@@ -1281,12 +1281,12 @@ function applyRequests(duel, worldJob, requests) {
   }
 }
 
-function moveJobRaiders(duel, worldJob, dt) {
+export function moveJobRaiders(duel, worldJob, dt) {
   const scablands = !!duel.course.def.scablands;
   for (const actor of worldJob.actors) {
     if (!actor.approachTarget || actor.knockedDown || !(actor.approachSpeed > 0)) continue;
     const dx = actor.approachTarget.x - actor.x, dz = actor.approachTarget.z - actor.z;
-    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt, from = scablands ? {x: actor.x, z: actor.z} : null;
+    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt, from = {x: actor.x, y: actor.y, z: actor.z};
     if (gap <= travel) {
       actor.x = actor.approachTarget.x; actor.z = actor.approachTarget.z;
     } else {
@@ -1298,8 +1298,22 @@ function moveJobRaiders(duel, worldJob, dt) {
       const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: actor.y});
       actor.x = at.x; actor.z = at.z; actor.y = at.y;
     }
-    // A brand opponent receives a fresh movement decision each rule step.
-    if (actor.brandAsh) actor.approachTarget = null;
+    if (actor.brandAsh) {
+      // The foot mover resolves land and buildings, but not other people.
+      // Reserve the whole step so a long step cannot pass through a neighbour.
+      const mx = actor.x - from.x, mz = actor.z - from.z;
+      const lengthSquared = mx * mx + mz * mz;
+      const crowded = worldJob.actors.some(other => {
+        if (other === actor || !other.brandAsh) return false;
+        const share = lengthSquared > 0 ? Math.max(0, Math.min(1,
+          ((other.x - from.x) * mx + (other.z - from.z) * mz) / lengthSquared)) : 0;
+        return Math.hypot(from.x + mx * share - other.x,
+          from.z + mz * share - other.z) < BRAND_RULE.ashSeparationMetres;
+      });
+      if (crowded) Object.assign(actor, from);
+      // A brand opponent receives a fresh movement decision each rule step.
+      actor.approachTarget = null;
+    }
   }
 }
 

@@ -163,6 +163,11 @@ assert.equal(firstWave.requests[0].type, 'spawnBrandAsh');
 assert.equal(ashTick(firstWave.state).requests.length, 0);
 const secondWave = ashTick(firstWave.state, {...ashView, lamps: {pump: true, tower: true}});
 assert.equal(secondWave.requests.length, 2);
+// Slice 11.5: two wall points, then separation at every movement step.
+const waveEntries = secondWave.requests.map(request => request.from.position);
+assert(Math.hypot(waveEntries[0].x-waveEntries[1].x,
+  waveEntries[0].z-waveEntries[1].z) >= 20, 'The second group enters at least 20 m apart.');
+
 assert.equal(Object.keys(secondWave.state.men).length, 3);
 assert.equal(Object.values(secondWave.state.men).filter(man => man.role === 'smother').length, 1);
 const darkAgain = ashTick(secondWave.state, {...ashView, lamps: {}});
@@ -690,3 +695,41 @@ for (const place of [sites.hearth, ...sites.lamps]) {
   assert.equal(fighter.knockedDown,false);
 }
 console.log('PASS Light the Town: clear hearth and lamp recovery, facing the fire.');
+
+// Two pairs approach the same point and cross paths, without player driving.
+const {moveJobRaiders} = await import('../src/arena/modes/world-job.js');
+const spacingActors = [
+  {id:'a',brandAsh:true,x:-5,z:0}, {id:'b',brandAsh:true,x:5,z:0},
+  {id:'c',brandAsh:true,x:0,z:-5}, {id:'d',brandAsh:true,x:0,z:5},
+].map(actor => ({...actor,approachSpeed:BRAND_RULE.ashWalkMps}));
+for (let frame=0;frame<120;frame++) {
+  for (const actor of spacingActors) actor.approachTarget = {x:0,z:0};
+  moveJobRaiders({course:{def:{scablands:false}}}, {actors:spacingActors}, 1/60);
+  for (let a=0;a<spacingActors.length;a++) for(let b=a+1;b<spacingActors.length;b++)
+    assert(Math.hypot(spacingActors[a].x-spacingActors[b].x,
+      spacingActors[a].z-spacingActors[b].z)>=1.2, 'No two Ash Men may overlap at any step.');
+}
+console.log('PASS slice 11.5: separate wall entries and separation through converging steps.');
+
+// The drawn town supplies valid separate entries for both groups, including
+// the case where two lamps are already lit at the same rule step.
+for (const lamp of sites.lamps) {
+  const spawned = stepBrandAsh(actualStep, {}, {onFoot:true,
+    fighter:{position:lamp.position}, lamps:{pump:true,tower:true}}, 0);
+  const spawns = spawned.requests.filter(request => request.type === 'spawnBrandAsh');
+  assert.equal(spawns.length,3);
+  const second = spawns.slice(1).map(request => request.from.position);
+  assert(Math.hypot(second[0].x-second[1].x,second[0].z-second[1].z)>=20);
+  for (let a=0;a<spawns.length;a++) for (let b=a+1;b<spawns.length;b++) {
+    const first=spawns[a].from.position, next=spawns[b].from.position;
+    assert(Math.hypot(first.x-next.x,first.z-next.z)>=1.2);
+  }
+}
+// A large time step must not let an Ash Man pass through a stationary one.
+const crossing = [
+  {brandAsh:true,x:-3,z:0,approachSpeed:6,approachTarget:{x:3,z:0}},
+  {brandAsh:true,x:0,z:0},
+];
+moveJobRaiders({course:{def:{scablands:false}}}, {actors:crossing}, 1);
+assert.equal(crossing[0].x,-3);
+console.log('PASS slice 11.5: real town entries and no crossing through a stationary neighbour.');

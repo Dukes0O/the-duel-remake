@@ -38,6 +38,8 @@ export const BRAND_RULE = Object.freeze({
   wallRadius: 2,
   ashWalkMps: 4.5,
   ashRadiusMetres: 0.4,
+  ashEntrySpacingMetres: 20,
+  ashSeparationMetres: 1.2,
   alleyCellMetres: 2,
   alleySampleMetres: 0.25,
   alleyReachMetres: 0.5,
@@ -128,13 +130,20 @@ export function stepBrandAsh(step, state, view, dt = 0) {
   let brandAshed = false;
   const nearest = (places, from) => places.reduce((best, place) =>
     distance(spot(place), from) < distance(spot(best), from) ? place : best, null);
-  const farthest = from => entries.reduce((best, entry) =>
-    !best || distance(spot(entry), from) > distance(spot(best), from) ? entry : best, null);
   for (const lamp of lamps) if (view.lamps?.[lamp.id] && !next.seen.includes(lamp.id)) next.seen.push(lamp.id);
   let wave = state.wave ?? 0;
   while (wave < BRAND_RULE.ashWaves.length && next.seen.length > wave && entries.length && here) {
-    const from = farthest(here);
+    const usedEntries = [];
     for (let index = 0; index < BRAND_RULE.ashWaves[wave]; index++) {
+      const available = entries.filter(entry => usedEntries.every(used =>
+        distance(spot(entry), spot(used)) >= BRAND_RULE.ashEntrySpacingMetres) &&
+        (view.ashMen ?? []).every(actor => distance(spot(entry), spot(actor)) >= BRAND_RULE.ashSeparationMetres) &&
+        requests.filter(request => request.type === 'spawnBrandAsh').every(request =>
+          distance(spot(entry), spot(request.from)) >= BRAND_RULE.ashSeparationMetres));
+      const from = available.reduce((best, entry) => !best ||
+        distance(spot(entry), here) > distance(spot(best), here) ? entry : best, null);
+      if (!from) throw new Error('The town needs separate clear wall entries for its Ash Men.');
+      usedEntries.push(from);
       const id = `town-ash-${wave}-${index}`;
       // Exactly one lamp smotherer; the other two throw ash at the player.
       next.men[id] = {role: wave === 0 ? 'smother' : 'throw', throwWait: 0};

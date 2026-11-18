@@ -7,8 +7,10 @@
 - Codex decided: shaken means 70% of the player's top speed; the Boneyard stays at 60 km/h. Sacks burst on the road beside the pursuing car.
 - Sound: sacks retain world.thief.ash; no new game event or cue.
 - Integration brought into this lane: already up to date at 0496c6d86.
-- Point 4 built: wall-crossing captions and lamp warnings only within 15 m; repeated steps do not repeat the warning. Captions add no sound cue.
+- Point 4 built: wall-crossing captions and lamp warnings only within 15 m; repeated steps do not repeat the warning. Captions and separation add no sound cue.
 - Point 4 check on 75a15ae79 plus this change: job 2 rules pass, including browser-expression parsing; new wall-warning check failed first; no older assertion changed.
-- Pending: points 2, 3, 5 and 6, older related suites, Easy walk and drive, replay/world guards, lane tier, build and independent review.
+- Point 5 built: second-wave entries are at least 20 m apart; occupied entries are skipped; steps reserve 1.2 m around every Ash Man. The existing mover has no people separation.
+- Point 5 checks on 492752186 plus this commit: job 2 rules pass; new entry and converging-step checks failed first; real town entries and long crossing steps pass; diff check passes.
+- Pending: points 2, 3 and 6, older related suites, Easy walk and drive, replay/world guards, lane tier, build and independent review.
 - For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all six fixes.
-- **Removed:** top-speed-minus-five pace, fixed-place sack targets and distant lamp-arrival warnings.
+- **Removed:** top-speed-minus-five pace, fixed-place sack targets distant lamp-arrival warnings, shared wave entries and overlapping Ash Man steps.
