@@ -2,13 +2,13 @@
 // during a conversation while these paths and every other job clock are still.
 const PROFILES = [
   // Name, figure, standing height (metres), shoulder width multiplier, walking pace (m/s).
-  ['rell', 'walker-trader', 1.78, 1.13, 1.23],
-  ['dace', 'walker-kid-b', 1.58, .88, 1.52],
+  ['rell', 'rell', 1.78, 1.13, 1.23],
+  ['dace', 'dace', 1.58, .88, 1.52],
   ['wim', 'walker-kid-a', 1.16, .97, 1.08],
   ['walker-1', 'walker-a', 1.75, .99, 1.29],
   ['walker-2', 'walker-b', 1.63, 1.05, 1.18],
   ['walker-3', 'walker-c', 1.83, 1.02, 1.36],
-  ['walker-4', 'walker-d', 1.69, .94, 1.26],
+  ['walker-4', 'walker-vane', 1.69, .94, 1.26],
   ['walker-5', 'walker-e', 1.73, 1.07, 1.22],
   ['walker-6', 'walker-f', 1.61, 1, 1.15],
   ['walker-7', 'walker-g', 1.81, .98, 1.41],
@@ -32,12 +32,25 @@ const GATE_OFFSETS = [
   [.76, -3.87, .11], [2.14, -4.43, -.35],
 ];
 
+export const HANDCART = Object.freeze({width:.83, length:1.18, axleAhead:1.15, wheelRadius:.34, shaftBack:-.81});
+const CARTERS = new Set(['walker-1','walker-3','walker-6','walker-8']);
+
+function placeCart(person) {
+  const at = person.position;
+  const cart = person.cart ??= {travel:0};
+  cart.x = at.x + Math.sin(person.yaw) * HANDCART.axleAhead;
+  cart.y = at.y;
+  cart.z = at.z + Math.cos(person.yaw) * HANDCART.axleAhead;
+  cart.yaw = person.yaw;
+}
+
 export function walkerGroupAt(origin, yaw, heightAt = () => origin.y) {
   const sin = Math.sin(yaw), cos = Math.cos(yaw);
   return GATE_OFFSETS.map(([east, forward, turn], index) => {
     const x = origin.x + east * cos + forward * sin;
     const z = origin.z - east * sin + forward * cos;
-    return {id: PROFILES[index][0], position: {x, y: heightAt(x, z), z}, yaw: yaw + turn};
+    const id = PROFILES[index][0];
+    return {id, position: {x, y: heightAt(x, z), z}, yaw: yaw + turn, cart:CARTERS.has(id)};
   });
 }
 
@@ -46,7 +59,7 @@ const RESTING = new Set(['stand', 'sit', 'sleep']);
 
 export function createStoryPeople(placements) {
   const cast = [], ids = new Set();
-  for (const {id, position, yaw = 0, action = 'stand', path} of placements) {
+  for (const {id, position, yaw = 0, action = 'stand', path, cart} of placements) {
     if (!Object.hasOwn(STORY_FIGURES, id) || ids.has(id))
       throw new Error('Unknown or repeated story figure: ' + id);
     if (![position?.x, position?.y, position?.z, yaw].every(Number.isFinite))
@@ -55,6 +68,7 @@ export function createStoryPeople(placements) {
     const {height, width} = STORY_FIGURES[id];
     const radius = .4 * width * height / 1.7;
     const person = {id, position: {...position}, height, radius, yaw, distance: 0, action: 'stand'};
+    if (cart) placeCart(person);
     setStoryPersonAction(person, action, path);
     cast.push(person);
   }
@@ -65,6 +79,7 @@ export function setStoryPersonAction(person, action, path = []) {
   if (!MOVING.has(action) && !RESTING.has(action)) throw new Error('Unknown story action: ' + action);
   if (MOVING.has(action) && (!path.length || !path.every(p => Number.isFinite(p.x) && Number.isFinite(p.z))))
     throw new Error('A moving story figure needs a path in metres.');
+  if (action === 'push-cart') placeCart(person);
   person.action = action;
   person.path = MOVING.has(action) ? path : [];
   person.nextPoint = 0;
@@ -90,6 +105,10 @@ export function advanceStoryPeople(cast, dt, heightAt) {
       at.y = heightAt(at.x, at.z, at.y);
       person.yaw = Math.atan2(dx, dz);
       person.distance += step;
+      if (person.action === 'push-cart') {
+        placeCart(person);
+        person.cart.travel += step;
+      }
       remaining -= step;
       if (step === length) person.nextPoint++;
       moved = true;

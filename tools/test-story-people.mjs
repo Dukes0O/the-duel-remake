@@ -46,3 +46,118 @@ for (const body of [{halfWidth: 1, halfLength: 2, height: 1.5},
 grid.setStoryPeople([]);
 assert.deepEqual(grid.near(0, 0, 0, 5).map(s => s.id), ['auntie']);
 console.log('Story people: group, turning, actions and solid sweeps passed.');
+
+const THREE = await import('three');
+const {GLTFLoader} = await import('three/addons/loaders/GLTFLoader.js');
+const {readFile} = await import('node:fs/promises');
+const {createStoryPeopleView} = await import('../src/world/story-people-view.js');
+async function loadRealAsset(path) {
+  const bytes = await readFile(new URL('../public' + path, import.meta.url));
+  const loader = new GLTFLoader();
+  // Node does not decode embedded JPEGs. Exercise the real geometry and rig.
+  loader.register(() => ({name:'TEST_TEXTURE', loadTexture:() => Promise.resolve(new THREE.Texture())}));
+  return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+}
+const view = createStoryPeopleView(loadRealAsset);
+const namedCast = createStoryPeople([...walkerGroupAt({x:0,y:0,z:0}, 0),
+  ...['auntie-solder','cinder','clinker'].map((id, i) => ({id, position:{x: 3+i, y:0, z:0}}))]);
+const job = {storyPeople: namedCast, storySpeaker:'rell'};
+const observer = {x:0, z:6};
+view.update(job, observer, 0);
+await view.group.userData.ready;
+assert.ifError(view.group.userData.loadError);
+assert.equal(view.group.children.length, 14);
+const rendered = t => { view.update(job, observer, t); view.group.updateMatrixWorld(true); };
+const anchor = id => view.group.getObjectByName('story-bubble-' + id).getWorldPosition(new THREE.Vector3());
+for (let i = 1; i <= 60; i++) rendered(i / 60);
+const standing = anchor('wim');
+assert.ok(standing.y > 1.2 && standing.y < 1.4, 'Wim’s own bubble is above her standing head');
+assert.ok(anchor('rell').y > anchor('dace').y && anchor('dace').y > standing.y);
+const trail = anchor('rell');
+observer.x = 3;
+for (let i = 61; i <= 120; i++) rendered(i / 60);
+assert.ok(trail.distanceTo(anchor('rell')) > .001, 'A speaking head moves on its rig');
+setStoryPersonAction(namedCast[2], 'sleep');
+for (let i = 121; i <= 240; i++) rendered(i / 60);
+assert.ok(anchor('wim').y < standing.y - .19, 'Bubble follows Wim down to the fence');
+for (const person of namedCast.slice(0,11)) {
+  const group = view.group.getObjectByName('story-person-' + person.id);
+  const skins = [];
+  group.traverse(n => { if (n.isSkinnedMesh) skins.push(n); });
+  assert.equal(skins.length, 1, 'one skinned draw for ' + person.id);
+  assert.equal(skins[0].geometry.groups.length, 0);
+  assert.ok(skins[0].skeleton.bones.length >= 17);
+}
+for (const id of ['auntie-solder','clinker']) {
+  const actor = view.group.getObjectByName('story-person-' + id);
+  const here = actor.getWorldPosition(new THREE.Vector3());
+  let clothing = 0;
+  actor.traverse(node => {
+    if (!node.isSkinnedMesh) return;
+    const bounds = new THREE.Box3().setFromObject(node, true);
+    assert.ok(bounds.min.x > here.x-.65 && bounds.max.x < here.x+.65,
+      id + ' wears each bound garment at her or his position');
+    clothing++;
+  });
+  assert.ok(clothing >= 2);
+}
+const runner = namedCast[1];
+setStoryPersonAction(runner, 'run', [{x:3, z:20}]);
+for (let i = 0; i < 20; i++) {
+  runner.distance = runner.height * 1.42 * i / 20;
+  rendered(4 + i / 60);
+  const group = view.group.getObjectByName('story-person-dace');
+  assert.ok(Math.abs(new THREE.Box3().setFromObject(group,true).min.y) < .015,
+    'The sole of the supporting running boot stays on the ground');
+}
+if (process.argv.includes('--measure')) {
+  const twelve = createStoryPeople([...walkerGroupAt({x:0,y:0,z:0},0),
+    {id:'auntie-solder',position:{x:3,y:0,z:-1}}]);
+  const timingJob = {storyPeople:twelve,storySpeaker:'rell'};
+  view.update(timingJob,{x:0,z:20.4},0);
+  await view.group.userData.ready;
+  assert.ifError(view.group.userData.loadError);
+  const samples = [];
+  const viewer = {x:0,z:20.4};
+  for (let i = 0; i < 700; i++) {
+    const start = performance.now();
+    view.update(timingJob,viewer,i/60);
+    view.group.updateMatrixWorld(true);
+    if (i>=100) samples.push(performance.now()-start);
+  }
+  samples.sort((a,b)=>a-b);
+  console.log('Cloud CPU only, twelve visible people with four carts at 20 m, warmed 600-frame pose and scene transforms: '+
+    'median '+samples[300].toFixed(3)+' ms, p95 '+samples[569].toFixed(3)+' ms (drawing and GPU time excluded).');
+}
+view.update({}, observer, 5);
+assert.equal(view.group.children.length, 0);
+assert.equal(view.group.getObjectByName('story-bubble-wim'), undefined);
+view.dispose();
+console.log('Story people: every actual figure loads, and the photographed Walkers use one draw and a moving crown each.');
+
+const {Duel} = await import('../src/game.js');
+const {placeActor} = await import('../src/arena/arena-event.js');
+const {createFighter, stepFighter} = await import('../src/onfoot.js');
+const {scablandsSurfaceHeightAt} = await import('../src/world/scablands-ground.js');
+const {roadPointFrom, ROAD_NET} = await import('../src/world/scablands-road.js');
+const {LAND} = await import('../src/world/scablands-names.js');
+const site = roadPointFrom(ROAD_NET.road('east-road'),LAND.yard.x,LAND.yard.z,500);
+const stop = {x:site.x,y:scablandsSurfaceHeightAt(site.x,site.z),z:site.z};
+const duel = new Duel({seed:19,featureFlags:{'hidden-road':true,'story-everburn':true}});
+duel.state.wastelandGateDiscovered = true;
+const demo = {id:'test-stop-at-the-gate', storyPeople:[{id:'rell',position:stop}],
+  steps:[{kind:'reach',place:{id:'end',position:{...stop,z:stop.z+500}}}]};
+assert.equal(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',opponents:[],seed:19,job:demo}), true);
+const near = (offset) => duel.course.nearest(stop.x,stop.z+offset);
+const before = near(-10), beyond = near(10);
+placeActor(duel,duel.state,{...beyond,headingError:-duel.course.at(beyond.s).heading},25);
+duel.state.prevS = before.s;
+duel.state.prevLateral = before.lateral;
+duel._staticContacts(duel.state,true);
+const stopped = duel.course.worldAt(duel.state.s,duel.state.lateral);
+assert.ok(stopped.z < stop.z - 1 && stopped.z > stop.z - 5, 'Actual player car stopped short of Rell');
+const walker = createFighter(duel.course,duel.state,{...near(-2),yaw:0});
+for (let i=0;i<160;i++) stepFighter(duel.course,duel.state,walker,{forward:true},1/120);
+assert.ok(walker.z < stop.z -.35 && walker.z > stop.z - 1.4, 'Actual player walker stopped at the figure');
+assert.deepEqual(duel.state.arena.worldJob.storyPeople[0].position,stop);
+console.log('Story people: the game car and a fighter on foot both stop short in the real world job.');
