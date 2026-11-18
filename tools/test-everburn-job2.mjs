@@ -6,7 +6,10 @@ import {brandSites} from '../src/world/jobs/brand-sites.js';
 import {SCABLANDS_SOLIDS, SOLID_GRID, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
-import {worldHudModel} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
+import {footBrandDirection} from '../src/combat-hud.js';
+import {brandTownMap, drawSmallMap, createKnowledge, toScreen, SMALL_MAP} from '../src/world/scablands-map.js';
+import {landMarks} from '../src/world/scablands-picture.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
 import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {createBrandLamps} from '../src/world/brand-lamps.js';
@@ -429,6 +432,50 @@ assert.equal(hud({...hudState, townEnding: true, theftStarted: true}).line, BRAN
 assert.equal(hud({...hudState, townEnding: true}).target, null);
 assert.equal(JSON.stringify(hudState), hudBefore, 'The HUD only reads job state.');
 console.log('PASS Light the Town: real definition, clear wall entries, brand gauge and lamp guidance.');
+
+// Slice 11.3: guidance reads every lamp, even before the player can see it.
+const navigationWorld = {definition, job: {...actualJob, stepState: hudState},
+  actors: [{id:'over-wall',brandAsh:true,x:sites.ashEntries[0].position.x,
+    z:sites.ashEntries[0].position.z}]};
+const navigationState = {status:'racing',onFoot:true,
+  fighter:{...sites.lamps[1].position,yaw:Math.PI / 2},
+  arena:{mode:'world-job',worldJob:navigationWorld}};
+assert.deepEqual(footBrandDirection(navigationState),{name:'TOWER LAMP',distance:0,angle:-90});
+navigationState.fighter = {...sites.hearth.position,yaw:0};
+navigationWorld.job.stepState = {...hudState,brandSeconds:0};
+assert.deepEqual(footBrandDirection(navigationState),{name:'THE HEARTH',distance:0,angle:0});
+navigationState.fighter = {...sites.lamps[0].position,yaw:0};
+assert.equal(footBrandDirection(navigationState).name,'PUMP LAMP');
+navigationState.onFoot=false;
+assert.equal(footBrandDirection(navigationState),null);
+navigationState.onFoot=true;
+navigationWorld.job.stepState=hudState;
+const navigationBefore=JSON.stringify(navigationWorld);
+const mapFrame=worldMapFrame({state:navigationState,course:null,model:hud(hudState),knowledge:null});
+const townMap=brandTownMap(mapFrame,SMALL_MAP);
+assert(townMap.view.scale >= 1,'The town uses metres rather than kilometres on the small map.');
+assert.deepEqual(townMap.fires.map(fire=>[fire.id,fire.lit]),
+  [['town-hearth',true],['pump',true],['tower',false],['far',false]]);
+assert.deepEqual(townMap.men.map(man=>man.id),['over-wall']);
+for(const point of [...townMap.fires,...townMap.men]) {
+  const at=toScreen(townMap.view,point.x,point.z);
+  assert(at.x>0&&at.x<SMALL_MAP.width&&at.y>0&&at.y<SMALL_MAP.height);
+}
+assert.equal(JSON.stringify(navigationWorld),navigationBefore);
+const mapLabels=[], mapFills=[];
+const mapContext=new Proxy({
+  measureText:text=>({width:String(text).length*7}),
+  fillText:text=>mapLabels.push(text),
+  fill(){mapFills.push(this.fillStyle);},
+},{get:(object,key)=>key in object?object[key]:()=>{}});
+drawSmallMap(mapContext,{...mapFrame,picture:{marks:landMarks()},
+  knowledge:createKnowledge(),target:null});
+for(const label of ['HEARTH','PUMP','TOWER','FAR']) assert(mapLabels.includes(label));
+for(const colour of ['#ffbc72','#252e34','#ff683a']) assert(mapFills.includes(colour),
+  'The map paints lit fires, dark fires and the man who has entered.');
+navigationState.onFoot=false;
+assert.equal(brandTownMap({...mapFrame,onFoot:false},SMALL_MAP),null);
+console.log('PASS slice 11.3: named foot arrows and a town map with every fire and entered Ash Man.');
 
 // Job 2.3: the drawing and temporary collision posts share their dimensions.
 const lampGrid = createJobSolidGrid({near: () => []});

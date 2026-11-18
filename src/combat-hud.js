@@ -10,6 +10,25 @@ import {arsenalEnabled} from './combat-weapons.js';
 import {carEffect} from './arsenal/car-effects.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {convoyPrompt} from './convoy-prompt.js';
+import {brandHudStep} from './world/world-hud.js';
+import {BRAND_RULE} from './world/jobs/brand-rule.js';
+
+export function footBrandDirection(state) {
+  const worldJob = state?.arena?.mode === 'world-job' && state.arena.worldJob;
+  const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
+  if (state?.status !== 'racing' || !state.onFoot || !state.fighter || !step?.brand) return null;
+  const fighter = state.fighter;
+  const target = brandHudStep(step, job.stepState, fighter).target;
+  if (!target) return null;
+  const at = target.position ?? target;
+  const dx = at.x - fighter.x, dz = at.z - fighter.z;
+  const bearing = Math.atan2(dx, dz) - (fighter.yaw || 0);
+  const name = target.id === step.hearth?.id ? 'THE HEARTH'
+    : ['pump', 'tower', 'far'].includes(target.id) ? `${target.id.toUpperCase()} LAMP`
+      : (target.name ?? 'Auntie Solder').toUpperCase();
+  return {name, distance: Math.round(Math.hypot(dx, dz)),
+    angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
+}
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 export const combatSlotHidden = (slot, id, loanButton) =>
@@ -218,6 +237,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
@@ -258,6 +278,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const footHealthFill = footHealth.querySelector('i');
   const carDistance = host.querySelector('.combat-foot-car strong');
   const carArrow = host.querySelector('.combat-foot-car-arrow');
+  const townPointer = host.querySelector('.combat-foot-town');
+  townPointer.style.bottom = `${BRAND_RULE.footMarkerBottomPixels}px`;
+  const townName = townPointer.querySelector('b');
+  const townDistance = townPointer.querySelector('strong');
+  const townArrow = townPointer.querySelector('span');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   const footAction = host.querySelector('.combat-foot-action');
@@ -321,6 +346,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setText(carDistance, `${direction.distance} m`);
       const rotation = `rotate(${direction.angle}deg)`;
       if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
+      const town = footBrandDirection(state);
+      townPointer.hidden = !town;
+      if (town) {
+        setText(townName, town.name);
+        setText(townDistance, `${town.distance} m`);
+        townArrow.style.transform = `rotate(${town.angle}deg)`;
+        townPointer.setAttribute('aria-label', `${town.name}, ${town.distance} metres away`);
+      }
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);

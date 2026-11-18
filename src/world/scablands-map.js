@@ -13,6 +13,7 @@ import {bedMistCorners} from './jobs/ember-rule.js';
 import {sightOutline, sees, WATCH, holderOf} from './scablands-ways.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsHeightAt} from './scablands-height.js';
+import {BRAND_RULE} from './jobs/brand-rule.js';
 
 // ---- The picture of the game's land, made once ---------------------------------------------------------------------------------------
 let landPicture = null;
@@ -295,9 +296,41 @@ function drawActors(ctx, view, actors, size) {
 }
 
 // ---- The small map ---------------------------------------------------------------------------------------------------------------------
+export function brandTownMap(frame, {width, height} = SMALL_MAP) {
+  const job = frame.worldJob?.job, step = job?.steps?.[job.stepIndex];
+  if (!frame.racing || !frame.onFoot || !step?.brand) return null;
+  const point = place => place.position ?? place;
+  const fires = [step.hearth, ...(step.places ?? [])].filter(Boolean).map(place => ({
+    ...point(place), id: place.id,
+    lit: place === step.hearth || job.stepState?.lamps?.[place.id] === true,
+  }));
+  const men = (frame.worldJob.actors ?? []).filter(actor => actor.brandAsh);
+  const points = [...fires, ...men, ...(step.ashEntries ?? []).map(point), frame.car];
+  const minX = Math.min(...points.map(at => at.x)), maxX = Math.max(...points.map(at => at.x));
+  const minZ = Math.min(...points.map(at => at.z)), maxZ = Math.max(...points.map(at => at.z));
+  const padding = BRAND_RULE.mapPaddingMetres * 2;
+  const across = Math.max(BRAND_RULE.mapMetresAcross, maxX - minX + padding,
+    (maxZ - minZ + padding) * width / height);
+  return {view: {cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2,
+    scale: width / across, width, height}, fires, men};
+}
+
+function drawTownFires(ctx, town) {
+  for (const fire of town.fires) {
+    const at = toScreen(town.view, fire.x, fire.z);
+    ctx.beginPath(); ctx.arc(at.x, at.y, BRAND_RULE.mapFireRadiusPixels, 0, Math.PI * 2);
+    ctx.fillStyle = fire.lit ? '#ffbc72' : '#252e34'; ctx.fill();
+    ctx.strokeStyle = INK.pale; ctx.lineWidth = BRAND_RULE.mapFireStrokePixels; ctx.stroke();
+    const label = fire.id === 'town-hearth' ? 'HEARTH' : fire.id.toUpperCase();
+    text(ctx, label, at.x, at.y - BRAND_RULE.mapLabelOffsetPixels, {size: BRAND_RULE.mapLabelSizePixels});
+  }
+}
+
 // `frame`: {picture, canvas (the picture as a canvas), car: {x, z, heading}, target: {x, z, name} | null, knowledge, actors: [{kind, position}]}.
 export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMALL_MAP.height} = {}) {
-  const {picture, car, target, knowledge, actors = []} = frame, marks = picture.marks, view = smallView(car, {width, height});
+  const {picture, car, target, knowledge, actors = []} = frame, marks = picture.marks;
+  const town = brandTownMap(frame, {width, height});
+  const view = town?.view ?? smallView(car, {width, height});
   drawGround(ctx, picture, frame.canvas, view);
   drawRiver(ctx, view, marks);
   drawSights(ctx, view, knowledge);
@@ -335,10 +368,13 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
     if (marker.onMap) drawTargetMark(ctx, marker.x, marker.y, 10);
     else drawEdgeMarker(ctx, marker, 8);
   }
-  drawCarArrow(ctx, width / 2, height / 2, car.heading ?? 0, 13);
+  if (town) drawTownFires(ctx, town);
+  const carAt = toScreen(view, car.x, car.z);
+  drawCarArrow(ctx, carAt.x, carAt.y, car.heading ?? 0, 13);
   // At 60 m a rider is only ten pixels from the car. Keep its mark above the
   // car's thirteen-pixel arrow so the last part of a scout chase stays visible.
   drawActors(ctx, view, actors, 5);
+  if (town) drawActors(ctx, view, town.men.map(man => ({kind: 'hunter', position: man})), 5);
   // On the map a place already carries its name; a mark on the edge, or a point that is no place, says what it is and how far (km).
   if (marker && (!marker.onMap || !namesAPlace(marks, target))) {
     const label = marker.onMap ? `${target.name.toUpperCase()}` : `${target.name.toUpperCase()}  ${marker.km.toFixed(1)} km`;
@@ -346,7 +382,7 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
     ctx.fillStyle = '#14120ee6'; ctx.fillRect(bx, by - 11, w, 22); ctx.strokeStyle = INK.gold; ctx.lineWidth = 1.2; ctx.strokeRect(bx, by - 11, w, 22);
     text(ctx, label, bx + w / 2, by, {size: 14, colour: INK.gold, halo: 'transparent'});
   }
-  drawFrame(ctx, view, {north: true, bar: 500});
+  drawFrame(ctx, view, {north: true, bar: town ? BRAND_RULE.mapScaleBarMetres : 500});
   return marker;
 }
 

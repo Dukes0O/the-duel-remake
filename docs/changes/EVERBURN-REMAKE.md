@@ -1,5 +1,5 @@
 # EVERBURN-REMAKE slice 11
-- Built points 1, 4, 5 and 6; point 2 has its loan, load rule and native projectile/flame links. Jobs stay hidden; saves and pay are unchanged.
+- Built points 1, 3, 4, 5 and 6; point 2 has its loan, load rule and native projectile/flame links. Jobs stay hidden; saves and pay are unchanged.
 - Point 1 on 75a15ae79: job 3 passes after failing launch; Medium closes at 1,200.9 m after walking 60 m; stationary gap at 25 s is 347.1 m.
 - Changed assertions for Claude: road pace 195 to 180 and 125 to 117 km/h; launch 195 to 40 (point 1). Fixed sack targets become the pursuing car's point; second fixture still proves x=30, supplied at throw.
 - Codex decided: shaken means 70% of player top speed; Boneyard stays at 60 km/h. Sacks burst beside the pursuing car.
@@ -7,10 +7,10 @@
 - Point 6 on 3ef3421b9: job 2 and browser-expression parsing pass after wrench-only regression fails. Any hand tool swings within 2 m; normal weapon attack is suppressed; Cinder explains once within 12 m.
 - Before point 2: RPG, car bolts/bombs/harpoons report sweeps but do no thief/load damage; car flame costs 15 load/s for its first contact step only. Hand flamer, marksman, sticky bombs, cannon and turret miss this separate actor; wrench repairs, grapple moves, smoke hides and shock disables. Rocket pods and other arsenal effects also target opponents. Hard meetings alone earn knocks.
 - Point 2 on 3ef3421b9 plus this commit: loaned hand flamer; reported blasts cost 40, bolts 20, other hits 10; no weapon earns knocks; first hit warns. Native shots carry their kind; separate same-step shots count once each. Both flame cones reach the load; car flame continues through its burst.
-- Checks this commit: job 2, job 3, combat-projectiles and polish-flame pass; point 2 loan check failed before. Arena checks prove aimed hand flame and two distinct shots; no existing assertion changed this round. Diff check passes.
+- Point 2 on c5060bafe: job 2, job 3, combat-projectiles and polish-flame pass; loan failed before. Arena proves aimed hand flame and distinct shots. Point 3 this commit: new guidance check failed before; job 2, combat-hud, world-hud, scablands-map and scablands-job-map pass; no old assertion changed.
 - Held-click fix: world-job-mode line 294 failed before; world-job-mode and job 2 now pass. Hold state tracks the attack press through range changes; no existing assertion changed.
 - Sound: world.thief.ash and world.bellows.load retained; hand flame uses crew.flamer.start/stop; car flame uses weapon.flame.start/loop/end. Warnings remain captions; no new event cue.
-- Integration merge: already current at 0496c6d86. Final lane tier/build not run yet.
-- Pending: remaining weapon paths (crew shots and rocket pods), point 3, related suites, Easy walk/drive, replay/world guards, lane tier, build and independent review.
+- Point 3: foot marker names the nearest needed fire with metres and facing arrow. Small map fits town, fires, wall entries and fighter; dark/lit lamps and entered Ash Men draw immediately. Named scale starts at 300 m across, expanding only to fit. Final lane tier/build not run yet.
+- Pending: remaining weapon paths (crew shots and rocket pods), related suites, Easy walk/drive, replay/world guards, lane tier, build and independent review.
 - For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all fixes.
-- **Removed:** top-speed-minus-five pace, fixed sack targets, distant warnings, shared entries, overlapping steps, wrench-only brand use and bellows immunity to native weapon hits.
+- **Removed:** top-speed-minus-five pace, fixed sack targets, distant warnings, shared entries, overlapping steps, wrench-only brand use and bellows immunity to native weapon hits, missing foot guidance and kilometre-scale town map.

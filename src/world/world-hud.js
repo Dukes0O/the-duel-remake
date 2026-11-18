@@ -249,7 +249,8 @@ export function worldMapFrame({state, course, model, knowledge, picture, canvas}
   const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
   const awaitingPickup = worldJob?.definition?.id === 'everburn-hot-delivery' && step?.pickup && !worldJob.job.stepState.loaded;
   const actors = awaitingPickup ? [] : (data?.marks ?? []).filter(mark => mark.kind !== 'player');
-  return {picture, canvas, car, target, knowledge, actors, worldJob};
+  return {picture, canvas, car, target, knowledge, actors, worldJob,
+    onFoot: state.onFoot === true, racing: state.status === 'racing'};
 }
 
 // The ways to the job's place, each with its numbers (src/world/scablands-ways.js). From the job's own starting place when it has one
