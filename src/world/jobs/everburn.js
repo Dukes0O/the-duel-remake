@@ -207,7 +207,7 @@ export function buildEverburn(land) {
       lineId:'story.ember.auntie-solder.5',
       steps:[step('chase',{what:'Stop the thief and bring back the bellows.', bellows:true, targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
         path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,
-        roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower',
+        roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower', lentWeapon:'cinders-hand-flamer',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
         bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[2].position),
         startLineId:'story.ember.auntie-solder.5',
@@ -292,7 +292,7 @@ export function buildEverburn(land) {
       // diggers at the Everburn well, by the marked way, which goes round the town's south side and then by the safe road. No part of it
       // comes within 6 m of a solid near the town (the well's own box at the very end excepted). A spill sends the car back to the last safe
       // point it passed.
-      steps:[step('carry',{what:'Carry Auntie’s hot soup from her kitchen to the diggers at the Everburn well.', load:'hot-soup', origin:kitchen,
+      steps:[step('carry',{what:'Carry Auntieâ€™s hot soup from her kitchen to the diggers at the Everburn well.', load:'hot-soup', origin:kitchen,
         destination:well, safePoints:path(townSafeCorner, place('south-road', at('tin-town', -30, -30), 10), safeRoad),
         // The car starts on open ground beside the kitchen, outside the town's solid, facing the first safe point. Moved 2 m west when the
         // forge was built beside it (16 November 2026): it and the camera behind it stand more than 3 m clear of the forge and the town.

@@ -13,6 +13,21 @@ import {sweepObstacle, CAR_HALF_WIDTH} from '../src/collision.js';
 const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
 const {FIGHTER_RULES} = await import('../src/onfoot.js');
 
+// Slice 11.2: every reported weapon contact damages the load, never earns a knock.
+assert.equal(EVERBURN_JOBS[2].steps[0].lentWeapon, 'cinders-hand-flamer');
+for (const [weapon, damage] of [['rpg',40],['rocket-pod',40],['bomb',40],
+  ['sticky-bomb',40],['crossbow',20],['marksman',20],['harpoon',10],['scrap-cannon',10],['scrap-turret',10]]) {
+  const hit=stepBellowsLoad({}, {weaponHits:[{weapon}], behindMetres:500}, 0);
+  assert.equal(hit.state.bellows,100-damage,weapon);
+  assert.equal(hit.state.knocks,0,weapon);
+  assert.equal(hit.state.thiefStopped,undefined,weapon);
+  assert.equal(hit.events.filter(event=>event.lineId==='bellows.warning').length,1,weapon);
+  assert.equal(stepBellowsLoad(hit.state,{weaponHits:[{weapon}],behindMetres:500},0)
+    .events.filter(event=>event.lineId==='bellows.warning').length,0);
+}
+assert.equal(stepBellowsLoad({}, {weaponHits:[{weapon:'bomb'},{weapon:'crossbow'}]},0).state.bellows,40);
+console.log('PASS slice 11.2: loaned hand flamer, weapon load damage and first-contact warning.');
+
 // Slice 11.1: step only the rules on a straight road, without a driver.
 const reachStep = {targetId:'thief', path:[]};
 const reachTick = (state, thief, car, speedKmh, dt, extra = {}) => stepBellowsChase(
@@ -671,6 +686,27 @@ assert.equal(measured.carContact, true);
 assert.equal(measured.meetingKmh, 31);
 assert.equal(JSON.stringify(factsJob.carContacts), contactsBefore);
 assert.equal(readFacts([{id:'other', flame:true}]).flameContact, false);
+const {reportWorldJobThingHit} = await import('../src/arena/modes/world-job.js');
+factsState.worldJobThingsHit=[];
+for (const [hitId,weapon] of [['first','rpg'],['second','crossbow']]) {
+  assert.equal(reportWorldJobThingHit(factsDuel,{id:factsStep.targetId,hitId,weapon}),true);
+  assert.equal(reportWorldJobThingHit(factsDuel,{id:factsStep.targetId,hitId,weapon}),false);
+}
+const loadHits=readFacts(factsState.worldJobThingsHit).weaponHits;
+assert.equal(loadHits.length,2);
+assert.equal(stepBellowsLoad({}, {weaponHits:loadHits,behindMetres:500},0).state.bellows,40);
+factsState.worldJobThingsHit=[];
+factsState.onFoot=true;
+factsState.footWeapons.selected='hand-flamer';
+Object.assign(factsState.fighter,{x:thiefAt.x,z:thiefAt.z-5,y:thiefAt.y??0,yaw:0,pitch:0,flaming:true});
+assert.equal(readFacts([]).flameContact,true);
+assert.equal(stepBellowsLoad({},readFacts([]),2).state.bellows,70);
+factsState.fighter.yaw=Math.PI;
+assert.equal(readFacts([]).flameContact,false);
+factsState.fighter.yaw=0;
+factsState.fighter.z=thiefAt.z-7;
+assert.equal(readFacts([]).flameContact,false);
+factsState.fighter.flaming=false;
 factsState.onFoot = true;
 assert.equal(readFacts([]).carContact, false, 'The parked car cannot ram while the player walks.');
 factsJob.actors[0].pathIndex = roadPlaces.length;

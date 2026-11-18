@@ -112,9 +112,20 @@ export function bellowsArenaFacts(duel, worldJob, step, thingsHit) {
   const surface = duel._drivingSurface(pose.s, pose.lateral);
   const contacts = duel.state.onFoot ? [] : (worldJob.carContacts ?? [])
     .filter(hit => hit.actor.id === step.targetId);
-  return {bellows:{...bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex ?? 0),
+  const weaponHits = thingsHit.filter(hit => (hit.actorId ?? hit.id) === step.targetId && !hit.flame);
+  const fighter = duel.state.onFoot && duel.state.fighter;
+  const gear = signatureFor('cinder');
+  const direction = fighter && gearDirection(fighter);
+  const dx = fighter ? thief.position.x - fighter.x : 0;
+  const dz = fighter ? thief.position.z - fighter.z : 0;
+  const distance = Math.hypot(dx, dz);
+  const handFlame = fighter?.flaming && duel.state.footWeapons?.selected === 'hand-flamer' &&
+    distance > 0 && distance <= gear.range &&
+    Math.abs((thief.position.y ?? 0) - fighter.y) < BELLOWS_RULE.handFlameHeightMetres &&
+    (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2);
+  return {bellows:{weaponHits, ...bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex ?? 0),
     playerTopSpeedKmh:surface.speedLimit * MPH_TO_KMH,
-    flameContact:thingsHit.some(hit => (hit.actorId ?? hit.id) === step.targetId && hit.flame === true),
+    flameContact:!!handFlame || thingsHit.some(hit => (hit.actorId ?? hit.id) === step.targetId && hit.flame === true),
     carContact:contacts.length > 0,
     meetingKmh:Math.max(0, ...contacts.map(hit => hit.kmh)),
     solidContact:thief.bellowsSolidContact === true,
@@ -1689,7 +1700,10 @@ export function reportWorldJobThingHit(duel, hit) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || !hit?.id) return false;
   state.worldJobThingsHit ??= [];
-  if (state.worldJobThingsHit.some(item => item.id === hit.id)) return false;
+  const step = worldJob.job?.steps[worldJob.job.stepIndex];
+  const loadContact = step?.bellows && (hit.actorId ?? hit.id) === step.targetId;
+  if (state.worldJobThingsHit.some(item => item.id === hit.id &&
+      (!loadContact || item.hitId === hit.hitId && item.flame === hit.flame))) return false;
   state.worldJobThingsHit.push({...hit});
   return true;
 }

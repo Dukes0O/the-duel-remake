@@ -4,6 +4,10 @@ import {nearestOnLine} from '../scablands-ways.js';
 export const BELLOWS_RULE = Object.freeze({
   start: 100,
   flamePerSecond: 15,
+  blastPerHit: 40,
+  boltPerHit: 20,
+  otherPerHit: 10,
+  handFlameHeightMetres: 2,
   warningBehindMetres: 100,
   hardKnockKmh: 20,
   stopKnocks: 3,
@@ -235,9 +239,14 @@ export function stepBellowsLoad(state, facts, dt = 0) {
   if (state.thiefStopped) return {state: next, events};
 
   next.shakenRemaining = Math.max(0, next.shakenRemaining - Math.max(0, dt));
+  const weaponHits = facts.weaponHits ?? [];
+  const weaponDamage = weaponHits.reduce((total, hit) => total +
+    (['rpg', 'rocket-pod', 'bomb', 'sticky-bomb'].includes(hit.weapon) ? BELLOWS_RULE.blastPerHit
+      : ['crossbow', 'marksman'].includes(hit.weapon) ? BELLOWS_RULE.boltPerHit
+      : BELLOWS_RULE.otherPerHit), 0);
   const flameSeconds = facts.flameContact ? Math.max(0, dt) : 0;
-  next.bellows = Math.max(0, next.bellows - BELLOWS_RULE.flamePerSecond * flameSeconds);
-  if (!state.leatherWarned && (facts.flameContact || facts.behindMetres >= 0 &&
+  next.bellows = Math.max(0, next.bellows - weaponDamage - BELLOWS_RULE.flamePerSecond * flameSeconds);
+  if (!state.leatherWarned && (facts.flameContact || weaponHits.length > 0 || facts.behindMetres >= 0 &&
       facts.behindMetres <= BELLOWS_RULE.warningBehindMetres)) {
     next.leatherWarned = true;
     events.push({type: 'say', lineId: 'bellows.warning'});

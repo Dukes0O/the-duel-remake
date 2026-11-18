@@ -1,15 +1,16 @@
 # EVERBURN-REMAKE slice 11
-- Built points 1, 4, 5 and 6. Both jobs remain hidden; no saved shape or pay changed.
-- Point 1: slow launch, road-gap pace, three-second recovery and sacks aimed at a nearby pursuing car.
-- Point 1 check on 0496c6d86 plus 75a15ae79: job 3 rules pass; launch failed first (195 instead of 40 km/h). Medium closes at 1,200.9 m after walking 60 m; stationary car gap at 25 s is 347.1 m.
-- Changed assertions for Claude: road pace 195 to 180 and 125 to 117 km/h; launch 195 to 40 km/h (point 1). Fixed sack points become the pursuing car's road point; second sack fixture still proves x=30, now supplied at throw.
+- Built points 1, 4, 5 and 6; point 2 has its loan, load rule and native projectile/flame links. Jobs stay hidden; saves and pay are unchanged.
+- Point 1 on 75a15ae79: job 3 passes after failing launch; Medium closes at 1,200.9 m after walking 60 m; stationary gap at 25 s is 347.1 m.
+- Changed assertions for Claude: road pace 195 to 180 and 125 to 117 km/h; launch 195 to 40 (point 1). Fixed sack targets become the pursuing car's point; second fixture still proves x=30, supplied at throw.
 - Codex decided: shaken means 70% of player top speed; Boneyard stays at 60 km/h. Sacks burst beside the pursuing car.
-- Point 4: separate wall captions and lamp warnings within 15 m, once per target. Job 2 rules pass on 75a15ae79 plus 492752186; wall-warning check failed first.
-- Point 5: second-wave entries at least 20 m apart; steps reserve 1.2 m around each Ash Man. Existing mover has no people separation. Job 2 rules pass on 492752186 plus bfc0e8446; entry and crossing checks failed first.
-- Point 6: any selected hand weapon swings the burning brand within 2 m; normal weapon attack is suppressed. Farther away the flamer works. Cinder explains both tools once within 12 m.
-- Point 6 checks on bfc0e8446 plus this commit: job 2 rules and browser-expression parsing pass; regression fails with old wrench-only rule. Normal weapon step proves no flame, rocket or repair on a brand attack and flame farther away. Diff check passes; no older assertions changed.
-- Sound: sacks retain world.thief.ash; flamer retains crew.flamer.start/stop; warnings are captions; brand retreat retains its existing silent event.
-- Integration brought into lane: already up to date at 0496c6d86. No final lane tier or build run yet.
-- Pending: points 2 and 3, older related suites, Easy walk and drive, replay/world guards, lane tier, build and independent review.
-- For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all six fixes.
-- **Removed:** top-speed-minus-five pace, fixed sack targets, distant arrival warnings, shared wave entries, overlapping Ash Man steps and wrench-only brand attacks.
+- Points 4/5 on 492752186/bfc0e8446: job 2 passes after failing warning/entry/crossing checks. Wall captions differ from warnings within 15 m; entries are 20 m apart and mover steps reserve 1.2 m. Existing mover has no people separation.
+- Point 6 on 3ef3421b9: job 2 and browser-expression parsing pass after wrench-only regression fails. Any hand tool swings within 2 m; normal weapon attack is suppressed; Cinder explains once within 12 m.
+- Before point 2: RPG, car bolts/bombs/harpoons report sweeps but do no thief/load damage; car flame costs 15 load/s for its first contact step only. Hand flamer, marksman, sticky bombs, cannon and turret miss this separate actor; wrench repairs, grapple moves, smoke hides and shock disables. Rocket pods and other arsenal effects also target opponents. Hard meetings alone earn knocks.
+- Point 2 on 3ef3421b9 plus this commit: loaned hand flamer; reported blasts cost 40, bolts 20, other hits 10; no weapon earns knocks; first hit warns. Native shots carry their kind; separate same-step shots count once each. Both flame cones reach the load; car flame continues through its burst.
+- Checks this commit: job 2, job 3, combat-projectiles and polish-flame pass; point 2 loan check failed before. Arena checks prove aimed hand flame and two distinct shots; no existing assertion changed this round. Diff check passes.
+- Found in world-job-mode: line 294 fails, held attack swings again when a new Ash Man enters reach. This is in point 6's range-based latch, untouched this round; fix next without changing the assertion.
+- Sound: world.thief.ash and world.bellows.load retained; hand flame uses crew.flamer.start/stop; car flame uses weapon.flame.start/loop/end. Warnings remain captions; no new event cue.
+- Integration merge: already current at 0496c6d86. Final lane tier/build not run yet.
+- Pending: remaining weapon paths (crew shots and rocket pods), point 3, held-click fault, related suites, Easy walk/drive, replay/world guards, lane tier, build and independent review.
+- For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all fixes.
+- **Removed:** top-speed-minus-five pace, fixed sack targets, distant warnings, shared entries, overlapping steps, wrench-only brand use and bellows immunity to native weapon hits.
