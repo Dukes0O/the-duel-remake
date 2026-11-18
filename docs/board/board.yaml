@@ -568,6 +568,18 @@ tasks:
     needs: []
     details: "docs/board/cards/STORY-CHOICES.md"
 
+  - id: WASTELAND-ART-DIRECTION
+    title: "Big Bess and Tin Town at dusk: compare photo textures, Blender and HTML art"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "review"
+    waiting_on: "claude"
+    claimed_by: "Codex (cloud), 18 November 2026"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WASTELAND-ART-DIRECTION.md"
+
   - id: WORLD-FAULTS-18-NOV
     title: "Faults of the Scablands from Kyle's try: the gate's solid, the sideways thief, the sunk car, sudden moves, crashes, the crossbow"
     owner: "codex"
@@ -627,18 +639,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/STORY-PEOPLE.md"
-
-  - id: WASTELAND-ART-DIRECTION
-    title: "Big Bess and Tin Town at dusk: compare photo textures, Blender and HTML art"
-    owner: "codex"
-    lane: "ART"
-    size: "M"
-    status: "review"
-    waiting_on: "claude"
-    claimed_by: "Codex (cloud), 18 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/WASTELAND-ART-DIRECTION.md"
 
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
