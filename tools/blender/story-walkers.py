@@ -114,6 +114,14 @@ def load_photo(source, view):
         rgb[row,~valid] = rgb[row,near[~valid]]
     return rgb
 
+# The same trader's rear photograph shows the roll, rope cross and side
+# buckles. Reserve its own panel beyond the last walker's shirt and leg UVs.
+pack_x, pack_y = atlas_width-75, atlas_height-120
+pack_crop = (64,14,124,119)
+pack_photo = load_photo('walker-trader','back')
+left,top,right,bottom = pack_crop
+pixels[pack_y:pack_y+bottom-top,pack_x:pack_x+right-left,:3] = pack_photo[top:bottom,left:right][::-1]
+
 def sample(photo, x, y, dace):
     if dace:
         x = (x-29)*2
@@ -304,10 +312,21 @@ def make_person(index, ident, source, style):
         matrix=donor.matrix_local.copy()
         matrix.translation += Vector(offset)
         matrix = Matrix.Scale(1.83/1.70,4) @ matrix @ Euler(tuple(math.radians(n) for n in tilt)).to_matrix().to_4x4() @ Matrix.Scale(size,4)
+        # Map each copied piece before shifting/tilting it on this wearer.
+        # Side edges receive canvas; the crossed rope stays centred on the back.
+        original=[donor.matrix_local@v.co for v in pack.data.vertices]
+        xs=[v.x for v in original]; zs=[v.z for v in original]
+        x0,x1=min(xs),max(xs); z0,z1=min(zs),max(zs)
+        crop=(69,19,116,36) if part=='roll' else (70,39,116,113)
+        for loop in pack.data.loops:
+            v=original[loop.vertex_index]
+            along=(v.x-x0)/(x1-x0); up=(v.z-z0)/(z1-z0)
+            u=crop[2]-along*(crop[2]-crop[0]); y=crop[3]-up*(crop[3]-crop[1])
+            pack.data.uv_layers.active.data[loop.index].uv=(
+                (pack_x+u-pack_crop[0])/atlas_width,(pack_y+pack_crop[3]-y)/atlas_height)
         pack.data.transform(matrix)
         pack.data.materials.clear()
         pack.data.materials.append(material)
-        for texel in pack.data.uv_layers.active.data: texel.uv=foot_uv
         pack.vertex_groups.new(name='chest').add(list(range(len(pack.data.vertices))),1,'REPLACE')
         accessories.append(pack)
     if accessories:
