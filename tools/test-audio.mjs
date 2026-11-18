@@ -243,6 +243,19 @@ const state = (overrides = {}) => ({
   ...overrides,
 });
 const { audio, context } = await makeAudio();
+{
+  const {audio} = await makeAudio();
+  const count = {brandSeconds: 80, lightingLamp: 'mast', lightingSeconds: .1};
+  const st = state({onFoot: true, arena: {mode: 'world-job', worldJob: {job: {
+    steps: [{brand: true}], stepIndex: 0, stepState: count}}}});
+  audio.update(st);
+  const hiss = audio.lampLightingVoice;
+  check(!!hiss, 'lamp lighting starts the bank hiss');
+  count.lightingSeconds = 1; audio.update(st);
+  check(audio.lampLightingVoice === hiss, 'lamp hiss sustains without stacking');
+  count.lightingLamp = null; count.lightingSeconds = 0; audio.update(st);
+  check(audio.lampLightingVoice === null, 'leaving the lamp stops the hiss');
+}
 // The actual output curve keeps quiet gain and leaves headroom for large hits.
 const outputCurve = audio.output.curve;
 const curveAt = value => outputCurve[Math.round((value + 1) * (outputCurve.length - 1) / 2)];

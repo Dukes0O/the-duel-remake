@@ -33,8 +33,22 @@ export function footBrandDirection(state) {
   const name = target.id === step.hearth?.id ? 'THE HEARTH'
     : ['pump', 'tower', 'mast'].includes(target.id) ? `${target.id.toUpperCase()} LAMP`
       : (target.name ?? 'Auntie Solder').toUpperCase();
-  return {name, distance: Math.round(way ? way.metres : Math.hypot(dx, dz)),
+  const flatGap = Math.hypot(at.x - fighter.x, at.z - fighter.z);
+  const atLamp = step.places?.includes(target) && flatGap <= BRAND_RULE.lampRadius;
+  const metres = atLamp ? flatGap : way ? way.metres : flatGap;
+  return {name, distance: metres < BRAND_RULE.lampDistanceDecimalsBelow ? metres.toFixed(1) : Math.round(metres),
+    atLamp,
     angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
+}
+
+export function footLampProgress(state) {
+  const job = state?.arena?.mode === 'world-job' && state.arena.worldJob?.job;
+  const step = job?.steps?.[job.stepIndex], count = job?.stepState;
+  if (!state.onFoot || !step?.brand || count?.townEnding || !(count?.brandSeconds > 0)) return null;
+  const lamp = step.places?.find(place => place.id === count.lightingLamp);
+  if (!lamp || !(count.lightingSeconds > 0)) return null;
+  return {text: `LIGHTING THE ${(lamp.name ?? `${lamp.id} lamp`).toUpperCase()}`,
+    fraction: Math.min(1, count.lightingSeconds / BRAND_RULE.lampSeconds)};
 }
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
@@ -256,6 +270,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-fight-subtitle" role="status" aria-live="polite" hidden></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
+    <div class="combat-foot-action combat-lamp-progress" role="status" hidden><b></b><div class="combat-armor-track"><i></i></div></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
     <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
@@ -307,6 +322,19 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   const footAction = host.querySelector('.combat-foot-action');
   const footReticle = host.querySelector('.combat-foot-reticle');
+  const lampProgress = host.querySelector('.combat-lamp-progress');
+  lampProgress.style.top = `calc(50% + ${BRAND_RULE.lampProgressTopPixels}px)`;
+  lampProgress.style.width = `${BRAND_RULE.lampProgressWidthPixels}px`;
+  // The existing action row and armor track supply the same border, lettering and fill as the other rows.
+  const drawLampProgress = state => {
+    const progress = footLampProgress(state);
+    lampProgress.hidden = !progress;
+    lampProgress.style.display = progress ? 'block' : 'none';
+    if (progress) {
+      setText(lampProgress.querySelector('b'), progress.text);
+      setFraction(lampProgress.querySelector('i'), progress.fraction);
+    }
+  };
   let hitUntil = -1, damageUntil = -1, xpUntil = -1, damageDirection = 'front';
   let previousZones = null;
 
@@ -360,6 +388,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     stage.classList.toggle('combat-upgraded', active);
     stage.classList.toggle('on-foot', onFoot);
     host.classList.toggle('on-foot', onFoot);
+    drawLampProgress(state);
     if (!active) return;
 
     if (onFoot) {
@@ -374,10 +403,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const rotation = `rotate(${direction.angle}deg)`;
       if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
       const town = footBrandDirection(state);
+
       townPointer.hidden = !town;
       if (town) {
         setText(townName, town.name);
-        setText(townDistance, `${town.distance} m`);
+        setText(townDistance, town.atLamp ? 'AT THE LAMP' : `${town.distance} m`);
         townArrow.style.transform = `rotate(${town.angle}deg)`;
         townPointer.setAttribute('aria-label', `${town.name}, ${town.distance} metres away`);
       }

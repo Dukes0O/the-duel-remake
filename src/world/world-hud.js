@@ -42,7 +42,9 @@ export function brandHudStep(step, state = {}, player = null) {
   const gap = place => finitePoint(here) && finitePoint(place)
     ? Math.hypot(pointOf(place).x - here.x, pointOf(place).z - here.z) : Infinity;
   const target = candidates.filter(Boolean).reduce((best, place) => !best || gap(place) < gap(best) ? place : best, null);
-  const line = state.lightingLamp ? 'Hold still to light the lamp.'
+  const atDarkLamp = !burning && lamps.some(lamp => !state.lamps?.[lamp.id] && gap(lamp) <= BRAND_RULE.lampRadius);
+  const line = state.lightingLamp ? 'Stay by the lamp.'
+    : atDarkLamp ? 'The brand is out. Relight it at the hearth or a lit lamp.'
     : burning ? 'Carry the brand to a dark lamp.'
       : state.brandsUsed > 0 ? 'Relight the brand at the hearth or a lit lamp.' : 'Take a brand from the hearth.';
   return {target, line};

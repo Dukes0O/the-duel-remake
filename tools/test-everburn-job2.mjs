@@ -154,7 +154,7 @@ assert.equal(tick(ashed.state, foot(0)).state.brandsUsed, 2);
 let lighting = tick(taken.state, foot(100), 1);
 assert.equal(lighting.complete, false);
 assert.equal(lighting.state.lamps.tower, undefined);
-assert.equal(tick(lighting.state, foot(103), 1).state.lightingSeconds, 0);
+assert.equal(tick(lighting.state, foot(103.6), 1).state.lightingSeconds, 0);
 assert.equal(tick(expired.state, foot(100), 2).state.lamps.tower, undefined);
 lighting = tick(lighting.state, foot(100), 1);
 assert.equal(lighting.state.lamps.tower, true);
@@ -164,10 +164,21 @@ const relit = tick({...lighting.state, brandSeconds: 0}, foot(103));
 assert.equal(relit.state.brandSeconds, 90);
 assert.equal(relit.state.brandsUsed, 2);
 assert.equal(tick({...lighting.state, brandSeconds: 0}, foot(103.01)).state.brandSeconds, 0);
-assert.equal(tick(taken.state, foot(62), 2).state.lamps.pump, true);
-assert.equal(tick(taken.state, foot(62.01), 2).state.lamps.pump, undefined);
+assert.equal(tick(taken.state, foot(63.4), 2).state.lamps.pump, true);
+assert.equal(tick(taken.state, foot(63.6), 2).state.lamps.pump, undefined);
 assert.equal(tick(taken.state, {onFoot: true, fighter: {
-  position: places[0].position, speed: 4.5}}, 2).state.lamps.pump, undefined);
+  position: {x:63.4,y:0,z:0}, speed: 4.5}}, 2).state.lamps.pump, true);
+const leftCircle = tick(lighting.state, foot(103.6), 1);
+assert.equal(leftCircle.state.lightingSeconds, 0);
+const partial = tick(taken.state, foot(63.4), 1);
+const leftPartial = tick(partial.state, foot(63.6), .1);
+const restarted = tick(leftPartial.state, foot(63.4), 1);
+assert.equal(restarted.state.lightingSeconds, 1);
+assert.equal(restarted.state.lamps.pump, undefined);
+let sprint = taken.state;
+for (let x = 56; x <= 64; x += .1) sprint = tick(sprint, foot(x, {fighter:{position:{x,y:0,z:0},speed:7}}), .1 / 7).state;
+assert.equal(sprint.lamps.pump, undefined);
+assert.equal(sprint.lightingSeconds, 0);
 
 // Job 2.4/5 foundations: a smothered lamp can be lit again; recovery preserves
 // lamps and uses the last lamp on Easy, the hearth on other difficulties.
@@ -550,10 +561,10 @@ const navigationWorld = {definition, job: {...actualJob, stepState: hudState},
 const navigationState = {status:'racing',onFoot:true,
   fighter:{...sites.lamps[1].position,yaw:Math.PI / 2},
   arena:{mode:'world-job',worldJob:navigationWorld}};
-assert.deepEqual(footBrandDirection(navigationState),{name:'TOWER LAMP',distance:0,angle:-90});
+assert.deepEqual(footBrandDirection(navigationState),{name:'TOWER LAMP',distance:'0.0',atLamp:true,angle:-90});
 navigationState.fighter = {...sites.hearth.position,yaw:0};
 navigationWorld.job.stepState = {...hudState,brandSeconds:0};
-assert.deepEqual(footBrandDirection(navigationState),{name:'THE HEARTH',distance:0,angle:0});
+assert.deepEqual(footBrandDirection(navigationState),{name:'THE HEARTH',distance:'0.0',atLamp:false,angle:0});
 navigationState.fighter = {...sites.lamps[0].position,yaw:0};
 assert.equal(footBrandDirection(navigationState).name,'PUMP LAMP');
 // Slice 13: with the job's solids the arrow leads by the way that can be walked. Stepped out in the forge bay with the

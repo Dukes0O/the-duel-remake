@@ -2,7 +2,25 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {armorPresentation, combatSlotHidden, combatHudEnabled, combatHudVisible, damageZoneFromChange,
   fallbackOpponentPosition, footCarDirection, footAmmoPresentation,
-  footActionPresentation} from '../src/combat-hud.js';
+  footActionPresentation, footLampProgress, footBrandDirection} from '../src/combat-hud.js';
+
+test('lamp bar reads the rule count, and the lamp row names its circle and precise distance', () => {
+  const step = {brand: true, places: [{id: 'mast', position: {x: 0, z: 0}}]};
+  const count = {brandBriefed: true, brandSeconds: 80, lightingLamp: 'mast', lightingSeconds: 1};
+  const state = {status: 'racing', onFoot: true, fighter: {x: 3.4, z: 0},
+    arena: {mode: 'world-job', worldJob: {job: {steps: [step], stepIndex: 0, stepState: count}}}};
+  const before = JSON.stringify(state);
+  assert.deepEqual(footLampProgress(state), {text: 'LIGHTING THE MAST LAMP', fraction: .5});
+  assert.equal(footBrandDirection(state).atLamp, true);
+  assert.equal(JSON.stringify(state), before);
+  state.fighter.x = 3.6;
+  assert.equal(footBrandDirection(state).distance, '3.6');
+  assert.equal(footBrandDirection(state).atLamp, false);
+  count.townEnding = true;
+  assert.equal(footLampProgress(state), null);
+  count.townEnding = false; count.brandSeconds = 0;
+  assert.equal(footLampProgress(state), null);
+});
 
 test('every real car slot is visible, with one button for a borrowed flamethrower', () => {
   for (const loadout of [['crossbow','tesla','decoy','flamethrower'], ['crossbow','tesla','decoy','nitro']]) {

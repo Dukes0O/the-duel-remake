@@ -1724,3 +1724,10 @@ flame's edges fade out; no hard outline.
 
 **Removed** (name each on the change note's line): `standingSpeed`; the line "Hold still to light the lamp."; the made
 tone as the Hand Flamer's sound in a job, if nothing else plays it.
+
+### Changed assertions, for Claude to review (slice 15a)
+- `test-everburn-job2`: leaving the tower circle at x=103 becomes x=103.6, because the radius grows from 2 to 3.5 m.
+- Pump lighting boundary: x=62 / 62.01 becomes x=63.4 / 63.6 (lights / stays dark).
+- Walking at 4.5 m/s for two seconds inside the circle: dark becomes lit; the standing-speed requirement is removed.
+- Lamp and hearth rows at zero metres: numeric 0 becomes displayed `0.0`, with the new `atLamp` state (true / false).
+- `test-p4-audio`: exclude only the new `world.lamp.lighting` cue from the historical bank projection; its pinned hash stays unchanged.

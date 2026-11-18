@@ -1202,6 +1202,7 @@ export class EngineAudio {
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
+      this._clearLampLighting();
       this.mixer?.stopAll();
     }
   }
@@ -1227,6 +1228,7 @@ export class EngineAudio {
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
+      this._clearLampLighting();
       this.mixer?.stopAll();
     }
   }
@@ -1289,7 +1291,30 @@ export class EngineAudio {
     } else this.turboArmed = false;
   }
 
+  _clearLampLighting() {
+    this.lampLightingVoice?.stop();
+    this.lampLightingVoice = null;
+    this.lampLightingId = null;
+    this.lampLightingSeconds = 0;
+  }
+
+  _updateLampLighting(state) {
+    const job = state.arena?.mode === 'world-job' && state.arena.worldJob?.job;
+    const step = job?.steps?.[job.stepIndex], count = job?.stepState;
+    const id = state.status === 'racing' && !state.paused && !this.muted && state.onFoot &&
+      step?.brand && !count?.townEnding && count?.brandSeconds > 0 && count?.lightingSeconds > 0
+      ? count.lightingLamp : null;
+    if (!id || this.lampLightingId !== id || count.lightingSeconds < this.lampLightingSeconds)
+      this._clearLampLighting();
+    if (id && this.context?.state === 'running') {
+      if (!this.lampLightingId) this.lampLightingVoice = this._playCue('world.lamp.lighting');
+      this.lampLightingId = id;
+      this.lampLightingSeconds = count.lightingSeconds;
+    }
+  }
+
   update(st, environment = {}) {
+    this._updateLampLighting(st);
     this._syncGrandPrix(st);
     this._syncMixer(st);
     this.updateFightVoices(st);
@@ -1733,6 +1758,7 @@ export class EngineAudio {
       this._yetiAudioHits=new Set();
       this._clearProjectiles();
       this._clearArsenalFields();
+      this._clearLampLighting();
       this.mixer?.stopAll();
       this._stopHiddenRoadVoices();
       this.hiddenRoadId = null;
