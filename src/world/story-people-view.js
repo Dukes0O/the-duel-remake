@@ -213,9 +213,9 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   poseBone(joints.pelvis, 0, stride * .07, (moving ? stride * .023 : settle * .011) * (1 - sit));
   poseBone(joints.chest, running ? .17 : push * .12 + sit * .06 - sleep * .28 + .011 * breath,
     -.07 * stride + .06 * gesture, .017 * settle + .28 * sleep);
-  poseBone(joints.neck, .007 * breath + .045 * gesture + .24 * sleep, facing.headYaw * .68);
-  poseBone(joints.head, .035 * gesture * Math.sin(clock * 3.1) + .19 * sleep,
-    facing.headYaw * .32, .28 * sleep);
+  poseBone(joints.neck, .007 * breath + .045 * gesture + .46 * sleep, facing.headYaw * .68 - .10 * sleep);
+  poseBone(joints.head, .035 * gesture * Math.sin(clock * 3.1) + .38 * sleep,
+    facing.headYaw * .32 - .10 * sleep, .33 * sleep);
   for (const [side, sign] of SIDES) {
     const swing = sign * stride;
     const lift = moving ? Math.max(0, sign * Math.cos(phase)) : 0;
@@ -225,8 +225,9 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     poseBone(joints['foot' + side], -.26 * sit - .44 * sleep + 1.29 * longLeg - lift * .19);
     const gestureSide = sign > 0 ? gesture : .15 * gesture;
     poseBone(joints['upper_arm' + side], swing * (running ? .5 : .31) * (1 - push) -
-      .68 * push - .43 * sit - .23 * gestureSide, 0, -sign * (.055 + .10 * gestureSide));
-    poseBone(joints['forearm' + side], -.09 - .14 * push - .66 * sit - (running ? .69 : 0) - .5 * gestureSide);
+      .68 * push - .43 * sit - .23 * gestureSide, 0, -sign * (.055 + .10 * gestureSide + (sign < 0 ? .49 : .39) * sleep));
+    poseBone(joints['forearm' + side], -.09 - .14 * push - .66 * sit - .29 * sleep - (running ? .69 : 0) - .5 * gestureSide,
+      0, -sign * (sign < 0 ? .34 : .25) * sleep);
   }
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.

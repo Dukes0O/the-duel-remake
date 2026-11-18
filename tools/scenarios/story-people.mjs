@@ -102,7 +102,7 @@ export async function run(context) {
   for (const [shot,eye,subject,changes] of [
     ['gate-group',at(0,-25.6),'rell',{}], ['rell-speaking',at(-.4,-9.1),'rell',{}],
     ['dace-running',at(-2,-7.4),'dace',{dace:at(0,-5.2)}],
-    ['wim-and-auntie',at(8.1,-2.5),'wim',{wim:at(8.57,-.43), 'auntie-solder':at(9.0,-.16)}],
+    ['wim-and-auntie',at(8.1,-2.5),'wim',{wim:at(8.62,-.41), 'auntie-solder':at(9.0,-.16)}],
   ]) {
     await evaluate('stage',shot,eye,changes,runAction);
     // Let gaze, hands, and the grounded resting pose settle on rendering time.

@@ -132,7 +132,7 @@ await savePose('actions', cast, null, {x:1,z:6}, ([dace, carter, rell, wim]) => 
 });
 const resting = [
   {id:'rell',position:{x:-1.1,y:0,z:.15},yaw:-.27,action:'sit'},
-  {id:'wim',position:{x:.89,y:0,z:.12},yaw:.18,action:'sleep'},
+  {id:'wim',position:{x:.84,y:0,z:.10},yaw:.18,action:'sleep'},
   {id:'auntie-solder',position:{x:.46,y:0,z:-.17},yaw:-.32,action:'sit'},
 ];
 await savePose('at-rest', resting, null, {x:0,z:3.3});
