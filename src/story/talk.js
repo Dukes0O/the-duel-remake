@@ -7,9 +7,11 @@ function checkWords(words) {
 }
 
 export function validateTalkScene(scene) {
-  if (!scene?.choices?.length) throw new TypeError('A talk scene needs a choice.');
+  if (!scene?.lines?.length && !scene?.thoughts?.length && !scene?.choices?.length)
+    throw new TypeError('A talk scene needs a line, thought or choice.');
+  if (scene.questions?.length && !scene.choices?.length) throw new TypeError('Questions need a final choice.');
   const ids = new Set();
-  for (const option of [...(scene.questions ?? []), ...scene.choices]) {
+  for (const option of [...(scene.questions ?? []), ...(scene.choices ?? [])]) {
     if (!option.id || ids.has(option.id)) throw new TypeError('Talk option ids must be unique.');
     ids.add(option.id);
     checkWords(option.words);
@@ -34,6 +36,7 @@ function enter(scene, state, phase, index = 0) {
     return enter(scene, state, phase === 'lines' ? 'thoughts' : 'options');
   }
   if (phase === 'thoughts' && !scene.thoughts?.[index]) phase = 'options';
+  if (phase === 'options' && !scene.choices?.length) phase = 'done';
   return {...state, phase, index};
 }
 

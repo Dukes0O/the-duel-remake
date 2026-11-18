@@ -1413,6 +1413,7 @@ export function stepWorldJob(duel, dt) {
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (talkStep?.kind === 'talk') {
     if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
+    const previousStep = worldJob.job.stepIndex;
     const before = worldJob.job.stepState.talk;
     const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
     worldJob.talkAction = null;
@@ -1421,10 +1422,8 @@ export function stepWorldJob(duel, dt) {
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
-    if (chosen) {
-      duel.emit({storyChoice: chosen});
-      applyStepLoan(duel, worldJob);
-    }
+    if (chosen) duel.emit({storyChoice: chosen});
+    if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
     const changed = !before || chosen || before.phase !== screen?.phase || before.index !== next.stepState.talk?.index;
     if (changed) {
       const cue = chosen ? 'story.talk.choose' : screen?.line ? 'story.talk.line' : screen?.phase === 'thoughts' ? 'story.thought' : null;

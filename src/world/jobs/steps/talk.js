@@ -8,6 +8,7 @@ export function stepTalk(step, state, view) {
   const current = previous ?? startTalk(step.scene);
   const outcome = actOnTalk(step.scene, current, view.talkAction, facts);
   if (outcome.choice) return {state, complete: true, events: [{type: 'talkChoice', ...outcome.choice}]};
+  if (outcome.state.phase === 'done') return {state, complete: true};
   if (previous === outcome.state) return {state};
   const screen = talkScreen(step.scene, outcome.state, facts);
   return {state: {...state, talk: outcome.state, screen}};

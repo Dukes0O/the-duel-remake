@@ -55,6 +55,14 @@ assert.deepEqual(act(select(1)), {id: give.id, effects: give.effects, asked: ['r
 assert.equal(act(select(1)), undefined);
 assert.throws(() => startTalk({...scene, thoughts: ['x'.repeat(261)]}), /260/);
 
+// Night 2 also begins with a conversation at the hearth that simply sends
+// the player to the gate. Leaving that conversation spends nothing.
+let introduction = createJob({steps: [{kind: 'talk', scene: {lines: [{speaker: 'cinder', words: 'Off you go.'}]}}]});
+introduction = stepJob(introduction, {}, 0);
+assert.equal(introduction.stepState.screen.line.words, 'Off you go.');
+introduction = stepJob(introduction, {talkAction: advance}, 0);
+assert(introduction.done);
+assert.equal(introduction.talkResult, undefined);
 const fixture = {id: 'gate-talk', steps: [{kind: 'talk', scene, branches: {gift: 'after-the-gift'}},
   {kind: 'reach', id: 'other-path', place: {position: {x: 0, y: 0, z: 0}}},
   {kind: 'reach', id: 'after-the-gift', place: {position: {x: 100, y: 0, z: 100}}}]};
