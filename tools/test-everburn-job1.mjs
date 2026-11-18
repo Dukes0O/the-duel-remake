@@ -560,6 +560,11 @@ for (const reason of ['ridge-car', 'ridge-rider', 'off-pan', 'time']) {
   stepGlassSeen(sight, facts, FURNACE_PATIENCE_SECONDS);
   assert.equal(glassWarningDue(sight, false), true, 'the horn is due at eight seconds');
   assert.equal(glassWarningDue(sight, true), false, 'an active pursuit has no second horn');
+  stepGlassSeen(sight, facts, 20);
+  assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS, 'exposure stops at eight seconds');
+  stepGlassSeen(sight, {...facts, visible:false}, 1);
+  assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS - 1, 'one second behind rock drains a full bar');
+  stepGlassSeen(sight, facts, 1);
   stepGlassSeen(sight, facts, -2);
   assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS, 'negative time cannot change the count');
   assert.equal(FURNACE_GLASS.roundSeconds, 40);

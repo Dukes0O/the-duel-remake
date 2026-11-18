@@ -97,7 +97,8 @@ export function stepGlassSeen(state, {car, glass, loaded, visible}, dt) {
     Math.hypot(car.x - glass.x, car.z - glass.z) <= FURNACE_GLASS.glassRadius;
   const seen = !!loaded && !!visible && illuminated;
   const elapsed = Math.max(0, dt);
-  state.seenSeconds = Math.max(0, (state.seenSeconds ?? 0) + (seen ? elapsed : -elapsed));
+  state.seenSeconds = Math.max(0, Math.min(FURNACE_PATIENCE_SECONDS,
+    (state.seenSeconds ?? 0) + (seen ? elapsed : -elapsed)));
   state.inGlass = seen;
   return state;
 }
