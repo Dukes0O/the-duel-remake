@@ -113,7 +113,7 @@ console.log('PASS slice 11.6: any slot swings within 2 m, consumes no shot, and 
 for (const name of Object.keys(pageFunctions)) {
   assert.doesNotThrow(() => new Function(`return ${pageSource(name)}`));
 }
-for (const scene of ['start', 'brand', 'opponent', 'ending']) {
+for (const scene of ['start', 'brand', 'lighting', 'opponent', 'ending']) {
   const source = pageSource('scene', scene);
   assert.doesNotThrow(() => new Function(`return ${source}`));
   assert(!source.includes('import('), 'Browser scenes use only the bundled app and renderer.');

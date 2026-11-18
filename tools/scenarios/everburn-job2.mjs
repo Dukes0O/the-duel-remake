@@ -1,4 +1,4 @@
-// Four fixed views for Claude's review, not a scripted walk or a completion test.
+// Five fixed views for Claude's review, not a scripted walk or a completion test.
 // All profile changes stay inside the harness's memory-only tab.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -51,6 +51,11 @@ export const pageFunctions = {
       job.stepState.lamps = {[step.places[0].id]: true};
       app.advance(1 / 60);
     }
+    if (which === 'lighting') {
+      const lamp = step.places.find(place => place.id === 'mast');
+      Object.assign(state.fighter, lamp.position, {x: lamp.position.x + 3.4});
+      Object.assign(job.stepState, {lamps: {}, lightingLamp: lamp.id, lightingSeconds: 1});
+    }
     if (which === 'ending') {
       job.stepState.lamps = Object.fromEntries(step.places.map(lamp => [lamp.id, true]));
       app.advance(1 / 60);
@@ -63,6 +68,7 @@ export const pageFunctions = {
     render.renderFrame();
     const target = which === 'start' ? 'Auntie Solder at the forge'
       : which === 'brand' ? 'Carried town brand'
+        : which === 'lighting' ? 'Town lamp: mast'
         : which === 'opponent' ? 'Town Ash Men' : 'The bellows thief';
     let node;
     render.scene.traverse(item => { if (item.name === target) node = item; });
@@ -90,10 +96,17 @@ export const pageFunctions = {
     });
     const run = world.job.stepState;
     const gauge = document.querySelector('.world-hud-ember');
+    const progress = document.querySelector('.combat-lamp-progress');
+    const row = document.querySelector('.combat-foot-town');
+    const ring = render.scene.getObjectByName('Lighting circle: mast');
     return {target, visible, parts: parts.length,
       inView: Math.abs(projected.x) < 1 && Math.abs(projected.y) < 1 && Math.abs(projected.z) < 1,
       brandSeconds: run.brandSeconds ?? 0, brandsUsed: run.brandsUsed ?? 0,
       gauge: gauge && !gauge.hidden ? gauge.textContent : null,
+      lighting: progress && !progress.hidden ? progress.textContent : null,
+      lightingFill: progress?.querySelector('i')?.style.transform ?? null,
+      lampRow: row && !row.hidden ? row.textContent : null,
+      ring: ring?.visible === true,
       lamps: run.lamps ?? {}, opponents: world.actors.filter(item => item.brandAsh).length,
       endingElapsed: run.endingElapsed ?? null, theftStarted: run.theftStarted ?? false};
   },
@@ -116,7 +129,7 @@ export async function run(context) {
     await context.waitFor(pageSource('yard'), 'the yard', 60000);
     await page('start');
     await context.waitFor(pageSource('loaded'), 'Light the Town and its art', 120000);
-    for (const which of ['start', 'brand', 'opponent', 'ending']) {
+    for (const which of ['start', 'brand', 'lighting', 'opponent', 'ending']) {
       if (which === 'brand') await page('leaveCar');
       const measured = await page('scene', which);
       report.pictures.push({name: which, ...measured});
@@ -126,12 +139,17 @@ export async function run(context) {
         report.failures.push('brand: the burning brand and its gauge must be shown together.');
       if (which === 'opponent' && measured.opponents < 1)
         report.failures.push('opponent: no Ash Man has entered.');
+      if (which === 'lighting' && (!measured.lighting?.includes('LIGHTING THE MAST LAMP') ||
+          measured.lightingFill !== 'scaleX(0.50)' || !measured.lampRow?.includes('AT THE LAMP') || !measured.ring))
+        report.failures.push('lighting: the half-filled bar, lamp row and ground ring must be shown together.');
       if (which === 'ending' && (!measured.theftStarted || Object.values(measured.lamps).filter(Boolean).length !== 3))
         report.failures.push('ending: the thief and three lit lamps must be present.');
+      if (which === 'ending' && (measured.lighting || measured.ring))
+        report.failures.push('ending: the lamp bar and dark-lamp ring must be hidden.');
       await context.screenshot(`everburn-job2-${which}`);
     }
   } catch (error) { report.failures.push(error.message); }
-  if (report.pictures.length !== 4) report.failures.push('The review needs all four pictures.');
+  if (report.pictures.length !== 5) report.failures.push('The review needs all five pictures.');
   await writeFile(join(context.outputDir, 'everburn-job2.json'), JSON.stringify(report, null, 2) + '\n');
   if (report.failures.length) throw Error(report.failures.join('\n'));
 }

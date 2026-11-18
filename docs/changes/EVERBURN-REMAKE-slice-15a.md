@@ -9,7 +9,7 @@ Finding 4 measured: `sim-driving.js:204` requests `world.ground.scab-plates`, wh
 At (5960,62), 15 m west of the gate, four real Duel steps crossing the road edge produced two such cues: armour 121 throughout, damage zones 0, impactTimer 0 s throughout.
 Ground transitions/refusals now use existing suspension thump `vehicle.landing`; solid/car crash routing and every damage rule stay unchanged. Finding 3 is not reproduced; no exit-rule change.
 Checks: lamp suites job2/world-hud/combat-hud/scablands-scene pass; P4 audio historical pins pass; real audio/PCM on review-fix commit passes 721 checks; Easy job2 10/10, one brand each. Final lane/build and older suites pending.
-Changed assertions, for Claude to review: card lists radius 2 to 3.5, walking lights, zero metres to `0.0`, and excluding only the new hiss from the historical bank pin.
+Changed assertions, for Claude to review: card lists radius 2 to 3.5, walking lights, zero metres to `0.0`, excluding only the new hiss from the historical bank pin, browser pictures 4 to 5 for lighting.
 For Claude to run: existing browser `everburn-job2` (page expressions parse in Node), then the job by hand with sound. Independent code review confirmed all fixes.
 Codex decided: see card for measured cause, bounded three-cue admission and why finding 3 has no proposed cure.
 Removed: `standingSpeed`, its speed gate and “Hold still to light the lamp.” CPU crews still use the old flamer tone, so its bank cue remains.
