@@ -49,6 +49,8 @@ export const BRAND_RULE = Object.freeze({
   ashRadiusMetres: 0.4,
   ashEntrySpacingMetres: 20,
   ashSeparationMetres: 1.2,
+  ashYieldDegrees: 60,
+  ashBackStepShare: 0.5,
   alleyCellMetres: 2,
   alleySampleMetres: 0.25,
   alleyReachMetres: 0.5,

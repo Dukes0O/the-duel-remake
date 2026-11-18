@@ -849,3 +849,54 @@ const crossing = [
 moveJobRaiders({course:{def:{scablands:false}}}, {actors:crossing}, 1);
 assert.equal(crossing[0].x,-3);
 console.log('PASS slice 11.5: real town entries and no crossing through a stationary neighbour.');
+
+// Review: opposing walkers must pass even in the town's narrowest alley.
+// Check every authored alley stretch, in both normal and fleeing priority.
+for (let segment = 1; segment < actualStep.farWalk.length - 1; segment++) {
+  const start = actualStep.farWalk[segment].position;
+  const end = actualStep.farWalk[segment + 1].position;
+  const length = Math.hypot(end.x-start.x,end.z-start.z);
+  const span = Math.min(10,length/3);
+  const middle = {x:(start.x+end.x)/2,z:(start.z+end.z)/2};
+  const ends = [-1,1].map(sign => ({x:middle.x+sign*(end.x-start.x)/length*span,
+    z:middle.z+sign*(end.z-start.z)/length*span}));
+  for (const fleeing of [false,true]) {
+    const grid = createJobSolidGrid();
+    grid.setBrandLamps(actualStep.places);
+    const actors = ends.map((at,index) => ({id:index?'b':'a',brandAsh:true,...at,
+      y:scablandsSurfaceHeightAt(at.x,at.z),approachSpeed:BRAND_RULE.ashWalkMps}));
+    const world = {actors,solidGrid:grid,job:{stepState:{brandAsh:{men:{b:{fleeing}}}}}};
+    const arrived = [false,false];
+    for (let tick=0;tick<300 && !arrived.every(Boolean);tick++) {
+      for (const [index,actor] of actors.entries()) {
+        const goal = ends[1-index];
+        arrived[index] ||= Math.hypot(actor.x-goal.x,actor.z-goal.z)<.5;
+        actor.approachTarget = arrived[index] ? null :
+          brandAshAim(actor,goal,actualStep.ashEntries,grid.movers);
+      }
+      moveJobRaiders({course:{def:{scablands:true}}},world,.1);
+      assert(Math.hypot(actors[0].x-actors[1].x,actors[0].z-actors[1].z)>=1.2);
+      for (const actor of actors) {
+        const clear = pushOutOfSolids(actor.x,actor.z,BRAND_RULE.ashRadiusMetres,grid.movers,actor.y);
+        assert(Math.hypot(clear.x-actor.x,clear.z-actor.z)<1e-8,
+          `Alley ${segment}: ${actor.id} must remain outside buildings.`);
+      }
+    }
+    assert(arrived.every(Boolean),`Alley ${segment}: both men arrive within 30 seconds (fleeing ${fleeing}).`);
+  }
+}
+console.log('PASS review: opposing Ash Men and a fleeing man pass through every town alley within 30 seconds.');
+for (const fleeing of [false,true]) {
+  const actors = [{id:'a',brandAsh:true,x:0,z:-1,approachTarget:{x:0,z:5}},
+    {id:'b',brandAsh:true,x:0,z:1,approachTarget:{x:0,z:-5}}]
+    .map(actor => ({...actor,approachSpeed:BRAND_RULE.ashWalkMps}));
+  // Put the yielding man first to prove that array order does not choose priority.
+  if (!fleeing) actors.reverse();
+  moveJobRaiders({course:{def:{scablands:false}}},{actors,
+    job:{stepState:{brandAsh:{men:{b:{fleeing}}}}}},.3);
+  const yielding = actors.find(actor => actor.id === (fleeing?'a':'b'));
+  const winner = actors.find(actor => actor.id === (fleeing?'b':'a'));
+  assert.equal(winner.x,0,'The man with the way keeps his line.');
+  assert(fleeing ? yielding.x>0 : yielding.x<0,'The other man tries 60 degrees right first.');
+}
+console.log('PASS review: lower ids keep the way, fleeing takes priority, and the first free step is right.');

@@ -1312,16 +1312,41 @@ export function moveJobRaiders(duel, worldJob, dt) {
     if (actor.brandAsh) {
       // The foot mover resolves land and buildings, but not other people.
       // Reserve the whole step so a long step cannot pass through a neighbour.
-      const mx = actor.x - from.x, mz = actor.z - from.z;
-      const lengthSquared = mx * mx + mz * mz;
-      const crowded = worldJob.actors.some(other => {
+      const neighbours = to => worldJob.actors.filter(other => {
         if (other === actor || !other.brandAsh) return false;
+        const mx = to.x - from.x, mz = to.z - from.z;
+        const lengthSquared = mx * mx + mz * mz;
         const share = lengthSquared > 0 ? Math.max(0, Math.min(1,
           ((other.x - from.x) * mx + (other.z - from.z) * mz) / lengthSquared)) : 0;
         return Math.hypot(from.x + mx * share - other.x,
           from.z + mz * share - other.z) < BRAND_RULE.ashSeparationMetres;
       });
-      if (crowded) Object.assign(actor, from);
+      const crowded = neighbours(actor);
+      if (crowded.length) {
+        Object.assign(actor, from);
+        const men = worldJob.job?.stepState?.brandAsh?.men ?? {};
+        const yieldsTo = other => !!men[actor.id]?.fleeing !== !!men[other.id]?.fleeing
+          ? !!men[other.id]?.fleeing : actor.id > other.id;
+        if (crowded.some(yieldsTo)) {
+          const angle = BRAND_RULE.ashYieldDegrees * Math.PI / 180;
+          const mx = dx / (gap || 1) * Math.min(travel, gap);
+          const mz = dz / (gap || 1) * Math.min(travel, gap);
+          const candidates = [angle, -angle].map(turn => ({
+            x: from.x + mx * Math.cos(turn) + mz * Math.sin(turn),
+            z: from.z + mz * Math.cos(turn) - mx * Math.sin(turn),
+          }));
+          candidates.push({x:from.x - mx * BRAND_RULE.ashBackStepShare,
+            z:from.z - mz * BRAND_RULE.ashBackStepShare});
+          for (const candidate of candidates) {
+            const at = scablands ? stepMover(from, candidate, {radius:BRAND_RULE.ashRadiusMetres,
+              grade:FOOT_GRADE, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid,
+              height:from.y}) : {...candidate,y:from.y};
+            if (at.blocked || neighbours(at).length) continue;
+            Object.assign(actor, {x:at.x,y:at.y,z:at.z});
+            break;
+          }
+        }
+      }
       // A brand opponent receives a fresh movement decision each rule step.
       actor.approachTarget = null;
     }
