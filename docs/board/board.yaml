@@ -971,7 +971,8 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex (cloud), 18 November 2026"
     needs: ["TOWN-ART-HOMES"]
     locks: []
     details: "docs/board/cards/TOWN-HOME-SURFACES.md"
