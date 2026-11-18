@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {createRoadLook} from '../src/world/scablands-ground-look.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {TIN_TOWN_GATE as gate} from '../src/world/tin-town-gate.js';
-import {gatePageSource} from './scenarios/tin-town-gate-road.mjs';
+import {gatePageSource, gateReadouts} from './scenarios/tin-town-gate-road.mjs';
 import {pageSource as job2} from './scenarios/everburn-job2.mjs';
 
 function compile(options) {
@@ -50,8 +50,8 @@ for (const metres of [0, 5, 20, 42, 48]) {
   assert.equal(here?.road.id, 'east-road', 'the gate approach lies on East Road at ' + metres + ' m');
   assert.ok(here.distance < .05, 'the wheel impressions follow its centre');
 }
-for (const expression of [...['ready', 'prepare', 'yard', 'start', 'loaded'].map(name => job2(name)),
-  gatePageSource('place', 48), gatePageSource('drive')]) {
+for (const expression of [...Object.values(gateReadouts), ...['ready', 'prepare', 'yard', 'start', 'loaded'].map(name => job2(name)),
+  gatePageSource('prepareView'), gatePageSource('place', 48), gatePageSource('drive'), gatePageSource('rollTo', 3)]) {
   assert.doesNotThrow(() => new Function('return ' + expression));
 }
 console.log('Tin Town road material controls, gate transforms and East Road approach passed.');
