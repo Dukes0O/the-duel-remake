@@ -3,8 +3,8 @@
 One painted plate, tried once: the opening of Night 2, the Walkers at Tin Town's gate at dusk. Kyle, 18 November 2026,
 said yes to trying one plate, after the study WASTELAND-ART-DIRECTION showed that an illustration can carry a still
 moment far better than the game's own picture, and that an illustration drawn freely shows a different truck from the
-one a player drives. Codex's card, for its cloud. Claude judges the pair before Kyle sees it. Needs STORY-PEOPLE, whose
-figures are the people in the picture.
+one a player drives. Codex's card, for its cloud. Claude judges the pair before Kyle sees it. The people in the picture
+are the figures STORY-PEOPLE made (merged 18 November).
 
 ## The two conditions
 
@@ -18,7 +18,7 @@ figures are the people in the picture.
 `docs/story/five-cold-nights.md`, section 4, scene 2: "Outside, in the last light: eleven people, four handcarts and no
 fire." Seen from inside the gate, at a standing person's eye height (1.62 m), looking out through the opening. The
 town's three lamps are lit and warm; the people outside stand in cold blue dusk, just beyond the reach of the light. Rell
-is in front. Dace is a boy at a cart, looking past the viewer into the town. Wim is old and seated on a cart. Nobody
+is in front. Dace is a boy at a cart, looking past the viewer into the town. Wim is six, in her mustard work jacket, seated on a cart. Nobody
 carries a weapon. The tone is gritty reportage, never a toy and never a poster: no text, no border, no logo.
 
 ## Part 1. The pair (stop here for Claude)

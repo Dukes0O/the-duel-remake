@@ -1,5 +1,6 @@
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
+import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
@@ -205,6 +206,11 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setBrandLamps(definition.steps[0].places ?? []);
     if (definition.steps[0].auntie) worldJob.solidGrid.setPeople([definition.steps[0].auntie]);
+  }
+  if (definition.storyPeople?.length) {
+    worldJob.storyPeople = createStoryPeople(definition.storyPeople);
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
   }
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
@@ -1479,6 +1485,10 @@ export function stepWorldJob(duel, dt) {
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (worldJob.storyPeople && currentStep?.kind !== 'talk' &&
+      advanceStoryPeople(worldJob.storyPeople, dt, scablandsActorHeightAt)) {
+    worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
+  }
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
     worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);

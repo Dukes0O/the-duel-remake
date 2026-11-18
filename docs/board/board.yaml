@@ -608,23 +608,13 @@ tasks:
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2.md"
 
-  - id: STORY-PEOPLE
-    title: "People worth talking to: figures that stand, attend, act and can be told apart (Kyle, 18 November)"
-    owner: "codex"
-    lane: "ART"
-    size: "L"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/STORY-PEOPLE.md"
-
   - id: STORY-PLATE-NIGHT-2
     title: "One painted plate, tried once: the Walkers at the gate at dusk, drawn over the game's own scene (Kyle, 18 November)"
     owner: "codex"
     lane: "ART"
     size: "S"
     status: "ready"
-    needs: ["STORY-PEOPLE"]
+    needs: []
     locks: []
     details: "docs/board/cards/STORY-PLATE-NIGHT-2.md"
 
