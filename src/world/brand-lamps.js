@@ -22,7 +22,7 @@ export function createBrandLamps({surface = null} = {}) {
       gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
     fragmentShader: `varying vec2 vGround; uniform float radius; uniform float width; uniform float opacity;
       void main() { float edge=abs(length(vGround)-(radius-width*.5))/(width*.5);
-        gl_FragColor=vec4(1.0,.52,.14,opacity*(1.0-smoothstep(0.0,1.0,edge))); }`,
+        gl_FragColor=vec4(1.0,.74,.34,opacity*(1.0-smoothstep(0.0,1.0,edge))); }`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
   });
   let places = null, seconds = 0;

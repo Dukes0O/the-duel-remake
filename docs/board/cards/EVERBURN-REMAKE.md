@@ -1800,3 +1800,26 @@ His findings in the world itself, each to be measured before it is cured (card W
 8. "My weapons don't do anything": the crossbow "just shoots into the distance missing the target."
 9. The thief on foot can be driven through: "a transparent item just like the way the buildings were."
 10. The job ended with no sign of why.
+
+
+### Part A built by Codex, reviewed and merged (18 November 2026)
+
+Built as ruled: the 3.5 m circle with no standing still, the bar, the row, the ring; the engine fading on foot; the Hand
+Flamer's recorded start, loop and end; the landing thump for ground alone. Codex measured each cause first (its note is
+in the merge's commit message). Finding 3 (could not get out of the car again) was measured and not reproduced: the
+ground by the gate leaves `impactTimer` at 0. It stays unexplained.
+
+One separate Claude review (read only): nothing serious; in `src/audio.js` no way was found to leave an engine layer
+quiet or the flame loop playing. Its one real fault, cured by Claude: the row said "AT THE LAMP" at a lit lamp with the
+brand out, 0.5 m before the brand could be relit there. Claude's art pick: the ring was red against the town's ground and
+is a paler amber. Browser scenario `everburn-job2` passes with its new lighting picture (its own comparison of the bar's
+fill was corrected: the browser writes 0.50 as 0.5).
+
+Changed assertions, reviewed by Claude and by the reviewer against the rulings, none loosened: the lamp's reach in
+`tools/test-everburn-job2.mjs` (2 m to 3.5 m, walking now lights), the row's metres to one decimal place, the new
+cue left out of the pinned bank hash in `tools/test-p4-audio.mjs` as earlier Everburn cues were, and
+`tools/test-old-smoke.mjs`, where Codex's check of the remade catch in a real Duel replaces the part Claude had removed.
+
+Not done: nobody has listened to the sounds. Left for WORLD-FAULTS-18-NOV: the cue `world.ground.scab-plates` is still
+in the bank and still asked for by the rules, and the sound code renames it; the rules should ask for the thump by name
+and the old cue should go.

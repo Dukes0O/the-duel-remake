@@ -34,7 +34,10 @@ export function footBrandDirection(state) {
     : ['pump', 'tower', 'mast'].includes(target.id) ? `${target.id.toUpperCase()} LAMP`
       : (target.name ?? 'Auntie Solder').toUpperCase();
   const flatGap = Math.hypot(at.x - fighter.x, at.z - fighter.z);
-  const atLamp = step.places?.includes(target) && flatGap <= BRAND_RULE.lampRadius;
+  // "AT THE LAMP" is said only where standing lights it: a dark lamp, with the brand burning. A lit lamp that relights the
+  // brand has its own, shorter reach, and the row keeps its metres there (the review of 18 November 2026).
+  const atLamp = step.places?.includes(target) && !job.stepState?.lamps?.[target.id] && (job.stepState?.brandSeconds ?? 0) > 0 &&
+    flatGap <= BRAND_RULE.lampRadius;
   const metres = atLamp ? flatGap : way ? way.metres : flatGap;
   return {name, distance: metres < BRAND_RULE.lampDistanceDecimalsBelow ? metres.toFixed(1) : Math.round(metres),
     atLamp,

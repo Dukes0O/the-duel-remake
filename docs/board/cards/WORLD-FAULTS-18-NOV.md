@@ -12,6 +12,8 @@ was ruled out. Cure only what is a fault of the world; a number that is a design
 
 1. **Ground and the crash sound.** Slice 15 part A changed ground-only stops to the landing thump. Confirm with a check
    that the same holds on the Boneyard road and on the way out of Tin Town.
+   Then finish that cure: `src/sim-driving.js` and `src/sim-scablands.js` still ask for `world.ground.scab-plates` and
+   `src/audio.js` renames it. The rules ask for the landing thump by its own name, and the old cue leaves the bank.
 2. **Tin Town's gate.** A car driving out through the gate's opening (9 m wide) is slowed or held with nothing in front of
    it. Measure the solids the gate and its fence give the grid (`src/world/tin-town-gate.js`, `tinTownGateSolids`) against
    what is drawn: every solid must lie inside its drawn thing, as the Boneyard's wrecks now do. Then drive a car through

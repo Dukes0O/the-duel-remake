@@ -16,6 +16,13 @@ test('lamp bar reads the rule count, and the lamp row names its circle and preci
   state.fighter.x = 3.6;
   assert.equal(footBrandDirection(state).distance, '3.6');
   assert.equal(footBrandDirection(state).atLamp, false);
+  // The review of 18 November: with the brand out the row leads to a lit lamp to relight at, whose reach is 3 m, so it
+  // keeps its metres at 3.2 m and does not say "AT THE LAMP".
+  const outState = {status: 'racing', onFoot: true, fighter: {x: 3.2, z: 0}, arena: {mode: 'world-job', worldJob: {job: {steps: [step], stepIndex: 0,
+    stepState: {brandBriefed: true, brandSeconds: 0, brandsUsed: 1, lamps: {mast: true}}}}}};
+  assert.equal(footBrandDirection(outState).name, 'MAST LAMP');
+  assert.equal(footBrandDirection(outState).atLamp, false);
+  assert.equal(footBrandDirection(outState).distance, '3.2');
   count.townEnding = true;
   assert.equal(footLampProgress(state), null);
   count.townEnding = false; count.brandSeconds = 0;
