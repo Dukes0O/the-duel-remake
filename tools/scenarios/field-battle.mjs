@@ -41,8 +41,17 @@ export async function run(c) {
     if(d.id!=='gas-run-boneyard-battle'||d.battle!==true)throw Error('Wrong job: '+d.id);
     if(d.steps[0].ambushes.length!==2)throw Error('Expected two ambushes');
     return {id:d.id,shares:d.shares,raids:d.raids,feud:d.feud,runs:d.runs};})()`);
-  // Drive the car onto the road beside where she will be when the furnace comes out, and let her drive until it is out.
-  await c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,road=a.duel.course.nearest(-60,366);s.s=road.s;s.lateral=road.lateral;s.speedMph=0;})()`);
+  // The furnace comes out when she has driven 5,500 m of a 12,300 m road (435 s of her driving at 9 m/s on the larger land), so she is put on her
+  // road 30 m short of that place, the way everburn-frames puts her, the car on the road 13 m behind her, and she drives until it is out.
+  await c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,j=s.arena.worldJob,step=j.definition.steps[0],bess=j.actors.find(x=>x.id==='big-bess'),
+    points=step.path.map(item=>item.position??item),at=metres=>{let left=metres,index=1;
+      while(index<points.length-1&&left>Math.hypot(points[index].x-points[index-1].x,points[index].z-points[index-1].z)){
+        left-=Math.hypot(points[index].x-points[index-1].x,points[index].z-points[index-1].z);index++;}
+      const from=points[index-1],to=points[index],length=Math.hypot(to.x-from.x,to.z-from.z);
+      return {index,x:from.x+(to.x-from.x)/length*left,z:from.z+(to.z-from.z)/length*left};};
+    const target=at(step.furnaceActor.battle.comesOutAtMetres-30),carAt=at(step.furnaceActor.battle.comesOutAtMetres-43);
+    bess.position={...bess.position,x:target.x,z:target.z};bess.pathIndex=target.index;bess.stretchHealth=bess.health;
+    const road=a.duel.course.nearest(carAt.x,carAt.z);s.s=road.s;s.lateral=road.lateral;s.speedMph=0;})()`);
   let out2=false;
   for(let i=0;i<200;i++){
     out2=await c.evaluate('(()=>{const a=window.__qaApp;a.advance(1);return a.duel.state.arena.worldJob.actors.some(x=>x.furnace)})()');
