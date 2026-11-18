@@ -26,7 +26,7 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
-import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts} from '../../world/jobs/bellows-rule.js';
+import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts, bellowsRestartPlaces} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
@@ -1079,8 +1079,42 @@ export function applyBellowsThiefFlee(duel, worldJob, request) {
   return true;
 }
 
+// A missed chase moves the existing cars, without recreating the job, load,
+// armour or rewards. Foot players keep their fighter at the restarted car.
+export function applyBellowsRestart(duel, worldJob, request) {
+  if (request.type !== 'bellowsRestart') return false;
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (!step?.bellows || !step.bellowsRoute) return true;
+  const thief = worldJob.actors.find(actor => actor.id === step.targetId);
+  if (!thief) return true;
+  const places = bellowsRestartPlaces(step.bellowsRoute), state = duel.state;
+  const pose = duel.course.nearest(places.player.x, places.player.z);
+  state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
+  state.speedMph = 0; state.yawVelocity = 0; state.pushVelocity = 0;
+  state.headingError = wrapHeading(places.player.heading - duel.course.at(pose.s).heading);
+  state.scablandsHitKmh = 0; state.scablandsLongFall = false;
+  if (state.onFoot && state.fighter) {
+    const at = duel.course.groundAt(pose.s, pose.lateral);
+    Object.assign(state.fighter, {x:at.x, y:at.y, z:at.z, groundY:at.y,
+      s:pose.s, lateral:pose.lateral, yaw:places.player.heading,
+      speed:0, airHeight:0, verticalSpeed:0});
+  }
+  Object.assign(thief, {position:{x:places.thief.x,
+    y:scablandsSurfaceHeightAt(places.thief.x, places.thief.z), z:places.thief.z},
+    heading:places.thief.heading, pathIndex:places.thief.pathIndex,
+    pathProgress:places.thief.pathIndex / (step.path.length - 1), speed:0,
+    reachedEnd:false, bellowsSolidContact:false, bellowsSolidImpactKmh:0});
+  worldJob.carContacts = [];
+  worldJob.lastKmh = 0;
+  worldJob.riderHitKmh = 0;
+  worldJob.riderContactShedKmh = 0;
+  syncJobCarSolids(worldJob);
+  return true;
+}
+
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
+    if (applyBellowsRestart(duel, worldJob, request)) continue;
     if (applyBellowsFurnaceLeave(duel, worldJob, request)) continue;
     if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
     if (applyBrandRequest(duel, worldJob, request)) continue;

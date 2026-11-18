@@ -607,3 +607,66 @@ assert.deepEqual(bellowsArenaFacts(factsDuel, factsJob, definition.steps[0], [])
 assert.equal(JSON.stringify([...memory]), factsSaved);
 factsApp.returnToMenu(); factsApp.dispose?.();
 console.log('PASS Run Him Down: arena facts measure the authored road, surface speed, flame and swept impacts without save writes.');
+
+// Job 3.5: a furnace arrival resets placement, never the earned load or
+// knocks. Prove the restart through the real arena, without driving it.
+const {bellowsRestartPlaces} = await import('../src/world/jobs/bellows-rule.js');
+const {applyBellowsRestart} = await import('../src/arena/modes/world-job.js');
+const restartPlaces = bellowsRestartPlaces(routeDefinition);
+const chasePath = [...routeDefinition.road, ...routeDefinition.wrecks.slice(1)];
+const restartedStep = {...factsStep, path:chasePath};
+const restartApp = new App(); restartApp.audio.unlock = () => {};
+restartApp.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
+  'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
+restartApp.duel.state.wastelandGateDiscovered = true;
+assert(restartApp.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
+  car:'falcone_f42', playerId:restartApp.player.id, seed:1989, opponents:[],
+  job:{...definition, steps:[restartedStep]}}));
+const restartDuel = restartApp.duel, restartState = restartDuel.state;
+const restartJob = restartState.arena.worldJob;
+const restartThief = {id:restartedStep.targetId, position:{x:0, y:0, z:0},
+  renderCar:'dusthawk_rally', health:20, speed:20, reachedEnd:true,
+  bellowsSolidContact:true, bellowsSolidImpactKmh:40};
+restartJob.actors = [restartThief];
+restartJob.job.stepState = {bellows:63, knocks:2, sacksThrown:[0, 1], ridersStarted:true};
+const preservedRules = JSON.stringify(restartJob.job.stepState);
+const restartSaved = JSON.stringify([...memory]);
+const restartRequest = {type:'bellowsRestart', leadMetres:150};
+assert.equal(applyBellowsRestart(restartDuel, restartJob, {type:'follow'}), false);
+let leadAlong = 0;
+for (let index = routeDefinition.road.length; index < restartPlaces.thief.pathIndex; index++) {
+  const from = chasePath[index - 1].position, to = chasePath[index].position;
+  leadAlong += Math.hypot(to.x - from.x, to.z - from.z);
+}
+const segmentStart = chasePath[restartPlaces.thief.pathIndex - 1].position;
+leadAlong += Math.hypot(restartPlaces.thief.x - segmentStart.x, restartPlaces.thief.z - segmentStart.z);
+assert(Math.abs(leadAlong - 150) < 1e-8);
+for (const onFoot of [false, true]) {
+  restartState.onFoot = onFoot;
+  restartState.speedMph = 80; restartState.pushVelocity = 10;
+  restartJob.carContacts = [{actor:restartThief, kmh:40}];
+  assert.equal(applyBellowsRestart(restartDuel, restartJob, restartRequest), true);
+  const playerAt = restartDuel.course.groundAt(restartState.s, restartState.lateral);
+  assert(Math.hypot(playerAt.x - routeDefinition.wrecks[0].position.x,
+    playerAt.z - routeDefinition.wrecks[0].position.z) < 1e-6);
+  assert.equal(restartState.speedMph, 0);
+  assert.equal(restartState.pushVelocity, 0);
+  assert.equal(restartState.onFoot, onFoot);
+  if (onFoot) assert(Math.hypot(restartState.fighter.x - playerAt.x,
+    restartState.fighter.z - playerAt.z) < 1e-6);
+  assert.equal(restartThief.pathIndex, restartPlaces.thief.pathIndex);
+  assert.equal(restartThief.heading, restartPlaces.thief.heading);
+  assert.equal(restartThief.bellowsSolidContact, false);
+  assert.equal(restartThief.bellowsSolidImpactKmh, 0);
+  assert.equal(restartThief.reachedEnd, false);
+  assert.deepEqual(restartJob.carContacts, []);
+  assert.equal(JSON.stringify(restartJob.job.stepState), preservedRules);
+  for (const solid of SCABLANDS_SOLIDS) {
+    for (const at of [playerAt, restartThief.position])
+      assert.equal(sweepObstacle(at, at, solid, 0,
+        {halfWidth:clearance, halfLength:clearance}), null, solid.id);
+  }
+}
+assert.equal(JSON.stringify([...memory]), restartSaved);
+restartApp.returnToMenu(); restartApp.dispose?.();
+console.log('PASS Run Him Down: restart places both cars on the clear wreck line, 150 m apart along it, preserving load, knocks and saves.');

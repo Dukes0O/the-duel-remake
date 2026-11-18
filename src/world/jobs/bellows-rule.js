@@ -94,6 +94,24 @@ export function bellowsFootStart(car, farLamp) {
     heading: Math.atan2(-dx, -dz)});
 }
 
+// Restart on the same proven wreck line. The lead is measured along that
+// line, so neither car is placed inside a wreck when the line turns.
+export function bellowsRestartPlaces(route) {
+  const points = route.wrecks.map(place => place.position ?? place);
+  let left = BELLOWS_RULE.restartLeadMetres;
+  for (let index = 1; index < points.length; index++) {
+    const from = points[index - 1], to = points[index];
+    const dx = to.x - from.x, dz = to.z - from.z;
+    const length = Math.hypot(dx, dz);
+    if (left > length || length === 0) { left -= length; continue; }
+    const first = points[1];
+    return {player:{...points[0], heading:Math.atan2(first.x - points[0].x, first.z - points[0].z)},
+      thief:{x:from.x + dx * left / length, z:from.z + dz * left / length,
+        heading:Math.atan2(dx, dz), pathIndex:route.road.length - 1 + index}};
+  }
+  throw new Error('The bellows wreck line must leave room for the restart lead.');
+}
+
 export function bellowsGrade(condition) {
   return condition >= BELLOWS_RULE.wholeFrom ? 'whole'
     : condition >= BELLOWS_RULE.patchFrom ? 'patch' : 'scorched';
