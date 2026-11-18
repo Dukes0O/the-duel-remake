@@ -285,7 +285,7 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
     if (facts.inBoneyard || facts.onFoot || !(facts.behindMetres >= 0 &&
         facts.behindMetres <= BELLOWS_RULE.sackBehindMetres)) continue;
     const point = facts.sackPoint;
-    if (!point) throw new Error('The thief needs the pursuing car?s road point for his sack.');
+    if (!point) throw new Error('The thief needs the pursuing car’s road point for his sack.');
     const cloud = bellowsAshBox(`thief-ash-${index}`, point, facts.roadWidthMetres);
     next.clouds.push(cloud);
     next.sacksThrown.push(index);

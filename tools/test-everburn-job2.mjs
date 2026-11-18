@@ -5,7 +5,7 @@ import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {brandSites} from '../src/world/jobs/brand-sites.js';
 import {SCABLANDS_SOLIDS, SOLID_GRID, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {footBrandDirection} from '../src/combat-hud.js';
 import {brandTownMap, drawSmallMap, createKnowledge, toScreen, SMALL_MAP} from '../src/world/scablands-map.js';
@@ -27,6 +27,10 @@ import {brandCombatView} from '../src/arena/modes/world-job.js';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {stepFootWeapons} from '../src/onfoot-weapons.js';
+
+assert.equal(EVERBURN_SIDE_JOBS.find(job => job.steps.some(step => step.load === 'hot-soup'))
+  .steps.find(step => step.load === 'hot-soup').what,
+  'Carry Auntie\u2019s hot soup from her kitchen to the diggers at the Everburn well.');
 
 // Slice 11, point 6: the same click chooses the brand by reach, never by slot.
 const closeWorld = {actors:[{id:'close',brandAsh:true,x:0,y:0,z:2}],

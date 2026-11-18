@@ -13,6 +13,9 @@ import {sweepObstacle, CAR_HALF_WIDTH} from '../src/collision.js';
 const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
 const {FIGHTER_RULES} = await import('../src/onfoot.js');
 
+assert.throws(() => stepBellowsPursuit({}, {roadMetres:800,behindMetres:10},0),
+  {message:'The thief needs the pursuing car\u2019s road point for his sack.'});
+
 // Slice 11.2: every reported weapon contact damages the load, never earns a knock.
 assert.equal(EVERBURN_JOBS[2].steps[0].lentWeapon, 'cinders-hand-flamer');
 for (const [weapon, damage] of [['rpg',40],['rocket-pod',40],['bomb',40],
