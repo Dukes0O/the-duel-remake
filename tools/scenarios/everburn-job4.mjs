@@ -75,7 +75,7 @@ export const pageFunctions = {
     still.src = render.renderer.domElement.toDataURL('image/png');
     const rect = render.renderer.domElement.getBoundingClientRect();
     Object.assign(still.style,{position:'fixed',left:`${rect.left}px`,top:`${rect.top}px`,
-      width:`${rect.width}px`,height:`${rect.height}px`,zIndex:'10',pointerEvents:'none'});
+      width:`${rect.width}px`,height:`${rect.height}px`,zIndex:'1',pointerEvents:'none'});
     document.body.append(still);
     const gauge = document.querySelector('.world-hud-ember');
     return {gas:world.job.stepState.gas,holes:world.job.stepState.holes,

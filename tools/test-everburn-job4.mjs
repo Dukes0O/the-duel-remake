@@ -147,6 +147,37 @@ assert.deepEqual(hotDelivery.events, [{type:'burn', id:first.id}], 'Hot Delivery
 assert.deepEqual(burnBarricades(step.barriers, {}, [{...flame(first.id), flame:false}], 10, 4).events, []);
 console.log('Slow Ride: blocks, burn times, hard knocks, map and moving-off checks passed.');
 
+// A real burst must report sustained contact, not one frame per burst.
+{
+  const flameDuel = new Duel({seed:7,featureFlags:{'hidden-road':true,arsenal:true}});
+  flameDuel.state.wastelandGateDiscovered = true;
+  assert.ok(flameDuel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:7,
+    cpuDifficulty:'easy',opponents:[],job:definition}));
+  flameDuel.state.status = 'racing';
+  const flameWorld = flameDuel.state.arena.worldJob;
+  flameWorld.job.stepState = {gasLoaded:true,gas:100,holes:0};
+  flameDuel.setInput({throttle:0,brake:0,steer:0});
+  flameDuel.step(.01);
+  const pose = flameDuel.course.nearest(first.position.x-Math.sin(first.heading)*6,
+    first.position.z-Math.cos(first.heading)*6);
+  Object.assign(flameDuel.state,{s:pose.s,lateral:pose.lateral,speedMph:0,
+    headingError:first.heading-flameDuel.course.at(pose.s).heading});
+  assert.ok(flameDuel.fireWeapon('flamethrower'), 'The loaned car flamethrower fires.');
+  for (let tick = 0; tick < 2400 && !flameWorld.job.stepState.burntBarricades?.includes(first.id); tick++) {
+    const heat = flameWorld.job.stepState.barrierHeat?.[first.id] ?? 0;
+    if (heat < GAS_LOAD_RULE.blockBurnSeconds)
+      assert.ok(!flameWorld.job.stepState.burntBarricades?.includes(first.id));
+    flameDuel.fireWeapon('flamethrower');
+    flameDuel.step(.01);
+  }
+  assert.ok(flameWorld.job.stepState.burntBarricades?.includes(first.id),
+    `Live flame burns the timber block (heat ${flameWorld.job.stepState.barrierHeat?.[first.id] ?? 0}).`);
+  const heat = flameWorld.job.stepState.barrierHeat[first.id];
+  assert.ok(heat >= 4 && heat < 4.02, 'Removal needs four seconds of actual flame contact.');
+  assert.ok(!flameWorld.solidGrid.barricades.some(barrier => barrier.id === first.id));
+}
+console.log('Slow Ride: sustained live flame removes its block at four seconds of contact.');
+
 // Step the existing simulation at staged contacts. This is no drive route.
 const duel = new Duel({seed:7, featureFlags:{'hidden-road':true, arsenal:true}});
 duel.state.wastelandGateDiscovered = true;

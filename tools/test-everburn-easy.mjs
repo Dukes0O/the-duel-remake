@@ -4,7 +4,7 @@ import {EAST_ROAD, ROAD_NET} from '../src/world/scablands-road.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {driveToCinder, driveThroughYardGate, driveAlongRoad, driveMeasuredStretches,
   driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
-import {roadGraph, roadWay} from '../src/world/scablands-ways.js';
+import {roadGraph, roadWay, nearestOnLine} from '../src/world/scablands-ways.js';
 import {pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
@@ -554,10 +554,70 @@ function driveHotDelivery(duel, definition) {
   return null;
 }
 
+function driveSlowRide(duel, definition, observe) {
+  const step = definition.steps[0], state = duel.state;
+  // Drive up to Moss and brake in his ring. No placement or rule edits.
+  for (let tick = 0; tick < 120 * 60; tick++) {
+    if (state.status !== 'racing') {
+      duel.setInput({throttle:0,brake:0,steer:0,interact:false});
+    } else {
+      const car = duel.course.groundAt(state.s,state.lateral), target = step.meeting.position;
+      const gap = Math.hypot(target.x-car.x,target.z-car.z);
+      const turn = wrap(Math.atan2(target.x-car.x,target.z-car.z)-(car.heading+state.headingError));
+      const speed = Math.abs(state.speedMph), desired = gap < 5 ? 0 : gap < 18 ? 4 : 12;
+      duel.setInput({throttle:speed < desired && Math.abs(turn) < 1.2 ? .5 : 0,
+        brake:speed > desired || gap < 5 ? 1 : 0,steer:clamp(-turn*2,-1,1),interact:false});
+    }
+    duel.step(DT);
+    observe();
+    if (state.arena.worldJob.job.stepState.gasLoaded) break;
+  }
+  if (!state.arena.worldJob.job.stepState.gasLoaded) return 'stopping beside Moss';
+  const road = step.path.map(spot), length = road.slice(1).reduce((sum,point,index) =>
+    sum + Math.hypot(point.x-road[index].x,point.z-road[index].z),0);
+  let along = 0;
+  for (let tick = 0; tick < 120 * 900 && state.status !== 'arena_result'; tick++) {
+    const world = state.arena.worldJob, car = duel.course.groundAt(state.s,state.lateral), rule = world.job.stepState;
+    let aim = eastRoadAim(car,30,road);
+    along = nearestOnLine(road,car.x,car.z).along;
+    let desired = along > length - 200 ? 12 : 35;
+    const bess = world.actors.find(actor => actor.id === step.actorId);
+    // Return to a rider who is closing on the tank, then open the next block.
+    // The car always uses steering and throttle, including on the return trip.
+    const rider = world.actors.find(actor => actor.health > 0 && !actor.ramRetreat && !actor.gasDrivenOff &&
+      step.gasRaiders.some(def => def.id === actor.id) &&
+      Math.hypot(actor.position.x-bess.position.x,actor.position.z-bess.position.z) < 100);
+    if (rider) { aim = rider.position; desired = 45; }
+    else if (along > length - 5) desired = 0;
+    for (const barrier of step.barriers) {
+      if (rule.burntBarricades?.includes(barrier.id)) continue;
+      const dx = barrier.position.x-car.x, dz = barrier.position.z-car.z;
+      const gap = Math.hypot(dx,dz), angle = wrap(Math.atan2(dx,dz)-(car.heading+state.headingError));
+      if (gap < 100 && Math.abs(angle) < Math.PI / 4) desired = 6;
+      if (gap < 20 && Math.abs(angle) < Math.PI / 4) aim = barrier.position;
+      if (gap < 7 && Math.abs(angle) < Math.PI / 4) desired = 0;
+      if (gap < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
+    }
+    const turn = wrap(Math.atan2(aim.x-car.x,aim.z-car.z)-(car.heading+state.headingError));
+    const speed = Math.abs(state.speedMph);
+    duel.setInput({throttle:speed < desired ? .8 : 0,brake:speed > desired + 1 ? 1 : 0,
+      steer:clamp(-turn*2,-1,1),interact:false});
+    duel.step(DT);
+    observe();
+  }
+  if (!state.arena.worldJob.job.done && along < length-5) {
+    return `opening the Tin Road at ${along.toFixed(0)} m`;
+  }
+  return null;
+}
+
 function play(definition, seed) {
   const duel = new Duel({seed, featureFlags: flags});
-  let raiderHits = 0;
-  duel.onChange((_state, event) => { if (event.raiderHit) raiderHits++; });
+  let raiderHits = 0, gasStops = 0, gasHoles = 0, wasStopped = false;
+  duel.onChange((_state, event) => {
+    if (event.raiderHit) raiderHits++;
+    if (event.arenaTell?.cue === 'world.bess.leak') gasHoles++;
+  });
   duel.state.wastelandGateDiscovered = true;
   const job = {...definition, seed};
   assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job',
@@ -565,14 +625,24 @@ function play(definition, seed) {
     weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job}), true,
   `${definition.name} starts in a real headless Duel`);
   const hotDelivery = definition.id === 'everburn-hot-delivery';
-  const waitingFor = hotDelivery ? driveHotDelivery(duel, definition) : null;
+  const slowRide = !!definition.steps[0]?.gasLoad;
+  const observeGas = () => {
+    if (!slowRide) return;
+    const world = duel.state.arena.worldJob;
+    const stopped = world.job.stepState.gasLoaded && world.follow?.speed === 0 && !world.arrivalHold;
+    if (stopped && !wasStopped) gasStops++;
+    wasStopped = stopped;
+  };
+  const waitingFor = hotDelivery ? driveHotDelivery(duel, definition) : slowRide ? driveSlowRide(duel,definition,observeGas) : null;
   const limit = hotDelivery ? 240 : Math.ceil(MAX_SECONDS / DT);
   const ashMotion = new Map();
   let longestAshStop = 0;
   for (let tick = 0; tick < limit && duel.state.status !== 'arena_result' && !waitingFor; tick++) {
-    if (!hotDelivery && duel.state.status === 'racing') playerInput(duel);
+    if (slowRide) duel.setInput({throttle:0,brake:1,steer:0,interact:false});
+    else if (!hotDelivery && duel.state.status === 'racing') playerInput(duel);
     else duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false, interact: false});
     duel.step(DT);
+    observeGas();
     if (definition.steps[0]?.brand && duel.state.status === 'racing') {
       const world = duel.state.arena.worldJob, rule = world.job.stepState;
       if (!rule.townEnding) for (const actor of world.actors.filter(actor => actor.brandAsh)) {
@@ -591,7 +661,8 @@ function play(definition, seed) {
   }
   const worldJob = duel.state.arena.worldJob;
   return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete',
-    waitingFor, seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
+    waitingFor, gas:worldJob.gasResult?.gas ?? worldJob.job.stepState.gas, gasStops, gasHoles,
+    seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
       ['spilled', 'restarted', 'waveRestarted', 'knockedDown'].includes(event.type)).length,
     stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState, bellowsResult:worldJob.bellowsResult,
     firstKnockRoadMetres: bellowsDrives.get(duel)?.firstKnockRoadMetres, longestAshStop,
@@ -613,6 +684,8 @@ for (const definition of jobs) {
   let finishes = 0;
   for (let seed = 1; seed <= 10; seed++) {
     const result = play(definition, seed);
+    if (definition.steps[0]?.gasLoad)
+      console.log(`Slow Ride, seed ${seed}: gas ${result.gas}, stops ${result.gasStops}, holes ${result.gasHoles}`);
     if (definition.steps[0]?.brand) {
       const walk = townWalks.get(result.duel);
       console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}, longest Ash Man stop ${result.longestAshStop.toFixed(2)} s`);
