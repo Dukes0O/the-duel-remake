@@ -47,6 +47,9 @@ each lead where section 4 says.
 - A consequence is tied back in a person's line, as section 4 writes it (Dace on the scout, Cinder on the fourth
   night), never by a notice.
 - Nothing here touches the remade jobs 1 to 4 or anything saved before.
+- The ledger is merged (`src/story/ledger.js`, `ledger-save.js`, `people.js`). `bankHearth` returns the embers burned
+  but not the embers the night needed; add that count to what it returns, so that a scene can tell when the hearth
+  was short (Claude's review of STORY-LEDGER, 18 November).
 
 ## Checks
 

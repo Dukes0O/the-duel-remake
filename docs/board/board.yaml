@@ -578,16 +578,6 @@ tasks:
     locks: []
     details: "docs/board/cards/WORLD-FAULTS-18-NOV.md"
 
-  - id: STORY-LEDGER
-    title: "The one ledger for the Wasteland: what the game remembers of a player's choices"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/STORY-LEDGER.md"
-
   - id: STORY-TALK
     title: "Talk bubbles and thought bubbles: people speak over their heads, the player weighs in thoughts, no prices listed"
     owner: "codex"
@@ -614,7 +604,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["STORY-LEDGER", "STORY-TALK"]
+    needs: ["STORY-TALK"]
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2.md"
 

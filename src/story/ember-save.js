@@ -1,5 +1,6 @@
 // The Everburn's optional save marks. Pure profile operations; loading alone
 // does not add the story, and earning never mutates the profile it receives.
+import {FEUD_WORDS} from './people.js';
 import {getProfileWeapons, getSavedProfileWeapons} from '../weapon-upgrades.js';
 import {registerStory, storyIsNewer, storyOf, writeStory} from './story-save.js';
 
@@ -13,7 +14,7 @@ const object = value => value !== null && typeof value === 'object' && !Array.is
 // RUN-GAS: the Ash Men's feud with the player's town, 1 to 4, and how many gas runs have arrived. A save that has neither
 // reads as Raiding and 0; a damaged value is repaired to the same. Only a saved value is checked, so an older save is read
 // exactly as before and loading never adds either name.
-export const EMBER_FEUD_WORDS = Object.freeze(['Watching', 'Raiding', 'Hunting', 'War party']);
+export const EMBER_FEUD_WORDS = FEUD_WORDS;
 export const EMBER_FEUD_START = 2;
 export const EMBER_RUN_ROADS = Object.freeze(['long', 'boneyard']);
 const validFeud = value => Number.isSafeInteger(value) && value >= 1 && value <= EMBER_FEUD_WORDS.length;
