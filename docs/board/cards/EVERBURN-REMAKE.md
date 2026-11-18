@@ -1124,3 +1124,5 @@ Seven measured runs after one warm-up use the same land height plus river-depth 
 
 **Stopped under the third ruling.** First placement exceeds the extra 25 ms at Salt1, Salt2 and the Breaks. Every move exceeds the extra 1.5 ms. Mabel's unchanged check fails at 41,357 calls, against fewer than 6,000. The caller is createDigNearGround's digUnderlayHeight during 100 cutting steps and changed-bounds refreshes: 266 distinct cells, 5,462 cell searches, 17 distinct fine cells and 496 fine-cell fills after initial placement. These counts were measured in a temporary probe; no assertion was changed. Claude must choose another method or change the cost and Mabel requirements. The survey remains a report because the cost gate did not pass.
 The hill/mesa mesh comparison in test-scablands-things now moves the window when a sample lies outside its near block, as the ruling permits. Every original point and tolerance stays. Parts A to D, switches, saves, world data and simulation remain untouched.
+
+The E trial is withdrawn to its own card under Claude's fourth ruling. Its trial code remains in commits c53a1743f, 855a158c7 and 3b006d41d of this branch's history.
