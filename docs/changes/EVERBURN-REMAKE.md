@@ -12,4 +12,4 @@
 - Sound: existing world.thief.ash, world.bellows.load, crew.flamer.start/stop and weapon.flame.start/loop/end retained. New warnings are captions, with no new sound event.
 - For Claude to run: browser scenarios everburn-job2 and everburn-job3; independent code review and written review of the changed assertions. No browser was started here.
 - **Removed:** top-speed-minus-five pace, fixed sack targets, distant lamp warnings, shared wall entries, overlapping steps, wrench-only swings, native weapon immunity, missing foot guidance and the distant town map.
-- Review cure: opposing alley check failed before, passes after; all town alley stretches pass within 30 s, including fleeing priority. Easy walk now checks non-smothering stops stay within 3 s; final checks pending.
+- Review cures on 478eb413a/05a8f1d93: alley and text checks failed before, pass after; job 2/3 and world-job-mode pass. Easy walk 10/10, one brand and pump smother each, longest non-smothering stop 0.61 s. Lane since 33a2d6ea7: 92/93 in 437 s; Tollkeeper passes its ffmpeg-permitted retry. Build passes. Added left/back checks pass; no existing assertion changed. Integration merge pending.

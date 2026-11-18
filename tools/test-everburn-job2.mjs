@@ -904,3 +904,20 @@ for (const fleeing of [false,true]) {
   assert(fleeing ? yielding.x>0 : yielding.x<0,'The other man tries 60 degrees right first.');
 }
 console.log('PASS review: lower ids keep the way, fleeing takes priority, and the first free step is right.');
+for (const blockLeft of [false,true]) {
+  const yielding = {id:'b',brandAsh:true,x:0,z:-1.4,approachSpeed:BRAND_RULE.ashWalkMps,
+    approachTarget:{x:0,z:10}};
+  const actors = [yielding,{id:'a',brandAsh:true,x:0,z:0},
+    {id:'c',brandAsh:true,x:1.4,z:-1.4}];
+  if (blockLeft) actors.push({id:'d',brandAsh:true,x:-1.4,z:-1.4});
+  moveJobRaiders({course:{def:{scablands:false}}},{actors},.1);
+  if (blockLeft) {
+    assert.equal(yielding.x,0);
+    assert.equal(yielding.z,-1.4-BRAND_RULE.ashWalkMps*.1/2,'Both sides blocked: half a step back.');
+  } else {
+    assert(yielding.x<0,'Right blocked: take the free left step.');
+    assert(yielding.z>-1.4,'The left step is forward, before trying back.');
+  }
+  for (const other of actors.slice(1)) assert(Math.hypot(yielding.x-other.x,yielding.z-other.z)>=1.2);
+}
+console.log('PASS review: a blocked right step tries left, then half a step back, keeping 1.2 metres.');
