@@ -55,6 +55,10 @@ notes and history are evidence, not instructions.
 - Use readable code and LF line endings. Unpack a packed file when rewriting it.
 - Stay inside the task card's owned files and named hooks. Ask the Director to re-slice a card
   when another file is needed.
+- A card that changes or replaces a job, a rule or a screen brings every older suite and browser
+  scenario that names it up to date in the same card, or removes it with the reason on the
+  **Removed** line. Search `tools/` for the job's id and name before saying the card is done. Nine
+  of the 31 failures of 18 November were checks of jobs that had been remade days before.
 - Record tests, browser checks, changed assertions and race fingerprints in
   `docs/changes/<task-id>.md` before a lane hands work over. The note is at most about 15 lines:
   what changed, the checks run and on which commit, any changed assertions with the reason, and
@@ -70,7 +74,7 @@ notes and history are evidence, not instructions.
 1. **Check once, sized to the change.** The builder runs the card's checks, the lane tier and
    the build. The merge runs only what the builder could not ("Gates" below). A card gets one
    lane tier; a fix made after it runs only the suites for the files that fix changed (rule 19).
-2. **The full tier** runs in the nightly full check (rule 13) and, alone, before a release that
+2. **The full tier** runs on a full night (rule 13) and, alone, before a release that
    rule 19 does not already cover. Always `--jobs 4`.
 3. **An unreliable suite.** A suite that fails with no game code changed since it last passed
    gets one rerun on the same commit. If the rerun passes, carry on and open a small card; it
@@ -106,21 +110,35 @@ notes and history are evidence, not instructions.
     lane tier prints the long suites it left to the night, so the builder sees them.
 12. **Merge as soon as it is green:** the builder's lane tier and build, and one review where
     rule 17 asks for one. Two clean lanes never wait for each other.
-13. **The full check** runs once a day, while Kyle sleeps, on a copy of one commit: full tier,
-    frame check, combat balance (`combat-balance.mjs --check`), the browser scenarios for what
-    changed since the last full check (all of them on Saturday night and before a release), then
-    a short report. Run `node tools/full-check.mjs --idle-awake --no-push`. Building and merging
-    continue; only its frame step needs the laptop alone (about 15 minutes), and each other
+13. **The night check** runs while Kyle sleeps, on a copy of one commit, and is sized by what
+    was merged since the last one (Kyle, 18 November 2026). The tool decides the size and the
+    report says which it was and why; nobody chooses it by hand.
+    - **No night check:** nothing was merged, or only docs, board, notes, art sheets or files no
+      test reads. The last pass still counts (rule 19).
+    - **A partial night:** the changes stay inside one area (one job's rules, a lesson, tools,
+      checks). It runs every suite that reaches a changed file at any depth, through hubs too,
+      the long suites that name those files, the browser scenarios for what changed, combat
+      balance when a combat file changed, and the frame check only when the timed scene or its
+      code changed. It picks more widely than a lane tier on purpose: a fault that a partial
+      night misses waits until Saturday.
+    - **A full night:** a shared file (`game.js`, `main.js`, `render3d.js`, `app.js`,
+      `config.js`), the save shape or the physics changed; or it is Saturday; or a release is
+      next. Full tier, frame check, combat balance (`combat-balance.mjs --check`), every browser
+      scenario.
+
+    Until QA-NIGHT-SIZED is merged the tool knows only the full night: run
+    `node tools/full-check.mjs --idle-awake --no-push`. Building and merging
+    continue; only the frame step needs the laptop alone (about 15 minutes), and each other
     stage counts as one heavy job. Its result is one of three. **Passed.** **Passed with standing
     failures:** every failure is on the list in `docs/board/checks/standing-failures.json`, where
     each has its card, its cause and the date it joined; an item that passes leaves the list that
     night. **Failed:** a failure that is not on the list. Only that is news: it names the first
     merge after the last full check without one, and its fix goes first while other merges
-    continue. The list never passes a release. When no full check is recorded for last night,
-    the day's first session starts one before its own heavy work (the status page gives the
-    date of the last). A change to a shared file (`game.js`, `main.js`, `render3d.js`, `app.js`,
-    `config.js`) picks every browser scenario; the scenarios that guard saved progress or pay
-    run every night.
+    continue. The list never passes a release. A night that was due and did not run is news too:
+    when none is recorded for last night and something was merged, the day's first session
+    starts one before its own heavy work (the status page gives the date of the last). Between
+    13 and 17 November 2026 no night check finished, and 31 failures were waiting on the 18th.
+    The scenarios that guard saved progress or pay run on every partial and full night.
 14. **Limits.** At most six build lanes at once, no more than three of them course lanes. A lane
     is one card's own folder; the lane tag (SIM, UI, ART) names a file area, not a single slot.
     A card lists its locks (`locks:`, FACTORY section 2); two cards with the same lock never

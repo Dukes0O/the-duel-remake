@@ -1694,6 +1694,28 @@ things manually, or automate something that could bring ROI without constant man
   embers are getting low. Nothing is to be built from this now.
 - To reverse: Kyle says so.
 
+## The night check is sized by the day's merges (Kyle, 18 November 2026)
+
+Kyle, after a morning spent sorting the 31 failures of the first night check to finish in six days: "Maybe we need to
+evaluate what was accomplished during the working hours of the day and determine whether full or partial testing to be
+done at night? Then if partial testing, we can keep building instead." Claude's recommendation, which he accepted
+("yes, write it into the rules"):
+
+- The rule "one lane tier per change" stays. It is the cheap check (12 minutes and 74 of 667 suites that morning).
+- The night check has three sizes, chosen by the tool from what was merged since the last one: none, partial or full.
+  AGENTS.md rule 13 holds the wording. A full night took 3 hours 34 minutes on 18 November (full tier 70 minutes, browser
+  scenarios 2 hours 18 minutes, frames 15 minutes with the laptop alone).
+- A partial night picks widely (every suite that reaches a changed file at any depth), because what it misses waits
+  until Saturday's full night.
+- Two cheaper cures go with it: a night that was due and did not run is news the next morning, and a card that changes
+  a job brings the older checks that name the job up to date in the same card.
+
+Known limit, said to Kyle: while the Everburn's rules are loaded by the game's core files, most nights of this work
+will still be full nights. The saving comes on art, lesson and tooling days.
+
+To reverse: restore rule 13's first sentence to "runs once a day" with the full list of stages, and remove the size
+choice from `tools/full-check.mjs` (card QA-NIGHT-SIZED).
+
 ## Checks sized to the card, and a nightly check that tells news (Kyle, 16 November 2026)
 
 Kyle asked for an audit of how the game is built: "I've found many times in the past where we ended up doing more testing
