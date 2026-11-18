@@ -151,23 +151,29 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
 }
 
 {
-  // Job 4 shows no raw ids: its start, rest, sighting and ending lines are all real captions, and it ends on Auntie Solder's
-  // existing result line, which it holds for (the way job 3 holds for Cinder's).
-  const step = EVERBURN_JOBS[3].steps[0];
-  const named = [step.startLineId, step.restLineId, ...step.sayAtShare.map(item => item.lineId), ...step.closing, EVERBURN_JOBS[3].lineId];
-  assert.ok(named.every(id => EMBER_CAPTIONS[id]), `every line job 4 names has words: ${named.filter(id => !EMBER_CAPTIONS[id])}`);
+  // The meeting now owns the introduction; the shared world hold owns arrival.
+  const definition = EVERBURN_JOBS[3], step = definition.steps[0];
+  const named = [step.restLineId, ...step.sayAtShare.map(item => item.lineId),
+    step.gasArrivalLineId, definition.lineId];
+  assert.ok(named.every(id => EMBER_CAPTIONS[id]), `every existing line job 4 names has words: ${named.filter(id => !EMBER_CAPTIONS[id])}`);
+  assert.ok(Object.values(definition.captions).every(text => typeof text === 'string' && text.startsWith('Moss: ')),
+    "the new meeting, flash and dry captions contain Moss's words");
   assert.ok(!Object.hasOwn(step, 'wonLineId'), 'job 4 has no won line of an id without words');
-  const bess = (atDestination, share = .5) => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'big-bess', position: {x: 600, y: 0, z: 0}, health: 100, pathProgress: 1, atDestination, share}]});
-  const began = lineIdsHeard(createJob(EVERBURN_JOBS[3], 1), () => bess(false, .1), 3);
-  assert.equal(began.heard[0], 'story.ember.moss.1', 'job 4 starts with Moss\'s own line');
-  const midway = lineIdsHeard(began.job, () => bess(false, .5), 3);
+  const bess = (atDestination, share = 0) => ({player:{position:step.meeting.position},speedKmh:0,
+    actors:[{id:'big-bess',position:step.path[0].position,health:100,pathIndex:1,
+      pathProgress:share,atDestination,share}]});
+  const outside = lineIdsHeard(createJob(definition,1), () => ({...bess(false),player:{position:step.carStart}}),3);
+  assert.deepEqual(outside.heard, [], 'Moss waits for the car to stop beside him');
+  const began = lineIdsHeard(outside.job, () => bess(false),12);
+  assert.deepEqual(began.heard, ['gas.meeting.1','gas.meeting.2','gas.meeting.3','story.ember.moss.1'],
+    "the three new lines lead into Moss's existing line, once each");
+  const midway = lineIdsHeard(began.job, () => bess(false,.5),12);
   assert.ok(midway.heard.includes('story.ember.moss.4'), 'job 4 passes its furnace sighting on the way');
-  const arriving = lineIdsHeard(midway.job, () => bess(true, 1), .5);
-  assert.deepEqual(arriving.heard.filter(id => id === 'story.ember.auntie-solder.6'), ['story.ember.auntie-solder.6'], 'on arrival Auntie Solder\'s result line is said');
-  assert.equal(arriving.job.done, false, 'and the job holds while it shows');
-  const ended = lineIdsHeard(arriving.job, () => bess(true), 4);
-  assert.equal(ended.job.done, true, 'then the job ends');
-  assert.ok(!ended.heard.includes('story.ember.auntie-solder.6'), 'the line is said once');
+  const arriving = stepJob(midway.job,bess(true,1),.1);
+  assert.equal(arriving.done,true,'the escort hands the arrival to the world hold');
+  assert.ok(arriving.events.some(event => event.type === 'gasArrived'));
+  assert.deepEqual(step.arrivalHold,{seconds:9,catchAt:5},'arrival uses the shared nine-second hold');
+  assert.equal(step.gasArrivalLineId,'story.ember.auntie-solder.6',"the hold says Auntie Solder's existing line");
 }
 {
   // RUN-GAS: the six lines of the gas run, each at the moment the card gives.

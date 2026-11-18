@@ -1324,12 +1324,54 @@ blocks.
 the job's own; checked by rules without driving, then one scripted run on Easy; then Claude's drive by hand, then
 Kyle's. It stays hidden with the rest of the story.
 
+## Slice 12 result (Codex built it; a Claude reviewer and Claude cured it; 17 November 2026, evening): job 4 merged, hidden
+
+**In:** Slow Ride as designed above, in the escort step that the gas runs and the battle share, behind `step.gasLoad`:
+the meeting with Moss, the Tin Road, the gas and its holes, three blocks, four raids, the flash, the plugging, the
+watching furnace, the restart, the nine-second arrival with the forge's fire and the lamps rising, pay by gas. Codex's
+scripted run on Easy finishes ten times in ten with 56 gas, five stops and thirteen holes.
+
+**Review (a separate Claude reviewer, because Codex's quota was nearly spent):** the gas runs, the battle, Hot
+Delivery and races cannot reach the new lines; nothing saved, pay taken once. Six faults, all cured by Claude with
+checks:
+1. Job 4 moved one call so that the car's meetings were cleared before job 3 read them: no knock on the thief could
+   count. Job 3's facts are read first again, and a new check runs a real meeting through the real step.
+2. The gas figure was rounded up on the screen (79.2 read 80 and was paid as under 80). It is rounded down.
+3. The restart went to the block cleared most recently wherever Bess was, so a block opened ahead of her carried a dry
+   tank forward past blocks still standing, with the gas of an earlier moment. The checkpoint is now the farthest
+   cleared block she has herself passed, with the gas she had as she passed it. **This changes design point 9.**
+4. She counted as stopped at a block only at exactly 0 m; a hair of distance skipped her eight seconds and a plugging.
+5. Flame did nothing to a rider (design points 4 and 5 say it drives him off). It turns him away as a ram does.
+6. The 2 m clearance meant for her way inside the gate also covered 238 m of road outside the fence. That stretch
+   keeps the 10 m of a road; only the three legs inside the gate have 2 m.
+
+**Changed assertions, reviewed by Claude (rule 18); none is loosened:** job 4's speed 9 m/s becomes 32 km/h; two foot
+ambushes become four raids of cars; health and rest become gas, holes and the checkpoint; pay 80 becomes 150, 100 or 60
+by gas; the start 10 m behind and 6 m aside becomes 60 m off with the meeting first; the caption-only ending becomes a
+nine-second hold; the raids' and blocks' places are checked along the Tin Road in place of the Wash and the bridge; the
+old sound pin leaves out the three new cues and is itself unchanged; "a cleared block records the gas then" becomes
+"the last block she has passed records the gas then" (fault 3).
+
+**Checks:** lane tier 180 of 180 on the merged result with the cures, replays and world signatures unchanged, build,
+browser scenarios `everburn-job4` and `everburn-job3`. The four pictures are aimed at their subjects.
+**Not done, Claude's:** the hand drive; Moss is a plain stand-in figure; the hose, the holes and the flash are plain.
+**Sound:** new `world.bess.leak`, `world.bess.plug`, `world.gas.flash`, from the bank's recipes.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
 the save. The game does not show it while the switches are off. Nothing was wiped.
 
 ## Codex decided (Claude to review)
+
+- Slice 12, Slow Ride arrival: the land's Tin Road ends 238 m outside the south gate. The existing escort path continues straight through the gate, 32 m inside, then east to the forge's delivery bay (25 m east and 14 m south of town). The tank stands nine metres east of Bess. The rule suite checks every new metre against the town solids with two metres of clearance. Blocks and raids use shares of this complete route. The forge starts at 45% fire and lamps at 65%, rising to full through the existing hold. Old Smoke appears on the high ground 100 m west and 180 m north of town and travels another 180 m north during the hold. These are drawing choices for Claude to review. The new guidance is "Open the road and keep the Ash Men off her tank."
+
+- Slice 12, Slow Ride flash: the plain bright sheet lasts 0.35 seconds, kept in `GAS_LOAD_RULE.flashVisibleSeconds`. Flame means a live player car burst or the player's active Hand Flamer within the designed eight metres. No extra player sentence is added. Plugging takes six uninterrupted still seconds and does not refill gas.
+
+- Slice 12, Slow Ride raids: each post stands 400 m along the road normal, alternating right and left. All eight rider starts have no solid within 10 m. Riders aim 6 m beside Bess, on opposite sides when there are two; a rider within 12 m can work on her tank. Both distances are named constants. No extra player sentence is added.
+
+- Slice 12, Slow Ride load: the gauge says "100 / 100. 0 holes open." and uses "1 hole open." for one hole. Its spoken label says "Gas is 100 out of 100. 0 holes open." Numbers follow the tank. These are the extra words needed to name the hole count.
+- Slice 12, Slow Ride meeting: Bess starts at the Tin Road's Boneyard endpoint (23 m east, 4 m south of the named Boneyard), clear of the wrecks. Moss's stop ring is 6 m to her right, with a 6 m radius and the car stopped below 1 km/h. The car starts 60 m behind her on that road's line. The hose starts at the north wreck's east wing (13 m east, 32 m north of the Boneyard). This keeps her moving on the land's road from the first metre. No extra player sentence is added.
 
 - Slice 9, story wall: job 2 is "Light the Town" and its note is "Take a brand from the hearth. Light the three town lamps and drive off the Ash Men." Ash Men choose clear alley waypoints against the existing solids, then use the existing foot mover. They do not gain any speed, range or shorter smothering time.
 

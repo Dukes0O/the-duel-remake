@@ -1,4 +1,5 @@
 import {pathShare} from '../furnace-sightings.js';
+import {GAS_LOAD_RULE, gasLoadMeeting, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug, gasLoadCheckpoint, gasLoadRestart, gasLoadResult} from '../gas-load-rule.js';
 
 // Raids on an escort (docs/board/cards/RUN-GAS.md, "Raids on an escort"). A step may carry `ambushes`: [{id, place, count}].
 //   - When the truck comes within AMBUSH_ALERT_METRES of an ambush's place, its raiders appear (a spawnWave request).
@@ -100,9 +101,15 @@ function stepAmbushes(step, state, view, truck, requests) {
 }
 
 export function stepEscort(step, state, view, dt = 0) {
+  if (step.gasLoad) {
+    state = {gas: GAS_LOAD_RULE.start, holes: GAS_LOAD_RULE.startHoles, ...state};
+    const meeting = gasLoadMeeting(step, state, view);
+    if (meeting) return meeting;
+    state = {...state, gasLoaded: true};
+  }
   const actors = view.actors ?? [];
   const truck = actors.find(actor => actor.id === step.actorId);
-  if (truck && (truck.health ?? 1) <= 0) {
+  if (!step.gasLoad && truck && (truck.health ?? 1) <= 0) {
     // Rests are counted for the stretch she is on (the place she is heading for), so a run can never loop for ever (RUN-GAS).
     const stretch = String(truck.pathIndex ?? 1);
     if (!state.rested) return { state: { rested: true, restLeft: step.restSeconds ?? 0, stretchRests: {...(state.stretchRests ?? {}), [stretch]: (state.stretchRests?.[stretch] ?? 0) + 1} }, events: [{ type: 'rest', actorId: step.actorId }], requests: [{ type: 'say', lineId: step.restLineId }, { type: 'follow', path: step.path, speed: 0 }] };
@@ -134,6 +141,33 @@ export function stepEscort(step, state, view, dt = 0) {
   // count as a successful escort.
   const requests = [{ type: 'follow', path: step.path, speed: step.speed }, { type: 'marker', place: step.destination }];
   if (!truck) return {state, complete: false, requests};
+  if (step.gasLoad) {
+    const restart = gasLoadRestart(step, state);
+    if (restart) return restart;
+  }
+  if (step.gasLoad && (truck.atDestination === true || truck.atDestination === undefined && truck.pathProgress >= 1)) {
+    const result = state.gasArrivalResult ?? gasLoadResult(state.gas);
+    requests[0].speed = 0;
+    return {state:{...state, gasArrivalResult:result}, complete:true, requests,
+      events:state.gasArrivalResult ? [] : [{type:'gasArrived', ...result}]};
+  }
+  let blockEvents = [];
+  if (step.gasLoad) {
+    const truckAlong = pathShare(truck.position, truck.pathIndex, step.path).metres;
+    const blocks = gasLoadBlocks(step, state, view, truckAlong, dt);
+    state = gasLoadCheckpoint(step, state, blocks.state, truckAlong);
+    requests[0].speed = blocks.speed;
+    const raids = gasLoadRaids(step, state, view, truck,
+      pathShare(truck.position, truck.pathIndex, step.path).share, dt);
+    const flash = gasLoadFlash(step, raids.state, view, truck, dt);
+    const restart = gasLoadRestart(step, flash.state);
+    if (restart) return {...restart, events:[...blocks.events, ...raids.events, ...flash.events, ...restart.events]};
+    const plug = gasLoadPlug(step, flash.state, blocks.speed, dt);
+    state = plug.state;
+    requests[0].speed = plug.speed;
+    requests.push(...flash.requests, ...plug.requests);
+    blockEvents = [...blocks.events, ...raids.events, ...flash.events, ...plug.events];
+  }
   const ambushState = stepAmbushes(step, state, view, truck, requests);
   const complete = truck.atDestination === true || (truck.atDestination === undefined && truck.pathProgress >= 1);
   // A step with `arrival` closes with Moss's line for how Big Bess comes in (whole or hurt), then any extra lines it names.
@@ -148,5 +182,5 @@ export function stepEscort(step, state, view, dt = 0) {
   }
   const closingLines = arrival?.battle ? [...(ending === 'won' ? arrival.battle.wonLineIds : arrival.battle.arrivedLineIds)] :
     arrival ? [(truck.health ?? 0) >= arrival.hurtBelow ? arrival.wholeLineId : arrival.hurtLineId, ...(arrival.thenLineIds ?? [])] : null;
-  return { state: {...state, ...ambushState, ...(ending ? {ending} : {})}, complete, requests, ...(closingLines ? {closingLines} : {}) };
+  return { state: {...state, ...ambushState, ...(ending ? {ending} : {})}, complete, requests, events: blockEvents, ...(closingLines ? {closingLines} : {}) };
 }

@@ -1,6 +1,7 @@
 // The three lamps of "Light the Town" (EVERBURN-REMAKE, job 2), each the town lamp drawn by src/world/town-lamp-look.js
 // with a light of its own for the ground and walls around it. Presentation reads the job, never steps it.
 import * as THREE from 'three';
+import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {BRAND_RULE} from './jobs/brand-rule.js';
 import {createTownLamp} from './town-lamp-look.js';
 
@@ -20,11 +21,12 @@ export function createBrandLamps({surface = null} = {}) {
   return {group,
     update(worldJob) {
       const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-      group.visible = step?.brand === true;
+      group.visible = step?.brand === true || step?.gasLoad === true;
       if (!group.visible) return;
-      if (places !== step.places) {
+      const sites = step.gasLoad ? step.gasLamps : step.places;
+      if (places !== sites) {
         clear();
-        places = step.places;
+        places = sites;
         (places ?? []).forEach((place, index) => {
           const lamp = new THREE.Group();
           lamp.name = `Town lamp: ${place.id}`;
@@ -43,15 +45,16 @@ export function createBrandLamps({surface = null} = {}) {
         });
       }
       for (const lamp of lamps) {
-        lamp.lit = worldJob.job.stepState.lamps?.[lamp.id] === true;
-        lamp.look.setLit(lamp.lit, seconds);
-        lamp.glow.intensity = lamp.lit ? 10 : 0;
+        lamp.lit = step.gasLoad || worldJob.job.stepState.lamps?.[lamp.id] === true;
+        lamp.brightness = step.gasLoad ? GAS_LOAD_RULE.lampBeforeGasShare + (1 - GAS_LOAD_RULE.lampBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : 1;
+        lamp.look.setLit(lamp.lit, seconds, lamp.brightness);
+        lamp.glow.intensity = lamp.lit ? 10 * lamp.brightness : 0;
       }
     },
     // The scene's own clock: the flame's flicker and the half second a lamp takes to come up.
     animate(now) {
       seconds = now;
-      if (group.visible) for (const lamp of lamps) lamp.look.setLit(lamp.lit, now);
+      if (group.visible) for (const lamp of lamps) lamp.look.setLit(lamp.lit, now, lamp.brightness);
     },
     dispose() { clear(); },
   };

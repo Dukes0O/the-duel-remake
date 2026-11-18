@@ -134,7 +134,7 @@ export function worldJobMapData(course, state) {
     if (!Number.isFinite(position?.x) || !Number.isFinite(position?.z)) continue;
     if (actor.id === step?.actorId && step?.actor?.escort) marks.push({kind: 'escort', position});
     else if (actor.furnace) marks.push({kind: 'hunter', position});
-    else if (actor.ambushKey || actor.id === step?.scout?.id && worldJob.job.stepState.scoutWarned ||
+    else if (step?.gasLoad && step.gasRaiders?.some(def => def.id === actor.id) && actor.health > 0 && !actor.gasDrivenOff || actor.ambushKey || actor.id === step?.scout?.id && worldJob.job.stepState.scoutWarned ||
       step?.kind === 'defend' && defenders.has(actor)) marks.push({kind: 'rider', position});
   }
   return {path: road.path.length ? road.path : [player], start: road.start ?? fallback,

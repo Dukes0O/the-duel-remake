@@ -8,7 +8,7 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES, AMBUSH_GONE_METRES, AMBUSH_WEAR_METRES, AMBUSH_MIN_FROM_START_METRES,
   AMBUSH_WEAR_PER_SECOND} from '../src/world/jobs/steps/escort.js';
-import {GAS_RUN_AMBUSH_METRES, GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay} from '../src/world/jobs/gas-run.js';
+import {GAS_RUN_AMBUSH_METRES, GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay, pointAlongRoad} from '../src/world/jobs/gas-run.js';
 import {arenaReward} from '../src/arena/arena-settlement.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {App} from '../src/app.js';
@@ -91,9 +91,20 @@ const pos = (x, z) => ({x, y: 0, z});
     'the raid line is not said again after a restart');
 }
 
-// ---- 2. Raids in a real Duel: Everburn job 4 ------------------------------------------------------------------------
+// ---- 2. Shared health escort raids in a real Duel ------------------------------------------------------------------------
 const FLAGS = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true, 'warlord-cards': true, 'crew-gear': true};
 const DT = 1 / 120;
+// Keep the shared gas-run health and foot-raider checks on a short, clear
+// stretch of their own road. Slow Ride now has car raids and gas instead;
+// tools/test-everburn-job4.mjs proves those rules without driving.
+const healthRun = gasRunJob({road:'boneyard',feud:2,runs:0});
+const healthPlace = (id, metres) => ({id,position:{...pointAlongRoad('boneyard',metres),y:0},radius:12});
+const healthPath = [0,150,300,1000].map((metres,index) => healthPlace(`health-road-${index}`,metres));
+const healthEscort = {...healthRun,steps:[{...healthRun.steps[0],path:healthPath,
+  actor:{...healthRun.steps[0].actor,path:healthPath},destination:healthPath.at(-1),
+  ambushes:[{id:'gas-run-raid-1',place:healthPlace('gas-run-raid-1',440),count:2},
+    {id:'gas-run-raid-2',place:healthPlace('gas-run-raid-2',850),count:2}]}]};
+
 function startJob(definition, difficulty, seed = 1) {
   const duel = new Duel({seed, featureFlags: FLAGS});
   duel.state.wastelandGateDiscovered = true;
@@ -126,8 +137,7 @@ function placeOnPath(truck, path, metres) {
     left -= length;
   }
 }
-// SCABLANDS-LAND round 4: Big Bess's drive to job 4's first raid is about 1.9 km on the larger land (it was about 190 m), about 190 s at 9 m a second,
-// so the wait for a first raid is allowed 400 s (it was 90 s). A shorter limit that a call names is not changed.
+// Allow the shared recovery checks to reach the next raid; individual checks may name a shorter limit.
 function runUntil(duel, condition, seconds = 400) {
   for (let tick = 0; tick < Math.round(seconds / DT) && !condition(); tick++) {
     duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
@@ -136,22 +146,22 @@ function runUntil(duel, condition, seconds = 400) {
   return condition();
 }
 {
-  const job4 = EVERBURN_JOBS[3];
-  const ambushes = job4.steps[0].ambushes;
-  same(ambushes.map(item => [item.id, item.count]), [['ash-men-raid-1', 2], ['ash-men-raid-2', 2]], 'job 4 has its two ambushes of 2 raiders');
-  check(!Object.hasOwn(job4.steps[0], 'raiders'), 'the unread raiders list is gone');
-  same([job4.steps[0].speed, job4.steps[0].health, job4.steps[0].actor.health], [9, 100, 100], 'job 4 keeps Big Bess at 9 m a second and 100 health');
+  const escortJob = healthEscort;
+  const ambushes = escortJob.steps[0].ambushes;
+  same(ambushes.map(item => [item.id, item.count]), [['gas-run-raid-1', 2], ['gas-run-raid-2', 2]], 'the health escort fixture has two raids of two foot raiders');
+  check(!Object.hasOwn(escortJob.steps[0], 'raiders'), 'the unread raiders list is gone');
+  same([escortJob.steps[0].speed, escortJob.steps[0].health, escortJob.steps[0].actor.health], [9, 100, 100], 'the gas run keeps Big Bess at 9 m a second and 100 health');
 
   for (const [difficulty, rate, count] of [['easy', 1.5, 1], ['medium', 5, 2], ['hard', 7, 2]]) {
-    const duel = startJob(job4, difficulty), warnings = [];
+    const duel = startJob(escortJob, difficulty), warnings = [];
     duel.onChange((_state, event) => { if (event.raiderWarning) warnings.push(event.zone); });
     check(runUntil(duel, () => raidersOf(duel).length > 0 && duel.state.status === 'racing'), `${difficulty}: the first raid appears`);
-    same(warnings, ['ambush:ash-men-raid-1'], `${difficulty}: with the existing raider warning, once`);
+    same(warnings, ['ambush:gas-run-raid-1'], `${difficulty}: with the existing raider warning, once`);
     const raiders = raidersOf(duel), place = ambushes[0].place.position;
     same(raiders.length, count, `${difficulty}: ${count} raider${count === 1 ? '' : 's'} appear`);
     check(raiders.every(raider => Math.hypot(raider.x - place.x, raider.z - place.z) <= 12), `${difficulty}: they stand within 12 m of the place`);
     if (count === 2) {
-      const road = alongPath(job4.steps[0].path, place).direction, side = raider => road.z * (raider.x - place.x) - road.x * (raider.z - place.z);
+      const road = alongPath(escortJob.steps[0].path, place).direction, side = raider => road.z * (raider.x - place.x) - road.x * (raider.z - place.z);
       check(side(raiders[0]) * side(raiders[1]) < 0, `${difficulty}: on both sides of the road`);
     }
     check(raiders.every(raider => raider.health > 0 && raider.crewId === 'tusk'), `${difficulty}: they are the foot raiders the well has`);
@@ -173,31 +183,31 @@ function runUntil(duel, condition, seconds = 400) {
 
   // Left alone on Medium Big Bess is worn to nothing, rests, and starts the stretch again with its raiders back.
   {
-    const duel = startJob(job4, 'medium');
+    const duel = startJob(escortJob, 'medium');
     runUntil(duel, () => raidersOf(duel).length > 0);
     const bess = bessOf(duel), place = ambushes[0].place.position;
     Object.assign(bess.position, {x: place.x + 4, z: place.z + 4});
-    // Slice 2b: Slow Ride goes by the Wash, so the first raid stands on the stretch from the Wash (her third place) to the camp: she is driving to the fourth.
+    // The first fixture raid stands on its third stretch.
     bess.pathIndex = 3;
     bess.health = 1; // two raiders at 5 a second each take it in a tenth of a second
     check(runUntil(duel, () => worldOf(duel).job.stepState.rested === true, 30), 'at 0 health Big Bess rests');
     check(bessOf(duel).health === 0, 'with no health left');
     check(runUntil(duel, () => worldOf(duel).job.stepState.rested === false && bessOf(duel).health > 0, 10), 'and the stretch starts again after the rest');
     same(Math.round(bessOf(duel).health), 100, 'with the health she had when she began it');
-    const boneyard = job4.steps[0].path[2].position; // the Wash, the last place she reached before the raid (it was the Boneyard)
+    const boneyard = escortJob.steps[0].path[2].position; // The last fixture waypoint before the raid.
     near(Math.hypot(bessOf(duel).position.x - boneyard.x, bessOf(duel).position.z - boneyard.z), 0, 30, 'back at the last place she reached (she has moved off a little)');
     check(!bessOf(duel).atDestination, 'a restart is never an arrival');
-    // SCABLANDS-LAND round 4: she restarts at the Boneyard, 1.9 km from the raid (it was 186 m), so she needs about 190 s to come within 160 m of it again; the wait is 400 s (it was 10 s).
+    // Reaching the raid again must restore its standing raiders.
     check(runUntil(duel, () => raidersOf(duel).length === 2 && raidersOf(duel).every(raider => raider.health > 0), 400), 'and the ambush is back in place');
     check(duel.state.status === 'racing', 'a run is never lost for good: the job is still going');
   }
 
   // Once she is 60 m past an ambush the raiders still standing are removed.
   {
-    const duel = startJob(job4, 'medium');
+    const duel = startJob(escortJob, 'medium');
     runUntil(duel, () => raidersOf(duel).length > 0);
     check(duel.state.raids.zones.length === 1, 'the camp is in the raider list');
-    const bess = bessOf(duel), place = ambushes[0].place.position, path = job4.steps[0].path;
+    const bess = bessOf(duel), place = ambushes[0].place.position, path = escortJob.steps[0].path;
     const farther = alongPath(path, place).metres + 70;
     placeOnPath(bess, path, farther);
     run(duel, .1);
@@ -208,7 +218,7 @@ function runUntil(duel, condition, seconds = 400) {
 
 // ---- 2b. What play showed (RUN-GAS follow-ups): running raiders down, staying down, health after a rest, where ambushes stand ---
 {
-  const job4 = EVERBURN_JOBS[3], step4 = job4.steps[0], coast = {throttle: 0, brake: 0, steer: 0, boost: false, interact: false};
+  const escortJob = healthEscort, step4 = escortJob.steps[0], coast = {throttle: 0, brake: 0, steer: 0, boost: false, interact: false};
   // The car on a raider, at a speed, for one tick.
   const touch = (duel, raider, {mph, away = 0}) => {
     const at = duel.course.nearest(raider.x + away, raider.z);
@@ -217,7 +227,7 @@ function runUntil(duel, condition, seconds = 400) {
   };
   const apart = (duel, raider) => { const car = duel.course.worldAt(duel.state.s, duel.state.lateral); return Math.hypot(car.x - raider.x, car.z - raider.z); };
   {
-    const duel = startJob(job4, 'medium'), knocks = [];
+    const duel = startJob(escortJob, 'medium'), knocks = [];
     duel.onChange((_state, event) => { if (event.raiderKnockdown) knocks.push(event.raider); });
     check(runUntil(duel, () => raidersOf(duel).length === 2 && duel.state.status === 'racing'), 'medium: two raiders appear');
     const [first, second] = raidersOf(duel);
@@ -239,7 +249,7 @@ function runUntil(duel, condition, seconds = 400) {
     check(raidersOf(duel).every(raider => raider.knockedDown), 'and they are still the ambush raiders');
   }
   {
-    const duel = startJob(job4, 'medium');
+    const duel = startJob(escortJob, 'medium');
     runUntil(duel, () => raidersOf(duel).length === 2);
     const [first, second] = raidersOf(duel);
     check(damageRaider(duel, first, 999, {source: 'crossbow', owner: 'player'}) === true && first.knockedDown, 'a weapon knocks a raider down');
@@ -249,8 +259,8 @@ function runUntil(duel, condition, seconds = 400) {
     // The next ambush's raiders are standing: only the knocked-down ones of an ambush stay down.
     const place2 = step4.ambushes[1].place.position, path = step4.path;
     placeOnPath(bessOf(duel), path, alongPath(path, place2).metres - 100);
-    check(runUntil(duel, () => raidersOf(duel).some(raider => raider.id.startsWith('ambush:ash-men-raid-2')), 5), 'the second ambush appears');
-    check(raidersOf(duel).filter(raider => raider.id.startsWith('ambush:ash-men-raid-2')).every(raider => !raider.knockedDown), 'with its raiders standing');
+    check(runUntil(duel, () => raidersOf(duel).some(raider => raider.id.startsWith('ambush:gas-run-raid-2')), 5), 'the second ambush appears');
+    check(raidersOf(duel).filter(raider => raider.id.startsWith('ambush:gas-run-raid-2')).every(raider => !raider.knockedDown), 'with its raiders standing');
   }
   {
     // Outside escort ambushes nothing about raiders changes: job 6's well raiders still get up after their 3 seconds.
@@ -269,7 +279,7 @@ function runUntil(duel, condition, seconds = 400) {
 
   // After a rest Big Bess has at least 60 health, and more if she had more when the stretch began.
   for (const [began, expected] of [[100, 100], [90, 90], [60, 60], [59, 60], [20, 60], [1, 60]]) {
-    const duel = startJob(job4, 'medium');
+    const duel = startJob(escortJob, 'medium');
     runUntil(duel, () => raidersOf(duel).length > 0);
     const bess = bessOf(duel);
     bess.stretchHealth = began; bess.health = 0;
@@ -277,17 +287,12 @@ function runUntil(duel, condition, seconds = 400) {
     near(bessOf(duel).health, expected, 1, `a stretch begun with ${began} health restarts with ${expected}`);
   }
 
-  // Where ambushes stand: none within 180 m of the start along the road, on job 4 and on every road, feud and run sampled.
+  // Where health-escort ambushes stand: none within 180 m of the start on every sampled road, feud and run.
   {
     const firstAmbush = step4.ambushes[0];
-    // Slice 2b: Slow Ride goes by the Wash, so the first ambush stands .4 of the way from the Wash to the halfway camp (the same 30 percent of her road, 2,251 m of 7,376).
-    const firstAt = LAND.between('the-wash', 'safe-road', .4);
-    same([firstAmbush.place.position.x, firstAmbush.place.position.z], [firstAt.x, firstAt.z], 'job 4 first ambush stands two fifths of the way from the Wash to the halfway camp');
-    near(alongPath(step4.path, firstAmbush.place).gap, 0, .5, 'on her road');
-    check(step4.ambushes.every(item => alongPath(step4.path, item.place).metres >= AMBUSH_MIN_FROM_START_METRES), 'no ambush of job 4 within 180 m of its start');
-    // Slice 2b: its metres along her road are the road to the Wash (past the Boneyard's west edge) and two fifths of the stretch from the Wash to the camp.
-    const stretch = (a, b) => Math.hypot(b.x - a.x, b.z - a.z), pts = step4.path.map(item => item.position);
-    near(alongPath(step4.path, firstAmbush.place).metres, stretch(pts[0], pts[1]) + stretch(pts[1], pts[2]) + .4 * stretch(pts[2], pts[3]), 1, 'the first is two fifths of the way from the Wash to the camp along her road');
+    near(alongPath(step4.path, firstAmbush.place).gap, 0, .5, 'the health fixture raid stands on its road');
+    check(step4.ambushes.every(item => alongPath(step4.path, item.place).metres >= AMBUSH_MIN_FROM_START_METRES),
+      'no health fixture raid is within 180 m of its start');
     let sampled = 0;
     for (const road of GAS_RUN_ROADS) for (let feud = 1; feud <= 4; feud++) for (let runs = 0; runs < 200; runs++) {
       const job = gasRunJob({road, feud, runs});
@@ -302,7 +307,7 @@ function runUntil(duel, condition, seconds = 400) {
 
   // The flamethrower is lent for job 4 and for every run, as job 1 lends it.
   {
-    check(EVERBURN_JOBS[0].steps[0].lentWeapon === 'flamethrower' && step4.lentWeapon === 'flamethrower', 'job 1 and job 4 lend the flamethrower');
+    check(EVERBURN_JOBS[0].steps[0].lentWeapon === 'flamethrower' && step4.lentWeapon === 'flamethrower', 'job 1 and the health escort lend the flamethrower');
     for (const road of GAS_RUN_ROADS) check(gasRunJob({road, feud: 2}).steps[0].lentWeapon === 'flamethrower', `the ${road} road lends the flamethrower`);
     const duel = startJob(gasRunJob({road: 'boneyard', feud: 2, runs: 0, difficulty: 'medium'}), 'medium');
     same(worldOf(duel).activeLoan, 'flamethrower', 'a run in a real Duel has the flamethrower on loan');
@@ -347,16 +352,15 @@ function runUntil(duel, condition, seconds = 400) {
   check(!other.state.gone.includes('b') && other.state.stretchRests[2] === 1, 'a first rest on another stretch does not make its ambush give up');
 }
 {
-  // In a real Duel: job 4's first ambush with four raiders, never cleared (the player does not fight), on Medium. She rests at it twice,
+  // In a real Duel: the health escort fixture's first ambush with four raiders, never cleared (the player does not fight), on Medium. She rests at it twice,
   // the raiders give up, Moss says so once, and she arrives.
-  const job4 = EVERBURN_JOBS[3], step4 = job4.steps[0];
-  const lethal = {...job4, steps: [{...step4, ambushes: [{id: 'only', place: step4.ambushes[0].place, count: 4}]}]};
+  const escortJob = healthEscort, step4 = escortJob.steps[0];
+  const lethal = {...escortJob, steps: [{...step4, ambushes: [{id: 'only', place: step4.ambushes[0].place, count: 4}]}]};
   for (const difficulty of ['easy', 'medium', 'hard']) {
     const duel = startJob(lethal, difficulty), lines = [];
     const callout = duel._callout.bind(duel); duel._callout = (text, seconds) => { lines.push(String(text)); return callout(text, seconds); };
     let rests = 0, gaveUp = 0;
-    // SCABLANDS-LAND round 4: the drive is about 6.6 km (it was about 0.66 km) and each rest puts her back at the Boneyard, 1.9 km before the raid,
-    // so the whole run is allowed 1,800 s (it was 900 s).
+    // Keep the existing recovery deadline, including both rests.
     for (let tick = 0; tick < Math.round(1800 / DT) && duel.state.status !== 'arena_result'; tick++) {
       duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
       duel.step(DT);
@@ -465,13 +469,13 @@ function runUntil(duel, condition, seconds = 400) {
   same(gasRunJob({road: 'long'}).steps[0].startLineId, 'story.ember.moss.5', 'the long road starts with Moss\'s long road line');
   same([gasRunJob({road: 'long'}).steps[0].what, step.what], ['Keep Big Bess safe on the long road to Tin Town.', 'Keep Big Bess safe on the Boneyard road to Tin Town.'], 'each run\'s line on screen is a whole sentence naming its road');
 
-  // Pay: a share is what job 4 pays today (80 times the difficulty factor).
+  // Gas-run pay stays 80 per share, with the existing difficulty factor.
   for (const [difficulty, factor] of [['easy', 1], ['medium', 1.2], ['hard', 1.4]]) {
     const share = Math.round(80 * factor);
     same([gasRunPay('long', difficulty), gasRunPay('boneyard', difficulty)], [share, Math.round(160 * factor)], `${difficulty}: 1 share on the long road, 2 on the Boneyard road`);
     same(gasRunPay('long', difficulty), arenaReward({version: 1, venueId: 'scablands', mode: 'world-job', phase: 'over', participants: [{id: 'player'}],
-      result: {placings: ['player'], winnerId: 'player', reason: 'job-complete'}, worldJob: {definition: EVERBURN_JOBS[3], job: {stepIndex: 1, steps: [{}]}}}, difficulty).total,
-    `${difficulty}: one share is what job 4 pays`);
+      result: {placings: ['player'], winnerId: 'player', reason: 'job-complete'}, worldJob: {definition: gasRunJob({road:'long'}), job: {stepIndex: 1, steps: [{}]}}}, difficulty).total,
+    `${difficulty}: one share is what an ordinary world job pays`);
   }
 
   // Both roads clear every box in SCABLANDS_SOLIDS by 8 m. The road begins at the well, so its first piece is let touch the

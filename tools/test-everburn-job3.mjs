@@ -635,6 +635,26 @@ console.log('PASS Run Him Down: furnace waits, horns once at collection, leaves 
 // Job 3.6: stopping the car releases one unarmed foot actor. The same
 // mover used by the other job raiders carries him away from the player.
 const {applyBellowsThiefFlee, stepWorldJob} = await import('../src/arena/modes/world-job.js');
+// A review of slice 12 found the step's order turned round: the car's meetings with the thief were cleared for the riders
+// before job 3 read them, so no knock could count in the real step. One hard meeting in the real step is one knock.
+{
+  const app = new App(); app.audio.unlock = () => {};
+  app.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
+    'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
+  app.duel.state.wastelandGateDiscovered = true;
+  assert(app.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
+    car:'falcone_f42', playerId:app.player.id, seed:1989, opponents:[], job:definition}));
+  const duel = app.duel, state = duel.state, world = state.arena.worldJob;
+  state.status = 'racing'; state.countdown = 0; state.onFoot = false;
+  stepWorldJob(duel, 1 / 60);
+  const thief = world.actors.find(actor => actor.id === world.job.steps[0].targetId);
+  assert(thief, 'The thief is an actor of the real job.');
+  assert.equal(world.job.stepState.knocks ?? 0, 0);
+  world.carContacts = [{actor:thief, kmh:BELLOWS_RULE.hardKnockKmh + 5, nx:0, nz:1}];
+  stepWorldJob(duel, 1 / 60);
+  assert.equal(world.job.stepState.knocks, 1, 'A hard meeting with the thief in the real step counts one knock.');
+  assert.deepEqual(world.carContacts, [], 'The meetings are cleared once they have been read.');
+}
 const escapeApp = new App(); escapeApp.audio.unlock = () => {};
 escapeApp.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
   'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});

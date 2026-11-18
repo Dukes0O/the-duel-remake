@@ -23,6 +23,7 @@ import {roadNet, EAST_ROAD, roadPointFrom} from '../src/world/scablands-road.js'
 import {riverFor, stepsWayFor} from '../src/world/scablands-regions.js';
 import {HOT_DELIVERY_WAYS, routeFor, sliceLine, nearestOnLine} from '../src/world/scablands-ways.js';
 import {BED_MIST, SALT_RIDERS} from '../src/world/jobs/ember-rule.js';
+import {GAS_LOAD_RULE} from '../src/world/jobs/gas-load-rule.js';
 import {tinTownGateFor} from '../src/world/tin-town-gate.js';
 import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
 import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
@@ -233,13 +234,35 @@ test('moving a place in a copy of the table moves everything that belongs to it,
     assert.ok(fence.length > 0, `${moved}: the ring fence exists`);
     for (const solid of fence) assert.ok(Math.abs(Math.hypot(solid.x - town.x, solid.z - town.z) - 88) < 1, `${moved}: ${solid.id} follows the ring`);
     const positions = positionsOf(after), bridge = movedLand.at('girder-bridge'), east = net.road('east-road');
-    for (const [id, offset] of [['bridge-in', -150], ['bridge-out', 150], ['furnace-bridge-in', 150], ['furnace-bridge-out', -150]]) {
+    for (const [id, offset] of [['furnace-bridge-in', 150], ['furnace-bridge-out', -150]]) {
       const pos = positions.get(id); assert.ok(pos, `${moved}: ${id} exists`);
       near({x: pos[0], z: pos[1]}, roadPointFrom(east, bridge.x, bridge.z, offset), id);
     }
-    const raid = positions.get('ash-men-raid-2'), out = positions.get('bridge-out');
-    assert.ok(raid && out, `${moved}: the second ambush exists`);
-    near({x: raid[0], z: raid[1]}, {x: (out[0] + town.x) / 2, z: (out[1] + town.z) / 2}, 'second ambush');
+    const slowRide = after.jobs[3].steps[0], tinRoad = net.road('tin-road');
+    assert.deepEqual(slowRide.path.slice(0, tinRoad.points.length).map(place =>
+      ({x: place.position.x, z: place.position.z})), tinRoad.points,
+    `${moved}: Slow Ride follows every point of the moved Tin Road`);
+    for (const block of slowRide.blocks) {
+      const found = nearestOnLine(slowRide.path.map(place => place.position), block.position.x, block.position.z);
+      assert.ok(found.distance < 1e-6, `${moved}: ${block.id} stays on Bess's road`);
+    }
+    for (const raid of slowRide.gasRaids) {
+      const found = nearestOnLine(slowRide.path.map(place => place.position), raid.place.position.x, raid.place.position.z);
+      assert.ok(Math.abs(found.distance - 400) < 1e-6, `${moved}: ${raid.id} stays 400 m beside Bess's road`);
+    }
+    const first = tinRoad.points[0], next = tinRoad.points[1];
+    const bearing = Math.atan2(next.x - first.x, next.z - first.z);
+    near(slowRide.meeting.position, {x: first.x - Math.cos(bearing) * GAS_LOAD_RULE.meetingSideMetres,
+      z: first.z + Math.sin(bearing) * GAS_LOAD_RULE.meetingSideMetres}, 'Moss beside the road');
+    for (const [index, actor] of slowRide.waitingActors.entries()) {
+      const road = {points: slowRide.path.map(place => place.position)}, start = road.points[0];
+      near(actor.start.position, roadPointFrom(road, start.x, start.z,
+        slowRide.blocks[index + 1].metres + (index ? GAS_LOAD_RULE.riderBehindMetres : 0)), actor.id);
+    }
+    for (const actor of slowRide.gasRaiders) {
+      const post = slowRide.gasRaids.find(raid => raid.id === actor.raidId).place.position;
+      near(actor.start.position, {x: post.x, z: post.z + actor.raidIndex * GAS_LOAD_RULE.raidRiderSpacingMetres}, actor.id);
+    }
     // A changed river length can need another sheet. Check every sheet's
     // coverage and river binding rather than treating sheets as named places.
     const patches = after.jobs[0].steps[0].bedMist;
@@ -272,6 +295,9 @@ test('moving a place in a copy of the table moves everything that belongs to it,
       // Slice 2b: the places a job lines up on the East Road 150 m either side of the Girder Bridge are points of the road (a curve that bends as a place moves), as the
       // road's own derived nodes are, so they do not move by a straight share of a place's move; the bridge itself (a named point) is checked above.
       if (/^(furnace-)?bridge-(in|out)$|^ash-men-raid-2$/.test(id)) continue;
+      // These placements are checked against the moved road above. Its bends
+      // turn their side offsets rather than moving them by a straight share.
+      if (/^bess-(tin-road-|raid-post-|raid-\d+-start-|block-car-|road-block-)/.test(id) || id === 'moss-meeting') continue;
       // EVERBURN-REMAKE job 1 (16 November 2026): the Halfway Camp's brazier stands 9 m to one side of the way from the camp to Tin Town, so it
       // turns about the camp a little when either place moves. It belongs to the camp: it stays 9 m from it, on that same side of that way.
       // These positions follow the road and gate as the land moves.

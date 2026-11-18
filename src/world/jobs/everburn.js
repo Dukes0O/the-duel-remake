@@ -6,6 +6,7 @@
 // real one, so moving a place in the table moves every job that stands by it (tools/test-scablands-size.mjs).
 import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, GAS_FLASH_LINE, GAS_DRY_LINE} from './gas-load-rule.js';
 import {EMBER_RULE, SALT_RIDERS, bedMistFor, bridgeAshPlan} from './ember-rule.js';
 import {riverFor} from '../scablands-regions.js';
 import {bessRest} from '../boneyard-wrecks.js';
@@ -22,7 +23,7 @@ import {boneyardWrecks} from '../boneyard-wrecks.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
-export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery', 'everburn-get-out-and-walk', 'everburn-run-him-down'];
+export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery', 'everburn-get-out-and-walk', 'everburn-run-him-down', 'everburn-slow-ride'];
 
 export function buildEverburn(land) {
   const {at, between} = land;
@@ -67,14 +68,48 @@ export function buildEverburn(land) {
   // reaches the place in front of the gate, the gate burns (old-smoke.js). The furnace does not drive through the gate: it stops
   // 82 m south of the gate's centre, in front of it, and turns west along the outside of the fence.
   const furnaceGate = place('tin-town-gate-front', at('tin-town', -25, 82), 18);
-  // Slow Ride follows the Boneyard Road and the East Road (SCABLANDS-LAND round 4, slice 2b): from the Boneyard over the Wash to the halfway camp, then over
-  // the Girder Bridge to Tin Town. Big Bess obeys the ground, and the dry river's banks are too steep for her: the straight lines between the places crossed them.
-  // The bridge's deck is 14 m wide with a solid truss each side, so the road is lined up on it 150 m before and after, on the East Road's own line.
   const bridgeAt = at('girder-bridge');
-  const bridgeIn = place('bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12), bridgeOut = place('bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12);
   const furnaceBridgeIn = place('furnace-bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12), furnaceBridgeOut = place('furnace-bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12);
-  // She sets out from where she stands in the Boneyard (the wrecks are solid: the straight way west from its middle runs through the south wreck) and leaves it by the west edge of the wreck field.
-  const slowRidePath = path(place('boneyard', at('boneyard', 40, -42), 18), place('boneyard-west-edge', at('boneyard', -110, -80), 12), place('the-wash', at('the-wash'), 12), safeRoad, bridgeIn, place('girder-bridge', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 10), 12), bridgeOut, place('tin-town', at('tin-town', -27, 2), 18));
+  // Bess starts at the plane row's clear road entry. Her existing mover
+  // follows every point of the land's own Tin Road to the south gate.
+  const southGate = tinTownGateFor(land).gate;
+  const slowRidePath = path(...net.road('tin-road').points.map((point, index) => place(`bess-tin-road-${index}`, point)),
+    place('bess-south-gate', {x:southGate.x, z:southGate.z}),
+    place('bess-inside-gate', {x:southGate.x, z:southGate.z - GAS_LOAD_RULE.arrivalGateInsideMetres}),
+    place('bess-forge-turn', at('tin-town', GAS_LOAD_RULE.tankBayEastMetres, southGate.z - land.at('tin-town').z - GAS_LOAD_RULE.arrivalGateInsideMetres)),
+    place('bess-forge-tank', at('tin-town', GAS_LOAD_RULE.tankBayEastMetres, GAS_LOAD_RULE.tankBaySouthMetres), 1));
+  const bessMeeting = place('moss-meeting', escortCarStart(slowRidePath, 0, GAS_LOAD_RULE.meetingSideMetres), GAS_LOAD_RULE.meetingRadiusMetres);
+  const tinRoad = {points:slowRidePath.map(place => place.position)}, tinStart = tinRoad.points[0];
+  const tinLength = tinRoad.points.slice(1).reduce((sum, point, index) => sum +
+    Math.hypot(point.x - tinRoad.points[index].x, point.z - tinRoad.points[index].z), 0);
+  const slowRaids = path(...GAS_LOAD_RULE.raidShares.map((share, index) => {
+    const point = roadPointFrom(tinRoad, tinStart.x, tinStart.z, tinLength * share);
+    const ahead = roadPointFrom(tinRoad, tinStart.x, tinStart.z, tinLength * share + 1);
+    const heading = Math.atan2(ahead.x - point.x, ahead.z - point.z), side = index % 2 ? -1 : 1;
+    return Object.freeze({id:`bess-raid-${index + 1}`, share, side,
+      place:place(`bess-raid-post-${index + 1}`, {x:point.x + Math.cos(heading) * side * GAS_LOAD_RULE.raidSideMetres,
+        z:point.z - Math.sin(heading) * side * GAS_LOAD_RULE.raidSideMetres})});
+  }));
+  const slowRaiders = path(...slowRaids.flatMap(raid => Array.from({length:GAS_LOAD_RULE.raidCount}, (_, index) =>
+    Object.freeze({id:`${raid.id}-rider-${index + 1}`, raidId:raid.id, raidIndex:index, gasRaid:true,
+      stationSide:raid.side * (index ? -1 : 1), renderCar:'dusthawk_rally', health:100,
+      start:place(`${raid.id}-start-${index + 1}`, {...raid.place.position,
+        z:raid.place.position.z + index * GAS_LOAD_RULE.raidRiderSpacingMetres})}))));
+  const slowBlocks = path(...GAS_LOAD_RULE.blockShares.map((share, index) => {
+    const metres = tinLength * share;
+    const point = roadPointFrom(tinRoad, tinStart.x, tinStart.z, metres);
+    const ahead = roadPointFrom(tinRoad, tinStart.x, tinStart.z, metres + 1);
+    return Object.freeze({id:`bess-road-block-${index + 1}`, metres, car:index === 1,
+      position:Object.freeze({...point, y:scablandsSurfaceHeightAt(point.x, point.z)}),
+      heading:Math.atan2(ahead.x - point.x, ahead.z - point.z)});
+  }));
+  const slowBlockCars = path(...[slowBlocks[1], slowBlocks[2]].map((block, index) => {
+    const point = index === 0 ? block.position : roadPointFrom(tinRoad, tinStart.x, tinStart.z,
+      block.metres + GAS_LOAD_RULE.riderBehindMetres);
+    return Object.freeze({id:index === 0 ? block.id : 'bess-block-rider', gasBlockCar:index === 0,
+      gasBlockRider:index === 1, renderCar:'dusthawk_rally', health:100,
+      heading:block.heading + Math.PI / 2, start:place(`bess-block-car-${index}`, point)});
+  }));
   const furnaceRunBack = place('furnace-run-3', between('dead-mall', 'everburn', .485, 5.62, -18.9));
   // The well's post is solid. Start and finish outside it, on the sides reached by the two road pieces.
   const furnaceStart = place('furnace-well-start', at('everburn', -5, -10), 18);
@@ -215,24 +250,25 @@ export function buildEverburn(land) {
         // Collection requests Cinder's line while the bellows rule times its hold.
       })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
-      // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
-      resultLine:'The gas is in Tin Town and the forge is lit.',
+      captions:Object.freeze({...GAS_LOAD_LINES, 'gas.flash':GAS_FLASH_LINE, 'gas.dry':GAS_DRY_LINE}),
+      resultLineId:'story.ember.auntie-solder.6',
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
-      steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
+      steps:[step('escort',{what:'Open the road and keep the Ash Men off her tank.', gasLoad:true, meeting:bessMeeting,
+        gasTank:place('forge-gas-tank', at('tin-town', GAS_LOAD_RULE.tankEastMetres, GAS_LOAD_RULE.tankSouthMetres)),
+        gasFurnacePlace:place('gas-furnace-high-ground', at('tin-town', GAS_LOAD_RULE.arrivalFurnaceEastMetres, GAS_LOAD_RULE.arrivalFurnaceSouthMetres)),
+        gasLamps:townLights.lamps,
+        blocks:slowBlocks, barriers:path(slowBlocks[0], slowBlocks[2]), waitingActors:slowBlockCars,
+        hoseFrom:place('bess-plane-wing', at('boneyard', 13, -32)), actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:GAS_LOAD_RULE.speedKmh / 3.6,
         path:slowRidePath}, path:slowRidePath, destination:slowRidePath.at(-1),
-        // The car starts 10 m behind her and 6 m to her right, facing along her road (it was the Boneyard's own spawn, 165 m off).
-        carStart:escortCarStart(slowRidePath),
-        speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
-        // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. Both stand on her road: the first three
-        // quarters of the way from the Boneyard to the halfway camp (past the Wash), the second three quarters of the way from the camp to Tin
-        // Town (past the bridge). The flamethrower is lent, as in job 1.
-        ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1', between('the-wash', 'safe-road', .4)), count:2}),
-          Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2', {x: bridgeOut.position.x + (at('tin-town').x - bridgeOut.position.x) * .5, z: bridgeOut.position.z + (at('tin-town').z - bridgeOut.position.z) * .5}), count:2})]),
+        carStart:escortCarStart(slowRidePath, GAS_LOAD_RULE.carStartBehindMetres, GAS_LOAD_RULE.carStartSideMetres),
+        speed:GAS_LOAD_RULE.speedKmh / 3.6, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
+        gasRaids:slowRaids, gasRaiders:slowRaiders,
         // The furnace paces her on the high ground while she is between 30% and 70% of her road.
         sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
         // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.
-        reward:'scrap', startLineId:'story.ember.moss.1', closing:['story.ember.auntie-solder.6']})]}),
+        arrivalHold:Object.freeze({seconds:GAS_LOAD_RULE.arrivalSeconds, catchAt:GAS_LOAD_RULE.arrivalCatchSeconds}),
+        gasArrivalLineId:'story.ember.auntie-solder.6', reward:'scrap'})]}),
     Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
       resultLineId:'story.ember.old-smoke.1',
       easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'story.ember.cinder.11',

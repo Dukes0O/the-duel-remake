@@ -1,3 +1,4 @@
+import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {SALT_RIDERS} from './jobs/ember-rule.js';
 import {createScablandsDrawnFeet} from './scablands-drawn-feet.js';
 import * as THREE from 'three';
@@ -40,6 +41,7 @@ import {saltLeanToShape} from './salt-lean-to-look.js';
 import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
+import {createGasLoadView} from './gas-load-view.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSolids,SCABLANDS_SOLIDS} from './scablands-solids.js';
 import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
@@ -638,6 +640,7 @@ export function createScablandsScene(course,options={}){
     saltShelter.add(lean);
   }
   const cinder=createCinderFigure();group.add(cinder);
+  const gasLoadView=createGasLoadView();group.add(gasLoadView.group);
   const brandLamps=createBrandLamps({surface:()=>barricadeMaterial});group.add(brandLamps.group);
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
@@ -915,6 +918,8 @@ export function createScablandsScene(course,options={}){
           glassBeam.place(glassSource, glassTarget, glass.radius ?? FURNACE_GLASS.glassRadius, clock);
         }
       } else glassBeam.group.visible = false;
+      const gasStep = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+      forge.gas(gasStep?.gasLoad ? GAS_LOAD_RULE.forgeBeforeGasShare + (1 - GAS_LOAD_RULE.forgeBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : null);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -998,8 +1003,9 @@ export function createScablandsScene(course,options={}){
       townDoor.position.set(doorPose.localX,1.5,doorPose.localZ);
       braziers.group.visible=Boolean(emberStep);
       braziers.setYardPotLoaded(Boolean(emberStep?.pickup&&worldJob?.job?.stepState?.loaded));
+      gasLoadView.update(worldJob,group.userData.drawnGroundHeightAt);
       barricades.forEach((rig,index)=>{
-        const barrier=emberStep?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
+        const barrier=(stepNow?.gasLoad?stepNow:emberStep)?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
         rig.visible=Boolean(barrier);rig.children[0].visible=!burnt;rig.children[1].visible=Boolean(burnt);
         if(barrier){const at=barrier.position;rig.position.set(at.x,at.y,at.z);rig.rotation.y=barrier.heading+Math.PI;}
       });
@@ -1080,7 +1086,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();bellowsView.dispose();
+    barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

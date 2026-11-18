@@ -78,7 +78,7 @@ const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 // draws, and any furnace that is an actor of the job).
 export function jobFacts(worldJob) {
   const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-  const barricades = (step?.barriers ?? []).map(item => ({id: item.id, ...(item.position ?? item)})).filter(item => Number.isFinite(item.x) && Number.isFinite(item.z));
+  const barricades = (step?.gasLoad ? step.blocks ?? [] : step?.barriers ?? []).map(item => ({id: item.id, ...(item.position ?? item), ...(step?.gasLoad ? {known:true} : {})})).filter(item => Number.isFinite(item.x) && Number.isFinite(item.z));
   const furnaces = [];
   const sighted = furnaceSighting(worldJob);
   if (sighted?.hidden) furnaces.push({id: 'furnace-skyline', hidden: true});
@@ -98,7 +98,7 @@ export function learn(knowledge, {car, barricades = [], furnaces = [], crossings
     changed = true;
   }
   for (const item of barricades) {
-    if (knowledge.barricades.has(item.id) || gap(car, item) > SEEN.barricade) continue;
+    if (knowledge.barricades.has(item.id) || !item.known && gap(car, item) > SEEN.barricade) continue;
     knowledge.barricades.set(item.id, {id: item.id, x: item.x, z: item.z, who: holderOf(item.id)});
     // A crossing a barricade stands at is held by whoever set it there.
     const near = crossings.filter(crossing => gap(crossing, item) < 260).sort((a, b) => gap(a, item) - gap(b, item))[0];

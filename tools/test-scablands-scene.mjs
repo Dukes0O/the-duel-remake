@@ -482,11 +482,11 @@ assert.deepEqual([rolling(5).x,rolling(5).z],[rolling(5).x,rolling(5).z],'job 3:
 // Job 4: 90 m to the north of Big Bess and 40 m ahead of her while she is between 30% and 70% of her road, at her speed, then turning away north.
 const slow=EVERBURN_JOBS[3].steps[0],points=slow.path.map(item=>item.position);
 const legs=points.slice(1).map((point,index)=>Math.hypot(point.x-points[index].x,point.z-points[index].z)),total=legs.reduce((sum,length)=>sum+length,0);
-// Slice 2b: Slow Ride's road has more than two legs (it goes by the Wash and the Girder Bridge), so the share is walked along all of them.
+// Slow Ride follows every Tin Road point and the forge approach, so walk the share along every leg.
 const escortAtShare=share=>{let metres=share*total,index=0;while(index<legs.length-1&&metres>legs[index]){metres-=legs[index];index++;}
   const from=points[index],to=points[index+1],t=metres/legs[index];
   return {id:'big-bess',position:{x:from.x+(to.x-from.x)*t,y:0,z:from.z+(to.z-from.z)*t},pathIndex:index+1,roadHeading:Math.atan2(to.x-from.x,to.z-from.z)};};
-const escorting=(share,job={stepIndex:0,steps:EVERBURN_JOBS[3].steps,done:false})=>sightingState(4,job,{actors:[escortAtShare(share)]});
+const escorting=(share,job={stepIndex:0,steps:EVERBURN_JOBS[3].steps,stepState:{gasLoaded:true,gas:100,holes:0},done:false})=>sightingState(4,job,{actors:[escortAtShare(share)]});
 const wrapAngle=angle=>Math.atan2(Math.sin(angle),Math.cos(angle));
 syncScene(scene.group,escorting(.2));
 assert.ok(rigAt().distanceTo(restAt)<.001,'job 4: before 30% of her road the furnace stays where it was');
@@ -657,22 +657,32 @@ const roadPieces=roadsDraw.group.children.filter(mesh=>mesh.visible);
   const addLine=(points)=>{for(let index=1;index<points.length;index++)lines.push([points[index-1],points[index]]);};
   addLine(flat(furnaceSteps.slice(planes,roadHome+1)));
   addLine(flat(GAS_RUN_PATHS.long));addLine(flat(GAS_RUN_PATHS.boneyard));
-  addLine(flat(EVERBURN_JOBS[3].steps[0].path).slice(1));
+  const slowPath = EVERBURN_JOBS[3].steps[0].path;
+  const bayStart = slowPath.findIndex(place => place.id === 'bess-south-gate');
+  // The run from the Tin Road's end to the south gate is outside the fence: it keeps the ten metres of a road too.
+  addLine(flat(slowPath).slice(1,bayStart+1));
+  // The new delivery bay is inside the town, beyond the land's Tin Road.
+  // Its full solid clearance is proved in test-everburn-job4. Keep the old
+  // ten-metre road rule and check this service approach separately.
+  const bayLines = flat(slowPath).slice(bayStart).slice(1).map((point,index) =>
+    [slowPath[bayStart+index].position,point]);
   addLine([LAND.yard,LAND.at('tin-town')]);addLine([LAND.at('tin-town',-25,62),LAND.at('tin-town')]);
   assert.ok(lines.length>=12,'the roads and lines are read from the real job paths');
   const distanceToLine=(x,z,[a,b])=>{const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);};
-  let nearestCentre=1e9,nearestRoad=1e9,vertices=0;
+  let nearestCentre=1e9,nearestRoad=1e9,nearestBay=1e9,vertices=0;
   for(const mesh of meshes){
     const at=mesh.geometry.attributes.position;
     for(let index=0;index<at.count;index++){
       const x=at.getX(index),z=at.getZ(index);vertices++;
       nearestCentre=Math.min(nearestCentre,Math.hypot(x-TIN_TOWN_CENTRE.x,z-TIN_TOWN_CENTRE.z));
       for(const line of lines)nearestRoad=Math.min(nearestRoad,distanceToLine(x,z,line));
+      for(const line of bayLines)nearestBay=Math.min(nearestBay,distanceToLine(x,z,line));
     }
   }
   assert.ok(vertices>10000,'the shacks are drawn');
   assert.ok(nearestCentre>=24,`nothing is drawn within 24 m of the town's centre (nearest ${nearestCentre.toFixed(1)} m)`);
   assert.ok(nearestRoad>=10,`nothing is drawn within 10 m of a road or path (nearest ${nearestRoad.toFixed(1)} m)`);
+  assert.ok(nearestBay>=2,`Bess's forge approach stays two metres clear of the shacks (nearest ${nearestBay.toFixed(1)} m)`);
   // Every foot stands on the ground at its own point.
   assert.ok(data.feet.length>150,'every leg, post and sheet has a foot');
   const worst=Math.max(...data.feet.map(foot=>Math.abs(foot.y-scablandsSurfaceHeightAt(foot.x,foot.z))));

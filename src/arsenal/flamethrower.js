@@ -128,7 +128,8 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
         const bellows = duel.state.arena.worldJob?.job;
         const bellowsStep = bellows?.steps[bellows.stepIndex];
         const loadContact = bellowsStep?.bellows && thing.id === bellowsStep.targetId;
-        if (!loadContact && burst.worldJobHits.includes(thing.id)) continue;
+        const timedBarricade = bellowsStep?.gasLoad && thing.kind === 'barricade' && thing.burnable;
+        if (!loadContact && !timedBarricade && burst.worldJobHits.includes(thing.id)) continue;
         const dx = thing.position.x - at.x, dz = thing.position.z - at.z;
         const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
           Math.cos(Math.atan2(dx, dz) - heading));
