@@ -544,7 +544,7 @@ export function createScablandsScene(course,options={}){
     // Layered job movers carry their actual support height, including beneath a deck.
     const layered=onGround&&actor.hasFloorHeight&&Number.isFinite(at?.y);
     rig.position.set(x,layered?at.y:(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
-    rig.position.y+=group.userData.drawnFeet?.shift(x,z,layered?at.y:undefined,onGround?undefined:rig.position.y)??0;
+    rig.position.y+=group.userData.drawnFeet?.shiftFor(rig,clock,x,z,layered?at.y:undefined,onGround?undefined:rig.position.y)??0;
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
@@ -887,7 +887,8 @@ export function createScablandsScene(course,options={}){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
       brandAuntie.update(worldJob);
-      const drawnShift=group.userData.drawnFeet?.shift;
+      const drawnShift=(x,z,support,airborneFeet,object)=>object?
+        group.userData.drawnFeet.shiftFor(object,clock,x,z,support,airborneFeet):group.userData.drawnFeet.shift(x,z,support,airborneFeet);
       carriedBrand.update(state,drawnShift);
       brandAshView.update(worldJob,drawnShift);
       brandThief.update(worldJob,drawnShift);
@@ -1005,7 +1006,7 @@ export function createScablandsScene(course,options={}){
       if(cinder.visible){
         const at=(emberStep.pickup.figure??emberStep.pickup.place).position;
         cinder.position.set(at.x,scablandsSurfaceHeightAt(at.x,at.z),at.z);
-        cinder.position.y+=group.userData.drawnFeet.shift(at.x,at.z);
+        cinder.position.y+=group.userData.drawnFeet.shiftFor(cinder,clock,at.x,at.z);
         const start=emberStep.carStart;
         if(start)cinder.rotation.y=Math.atan2(start.x-at.x,start.z-at.z);
         requestCinder();

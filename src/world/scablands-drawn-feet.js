@@ -53,9 +53,9 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
     // either surface is half their separation; outside the band it is exact.
     return river + (top - river) * (distance - 77) / 6;
   }
-  function shift(x, z, support, airborneFeet) {
+  function rawShift(x, z, support, airborneFeet) {
     const actorFeet=Number.isFinite(airborneFeet)?airborneFeet:support;
-    if(Number.isFinite(actorFeet)&&course?.groundTunnels?.tubeAt({x,y:actorFeet,z},actorFeet,.1))return 0;
+    if(Number.isFinite(actorFeet)&&course?.groundTunnels?.tubeAt({x,y:actorFeet,z},actorFeet,.1))return null;
     const distance=riverField.distanceAt(x,z);
     // The edit layer already includes the current natural ground. The public
     // surface query cancels and re-adds that same natural height for marks.
@@ -68,12 +68,30 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
     // Unknown supports, decks, edited yards and tunnel floors keep their own drawing.
     if (Math.abs(floor - own) > .1 ||
         (scablandsGroundEdit.chunkCount>0 && Math.abs(scablandsGroundEdit.heightAt(x,z) - scablandsNaturalHeightAt(x,z)) > 1e-6) ||
-        course?.groundTunnels?.tubeAt({x,y:floor,z},floor,.1)) return 0;
+        course?.groundTunnels?.tubeAt({x,y:floor,z},floor,.1)) return null;
     // The plain already has a small drawing lift. Keep lattice corners fixed,
     // but do not subtract that lift at the river join (which has none).
     const lift=NEAR_GROUND.lift*Math.max(0,Math.min(1,(distance-83)/3));
     return Math.max(-1.2, Math.min(1.2, groundAt(x,z) - own - lift));
   }
+  function shift(x,z,support,airborneFeet) {
+    return rawShift(x,z,support,airborneFeet)??0;
+  }
+  function shiftFor(object,seconds,x,z,support,airborneFeet) {
+    const raw=rawShift(x,z,support,airborneFeet),blocked=raw===null,target=raw??0;
+    const data=object.userData??(object.userData={});
+    let ease=data.scablandsFeet;
+    if(!ease) {
+      data.scablandsFeet={blocked,value:target,offset:0,start:seconds};
+      return target;
+    }
+    if(blocked!==ease.blocked) {
+      ease.offset=ease.value-target;ease.start=seconds;ease.blocked=blocked;
+    }
+    const remaining=Math.max(0,1-Math.max(0,seconds-ease.start)/.4);
+    ease.value=target+ease.offset*remaining;
+    return ease.value;
+  }
   refresh();
-  return {groundAt, shift, refresh};
+  return {groundAt, shift, shiftFor, refresh};
 }

@@ -6,13 +6,14 @@ import {Course} from '../src/course.js';
 import {createRiverField} from '../src/world/scablands-draw.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
-import {scablandsFloorsAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsFloorsAt,scablandsSurfaceHeightAt,scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {createScablandsDrawnFeet} from '../src/world/scablands-drawn-feet.js';
 import {NEAR_GROUND} from '../src/world/near-ground.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {HOT_DELIVERY_WAYS, routeFor, sampleLine} from '../src/world/scablands-ways.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
+import {ROAD_NET} from '../src/world/scablands-road.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {syncScene} from '../src/scene-systems.js';
 
@@ -51,6 +52,31 @@ try {
   const underground=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+1},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:tunnel}});
   assert.equal(underground.shift(2690,-2445,own),0,'A tunnel support receives no shift.');
   assert.equal(underground.shift(2690,-2445,own,own+1),0,'Jumping within a tunnel receives no shift.');
+  // Drawing-only state is kept on the mesh. Rule positions advance at 100 km/h.
+  const mouthFeet=createScablandsDrawnFeet({near:{heightAtDrawn:(x,z)=>scablandsSurfaceHeightAt(x,z)+.825},
+    gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:tunnel}});
+  const bridgeHit=ROAD_NET.nearest(deck.x,deck.z),a=bridgeHit.road.points[bridgeHit.index],b=bridgeHit.road.points[bridgeHit.index+1];
+  const heading=Math.atan2(b.x-a.x,b.z-a.z);
+  for(const kind of ['tunnel','bridge']) {
+    const view=new THREE.Group(), delta=100/3.6/60,field=kind==='tunnel'?mouthFeet:feet;
+    let previous=null,previousRaw=null,previousSupport,switched=false;
+    for(let frame=0;frame<500;frame++) {
+      const along=-120+frame*delta;
+      const x=kind==='tunnel'?2670+frame*delta:deck.x+Math.sin(heading)*along;
+      const z=kind==='tunnel'?-2445:deck.z+Math.cos(heading)*along;
+      const support=scablandsActorHeightAt(x,z,previousSupport);
+      previousSupport=support;
+      const raw=field.shift(x,z,support),eased=field.shiftFor(view,frame/60,x,z,support);
+      const blocked=view.userData.scablandsFeet.blocked;
+      if(previous) {
+        const groundChange=blocked===previous.blocked?Math.abs(raw-previousRaw):0;
+        assert.ok(Math.abs(eased-previous.value)<=groundChange+.05+1e-9,`${kind} switch is eased at 60 Hz`);
+        switched ||= blocked!==previous.blocked;
+      }
+      previous={value:eased,blocked};previousRaw=raw;
+    }
+    assert.ok(switched,`${kind} route crosses a support boundary`);
+  }
   const deepTunnel=createGroundTunnels([{start:{x:2680,y:own-10+1.65,z:-2445},end:{x:2700,y:own-10+1.65,z:-2445},radius:3}]);
   const deepFeet=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+.8},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:deepTunnel}});
   assert.equal(deepFeet.shift(2690,-2445,own-10,own-9),0,'A jump in a buried tunnel keeps its underground support.');

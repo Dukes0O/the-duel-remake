@@ -34,7 +34,7 @@ export function createCarriedBrand() {
       group.position.set(fighter.x - Math.cos(yaw) * R.brandHandSide + Math.sin(yaw) * R.brandHandForward,
         fighter.y + R.brandHandHeight,
         fighter.z + Math.sin(yaw) * R.brandHandSide + Math.cos(yaw) * R.brandHandForward);
-      group.position.y+=drawnShift?.(fighter.x,fighter.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined)??0;
+      group.position.y+=drawnShift?.(fighter.x,fighter.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined,group)??0;
       group.rotation.set(fighter.pitch || 0, yaw, 0, 'YXZ');
     },
     dispose() {

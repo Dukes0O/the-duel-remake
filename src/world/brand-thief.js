@@ -20,7 +20,7 @@ export function createBrandThief() {
       group.visible = Boolean(pose);
       if (!pose) { figures.update([], {active: false}); return; }
       Object.assign(actor, pose, {y: scablandsSurfaceHeightAt(pose.x, pose.z)});
-      group.position.y=drawnShift?.(actor.x,actor.z,actor.y)??0;
+      group.position.y=drawnShift?.(actor.x,actor.z,actor.y,undefined,group)??0;
       figures.update([actor], {active: true});
       load.position.set(actor.x - Math.sin(actor.yaw) * R.thiefLoadBehind,
         actor.y + R.thiefLoadLift, actor.z - Math.cos(actor.yaw) * R.thiefLoadBehind);

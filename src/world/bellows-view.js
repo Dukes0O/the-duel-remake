@@ -38,7 +38,7 @@ export function createBellowsView(course) {
           load.visible = true;
           load.position.set(at.x, (at.y ?? 0) + R.roofLoadLift, at.z);
           load.position.y+=drawnShift?.(at.x,at.z,carried.bellowsLoaded?state.groundHeight:at.y,
-            carried.bellowsLoaded&&state.airborne?state._jumpY:undefined)??0;
+            carried.bellowsLoaded&&state.airborne?state._jumpY:undefined,load)??0;
           load.rotation.y = heading;
         }
         for (const cloud of carried.clouds ?? []) {
@@ -53,7 +53,7 @@ export function createBellowsView(course) {
           const pose = course.nearest(cloud.x, cloud.z);
           const floor = course.groundAt(pose.s, pose.lateral).y;
           mesh.position.set(cloud.x, floor + R.ashHeightMetres / 2, cloud.z);
-          mesh.position.y+=drawnShift?.(cloud.x,cloud.z,floor)??0;
+          mesh.position.y+=drawnShift?.(cloud.x,cloud.z,floor,undefined,mesh)??0;
           mesh.rotation.y = cloud.yaw;
           mesh.scale.set(cloud.width, R.ashHeightMetres, cloud.length);
         }

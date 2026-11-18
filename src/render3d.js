@@ -364,11 +364,16 @@ export function attachRenderer(host, app) {
   worldJobCrate.visible=false;scene.add(worldJobCrate);
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
-  const drawnShift=(x,z,support,airborneFeet)=>world?.userData?.drawnFeet?.shift(x,z,support,airborneFeet)??0;
-  const carShift=(x,z,actor)=>drawnShift(x,z,actor?.groundHeight,actor?.airborne?scablandsActorFeet(actor,actor.groundHeight):undefined);
+  let drawingSeconds=0;
+  const cameraFeetRig={userData:{}};
+  const drawnShift=(x,z,support,airborneFeet,object)=>{
+    const feet=world?.userData?.drawnFeet;
+    return feet?(object?feet.shiftFor(object,drawingSeconds,x,z,support,airborneFeet):feet.shift(x,z,support,airborneFeet)):0;
+  };
+  const carShift=(x,z,actor,object)=>drawnShift(x,z,actor?.groundHeight,actor?.airborne?scablandsActorFeet(actor,actor.groundHeight):undefined,object);
   const applyVehicleTerrainPose=(mesh,course,actor)=>{
     applyPhysicalVehicleTerrainPose(mesh,course,actor);
-    if(course.def?.scablands)mesh.position.y+=carShift(mesh.position.x,mesh.position.z,actor);
+    if(course.def?.scablands)mesh.position.y+=carShift(mesh.position.x,mesh.position.z,actor,mesh);
   };
   let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
@@ -663,6 +668,7 @@ export function attachRenderer(host, app) {
     }
     const diagnosticTime = Number.isFinite(presentation.presentationSeconds);
     const presentationSeconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
+    drawingSeconds=presentationSeconds;
     const ambientNow = diagnosticTime ? presentationSeconds*1000 : now;
     lastPresentationSeconds = presentationSeconds; lastSaltHeatEnabled = false;
     const phaseProbe=measure&&app.frameDiagnostics?.active?app.frameDiagnostics:null;
@@ -892,7 +898,7 @@ export function attachRenderer(host, app) {
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       const pose=onFootCameraPose(course,st.fighter,footMode);
-      const shift=drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0),st.fighter.airHeight>0?st.fighter.y:undefined);
+      const shift=drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0),st.fighter.airHeight>0?st.fighter.y:undefined,cameraFeetRig);
       pose.position.y+=shift;pose.target.y+=shift;
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
@@ -906,7 +912,7 @@ export function attachRenderer(host, app) {
       const back = mode === 'hood' ? .8 : mode === 'wide' ? -16 : tall?-12:-8.7;
       const height = mode === 'hood' ? (tall?3.2:1.38) : mode === 'wide' ? (tall?7.5:5.6) : tall?5.8:3.65;
       const cp = worldAtExtended(course, distance + back, lateral);
-      const supportLift=(Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0)+carShift(pp.x,pp.z,st);
+      const supportLift=(Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0)+carShift(pp.x,pp.z,st,player);
       const groundLift = pp.y - course.at(distance).y+supportLift+(st.airHeight||0)*.65;
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
@@ -967,7 +973,7 @@ export function attachRenderer(host, app) {
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
     const groundChase=!menu&&!st.onFoot&&['chase','wide'].includes(app.cameraMode||'chase')&&
       !deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera;
-    const cameraFeet=scablandsActorFeet(st,pp.y)+carShift(pp.x,pp.z,st), drawnGround=world?.userData?.drawnFeet?.groundAt??world?.userData?.drawnGroundHeightAt;
+    const cameraFeet=scablandsActorFeet(st,pp.y)+carShift(pp.x,pp.z,st,player), drawnGround=world?.userData?.drawnFeet?.groundAt??world?.userData?.drawnGroundHeightAt;
     if(groundChase)raiseScablandsCamera(course,camTarget,player.position,cameraFeet,drawnGround);
     camera.position.y-=machineLiftApplied;machineLiftApplied=0; // the height a big machine gave the camera last frame is not part of where it stands
     if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
@@ -1053,7 +1059,7 @@ export function attachRenderer(host, app) {
       const actor=jobActors.find(item=>item.id===entry.id);entry.mesh.visible=!menu&&!!actor;
       if(!entry.mesh.visible)continue;
       placeWorldJobVehicle(entry.mesh,actor,course,st.s);
-      entry.mesh.position.y+=drawnShift(actor.position.x,actor.position.z,actor.hasFloorHeight?actor.position.y:undefined);
+      entry.mesh.position.y+=drawnShift(actor.position.x,actor.position.z,actor.hasFloorHeight?actor.position.y:undefined,undefined,entry.mesh);
       if(Number.isFinite(entry.previousX))entry.mesh.rotation.y=Math.atan2(
         actor.position.x-entry.previousX,entry.previousZ-actor.position.z);
       entry.previousX=actor.position.x;entry.previousZ=actor.position.z;
