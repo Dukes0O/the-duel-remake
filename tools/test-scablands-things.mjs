@@ -15,7 +15,7 @@ import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, rea
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
-import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
+import {createNearGround, nearGroundHeightAt, NEAR_GROUND} from '../src/world/near-ground.js';
 import {preparedScarps} from '../src/world/scablands-scarps.js';
 import {HILLS} from '../src/world/scablands-height.js';
 
@@ -49,6 +49,11 @@ test('the height used for things follows the drawn hills and mesa faces', () => 
     for (let dx = -hill.radius; dx <= hill.radius; dx += 23) for (let dz = -hill.radius; dz <= hill.radius; dz += 29) {
       if (Math.hypot(dx, dz) > hill.radius) continue;
       const x = hill.x + dx, z = hill.z + dz;
+      // Crease detail follows the car. Put this sample inside its near block.
+      if (Math.abs(x - ground.centreX) >= (NEAR_GROUND.creaseNear - 1) * NEAR_GROUND.cellX ||
+          Math.abs(z - ground.centreZ) >= (NEAR_GROUND.creaseNear - 1) * NEAR_GROUND.cellZ) {
+        ground.follow(x, z); ground.mesh.updateMatrixWorld(true);
+      }
       ray.set(new THREE.Vector3(x, 1000, z), down);
       const hits = ray.intersectObject(ground.mesh, true);
       assert.ok(hits.length, `${kind} ground covers the point`);
