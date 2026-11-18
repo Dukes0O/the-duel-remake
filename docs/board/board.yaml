@@ -628,6 +628,17 @@ tasks:
     locks: []
     details: "docs/board/cards/STORY-PEOPLE.md"
 
+  - id: WASTELAND-ART-DIRECTION
+    title: "Big Bess and Tin Town at dusk: compare photo textures, Blender and HTML art"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    claimed_by: "Codex (cloud), 18 November 2026"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WASTELAND-ART-DIRECTION.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
