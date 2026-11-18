@@ -21,8 +21,8 @@ import {gasRunPaths, gasRunWreck} from '../src/world/jobs/gas-run.js';
 import {furnaceMarks} from '../src/world/jobs/furnace-sightings.js';
 import {roadNet, EAST_ROAD, roadPointFrom} from '../src/world/scablands-road.js';
 import {riverFor, stepsWayFor} from '../src/world/scablands-regions.js';
-import {nearestOnLine} from '../src/world/scablands-ways.js';
-import {BED_MIST} from '../src/world/jobs/ember-rule.js';
+import {HOT_DELIVERY_WAYS, routeFor, sliceLine, nearestOnLine} from '../src/world/scablands-ways.js';
+import {BED_MIST, SALT_RIDERS} from '../src/world/jobs/ember-rule.js';
 import {tinTownGateFor} from '../src/world/tin-town-gate.js';
 import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
 import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
@@ -275,6 +275,20 @@ test('moving a place in a copy of the table moves everything that belongs to it,
       // EVERBURN-REMAKE job 1 (16 November 2026): the Halfway Camp's brazier stands 9 m to one side of the way from the camp to Tin Town, so it
       // turns about the camp a little when either place moves. It belongs to the camp: it stays 9 m from it, on that same side of that way.
       // These positions follow the road and gate as the land moves.
+      // The salt post is a fixed distance along a bending way, then a south offset.
+      // Check that geometry exactly instead of assuming a straight share of a town move.
+      if (/^salt-(lean-to|rider-start-[12])$/.test(id)) {
+        const way = routeFor(HOT_DELIVERY_WAYS.find(way => way.id === 'salt-pan').legs,
+          {start:movedLand.yard, destination:movedLand.at('tin-town'), land:movedLand, net});
+        const [point, ahead] = sliceLine(way, SALT_RIDERS.postAlong, SALT_RIDERS.postAlong + 1);
+        const dx = ahead.x - point.x, dz = ahead.z - point.z, length = Math.hypot(dx, dz);
+        const post = {x:point.x - dz / length * SALT_RIDERS.postSide,
+          z:point.z + dx / length * SALT_RIDERS.postSide};
+        const rider = /^salt-rider-start-([12])$/.exec(id);
+        if (rider) { post.x += (rider[1] === '1' ? -1 : 1) * SALT_RIDERS.riderOffset; post.z -= SALT_RIDERS.riderOffset; }
+        near({x:b.get(id)[0], z:b.get(id)[1]}, post, id);
+        continue;
+      }
       const rider = /^ash-rider-start-([12])$/.exec(id);
       if (rider) {
         const barrier = b.get(`ash-men-barricade-${rider[1]}`);

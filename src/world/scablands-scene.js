@@ -612,7 +612,7 @@ export function createScablandsScene(course,options={}){
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
-  const saltShelter = new THREE.Group(); saltShelter.name = 'The salt lean-to'; group.add(saltShelter);
+  const saltShelter = new THREE.Group(); saltShelter.name = 'The salt lean-to'; saltShelter.visible = false; group.add(saltShelter);
   const saltMaterial = new THREE.MeshStandardMaterial({color:0x756551, roughness:.9});
   for (const x of [-SALT_RIDERS.shelterHalfX, SALT_RIDERS.shelterHalfX]) for (const z of [-SALT_RIDERS.shelterHalfZ, SALT_RIDERS.shelterHalfZ]) {
     const post = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterPostWidth, SALT_RIDERS.shelterHeight, SALT_RIDERS.shelterPostWidth), saltMaterial);
