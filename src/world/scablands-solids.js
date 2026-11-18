@@ -207,6 +207,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
   const grid = {
     people: [],
+    storyPeople: [],
     brandLamps: [],
     cars: [],
     braziers: [],
@@ -223,6 +224,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
       for (const solid of this.people) found.push(solid);
+      for (const solid of this.storyPeople) found.push(solid);
       for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
       return found;
@@ -230,6 +232,12 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     setPeople(people) {
       this.people = people.map(({id, position}) => make({id, kind:'person', shape:'ellipse',
         x:position.x, z:position.z, halfX:.45, halfZ:.45, height:1.8}));
+    },
+    setStoryPeople(people) {
+      this.storyPeople = people.map(({id, position, height, radius}) => make({
+        id, kind:'person', shape:'ellipse', x:position.x, z:position.z, base:position.y,
+        halfX:radius, halfZ:radius, height, verticalClearance:true,
+      }));
     },
     setBrandLamps(places) {
       this.brandLamps = places.map(({id, position}) => make({id: `town-lamp-${id}`,
