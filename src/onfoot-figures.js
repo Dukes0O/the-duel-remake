@@ -79,14 +79,14 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
   const matrix = new THREE.Matrix4(), from = new THREE.Vector3(), to = new THREE.Vector3();
   const direction = new THREE.Vector3(), lastPositions = new WeakMap();
   const eye = new THREE.Vector3();
-  let actorCount = 0, localFighter = null, disposed = false;
+  let actorCount = 0, localFighter = null, localShift = 0, disposed = false;
   for (const [kind, mesh] of Object.entries(meshes)) {
     mesh.onBeforeRender = (_renderer, _scene, camera) => {
       // The local figure remains available in a distant mirror or photo view.
       // The first-person eye is inside its helmet, so omit only its last slot
       // for a camera at the fighter's eye. No matrix upload is needed here.
       const hideLocal = localFighter && camera.position.distanceToSquared(
-        eye.set(localFighter.x, localFighter.y + 1.62, localFighter.z)) < .7 ** 2;
+        eye.set(localFighter.x, localFighter.y + localShift + 1.62, localFighter.z)) < .7 ** 2;
       mesh.count = (actorCount - (hideLocal ? 1 : 0)) * PARTS[kind];
     };
   }
@@ -121,7 +121,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     const gait = !down && !airborne && distance > .003
       ? Math.sin((fighter.steps || 0) * .11) * .17 : 0;
     root.position.set(fighter.x, fighter.y + (down ? .48 : 0), fighter.z);
-    root.position.y+=drawnShift?.(fighter.x,fighter.z,fighter.groundY??fighter.y-(fighter.airHeight||0))??0;
+    root.position.y+=drawnShift?.(fighter.x,fighter.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined)??0;
     root.rotation.set(down ? -Math.PI / 2 : 0, fighter.yaw || 0, 0, 'YXZ');
     root.updateMatrix();
 
@@ -181,6 +181,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     if (local) ordered.push(local);
     actorCount = active ? ordered.length : 0;
     localFighter = active ? local?.fighter || local : null;
+    localShift=localFighter?(drawnShift?.(localFighter.x,localFighter.z,localFighter.groundY??localFighter.y-(localFighter.airHeight||0),localFighter.airHeight>0?localFighter.y:undefined)??0):0;
     group.visible = actorCount > 0;
     for (const [kind, mesh] of Object.entries(meshes)) mesh.count = actorCount * PARTS[kind];
     if (!group.visible) return 0;

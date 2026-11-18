@@ -46,6 +46,13 @@ try {
   const tunnel=createGroundTunnels([{start:{x:2680,y:own+1.65,z:-2445},end:{x:2700,y:own+1.65,z:-2445},radius:3}]);
   const underground=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+1},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:tunnel}});
   assert.equal(underground.shift(2690,-2445,own),0,'A tunnel support receives no shift.');
+  assert.equal(underground.shift(2690,-2445,own,own+1),0,'Jumping within a tunnel receives no shift.');
+  const deepTunnel=createGroundTunnels([{start:{x:2680,y:own-10+1.65,z:-2445},end:{x:2700,y:own-10+1.65,z:-2445},radius:3}]);
+  const deepFeet=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+.8},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:deepTunnel}});
+  assert.equal(deepFeet.shift(2690,-2445,own-10,own-9),0,'A jump in a buried tunnel keeps its underground support.');
+  const takeoff=scablandsSurfaceHeightAt(2690,-2450);
+  assert.ok(Math.abs(feet.shift(2690,-2445,takeoff,own+2)-feet.shift(2690,-2445,own))<1e-9,
+    'An airborne car keeps the shift of the ground below, rather than its old takeoff height.');
   for(const height of [-100,100]) {
     const limited=createScablandsDrawnFeet({near:{heightAtDrawn:()=>height},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128}});
     assert.equal(limited.shift(2690,-2445),Math.sign(height)*1.2);
@@ -54,6 +61,10 @@ try {
   const actors=Array.from({length:12},(_,i)=>({x:2690+i*.2,z:-2445+i*.2}));
   const near=course.nearest(2690,-2445);
   syncScene(scene.group,{s:near.s,lateral:near.lateral});
+  const furnaceActor={id:'old-smoke-furnace',position:{x:2690,y:own,z:-2445},heading:0};
+  syncScene(scene.group,{s:near.s,lateral:near.lateral,arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},job:{stepIndex:0,steps:[{kind:'chase',path:[]}]},actors:[furnaceActor]}}});
+  assert.ok(Math.abs(scene.group.getObjectByName("Old Smoke's moving furnace rig").position.y-own-feet.shift(2690,-2445,own))<1e-8,
+    'The furnace keeps its absolute base height and receives the ground correction.');
   for(let frame=0;frame<100;frame++)for(const actor of actors)sink+=feet.shift(actor.x,actor.z);
   const start=performance.now();
   for(let frame=0;frame<2000;frame++)for(const actor of actors)sink+=feet.shift(actor.x,actor.z);

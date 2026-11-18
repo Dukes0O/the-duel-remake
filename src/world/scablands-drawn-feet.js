@@ -1,7 +1,7 @@
 import {nearGroundHeightAt, NEAR_GROUND} from './near-ground.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt, scablandsGroundEdit,
-  scablandsNaturalHeightAt} from './scablands-ground.js';
-import {riverDepthAt} from './scablands-regions.js';
+  scablandsNaturalHeightAt, selectScablandsFloor} from './scablands-ground.js';
+import {riverDepthAt,riverGorgeDepthAt} from './scablands-regions.js';
 
 // Drawing only. The shader cuts the near mesh away below distance 80; the
 // gorge ribbon continues to 92. Outside the cut, the higher mesh is visible.
@@ -53,16 +53,25 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
     // either surface is half their separation; outside the band it is exact.
     return river + (top - river) * (distance - 77) / 6;
   }
-  function shift(x, z, support) {
-    const count = scablandsFloorsAt(x, z, floors), own = floors[count - 1];
-    const floor = Number.isFinite(support) ? support : floors[0];
+  function shift(x, z, support, airborneFeet) {
+    const actorFeet=Number.isFinite(airborneFeet)?airborneFeet:support;
+    if(Number.isFinite(actorFeet)&&course?.groundTunnels?.tubeAt({x,y:actorFeet,z},actorFeet,.1))return 0;
+    const distance=riverField.distanceAt(x,z);
+    // The edit layer already includes the current natural ground. The public
+    // surface query cancels and re-adds that same natural height for marks.
+    // Ask the floor selector only where a deck actually adds a second floor.
+    const layered=distance<100&&riverGorgeDepthAt(x,z)>riverDepthAt(x,z);
+    const count=layered?scablandsFloorsAt(x,z,floors):0;
+    const own=count?floors[count-1]:scablandsGroundEdit.heightAt(x,z);
+    const floor = Number.isFinite(airborneFeet)?(count?selectScablandsFloor(floors,count,airborneFeet):own):
+      Number.isFinite(support) ? support : count?floors[0]:own;
     // Unknown supports, decks, edited yards and tunnel floors keep their own drawing.
     if (Math.abs(floor - own) > .1 ||
         (scablandsGroundEdit.chunkCount>0 && Math.abs(scablandsGroundEdit.heightAt(x,z) - scablandsNaturalHeightAt(x,z)) > 1e-6) ||
         course?.groundTunnels?.tubeAt({x,y:floor,z},floor,.1)) return 0;
     // The plain already has a small drawing lift. Keep lattice corners fixed,
     // but do not subtract that lift at the river join (which has none).
-    const lift=NEAR_GROUND.lift*Math.max(0,Math.min(1,(riverField.distanceAt(x,z)-83)/3));
+    const lift=NEAR_GROUND.lift*Math.max(0,Math.min(1,(distance-83)/3));
     return Math.max(-1.2, Math.min(1.2, groundAt(x,z) - own - lift));
   }
   refresh();

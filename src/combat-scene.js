@@ -3,7 +3,7 @@ import {FLAME_RULES} from './arsenal/flamethrower.js';
 import {SIGNATURE_GEAR} from './crew-gear/gear.js';
 import {createSmokeCloud, smokeHazeOpacity} from './combat-effects.js';
 import {
-  arsenalEnabled, hazardsActive, point
+  arsenalEnabled, hazardsActive, point as physicalPoint
 } from './combat-weapons.js';
 import {
   carEffect
@@ -41,6 +41,12 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
 } = {
 }){
   const group=new THREE.Group();
+  let drawnShift;
+  const point=(duel,actor)=>{
+    const at=physicalPoint(duel,actor);
+    at.y+=drawnShift?.(at.x,at.z,actor.groundHeight,actor.airborne?actor._jumpY:undefined)??0;
+    return at;
+  };
   group.name='Wasteland weapons and shockwaves';
   const onFootFigures=createRiggedFighterFigures({
     loadAsset:loadFighterAsset
@@ -598,6 +604,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   }
   function update(duel, vehicles = {
   }, useAtlas = false){
+    drawnShift=vehicles.drawnShift;
     const s = duel.state, c = s.combat;
     const active = !!c && s.status !== 'menu';
     group.visible = active;
@@ -752,7 +759,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     presentFlame(crewFlame, {...flameFrame,
       active: active && duel.featureFlags?.enabled('crew-gear') === true &&
         s.onFoot && fighter?.flaming === true && cinderHalfAngle > 0,
-      at: fighter && {x: fighter.x, y: fighter.y + .85, z: fighter.z},
+      at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
       heading: fighter?.yaw, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
     cpuGearViews.forEach((view, index) => {
       const crew = s.opponents?.[index]?.cpuCrew;
@@ -768,7 +775,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         }
       }
       presentFlame(view.flame, {...flameFrame, active: fighter?.flaming === true,
-        at: fighter && {x: fighter.x, y: fighter.y + .85, z: fighter.z},
+        at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
         heading: fighter?.yaw, range: cinderGear.range}, duel);
     });
     burningCars.forEach((view, index) => {

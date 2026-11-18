@@ -537,7 +537,7 @@ export function createScablandsScene(course,options={}){
     // Layered job movers carry their actual support height, including beneath a deck.
     const layered=onGround&&actor.hasFloorHeight&&Number.isFinite(at?.y);
     rig.position.set(x,layered?at.y:(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
-    if(onGround)rig.position.y+=group.userData.drawnFeet?.shift(x,z,layered?at.y:undefined)??0;
+    rig.position.y+=group.userData.drawnFeet?.shift(x,z,layered?at.y:undefined,onGround?undefined:rig.position.y)??0;
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
