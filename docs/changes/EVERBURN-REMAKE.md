@@ -1,14 +1,15 @@
-# EVERBURN-REMAKE slice 10
-Cars: render3d.js places road cars through applyVehicleTerrainPose and job cars through placeWorldJobVehicle; the shadow and pot follow their parent.
-Machines: scablands-scene.js places Big Bess through placeRig; her dust and shade follow the rig.
-Walkers: combat-scene.js sends poses to rigged-fighter.js and onfoot-figures.js; render3d.js places the on-foot camera; Cinder and his ring share one root.
-Effects: effects.js uses the car support and tire contacts; vehicle markers follow the drawn meshes.
-The near mesh is discarded inside river distance 80 m. The gorge extends to 92 m, overlapping outside; the higher mesh is visible there.
-The helper joins the cut edge across 77 to 83 m, reads stored near corners and indexes the gorge triangles; no race state changes.
-Drawing fault: the cut edge has a .199501277 m step near (2650.79,2221.98); blending hides the actor jump, not the mesh seam.
-Focused checks: scene contact passes; four ways and ten river-bank lines pass both revised step limits; twelve actors cost .029 ms on plain, .060 ms at river (development checks).
-Integration merged cleanly at 8fdc17d40. Independent review passed after fixes for airborne support and the first-person eye. Final lane tier and build pending; browser pictures are written, not run.
-Changed assertions: route survey logging gaps over .3 m becomes contact within .05 m (half the seam allowed in the band); Bess escort height becomes own height plus drawing shift, with the same .001 m tolerance. Continuity .08 becomes .3 per Claude, plus .05 at .05 m.
-Codex decided: preserve the near mesh's existing .025 m lift at lattice corners; taper that allowance away before the river blend.
-Sound: no new game event or cue. Windbreak accepted in separate commit 173751c1d; its focused check passed.
-**Removed:** unshifted actor, effect and camera placement on unedited Scablands ground; the windbreak replaces the passable shelter back.
+Cars and chase cameras now follow the drawn ground through render3d.js; applyVehicleTerrainPose places cars, placeWorldJobVehicle places job cars, and shadows and the pot follow their parent.
+Machines: scablands-scene.js uses placeRig for Big Bess and the furnace; their shade, dust and fire follow the rig. The accepted windbreak is in 173751c1d; its focused check passed.
+Walkers: combat-scene.js supplies rigged-fighter.js and onfoot-figures.js; render3d.js supplies the camera. Cinder and his ring share one root. brand-thief.js supplies the walking thief and his load.
+Effects: effects.js uses support and tire contacts; combat-scene.js places owner effects. brand-carried.js, brand-ash-view.js and bellows-view.js use the same helper for hands, marks, loads and clouds.
+The near mesh is cut away inside river distance 80 m; the gorge extends to 92 m and overlaps outside, where the higher mesh is seen. Drawing fault: a .199501277 m step near (2650.79,2221.98); the helper blends across 77 to 83 m without changing either mesh or drawnGroundHeightAt.
+East road largest changes at .5/.05 m steps: .011923131 at (5975,83.641603) / .001289483 at (5975,83.343497).
+Plates largest changes: .148869267 at (2961.129117,-247.018544) / .021954071 at (2962.996328,-247.174307).
+Salt pan largest changes: .066489090 at (5204.888998,-1620.626269) / .011293990 at (950.371190,-1530.362156).
+River bed largest changes: .114826623 at (3097.085299,-246.157128) / .017354168 at (3094.498574,-246.386969).
+Rule and contact checks pass on all four ways and ten lines across both river banks. Corners, three measured places, decks, tunnels, flight and limits pass. Twelve shifts cost .027564 ms on plain and .051032 ms at river, below .15 ms.
+Lane tier on b1f92f0cc: 88/91, then all three isolated retries passed (two ffmpeg permission failures; the runner inventory changed during the merge). Replays and world signatures pass unchanged again on ff196f8e9 plus this commit's drawing hooks: 3/3.
+Final hooks: 27/28 checks, then the missing Auntie model substitute was fixed and drawn-feet passed. Job 2/3 view regressions, 19 extra camera/car/fighter/effect suites, build and independent review pass on ff196f8e9 plus this commit's files. No assertion was loosened.
+Integration merged cleanly at ff196f8e9 (0496c6d86 included). For Claude to run: everburn-job1 on Performance, including three side pictures at 5 m off and 1 m up. All 25 page expressions parse with new Function; Chrome cannot run in this job.
+Changed assertions: survey logging gaps over .3 m becomes contact within .05 m, with half the seam allowed in its band; Bess escort height changes from own height to own height plus shift, keeping .001 m tolerance. Claude revised .08 to .3 m per .5 m and added .05 m per .05 m; both pass.
+Codex decided: keep the existing .025 m near-ground lift at lattice corners and taper it away before the river blend. Sound: no new event or cue. **Removed:** unshifted Scablands actor, effect and camera placement; the windbreak replaces the passable shelter back.

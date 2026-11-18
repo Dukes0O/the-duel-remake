@@ -14,12 +14,13 @@ export function createBrandThief() {
   group.add(figures.group, load);
   const actor = {};
   return {group, figures,
-    update(worldJob) {
+    update(worldJob, drawnShift) {
       const job = worldJob?.job;
       const pose = brandThiefPose(job?.steps?.[job.stepIndex], job?.stepState);
       group.visible = Boolean(pose);
       if (!pose) { figures.update([], {active: false}); return; }
       Object.assign(actor, pose, {y: scablandsSurfaceHeightAt(pose.x, pose.z)});
+      group.position.y=drawnShift?.(actor.x,actor.z,actor.y)??0;
       figures.update([actor], {active: true});
       load.position.set(actor.x - Math.sin(actor.yaw) * R.thiefLoadBehind,
         actor.y + R.thiefLoadLift, actor.z - Math.cos(actor.yaw) * R.thiefLoadBehind);

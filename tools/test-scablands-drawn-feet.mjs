@@ -18,8 +18,12 @@ import {syncScene} from '../src/scene-systems.js';
 
 const riverField = createRiverField(SCABLANDS_LAYOUT);
 const course = new Course(SCABLANDS_VENUE, 1989);
-const scene = createScablandsScene(course, {loadAsset: async () => {
+const scene = createScablandsScene(course, {loadAsset: async path => {
   const root = new THREE.Group();
+  if(path.endsWith('/folk.glb')){
+    const auntie=new THREE.Mesh(new THREE.BoxGeometry(.5,1.7,.4),new THREE.MeshStandardMaterial());
+    auntie.name='auntie-solder root';root.add(auntie);
+  }
   for (const name of ['Big Bess gas truck', "Old Smoke's rolling furnace"]) {
     const model = new THREE.Group();
     model.name = name;

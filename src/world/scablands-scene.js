@@ -887,10 +887,11 @@ export function createScablandsScene(course,options={}){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
       brandAuntie.update(worldJob);
-      carriedBrand.update(state);
-      brandAshView.update(worldJob);
-      brandThief.update(worldJob);
-      bellowsView.update(state);
+      const drawnShift=group.userData.drawnFeet?.shift;
+      carriedBrand.update(state,drawnShift);
+      brandAshView.update(worldJob,drawnShift);
+      brandThief.update(worldJob,drawnShift);
+      bellowsView.update(state,drawnShift);
       const glass = hotDeliveryGlass(worldJob);
       glassPatch.visible = !!glass;
       if (glass) {
