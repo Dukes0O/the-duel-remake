@@ -161,16 +161,17 @@ Helper, 18 November (each follows a decision or a remake; the refusal is still p
 
 **18 November 2026, on the helper's work.** Read line by line in the diff (scenario files and the two cards only; no game
 file changed). Changed assertions 1 to 6 are accepted: each follows Kyle's decision of 17 November or the remake, the
-refusal of a flown car is still proved on the one car it applies to, and nothing is loosened.  and
- wait no longer than before; they start Big Bess near the place they test, because her road is 12 km long
-now.  passes alone twice, so QA-WAVE1-AUDIO-FLIGHT closes under its own rule at the next merge.
+refusal of a flown car is still proved on the one car it applies to, and nothing is loosened. `run-gas` and
+`field-battle` wait no longer than before; they start Big Bess near the place they test, because her road is 12 km long
+now. `arsenal-wave1-audio` passes alone twice, so QA-WAVE1-AUDIO-FLIGHT closes under its own rule at the next merge.
 
-**machine-borer: the game is wrong, and it gets its own cure.** Since  Mabel's second view puts the eye above
+**machine-borer: the game is wrong, and it gets its own cure.** Since `b14365aad` Mabel's second view puts the eye above
 her model, which is inside the rock whenever she is cutting. Ruling: an eye may never stand inside solid ground. While any
 part of Mabel is under the hill, her second view is the view from outside the mouth that the scenario photographs (the
-branch that can no longer be reached); in the open it is the cab view of . gains the check it lacked: at 20 m and at the far end of the cut the eye of every view has open air above it or the
+branch that can no longer be reached); in the open it is the cab view of `b14365aad`. `tools/test-machine-view.mjs`
+gains the check it lacked: at 20 m and at the far end of the cut the eye of every view has open air above it or the
 tunnel's own bore round it. The scenario stays as written and proves it. Codex builds this after slice 15 part A; the Dig
 is still behind its switch, so no player has met it.
 
 **Section A is cured** (Claude, commit e119269c6): the colour table is made at first draw, and
- checks every rules bundle for a copy of Three.js.
+`tools/test-manifest-await.mjs` checks every rules bundle for a copy of Three.js.
