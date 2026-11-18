@@ -481,6 +481,16 @@ tasks:
     flag: "scablands-runs"
     details: "docs/board/cards/RUN-GAS.md"
 
+  - id: WASTELAND-GATE-ROAD-LOOK
+    title: "Tin Town's south gate in motion: broken tyre impressions and the middle lamp on the real approach"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WASTELAND-GATE-ROAD-LOOK.md"
+
   - id: SCABLANDS-LAND
     title: "The Scablands as a place: coloured models, drawn ground and wear, a flat road, Tin Town's gate"
     owner: "claude"
