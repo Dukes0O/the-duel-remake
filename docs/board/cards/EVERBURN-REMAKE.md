@@ -1176,6 +1176,33 @@ untouched. Checks: lane tier 41 of 41, build, browser scenario `everburn-job2`. 
 scenario's picture (its head first read as an orange bucket and was darkened; not yet seen again), the lamp only in a
 test scene. Dusk, the lit windows and the people coming out are still to draw.
 
+## Claude's second hand play of job 2 (17 November 2026, evening; visible window, real keys and mouse)
+
+Played from the forge bay to two lit lamps and a meeting with an Ash Man at the pump lamp. What works by hand: the
+briefing, stepping out, the brand at the hearth, the marker ("PUMP LAMP 63 m") and the town map, both lamps lit by
+standing, Auntie's two warnings at the right moments, the hint for the flamer and the brand, the drawn lamp with its
+pool of light, the brand in the player's view (it was out of view at 0.65 m forward; it is held at 1 m forward now).
+
+**Cured at once by Claude, with a check (to be confirmed by the next review):** the Hand Flamer could never burn an Ash
+Man back when the view was at its resting tilt. The aim compared a direction in three dimensions (tilted 22 degrees
+down) with a flat distance, and the flamer's cone is 17.5 degrees either side, so a man dead ahead at 5 m was outside
+it. A lamp was smothered while Claude stood 5 m away with the flamer burning. The aim is now judged on the flat.
+
+**Faults for slice 13, before Kyle tries it:**
+1. Holding F does nothing for the first twelve seconds, while the prompt "HOLD F TO GET OUT" is shown, because the
+   briefing is still being said. Let the player step out at once and let the lines go on.
+2. Cinder's "Hold F to step out. Take a brand from the hearth." is shown after the brand has been taken.
+3. The marker points straight at the first lamp through the forge's crane, and a walker who follows it stands against
+   the crane's foot. The marker should lead round the forge (the alley route the Ash Men already use).
+4. The pump lamp and the far lamp stand on open ground outside the last shacks, the far lamp about 60 m out on the
+   plates. They are to stand among the shacks, where a lamp lights something.
+5. No flame is seen when the Hand Flamer is fired on foot in this job, so a miss and a hit look the same.
+6. The Hand Flamer shows "AMMO 4" and then "AMMO" with a dash; what it holds and what a click costs is not clear on
+   the screen.
+7. The same wrong aim is in the crew gear's own test of the flamer against cars (`src/crew-gear/signature.js`,
+   about line 106): to be looked at there too.
+Not yet played: the swing of the brand, the third lamp, the ending.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the

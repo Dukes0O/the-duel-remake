@@ -11,6 +11,7 @@
 //        free:3000  or  free:3000:name      no keys, the game running
 //        eval:<javascript>                  evaluated in the page, the result printed
 //        shot:<name>                        a picture now (the pause screen, if the game is paused)
+//        hold:Mouse:300  or  hold:ArrowUp+Mouse:800   the left mouse button held, alone or with keys
 //      Keys: the arrows, Space, Escape, Enter, Tab, ShiftLeft and the letters W A S D Q P C F E H M V G R X and the digits 1 to 4 (as ArrowUp, KeyW, Digit4 and so on).
 //   4. node tools/hand-drive.mjs stop       closes that Chrome and deletes its throwaway profile
 // Pictures are saved as .evidence/hand-drive/<name>.jpg under the folder the tool is run from, and are deleted after the review.
@@ -72,6 +73,8 @@ if (command === 'start') {
 } else if (command === 'do') {
   const browser = await connect();
   const key = (type, code) => browser.send('Input.dispatchKeyEvent', {type, code, key: code.startsWith('Key') ? code.slice(3).toLowerCase() : code.startsWith('Digit') ? code.slice(5) : code === 'Space' ? ' ' : code, windowsVirtualKeyCode: VK[code], nativeVirtualKeyCode: VK[code]});
+  // The left mouse button, pressed in the middle of the view (on foot it fires the hand weapon or swings).
+  const mouse = type => browser.send('Input.dispatchMouseEvent', {type, x: 640, y: 400, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1});
   // In the Dig (a machine yard, not a race) there is no race to pause: `window.__theDig` runs on its own.
   const running = on => browser.evaluate(`(() => { const a = window.__qaApp; if (!a || window.__theDig?.host?.isConnected) return; if (a.duel.state.paused === ${on}) a.togglePause(); })()`);
   const shot = async name => {
@@ -84,11 +87,11 @@ if (command === 'start') {
     if (kind === 'hold' || kind === 'free') {
       const codes = kind === 'hold' ? rest[0].split('+') : [], ms = Number(rest[kind === 'hold' ? 1 : 0]);
       await running(true);
-      for (const code of codes) await key('rawKeyDown', code);
+      for (const code of codes) await (code === 'Mouse' ? mouse('mousePressed') : key('rawKeyDown', code));
       await sleep(ms);
       const name = rest[kind === 'hold' ? 2 : 1];
       if (name) await shot(name);
-      for (const code of codes) await key('keyUp', code);
+      for (const code of codes) await (code === 'Mouse' ? mouse('mouseReleased') : key('keyUp', code));
       await running(false);
     } else if (kind === 'eval') console.log(JSON.stringify(await browser.evaluate(rest.join(':'))));
     else if (kind === 'shot') await shot(rest[0]); else throw Error('Unknown step ' + step);
