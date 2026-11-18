@@ -5,6 +5,7 @@ import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.
 import {combatOwnerId, outOfPlay, hostile} from '../combat-teams.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
 import {carFighterTargets, fighterObstacle, splashCarFighter} from '../crew-gear/contacts.js';
+import {bellowsWeaponTarget, reportWorldJobThingHit} from '../arena/modes/world-job.js';
 
 export const ROCKET_RULES = Object.freeze({
   count: 4, spacing: .12, bearings: [-1.5, -.5, .5, 1.5],
@@ -204,6 +205,11 @@ function body(duel, actor) {
 function blast(duel, shot, at, damageCar, shielded) {
   const owner = [duel.state, ...duel.state.opponents].find(actor =>
     targetIdentity(duel, actor) === shot.attackerId);
+  const bellows = owner === duel.state && bellowsWeaponTarget(duel);
+  if (bellows && Math.hypot(bellows.position.x - at.x, bellows.position.z - at.z) <=
+      ROCKET_RULES.blastRadius + bellows.obstacle.halfX &&
+      Math.abs(bellows.position.y - at.y) <= bellows.obstacle.height + ROCKET_RULES.blastRadius)
+    reportWorldJobThingHit(duel, {...bellows, weapon:shot.kind, hitId:shot.id});
   for (const actor of [duel.state, ...duel.state.opponents]) {
     if (actor === owner || outOfPlay(duel, actor) ||
         !hostile(duel, owner, actor) || shielded(duel, actor)) continue;
@@ -242,6 +248,8 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
     if (actor !== owner && !outOfPlay(duel, actor) && hostile(duel, owner, actor))
       consider(body(duel, actor));
   for (const target of carFighterTargets(duel, shot)) consider(fighterObstacle(target));
+  const bellows = owner === duel.state && bellowsWeaponTarget(duel);
+  if (bellows) consider(bellows.obstacle);
   if (duel._obstacles) {
     const a = duel.course.nearest(from.x, from.z), b = duel.course.nearest(to.x, to.z, a.s);
     for (const obstacle of duel._obstacles(Math.min(a.s, b.s) - 3,

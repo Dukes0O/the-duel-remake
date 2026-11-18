@@ -22,6 +22,7 @@ export const BRAND_RULE = Object.freeze({
   duskSeconds: 240,
   ashWaves: Object.freeze([1, 2]),
   smotherRadius: 2,
+  lampWarningMetres: 15,
   smotherSeconds: 4,
   throwRange: 8,
   throwSeconds: 5,
@@ -33,10 +34,23 @@ export const BRAND_RULE = Object.freeze({
   ashMarkWidth: 0.1,
   ashMarkLift: 0.04,
   swingRadius: 2,
+  toolsWarningMetres: 12,
+  mapMetresAcross: 300,
+  mapPaddingMetres: 20,
+  mapScaleBarMetres: 50,
+  mapFireRadiusPixels: 6,
+  mapFireStrokePixels: 2,
+  mapLabelOffsetPixels: 13,
+  mapLabelSizePixels: 12,
+  footMarkerBottomPixels: 132,
   handFlamerRadius: 6,
   wallRadius: 2,
   ashWalkMps: 4.5,
   ashRadiusMetres: 0.4,
+  ashEntrySpacingMetres: 20,
+  ashSeparationMetres: 1.2,
+  ashYieldDegrees: 60,
+  ashBackStepShare: 0.5,
   alleyCellMetres: 2,
   alleySampleMetres: 0.25,
   alleyReachMetres: 0.5,
@@ -106,14 +120,26 @@ export const BRAND_LINES = Object.freeze({
   brand: 'Cinder: Hold F to step out. Take a brand from the hearth.',
   awake: 'Auntie Solder: Three lamps. Now we can see how bad it is.',
   thief: "Auntie Solder: Thief! He's got my bellows!",
+  wallFirst: "Auntie Solder: One's over the wall!",
+  wallSecond: 'Auntie Solder: Two more over the wall!',
   pump: 'Auntie Solder: They are at the pump lamp!',
   tower: 'Auntie Solder: They are at the tower lamp!',
   far: 'Auntie Solder: They are at the far lamp!',
+  tools: 'Cinder: Burn him back with the flamer. Up close, the same click swings the brand.',
 });
 
 const spot = value => value?.position ?? value;
 const distance = (a, b) => a && b
   ? Math.hypot(a.x - b.x, (a.y ?? 0) - (b.y ?? 0), a.z - b.z) : Infinity;
+
+// Shared by weapon dispatch and the job bridge so a swing cannot also shoot.
+export function brandSwingReady(state) {
+  const world = state.arena?.mode === 'world-job' && state.arena.worldJob;
+  const job = world?.job, fighter = state.onFoot && state.fighter;
+  return state.status === 'racing' && !state.paused && !!fighter && !fighter.knockedDown &&
+    job?.steps[job.stepIndex]?.brand === true && job.stepState?.brandSeconds > 0 &&
+    world.actors.some(actor => actor.brandAsh && distance(actor, fighter) <= BRAND_RULE.swingRadius);
+}
 
 // Decisions for the existing job raiders. The arena supplies their positions
 // and moves them with its normal foot mover; this rule never moves a fighter.
@@ -123,20 +149,33 @@ export function stepBrandAsh(step, state, view, dt = 0) {
   const next = {...state, seen: [...(state.seen ?? [])], men: {...state.men}};
   const requests = [], events = [], smotheredLamps = [];
   let brandAshed = false;
+  if (!next.toolsExplained && view.onFoot && (view.ashMen ?? []).some(actor =>
+      distance(spot(actor), here) <= BRAND_RULE.toolsWarningMetres)) {
+    next.toolsExplained = true;
+    requests.push({type: 'say', lineId: 'brand.tools'});
+  }
   const nearest = (places, from) => places.reduce((best, place) =>
     distance(spot(place), from) < distance(spot(best), from) ? place : best, null);
-  const farthest = from => entries.reduce((best, entry) =>
-    !best || distance(spot(entry), from) > distance(spot(best), from) ? entry : best, null);
   for (const lamp of lamps) if (view.lamps?.[lamp.id] && !next.seen.includes(lamp.id)) next.seen.push(lamp.id);
   let wave = state.wave ?? 0;
   while (wave < BRAND_RULE.ashWaves.length && next.seen.length > wave && entries.length && here) {
-    const from = farthest(here);
+    const usedEntries = [];
     for (let index = 0; index < BRAND_RULE.ashWaves[wave]; index++) {
+      const available = entries.filter(entry => usedEntries.every(used =>
+        distance(spot(entry), spot(used)) >= BRAND_RULE.ashEntrySpacingMetres) &&
+        (view.ashMen ?? []).every(actor => distance(spot(entry), spot(actor)) >= BRAND_RULE.ashSeparationMetres) &&
+        requests.filter(request => request.type === 'spawnBrandAsh').every(request =>
+          distance(spot(entry), spot(request.from)) >= BRAND_RULE.ashSeparationMetres));
+      const from = available.reduce((best, entry) => !best ||
+        distance(spot(entry), here) > distance(spot(best), here) ? entry : best, null);
+      if (!from) throw new Error('The town needs separate clear wall entries for its Ash Men.');
+      usedEntries.push(from);
       const id = `town-ash-${wave}-${index}`;
       // Exactly one lamp smotherer; the other two throw ash at the player.
       next.men[id] = {role: wave === 0 ? 'smother' : 'throw', throwWait: 0};
       requests.push({type: 'spawnBrandAsh', id, from});
     }
+    events.push({type: 'ashOverWall', lineId: wave === 0 ? 'brand.wallFirst' : 'brand.wallSecond'});
     wave++;
   }
   next.wave = wave;
@@ -163,8 +202,12 @@ export function stepBrandAsh(step, state, view, dt = 0) {
     if (man.role === 'smother') {
       const lamp = nearest(lamps.filter(candidate => view.lamps?.[candidate.id]), at);
       if (lamp && man.lamp !== lamp.id) {
-        events.push({type: 'lampThreatened', id: lamp.id});
         man.smotherSeconds = 0;
+      }
+      if (lamp && man.warnedLamp !== lamp.id &&
+          distance(at, spot(lamp)) <= BRAND_RULE.lampWarningMetres) {
+        events.push({type: 'lampThreatened', id: lamp.id});
+        man.warnedLamp = lamp.id;
       }
       man.lamp = lamp?.id ?? null;
       man.smotherSeconds = lamp && distance(at, spot(lamp)) <= BRAND_RULE.smotherRadius
@@ -237,6 +280,8 @@ export function stepBrand(step, state, view, dt) {
     requests.push(...ash.requests);
     for (const event of ash.events) if (event.type === 'lampThreatened')
       requests.push({type: 'say', lineId: `brand.${event.id}`});
+    else if (event.type === 'ashOverWall')
+      requests.push({type: 'say', lineId: event.lineId});
   }
   const here = view.onFoot ? view.fighter?.position : null;
   const carried = next.brandsUsed > 0;

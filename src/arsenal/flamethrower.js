@@ -125,7 +125,10 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
       }
       burst.worldJobHits ??= [];
       for (const thing of worldJobHitTargets(duel)) {
-        if (burst.worldJobHits.includes(thing.id)) continue;
+        const bellows = duel.state.arena.worldJob?.job;
+        const bellowsStep = bellows?.steps[bellows.stepIndex];
+        const loadContact = bellowsStep?.bellows && thing.id === bellowsStep.targetId;
+        if (!loadContact && burst.worldJobHits.includes(thing.id)) continue;
         const dx = thing.position.x - at.x, dz = thing.position.z - at.z;
         const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
           Math.cos(Math.atan2(dx, dz) - heading));
@@ -133,7 +136,7 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
             Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
             Math.abs(angle) <= FLAME_RULES.halfConeRadians) &&
             Math.abs((thing.position.y || 0) - at.y) < 3) {
-          burst.worldJobHits.push(thing.id);
+          if (!burst.worldJobHits.includes(thing.id)) burst.worldJobHits.push(thing.id);
           reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined,
             burnable: thing.kind === 'barricade' && thing.burnable, flame: true});
         }

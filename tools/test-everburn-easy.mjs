@@ -13,6 +13,7 @@ import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
 import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
 import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
+import {bellowsRoadFacts} from '../src/world/jobs/bellows-rule.js';
 
 // SCABLANDS-LAND round 4: the limit was 720 s; the roads and the furnace's path are ten times as long (the chase alone is 1,042 s at child pace).
 const DT = 1 / 120, MAX_SECONDS = 3000;
@@ -390,6 +391,8 @@ function driveBellows(duel, step) {
   }
   const thief = world.actors.find(actor=>actor.id===step.targetId);
   if (!thief) return;
+  if (rule.knocks > 0 && drive.firstKnockRoadMetres == null)
+    drive.firstKnockRoadMetres = bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex).roadMetres;
   const gap = Math.hypot(car.x-thief.position.x,car.z-thief.position.z);
   if (rule.thiefStopped) {
     if (gap>6) moveTowardMarker(duel,thief.position);
@@ -564,16 +567,34 @@ function play(definition, seed) {
   const hotDelivery = definition.id === 'everburn-hot-delivery';
   const waitingFor = hotDelivery ? driveHotDelivery(duel, definition) : null;
   const limit = hotDelivery ? 240 : Math.ceil(MAX_SECONDS / DT);
+  const ashMotion = new Map();
+  let longestAshStop = 0;
   for (let tick = 0; tick < limit && duel.state.status !== 'arena_result' && !waitingFor; tick++) {
     if (!hotDelivery && duel.state.status === 'racing') playerInput(duel);
     else duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false, interact: false});
     duel.step(DT);
+    if (definition.steps[0]?.brand && duel.state.status === 'racing') {
+      const world = duel.state.arena.worldJob, rule = world.job.stepState;
+      if (!rule.townEnding) for (const actor of world.actors.filter(actor => actor.brandAsh)) {
+        const man = rule.brandAsh?.men?.[actor.id];
+        const smothering = !man?.fleeing && man?.role === 'smother' &&
+          definition.steps[0].places.some(lamp => rule.lamps?.[lamp.id] &&
+            Math.hypot(actor.x-lamp.position.x,actor.z-lamp.position.z)<=BRAND_RULE.smotherRadius);
+        const previous = ashMotion.get(actor.id);
+        const stopped = previous && !smothering &&
+          Math.hypot(actor.x-previous.x,actor.z-previous.z)<1e-6 ? previous.stopped+DT : 0;
+        ashMotion.set(actor.id,{x:actor.x,z:actor.z,stopped});
+        longestAshStop = Math.max(longestAshStop,stopped);
+        assert(stopped<=3,`${actor.id} stood still for ${stopped} seconds without smothering.`);
+      }
+    }
   }
   const worldJob = duel.state.arena.worldJob;
   return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete',
     waitingFor, seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
       ['spilled', 'restarted', 'waveRestarted', 'knockedDown'].includes(event.type)).length,
     stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState, bellowsResult:worldJob.bellowsResult,
+    firstKnockRoadMetres: bellowsDrives.get(duel)?.firstKnockRoadMetres, longestAshStop,
     onFoot: duel.state.onFoot, marker: worldJob.marker, waves: worldJob.clearedWaves,
     actorCount: worldJob.actors.length,
     footWeapons: duel.state.footWeapons && {ammo: duel.state.footWeapons.ammo,
@@ -594,9 +615,14 @@ for (const definition of jobs) {
     const result = play(definition, seed);
     if (definition.steps[0]?.brand) {
       const walk = townWalks.get(result.duel);
-      console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}`);
+      console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}, longest Ash Man stop ${result.longestAshStop.toFixed(2)} s`);
     }
-    if (definition.steps[0]?.bellows) console.log(`Run Him Down, seed ${seed}: knocks ${result.bellowsResult?.knocks ?? result.stepState.knocks}, bellows ${result.bellowsResult?.bellows ?? result.stepState.bellows}, loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}`);
+    if (definition.steps[0]?.bellows) {
+      const load = result.bellowsResult ?? result.stepState;
+      const firstKnock = result.firstKnockRoadMetres?.toFixed(1) ?? 'none';
+      console.log(`Run Him Down, seed ${seed}: knocks ${load.knocks}, bellows ${load.bellows}, ` +
+        `loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}, first knock at ${firstKnock} m of road`);
+    }
     if (result.won) finishes++;
     if ((seed === 1 || trialJobsOnly || selectedJob) && !result.won) {
       console.log(`Failed ${definition.name}, seed ${seed}`);

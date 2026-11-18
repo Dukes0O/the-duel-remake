@@ -6,6 +6,7 @@
    the raiders' toll) stands under the caption's three lines instead of over the mirror (EVERBURN-PLAY-FIXES, fourth round). */
 .is-world-job .combat-fight-subtitle{top:calc(90px + 30vw / 3.2 + 24px + 150px)}
 .combat-foot-reticle,.combat-foot-action,.combat-foot-car,.combat-foot-gear{display:none}
+.combat-upgraded-hud.on-foot .combat-foot-town[hidden]{display:none}
 .combat-upgraded-hud.on-foot .combat-slot-bar{display:none}
 .combat-xp-toast{display:none;position:absolute;left:50%;bottom:175px;transform:translateX(-50%);padding:7px 12px;border:1px solid #ffc17e;background:#17231fe8;color:#ffe7b7;font-size:11px;font-weight:800;letter-spacing:.8px;white-space:nowrap;box-shadow:0 4px 16px #000a}.combat-xp-toast.is-visible{display:block}
 #stage.on-foot .speedometer,#stage.on-foot .rear-view-frame,#stage.on-foot #lives-display,#stage.on-foot #radar-label,#stage.on-foot #radar-meter{display:none}

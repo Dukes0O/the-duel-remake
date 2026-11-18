@@ -207,7 +207,7 @@ export function buildEverburn(land) {
       lineId:'story.ember.auntie-solder.5',
       steps:[step('chase',{what:'Stop the thief and bring back the bellows.', bellows:true, targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
         path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,
-        roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower',
+        roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower', lentWeapon:'cinders-hand-flamer',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
         bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[2].position),
         startLineId:'story.ember.auntie-solder.5',
