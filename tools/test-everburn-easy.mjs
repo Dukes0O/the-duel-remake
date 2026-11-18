@@ -577,6 +577,7 @@ function play(definition, seed) {
     waitingFor, seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
       ['spilled', 'restarted', 'waveRestarted', 'knockedDown'].includes(event.type)).length,
     stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState, bellowsResult:worldJob.bellowsResult,
+    firstKnockRoadMetres: bellowsDrives.get(duel)?.firstKnockRoadMetres,
     onFoot: duel.state.onFoot, marker: worldJob.marker, waves: worldJob.clearedWaves,
     actorCount: worldJob.actors.length,
     footWeapons: duel.state.footWeapons && {ammo: duel.state.footWeapons.ammo,
@@ -599,7 +600,12 @@ for (const definition of jobs) {
       const walk = townWalks.get(result.duel);
       console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}`);
     }
-    if (definition.steps[0]?.bellows) console.log(`Run Him Down, seed ${seed}: knocks ${result.bellowsResult?.knocks ?? result.stepState.knocks}, bellows ${result.bellowsResult?.bellows ?? result.stepState.bellows}, loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}, first knock at ${bellowsDrives.get(result.duel)?.firstKnockRoadMetres?.toFixed(1) ?? 'none'} m of road`);
+    if (definition.steps[0]?.bellows) {
+      const load = result.bellowsResult ?? result.stepState;
+      const firstKnock = result.firstKnockRoadMetres?.toFixed(1) ?? 'none';
+      console.log(`Run Him Down, seed ${seed}: knocks ${load.knocks}, bellows ${load.bellows}, ` +
+        `loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}, first knock at ${firstKnock} m of road`);
+    }
     if (result.won) finishes++;
     if ((seed === 1 || trialJobsOnly || selectedJob) && !result.won) {
       console.log(`Failed ${definition.name}, seed ${seed}`);
