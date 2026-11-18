@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import {Group, Object3D, Scene} from 'three';
 import {App} from '../src/app.js';
 import {pageFunctions, pageSource} from './scenarios/story-talk.mjs';
-import {speechPlacement, talkCameraPose} from '../src/story/talk-view.js';
+import {createTalkSpeakerLookup, speechPlacement, talkCameraPose} from '../src/story/talk-view.js';
 import {registerSceneSystem, syncScene} from '../src/scene-systems.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
@@ -145,6 +146,21 @@ for (const [x, y] of [[0, 0], [320, 200], [100, 150]]) {
   assert(p.left >= 0 && p.left + 160 <= 320 && p.top >= 0 && p.top + 44 <= 200);
   assert(Math.abs(p.left + p.tail - Math.max(10, Math.min(310, x))) <= 4);
 }
+const stage = new Scene(), rig = new Group(), head = new Object3D();
+head.name = 'story-bubble-rell';
+rig.add(head);
+stage.add(rig);
+const findSpeaker = createTalkSpeakerLookup(stage);
+assert.equal(findSpeaker('rell', 0), head);
+rig.removeFromParent();
+const replacement = rig.clone();
+stage.add(replacement);
+assert.equal(head.parent, rig, 'a retired figure still owns its head');
+assert.equal(findSpeaker('rell', 16), replacement.children[0], 'a replacement speaker is followed immediately');
+replacement.visible = false;
+assert.equal(findSpeaker('rell', 32), null, 'an offstage speaker cannot pull the camera to its hidden rig');
+replacement.visible = true;
+assert.equal(findSpeaker('rell', 260), replacement.children[0]);
 const shot = talkCameraPose({x: 0, y: 0, z: 0}, {x: 0, y: 1.6, z: 4}, true);
 assert(shot.position.z < 0 && shot.position.x > 0 && shot.target.z === 4);
 for (const cue of ['story.talk.line', 'story.thought', 'story.talk.choose']) {

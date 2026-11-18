@@ -3,6 +3,29 @@
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const speakerName = id => id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
+// A retired figure still owns its skeleton. Follow the anchor only while its
+// entire parent chain is visible and connected to this scene.
+export function createTalkSpeakerLookup(scene) {
+  let lastId = null, anchor = null, nextLookup = 0;
+  function onStage(node) {
+    for (let part = node; part && part.visible; part = part.parent) if (part === scene) return true;
+    return false;
+  }
+  return (id, now) => {
+    if (id !== lastId || anchor && !onStage(anchor)) {
+      lastId = id;
+      anchor = null;
+      nextLookup = 0;
+    }
+    if (id && !anchor && now >= nextLookup) {
+      const candidate = scene.getObjectByName('story-bubble-' + id);
+      anchor = onStage(candidate) ? candidate : null;
+      nextLookup = now + 200;
+    }
+    return anchor;
+  };
+}
+
 export function talkCameraPose(player, head, onFoot) {
   const dx = head.x - player.x, dz = head.z - player.z;
   const distance = Math.hypot(dx, dz);

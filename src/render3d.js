@@ -47,7 +47,7 @@ import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
-import {mountTalkView, talkCameraPose} from './story/talk-view.js';
+import {createTalkSpeakerLookup, mountTalkView, talkCameraPose} from './story/talk-view.js';
 import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView, townEveningAmount } from './world-job-camera.js';
 import { brandThiefPose } from './world/jobs/brand-rule.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
@@ -182,21 +182,13 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
-  let talkView, talkPersonId, talkPerson, talkWorld, heldWorldSeconds, nextHeadLookup = 0;
+  let talkView, heldWorldSeconds;
   const talkHead = new THREE.Vector3(), talkProjection = new THREE.Vector3();
+  const findTalkSpeaker = createTalkSpeakerLookup(scene);
   function speakerHead(step, speaker, now) {
     if (!speaker) return null;
-    if (speaker !== talkPersonId || world !== talkWorld) {
-      talkPersonId = speaker;
-      talkWorld = world;
-      talkPerson = null;
-      nextHeadLookup = 0;
-    }
-    if (!talkPerson?.parent && now >= nextHeadLookup) {
-      talkPerson = scene.getObjectByName('story-bubble-' + speaker);
-      nextHeadLookup = now + 200;
-    }
-    if (talkPerson?.parent) return talkPerson.getWorldPosition(talkHead);
+    const person = findTalkSpeaker(speaker, now);
+    if (person) return person.getWorldPosition(talkHead);
     // Jobs using existing figures can author the head's world point until
     // the rigged figure supplies its animated story-bubble anchor.
     const fixed = step.anchors?.[speaker];
