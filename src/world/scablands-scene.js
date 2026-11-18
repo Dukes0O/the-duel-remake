@@ -1,3 +1,4 @@
+import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {SALT_RIDERS} from './jobs/ember-rule.js';
 import {createScablandsDrawnFeet} from './scablands-drawn-feet.js';
 import * as THREE from 'three';
@@ -917,6 +918,8 @@ export function createScablandsScene(course,options={}){
           glassBeam.place(glassSource, glassTarget, glass.radius ?? FURNACE_GLASS.glassRadius, clock);
         }
       } else glassBeam.group.visible = false;
+      const gasStep = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+      forge.gas(gasStep?.gasLoad ? GAS_LOAD_RULE.forgeBeforeGasShare + (1 - GAS_LOAD_RULE.forgeBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : null);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;

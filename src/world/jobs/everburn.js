@@ -73,9 +73,14 @@ export function buildEverburn(land) {
   const furnaceBridgeIn = place('furnace-bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12), furnaceBridgeOut = place('furnace-bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12);
   // Bess starts at the plane row's clear road entry. Her existing mover
   // follows every point of the land's own Tin Road to the south gate.
-  const slowRidePath = path(...net.road('tin-road').points.map((point, index) => place(`bess-tin-road-${index}`, point)));
+  const southGate = tinTownGateFor(land).gate;
+  const slowRidePath = path(...net.road('tin-road').points.map((point, index) => place(`bess-tin-road-${index}`, point)),
+    place('bess-south-gate', {x:southGate.x, z:southGate.z}),
+    place('bess-inside-gate', {x:southGate.x, z:southGate.z - GAS_LOAD_RULE.arrivalGateInsideMetres}),
+    place('bess-forge-turn', at('tin-town', GAS_LOAD_RULE.tankBayEastMetres, southGate.z - land.at('tin-town').z - GAS_LOAD_RULE.arrivalGateInsideMetres)),
+    place('bess-forge-tank', at('tin-town', GAS_LOAD_RULE.tankBayEastMetres, GAS_LOAD_RULE.tankBaySouthMetres), 1));
   const bessMeeting = place('moss-meeting', escortCarStart(slowRidePath, 0, GAS_LOAD_RULE.meetingSideMetres), GAS_LOAD_RULE.meetingRadiusMetres);
-  const tinRoad = net.road('tin-road'), tinStart = tinRoad.points[0];
+  const tinRoad = {points:slowRidePath.map(place => place.position)}, tinStart = tinRoad.points[0];
   const tinLength = tinRoad.points.slice(1).reduce((sum, point, index) => sum +
     Math.hypot(point.x - tinRoad.points[index].x, point.z - tinRoad.points[index].z), 0);
   const slowRaids = path(...GAS_LOAD_RULE.raidShares.map((share, index) => {
@@ -250,7 +255,10 @@ export function buildEverburn(land) {
       resultLineId:'story.ember.auntie-solder.6',
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
-      steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', gasLoad:true, meeting:bessMeeting,
+      steps:[step('escort',{what:'Open the road and keep the Ash Men off her tank.', gasLoad:true, meeting:bessMeeting,
+        gasTank:place('forge-gas-tank', at('tin-town', GAS_LOAD_RULE.tankEastMetres, GAS_LOAD_RULE.tankSouthMetres)),
+        gasFurnacePlace:place('gas-furnace-high-ground', at('tin-town', GAS_LOAD_RULE.arrivalFurnaceEastMetres, GAS_LOAD_RULE.arrivalFurnaceSouthMetres)),
+        gasLamps:townLights.lamps,
         blocks:slowBlocks, barriers:path(slowBlocks[0], slowBlocks[2]), waitingActors:slowBlockCars,
         hoseFrom:place('bess-plane-wing', at('boneyard', 13, -32)), actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:GAS_LOAD_RULE.speedKmh / 3.6,
         path:slowRidePath}, path:slowRidePath, destination:slowRidePath.at(-1),

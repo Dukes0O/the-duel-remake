@@ -104,10 +104,10 @@ export function createTownLamp({seed = 0, surface = null, documentLike = typeof 
   group.add(pool);
   let since = null, wasLit = null;
   return {group, lantern: at,
-    setLit(lit, seconds) {
+    setLit(lit, seconds, brightness = 1) {
       // A lamp drawn for the first time is as the job has it at once; after that a change takes half a second.
       if (lit !== wasLit) { since = wasLit === null ? null : seconds; wasLit = lit; }
-      const up = lit ? Math.min(1, since == null ? 1 : (seconds - since) / .5) : 0, eased = up * up * (3 - 2 * up);
+      const up = lit ? brightness * Math.min(1, since == null ? 1 : (seconds - since) / .5) : 0, eased = up * up * (3 - 2 * up);
       paneMaterial.uniforms.uLit.value = eased; paneMaterial.uniforms.uTime.value = seconds;
       flameMaterial.uniforms.uTime.value = seconds; glowMaterial.uniforms.uTime.value = seconds;
       flame.visible = eased > .05; pool.visible = eased > .05;

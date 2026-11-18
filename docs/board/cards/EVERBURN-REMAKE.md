@@ -1239,6 +1239,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 12, Slow Ride arrival: the land's Tin Road ends 238 m outside the south gate. The existing escort path continues straight through the gate, 32 m inside, then east to the forge's delivery bay (25 m east and 14 m south of town). The tank stands nine metres east of Bess. The rule suite checks every new metre against the town solids with two metres of clearance. Blocks and raids use shares of this complete route. The forge starts at 45% fire and lamps at 65%, rising to full through the existing hold. Old Smoke appears on the high ground 100 m west and 180 m north of town and travels another 180 m north during the hold. These are drawing choices for Claude to review. The new guidance is "Open the road and keep the Ash Men off her tank."
+
 - Slice 12, Slow Ride flash: the plain bright sheet lasts 0.35 seconds, kept in `GAS_LOAD_RULE.flashVisibleSeconds`. Flame means a live player car burst or the player's active Hand Flamer within the designed eight metres. No extra player sentence is added. Plugging takes six uninterrupted still seconds and does not refill gas.
 
 - Slice 12, Slow Ride raids: each post stands 400 m along the road normal, alternating right and left. All eight rider starts have no solid within 10 m. Riders aim 6 m beside Bess, on opposite sides when there are two; a rider within 12 m can work on her tank. Both distances are named constants. No extra player sentence is added.

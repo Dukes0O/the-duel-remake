@@ -1723,7 +1723,7 @@ export function stepWorldJob(duel, dt) {
       worldJob.forgeGasShare = 0;
       sayLine(duel, worldJob, currentStep.gasArrivalLineId);
       duel.emit({arenaTell:{id:'gas-arrival', targetId:'player', seconds:0,
-        cue:'world.furnace.horn', position:{...currentStep.destination.position}}});
+        cue:'world.furnace.horn', position:{...(currentStep.gasFurnacePlace ?? currentStep.destination).position}}});
     }
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,

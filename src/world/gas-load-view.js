@@ -39,6 +39,13 @@ export function createGasLoadView() {
   flash.rotation.y = Math.PI / 2;
   flash.position.set(1.5, 2, 0);
   leaks.add(flash);
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 4, 12),
+    new THREE.MeshStandardMaterial({color:0x544c3a, roughness:.9}));
+  tank.name = 'Forge gas tank';
+  group.add(tank);
+  const arrivalHose = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0x211e19}));
+  arrivalHose.name = 'Forge tank hose';
+  group.add(arrivalHose);
   let placed = null;
   return {group, update(worldJob, groundAt) {
     const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
@@ -54,6 +61,16 @@ export function createGasLoadView() {
       leaks.rotation.y = bess.heading ?? 0;
       flash.visible = state.flashVisible > 0;
       holes.forEach((hole, index) => {hole.visible = index < (state.holes ?? 0);});
+    }
+    const destination = step.gasTank?.position;
+    tank.visible = !!destination;
+    arrivalHose.visible = !!destination && worldJob.forgeGasShare != null && !!bess;
+    if (destination) tank.position.set(destination.x, groundAt(destination.x, destination.z) + 2, destination.z);
+    if (arrivalHose.visible) {
+      const from = bess.position;
+      arrivalHose.geometry.setFromPoints([new THREE.Vector3(from.x, groundAt(from.x, from.z) + 2, from.z),
+        new THREE.Vector3((from.x + destination.x) / 2, groundAt(from.x, from.z) + .15, (from.z + destination.z) / 2),
+        new THREE.Vector3(destination.x, groundAt(destination.x, destination.z) + 1, destination.z)]);
     }
     if (!meeting) return;
     const at = step.meeting.position;

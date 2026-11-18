@@ -3,6 +3,7 @@
 // no actor, has no collision and follows no rule. Where it stands is worked out from the job's own state and clock
 // (and Big Bess's own place on her road), so the same inputs always give the same picture. Nothing here draws or
 // changes a race; the scene reads `furnaceSighting` and the job engine reads `pathShare`.
+import {GAS_LOAD_RULE} from './gas-load-rule.js';
 import {OLD_SMOKE} from './old-smoke.js';
 import {LAND} from '../scablands-names.js';
 import {sees, WATCH} from '../scablands-ways.js';
@@ -243,6 +244,10 @@ export function furnaceSighting(worldJob) {
   if (definition.number === 4) {
     const step = job?.steps?.[job.stepIndex], path = step?.path, bess = worldJob.actors?.find(actor => actor.id === step?.actorId);
     if (!bess?.position || !path?.length) return null;
+    if (step.gasLoad && worldJob.forgeGasShare != null) {
+      const from = step.gasFurnacePlace.position;
+      return {x:from.x, z:from.z - GAS_LOAD_RULE.arrivalFurnaceAwayMetres * worldJob.forgeGasShare, heading:NORTH};
+    }
     const {share, total} = pathShare(bess.position, bess.pathIndex, path), pacing = FURNACE_PACING;
     if (over || share < pacing.fromShare) return over ? {hidden: true} : null;
     const pose = bessPose(bess, path, bess.pathIndex);

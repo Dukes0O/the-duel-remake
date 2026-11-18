@@ -12,6 +12,9 @@ import {stepEscort} from '../src/world/jobs/steps/escort.js';
 import {worldHudModel, drawGasGauge} from '../src/world/world-hud.js';
 import {Duel} from '../src/game.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {createForge} from '../src/world/forge-look.js';
+import {createBrandLamps} from '../src/world/brand-lamps.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {createGasLoadView} from '../src/world/gas-load-view.js';
 import {startFlamethrower} from '../src/arsenal/flamethrower.js';
 import {SOLID_GRID} from '../src/world/scablands-solids.js';
@@ -22,7 +25,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-slow-ride');
 const step = definition.steps[0], road = ROAD_NET.road('tin-road');
 assert.equal(REMADE_EVERBURN_JOBS.includes(definition.id), false, 'Unfinished job stays hidden.');
 assert.equal(step.gasLoad, true);
-assert.deepEqual(step.path.map(place => ({x: place.position.x, z: place.position.z})), road.points);
+assert.deepEqual(step.path.slice(0, road.points.length).map(place => ({x: place.position.x, z: place.position.z})), road.points);
 assert.equal(step.speed * 3.6, GAS_LOAD_RULE.speedKmh);
 assert.ok(Math.abs(Math.hypot(step.carStart.x - step.path[0].position.x,
   step.carStart.z - step.path[0].position.z) - 60) < .1);
@@ -482,3 +485,46 @@ for (const gas of [100,80,79.99,40,39.99]) {
   assert.ok(arenaResultsScreen({arena}, {metric:()=>'', action:()=>'', escapeHTML:String}).description.includes(gasResult.sentence));
 }
 console.log('Slow Ride: reward by gas, existing difficulty factors, single settlement, unchanged save keys and results sentences passed.');
+
+// The approach uses the same actor mover through the south gate, then a clear
+// lane to the forge bay. Check each new metre with Bess's collision radius.
+for (let index = road.points.length; index < step.path.length; index++) {
+  const from = step.path[index - 1].position, to = step.path[index].position;
+  const length = Math.hypot(to.x - from.x, to.z - from.z);
+  for (let metre = 0; metre <= length; metre++) {
+    const x = from.x + (to.x - from.x) * metre / length, z = from.z + (to.z - from.z) * metre / length;
+    for (const solid of SCABLANDS_SOLIDS) {
+      const dx = x - solid.x, dz = z - solid.z, c = Math.cos(solid.heading), s = Math.sin(solid.heading);
+      const gap = Math.hypot(Math.max(0, Math.abs(dx*c - dz*s) - solid.halfX),
+        Math.max(0, Math.abs(dx*s + dz*c) - solid.halfZ));
+      assert.ok(gap > 2, `Bess clears ${solid.id} on the forge approach.`);
+    }
+  }
+}
+const forgeView = createForge({heightAt:()=>0});
+const townLamps = createBrandLamps();
+const arrivalView = {definition, actors:[{...truck, position:step.destination.position}],
+  job:{steps:[step], stepIndex:0, stepState:{gasLoaded:true, gas:82, holes:0}}, forgeGasShare:0};
+const frozenArrival = JSON.stringify(arrivalView);
+drawing.update(arrivalView, ()=>0);
+assert.equal(drawing.group.getObjectByName('Forge tank hose').visible, true);
+assert.equal(drawing.group.getObjectByName('Forge gas tank').visible, true);
+forgeView.gas(GAS_LOAD_RULE.forgeBeforeGasShare); forgeView.animate(0);
+const smallFire = forgeView.flame.scale.y;
+townLamps.update(arrivalView); townLamps.animate(0);
+const firstLamp = townLamps.group.children[0];
+const smallLamp = firstLamp.getObjectByName('Lamp flame').scale.y;
+assert.equal(townLamps.group.children.length, 3);
+const leavingStart = furnaceSighting(arrivalView);
+assert.deepEqual(leavingStart, {x:step.gasFurnacePlace.position.x, z:step.gasFurnacePlace.position.z, heading:Math.PI});
+assert.equal(JSON.stringify(arrivalView), frozenArrival, 'Arrival drawing leaves the job unchanged.');
+arrivalView.forgeGasShare = 1;
+forgeView.gas(1); forgeView.animate(0);
+townLamps.update(arrivalView); townLamps.animate(0);
+assert.ok(forgeView.flame.scale.y > smallFire);
+assert.ok(firstLamp.getObjectByName('Lamp flame').scale.y > smallLamp);
+assert.equal(furnaceSighting(arrivalView).z, leavingStart.z - GAS_LOAD_RULE.arrivalFurnaceAwayMetres);
+forgeView.gas(null); forgeView.animate(0);
+assert.equal(forgeView.flame.visible, false, 'Gas fire does not remain in another job.');
+forgeView.dispose(); townLamps.dispose();
+console.log('Slow Ride: clear forge approach, connected hose, rising fire and lamps, and furnace departure passed.');

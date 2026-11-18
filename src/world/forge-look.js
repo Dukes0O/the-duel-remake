@@ -238,7 +238,7 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
   // wherever the car stopped, and the job can time its own ending and its sound to that moment. That clock is the job's own
   // count of its hold whenever the scene passes it (`hold`), so a pause stops the crane and the fire with the game.
   const park = {bearing: pitBearing + .9, reach: 7};
-  let bearing = park.bearing, reach = park.reach, length = lengthUp, last = null, car = null, job = null, grade = null, tip = 0;
+  let bearing = park.bearing, reach = park.reach, length = lengthUp, last = null, car = null, job = null, grade = null, tip = 0, gasFire = null;
   const place = () => {
     arm.rotation.y = bearing; trolley.position.z = reach;
     for (const line of lines) line.scale.y = length;
@@ -271,6 +271,7 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
 
   return {
     group, plan,
+    gas(share) { gasFire = share == null ? null : Math.max(0, Math.min(1, share)); },
     // Where the player's car is, in the land's metres, or nothing when there is no car to watch.
     watch(x, z) { car = Number.isFinite(x) && Number.isFinite(z) ? {x, z} : null; },
     // The pot is handed over: `at` is where it stands on the car (the land's metres, y the height of its foot), `gradeName`
@@ -320,7 +321,7 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
         pot.userData.update(seconds, burning == null ? job.ember : Math.max(0, job.ember * (1 - burning / .5)));
       }
       // The fire grows from the moment the ember lands, as fast and as tall as the ember was good.
-      const fire = burning == null ? null : FIRE[grade], grown = fire ? Math.min(1, burning / fire.seconds) : 0, eased = grown * grown * (3 - 2 * grown);
+      const fire = gasFire != null ? FIRE.bright : burning == null ? null : FIRE[grade], grown = gasFire ?? (fire ? Math.min(1, burning / fire.seconds) : 0), eased = grown * grown * (3 - 2 * grown);
       coalMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uHeat.value = fire ? Math.min(1, .25 + .75 * eased) * (.45 + .55 * fire.size) : 0;
       flameMaterial.uniforms.uTime.value = seconds; glowMaterial.uniforms.uTime.value = seconds;
       flames.forEach((flame, index) => {
