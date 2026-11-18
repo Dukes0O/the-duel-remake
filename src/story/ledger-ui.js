@@ -1,4 +1,8 @@
 // The view receives the part of the ledger someone at the hearth can know.
+export function playLedgerPageTurn(audio) {
+  if (audio?.context?.state === 'running' && !audio.muted) audio._playCue('story.ledger.open');
+}
+
 export function ledgerPageMarkup(page, escapeHTML) {
   const title = '<h3 id="ledger-title">What people remember</h3>';
   const section = (subtitle, items) => items.length
