@@ -1,8 +1,9 @@
+import {SALT_RIDERS} from './jobs/ember-rule.js';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
+import {scablandsSurfaceHeightAt, scablandsFloorsAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
@@ -15,7 +16,8 @@ import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
-import {furnaceSighting} from './jobs/furnace-sightings.js';
+import {furnaceSighting, hotDeliveryGlass, FURNACE_GLASS} from './jobs/furnace-sightings.js';
+import {BED_MIST, bedMistCorners, BRIDGE_ASH, bridgeAshFall} from './jobs/ember-rule.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
@@ -461,6 +463,31 @@ export function createScablandsScene(course,options={}){
   const followsOpenMarks=!Object.hasOwn(options,'openMarks');
   let openMarks=options.openMarks??getScablandsOpenMarks();
   const group=new THREE.Group();group.name='The Scablands';
+  // Rings give the light enough ground samples to follow the slopes between rocks.
+  const glassGrid = new THREE.RingGeometry(0, FURNACE_GLASS.glassRadius,
+    FURNACE_GLASS.drawSegments, FURNACE_GLASS.drawRings);
+  glassGrid.rotateX(-Math.PI / 2);
+  const glassLocal = glassGrid.attributes.position.array.slice();
+  const glassPatch = new THREE.Mesh(glassGrid, new THREE.MeshBasicMaterial({
+    color:0xfff4bc, transparent:true, opacity:.48, depthWrite:false,
+    polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2,
+  }));
+  glassPatch.name = "The furnace's glass on the ground";
+  glassPatch.visible = false;
+  group.add(glassPatch);
+  const mist = new THREE.Group();
+  mist.name = 'Cold mist in the river bed';
+  group.add(mist);
+  const mistMaterial = new THREE.MeshBasicMaterial({color:0xdde5e5, transparent:true,
+    opacity:.55, depthWrite:false, side:THREE.DoubleSide});
+  let mistPatches = null;
+  const ashColumn = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshBasicMaterial({color:0x98948e, transparent:true,
+      opacity:BRIDGE_ASH.drawOpacity, depthWrite:false}));
+  ashColumn.name = 'Ash falling under the Girder Bridge';
+  ashColumn.visible = false;
+  group.add(ashColumn);
+  const ashFloors = [];
   let yard=null;
   let retired=false;
   let townDraw=null;
@@ -592,6 +619,14 @@ export function createScablandsScene(course,options={}){
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
+  const saltShelter = new THREE.Group(); saltShelter.name = 'The salt lean-to'; saltShelter.visible = false; group.add(saltShelter);
+  const saltMaterial = new THREE.MeshStandardMaterial({color:0x756551, roughness:.9});
+  for (const x of [-SALT_RIDERS.shelterHalfX, SALT_RIDERS.shelterHalfX]) for (const z of [-SALT_RIDERS.shelterHalfZ, SALT_RIDERS.shelterHalfZ]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterPostWidth, SALT_RIDERS.shelterHeight, SALT_RIDERS.shelterPostWidth), saltMaterial);
+    post.position.set(x, SALT_RIDERS.shelterHeight / 2, z); saltShelter.add(post);
+  }
+  const saltRoof = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterRoofWidth, SALT_RIDERS.shelterRoofThickness, SALT_RIDERS.shelterRoofDepth), saltMaterial);
+  saltRoof.position.y = SALT_RIDERS.shelterHeight; saltRoof.rotation.x = SALT_RIDERS.shelterRoofSlope; saltShelter.add(saltRoof);
   const cinder=createCinderFigure();group.add(cinder);
   const brandLamps=createBrandLamps();group.add(brandLamps.group);
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
@@ -843,6 +878,17 @@ export function createScablandsScene(course,options={}){
       brandAshView.update(worldJob);
       brandThief.update(worldJob);
       bellowsView.update(state);
+      const glass = hotDeliveryGlass(worldJob);
+      glassPatch.visible = !!glass;
+      if (glass) {
+        const vertices = glassGrid.attributes.position;
+        for (let index = 0; index < vertices.count; index++) {
+          const x = glass.x + glassLocal[index * 3], z = glass.z + glassLocal[index * 3 + 2];
+          vertices.setXYZ(index, x, group.userData.drawnGroundHeightAt(x, z) + FURNACE_GLASS.drawLift, z);
+        }
+        vertices.needsUpdate = true;
+        glassGrid.computeBoundingSphere();
+      }
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -892,6 +938,37 @@ export function createScablandsScene(course,options={}){
       }
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
+      saltShelter.visible = Boolean(emberStep?.saltPost);
+      if (saltShelter.visible) {
+        const point = emberStep.saltPost.position;
+        saltShelter.position.set(point.x, scablandsSurfaceHeightAt(point.x, point.z), point.z);
+      }
+      const ash = emberStep?.bridgeAsh && !worldJob.job.done ?
+        bridgeAshFall(worldJob.job.stepState?.bridgeAsh, emberStep.bridgeAsh) : null;
+      ashColumn.visible = Boolean(ash);
+      if (ash) {
+        const count = scablandsFloorsAt(ash.x, ash.z, ashFloors);
+        const bottom = ashFloors[count - 1];
+        const height = count > 1 ? ashFloors[0] - bottom : BRIDGE_ASH.drawHeight;
+        ashColumn.position.set(ash.x, bottom + height / 2, ash.z);
+        ashColumn.rotation.y = Math.atan2(ash.tx, ash.tz);
+        ashColumn.scale.set(ash.halfWidth * 2, height, ash.halfLength * 2);
+      }
+      mist.visible = Boolean(emberStep && !worldJob.job.done);
+      if (mist.visible && mistPatches !== emberStep.bedMist) {
+        for (const sheet of [...mist.children]) { sheet.geometry.dispose(); mist.remove(sheet); }
+        mistPatches = emberStep.bedMist;
+        for (const patch of mistPatches ?? []) {
+          const points = bedMistCorners(patch);
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(points.flatMap(point =>
+            [point.x, group.userData.drawnGroundHeightAt(point.x, point.z) + BED_MIST.drawLift, point.z]), 3));
+          geometry.setIndex([0,1,2,0,2,3]);
+          const sheet = new THREE.Mesh(geometry, mistMaterial);
+          sheet.name = patch.id;
+          mist.add(sheet);
+        }
+      }
       townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
       const doorPose=tinTownDoorPose(TIN_TOWN_GATE,worldJob?.tinTownGateProgress??0);
       townDoor.rotation.y=doorPose.angle;

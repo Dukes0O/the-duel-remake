@@ -10,6 +10,7 @@
 // Not solid, and why: people (`folk.glb`), Big Bess and the furnace (they move; they are targets), the gate's beam and lamps and the
 // bridge's cross ties (they hang more than 5 m up, over any car), and the places that draw nothing (the Dry Dam, the Ships and the Iron
 // Line's station: the three boxes the old table held there stood in the air).
+import {SALT_RIDERS} from './jobs/ember-rule.js';
 import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {boneyardWrecks} from './boneyard-wrecks.js';
@@ -210,12 +211,14 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     braziers: [],
     barricades: [],
     yard: [],
+    shelter: [],
     townGate: [],
     near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
+      for (const solid of this.shelter) found.push(solid);
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
       for (const solid of this.people) found.push(solid);
@@ -237,6 +240,11 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       this.cars = actors.map(actor => ({...make({id:`job-car-${actor.id}`, kind:'vehicle',
         x:actor.position.x, z:actor.position.z, base:actor.position.y, halfX:.95, halfZ:2.2,
         heading:actor.heading ?? 0, height:1.6, verticalClearance:true}), jobActor:actor}));
+    },
+    setShelter(point) {
+      const {shelterHalfX:x, shelterHalfZ:z, shelterPostWidth:width, shelterHeight:height} = SALT_RIDERS;
+      this.shelter = [-x, x].flatMap(dx => [-z, z].map(dz => make({id:`salt-post-${dx}-${dz}`, kind:'post',
+        x:point.x + dx, z:point.z + dz, halfX:width / 2, halfZ:width / 2, height})));
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
     setTownGate(gate, progress = 0) {

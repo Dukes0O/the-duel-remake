@@ -8,6 +8,7 @@ import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
 import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
 import {BELLOWS_RULE, bellowsSentence} from './jobs/bellows-rule.js';
+import {FURNACE_PATIENCE_SECONDS} from './jobs/furnace-sightings.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -177,6 +178,9 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     bellows: step?.bellows ? {
       value: job.stepState.bellows ?? BELLOWS_RULE.start, max: BELLOWS_RULE.start,
     } : null,
+    seen: worldJob?.definition?.storyId === 'everburn' && worldJob.definition.number === 1 &&
+      !job?.done && !worldJob.settled && (worldJob.skylineSight?.seenSeconds ?? 0) > 0
+      ? {value: Math.min(worldJob.skylineSight.seenSeconds, FURNACE_PATIENCE_SECONDS), max: FURNACE_PATIENCE_SECONDS} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -346,7 +350,7 @@ export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} 
     const dangers = [...knowledge.barricades.values()].map(item => `A barricade of the ${item.who}.`);
     if (knowledge.sights.size) dangers.push('The furnace watches the land.');
     if (knowledge.hotDeliveryDangers?.has('salt-pan')) dangers.push('The wind on the salt pan cools the ember faster.');
-    if (knowledge.hotDeliveryDangers?.has('river-bed')) dangers.push('Cold air lies in the river bed. The pot cools fast down here.');
+    if (knowledge.hotDeliveryDangers?.has('river-bed')) dangers.push('Cold mist lies in the hollows. Steer round it.');
     if (knowledge.hotDeliveryDangers?.has('pipe')) dangers.push('Cross the Pipe at 40 km/h or less.');
     const learnt = dangers.length ? `<ul class="world-hud-learnt">${dangers.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '';
     return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>${learnt}`;
@@ -389,6 +393,12 @@ export function createWorldHud({host, app = null, picture = null}) {
       <aside class="world-hud-ways" aria-label="Ways to the job's place"></aside></div>
       </section>`;
   host.append(root);
+  const seenGauge = doc.createElement('div');
+  seenGauge.className = 'world-hud-seen';
+  seenGauge.hidden = true;
+  seenGauge.innerHTML = '<b>SEEN</b><progress aria-label="Seen by the furnace"></progress>';
+  root.append(seenGauge);
+  const seenMeter = seenGauge.querySelector('progress');
   const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
@@ -468,6 +478,11 @@ export function createWorldHud({host, app = null, picture = null}) {
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       // The ember gauge: a glowing bar that dims as the ember falls, flashes when a jolt takes ember, and says OUT at 0.
+      seenGauge.hidden = !model.seen;
+      if (model.seen) {
+        seenMeter.max = model.seen.max;
+        seenMeter.value = model.seen.value;
+      }
       emberGauge.hidden = !model.ember && !model.brand && !model.bellows;
       if (model.bellows) drawBellowsGauge(model.bellows, emberGauge, emberBar, emberLabel, emberNote);
       if (model.brand) drawBrandGauge(model.brand, emberGauge, emberBar, emberLabel, emberNote);
