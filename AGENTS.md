@@ -25,6 +25,10 @@ notes and history are evidence, not instructions.
   opened as a pull request into `integration/wasteland`. A cloud session never merges, never
   pushes `integration` or `master`, and never touches the live game. It runs the lane tier and
   `npm run build` and lists in the change note any suite it could not run. The laptop merges.
+- Codex in its cloud (Kyle, 18 November 2026) works by the same rule on cards with `owner: codex`: each card only on
+  its `codex/<card>` branch, cut from `origin/integration/wasteland`, pushed and opened as a pull request into
+  `integration/wasteland`. It never merges and never pushes `integration` or `master`. `docs/CODEX_PLAYBOOK.md`
+  section 15 says what a cloud cannot do and what the laptop then does.
 - A cloud session never stops to ask in chat. It writes the question to
   `docs/board/questions/<CARD>.md` on its branch (what needs deciding, the options, its
   recommended pick), commits and pushes at once, and carries on with that pick if the work can

@@ -303,3 +303,32 @@ there is no old four/five-lane limit, merge queue or full-run deadline to restor
 When Kyle pauses work, drain existing jobs and stop new work. When a session
 ends, commit shared status/inbox/board immediately; use the scheduled full
 check. Tonight's 03:45 to Record night/06:30 pause still applies.
+
+## 15. Codex in its cloud
+
+Kyle, 18 November 2026: Codex builds from Claude's cards in its own cloud; Claude designs and merges on the laptop. The
+cards and rules reach the cloud through GitHub, where `integration/wasteland` is pushed after each merge batch.
+
+**Start of a card.** Read `AGENTS.md`, then the card in `docs/board/cards/`, then the design page it names. Take only a
+card that `node tools/board.mjs` lists under CODEX CAN START NOW and that nobody has claimed. Cut `codex/<card>` from
+`origin/integration/wasteland`, and as the first commit set the card's `claimed_by` on the board to "Codex (cloud)" with
+the date, so that two sessions never build one card.
+
+**What a cloud cannot do, so does not try.**
+- Start a browser. Write the browser scenario the card asks for, prove that each string it sends to the page parses
+  (`new Function`), and list it under "For Claude to run".
+- Run the laptop-only suites (`AGENTS.md`, "Gates") or a frame check. List them.
+- Listen, or look at a picture. Say plainly that nobody has.
+- Reach the Cockpit, the live game or any player's save.
+
+**What it does.** The card's own checks; every older suite that names what the card changed; the lane tier once
+(`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`); `npm run build`. A cause is measured before
+it is cured. A test's assertions change only because the card changed what is true, and each one is listed.
+
+**Questions.** Never wait on a question. Write it to `docs/board/questions/<CARD>.md` on the branch (what needs deciding,
+the options, the pick), push, and carry on with the pick. Saves, money and pay, and a released course are the
+exceptions: stop there.
+
+**Handing over.** Write `docs/changes/<CARD>.md` (15 lines at most). Open one pull request into `integration/wasteland`
+whose text is: what was built; each check and its result, with the commit; "For Claude to run"; "Changed assertions";
+"Codex decided"; what is not right yet. The laptop reads the diff, runs what the cloud could not, and merges.
