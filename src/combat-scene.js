@@ -1,5 +1,6 @@
 import {createFlameResources, createFlameView, createFlameScorch, createFlameLighting} from './flame-view.js';
 import {FLAME_RULES} from './arsenal/flamethrower.js';
+import {handFlameMuzzle} from './world/jobs/hand-flame.js';
 import {SIGNATURE_GEAR} from './crew-gear/gear.js';
 import {createSmokeCloud, smokeHazeOpacity} from './combat-effects.js';
 import {
@@ -312,20 +313,26 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const flameLightSources = [];
   let flameScorchTimes = new WeakMap();
   let flameRaceState = null;
-  function presentFlame(view, {active, at, heading = 0, seconds, camera, quality, age,
+  // A tilted burst whose middle is higher than this above the ground leaves no burn on it.
+  const FLAME_SCORCH_REACH_METRES = 1.2;
+  // pitch: how far the burst is tilted up (radians), for a flame that follows a barrel; the burst turns to the heading first.
+  function presentFlame(view, {active, at, heading = 0, pitch = 0, seconds, camera, quality, age,
     range = FLAME_RULES.range, coneHalfAngle, body = false}, duel) {
     if (active) {
-      view.group.position.set(at.x, at.y, at.z); view.group.rotation.set(0, heading, 0);
+      view.group.position.set(at.x, at.y, at.z); view.group.rotation.set(-pitch, heading, 0, 'YXZ');
     }
     view.update({active, seconds, camera, quality, age, coneHalfAngle});
     if (!active) {flameScorchTimes.delete(view); return;}
-    const center = body ? 0 : range * .45;
+    const center = (body ? 0 : range * .45) * Math.cos(pitch);
     const x = at.x + Math.sin(heading) * center, z = at.z + Math.cos(heading) * center;
-    flameLightSources.push({x, y: at.y, z, range, body});
+    const centreY = at.y + (body ? 0 : range * .45) * Math.sin(pitch);
+    flameLightSources.push({x, y: centreY, z, range, body});
     const last = flameScorchTimes.get(view) ?? -Infinity;
     if (seconds - last >= .24) {
       const nearest = duel.course.nearest?.(x, z);
       const ground = nearest ? duel.course.groundAt(nearest.s, nearest.lateral) : at;
+      // A burst aimed over the ground leaves no burn on it.
+      if (pitch !== 0 && centreY - ground.y > FLAME_SCORCH_REACH_METRES) return;
       flameScorch.stamp({x, y: ground.y+(drawnShift?.(x,z)??0), z, heading, size: body ? 1.1 : range * .32}, seconds);
       flameScorchTimes.set(view, seconds);
     }
@@ -769,11 +776,15 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const flatAim = stepNow?.brand === true || stepNow?.gasLoad === true || stepNow?.bellows === true;
     const cinderCosine = Math.cos(cinderGear.cone / 2) / Math.max(1e-9, flatAim ? 1 : Math.cos(fighter?.pitch || 0));
     const cinderHalfAngle = Math.acos(Math.min(1, cinderCosine));
+    // In those jobs the burst leaves the barrel's mouth and follows the barrel (Kyle, 18 November 2026: aimed at a lamp
+    // overhead, the fire still ran along the ground from the walker's hip). In the arenas it is drawn as before.
+    const muzzle = fighter && flatAim ? handFlameMuzzle(fighter) : null;
+    const flameLift = fighter ? (drawnShift?.forActor?.(fighter)??drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0) : 0;
     presentFlame(crewFlame, {...flameFrame,
       active: active && duel.featureFlags?.enabled('crew-gear') === true &&
         s.onFoot && fighter?.flaming === true && cinderHalfAngle > 0,
-      at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.forActor?.(fighter)??drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
-      heading: fighter?.yaw, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
+      at: fighter && (muzzle ? {x: muzzle.x, y: muzzle.y + flameLift, z: muzzle.z} : {x: fighter.x, y: fighter.y + .85 + flameLift, z: fighter.z}),
+      heading: fighter?.yaw, pitch: muzzle ? fighter.pitch || 0 : 0, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
     cpuGearViews.forEach((view, index) => {
       const crew = s.opponents?.[index]?.cpuCrew;
       const enabled = active && duel.featureFlags?.enabled('cpu-crews') === true;

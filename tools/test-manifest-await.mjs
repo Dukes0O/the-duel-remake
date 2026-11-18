@@ -59,6 +59,9 @@ for (const [name, modules] of Object.entries(ENTRIES)) {
   clearTimeout(timer);
   ok(finished && globalThis.__bundleLoaded === true, `${name}: the bundle finishes loading (it waited ${LIMIT_MS / 1000} s)`);
   ok(!chunk.code.includes('node:fs'), `${name}: the bundle holds no Node-only course reader`);
+  // QA-NIGHT-18-NOV: a rules file that makes a Three.js thing when it is loaded carries a second copy of Three.js into
+  // every scenario's helper bundle, and the page then warns "Multiple instances of Three.js being imported".
+  ok(!chunk.code.includes('Multiple instances of Three.js'), `${name}: the bundle holds no copy of Three.js`);
 }
 
 // Node loads in any order: a graph that imports a course file as well as the game (a test does) loads, whichever comes

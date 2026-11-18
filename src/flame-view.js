@@ -22,7 +22,11 @@ void main() {
   flameAt = at.xyz;
   gl_Position = projectionMatrix * modelViewMatrix * at;
 }`;
+// Shares of the sector's half angle and of its reach from which the burst begins to thin.
+export const FLAME_SOFT = Object.freeze({side: .55, end: .7});
 const fragment = `
+#define FLAME_SOFT_SIDE ${FLAME_SOFT.side.toFixed(2)}
+#define FLAME_SOFT_END ${FLAME_SOFT.end.toFixed(2)}
 uniform sampler2D flameMap;
 uniform float flameRange;
 uniform float flameHalfAngle;
@@ -32,10 +36,15 @@ varying vec2 flameUv;
 varying vec3 flameAt;
 void main() {
   float distance = length(flameAt.xz);
-  if (flameBody < 0.5 && (flameAt.z < 0.0 || distance > flameRange * flameReveal ||
-      abs(atan(flameAt.x, flameAt.z)) > flameHalfAngle)) discard;
+  float reach = flameRange * flameReveal;
+  float angle = abs(atan(flameAt.x, flameAt.z));
+  if (flameBody < 0.5 && (flameAt.z < 0.0 || distance > reach || angle > flameHalfAngle)) discard;
+  // The burst thins out toward the sides and the far end of its sector, so that no straight edge is seen where it stops
+  // (Kyle, 18 November 2026: seen from the walker's own eyes the sector's sides were two hard upright lines).
+  float edge = flameBody > 0.5 ? 1.0 : (1.0 - smoothstep(flameHalfAngle * FLAME_SOFT_SIDE, flameHalfAngle, angle)) *
+    (1.0 - smoothstep(reach * FLAME_SOFT_END, reach, distance));
   vec4 source = texture2D(flameMap, flameUv);
-  float density = pow(source.a, 0.65) * smoothstep(0.03, 0.30, source.r);
+  float density = pow(source.a, 0.65) * smoothstep(0.03, 0.30, source.r) * edge;
   float heat = clamp(source.r * 1.75 + (1.0 - distance / max(flameRange, 0.01)) * 0.22, 0.0, 1.0);
   vec3 color = mix(vec3(0.55, 0.045, 0.008), vec3(1.0, 0.48, 0.035), smoothstep(0.08, 0.65, heat));
   color = mix(color, vec3(1.0, 0.90, 0.58), smoothstep(0.65, 1.0, heat));

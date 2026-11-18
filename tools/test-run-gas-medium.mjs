@@ -5,7 +5,6 @@
 // Each case is 10 tries; the run count is the try's number, so each try has its own ambush places.
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
 import {alongPath} from '../src/world/jobs/steps/escort.js';
 import {pathShare} from '../src/world/jobs/furnace-sightings.js';
@@ -113,7 +112,7 @@ function play(definition, seed, driver) {
 }
 
 const cases = [
-  {name: 'Job 4 (Slow Ride)', job: () => EVERBURN_JOBS[3]},
+  // Job 4 (Slow Ride) was remade as the gas load and has its own checks (tools/test-everburn-job4.mjs, tools/test-everburn-easy.mjs).
   ...['long', 'boneyard'].flatMap(road => [1, 2, 3, 4].map(feud => ({name: `${road} road, ${FEUD_WORDS[feud - 1]}`, road, feud,
     job: seed => gasRunJob({road, feud, runs: seed - 1, difficulty: 'medium'})}))),
 ];
@@ -147,7 +146,6 @@ assert.equal(battleRows['driver who never fights'].battlesWon, 0, 'a driver who 
 const get = (label, name) => results[`${label} / ${name}`];
 // The card's targets.
 const FIGHT = 'fighting driver', COWARD = 'driver who never fights';
-assert(get(FIGHT, 'Job 4 (Slow Ride)').wins >= 8, `the fighting driver wins job 4: ${get(FIGHT, 'Job 4 (Slow Ride)').wins}/10, expected at least 8`);
 assert(get(FIGHT, 'boneyard road, Raiding').wins >= 8, `the fighting driver wins a Boneyard run at Raiding: ${get(FIGHT, 'boneyard road, Raiding').wins}/10, expected at least 8`);
 assert(get(FIGHT, 'boneyard road, War party').wins >= 5, `the fighting driver wins a Boneyard run at War party: ${get(FIGHT, 'boneyard road, War party').wins}/10, expected at least 5`);
 // The driver who never fights arrives everywhere: an ambush that is never cleared gives up after two rests on its stretch, so a run
