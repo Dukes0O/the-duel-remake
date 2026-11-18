@@ -1747,7 +1747,7 @@ tone as the Hand Flamer's sound in a job, if nothing else plays it.
 ### Independent code review, slice 15a
 The separate reviewer found three real sound gaps: coasting wind/tyres remained audible on foot, noise recipes did not render the lamp hiss's rise, and automatic shift accents missed the engine fade. All three are cured with real-audio checks. The reviewer confirmed the fixes and found no remaining code fault. Audio/PCM passes 721 checks. No assertions were loosened for these cures.
 
-- Browser scenario picture count: four becomes five, adding a fixed half-lit mast lamp view that checks the progress bar, AT THE LAMP row and ring. The ending also checks that the new bar and ring are hidden. Every page expression parses separately with `new Function`; Claude runs the browser.
+
 ### Part B built and reviewed (Claude, 18 November 2026)
 
 Built: the burst leaves the barrel's mouth and follows the barrel in the three town jobs (`src/world/jobs/hand-flame.js`
