@@ -87,6 +87,13 @@ for (const person of namedCast.slice(0,11)) {
   assert.equal(skins.length, 1, 'one skinned draw for ' + person.id);
   assert.equal(skins[0].geometry.groups.length, 0);
   assert.ok(skins[0].skeleton.bones.length >= 17);
+  const neutral=skins[0].skeleton.bones.findIndex(b=>b.name==='neutral_bone');
+  if (neutral>=0) {
+    const {skinIndex:joint,skinWeight:weight}=skins[0].geometry.attributes;
+    for (let i=0;i<joint.count;i++) for (let slot=0;slot<4;slot++)
+      assert.ok(joint.getComponent(i,slot)!==neutral || weight.getComponent(i,slot)<.001,
+        person.id+' has a garment vertex left behind by the moving fighter rig');
+  }
 }
 for (const id of ['auntie-solder','clinker']) {
   const actor = view.group.getObjectByName('story-person-' + id);

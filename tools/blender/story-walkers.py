@@ -4,19 +4,24 @@ blender -b -t 4 --python-exit-code 1 --python tools/blender/story-walkers.py -- 
 """
 import argparse
 import math
+import json
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', type=Path, required=True)
+parser.add_argument('--paths-only', action='store_true')
+args = parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else sys.argv[1:])
+models = args.root.resolve() / 'public/assets/models/wasteland'
+town = models / 'town'
+if args.paths_only:
+    print(json.dumps({'blend':[], 'glb':[str(town/'story-walkers.glb')]}))
+    raise SystemExit(0)
+
 import bpy
 import numpy as np
 from mathutils import Euler, Matrix, Vector
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--root', type=Path, required=True)
-args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
-models = args.root.resolve() / 'public/assets/models/wasteland'
-town = models / 'town'
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 bpy.ops.import_scene.gltf(filepath=str(models / 'test-fighter.glb'))
@@ -153,6 +158,10 @@ def dace_depth():
 def blend_joints(height, ordered):
     for (a,name_a),(b,name_b) in zip(ordered,ordered[1:]):
         if height < b:
+            # Two stations on the same bone must keep all of its weight.
+            # REPLACE-ing that group twice can leave nearly zero at an elbow.
+            if name_a == name_b:
+                return [(name_a,1)]
             weight = float(smoothstep((height-a)/(b-a)))
             return [(name_a,1-weight),(name_b,weight)]
     return [(ordered[-1][1],1)]
