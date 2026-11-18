@@ -227,6 +227,44 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   }
 }
 
+// The salt horn reveals both actors; each chase boundary sends both home.
+for (const reason of ['ridge-car', 'ridge-rider', 'off-pan', 'time']) {
+  const definition = EVERBURN_JOBS[0], step = definition.steps[0];
+  const world = createWorldJob(definition), events = [], captions = [];
+  let car = {...step.saltPost.position, z:step.saltPost.position.z - 50};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const state = {arena:{mode:'world-job',worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, headingError:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, car:CARS.falcone_f42, seed:19, course:{def:SCABLANDS_VENUE,
+    nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car},
+    emit:event => events.push(event), _storyCallout:line => captions.push(line)};
+  initializeWorldJob(duel, definition);
+  const map = () => worldJobMapData(duel.course, state).marks.filter(mark => mark.kind === 'rider');
+  world.job.stepState = {loaded:false, ember:100};
+  stepWorldJob(duel, 0);
+  assert.equal(world.saltWarned, undefined);
+  assert.equal(map().length, 0);
+  world.job.stepState.loaded = true;
+  stepWorldJob(duel, 0);
+  assert.equal(world.saltWarned, true);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.salt.horn').length, 1);
+  assert.ok(captions.includes("Rook: Salt riders. They won't climb the Ridge. Get to it first."));
+  assert.equal(map().length, 2);
+  const riders = world.actors.filter(actor => actor.id.startsWith('salt-rider-'));
+  assert.ok(riders.every(actor => actor.pursuing && actor.renderCar === 'dusthawk_rally'));
+  if (reason === 'ridge-car') car = {...step.saltRidge};
+  if (reason === 'ridge-rider') riders[0].position = {...step.saltRidge, y:0};
+  if (reason === 'off-pan') car = {...LAND.yard};
+  if (reason === 'time') world.saltChaseSeconds = SALT_RIDERS.chaseSeconds;
+  stepWorldJob(duel, 0);
+  assert.equal(world.saltDone, true, reason);
+  assert.ok(riders.every((actor, index) => !actor.pursuing && (actor.returningToPost ||
+    Math.hypot(actor.position.x - step.saltRiders[index].start.position.x,
+      actor.position.z - step.saltRiders[index].start.position.z) <= 1)), reason);
+  stepWorldJob(duel, 0);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.salt.horn').length, 1);
+}
+
 // The job counts light exposure, not all time in the watch's view.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
@@ -598,7 +636,7 @@ function stopScoutForProof(duel) {
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
   let car = {...LAND.yard};
-  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+  const state = {arena:{mode:'world-job',worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
     speedMph:0, headingError:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
