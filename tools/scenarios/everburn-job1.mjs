@@ -94,7 +94,15 @@ export async function run(context) {
           const p = pointFor(node);
           const drawFocused = new Function(`return (${focusSource})`)();
           drawFocused(camera, render.renderer, render.scene, p, options);
-        }
+          // The game draws its own view again before the screenshot is taken, so the aimed view is held as a still over it.
+          let held = document.getElementById('qa-aimed-view');
+          if (!held) {
+            held = document.createElement('img'); held.id = 'qa-aimed-view';
+            held.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:2147483000;pointer-events:none';
+            document.body.append(held);
+          }
+          held.src = render.renderer.domElement.toDataURL('image/jpeg', .92);
+        } else document.getElementById('qa-aimed-view')?.remove();
         const visible = node && (() => { for (let p = node; p; p = p.parent) if (!p.visible) return false; return true; })();
         let projection = null;
         if (node) { const p = pointFor(node); p.y += options.aimHeight ?? 1; projection = p.project(camera); }
@@ -227,6 +235,8 @@ export async function run(context) {
     });
     await picture('bed-mist-from-60m', 'bed-mist-1',
       {focus:true,groundPatch:true,dy:8,dz:60,aimHeight:0,loaded:true});
+    await picture('bed-mist-from-25m-low', 'bed-mist-1',
+      {focus:true,groundPatch:true,dy:2.2,dz:25,aimHeight:.5,loaded:true});
     await page(context, () => {
       const app = window.__qaApp, duel = app.duel, state = duel.state;
       const job = state.arena.worldJob, plan = job.job.steps[0].bridgeAsh;
@@ -238,6 +248,8 @@ export async function run(context) {
     });
     await picture('bridge-ash-from-150m', 'Ash falling under the Girder Bridge',
       {focus:true,dy:4,dz:150,aimHeight:0,loaded:true});
+    await picture('bridge-ash-from-40m', 'Ash falling under the Girder Bridge',
+      {focus:true,dx:18,dy:3,dz:40,aimHeight:0,loaded:true});
     await page(context, () => {
       const app = window.__qaApp, duel = app.duel, state = duel.state;
       const post = state.arena.worldJob.job.steps[0].saltPost.position;
@@ -247,6 +259,7 @@ export async function run(context) {
       app.onFrame?.(state, 0); window.__render.renderFrame();
     });
     await picture('salt-lean-to-from-200m', 'The salt lean-to', {focus:true,dy:6,dz:200,loaded:true});
+    await picture('salt-lean-to-from-25m', 'The salt lean-to', {focus:true,dx:12,dy:4,dz:25,aimHeight:2,loaded:true});
     // The riders only exist after the pot has been collected.
     for (const distance of [250, 60]) {
       const road = pointAlong(EAST_ROAD.points, 900 - distance);

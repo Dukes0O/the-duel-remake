@@ -18,6 +18,7 @@ import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting, hotDeliveryGlass, FURNACE_GLASS} from './jobs/furnace-sightings.js';
 import {BED_MIST, bedMistCorners, BRIDGE_ASH, bridgeAshFall} from './jobs/ember-rule.js';
+import {createGlassPatchMaterial, createGlassBeam, createMistMaterial, createMistGeometry, createAshFall} from './ember-ways-look.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
@@ -28,6 +29,7 @@ import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
 import {barricadeShape,barricadeSurface} from './ash-men-look.js';
+import {saltLeanToShape} from './salt-lean-to-look.js';
 import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
@@ -462,23 +464,25 @@ export function createScablandsScene(course,options={}){
     FURNACE_GLASS.drawSegments, FURNACE_GLASS.drawRings);
   glassGrid.rotateX(-Math.PI / 2);
   const glassLocal = glassGrid.attributes.position.array.slice();
-  const glassPatch = new THREE.Mesh(glassGrid, new THREE.MeshBasicMaterial({
-    color:0xfff4bc, transparent:true, opacity:.48, depthWrite:false,
-    polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2,
-  }));
+  // The glass stands this high on the furnace, above the ground the furnace stands on.
+  const GLASS_ON_FURNACE_METRES = 9;
+  // The light, the mist and the ash are drawn by src/world/ember-ways-look.js; the job's rules say where each is.
+  const glassMaterial = createGlassPatchMaterial();
+  const glassPatch = new THREE.Mesh(glassGrid, glassMaterial);
   glassPatch.name = "The furnace's glass on the ground";
-  glassPatch.visible = false;
+  glassPatch.visible = false; glassPatch.renderOrder = 2;
   group.add(glassPatch);
+  // The shaft from the furnace on its mesa down to the patch, and the flash of the glass itself.
+  const glassBeam = createGlassBeam();
+  glassBeam.group.visible = false;
+  group.add(glassBeam.group);
+  const glassSource = {x:0, y:0, z:0}, glassTarget = {x:0, y:0, z:0};
   const mist = new THREE.Group();
   mist.name = 'Cold mist in the river bed';
   group.add(mist);
-  const mistMaterial = new THREE.MeshBasicMaterial({color:0xdde5e5, transparent:true,
-    opacity:.55, depthWrite:false, side:THREE.DoubleSide});
+  const mistMaterial = createMistMaterial();
   let mistPatches = null;
-  const ashColumn = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({color:0x98948e, transparent:true,
-      opacity:BRIDGE_ASH.drawOpacity, depthWrite:false}));
-  ashColumn.name = 'Ash falling under the Girder Bridge';
+  const ashColumn = createAshFall();
   ashColumn.visible = false;
   group.add(ashColumn);
   const ashFloors = [];
@@ -614,14 +618,18 @@ export function createScablandsScene(course,options={}){
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
+  // The salt riders' lean-to, drawn by src/world/salt-lean-to-look.js to the plan the job's solids use.
   const saltShelter = new THREE.Group(); saltShelter.name = 'The salt lean-to'; saltShelter.visible = false; group.add(saltShelter);
-  const saltMaterial = new THREE.MeshStandardMaterial({color:0x756551, roughness:.9});
-  for (const x of [-SALT_RIDERS.shelterHalfX, SALT_RIDERS.shelterHalfX]) for (const z of [-SALT_RIDERS.shelterHalfZ, SALT_RIDERS.shelterHalfZ]) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterPostWidth, SALT_RIDERS.shelterHeight, SALT_RIDERS.shelterPostWidth), saltMaterial);
-    post.position.set(x, SALT_RIDERS.shelterHeight / 2, z); saltShelter.add(post);
+  let saltShelterBuilt = false;
+  function buildSaltShelter() {
+    if (saltShelterBuilt) return;
+    saltShelterBuilt = true;
+    const lean = new THREE.Mesh(saltLeanToShape({halfX:SALT_RIDERS.shelterHalfX, halfZ:SALT_RIDERS.shelterHalfZ,
+      postWidth:SALT_RIDERS.shelterPostWidth, height:SALT_RIDERS.shelterHeight, roofWidth:SALT_RIDERS.shelterRoofWidth,
+      roofDepth:SALT_RIDERS.shelterRoofDepth, roofSlope:SALT_RIDERS.shelterRoofSlope}), barricadeMaterial);
+    lean.name = 'Lean-to, windbreak and horn'; lean.castShadow = true; lean.receiveShadow = true;
+    saltShelter.add(lean);
   }
-  const saltRoof = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterRoofWidth, SALT_RIDERS.shelterRoofThickness, SALT_RIDERS.shelterRoofDepth), saltMaterial);
-  saltRoof.position.y = SALT_RIDERS.shelterHeight; saltRoof.rotation.x = SALT_RIDERS.shelterRoofSlope; saltShelter.add(saltRoof);
   const cinder=createCinderFigure();group.add(cinder);
   let cinderRequested=false;
   function requestCinder(){
@@ -817,6 +825,8 @@ export function createScablandsScene(course,options={}){
         bessEffects.fires.forEach((fire,index)=>{fire.scale.y=fire.userData.tall*(.8+.3*Math.abs(Math.sin(seconds*4.7+index*2.3)));});
       }
       clock=seconds;
+      glassMaterial.uniforms.uTime.value=seconds;mistMaterial.uniforms.uTime.value=seconds;
+      if(ashColumn.visible)ashColumn.userData.update(seconds);
       if(forge.group.visible)forge.animate(seconds);
       if(cinderArc.visible&&furnaceRig&&furnaceEffects&&bessRig){
         furnaceRig.updateWorldMatrix(true,false);bessRig.updateWorldMatrix(true,false);group.updateWorldMatrix(true,false);
@@ -871,7 +881,17 @@ export function createScablandsScene(course,options={}){
         }
         vertices.needsUpdate = true;
         glassGrid.computeBoundingSphere();
-      }
+        // The glass is on the furnace, which stands where the job's sighting puts it.
+        const furnaceAt = furnaceSighting(worldJob);
+        glassBeam.group.visible = Boolean(furnaceAt && !furnaceAt.hidden);
+        if (glassBeam.group.visible) {
+          glassSource.x = furnaceAt.x; glassSource.z = furnaceAt.z;
+          glassSource.y = scablandsSurfaceHeightAt(furnaceAt.x, furnaceAt.z) + GLASS_ON_FURNACE_METRES;
+          glassTarget.x = glass.x; glassTarget.z = glass.z;
+          glassTarget.y = group.userData.drawnGroundHeightAt(glass.x, glass.z) + FURNACE_GLASS.drawLift;
+          glassBeam.place(glassSource, glassTarget, glass.radius ?? FURNACE_GLASS.glassRadius, clock);
+        }
+      } else glassBeam.group.visible = false;
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -923,6 +943,7 @@ export function createScablandsScene(course,options={}){
       const emberStep=stepNow?.ember?stepNow:null;
       saltShelter.visible = Boolean(emberStep?.saltPost);
       if (saltShelter.visible) {
+        buildSaltShelter();
         const point = emberStep.saltPost.position;
         saltShelter.position.set(point.x, scablandsSurfaceHeightAt(point.x, point.z), point.z);
       }
@@ -942,13 +963,9 @@ export function createScablandsScene(course,options={}){
         for (const sheet of [...mist.children]) { sheet.geometry.dispose(); mist.remove(sheet); }
         mistPatches = emberStep.bedMist;
         for (const patch of mistPatches ?? []) {
-          const points = bedMistCorners(patch);
-          const geometry = new THREE.BufferGeometry();
-          geometry.setAttribute('position', new THREE.Float32BufferAttribute(points.flatMap(point =>
-            [point.x, group.userData.drawnGroundHeightAt(point.x, point.z) + BED_MIST.drawLift, point.z]), 3));
-          geometry.setIndex([0,1,2,0,2,3]);
+          const geometry = createMistGeometry(bedMistCorners(patch), group.userData.drawnGroundHeightAt, BED_MIST.drawLift);
           const sheet = new THREE.Mesh(geometry, mistMaterial);
-          sheet.name = patch.id;
+          sheet.name = patch.id; sheet.renderOrder = 2;
           mist.add(sheet);
         }
       }
