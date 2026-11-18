@@ -47,6 +47,7 @@ function jpegDimensions(bytes, start, length) {
 }
 
 const generators = [
+  {script:'tools/blender/story-walkers.py',args:[],recipeOnly:true,glb:['public/assets/models/wasteland/town/story-walkers.glb']},
   {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/works.glb'],budget:100000,maxBytes:3000000},
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
@@ -206,6 +207,8 @@ const nativeGenerators = [
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
 const reviewHelpers = [
+  {script:'tools/blender/story-people-review.py',args:[],render:'folder',extension:'jpg',
+    views:['current-20m','gate-walkers-20m','gate-talk','travellers','actions','at-rest']},
   {script:'tools/blender/town-sheet.py',args:[],render:false,summary:['docs','board','looks','town-art-base','round-3.jpg']},
   {script:'tools/blender/deep-art-sheet.py',args:[],render:false,summary:['docs','board','looks','deep-art','round-2.jpg']},
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
@@ -2104,7 +2107,7 @@ try {
       const plan=JSON.parse(call.stdout);
       assert.deepEqual(plan.glb,[],'review helper never emits a runtime model');
       assert.deepEqual(plan.blend,[],'review helper never authors a model source');
-      assert.deepEqual(plan.evidence,helper.render === 'folder' ? helper.views.map(view => join(folder, view + '.png'))
+      assert.deepEqual(plan.evidence,helper.render === 'folder' ? helper.views.map(view => join(folder, view + '.' + (helper.extension ?? 'png')))
         : helper.render?[join(fixtureRoot,'.evidence','kits','review.png')]:[]);
       assert.deepEqual(plan.summary,helper.render?[]:[join(fixtureRoot,...(helper.summary || ['docs','board','looks','kits','round-1.jpg']))]);
       assert.deepEqual(readdirSync(fixtureRoot),[],'planning creates no output');

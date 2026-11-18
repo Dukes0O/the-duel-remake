@@ -1,14 +1,33 @@
 """Render photographs of the actual posed meshes prepared by story-people-poses.mjs.
 blender -b -t 4 --python-exit-code 1 --python tools/blender/story-people-review.py -- EVIDENCE_DIR
 """
+import argparse
 import json
 import math
 import sys
 from pathlib import Path
+NAMES = ('current-20m','gate-walkers-20m','gate-talk','travellers','actions','at-rest')
+parser = argparse.ArgumentParser()
+parser.add_argument('folder', nargs='?', type=Path)
+parser.add_argument('views', nargs='*')
+parser.add_argument('--out', type=Path)
+parser.add_argument('--root', type=Path, default=Path.cwd())
+parser.add_argument('--paths-only', action='store_true')
+args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else sys.argv[1:])
+if not (args.out or args.folder):
+    parser.error('Choose an evidence directory.')
+root=args.root.resolve()
+folder=(root/(args.out or args.folder)).resolve()
+if not folder.is_relative_to(root/'.evidence'):
+    parser.error('Review images belong under .evidence/.')
+if set(args.views)-set(NAMES):
+    parser.error('Unknown review view.')
+if args.paths_only:
+    print(json.dumps({'blend':[],'glb':[],'evidence':[str(folder/(n+'.jpg')) for n in (args.views or NAMES)],'summary':[]}))
+    raise SystemExit(0)
+
 import bpy
 from mathutils import Vector
-
-folder = Path(sys.argv[sys.argv.index('--') + 1]).resolve()
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.render.engine = 'CYCLES'
@@ -96,8 +115,7 @@ def payload(name):
 objects = {name:payload(name) for name in ['gate','current','gate-walkers','speaking','leads','actions','at-rest','camp']}
 
 def shot(name, show, eye, target, fov):
-    selection = sys.argv[sys.argv.index('--') + 2:]
-    if selection and name not in selection:
+    if args.views and name not in args.views:
         return
     for key, col in objects.items():
         col.hide_render = key not in show

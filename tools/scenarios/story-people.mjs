@@ -56,6 +56,73 @@ export const pageFunctions = {
     if (shot === 'dace-running') app.advance(.42);
     app.onFrame?.(state,0);
   },
+  gateSample(present) {
+    return (async () => {
+      const app=window.__qaApp, api=window.__render, world=app.duel.state.arena.worldJob;
+      const cast=world.storyPeople, crowd=api.scene.getObjectByName('Wasteland story people');
+      const gl=api.renderer.getContext(), ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+      const pass=api.composer.passes[0], previousDraw=pass.render, previousProbe=app.frameDiagnostics;
+      const previousCamera=api.camera.position.clone(), next=()=>new Promise(requestAnimationFrame);
+      const cpu=[],gpu=[],intervals=[],queries=[];
+      let collecting=false, disjoint=false, previous=null;
+      const poll=()=>{
+        if (!ext) return;
+        if (gl.getParameter(ext.GPU_DISJOINT_EXT)) disjoint=true;
+        while (queries.length && gl.getQueryParameter(queries[0],gl.QUERY_RESULT_AVAILABLE)) {
+          const query=queries.shift();
+          if (!disjoint) gpu.push(gl.getQueryParameter(query,gl.QUERY_RESULT)/1e6);
+          gl.deleteQuery(query);
+        }
+      };
+      const summary=values=>{
+        const sorted=values.slice().sort((a,b)=>a-b);
+        const at=q=>sorted.length?sorted[Math.ceil(q*sorted.length)-1]:null;
+        return {samples:sorted.length,p50:at(.5),p95:at(.95)};
+      };
+      try {
+        world.storyPeople=present?cast:[];
+        await next();
+        await crowd.userData.ready;
+        for(let i=0;i<30;i++) await next();
+        if (crowd.visible!==present || (present && crowd.children.filter(n=>n.name.startsWith('story-person-')).length!==12))
+          throw Error('Gate frame control has the wrong visible cast.');
+        app.frameDiagnostics={active:true,now:()=>performance.now(),recordAppFrame(){},
+          recordRendererFrame(timestamp,update,submit) {
+            if (!collecting) return;
+            cpu.push(update+submit);
+            if (previous!==null) intervals.push(timestamp-previous);
+            previous=timestamp;
+          }};
+        pass.render=function(...args) {
+          poll();
+          let query;
+          if (collecting && ext && !disjoint && !gl.getQuery(ext.TIME_ELAPSED_EXT,gl.CURRENT_QUERY)) {
+            query=gl.createQuery();
+            if (query) gl.beginQuery(ext.TIME_ELAPSED_EXT,query);
+          }
+          try { return previousDraw.apply(this,args); }
+          finally { if (query) { gl.endQuery(ext.TIME_ELAPSED_EXT); queries.push(query); } }
+        };
+        collecting=true;
+        for(let i=0;i<121;i++) await next();
+        collecting=false;
+        for(let i=0;i<60 && queries.length;i++){ await next(); poll(); }
+        if (cpu.length<115 || previousCamera.distanceTo(api.camera.position)>.15)
+          throw Error('Gate frame sample lost its fixed player camera or delivered too few frames.');
+        return {present,sceneCpuMs:summary(cpu),mainPassGpuMs:disjoint?null:summary(gpu),
+          deliveredMs:summary(intervals),gpuSupported:!!ext,disjoint,
+          pixelRatio:api.renderer.getPixelRatio(),viewport:[gl.drawingBufferWidth,gl.drawingBufferHeight]};
+      } finally {
+        collecting=false;
+        pass.render=previousDraw;
+        app.frameDiagnostics=previousProbe;
+        for(const query of queries) gl.deleteQuery(query);
+        world.storyPeople=cast;
+        await next();
+        await crowd.userData.ready;
+      }
+    })();
+  },
   settled: () => new Promise(resolve => setTimeout(resolve, 1250)),
   draw(shot, eye, subject) {
     const api = window.__render, scene = api.scene, camera = api.camera;
@@ -97,13 +164,14 @@ export function pageSource(name, ...args) {
 
 export async function run(context) {
   const evaluate = (name, ...args) => context.evaluate(pageSource(name,...args));
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,story-choices,warlord-cards&harness=story-people');
   await context.waitFor(pageSource('ready'),'memory-only menu',60000);
   await evaluate('prepare');
   await context.waitFor(pageSource('yard'),'yard',60000);
   await evaluate('start',reviewJob);
   await context.waitFor(pageSource('loaded'),'gate company and town',120000);
-  const report = [];
+  const report = {views:[],frameTiming:null};
   for (const [shot,eye,subject,changes] of [
     ['gate-group',at(0,-25.6),'rell',{}], ['rell-speaking',at(-.4,-9.1),'rell',{}],
     ['dace-running',at(-2,-7.4),'dace',{dace:at(0,-5.2)}],
@@ -112,8 +180,20 @@ export async function run(context) {
     await evaluate('stage',shot,eye,changes,runAction);
     // Let gaze, hands, and the grounded resting pose settle on rendering time.
     await evaluate('settled');
-    report.push(await evaluate('draw',shot,eye,subject));
+    report.views.push(await evaluate('draw',shot,eye,subject));
     await context.screenshot('story-people-' + shot);
+    if (shot==='gate-group' && context.headed) {
+      // Alternate identical views to limit order bias. GPU work, CPU work and
+      // delivered intervals are separate observations on the target laptop.
+      const samples=[];
+      for (const enabled of [false,true,true,false]) samples.push(await evaluate('gateSample',enabled));
+      const p95Delta=key=>{
+        if (samples.some(s=>!s[key] || s[key].samples<115)) return null;
+        return (samples[1][key].p95+samples[2][key].p95-samples[0][key].p95-samples[3][key].p95)/2;
+      };
+      report.frameTiming={limitMs:1,samples,p95AddedMs:{
+        rendererCpu:p95Delta('sceneCpuMs'),mainPassGpu:p95Delta('mainPassGpuMs'),delivered:p95Delta('deliveredMs')}};
+    }
   }
   await writeFile(join(context.outputDir,'story-people.json'), JSON.stringify(report,null,2)+'\n');
   return report;
