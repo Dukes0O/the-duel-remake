@@ -13,6 +13,7 @@ import {landMarks} from '../src/world/scablands-picture.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
 import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {createBrandLamps} from '../src/world/brand-lamps.js';
+import {TOWN_LAMP} from '../src/world/town-lamp-look.js';
 import {createBrandAuntie} from '../src/world/brand-auntie.js';
 import {createCarriedBrand} from '../src/world/brand-carried.js';
 import {createBrandAshView} from '../src/world/brand-ash-view.js';
@@ -502,16 +503,19 @@ assert.equal(lampView.group.visible, true);
 assert.equal(lampView.group.children.length, 3);
 for (const [index, lamp] of lampView.group.children.entries()) {
   assert.equal(lamp.position.y, sites.lamps[index].position.y);
-  const [post, box, glow] = lamp.children;
-  assert.equal(post.geometry.parameters.radiusTop, lampGrid.brandLamps[index].halfX);
-  assert.equal(post.geometry.parameters.height, BRAND_RULE.postHeight);
-  assert.equal(box.position.y, BRAND_RULE.postHeight);
+  // Claude's drawn lamp (src/world/town-lamp-look.js) stands in place of the plain post and box.
+  const [look, glow] = lamp.children;
+  assert.ok(look.getObjectByName('Lamp post and lantern'), 'each lamp is the drawn town lamp');
+  assert.equal(look.children.filter(child => child.name === 'Lantern pane').length, 4);
+  assert.ok(TOWN_LAMP.footRadius <= lampGrid.brandLamps[index].halfX + .1, 'the foot of the lamp is no more than 0.1 m wider than its solid');
+  assert.ok(Math.abs(glow.position.y - (TOWN_LAMP.postHeight + .12 - TOWN_LAMP.lanternDrop + TOWN_LAMP.lantern.tall / 2)) < 1e-6, 'the light is in the lantern');
+  assert.equal(look.getObjectByName('Lamp flame').visible, index === 0, 'only a lit lamp shows its flame');
   assert.equal(glow.distance, BRAND_RULE.lanternLightRadius);
   assert.equal(glow.intensity > 0, index === 0);
 }
 lampWorldJob.job.stepState.lamps.pump = false;
 lampView.update(lampWorldJob);
-assert.equal(lampView.group.children[0].children[2].intensity, 0);
+assert.equal(lampView.group.children[0].children[1].intensity, 0);
 lampWorldJob.job.stepState.lamps.pump = true;
 assert.equal(JSON.stringify(lampWorldJob), lampStateBefore);
 lampView.update(null);
@@ -609,7 +613,8 @@ for (const hidden of [
   assert.equal(brandLight.intensity, 0);
 }
 let disposedBrandParts = 0;
-for (const part of [brandStick.geometry, brandStick.material, brandFlame.geometry, brandFlame.material])
+// The drawn flame is two tongues that share one shape and one material.
+for (const part of [brandStick.geometry, brandStick.material, brandFlame.children[0].geometry, brandFlame.children[0].material])
   part.addEventListener('dispose', () => disposedBrandParts++);
 brandView.dispose();
 assert.equal(disposedBrandParts, 4);

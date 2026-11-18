@@ -1163,6 +1163,19 @@ the browser scenarios `everburn-job1`, `everburn-job2`, `everburn-job3`.
 **Still owed before Kyle tries either job:** Claude's hand play of both to the end; the redraw of the brand, the
 lamps, dusk and the windows.
 
+## Job 2's lamps and brand, drawn (Claude, 17 November 2026, evening): merged, hidden
+
+The three lamps are the town lamp of `src/world/town-lamp-look.js` (a pipe post in a concrete-filled tyre, a bent arm,
+a hung lantern with sooted panes, a flame, a pool of light and a light of its own), each turned a different way. The
+brand is a stick with a charred rag head bound in wire and a two-tongued flame, with its own light and pool. Both
+replace slice 9's plain shapes. **Changed assertions in `tools/test-everburn-job2.mjs`, reviewed by Claude; none is
+loosened:** the lamp view's checks of a plain post and box (their radius and heights) become checks that each lamp is
+the drawn lamp with four panes, a foot no more than 0.1 m wider than its solid, its light in the lantern, and a flame
+shown only when lit; the brand's disposal check names the drawn flame's shape and material. The rule checks are
+untouched. Checks: lane tier 41 of 41, build, browser scenario `everburn-job2`. Seen by Claude: the brand in the
+scenario's picture (its head first read as an orange bucket and was darkened; not yet seen again), the lamp only in a
+test scene. Dusk, the lit windows and the people coming out are still to draw.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the
