@@ -528,3 +528,14 @@ forgeView.gas(null); forgeView.animate(0);
 assert.equal(forgeView.flame.visible, false, 'Gas fire does not remain in another job.');
 forgeView.dispose(); townLamps.dispose();
 console.log('Slow Ride: clear forge approach, connected hose, rising fire and lamps, and furnace departure passed.');
+
+const drawingResources = new Set();
+drawing.group.traverse(node => {
+  if (node.geometry) drawingResources.add(node.geometry);
+  for (const material of [].concat(node.material ?? [])) drawingResources.add(material);
+});
+let released = 0;
+for (const resource of drawingResources) resource.addEventListener('dispose', () => {released++;});
+drawing.dispose();
+assert.equal(released, drawingResources.size, 'Leaving the scene releases every tank, hose and meeting drawing resource once.');
+assert.equal(drawing.group.children.length, 0);

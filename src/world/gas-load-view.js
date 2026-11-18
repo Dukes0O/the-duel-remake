@@ -85,5 +85,14 @@ export function createGasLoadView() {
       hose.geometry.setFromPoints([new THREE.Vector3(from.x, groundAt(from.x, from.z) + lift, from.z),
         new THREE.Vector3(to.x, groundAt(to.x, to.z) + lift, to.z)]);
     }
+  }, dispose() {
+    const geometries = new Set(), materials = new Set();
+    group.traverse(node => {
+      if (node.geometry) geometries.add(node.geometry);
+      for (const material of [].concat(node.material ?? [])) materials.add(material);
+    });
+    for (const geometry of geometries) geometry.dispose();
+    for (const material of materials) material.dispose();
+    group.clear();
   }};
 }
