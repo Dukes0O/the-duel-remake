@@ -966,6 +966,16 @@ tasks:
 
 
 
+  - id: TOWN-HOME-SURFACES
+    title: "Founding town: restore surface detail to the home walls"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-ART-HOMES"]
+    locks: []
+    details: "docs/board/cards/TOWN-HOME-SURFACES.md"
+
   - id: TOWN-VIEW-ART
     title: "Town: real buildings replace the boxes"
     owner: "codex"
