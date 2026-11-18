@@ -6,6 +6,10 @@ import { EngineAudio, combatAudioSpace } from '../src/audio.js';
 import {SOUND_BANK, CAR_VOICES} from '../src/sound-bank.js';
 import {measureCue, wavBytes} from './audio/render-lab-cues.mjs';
 import {measureLoudness} from './audio/measurements.mjs';
+import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
+import {Duel} from '../src/game.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
 import { App } from '../src/app.js';
 import { CARS, COURSE } from '../src/config.js';
 import {KOGANE_PASS} from '../src/circuits/kogane-pass.js';
@@ -72,6 +76,7 @@ class Param {
   }
   setValueAtTime(value, time) {
     assert(Number.isFinite(time));
+    (this.events ??= []).push({value, time});
     this.value = value;
   }
   setTargetAtTime(value, time, constant) {
@@ -80,6 +85,7 @@ class Param {
     this.value = value;
   }
   linearRampToValueAtTime(value, time) {
+    (this.ramps ??= []).push({value, time});
     this.setValueAtTime(value, time);
   }
   exponentialRampToValueAtTime(value, time) {
@@ -243,6 +249,134 @@ const state = (overrides = {}) => ({
   ...overrides,
 });
 const { audio, context } = await makeAudio();
+{
+  const {audio, context} = await makeAudio();
+  const count = {brandSeconds: 80, lightingLamp: 'mast', lightingSeconds: .1};
+  const st = state({onFoot: true, arena: {mode: 'world-job', worldJob: {job: {
+    steps: [{brand: true}], stepIndex: 0, stepState: count}}}});
+  audio.update(st);
+  const hiss = audio.lampLightingVoice;
+  check(!!hiss, 'lamp lighting starts the bank hiss');
+  const hissFilter = context.nodes.findLast(node => node.type === 'lowpass' && node.frequency.events?.[0]?.value === 450);
+  check(hissFilter?.frequency.events.at(-1).value === 1800, 'lamp hiss filter rises from 450 to 1800 Hz');
+  const hissGain = context.nodes.findLast(node => node.gain?.ramps?.some(ramp => ramp.value === .18 * .25));
+  check(hissGain?.gain.ramps[0].time === context.currentTime + BRAND_RULE.lampSeconds * .9, 'quiet lamp hiss rises through the lighting count');
+  count.lightingSeconds = 1; audio.update(st);
+  check(audio.lampLightingVoice === hiss, 'lamp hiss sustains without stacking');
+  count.lightingLamp = null; count.lightingSeconds = 0; audio.update(st);
+  check(audio.lampLightingVoice === null, 'leaving the lamp stops the hiss');
+}
+// Finding 1: step the actual engine automation at fixed revs and load, changing only the walker's flat distance.
+{
+  const {audio, context} = await makeAudio();
+  const st = state({onFoot: true, speedMph: 0, revs: .6, input: {throttle: .7, brake: 0}, fighter: {x: 0, y: 100, z: 0}});
+  const environment = {course: {def: {}, worldAt: () => ({x: 0, y: 0, z: 0})}};
+  const levels = () => [audio.engineGain.gain.value, ...['idle','loadLow','loadMid','loadHigh','coast','engine'].flatMap(key => {
+    const sample = audio.samples[key];
+    return sample ? [sample.gain.gain.value, sample.body.gain.gain.value, sample.intake.gain.gain.value] : [];
+  })];
+  context.advance(1); audio.update(st, environment);
+  const near = levels();
+  st.fighter.x = 30; audio.update(st, environment);
+  const far = levels();
+  console.log('Finding 1 engine layer targets at 0 / 30 m:', near, far);
+  check(near.some(value => value > 0), 'engine is audible beside the car');
+  check(far.every(value => value === 0), 'every engine layer is silent at 30 m on foot');
+  for (const [metres, share] of [[5, 1], [17.5, .5], [40, 0]]) {
+    st.fighter.x = metres; audio.update(st, environment);
+    levels().forEach((value, i) => check(Math.abs(value - near[i] * share) < 1e-9, 'each engine layer follows flat linear distance'));
+  }
+  st.onFoot = false; st.fighter.x = 100; audio.update(st, environment);
+  levels().forEach((value, i) => check(Math.abs(value - near[i]) < 1e-9, 'in-car engine levels stay unchanged'));
+  st.onFoot = true; st.input.throttle = 0; audio.update(st, environment);
+  check(audio.wind.gain.gain.value === 0 && audio.tires.gain.gain.value === 0 &&
+    audio.samples.squeal.gain.gain.value === 0, 'parked car tyres and wind are silent on foot');
+  for (const looseSurface of [false, true]) for (const tyreSlipRules of [false, true]) {
+    const coasting = {...st, speedMph: 15, slipAngle: .5, tyreSlip: 1, tyreSlipRules};
+    context.advance(.1); audio.update(coasting, {...environment, looseSurface});
+    check([audio.wind, audio.tires, audio.gravel].every(layer => layer.gain.gain.value === 0) &&
+      audio.samples.squeal.gain.gain.value === 0, 'coasting car wind and all tyre layers are silent on foot with either tyre rule');
+  }
+  st.fighter.x = 30;
+  audio.event({shift: 0}, st, environment.course);
+  check(audio.shiftVoice.gain.gain.ramps.every(ramp => ramp.value === 0), 'recorded engine shift is silent at 30 m');
+  delete audio.samples.shift;
+  let fallbackScale = null;
+  const play = audio._playCue.bind(audio);
+  audio._playCue = (id, options) => {if (id === 'engine.shift-fallback') fallbackScale = options.scale; return play(id, options);};
+  audio.event({shift: 0}, st, environment.course);
+  check(fallbackScale === 0, 'synthetic shift follows engine distance too');
+}
+// Finding 2: the audio must follow actual barrel flame, even with all switches off.
+{
+  const {audio, context} = await makeAudio();
+  const st = state({mode: 'wasteland', maxArmor: 100, wastelandGateDiscovered: true, onFoot: true, speedMph: 0,
+    footWeapons: {selected: 'hand-flamer'}, fighter: {x: 0, y: 0, z: 0, flaming: true},
+    arena: {mode: 'world-job', worldJob: {}}});
+  const heard = [], play = audio._playCue.bind(audio);
+  audio._playCue = (id, options) => {heard.push(id); return play(id, options);};
+  audio.flags = {enabled: id => id === 'crew-gear'};
+  audio.event({crewGearCue: 'crew.flamer.start', hitPosition: st.fighter}, st);
+  console.log('Finding 2 original event cue requests:', heard);
+  heard.length = 0;
+  audio.flags = {enabled: () => false};
+  for (const suffix of ['start','loop','end']) {
+    const id = 'weapon.flame.' + suffix;
+    audio.cueBuffers[id] = await context.decodeAudioData(fs.readFileSync(new URL('../public/assets/audio/' + SOUND_BANK[id].files[0], import.meta.url)));
+  }
+  audio.update(st);
+  check(heard.includes('weapon.flame.start') && heard.includes('weapon.flame.loop'), 'world Hand Flamer starts recorded flame cues with switches off');
+  const loop = audio.worldHandFlamerVoice;
+  const source = context.nodes.findLast(node => node.loop && node.buffer === audio.cueBuffers['weapon.flame.loop']);
+  check(!!loop && !!source, 'Hand Flamer uses the actual recorded loop');
+  context.advance(5); audio.update(st);
+  check(!source.ended && audio.worldHandFlamerVoice === loop, 'recorded flame sustains beyond one recording without stacking');
+  st.fighter.flaming = false; audio.update(st);
+  audio.update(st);
+  check(heard.filter(id => id === 'weapon.flame.end').length === 1, 'out of fuel or released barrel flame ends once');
+  context.advance(.1);
+  check(source.ended && !audio.worldHandFlamerVoice, 'flame loop stops when flame stops');
+  check(audio._playCue('weapon.magnet.hum', {worldHandFlamer: true}) === null, 'Hand Flamer exception refuses other arsenal cues');
+  check(!audio.arsenalFieldVoices.size && !audio.worldHandFlamerVoice, 'flame admission does not enable other arsenal fields');
+  st.fighter.flaming = true; audio.update(st);
+  audio.setPaused(true);
+  check(!audio.worldHandFlamerVoice, 'pause clears the Hand Flamer loop');
+}
+// Finding 4 and finding 3: two real Duel steps across the ground edge west of the town gate.
+{
+  const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'story-everburn': true, arsenal: true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed: 1989,
+    opponents: [], job: EVERBURN_JOBS.find(job => job.id === 'everburn-get-out-and-walk')}));
+  const {audio} = await makeAudio();
+  const requests = [], play = audio._playCue.bind(audio), events = [];
+  audio._playCue = (id, options) => {requests.push(id); return play(id, options);};
+  duel.onChange((st, event) => {events.push(event); audio.event(event, st, duel.course);});
+  const st = duel.state, armor = st.armor, damage = {...st.damageZones};
+  st.countdown = 0; st.status = 'racing';
+  let maxImpact = 0;
+  for (const offset of [-10, -15, -10, -15]) {
+    const pose = duel.course.nearest(TIN_TOWN_GATE.x + offset, TIN_TOWN_GATE.z);
+    Object.assign(st, {s: pose.s, lateral: pose.lateral, speedMph: 10, gear: 1, airborne: false, _jumpY: null});
+    st.stageTimeSec += 1;
+    duel.step(1 / 120);
+    maxImpact = Math.max(maxImpact, st.impactTimer);
+  }
+  console.log('Finding 4/3 real gate ground steps:', JSON.stringify({events: events.filter(event => event.groundChanged || event.scablandsHit || event.crash),
+    requests, maxImpact, armorBefore: armor, armorAfter: st.armor, damage: st.damageZones}));
+  check(events.some(event => event.groundChanged?.id === 'scab-plates'), 'real Duel crosses the scab-plate edge beside the gate');
+  check(maxImpact === 0 && st.armor === armor && JSON.stringify(st.damageZones) === JSON.stringify(damage), 'gate ground transitions neither start impactTimer nor take damage');
+  check(requests.filter(id => id === 'vehicle.landing').length === 2 && !requests.includes('world.ground.scab-plates'), 'ground transition plays suspension thump instead of the borrowed crash');
+  requests.length = 0;
+  audio.event({scablandsHit: {kind: 'climb', impactMph: 20, player: true, cue: 'world.ground.scab-plates'}}, st, duel.course);
+  check(requests.includes('vehicle.landing') && !requests.includes('world.ground.scab-plates'), 'ground-only refusal also plays the suspension thump');
+  const crashes = [];
+  const recorded = audio._recordedImpact.bind(audio);
+  audio.cueBuffers['vehicle.crash.recorded'] = audio.noiseBuffer;
+  audio._recordedImpact = (id, ...args) => {crashes.push(id); return recorded(id, ...args);};
+  audio.event({crash: true, strength: .5}, st, duel.course);
+  check(crashes.includes('vehicle.crash.recorded'), 'solid and car crash route stays unchanged');
+}
 // The actual output curve keeps quiet gain and leaves headroom for large hits.
 const outputCurve = audio.output.curve;
 const curveAt = value => outputCurve[Math.round((value + 1) * (outputCurve.length - 1) / 2)];

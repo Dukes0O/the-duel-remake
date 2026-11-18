@@ -13,6 +13,18 @@ export function createBrandLamps({surface = null} = {}) {
   group.name = 'Light the Town lamps';
   group.visible = false;
   const lamps = [];
+  // One flat quad per dark lamp. The shader fades both sides of the ring, without a texture or extra draw calls.
+  const ringShape = new THREE.PlaneGeometry(BRAND_RULE.lampRadius * 2, BRAND_RULE.lampRadius * 2).rotateX(-Math.PI / 2);
+  const ringMaterial = new THREE.ShaderMaterial({
+    uniforms: {radius: {value: BRAND_RULE.lampRadius}, width: {value: BRAND_RULE.lampRingWidth},
+      opacity: {value: BRAND_RULE.lampRingOpacity}},
+    vertexShader: `varying vec2 vGround; void main() { vGround=position.xz;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `varying vec2 vGround; uniform float radius; uniform float width; uniform float opacity;
+      void main() { float edge=abs(length(vGround)-(radius-width*.5))/(width*.5);
+        gl_FragColor=vec4(1.0,.52,.14,opacity*(1.0-smoothstep(0.0,1.0,edge))); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  });
   let places = null, seconds = 0;
   // A lit lamp is seen from across the town by the glow round its lantern: one soft round patch that always faces the
   // view, added to what is behind it (the ending is watched from 80 m, where the lantern itself is a few pixels).
@@ -64,8 +76,13 @@ export function createBrandLamps({surface = null} = {}) {
           halo.scale.setScalar(BRAND_LAMP_GLOW.metres);
           halo.visible = false;
           lamp.add(halo);
+          const ring = new THREE.Mesh(ringShape, ringMaterial);
+          ring.name = `Lighting circle: ${place.id}`;
+          ring.position.y = BRAND_RULE.lampRingLift;
+          ring.visible = false;
+          lamp.add(ring);
           group.add(lamp);
-          lamps.push({id: place.id, look, glow, halo, lit: false});
+          lamps.push({id: place.id, look, glow, halo, ring, lit: false});
         });
       }
       for (const lamp of lamps) {
@@ -74,6 +91,7 @@ export function createBrandLamps({surface = null} = {}) {
         lamp.look.setLit(lamp.lit, seconds, lamp.brightness);
         lamp.glow.intensity = lamp.lit ? 10 * lamp.brightness : 0;
         lamp.halo.visible = lamp.lit;
+        lamp.ring.visible = step.brand === true && !lamp.lit && worldJob.job.stepState.brandSeconds > 0 && !worldJob.job.stepState.townEnding;
         lamp.halo.material.opacity = lamp.lit ? BRAND_LAMP_GLOW.opacity * lamp.brightness : 0;
       }
     },
@@ -82,6 +100,6 @@ export function createBrandLamps({surface = null} = {}) {
       seconds = now;
       if (group.visible) for (const lamp of lamps) lamp.look.setLit(lamp.lit, now, lamp.brightness);
     },
-    dispose() { clear(); glowMap.dispose(); },
+    dispose() { clear(); glowMap.dispose(); ringShape.dispose(); ringMaterial.dispose(); },
   };
 }

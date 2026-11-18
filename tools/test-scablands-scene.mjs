@@ -15,6 +15,30 @@ import {BONEYARD_WRECKS,BESS_REST} from '../src/world/boneyard-wrecks.js';
 import {createEverburnProps} from '../src/world/everburn-props.js';
 import {animateScene,syncScene} from '../src/scene-systems.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {createBrandLamps} from '../src/world/brand-lamps.js';
+import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
+
+{
+  const lamps = createBrandLamps();
+  const count = {brandSeconds: 80, lamps: {}};
+  const world = {job: {steps: [{brand: true, places: [{id: 'mast', position: {x: 0, y: 7, z: 0}}]}], stepIndex: 0, stepState: count}};
+  lamps.update(world);
+  const ring = lamps.group.getObjectByName('Lighting circle: mast');
+  assert(ring.isMesh && ring.visible);
+  assert.equal(ring.material.blending, THREE.AdditiveBlending);
+  assert.equal(ring.material.fog, false);
+  assert.equal(ring.geometry.parameters.width, BRAND_RULE.lampRadius * 2);
+  assert.equal(ring.getWorldPosition(new THREE.Vector3()).y, 7 + BRAND_RULE.lampRingLift);
+  let shapes = 0, materials = 0;
+  ring.geometry.addEventListener('dispose', () => shapes++);
+  ring.material.addEventListener('dispose', () => materials++);
+  count.brandSeconds = 0; lamps.update(world); assert.equal(ring.visible, false);
+  count.brandSeconds = 80; count.lamps.mast = true; lamps.update(world); assert.equal(ring.visible, false);
+  count.lamps.mast = false; count.townEnding = true; lamps.update(world); assert.equal(ring.visible, false);
+  lamps.dispose();
+  assert.equal(shapes, 1); assert.equal(materials, 1);
+  assert.equal(lamps.group.children.length, 0);
+}
 import {FURNACE_SKYLINE,FURNACE_LEAVING} from '../src/world/jobs/furnace-sightings.js';
 import {TIN_TOWN_CENTRE} from '../src/world/tin-town-shacks.js';
 import {placeWorldJobVehicle} from '../src/vehicle-grounding.js';

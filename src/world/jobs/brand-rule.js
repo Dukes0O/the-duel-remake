@@ -3,9 +3,14 @@
 export const BRAND_RULE = Object.freeze({
   burnSeconds: 90,
   relightRadius: 3,
-  lampRadius: 2,
+  lampRadius: 3.5,
   lampSeconds: 2,
-  standingSpeed: 0.1,
+  lampRingWidth: 0.45,
+  lampRingLift: 0.04,
+  lampRingOpacity: 0.55,
+  lampDistanceDecimalsBelow: 10,
+  lampProgressTopPixels: 50,
+  lampProgressWidthPixels: 250,
   meetingRadius: 8,
   auntieEast: -1,
   auntieSouth: 6,
@@ -346,7 +351,7 @@ export function stepBrand(step, state, view, dt) {
     next.brandSeconds = rule.burnSeconds;
   }
 
-  const lamp = here && Math.abs(view.fighter?.speed ?? 0) <= rule.standingSpeed &&
+  const lamp = here &&
     next.brandSeconds > 0 && lamps.find(candidate =>
     !next.lamps[candidate.id] && distance(here, spot(candidate)) <= rule.lampRadius);
   next.lightingLamp = lamp ? lamp.id : null;

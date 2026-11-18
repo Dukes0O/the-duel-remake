@@ -22,6 +22,14 @@ import {stepCarry} from '../src/world/jobs/steps/carry.js';
 }
 
 const place = (id, x, z, name = id) => ({id, name, position: {x, z}});
+{
+  const step = {kind: 'onfoot', brand: true, hearth: place('hearth', 20, 0), places: [place('mast', 0, 0)]};
+  const worldJob = {job: {steps: [step], stepIndex: 0, stepState: {brandBriefed: true, brandsUsed: 1, brandSeconds: 0}}};
+  const model = () => worldHudModel({worldJob, player: {x: 3.4, z: 0}, onFoot: true});
+  assert.equal(model().line, 'The brand is out. Relight it at the hearth or a lit lamp.');
+  Object.assign(worldJob.job.stepState, {brandSeconds: 80, lightingLamp: 'mast', lightingSeconds: 1});
+  assert.equal(model().line, 'Stay by the lamp.');
+}
 const target = place('tin-town', 10, 0, 'Tin Town');
 const actors = [{id: 'raider', position: {x: 4, z: 0}}, {id: 'truck', position: {x: 3, z: 2}}];
 const cases = [

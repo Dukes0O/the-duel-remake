@@ -1725,6 +1725,29 @@ flame's edges fade out; no hard outline.
 **Removed** (name each on the change note's line): `standingSpeed`; the line "Hold still to light the lamp."; the made
 tone as the Hand Flamer's sound in a job, if nothing else plays it.
 
+### Changed assertions, for Claude to review (slice 15a)
+- `test-everburn-job2`: leaving the tower circle at x=103 becomes x=103.6, because the radius grows from 2 to 3.5 m.
+- Pump lighting boundary: x=62 / 62.01 becomes x=63.4 / 63.6 (lights / stays dark).
+- Walking at 4.5 m/s for two seconds inside the circle: dark becomes lit; the standing-speed requirement is removed.
+- Lamp and hearth rows at zero metres: numeric 0 becomes displayed `0.0`, with the new `atLamp` state (true / false).
+- `test-p4-audio`: exclude only the new `world.lamp.lighting` cue from the historical bank projection; its pinned hash stays unchanged.
+
+- Browser scenario picture count: four becomes five, adding a fixed half-lit mast lamp view that checks the progress bar, AT THE LAMP row and ring. The ending also checks that the new bar and ring are hidden. Every page expression parses separately with `new Function`; Claude runs the browser.
+
+- `test-old-smoke`: replace the stale health-zero catch fixture with stronger current stop-and-collect checks. Zero health must not win, stopping alone must not release the furnace, collection must timestamp departure and sound one horn, the road caption must show, and the ending must finish without restarting departure. Old five-second completion wait becomes ten for the current nine-second ending. No furnace chase assertion changes. The automatic approval review rejected deleting this obsolete case, so the case is retained and updated instead.
+
+- `test-old-smoke` exact old/new expectations: health 0 causing a catch becomes health 0 causing no catch; `wonAtSec` at health loss becomes `bellowsLeavingAtSec` at collection; ?There it goes, out the far end.? becomes the existing road caption ?Hear that horn? It is leaving without them.?; five seconds to finish becomes ten for the current nine-second ending. Added checks reject stopping alone and require the departure clock and horn once. Independent review confirmed stronger coverage; the updated suite passes 4402 checks. Claude authorised completing this fixture in the 09:50 continuation.
+
+### Codex decided (Claude to review), slice 15a
+- The gate's measured ground-only crash is a road-to-scab-plates sound transition, not an impact: at (5960, 62), 15 m west of the gate, four real Duel steps alternating with (5965, 62) requested the borrowed crash twice. `sim-driving.js:204` emits it; `sound-bank.js:642` borrows `vehicle.crash.recorded`; `sim-scablands.js:38` asks for the same cue on a ground refusal. Route both ground-only requests in audio to the existing low suspension thump, `vehicle.landing`. Solid and car collisions keep their path and every damage rule stays as it was.
+- Finding 3 is not reproduced by that ground: `impactTimer` stayed 0 seconds on every step, armour stayed 121, all four damage zones stayed 0. The sound transition cannot start or renew the exit blocker. No change to the exit rule is justified by this measurement; Claude still needs Kyle's failing place and moment.
+- The three recorded flame cues alone receive a world-job Hand Flamer admission past `arsenal`. Audio reads `fighter.flaming`; no flame direction, drawing or hit code changes. CPU crews still use the old tone, so it remains in the bank.
+- The lighting bar uses the existing action-row and armour-track styles inside `combat-hud.js`, with its placement numbers in `BRAND_RULE`; no extra CSS file is needed.
+
+### Independent code review, slice 15a
+The separate reviewer found three real sound gaps: coasting wind/tyres remained audible on foot, noise recipes did not render the lamp hiss's rise, and automatic shift accents missed the engine fade. All three are cured with real-audio checks. The reviewer confirmed the fixes and found no remaining code fault. Audio/PCM passes 721 checks. No assertions were loosened for these cures.
+
+
 ### Part B built and reviewed (Claude, 18 November 2026)
 
 Built: the burst leaves the barrel's mouth and follows the barrel in the three town jobs (`src/world/jobs/hand-flame.js`

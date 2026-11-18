@@ -799,7 +799,44 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   check(worldJob.furnaceLog.find(event => event.type === 'stoke').tSec > 6.6, 'the first door stokes only after the third line has played');
 }
 
-// Job 3's own catch (the thief stopped, the walk to the bellows, the note of when they leave for the furnace sighting, Cinder's
-// line) is checked in tools/test-everburn-job3.mjs since the job was remade; the old catch by the car is gone.
+{
+  // Job 3's remade catch: stopping alone does not release the furnace. Collection starts its clock and the full ending.
+  const seed = 31, duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed, cpuDifficulty: 'medium', opponents: [],
+    weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job: {...EVERBURN_JOBS[2], seed}}), true, 'job 3 starts in a real headless Duel');
+  const worldJob = duel.state.arena.worldJob, heard = [], cues = [];
+  duel.onChange((_state, event) => {if (event.arenaTell?.cue) cues.push(event.arenaTell.cue);});
+  const waiting = LAND.at('boneyard', -30, 0), start = duel.course.nearest(waiting.x, waiting.z);
+  Object.assign(duel.state, {s: start.s, lateral: start.lateral, speedMph: 0, headingError: 0, yawVelocity: 0, onFoot: false});
+  const watch = () => { if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); };
+  for (let n = 0; n < 8 / DT && !worldJob.actors.length; n++) { tick(duel); watch(); }
+  for (let n = 0; n < 4 / DT; n++) { tick(duel); watch(); }
+  const thief = worldJob.actors.find(actor => actor.id === worldJob.job.steps[0].targetId);
+  check(!!thief && worldJob.bellowsLeavingAtSec === undefined, 'the thief is on the road and nothing is collected yet');
+  thief.health = 0;
+  for (let n = 0; n < 1 / DT; n++) { tick(duel); watch(); }
+  check(!worldJob.job.stepState.thiefStopped && worldJob.bellowsLeavingAtSec === undefined && !duel.state.arena.result,
+    'zero health cannot substitute for the three knocks or collection');
+  Object.assign(worldJob.job.stepState, {thiefStopped: true, knocks: 3});
+  tick(duel); watch();
+  check(worldJob.bellowsLeavingAtSec === undefined && !duel.state.arena.result, 'stopping the thief alone does not release the furnace');
+  const collect = duel.course.nearest(thief.position.x, thief.position.z);
+  Object.assign(duel.state, {s: collect.s, lateral: collect.lateral, speedMph: 0, pushVelocity: 0});
+  tick(duel); watch();
+  check(worldJob.job.stepState.bellowsLoaded === true, 'the stopped car collects the bellows');
+  check(Number.isFinite(worldJob.bellowsLeavingAtSec) && Math.abs(worldJob.bellowsLeavingAtSec - worldJob.clockSec) < .1,
+    'the job notes when collection happened, for the furnace sighting');
+  check(cues.filter(cue => cue === 'world.furnace.horn').length === 1, 'collection sounds the furnace horn once');
+  check(!duel.state.arena.result && heard.includes('Cinder: He was taking the bellows to the furnace. Hear that horn? It is leaving without them.'),
+    "Cinder's road line shows and the job waits for the full ending");
+  const departure = worldJob.bellowsLeavingAtSec;
+  thief.health = 20;
+  waitUntil(duel, () => !!duel.state.arena.result, 10);
+  check(duel.state.arena.result?.reason === 'job-complete' && duel.state.arena.result.winnerId === 'player',
+    'the job is won after the ending, even if the thief health changes');
+  check(worldJob.bellowsLeavingAtSec === departure && cues.filter(cue => cue === 'world.furnace.horn').length === 1,
+    'later steps neither restart departure nor repeat the horn');
+}
 
 console.log(`Old Smoke: furnace chase rules passed (${checks} checks)`);
