@@ -250,6 +250,10 @@ the game.
   furnace, 10 November.)
 - **A vehicle standing on its nose in the game** was authored +Y up and then exported with the exporter's own Y-up turn.
   A recipe authored +Y up exports with `export_yup=False`. (`scablands-vehicles.py`, 10 November.)
+- **Fine gravel can make interrupted wheel marks look like continuous rails in chase view.** Measure the tyre centres
+  on the driving mesh. Break up the marks over metres using the road's world-space wear texture, then use its fine
+  grain inside each impression. Check the gaps from the moving driver's camera. At a gate, fade the old grader ruts
+  across their whole width so the approach shows a single pair. (Tin Town, 18 November.)
 - **Look at the piece in the game before accepting it.** Both faults above passed three rounds of Blender renders,
   because the renders showed the noise colour and the review camera was turned to suit. A piece nobody has loaded in
   the game is not checked: its scene test must use the names and the file the real loader gives.
