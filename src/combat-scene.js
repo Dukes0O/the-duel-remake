@@ -768,7 +768,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     presentFlame(crewFlame, {...flameFrame,
       active: active && duel.featureFlags?.enabled('crew-gear') === true &&
         s.onFoot && fighter?.flaming === true && cinderHalfAngle > 0,
-      at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
+      at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.forActor?.(fighter)??drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
       heading: fighter?.yaw, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
     cpuGearViews.forEach((view, index) => {
       const crew = s.opponents?.[index]?.cpuCrew;
@@ -784,7 +784,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         }
       }
       presentFlame(view.flame, {...flameFrame, active: fighter?.flaming === true,
-        at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
+        at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.forActor?.(fighter)??drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
         heading: fighter?.yaw, range: cinderGear.range}, duel);
     });
     burningCars.forEach((view, index) => {

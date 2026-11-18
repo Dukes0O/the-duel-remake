@@ -367,7 +367,8 @@ export function attachRenderer(host, app) {
   let drawingSeconds=0;
   const cameraFeetRig={userData:{}};
   const actorMeshes=new WeakMap();
-  const drawnShift=(x,z,support,airborneFeet,object)=>{
+  const drawnShift=(x,z,support,airborneFeet,object,actor)=>{
+    if(object&&actor)actorMeshes.set(actor,object);
     const feet=world?.userData?.drawnFeet;
     return feet?(object?feet.shiftFor(object,drawingSeconds,x,z,support,airborneFeet):feet.shift(x,z,support,airborneFeet)):0;
   };

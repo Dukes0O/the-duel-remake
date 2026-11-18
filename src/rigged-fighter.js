@@ -168,7 +168,7 @@ export function createRiggedFighterFigures({
     const at = selected.pose;
     const fighter=entry.fighter||entry;
     figure.root.position.set(at.x, at.y, at.z);
-    figure.root.position.y+=options.drawnShift?.(at.x,at.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined,figure.root)??0;
+    figure.root.position.y+=options.drawnShift?.(at.x,at.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined,figure.root,fighter)??0;
     figure.root.rotation.set(0, at.yaw, 0);
     figure.root.visible = true;
     // Retain the original active-roster names used by the GFX-00 control.

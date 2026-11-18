@@ -15,6 +15,7 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {createBrandAshView} from '../src/world/brand-ash-view.js';
 import {syncScene} from '../src/scene-systems.js';
 
 const riverField = createRiverField(SCABLANDS_LAYOUT);
@@ -77,6 +78,18 @@ try {
     }
     assert.ok(switched,`${kind} route crosses a support boundary`);
   }
+  const ashView=createBrandAshView(),heightCalls=[];
+  const ashActor={id:'ash-test',brandAsh:true,x:10,y:2,z:20,yaw:0};
+  ashView.update({actors:[ashActor],job:{stepIndex:0,steps:[{brand:true}],stepState:{brandAsh:{men:{
+    'ash-test':{ash:{remaining:.5,position:{x:30,y:3,z:40}}}
+  }}}}},(x,z)=>{heightCalls.push([x,z]);return .8;});
+  assert.deepEqual(heightCalls,[[10,20],[30,40]],'Thrown ash asks each source and target height once.');
+  ashView.dispose();
+  const tunnelPoints=[];
+  const scratchFeet=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+.8},gorge:{heightAtDrawn:()=>null},
+    riverField:{distanceAt:()=>128},course:{groundTunnels:{tubeAt:point=>{tunnelPoints.push(point);return null;}}}});
+  scratchFeet.shift(2690,-2445,own);scratchFeet.shift(2690,-2445,own);
+  assert.ok(tunnelPoints.every(point=>point===tunnelPoints[0]),'Tunnel queries reuse one drawing scratch point.');
   const deepTunnel=createGroundTunnels([{start:{x:2680,y:own-10+1.65,z:-2445},end:{x:2700,y:own-10+1.65,z:-2445},radius:3}]);
   const deepFeet=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+.8},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:deepTunnel}});
   assert.equal(deepFeet.shift(2690,-2445,own-10,own-9),0,'A jump in a buried tunnel keeps its underground support.');
@@ -104,8 +117,9 @@ try {
   const riverActors=Array.from({length:12},(_,i)=>({x:2650.79+i*.1,z:2221.98+i*.1}));
   const riverNear=course.nearest(riverActors[0].x,riverActors[0].z);
   for(let i=0;i<20;i++)syncScene(scene.group,{s:riverNear.s,lateral:riverNear.lateral});
+  const riverRigs=Array.from({length:12},()=>new THREE.Group());
   const riverStart=performance.now();
-  for(let frame=0;frame<200;frame++)for(const actor of riverActors)sink+=feet.shift(actor.x,actor.z);
+  for(let frame=0;frame<200;frame++)for(const [index,actor] of riverActors.entries())sink+=feet.shiftFor(riverRigs[index],frame/60,actor.x,actor.z);
   const riverMilliseconds=(performance.now()-riverStart)/200;
   console.log('Twelve river actors:',riverMilliseconds,'ms');
   assert.ok(riverMilliseconds<=.15,'Twelve river shifts take at most .15 ms.');

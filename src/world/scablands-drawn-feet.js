@@ -6,7 +6,12 @@ import {riverDepthAt,riverGorgeDepthAt} from './scablands-regions.js';
 // Drawing only. The shader cuts the near mesh away below distance 80; the
 // gorge ribbon continues to 92. Outside the cut, the higher mesh is visible.
 export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
-  const floors = [];
+  const floors = [], tunnelPoint={x:0,y:0,z:0};
+  function inTunnel(x,z,y) {
+    if(!course?.groundTunnels)return false;
+    tunnelPoint.x=x;tunnelPoint.y=y;tunnelPoint.z=z;
+    return !!course.groundTunnels.tubeAt(tunnelPoint,y,.1);
+  }
   // View-owned geometry only. Rebuilt pieces get fresh indices; no actor or
   // simulation state is cached, and the answer never depends on past queries.
   const indices=new WeakMap();
@@ -25,7 +30,8 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
         const triangle={cx,cz,cy,ux:(bz-cz)/det,uz:(cx-bx)/det,vx:(cz-az)/det,vz:(ax-cx)/det,dyA:ay-cy,dyB:by-cy};
         for(let i=Math.floor(Math.min(ax,bx,cx)/32);i<=Math.floor(Math.max(ax,bx,cx)/32);i++)
           for(let j=Math.floor(Math.min(az,bz,cz)/32);j<=Math.floor(Math.max(az,bz,cz)/32);j++) {
-            const key=`${i},${j}`;if(!bins.has(key))bins.set(key,[]);bins.get(key).push(triangle);
+            let column=bins.get(i);if(!column){column=new Map();bins.set(i,column);}
+            if(!column.has(j))column.set(j,[]);column.get(j).push(triangle);
           }
       }
       indices.set(geometry,bins);
@@ -33,8 +39,8 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
   }
   function riverAt(x,z) {
     let height=null;
-    const key=`${Math.floor(x/32)},${Math.floor(z/32)}`;
-    for(const piece of gorge.pieces??[])for(const t of indices.get(piece.mesh?.geometry)?.get(key)??[]) {
+    const i=Math.floor(x/32),j=Math.floor(z/32);
+    for(const piece of gorge.pieces??[])for(const t of indices.get(piece.mesh?.geometry)?.get(i)?.get(j)??[]) {
       const dx=x-t.cx,dz=z-t.cz,u=t.ux*dx+t.uz*dz,v=t.vx*dx+t.vz*dz;
       if(u>=-1e-7&&v>=-1e-7&&u+v<=1+1e-7)height=Math.max(height??-Infinity,t.cy+u*t.dyA+v*t.dyB);
     }
@@ -55,7 +61,7 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
   }
   function rawShift(x, z, support, airborneFeet) {
     const actorFeet=Number.isFinite(airborneFeet)?airborneFeet:support;
-    if(Number.isFinite(actorFeet)&&course?.groundTunnels?.tubeAt({x,y:actorFeet,z},actorFeet,.1))return null;
+    if(Number.isFinite(actorFeet)&&inTunnel(x,z,actorFeet))return null;
     const distance=riverField.distanceAt(x,z);
     // The edit layer already includes the current natural ground. The public
     // surface query cancels and re-adds that same natural height for marks.
@@ -68,7 +74,7 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
     // Unknown supports, decks, edited yards and tunnel floors keep their own drawing.
     if (Math.abs(floor - own) > .1 ||
         (scablandsGroundEdit.chunkCount>0 && Math.abs(scablandsGroundEdit.heightAt(x,z) - scablandsNaturalHeightAt(x,z)) > 1e-6) ||
-        course?.groundTunnels?.tubeAt({x,y:floor,z},floor,.1)) return null;
+        inTunnel(x,z,floor)) return null;
     // The plain already has a small drawing lift. Keep lattice corners fixed,
     // but do not subtract that lift at the river join (which has none).
     const lift=NEAR_GROUND.lift*Math.max(0,Math.min(1,(distance-83)/3));
