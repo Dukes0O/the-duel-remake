@@ -568,11 +568,13 @@ Kyle: "Something that can allow a player to redo this story a few times and get 
 
 - **The Story Wall keeps score of what has been seen.** "Endings found: 1 of 4. Choices seen: 9 of 36." The gaps are
   the reason to play again.
-- **Tell it again.** When an act is over it can be played again from its beginning, as a new telling, with a new throw
-  of luck. At the end of the new telling the player says which telling is the true one. The other is kept as a tale,
+- **Play it again.** When an act is over it can be played again from its beginning, with a new throw of luck. At the
+  end of the second play the player picks which outcome stands, the first or the second (Kyle, 18 November 2026: "the
+  mechanic of picking at the end makes sense so that you don't need to replay an earlier version just to get it
+  back"). The other is kept as a tale,
   and its ending still counts as found. Nothing is replaced unless the player chooses it.
-- **What a telling carries.** The towers, the tunnel and the friends of an act belong to the telling they were made
-  in. Whichever telling is the true one, its things are the ones that stand in the land.
+- **What a play carries.** The towers, the tunnel and the friends of an act belong to the play they were made in.
+  Whichever outcome the player picks, its things are the ones that stand in the land.
 - **Winter comes round.** After the first act the cold returns whenever the player calls it, with different people at
   the gate, drawn from everyone met in every story, and with whatever towers and tunnels are standing. That is how
   one act becomes many evenings without a new place having to be built for each.
@@ -597,7 +599,7 @@ Nothing is built until Kyle has read this. Then, in this order, each as its own 
 5. Then Night 1, Day 3, Day 4 and Night 5. All four are now written in full (sections 12 to 15), with the dig, the
    apprentice and the watchtower of section 8 in their places. Their cards are cut only after Night 2 has been played
    by hand and tried by Kyle; section 16 lists what they need made.
-6. **Tell it again** and the score of endings found (section 9), once one act can be finished.
+6. **Play it again** and the score of endings found (section 9), once one act can be finished.
 
 The faults of the world from Kyle's try (card WORLD-FAULTS-18-NOV) are cured alongside, because this is played in it.
 
@@ -605,13 +607,14 @@ The faults of the world from Kyle's try (card WORLD-FAULTS-18-NOV) are cured alo
 
 1. **May a person leave for good?** A Dace who is sent away rides with the Ash Men. My recommendation: people can
    leave and can come back changed, and nobody dies on screen. It keeps the choices heavy and fits the rule that
-   nothing is lost for good.
+   nothing is lost for good. **Ruled by Kyle, 18 November 2026: a person can leave for good.** Whether that person
+   appears again in another story is not planned now; the ledger keeps the mark, so a later story can.
 2. **May Old Smoke be someone you can make peace with,** as well as someone you can beat? The Long Dry already lets a
    beaten warlord make peace or be driven off. My recommendation: yes, and it is the hardest ending to earn.
    **Ruled by Kyle, 18 November 2026: yes, peace is possible.** Section 15 stands as written.
-3. **Is this the right size?** Five nights, about an hour and a half of play in all, each night about fifteen minutes,
+3. **Is this the right size?** **Ruled by Kyle, 18 November 2026: five nights is right for this story line, because there are others to play.** Five nights, about an hour and a half of play in all, each night about fifteen minutes,
    then the next act. Longer is possible by adding nights; the ledger does not change.
-4. **When a story is told again, which telling stands?** My recommendation: the player says, at the end of the new
+4. **When a story is played again, which outcome stands?** **Ruled by Kyle, 18 November 2026: the player picks at the end.** My recommendation: the player says, at the end of the new
    telling, and the other is kept as a tale. The other way would be that the first telling always stands and later
    ones are only tales, which is safer for a town built over years and less exciting to replay.
 

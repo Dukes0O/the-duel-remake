@@ -1772,3 +1772,4 @@ Kyle: "go ahead with the first four audit changes".
   in the Cockpit. Both wait for Kyle.
 - To reverse: Kyle says so.
 - **18 November 2026. Old Smoke can be made peace with.** Kyle: "Yes, peace possible." Five Cold Nights keeps its third ending, Shared fire, as `docs/story/five-cold-nights.md` section 15 writes it. The other three questions of section 11 (people leaving for good, the act's size, which telling stands) are still open.
+- **18 November 2026. Five Cold Nights: the last three rulings.** Kyle: five nights is the right size for this story line, because there are others to play; a person can leave for good (a return in another story is not planned now); when a story is played again, the player picks at the end which outcome stands. With the ruling on Old Smoke above, all four questions of `docs/story/five-cold-nights.md` section 11 are settled.
