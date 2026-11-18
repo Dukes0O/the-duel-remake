@@ -1708,6 +1708,20 @@ export function reportWorldJobThingHit(duel, hit) {
   return true;
 }
 
+// This car is a job actor, not an opponent. Native weapons share its solid
+// body, but its rule alone decides load loss and hard knocks.
+export function bellowsWeaponTarget(duel) {
+  const state = duel.state, worldJob = state.arena?.worldJob;
+  const step = worldJob?.job?.steps[worldJob.job.stepIndex];
+  if (!step?.bellows || worldJob.settled || state.arena.result ||
+      state.status !== 'racing' || worldJob.job.stepState.thiefStopped) return null;
+  const actor = worldJob.actors.find(item => item.id === step.targetId && item.health > 0);
+  if (!actor?.position) return null;
+  return {id:actor.id, actorId:actor.id, position:actor.position,
+    obstacle:{...actor.position, halfX:BELLOWS_RULE.thiefRadiusMetres,
+      halfZ:BELLOWS_RULE.thiefRadiusMetres, height:BELLOWS_RULE.weaponBodyHeightMetres, shape:'box'}};
+}
+
 export function worldJobHitTargets(duel) {
   const worldJob = duel.state.arena?.worldJob;
   if (!worldJob || worldJob.settled || duel.state.arena?.result) return EMPTY_HIT_TARGETS;

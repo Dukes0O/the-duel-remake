@@ -28,6 +28,59 @@ for (const [weapon, damage] of [['rpg',40],['rocket-pod',40],['bomb',40],
 assert.equal(stepBellowsLoad({}, {weaponHits:[{weapon:'bomb'},{weapon:'crossbow'}]},0).state.bellows,40);
 console.log('PASS slice 11.2: loaned hand flamer, weapon load damage and first-contact warning.');
 
+// Native crew shots and rockets must reach the separate job actor too.
+const {stepGearProjectile} = await import('../src/crew-gear/projectiles.js');
+const {stepRocketPod} = await import('../src/arsenal/rockets.js');
+const {stepGearDeployables} = await import('../src/crew-gear/signature.js');
+const weaponDuel = {
+  state: {status:'racing', mode:'wasteland', wastelandGateDiscovered:true,
+    opponents:[], onFoot:false, stageTimeSec:0,
+    combat:{bursts:[], serial:0}, worldJobThingsHit:[],
+    arena:{mode:'world-job', participants:[], worldJob:{actors:[
+      {id:'thief',health:20,position:{x:0,y:0,z:10}}],
+      job:{steps:[{bellows:true,targetId:'thief'}],stepIndex:0,stepState:{}}, hitTargets:[]}}},
+  course:{nearest:(x,z)=>({s:z,lateral:x}),
+    groundAt:(s,lateral)=>({x:lateral??0,y:0,z:s??0,heading:0})},
+  featureFlags:{enabled:()=>true}, _obstacles:()=>[], emit:()=>{},
+};
+for (const [kind,crewId,damage] of [['marksman','dune',20],['scrap-cannon','tusk',10],
+  ['sticky-bomb','nell',40],['rocket-pod',null,40]]) {
+  weaponDuel.state.worldJobThingsHit=[];
+  const shot={id:kind, kind, crewId, attackerId:'player', ownerId:'player',
+    crewGearShot:!!crewId, x:0,y:1,z:0,launchX:0,launchY:1,launchZ:0,
+    vx:0,vy:0,vz:40,age:0,travelled:0};
+  if (crewId) {
+    if (kind==='sticky-bomb') Object.assign(shot,{thrown:true,stuck:true,fuseSeconds:3,z:10});
+    stepGearProjectile(weaponDuel,shot,.5);
+  } else stepRocketPod(weaponDuel,shot,.5);
+  const hits=weaponDuel.state.worldJobThingsHit;
+  assert.equal(hits.length,1,`${kind} reaches the thief exactly once.`);
+  const result=stepBellowsLoad({}, {weaponHits:hits,behindMetres:500},0);
+  assert.equal(result.state.bellows,100-damage,kind);
+  assert.equal(result.state.knocks,0,kind);
+  assert.equal(weaponDuel.state.arena.worldJob.actors[0].health,20);
+}
+weaponDuel.state.worldJobThingsHit=[];
+weaponDuel.state.crewGear={crewId:'odessa',serial:0,
+  turret:{id:'turret',x:0,y:0,z:0,age:0,shotSeconds:0}};
+stepGearDeployables(weaponDuel,.8);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,1,'The turret shoots the thief.');
+assert.equal(stepBellowsLoad({}, {weaponHits:weaponDuel.state.worldJobThingsHit},0).state.bellows,90);
+weaponDuel.state.worldJobThingsHit=[];
+stepGearDeployables(weaponDuel,1.6);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,2,'Separate turret rounds each count.');
+weaponDuel.state.worldJobThingsHit=[];
+weaponDuel._obstacles=()=>[{x:0,y:0,z:5,halfX:3,halfZ:1,height:3,shape:'box'}];
+stepGearProjectile(weaponDuel,{id:'blocked',kind:'marksman',crewId:'dune',crewGearShot:true,
+  attackerId:'player',x:0,y:1,z:0,vx:0,vy:0,vz:40,age:0,travelled:0},.5);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,0,'Scenery stops a crew shot before the thief.');
+weaponDuel._obstacles=()=>[];
+weaponDuel.state.status='countdown';
+stepRocketPod(weaponDuel,{id:'early',kind:'rocket-pod',attackerId:'player',
+  x:0,y:1,z:0,vx:0,vy:0,vz:40,age:0,travelled:0},.5);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,0,'The target is absent before racing.');
+console.log('PASS slice 11.2: native crew shots, sticky blasts, rockets and turret hits damage only the bellows.');
+
 // Slice 11.1: step only the rules on a straight road, without a driver.
 const reachStep = {targetId:'thief', path:[]};
 const reachTick = (state, thief, car, speedKmh, dt, extra = {}) => stepBellowsChase(

@@ -8,6 +8,7 @@ export const BELLOWS_RULE = Object.freeze({
   boltPerHit: 20,
   otherPerHit: 10,
   handFlameHeightMetres: 2,
+  weaponBodyHeightMetres: 2,
   warningBehindMetres: 100,
   hardKnockKmh: 20,
   stopKnocks: 3,
