@@ -39,6 +39,15 @@ const BOARDING_CUES = Object.freeze({
   'crew.boarding.release': 'vehicle.landing',
 });
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+export const FOOT_ENGINE_SOUND = Object.freeze({fullMetres: 5, silentMetres: 30});
+function footEngineGain(state, course) {
+  if (!state.onFoot || !state.fighter) return 1;
+  const car = course?.worldAt?.(state.s, state.lateral || 0);
+  if (!car) return 1;
+  const distance = Math.hypot(state.fighter.x - car.x, state.fighter.z - car.z);
+  return clamp((FOOT_ENGINE_SOUND.silentMetres - distance) /
+    (FOOT_ENGINE_SOUND.silentMetres - FOOT_ENGINE_SOUND.fullMetres), 0, 1);
+}
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
 // retain the same tonal target, so switching recordings cannot reset the pitch.
 const engineTone = (revs) => 52 * 2 ** (clamp(revs, 0, 1.15) * 1.55);
@@ -1249,7 +1258,7 @@ export class EngineAudio {
     this.turboArmed = false;
   }
 
-  _updateTurbo(st, running, load, throttle, t) {
+  _updateTurbo(st, running, load, throttle, t, engineDistance = 1) {
     const enabled = this.carVoice.turbo && this.flags.enabled('nissan-skyline');
     if (!enabled || !running || this.muted || this.paused) {
       this._clearTurbo();
@@ -1274,7 +1283,7 @@ export class EngineAudio {
       const {osc, gain} = this.turboLoop;
       osc.frequency.setTargetAtTime(def.oscillator.lowHz +
         clamp(st.revs, 0, 1) * (def.oscillator.highHz - def.oscillator.lowHz), t, .055);
-      gain.gain.setTargetAtTime(def.volume * clamp((load - .35) / .65, 0, 1), t, .045);
+      gain.gain.setTargetAtTime(def.volume * engineDistance * clamp((load - .35) / .65, 0, 1), t, .045);
       if (load <= .35 || throttle <= .35) {
         this.turboLoop.voice.stop();
         this.turboLoop = null;
@@ -1284,7 +1293,7 @@ export class EngineAudio {
       if (throttle >= .7 && st.revs > .55) this.turboArmed = true;
       if (throttle < .2 && this.turboArmed && st.revs > .55 &&
           t >= (this.nextBlowoff || 0)) {
-        this.blowoffVoice = this._playCue('vehicle.blowoff');
+        this.blowoffVoice = this._playCue('vehicle.blowoff', {scale: engineDistance});
         this.nextBlowoff = t + 1.2;
       }
       if (throttle < .2) this.turboArmed = false;
@@ -1338,8 +1347,11 @@ export class EngineAudio {
       (racing && !impacting) || (st.status === 'countdown' && !st.paused);
     const grounded = !st.airborne && (st.airHeight || 0) < 0.12,
       looseSurface = !!st.offRoad || !!environment.looseSurface;
-    const voice = (this.carVoice =
-      CAR_VOICES[st.car] || CAR_VOICES.falcone_f42);
+    const baseVoice = (this.carVoice = CAR_VOICES[st.car] || CAR_VOICES.falcone_f42);
+    const engineDistance = footEngineGain(st, environment.course);
+    const voice = {...baseVoice, gain: baseVoice.gain * engineDistance,
+      exhaust: baseVoice.exhaust * engineDistance, intake: baseVoice.intake * engineDistance,
+      accent: baseVoice.accent * engineDistance};
     const perspective =
       environment.cameraMode === 'hood'
         ? { gain: 1, brightness: 1.08, exhaust: 0.58, intake: 1.38 }
@@ -1572,7 +1584,7 @@ export class EngineAudio {
         0.07,
       );
     }
-    this._updateTurbo(st, running, load, throttle, t);
+    this._updateTurbo(st, running, load, throttle, t, engineDistance);
     if (running && racing && !this.muted) {
       if (
         throttle > 0.6 &&

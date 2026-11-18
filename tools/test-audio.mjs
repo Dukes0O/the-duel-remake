@@ -256,6 +256,32 @@ const { audio, context } = await makeAudio();
   count.lightingLamp = null; count.lightingSeconds = 0; audio.update(st);
   check(audio.lampLightingVoice === null, 'leaving the lamp stops the hiss');
 }
+// Finding 1: step the actual engine automation at fixed revs and load, changing only the walker's flat distance.
+{
+  const {audio, context} = await makeAudio();
+  const st = state({onFoot: true, speedMph: 0, revs: .6, input: {throttle: .7, brake: 0}, fighter: {x: 0, y: 100, z: 0}});
+  const environment = {course: {def: {}, worldAt: () => ({x: 0, y: 0, z: 0})}};
+  const levels = () => [audio.engineGain.gain.value, ...['idle','loadLow','loadMid','loadHigh','coast','engine'].flatMap(key => {
+    const sample = audio.samples[key];
+    return sample ? [sample.gain.gain.value, sample.body.gain.gain.value, sample.intake.gain.gain.value] : [];
+  })];
+  context.advance(1); audio.update(st, environment);
+  const near = levels();
+  st.fighter.x = 30; audio.update(st, environment);
+  const far = levels();
+  console.log('Finding 1 engine layer targets at 0 / 30 m:', near, far);
+  check(near.some(value => value > 0), 'engine is audible beside the car');
+  check(far.every(value => value === 0), 'every engine layer is silent at 30 m on foot');
+  for (const [metres, share] of [[5, 1], [17.5, .5], [40, 0]]) {
+    st.fighter.x = metres; audio.update(st, environment);
+    levels().forEach((value, i) => check(Math.abs(value - near[i] * share) < 1e-9, 'each engine layer follows flat linear distance'));
+  }
+  st.onFoot = false; st.fighter.x = 100; audio.update(st, environment);
+  levels().forEach((value, i) => check(Math.abs(value - near[i]) < 1e-9, 'in-car engine levels stay unchanged'));
+  st.onFoot = true; st.input.throttle = 0; audio.update(st, environment);
+  check(audio.wind.gain.gain.value === 0 && audio.tires.gain.gain.value === 0 &&
+    audio.samples.squeal.gain.gain.value === 0, 'parked car tyres and wind are silent on foot');
+}
 // The actual output curve keeps quiet gain and leaves headroom for large hits.
 const outputCurve = audio.output.curve;
 const curveAt = value => outputCurve[Math.round((value + 1) * (outputCurve.length - 1) / 2)];
