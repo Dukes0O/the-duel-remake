@@ -293,7 +293,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
   let drawnShift;
   function effectShift(position,owner,object) {
     return (owner?drawnShift?.forActor?.(owner):undefined)??
-      drawnShift?.(position.x,position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:undefined,object)??0;
+      drawnShift?.(position.x,position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:owner?undefined:position.y,object)??0;
   }
   function show(slot,position,options) {
     showUnshifted(slot,position,options);

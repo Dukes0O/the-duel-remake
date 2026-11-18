@@ -44,7 +44,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   let drawnShift;
   const shiftEffect=(object,owner)=>{
     object.position.y+=(owner?drawnShift?.forActor?.(owner):undefined)??
-      drawnShift?.(object.position.x,object.position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:undefined,object)??0;
+      drawnShift?.(object.position.x,object.position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:owner?undefined:object.position.y,object)??0;
   };
   const point=(duel,actor)=>{
     const at=physicalPoint(duel,actor);

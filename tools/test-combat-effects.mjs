@@ -453,6 +453,12 @@ test('Scablands bursts, roof charge and atlas follow drawing shifts without chan
       'The roof charge uses the owning car shift.');
     atlas.update({state:current,course,dt:0,drawnShift});
     assert.equal(atlas.group.getObjectByName('combat-vfx-burst-0-explosion').position.y,2.8,'The atlas uses the same shifted hit place.');
+    const tunnelShift=(x,z,support,physicalY)=>physicalY===2?0:.8;
+    procedural.update(duel,{drawnShift:tunnelShift});
+    assert.equal(burst.position.y,2,'An unowned underground burst selects its tunnel from physical height.');
+    atlas.update({state:current,course,dt:0,drawnShift:tunnelShift});
+    assert.equal(atlas.group.getObjectByName('combat-vfx-burst-0-explosion').position.y,2,
+      'The atlas also supplies physical height for underground effects.');
     assert.equal(JSON.stringify(current),before,'Effects do not edit physical positions.');
   } finally {procedural.dispose();atlas.dispose();}
 });
