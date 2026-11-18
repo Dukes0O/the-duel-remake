@@ -78,7 +78,12 @@ export function startRoadFight(duel, world) {
   const state = duel.state;
   if (world.riderFight) {
     const previous = new Set(world.riderFight.riders);
-    state.opponents = state.opponents.filter(car => !previous.has(car.arenaId));
+    const former = state.opponents;
+    state.opponents = former.filter(car => !previous.has(car.arenaId));
+    // Native contact latches use field indices. An arriving car cannot inherit a departed car's ram.
+    for (const key of duel._combatRamIncidents ?? []) {
+      if (key.split(':').some(slot => slot >= 0 && former[slot] !== state.opponents[slot])) duel._combatRamIncidents.delete(key);
+    }
     state.arena.participants = state.arena.participants.filter(entry => !previous.has(entry.id));
     world.actors = world.actors.filter(actor => !actor.riderCrew);
   }

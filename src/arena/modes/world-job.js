@@ -305,7 +305,9 @@ function applyStepLoan(duel, worldJob) {
 export function prepareWorldJobControls(duel) {
   const worldJob=duel.state.arena?.mode==='world-job'?duel.state.arena.worldJob:null;
   if(!worldJob)return false;
-  const step=worldJob?.job.steps[worldJob.job.stepIndex];
+  const step=worldJob.job.steps[worldJob.job.stepIndex];
+  // Conversation choices and other external job transitions can enter a fight between simulation ticks.
+  if (step?.kind === 'rider-fight' && worldJob.riderReserve?.length) startRoadFight(duel,worldJob);
   const input=duel.state.input??{};
   worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
   if(step?.kind!=='drivetrain') return false;

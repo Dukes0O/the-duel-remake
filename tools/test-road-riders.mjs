@@ -22,6 +22,7 @@ import {targetFor} from '../src/arsenal/targeting.js';
 import {WEAPON_IDS, ARSENAL_WEAPONS} from '../src/weapon-upgrades.js';
 import {scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {stepJob} from '../src/world/jobs/job-engine.js';
 import {RIDER_RULE as RULE} from '../src/world/jobs/rider-rule.js';
 import {washRiderJob} from '../src/world/jobs/wash-riders.js';
 import {throwRiderAsh, updateRoadFight} from '../src/arena/modes/road-riders.js';
@@ -33,8 +34,8 @@ const nativeWeapons = [...WEAPON_IDS, ...Object.keys(ARSENAL_WEAPONS)];
 const distance = (a,b) => Math.hypot(a.x-b.x, a.z-b.z);
 const selected = process.argv[2];
 
-function runEvent({seed=1, difficulty='easy', count=1, boxIn=false, fightToEnd=false, overrides={}, job, weaponLoadout=['crossbow','bomb','star']}={}) {
-  const duel = new Duel({seed,featureFlags:FLAGS});
+function runEvent({seed=1, difficulty='easy', count=1, boxIn=false, fightToEnd=false, overrides={}, flags=FLAGS, job, weaponLoadout=['crossbow','bomb','star']}={}) {
+  const duel = new Duel({seed,featureFlags:flags});
   duel.state.wastelandGateDiscovered = true;
   job ??= washRiderJob({seed,count,boxIn,fightToEnd});
   assert.ok(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',opponents:[],
@@ -43,7 +44,7 @@ function runEvent({seed=1, difficulty='easy', count=1, boxIn=false, fightToEnd=f
   const state = duel.state, world = state.arena.worldJob;
   const events = [];
   duel.onChange((_state, event) => {
-    if (event.riderFight || event.riderAsh || event.vehicleSmash || event.combatRamHit || event.arenaTell || event.arsenalCue) events.push(event);
+    if (event.riderFight || event.riderAsh || event.vehicleSmash || event.combatRamHit || event.weaponFired || event.arenaTell || event.arsenalCue) events.push(event);
   });
   return {duel,state,world,fight:world?.riderFight,events};
 }
@@ -103,6 +104,20 @@ function rulesAndRoster() {
   assert.equal(sim.world.riderFight.index,1);
   assert.ok(sim.world.riderFight.riders.every(id => !firstIds.includes(id)));
   assert.equal(sim.world.riderReserve.length,0);
+  const branched=washRiderJob({count:3});
+  const marker={x:1200,y:0,z:1200};
+  branched.steps.unshift({kind:'reach',id:'choose',position:marker});
+  const entered=runEvent({job:branched});
+  assert.equal(entered.state.opponents.length,0);
+  assert.equal(entered.world.riderReserve.length,3);
+  // A job owner can complete the prior step outside the usual stepWorldJob tail, as a choice screen does.
+  entered.world.job=stepJob(entered.world.job,{player:{position:marker}},DT);
+  assert.equal(entered.world.job.stepIndex,1);
+  advance(entered,DT*3);
+  assert.equal(entered.world.riderFight?.riders.length,3);
+  assert.equal(entered.world.riderReserve.length,0);
+  assert.equal(entered.state.opponents.length,3);
+  assert.ok(entered.world.riderFight.elapsed>0);
   const protectedJob=washRiderJob({count:1}), ally={car:'dusthawk_rally',jobId:'wash-truck',brain:'gunner'};
   protectedJob.steps[0].targetId=ally.jobId;
   ally.start={...protectedJob.steps[0].carStart,x:protectedJob.steps[0].carStart.x+42};
@@ -139,6 +154,10 @@ function rulesAndRoster() {
 }
 
 function fireAndCrew() {
+  const armed=runEvent({difficulty:'hard',job:washRiderJob({count:1,weapon:'crossbow',fightToEnd:true})});
+  advance(armed,15,undefined,()=>armed.events.some(e=>e.weaponFired));
+  const shots=armed.events.filter(e=>e.weaponFired&&e.actor===armed.state.opponents[0]);
+  assert.ok(shots.length>0 && shots.every(e=>e.weaponFired==='crossbow'),'the native CPU uses its one job-specified arsenal weapon');
   const sim=runEvent(), {duel,state,world,fight,events}=sim, rider=state.opponents[0];
   const at=worldPose(duel,state);
   place(sim,rider,{x:at.x,z:at.z+22},Math.PI);
@@ -163,6 +182,14 @@ function fireAndCrew() {
   advance(away,RULE.ashFlightSec+DT*2);
   assert.ok(hazardsFor(away.duel).every(h=>distance(h,worldPose(away.duel,away.state))>RULE.ashRadius));
 
+  const basic=runEvent({flags:{...FLAGS,arsenal:false}}), basicFoe=basic.state.opponents[0], base=worldPose(basic.duel,basic.state);
+  place(basic,basicFoe,{x:base.x,z:base.z+22},Math.PI);
+  assert.ok(throwRiderAsh(basic.duel,basicFoe));
+  basicFoe.weaponsDisabledUntil=Infinity;
+  advance(basic,RULE.ashFlightSec+.1);
+  assert.ok(smokeHazeOpacity(hazardsFor(basic.duel),{...base,y:basic.state.groundHeight+1})>0);
+  advance(basic,RULE.ashLifetime+.1);
+  assert.equal(hazardsFor(basic.duel).length,0,'a job ash cloud expires with the arsenal switch off');
   const two=runEvent({count:2}), [retiring,other]=two.state.opponents;
   retiring.roadRider.home={...worldPose(two.duel,retiring),z:worldPose(two.duel,retiring).z-24};
   retiring.armor=retiring.maxArmor*RULE.retreatFraction;
@@ -206,6 +233,16 @@ function chaseAndLoss() {
     advance(sim,RULE.aftermathSec+DT*3);
     assert.equal(state.arena.result?.winnerId,'raiders');
     assert.equal(events.filter(e=>e.riderFight).length,1);
+    if(difficulty==='easy') {
+      const record=run=>run.events.flatMap(e=>e.combatRamHit?[[e.attackerIndex,e.victimIndex,e.closingKph,e.armorRemoved]]:
+        e.riderAsh?[[e.riderAsh.ownerId,e.riderAsh.position]]:e.riderFight?[[e.riderFight.outcome]]:[]);
+      const again=runEvent({difficulty,count:3});
+      advance(again,1.2);
+      advance(again,110,undefined,()=>!!again.fight.outcome);
+      advance(again,RULE.aftermathSec+DT*3);
+      assert.deepEqual(record(again),record(sim),'same inputs repeat every impact and ash landing');
+      assert.equal(again.fight.endedAt,fight.endedAt);
+    }
     console.log(difficulty+' idle car was wrecked in '+fight.endedAt.toFixed(2)+'s, '+events.filter(e=>e.combatRamHit).length+' native ram reports.');
   }
 }
@@ -324,7 +361,7 @@ function sampleWeapon(weapon, rider, range=30, crossHazard=false) {
     evidence.disabled ||= !!carEffect(target,'disabled');
     evidence.slick ||= !!carEffect(target,'slick');
     evidence.grip ||= !!carEffect(target,'grip');
-    evidence.hidden ||= smokeHazeOpacity(hazardsFor(duel),worldPose(duel,target))>0;
+    evidence.hidden ||= smokeHazeOpacity(hazardsFor(duel).filter(h=>h.kind==='smoke'),{...worldPose(duel,target),y:target.groundHeight+1})>0;
   }
   evidence.armor=Math.round((initial-target.armor)*1000)/1000;
   return evidence;

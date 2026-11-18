@@ -54,9 +54,9 @@ export function arsenalWaveThreeEnabled(duel) {
 }
 
 // Road hazards and car effects also run in warlord fights, whose moves use
-// them before the arsenal is released (docs/ARSENAL.md, Switch).
+// them before the arsenal is released (docs/ARSENAL.md, Switch), and for a world job's thrown ash.
 export function hazardsActive(duel) {
-  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord';
+  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord' || !!duel.state.arena?.worldJob?.riderFight;
 }
 
 export function createCombat(levels) {
