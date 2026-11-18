@@ -583,7 +583,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex (cloud), 18 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/STORY-LEDGER.md"
