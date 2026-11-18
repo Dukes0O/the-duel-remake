@@ -62,7 +62,7 @@ export function createHandcartView({spread=.23, height=.88, back=HANDCART.shaftB
 export function createCampStool(stature) {
   const root = new THREE.Group();
   root.name = 'Camp stool';
-  const h = stature*.145, width = stature*.245, depth=stature*.23;
+  const h = stature*.263, width = stature*.245, depth=stature*.23;
   const parts = [];
   for (let i=0;i<4;i++) {
     const plank=new THREE.BoxGeometry(width,.028,depth/4-.006);

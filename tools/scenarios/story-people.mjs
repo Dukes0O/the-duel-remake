@@ -11,12 +11,12 @@ const at = (dx, dz) => {
   const x = TIN_TOWN_GATE.x + dx, z = TIN_TOWN_GATE.z + dz;
   return {x, y:ground(x,z), z};
 };
-const people = [...walkerGroupAt(at(0,3), Math.PI, ground),
-  {id:'auntie-solder', position:at(4,1), yaw:Math.PI}];
+const people = [...walkerGroupAt(at(0,-5.2), Math.PI, ground),
+  {id:'auntie-solder', position:at(4,-5), yaw:Math.PI}];
 const reviewJob = {...EVERBURN_JOBS[1], id:'story-people-review', storyPeople:people,
-  steps:[{...EVERBURN_JOBS[1].steps[0], bellowsFootStart:{...at(0,-17.4),heading:0}}]};
+  steps:[{...EVERBURN_JOBS[1].steps[0], bellowsFootStart:{...at(0,-25.6),heading:0}}]};
 const runAction = {};
-setStoryPersonAction(runAction,'run',[at(1,4),at(5,7)]);
+setStoryPersonAction(runAction,'run',[at(1,-4.2),at(5,-1.2)]);
 
 export const pageFunctions = {
   ready:lightTown.ready, prepare:lightTown.prepare, yard:lightTown.yard,
@@ -100,9 +100,9 @@ export async function run(context) {
   await context.waitFor(pageSource('loaded'),'gate company and town',120000);
   const report = [];
   for (const [shot,eye,subject,changes] of [
-    ['gate-group',at(0,-17.4),'rell',{}], ['rell-speaking',at(-.4,-1.0),'rell',{}],
-    ['dace-running',at(-2,1),'dace',{dace:at(0,3)}],
-    ['wim-and-auntie',at(8.1,-2.5),'wim',{wim:at(8.68,-.41), 'auntie-solder':at(8.95,-.18)}],
+    ['gate-group',at(0,-25.6),'rell',{}], ['rell-speaking',at(-.4,-9.1),'rell',{}],
+    ['dace-running',at(-2,-7.4),'dace',{dace:at(0,-5.2)}],
+    ['wim-and-auntie',at(8.1,-2.5),'wim',{wim:at(8.57,-.43), 'auntie-solder':at(9.0,-.16)}],
   ]) {
     await evaluate('stage',shot,eye,changes,runAction);
     // Let gaze, hands, and the grounded resting pose settle on rendering time.

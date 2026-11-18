@@ -90,7 +90,7 @@ function bake(group) {
 }
 
 const gate = createTinTownGate();
-gate.position.set(0, 0, 3);
+gate.position.set(0, 0, -5.1);
 gate.rotation.y = 0;
 await fs.writeFile(path.join(out, 'gate.json'), JSON.stringify(bake(gate)));
 const placements = walkerGroupAt({x:0, y:0, z:0}, 0);
@@ -132,8 +132,8 @@ await savePose('actions', cast, null, {x:1,z:6}, ([dace, carter, rell, wim]) => 
 });
 const resting = [
   {id:'rell',position:{x:-1.1,y:0,z:.15},yaw:-.27,action:'sit'},
-  {id:'wim',position:{x:.85,y:0,z:.13},yaw:.18,action:'sleep'},
-  {id:'auntie-solder',position:{x:.55,y:0,z:-.14},yaw:-.32,action:'sit'},
+  {id:'wim',position:{x:.89,y:0,z:.12},yaw:.18,action:'sleep'},
+  {id:'auntie-solder',position:{x:.46,y:0,z:-.17},yaw:-.32,action:'sit'},
 ];
 await savePose('at-rest', resting, null, {x:0,z:3.3});
 const fence = createTinTownGate().getObjectByName('Gate fence right');

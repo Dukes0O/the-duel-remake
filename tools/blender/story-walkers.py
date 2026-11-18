@@ -224,8 +224,12 @@ def make_person(index, ident, source, style):
                 elif skirt:
                     # Below the hips the single coat falls over both thighs.
                     hip = float(smoothstep((h-.80)/.22))
+                    below_knee = 1-float(smoothstep((h-.45)/.24))
                     right = float(smoothstep((x+6)/12))
-                    groups=[('pelvis',hip),('thigh.L',(1-right)*(1-hip)),('thigh.R',right*(1-hip))]
+                    thigh = (1-hip)*(1-below_knee)
+                    shin = (1-hip)*below_knee
+                    groups=[('pelvis',hip),('thigh.L',(1-right)*thigh),('thigh.R',right*thigh),
+                            ('shin.L',(1-right)*shin),('shin.R',right*shin)]
                 elif kind=='head':
                     groups=[('head',1)]
                 elif kind=='neck':

@@ -1,6 +1,7 @@
 // Only the world job moves a person's feet across the land. Gaze, weight,
 // breathing, gestures and the point above the head belong to the presentation.
 import * as THREE from 'three';
+import {TessellateModifier} from 'three/addons/modifiers/TessellateModifier.js';
 import {clone as cloneSkin} from 'three/addons/utils/SkeletonUtils.js';
 import {disposeFigureAsset} from '../rigged-fighter.js';
 import {createHandcartView, createCampStool} from './handcart-view.js';
@@ -37,30 +38,45 @@ function bindClothing(model, body, joint, owned) {
   const bounds = new THREE.Box3().setFromObject(body, true);
   const height = bounds.max.y - bounds.min.y;
   const transform = new THREE.Matrix4(), normalMatrix = new THREE.Matrix3(), n = new THREE.Vector3();
-  const jointToBind = body.skeleton.bones.map((bone, index) => new THREE.Matrix4()
+  const fromBind = body.skeleton.bones.map((bone, index) => new THREE.Matrix4()
     .multiplyMatrices(body.matrixWorld, body.bindMatrixInverse)
-    .multiply(bone.matrixWorld).multiply(body.skeleton.boneInverses[index]).multiply(body.bindMatrix).invert());
+    .multiply(bone.matrixWorld).multiply(body.skeleton.boneInverses[index]).multiply(body.bindMatrix));
+  const localScale = new THREE.Vector3(), inverse = new THREE.Matrix4();
   for (const garment of garments) {
-    const geom = garment.geometry.clone();
+    const box = new THREE.Box3().setFromObject(garment,true);
+    const tall = box.max.y-box.min.y > .26*height;
+    const size = garment.getWorldScale(localScale);
+    // The old apron is a box with corners only. Add rows of vertices to let
+    // the leather lie across the lap and hang down over the shins.
+    const geom = tall
+      ? new TessellateModifier(.12/Math.max(size.x,size.y,size.z),6).modify(garment.geometry)
+      : garment.geometry.clone();
     const points = geom.getAttribute('position'), normals = geom.getAttribute('normal');
     const indices = new Uint16Array(points.count * 4);
     const weights = new Float32Array(points.count * 4);
     for (let i = 0; i < points.count; i++) {
       up.fromBufferAttribute(points, i).applyMatrix4(garment.matrixWorld);
-      const h = (up.y - bounds.min.y) / height;
-      const name = h > .86 ? 'head' : h < .46 ? (up.x < 0 ? 'thighL' : 'thighR') : h < .61 ? 'pelvis' : 'chest';
-      const index = joint[name].index;
-      // The folk kit's original bind matrices include their places in its line-up.
-      // Undo that joint's complete bind-to-world transform at the rest pose.
-      up.applyMatrix4(jointToBind[index]);
+      const h = (up.y - bounds.min.y) / height, side = up.x < 0 ? 'L' : 'R';
+      let a='chest', b='chest', mix = 0;
+      if (h>.86) a=b='head';
+      else if (h<.39) {a='shin'+side; b='thigh'+side; mix=THREE.MathUtils.smoothstep(h,.25,.39);}
+      else if (h<.57) {a='thigh'+side; b='pelvis'; mix=THREE.MathUtils.smoothstep(h,.43,.57);}
+      else if (h<.67) {a='pelvis'; b='chest'; mix=THREE.MathUtils.smoothstep(h,.57,.67);}
+      const first = joint[a].index, second = joint[b].index;
+      // The folk kit carries its original line-up in the bind matrices. Undo
+      // the complete weighted bind transform at this garment point.
+      for (let element=0;element<16;element++) inverse.elements[element] =
+        (1-mix)*fromBind[first].elements[element]+mix*fromBind[second].elements[element];
+      inverse.invert();
+      up.applyMatrix4(inverse);
       points.setXYZ(i, up.x, up.y, up.z);
       if (normals) {
-        transform.multiplyMatrices(jointToBind[index], garment.matrixWorld);
+        transform.multiplyMatrices(inverse, garment.matrixWorld);
         n.fromBufferAttribute(normals, i).applyNormalMatrix(normalMatrix.getNormalMatrix(transform));
         normals.setXYZ(i, n.x, n.y, n.z);
       }
-      indices[i * 4] = index;
-      weights[i * 4] = 1;
+      indices[i*4]=first; weights[i*4]=1-mix;
+      indices[i*4+1]=second; weights[i*4+1]=mix;
     }
     geom.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(indices, 4));
     geom.setAttribute('skinWeight', new THREE.Float32BufferAttribute(weights, 4));
@@ -204,9 +220,9 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     const swing = sign * stride;
     const lift = moving ? Math.max(0, sign * Math.cos(phase)) : 0;
     const longLeg = sign < 0 ? sleep : 0;
-    poseBone(joints['thigh' + side], -1.96 * sit - .18 * sleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
-    poseBone(joints['shin' + side], 2.75 * sit + .10 * sleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
-    poseBone(joints['foot' + side], -.70 * sit + 1.29 * longLeg - lift * .19);
+    poseBone(joints['thigh' + side], -1.43 * sit - .71 * sleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
+    poseBone(joints['shin' + side], 1.65 * sit + 1.20 * sleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
+    poseBone(joints['foot' + side], -.26 * sit - .44 * sleep + 1.29 * longLeg - lift * .19);
     const gestureSide = sign > 0 ? gesture : .15 * gesture;
     poseBone(joints['upper_arm' + side], swing * (running ? .5 : .31) * (1 - push) -
       .68 * push - .43 * sit - .23 * gestureSide, 0, -sign * (.055 + .10 * gestureSide));
