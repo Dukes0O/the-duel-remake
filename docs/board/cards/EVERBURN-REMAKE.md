@@ -878,14 +878,12 @@ of bright light, 60 m wide, walks over the ground on a fixed round of about fort
   behind a butte and they go home.
 - What the player does: watch the light, dash from butte to butte, 50 km/h on the rock.
 
-**The salt pan: race the salt riders to the Pipe.** Two Ash Men keep a lean-to at the salt works in the middle of the pan
-and watch for a glow. Cinder's reason holds: they take any fire they find.
-- They see the pot at 700 m (the pan is flat and the pot glows). A horn, and both set out to cut the car off.
-- On the pan they are as fast as the player; they gain only when the player turns or slows. They ram by the ember rule.
-- They will not drive onto the Pipe. The player must reach it far enough ahead to brake to 40 km/h for the crossing.
-  A lead of about four seconds is enough; less, and the last ram comes at the Pipe's mouth.
-- A player who passes wide of the salt works (about 1 km longer, in the wind) is seen later and starts the race ahead.
-- What the player does: choose the line across the pan, hold speed, judge the braking for the Pipe with two cars behind.
+**The salt pan: race the salt riders to the Ridge.** Two Ash Men keep the salt lean-to 400 m south of the way at its 3.0 km point.
+- They see the loaded pot at 700 m with clear sight. A horn, and both steer to cut the car off.
+- On the pan they match the player's pan top speed, less 5 km/h on Easy. They ram by the ember rule and back off.
+- They turn home within 650 m of the Ridge, when the car reaches that line, when it leaves the pan (roads on the pan count), or after 120 seconds.
+- Rook says: "Rook: Salt riders. They won't climb the Ridge. Get to it first."
+- A road line from 2.4 km must be caught; a north line passing the lean-to 900 m away must stay unseen or reach the Ridge line four seconds ahead.
 
 **The river bed: the cold is seen, and the bridge is passed from below.** No rider goes down into the bed; that stands.
 - **Cold mist** lies in the bed's hollows, drawn, in patches 30 to 50 m long. The pot cools five times as fast in a patch
@@ -894,7 +892,7 @@ and watch for a glow. Cinder's reason holds: they take any fire they find.
 - **Under the Girder Bridge** the Ash Men on the deck tip ash to smother the fire. A horn as the car comes within 300 m;
   then ash falls in each of the three gaps between the piers in turn, two seconds each, in a fixed order. Driving through
   falling ash takes 20 from the pot. The player watches one round and goes through the gap that has just emptied.
-- **Out at the Steps** the car comes up under the furnace's glass for the last 800 m, by the plates' rule.
+- **Out at the Steps** the furnace's glass sweeps the first 250 m after the Steps, by the plates' rule.
 - What the player does: read the mist, time the bridge, then one dash in the open.
 
 **The East Road (Kyle's 5).** By slice 6b a burning fence wakes its rider, who comes out through it. Kyle saw nobody, and
@@ -1031,3 +1029,5 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 - A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.
 - Slice 7: Tin Town's door keeps its 20 m car approach trigger. It swings shut when the car leaves that area and opens on return. Its leaf stays solid at its drawn position throughout the 1.5-second swing. The existing gate cue sounds once when each swing starts.
+
+- Slice 8C follows the ruled 400 m south offset at the way's 3.0 km point. Its exact current position is (2004,-1795); the ruling's approximate (1851,-2166) lies on the way itself. The named way and offset govern placement.

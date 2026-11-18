@@ -13,12 +13,13 @@ import {captionRecord} from '../../story/story-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
 import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
+import {arenaFloorSpeed} from '../venues.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
-import {scablandsDriveAt, RIVER_LAND, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
+import {scablandsDriveAt, RIVER_LAND, GROUND_AREAS, polygonMargin, edgeWarp, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
 import {ROAD_NET, roadPointFrom} from '../../world/scablands-road.js';
 import {nearestOnLine, sees} from '../../world/scablands-ways.js';
-import {MPH_TO_KMH, emberSentence, EMBER_CAPTION_SECONDS} from '../../world/jobs/ember-rule.js';
+import {MPH_TO_KMH, SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome, emberSentence, EMBER_CAPTION_SECONDS} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
@@ -138,11 +139,14 @@ export function initializeWorldJob(duel, definition) {
   }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
+    const post = definition.steps[0].saltPost.position;
+    worldJob.solidGrid.setShelter(post);
     worldJob.solidGrid.setPeople([{id:'hot-delivery-cinder', position:definition.steps[0].pickup.figure.position}]);
   }
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
+  for (const actor of definition.steps[0]?.saltRiders ?? []) updateJobActor(duel, worldJob, actor, 0);
   syncJobCarSolids(worldJob);
   state.worldJobThingsHit = [];
   if (definition.steps[0]?.faceOriginToPlace && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
@@ -260,6 +264,31 @@ function updateJobActors(duel, worldJob, dt) {
   for (const actor of step?.waitingActors ?? []) {
     updateJobActor(duel, worldJob, actor, dt);
     pursueJobRider(duel, worldJob, actor, dt);
+  }
+  if (step?.saltRiders) {
+    const car = position(duel, duel.state), pan = GROUND_AREAS.polygons.find(area => area.id === 'salt-pan');
+    const ground = scablandsDriveAt(car.x, car.z);
+    const onPan = ground.id === 'salt-pan' || ground.id === 'road' &&
+      polygonMargin(pan.points, car.x, car.z) + edgeWarp(car.x, car.z, pan.phase) > 0;
+    const riders = step.saltRiders.map(def => worldJob.actors.find(actor => actor.id === def.id));
+    if (!worldJob.saltWarned && !worldJob.saltDone && worldJob.job.stepState.loaded && onPan &&
+        riders.some(rider => rider.health > 0 && sees(rider.position, car, {heightAt:scablandsSurfaceHeightAt,
+          actorFloors:true, tunnels:duel.course.groundTunnels, eye:SALT_RIDERS.eye,
+          range:SALT_RIDERS.sightMetres, step:SALT_RIDERS.sightStep}))) {
+      worldJob.saltWarned = true;
+      duel._storyCallout("Rook: Salt riders. They won't climb the Ridge. Get to it first.", EMBER_CAPTION_SECONDS);
+      duel.emit({arenaTell:{id:'salt-warning', targetId:'player', seconds:0, cue:'world.salt.horn', position:car}});
+      for (const rider of riders) { rider.pursuing = true; rider.ambushKey = 'salt'; }
+    }
+    if (worldJob.saltWarned && !worldJob.saltDone) {
+      worldJob.saltChaseSeconds = (worldJob.saltChaseSeconds ?? 0) + Math.max(0, dt);
+      if (riders.some(rider => saltRidersTurnHome({car, rider:rider.position, ridge:step.saltRidge,
+          onPan, chaseSeconds:worldJob.saltChaseSeconds}))) {
+        worldJob.saltDone = true;
+        for (const rider of riders) rider.returningToPost = true;
+      }
+    }
+    for (const actor of step.saltRiders) if (worldJob.saltWarned) pursueJobRider(duel, worldJob, actor, dt);
   }
   // The scout is a job rider, so it uses the same actor and hit-target path.
   if (step?.scout && worldJob.job.stepState.loaded) {
@@ -406,7 +435,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
   const furnaceRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.furnaceRiders?.includes(actorDef);
-  const emberRider = roadRider || furnaceRider;
+  const saltRider = worldJob.job.steps[worldJob.job.stepIndex]?.saltRiders?.includes(actorDef);
+  const emberRider = roadRider || furnaceRider || saltRider;
   const campRider = roadRider && actorDef.scoopAmbush;
   if (campRider && !worldJob.job.stepState.campAwake && !worldJob.ridersRetreating) {
     rider.speed = 0;
@@ -539,11 +569,19 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     }
     return;
   }
-  rider.heading = Math.atan2(dx, dz);
-  const pursuitSpeed = roadRider && duel.state.cpuDifficulty === 'easy' ? 5 : 18;
-  const travel = Math.min(distance - 3, pursuitSpeed * dt);
+  const panTop = saltRider ? Math.min(duel.car.topSpeed,
+    arenaFloorSpeed(duel.course.def.scrapdome, duel.car.topSpeed) * SCABLANDS_DRIVE['salt-pan'].top) * MPH_TO_KMH : 0;
+  const pursuitSpeed = saltRider ? saltRiderSpeed(panTop, duel.state.cpuDifficulty) :
+    roadRider && duel.state.cpuDifficulty === 'easy' ? 5 : 18;
+  const pose = worldPose(duel, duel.state), playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
+  const aim = saltRider ? saltIntercept(rider.position, car,
+    {x:Math.sin(pose.heading) * playerSpeed, z:Math.cos(pose.heading) * playerSpeed}, pursuitSpeed) : car;
+  const aimDx = aim.x - rider.position.x, aimDz = aim.z - rider.position.z;
+  const aimDistance = Math.hypot(aimDx, aimDz);
+  rider.heading = Math.atan2(aimDx, aimDz);
+  const travel = Math.min(Math.max(0, aimDistance - (saltRider ? 0 : 3)), pursuitSpeed * dt);
   const before = rider.position;
-  const moved = stepMover(before, {x: before.x + dx / distance * travel, z: before.z + dz / distance * travel},
+  const moved = stepMover(before, {x: before.x + aimDx / (aimDistance || 1) * travel, z: before.z + aimDz / (aimDistance || 1) * travel},
     {radius: 1.3, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: before.y});
   rider.position = {x: moved.x, y: moved.y, z: moved.z};
   rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;

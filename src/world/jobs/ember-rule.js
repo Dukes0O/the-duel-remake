@@ -121,7 +121,11 @@ export const BESS_GREETING_RADIUS = 40;
 export const EMBER_CAPTION_SECONDS = 3;
 export const SALT_RIDERS = Object.freeze({
   sightMetres:700,
-  pipeClearMetres:60,
+  ridgeClearMetres:650,
+  postAlong:3000, postSide:400, riderOffset:6,
+  eye:1.5, sightStep:5,
+  shelterHalfX:4, shelterHalfZ:3, shelterPostWidth:.5, shelterHeight:3,
+  shelterRoofWidth:9, shelterRoofDepth:7, shelterRoofThickness:.2, shelterRoofSlope:.08,
   chaseSeconds:120,
   easySlowerKmh:5,
 });
@@ -158,10 +162,10 @@ export function saltRiderSpeed(panTopKmh, difficulty) {
   return Math.max(0, panTopKmh - (difficulty === 'easy' ? SALT_RIDERS.easySlowerKmh : 0)) / 3.6;
 }
 
-// The Pipe's near end is a boundary for riders, even while the car is still
+// The Ridge is a boundary for riders, even while the car is still
 // on the pan. Returning is final for this chase and never reset by sight.
-export function saltRidersTurnHome({car, rider, pipeMouth, onPan, chaseSeconds}) {
-  const near = point => Math.hypot(point.x - pipeMouth.x, point.z - pipeMouth.z) <= SALT_RIDERS.pipeClearMetres;
+export function saltRidersTurnHome({car, rider, ridge, onPan, chaseSeconds}) {
+  const near = point => Math.hypot(point.x - ridge.x, point.z - ridge.z) <= SALT_RIDERS.ridgeClearMetres;
   return !onPan || chaseSeconds >= SALT_RIDERS.chaseSeconds || near(car) || near(rider);
 }
 

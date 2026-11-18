@@ -220,6 +220,15 @@ export async function run(context) {
     });
     await picture('bridge-ash-from-150m', 'Ash falling under the Girder Bridge',
       {focus:true,dy:4,dz:150,aimHeight:0,loaded:true});
+    await page(context, () => {
+      const app = window.__qaApp, duel = app.duel, state = duel.state;
+      const post = state.arena.worldJob.job.steps[0].saltPost.position;
+      const pose = duel.course.nearest(post.x, post.z + 200);
+      state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
+      state.speedMph = 0;
+      app.onFrame?.(state, 0); window.__render.renderFrame();
+    });
+    await picture('salt-lean-to-from-200m', 'The salt lean-to', {focus:true,dy:6,dz:200,loaded:true});
     // The riders only exist after the pot has been collected.
     for (const distance of [250, 60]) {
       const road = pointAlong(EAST_ROAD.points, 900 - distance);
@@ -307,7 +316,7 @@ export async function run(context) {
     await picture('10-forge-alight','Hot Delivery forge fire',{forge:true,holdAt:8,aimHeight:0});
     await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
-  for (const name of ['glass-on-plates-from-150m','bed-mist-from-60m','bridge-ash-from-150m','yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','scout-post-from-250m','scout-post-from-60m','camp-awake-at-fence-end','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
+  for (const name of ['salt-lean-to-from-200m','glass-on-plates-from-150m','bed-mist-from-60m','bridge-ash-from-150m','yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','scout-post-from-250m','scout-post-from-60m','camp-awake-at-fence-end','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
     '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
     if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
   }

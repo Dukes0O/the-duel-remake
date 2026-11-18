@@ -1,3 +1,4 @@
+import {SALT_RIDERS} from './jobs/ember-rule.js';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
@@ -611,6 +612,14 @@ export function createScablandsScene(course,options={}){
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
+  const saltShelter = new THREE.Group(); saltShelter.name = 'The salt lean-to'; group.add(saltShelter);
+  const saltMaterial = new THREE.MeshStandardMaterial({color:0x756551, roughness:.9});
+  for (const x of [-SALT_RIDERS.shelterHalfX, SALT_RIDERS.shelterHalfX]) for (const z of [-SALT_RIDERS.shelterHalfZ, SALT_RIDERS.shelterHalfZ]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterPostWidth, SALT_RIDERS.shelterHeight, SALT_RIDERS.shelterPostWidth), saltMaterial);
+    post.position.set(x, SALT_RIDERS.shelterHeight / 2, z); saltShelter.add(post);
+  }
+  const saltRoof = new THREE.Mesh(new THREE.BoxGeometry(SALT_RIDERS.shelterRoofWidth, SALT_RIDERS.shelterRoofThickness, SALT_RIDERS.shelterRoofDepth), saltMaterial);
+  saltRoof.position.y = SALT_RIDERS.shelterHeight; saltRoof.rotation.x = SALT_RIDERS.shelterRoofSlope; saltShelter.add(saltRoof);
   const cinder=createCinderFigure();group.add(cinder);
   let cinderRequested=false;
   function requestCinder(){
@@ -909,6 +918,11 @@ export function createScablandsScene(course,options={}){
       }
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
+      saltShelter.visible = Boolean(emberStep?.saltPost);
+      if (saltShelter.visible) {
+        const point = emberStep.saltPost.position;
+        saltShelter.position.set(point.x, scablandsSurfaceHeightAt(point.x, point.z), point.z);
+      }
       const ash = emberStep?.bridgeAsh && !worldJob.job.done ?
         bridgeAshFall(worldJob.job.stepState?.bridgeAsh, emberStep.bridgeAsh) : null;
       ashColumn.visible = Boolean(ash);

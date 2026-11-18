@@ -33,6 +33,8 @@ import {BRIDGE_ASH, bridgeAshFall, stepBridgeAsh, EMBER_RULE} from '../src/world
 import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome,
   BED_MIST, bedMistFor, bedColdFactor, inBedMist, bedMistCorners} from '../src/world/jobs/ember-rule.js';
 import {Duel} from '../src/game.js';
+import {arenaFloorSpeed} from '../src/arena/venues.js';
+import {CARS} from '../src/config.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
 import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStepsRoute, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
@@ -168,14 +170,61 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
     assert.equal(saltRiderSpeed(top, 'easy'), (top - 5) / 3.6);
   }
   assert.equal(saltRiderSpeed(3, 'easy'), 0);
-  const chase = {car:{x:100, z:0}, rider:{x:200, z:0}, pipeMouth:rider,
+  const chase = {car:{x:1000, z:0}, rider:{x:1200, z:0}, ridge:rider,
     onPan:true, chaseSeconds:119.9};
   assert.equal(saltRidersTurnHome(chase), false);
   assert.equal(saltRidersTurnHome({...chase, onPan:false}), true);
   assert.equal(saltRidersTurnHome({...chase, chaseSeconds:SALT_RIDERS.chaseSeconds}), true);
-  assert.equal(saltRidersTurnHome({...chase, car:{x:60, z:0}}), true);
-  assert.equal(saltRidersTurnHome({...chase, rider:{x:0, z:60}}), true);
-  assert.equal(saltRidersTurnHome({...chase, car:{x:60.01, z:0}}), false);
+  assert.equal(saltRidersTurnHome({...chase, car:{x:650, z:0}}), true);
+  assert.equal(saltRidersTurnHome({...chase, rider:{x:0, z:650}}), true);
+  assert.equal(saltRidersTurnHome({...chase, car:{x:650.01, z:0}}), false);
+}
+
+// The two salt lines are rule probes at fixed speed, with no steering driver.
+{
+  const step = EVERBURN_JOBS[0].steps[0], post = step.saltPost.position;
+  const route = routeFor(HOT_DELIVERY_WAYS[2].legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const at = along => sliceLine(route, along, along + .01)[0];
+  const mid = at(3000), ahead = at(3001), length = Math.hypot(ahead.x - mid.x, ahead.z - mid.z);
+  const south = {x:-(ahead.z - mid.z) / length, z:(ahead.x - mid.x) / length};
+  assert.ok(Math.abs(Math.hypot(post.x - mid.x, post.z - mid.z) - 400) < 1e-8);
+  assert.equal(scablandsDriveAt(post.x, post.z).id, 'salt-pan');
+  assert.equal(pushOutOfSolids(post.x, post.z, 5).hit, null);
+  assert.ok(SOUND_BANK['world.salt.horn'].layers.length);
+  for (const difficulty of ['medium', 'easy']) for (const wide of [false, true]) {
+    const floor = arenaFloorSpeed(SCABLANDS_VENUE.scrapdome, CARS.falcone_f42.topSpeed);
+    const speed = floor * (wide ? 1.25 : 1) * 1.609344 / 3.6;
+    const riderSpeed = saltRiderSpeed(floor * 1.25 * 1.609344, difficulty);
+    const start = at(2400);
+    const line = wide ? [start, {x:start.x - south.x * 500, z:start.z - south.z * 500}, {x:mid.x - south.x * 500, z:mid.z - south.z * 500},
+      ...[4000, 5000, 6000].map(along => {const p = at(along); return {x:p.x - south.x * 500, z:p.z - south.z * 500};})] : sliceLine(route, 2400, 6500);
+    const riders = step.saltRiders.map(actor => ({...actor.start.position}));
+    let seen = null, caught = null, lead = Infinity, finish = null;
+    const dt = .025;
+    for (let t = 0; t < 120 && speed * t < pathLength(line) - 1; t += dt) {
+      const car = sliceLine(line, speed * t, speed * t + 1)[0];
+      const next = sliceLine(line, speed * t + 1, speed * t + 2)[0];
+      const span = Math.hypot(next.x - car.x, next.z - car.z);
+      if (Math.hypot(car.x - step.saltRidge.x, car.z - step.saltRidge.z) <= 650) {
+        finish = t; lead = Math.min(...riders.map(rider => Math.hypot(car.x - rider.x, car.z - rider.z) / riderSpeed)); break;
+      }
+      if (seen === null && riders.some(rider => sees(rider, car, {heightAt:scablandsSurfaceHeightAt,
+          eye:SALT_RIDERS.eye, target:1.5, step:SALT_RIDERS.sightStep, range:SALT_RIDERS.sightMetres})))
+        seen = {seconds:t, along:nearestOnLine(route, car.x, car.z).along};
+      if (seen !== null) for (const rider of riders) {
+        const aim = saltIntercept(rider, car, {x:(next.x - car.x) / span * speed, z:(next.z - car.z) / span * speed}, riderSpeed);
+        const distance = Math.hypot(aim.x - rider.x, aim.z - rider.z), travel = Math.min(distance, riderSpeed * dt);
+        rider.x += (aim.x - rider.x) / (distance || 1) * travel;
+        rider.z += (aim.z - rider.z) / (distance || 1) * travel;
+        if (caught === null && Math.hypot(car.x - rider.x, car.z - rider.z) <= 3)
+          caught = {seconds:t, along:nearestOnLine(route, car.x, car.z).along};
+      }
+    }
+    console.log('Salt rule proof:', JSON.stringify({difficulty, wide, seen, caught, finish, lead}));
+    assert.ok(finish !== null, 'the line reaches the Ridge boundary');
+    if (wide) assert.ok(seen === null || lead >= 4, 'the wide line has four seconds or stays unseen');
+    else assert.ok(caught !== null, 'the road line is caught before the Ridge boundary');
+  }
 }
 
 // The job counts light exposure, not all time in the watch's view.
@@ -1923,9 +1972,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(measurement.ember, pot.ember, 'the measurement reads the real pot');
   assert.equal(measurement.jolts, arrival?.observedJoltCount ?? pot.joltCount ?? 0,
     'the measurement accounts for the real jolts');
-  assert.equal(measurement.rams, 0, 'the careful salt-pan drive takes no rider rams');
-  assert.ok(measurement.arrival >= 30 && measurement.arrival < 70, 'the salt-pan ember arrives alive');
-  assert.ok(remaining.reachedAll && arrival?.done, 'the salt-pan drive reaches and delivers at the forge');
+  assert.equal(measurement.rams, 6, 'the unchanged road-line drive meets the new salt riders six times');
+  assert.equal(measurement.ember, 0, 'the unchanged road-line drive loses its fire to the salt riders');
+  assert.equal(measurement.arrival, null, 'an out pot cannot be delivered');
+  assert.ok(remaining.reachedAll && arrival?.done === false, 'the unchanged drive reaches the forge with an out pot');
   if (arrival) assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'an arrival stops at the forge');
   else assert.equal(measurement.arrival, null, 'a stuck drive is not recorded as an arrival');
 
@@ -2523,8 +2573,9 @@ const waitingState = {arena:{worldJob:waitingWorld}, weaponLoadout:[], s:0, late
 const waitingDuel = {state:waitingState, seed:19, course:{def:{scablands:true},
   nearest:() => ({s:0, lateral:0}), at:() => ({heading:0})}};
 initializeWorldJob(waitingDuel, definition);
-assert.equal(waitingWorld.actors.length, 2);
-for (const [index, actor] of waitingWorld.actors.entries()) {
+assert.equal(waitingWorld.actors.length, 4);
+assert.deepEqual(waitingWorld.actors.map(actor => actor.id), [...step.waitingActors, ...step.saltRiders].map(actor => actor.id));
+for (const [index, actor] of waitingWorld.actors.filter(actor => step.waitingActors.some(def => def.id === actor.id)).entries()) {
   const barrier = step.barriers[index], floors = [];
   assert.equal(actor.id, step.waitingActors[index].id);
   assert.equal(actor.renderCar, 'dusthawk_rally');
