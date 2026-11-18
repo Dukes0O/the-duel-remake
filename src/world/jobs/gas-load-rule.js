@@ -160,3 +160,35 @@ export function gasLoadPlug(step, state, speed, dt) {
   }
   return {state:{...state, plugging, plugElapsed:elapsed}, speed:plugging ? 0 : speed, requests, events};
 }
+
+export const GAS_DRY_LINE = "Moss: She's dry. Back to the planes.";
+
+// Keep the tank reading at the moment each block is opened, even when the
+// player opens it ahead of Bess. This is job state, never saved progress.
+export function gasLoadCheckpoint(step, before, state) {
+  let checkpoint = state.gasCheckpoint;
+  for (const block of step.blocks ?? []) {
+    if (state.clearedBlocks?.includes(block.id) && !before.clearedBlocks?.includes(block.id)) {
+      checkpoint = {id:block.id, gas:state.gas, place:{position:{...block.position}}, metres:block.metres};
+    }
+  }
+  return {...state, ...(checkpoint ? {gasCheckpoint:checkpoint} : {})};
+}
+
+export function gasLoadRestart(step, state) {
+  if (state.gas > 0) return null;
+  const checkpoint = state.gasCheckpoint;
+  const place = checkpoint?.place ?? step.path[0];
+  const metres = checkpoint?.metres ?? 0;
+  let walked = 0, pathIndex = 1;
+  for (; pathIndex < step.path.length - 1; pathIndex++) {
+    const from = step.path[pathIndex - 1].position, to = step.path[pathIndex].position;
+    walked += Math.hypot(to.x - from.x, to.z - from.z);
+    if (walked > metres) break;
+  }
+  return {state:{...state, gas:checkpoint?.gas ?? GAS_LOAD_RULE.start,
+    holes:GAS_LOAD_RULE.startHoles, holeClocks:{}, plugging:false, plugElapsed:0,
+    flashCooldown:0, flashVisible:0, stoppedBlock:null, blockRestartLeft:0},
+    complete:false, requests:[{type:'follow', path:step.path, speed:0}, {type:'say', lineId:'gas.dry'}],
+    events:[{type:'restarted', actorId:step.actorId, place, pathIndex}]};
+}

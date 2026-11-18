@@ -1,9 +1,10 @@
 // Slow Ride rules, without a scripted drive or persistent storage.
 import assert from 'node:assert/strict';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {furnaceSighting, FURNACE_PACING} from '../src/world/jobs/furnace-sightings.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug} from '../src/world/jobs/gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug, gasLoadCheckpoint, gasLoadRestart} from '../src/world/jobs/gas-load-rule.js';
 import {burnBarricades} from '../src/world/jobs/barricade.js';
 import {createKnowledge, jobFacts, learn} from '../src/world/scablands-map.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
@@ -350,3 +351,73 @@ assert.ok(Math.hypot(raidTruck.position.x - beforePlug.x, raidTruck.position.z -
   'The shared mover sets off after the plug.');
 assert.equal(world.follow.speed, step.speed);
 console.log('Slow Ride: real stopped movement, leaking during repair and plug sound dispatch passed.');
+
+// A cleared block records the gas then, not when Bess later reaches it.
+const checkpointState = gasLoadCheckpoint(step, {clearedBlocks:[]},
+  {gasLoaded:true, gas:73, clearedBlocks:[step.blocks[0].id]});
+assert.equal(checkpointState.gasCheckpoint.gas, 73);
+assert.equal(gasLoadCheckpoint(step, checkpointState, {...checkpointState, gas:50}).gasCheckpoint.gas, 73);
+const dry = gasLoadRestart(step, {...checkpointState, gas:0, holes:3, plugging:true,
+  stoppedBlock:step.blocks[1].id, blockRestartLeft:8, flashVisible:1});
+assert.equal(dry.state.gas, 73);
+assert.equal(dry.state.holes, 0);
+assert.equal(dry.state.plugging, false);
+assert.equal(dry.state.stoppedBlock, null);
+assert.equal(dry.state.flashVisible, 0);
+assert.deepEqual(dry.events[0].place.position, step.blocks[0].position);
+assert.equal(dry.events[0].pathIndex,
+  step.path.findIndex((_, index) => index > 0 && metresAtPlace(step.path, index) > step.blocks[0].metres));
+assert.deepEqual(dry.requests.filter(request => request.type === 'say'), [{type:'say', lineId:'gas.dry'}]);
+assert.equal(definition.captions['gas.dry'], "Moss: She's dry. Back to the planes.");
+assert.equal(gasLoadRestart(step, {gas:.001}), null);
+const dryAtStart = gasLoadRestart(step, {gas:0});
+assert.equal(dryAtStart.state.gas, 100);
+assert.deepEqual(dryAtStart.events[0].place, step.path[0]);
+assert.equal(dryAtStart.events[0].pathIndex, 1);
+const laterCheckpoint = gasLoadCheckpoint(step, checkpointState,
+  {...checkpointState, gas:46, clearedBlocks:step.blocks.map(block => block.id)});
+assert.equal(laterCheckpoint.gasCheckpoint.id, step.blocks[2].id);
+assert.equal(laterCheckpoint.gasCheckpoint.gas, 46);
+world.job.stepState = {...laterCheckpoint, gas:.000001, holes:1,
+  burntBarricades:step.barriers.map(barrier => barrier.id)};
+world.solidGrid.setBarricades([]);
+raidTruck.health = 17;
+duel.step(.001);
+assert.equal(world.job.stepState.gas, 46, 'The live leak restarts the tank with its checkpoint gas.');
+assert.equal(world.job.stepState.holes, 0);
+assert.deepEqual(raidTruck.position, step.blocks[2].position,
+  'The existing escort restart puts Bess at the cleared block.');
+assert.equal(raidTruck.health, 17, 'Gas restart does not run the shared health recovery rule.');
+assert.equal(raidTruck.atDestination, false);
+assert.equal(world.follow.speed, 0, 'There is no movement on the restart tick.');
+duel.step(.1);
+assert.equal(world.follow.speed, step.speed, 'The existing mover resumes on the road.');
+console.log('Slow Ride: checkpoint gas, start fallback, dry caption and shared live restart passed.');
+
+const pacingWorld = {definition, job:{steps:[step], stepIndex:0}, actors:[truck]};
+function placeBess(metres) {
+  let left = metres;
+  for (let index = 1; index < step.path.length; index++) {
+    const from = step.path[index - 1].position, to = step.path[index].position;
+    const length = Math.hypot(to.x - from.x, to.z - from.z);
+    if (left <= length) {
+      truck.position = {x:from.x + (to.x - from.x) * left / length,
+        z:from.z + (to.z - from.z) * left / length};
+      truck.pathIndex = index;
+      return;
+    }
+    left -= length;
+  }
+}
+placeBess(total * (FURNACE_PACING.fromShare - .001));
+assert.equal(furnaceSighting(pacingWorld), null);
+for (const share of [.301, .5, .699]) {
+  placeBess(total * share);
+  const sight = furnaceSighting(pacingWorld);
+  assert.ok(Number.isFinite(sight.x) && Number.isFinite(sight.z));
+  assert.ok(Math.abs(Math.hypot(sight.x - truck.position.x,
+    sight.z + FURNACE_PACING.northMetres - truck.position.z) - FURNACE_PACING.aheadMetres) < 1e-8,
+    'The existing furnace paces Bess on the high ground.');
+}
+assert.deepEqual(step.sayAtShare, [{share:FURNACE_PACING.fromShare, lineId:'story.ember.moss.4'}]);
+console.log('Slow Ride: existing Old Smoke pacing and Moss caption retained.');

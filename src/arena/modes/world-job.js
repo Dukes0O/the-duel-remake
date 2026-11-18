@@ -1681,11 +1681,12 @@ export function stepWorldJob(duel, dt) {
       const truck = worldJob.actors.find(actor => actor.id === event.actorId), path = next.steps[next.stepIndex]?.path;
       // On her first stretch that place is her named start (the road's first place may be a solid), when she has one.
       const index = Math.max(0, (truck?.pathIndex ?? 1) - 1), named = index === 0 ? next.steps[next.stepIndex]?.actor?.start : null;
-      const start = named ?? path?.[index];
+      const start = currentStep?.gasLoad ? event.place : named ?? path?.[index];
       if (truck && start) {
         truck.position = {...(start.position ?? start)};
         // After a rest she has at least REST_HEALTH_MINIMUM, and more if she had more when the stretch began.
-        truck.health = Math.max(truck.stretchHealth ?? 0, REST_HEALTH_MINIMUM);
+        if (currentStep?.gasLoad) truck.pathIndex = event.pathIndex;
+        else truck.health = Math.max(truck.stretchHealth ?? 0, REST_HEALTH_MINIMUM);
         truck.stretchHealth = truck.health;
         truck.reachedEnd = false; truck.atDestination = false;
         // The battle's furnace falls back to where it came out, behind her, and keeps its broken doors.
