@@ -134,6 +134,23 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   }
 }
 
+// Cold follows the loaded car when its driver steps out or crosses a region boundary.
+{
+  const step = EVERBURN_JOBS[0].steps[0], mist = step.bedMist[0];
+  const dry = {x:LAND.yard.x, z:LAND.yard.z};
+  const loss = (carPosition, carGroundRegion, driver, groundRegion) => 100 - stepCarry(step,
+    {loaded:true, ember:100}, {carPosition, carGroundRegion, player:{position:driver},
+      groundRegion, onFoot:true, speedKmh:0}, 1).state.ember;
+  assert.ok(Math.abs(loss(mist, 'river-bed', dry, 'road') - step.ember.coldPerSecond * 5) < 1e-9,
+    'a car in mist stays cold while its driver stands outside');
+  assert.ok(Math.abs(loss(dry, 'road', mist, 'river-bed') - step.ember.coldPerSecond) < 1e-9,
+    'a driver in mist cannot chill a car on the road');
+  assert.ok(Math.abs(loss(dry, 'salt-pan', mist, 'river-bed') - step.ember.coldPerSecond * 1.5) < 1e-9,
+    'the pan factor follows the car region');
+  assert.ok(Math.abs(loss(dry, 'road', dry, 'salt-pan') - step.ember.coldPerSecond) < 1e-9,
+    'a driver on the pan cannot chill a car on the road');
+}
+
 // Salt riders lead a moving car, rather than steering to where it was.
 {
   const rider = {x:0, z:0};

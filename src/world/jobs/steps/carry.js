@@ -44,8 +44,9 @@ function stepEmberCarry(step, state, view, dt) {
   next.bridgeAsh = ash.state;
   events.push(...ash.events);
   if (!out) {
-    const coldFactor = view.groundRegion === 'river-bed' && step.bedMist
-      ? bedColdFactor(here, step.bedMist) : step.coldRegions?.[view.groundRegion] ?? 1;
+    const carRegion = view.carGroundRegion ?? view.groundRegion;
+    const coldFactor = carRegion === 'river-bed' && step.bedMist
+      ? bedColdFactor(view.carPosition ?? here, step.bedMist) : step.coldRegions?.[carRegion] ?? 1;
     const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, severeHit: view.severeHit, safeKmh: view.safeKmh, difficulty: view.difficulty, coldFactor, dt});
     next.ember = Math.max(0, Math.min(rule.start, ember - loss.total - ash.loss));
     // How fast the pot is losing ember from rough ground and hits, per second (cold alone is slower than 1).
