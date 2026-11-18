@@ -15,7 +15,7 @@ import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {ROAD_NET, roadPointFrom} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, drawGlassRing, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
-import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {FORGE, forgePlan, createForge} from '../src/world/forge-look.js';
 import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS, RIVER_LAND} from '../src/world/scablands-regions.js';
@@ -2519,6 +2519,38 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   assert.equal(world.skylineSight.seenSeconds, 8);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-') && actor.pursuing).length, 2);
+}
+// Both furnace riders start at the watch and descend toward the car for ten seconds.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  let car = {...hotDeliveryGlass(world)};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0,lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.skylineSight = {seenSeconds:FURNACE_PATIENCE_SECONDS};
+  stepWorldJob(duel, 0);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  assert.equal(riders.length, 2);
+  const starts = riders.map(rider => ({...rider.position}));
+  for (const [index, start] of starts.entries()) {
+    const post = definition.steps[0].furnaceRiders[index].start.position;
+    assert.ok(Math.hypot(start.x - FURNACE_SKYLINE.x, start.z - FURNACE_SKYLINE.z) < 10);
+    assert.deepEqual({x:start.x,z:start.z}, {x:post.x,z:post.z}, 'each rider starts at its watch post');
+  }
+  car = {x:FURNACE_SKYLINE.x + 625 * Math.sin(Math.PI / 12),
+    z:FURNACE_SKYLINE.z + 625 * Math.cos(Math.PI / 12)};
+  car.y = scablandsActorHeightAt(car.x, car.z);
+  for (let i = 0; i < 100; i++) stepWorldJob(duel, .1);
+  for (const [index, rider] of riders.entries()) {
+    assert.ok(rider.pursuing, 'the rider is still pursuing after ten seconds');
+    assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) <
+      Math.hypot(starts[index].x - car.x, starts[index].z - car.z), 'the rider is nearer the car after ten seconds');
+    assert.ok(rider.position.y < starts[index].y, 'the rider is lower after ten seconds');
+  }
 }
 // The real watch and moving glass share the eight-second rule and can call the pair again.
 {
