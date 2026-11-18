@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids} from '../src/world/jobs/gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash} from '../src/world/jobs/gas-load-rule.js';
 import {burnBarricades} from '../src/world/jobs/barricade.js';
 import {createKnowledge, jobFacts, learn} from '../src/world/scablands-map.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
@@ -12,6 +12,7 @@ import {worldHudModel, drawGasGauge} from '../src/world/world-hud.js';
 import {Duel} from '../src/game.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {createGasLoadView} from '../src/world/gas-load-view.js';
+import {startFlamethrower} from '../src/arsenal/flamethrower.js';
 import {SOLID_GRID} from '../src/world/scablands-solids.js';
 import {worldJobMapData} from '../src/route-map.js';
 import {worldJobHitTargets} from '../src/arena/modes/world-job.js';
@@ -251,8 +252,48 @@ const drawing = createGasLoadView();
 const beforeDraw = JSON.stringify(world.job.stepState);
 drawing.update(world, () => 12);
 const leaks = drawing.group.getObjectByName('Tank holes and spray');
-assert.equal(leaks.children.filter(hole => hole.visible).length, world.job.stepState.holes);
+assert.equal(leaks.children.filter(hole => hole.visible && hole.name !== 'Tank gas flash').length, world.job.stepState.holes);
 assert.equal(leaks.position.y, 12, 'Spray sits with the drawn tank floor.');
 assert.equal(drawing.group.getObjectByName('Plane wing gas hose').visible, false);
 assert.equal(JSON.stringify(world.job.stepState), beforeDraw, 'Drawing holes cannot drain gas.');
 console.log('Slow Ride: leak sound recipe and read-only hole drawing passed.');
+
+const flameView = {playerFlaming:true, player:{position:{...truck.position}}};
+const flashed = gasLoadFlash(step, {gas:100, holes:1}, flameView, truck, .1);
+assert.equal(flashed.state.gas, 85);
+assert.deepEqual(flashed.events, [{type:'gasFlash', actorId:step.actorId}]);
+assert.deepEqual(flashed.requests, [{type:'say', lineId:'gas.flash'}]);
+assert.equal(definition.captions['gas.flash'], "Moss: Not near the tank when she's weeping!");
+assert.equal(gasLoadFlash(step, flashed.state, flameView, truck, 1.99).state.gas, 85);
+const flashAgain = gasLoadFlash(step, flashed.state, flameView, truck, 2);
+assert.equal(flashAgain.state.gas, 70);
+assert.deepEqual(flashAgain.requests, [], 'Moss warns only once.');
+for (const facts of [{...flameView, playerFlaming:false},
+  {...flameView, player:{position:{...truck.position, x:truck.position.x + 8.01}}}]) {
+  assert.equal(gasLoadFlash(step, {gas:100, holes:1}, facts, truck, .1).state.gas, 100);
+}
+assert.equal(gasLoadFlash(step, {gas:100, holes:0}, flameView, truck, 1).state.gas, 100);
+assert.equal(gasLoadFlash(step, {gas:5, holes:1}, flameView, truck, .1).state.gas, 0);
+assert.equal(gasLoadFlash(step, {gas:100, holes:1}, {...flameView,
+  player:{position:{...truck.position, x:truck.position.x + 8}}}, truck, .1).state.gas, 85);
+world.job.stepState.flashVisible = GAS_LOAD_RULE.flashVisibleSeconds;
+drawing.update(world, () => 12);
+assert.equal(drawing.group.getObjectByName('Tank gas flash').visible, true);
+world.job.stepState.flashVisible = 0;
+drawing.update(world, () => 12);
+assert.equal(drawing.group.getObjectByName('Tank gas flash').visible, false);
+assert.ok(SOUND_BANK['world.gas.flash'].layers.length);
+console.log('Slow Ride: flash range, cost, cooldown, one warning, recipe and drawing passed.');
+
+const flashSounds = [];
+duel.onChange((_state, event) => {if (event.arenaTell?.cue === 'world.gas.flash') flashSounds.push(event.arenaTell);});
+world.job.stepState = {gasLoaded:true, gas:100, holes:1};
+const carAt = duel.course.groundAt(duel.state.s, duel.state.lateral);
+Object.assign(raidTruck.position, {x:carAt.x + 6, z:carAt.z});
+assert.ok(startFlamethrower(duel, duel.state));
+duel.step(.01);
+assert.ok(world.job.stepState.gas < 85 && world.job.stepState.gas > 84.9,
+  'A real player flame burst reaches the gas rule, after the ordinary leak.');
+assert.equal(flashSounds.length, 1);
+assert.ok(world.job.stepState.flashVisible > 0);
+console.log('Slow Ride: live player flame facts and flash sound dispatch passed.');

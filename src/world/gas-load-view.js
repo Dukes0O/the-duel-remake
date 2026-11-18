@@ -33,6 +33,12 @@ export function createGasLoadView() {
     leaks.add(mark);
     return mark;
   });
+  const flash = new THREE.Mesh(new THREE.PlaneGeometry(5, 2), new THREE.MeshBasicMaterial({
+    color:0xffe7a0, transparent:true, opacity:.85, side:THREE.DoubleSide, depthWrite:false}));
+  flash.name = 'Tank gas flash';
+  flash.rotation.y = Math.PI / 2;
+  flash.position.set(1.5, 2, 0);
+  leaks.add(flash);
   let placed = null;
   return {group, update(worldJob, groundAt) {
     const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
@@ -46,6 +52,7 @@ export function createGasLoadView() {
     if (leaks.visible) {
       leaks.position.set(bess.position.x, groundAt(bess.position.x, bess.position.z), bess.position.z);
       leaks.rotation.y = bess.heading ?? 0;
+      flash.visible = state.flashVisible > 0;
       holes.forEach((hole, index) => {hole.visible = index < (state.holes ?? 0);});
     }
     if (!meeting) return;

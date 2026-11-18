@@ -13,6 +13,10 @@ export const GAS_LOAD_RULE = Object.freeze({
   maxHoles: 3,
   leakPerSecond: .5,
   easyLeakPerSecond: .25,
+  flashRangeMetres: 8,
+  flashGas: 15,
+  flashCooldownSeconds: 2,
+  flashVisibleSeconds: .35,
   start: 100,
   startHoles: 0,
   speedKmh: 32,
@@ -115,4 +119,24 @@ export function gasLoadRaids(step, state, view, truck, share, dt) {
   const rate = view.difficulty === 'easy' ? GAS_LOAD_RULE.easyLeakPerSecond : GAS_LOAD_RULE.leakPerSecond;
   return {state:{...state, gasRaids:raids, holeClocks:clocks, holes,
     gas:Math.max(0, (state.gas ?? GAS_LOAD_RULE.start) - rate * leakingSeconds)}, requests, events};
+}
+
+export const GAS_FLASH_LINE = "Moss: Not near the tank when she's weeping!";
+
+export function gasLoadFlash(step, state, view, truck, dt) {
+  const seconds = Math.max(0, dt), requests = [], events = [];
+  let cooldown = Math.max(0, (state.flashCooldown ?? 0) - seconds);
+  let visible = Math.max(0, (state.flashVisible ?? 0) - seconds);
+  let gas = state.gas ?? GAS_LOAD_RULE.start, flashSaid = state.flashSaid ?? false;
+  const player = view.player?.position;
+  if (state.holes > 0 && view.playerFlaming && player && cooldown === 0 &&
+      Math.hypot(player.x - truck.position.x, player.z - truck.position.z) <= GAS_LOAD_RULE.flashRangeMetres) {
+    gas = Math.max(0, gas - GAS_LOAD_RULE.flashGas);
+    cooldown = GAS_LOAD_RULE.flashCooldownSeconds;
+    visible = GAS_LOAD_RULE.flashVisibleSeconds;
+    events.push({type:'gasFlash', actorId:step.actorId});
+    if (!flashSaid) requests.push({type:'say', lineId:'gas.flash'});
+    flashSaid = true;
+  }
+  return {state:{...state, gas, flashSaid, flashCooldown:cooldown, flashVisible:visible}, requests, events};
 }

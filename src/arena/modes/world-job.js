@@ -1553,7 +1553,9 @@ export function stepWorldJob(duel, dt) {
   }
   const carriedCar = position(duel, state);
   const view = {player: playerView, onFoot: !!state.onFoot,
-    ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? []} : {}),
+    ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],
+      playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
+        (state.combat?.flameBursts ?? []).some(burst => burst.ownerId === 'player')} : {}),
     ...bellowsFacts,
     ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
     ashMen: currentStep?.brand ? actors.filter(actor =>
@@ -1595,6 +1597,8 @@ export function stepWorldJob(duel, dt) {
     if (currentStep?.gasLoad && event.type === 'gasRaid') duel.emit({arenaTell:{id:event.id, cue:'world.ashmen.horn',
       seconds:0, position:currentStep.gasRaids.find(raid => raid.id === event.id)?.place.position}});
     if (currentStep?.gasLoad && event.type === 'gasLeak') duel.emit({arenaTell:{id:'gas-leak', cue:'world.bess.leak',
+      seconds:0, position:worldJob.actors.find(actor => actor.id === currentStep.actorId)?.position}});
+    if (currentStep?.gasLoad && event.type === 'gasFlash') duel.emit({arenaTell:{id:'gas-flash', cue:'world.gas.flash',
       seconds:0, position:worldJob.actors.find(actor => actor.id === currentStep.actorId)?.position}});
     // The battle's furnace counts each of Big Bess's rests once it is out; after the third it is spent (old-smoke.js).
     // Rests she had before it came out are the riders' doing and burn none of its coal.

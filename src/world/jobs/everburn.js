@@ -6,7 +6,7 @@
 // real one, so moving a place in the table moves every job that stands by it (tools/test-scablands-size.mjs).
 import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES} from './gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, GAS_FLASH_LINE} from './gas-load-rule.js';
 import {EMBER_RULE, SALT_RIDERS, bedMistFor, bridgeAshPlan} from './ember-rule.js';
 import {riverFor} from '../scablands-regions.js';
 import {bessRest} from '../boneyard-wrecks.js';
@@ -246,7 +246,7 @@ export function buildEverburn(land) {
         // Collection requests Cinder's line while the bellows rule times its hold.
       })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
-      captions:GAS_LOAD_LINES,
+      captions:Object.freeze({...GAS_LOAD_LINES, 'gas.flash':GAS_FLASH_LINE}),
       // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
       resultLine:'The gas is in Tin Town and the forge is lit.',
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
