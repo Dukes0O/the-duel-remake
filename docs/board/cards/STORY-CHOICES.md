@@ -34,5 +34,13 @@ Kyle reads 1 to 4 before any card for Codex is written. After that each scene be
 
 `docs/story/five-cold-nights.md` holds items 1 to 5: the form (a hearth to keep, a road to run, people who remember),
 the ledger, the first act's map of choices (five nights, four endings), the second night written in full with every
-line and branch, and what is reused. It ends with three things for Kyle to rule on. **Waiting for Kyle to read it.**
+line and branch, and what is reused. It ends with four things for Kyle to rule on.
 Nothing is built from it yet. Still owed after his reading: the other four nights written in full, as the second is.
+
+**Kyle's reading, 18 November 2026:** "This is getting somewhere ... this is the right direction." He asked for it to
+tie to the rest of the game (dig or fight it out, an apprentice to protect, watchtowers built as in the town), for many
+such stories that intersect, and for integration between them. Sections 7 to 9 of the page are Claude's answer: one
+ledger for the whole Wasteland, what each story reads and writes, crossings between stories, and playing an act again.
+Kyle has not yet read those three sections or ruled on the four questions; the other nights are written on Claude's
+recommendations meanwhile. Owed next: Night 1, Day 3, Day 4 and Night 5 in full; then the first cards for Codex (the
+talk screen, the ledger, riders who fight).

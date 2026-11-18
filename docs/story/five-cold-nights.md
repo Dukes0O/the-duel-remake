@@ -100,8 +100,8 @@ mean to put the hearth out before it can spread.
 | --- | --- | --- | --- |
 | **Night 1. Carry it in** | Which way to drive the pot from the yard to Tin Town | The East Road and the Girder Bridge. The Wash. Round by the Boneyard road | How many embers you arrive with (3 to 6). Whether the Ash Men are Watching or Raiding. Whether Dot has met you |
 | **Night 2. Strangers at the gate** | The Walkers ask for one ember | Give it. Trade it for a watch. Take them in. Refuse | The Walkers' word. Word on the road. A watch on the fence. Dace |
-| **Day 3. Bess goes for gas** | Which road Big Bess takes home from the well | The bridge, through the Ash Men. The long road by the ships. The South Ford by night | How much gas comes home, so how many embers. The feud. The Deck Folk's watch |
-| **Day 4. Word gets round** | Who gets fire, now that people know | Dot's oven. Miss Quill's school. Odessa's plating for Bess. Then the town's rule: fire for work, fire for anyone, or fire for Tin Town | Who stands with you. How many come asking. Whether peace is possible. That night the Ash Men come over the wall |
+| **Day 3. Bess goes for gas** | Which road Big Bess takes home from the well, or whether to spend the day digging a new one | The bridge, through the Ash Men. The long road by the ships. The South Ford by night. Or no run today: bore under the mesa | How much gas comes home, so how many embers. The feud. The Deck Folk's watch. A road under the Ash Men for good |
+| **Day 4. Word gets round** | Who gets fire, now that people know, and whether wood is burned or built with | Dot's oven. Miss Quill's school. Odessa's plating for Bess. A watchtower. Then the town's rule: fire for work, fire for anyone, or fire for Tin Town | Who stands with you. How many come asking. What the town can see coming. Whether peace is possible. That night the Ash Men come over the wall |
 | **Night 5. The Long Cold** | A boy from the Ash Men asks for an ember for Old Smoke's sick stoker | Give it. Hold the boy. Send him away | Whether Old Smoke comes to talk before he comes to fight. Then the last night, and one of four endings |
 
 **Night 1 in a little more detail.** The pot run exists and keeps its rules: the ember fades with time, rough ground
@@ -120,12 +120,18 @@ blocks to burn, riders).
   you: embers for the ships' galley, and in return the ships' watch calls out riders on every later run.
 - *The South Ford* opens only if the Walkers are Friendly. They lead Bess over by night. No riders. Rough ground, so
   the tank weeps. If you refused the Walkers and luck was unkind, the Ash Men know the ford now, and are waiting at it.
+- *Under the mesa* is the fourth way, and it is not a run at all: **dig, or fight it out** (section 8). Take the boring
+  machine to the mesa beside the bridge and cut a way under the Ash Men's ground. Bess does not go for gas today, so
+  tonight burns an ember with none baked. From tomorrow every run passes under the bridge, with no toll and no riders
+  on that stretch, for the rest of the game.
 
 **Day 4 in a little more detail.** The queue at the gate is as long as the Word on the road. Each asker is someone the
 Wasteland's story already has, and each ask is a different kind of sum:
 - *Dot* wants embers for the pie oven and pays in pies. A pie is a gift, and a gift mends one Wary.
 - *Miss Quill* has forty children in a dead airliner and one stove. She can pay nothing. Bo asks if he can drive your car.
 - *Odessa* wants two embers' worth of forge time to plate Bess's tank. Do it and every later run leaks half as much.
+- *A watchtower* can be built instead of burned (section 8): the same woodpile that the kiln bakes into embers is the
+  wood a tower is made of. A tower sees riders coming from its side for the rest of the game.
 - Then Auntie Solder asks you to set **the town's rule**, because she is tired of being asked at the gate:
   *fire for work*, *fire for anyone*, or *fire for Tin Town*. It is the largest choice in the act. It changes how fast
   Word spreads, who is turned away from now on, and whether Old Smoke will believe you on the fifth night.
@@ -399,22 +405,156 @@ About fifteen minutes: three or four minutes of talk, and one or two short piece
 
 **New people:** Rell, Dace and Wim. Nobody else is invented.
 
-## 7. What would be built first
+## 7. One land, one ledger, many stories
+
+Kyle, 18 November 2026, on reading sections 1 to 6: "This is the right direction ... we can build this world out with
+lots of choose your own adventure story lines and they can intersect with each other. We will need integration
+between them." This section is that integration.
+
+The Wasteland already has several stories, which the Long Dry calls strands: the Water Road, the Everburn, the Notice
+Board, Ships in the Sand, the Polite Letter, and the town itself. Until now each kept its own notes. From now on:
+
+**There is one ledger for the whole Wasteland, for each player.** Every story reads it and writes it. It holds:
+
+- **People.** One word for each person or people, across every story. Dot is the same Dot wherever she appears.
+- **Things made.** Towers, tunnels, roads opened, machines owned, apprentices taught. A thing made in one story stands
+  in all of them.
+- **Stocks.** Embers, gas, water, scrap, wood.
+- **Feuds and the Word on the road.**
+- **Marks.** The plain sentences of what was done.
+
+**Each story's page begins with what it reads and what it writes.** For this story:
+
+| Five Cold Nights reads | Five Cold Nights writes |
+| --- | --- |
+| Dot's word (the Water Road) | The Walkers, Dace, the Ash Men's feud, Old Smoke's ending |
+| Whether a tunnel is cut under the mesa (the Dig) | A tunnel, if you cut it here |
+| Towers standing round Tin Town (the town) | Towers, if you build them here, and who keeps them |
+| Who is an apprentice, and at what (the machines) | Dace or a Walker as an apprentice |
+| Rook's lost car, fetched or not (the Notice Board) | The town's rule about fire |
+| Whether the helipad is built (the helicopter) | Embers and gas in store |
+
+**A crossing is a scene that needs marks from two stories.** They are listed together, so that two stories never say
+opposite things about the same person. The first five:
+
+1. **The Dig and this story.** A tunnel under the mesa is a fourth way home for Bess, whichever story it was cut in.
+2. **The town and this story.** A watchtower built for the town warns of raids here, and a friend made here keeps it.
+3. **The Water Road and this story.** If the Road Rats burned Dot's diner and you rebuilt it, Dot is Friendly already,
+   and her oven is a gift between friends and not a trade.
+4. **The Notice Board and this story.** If you fetched Rook's lost car from the Boneyard, Rook rides with Bess on Day 3
+   and calls out riders.
+5. **The helicopter and this story.** With a helipad, an ember can be flown to the ships or the school: past every
+   rider, but the wind is hard on the pot, and a helicopter is seen from everywhere, so Word spreads.
+
+**Two rules keep it from tangling.**
+
+- **Every story can be played alone.** For each thing a story reads, it says what happens if the other story has not
+  been played. Another story is never needed, only rewarded.
+- **A night passes only when the player banks a hearth.** There are no timers and nothing moves while the game is
+  closed. In an act with a clock, like this one, each day has room for one large outing: a run, a dig or a build. So
+  choosing to dig is choosing not to fetch gas that day, and the price is felt that night.
+
+## 8. Where this story meets the rest of the game
+
+Kyle: "It can now also start tying out to other parts of the game where we can dig, we need to choose to dig or fight
+it out, we need to protect the apprentice who might dig or take a run if they get into trouble. We need to be able to
+create watchtowers."
+
+### Dig, or fight it out (Day 3)
+
+The Ash Men hold the bridge. You can pay them, fight through them, go round them, or go **under** them.
+
+- **The price.** The first cut is yours, by hand, at the machine's controls (`docs/MACHINES.md`: you do a job
+  before anyone can be taught it). It takes the day. No gas comes home, and the night burns an ember. A player must be
+  able to afford that, so this is a choice for someone who counted ahead.
+- **What it buys.** A road that the Ash Men do not hold and do not know. Every later run is shorter and safer. The
+  tunnel stays when the act is over.
+- **What can go wrong.** A tunnel is a secret until somebody tells it. A scout who got over the wall, or a Dace who
+  was sent away, may carry it to Clinker. Then its mouth is one more place to guard.
+
+### The apprentice, and the apprentice in trouble
+
+After your first cut, somebody else can finish the tunnel while you do something else. **Who it is comes from the
+ledger.**
+
+- *Dace*, if he owes you: "I can hold a lever. I've been looking at how you do it."
+- *One of the Walkers*, if they are Friendly.
+- *Nobody*, if you have no such friend. Then you cut all of it yourself, and it takes two of your five days.
+
+An apprentice works as well as you taught: the machine remembers how cleanly you cut, as the machines' design says.
+An apprentice can also be sent with Bess on a run, as the feuds and runs design allows.
+
+**And an apprentice can get into trouble.** You hear it on the radio, in the middle of whatever you chose to do.
+
+> **Dace:** There's grey men at the mouth. I've shut her down. I'm in the dark with a spanner. No hurry. Some hurry.
+
+| | You do | The price |
+| --- | --- | --- |
+| a | Go to him now | You leave what you were doing. If that was a gas run, Moss takes Bess on alone, and she comes home with more holes |
+| b | Send friends | Only if somebody owes you. The Walkers go by the footpaths. It spends what they owed |
+| c | "Cut your way out the far side." | He has made one cut in his life. Luck, weighted by how well you taught him |
+
+If it goes badly, nobody dies. The apprentice is taken to the Ash Men's camp, and the machine as well. Getting both
+back is tomorrow's outing, and tomorrow is a day you needed for something else.
+
+### Watchtowers: burn the wood, or build with it (Day 4, and any day after)
+
+- **Where.** The open west side of the fence, the Wash, or the rise above the bridge. Each watches one way in.
+- **What it costs.** Girders hauled from the Boneyard, by you, in a truck. Wood from the kiln's own pile, so a tower
+  costs about two embers that will never be baked. Half a day. It is built the way the town's design says: by
+  hauling and raising, never by pressing a button.
+- **Who keeps it.** A tower needs a keeper, and the keeper comes from the ledger. The Deck Folk have kept a ship's
+  watch for thirty years ("Nothing to report. Sea's late."). A Walker will do it. Without a friend to spare, somebody
+  from Tin Town leaves the fence to do it.
+- **What it gives.** Riders from that side are seen early: they are marked on the map, and you begin the night at the
+  right lamp. On the last night that side holds longer.
+- **What can happen to it.** The Ash Men put out towers as they put out lamps. A tower can be burned and built again.
+- A tower stands when the act is over, and belongs to the town from then on.
+
+### More joins, for later nights and later acts
+
+- **The Lab.** A lesson with Brian on why charcoal burns all night. Finish it and the kiln is run better: sixteen of
+  gas for an ember, not twenty. What a player learns is worth embers.
+- **The Bowl.** Big Mo's Show Night pays its purse in gas. But a night at the Bowl is a night away from the fence.
+- **The beaten warlords.** Each can come to the gate with something to offer and a history. Kettle Kingpin's Titan
+  could haul a week of wood in a day. Whether to trust him is the choice.
+
+## 9. Playing it again
+
+Kyle: "Something that can allow a player to redo this story a few times and get different results."
+
+- **The Story Wall keeps score of what has been seen.** "Endings found: 1 of 4. Choices seen: 9 of 36." The gaps are
+  the reason to play again.
+- **Tell it again.** When an act is over it can be played again from its beginning, as a new telling, with a new throw
+  of luck. At the end of the new telling the player says which telling is the true one. The other is kept as a tale,
+  and its ending still counts as found. Nothing is replaced unless the player chooses it.
+- **What a telling carries.** The towers, the tunnel and the friends of an act belong to the telling they were made
+  in. Whichever telling is the true one, its things are the ones that stand in the land.
+- **Winter comes round.** After the first act the cold returns whenever the player calls it, with different people at
+  the gate, drawn from everyone met in every story, and with whatever towers and tunnels are standing. That is how
+  one act becomes many evenings without a new place having to be built for each.
+- **Two players, two ledgers.** Kyle's and Gratian's stories are their own. On a visit to the other's town, the towers
+  standing and the ending reached can be seen and not changed.
+
+## 10. What would be built first
 
 Nothing is built until Kyle has read this. Then, in this order, each as its own card with its own checks:
 
 1. **The talk screen.** A face, a name, one line at a time, free questions, then choices with their prices. Number keys.
-2. **The ledger.** Saved with the player, never touching anything saved before it. The rules that read and write it. The page
-   "What people remember". The "Because" line.
+2. **The ledger, as the one ledger for the Wasteland** (section 7). Saved with the player, never changing anything
+   saved before it: it reads what older stories saved and writes only its own. The rules that read and write it. The
+   page "What people remember". The "Because" line.
 3. **Riders who fight.** Kyle's finding: "the cars don't fight back." Riders on the road use what the arena's
    opponents already do: they ram, they shoot, they can be wrecked, and they can wreck you.
 4. **Night 2,** exactly as written in section 4, as the first playable chapter. Claude plays it by hand, every branch,
    before Kyle tries it.
-5. Then Night 1, Day 3, Day 4 and Night 5, each written in full first, as section 4 is.
+5. Then Night 1, Day 3, Day 4 and Night 5, each written in full first, as section 4 is, with the dig, the apprentice
+   and the watchtower of section 8 in their places.
+6. **Tell it again** and the score of endings found (section 9), once one act can be finished.
 
 The faults of the world from Kyle's try (card WORLD-FAULTS-18-NOV) are cured alongside, because this is played in it.
 
-## 8. Three things for Kyle to rule on
+## 11. Four things for Kyle to rule on
 
 1. **May a person leave for good?** A Dace who is sent away rides with the Ash Men. My recommendation: people can
    leave and can come back changed, and nobody dies on screen. It keeps the choices heavy and fits the rule that
@@ -423,3 +563,8 @@ The faults of the world from Kyle's try (card WORLD-FAULTS-18-NOV) are cured alo
    beaten warlord make peace or be driven off. My recommendation: yes, and it is the hardest ending to earn.
 3. **Is this the right size?** Five nights, about an hour and a half of play in all, each night about fifteen minutes,
    then the next act. Longer is possible by adding nights; the ledger does not change.
+4. **When a story is told again, which telling stands?** My recommendation: the player says, at the end of the new
+   telling, and the other is kept as a tale. The other way would be that the first telling always stands and later
+   ones are only tales, which is safer for a town built over years and less exciting to replay.
+
+Until Kyle rules, the other nights are written on these recommendations.
