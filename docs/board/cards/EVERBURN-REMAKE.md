@@ -1221,6 +1221,34 @@ The Ash Men are the blocky raider figures; beside the drawn lamp and brand they 
 A note on the tool: a mouse press made while the pause screen is still fading does not reach the game, which made
 several of Claude's shots miss; the hand-drive tool now waits and presses clear of the captions.
 
+## Claude's hand drive of job 3 (17 November 2026, evening; visible window, real keys): not finished, faults found
+
+Played from the start on foot to one knock on the thief in the Boneyard, then held fast and stopped. What works by
+hand: Auntie's cry, the bellows bar, the Hand Flamer lent on foot, the thief on the map with his distance, the road at
+175 km/h, the message when he reaches the furnace, a hard knock counted at 21 km/h.
+
+**Faults, for slice 13 and for Claude's design, before Kyle tries it:**
+1. **An unseen wall in the Boneyard.** The car was held at about (4256, 2997) on open ground, with nothing drawn in
+   front of it, twice. The wrecks' solids are three whole boxes, each as wide as an aircraft with both wings, and the
+   wrecks drawn there have less than that. The thief's line rounds the corners of those unseen boxes. A solid must be
+   where something is drawn and nowhere else: the boxes are to follow the fuselage, tail and wing that are drawn.
+2. **The way to the car.** On foot the marker "YOUR CAR 60 m" points through the shacks. Claude stood against a wall
+   36 m from the car while the thief drew 1.9 km ahead. The same fault as job 2's marker.
+3. **The way out of town.** From the forge bay the car met the town's fence before it found the gate. Nothing shows
+   the driver the gate; the route's first point is beyond the fence.
+4. **Late to the road.** A player who takes a minute to reach the car and the gate never meets the thief on the road:
+   he is in the Boneyard first. His slow start (40 km/h for 25 seconds) is too short for a player on foot among
+   shacks. He should not leave the gate's mouth until the player's car has moved.
+5. **The restart is a loop** (Claude's design, to be changed). When he reaches the furnace the player's car is put at
+   the Boneyard's edge and he sets off again, and he reaches the furnace again about 25 seconds later, and again. Kyle
+   asked for no loops (11 November). To be redesigned: what the furnace does with the bellows when he arrives, so that
+   reaching it is an ending that is worse, not a turn of a wheel.
+6. After the restart he stood 7 m from the car, not 150 m ahead, and the first knock was a tap at 21 km/h on a
+   standing car.
+7. The weapons shown in the car are UFO jump, bomb storm, crossbow and star shield: none of them belongs to a chase
+   for a pair of leather bellows, and three of them spoil the bellows.
+Not driven: his blocking and his sacks on the road, the furnace's riders, the second and third knocks, the ending.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the
