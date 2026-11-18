@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash} from '../src/world/jobs/gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug} from '../src/world/jobs/gas-load-rule.js';
 import {burnBarricades} from '../src/world/jobs/barricade.js';
 import {createKnowledge, jobFacts, learn} from '../src/world/scablands-map.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
@@ -297,3 +297,56 @@ assert.ok(world.job.stepState.gas < 85 && world.job.stepState.gas > 84.9,
 assert.equal(flashSounds.length, 1);
 assert.ok(world.job.stepState.flashVisible > 0);
 console.log('Slow Ride: live player flame facts and flash sound dispatch passed.');
+
+let plugging = gasLoadPlug(step, {gas:80, holes:2}, step.speed, 0);
+assert.equal(plugging.speed, 0);
+assert.deepEqual(plugging.requests, [{type:'say', lineId:step.restLineId}]);
+for (let second = 0; second < 5; second++) {
+  plugging = gasLoadPlug(step, plugging.state, step.speed, 1);
+  assert.equal(plugging.speed, 0);
+  assert.equal(plugging.state.holes, 2);
+  assert.deepEqual(plugging.requests, [], 'The rest line is said once per repair.');
+}
+plugging = gasLoadPlug(step, plugging.state, step.speed, 1);
+assert.equal(plugging.speed, step.speed);
+assert.equal(plugging.state.holes, 0);
+assert.equal(plugging.state.gas, 80, 'Plugging never refills gas.');
+assert.deepEqual(plugging.state.holeClocks, {});
+assert.deepEqual(plugging.events, [{type:'gasPlug', actorId:step.actorId}]);
+assert.equal(gasLoadPlug(step, plugging.state, step.speed, 6).events.length, 0);
+const oneHoleMoving = gasLoadPlug(step, {gas:80, holes:1}, step.speed, 6);
+assert.equal(oneHoleMoving.state.holes, 1, 'One hole cannot stop her.');
+assert.equal(oneHoleMoving.state.plugElapsed, 0);
+const atBlock = gasLoadPlug(step, oneHoleMoving.state, 0, 5);
+assert.equal(atBlock.state.holes, 1);
+assert.equal(gasLoadPlug(step, atBlock.state, 0, 1).state.holes, 0,
+  'Moss also plugs a single hole while waiting at a block.');
+assert.equal(gasLoadPlug(step, atBlock.state, step.speed, 1).state.plugElapsed, 0,
+  'Moving interrupts work on a single hole.');
+const stoppedForBlock = gasLoadPlug(step, {gas:80, holes:2}, 0, 6);
+assert.equal(stoppedForBlock.speed, 0, 'Plugging cannot release a standing road block.');
+assert.ok(SOUND_BANK['world.bess.plug'].layers.length);
+console.log('Slow Ride: two-hole stop, six-second plug, single-hole block repair and moving off passed.');
+
+duel.state.combat.flameBursts = [];
+world.job.stepState = {gasLoaded:true, gas:100, holes:2};
+Object.assign(raidTruck.position, step.path[0].position);
+raidTruck.pathIndex = 1;
+world.follow.speed = step.speed;
+const plugSounds = [];
+duel.onChange((_state, event) => {if (event.arenaTell?.cue === 'world.bess.plug') plugSounds.push(event.arenaTell);});
+const beforePlug = {...raidTruck.position};
+for (let tick = 0; tick < 59; tick++) duel.step(.1);
+assert.equal(raidTruck.position.x, beforePlug.x);
+assert.equal(raidTruck.position.z, beforePlug.z);
+assert.equal(world.job.stepState.holes, 2);
+assert.ok(Math.abs(world.job.stepState.gas - (100 - 2 * GAS_LOAD_RULE.easyLeakPerSecond * 5.9)) < 1e-8, 'The tank still leaks during repairs.');
+duel.step(.1);
+// Allow only floating-point clock residue, without shortening the six seconds.
+if (world.job.stepState.holes) duel.step(.001);
+assert.equal(world.job.stepState.holes, 0);
+assert.equal(plugSounds.length, 1);
+assert.ok(Math.hypot(raidTruck.position.x - beforePlug.x, raidTruck.position.z - beforePlug.z) > 0,
+  'The shared mover sets off after the plug.');
+assert.equal(world.follow.speed, step.speed);
+console.log('Slow Ride: real stopped movement, leaking during repair and plug sound dispatch passed.');

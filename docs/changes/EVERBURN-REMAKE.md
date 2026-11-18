@@ -4,12 +4,12 @@ Ambushes today: foot raiders walk to Bess; standing raiders within 30 m wear her
 Job 1 today: flame reports burnable barricade contacts to carry; the first burn event removes the solid; swept car contacts send riders into their existing ram retreat, and weapons damage them.
 Job 3 today: bellows rule counts a new car meeting or solid impact at 20 km/h or more, held contact only once.
 Job 1 ending today: worldJob.arrivalHold runs nine seconds, catches the forge at five, then finishes through the shared hold path.
-Built: parts 1 to 5, meeting, Tin Road, GAS gauge, blocks, four raids, holes, loss, map marks, permanent ram retreat, spray and flame flash. No switches or saved fields changed.
-Checks on parent e29344be3 plus part 5: test-everburn-job4 and test-world-jobs pass; shared battle and gas checks running. Final lane tier, replays and build not run yet.
+Built: parts 1 to 6, meeting, Tin Road, GAS gauge, blocks, four raids, holes, loss, map marks, permanent ram retreat, spray, flame flash and six-second plugging with a two-hole stop. No switches or saved fields changed.
+Checks on parent 86400fde3 plus part 6: test-everburn-job4, test-world-jobs, test-board (645), test-repo-hygiene and git diff --check pass; test-field-battle passed 4702 checks on part 5; not repeated after part 6 because it ran over three minutes. Final lane tier, replays and build not run yet.
 Not green: test-run-gas stops at line 141 expecting job 4's removed two ambushes; later gas-run checks are not reached. Update its job 4 cases for the remake while retaining every gas-run and battle assertion.
 For Claude to run: final four-picture browser scenario and hand drive, once written.
-Changed assertions: job4 health-isolation check gas 73 becomes 72.95 with one hole for 0.1 s (point 5); historical audio projection excludes the new world.bess.leak and world.gas.flash cues, keeping its old hash. Pending: old job4 speed 9 to 32/3.6 m/s (point 2), two old ambushes to four car raids (point 5), old health/restart assertions to gas rules (points 3, 7, 9).
-Codex decided: meeting, gauge wording, clear raid posts and tank working range are in the card. New checks add no changed older tolerances.
-Sound: raids use world.ashmen.horn; holes use world.bess.leak from a bank recipe. Block burning and ram movement keep their existing events. Flash uses world.gas.flash from a bank recipe; plug is next.
+Changed assertions: job4 health-isolation check gas 73 becomes 72.95 with one hole for 0.1 s (point 5); historical audio projection excludes the new world.bess.leak, world.gas.flash and world.bess.plug cues, keeping its old hash; hole-only drawing count excludes the added flash mesh. Pending: old job4 speed 9 to 32/3.6 m/s (point 2), two old ambushes to four car raids (point 5), old health/restart assertions to gas rules (points 3, 7, 9).
+Codex decided: meeting, gauge wording, clear raid posts, tank working range and a 0.35-second flash are in the card. New checks add no changed older tolerances.
+Sound: raids use world.ashmen.horn; holes use world.bess.leak from a bank recipe. Block burning and ram movement keep their existing events. Flash uses world.gas.flash and plugging uses world.bess.plug, both bank recipes.
 **Removed:** job 4's Wash/bridge route, automatic start caption, health display, health wear and rest rule, and its two old long-road ambushes; old step text remains until the later parts replace it.
-Next: plugging, restart, arrival, Easy driver, old job4 suite cases and browser scenario; then integration merge, final checks and build. This is not a release candidate.
+Next: restart, arrival, Easy driver, old job4 suite cases and browser scenario; then integration merge, final checks and build. This is not a release candidate.

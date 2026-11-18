@@ -1585,6 +1585,9 @@ export function stepWorldJob(duel, dt) {
   // FIELD-BATTLE-ASH: how the battle ended, fixed by the escort step the moment Big Bess arrived ('won' or 'arrived').
   if (next.stepState.ending) worldJob.battleEnding = next.stepState.ending;
   state.worldJobThingsHit = [];
+  // Slow Ride's stop and distance cap govern this movement tick, including
+  // the six still seconds in which Moss works on the tank.
+  if (currentStep?.gasLoad) applyRequests(duel, worldJob, next.requests.filter(request => request.type === 'follow'));
   moveJobRaiders(duel, worldJob, dt);
   updateJobActors(duel, worldJob, dt);
   if (next.stepIndex !== previousStep) {
@@ -1599,6 +1602,8 @@ export function stepWorldJob(duel, dt) {
     if (currentStep?.gasLoad && event.type === 'gasLeak') duel.emit({arenaTell:{id:'gas-leak', cue:'world.bess.leak',
       seconds:0, position:worldJob.actors.find(actor => actor.id === currentStep.actorId)?.position}});
     if (currentStep?.gasLoad && event.type === 'gasFlash') duel.emit({arenaTell:{id:'gas-flash', cue:'world.gas.flash',
+      seconds:0, position:worldJob.actors.find(actor => actor.id === currentStep.actorId)?.position}});
+    if (currentStep?.gasLoad && event.type === 'gasPlug') duel.emit({arenaTell:{id:'gas-plug', cue:'world.bess.plug',
       seconds:0, position:worldJob.actors.find(actor => actor.id === currentStep.actorId)?.position}});
     // The battle's furnace counts each of Big Bess's rests once it is out; after the third it is spent (old-smoke.js).
     // Rests she had before it came out are the riders' doing and burn none of its coal.

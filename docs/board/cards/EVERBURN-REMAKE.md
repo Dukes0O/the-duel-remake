@@ -1194,6 +1194,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 12, Slow Ride flash: the plain bright sheet lasts 0.35 seconds, kept in `GAS_LOAD_RULE.flashVisibleSeconds`. Flame means a live player car burst or the player's active Hand Flamer within the designed eight metres. No extra player sentence is added. Plugging takes six uninterrupted still seconds and does not refill gas.
+
 - Slice 12, Slow Ride raids: each post stands 400 m along the road normal, alternating right and left. All eight rider starts have no solid within 10 m. Riders aim 6 m beside Bess, on opposite sides when there are two; a rider within 12 m can work on her tank. Both distances are named constants. No extra player sentence is added.
 
 - Slice 12, Slow Ride load: the gauge says "100 / 100. 0 holes open." and uses "1 hole open." for one hole. Its spoken label says "Gas is 100 out of 100. 0 holes open." Numbers follow the tank. These are the extra words needed to name the hole count.

@@ -13,6 +13,8 @@ export const GAS_LOAD_RULE = Object.freeze({
   maxHoles: 3,
   leakPerSecond: .5,
   easyLeakPerSecond: .25,
+  plugSeconds: 6,
+  plugAtHoles: 2,
   flashRangeMetres: 8,
   flashGas: 15,
   flashCooldownSeconds: 2,
@@ -139,4 +141,22 @@ export function gasLoadFlash(step, state, view, truck, dt) {
     flashSaid = true;
   }
   return {state:{...state, gas, flashSaid, flashCooldown:cooldown, flashVisible:visible}, requests, events};
+}
+
+// Use the shared escort's stopped command, including a wait at a road block.
+// The clock resets when she moves; plugging is six uninterrupted seconds.
+export function gasLoadPlug(step, state, speed, dt) {
+  const requests = [], events = [];
+  let plugging = state.plugging ?? false;
+  if (state.holes >= GAS_LOAD_RULE.plugAtHoles && !plugging) {
+    plugging = true;
+    requests.push({type:'say', lineId:step.restLineId});
+  }
+  const stopped = plugging || speed === 0;
+  const elapsed = state.holes > 0 && stopped ? (state.plugElapsed ?? 0) + Math.max(0, dt) : 0;
+  if (state.holes > 0 && elapsed >= GAS_LOAD_RULE.plugSeconds) {
+    events.push({type:'gasPlug', actorId:step.actorId});
+    return {state:{...state, holes:0, holeClocks:{}, plugging:false, plugElapsed:0}, speed, requests, events};
+  }
+  return {state:{...state, plugging, plugElapsed:elapsed}, speed:plugging ? 0 : speed, requests, events};
 }
