@@ -63,6 +63,7 @@ const gateFound=document.createElement('button');gateFound.textContent='Create t
   refreshRaceSetup();gateFound.disabled=true;panel.open=false;
 };panel.append(gateFound);
 if (qaParams.has('road-riders-review')) {
+  gateFound.dataset.washPlayer='';
   const {washRiderJob}=await import('../src/world/jobs/wash-riders.js');
   for (const difficulty of ['easy','medium','hard']) {
     const button=document.createElement('button');

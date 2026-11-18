@@ -554,9 +554,9 @@ export class Duel {
         opponents.some(spec => !CARS[spec?.car])) return false;
     if (mode === 'world-job' && job.steps.some(step => step.kind === 'rider-fight')) {
       if (!this.featureFlags.enabled('road-riders') || !venue.scablands) return false;
-      const riders = riderOpponentSpecs(job.steps, opponents);
-      if (!riders) return false;
-      opponents = [...opponents, ...riders];
+      const roster = riderOpponentSpecs(job, opponents, maxOpponents);
+      if (!roster) return false;
+      opponents = roster;
     }
     setScablandsOpenMarks([]);
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',

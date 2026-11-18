@@ -14,7 +14,8 @@ export function createBrandAshView({road = false} = {}) {
   group.add(figures.group);
   const ashShape = new THREE.SphereGeometry(R.ashDrawingRadius, 8, 6);
   const ashMaterial = new THREE.MeshStandardMaterial({color: 0xaaa291, roughness: 1});
-  const markShape = new THREE.RingGeometry(R.ashRadius - R.ashMarkWidth, R.ashRadius, 24);
+  const radius = road ? RIDER_RULE.ashRadius : R.ashRadius;
+  const markShape = new THREE.RingGeometry(radius - R.ashMarkWidth, radius, 24);
   const markMaterial = new THREE.MeshBasicMaterial({color: 0xc6bfae,
     transparent: true, opacity: .65, side: THREE.DoubleSide, depthWrite: false});
   const warnings = Array.from({length: capacity}, () => {

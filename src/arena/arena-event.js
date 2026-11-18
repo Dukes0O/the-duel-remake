@@ -422,7 +422,9 @@ export function stepArenaEvent(duel, dt) {
   if (worldJobDecision) { finish(duel, worldJobDecision.reason, worldJobDecision.winnerId); return; }
   if (!ambush) for (const actor of respawns) {
     const fight = arena.worldJob?.riderFight;
-    if (actor.roadRider || actor === state && fight?.outcome === 'lost' && fight.index === arena.worldJob.job.stepIndex) continue;
+    const lostTarget = fight?.outcome === 'lost' && fight.index === arena.worldJob.job.stepIndex &&
+      (actor === state || actor.arenaId === fight.targetId);
+    if (actor.roadRider || lostTarget) continue;
     respawn(duel, arenaParticipant(duel, actor), actor);
   }
   stepClock(duel, dt);

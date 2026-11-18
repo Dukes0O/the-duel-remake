@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {readFile} from 'node:fs/promises';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {EngineAudio, combatAudioSpace} from '../src/audio.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {createCombatEffects, smokeHazeOpacity} from '../src/combat-effects.js';
 import {syncScene} from '../src/scene-systems.js';
 import {Duel} from '../src/game.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {arenaActor, arenaParticipant} from '../src/combat-teams.js';
@@ -19,8 +23,8 @@ import {scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {RIDER_RULE as RULE} from '../src/world/jobs/rider-rule.js';
 import {washRiderJob} from '../src/world/jobs/wash-riders.js';
-import {throwRiderAsh} from '../src/arena/modes/road-riders.js';
-import {readySource, loadedSource, fightSource, stateSource} from './scenarios/road-riders.mjs';
+import {throwRiderAsh, updateRoadFight} from '../src/arena/modes/road-riders.js';
+import {readySource, prepareSource, visitReadySource, visitSource, yardSource, loadedSource, fightSource, stateSource} from './scenarios/road-riders.mjs';
 
 const DT = 1 / 60;
 const FLAGS = {'hidden-road':true, 'road-riders':true, 'scablands-realism':true, arsenal:true, 'arsenal-wave3':true};
@@ -59,7 +63,22 @@ function place(sim, car, location, heading=0, speed=0) {
 }
 
 function rulesAndRoster() {
-  for (const pageSource of [readySource,loadedSource,stateSource,...['easy','medium','hard'].map(fightSource)]) new Function('return '+pageSource);
+  const saved=new Map();
+  globalThis.localStorage={getItem:key=>saved.get(key)??null,setItem:(key,value)=>saved.set(key,String(value)),removeItem:key=>saved.delete(key)};
+  globalThis.cancelAnimationFrame ??= ()=>{};
+  const app=new App();app.audio.unlock=()=>{};
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{...FLAGS,'story-everburn':true}});
+  app.addPlayer('Wasteland QA');
+  app.profile={...app.profile,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};
+  assert.ok(app._saveProfile());
+  assert.ok(app.visitWasteland());
+  for(const difficulty of ['easy','medium','hard']) {
+    app.cpuDifficulty=difficulty;
+    assert.ok(app._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job:washRiderJob()}));
+    assert.equal(app.duel.state.cpuDifficulty,difficulty);
+    assert.equal(app.duel.state.arena.worldJob.riderFight.riders.length,3);
+  }
+  for (const pageSource of [readySource,prepareSource,visitReadySource,visitSource,yardSource,loadedSource,stateSource,...['easy','medium','hard'].map(fightSource)]) new Function('return '+pageSource);
   const gated = new Duel({seed:7,featureFlags:{...FLAGS,'road-riders':false}});
   gated.state.wastelandGateDiscovered = true;
   assert.equal(gated.startArenaEvent({venueId:'scablands',mode:'world-job',opponents:[],job:washRiderJob()}),false);
@@ -83,7 +102,39 @@ function rulesAndRoster() {
   assert.equal(sim.world.riderFight.index,1);
   assert.ok(sim.world.riderFight.riders.every(id => !firstIds.includes(id)));
   assert.equal(sim.world.riderReserve.length,0);
-  console.log('Opt-in roster, existing Everburn jobs, subsequent steps and laptop page expressions passed.');
+  const protectedJob=washRiderJob({count:1}), ally={car:'dusthawk_rally',jobId:'wash-truck',brain:'gunner'};
+  protectedJob.steps[0].targetId=ally.jobId;
+  ally.start={...protectedJob.steps[0].carStart,x:protectedJob.steps[0].carStart.x+42};
+  protectedJob.riderAllies=[ally];
+  const escorted=runEvent({job:protectedJob});
+  const [truck,attacker]=escorted.state.opponents;
+  assert.equal(arenaActor(escorted.duel,attacker.roadRider.targetId),truck);
+  assert.equal(arenaParticipant(escorted.duel,truck).team,'player');
+  const pose=worldPose(escorted.duel,escorted.state);
+  place(escorted,truck,{x:pose.x+42,z:pose.z});
+  place(escorted,attacker,{x:pose.x+42,z:pose.z+20},Math.PI);
+  assert.equal(targetFor(escorted.duel,attacker,{range:40}),truck);
+  assert.ok(throwRiderAsh(escorted.duel,attacker));
+  assert.ok(distance(escorted.fight.ash[0].position,worldPose(escorted.duel,truck))<1);
+  const remote=runEvent(), ahead=worldPose(remote.duel,remote.state), foe=remote.state.opponents[0];
+  const ringHeading=remote.duel.course.at(remote.state.s).heading;
+  place(remote,remote.state,ahead,ringHeading);
+  place(remote,foe,{x:ahead.x+Math.sin(ringHeading)*11,z:ahead.z+Math.cos(ringHeading)*11},ringHeading);
+  assert.ok(Math.abs(foe.s-remote.state.s)<2,'the small arena oval compresses this real 11 m gap');
+  const before=worldPose(remote.duel,foe);
+  assert.equal(remote.duel._vehicleContact(remote.state,foe,'rival'),false,'11 actual metres leave both bumpers clear');
+  assert.deepEqual(worldPose(remote.duel,foe),before);
+  const continueJob=washRiderJob();
+  continueJob.steps[0].onLost='continue';
+  continueJob.steps.push({kind:'reach',id:'carry-on',place:{id:'far',position:{x:0,z:0},radius:5}});
+  const continuing=runEvent({job:continueJob});
+  continuing.state.armor=1;
+  applyArmorDamage(continuing.duel,continuing.state,'crossbow',{owner:continuing.state.opponents[0].arenaId});
+  advance(continuing,RULE.aftermathSec+DT*5);
+  assert.equal(continuing.world.job.stepIndex,1);
+  assert.equal(continuing.world.job.storyMarks.riderFight.outcome,'lost');
+  assert.equal(continuing.state.arena.result,null);
+  console.log('Opt-in and subsequent rosters, four previous Everburn jobs, protected truck, world-metre contact and laptop page expressions passed.');
 }
 
 function fireAndCrew() {
@@ -170,16 +221,34 @@ function roadblock(boxIn, weaving, seed=1) {
       heldFrames++; topHold=Math.max(topHold,fight.heldSec);
     }
   },()=>!!fight.outcome);
-  return {outcome:fight.outcome, elapsed:fight.elapsed, heldFrames,topHold,
+  const elapsed=fight.elapsed;
+  if(fight.outcome) advance(sim,RULE.aftermathSec+DT*3);
+  return {outcome:fight.outcome,elapsed,winner:state.arena.result?.winnerId,heldFrames,topHold,
     job:sim.world.job.storyMarks?.riderFight?.outcome, reports:events.filter(e=>e.riderFight).length,
     armor:Math.round(state.armor*1000),positions:state.opponents.map(c=>[c.s,c.lateral,c.armor])};
 }
 
 function formation() {
+  const rig=runEvent({count:5,boxIn:true}), at=worldPose(rig.duel,rig.state);
+  place(rig,rig.state,at);
+  const offsets=[[0,5],[0,-5],[-3,0],[3,0],[14,14]];
+  for(const [i,car] of rig.state.opponents.entries()) place(rig,car,{x:at.x+offsets[i][0],z:at.z+offsets[i][1]});
+  const check=dt=>updateRoadFight(rig.duel,rig.world,rig.world.job.steps[0],dt);
+  check(.1);
+  assert.equal(rig.fight.heldSec,.1);
+  const left=rig.state.opponents[2],leftAt=worldPose(rig.duel,left);
+  place(rig,left,{x:at.x,z:at.z-12});
+  check(.1);assert.equal(rig.fight.heldSec,0,'opening either side clears a partial hold');
+  place(rig,left,leftAt);left.groundHeight=rig.state.groundHeight+RULE.verticalReach+1;
+  check(.1);assert.equal(rig.fight.heldSec,0,'a vehicle on a different deck cannot hold the player');
+  place(rig,left,leftAt);
+  rig.state.speedMph=30;check(DT);
+  assert.equal(rig.fight.heldSec,0,'moving faster than 10 km/h clears a hold');
   const held=roadblock(true,false);
   assert.equal(held.outcome,'surrounded');
   assert.equal(held.job,'surrounded');
   assert.equal(held.reports,1);
+  assert.equal(held.winner,'raiders');
   assert.ok(held.topHold>=RULE.boxSeconds-DT*2);
   const escaped=roadblock(true,true);
   assert.equal(escaped.outcome,null);
@@ -289,7 +358,13 @@ function weaponParity() {
 
 async function crewPresentation() {
   const sim=runEvent({count:5,fightToEnd:true}), {duel,state}=sim;
-  const scene=createScablandsScene(duel.course,{loadAsset:async()=>({scene:new THREE.Group()})});
+  const loader=new GLTFLoader();
+  // The cloud has no browser JPEG decoder. Parse every committed model, joint and material.
+  loader.register(()=>({name:'TEST_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const scene=createScablandsScene(duel.course,{loadAsset:async path=>{
+    const bytes=await readFile(new URL('../public'+path,import.meta.url));
+    return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  }});
   const effects=createCombatEffects({loadTexture:()=>new THREE.Texture()});
   try {
     assert.equal(await scene.ready,true);
@@ -298,6 +373,9 @@ async function crewPresentation() {
     const legs=view.getObjectByName('fighter-limbs');
     assert.ok(view.visible&&legs.isInstancedMesh);
     assert.equal(legs.count,0);
+    const warning=view.children.find(child=>child.children.some(mesh=>mesh.geometry?.type==='RingGeometry'));
+    const ring=warning.children.find(mesh=>mesh.geometry?.type==='RingGeometry');
+    assert.equal(ring.geometry.parameters.outerRadius,RULE.ashRadius);
     const car=state.opponents.at(-1);
     car.armor=.5;
     applyArmorDamage(duel,car,'crossbow',{owner:'player'});

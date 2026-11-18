@@ -14,5 +14,8 @@ export function washRiderJob({seed=1,count=3,boxIn=false,weapon='ash-sack',fight
       start:{x,z,heading:boxIn ? carStart.heading : Math.atan2(carStart.x-x,carStart.z-z), speedMph:boxIn ? slots.approachMph : 0},
       home:{x:carStart.x+side*slots.homeScale,z:carStart.z+ahead*slots.homeScale}};
   });
-  return {id:'wash-road-riders',name:'Riders at the Wash',steps:[{kind:'rider-fight',id:'wash',carStart,riders}]};
+  const what=boxIn ? 'Keep turning to escape the roadblock.' : 'Drive off the Ash riders and keep your car running.';
+  return {id:'wash-road-riders',name:'Riders at the Wash',steps:[
+    {kind:'rider-fight',id:'wash',what,carStart,riders,onSurrounded:'lose'},
+  ]};
 }

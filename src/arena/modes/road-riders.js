@@ -14,19 +14,30 @@ const sides = ['front', 'back', 'left', 'right'];
 const diff = duel => R.difficulty[duel.state.cpuDifficulty] ?? R.difficulty.medium;
 const dist = (a,b) => Math.hypot(a.x-b.x,a.z-b.z);
 const validPoint = p => p && Number.isFinite(p.x) && Number.isFinite(p.z);
-const key = (stepIndex, id) => `road-rider/${stepIndex}/${id}`;
+const RIDER_PREFIX = 'road-rider/';
+const key = (stepIndex, id) => RIDER_PREFIX + stepIndex + '/' + id;
 
 // Each enemy is built by the native arena roster, with its normal car, armour, weapons and contact pipeline.
 // Reserve future-step cars out of the physical field until the job reaches them.
-export function riderOpponentSpecs(steps, allies) {
-  const specs = [];
+export function riderOpponentSpecs(job, original, maxAllies) {
+  const authored = job.riderAllies ?? [];
+  if (!Array.isArray(authored) || original.length + authored.length > maxAllies) return null;
+  const originalIds = original.map(car=>car.jobId).filter(Boolean);
+  const taken = new Set(originalIds);
+  if (taken.size !== originalIds.length || originalIds.some(id=>typeof id !== 'string' || id.startsWith(RIDER_PREFIX))) return null;
+  for (const ally of authored) {
+    if (typeof ally?.jobId !== 'string' || !ally.jobId || ally.jobId.startsWith(RIDER_PREFIX) || taken.has(ally.jobId) || !Object.hasOwn(CARS,ally.car) || !validPoint(ally.start)) return null;
+    taken.add(ally.jobId);
+  }
+  const allies = [...original,...authored], specs = [...allies];
+  const steps = job.steps;
   for (const [index, step] of steps.entries()) {
     if (step.kind !== 'rider-fight') continue;
-    if (step.targetId && !allies.some((car,i) => car.jobId === step.targetId || `cpu-${i+1}` === step.targetId)) return null;
+    if (step.targetId && step.targetId !== 'player' && !allies.some((car,i) => car.jobId === step.targetId || `cpu-${i+1}` === step.targetId)) return null;
     if (!Array.isArray(step.riders) || !step.riders.length || step.riders.length > R.maximumField) return null;
     const ids = new Set();
     for (const rider of step.riders) {
-      if (!rider?.id || ids.has(rider.id) || !Object.hasOwn(CARS,rider.car) ||
+      if (typeof rider?.id !== 'string' || !rider.id || ids.has(rider.id) || !Object.hasOwn(CARS,rider.car) ||
           !(rider.weapon === 'ash-sack' || WEAPON_IDS.includes(rider.weapon) || Object.hasOwn(ARSENAL_WEAPONS,rider.weapon)) ||
           !validPoint(rider.start) || !validPoint(rider.home)) return null;
       ids.add(rider.id);
@@ -36,10 +47,24 @@ export function riderOpponentSpecs(steps, allies) {
   return specs;
 }
 
+function placeJobCar(duel, car, at, heading) {
+  const near = duel.course.nearest(at.x,at.z);
+  car.s = car.prevS = near.s;
+  car.lateral = car.prevLateral = near.lateral;
+  car.headingError = (at.heading ?? heading) - duel.course.at(near.s).heading;
+  car.groundHeight = car.prevGroundHeight = scablandsActorHeightAt(at.x,at.z,at.y);
+  car.speedMph = at.speedMph || 0;
+}
+
 export function reserveRoadRiders(duel, world) {
   const state = duel.state, arena = state.arena;
-  const reserved = state.opponents.filter(car => car.jobId?.startsWith('road-rider/'));
+  const reserved = state.opponents.filter(car => car.jobId?.startsWith(RIDER_PREFIX));
   if (!reserved.length) return;
+  for (const ally of world.definition.riderAllies ?? []) {
+    const car=state.opponents.find(car=>car.jobId===ally.jobId);
+    placeJobCar(duel,car,ally.start,0);
+    arenaParticipant(duel,car).team='player';
+  }
   world.riderReserve = reserved.map(car => ({car, participant:arenaParticipant(duel,car)}));
   state.opponents = state.opponents.filter(car => !reserved.includes(car));
   arena.participants = arena.participants.filter(p => !world.riderReserve.some(entry => entry.participant === p));
@@ -57,7 +82,7 @@ export function startRoadFight(duel, world) {
     state.arena.participants = state.arena.participants.filter(entry => !previous.has(entry.id));
     world.actors = world.actors.filter(actor => !actor.riderCrew);
   }
-  const target = step.targetId ? state.opponents.find(car => car.jobId === step.targetId || car.arenaId === step.targetId) : state;
+  const target = step.targetId && step.targetId !== 'player' ? state.opponents.find(car => car.jobId === step.targetId || car.arenaId === step.targetId) : state;
   if (!target) throw new Error(`Rider fight needs the named allied arena car: ${step.targetId}`);
   if (index === 0 && Number.isFinite(step.carStart?.speedMph)) state.speedMph=step.carStart.speedMph;
   const targetId = target === state ? 'player' : target.arenaId;
@@ -67,13 +92,9 @@ export function startRoadFight(duel, world) {
   for (const definition of step.riders) {
     const entry = world.riderReserve.find(entry => entry.car.jobId === key(index,definition.id));
     const {car, participant} = entry, at = definition.start;
-    const near = duel.course.nearest(at.x,at.z), targetAt = worldPose(duel,target);
-    car.s = car.prevS = near.s; car.lateral = car.prevLateral = near.lateral;
-    const heading = at.heading ?? Math.atan2(targetAt.x-at.x,targetAt.z-at.z);
-    car.headingError = heading - duel.course.at(car.s).heading;
-    car.groundHeight = car.prevGroundHeight = scablandsActorHeightAt(at.x,at.z,at.y);
+    const targetAt = worldPose(duel,target);
+    placeJobCar(duel,car,at,Math.atan2(targetAt.x-at.x,targetAt.z-at.z));
     car.armor = car.maxArmor *= diff(duel).armor;
-    car.speedMph = at.speedMph || 0;
     car.weaponLoadout = [definition.weapon];
     car.roadRider = {id:definition.id, weapon:definition.weapon, home:definition.home,
       fightToEnd:definition.fightToEnd === true, slot:definition.boxIn ? slot++ : null,
