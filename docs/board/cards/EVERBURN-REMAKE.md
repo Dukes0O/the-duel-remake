@@ -979,9 +979,11 @@ more of meeting speed) stop him.
 he throws a sack of ash from his window: a grey cloud 30 m long lies on the road for six seconds and the player sees
 nothing inside it. Round it or through it blind.
 
-**In the Boneyard** he leaves the road and goes through the planes: under a wing, through a fuselage with both ends
-open, round the plane row. He knows the gaps and takes them at 60 km/h; a car that follows his line gets through, and one
-that cuts a corner meets a wreck. This is where a careful driver catches him.
+**In the Boneyard** he leaves the road at the plane row and follows a fixed line round the ends of the three wrecks' solid
+boxes, passing each end 2.5 m clear, with at least three turns of 40 degrees or more, at 60 km/h, and comes out at the wing
+gap. The whole line must fit the car with 1 m to spare on the wreck's side and stay that far from every other solid.
+A player may follow his line or go round wide. The rule check reports how much longer the wide way is. This is Claude's
+ruling of 17 November, evening; the wreck art and solids stay as they stand.
 
 **The danger that ends it.** Old Smoke's furnace stands at the Boneyard's far end, the wing gap, and is seen there from
 the plane row with its smoke. Two riders come out from it to meet him when he is 400 m from it and ram the player. If he
@@ -1019,7 +1021,7 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 - Slice 9, job 3 escape: the stopped thief steps out 3 m from his car, away from the player, then runs 60 m that way at 6 m/s through the existing job foot mover. Those distances and speed are named in `BELLOWS_RULE`. He stays outside shooting raid zones. No extra sound cue is added; collection still sounds `world.bellows.load` and the furnace horn.
 
 - Slice 9, job 3: the two sacks burst at 800 m and 1,600 m along the road from the town gate. Both distances are named in `BELLOWS_RULE.ashAtRoadMetres`. The nine-second ending starts when the thief stops, but results wait until the player has stopped beside him and collected the bellows. The player can still approach during that hold.
-- Slice 9, job 3 route needs Claude's decision: the Boneyard currently has three whole solid aircraft boxes, with no wing or fuselage opening. Their nearest edge gaps are 17 m (north/south), 41.43 m (north/east) and 67.97 m (east/south). None supplies a 6 to 9 m gap. A line through three such gaps needs the wreck drawing and solids changed together, or an agreed wider route. Do not claim that the existing wrecks prove the designed narrow route; the other chase rules can continue while this is decided.
+- Slice 9, job 3 route: Claude ruled on 17 November, evening, to round the ends of the existing solid wreck boxes, as the design above now says. No wreck drawing or solid changes are needed.
 - Slice 9, job 2 theft: the runner takes the clear south alley toward the gate at 6 m/s, starting at five seconds. The ending shows the start of his escape, with a plain brown load on his back. He is still running when the nine-second ending closes; reaching the gate is not a new condition for finishing.
 - Slice 9, job 2 guidance: "Stop beside Auntie Solder at the forge.", "Take a brand from the hearth.", "Carry the brand to a dark lamp.", "Hold still to light the lamp.", "Relight the brand at the hearth or a lit lamp." and "The brand is out." The arrow selects the nearest dark lamp while the brand burns and the nearest fire when it is out. Ash Men enter one metre inside a sheet of the town's own fence, clear of its solid.
 - Slice 9, job 2: the tower lamp stands at the watchtower's foot. The existing fighter has no ladder action; the town's ladders are scenery. Lamp sites come from the water-tower and watchtower slots in `tinTownLayout`; a clear 159.8 m alley route reaches the far lamp.

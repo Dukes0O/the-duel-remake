@@ -12,6 +12,7 @@ import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
 import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
+import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
 
 // SCABLANDS-LAND round 4: the limit was 720 s; the roads and the furnace's path are ten times as long (the chase alone is 1,042 s at child pace).
 const DT = 1 / 120, MAX_SECONDS = 3000;
@@ -289,9 +290,92 @@ function driveFurnace(duel, actor) {
     steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
 }
 
+// One walk for the remade town. Plan footsteps through the drawn town's open
+// alleys; movement, turning, the brand and every opponent remain Duel rules.
+const townWalks = new WeakMap();
+function townFootpath(from, goal) {
+  const centre = LAND.at('tin-town'), cell = 2;
+  const point = (x, z) => ({x: centre.x + x * cell, z: centre.z + z * cell});
+  const clear = (a, b) => {
+    const parts = Math.max(1, Math.ceil(Math.hypot(b.x-a.x, b.z-a.z) * 4));
+    for (let i = 0; i <= parts; i++)
+      if (pushOutOfSolids(a.x+(b.x-a.x)*i/parts, a.z+(b.z-a.z)*i/parts, .55).hit) return false;
+    return true;
+  };
+  const start = {x: Math.round((from.x-centre.x)/cell), z: Math.round((from.z-centre.z)/cell)};
+  const key = p => `${p.x},${p.z}`;
+  const queue = [start], previous = new Map([[key(start), null]]);
+  let end;
+  for (let i = 0; i < queue.length; i++) {
+    const node = queue[i], here = point(node.x,node.z);
+    if (Math.hypot(here.x-goal.x, here.z-goal.z) < 4 && clear(here,goal)) { end = node; break; }
+    for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+      const next = {x:node.x+dx,z:node.z+dz};
+      if (Math.abs(next.x)>43 || Math.abs(next.z)>43 || previous.has(key(next)) || !clear(here,point(next.x,next.z))) continue;
+      previous.set(key(next),node); queue.push(next);
+    }
+  }
+  assert(end, `No town alley reaches ${JSON.stringify(goal)}`);
+  const route = [goal];
+  for (let node=end; node; node=previous.get(key(node))) route.unshift(point(node.x,node.z));
+  // Keep the longest clear straight stretches, rather than turning at every cell.
+  const smooth = []; let here = from;
+  while (route.length) {
+    let index = route.length-1;
+    while (index > 0 && !clear(here,route[index])) index--;
+    here = route[index]; smooth.push(here); route.splice(0,index+1);
+  }
+  return smooth;
+}
+function walkLightTheTown(duel, step) {
+  const state = duel.state, world = state.arena.worldJob, rule = world.job.stepState;
+  const walk = townWalks.get(duel) ?? {smothered:{pump:0,tower:0,far:0}, lamps:{}};
+  townWalks.set(duel,walk);
+  for (const lamp of step.places) {
+    if (walk.lamps[lamp.id] && !rule.lamps?.[lamp.id] && !rule.townEnding) walk.smothered[lamp.id]++;
+    walk.lamps[lamp.id] = !!rule.lamps?.[lamp.id];
+  }
+  walk.brandsUsed = rule.brandsUsed ?? walk.brandsUsed ?? 0;
+  duel.setInput({throttle:0,brake:1,steer:0,interact:false});
+  duel.setFighterInput({});
+  if (rule.townEnding) return;
+  if (!rule.brandBriefed) return; // The car already stands in Auntie's ring.
+  if (!state.onFoot) {
+    duel.setInput({throttle:0,brake:1,steer:0,interact:!state.footTransition?.needsRelease});
+    return;
+  }
+  const fighter = state.fighter;
+  const enemy = world.actors.filter(actor => actor.brandAsh &&
+    !rule.brandAsh?.men?.[actor.id]?.fleeing && !rule.brandAsh?.men?.[actor.id]?.gone)
+    .sort((a,b)=>Math.hypot(a.x-fighter.x,a.z-fighter.z)-Math.hypot(b.x-fighter.x,b.z-fighter.z))[0];
+  if (enemy && Math.hypot(enemy.x-fighter.x,enemy.z-fighter.z) <= BRAND_RULE.handFlamerRadius) {
+    const turn = wrap(Math.atan2(enemy.x-fighter.x,enemy.z-fighter.z)-fighter.yaw);
+    duel.setFighterInput({turnLeft:turn>.03,turnRight:turn<-.03,aim:true,fire:Math.abs(turn)<.15});
+    return;
+  }
+  const sources = [step.hearth,...step.places.filter(lamp=>rule.lamps?.[lamp.id])];
+  const nearest = places => places.slice().sort((a,b)=>Math.hypot(a.position.x-fighter.x,a.position.z-fighter.z)-Math.hypot(b.position.x-fighter.x,b.position.z-fighter.z))[0];
+  const goal = !rule.brandSeconds ? nearest(sources) :
+    step.places.find(lamp=>!rule.lamps?.[lamp.id]);
+  if (!goal) return;
+  if (walk.goal !== goal.id) {
+    walk.goal=goal.id;
+    // A hearth is solid. Hold the brand beside its front, as a player does.
+    const target = goal === step.hearth ? {...goal.position,z:goal.position.z+2.8} : goal.position;
+    walk.route=townFootpath(fighter,target);
+  }
+  while (walk.route.length>1 && Math.hypot(walk.route[0].x-fighter.x,walk.route[0].z-fighter.z)<.5) walk.route.shift();
+  const target=walk.route[0], gap=Math.hypot(target.x-fighter.x,target.z-fighter.z);
+  const turn=wrap(Math.atan2(target.x-fighter.x,target.z-fighter.z)-fighter.yaw);
+  const stopGap = walk.route.length === 1 ? (goal === step.hearth ? .1 : 1.1) : .35;
+  duel.setFighterInput({turnLeft:turn>.03,turnRight:turn<-.03,
+    forward:gap>stopGap && Math.abs(turn)<.15});
+}
+
 function playerInput(duel) {
   const state = duel.state, worldJob = state.arena.worldJob;
   const step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (step?.brand) { walkLightTheTown(duel,step); return; }
   const phase = worldJob.job.stepState.phase;
   const needsRelease = state.footTransition?.needsRelease === true;
   let target = currentMarker(duel);
@@ -469,6 +553,10 @@ for (const definition of jobs) {
   let finishes = 0;
   for (let seed = 1; seed <= 10; seed++) {
     const result = play(definition, seed);
+    if (definition.steps[0]?.brand) {
+      const walk = townWalks.get(result.duel);
+      console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}`);
+    }
     if (result.won) finishes++;
     if ((seed === 1 || trialJobsOnly || selectedJob) && !result.won) {
       console.log(`Failed ${definition.name}, seed ${seed}`);
