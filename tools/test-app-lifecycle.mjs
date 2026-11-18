@@ -96,6 +96,28 @@ try {
   assert.equal(inputApp._footPointer.fire || inputApp._footPointer.aim, false);
   inputApp.duel.state.paused = false;
   assert.equal(inputApp.footMouseHint, 'Click the picture to capture the mouse.');
+  for (const next of [{paused:true}, {onFoot:false}, {status:'menu'}]) {
+    Object.assign(inputApp.duel.state,{onFoot:true, paused:false, status:'racing'});
+    mouse('mousedown',0);
+    assert.equal(inputApp._footPointer.capture, 'requesting');
+    Object.assign(inputApp.duel.state,next);
+    const stateBeforeGrant = {...inputApp.duel.state};
+    document.pointerLockElement = canvas;
+    document.dispatchEvent(new Event('pointerlockchange'));
+    assert.equal(document.pointerLockElement, null, 'A late grant must release the game canvas.');
+    assert.equal(inputApp._footPointer.capture, null);
+    assert.equal(inputApp._footPointer.fire || inputApp._footPointer.aim, false);
+    assert.deepEqual(inputApp.duel.state, stateBeforeGrant);
+  }
+  Object.assign(inputApp.duel.state,{onFoot:true, paused:false, status:'racing'});
+  document.pointerLockElement = outside;
+  document.dispatchEvent(new Event('pointerlockchange'));
+  const otherEscape = key('Escape'); window.dispatchEvent(otherEscape);
+  assert.equal(document.pointerLockElement, outside);
+  assert.equal(otherEscape.defaultPrevented, false);
+  assert.equal(inputApp.duel.state.paused, false);
+  document.pointerLockElement = null;
+  document.dispatchEvent(new Event('pointerlockchange'));
   inputApp.duel.state.paused = true;
   const look = inputApp._footPointer.lookX;
   mouse('mousedown', 2); mouse('mousemove', 0, 9, 9);
