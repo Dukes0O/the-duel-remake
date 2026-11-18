@@ -13,6 +13,8 @@ export const NEAR_GROUND = Object.freeze({
   cellX: 1400 / 60, cellZ: 1000 / 60, cellsX: 60, cellsZ: 60,
   // The drawn ground rides this far above the land's own height, so that nothing laid on the land sinks into it.
   lift: .025,
+  creaseCandidate:.4, creaseError:.2, deepCreaseError:.6,
+  creaseDivisions:4, cacheCells:8192,
 });
 const {cellX, cellZ, cellsX, cellsZ, lift} = NEAR_GROUND;
 const across = cellsX + 1, down = cellsZ + 1, corners = across * down;
@@ -26,6 +28,62 @@ const faces = preparedScarps(SCARPS).map(s => {
 });
 const isFaceCell = (x, z) => faces.some(f => x <= f.x1 && x + cellX >= f.x0 && z <= f.z1 && z + cellZ >= f.z0);
 
+// A cell has one answer for both the mesh and things placed on that mesh.
+// Standalone queries have a bounded cache; a window supplies its retained corners.
+const detailCaches = new WeakMap();
+function detailCache(heightAt, grid) {
+  let grids = detailCaches.get(heightAt);
+  if (!grids) { grids = new WeakMap(); detailCaches.set(heightAt, grids); }
+  let cells = grids.get(grid);
+  if (!cells) { cells = new Map(); grids.set(grid, cells); }
+  return cells;
+}
+const flatHeight = (a, b, c, d, u, v) => u + v <= 1 ?
+  a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v);
+export function nearGroundCell(ix, iz, heightAt, grid = NEAR_GROUND, readCorner = null, cache = detailCache(heightAt, grid)) {
+  const key = `${ix},${iz}`;
+  if (cache.has(key)) return cache.get(key);
+  const {cellX, cellZ, lift} = grid;
+  const corner = readCorner ?? ((i, j) => Math.fround(heightAt(i * cellX, j * cellZ) + lift));
+  const a = corner(ix, iz), b = corner(ix + 1, iz), c = corner(ix, iz + 1), d = corner(ix + 1, iz + 1);
+  const scarp = isFaceCell(ix * cellX, iz * cellZ);
+  let fine = scarp ? divisions : 0;
+  let quarters = null;
+  if (!fine) {
+    let bend = 0;
+    for (let j = iz; j <= iz + 1; j++) for (let i = ix; i <= ix + 1; i++) {
+      const h = corner(i, j);
+      bend = Math.max(bend, Math.abs(corner(i - 1, j) - 2 * h + corner(i + 1, j)),
+        Math.abs(corner(i, j - 1) - 2 * h + corner(i, j + 1)));
+    }
+    if (bend > (grid.creaseCandidate ?? NEAR_GROUND.creaseCandidate)) {
+      quarters = new Float64Array(9);
+      let error = 0;
+      for (let j = 1; j <= 3; j++) for (let i = 1; i <= 3; i++) {
+        const h = heightAt((ix + i / 4) * cellX, (iz + j / 4) * cellZ) + lift;
+        quarters[(j - 1) * 3 + i - 1] = h;
+        error = Math.max(error, Math.abs(h - flatHeight(a, b, c, d, i / 4, j / 4)));
+      }
+      if (error > NEAR_GROUND.creaseError)
+        fine = error > NEAR_GROUND.deepCreaseError ? divisions : NEAR_GROUND.creaseDivisions;
+    }
+  }
+  let samples = null;
+  if (fine) {
+    samples = new Float64Array((fine - 1) ** 2);
+    for (let j = 1; j < fine; j++) for (let i = 1; i < fine; i++) {
+      const quarter = quarters && (fine === 4 || i % 2 === 0 && j % 2 === 0);
+      samples[(j - 1) * (fine - 1) + i - 1] = quarter ?
+        quarters[(j * 4 / fine - 1) * 3 + i * 4 / fine - 1] :
+        heightAt((ix + i / fine) * cellX, (iz + j / fine) * cellZ) + lift;
+    }
+  }
+  const detail = {divisions:fine, samples, kind:scarp ? 'scarp' : fine === 4 ? 'crease4' : fine === 8 ? 'crease8' : 'flat'};
+  if (cache.size >= NEAR_GROUND.cacheCells) cache.delete(cache.keys().next().value);
+  cache.set(key, detail);
+  return detail;
+}
+
 // The height at (x, z) of the ground as it is drawn: the straight slopes between lattice corners, cut the way the window's
 // triangles are cut (each cell is two triangles meeting along the line from its (1, 0) corner to its (0, 1) corner). Used to lay
 // a thing on what is seen. `heightAt(x, z)` is the land's own height.
@@ -33,7 +91,9 @@ export function nearGroundHeightAt(x, z, heightAt, grid = NEAR_GROUND) {
   const {cellX, cellZ, lift} = grid;
   const fx = x / cellX, fz = z / cellZ, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz;
   const corner = (i, j) => heightAt((ix + i) * cellX, (iz + j) * cellZ) + lift;
-  if (isFaceCell(ix * cellX, iz * cellZ)) {
+  const detail = nearGroundCell(ix, iz, heightAt, grid);
+  if (detail.divisions) {
+    const divisions = detail.divisions;
     const a = Math.fround(corner(0, 0)), b = Math.fround(corner(1, 0));
     const c = Math.fround(corner(0, 1)), d = Math.fround(corner(1, 1));
     const sample = (i, j) => {
@@ -42,7 +102,7 @@ export function nearGroundHeightAt(x, z, heightAt, grid = NEAR_GROUND) {
       if (j === divisions) return c * (1 - s) + d * s;
       if (i === 0) return a * (1 - t) + c * t;
       if (i === divisions) return b * (1 - t) + d * t;
-      return heightAt((ix + s) * cellX, (iz + t) * cellZ) + lift;
+      return detail.samples[(j - 1) * (divisions - 1) + i - 1];
     };
     const sx = u * divisions, sz = v * divisions, i = Math.floor(sx), j = Math.floor(sz), s = sx - i, t = sz - j;
     if (s + t <= 1) { const h = sample(i, j); return h + (sample(i + 1, j) - h) * s + (sample(i, j + 1) - h) * t; }
@@ -87,21 +147,26 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   faceMesh.name = 'Scablands near scarp faces'; faceMesh.receiveShadow = true; faceMesh.frustumCulled = false;
   mesh.add(faceMesh);
 
-  const faceHeights = new Map();
+  const faceHeights = new Map(), cornerRing = new Map();
+  const retainedCorner = (i, j) => {
+    const key = `${i},${j}`;
+    if (!cornerRing.has(key)) cornerRing.set(key, Math.fround(heightAt(i * cellX, j * cellZ) + lift));
+    return cornerRing.get(key);
+  };
   function updateFaces() {
     const facePositions = [], faceIndices = [];
     let baseCount = 0;
     for (let iz = 0; iz < cellsZ; iz++) for (let ix = 0; ix < cellsX; ix++) {
       const a = iz * across + ix, b = a + 1, c = a + across, d = c + 1;
       const x = (centreI + ix - cellsX / 2) * cellX, z = (centreJ + iz - cellsZ / 2) * cellZ;
-      if (!isFaceCell(x, z)) {
+      const cellI = centreI + ix - cellsX / 2, cellJ = centreJ + iz - cellsZ / 2;
+      const detail = nearGroundCell(cellI, cellJ, heightAt, grid, retainedCorner, faceHeights);
+      if (!detail.divisions) {
         indices[baseCount++] = a; indices[baseCount++] = c; indices[baseCount++] = b;
         indices[baseCount++] = b; indices[baseCount++] = c; indices[baseCount++] = d;
         continue;
       }
-      const key = `${centreI + ix - cellsX / 2},${centreJ + iz - cellsZ / 2}`;
-      let samples = faceHeights.get(key);
-      if (!samples) { samples = new Float64Array((divisions - 1) ** 2); faceHeights.set(key, samples); }
+      const divisions = detail.divisions, samples = detail.samples;
       const start = facePositions.length / 3;
       for (let j = 0; j <= divisions; j++) for (let i = 0; i <= divisions; i++) {
         const u = i / divisions, v = j / divisions, px = x + u * cellX, pz = z + v * cellZ;
@@ -113,8 +178,6 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
         else {
           const sample = (j - 1) * (divisions - 1) + i - 1;
           y = samples[sample];
-          if (!y) { y = heightAt(px, pz) + lift; samples[sample] = y || Number.MIN_VALUE; }
-          else if (y === Number.MIN_VALUE) y = 0;
         }
         facePositions.push(px - centreI * cellX, y, pz - centreJ * cellZ);
       }
@@ -137,7 +200,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
 
   // The lattice corner (in whole cells) at the window's middle. Not yet placed.
   let centreI = NaN, centreJ = NaN;
-  const cornerHeight = (i, j) => heightAt(i * cellX, j * cellZ) + lift;
+  const cornerHeight = retainedCorner;
 
   function shade(x0 = 0, x1 = cellsX, z0 = 0, z1 = cellsZ) {
     for (let iz = z0; iz <= z1; iz++) for (let ix = x0; ix <= x1; ix++) {
@@ -167,10 +230,20 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     mesh.position.set(i * cellX, 0, j * cellZ);
     shade();
     updateFaces();
+    for (const key of cornerRing.keys()) {
+      const [x, z] = key.split(',').map(Number);
+      if (x < i - cellsX / 2 - 1 || x > i + cellsX / 2 + 1 ||
+          z < j - cellsZ / 2 - 1 || z > j + cellsZ / 2 + 1) cornerRing.delete(key);
+    }
   }
 
   return {
     mesh, geometry, faceMesh,
+    get cellCounts() {
+      const counts = {flat:0, scarp:0, crease4:0, crease8:0};
+      for (const detail of faceHeights.values()) counts[detail.kind]++;
+      return counts;
+    },
     // The window's middle, in metres, once it has been placed.
     get centreX() { return centreI * cellX; },
     get centreZ() { return centreJ * cellZ; },
@@ -184,13 +257,25 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     refresh() {
       if (Number.isNaN(centreI)) return;
       const i = centreI, j = centreJ;
-      faceHeights.clear();
+      faceHeights.clear(); cornerRing.clear(); detailCaches.delete(heightAt);
       centreI = NaN; centreJ = NaN; place(i, j);
     },
     // Re-sample only edited corners and their neighbours. Face cells have their
     // own finer samples, so invalidate only those touched by the edit.
     refreshBounds({minX, maxX, minZ, maxZ}) {
       if (Number.isNaN(centreI)) return;
+      detailCaches.delete(heightAt);
+      // Corner curvature reaches one cell beyond the edited corner.
+      for (const key of cornerRing.keys()) {
+        const [i, j] = key.split(',').map(Number);
+        if (i * cellX >= minX - cellX && i * cellX <= maxX + cellX &&
+            j * cellZ >= minZ - cellZ && j * cellZ <= maxZ + cellZ) cornerRing.delete(key);
+      }
+      for (const key of faceHeights.keys()) {
+        const [i, j] = key.split(',').map(Number);
+        if ((i + 2) * cellX >= minX && (i - 1) * cellX <= maxX &&
+            (j + 2) * cellZ >= minZ && (j - 1) * cellZ <= maxZ) faceHeights.delete(key);
+      }
       const originI = centreI - cellsX / 2, originJ = centreJ - cellsZ / 2;
       const x0 = Math.max(0, Math.floor(minX / cellX - originI));
       const x1 = Math.min(cellsX, Math.ceil(maxX / cellX - originI));
@@ -213,14 +298,14 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       if (!facesChanged) for (let z = Math.max(0, z0 - 1); z < Math.min(cellsZ, z1 + 1) && !facesChanged; z++)
         for (let x = Math.max(0, x0 - 1); x < Math.min(cellsX, x1 + 1); x++)
           if (isFaceCell((originI + x) * cellX, (originJ + z) * cellZ)) { facesChanged = true; break; }
-      if (facesChanged) updateFaces();
+      updateFaces();
     },
     // The drawn height at (x, z), read from this window's own corners, for a point inside it; null outside.
     heightAtDrawn(x, z) {
       if (Number.isNaN(centreI)) return null;
       const fx = x / cellX - (centreI - cellsX / 2), fz = z / cellZ - (centreJ - cellsZ / 2);
       if (fx < 0 || fz < 0 || fx >= cellsX || fz >= cellsZ) return null;
-      if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt, grid);
+      if (nearGroundCell(Math.floor(x / cellX), Math.floor(z / cellZ), heightAt, grid, retainedCorner, faceHeights).divisions) return nearGroundHeightAt(x, z, heightAt, grid);
       const ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, at = iz * across + ix;
       return u + v <= 1 ? heights[at] + (heights[at + 1] - heights[at]) * u + (heights[at + across] - heights[at]) * v :
         heights[at + across + 1] + (heights[at + across] - heights[at + across + 1]) * (1 - u) + (heights[at + 1] - heights[at + across + 1]) * (1 - v);

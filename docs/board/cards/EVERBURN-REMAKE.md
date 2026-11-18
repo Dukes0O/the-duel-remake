@@ -1031,3 +1031,18 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 - Slice 7: Tin Town's door keeps its 20 m car approach trigger. It swings shut when the car leaves that area and opens on return. Its leaf stays solid at its drawn position throughout the 1.5-second swing. The existing gate cue sounds once when each swing starts.
 
 - Slice 8C follows the ruled 400 m south offset at the way's 3.0 km point. Its exact current position is (2004,-1795); the ruling's approximate (1851,-2166) lies on the way itself. The named way and offset govern placement.
+
+## Slice 8E cheaper cure trial, 17 November 2026
+The corner test is pure and cached by height function and grid. The window reuses its corners and one outer ring. Nine interior heights confirm a candidate; four divisions reuse them, eight divisions cover errors above 0.6 m. Scarps keep eight divisions. Refresh clears the caches. Threshold 0.4 m is chosen: neither 0.4 nor 0.2 misses a confirmed cell on the four way lines. Across the full five windows, misses at 0.4 / 0.2 are yard 0/0, salt1 0/0, salt2 0/0, salt3 0/0, Breaks 3/0.
+
+Measured seven placements and one-cell moves for each version, reporting median milliseconds after warming the land. Heights include the scene's river-depth correction. Fine counts are scarp / crease4 / crease8; before has only scarps. Places: yard; salt1 (2690,-2445); salt2 (2926,-2529); salt3 (3255,-2639); Breaks at dead-mall offset (-439,-1060).
+
+| Place | First heights before/after | Move heights before/after | First ms before/after | Move ms before/after | First fine before/after | Move fine before/after |
+| --- | --- | --- | --- | --- | --- | --- |
+| Yard | 3721/3965 | 61/63 | 16.63/29.51 | 0.46/3.02 | 0 / 0,0,0 | 0 / 0,0,0 |
+| Salt1 | 5926/15731 | 208/331 | 33.55/103.09 | 2.55/7.79 | 45 / 45,313,53 | 48 / 48,316,54 |
+| Salt2 | 7396/17420 | 208/228 | 41.93/112.09 | 2.69/7.55 | 75 / 75,262,65 | 78 / 78,262,65 |
+| Salt3 | 9601/18132 | 208/282 | 52.98/116.18 | 3.53/8.42 | 120 / 120,175,63 | 123 / 123,172,62 |
+| Breaks | 3721/30562 | 61/655 | 19.32/184.59 | 0.47/12.84 | 0 / 0,1036,95 | 0 / 0,1039,99 |
+
+**Stopped at the ruled cost gate.** All moves exceed the extra 2 ms limit. All three salt placements exceed the extra 60 ms limit, and the Breaks exceeds 150 ms. The code is kept in a commit marked trial. The ground survey remains a report, as Claude required measurement before the assertion. Claude must change the cost allowance or choose the next repair. This supersedes the earlier removed-trial stop; C and D3 are resolved by the evening rulings.
