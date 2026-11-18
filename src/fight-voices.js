@@ -25,6 +25,12 @@ const playerAction = (event, state) => !event.enemy &&
     /\.(fire|deploy|start)$/.test(event.arsenalCue || '') ||
     /\.(fire|throw|launch|deploy|start)$/.test(event.crewGearCue || ''));
 
+// Light the Town is walked through alleys with a brand: a crew's road callout ("That road is mine.") has no place there.
+function walkingTheTown(state) {
+  const job = state.arena?.mode === 'world-job' && state.arena.worldJob?.job;
+  return !!job && job.steps?.[job.stepIndex]?.brand === true;
+}
+
 function roadDanger(state, course) {
   const world = state.arena?.mode === 'world-job' && state.arena.worldJob;
   if (!world?.job || !course?.worldAt) return false;
@@ -95,7 +101,7 @@ export function createFightVoices({enabled, audible, play, duration}) {
       if (event?.stageLoaded != null) {clear(); seen.clear(); return;}
       update(next);
       if (!enabled() || !playing(state) || !event) return;
-      if (playerAction(event, state) && !(state.crewId === 'rook' && roadDanger(state, course)))
+      if (playerAction(event, state) && !walkingTheTown(state) && !(state.crewId === 'rook' && roadDanger(state, course)))
         enqueue(`crew.${state.crewId}.callout`, 'crew');
       if (event.raiderWarning) enqueue('raider.toll', `raider:${event.zone ?? 'warning'}`);
     },

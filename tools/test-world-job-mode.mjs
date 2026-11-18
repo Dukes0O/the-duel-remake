@@ -246,8 +246,8 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
 {
   const place = (id, x, z) => ({id, position: {x, y: 0, z}});
   const hearth = place('hearth', 0, 0);
-  const lamps = [place('pump', 20, 0), place('tower', 40, 0), place('far', 60, 0)];
-  const job = {id: 'test-town-brand', steps: [{kind: 'onfoot', brand: true, hearth, farWalk:[place('hearth-front',0,2.8)],
+  const lamps = [place('pump', 20, 0), place('tower', 40, 0), place('mast', 60, 0)];
+  const job = {id: 'test-town-brand', steps: [{kind: 'onfoot', brand: true, hearth, hearthFront:place('hearth-front',0,2.8),
     places: lamps, auntie: place('town-auntie-solder', 5, 5), ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
   const {app} = start({job});
   const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
@@ -332,7 +332,7 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
 // These are rule snapshots, not a second scripted walk through the job.
 {
   const place = (id, x) => ({id, position: {x, y: 0, z: 0}});
-  const lamps = [place('pump', 20), place('tower', 40), place('far', 60)];
+  const lamps = [place('pump', 20), place('tower', 40), place('mast', 60)];
   const {app} = start({job: {id: 'test-brand-ending', captions: {
     'brand.awake': 'Auntie Solder: Three lamps. Now we can see how bad it is.',
     'brand.thief': "Auntie Solder: Thief! He's got my bellows!",

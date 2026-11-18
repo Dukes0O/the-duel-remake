@@ -76,6 +76,16 @@ test('on-foot ammo does not imply an unbuilt weapon is ready', () => {
     {name: 'RPG', ammo: 'AMMO 3'});
 });
 
+test('the Hand Flamer shows seconds of fuel and says how it is used', () => {
+  const flamer = ammo => ({footGear: {name: 'HAND FLAMER', ammo}, footWeapons: {}, fighter: {}});
+  assert.deepEqual(footAmmoPresentation(flamer(4)), {name: 'HAND FLAMER', ammo: 'FUEL 4.0 s'});
+  assert.deepEqual(footAmmoPresentation(flamer(2.64)), {name: 'HAND FLAMER', ammo: 'FUEL 2.6 s'});
+  assert.deepEqual(footAmmoPresentation(flamer(0)), {name: 'HAND FLAMER', ammo: 'FUEL 0.0 s'});
+  assert.equal(footActionPresentation(flamer(2.64)).text, 'HOLD FIRE TO BURN');
+  assert.equal(footActionPresentation({...flamer(2.64), fighter: {flaming: true}}).text, 'FLAMING');
+  assert.equal(footActionPresentation(flamer(0)).text, 'OUT OF FUEL / LET GO TO REFILL');
+});
+
 test('on-foot status gives clear lock, reload and repair cues', () => {
   const state = {stageTimeSec: 4, footGear: {name: 'LONGHORN RPG', ammo: 3},
     footWeapons: {lockTargetIndex: null, lockSeconds: 0, nextFireAt: 0}};

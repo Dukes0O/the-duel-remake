@@ -74,20 +74,12 @@ export const BRAND_RULE = Object.freeze({
   brandLightRadius: 12,
   brandLightIntensity: 8,
   wallEntryInset: 1,
-  farWalkMin: 120,
-  farWalkMax: 160,
   sites: Object.freeze({
     pumpSouth: 5,
     towerEast: 5,
-    farWest: 53,
-    farNorth: 6,
+    mastEast: 0.7,
+    mastNorth: 3,
     hearthApproachSouth: 2.8,
-    firstAlleyEast: 20,
-    firstAlleySouth: 7,
-    innerAlleyNorth: 20,
-    westAlleyWest: 26,
-    westAlleyNorth: 34,
-    northAlleyNorth: 60,
     thiefAlleyEast: 20,
     thiefAlleySouth: 7,
     thiefGateApproachSouth: 30,
@@ -124,7 +116,7 @@ export const BRAND_LINES = Object.freeze({
   wallSecond: 'Auntie Solder: Two more over the wall!',
   pump: 'Auntie Solder: They are at the pump lamp!',
   tower: 'Auntie Solder: They are at the tower lamp!',
-  far: 'Auntie Solder: They are at the far lamp!',
+  mast: 'Auntie Solder: They are at the mast lamp!',
   tools: 'Cinder: Burn him back with the flamer. Up close, the same click swings the brand.',
 });
 
@@ -179,6 +171,14 @@ export function stepBrandAsh(step, state, view, dt = 0) {
     wave++;
   }
   next.wave = wave;
+  // A thrower's ash is for the brand. While the brand is out he has nothing to throw at, so he goes for a lit lamp as
+  // the smotherer does, and comes back for the player when the brand burns again (Claude's hand play, 17 November 2026:
+  // with the brand out the two throwers stood face to face with the player and did nothing).
+  const brandOut = view.brandSeconds <= 0;
+  const soughtLamps = new Set();
+  // A lamp's warning is said once while any man is at it, however many of them come (two throwers arriving together
+  // made Auntie say it twice; found by the review of slice 13).
+  const warnedBefore = new Set(state.lampsWarned ?? []), atLamps = new Set();
   for (const actor of view.ashMen ?? []) {
     if (!next.men[actor.id]) continue;
     const man = next.men[actor.id] = {...next.men[actor.id]};
@@ -201,25 +201,35 @@ export function stepBrandAsh(step, state, view, dt = 0) {
       } else requests.push({type: 'moveBrandAsh', id: actor.id, place: man.wall});
       continue;
     }
-    if (man.role === 'smother') {
-      const lamp = nearest(lamps.filter(candidate => view.lamps?.[candidate.id]), at);
+    if (man.role === 'smother' || (brandOut && !man.ash)) {
+      // Each man takes the nearest lit lamp no other man is already going for, when there is one.
+      const litLamps = lamps.filter(candidate => view.lamps?.[candidate.id]);
+      const lamp = nearest(litLamps.some(candidate => !soughtLamps.has(candidate.id))
+        ? litLamps.filter(candidate => !soughtLamps.has(candidate.id)) : litLamps, at);
+      if (lamp) soughtLamps.add(lamp.id);
       if (lamp && man.lamp !== lamp.id) {
         man.smotherSeconds = 0;
       }
-      if (lamp && man.warnedLamp !== lamp.id &&
-          distance(at, spot(lamp)) <= BRAND_RULE.lampWarningMetres) {
-        events.push({type: 'lampThreatened', id: lamp.id});
+      if (lamp && distance(at, spot(lamp)) <= BRAND_RULE.lampWarningMetres) {
+        if (man.warnedLamp !== lamp.id && !warnedBefore.has(lamp.id) && !atLamps.has(lamp.id))
+          events.push({type: 'lampThreatened', id: lamp.id});
         man.warnedLamp = lamp.id;
+        atLamps.add(lamp.id);
       }
       man.lamp = lamp?.id ?? null;
       man.smotherSeconds = lamp && distance(at, spot(lamp)) <= BRAND_RULE.smotherRadius
         ? (man.smotherSeconds ?? 0) + dt : 0;
       if (lamp) requests.push({type: 'moveBrandAsh', id: actor.id, place: lamp});
+      // No lamp is alight: a thrower keeps by the player until there is a brand or a lamp again.
+      else if (man.role === 'throw' && playerGap > BRAND_RULE.throwRange && here)
+        requests.push({type: 'moveBrandAsh', id: actor.id, place: {position: here}});
       if (man.smotherSeconds >= BRAND_RULE.smotherSeconds) {
         smotheredLamps.push(lamp.id);
         man.smotherSeconds = 0;
       }
     } else {
+      // Back to the brand: whatever he had begun at a lamp is dropped.
+      if (man.role === 'throw' && man.lamp) { man.lamp = null; man.smotherSeconds = 0; man.warnedLamp = null; }
       man.throwWait = Math.max(0, man.throwWait - dt);
       if (man.ash) {
         man.ash = {...man.ash, remaining: man.ash.remaining - dt};
@@ -236,6 +246,7 @@ export function stepBrandAsh(step, state, view, dt = 0) {
       if (playerGap > BRAND_RULE.throwRange && here) requests.push({type: 'moveBrandAsh', id: actor.id, place: {position: here}});
     }
   }
+  next.lampsWarned = [...atLamps];
   return {state: next, requests, events, smotheredLamps, brandAshed};
 }
 
@@ -254,25 +265,29 @@ export function brandSentence(brandsUsed) {
 // Ash impacts and lamp smothering are facts supplied by the job's opponents.
 export function stepBrand(step, state, view, dt) {
   const rule = BRAND_RULE;
-  // The existing caption queue owns the timing of Auntie's three sentences.
+  // The stop beside Auntie is the meeting: made in the car, before a brand can be taken. From that moment the hearth
+  // gives a brand, and Auntie's two sentences are said while the player may already be stepping out (Claude's hand play,
+  // 17 November 2026: the hearth gave nothing for twelve seconds while the screen said HOLD F TO GET OUT).
   // The meeting is optional so rule fixtures can exercise the load directly.
+  const briefing = [];
   if (step.meeting && !state.brandBriefed) {
-    const requests = [{type: 'marker', place: step.meeting}];
     const stopped = !view.onFoot && Math.abs(view.speedKmh ?? 0) < rule.stoppedKmh;
-    if (!state.brandMeeting && stopped && distance(view.player?.position, spot(step.meeting)) <= rule.meetingRadius) {
-      requests.push(...['lamps', 'alleys', 'brand'].map(key => ({type: 'say', lineId: `brand.${key}`})));
-      return {state: {...state, brandMeeting: true}, complete: false, events: [], requests};
-    }
-    if (!state.brandMeeting || (state.lineQueue?.length ?? 0) > 0 || (state.lineRemaining ?? 0) > 0)
-      return {state, complete: false, events: [], requests};
-    state = {...state, brandBriefed: true};
+    if (!stopped || distance(view.player?.position, spot(step.meeting)) > rule.meetingRadius)
+      return {state, complete: false, events: [], requests: [{type: 'marker', place: step.meeting}]};
+    briefing.push(...['lamps', 'alleys'].map(key => ({type: 'say', lineId: `brand.${key}`})));
+    state = {...state, brandMeeting: true, brandBriefed: true};
+  } else if (state.brandMeeting && !state.brandHinted &&
+      !(state.lineQueue?.length > 0) && !(state.lineRemaining > 0)) {
+    // Cinder's hint follows Auntie's sentences, and only for a player who is still sitting in the car without a brand.
+    state = {...state, brandHinted: true};
+    if (!view.onFoot && !(state.brandsUsed > 0)) briefing.push({type: 'say', lineId: 'brand.brand'});
   }
   // Once the town wakes, neither ash nor a burning brand can undo arrival.
   if (state.townEnding) return stepBrandEnding(state, dt);
   const next = {...state, lamps: {...state.lamps},
     brandSeconds: state.brandSeconds ?? 0, brandsUsed: state.brandsUsed ?? 0,
     brandElapsed: state.brandElapsed ?? 0};
-  const events = [], requests = [];
+  const events = [], requests = [...briefing];
   const lamps = step.places ?? [];
   const ash = step.ashEntries?.length ? stepBrandAsh(step, state.brandAsh ?? {},
     {...view, lamps: next.lamps, brandSeconds: next.brandSeconds}, dt) : null;
@@ -361,7 +376,8 @@ export function stepBrand(step, state, view, dt) {
 
 function stepBrandEnding(state, dt) {
   const elapsed = Math.min(BRAND_RULE.endingSeconds, (state.endingElapsed ?? 0) + dt);
-  const events = [], requests = [];
+  // The ending has no place to walk to: the last lamp's ring goes with the walk.
+  const events = [], requests = [{type: 'marker', place: null}];
   const theft = !state.theftStarted && elapsed >= BRAND_RULE.theftAtSeconds;
   if (theft) {
     events.push({type: 'brandTheft'});

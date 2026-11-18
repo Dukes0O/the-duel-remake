@@ -164,7 +164,8 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   const finds = [...(worldJob?.definition?.finds ?? []), ...(job?.steps ?? []).flatMap(item => item.finds ?? [])];
   return {
     line: worldJob?.arrivalHold ? 'Delivered. The forge takes the fire.' : next.line, kind: next.kind, target, bearing,
-    prompt: townGatePrompt || (step?.kind==='onfoot' ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
+    // While the town's ending is watched there is nothing to do, so nothing is asked.
+    prompt: townGatePrompt || (step?.kind==='onfoot' && !job?.stepState?.townEnding ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
@@ -174,7 +175,7 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
     ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
-    brand: step?.brand && job.stepState.brandsUsed > 0 ? {
+    brand: step?.brand && job.stepState.brandsUsed > 0 && !job.stepState.townEnding ? {
       value: job.stepState.brandSeconds ?? 0, max: BRAND_RULE.burnSeconds,
       out: !(job.stepState.brandSeconds > 0), brandsUsed: job.stepState.brandsUsed,
     } : null,
@@ -486,6 +487,8 @@ export function createWorldHud({host, app = null, picture = null}) {
         found: profile?.world?.found ?? []});
       line.textContent = model.line;
       prompt.textContent = model.prompt;
+      // With nothing to ask, the box goes too (it stayed as an empty dark pill beside the mirror).
+      prompt.hidden = !model.prompt;
       const bars=model.wave?[{label:`WAVE ${Math.min(model.wave.value+1,model.wave.max)} / ${model.wave.max}`,value:Math.min(model.wave.value+1,model.wave.max),max:model.wave.max}]:[];
       if(model.well)bars.push({label:`WELL ${Math.ceil(model.well.value)} / ${model.well.max}`,value:model.well.value,max:model.well.max});
       progress.hidden=!bars.length;

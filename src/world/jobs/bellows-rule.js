@@ -119,10 +119,11 @@ export function bellowsWreckRoute(wrecks, entry, exit) {
   return Object.freeze({line, wide, metres: length(line), wideExtraMetres: length(wide) - length(line)});
 }
 
-export function bellowsFootStart(car, farLamp) {
-  const dx = farLamp.x - car.x, dz = farLamp.z - car.z;
+// The chase starts on foot beside a lit lamp (the pump lamp), a run from the car in the bay.
+export function bellowsFootStart(car, lamp) {
+  const dx = lamp.x - car.x, dz = lamp.z - car.z;
   const distance = Math.hypot(dx, dz);
-  if (!(distance > 0)) throw new Error('The far lamp must be away from the bay.');
+  if (!(distance > 0)) throw new Error('The lamp must be away from the bay.');
   return Object.freeze({x: car.x + dx / distance * BELLOWS_RULE.footStartFromCarMetres,
     z: car.z + dz / distance * BELLOWS_RULE.footStartFromCarMetres,
     heading: Math.atan2(-dx, -dz)});

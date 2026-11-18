@@ -173,6 +173,12 @@ Three more from the same merge, each found only by the last lane tier:
   riders were designed to give up at the Pipe, which the road crosses before
   it reaches the pan. Print the way's line, its regions and the places' own
   coordinates before writing a rule that races to one of them.
+- **A cause written down from a hand play is measured before it is cured.** Two
+  of the causes recorded from job 2's hand plays on 17 November were wrong: F was
+  not blocked during the opening lines (the hearth was), and the view had no
+  resting tilt (the hand-drive tool's own mouse press had tilted it). Read the
+  state at the moment (`eval:` in `tools/hand-drive.mjs`) or the rule's code
+  first; write the fault as what was seen, and the cause only once it is measured.
 - **A cure with a cost gate that fails twice gets a new method**, not a third
   try of the same one. Drawing creased ground finer failed three times; the
   cure that stands draws what stands on the land at the drawn ground.

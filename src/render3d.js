@@ -47,7 +47,7 @@ import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
 import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView } from './world-job-camera.js';
-import { brandThiefPose, BRAND_RULE } from './world/jobs/brand-rule.js';
+import { brandThiefPose } from './world/jobs/brand-rule.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
@@ -1032,7 +1032,7 @@ export function attachRenderer(host, app) {
     const townJob = !menu && st.arena?.mode === 'world-job' ? st.arena.worldJob?.job : null, townStep = townJob?.steps?.[townJob.stepIndex];
     if (townStep?.brand && townJob.stepState?.townEnding) {
       const ending = townJob.stepState, ground = drawnGround || scablandsSurfaceHeightAt;
-      const pose = townEndingView(townStep, ground, brandThiefPose(townStep, ending), ending.endingElapsed - BRAND_RULE.theftAtSeconds);
+      const pose = townEndingView(townStep, ground, brandThiefPose(townStep, ending));
       const t = Math.max(0, Math.min(1, ending.endingElapsed)), blend = t * t * (3 - 2 * t);
       camera.position.lerp(new THREE.Vector3(pose.position.x, pose.position.y, pose.position.z), blend);
       lookTarget.lerp(new THREE.Vector3(pose.target.x, pose.target.y, pose.target.z), blend);

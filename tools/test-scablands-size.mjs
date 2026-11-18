@@ -367,7 +367,7 @@ test('moving a place in a copy of the table moves everything that belongs to it,
   }
   // The things named in the card, by name: all of Tin Town's follow Tin Town.
   const before = positionsOf(everything(LAND)), after = positionsOf(everything(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))));
-  for (const id of ['tin-town', 'tin-town-gate-front', 'pump', 'tower', 'far', 'town-hearth', 'auntie-kitchen', 'town-safe-corner', 'south-road',
+  for (const id of ['tin-town', 'tin-town-gate-front', 'pump', 'tower', 'mast', 'town-hearth', 'auntie-kitchen', 'town-safe-corner', 'south-road',
     'furnace-approach', 'tin-town-gate', 'tin-town-gate-approach', 'long-road-6', 'rail-tin-town', 'rail-east-run']) {
     assert.ok(before.has(id), `${id} exists`);
     assert.deepEqual([after.get(id)[0] - before.get(id)[0], after.get(id)[1] - before.get(id)[1]], delta, `${id} moves with Tin Town`);

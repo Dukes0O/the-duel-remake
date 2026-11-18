@@ -3,6 +3,7 @@ import {BRAND_RULE, BRAND_LINES, brandPay, brandSentence, stepBrandAsh} from '..
 import {stepOnFoot} from '../src/world/jobs/steps/onfoot.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {brandSites} from '../src/world/jobs/brand-sites.js';
+import {brandWaysFor} from '../src/world/jobs/brand-ways.js';
 import {SCABLANDS_SOLIDS, SOLID_GRID, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
@@ -121,7 +122,7 @@ console.log('PASS Light the Town: every browser page expression parses in its ow
 
 // Rule snapshots, never a walking driver.
 const hearth = {id: 'hearth', position: {x: 0, y: 0, z: 0}};
-const places = ['pump', 'tower', 'far'].map((id, index) =>
+const places = ['pump', 'tower', 'mast'].map((id, index) =>
   ({id, position: {x: 60 + index * 40, y: 0, z: 0}}));
 const step = {kind: 'onfoot', brand: true, hearth, places};
 const foot = (x, extras = {}) => ({onFoot: true,
@@ -194,7 +195,7 @@ assert.equal(tick(taken.state, {onFoot: false}, 240).state.dusk, 1);
 assert.equal(tick(taken.state, {onFoot: false}, 300).state.dusk, 1);
 
 // Job 2.7 foundations: all lamps must be lit at once, with the designed pay.
-const all = {...taken.state, lamps: {pump: true, tower: true, far: true}};
+const all = {...taken.state, lamps: {pump: true, tower: true, mast: true}};
 assert.equal(tick(all, foot(10)).complete, true);
 assert.equal(tick(all, foot(10, {smotheredLamps: ['pump']})).complete, false);
 assert.equal(brandPay(1), 100);
@@ -260,7 +261,7 @@ assert(Math.hypot(waveEntries[0].x-waveEntries[1].x,
 assert.equal(Object.keys(secondWave.state.men).length, 3);
 assert.equal(Object.values(secondWave.state.men).filter(man => man.role === 'smother').length, 1);
 const darkAgain = ashTick(secondWave.state, {...ashView, lamps: {}});
-assert.equal(ashTick(darkAgain.state, {...ashView, lamps: {pump: true, tower: true, far: true}}).requests.length, 0);
+assert.equal(ashTick(darkAgain.state, {...ashView, lamps: {pump: true, tower: true, mast: true}}).requests.length, 0);
 assert.equal(firstWave.state.men['town-ash-0-0'].lamp, undefined);
 
 // Four seconds must be spent continuously beside the nearest lit lamp.
@@ -288,6 +289,38 @@ const landed = ashTick(thrown.state, throwView, 1);
 assert.equal(ashTick(landed.state, throwView, 3.99).events.length, 0);
 assert.equal(ashTick(landed.state, throwView, 4).events[0].type, 'ashThrow');
 assert.equal(ashTick(secondWave.state, {...throwView, ...foot(59.99)}).events.length, 0);
+
+// Slice 13: while the brand is out a thrower has nothing to throw at, so he goes for a lit lamp as the smotherer does
+// (each man a lamp of his own while there is one) and smothers it in the same four seconds; with the brand burning
+// again he comes back for the player. Before, the two throwers stood in front of the player and did nothing.
+{
+  const men = [['town-ash-0-0', 70], ['town-ash-1-0', 75], ['town-ash-1-1', 95]].map(([id, x]) => ({id, position: {x, y: 0, z: 0}}));
+  const outView = {...ashView, brandSeconds: 0, lamps: {pump: true, tower: true}, ashMen: men};
+  const moves = result => result.requests.filter(request => request.type === 'moveBrandAsh').map(request => [request.id, request.place.id]);
+  const out = ashTick(secondWave.state, outView);
+  assert.deepEqual(moves(out), [['town-ash-0-0', 'pump'], ['town-ash-1-0', 'tower'], ['town-ash-1-1', 'tower']]);
+  assert.equal(out.events.some(event => event.type === 'ashThrow'), false, 'Nobody throws at a brand that is out.');
+  const atTower = {...outView, ashMen: [{id: 'town-ash-1-0', position: places[1].position}]};
+  const begun = ashTick(out.state, atTower, 3.99);
+  assert.deepEqual(begun.smotheredLamps, []);
+  assert.deepEqual(ashTick(begun.state, atTower, .01).smotheredLamps, ['tower']);
+  const relit = ashTick(begun.state, {...outView, brandSeconds: 90});
+  assert.deepEqual(moves(relit), [['town-ash-0-0', 'pump'], ['town-ash-1-0', undefined], ['town-ash-1-1', undefined]],
+    'With the brand burning the throwers walk back to the player.');
+  assert.equal(relit.state.men['town-ash-1-0'].lamp, null);
+  assert.equal(relit.state.men['town-ash-1-0'].smotherSeconds, 0);
+  // Two throwers who come to one lamp together are warned of once, not twice (found by the review of slice 13), and
+  // again only after every man has left it.
+  const together = {...outView, lamps: {tower: true}, ashMen: [['town-ash-1-0', 96], ['town-ash-1-1', 104]].map(([id, x]) => ({id, position: {x, y: 0, z: 0}}))};
+  const arrived = ashTick(secondWave.state, together);
+  assert.deepEqual(arrived.events.filter(event => event.type === 'lampThreatened'), [{type: 'lampThreatened', id: 'tower'}]);
+  assert.deepEqual(ashTick(arrived.state, together).events.filter(event => event.type === 'lampThreatened'), []);
+  const left = ashTick(arrived.state, {...together, brandSeconds: 90});
+  assert.deepEqual(left.state.lampsWarned, []);
+  assert.deepEqual(ashTick(left.state, together).events.filter(event => event.type === 'lampThreatened'), [{type: 'lampThreatened', id: 'tower'}]);
+  // No lamp alight and no brand: a thrower keeps by the player.
+  assert.deepEqual(moves(ashTick(secondWave.state, {...outView, lamps: {}})), [['town-ash-1-0', undefined], ['town-ash-1-1', undefined]]);
+}
 
 // Job 2.5: a burning swing at two metres or a confirmed Hand Flamer hit at
 // six metres causes permanent retreat. Neither damages or kills a fighter.
@@ -326,11 +359,14 @@ assert.equal(integratedAsh.state.brandSeconds, 0);
 assert(integratedAsh.events.some(event => event.type === 'brandOut'));
 console.log('PASS Light the Town: Ash Men waves, smothering, ash tells, dodging and permanent retreat.');
 
-// Job 2.3: actual town places, ground-level tower access and a clear alley
-// route of the specified length. Geometry samples do not move a player.
+// Job 2.3: actual town places, ground-level tower access, and a way a walker can follow from each place to each other
+// (the marker's way, src/world/jobs/brand-ways.js). Geometry samples do not move a player.
+// Changed on 17 November 2026 (the card, "Job 2, slice 13"): the third lamp stood 38 m outside the town and this check
+// walked six hand-set points to it (120 m to 160 m); it stands beside the radio mast now, and the check follows the
+// shown way between every pair of places on the real solids instead.
 const sites = brandSites();
 assert.equal(sites.towerAtFoot, true);
-assert.deepEqual(sites.lamps.map(lamp => lamp.id), ['pump', 'tower', 'far']);
+assert.deepEqual(sites.lamps.map(lamp => lamp.id), ['pump', 'tower', 'mast']);
 for (const lamp of sites.lamps) {
   const {x, y, z} = lamp.position;
   assert.equal(y, scablandsSurfaceHeightAt(x, z));
@@ -344,37 +380,79 @@ for (const lamp of sites.lamps) {
     assert(gap >= BRAND_RULE.lampClearance, `${lamp.id} too near ${solid.id}: ${gap}`);
   }
 }
-let walkMetres = 0;
-for (let index = 1; index < sites.farWalk.length; index++) {
-  const a = sites.farWalk[index - 1].position, b = sites.farWalk[index].position;
-  const length = Math.hypot(b.x - a.x, b.z - a.z);
-  walkMetres += length;
-  for (let part = 0; part <= Math.ceil(length * 4); part++) {
-    const share = part / Math.ceil(length * 4);
-    const x = a.x + (b.x - a.x) * share, z = a.z + (b.z - a.z) * share;
-    assert.equal(pushOutOfSolids(x, z, .4, SOLID_GRID).hit, null,
-      `The far lamp alley must fit the existing fighter at ${x}, ${z}.`);
+// Every lamp stands among the shacks: a wall within 6 m for its light to fall on.
+for (const lamp of sites.lamps) assert(SCABLANDS_SOLIDS.some(solid => solid.height >= 2 &&
+  Math.hypot(lamp.position.x - solid.x, lamp.position.z - solid.z) - Math.hypot(solid.halfX, solid.halfZ) <= 6),
+  `${lamp.id} lamp has no wall within 6 m to light`);
+const wayGrid = createJobSolidGrid();
+wayGrid.setBrandLamps(sites.lamps);
+const ways = brandWaysFor({brand: true, hearth: sites.hearth, places: sites.lamps, ashEntries: sites.ashEntries}, wayGrid.movers);
+const reachOf = place => place.id === sites.hearth.id ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius;
+// A walker the size of the existing fighter who steps a quarter metre at a time toward the aim it is shown.
+function followWay(from, place) {
+  let at = {x: from.x, z: from.z}, metres = 0, said = null;
+  for (let tick = 0; tick < 4000 && Math.hypot(at.x - place.position.x, at.z - place.position.z) > reachOf(place); tick++) {
+    const aim = ways.aim(at, place.id);
+    assert(aim, `No way is shown to ${place.id} from ${at.x.toFixed(1)}, ${at.z.toFixed(1)}`);
+    said ??= aim.metres;
+    const gap = Math.hypot(aim.x - at.x, aim.z - at.z), pace = Math.min(.25, gap);
+    const x = at.x + (aim.x - at.x) / gap * pace, z = at.z + (aim.z - at.z) / gap * pace;
+    const stood = pushOutOfSolids(x, z, .4, wayGrid.movers, scablandsSurfaceHeightAt(x, z));
+    metres += Math.hypot(stood.x - at.x, stood.z - at.z);
+    at = {x: stood.x, z: stood.z};
   }
+  return {metres, said, left: Math.hypot(at.x - place.position.x, at.z - place.position.z)};
 }
-assert(walkMetres >= BRAND_RULE.farWalkMin && walkMetres <= BRAND_RULE.farWalkMax,
-  `Far lamp alley length: ${walkMetres}`);
+const beside = place => place.id === sites.hearth.id ? sites.hearthFront.position
+  : {x: place.position.x + 1.8, z: place.position.z};
+let walkMetres = 0;
+const wayPlaces = [sites.hearth, ...sites.lamps];
+for (const from of wayPlaces) for (const to of wayPlaces) {
+  if (from === to) continue;
+  const start = beside(from), straight = Math.hypot(start.x - to.position.x, start.z - to.position.z);
+  const walk = followWay(start, to);
+  assert(walk.left <= reachOf(to), `The way from ${from.id} to ${to.id} stops ${walk.left.toFixed(1)} m short.`);
+  assert(walk.metres <= straight * 1.35 + 10, `The way from ${from.id} to ${to.id} wanders: ${walk.metres.toFixed(0)} m for ${straight.toFixed(0)} m.`);
+  assert(Math.abs(walk.said - walk.metres) <= walk.metres * .15 + 4, `The distance shown from ${from.id} to ${to.id} (${walk.said.toFixed(0)} m) is not the walk (${walk.metres.toFixed(0)} m).`);
+  if (from === sites.hearth) walkMetres += walk.metres;
+}
+// From inside the forge bay, where the car is parked, the straight line to the pump lamp is through the forge; the aim
+// shown is another way, and following it arrives.
+const parked = EVERBURN_JOBS.find(job => job.id === 'everburn-get-out-and-walk').steps[0].carStart;
+const steppedOut = pushOutOfSolids(parked.x + 1.6, parked.z, .4, wayGrid.movers, scablandsSurfaceHeightAt(parked.x + 1.6, parked.z));
+for (const lamp of sites.lamps) assert(followWay(steppedOut, lamp).left <= BRAND_RULE.lampRadius);
 assert.deepEqual(sites, brandSites(), 'Sites repeat without a random draw.');
-console.log(`PASS Light the Town: real lamp clearance and ${walkMetres.toFixed(1)} m alley route.`);
+console.log(`PASS Light the Town: real lamp clearance, a wall by every lamp and a followed way between every pair of places (${walkMetres.toFixed(0)} m from the hearth to the three lamps).`);
 
-// Job 2.1: the stop is made in the car, before a brand can be taken. The
-// existing caption sequencer says the three sentences once, in order.
+// Job 2.1: the stop is made in the car, before a brand can be taken. From the stop the hearth gives a brand while
+// Auntie's two sentences are said (the existing caption sequencer says them once, in order); Cinder's hint follows
+// only for a player who is still sitting in the car without a brand. Changed on 17 November 2026 after Claude's hand
+// play (the card, "Job 2, slice 13"): before, no brand could be taken until all three sentences had been said.
 const meetingStep = {...step, meeting: hearth};
 const waiting = (state, view) => stepOnFoot(meetingStep, state, view, 0);
+const saidBy = result => result.requests.filter(request => request.type === 'say').map(request => request.lineId);
 assert.equal(waiting({}, foot(0)).state.brandMeeting, undefined);
+assert.equal(waiting({}, foot(0)).state.brandsUsed, undefined, 'No brand before the stop beside Auntie.');
 assert.equal(waiting({}, {player: hearth, speedKmh: 1}).state.brandMeeting, undefined);
 assert.equal(waiting({}, {player: {position: {x: 8.01, z: 0}}}).state.brandMeeting, undefined);
 const greeted = waiting({}, {player: {position: {x: 8, z: 0}}});
 assert.equal(greeted.state.brandMeeting, true);
-assert.deepEqual(greeted.requests.filter(request => request.type === 'say').map(request => request.lineId),
-  ['brand.lamps', 'brand.alleys', 'brand.brand']);
-assert.equal(waiting({...greeted.state, lineQueue: ['brand.brand']}, foot(0)).state.brandsUsed, undefined);
-assert.equal(waiting({...greeted.state, lineRemaining: .1}, foot(0)).state.brandsUsed, undefined);
-assert.equal(waiting(greeted.state, foot(0)).state.brandsUsed, 1);
+assert.equal(greeted.state.brandBriefed, true);
+assert.deepEqual(saidBy(greeted), ['brand.lamps', 'brand.alleys']);
+// Stepping out while Auntie is speaking: the brand is taken at once, and the hint to step out is never said.
+const early = waiting({...greeted.state, lineQueue: ['brand.alleys'], lineRemaining: 1}, foot(0));
+assert.equal(early.state.brandsUsed, 1);
+assert.equal(early.state.brandHinted, undefined);
+const afterEarly = waiting({...early.state, lineQueue: [], lineRemaining: 0}, foot(0));
+assert.equal(afterEarly.state.brandHinted, true);
+assert.deepEqual(saidBy(afterEarly), []);
+// Still in the car when Auntie has finished: Cinder's hint, once.
+assert.deepEqual(saidBy(waiting({...greeted.state, lineRemaining: .1}, {player: hearth, speedKmh: 0})), []);
+const sitting = waiting(greeted.state, {player: hearth, speedKmh: 0});
+assert.deepEqual(saidBy(sitting), ['brand.brand']);
+assert.deepEqual(saidBy(waiting(sitting.state, {player: hearth, speedKmh: 0})), []);
+// On foot without a brand when Auntie has finished: the screen's own line says what to do; no hint to step out.
+assert.deepEqual(saidBy(waiting(greeted.state, foot(40))), []);
 const meetingDef = {id: 'brand-meeting-check', captions: Object.fromEntries(
   Object.entries(BRAND_LINES).map(([id, text]) => [`brand.${id}`, text])), steps: [meetingStep]};
 let meetingJob = createJob(meetingDef);
@@ -470,6 +548,24 @@ navigationWorld.job.stepState = {...hudState,brandSeconds:0};
 assert.deepEqual(footBrandDirection(navigationState),{name:'THE HEARTH',distance:0,angle:0});
 navigationState.fighter = {...sites.lamps[0].position,yaw:0};
 assert.equal(footBrandDirection(navigationState).name,'PUMP LAMP');
+// Slice 13: with the job's solids the arrow leads by the way that can be walked. Stepped out in the forge bay with the
+// pump lamp the only dark one and the brand burning, it is found by an arrow that follows the shown way, with that walk's
+// metres; without the solids (as above) it points straight, as before.
+{
+  const arrowGrid = createJobSolidGrid();
+  arrowGrid.setBrandLamps(actualStep.places);
+  const from = pushOutOfSolids(actualStep.carStart.x + 1.6, actualStep.carStart.z, .4, arrowGrid.movers,
+    scablandsSurfaceHeightAt(actualStep.carStart.x + 1.6, actualStep.carStart.z));
+  const walker = {x: from.x, y: 0, z: from.z, yaw: 0};
+  const world = {...navigationWorld, solidGrid: arrowGrid, job: {...actualJob, stepState: {...hudState, lamps: {tower: true, mast: true}}}};
+  const arrow = footBrandDirection({...navigationState, fighter: walker, arena: {mode: 'world-job', worldJob: world}});
+  const shown = brandWaysFor(actualStep, arrowGrid.movers).aim(walker, 'pump');
+  assert.equal(arrow.name, 'PUMP LAMP');
+  assert.equal(arrow.distance, Math.round(shown.metres));
+  assert.equal(arrow.angle, Math.round(Math.atan2(shown.x - walker.x, shown.z - walker.z) * 180 / Math.PI));
+  const pump = actualStep.places[0].position, straight = Math.round(Math.atan2(pump.x - walker.x, pump.z - walker.z) * 180 / Math.PI);
+  assert.notEqual(arrow.angle, straight, 'From the bay the straight line to the pump lamp is through the forge.');
+}
 navigationState.onFoot=false;
 assert.equal(footBrandDirection(navigationState),null);
 navigationState.onFoot=true;
@@ -479,7 +575,7 @@ const mapFrame=worldMapFrame({state:navigationState,course:null,model:hud(hudSta
 const townMap=brandTownMap(mapFrame,SMALL_MAP);
 assert(townMap.view.scale >= 1,'The town uses metres rather than kilometres on the small map.');
 assert.deepEqual(townMap.fires.map(fire=>[fire.id,fire.lit]),
-  [['town-hearth',true],['pump',true],['tower',false],['far',false]]);
+  [['town-hearth',true],['pump',true],['tower',false],['mast',false]]);
 assert.deepEqual(townMap.men.map(man=>man.id),['over-wall']);
 for(const point of [...townMap.fires,...townMap.men]) {
   const at=toScreen(townMap.view,point.x,point.z);
@@ -494,7 +590,7 @@ const mapContext=new Proxy({
 },{get:(object,key)=>key in object?object[key]:()=>{}});
 drawSmallMap(mapContext,{...mapFrame,picture:{marks:landMarks()},
   knowledge:createKnowledge(),target:null});
-for(const label of ['HEARTH','PUMP','TOWER','FAR']) assert(mapLabels.includes(label));
+for(const label of ['HEARTH','PUMP','TOWER','MAST']) assert(mapLabels.includes(label));
 for(const colour of ['#ffbc72','#252e34','#ff683a']) assert(mapFills.includes(colour),
   'The map paints lit fires, dark fires and the man who has entered.');
 navigationState.onFoot=false;
@@ -889,11 +985,27 @@ moveJobRaiders({course:{def:{scablands:false}}}, {actors:crossing}, 1);
 assert.equal(crossing[0].x,-3);
 console.log('PASS slice 11.5: real town entries and no crossing through a stationary neighbour.');
 
-// Review: opposing walkers must pass even in the town's narrowest alley.
-// Check every authored alley stretch, in both normal and fleeing priority.
-for (let segment = 1; segment < actualStep.farWalk.length - 1; segment++) {
-  const start = actualStep.farWalk[segment].position;
-  const end = actualStep.farWalk[segment + 1].position;
+// Review: opposing walkers must pass each other on the town's hand-set stretches (the thief's way from the forge to
+// the gate; the stretches of the old walk to the far lamp went with that lamp). Normal and fleeing priority.
+// Two men can now head for one lamp and back, so a straight approach to each lamp is checked as well (the review of
+// slice 13): the first of sixteen directions round the lamp that is clear for a walker from 3 m to 15 m out.
+const passingStretches = [];
+for (let segment = 1; segment < actualStep.theftPath.length - 1; segment++)
+  passingStretches.push([actualStep.theftPath[segment].position, actualStep.theftPath[segment + 1].position]);
+for (const lamp of actualStep.places) {
+  const clearAt = (x, z) => !pushOutOfSolids(x, z, .4, SOLID_GRID, scablandsSurfaceHeightAt(x, z)).hit;
+  let approach = null;
+  for (let turn = 0; turn < 16 && !approach; turn++) {
+    const angle = turn * Math.PI / 8, ux = Math.sin(angle), uz = Math.cos(angle);
+    let clearWalk = true;
+    for (let metres = 3; metres <= 15 && clearWalk; metres += .25) clearWalk = clearAt(lamp.position.x + ux * metres, lamp.position.z + uz * metres);
+    if (clearWalk) approach = [{x: lamp.position.x + ux * 15, z: lamp.position.z + uz * 15}, {x: lamp.position.x + ux * 3, z: lamp.position.z + uz * 3}];
+  }
+  assert(approach, `The ${lamp.id} lamp has a straight approach of 12 m.`);
+  passingStretches.push(approach);
+}
+console.log(`Passing walkers: ${passingStretches.length} stretches.`);
+for (const [start, end] of passingStretches) {
   const length = Math.hypot(end.x-start.x,end.z-start.z);
   const span = Math.min(10,length/3);
   const middle = {x:(start.x+end.x)/2,z:(start.z+end.z)/2};
@@ -918,10 +1030,10 @@ for (let segment = 1; segment < actualStep.farWalk.length - 1; segment++) {
       for (const actor of actors) {
         const clear = pushOutOfSolids(actor.x,actor.z,BRAND_RULE.ashRadiusMetres,grid.movers,actor.y);
         assert(Math.hypot(clear.x-actor.x,clear.z-actor.z)<1e-8,
-          `Alley ${segment}: ${actor.id} must remain outside buildings.`);
+          `Stretch ${passingStretches.findIndex(item => item[0] === start) + 1}: ${actor.id} must remain outside buildings.`);
       }
     }
-    assert(arrived.every(Boolean),`Alley ${segment}: both men arrive within 30 seconds (fleeing ${fleeing}).`);
+    assert(arrived.every(Boolean),`Stretch ${passingStretches.findIndex(item => item[0] === start) + 1}: both men arrive within 30 seconds (fleeing ${fleeing}).`);
   }
 }
 console.log('PASS review: opposing Ash Men and a fleeing man pass through every town alley within 30 seconds.');

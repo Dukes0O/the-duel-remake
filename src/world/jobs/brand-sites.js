@@ -1,6 +1,6 @@
 // Job 2's places come from the town that is drawn, not a second town layout.
-// The route is a clear way through its alleys, not a movement system. The
-// existing fighter still owns every step, collision and choice of direction.
+// The existing fighter owns every step, collision and choice of direction; the way shown to a walker is worked out in
+// brand-ways.js.
 import {LAND} from '../scablands-names.js';
 import {tinTownLayout, tinTownFence} from '../tin-town-shacks.js';
 import {forgePlan} from '../forge-look.js';
@@ -13,7 +13,8 @@ export function brandSites(land = LAND) {
   const slots = tinTownLayout(land).clusters.flatMap(cluster => cluster.slots);
   const pump = slots.find(slot => slot.kind === 'T');
   const tower = slots.find(slot => slot.kind === 'W');
-  if (!pump || !tower) throw new Error('Light the Town needs both town towers.');
+  const mast = slots.find(slot => slot.kind === 'P');
+  if (!pump || !tower || !mast) throw new Error('Light the Town needs the pump, the water tower and the radio mast.');
   const rule = BRAND_RULE.sites;
   const place = (id, point) => Object.freeze({id, position: Object.freeze({
     x: point.x, y: scablandsSurfaceHeightAt(point.x, point.z), z: point.z,
@@ -26,17 +27,12 @@ export function brandSites(land = LAND) {
     place('pump', {x: pump.x, z: pump.z + rule.pumpSouth}),
     // Ladders in the folk kit are scenery. The fighter has no ladder action.
     place('tower', {x: tower.x + rule.towerEast, z: tower.z}),
-    place('far', {x: pump.x - rule.farWest, z: pump.z - rule.farNorth}),
+    // The third lamp stands in the small yard among the east shacks, beside the radio mast, which is seen over the roofs.
+    // It stood 38 m outside the town on the open plates until 17 November 2026, where it lit nothing (Claude's hand play).
+    place('mast', {x: mast.x + rule.mastEast, z: mast.z - rule.mastNorth}),
   ]);
-  const farWalk = Object.freeze([
-    place('hearth-front', {x: hearthAt.x, z: hearthAt.z + rule.hearthApproachSouth}),
-    place('forge-alley', land.at('tin-town', rule.firstAlleyEast, rule.firstAlleySouth)),
-    place('inner-alley', land.at('tin-town', rule.firstAlleyEast, -rule.innerAlleyNorth)),
-    place('west-alley', land.at('tin-town', -rule.westAlleyWest, -rule.westAlleyNorth)),
-    place('north-alley', land.at('tin-town', -rule.westAlleyWest, -rule.northAlleyNorth)),
-    place('far-alley', {x: lamps[2].position.x, z: land.at('tin-town').z - rule.northAlleyNorth}),
-    lamps[2],
-  ]);
+  // The clear ground in front of the hearth: where a walker gets up after a knockdown, and where the thief sets off.
+  const hearthFront = place('hearth-front', {x: hearthAt.x, z: hearthAt.z + rule.hearthApproachSouth});
   const centre = land.at('tin-town');
   const ashEntries = Object.freeze(tinTownFence(land).map((sheet, index) => {
     const dx = centre.x - sheet.x, dz = centre.z - sheet.z;
@@ -44,12 +40,12 @@ export function brandSites(land = LAND) {
     return place(`town-wall-${index}`, {x: sheet.x + dx * scale, z: sheet.z + dz * scale});
   }));
   const gate = tinTownGateFor(land).gate;
-  const theftPath = Object.freeze([farWalk[0],
+  const theftPath = Object.freeze([hearthFront,
     place('thief-bay', land.at('tin-town', rule.thiefAlleyEast, rule.thiefAlleySouth)),
     place('thief-south-alley', land.at('tin-town', rule.thiefAlleyEast, rule.thiefGateApproachSouth)),
     place('thief-gate-approach', {x: gate.x, z: land.at('tin-town').z + rule.thiefGateApproachSouth}),
     place('thief-gate', gate)]);
-  return Object.freeze({hearth, auntie, lamps, farWalk, ashEntries, theftPath, towerAtFoot: true});
+  return Object.freeze({hearth, auntie, lamps, hearthFront, ashEntries, theftPath, towerAtFoot: true});
 }
 
 // Choose alley waypoints only. The existing foot mover owns every actual step.
@@ -124,7 +120,7 @@ export function brandAshAim(actor, goal, entries, grid) {
 export function brandRecoveryPose(step, place, grid = SOLID_GRID) {
   const at = place.position ?? place;
   const hearth = place.id === step.hearth.id;
-  const candidates = hearth ? [step.farWalk[0].position] :
+  const candidates = hearth ? [step.hearthFront.position] :
     Array.from({length: BRAND_RULE.recoveryDirections}, (_, index) => {
       const angle = index * Math.PI * 2 / BRAND_RULE.recoveryDirections;
       return {x: at.x + Math.sin(angle) * BRAND_RULE.recoveryLampMetres,

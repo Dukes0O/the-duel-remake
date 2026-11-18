@@ -330,7 +330,7 @@ function townFootpath(from, goal) {
 }
 function walkLightTheTown(duel, step) {
   const state = duel.state, world = state.arena.worldJob, rule = world.job.stepState;
-  const walk = townWalks.get(duel) ?? {smothered:{pump:0,tower:0,far:0}, lamps:{}};
+  const walk = townWalks.get(duel) ?? {smothered:{pump:0,tower:0,mast:0}, lamps:{}};
   townWalks.set(duel,walk);
   for (const lamp of step.places) {
     if (walk.lamps[lamp.id] && !rule.lamps?.[lamp.id] && !rule.townEnding) walk.smothered[lamp.id]++;

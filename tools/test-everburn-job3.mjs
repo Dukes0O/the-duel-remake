@@ -517,12 +517,14 @@ const duel = app.duel, playerState = duel.state;
 assert.equal(playerState.onFoot, true);
 assert(playerState.fighter && playerState.footTransition && playerState.footWeapons);
 const bay = duel.course.groundAt(playerState.s, playerState.lateral);
-const far = town.places.find(lamp => lamp.id === 'far').position;
+// The start is toward the pump lamp since 17 November 2026: job 2's third lamp, which gave the side before, moved in
+// beside the radio mast on the other side of the bay (the card, "Job 2, slice 13").
+const far = town.places.find(lamp => lamp.id === 'pump').position;
 assert(Math.hypot(bay.x - town.carStart.x, bay.z - town.carStart.z) < 1e-6);
 assert(Math.abs(fighterDistanceToCar(duel) - BELLOWS_RULE.footStartFromCarMetres) < 1e-6);
 assert((playerState.fighter.x - bay.x) * (far.x - bay.x) +
   (playerState.fighter.z - bay.z) * (far.z - bay.z) > 0,
-  'The player starts on the far lamp side of the bay.');
+  'The player starts on the pump lamp side of the bay.');
 assert.equal(playerState.speedMph, 0);
 assert.equal(JSON.stringify([...memory]), savedBeforeStart, 'The start writes no saved fields.');
 playerState.status = 'racing'; playerState.countdown = 0;

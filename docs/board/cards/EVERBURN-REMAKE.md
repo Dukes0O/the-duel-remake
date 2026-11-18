@@ -1408,6 +1408,78 @@ the lane tier for the changed files (82 suites, pass; the long suites it left to
 `test-field-battle`, `test-first-person-polish`, `test-old-smoke`, `test-run-gas-medium`), and the build.
 **Removed:** nothing.
 
+## Job 2, slice 13: the faults of the hand plays cured by Claude (17 November 2026, night): hidden
+
+Codex's allowance ran out for the night (Kyle), so Claude built this slice. By fault number in the hand-play list above:
+- **1 and 2.** Measured first: F does step the player out during the opening lines (0.4 s). The real fault was that the
+  hearth gave no brand until all three lines had been said. The stop beside Auntie is now the whole meeting: the hearth
+  gives a brand from that moment, Auntie's two sentences are said meanwhile, and Cinder's hint ("Hold F to step out...")
+  follows only for a player still sitting in the car without a brand.
+- **3 and 13. The arrow leads by a way that can be walked.** New `src/world/jobs/brand-ways.js`: the town is cut into
+  2 m squares once (about 0.07 s), and for the hearth and each lamp every clear square knows the next step toward it.
+  The arrow on the screen points along that way and shows the walk's metres. (The Ash Men's own finder took 0.15 s to
+  0.4 s a route and is unchanged.)
+- **4. The third lamp stands among the east shacks, beside the radio mast**, and is the MAST LAMP (it stood 38 m outside
+  the town on the open plates, as the FAR LAMP). The pump lamp stays: measured, it is 2 m from the shack row and 5 m from
+  the pump. With the lamp moved, the hand-set walk to it and its length limits are removed; job 3's start is toward the
+  pump lamp (it was toward the far lamp, now on the other side of the bay).
+- **5. The flame is seen.** The drawn flame was hidden whenever the view tilted down more than 17.5 degrees; in jobs 2
+  and 4, where the aim is on the flat, it is drawn at full width.
+- **6.** The Hand Flamer shows "FUEL 3.5 s" and "HOLD FIRE TO BURN" / "OUT OF FUEL / LET GO TO REFILL" (also in ordinary
+  crew play, where the same label showed "AMMO" and a dash).
+- **7. Not a fault.** In ordinary crew play the flamer's cone is meant to narrow as the view tilts (the flame meets the
+  ground). The "resting tilt" of the first note was the hand-drive tool's own mouse press.
+- **8. The ending has two views.** The overview picks its side from where the lamps stand (80 m back, 24 m up); at the
+  theft it cuts to a standpoint 12 m beside the thief's way, 2.5 m up, and turns with him as he runs from the forge.
+- **9.** Results: "The three lamps of Tin Town are alight, and a thief is away through the gate with the bellows."
+- **10.** The crew's road callout is not said in this job.
+- **11. Throwers have something to do when the brand is out:** each goes for a lit lamp no other man is going for and
+  smothers it as the smotherer does; with the brand burning again he comes back for the player.
+- **12 and the labels.** The last lamp's ring, the prompt, the brand bar, the walker's health, arrows and aiming mark are
+  not shown during the ending. An empty prompt box is no longer drawn in any job.
+
+**Claude's hand play of the changed job** (visible window, real keys and mouse, the arrow followed as a player would):
+out of the car during Auntie's first line, a brand at 8 s, the mast lamp lit at 18 s, the pump lamp at 32 s by the arrow
+round the big shed. Two throwers met on the way to the tower lamp: one burned back with the flame seen; the other's ash
+put the brand out, and he and the smotherer then smothered both lit lamps while Claude walked to the hearth. All three
+burned back by 100 s, the three lamps lit again, the ending and the results at about 140 s: 3 brands, 50 scrap. The
+brand going out is now a real setback, and burning the men back early is the way to keep the lamps. The scripted Easy
+walk finishes 10 of 10 with one brand.
+
+**Changed assertions (Claude's review, rule 18): nothing is loosened.**
+- `test-everburn-job2`, the briefing: was "no brand until three sentences have been said"; now "no brand before the stop
+  beside Auntie; from the stop, a brand at once; Cinder's hint only for a player still in the car". The stop in the car
+  is still required.
+- `test-everburn-job2`, the walk: was six hand-set points to the far lamp, 120 m to 160 m, each stretch clear; now the
+  shown way is followed on the real solids between every pair of the four places (arrives within reach, no more than
+  1.35 times the straight line plus 10 m, the metres shown within 15 % of the walk), plus a wall within 6 m of every lamp.
+- `test-everburn-job2`, passing walkers: the same check on the thief's hand-set stretches (the old stretches went
+  with the far lamp). Lamp ids and the map's labels: `far` is `mast`.
+- `test-forge-hold-camera`: the overview is 80 m from the middle of the five places (was 62 m beyond the hearth and
+  gate, away from the far lamp); from the theft, the near view replaces "turns to him within 1.2 s".
+- `test-everburn-job3`: the start is on the pump lamp's side of the bay.
+- `test-scablands-size`, `test-world-job-mode`, `test-everburn-easy`: the lamp's id only.
+
+**The independent review (a separate Claude reviewer, read-only) found nothing serious.** Cured from it: a lamp's
+warning could be said twice when two throwers reached one lamp together (it is said once while any man is at the lamp);
+the walking ways are worked out during the countdown instead of at the walker's first step (a pause of about 0.1 s);
+the check of two men passing each other now also covers a straight approach to each lamp; two comments. Left as they
+are, on its word: the way check uses the land's fixed solids, not a course's own extra ones; about 1 square in 500 has
+no way and the arrow there points straight, as before. For job 3, from the same review: the Hand Flamer's test against
+the thief on foot still counts the view's tilt, and the arrow to the car still points through one shack.
+
+**Checks, on the working tree over `bd7fef92c`:** the lane tier for the changed files (136 picked: 133 passed,
+`test-world-hud` failed on a job with no step state and was fixed, `test-world-job-mode` and `test-yeti` not run
+and then run by name, pass); after the reviewer's cures, the 21 suites that read the four files changed since, by name,
+pass; `test-everburn-easy` for job 2 and for job 3 alone, 10 of 10 each; browser scenarios `everburn-job2` and
+`everburn-job3`; `npm run build`. Left to the night by the tier: `test-convoy-tanker-art`, `test-field-battle`,
+`test-first-person-polish`, `test-old-smoke`, `test-run-gas-medium` and the rest of `test-everburn-easy`.
+
+**Still owed for job 2 (Claude's drawing):** dusk over the four minutes, windows lighting at the ending, and Ash Men
+figures that do not read as toys. Then Kyle's try.
+**Removed:** the far lamp's hand-set walk (`farWalk`, six site numbers, `farWalkMin`, `farWalkMax`), the ending
+view's 1.2 s turn.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

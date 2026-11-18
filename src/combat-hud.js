@@ -12,6 +12,7 @@ import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {convoyPrompt} from './convoy-prompt.js';
 import {brandHudStep} from './world/world-hud.js';
 import {BRAND_RULE} from './world/jobs/brand-rule.js';
+import {brandWaysFor, prepareBrandWays} from './world/jobs/brand-ways.js';
 
 export function footBrandDirection(state) {
   const worldJob = state?.arena?.mode === 'world-job' && state.arena.worldJob;
@@ -21,12 +22,17 @@ export function footBrandDirection(state) {
   const target = brandHudStep(step, job.stepState, fighter).target;
   if (!target) return null;
   const at = target.position ?? target;
-  const dx = at.x - fighter.x, dz = at.z - fighter.z;
+  // The arrow leads by a way that can be walked (round the forge and the shacks), and the metres are that walk's; where
+  // no way is known it points straight at the place, as it always did.
+  const grid = worldJob.solidGrid?.movers ?? worldJob.solidGrid;
+  const way = grid && target.id ? brandWaysFor(step, grid)?.aim(fighter, target.id) : null;
+  const toward = way ?? at;
+  const dx = toward.x - fighter.x, dz = toward.z - fighter.z;
   const bearing = Math.atan2(dx, dz) - (fighter.yaw || 0);
   const name = target.id === step.hearth?.id ? 'THE HEARTH'
-    : ['pump', 'tower', 'far'].includes(target.id) ? `${target.id.toUpperCase()} LAMP`
+    : ['pump', 'tower', 'mast'].includes(target.id) ? `${target.id.toUpperCase()} LAMP`
       : (target.name ?? 'Auntie Solder').toUpperCase();
-  return {name, distance: Math.round(Math.hypot(dx, dz)),
+  return {name, distance: Math.round(way ? way.metres : Math.hypot(dx, dz)),
     angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
 }
 
@@ -160,6 +166,10 @@ export function footAmmoPresentation(state) {
   if (!gear || typeof gear.name !== 'string')
     return {name: 'NO FOOT WEAPON', ammo: 'AMMO —'};
   if (gear.name === 'WRENCH') return {name: gear.name, ammo: 'REPAIR +40'};
+  // The Hand Flamer holds seconds of fuel, not rounds: it burns while fire is held and fills again while it is not.
+  // (It showed "AMMO 4" when full and "AMMO" with a dash at every other moment.)
+  if (gear.name === 'HAND FLAMER' && Number.isFinite(gear.ammo))
+    return {name: gear.name, ammo: `FUEL ${Math.max(0, gear.ammo).toFixed(1)} s`};
   const ammo = Number.isSafeInteger(gear.ammo) && gear.ammo >= 0
     ? String(gear.ammo) : '—';
   return {name: gear.name, ammo: `AMMO ${ammo}`};
@@ -181,7 +191,8 @@ export function footActionPresentation(state) {
       ? 'RELEASE FIRE TO REPAIR AGAIN' : 'HOLD FIRE NEAR YOUR CAR', locked: false};
   }
   if (gear.name !== 'LONGHORN RPG') {
-    if (gear.name === 'HAND FLAMER' && state.fighter?.flaming) return {text: 'FLAMING', locked: false};
+    if (gear.name === 'HAND FLAMER') return {text: state.fighter?.flaming ? 'FLAMING'
+      : gear.ammo === 0 ? 'OUT OF FUEL / LET GO TO REFILL' : 'HOLD FIRE TO BURN', locked: false};
     if (gear.ammo === 0) return {text: 'OUT OF GEAR', locked: false};
     const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
     return {text: reload > 0 ? `READY IN ${reload.toFixed(1)}s` : 'FIRE TO USE', locked: false};
@@ -321,14 +332,21 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   });
 
   function update(state) {
+    // Light the Town's walking ways are worked out while the countdown runs, not at the walker's first step.
+    if (state.status === 'countdown' && state.arena?.mode === 'world-job') {
+      const world = state.arena.worldJob, step = world?.job?.steps?.[world.job.stepIndex];
+      if (step?.brand && world.solidGrid) prepareBrandWays(step, world.solidGrid.movers ?? world.solidGrid);
+    }
     const active = combatHudVisible(app.duel, state);
     const subtitle = active ? readFightSubtitle(state) : null;
     if (fightSubtitle.hidden !== !subtitle) fightSubtitle.hidden = !subtitle;
     setText(fightSubtitle, subtitle || '');
     const onFoot = active && state.onFoot && !!state.fighter;
-    if (host.hidden === active) host.hidden = !active;
+    // Light the Town's ending is watched from over the town: the walker's gauges, arrows and aiming mark go for those seconds.
+    const watching = state.arena?.mode === 'world-job' && state.arena.worldJob?.job?.stepState?.townEnding === true;
+    if (host.hidden === (active && !watching)) host.hidden = !active || watching;
     if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;
-    if (footHealth.hidden === onFoot) footHealth.hidden = !onFoot;
+    if (footHealth.hidden === (onFoot && !watching)) footHealth.hidden = !onFoot || watching;
     const stage = root.querySelector('#stage');
     stage.classList.toggle('combat-upgraded', active);
     stage.classList.toggle('on-foot', onFoot);

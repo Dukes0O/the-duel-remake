@@ -763,7 +763,11 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const fighter=s.fighter;
     // The native hand-flamer test uses fighter x/z as its origin. Pitch narrows
     // its horizontal sector through the same projected direction cosine.
-    const cinderCosine = Math.cos(cinderGear.cone / 2) / Math.max(1e-9, Math.cos(fighter?.pitch || 0));
+    // In Light the Town and Slow Ride the flamer's aim is judged on the flat (src/arena/modes/world-job.js), so the flame
+    // is drawn at its full width however the view is tilted; a walker looking down saw no flame at all there.
+    const jobNow = s.arena?.mode === 'world-job' ? s.arena.worldJob?.job : null, stepNow = jobNow?.steps?.[jobNow.stepIndex];
+    const flatAim = stepNow?.brand === true || stepNow?.gasLoad === true;
+    const cinderCosine = Math.cos(cinderGear.cone / 2) / Math.max(1e-9, flatAim ? 1 : Math.cos(fighter?.pitch || 0));
     const cinderHalfAngle = Math.acos(Math.min(1, cinderCosine));
     presentFlame(crewFlame, {...flameFrame,
       active: active && duel.featureFlags?.enabled('crew-gear') === true &&
