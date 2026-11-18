@@ -1131,6 +1131,51 @@ the view is taken over); Claude measured it in the page instead: drawn ground 2.
 `src/render3d.js` and four other files every course uses are changed, so tonight's full check runs every browser
 scenario.
 
+## Slice 11 result (Codex built it; Claude ruled and reviewed; 17 November 2026, evening): merged, hidden
+
+**The six rule faults of Claude's hand play are cured.** Job 3: the thief leaves at 40 km/h until the player's car
+moves (or 25 seconds), then drives at 90% of the player's car's top speed there when the gap is 120 m or less (80% on
+Easy) and half that top speed at 400 m or more, 70% for three seconds after a knock; a sack is thrown only when the
+player is within 60 m behind him after 800 m and 1,600 m of road. On foot the player is lent Cinder's Hand Flamer, not
+the rocket launcher; any weapon's hit on his car takes from the bellows (flame 15 a second, a rocket or bomb 40, a
+crossbow bolt 20, anything else 10) and only hard knocks stop him. Job 2: a marker names the next place with its metres
+(the nearest dark lamp while the brand burns, the hearth or a lit lamp while it is out), and the small map shows the
+whole town on foot with the hearth, the lamps and the Ash Men; Auntie says "One's over the wall!" and "Two more over
+the wall!" at the wall and "They are at the pump lamp!" when a man is within 15 m of a lit lamp; the second group comes
+over 20 m apart and men keep 1.2 m from each other; one click swings the brand within 2 m and fires the flamer beyond.
+
+**Review:** one independent Codex review found the cures match the rulings and nothing outside jobs 2 and 3 changed
+(each new line in the shared weapon, HUD and map files is behind a test of these two jobs), and two faults: Ash Men who
+could block each other for ever, and two apostrophes damaged in saving (one in the soup job). Both are cured; the man
+with the lower id has the way, a man running away has it over any other, and the other steps aside.
+
+**Changed assertions, reviewed by Claude (rule 18); none is loosened:** the thief's pace on the road, 195 km/h becoming
+180 and 125 becoming 117 (90% and 80% of the car's top speed there in place of top speed less 5), and his start, 195
+becoming 40; the two fixed sack places become the pursuing car's place, with the cloud's box checked exactly. Job 2's
+suite only gains checks.
+
+**Checks:** Codex's lane tiers (108 of 109 then 92 of 93, the one failure each time a sound suite that passes when
+allowed to start its tool), replays and world signatures unchanged, the Easy walk and drive ten of ten. On Easy the
+scripted drive's first knock comes only in the Boneyard, at 3,473 m; by rule a car at top speed closes to 60 m of him
+by 683 m on Easy and 1,201 m on Medium, so the script's late knock is the script's. At the merge: `npm run build` and
+the browser scenarios `everburn-job1`, `everburn-job2`, `everburn-job3`.
+
+**Still owed before Kyle tries either job:** Claude's hand play of both to the end; the redraw of the brand, the
+lamps, dusk and the windows.
+
+## Job 2's lamps and brand, drawn (Claude, 17 November 2026, evening): merged, hidden
+
+The three lamps are the town lamp of `src/world/town-lamp-look.js` (a pipe post in a concrete-filled tyre, a bent arm,
+a hung lantern with sooted panes, a flame, a pool of light and a light of its own), each turned a different way. The
+brand is a stick with a charred rag head bound in wire and a two-tongued flame, with its own light and pool. Both
+replace slice 9's plain shapes. **Changed assertions in `tools/test-everburn-job2.mjs`, reviewed by Claude; none is
+loosened:** the lamp view's checks of a plain post and box (their radius and heights) become checks that each lamp is
+the drawn lamp with four panes, a foot no more than 0.1 m wider than its solid, its light in the lantern, and a flame
+shown only when lit; the brand's disposal check names the drawn flame's shape and material. The rule checks are
+untouched. Checks: lane tier 41 of 41, build, browser scenario `everburn-job2`. Seen by Claude: the brand in the
+scenario's picture (its head first read as an orange bucket and was darkened; not yet seen again), the lamp only in a
+test scene. Dusk, the lit windows and the people coming out are still to draw.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the

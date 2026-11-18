@@ -27,7 +27,7 @@ import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
-import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
+import {BRAND_RULE, brandSwingReady} from '../../world/jobs/brand-rule.js';
 import {brandAshAim, brandRecoveryPose} from '../../world/jobs/brand-sites.js';
 import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts, bellowsRestartPlaces} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
@@ -113,9 +113,20 @@ export function bellowsArenaFacts(duel, worldJob, step, thingsHit) {
   const surface = duel._drivingSurface(pose.s, pose.lateral);
   const contacts = duel.state.onFoot ? [] : (worldJob.carContacts ?? [])
     .filter(hit => hit.actor.id === step.targetId);
-  return {bellows:{...bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex ?? 0),
+  const weaponHits = thingsHit.filter(hit => (hit.actorId ?? hit.id) === step.targetId && !hit.flame);
+  const fighter = duel.state.onFoot && duel.state.fighter;
+  const gear = signatureFor('cinder');
+  const direction = fighter && gearDirection(fighter);
+  const dx = fighter ? thief.position.x - fighter.x : 0;
+  const dz = fighter ? thief.position.z - fighter.z : 0;
+  const distance = Math.hypot(dx, dz);
+  const handFlame = fighter?.flaming && duel.state.footWeapons?.selected === 'hand-flamer' &&
+    distance > 0 && distance <= gear.range &&
+    Math.abs((thief.position.y ?? 0) - fighter.y) < BELLOWS_RULE.handFlameHeightMetres &&
+    (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2);
+  return {bellows:{weaponHits, ...bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex ?? 0),
     playerTopSpeedKmh:surface.speedLimit * MPH_TO_KMH,
-    flameContact:thingsHit.some(hit => (hit.actorId ?? hit.id) === step.targetId && hit.flame === true),
+    flameContact:!!handFlame || thingsHit.some(hit => (hit.actorId ?? hit.id) === step.targetId && hit.flame === true),
     carContact:contacts.length > 0,
     meetingKmh:Math.max(0, ...contacts.map(hit => hit.kmh)),
     solidContact:thief.bellowsSolidContact === true,
@@ -1148,14 +1159,14 @@ export function applyBrandRequest(duel, worldJob, request) {
   return false;
 }
 
-function brandCombatView(state, worldJob) {
+export function brandCombatView(state, worldJob) {
   const fighter = state.onFoot && state.fighter;
   const attacking = !!fighter && !fighter.knockedDown && state.fighterInput?.fire === true;
-  const swing = attacking && state.footWeapons?.selected === 'wrench';
+  const swing = attacking && brandSwingReady(state);
   const brandSwing = swing && !worldJob.brandSwingHeld;
-  worldJob.brandSwingHeld = swing;
+  worldJob.brandSwingHeld = attacking;
   const handFlamerHits = [];
-  if (attacking && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
+  if (attacking && !swing && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
     const direction = gearDirection(fighter), gear = signatureFor('cinder');
     for (const actor of worldJob.actors) {
       if (!actor.brandAsh) continue;
@@ -1314,12 +1325,12 @@ function applyRequests(duel, worldJob, requests) {
   }
 }
 
-function moveJobRaiders(duel, worldJob, dt) {
+export function moveJobRaiders(duel, worldJob, dt) {
   const scablands = !!duel.course.def.scablands;
   for (const actor of worldJob.actors) {
     if (!actor.approachTarget || actor.knockedDown || !(actor.approachSpeed > 0)) continue;
     const dx = actor.approachTarget.x - actor.x, dz = actor.approachTarget.z - actor.z;
-    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt, from = scablands ? {x: actor.x, z: actor.z} : null;
+    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt, from = {x: actor.x, y: actor.y, z: actor.z};
     if (gap <= travel) {
       actor.x = actor.approachTarget.x; actor.z = actor.approachTarget.z;
     } else {
@@ -1331,8 +1342,47 @@ function moveJobRaiders(duel, worldJob, dt) {
       const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: actor.y});
       actor.x = at.x; actor.z = at.z; actor.y = at.y;
     }
-    // A brand opponent receives a fresh movement decision each rule step.
-    if (actor.brandAsh) actor.approachTarget = null;
+    if (actor.brandAsh) {
+      // The foot mover resolves land and buildings, but not other people.
+      // Reserve the whole step so a long step cannot pass through a neighbour.
+      const neighbours = to => worldJob.actors.filter(other => {
+        if (other === actor || !other.brandAsh) return false;
+        const mx = to.x - from.x, mz = to.z - from.z;
+        const lengthSquared = mx * mx + mz * mz;
+        const share = lengthSquared > 0 ? Math.max(0, Math.min(1,
+          ((other.x - from.x) * mx + (other.z - from.z) * mz) / lengthSquared)) : 0;
+        return Math.hypot(from.x + mx * share - other.x,
+          from.z + mz * share - other.z) < BRAND_RULE.ashSeparationMetres;
+      });
+      const crowded = neighbours(actor);
+      if (crowded.length) {
+        Object.assign(actor, from);
+        const men = worldJob.job?.stepState?.brandAsh?.men ?? {};
+        const yieldsTo = other => !!men[actor.id]?.fleeing !== !!men[other.id]?.fleeing
+          ? !!men[other.id]?.fleeing : actor.id > other.id;
+        if (crowded.some(yieldsTo)) {
+          const angle = BRAND_RULE.ashYieldDegrees * Math.PI / 180;
+          const mx = dx / (gap || 1) * Math.min(travel, gap);
+          const mz = dz / (gap || 1) * Math.min(travel, gap);
+          const candidates = [angle, -angle].map(turn => ({
+            x: from.x + mx * Math.cos(turn) + mz * Math.sin(turn),
+            z: from.z + mz * Math.cos(turn) - mx * Math.sin(turn),
+          }));
+          candidates.push({x:from.x - mx * BRAND_RULE.ashBackStepShare,
+            z:from.z - mz * BRAND_RULE.ashBackStepShare});
+          for (const candidate of candidates) {
+            const at = scablands ? stepMover(from, candidate, {radius:BRAND_RULE.ashRadiusMetres,
+              grade:FOOT_GRADE, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid,
+              height:from.y}) : {...candidate,y:from.y};
+            if (at.blocked || neighbours(at).length) continue;
+            Object.assign(actor, {x:at.x,y:at.y,z:at.z});
+            break;
+          }
+        }
+      }
+      // A brand opponent receives a fresh movement decision each rule step.
+      actor.approachTarget = null;
+    }
   }
 }
 
@@ -1725,9 +1775,26 @@ export function reportWorldJobThingHit(duel, hit) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || !hit?.id) return false;
   state.worldJobThingsHit ??= [];
-  if (state.worldJobThingsHit.some(item => item.id === hit.id)) return false;
+  const step = worldJob.job?.steps[worldJob.job.stepIndex];
+  const loadContact = step?.bellows && (hit.actorId ?? hit.id) === step.targetId;
+  if (state.worldJobThingsHit.some(item => item.id === hit.id &&
+      (!loadContact || item.hitId === hit.hitId && item.flame === hit.flame))) return false;
   state.worldJobThingsHit.push({...hit});
   return true;
+}
+
+// This car is a job actor, not an opponent. Native weapons share its solid
+// body, but its rule alone decides load loss and hard knocks.
+export function bellowsWeaponTarget(duel) {
+  const state = duel.state, worldJob = state.arena?.worldJob;
+  const step = worldJob?.job?.steps[worldJob.job.stepIndex];
+  if (!step?.bellows || worldJob.settled || state.arena.result ||
+      state.status !== 'racing' || worldJob.job.stepState.thiefStopped) return null;
+  const actor = worldJob.actors.find(item => item.id === step.targetId && item.health > 0);
+  if (!actor?.position) return null;
+  return {id:actor.id, actorId:actor.id, position:actor.position,
+    obstacle:{...actor.position, halfX:BELLOWS_RULE.thiefRadiusMetres,
+      halfZ:BELLOWS_RULE.thiefRadiusMetres, height:BELLOWS_RULE.weaponBodyHeightMetres, shape:'box'}};
 }
 
 export function worldJobHitTargets(duel) {

@@ -640,7 +640,7 @@ export function createScablandsScene(course,options={}){
   }
   const cinder=createCinderFigure();group.add(cinder);
   const gasLoadView=createGasLoadView();group.add(gasLoadView.group);
-  const brandLamps=createBrandLamps();group.add(brandLamps.group);
+  const brandLamps=createBrandLamps({surface:()=>barricadeMaterial});group.add(brandLamps.group);
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
   const brandAshView=createBrandAshView();group.add(brandAshView.group);
@@ -854,6 +854,7 @@ export function createScablandsScene(course,options={}){
       if(nearTinTown){gateFire.animate(seconds);chimneySmoke.animate(seconds);}
       if(nearWell)everburnFire.animate(seconds);
       braziers.animate(seconds);
+      brandLamps.animate(seconds);carriedBrand.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
       // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.

@@ -3,12 +3,151 @@ import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {BELLOWS_RULE, BELLOWS_LINES, bellowsPay, bellowsSentence,
   stepBellowsLoad, bellowsAshBox, stepBellowsAsh, bellowsThiefSpeedKmh,
   bellowsBlockingSide, bellowsBlockingMove, stepBellowsPursuit, stepBellowsEnding,
-  bellowsWreckRoute} from '../src/world/jobs/bellows-rule.js';
+  bellowsWreckRoute, stepBellowsChase} from '../src/world/jobs/bellows-rule.js';
 import {BONEYARD_WRECKS, boneyardWrecks} from '../src/world/boneyard-wrecks.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {sweepObstacle, CAR_HALF_WIDTH} from '../src/collision.js';
+
+const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
+const {FIGHTER_RULES} = await import('../src/onfoot.js');
+
+assert.throws(() => stepBellowsPursuit({}, {roadMetres:800,behindMetres:10},0),
+  {message:'The thief needs the pursuing car\u2019s road point for his sack.'});
+
+// Slice 11.2: every reported weapon contact damages the load, never earns a knock.
+assert.equal(EVERBURN_JOBS[2].steps[0].lentWeapon, 'cinders-hand-flamer');
+for (const [weapon, damage] of [['rpg',40],['rocket-pod',40],['bomb',40],
+  ['sticky-bomb',40],['crossbow',20],['marksman',20],['harpoon',10],['scrap-cannon',10],['scrap-turret',10]]) {
+  const hit=stepBellowsLoad({}, {weaponHits:[{weapon}], behindMetres:500}, 0);
+  assert.equal(hit.state.bellows,100-damage,weapon);
+  assert.equal(hit.state.knocks,0,weapon);
+  assert.equal(hit.state.thiefStopped,undefined,weapon);
+  assert.equal(hit.events.filter(event=>event.lineId==='bellows.warning').length,1,weapon);
+  assert.equal(stepBellowsLoad(hit.state,{weaponHits:[{weapon}],behindMetres:500},0)
+    .events.filter(event=>event.lineId==='bellows.warning').length,0);
+}
+assert.equal(stepBellowsLoad({}, {weaponHits:[{weapon:'bomb'},{weapon:'crossbow'}]},0).state.bellows,40);
+console.log('PASS slice 11.2: loaned hand flamer, weapon load damage and first-contact warning.');
+
+// Native crew shots and rockets must reach the separate job actor too.
+const {stepGearProjectile} = await import('../src/crew-gear/projectiles.js');
+const {stepRocketPod} = await import('../src/arsenal/rockets.js');
+const {stepGearDeployables} = await import('../src/crew-gear/signature.js');
+const weaponDuel = {
+  state: {status:'racing', mode:'wasteland', wastelandGateDiscovered:true,
+    opponents:[], onFoot:false, stageTimeSec:0,
+    combat:{bursts:[], serial:0}, worldJobThingsHit:[],
+    arena:{mode:'world-job', participants:[], worldJob:{actors:[
+      {id:'thief',health:20,position:{x:0,y:0,z:10}}],
+      job:{steps:[{bellows:true,targetId:'thief'}],stepIndex:0,stepState:{}}, hitTargets:[]}}},
+  course:{nearest:(x,z)=>({s:z,lateral:x}),
+    groundAt:(s,lateral)=>({x:lateral??0,y:0,z:s??0,heading:0})},
+  featureFlags:{enabled:()=>true}, _obstacles:()=>[], emit:()=>{},
+};
+for (const [kind,crewId,damage] of [['marksman','dune',20],['scrap-cannon','tusk',10],
+  ['sticky-bomb','nell',40],['rocket-pod',null,40]]) {
+  weaponDuel.state.worldJobThingsHit=[];
+  const shot={id:kind, kind, crewId, attackerId:'player', ownerId:'player',
+    crewGearShot:!!crewId, x:0,y:1,z:0,launchX:0,launchY:1,launchZ:0,
+    vx:0,vy:0,vz:40,age:0,travelled:0};
+  if (crewId) {
+    if (kind==='sticky-bomb') Object.assign(shot,{thrown:true,stuck:true,fuseSeconds:3,z:10});
+    stepGearProjectile(weaponDuel,shot,.5);
+  } else stepRocketPod(weaponDuel,shot,.5);
+  const hits=weaponDuel.state.worldJobThingsHit;
+  assert.equal(hits.length,1,`${kind} reaches the thief exactly once.`);
+  const result=stepBellowsLoad({}, {weaponHits:hits,behindMetres:500},0);
+  assert.equal(result.state.bellows,100-damage,kind);
+  assert.equal(result.state.knocks,0,kind);
+  assert.equal(weaponDuel.state.arena.worldJob.actors[0].health,20);
+}
+weaponDuel.state.worldJobThingsHit=[];
+weaponDuel.state.crewGear={crewId:'odessa',serial:0,
+  turret:{id:'turret',x:0,y:0,z:0,age:0,shotSeconds:0}};
+stepGearDeployables(weaponDuel,.8);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,1,'The turret shoots the thief.');
+assert.equal(stepBellowsLoad({}, {weaponHits:weaponDuel.state.worldJobThingsHit},0).state.bellows,90);
+weaponDuel.state.worldJobThingsHit=[];
+stepGearDeployables(weaponDuel,1.6);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,2,'Separate turret rounds each count.');
+weaponDuel.state.worldJobThingsHit=[];
+weaponDuel._obstacles=()=>[{x:0,y:0,z:5,halfX:3,halfZ:1,height:3,shape:'box'}];
+stepGearProjectile(weaponDuel,{id:'blocked',kind:'marksman',crewId:'dune',crewGearShot:true,
+  attackerId:'player',x:0,y:1,z:0,vx:0,vy:0,vz:40,age:0,travelled:0},.5);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,0,'Scenery stops a crew shot before the thief.');
+weaponDuel._obstacles=()=>[];
+weaponDuel.state.status='countdown';
+stepRocketPod(weaponDuel,{id:'early',kind:'rocket-pod',attackerId:'player',
+  x:0,y:1,z:0,vx:0,vy:0,vz:40,age:0,travelled:0},.5);
+assert.equal(weaponDuel.state.worldJobThingsHit.length,0,'The target is absent before racing.');
+console.log('PASS slice 11.2: native crew shots, sticky blasts, rockets and turret hits damage only the bellows.');
+
+// Slice 11.1: step only the rules on a straight road, without a driver.
+const reachStep = {targetId:'thief', path:[]};
+const reachTick = (state, thief, car, speedKmh, dt, extra = {}) => stepBellowsChase(
+  reachStep, state, {onFoot:speedKmh === 0, speedKmh, difficulty:'medium',
+    carPosition:{x:car,z:0}, actors:[{id:'thief',position:{x:thief,z:0}}],
+    bellows:{roadMetres:thief, behindMetres:thief-car, playerTopSpeedKmh:200,
+      furnaceMetres:10000, ...extra}}, dt);
+assert.equal(reachTick({},250,0,0,0).requests.find(r=>r.type==='follow').speed,40/3.6);
+const reachStart = EVERBURN_JOBS[2].steps[0];
+const startGate = reachStart.path[0].position;
+const startGap = Math.hypot(startGate.x-reachStart.carStart.x,startGate.z-reachStart.carStart.z);
+let reachState = {}, thiefRoad = 0, carRoad = -startGap, caughtAt = null;
+// Walk from the authored foot start to the car, then use top speed on the road.
+for (let frame=0; frame<18000 && caughtAt === null; frame++) {
+  const dt=1/60, seconds=frame*dt, driving=seconds >= BELLOWS_RULE.footStartFromCarMetres/FIGHTER_RULES.walkMetersPerSecond;
+  const result=reachTick(reachState,thiefRoad,carRoad,driving?200:0,dt);
+  reachState=result.state;
+  thiefRoad+=result.requests.find(r=>r.type==='follow').speed*dt;
+  if(driving) carRoad+=200/3.6*dt;
+  if(thiefRoad-carRoad<=60) caughtAt=thiefRoad;
+}
+assert(caughtAt!==null && caughtAt<1500, `Medium must close before 1500 m, got ${caughtAt}.`);
+let waitingState={}, waitingThief=0, waitingCar=-startGap;
+for(let frame=0;frame<1500;frame++) {
+  const result=reachTick(waitingState,waitingThief,waitingCar,0,1/60);
+  waitingState=result.state;
+  waitingThief+=result.requests.find(r=>r.type==='follow').speed/60;
+}
+assert(waitingThief-waitingCar<=400,'A stationary car must still see him after 25 seconds.');
+console.log(`PASS slice 11.1: Medium closes at ${caughtAt.toFixed(1)} m; stationary gap ${(waitingThief-waitingCar).toFixed(1)} m.`);
+
+// Exact pace boundaries, launch latch and three-second recovery.
+for (const [gap, difficulty, expected] of [
+  [120,'medium',180],[400,'medium',100],[260,'medium',140],
+  [0,'easy',160],[260,'easy',130],[500,'easy',100],
+]) assert.equal(bellowsThiefSpeedKmh(200,false,gap,difficulty),expected);
+assert.equal(bellowsThiefSpeedKmh(200,false,120,'medium',true),140);
+assert.equal(bellowsThiefSpeedKmh(200,true,120,'medium',true),60);
+const pace = result => result.requests.find(request=>request.type==='follow').speed*3.6;
+assert.equal(pace(reachTick({},120,0,20,24.99)),40);
+assert.equal(pace(reachTick({},120,0,20,25)),180);
+const launched=reachTick({},120,0,20.01,0);
+assert.equal(pace(launched),180);
+assert.equal(pace(reachTick(launched.state,120,0,0,0)),180);
+const shaken=reachTick(launched.state,120,0,40,0,
+  {carContact:true,meetingKmh:20});
+assert.equal(shaken.state.knocks,1);
+assert.equal(pace(shaken),140);
+const recovering=reachTick(shaken.state,120,0,40,2.99);
+assert.equal(pace(recovering),140);
+assert.equal(pace(reachTick(recovering.state,120,0,40,.011)),180);
+
+// Both sacks wait for a pursuing car, and burst at its current road point.
+const sackFacts={roadMetres:1700,behindMetres:60,roadWidthMetres:28,
+  furnaceMetres:1000,sackPoint:{x:1633,z:12,heading:.7}};
+for(const extra of [{behindMetres:60.01},{behindMetres:-.01},{onFoot:true},{inBoneyard:true}])
+  assert.deepEqual(stepBellowsPursuit({}, {...sackFacts,...extra}).state.sacksThrown,[]);
+const lateSacks=stepBellowsPursuit({},sackFacts);
+assert.deepEqual(lateSacks.state.sacksThrown,[0,1]);
+for(const box of lateSacks.state.clouds) {
+  assert.equal(box.x,1633); assert.equal(box.z,12); assert.equal(box.yaw,.7);
+  assert.equal(box.remaining,6); assert.equal(box.width,28); assert.equal(box.length,30);
+}
+console.log('PASS slice 11.1: launch latch, pace boundaries, recovery and sacks aimed at a nearby car.');
 
 // Job 3.4: prove whole segments clear, rather than sampling points or driving.
 const wreckSnapshot = JSON.stringify(BONEYARD_WRECKS);
@@ -56,8 +195,8 @@ assert(Math.abs(shifted.wideExtraMetres - wreckRoute.wideExtraMetres) < 1e-9);
 console.log(`PASS Run Him Down: wreck ends clear by 2.5 m, ${turns.filter(degrees => degrees >= 40).length} turns, every segment clears all solids; wide way adds ${wreckRoute.wideExtraMetres.toFixed(1)} m.`);
 
 // Job 3.2: speed, attempted passes and each sack's six-second road-width box.
-assert.equal(bellowsThiefSpeedKmh(200, false), 195);
-assert.equal(bellowsThiefSpeedKmh(130, false), 125);
+assert.equal(bellowsThiefSpeedKmh(200, false), 180);
+assert.equal(bellowsThiefSpeedKmh(130, false), 117);
 assert.equal(bellowsThiefSpeedKmh(200, true), 60);
 for (const [along, side, expected] of [
   [-30, -2, -1], [-30, 2, 1], [-30.01, 2, 0], [0, 2, 1], [0.01, 2, 0], [-5, 0, 0],
@@ -157,8 +296,8 @@ assert.equal(tick(softWall, wall).state.knocks, 0, 'Leaning against a solid is o
 console.log('PASS Run Him Down: load, warning, separate meetings, three knocks and result boundaries.');
 
 // Job 3.2 and 3.5: rules snapshots cross sack marks and reach the furnace.
-const roadFacts = {roadMetres: 0, roadWidthMetres: 28, furnaceMetres: 1000,
-  sackPoints: [{x: 10, z: 20, heading: 1}, {x: 30, z: 40, heading: 2}]};
+const roadFacts = {roadMetres: 0, roadWidthMetres: 28, furnaceMetres: 1000, behindMetres:60,
+  sackPoint: {x: 10, z: 20, heading: 1}};
 const pursue = (state, facts = {}, dt = 0) => stepBellowsPursuit(state, {...roadFacts, ...facts}, dt);
 assert.equal(pursue({}, {roadMetres: 799.99}).state.clouds.length, 0);
 let pursuit = pursue({}, {roadMetres: 800});
@@ -170,7 +309,7 @@ pursuit = pursue(firstSack, {roadMetres: 800}, 6);
 assert.deepEqual(pursuit.events, []);
 assert.deepEqual(pursuit.state.clouds, []);
 assert.equal(firstSack.clouds[0].remaining, 6, 'Stepping must not age the earlier snapshot.');
-pursuit = pursue(pursuit.state, {roadMetres: 1600});
+pursuit = pursue(pursuit.state, {roadMetres: 1600, sackPoint:{x:30,z:40,heading:2}});
 assert.deepEqual(pursuit.state.sacksThrown, [0, 1]);
 assert.equal(pursuit.state.clouds[0].x, 30);
 assert.equal(pursue({}, {roadMetres: 2000}).state.clouds.length, 2);
@@ -235,7 +374,7 @@ const chaseStep = {kind: 'chase', bellows: true, targetId: 'thief',
 const chaseView = {onFoot: false, speedKmh: 0, carPosition: {x: 0, z: 0},
   player: {position: {x: 0, z: 0}},
   actors: [{id: 'thief', health: 0, position: {x: 3, z: 0}}], contact: 'thief',
-  bellows: {...roadFacts, playerTopSpeedKmh: 200}};
+  bellows: {...roadFacts, behindMetres:Infinity, playerTopSpeedKmh: 200}};
 let chase = createJob({steps: [chaseStep]}, 17);
 const missing = stepJob(chase, {...chaseView, actors: []}, 100);
 assert.equal(missing.done, false);
@@ -244,7 +383,7 @@ assert.equal(missing.requests.find(request => request.type === 'follow').speed, 
 chase = stepJob(chase, chaseView);
 assert.equal(chase.done, false, 'Health zero and proximity cannot stop the thief.');
 assert.equal(chase.stepState.knocks, 0);
-assert.equal(chase.requests.find(request => request.type === 'follow').speed, 195 / 3.6);
+assert.equal(chase.requests.find(request => request.type === 'follow').speed, 40 / 3.6);
 assert.equal(chase.requests.find(request => request.type === 'follow').actorId, 'thief');
 chase = stepJob(chase, {...chaseView, carPosition: {x: -10000, z: 0}});
 assert.equal(chase.failedStep, false, 'The bellows chase has no old distance leash.');
@@ -321,7 +460,7 @@ console.log('PASS Run Him Down: bellows gauge shows the rule load and clears emb
 // scripted walking is needed to prove the existing fighter can return to the car.
 const {App} = await import('../src/app.js');
 const {createFeatureFlags} = await import('../src/feature-flags.js');
-const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
+
 const {stepFootTransition, fighterDistanceToCar} = await import('../src/onfoot-transition.js');
 const memory = new Map();
 globalThis.localStorage = {getItem:key => memory.get(key) ?? null,
@@ -592,7 +731,8 @@ assert.equal(measured.carContact, false);
 assert.equal(measured.meetingKmh, 0);
 assert.equal(measured.inBoneyard, false);
 assert(measured.roadMetres > 0);
-assert.equal(measured.sackPoints.length, 2);
+assert(Number.isFinite(measured.sackPoint.x));
+assert(Number.isFinite(measured.sackPoint.z));
 assert.equal(measured.roadWidthMetres, routeDefinition.roadWidthMetres);
 const thiefPose = factsDuel.course.nearest(thiefAt.x, thiefAt.z);
 assert.equal(measured.playerTopSpeedKmh,
@@ -605,6 +745,27 @@ assert.equal(measured.carContact, true);
 assert.equal(measured.meetingKmh, 31);
 assert.equal(JSON.stringify(factsJob.carContacts), contactsBefore);
 assert.equal(readFacts([{id:'other', flame:true}]).flameContact, false);
+const {reportWorldJobThingHit} = await import('../src/arena/modes/world-job.js');
+factsState.worldJobThingsHit=[];
+for (const [hitId,weapon] of [['first','rpg'],['second','crossbow']]) {
+  assert.equal(reportWorldJobThingHit(factsDuel,{id:factsStep.targetId,hitId,weapon}),true);
+  assert.equal(reportWorldJobThingHit(factsDuel,{id:factsStep.targetId,hitId,weapon}),false);
+}
+const loadHits=readFacts(factsState.worldJobThingsHit).weaponHits;
+assert.equal(loadHits.length,2);
+assert.equal(stepBellowsLoad({}, {weaponHits:loadHits,behindMetres:500},0).state.bellows,40);
+factsState.worldJobThingsHit=[];
+factsState.onFoot=true;
+factsState.footWeapons.selected='hand-flamer';
+Object.assign(factsState.fighter,{x:thiefAt.x,z:thiefAt.z-5,y:thiefAt.y??0,yaw:0,pitch:0,flaming:true});
+assert.equal(readFacts([]).flameContact,true);
+assert.equal(stepBellowsLoad({},readFacts([]),2).state.bellows,70);
+factsState.fighter.yaw=Math.PI;
+assert.equal(readFacts([]).flameContact,false);
+factsState.fighter.yaw=0;
+factsState.fighter.z=thiefAt.z-7;
+assert.equal(readFacts([]).flameContact,false);
+factsState.fighter.flaming=false;
 factsState.onFoot = true;
 assert.equal(readFacts([]).carContact, false, 'The parked car cannot ram while the player walks.');
 factsJob.actors[0].pathIndex = roadPlaces.length;

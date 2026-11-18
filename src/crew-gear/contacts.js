@@ -8,6 +8,7 @@ import {actorBody, startKnock, bodyHeading} from '../vehicle-knock.js';
 import {solveVehicleImpact, yawInertia, CRASH_TUNING, impactSeverity} from '../vehicle-collision.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {actorForTarget} from '../arsenal/targeting.js';
+import {bellowsWeaponTarget} from '../arena/modes/world-job.js';
 
 const SHOT_BODY = {halfWidth: .04, halfLength: .04, height: .08};
 export function gearDirection(fighter) {
@@ -146,6 +147,8 @@ export function gearContact(duel, start, end, owner, {fighters = true} = {}) {
     consider({x: f.x, y: f.y, z: f.z, halfX: FIGHTER_RULES.radius,
       halfZ: FIGHTER_RULES.radius, height: FIGHTER_RULES.height, shape: 'box'}, {target});
   }
+  const bellows = owner === duel.state && bellowsWeaponTarget(duel);
+  if (bellows) consider(bellows.obstacle, {bellows});
   const from = duel.course.nearest(start.x, start.z), to = duel.course.nearest(end.x, end.z, from.s);
   for (const obstacle of duel._obstacles(Math.min(from.s, to.s) - 4, Math.max(from.s, to.s) + 4))
     consider(obstacle, {scenery: true});

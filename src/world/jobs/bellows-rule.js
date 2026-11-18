@@ -4,12 +4,27 @@ import {nearestOnLine} from '../scablands-ways.js';
 export const BELLOWS_RULE = Object.freeze({
   start: 100,
   flamePerSecond: 15,
+  blastPerHit: 40,
+  boltPerHit: 20,
+  otherPerHit: 10,
+  handFlameHeightMetres: 2,
+  weaponBodyHeightMetres: 2,
   warningBehindMetres: 100,
   hardKnockKmh: 20,
   stopKnocks: 3,
   // Road riders release their meeting latch beyond eight metres as well.
   meetingReleaseMetres: 8,
-  roadSpeedBelowPlayerKmh: 5,
+  launchSpeedKmh: 40,
+  launchPlayerSpeedKmh: 20,
+  launchSeconds: 25,
+  closeGapMetres: 120,
+  farGapMetres: 400,
+  closeSpeedShare: 0.9,
+  easyCloseSpeedShare: 0.8,
+  farSpeedShare: 0.5,
+  shakenSeconds: 3,
+  shakenSpeedShare: 0.7,
+  sackBehindMetres: 60,
   blockingBehindMetres: 30,
   blockingSideMps: 2,
   thiefRadiusMetres: 1.3,
@@ -149,34 +164,33 @@ export function stepBellowsAsh(clouds, dt) {
     .filter(cloud => cloud.remaining > 0);
 }
 
-export function bellowsThiefSpeedKmh(playerTopSpeedKmh, inBoneyard) {
-  return inBoneyard ? BELLOWS_RULE.boneyardSpeedKmh
-    : Math.max(0, playerTopSpeedKmh - BELLOWS_RULE.roadSpeedBelowPlayerKmh);
+export function bellowsThiefSpeedKmh(playerTopSpeedKmh, inBoneyard,
+  behindMetres = BELLOWS_RULE.closeGapMetres, difficulty = 'medium', shaken = false) {
+  if (inBoneyard) return BELLOWS_RULE.boneyardSpeedKmh;
+  const rule = BELLOWS_RULE;
+  const close = difficulty === 'easy' ? rule.easyCloseSpeedShare : rule.closeSpeedShare;
+  const share = Math.max(0, Math.min(1,
+    (behindMetres - rule.closeGapMetres) / (rule.farGapMetres - rule.closeGapMetres)));
+  const speed = Math.max(0, playerTopSpeedKmh) * (close + (rule.farSpeedShare - close) * share);
+  return shaken ? Math.max(0, playerTopSpeedKmh) * rule.shakenSpeedShare : speed;
 }
 
 // Measure against the authored road, not the nearest world road or the scene.
 export function bellowsRoadFacts(route, thief, car, pathIndex) {
   const road = route.road.map(place => place.position ?? place);
   const here = nearestOnLine(road, thief.x, thief.z);
-  const a = road[here.index], b = road[here.index + 1];
-  const span = Math.hypot(b.x - a.x, b.z - a.z);
-  const sackPoints = BELLOWS_RULE.ashAtRoadMetres.map(metres => {
-    let left = metres;
-    for (let index = 0; index + 1 < road.length; index++) {
-      const from = road[index], to = road[index + 1];
-      const length = Math.hypot(to.x - from.x, to.z - from.z);
-      if (left <= length || index + 2 === road.length) {
-        const share = length > 0 ? Math.min(1, left / length) : 0;
-        return {x:from.x + (to.x - from.x) * share, z:from.z + (to.z - from.z) * share,
-          heading:Math.atan2(to.x - from.x, to.z - from.z)};
-      }
-      left -= length;
-    }
-  });
-  return {roadMetres:here.along, roadWidthMetres:route.roadWidthMetres, sackPoints,
+  const playerRoad = nearestOnLine(road, car.x, car.z);
+  const playerA = road[playerRoad.index], playerB = road[playerRoad.index + 1];
+  const playerSpan = Math.hypot(playerB.x - playerA.x, playerB.z - playerA.z);
+  const playerShare = playerSpan > 0 ? Math.max(0, Math.min(1,
+    ((car.x - playerA.x) * (playerB.x - playerA.x) +
+      (car.z - playerA.z) * (playerB.z - playerA.z)) / playerSpan ** 2)) : 0;
+  return {roadMetres:here.along, roadWidthMetres:route.roadWidthMetres,
+    sackPoint:{x:playerA.x + (playerB.x - playerA.x) * playerShare,
+      z:playerA.z + (playerB.z - playerA.z) * playerShare,
+      heading:Math.atan2(playerB.x - playerA.x, playerB.z - playerA.z)},
     inBoneyard:pathIndex >= road.length,
-    behindMetres:span > 0 ? ((thief.x - car.x) * (b.x - a.x) +
-      (thief.z - car.z) * (b.z - a.z)) / span : Infinity,
+    behindMetres:here.along - playerRoad.along,
     furnaceMetres:Math.hypot(thief.x - (route.wrecks.at(-1).position ?? route.wrecks.at(-1)).x,
       thief.z - (route.wrecks.at(-1).position ?? route.wrecks.at(-1)).z)};
 }
@@ -220,13 +234,20 @@ export function bellowsBlockingMove(from, proposed, segmentStart, segmentEnd, pl
 // meeting does not become a second knock. Separate, then meet again.
 export function stepBellowsLoad(state, facts, dt = 0) {
   const next = {...state, bellows: state.bellows ?? BELLOWS_RULE.start,
-    knocks: state.knocks ?? 0};
+    knocks: state.knocks ?? 0,
+    shakenRemaining: state.shakenRemaining ?? 0};
   const events = [];
   if (state.thiefStopped) return {state: next, events};
 
+  next.shakenRemaining = Math.max(0, next.shakenRemaining - Math.max(0, dt));
+  const weaponHits = facts.weaponHits ?? [];
+  const weaponDamage = weaponHits.reduce((total, hit) => total +
+    (['rpg', 'rocket-pod', 'bomb', 'sticky-bomb'].includes(hit.weapon) ? BELLOWS_RULE.blastPerHit
+      : ['crossbow', 'marksman'].includes(hit.weapon) ? BELLOWS_RULE.boltPerHit
+      : BELLOWS_RULE.otherPerHit), 0);
   const flameSeconds = facts.flameContact ? Math.max(0, dt) : 0;
-  next.bellows = Math.max(0, next.bellows - BELLOWS_RULE.flamePerSecond * flameSeconds);
-  if (!state.leatherWarned && (facts.flameContact || facts.behindMetres >= 0 &&
+  next.bellows = Math.max(0, next.bellows - weaponDamage - BELLOWS_RULE.flamePerSecond * flameSeconds);
+  if (!state.leatherWarned && (facts.flameContact || weaponHits.length > 0 || facts.behindMetres >= 0 &&
       facts.behindMetres <= BELLOWS_RULE.warningBehindMetres)) {
     next.leatherWarned = true;
     events.push({type: 'say', lineId: 'bellows.warning'});
@@ -239,6 +260,7 @@ export function stepBellowsLoad(state, facts, dt = 0) {
       (!solidHeld && facts.solidContact && facts.solidImpactKmh >= BELLOWS_RULE.hardKnockKmh)) {
     // Two reports for one physics step still describe just one knock.
     next.knocks++;
+    next.shakenRemaining = BELLOWS_RULE.shakenSeconds;
     events.push({type: 'bellowsKnock', knocks: next.knocks});
   }
   next.meetingHeld = !!(meetingHeld || facts.carContact);
@@ -251,8 +273,8 @@ export function stepBellowsLoad(state, facts, dt = 0) {
 }
 
 // Road progress and furnace distance are measured by the chase, not the scene.
-// Crossings, rather than a narrow distance window, keep sacks repeatable even
-// when one rules step crosses both marks. A restart cannot throw them again.
+// Each sack waits beyond its mark until the car is close behind. A restart
+// cannot throw an already used sack again.
 export function stepBellowsPursuit(state, facts, dt = 0) {
   const next = {...state, clouds: stepBellowsAsh(state.clouds ?? [], dt),
     sacksThrown: [...(state.sacksThrown ?? [])]};
@@ -260,8 +282,10 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
   if (state.thiefStopped) return {state: next, events, requests};
   for (const [index, metres] of BELLOWS_RULE.ashAtRoadMetres.entries()) {
     if (next.sacksThrown.includes(index) || !(facts.roadMetres >= metres)) continue;
-    const point = facts.sackPoints?.[index];
-    if (!point) throw new Error('The thief needs a road point for each sack.');
+    if (facts.inBoneyard || facts.onFoot || !(facts.behindMetres >= 0 &&
+        facts.behindMetres <= BELLOWS_RULE.sackBehindMetres)) continue;
+    const point = facts.sackPoint;
+    if (!point) throw new Error('The thief needs the pursuing car’s road point for his sack.');
     const cloud = bellowsAshBox(`thief-ash-${index}`, point, facts.roadWidthMetres);
     next.clouds.push(cloud);
     next.sacksThrown.push(index);
@@ -329,14 +353,21 @@ export function stepBellowsChase(step, state, view, dt = 0) {
   const car = view.carPosition ?? (!view.onFoot ? view.player?.position : null);
   const carGapMetres = car && target.position
     ? Math.hypot(car.x - target.position.x, car.z - target.position.z) : Infinity;
-  const facts = {...view.bellows, carGapMetres};
+  const facts = {...view.bellows, carGapMetres, onFoot:view.onFoot === true};
+  const chaseElapsed = (state.chaseElapsed ?? 0) + Math.max(0, dt);
+  const launchEnded = state.launchEnded === true || chaseElapsed >= BELLOWS_RULE.launchSeconds ||
+    !view.onFoot && Math.abs(view.speedKmh ?? 0) > BELLOWS_RULE.launchPlayerSpeedKmh;
+  state = {...state, chaseElapsed, launchEnded};
   const load = stepBellowsLoad(state, facts, dt);
   const pursuit = stepBellowsPursuit(load.state, facts, dt);
   const ending = stepBellowsEnding(pursuit.state, {carGapMetres,
     onFoot: view.onFoot === true, playerSpeedKmh: view.speedKmh ?? Infinity}, dt);
   // A stopped thief stays stopped throughout collection and captions.
   const speedKmh = ending.state.thiefStopped || !Number.isFinite(facts.playerTopSpeedKmh)
-    ? 0 : bellowsThiefSpeedKmh(facts.playerTopSpeedKmh, facts.inBoneyard === true);
+    ? 0 : facts.inBoneyard ? BELLOWS_RULE.boneyardSpeedKmh
+    : !launchEnded ? BELLOWS_RULE.launchSpeedKmh
+    : bellowsThiefSpeedKmh(facts.playerTopSpeedKmh, false, facts.behindMetres,
+      view.difficulty, ending.state.shakenRemaining > 0);
   const events = [...load.events, ...pursuit.events, ...ending.events];
   const requests = [marker, follow(speedKmh / 3.6),
     ...load.events.filter(event => event.type === 'say'),

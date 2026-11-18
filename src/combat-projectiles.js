@@ -297,7 +297,8 @@ export function stepProjectiles(duel, dt) {
         if (approach && approach.distance < thing.radius &&
             Math.abs(projectile.y - (at.y ?? 0)) < T.projectileHitHeight + 1) {
           projectile.worldJobHits.push(thing.id);
-          reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined});
+          reportWorldJobThingHit(duel, {...thing, weapon:projectile.kind,
+            hitId:projectile.id, damage: thing.kind === 'furnace-vent' ? 1 : undefined});
         }
       }
     }
