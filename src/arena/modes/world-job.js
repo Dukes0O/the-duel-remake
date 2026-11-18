@@ -1228,6 +1228,7 @@ export function applyBellowsThiefFlee(duel, worldJob, request) {
       z:z + forward.z * BELLOWS_RULE.thiefRunMetres}});
   delete actor.groundY;
   worldJob.actors.push(actor);
+  worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
   return true;
 }
 
@@ -1348,8 +1349,11 @@ export function moveJobRaiders(duel, worldJob, dt) {
     actor.yaw = Math.atan2(dx, dz);
     // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
     if (scablands) {
-      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: actor.y});
+      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid,
+        height: actor.y, moverId: actor.id});
       actor.x = at.x; actor.z = at.z; actor.y = at.y;
+      if (actor.bellowsThief && (from.x !== at.x || from.z !== at.z))
+        worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
     }
     if (actor.brandAsh) {
       // The foot mover resolves land and buildings, but not other people.

@@ -594,7 +594,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["WORLD-FAULTS-18-NOV"]
+    needs: []
     locks: []
     details: "docs/board/cards/ROAD-RIDERS.md"
 

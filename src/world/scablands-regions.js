@@ -186,7 +186,7 @@ export function riseHeightAt(x, z, rises = RISES) {
 const drive = (id, name, top, grip, scrub, roughness, safeKmh, dust, extra = {}) =>
   Object.freeze({id, name, top, grip, scrub, roughness, safeKmh, dust, soft: false, shake: 0, ...extra,
     // The sound cue played when a car drives on to this ground (src/sound-bank.js): one for each ground, soft sand of the river bed too.
-    cue: `world.ground.${extra.soft ? 'river-soft' : id}`});
+    cue: id === 'scab-plates' ? 'vehicle.landing' : `world.ground.${extra.soft ? 'river-soft' : id}`});
 export const DRIVE = Object.freeze({
   road: drive('road', 'Road', 1, .95, .02, .05, Infinity, 0x9a8566),
   'salt-pan': drive('salt-pan', 'Salt pan', 1.25, .80, .02, .04, Infinity, 0xe9e5db),

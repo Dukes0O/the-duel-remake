@@ -10,13 +10,13 @@ export const FOOT_GRADE = Math.tan(40 * Math.PI / 180);
 export const TRUCK_GRADE = GROUND.gripGrade;
 
 // A mover steps from `from` to `to` ({x, z} each). Returns {x, z, blocked}: where it ends, and why it was held ('steep', 'solid' or false).
-export function stepMover(from, to, {radius = .4, grade = TRUCK_GRADE, solids = true, grid, height} = {}) {
+export function stepMover(from, to, {radius = .4, grade = TRUCK_GRADE, solids = true, grid, height, moverId} = {}) {
   let x = to.x, z = to.z, blocked = false;
   const dx = to.x - from.x, dz = to.z - from.z, distance = Math.hypot(dx, dz);
   const ground = Number.isFinite(height) ? (px, pz) => scablandsActorHeightAt(px, pz, height) : scablandsSurfaceHeightAt;
   if (distance > 1e-6 && (ground(to.x, to.z) - ground(from.x, from.z)) / distance > grade) { x = from.x; z = from.z; blocked = 'steep'; }
   if (!solids) return {x, z, y: ground(x, z), blocked};
-  const pushed = pushOutOfSolids(x, z, radius, grid, Number.isFinite(height) ? ground(x, z) : undefined);
+  const pushed = pushOutOfSolids(x, z, radius, grid, Number.isFinite(height) ? ground(x, z) : undefined, moverId);
   if (pushed.hit) blocked = blocked || 'solid';
   return {x: pushed.x, z: pushed.z, y: ground(pushed.x, pushed.z), blocked};
 }

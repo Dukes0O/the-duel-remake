@@ -1076,9 +1076,6 @@ export function attachRenderer(host, app) {
       if(!entry.mesh.visible)continue;
       placeWorldJobVehicle(entry.mesh,actor,course,st.s);
       entry.mesh.position.y+=drawnShift(actor.position.x,actor.position.z,actor.hasFloorHeight?actor.position.y:undefined,undefined,entry.mesh);
-      if(Number.isFinite(entry.previousX))entry.mesh.rotation.y=Math.atan2(
-        actor.position.x-entry.previousX,entry.previousZ-actor.position.z);
-      entry.previousX=actor.position.x;entry.previousZ=actor.position.z;
     }
     const refillCrate=st.arena?.mode==='world-job'?st.arena.worldJob?.refillCrate:null;
     worldJobCrate.visible=!menu&&!!refillCrate;
