@@ -247,7 +247,7 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   const place = (id, x, z) => ({id, position: {x, y: 0, z}});
   const hearth = place('hearth', 0, 0);
   const lamps = [place('pump', 20, 0), place('tower', 40, 0), place('far', 60, 0)];
-  const job = {id: 'test-town-brand', steps: [{kind: 'onfoot', brand: true, hearth,
+  const job = {id: 'test-town-brand', steps: [{kind: 'onfoot', brand: true, hearth, farWalk:[place('hearth-front',0,2.8)],
     places: lamps, auntie: place('town-auntie-solder', 5, 5), ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
   const {app} = start({job});
   const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
@@ -311,14 +311,19 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   assert.equal(state.fighter.knockedDown, false);
   assert.equal(state.fighter.health, 100);
   assert.equal(state.fighter.respawns, 1);
-  assert.equal(state.fighter.x, lamps[0].position.x + BRAND_RULE.recoveryOffset);
-  assert.equal(worldJob.job.stepState.brandSeconds, BRAND_RULE.burnSeconds);
+  assert.equal(state.fighter.x, lamps[0].position.x);
+  assert.equal(state.fighter.z, lamps[0].position.z + BRAND_RULE.recoveryLampMetres);
+  assert.equal(worldJob.job.stepState.brandSeconds, 0);
+  assert.equal(ashTells.at(-1).cue, 'world.brand.out');
   assert.equal(worldJob.job.stepState.lamps.pump, true);
   stepWorldJob(duel, 0);
   assert.equal(state.fighter.respawns, 1, 'recovery happens once');
+  assert.equal(worldJob.job.stepState.brandSeconds, BRAND_RULE.burnSeconds);
+  assert.equal(ashTells.at(-1).cue, 'world.brand.catch');
   state.cpuDifficulty = 'medium'; state.fighter.knockedDown = true;
   stepWorldJob(duel, 0);
-  assert.equal(state.fighter.x, hearth.position.x + BRAND_RULE.recoveryOffset);
+  assert.equal(state.fighter.x, hearth.position.x);
+  assert.equal(state.fighter.z, hearth.position.z + 2.8);
   assert.equal(worldJob.job.stepState.lamps.pump, true);
   app.returnToMenu(); app.dispose?.();
 }
