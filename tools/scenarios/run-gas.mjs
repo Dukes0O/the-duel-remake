@@ -38,6 +38,14 @@ export async function run(c) {
     const ambush=d.steps[0].ambushes[0].place.position;
     // Put the car 40 m short of the first ambush, on the road, and let Big Bess drive on until the raiders appear.
     const road=a.duel.course.nearest(ambush.x-40,ambush.z);s.s=road.s;s.lateral=road.lateral;s.speedMph=0;
+    // The roads are long on the larger land (the first raid is 3,900 m down the Boneyard road, 435 s of her driving at 9 m/s), so she is
+    // put on her road 60 m short of that raid, the way everburn-frames puts her, and the run goes on from there.
+    const bess=j.actors.find(x=>x.id==='big-bess'),points=d.steps[0].path.map(item=>item.position??item);
+    let left=d.steps[0].ambushes[0].metres-60,index=1;
+    while(index<points.length-1&&left>Math.hypot(points[index].x-points[index-1].x,points[index].z-points[index-1].z)){
+      left-=Math.hypot(points[index].x-points[index-1].x,points[index].z-points[index-1].z);index++;}
+    const from=points[index-1],to=points[index],length=Math.hypot(to.x-from.x,to.z-from.z);
+    bess.position={...bess.position,x:from.x+(to.x-from.x)/length*left,z:from.z+(to.z-from.z)/length*left};bess.pathIndex=index;bess.stretchHealth=bess.health;
     return {feud:d.feud,runs:d.runs,raids:d.raids,ambush};})()`);
   for(let i=0;i<400;i++){
     const seen=await c.evaluate('(()=>{const a=window.__qaApp;a.advance(0.5);return a.duel.state.arena.worldJob.actors.some(x=>x.ambushKey)})()');

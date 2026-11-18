@@ -88,22 +88,24 @@ async function framedCar(context,car){
   return result;
 }
 
-async function refusedEnzo(context){
+// The one car still flown (the McMurtry Speirling) is refused; a medal car (the Enzo) is admitted
+// (earned-cars decision of 17 November).
+async function refusedFlownCar(context){
   const refusal=await context.evaluate(`(() => {
     const app=window.__qaApp;
     const memoryOnly=!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
       window.name.startsWith('__duel_qa_tab_v2:');
-    if(!memoryOnly)throw Error('Enzo refusal needs the disposable memory-only tab');
-    app.setRaceSettings({car:'ferrari_enzo'});
+    if(!memoryOnly)throw Error('McMurtry refusal needs the disposable memory-only tab');
+    app.setRaceSettings({car:'mcmurtry_speirling'});
     const storage=()=>JSON.stringify(Array.from({length:localStorage.length},(_,index)=>{
       const key=localStorage.key(index);return [key,localStorage.getItem(key)];
     }).sort((a,b)=>a[0].localeCompare(b[0])));
     const helicopterOn=app._switches().enabled('helicopter')===true;
-    const unlocked=app.profile.unlockedCars.includes('ferrari_enzo');
-    const untransported=!Object.hasOwn(app.profile.heli?.carsAt||{},'ferrari_enzo')&&
+    const unlocked=app.profile.unlockedCars.includes('mcmurtry_speirling');
+    const untransported=!Object.hasOwn(app.profile.heli?.carsAt||{},'mcmurtry_speirling')&&
       (app.profile.heli?.flights||0)===0;
-    if(!helicopterOn||!unlocked||!untransported||app.menuCar!=='ferrari_enzo')
-      throw Error('Enzo refusal requires helicopter enabled and the selected car unlocked but untransported');
+    if(!helicopterOn||!unlocked||!untransported||app.menuCar!=='mcmurtry_speirling')
+      throw Error('McMurtry refusal requires helicopter enabled and the selected car unlocked but untransported');
     const before={owner:app.player.id,state:app.duel.state,course:app.duel.course,
       stateValue:JSON.stringify(app.duel.state),features:JSON.stringify(app.duel.course?.features),
       run:app.runId,profile:JSON.stringify(app.profile),heli:JSON.stringify(app.profile.heli),
@@ -120,14 +122,25 @@ async function refusedEnzo(context){
       unchangedHeli:JSON.stringify(app.profile.heli)===before.heli,
       unchangedStorage:storage()===before.storage};
   })()`);
-  if(refusal.car!=='ferrari_enzo'||refusal.admitted!==false||
-    refusal.message!==`The ${CARS.ferrari_enzo.name} travels only by air. Fly it here from the helipad first.`||
+  if(refusal.car!=='mcmurtry_speirling'||refusal.admitted!==false||
+    refusal.message!==`The ${CARS.mcmurtry_speirling.name} travels only by air. Fly it here from the helipad first.`||
     !refusal.memoryOnly||!refusal.helicopterOn||!refusal.unlocked||!refusal.untransported||
     refusal.status!=='menu'||refusal.visit||refusal.journey||!refusal.sameOwner||
     !refusal.sameState||!refusal.unchangedState||!refusal.sameCourse||!refusal.unchangedFeatures||
     !refusal.sameRun||!refusal.unchangedProfile||
     !refusal.unchangedHeli||!refusal.unchangedStorage)
-    throw Error('Production Enzo yard refusal or isolation failed: '+JSON.stringify(refusal));
+    throw Error('Production McMurtry yard refusal or isolation failed: '+JSON.stringify(refusal));
+  const enzo=await context.evaluate(`(() => {
+    const app=window.__qaApp;
+    app.setRaceSettings({car:'ferrari_enzo'});
+    const admitted=app.visitWasteland();
+    const result={car:app.menuCar,admitted,status:app.duel.state.status,visitCar:app.duel.state.car};
+    if(admitted)app.returnToMenu();
+    return result;
+  })()`);
+  if(enzo.car!=='ferrari_enzo'||enzo.admitted!==true||enzo.visitCar!=='ferrari_enzo')
+    throw Error('Untransported Enzo must be admitted to the yard: '+JSON.stringify(enzo));
+  refusal.enzoAdmitted=true;
   return refusal;
 }
 
@@ -142,14 +155,14 @@ export async function run(context) {
   const before=await context.evaluate(`(() => {
     const app=window.__qaApp;app.stop();
     app.addPlayer('Yard QA');
-    app.profile={...app.profile,credits:700,unlockedCars:${JSON.stringify([...CAR_KEYS,'ferrari_enzo','koenigsegg_jesko'])},wasteland:{...app.profile.wasteland,
+    app.profile={...app.profile,credits:700,unlockedCars:${JSON.stringify([...CAR_KEYS,'ferrari_enzo','koenigsegg_jesko','mcmurtry_speirling'])},wasteland:{...app.profile.wasteland,
       discoveredGate:true,scrap:3000,xp:2000}};
     if(!app._saveProfile())throw Error('memory-only setup save failed');
     const before={credits:app.profile.credits,scrap:app.profile.wasteland.scrap,
       history:app.profile.history.length,settled:app.profile.settledResults.length};
     return before;
   })()`);
-  const airOnlyRefusal=await refusedEnzo(context);
+  const airOnlyRefusal=await refusedFlownCar(context);
   const framing=[],framingErrors=[];
   for(const car of [...CAR_KEYS,'koenigsegg_jesko']){
     const start=await context.evaluate(`(() => {
