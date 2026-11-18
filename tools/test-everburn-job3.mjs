@@ -744,3 +744,69 @@ assert.equal(rider.speed, 0);
 assert.equal(JSON.stringify([...memory]), ridersSaved);
 ridersApp.returnToMenu(); ridersApp.dispose?.();
 console.log('PASS Run Him Down: two clear furnace riders share pursuit, ram retreat and ember hit loss on armour, without save writes.');
+
+// Job 3.6: condition changes pay, never the saved shape or the kept reward.
+const {arenaReward, settleArenaResult} = await import('../src/arena/arena-settlement.js');
+const {arenaResultsScreen} = await import('../src/screen-arena.js');
+for (const [condition,pay,sentence] of [
+  [100,120,'The bellows came back whole.'],[80,120,'The bellows came back whole.'],
+  [79,80,'The bellows will patch.'],[40,80,'The bellows will patch.'],
+  [39,50,'The bellows are scorched.'],[0,50,'The bellows are scorched.'],
+]) {
+  const bellowsResult={bellows:condition,knocks:3,pay:bellowsPay(condition),sentence:bellowsSentence(condition)};
+  const finishedArena = {version: 1, venueId: 'scablands', mode: 'world-job', phase: 'over',
+    participants: [{id: 'player', kind: 'player'}],
+    result: {placings: ['player'], winnerId: 'player', reason: 'job-complete'},
+    worldJob: {definition: definition, bellowsResult, job: {steps: definition.steps, stepIndex: definition.steps.length}}};
+  for (const [difficulty, factor] of [['easy', 1], ['medium', 1.2], ['hard', 1.4]])
+    assert.deepEqual(arenaReward(finishedArena, difficulty),
+      {base: pay, placing: 0, wrecks: 0, factor, total: Math.round(pay * factor)});
+  const profile = {credits: 123, kept: 'unchanged', wasteland: {
+    version: 1, discoveredGate: true, scrap: 10, settledResults: [],
+    territories: {kettle: {hold: 0, claimed: false}}, kept: 'unchanged',
+  }};
+  const beforeProfile = JSON.stringify(profile);
+  const request = {runId: `bellows-${condition}`, ownerPlayerId: 'test-player',
+    activePlayerId: 'test-player', cpuDifficulty: 'easy', arena: finishedArena};
+  const paid = settleArenaResult(profile, request);
+  assert.equal(paid.awarded, true);
+  assert.equal(paid.scrapEarned, pay);
+  assert.equal(paid.profile.wasteland.scrap, 10 + pay);
+  assert.equal(paid.holdAdded, 0);
+  assert.equal(JSON.stringify(profile), beforeProfile, 'Settlement leaves its input alone.');
+  assert.deepEqual(Object.keys(paid.profile), Object.keys(profile));
+  assert.deepEqual(Object.keys(paid.profile.wasteland), Object.keys(profile.wasteland));
+  assert.equal(paid.profile.credits, 123);
+  assert.equal(paid.profile.kept, 'unchanged');
+  assert.equal(paid.profile.wasteland.kept, 'unchanged');
+  const duplicate = settleArenaResult(paid.profile, request);
+  assert.equal(duplicate.awarded, false);
+  assert.equal(duplicate.profile, paid.profile);
+  assert.equal(duplicate.scrapEarned, 0);
+  const unfinishedArena = {...finishedArena, phase: 'active'};
+  assert.equal(settleArenaResult(profile, {...request, arena: unfinishedArena}).awarded, false);
+  const screen = arenaResultsScreen({arena: finishedArena},
+    {metric: () => '', action: () => '', escapeHTML: String});
+  assert.equal(screen.description.split(sentence).length - 1, 1);
+  const lost = arenaResultsScreen({arena: {...finishedArena,
+    result: {winnerId: 'raiders', reason: 'job-failed'}}},
+  {metric: () => '', action: () => '', escapeHTML: String});
+  assert.equal(lost.description.includes(sentence), false);
+}
+console.log('PASS Run Him Down: graded payment, results, unchanged saved fields and duplicate protection.');
+
+// The arena must retain the rule's result before completion clears stepState.
+const paidApp = new App(); paidApp.audio.unlock = () => {};
+paidApp.duel.featureFlags = createFeatureFlags({storage:null, overrides:{'hidden-road':true}});
+paidApp.duel.state.wastelandGateDiscovered = true;
+assert(paidApp.duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',
+  playerId:paidApp.player.id,seed:1989,opponents:[],job:definition}));
+const paidDuel=paidApp.duel, paidWorld=paidDuel.state.arena.worldJob;
+stepWorldJob(paidDuel,0);
+paidWorld.job.stepState={thiefStopped:true,thiefFled:true,bellowsLoaded:true,
+  endingElapsed:9,bellows:63,knocks:3,linesStarted:true,linesClosing:true};
+stepWorldJob(paidDuel,0);
+assert.deepEqual(paidWorld.bellowsResult,{bellows:63,knocks:3,pay:80,sentence:'The bellows will patch.'});
+assert.equal(paidWorld.job.done,true);
+paidApp.returnToMenu(); paidApp.dispose?.();
+console.log('PASS Run Him Down: arena keeps the earned load and knocks through step completion.');

@@ -372,9 +372,48 @@ function walkLightTheTown(duel, step) {
     forward:gap>stopGap && Math.abs(turn)<.15});
 }
 
+const bellowsDrives = new WeakMap();
+function driveBellows(duel, step) {
+  const state = duel.state, world = state.arena.worldJob, rule = world.job.stepState;
+  const car = duel.course.groundAt(state.s,state.lateral);
+  const drive = bellowsDrives.get(duel) ?? {};
+  bellowsDrives.set(duel,drive);
+  duel.setInput({throttle:0,brake:1,steer:0,interact:false});
+  if (state.onFoot) {
+    drive.walk ??= townFootpath(state.fighter,car);
+    while (drive.walk.length>1 && Math.hypot(drive.walk[0].x-state.fighter.x,drive.walk[0].z-state.fighter.z)<.6) drive.walk.shift();
+    if (Math.hypot(state.fighter.x-car.x,state.fighter.z-car.z)<2) {
+      duel.setFighterInput({});
+      duel.setInput({interact:!state.footTransition?.needsRelease});
+    } else moveTowardMarker(duel,drive.walk[0]);
+    return;
+  }
+  const thief = world.actors.find(actor=>actor.id===step.targetId);
+  if (!thief) return;
+  const gap = Math.hypot(car.x-thief.position.x,car.z-thief.position.z);
+  if (rule.thiefStopped) {
+    if (gap>6) moveTowardMarker(duel,thief.position);
+    return;
+  }
+  // Leave the forge through the gate, then follow the same road the thief took.
+  const gate = step.bellowsRoute.road[0].position;
+  if (!drive.outside) {
+    if (Math.hypot(car.x-gate.x,car.z-gate.z)<12) drive.outside=true;
+    else { moveTowardMarker(duel,gate); return; }
+  }
+  const road = step.bellowsRoute.road.map(spot);
+  const aim = gap<65 ? thief.position : eastRoadAim(car,45,road);
+  const turn = wrap(Math.atan2(aim.x-car.x,aim.z-car.z)-(car.heading+(state.headingError||0)));
+  const speed = Math.abs(state.speedMph);
+  duel.setInput({throttle:Math.abs(turn)<1.2 ? 1:0,
+    brake:Math.abs(turn)>1.2 && speed>15 ? 1:0,
+    steer:clamp(-turn*2,-1,1),boost:false,interact:false});
+}
+
 function playerInput(duel) {
   const state = duel.state, worldJob = state.arena.worldJob;
   const step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (step?.bellows) { driveBellows(duel,step); return; }
   if (step?.brand) { walkLightTheTown(duel,step); return; }
   const phase = worldJob.job.stepState.phase;
   const needsRelease = state.footTransition?.needsRelease === true;
@@ -534,7 +573,7 @@ function play(definition, seed) {
   return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete',
     waitingFor, seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
       ['spilled', 'restarted', 'waveRestarted', 'knockedDown'].includes(event.type)).length,
-    stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState,
+    stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState, bellowsResult:worldJob.bellowsResult,
     onFoot: duel.state.onFoot, marker: worldJob.marker, waves: worldJob.clearedWaves,
     actorCount: worldJob.actors.length,
     footWeapons: duel.state.footWeapons && {ammo: duel.state.footWeapons.ammo,
@@ -557,6 +596,7 @@ for (const definition of jobs) {
       const walk = townWalks.get(result.duel);
       console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}`);
     }
+    if (definition.steps[0]?.bellows) console.log(`Run Him Down, seed ${seed}: knocks ${result.bellowsResult?.knocks ?? result.stepState.knocks}, bellows ${result.bellowsResult?.bellows ?? result.stepState.bellows}, loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}`);
     if (result.won) finishes++;
     if ((seed === 1 || trialJobsOnly || selectedJob) && !result.won) {
       console.log(`Failed ${definition.name}, seed ${seed}`);

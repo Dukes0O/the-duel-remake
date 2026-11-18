@@ -1525,6 +1525,9 @@ export function stepWorldJob(duel, dt) {
         cue: BRAND_CUES[event.type], position: {...(event.position ?? lamp?.position ?? point)}}});
     }
     playBellowsEvent(duel, worldJob, currentStep, event, view.carPosition);
+    if (event.type === 'bellowsArrived') {
+      worldJob.bellowsResult = {bellows:event.bellows, knocks:event.knocks, pay:event.pay, sentence:event.sentence};
+    }
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
         sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
