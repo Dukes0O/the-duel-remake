@@ -1011,7 +1011,7 @@ The flamethrower is kept in every case. The closing caption appears at five seco
 
 **Job 4, Slow Ride,** is designed in the next section. Its lead-up is already in: Big Bess is met in job 1.
 
-## Slice 8 result (Codex built it; Claude designed, ruled and reviewed; 17 November 2026, night): merged, hidden
+## Slice 8 result (Codex built it; Claude designed, ruled and reviewed; 17 November 2026, evening): merged, hidden
 
 **In:** the yard's brazier fills the pot to 100 at every stop and a wayside brazier lifts it to 60 once; a dead pot is
 told the nearest fire; Moss greets the car at Big Bess. The furnace's glass walks a forty-second round on the plates
@@ -1052,7 +1052,7 @@ driven by hand with the sound on, the salt road first, before Kyle tries it.
 
 **Sound:** new `world.salt.horn` and `world.bridge.ash`, from the bank's recipes.
 
-## Slice 9 result (Codex built it; Claude designed, ruled, reviewed and began the hand play; 17 November 2026, night): merged, hidden
+## Slice 9 result (Codex built it; Claude designed, ruled, reviewed and began the hand play; 17 November 2026, evening): merged, hidden
 
 **In:** job 2 "Light the Town" and job 3 "Run Him Down" as designed above, offered in story order behind the unchanged
 switches. Codex's choices that stand: the tower lamp at the tower's foot (a walker cannot climb); the thief rounds the
@@ -1095,6 +1095,41 @@ Not yet played: driving off Ash Men, the third lamp and the ending of job 2; the
 
 **Sound:** `world.brand.catch`, `world.brand.out`, `world.ash.throw`, `world.town.wake`, `world.thief.ash`,
 `world.bellows.load`, from the bank's recipes.
+
+## Slice 10 result (Codex built it; Claude ruled, reviewed and looked; 17 November 2026, evening): merged, hidden
+
+**Kyle's finding 11, the car sinking into the ground, is cured in the drawing.** On the Scablands, a car, a walker, what
+they carry, their effects and the camera's feet are drawn shifted by the difference between the ground as it is drawn
+and the land's own height at their place (`src/world/scablands-drawn-feet.js`), held within 1.2 m. The shift is 0 on a
+bridge deck, the Pipe, a tunnel's floor and levelled ground, and where that reason starts or stops it eases over 0.4
+seconds, kept on the drawn object. No rule, position or saved value changes; off the Scablands the shift is always 0.
+The salt lean-to's windbreak is solid.
+
+**Measured:** along all four ways the car's feet are within 0.05 m of the drawn ground (the survey is now an assertion).
+At the three places measured on the salt road the shift is 0.4 to 0.9 m. Twelve actors cost 0.03 ms a frame on the plain
+and 0.07 ms by the river. Replays (297 and 12) and world signatures (63) are unchanged.
+
+**One fault left, a drawing fault, Claude's:** inside 80 m of the river the near ground is cut away and the gorge's
+ribbon takes over, and the two drawn surfaces stand up to 0.37 m apart where they meet (worst at (3103,-276)). Making
+the ribbon take the plain's height over its outer band cost more than 20 ms to build, so the car's shift is blended
+over 6 m at that line instead and may be up to 0.2 m off the drawn ground inside it. The step in the ground itself is
+still to be cured.
+
+**Review:** one independent Codex review found no other course drawn differently, no rule reading the shift and
+nothing saved, and three faults (the seam above, a jump where the shift switches off, effects left at the old height
+while their car moved). The last two are cured, each with a check; Claude read the easing.
+
+**Changed assertions, reviewed by Claude (rule 18); none is loosened:** the survey's logged count of gaps over 0.3 m
+becomes an assertion of contact within 0.05 m, with half the seam (0.2 m at most) allowed inside its 6 m band; Big
+Bess's expected drawn height is her own height plus the shift, at the same tolerance, and after a change of floor she
+reaches it in 0.4 seconds.
+
+**Checks:** Codex's lane tier 80 of 80 on 1a87b1579; at the merge `npm run build`, `test-drive-through` and the browser
+scenario `everburn-job1` (25 pictures). Claude looked at the two low side pictures on the salt road: the wheels stand
+on the ground at both places. The third place's picture could not be aimed (the Ridge's lookout sees the car there and
+the view is taken over); Claude measured it in the page instead: drawn ground 2.03 m, feet 1.20 m plus a shift of 0.83.
+`src/render3d.js` and four other files every course uses are changed, so tonight's full check runs every browser
+scenario.
 
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 

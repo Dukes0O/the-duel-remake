@@ -20,13 +20,13 @@ export function createBellowsView(course) {
   const figures = createOnFootFigures({capacity:1});
   group.add(load, figures.group);
   return {group, load, clouds, figures,
-    update(state) {
+    update(state, drawnShift) {
       const worldJob = state?.arena?.mode === 'world-job' ? state.arena.worldJob : null;
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
       group.visible = step?.bellows === true;
       load.visible = false;
       figures.update(group.visible ? (worldJob.actors ?? []).filter(actor => actor.bellowsThief) : [],
-        {active:group.visible});
+        {active:group.visible,drawnShift});
       const active = new Set();
       if (group.visible) {
         const carried = job.stepState ?? {};
@@ -37,6 +37,8 @@ export function createBellowsView(course) {
         if (at) {
           load.visible = true;
           load.position.set(at.x, (at.y ?? 0) + R.roofLoadLift, at.z);
+          load.position.y+=drawnShift?.(at.x,at.z,carried.bellowsLoaded?state.groundHeight:at.y,
+            carried.bellowsLoaded&&state.airborne?state._jumpY:undefined,load)??0;
           load.rotation.y = heading;
         }
         for (const cloud of carried.clouds ?? []) {
@@ -51,6 +53,7 @@ export function createBellowsView(course) {
           const pose = course.nearest(cloud.x, cloud.z);
           const floor = course.groundAt(pose.s, pose.lateral).y;
           mesh.position.set(cloud.x, floor + R.ashHeightMetres / 2, cloud.z);
+          mesh.position.y+=drawnShift?.(cloud.x,cloud.z,floor,undefined,mesh)??0;
           mesh.rotation.y = cloud.yaw;
           mesh.scale.set(cloud.width, R.ashHeightMetres, cloud.length);
         }

@@ -160,6 +160,22 @@ Three more from the same merge, each found only by the last lane tier:
   picture that must be taken at an exact moment steps to that moment inside the
   same call that measures it. A scenario that was only parsed, never run in a
   browser, is not checked: say so in the change note, as a thing still owed.
+- **A scenario written without a browser starts a story job this way**, or it
+  stops at its first step (slices 8 and 9 of EVERBURN-REMAKE, 17 November): the
+  test player's story entry carries its version (`story:{version:1, ...}`), or
+  the save drops it; the player goes to the yard first (`#wasteland-visit`, then
+  wait for `isYardHomeActive()`), because a job starts only from there; and the
+  job's actors and its fighter exist only once the state's status is `racing`,
+  so wait for that and do not set the countdown to 0. A picture aimed by the
+  scenario's own camera is held as a still over the page, because the game
+  draws its own view again before the screenshot is taken.
+- **A design that names places is measured against the land first.** The salt
+  riders were designed to give up at the Pipe, which the road crosses before
+  it reaches the pan. Print the way's line, its regions and the places' own
+  coordinates before writing a rule that races to one of them.
+- **A cure with a cost gate that fails twice gets a new method**, not a third
+  try of the same one. Drawing creased ground finer failed three times; the
+  cure that stands draws what stands on the land at the drawn ground.
 
 **Scripted drives.** A brief asks for at most one scripted drive that proves
 a job can be finished, by one way, and the card names it. Six such drives on

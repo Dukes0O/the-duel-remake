@@ -19,7 +19,10 @@ import {FURNACE_SKYLINE,FURNACE_LEAVING} from '../src/world/jobs/furnace-sightin
 import {TIN_TOWN_CENTRE} from '../src/world/tin-town-shacks.js';
 import {placeWorldJobVehicle} from '../src/vehicle-grounding.js';
 import {HOT_DELIVERY_WAYS, routeFor, sampleLine, pathLength} from '../src/world/scablands-ways.js';
-import {scablandsActorHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsActorHeightAt,scablandsFloorsAt} from '../src/world/scablands-ground.js';
+import {nearGroundHeightAt} from '../src/world/near-ground.js';
+import {createRiverField} from '../src/world/scablands-draw.js';
+import {riverDepthAt} from '../src/world/scablands-regions.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
 function addFolkFixture(root,path){
@@ -88,7 +91,12 @@ const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
 // Survey the actual job ways without driving. At decks, retain the actor's previous
 // floor; the gorge drawing below a bridge is not ground above the car on its deck.
 {
+  // Claude's fallback for a river rebuild over budget has a fixed contact cap.
+  const contactAllowance=(distance,plain,gorge)=>distance>=77&&distance<=83?
+    Math.min(.2,Math.max(.05,Math.max(0,plain-(gorge??plain))/2)):.05;
+  assert.equal(contactAllowance(80,1,0),.2,'Even a larger seam cannot grant more than .2 m.');
   const step = EVERBURN_JOBS[0].steps[0], gaps = [];
+  const field=createRiverField(SCABLANDS_LAYOUT),floors=[];
   for (const way of HOT_DELIVERY_WAYS) {
     const route = routeFor(way.legs, {start:step.origin.position, destination:step.destination.position});
     const samples = sampleLine(route, 5);
@@ -102,14 +110,21 @@ const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
         feet = scablandsActorHeightAt(x, z, feet);
         // This scene query uses nearGroundHeightAt on the plain and the actual
         // river ribbon triangles where the plain is cut away.
-        const drawn = scene.group.userData.drawnGroundHeightAt(x, z), gap = drawn - feet;
+        const distance=field.distanceAt(x,z);
+        const plain=nearGroundHeightAt(x,z,(x,z)=>scablandsSurfaceHeightAt(x,z)+riverDepthAt(x,z));
+        const gorge=distance<94?scene.group.userData.gorge.heightAtDrawn(x,z):null;
+        const drawn=distance<80?(gorge??plain):Math.max(gorge??-Infinity,plain);
+        const shift=scene.group.userData.drawnFeet.shift(x,z,feet), gap=drawn-feet-shift;
         assert.ok(Number.isFinite(feet) && Number.isFinite(drawn));
-        if (gap > .3) gaps.push({way:way.id, along:+point.along.toFixed(2), offset,
+        const count=scablandsFloorsAt(x,z,floors),onLand=Math.abs(feet-floors[count-1])<.001;
+        const allowance=contactAllowance(distance,plain,gorge);
+        if (onLand && Math.abs(gap) > allowance+1e-6) gaps.push({way:way.id, along:+point.along.toFixed(2), offset,
           x:+x.toFixed(2), z:+z.toFixed(2), gap:+gap.toFixed(3)});
       }
     }
   }
-  console.log('Hot Delivery ground above car by more than .3 m:', JSON.stringify(gaps));
+  field.texture.dispose();
+  assert.deepEqual(gaps,[], 'The feet touch the visible mesh within .05 m, or half the seam inside the blend band.');
 }
 // SCABLANDS-LAND round 4, slice 2b: the solids are everything drawn that stands taller than a wheel (src/world/scablands-solids.js), built from the same
 // data that draws it; tools/test-scablands-solid.mjs reads the real models and drives at each kind. The old table's 18 boxes (a box for each place, the
@@ -181,12 +196,18 @@ assert.ok(Math.abs(bessRig.rotation.y-BESS_REST.heading)<.001,'outside a job, sh
 assert.ok(!EVERBURN_JOBS[3].steps[0].actor.renderCar,'job 4 spawns no stand-in car for Big Bess: the Scablands scene draws her truck');
 const bessActor={id:'big-bess',position:{x:boneyard.x+100,y:0,z:boneyard.z},heading:1.2};
 syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
-assert.ok(bessAt().distanceTo(new THREE.Vector3(boneyard.x+100,scablandsSurfaceHeightAt(boneyard.x+100,boneyard.z),boneyard.z))<.001,
+assert.ok(bessAt().distanceTo(new THREE.Vector3(boneyard.x+100,scablandsSurfaceHeightAt(boneyard.x+100,boneyard.z)+scene.group.userData.drawnFeet.shift(boneyard.x+100,boneyard.z),boneyard.z))<.001,
   'in the escort, Big Bess takes the position of her actor, on the ground');
 // A mover that has selected a floor carries an absolute height, including below a deck.
+const bessBeforeFloorSwitch=bessRig.userData.scablandsFeet.value;
 bessActor.hasFloorHeight=true;bessActor.position.y=-12;
 syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
-assert.equal(bessRig.position.y,-12,'Big Bess is drawn at her selected floor');
+assert.equal(bessRig.position.y,-12+bessBeforeFloorSwitch,'Big Bess keeps her previous drawing shift on the switch frame');
+animateScene(scene.group,.4);
+syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
+assert.equal(bessRig.position.y,-12,'Big Bess is drawn at her selected floor after .4 seconds');
+// Return the independent furnace art checks to their original still frame.
+animateScene(scene.group,0);
 delete bessActor.hasFloorHeight;bessActor.position.y=0;
 assert.ok(Math.abs(bessRig.rotation.y-1.2)<.001,'in the escort, Big Bess takes the heading of her actor');
 bessActor.heading=undefined;bessActor.position={x:0,y:0,z:0};bessActor.pathIndex=1;

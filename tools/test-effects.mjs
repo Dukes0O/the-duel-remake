@@ -12,6 +12,20 @@ function surface({dirt=false}={}){
 }
 const state=(extra={})=>({status:'racing',car:'stuttgart_959s',s:100,lateral:0,speedMph:90,headingError:0,slipAngle:0,offRoad:false,roughness:1,input:{brake:1},...extra});
 const arrays=fx=>({particles:fx.group.children.find(child=>child.isPoints),marks:fx.group.children.find(child=>child.isInstancedMesh)});
+// Drawn-ground correction follows both stored support and sampled tire planes.
+for(const stored of [false,true]){
+  const course=surface({dirt:true}),s=state({offRoad:true,...(stored?{groundHeight:12}: {})});
+  const before=JSON.stringify(s),heights=[];
+  for(const lift of [0,.8]){
+    const fx=createDrivingEffects(),p=course.groundAt(s.s,s.lateral);
+    fx.update({p,state:s,dt:.05,course,drawnShift:()=>lift});
+    const {marks}=arrays(fx),matrix=new THREE.Matrix4();marks.getMatrixAt(0,matrix);
+    check(marks.geometry.attributes.markAlpha.array[0]>0,'The correction check emits a real tire mark.');
+    heights.push(new THREE.Vector3().setFromMatrixPosition(matrix).y);fx.dispose();
+  }
+  check(Math.abs(heights[1]-heights[0]-.8)<1e-5,'Tire marks follow the drawn feet with and without stored support.');
+  check(JSON.stringify(s)===before,'Shifting tire marks does not change the car state.');
+}
 {
   const course=surface(),fx=createDrivingEffects(),s=state(),p=course.groundAt(s.s,s.lateral);
   fx.update({p,state:s,dt:.05,course});const {marks}=arrays(fx),matrix=new THREE.Matrix4();marks.getMatrixAt(0,matrix);
