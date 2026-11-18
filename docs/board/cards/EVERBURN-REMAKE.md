@@ -1108,3 +1108,19 @@ On 5a65f7af9 the lane since fa4e75e50 ran all 138 suites: 119 passed and 19 fail
 The unasserted ground survey still finds four salt-way gaps above 0.3 m: (2916,-2520.04) 0.350 m; (2686.43,-2449.97) 0.368 m; (2691.17,-2451.55) 0.310 m; (2933.08,-2532.05) 0.317 m. Accepting the cost alone would not complete E. Claude must choose its next repair. No assertion or tolerance is changed for E.
 Changed assertion for Claude's review: the three new salt positions do not move by a straight share when Tin Town moves, because the way bends and the south offset turns. Their movement check now derives the moved way, its 3 km point, its normal and the 400 m offset, then checks both rider offsets with the same existing position comparison. All older position checks stay unchanged.
 The browser handover has the four requested light, lean-to/riders, mist and ash views; all 28 page and wait expressions parse in Node. Chrome was not started. Easy Hot Delivery finishes all ten seeds, each with 25.985185 fire and five rams. Bed drives stay unchanged at 14.509091 and 21.227953 fire, zero rams. The unchanged slower salt-road drive now meets six rams and arrives out; this is a changed outcome for review, not a changed driver. No switch or saved field changed.
+
+
+## Slice 8E third cure trial, 17 November 2026
+The third ruling is implemented as a trial: only the 24 by 24 near block searches for creases, all confirmed creases use eight divisions, distant scarps retain their former detail, and unchanged fine-cell sets keep their mesh. Standalone cell queries memoize the corner test with at most sixteen corner heights, in a bounded cache. Refresh invalidates touched answers. Rebuilt geometry forgets its old bounds so ray tests see the new mesh.
+Seven measured runs after one warm-up use the same land height plus river-depth correction as the scene. The baseline is before trial c53a1743f. Fine counts below are scarp / crease; moves are one cell east. No other heavy job ran in this lane.
+
+| Place | First calls before/after | Move calls before/after | First ms before/after | Move ms before/after | First fine before/after | Move fine before/after |
+| --- | --- | --- | --- | --- | --- | --- |
+| Yard | 3721/3721 | 61/61 | 17.22/19.88 | .44/2.24 | 0 / 0,0 | 0 / 0,0 |
+| Salt1 | 5926/10049 | 208/828 | 33.15/59.47 | 2.13/8.39 | 45 / 45,61 | 48 / 48,72 |
+| Salt2 | 7396/11644 | 208/275 | 40.96/68.73 | 2.71/5.62 | 75 / 75,63 | 78 / 78,60 |
+| Salt3 | 9601/11739 | 208/208 | 52.23/69.00 | 3.51/5.47 | 120 / 120,35 | 123 / 123,33 |
+| Breaks | 3721/23664 | 61/494 | 18.26/251.59 | .47/20.78 | 0 / 0,371 | 0 / 0,368 |
+
+**Stopped under the third ruling.** First placement exceeds the extra 25 ms at Salt1, Salt2 and the Breaks. Every move exceeds the extra 1.5 ms. Mabel's unchanged check fails at 41,357 calls, against fewer than 6,000. The caller is createDigNearGround's digUnderlayHeight during 100 cutting steps and changed-bounds refreshes: 266 distinct cells, 5,462 cell searches, 17 distinct fine cells and 496 fine-cell fills after initial placement. These counts were measured in a temporary probe; no assertion was changed. Claude must choose another method or change the cost and Mabel requirements. The survey remains a report because the cost gate did not pass.
+The hill/mesa mesh comparison in test-scablands-things now moves the window when a sample lies outside its near block, as the ruling permits. Every original point and tolerance stays. Parts A to D, switches, saves, world data and simulation remain untouched.
