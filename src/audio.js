@@ -42,8 +42,6 @@ const BOARDING_CUES = Object.freeze({
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 export const FOOT_ENGINE_SOUND = Object.freeze({fullMetres: 5, silentMetres: 30});
 // Scab plates borrowed the car-crash recording. Ground alone uses the bank's low suspension thump instead.
-const GROUND_THUMP_CUE = 'vehicle.landing';
-const groundSound = cue => cue === 'world.ground.scab-plates' ? GROUND_THUMP_CUE : cue;
 function footEngineGain(state, course) {
   if (!state?.onFoot || !state.fighter) return 1;
   const car = course?.worldAt?.(state.s, state.lateral || 0);
@@ -2092,11 +2090,11 @@ export class EngineAudio {
     // both from sounds the game has, scaled by the size of the hit.
     if (ev.fenceSnap) this._playCue(ev.fenceSnap.cue, {scale: .7});
     if (ev.scablandsHit?.player)
-      this._playCue(groundSound(ev.scablandsHit.cue), {
+      this._playCue(ev.scablandsHit.cue, {
         scale: clamp(0.5 + (ev.scablandsHit.kind === 'fall' ? (Number(ev.scablandsHit.kmh) || 0) / 50 : (Number(ev.scablandsHit.impactMph) || 0) / 60), 0.5, 1.6),
       });
     if (ev.groundChanged)
-      this._playCue(groundSound(ev.groundChanged.cue), {
+      this._playCue(ev.groundChanged.cue, {
         scale: clamp(0.4 + Math.abs(Number(ev.groundChanged.speedMph) || 0) / 90, 0.4, 1.4),
       });
     if (ev.muddyHollowSplash)

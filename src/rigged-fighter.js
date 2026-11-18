@@ -14,7 +14,7 @@ const crewOf = entry => {
   return CREW.has(id) ? id : 'rook';
 };
 
-function releaseAsset(asset) {
+export function disposeFigureAsset(asset) {
   const geometries = new Set(), materials = new Set(), textures = new Set(), skeletons = new Set();
   asset?.scene?.traverse(node => {
     if (node.geometry) geometries.add(node.geometry);
@@ -92,7 +92,7 @@ export function createRiggedFighterFigures({
     group.userData.crews[id] = 'loading';
     refreshStatus();
     Promise.resolve().then(() => loadAsset(id)).then(loaded => {
-      if (disposed) { releaseAsset(loaded); return; }
+      if (disposed) { disposeFigureAsset(loaded); return; }
       try {
         validateAsset(loaded);
         // Prepare bounded pools when each asset resolves, never during frames.
@@ -100,7 +100,7 @@ export function createRiggedFighterFigures({
           record.figures.push(makeFigure(id, index, loaded));
       } catch (error) {
         releaseFigures(record);
-        releaseAsset(loaded);
+        disposeFigureAsset(loaded);
         throw error;
       }
       record.asset = loaded;
@@ -233,7 +233,7 @@ export function createRiggedFighterFigures({
     for (const record of assets.values()) {
       releaseFigures(record);
       if (record.asset && !released.has(record.asset)) {
-        releaseAsset(record.asset); released.add(record.asset);
+        disposeFigureAsset(record.asset); released.add(record.asset);
       }
     }
     group.removeFromParent();

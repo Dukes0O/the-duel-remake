@@ -1,3 +1,4 @@
+import {createStoryPeopleView} from './story-people-view.js';
 import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {SALT_RIDERS} from './jobs/ember-rule.js';
 import {createScablandsDrawnFeet} from './scablands-drawn-feet.js';
@@ -134,6 +135,8 @@ export function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
 // Cut a rectangle out of the ground's material: the rectangle is the detailed ground's window (the material is changed in place).
 function withHole(material,hole){
   const lookCompile=material.onBeforeCompile;
+  const groundKey=material.customProgramCacheKey.bind(material);
+  material.customProgramCacheKey=()=>groundKey()+'-near-window';
   material.onBeforeCompile=(shader,renderer)=>{
     lookCompile?.call(material,shader,renderer);
     shader.uniforms.uNearHole=hole;
@@ -642,6 +645,9 @@ export function createScablandsScene(course,options={}){
   const cinder=createCinderFigure();group.add(cinder);
   const gasLoadView=createGasLoadView();group.add(gasLoadView.group);
   const brandLamps=createBrandLamps({surface:()=>barricadeMaterial});group.add(brandLamps.group);
+  const storyPeople = createStoryPeopleView(loadAsset);
+  group.add(storyPeople.group);
+  let peopleSeconds = 0;
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
   const brandAshView=createBrandAshView();group.add(brandAshView.group);
@@ -874,7 +880,7 @@ export function createScablandsScene(course,options={}){
         furnaceEffects.glow.position.set(door.x+door.out.x*3.2,.14,door.z+door.out.z*3.2);
       }
     },
-    sync(state){
+    sync(state, dt = 0, presentationDt = dt){
       syncTunnels();
       if(tunnelLining?.userData.look&&locate(state))lightTunnel(state);
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
@@ -897,6 +903,8 @@ export function createScablandsScene(course,options={}){
       const drawnShift=(x,z,support,airborneFeet,object)=>object?
         group.userData.drawnFeet.shiftFor(object,clock,x,z,support,airborneFeet):group.userData.drawnFeet.shift(x,z,support,airborneFeet);
       carriedBrand.update(state,drawnShift);
+      if (worldJob?.storyPeople) peopleSeconds += Math.max(0, presentationDt);
+      storyPeople.update(worldJob, here, peopleSeconds, drawnShift);
       brandAshView.update(worldJob,drawnShift);
       brandThief.update(worldJob,drawnShift);
       bellowsView.update(state,drawnShift);
@@ -1089,6 +1097,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
+    storyPeople.dispose();
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

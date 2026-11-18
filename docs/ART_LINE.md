@@ -225,8 +225,17 @@ the game.
 - **Hats that float, or shards behind a head:** photos that do not show the same
   person, or a part not joined. Use `largest_part` and check all views.
 
+- At conversation distance, a photo hull can carry a second profile on a cheek, a bright studio edge on a sleeve and a patch of floor between the boots. Measure the garment and each limb separately. Give the head one continuous front-to-back texture, keep the two boot soles separate, and inspect the exported skin in a turned pose. A long coat retains one skirt across both thighs with a vent down the front (STORY-PEOPLE, 18 November).
+- A rigid outfit added to a skin can appear metres away even when its head anchor is correct. Transform the garment vertices from their old world position through the new joint's inverse bind pose. Check the actual deformed garment bounds in standing and resting poses.
+
 ### Placement and export
 
+- **Two ground layers can share the wrong shader.** A material that changes the
+  fragment shader in `onBeforeCompile` needs a distinct Three.js program cache
+  key. Otherwise drawing the near ground first can make the coarse horizon cover
+  the car. Compare the compiled program IDs and the pixels under the car with
+  the horizon visible and hidden. On Tin Road the coarse layer stood 1.388 m
+  above the car's support. (WORLD-FAULTS-18-NOV, 18 November 2026.)
 - **An empty render sheet or a tiny prop:** an exported glTF is Y-up, but a
   Blender render scene is Z-up. Convert camera positions and targets with the
   same game-to-Blender transform as the model before judging framing; inspect

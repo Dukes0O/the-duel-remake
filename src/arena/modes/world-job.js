@@ -1,5 +1,6 @@
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
+import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
@@ -205,6 +206,11 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setBrandLamps(definition.steps[0].places ?? []);
     if (definition.steps[0].auntie) worldJob.solidGrid.setPeople([definition.steps[0].auntie]);
+  }
+  if (definition.storyPeople?.length) {
+    worldJob.storyPeople = createStoryPeople(definition.storyPeople);
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
   }
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
@@ -1228,6 +1234,7 @@ export function applyBellowsThiefFlee(duel, worldJob, request) {
       z:z + forward.z * BELLOWS_RULE.thiefRunMetres}});
   delete actor.groundY;
   worldJob.actors.push(actor);
+  worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
   return true;
 }
 
@@ -1348,8 +1355,11 @@ export function moveJobRaiders(duel, worldJob, dt) {
     actor.yaw = Math.atan2(dx, dz);
     // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
     if (scablands) {
-      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: actor.y});
+      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid,
+        height: actor.y, moverId: actor.id});
       actor.x = at.x; actor.z = at.z; actor.y = at.y;
+      if (actor.bellowsThief && (from.x !== at.x || from.z !== at.z))
+        worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
     }
     if (actor.brandAsh) {
       // The foot mover resolves land and buildings, but not other people.
@@ -1497,6 +1507,10 @@ export function stepWorldJob(duel, dt) {
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (worldJob.storyPeople && currentStep?.kind !== 'talk' &&
+      advanceStoryPeople(worldJob.storyPeople, dt, scablandsActorHeightAt)) {
+    worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
+  }
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
     worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);

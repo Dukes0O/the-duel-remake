@@ -207,6 +207,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
   const grid = {
     people: [],
+    storyPeople: [],
     brandLamps: [],
     cars: [],
     braziers: [],
@@ -223,13 +224,21 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
       for (const solid of this.people) found.push(solid);
+      for (const solid of this.storyPeople) found.push(solid);
       for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
       return found;
     },
     setPeople(people) {
-      this.people = people.map(({id, position}) => make({id, kind:'person', shape:'ellipse',
-        x:position.x, z:position.z, halfX:.45, halfZ:.45, height:1.8}));
+      this.people = people.map(({id, position, floorHeight}) => make({id, kind:'person', shape:'ellipse',
+        x:position.x, z:position.z, halfX:.45, halfZ:.45, height:1.8,
+        base:floorHeight, verticalClearance:Number.isFinite(floorHeight)}));
+    },
+    setStoryPeople(people) {
+      this.storyPeople = people.map(({id, position, height, radius}) => make({
+        id, kind:'person', shape:'ellipse', x:position.x, z:position.z, base:position.y,
+        halfX:radius, halfZ:radius, height, verticalClearance:true,
+      }));
     },
     setBrandLamps(places) {
       this.brandLamps = places.map(({id, position}) => make({id: `town-lamp-${id}`,
@@ -270,11 +279,12 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
 // ---- A round thing against the solids ----------------------------------------------------------------------------------------------------------
 // Moves a point out of every solid it overlaps by a circle of `radius`, along the nearest face, as a raider on foot or a truck steps. Returns
 // {x, z, hit} (the solid it was last pushed from, or null). Cheap: it asks the grid once.
-export function pushOutOfSolids(x, z, radius = .4, grid = SOLID_GRID, actorHeight) {
+export function pushOutOfSolids(x, z, radius = .4, grid = SOLID_GRID, actorHeight, moverId) {
   let hit = null;
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
     for (const solid of grid.near(x, z, x, z, radius + 2)) {
+      if (moverId && solid.id === moverId) continue;
       // A mover on a deck passes over what stands under it (the bridge's piers), and a mover down in the bed passes under the deck's trusses and pipeline.
       if (solid.verticalClearance) { const ground = Number.isFinite(actorHeight) ? actorHeight : scablandsSurfaceHeightAt(x, z); if (ground > solid.maxY - .01 || ground + 2.5 < solid.minY) continue; }
       const cos = Math.cos(solid.heading), sin = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;

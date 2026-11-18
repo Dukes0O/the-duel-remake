@@ -578,16 +578,6 @@ tasks:
     locks: []
     details: "docs/board/cards/WORLD-FAULTS-18-NOV.md"
 
-  - id: STORY-LEDGER
-    title: "The one ledger for the Wasteland: what the game remembers of a player's choices"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/STORY-LEDGER.md"
-
   - id: STORY-TALK
     title: "Talk bubbles and thought bubbles: people speak over their heads, the player weighs in thoughts, no prices listed"
     owner: "codex"
@@ -605,7 +595,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["WORLD-FAULTS-18-NOV"]
+    needs: []
     locks: []
     details: "docs/board/cards/ROAD-RIDERS.md"
 
@@ -615,19 +605,19 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["STORY-LEDGER", "STORY-TALK"]
+    needs: ["STORY-TALK"]
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2.md"
 
-  - id: STORY-PEOPLE
-    title: "People worth talking to: figures that stand, attend, act and can be told apart (Kyle, 18 November)"
+  - id: STORY-PLATE-NIGHT-2
+    title: "One painted plate, tried once: the Walkers at the gate at dusk, drawn over the game's own scene (Kyle, 18 November)"
     owner: "codex"
     lane: "ART"
-    size: "L"
+    size: "S"
     status: "ready"
     needs: []
     locks: []
-    details: "docs/board/cards/STORY-PEOPLE.md"
+    details: "docs/board/cards/STORY-PLATE-NIGHT-2.md"
 
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"

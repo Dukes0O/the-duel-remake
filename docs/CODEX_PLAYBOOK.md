@@ -332,3 +332,9 @@ exceptions: stop there.
 **Handing over.** Write `docs/changes/<CARD>.md` (15 lines at most). Open one pull request into `integration/wasteland`
 whose text is: what was built; each check and its result, with the commit; "For Claude to run"; "Changed assertions";
 "Codex decided"; what is not right yet. The laptop reads the diff, runs what the cloud could not, and merges.
+
+**The laptop's check-in (Kyle, 18 November 2026).** At each Wasteland check-in Claude fetches `origin` and looks at every
+`codex/*` branch. For each branch whose own card says `waiting_on: claude`, Claude reviews the diff independently, runs
+the checks listed under "For Claude to run", and records the verdict and any fixes on GitHub against the exact commit
+reviewed. If the branch has no pull request, the laptop opens it. A branch still `building` is left alone, except that
+its questions file is answered.

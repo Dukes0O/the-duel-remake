@@ -11,7 +11,14 @@ export function placeWorldJobVehicle(vehicle, actor, course, hint = 0) {
   const near = course.nearest(at.x, at.z, hint);
   const y = actor.hasFloorHeight && Number.isFinite(at.y)
     ? at.y : course.groundAt(near.s, near.lateral).y + (at.y || 0);
+  if (Number.isFinite(actor.heading)) {
+    vehicle.rotation.y = actor.heading;
+  } else if (vehicle.userData.placedInJob) {
+    const dx = at.x - vehicle.position.x, dz = at.z - vehicle.position.z;
+    if (dx || dz) vehicle.rotation.y = Math.atan2(dx, dz);
+  }
   vehicle.position.set(at.x, y, at.z);
+  vehicle.userData.placedInJob = true;
 }
 
 // Measure intact wheel geometry once per instance. Imported source bounding
