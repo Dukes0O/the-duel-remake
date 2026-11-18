@@ -68,3 +68,23 @@ export function forgeHoldView(car, plan, groundAt) {
   const tx = car.x + (plan.hearth.x - car.x) * 2 / 3, tz = car.z + (plan.hearth.z - car.z) * 2 / 3;
   return {position: {x, y: groundAt(x, z) + 3.6, z}, target: {x: tx, y: groundAt(tx, tz) + 3, z: tz}};
 }
+
+// The standing view while the town wakes (EVERBURN-REMAKE job 2). Claude's hand play of 17 November ended a metre from a lamp
+// post, facing the fence, while Auntie spoke and the thief ran unseen. The view stands high beyond the hearth and the gate, on the
+// side away from the far lamp, so that the three lamps, the forge and the gate are all in it; once the thief runs it turns to
+// follow him. `step` gives the hearth, the lamps (`places`) and the thief's path; `thief` is where he is now, or null.
+export const TOWN_ENDING_VIEW = Object.freeze({backMetres: 62, upMetres: 24, lookUpMetres: 2, followSeconds: 1.2});
+export function townEndingView(step, groundAt, thief = null, sinceTheftSeconds = 0) {
+  const at = place => place.position ?? place;
+  const hearth = at(step.hearth), gate = at(step.theftPath.at(-1));
+  const far = step.places.map(at).reduce((best, lamp) =>
+    Math.hypot(lamp.x - hearth.x, lamp.z - hearth.z) > Math.hypot(best.x - hearth.x, best.z - hearth.z) ? lamp : best);
+  const mid = {x: (hearth.x + gate.x) / 2, z: (hearth.z + gate.z) / 2};
+  const dx = mid.x - far.x, dz = mid.z - far.z, length = Math.hypot(dx, dz) || 1;
+  const x = mid.x + dx / length * TOWN_ENDING_VIEW.backMetres, z = mid.z + dz / length * TOWN_ENDING_VIEW.backMetres;
+  const follow = thief ? Math.max(0, Math.min(1, sinceTheftSeconds / TOWN_ENDING_VIEW.followSeconds)) : 0;
+  const eased = follow * follow * (3 - 2 * follow);
+  const tx = mid.x + ((thief?.x ?? mid.x) - mid.x) * eased, tz = mid.z + ((thief?.z ?? mid.z) - mid.z) * eased;
+  return {position: {x, y: groundAt(x, z) + TOWN_ENDING_VIEW.upMetres, z},
+    target: {x: tx, y: groundAt(tx, tz) + TOWN_ENDING_VIEW.lookUpMetres, z: tz}};
+}
