@@ -1,5 +1,6 @@
 // Slow Ride rules, without a scripted drive or persistent storage.
 import assert from 'node:assert/strict';
+import '../src/story/ember-lines.js';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceSighting, FURNACE_PACING} from '../src/world/jobs/furnace-sightings.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
@@ -23,7 +24,7 @@ import {worldJobHitTargets} from '../src/arena/modes/world-job.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-slow-ride');
 const step = definition.steps[0], road = ROAD_NET.road('tin-road');
-assert.equal(REMADE_EVERBURN_JOBS.includes(definition.id), false, 'Unfinished job stays hidden.');
+assert.equal(REMADE_EVERBURN_JOBS.includes(definition.id), true, 'The checked remake is ready behind the hidden story switch.');
 assert.equal(step.gasLoad, true);
 assert.deepEqual(step.path.slice(0, road.points.length).map(place => ({x: place.position.x, z: place.position.z})), road.points);
 assert.equal(step.speed * 3.6, GAS_LOAD_RULE.speedKmh);
@@ -469,6 +470,9 @@ for (const [gas, pay, sentence] of [[100,150,'Bess came in full.'], [80,150,'Bes
   assert.deepEqual(gasLoadResult(gas), {gas, pay, sentence});
 }
 const arrivalSounds = [];
+const arrivalCaptions = [];
+const auntieArrival = "Auntie Solder: Listen to that. That's a forge. That is a forge, you lovely thing.";
+duel.onStoryCaption = text => arrivalCaptions.push(text);
 duel.onChange((_state, event) => {if (event.arenaTell?.cue === 'world.furnace.horn') arrivalSounds.push(event.arenaTell);});
 world.job.stepState = {gasLoaded:true, gas:82, holes:0, clearedBlocks:step.blocks.map(block => block.id)};
 raidTruck.position = {...step.destination.position};
@@ -481,6 +485,7 @@ assert.equal(world.job.done, false);
 assert.deepEqual(world.gasResult, {gas:82, pay:150, sentence:'Bess came in full.'});
 assert.equal(world.forgeGasShare, 0);
 assert.equal(arrivalSounds.length, 1);
+assert.equal(arrivalCaptions.filter(text => text === auntieArrival).length, 1, 'Auntie speaks her exact arrival line.');
 for (let count = 0; count < 8; count++) duel.step(1);
 assert.equal(world.settled, false, 'Eight seconds cannot end the hold.');
 assert.ok(Math.abs(world.forgeGasShare - 8 / 9) < 1e-8);
@@ -489,6 +494,7 @@ duel.step(1);
 assert.equal(world.settled, true);
 assert.equal(world.forgeGasShare, 1);
 assert.equal(arrivalSounds.length, 1, 'The furnace sounds once at arrival.');
+assert.equal(arrivalCaptions.filter(text => text === auntieArrival).length, 1, 'Her line does not repeat during the hold.');
 console.log('Slow Ride: gas grade boundaries, frozen delivery, shared nine-second hold and one arrival horn passed.');
 
 const {arenaReward, settleArenaResult} = await import('../src/arena/arena-settlement.js');

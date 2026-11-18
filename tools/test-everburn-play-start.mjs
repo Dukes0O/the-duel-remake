@@ -18,6 +18,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {createJobSolidGrid, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {GAS_LOAD_RULE} from '../src/world/jobs/gas-load-rule.js';
 import {EMBER_RULE} from '../src/world/jobs/ember-rule.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
@@ -166,9 +167,10 @@ for (const [name, job] of starts) {
     const from = truckStart, to = at(step.path[1]), length = Math.hypot(to.x - from.x, to.z - from.z);
     const forward = {x: (to.x - from.x) / length, z: (to.z - from.z) / length}, right = {x: -forward.z, z: forward.x};
     const along = (car.x - from.x) * forward.x + (car.z - from.z) * forward.z, across = (car.x - from.x) * right.x + (car.z - from.z) * right.z;
-    const behind = job.run === true ? GAS_RUN_START_BEHIND_METRES : ESCORT_START_BEHIND_METRES;
+    const behind = step.gasLoad ? GAS_LOAD_RULE.carStartBehindMetres : job.run === true ? GAS_RUN_START_BEHIND_METRES : ESCORT_START_BEHIND_METRES;
+    const side = step.gasLoad ? GAS_LOAD_RULE.carStartSideMetres : ESCORT_START_RIGHT_METRES;
     near(-along, behind, .15, `${name}: the car starts ${behind} m behind Big Bess`);
-    near(across, ESCORT_START_RIGHT_METRES, .15, `${name}: the car starts ${ESCORT_START_RIGHT_METRES} m to her right`);
+    near(across, side, .15, `${name}: the car starts ${side} m to her right`);
     check(facingAngle(car, {x: car.x + forward.x, z: car.z + forward.z}) < .001, `${name}: the car faces along her road`);
     // Big Bess herself starts clear of every solid: every point of her outline (her box, read from her model) is at least 3 m from each.
     const box = BIG_MACHINE_BOXES['big-bess'];
@@ -208,9 +210,10 @@ for (const [name, job] of starts) {
   const job6 = start(EVERBURN_JOBS[5]), car6 = carAt(job6);
   check(facingAngle(car6, at(EVERBURN_JOBS[5].steps[0].place)) < .01, 'job 6: the car faces the derrick');
   // Job 4 says its own result line when Big Bess is in Tin Town.
-  const result = arenaResultsScreen({arena: {mode: 'world-job', result: {winnerId: 'player'}, worldJob: {definition: EVERBURN_JOBS[3]}}},
+  const result = arenaResultsScreen({arena: {mode: 'world-job', result: {winnerId: 'player'}, worldJob: {definition: EVERBURN_JOBS[3],gasResult:{gas:100,pay:150,sentence:'Bess came in full.'}}}},
     {metric: () => '', action: () => '', escapeHTML: String});
-  check(result.description === 'The gas is in Tin Town and the forge is lit.', 'job 4: the result line is the gas in Tin Town and the forge lit');
+  check(result.description === "Listen to that. That's a forge. That is a forge, you lovely thing. Bess came in full. The next job is being made.",
+    'job 4: the result keeps Auntie Solder, names the delivered gas and holds the unfinished next job');
 }
 
 // ---- 3. Job 6's raiders ----------------------------------------------------------------------------------------------------------------
@@ -347,10 +350,17 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
   const truck = worldJob.actors.find(actor => actor.id === 'big-bess'), named = at(step.actor.start ?? step.path[0]);
   check(truck && Math.hypot(truck.position.x - named.x, truck.position.z - named.z) < .5, `${name}: the truck stands at her start in the real job`);
   check(truck.pathIndex === 1 || !step.actor.start && truck.pathIndex === undefined, `${name}: she sets off for the road's second place, never back to its first`);
+  if (step.gasLoad) {
+    for (let tick = 0; tick < 120; tick++) duel.step(DT);
+    check(Math.hypot(truck.position.x-named.x,truck.position.z-named.z) < .01,
+      `${name}: Bess waits for the meeting before moving`);
+    worldJob.job.stepState.gasLoaded = true;
+    duel.step(DT);
+  }
   for (let tick = 0; tick < 120; tick++) duel.step(DT);
   const moved = Math.hypot(truck.position.x - named.x, truck.position.z - named.z), to = at(step.path[1]);
   check(moved > 15 && moved < 21 && Math.hypot(to.x - truck.position.x, to.z - truck.position.z) < Math.hypot(to.x - named.x, to.z - named.z),
-    `${name}: two seconds on she has driven ${moved.toFixed(1)} m toward the second place (9 m a second)`);
+    `${name}: two seconds on she has driven ${moved.toFixed(1)} m toward the second place (${step.speed} m a second)`);
 }
 {
   // The town's solids (slice 2b: thirteen blocks cut from the model, in place of the one box called tin-town-shell) stand on the town as it is drawn: wholly inside

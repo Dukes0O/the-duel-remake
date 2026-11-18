@@ -28,6 +28,10 @@ export const pageFunctions = {
     const app = window.__qaApp, duel = app.duel, state = duel.state, world = state.arena.worldJob;
     const step = world.job.steps[0], bess = world.actors.find(actor => actor.id === step.actorId);
     if (!bess) throw Error('Big Bess is missing.');
+    const placeCar = (x,z) => {
+      const pose = duel.course.nearest(x,z);
+      state.s = pose.s; state.lateral = pose.lateral; state.speedMph = 0;
+    };
     let subject = step.meeting.position, distance = 22;
     if (which === 'leak') {
       world.job.stepState = {...world.job.stepState,gasLoaded:true,gas:79,holes:1};
@@ -38,6 +42,8 @@ export const pageFunctions = {
       world.job.stepState = {...world.job.stepState,gasLoaded:true,holes:0};
       subject = step.blocks[0].position;
       distance = 150;
+      placeCar(subject.x-Math.sin(step.blocks[0].heading)*distance,
+        subject.z-Math.cos(step.blocks[0].heading)*distance);
     }
     if (which === 'arrival') {
       world.job.stepState = {...world.job.stepState,gasLoaded:true,gas:85,holes:0,
@@ -47,6 +53,7 @@ export const pageFunctions = {
       bess.pathProgress = 1;
       bess.atDestination = true;
       world.follow.speed = 0;
+      placeCar(bess.position.x,bess.position.z+6);
       duel.setInput({throttle:0,brake:1,steer:0,interact:false});
       app.advance(1 / 60);
       if (!world.arrivalHold) throw Error('The arrival hold did not start.');
@@ -68,6 +75,12 @@ export const pageFunctions = {
     camera.lookAt(point.x, point.y + 1, point.z);
     camera.updateMatrixWorld(true);
     render.renderer.render(render.scene,camera);
+    let forgeVisible = false;
+    render.scene.traverse(node => {
+      if (node.name !== "Tin Town's forge and crane") return;
+      forgeVisible = true;
+      for (let parent=node;parent;parent=parent.parent) forgeVisible &&= parent.visible;
+    });
     // Hold the aimed picture over the game's next frames until the screenshot.
     document.getElementById('slow-ride-still')?.remove();
     const still = document.createElement('img');
@@ -80,7 +93,7 @@ export const pageFunctions = {
     const gauge = document.querySelector('.world-hud-ember');
     return {gas:world.job.stepState.gas,holes:world.job.stepState.holes,
       gasLoaded:!!world.job.stepState.gasLoaded,hold:!!world.arrivalHold,
-      forgeGasShare:world.forgeGasShare ?? null,
+      forgeGasShare:world.forgeGasShare ?? null,forgeVisible,
       gauge:gauge && !gauge.hidden ? gauge.textContent : null, distance};
   },
 };
@@ -107,7 +120,7 @@ export async function run(context) {
       if (which === 'meeting' && measured.gasLoaded) report.failures.push('The meeting must show the hose and Moss.');
       if (which === 'leak' && (measured.holes !== 1 || !measured.gauge?.includes('GAS')))
         report.failures.push('The leaking tank and gas gauge must be shown together.');
-      if (which === 'arrival' && (!measured.hold || measured.forgeGasShare <= 0))
+      if (which === 'arrival' && (!measured.hold || measured.forgeGasShare <= 0 || !measured.forgeVisible))
         report.failures.push('The arrival must show the hold and the rising forge fire.');
       await context.screenshot(`everburn-job4-${which}`);
     }
