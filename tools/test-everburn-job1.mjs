@@ -2392,6 +2392,34 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   stepWorldJob(duel, .1);
   assert.equal(world.job.stepState.joltCount, 1, `${meeting}: backing off does not charge again`);
 }
+// The bed's exit uses the same glass and watch, 100 m east of the Steps.
+{
+  const world = createWorldJob(definition), events = [];
+  const car = LAND.at('the-steps', 100, 0);
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const round = furnaceGlassRound();
+  let phase = null;
+  for (let t = 0; t < FURNACE_GLASS.roundSeconds; t += .01) {
+    const patch = glassOnRound(round, t);
+    if (Math.hypot(car.x - patch.x, car.z - patch.z) < FURNACE_GLASS.glassRadius) { phase = t; break; }
+  }
+  assert.notEqual(phase, null, 'the unchanged round crosses the bed exit');
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:phase, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  // Hold the clock at an illuminated instant to isolate exposure from beam motion.
+  stepWorldJob(duel, 4);
+  assert.equal(world.skylineSight.visible, true);
+  assert.equal(world.skylineSight.seenSeconds, 4);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 0);
+  stepWorldJob(duel, 4);
+  assert.equal(world.skylineSight.seenSeconds, 8);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-') && actor.pursuing).length, 2);
+}
 // The real watch and moving glass share the eight-second rule and can call the pair again.
 {
   const world = createWorldJob(definition), events = [];
