@@ -186,6 +186,24 @@ export async function run(context) {
     await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
     await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
     await picture('3-cinder-pot','Cinder at the yard gate',{focus:true,dx:12,dy:6,dz:15,loaded:true,pot:true});
+    for (const [index, point] of [{x:2690,z:-2445},{x:2926,z:-2529},{x:3255,z:-2639}].entries()) {
+      await page(context, point => {
+        const app=window.__qaApp, duel=app.duel, state=duel.state, render=window.__render;
+        const near=duel.course.nearest(point.x,point.z);
+        state.s=state.prevS=near.s;state.lateral=state.prevLateral=near.lateral;
+        state.speedMph=0;state.airborne=false;state.airHeight=0;
+        state.groundHeight=duel.course.groundAt(near.s,near.lateral).y;
+        state.headingError=-duel.course.at(near.s).heading;
+        app.onFrame?.(state,0);render.renderFrame();
+        let land=null;render.scene.traverse(node=>{if(node.name==='The Scablands')land=node;});
+        if(!land?.userData.drawnFeet)throw Error('The drawn ground is missing.');
+        const y=state.groundHeight+land.userData.drawnFeet.shift(point.x,point.z,state.groundHeight);
+        app.inspectionCamera={position:[point.x+5,y+1,point.z],target:[point.x,y+.3,point.z]};
+        render.renderFrame();
+      }, point);
+      await picture(`ground-contact-${index+1}`,"Cinder's ember pot",{loaded:true,pot:true});
+    }
+    await page(context,()=>{window.__qaApp.inspectionCamera=null;});
     await page(context, point => {
       const app = window.__qaApp, duel = app.duel, state = duel.state;
       const pose = duel.course.nearest(point.x, point.z + 150);
@@ -317,7 +335,7 @@ export async function run(context) {
     await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
   for (const name of ['salt-lean-to-from-200m','glass-on-plates-from-150m','bed-mist-from-60m','bridge-ash-from-150m','yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','scout-post-from-250m','scout-post-from-60m','camp-awake-at-fence-end','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
-    '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
+    'ground-contact-1','ground-contact-2','ground-contact-3','6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
     if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
   }
   await persist();

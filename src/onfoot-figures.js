@@ -111,7 +111,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     part.scale.set(width, length, width);
     store('limbs', actor, index);
   }
-  function pose(fighter, actor) {
+  function pose(fighter, actor, drawnShift) {
     const appearance=crewAppearance(fighter.crewId);
     const last = lastPositions.get(fighter);
     const distance = last ? Math.hypot(fighter.x - last.x, fighter.z - last.z) : 0;
@@ -121,6 +121,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     const gait = !down && !airborne && distance > .003
       ? Math.sin((fighter.steps || 0) * .11) * .17 : 0;
     root.position.set(fighter.x, fighter.y + (down ? .48 : 0), fighter.z);
+    root.position.y+=drawnShift?.(fighter.x,fighter.z,fighter.groundY??fighter.y-(fighter.airHeight||0))??0;
     root.rotation.set(down ? -Math.PI / 2 : 0, fighter.yaw || 0, 0, 'YXZ');
     root.updateMatrix();
 
@@ -168,7 +169,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     }
   }
 
-  function update(fighters = [], {active = false} = {}) {
+  function update(fighters = [], {active = false, drawnShift} = {}) {
     if (disposed) return 0;
     const valid = (Array.isArray(fighters) ? fighters : []).filter(entry => {
       const fighter = entry?.fighter || entry;
@@ -186,7 +187,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     ordered.forEach((entry, index) => {
       const fighter=entry.fighter||entry;
       paint(index,fighter.crewId||entry.crewId||'rook');
-      pose(fighter,index);
+      pose(fighter,index,drawnShift);
     });
     for (const mesh of Object.values(meshes)) mesh.instanceMatrix.needsUpdate = true;
     return actorCount;

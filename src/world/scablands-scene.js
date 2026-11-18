@@ -1,4 +1,5 @@
 import {SALT_RIDERS} from './jobs/ember-rule.js';
+import {createScablandsDrawnFeet} from './scablands-drawn-feet.js';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
@@ -532,6 +533,7 @@ export function createScablandsScene(course,options={}){
     // Layered job movers carry their actual support height, including beneath a deck.
     const layered=onGround&&actor.hasFloorHeight&&Number.isFinite(at?.y);
     rig.position.set(x,layered?at.y:(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
+    if(onGround)rig.position.y+=group.userData.drawnFeet?.shift(x,z,layered?at.y:undefined)??0;
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
@@ -856,6 +858,7 @@ export function createScablandsScene(course,options={}){
         forge.watch(here.x,here.z);
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
+        group.userData.drawnFeet?.refresh();
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       const glass = hotDeliveryGlass(worldJob);
@@ -964,6 +967,7 @@ export function createScablandsScene(course,options={}){
       if(cinder.visible){
         const at=(emberStep.pickup.figure??emberStep.pickup.place).position;
         cinder.position.set(at.x,scablandsSurfaceHeightAt(at.x,at.z),at.z);
+        cinder.position.y+=group.userData.drawnFeet.shift(at.x,at.z);
         const start=emberStep.carStart;
         if(start)cinder.rotation.y=Math.atan2(start.x-at.x,start.z-at.z);
         requestCinder();
@@ -1049,6 +1053,7 @@ export function createScablandsScene(course,options={}){
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
   // The road net, the gorge and the crossings are drawn in pieces built as the player nears them; a check or a picture can build them all.
   group.userData.roads=roads;group.userData.gorge=gorge;group.userData.crossings=crossings;group.userData.stepsWay=stepsWay;
+  group.userData.drawnFeet=createScablandsDrawnFeet({near,gorge,riverField,course});
   group.userData.drawnGroundHeightAt=(x,z)=>
     (riverField.distanceAt(x,z)<80?gorge.heightAtDrawn(x,z):null) ?? nearGroundHeightAt(x,z,plainHeightAt);
   // Where the furnace and Big Bess stand as drawn this frame, for the camera: [{id, x, y, z, heading, halfX, minZ, maxZ, height}].

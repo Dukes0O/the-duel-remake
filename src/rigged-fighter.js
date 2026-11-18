@@ -167,6 +167,7 @@ export function createRiggedFighterFigures({
     figure.mixer.setTime(clipTime);
     const at = selected.pose;
     figure.root.position.set(at.x, at.y, at.z);
+    figure.root.position.y+=options.drawnShift?.(at.x,at.z,entry.fighter.groundY??entry.fighter.y-(entry.fighter.airHeight||0))??0;
     figure.root.rotation.set(0, at.yaw, 0);
     figure.root.visible = true;
     // Retain the original active-roster names used by the GFX-00 control.
@@ -217,6 +218,7 @@ export function createRiggedFighterFigures({
     for (let index = missing; index < MAX_FIGHTER_FIGURES; index++) fallbackRoster[index] = null;
     if (missing) {
       fallbackOptions.active = true;
+      fallbackOptions.drawnShift = options.drawnShift;
       fallback.update(fallbackRoster, fallbackOptions);
     } else fallback.group.visible = false;
     return count;

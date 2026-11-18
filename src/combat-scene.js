@@ -660,6 +660,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     fighterOptions.enabled = s.mode === 'wasteland' && wastelandRulesActive(s);
     fighterOptions.time = s.stageTimeSec ?? 0;
     fighterOptions.cameraPosition = vehicles.camera?.position || null;
+    fighterOptions.drawnShift = vehicles.drawnShift;
     onFootFigures.update(fighterRoster, fighterOptions);
     raiderMarkers.update(duel);
     salvageMarkers.update(duel);

@@ -58,7 +58,7 @@ import {createEmberPot} from './world/ember-pot.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
-import { placeGroundedVehicle, placeWorldJobVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
+import { placeGroundedVehicle, placeWorldJobVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose as applyPhysicalVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
@@ -364,6 +364,11 @@ export function attachRenderer(host, app) {
   worldJobCrate.visible=false;scene.add(worldJobCrate);
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
+  const drawnShift=(x,z,support)=>world?.userData?.drawnFeet?.shift(x,z,support)??0;
+  const applyVehicleTerrainPose=(mesh,course,actor)=>{
+    applyPhysicalVehicleTerrainPose(mesh,course,actor);
+    if(course.def?.scablands)mesh.position.y+=drawnShift(mesh.position.x,mesh.position.z,actor?.groundHeight);
+  };
   let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
   const hasAvalanche=next=>(next.def.id==='summit-run'||isSummitAttack(next.def)) && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
@@ -886,6 +891,8 @@ export function attachRenderer(host, app) {
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       const pose=onFootCameraPose(course,st.fighter,footMode);
+      const shift=drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0));
+      pose.position.y+=shift;pose.target.y+=shift;
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
       camera.fov=pose.fov;
@@ -898,7 +905,7 @@ export function attachRenderer(host, app) {
       const back = mode === 'hood' ? .8 : mode === 'wide' ? -16 : tall?-12:-8.7;
       const height = mode === 'hood' ? (tall?3.2:1.38) : mode === 'wide' ? (tall?7.5:5.6) : tall?5.8:3.65;
       const cp = worldAtExtended(course, distance + back, lateral);
-      const supportLift=Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0;
+      const supportLift=(Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0)+drawnShift(pp.x,pp.z,st.groundHeight);
       const groundLift = pp.y - course.at(distance).y+supportLift+(st.airHeight||0)*.65;
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
@@ -959,7 +966,7 @@ export function attachRenderer(host, app) {
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
     const groundChase=!menu&&!st.onFoot&&['chase','wide'].includes(app.cameraMode||'chase')&&
       !deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera;
-    const cameraFeet=scablandsActorFeet(st,pp.y), drawnGround=world?.userData?.drawnGroundHeightAt;
+    const cameraFeet=scablandsActorFeet(st,pp.y)+drawnShift(pp.x,pp.z,st.groundHeight), drawnGround=world?.userData?.drawnFeet?.groundAt??world?.userData?.drawnGroundHeightAt;
     if(groundChase)raiseScablandsCamera(course,camTarget,player.position,cameraFeet,drawnGround);
     camera.position.y-=machineLiftApplied;machineLiftApplied=0; // the height a big machine gave the camera last frame is not part of where it stands
     if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
@@ -989,7 +996,7 @@ export function attachRenderer(host, app) {
       }
     }
     if(!menu&&!st.onFoot&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
-      constrainScablandsCamera(course,camera.position,player.position,scablandsActorFeet(st, pp.y));
+      constrainScablandsCamera(course,camera.position,player.position,cameraFeet);
     if (groundChase && course.def?.scablands) {
       const mode = app.cameraMode || 'chase';
       const height = mode === 'wide' ? (tall ? 7.5 : 5.6) : (tall ? 5.8 : 3.65);
@@ -1045,6 +1052,7 @@ export function attachRenderer(host, app) {
       const actor=jobActors.find(item=>item.id===entry.id);entry.mesh.visible=!menu&&!!actor;
       if(!entry.mesh.visible)continue;
       placeWorldJobVehicle(entry.mesh,actor,course,st.s);
+      entry.mesh.position.y+=drawnShift(actor.position.x,actor.position.z,actor.hasFloorHeight?actor.position.y:undefined);
       if(Number.isFinite(entry.previousX))entry.mesh.rotation.y=Math.atan2(
         actor.position.x-entry.previousX,entry.previousZ-actor.position.z);
       entry.previousX=actor.position.x;entry.previousZ=actor.position.z;
@@ -1092,7 +1100,7 @@ export function attachRenderer(host, app) {
       for(const lamp of police.userData.brakeLights||[])lamp.material.emissiveIntensity=pursuit.braking?4:1.4;
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(ambientNow / 130) % 2 === i; });
     }
-    effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now:ambientNow });
+    effects.update({ p: pp, course, drawnShift, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now:ambientNow });
     const effectDt = st.paused ? 0 : dt;
     explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
     crashPoseState=st;
@@ -1124,7 +1132,7 @@ export function attachRenderer(host, app) {
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
-    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera,
+    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera,drawnShift,
       smokeTexture:combatEffects?.resources.textures.smoke,
       quality:app.ambientOcclusionEnabled!==false?'high':'performance'},useCombatAtlas);
     if(st.arena?.mode==='fuel-run'){

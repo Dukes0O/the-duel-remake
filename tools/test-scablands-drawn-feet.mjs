@@ -6,9 +6,15 @@ import {Course} from '../src/course.js';
 import {createRiverField} from '../src/world/scablands-draw.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
-import {scablandsFloorsAt} from '../src/world/scablands-ground.js';
+import {scablandsFloorsAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {createScablandsDrawnFeet} from '../src/world/scablands-drawn-feet.js';
+import {NEAR_GROUND} from '../src/world/near-ground.js';
+import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {HOT_DELIVERY_WAYS, routeFor, sampleLine} from '../src/world/scablands-ways.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {RIVER_LAND} from '../src/world/scablands-regions.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {syncScene} from '../src/scene-systems.js';
 
 const riverField = createRiverField(SCABLANDS_LAYOUT);
 const course = new Course(SCABLANDS_VENUE, 1989);
@@ -24,6 +30,44 @@ const scene = createScablandsScene(course, {loadAsset: async () => {
 assert.equal(await scene.ready, true);
 
 try {
+  const feet=scene.group.userData.drawnFeet;
+  for(const [x,z] of [[2690,-2445],[2926,-2529],[3255,-2639]]) {
+    const own=scablandsSurfaceHeightAt(x,z),shift=feet.shift(x,z,own);
+    assert.ok(shift>=.4&&shift<=.9,`Measured place (${x},${z}): ${shift}`);
+    assert.ok(Math.abs(shift-(feet.groundAt(x,z)-own-NEAR_GROUND.lift))<1e-9);
+  }
+  for(let i=112;i<=118;i++)for(let j=-150;j<=-145;j++) {
+    const x=i*NEAR_GROUND.cellX,z=j*NEAR_GROUND.cellZ;
+    assert.ok(Math.abs(feet.shift(x,z))<1e-5,'The existing .025 m ground lift is not added twice at corners.');
+  }
+  const deck=LAND.at('girder-bridge');
+  assert.equal(feet.shift(deck.x,deck.z,scablandsSurfaceHeightAt(deck.x,deck.z)),0);
+  const own=scablandsSurfaceHeightAt(2690,-2445);
+  const tunnel=createGroundTunnels([{start:{x:2680,y:own+1.65,z:-2445},end:{x:2700,y:own+1.65,z:-2445},radius:3}]);
+  const underground=createScablandsDrawnFeet({near:{heightAtDrawn:()=>own+1},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128},course:{groundTunnels:tunnel}});
+  assert.equal(underground.shift(2690,-2445,own),0,'A tunnel support receives no shift.');
+  for(const height of [-100,100]) {
+    const limited=createScablandsDrawnFeet({near:{heightAtDrawn:()=>height},gorge:{heightAtDrawn:()=>null},riverField:{distanceAt:()=>128}});
+    assert.equal(limited.shift(2690,-2445),Math.sign(height)*1.2);
+  }
+  let sink=0;
+  const actors=Array.from({length:12},(_,i)=>({x:2690+i*.2,z:-2445+i*.2}));
+  const near=course.nearest(2690,-2445);
+  syncScene(scene.group,{s:near.s,lateral:near.lateral});
+  for(let frame=0;frame<100;frame++)for(const actor of actors)sink+=feet.shift(actor.x,actor.z);
+  const start=performance.now();
+  for(let frame=0;frame<2000;frame++)for(const actor of actors)sink+=feet.shift(actor.x,actor.z);
+  const milliseconds=(performance.now()-start)/2000;
+  console.log(`Twelve actors: ${milliseconds.toFixed(6)} ms per frame (${sink}).`);
+  assert.ok(milliseconds<=.15,'Twelve shifts take at most .15 ms.');
+  const riverActors=Array.from({length:12},(_,i)=>({x:2650.79+i*.1,z:2221.98+i*.1}));
+  const riverNear=course.nearest(riverActors[0].x,riverActors[0].z);
+  for(let i=0;i<20;i++)syncScene(scene.group,{s:riverNear.s,lateral:riverNear.lateral});
+  const riverStart=performance.now();
+  for(let frame=0;frame<200;frame++)for(const actor of riverActors)sink+=feet.shift(actor.x,actor.z);
+  const riverMilliseconds=(performance.now()-riverStart)/200;
+  console.log('Twelve river actors:',riverMilliseconds,'ms');
+  assert.ok(riverMilliseconds<=.15,'Twelve river shifts take at most .15 ms.');
   const step = EVERBURN_JOBS[0].steps[0], floors = [], failures = [];
   for (const spacing of [.5, .05]) for (const way of HOT_DELIVERY_WAYS) {
     const route = routeFor(way.legs, {start: step.origin.position, destination: step.destination.position});
@@ -33,8 +77,8 @@ try {
       // A single floor is unambiguous here: no deck, Pipe or tunnel is selected.
       // Fresh course and ground: there are no player edits or tunnel segments.
       if (count !== 1) { previous = null; continue; }
-      const own = floors[0], drawn = scene.group.userData.drawnGroundHeightAt(point.x, point.z);
-      const current = {x: point.x, z: point.z, along: point.along, own, drawn, correction: Math.max(-1.2, Math.min(1.2, drawn - own))};
+      const own = floors[0], drawn = scene.group.userData.drawnFeet.groundAt(point.x, point.z);
+      const current = {x: point.x, z: point.z, along: point.along, own, drawn, correction: scene.group.userData.drawnFeet.shift(point.x,point.z,own)};
       if (previous) {
         const change = Math.abs(current.correction - previous.correction);
         if (!worst || change > worst.change) worst = {change, before: previous, after: current};
@@ -50,7 +94,37 @@ try {
     }
   }
   assert.deepEqual(failures, [], 'The correction must meet the revised continuity limits.');
+  // Ten perpendicular lines, one on each bank at five named river places.
+  for (const name of ['the-pipe','the-steps','girder-bridge','the-wash','south-ford']) {
+    const place=LAND.at(name), hit=RIVER_LAND.nearest(place.x,place.z);
+    const points=RIVER_LAND.line.points, along=RIVER_LAND.line.along;
+    let i=0; while(i+1<along.length-1 && along[i+1]<hit.along)i++;
+    const a=points[i], b=points[i+1], length=Math.hypot(b.x-a.x,b.z-a.z);
+    const nx=(b.z-a.z)/length, nz=-(b.x-a.x)/length;
+    for(const bank of [-1,1]) for(const spacing of [.5,.05]) {
+      let previous=null, worst={change:0}, seam=null;
+      for(let n=0;n<=Math.round(36/spacing);n++) {
+        const across=bank*(64+n*spacing), x=place.x+nx*across,z=place.z+nz*across;
+        const drawn=scene.group.userData.drawnFeet.groundAt(x,z);
+        const correction=scene.group.userData.drawnFeet.shift(x,z,scablandsFloorsAtHeight(x,z));
+        const current={x,z,correction,distance:riverField.distanceAt(x,z)};
+        if(previous) {
+          const change=Math.abs(correction-previous.correction);
+          if(change>worst.change)worst={change,before:previous,after:current};
+          if(previous.distance<80&&current.distance>=80)seam=current;
+        }
+        previous=current;
+      }
+      console.log(`${name} bank ${bank} step ${spacing}: ${JSON.stringify({worst,seam})}`);
+      assert.ok(seam, 'Each line crosses the cut edge.');
+      assert.ok(worst.change<=(spacing===.5?.3:.05),'The river join must never jump.');
+    }
+  }
 } finally {
   scene.dispose();
   riverField.texture.dispose();
+}
+
+function scablandsFloorsAtHeight(x,z) {
+  const floors=[]; const count=scablandsFloorsAt(x,z,floors);return floors[count-1];
 }
