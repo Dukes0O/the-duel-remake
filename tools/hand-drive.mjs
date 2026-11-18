@@ -73,8 +73,9 @@ if (command === 'start') {
 } else if (command === 'do') {
   const browser = await connect();
   const key = (type, code) => browser.send('Input.dispatchKeyEvent', {type, code, key: code.startsWith('Key') ? code.slice(3).toLowerCase() : code.startsWith('Digit') ? code.slice(5) : code === 'Space' ? ' ' : code, windowsVirtualKeyCode: VK[code], nativeVirtualKeyCode: VK[code]});
-  // The left mouse button, pressed in the middle of the view (on foot it fires the hand weapon or swings).
-  const mouse = type => browser.send('Input.dispatchMouseEvent', {type, x: 640, y: 400, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1});
+  // The left mouse button, pressed on the view below and right of its middle, where no caption or gauge lies over the
+  // canvas (a press on a caption does not reach the game; on foot the button fires the hand weapon or swings).
+  const mouse = type => browser.send('Input.dispatchMouseEvent', {type, x: 900, y: 520, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1});
   // In the Dig (a machine yard, not a race) there is no race to pause: `window.__theDig` runs on its own.
   const running = on => browser.evaluate(`(() => { const a = window.__qaApp; if (!a || window.__theDig?.host?.isConnected) return; if (a.duel.state.paused === ${on}) a.togglePause(); })()`);
   const shot = async name => {
@@ -87,6 +88,8 @@ if (command === 'start') {
     if (kind === 'hold' || kind === 'free') {
       const codes = kind === 'hold' ? rest[0].split('+') : [], ms = Number(rest[kind === 'hold' ? 1 : 0]);
       await running(true);
+      // The pause screen lies over the view for a moment after the game goes on, and a press on it does not reach the game.
+      if (codes.includes('Mouse')) await sleep(350);
       for (const code of codes) await (code === 'Mouse' ? mouse('mousePressed') : key('rawKeyDown', code));
       await sleep(ms);
       const name = rest[kind === 'hold' ? 2 : 1];

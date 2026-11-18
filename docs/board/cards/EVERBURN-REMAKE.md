@@ -1201,7 +1201,25 @@ it. A lamp was smothered while Claude stood 5 m away with the flamer burning. Th
    the screen.
 7. The same wrong aim is in the crew gear's own test of the flamer against cars (`src/crew-gear/signature.js`,
    about line 106): to be looked at there too.
-Not yet played: the swing of the brand, the third lamp, the ending.
+
+**Third hand play, the same evening: job 2 finished by hand.** Two lamps lit, the first Ash Man burned back with the
+flamer at 4 m while he stood smothering the far lamp (the lamp stayed lit), the brand put out by the two throwers, both
+burned back at arm's length, the brand relit at a lamp, the smothered lamp relit, the third lamp reached by the alleys,
+the ending and the results: two brands, 70 scrap, about four minutes. The flamer's cure holds. Further faults for slice
+13:
+8. **The ending is not seen.** The view stays where the player stood, here facing the fence a metre from the tower
+   lamp, while Auntie speaks and the thief runs. The hold needs a view of its own over the town (as job 1's hold has at
+   the forge): the windows lighting, then the thief running from the forge to the gate.
+9. The results say "You made it back to the yard.", which is not what happened.
+10. A line from another mode, "That road is mine. Keep moving.", is shown when an Ash Man is close.
+11. The two throwers, once the brand is out, stand face to face with the player and do nothing more.
+12. A lit lamp keeps its red ring, at the ending too.
+13. Fault 3 again, and it cost a brand's worth of time: the marker led straight into a shack on the way to the tower
+    lamp, 88 m short of it.
+14. It is bright noon at the ending; dusk is still to draw (Claude's).
+The Ash Men are the blocky raider figures; beside the drawn lamp and brand they read as toys (Claude's, an art round).
+A note on the tool: a mouse press made while the pause screen is still fading does not reach the game, which made
+several of Claude's shots miss; the hand-drive tool now waits and presses clear of the captions.
 
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
