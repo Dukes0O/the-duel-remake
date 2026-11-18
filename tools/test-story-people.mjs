@@ -110,6 +110,38 @@ for (let i = 0; i < 20; i++) {
   assert.ok(Math.abs(new THREE.Box3().setFromObject(group,true).min.y) < .015,
     'The sole of the supporting running boot stays on the ground');
 }
+// Each rigid pair of handles fits the hands on its own carter, including
+// the tallest and narrowest bodies. Check flesh on the actual exported rig.
+for (const id of ['walker-1','walker-3','walker-6','walker-8']) {
+  const person = namedCast.find(p=>p.id===id);
+  setStoryPersonAction(person,'push-cart',[{x:0,z:20}]);
+  for (let i=0;i<70;i++) rendered(5+i/60);
+  const actor = view.group.getObjectByName('story-person-'+id);
+  const skin = actor.getObjectByProperty('isSkinnedMesh',true);
+  const cart = view.group.getObjectByName('story-handcart-'+id);
+  const {spread,height,back} = cart.userData.grip;
+  const indices=skin.geometry.attributes.skinIndex, weights=skin.geometry.attributes.skinWeight;
+  const palm = skin.skeleton.bones.map((b,i)=>/hand/.test(b.name)?i:-1).filter(i=>i>=0);
+  const samples=[];
+  for (let i=0;i<indices.count;i++) {
+    if ([0,1,2,3].some(slot=>weights.getComponent(i,slot)>.35 && palm.includes(indices.getComponent(i,slot)))) samples.push(i);
+  }
+  const point = new THREE.Vector3(), closest = new THREE.Vector3();
+  for (let phase=0;phase<12;phase++) {
+    person.distance=person.height*.86*phase/12;
+    rendered(7+phase/60);
+    for (const hand of [-1,1]) {
+      const grip=new THREE.Line3(new THREE.Vector3(hand*spread,height,back),new THREE.Vector3(hand*spread,height+.01,back-.11));
+      let minimum=Infinity;
+      for (const vertex of samples) {
+        skin.getVertexPosition(vertex,point).applyMatrix4(skin.matrixWorld);
+        cart.worldToLocal(point);
+        minimum=Math.min(minimum,point.distanceTo(grip.closestPointToPoint(point,true,closest)));
+      }
+      assert.ok(minimum<.045,id+' keeps a hand on the iron grip throughout its stride');
+    }
+  }
+}
 if (process.argv.includes('--measure')) {
   const twelve = createStoryPeople([...walkerGroupAt({x:0,y:0,z:0},0),
     {id:'auntie-solder',position:{x:3,y:0,z:-1}}]);

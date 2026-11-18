@@ -26,10 +26,10 @@ export const STORY_FIGURES = Object.freeze(Object.fromEntries(PROFILES.map(
 // round her coat, Dace stands towards the hearth side, and the carts have
 // room to come between the clusters behind. +z is the group's facing.
 const GATE_OFFSETS = [
-  [0, .4, 0], [1.35, -.8, -.27], [-.85, -.37, .22],
+  [0, .4, 0], [1.35, -.8, -.27], [-.56, -.37, .22],
   [-1.85, -1.52, .43], [-3.43, -2.25, .67], [.72, -1.91, -.12],
   [2.65, -1.66, -.47], [3.51, -2.88, -.73], [-2.54, -3.05, .37],
-  [-.34, -3.87, .11], [2.02, -4.43, -.35],
+  [-1.07, -3.87, .11], [2.02, -4.43, -.35],
 ];
 
 export const HANDCART = Object.freeze({width:.83, length:1.18, axleAhead:1.15, wheelRadius:.34, shaftBack:-.81});
