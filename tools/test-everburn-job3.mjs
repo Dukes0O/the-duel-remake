@@ -2,7 +2,58 @@ import assert from 'node:assert/strict';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {BELLOWS_RULE, BELLOWS_LINES, bellowsPay, bellowsSentence,
   stepBellowsLoad, bellowsAshBox, stepBellowsAsh, bellowsThiefSpeedKmh,
-  bellowsBlockingSide, bellowsBlockingMove, stepBellowsPursuit, stepBellowsEnding} from '../src/world/jobs/bellows-rule.js';
+  bellowsBlockingSide, bellowsBlockingMove, stepBellowsPursuit, stepBellowsEnding,
+  bellowsWreckRoute} from '../src/world/jobs/bellows-rule.js';
+import {BONEYARD_WRECKS, boneyardWrecks} from '../src/world/boneyard-wrecks.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
+import {ROAD_NET} from '../src/world/scablands-road.js';
+import {sweepObstacle, CAR_HALF_WIDTH} from '../src/collision.js';
+
+// Job 3.4: prove whole segments clear, rather than sampling points or driving.
+const wreckSnapshot = JSON.stringify(BONEYARD_WRECKS);
+const entry = ROAD_NET.road('tin-road').points[0];
+const exit = LAND.at('boneyard', -284, 166);
+const wreckRoute = bellowsWreckRoute(BONEYARD_WRECKS, entry, exit);
+const clearance = Math.max(CAR_HALF_WIDTH, BELLOWS_RULE.thiefRadiusMetres) + BELLOWS_RULE.sideClearanceMetres;
+for (const points of [wreckRoute.line, wreckRoute.wide]) {
+  assert.deepEqual(points[0], {x:entry.x, z:entry.z});
+  assert.deepEqual(points.at(-1), exit);
+  for (let index = 1; index < points.length; index++) {
+    for (const solid of SCABLANDS_SOLIDS) {
+      assert.equal(sweepObstacle(points[index - 1], points[index], solid, 0,
+        {halfWidth:clearance, halfLength:clearance}), null,
+      `Segment ${index} needs the car width and one metre clear of ${solid.id}.`);
+    }
+  }
+}
+const turns = wreckRoute.line.slice(1, -1).map((point, index) => {
+  const from = wreckRoute.line[index], to = wreckRoute.line[index + 2];
+  const ax = point.x - from.x, az = point.z - from.z, bx = to.x - point.x, bz = to.z - point.z;
+  return Math.acos(Math.max(-1, Math.min(1, (ax * bx + az * bz) /
+    (Math.hypot(ax, az) * Math.hypot(bx, bz))))) * 180 / Math.PI;
+});
+assert(turns.filter(degrees => degrees >= BELLOWS_RULE.wreckTurnDegrees).length >= BELLOWS_RULE.wreckTurnCount);
+// Each designated end is passed exactly 2.5 m clear, using that box's size.
+for (const [id, segment, end] of [['east', 2, 'south'], ['north', 4, 'north'], ['south', 6, 'south']]) {
+  const wreck = BONEYARD_WRECKS.find(row => row.id === id);
+  const z = wreck.z + (end === 'north' ? -1 : 1) * wreck.size[2] / 2;
+  for (const point of wreckRoute.line.slice(segment, segment + 2))
+    assert.equal(Math.abs(point.z - z), BELLOWS_RULE.wreckEndClearanceMetres);
+}
+assert(wreckRoute.wideExtraMetres > 0);
+assert.deepEqual(bellowsWreckRoute(BONEYARD_WRECKS, entry, exit), wreckRoute);
+assert.equal(JSON.stringify(BONEYARD_WRECKS), wreckSnapshot);
+// Moving the land moves the route with it; no absolute world coordinates.
+const movedLand = {at:(id, dx = 0, dz = 0) => {
+  const p = LAND.at(id, dx, dz); return {x:p.x + 137, z:p.z - 211};
+}};
+const shifted = bellowsWreckRoute(boneyardWrecks(movedLand),
+  {x:entry.x + 137, z:entry.z - 211}, {x:exit.x + 137, z:exit.z - 211});
+for (let index = 0; index < wreckRoute.line.length; index++)
+  assert.deepEqual(shifted.line[index], {x:wreckRoute.line[index].x + 137, z:wreckRoute.line[index].z - 211});
+assert(Math.abs(shifted.wideExtraMetres - wreckRoute.wideExtraMetres) < 1e-9);
+console.log(`PASS Run Him Down: wreck ends clear by 2.5 m, ${turns.filter(degrees => degrees >= 40).length} turns, every segment clears all solids; wide way adds ${wreckRoute.wideExtraMetres.toFixed(1)} m.`);
 
 // Job 3.2: speed, attempted passes and each sack's six-second road-width box.
 assert.equal(bellowsThiefSpeedKmh(200, false), 195);
@@ -277,6 +328,13 @@ app.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
   'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
 const savedBeforeStart = JSON.stringify([...memory]);
 const definition = EVERBURN_JOBS[2], town = EVERBURN_JOBS[1].steps[0];
+const routeDefinition = definition.steps[0].bellowsRoute;
+assert.deepEqual(routeDefinition.wrecks.map(place => ({x:place.position.x, z:place.position.z})), wreckRoute.line);
+assert.deepEqual(routeDefinition.road.at(-1).position, routeDefinition.wrecks[0].position);
+assert.equal(routeDefinition.roadWidthMetres, ROAD_NET.road('tin-road').halfWidth * 2);
+assert.equal(routeDefinition.wideExtraMetres, wreckRoute.wideExtraMetres);
+assert.deepEqual(routeDefinition.road.slice(1).map(place => ({x:place.position.x, z:place.position.z})),
+  [...ROAD_NET.road('tin-road').points].reverse().map(point => ({x:point.x, z:point.z})));
 app.duel.state.wastelandGateDiscovered = true;
 assert.equal(app.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
   car:'falcone_f42', playerId:app.player.id, seed:1989, opponents:[], job:definition}), true);

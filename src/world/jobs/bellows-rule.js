@@ -12,8 +12,10 @@ export const BELLOWS_RULE = Object.freeze({
   blockingSideMps: 2,
   thiefRadiusMetres: 1.3,
   boneyardSpeedKmh: 60,
-  gapMinMetres: 6,
-  gapMaxMetres: 9,
+  wreckEndClearanceMetres: 2.5,
+  wreckTurnDegrees: 40,
+  wreckTurnCount: 3,
+  wideRouteMarginMetres: 100,
   sideClearanceMetres: 1,
   footStartFromCarMetres: 60,
   carStartLeadMetres: 250,
@@ -43,6 +45,43 @@ export const BELLOWS_LINES = Object.freeze({
   warning: 'Cinder: Not the flamethrower! Leather burns.',
   restart: "Cinder: He has reached the furnace. Again, from the Boneyard's edge.",
 });
+
+// These are the wrecks' actual axis-aligned solid boxes, not their drawn
+// headings. Round the east wreck's south end, the north wreck's north end,
+// then the south wreck's south end. The actor follows every corner exactly.
+export function bellowsWreckRoute(wrecks, entry, exit) {
+  const box = id => {
+    const wreck = wrecks.find(row => row.id === id);
+    if (!wreck) throw new Error(`The bellows route needs the ${id} wreck.`);
+    return {west: wreck.x - wreck.size[0] / 2, east: wreck.x + wreck.size[0] / 2,
+      north: wreck.z - wreck.size[2] / 2, south: wreck.z + wreck.size[2] / 2};
+  };
+  const east = box('east'), north = box('north'), south = box('south');
+  const clear = BELLOWS_RULE.wreckEndClearanceMetres;
+  const point = (x, z) => Object.freeze({x, z});
+  const line = Object.freeze([
+    point(entry.x, entry.z),
+    point(east.east + clear, entry.z),
+    point(east.east + clear, east.south + clear),
+    point(north.east + clear, east.south + clear),
+    point(north.east + clear, north.north - clear),
+    point(south.east + clear, north.north - clear),
+    point(south.east + clear, south.south + clear),
+    point(south.west - clear, south.south + clear),
+    point(exit.x, exit.z),
+  ]);
+  // One wide alternative, around the outside of the whole wreck field.
+  // It shares both endpoints, so its extra distance has a fair comparison.
+  const margin = BELLOWS_RULE.wideRouteMarginMetres;
+  const farEast = Math.max(east.east, north.east, south.east) + margin;
+  const farWest = Math.min(east.west, north.west, south.west) - margin;
+  const farNorth = Math.min(east.north, north.north, south.north) - margin;
+  const wide = Object.freeze([line[0], point(farEast, entry.z), point(farEast, farNorth),
+    point(farWest, farNorth), point(farWest, exit.z), line.at(-1)]);
+  const length = points => points.slice(1).reduce((total, to, index) =>
+    total + Math.hypot(to.x - points[index].x, to.z - points[index].z), 0);
+  return Object.freeze({line, wide, metres: length(line), wideExtraMetres: length(wide) - length(line)});
+}
 
 export function bellowsFootStart(car, farLamp) {
   const dx = farLamp.x - car.x, dz = farLamp.z - car.z;

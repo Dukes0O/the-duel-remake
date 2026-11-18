@@ -14,7 +14,8 @@ import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.j
 import {yardPlan} from '../scablands-yard-look.js';
 import {brandSites} from './brand-sites.js';
 import {BRAND_LINES} from './brand-rule.js';
-import {bellowsFootStart} from './bellows-rule.js';
+import {bellowsFootStart, bellowsWreckRoute} from './bellows-rule.js';
+import {boneyardWrecks} from '../boneyard-wrecks.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -129,6 +130,18 @@ export function buildEverburn(land) {
   const planeRow = place('plane-row', at('boneyard', -144, 76)), wingGap = place('wing-gap', at('boneyard', -284, 166));
   // Job 3's thief runs from the Boneyard past the plane row to the wing gap.
   const thiefPath = path(boneyard, planeRow, wingGap);
+  // Kept on job 3 alone until its arena facts and riders are connected. The
+  // road and wreck line share the Tin Road's real Boneyard endpoint.
+  const bellowsRoad = net.road('tin-road');
+  const bellowsWrecks = bellowsWreckRoute(boneyardWrecks(land), bellowsRoad.points[0], wingGap.position);
+  const bellowsRoute = Object.freeze({
+    road:path(place('thief-town-gate', tinTownGateFor(land).gate),
+      ...[...bellowsRoad.points].reverse().map((point, index) => place(`thief-road-${index}`, point))),
+    wrecks:path(...bellowsWrecks.line.map((point, index) => place(index === 0 ? 'plane-row' : `thief-wreck-${index}`, point))),
+    wide:path(...bellowsWrecks.wide.map((point, index) => place(`thief-wide-${index}`, point))),
+    roadWidthMetres:bellowsRoad.halfWidth * 2,
+    wideExtraMetres:bellowsWrecks.wideExtraMetres,
+  });
   const prospector1 = place('prospector-1', at('boneyard', -24, 26)), survey1 = place('survey-flag-1', at('boneyard', 26, -4));
   const kitchen = place('auntie-kitchen', at('tin-town', 15, 4), 4), townSafeCorner = place('town-safe-corner', at('tin-town', 32, -30), 6);
   const valveRoom = place('mall-valve-room', at('dead-mall', -12, 0), 7);
@@ -168,7 +181,7 @@ export function buildEverburn(land) {
       resultLineId:'story.ember.cinder.10',
       easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',
       steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
-        path:thiefPath}, path:thiefPath,
+        path:thiefPath}, path:thiefPath, bellowsRoute,
         targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'story.ember.cinder.9',
         targetHealth:20, reward:'flamethrower',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
