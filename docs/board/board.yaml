@@ -623,8 +623,9 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "L"
-    status: "building"
+    status: "review"
     claimed_by: "Codex (cloud), 18 November 2026"
+    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/STORY-PEOPLE.md"
