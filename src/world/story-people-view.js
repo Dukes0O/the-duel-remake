@@ -3,8 +3,8 @@
 import * as THREE from 'three';
 import {clone as cloneSkin} from 'three/addons/utils/SkeletonUtils.js';
 import {disposeFigureAsset} from '../rigged-fighter.js';
-import {createHandcartView} from './handcart-view.js';
-import {STORY_FIGURES, attendTo} from './jobs/story-people.js';
+import {createHandcartView, createCampStool} from './handcart-view.js';
+import {HANDCART, STORY_FIGURES, attendTo} from './jobs/story-people.js';
 
 const WALKERS = '/assets/models/wasteland/town/story-walkers.glb';
 const FOLK = '/assets/models/wasteland/scablands/folk.glb';
@@ -145,6 +145,36 @@ function makeFigure(id, asset) {
     first:true, seated:0, asleep:0, armReach:0};
 }
 
+// Set the shafts' width and pitch once from this person's relaxed, pushing
+// grip. The axle and both handles stay rigid throughout the walking cycle.
+function fitCart(figure, person) {
+  const actor = {id:person.id, position:{x:0,y:0,z:0}, yaw:0, action:'push-cart', distance:0};
+  const {seated, asleep, armReach, first} = figure;
+  const savedFacing = {...figure.facing};
+  Object.assign(figure,{seated:0,asleep:0,armReach:1,first:true});
+  poseFigure(figure,actor,null,false,0,0,0);
+  figure.root.updateMatrixWorld(true);
+  const {body,joints} = figure, {position,skinIndex,skinWeight} = body.geometry.attributes;
+  const hands = [joints.handL.index,joints.handR.index];
+  const centre = new THREE.Vector3(), point = new THREE.Vector3();
+  let weight = 0;
+  for (let i=0;i<position.count;i++) {
+    for (let slot=0;slot<4;slot++) {
+      const w=skinWeight.getComponent(i,slot);
+      if (w < .6 || !hands.includes(skinIndex.getComponent(i,slot))) continue;
+      body.getVertexPosition(i,point).applyMatrix4(body.matrixWorld);
+      point.x = Math.abs(point.x);
+      centre.addScaledVector(point,w);
+      weight += w;
+    }
+  }
+  Object.assign(figure,{seated,asleep,armReach,first});
+  Object.assign(figure.facing,savedFacing);
+  if (!weight) return undefined;
+  centre.divideScalar(weight);
+  return {spread:centre.x, height:centre.y, back:centre.z-HANDCART.axleAhead+.055};
+}
+
 function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   const {root, joints, facing, model} = figure, profile = STORY_FIGURES[person.id];
   if (figure.first) { facing.yaw = person.yaw; figure.first = false; }
@@ -165,17 +195,17 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   const settle = Math.sin(clock * .63 + profile.index * 2.1);
   const gesture = speaking ? .5 + .5 * Math.sin(clock * 2.4 + profile.index) : 0;
   poseBone(joints.pelvis, 0, stride * .07, (moving ? stride * .023 : settle * .011) * (1 - sit));
-  poseBone(joints.chest, running ? .17 : push * .12 + sit * .06 - sleep * .20 + .011 * breath,
-    -.07 * stride + .06 * gesture, .017 * settle + .10 * sleep);
-  poseBone(joints.neck, .007 * breath + .045 * gesture + .18 * sleep, facing.headYaw * .68);
-  poseBone(joints.head, .035 * gesture * Math.sin(clock * 3.1) + .17 * sleep,
-    facing.headYaw * .32, .13 * sleep);
+  poseBone(joints.chest, running ? .17 : push * .12 + sit * .06 - sleep * .28 + .011 * breath,
+    -.07 * stride + .06 * gesture, .017 * settle + .28 * sleep);
+  poseBone(joints.neck, .007 * breath + .045 * gesture + .24 * sleep, facing.headYaw * .68);
+  poseBone(joints.head, .035 * gesture * Math.sin(clock * 3.1) + .19 * sleep,
+    facing.headYaw * .32, .28 * sleep);
   for (const [side, sign] of SIDES) {
     const swing = sign * stride;
     const lift = moving ? Math.max(0, sign * Math.cos(phase)) : 0;
     const longLeg = sign < 0 ? sleep : 0;
-    poseBone(joints['thigh' + side], -1.96 * sit + .39 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
-    poseBone(joints['shin' + side], 2.75 * sit - 2.44 * longLeg + lift * (running ? 1.07 : .47));
+    poseBone(joints['thigh' + side], -1.96 * sit - .18 * sleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
+    poseBone(joints['shin' + side], 2.75 * sit + .10 * sleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
     poseBone(joints['foot' + side], -.70 * sit + 1.29 * longLeg - lift * .19);
     const gestureSide = sign > 0 ? gesture : .15 * gesture;
     poseBone(joints['upper_arm' + side], swing * (running ? .5 : .31) * (1 - push) -
@@ -197,6 +227,7 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
 
 function releaseFigure(figure) {
   figure.cart?.dispose();
+  figure.stool?.dispose();
   const skeletons = new Set();
   figure.root.traverse(node => { if (node.skeleton) skeletons.add(node.skeleton); });
   for (const skeleton of skeletons) skeleton.dispose();
@@ -247,7 +278,7 @@ export function createStoryPeopleView(loadAsset) {
         const at = person.position;
         if (person.cart) {
           if (!figure.cart) {
-            figure.cart = createHandcartView();
+            figure.cart = createHandcartView(fitCart(figure,person));
             figure.cart.root.name = 'story-handcart-' + person.id;
             group.add(figure.cart.root);
           }
@@ -258,6 +289,11 @@ export function createStoryPeopleView(loadAsset) {
         figure.root.visible = Math.hypot(at.x - viewer.x, at.z - viewer.z) < 95;
         if (!figure.root.visible) continue;
         const shift = drawnShift?.(at.x, at.z, at.y, undefined, figure.root) ?? 0;
+        if (person.action === 'sit' && !figure.stool) {
+          figure.stool = createCampStool(person.height);
+          figure.root.add(figure.stool.root);
+        }
+        if (figure.stool) figure.stool.root.visible = person.action === 'sit';
         const speaking = person.id === speaker;
         poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift);
       }
