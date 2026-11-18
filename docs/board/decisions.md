@@ -1694,6 +1694,14 @@ things manually, or automate something that could bring ROI without constant man
   embers are getting low. Nothing is to be built from this now.
 - To reverse: Kyle says so.
 
+## Integration is pushed to GitHub after each merge batch (Kyle, 18 November 2026)
+
+Kyle is setting Codex up in its cloud to build from Claude's cards. The cards live in this repository, and a cloud reads
+it from GitHub. Asked "May integration be pushed to GitHub after each merge, so Codex's cloud can read the cards?", Kyle
+answered "Yes, push". Until then integration was pushed only after a release. The rule is in AGENTS.md, "Gates". The
+repository on GitHub is public, so the rule also says what may never go up. To reverse: remove that bullet; the release
+gate's own push stays.
+
 ## The story is rebuilt around choices (Kyle, 18 November 2026)
 
 Kyle tried jobs 2 and 3 of the remade Everburn and rejected the story a second time (the first was 14 November). His
