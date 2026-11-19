@@ -1,29 +1,16 @@
-# MACHINE-DRILL
+# MACHINE-DRILL: the rig, the cuttings, the water and the wellhead, drawn (Claude, 19 November 2026)
 
-The drill has repeatable ground layers and water, a recoverable jam, and a town command that adds a drilled well. The yard has a driveable rig, a mast, controls, sounds and wellheads that last for the visit. Q now steps through the drill in the yard. Connecting a yard well to a player's town is a later card.
+View work only. No rule in `src/machines/drill.js` changed and no fingerprint was re-recorded.
 
-The drill controls now name the mast and feed. A growing heap beside the hole changes colour with the ground and turns dark and wet at water. The depth caption names the layer. The browser scenario checks the controls and takes a fourth picture after the rig backs away from the wellhead.
+- **Rig.** The yard uses the photo-built drill truck from `machines-2.glb` in place of the trencher's tractor with a ladder. Tab stands its lattice mast up over the hole and lays it down; the string feeds down in strokes with an auger turning at its foot; a jammed string shudders. The chase view stands to one side while the mast is up, and the driller's view stands behind the rig.
+- **Cuttings.** A heap by the hole in the layer's colour, and a row of sample piles behind the rig, one for each metre drilled: red clay, brown gravel, pale rock, dark wet ground last.
+- **Water.** A brown jet up the hole that clears and sinks back, and wet ground with open water spreading round the hole.
+- **Wellhead.** Casing only while the rig stands on the hole; then a pad, a painted casing, a red valve and hand wheel, and a standpipe running water.
+- **Words.** The caption is a whole sentence ("The bit is 8.7 m down, in rock."; "Water at 13.2 m. The bit is in wet ground."). "Lower the mast" became "stand the mast up" and "lay the mast down", because that is what this rig does; the choice is on the card for the Director.
+- **Changed assertions:** none in `tools/test-machine-drill.mjs`. `tools/test-machine-view.mjs` takes the drill from `machines-2.glb`; its claims are unchanged.
+- **Sound cues:** no new game event. The eight `drill-*` cues are unchanged.
+- **Checks:** CHECKS-PLACEHOLDER
+- **Hand play and look:** one well drilled to water with real keys in a visible window (clay, gravel, rock, one jam backed out, water at 13.2 m); sheets `docs/board/looks/machine-drill/round-1.jpg` and `round-2.jpg` with their review notes.
+- **Not done:** the truck's deck is blurred where its photos meet and its outriggers are plain bars (faults in the model; no Blender round was started). `tools/scenarios/machine-drill.mjs` was not changed.
 
-The review fix keeps every existing test pit unchanged, including a pit still being dug. The drill test now repeats a whole hole, compares another place, and checks old and drilled town saves and water recovery.
-
-Checks after merging integration: `test-machine-drill`, all six other machine suites, `test-the-dig` and `test-town-ground` passed. Combat replay fingerprints passed 12 checks across four encounters. Race replay fingerprints passed 297 checks across 33 cases, three frame rates and three runs. The lane tier passed 36 of 37 suites; `test-review-evidence` failed when starting ffmpeg returned `EPERM`, the same failure as the prior run and standalone retry. World composition passed. The build passed.
-
-This round: `node tools/test-machine-drill.mjs` passed, including the cuttings view checks. `npm.cmd run build` passed. PowerShell blocked `npm.ps1`, so the Windows command wrapper was used. The browser scenario was not run. No race rules changed; the earlier replay fingerprints are recorded above.
-
-Sound cues: `drill-engine`, `drill-feed`, `drill-clay`, `drill-gravel`, `drill-rock`, `drill-jam`, `drill-reverse` and `drill-water`.
-
-## For Claude to run
-
-Run `tools/scenarios/machine-drill.mjs` with an isolated memory-only profile: drive, lower the mast, drill through the layers, jam and reverse the bit, reach water, back the rig 8 m away and photograph the wellhead, and revisit the yard to confirm it is gone. The normal feed can take several minutes. Check the controls panel, the heap and layer caption, the four pictures, and the sounds. The independent save review and save checks are assigned to a second job. Rerun `test-review-evidence.mjs` where ffmpeg can start; the earlier lane run failed with `EPERM` there.
-
-## Changed assertions, for Claude to review
-
-None. New assertions cover the review findings.
-
-## Codex decided (Claude to review)
-
-Hard feed above three quarters in rock jams the bit. Reversing the feed frees it. Layer boundaries vary with the seed and place and end at the water depth. The rig stops before the mast can feed, and yard wellheads last only for that visit. Tab selects work or travel; Space feeds steadily, Space with W feeds hard, and S reverses the bit.
-
-## Removed
-
-The earlier stop note was replaced. The excavator controls shown for the drill were replaced with drill controls. No game feature was removed.
+**Removed:** the ladder of boxes and the drill bit of one cylinder on the trencher's tractor; the single ball that stood for the cuttings; the three plain cylinders that stood for the wellhead; the caption "in wet."

@@ -27,7 +27,7 @@ SHEETS = {
             ('=before-dozer-cab', 'The dozer from its seat: no blade'),
             ('=before-ground-loose', 'After a full dozer pass: nothing shows')]),
         ('After, from 30 m', [
-            ('dozer-30m', 'Dozer'), ('roller-30m', 'Roller'), ('paver-30m', 'Paver'),
+            ('dozer-30m', 'Dozer (picture narrowed)'), ('roller-30m', 'Roller (picture narrowed)'), ('paver-30m', 'Paver (picture narrowed)'),
             ('ground-all-low', 'The worked stretch')]),
         ('After, from the driver\'s seat, working', [
             ('dozer-seat-cut', 'Dozer: blade down, cutting'), ('roller-seat-rolling', 'Roller: drum on the fill'),
@@ -40,7 +40,7 @@ SHEETS = {
             ('ground-firm-above', 'Six passes: firm'), ('ground-all-above', 'All six states in one stretch')]),
         ('Each state from standing height', [
             ('ground-close-23', 'Cut by the blade'), ('ground-close-38', 'Loose fill'), ('ground-close-36', 'Rolled firm'),
-            ('ground-close-30', 'Paved'), ('ground-close-42', 'Bad: paved on soft fill'),
+            ('ground-close-31', 'Paved'), ('ground-close-42', 'Bad: paved on soft fill'),
             ('ground-close-17', 'Bad: paved too fast')]),
     ]),
     'drill': ('machine-drill', 'The drill rig, what comes up, the water and the wellhead', [

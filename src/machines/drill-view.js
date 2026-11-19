@@ -45,8 +45,8 @@ export function drillDepthWords(hole) {
 // What comes up from each layer: its colour and how its grains are drawn (see earthMaterial).
 const LAYERS = Object.freeze({
   clay: Object.freeze({colour:0x9c5b38, kind:0}),
-  gravel: Object.freeze({colour:0x8b8171, kind:1}),
-  rock: Object.freeze({colour:0xa29f97, kind:2}),
+  gravel: Object.freeze({colour:0x8a6f4d, kind:1}),
+  rock: Object.freeze({colour:0xb5b2aa, kind:2}),
   wet: Object.freeze({colour:0x302c27, kind:3}),
 });
 // Everything beside a hole is placed in the rig's own metres (right, forward), with the hole at the middle and the
@@ -93,11 +93,13 @@ function createSpray(count, name) {
   return points;
 }
 
-// Standing water on the ground: dark where the eye looks down into it and bright with sky where it looks along it.
+// Water drawn three ways. Standing (`flow` 0): wet dark earth round the rim and open water in the middle, dark where
+// the eye looks down into it and pale with sky where it looks along it. Falling in a ribbon (1) and rising in a jet
+// (2): bright streaks that run along it, brown with mud while `uWaterMud` is up.
 function waterMaterial(flow = 0) {
   const material = new THREE.MeshStandardMaterial({color:0x2a2620, roughness:.12, transparent:true, depthWrite:false,
     polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3, side:THREE.DoubleSide});
-  const uniforms = {uWaterNoise:{value:scrapNoise()}, uWaterTime:{value:0}, uWaterFlow:{value:flow}};
+  const uniforms = {uWaterNoise:{value:scrapNoise()}, uWaterTime:{value:0}, uWaterFlow:{value:flow}, uWaterMud:{value:0}};
   material.userData.water = uniforms;
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, uniforms);
@@ -105,29 +107,30 @@ function waterMaterial(flow = 0) {
       .replace('#include <common>', '#include <common>\nvarying vec2 vWaterUv;varying vec3 vWaterWorld;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvWaterUv=uv;vWaterWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D uWaterNoise;uniform float uWaterTime;uniform float uWaterFlow;varying vec2 vWaterUv;varying vec3 vWaterWorld;')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uWaterNoise;uniform float uWaterTime;uniform float uWaterFlow;uniform float uWaterMud;varying vec2 vWaterUv;varying vec3 vWaterWorld;')
       .replace('#include <color_fragment>', `#include <color_fragment>
-        vec3 waterEye=normalize(vViewPosition);
-        vec3 waterUp=normalize((viewMatrix*vec4(0.0,1.0,0.0,0.0)).xyz);
-        float waterRipple=texture2D(uWaterNoise,vWaterWorld.xz*.9+vec2(uWaterTime*.07,-uWaterTime*.05)).g;
-        float waterGlance=pow(1.0-clamp(abs(dot(waterEye,mix(waterUp,vNormal,uWaterFlow))),0.0,1.0),2.2);
-        vec3 waterSky=vec3(.62,.56,.45);
         if(uWaterFlow>.5){
-          // Falling water: bright streaks running down the ribbon.
           float streak=texture2D(uWaterNoise,vec2(vWaterUv.x*.9,vWaterUv.y*.35+uWaterTime*.9)).b;
-          diffuseColor.rgb=mix(vec3(.30,.36,.36),vec3(.92,.95,.93),smoothstep(.35,.75,streak));
-          diffuseColor.a=(.55+.4*streak)*smoothstep(0.0,.12,vWaterUv.x)*smoothstep(1.0,.88,vWaterUv.x);
+          vec3 clear=mix(vec3(.26,.32,.33),vec3(.80,.85,.84),smoothstep(.35,.75,streak));
+          diffuseColor.rgb=mix(clear,vec3(.30,.21,.13)*(.6+.8*streak),uWaterMud);
+          float side=uWaterFlow>1.5?1.0:smoothstep(0.0,.12,vWaterUv.x)*smoothstep(1.0,.88,vWaterUv.x);
+          diffuseColor.a=(.5+.45*streak)*side;
         }else{
-          float edge=length(vWaterUv-.5)*2.0+(texture2D(uWaterNoise,vWaterWorld.xz*.21).r-.5)*.55;
-          diffuseColor.rgb=mix(diffuseColor.rgb,waterSky,clamp(waterGlance*1.5+.10*waterRipple,0.0,1.0));
-          // Wet earth round the rim, open water in the middle.
-          float pool=1.0-smoothstep(.45,.78,edge);
-          diffuseColor.rgb=mix(vec3(.085,.055,.034),diffuseColor.rgb,pool);
-          diffuseColor.a=(1.0-smoothstep(.72,1.0,edge))*mix(.82,.94,pool);
+          vec3 waterEye=normalize(vViewPosition);
+          vec3 waterUp=normalize((viewMatrix*vec4(0.0,1.0,0.0,0.0)).xyz);
+          float waterGlance=pow(1.0-clamp(abs(dot(waterEye,waterUp)),0.0,1.0),2.2);
+          float waterFar=length(vWaterUv-.5)*2.0;
+          float edge=waterFar+(texture2D(uWaterNoise,vWaterWorld.xz*.21).r-.5)*.5+(texture2D(uWaterNoise,vWaterWorld.xz*1.3).g-.5)*.12;
+          float pool=1.0-smoothstep(.50,.62,edge);
+          float ripple=texture2D(uWaterNoise,vWaterWorld.xz*.9+vec2(uWaterTime*.07,-uWaterTime*.05)).g;
+          float ring=.5+.5*sin(waterFar*42.0-uWaterTime*4.5);
+          vec3 open=mix(vec3(.030,.027,.022),vec3(.42,.38,.31),clamp(waterGlance*.75+.06*ripple,0.0,.6))+vec3(.045)*ring*waterGlance;
+          diffuseColor.rgb=mix(vec3(.045,.028,.017)*(.8+.4*ripple),open,pool);
+          diffuseColor.a=(1.0-smoothstep(.86,1.0,edge))*mix(.8,.95,pool);
         }`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor=uWaterFlow>.5?.2:mix(.75,.1,1.0-smoothstep(.45,.78,length(vWaterUv-.5)*2.0));');
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor=uWaterFlow>.5?.25:mix(.8,.1,1.0-smoothstep(.50,.62,length(vWaterUv-.5)*2.0));');
   };
-  material.customProgramCacheKey = () => 'machine-water-1';
+  material.customProgramCacheKey = () => 'machine-water-2';
   return material;
 }
 
@@ -144,7 +147,7 @@ export function createYardWellheadView(parent, heightAt) {
   const paint = wear.apply(new THREE.MeshStandardMaterial({color:0x3f6a63, roughness:.7, metalness:.2}));
   const steel = wear.apply(new THREE.MeshStandardMaterial({color:0x5b5650, roughness:.75, metalness:.3}));
   const red = wear.apply(new THREE.MeshStandardMaterial({color:0x8c2f1e, roughness:.7, metalness:.2}));
-  const concrete = earthMaterial(0x9a9486, 1);
+  const concrete = earthMaterial(0x9a9486, 1, {vertexColors:false});
   const stream = waterMaterial(1), splash = waterMaterial(0);
   const geometries = [];
   const keep = geometry => { geometries.push(geometry); return geometry; };
@@ -236,7 +239,8 @@ export function createDrillCuttingsView(parent, heightAt) {
   const sampleMaterials = Object.fromEntries(Object.entries(LAYERS).map(([name, {colour, kind}]) => [name, earthMaterial(colour, kind)]));
   sampleMaterials.wet.roughness = .45;
   const poolGeometry = new THREE.CircleGeometry(.5, 40); poolGeometry.rotateX(-Math.PI / 2);
-  const heaps = new Map();
+  const jetGeometry = new THREE.CylinderGeometry(.07, .17, 1, 10, 1, true);
+  const heaps = new Map(), clear = new THREE.Color(.50, .56, .57);
   function start(hole, heading) {
     const {x, z} = hole.site, key = `${x}:${z}`, sin = Math.sin(heading), cos = Math.cos(heading);
     const place = (right, forward) => ({x:x + right * cos + forward * sin, z:z + forward * cos - right * sin});
@@ -247,14 +251,16 @@ export function createDrillCuttingsView(parent, heightAt) {
     heap.castShadow = true; heap.receiveShadow = true;
     heap.position.set(at.x, heightAt(at.x, at.z), at.z);
     heap.rotation.y = heading + key.length;
-    const chips = createSpray(26, 'cuttings thrown up at the hole'), water = createSpray(70, 'water coming up the hole');
-    water.material.uniforms.uSize.value = .13;
+    const chips = createSpray(26, 'cuttings thrown up at the hole'), water = createSpray(140, 'water coming up the hole');
+    water.material.uniforms.uSize.value = .07;
+    const jet = new THREE.Mesh(jetGeometry, waterMaterial(2));
+    jet.name = 'water rising from the hole'; jet.visible = false;
     const pool = new THREE.Mesh(poolGeometry, waterMaterial(0));
     pool.name = 'water on the ground'; pool.visible = false; pool.renderOrder = 1;
-    for (const item of [chips, water, pool]) item.position.set(x, heightAt(x, z) + .1, z);
-    holder.add(heap, chips, water, pool);
+    for (const item of [chips, water, pool, jet]) item.position.set(x, heightAt(x, z) + .1, z);
+    holder.add(heap, chips, water, pool, jet);
     group.add(holder);
-    const entry = {key, holder, heap, chips, water, pool, place, samples:[], depth:0, fed:0, wet:-1, clock:0};
+    const entry = {key, holder, heap, chips, water, pool, jet, place, ground:heightAt(x, z) + .1, samples:[], depth:0, fed:0, wet:-1, clock:0};
     heaps.set(key, entry);
     return entry;
   }
@@ -301,8 +307,16 @@ export function createDrillCuttingsView(parent, heightAt) {
         entry.water.visible = rigHere || entry.wet < 9;
         if (entry.water.visible) {
           entry.water.userData.place(entry.clock * 1.25, 3.4 * force + .25, 1.5 * force + .35);
-          entry.water.material.uniforms.uColor.value.setRGB(.34, .25, .16).lerp(new THREE.Color(.74, .80, .80), clamp(entry.wet / 3));
+          entry.water.material.uniforms.uColor.value.setRGB(.17, .12, .075).lerp(clear, clamp((entry.wet - .6) / 3));
           entry.water.material.uniforms.uFade.value = rigHere ? 1 : clamp((9 - entry.wet) / 2);
+        }
+        // A solid jet while the water comes hard; it sinks back as the hole settles.
+        const tall = 3.2 * force;
+        entry.jet.visible = entry.water.visible && tall > .5;
+        if (entry.jet.visible) {
+          entry.jet.scale.set(1, tall, 1); entry.jet.position.y = entry.ground + tall / 2;
+          entry.jet.material.userData.water.uWaterTime.value = entry.clock * 1.6;
+          entry.jet.material.userData.water.uWaterMud.value = 1 - clamp((entry.wet - .6) / 3);
         }
         entry.pool.visible = true;
         entry.pool.scale.setScalar(2 * (.5 + 1.7 * (1 - Math.exp(-entry.wet / 5))));
@@ -311,11 +325,11 @@ export function createDrillCuttingsView(parent, heightAt) {
     },
     dispose() {
       group.removeFromParent();
-      heapGeometry.dispose(); poolGeometry.dispose();
+      heapGeometry.dispose(); poolGeometry.dispose(); jetGeometry.dispose();
       for (const geometry of sampleGeometries) geometry.dispose();
       for (const material of Object.values(sampleMaterials)) material.dispose();
       for (const entry of heaps.values()) {
-        entry.heap.material.dispose(); entry.pool.material.dispose();
+        entry.heap.material.dispose(); entry.pool.material.dispose(); entry.jet.material.dispose();
         for (const spray of [entry.chips, entry.water]) { spray.geometry.dispose(); spray.material.dispose(); }
       }
     },
@@ -366,13 +380,13 @@ export function createDrillView(model) {
   return {root,
     /** Where the driller stands while the mast is up: behind the rig and to one side, facing the hole. */
     seat(rig) {
-      return rig?.hole?.mastDown ? {eye:[-3.6, 2.5, -5.2], target:[.3, 1.5, 1.2]} : null;
+      return rig?.hole?.mastDown ? {eye:[-4.2, 3.0, -5.8], target:[-.3, 1.0, -.4]} : null;
     },
     update(rig, body, dt = 0) {
       let pose = poses.get(body);
       if (!pose) {
         const mastNode = machinePart(body, 'drill-rig:mast'), stringNode = machinePart(body, 'drill-rig:string');
-        pose = {mast:mastNode, string:stringNode, angle:0, feed:0, spin:0, depth:0,
+        pose = {mast:mastNode, string:stringNode, angle:0, feed:0, spin:0, depth:0, clock:0,
           baseZ:stringNode?.position.z ?? 0, baseTurn:stringNode?.quaternion.clone() ?? null};
         poses.set(body, pose);
       }
@@ -386,7 +400,10 @@ export function createDrillView(model) {
       if (depth > pose.depth + 1e-6) pose.spin += dt * 9;
       pose.depth = depth;
       pose.mast.rotation.x = pose.angle;
-      pose.string.position.z = pose.baseZ + pose.feed;
+      // A jammed bit shows: the string shudders in the mast and nothing comes up.
+      pose.clock += dt;
+      pose.string.position.x = hole?.jammed ? Math.sin(pose.clock * 70) * .014 : 0;
+      pose.string.position.z = pose.baseZ + pose.feed + (hole?.jammed ? Math.sin(pose.clock * 43) * .01 : 0);
       pose.string.quaternion.copy(pose.baseTurn).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), pose.spin));
     }};
 }

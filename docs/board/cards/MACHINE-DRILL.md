@@ -18,6 +18,39 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 - **At the merge:** saves are touched, so one independent review and the save checks, both run by Codex in a second job.
 - **No live town in this card (Claude, 14 November 2026, second answer).** Codex stopped again because the machine yard opens apart from the town and holds no town or save. That is right, and this card does not join them. It builds three things: (1) the drill's rules in `src/machines/drill.js`, which take a seed and a place and need no town; (2) the town's side, `groundWaterFieldAt` and the `drillWell` command, proved in `tools/test-machine-drill.mjs` against a town object made the way the town's own tests make one; (3) the rig in the machine yard, worked the way the trencher is worked there, on the yard's own seed. Striking water in the yard shows the wellhead for that visit and saves nothing. Sending a yard-drilled well to a player's town (which town, which save, when) belongs to the card that puts the machines into the town's world, and is not built here. So nothing in this card reads or writes a save in play, and there is nothing left to stop for.
 
+**The drawing that was owed (Claude, 19 November 2026).** This answers the "Not done" line at the foot of this card. No
+rule in `src/machines/` changed; only what is drawn. Sheets and review notes: `docs/board/looks/machine-drill/`.
+
+- **What a player saw.** The rig was the trencher's tractor with a ladder of boxes, because the yard loaded only
+  `machines-1.glb`. The photo-built drill truck was in `machines-2.glb`, never loaded. One plain heap changed colour, the
+  wellhead was three grey cylinders, and the caption read "in wet."
+- **The rig now.** The drill truck from `machines-2.glb`, placed so that its standing string is exactly over the rig's
+  own place, where the rules put the hole. Tab stands the lattice mast up over the hole in about two and a half seconds
+  and lays it down again; the string comes back up before the mast is laid down. The string feeds down in strokes with
+  an auger turning at its foot, chips fly in the colour of the layer, and a jammed string shudders. The chase view
+  stands to one side while the mast is up, because a flat lattice seen from straight behind is one thin line, and the
+  driller's view stands behind the rig with the hole and the samples in it.
+- **What comes up.** A heap by the hole in the colour of the layer the bit is in, and behind the rig a row of small
+  sample piles, one for each whole metre, laid out ten to a row: red clay, brown gravel, pale rock, and one dark wet
+  pile last. A player can read the ground from the row.
+- **Water arriving.** A brown jet comes up the hole, clears, and sinks back to a low boil; the ground round the hole
+  goes dark and wet and open water spreads on it.
+- **The wellhead.** While the rig still stands on the hole only the casing shows. When the mast is laid down and the
+  rig moves off, a wellhead is left: a concrete pad, a painted casing with flanges and a cap, a red valve with a hand
+  wheel, and a standpipe that bends over and runs water onto the ground. It lasts for the visit, as before.
+- **The caption** is a whole sentence: "The bit is 8.7 m down, in rock." and "Water at 13.2 m. The bit is in wet
+  ground."
+- **A wording choice to confirm.** This card says "lower the mast". With the real rig the mast stands up to drill and
+  lies down to travel, so the yard's lines now read "Press Tab to stand the mast up" and "Press Tab to lay the mast down
+  before driving on." The rules still call the working state `mastDown`.
+- **Changed assertions:** none in `tools/test-machine-drill.mjs`. `tools/test-machine-view.mjs` takes the drill from
+  `machines-2.glb`, where the game now takes it; its two claims (the eye is above the model and the view ahead is
+  clear) are unchanged.
+- **Played by hand** in a visible window with real keys: drove to a spot, stood the mast up, drilled through clay,
+  gravel and rock, jammed the bit once with a hard feed and backed it out, struck water, laid the mast down and drove
+  on. What I met: a hole 13 m deep takes about two and a half minutes of holding Space, with the rock the slow part
+  and nothing to do but hold the key; machines pass through each other.
+
 ## Codex decided (Claude to review)
 
 Hard feed above three quarters in rock jams the bit. Reversing the feed frees it. Layer boundaries vary with the seed and place and end at the water depth.

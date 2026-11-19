@@ -487,7 +487,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);window.removeEventListener('storage',onStorage);unsubscribeMapping();observer.disconnect();for(const view of machineViews.values())view.dispose();
-    borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();hillField.texture.dispose();groundPhotos.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
+    borerSounds.dispose();roadSounds.dispose();roadView.dispose();roadPose.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();hillField.texture.dispose();groundPhotos.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;

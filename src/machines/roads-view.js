@@ -1,10 +1,11 @@
 import {DIG_MACHINE_TONES} from '../sound-bank.js';
 import * as THREE from 'three';
 import {roadCondition} from './roads.js';
-import {scrapNoise} from '../world/scrap-look.js';
+import {createSmokeMaterial, scrapNoise} from '../world/scrap-look.js';
 import {earthMaterial, moundGeometry} from './earth-look.js';
 
 const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
+const unit = (index, k) => { const v = Math.sin(index * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
 const plain = name => name.replace(/[^a-z0-9-]/gi, '').toLowerCase();
 /** Find a named part of a loaded model. The loader drops ':' and turns spaces to '_', so compare letters and digits only. */
 export function machinePart(root, name) {
@@ -66,18 +67,18 @@ function roadSkinMaterial() {
         float rClod=smoothstep(.40,.64,rMid.r*.55+rFine.b*.45);
         vec3 rLoose=vec3(.085,.043,.023)*(.42+.95*rClod)*(.82+.36*rFine.g);
         vec3 rCut=vec3(.115,.058,.030)*(.84+.24*rFine.g)*(.88+.24*rBig.r);
-        vec3 rTight=vec3(.40,.29,.18)*(.95+.08*rFine.g)*(.95+.08*rBig.b);
+        vec3 rTight=vec3(.40,.29,.18)*(.95+.08*rFine.g)*(.95+.08*rBig.b)*(1.0-.22*smoothstep(.58,.70,rFine.b));
         float rPressed=rFirm*rFirm*(3.0-2.0*rFirm);
         vec3 rEarth=mix(mix(rCut,rLoose,rFill),rTight,rPressed);
         // Small stones lie in loose and scraped ground; the drum presses them in.
         rEarth+=vec3(.16,.12,.08)*smoothstep(.70,.78,rFine.g*.55+rFine.b*.45)*(1.0-.8*rPressed)*.6;
         // The laid surface: a dark mat with pale grit in it.
-        float rGrit=smoothstep(.60,.70,rFine.g);
+        float rGrit=smoothstep(.58,.70,texture2D(uRoadNoise,rp*2.9+.53).g);
         vec3 rGood=vec3(.014,.014,.016)*(.78+.5*rFine.b)+vec3(.05,.047,.042)*rGrit*.3;
         // Laid on soft ground: it sinks and crazes, and the earth shows in the cracks.
-        float rCrack=1.0-smoothstep(.0,.035,min(abs(rMid.r-.5),abs(rMid.b-.47)));
+        float rCrack=1.0-smoothstep(.0,.04,min(min(abs(rMid.r-.5),abs(rMid.b-.47)),abs(rBig.g-.5)*.6+abs(rFine.r-.5)*.25));
         float rSunk=smoothstep(.50,.68,rBig.r*.5+rMid.b*.5);
-        vec3 rSoftMat=mix(rGood*1.9+vec3(.020,.015,.010),rLoose*1.5,max(rCrack*.92,rSunk*.6));
+        vec3 rSoftMat=mix(rGood*1.5+vec3(.012,.009,.006),rLoose*1.7,max(rCrack*.95,rSunk*.7));
         // Laid badly: ripples across it and torn patches where the grit pulled out.
         float rRipple=.5+.5*sin(rMid.r*46.0+rBig.b*9.0);
         float rTorn=smoothstep(.54,.64,rMid.b*.6+rFine.r*.4);
@@ -112,7 +113,7 @@ export function createRoadWorkView(parent, heightAt, sharedGround = false) {
   const group = new THREE.Group();
   group.name = 'yard-road-work';
   parent.add(group);
-  const heapMaterial = earthMaterial(0x6f4a30, 0);
+  const heapMaterial = earthMaterial(0x553a2a, 0);
   const heap = new THREE.Mesh(moundGeometry({seed:5, forward:.55}), heapMaterial);
   heap.name = 'dozer-blade-heap';
   heap.visible = false;
@@ -229,6 +230,30 @@ export function createRoadWorkView(parent, heightAt, sharedGround = false) {
   };
 }
 
+// Steam off the fresh surface behind the paver's screed, as soft puffs that face the viewer. They are placed from the
+// clock in the paver's own metres, so nothing is stored between frames.
+function createSteam(count = 12) {
+  const group = new THREE.Group();
+  group.name = 'steam off the new surface';
+  const material = createSmokeMaterial(0xb7b0a2), card = new THREE.PlaneGeometry(1, 1);
+  const puffs = Array.from({length:count}, (_, index) => {
+    const puff = new THREE.Mesh(card, material);
+    puff.name = 'steam'; puff.renderOrder = 2; puff.visible = false; puff.userData.fade = 0;
+    puff.onBeforeRender = () => { material.uniforms.uFade.value = puff.userData.fade; material.uniforms.uSeed.value = index * .37; material.uniformsNeedUpdate = true; };
+    group.add(puff);
+    return puff;
+  });
+  group.userData.place = (seconds, strength) => puffs.forEach((puff, index) => {
+    const age = (seconds / 2.4 + index / count) % 1;
+    puff.position.set((unit(index, 1) - .5) * 4.6, .2 + age * 1.7, -4.9 - age * 1.3 - unit(index, 2) * .9);
+    puff.scale.set(.8 + 2 * age, .8 + 2 * age, 1);
+    puff.userData.fade = strength * Math.min(1, age / .15) * Math.pow(1 - age, 1.4) * .3;
+    puff.visible = puff.userData.fade > .004;
+  });
+  group.userData.dispose = () => { material.dispose(); card.dispose(); };
+  return group;
+}
+
 /** The roller and the paver come from a family whose machines face the other way. Turn one to face forward. */
 export function roadMachineModel(model) {
   if (!model) return null;
@@ -248,14 +273,15 @@ const SCREED_TRAVEL = .28, DRUM_RADIUS = .75;
  * with the ground it covers, and the paver's screed comes down to lay. It reads the machines and changes nothing.
  */
 export function createRoadMachinePose() {
-  const parts = new WeakMap();
+  const parts = new WeakMap(), steams = [];
   const toward = (value, target, step) => value + clamp(target - value, -step, step);
   function found(view, id) {
     let entry = parts.get(view);
     if (entry) return entry;
     const name = {dozer:'dozer:blade', roller:'roller:drum', paver:'paver:screed'}[id];
     const node = machinePart(view.body, name);
-    entry = {node, base:node ? node.position.y : 0, offset:null, edge:0, turn:0};
+    entry = {node, base:node ? node.position.y : 0, offset:null, edge:0, turn:0, steam:null, laying:0};
+    if (node && id === 'paver') { entry.steam = createSteam(); view.root.add(entry.steam); steams.push(entry.steam); }
     if (node && id === 'dozer') {
       view.root.updateMatrixWorld(true);
       entry.edge = new THREE.Box3().setFromObject(node).min.y - view.root.position.y;
@@ -285,9 +311,12 @@ export function createRoadMachinePose() {
           const target = active === id && working ? 0 : SCREED_TRAVEL;
           entry.offset = entry.offset === null ? target : toward(entry.offset, target, dt * .35);
           entry.node.position.y = entry.base + entry.offset;
+          entry.laying = toward(entry.laying, busy ? 1 : 0, dt * .8);
+          entry.steam.userData.place(machine.timeSeconds, entry.laying);
         }
       }
     },
+    dispose() { for (const steam of steams) { steam.removeFromParent(); steam.userData.dispose(); } },
   };
 }
 

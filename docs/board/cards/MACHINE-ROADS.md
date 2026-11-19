@@ -8,6 +8,43 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 
 ## Claude answers
 
+**The drawing that was owed (Claude, 19 November 2026).** This answers the "Not done" line below. No rule in
+`src/machines/` changed; only what is drawn. Sheets and review notes: `docs/board/looks/machine-roads/`.
+
+- **What a player saw, measured in the real game.** The roller and the paver were a yellow box and a green box with a
+  grey drum: the yard loaded only `machines-1.glb`, and the photo-built roller and paver were in `machines-2.glb`, never
+  loaded. The dozer's blade never moved and its seat view showed no part of the machine. After a full pass of the dozer
+  the ground showed nothing at all, because the colours were painted on the yard floor and the floor lies under the
+  edited ground.
+- **The machines now.** The yard loads `machines-2.glb` and uses its roller and paver. The dozer's blade goes down to cut
+  while Space is held, sits half way to spread and lifts to travel, with a heap of loose earth rolling ahead of it. The
+  roller's drum turns with the ground it covers. The paver's screed comes down to lay and lifts to travel, and steam
+  rises off the new surface behind it. Each machine has a driver's seat that shows the tool it works: the top of the
+  blade over the bonnet, the drum under the hood, the hopper and its drag chain.
+- **The ground now.** Worked ground is its own drawn surface 0.07 m above the ground, on the same corners as the edited
+  ground. Scraped by the blade: plain, the ground's grain showing through. Loose fill: dark clods with a ragged edge.
+  Rolled: paler and flatter with each pass. Paved: a dark mat with a straight edge. Paved on fill that was never made
+  firm: crazed, with earth in the cracks. Paved too fast, off its line or over a bump: rippled and torn, with a ragged
+  edge. A heap or a pit is not drawn as work; it is the ground's own shape.
+- **A fault found in the model file.** One paver track wheel stood 22 m from the paver and the roller's root sat on top
+  of the loader, because the recipe used the name `roller` twice. The wheel is back on its track (72 points moved by
+  20.38 m in `machines-2.glb`), the roller's root is at x = 22, and the recipe line is corrected. The file was corrected
+  in place, not exported again from Blender; the next export from the corrected recipe gives the same placement.
+- **Changed assertions, reviewed.** `tools/test-machine-roads.mjs` used to read the yard floor's vertex colours and
+  heights. Those were never seen in the game, so the floor painting is removed and the same claims are now made of the
+  drawn surface: work shows and changes height, it reaches across the drum and no further, bad work and repaired work
+  differ, a paved edge is clean, loose, firm and paved are three different surfaces, and removing work removes the
+  drawing. Two claims are added (cut ground is drawn apart from fill; ground the roller only measured is not drawn).
+  Nothing is loosened. `tools/test-machine-view.mjs` now takes the drill from `machines-2.glb`, where the game takes
+  it, and adds a check for each road machine that its seat is clear of the model and that the eye meets the blade, the
+  drum or the paver's own front in the lower half of the picture.
+- **Played by hand** in a visible window with real keys: cut through the heap, filled the ditch, scraped a stretch,
+  spread the load, rolled six passes, paved too fast, at a steady pace, and over unrolled fill. What I met: machines
+  pass through each other (I rolled into the parked dozer); six passes are needed before fill counts as firm, because
+  each pass also pushes fill sideways; a paver cannot lay on scraped ground, only on fill, and nothing says so.
+- **Ready for the Dig?** Yes for their look. The roller and the paver read as themselves from 30 m and from the seat.
+  `digMachineIds` still leaves them out without the town's switch; DIG-YARD-TOY decides when to add them.
+
 ## Codex decided (Claude to review)
 
 - Road work uses whole-metre cells. A blade carries material from a cut into a fill; rolling firms the fill and paving records its condition. The yard uses Space while driving to operate each road machine. The town connection still needs to be built.
