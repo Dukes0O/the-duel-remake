@@ -37,6 +37,7 @@ import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
+import {BELL_CUE, startWorkVehicle, stepWorkVehicleControls} from '../../town/work-vehicles.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -193,6 +194,8 @@ export function initializeWorldJob(duel, definition) {
   worldJob.originalFootWeaponSelected = state.footWeapons?.selected ?? null;
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
+  // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags.enabled('wasteland-town')});
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
@@ -320,11 +323,22 @@ export function prepareWorldJobControls(duel) {
   if (step?.kind === 'rider-fight' && worldJob.riderReserve) startRoadFight(duel,worldJob);
   const input=duel.state.input??{};
   worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
+  if(worldJob.vehicle&&!duel.state.onFoot)driveWorkVehicle(duel,worldJob,input);
   if(step?.kind!=='drivetrain') return false;
   Object.assign(worldJob.controls,{throttle:input.throttle??0,brake:input.brake??0});
   input.throttle=0;input.brake=0;input.steer=0;input.boost=false;
   duel.state.speedMph=0;duel.state.pushVelocity=0;
   return true;
+}
+
+// TOWN-VEHICLES: a truck has no nitro. Its boost key rings the bell, if it has one, and its steering keeps to its turning circle.
+function driveWorkVehicle(duel, worldJob, input) {
+  const stepped = stepWorkVehicleControls(worldJob.vehicle, input,
+    {speedMph: duel.state.speedMph, clockSec: duel.state.arena.clockSec, course: duel.course});
+  worldJob.vehicle = stepped.vehicle;
+  input.steer = stepped.steer;
+  duel.state.boost = 0;
+  if (stepped.rang) duel.emit({arenaTell: {id: 'town-bell', targetId: 'player', seconds: 0, cue: BELL_CUE}});
 }
 
 function syncJobCarSolids(worldJob) {

@@ -163,6 +163,8 @@ export class Duel {
   }
 
   get car() {
+    // TOWN-VEHICLES: a job's work vehicle is driven in place of the garage car (src/town/work-vehicles.js).
+    const workVehicle = this.state.arena?.worldJob?.vehicle?.car; if (workVehicle) return workVehicle;
     const base = CARS[this.state.car], upgrades = base.factoryMaxed ? FACTORY_MAX_UPGRADES : this.state.upgrades;
     const driverId = normalizeDriverId(this.state.driverId);
     const key = `${this.state.car}|${driverId}|${UPGRADE_KEYS.map(name => upgrades[name] || 0).join(':')}${this.state.tune ? '|' + tuneKey(this.state.tune) : ''}`; // LAB-TUNE
@@ -195,7 +197,7 @@ export class Duel {
   _surface(...args) { return simDriving._surface.apply(this, args); }
   _drivingSurface(...args) { return simDriving._drivingSurface.apply(this, args); }
   _roadGrip(...args) { return simDriving._roadGrip.apply(this, args); }
-  _vehicleSpec(...args) { return simContacts._vehicleSpec.apply(this, args); }
+  _vehicleSpec(...args) { return (args[0] === this.state && this.state.arena?.worldJob?.vehicle?.body) || simContacts._vehicleSpec.apply(this, args); }
 
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
