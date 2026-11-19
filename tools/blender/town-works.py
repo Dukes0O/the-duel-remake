@@ -3,11 +3,11 @@
 The whole family, written to works.glb:
     blender -b --python tools/blender/town-works.py -- --root .
 One piece or group, written to .qa-dist/works-trial.glb, with its review sheet:
-    blender -b --python tools/blender/town-works.py -- --root . --only sawmill --render sawmill --round 3
+    blender -b --python tools/blender/town-works.py -- --root . --only sawmill --render sawmill:3
 
 Groups for --only: `heaps` (the eight stockpiles) and `small` (the pit, trenches, valve box,
-pipe stack, handcart, barrow and flatbed). Sheets for --render: sawmill, salvage-yard,
-old-ground, small, heaps.
+pipe stack, handcart, barrow and flatbed). Sheets for --render, each as name:round and several
+with commas between: sawmill, salvage-yard, old-ground, small, heaps.
 """
 import argparse
 import json
@@ -25,8 +25,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--only', default='')
-parser.add_argument('--render', default='')
-parser.add_argument('--round', type=int, default=1)
+parser.add_argument('--render', default='', help='sheets to render, each with its round: sawmill:3,heaps:1')
 parser.add_argument('--assemble-sheet', default='')
 parser.add_argument('--evidence', default='.evidence/2026-11-19/TOWN-ART-WORKS')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
@@ -45,14 +44,16 @@ out = root / ('.qa-dist/works-trial.glb' if only else 'public/assets/models/wast
 SHEET_FOLDERS = {'sawmill': 'town-art-works-sawmill', 'salvage-yard': 'town-art-works-salvage-yard',
                  'old-ground': 'town-art-works-old-ground', 'small': 'town-art-works-small',
                  'heaps': 'town-art-works-heaps'}
-if args.render and args.render not in SHEET_FOLDERS:
-    parser.error(f'unknown sheet: {args.render}')
-sheet = root / f'docs/board/looks/{SHEET_FOLDERS[args.render]}/round-{args.round}.jpg' if args.render else None
+renders = [(word.split(':')[0], int(word.split(':')[1]) if ':' in word else 1) for word in filter(None, args.render.split(','))]
+for render_key, _ in renders:
+    if render_key not in SHEET_FOLDERS:
+        parser.error(f'unknown sheet: {render_key}')
+sheets = {key: root / f'docs/board/looks/{SHEET_FOLDERS[key]}/round-{number}.jpg' for key, number in renders}
 
 if args.paths_only:
     print(json.dumps({'blend': [], 'glb': [str(out)],
-                      'evidence': [str(evidence)] if args.render else [],
-                      'summary': [str(sheet)] if args.render else []}))
+                      'evidence': [str(evidence)] if renders else [],
+                      'summary': [str(path) for path in sheets.values()]}))
     raise SystemExit(0)
 
 if args.assemble_sheet:
@@ -1341,7 +1342,7 @@ if want('salvage-yard'):
         'rear': {'centre': 511.5, 'ground': 632, 'scale': 4.9 / 783},
         'top': {'front': 114, 'rear': 909, 'centre': 383.5, 'x_scale': 4.9 / 563},
         # The stove pipe stands at a different place in each view, so it leaves every mask.
-        'cut': {'side': [(128, 95, 174, 187)], 'front': [(226, 50, 278, 150)], 'rear': [(822, 120, 868, 199)]},
+        'cut': {'side': [(120, 90, 180, 188)], 'front': [(226, 50, 278, 150)], 'rear': [(822, 120, 868, 199)]},
         'grey': 22, 'tolerance': 26, 'bleed_tolerance': 38,
         'voxel': .12, 'target': 1500, 'mask_dir': str(render_masks),
     }
@@ -1843,7 +1844,7 @@ for image in bpy.data.images:
 town.export_glb(out)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size}))
 
-if args.render:
+if renders:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(out))
     scene = bpy.context.scene
@@ -1866,9 +1867,8 @@ if args.render:
     bpy.ops.object.camera_add()
     camera = bpy.context.object; camera.name = 'review-camera'; scene.camera = camera
     camera.data.clip_end = 600
-    shots = evidence / f'{args.render}-round-{args.round}'
-    shots.mkdir(parents=True, exist_ok=True)
     by_name = {obj.name: obj for obj in bpy.data.objects}
+    shots = [None]
 
     def show(ids, hidden=(), places=None, parts=None):
         """Show only these pieces, each at its place (x, z) if given. `hidden` names parts to leave
@@ -1901,9 +1901,9 @@ if args.render:
             camera.data.type = 'PERSP'; camera.data.sensor_width = 36
             camera.data.lens = 36 * direction.length / size
         scene.render.resolution_x, scene.render.resolution_y = res
-        scene.render.filepath = str(shots / f'{name}.png')
+        scene.render.filepath = str(shots[0] / f'{name}.png')
         bpy.ops.render.render(write_still=True)
-        return str(shots / f'{name}.png')
+        return str(shots[0] / f'{name}.png')
 
     def mayor(name, target, fit, res=(1280, 720), distance=80, turn=45):
         """The mayor's camera: 45 degrees down from `distance` metres, looking from the road side."""
@@ -1919,149 +1919,152 @@ if args.render:
     def ref(name):
         return str(textures / name)
 
-    rows = []
-    if args.render == 'sawmill':
-        show(['sawmill'])
-        rows = [
-            {'label': 'LONG SIDE | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 400,
-             'panels': [ref('sawmill-side.jpg'), shoot('side', 'ortho', (0, 3.3, -60), (0, 3.3, 0), 24.5, (1024, 512))]},
-            {'label': 'END | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 430,
-             'panels': [ref('sawmill-front.jpg'), shoot('end', 'ortho', (-60, 3.55, 0), (0, 3.55, 0), 9.75, (1024, 768))]},
-            {'label': 'STRAIGHT DOWN | SOURCE PHOTO  /  EXPORTED MODEL (two bays left open over the saw)', 'height': 400,
-             'panels': [ref('sawmill-roof.jpg'), shoot('above', 'ortho', (0, 60, 0), (0, 0, 0), 25, (1024, 683))]},
-            {'label': 'THREE-QUARTER VIEWS | EXPORTED MODEL', 'height': 430,
-             'panels': [shoot('three-quarter-front', 'ortho', (30, 22, -34), (0, 2.6, 0), 27, (1024, 768)),
-                        shoot('three-quarter-rear', 'ortho', (-30, 22, 34), (0, 2.6, 0), 27, (1024, 768))]},
-            {'label': "MAYOR'S CAMERA, 45 DEGREES DOWN FROM 80 M  /  DRIVER'S SEAT, 1.2 M HIGH AT 30 M", 'height': 500,
-             'panels': [mayor('mayor', (0, 2, 0), 30), driver('driver', (0, 3.2, 0), 27, distance=30)]},
-            {'label': 'THE SAW UNDER THE ROOF, FROM 9 M  /  LOG STACKS BEHIND', 'height': 430,
-             'panels': [shoot('saw', 'persp', (-2.5, 2.3, -9.5), (2.6, 1.1, -.8), 9, (1024, 768)),
-                        shoot('stacks', 'persp', (-9, 2.2, 18), (0, 1.6, 4), 22, (1024, 768))]},
-        ]
-        title = f'TOWN WORKS | SAWMILL | ROUND {args.round}'
-    elif args.render == 'heaps':
-        places = {piece_id: ((index % 4 - 1.5) * 8, (index // 4 - .5) * -9) for index, piece_id in enumerate(HEAPS)}
-        show(HEAPS, places=places)
-        names = [piece_id.replace('pile-', '').upper() for piece_id in HEAPS]
-        rows = [
-            {'label': "ALL EIGHT FROM THE MAYOR'S CAMERA AT 80 M, IN 8 M CELLS  |  back row: " + ', '.join(names[:4])
-                      + '  |  front row: ' + ', '.join(names[4:]),
-             'height': 640, 'panels': [mayor('all-mayor', (0, .5, 0), 38, res=(1600, 800), turn=20)]},
-            {'label': 'ALL EIGHT AS SMALL AS THE MAYOR SEES THEM FROM 120 M (true size at 1280 px across the screen)', 'height': 260,
-             'panels': [shoot('all-far', 'persp', (120 * .7071 * .342, 120 * .7071, -120 * .7071 * .94), (0, .5, 0), 95, (1280, 260))]},
-        ]
-        for start in (0, 4):
-            ids = HEAPS[start:start + 4]
-            panels = []
-            for piece_id in ids:
-                show([piece_id])
-                panels.append(driver(f'{piece_id}-driver', (0, .8, 0), 8.5, res=(640, 400), distance=16, across=5))
-            rows.append({'label': "DRIVER'S SEAT AT 16 M | " + ' | '.join(i.replace('pile-', '').upper() for i in ids),
-                         'height': 300, 'panels': panels})
-            panels = []
-            for piece_id in ids:
-                show([piece_id])
-                panels.append(shoot(f'{piece_id}-above', 'ortho', (0, 30, 0), (0, 0, 0), 8, (512, 512)))
-            rows.append({'label': 'STRAIGHT DOWN, ONE 8 M CELL | ' + ' | '.join(i.replace('pile-', '').upper() for i in ids),
-                         'height': 420, 'panels': panels})
-        title = f'TOWN WORKS | THE EIGHT STOCKPILES | ROUND {args.round}'
-    elif args.render == 'salvage-yard':
-        show(['salvage-yard'], parts=['salvage-yard:shed'])
-        shed = (8.5, 1.9, -7.7)
-        rows = [
-            {'label': "THE GANG'S SHED, LONG SIDE AND FRONT | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA", 'height': 330,
-             'panels': [ref('salvage-shed-side.jpg'), shoot('shed-side', 'ortho', (-60, 1.9, -7.7), shed, 8.6, (1024, 768)),
-                        ref('salvage-shed-front.jpg'), shoot('shed-front', 'ortho', (8.5, 1.9, -70), shed, 7.5, (1024, 768))]},
-        ]
-        shed_top = shoot('shed-top', 'ortho', (8.5, 40, -7.7), (8.5, 0, -7.7), 9.3, (768, 1024))
-        show(['salvage-yard'])
-        rows += [
-            {'label': 'SHED ROOF AND BAY WALL | SOURCE PHOTOS  /  THE YARD STRAIGHT DOWN', 'height': 560,
-             'panels': [ref('salvage-shed-top.jpg'), shed_top, shoot('above', 'ortho', (0, 60, 0), (0, 0, 0), 24.5, (1024, 1024))],
-             'weights': [.75, .75, 1.3]},
-            {'label': "MAYOR'S CAMERA, 45 DEGREES DOWN FROM 80 M  /  FROM THE OTHER FRONT CORNER", 'height': 520,
-             'panels': [mayor('mayor', (0, 1, 0), 34), mayor('mayor-left', (0, 1, 0), 34, turn=-40)]},
-            {'label': "DRIVER'S SEAT ON THE ROAD, 1.2 M HIGH AT 28 M  /  INSIDE THE GATE, LOOKING AT THE BAYS", 'height': 500,
-             'panels': [driver('driver', (0, 2.2, -8), 30, distance=20, across=4),
-                        shoot('bays', 'persp', (0, 3.2, -9.5), (0, 1.2, 8), 26, (1280, 720))]},
-            {'label': 'THREE-QUARTER VIEWS | EXPORTED MODEL', 'height': 470,
-             'panels': [shoot('three-quarter-front', 'ortho', (34, 26, -38), (0, 1.5, 0), 34, (1024, 768)),
-                        shoot('three-quarter-rear', 'ortho', (-34, 26, 38), (0, 1.5, 0), 34, (1024, 768))]},
-        ]
-        title = f'TOWN WORKS | SALVAGE YARD | ROUND {args.round}'
-    elif args.render == 'old-ground':
-        few = {f'old-ground:marker-{n}' for n in range(5, 13)}
-        all_markers = [f'old-ground:marker-{n}' for n in range(1, 13)]
-        show(['old-ground'], parts=['old-ground:wall'])
-        wall_view = shoot('wall', 'ortho', (-6, .5, -60), (-6, .5, -10.3), 6.4, (1024, 256))
-        show(['old-ground'], parts=['old-ground:gate', 'old-ground:lamp'])
-        gate_view = shoot('gate', 'ortho', (0, 1.45, -60), (0, 1.45, -10.3), 4.4, (1024, 768))
-        show(['old-ground'], parts=all_markers[:4])
-        marker_view = shoot('markers', 'persp', (0, 1.5, -12.5), (0, .5, -3.2), 9.5, (1024, 512))
-        grave_view = shoot('grave', 'ortho', (-2.8, 30, -3.45), (-2.8, 0, -3.45), 3.0, (1024, 512), roll=math.radians(90))
-        show(['old-ground'], parts=['old-ground:tree'])
-        turn = math.radians(205)
-        tree_view = shoot('tree', 'ortho', (6.9 + 60 * math.sin(turn), 3.3, 6.6 + 60 * math.cos(turn)), (6.9, 3.3, 6.6), 8.2, (768, 1024))
-        tree_other = shoot('tree-other', 'ortho', (6.9 + 60 * math.cos(turn), 3.3, 6.6 - 60 * math.sin(turn)), (6.9, 3.3, 6.6), 8.2, (768, 1024))
-        rows = [
-            {'label': 'DRY-STONE WALL AND GATEWAY | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 330,
-             'panels': [ref('old-ground-wall-side.jpg'), wall_view, ref('old-ground-gate.jpg'), gate_view], 'weights': [1.3, 1.3, .9, .9]},
-            {'label': 'MARKERS AND ONE GRAVE | SOURCE PHOTOS  /  EXPORTED MODEL', 'height': 300,
-             'panels': [ref('old-ground-markers.jpg'), marker_view, ref('old-ground-grave-top.jpg'), grave_view]},
-            {'label': 'THE DEAD TREE | SOURCE PHOTO  /  MODEL FROM THE SAME SIDE  /  MODEL FROM A QUARTER TURN ROUND', 'height': 560,
-             'panels': [ref('old-ground-tree.jpg'), tree_view, tree_other]},
-        ]
-        show(['old-ground'], hidden=few)
-        rows.append({'label': "WITH ITS FIRST FOUR GRAVES | MAYOR'S CAMERA, 45 DEGREES DOWN FROM 80 M  /  STRAIGHT DOWN", 'height': 520,
-                     'panels': [mayor('mayor-few', (0, 1, 0), 31), shoot('above-few', 'ortho', (0, 60, 0), (0, 0, 0), 23, (1024, 1024))],
-                     'weights': [1.5, 1]})
-        show(['old-ground'])
-        rows += [
-            {'label': "WITH ALL TWELVE | MAYOR'S CAMERA FROM 80 M  /  DRIVER'S SEAT ON THE ROAD, 1.2 M HIGH AT 26 M", 'height': 500,
-             'panels': [mayor('mayor', (0, 1, 0), 31, turn=-35), driver('driver', (0, 2.2, -6), 27, distance=16, across=5)]},
-            {'label': 'THREE-QUARTER VIEWS, ALL TWELVE | EXPORTED MODEL', 'height': 450,
-             'panels': [shoot('three-quarter-front', 'ortho', (30, 24, -36), (0, 1.2, 0), 31, (1024, 768)),
-                        shoot('inside', 'persp', (-1.5, 1.7, -8.5), (2.5, 1.3, 4), 16, (1024, 768))]},
-        ]
-        title = f'TOWN WORKS | OLD GROUND | ROUND {args.round}'
-    elif args.render == 'small':
-        def pair(piece_id, side_photo, top_photo, side_scale, side_res, top_scale, top_res, side_height, hidden=()):
-            show([piece_id], hidden=hidden)
-            return [ref(side_photo), shoot(f'{piece_id}-side', 'ortho', (-40, side_height, 0), (0, side_height, 0), side_scale, side_res),
-                    ref(top_photo), shoot(f'{piece_id}-top', 'ortho', (0, 30, 0), (0, 0, 0), top_scale, top_res, roll=math.radians(90))]
-        rows = [
-            {'label': 'FLATBED, WITHOUT ITS LOAD | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 250,
-             'panels': pair('flatbed', 'flatbed-side.jpg', 'flatbed-top.jpg', 7.05, (1024, 512), 7.05, (1024, 512), 1.25, hidden={'flatbed:load'})},
-            {'label': 'HANDCART | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL', 'height': 370,
-             'panels': pair('handcart', 'handcart-side.jpg', 'handcart-top.jpg', 2.88, (1024, 768), 2.4, (1024, 768), .42)},
-            {'label': 'BARROW | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL', 'height': 370,
-             'panels': pair('barrow', 'barrow-side.jpg', 'barrow-top.jpg', 1.62, (1024, 768), 1.6, (1024, 768), .47)},
-        ]
-        show(['flatbed'])
-        rows.append({'label': "FLATBED WITH ITS LOAD | MAYOR'S CAMERA FROM 80 M  /  DRIVER'S SEAT AT 18 M  /  THREE-QUARTER", 'height': 400,
-                     'panels': [mayor('flatbed-mayor', (0, 1, 0), 10, res=(800, 600)), driver('flatbed-driver', (0, 1.2, 0), 9.5, res=(800, 600), distance=18, across=7),
-                                shoot('flatbed-three-quarter', 'ortho', (-20, 14, -24), (0, 1.1, 0), 9, (800, 600))]})
-        for label, ids in (('HANDCART | BARROW | VALVE BOX | PIPE STACK', ['handcart', 'barrow', 'valve-box', 'pipe-stack']),
-                           ('TEST PIT | TRENCH | TRENCH CORNER', ['test-pit', 'trench', 'trench-corner'])):
-            fits = {'handcart': 4, 'barrow': 3, 'valve-box': 4, 'pipe-stack': 8.5, 'test-pit': 6, 'trench': 9.5, 'trench-corner': 9.5}
-            near, far = [], []
-            for piece_id in ids:
-                show([piece_id])
-                near.append(mayor(f'{piece_id}-mayor', (0, .3, 0), fits[piece_id], res=(640, 480)))
-                far.append(driver(f'{piece_id}-driver', (0, .5, 0), fits[piece_id] * 1.1, res=(640, 400), distance=15, across=5))
-            rows.append({'label': "MAYOR'S CAMERA FROM 80 M, CLOSE | " + label, 'height': 380 if len(ids) == 4 else 440, 'panels': near})
-            rows.append({'label': "DRIVER'S SEAT AT 15 M | " + label, 'height': 300, 'panels': far})
-        rows.append({'label': 'SOURCE PHOTOS | TEST PIT, TRENCH, VALVE BOX, HAND WHEEL, TOOLS', 'height': 300,
-                     'panels': [ref('test-pit-top.jpg'), ref('trench-top.jpg'), ref('valve-box-top.jpg'), ref('valve-wheel.jpg'), ref('works-tools.jpg')],
-                     'weights': [1, 1.6, 1, 1, 1.2]})
-        places = {piece_id: ((index % 4 - 1.5) * 8, (index // 4 - .5) * -9) for index, piece_id in enumerate(SMALL)}
-        show(SMALL, places=places)
-        rows.append({'label': "ALL EIGHT IN 8 M CELLS FROM THE MAYOR'S CAMERA AT 80 M  |  back row: " + ', '.join(SMALL[:4]) + '  |  front row: ' + ', '.join(SMALL[4:]),
-                     'height': 600, 'panels': [mayor('all-mayor', (0, .5, 0), 38, res=(1600, 800), turn=20)]})
-        title = f'TOWN WORKS | SMALL WORKS AND HAULERS | ROUND {args.round}'
-    plan = {'title': title, 'out': str(sheet), 'rows': rows}
-    plan_path = shots / 'sheet-plan.json'
-    plan_path.write_text(json.dumps(plan, indent=1), encoding='utf-8')
-    import subprocess
-    subprocess.run(['python', str(Path(__file__).resolve()), '--root', str(root), '--assemble-sheet', str(plan_path)], check=True)
-    print(json.dumps({'glb': str(out), 'sheet': str(sheet)}))
+    for render_key, round_number in renders:
+        shots[0] = evidence / f'{render_key}-round-{round_number}'
+        shots[0].mkdir(parents=True, exist_ok=True)
+        rows = []
+        if render_key == 'sawmill':
+            show(['sawmill'])
+            rows = [
+                {'label': 'LONG SIDE | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 400,
+                 'panels': [ref('sawmill-side.jpg'), shoot('side', 'ortho', (0, 3.3, -60), (0, 3.3, 0), 24.5, (1024, 512))]},
+                {'label': 'END | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 430,
+                 'panels': [ref('sawmill-front.jpg'), shoot('end', 'ortho', (-60, 3.55, 0), (0, 3.55, 0), 9.75, (1024, 768))]},
+                {'label': 'STRAIGHT DOWN | SOURCE PHOTO  /  EXPORTED MODEL (two bays left open over the saw)', 'height': 400,
+                 'panels': [ref('sawmill-roof.jpg'), shoot('above', 'ortho', (0, 60, 0), (0, 0, 0), 25, (1024, 683))]},
+                {'label': 'THREE-QUARTER VIEWS | EXPORTED MODEL', 'height': 430,
+                 'panels': [shoot('three-quarter-front', 'ortho', (30, 22, -34), (0, 2.6, 0), 27, (1024, 768)),
+                            shoot('three-quarter-rear', 'ortho', (-30, 22, 34), (0, 2.6, 0), 27, (1024, 768))]},
+                {'label': "MAYOR'S CAMERA, 45 DEGREES DOWN FROM 80 M  /  DRIVER'S SEAT, 1.2 M HIGH AT 30 M", 'height': 500,
+                 'panels': [mayor('mayor', (0, 2, 0), 30), driver('driver', (0, 3.2, 0), 27, distance=30)]},
+                {'label': 'THE SAW UNDER THE ROOF, FROM 9 M  /  LOG STACKS BEHIND', 'height': 430,
+                 'panels': [shoot('saw', 'persp', (-2.5, 2.3, -9.5), (2.6, 1.1, -.8), 9, (1024, 768)),
+                            shoot('stacks', 'persp', (-9, 2.2, 18), (0, 1.6, 4), 22, (1024, 768))]},
+            ]
+            title = f'TOWN WORKS | SAWMILL | ROUND {round_number}'
+        elif render_key == 'heaps':
+            places = {piece_id: ((index % 4 - 1.5) * 8, (index // 4 - .5) * -9) for index, piece_id in enumerate(HEAPS)}
+            show(HEAPS, places=places)
+            names = [piece_id.replace('pile-', '').upper() for piece_id in HEAPS]
+            rows = [
+                {'label': "ALL EIGHT FROM THE MAYOR'S CAMERA AT 80 M, IN 8 M CELLS  |  back row: " + ', '.join(names[:4])
+                          + '  |  front row: ' + ', '.join(names[4:]),
+                 'height': 640, 'panels': [mayor('all-mayor', (0, .5, 0), 38, res=(1600, 800), turn=20)]},
+                {'label': 'ALL EIGHT AS SMALL AS THE MAYOR SEES THEM FROM 120 M (true size at 1280 px across the screen)', 'height': 260,
+                 'panels': [shoot('all-far', 'persp', (120 * .7071 * .342, 120 * .7071, -120 * .7071 * .94), (0, .5, 0), 95, (1280, 260))]},
+            ]
+            for start in (0, 4):
+                ids = HEAPS[start:start + 4]
+                panels = []
+                for piece_id in ids:
+                    show([piece_id])
+                    panels.append(driver(f'{piece_id}-driver', (0, .8, 0), 8.5, res=(640, 400), distance=16, across=5))
+                rows.append({'label': "DRIVER'S SEAT AT 16 M | " + ' | '.join(i.replace('pile-', '').upper() for i in ids),
+                             'height': 300, 'panels': panels})
+                panels = []
+                for piece_id in ids:
+                    show([piece_id])
+                    panels.append(shoot(f'{piece_id}-above', 'ortho', (0, 30, 0), (0, 0, 0), 8, (512, 512)))
+                rows.append({'label': 'STRAIGHT DOWN, ONE 8 M CELL | ' + ' | '.join(i.replace('pile-', '').upper() for i in ids),
+                             'height': 420, 'panels': panels})
+            title = f'TOWN WORKS | THE EIGHT STOCKPILES | ROUND {round_number}'
+        elif render_key == 'salvage-yard':
+            show(['salvage-yard'], parts=['salvage-yard:shed'])
+            shed = (8.5, 1.9, -7.7)
+            rows = [
+                {'label': "THE GANG'S SHED, LONG SIDE AND FRONT | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA", 'height': 330,
+                 'panels': [ref('salvage-shed-side.jpg'), shoot('shed-side', 'ortho', (-60, 1.9, -7.7), shed, 8.6, (1024, 768)),
+                            ref('salvage-shed-front.jpg'), shoot('shed-front', 'ortho', (8.5, 1.9, -70), shed, 7.5, (1024, 768))]},
+            ]
+            shed_top = shoot('shed-top', 'ortho', (8.5, 40, -7.7), (8.5, 0, -7.7), 9.3, (768, 1024))
+            show(['salvage-yard'])
+            rows += [
+                {'label': 'SHED ROOF AND BAY WALL | SOURCE PHOTOS  /  THE YARD STRAIGHT DOWN', 'height': 560,
+                 'panels': [ref('salvage-shed-top.jpg'), shed_top, shoot('above', 'ortho', (0, 60, 0), (0, 0, 0), 24.5, (1024, 1024))],
+                 'weights': [.75, .75, 1.3]},
+                {'label': "MAYOR'S CAMERA, 45 DEGREES DOWN FROM 80 M  /  FROM THE OTHER FRONT CORNER", 'height': 520,
+                 'panels': [mayor('mayor', (0, 1, 0), 34), mayor('mayor-left', (0, 1, 0), 34, turn=-40)]},
+                {'label': "DRIVER'S SEAT ON THE ROAD, 1.2 M HIGH AT 28 M  /  INSIDE THE GATE, LOOKING AT THE BAYS", 'height': 500,
+                 'panels': [driver('driver', (0, 2.2, -8), 30, distance=20, across=4),
+                            shoot('bays', 'persp', (0, 3.2, -9.5), (0, 1.2, 8), 26, (1280, 720))]},
+                {'label': 'THREE-QUARTER VIEWS | EXPORTED MODEL', 'height': 470,
+                 'panels': [shoot('three-quarter-front', 'ortho', (34, 26, -38), (0, 1.5, 0), 34, (1024, 768)),
+                            shoot('three-quarter-rear', 'ortho', (-34, 26, 38), (0, 1.5, 0), 34, (1024, 768))]},
+            ]
+            title = f'TOWN WORKS | SALVAGE YARD | ROUND {round_number}'
+        elif render_key == 'old-ground':
+            few = {f'old-ground:marker-{n}' for n in range(5, 13)}
+            all_markers = [f'old-ground:marker-{n}' for n in range(1, 13)]
+            show(['old-ground'], parts=['old-ground:wall'])
+            wall_view = shoot('wall', 'ortho', (-6, .5, -60), (-6, .5, -10.3), 6.4, (1024, 256))
+            show(['old-ground'], parts=['old-ground:gate', 'old-ground:lamp'])
+            gate_view = shoot('gate', 'ortho', (0, 1.45, -60), (0, 1.45, -10.3), 4.4, (1024, 768))
+            show(['old-ground'], parts=all_markers[:4])
+            marker_view = shoot('markers', 'persp', (0, 1.5, -12.5), (0, .5, -3.2), 9.5, (1024, 512))
+            grave_view = shoot('grave', 'ortho', (-2.8, 30, -3.45), (-2.8, 0, -3.45), 3.0, (1024, 512), roll=math.radians(90))
+            show(['old-ground'], parts=['old-ground:tree'])
+            turn = math.radians(205)
+            tree_view = shoot('tree', 'ortho', (6.9 + 60 * math.sin(turn), 3.3, 6.6 + 60 * math.cos(turn)), (6.9, 3.3, 6.6), 8.2, (768, 1024))
+            tree_other = shoot('tree-other', 'ortho', (6.9 + 60 * math.cos(turn), 3.3, 6.6 - 60 * math.sin(turn)), (6.9, 3.3, 6.6), 8.2, (768, 1024))
+            rows = [
+                {'label': 'DRY-STONE WALL AND GATEWAY | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 330,
+                 'panels': [ref('old-ground-wall-side.jpg'), wall_view, ref('old-ground-gate.jpg'), gate_view], 'weights': [1.3, 1.3, .9, .9]},
+                {'label': 'MARKERS AND ONE GRAVE | SOURCE PHOTOS  /  EXPORTED MODEL', 'height': 300,
+                 'panels': [ref('old-ground-markers.jpg'), marker_view, ref('old-ground-grave-top.jpg'), grave_view]},
+                {'label': 'THE DEAD TREE | SOURCE PHOTO  /  MODEL FROM THE SAME SIDE  /  MODEL FROM A QUARTER TURN ROUND', 'height': 560,
+                 'panels': [ref('old-ground-tree.jpg'), tree_view, tree_other]},
+            ]
+            show(['old-ground'], hidden=few)
+            rows.append({'label': "WITH ITS FIRST FOUR GRAVES | MAYOR'S CAMERA, 45 DEGREES DOWN FROM 80 M  /  STRAIGHT DOWN", 'height': 520,
+                         'panels': [mayor('mayor-few', (0, 1, 0), 31), shoot('above-few', 'ortho', (0, 60, 0), (0, 0, 0), 23, (1024, 1024))],
+                         'weights': [1.5, 1]})
+            show(['old-ground'])
+            rows += [
+                {'label': "WITH ALL TWELVE | MAYOR'S CAMERA FROM 80 M  /  DRIVER'S SEAT ON THE ROAD, 1.2 M HIGH AT 26 M", 'height': 500,
+                 'panels': [mayor('mayor', (0, 1, 0), 31, turn=-35), driver('driver', (0, 2.2, -6), 27, distance=16, across=5)]},
+                {'label': 'THREE-QUARTER VIEWS, ALL TWELVE | EXPORTED MODEL', 'height': 450,
+                 'panels': [shoot('three-quarter-front', 'ortho', (30, 24, -36), (0, 1.2, 0), 31, (1024, 768)),
+                            shoot('inside', 'persp', (-1.5, 1.7, -8.5), (2.5, 1.3, 4), 16, (1024, 768))]},
+            ]
+            title = f'TOWN WORKS | OLD GROUND | ROUND {round_number}'
+        elif render_key == 'small':
+            def pair(piece_id, side_photo, top_photo, side_scale, side_res, top_scale, top_res, side_height, hidden=()):
+                show([piece_id], hidden=hidden)
+                return [ref(side_photo), shoot(f'{piece_id}-side', 'ortho', (-40, side_height, 0), (0, side_height, 0), side_scale, side_res),
+                        ref(top_photo), shoot(f'{piece_id}-top', 'ortho', (0, 30, 0), (0, 0, 0), top_scale, top_res, roll=math.radians(90))]
+            rows = [
+                {'label': 'FLATBED, WITHOUT ITS LOAD | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 250,
+                 'panels': pair('flatbed', 'flatbed-side.jpg', 'flatbed-top.jpg', 7.05, (1024, 512), 7.05, (1024, 512), 1.25, hidden={'flatbed:load'})},
+                {'label': 'HANDCART | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL', 'height': 370,
+                 'panels': pair('handcart', 'handcart-side.jpg', 'handcart-top.jpg', 2.88, (1024, 768), 2.4, (1024, 768), .42)},
+                {'label': 'BARROW | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL', 'height': 370,
+                 'panels': pair('barrow', 'barrow-side.jpg', 'barrow-top.jpg', 1.62, (1024, 768), 1.6, (1024, 768), .47)},
+            ]
+            show(['flatbed'])
+            rows.append({'label': "FLATBED WITH ITS LOAD | MAYOR'S CAMERA FROM 80 M  /  DRIVER'S SEAT AT 18 M  /  THREE-QUARTER", 'height': 400,
+                         'panels': [mayor('flatbed-mayor', (0, 1, 0), 10, res=(800, 600)), driver('flatbed-driver', (0, 1.2, 0), 9.5, res=(800, 600), distance=18, across=7),
+                                    shoot('flatbed-three-quarter', 'ortho', (-20, 14, -24), (0, 1.1, 0), 9, (800, 600))]})
+            for label, ids in (('HANDCART | BARROW | VALVE BOX | PIPE STACK', ['handcart', 'barrow', 'valve-box', 'pipe-stack']),
+                               ('TEST PIT | TRENCH | TRENCH CORNER', ['test-pit', 'trench', 'trench-corner'])):
+                fits = {'handcart': 4, 'barrow': 3, 'valve-box': 4, 'pipe-stack': 8.5, 'test-pit': 6, 'trench': 9.5, 'trench-corner': 9.5}
+                near, far = [], []
+                for piece_id in ids:
+                    show([piece_id])
+                    near.append(mayor(f'{piece_id}-mayor', (0, .3, 0), fits[piece_id], res=(640, 480)))
+                    far.append(driver(f'{piece_id}-driver', (0, .5, 0), fits[piece_id] * 1.1, res=(640, 400), distance=15, across=5))
+                rows.append({'label': "MAYOR'S CAMERA FROM 80 M, CLOSE | " + label, 'height': 380 if len(ids) == 4 else 440, 'panels': near})
+                rows.append({'label': "DRIVER'S SEAT AT 15 M | " + label, 'height': 300, 'panels': far})
+            rows.append({'label': 'SOURCE PHOTOS | TEST PIT, TRENCH, VALVE BOX, HAND WHEEL, TOOLS', 'height': 300,
+                         'panels': [ref('test-pit-top.jpg'), ref('trench-top.jpg'), ref('valve-box-top.jpg'), ref('valve-wheel.jpg'), ref('works-tools.jpg')],
+                         'weights': [1, 1.6, 1, 1, 1.2]})
+            places = {piece_id: ((index % 4 - 1.5) * 8, (index // 4 - .5) * -9) for index, piece_id in enumerate(SMALL)}
+            show(SMALL, places=places)
+            rows.append({'label': "ALL EIGHT IN 8 M CELLS FROM THE MAYOR'S CAMERA AT 80 M  |  back row: " + ', '.join(SMALL[:4]) + '  |  front row: ' + ', '.join(SMALL[4:]),
+                         'height': 600, 'panels': [mayor('all-mayor', (0, .5, 0), 38, res=(1600, 800), turn=20)]})
+            title = f'TOWN WORKS | SMALL WORKS AND HAULERS | ROUND {round_number}'
+        plan = {'title': title, 'out': str(sheets[render_key]), 'rows': rows}
+        plan_path = shots[0] / 'sheet-plan.json'
+        plan_path.write_text(json.dumps(plan, indent=1), encoding='utf-8')
+        import subprocess
+        subprocess.run(['python', str(Path(__file__).resolve()), '--root', str(root), '--assemble-sheet', str(plan_path)], check=True)
+        print(json.dumps({'glb': str(out), 'sheet': str(sheets[render_key])}))
