@@ -568,11 +568,15 @@ Kyle: "Something that can allow a player to redo this story a few times and get 
 
 - **The Story Wall keeps score of what has been seen.** "Endings found: 1 of 4. Choices seen: 9 of 36." The gaps are
   the reason to play again.
-- **Play it again.** When an act is over it can be played again from its beginning, with a new throw of luck. At the
-  end of the second play the player picks which outcome stands, the first or the second (Kyle, 18 November 2026: "the
-  mechanic of picking at the end makes sense so that you don't need to replay an earlier version just to get it
-  back"). The other is kept as a tale,
-  and its ending still counts as found. Nothing is replaced unless the player chooses it.
+- **Play a night again.** A finished night opens **What people remember** with the differences side by side. **Keep
+  how it stands** has focus. **Keep this time** asks for confirmation before replacing the night's entry. The ledger
+  keeps one telling per night. Leaving or reloading before the choice keeps the saved telling. Career pay is awarded
+  only on the first completion.
+- **Later nights stand.** A later night that read a changed fact says it was told before this changed. Its decisions,
+  narration and effects stay as written. A scene that reads a fact to choose an outcome records that read in its
+  journal. The hearth rules track their own stock, heat and due promises.
+- **Play an act again.** A finished act can be played from the beginning with a new throw of luck. The ending still
+  counts as found in the endings score.
 - **What a play carries.** The towers, the tunnel and the friends of an act belong to the play they were made in.
   Whichever outcome the player picks, its things are the ones that stand in the land.
 - **Winter comes round.** After the first act the cold returns whenever the player calls it, with different people at
