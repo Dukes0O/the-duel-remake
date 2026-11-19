@@ -101,20 +101,45 @@ export async function run(context) {
   fact(await app(`app._water?.pending?.mark === 'sal'`), 'choosing automatic gears keeps the story job');
 
   // 3. START and the race, driven by the game's autopilot on Easy. Up to three tries.
+  // The game's own loop is stopped before START, and the countdown and the race are stepped by hand, 1/60 s at a step, the
+  // way the rules run without a screen. So the autopilot takes the wheel at the first moment of the race on every run, and
+  // the race is the same whether the laptop is idle or busy (QA-WATER-ROAD-AUTOPILOT). Before this, the loop ran the race
+  // by the clock until this script got round to stopping it, a stretch of a second or more that changed with the load.
+  const step = seconds => `(() => { const a = window.__qaApp; a.stop?.(); a.autopilot = true; a._scriptedCrashDone = true;
+    const final = () => ['stage_result', 'gameover'].includes(a.duel.state.status);
+    for (let i = 0; i < ${Math.round(seconds * 60)} && a.visualReady && !final(); i++) a.advance(1 / 60, 1 / 60);
+    return {status: a.duel.state.status, ready: a.visualReady, final: final()}; })()`;
   let won = false;
   for (let attempt = 1; attempt <= 3 && !won; attempt++) {
     if (attempt > 1) { await toMenu(); await app(`app.waterStep('sal')`); await wait(300); }
+    await app(`app.stop()`);
     await click('#start-engine');
-    await context.waitFor(`window.__qaApp.duel.state.status === 'racing'`, 'GO', 90_000);
+    await context.waitFor(`window.__qaApp.duel.state.status === 'countdown' && window.__qaApp.visualReady`, 'the countdown', 90_000);
+    // The countdown, then GO: the race stands at its first moment. A moment when the renderer is not presenting a frame is
+    // waited for, never skipped (the rules do not step then).
+    let go = null;
+    for (let chunk = 0; chunk < 20 && go?.status !== 'racing'; chunk++) {
+      await context.waitFor(`window.__qaApp.visualReady`, 'the renderer to present a frame', 60_000);
+      go = await context.evaluate(`(() => { const a = window.__qaApp; a.autopilot = false;
+        for (let i = 0; i < 60 * 10 && a.visualReady && a.duel.state.status === 'countdown'; i++) a.advance(1 / 60, 1 / 60);
+        return {status: a.duel.state.status, time: a.duel.state.stageTimeSec}; })()`);
+    }
+    if (go.status !== 'racing') throw Error('The countdown should end in the race: ' + JSON.stringify(go));
     if (attempt === 1) {
+      // The picture and Hollis's line at GO, with the race held still at that moment.
+      await context.evaluate(`(() => { const a = window.__qaApp; a.onFrame?.(a.duel.state, 0); })()`);
       await wait(500);
-      fact(await app(`app.storyCaption?.id === 'story.water.job.sal'`), 'Hollis\'s radio line shows at GO');
+      fact(await app(`app.storyCaption?.id === 'story.water.job.sal'`), "Hollis's radio line shows at GO");
       await shot('04-race-start-caption', 'the race starts with Hollis on the radio');
     }
     // The game's own autopilot drives (the assisted player of tools/water-easy-driver.mjs wins this race 10 in 10).
-    const result = await context.evaluate(`(() => { const a = window.__qaApp; a.stop?.(); a.autopilot = true; a._scriptedCrashDone = true;
-      for (let i = 0; i < 60 * 900 && !['stage_result', 'gameover'].includes(a.duel.state.status); i++) a.advance(1 / 60, 1 / 60);
-      a.autopilot = false; a.start?.(); const r = a.duel.state.results || {};
+    // It runs in stretches of twenty seconds, so a screen that is not presenting a frame yet is waited for, never skipped.
+    let state = null;
+    for (let chunk = 0; chunk < 60 && !state?.final; chunk++) {
+      if (state && !state.ready) await context.waitFor(`window.__qaApp.visualReady`, 'the renderer to present a frame', 60_000);
+      state = await context.evaluate(step(20));
+    }
+    const result = await context.evaluate(`(() => { const a = window.__qaApp; a.autopilot = false; a.start?.(); const r = a.duel.state.results || {};
       return {status: a.duel.state.status, won: r.won === true, job: r.waterJob ?? null, time: r.timeSec ?? r.stageTimeSec ?? null}; })()`);
     report.races.push(result);
     won = result.won;

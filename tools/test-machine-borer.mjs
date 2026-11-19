@@ -16,6 +16,86 @@ import {createDigGroundLook, createDigNearGround, digUnderlayHeight, createMachi
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
 
+// Drive the real mesa with the same land and spoil refusals as the Dig.
+// QA-BORER-SUITE-TIME: the land's answer to "may spoil or a cut go here" depends only on the place asked about, and a cut
+// asks about the same ground cells hundreds of times as it advances, so each answer is worked out once (the same
+// function, the same arguments, the same answers). A climbing and a trench run are one bore up to the moment the
+// exit cutting starts, so the climbing run hands over its state there (`fork`) and the trench run carries on from it
+// instead of boring the same 300 m again.
+function rememberedByPlace(refusal) {
+  const answers = new Map();
+  return shape => {
+    const key = `${shape.x},${shape.z},${shape.radius}`;
+    if (!answers.has(key)) answers.set(key, refusal(shape));
+    return answers.get(key);
+  };
+}
+function driveMesa(kind, resume = null) {
+  const visit = createDigSandbox({playerId:`mesa-proof-${kind}`});
+  const base = visit.ground, park = createDigBorer(base);
+  const x = park.x + 30 * Math.sin(park.heading), z = park.z + 30 * Math.cos(park.heading);
+  let machine = {...park, x, z, y:base.heightAt(x, z)};
+  const line = borerSurvey(base, machine);
+  const target = kind === 'survey' ? Math.atan(line.riseM / line.distanceM) : Math.PI / 30;
+  const ground = {...base, refusal:rememberedByPlace(shape => borerLandRefusal(shape, base)),
+    spoilRefusal:rememberedByPlace(shape => borerSpoilRefusal(shape, base))};
+  let trenchWarnings = 0, heapMeasured = false, heapFailure = null, fork = null;
+  if (resume) {
+    base.loadSave(resume.ground);
+    machine = structuredClone(resume.machine);
+    trenchWarnings = resume.trenchWarnings;
+  }
+  const pristine = kind === 'survey' ? createDigSandbox({playerId:'heap-baseline'}).ground : null;
+  for (let i = 0; i < 3000; i++) {
+    const before = machine.distanceM + (machine.exitCutting?.distanceM || 0);
+    const wantsClimb = kind === 'survey' || kind === 'steep' || (kind === 'climb' && machine.exitCutting) || (kind === 'trench' && machine.exitCutting?.distanceM >= 70);
+    const slope = wantsClimb ? (machine.slope < target - 0.00001 ? 1 : machine.slope > target + 0.00001 ? -1 : 0) : 0;
+    const result = stepBorer(machine, {thrust:1/3, slope, mutableSegments:true}, ground, null, 2);
+    machine = result.state;
+    trenchWarnings += result.events.filter(event => event.message === BORER_TRENCH).length;
+    if (pristine && !heapMeasured && machine.distanceM >= 100) {
+      heapMeasured = true;
+      const bank = machine.spoilBank, dir = bank.direction;
+      const sample = (along, across) => {
+        const x = bank.origin.x + dir.x * along - dir.z * across;
+        const z = bank.origin.z + dir.z * along + dir.x * across;
+        return base.heightAt(x, z) - pristine.heightAt(x, z);
+      };
+      let maxSlope = 0, crest = 0;
+      for (const fraction of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+        const along = bank.far * fraction;
+        let previous = sample(along, -9);
+        for (let across = -8; across <= 9; across++) {
+          const height = sample(along, across);
+          maxSlope = Math.max(maxSlope, Math.abs(height - previous));
+          crest = Math.max(crest, height);
+          previous = height;
+        }
+      }
+      const laid = base.toSave().chunks.reduce((sum, chunk) =>
+        sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
+      const expected = Math.PI * 9 * machine.distanceM * 1.25;
+      console.log(`Real heap at ${machine.distanceM.toFixed(2)} m: cross slope ${maxSlope.toFixed(4)}, crest ${crest.toFixed(4)} m, volume error ${((laid / expected - 1) * 100).toFixed(3)}%.`);
+      heapFailure = maxSlope > 0.70001 ? `Real heap cross slope ${maxSlope} exceeds 0.7.` :
+        crest > 5.00001 ? `Real heap crest ${crest} exceeds 5 m.` :
+        Math.abs(laid / expected - 1) > 0.02 ? `Real heap volume ${laid} differs from ${expected}.` : null;
+    }
+
+    if (machine.finished || (machine.message && machine.distanceM + (machine.exitCutting?.distanceM || 0) <= before + 1e-8)) break;
+    if (kind === 'climb' && !fork && machine.exitCutting)
+      fork = {machine:structuredClone(machine), ground:base.toSave(), trenchWarnings};
+  }
+  if (pristine) assert.ok(heapMeasured, `The real bore did not reach 100 m: ${machine.message}`);
+  closeDigSandbox();
+  return {machine, trenchWarnings, ground:base, heapFailure, fork};
+}
+// The four bores through the real mesa run first, before the unit checks below give the cutter's code many different
+// kinds of ground to meet: timed once alone, the whole suite took 224 s this way and 267 s with the bores where they were. Each result is checked where it is used.
+const mesaDrives = {survey:driveMesa('survey')};
+mesaDrives.climb = driveMesa('climb');
+mesaDrives.trench = driveMesa('trench', mesaDrives.climb.fork);
+mesaDrives.steep = driveMesa('steep');
+
 // A new heap can start further down the same line to avoid protected ground.
 {
   const ground = createGroundEdit({region:{editable:true}, naturalHeight:()=>0,
@@ -502,60 +582,7 @@ while(seamBorer.distanceM < 100) {
   }
 }
 
-// Drive the real mesa with the same land and spoil refusals as the Dig.
-function driveMesa(kind) {
-  const visit = createDigSandbox({playerId:`mesa-proof-${kind}`});
-  const base = visit.ground, park = createDigBorer(base);
-  const x = park.x + 30 * Math.sin(park.heading), z = park.z + 30 * Math.cos(park.heading);
-  let machine = {...park, x, z, y:base.heightAt(x, z)};
-  const line = borerSurvey(base, machine);
-  const target = kind === 'survey' ? Math.atan(line.riseM / line.distanceM) : Math.PI / 30;
-  const ground = {...base, refusal:shape => borerLandRefusal(shape, base),
-    spoilRefusal:shape => borerSpoilRefusal(shape, base)};
-  let trenchWarnings = 0, heapMeasured = false, heapFailure = null;
-  const pristine = kind === 'survey' ? createDigSandbox({playerId:'heap-baseline'}).ground : null;
-  for (let i = 0; i < 3000; i++) {
-    const before = machine.distanceM + (machine.exitCutting?.distanceM || 0);
-    const wantsClimb = kind === 'survey' || kind === 'steep' || (kind === 'climb' && machine.exitCutting) || (kind === 'trench' && machine.exitCutting?.distanceM >= 70);
-    const slope = wantsClimb ? (machine.slope < target - 0.00001 ? 1 : machine.slope > target + 0.00001 ? -1 : 0) : 0;
-    const result = stepBorer(machine, {thrust:1/3, slope, mutableSegments:true}, ground, null, 2);
-    machine = result.state;
-    trenchWarnings += result.events.filter(event => event.message === BORER_TRENCH).length;
-    if (pristine && !heapMeasured && machine.distanceM >= 100) {
-      heapMeasured = true;
-      const bank = machine.spoilBank, dir = bank.direction;
-      const sample = (along, across) => {
-        const x = bank.origin.x + dir.x * along - dir.z * across;
-        const z = bank.origin.z + dir.z * along + dir.x * across;
-        return base.heightAt(x, z) - pristine.heightAt(x, z);
-      };
-      let maxSlope = 0, crest = 0;
-      for (const fraction of [0.1, 0.3, 0.5, 0.7, 0.9]) {
-        const along = bank.far * fraction;
-        let previous = sample(along, -9);
-        for (let across = -8; across <= 9; across++) {
-          const height = sample(along, across);
-          maxSlope = Math.max(maxSlope, Math.abs(height - previous));
-          crest = Math.max(crest, height);
-          previous = height;
-        }
-      }
-      const laid = base.toSave().chunks.reduce((sum, chunk) =>
-        sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
-      const expected = Math.PI * 9 * machine.distanceM * 1.25;
-      console.log(`Real heap at ${machine.distanceM.toFixed(2)} m: cross slope ${maxSlope.toFixed(4)}, crest ${crest.toFixed(4)} m, volume error ${((laid / expected - 1) * 100).toFixed(3)}%.`);
-      heapFailure = maxSlope > 0.70001 ? `Real heap cross slope ${maxSlope} exceeds 0.7.` :
-        crest > 5.00001 ? `Real heap crest ${crest} exceeds 5 m.` :
-        Math.abs(laid / expected - 1) > 0.02 ? `Real heap volume ${laid} differs from ${expected}.` : null;
-    }
-
-    if (machine.finished || (machine.message && machine.distanceM + (machine.exitCutting?.distanceM || 0) <= before + 1e-8)) break;
-  }
-  if (pristine) assert.ok(heapMeasured, `The real bore did not reach 100 m: ${machine.message}`);
-  closeDigSandbox();
-  return {machine, trenchWarnings, ground:base, heapFailure};
-}
-const surveyedResult = driveMesa('survey');
+const surveyedResult = mesaDrives.survey;
 const surveyedDrive = surveyedResult.machine;
 assert.equal(surveyedDrive.finished, true, `Surveyed drive: ${surveyedDrive.message}`);
 assert.equal(surveyedResult.heapFailure, null);
@@ -597,15 +624,16 @@ assert.ok(Math.hypot(finishedDrive.borer.x-surveyedDrive.x, finishedDrive.borer.
   'Drive mode moves out after daylight.');
 finishedDrive = stepDigSandbox(finishedDrive, {controls:{forward:-1}}, 2);
 assert.ok(finishedDrive.borer.travelM < finishedDrive.borer.distanceM, 'Drive mode backs into the bore.');
-const climbingDrive = driveMesa('climb').machine;
+const climbingResult = mesaDrives.climb;
+const climbingDrive = climbingResult.machine;
 assert.equal(climbingDrive.finished, true, `Climbing exit: ${climbingDrive.message}`);
 assert.ok(climbingDrive.exitCutting && climbingDrive.exitCutting.distanceM < 60, 'The exit cutting reaches the surface within 60 m.');
-const trenchDrive = driveMesa('trench');
+const trenchDrive = mesaDrives.trench;
 assert.equal(trenchDrive.trenchWarnings, 1 + Math.floor((trenchDrive.machine.exitCutting.distanceM - 60) / 30),
   'The warning sounds once at 60 m and once for every further 30 m.');
 assert.equal(trenchDrive.machine.finished, true, 'She can climb out after 70 m of exit cutting.');
 assert.ok(trenchDrive.machine.exitCutting.distanceM >= 70);
-const steepDrive = driveMesa('steep').machine;
+const steepDrive = mesaDrives.steep.machine;
 assert.equal(steepDrive.message, BORER_OPEN_GROUND, 'The steep drive stops under open ground.');
 assert.ok(Math.abs(steepDrive.distanceM - 277.86) <= 5,
   `The steep drive stops near 277.86 m, not ${steepDrive.distanceM} m.`);
@@ -810,11 +838,13 @@ const paceStart = paceDig.borer;
 paceDig = {...paceDig, activeMachine:'borer', mode:'work', borer:{...paceStart,
   x:paceStart.x + 60 * Math.sin(paceStart.heading), z:paceStart.z + 60 * Math.cos(paceStart.heading),
   started:true, covered:true, lever:0.33}};
-for (let frame=0; frame<600; frame++) paceDig = stepDigSandbox(paceDig, {controls:{}}, 1/60);
+// QA-BORER-SUITE-TIME: stepDigSandbox runs its own fixed 1/60 s steps inside one call, so 10 s in one call is the same 600
+// steps as 600 calls of 1/60 s; the per-call copying and ground save are done once instead of 600 times.
+paceDig = stepDigSandbox(paceDig, {controls:{}}, 10);
 assert.ok(Math.abs(paceDig.borer.distanceM - 4.95) < 0.01,
   `At lever 0.33 the Dig cuts 4.95 m in 10 simulated seconds, got ${paceDig.borer.distanceM}.`);
 const paceDistance = paceDig.borer.distanceM;
-for (let frame=0; frame<15000; frame++) paceDig = stepDigSandbox(paceDig, {controls:{}}, 1/60);
+paceDig = stepDigSandbox(paceDig, {controls:{}}, 250);
 assert.ok(Math.abs(paceDig.borer.distanceM - paceDistance - 123.75) < 0.02,
   `At lever 0.33 the Dig cuts 123.75 m in 250 simulated seconds, got ${paceDig.borer.distanceM - paceDistance}.`);
 

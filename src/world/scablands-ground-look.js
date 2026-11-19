@@ -237,12 +237,12 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       Object.assign(shader.uniforms, uniforms);
       if (tracks) Object.assign(shader.uniforms, {uTracks: tracks.texture, uTracksBox: tracks.box});
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;\n#ifdef GROUND_MADE\nattribute float aMade;\nattribute float aSoil;\nvarying float vMade;\nvarying float vSoil;\n#endif')
+        .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;\n#ifdef GROUND_MADE\nattribute float aMade;\nattribute float aMoved;\nattribute float aSoil;\nvarying float vMade;\nvarying float vMoved;\nvarying float vSoil;\n#endif')
         .replace('#include <project_vertex>', `#include <project_vertex>
           vGroundPos=(modelMatrix*vec4(transformed,1.0)).xyz;
           vGroundNormal=mat3(modelMatrix)*objectNormal;
           #ifdef GROUND_MADE
-          vMade=aMade;vSoil=aSoil;
+          vMade=aMade;vMoved=aMoved;vSoil=aSoil;
           #endif`);
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', `#include <common>
@@ -251,7 +251,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           ${areaCode}${tunnelCapable ? `\n          ${tunnelDeclarations}` : ''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
           #ifdef GROUND_MADE
-          varying float vMade;varying float vSoil;
+          varying float vMade;varying float vMoved;varying float vSoil;
           #endif
           vec3 gGlow;${photosOn ? 'vec2 gRelief;' : ''}
           ${CELLS}
@@ -419,8 +419,10 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           }` : ''}
           // Ground a machine has heaped or dug a little way is earth, however steep its side: a heap's flank and a ditch's wall
           // are not the bare rock of a scarp. A cut of metres (a road into a hill) is through rock and keeps the rock's look.
+          // Whether ground was worked is read from how much was moved (vMoved), never from the sum of cut and fill: beside a ditch
+          // the cut and its own ridge sum to nothing, and that ground was drawn as rock with pale scree (DIG-YARD-TOY).
           #ifdef GROUND_MADE
-          float gEarth=max(smoothstep(.0003,.003,vMade),smoothstep(.0003,.003,-vMade)*(1.0-smoothstep(1.5,3.0,-vMade)));
+          float gEarth=smoothstep(.0003,.003,vMoved)*(1.0-smoothstep(1.5,3.0,-vMade));
           #else
           float gEarth=0.0;
           #endif
@@ -474,7 +476,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-9-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
+    material.customProgramCacheKey = () => `ground-look-10-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
     material.needsUpdate = true;
     return material;
   }

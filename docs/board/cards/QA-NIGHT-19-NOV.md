@@ -38,3 +38,11 @@ The night check of 19 November 2026 on `a7b2f60c1`. Claude's card (Kyle moved th
 3. High at 28.3 ms: at the next frame check with the laptop alone, time the last commit that passed on High as the
    control first (rule 8).
 4. Fold the one-off misses into their existing cards only if they fail again.
+
+## Item 1 is done (Claude, 19 November 2026, evening)
+
+`wildlife-view` was not a fault in the game. The herds stand somewhere new each calendar day, and on 19 November the
+check's own sweep along the lap startled its herd before the drive that was meant to. The scenario now fixes its play
+day (`globalThis.__qaWildlifeDay`, a QA hook read by `viewPlayDay`), plans the herd from the rules, steps a fixed
+distance a frame and checks the herd stands where the plan put it. The startle is sound: over 40 days on two courses,
+205 of 210 animals within 34 m of the road ran from a passing car. Still open here: item 3, High at 28.3 ms.

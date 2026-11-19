@@ -18,7 +18,7 @@ tasks:
     lane: "UI"
     size: "S"
     status: "building"
-    claimed_by: "Claude: slices 1 and 2 merged 16 November 2026 with the switch off; owed: the pale ring at a heap's foot, a frame check in the Dig yard, Kyle's try"
+    claimed_by: "Claude: slices 1 and 2 merged 16 November with the switch off; the pale ring cured 19 November; owed: a frame check in the Dig yard, then Kyle's try"
     needs: []
     locks: []
     flag: "the-dig"
@@ -398,25 +398,18 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
 
-  - id: QA-TIMING-UNDER-LOAD
-    title: "Town timing checks fail when art jobs run beside them"
+  - id: WILD-HIT
+    title: "Cars knock roadside animals down, with a small heap and a bit of blood (Kyle, 19 November)"
     owner: "claude"
-    lane: "TOOLS"
+    lane: "UI"
     size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
+    status: "review"
+    claimed_by: "Claude, since 19 November 2026: merged behind the dev switch; Kyle tries it next"
+    waiting_on: "kyle"
     needs: []
-    details: "docs/board/cards/QA-TIMING-UNDER-LOAD.md"
-
-  - id: QA-WATER-ROAD-AUTOPILOT
-    title: "water-road scenario: Sal's road autopilot sometimes misses Easy within three tries"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-WATER-ROAD-AUTOPILOT.md"
+    locks: []
+    flag: "wildlife-hits"
+    details: "docs/board/cards/WILD-HIT.md"
 
   - id: LAB-LOOK
     title: "The Lab's lessons: a compelling place to learn (look and lesson UX)"
@@ -434,7 +427,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with a Sonnet helper, since 19 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/LAB-REVIEW-FLYING.md"
@@ -444,7 +438,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with a Sonnet helper, since 19 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/LAB-REVIEW-TUNNEL.md"
@@ -519,8 +514,7 @@ tasks:
     owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
+    status: "backlog"
     needs: []
     details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
 
