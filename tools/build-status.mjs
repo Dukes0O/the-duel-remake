@@ -3,6 +3,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSy
 import { dirname, isAbsolute, relative, resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseBoard } from './board.mjs';
+import { evidenceDate } from './evidence-date.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const LIVE_ROOT = 'C:/Users/kyleb/dev/the-duel-remake';
@@ -331,7 +332,7 @@ export function latestNight(root, now) {
   for (const name of names) {
     const value = jsonFile(join(directory, name)).value;
     if (value?.schema !== 1 || !value.date || !value.source || !value.status) continue;
-    const today = new Date(now).toISOString().slice(0,10);
+    const today = evidenceDate(new Date(now));  // the night's date is the laptop's local date (evidence-date.mjs)
     const nights = Math.max(0, Math.floor((Date.parse(today+'T00:00:00Z') - Date.parse(value.date+'T00:00:00Z')) / 86400000));
     return {date:value.date, commit:value.source, result:value.status, nights,
       size: value.size === 'partial' ? 'partial' : 'full', fullTierPass: nightIsFullTierPass(value)};

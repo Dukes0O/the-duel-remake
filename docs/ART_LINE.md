@@ -274,6 +274,17 @@ the game.
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
 - **Wide seat-band cuts break a scaffold.** Removing horizontal seat bands from one whole stand mask also cuts through the posts and braces where they cross those bands, leaving broken supports. Trace seat rows as separate pieces and build or trace the open frame independently; inspect the full side view.
 
+- **A part stands 22 m from its machine because a name was used twice.** `town-machines-2.py` named a paver track
+  wheel `roller` inside a loop, after `roller` already meant the road roller. The line that lays the family out in a
+  row then moved that one wheel to x = 22 and left the roller on top of the loader. Every sheet hid the other machines,
+  so nobody saw it until the paver was loaded in the game, where a black lump hung in the air beside another machine.
+  A recipe that builds several machines gives every loop its own names, and its last step prints each machine's
+  bounds: a machine wider than its own table is this fault. (MACHINE-ROADS, 19 November 2026.)
+- **A stand-in shape hides a model that was never loaded.** The yard drew a yellow box for the roller and a green box
+  for the paver when their models were missing from the file it loaded, and so it never failed. The models had been
+  finished in another file for eleven days. Where a model is missing the game should say so, not draw a box.
+  (19 November 2026.)
+
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
 - **A drum spins around the wrong axis in a Blender review.** Town models convert game Y-up to Blender Z-up, so a part whose long axis is game Y spins around Blender Z (local Euler Z), after checking its imported joint orientation. The mixer-truck review pose originally rotated around Blender Y and looked unchanged end-on.
@@ -319,6 +330,23 @@ the game.
   it is (`aSoil` in `src/world/ground-view.js`). (16 November 2026.)
 - **Tell colour from light before changing a colour.** Switch the sun off in the running game: what stays pale is colour,
   what goes dark was only lit. A heap's body turned out to be light and its pale ring colour. (16 November 2026.)
+- **Work painted on a ground that lies under another ground is never seen.** The road machines coloured the yard's
+  floor, and the floor lies under the edited ground wherever a machine has worked, so a finished road showed nothing at
+  all for five days. A picture from straight above after one pass settles it. Worked ground is now its own thin surface
+  0.07 m above the ground (`createRoadWorkView` in `src/machines/roads-view.js`), on the same one-metre corners and the
+  same diagonal as the edited ground so that the two lie parallel, with its states drawn by a shader the way wear is
+  drawn on a machine. (MACHINE-ROADS, 19 November 2026.)
+- **A drawn ground colour comes out two or three times too pale.** A colour written into a shader is multiplied by the
+  yard's sun and sky light before the picture is toned. Loose earth written as it should look came out as pale sand, a
+  road mat as grey, and standing water as a white disc. Start from about a third of the colour wanted, look at it in
+  the game beside the ground it lies on, and keep a made surface rough: a smooth one mirrors the pale sky and reads as
+  mist. (MACHINE-ROADS and MACHINE-DRILL, 19 November 2026.)
+- **Cracks drawn from the level lines of a noise picture run in loops** and read as worm trails. A surface that has
+  broken up is a net of small plates: draw the walls between scattered cell centres (`roadPlates` in
+  `src/machines/roads-view.js`). (19 November 2026.)
+- **A heap or a pit taken for worked ground.** The yard starts with a one-metre heap and a one-metre ditch recorded as
+  road cells. Drawn as "cut" they came out as one flat pale slab, the paper fault again. Only what a tool did is drawn as
+  work; a heap or a hole is the ground's own shape and the ground draws it. (19 November 2026.)
 
 ### Moments (a thing that happens, not a thing that stands)
 
@@ -344,6 +372,13 @@ the game.
 - **A rule that hurts and draws nothing.** The furnace's cinders took Big Bess's health under a caption and a sound, with nothing in the air and nothing on her, and the machine's death drew nothing either (the field battle, 12 November). Every event that costs health, and every death, needs something drawn. Find these by taking pictures from a camera placed beside the machines while the fight runs; the game's own camera sits on the player's car, and a parked car's pictures prove nothing.
 - **Points drawn too small to see.** A point's size is given in pixels of the drawn picture, not in metres: lumps sized at 23 pixels at 30 m showed as dots in the game's pictures. Size a drawn point for the far end of the distance it will be seen from, and look at it in a picture from there.
 
+- **Pictures taken by the clock miss their subject.** A hand play on a busy laptop runs slower than the clock, and on a
+  free one faster: the same script photographed a dozer with a full blade in one round and an empty one in the next,
+  and a strip of fill and then bare ground. Take each picture by what the game says (the load carried, where the fill
+  lies), read from the page, not after a count of seconds. (MACHINE-ROADS round 2, 19 November 2026.)
+- **`tools/test-blender-output.mjs` starts Blender for every recipe.** It is a heavy job and takes a turn
+  (`docs/FACTORY.md` section 8), and it is not a quick look at one file. To check one model file's own claims, read the
+  file's node list, positions and bounds with a few lines of Node. (19 November 2026.)
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,
