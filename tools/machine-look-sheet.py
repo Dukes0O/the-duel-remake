@@ -31,13 +31,13 @@ SHEETS = {
             ('ground-all-low', 'The worked stretch')]),
         ('After, from the driver\'s seat, working', [
             ('dozer-seat-cut', 'Dozer: blade down, cutting'), ('roller-seat-rolling', 'Roller: drum on the fill'),
-            ('paver-seat-slow', 'Paver: hopper ahead, steady pace'), ('paver-chase-fast', 'Paver from behind: screed down')]),
+            ('paver-seat-slow', 'Paver: hopper ahead, steady pace'), ('paver-chase-slow', 'Paver from behind: screed down, steam')]),
         ('After, beside the machine', [
             ('dozer-side-cut', 'Blade down, earth rolling ahead'), ('dozer-side-spread', 'Blade half up, spreading'),
             ('roller-side', 'Roller on rolled ground'), ('paver-side-working', 'Paver laying')]),
         ('The ground: one pass of the roller, six passes, and the whole stretch from above', [
             ('ground-loose-above', 'Loose fill as the dozer leaves it'), ('ground-pass1-above', 'One pass'),
-            ('ground-firm-above', 'Six passes: firm'), ('ground-all-above', 'All six states in one stretch')]),
+            ('ground-firm-above', 'Six passes: firm'), ('ground-all-above', 'Two strips with every state')]),
         ('Each state from standing height', [
             ('ground-close-23', 'Cut by the blade'), ('ground-close-38', 'Loose fill'), ('ground-close-36', 'Rolled firm'),
             ('ground-close-31', 'Paved'), ('ground-close-42', 'Bad: paved on soft fill'),
@@ -46,7 +46,8 @@ SHEETS = {
     'drill': ('machine-drill', 'The drill rig, what comes up, the water and the wellhead', [
         ('Before: the game as merged on 14 November', [
             ('=before-drill-near', 'The rig: the trencher with a ladder'), ('=before-drill-30m', 'From 30 m'),
-            ('=before-drill-work', 'Drilling: one plain heap'), ('=before-drill-well', 'Water and the wellhead')]),
+            ('=before-drill-work', 'Drilling: one plain heap'), ('=before-drill-water-hud', 'Water: "13.2 m deep, in wet."'),
+            ('=before-drill-well', 'The wellhead left behind')]),
         ('After: the rig', [
             ('drill-side-travel', 'Mast laid down to travel'), ('drill-30m-travel', 'From 30 m'),
             ('drill-side-work', 'Mast standing over the hole'), ('drill-30m-work', 'From 30 m, drilling')]),

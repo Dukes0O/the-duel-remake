@@ -46,7 +46,7 @@ export function drillDepthWords(hole) {
 const LAYERS = Object.freeze({
   clay: Object.freeze({colour:0x9c5b38, kind:0}),
   gravel: Object.freeze({colour:0x8a6f4d, kind:1}),
-  rock: Object.freeze({colour:0xb5b2aa, kind:2}),
+  rock: Object.freeze({colour:0x8f8c86, kind:2}),
   wet: Object.freeze({colour:0x302c27, kind:3}),
 });
 // Everything beside a hole is placed in the rig's own metres (right, forward), with the hole at the middle and the
@@ -120,17 +120,17 @@ function waterMaterial(flow = 0) {
           vec3 waterUp=normalize((viewMatrix*vec4(0.0,1.0,0.0,0.0)).xyz);
           float waterGlance=pow(1.0-clamp(abs(dot(waterEye,waterUp)),0.0,1.0),2.2);
           float waterFar=length(vWaterUv-.5)*2.0;
-          float edge=waterFar+(texture2D(uWaterNoise,vWaterWorld.xz*.21).r-.5)*.5+(texture2D(uWaterNoise,vWaterWorld.xz*1.3).g-.5)*.12;
+          float edge=waterFar+(texture2D(uWaterNoise,vWaterWorld.xz*.21).r-.5)*.5;
           float pool=1.0-smoothstep(.50,.62,edge);
           float ripple=texture2D(uWaterNoise,vWaterWorld.xz*.9+vec2(uWaterTime*.07,-uWaterTime*.05)).g;
           float ring=.5+.5*sin(waterFar*42.0-uWaterTime*4.5);
-          vec3 open=mix(vec3(.030,.027,.022),vec3(.42,.38,.31),clamp(waterGlance*.75+.06*ripple,0.0,.6))+vec3(.045)*ring*waterGlance;
-          diffuseColor.rgb=mix(vec3(.045,.028,.017)*(.8+.4*ripple),open,pool);
+          vec3 open=mix(vec3(.012,.012,.011),vec3(.15,.14,.12),clamp(waterGlance*.9+.05*ripple,0.0,.7))+vec3(.025)*ring*waterGlance;
+          diffuseColor.rgb=mix(vec3(.040,.024,.014)*(.8+.4*ripple),open,pool);
           diffuseColor.a=(1.0-smoothstep(.86,1.0,edge))*mix(.8,.95,pool);
         }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor=uWaterFlow>.5?.25:mix(.8,.1,1.0-smoothstep(.50,.62,length(vWaterUv-.5)*2.0));');
   };
-  material.customProgramCacheKey = () => 'machine-water-2';
+  material.customProgramCacheKey = () => 'machine-water-3';
   return material;
 }
 

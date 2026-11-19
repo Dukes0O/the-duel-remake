@@ -54,7 +54,15 @@ function roadSkinMaterial() {
       .replace('#include <common>', `#include <common>
         uniform sampler2D uRoadNoise;varying vec4 vRoad;varying vec2 vRoadMore;varying vec3 vRoadWorld;
         float roadMat=0.0;float roadBad=0.0;float roadRelief=0.0;
-        float roadLumps(vec2 p){return texture2D(uRoadNoise,p*.19+.37).r*.55+texture2D(uRoadNoise,p*.83+.11).b*.45;}`)
+        float roadLumps(vec2 p){return texture2D(uRoadNoise,p*.19+.37).r*.55+texture2D(uRoadNoise,p*.83+.11).b*.45;}
+        vec2 roadCell(vec2 p){p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));return fract(sin(p)*43758.5453);}
+        // How far a point is from the nearest wall between small plates: a surface on soft ground breaks into plates.
+        float roadPlates(vec2 p){
+          vec2 n=floor(p),f=fract(p);float d1=8.0,d2=8.0;
+          for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){
+            vec2 g=vec2(float(i),float(j));float d=length(g+roadCell(n+g)-f);
+            if(d<d1){d2=d1;d1=d;}else if(d<d2){d2=d;}}
+          return d2-d1;}`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         vec2 rp=vRoadWorld.xz;
         vec3 rBig=texture2D(uRoadNoise,rp*.045).rgb;
@@ -76,9 +84,9 @@ function roadSkinMaterial() {
         float rGrit=smoothstep(.58,.70,texture2D(uRoadNoise,rp*2.9+.53).g);
         vec3 rGood=vec3(.014,.014,.016)*(.78+.5*rFine.b)+vec3(.05,.047,.042)*rGrit*.3;
         // Laid on soft ground: it sinks and crazes, and the earth shows in the cracks.
-        float rCrack=1.0-smoothstep(.0,.04,min(min(abs(rMid.r-.5),abs(rMid.b-.47)),abs(rBig.g-.5)*.6+abs(rFine.r-.5)*.25));
+        float rCrack=1.0-smoothstep(.02,.09,roadPlates(rp*2.7+(rMid.rg-.5)*.9));
         float rSunk=smoothstep(.50,.68,rBig.r*.5+rMid.b*.5);
-        vec3 rSoftMat=mix(rGood*1.5+vec3(.012,.009,.006),rLoose*1.7,max(rCrack*.95,rSunk*.7));
+        vec3 rSoftMat=mix(rGood*1.5+vec3(.012,.009,.006),rLoose*1.7,max(rCrack*.95,rSunk*.55));
         // Laid badly: ripples across it and torn patches where the grit pulled out.
         float rRipple=.5+.5*sin(rMid.r*46.0+rBig.b*9.0);
         float rTorn=smoothstep(.54,.64,rMid.b*.6+rFine.r*.4);
@@ -100,7 +108,7 @@ function roadSkinMaterial() {
         vec3 roadBump=vec3(roadH-roadLumps(vRoadWorld.xz+vec2(.06,0.0)),0.0,roadH-roadLumps(vRoadWorld.xz+vec2(0.0,.06)))*(roadRelief/.06);
         normal=normalize(normal+(viewMatrix*vec4(roadBump,0.0)).xyz);`);
   };
-  material.customProgramCacheKey = () => 'road-work-skin-1';
+  material.customProgramCacheKey = () => 'road-work-skin-2';
   return material;
 }
 
