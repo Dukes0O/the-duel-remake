@@ -282,6 +282,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-foot-action combat-lamp-progress" role="status" hidden><b></b><div class="combat-armor-track"><i></i></div></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
     <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town night-2-alternative-route" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot equipment and controls"><b></b><strong></strong><small class="combat-foot-mouse"></small></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
@@ -327,6 +328,12 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const townName = townPointer.querySelector('b');
   const townDistance = townPointer.querySelector('strong');
   const townArrow = townPointer.querySelector('span');
+  const alternativePointer = host.querySelector('.night-2-alternative-route');
+  alternativePointer.style.bottom = (BRAND_RULE.footMarkerBottomPixels + 45) + 'px';
+  const alternativeName = alternativePointer.querySelector('b');
+  const alternativeDistance = alternativePointer.querySelector('strong');
+  const alternativeArrow = alternativePointer.querySelector('span');
+  const footGearBox = host.querySelector('.combat-foot-gear');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   const footMouse = host.querySelector('.combat-foot-mouse');
@@ -412,7 +419,20 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setText(carDistance, `${direction.distance} m`);
       const rotation = `rotate(${direction.angle}deg)`;
       if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
-      const town = footBrandDirection(state);
+      const walkingRoutes = state.arena?.worldJob?.night2?.routes ?? [];
+      const [firstWalk, secondWalk] = walkingRoutes;
+      const walkPointer = route => {
+        const bearing = Math.atan2(route.point.x - state.fighter.x, route.point.z - state.fighter.z) - state.fighter.yaw;
+        return {name: route.name, distance: Math.round(route.metres), angle: bearing * 180 / Math.PI};
+      };
+      const town = firstWalk ? walkPointer(firstWalk) : footBrandDirection(state);
+      alternativePointer.hidden = !secondWalk;
+      if (secondWalk) {
+        const alternate = walkPointer(secondWalk);
+        setText(alternativeName, alternate.name);
+        setText(alternativeDistance, `${alternate.distance} m`);
+        alternativeArrow.style.transform = `rotate(${alternate.angle}deg)`;
+      }
 
       townPointer.hidden = !town;
       if (town) {
@@ -421,6 +441,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
         townArrow.style.transform = `rotate(${town.angle}deg)`;
         townPointer.setAttribute('aria-label', `${town.name}, ${town.distance} metres away`);
       }
+      const holstered = state.arena?.worldJob?.night2?.holstered === true;
+      footGearBox.hidden = holstered && !app.footMouseHint;
+      footGearName.hidden = holstered;
+      footGearAmmo.hidden = holstered;
+      footAction.hidden = holstered;
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);
@@ -429,7 +454,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setText(footAction, action.text);
       footReticle.classList.toggle('is-locked', action.locked);
       const aim=projectFootAim();
-      footReticle.hidden=aim?.visible===false;
+      footReticle.hidden=holstered || aim?.visible===false;
       const left=`${((aim?.x??.5)*100).toFixed(3)}%`,top=`${((aim?.y??.5)*100).toFixed(3)}%`;
       if(footReticle.style.left!==left)footReticle.style.left=left;
       if(footReticle.style.top!==top)footReticle.style.top=top;

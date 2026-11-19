@@ -16,10 +16,10 @@ function stepEmberCarry(step, state, view, dt) {
   }
   // The pickup is a job phase: cold and jolts start only after Cinder has spoken.
   if (step.pickup && !state.loaded) {
-    const place = step.pickup.place;
+    const place = step.pickup.atCar ? view.carPosition : step.pickup.place;
     if (!state.pickingUp) {
       const stopped = Math.abs(view.speedKmh ?? 0) < 1;
-      if (stopped && gap(here, place) <= step.pickup.radius) {
+      if (stopped && place && (!step.pickup.atCar || !view.onFoot) && gap(here, place) <= step.pickup.radius) {
         return {state: {...state, pickingUp: true}, complete: false, events,
           requests: [{type: 'marker', place}, ...step.pickup.lines.map(lineId => ({type: 'say', lineId}))]};
       }

@@ -21,7 +21,7 @@ import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
-import {playLedgerPageTurn} from './story/ledger-ui.js';
+import {ledgerPageMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
 import {finishArenaEvent} from './arena/arena-event.js';
@@ -367,7 +367,8 @@ root.addEventListener('click',e => {
         playLedgerPageTurn(app.audio);
       }
       return;
-    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
+    case 'story-night-2': if (app.startNight2?.()) { lastScreen = null; renderState(app.duel.state); } return;
+    case 'yard-cards': if(app.wastelandUnlocked() && (app._switches().enabled('warlord-cards') || app._switches().enabled('story-choices'))){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
@@ -501,7 +502,12 @@ function renderState(s) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; if(menu&&nextUpOn)refreshNextUp(); ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const night2Page = s.arena?.result?.night2Page;
+    const night2Modal = night2Page ? '<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="ledger-title">' +
+      '<div class="yard-home-content">' + ledgerPageMarkup(night2Page, escapeHTML) + '</div>' +
+      (s.arena.result.night2SaveIssue ? '<p role="status">' + escapeHTML(s.arena.result.night2SaveIssue) + '</p>' : '') +
+      '<footer><button type="button" data-action="arena-yard">Back to the yard</button></footer></section>' : null;
+    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':night2Modal ?? modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);
     const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
     if(cardPictures.length){

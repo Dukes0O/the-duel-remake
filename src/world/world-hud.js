@@ -108,7 +108,7 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
     }
     default:
       target = step.place ?? step.destination ?? null;
-      line = 'Keep going';
+      line = step.what ?? 'Keep going';
   }
   return {kind: step.kind, line, target: markerOf(target, places)};
 }
@@ -134,6 +134,15 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
       next.line = 'Out by the town gate, then after him.';
     }
   }
+  const chapter = worldJob?.night2;
+  if (chapter && onFoot && step?.kind === 'reach') {
+    const route = chapter.routes[0];
+    next.target = route ? markerOf({name: route.name, position: route.point}, places) : null;
+  }
+  if (step?.pickup?.atCar && !job.stepState.loaded) {
+    next.target = markerOf({name: 'Your car', position: worldJob.marker}, places);
+    next.line = onFoot ? 'Find your car and hold F to get in with the ember.' : 'Stop the car to load the ember.';
+  }
   const position = markerOf(player, places);
   const target = next.target;
   const nearbyFence = step?.ember && job?.stepState?.loaded && finitePoint(player) &&
@@ -147,7 +156,7 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     (step.barriers ?? []).some(barrier => !(job.stepState?.burntBarricades ?? []).includes(barrier.id) &&
       Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
   if (nearbyBlock) next.line = 'Burn the block: get within 9 m and hold 4.';
-  if (step?.ember && step.pickup && finitePoint(player) && !onFoot) {
+  if (step?.ember && step.pickup && !step.pickup.atCar && finitePoint(player) && !onFoot) {
     const loaded = job.stepState.loaded;
     const ring = loaded ? step.destination : step.pickup.place;
     const radius = loaded ? step.radius : step.pickup.radius;
@@ -286,6 +295,8 @@ export function worldMapFrame({state, course, model, knowledge, picture, canvas}
   const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
   const awaitingPickup = worldJob?.definition?.id === 'everburn-hot-delivery' && step?.pickup && !worldJob.job.stepState.loaded;
   const actors = awaitingPickup ? [] : (data?.marks ?? []).filter(mark => mark.kind !== 'player');
+  const dace = step?.id === 'chase' ? worldJob.night2?.daceTrack : null;
+  if (dace) actors.push({id: 'dace', kind: dace.visible ? 'dace' : 'dace-last', position: dace.position});
   return {picture, canvas, car, target, knowledge, actors, worldJob,
     onFoot: state.onFoot === true, racing: state.status === 'racing'};
 }
@@ -503,7 +514,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       if (doc.createElement && !landCanvas) landCanvas = createPictureCanvas(land, doc);
       if (landCanvas && landCanvas.update()) lastSmall = -Infinity;
       const actor = state.onFoot && state.fighter ? state.fighter : state;
-      const point = duel.course?.worldAt?.(actor.s, actor.lateral);
+      const point = state.onFoot && state.fighter ? state.fighter : duel.course?.worldAt?.(actor.s, actor.lateral);
       const model = worldHudModel({worldJob: state.arena.worldJob, player: point, speedKmh:(state.speedMph ?? 0) * 1.609344, onFoot:state.onFoot,
         found: profile?.world?.found ?? []});
       line.textContent = model.line;
@@ -580,7 +591,10 @@ export function createWorldHud({host, app = null, picture = null}) {
         const cost = clock() - before;
         stats.smallDraws++; stats.smallMs += cost; stats.smallMaxMs = Math.max(stats.smallMaxMs, cost);
         const label = `Map of the land round your car, north at the top. ${frame.target ? (marker?.onMap ? `${frame.target.name} is on the map.` : `${frame.target.name} is ${marker?.km?.toFixed(1)} km away.`) : ''}`;
-        if (smallCanvas.getAttribute('aria-label') !== label) smallCanvas.setAttribute('aria-label', label);
+        const dace = frame.actors.find(actor => actor.id === 'dace');
+        const tracking = dace?.kind === 'dace' ? ' Dace is in sight.' : dace ? ' Dace’s last seen position is marked.' : '';
+        if (smallCanvas.getAttribute('aria-label') !== label + tracking) smallCanvas.setAttribute('aria-label', label + tracking);
+        smallCanvas.dataset.dace = dace?.kind ?? '';
       }
       stats.updates++; stats.updateMs += clock() - began;
     },

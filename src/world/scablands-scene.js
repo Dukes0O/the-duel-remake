@@ -38,6 +38,7 @@ import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
 import {barricadeShape,barricadeSurface} from './ash-men-look.js';
+import {createNight2Look} from './night-2-look.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
 import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
@@ -648,6 +649,7 @@ export function createScablandsScene(course,options={}){
   const brandLamps=createBrandLamps({surface:()=>barricadeMaterial});group.add(brandLamps.group);
   const storyPeople = createStoryPeopleView(loadAsset);
   group.add(storyPeople.group);
+  let night2;
   let peopleSeconds = 0;
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
@@ -906,7 +908,12 @@ export function createScablandsScene(course,options={}){
         group.userData.drawnFeet.shiftFor(object,clock,x,z,support,airborneFeet):group.userData.drawnFeet.shift(x,z,support,airborneFeet);
       carriedBrand.update(state,drawnShift);
       if (worldJob?.storyPeople) peopleSeconds += Math.max(0, presentationDt);
-      storyPeople.update(worldJob, here, peopleSeconds, drawnShift);
+      storyPeople.update(worldJob, worldJob?.night2?.camera?.target ?? here, peopleSeconds, drawnShift);
+      if (worldJob?.night2 && !night2) {
+        night2 = createNight2Look();
+        group.add(night2.group);
+      }
+      night2?.update(worldJob, peopleSeconds, drawnShift);
       brandAshView.update(worldJob,drawnShift);
       if (worldJob?.riderFight && !roadRidersView) {
         roadRidersView = createBrandAshView({road:true});
@@ -937,7 +944,10 @@ export function createScablandsScene(course,options={}){
         }
       } else glassBeam.group.visible = false;
       const gasStep = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-      forge.gas(gasStep?.gasLoad ? GAS_LOAD_RULE.forgeBeforeGasShare + (1 - GAS_LOAD_RULE.forgeBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : null);
+      const storyEmbers = worldJob?.night2?.ledger.stocks.embers;
+      forge.gas(storyEmbers !== undefined ? Math.min(1, storyEmbers / 4) :
+        gasStep?.gasLoad ? GAS_LOAD_RULE.forgeBeforeGasShare +
+          (1 - GAS_LOAD_RULE.forgeBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : null);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -1015,7 +1025,7 @@ export function createScablandsScene(course,options={}){
           mist.add(sheet);
         }
       }
-      townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
+      townDoor.visible=Boolean(worldJob?.night2)||worldJob?.definition?.id==='everburn-hot-delivery';
       const doorPose=tinTownDoorPose(TIN_TOWN_GATE,worldJob?.tinTownGateProgress??0);
       townDoor.rotation.y=doorPose.angle;
       townDoor.position.set(doorPose.localX,1.5,doorPose.localZ);
@@ -1104,7 +1114,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose();
+    storyPeople.dispose(); night2?.dispose();
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

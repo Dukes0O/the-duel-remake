@@ -291,6 +291,21 @@ function drawActors(ctx, view, actors, size) {
   for (const actor of actors) {
     const at = toScreen(view, actor.position.x, actor.position.z);
     if (at.x < 0 || at.y < 0 || at.x > view.width || at.y > view.height) continue;
+    if (actor.kind === 'dace' || actor.kind === 'dace-last') {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(at.x, at.y, size + 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffd094'; ctx.lineWidth = 2;
+      if (actor.kind === 'dace') { ctx.fillStyle = '#ee942e'; ctx.fill(); }
+      ctx.stroke();
+      ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff1cf';
+      ctx.strokeStyle = '#181c20'; ctx.lineWidth = 3;
+      const label = actor.kind === 'dace' ? 'Dace' : 'Dace · last seen';
+      const labelX = Math.max(2, Math.min(at.x + size + 5, view.width - ctx.measureText(label).width - 2));
+      const labelY = Math.max(15, at.y - size - 3);
+      ctx.strokeText(label, labelX, labelY); ctx.fillText(label, labelX, labelY);
+      ctx.restore();
+      continue;
+    }
     ctx.beginPath(); ctx.arc(at.x, at.y, size, 0, Math.PI * 2); ctx.fillStyle = ACTOR_COLOURS[actor.kind] ?? INK.pale; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = INK.paper; ctx.stroke();
   }
 }
@@ -330,7 +345,8 @@ function drawTownFires(ctx, town) {
 export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMALL_MAP.height} = {}) {
   const {picture, car, target, knowledge, actors = []} = frame, marks = picture.marks;
   const town = brandTownMap(frame, {width, height});
-  const view = town?.view ?? smallView(car, {width, height});
+  const pursuit = frame.worldJob?.night2 && frame.worldJob.job.steps[frame.worldJob.job.stepIndex]?.id === 'chase';
+  const view = town?.view ?? smallView(car, {width, height, ...(pursuit ? {metresAcross: 250} : {})});
   drawGround(ctx, picture, frame.canvas, view);
   drawRiver(ctx, view, marks);
   drawSights(ctx, view, knowledge);

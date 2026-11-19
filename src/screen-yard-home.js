@@ -8,7 +8,7 @@ import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
 import {waterNextUp, waterWallMarkup} from './story/water-ui.js';
 import {emberNextUp, emberWallMarkup} from './story/ember-ui.js';
 import {savedLedger} from './story/ledger-save.js';
-import {ledgerPageData} from './story/ledger.js';
+import {night2Page} from './world/jobs/night-2.js';
 import {ledgerPageMarkup} from './story/ledger-ui.js';
 import {yardThingsToTry} from './yard-things-to-try.js';
 
@@ -58,7 +58,9 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
-  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${career?.discoveredGate && featureFlags?.enabled('warlord-cards') ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}${featureFlags?.enabled('the-dig')===true?button('THE DIG','yard-the-dig'):''}${featureFlags?.enabled('wasteland-town')===true?button('THE TOWN','yard-the-town'):''}</nav>`;
+  const ledgerAvailable = career?.discoveredGate && featureFlags?.enabled('story-choices') === true;
+  const storyWall = career?.discoveredGate && featureFlags?.enabled('warlord-cards');
+  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${(storyWall || ledgerAvailable) ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}${featureFlags?.enabled('the-dig')===true?button('THE DIG','yard-the-dig'):''}${featureFlags?.enabled('wasteland-town')===true?button('THE TOWN','yard-the-town'):''}</nav>`;
   const intro = '<p>Win Mad Max Duel events to earn scrap and build territory hold. The yard is your place to prepare for the next fight.</p>';
   const claimed = Object.values(career?.territories || {}).filter(territory => territory.claimed).length;
   const canFight = !!arenaMarkup && warlordsAvailable;
@@ -67,16 +69,17 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const fightCopy = story ? story.text : canFight ? yardNextStep(profile, {featureFlags}) : 'Warlord fights are coming later.';
   const storyButton = story?.button ?? '';
   const careerContent = `<div class="yard-home-intro"><h3>YOUR WASTELAND CAREER</h3><p>Notoriety rank ${career?.rank || 1} · ${Math.floor(career?.xp || 0).toLocaleString()} XP · ${claimed} territories claimed</p>${intro}<p>Win four events in a territory to fill its hold. ${fightCopy}</p>${storyButton}</div>`;
-  const ledgerAvailable = career?.discoveredGate && featureFlags?.enabled('story-choices') === true;
   let content;
   if (panel === 'scrapdome' && arenaMarkup) content = arenaMarkup;
   else if (panel === 'territory') content = territoryPanel(profile,
     canFight ? {featureFlags} : {builtWarlordIds: [], featureFlags});
-  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) {
-    content = (ledgerAvailable ? button('What people remember', 'yard-ledger') : '') +
-      emberWallMarkup(ember) + waterWallMarkup(water) + cardWallScreen(profile,escapeHTML);
+  else if (panel === 'cards' && (storyWall || ledgerAvailable)) {
+    content = (ledgerAvailable ? '<article class="yard-home-intro"><h3>Five Cold Nights</h3>' +
+      '<p>Night 1 is still to come. Night 2 begins with four embers.</p>' +
+      button('Night 2 · Strangers at the gate', 'story-night-2') + button('What people remember', 'yard-ledger') + '</article>' : '') +
+      emberWallMarkup(ember) + waterWallMarkup(water) + (storyWall ? cardWallScreen(profile,escapeHTML) : '');
   } else if (panel === 'ledger' && ledgerAvailable) {
-    content = ledgerPageMarkup(ledgerPageData(savedLedger(profile)), escapeHTML) + button('Back to Story Wall', 'yard-cards');
+    content = ledgerPageMarkup(night2Page(savedLedger(profile)), escapeHTML) + button('Back to Story Wall', 'yard-cards');
   }
   else if (panel === 'crew') content = crewPanel(profile, escapeHTML,{gearEnabled:featureFlags?.enabled('crew-gear')===true,warlordCardsEnabled:featureFlags?.enabled('warlord-cards')===true && featureFlags?.enabled('crew-gear')===true});
   else if (panel === 'armory') content = armoryMarkup;

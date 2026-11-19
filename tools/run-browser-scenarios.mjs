@@ -12,6 +12,9 @@ const scenarioDir = join(PROJECT_ROOT, 'tools', 'scenarios');
 // Prefixes and paths are intentionally narrow; unassigned scenarios always run.
 export const SCENARIO_AREAS = [
   {prefixes:['lab-'], paths:['src/lab/']},
+  {prefixes:['story-night-2','story-plate-reference'], paths:['src/story/','src/world/jobs/',
+    'src/world/story-people-view.js','src/world/night-2-look.js','src/screen-yard-home.js',
+    'tools/art/story-plates/']},
   {prefixes:['deep-'], paths:['src/deep/']},
   {prefixes:['heli-'], paths:['src/heli/']},
   {prefixes:['ski-'], paths:['src/ski/']},
@@ -43,7 +46,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['earned-cars'], paths:['src/earned-cars-ui.js','src/unlock-vehicles.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
-export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens'].includes(name) ||
+export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||
   /save|storage|backup|restore|archive|migrat|pay|reward/.test(name);
 const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
 const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;

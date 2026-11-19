@@ -69,11 +69,19 @@ export function forgeHoldView(car, plan, groundAt) {
   return {position: {x, y: groundAt(x, z) + 3.6, z}, target: {x: tx, y: groundAt(tx, tz) + 3, z: tz}};
 }
 
+export const NIGHT_2_DUSK_SECONDS = 4;
+export function night2LightBlend(value, afterDark, dt) {
+  const next = value + (afterDark ? 1 : -1) * Math.max(0, dt) / NIGHT_2_DUSK_SECONDS;
+  return Math.max(0, Math.min(1, next));
+}
+
 // How far the evening has come on in Light the Town, 0 (day) to 1 (dusk), for the light and the windows; 0 in every other
 // job. The job's own clock brings it on over four minutes; each lamp first lit brings it on at least a quarter, so that a
 // quick player also sees the light go; and the ending takes it to dusk in two and a half seconds, when the windows light.
 export const TOWN_EVENING = Object.freeze({perLamp: .25, endingSeconds: 2.5});
 export function townEveningAmount(state) {
+  const chapter = state?.arena?.worldJob?.night2;
+  if (chapter) return chapter.evening;
   const job = state?.arena?.mode === 'world-job' ? state.arena.worldJob?.job : null, step = job?.steps?.[job.stepIndex];
   if (!step?.brand) return 0;
   const rule = job.stepState ?? {};

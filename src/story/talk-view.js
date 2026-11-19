@@ -201,6 +201,11 @@ export function mountTalkView(stage, send) {
       button.type = 'button';
       const shortcut = index < 10 ? String((index + 1) % 10) + ' · ' : '';
       button.append(create('small', '', shortcut + (option.kind === 'ask' ? 'Ask' : 'Say')), doc.createTextNode(option.words));
+      if (option.detail) button.append(create('small', 'story-option-detail', option.detail));
+      if (option.disabled) {
+        button.disabled = true;
+        button.append(create('small', 'story-option-detail', option.disabled));
+      }
       button.addEventListener('click', () => choose(index));
       for (const name of ['pointerenter', 'focus']) button.addEventListener(name, () => { if (held < 0) preview(index); });
       for (const name of ['pointerleave', 'blur']) button.addEventListener(name, () => { if (held < 0 && selected === index) preview(-1); });
@@ -219,7 +224,8 @@ export function mountTalkView(stage, send) {
     }
     preview(-1);
   }
-  function update(page, point) {
+  let turn = 0;
+  function update(page, point, scene) {
     if (page !== current) {
       const opening = !current;
       current = page;
@@ -236,6 +242,8 @@ export function mountTalkView(stage, send) {
         releaseGameCapture();
         root.focus({preventScroll: true});
       }
+      root.dataset.scene = scene ?? '';
+      root.dataset.turn = String(++turn);
       draw(page);
     }
     if (!page?.line || page.line.radio) return;

@@ -677,7 +677,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       localFighterEntry.fighter = showDeparted ? departed.fighter : s.fighter;
       localFighterEntry.presentation = showDeparted ? departed.presentation : s.fighter.presentation;
       localFighterEntry.input = s.fighterInput;
-      localFighterEntry.weapons = showDeparted ? null : s.footWeapons;
+      localFighterEntry.weapons = showDeparted || s.arena?.worldJob?.night2?.holstered ? null : s.footWeapons;
       fighterRoster[fighterCount++] = localFighterEntry;
     }
     for (let index = fighterCount; index < fighterRoster.length; index++) fighterRoster[index] = null;

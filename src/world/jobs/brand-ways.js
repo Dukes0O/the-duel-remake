@@ -44,7 +44,7 @@ function clearWay(a, b, grid, y, radius = BRAND_WAYS.walkerRadius, first = 0) {
 
 // `places` are the hearth and the lamps ({id, position}); `around` are further points the town reaches to (its wall
 // entries), so that the squares cover the whole town. `reach(place)` is how near a walker must come to use the place.
-export function createBrandWays({places, around = [], grid = SOLID_GRID, reach = () => BRAND_RULE.lampRadius}) {
+export function createBrandWays({places, around = [], grid = SOLID_GRID, reach = () => BRAND_RULE.lampRadius, strict = false}) {
   const rule = BRAND_WAYS, cell = rule.cellMetres;
   const points = [...places, ...around].map(spot);
   const minX = Math.min(...points.map(p => p.x)) - rule.marginMetres, minZ = Math.min(...points.map(p => p.z)) - rule.marginMetres;
@@ -135,11 +135,11 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
   // Where a walker at `from` should head for the place, and how far the walk is: {x, z, metres, direct}. `direct` says the
   // aim is the place itself (it can be walked straight up to). Null when no way is known from there (the caller then
   // points straight at the place, as before).
-  function aim(from, placeId) {
+  function trace(from, placeId, fullPath) {
     const place = byId.get(placeId);
     if (!place || !Number.isFinite(from?.x) || !Number.isFinite(from?.z)) return null;
     const field = fieldFor(place), y = scablandsSurfaceHeightAt(from.x, from.z);
-    const seen = to => clearWay(from, to, grid, y, rule.sightRadius, 1);
+    const seen = to => clearWay(from, to, grid, y, strict ? rule.walkerRadius : rule.sightRadius, 1);
     const fc = Math.round((from.x - minX) / cell), fr = Math.round((from.z - minZ) / cell);
     let start = -1, least = Infinity;
     for (let r = fr - 1; r <= fr + 1; r++) for (let c = fc - 1; c <= fc + 1; c++) {
@@ -150,6 +150,17 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
       if (total < least && seen(at)) { least = total; start = index; }
     }
     if (start < 0) return null;
+    if (fullPath) {
+      const path = [centre(start)];
+      let index = start;
+      while (field.next[index] >= 0) {
+        index = field.next[index];
+        path.push(centre(index));
+      }
+      const stop = field.stops.get(index);
+      if (gap(path.at(-1), stop) > 0) path.push(stop);
+      return path;
+    }
     // Follow the way a few squares on and keep the farthest point that can be walked straight to.
     let best = start, index = start;
     for (let ahead = 0; ahead < rule.lookAheadCells && field.next[index] >= 0; ahead++) {
@@ -157,11 +168,18 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
       if (seen(centre(index))) best = index;
     }
     const stop = field.stops.get(index);
-    if (stop && seen(stop)) return {x: field.goal.x, z: field.goal.z, metres: gap(from, field.goal), direct: true};
+    if (stop && seen(stop)) {
+      const target = strict && !seen(field.goal) ? stop : field.goal;
+      return {...target, metres: gap(from, target), direct: target === field.goal};
+    }
     const at = centre(best);
     return {x: at.x, z: at.z, metres: gap(from, at) + field.metres[best] + Math.max(.5, reach(place) - rule.reachInsetMetres), direct: false};
   }
-  return {aim, cells: count};
+  return {
+    aim: (from, placeId) => trace(from, placeId, false),
+    path: (from, placeId) => trace(from, placeId, true),
+    cells: count,
+  };
 }
 
 // One set of ways for each job step and its solids, made when first asked for. `prepareBrandWays` makes it and the four
@@ -172,7 +190,7 @@ export function brandWaysFor(step, grid = SOLID_GRID) {
   if (!step?.brand || !step.hearth || !step.places?.length) return null;
   let ways = kept.get(step);
   if (!ways || ways.grid !== grid) {
-    ways = {grid, ways: createBrandWays({places: [step.hearth, ...step.places], around: step.ashEntries ?? [], grid,
+    ways = {grid, ways: createBrandWays({places: [step.hearth, ...step.places], around: step.wayAround ?? step.ashEntries ?? [], grid,
       reach: place => place.id === step.hearth.id ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius})};
     kept.set(step, ways);
   }

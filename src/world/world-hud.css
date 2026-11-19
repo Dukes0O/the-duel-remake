@@ -63,3 +63,15 @@
 .world-map-open .race-callout{z-index:9;top:auto;bottom:8px;width:auto;max-width:min(76vw,52rem);padding:8px 22px 10px;background:#191914f6;border:1px solid #e4d4b277;border-left:4px solid #e69a38;border-radius:4px;box-shadow:0 .5rem 1.5rem #000a}
 .in-race.world-map-open .race-callout{top:auto}
 .world-map-open .race-callout>b{font-size:24px;letter-spacing:0}
+
+.night-2-dace-marker {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  padding: 2px 7px;
+  color: #ffe0a5;
+  background: #151719db;
+  border-bottom: 2px solid #e99c3e;
+  font: 700 12px/1.4 system-ui, sans-serif;
+}

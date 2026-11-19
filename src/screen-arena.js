@@ -218,6 +218,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
+    if (arena.worldJob?.night2) return {eyebrow: 'FIVE COLD NIGHTS',
+      title: 'STRANGERS AT THE GATE', description: 'You left Night 2 unfinished.',
+      metrics: '', extra: '', actions: action('BACK TO THE YARD', 'arena-yard', true) + action('MAIN MENU', 'menu')};
     const storyIndex = EVERBURN_JOBS.findIndex(item => item.id === job?.id);
     // Only an authored Everburn chapter can follow a rider fight.
     const jobIndex = arena.worldJob?.riderFight ? storyIndex : Math.max(0,storyIndex);
@@ -330,7 +333,7 @@ export function arenaPauseScreen(state, {metric, action, time, escapeHTML = Stri
     return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',
       description: escapeHTML(step?.what ? `${name}${place}. ${step.what}` : `${name}${place}.`),
       metrics: metric('TIME ON THE JOB', time(Math.max(0, state.stageTimeSec ?? 0)), true),
-      extra: '', actions: action('BACK TO THE JOB', 'resume', true) + action('START AGAIN', 'world-job-retry') + action('BACK TO THE YARD', 'arena-yard')};
+      extra: '', actions: action('BACK TO THE JOB', 'resume', true) + (worldJob?.night2 ? '' : action('START AGAIN', 'world-job-retry')) + action('BACK TO THE YARD', 'arena-yard')};
   }
   const hud = arenaHud(state);
   if (!hud) return null;

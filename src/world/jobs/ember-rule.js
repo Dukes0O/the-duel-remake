@@ -174,6 +174,7 @@ export const BRAZIER_NAMES = Object.freeze({
   'yard-brazier': "Cinder's brazier",
   'halfway-brazier': 'the Halfway Camp',
   'wash-brazier': 'the Wash camp',
+  'tin-town-brazier': 'Tin Town’s gate',
 });
 
 export const EMBER_RULE = Object.freeze({

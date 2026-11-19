@@ -31,7 +31,7 @@ export function createBrandAuntie() {
     update(worldJob) {
       const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
       group.visible = Boolean(model && step?.brand && step.auntie);
-      if (source) source.visible = group.visible ? false : sourceVisible;
+      if (source) source.visible = group.visible || worldJob?.night2 ? false : sourceVisible;
       if (!group.visible) return;
       const at = step.auntie.position, bay = step.meeting.position;
       group.position.set(at.x, at.y, at.z);
