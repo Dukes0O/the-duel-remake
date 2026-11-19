@@ -12,7 +12,7 @@ export async function run(c) {
     document.querySelectorAll('body > details').forEach(e => e.hidden = true); a.openLab(); })()`);
   const canvas = `document.querySelector('.lab-canvas')`, state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
   const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
-    ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
+    ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], KeyR: ['r', 82], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
   const shot = name => c.screenshot(name);
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {type, code, key: KEYS[code][0], windowsVirtualKeyCode: KEYS[code][1]});
@@ -22,6 +22,13 @@ export async function run(c) {
   const bubble = () => c.evaluate(`document.querySelector('.lc-bubble').textContent`);
   const saying = (text, label) => c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, label, 20_000);
   const prompt = (text, label) => c.waitFor(`document.querySelector('.lc-prompt')?.textContent.includes(${JSON.stringify(text)})`, label, 10_000);
+  // LAB-PAGE: a watch step that animates offers Watch again, and R plays it again without leaving the step.
+  const replayOnR = async step => {
+    if (!(await c.evaluate("[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.startsWith('Watch again'))"))) throw Error(`The ${step} step should offer Watch again.`);
+    await press('KeyR'); await wait(400);
+    if ((await c.evaluate(state)).ready) throw Error(`R should play the ${step} step again.`);
+    await at(step, 's.ready');
+  };
   const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
   const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1320, r.height / 680);
     return {x: r.left + (r.width - 1320 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
@@ -35,7 +42,7 @@ export async function run(c) {
   await c.evaluate(`document.querySelector('[data-lab-lesson="start:braking"]').click()`);
   await at('wonder');
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
-  await wait(1100); await shot('wonder-braking'); await at('wonder', 's.ready'); await shot('wonder');
+  await wait(1100); await shot('wonder-braking'); await at('wonder', 's.ready'); await shot('wonder'); await replayOnR('wonder');
   if (!(await c.evaluate(`document.querySelector('.lc-back').hidden`))) throw Error('The first step has nothing before it.');
   await next('wonder');
   // Speed: km/h on the dial, m/s in the sums, and each press changes the sum at once.
@@ -65,10 +72,10 @@ export async function run(c) {
   await press('ArrowRight');
   if (!(await worked('20% < 31%'))) throw Error('The lever should stay free after the word, and the sum should follow it.');
   await next('word-balance');
-  await at('watch'); await wait(1300); await shot('watch-braking'); await at('watch', 's.ready'); await shot('watch');
+  await at('watch'); await wait(1300); await shot('watch-braking'); await at('watch', 's.ready'); await shot('watch'); await replayOnR('watch');
   await next('watch');
   // Twice the speed: Space at 100 km/h says to turn the dial; 200 km/h, a wrong guess says why. The panel keeps the answer until the car stops.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 200', 'the wrong speed says why');
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('turn the dial up until it reads 200', 'the wrong speed says why');
   await press('ArrowUp', 10); await prompt('200 km/h', 'the dial reads 200'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
   if (await c.evaluate(`document.querySelector('.lc-formulas').textContent.includes('72.')`)) throw Error('The panel gave away the guess.');
   await press('Digit1'); await at('try-speed', 's.ready'); await saying('It needed four times the road', 'a wrong guess says why'); await shot('try-speed-done');
