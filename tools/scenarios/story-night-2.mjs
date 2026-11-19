@@ -94,16 +94,54 @@ export const pageFunctions = {
       throw Error('Gate choices cover the cast or are clipped: ' + JSON.stringify({viewport: [innerWidth, innerHeight], gap}));
     return true;
   },
-  scoutFire: () => {
+  scoutAim: () => {
     const {duel} = window.__qaApp, {worldJob} = duel.state.arena;
     const scout = worldJob.actors.find(actor => actor.brandAsh);
     const point = {x: scout.x, y: scout.y, z: scout.z + 3};
     const {s,lateral} = duel.course.nearest(point.x, point.z);
     Object.assign(duel.state.fighter, point, {s,lateral,groundY: point.y, yaw: Math.PI, pitch: 0});
-    window.__qaApp._footPointer.fire = true;
   },
   scoutTurned: () => window.__qaApp.duel.state.arena.worldJob.night2.scoutTurned === true,
-  releaseFire: () => { window.__qaApp._footPointer.fire = false; },
+  canvasPressPoint: () => {
+    const canvas = document.querySelector('#view3d canvas');
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round(rect.left + rect.width / 2), y = Math.round(rect.top + rect.height / 2);
+    if (document.elementFromPoint(x, y) !== canvas) throw Error('Night 2 mouse target is covered.');
+    return {x, y};
+  },
+  peacefulPress: () => {
+    const app = window.__qaApp, state = app.duel.state;
+    if (!app._footPointer.fire || !state.arena.worldJob.night2.holstered || state.footWeapons.selected !== 'rpg')
+      throw Error('The mouse press did not reach the peaceful RPG guard.');
+    const {ammo, serial} = state.footWeapons;
+    app.advance(.08);
+    if (state.footWeapons.ammo !== ammo || state.footWeapons.serial !== serial ||
+        state.combat.projectiles.some(projectile => projectile.kind === 'rpg'))
+      throw Error('The peaceful mouse press fired a rocket.');
+    return true;
+  },
+  pumpDirection: () => {
+    const {worldJob: world} = window.__qaApp.duel.state.arena;
+    return world.night2.routes[0]?.name === 'The pump lamp' && !!world.marker &&
+      document.querySelector('.world-hud-line').textContent === 'Carry the brand to the pump lamp.';
+  },
+  towerLights: () => {
+    const {camera, scene} = window.__render;
+    const {worldJob: world} = window.__qaApp.duel.state.arena;
+    const eye = world.night2.camera?.position;
+    const fires = scene.getObjectByName('Walkers’ camp fires');
+    return eye && Math.abs(camera.position.x - eye.x) < .01 && Math.abs(camera.position.y - eye.y) < .01 &&
+      fires?.visible && fires.children.every(fire => fire.visible) && [1, 2, 3].every(index =>
+      scene.getObjectByName('Wash rider ' + index + ' lights')?.visible);
+  },
+  towerOptions: () => {
+    const buttons = [...document.querySelectorAll('.story-talk[data-scene="tower"] .story-options button')];
+    if (buttons.length !== 2 || buttons.some(button => button.disabled) ||
+        !buttons[0].textContent.includes('Rell will probably turn Clinker down.') ||
+        !buttons[1].textContent.includes('Carry one ember out to them'))
+      throw Error('Slice A tower choices still show a missing fight or an unclear Watch hint.');
+    return true;
+  },
   ledger: () => {
     const page = document.querySelector('.story-ledger');
     return window.__qaApp.profile.story?.ledger?.night === 3 &&
@@ -145,6 +183,10 @@ export async function run(context) {
     await wait('step', 'gate', 'lines');
     await wait('gateCast');
   }
+  async function leftMouse(type, point) {
+    await context.command('Input.dispatchMouseEvent', {...point, type, button: 'left', clickCount: 1,
+      buttons: type === 'mousePressed' ? 1 : 0});
+  }
   async function gateOptions() {
     await advance('gate', 7);
     await advanceNight2Dialogue(context, 'gate', 'thoughts', 2);
@@ -175,9 +217,11 @@ export async function run(context) {
   await advance('whistle', 1);
   await wait('step', 'scout');
   await context.screenshot('night-2-scout');
-  await evaluate('scoutFire');
+  await evaluate('scoutAim');
+  const scoutPoint = await evaluate('canvasPressPoint');
+  await leftMouse('mousePressed', scoutPoint);
   await wait('scoutTurned');
-  await evaluate('releaseFire');
+  await leftMouse('mouseReleased', scoutPoint);
   await advance('scout-stopped', 1);
   await advance('close', 1);
   await wait('ledger');
@@ -191,8 +235,17 @@ export async function run(context) {
   await wait('step', 'light-pump');
   await evaluate('at', sites.hearthFront);
   await context.waitFor('window.__qaApp.duel.state.arena.worldJob.job.stepState.brandSeconds > 0', 'the brand', 12000);
+  await wait('pumpDirection');
   await evaluate('at', {x: sites.pump.position.x + 1.6, y: sites.pump.position.y, z: sites.pump.position.z});
+  const pumpPoint = await evaluate('canvasPressPoint');
+  await leftMouse('mousePressed', pumpPoint);
+  await evaluate('peacefulPress');
+  await leftMouse('mouseReleased', pumpPoint);
+  await wait('step', 'back-to-hearth');
   await context.screenshot('night-2-pump-lamp');
+  await evaluate('at', sites.hearthApproach);
+  await wait('step', 'at-hearth', 'lines');
+  await context.screenshot('night-2-back-at-the-hearth');
 
   await reachGate();
   await gateOptions();
@@ -202,5 +255,9 @@ export async function run(context) {
   await evaluate('choose', 'The Dead Mall has a roof.');
   await advance('tell-mall', 1);
   await wait('step', 'tower', 'lines');
+  await wait('towerLights');
   await context.screenshot('night-2-tower');
+  await advance('tower', 1);
+  await wait('step', 'tower', 'options');
+  await evaluate('towerOptions');
 }

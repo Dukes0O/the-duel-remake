@@ -71,10 +71,10 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
     scalars: ['sun', 'hemi', 'env', 'fogNear', 'fogFar', 'exposure', 'bloom', 'sunStrength', 'cloudCover']});
   const evening = {sunOffset: {x: 0, y: 0, z: 0}}, eveningColours = Object.fromEntries(EVENING.colours.map(key => [key, [0, 0, 0]]));
   const eased = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
-  function eveningOver(day, amount, theme, nightShare = 0, chaseLight = false) {
+  function eveningOver(day, amount, theme, nightShare = 0) {
     const golden = lightPathLook('golden', theme), dusk = lightPathLook('dusk', theme);
     const nocturnal = nightShare ? lightPathLook('night', theme) : null;
-    const moonlit = chaseLight && nocturnal ? {...nocturnal, sun: .64, hemi: 1.32, env: .19,
+    const moonlit = nocturnal ? {...nocturnal, sun: .64, hemi: 1.32, env: .19,
       exposure: 1.26, sunOffset: {x: -970, y: 180, z: 160}} : nocturnal;
     const toGolden = eased(amount / EVENING.goldenBy) * EVENING.goldenShare;
     const toDusk = eased((amount - EVENING.duskFrom) / (1 - EVENING.duskFrom)) * EVENING.duskShare;
@@ -118,7 +118,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
 
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = 0, chaseLight = false }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = 0 }) {
       if (stopped) return;
       if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
@@ -131,7 +131,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
       const daySettings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
       const chapterNight = !pathSample && !tunnel ? Math.max(0, Math.min(1, storyNight)) : 0;
       const settings = !pathSample && !tunnel && (eveningAmount > 0 || chapterNight > 0)
-        ? eveningOver(daySettings, eveningAmount, theme, chapterNight, chaseLight) : daySettings;
+        ? eveningOver(daySettings, eveningAmount, theme, chapterNight) : daySettings;
       host.dataset.evening = eveningAmount > 0 ? eveningAmount.toFixed(2) : '0';
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {

@@ -127,7 +127,6 @@ export const NIGHT_2_SCENES = {
     ...scene(clinker('Cold, are you? Shut out by the fire-keepers? Old Smoke keeps a fire for everyone. He just keeps it himself. Come and be warm. And bring what you know about the footpaths.')),
     choices: [
       choice('watch-clinker', 'Watch'),
-      choice('drive-riders-off', 'Drive out and run the riders off', [], {disabled: 'Available when the Wash fight is ready'}),
       priced('carry-ember', 'Carry one ember out to them, now', -1, []),
     ],
   },

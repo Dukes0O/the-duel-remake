@@ -1,7 +1,7 @@
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
-import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2ScoutDestination} from '../../world/jobs/night-2.js';
+import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
@@ -1288,7 +1288,10 @@ function applyRequests(duel, worldJob, requests) {
     if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
     if (applyBrandRequest(duel, worldJob, request)) continue;
     if (request.type === 'marker') {
-      const walking = worldJob.night2 && duel.state.onFoot && worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'reach';
+      const step = worldJob.job.steps[worldJob.job.stepIndex], fighter = duel.state.fighter;
+      const chapter = duel.state.onFoot && worldJob.night2;
+      if (chapter && step?.brand && request.place) night2BrandRoute(chapter, fighter, request.place);
+      const walking = chapter && (step?.kind === 'reach' || step?.brand);
       const waypoint = walking && worldJob.night2.routes[0]?.point;
       const place = waypoint ? {...waypoint, y: scablandsSurfaceHeightAt(waypoint.x, waypoint.z), radius: 1.1}
         : walking ? null : request.place;

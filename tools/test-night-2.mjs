@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {PerspectiveCamera, Vector3} from 'three';
+import {BoxGeometry, Group, Mesh, MeshStandardMaterial, PerspectiveCamera, Vector3} from 'three';
 import {night2LightBlend} from '../src/world-job-camera.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
@@ -15,6 +15,11 @@ import {night2Job, night2Odds, night2Opening} from '../src/world/jobs/night-2.js
 import {NIGHT_2_SITES as sites} from '../src/world/jobs/night-2-sites.js';
 import {savedLedger} from '../src/story/ledger-save.js';
 import {settleNight2} from '../src/story/night-2-save.js';
+import {createScablandsScene, SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
+import {syncScene} from '../src/scene-systems.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {sees} from '../src/world/scablands-ways.js';
+import {sweepObstacle} from '../src/collision.js';
 
 const seedFor = (name, chance, outcome) => {
   for (let seed = 1; seed < 10_000; seed++)
@@ -208,6 +213,62 @@ for (const [answer, count, word, mark] of [
   run.finish(count);
 }
 
+// Run the production App mouse handler against the native fighter. The laptop
+// scenario additionally dispatches a real CDP mouse press at the canvas.
+function withMouse(run, press) {
+  const win = new EventTarget(), doc = new EventTarget();
+  class Canvas {
+    closest(selector) { return selector === '#view3d canvas' ? this : null; }
+    requestPointerLock() { doc.pointerLockElement = this; }
+  }
+  const previous = {window: globalThis.window, document: globalThis.document, Element: globalThis.Element};
+  const input = Object.assign(Object.create(App.prototype), {duel: run.duel, _footPointer: {},
+    _resetKeyboardInput() {}, _readGamepad() { return {}; }, keys: {}});
+  try {
+    Object.assign(globalThis, {window: win, document: doc, Element: Canvas});
+    input._bindKeys();
+    const event = new Event('mousedown', {cancelable: true});
+    Object.defineProperties(event, {button: {value: 0}, target: {value: new Canvas()}});
+    win.dispatchEvent(event);
+    assert(event.defaultPrevented && input._footPointer.fire, 'The canvas press reaches the fighter input');
+    input._applyInput(1 / 60);
+    assert(run.duel.state.fighterInput.fire);
+    press();
+  } finally {
+    input._inputEvents?.abort();
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+}
+
+const nightScene = createScablandsScene(opening.duel.course, {loadAsset: async path => {
+  const root = new Group();
+  if (path === SCABLANDS_ASSETS.folk) {
+    const auntie = new Group();
+    auntie.name = 'auntie-solder_root';
+    auntie.add(new Mesh(new BoxGeometry(.5, 2, .4), new MeshStandardMaterial()));
+    root.add(auntie);
+  }
+  if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace) {
+    const vehicle = new Group();
+    vehicle.name = path === SCABLANDS_ASSETS.bess ? 'Big Bess gas truck' : "Old Smoke's rolling furnace";
+    root.add(vehicle);
+  }
+  return {scene: root};
+}});
+assert(await nightScene.ready);
+const findScene = (run, name) => {
+  syncScene(nightScene.group, run.duel.state);
+  return nightScene.group.getObjectByName(name);
+};
+function pumpFalloff(lamp, radius, intensity) {
+  const light = lamp.children.find(object => object.isPointLight);
+  assert(light.intensity >= intensity && light.distance >= radius && light.decay === 2,
+    'The pump illuminates ground nearby with falloff');
+}
+
 for (const stopped of [false, true]) {
   const run = chapter(giftSeed);
   run.openGate();
@@ -225,9 +286,10 @@ for (const stopped of [false, true]) {
     const scout = run.world.actors.find(actor => actor.brandAsh);
     run.footAt({x: scout.x, y: scout.y, z: scout.z + 3.5});
     Object.assign(run.duel.state.fighter, {yaw: Math.PI, pitch: 0});
-    run.duel.setFighterInput({fire: true});
-    run.tick(12);
-    assert(run.view.scoutTurned, 'The loaned hand flamer turns the real scout');
+    pumpFalloff(findScene(run, 'Town lamp: pump'), 25, 100);
+    assert.equal(findScene(run, 'Night 2 hearth light').visible, true);
+    withMouse(run, () => run.tick(12));
+    assert(run.view.scoutTurned, 'The canvas press works with the loaned hand flamer');
     run.duel.setFighterInput({fire: false});
   }
   for (let i = 0; i < 750 && run.stage() === 'scout'; i++) run.tick(7);
@@ -245,15 +307,49 @@ assert.equal(lamp.view.ledger.stocks.embers, 4);
 assert.equal(lamp.view.ledger.words['auntie-solder'], 'Wary');
 assert.equal(lamp.view.ledger.roadWord, 2);
 lamp.advance('light-pump');
+lamp.tick();
+const lampHud = () => worldHudModel({worldJob: lamp.world, player: lamp.duel.state.fighter, onFoot: true});
+assert.equal(lampHud().line, 'Take a brand from the hearth.');
+assert.equal(lampHud().target.name, 'The hearth');
+const darkLamp = findScene(lamp, 'Town lamp: pump');
+assert.equal(darkLamp.children.find(object => object.isPointLight).intensity, 0);
 lamp.footAt(sites.hearthFront);
 lamp.tick();
 assert(lamp.world.job.stepState.brandSeconds > 0);
-lamp.footAt({x: sites.pump.position.x + 1.6, y: sites.pump.position.y, z: sites.pump.position.z});
-lamp.tick(130);
+const guide = lampHud();
+assert.equal(guide.line, 'Carry the brand to the pump lamp.');
+assert.equal(guide.target.name, 'The pump lamp');
+assert.deepEqual([guide.target.x, guide.target.z], [lamp.world.marker.x, lamp.world.marker.z]);
+const weapon = lamp.duel.state.footWeapons;
+assert.equal(weapon.selected, 'rpg');
+assert(weapon.ammo > 0);
+const {ammo, serial} = weapon;
+withMouse(lamp, () => lamp.tick(5));
+assert.equal(weapon.ammo, ammo);
+assert.equal(weapon.serial, serial);
+assert(!lamp.duel.state.combat.projectiles.some(projectile => projectile.kind === 'rpg'));
+lamp.duel.setFighterInput({fire: false});
+// Use the new arrow from the hearth to the pump through the real foot mover.
+let atPump = false;
+for (let frame = 0; frame < 1800 && lamp.stage() === 'light-pump'; frame++) {
+  const fighter = lamp.duel.state.fighter;
+  if (!atPump && Math.hypot(fighter.x - sites.pump.position.x, fighter.z - sites.pump.position.z) < 8) {
+    atPump = true;
+    withMouse(lamp, () => lamp.tick(5));
+    assert.equal(weapon.ammo, ammo);
+    assert.equal(weapon.serial, serial);
+  }
+  const route = lamp.view.routes[0];
+  if (route) pointAt(lamp.duel, route.point, {forward: route.metres > .4, sprint: true});
+  lamp.tick();
+}
+assert(atPump, 'The mouse press also reaches the peaceful guard among the shacks by the pump');
 assert.equal(lamp.stage(), 'back-to-hearth');
 assert(lamp.view.lamps.pump);
-lamp.footAt(sites.hearthApproach);
-lamp.tick(2);
+pumpFalloff(findScene(lamp, 'Town lamp: pump'), 25, 100);
+assert.equal(findScene(lamp, 'Night 2 hearth light').visible, true);
+followRoute(lamp, 'back-to-hearth', 1800, true);
+assert.equal(lamp.stage(), 'at-hearth');
 lamp.advance('close');
 lamp.finish(4);
 
@@ -271,6 +367,45 @@ for (const [seed, mall, outcome] of [
   assert.equal(night2Odds(run.view).refuseClinker, mall ? .75 : .5);
   assert.equal(run.view.ledger.words.walkers, mall ? 'Wary' : 'Cold');
   assert.equal(run.view.ledger.roadWord, 0);
+  const options = run.world.job.steps[run.world.job.stepIndex].scene.choices;
+  assert.deepEqual(options.map(choice => choice.id), ['watch-clinker', 'carry-ember']);
+  assert.match(options[0].detail, mall ? /^Rell will probably turn Clinker down/ : /^Rell might take Clinker/);
+  if (mall) {
+    const camera = run.view.camera, eye = camera.position;
+    const fires = findScene(run, 'Walkers’ camp fires');
+    assert(fires.visible && fires.children.length === 2);
+    const points = fires.children.map(fire => {
+      assert(fire.visible && Math.hypot(fire.position.x - sites.camp.position.x, fire.position.z - sites.camp.position.z) < 8);
+      return fire.children.find(object => object.renderOrder === 3);
+    });
+    for (const [index, actor] of run.world.actors.filter(actor => actor.id.startsWith('wash-rider-')).entries()) {
+      const pair = nightScene.group.getObjectByName(`Wash rider ${index + 1} lights`);
+      assert(pair.visible && pair.children.length === 2);
+      assert.deepEqual([pair.position.x, pair.position.z], [actor.position.x, actor.position.z]);
+      points.push(...pair.children);
+    }
+    assert.equal(points.length, 8);
+    const screenPoints = points.map(light => {
+      const at = light.getWorldPosition(new Vector3());
+      const center = project(camera, at);
+      assert(Math.abs(center.x) < .75 && Math.abs(center.y) < .75 && center.z > -1 && center.z < 1,
+        'All camp flames and rider lights fit inside the actual tower camera');
+      assert(sees(eye, at, {heightAt: scablandsSurfaceHeightAt, eye: 0, target: 0, step: 2, actorFloors: true}),
+        'No land hides the light from the tower');
+      const nearby = run.world.solidGrid.near(eye.x, eye.z, at.x, at.z, 1);
+      assert(!nearby.some(solid => solid.kind !== 'person' && sweepObstacle(eye, at, solid, 0,
+        {halfWidth: 0, halfLength: 0, height: 0})), 'No town solid hides the light from the tower');
+      const radius = light.geometry.parameters.radius ?? light.geometry.parameters.width * light.getWorldScale(new Vector3()).x / 2;
+      const edge = project(camera, {...at, z: at.z + radius});
+      assert(Math.abs(edge.x - center.x) * 1280 >= 4, 'Projected light is at least four pixels across');
+      return center;
+    });
+    assert(screenPoints.every((point, index) => screenPoints.every((other, j) => index === j ||
+      Math.hypot((point.x - other.x) * 640, (point.y - other.y) * 360) >= 4)), 'The projected lights stay distinct');
+    const [first, second] = screenPoints;
+    const fireGap = Math.hypot((first.x - second.x) * 640, (first.y - second.y) * 360);
+    console.log(`Tower camera resolves two camp fires (${fireGap.toFixed(1)} px apart) and six rider lights through actual scene geometry.`);
+  }
   run.say('Watch');
   assert.equal(run.view.watchOutcome, outcome);
   run.advance('close');
@@ -278,6 +413,7 @@ for (const [seed, mall, outcome] of [
   assert.equal(run.view.ledger.feud, outcome === 'walkers-go-with-clinker' ? 'Hunting' : 'Raiding');
 }
 
+nightScene.dispose();
 console.log('PASS Night 2 real world job: opening cast, both named throws, caught choices and escape, scout, lamp, Mall and bank.');
 
 // The scripted play follows the two real navigation arrows and uses only

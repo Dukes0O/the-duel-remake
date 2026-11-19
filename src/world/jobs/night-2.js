@@ -18,7 +18,7 @@ const riders = [
   {id: 'wash-rider-2', start: {x: sites.camp.position.x + 31, z: 210}, heading: 2, renderCar: 'falcone_f42'},
   {id: 'wash-rider-3', start: {x: sites.camp.position.x + 48, z: 264}, heading: -.6, renderCar: 'dusthawk_rally'},
 ];
-const points = [sites.gateTalk, sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost, sites.storeApproach];
+const points = [sites.hearth, sites.pump, sites.gateTalk, sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost, sites.storeApproach];
 const at = place => place.position ?? place;
 
 const talk = (id, set, options = {}) => ({id, kind: 'talk', scene: NIGHT_2_SCENES[id], set, ...options});
@@ -62,7 +62,7 @@ export function createNight2(definition, grid) {
   paths.setTownGate(sites.gate, 1);
   paths.setBrandLamps([...sites.lamps, ...sites.chaseLamps]);
   return {opening, ledger: createLedger(opening), journal: [], set: null, evening: .65, night: false,
-    ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius, strict: true}),
+    ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius ?? (place === sites.hearth ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius), strict: true}),
     lamps: {}, scrap: 0, props: {}, routes: []};
 }
 
@@ -95,7 +95,7 @@ function sceneFor(step, chapter) {
   const options = scene.choices?.map(choice => ({...choice,
     plain: plainStockChange(chapter.ledger, choice),
     ...(choice.id === 'watch-clinker' ? {detail: night2Odds(chapter).refuseClinker > .5
-      ? 'Likely they refuse' : 'Could go either way'} : {}),
+      ? 'Rell will probably turn Clinker down.' : 'Rell might take Clinker’s offer or turn it down.'} : {}),
   }));
   return {...scene, choices: options, stocks: {embers: chapter.ledger.stocks.embers}};
 }
@@ -140,10 +140,9 @@ const worldRellAtGate = night2Point(sites.gate.x, sites.gate.z + 4.8);
 function dressing(chapter, step) {
   chapter.props.salt = step.id === 'salt';
   chapter.props.ladle = ['chase', 'caught'].includes(step.id);
-  chapter.props.chaseLights = ['theft', 'reach-store', 'chase', 'caught'].includes(step.id);
   chapter.props.shawl = step.id === 'at-hearth';
   chapter.props.shelter = ['camp', 'caught', 'chase', 'pump', 'sleep'].includes(chapter.set);
-  chapter.props.torches = ['tower', 'pot', 'delivery'].includes(step.id);
+  chapter.props.campLights = ['tower', 'tower-outcome', 'pot', 'delivery'].includes(step.id);
   const cut = (look, x, z) => ({
     position: {...night2Point(look.x + x, look.z + z), y: look.y + 1.8},
     target: {...look, y: look.y + 1.35}, fov: 49,
@@ -274,6 +273,11 @@ function metres(path, from) {
 function direction(chapter, from, via, tail = []) {
   const way = chapter.ways.aim(from, via.id);
   return way ? {point: way, metres: way.metres + metres(tail, at(via))} : null;
+}
+
+export function night2BrandRoute(chapter, point, place) {
+  const route = direction(chapter, point, place);
+  chapter.routes = route ? [{name: place.id === sites.pump.id ? 'The pump lamp' : 'The hearth', ...route}] : [];
 }
 
 const SIGHT_RAY = {halfWidth: 0, halfLength: 0, height: 0};

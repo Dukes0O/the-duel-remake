@@ -32,7 +32,7 @@ function nextFind(step, found) {
 // Presentation reads the same lamp state as the rules. Choosing an arrow here
 // never lights a lamp, moves a fighter or changes the brand's remaining time.
 export function brandHudStep(step, state = {}, player = null) {
-  if (!state.brandBriefed) return {target: step.meeting, line: 'Stop beside Auntie Solder at the forge.'};
+  if (step.meeting && !state.brandBriefed) return {target: step.meeting, line: 'Stop beside Auntie Solder at the forge.'};
   if (state.townEnding) return {target: null, line: state.theftStarted ? BRAND_LINES.thief : BRAND_LINES.awake};
   const burning = state.brandSeconds > 0;
   const lamps = step.places ?? [];
@@ -135,9 +135,11 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     }
   }
   const chapter = worldJob?.night2;
-  if (chapter && onFoot && step?.kind === 'reach') {
+  if (chapter && onFoot && (step?.kind === 'reach' || step?.brand)) {
     const route = chapter.routes[0];
     next.target = route ? markerOf({name: route.name, position: route.point}, places) : null;
+    if (step.brand && job.stepState.brandSeconds > 0) next.line = job.stepState.lightingLamp
+      ? 'Stay by the pump lamp.' : 'Carry the brand to the pump lamp.';
   }
   if (step?.pickup?.atCar && !job.stepState.loaded) {
     next.target = markerOf({name: 'Your car', position: worldJob.marker}, places);

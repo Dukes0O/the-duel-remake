@@ -234,6 +234,13 @@ try {
     // A colour brought back from dusk can differ in its last binary place, so this one is compared to twelve decimals.
     vector(Object.values(read(dusk)).flat(), Object.values(day).flat(), 'with the job over the light is the day again');
     equal(JSON.stringify(resolveLightingSettings('arena', {mood: undefined, night: false, tunnel: false})), before, 'the day\u2019s own settings are not written to');
+    dusk.lighting.apply({course: arena, evening: 1, chapterNight: 1});
+    const moonlit = read(dusk);
+    check(moonlit.sun > 0 && moonlit.sun < day.sun && moonlit.hemi > .82,
+      'Chapter night keeps a restrained moon key and enough fill to read people and ground');
+    equal(dusk.sky.material.uniforms.moon.value, 1, 'The night chapter draws the moon');
+    dusk.lighting.apply({course: arena});
+    vector(Object.values(read(dusk)).flat(), Object.values(day).flat(), 'The moonlight ends with the chapter');
     const tunnel = fixture(), inTunnel = course('arena', 'day', true);
     const tunnelPlain = fixture();
     tunnelPlain.lighting.apply({course: inTunnel, blend: 1, tunnel: true});
