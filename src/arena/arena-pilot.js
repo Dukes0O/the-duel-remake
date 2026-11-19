@@ -57,7 +57,7 @@ export function pilotStep(duel, actor, goal, dt) {
   actor.prevAirHeight = actor.airHeight || 0;
   const pose = worldPose(duel, actor);
   const goalRing = course.nearest(goal.x, goal.z, actor.s);
-  const far = Math.abs(ringDistance(course, actor.s, goalRing.s)) > PILOT.ringRouteMetres;
+  const far = !actor.roadRider && Math.abs(ringDistance(course, actor.s, goalRing.s)) > PILOT.ringRouteMetres;
   let desired = far ? ringHeading(duel, actor, goalRing.s, goalRing.lateral)
     : Math.atan2(goal.x - pose.x, goal.z - pose.z);
 

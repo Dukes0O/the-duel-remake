@@ -151,7 +151,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
   const muzzles = Array.from({length: PROJECTILE_LIMIT}, (_, index) =>
     makeSlot(group, resources, resources.textures.muzzle,
       `combat-vfx-muzzle-${index}`, grid2));
-  const wrecks = Array.from({length: WRECK_LIMIT}, (_, index) => ({
+  const wreckSlot = index => ({
     fire: makeSlot(group, resources, resources.textures.fire,
       `combat-vfx-wreck-${index}-fire`, grid8),
     explosion: makeSlot(group, resources, resources.textures.explosion,
@@ -160,19 +160,21 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       `combat-vfx-wreck-${index}-smoke`, grid8),
     age: 0,
     active: false,
-  }));
+  });
+  const wrecks = Array.from({length: WRECK_LIMIT}, (_, index) => wreckSlot(index));
   const trafficWrecks = Array.from({length: TRAFFIC_WRECK_LIMIT}, (_, index) => ({
     smoke: makeSlot(group, resources, resources.textures.smoke,
       `combat-vfx-traffic-wreck-${index}-smoke`, grid8),
     fire: makeSlot(group, resources, resources.textures.fire,
       `combat-vfx-traffic-wreck-${index}-fire`, grid8),
   }));
-  const damage = Array.from({length: WRECK_LIMIT}, (_, index) => ({
+  const damageSlot = index => ({
     smoke: makeSlot(group, resources, resources.textures.smoke,
       `combat-vfx-damage-${index}-smoke`, grid8),
     fire: makeSlot(group, resources, resources.textures.fire,
       `combat-vfx-damage-${index}-fire`, grid8),
-  }));
+  });
+  const damage = Array.from({length: WRECK_LIMIT}, (_, index) => damageSlot(index));
   const crashImpacts = Array.from({length: crashPresentation ? CRASH_IMPACT_LIMIT : 0}, (_, index) => ({
     sparks: makeSlot(group, resources, resources.textures.muzzle,
       `crash-vfx-impact-${index}-sparks`, grid2),
@@ -369,10 +371,20 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
         size: projectile.kind === 'bomb' ? 3 : 2.2,
         startFrame: projectile.age < .05 ? 0 : 1, frameCount: 2});
     });
+    const riderFight = state?.arena?.worldJob?.riderFight;
+    if (enabled && riderFight) {
+      // Ordinary arenas need four effect slots. Only an authored larger field pays for extra meshes.
+      while (wrecks.length <= state.opponents.length) {
+        const index = wrecks.length, wreck = wreckSlot(index), hurt = damageSlot(index);
+        wrecks.push(wreck);
+        damage.push(hurt);
+        everySlot.push(wreck.fire, wreck.explosion, wreck.smoke, hurt.fire, hurt.smoke);
+      }
+    }
+    const effectActor = index => enabled && (index < WRECK_LIMIT || riderFight) ?
+      (index === 0 ? state : state.opponents?.[index - 1]) : null;
     damage.forEach((entry, index) => {
-      const actor = enabled
-        ? index === 0 ? state : state.opponents?.[index - 1]
-        : null;
+      const actor = effectActor(index);
       const fraction = actor?.armor / actor?.maxArmor;
       if (actor?.arenaNitroSpentSec > 0 && !actor.combatWrecking && !actor.crushed) {
         const ground = course.groundAt(actor.s, actor.lateral);
@@ -388,7 +400,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       }
       entry.smoke.mesh.material.color.setHex(0xffffff);
       const damaged = Number.isFinite(fraction) && fraction >= 0 &&
-        !actor.combatWrecking && !actor.crushed;
+        !actor.combatWrecking && !actor.crushed && actor.roadRider?.phase !== 'home';
       if (!damaged || fraction >= 0.3) {
         hide(entry.smoke);
         hide(entry.fire);
@@ -407,9 +419,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       else hide(entry.fire);
     });
     wrecks.forEach((entry, index) => {
-      const actor = enabled
-        ? index === 0 ? state : state.opponents?.[index - 1]
-        : null;
+      const actor = effectActor(index);
       if (!actor?.combatWrecking) {
         entry.active = false;
         entry.age = 0;

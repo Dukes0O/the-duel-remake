@@ -282,4 +282,7 @@ test('warlord settlement and world job files select their scenario areas', () =>
   assert.equal(everburn.length,2);
   for(const row of everburn) for(const file of ['src/arena/modes/world-job.js','src/arena/arena-event.js'])
     assert.ok(row.paths.includes(file));
+  const riders=suite.SCENARIO_AREAS.find(row=>row.prefixes.includes('road-riders'));
+  for (const file of ['src/arena/modes/road-riders.js','src/sim-contacts.js','src/combat-hud.js','src/sound-bank.js'])
+    assert.ok(riders.paths.includes(file));
 });

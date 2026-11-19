@@ -1,3 +1,4 @@
+import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal} from './road-riders.js';
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
@@ -238,6 +239,7 @@ export function initializeWorldJob(duel, definition) {
     state.speedMph=0;state.headingError=0;state.townGatePrompt='';
   }
   initializeWorldFootStart(duel, definition.steps[0]?.footStart ?? definition.steps[0]?.bellowsFootStart);
+  if (definition.steps.some(step=>step.kind==='rider-fight')) reserveRoadRiders(duel, worldJob);
   if (definition.id === NIGHT_2_ID) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setBrandLamps([...NIGHT_2_SITES.lamps, ...NIGHT_2_SITES.chaseLamps]);
@@ -313,7 +315,9 @@ function applyStepLoan(duel, worldJob) {
 export function prepareWorldJobControls(duel) {
   const worldJob=duel.state.arena?.mode==='world-job'?duel.state.arena.worldJob:null;
   if(!worldJob)return false;
-  const step=worldJob?.job.steps[worldJob.job.stepIndex];
+  const step=worldJob.job.steps[worldJob.job.stepIndex];
+  // Conversation choices and other external job transitions can enter a fight between simulation ticks.
+  if (step?.kind === 'rider-fight' && worldJob.riderReserve) startRoadFight(duel,worldJob);
   const input=duel.state.input??{};
   worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
   if(step?.kind!=='drivetrain') return false;
@@ -1375,6 +1379,7 @@ export function moveJobRaiders(duel, worldJob, dt) {
       if (actor.bellowsThief && (from.x !== at.x || from.z !== at.z))
         worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
     }
+    if (actor.riderCrew && (actor.x !== from.x || actor.z !== from.z)) actor.steps++;
     if (actor.brandAsh) {
       // The foot mover resolves land and buildings, but not other people.
       // Reserve the whole step so a long step cannot pass through a neighbour.
@@ -1709,7 +1714,9 @@ export function stepWorldJob(duel, dt) {
     applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: NIGHT_2_SCOUT.id, place});
     if (burning) worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id).approachSpeed = 4.5;
   }
+  if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
   const view = {player: playerView, onFoot: !!state.onFoot,
+    ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
     ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot)} : {}),
     ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],
       playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
@@ -1754,8 +1761,10 @@ export function stepWorldJob(duel, dt) {
     worldJob.clearedWaves = [];
     // EVERBURN-PLAY-FIXES: when a defence ends the raiders still standing are removed, so none is left piled at the well.
     if (currentStep?.kind === 'defend') removeWaveRaiders(duel, worldJob, previousStep);
-  }
-  if (next.stepIndex !== previousStep) {
+    const outcome = currentStep?.kind === 'rider-fight' && worldJob.riderFight.outcome;
+    if (outcome === 'lost' && currentStep.onLost !== 'continue' || outcome === 'surrounded' && currentStep.onSurrounded === 'lose')
+      return {reason:'rider-fight-lost', winnerId:'raiders'};
+    if (worldJob.riderReserve) startRoadFight(duel, worldJob);
     if (worldJob.night2) enterNight2(duel, worldJob);
     applyStepLoan(duel, worldJob);
   }
@@ -1940,7 +1949,8 @@ export function worldJobHitTargets(duel) {
   return targets;
 }
 
-export function worldJobPilotGoal(duel, actor) {
+export function worldJobPilotGoal(duel, actor, dt) {
+  if (actor.roadRider) return roadRiderGoal(duel, actor, dt);
   const follow = duel.state.arena?.worldJob?.follow;
   if (follow?.path?.length && (!follow.actorId || actor.jobId === follow.actorId ||
       actor.arenaId === follow.actorId || actor === duel.state.opponents[0])) {

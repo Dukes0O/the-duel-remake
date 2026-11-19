@@ -94,17 +94,30 @@ function combatShieldForActor(duel, actor) {
 }
 
 function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, specB,
-  impactMph, zoneA, zoneB, pairKey}) {
+  impactMph, zoneA, zoneB, pairKey, worldFrame}) {
   const incidents = duel._combatRamIncidents;
   const firstImpact = !incidents.has(pairKey);
   const correction = Math.max(0, nx ? width + .04 - end.x * nx : length + .04 - end.z * nz);
   const shareA = specB.mass / (specA.mass + specB.mass), shareB = 1 - shareA;
   // Continue to separate solid bodies while the incident is latched. Only the
   // first contact transfers momentum or armor and emits a hit.
-  a.lateral += nx * correction * shareA;
-  b.lateral -= nx * correction * shareB;
-  a.s += nz * correction * shareA;
-  b.s -= nz * correction * shareB;
+  if (worldFrame) {
+    // A lane metre far outside the Scablands oval can span several metres on the ground.
+    // Apply the same separation in world space that was measured by the swept bodies.
+    const dx = nx * worldFrame.cos + nz * worldFrame.sin;
+    const dz = -nx * worldFrame.sin + nz * worldFrame.cos;
+    for (const [car, share] of [[a,shareA],[b,-shareB]]) {
+      const at = duel.course.worldAt(car.s, car.lateral);
+      const next = duel.course.nearest(at.x+dx*correction*share, at.z+dz*correction*share, car.s);
+      car.s = next.s;
+      car.lateral = next.lateral;
+    }
+  } else {
+    a.lateral += nx * correction * shareA;
+    b.lateral -= nx * correction * shareB;
+    a.s += nz * correction * shareA;
+    b.s -= nz * correction * shareB;
+  }
   a.offRoad = !duel._surface(a.s, a.lateral).mainRoad;
   b.offRoad = !duel._surface(b.s, b.lateral).mainRoad;
   if (!firstImpact) return true;
@@ -550,6 +563,21 @@ export function _vehicleContact(a, b, reason) {
   const phase = this.relativeS(b.s, a.s) - b.s;
   const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
   const end = { x: a.lateral - b.lateral, z: a.s - b.s - phase };
+  let worldFrame;
+  if (armoredPair && this.state.arena?.worldJob?.riderFight) {
+    // The arena envelope and crash response are shared. At a world job's remote coordinates
+    // the ring's distance along its centreline is not the distance between the two bumpers.
+    const heading = this.course.at(a.s).heading;
+    worldFrame = {sin:Math.sin(heading), cos:Math.cos(heading)};
+    const relative = (to, at, other) => {
+      const dx = at.x - other.x, dz = at.z - other.z;
+      to.x = dx * worldFrame.cos - dz * worldFrame.sin;
+      to.z = dx * worldFrame.sin + dz * worldFrame.cos;
+    };
+    relative(start, this.course.worldAt(a.prevS??a.s,a.prevLateral??a.lateral),
+      this.course.worldAt(b.prevS??b.s,b.prevLateral??b.lateral));
+    relative(end, this.course.worldAt(a.s,a.lateral), this.course.worldAt(b.s,b.lateral));
+  }
   // A road-aligned envelope is intentionally a little generous to avoid
   // the visible cars interpenetrating while their bodies drift.
   const angleA = (a.headingError || 0) + (a.slipAngle || 0), angleB = (b.headingError || 0) + (b.slipAngle || 0);
@@ -617,7 +645,7 @@ export function _vehicleContact(a, b, reason) {
   const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
-    specA,specB,impactMph,zoneA:zone,zoneB,pairKey});
+    specA,specB,impactMph,zoneA:zone,zoneB,pairKey,worldFrame});
   // A solid hulk or shoved car touched below shove speed just stays in
   // contact; the older contact rules must not restart it as a live car.
   if (solidTraffic(this, b) && impactMph < COMBAT_TUNING.roadside.minimumImpactMph) return true;

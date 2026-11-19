@@ -38,6 +38,7 @@ export function deployDecoyDrone(duel, owner) {
     combatWrecking: false, armor: 1e6, maxArmor: 1e6, knock: null, mirage: null,
     damageZones: {...(owner.damageZones || {})}, combatShield: 0, ramDamageScale: 0,
     weaponLoadout: [], combatArmorKit: null};
+  if (copy.roadRider) delete copy.roadRider;
   follow(duel, copy, owner);
   state.opponents.push(copy);
   if (state.arena) {
