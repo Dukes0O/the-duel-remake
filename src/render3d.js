@@ -864,7 +864,7 @@ export function attachRenderer(host, app) {
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
     applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
-    const tall=carKey==='titan_monster';
+    const tall=carKey==='titan_monster'||workVehicleView.drawsFor(st,app._switches?.()??app.duel.featureFlags); // TOWN-VEHICLES: a truck's camera sits as high as the Titan's
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;

@@ -66,7 +66,12 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
       if (name.includes(':steer-')) steers.push({object, base:object.quaternion.clone()});
       if (name.includes(':spin-')) spins.push({object, base:object.quaternion.clone()});
     });
-    return {id:vehicle.id, group, steers, spins, load:loadNode ? findModelNode(body, loadNode) : null,
+    // The lowest point of the truck's wheels, in its own frame: the renderer stands a car on its lowest wheel point.
+    turned.updateMatrixWorld(true);
+    const tyres = new THREE.Box3();
+    for (const wheel of [...steers, ...spins]) tyres.expandByObject(wheel.object);
+    return {id:vehicle.id, group, turned, contactY:tyres.isEmpty() ? 0 : tyres.min.y, steers, spins,
+      load:loadNode ? findModelNode(body, loadNode) : null,
       maxSteer:definition.maxSteerDeg * Math.PI / 180, roll:0, clock:null};
   }
 
@@ -96,6 +101,9 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     }
     camera?.layers.enable(WORK_VEHICLE_LAYER);
     shown.group.position.copy(player.position);
+    // The car stands at the ground plus a clearance less its own lowest wheel point (src/vehicle-grounding.js);
+    // the truck's wheels are put where the car's are.
+    shown.turned.position.y = (player.userData.grounding?.contactY ?? 0) - shown.contactY;
     shown.group.quaternion.copy(player.quaternion);
     shown.group.visible = player.visible;
     player.visible = false;
@@ -112,5 +120,8 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     return changed;
   }
 
-  return {update, get shown() { return shown?.id ?? null; }};
+  /** True while a work vehicle is driven: the renderer then sets its cameras as it does for the tall Titan. */
+  const drawsFor = (state, flags) => workVehicleToDraw(state, flags) !== null;
+
+  return {update, drawsFor, get shown() { return shown?.id ?? null; }};
 }

@@ -283,6 +283,12 @@ test('the view draws the truck only for a work vehicle with the switch on, and l
   assert.ok(drawn && drawn.visible && !player.visible, 'the truck is drawn in place of the car');
   assert.ok(drawn.position.equals(player.position) && drawn.quaternion.equals(player.quaternion), 'it takes the car\'s pose');
   assert.equal(drawn.getObjectByName('fire-truck').position.length(), 0, 'the truck sits on the car\'s point');
+  // The car stands on its lowest wheel point; the truck's wheels go to the same height. The stand-in's wheels are
+  // unit boxes about their centres, so their lowest point is half a metre below the truck's.
+  player.userData.grounding = {contactY:0.3};
+  view.update({scene, player, camera, state, flags:on});
+  assert.ok(Math.abs(drawn.children[0].position.y - (0.3 - (-0.5))) < 1e-9, 'the truck\'s tyres stand where the car\'s do');
+  delete player.userData.grounding;
   assert.equal(drawn.getObjectByName('fire-truckbody').layers.isEnabled(WORK_VEHICLE_LAYER), true);
   assert.equal(drawn.getObjectByName('fire-truckbody').layers.isEnabled(0), false, 'the mirror\'s camera does not see the cab from inside');
   assert.equal(camera.layers.isEnabled(WORK_VEHICLE_LAYER), true, 'the main camera does');
