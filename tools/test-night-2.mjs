@@ -725,6 +725,7 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
   checkCampSmoke(run);
   const at = worldPose(duel, state);
   assert(Math.hypot(at.x - sites.washApproach.position.x, at.z - sites.washApproach.position.z) < sites.washApproach.radius);
+  let wreckAt;
   const finishFight = (afterOutcome = () => {}) => {
     if (surrounded) {
       for (let i = 0; i < 3900 && !world.riderFight.outcome; i++) run.tick();
@@ -734,6 +735,7 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
     }
     duel.setInput({throttle: 0, brake: 1});
     const wreckPlayer = () => {
+      wreckAt = worldPose(duel, state);
       state.armor = 1;
       assert(applyArmorDamage(duel, state, 'crossbow', {owner: state.opponents[0].arenaId}));
       assert(state.combatWrecking);
@@ -796,7 +798,7 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
     assert.equal(run.stage(), 'wash-walk-to-cut');
     assert(state.onFoot && state.combatWrecking);
     assert.match(worldHudModel({worldJob: world}).line, /towed in at dawn/);
-    assert(Math.hypot(state.fighter.x - at.x, state.fighter.z - at.z) < 12, 'The fighter comes out near the wreck');
+    assert(Math.hypot(state.fighter.x - wreckAt.x, state.fighter.z - wreckAt.z) < 12, 'The fighter comes out near the wreck');
     duel.setInput({interact: true});
     run.tick(120);
     assert(state.onFoot && state.combatWrecking, 'Holding F and waiting cannot recover the wreck tonight');
