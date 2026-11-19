@@ -131,3 +131,71 @@ None. `lab.brian.fire.intro` and `lab.brian.fire.explain` match the unchanged op
 
 The "large fire in real life" caveat, the "game's rule" and "fact about real wood" notes, the kilogram clause in the
 retardant step. Nothing else.
+
+## Strength
+
+### Audit checked against the code
+
+Confirmed as written: the maths words, "thickness counts twice", the step's own word defined behind "Tell me more",
+"Too thin" forcing a key press, the repeated key labels, "Stiff" contradicting itself, and Density missing from the
+notebook. Partly wrong:
+
+- The audit says the dip numbers "come only after" in "Stiff". They do not: each bar's row already shows "dips X mm"
+  live while the weights hang. What was true is that the carbon fibre bar dips 0.3 mm, under one pixel, so it cannot be
+  seen to move. The run is now long enough to read the live numbers, and R plays it again.
+- The audit says Brian's two rules never give a reason a learner can test. The reason ("a bump on the cable") was in
+  the text; it is kept, behind "Tell me more", because it is not needed to do the task.
+- The "millimetre is one thousandth of a metre" sentence stays behind "Tell me more" in the wonder: the unit is
+  defined before the learner needs it to answer, and nothing in the step is lost.
+
+### Changed
+
+- "The sum" became "calculation", "worked line" or "panel". "Thickness counts twice" and "counts three times" became
+  "squared" and "cubed", each defined where first used ("thickness multiplied by itself"; "thickness × thickness ×
+  thickness, so doubling the thickness makes a bar eight times as stiff").
+- "Strength" opens with the words it teaches: stress, newton and N/mm², the strength of a material, and the task, in
+  three sentences. Load, bending for good and the gauge follow behind "Tell me more".
+- "Too thin" opens on the carbon fibre arm already on the rig and asks its question first: "Will the arm hold, bend for
+  good, or snap?" There is no forced key press and no "Go on" button. The car now comes onto the arm over 6 seconds
+  and R plays it again. The step has no control for Show me to point at, so Show me does not apply to it.
+- "Stiff" says the carbon fibre bar is the stiffer part although steel is the stiffer material, and its dip runs 7
+  seconds with the live numbers. The brittle ram takes 6 seconds, the watch about 10, and R plays "Stiff", "Brittle"
+  and "Too thin" again. "Thick enough" cut the safety line's reason to behind "Tell me more".
+- Density is now a notebook word (`strength-density`), so it appears under "Words so far". The player's old six words
+  keep their ids.
+- Every "Press 1", "Press ↑", "Press Space", "press R" left Brian's words, prompts and hints. "Which bar bends for good
+  first?" became "Which bar gives way first?" (carbon fibre snaps, it does not bend for good). Question 3's cards read
+  "Steel, 80 mm, 16.9 kg" and its question is one sentence shorter.
+
+### Tests
+
+- `node --test tools/test-lab-classroom-strength.mjs`: 27 of 27. `node tools/test-lab-brian-short.mjs`: 6 of 6.
+- `node tools/run-browser-scenarios.mjs --scenarios lab-classroom-strength --jobs 2`: passed, 0 warnings, 0 errors.
+
+### Changed assertions (one reason each)
+
+1. The notebook list gains `strength-density` first: the Density step defines a word.
+2. The dips are read after 2 s, not 1 s: the weights now take 1.5 s to come on.
+3. "Too thin" is checked on its opening question, the carbon fibre arm and the guess, not on "press 3 first": the key press is gone.
+4. Show me is checked on every step that has a control; "Too thin" has none, and its hints are checked climbing with no pointer.
+5. "Make the arm thicker, then hang the car again" and "Make the arm thicker until the handle reads 80 mm, then hang the
+   car" replace the arrow and Space instructions; the same for the thinner direction: no key labels.
+6. Question 1's wrong answer for carbon fibre says "gave way first, by bending for good": the question changed.
+7. The prompts "The load on the bar is 0 kg. Hang 10 kg." and "Pick the card with your answer." replace their key labels.
+8. The scenario picks the carbon fibre arm by a click in the free test, since "Too thin" no longer has a rack to click;
+   it waits further into each long run for its pictures and expects `strength-density` in the notebook.
+
+### Added tests
+
+Kyle's wording rules over everything the lesson says; the step's own word defined in its opening; the length of the
+watch, the dip, the ram and "Too thin", with R; Density as a notebook word; "Too thin" with nothing to press first and a
+replay that is not a new attempt at the bench.
+
+### Lines to re-record
+
+None. `lab.brian.strength.intro` and `lab.brian.strength.explain` match the unchanged opening of the watch and the recap.
+
+### Removed
+
+The "press 3 first" note, the "Go on" button and the key press that forced carbon fibre in "Too thin"; the phrase "counts
+twice" and "counts three times".
