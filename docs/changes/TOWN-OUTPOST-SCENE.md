@@ -1,0 +1,11 @@
+# TOWN-OUTPOST-SCENE: the neighbours in the world (switch `wasteland-town`)
+
+**What changed.** Five outposts from `outposts.glb` stand in the Scablands as new data (`src/town/content/outposts-world.js`): Dot's Diner on the Boneyard Road, Miss Quill's school at the Boneyard's edge, Old Tam's hut on the Ridge, Deck Town by the Ships, the Rail Halt beside the Iron Line. `src/town/town-outpost-world.js` places them from the real ground (pad edges 0.12 m in at the lowest corner) and cuts their solids from the model; `createTownWorld` hands them to the town drive as `layout.outposts`, and the drive's job grid makes them solid (`createJobSolidGrid().setTown`), so no other job and no replay sees them. `src/town/view/town-outposts-scene.js` draws them with people from the story cast who step aside from a car, Bo going round the school, the fence protection builds (with its gate), and Tuesday and Tam's goats from the wildlife models once WILD-ART-WASTE adds `camp-dog`/`dog` and `goat`. Hooks: `scablands-scene.js` (draw), `world-job.js` (solids), `scablands-solids.js` (`setTown`). No new game event, so no sound cue. Decisions: `docs/board/questions/TOWN-OUTPOST-SCENE.md`.
+
+**Checks, on c12294a.** `tools/test-town-outposts-scene.mjs` 7 passed (placement clear of roads, routes, places, crossings, river and rail; ground and burial; solids against the model; fence with protection; a car stopped at the diner; drawing on the drawn ground, people stepping aside, animals by name). Lane tier: 86 passed, 1 failed: `test-arsenal-runtime` needed released commit `0f934845` missing from this shallow clone; fetched, its one rerun passed. Left to the night by the tier: `test-arena-shove`, `test-convoy-tanker-art`, `test-everburn-easy`, `test-field-battle`, `test-first-person-polish`, `test-old-smoke`. `npm run build` passed. Replay and world-signature guards passed unchanged.
+
+**Not run here (Claude's laptop).** Browser scenario `tools/scenarios/town-outposts.mjs`: this container's software renderer times out on the drive to the yard (the existing `town-world` scenario does the same). Laptop-only suites: none touched. No frame check (nothing a player can reach yet).
+
+**Changed assertions.** None.
+
+**Removed.** Nothing; this is new.
