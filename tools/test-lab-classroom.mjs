@@ -49,15 +49,18 @@ const goTo = (session, id) => {
     session.act('next');
   }
 };
-// The key a prompt names ("press 1", "press Space") must do what the prompt asks.
+// The control a pendulum prompt asks for is the control Brian points at, and the prompt names it by what it is ("Click the
+// 5 m hook", "Drag the weight", "Click Tap"), not by a key: the screen shows its own key labels (LAB-REVIEW-FLYING).
 function followPrompt(session) {
-  const v = session.view(), key = v.prompt.match(/press (Space|\d)/i)?.[1];
-  assert.ok(key, `prompt names no key: ${v.prompt}`);
-  assert.ok(v.keys[key], `the key in "${v.prompt}" does nothing`);
-  session.act(v.keys[key]);
-  return v.keys[key];
+  const v = session.view(), action = v.target;
+  assert.ok(action, `no control to use: ${v.prompt}`);
+  assert.match(v.prompt, /\b(click|drag|tap|let go)\b/i, `prompt names no control: ${v.prompt}`);
+  assert.ok(Object.values(v.keys).includes(action), `the control in "${v.prompt}" does nothing`);
+  session.act(action);
+  return action;
 }
 const FREE_TEST = [['hook:5'], ['hook:25'], ['weight:heavy']];
+const WEIGHTS_BY_NAME = {light: 20, heavy: 200};
 function playFree(session) {
   for (const actions of FREE_TEST) { actions.forEach(action => session.act(action)); session.act('release'); until(session, v => v.keys.Space === 'release', 15); }
 }
@@ -75,6 +78,7 @@ function playThrough(session, {check = () => {}} = {}) {
     session.act(guess); assert.equal(followPrompt(session), 'release');
     until(session, v => v.ready, 15); check(session.view()); session.act('next');
   }
+  for (const id of ['word-pi', 'word-gravity']) { assert.equal(session.view().step.id, id); assert.ok(session.view().ready, `${id} has nothing to press`); session.act('next'); }
   session.act(session.view().target); session.act(session.view().target); assert.ok(session.view().ready, 'the formula step opens after a hook and a weight'); session.act('next');
   playFree(session); assert.ok(session.view().ready, 'three settings open Continue'); session.act('next');
   session.act('hook:25'); session.act('release'); until(session, v => v.ready, 15); session.act('next');
@@ -87,6 +91,7 @@ function playThroughTo(session, id) {
     'word-length': () => session.act('measure:25'), 'watch-lengths': () => until(session, v => v.ready, 15),
     'try-short': () => { session.act('hook:5'); session.act('guess:0'); session.act('release'); until(session, v => v.ready, 15); },
     'try-heavy': () => { session.act('weight:heavy'); session.act('guess:2'); session.act('release'); until(session, v => v.ready, 15); },
+    'word-pi': () => {}, 'word-gravity': () => {},
     'try-formula': () => { session.act(session.view().target); session.act(session.view().target); },
     'try-free': () => playFree(session),
     alone: () => { session.act('hook:25'); session.act('release'); until(session, v => v.ready, 15); },
@@ -139,9 +144,10 @@ test('a wrong press never leaves a prompt that cannot be followed: from every se
     playThroughTo(shown, id);
     for (const press of [first, second]) if (shown.view().cards.length === 0) shown.act(press);
     for (let i = 0; i < 3 && session.view().cards.length === 0; i++) {
-      const v = session.view(), key = v.prompt.match(/press (\d)/)?.[1];
-      assert.equal(v.keys[key], v.target, `${id} after ${first}, ${second}: "${v.prompt}" presses the control Brian points at`);
-      session.act(v.keys[key]);
+      const v = session.view(), [kind, value] = v.target.split(':');
+      assert.match(v.prompt, new RegExp(kind === 'hook' ? `the ${value} m hook` : `the ${WEIGHTS_BY_NAME[value]} kg weight`), `${id} after ${first}, ${second}: "${v.prompt}" names the control Brian points at`);
+      assert.ok(Object.values(v.keys).includes(v.target));
+      session.act(v.target);
     }
     assert.equal(session.view().cards.length, 3, `${id} after ${first}, ${second}: following the prompt reaches the guess`);
     for (let i = 0; i < 3 && shown.view().cards.length === 0; i++) {
@@ -164,7 +170,7 @@ test('a wrong guess says why with the real swing times, and the player can carry
   assert.deepEqual(v.cards.map(c => c.state), ['right', 'wrong', null]);
   assert.ok(session.act('next'));
   session.act('hook:25');
-  assert.equal(session.view().brian.text, 'The string is now 25 m, but this test changes only the weight, so the string must stay at 15 m. Press 2 to go back to the 15 m hook.');
+  assert.equal(session.view().brian.text, 'The string is now 25 m, but this test changes only the weight, so the string must stay at 15 m. Click the 15 m hook to go back.');
 });
 
 test('no guess or open question is settled early: the words, the panel and the board wait for the result', () => {
@@ -192,7 +198,7 @@ test('no guess or open question is settled early: the words, the panel and the b
   for (const earlier of heavy.page.flatMap(row => [row.setup, row.result])) assert.doesNotMatch(earlier ?? '', /weight (does not|makes no)|cancel|same swing time/, 'no earlier step states the weight’s answer');
   session.act('guess:2'); session.act('release'); until(session, v => v.ready, 15);
   assert.ok(session.view().pulls);
-  assert.deepEqual(session.view().formulas.map(f => f.worked), ['(20 × 9.81) ÷ 20 = 9.81 m/s²', '(200 × 9.81) ÷ 200 = 9.81 m/s²']);
+  assert.deepEqual(session.view().formulas.map(f => f.worked), ['(20 × 9.81) ÷ 20 = 9.81 N per kilogram', '(200 × 9.81) ÷ 200 = 9.81 N per kilogram']);
   const checks = createClassroomSession(lesson);
   playThroughTo(checks, 'check-slowest');
   assert.ok(checks.view().formulas.every(f => !f.worked), 'question 1 shows only the general formula');
@@ -202,16 +208,25 @@ test('no guess or open question is settled early: the words, the panel and the b
   assert.deepEqual(checks.view().formulas, [], 'question 3 shows no sums');
 });
 
-test('the formula: π and √ are defined first, the hook and the weight move the sums, and every sum comes out on a calculator', () => {
+test('the formula: π, √, m/s and g are defined in their own steps first, the hook and the weight move the formulas, and every worked line comes out on a calculator', () => {
   const session = createClassroomSession(lesson);
-  playThroughTo(session, 'try-formula');
+  playThroughTo(session, 'word-pi');
+  assert.match(session.view().say, /π, a Greek letter said “pie”.*√, which means the square root/);
+  assert.ok(session.view().ready, 'a symbol step has nothing to press');
+  session.act('next');
+  assert.equal(session.view().step.id, 'word-gravity');
+  assert.ok(session.view().say.indexOf('written m/s') < session.view().say.indexOf('m/s²'), 'm/s comes before m/s²');
+  assert.equal(session.view().formulas[1].worked, '9.81 × 2 = 19.62 m/s after 2 seconds');
+  assert.equal((3.14 * 10).toFixed(1), '31.4', 'a circle 10 m across is 31.4 m around, as the panel says');
+  assert.equal(session.view().formulas[0].worked, '20 m ÷ 4 s = 5 m/s');
+  session.act('next');
   let v = session.view();
-  assert.ok(v.say.indexOf('π is a Greek letter') < v.say.indexOf('T = 2 × π'), 'π comes before the formula');
-  assert.ok(v.say.indexOf('√ means the square root') < v.say.indexOf('T = 2 × π'), '√ comes before the formula');
-  assert.ok(v.say.indexOf('written m/s') < v.say.indexOf('m/s²'), 'm/s comes before m/s²');
+  assert.equal(v.step.id, 'try-formula');
+  assert.match(v.say, /^The swing time is T = 2 × π × √\(L ÷ g\), where T is the swing time in seconds, L is the string length in metres/);
+  assert.match(v.say, /Change the hook, then change the weight, and see which one changes the swing time T\./);
   assert.equal(v.formulas[0].formula, 'T = 2 × π × √(L ÷ g)');
   assert.equal(v.formulas[0].worked, '2 × 3.14 × √(15 ÷ 9.81) = 7.77 s');
-  assert.equal(v.formulas[1].worked, '(20 × 9.81) ÷ 20 = 9.81 m/s²');
+  assert.equal(v.formulas[1].worked, '(20 × 9.81) ÷ 20 = 9.81 N per kilogram');
   assert.ok(!v.ready);
   session.act('hook:5');
   v = session.view();
@@ -219,7 +234,7 @@ test('the formula: π and √ are defined first, the hook and the weight move th
   session.act('weight:heavy');
   v = session.view();
   assert.equal(v.formulas[0].worked, '2 × 3.14 × √(5 ÷ 9.81) = 4.48 s', 'the weight leaves the swing time alone');
-  assert.equal(v.formulas[1].worked, '(200 × 9.81) ÷ 200 = 9.81 m/s²', 'and moves the numbers in the lower sum, not the answer');
+  assert.equal(v.formulas[1].worked, '(200 × 9.81) ÷ 200 = 9.81 N per kilogram', 'and moves the numbers in the lower calculation, not the answer');
   assert.ok(v.ready);
   const closing = v.brian.text;
   session.act('hook:25');
@@ -230,7 +245,8 @@ test('the formula: π and √ are defined first, the hook and the weight move th
     assert.ok(Math.abs(calculated - answer) < .005, `${length} m on a calculator`);
     assert.equal(answer.toFixed(1), stringPeriod(length).toFixed(1), `the sum agrees with the stopwatch at ${length} m`);
   }
-  assert.ok(Math.abs(10.03 / 4.48 - 2.2) < .05, 'about 2.2 times, as Brian says');
+  assert.doesNotMatch(v.say, /2\.2 times|4\.48/, 'the five-times-the-length remark, which did not match the 4.5 s elsewhere, is gone');
+  assert.equal(sumSeconds(5), 4.48, 'the 5 m worked line is 4.48 s on a calculator');
   assert.equal(G_SHOWN, 9.81);
 });
 
@@ -240,7 +256,7 @@ test('the free test: string, weight and pull-back all move the sums, three diffe
   let v = session.view();
   assert.equal(FREE_TRIES, 3);
   assert.equal(v.ready, false);
-  assert.deepEqual(v.formulas.map(f => f.worked), ['2 × 3.14 × √(15 ÷ 9.81) = 7.77 s', '(20 × 9.81) ÷ 20 = 9.81 m/s²', '4 × 15 × (20 ÷ 57.3) = 20.9 m', '20.9 ÷ 7.77 = 2.69 m/s']);
+  assert.deepEqual(v.formulas.map(f => f.worked), ['2 × 3.14 × √(15 ÷ 9.81) = 7.77 s', '(20 × 9.81) ÷ 20 = 9.81 N per kilogram', '4 × 15 × (20 ÷ 57.3) = 20.9 m', '20.9 ÷ 7.77 = 2.69 m/s']);
   for (const f of v.formulas) assert.ok(f.title, 'every entry has a heading');
   session.act('pull:up');
   assert.deepEqual(session.view().formulas.slice(2).map(f => f.worked), ['4 × 15 × (25 ÷ 57.3) = 26.2 m', '26.2 ÷ 7.77 = 3.37 m/s'], 'the pull-back moves the trip and the speed');
@@ -249,12 +265,13 @@ test('the free test: string, weight and pull-back all move the sums, three diffe
   session.act('pull:down');
   for (let i = 0; i < 6; i++) session.act('pull:down');
   assert.equal(session.view().pull.deg, MIN_PULL);
-  assert.match(session.view().brian.text, /5 degrees is as small/, 'the end of the range says so');
+  assert.match(session.view().brian.text, /5 degrees is as small as the pull-back goes/, 'the end of the range says so');
+  assert.match(session.view().formulas[3].note, /for every pull-back up to 30 degrees\.$/, 'the range is stated plainly, with no real-pendulum caveat');
   for (let i = 0; i < 3; i++) session.act('pull:up');
   assert.equal(session.view().pull.deg, 20);
   const test = () => { session.act('release'); until(session, x => x.keys.Space === 'release', 15); };
   test();
-  assert.match(session.view().brian.text, /^With a 15 m string, a 20 kg weight and a pull-back of 20 degrees, one swing needed 7\.8 s, which is the sum’s 7\.77 s to one decimal place\. Change a setting/);
+  assert.match(session.view().brian.text, /^With a 15 m string, a 20 kg weight and a pull-back of 20 degrees, one swing needed 7\.8 s, which is the formula’s 7\.77 s to one decimal place\. Change a setting/);
   test();
   assert.match(session.view().brian.text, /already tested this exact setting/);
   assert.equal(session.view().ready, false, 'the same setting again does not count');
@@ -490,9 +507,9 @@ test('the pictures show the idea: the trip, the pull arrow’s sum, the pull-bac
   assert.match(short, /one swing travels 7\.0 m/); assert.match(short, /one swing travels 20\.9 m/);
   session.act('next'); session.act('weight:heavy'); session.act('guess:2'); session.act('release'); until(session, v => v.ready, 15);
   const heavy = drawn(session);
-  assert.match(heavy, /1962\.0 ÷ 200 kg = 9\.81 m\/s²/); assert.match(heavy, /196\.2 ÷ 20 kg = 9\.81 m\/s²/);
+  assert.match(heavy, /1962\.0 ÷ 200 kg = 9\.81 N per kilogram/); assert.match(heavy, /196\.2 ÷ 20 kg = 9\.81 N per kilogram/);
   assert.ok(Math.abs(1962 / 200 - 9.81) < 1e-9 && Math.abs(196.2 / 20 - 9.81) < 1e-9);
-  session.act('next'); session.act(session.view().target); session.act(session.view().target); session.act('next');
+  session.act('next'); session.act('next'); session.act('next'); session.act(session.view().target); session.act(session.view().target); session.act('next');
   assert.match(drawn(session), /20°/);
   session.act('pull:up');
   assert.match(drawn(session), /25°/);
@@ -543,6 +560,7 @@ test('review fixes: slow motion ends with its step; Show me presses the control;
   session.act('weight:light');
   assert.equal(session.view().help, 0, 'pressing the weight already hanging is not a failed try');
   session.act('weight:heavy'); session.act('guess:2'); session.act('release'); until(session, x => x.ready, 15); session.act('next');
+  for (let i = 0; i < 2; i++) session.act('next');
   session.act(session.view().target); session.act(session.view().target); session.act('next');
   playFree(session); session.act('next');
   session.act('hook:25'); session.act('release'); until(session, x => x.ready, 15);
@@ -554,7 +572,7 @@ test('review fixes: in the short-string try a weight press keeps the comparison 
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-short');
   session.act('weight:heavy');
-  assert.match(session.view().brian.text, /this test changes only the string, so the weight must stay at 20 kg\. Press 4/);
+  assert.match(session.view().brian.text, /this test changes only the string, so the weight must stay at 20 kg\. Click the 20 kg weight to put it back\./);
   session.act('hook:5');
   assert.equal(session.view().cards.length, 0, 'heavy on 5 m changes two things, so no guess yet');
   assert.equal(session.view().target, 'weight:light', 'and the prompt now asks for the weight, not the hook');
@@ -755,8 +773,8 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-short');
   const v = session.view(), [hx, hy] = targetPoint(v, 'hook:5');
-  assert.match(hoverInfo(v, hx, hy), /5 m hook\. Click it, or press 1/);
-  assert.match(hoverInfo(v, ...targetPoint(v, 'weight:heavy')), /200 kg weight\. Click it, or press 5/);
+  assert.match(hoverInfo(v, hx, hy), /5 m hook\. Click it to hang the weight here\./);
+  assert.match(hoverInfo(v, ...targetPoint(v, 'weight:heavy')), /200 kg weight\. Click it to hang it\./);
   const grey = v.pendulums.find(p => p.ghost);
   assert.match(hoverInfo(v, ...bobPoint(grey)), /grey weight/);
   assert.match(hoverInfo(v, grey.x - 30, 50), /stopwatch/i);
@@ -1505,4 +1523,79 @@ test('fitBoard fits a board that names no size exactly as it always did, and fit
   assert.deepEqual(fitBoard(ctx, 1300, 600, () => {}, BOARD), fitBoard(ctx, 1300, 600, () => {}), 'naming the usual size changes nothing');
   assert.deepEqual(fitBoard(ctx, 1320, 680, () => {}, {width: 1320, height: 680}), {scale: 1, left: 0, top: 0});
   assert.deepEqual(fitBoard(ctx, 1000, 800, () => {}, {width: 1320, height: 680}), {scale: 1000 / 1320, left: 0, top: (800 - 680 * 1000 / 1320) / 2});
+});
+
+// Kyle's review of Rust (19 November 2026, docs/LAB.md 13.2) applied to Pendulums (LAB-REVIEW-FLYING).
+test('Pendulums: no hedging, no “sum” for a formula, no key labels, and no free-fall maths for a weight on a string', () => {
+  const texts = [];
+  const collect = v => texts.push(v.say, v.prompt, ...v.hints, ...v.cards.map(c => c.label), ...(v.ideas ?? []).map(i => i.text), ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]), ...(v.table ?? []).map(r => r.label));
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  STEPS.forEach((step, i) => { session.act(`go:${i}`); run(session, 12); collect(session.view()); });
+  const full = createClassroomSession(lesson);
+  playThrough(full, {check: v => collect(v)});
+  for (const id of ['check-slowest', 'check-heavy', 'check-settle']) for (const answer of [0, 1, 2]) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id); s.act(`answer:${answer}`); texts.push(s.view().brian.text); collect(s.view());
+  }
+  const wrongs = createClassroomSession(lesson);
+  playThroughTo(wrongs, 'try-short');
+  for (const press of ['weight:heavy', 'hook:25', 'hook:15']) { wrongs.act(press); texts.push(wrongs.view().brian.text); }
+  wrongs.act('weight:light'); wrongs.act('hook:5'); wrongs.act('guess:1'); wrongs.act('release'); until(wrongs, v => v.ready, 15); texts.push(wrongs.view().brian.text);
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  collect(job.view()); job.act('hook:5'); job.act('release'); until(job, v => v.lastTry, 15); texts.push(job.view().brian.text);
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  collect(free.view()); free.act('release'); until(free, x => x.keys.Space === 'release', 15); texts.push(free.view().brian.text); free.act('pull:down'); texts.push(free.view().brian.text);
+  const all = [...texts, ...lesson.words.map(w => w.meaning), ...KEY_IDEAS.map(i => i.text)].filter(Boolean).join('\n').replace(/Tell me more|‹more›/g, '');
+  const faults = [/\bin this game\b/i, /\bthis game\b/i, /\ba simplification\b/i, /\bthe sums?\b/i, /\bsums\b/i, /\bthis sum\b/i, /\bpress [0-9↑↓←→WASD]\b/i, /\bpress (Space|Enter|Return)\b/i, /\bor press\b/i,
+    /\breal pendulum\b/i, /speeding up = \(weight × g\)/, /\bspeeds up (at|by) 9\.81/i, /9\.81 m\/s² .*(weight|speeds)/i, /\bsimply\b/i];
+  for (const f of faults) assert.doesNotMatch(all, f, `the lesson says ${all.match(f)?.[0]}`);
+  assert.match(all, /N per kilogram/);
+});
+
+test('Pendulums: the symbols are defined in steps of their own before the formula, each in three sentences or fewer, and the formula step names its task first', () => {
+  const at = id => STEPS.findIndex(s => s.id === id);
+  assert.ok(at('word-pi') < at('word-gravity') && at('word-gravity') < at('try-formula') && at('try-heavy') < at('word-pi'));
+  const session = createClassroomSession(lesson);
+  for (const id of ['word-pi', 'word-gravity', 'try-formula']) {
+    playThroughTo(session, id);
+    const v = session.view(), words = v.say.split(/\s+/).length;
+    assert.ok(words <= 105, `${id} says ${words} words in all`);
+  }
+  playThroughTo(session, 'try-formula');
+  const v = session.view();
+  assert.ok(v.say.indexOf('Change the hook') < v.say.indexOf('square root is there because'), 'the task comes before the reason');
+  assert.ok(!v.say.includes('Greek letter'), 'π is defined in its own step');
+  assert.match(v.prompt, /^The string is 15 m and the weight is 20 kg\. Change the hook, then change the weight, and watch which one changes T\.$/);
+});
+
+test('Pendulums: Watch again restarts the wonder, the two lengths and the check swings from the start', () => {
+  const session = createClassroomSession(lesson);
+  run(session, 6); session.act('replay'); run(session, .1);
+  assert.ok(session.view().time < .3 || session.view().ready, 'the wonder starts again');
+  playThroughTo(session, 'watch-lengths');
+  until(session, v => v.ready, 15);
+  assert.ok(session.view().pendulums.every(p => p.stopwatch?.done), 'both swings have finished');
+  session.act('replay'); run(session, 1);
+  assert.ok(session.view().pendulums.every(p => !p.stopwatch?.done && (p.stopwatch?.elapsed ?? 0) < 1), 'both swings start again together');
+  const check = createClassroomSession(lesson);
+  playThroughTo(check, 'check-slowest');
+  check.act('answer:1'); run(check, 4);
+  assert.ok(check.view().pendulums.every(p => p.stopwatch?.elapsed > 2));
+  check.act('replay'); run(check, .2);
+  assert.ok(check.view().pendulums.every(p => (p.stopwatch?.elapsed ?? 0) < 1), 'the check swings start again');
+});
+
+test('Pendulums: Let go has a button that shows its key, so no prompt has to name Space', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-pendulum');
+  assert.deepEqual(session.view().buttons, [{action: 'release', label: 'Let go', key: 'Space'}]);
+  assert.doesNotMatch(session.view().prompt, /Space/);
+  session.act('release');
+  assert.deepEqual(session.view().buttons, []);
+  for (const id of ['try-free', 'alone']) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id);
+    assert.deepEqual(s.view().buttons.map(b => b.key), ['Space'], `${id} offers Let go`);
+  }
 });

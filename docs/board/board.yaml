@@ -422,17 +422,6 @@ tasks:
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
 
-  - id: LAB-REVIEW-FLYING
-    title: "Lab: Lift, Pendulums, Air and altitude, and Headings meet Kyle's rules of 19 November"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude (Director) with a Sonnet helper, since 19 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/LAB-REVIEW-FLYING.md"
-
   - id: LAB-REVIEW-TUNNEL
     title: "Lab: Downforce, Grip, Braking and Suspension meet Kyle's rules of 19 November"
     owner: "claude"
