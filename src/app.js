@@ -2018,6 +2018,26 @@ export class App {
     clearScablandsTownLayout();
     return false;
   }
+  // HELI-RUSTWALL: FLY from the town's finished Helipad. The Scablands is loaded as the town's drive loads it (so it is drawn
+  // with the town on it), then the helicopter visit runs there with the land handed to the session as plain inputs. What the
+  // visit does goes back to the town as commands, and the town is saved when the visit ends.
+  async startTownHeli(town) {
+    if(this._switches().enabled('wasteland-town')!==true||!this.heliAvailable()||!town||!this.isYardHomeActive())return false;
+    const [{createTownWorld},{setScablandsTownLayout,clearScablandsTownLayout},townHeli,{dispatchTownCommand},{saveTownAfterFlight}]=await Promise.all([
+      import('./town/town-world.js'),import('./world/scablands-ground.js'),import('./town/town-heli.js'),import('./town/town-commands.js'),import('./town/town-page-store.js')]);
+    if(townHeli.scablandsVisitRefusal(town,{lessonsDone:heliOf(this.profile).lessons}))return false;
+    const layout=createTownWorld(town);
+    setScablandsTownLayout(layout);
+    const job={id:'town-drive',kind:'town-drive',seed:town.seed??0,steps:[],layout};
+    if(!this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job})){clearScablandsTownLayout();return false;}
+    this._townHeli={town,commands:events=>{for(const command of townHeli.townCommandsForHeliEvents(events))dispatchTownCommand(town,command);},
+      save:()=>saveTownAfterFlight(town),clear:clearScablandsTownLayout};
+    const st=this.duel.state;
+    st.status='menu';
+    if(this.visitHeli({scablands:townHeli.scablandsHeliInputs(town)}))return true;
+    this._townHeli=null;this.returnToMenu();clearScablandsTownLayout();
+    return false;
+  }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.
@@ -2086,6 +2106,9 @@ export class App {
     this._cancelStoryThanks();
     this.heliSession = null; this.heliMapOpen = false; // MAP-VIEW
     const left = session.leave();
+    // HELI-RUSTWALL: the visit's last word to the town (the fire still burning, the map seen), then the town is saved.
+    const town = this._townHeli;
+    if (town) { this._townHeli = null; town.commands(session.takeEvents()); town.clear(); void town.save().catch(error => console.error('The town could not be saved after the flight:', error)); }
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
     this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {}), ...(left.lab ? {lab: left.lab} : {}), ...(left.story ? {story: left.story} : {})};
     this._saveProfile();
@@ -2166,7 +2189,7 @@ export class App {
     return !!this.player && this._switches().enabled('helicopter') === true;
   }
   // From the main menu to the helipad: where the helicopter last stood, else Tremblant Woods (HELI-JOB-CLARITY).
-  visitHeli({mode = 'assisted'} = {}) {
+  visitHeli({mode = 'assisted', scablands = null} = {}) {
     if (this.duel.state.status !== 'menu' || !this.heliAvailable()) return false;
     this._refreshPlayer();
     this._storyPending = null; this._storyLeave();
@@ -2197,6 +2220,7 @@ export class App {
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       // SKI-VIEW: heli-skiing needs Summit Run (the session checks that too).
       heliSkiingEnabled: this._switches().enabled('heli-skiing') === true,
+      scablands, // HELI-RUSTWALL: the Scablands' land when flown from the town's Helipad (startTownHeli), else null
       wildlife: wildlifeRules, wildlifeApproved, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
@@ -2208,6 +2232,8 @@ export class App {
         this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {}), ...(profile.lab ? {lab: profile.lab} : {}), ...(profile.story ? {story: profile.story} : {})};
         this._saveProfile();
       }});
+    // HELI-RUSTWALL: in the Scablands the game is already on the land (startTownHeli); it shows the helicopter now.
+    if (scablands) { this.duel.state.status = 'heli'; this.duel.state.heliVisit = {courseId: 'scablands'}; }
     this.setInputContext(null);
     this._heliEvents(this.heliSession.start());
     return true;
@@ -2228,6 +2254,7 @@ export class App {
         this._storyThanks = this._storyTimer(() => { this._storyThanks = null; this._storySay('story.kogane.daichi.thanks'); }, 3200);
       }
     }
+    this._townHeli?.commands(events);
     if (events.length) this.heliLog = [...this.heliLog, ...events].slice(-40);
     if (events.length) this.duel.emit({heli: true});
   }

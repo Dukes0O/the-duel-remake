@@ -266,6 +266,54 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       pump.model.rotation.y = Math.atan2(ski.pump.pad.x - ski.pump.x, ski.pump.pad.z - ski.pump.z);
     }
   }
+  // HELI-RUSTWALL: the Scablands' marks (view.scablands). While the Ridge burns, the fire crew's folding dip tank, an open
+  // orange tank 6.4 m across with its water showing, and the fuel truck's pad with the pump; and always the yellow 12 m ring
+  // at Old Tam's hut, where a lifted load is set down. Drawing only.
+  const scMarks = new THREE.Group();
+  scMarks.name = 'Scablands marks';
+  group.add(scMarks);
+  const tankWall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40, 1, true),
+    new THREE.MeshStandardMaterial({color: 0xe86a1c, roughness: .8, side: THREE.DoubleSide}));
+  const tankWater = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshStandardMaterial({color: 0x3f7fa6, roughness: .2}));
+  tankWater.rotation.x = -Math.PI / 2;
+  const tank = new THREE.Group();
+  tank.name = 'Dip tank';
+  tank.add(tankWall, tankWater);
+  const hutRing = ring(THREE, 12, 0xf2c14e), fuelRing = padRing(0xf2c14e);
+  hutRing.name = 'Old Tam hut circle'; fuelRing.name = 'Ridge fuel truck pad';
+  scMarks.add(tank, hutRing, fuelRing);
+  const fuelPump = {status: 'idle', model: null};
+  function scablandsDraw(sc) {
+    scMarks.visible = !!sc;
+    if (!sc) return;
+    hutRing.position.set(sc.hut.x, sc.hut.y + .15, sc.hut.z);
+    tank.visible = !!sc.tank;
+    const water = sc.water?.find(body => body.kind === 'dipTank');
+    if (sc.tank && water) {
+      const depth = water.surface - sc.tank.y;
+      tank.position.set(sc.tank.x, sc.tank.y, sc.tank.z);
+      tankWall.scale.set(sc.tank.radius, depth + .2, sc.tank.radius); tankWall.position.y = (depth + .2) / 2;
+      tankWater.scale.setScalar(sc.tank.radius - .05); tankWater.position.y = depth;
+    }
+    fuelRing.visible = !!sc.fuel;
+    if (!sc.fuel) { if (fuelPump.model) fuelPump.model.visible = false; return; }
+    fuelRing.position.set(sc.fuel.x, sc.fuel.y + .15, sc.fuel.z);
+    if (fuelPump.status === 'idle') {
+      fuelPump.status = 'loading';
+      load(SKI_PUMP_URL).then(model => {
+        if (disposed) return;
+        model.name = 'Ridge fuel truck pump';
+        model.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
+        fuelPump.model = model; fuelPump.status = 'ready';
+        scMarks.add(model);
+      }).catch(error => { fuelPump.status = 'error'; console.warn(`The Ridge fuel pump did not load: ${String(error?.message || error)}`); });
+    }
+    if (fuelPump.model) {
+      fuelPump.model.visible = true;
+      // At the edge of the pad, beside the tank.
+      fuelPump.model.position.set(sc.fuel.x + sc.fuel.radius * .75, sc.fuel.y, sc.fuel.z);
+    }
+  }
   let spin = 0;
   const points = cableGeometry.attributes.position;
 
@@ -297,7 +345,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         if (item.own) continue;
         const mesh = otherMesh(item);
         if (!mesh) continue;
-        seen.add(item.id);
+        seen.add(item.lift ? `lift:${item.lift}` : item.id);
         mesh.visible = true;
         mesh.position.set(item.x, item.y - .7, item.z);
         mesh.rotation.set(0, item.heading || 0, 0);
@@ -342,6 +390,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       labTargetsDraw(view.challenge?.targets, h); // LAB-TARGETS
       // SKI-FINISH: not while a run is skied, so the ski scene's backdrop (painted from this world) never shows the marks.
       skiDraw(view.courseId === 'summit-run' && !view.ski?.run ? view.ski : null, h);
+      scablandsDraw(view.scablands ?? null); // HELI-RUSTWALL
       fire.update(view, {dt});
       if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, vehicleAssets, ...(rescueLoad ? {load: rescueLoad} : {})});
       rescue?.update(view, {dt});

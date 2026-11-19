@@ -155,6 +155,21 @@ export function heliFlown(town) {
   return {ok: true, already: false, message: 'Kestrel One came over the wall for the first time.'};
 }
 
+// What a helicopter visit's events ask of the town, as town commands (the app applies them as they come and saves the town
+// when the visit ends). Only the last word on a fire still burning is kept: it is the whole record.
+export function townCommandsForHeliEvents(events = []) {
+  const commands = [];
+  let burning = null;
+  for (const event of Array.isArray(events) ? events : []) {
+    if (event?.type === 'scablandsFlown') commands.push({type: 'heliFlown'});
+    else if (event?.type === 'scablandsLift') commands.push({type: 'heliLiftDone', liftId: event.liftId});
+    else if (event?.type === 'scablandsScouted') commands.push({type: 'heliScout', chunks: event.chunks});
+    else if (event?.type === 'scablandsFire' && event.state === 'burning') burning = {type: 'heliRidgeFire', state: 'burning', fire: event.fire};
+    else if (event?.type === 'scablandsFire') { burning = null; commands.push({type: 'heliRidgeFire', state: event.state}); }
+  }
+  return burning ? [...commands, burning] : commands;
+}
+
 registerTownCommand('heliSendDune', town => sendDuneToRidge(town));
 registerTownCommand('heliRidgeFire', (town, command) => heliRidgeFire(town, command));
 registerTownCommand('heliLiftDone', (town, command) => heliLiftDone(town, command));
