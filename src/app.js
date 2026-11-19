@@ -10,7 +10,7 @@ import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {unstuckInput} from './demo-unstuck.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
-import {settleCup} from './progression.js';
+import {isSavedCarId, settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
@@ -79,8 +79,9 @@ import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnd
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
 import {NIGHT_2_ID, night2Job, night2Page} from './world/jobs/night-2.js';
-import {settleNight2} from './story/night-2-save.js';
-import {playLedgerPageTurn} from './story/ledger-ui.js';
+import {keepNight2Replay, settleNight2} from './story/night-2-save.js';
+import {playLedgerChoice, playLedgerPageTurn} from './story/ledger-ui.js';
+import {savedLedger} from './story/ledger-save.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
@@ -123,8 +124,7 @@ function validWarlordRegistry(registry) {
   for (const player of registry.players) {
     const profile = player?.profile, name = playerName(player?.name);
     const carsValid = profile?.version === 1 && profile.unlockedCars === undefined ||
-      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(id =>
-        typeof id === 'string' && Object.hasOwn(CARS, id));
+      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(isSavedCarId);
     const careerValid = profile?.version === 1 && profile.wasteland === undefined ||
       record(profile?.wasteland) && profile.wasteland.version === 1;
     if (!record(player) || typeof player.id !== 'string' || !/^[\w-]{1,80}$/.test(player.id) ||
@@ -1513,15 +1513,20 @@ export class App {
     if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
     const chapter = state.arena.worldJob?.night2;
     if (chapter) {
-      if (!chapter.page || result.winnerId !== 'player') return false;
+      if (!chapter.completed || result.winnerId !== 'player' || result.night2Page || result.night2Replay) return false;
       const previous = this.profile;
       const updated = settleNight2(previous, chapter);
+      if (updated.replay) {
+        result.night2Replay = updated.replay;
+        playLedgerPageTurn(this.audio);
+        return false;
+      }
       if (updated.changed) {
         this.profile = updated.profile;
         result.settlementSaved = this._saveShopProfile(previous);
       }
-      result.night2Page = updated.kept ? night2Page(updated.kept) : chapter.page;
-      result.night2SaveIssue = updated.kept ? 'This replay was not kept.' : updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
+      result.night2Page = chapter.page;
+      result.night2SaveIssue = updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
       playLedgerPageTurn(this.audio);
       return result.settlementSaved;
     }
@@ -1557,6 +1562,69 @@ export class App {
     Object.assign(result,{scrapEarned:settled.scrapEarned,
       scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
       hold:settled.hold,settlementSaved:true});
+    return true;
+  }
+  chooseNight2Replay(action) {
+    const state = this.duel.state, result = state.arena?.result;
+    const replay = result?.night2Replay, chapter = state.arena?.worldJob?.night2;
+    if (state.status !== 'arena_result' || !replay || !chapter?.completed ||
+        !this.runId || this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId) return false;
+    if (action === 'review' && !replay.confirming) {
+      playLedgerChoice(this.audio);
+      replay.confirming = true;
+      replay.issue = '';
+      return true;
+    }
+    if (action === 'cancel' && replay.confirming) {
+      replay.confirming = false;
+      replay.issue = '';
+      return true;
+    }
+    if (action === 'keep' && !replay.confirming) {
+      playLedgerChoice(this.audio);
+      this._refreshPlayer();
+      result.night2Page = night2Page(savedLedger(this.profile));
+    } else if (action === 'replace' && replay.confirming) {
+      const durable = readWarlordRegistry();
+      const registry = durable.registry;
+      const owner = registry?.players.find(player => player.id === this._runPlayerId);
+      if (durable.status !== 'ready' || !owner || registry.activePlayerId !== owner.id) {
+        replay.issue = 'Your saved telling could not be opened. Try again.';
+        return false;
+      }
+      let profile = owner.profile;
+      if (this.profileSaved === false) {
+        // Keep live earnings from a failed save only when the stored owner is
+        // still the last verified copy, just as in Warlord settlement.
+        const verified = this._warlordVerifiedOwner;
+        if (verified?.ownerId !== owner.id || verified.snapshot !== JSON.stringify(owner.profile)) {
+          replay.issue = 'Your progress could not be saved with this telling. Try again.';
+          return false;
+        }
+        profile = this.profile;
+        const live = {...registry, players: registry.players.map(player =>
+          player.id === owner.id ? {...player, profile} : player)};
+        if (!validWarlordRegistry(live)) {
+          replay.issue = 'Your progress could not be saved with this telling. Try again.';
+          return false;
+        }
+      }
+      const updated = keepNight2Replay(profile, chapter, replay.expected);
+      if (!updated.ok) {
+        replay.issue = updated.reason;
+        return false;
+      }
+      const candidate = replacePlayerProfile(registry, owner.id, updated.profile);
+      if (!savePlayers(candidate)) {
+        replay.issue = 'The saved telling is still in place. Try again.';
+        return false;
+      }
+      this._adoptWarlordRegistry(candidate, true);
+      result.night2Page = night2Page(savedLedger(this.profile));
+      result.settlementSaved = true;
+    } else return false;
+    if (result.night2Page) result.night2Page.saltScrap = 0;
+    delete result.night2Replay;
     return true;
   }
   _settleFuelResult(event, state) {

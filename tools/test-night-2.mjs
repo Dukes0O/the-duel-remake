@@ -27,6 +27,7 @@ import {RIDER_RULE} from '../src/world/jobs/rider-rule.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {placeWashSurroundReview, startWashSurroundReview} from './night-2-wash-review.js';
+import {PLAYERS_KEY, createPlayer, loadPlayers, replacePlayerProfile, savePlayers, selectPlayer} from '../src/progression.js';
 
 const seedFor = (name, chance, outcome) => {
   for (let seed = 1; seed < 10_000; seed++)
@@ -475,7 +476,8 @@ globalThis.localStorage = {getItem: key => memory.get(key) ?? null, setItem: (ke
 globalThis.cancelAnimationFrame = () => {};
 const app = new App();
 app.audio.unlock = () => {};
-app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true}};
+app.profile = {...app.profile, unlockedCars: [...app.profile.unlockedCars, 'falcone_vasca'],
+  wasteland: {...app.profile.wasteland, discoveredGate: true}};
 assert(app._saveProfile());
 app.duel.featureFlags = flags;
 const wall = yardHomeScreen({profile: app.profile, playerName: app.player.name, escapeHTML: String, panel: 'cards', featureFlags: flags});
@@ -617,24 +619,125 @@ assert(seen > 0, 'The sprint starts from a visible Dace');
 assert(Math.hypot(firstDace.x - sites.store.position.x, firstDace.z - sites.store.position.z) < 1);
 console.log(`PASS Night 2 chase: real route caught Dace, ${seen} visible steps and ${hidden} last-seen steps.`);
 
-// A completed replay uses the original installed profile and a different
-// branch balance. The result screen receives the page from the saved ledger.
+// Use the same installed player for each replay through the ordinary result path.
+const firstSave = memory.get(PLAYERS_KEY);
 const keptBefore = savedLedger(app.profile);
-assert(app.returnToYard());
-app.advance(8);
-assert(app.startNight2());
-const replay = chapter(app.seed, app.duel);
-replay.openGate();
-replay.say(NIGHT_2_CHOICES[3].words);
-replay.say('Say nothing');
-replay.advance('tower');
-replay.say('Watch');
-replay.advance('close');
-replay.finish(4);
-assert.equal(replay.duel.state.arena.result.night2Page.embers, keptBefore.stocks.embers);
-assert.equal(replay.duel.state.arena.result.night2SaveIssue, 'This replay was not kept.');
+function reachReplayClose(tellMall = false) {
+  assert(app.returnToYard());
+  app.advance(8);
+  assert(app.startNight2());
+  const replay = chapter(app.seed, app.duel);
+  replay.openGate();
+  replay.say(NIGHT_2_CHOICES[3].words);
+  replay.say(tellMall ? NIGHT_2_SCENES.refuse.choices[0].words : 'Say nothing');
+  replay.advance('tower');
+  replay.say('Watch');
+  replay.advance('close');
+  return replay;
+}
+reachReplayClose();
+assert.equal(app.chooseNight2Replay('replace'), false);
+assert(app.leaveWorldJob());
+assert.equal(app.duel.state.arena.result.night2Replay, undefined);
+assert.equal(memory.get(PLAYERS_KEY), firstSave);
+
+const firstReplay = reachReplayClose();
+firstReplay.finish(4);
+assert(firstReplay.duel.state.arena.result.night2Replay.differences.some(({key, kept, played}) =>
+  key === 'embers' && kept === keptBefore.stocks.embers && played === 3));
+assert.equal(memory.get(PLAYERS_KEY), firstSave);
+assert.equal(savedLedger(new App().profile).stocks.embers, keptBefore.stocks.embers, 'reload before choice');
+assert(app.chooseNight2Replay('keep'));
+assert.equal(firstReplay.duel.state.arena.result.night2Page.embers, keptBefore.stocks.embers);
+assert.equal(memory.get(PLAYERS_KEY), firstSave);
+
+const secondReplay = reachReplayClose();
+secondReplay.finish(4);
+assert.equal(app.chooseNight2Replay('replace'), false, 'require confirmation');
+assert(app.chooseNight2Replay('review'));
+assert.equal(memory.get(PLAYERS_KEY), firstSave);
+assert(app.chooseNight2Replay('cancel'));
+assert.equal(memory.get(PLAYERS_KEY), firstSave);
+assert(app.chooseNight2Replay('review'));
+const setItem = localStorage.setItem;
+localStorage.setItem = (key, value) => {
+  if (key === PLAYERS_KEY) throw Error('Temporary write failure');
+  setItem(key, value);
+};
+assert.equal(app.chooseNight2Replay('replace'), false);
+assert.equal(memory.get(PLAYERS_KEY), firstSave);
 assert.deepEqual(savedLedger(app.profile), keptBefore);
-console.log('PASS Night 2 replay: the banked page from the first run remains in view and in the save.');
+assert(secondReplay.duel.state.arena.result.night2Replay.confirming);
+localStorage.setItem = setItem;
+const registry = loadPlayers();
+const invalid = JSON.parse(memory.get(PLAYERS_KEY));
+invalid.players.find(player => player.id === app.player.id).profile.unlockedCars.push('bogus-car');
+const invalidBytes = JSON.stringify(invalid);
+memory.set(PLAYERS_KEY, invalidBytes);
+assert.equal(app.chooseNight2Replay('replace'), false, 'invalid registry never gets normalized and overwritten');
+assert.equal(memory.get(PLAYERS_KEY), invalidBytes);
+const career = {...app.profile, credits: 412, wasteland: {...app.profile.wasteland, scrap: 37}};
+assert(savePlayers(replacePlayerProfile(registry, app.player.id, career)));
+assert(app.chooseNight2Replay('replace'), 'retry after storage failure');
+assert.equal(secondReplay.duel.state.arena.result.night2Page.embers, 3);
+assert.equal(secondReplay.duel.state.arena.result.night2Replay, undefined);
+const refreshed = new App().profile;
+assert.equal(savedLedger(refreshed).stocks.embers, 3);
+assert(refreshed.unlockedCars.includes('falcone_vasca'), 'previously earned car stays owned while its switch is off');
+assert.equal(refreshed.credits, 412);
+assert.equal(refreshed.wasteland.scrap, 37);
+const secondSave = memory.get(PLAYERS_KEY);
+assert.equal(app.chooseNight2Replay('replace'), false);
+assert.equal(memory.get(PLAYERS_KEY), secondSave);
+console.log('PASS Night 2 replay: unfinished, reload, both choices, failed write and retry through the App.');
+
+const ownerId = app.player.id;
+const other = createPlayer(loadPlayers(), 'Second Night 2 player');
+assert(other.ok);
+const otherId = other.registry.activePlayerId;
+assert(savePlayers(selectPlayer(other.registry, ownerId)));
+const liveReplay = reachReplayClose(true);
+liveReplay.finish(4);
+assert(app.chooseNight2Replay('review'));
+const beforeGain = loadPlayers();
+const beforeGainBytes = memory.get(PLAYERS_KEY);
+const rejectSave = (key, value) => {
+  if (key === PLAYERS_KEY) throw Error('Temporary write failure');
+  setItem(key, value);
+};
+localStorage.setItem = rejectSave;
+app.profile = {...app.profile, credits: 427, wasteland: {...app.profile.wasteland, scrap: 53}};
+assert.equal(app._saveProfile(), false);
+assert.equal(app.profileSaved, false);
+assert.equal(memory.get(PLAYERS_KEY), beforeGainBytes);
+const liveBeforeConfirm = app.profile;
+
+localStorage.setItem = setItem;
+const concurrent = replacePlayerProfile(beforeGain, otherId, {...other.player.profile, credits: 553});
+const durableOwner = concurrent.players.find(player => player.id === ownerId).profile;
+assert(savePlayers(replacePlayerProfile(concurrent, ownerId, {...durableOwner, credits: 719})));
+const conflictingBytes = memory.get(PLAYERS_KEY);
+assert.equal(app.chooseNight2Replay('replace'), false, 'never overwrite a changed durable owner while live progress is pending');
+assert.match(liveReplay.duel.state.arena.result.night2Replay.issue, /Try again/);
+assert.equal(memory.get(PLAYERS_KEY), conflictingBytes);
+assert.strictEqual(app.profile, liveBeforeConfirm);
+
+assert(savePlayers(concurrent));
+const verifiedBytes = memory.get(PLAYERS_KEY);
+localStorage.setItem = rejectSave;
+assert.equal(app.chooseNight2Replay('replace'), false);
+assert.strictEqual(app.profile, liveBeforeConfirm);
+assert.equal(memory.get(PLAYERS_KEY), verifiedBytes);
+localStorage.setItem = setItem;
+assert(app.chooseNight2Replay('replace'));
+const afterConfirm = loadPlayers();
+const ownerSaved = afterConfirm.players.find(player => player.id === ownerId).profile;
+assert.equal(ownerSaved.credits, 427);
+assert.equal(ownerSaved.wasteland.scrap, 53);
+assert(savedLedger(ownerSaved).marks.includes('told-walkers-of-mall'));
+assert.deepEqual(afterConfirm.players.find(player => player.id === otherId),
+  concurrent.players.find(player => player.id === otherId));
+console.log('PASS Night 2 replay preserves unsaved live gains and concurrent changes to a second player.');
 
 // Both mounted HUDs read the real arena state. This small DOM adapter records
 // their actual text and visibility without needing a browser or WebGL.

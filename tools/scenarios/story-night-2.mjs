@@ -172,6 +172,63 @@ export const pageFunctions = {
       page?.innerText.includes('What people remember') && !!page.querySelector('.ledger-tonight') &&
       !/Raiding|Watching|Friendly|night-2\/dace-steals/.test(page.innerText);
   },
+  savedBytes: () => {
+    if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only storage is required.');
+    return localStorage.getItem('the-duel-players-v2');
+  },
+  replay: (confirming = false) => {
+    const page = document.querySelector('.story-replay');
+    if (!page) return false;
+    const headings = [...page.querySelectorAll('th')].map(heading => heading.textContent);
+    const focused = document.activeElement?.dataset.action;
+    return headings.join('|') === 'As it stands|This time' &&
+      page.innerText.includes('What people remember') && page.innerText.includes('3 embers in store.') &&
+      page.innerText.includes('2 embers in store.') &&
+      (confirming ? page.innerText.includes('The first telling will be forgotten.') && focused === 'night-2-replay-cancel'
+        : !page.querySelector('.story-replay-warning') && focused === 'night-2-replay-keep');
+  },
+  replayLayout: (width, height, confirming = false) => {
+    const page = document.querySelector('.story-replay');
+    if (!page || innerWidth !== width || innerHeight !== height) return false;
+    const view = page.parentElement.getBoundingClientRect();
+    const panel = page.getBoundingClientRect();
+    const region = page.querySelector('.story-replay-comparison');
+    const controls = page.querySelector('footer').getBoundingClientRect();
+    const overflow = region.scrollHeight > region.clientHeight + 1;
+    const columns = [...region.querySelectorAll('th')].map(th => th.getBoundingClientRect().width);
+    if (panel.left < view.left || panel.top < view.top || panel.right > view.right || panel.bottom > view.bottom ||
+        Math.abs(panel.left + panel.right - view.left - view.right) > 2 ||
+        Math.abs(panel.top + panel.bottom - view.top - view.bottom) > 2 ||
+        controls.bottom > panel.bottom || region.scrollWidth > region.clientWidth + 1 ||
+        Math.abs(columns[0] - columns[1]) > 2 || (width === 1280 && (panel.width < 760 || overflow))) {
+      throw Error('The replay panel or its columns do not fit ' + width + '×' + height);
+    }
+    if (confirming) {
+      const warning = page.querySelector('#ledger-replay-warning');
+      const bounds = warning?.getBoundingClientRect();
+      if (warning?.innerText !== 'The first telling will be forgotten.' || bounds.height <= 0 ||
+          bounds.top < region.getBoundingClientRect().bottom || bounds.bottom > controls.top) {
+        throw Error('The replay warning must stay visible above the confirmation buttons.');
+      }
+    }
+    return true;
+  },
+  replayCopy: () => {
+    const cells = [...document.querySelectorAll('.story-replay td')].map(cell => cell.textContent.trim());
+    return cells.includes('No debt.') && cells.includes('The Walkers: Friendly.') &&
+      !cells.some(cell => cell.startsWith('No debt') && cell !== 'No debt.');
+  },
+  replayScroll: (focus = false) => {
+    const region = document.querySelector('.story-replay-comparison');
+    if (!region) return false;
+    if (focus) region.focus();
+    return region.scrollHeight <= region.clientHeight + 1 || region.scrollTop > 0;
+  },
+  ledgerResult: embers => {
+    const page = document.querySelector('.story-ledger');
+    return window.__qaApp.profile.story?.ledger?.stocks.embers === embers &&
+      !document.querySelector('.story-replay') && page?.innerText.includes(embers + ' embers and');
+  },
 };
 
 export const pageSource = (name, ...args) =>
@@ -193,13 +250,22 @@ export async function run(context) {
   const wait = (name, ...args) => context.waitFor(pageSource(name, ...args), name + ' ' + args.join(' '), 90000);
   const click = async action => { await wait('control', action); await evaluate('control', action, true); };
   const advance = (id, times) => advanceNight2Dialogue(context, id, 'lines', times);
-  await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  async function reachGate(washFight = false) {
-    const flags = 'hidden-road,story-choices,crew-gear,warlord-cards' + (washFight ? ',road-riders' : '');
-    await context.navigate('/tools/menu-check.html?flags=' + flags + '&harness=story-night-2');
-    await wait('ready');
-    await evaluate('prepare', theftSeed);
-    await click('wasteland-visit');
+  const viewport = (width, height) => context.command('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: false});
+  const replayKey = (type, code, windowsVirtualKeyCode, autoRepeat = false) =>
+    context.command('Input.dispatchKeyEvent', {type, code, key: code === 'Space' ? ' ' : code, windowsVirtualKeyCode, autoRepeat,
+      // A real keyboard sends the character with the press; without it Chrome never activates the focused button.
+      ...(type === 'keyDown' && code === 'Enter' ? {text: '\r'} : type === 'keyDown' && code === 'Space' ? {text: ' '} : {})});
+  await viewport(1280, 720);
+  async function reachGate({freshPlayer = true, washFight = false} = {}) {
+    if (freshPlayer) {
+      const flags = 'hidden-road,story-choices,crew-gear,warlord-cards' + (washFight ? ',road-riders' : '');
+      await context.navigate('/tools/menu-check.html?flags=' + flags + '&harness=story-night-2');
+      await wait('ready');
+      await evaluate('prepare', theftSeed);
+      await click('wasteland-visit');
+    } else {
+      await click('arena-yard');
+    }
     await click('yard-cards');
     await click('story-night-2');
     await advance('hearth', 4);
@@ -257,6 +323,61 @@ export async function run(context) {
   await wait('ledger');
   await context.screenshot('night-2-ledger');
 
+  const firstSave = await evaluate('savedBytes');
+  async function finishRefusal(holdEnter = false) {
+    await reachGate({freshPlayer: false});
+    await gateOptions();
+    await evaluate('choose', "I can't.");
+    await advance('refuse', 4);
+    await wait('step', 'refuse', 'options');
+    await evaluate('choose', 'Say nothing');
+    await advance('tower', 1);
+    await wait('step', 'tower', 'options');
+    await evaluate('choose', 'Watch');
+    await advanceNight2Dialogue(context, 'tower-outcome', 'thoughts', 1);
+    if (holdEnter) {
+      await context.waitFor(pageSource('renderedTurn', 'close', 'lines'), 'closing line', 90000);
+      await replayKey('keyDown', 'Enter', 13);
+    } else await advance('close', 1);
+    await wait('replay');
+    if (await evaluate('savedBytes') !== firstSave) throw Error('The replay wrote before a choice.');
+  }
+  await finishRefusal(true);
+  await replayKey('keyDown', 'Enter', 13, true);
+  await replayKey('keyUp', 'Enter', 13);
+  if (!await evaluate('replay')) throw Error('Held Enter consumed the replay choice.');
+  await wait('replayLayout', 1280, 720);
+  if (!await evaluate('replayCopy')) throw Error('The comparison did not show the plain difference in debt and word.');
+  await context.screenshot('night-2-replay-compare');
+  await replayKey('keyDown', 'Enter', 13);
+  await replayKey('keyUp', 'Enter', 13);
+  await wait('ledgerResult', 2);
+  if (await evaluate('savedBytes') !== firstSave) throw Error('Keep how it stands changed the save.');
+
+  await finishRefusal();
+  await click('night-2-replay-review');
+  await wait('replay', true);
+  await wait('replayLayout', 1280, 720, true);
+  await viewport(420, 380);
+  await wait('replayLayout', 420, 380, true);
+  await evaluate('replayScroll', true);
+  await replayKey('keyDown', 'ArrowDown', 40);
+  await replayKey('keyUp', 'ArrowDown', 40);
+  await wait('replayScroll');
+  await replayKey('keyDown', 'Tab', 9);
+  await replayKey('keyUp', 'Tab', 9);
+  await viewport(1280, 720);
+  await wait('replayLayout', 1280, 720, true);
+  await wait('replay', true);
+  if (await evaluate('savedBytes') !== firstSave) throw Error('The replay wrote before confirmation.');
+  await context.screenshot('night-2-replay-confirmation');
+  await replayKey('keyDown', 'Tab', 9);
+  await replayKey('keyUp', 'Tab', 9);
+  await replayKey('keyDown', 'Space', 32);
+  await replayKey('keyUp', 'Space', 32);
+  await wait('ledgerResult', 3);
+  if (await evaluate('savedBytes') === firstSave) throw Error('The replacement was not saved.');
+
   await reachGate();
   await gateOptions();
   await evaluate('choose', 'Come inside.');
@@ -278,7 +399,7 @@ export async function run(context) {
   await wait('step', 'at-hearth', 'lines');
   await context.screenshot('night-2-back-at-the-hearth');
 
-  await reachGate(true);
+  await reachGate({washFight: true});
   await gateOptions();
   await evaluate('choose', "I can't.");
   await advance('refuse', 4);

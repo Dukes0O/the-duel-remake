@@ -1,5 +1,5 @@
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow, plainStockChange} from '../../story/ledger.js';
-import {NIGHT_2_EFFECTS, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
+import {NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
 import {sweepObstacle} from '../../collision.js';
 import {createJobSolidGrid} from '../scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
@@ -215,7 +215,7 @@ export function enterNight2Step(worldJob) {
   dressing(chapter, step);
   if (step.id === 'chase') beginChase(worldJob);
   if (step.id === 'gate') record(chapter, 'meet-walkers',
-    presentPeople(['rell', 'dace', 'wim'], 'You met at Tin Town’s gate.'));
+    presentPeople(['rell', 'dace', 'wim'], NIGHT_2_GATE_ENCOUNTER));
   if (['theft', 'whistle', 'lamp', 'tower'].includes(step.id)) chapter.night = true;
   if (step.id === 'salt' || step.id === 'escaped') {
     chapter.night = false;
@@ -303,7 +303,10 @@ export function routeNight2(worldJob, previous, result, cue, wrecked = false) {
   result.done = id == null;
   result.stepState = {};
   result.events = result.events.filter(event => event.type !== 'done');
-  if (result.done) result.events.push({type: 'done'});
+  if (result.done) {
+    chapter.completed = step.id === 'close';
+    result.events.push({type: 'done'});
+  }
 }
 
 function metres(path, from) {

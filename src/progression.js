@@ -148,6 +148,9 @@ export function createProfile() {
     activeRace: null
   };
 }
+// Gated earned cars stay owned while their catalog entry is disabled.
+export const isSavedCarId = car => typeof car === 'string' && (car === 'falcone_vasca' || Object.hasOwn(CARS, car));
+
 export function normalizeProfile(value) {
   if (!value || typeof value !== 'object' || ![1, 2].includes(value.version))
     return createProfile();
@@ -161,10 +164,7 @@ export function normalizeProfile(value) {
   profile.unlockedCars = [
     ...new Set([
       ...FREE_CARS,
-      ...(Array.isArray(value.unlockedCars)
-        // Gated earned cars stay owned while their catalog entry is disabled.
-        ? value.unlockedCars.filter(car => car === 'falcone_vasca' || Object.hasOwn(CARS, car))
-        : [])
+      ...(Array.isArray(value.unlockedCars) ? value.unlockedCars.filter(isSavedCarId) : [])
     ])
   ];
   for (const car of profile.unlockedCars) profile.upgrades[car] = getUpgradeLevels(value, car);
