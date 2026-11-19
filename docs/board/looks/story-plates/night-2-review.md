@@ -16,7 +16,7 @@ The stage exports the game's detailed and coarse ground and road meshes. The Eas
 
 The sheet overlays 32% Blender on the painting. Cyan traces IDs from the same Cycles pass as the base image. Ochre marks 126 corresponding points on the painting. Each person, cart and gate assembly was first matched across a ±46 px search. Local edge matching and native-pixel inspection located individual seams, crowns and contact points. The largest marked displacement was 8.5 px at the right post's front foot. The maxima were 1.4 px for people, 1.0 px for carts and 6.1 px for lamps. In a separate trace through 967 visible sky/terrain columns, the painted ridge lay from 3 px above to 5 px below the Blender ridge. An independent reviewer traced the paint against the actual game's terrain and found a median of 1.1 px and a maximum of 8.9 px over 901 unobstructed columns. The faint road ruts converge toward the people in both views. Their worn edges become broad under the foreground dust. [Native point pairs](../../../../tools/art/story-plates/night-2-registration.csv)
 
-## Claude's verdict (19 November 2026)
+## Claude's verdict (18 November 2026)
 
 The lower right panel is the running game at the plate's camera, at Light the Town's dusk, with the photographed ground on (`scablands-realism`). Without it the ground is plain brown and the lamp pool is missing.
 
