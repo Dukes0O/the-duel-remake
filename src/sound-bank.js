@@ -58,6 +58,8 @@ export const DIG_MACHINE_TONES = Object.freeze({
 export const SOUND_BANK = {
   'story.ledger.open': cue('interface', {flag: 'story-choices', volume: .18, limit: 1,
     layers: [{...noise(2000, .18, .35), endFrequency: 650, attack: .03}, noise(780, .06, .15, 'highpass')]}),
+  'story.ledger.choose': cue('interface', {flag: 'story-choices', volume: .16, limit: 1,
+    layers: [noise(970, .09, .22), tone(180, .075, .08)]}),
   ...Object.fromEntries(Object.entries(DIG_MACHINE_TONES).map(([name, [frequency, type, duration]]) =>
     [name, cue('vehicle', {flag: 'the-dig', layers: [tone(frequency, duration, 0.06, type)]})])),
   // The Deep adapter lazy-loads these only during a submerged visit.

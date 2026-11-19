@@ -259,7 +259,10 @@ export function routeNight2(worldJob, previous, result, cue) {
   result.done = id == null;
   result.stepState = {};
   result.events = result.events.filter(event => event.type !== 'done');
-  if (result.done) result.events.push({type: 'done'});
+  if (result.done) {
+    chapter.completed = step.id === 'close';
+    result.events.push({type: 'done'});
+  }
 }
 
 function metres(path, from) {
