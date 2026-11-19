@@ -1,5 +1,17 @@
 import {bankLedgerHearth, beginLedger, recordLedgerChoice, replaceLedgerNight, savedLedger} from './ledger-save.js';
 import {replayTelling} from './ledger-replay.js';
+import {NIGHT_2_CHOICES, NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER} from './scenes/night-2.js';
+
+// Slice A journaled encounters and debts by key. Later versions add their
+// values, so only the old equivalent authored choices need to supply the text.
+function legacyNight2Value({type, key, choiceId, after}) {
+  if (after !== undefined) return after;
+  if (type === 'met' && choiceId === 'meet-walkers') return NIGHT_2_GATE_ENCOUNTER;
+  if (type !== 'debt') return undefined;
+  const effects = NIGHT_2_CHOICES.find(choice => choice.id === choiceId)?.effects ?? NIGHT_2_EFFECTS[choiceId];
+  const debt = effects?.find(effect => effect.type === type && effect.id === key);
+  return debt ? {...debt, owedBy: debt.owedBy ?? debt.person} : undefined;
+}
 
 // Write the example only on completion. Quit/retry keeps the chapter's
 // transient choices out of the profile, and a replay never awards salt twice.
@@ -7,7 +19,7 @@ export function settleNight2(profile, chapter) {
   if (!chapter.completed) return {ok: false, profile, changed: false, reason: 'Finish the night before keeping it.'};
   const kept = savedLedger(profile);
   const night = chapter.opening.night;
-  const replay = kept && replayTelling(kept, chapter.ledger, night);
+  const replay = kept && replayTelling(kept, chapter.ledger, night, legacyNight2Value);
   if (replay) return {ok: true, profile, changed: false, replay: {
     expected: JSON.stringify(kept), differences: replay.differences,
   }};
@@ -29,5 +41,5 @@ export function settleNight2(profile, chapter) {
 // Confirmation is the only replay write. It never goes through first-night pay.
 export function keepNight2Replay(profile, chapter, expected) {
   if (!chapter.completed) return {ok: false, profile, changed: false, reason: 'Finish the night before keeping it.'};
-  return replaceLedgerNight(profile, chapter.opening.night, chapter.ledger, expected);
+  return replaceLedgerNight(profile, chapter.opening.night, chapter.ledger, expected, legacyNight2Value);
 }

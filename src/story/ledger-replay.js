@@ -1,4 +1,4 @@
-import {ledgerCause, sameLedgerCause} from './ledger.js';
+import {extraHeatTonight, ledgerCause, recordedTellCause} from './ledger.js';
 
 const own = Object.hasOwn;
 const equal = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
@@ -53,7 +53,6 @@ function put(ledger, {slot, key}, value) {
 function beforeOf(change) {
   if (change.type === 'mark' || change.type === 'made') return false;
   if (change.type === 'shareHearth' || change.type === 'debt' || change.type === 'promise') return null;
-  if (change.type === 'word' && change.before === 'Strangers') return null; // Original v1 used the display default.
   return change.before;
 }
 
@@ -96,7 +95,7 @@ export function hasTelling(ledger, night) {
 
 // The later telling keeps its actual decisions, narration and bank. Its dependency
 // note is on the ledger itself and appears until that later night is played again.
-export function replayTelling(saved, played, night) {
+export function replayTelling(saved, played, night, legacyValue) {
   if (!hasTelling(saved, night) || !banked(played, night)) return null;
   const earlier = saved.history.filter(change => change.night < night);
   const later = saved.history.filter(change => change.night > night);
@@ -108,7 +107,8 @@ export function replayTelling(saved, played, night) {
   const bankedLater = new Set(later.filter(change => change.type === 'night' &&
     change.choiceId === 'bank/' + change.night).map(change => change.night));
   const next = structuredClone(saved);
-  const warnings = new Set((saved.toldBeforeChange ?? []).filter(value => value !== night));
+  const priorWarnings = Array.isArray(saved.toldBeforeChange) ? saved.toldBeforeChange : [];
+  const warnings = new Set(priorWarnings.filter(value => Number.isSafeInteger(value) && value !== night));
   const replacement = new Map();
   const differences = [];
 
@@ -119,10 +119,17 @@ export function replayTelling(saved, played, night) {
     const current = valueOf(saved, fact);
     // The first banked Night 2 build shipped key-only encounter and debt changes.
     // Their values are still in the stock ledger or in the next effect's before field.
-    const laterOpening = (following.length ? beforeOf(following[0]) : current);
-    const opening = oldChanges.length ? beforeOf(oldChanges[0]) ?? null
+    const laterOpening = following.length ? beforeOf(following[0]) : current;
+    let opening = oldChanges.length ? beforeOf(oldChanges[0]) ?? null
       : laterOpening === undefined ? beforeOf(newChanges[0]) ?? null : laterOpening;
-    let oldValue = oldChanges.length ? afterOf(oldChanges.at(-1), laterOpening) : opening;
+    // Original v1 used the display default even when no word had been saved.
+    if (fact.slot === 'words' && opening === 'Strangers' &&
+        !earlier.some(change => change.type === 'word' && change.key === fact.key)) opening = null;
+    const oldEnd = oldChanges.at(-1);
+    const matching = oldEnd && newChanges.find(change =>
+      change.type === oldEnd.type && change.choiceId === oldEnd.choiceId);
+    const recovered = oldEnd && (legacyValue?.(oldEnd) ?? matching?.after);
+    let oldValue = oldEnd ? afterOf(oldEnd, recovered ?? laterOpening ?? current) : opening;
     let newValue = opening;
     for (const change of newChanges) {
       const before = newValue;
@@ -139,11 +146,13 @@ export function replayTelling(saved, played, night) {
     differences.push({...fact, kept: oldValue, played: newValue});
     let laterIndex = 0;
     for (const change of later) {
-      const cause = change.type === 'tell' ? change.cause ?? saved.history[change.source] : null;
+      const cause = change.type === 'tell' ? recordedTellCause(saved, change) : null;
       const read = change.type === 'read' ? factOf({type: change.fact, key: change.key}) : factOf(cause ?? {});
       const writesFact = sameFact(factOf(change), id);
+      const heatChanged = fact.slot === 'extraHeatFrom' &&
+        extraHeatTonight(oldValue, change.night) !== extraHeatTonight(newValue, change.night);
       const bank = change.choiceId === 'bank/' + change.night &&
-        (id === 'stocks/embers' || fact.slot === 'extraHeatFrom' ||
+        (id === 'stocks/embers' || heatChanged ||
           fact.slot === 'obligations' && (oldValue?.due === change.night || newValue?.due === change.night));
       const usesValue = writesFact && (['stock', 'roadWord', 'feud', 'settle'].includes(change.type) || change.relative);
       if (!equal(oldValue, newValue) && (bank || usesValue || sameFact(read, id)) &&
@@ -159,13 +168,11 @@ export function replayTelling(saved, played, night) {
   }
 
   next.history = [...earlier, ...newNight.map(change => replacement.get(change) ?? change), ...later];
-  next.history = next.history.map(change => {
-    if (change.type !== 'tell' || change.cause || change.night === night) return change;
-    // Older v1 tells used array offsets. Rebase only their reference, never their prose.
-    const cause = ledgerCause(saved.history[change.source]);
-    const source = next.history.findIndex(item => sameLedgerCause(item, cause));
-    return source === change.source ? change : {...change, source};
-  });
+  // Old tells used array offsets. Save their stable links alongside the journal
+  // so later written records stay byte-for-byte even when a source is removed.
+  const legacyTellCauses = [...earlier, ...later].filter(change => change.type === 'tell' && !change.cause)
+    .map(change => ({tell: ledgerCause(saved.history, saved.history.indexOf(change)), cause: recordedTellCause(saved, change)}));
+  if (legacyTellCauses.length || own(saved, 'legacyTellCauses')) next.legacyTellCauses = legacyTellCauses;
   if (warnings.size || own(saved, 'toldBeforeChange')) next.toldBeforeChange = [...warnings].sort((a, b) => a - b);
   return {ledger: next, differences};
 }

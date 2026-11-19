@@ -110,6 +110,26 @@ export const pageFunctions = {
       page?.innerText.includes('What people remember') && !!page.querySelector('.ledger-tonight') &&
       !/Raiding|Watching|Friendly|night-2\/dace-steals/.test(page.innerText);
   },
+  savedBytes: () => {
+    if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only storage is required.');
+    return localStorage.getItem('the-duel-players-v2');
+  },
+  replay: (confirming = false) => {
+    const page = document.querySelector('.story-replay');
+    if (!page) return false;
+    const headings = [...page.querySelectorAll('th')].map(heading => heading.textContent);
+    const focused = document.activeElement?.dataset.action;
+    return headings.join('|') === 'As it stands|This time' &&
+      page.innerText.includes('What people remember') && page.innerText.includes('3 embers in store.') &&
+      page.innerText.includes('2 embers in store.') &&
+      (confirming ? page.innerText.includes('The first telling will be forgotten.') && focused === 'night-2-replay-cancel'
+        : !page.querySelector('.story-replay-warning') && focused === 'night-2-replay-keep');
+  },
+  ledgerResult: embers => {
+    const page = document.querySelector('.story-ledger');
+    return window.__qaApp.profile.story?.ledger?.stocks.embers === embers &&
+      !document.querySelector('.story-replay') && page?.innerText.includes(embers + ' embers and');
+  },
 };
 
 export const pageSource = (name, ...args) =>
@@ -132,11 +152,15 @@ export async function run(context) {
   const click = async action => { await wait('control', action); await evaluate('control', action, true); };
   const advance = (id, times) => advanceNight2Dialogue(context, id, 'lines', times);
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  async function reachGate() {
-    await context.navigate('/tools/menu-check.html?flags=hidden-road,story-choices,crew-gear,warlord-cards&harness=story-night-2');
-    await wait('ready');
-    await evaluate('prepare', theftSeed);
-    await click('wasteland-visit');
+  async function reachGate(freshPlayer = true) {
+    if (freshPlayer) {
+      await context.navigate('/tools/menu-check.html?flags=hidden-road,story-choices,crew-gear,warlord-cards&harness=story-night-2');
+      await wait('ready');
+      await evaluate('prepare', theftSeed);
+      await click('wasteland-visit');
+    } else {
+      await click('arena-yard');
+    }
     await click('yard-cards');
     await click('story-night-2');
     await advance('hearth', 4);
@@ -182,6 +206,37 @@ export async function run(context) {
   await advance('close', 1);
   await wait('ledger');
   await context.screenshot('night-2-ledger');
+
+  const firstSave = await evaluate('savedBytes');
+  async function finishRefusal() {
+    await reachGate(false);
+    await gateOptions();
+    await evaluate('choose', "I can't.");
+    await advance('refuse', 4);
+    await wait('step', 'refuse', 'options');
+    await evaluate('choose', 'Say nothing');
+    await advance('tower', 1);
+    await wait('step', 'tower', 'options');
+    await evaluate('choose', 'Watch');
+    await advanceNight2Dialogue(context, 'tower-outcome', 'thoughts', 1);
+    await advance('close', 1);
+    await wait('replay');
+    if (await evaluate('savedBytes') !== firstSave) throw Error('The replay wrote before a choice.');
+  }
+  await finishRefusal();
+  await context.screenshot('night-2-replay-compare');
+  await click('night-2-replay-keep');
+  await wait('ledgerResult', 2);
+  if (await evaluate('savedBytes') !== firstSave) throw Error('Keep how it stands changed the save.');
+
+  await finishRefusal();
+  await click('night-2-replay-review');
+  await wait('replay', true);
+  if (await evaluate('savedBytes') !== firstSave) throw Error('The replay wrote before confirmation.');
+  await context.screenshot('night-2-replay-confirmation');
+  await click('night-2-replay-replace');
+  await wait('ledgerResult', 3);
+  if (await evaluate('savedBytes') === firstSave) throw Error('The replacement was not saved.');
 
   await reachGate();
   await gateOptions();

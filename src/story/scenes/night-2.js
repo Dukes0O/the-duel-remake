@@ -18,6 +18,8 @@ const choice = (id, words, effects = [], details) => ({id, words, effects, ...de
 const priced = (id, words, by, effects, details) =>
   choice(id, words, [stock(by), ...effects], {plainStock: 'embers', ...details});
 
+export const NIGHT_2_GATE_ENCOUNTER = 'You met at Tin Town’s gate.';
+
 export const NIGHT_2_QUESTIONS = [
   {id: 'why-ember', words: 'Why not take a light from our hearth?',
     shows: 'Why an ember given is an ember gone',

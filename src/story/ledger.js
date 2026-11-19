@@ -6,6 +6,7 @@ import {FEUD_WORDS, STORY_PEOPLE} from './people.js';
 export const FRIEND_WORDS = Object.freeze(['Cold', 'Wary', 'Strangers', 'Friendly', 'Sworn']);
 export {FEUD_WORDS};
 const stocks = ['embers', 'gas'];
+const readableFacts = ['stock', 'word', 'met', 'mark', 'made', 'debt', 'promise', 'settle', 'feud', 'roadWord', 'shareHearth'];
 const clip = (n, low, high) => Math.max(low, Math.min(high, n));
 
 function requireValue(ok, message) {
@@ -51,14 +52,28 @@ export function causeOf(ledger, type, key = type) {
 }
 
 // Persist a tell's cause without depending on its position in a replaceable night.
-export function ledgerCause(change) {
+export function ledgerCause(history, index) {
+  const change = history[index];
   if (!change) return null;
   const {night, choiceId, type, key} = change;
-  return {night, choiceId, type, key};
+  const occurrence = history.slice(0, index).filter(item =>
+    item.night === night && item.choiceId === choiceId && item.type === type && item.key === key).length;
+  return {night, choiceId, type, key, occurrence};
 }
 
 export function sameLedgerCause(a, b) {
-  return a && b && a.night === b.night && a.choiceId === b.choiceId && a.type === b.type && a.key === b.key;
+  return a && b && a.night === b.night && a.choiceId === b.choiceId && a.type === b.type && a.key === b.key &&
+    a.occurrence === b.occurrence;
+}
+
+export function recordedTellCause(ledger, change) {
+  if (change.cause) return change.cause;
+  if (Array.isArray(ledger.legacyTellCauses)) {
+    const tell = ledgerCause(ledger.history, ledger.history.indexOf(change));
+    const known = ledger.legacyTellCauses.find(item => sameLedgerCause(item?.tell, tell));
+    if (known) return known.cause;
+  }
+  return ledgerCause(ledger.history, change.source);
 }
 
 function stockAfter(count, by) {
@@ -84,8 +99,11 @@ function applyEffect(ledger, e) {
   switch (e.type) {
     // A scene that branches on an earlier fact records the facts it used.
     // The replay can then identify dependent nights even if the scene only spoke.
-    case 'read':
-      return {key: id(e.key), fact: id(e.fact)};
+    case 'read': {
+      requireValue(readableFacts.includes(e.fact), 'Unknown ledger fact.');
+      const key = ['roadWord', 'shareHearth', 'feud'].includes(e.fact) ? e.fact : id(e.key);
+      return {key, fact: e.fact};
+    }
     case 'stock': {
       requireValue(stocks.includes(e.stock), 'Unknown stock.');
       const before = ledger.stocks[e.stock];
@@ -150,9 +168,9 @@ function applyEffect(ledger, e) {
       // The writer supplies what someone actually said, and the line tying it
       // to the decision. No raw marks, effect names or choice IDs reach the page.
       const source = integer(e.source, 0, ledger.history.length - 1);
-      const cause = ledgerCause(ledger.history[source]);
+      const cause = ledgerCause(ledger.history, source);
       if (ledger.history.some(change => change.type === 'tell' &&
-        (change.cause ? sameLedgerCause(change.cause, cause) : change.source === source))) return null;
+        sameLedgerCause(recordedTellCause(ledger, change), cause))) return null;
       return {key: cause.key, source, cause, text: sentence(e.text), because: sentence(e.because)};
     }
     case 'shareHearth': {
@@ -191,14 +209,14 @@ export function namedThrow(ledger, name, probability) {
 }
 
 // An extra ember every second night the Walkers live at the hearth.
-function extraHeatTonight(ledger) {
-  return ledger.extraHeatFrom !== null && (ledger.night - ledger.extraHeatFrom) % 2 === 1;
+export function extraHeatTonight(from, night) {
+  return from !== null && (night - from) % 2 === 1;
 }
 
 export function bankHearth(ledger) {
   const night = ledger.night;
   const choiceId = 'bank/' + night;
-  const needed = extraHeatTonight(ledger) ? 2 : 1;
+  const needed = extraHeatTonight(ledger.extraHeatFrom, night) ? 2 : 1;
   const burned = Math.min(ledger.stocks.embers, needed);
   const next = structuredClone(ledger);
   const changes = [];
@@ -222,17 +240,18 @@ export function ledgerPageData(ledger) {
   // Until a scene reveals the change in the hearth, it cannot give away that
   // consequence through a shorter forecast on the wall.
   if (ledger.extraHeatFrom !== null && consequences.some(change => {
-    const cause = change.cause ?? ledger.history[change.source];
+    const cause = recordedTellCause(ledger, change);
     return cause?.type === 'shareHearth' && cause.night === ledger.extraHeatFrom;
   })) {
     const pairs = Math.floor(embers / 3);
-    nights = pairs * 2 + Number(embers % 3 >= (extraHeatTonight(ledger) ? 2 : 1));
+    nights = pairs * 2 + Number(embers % 3 >= (extraHeatTonight(ledger.extraHeatFrom, ledger.night) ? 2 : 1));
   }
   return {
     embers, gas, nights,
     obligations: ledger.obligations.map(item => item.text),
     people: Object.entries(ledger.encounters).map(([key, last]) => ({name: STORY_PEOPLE[key], last})),
     consequences: consequences.map(({text, because}) => ({text, because})),
-    ...(ledger.toldBeforeChange?.length ? {toldBeforeChange: ledger.toldBeforeChange} : {}),
+    ...(Array.isArray(ledger.toldBeforeChange) && ledger.toldBeforeChange.length
+      ? {toldBeforeChange: ledger.toldBeforeChange} : {}),
   };
 }

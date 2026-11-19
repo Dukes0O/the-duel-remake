@@ -10,7 +10,7 @@ import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {unstuckInput} from './demo-unstuck.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
-import {settleCup} from './progression.js';
+import {isSavedCarId, settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
@@ -124,8 +124,7 @@ function validWarlordRegistry(registry) {
   for (const player of registry.players) {
     const profile = player?.profile, name = playerName(player?.name);
     const carsValid = profile?.version === 1 && profile.unlockedCars === undefined ||
-      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(id =>
-        typeof id === 'string' && Object.hasOwn(CARS, id));
+      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(isSavedCarId);
     const careerValid = profile?.version === 1 && profile.wasteland === undefined ||
       record(profile?.wasteland) && profile.wasteland.version === 1;
     if (!record(player) || typeof player.id !== 'string' || !/^[\w-]{1,80}$/.test(player.id) ||

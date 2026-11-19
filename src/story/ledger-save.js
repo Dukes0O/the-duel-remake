@@ -37,9 +37,9 @@ registerStory({
     },
     choose: (entry, night, choice) => update(entry, night, ledger => applyChoice(ledger, choice)),
     bank: (entry, night) => update(entry, night, bankHearth),
-    replay: (entry, night, played, expected) => {
+    replay: (entry, night, played, expected, legacyValue) => {
       if (!readable(entry) || JSON.stringify(entry) !== expected) return 'The saved telling has changed. Play the night again to compare it.';
-      return replayTelling(entry, played, night)?.ledger ?? 'Finish the night before keeping it.';
+      return replayTelling(entry, played, night, legacyValue)?.ledger ?? 'Finish the night before keeping it.';
     },
   },
 });
@@ -59,7 +59,8 @@ function writeLedger(profile, writer, ...args) {
 export const beginLedger = (profile, opening) => writeLedger(profile, 'begin', opening);
 export const recordLedgerChoice = (profile, night, choice) => writeLedger(profile, 'choose', night, choice);
 export const bankLedgerHearth = (profile, night) => writeLedger(profile, 'bank', night);
-export const replaceLedgerNight = (profile, night, played, expected) => writeLedger(profile, 'replay', night, played, expected);
+export const replaceLedgerNight = (profile, night, played, expected, legacyValue) =>
+  writeLedger(profile, 'replay', night, played, expected, legacyValue);
 export function savedLedger(profile) {
   if (profile?.story?.version !== 1) return null;
   const entry = profile.story.ledger;
