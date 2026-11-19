@@ -58,11 +58,22 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
   const local = point => ({ x: (point.x - obstacle.x) * cs - (point.z - obstacle.z) * sn,
     z: (point.x - obstacle.x) * sn + (point.z - obstacle.z) * cs });
   const relative = carHeading - angle, c = Math.abs(Math.cos(relative)), s = Math.abs(Math.sin(relative));
-  const sweep = obstacle.shape === 'ellipse' ? sweepEllipse : sweepBox;
   const startLocal = local(start), endLocal = local(end);
   const width = obstacle.halfX + halfWidth * c + halfLength * s, length = obstacle.halfZ + halfLength * c + halfWidth * s;
-  let hit = sweep(startLocal, endLocal, width, length);
-  if (obstacle.exactCarCorners) hit = orientedCarSweep(startLocal, endLocal, hit, obstacle, relative, halfWidth, halfLength, width, length);
+  // An ellipse meets the car's own turned rectangle (QA-ROUND-SOLID-HEADING); a box keeps its established envelope.
+  // A body with equal half-widths is round (a person, a shot or a sight line; no vehicle is square). It meets an
+  // ellipse as a point meets that ellipse grown by its radius, so its contact faces out from the solid's centre and
+  // a person slides round a post or another person instead of meeting a flat face head on.
+  const round = halfWidth === halfLength;
+  const sweep = obstacle.shape === 'ellipse'
+    ? round
+      ? (from, to, grow = 0) => sweepCarEllipse(from, to, obstacle.halfX + halfWidth, obstacle.halfZ + halfWidth, 0, 0, 0, grow)
+      : (from, to, grow = 0) => sweepCarEllipse(from, to, obstacle.halfX, obstacle.halfZ, relative, halfWidth, halfLength, grow)
+    : (from, to, grow = 0) => {
+      const boxHit = sweepBox(from, to, width + grow, length + grow);
+      return obstacle.exactCarCorners ? orientedCarSweep(from, to, boxHit, obstacle, relative, halfWidth, halfLength, width, length) : boxHit;
+    };
+  let hit = sweep(startLocal, endLocal);
   if (!hit) return null;
   // Grounded cars explicitly retain their historical authored envelopes.
   // Airborne cars, fighters and projectile sweeps use model measurements.
@@ -84,8 +95,7 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
     }
     if (entryY > hit.t) {
       const point = { x: startLocal.x + (endLocal.x - startLocal.x) * entryY, z: startLocal.z + (endLocal.z - startLocal.z) * entryY };
-      let contact = sweep(point, point, width + 1e-8, length + 1e-8);
-      if (obstacle.exactCarCorners) contact = orientedCarSweep(point, point, contact, obstacle, relative, halfWidth, halfLength, width, length);
+      const contact = sweep(point, point, 1e-8);
       if (!contact) return null;
       hit = { ...contact, t: entryY };
     }
@@ -94,26 +104,75 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
   return { ...hit, nx, nz, obstacle };
 }
 
-function sweepEllipse(start, end, radiusX, radiusZ) {
-  const dx = end.x - start.x, dz = end.z - start.z;
-  const rx2 = radiusX * radiusX, rz2 = radiusZ * radiusZ;
-  const c = start.x * start.x / rx2 + start.z * start.z / rz2 - 1;
-  if (c < 0) {
-    let nx = start.x / rx2, nz = start.z / rz2;
-    let length = Math.hypot(nx, nz);
-    if (length < 1e-8) { nx = -dx; nz = -dz || 1; length = Math.hypot(nx, nz); }
-    nx /= length; nz /= length;
-    const a = nx * nx / rx2 + nz * nz / rz2, b = 2 * (start.x * nx / rx2 + start.z * nz / rz2);
-    return { t: 0, nx, nz, penetration: (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a), inside: true };
+// The car is a rectangle turned by `relative` in the ellipse's frame. Scaling that frame by 1/radiusX and 1/radiusZ makes the ellipse
+// a unit circle and the car a parallelogram; they touch when the car's centre is inside the parallelogram grown by the circle's radius.
+// The scaling keeps straight lines and the moment of contact, so the time is exact for round and long ellipses alike. A normal comes back
+// through the scaling's transpose, and a starting overlap is pushed out by the shortest way in metres. A body with no size (a sight line)
+// is a point, and a body with no width is a segment.
+function sweepCarEllipse(start, end, radiusX, radiusZ, relative, halfWidth, halfLength, grow = 0) {
+  const rx = Math.max(radiusX, 1e-6), rz = Math.max(radiusZ, 1e-6), radius = 1 + grow;
+  const cos = Math.cos(relative), sin = Math.sin(relative);
+  const ux = halfWidth * cos / rx, uz = -halfWidth * sin / rz, vx = halfLength * sin / rx, vz = halfLength * cos / rz;
+  const vertices = [[ux + vx, uz + vz], [vx - ux, vz - uz], [-ux - vx, -uz - vz], [ux - vx, uz - vz]];
+  const edges = [];
+  vertices.forEach(([ax, az], index) => {
+    const [bx, bz] = vertices[(index + 1) % 4], ex = bx - ax, ez = bz - az, span = Math.hypot(ex, ez);
+    if (span < 1e-9) return;
+    const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+    let nx = ez / span, nz = -ex / span;
+    if (nx * mx + nz * mz < 0) { nx = -nx; nz = -nz; }
+    edges.push({ax, az, tx: ex / span, tz: ez / span, span, mx, mz, nx, nz, offset: nx * mx + nz * mz});
+  });
+  const qx = start.x / rx, qz = start.z / rz, dx = end.x / rx - qx, dz = end.z / rz - qz;
+  const toLocal = (nx, nz, depth) => {
+    const wx = nx / rx, wz = nz / rz, size = Math.hypot(wx, wz);
+    return {nx: wx / size, nz: wz / size, penetration: depth / size};
+  };
+  // Only a body with area can hold the centre; the small allowance keeps a centre on a corner from rounding out of it.
+  if (edges.length === 4 && edges.every(edge => edge.nx * qx + edge.nz * qz <= edge.offset + 1e-12)) {
+    let best = null;
+    for (const edge of edges) {
+      const way = toLocal(edge.nx, edge.nz, edge.offset + radius - (edge.nx * qx + edge.nz * qz));
+      if (!best || way.penetration < best.penetration) best = way;
+    }
+    return {t: 0, ...best, inside: true};
   }
-  const a = dx * dx / rx2 + dz * dz / rz2, b = 2 * (start.x * dx / rx2 + start.z * dz / rz2);
-  const discriminant = b * b - 4 * a * c;
-  if (a < 1e-12 || discriminant < 0) return null;
-  const t = (-b - Math.sqrt(discriminant)) / (2 * a);
-  if (t < 0 || t > 1) return null;
-  let nx = (start.x + dx * t) / rx2, nz = (start.z + dz * t) / rz2;
-  const length = Math.hypot(nx, nz); nx /= length; nz /= length;
-  return { t, nx, nz, penetration: 0, inside: false };
+  let nearest = Math.hypot(qx - vertices[0][0], qz - vertices[0][1]), px = vertices[0][0], pz = vertices[0][1];
+  for (const edge of edges) {
+    const along = Math.max(0, Math.min(edge.span, (qx - edge.ax) * edge.tx + (qz - edge.az) * edge.tz));
+    const cx = edge.ax + edge.tx * along, cz = edge.az + edge.tz * along, gap = Math.hypot(qx - cx, qz - cz);
+    if (gap < nearest) { nearest = gap; px = cx; pz = cz; }
+  }
+  if (nearest < radius) {
+    // A centre exactly on the body has no direction of its own; back the way it came, as the old sweep did.
+    if (nearest < 1e-12) {
+      const bx = -dx, bz = -dz || 1, size = Math.hypot(bx, bz);
+      return {t: 0, ...toLocal(bx / size, bz / size, radius), inside: true};
+    }
+    return {t: 0, ...toLocal((qx - px) / nearest, (qz - pz) / nearest, radius - nearest), inside: true};
+  }
+  const a = dx * dx + dz * dz;
+  if (a < 1e-24) return null;
+  let best = null;
+  for (const edge of edges) {
+    const closing = edge.nx * dx + edge.nz * dz;
+    if (closing >= 0) continue;
+    const t = (edge.offset + radius - (edge.nx * qx + edge.nz * qz)) / closing;
+    if (t < 0 || t > 1 || (best && t >= best.t)) continue;
+    const along = (qx + dx * t - edge.mx) * edge.tx + (qz + dz * t - edge.mz) * edge.tz;
+    if (Math.abs(along) <= edge.span / 2) best = {t, nx: edge.nx, nz: edge.nz};
+  }
+  for (const [vx0, vz0] of vertices) {
+    const ox = qx - vx0, oz = qz - vz0, b = 2 * (ox * dx + oz * dz), c = ox * ox + oz * oz - radius * radius;
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) continue;
+    const t = (-b - Math.sqrt(discriminant)) / (2 * a);
+    if (t < 0 || t > 1 || (best && t >= best.t)) continue;
+    best = {t, nx: (ox + dx * t) / radius, nz: (oz + dz * t) / radius};
+  }
+  if (!best) return null;
+  const {nx, nz} = toLocal(best.nx, best.nz, 0);
+  return {t: best.t, nx, nz, penetration: 0, inside: false};
 }
 
 export function contactZone(nx, nz, heading = 0) {

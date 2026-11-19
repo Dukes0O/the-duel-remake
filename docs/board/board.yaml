@@ -488,16 +488,6 @@ tasks:
     locks: []
     details: "docs/board/cards/SCABLANDS-LAND.md"
 
-  - id: QA-ROUND-SOLID-HEADING
-    title: "A car passing a round solid thing is slowed when the thing's heading differs from the car's"
-    owner: "claude"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-ROUND-SOLID-HEADING.md"
-
   - id: QA-BORER-SUITE-TIME
     title: "The boring machine's two suites take eight minutes between them"
     owner: "claude"
