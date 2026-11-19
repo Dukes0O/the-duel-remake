@@ -1,7 +1,8 @@
 # QA-NIGHT-SIZED
 
 Kyle's decision of 18 November 2026 (`docs/board/decisions.md`, "The night check is sized by the day's merges"). The
-wording is in AGENTS.md rule 13. Codex's card: tools only, no game file, no browser needed to build it.
+wording is in AGENTS.md rule 13. Claude's card since Kyle moved the overnight testing to Claude (18 November 2026):
+tools only, no game file, no browser needed to build it.
 
 ## What to build
 
