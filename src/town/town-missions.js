@@ -11,15 +11,14 @@ import {stepTown} from './town-sim.js';
 
 export const TOWN_MISSION_SETTLED_LIMIT = 500;
 export const TOWN_MISSION_HISTORY_LIMIT = 40;
-// The most a single haul can bring: the flatbed's bed (src/town/content/work-vehicles.js).
-export const TOWN_MISSION_MAX_KG = 9000;
+// The most a single run can bring or lose. A bed that empties is loaded again and a part-unloaded truck can drive off, so
+// a run is not held to one 9,000 kg bedful; this bound only refuses a result no run could have.
+export const TOWN_MISSION_MAX_KG = 100_000;
 const HAUL_CHAPTER = 'town.act1.salvage';
 const DROP_CELL = Object.freeze({regionId:'scablands', x:4, z:-8});
 
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
-const wholeKg = (value, most = TOWN_MISSION_MAX_KG) => Number.isSafeInteger(value) && value >= 0 && value <= most;
-// What can be lost in one run: a bed that empties can be loaded again, so more than one bedful.
-const MAX_LOST_KG = 100_000;
+const wholeKg = value => Number.isSafeInteger(value) && value >= 0 && value <= TOWN_MISSION_MAX_KG;
 
 function missionsFor(town) {
   if (!record(town.missions)) town.missions = {version:1, settled:[], history:[], totals:{}};
@@ -50,7 +49,7 @@ export function townMissionResult(town, result = {}) {
   if (!record(town)) return {ok:false, settled:false, message:'There is no town to take the result.'};
   const {runId, jobId, kind, good, deliveredKg, lostKg, chapter = null} = result;
   if (typeof runId !== 'string' || !runId || runId.length > 128 || typeof jobId !== 'string' || !jobId || kind !== 'haul' ||
-      !goodDefinition(good) || !wholeKg(deliveredKg) || !wholeKg(lostKg, MAX_LOST_KG) ||
+      !goodDefinition(good) || !wholeKg(deliveredKg) || !wholeKg(lostKg) ||
       (chapter !== null && chapter !== HAUL_CHAPTER))
     return {ok:false, settled:false, message:'That haul result is not clear.'};
   if (townMissionSettled(town, runId)) return {ok:true, settled:false, message:'That haul already has a result.'};

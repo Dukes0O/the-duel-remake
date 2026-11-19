@@ -110,24 +110,25 @@ export function townJobResult(worldJob, runId) {
 /**
  * One drive of a town job, from GO to the town's save: the town ticks while it is driven (`frame`, real seconds, outside race
  * state) and its serious news is handed back for the radio; at the end `settle` applies the run's one mission result and saves
- * the town through `save(town, reason)`. Settling twice returns the first answer, so the town is changed and saved once.
+ * the town through `save(town, reason)`. The result is applied once whatever happens; settling again returns the same answer,
+ * except that a save which failed is tried again.
  */
 export function createTownJobRun({town, runId, save = async () => true, step = target => stepTown(target), secondsPerTick = 10,
   radioGapSeconds = 60} = {}) {
   if (!town || typeof town !== 'object' || typeof runId !== 'string' || !runId) throw new TypeError('A town job run needs its town and run id.');
   const clock = createTownMissionClock(town, {step, secondsPerTick, radioGapSeconds});
   let settling = null, outcome = null;
+  const trySave = () => (settling = Promise.resolve().then(() => save(town, 'mission')).then(saved => ({...outcome, saved:saved !== false}),
+    error => ({...outcome, saved:false, saveMessage:error?.message || 'The town could not be saved.'})));
   return Object.freeze({
     town, runId,
     frame:seconds => clock.advance(seconds).radio,
     settle(worldJob) {
-      if (settling) return settling;
+      if (settling) return settling.then(answer => answer.saved ? answer : trySave());
       const result = townJobResult(worldJob, runId);
       outcome = result ? townMissionResult(town, result)
         : {ok:true, settled:false, message:'The job was left unfinished, so nothing reached the town.'};
-      settling = Promise.resolve().then(() => save(town, 'mission')).then(saved => ({...outcome, saved:saved !== false}),
-        error => ({...outcome, saved:false, saveMessage:error?.message || 'The town could not be saved.'}));
-      return settling;
+      return trySave();
     },
     get outcome() { return outcome; }, get ticks() { return clock.ticks; },
   });

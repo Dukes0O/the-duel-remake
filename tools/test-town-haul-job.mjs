@@ -145,9 +145,12 @@ test('a mission result is applied exactly once per run id, and only a clear one'
   assert.equal(getTownNext(town).chapter?.id, 'town.act1.soup', 'Chapter 4 is next');
   assert.equal(townMissionResult(town, {...result, runId:'run-b', chapter:null, jobId:'town-salvage-run', deliveredKg:3000}).settled, true);
   assert.equal(stockpileAt(town, cell).salvage, 8200);
-  for (const bad of [{deliveredKg:9001}, {deliveredKg:-1}, {deliveredKg:1.5}, {good:'gold'}, {kind:'fight'}, {runId:''}, {chapter:'town.act1.fire'}])
+  // A run that unloaded part, lost the rest and loaded again can bring home more than one 9,000 kg bedful.
+  assert.equal(townMissionResult(town, {...result, runId:'run-twice', chapter:null, jobId:'town-salvage-run', deliveredKg:11_000}).settled, true);
+  assert.equal(stockpileAt(town, cell).salvage, 19_200);
+  for (const bad of [{deliveredKg:100_001}, {lostKg:100_001}, {deliveredKg:-1}, {deliveredKg:1.5}, {good:'gold'}, {kind:'fight'}, {runId:''}, {chapter:'town.act1.fire'}])
     assert.equal(townMissionResult(town, {...result, runId:'run-bad', ...bad}).ok, false, JSON.stringify(bad));
-  assert.equal(stockpileAt(town, cell).salvage, 8200, 'a refused result changes nothing');
+  assert.equal(stockpileAt(town, cell).salvage, 19_200, 'a refused result changes nothing');
   assert.equal(dispatchTownCommand(town, {type:'townMissionResult', ...result, runId:'forged'}).ok, false,
     'a result is not an ordinary town command');
   // The settled list is bounded, and the newest ids are the ones kept.
@@ -200,10 +203,20 @@ test('during the drive the town ticks once every 10 real seconds, and serious ne
   const definition = townJobDefinition(town, 'town-haul-salvage');
   const worldJob = {definition, job:{done:true}, haulResult:{good:'salvage', deliveredKg:3000, lostKg:450}};
   const [a, b] = await Promise.all([runner.settle(worldJob), runner.settle(worldJob)]);
-  assert.equal(a, b);
+  assert.deepEqual(a, b);
   assert.equal(a.settled, true);
   assert.equal(a.saved, true);
-  assert.equal(saves, 1);
+  assert.equal(saves, 1, 'a second settle does not save again');
+  // A save that fails is tried again on the next settle; the result is still applied only once.
+  const failing = chapterTown();
+  let tries = 0;
+  const flaky = createTownJobRun({town:failing, runId:'run-flaky', save:async () => { tries++; if (tries === 1) throw new Error('Town storage is busy.'); return true; }});
+  const first = await flaky.settle(worldJob);
+  assert.equal(first.saved, false);
+  const second = await flaky.settle(worldJob);
+  assert.equal(second.saved, true);
+  assert.equal(tries, 2);
+  assert.equal(stockpileAt(failing, townMissionDropCell(failing)).salvage, 3000, 'applied once across both settles');
 });
 
 test('every line on the mission card and the radio is a plain whole sentence, and every haul event names its sound cue', () => {
@@ -219,6 +232,9 @@ test('every line on the mission card and the radio is a plain whole sentence, an
   }
   assert.match(townMissionCardMarkup(card), /GO YOURSELF/);
   assert.match(townMissionCardMarkup(card), /NOT NOW/);
+  const visiting = townMissionCardMarkup(townMissionCardModel(chapterTown(), {readOnly:true}));
+  assert.doesNotMatch(visiting, /GO YOURSELF/);
+  assert.match(visiting, /data-town-mission-later/, 'a visitor can close the card');
   for (const cue of ['world.bellows.load', 'vehicle.crush', 'interface.bonus']) assert.ok(SOUND_BANK[cue], cue);
 });
 

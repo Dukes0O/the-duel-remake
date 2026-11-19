@@ -2042,7 +2042,6 @@ export class App {
     if(this._switches().enabled('wasteland-town')!==true||!town||!(this.isYardHomeActive()||this.duel.state.arena))return false;
     const [{townJobDefinition,createTownJobRun},{setScablandsTownLayout,clearScablandsTownLayout},{saveTownFromDrive}]=await Promise.all([
       import('./world/jobs/town-jobs.js'),import('./world/scablands-ground.js'),import('./town/town-entry.js')]);
-    await this._townJob?.settle(null);
     const job=townJobDefinition(town,jobId,{seed:(town.seed^((this._arenaSerial||0)+1)*7919)>>>0});
     if(!job)return false;
     setScablandsTownLayout(job.layout);
@@ -2658,6 +2657,7 @@ export class App {
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
+    if(st.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(st.arena.worldJob); // TOWN-HAUL-JOB: every way out saves the town
     cleanupWorldJobLoan(this.duel);
     this.duel.clearDeep();this.deepAudio.stop();
     const heliLanding = this._heliLandingChoice();

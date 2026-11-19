@@ -43,7 +43,7 @@ export function townMissionCardModel(town, {readOnly = false} = {}) {
 
 export function townMissionCardMarkup(model) {
   if (!model) return '';
-  const buttons = model.readOnly ? '<p>This job belongs to the town you are visiting.</p>'
+  const buttons = model.readOnly ? '<p>This job belongs to the town you are visiting.</p><button type="button" data-town-mission-later>CLOSE</button>'
     : `<button type="button" data-town-mission-go="${safe(model.jobId)}">GO YOURSELF</button>` +
       `<button type="button" data-town-mission-later>NOT NOW</button>`;
   return `<section class="town-mission-card town-onboard" role="dialog" aria-label="${safe(model.title)}">` +
