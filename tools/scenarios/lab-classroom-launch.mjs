@@ -33,7 +33,7 @@ export async function run(c) {
   await at('wonder');
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
   await wait(2000); await shot('wonder-flying'); await at('wonder', 's.ready'); await shot('wonder');
-  if (!(await bubble()).includes('nearly the same spot')) throw Error('The wonder should end on the two landings: ' + await bubble());
+  if (!(await bubble()).includes('Is there an angle that goes further than both')) throw Error('The wonder should end on its question: ' + await bubble());
   await next('wonder');
   // Speed first: the dial, and m/s, are defined before the arrows use them.
   await at('word-speed'); await shot('word-speed'); await openFormulaPanel(c); await press('ArrowRight', 2); await at('word-speed', 's.ready'); await shot('word-speed-done');
@@ -55,7 +55,7 @@ export async function run(c) {
   await at('watch'); await wait(5000); await shot('watch-running'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
   // Past the flag: guess steeper; a launch at 45 says to tilt first; 50 degrees still lands past; 60 is on the flag.
-  // The free test: the ramp and the dial move the sums at once, and three launches open Continue.
+  // The free test: the ramp and the dial move the formulas at once, and three launches open Continue.
   await at('try-free'); await shot('try-free');
   await press('ArrowDown', 2); await press('ArrowRight', 2); await wait(200); await shot('try-free-set');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('22 × cos 35°'))`))) throw Error('The formulas did not follow the ramp and the dial.');
@@ -69,12 +69,12 @@ export async function run(c) {
   await press('ArrowUp', 2); await press('Space'); await at('try-flag', 's.ready'); await saying('so does tilting the other way', 'either way works'); await shot('try-flag-done');
   await next('try-flag');
   // A little slower: Space at 72 km/h says to turn the dial; 65 km/h, a wrong guess says why.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ← until the dial reads 65', 'the wrong speed says why');
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('turn the dial until it reads 65', 'the wrong speed says why');
   await press('ArrowLeft', 2); await prompt('65 km/h', 'the dial reads 65'); await press('Space'); await at('try-speed', 's.cards === 3'); await shot('try-speed-guess');
   await press('Digit3'); await at('try-speed', 's.ready'); await saying('did not shorten by that much', 'a wrong guess says why'); await shot('try-speed-done');
   await next('try-speed');
   // Brian's job: mark 1 short then right; mark 2 by Show me; mark 3 too steep, then 45 degrees at 65 km/h.
-  await at('alone'); await shot('alone'); await press('Space'); await saying('Add speed by pressing →', 'a short launch says why'); await shot('alone-short');
+  await at('alone'); await shot('alone'); await press('Space'); await saying('Add speed, then launch again', 'a short launch says why'); await shot('alone-short');
   await press('ArrowRight', 2); await press('Space'); await saying('For the second mark', 'mark 1 is on the flag');
   for (let i = 0; i < 3 && !(await c.evaluate(`${state}?.help === 3`)); i++) await press('KeyH');
   await wait(1500); await shot('alone-show-me');
