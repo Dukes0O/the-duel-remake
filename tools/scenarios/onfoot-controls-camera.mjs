@@ -47,7 +47,7 @@ export async function run(context){
     {type:'mousePressed',button:'left',clickCount:1,x:point.x,y:point.y});
   await context.command('Input.dispatchMouseEvent',
     {type:'mouseReleased',button:'left',clickCount:1,x:point.x,y:point.y});
-  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas')",
+  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas') && window.__qaApp._footPointer.capture==='held'",
     `fighter pointer lock at ${point.target}`,10_000);
   const before=await context.evaluate('window.__qaApp.duel.state.fighter.yaw');
   await context.command('Input.dispatchMouseEvent',
@@ -92,7 +92,7 @@ export async function run(context){
     {type:'mousePressed',button:'left',clickCount:1,x:point.x,y:point.y});
   await context.command('Input.dispatchMouseEvent',
     {type:'mouseReleased',button:'left',clickCount:1,x:point.x,y:point.y});
-  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas')",
+  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas') && window.__qaApp._footPointer.capture==='held'",
     'pointer lock after second exit',10_000);
   await key(context,'keyDown','Escape','Escape',27);
   await context.waitFor('!document.pointerLockElement && window.__qaApp.duel.state.paused',

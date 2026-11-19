@@ -2902,7 +2902,8 @@ export class App {
     if(typeof document!=='undefined')document.addEventListener('pointerlockchange',()=>{
       const pointer = this._footPointer;
       if (footMouseLocked()) {
-        if (footMouseActive(this.duel.state) && (pointer.capture === 'requesting' || pointer.capture === 'held')) {
+        // A capture is the player's whenever the fighter is walking, even if its request's state was lost on the way.
+        if (footMouseActive(this.duel.state)) {
           pointer.capture = 'held';
         } else {
           // Capture may arrive after a pause, car entry or the return to the menu.
@@ -2913,6 +2914,8 @@ export class App {
         }
         return;
       }
+      // A release reported while a request waits: the browser answered without capturing, so the next click may ask again.
+      if (pointer.capture === 'requesting') pointer.capture = null;
       if (pointer.capture !== 'held') return;
       pointer.capture = null;
       this._footPointer.fire=this._footPointer.aim=false;
