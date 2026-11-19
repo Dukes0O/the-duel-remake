@@ -21,7 +21,8 @@ import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
-import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
+import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, night2DawnMarkup, night2JournalMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
+import {night2Page} from './world/jobs/night-2.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
 import {finishArenaEvent} from './arena/arena-event.js';
@@ -81,7 +82,7 @@ const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="
 const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const choices = app.getRaceChoices();
 let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, armoryCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false;
-let coursesOpen=false,courseMessage='',yardPanel='home',arenaOpponents=3,arenaMode='last-car-rolling',arenaVenue='scrapdome';
+let journalOpen=false,coursesOpen=false,courseMessage='',yardPanel='home',arenaOpponents=3,arenaMode='last-car-rolling',arenaVenue='scrapdome';
 let cardArt=null;
 const domEvents=new AbortController();
 const boardFilter={stage:choices.startStage,car:'',driverId:getEquippedDriverId(app.profile)};
@@ -324,6 +325,21 @@ root.addEventListener('click',e => {
     garageMessage = result.ok ? 'Car weapon fitted.' : result.reason;
     lastScreen = null; renderState(app.duel.state); return;
   }
+  // STORY-NIGHT-2-FLOW: the journal from the pause card, and Continue at dawn.
+  if (button.dataset.action === 'story-journal' || button.dataset.action === 'story-journal-close') {
+    const opening = button.dataset.action === 'story-journal';
+    journalOpen = opening && !!app.duel.state.paused && !!app.duel.state.arena?.worldJob?.night2;
+    if (journalOpen) playLedgerPageTurn(app.audio);
+    lastScreen = null;
+    renderState(app.duel.state);
+    if (!journalOpen) ui['modal-layer'].querySelector('[data-action="story-journal"]')?.focus({preventScroll: true});
+    return;
+  }
+  if (button.dataset.action === 'night-2-continue') {
+    if (app.night2Continue?.()) lastScreen = null;
+    renderState(app.duel.state);
+    return;
+  }
   if (button.dataset.action?.startsWith('night-2-replay-')) {
     app.chooseNight2Replay(button.dataset.action.slice('night-2-replay-'.length));
     lastScreen = null;
@@ -511,11 +527,15 @@ function renderState(s) {
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
     const night2Result = s.arena?.result;
+    const night2Chapter = s.arena?.worldJob?.night2;
+    if (!s.paused || !night2Chapter) journalOpen = false;
+    // STORY-NIGHT-2-FLOW: no page stops play at the end of the night. The replay choice still needs the player's decision;
+    // otherwise the dawn stays in view with one line of what people remember and a Continue. The journal opens from the pause card.
+    const dawn = !night2Result?.night2Replay && !!night2Result?.night2Page;
     const night2Modal = night2Result?.night2Replay ? ledgerReplayMarkup(night2Result.night2Replay, escapeHTML)
-      : night2Result?.night2Page ? '<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="ledger-title">' +
-      '<div class="yard-home-content">' + ledgerPageMarkup(night2Result.night2Page, escapeHTML) + '</div>' +
-      (night2Result.night2SaveIssue ? '<p role="status">' + escapeHTML(night2Result.night2SaveIssue) + '</p>' : '') +
-      '<footer><button type="button" data-action="arena-yard">Back to the yard</button></footer></section>' : null;
+      : dawn ? night2DawnMarkup({remembered: night2Result.night2Remembered, issue: night2Result.night2SaveIssue}, escapeHTML)
+      : journalOpen ? night2JournalMarkup(night2Page(night2Chapter.ledger), escapeHTML) : null;
+    ui.stage.classList.toggle('story-dawn-active', dawn);
     const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':night2Modal ?? modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);
     const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
@@ -564,6 +584,15 @@ function renderState(s) {
     ui.stage.style.setProperty('--hidden-road-hud-opacity',hudOpacity);
 }
 document.addEventListener('keydown',e=>{
+  // STORY-NIGHT-2-FLOW: Esc in the journal goes back to the pause card, not on into the game.
+  if (e.code === 'Escape' && !e.defaultPrevented && journalOpen) {
+    e.preventDefault();
+    journalOpen = false;
+    lastScreen = null;
+    renderState(app.duel.state);
+    ui['modal-layer'].querySelector('[data-action="story-journal"]')?.focus({preventScroll: true});
+    return;
+  }
   if (e.code === 'Escape' && !e.defaultPrevented && app.chooseNight2Replay('cancel')) {
     e.preventDefault();
     lastScreen = null;

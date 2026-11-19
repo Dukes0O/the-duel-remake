@@ -130,8 +130,9 @@ export const pageFunctions = {
     const {worldJob: world} = window.__qaApp.duel.state.arena;
     const eye = world.night2.camera?.position;
     const fires = scene.getObjectByName('Walkers’ camp fires');
+    // STORY-NIGHT-2-FLOW: a refused camp is dark; the riders' lights, one of them circling, are what the tower sees.
     return eye && Math.abs(camera.position.x - eye.x) < .01 && Math.abs(camera.position.y - eye.y) < .01 &&
-      fires?.visible && fires.children.every(fire => fire.visible) && [1, 2, 3].every(index =>
+      fires && !fires.visible && [1, 2, 3].every(index =>
       scene.getObjectByName('Wash rider ' + index + ' lights')?.visible);
   },
   towerOptions: washFight => {
@@ -166,11 +167,28 @@ export const pageFunctions = {
       state.opponents.every(actor => actor.roadRider) && [1, 2, 3].every(index =>
         window.__render.scene.getObjectByName('Wash rider ' + index + ' lights')?.visible);
   },
-  ledger: () => {
-    const page = document.querySelector('.story-ledger');
-    return window.__qaApp.profile.story?.ledger?.night === 3 &&
-      page?.innerText.includes('What people remember') && !!page.querySelector('.ledger-tonight') &&
-      !/Raiding|Watching|Friendly|night-2\/dace-steals/.test(page.innerText);
+  // STORY-NIGHT-2-FLOW: the night ends in the world. One line of what people remember, a Continue, and no journal page.
+  dawn: remembered => {
+    const note = document.querySelector('.story-dawn-note');
+    const button = document.querySelector('.story-dawn [data-action="night-2-continue"]');
+    return window.__qaApp.profile.story?.ledger?.night === 3 && !document.querySelector('.story-ledger') &&
+      note?.textContent === remembered && !!button && document.activeElement === button &&
+      document.querySelector('#stage')?.classList.contains('story-dawn-active') &&
+      note.getBoundingClientRect().top < innerHeight * .2 && button.getBoundingClientRect().bottom > innerHeight * .7;
+  },
+  journal: () => {
+    const page = document.querySelector('.story-journal .story-ledger');
+    return !!page && page.innerText.includes('What people remember') && !!page.querySelector('.ledger-tonight') &&
+      !/Raiding|Watching|Friendly|night-2\/dace-steals/.test(page.innerText) &&
+      !!document.querySelector('[data-action="story-journal-close"]');
+  },
+  pausedCard: () => !!document.querySelector('[data-action="story-journal"]') && !document.querySelector('.story-journal'),
+  pause: () => { const app = window.__qaApp; if (!app.duel.state.paused) app.togglePause(); return app.duel.state.paused; },
+  resume: () => { const app = window.__qaApp; if (app.duel.state.paused) app.togglePause(); return !app.duel.state.paused; },
+  yardWithoutArrival: () => {
+    const app = window.__qaApp, journey = app.duel.state.hiddenRoadJourney;
+    return app.isYardHomeActive() && journey?.phase === 'arrived' &&
+      document.querySelector('[data-gatekeeper-subtitle]')?.hidden !== false;
   },
   savedBytes: () => {
     if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only storage is required.');
@@ -225,9 +243,9 @@ export const pageFunctions = {
     return region.scrollHeight <= region.clientHeight + 1 || region.scrollTop > 0;
   },
   ledgerResult: embers => {
-    const page = document.querySelector('.story-ledger');
+    const note = document.querySelector('.story-dawn-note');
     return window.__qaApp.profile.story?.ledger?.stocks.embers === embers &&
-      !document.querySelector('.story-replay') && page?.innerText.includes(embers + ' embers and');
+      !document.querySelector('.story-replay') && note?.textContent.startsWith('Remembered: ');
   },
 };
 
@@ -264,7 +282,9 @@ export async function run(context) {
       await evaluate('prepare', theftSeed);
       await click('wasteland-visit');
     } else {
-      await click('arena-yard');
+      // STORY-NIGHT-2-FLOW: Continue at dawn goes straight to the yard, without the Wasteland arrival.
+      await click('night-2-continue');
+      await wait('yardWithoutArrival');
     }
     await click('yard-cards');
     await click('story-night-2');
@@ -312,6 +332,15 @@ export async function run(context) {
   await advance('whistle', 1);
   await wait('step', 'scout');
   await context.screenshot('night-2-scout');
+  // The journal opens from the pause card, and Esc goes back to the card.
+  await wait('pause');
+  await click('story-journal');
+  await wait('journal');
+  await context.screenshot('night-2-journal');
+  await context.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'Escape', key: 'Escape', windowsVirtualKeyCode: 27});
+  await context.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'Escape', key: 'Escape', windowsVirtualKeyCode: 27});
+  await wait('pausedCard');
+  await wait('resume');
   await wait('canvasPressPoint');
   const scoutPoint = await evaluate('canvasPressPoint');
   await evaluate('scoutAim');
@@ -320,8 +349,8 @@ export async function run(context) {
   await leftMouse('mouseReleased', scoutPoint);
   await advance('scout-stopped', 1);
   await advance('close', 1);
-  await wait('ledger');
-  await context.screenshot('night-2-ledger');
+  await wait('dawn', "Remembered: the Walkers owe you two nights' watch.");
+  await context.screenshot('night-2-dawn');
 
   const firstSave = await evaluate('savedBytes');
   async function finishRefusal(holdEnter = false) {

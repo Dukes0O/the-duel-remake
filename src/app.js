@@ -78,9 +78,10 @@ import {cleanupWorldJobLoan, ringJobVehicleBell} from './arena/modes/world-job.j
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
-import {NIGHT_2_ID, night2Job, night2Page} from './world/jobs/night-2.js';
+import {NIGHT_2_ID, night2Job, night2Page, night2Remembered} from './world/jobs/night-2.js';
+import {arriveHiddenRoadVisitAtOnce} from './hidden-road-journey.js';
 import {keepNight2Replay, settleNight2} from './story/night-2-save.js';
-import {playLedgerChoice, playLedgerPageTurn} from './story/ledger-ui.js';
+import {playJournalNote, playLedgerChoice, playLedgerPageTurn} from './story/ledger-ui.js';
 import {savedLedger} from './story/ledger-save.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
@@ -1526,8 +1527,10 @@ export class App {
         result.settlementSaved = this._saveShopProfile(previous);
       }
       result.night2Page = chapter.page;
+      // STORY-NIGHT-2-FLOW: the night ends in the world with one line of what people remember, not the journal page.
+      result.night2Remembered = chapter.remembered ?? night2Remembered(chapter.ledger);
       result.night2SaveIssue = updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
-      playLedgerPageTurn(this.audio);
+      playJournalNote(this.audio);
       return result.settlementSaved;
     }
     const previous=this.profile,settled=settleArenaResult(previous,{runId:this.runId,
@@ -1624,8 +1627,19 @@ export class App {
       result.settlementSaved = true;
     } else return false;
     if (result.night2Page) result.night2Page.saltScrap = 0;
+    // The telling that stands is the one remembered.
+    result.night2Remembered = night2Remembered(savedLedger(this.profile), chapter.opening.night);
+    playJournalNote(this.audio);
     delete result.night2Replay;
     return true;
+  }
+  // STORY-NIGHT-2-FLOW: Continue at dawn. Until the next chapter exists the night returns to the yard, without the
+  // Wasteland arrival (it plays once in a career). The replay choice comes first when there is one.
+  night2Continue() {
+    const state = this.duel.state, result = state.arena?.result;
+    if (state.status !== 'arena_result' || !state.arena?.worldJob?.night2?.completed || !result?.night2Page || result.night2Replay)
+      return false;
+    return this.returnToYard();
   }
   _settleFuelResult(event, state) {
     const result = state?.arena?.result;
@@ -2366,10 +2380,12 @@ export class App {
   }
   returnToYard() {
     if (!this.duel.state.arena) return false;
+    // STORY-NIGHT-2-FLOW: from a story night the way back to the yard skips the Wasteland arrival.
+    const storyNight = !!this.duel.state.arena.worldJob?.night2 && this._switches().enabled('story-choices') === true;
     this.returnToMenu();
-    return this.visitWasteland();
+    return this.visitWasteland({arrived: storyNight});
   }
-  visitWasteland() {
+  visitWasteland({arrived = false} = {}) {
     if (this.duel.state.status !== 'menu') return false;
     this._refreshPlayer();
     const discovery = this.getHiddenRoadDiscovery();
@@ -2385,9 +2401,11 @@ export class App {
     this._racePaint = getPaintAppearance(this.profile, car,
       {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep'),wastelandTownEnabled:this._switches().enabled('wasteland-town')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
-    return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
+    const started = this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),
       difficulty: this._raceSettings.difficulty});
+    if (started && arrived === true) arriveHiddenRoadVisitAtOnce(this.duel);
+    return started;
   }
   _clearHiddenRoadInput() {
     this.keys = {};
@@ -3016,7 +3034,10 @@ export class App {
       this._footPointer.fire=this._footPointer.aim=false;
       if (document.pointerLockElement || !footMouseActive(this.duel.state)) return;
       this._footPointerReleasedAt=performance.now();
-      if(!this.duel.state.paused && !activeTalkStep(this.duel.state))this.togglePause();
+      // STORY-NIGHT-2-FLOW: with story-choices on, Esc while the picture holds the mouse only frees it and the game keeps running.
+      // Pause stays on P, and on Esc once the mouse is free (Kyle, 19 November 2026).
+      const escFreesOnly=(this.duel.featureFlags?.base||this.duel.featureFlags)?.enabled?.('story-choices')===true;
+      if(!escFreesOnly && !this.duel.state.paused && !activeTalkStep(this.duel.state))this.togglePause();
     },{signal});
     if (typeof document !== 'undefined') document.addEventListener('pointerlockerror', () => {
       if (this._footPointer.capture === 'requesting') this._footPointer.capture = 'refused';
