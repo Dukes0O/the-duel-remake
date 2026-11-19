@@ -843,10 +843,11 @@ tasks:
 
   - id: SHIPS-DECKS
     title: "Decks, ladders and the night storm"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/SHIPS-DECKS, pull request into integration/wasteland"
     needs: ["MULE-RAILS"]
     locks: []
     flag: "wasteland-town"
@@ -992,10 +993,11 @@ tasks:
 
   - id: TOWN-OUTPOST-SCENE
     title: "Town: neighbours in the world"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/TOWN-OUTPOST-SCENE, pull request into integration/wasteland"
     needs: ["TOWN-ART-OUTPOSTS","TOWN-WORLD"]
     locks: []
     details: "docs/board/cards/TOWN-OUTPOST-SCENE.md"
@@ -1113,10 +1115,11 @@ tasks:
 
   - id: FAR-RAIN
     title: "Rain: the first anyone has seen out here"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/FAR-RAIN, pull request into integration/wasteland"
     needs: ["TUNNEL-TRIAL"]
     locks: []
     details: "docs/board/cards/FAR-RAIN.md"
@@ -1293,10 +1296,11 @@ tasks:
 
   - id: TOWN-VANE-SCENE
     title: "Town: Vane in the world"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/TOWN-VANE-SCENE, pull request into integration/wasteland"
     needs: ["TOWN-ART-VANE","TOWN-WORLD","TOWN-VANE"]
     locks: []
     details: "docs/board/cards/TOWN-VANE-SCENE.md"
@@ -1323,10 +1327,11 @@ tasks:
 
   - id: HELI-RUSTWALL
     title: "Kestrel One over the wall"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/HELI-RUSTWALL, pull request into integration/wasteland"
     needs: ["TOWN-WORLD","TOWN-OUTPOSTS"]
     locks: []
     details: "docs/board/cards/HELI-RUSTWALL.md"
