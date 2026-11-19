@@ -22,3 +22,15 @@ Written by the cloud session building the card. Each has my pick, and the work c
    browser scenario sets the state by hand in its memory-only town.
 5. **The Helipad's lock.** `town-links.js` read "Ridge fire" as "finish the first fire story" (the Everburn). It now means
    the fire on the Ridge has been reported. **Pick:** as written.
+6. **Fuel at the fire.** The pad is about 4.3 km from the Ridge, and the first scripted flight lost the fire to two spread
+   steps on every trip home for fuel. **Pick:** while the Ridge burns a fuel truck stands in a 12 m circle beside the dip
+   tank and sells at the pump's price, as the lodge's crews stage fuel at Summit Run's rescues. With it the flight puts the
+   fire out in 7 drops.
+7. **The scrub.** The fire rules were tuned on Tremblant Woods' strip of forest; on an open slope of scrub they burn the
+   Ridge out in two steps, whatever the pilot does. **Pick:** the scrub is a band two fire cells deep round the Ridge's
+   shoulder (245 to 280 m from its middle), which meets the fire packet's own targets. No rule changed. Whether a band reads
+   as scrub from the air is Claude's look.
+8. **Old Tam's pickup has no model.** **Pick:** it is drawn as the Dusthawk Rally's model until a pickup is made (an art
+   card), and the feed crate as the lesson's crate.
+9. **Where a visit ends.** Leaving the Scablands goes to the main menu, as any helicopter visit does, not back to the yard or
+   the town. **Pick:** leave it so for this card; going back to the town is a small follow-up in `app.returnToMenu`.
