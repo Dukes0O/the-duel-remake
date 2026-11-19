@@ -13,7 +13,7 @@ export const RAIN_LOOK = Object.freeze({
   // When each part arrives, in seconds after the rain begins.
   arrival: Object.freeze({
     firstDropAt: 1.5,        // the single drop on the glass
-    secondDropAt: 7,         // nothing else lands before this
+    secondDropAt: 5,         // nothing else lands before this
     dropsFullAt: 48,         // drops on the glass at their full rate
     fallFrom: 9,             // falling rain begins to show
     fallFullAt: 50,
@@ -25,7 +25,7 @@ export const RAIN_LOOK = Object.freeze({
     puddlesFullAt: 160,
     soundFrom: 1.5,          // the first tick is the first drop; the hiss comes in under it
     soundFullAt: 60,
-    rampPower: 1.7,          // slow at first, then faster: the shower thickens
+    rampPower: 1.35,         // slow at first, then faster: the shower thickens
     stopSeconds: 5,          // under cover, the falling rain is gone in this long
     resumeShare: .25,        // time out of the rain counts back at this share, so a short tunnel does not restart it
     dryingSeconds: 300,      // after the rain, the ground takes this long to dry
@@ -35,7 +35,7 @@ export const RAIN_LOOK = Object.freeze({
     distance: .7,                    // from the eye to the glass
     focusBlurMm: 2.2,                // the eye looks past the glass: the soft edge of every bead
     dropRadiusMm: Object.freeze([.8, 2.4]),
-    firstDropRadiusMm: 3.1,          // the first drop of a shower is a big one
+    firstDropRadiusMm: 5,            // the first drop of a shower is a big one, and spreads as it hits
     firstDropAt: Object.freeze([.16, .12]), // on the screen, from the centre: right and up, in screen heights
     runRadiusMm: 3,                  // a bead this big runs
     hitsPerSecond: 22,               // beads landing on the glass in view, standing still, in full rain
@@ -47,13 +47,13 @@ export const RAIN_LOOK = Object.freeze({
     trailRadiusMm: Object.freeze([.3, .6]),
     trailEveryMm: 5,
     sag: .14,                        // a bead hangs a little heavier at the bottom
-    rim: .62,                        // the dark edge where the bead bends light away
-    glint: .7,                       // the bright point of sky on its top
-    opacity: .92,
+    rim: .45,                        // the dark edge where the bead bends light away
+    glint: .9,                       // the bright point of sky on its top
+    opacity: .72,                    // a bead is clear water: it changes what is behind it, it does not hide it
     // What a bead shows: the world small and upside down, so sky at its bottom and ground at its top. Shares of the
     // fog colour, which is the colour of the sky at the horizon.
-    skyShare: 1.18,
-    groundShare: .34,
+    skyShare: 1.08,
+    groundShare: .5,
     wiper: Object.freeze({
       afterBeads: 14,                // the driver switches it on when this many beads are on the glass
       intermittentSeconds: 7,
@@ -84,12 +84,13 @@ export const RAIN_LOOK = Object.freeze({
     box: Object.freeze([36, 22, 36]),
     speed: 8.5,                      // a raindrop of about 2 mm falls at this speed
     wind: Object.freeze([1.4, .5]),  // drift along x and z
-    exposure: 1 / 42,                // how long the eye takes in a moving drop
+    exposure: 1 / 30,                // how long the eye takes in a moving drop
     widthMm: 1.6,
     minPixels: .9,                   // a streak is drawn at least this wide and made fainter to match
+    farShare: .3,                    // but never fainter than this share: the eye blurs a far drop wider, it does not lose it
     nearest: .7,                     // nothing this close to the eye
     brightness: 1.25,                // share of the fog colour: a drop catches the light of the whole sky
-    alpha: .2,
+    alpha: .32,
   }),
   // Wet ground and puddles, laid over the real ground around the car.
   ground: Object.freeze({
@@ -110,16 +111,16 @@ export const RAIN_LOOK = Object.freeze({
     hollow: Object.freeze([.02, .14]), // how much lower than the ground around it a place must be to fill
     hollowRadiusCells: 2,
     flatSlope: Object.freeze([.05, .14]), // rise per metre: no water stands on steeper ground
-    microShare: .4,                  // small hollows the height samples are too coarse to see
+    microShare: .6,                  // small hollows the height samples are too coarse to see
     microSize: 1.9,
     fillFrom: 1.08,                  // the water's level, as a share of the hollow, when the puddles begin
-    fillTo: .5,                      // and when they are full
+    fillTo: .45,                     // and when they are full
     edge: .07,
     ripples: true,                   // rings where the drops land in a puddle; High only
     rippleCell: .45,
     rippleSeconds: .85,
-    fadeFrom: .62,                   // share of the wet ground's reach where it starts to fade out
-    fadeTo: .96,
+    fadeFrom: .55,                   // share of the wet ground's reach where it starts to fade out
+    fadeTo: .97,
     zenithShare: .78,                // the sky straight up is this share of the horizon's brightness
   }),
   // The sky closes over: the look the light moves to in full rain. Colours are the sky in daylight; at night they are

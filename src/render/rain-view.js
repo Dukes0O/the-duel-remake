@@ -3,7 +3,8 @@
 //
 // What it adds to a frame while it rains, by its own reckoning (Claude times it on the laptop):
 // - Draw calls: 3 from the chase camera (falling rain, wet ground, lens drops), 3 or 4 from the driver's seat
-//   (falling rain, wet ground, beads, and the wiper while it moves). No extra pass and no render target.
+//   (falling rain, wet ground, beads, and the wiper while it moves). No extra pass and no render target. The mirror
+//   (30 times a second, small) draws the wet ground once more, and nothing else of the rain.
 // - Triangles: falling rain 2 per streak (High 14,000; Performance 4,800); wet ground High 49 tiles of 12 x 12 cells
 //   (14,100), Performance 25 tiles of 10 x 10 (5,000); beads 2 each (at most 340).
 // - Fill: the wet ground covers the ground in view once with a short shader; the beads and streaks are thin.
@@ -22,7 +23,7 @@ import {rainPlace, rainWanted} from './rain-regions.js';
 import {createRainSky} from './rain-sky.js';
 import {createRainSound} from './rain-sound.js';
 
-// The glass is seen by the player's camera only, never in the mirror.
+// The glass and the falling rain are seen by the player's camera only, never in the mirror.
 export const RAIN_GLASS_LAYER = 29;
 const RELEASED = new Set(COURSE.map(event => event.id));
 const qaBuild = () => Boolean(import.meta.env?.DEV || (typeof __DUEL_QA__ !== 'undefined' && __DUEL_QA__ === true));
@@ -127,7 +128,7 @@ const FALL_VERTEX = /* glsl */`
   attribute vec4 aSeed;
   attribute vec2 corner;
   uniform vec3 uBox, uFall, uEyeVelocity;
-  uniform float uTime, uExposure, uWidth, uPixel, uNearest, uAlpha;
+  uniform float uTime, uExposure, uWidth, uPixel, uNearest, uAlpha, uFarShare;
   varying float vAlpha;
   void main() {
     vec3 low = cameraPosition - uBox * 0.5;
@@ -143,7 +144,7 @@ const FALL_VERTEX = /* glsl */`
     vec3 fromEye = (p - cameraPosition) / (uBox * 0.5);
     float edge = 1.0 - smoothstep(0.7, 1.0, max(abs(fromEye.x), max(abs(fromEye.y), abs(fromEye.z))));
     float near = smoothstep(uNearest, uNearest * 2.5, -head.z);
-    vAlpha = uAlpha * edge * near * (uWidth / width);
+    vAlpha = uAlpha * edge * near * max(uWidth / width, uFarShare);
     gl_Position = projectionMatrix * view;
   }
 `;
@@ -176,9 +177,10 @@ function fallMesh(count) {
     transparent: true, depthWrite: false, depthTest: true,
     uniforms: {uBox: {value: new THREE.Vector3(...fall.box)}, uFall: {value: new THREE.Vector3(fall.wind[0], -fall.speed, fall.wind[1])},
       uEyeVelocity: {value: new THREE.Vector3()}, uTime: {value: 0}, uExposure: {value: fall.exposure}, uWidth: {value: fall.widthMm / 1000},
-      uPixel: {value: .001}, uNearest: {value: fall.nearest}, uAlpha: {value: fall.alpha}, uColour: {value: new THREE.Color()}}});
+      uPixel: {value: .001}, uNearest: {value: fall.nearest}, uAlpha: {value: fall.alpha}, uFarShare: {value: fall.farShare}, uColour: {value: new THREE.Color()}}});
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = 'Rain falling'; mesh.frustumCulled = false; mesh.userData.excludeAmbientOcclusion = true;
+  // Too fine to see in the small mirror, so drawn for the player's camera only.
+  mesh.name = 'Rain falling'; mesh.frustumCulled = false; mesh.layers.set(RAIN_GLASS_LAYER); mesh.userData.excludeAmbientOcclusion = true;
   return mesh;
 }
 
@@ -315,7 +317,8 @@ function createWetGround({high, look = RAIN_LOOK.ground}) {
   return {
     mesh,
     high,
-    radius: tiles * look.tile / 2,
+    // How far the laid tiles reach from the centre in every direction, wherever in its tile the centre stands.
+    radius: (tiles - 1) / 2 * look.tile,
     get ready() { return ready; },
     get slots() { return slots; },
     // Lay ground around (x, z) with `heightAt`, spending at most `budgetMs`.
