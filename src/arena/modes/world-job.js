@@ -194,10 +194,12 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
-  // The neighbours' outposts are solid in a town drive only, from the layout the drive was started with (TOWN-OUTPOST-SCENE).
-  if(definition.kind==='town-drive'&&definition.layout?.outposts?.solids?.length){
+  // The neighbours' outposts and Mrs Vane's things are solid in a town drive only, from the layout the drive was started with
+  // (TOWN-OUTPOST-SCENE, TOWN-VANE-SCENE).
+  const townSolids=definition.kind==='town-drive'?[...definition.layout?.outposts?.solids??[],...definition.layout?.vane?.solids??[]]:[];
+  if(townSolids.length){
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
-    worldJob.solidGrid.setTown(definition.layout.outposts.solids);
+    worldJob.solidGrid.setTown(townSolids);
   }
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
