@@ -4,7 +4,7 @@ import {sweepObstacle} from '../../collision.js';
 import {createJobSolidGrid} from '../scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {sees} from '../scablands-ways.js';
-import {createBrandWays} from './brand-ways.js';
+import {createBrandWays, townCarWay} from './brand-ways.js';
 import {BRAND_RULE} from './brand-rule.js';
 import {EMBER_RULE} from './ember-rule.js';
 import {NIGHT_2_SITES as sites, night2Cast, night2Point} from './night-2-sites.js';
@@ -337,7 +337,9 @@ export function night2Action(worldJob, point, onFoot, car) {
   if (step.action === 'board' || step.inCar && onFoot) {
     const pastGate = point.z >= sites.gate.z + 3;
     const throughGate = car.z >= sites.gate.z && !pastGate && point.x > sites.westGap.position.x;
-    const route = onFoot && throughGate && direction(chapter, point, sites.gateOutside);
+    const alley = onFoot && townCarWay(step, worldJob.solidGrid, car, sites.around)?.aim(point, 'car');
+    const route = alley ? {point: alley, metres: alley.metres}
+      : onFoot && throughGate && direction(chapter, point, sites.gateOutside);
     chapter.routes = onFoot ? [{name: 'Your car', ...(route || {point: car, metres: dist(point, car)})}] : [];
     return {arrival: onFoot ? null : 'boarded', marker: chapter.routes[0]?.point};
   }

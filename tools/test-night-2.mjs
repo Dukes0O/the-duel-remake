@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {BoxGeometry, Group, Mesh, MeshStandardMaterial, PerspectiveCamera, Vector3} from 'three';
+import {Group, PerspectiveCamera, Texture, Vector3} from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {night2LightBlend} from '../src/world-job-camera.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
@@ -169,13 +170,13 @@ const newer = {story: {version: 7}, wasteland: {scrap: 91}};
 assert.equal(settleNight2(newer, opening.view).profile, newer);
 
 const nightScene = createScablandsScene(opening.duel.course, {loadAsset: async path => {
-  const root = new Group();
-  if (path === SCABLANDS_ASSETS.folk) {
-    const auntie = new Group();
-    auntie.name = 'auntie-solder_root';
-    auntie.add(new Mesh(new BoxGeometry(.5, 2, .4), new MeshStandardMaterial()));
-    root.add(auntie);
+  if (path === SCABLANDS_ASSETS.folk || path.endsWith('/story-walkers.glb') || path.endsWith('/cinder.glb')) {
+    const bytes = await readFile(new URL('../public' + path, import.meta.url));
+    const loader = new GLTFLoader();
+    loader.register(() => ({name: 'TEST_TEXTURE', loadTexture: () => Promise.resolve(new Texture())}));
+    return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
   }
+  const root = new Group();
   if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace) {
     const vehicle = new Group();
     vehicle.name = path === SCABLANDS_ASSETS.bess ? 'Big Bess gas truck' : "Old Smoke's rolling furnace";
@@ -228,9 +229,15 @@ for (const [answer, count, word, mark] of [
     const carts = cast.filter(person => person.cart);
     assert.equal(carts.length, 4);
     const rell = cast.find(person => person.id === 'rell');
-    const drawnCarts = carts.map(({id}) => nightScene.group.getObjectByName('story-handcart-' + id));
+    const peopleView = nightScene.group.getObjectByName('Wasteland story people');
+    await peopleView.userData.ready;
+    assert.ifError(peopleView.userData.loadError);
+    syncScene(nightScene.group, run.duel.state);
+    const drawnCarts = carts.map(({id}) => peopleView.getObjectByName('story-handcart-' + id));
     assert(drawnCarts.every(cart => cart?.visible));
-    const targets = [rell.position, ...fires.children.map(fire => fire.position),
+    const rellDraw = peopleView.getObjectByName('story-person-' + rell.id);
+    assert(rellDraw.visible);
+    const targets = [rellDraw.getWorldPosition(new Vector3()), ...fires.children.map(fire => fire.position),
       ...drawnCarts.map(cart => cart.getWorldPosition(new Vector3()))];
     for (const target of targets) {
       const image = project(run.view.camera, target);
