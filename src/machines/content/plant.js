@@ -15,7 +15,8 @@ export const PLANT_CONTENT = Object.freeze({
   // Loose crushed gravel and dry sand both weigh about 1,600 kg a cubic metre.
   looseKgPerM3:Object.freeze({gravel:1_600, sand:1_600}),
   pileReposeRadians:35 * Math.PI / 180,
-  loader:Object.freeze({bucketM3:2, reachM:3.6, scoopM3PerSecond:1, tipM3PerSecond:1, binsMarginM:1.2}),
+  // In a pile the loader creeps at a fifth of its drive and stops with its bucket halfway in.
+  loader:Object.freeze({bucketM3:2, reachM:3.6, scoopM3PerSecond:1, tipM3PerSecond:1, binsMarginM:1.2, pushForward:0.2, pushDepth:0.5}),
   // A central-mix plant at 120 cubic metres an hour.
   batch:Object.freeze({m3PerSecond:2 / 60, binsCapacityKg:30_000, chargeReachM:1.6}),
   mixer:Object.freeze({drumM3:6, pourM3PerSecond:2 / 60, chuteLengthM:1.6, chutePivotZ:-3.4,

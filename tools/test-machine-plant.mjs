@@ -100,6 +100,15 @@ parkAtBins();
 for (let i = 0; i < 60 * 5; i++) { stepLoader(plant, {tip:true}, STEP); parkAtBins(); }
 check(binsKg(plant, 'sand'), 3_200, 1e-6, 'a bucket of sand is in the sand bin');
 
+// A pile pushes back: driving on into it stops with the bucket halfway in, so it can still scoop.
+const push = createPlant();
+push.loader.machine = setMachine(push.loader.machine, PLANT_YARD.sandPile.x, PLANT_YARD.sandPile.z - 10, 0);
+for (let i = 0; i < 60 * 20; i++) stepLoader(push, {forward:1, scoop:true}, STEP);
+const pushTip = loaderBucketPoint(push);
+assert.ok(Math.hypot(pushTip.x - PLANT_YARD.sandPile.x, pushTip.z - PLANT_YARD.sandPile.z) < pileRadiusM(pileKg(push, 'sand')) + 0.6, 'the bucket stays in the pile');
+assert.ok(push.loader.machine.z < PLANT_YARD.sandPile.z, 'the loader did not drive through the pile');
+check(push.loader.bucket.kg, 3_200, 1e-6, 'driving into the pile fills the bucket');
+
 // Slice 3: the batch plant mixes 2 m3 a minute in the mix's proportions, under the plant only.
 const place = PLANT_YARD.batchPlant, charge = placeLocal(place, place.charge.x, place.charge.z);
 const backUnder = () => { plant.mixer.machine = setMachine(plant.mixer.machine, charge.x, charge.z - PLANT_CONTENT.mixer.chutePivotZ, 0); };

@@ -198,8 +198,17 @@ export function stepLoader(plant, controls = {}, dtSeconds = 0) {
   if (!finite(dtSeconds) || dtSeconds < 0) throw new TypeError('Plant time must be non-negative.');
   const settings = PLANT_CONTENT.loader, loose = PLANT_CONTENT.looseKgPerM3;
   const loader = plant.loader, events = [];
-  loader.machine = stepMachine(machineDefinition('loader'), loader.machine,
-    {forward:controls.forward ?? 0, steer:controls.steer ?? 0}, dtSeconds);
+  const before = loader.machine;
+  // A pile pushes back: with the bucket in it, the loader creeps, and it cannot drive through.
+  const inPile = pileUnder(plant, loaderBucketPoint(plant));
+  const forward = inPile ? Math.min(controls.forward ?? 0, PLANT_CONTENT.loader.pushForward) : controls.forward ?? 0;
+  loader.machine = stepMachine(machineDefinition('loader'), before, {forward, steer:controls.steer ?? 0}, dtSeconds);
+  if (inPile && (controls.forward ?? 0) > 0) {
+    const place = inPile === 'sand' ? plant.layout.sandPile : plant.layout.gravelPile;
+    const tip = loaderBucketPoint(plant);
+    const deep = PLANT_CONTENT.loader.pushDepth * pileRadiusM(pileKg(plant, inPile));
+    if (Math.hypot(tip.x - place.x, tip.z - place.z) < deep) loader.machine = {...loader.machine, x:before.x, z:before.z, speedMps:0};
+  }
   const target = controls.tip ? 1 : controls.scoop ? 0 : 0.35;
   loader.lift += clamp(target - loader.lift, -0.7 * dtSeconds, 0.7 * dtSeconds);
   const point = loaderBucketPoint(plant);

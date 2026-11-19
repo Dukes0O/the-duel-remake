@@ -88,8 +88,8 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
     mesh.name = `${material} pile`; mesh.castShadow = true; mesh.receiveShadow = true; mesh.visible = false;
     group.add(mesh); piles[material] = mesh;
   }
-  const stoneGeometry = own(new THREE.DodecahedronGeometry(0.16, 0));
-  const beltStones = new THREE.InstancedMesh(stoneGeometry, own(new THREE.MeshStandardMaterial({color:0x8a7f70, roughness:1, flatShading:true})), 4 * 72);
+  const stoneGeometry = own(new THREE.DodecahedronGeometry(0.24, 0));
+  const beltStones = new THREE.InstancedMesh(stoneGeometry, own(new THREE.MeshStandardMaterial({color:0xa69a88, roughness:1, flatShading:true})), 4 * 72);
   beltStones.name = 'Gravel on the belt'; beltStones.castShadow = true; beltStones.count = 0;
   beltStones.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   group.add(beltStones);
