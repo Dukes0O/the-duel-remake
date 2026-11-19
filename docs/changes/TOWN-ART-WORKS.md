@@ -6,7 +6,7 @@
 
 **Checks.** See the merge commit for the commit each ran on: the works check of `tools/test-blender-output.mjs` passes (all 21 pieces, each within its budget, named parts, three lamps lit); `tools/test-repo-hygiene.mjs`; `tools/test-review-evidence.mjs`. No frame check (rule 9). Not wired into the game.
 
-**Changed assertion.** The works check now names all 21 pieces and their budgets and parts instead of the warehouse, kiln and old sawmill; the sawmill's `log-stack-road`/`-far` became `log-stack-1` to `-3`. Nothing loosens (Claude's review is on the card).
+**Changed assertion.** The works check now names all 21 pieces and their budgets and parts instead of the warehouse, kiln and old sawmill; the sawmill's `log-stack-road`/`-far` became `log-stack-1` to `-3`; the registry entry is `recipeOnly` (it now must plan no `.blend`). Nothing loosens (Claude's review is on the card).
 
 **Lessons** added to `docs/ART_LINE.md`: open frames, roofs that hide machines, small carved sheds, heaps that read as paper, tree cut-outs, ground that cannot be dug, photo disagreements, arches under decks, photo size in a family file.
 

@@ -48,7 +48,8 @@ function jpegDimensions(bytes, start, length) {
 
 const generators = [
   {script:'tools/blender/story-walkers.py',args:[],recipeOnly:true,glb:['public/assets/models/wasteland/town/story-walkers.glb']},
-  {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,
+  // TOWN-ART-WORKS keeps the recipe, not a .blend (AGENTS: no .blend files): it plans none.
+  {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/works.glb'],budget:100000,maxBytes:8000000},
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
     glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
