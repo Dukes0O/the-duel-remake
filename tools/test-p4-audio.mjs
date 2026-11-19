@@ -53,12 +53,14 @@ const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sa
   'drill-reverse', 'drill-water', 'dozer-blade', 'roller-ground', 'paver-surface',
   'borer.stall', 'borer.call', 'borer.refuse', 'borer.breakthrough', 'borer.daylight'];
 const added = new Set(CUES);
+// STORY-NIGHT-2 adds four chapter-only cues. The pre-P4 bank pin is unchanged.
+const NIGHT_2_CUES = new Set(['town.gate.bell', 'night.whistle', 'luck.kind', 'luck.unkind']);
 const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 // Full pre-P4 objects are pinned; no old record or credit can silently change.
 assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !SKI_BANK_CUES.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) && !id.startsWith('deep.ana.') && !LAB_BANK_CUES.has(id) &&
-  id !== 'story.ledger.open' &&
+  id !== 'story.ledger.open' && !NIGHT_2_CUES.has(id) &&
   id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id) && !EMBER_CUES.has(id) && !GROUND_CUES.has(id) && !FENCE_CUES.has(id)))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
 assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !SKI_BANK_CUES.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !String(row.cue).startsWith('deep.ana.') && !String(row.cue).startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue) && !SKYLINE_CUES.has(row.cue) && !KOGANE_CUES.has(row.cue))}),

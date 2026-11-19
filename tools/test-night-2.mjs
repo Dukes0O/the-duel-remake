@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {SOUND_BANK} from '../src/sound-bank.js';
 import {App} from '../src/app.js';
 import {yardHomeScreen} from '../src/screen-yard-home.js';
 import {pageFunctions, pageSource} from './scenarios/story-night-2.mjs';
@@ -86,6 +87,9 @@ function chapter(seed, startedDuel) {
 }
 
 for (const scene of Object.values(NIGHT_2_SCENES)) validateTalkScene(scene);
+for (const id of ['town.gate.bell', 'night.whistle', 'luck.kind', 'luck.unkind'])
+  assert.equal(SOUND_BANK[id].flag, 'story-choices');
+assert.notDeepEqual(SOUND_BANK['luck.kind'].layers, SOUND_BANK['luck.unkind'].layers);
 assert.equal(bankHearth(createLedger(night2Opening(9))).needed, 1);
 const opening = chapter(giftSeed);
 opening.openGate();
