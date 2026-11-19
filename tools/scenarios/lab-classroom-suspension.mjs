@@ -107,11 +107,11 @@ export async function run(c) {
   await d.at('recap'); await shot('recap');
   const contract = await c.evaluate(`(() => {
     const panel = document.querySelector('.lc-physics')?.textContent ?? '';
-    const past = document.querySelectorAll('.lc-past > *').length;
+    const past = document.querySelectorAll('.lc-word-list > *').length;
     return {hasRoll: panel.includes('body leans'), past};
   })()`);
   if (!contract.hasRoll) throw new Error('Physics panel does not show the body-roll explanation.');
-  if (contract.past < 12) throw new Error(`The lesson page did not keep earlier steps: ${contract.past}`);
+  if (contract.past !== 5) throw new Error(`The Words so far fold should hold the five words: ${contract.past}`);
   await select('Enter'); await wait(1200); await shot('challenge');
   await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('completed the Suspension lesson')`, 'four suspension bench comparisons pass the unchanged challenge', 20_000);
 }

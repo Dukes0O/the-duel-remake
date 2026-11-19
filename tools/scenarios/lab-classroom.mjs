@@ -2,6 +2,8 @@
 // to the recap, on the harness's memory-only origin. The formula panel starts closed in every lesson (Kyle, 9 November 2026).
 // Its first steps have no formulas, so the scenario opens the panel at the first step that has some (openFormulaPanel).
 
+import {CLASSROOM_LESSONS} from '../../src/lab/classroom/classroom-lessons.js';
+
 // Shared by the Lab classroom scenarios. Call it at the first step that has formulas: it checks the panel is closed and
 // offered, opens it the way a player does (the F key), and waits until it shows. The choice lasts for that lesson only,
 // so a scenario that opens a second lesson calls this again there.
@@ -19,7 +21,7 @@ export async function run(c) {
 }
 
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], Escape: ['Escape', 27], KeyH: ['h', 72], KeyE: ['e', 69], KeyW: ['w', 87], KeyA: ['a', 65],
-  Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], Digit5: ['5', 53], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40]};
+  Backspace: ['Backspace', 8], KeyR: ['r', 82], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], Digit5: ['5', 53], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40]};
 
 async function play(c) {
   await c.navigate('/tools/menu-check.html?flags=lab-classroom,rescue,summit-run');
@@ -69,12 +71,34 @@ async function play(c) {
   await next('word-swing-time');
   await at('watch-lengths'); await new Promise(r => setTimeout(r, 5000)); await shot('watch-lengths-running');
   await at('watch-lengths', 's.ready'); await new Promise(r => setTimeout(r, 400)); await shot('watch-lengths');
-  await next('watch-lengths');
-  const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
+  // LAB-PAGE: a watch step that animates offers Watch again, and R restarts it without leaving the step.
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.startsWith('Watch again'))`))) throw Error('A watch step that animates should offer Watch again.');
+  await press('KeyR'); await new Promise(r => setTimeout(r, 400));
+  if ((await c.evaluate(state)).step !== 'watch-lengths') throw Error('R should restart the animation and stay on the step.');
+  await next('watch-lengths');  const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
   const noPanel = async label => { if (await c.evaluate(`!document.querySelector('.lc-physics').hidden`)) throw Error(`${label}: the panel is open while the guess or the question is open.`); };
   // The guided try: Brian's help climbs to his pointer, then the set-up, a wrong guess and why.
   await at('try-short'); await shot('try-short');
-  for (const rung of [1, 2, 3]) { await press('KeyH'); await at('try-short', `s.help === ${rung}`); }
+  // LAB-PAGE: the step being worked on is at the top; the words are in one closed fold below; the steps that only gave an instruction or ran a test have left.
+  const title = id => CLASSROOM_LESSONS.pendulum.steps.find(s => s.id === id).title;
+  const pageNow = () => c.evaluate(`(() => ({now: [...document.querySelectorAll('.lc-past h4')].map(e => e.textContent), words: [...document.querySelectorAll('.lc-word-list h4')].map(e => e.textContent),
+    folded: document.querySelector('.lc-word-list').hidden, toggle: document.querySelector('.lc-words-toggle').textContent.trim().replace(/\\s+/g, ' ')}))()`);
+  let page = await pageNow();
+  if (JSON.stringify(page.now) !== JSON.stringify([title('try-short')])) throw Error(`The step now should be alone at the top: ${page.now}`);
+  if (JSON.stringify(page.words) !== JSON.stringify(['word-pendulum', 'word-length', 'word-swing-time'].map(title))) throw Error(`The fold should hold the three words: ${page.words}`);
+  if (!page.folded || page.toggle !== 'Words so far (3)') throw Error(`The Words so far fold should start closed: ${page.folded} ${page.toggle}`);
+  await c.evaluate(`document.querySelector('.lc-words-toggle').click()`); await new Promise(r => setTimeout(r, 300));
+  if (await c.evaluate(`document.querySelector('.lc-word-list').hidden || document.querySelector('.lc-word-list section.open')`)) throw Error('A click should open the fold with its words folded.');
+  await shot('words-fold-open');
+  if (await c.evaluate(`(() => { const p = document.querySelector('.lc-page'); return p.scrollWidth > p.clientWidth + 1; })()`)) throw Error('The open Words so far fold runs wider than Brian\u2019s page.');
+  await c.evaluate(`document.querySelector('.lc-word-list section button').click()`); await new Promise(r => setTimeout(r, 300));
+  if (!(await c.evaluate(`!!document.querySelector('.lc-word-list section.open')`))) throw Error('A click on a word should open it.');
+  await c.evaluate(`document.querySelector('.lc-words-toggle').click()`); await new Promise(r => setTimeout(r, 200));
+  // Previous step shows that step in full at the top; Continue returns.
+  await press('Backspace'); await at('watch-lengths');
+  page = await pageNow();
+  if (JSON.stringify(page.now) !== JSON.stringify([title('watch-lengths')]) || page.words.length !== 3) throw Error(`Previous step should show that step at the top: ${page.now}`);
+  await next('watch-lengths'); await at('try-short');  for (const rung of [1, 2, 3]) { await press('KeyH'); await at('try-short', `s.help === ${rung}`); }
   await new Promise(r => setTimeout(r, 700)); await shot('try-short-show-me');
   // Show me: Brian's pointer presses the 5 m hook and hands the guess back.
   await at('try-short', 's.cards === 3'); await new Promise(r => setTimeout(r, 300)); await shot('try-short-guess'); await noPanel('the short string');

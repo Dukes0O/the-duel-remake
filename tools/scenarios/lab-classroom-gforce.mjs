@@ -162,9 +162,9 @@ export async function run(c) {
   if (!panelVisible) throw new Error('The physics panel did not show the G-force rule at 1920 by 1000.');
 
   const pageKeptSteps = await c.evaluate(`
-    document.querySelectorAll('.lc-past > *').length >= 12
+    document.querySelectorAll('.lc-past > *').length === 1 && document.querySelectorAll('.lc-word-list > *').length === 4 && document.querySelector('.lc-word-list').hidden
   `);
-  if (!pageKeptSteps) throw new Error('The classroom page did not keep the earlier lesson steps.');
+  if (!pageKeptSteps) throw new Error('The classroom page did not keep the four words in the closed Words so far fold.');
 
   await press('Enter');
   await wait(1500);

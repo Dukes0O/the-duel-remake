@@ -62,7 +62,8 @@ async function play(c) {
   await at('word-heat'); await press('Digit2'); await at('word-heat', 's.ready'); await shot('word-heat');
   await next('word-heat');
   await at('word-oxygen'); await press('Digit3'); await at('word-oxygen', 's.ready'); await says('That is why my lid worked', 'the wonder answered'); await shot('word-oxygen');
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-past h4')].map(e => e.textContent).join() === 'Why did the lid work?,Fuel,Heat,Oxygen'`))) throw Error('Earlier words should stay on the page.');
+  // LAB-PAGE: the step being worked on is at the top, the earlier words are in the closed Words so far fold, and the opening question left the page.
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-past h4')].map(e => e.textContent).join() === 'Oxygen' && [...document.querySelectorAll('.lc-word-list h4')].map(e => e.textContent).join() === 'Fuel,Heat' && document.querySelector('.lc-word-list').hidden`))) throw Error('The step now should be at the top and the earlier words in the closed Words so far fold.');
   await next('word-oxygen');
   await at('word-triangle'); await press('Digit3'); await at('word-triangle', 's.ready'); await shot('word-triangle');
   await next('word-triangle');

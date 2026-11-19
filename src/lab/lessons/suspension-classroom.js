@@ -178,6 +178,7 @@ export function createModel() {
       : id().startsWith('check-') ? 'quiz' : 'ready';
     guess = null; say = ''; lastHeldAt = -Infinity; quizAnswer = null;
     if (['wonder', 'formula', 'watch'].includes(id())) setup = {...SETUPS[0]};
+    if (id() === 'watch') { rows.splice(0); tested.clear(); }
     if (id() === 'guess-bumps') setup = {...SETUPS[0]};
     if (id() === 'guess-roll') setup = {...SETUPS[0]};
     if (id() === 'try-free') { rows.splice(0); tested.clear(); setup = {...SETUPS[0]}; }
@@ -226,6 +227,8 @@ export function createModel() {
       lastHeldAt = now;
       action = action.slice(0, -5);
     }
+    // Watch again: the step starts over, with the rig back on its first setting and the readings cleared.
+    if (action === 'replay' && ['wonder', 'watch'].includes(id())) { enter(index); return null; }
     if (action === 'show' && ['try-free', 'alone'].includes(id())) return doShowMe();
     if (action.startsWith('spring:')) return setControl('spring', action.endsWith('soft') ? 'soft' : 'stiff');
     if (action.startsWith('road:')) return setControl('road', action.endsWith('bumpy') ? 'bumpy' : 'smooth');

@@ -159,7 +159,7 @@ async function play(c) {
   }
   await at('recap'); await wait(1500); await shot('recap');
   await measure('recap (no strip)');
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-past h4')].some(e => e.textContent === 'The collective lever') && document.querySelector('.lc-past').textContent.includes('Newton’s third law')`))) throw Error('Earlier words did not stay on the page.');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-word-list h4')].some(e => e.textContent === 'The collective lever') && document.querySelector('.lc-word-list').textContent.includes('Newton’s third law')`))) throw Error('Earlier words did not stay in the Words so far fold.');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
   // Teaching writes the notebook words and never passes the lesson by itself.
   if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.lift && ['lift-weight', 'lift-lift', 'lift-collective', 'lift-hover'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
