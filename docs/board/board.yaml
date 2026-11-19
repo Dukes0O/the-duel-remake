@@ -583,9 +583,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "review"
-    waiting_on: "claude"
-    claimed_by: "Codex (cloud), 19 November 2026"
+    status: "building"
+    claimed_by: "Codex (cloud), 19 November 2026, Slice B"
     needs: []
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2.md"

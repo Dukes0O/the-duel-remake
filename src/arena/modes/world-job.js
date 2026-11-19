@@ -239,6 +239,7 @@ export function initializeWorldJob(duel, definition) {
     state.speedMph=0;state.headingError=0;state.townGatePrompt='';
   }
   initializeWorldFootStart(duel, definition.steps[0]?.footStart ?? definition.steps[0]?.bellowsFootStart);
+  if (definition.steps.some(step=>step.kind==='rider-fight')) reserveRoadRiders(duel, worldJob);
   if (definition.id === NIGHT_2_ID) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setBrandLamps([...NIGHT_2_SITES.lamps, ...NIGHT_2_SITES.chaseLamps]);
@@ -247,7 +248,6 @@ export function initializeWorldJob(duel, definition) {
     worldJob.night2 = createNight2(definition, duel.course.solidGrid);
     enterNight2(duel, worldJob);
   }
-  if (definition.steps.some(step=>step.kind==='rider-fight')) reserveRoadRiders(duel, worldJob);
   return true;
 }
 
@@ -1769,6 +1769,7 @@ export function stepWorldJob(duel, dt) {
       return {reason:'rider-fight-lost', winnerId:'raiders'};
     if (worldJob.night2) enterNight2(duel, worldJob);
     if (worldJob.riderReserve) startRoadFight(duel, worldJob);
+    if (worldJob.night2) enterNight2(duel, worldJob);
     applyStepLoan(duel, worldJob);
   }
   for (const event of next.events) {

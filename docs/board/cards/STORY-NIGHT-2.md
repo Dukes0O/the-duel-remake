@@ -67,7 +67,7 @@ shut), each from the bank's own layers; the pot's, the lamp's and the flamer's c
 
 ## From the painted plate (Claude, 18 November 2026)
 
-The plate trial stopped at one picture: the game looks poor beside it (`docs/board/looks/story-plates/night-2-review.md`). Two things carry over to this card. Wim sits on the front of the left cart, and the sitting action's automatic ground stool is suppressed for her on every frame of the gate scene. The scene's staging and camera are in `tools/art/story-plates/night-2-pose.json`. The painting remains the gate scene’s staging reference. The playable chapter uses the in-engine lighting updated for PR #47.
+The plate trial stopped at one picture: the game looks poor beside it (`docs/board/looks/story-plates/night-2-review.md`). Two things carry over to this card. Wim sits on the front of the left cart, and the sitting action's automatic ground stool is suppressed for her on every frame of the gate scene. The scene's staging and camera are in `tools/art/story-plates/night-2-pose.json`. The painting is the look the gate scene aims at, but lighting work is not part of this card.
 
 
 ## Claude review of Slice A
@@ -79,17 +79,17 @@ holstered. The hearth shot includes the fire, Auntie counts after banking, the p
 car where it is parked, and the replay shows the first saved page and the replay message.
 The scenario now waits for the QA button and each rendered dialogue turn.
 
-Since `480b1e594`, Night 2’s moonlight covers every night step, the pump lights its surrounds,
-and the tower shows the Walkers’ fires and the three riders’ roof lights. Slice A presents
-Watch and Carry one ember. The hint names Rell and Clinker. Taking the brand switches the
-banner and route to the pump, and the scenario sends real mouse presses there and at the
-scout. Claude’s earlier hand play covered watch through the saved page, the inside dialogue
-and pump bar, and refusal with the Dead Mall answer.
-
 The [change note](../../changes/STORY-NIGHT-2.md) records the cloud checks and pending laptop
 checks. Run `story-night-2` four consecutive times on the laptop at 1280×720 before the
-verdict, then play the full chase, the pot drive and Carry one ember. Check the revised night look and sound. PR #47 approved the four explicit Night 2 cue
+verdict, then check the branches by hand. PR #47 approved the four explicit Night 2 cue
 exclusions in `tools/test-p4-audio.mjs`. The historical fingerprint is intact.
 
-ROAD-RIDERS reached official integration and passed Claude’s three laptop hand fights. Slice B
-can proceed separately while this PR stays on Slice A. Kyle’s try follows Claude’s play of all branches.
+Keep this card open for Slice B after ROAD-RIDERS reaches official integration and passes
+its laptop hand fights. Kyle’s try follows Claude’s play of all branches.
+
+## Slice A merged (Claude, 18 November 2026, late)
+
+Slice A is on integration behind `story-choices` (dev). Slice B remains: the Wash fight with the riders (ROAD-RIDERS is merged). Carry over from Claude's hand play:
+- The escape scene at the Walkers' camp shows open ground. Rell speaks of "my fire", but the camp's carts and fire are not in the picture. Stage the camp.
+- The chase is winnable only by a small margin, and a player who loses a few seconds against a wall cannot catch Dace (the escape branch then follows, as designed). Kyle's try judges whether the margin is right.
+- The tower's fight option returns in Slice B.
