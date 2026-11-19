@@ -76,6 +76,11 @@ for (const id of [
   'gate.drum',
 ])
   assert(SOUND_BANK[id], id);
+const retreat = SOUND_BANK['rider.breaks-off'];
+assert.equal(retreat.bus, 'vehicle');
+assert.equal(retreat.flag, 'road-riders');
+assert.equal(retreat.layers.length, 2);
+assert.ok(retreat.layers.every(layer => layer.endFrequency < layer.frequency), 'both retreat engine tones fall');
 const master = new Node(),
   vehicle = new Node();
 const mixer = new SoundMixer(context, master, { vehicle });
