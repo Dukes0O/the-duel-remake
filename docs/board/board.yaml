@@ -548,6 +548,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-NIGHT-18-NOV.md"
 
+  - id: QA-NIGHT-19-NOV
+    title: "The night check of 19 November: stopped at four hours; Lab panel cured; wildlife-view fails outside the code"
+    owner: "claude"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-NIGHT-19-NOV.md"
+
   - id: QA-EVIDENCE-DATE-BOUNDARY
     title: "One clock names every evidence folder: the browser runner and the round planner disagreed at midnight"
     owner: "codex"
