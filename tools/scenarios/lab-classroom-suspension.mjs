@@ -1,4 +1,6 @@
 // Keyboard-only Suspension classroom play at 1920 by 1000. Saves stay in memory.
+// The formula panel starts closed; the lesson opens it with F at its first formulas (the watch step).
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = Object.freeze({
   Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69],
   Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51],
@@ -76,7 +78,7 @@ export async function run(c) {
   await d.next('guess-roll');
 
   // Watch runs through all four spring-road settings; the values really change.
-  await d.at('watch'); await shot('watch-start'); await wait(2500); await shot('watch-changing');
+  await d.at('watch'); await shot('watch-start'); await openFormulaPanel(c); await wait(2500); await shot('watch-changing');
   await d.at('watch', 'value.ready'); await shot('watch-finished'); await d.next('watch');
 
   await d.at('formula'); await shot('formula');

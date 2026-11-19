@@ -2,6 +2,7 @@
 // map's click-to-go to the wind tunnel, through Brian's job with Show me, to the pass and the Brake balance row open on
 // the Tune page. It also checks the classroom's reading fixes: Brian's "Stuck?" offer sits under his words, and
 // Backspace goes back one step. Memory-only saves.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html');
@@ -39,6 +40,7 @@ export async function run(c) {
   await next('wonder');
   // Speed: km/h on the dial, m/s in the sums, and each press changes the sum at once.
   await at('word-speed'); await shot('word-speed');
+  await openFormulaPanel(c);
   if (!(await worked('22.35 m/s × 3.6 = 80.46 km/h'))) throw Error('The sum should start at the dial’s speed.');
   await press('ArrowUp');
   if (!(await worked('26.82 m/s × 3.6 = 96.55 km/h'))) throw Error('The sum did not follow the dial.');

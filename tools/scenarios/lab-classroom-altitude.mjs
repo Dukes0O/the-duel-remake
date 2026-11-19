@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-ALTITUDE: the Air and altitude classroom played by keyboard (and one mouse drag of the lever),
 // from the Lab map to the helicopter challenge, on the harness's memory-only origin. Walking up to a machine is covered by
 // tools/scenarios/lab-classroom.mjs.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
@@ -35,7 +36,7 @@ async function play(c) {
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
   await wait(3500); await shot('wonder');
   await next('wonder');
-  await at('word-altitude'); await press('ArrowUp'); await says('Panorama Ridge is 860 m', 'the Ridge'); await press('ArrowUp');
+  await at('word-altitude'); await openFormulaPanel(c); await press('ArrowUp'); await says('Panorama Ridge is 860 m', 'the Ridge'); await press('ArrowUp');
   await at('word-altitude', 's.ready'); await wait(400); await shot('word-altitude');
   await sums('2,860 m − 0 m', 'the altitude sum follows the stand');
   await press('ArrowDown'); await sums('860 m − 0 m', 'the stand stays free after the answer'); await press('ArrowUp');

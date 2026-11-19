@@ -40,7 +40,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     portrait.innerHTML = `<img alt="Brian" src="${url}">`;
   });
 
-  const physicsOpen = () => physicsChoice ?? win.innerWidth >= 1500;
+  // The formula panel starts closed so that the words and the picture teach first; F or the button opens it (Kyle, 9 November 2026).
+  const physicsOpen = () => physicsChoice ?? false;
   function setHtml(element, key, html) { if (last[key] !== html) { element.innerHTML = html; last[key] = html; return true; } return false; }
   function act(action) {
     note = '';

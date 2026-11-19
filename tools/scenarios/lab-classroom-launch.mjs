@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-LAUNCH: the Launch angles classroom played by keyboard (and one mouse click on the ramp panel), from the
 // Lab map's click-to-go to the launcher, through Brian's job with Show me, to the pass and the free Aerials reward.
-// Memory-only saves.
+/// Memory-only saves. The formula panel starts closed; the lesson opens it with F at its first formulas.
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
 const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
@@ -35,7 +36,7 @@ export async function run(c) {
   if (!(await bubble()).includes('nearly the same spot')) throw Error('The wonder should end on the two landings: ' + await bubble());
   await next('wonder');
   // Speed first: the dial, and m/s, are defined before the arrows use them.
-  await at('word-speed'); await shot('word-speed'); await press('ArrowRight', 2); await at('word-speed', 's.ready'); await shot('word-speed-done');
+  await at('word-speed'); await shot('word-speed'); await openFormulaPanel(c); await press('ArrowRight', 2); await at('word-speed', 's.ready'); await shot('word-speed-done');
   await next('word-speed');
   // Launch angle: one click on the ramp panel's Flatter, then ↓ twice more.
   await at('word-angle'); await shot('word-angle');

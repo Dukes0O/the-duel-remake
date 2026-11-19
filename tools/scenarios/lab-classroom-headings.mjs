@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-HEADINGS: the Headings and maps classroom played by keyboard (and one mouse drag of the ruler), from
-// walking up to the map table to the helicopter challenge, on the harness's memory-only origin. Run at 1920 by 1000, so
-// the physics panel is open and its sums can be checked against the controls.
+// walking up to the map table to the helicopter challenge, on the harness's memory-only origin. Run at 1920 by 1000. The
+// physics panel starts closed and the lesson opens it with F, so its sums can be checked against the controls.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
@@ -49,7 +50,7 @@ async function play(c) {
   if (!(await bubble()).includes('passed 517 m from the smoke')) throw Error('The wonder should end on the miss: ' + await bubble());
   await next('wonder');
   // Heading: D counts up, the sum follows, and A first says the number went down. The step stays open afterwards.
-  await at('word-heading'); await shot('word-heading'); await press('KeyA'); await wait(300); await shot('word-heading-left');
+  await at('word-heading'); await shot('word-heading'); await openFormulaPanel(c); await press('KeyA'); await wait(300); await shot('word-heading-left');
   await summing('355° ÷ 360°', 'the sum follows the gauge');
   await press('KeyD', 8); await at('word-heading', 's.ready'); await wait(200); await shot('word-heading-right');
   await press('KeyD', 8); await wait(200); await shot('word-heading-open');

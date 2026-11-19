@@ -1,7 +1,8 @@
 // LAB-CLASSROOM-WAX: the Ski wax classroom played by keyboard (and one mouse click on a tin), from the Lab map's
 // click-to-go to the slalom: the helicopter flies to the Devils drop, picks today's wax and steps into the ski
-// challenge with the key idea card. Memory-only saves.
+// challenge with the key idea card. Memory-only saves. The formula panel starts closed; the lesson opens it with F at its first formulas.
 import {SKI_PADS} from '../../src/ski/ski-session.js';
+import {openFormulaPanel} from './lab-classroom.mjs';
 
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
@@ -42,6 +43,7 @@ export async function run(c) {
   await next('wonder');
   // Wax: one mouse click on the medium tin.
   await at('word-wax'); await shot('word-wax');
+  await openFormulaPanel(c);
   const medium = await toScreen(500, 600);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: medium.x, y: medium.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: medium.x, y: medium.y, button: 'left', buttons: 0, clickCount: 1});

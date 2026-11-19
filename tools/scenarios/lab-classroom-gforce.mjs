@@ -1,5 +1,6 @@
 // Keyboard-only G-force classroom play at the full physics-panel resolution.
-// Saves stay in memory, and Claude runs this scenario on the laptop.
+/// Saves stay in memory, and Claude runs this scenario on the laptop. The formula panel starts closed; the lesson opens it with F.
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = Object.freeze({
   Enter: ['Enter', 13],
   Space: [' ', 32],
@@ -76,6 +77,7 @@ export async function run(c) {
 
   await at('word-speed');
   await shot('gforce-word-speed');
+  await openFormulaPanel(c);
   await press('ArrowRight');
   await at('word-speed', 'value.ready');
   await shot('gforce-speed-set');
@@ -155,7 +157,7 @@ export async function run(c) {
   await at('recap');
   await shot('gforce-recap');
   const panelVisible = await c.evaluate(`
-    document.querySelector('.lc-physics')?.textContent.includes('G-force')
+    !document.querySelector('.lc-physics')?.hidden && document.querySelector('.lc-physics')?.textContent.includes('G-force')
   `);
   if (!panelVisible) throw new Error('The physics panel did not show the G-force rule at 1920 by 1000.');
 

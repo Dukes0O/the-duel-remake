@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-LIFT: the Lift and weight classroom played by keyboard (and one mouse drag of the lever),
 // from the Lab map to the helicopter challenge, on the harness's memory-only origin. Walking up to a machine is covered by
-// tools/scenarios/lab-classroom.mjs.
+// tools/scenarios/lab-classroom.mjs. The formula panel starts closed, so the lesson opens it with F at its first formulas.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
@@ -32,6 +33,7 @@ async function play(c) {
   await wait(3500); await shot('wonder-strain'); await wait(3000); await shot('wonder-lifts');
   await next('wonder');
   await at('word-weight'); await shot('word-weight');
+  await openFormulaPanel(c);
   if (!(await worked('15,990.3 N'))) throw Error('The weight in newtons is not in the panel.');
   await press('Digit1'); await at('word-weight', 's.ready'); await wait(400); await shot('word-weight-crate');
   if (!(await worked('20,895.3 N'))) throw Error('The sums did not follow the crate.');

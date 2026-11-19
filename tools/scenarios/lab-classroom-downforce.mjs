@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-DOWNFORCE: the Downforce classroom played by keyboard (and one mouse click on the wing panel), from the
 // Lab map's click-to-go to the wind tunnel, through Brian's job with Show me, to the pass and the Wing angle row open
 // on the Tune page. passDownforce is the short way through, which lab-tune-view uses to open the wing. Memory-only saves.
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
 const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
@@ -81,6 +82,7 @@ export async function run(c) {
   await next('wonder');
   // Fan speed: km/h and m/s are defined, and the dial moves the sum.
   await at('word-speed'); await shot('word-speed');
+  await openFormulaPanel(c);
   await press('ArrowUp'); await wait(200);
   if (!(await sums('26.82 m/s'))) throw Error('The sum did not follow the fan dial.');
   await press('ArrowUp', 4); await at('word-speed', 's.ready'); await wait(300); await shot('word-speed-done');

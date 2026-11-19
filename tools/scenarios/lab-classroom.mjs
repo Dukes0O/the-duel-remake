@@ -1,5 +1,18 @@
 // LAB-CLASSROOM: the pendulum classroom played by keyboard alone, from walking up to the machine
-// to the recap, on the harness's memory-only origin.
+// to the recap, on the harness's memory-only origin. The formula panel starts closed in every lesson (Kyle, 9 November 2026).
+// Its first steps have no formulas, so the scenario opens the panel at the first step that has some (openFormulaPanel).
+
+// Shared by the Lab classroom scenarios. Call it at the first step that has formulas: it checks the panel is closed and
+// offered, opens it the way a player does (the F key), and waits until it shows. The choice lasts for that lesson only,
+// so a scenario that opens a second lesson calls this again there.
+export async function openFormulaPanel(c) {
+  await c.waitFor(`!document.querySelector('.lc-show-physics')?.hidden`, 'the Show the physics button is offered', 20_000);
+  if (!(await c.evaluate(`document.querySelector('.lc-physics').hidden`))) throw Error('The formula panel should start closed.');
+  await c.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'KeyF', key: 'f', windowsVirtualKeyCode: 70});
+  await c.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'KeyF', key: 'f', windowsVirtualKeyCode: 70});
+  await c.waitFor(`!document.querySelector('.lc-physics').hidden`, 'F opens the formula panel', 5_000);
+}
+
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
@@ -74,6 +87,7 @@ async function play(c) {
   await press('Digit2'); await press('Digit5'); await at('try-heavy', 's.cards === 3'); await new Promise(r => setTimeout(r, 300)); await shot('try-heavy-guess'); await noPanel('the heavy weight');
   await press('Digit3'); await press('Space');
   await at('try-heavy', 's.ready'); await new Promise(r => setTimeout(r, 1200)); await shot('try-heavy-right');
+  await openFormulaPanel(c);
   if (!(await worked('(200 × 9.81) ÷ 200 = 9.81'))) throw Error('The heavy weight’s sum is missing.');
   await next('try-heavy');
   // The formula: a hook and a weight move the sums.
