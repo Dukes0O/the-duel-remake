@@ -479,7 +479,7 @@ function testsCard(ctx, view) {
   text(ctx, `YOUR TESTS WITH THE ${kg0(CAR_KG)} CAR`, x + 16, y + 20, {size: 13, align: 'left', colour: LABEL, weight: 800});
   const cols = [['Arm', x + 12, 'left'], ['Weight', x + 214, 'right'], ['Used', x + 266, 'right'], ['Dip', x + 322, 'right'], ['Result', x + 372, 'right']];
   for (const [label, cx, align] of cols) text(ctx, label, cx, y + 46, {size: 13, align, colour: LABEL, weight: 800});
-  if (!view.tests.length) text(ctx, 'There are no tests yet. Press Space to test.', x + w / 2, y + 120, {size: 16, colour: LABEL});
+  if (!view.tests.length) text(ctx, 'There are no tests yet.', x + w / 2, y + 120, {size: 16, colour: LABEL});
   view.tests.forEach((t, i) => {
     const rowY = y + 74 + i * 32, colour = t.holds ? theme.text : theme.bad;
     ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(x + 6, rowY - 15, w - 12, 30);

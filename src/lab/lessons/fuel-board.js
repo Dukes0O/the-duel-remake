@@ -321,7 +321,7 @@ function raceRoad(ctx, view, lanes = view.lanes.length) {
   roadBlock(ctx, r);
   text(ctx, 'start', stripX(r, 0), below, {size: 15, colour: DIM});
   for (const m of [10, 20, 30, 40]) text(ctx, `${m} m`, stripX(r, m), below, {size: 15, colour: DIM});
-  text(ctx, `From a standstill to ${TARGET_TEXT}, timed at real speed`, r.x + r.w / 2, roadTop(r) - 22, {size: 18, colour: DIM});
+  text(ctx, `From a standstill to ${TARGET_TEXT}${view.slowRace ? ', shown in slow motion' : ''}`, r.x + r.w / 2, roadTop(r) - 22, {size: 18, colour: DIM});
   const perM = (r.w - r.lead - 20) / STRIP.metres;
   view.lanes.forEach((l, i) => {
     const nose = stripX(r, l.metres), cy = carY(r, i), top = cy - 21 * r.cs, bottom = cy + 18 * r.cs;
@@ -590,7 +590,7 @@ export function strip(view) {
   if (view.job) out.readouts.push({label: '', value: `${Math.round(view.litres)} litres lasts ${pctAbout(view.job.lasts)} of a Grand Prix.`, tone: null});
   if (view.free) {
     const rows = view.free.rows.slice(-TABLE_ROWS).map(r => ({label: `${r.car}, petrol ${r.litres} L, total mass ${n1(r.total)} kg`, value: `acceleration ${r.accel.toFixed(3)} m/s², time ${s2(r.seconds)}`, tone: 'good'}));
-    out.tables.push({title: 'YOUR TESTS', rows: rows.length ? rows : [{label: 'There are no tests yet. Press Space to race.', value: '', tone: 'faint'}]});
+    out.tables.push({title: 'YOUR TESTS', rows: rows.length ? rows : [{label: 'There are no tests yet.', value: '', tone: 'faint'}]});
   }
   return out.readouts.length || out.tables.length ? out : null;
 }

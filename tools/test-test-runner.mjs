@@ -260,8 +260,26 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   const sharedPlan=selectPlan(actual,{tier:'lane',affected:shared});
   check(LANE_GUARDS.every(guard=>sharedPlan.some(task=>task.suite===guard))&&sharedPlan.some(task=>task.suite===CORE_SUITE),
     'a shared-file lane still runs the replay guards and the core suite');
-  check(Object.entries(SHARED_FILES).every(([path,owners])=>owners.every(owner=>suitesForChanges(actual,[path]).includes(owner))),
+  // One walk of the inventory serves every shared-file check below.
+  const sharedCache={dependencyCache:new Map(),graphCache:new Map()};
+  check(Object.entries(SHARED_FILES).every(([path,owners])=>owners.every(owner=>suitesForChanges(actual,[path],sharedCache).includes(owner))),
     'a shared file selects the suites that own it');
+  // QA-WIDE-FILES (Director's ruling, 19 November 2026): course tables and small helpers select
+  // their owners, not the hundreds of suites that reach them through config.js or a combat helper.
+  const narrowed=['src/circuits/index.js','src/freestyle-course.js','src/bowl/bowl-course.js','src/expansion-courses.js',
+    'src/circuit-manifests.js','src/summit-attack.js','src/wasteland-access.js','src/wasteland-tuning.js','src/arsenal/targeting.js'];
+  for(const path of narrowed){
+    const picked=suitesForChanges(actual,[path],sharedCache);
+    check(SHARED_FILES[path]?.length>=2&&SHARED_FILES[path].every(owner=>actual.includes(owner))&&picked.length<60,
+      `${path} selects its existing owners and text readers, not every suite that reaches it`);
+  }
+  // The ruling leaves the save and money rules, the seeded generator, the road class and the firing rules as ordinary
+  // files: a change to one still selects a suite that imports it without owning it.
+  const ordinary={'src/progression.js':'tools/test-heli-save.mjs','src/rng.js':'tools/test-tunnels.mjs',
+    'src/course.js':'tools/test-circuits.mjs','src/combat-weapons.js':'tools/test-raiders.mjs','src/drivers.js':'tools/test-career-budget.mjs'};
+  for(const [path,importer] of Object.entries(ordinary))
+    check(!Object.hasOwn(SHARED_FILES,path)&&suitesForChanges(actual,[path],sharedCache).includes(importer),
+      `${path} stays an ordinary file whose importers run in a lane`);
   const lesson=suitesForChanges(actual,['src/lessons/drive-lessons.js']);
   check(lesson.includes('tools/test-drive-lessons.mjs')&&lesson.length<40,
     'a feature module selects its own suites, not every suite that reaches it through game.js');
