@@ -24,18 +24,18 @@ export function createPlantSounds(audio) {
     loops.delete(cue);
     voice.oscillator.stop();
   }
-  function hold(cue, on) {
+  function hold(cue, on, nearness = 1) {
     const ctx = ready();
     if (!ctx || !on) { stopLoop(cue); return; }
-    if (loops.has(cue)) return;
+    if (loops.has(cue)) { loops.get(cue).gain.gain.setValueAtTime(LOOPS[cue] * nearness, ctx.currentTime); return; }
     const [frequency, waveform] = PLANT_TONES[cue];
     const oscillator = ctx.createOscillator(), gain = ctx.createGain();
     oscillator.type = waveform; oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-    gain.gain.setValueAtTime(LOOPS[cue], ctx.currentTime);
+    gain.gain.setValueAtTime(LOOPS[cue] * nearness, ctx.currentTime);
     oscillator.connect(gain); gain.connect(audio.master);
     oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
     oscillator.start();
-    loops.set(cue, {oscillator});
+    loops.set(cue, {oscillator, gain});
   }
   function play(cue) {
     const spec = PLANT_TONES[cue], ctx = ready();
@@ -55,13 +55,13 @@ export function createPlantSounds(audio) {
   }
   return {
     /** Hold the running machines' tones while their events arrive, and play the rest once. */
-    update(events) {
+    update(events, nearness = 1) {
       const cues = new Set(events.map(event => event.cue).filter(cue => cue?.startsWith('plant.')));
       // A frame can pass without a simulation step, so a running tone is held briefly between events.
       const now = audio?.context?.currentTime ?? 0;
       for (const cue of Object.keys(LOOPS)) {
         if (cues.has(cue)) seen.set(cue, now);
-        hold(cue, now - (seen.get(cue) ?? -Infinity) < 0.25);
+        hold(cue, now - (seen.get(cue) ?? -Infinity) < 0.25, cue === 'plant.drum' ? 1 : nearness);
       }
       for (const cue of cues) play(cue);
     },

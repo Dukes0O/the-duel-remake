@@ -193,6 +193,8 @@ assert.deepEqual(run(), run(), 'the plant is repeatable from its inputs');
 const town = createTown(4312, 'Plant Town');
 const townPlant = createPlant({ledger:town, stock:{sandKg:5_000, cementKg:2_000, waterLitres:1_000}});
 assert.equal(town.goods.stockpiles['scablands:-50:6'].goods.sand, 5_000);
+createPlant({ledger:town});
+assert.equal(town.goods.stockpiles['scablands:-50:6'].goods.sand, 5_000, 'a plant made on a town adds no stock of its own');
 tipIntoHopper(townPlant, {rock:2}, 2);
 for (let i = 0; i < 60 * 120; i++) stepCrusher(townPlant, STEP);
 check(stockpileAt(town, townPlant.cells.gravelPile).gravel, machineLoadMassKg({load:{rock:2}}), 1e-6, 'the town has the crushed gravel');

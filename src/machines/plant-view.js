@@ -89,7 +89,7 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
     group.add(mesh); piles[material] = mesh;
   }
   const stoneGeometry = own(new THREE.DodecahedronGeometry(0.16, 0));
-  const beltStones = new THREE.InstancedMesh(stoneGeometry, own(new THREE.MeshStandardMaterial({color:0x8a7f70, roughness:1, flatShading:true})), 96);
+  const beltStones = new THREE.InstancedMesh(stoneGeometry, own(new THREE.MeshStandardMaterial({color:0x8a7f70, roughness:1, flatShading:true})), 4 * 72);
   beltStones.name = 'Gravel on the belt'; beltStones.castShadow = true; beltStones.count = 0;
   beltStones.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   group.add(beltStones);
@@ -138,8 +138,12 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
       ownMaterials(model);
       model.scale.set(form.halfM / FORM_INSIDE_HALF_M, form.depthM / FORM_SURFACE_M, form.halfM / FORM_INSIDE_HALF_M);
       place(model, form).name = `Form ${form.id}`;
-      findModelNode(model, 'formwork-1:set')?.removeFromParent();
+      // The model's own wet and set concrete colours are the two ends of setting.
+      const setNode = findModelNode(model, 'formwork-1:set');
       const surface = findModelNode(model, 'formwork-1:wet');
+      if (setNode?.material?.color && !parts.forms.length) dryColour.copy(setNode.material.color);
+      if (surface?.material?.color && !parts.forms.length) wetColour.copy(surface.material.color);
+      setNode?.removeFromParent();
       if (surface) surface.visible = false;
       parts.forms.push({id:form.id, model, surface});
     }
@@ -184,7 +188,10 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
     if (!plant) return;
     time += dtSeconds;
     if (!layout) { layout = plant.layout; if (built) { build(built.plants, built.machines); built = null; } }
-    sounds.update(events);
+    // The crusher and belt are heard near the plant, and fade with distance.
+    const listener = sim.activeMachine === 'borer' ? sim.borer : (sim.plant[sim.activeMachine]?.machine ?? sim.haul?.machines?.[sim.activeMachine] ?? sim.roadMachines?.[sim.activeMachine]?.machine ?? sim.drill?.machine);
+    const away = listener ? Math.hypot(listener.x - layout.crusher.x, listener.z - layout.crusher.z) : 0;
+    sounds.update(events, Math.min(1, 25 / Math.max(25, away)));
     // Piles grow as cones at their natural slope.
     for (const [material, place] of [['gravel', layout.gravelPile], ['sand', layout.sandPile]]) {
       const kg = pileKg(plant, material), mesh = piles[material], radius = pileRadiusM(kg);

@@ -58,8 +58,13 @@ export function tipTruckIntoHopper(sim, truck, dtSeconds) {
     const spot = plant.layout.screenings;
     const filled = sim.ground.fill({x:spot.x, z:spot.z, radius:1.2}, material, volume);
     // A refused fill would lose the dirt, so it stays in the bed instead.
-    if (!filled.ok) result.load[material] = (result.load[material] ?? 0) + volume;
-    else screened = true;
+    if (!filled.ok) {
+      result.load[material] = (result.load[material] ?? 0) + volume;
+      result.events.push({type:'plant-refused', cue:'plant.refuse', message:'The screened dirt has nowhere to go. Tip this load somewhere else.'});
+    } else {
+      screened = true;
+      plant.screenedM3 += volume;
+    }
   }
   if (!sim.plantSupplied) rememberPlant(sim.playerId, plant);
   const emptied = Object.values(result.load).reduce((sum, volume) => sum + volume, 0) < 1e-5;

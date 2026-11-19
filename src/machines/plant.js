@@ -25,8 +25,12 @@ export function placeLocal(place, localX, localZ) {
 /** A ledger is anything TOWN-GOODS can store goods in: a real town, or the yard's own. */
 export function createPlantLedger() { return {goods:{stockpiles:{}, prices:{}}}; }
 
-/** Make a plant at a layout. Stock is stored through TOWN-GOODS; the water tank is the plant's own. */
-export function createPlant({ledger = createPlantLedger(), layout = PLANT_YARD, stock = layout.stock ?? null} = {}) {
+/**
+ * Make a plant at a layout. Stock is stored through TOWN-GOODS; the water tank is the plant's own.
+ * Only a plant with its own new ledger starts with the layout's stock, so a town is never stocked twice.
+ */
+export function createPlant({ledger = null, layout = PLANT_YARD, stock = ledger ? null : layout.stock ?? null} = {}) {
+  ledger ??= createPlantLedger();
   if (!ledger || typeof ledger !== 'object') throw new TypeError('A plant needs a goods ledger or a town.');
   const cells = {hopper:cellOf(layout, layout.hopper), gravelPile:cellOf(layout, layout.gravelPile),
     sandPile:cellOf(layout, layout.sandPile), bins:cellOf(layout, layout.batchPlant),
@@ -119,7 +123,6 @@ export function tipIntoHopper(plant, load, volumeM3) {
       acceptedKg += kg;
     } else {
       screened[material] = (screened[material] ?? 0) + part;
-      plant.screenedM3 += part;
     }
   }
   if (acceptedKg > 0) events.push({type:'hopper-tip', cue:'plant.hopper', kg:acceptedKg});
