@@ -13,7 +13,8 @@
 - **Checks** on base `00382d70b` plus this change: `test-ground-view` (new checks: made value in place, edge corners face up,
   worked ground beside a ditch; each fails on the old code), and the suites listed in the commit message.
   Shader compiled with the Dig's own material; with the old earth test the ditch's end shows 10 rock pixels, with the new none.
-  **Not run:** the lane tier and `npm run build`, because C: had 4.4 GB free (the brief says stop under 15 GB).
+  Lane tier on `ce0a4650d` (current integration `bb7aace9c` merged in): 36 of 36 passed, replay fingerprints unchanged; left
+  to the night: `test-convoy-tanker-art`, `test-first-person-polish`. `npm run build` passed on the same commit.
 - **Pictures** (`.evidence/2026-11-19/DIG-YARD-TOY/`): `ring-before.png` and `ring-after.png` from the same camera,
   `ring-terms-before.png` (rock red, scree yellow, spoil blue) and `driver-seat-after.png`.
 - **Removed:** the swapped sample index and the signed-sum earth test. Nothing else.
