@@ -268,3 +268,23 @@ races the player sets up and R on a failed job race; the five notebook words.
 
 The electric car caveat on the screen, the "In this game" and "real car" notes, "timed at real speed", and the keys in
 every prompt and hint.
+
+## Checks run once on all four lessons together
+
+- `node tools/run-tests.mjs --tier lane --changed --since 00382d70b --jobs 4`: 38 of 38 suites passed, 0 failed
+  (three suites left to the night). The laptop was busy with other sessions' work, so the run took 19 minutes.
+- `npm run build`: passed.
+- Browser scenarios, `--jobs 2`: `lab-classroom-rust`, `lab-classroom-fire`, `lab-classroom-strength` and
+  `lab-classroom-fuel` passed with 0 warnings and 0 errors. The scenarios that open these lessons from other places,
+  `lab-restore`, `lab-navigation` and `lab-classroom`, passed. `lab-walk` timed out once while the laptop was busy ("turning-arm
+  approach", the Turning Arm and not one of these four lessons) and passed when rerun alone.
+- Lab suites for the shared frame and the lesson titles (`test-lab-classroom`, `test-lab-classroom-page`,
+  `test-lab-classroom-headings`, `test-lab-title-words`, `test-lab-radio`, `test-lab-brian-short`) pass.
+- The other twelve `lab-classroom-*` scenarios open other lessons and none of the four lessons' files, so they were not run.
+- Race fingerprints do not apply: no race code changed.
+
+## Left open
+
+- `lab.brian.fuel.explain` needs re-recording (see Fuel).
+- The page frame's "Words so far" fold, steps leaving the page once done, and the Watch again button belong to LAB-PAGE.
+  Each lesson here now offers R (`actions: ['replay']`) on its long runs, so the button appears wherever the frame shows it.
