@@ -42,7 +42,7 @@ if (qaParams.has('night-2-surround-review')) {
 const {CARS}=await import('../src/config.js');
 const {UPGRADE_TYPES}=await import('../src/progression.js');
 // The box closes when anything outside it is pressed, so that it never lies over a menu button the tester wants.
-const panel=document.createElement('details');panel.open=true;
+const panel=document.createElement('details');panel.className='qa-temporary-saves';panel.open=true;
 document.addEventListener('pointerdown',event=>{if(panel.open&&!panel.contains(event.target))panel.open=false;},true);
 panel.style.cssText='position:fixed;left:12px;top:76px;z-index:999;padding:8px 12px;background:#10212cf0;color:white;font:12px/1.5 system-ui;border:1px solid #7198a0;max-width:330px';
 const summary=document.createElement('summary');summary.textContent='MENU QA · TEMPORARY SAVES';panel.append(summary);
