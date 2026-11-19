@@ -865,7 +865,7 @@ export function attachRenderer(host, app) {
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
     applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
-    applyDustNightFog(scene,dustNight,dt);
+    applyDustNightFog(scene,dustNight,dt,renderer);
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.

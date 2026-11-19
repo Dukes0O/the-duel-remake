@@ -21,7 +21,9 @@ export const pageFunctions = {
       {kind: 'rescue', what: 'Steer by the beam. Pick up two lookouts, then reach the lighthouse.', seats: 2, boardSeconds: 1.5, radius: 10,
         stopSpeed: .5, people: [{id: 'lost-lookout-1', position: {x: 70, y: -2, z: -385}, radius: 10}], home: lighthouse, homeRadius: 18, ...weather},
       {kind: 'onfoot', what: 'Climb the lighthouse stairs behind Vesper.', radius: 3, climbs: true, ...weather,
-        places: [{id: 'lamp-room', position: {x: 170, y: 24, z: -397}, radius: 3, action: 'use'}]},
+        // A second place nobody reaches, so standing in the lamp room does not finish the step (and its weather) mid-picture.
+        places: [{id: 'lamp-room', position: {x: 170, y: 24, z: -397}, radius: 3, action: 'use'},
+          {id: 'not-reached', position: {x: 170, y: -.5, z: -300}, radius: 1, action: 'use'}]},
     ];
     if (!duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed: 1989, cpuDifficulty: 'easy',
       opponents: [], weaponLoadout: ['bomb'], arsenalRank: 9, job: {id: 'ships-decks-look', seed: 1989, steps}}))
@@ -106,6 +108,6 @@ export async function run(context) {
       await context.screenshot(picture);
     }
   }
-  await writeFile(join(context.outputDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+  await writeFile(join(context.outputDir, 'look.json'), JSON.stringify(report, null, 2) + '\n');
   if (report.failures.length) throw Error('Ships decks look facts failed: ' + report.failures.join(' | '));
 }

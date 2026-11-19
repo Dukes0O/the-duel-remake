@@ -8,7 +8,10 @@ export const DUST_NIGHT = Object.freeze({
   // Sight in the dust: the fog closes from 6 m and hides everything past 70 m.
   fogNear: 6,
   fogFar: 70,
-  fogColor: 0x2e241b,
+  fogColor: 0x3b2c1f,
+  // Night: the picture is darker than the moonlit night of other jobs, and a dome of dust hides the sky.
+  exposure: .62,
+  domeRadius: 1400,
   // The lamp turns once every 12 seconds, as a real lighthouse light turns in its own steady time.
   beamTurnSeconds: 12,
   beamLength: 900,
