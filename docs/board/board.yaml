@@ -18,7 +18,7 @@ tasks:
     lane: "UI"
     size: "S"
     status: "building"
-    claimed_by: "Claude: slices 1 and 2 merged 16 November 2026 with the switch off; owed: the pale ring at a heap's foot, a frame check in the Dig yard, Kyle's try"
+    claimed_by: "Claude: slices 1 and 2 merged 16 November with the switch off; the pale ring cured 19 November; owed: a frame check in the Dig yard, then Kyle's try"
     needs: []
     locks: []
     flag: "the-dig"
@@ -398,16 +398,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
 
-  - id: QA-TIMING-UNDER-LOAD
-    title: "Town timing checks fail when art jobs run beside them"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-TIMING-UNDER-LOAD.md"
-
   - id: QA-WATER-ROAD-AUTOPILOT
     title: "water-road scenario: Sal's road autopilot sometimes misses Easy within three tries"
     owner: "claude"
@@ -519,8 +509,7 @@ tasks:
     owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
+    status: "backlog"
     needs: []
     details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
 
