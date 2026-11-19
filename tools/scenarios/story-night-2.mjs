@@ -77,7 +77,8 @@ export const pageFunctions = {
   releaseFire: () => { window.__qaApp._footPointer.fire = false; },
   ledger: () => {
     const page = document.querySelector('.story-ledger');
-    return page?.innerText.includes('What people remember') && !!page.querySelector('.ledger-tonight') &&
+    return window.__qaApp.profile.story?.ledger?.night === 3 &&
+      page?.innerText.includes('What people remember') && !!page.querySelector('.ledger-tonight') &&
       !/Raiding|Watching|Friendly|night-2\/dace-steals/.test(page.innerText);
   },
 };
