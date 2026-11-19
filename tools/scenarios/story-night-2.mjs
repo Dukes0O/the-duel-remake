@@ -252,7 +252,9 @@ export async function run(context) {
   const advance = (id, times) => advanceNight2Dialogue(context, id, 'lines', times);
   const viewport = (width, height) => context.command('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: false});
   const replayKey = (type, code, windowsVirtualKeyCode, autoRepeat = false) =>
-    context.command('Input.dispatchKeyEvent', {type, code, key: code === 'Space' ? ' ' : code, windowsVirtualKeyCode, autoRepeat});
+    context.command('Input.dispatchKeyEvent', {type, code, key: code === 'Space' ? ' ' : code, windowsVirtualKeyCode, autoRepeat,
+      // A real keyboard sends the character with the press; without it Chrome never activates the focused button.
+      ...(type === 'keyDown' && code === 'Enter' ? {text: '\r'} : type === 'keyDown' && code === 'Space' ? {text: ' '} : {})});
   await viewport(1280, 720);
   async function reachGate({freshPlayer = true, washFight = false} = {}) {
     if (freshPlayer) {
