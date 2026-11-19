@@ -102,8 +102,9 @@ All drawing, read-only from the race:
   the road and trot or bound 10 to 20 m into cover, then idle again.
   Birds take off and fly off, and do not come back that race.
 - Faded out beyond 250 m and capped at 12 animals drawn at once.
-- Animals never touch race state: no collisions, no effect on cars, timing,
-  computer racers, replays or pay. The world composition signatures are
+- Animals never touch race state: no effect on cars, timing, computer
+  racers, replays or pay (a car can knock one down, section 3.5, but only in
+  the drawing). The world composition signatures are
   measured without them (they live in their own group, like the cars); if
   that cannot hold, WILD-VIEW takes the `world-signatures` lock and a
   reviewed regeneration instead.
@@ -114,6 +115,33 @@ The helicopter session draws the same animals on the course it is flying
 over (the race's spots, from the day's seed), plus the wildlife count's
 animals (section 4). From the air you see more than from the road: the
 helicopter's view range is 400 m.
+
+### 3.5 Knocked down (switch `wildlife-hits`, Kyle 19 November 2026)
+
+Kyle: "we should be able to hit the animals with the car if they're on the
+side of the road. smash them like other cars. crush them in the monster
+truck. leave them in a small heap with a bit of red blood on the ground."
+
+- Any car (the player's, the rival, the extra opponents, traffic) whose
+  middle comes within 2.4 m of an animal on the ground knocks it down; the
+  monster truck (`kind: 'monster'`) within 3.4 m. A bird in the air is out
+  of reach; one still on the ground is not.
+- The animal is thrown 1.2 m on, away from the car, and lies on its side,
+  still, as a small heap (60% of its width high). Under the monster truck it
+  is flattened to 20%. It stays for the rest of the race and fades with
+  distance like any animal. Flying the helicopter and landing again plans the
+  race's animals afresh, so they stand again (as animals that ran do).
+- A small stain spreads under it (about a quarter of the body's length
+  across): deep red, matte, ragged (the same shape every
+  time for the same animal), lying on the ground's slope and drawn out
+  along the way the car pushed; half as wide again under the monster truck.
+- The player's own hits play the crush crunch (`vehicle.crush`), a harder
+  one from the monster truck. Other cars' hits are silent.
+- Drawing only: the car feels no bump and loses no speed, and nothing in
+  the race, replays, records or pay changes. A bump the driver feels would
+  be a race rule and a card of its own.
+- The browser look is `tools/scenarios/wildlife-hits.mjs`; the rules are
+  checked without graphics in `tools/test-wildlife-view.mjs`.
 
 ## 4. The wildlife count
 
