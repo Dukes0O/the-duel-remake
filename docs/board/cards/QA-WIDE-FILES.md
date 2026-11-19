@@ -43,7 +43,7 @@ A ruling per file in this card, then a Codex job that adds the owners to `SHARED
 
 ## Draft ruling (19 November 2026, for the Director's written review under rule 18)
 
-Status: draft. The runner does not change until the Director confirms or changes this section by message.
+Status: confirmed by the Director with one change (`src/drivers.js` stays as it is); see "Claude's ruling" below.
 
 **How the runner picks today** (`tools/run-tests.mjs`, `docs/CODEX_PLAYBOOK.md` section 7). A lane runs the six smoke
 suites and the three guards (`test-replays`, `test-combat-replays`, `test-world-composition`), plus every suite that
@@ -94,9 +94,9 @@ lane. A lane would no longer run the suites that use these files only to find a 
   and the freestyle drag strip), `test-mountain-support` (support under a car matches the visible mountain triangles).
   These are all three of its direct importers, plus `test-mountain-support`.
 - `src/bowl/bowl-course.js`: `test-bowl-course` (the Bowl's layout and props), `test-bowl-save` (Bowl scores only rise,
-  pay once and leave the rest of the profile alone), `test-bowl-air` (pitch control and landings),
-  `test-bowl-show` (stunt scoring is the same at 30, 60 and 144 frames a second). The Bowl is behind a dev switch, so
-  neither guard drives it; these four carry it. The session building this file today gains once Part 2 lands.
+  pay once and leave the rest of the profile alone), `test-bowl-air` (pitch control and landings).
+  (`test-bowl-show` was in the draft; the review found it reaches no Bowl course file, so Part 2 leaves it out.) The Bowl is behind a dev switch, so
+  neither guard drives it; its owners carry it. The session building this file today gains once Part 2 lands.
 - `src/expansion-courses.js`: `test-expansion-geometry` (real mesh positions, no gaps or folds),
   `test-circuit-eifel` (Eifel's identity and road), `test-expansion-driving` (a long suite: a lane prints it as left to
   the night). The replay guard drives all of these courses.
@@ -190,3 +190,26 @@ short suite. Part 2's one lane tier is therefore a whole short tier and should t
 Not answerable yet. Since QA-NIGHTLY-NEWS (16 November) only one night has finished (`night-2026-11-18`), and it was a
 full night that ran every scenario; neither the November ledgers nor the evidence they name record how many scenarios a
 partial night picked or left for Saturday. The two-week watch stands.
+
+## Claude's ruling (Director, 19 November 2026; the written review rule 18 asks for)
+
+Confirmed as drafted, with the owners listed above:
+
+- Narrow: `src/circuits/index.js`, `src/freestyle-course.js`, `src/bowl/bowl-course.js`, `src/expansion-courses.js`,
+  `src/circuit-manifests.js`, `src/summit-attack.js`, `src/wasteland-access.js`, `src/wasteland-tuning.js`,
+  `src/arsenal/targeting.js`.
+- Leave as they are: `src/progression.js`, `src/rng.js`, `src/course.js`, and `src/combat-weapons.js` (the
+  recommendation is taken: most of its importers are fights that fire it, and the combat replays fire only three weapons).
+
+The one change: leave `src/drivers.js` as it is. It holds `purchaseDriver`, which is credits, and it has not changed since
+September, so narrowing it saves nothing today and removes cover from a money rule.
+
+Nothing is loosened by this ruling: no assertion changes, every suite taken out of a lane still runs on the next partial
+or full night, and the replay and world-signature guards run in every lane. Stay with owner lists; do not change how the
+runner walks through a shared file.
+
+Part 2's checks, sized to the change: it alters only which suites a lane picks. Run `tools/test-test-runner.mjs` with the
+new check, the runner's other own suites, and print the lane plan for three changed-file cases (`src/bowl/bowl-course.js`
+alone, `src/circuits/index.js` alone, `src/progression.js` alone) to show the counts. Do not run the whole short tier that
+a change to `tools/run-tests.mjs` would pick: tonight's night check is a full one (shared game files changed today) and
+runs every suite, and the laptop is short of memory. Run `npm run build` only if a file the build reads changed.
