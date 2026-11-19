@@ -328,7 +328,7 @@ export function arenaPauseScreen(state, {metric, action, time, escapeHTML = Stri
     return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',
       description: escapeHTML(step?.what ? `${name}${place}. ${step.what}` : `${name}${place}.`),
       metrics: metric('TIME ON THE JOB', time(Math.max(0, state.stageTimeSec ?? 0)), true),
-      extra: '', actions: action('BACK TO THE JOB', 'resume', true) + (arena.worldJob?.night2 ? '' : action('START AGAIN', 'world-job-retry')) + action('BACK TO THE YARD', 'arena-yard')};
+      extra: '', actions: action('BACK TO THE JOB', 'resume', true) + (worldJob?.night2 ? '' : action('START AGAIN', 'world-job-retry')) + action('BACK TO THE YARD', 'arena-yard')};
   }
   const hud = arenaHud(state);
   if (!hud) return null;

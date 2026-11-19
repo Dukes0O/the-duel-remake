@@ -193,7 +193,11 @@ function fitCart(figure, person) {
 
 function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   const {root, joints, facing, model} = figure, profile = STORY_FIGURES[person.id];
-  if (figure.first) { facing.yaw = person.yaw; figure.first = false; }
+  if (figure.first) {
+    facing.yaw = person.yaw;
+    if (person.action === 'sit' && person.seat === 'handcart') figure.seated = 1;
+    figure.first = false;
+  }
   attendTo(person, facing, target, dt);
   root.rotation.y = facing.yaw;
   const at = person.position;

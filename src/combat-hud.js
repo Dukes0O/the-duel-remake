@@ -276,6 +276,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-foot-action combat-lamp-progress" role="status" hidden><b></b><div class="combat-armor-track"><i></i></div></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
     <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town night-2-alternative-route" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot equipment and controls"><b></b><strong></strong><small class="combat-foot-mouse"></small></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
@@ -321,11 +322,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const townName = townPointer.querySelector('b');
   const townDistance = townPointer.querySelector('strong');
   const townArrow = townPointer.querySelector('span');
-  const alternativePointer = townPointer.cloneNode(true);
-  alternativePointer.classList.add('night-2-alternative-route');
+  const alternativePointer = host.querySelector('.night-2-alternative-route');
   alternativePointer.style.bottom = (BRAND_RULE.footMarkerBottomPixels + 45) + 'px';
-  alternativePointer.hidden = true;
-  townPointer.after(alternativePointer);
   const alternativeName = alternativePointer.querySelector('b');
   const alternativeDistance = alternativePointer.querySelector('strong');
   const alternativeArrow = alternativePointer.querySelector('span');

@@ -104,7 +104,7 @@ export async function run(context) {
     await click('story-night-2');
     await advance('hearth', 4);
     await wait('step', 'walk-to-gate');
-    await evaluate('at', sites.gateOutside);
+    await evaluate('at', sites.gateTalk);
     await wait('step', 'gate', 'lines');
     await wait('gateCast');
   }

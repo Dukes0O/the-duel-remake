@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {App} from '../src/app.js';
 import {yardHomeScreen} from '../src/screen-yard-home.js';
 import {pageFunctions, pageSource} from './scenarios/story-night-2.mjs';
@@ -63,7 +64,7 @@ function chapter(seed, startedDuel) {
   const openGate = () => {
     tick(2);
     advance('walk-to-gate');
-    footAt(sites.gateOutside);
+    footAt(sites.gateTalk);
     tick(2);
     assert.equal(stage(), 'gate');
   };
@@ -92,6 +93,26 @@ assert(opening.cues.includes('town.gate.bell'));
 assert.equal(opening.world.storyPeople.filter(person => person.cart).length, 4);
 assert.equal(opening.world.storyPeople.length, 13);
 assert.equal(opening.world.storyPeople.find(person => person.id === 'wim').seat, 'handcart');
+const pose = JSON.parse(await readFile(new URL('./art/story-plates/night-2-pose.json', import.meta.url)));
+const matchesPose = (point, relative) => {
+  for (const [index, axis] of ['x', 'y', 'z'].entries())
+    assert(Math.abs(point[axis] - pose.gateWorld[index] - relative[index]) < 1e-8, 'Gate staging ' + axis);
+};
+for (const {id, action, position, yaw} of pose.people) {
+  const person = opening.world.storyPeople.find(person => person.id === id);
+  matchesPose(person.position, position);
+  assert.equal(person.action, action);
+  assert.equal(person.yaw, yaw);
+}
+for (const {owner, axle, yaw} of pose.carts) {
+  const {cart} = opening.world.storyPeople.find(person => person.id === owner);
+  matchesPose(cart, axle);
+  assert.equal(cart.yaw, yaw);
+}
+const camera = opening.view.camera;
+matchesPose(camera.position, pose.camera.eye);
+matchesPose(camera.target, pose.camera.aim);
+assert.equal(camera.fov, pose.camera.verticalFov);
 opening.say(NIGHT_2_CHOICES[0].words);
 assert.deepEqual([opening.view.ledger.stocks.embers, opening.view.ledger.words.walkers, opening.view.ledger.roadWord],
   [3, 'Friendly', 1]);

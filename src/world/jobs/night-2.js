@@ -14,7 +14,7 @@ const riders = [
   {id: 'wash-rider-2', start: {x: sites.camp.position.x + 31, z: 210}, heading: 2, renderCar: 'falcone_f42'},
   {id: 'wash-rider-3', start: {x: sites.camp.position.x + 48, z: 264}, heading: -.6, renderCar: 'dusthawk_rally'},
 ];
-const points = [sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost];
+const points = [sites.gateTalk, sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost];
 const at = place => place.position ?? place;
 
 const talk = (id, set, options = {}) => ({id, kind: 'talk', scene: NIGHT_2_SCENES[id], set, ...options});
@@ -28,8 +28,8 @@ export function night2Job(seed) {
   return {id: NIGHT_2_ID, name: 'Strangers at the gate', title: 'Strangers at the gate', seed,
     steps: [
       talk('hearth', 'hearth', {carStart: sites.car, footStart: hearthStart}),
-      walk('walk-to-gate', sites.gateOutside, 'Walk to the gate.'),
-      talk('gate', 'gate', {plateHook: 'walkers-at-the-gate'}),
+      walk('walk-to-gate', sites.gateTalk, 'Walk to the gate.'),
+      talk('gate', 'gate'),
       talk('gift', 'gate'), talk('salt', 'salt'), talk('theft', 'hearth'),
       {id: 'chase', kind: 'night-2-action', action: 'chase'},
       talk('caught', 'caught'), talk('take-dace-to-rell', 'rell-at-gate'), talk('send-away', 'rell-at-gate'),
@@ -126,7 +126,7 @@ function beginChase(worldJob) {
   chapter.chasePath = path;
 }
 
-const worldRellAtGate = night2Point(sites.gate.x - 1.4, sites.gate.z + 19);
+const worldRellAtGate = night2Point(sites.gate.x, sites.gate.z + 4.8);
 
 function dressing(chapter, step) {
   chapter.props.salt = step.id === 'salt';
@@ -138,7 +138,8 @@ function dressing(chapter, step) {
     position: {...night2Point(look.x + x, look.z + z), y: look.y + 1.8},
     target: {...look, y: look.y + 1.35}, fov: 49,
   });
-  if (['tower', 'tower-outcome'].includes(step.id)) chapter.camera = sites.tower;
+  if (step.id === 'gate') chapter.camera = sites.gateView;
+  else if (['tower', 'tower-outcome'].includes(step.id)) chapter.camera = sites.tower;
   else if (['escaped', 'take-dace-to-rell', 'send-away'].includes(step.id))
     chapter.camera = cut(worldRellAtGate, 2, -4);
   else if (step.id === 'close') chapter.camera = cut(sites.auntie.position, 3.5, 1.5);

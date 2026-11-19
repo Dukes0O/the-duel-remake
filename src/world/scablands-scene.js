@@ -938,7 +938,10 @@ export function createScablandsScene(course,options={}){
         }
       } else glassBeam.group.visible = false;
       const gasStep = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-      forge.gas(gasStep?.gasLoad ? GAS_LOAD_RULE.forgeBeforeGasShare + (1 - GAS_LOAD_RULE.forgeBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : null);
+      const storyEmbers = worldJob?.night2?.ledger.stocks.embers;
+      forge.gas(storyEmbers !== undefined ? Math.min(1, storyEmbers / 4) :
+        gasStep?.gasLoad ? GAS_LOAD_RULE.forgeBeforeGasShare +
+          (1 - GAS_LOAD_RULE.forgeBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : null);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -1016,7 +1019,7 @@ export function createScablandsScene(course,options={}){
           mist.add(sheet);
         }
       }
-      townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
+      townDoor.visible=Boolean(worldJob?.night2)||worldJob?.definition?.id==='everburn-hot-delivery';
       const doorPose=tinTownDoorPose(TIN_TOWN_GATE,worldJob?.tinTownGateProgress??0);
       townDoor.rotation.y=doorPose.angle;
       townDoor.position.set(doorPose.localX,1.5,doorPose.localZ);
