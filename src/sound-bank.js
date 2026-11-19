@@ -859,6 +859,9 @@ export const SOUND_BANK = {
     pitchEnd: 0.86,
     noise: true,
   }),
+  // TOWN-VEHICLES: the fire truck's brass bell, one clang a press (B). Made like town.gate.bell, smaller and brighter.
+  'town.bell': cue('interface', {flag: 'wasteland-town', volume: .42, limit: 2,
+    layers: [tone(880, .9, .55, 'sine'), tone(2093, .5, .22, 'triangle'), tone(3270, .25, .12, 'sine')]}),
 };
 SOUND_BANK['arena.blackiron-barrage'] = cue('impacts', {
   flag: 'blackiron', priority: 70, limit: 1,

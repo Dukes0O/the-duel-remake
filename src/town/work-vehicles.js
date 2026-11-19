@@ -15,9 +15,7 @@ const DRIVELINE_SHARE = 0.8;
 // The arena's driving multiplies a car's pull by its launch scale, and each gear's pull falls off towards the
 // top of the gear (about three quarters on average). Dividing by both makes the pull the real one.
 const GEAR_PULL_SHARE = 0.75;
-// Holding the bell key rings it again at a bell-rope pace.
-export const BELL_REPEAT_SECONDS = 0.8;
-// The bell's sound cue. World Job sends it as a `townBell` event; TOWN-FIRE-JOB adds the bank row and plays it.
+// The bell's sound cue (src/sound-bank.js).
 export const BELL_CUE = 'town.bell';
 
 const finite = Number.isFinite;
@@ -91,7 +89,7 @@ export function startWorkVehicle(spec, {enabled = false} = {}) {
   const definition = workVehicleDefinition(id);
   const loadKg = clamp(finite(spec?.loadKg) ? spec.loadKg : definition.startLoadKg ?? 0, 0, definition.maxLoadKg);
   const tankL = definition.tank ? clamp(finite(spec?.tankL) ? spec.tankL : definition.tank.startL, 0, definition.tank.capacityL) : 0;
-  return prepared({id, loadKg, tankL, steering:null, bell:definition.bell ? {held:false, lastRingSec:null, rings:0} : null});
+  return prepared({id, loadKg, tankL, steering:null, bell:definition.bell ? {rings:0} : null});
 }
 
 /** Put kilograms on the bed or the hook. What will not fit is refused with a sentence. */
@@ -142,21 +140,22 @@ export function workVehicleSteer(vehicle, steer, speedMph, course = null) {
 }
 
 /**
- * One step of the driver's controls, before driving. The boost key has no nitro to fire in a truck: in a vehicle
- * with a bell it rings the bell (sound cue `town.bell`), at once and again every 0.8 s while held.
- * `steer` is what the input holds now. The app writes the input once a frame and a frame may run several steps,
- * so a value equal to the one this function wrote last time is the same press, and the press it came from is used.
- * Returns the vehicle, the steering to write, and whether the bell rang.
+ * One step of the steering, before driving. `steer` is what the input holds now. The app writes the input once a
+ * frame and a frame may run several steps, so a value equal to the one this function wrote last time is the same
+ * press, and the press it came from is used. Returns the vehicle and the steering to write.
  */
-export function stepWorkVehicleControls(vehicle, {steer = 0, boost = false} = {}, {speedMph = 0, clockSec = 0, course = null} = {}) {
+export function stepWorkVehicleControls(vehicle, {steer = 0} = {}, {speedMph = 0, course = null} = {}) {
   const seen = clamp(finite(steer) ? steer : 0, -1, 1);
   const pressed = vehicle.steering && seen === vehicle.steering.written ? vehicle.steering.pressed : seen;
   const written = workVehicleSteer(vehicle, pressed, speedMph, course);
-  let next = {...vehicle, steering:{pressed, written}}, rang = false;
-  if (vehicle.bell) {
-    const held = boost === true, last = vehicle.bell.lastRingSec;
-    rang = held && (!vehicle.bell.held || last === null || clockSec - last >= BELL_REPEAT_SECONDS - 1e-9);
-    next = {...next, bell:{held, lastRingSec:rang ? clockSec : last, rings:vehicle.bell.rings + Number(rang)}};
-  }
-  return {vehicle:next, steer:written, rang};
+  return {vehicle:{...vehicle, steering:{pressed, written}}, steer:written};
+}
+
+/**
+ * The bell key (B) was pressed. A vehicle with a bell rings once a press; one without a bell does nothing.
+ * Space is kept for working a vehicle's tool, as it is in every machine.
+ */
+export function ringWorkVehicleBell(vehicle) {
+  if (!vehicle?.bell) return {vehicle, rang:false};
+  return {vehicle:{...vehicle, bell:{rings:vehicle.bell.rings + 1}}, rang:true};
 }

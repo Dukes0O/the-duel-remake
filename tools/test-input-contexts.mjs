@@ -8,7 +8,9 @@ globalThis.cancelAnimationFrame ??= () => {};
 assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'heli', 'photo', 'machine']);
 assert.equal(keyboardAction('car', 'KeyC'), 'camera-cycle');
 assert.equal(keyboardAction('menu', 'KeyC'), 'camera-cycle');
-for (const code of ['KeyD', 'KeyB', 'KeyV', 'KeyX']) assert.equal(keyboardAction('car', code), null, `${code} is not a camera key`);
+for (const code of ['KeyD', 'KeyV', 'KeyX']) assert.equal(keyboardAction('car', code), null, `${code} is not a camera key`);
+// TOWN-VEHICLES: B, once a camera key, now rings the fire truck's bell; it is still not a camera key.
+assert.equal(keyboardAction('car', 'KeyB'), 'town-bell', 'KeyB rings the bell and is not a camera key');
 // 12 October 2026 (Kyle: "they do not turn left and right"): on foot A, D and the
 // left and right arrows turn the fighter; Q and E step sideways.
 assert.equal(keyboardAction('foot', 'KeyD'), null, 'D turns on foot and cannot change car camera');

@@ -37,7 +37,7 @@ import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
-import {BELL_CUE, startWorkVehicle, stepWorkVehicleControls} from '../../town/work-vehicles.js';
+import {BELL_CUE, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls} from '../../town/work-vehicles.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -331,18 +331,23 @@ export function prepareWorldJobControls(duel) {
   return true;
 }
 
-// TOWN-VEHICLES: a truck has no nitro. Its boost key rings the bell, if it has one, and its steering keeps to its turning circle.
-// While a line waits for the player, or a step asks for the whistle, the key does that as it does in any car, and the bell stays still.
+// TOWN-VEHICLES: a truck has no nitro, and its steering keeps to its turning circle. Space is left for a vehicle's tool.
 function driveWorkVehicle(duel, worldJob, input) {
-  const waiting = worldJob.job.stepState?.lineBlocking === true || worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'whistle';
-  const stepped = stepWorkVehicleControls(worldJob.vehicle, {steer: input.steer, boost: input.boost === true && !waiting},
-    {speedMph: duel.state.speedMph, clockSec: duel.state.arena.clockSec, course: duel.course});
+  const stepped = stepWorkVehicleControls(worldJob.vehicle, input, {speedMph: duel.state.speedMph, course: duel.course});
   worldJob.vehicle = stepped.vehicle;
-  if (!waiting) worldJob.controls.whistle = false;
   input.steer = stepped.steer;
   duel.state.boost = 0;
-  // The sound (cue town.bell) is added by TOWN-FIRE-JOB with the bank row; the event is the sim's whole part.
-  if (stepped.rang) duel.emit({townBell: {cue: BELL_CUE, position: worldJobPosition(duel, duel.state)}});
+}
+
+// TOWN-VEHICLES: B rings the driven work vehicle's bell, if it has one (sound cue town.bell), as the weapon keys fire.
+export function ringJobVehicleBell(duel) {
+  const state = duel.state, worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+  if (!worldJob?.vehicle || state.status !== 'racing' || state.paused || state.onFoot) return false;
+  const rung = ringWorkVehicleBell(worldJob.vehicle);
+  worldJob.vehicle = rung.vehicle;
+  if (rung.rang) duel.emit({arenaTell: {id: 'town-bell', targetId: 'player', seconds: 0, cue: BELL_CUE,
+    position: worldJobPosition(duel, state)}});
+  return rung.rang;
 }
 
 function syncJobCarSolids(worldJob) {

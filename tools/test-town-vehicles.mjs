@@ -8,7 +8,11 @@ import {ARENA_FIELD} from '../src/arena/arena-event.js';
 import {createTown} from '../src/town/town-state.js';
 import {createTownWorld} from '../src/town/town-world.js';
 import {setScablandsTownLayout, clearScablandsTownLayout} from '../src/world/scablands-ground.js';
-import {cleanupWorldJobLoan} from '../src/arena/modes/world-job.js';
+import {cleanupWorldJobLoan, ringJobVehicleBell} from '../src/arena/modes/world-job.js';
+import {keyboardAction} from '../src/input-contexts.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
+import * as THREE from 'three';
+import {createWorkVehicleView, workVehicleToDraw, WORK_VEHICLE_LAYER} from '../src/town/view/work-vehicle-view.js';
 import {defineMachine} from '../src/machines/content/machines.js';
 import {WORK_VEHICLE_DEFINITIONS, WORK_VEHICLE_IDS, startWorkVehicle, loadWorkVehicle, unloadWorkVehicle,
   fillWorkVehicleTank, pumpWorkVehicleTank, workVehicleTurnRadiusM} from '../src/town/work-vehicles.js';
@@ -166,12 +170,9 @@ test('a truck turns no tighter than its own turning circle, at any speed', () =>
   }
 });
 
-test('the fire truck rings its bell on the boost key, and no truck fires nitro', () => {
+test('B rings the fire truck\'s bell once a press, and Space fires no nitro in a truck', () => {
   const duel = drive('fire-truck'), rings = [];
-  duel.onChange((state, event) => {
-    if (event.townBell) rings.push(state.arena.clockSec);
-    assert.equal(event.arenaTell, undefined, 'the bell sends no cue to the audio until its bank row exists');
-  });
+  duel.onChange((state, event) => { if (event.arenaTell?.id === 'town-bell') rings.push(event.arenaTell); });
   // At junction pace the truck's own turning circle holds the steering in, which is when a press could be scaled twice.
   launch(duel, 8);
   const steady = drive('fire-truck');
@@ -185,30 +186,25 @@ test('the fire truck rings its bell on the boost key, and no truck fires nitro',
       duel.step(dt); steady.step(dt);
     }
   }
-  assert.equal(rings.length, 3, 'two seconds held rings at once and every 0.8 s');
+  assert.equal(rings.length, 0, 'Space is kept for a vehicle\'s tool and rings nothing');
   assert.equal(duel.state.boosting, false);
-  assert.ok(Math.abs(duel.state.speedMph - steady.state.speedMph) < 1e-9, 'holding the key adds no speed');
+  assert.ok(Math.abs(duel.state.speedMph - steady.state.speedMph) < 1e-9, 'holding Space adds no speed');
   assert.deepEqual(pose(duel), pose(steady), 'several steps in one frame steer as one press');
-  duel.setInput({boost:false}); duel.step(dt);
-  duel.setInput({boost:true}); duel.step(dt);
-  assert.equal(rings.length, 4, 'a new press rings at once');
-  assert.equal(duel.state.arena.worldJob.vehicle.bell.rings, 4);
-  const worldJob = duel.state.arena.worldJob;
-  assert.equal(worldJob.controls.whistle, false, 'the bell does not also skip a line');
-  // While a line waits for the player, the key moves the line on and the bell stays still.
-  duel.setInput({boost:false}); duel.step(dt);
-  worldJob.job = {...worldJob.job, stepState:{...worldJob.job.stepState, lineBlocking:true}};
-  duel.setInput({boost:true}); duel.step(dt);
-  assert.equal(rings.length, 4);
-  assert.equal(worldJob.controls.whistle, true);
+  assert.equal(keyboardAction('car', 'KeyB'), 'town-bell');
+  assert.equal(ringJobVehicleBell(duel), true);
+  assert.equal(ringJobVehicleBell(duel), true);
+  assert.equal(rings.length, 2, 'each press rings once');
+  assert.equal(rings[0].cue, 'town.bell');
+  assert.ok(Object.hasOwn(SOUND_BANK, 'town.bell') && SOUND_BANK['town.bell'].flag === 'wasteland-town', 'the cue is in the bank behind the switch');
+  assert.ok(Number.isFinite(rings[0].position?.x) && Number.isFinite(rings[0].position?.z), 'the bell sounds from the truck');
+  assert.equal(duel.state.arena.worldJob.vehicle.bell.rings, 2);
+  duel.state.paused = true;
+  assert.equal(ringJobVehicleBell(duel), false, 'a paused game rings nothing');
   finish(duel); finish(steady);
-  const tanker = drive('water-tanker'), quiet = [];
-  tanker.onChange((state, event) => { if (event.townBell) quiet.push(event); });
-  tanker.setInput({throttle:1, boost:true});
-  for (let i = 0; i < 240; i++) tanker.step(dt);
-  assert.equal(quiet.length, 0, 'only the fire truck has a bell');
-  assert.equal(tanker.state.boosting, false);
-  finish(tanker);
+  const tanker = drive('water-tanker'), garage = drive(undefined);
+  assert.equal(ringJobVehicleBell(tanker), false, 'only the fire truck has a bell');
+  assert.equal(ringJobVehicleBell(garage), false, 'B does nothing in a garage car');
+  finish(tanker); finish(garage);
 });
 
 test('loads and tanks are real sums for the jobs that use them', () => {
@@ -242,4 +238,81 @@ test('a work-vehicle drive is repeatable from seed and inputs', () => {
     return result;
   };
   assert.deepEqual(run(), run());
+});
+
+// The view's rules, with a stand-in for trucks-1.glb named as GLTFLoader names it: the colons are taken out of
+// node names and the model's own name is kept in userData.name. A front wheel is a steering node holding a rolling
+// node, as on the model. The real model is looked at in the game.
+test('the view draws the truck only for a work vehicle with the switch on, and leaves a garage car alone', async () => {
+  const part = (name, parent) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+    mesh.name = name.replaceAll(':', ''); mesh.userData.name = name; parent.add(mesh);
+    return mesh;
+  };
+  const stand = new THREE.Group();
+  for (const id of ['fire-truck', 'supply-truck', 'water-tanker', 'tow-rig']) {
+    const truck = new THREE.Group(); truck.name = id; truck.userData.name = id; truck.position.set(9, 9, 9);
+    part(`${id}:body`, truck); part(`${id}:load`, truck); part(`${id}:spin-rear-left`, truck);
+    part(`${id}:spin-front-left`, part(`${id}:steer-front-left`, truck));
+    stand.add(truck);
+  }
+  const loads = [];
+  const view = createWorkVehicleView({loadModel:url => { loads.push(url); return Promise.resolve(stand); }});
+  const on = {enabled:name => name === 'wasteland-town'}, off = {enabled:() => false};
+  const scene = new THREE.Scene(), player = new THREE.Group(), camera = new THREE.PerspectiveCamera();
+  scene.add(player);
+  player.position.set(4, 1, -7); player.rotation.set(0.1, 1.2, -0.05); player.visible = true;
+  const jobState = vehicle => ({arena:{mode:'world-job', worldJob:{vehicle}}, speedMph:10, steerVisual:0.5, stageTimeSec:1});
+  const fire = startWorkVehicle('fire-truck', {enabled:true});
+  for (const [state, flags] of [[jobState(fire), off], [jobState(null), on], [{arena:null}, on], [{arena:{mode:'warlord'}}, on]]) {
+    assert.equal(workVehicleToDraw(state, flags), null);
+    assert.equal(view.update({scene, player, camera, state, flags}), false);
+    assert.equal(player.visible, true, 'a garage car is drawn exactly as the renderer made it');
+    assert.equal(scene.children.length, 1);
+  }
+  assert.equal(loads.length, 0, 'nothing loads until a truck is driven');
+  assert.equal(camera.layers.isEnabled(WORK_VEHICLE_LAYER), false);
+  const state = jobState(fire), before = JSON.stringify(state);
+  view.update({scene, player, camera, state, flags:on});
+  assert.equal(player.visible, false, 'while the truck loads, no sports car is drawn');
+  await Promise.resolve(); await Promise.resolve();
+  player.visible = true;
+  assert.equal(view.update({scene, player, camera, state, flags:on}), true);
+  assert.deepEqual(loads, ['/assets/models/wasteland/town/trucks-1.glb']);
+  const drawn = scene.getObjectByName('work-vehicle:fire-truck');
+  assert.ok(drawn && drawn.visible && !player.visible, 'the truck is drawn in place of the car');
+  assert.ok(drawn.position.equals(player.position) && drawn.quaternion.equals(player.quaternion), 'it takes the car\'s pose');
+  assert.equal(drawn.getObjectByName('fire-truck').position.length(), 0, 'the truck sits on the car\'s point');
+  assert.equal(drawn.getObjectByName('fire-truckbody').layers.isEnabled(WORK_VEHICLE_LAYER), true);
+  assert.equal(drawn.getObjectByName('fire-truckbody').layers.isEnabled(0), false, 'the mirror\'s camera does not see the cab from inside');
+  assert.equal(camera.layers.isEnabled(WORK_VEHICLE_LAYER), true, 'the main camera does');
+  // Steering turns the steering node about the upright only; rolling turns the rolling nodes about the axle only.
+  const steerNode = drawn.getObjectByName('fire-trucksteer-front-left'), frontSpin = drawn.getObjectByName('fire-truckspin-front-left');
+  const euler = new THREE.Euler().setFromQuaternion(steerNode.quaternion, 'YXZ');
+  assert.ok(Math.abs(euler.y + 0.5 * 35 * Math.PI / 180) < 1e-6 && Math.abs(euler.x) < 1e-9, 'the front wheel turns with the steering');
+  state.stageTimeSec = 1.1;
+  view.update({scene, player, camera, state, flags:on});
+  const rolled = new THREE.Euler().setFromQuaternion(frontSpin.quaternion, 'XYZ').x;
+  const expected = -10 * 0.44704 * 0.1 / 0.54;
+  assert.ok(Math.abs(rolled - expected) < 1e-6, `the front wheel rolls once for the distance (${rolled})`);
+  assert.ok(Math.abs(new THREE.Euler().setFromQuaternion(drawn.getObjectByName('fire-truckspin-rear-left').quaternion, 'XYZ').x - expected) < 1e-6);
+  state.stageTimeSec = 1;
+  assert.equal(JSON.stringify(state).replace('"stageTimeSec":1}', ''), before.replace('"stageTimeSec":1}', ''), 'the view writes no state');
+  // The flatbed is the supply truck with its load hidden; the supply truck shows its load only when it has one.
+  const show = vehicle => { view.update({scene, player, camera, state:jobState(vehicle), flags:on}); return scene.getObjectByName(`work-vehicle:${vehicle.id}`); };
+  assert.equal(show(startWorkVehicle('flatbed', {enabled:true})).getObjectByName('supply-truckload').visible, false);
+  assert.equal(show(startWorkVehicle('supply-truck', {enabled:true})).getObjectByName('supply-truckload').visible, true);
+  assert.equal(show(startWorkVehicle({id:'supply-truck', loadKg:0}, {enabled:true})).getObjectByName('supply-truckload').visible, false);
+  assert.equal(scene.children.length, 2, 'one truck at a time');
+  player.visible = true;
+  assert.equal(view.update({scene, player, camera, state:{arena:null}, flags:on}), true);
+  assert.equal(scene.children.length, 1, 'the truck goes when the job ends');
+  assert.equal(player.visible, true);
+  // A model that cannot be loaded leaves the garage car drawn, so the player is never invisible.
+  const broken = createWorkVehicleView({loadModel:() => Promise.reject(new Error('missing'))});
+  broken.update({scene, player, camera, state:jobState(fire), flags:on});
+  await Promise.resolve(); await Promise.resolve();
+  player.visible = true;
+  broken.update({scene, player, camera, state:jobState(fire), flags:on});
+  assert.equal(player.visible, true);
 });

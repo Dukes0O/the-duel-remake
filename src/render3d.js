@@ -72,6 +72,7 @@ import {createBowlView} from './bowl/bowl-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createWorkVehicleView} from './town/view/work-vehicle-view.js'; // TOWN-VEHICLES
 import {createTankerModel} from './arena/tanker-model.js';
 import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
 import {referenceLap} from './reference-laps.js';
@@ -459,6 +460,7 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
+  const workVehicleView=createWorkVehicleView(); // TOWN-VEHICLES: a job's work vehicle is drawn in place of the garage car
   function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
     let status=vehicleAssets.status(key,{finish});
@@ -1341,6 +1343,7 @@ export function attachRenderer(host, app) {
       host.dataset.warmupStatus=warmupTicket.state.status;
       if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     }
+    if(workVehicleView.update({scene,player,camera,state:st,flags:app._switches?.()??app.duel.featureFlags})){sceneRevision++;ambientShading.refresh();}
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;
