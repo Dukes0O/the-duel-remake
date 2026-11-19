@@ -24,8 +24,12 @@ const westWildlife = [
   ['chamois', 'Walk', 'white-tailed-deer'], ['ibex', 'Walk', 'white-tailed-deer'], ['red-fox', 'Walk', 'eastern-wolf'],
   ['wildcat', 'Walk', 'eastern-wolf'], ['wild-boar', 'Walk'], ['alpine-marmot', 'Walk'],
   ['black-stork', 'Fly'], ['golden-eagle', 'Fly'], ['gull', 'Fly'],
-].map(([id, motion, donor]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
-  glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
+  // WILD-ART-WASTE: the town's goat, chicken and camp dog, then three Wasteland animals.
+  // The chicken walks, but it is a bird and keeps a bird's 2,000 triangles.
+  ['goat', 'Walk', 'white-tailed-deer'], ['camp-dog', 'Walk', 'eastern-wolf'], ['chicken', 'Walk', undefined, 2000],
+  ['turkey-vulture', 'Fly'], ['desert-monitor', 'Walk'], ['scorpion', 'Walk'],
+].map(([id, motion, donor, budget]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
+  glb: [`public/assets/wildlife/${id}.glb`], budget: budget ?? (motion === 'Fly' ? 2000 : 5000) }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
 const artCandidates = new Set(['wildcat']);
