@@ -22,3 +22,7 @@ required, so every line of the story gets a full review. The Walkers' lines read
 
 `test-night-2` and `test-story-talk` (they check the lines and branches); Kyle reads the new lines before Codex builds
 the opening scene.
+
+## Story logic
+
+Kyle, 19 November: the Walkers had a fire at the Wash after being refused an ember. Check every branch for facts that contradict each other (who has fire, who knows the way, who is where), and write the result into the design page. STORY-NIGHT-2-FLOW item 6 settles the camp's fire.

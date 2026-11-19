@@ -24,6 +24,25 @@ STORY-DIALOGUE-PLAIN, Claude's). Codex's card, for its cloud. Everything stays b
    the hand flamer at its real reach, and show on screen when the scout is in reach. If the design means the scout
    always escapes, say so in the note and Claude decides.
 
+5. **Choices without labels.** Drop the "SAY" and "ASK" labels from the choice bubbles; show the words, with the
+   number key small beside them. The talk tests that read the labels change with it.
+6. **The Wash camp, from Kyle's play of the fight (Claude's decisions):**
+   - **Fire follows the ember.** The Walkers came to Tin Town because they had no fire. Their camp has firelight only
+     on branches where they got an ember (the gift, the watch, carrying one out). On the refuse branches the camp is
+     dark and cold, in the tower view and at the Wash alike.
+   - **The riders lay siege.** One rider circles the camp at about 30 m with its headlights on, so no Walker can slip
+     away and so a player can find a dark camp by those lights; the others turn to meet the player. When the fight is
+     won, the circling rider breaks off last.
+   - **Ash Men on foot can be run down.** The crew who leave a wrecked rider car run for the camp. A hit from the
+     player's car stops one for good (no gore: they fall and stay down). Any that reach the camp take it: the Walkers
+     are driven off and the ledger records `wash-camp-taken` (the Walkers' word drops one step, and Day 3 reads it).
+   - **The camp is solid.** The shelters, carts, crates and fires stop the car; nothing drives through them.
+   - **No figure on the player's car.** Kyle's picture shows a person standing in the player's car at the Wash, with
+     a brown puff behind. Find which figure it is (a bailing crew member placed at a car's position, a Walker, or the
+     player on foot), and put it on the ground beside the car.
+7. **The scout and the crew read the same way:** whatever stops an Ash Man on foot at the Wash also works on the scout
+   in town (item 4), so the player learns one rule.
+
 ## Checks
 
 - `test-night-2` and `test-story-replay-pick` cover the end of the night without the yard and without the arrival;
