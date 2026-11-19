@@ -64,7 +64,8 @@ test('the lesson walks the seven parts in order, keeps the old notebook words, a
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
   assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['fuel-word-1', 'fuel-word-2', 'fuel-word-0'], 'the old lesson’s notebook ids, litre first because the fuel load is measured in litres');
-  assert.deepEqual(lesson.words.map(w => w.word), ['Fuel load', 'Litre', 'Kilogram']);
+  assert.deepEqual(lesson.words.map(w => w.word), ['Fuel load', 'Litre', 'Kilogram', 'Mass', 'Density', 'Speed', 'Acceleration', 'Force'], 'the old three, and the words the steps define without a notebook entry');
+  assert.deepEqual(STEPS.flatMap(s => [s.word, ...(s.words ?? [])].filter(Boolean)).sort(), lesson.words.map(w => w.id).sort(), 'every word a step defines is in the notebook');
   assert.equal(lesson.name, 'Fuel and weight');
   assert.equal(lesson.finishLabel, 'Finish the lesson');
 });
@@ -112,10 +113,10 @@ test('the sums: the speed is honest in km/h and m/s, and every sum comes out on 
   assert.equal(sumsOf(0).empty, 1198.2);
 });
 
-test('the free test’s cars burn petrol, and an electric car is explained, not raced', () => {
+test('the free test’s cars burn petrol, and the lesson says so plainly', () => {
   for (const car of FREE_CARS) { assert.ok(CARS[car], car); assert.notEqual(CARS[car].electric, true, `${car} is a petrol car`); }
   assert.ok(FREE_CARS.length >= 3);
-  assert.match(stepWords('recap'), /An electric car carries batteries instead, and a battery has the same mass whether it is full or empty/);
+  assert.doesNotMatch(stepWords('recap'), /electric/, 'the last words keep the rule, with no caveat about other cars');
 });
 
 test('a child who does exactly what each prompt says passes every step, and the lesson’s runs pass the bench', () => {
@@ -164,10 +165,10 @@ test('pouring: ↑ pours in and ↓ pours out, 5 litres a press, with the litres
   assert.notEqual(session.view().brian.text, 'The tank is full, with 70 litres.', 'the words go as soon as they stop being true');
   const words = createClassroomSession(lesson);
   playThroughTo(words, 'word-kilogram');
-  assert.equal(words.view().prompt, 'Press 1 for the water and 2 for the petrol, or click a jug.');
+  assert.equal(words.view().prompt, 'Weigh each jug and compare the readings.');
   words.act('weigh:petrol');
-  assert.match(words.view().brian.text, /^One litre of petrol has a mass of 0\.74 kg\. Now weigh the litre of water by pressing 1\./);
-  assert.equal(words.view().prompt, 'Press 1 to weigh the water, or click its jug.', 'the prompt does not ask for what is done');
+  assert.match(words.view().brian.text, /^One litre of petrol has a mass of 0\.74 kg\. Now weigh the litre of water\./);
+  assert.equal(words.view().prompt, 'Now weigh the water.', 'the prompt does not ask for what is done');
   words.act('weigh:water');
   assert.match(words.view().brian.text, /^Each jug holds the same space, one litre, but the water has a mass of 1\.00 kg and the petrol has a mass of 0\.74 kg\./);
   assert.equal(words.view().formulas.find(f => f.title === 'Petrol').worked, '0.74 kg ÷ 1 litre = 0.74 kg per litre');
@@ -177,10 +178,10 @@ test('the tries: a wrong pour says why with the real litres, kilograms and times
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-half');
   pourTo(session, 50); session.act('go'); until(session, v => v.step.id === 'try-half' && v.lanes.every(l => l.done) && !/Watch/.test(v.brian.text));
-  assert.equal(session.view().brian.text, '50 litres is more than half, and that car stopped the stopwatch at 3.23 s against 3.27 s for the full tank. Half of 70 is 35, so pour out 15 more litres with ↓ and race again.');
+  assert.equal(session.view().brian.text, '50 litres is more than half, and that car stopped the stopwatch at 3.23 s against 3.27 s for the full tank. Half of 70 is 35, so pour out 15 more litres and race again.');
   assert.equal(session.view().ready, false);
   pourTo(session, 20); session.act('go'); until(session, v => /less than half/.test(v.brian.text));
-  assert.equal(session.view().brian.text, '20 litres is less than half. That car won, stopping the stopwatch at 3.17 s against 3.27 s for the full tank, but half of 70 is 35, so pour in 15 litres with ↑ and race again.');
+  assert.equal(session.view().brian.text, '20 litres is less than half. That car won, stopping the stopwatch at 3.17 s against 3.27 s for the full tank, but half of 70 is 35, so pour in 15 litres and race again.');
   pourTo(session, 35); session.act('go'); until(session, v => v.ready);
   assert.equal(session.view().brian.text, 'A tank holding 35 litres, half of 70, carries 25.9 kg of petrol. That car reached 100 km/h in 3.20 s and the full tank reached it in 3.27 s, so the car with half a tank was 92 cm ahead when it got there.');
   session.act('next');
@@ -190,10 +191,10 @@ test('the tries: a wrong pour says why with the real litres, kilograms and times
   assert.equal(session.view().litres, 45, 'nothing stops the pour on the mass');
   assert.equal(session.view().ready, false);
   session.act('go');
-  assert.equal(session.view().brian.text, 'The scale reads 33.3 kg, which is 3.7 kg too light. Each press of ↑ pours in 3.7 kg.');
+  assert.equal(session.view().brian.text, 'The scale reads 33.3 kg, which is 3.7 kg too light. Each pour in adds 3.7 kg.');
   assert.equal(session.view().help, 1, 'a wrong weighing climbs one rung of help');
   session.act('pour:in'); session.act('pour:in'); session.act('go');
-  assert.equal(session.view().brian.text, 'The scale reads 40.7 kg, which is 3.7 kg too heavy. Each press of ↓ lets out 3.7 kg.');
+  assert.equal(session.view().brian.text, 'The scale reads 40.7 kg, which is 3.7 kg too heavy. Each pour out removes 3.7 kg.');
   assert.ok(!/litres/.test(session.view().brian.text), 'under the cloth Brian does not say the litres');
   session.act('pour:out'); session.act('go');
   assert.equal(session.view().ready, true);
@@ -204,14 +205,14 @@ test('the tries: a wrong pour says why with the real litres, kilograms and times
   assert.equal(full.view().brian.text, 'The tank is full.', 'the full tank is not given away in litres');
 });
 
-test('Brian’s job: too little runs out, too much carries extra mass, and that race goes again', () => {
+test('Brian’s job: too little runs out, too much carries more petrol than the race needs, and that race goes again', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   assert.equal(session.view().job.name, 'Half a Grand Prix');
   assert.equal(session.view().litres, 70, 'the tank starts full');
   assert.equal(sumOf(session.view(), 'How far the petrol lasts'), '70 ÷ 70 × 110% = 110%');
-  session.act('go'); until(session, v => /extra mass/.test(v.brian.text));
-  assert.equal(session.view().brian.text, 'The car finished, but 70 litres lasts 110% of a Grand Prix, so 35 litres, which is 25.9 kg, was extra mass that the car carried for nothing. Set the tank to 35 litres and race again.');
+  session.act('go'); until(session, v => /more petrol than this race needs/.test(v.brian.text));
+  assert.equal(session.view().brian.text, 'The car finished, but 70 litres lasts 110% of a Grand Prix, so 35 litres, which is 25.9 kg, was more petrol than this race needs. Set the tank to 35 litres and race again.');
   assert.equal(session.view().help, 1, 'a failed race climbs one rung of help');
   pourTo(session, 30); session.act('go');
   assert.equal(sumOf(session.view(), 'How far the petrol lasts'), '30 ÷ 70 × 110% = 47.1%', 'the sum follows the pour, with enough decimals to compare');
@@ -275,18 +276,18 @@ test('hints and prompts say the right way to turn the tap from every setting', (
     playThroughTo(session, id);
     for (const litres of [70, want + 5, want - 5, 0]) {
       pourTo(session, litres);
-      assert.match(session.view().hints[1], new RegExp(`Press ${litres > want ? '↓' : '↑'} until the ${word} reads`), `${id} from ${litres} litres`);
+      assert.match(session.view().hints[1], new RegExp(`${litres > want ? 'Pour out' : 'Pour in'} until the ${word} reads`), `${id} from ${litres} litres`);
       assert.match(session.view().hints[2], /pour the petrol/);
     }
     pourTo(session, want);
-    assert.match(session.view().hints[1], /so press Space\./, 'no press is asked for at the right setting');
+    assert.match(session.view().hints[1], id === 'try-half' ? /so race\./ : /so weigh it\./, 'no pour is asked for at the right setting');
     assert.match(session.view().hints[2], id === 'try-half' ? /I will race\./ : /I will weigh the petrol\./, 'Brian only does what is left to do');
-    assert.match(session.view().prompt, id === 'try-half' ? /Press Space to race\.$/ : /Press Space to weigh it\.$/);
+    assert.match(session.view().prompt, id === 'try-half' ? /Race\.$/ : /Weigh it\.$/);
   }
   const job = createClassroomSession(lesson);
   playThroughTo(job, 'alone');
   pourTo(job, 35);
-  assert.match(job.view().prompt, /Press Space to race\.$/);
+  assert.match(job.view().prompt, /Race\.$/);
   assert.match(job.view().hints[2], /I will race\./);
 });
 
@@ -532,7 +533,7 @@ test('the races: one clock for every car, the lighter car ahead all the way, and
   run(session, 1); assert.ok(session.view().litres < 70 && session.view().kg < 51.8, 'the scale falls as the tank empties');
   until(session, v => v.ready);
   assert.deepEqual(session.view().lanes.map(l => l.winner), [false, false, true], 'the empty tank wins');
-  assert.match(session.view().brian.text, /each kilogram receives a larger share of the force, so the whole car accelerates faster/);
+  assert.match(session.view().brian.text, /The same force speeds up every kilogram of the car, so with fewer kilograms the whole car accelerates faster/);
   assert.match(session.view().brian.text, /the empty tank beat the full tank by only 1\.8 m/);
   assert.deepEqual(session.view().formulas.map(f => f.worked).filter(Boolean), ['10,617 N ÷ 1,250.0 kg = 8.494 m/s^2', '10,617 N ÷ 1,224.1 kg = 8.673 m/s^2', '10,617 N ÷ 1,198.2 kg = 8.861 m/s^2']);
   assert.equal(STRIP.metres, 50);
@@ -574,7 +575,7 @@ test('review fixes: the can holds only what went out of the tap; clicks land whe
   assert.equal(v.target, 'go');
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
   // Show me in the job: "That is how it is done." comes with what Brian did, not the last failure.
-  job.act('go'); until(job, x => /extra mass/.test(x.brian.text));
+  job.act('go'); until(job, x => /more petrol than this race needs/.test(x.brian.text));
   for (let k = 0; k < 3; k++) job.act('help');
   run(job, SHOW_ME_S + .2);
   assert.equal(job.view().brian.text, 'That is how it is done. I will set the tank to 35 litres, the least that lasts this race, and then race.');
@@ -702,4 +703,68 @@ test('LAB-LOOK round 11: the wide board names its size and draws no text smaller
       run(session, .5);
     }
   }
+});
+
+test('Kyle’s rules of 19 November 2026: no hedging, correct maths words, no key labels repeated, and a task that says its purpose', () => {
+  const said = new Set();
+  const note = text => { if (text) said.add(String(text)); };
+  const session = createClassroomSession(lesson);
+  for (const id of STEPS.map(s => s.id)) {
+    playThroughTo(session, id);
+    const v = session.view();
+    note(v.say); note(v.prompt); (v.hints ?? []).forEach(note); (v.cards ?? []).forEach(c => note(c.label)); (v.formulas ?? []).forEach(f => { note(f.note); note(f.title); });
+    note(v.page.at(-1)?.result);
+  }
+  for (const id of STEPS.map(s => s.id)) note(stepWords(id));
+  const half = createClassroomSession(lesson); playThroughTo(half, 'try-half'); pourTo(half, 50); half.act('go'); run(half, 8); note(half.view().brian.text);
+  const weigh = createClassroomSession(lesson); playThroughTo(weigh, 'try-weigh'); pourTo(weigh, 45); weigh.act('go'); note(weigh.view().brian.text);
+  const free = createClassroomSession(lesson); playThroughTo(free, 'try-free'); raceFree(free); note(free.view().brian.text);
+  const text = [...said].join('\n');
+  assert.doesNotMatch(text, /in this game|simplification|game’s|real car|belongs to petrol cars/i, 'no hedging');
+  assert.doesNotMatch(text, /\b(the sums?|sums beside|sum beside|sums use|sums for)\b/i, 'a multiplication or a division is not a sum');
+  assert.doesNotMatch(text, /[Pp]ress [↑↓←→12]|[Pp]ress Space|[Pp]ress R\b|with ↓|with ↑|pouring with/, 'the screen shows its own key labels');
+  assert.doesNotMatch(text, /electric/i, 'the last words keep the rule, with no caveat about other cars');
+  const pour = createClassroomSession(lesson); playThroughTo(pour, 'try-weigh');
+  assert.match(pour.view().brian.text, /^The gauge is covered, so you must use the scale\. Pour petrol in or out until the scale reads 37\.0 kg, and then weigh it\. This shows you how to work out the litres from the mass alone\.$/);
+  const watch = createClassroomSession(lesson); playThroughTo(watch, 'watch');
+  assert.match(watch.view().brian.text, /^Watch the scale as I empty the tank, and then three identical cars race with a full tank, half a tank and an empty tank\./, 'the opening says what the learner will see');
+  const job = createClassroomSession(lesson); playThroughTo(job, 'alone');
+  assert.match(job.view().brian.text, /^Pour the least petrol that lasts each race, and then race\./);
+  const speed = createClassroomSession(lesson); playThroughTo(speed, 'word-speed');
+  assert.match(speed.view().brian.text, /Race the car to 100 km\/h, and watch how its speed grows\./);
+});
+
+test('the wonder and the watch last about ten seconds, R plays them again, and a failed job race can be watched again', () => {
+  const time = (session, ready) => { let t = 0; while (!ready(session.view()) && t < 60) { session.tick(.05); t += .05; } return t; };
+  const wonder = createClassroomSession(lesson);
+  const w = time(wonder, x => x.ready);
+  assert.ok(w >= 9 && w < 13, `the wonder lasts ${w.toFixed(1)} s`);
+  assert.equal(wonder.view().slowRace, true, 'the board says it is slow motion');
+  wonder.act('replay'); assert.equal(wonder.view().lanes.every(l => l.seconds == null), true, 'R starts the race again');
+  const watch = createClassroomSession(lesson); playThroughTo(watch, 'watch');
+  const t = time(watch, x => x.ready);
+  assert.ok(t >= 10 && t < 16, `the drain and the race last ${t.toFixed(1)} s`);
+  watch.act('replay'); assert.ok(watch.view().litres > 60, 'the tank is full again');
+  // The races the player sets up keep their real speed.
+  const half = createClassroomSession(lesson); playThroughTo(half, 'try-half'); pourTo(half, HALF); half.act('go');
+  const h = time(half, x => x.ready);
+  assert.ok(h < 6, `a half tank race takes ${h.toFixed(1)} s`);
+  assert.equal(half.view().slowRace, false);
+  // The job: a failed race plays again.
+  const job = createClassroomSession(lesson); playThroughTo(job, 'alone');
+  job.act('go'); until(job, x => /more petrol than this race needs/.test(x.brian.text));
+  assert.ok(job.view().actions.includes('replay'));
+  job.act('replay');
+  assert.equal(job.view().job.race.over, false, 'the same race runs again');
+  until(job, x => x.job.race.over);
+  assert.match(job.view().brian.text, /more petrol than this race needs/);
+  assert.equal(job.view().job.day, 1, 'a replay is not a new race');
+});
+
+test('Density, Mass, Speed, Acceleration and Force are notebook words, taught by their own steps', () => {
+  const by = Object.fromEntries(STEPS.map(s => [s.id, [s.word, ...(s.words ?? [])].filter(Boolean)]));
+  assert.deepEqual(by['word-kilogram'], ['fuel-word-2', 'fuel-mass', 'fuel-density']);
+  assert.deepEqual(by['word-speed'], ['fuel-speed', 'fuel-acceleration']);
+  assert.deepEqual(by.watch, ['fuel-force']);
+  for (const word of lesson.words) assert.match(word.meaning, /\.$/, word.word);
 });
