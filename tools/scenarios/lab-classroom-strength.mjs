@@ -36,22 +36,16 @@ export async function playThrough(c, shot = async () => {}) {
   await at('word-strength'); await shot('word-strength'); await press('ArrowUp'); await saying('A load of 10 kg brings the stress to 73%', 'the first weight says how much strength it uses');
   await shot('word-strength-10'); await press('ArrowUp'); await at('word-strength', 's.ready'); await shot('word-strength-bent');
   await next('word-strength');
-  await at('word-stiff'); await shot('word-stiff'); await press('Space'); await wait(900); await shot('word-stiff-dipping'); await at('word-stiff', 's.ready'); await shot('word-stiff-done');
+  await at('word-stiff'); await shot('word-stiff'); await press('Space'); await wait(3500); await shot('word-stiff-dipping'); await at('word-stiff', 's.ready'); await shot('word-stiff-done');
   await next('word-stiff');
-  await at('word-brittle'); await shot('word-brittle'); await press('Space'); await wait(2400); await shot('word-brittle-ram'); await at('word-brittle', 's.ready'); await wait(700); await shot('word-brittle-snapped');
+  await at('word-brittle'); await shot('word-brittle'); await press('Space'); await wait(3000); await shot('word-brittle-ram'); await at('word-brittle', 's.ready'); await wait(700); await shot('word-brittle-snapped');
   await next('word-brittle');
-  await at('watch'); await wait(2600); await shot('watch-loading'); await at('watch', 's.ready'); await shot('watch');
+  await at('watch'); await wait(5000); await shot('watch-loading'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
-  // Too thin: Space on steel says to pick carbon fibre first; one click on the rack picks it; a wrong guess says why.
-  await at('try-snap'); await shot('try-snap'); await press('Space'); await saying('press 3 first', 'hanging the wrong arm says why');
-  const rack = await toScreen(450, 636);
-  await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: rack.x, y: rack.y, button: 'left', buttons: 1, clickCount: 1});
-  await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: rack.x, y: rack.y, button: 'left', buttons: 0, clickCount: 1});
-  await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
-  await prompt('The carbon fibre arm is 20 mm thick', 'the click on the rack picks carbon fibre'); await shot('try-snap-picked');
-  await press('Space'); await at('try-snap', 's.cards === 3'); await shot('try-snap-guess');
+  // Too thin: the carbon fibre arm is on the rig and the question comes first; a wrong guess says why, and the car comes on slowly.
+  await at('try-snap', 's.cards === 3'); await shot('try-snap-guess'); await prompt('Pick the card with your answer.', 'there is nothing to press before the question');
   if (await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('164%'))`)) throw Error('The panel gave away the answer to the guess.');
-  await press('Digit1'); await at('try-snap', 's.ready'); await saying('The arm snapped', 'a wrong guess says what happened'); await wait(400); await shot('try-snap-snapped');
+  await press('Digit1'); await wait(3000); await shot('try-snap-lowering'); await at('try-snap', 's.ready'); await saying('The arm snapped', 'a wrong guess says what happened'); await wait(400); await shot('try-snap-snapped');
   await next('try-snap');
   // Thick enough: 50 mm bends for good and says why; 80 mm holds.
   await at('try-steel'); await shot('try-steel'); await press('ArrowUp'); await press('Space'); await saying('bent for good, because', 'a thin steel arm says why'); await shot('try-steel-bent');
@@ -62,7 +56,12 @@ export async function playThrough(c, shot = async () => {}) {
   await press('Digit1'); await press('ArrowDown', 2); await wait(200); await shot('try-free-set');
   if (!(await worked('2,700 kg/m³ × 0.5 m × 0.06 m × 0.06 m'))) throw Error('The sums did not follow the rack and the handle.');
   await press('Space'); await wait(900); await shot('try-free-hanging'); await saying('test a different arm', 'the first arm says its result');
-  await press('Digit3'); await press('ArrowDown', 4); await press('Space'); await saying('The carbon fibre arm at 20 mm snapped', 'a thin arm says why'); await wait(500); await shot('try-free-snapped');
+  const rack = await toScreen(450, 636);
+  await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: rack.x, y: rack.y, button: 'left', buttons: 1, clickCount: 1});
+  await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: rack.x, y: rack.y, button: 'left', buttons: 0, clickCount: 1});
+  await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
+  await prompt('The carbon fibre arm is', 'a click on the rack picks carbon fibre');
+  await press('ArrowDown', 4); await press('Space'); await saying('The carbon fibre arm at 20 mm snapped', 'a thin arm says why'); await wait(500); await shot('try-free-snapped');
   await press('ArrowUp', 6); await press('Digit2'); await press('Space'); await at('try-free', 's.ready'); await saying('tested enough arms', 'three arms open Continue'); await shot('try-free-three');
   await next('try-free');
   // Brian's job: aluminium holds but is heavy; carbon fibre at 40 mm is over its line; Show me builds the lightest.
@@ -83,7 +82,7 @@ export async function playThrough(c, shot = async () => {}) {
   }
   await at('recap'); await wait(800); await shot('recap');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
-  const words = ['strength-strength', 'strength-stiff', 'strength-brittle', 'strength-aluminium', 'strength-steel', 'strength-carbon-fibre'];
+  const words = ['strength-density', 'strength-strength', 'strength-stiff', 'strength-brittle', 'strength-aluminium', 'strength-steel', 'strength-carbon-fibre'];
   if (!(await c.evaluate(`!window.__qaApp.profile.lab?.done?.strength && ${JSON.stringify(words)}.every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.includes('Finish the lesson'))`))) throw Error('The last step should say Finish the lesson.');
   // Enter finishes: the lesson's own arms pass the bench's goal; Brian says what it opened, and Enter goes back to the Lab.

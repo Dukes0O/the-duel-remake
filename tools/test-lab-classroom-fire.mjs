@@ -328,7 +328,7 @@ test('Previous step shows a finished word as it was, and Watch again plays the W
   session.act('replay');
   assert.equal(session.view().table.filter(Boolean).length, 0);
   until(session, x => x.table.filter(Boolean).length === 3);
-  until(session, x => /R to watch again/.test(x.prompt));
+  until(session, x => /Press Enter to continue/.test(x.prompt));
   assert.match(say(session), /Each time one side was removed, the fire went out/);
 });
 
@@ -378,7 +378,7 @@ test('the free test: every setting of the three switches has its flame and its r
   // The switches stay open after Continue opens, and the closing words stay true.
   flip(session, 'gas:off');
   assert.equal(session.view().freeRows.length, 4);
-  assert.match(say(session), /Press Enter when you have tested enough settings/);
+  assert.match(say(session), /You have tested enough settings/);
   assert.match(say(session), /Any one of these would be enough to stop the fire/);
   // Show me presses a switch that leads to a setting not tested yet, and a click on the plate does the same.
   const s = createClassroomSession(lesson);
@@ -410,7 +410,8 @@ test('how a forest fire spreads: each press runs one game spread, and the sums f
   assert.deepEqual(MARKED_CELL, [1, ROWS - 1]);
   assert.equal(session.view().ready, true); assert.equal(session.view().forest.road, true);
   assert.equal(worked(session, 'How fast the front moves'), '5 × 20 m = 100 m, and 5 × 70 s = 350 s, so 100 ÷ 350 = about 0.29 m/s');
-  assert.match(say(session), /5 spreads last 350 seconds, which is less than the 420 seconds of the challenge\. The front travelled 100 metres in that time, which is about 0\.29 metres per second, written m\/s/);
+  assert.match(say(session), /^That spread carried the fire into the trees beside the road, 5 spreads after it was lit\. .* A fire left alone reaches the road, so we must remove a side of the triangle/, 'the conclusion comes before the speed');
+  assert.match(session.view().brian.text, /5 spreads last 350 seconds, which is less than the 420 seconds of the challenge\. The front travelled 100 metres in that time, which is about 0\.29 metres per second, written m\/s/);
   // The challenge's own clock: a spread every 70 s, seven minutes, six spreads.
   assert.equal(CHALLENGE_RULES.fire.spreadEvery, 70); assert.equal(CHALLENGE_SPREADS, 6);
   assert.equal(session.act('spread') && session.view().forest.burning, fire.burning.length, 'the step stops once the fire has reached the road');
@@ -462,7 +463,7 @@ test('the sums: the strip and the job follow the controls, and every worked line
   assert.equal(worked(q, 'The rule of the fire triangle'), 'Oil yes, a hot stove yes, oxygen no, so no fire.');
   playThroughTo(q, 'check-game');
   assert.equal(worked(q, 'One full bucket'), '600 ÷ 180 = about 3.33 cells at full strength');
-  assert.equal(worked(q, 'Spreads during the challenge'), '420 s ÷ 70 s = 6 spreads');
+  assert.equal(worked(q, 'Spreads during the challenge'), undefined, 'the question about the first drop shows only what bears on it');
 });
 
 test('every step after the first shows the physics, and no object or physics word breaks the card’s wording rules', () => {
@@ -585,4 +586,73 @@ test('the arrows show every spread the game allows, and Show me reaches three se
   }
   assert.equal(s.view().ready, true);
   assert.equal(s.view().page.at(-1).setup, opening, 'the step’s opening words do not change with the switches');
+});
+
+test('Kyle’s rules of 19 November 2026: no hedging, correct maths words, no key labels repeated, a task that says what it is for', () => {
+  const session = createClassroomSession(lesson);
+  const said = new Set();
+  const note = text => { if (text) said.add(String(text)); };
+  for (const id of STEPS.map(s => s.id)) {
+    playThroughTo(session, id);
+    const v = session.view();
+    note(v.say); note(v.prompt); (v.hints ?? []).forEach(note); (v.cards ?? []).forEach(c => note(c.label)); (v.formulas ?? []).forEach(f => { note(f.note); note(f.title); note(f.worked); note(f.formula); });
+    note(session.view().page.at(-1)?.result);
+  }
+  // Every result a try, a free setting and the job can give.
+  for (const id of ['try-water', 'try-sand']) for (const pick of SIDES) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id);
+    s.act(`answer:${side(pick)}`); s.act('tip'); until(s, x => x.ready); note(say(s));
+  }
+  const strip = createClassroomSession(lesson); playThroughTo(strip, 'try-strip');
+  strip.act('rake'); strip.act(`answer:${side('heat')}`); strip.act('burn'); until(strip, x => x.ready); note(say(strip));
+  const free = createClassroomSession(lesson); playThroughTo(free, 'try-free');
+  for (const a of ['lid:shut', 'gas:off', 'wood:out', 'lid:open']) { flip(free, a); note(say(free)); }
+  const job = createClassroomSession(lesson); playThroughTo(job, 'alone');
+  const [bi, bj] = [0, 0]; job.act(`drop:${bi}:${bj}`); note(say(job));
+  const text = [...said].join('\n');
+  assert.doesNotMatch(text, /in this game|simplification|game’s own|the game’s|real life|a fact about real|not a rule of the game/i, 'no hedging');
+  assert.doesNotMatch(text, /\bthe sums?\b|\bsums beside\b/i, 'a division is not a sum');
+  assert.doesNotMatch(text, /[Pp]ress [↑↓←→123]|[Pp]ress Space|with ← → ↑ ↓/, 'the screen shows its own key labels');
+  assert.doesNotMatch(text, /fuel and heat and oxygen/, 'a checklist, not an addition');
+  const fuel = createClassroomSession(lesson); playThroughTo(fuel, 'word-fuel');
+  assert.match(say(fuel), /Put the wood in, and see whether it burns by itself/);
+  const oxygen = createClassroomSession(lesson); playThroughTo(oxygen, 'word-oxygen');
+  assert.match(say(oxygen), /Shut the lid, and watch what the flame does/);
+  const triangle = createClassroomSession(lesson); playThroughTo(triangle, 'word-triangle');
+  assert.match(say(triangle), /Open the lid, and the fire has all three again/);
+  const rake = createClassroomSession(lesson); playThroughTo(rake, 'try-strip');
+  assert.match(say(rake), /then say which side of the triangle it removes\.$/, 'the strip names its question before the rake');
+  const first = createClassroomSession(lesson); playThroughTo(first, 'try-spread');
+  assert.match(say(first), /cells, and the number on a burning cell is its strength[^.]*\. Run spreads until the fire reaches the road/, 'cell and strength are defined before the first spread');
+});
+
+test('the runs with several things moving last long enough to watch, and Watch again plays them once more', () => {
+  const time = (session, ready) => { let t = 0; while (!ready(session.view()) && t < 60) { session.tick(.05); t += .05; } return t; };
+  const wonder = createClassroomSession(lesson);
+  const w = time(wonder, x => x.ready);
+  assert.ok(w >= 8 && w < 12, `the wonder lasts ${w.toFixed(1)} s`);
+  for (const pick of ['water', 'sand']) {
+    const s = createClassroomSession(lesson);
+    playThroughTo(s, `try-${pick}`);
+    s.act(`answer:${side(pick === 'water' ? 'heat' : 'air')}`); s.act('tip');
+    const t = time(s, x => x.ready && x.pit.flame === 0);
+    assert.ok(t >= 7 && t < 12, `the ${pick} bucket lasts ${t.toFixed(1)} s`);
+    assert.ok(s.view().actions.includes('replay'));
+    s.act('replay');
+    assert.equal(s.view().pit.pour.age < .1, true, 'the bucket tips again from the start');
+    until(s, x => x.pit.flame === 0 && x.pit.smoke !== null);
+  }
+  const strip = createClassroomSession(lesson);
+  playThroughTo(strip, 'try-strip'); strip.act('rake'); strip.act(`answer:${side('fuel')}`); strip.act('burn');
+  const st = time(strip, x => x.ready);
+  assert.ok(st >= 8 && st < 13, `the fire runs to the strip over ${st.toFixed(1)} s`);
+  assert.ok(strip.view().actions.includes('replay'));
+  strip.act('replay'); assert.equal(strip.view().forest.front <= 1, true, 'the fire starts again at the lake end');
+  until(strip, x => x.forest.front === STRIP - 1);
+  const coat = createClassroomSession(lesson);
+  playThroughTo(coat, 'word-retardant'); coat.act('coat');
+  const ct = time(coat, x => x.ready);
+  assert.ok(ct >= 8 && ct < 13, `the retardant run lasts ${ct.toFixed(1)} s`);
+  coat.act('replay'); until(coat, x => x.ready && x.forest.front === STRIP - 1);
+  assert.ok(coat.view().forest.cells.filter(c => c.i === STRIP).every(c => c.state === 'coated'));
 });

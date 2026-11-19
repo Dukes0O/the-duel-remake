@@ -91,7 +91,7 @@ async function play(c) {
   // How a forest fire spreads: one press, one spread; the sums follow.
   await at('try-spread'); await shot('try-spread'); await sum('25 + 25 = 50', 'the marked cell’s sum');
   await press('Space'); await sum('50 + 25 = 75', 'the marked cell grows'); await wait(200); await shot('try-spread-pressed');
-  await press('Space'); await press('Space'); await press('Space'); await at('try-spread', 's.ready'); await says('0.29 metres per second', 'the front’s speed'); await shot('try-spread-done');
+  await press('Space'); await press('Space'); await press('Space'); await at('try-spread', 's.ready'); await says('A fire left alone reaches the road', 'the conclusion comes first'); await shot('try-spread-done');
   await next('try-spread');
   // The strip: rake, guess, let it burn.
   await at('try-strip'); await shot('try-strip-setup'); await sum('6 × 3 = 18 cells', 'all the forest in reach'); await press('Space');

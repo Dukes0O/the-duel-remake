@@ -439,9 +439,23 @@ export const LANE_REACH=2;
 // replay guards drive them in every lane, the card's other files select their own
 // suites, a suite that reads one as text still runs, and the night full tier runs
 // every importer. Each lists the suites that own it.
+// QA-WIDE-FILES (Director's ruling, 19 November 2026): course tables and small helpers that
+// hundreds of suites reach only to look something up select their owners instead. The save and
+// money rules, the seeded generator, the road class and the firing rules stay ordinary files;
+// the card's ruling (git history of docs/board/cards/QA-WIDE-FILES.md) says why for each.
+const owners=(...names)=>names.map(name=>`tools/test-${name}.mjs`);
 export const SHARED_FILES=Object.freeze({
   'src/game.js':[],'src/main.js':[],'src/render3d.js':[],'src/app.js':[],'src/config.js':[],
-  'src/feature-flags.js':['tools/test-feature-flags.mjs','tools/test-preview-launcher.mjs']
+  'src/feature-flags.js':['tools/test-feature-flags.mjs','tools/test-preview-launcher.mjs'],
+  'src/circuits/index.js':owners('circuits','circuit-panorama-registry','circuit-variants'),
+  'src/circuit-manifests.js':owners('circuits','circuit-panorama-registry','feature-flags','wasteland-beta','career-rebuild'),
+  'src/freestyle-course.js':owners('freestyle-course','practice-map','playground-rivals','mountain-support'),
+  'src/bowl/bowl-course.js':owners('bowl-course','bowl-save','bowl-air'),
+  'src/expansion-courses.js':owners('expansion-geometry','circuit-eifel','expansion-driving'),
+  'src/summit-attack.js':owners('summit-attack','completion-screen','circuit-summit','course-access-ui'),
+  'src/wasteland-access.js':owners('wasteland-easter-egg','arsenal-core','career-rebuild','deep-save','heli-hooks'),
+  'src/wasteland-tuning.js':owners('arsenal-core','arsenal-runtime','enemy-aim','combat-projectiles','wasteland-career'),
+  'src/arsenal/targeting.js':owners('seeker-rockets','arsenal-runtime','arsenal-wave1','arsenal-wave3','crew-gear','road-riders')
 });
 // `wide` is the partial night's picker: the same walk with no reach limit, no hub limit and the
 // shared files counted like any other, so a suite that reaches a changed file at any depth runs.
