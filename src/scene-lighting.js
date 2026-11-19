@@ -71,22 +71,27 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
     scalars: ['sun', 'hemi', 'env', 'fogNear', 'fogFar', 'exposure', 'bloom', 'sunStrength', 'cloudCover']});
   const evening = {sunOffset: {x: 0, y: 0, z: 0}}, eveningColours = Object.fromEntries(EVENING.colours.map(key => [key, [0, 0, 0]]));
   const eased = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
-  let activeChapterNight = false;
-  function eveningOver(day, amount, theme) {
+  function eveningOver(day, amount, theme, nightShare = 0, chaseLight = false) {
     const golden = lightPathLook('golden', theme), dusk = lightPathLook('dusk', theme);
+    const nocturnal = nightShare ? lightPathLook('night', theme) : null;
+    const moonlit = chaseLight && nocturnal ? {...nocturnal, sun: .64, hemi: 1.32, env: .19,
+      exposure: 1.26, sunOffset: {x: -970, y: 180, z: 160}} : nocturnal;
     const toGolden = eased(amount / EVENING.goldenBy) * EVENING.goldenShare;
     const toDusk = eased((amount - EVENING.duskFrom) / (1 - EVENING.duskFrom)) * EVENING.duskShare;
-    const mixed = (from, a, b) => { const first = from + (a - from) * toGolden; return first + (b - first) * toDusk; };
+    const mixed = (from, a, b, night = null) => {
+      const first = from + (a - from) * toGolden, dusk = first + (b - first) * toDusk;
+      return night === null ? dusk : dusk + (night - dusk) * nightShare;
+    };
     for (const key of Object.keys(day)) evening[key] = day[key];
-    for (const key of EVENING.scalars) evening[key] = mixed(day[key], golden[key], dusk[key]);
+    for (const key of EVENING.scalars) evening[key] = mixed(day[key], golden[key], dusk[key], moonlit?.[key]);
     for (const key of EVENING.colours) {
       const from = colour(day[key]), out = eveningColours[key], r = from.r, g = from.g, b = from.b;
-      out[0] = mixed(r, golden[key][0], dusk[key][0]); out[1] = mixed(g, golden[key][1], dusk[key][1]); out[2] = mixed(b, golden[key][2], dusk[key][2]);
+      out[0] = mixed(r, golden[key][0], dusk[key][0], moonlit?.[key]?.[0]); out[1] = mixed(g, golden[key][1], dusk[key][1], moonlit?.[key]?.[1]); out[2] = mixed(b, golden[key][2], dusk[key][2], moonlit?.[key]?.[2]);
       evening[key] = out;
     }
     const sunFrom = day.sunOffset ?? SUN_OFFSET;
     evening.sunOffset = evening.sunPlace ??= {x: 0, y: 0, z: 0};
-    for (const axis of ['x', 'y', 'z']) evening.sunOffset[axis] = mixed(sunFrom[axis], golden.sunOffset[axis], dusk.sunOffset[axis]);
+    for (const axis of ['x', 'y', 'z']) evening.sunOffset[axis] = mixed(sunFrom[axis], golden.sunOffset[axis], dusk.sunOffset[axis], moonlit?.sunOffset[axis]);
     // Only the sun's direction changes: it stays as far off as by day, because a place's light may set that distance to
     // keep its whole shadow box inside the sun's light (the Scablands' is 320 m; the looks' own are about 130 m).
     const far = Math.hypot(sunFrom.x, sunFrom.y, sunFrom.z), now = Math.hypot(evening.sunOffset.x, evening.sunOffset.y, evening.sunOffset.z) || 1;
@@ -113,7 +118,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
 
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = false }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = 0, chaseLight = false }) {
       if (stopped) return;
       if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
@@ -124,9 +129,9 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
       let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
       if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, trialLight || course.def.light);
       const daySettings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
-      const chapterNight = storyNight && !pathSample && !tunnel;
-      const settings = chapterNight ? lightPathLook('night', theme)
-        : eveningAmount > 0 && !pathSample && !tunnel ? eveningOver(daySettings, eveningAmount, theme) : daySettings;
+      const chapterNight = !pathSample && !tunnel ? Math.max(0, Math.min(1, storyNight)) : 0;
+      const settings = !pathSample && !tunnel && (eveningAmount > 0 || chapterNight > 0)
+        ? eveningOver(daySettings, eveningAmount, theme, chapterNight, chaseLight) : daySettings;
       host.dataset.evening = eveningAmount > 0 ? eveningAmount.toFixed(2) : '0';
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {
@@ -142,7 +147,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
         ? winterDryPalette.colours : null;
       activeWinter = !!winter;
       if (!winter) {winterDryPalette = null;paletteKey(baseSettings,dryPaletteKey,true);hasDryPalette = true;}
-      atmosphere.setLightPath(!!pathSample);
+      atmosphere.setLightPath(!!pathSample || chapterNight > 0);
       const reach = settings.shadowReach || 45, far = settings.shadowFar || 240;
       shadowAhead = settings.shadowAhead || 0;
       if (reach !== shadowReach || far !== shadowFar) {
@@ -193,13 +198,12 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
         uniforms.stars.value = settings.stars;uniforms.moon.value = settings.moon;
         host.dataset.lightPath = 'true';host.dataset.nightAmount = String(settings.nightAmount);
       } else {
-        if (chapterNight || activeChapterNight) {
-          if (uniforms.stars) uniforms.stars.value = chapterNight ? settings.stars : 0;
-          if (uniforms.moon) uniforms.moon.value = chapterNight ? settings.moon : 0;
+        if (chapterNight) {
+          if (uniforms.stars) uniforms.stars.value = chapterNight;
+          if (uniforms.moon) uniforms.moon.value = chapterNight;
         }
         delete host.dataset.lightPath;delete host.dataset.nightAmount;
       }
-      activeChapterNight = chapterNight;
     },
     followCamera(camera, position, seconds) {
       if (stopped) return;

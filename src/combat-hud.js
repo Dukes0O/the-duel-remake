@@ -327,6 +327,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const alternativeName = alternativePointer.querySelector('b');
   const alternativeDistance = alternativePointer.querySelector('strong');
   const alternativeArrow = alternativePointer.querySelector('span');
+  const footGearBox = host.querySelector('.combat-foot-gear');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   const footMouse = host.querySelector('.combat-foot-mouse');
@@ -434,6 +435,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
         townArrow.style.transform = `rotate(${town.angle}deg)`;
         townPointer.setAttribute('aria-label', `${town.name}, ${town.distance} metres away`);
       }
+      const holstered = state.arena?.worldJob?.night2?.holstered === true;
+      footGearBox.hidden = holstered && !app.footMouseHint;
+      footGearName.hidden = holstered;
+      footGearAmmo.hidden = holstered;
+      footAction.hidden = holstered;
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);
@@ -442,7 +448,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setText(footAction, action.text);
       footReticle.classList.toggle('is-locked', action.locked);
       const aim=projectFootAim();
-      footReticle.hidden=aim?.visible===false;
+      footReticle.hidden=holstered || aim?.visible===false;
       const left=`${((aim?.x??.5)*100).toFixed(3)}%`,top=`${((aim?.y??.5)*100).toFixed(3)}%`;
       if(footReticle.style.left!==left)footReticle.style.left=left;
       if(footReticle.style.top!==top)footReticle.style.top=top;

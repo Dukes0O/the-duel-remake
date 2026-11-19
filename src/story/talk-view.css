@@ -59,3 +59,22 @@ body:has(.in-story-talk) #story-caption, .in-story-talk .rear-view-frame, .in-st
 .story-talk.recalling :is(.story-speech,.story-thoughts,.story-options,.story-inner-voice,.story-talk-controls button:first-child) { visibility: hidden }
 .story-options .story-option-detail { display: block; margin-top: .2em; }
 .story-options button:disabled { opacity: .55; cursor: default; }
+
+/* Keep the gate tableau clear while all seven options are on screen. */
+.story-talk[data-scene="gate"][data-phase="options"] .story-options {
+  bottom: 8px;
+  width: min(1200px, 96%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px 8px;
+  padding: 0 4px;
+  align-items: stretch;
+}
+.story-talk[data-scene="gate"] .story-options .story-cloud {
+  font: 500 clamp(12px, 1.08vw, 15px)/1.2 Georgia, serif;
+  padding: 4px 12px 5px;
+  border-radius: 14px;
+}
+.story-talk[data-scene="gate"][data-phase="options"] .story-talk-controls {
+  top: 4%;
+  bottom: auto;
+}

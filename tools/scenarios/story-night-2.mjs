@@ -8,14 +8,15 @@ let theftSeed = 1;
 while (!namedThrow(createLedger(night2Opening(theftSeed)), 'night-2/dace-steals', .5)) theftSeed++;
 
 export const pageFunctions = {
-  ready: () => window.__qaApp?.duel.state.status === 'menu' && !!window.__render,
+  ready: () => window.__qaApp?.duel.state.status === 'menu' && !!window.__render &&
+    [...document.querySelectorAll('details button')].some(button =>
+      button.textContent === 'Create temporary player ready for Night 2' && !button.hidden && !button.disabled),
   prepare: seed => {
     if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only storage is required.');
     const button = [...document.querySelectorAll('details button')]
       .find(button => button.textContent === 'Create temporary player ready for Night 2');
     if (!button || button.hidden) throw Error('Missing Night 2 QA player button.');
     button.click();
-    document.querySelector('[data-action="wasteland-visit"]').click();
     window.__qaApp.seed = seed;
   },
   control: (action, click = false) => {
@@ -27,9 +28,22 @@ export const pageFunctions = {
     const {worldJob: world} = window.__qaApp.duel.state.arena ?? {};
     if (world?.job.steps[world.job.stepIndex]?.id !== id) return false;
     const talk = document.querySelector('.story-talk');
-    return !phase || !talk?.hidden && talk?.dataset.phase === phase;
+    return !phase || !talk?.hidden && talk?.dataset.scene === id && talk.dataset.phase === phase;
   },
-  continue: () => document.querySelector('.story-talk:not([hidden]) .story-talk-controls button:first-child')?.click(),
+  renderedTurn: (id, phase, after = null, click = false) => {
+    const {worldJob: world} = window.__qaApp.duel.state.arena ?? {};
+    const talk = document.querySelector('.story-talk:not([hidden])');
+    const page = world?.job.stepState.screen;
+    const turn = talk?.dataset.turn;
+    if (world?.job.steps[world.job.stepIndex]?.id !== id || page?.phase !== phase ||
+        talk?.dataset.scene !== id || talk.dataset.phase !== phase || !turn || turn === after) return false;
+    const shown = phase === 'thoughts' ? talk.querySelector('.story-thoughts')?.lastElementChild?.textContent
+      : talk.querySelector('.story-words')?.textContent;
+    const expected = phase === 'thoughts' ? page.thoughts.at(-1) : page.line?.words;
+    if (!expected || shown !== expected || world.talkAction) return false;
+    if (click) talk.querySelector('.story-talk-controls button:first-child').click();
+    return turn;
+  },
   choose: words => {
     const button = [...document.querySelectorAll('.story-options button')].find(button => button.textContent.includes(words));
     if (!button || button.disabled) throw Error('Missing available choice: ' + words);
@@ -65,6 +79,21 @@ export const pageFunctions = {
     }
     return true;
   },
+  gateChoicesClear: () => {
+    const options = document.querySelector('.story-talk[data-scene="gate"] .story-options');
+    if (!options || options.children.length !== 7) throw Error('The gate should show seven options.');
+    const box = options.getBoundingClientRect();
+    const {camera} = window.__render;
+    const {worldJob: world} = window.__qaApp.duel.state.arena;
+    const vector = camera.position.clone();
+    const feet = world.storyPeople.filter(person => !['auntie-solder', 'cinder'].includes(person.id))
+      .map(({position}) => (1 - vector.set(position.x, position.y, position.z).project(camera).y) / 2 * innerHeight);
+    const gap = box.top - Math.max(...feet);
+    if (innerWidth !== 1280 || innerHeight !== 720 || gap < 4 ||
+        box.bottom > innerHeight || options.scrollHeight > options.clientHeight)
+      throw Error('Gate choices cover the cast or are clipped: ' + JSON.stringify({viewport: [innerWidth, innerHeight], gap}));
+    return true;
+  },
   scoutFire: () => {
     const {duel} = window.__qaApp, {worldJob} = duel.state.arena;
     const scout = worldJob.actors.find(actor => actor.brandAsh);
@@ -86,21 +115,28 @@ export const pageFunctions = {
 export const pageSource = (name, ...args) =>
   '(' + pageFunctions[name].toString() + ')(' + args.map(arg => JSON.stringify(arg)).join(',') + ')';
 
+export async function advanceNight2Dialogue(context, id, phase, times) {
+  let previous = null;
+  for (let i = 0; i < times; i++) {
+    await context.waitFor(pageSource('renderedTurn', id, phase, previous), id + ' rendered ' + phase, 90000);
+    if (!await context.evaluate(pageSource('wordsFit'))) throw Error('Dialogue is hidden in ' + id);
+    const turn = await context.evaluate(pageSource('renderedTurn', id, phase, previous, true));
+    if (!turn) throw Error('Dialogue changed before Continue in ' + id);
+    previous = turn;
+  }
+}
+
 export async function run(context) {
   const evaluate = (name, ...args) => context.evaluate(pageSource(name, ...args));
   const wait = (name, ...args) => context.waitFor(pageSource(name, ...args), name + ' ' + args.join(' '), 90000);
   const click = async action => { await wait('control', action); await evaluate('control', action, true); };
-  async function advance(id, times) {
-    for (let i = 0; i < times; i++) {
-      await wait('step', id, 'lines');
-      await evaluate('wordsFit');
-      await evaluate('continue');
-    }
-  }
+  const advance = (id, times) => advanceNight2Dialogue(context, id, 'lines', times);
+  await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   async function reachGate() {
     await context.navigate('/tools/menu-check.html?flags=hidden-road,story-choices,crew-gear,warlord-cards&harness=story-night-2');
     await wait('ready');
     await evaluate('prepare', theftSeed);
+    await click('wasteland-visit');
     await click('yard-cards');
     await click('story-night-2');
     await advance('hearth', 4);
@@ -111,12 +147,10 @@ export async function run(context) {
   }
   async function gateOptions() {
     await advance('gate', 7);
-    for (let i = 0; i < 2; i++) {
-      await wait('step', 'gate', 'thoughts');
-      await evaluate('continue');
-    }
+    await advanceNight2Dialogue(context, 'gate', 'thoughts', 2);
     await wait('step', 'gate', 'options');
     await evaluate('wordsFit');
+    await evaluate('gateChoicesClear');
   }
 
   await reachGate();
@@ -126,6 +160,8 @@ export async function run(context) {
   await evaluate('choose', 'Take one. No terms.');
   await advance('gift', 4);
   await advance('theft', 1);
+  await wait('step', 'reach-store');
+  await evaluate('at', sites.storeApproach);
   await wait('step', 'chase');
   await context.waitFor("document.querySelector('.night-2-alternative-route')?.hidden === false", 'both chase routes', 12000);
   await context.screenshot('night-2-chase');

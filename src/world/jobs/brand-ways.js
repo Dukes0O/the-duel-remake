@@ -44,7 +44,7 @@ function clearWay(a, b, grid, y, radius = BRAND_WAYS.walkerRadius, first = 0) {
 
 // `places` are the hearth and the lamps ({id, position}); `around` are further points the town reaches to (its wall
 // entries), so that the squares cover the whole town. `reach(place)` is how near a walker must come to use the place.
-export function createBrandWays({places, around = [], grid = SOLID_GRID, reach = () => BRAND_RULE.lampRadius}) {
+export function createBrandWays({places, around = [], grid = SOLID_GRID, reach = () => BRAND_RULE.lampRadius, strict = false}) {
   const rule = BRAND_WAYS, cell = rule.cellMetres;
   const points = [...places, ...around].map(spot);
   const minX = Math.min(...points.map(p => p.x)) - rule.marginMetres, minZ = Math.min(...points.map(p => p.z)) - rule.marginMetres;
@@ -139,7 +139,7 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
     const place = byId.get(placeId);
     if (!place || !Number.isFinite(from?.x) || !Number.isFinite(from?.z)) return null;
     const field = fieldFor(place), y = scablandsSurfaceHeightAt(from.x, from.z);
-    const seen = to => clearWay(from, to, grid, y, rule.sightRadius, 1);
+    const seen = to => clearWay(from, to, grid, y, strict ? rule.walkerRadius : rule.sightRadius, 1);
     const fc = Math.round((from.x - minX) / cell), fr = Math.round((from.z - minZ) / cell);
     let start = -1, least = Infinity;
     for (let r = fr - 1; r <= fr + 1; r++) for (let c = fc - 1; c <= fc + 1; c++) {
@@ -168,7 +168,10 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
       if (seen(centre(index))) best = index;
     }
     const stop = field.stops.get(index);
-    if (stop && seen(stop)) return {x: field.goal.x, z: field.goal.z, metres: gap(from, field.goal), direct: true};
+    if (stop && seen(stop)) {
+      const target = strict && !seen(field.goal) ? stop : field.goal;
+      return {...target, metres: gap(from, target), direct: target === field.goal};
+    }
     const at = centre(best);
     return {x: at.x, z: at.z, metres: gap(from, at) + field.metres[best] + Math.max(.5, reach(place) - rule.reachInsetMetres), direct: false};
   }

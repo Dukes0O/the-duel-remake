@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {PerspectiveCamera, Vector3} from 'three';
+import {night2LightBlend} from '../src/world-job-camera.js';
+import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {App} from '../src/app.js';
 import {yardHomeScreen} from '../src/screen-yard-home.js';
@@ -117,6 +120,29 @@ const camera = opening.view.camera;
 matchesPose(camera.position, pose.camera.eye);
 matchesPose(camera.target, pose.camera.aim);
 assert.equal(camera.fov, pose.camera.verticalFov);
+const project = (camera, point) => {
+  const lens = new PerspectiveCamera(camera.fov, 1280 / 720, .15, 2400);
+  lens.position.copy(camera.position);
+  lens.lookAt(new Vector3(camera.target.x, camera.target.y, camera.target.z));
+  lens.updateMatrixWorld(true);
+  return new Vector3(point.x, point.y, point.z).project(lens);
+};
+assert.equal(opening.screen()?.options?.length ?? 0, 0);
+const feetLine = Math.max(...opening.world.storyPeople
+  .filter(person => pose.people.some(item => item.id === person.id))
+  .map(person => (1 - project(camera, person.position).y) * 360));
+assert(feetLine < 608, 'At 1280×720 the bottom 112 px clear the approved cast');
+const hearthLook = chapter(giftSeed);
+for (const point of [sites.hearth.position, {...sites.auntie.position, y: sites.auntie.position.y + 1.7}]) {
+  const projected = project(hearthLook.view.camera, point);
+  assert(Math.abs(projected.x) < .9 && Math.abs(projected.y) < .9,
+    'The hearth shot contains the fire and Auntie');
+}
+assert.equal(night2LightBlend(0, true, 1), .25);
+assert.equal(night2LightBlend(.25, true, 1), .5);
+assert.equal(night2LightBlend(.5, true, 2), 1);
+assert.equal(night2LightBlend(1, false, 2), .5);
+console.log(`Gate cast feet at/before pixel ${feetLine.toFixed(1)} of 720; hearth and Auntie both in frame; four-second dusk blend.`);
 opening.say(NIGHT_2_CHOICES[0].words);
 assert.deepEqual([opening.view.ledger.stocks.embers, opening.view.ledger.words.walkers, opening.view.ledger.roadWord],
   [3, 'Friendly', 1]);
@@ -144,14 +170,30 @@ for (const [answer, count, word, mark] of [
   run.advance('theft');
   assert(run.cues.includes('luck.unkind'));
   const {x, y, z} = run.duel.state.fighter;
-  run.advance('chase');
+  run.advance('reach-store');
   assert.deepEqual([run.duel.state.fighter.x, run.duel.state.fighter.y, run.duel.state.fighter.z], [x, y, z]);
+  run.footAt(sites.storeApproach);
+  run.tick(2);
+  assert.equal(run.stage(), 'chase');
   const dace = run.world.storyPeople.find(person => person.id === 'dace');
   run.tick();
   assert.equal(run.view.routes.length, 2);
   if (answer === null) {
-    // Wide steps still use the real chapter movement and detect the camp arrival.
-    for (let i = 0; i < 230 && run.stage() === 'chase'; i++) run.duel.step(.5);
+    let lastSeen, disappeared = false;
+    // Standing by the store leaves time for Dace to turn the corner.
+    for (let i = 0; i < 230 && run.stage() === 'chase'; i++) {
+      run.duel.step(.5);
+      const track = run.view.daceTrack;
+      if (track?.visible) lastSeen = null;
+      else if (track) {
+        if (lastSeen) assert.deepEqual(track.position, lastSeen, 'A hidden map mark stays at the last sighting');
+        else lastSeen = {...track.position};
+        const map = worldMapFrame({state: run.duel.state, course: run.duel.course});
+        assert.deepEqual(map.actors.find(actor => actor.id === 'dace')?.position, track.position);
+        disappeared = true;
+      }
+    }
+    assert(disappeared, 'Dace disappears behind a solid or beyond sight of the store');
     assert.equal(run.stage(), 'escaped');
     assert(run.view.ledger.obligations.some(item => item.id === 'walkers-great-favour'));
   } else {
@@ -349,3 +391,60 @@ for (const source of [
   'window.__qaApp.duel.state.arena.worldJob.job.stepState.brandSeconds > 0',
 ]) new Function('return (' + source + ')');
 console.log('PASS Night 2 pot, questions, memory-only entry and scenario expression syntax.');
+
+// Drive only the reviewed approach and chase segment with the same fighter
+// inputs a player has. The opening-to-closing scripted play remains the watch.
+const chaseDrive = chapter(theftSeed);
+chaseDrive.openGate();
+chaseDrive.say(NIGHT_2_CHOICES[0].words);
+chaseDrive.advance('reach-store');
+function followRoute(run, scene, limit, sprint) {
+  for (let frame = 0; frame < limit && run.stage() === scene; frame++) {
+    const route = run.view.routes[0];
+    if (route) pointAt(run.duel, route.point, {forward: true, sprint});
+    run.tick();
+  }
+}
+followRoute(chaseDrive, 'reach-store', 1800, true);
+assert.equal(chaseDrive.stage(), 'chase');
+chaseDrive.tick();
+assert(chaseDrive.view.daceTrack?.visible, 'Dace is seen before leaving the store');
+const firstDace = {...chaseDrive.view.daceTrack.position};
+assert.match(worldHudModel({worldJob: chaseDrive.world, onFoot: true}).line, /Catch Dace.*west alleys/);
+assert.equal(chaseDrive.view.holstered, true);
+const map = worldMapFrame({state: chaseDrive.duel.state, course: chaseDrive.duel.course});
+assert.equal(map.actors.find(actor => actor.id === 'dace')?.kind, 'dace');
+let seen = 0, hidden = 0;
+for (let frame = 0; frame < 5400 && chaseDrive.stage() === 'chase'; frame++) {
+  const track = chaseDrive.view.daceTrack;
+  const route = chaseDrive.view.routes[0];
+  if (route) pointAt(chaseDrive.duel, route.point, {forward: true, sprint: true});
+  if (track?.visible) seen++;
+  else hidden++;
+  chaseDrive.tick();
+  if (track && !track.visible && chaseDrive.view.daceTrack && !chaseDrive.view.daceTrack.visible)
+    assert.deepEqual(chaseDrive.view.daceTrack.position, track.position, 'A hidden map mark stays at the last sighting');
+}
+assert.equal(chaseDrive.stage(), 'caught', 'The sprint can catch Dace before the Wash');
+assert(seen > 0, 'The sprint starts from a visible Dace');
+assert(Math.hypot(firstDace.x - sites.store.position.x, firstDace.z - sites.store.position.z) < 1);
+console.log(`PASS Night 2 chase: real route caught Dace, ${seen} visible steps and ${hidden} last-seen steps.`);
+
+// A completed replay uses the original installed profile and a different
+// branch balance. The result screen receives the page from the saved ledger.
+const keptBefore = savedLedger(app.profile);
+assert(app.returnToYard());
+app.advance(8);
+assert(app.startNight2());
+const replay = chapter(app.seed, app.duel);
+replay.openGate();
+replay.say(NIGHT_2_CHOICES[3].words);
+replay.say('Say nothing');
+replay.advance('tower');
+replay.say('Watch');
+replay.advance('close');
+replay.finish(4);
+assert.equal(replay.duel.state.arena.result.night2Page.embers, keptBefore.stocks.embers);
+assert.equal(replay.duel.state.arena.result.night2SaveIssue, 'This replay was not kept.');
+assert.deepEqual(savedLedger(app.profile), keptBefore);
+console.log('PASS Night 2 replay: the banked page from the first run remains in view and in the save.');

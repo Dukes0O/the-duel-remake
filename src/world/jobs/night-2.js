@@ -1,5 +1,9 @@
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow, plainStockChange} from '../../story/ledger.js';
 import {NIGHT_2_EFFECTS, NIGHT_2_SCENES, night2Count} from '../../story/scenes/night-2.js';
+import {sweepObstacle} from '../../collision.js';
+import {createJobSolidGrid} from '../scablands-solids.js';
+import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
+import {sees} from '../scablands-ways.js';
 import {createBrandWays} from './brand-ways.js';
 import {BRAND_RULE} from './brand-rule.js';
 import {EMBER_RULE} from './ember-rule.js';
@@ -14,7 +18,7 @@ const riders = [
   {id: 'wash-rider-2', start: {x: sites.camp.position.x + 31, z: 210}, heading: 2, renderCar: 'falcone_f42'},
   {id: 'wash-rider-3', start: {x: sites.camp.position.x + 48, z: 264}, heading: -.6, renderCar: 'dusthawk_rally'},
 ];
-const points = [sites.gateTalk, sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost];
+const points = [sites.gateTalk, sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost, sites.storeApproach];
 const at = place => place.position ?? place;
 
 const talk = (id, set, options = {}) => ({id, kind: 'talk', scene: NIGHT_2_SCENES[id], set, ...options});
@@ -31,11 +35,13 @@ export function night2Job(seed) {
       walk('walk-to-gate', sites.gateTalk, 'Walk to the gate.'),
       talk('gate', 'gate'),
       talk('gift', 'gate'), talk('salt', 'salt'), talk('theft', 'hearth'),
-      {id: 'chase', kind: 'night-2-action', action: 'chase'},
+      walk('reach-store', sites.storeApproach, 'Go to the store. Look for Dace with the stolen embers.'),
+      {id: 'chase', kind: 'night-2-action', action: 'chase',
+        what: 'Catch Dace before the Wash. Follow the west alleys or cut him off by the gate.'},
       talk('caught', 'caught'), talk('take-dace-to-rell', 'rell-at-gate'), talk('send-away', 'rell-at-gate'),
       talk('escaped', 'rell-at-gate'), talk('watch', 'gate'),
       walk('walk-watch-post', sites.watchPost, 'Walk to the watch by the pump.'), talk('whistle', 'scout'),
-      {id: 'scout', kind: 'night-2-action', action: 'scout', lentWeapon: 'cinders-hand-flamer'},
+      {id: 'scout', kind: 'night-2-action', action: 'scout', what: 'Turn the Ash scout with fire. Drive him out of the gate.', lentWeapon: 'cinders-hand-flamer'},
       talk('scout-stopped', 'scout'), talk('scout-escaped', 'scout'),
       talk('inside', 'gate'), talk('lamp', 'gate'),
       {id: 'light-pump', kind: 'onfoot', brand: true, hearth: sites.hearth,
@@ -52,8 +58,11 @@ export function night2Job(seed) {
 
 export function createNight2(definition, grid) {
   const opening = night2Opening(definition.seed);
+  const paths = createJobSolidGrid(grid);
+  paths.setTownGate(sites.gate, 1);
+  paths.setBrandLamps([...sites.lamps, ...sites.chaseLamps]);
   return {opening, ledger: createLedger(opening), journal: [], set: null, evening: .65, night: false,
-    ways: createBrandWays({places: points, around: sites.around, grid, reach: place => place.radius}),
+    ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius, strict: true}),
     lamps: {}, scrap: 0, props: {}, routes: []};
 }
 
@@ -131,6 +140,7 @@ const worldRellAtGate = night2Point(sites.gate.x, sites.gate.z + 4.8);
 function dressing(chapter, step) {
   chapter.props.salt = step.id === 'salt';
   chapter.props.ladle = ['chase', 'caught'].includes(step.id);
+  chapter.props.chaseLights = ['theft', 'reach-store', 'chase', 'caught'].includes(step.id);
   chapter.props.shawl = step.id === 'at-hearth';
   chapter.props.shelter = ['camp', 'caught', 'chase', 'pump', 'sleep'].includes(chapter.set);
   chapter.props.torches = ['tower', 'pot', 'delivery'].includes(step.id);
@@ -138,11 +148,18 @@ function dressing(chapter, step) {
     position: {...night2Point(look.x + x, look.z + z), y: look.y + 1.8},
     target: {...look, y: look.y + 1.35}, fov: 49,
   });
-  if (step.id === 'gate') chapter.camera = sites.gateView;
+  const fire = sites.hearth.position;
+  const hearthShot = speaker => ({
+    position: night2Point(fire.x - 3.3, fire.z + 10.2),
+    target: {x: (fire.x + speaker.x) / 2, y: fire.y + 1, z: (fire.z + speaker.z) / 2}, fov: 55,
+  });
+  if (['hearth', 'at-hearth', 'close'].includes(step.id)) {
+    chapter.camera = hearthShot(sites.auntie.position);
+    chapter.camera.position.y += 2.35;
+  } else if (step.id === 'gate') chapter.camera = sites.gateView;
   else if (['tower', 'tower-outcome'].includes(step.id)) chapter.camera = sites.tower;
   else if (['escaped', 'take-dace-to-rell', 'send-away'].includes(step.id))
     chapter.camera = cut(worldRellAtGate, 2, -4);
-  else if (step.id === 'close') chapter.camera = cut(sites.auntie.position, 3.5, 1.5);
   else chapter.camera = null;
 }
 
@@ -151,11 +168,13 @@ function dressing(chapter, step) {
 export function enterNight2Step(worldJob) {
   const chapter = worldJob.night2, step = worldJob.job.steps[worldJob.job.stepIndex];
   chapter.routes = [];
+  chapter.daceTrack = null;
   if (!step) return {};
   if (step.id === 'close' && !chapter.bank) {
     if (chapter.answer !== 'watch') record(chapter, 'unseen-scout', NIGHT_2_EFFECTS['unseen-scout']);
     close(chapter);
   }
+  chapter.holstered = step.id !== 'scout';
   if (step.kind === 'talk') step.scene = sceneFor(step, chapter);
   const set = step.set ?? {chase: 'chase', 'walk-to-gate': 'gate', 'walk-watch-post': 'scout', 'light-pump': 'pump'}[step.id];
   if (set && set !== chapter.set) {
@@ -224,7 +243,7 @@ function stageAfter(chapter, step, result, cue) {
 }
 
 const NEXT = {
-  hearth: 'walk-to-gate', 'walk-to-gate': 'gate', salt: 'close', theft: 'chase',
+  hearth: 'walk-to-gate', 'walk-to-gate': 'gate', salt: 'close', theft: 'reach-store', 'reach-store': 'chase',
   escaped: 'close', 'take-dace-to-rell': 'close', 'send-away': 'close', watch: 'walk-watch-post', 'walk-watch-post': 'whistle',
   whistle: 'scout', 'scout-stopped': 'close', 'scout-escaped': 'close', inside: 'lamp',
   lamp: 'light-pump', 'back-to-hearth': 'at-hearth', 'at-hearth': 'close',
@@ -254,7 +273,16 @@ function metres(path, from) {
 
 function direction(chapter, from, via, tail = []) {
   const way = chapter.ways.aim(from, via.id);
-  return {point: way ?? at(via), metres: (way?.metres ?? dist(from, at(via))) + metres(tail, at(via))};
+  return way ? {point: way, metres: way.metres + metres(tail, at(via))} : null;
+}
+
+const SIGHT_RAY = {halfWidth: 0, halfLength: 0, height: 0};
+export function night2DaceVisible(from, dace, grid) {
+  const range = 90;
+  if (!sees(from, dace, {heightAt: scablandsSurfaceHeightAt, range, eye: 1.62, target: 1.12, actorFloors: true, step: 2})) return false;
+  const eye = {...from, y: from.y + 1.62}, ember = {...dace, y: dace.y + 1.12};
+  return !grid.near(eye.x, eye.z, ember.x, ember.z, 1).some(solid =>
+    solid.kind !== 'person' && sweepObstacle(eye, ember, solid, 0, SIGHT_RAY));
 }
 
 export function night2Action(worldJob, point, onFoot) {
@@ -264,15 +292,22 @@ export function night2Action(worldJob, point, onFoot) {
     const contact = dace.action === 'run' && onFoot && dist(point, dace.position) <= 1.5 && Math.abs(point.y - dace.position.y) < 1.2;
     const beyondWest = point.x < at(sites.westGap).x - 6;
     const tail = [at(sites.westCut), at(sites.campWalk)];
-    const follow = beyondWest
-      ? {point: dace.position, metres: dist(point, dace.position)}
+    const inSight = night2DaceVisible(point, dace.position, worldJob.solidGrid);
+    if (inSight) chapter.daceTrack = {position: {...dace.position}, visible: true};
+    else if (chapter.daceTrack) chapter.daceTrack.visible = false;
+    const lastDace = chapter.daceTrack?.position;
+    const direct = lastDace && (beyondWest || inSight &&
+      !worldJob.solidGrid.near(point.x, point.z, lastDace.x, lastDace.z, 1).some(solid =>
+        solid.kind !== 'person' && sweepObstacle(point, lastDace, solid, 0, {halfWidth: .4, halfLength: .4, height: 1.5})));
+    const follow = direct ? {point: lastDace, metres: dist(point, lastDace)}
       : direction(chapter, point, sites.westGap, tail);
     const outside = point.x < at(sites.westGap).x - 5 || point.z >= sites.gate.z + 11;
     const cut = at(sites.westCut), end = at(sites.campWalk);
     const next = point.x > cut.x + 5 ? cut : end;
     const round = outside ? {point: next, metres: dist(point, next) + (next === cut ? dist(cut, end) : 0)}
       : direction(chapter, point, sites.gateOutside, tail);
-    chapter.routes = [{name: 'Through the alleys', ...follow}, {name: 'Round by the gate', ...round}];
+    chapter.routes = [follow && {name: 'Through the alleys', ...follow},
+      round && {name: 'Round by the gate', ...round}].filter(Boolean);
     return {contact, arrival: dace.action === 'stand' ? 'escaped' : null};
   }
   if (step.id === 'scout') {
@@ -283,8 +318,10 @@ export function night2Action(worldJob, point, onFoot) {
       (chapter.scoutTurned ? 'scout-stopped' : 'scout-escaped') : null};
   }
   if (step.kind === 'reach') {
-    const name = {'walk-to-gate': 'The gate', 'walk-watch-post': 'Dace’s watch', 'back-to-hearth': 'The hearth'}[step.id];
-    chapter.routes = [{name, ...direction(chapter, point, step.place)}];
+    const name = {'walk-to-gate': 'The gate', 'walk-watch-post': 'Dace’s watch', 'back-to-hearth': 'The hearth',
+      'reach-store': 'The store'}[step.id];
+    const route = direction(chapter, point, step.place);
+    chapter.routes = route ? [{name, ...route}] : [];
   }
   return {};
 }

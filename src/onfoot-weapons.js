@@ -261,6 +261,11 @@ function stepFootWeaponInput(duel, dt) {
   if (!state.onFoot || !fighter || !weapons || !combatArmorEnabled(duel) ||
       state.status !== 'racing' || state.paused || !(dt > 0)) return;
   const input = state.fighterInput;
+  if (state.arena?.worldJob?.night2?.holstered) {
+    weapons.fireHeld = !!input.fire;
+    fighter.flaming = false;
+    return;
+  }
   const hit = fighter.knockedDown ||
     weapons.lastHealth !== null && fighter.health < weapons.lastHealth - EPSILON ||
     state.armor < weapons.lastArmor - EPSILON;

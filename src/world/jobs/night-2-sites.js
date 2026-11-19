@@ -27,12 +27,14 @@ const westCut = place('west-cut', 5820, 109, 5);
 const scoutWall = place('scout-wall', 6069, -48, 2.2);
 const scoutGate = place('scout-gate', gate.x, gate.z + 10, 2);
 const store = place('ember-store', 6024, 14, 2);
+const storeApproach = place('store-approach', store.position.x + 5, store.position.z + 3, 2);
+const chaseLamps = [place('store-alley', 6020, 18), place('west-alley', 5970, 13), place('west-opening', 5930, 2)];
 const campWalk = place('wash-edge', camp.position.x + 14, camp.position.z - 4, 5);
 const hearthApproach = place('hearth-approach', town.hearthFront.position.x, town.hearthFront.position.z + 2.2, 2.2);
 const pump = town.lamps[0];
 const watchPost = place('watch-post', pump.position.x + 3, pump.position.z + 9, 3);
 export const NIGHT_2_SITES = {
-  ...town, gate, gateTalk, gateView, gateOutside, westGap, westCut, scoutWall, scoutGate, store, camp, campWalk, hearthApproach, around, pump, watchPost,
+  ...town, gate, gateTalk, gateView, gateOutside, westGap, westCut, scoutWall, scoutGate, store, storeApproach, chaseLamps, camp, campWalk, hearthApproach, around, pump, watchPost,
   car: {...night2Point(gate.x, gate.z + 26), heading: -Math.PI / 2},
   tower: {
     position: {...night2Point(gate.x + 4.8, gate.z + .5), y: gate.postHeight + 1.8},

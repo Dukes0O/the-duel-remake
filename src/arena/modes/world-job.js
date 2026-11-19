@@ -240,7 +240,7 @@ export function initializeWorldJob(duel, definition) {
   initializeWorldFootStart(duel, definition.steps[0]?.footStart ?? definition.steps[0]?.bellowsFootStart);
   if (definition.id === NIGHT_2_ID) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
-    worldJob.solidGrid.setBrandLamps(NIGHT_2_SITES.lamps);
+    worldJob.solidGrid.setBrandLamps([...NIGHT_2_SITES.lamps, ...NIGHT_2_SITES.chaseLamps]);
     worldJob.tinTownGateProgress = 1;
     worldJob.solidGrid.setTownGate(NIGHT_2_SITES.gate, 1);
     worldJob.night2 = createNight2(definition, duel.course.solidGrid);
@@ -1288,9 +1288,13 @@ function applyRequests(duel, worldJob, requests) {
     if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
     if (applyBrandRequest(duel, worldJob, request)) continue;
     if (request.type === 'marker') {
-      worldJob.marker = request.place ?? null;
-      const at = request.place?.position ?? request.place;
-      const radius = request.place?.radius ?? 4;
+      const walking = worldJob.night2 && duel.state.onFoot && worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'reach';
+      const waypoint = walking && worldJob.night2.routes[0]?.point;
+      const place = waypoint ? {...waypoint, y: scablandsSurfaceHeightAt(waypoint.x, waypoint.z), radius: 1.1}
+        : walking ? null : request.place;
+      worldJob.marker = place ?? null;
+      const at = place?.position ?? place;
+      const radius = place?.radius ?? 4;
       // Both Hot Delivery stops use the same floor ring. Raise it above the road
       // across its whole edge, including the slight slope at Cinder's post.
       const deliveryStop = worldJob.definition.id === 'everburn-hot-delivery' &&

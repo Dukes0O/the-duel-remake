@@ -224,7 +224,8 @@ export function mountTalkView(stage, send) {
     }
     preview(-1);
   }
-  function update(page, point) {
+  let turn = 0;
+  function update(page, point, scene) {
     if (page !== current) {
       const opening = !current;
       current = page;
@@ -241,6 +242,8 @@ export function mountTalkView(stage, send) {
         releaseGameCapture();
         root.focus({preventScroll: true});
       }
+      root.dataset.scene = scene ?? '';
+      root.dataset.turn = String(++turn);
       draw(page);
     }
     if (!page?.line || page.line.radio) return;

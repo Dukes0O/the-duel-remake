@@ -48,7 +48,7 @@ import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {createTalkSpeakerLookup, mountTalkView, talkCameraPose} from './story/talk-view.js';
-import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView, townEveningAmount } from './world-job-camera.js';
+import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView, townEveningAmount, night2LightBlend } from './world-job-camera.js';
 import { brandThiefPose } from './world/jobs/brand-rule.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
@@ -179,11 +179,15 @@ export function attachRenderer(host, app) {
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  host.replaceChildren(renderer.domElement);
+  const daceMarker = document.createElement('span');
+  daceMarker.className = 'night-2-dace-marker';
+  daceMarker.textContent = 'Dace';
+  daceMarker.hidden = true;
+  host.replaceChildren(renderer.domElement, daceMarker);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
-  let talkView, heldWorldSeconds;
-  const talkHead = new THREE.Vector3(), talkProjection = new THREE.Vector3();
+  let talkView, heldWorldSeconds, litChapter, chapterNightShare = 0;
+  const talkHead = new THREE.Vector3(), talkProjection = new THREE.Vector3(), daceProjection = new THREE.Vector3();
   const findTalkSpeaker = createTalkSpeakerLookup(scene);
   function speakerHead(step, speaker, now) {
     if (!speaker) return null;
@@ -844,8 +848,12 @@ export function attachRenderer(host, app) {
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     // WATER-SCREENS: the water works show the Water Road's progress (null while the story is off: nothing loads).
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
+    const chapter = !menu ? st.arena?.worldJob?.night2 : null;
+    if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
+    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night, st.paused ? 0 : dt);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
-        winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st), chapterNight: !menu && st.arena?.worldJob?.night2?.night,
+        winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
+      chapterNight: chapterNightShare, chaseLight: chapter?.props.chaseLights,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});
@@ -1102,8 +1110,20 @@ export function attachRenderer(host, app) {
         projected = {x: .5 + talkProjection.x * .5, y: .5 - talkProjection.y * .5};
       }
       talkView ??= mountTalkView(host.parentElement, (action, screen) => app.duel.talkInput(action, screen));
-      talkView.update(talk, projected);
+      talkView.update(talk, projected, townStep.id);
     } else talkView?.update(null);
+    const inSight = !menu && st.status === 'racing' && !st.paused && chapter?.daceTrack?.visible;
+    daceMarker.hidden = true;
+    if (inSight) {
+      const {x,y,z} = chapter.daceTrack.position;
+      camera.updateMatrixWorld();
+      daceProjection.set(x, y + 1.85, z).project(camera);
+      if (Math.abs(daceProjection.x) < .94 && Math.abs(daceProjection.y) < .92 && Math.abs(daceProjection.z) < 1) {
+        daceMarker.style.left = (50 + daceProjection.x * 50) + '%';
+        daceMarker.style.top = (50 - daceProjection.y * 50) + '%';
+        daceMarker.hidden = false;
+      }
+    }
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const lessonGhost=app.getDriveLessonGhost?.();
@@ -1236,7 +1256,7 @@ export function attachRenderer(host, app) {
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
     firstPersonOptions.enabled=armoredField;
-    firstPersonOptions.active=!menu&&st.onFoot&&st.status==='racing';
+    firstPersonOptions.active=!menu&&st.onFoot&&st.status==='racing'&&!st.arena?.worldJob?.night2?.holstered;
     firstPersonOptions.firstPerson=firstPersonView;
     firstPersonOptions.time=st.stageTimeSec;
     firstPersonGear.update(firstPersonEntry,firstPersonOptions);
@@ -1422,6 +1442,7 @@ export function attachRenderer(host, app) {
     dispose() {
     clearTrackSnapshot();
     talkView?.dispose();
+    daceMarker.remove();
     if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();wildlifeView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
