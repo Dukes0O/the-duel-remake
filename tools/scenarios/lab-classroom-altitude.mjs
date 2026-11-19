@@ -42,7 +42,7 @@ async function play(c) {
   await press('ArrowDown'); await sums('860 m − 0 m', 'the stand stays free after the answer'); await press('ArrowUp');
   await next('word-altitude');
   await at('word-density'); await shot('word-density-empty'); await press('Space'); await at('word-density', 's.ready'); await wait(300); await shot('word-density');
-  await press('ArrowDown'); await sums('= 0.92', 'the jar and the sum follow the stand'); await press('ArrowUp');
+  await press('ArrowDown'); await sums('100 × 0.92 = 92 dots', 'the jar and the sum follow the stand'); await press('ArrowUp');
   await next('word-density');
   await at('word-thin'); await press('Space'); await at('word-thin', 's.ready'); await wait(300); await shot('word-thin');
   await next('word-thin');
