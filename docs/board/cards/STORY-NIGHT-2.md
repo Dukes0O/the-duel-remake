@@ -65,6 +65,6 @@ each lead where section 4 says.
 Sounds: `town.gate.bell`, `night.whistle` (Dace), `luck.kind` and `luck.unkind` (two short notes, told apart with eyes
 shut), each from the bank's own layers; the pot's, the lamp's and the flamer's cues as they are.
 
-## From the painted plate (Claude, 19 November 2026)
+## From the painted plate (Claude, 18 November 2026)
 
 The plate trial stopped at one picture: the game looks poor beside it (`docs/board/looks/story-plates/night-2-review.md`). Two things carry over to this card. Wim sits on the front of the left cart, and the sitting action's automatic ground stool is suppressed for her on every frame of the gate scene. The scene's staging and camera are in `tools/art/story-plates/night-2-pose.json`. The painting is the look the gate scene aims at, but lighting work is not part of this card.
