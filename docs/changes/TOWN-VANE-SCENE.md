@@ -1,0 +1,11 @@
+# TOWN-VANE-SCENE: Vane in the world (switch `wasteland-town`)
+
+**What changed.** Mrs Vane's things from `vane.glb` stand in the Scablands during a town drive, as new data (`src/town/content/vane-world.js`) that moves no place. Her open kiosks stand on test-cleared pitches at the town's edge, on the side of their brown street and facing the town; a closed kiosk is gone. For each deed she holds, a billboard (road), a depot with white fences (works) or a tank with a white fence (outpost) goes up at that territory's site on the road toward it, and goes when the deed is won back. Vane Reach stands white on the plain 750 m beyond the Dry Dam and is drawn to 2,400 m. `src/town/town-vane-world.js` places them from the real ground and cuts their solids from the model (the tower only where a car meets it, below 4 m); `createTownWorld` hands them over as `layout.vane`, and the drive's job grid makes them solid with the outposts. Drawing: `src/town/view/town-vane-scene.js`. Cut from TOWN-OUTPOST-SCENE: it reuses `town-world-things.js` (where `nearestRoadPoint` now lives) and the model kit. No new game event, so no sound cue. Decisions: `docs/board/questions/TOWN-VANE-SCENE.md`.
+
+**Checks, on d8c7cda.** `tools/test-town-vane-scene.mjs` 8 passed (pitches, sites and Vane Reach clear of roads, routes, places, crossings, river, rail, outposts and the town's reserved ground; ground and burial; solids against the model; things growing and going with deeds and kiosks; kiosks at the edge and off the town's buildings; solid in the drive only; drawing ranges). `test-town-outposts-scene` and `test-town-world` still pass. Lane tier since TOWN-OUTPOST-SCENE's tested tip (f4a4e35): 75 passed, 0 failed. Left to the night by the tier: `test-arena-shove`, `test-convoy-tanker-art`, `test-everburn-easy`, `test-field-battle`, `test-first-person-polish`, `test-old-smoke`. `npm run build` passed. Replay and world-signature guards passed unchanged.
+
+**Not run here (Claude's laptop).** Browser scenario `tools/scenarios/town-vane.mjs`: this container's software renderer times out on the drive to the yard. Laptop-only suites: none touched. No frame check.
+
+**Changed assertions.** None.
+
+**Removed.** Nothing; this is new.
