@@ -1,10 +1,11 @@
 // LAB-CLASSROOM-LIFT: the Lift and weight classroom played by keyboard (and one mouse drag of the lever),
 // from the Lab map to the helicopter challenge, on the harness's memory-only origin. Walking up to a machine is covered by
-// tools/scenarios/lab-classroom.mjs.
+// tools/scenarios/lab-classroom.mjs. The formula panel starts closed, so the lesson opens it with F at its first formulas.
 // The window is 1920 x 1000 unless LAB_STAGE_SIZE says another (for example 1366x768); LAB_STAGE_LOG names a file that
 // gets one line for the board's drawn size at each step that is measured.
 import {appendFileSync} from 'node:fs';
 import {targetPoint} from '../../src/lab/lessons/lift-board.js';
+import {openFormulaPanel} from './lab-classroom.mjs';
 
 export async function run(c) {
   const [width, height] = (process.env.LAB_STAGE_SIZE ?? '1920x1000').split('x').map(Number);
@@ -72,6 +73,7 @@ async function play(c) {
   await wait(3500); await shot('wonder-strain'); await wait(3000); await shot('wonder-lifts');
   await next('wonder');
   await at('word-weight'); await shot('word-weight');
+  await openFormulaPanel(c);
   await measure('word-weight', ['Weight 1,630 kg', 'Kestrel One 1,630 kg']);
   await sums('15,990.3 N', 'The weight in newtons is not in the panel.');
   // The mouse on the stock of crates: the click lands on a crate that is drawn there (wood, not wall).
@@ -157,7 +159,7 @@ async function play(c) {
   }
   await at('recap'); await wait(1500); await shot('recap');
   await measure('recap (no strip)');
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-past h4')].some(e => e.textContent === 'The collective lever') && document.querySelector('.lc-past').textContent.includes('Newton’s third law')`))) throw Error('Earlier words did not stay on the page.');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-word-list h4')].some(e => e.textContent === 'The collective lever') && document.querySelector('.lc-word-list').textContent.includes('Newton’s third law')`))) throw Error('Earlier words did not stay in the Words so far fold.');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
   // Teaching writes the notebook words and never passes the lesson by itself.
   if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.lift && ['lift-weight', 'lift-lift', 'lift-collective', 'lift-hover'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');

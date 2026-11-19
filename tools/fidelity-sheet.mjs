@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {resolve, dirname, relative, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {evidenceDate} from './evidence-date.mjs';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const args = process.argv.slice(2);
@@ -21,9 +22,7 @@ function value(name, fallback) {
   return index < 0 ? fallback : args[index + 1];
 }
 function evidenceDir(family, round) {
-  const now = new Date();
-  const day = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  return resolve(root, process.env.DUEL_EVIDENCE_DIR || join('.evidence', day, family, `round-${round}`));
+  return resolve(root, process.env.DUEL_EVIDENCE_DIR || join('.evidence', evidenceDate(), family, `round-${round}`));
 }
 function summaryPath(family, round) {
   return join(root,'docs','board','looks',family,`round-${round}.jpg`);
