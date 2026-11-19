@@ -8,7 +8,9 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy } from './full-check.mjs';
+import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy, chooseNightSize, nightSizeLine, NIGHT_FULL_FILES, realFrameScope } from './full-check.mjs';
+import { nightIsFullTierPass, latestNight } from './build-status.mjs';
+import { fileURLToPath } from 'node:url';
 
 const date = '2026-10-12', head = 'a'.repeat(40), previous = 'b'.repeat(40), merge = 'c'.repeat(40);
 const root = 'C:/qa/the-duel-remake';
@@ -18,7 +20,7 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,frameSuiteFail=false,timingPatch={},timingMissing=false,browserPatch={}}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,frameSuiteFail=false,timingPatch={},timingMissing=false,browserPatch={},changed=['src/game.js'],planOptions={}}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
@@ -59,11 +61,13 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
       if(files.get(copyRoot+'/'+reportName)!==sourceReport||files.has(copyRoot+'/src/game.js'))throw Error('Copy is changed; nonforced cleanup refused.');
       copies.push(['remove',copy.source]);
     },
-    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1),previousSource:(lastGreen || files.has(`${root}/docs/board/checks/night-${date}.json`))?previous:null});return evidence;},
+    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1),previousSource:(lastGreen || files.has(`${root}/docs/board/checks/night-${date}.json`))?previous:null,...planOptions});return evidence;},
     refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
     recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
     processes:async()=>busy?[{pid:99,command:'node tools/run-tests.mjs --tier lane'}]:[],
     scenarioNames:async()=>['smoke-extra'], scenarioSelection:async()=>[{name:'smoke-extra'}], listNightFiles:async()=>lastGreen?['night-2026-10-11.json']:[],
+    // QA-NIGHT-SIZED: these older cases are full nights; the size is chosen from the changed files, and a shared game file makes it full.
+    changedFiles:async()=>changed,
     readText:async path=>{if(!files.has(path))throw Error('ENOENT');return files.get(path);},
     writeText:async(path,text)=>files.set(path,text), mkdir:async()=>{},
     appendText:async(path,text)=>{logs.push([path,text]);files.set(path,(files.get(path)||'')+text);},
@@ -78,6 +82,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
         let text='';
         if(stage.id==='full') {
           const packet=full();
+          if(stage.tier==='wide')packet.tier='wide';
           if(fullFailures.length)Object.assign(packet,{exitCode:1,passed:0,total:fullFailures.length,failures:fullFailures,
             results:fullFailures.map(label=>({label,passed:false,exitCode:1}))});
           if(partialFull)packet.notRun=1;
@@ -771,4 +776,147 @@ test('weekday, Saturday and strict plans choose the expected browser scope',()=>
   assert.equal(args('2026-11-14')[1], '--all');
   assert.equal(args('2026-11-16',true)[1], '--all');
   assert.equal(nightPlan({date:'2026-11-16'})[3].args[1], '--all');
+});
+
+// ---- QA-NIGHT-SIZED: the night's size comes from the files changed since the last night that passed ----
+const last={source:previous,status:'passed',date:'2026-10-11'};
+const reachStub=files=>({suites:['tools/test-a.mjs'],unreached:files.filter(file=>file.endsWith('.py')),total:100});
+const choose=(changed,extra={})=>chooseNightSize({date,previous:last,lastFull:{date:'2026-10-11'},changed,reach:reachStub,...extra});
+
+test('night size: nothing to check, or only notes and files no suite reads, is no night at all',()=>{
+  const nothing=choose([]);
+  assert.equal(nothing.size,'none');assert.match(nothing.reason,/^nothing to check since bbbbbbbbb$/);
+  const notes=choose(['docs/board/STATUS.md','docs/changes/X.md','docs/board/looks/rustwall/sheet.jpg','README.md','tools/scratch.py']);
+  assert.equal(notes.size,'none');assert.match(notes.reason,/only notes, board files or files that no suite reads changed since bbbbbbbbb \(5 files\)/);
+  assert.match(nightSizeLine(notes),/^No night check: /);
+});
+test('night size: a shared game file, the save shape or the physics makes the night full',()=>{
+  for(const file of ['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']) {
+    assert.ok(NIGHT_FULL_FILES.includes(file),file+' is a shared game file');
+    const size=choose(['docs/x.md',file,'tools/a.mjs']);
+    assert.equal(size.size,'full');assert.match(size.reason,new RegExp(file.replace('.','\\.')+' changed, which holds shared game code'));
+  }
+  for(const file of ['src/progression.js','src/career-backup.js','src/town/town-state.js','src/sim-driving.js','src/offroad-physics.js'])
+    assert.equal(choose([file]).size,'full',file+' holds the save shape or the physics');
+  assert.match(choose(['src/game.js','src/app.js','src/main.js','src/config.js']).reason,/src\/game\.js, src\/app\.js, src\/main\.js and 1 more changed, which hold/);
+  assert.equal(NIGHT_FULL_FILES.length,new Set(NIGHT_FULL_FILES).size);
+});
+test('night size: any other change is a partial night that says where the files are',()=>{
+  const size=choose(['src/lab/lab-tune.js','src/lab/lab-save-view.js','tools/test-lab.mjs','docs/changes/X.md']);
+  assert.equal(size.size,'partial');assert.equal(size.reason,'4 files changed, all under docs/, src/lab/ and tools/');
+  assert.deepEqual(size.suites,['tools/test-a.mjs']);
+  assert.equal(choose(['src/lab/lab-tune.js']).reason,'1 file changed, all under src/lab/');
+  assert.equal(choose(['a/x.js','b/x.js','c/x.js','d/x.js','e/x.js']).reason,'5 files changed, across 5 areas');
+});
+test('night size: Saturday, a last full night older than seven days, no earlier night, and --full all make it full',()=>{
+  const saturday=choose(['src/lab/lab-tune.js'],{date:'2026-10-17'});
+  assert.equal(saturday.size,'full');assert.match(saturday.reason,/Saturday/);
+  assert.equal(choose(['src/lab/lab-tune.js'],{date:'2026-10-16'}).size,'partial','Friday is an ordinary night');
+  // The seven-day rule: seven days is still fine, eight is not, and no full night on record is the same as old.
+  assert.equal(choose(['src/lab/lab-tune.js'],{lastFull:{date:'2026-10-05'}}).size,'partial');
+  const old=choose(['src/lab/lab-tune.js'],{lastFull:{date:'2026-10-04'}});
+  assert.equal(old.size,'full');assert.match(old.reason,/last full night was on 2026-10-04, more than seven days ago/);
+  assert.match(choose(['src/lab/lab-tune.js'],{lastFull:null}).reason,/no full night is on record/);
+  assert.match(choose(['src/lab/lab-tune.js'],{previous:null}).reason,/no earlier night/);
+  const forced=choose([],{force:true});
+  assert.equal(forced.size,'full');assert.match(forced.reason,/asked for by hand, for a release/);
+  assert.equal(parseNightArguments(['--idle-awake','--no-push','--full']).full,true);
+  assert.throws(()=>parseNightArguments(['--idle-awake','--no-push','--full','--full']));
+});
+test('night size: on a Saturday or an old week, a night with nothing to check reruns only when no full pass still counts',()=>{
+  const docsOnly=['docs/board/STATUS.md'];
+  assert.equal(choose(docsOnly,{date:'2026-10-17'}).size,'none','the full pass of the last night still counts (rule 19)');
+  assert.equal(choose(docsOnly,{date:'2026-10-17',previous:{...last,size:'partial'}}).size,'full');
+  assert.equal(choose(docsOnly,{lastFull:{date:'2026-10-01'},previous:{...last,size:'partial'}}).size,'full');
+  assert.equal(choose(docsOnly,{lastFull:{date:'2026-10-01'}}).size,'none');
+});
+
+test('night report: the first line gives the size and reason, a partial night runs only what changed and frames are reused',async()=>{
+  const lastRow={schema:1,status:'passed',source:previous,date:'2026-10-11',size:'full',stages:[{id:'frames',passed:true}]};
+  const options={changed:['src/lab/lab-tune.js'],planOptions:{size:'partial',frames:false,combat:false,scenarios:['smoke-extra']}};
+  const f=fixture(options);
+  f.files.set(`${root}/docs/board/checks/night-2026-10-11.json`,JSON.stringify(lastRow));
+  f.deps.reach=reachStub;f.deps.frameScope=()=>[];
+  const packet=await runNight(opts(),f.deps);
+  assert.equal(packet.status,'passed',JSON.stringify(packet.failures));
+  assert.equal(packet.size,'partial');
+  assert.deepEqual(f.calls,['full','browser'],'no frame or combat stage when neither changed');
+  const stage=packet.stages.find(row=>row.id==='full');
+  assert.deepEqual(stage.args,['tools/run-tests.mjs','--tier','wide','--since',previous,'--jobs','4','--keep-going','--json']);
+  assert.equal(packet.framesFrom,previous);
+  const morning=f.files.get(`${root}/docs/board/checks/night-${date}.md`),json=f.files.get(`${root}/docs/board/checks/night-${date}.json`);
+  assert.match(morning.split('\n')[0],/^Partial night: 1 file changed, all under src\/lab\/; \d+ of 100 suites, 1 of 1 browser scenarios, frames reused from bbbbbbbbb, combat balance not needed\.$/);
+  assert.equal(morning.split('\n')[0],packet.sizeLine);
+  assert.match(json,/^\{\n  "schema": 1,\n  "size": "partial",\n  "sizeLine": "Partial night: /,'the record begins with the size and its reason');
+  assert.match(morning,/not a full-tier pass for a release/);
+  assert.equal(f.files.get(root+'-copy/source/docs/board/checks/full-tier.json'),'original copied report\n','a partial night leaves the full-tier report alone');
+  assert.ok(morning.trim().split('\n').length<20);
+});
+test('night report: a partial night runs frames when the timed scene changed and combat balance when a combat file changed',async()=>{
+  const f=fixture({changed:['src/arsenal/crossbow.js'],planOptions:{size:'partial',frames:true,combat:true,scenarios:['smoke-extra']}});
+  f.files.set(`${root}/docs/board/checks/night-2026-10-11.json`,JSON.stringify({schema:1,status:'passed',source:previous,date:'2026-10-11',size:'full',stages:[{id:'frames',passed:true}]}));
+  f.deps.reach=reachStub;f.deps.frameScope=files=>files;
+  const packet=await runNight(opts(),f.deps);
+  assert.equal(packet.size,'partial');assert.equal(packet.status,'passed',JSON.stringify(packet.failures));
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
+  assert.match(packet.sizeLine,/frames run \(the timed scene or its code changed\), combat balance run\.$/);
+  assert.equal(packet.framesFrom,undefined);
+  // With no frame pass on record, frames run too.
+  const first=fixture({changed:['src/arsenal/crossbow.js'],planOptions:{size:'partial',frames:true,combat:true,scenarios:['smoke-extra']}});
+  first.deps.reach=reachStub;first.deps.frameScope=()=>[];
+  assert.match((await runNight(opts(),first.deps)).sizeLine,/frames run \(no earlier frame pass is on record\)/);
+});
+test('night report: a full night begins with its reason, and --full runs everything even when only notes changed',async()=>{
+  const f=fixture(),packet=await runNight(opts(),f.deps);
+  assert.equal(packet.size,'full');assert.match(f.files.get(`${root}/docs/board/checks/night-${date}.md`).split('\n')[0],/^Full night: src\/game\.js changed, which holds shared game code/);
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
+  const notesOnly=fixture({changed:['docs/board/STATUS.md']});
+  const forced=await runNight({...opts(),full:true},notesOnly.deps);
+  assert.equal(forced.size,'full');assert.match(forced.sizeLine,/asked for by hand, for a release/);
+  assert.deepEqual(notesOnly.calls,['full','frames','combat','browser']);
+});
+test('night report: a night with nothing to check starts no job and records nothing that could pass a later commit',async()=>{
+  const f=fixture({changed:['docs/board/STATUS.md','docs/board/looks/rustwall/sheet.jpg']});
+  f.deps.reach=()=>{throw Error('notes need no suite lookup');};
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.size,'none');assert.equal(result.status,'none');
+  assert.equal(f.calls.length,0);assert.deepEqual(f.copies,[]);
+  assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
+  assert.equal(f.metadata.some(args=>args[0]==='commit'),false,'no commit for a run-log line (rule 5)');
+  const log=f.files.get(root+'/docs/board/run-log.md');
+  assert.match(log,/^- 12 October, night: no night check: nothing to check since bbbbbbbbb \(2 files changed; only notes, board files or files no suite reads\)\.\n$/);
+  await runNight(opts(),f.deps);
+  assert.equal(f.files.get(root+'/docs/board/run-log.md'),log,'the same line is not added twice');
+});
+test('night frames are rerun only for files of the timed scene or its code',()=>{
+  const real=fileURLToPath(new URL('../',import.meta.url));
+  const scene=['src/sim-driving.js','src/screen-menu.js','src/circuits/harbour-lights.js','tools/scenarios/frame-pacing.mjs'];
+  const other=['docs/board/STATUS.md','tools/blender/hull_model.py','tools/test-full-check.mjs','package.json'];
+  assert.deepEqual(realFrameScope(real,[...other,...scene]),scene);
+});
+test('a partial night pass is never a full-tier pass for a release',async()=>{
+  const full={schema:1,date,source:head,status:'passed',size:'full'};
+  assert.equal(nightIsFullTierPass(full),true);
+  assert.equal(nightIsFullTierPass({...full,status:'standing'}),true);
+  assert.equal(nightIsFullTierPass({...full,size:'partial'}),false);
+  assert.equal(nightIsFullTierPass({...full,status:'failed'}),false);
+  const {size:_ignored,...legacy}=full;
+  assert.equal(nightIsFullTierPass(legacy),true,'a record from before nights had sizes was a full night');
+  // The status page and the release question read the recorded size.
+  const folder=await mkdtemp(join(tmpdir(),'duel-night-size-'));
+  try {
+    await mkdir(join(folder,'docs/board/checks'),{recursive:true});
+    await writeFile(join(folder,'docs/board/checks',`night-${date}.json`),JSON.stringify({...full,size:'partial'}));
+    const night=latestNight(folder,'2026-10-13T00:00:00Z');
+    assert.equal(night.size,'partial');assert.equal(night.fullTierPass,false);assert.equal(night.result,'passed');
+    await writeFile(join(folder,'docs/board/checks',`night-${date}.json`),JSON.stringify(full));
+    assert.equal(latestNight(folder,'2026-10-13T00:00:00Z').fullTierPass,true);
+  }finally {await rm(folder,{recursive:true,force:true});}
+  // And a real partial night writes a record that says so.
+  const f=fixture({changed:['src/lab/lab-tune.js'],planOptions:{size:'partial',frames:true,combat:false,scenarios:['smoke-extra']}});
+  f.deps.reach=reachStub;f.deps.frameScope=files=>files;
+  const packet=await runNight(opts(),f.deps);
+  const record=JSON.parse(f.files.get(`${root}/docs/board/checks/night-${date}.json`));
+  assert.equal(record.size,'partial');assert.equal(record.status,'passed');assert.equal(nightIsFullTierPass(record),false);
+  assert.equal(packet.size,'partial');
 });
