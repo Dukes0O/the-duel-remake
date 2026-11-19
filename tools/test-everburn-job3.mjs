@@ -9,6 +9,8 @@ import {LAND} from '../src/world/scablands-names.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {sweepObstacle, CAR_HALF_WIDTH} from '../src/collision.js';
+import {captionSeconds} from '../src/story/caption-queue.js';
+import {worldReturnNotice} from '../src/screen-hud.js';
 
 const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
 const {FIGHTER_RULES} = await import('../src/onfoot.js');
@@ -338,22 +340,37 @@ pursuit = pursue(pursuit.state, {furnaceMetres: 400});
 assert.deepEqual(pursuit.requests, [{type: 'bellowsRiders'}]);
 assert.equal(pursue(pursuit.state, {furnaceMetres: 100}).requests.length, 0);
 assert.equal(pursue(pursuit.state, {furnaceMetres: 30.01}).events.length, 0);
-const loadedChase = {...pursuit.state, bellows: 37, knocks: 2, meetingHeld: true, solidHeld: true};
+const waitingAtGate = pursue({...pursuit.state, bellows:37}, {furnaceMetres:0}, 30);
+assert.equal(waitingAtGate.state.bellows, 37);
+assert.equal(waitingAtGate.state.returnNotice, undefined);
+assert.deepEqual(waitingAtGate.requests, []);
+const loadedChase = {...pursuit.state, leftTownGate:true, bellows:37, knocks:2, meetingHeld:true, solidHeld:true};
 const restarted = pursue(loadedChase, {furnaceMetres: 30});
 // The furnace's crew has had its hands on them: each arrival takes 25 from the bellows (it was a restart that cost nothing
 // and could turn for ever; Claude's redesign of 17 November).
 assert.equal(restarted.state.bellows, 12);
 assert.equal(restarted.state.furnaceArrivals, 1);
-assert.equal(pursue({...restarted.state, bellows: 12}, {furnaceMetres: 30}).state.bellows, 0, 'The bellows never go below 0.');
-assert.equal(pursue({...restarted.state}, {furnaceMetres: 30}).state.furnaceArrivals, 2);
+assert.deepEqual(restarted.state.returnNotice, {text:BELLOWS_LINES.restart, remaining:captionSeconds(BELLOWS_LINES.restart)});
+assert.deepEqual(restarted.requests, []);
+let reading = pursue(restarted.state, {furnaceMetres:30, recovering:true}, 10);
+assert.deepEqual(reading.state.returnNotice, restarted.state.returnNotice, 'A fighter or car recovery cannot spend the unseen notice.');
+reading = pursue(reading.state, {furnaceMetres:30}, reading.state.returnNotice.remaining - 1/120);
+assert.deepEqual(reading.requests, []);
+assert.equal(reading.state.furnaceArrivals, 1);
+const moved = pursue(reading.state, {furnaceMetres:30}, 1/120);
+assert.deepEqual(moved.requests, [{type:'bellowsRestart', leadMetres:150}]);
+assert.deepEqual(moved.events, [{type:'bellowsRestart'}]);
+assert.equal(moved.state.returnNotice, null);
+assert.deepEqual(pursue(moved.state, {furnaceMetres:100}).requests, []);
+const secondArrival = pursue(moved.state, {furnaceMetres:30});
+assert.equal(secondArrival.state.bellows, 0, 'The bellows never go below 0.');
+assert.equal(secondArrival.state.furnaceArrivals, 2);
 assert.equal(restarted.state.knocks, 2);
 assert.equal(restarted.state.ridersStarted, true);
 assert.deepEqual(restarted.state.sacksThrown, [0, 1]);
 assert.deepEqual(restarted.state.clouds, []);
 assert.equal(restarted.state.meetingHeld, false);
 assert.equal(restarted.state.solidHeld, false);
-assert.deepEqual(restarted.requests, [{type: 'say', lineId: 'bellows.restart'},
-  {type: 'bellowsRestart', leadMetres: 150}]);
 assert.equal(pursue({...loadedChase, thiefStopped: true}, {furnaceMetres: 0}).requests.length, 0);
 console.log('PASS Run Him Down: two sacks, furnace riders and restart preserve the load.');
 
@@ -400,6 +417,7 @@ console.log('PASS Run Him Down: theft escape, collection, furnace departure and 
 // Exercise the ordinary job engine with snapshots, without a driver. The
 // bellows chase must not inherit the old health, contact or leash shortcuts.
 const chaseStep = {kind: 'chase', bellows: true, targetId: 'thief',
+  townGate:{position:{x:0,z:0}, through:{x:0,z:-1}, opening:9},
   path: [{position: {x: 0, z: 0}}, {position: {x: 2000, z: 0}}]};
 const chaseView = {onFoot: false, speedKmh: 0, carPosition: {x: 0, z: 0},
   player: {position: {x: 0, z: 0}},
@@ -436,16 +454,24 @@ assert.equal(chase.done, true);
 assert(chase.events.some(event => event.type === 'bellowsArrived' && event.knocks === 3));
 assert(chase.events.some(event => event.type === 'done'));
 assert.equal(chaseView.actors[0].health, 0, 'The rule never writes into an actor snapshot.');
-let retry = stepJob(createJob({steps: [chaseStep]}), {...chaseView,
+const atGate = stepJob(createJob({steps:[chaseStep]}), chaseView);
+let retry = stepJob(atGate, {...chaseView, carPosition:{x:0,z:1},
   bellows: {...chaseView.bellows, flameContact: true, furnaceMetres: 30}}, 2);
 assert.equal(retry.failedStep, false, 'Restarting the route must not reset the job state.');
 // Two seconds of flame take 30, and the arrival at the furnace 25 more.
 assert.equal(retry.stepState.bellows, 45);
-assert(retry.requests.some(request => request.type === 'bellowsRestart' && request.leadMetres === 150));
+assert(!retry.requests.some(request => request.type === 'bellowsRestart'));
 assert(retry.requests.some(request => request.type === 'say' && request.lineId === 'bellows.warning'));
-assert(retry.stepState.lineQueue.includes('bellows.restart'), 'The warning stays ahead of the restart caption.');
-retry = stepJob(retry, chaseView, 2.2);
-assert(retry.requests.some(request => request.type === 'say' && request.lineId === 'bellows.restart'));
+assert.equal(retry.stepState.returnNotice.text, BELLOWS_LINES.restart);
+retry = stepJob(retry, chaseView, retry.stepState.returnNotice.remaining);
+assert(retry.requests.some(request => request.type === 'bellowsRestart' && request.leadMetres === 150));
+assert(!retry.requests.some(request => request.lineId === 'bellows.restart'), 'The return reason is displayed once.');
+const footAtGate = {...chaseView, onFoot:true, carPosition:{x:0,z:1}, fighter:{position:{x:0,z:-1}},
+  bellows:{...chaseView.bellows, furnaceMetres:0}};
+const parkedOutside = stepJob(createJob({steps:[chaseStep]}), footAtGate, 30);
+assert.equal(parkedOutside.stepState.returnNotice, undefined, 'A parked car outside cannot stand in for its driver.');
+const walkedOut = stepJob(parkedOutside, {...footAtGate, fighter:{position:{x:0,z:1}}});
+assert.equal(walkedOut.stepState.returnNotice.text, BELLOWS_LINES.restart);
 const finalKnock = createJob({steps: [chaseStep]});
 finalKnock.stepState = {bellows: 70, knocks: 2};
 retry = stepJob(finalKnock, {...chaseView,
@@ -881,6 +907,47 @@ console.log('PASS Run Him Down: arena facts measure the authored road, surface s
 // knocks. Prove the restart through the real arena, without driving it.
 const {bellowsRestartPlaces} = await import('../src/world/jobs/bellows-rule.js');
 const {applyBellowsRestart} = await import('../src/arena/modes/world-job.js');
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const game = new Duel({seed:1989, featureFlags:{'hidden-road':true,'story-everburn':true,'scablands-realism':true}});
+  const s = game.state; s.wastelandGateDiscovered = true;
+  assert(game.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:1989, opponents:[], job:definition}));
+  Object.assign(s, {onFoot:false, fighter:null, status:'racing', countdown:0});
+  game.step(1/120);
+  const world = s.arena.worldJob, step = definition.steps[0], gate = step.townGate.position;
+  const thief = world.actors.find(actor => actor.id === step.targetId);
+  thief.position = {...step.bellowsRoute.wrecks.at(-1).position};
+  thief.pathIndex = step.path.length - 1;
+  const carAt = () => game.course.worldAt(s.s,s.lateral);
+  const closeTo = (a,b) => Math.hypot(a.x-b.x, a.z-b.z) < .05;
+  const parked = carAt();
+  game._storyCallout('A different job line was already on screen.', 3, true);
+  for (let tick=0; tick<240; tick++) game.step(1/120);
+  assert(closeTo(carAt(), parked));
+  assert.equal(world.job.stepState.furnaceArrivals, undefined);
+  for (const [dx,dz,hasLeft] of [[18,3,false],[0,3,false],[0,-1,false],[0,1,true]]) {
+    const pose = game.course.nearest(gate.x+dx,gate.z+dz);
+    placeActor(game, s, {s:pose.s, lateral:pose.lateral}, 0);
+    game.step(1/120);
+    assert.equal(!!world.job.stepState.leftTownGate, hasLeft, 'Only an outward crossing through the opening counts.');
+  }
+  const beforeMove = carAt(), readingTime = captionSeconds(BELLOWS_LINES.restart);
+  for (let tick=1; tick<Math.ceil(readingTime*120); tick++) {
+    assert.equal(worldReturnNotice(s), BELLOWS_LINES.restart);
+    if (tick === 120) game._storyCallout('An urgent line arrived while Cinder was explaining.', 3, true);
+    game.step(1/120);
+    assert(closeTo(carAt(), beforeMove));
+  }
+  assert.equal(worldReturnNotice(s), BELLOWS_LINES.restart);
+  game.step(1/120);
+  assert(closeTo(carAt(), bellowsRestartPlaces(step.bellowsRoute).player));
+  assert.equal(worldReturnNotice(s), '');
+  assert.equal(world.job.stepState.furnaceArrivals, 1);
+  for (let tick=0; tick<60; tick++) game.step(1/120);
+  assert.equal(worldReturnNotice(s), '');
+  assert.equal(world.job.stepState.furnaceArrivals, 1);
+}
 const restartPlaces = bellowsRestartPlaces(routeDefinition);
 const chasePath = [...routeDefinition.road, ...routeDefinition.wrecks.slice(1)];
 const restartedStep = {...factsStep, path:chasePath};

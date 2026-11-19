@@ -627,6 +627,12 @@ export const SOUND_BANK = {
       tone(184, 0.55, 0.06, 'square', 0.06, 370),
     ],
   }),
+  'story.talk.line': cue('interface', {flag: 'story-choices', volume: .32, limit: 1,
+    layers: [tone(760, .035, .22, 'triangle', 0, 500)]}),
+  'story.thought': cue('interface', {flag: 'story-choices', volume: .22, limit: 1,
+    layers: [tone(590, .065, .18, 'sine', 0, 460)]}),
+  'story.talk.choose': cue('interface', {flag: 'story-choices', volume: .42, limit: 1,
+    layers: [noise(2800, .12, .36, 'highpass'), tone(780, .075, .1, 'triangle', .015, 290)]}),
   // EVERBURN-REMAKE: Cinder's open pot. A spark thrown off by a jolt, the ember going out, a fresh scoop at a brazier.
   // Made in code like the machine cues; the world job plays them through the arena tell event.
   'world.ember.spark': cue('impacts', {priority: 60, limit: 2, volume: .5,

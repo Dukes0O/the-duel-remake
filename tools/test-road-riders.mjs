@@ -98,8 +98,9 @@ function rulesAndRoster() {
   const job = washRiderJob({count:2});
   const following = structuredClone(job.steps[0]);
   following.id='next';
-  job.steps.push(following);
-  const sim = runEvent({job});
+  job.steps.push(following,{kind:'talk',id:'after-fights',scene:{choices:[{id:'back',words:'Go back to the Wash.'}]},
+    branches:{back:job.steps[0].id}});
+  const sim = runEvent({job,flags:{...FLAGS,'story-choices':true}});
   assert.equal(sim.state.opponents.length,2);
   assert.equal(sim.world.riderReserve.length,2);
   assert.equal(sim.state.arena.participants.length,3);
@@ -112,10 +113,12 @@ function rulesAndRoster() {
   assert.equal(sim.world.riderReserve.length,0);
   const secondFight=sim.world.riderFight;
   for (const car of sim.state.opponents) car.armor=car.maxArmor*RULE.retreatFraction;
-  advance(sim,DT*2);
+  advance(sim,RULE.aftermathSec+DT*4);
   assert.equal(secondFight.outcome,'won');
-  // A talk choice can reset the step state and point to the original fight after a different field has entered.
-  sim.world.job={...sim.world.job,stepIndex:0,stepState:{},done:false};
+  assert.equal(sim.world.job.stepIndex,2);
+  assert.ok(sim.duel.talkInput({type:'select',index:0},sim.world.job.stepState.screen));
+  advance(sim,DT);
+  assert.equal(sim.world.job.stepIndex,0);
   advance(sim,DT);
   assert.equal(sim.world.job.stepIndex,1);
   assert.equal(sim.world.riderFight.outcome,'won');
@@ -338,7 +341,7 @@ function chaseAndLoss() {
       });
       assert.equal(driving.state.armor,driving.state.maxArmor,difficulty+' preserves the opening for a moving driver');
       assert.ok(!driving.events.some(event=>event.combatRamHit && (event.attackerIndex===-1 || event.victimIndex===-1) ||
-        event.vehicleSmash?.actor.roadRider),difficulty+' keeps real contact clear in the opening');
+        event.vehicleSmash?.actor?.roadRider),difficulty+' keeps real contact clear in the opening');
     }
   }
 }

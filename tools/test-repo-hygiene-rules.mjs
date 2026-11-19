@@ -90,6 +90,9 @@ try {
     ['raw audio in checks', 'docs/board/checks/race-capture.wav', 'RAW AUDIO'],
     ['raw video in tools', 'tools/captures/race.webm', 'RAW VIDEO'],
     ['raw JPG in tools', 'tools/captures/race.jpg', 'RAW JPG'],
+    ['rejected Night 2 paint take', 'tools/art/story-plates/night-2-try-1.jpg', 'UNSELECTED TAKE'],
+    ['raw Night 2 Blender capture', 'docs/board/looks/story-plates/night-2-base.jpg', 'RAW FRAME'],
+    ['unapproved second plate', 'tools/art/story-plates/night-3-painting.jpg', 'UNAPPROVED PLATE'],
     ['raw WebP in checks', 'docs/board/checks/race.webp', 'RAW WEBP'],
     ['earned-car raw PNG', 'docs/board/looks/earned-cars/car-2-round-2.png', 'RAW PNG'],
     ['earned-car unapproved JPEG extension', 'docs/board/looks/earned-cars/car-2-round-2.jpeg', 'RAW JPEG'],
@@ -146,6 +149,15 @@ try {
     const { status, report } = run(hygieneTool, root);
     same(status, 0, 'a look-test sheet and its note pass placement');
     same(report.failures, [], 'look-N.jpg is a review sheet, not a raw capture');
+  });
+
+  test('the single Night 2 trial keeps its review sheet and original painting outside public', () => {
+    const root = fixture('night-two-painting');
+    put(root, 'docs/board/looks/story-plates/night-2.jpg', 'comparison with its laptop panel');
+    put(root, 'tools/art/story-plates/night-2-painting.jpg', 'selected original painting');
+    const {status,report} = run(hygieneTool, root);
+    same(status, 0, 'the two Night 2 paths pass placement');
+    same(report.failures, [], 'the card-prescribed sheet and selected source have review homes');
   });
 
   test('the three earned-car cards have exact bounded review sheet names', () => {

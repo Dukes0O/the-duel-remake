@@ -93,6 +93,9 @@ export function createStoryRadio({getChain = () => null, show = () => {}, hide =
     stop();
     disposed = true;
   }
-  return {say, sayTownLine, sayInOrder, saySequence, sayAna: () => saySequence('kogane', 'ana'), stop, leave, pause, mute, dispose,
+  function click() {
+    if (!disposed && !isMuted()) getChain()?.click?.();
+  }
+  return {click, say, sayTownLine, sayInOrder, saySequence, sayAna: () => saySequence('kogane', 'ana'), stop, leave, pause, mute, dispose,
     get playing() { return current ? current.id : null; }, get keyed() { return !!current?.chain; }};
 }

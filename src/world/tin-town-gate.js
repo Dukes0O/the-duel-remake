@@ -49,7 +49,7 @@ export function tinTownGateSolids(land){
   const centre=gate.opening/2+POST_WIDTH/2,start=centre+POST_WIDTH/2,along=gate.fenceLength/2;
   const across=distance=>({x:gate.x+distance*Math.cos(yaw),z:gate.z-distance*Math.sin(yaw)});
   return Object.freeze([
-    ...posts.map(post=>Object.freeze({id:`tin-town-gate-post-${post.side}`,kind:'post',x:post.x,z:post.z,halfX:POST_WIDTH/2,halfZ:POST_WIDTH/2,heading:yaw,height:gate.postHeight})),
+    ...posts.map(post=>Object.freeze({id:`tin-town-gate-post-${post.side}`,kind:'post',x:post.x,z:post.z,halfX:POST_WIDTH/2,halfZ:POST_WIDTH/2,heading:yaw,height:gate.postHeight,exactCarCorners:true})),
     ...[-1,1].map(side=>Object.freeze({id:`tin-town-gate-fence-${side<0?'left':'right'}`,kind:'wall',...across(side*(start+along)),halfX:along,halfZ:.1,heading:yaw,height:3.2})),
   ]);
 }

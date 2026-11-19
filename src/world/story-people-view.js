@@ -267,6 +267,8 @@ export function createStoryPeopleView(loadAsset) {
       const asset = await assets.get(sourceFor(person.id));
       if (disposed || cast !== people) return;
       const figure = makeFigure(person.id, asset);
+      // The dialogue camera may look up this head before the next update places it in the world.
+      figure.root.visible = false;
       figures.set(person.id, figure);
       group.add(figure.root);
     }));

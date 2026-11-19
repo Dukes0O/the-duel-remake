@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-19T03:33:11.799Z
+Observed at: 2026-11-19T04:13:35.096Z
 
-Observation commit: e6c243f52202c1812cc75d418b701188ce92c11a
+Observation commit: 2c1cb5a548c6ba7b089c1befb020ea74438a0e4a
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e6c243f52202c1812cc75d418b701188ce92c11a
+Integration HEAD: 2c1cb5a548c6ba7b089c1befb020ea74438a0e4a
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -48,7 +48,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/story-night-2 | unknown | 2026-11-19T03:27:23Z | 0 | last commit 2026-11-19T03:27:23Z | AGENTS.md, docs/ART_LINE.md, docs/CODEX_PLAYBOOK.md, docs/board/STATUS.md, docs/board/board.yaml |
+| codex/story-night-2 | unknown | 2026-11-19T04:12:53Z | 0 | last commit 2026-11-19T04:12:53Z | AGENTS.md, docs/ART_LINE.md, docs/CODEX_PLAYBOOK.md, docs/board/STATUS.md, docs/board/board.yaml |
 | codex/story-plate-night-2 | unknown | 2026-11-19T00:33:38Z | 0 | last commit 2026-11-19T00:33:38Z | docs/board/board.yaml, docs/board/looks/story-plates/night-2-review.md, docs/board/looks/story-plates/night-2.jpg, docs/changes/STORY-PLATE-NIGHT-2.md, tools/art/story-plates/CREDITS.md |
 | codex/story-talk | unknown | 2026-11-19T00:58:42Z | 0 | last commit 2026-11-19T00:58:42Z | docs/board/STATUS.md, docs/board/board.yaml, docs/changes/STORY-TALK.md, src/app.js, src/arena/arena-event.js |
 | codex/town-home-surfaces | unknown | 2026-11-18T22:11:57Z | 0 | last commit 2026-11-18T22:11:57Z | docs/ART_LINE.md, docs/board/board.yaml, docs/board/cards/TOWN-HOME-SURFACES.md, docs/board/looks/town-home-surfaces/round-1-review.md, docs/board/looks/town-home-surfaces/round-1.jpg |
@@ -63,14 +63,14 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 719,014,361 B | unavailable | 250,000,000 B |
-| Wasteland models | 431,213,000 B | +1,505,112 B | 60,000,000 B |
+| Wasteland models | 431,213,000 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
-| Review `looks/` | 88,376,174 B | +834,041 B | 20,000,000 B |
-| Added bytes in last merge | 8,467,445 B | +5,793,859 B | 5,000,000 B |
-| All `public/` | 710,281,900 B | +1,505,112 B | unavailable |
-| Git objects | 1,033,827,328 B | -449,338,368 B | unavailable |
+| Review `looks/` | 91,040,717 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 8,467,445 B | +6,837,897 B | 5,000,000 B |
+| All `public/` | 710,281,900 B | +0 B | unavailable |
+| Git objects | 1,034,753,024 B | -411,422,720 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
