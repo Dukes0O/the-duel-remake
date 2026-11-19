@@ -104,10 +104,10 @@ export const pageFunctions = {
   scoutTurned: () => window.__qaApp.duel.state.arena.worldJob.night2.scoutTurned === true,
   canvasPressPoint: () => {
     const canvas = document.querySelector('#view3d canvas');
+    if (!canvas) return false;
     const rect = canvas.getBoundingClientRect();
     const x = Math.round(rect.left + rect.width / 2), y = Math.round(rect.top + rect.height / 2);
-    if (document.elementFromPoint(x, y) !== canvas) throw Error('Night 2 mouse target is covered.');
-    return {x, y};
+    return document.elementFromPoint(x, y) === canvas && {x, y};
   },
   peacefulPress: () => {
     const app = window.__qaApp, state = app.duel.state;
@@ -217,8 +217,9 @@ export async function run(context) {
   await advance('whistle', 1);
   await wait('step', 'scout');
   await context.screenshot('night-2-scout');
-  await evaluate('scoutAim');
+  await wait('canvasPressPoint');
   const scoutPoint = await evaluate('canvasPressPoint');
+  await evaluate('scoutAim');
   await leftMouse('mousePressed', scoutPoint);
   await wait('scoutTurned');
   await leftMouse('mouseReleased', scoutPoint);
@@ -237,6 +238,7 @@ export async function run(context) {
   await context.waitFor('window.__qaApp.duel.state.arena.worldJob.job.stepState.brandSeconds > 0', 'the brand', 12000);
   await wait('pumpDirection');
   await evaluate('at', {x: sites.pump.position.x + 1.6, y: sites.pump.position.y, z: sites.pump.position.z});
+  await wait('canvasPressPoint');
   const pumpPoint = await evaluate('canvasPressPoint');
   await leftMouse('mousePressed', pumpPoint);
   await evaluate('peacefulPress');
