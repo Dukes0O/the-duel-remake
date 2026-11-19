@@ -52,8 +52,9 @@ function jpegDimensions(bytes, start, length) {
 
 const generators = [
   {script:'tools/blender/story-walkers.py',args:[],recipeOnly:true,glb:['public/assets/models/wasteland/town/story-walkers.glb']},
-  {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/works.glb'],budget:100000,maxBytes:3000000},
+  // TOWN-ART-WORKS keeps the recipe, not a .blend (AGENTS: no .blend files): it plans none.
+  {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,recipeOnly:true,
+    glb:['public/assets/models/wasteland/town/works.glb'],budget:100000,maxBytes:8000000},
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
     glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
   {id:'town-safety',script:'tools/blender/town-safety.py',args:[],candidate:true,
@@ -1577,7 +1578,7 @@ try {
       assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
     }
   });
-  check('TOWN-ART-WORKS keeps the warehouse and adds the photographed kiln', () => {
+  check('TOWN-ART-WORKS exports every works piece inside its own triangle budget, with its named parts', () => {
     const path = join(root, 'public/assets/models/wasteland/town/works.glb');
     const bytes = readFileSync(path);
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
@@ -1588,15 +1589,15 @@ try {
     const nodes = gltf.nodes || [];
     const byName = new Map(nodes.map((node, index) => [node.name, index]));
     const family = byName.get('town-works');
-    const warehouse = byName.get('warehouse');
-    const kiln = byName.get('kiln');
     assert.ok(Number.isInteger(family), 'town-works root exists');
-    assert.ok(Number.isInteger(warehouse), 'warehouse building exists');
-    assert.ok(Number.isInteger(kiln), 'kiln building exists');
-    assert.ok((nodes[family].children || []).includes(warehouse), 'warehouse is a direct child of town-works');
-    assert.ok((nodes[family].children || []).includes(kiln), 'kiln is a direct child of town-works');
-    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name).sort(), ['kiln', 'warehouse'],
-      'the passed warehouse remains and the kiln is the only added building');
+    // The card's budget by plot: 3 by 3 and 3 by 2 get 9,000 triangles, 2 by 2 gets 5,000, one cell 1,800.
+    const budgets = { warehouse: 9000, kiln: 5000, sawmill: 9000, 'salvage-yard': 9000, 'old-ground': 9000,
+      'test-pit': 1800, trench: 1800, 'trench-corner': 1800, 'valve-box': 1800, 'pipe-stack': 1800,
+      handcart: 1800, barrow: 1800, flatbed: 1800,
+      'pile-salvage': 1800, 'pile-steel': 1800, 'pile-tin': 1800, 'pile-timber': 1800,
+      'pile-brick': 1800, 'pile-pipe': 1800, 'pile-sand': 1800, 'pile-clay': 1800 };
+    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name).sort(), Object.keys(budgets).sort(),
+      'the family holds exactly the card\'s twenty-one pieces, each a direct child of town-works');
     const trianglesUnder = index => {
       const node = nodes[index];
       const own = Number.isInteger(node.mesh)
@@ -1604,13 +1605,31 @@ try {
         : 0;
       return own + (node.children || []).reduce((sum, child) => sum + trianglesUnder(child), 0);
     };
-    const triangles = trianglesUnder(warehouse);
-    assert.ok(triangles > 100 && triangles <= 9_000, `warehouse has ${triangles} triangles; budget 9,000`);
-    const kilnTriangles = trianglesUnder(kiln);
-    assert.ok(kilnTriangles > 100 && kilnTriangles <= 5_000, `kiln has ${kilnTriangles} triangles; budget 5,000`);
-    assert.equal((gltf.images || []).length, 10, 'the four warehouse images stay and six kiln images are embedded');
-    for (const id of ['kiln:body', 'kiln:chimney', 'kiln:door', 'kiln:lamp', 'kiln:brick-stacks', 'kiln:woodpile']) {
-      assert.ok(byName.has(id), `${id} is exported as an individual piece`);
+    for (const [id, budget] of Object.entries(budgets)) {
+      const triangles = trianglesUnder(byName.get(id));
+      assert.ok(triangles > 100 && triangles <= budget, `${id} has ${triangles} triangles; budget ${budget}`);
+    }
+    assert.ok((gltf.images || []).length >= 19, 'the passed warehouse and kiln photos and the later pieces\' photos are embedded');
+    const parts = ['kiln:body', 'kiln:chimney', 'kiln:door', 'kiln:lamp', 'kiln:brick-stacks', 'kiln:woodpile',
+      'sawmill:timber-frame', 'sawmill:tin-roof', 'sawmill:bench', 'sawmill:circular-saw', 'sawmill:log-carriage',
+      'sawmill:log-on-carriage', 'sawmill:log-stack-1', 'sawmill:log-stack-2', 'sawmill:log-stack-3',
+      'sawmill:board-stacks', 'sawmill:sawdust-heap',
+      'salvage-yard:shed', 'salvage-yard:walls', 'salvage-yard:bays', 'salvage-yard:heap', 'salvage-yard:hoist',
+      'salvage-yard:gate-left', 'salvage-yard:gate-right', 'salvage-yard:lamp',
+      'old-ground:wall', 'old-ground:gate', 'old-ground:lamp', 'old-ground:tree',
+      ...Array.from({ length: 12 }, (_, index) => `old-ground:marker-${index + 1}`),
+      'flatbed:load', 'flatbed:wheels', 'valve-box:wheel'];
+    for (const id of parts) assert.ok(byName.has(id), `${id} is exported as an individual piece`);
+    for (const lamp of ['kiln:lamp', 'salvage-yard:lamp', 'old-ground:lamp']) {
+      const lit = (function emissive(index) {
+        const node = nodes[index];
+        const own = Number.isInteger(node.mesh) && gltf.meshes[node.mesh].primitives.some(primitive => {
+          const material = gltf.materials[primitive.material] || {};
+          return (material.emissiveFactor || [0, 0, 0]).some(value => value > 0);
+        });
+        return own || (node.children || []).some(emissive);
+      })(byName.get(lamp));
+      assert.ok(lit, `${lamp} glows`);
     }
   });
 
