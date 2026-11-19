@@ -450,17 +450,6 @@ tasks:
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
 
-  - id: LAB-PAGE
-    title: "Lab: Brian's page keeps the current step on top and the words behind one fold; formulas start closed"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude (Director) with a Sonnet helper, since 19 November 2026"
-    needs: []
-    locks: [lab-classroom-frame]
-    details: "docs/board/cards/LAB-PAGE.md"
-
   - id: LAB-REVIEW-WORKSHOP
     title: "Lab: Rust, Fire, Strength and Fuel meet Kyle's rules of 19 November"
     owner: "claude"

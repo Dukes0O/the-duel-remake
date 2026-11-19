@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-RUST: the Rust classroom played by keyboard (and one mouse click on the protection switch), from the
 // Lab map's click-to-go to the nail jars, through Brian's job with Show me, to the parts panel and the pass.
-// Memory-only saves.
+/// Memory-only saves. The formula panel starts closed; the lesson opens it with F at its first formulas.
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
 const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
@@ -36,6 +37,7 @@ export async function run(c) {
   await next('wonder');
   // The word steps: the sum follows the dial on each press, and the step stays open after its first run.
   await at('word-rust'); await shot('word-rust');
+  await openFormulaPanel(c);
   await summing('2% a day × 7 days = 14%', 'the sum starts at a week');
   await press('ArrowDown'); await summing('2% a day × 6 days = 12%', 'the dial moves the sum'); await press('ArrowUp'); await summing('2% a day × 7 days = 14%', 'and back');
   for (const [step, said] of [['word-rust', 'has 14% rust'], ['word-salt', '6 times as much'], ['word-zinc', 'of its coat is left']]) {
