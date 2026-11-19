@@ -583,8 +583,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "review"
-    waiting_on: "claude"
+    status: "building"
     claimed_by: "Codex (cloud), 19 November 2026, Slice B"
     needs: []
     locks: []
