@@ -338,7 +338,8 @@ test('a browser that will not close is ended with its helpers, and its pipes are
 
 // QA-TEMP-CLEANUP: a check removes its own Chrome profile folder, and a run starts by clearing folders left behind a day ago.
 test('browser profile folders: a check removes its own and a run clears only stale the-duel-browser-* folders', async () => {
-  const { mkdtemp, mkdir, rm, readdir, utimes, writeFile } = await import('node:fs/promises');
+  const { mkdtemp, mkdir, rm, readdir, symlink, utimes, writeFile } = await import('node:fs/promises');
+  const { existsSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const fixtureTemp = await mkdtemp(join(tmpdir(), 'duel-profile-fixture-'));
   const day = 24 * 60 * 60 * 1000, now = Date.now();
@@ -374,9 +375,21 @@ test('browser profile folders: a check removes its own and a run clears only sta
     const profile = await mkdtemp(join(fixtureTemp, 'the-duel-browser-'));
     await writeFile(join(profile, 'DevToolsActivePort'), '1\n');
     await browserHarness.cleanupProfile(profile, fixtureTemp);
-    assert.ok(!(await readdir(fixtureTemp)).includes(profile.split(/[\/]/).pop()), 'a finished check leaves no the-duel-browser-* folder behind');
+    assert.ok(existsSync(profile) === false, 'a finished check leaves no the-duel-browser-* folder behind');
     await assert.rejects(browserHarness.cleanupProfile(join(fixtureTemp, 'other-tool-old'), fixtureTemp), /Refusing to remove/);
-    await assert.rejects(browserHarness.cleanupProfile(join(fixtureTemp, 'the-duel-browser-fresh', '..'), fixtureTemp), /Refusing to remove/);
+    await assert.rejects(browserHarness.cleanupProfile(fixtureTemp, fixtureTemp), /Refusing to remove/, 'the Temp folder itself is never removed');
+    await mkdir(join(fixtureTemp, 'the-duel-browser-fresh', 'nested'));
+    await assert.rejects(browserHarness.cleanupProfile(join(fixtureTemp, 'the-duel-browser-fresh', 'nested'), fixtureTemp), /Refusing to remove/,
+      'only a direct child of Temp is removed, never a folder inside a profile');
+    // A link named like a profile, pointing at a folder that matters, is neither followed nor removed.
+    const precious = join(fixtureTemp, 'precious'), link = join(fixtureTemp, 'the-duel-browser-link');
+    await mkdir(precious); await writeFile(join(precious, 'keep.txt'), 'x');
+    await symlink(precious, link, 'junction');
+    const old = new Date(now - 9 * day); await utimes(link, old, old);
+    await browserHarness.removeStaleProfiles({ tempRoot: fixtureTemp, now });
+    assert.ok(existsSync(join(precious, 'keep.txt')), 'a linked folder is never followed by the stale sweep');
+    await assert.rejects(browserHarness.cleanupProfile(link, fixtureTemp), /Refusing to remove/, 'a link out of Temp is refused');
+    assert.ok(existsSync(join(precious, 'keep.txt')), 'a refused link leaves its target alone');
     assert.ok((await readdir(fixtureTemp)).includes('other-tool-old'), 'a refused removal leaves the folder in place');
   } finally { await rm(fixtureTemp, { recursive: true, force: true }); }
 });

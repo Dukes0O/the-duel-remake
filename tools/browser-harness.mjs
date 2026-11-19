@@ -456,7 +456,9 @@ export async function cleanupProfile(profile, tempRootPath = tmpdir()) {
   const target = await realpath(profile);
   const name = target.startsWith(tempRoot + sep) ? target.slice(tempRoot.length + 1) : '';
   if (!name || name.includes(sep) || !name.startsWith(PROFILE_PREFIX)) throw Error(`Refusing to remove unexpected browser profile: ${target}`);
-  await rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  // Chrome can hold its lock file for several seconds after it is ended (EBUSY on 19 November under load), so retry for
+  // up to about 20 s with a growing wait; a folder still locked after that is left for the next run's sweep.
+  await rm(target, { recursive: true, force: true, maxRetries: 12, retryDelay: 250 });
 }
 
 // At the start of a run, removes profile folders that earlier checks left behind (a crash or a kill skips the cleanup in
