@@ -308,11 +308,11 @@ export function createStoryPeopleView(loadAsset) {
         figure.root.visible = Math.hypot(at.x - viewer.x, at.z - viewer.z) < 95;
         if (!figure.root.visible) continue;
         const shift = drawnShift?.(at.x, at.z, at.y, undefined, figure.root) ?? 0;
-        if (person.action === 'sit' && !figure.stool) {
+        if (person.action === 'sit' && !person.seat && !figure.stool) {
           figure.stool = createCampStool(person.height);
           figure.root.add(figure.stool.root);
         }
-        if (figure.stool) figure.stool.root.visible = person.action === 'sit';
+        if (figure.stool) figure.stool.root.visible = person.action === 'sit' && !person.seat;
         const speaking = person.id === speaker;
         poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift);
       }

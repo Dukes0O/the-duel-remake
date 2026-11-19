@@ -55,3 +55,5 @@
 .water-road-tick .story-tick{border-color:#74d6b8;background:#74d6b822;position:relative;width:18px;height:18px;border:1px solid #74d6b8;border-radius:50%;flex:0 0 18px}
 .water-road-wall .story-step.is-done{padding:7px 14px}
 .water-road-wall .story-step.is-done p{display:none}
+
+.story-ledger .ledger-tonight { border-inline-start: 2px solid #dda750; padding-inline-start: .65em; }

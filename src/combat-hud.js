@@ -321,6 +321,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const townName = townPointer.querySelector('b');
   const townDistance = townPointer.querySelector('strong');
   const townArrow = townPointer.querySelector('span');
+  const alternativePointer = townPointer.cloneNode(true);
+  alternativePointer.classList.add('night-2-alternative-route');
+  alternativePointer.style.bottom = (BRAND_RULE.footMarkerBottomPixels + 45) + 'px';
+  alternativePointer.hidden = true;
+  townPointer.after(alternativePointer);
+  const alternativeName = alternativePointer.querySelector('b');
+  const alternativeDistance = alternativePointer.querySelector('strong');
+  const alternativeArrow = alternativePointer.querySelector('span');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
   const footAction = host.querySelector('.combat-foot-action');
@@ -405,7 +413,20 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setText(carDistance, `${direction.distance} m`);
       const rotation = `rotate(${direction.angle}deg)`;
       if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
-      const town = footBrandDirection(state);
+      const walkingRoutes = state.arena?.worldJob?.night2?.routes ?? [];
+      const [firstWalk, secondWalk] = walkingRoutes;
+      const walkPointer = route => {
+        const bearing = Math.atan2(route.point.x - state.fighter.x, route.point.z - state.fighter.z) - state.fighter.yaw;
+        return {name: route.name, distance: Math.round(route.metres), angle: bearing * 180 / Math.PI};
+      };
+      const town = firstWalk ? walkPointer(firstWalk) : footBrandDirection(state);
+      alternativePointer.hidden = !secondWalk;
+      if (secondWalk) {
+        const alternate = walkPointer(secondWalk);
+        setText(alternativeName, alternate.name);
+        setText(alternativeDistance, `${alternate.distance} m`);
+        alternativeArrow.style.transform = `rotate(${alternate.angle}deg)`;
+      }
 
       townPointer.hidden = !town;
       if (town) {

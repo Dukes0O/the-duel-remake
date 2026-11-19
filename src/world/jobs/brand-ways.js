@@ -135,7 +135,7 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
   // Where a walker at `from` should head for the place, and how far the walk is: {x, z, metres, direct}. `direct` says the
   // aim is the place itself (it can be walked straight up to). Null when no way is known from there (the caller then
   // points straight at the place, as before).
-  function aim(from, placeId) {
+  function trace(from, placeId, fullPath) {
     const place = byId.get(placeId);
     if (!place || !Number.isFinite(from?.x) || !Number.isFinite(from?.z)) return null;
     const field = fieldFor(place), y = scablandsSurfaceHeightAt(from.x, from.z);
@@ -150,6 +150,17 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
       if (total < least && seen(at)) { least = total; start = index; }
     }
     if (start < 0) return null;
+    if (fullPath) {
+      const path = [centre(start)];
+      let index = start;
+      while (field.next[index] >= 0) {
+        index = field.next[index];
+        path.push(centre(index));
+      }
+      const stop = field.stops.get(index);
+      if (gap(path.at(-1), stop) > 0) path.push(stop);
+      return path;
+    }
     // Follow the way a few squares on and keep the farthest point that can be walked straight to.
     let best = start, index = start;
     for (let ahead = 0; ahead < rule.lookAheadCells && field.next[index] >= 0; ahead++) {
@@ -161,7 +172,11 @@ export function createBrandWays({places, around = [], grid = SOLID_GRID, reach =
     const at = centre(best);
     return {x: at.x, z: at.z, metres: gap(from, at) + field.metres[best] + Math.max(.5, reach(place) - rule.reachInsetMetres), direct: false};
   }
-  return {aim, cells: count};
+  return {
+    aim: (from, placeId) => trace(from, placeId, false),
+    path: (from, placeId) => trace(from, placeId, true),
+    cells: count,
+  };
 }
 
 // One set of ways for each job step and its solids, made when first asked for. `prepareBrandWays` makes it and the four

@@ -78,6 +78,9 @@ import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
+import {NIGHT_2_ID, night2Job} from './world/jobs/night-2.js';
+import {settleNight2} from './story/night-2-save.js';
+import {playLedgerPageTurn} from './story/ledger-ui.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
@@ -821,12 +824,20 @@ export class App {
     finishArenaEvent(this.duel,'job-quit','raiders');
     return true;
   }
-  // TRY AGAIN (results screen) and START AGAIN (pause screen): the same job starts again from its start. A job still in play is left first.
+  startNight2() {
+    if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
+    return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0,
+      job: night2Job(this.seed)});
+  }
+
+  // A job still in play is left first.
   // A gas run starts again on its road (the battle is chosen by the save, as on the wall), a notice-board job by its board name, a story job by its number.
   worldJobAgain(){
     this.leaveWorldJob();
     const definition=this.duel.state.arena?.worldJob?.definition;
     if(!definition)return false;
+    if (definition.id === NIGHT_2_ID)
+      return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0, job: definition});
     if(definition.run===true)return this.gasRun(definition.road);
     const side=sideJobKey(definition);
     if(side)return this.everburnSideJob(side);
@@ -1503,6 +1514,19 @@ export class App {
       this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return false;
     this._refreshPlayer();
     if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
+    const chapter = state.arena.worldJob?.night2;
+    if (chapter) {
+      if (!chapter.page || result.winnerId !== 'player') return false;
+      const previous = this.profile;
+      const updated = settleNight2(previous, chapter);
+      if (updated.changed) {
+        this.profile = updated.profile;
+        result.settlementSaved = this._saveShopProfile(previous);
+      }
+      result.night2SaveIssue = updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
+      playLedgerPageTurn(this.audio);
+      return result.settlementSaved;
+    }
     const previous=this.profile,settled=settleArenaResult(previous,{runId:this.runId,
       ownerPlayerId:this._runPlayerId,activePlayerId:this.player.id,
       cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,arena:state.arena});
@@ -1934,7 +1958,8 @@ export class App {
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
     const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
-      (job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
+      (job.id === NIGHT_2_ID ? this._switches().enabled('story-choices') === true :
+        job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();

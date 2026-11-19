@@ -64,6 +64,8 @@ export function talkScreen(scene, state, facts = []) {
   const line = ['lines', 'answer'].includes(state.phase) ? state.history.at(-1) : null;
   const choices = state.phase === 'options' ? options(scene, state, facts).map(({kind, option}) => ({
     kind, words: option.words, thought: option.thought ?? null, plain: plainChange(option.plain),
+    ...(option.detail ? {detail: option.detail} : {}),
+    ...(option.disabled ? {disabled: option.disabled} : {}),
   })) : [];
   return {phase: state.phase, line, history: state.history.map(publicLine), options: choices,
     thoughts: state.phase === 'thoughts' ? scene.thoughts.slice(0, state.index + 1) : [],
@@ -75,7 +77,7 @@ export function actOnTalk(scene, state, action, facts = []) {
     return {state: enter(scene, state, state.phase, state.index + 1)};
   if (state.phase !== 'options' || action?.type !== 'select' || !Number.isInteger(action.index)) return {state};
   const selected = options(scene, state, facts)[action.index];
-  if (!selected) return {state};
+  if (!selected || selected.option.disabled) return {state};
   const {kind, option} = selected;
   if (kind === 'ask') {
     const history = [...state.history, publicLine({speaker: 'you', words: option.words})];

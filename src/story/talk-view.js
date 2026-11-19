@@ -201,6 +201,11 @@ export function mountTalkView(stage, send) {
       button.type = 'button';
       const shortcut = index < 10 ? String((index + 1) % 10) + ' · ' : '';
       button.append(create('small', '', shortcut + (option.kind === 'ask' ? 'Ask' : 'Say')), doc.createTextNode(option.words));
+      if (option.detail) button.append(create('small', 'story-option-detail', option.detail));
+      if (option.disabled) {
+        button.disabled = true;
+        button.append(create('small', 'story-option-detail', option.disabled));
+      }
       button.addEventListener('click', () => choose(index));
       for (const name of ['pointerenter', 'focus']) button.addEventListener(name, () => { if (held < 0) preview(index); });
       for (const name of ['pointerleave', 'blur']) button.addEventListener(name, () => { if (held < 0 && selected === index) preview(-1); });

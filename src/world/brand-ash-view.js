@@ -29,7 +29,7 @@ export function createBrandAshView() {
   return {group, figures,
     update(worldJob, drawnShift) {
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
-      group.visible = step?.brand === true;
+      group.visible = step?.brand === true || worldJob?.night2 != null && step?.id === 'scout';
       const actors = group.visible ? (worldJob.actors ?? []).filter(actor => actor.brandAsh) : [];
       figures.update(actors, {active: group.visible, drawnShift});
       for (let index = 0; index < capacity; index++) {

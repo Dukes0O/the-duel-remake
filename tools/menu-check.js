@@ -64,6 +64,21 @@ const gateFound=document.createElement('button');gateFound.textContent='Create t
 };panel.append(gateFound);
 // For a try by hand of a later job of the Everburn: a temporary player who has found the wasteland, read Hollis's note and
 // finished the jobs before it, so the Story Wall offers that job at once.
+const night2 = document.createElement('button');
+night2.textContent = 'Create temporary player ready for Night 2';
+night2.hidden = !app.duel.featureFlags.enabled('story-choices');
+night2.onclick = () => {
+  if (app.duel.state.status !== 'menu') return;
+  let suffix = 1;
+  while (app.players.players.some(player => player.name === 'Night 2 QA ' + suffix)) suffix++;
+  if (!app.addPlayer('Night 2 QA ' + suffix).ok) return;
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
+  app._saveProfile();
+  refreshRaceSetup();
+  night2.disabled = true;
+  panel.open = false;
+};
+panel.append(night2);
 const {EMBER_JOBS}=await import('../src/story/ember-save.js');
 const {EMBER_JOB_NAMES}=await import('../src/story/ember-road.js');
 for(const index of [1,2,3]){

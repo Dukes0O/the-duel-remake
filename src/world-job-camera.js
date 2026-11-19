@@ -74,6 +74,8 @@ export function forgeHoldView(car, plan, groundAt) {
 // quick player also sees the light go; and the ending takes it to dusk in two and a half seconds, when the windows light.
 export const TOWN_EVENING = Object.freeze({perLamp: .25, endingSeconds: 2.5});
 export function townEveningAmount(state) {
+  const chapter = state?.arena?.worldJob?.night2;
+  if (chapter) return chapter.evening;
   const job = state?.arena?.mode === 'world-job' ? state.arena.worldJob?.job : null, step = job?.steps?.[job.stepIndex];
   if (!step?.brand) return 0;
   const rule = job.stepState ?? {};

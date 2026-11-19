@@ -218,6 +218,10 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
+    if (arena.worldJob?.night2) return {eyebrow: 'FIVE COLD NIGHTS',
+      title: 'STRANGERS AT THE GATE', description: 'You left Night 2 unfinished.',
+      metrics: '', extra: '', actions: action('TRY AGAIN', 'world-job-retry', true) +
+        action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
     const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
     // A notice-board job has no next job: it ends at BACK TO THE YARD.
     const candidate = won && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;

@@ -32,7 +32,7 @@ const GATE_OFFSETS = [
   [-1.07, -3.87, .11], [2.02, -4.43, -.35],
 ];
 
-export const HANDCART = Object.freeze({width:.83, length:1.18, axleAhead:1.15, wheelRadius:.34, shaftBack:-.81});
+export const HANDCART = Object.freeze({width:.83, length:1.18, axleAhead:1.15, wheelRadius:.34, shaftBack:-.81, bedHeight:.509});
 const CARTERS = new Set(['walker-1','walker-3','walker-6','walker-8']);
 
 function placeCart(person) {
@@ -59,7 +59,7 @@ const RESTING = new Set(['stand', 'sit', 'sleep']);
 
 export function createStoryPeople(placements) {
   const cast = [], ids = new Set();
-  for (const {id, position, yaw = 0, action = 'stand', path, cart} of placements) {
+  for (const {id, position, yaw = 0, action = 'stand', path, cart, seat, pace} of placements) {
     if (!Object.hasOwn(STORY_FIGURES, id) || ids.has(id))
       throw new Error('Unknown or repeated story figure: ' + id);
     if (![position?.x, position?.y, position?.z, yaw].every(Number.isFinite))
@@ -67,7 +67,7 @@ export function createStoryPeople(placements) {
     ids.add(id);
     const {height, width} = STORY_FIGURES[id];
     const radius = .4 * width * height / 1.7;
-    const person = {id, position: {...position}, height, radius, yaw, distance: 0, action: 'stand'};
+    const person = {id, position: {...position}, height, radius, yaw, distance: 0, action: 'stand', seat, pace};
     if (cart) placeCart(person);
     setStoryPersonAction(person, action, path);
     cast.push(person);
@@ -92,7 +92,7 @@ export function advanceStoryPeople(cast, dt, heightAt) {
   let moved = false;
   for (const person of cast) {
     if (!MOVING.has(person.action)) continue;
-    const speed = STORY_FIGURES[person.id].pace *
+    const speed = person.pace ?? STORY_FIGURES[person.id].pace *
       (person.action === 'run' ? 3.15 : person.action === 'push-cart' ? .72 : 1);
     let remaining = Math.max(0, dt) * speed;
     while (remaining > 0 && person.nextPoint < person.path.length) {

@@ -1,6 +1,8 @@
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
+import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2ScoutDestination} from '../../world/jobs/night-2.js';
+import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
@@ -235,14 +237,22 @@ export function initializeWorldJob(duel, definition) {
     state.s=pose.s;state.lateral=pose.lateral;state.prevS=pose.s;state.prevLateral=pose.lateral;
     state.speedMph=0;state.headingError=0;state.townGatePrompt='';
   }
-  initializeBellowsFootStart(duel, definition.steps[0]);
+  initializeWorldFootStart(duel, definition.steps[0]?.footStart ?? definition.steps[0]?.bellowsFootStart);
+  if (definition.id === NIGHT_2_ID) {
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setBrandLamps(NIGHT_2_SITES.lamps);
+    worldJob.tinTownGateProgress = 1;
+    worldJob.solidGrid.setTownGate(NIGHT_2_SITES.gate, 1);
+    worldJob.night2 = createNight2(definition, duel.course.solidGrid);
+    enterNight2(duel, worldJob);
+  }
   return true;
 }
 
 // Only this job starts away from its parked car. The existing fighter checks
 // ground and solids and owns walking, weapons, knockdowns and getting back in.
-function initializeBellowsFootStart(duel, step) {
-  const start = step?.bellowsFootStart, state = duel.state;
+function initializeWorldFootStart(duel, start) {
+  const state = duel.state;
   if (!start) return;
   const pose = duel.course.nearest(start.x, start.z);
   const fighter = createFighter(duel.course, state, {...pose, yaw:start.heading});
@@ -314,7 +324,7 @@ export function prepareWorldJobControls(duel) {
 }
 
 function syncJobCarSolids(worldJob) {
-  if (worldJob.definition.id !== 'everburn-hot-delivery' && !worldJob.job.steps[worldJob.job.stepIndex]?.bellows && !worldJob.job.steps[worldJob.job.stepIndex]?.gasLoad) return;
+  if (!worldJob.night2 && worldJob.definition.id !== 'everburn-hot-delivery' && !worldJob.job.steps[worldJob.job.stepIndex]?.bellows && !worldJob.job.steps[worldJob.job.stepIndex]?.gasLoad) return;
   worldJob.solidGrid?.setCars(worldJob.actors.filter(actor => actor.renderCar && actor.position));
 }
 
@@ -1405,6 +1415,42 @@ export function moveJobRaiders(duel, worldJob, dt) {
   }
 }
 
+function night2Cue(duel, cue) {
+  duel.emit({arenaTell: {id: cue, targetId: 'player', seconds: 0, cue}});
+}
+
+function enterNight2(duel, worldJob) {
+  const {stand, scout, riders = []} = enterNight2Step(worldJob);
+  if (stand) {
+    const fighter = duel.state.fighter;
+    if (!duel.state.onFoot || !fighter) initializeWorldFootStart(duel, stand);
+    else {
+      const pose = duel.course.nearest(stand.x, stand.z);
+      Object.assign(fighter, stand, {s: pose.s, lateral: pose.lateral, groundY: stand.y,
+        airHeight: 0, verticalSpeed: 0, speed: 0});
+      if (Number.isFinite(stand.heading)) fighter.yaw = stand.heading;
+    }
+  }
+  if (scout) {
+    applyBrandRequest(duel, worldJob, {type: 'spawnBrandAsh', ...NIGHT_2_SCOUT});
+    const actor = worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id);
+    actor.approachSpeed = 2.4;
+  }
+  for (const actor of riders) updateJobActor(duel, worldJob, actor, 0);
+  if (!riders.length) worldJob.actors = worldJob.actors.filter(actor => !actor.id.startsWith('wash-rider-'));
+  syncJobCarSolids(worldJob);
+  if (!scout) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
+  if (worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'talk') {
+    worldJob.marker = null;
+    duel.state.arena.markers = [];
+  }
+}
+
+function routeWorldNight2(duel, worldJob, previous, next) {
+  if (worldJob.night2 && next.stepIndex !== previous)
+    routeNight2(worldJob, previous, next, cue => night2Cue(duel, cue));
+}
+
 function finishWorldJob(duel, worldJob) {
   const state = duel.state;
   worldJob.settled = true;
@@ -1427,16 +1473,22 @@ export function stepWorldJob(duel, dt) {
     const before = worldJob.job.stepState.talk;
     const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
     worldJob.talkAction = null;
+    routeWorldNight2(duel, worldJob, previousStep, next);
     worldJob.job = next;
     if (!before) duel.emit({talkOpened: true});
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
     if (chosen) duel.emit({storyChoice: chosen});
-    if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
+    if (next.stepIndex !== previousStep) {
+      if (worldJob.night2) enterNight2(duel, worldJob);
+      applyStepLoan(duel, worldJob);
+    }
     const changed = !before || chosen || before.phase !== screen?.phase || before.index !== next.stepState.talk?.index;
     if (changed) {
       const cue = chosen ? 'story.talk.choose' : screen?.line ? 'story.talk.line' : screen?.phase === 'thoughts' ? 'story.thought' : null;
+      const sceneCue = talkStep.scene.lines?.find(line => line.words === screen?.line?.words)?.cue;
+      if (sceneCue) night2Cue(duel, sceneCue);
       if (screen?.line?.radio) duel.emit({talkRadio: true});
       else if (cue) duel.emit({arenaTell: {id: 'story-talk', targetId: 'player', seconds: 0, cue}});
     }
@@ -1656,7 +1708,15 @@ export function stepWorldJob(duel, dt) {
     duel._storyCallout('Cold mist lies in the hollows. Steer round it.', 3);
   }
   const carriedCar = position(duel, state);
+  if (worldJob.night2 && currentStep?.id === 'scout') {
+    const fire = brandCombatView(state, worldJob);
+    const burning = fire.handFlamerHits.includes(NIGHT_2_SCOUT.id);
+    const place = night2ScoutDestination(worldJob, burning);
+    applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: NIGHT_2_SCOUT.id, place});
+    if (burning) worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id).approachSpeed = 4.5;
+  }
   const view = {player: playerView, onFoot: !!state.onFoot,
+    ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot)} : {}),
     ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],
       playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
         (state.combat?.flameBursts ?? []).some(burst => burst.ownerId === 'player')} : {}),
@@ -1679,6 +1739,7 @@ export function stepWorldJob(duel, dt) {
   const previousStepState = worldJob.job.stepState;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.gasCarContacts = [];
+  routeWorldNight2(duel, worldJob, previousStep, next);
   worldJob.job = next;
   if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
@@ -1699,7 +1760,10 @@ export function stepWorldJob(duel, dt) {
     // EVERBURN-PLAY-FIXES: when a defence ends the raiders still standing are removed, so none is left piled at the well.
     if (currentStep?.kind === 'defend') removeWaveRaiders(duel, worldJob, previousStep);
   }
-  if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
+  if (next.stepIndex !== previousStep) {
+    if (worldJob.night2) enterNight2(duel, worldJob);
+    applyStepLoan(duel, worldJob);
+  }
   for (const event of next.events) {
     if (currentStep?.gasLoad && event.type === 'gasRaid') duel.emit({arenaTell:{id:event.id, cue:'world.ashmen.horn',
       seconds:0, position:currentStep.gasRaids.find(raid => raid.id === event.id)?.place.position}});

@@ -112,7 +112,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
 
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0 }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = false }) {
       if (stopped) return;
       if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
@@ -123,7 +123,9 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
       let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
       if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, trialLight || course.def.light);
       const daySettings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
-      const settings = eveningAmount > 0 && !pathSample && !tunnel ? eveningOver(daySettings, eveningAmount, theme) : daySettings;
+      const chapterNight = storyNight && !pathSample && !tunnel;
+      const settings = chapterNight ? lightPathLook('night', theme)
+        : eveningAmount > 0 && !pathSample && !tunnel ? eveningOver(daySettings, eveningAmount, theme) : daySettings;
       host.dataset.evening = eveningAmount > 0 ? eveningAmount.toFixed(2) : '0';
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {
@@ -185,11 +187,15 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
       }
       host.dataset.theme = theme;
       host.dataset.tunnel = String(tunnel);
-      host.dataset.lightingMood = pathSample ? 'light-path' : night ? 'night' : mood || 'clear';
+      host.dataset.lightingMood = pathSample ? 'light-path' : night || chapterNight ? 'night' : mood || 'clear';
       if (pathSample) {
         uniforms.stars.value = settings.stars;uniforms.moon.value = settings.moon;
         host.dataset.lightPath = 'true';host.dataset.nightAmount = String(settings.nightAmount);
       } else {
+        if (chapterNight || uniforms.stars.value || uniforms.moon.value) {
+          uniforms.stars.value = chapterNight ? settings.stars : 0;
+          uniforms.moon.value = chapterNight ? settings.moon : 0;
+        }
         delete host.dataset.lightPath;delete host.dataset.nightAmount;
       }
     },

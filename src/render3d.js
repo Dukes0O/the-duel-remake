@@ -845,7 +845,7 @@ export function attachRenderer(host, app) {
     // WATER-SCREENS: the water works show the Water Road's progress (null while the story is off: nothing loads).
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
-        winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
+        winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st), chapterNight: !menu && st.arena?.worldJob?.night2?.night,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});
@@ -1057,6 +1057,7 @@ export function attachRenderer(host, app) {
       firstPersonView = false;
     }
     const talk = townStep?.kind === 'talk' && st.status === 'racing' && !st.paused ? townJob.stepState.screen : null;
+    const tower = st.arena?.worldJob?.night2?.camera;
     let head = null;
     if (talk) {
       const lastSpeaker = talk.history.findLast(line => !line.radio && line.speaker !== 'you')?.speaker;
@@ -1070,6 +1071,13 @@ export function attachRenderer(host, app) {
         firstPersonView = false;
         player.visible = true;
       }
+    }
+    if (talk && tower) {
+      camera.position.copy(tower.position);
+      lookTarget.copy(tower.target);
+      camera.fov = tower.fov;
+      firstPersonView = false;
+      player.visible = false;
     }
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
@@ -1085,7 +1093,7 @@ export function attachRenderer(host, app) {
     if (talk) {
       camera.updateMatrixWorld();
       let projected = null;
-      if (head && talk.line && !talk.line.radio) {
+      if (head && !tower && talk.line && !talk.line.radio) {
         if (talk.line.speaker === 'you') {
           talkProjection.copy(st.onFoot && st.fighter ? st.fighter : player.position);
           talkProjection.y += st.onFoot ? 1.65 : 1.1;

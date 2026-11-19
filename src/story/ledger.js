@@ -179,7 +179,8 @@ function extraHeatTonight(ledger) {
 export function bankHearth(ledger) {
   const night = ledger.night;
   const choiceId = 'bank/' + night;
-  const burned = Math.min(ledger.stocks.embers, extraHeatTonight(ledger) ? 2 : 1);
+  const needed = extraHeatTonight(ledger) ? 2 : 1;
+  const burned = Math.min(ledger.stocks.embers, needed);
   const next = structuredClone(ledger);
   const changes = [];
   if (burned) {
@@ -191,7 +192,7 @@ export function bankHearth(ledger) {
   changes.push({type: 'night', key: 'night', before: night, after: next.night, choiceId, night});
   next.history.push(...changes);
   const due = next.obligations.filter(item => item.type === 'promise' && item.due === night);
-  return {ledger: next, changes, burned, due};
+  return {ledger: next, changes, burned, needed, due};
 }
 
 export function ledgerPageData(ledger) {

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {BRAND_RULE} from './jobs/brand-rule.js';
+import {NIGHT_2_SITES} from './jobs/night-2-sites.js';
 import {createTownLamp} from './town-lamp-look.js';
 
 // `surface` is the scrap surface the scene already has (or a function that answers it), so that three lamps do not
@@ -48,9 +49,10 @@ export function createBrandLamps({surface = null} = {}) {
   return {group,
     update(worldJob) {
       const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-      group.visible = step?.brand === true || step?.gasLoad === true;
+      const chapter = worldJob?.night2;
+      group.visible = Boolean(chapter || step?.brand || step?.gasLoad);
       if (!group.visible) return;
-      const sites = step.gasLoad ? step.gasLamps : step.places;
+      const sites = chapter ? NIGHT_2_SITES.lamps : step.gasLoad ? step.gasLamps : step.places;
       if (places !== sites) {
         clear();
         places = sites;
@@ -86,12 +88,12 @@ export function createBrandLamps({surface = null} = {}) {
         });
       }
       for (const lamp of lamps) {
-        lamp.lit = step.gasLoad || worldJob.job.stepState.lamps?.[lamp.id] === true;
-        lamp.brightness = step.gasLoad ? GAS_LOAD_RULE.lampBeforeGasShare + (1 - GAS_LOAD_RULE.lampBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : 1;
+        lamp.lit = step?.gasLoad || chapter?.lamps[lamp.id] || worldJob.job.stepState.lamps?.[lamp.id] === true;
+        lamp.brightness = step?.gasLoad ? GAS_LOAD_RULE.lampBeforeGasShare + (1 - GAS_LOAD_RULE.lampBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : 1;
         lamp.look.setLit(lamp.lit, seconds, lamp.brightness);
         lamp.glow.intensity = lamp.lit ? 10 * lamp.brightness : 0;
         lamp.halo.visible = lamp.lit;
-        lamp.ring.visible = step.brand === true && !lamp.lit && worldJob.job.stepState.brandSeconds > 0 && !worldJob.job.stepState.townEnding;
+        lamp.ring.visible = step?.brand === true && (!chapter || step.places.some(place => place.id === lamp.id)) && !lamp.lit && worldJob.job.stepState.brandSeconds > 0 && !worldJob.job.stepState.townEnding;
         lamp.halo.material.opacity = lamp.lit ? BRAND_LAMP_GLOW.opacity * lamp.brightness : 0;
       }
     },
