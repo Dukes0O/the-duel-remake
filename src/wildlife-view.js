@@ -120,6 +120,10 @@ export function calendarPlayDay(date = new Date()) {
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
 }
 
+// The day the animals are planned for: the calendar day, unless a browser check has fixed one
+// (`globalThis.__qaWildlifeDay`, a whole number), so that its herds stand in the same places every day.
+export const viewPlayDay = () => Number.isInteger(globalThis.__qaWildlifeDay) ? globalThis.__qaWildlifeDay : calendarPlayDay();
+
 // ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
@@ -141,7 +145,7 @@ function disposeModel(scene) {
 // options: scene (the parent the animals' group joins), host (an element that
 // shows the view's state in data-wildlife, for the browser checks), loadModel(url)
 // -> a glTF (tests give their own), playDay() -> a whole number.
-export function createWildlifeView({scene, host = null, loadModel = defaultLoad, playDay = calendarPlayDay} = {}) {
+export function createWildlifeView({scene, host = null, loadModel = defaultLoad, playDay = viewPlayDay} = {}) {
   const group = new THREE.Group();
   group.name = 'Wildlife';
   group.visible = false;

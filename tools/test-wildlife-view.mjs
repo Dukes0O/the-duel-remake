@@ -6,13 +6,14 @@
 // Memory-only: no save is read or written. The look itself is a browser check.
 import assert from 'node:assert/strict';
 import {existsSync, readFileSync, readdirSync, statSync} from 'node:fs';
+import * as THREE from 'three';
 import * as wildlife from '../src/wildlife.js';
 import {
   WILDLIFE_MODELS, APPROVED_MODEL_IDS, WILDLIFE_MODEL_DIR, wildlifeModelUrl,
 } from '../src/wildlife-models.js';
 import {
   WILDLIFE_VIEW, IDLE, FLEE, FLY, GONE, startleReach, nextMood, fleeLength, fadeAlpha, pickNearest, turnToward, yawToward, birdFlight,
-  calendarPlayDay, ringLook,
+  calendarPlayDay, ringLook, viewPlayDay, createWildlifeView,
 } from '../src/wildlife-view.js';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
@@ -258,6 +259,54 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   ok(/planRace\(course, raceNumber, today\);[\s\S]{0,240}clearEntities\('count'\); countIndex\.clear\(\); countKey = null;/.test(view),
     'a new plan (leaving the helicopter, another course) clears the count animals, so none stand in a race');
   ok(/open: true/.test(readFileSync(new URL('../src/app.js', import.meta.url), 'utf8')), 'the app asks for open ground when it places the count');
+}
+
+// ---- The herds of 19 November 2026, driven past by a car (QA-NIGHT-19-NOV) ------------------
+// The browser check of the animals failed on that day with "Nothing ran". The game was not at fault: its sweep to find a
+// herd had already startled this one, and a herd that has run into cover is out of reach of a car on the middle of the
+// road. Here the real view runs without graphics (a plain box for every animal) on the day's own herds.
+{
+  const TODAY = 20776;
+  equal(calendarPlayDay(new Date(2026, 10, 19, 12, 0)), TODAY, '19 November 2026 is play day 20776');
+  equal(viewPlayDay(), calendarPlayDay(), 'with nothing fixed the view plans for the calendar day');
+  globalThis.__qaWildlifeDay = 12345; equal(viewPlayDay(), 12345, 'a browser check can fix the day');
+  globalThis.__qaWildlifeDay = 'x'; equal(viewPlayDay(), calendarPlayDay(), 'only a whole number fixes it');
+  delete globalThis.__qaWildlifeDay;
+  const definition = COURSE.find(row => row.id === 'tremblant-woods'), course = new Course(definition, definition.layoutSeed ?? 1989);
+  const clips = new Set(Object.values(WILDLIFE_MODELS).flatMap(entry => [entry.idle, entry.move, entry.fly].filter(Boolean)));
+  const loadModel = async () => {
+    const scene = new THREE.Group(); scene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial()));
+    return {scene, animations: [...clips].map(name => new THREE.AnimationClip(name, 1, []))};
+  };
+  const pause = ms => new Promise(done => setTimeout(done, ms));
+  const placed = wildlife.placeWildlife({courseId: 'tremblant-woods', playDay: TODAY, raceNumber: 1, course, approvedModels: APPROVED_MODEL_IDS,
+    referenceLap: referenceLap('tremblant-woods', 'fixed') ?? referenceLap('tremblant-woods', 'route_a')});
+  const herd = placed.spots.map(spot => ({spot, at: course.nearest(spot.animals[0].x, spot.animals[0].z)})).sort((p, q) => q.spot.animals.length - p.spot.animals.length)[0];
+  ok(herd.spot.animals.length >= 2 && Math.abs(herd.at.lateral) > 20 && Math.abs(herd.at.lateral) < 35, `the day's herd stands 20 to 35 m from the middle of the road (lateral ${herd.at.lateral.toFixed(1)}, ${herd.spot.animals.length} animals)`);
+
+  const view = createWildlifeView({scene: new THREE.Scene(), loadModel, playDay: () => TODAY});
+  const player = {position: new THREE.Vector3(), visible: true};
+  const frame = (s, lateral, dt = 1 / 60) => {
+    const at = course.worldAt(s, lateral); player.position.set(at.x, at.y ?? 0, at.z);
+    view.update({enabled: true, hidden: false, course, runId: 'qa', dt, worldVisible: true, heli: null, player, rival: null, extras: [], traffic: []});
+  };
+  const animals = () => { const rows = []; view.group.traverse(node => { if (node.parent?.parent === view.group && node.visible) rows.push({x: node.position.x, z: node.position.z}); }); return rows; };
+  const nearest = (row, list) => list.reduce((best, other) => Math.min(best, Math.hypot(row.x - other.x, row.z - other.z)), Infinity);
+  // A car at the pace of 38 m a second down the middle of the road, 1/60 s a frame, from `from` to `to`, then standing for `settle` frames.
+  const drive = (from, to, settle = 300) => { for (let s = from; s < to; s += 38 / 60) frame(s, 0); for (let i = 0; i < settle; i++) frame(to, 0); };
+  frame(herd.at.s - 300, 0); await pause(30); frame(herd.at.s - 300, 0);
+  drive(herd.at.s - 300, herd.at.s - 100, 0);
+  const idle = animals();
+  ok(herd.spot.animals.every(animal => nearest(animal, idle) < 1.5), 'the herd is drawn where the rules put it, standing');
+  drive(herd.at.s - 100, herd.at.s + 30);
+  const ran = animals();
+  ok(herd.spot.animals.every(animal => nearest(animal, ran) >= 4) && ran.length === idle.length, 'a car passing 26 to 34 m from the herd sends every animal running');
+  const ranTo = ran.map(row => course.nearest(row.x, row.z));
+  ok(ranTo.every(row => Math.abs(row.lateral) > 35), `into cover, beyond the 35 m a car on the middle of the road reaches (laterals ${ranTo.map(row => row.lateral.toFixed(1)).join(', ')})`);
+  // The cause of the failure: a herd that has already run is not startled again by the next car down the middle.
+  drive(herd.at.s - 140, herd.at.s + 30);
+  same(animals(), ran, 'a second car down the middle of the road leaves the herd where it ran to');
+  view.dispose();
 }
 
 // ---- Drawing never reaches into the race ---------------------------------------
