@@ -138,7 +138,7 @@ export const pageFunctions = {
     const buttons = [...document.querySelectorAll('.story-talk[data-scene="tower"] .story-options button')];
     if (buttons.length !== (washFight ? 3 : 2) || buttons.some(button => button.disabled) ||
         !buttons[0].textContent.includes('Rell will probably turn Clinker down.') ||
-        !buttons.at(-1).textContent.includes('Carry one ember out to them') ||
+        !buttons.at(-1).textContent.includes('Carry one ember out to the Walkers') ||
         washFight && !buttons[1].textContent.includes('Drive out and run the riders off'))
       throw Error('The tower is missing an available branch or the Watch hint.');
     return true;
@@ -268,7 +268,7 @@ export async function run(context) {
     }
     await click('yard-cards');
     await click('story-night-2');
-    await advance('hearth', 4);
+    await advance('hearth', 6);
     await wait('step', 'walk-to-gate');
     await evaluate('at', sites.gateTalk);
     await wait('step', 'gate', 'lines');
@@ -290,7 +290,7 @@ export async function run(context) {
   await context.screenshot('night-2-at-the-gate');
   await gateOptions();
   await context.screenshot('night-2-prices');
-  await evaluate('choose', 'Take one. No terms.');
+  await evaluate('choose', "You don't owe us anything for it.");
   await advance('gift', 4);
   await advance('theft', 1);
   await wait('step', 'reach-store');
@@ -305,7 +305,7 @@ export async function run(context) {
 
   await reachGate();
   await gateOptions();
-  await evaluate('choose', "for two nights' watch");
+  await evaluate('choose', 'keep watch on our fence for two nights');
   await advance('watch', 4);
   await wait('step', 'walk-watch-post');
   await evaluate('at', sites.watchPost);
@@ -332,8 +332,9 @@ export async function run(context) {
     await wait('step', 'refuse', 'options');
     await evaluate('choose', 'Say nothing');
     await advance('tower', 1);
+    await advanceNight2Dialogue(context, 'tower', 'thoughts', 1);
     await wait('step', 'tower', 'options');
-    await evaluate('choose', 'Watch');
+    await evaluate('choose', 'Stay on the tower and watch');
     await advanceNight2Dialogue(context, 'tower-outcome', 'thoughts', 1);
     if (holdEnter) {
       await context.waitFor(pageSource('renderedTurn', 'close', 'lines'), 'closing line', 90000);
@@ -380,7 +381,7 @@ export async function run(context) {
 
   await reachGate();
   await gateOptions();
-  await evaluate('choose', 'Come inside.');
+  await evaluate('choose', 'come inside and share our fire');
   await advance('inside', 5);
   await advance('lamp', 1);
   await wait('step', 'light-pump');
@@ -404,12 +405,13 @@ export async function run(context) {
   await evaluate('choose', "I can't.");
   await advance('refuse', 4);
   await wait('step', 'refuse', 'options');
-  await evaluate('choose', 'The Dead Mall has a roof.');
+  await evaluate('choose', 'The Dead Mall still has a roof.');
   await advance('tell-mall', 1);
   await wait('step', 'tower', 'lines');
   await wait('towerLights');
   await context.screenshot('night-2-tower');
   await advance('tower', 1);
+  await advanceNight2Dialogue(context, 'tower', 'thoughts', 1);
   await wait('step', 'tower', 'options');
   await evaluate('towerOptions', true);
   await evaluate('choose', 'Drive out and run the riders off');

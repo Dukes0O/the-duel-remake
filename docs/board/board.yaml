@@ -548,16 +548,6 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-NIGHT-18-NOV.md"
 
-  - id: STORY-DIALOGUE-PLAIN
-    title: "Every story line in plain, complete sentences, and an opening that explains the embers (Kyle, 19 November)"
-    owner: "claude"
-    lane: "DOCS"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/STORY-DIALOGUE-PLAIN.md"
-
   - id: STORY-NIGHT-2-FLOW
     title: "Night 2 from Kyle's try: Esc frees the mouse without pausing, breath that reads, no return to the yard at the end of the night"
     owner: "codex"
