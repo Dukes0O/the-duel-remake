@@ -17,6 +17,22 @@ export const TOWN_CAPTIONS = Object.freeze({
   'town.3.nothing': caption('Odessa', 'Chapter 3', "We've nothing to build with. There's a whole graveyard of airliners out in the Boneyard, and a flatbed in the truck bay. It'd do you good to get out of that chair."),
   'town.3.load': caption('Odessa', 'Driving back', "Slowly. That's a month's work on the back of that truck."),
   'town.3.won': caption('Odessa', 'Unloaded', 'Now that\'s a pile of scrap I can respect.'),
+  // TOWN-HAUL-JOB: the haul's own lines (docs/board/cards/TOWN-HAUL-JOB.md). One plain job each.
+  'town.haul.go': caption('Odessa', 'Setting out for the Boneyard', "Take the Boneyard Road past the halfway camp. My gang is cutting up the old airliners out there, and they'll load whatever you have room for."),
+  'town.haul.pile': caption('Odessa', 'At the pile', "Stop there and hold still. Every piece they lift on makes the truck heavier and the stack wobblier, so drive off when you think you have enough."),
+  'town.haul.back': caption('Odessa', 'Back at the pile', "Back again? Hold still and they'll load you up."),
+  'town.haul.full': caption('Odessa', 'The bed is full', "That's all the flatbed will take. Off you go, and take the bends gently."),
+  'town.haul.shed': caption('Odessa', 'The first piece falls off', "You've lost a piece off the back. Whatever falls off stays out there, so go easy over the bumps."),
+  'town.haul.empty': caption('Odessa', 'Everything has fallen off', "The bed's empty, so there's nothing to bring home. Go back to the pile and they'll load you again."),
+  'town.haul.drop': caption('Odessa', 'At the drop', "Stop there and hold still while we take it off."),
+  'town.haul.won': caption('Odessa', 'A salvage run unloaded', "That all goes on the pile. This town will find a use for every last kilo of it."),
+  'town.steel.go': caption('Odessa', 'Setting out for Tin Town', "A site has stopped because it's short of steel, and Tin Town has a stack of it. Take the flatbed along the East Road and over the Girder Bridge."),
+  'town.steel.pile': caption('Odessa', "At Tin Town's steel", "Stop by the steel and hold still. Steel is heavy, so you'll feel every piece they put on."),
+  'town.steel.load': caption('Odessa', 'Driving back with steel', "Steel doesn't bounce, it slides. Brake early and you'll keep it."),
+  'town.steel.won': caption('Odessa', 'Steel unloaded', "That's the site moving again. Thank you for not dropping any more of it than you did."),
+  'town.haul.card.run': caption('Odessa', 'The salvage run, on the mission card', "The gang has cut more off the airliners at the Boneyard. Bring it home whenever the flatbed is free."),
+  'town.steel.card': caption('Odessa', 'The steel run, on the mission card', "A building site has stopped because it ran out of steel. Tin Town has a stack of it, and the flatbed can bring it home."),
+  'town.radio.report': caption('Hollis', 'Serious news from the town while you drive', "News from town. {report}"),
   'town.4.soup': caption('Odessa', 'Chapter 4', 'They have water, so now they want dinner. People are like that. Build a soup kitchen.'),
   'town.4.homes': caption('Odessa', 'Soup built', "Paint some ground for homes and they'll put up their own. You don't build houses. You build reasons to stay."),
   'town.5.smell': caption('Odessa', 'Chapter 5', "You smell that? That is a lot of people and no plan. Build a latrine, downhill and well away from the well. I'll explain why if you make me."),
@@ -103,5 +119,6 @@ export function townCaptionText(id, town = {}) {
     if (age !== null) text=TOWN_CAPTIONS[age<18?'town.bo.16':'town.bo.grown'].text;
   }
   const year = BigInt(town?.calendar?.year ?? 1);
-  return text.replaceAll('{founders}', founderNames(town)).replaceAll('{aground}', numberWords(30n + year));
+  return text.replaceAll('{founders}', founderNames(town)).replaceAll('{aground}', numberWords(30n + year))
+    .replaceAll('{report}', typeof town?.radioReport === 'string' ? town.radioReport : 'Something needs you back home.');
 }
