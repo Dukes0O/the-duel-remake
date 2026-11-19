@@ -18,3 +18,8 @@ Claude (cloud), 19 November 2026. Each item is carried on with the pick shown; s
    job data's -2 m (the Scablands is not yet released, `docs/WASTELAND_TOWN.md` section 15), so each deck stands 6 m up.
 5. **Bare numbers.** The job places are bare yard-frame numbers, where Scablands rules ask for `land.at(...)`. **Pick:** leave them
    for SHIPS-JOBS, which owns the job file, and move the plate table with them when it does.
+6. **Garage cars or trucks in `vehicle`.** The Gatehouse's field names garage cars (`oneOf:['titan_monster','dusthawk_rally']`), while
+   TOWN-VEHICLES reads `job.vehicle` as a work-truck id. **Pick:** both shapes in one field: a work-truck id (or `{id, loadKg, tankL}`)
+   stays TOWN-VEHICLES's; `{oneOf, lendIfNone}` picks a garage car in `_startArenaFight` (`src/app.js`, one small hook), and
+   `lendIfNone` may name a work truck too. The Ships captions are not registered yet; SHIPS-JOBS registers them with its job file,
+   and the test registers them the same way.

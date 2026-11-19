@@ -6,6 +6,8 @@
 
 **Changed assertions:** none.
 
-**Owed:** the job-level `vehicle` field (`lendIfNone`, `src/world/jobs/job-vehicle.js`), after TOWN-VEHICLES merges. **For Claude:** `tools/scenarios/ships-decks.mjs` and the questions in `docs/board/questions/SHIPS-DECKS.md`.
+**Vehicle field** (after TOWN-VEHICLES). `src/world/jobs/job-vehicle.js`: a work-vehicle id still goes to TOWN-VEHICLES; `{oneOf, lendIfNone, lendLineId}` drives the player's chosen car if listed, else the first listed car they own, else lends `lendIfNone` for that run and says `lendLineId`. `src/app.js` takes the car from it in `_startArenaFight` (behind `wasteland-town`); the mode says the line. `tools/test-job-vehicle.mjs`: the choice rules, and a real App drive of the Gatehouse in a lent Titan with memory-only storage, where the saved profile is byte-identical during the drive and unchanged after the win but for the job's scrap. The loan line plays with the story caption's own radio click.
+
+**For Claude:** `tools/scenarios/ships-decks.mjs` and the questions in `docs/board/questions/SHIPS-DECKS.md`.
 
 **Removed:** nothing; this card replaces nothing.
