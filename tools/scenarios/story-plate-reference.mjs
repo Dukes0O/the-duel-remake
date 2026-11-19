@@ -1,4 +1,5 @@
 // Part 1 art evidence only. Capture the played-world view at the Blender camera.
+import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {pageSource as peoplePage} from './story-people.mjs';
@@ -62,7 +63,17 @@ export function pageSource(name,...args) {
   return '('+expressions[name].toString()+')('+args.map(JSON.stringify).join(',')+')';
 }
 export async function run(context) {
-  const data=JSON.parse(await readFile(join(context.outputDir,'camera-and-cast.json'),'utf8'));
+  const pose=new URL('../art/story-plates/night-2-pose.json',import.meta.url);
+  const data=JSON.parse(await readFile(pose,'utf8'));
+  // The full browser suite gives each scenario a fresh directory. A laptop
+  // assembling the sheet may instead have just staged this same camera and cast.
+  try {
+    const staged=JSON.parse(await readFile(join(context.outputDir,'camera-and-cast.json'),'utf8'));
+    for (const [key,expected] of Object.entries(data))
+      assert.deepEqual(staged[key],expected,'The staged Night 2 view disagrees with the approved '+key+'.');
+  } catch (error) {
+    if (error.code!=='ENOENT') throw error;
+  }
   const fixture=referenceJob(data);
   await context.command('Emulation.setDeviceMetricsOverride',{width:data.width,height:data.height,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,story-choices,warlord-cards&harness=story-plate-reference');

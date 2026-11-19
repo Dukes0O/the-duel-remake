@@ -1,11 +1,41 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import * as suite from './run-browser-scenarios.mjs';
 
 const root = resolve('browser runner mock project');
 const archive = resolve(suite.PROJECT_ROOT ?? root, '.evidence', 'FAC-07-pure');
 const turn = () => new Promise(setImmediate);
+
+test('Night 2 captures the approved pose in a fresh or pre-staged scenario directory', async () => {
+  const {run}=await import('./scenarios/story-plate-reference.mjs');
+  const approved=JSON.parse(await readFile(new URL('./art/story-plates/night-2-pose.json',import.meta.url),'utf8'));
+  const outputDir=await mkdtemp(join(tmpdir(),'duel-night-two-'));
+  const stagedFile=join(outputDir,'camera-and-cast.json');
+  const reachedDraw=new Error('Reached the native screenshot command');
+  async function trace() {
+    const calls=[];
+    await assert.rejects(run({outputDir,
+      command:(name,options)=>calls.push([name,options]),
+      navigate:url=>calls.push(url), waitFor:source=>calls.push(source),
+      evaluate:source=>{
+        new Function('return '+source);
+        calls.push(source);
+        if (source.includes('canvas.toDataURL')) throw reachedDraw;
+      }}), error=>error===reachedDraw);
+    return calls;
+  }
+  try {
+    const fresh=await trace();
+    assert.equal(fresh[0][0],'Emulation.setDeviceMetricsOverride');
+    await writeFile(stagedFile,JSON.stringify({...approved,ids:['offline object IDs']}));
+    assert.deepEqual(await trace(),fresh);
+    await writeFile(stagedFile,JSON.stringify({...approved,camera:{...approved.camera,far:9000}}));
+    await assert.rejects(run({outputDir}),/disagrees with the approved camera/);
+  } finally { await rm(outputDir,{recursive:true,force:true}); }
+});
 
 function fixture(names, overrides = {}) {
   const calls = [], reports = new Map(), rows = [];

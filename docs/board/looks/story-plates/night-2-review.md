@@ -20,6 +20,8 @@ The sheet overlays 32% Blender on the painting. Cyan traces IDs from the same Cy
 
 From the repository root, run these commands with Blender 4.5 with OpenImageDenoise, Node, and Python with NumPy and Pillow. The harness uses an isolated QA tab. It takes the game's own composer output at the staged eye, aim and lens and writes `laptop.png` at 1920 × 1080.
 
+The full browser suite can also run `story-plate-reference` in an empty output directory. It reads the approved camera, eleven placements and four cart axles from the branch. When a freshly staged manifest is present, the scenario verifies those same values before drawing. [Approved pose](../../../../tools/art/story-plates/night-2-pose.json)
+
 ```sh
 node tools/art/story-plates/night-2-stage.mjs .evidence/night-2-look
 blender -b -t 4 --python-exit-code 1 --python tools/art/story-plates/night-2-render.py -- .evidence/night-2-look

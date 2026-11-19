@@ -51,7 +51,10 @@ const aim = {x:gate.x,y:eye.y+(6+9.4)*Math.tan(8.4*Math.PI/180),z:gate.z+6};
 const tableau = {width:1920,height:1080,gateWorld:origin.toArray(),
   camera:{eye:local(eye),aim:local(aim),verticalFov:48,eyeHeight:1.62,near:.15,far:2400},
   people:cast.map(p=>({id:p.id,action:p.action,yaw:p.yaw,position:local(p.position)})),
-  carts:carters.map(p=>({owner:p.id,yaw:p.cart.yaw,axle:local({x:p.cart.x,y:p.cart.y,z:p.cart.z})})), ids};
+  carts:carters.map(p=>({owner:p.id,yaw:p.cart.yaw,axle:local({x:p.cart.x,y:p.cart.y,z:p.cart.z})}))};
+const approved=JSON.parse(await readFile(new URL('./night-2-pose.json',import.meta.url),'utf8'));
+assert.deepEqual(tableau,approved,'The staged view disagrees with the approved Night 2 camera or cast.');
+tableau.ids=ids;
 const toMaterials = new Map();
 async function loadAsset(url) {
   const bytes = await readFile(new URL('../../../public'+url,import.meta.url));
