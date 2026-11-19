@@ -1,6 +1,8 @@
 // LAB-CLASSROOM-STRENGTH: the Strength against weight classroom played by keyboard (and one mouse click on the rack),
 // from the Lab map's click-to-go to the bending rig, through Brian's job with Show me, to the pass and the Heavy hook
 // for sale in the Lab shop. Memory-only saves. lab-view plays the same lesson through `playThrough`.
+// The formula panel starts closed; the lesson opens it with F at its first formulas.
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
 
@@ -26,6 +28,7 @@ export async function playThrough(c, shot = async () => {}) {
   // Strength: ↑ hangs 10 kg at a time on the steel bar; 20 kg bends it for good.
   // Density: 1 and 3 show the 1 kg bar in the other two materials, and the sum follows the key.
   await at('word-density'); await shot('word-density');
+  await openFormulaPanel(c);
   await press('Digit1'); await saying('Aluminium has a density', 'aluminium says its density'); await shot('word-density-aluminium');
   await press('Digit3'); await at('word-density', 's.ready'); await wait(300); await shot('word-density-done');
   if (!(await worked('31.25 mm'))) throw Error('The density sum did not follow the key.');

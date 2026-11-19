@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-FUEL: the Fuel and weight classroom played by keyboard (and one mouse click on the tap), from the Lab
 // map's click-to-go to the wind tunnel, through Brian's job, to the pass and the Fuel load row open on the Tune page.
 // Memory-only saves.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html');
@@ -35,7 +36,7 @@ export async function run(c) {
   await wait(5000); await shot('wonder-racing'); await at('wonder', 's.ready'); await shot('wonder');
   await next('wonder');
   // The litre comes first, because the fuel load is measured in litres.
-  await at('word-litre'); await shot('word-litre'); await press('Space'); await at('word-litre', 's.ready'); await shot('word-litre-done');
+  await at('word-litre'); await shot('word-litre'); await openFormulaPanel(c); await press('Space'); await at('word-litre', 's.ready'); await shot('word-litre-done');
   await next('word-litre');
   await at('word-kilogram'); await shot('word-kilogram'); await press('Digit1'); await wait(300); await shot('word-kilogram-water'); await press('Digit2'); await at('word-kilogram', 's.ready'); await shot('word-kilogram-done');
   await next('word-kilogram');
