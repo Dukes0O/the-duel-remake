@@ -271,7 +271,7 @@ for (const [answer, count, word, mark] of [
       assert(Math.abs(image.x) < .9 && Math.abs(image.y) < .9 && image.z > 0 && image.z < 1,
         'Escape camera frames Rell, her fires and all four carts');
     }
-    assert.match(run.world.job.steps[run.world.job.stepIndex].scene.lines[0].words, /ash in my fire/);
+    assert.match(run.world.job.steps[run.world.job.stepIndex].scene.lines[0].words, /they've burned away/);
     assert(run.view.ledger.obligations.some(item => item.id === 'walkers-great-favour'));
   } else {
     run.footAt(dace.position);
@@ -459,7 +459,7 @@ for (const [seed, mall, outcome] of [
     const fireGap = Math.hypot((first.x - second.x) * 640, (first.y - second.y) * 360);
     console.log(`Tower camera resolves two camp fires (${fireGap.toFixed(1)} px apart) and six rider lights through actual scene geometry.`);
   }
-  run.say('Watch');
+  run.say('Stay on the tower and watch');
   assert.equal(run.view.watchOutcome, outcome);
   run.advance('close');
   run.finish(4);
@@ -537,7 +537,7 @@ pot.openGate();
 pot.say(NIGHT_2_CHOICES[3].words);
 pot.say('Say nothing');
 pot.advance('tower');
-pot.say('Carry one ember out to them, now');
+pot.say('Carry one ember out to the Walkers now');
 assert.equal(pot.stage(), 'pot');
 assert.equal(pot.view.ledger.stocks.embers, 3);
 assert(pot.world.actors.filter(actor => actor.renderCar).length === 3);
@@ -566,10 +566,10 @@ pot.finish(3);
 
 const asked = chapter(11);
 asked.openGate();
-asked.say("Who's the boy staring at my hearth?");
-asked.say('Dace. A word.');
+asked.say("Who's the boy staring at our hearth?");
+asked.say('Dace, can I have a word with you?');
 asked.say('Where are you going?');
-asked.say('Why not take a light from our hearth?');
+asked.say('Why not just take a light from our hearth?');
 asked.say(NIGHT_2_CHOICES[0].words);
 assert.equal(asked.view.ledger.stocks.embers, 3);
 assert(asked.view.ledger.marks.includes('know-south-ford'));
@@ -631,7 +631,7 @@ function reachReplayClose(tellMall = false) {
   replay.say(NIGHT_2_CHOICES[3].words);
   replay.say(tellMall ? NIGHT_2_SCENES.refuse.choices[0].words : 'Say nothing');
   replay.advance('tower');
-  replay.say('Watch');
+  replay.say('Stay on the tower and watch');
   replay.advance('close');
   return replay;
 }
