@@ -9,8 +9,8 @@ View work only. No rule in `src/machines/drill.js` changed and no fingerprint wa
 - **Words.** The caption is a whole sentence ("The bit is 8.7 m down, in rock."; "Water at 13.2 m. The bit is in wet ground."). "Lower the mast" became "stand the mast up" and "lay the mast down", because that is what this rig does; the choice is on the card for the Director.
 - **Changed assertions:** none in `tools/test-machine-drill.mjs`. `tools/test-machine-view.mjs` takes the drill from `machines-2.glb`; its claims are unchanged.
 - **Sound cues:** no new game event. The eight `drill-*` cues are unchanged.
-- **Checks:** CHECKS-PLACEHOLDER
+- **Checks:** on `8069c98f0` and `92c74f236` (the second differs by documents only). `test-machine-drill`, `test-machine-view` and `test-the-dig` passed alone; the lane tier, the replay guards and the build are recorded in `docs/changes/MACHINE-ROADS.md` (one tier for both cards: 69 of 69, nothing re-recorded). Browser scenario `machine-drill` passed in a visible window (4 screenshots, 0 warnings, 0 errors).
 - **Hand play and look:** one well drilled to water with real keys in a visible window (clay, gravel, rock, one jam backed out, water at 13.2 m); sheets `docs/board/looks/machine-drill/round-1.jpg` to `round-3.jpg`, each with its review note; round 3 is the one to send.
-- **Not done:** the truck's deck is blurred where its photos meet and its outriggers are plain bars (faults in the model; no Blender round was started). `tools/scenarios/machine-drill.mjs` was not changed.
+- **Not done:** the truck's deck is blurred where its photos meet and its outriggers are plain bars (faults in the model; no Blender round was started). `tools/scenarios/machine-drill.mjs` needed no change and passes.
 
 **Removed:** the ladder of boxes and the drill bit of one cylinder on the trencher's tractor; the single ball that stood for the cuttings; the three plain cylinders that stood for the wellhead; the caption "in wet."
