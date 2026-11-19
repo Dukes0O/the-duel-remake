@@ -8,6 +8,10 @@ import {createTownCamera, moveTownCamera, resizeTownCamera, updateTownCamera} fr
 import {pickTownGround, pickTownItem} from './town-pick.js';
 import {GROUND_UV, groundColour} from '../../world/ground-view.js';
 import {buildTownMapMarkers, layoutTownMapMarkers} from './town-map-markers.js';
+import {createTownWalkers} from './town-walkers.js';
+import {createTownFx} from './town-fx.js';
+
+const loadGltf=url=>new GLTFLoader().loadAsync(url);
 
 function terrainChunk(chunk, material) {
   const segments = 16, positions = [], colours = [], uvs = [], indices = [], startX = chunk.x*TOWN_CHUNK_METRES, startZ = chunk.z*TOWN_CHUNK_METRES;
@@ -56,7 +60,7 @@ function scablandsGround(material){
   return mesh;
 }
 
-export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync(url).then(result=>result.scene), width=1, height=1, now=new Date()}={}) {
+export function createTownScene({town, loadModel=url=>loadGltf(url).then(result=>result.scene), loadLifeModel=null, loadFxArt=undefined, width=1, height=1, now=new Date()}={}) {
   if (!town || typeof town !== 'object') throw new TypeError('Choose a town to view.');
   const scene=new THREE.Scene(); scene.background=new THREE.Color(0xb4a286); scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
@@ -72,7 +76,11 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
   const lights=new THREE.Group(); lights.name='Town lamps'; scene.add(lights);
   const assets=new THREE.Group(); assets.name='Scablands landmarks'; scene.add(assets);
   const ghost=createTownPlacementGhost(); ghost.visible=false; scene.add(ghost);
-  const state={camera,scene,ground,buildings,overlays,lights,assets,ghost,selected:null,underground:false,disposed:false,season:String(town.calendar?.season || 'spring').toLowerCase(),timeOfDay:town.calendar?.hour??now.getHours()+now.getMinutes()/60,loadModel,homeAssets:{},lastPlotSignature:'',lastLampHour:null,lastLampBuildingCount:-1,lastRenderedBuildingCount:town.buildings?.length??0};
+  // TOWN-VIEW-LIFE: people, carts, trucks and animals, then smoke, fire, dust and turning parts. Drawing only.
+  const life=createTownWalkers({town,loadModel:loadLifeModel??loadGltf,hourAt:()=>Number(town.calendar?.hour??12)});scene.add(life.group);
+  const fx=createTownFx({town,scene,buildings,load:loadFxArt,hourAt:()=>Number(town.calendar?.hour??12),seed:town.seed??1});scene.add(fx.group);
+  const stepLife=delta=>{const target=camera.userData.townView.target,distance=camera.position.distanceTo(target);life.update({dt:delta,focus:target,distance});fx.update({dt:delta,focus:target,distance});};
+  const state={camera,scene,ground,buildings,overlays,lights,assets,ghost,life,fx,selected:null,underground:false,disposed:false,season:String(town.calendar?.season || 'spring').toLowerCase(),timeOfDay:town.calendar?.hour??now.getHours()+now.getMinutes()/60,loadModel,homeAssets:{},lastPlotSignature:'',lastLampHour:null,lastLampBuildingCount:-1,lastRenderedBuildingCount:town.buildings?.length??0};
   const update=()=>{
     if(state.disposed) return;
     const distance=camera.position.distanceTo(camera.userData.townView.target);
@@ -114,7 +122,7 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
     for(const place of SCABLANDS_PLACES){const beacon=new THREE.Mesh(new THREE.CylinderGeometry(0.4,2,Math.max(3,place.height||8),6),new THREE.MeshStandardMaterial({color:0x8b6b48,roughness:.95}));beacon.position.set(place.x,(place.height||0)/2,place.z);beacon.name=`Scablands ${place.id||'place'}`;assets.add(beacon);}
   };
   const setPlacement=(x,z,{valid=true,width=1,depth=1}={})=>{ghost.geometry.dispose();ghost.geometry=new THREE.BoxGeometry(width*8*.85,1.2,depth*8*.85);ghost.material.color.set(valid?0x56b56f:0xc94d42);ghost.name=valid?'Valid town placement':'Invalid town placement';ghost.userData.placementValid=valid;ghost.position.set((x+width/2)*8,(scablandsSurfaceHeightAt((x+width/2)*8,(z+depth/2)*8)||0)+1,(z+depth/2)*8);ghost.visible=true;return ghost;};
-  const pointer=(x,y,rect)=>{state.selected=pickTownItem(camera,[...ground.children,...buildings.children],x,y,rect);return state.selected;};
+  const pointer=(x,y,rect)=>{state.selected=life.pickPerson(camera,x,y,rect)??pickTownItem(camera,[...ground.children,...buildings.children],x,y,rect);return state.selected;};
   const pickGround=(x,y,rect)=>pickTownGround(camera,ground.children,x,y,rect);
   const setUnderground=value=>{state.underground=Boolean(value);overlays.clear();if(state.underground){
     const routeLayers=[['pipes',0x377e9d],['sewers',0x775343],['wires',0xd5b754]];
@@ -128,9 +136,9 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
     for(const building of town.buildings||[])if(/pipe|sewer|wire/.test(building.buildingId||'')){const material=new THREE.MeshBasicMaterial({color:building.buildingId.startsWith('wire')?0xd5b754:building.buildingId.startsWith('sewer')?0x775343:0x377e9d});const line=new THREE.Mesh(new THREE.BoxGeometry(4,.25,4),material);line.position.set((building.x+.5)*8,(building.groundY??0)-1,(building.z+.5)*8);overlays.add(line);}
   }update();};
   const setCalendar=(calendar,{hour=calendar?.hour??state.timeOfDay}={})=>{state.season=String(calendar?.season||state.season).toLowerCase();state.timeOfDay=hour;sun.color.set(state.season==='winter'?0xc7dcff:0xffe4b6);update();};
-  const dispose=()=>{state.disposed=true;for(const root of [ground,buildings,overlays,lights,assets,ghost,farGround,...Object.values(state.homeAssets)])root.traverse(object=>{if(object.userData.sharedTownAsset&&root===buildings)return;object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(m=>m.dispose());else object.material?.dispose?.();});groundMaterial.dispose();dirtTexture?.dispose?.();};
+  const dispose=()=>{state.disposed=true;life.dispose();fx.dispose();for(const root of [ground,buildings,overlays,lights,assets,ghost,farGround,...Object.values(state.homeAssets)])root.traverse(object=>{if(object.userData.sharedTownAsset&&root===buildings)return;object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(m=>m.dispose());else object.material?.dispose?.();});groundMaterial.dispose();dirtTexture?.dispose?.();};
   update(); void addLandmarks(); void loadHomeAssets();
-  return {scene,camera,state,update,move:input=>moveTownCamera(camera,input),resize:(w,h)=>resizeTownCamera(camera,w,h),step:delta=>{updateTownCamera(camera,delta);update();},
+  return {scene,camera,state,update,move:input=>moveTownCamera(camera,input),resize:(w,h)=>resizeTownCamera(camera,w,h),step:delta=>{updateTownCamera(camera,delta);update();stepLife(delta);},
     mapMarkers:()=>buildTownMapMarkers(town),layoutMarkers:(options={})=>layoutTownMapMarkers(options.markers||buildTownMapMarkers(town),camera,options),
-    pick:pointer,pickGround,setPlacement,setUnderground,setCalendar,dispose};
+    pick:pointer,pickPerson:(x,y,rect)=>life.pickPerson(camera,x,y,rect),selectPerson:id=>life.select(id),pickGround,setPlacement,setUnderground,setCalendar,dispose};
 }
