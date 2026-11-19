@@ -784,7 +784,7 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
 const KMH_PER_MPH = 1.609344;
 
 function reachGforceFreeTest(session) {
-  run(session, 2.6);
+  run(session, 10.1);
   assert.equal(session.view().step.id, 'wonder');
   assert.equal(session.view().ready, true);
   session.act('next');
@@ -802,7 +802,7 @@ function reachGforceFreeTest(session) {
   session.act('next');
   session.act('next');
   assert.equal(session.view().step.id, 'watch');
-  run(session, 6.1);
+  run(session, 10.6);
   assert.equal(session.view().ready, true);
   session.act('next');
   assert.equal(session.view().step.id, 'try-speed');
@@ -815,7 +815,7 @@ function finishGuidedGforceTries(session) {
   assert.equal(session.view().ready, true);
   session.act('next');
   session.act('answer:0');
-  session.act('radius:up');
+  session.act('radius:down');
   session.act('run');
   assert.equal(session.view().ready, true);
   session.act('next');
@@ -837,12 +837,17 @@ test('G-force is registered with its old notebook words, challenge and seven les
   assert.equal(GFORCE_STEPS.find(step => step.id === 'recap').voice, 'lab.brian.gforce.explain');
 });
 
-test('the short G-force wonder ends with its prediction question', () => {
+test('the G-force wonder watches the cord for ten seconds, then asks why it leans, and R plays it again', () => {
   const model = createGforceModel();
   model.enter(0);
-  assert.match(model.view().say, /car on an arm.*cord.*meter.*words come next/i);
-  model.tick(2.5);
-  assert.match(model.view().say, /Which change could make the meter show a larger reading\?/);
+  assert.match(model.view().say, /car on an arm.*cord.*meter.*Watch the cord lean outward/i);
+  model.tick(9.9);
+  assert.equal(model.view().ready, false, 'the run is not over before ten seconds');
+  model.tick(.2);
+  assert.match(model.view().say, /^The cord leaned outward as the car went round, and the meter read 0\.39 g\. Why does the cord lean, and which change would make the meter read more\?/);
+  assert.ok(model.view().actions.includes('replay'));
+  model.act('replay');
+  assert.equal(model.view().ready, false, 'R plays the wonder again');
 });
 
 test('G-force screen contract uses sendable classroom keys and complete views', () => {
@@ -884,7 +889,7 @@ test('G-force screen contract uses sendable classroom keys and complete views', 
   assert.equal(model.state().speed, speed + 10, 'a held repeat moves after the pacing gap');
 });
 
-test('G-force formula sums calculate from the exact metric values they show and match the challenge rule', () => {
+test('G-force formulas calculate from the exact metric values they show and match the challenge rule', () => {
   const model = createGforceModel();
   const formulaIndex = GFORCE_STEPS.findIndex(step => step.id === 'formula');
   const radii = [10, 25, 50, 75, 100, 125, 150, 175, 200];
@@ -897,11 +902,12 @@ test('G-force formula sums calculate from the exact metric values they show and 
       while (state.radius < radius) { model.act('radius:up'); state = model.state(); }
       while (state.radius > radius) { model.act('radius:down'); state = model.state(); }
       const worked = model.view().formulas.at(-1).worked;
-      const match = worked.match(/\((\d+\.\d{2}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = about (\d+\.\d{2}) g/);
+      const match = worked.match(/\((\d+\.\d{4}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = (\d+\.\d{2}) g$/);
       assert.ok(match, worked);
       const [, metresPerSecond, shownRadius, shownG] = match;
       const calculated = (Number(metresPerSecond) ** 2 / Number(shownRadius) / 9.81).toFixed(2);
       assert.equal(shownG, calculated, `${speed} km/h on the dial and ${radius} m radius`);
+      assert.equal(shownG, model.view().g.toFixed(2), `${speed} km/h and ${radius} m: the line gives the meter's own reading, with no “about”`);
       assert.equal(model.view().g.toFixed(2), lateralG(speed / KMH_PER_MPH, radius).toFixed(2), 'the board meter matches the challenge function');
       assert.equal(model.view().speedKmh, speed);
     }
@@ -911,7 +917,7 @@ test('G-force formula sums calculate from the exact metric values they show and 
 test('a child can follow the G-force prompts through the speed and radius lessons', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
   reachGforceFreeTest(session);
-  assert.match(session.view().brian.text, /150 km\/h and radius stays at 50 m/);
+  assert.match(session.view().brian.text, /150 km\/h and the radius stays at 50 m/);
   assert.equal(session.view().g, null, 'the open prediction has no live result');
   assert.ok(session.view().formulas.every(entry => entry.worked === ''), 'the open prediction has no worked answer');
   assert.ok(session.view().formulas.every(entry => entry.title.length > 0), 'every formula row has a title');
@@ -940,9 +946,9 @@ test('the watch changes both settings over time and keeps the board, meter and f
   assert.equal(model.view().radiusM, 50);
   assert.equal(model.view().g.toFixed(2), lateralG(100 / KMH_PER_MPH, 50).toFixed(2));
   assert.match(model.view().formulas[0].worked, /^100 km\/h/);
-  model.tick(2);
-  assert.equal(model.view().speedKmh, 50);
-  model.tick(1);
+  model.tick(3.5);
+  assert.equal(model.view().speedKmh, 50, 'the speed goes back before the radius changes');
+  model.tick(1.5);
   assert.equal(model.view().radiusM, 100);
   assert.equal(model.view().g.toFixed(2), lateralG(50 / KMH_PER_MPH, 100).toFixed(2));
   assert.match(model.view().formulas.at(-1).worked, /100 m/);
@@ -954,7 +960,7 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   let open = session.view();
   assert.equal(open.g, null);
   assert.ok(open.formulas.every(entry => entry.worked === ''));
-  session.act('answer:1');
+  session.act('answer:0');
   for (let press = 0; press < 10; press++) session.act('speed:up');
   session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
@@ -962,15 +968,16 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   assert.match(session.view().brian.text, /3\.54 g/);
   assert.match(session.view().brian.text, /0\.39 g/);
   assert.match(session.view().brian.text, /150 ÷ 50 = 3, and 3 × 3 = 9/);
+  assert.doesNotMatch(session.view().brian.text, /\babout\b/, 'the reading is 9 times as large, with no “about”');
   session.act('next');
-  session.act('answer:1');
-  session.act('radius:up');
+  session.act('answer:0');
+  session.act('radius:down');
   session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
-  assert.match(session.view().brian.text, /75 m/);
-  assert.match(session.view().brian.text, /0\.26 g/);
+  assert.match(session.view().brian.text, /25 m/);
+  assert.match(session.view().brian.text, /0\.79 g/);
   assert.match(session.view().brian.text, /0\.39 g/);
-  assert.match(session.view().brian.text, /one and a half times 50 m.*two thirds as large/);
+  assert.match(session.view().brian.text, /half of 50 m.*the reading is twice as large/);
 });
 
 test('Show me points to a live control and records a new free-test setting on each use', () => {
@@ -1004,7 +1011,7 @@ test('Brian’s 2 g test has a working Space key and needs a changed setting', (
   assert.equal(session.view().step.id, 'alone');
   let view = session.view();
   assert.equal(view.keys.Space, 'run');
-  assert.match(view.prompt, /press Space/i);
+  assert.match(view.prompt, /run the turn/i);
   session.act(view.keys.Space);
   assert.equal(session.view().brian.mood, 'explain');
   assert.match(session.view().brian.text, /below the 2 g target/);
@@ -1017,7 +1024,7 @@ test('Brian’s 2 g test has a working Space key and needs a changed setting', (
   assert.match(session.view().brian.text, /2\.66 g/);
 });
 
-test('G-force questions have literal answers and keep their result sums hidden until answered', () => {
+test('G-force questions have literal answers and keep their results hidden until answered', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
   reachGforceFreeTest(session);
   finishGuidedGforceTries(session);
@@ -1034,11 +1041,12 @@ test('G-force questions have literal answers and keep their result sums hidden u
     }
     const view = session.view();
     assert.equal(view.asking, true);
-    assert.ok(view.formulas.every(entry => entry.worked === ''), `${id}: the panel has no answer sum`);
-    session.act('answer:1');
+    assert.ok(view.formulas.every(entry => entry.worked === ''), `${id}: the panel has no worked answer`);
+    const wrongPick = id === 'check-rule' ? 0 : 1;
+    session.act(`answer:${wrongPick}`);
     assert.equal(session.view().ready, true);
     assert.match(session.view().brian.text, /g|radius|speed/i);
-    assert.equal(session.view().cards[1].state, 'wrong');
+    assert.equal(session.view().cards[wrongPick].state, 'wrong');
   }
 });
 
@@ -1191,6 +1199,59 @@ test('G-force readings come from the turning rule: twice the speed gives four ti
   assert.ok(Math.abs(at(150, 50) / at(50, 50) - 9) < 1e-9, 'three times the speed, nine times the reading');
   assert.ok(Math.abs(at(50, 100) / at(50, 50) - .5) < 1e-9, 'twice the radius, half the reading');
   assert.ok(at(100, 50) < 2 && at(150, 50) >= 2, "Brian's 2 g test needs more than twice the starting speed");
+});
+
+test('review of 19 November: the right card moves, the tighter turn is tighter, and no step hedges or calls a division a sum', () => {
+  const position = id => [0, 1, 2].findIndex(i => { const probe = createGforceModel(); probe.enter(GFORCE_STEPS.findIndex(step => step.id === id)); return probe.act(`answer:${i}`).kind === 'right'; });
+  assert.deepEqual(['check-speed', 'check-radius', 'check-rule'].map(position), [2, 0, 1], 'the right card is not always the first');
+  // The two predictions: the right reading is on a different card each time, and the common mistake is offered.
+  for (const [id, right, labels] of [['try-speed', 1, ['1.18 g.', '3.54 g.', '1.57 g.']], ['try-radius', 2, ['0.20 g.', '0.39 g.', '0.79 g.']]]) {
+    const model = createGforceModel();
+    model.enter(GFORCE_STEPS.findIndex(step => step.id === id));
+    assert.deepEqual(model.view().cards.map(c => c.label), labels, id);
+    assert.equal(model.view().target, `answer:${right}`);
+    model.act(`answer:${right}`);
+    for (let press = 0; press < (id === 'try-speed' ? 10 : 1); press++) model.act(id === 'try-speed' ? 'speed:up' : 'radius:down');
+    assert.equal(model.act('run').kind, 'right', `${id}: the card with the real reading is right`);
+  }
+  const tighter = createGforceModel();
+  tighter.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-radius'));
+  tighter.act('answer:2'); tighter.act('radius:down');
+  assert.ok(tighter.view().radiusM < 50, 'a tighter turn has a smaller radius');
+  assert.ok(tighter.view().g > createGforceModel().view().g, 'and a bigger reading');
+  // Words: no hedge, no “sum” for a division, and Show me keeps its line while Brian sets the dials.
+  const texts = [];
+  const model = createGforceModel();
+  for (let index = 0; index < GFORCE_STEPS.length; index++) {
+    model.enter(index);
+    const view = model.view();
+    texts.push(view.say, view.prompt, ...view.hints, ...view.cards.map(c => c.label), ...view.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]));
+  }
+  texts.push(...GFORCE_IDEAS.map(i => i.text), ...CLASSROOM_LESSONS.gforce.words.map(w => w.meaning));
+  const faults = texts.filter(t => /\bin this game\b|\bthe game squares\b|\bsums?\b|\babout\b|simplif|\bapproximate/i.test(t ?? ''));
+  assert.deepEqual(faults, []);
+  const free = createGforceModel();
+  free.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-free'));
+  free.act('set:best');
+  for (let i = 0; i < 5; i++) free.tick(.15);
+  assert.match(free.view().say, /^I will set the speed dial to 100 km\/h and run the turn\.$/, 'the dials moving do not replace what Brian said');
+});
+
+test('review of 19 November: the cord hangs at the real angle of the reading, and the car goes round at the dial’s own rate', () => {
+  const arcs = [];
+  const ctx = new Proxy({}, {get: (_, name) => name === 'measureText' ? value => ({width: String(value).length * 8}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : (...args) => { if (name === 'arc') arcs.push(args); }, set: () => true});
+  for (const [speed, radius] of [[50, 50], [100, 50], [150, 50], [50, 25]]) {
+    const model = createGforceModel();
+    model.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-free'));
+    while (model.state().speed < speed) model.act('speed:up');
+    while (model.state().radius > radius) model.act('radius:down');
+    arcs.length = 0;
+    gforceBoard.drawBoard(ctx, model.view());
+    const weight = arcs.filter(a => a[2] === 8.4 && a[3] === 0 && a[0] > 150 && a[0] < 240 && a[1] > 555).at(-1);
+    assert.ok(weight, `${speed} km/h and ${radius} m: the weight is drawn`);
+    const lean = Math.atan2(weight[0] - 168, weight[1] - 558) * 180 / Math.PI;
+    assert.ok(Math.abs(lean - Math.atan(lateralG(speed / KMH_PER_MPH, radius)) * 180 / Math.PI) < .01, `${speed} km/h and ${radius} m: the cord is at ${lean.toFixed(1)}°`);
+  }
 });
 
 function reachGripFreeTest(session) {
