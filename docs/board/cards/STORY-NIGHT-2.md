@@ -93,3 +93,16 @@ Slice A is on integration behind `story-choices` (dev). Slice B remains: the Was
 - The escape scene at the Walkers' camp shows open ground. Rell speaks of "my fire", but the camp's carts and fire are not in the picture. Stage the camp.
 - The chase is winnable only by a small margin, and a player who loses a few seconds against a wall cannot catch Dace (the escape branch then follows, as designed). Kyle's try judges whether the margin is right.
 - The tower's fight option returns in Slice B.
+
+## Slice B ready for review
+
+Both switches allow the Wash fight from the tower. The entry boards the chapter car and drives
+to the Wash approach, where three real riders take the field. Victory sends the player back by
+car. A wreck leaves the car at the Wash and the player follows the west opening back to the
+hearth. The ledger records the dawn tow and Bess’s late departure for Day 3.
+
+The escape cut shows Rell, her fires and the four carts. The later A fixes for night lighting,
+pump guidance, tower framing and canvas input are included and rechecked here. The
+[change note](../../changes/STORY-NIGHT-2.md) records the cloud results and laptop checks.
+The independent review covers Slice B and those supplemental fixes. Kyle’s try judges the
+chase margin after Claude’s play.
