@@ -66,6 +66,7 @@ export const FEATURE_STATES = Object.freeze({
   'the-dig': 'dev',
   // Everburn story screens and Scablands jobs. Off for players since 14 November 2026: Kyle played it and found it not ready to be seen (docs/board/cards/EVERBURN-REMAKE.md says what must be true before it comes back).
   'story-everburn': 'dev',
+  'road-riders': 'dev',
   // Five Cold Nights and the shared Wasteland ledger.
   'story-choices': 'dev',
   // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run on the story wall once Everburn job 6 is won, and the Ash Men's feud. Needs story-everburn. Off for players since 14 November 2026, with the story.

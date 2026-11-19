@@ -125,6 +125,12 @@ export function fallbackOpponentPosition(course, player, opponent, index) {
   const z = (target?.z || 0) - (at?.z || 0);
   const right = x * Math.cos(heading) - z * Math.sin(heading);
   const forward = x * Math.sin(heading) + z * Math.cos(heading);
+  if (opponent.roadRider && forward < 0) {
+    // A directly trailing car sits beside the mirror, with left and right threats at their respective edges.
+    const side = Math.abs(right) < .1 ? (index % 2 ? 1 : -1) : Math.sign(right);
+    const bearing = Math.atan2(Math.abs(right), -forward);
+    return {x: .5 + side * Math.min(.38, .18 + bearing / Math.PI), y: .24 + Math.min(.28, bearing / Math.PI), direction: 'BEHIND'};
+  }
   return {
     x: right < -5 ? .12 : right > 5 ? .88 : .5,
     y: forward < 0 ? .68 + index * .065 : .29 + index * .065,
