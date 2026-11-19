@@ -15,6 +15,9 @@ const HELP_RUNGS = 3;
 // A result stays on the page; a "watch this" line or a hint does not.
 const KEPT_EVENTS = Object.freeze(['right', 'wrong', 'pass', 'fail']);
 
+// A step that teaches a word, or a few that belong together, whether or not the notebook keeps it. Its steps are named word-... in the lessons.
+export const definesWord = step => Boolean(step.word || step.words?.length || step.id.startsWith('word-'));
+
 // lesson: {id, steps: [{id, part, title}], createModel()}. The model owns the step's experiment:
 // enter(index), act(action) -> event, tick(dt) -> event, view({help, assist}) and targetOf(action).
 // Events: {kind: 'right' | 'wrong' | 'pass' | 'fail' | 'progress' | 'sound', say?, sound?}.
@@ -26,7 +29,8 @@ export function createClassroomSession(lesson) {
   const done = new Set(), events = [];
   // The page: what each step has taught so far (its first words and its latest result). Nothing is replaced by the next step.
   const page = new Map();
-  const pageRow = i => { if (!page.has(i)) page.set(i, {title: lesson.steps[i].title, setup: null, result: null}); return page.get(i); };
+  // word: the step defined a word, so it stays on the page, in the Words so far fold. Any other step leaves the page once done (LAB-PAGE).
+  const pageRow = i => { if (!page.has(i)) page.set(i, {title: lesson.steps[i].title, setup: null, result: null, word: definesWord(lesson.steps[i])}); return page.get(i); };
   model.enter(0);
 
   function handle(event) {

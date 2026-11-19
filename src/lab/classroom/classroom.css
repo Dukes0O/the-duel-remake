@@ -49,13 +49,22 @@
 .lc-portrait[data-mood="hint"] { border-color: #edc557; }
 .lc-portrait[data-mood="explain"] { border-color: #f0a148; }
 .lc-name { font-size: 18px; color: #c9cfca; }
-/* The page: each step adds to it, like a textbook, and the newest words sit last on the light paper. */
+/* The page (LAB-PAGE): the step being worked on, then Brian's newest words on the light paper, then the Words so far fold. */
 .lc-page { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-color: #4a524e transparent; }
-.lc-past section { margin-bottom: 10px; }
-.lc-past h4 { margin: 0 0 3px; font-size: 15px; font-weight: 700; color: #edc557; }
-.lc-past p { margin: 0 0 6px; font-size: 17px; line-height: 1.42; color: #c9cfca; }
-.lc-past section.now { margin-bottom: 6px; }
-.lc-past section.now p { color: #f5f0dc; }
+.lc-steps section { margin-bottom: 10px; }
+.lc-steps h4 { margin: 0 0 3px; font-size: 15px; font-weight: 700; color: #edc557; }
+.lc-steps p { margin: 0 0 6px; font-size: 17px; line-height: 1.42; color: #c9cfca; }
+.lc-steps section.now { margin-bottom: 6px; }
+.lc-steps section.now p { color: #f5f0dc; }
+/* LAB-PAGE: the Words so far fold, below Brian's newest words. */
+.lc-words { margin: 8px 0 2px; }
+.lc-words[hidden], .lc-word-list[hidden] { display: none; }
+.lc-words-toggle { box-sizing: border-box; display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 6px 2px; border: 0; border-top: 1px solid #343c39; background: none; font: inherit; font-size: 15px; font-weight: 700; color: #edc557; text-align: left; }
+.lc-words-toggle::before { content: '▸'; flex: none; width: 12px; color: #8f9791; }
+.lc-words-toggle[aria-expanded="true"]::before { content: '▾'; }
+.lc-words-toggle:hover { color: #fff2c8; }
+.lc-words-count { color: #8f9791; font-weight: 600; }
+.lc-word-list { margin-top: 4px; }
 .lc-bubble { margin: 0 0 4px; padding: 10px 13px; border-radius: 8px; background: #f5f0dc; color: #1d2224; font-size: 18px; line-height: 1.42; font-weight: 500; }
 .lc-nudge { flex: 0 0 auto; width: 100%; box-sizing: border-box; margin: 0; padding: 8px 12px; border-left: 4px solid #edc557; border-radius: 6px; background: rgba(237,197,87,.14); color: #f5f0dc; font-weight: 600; }
 /* The physics panel: the formulas of this step, with the numbers now on the board. */
@@ -98,14 +107,14 @@
 .lc-actions .primary { border-color: #edc557; background: #edc557; color: #1d2224; }
 .lc-actions .primary:disabled { border-color: #4a524e; background: #2a302e; color: #7d857f; }
 /* LAB-BRIAN-SHORT: an earlier step is its heading and first sentence until it is clicked; "Tell me more" opens the rest of Brian's words. */
-.lc-past h4 button { display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
-.lc-past h4 button::before { content: '▸'; flex: none; width: 12px; color: #8f9791; }
-.lc-past h4 button[aria-expanded="true"]::before { content: '▾'; }
-.lc-past h4 button:hover { color: #fff2c8; }
-.lc-past section.folded { margin-bottom: 7px; }
-.lc-past section.folded p { margin-bottom: 0; padding-left: 18px; font-size: 16px; color: #aab2ad; }
-.lc-past section.open p { padding-left: 18px; }
-.lc-past section.folded p.longer::after { content: ' …'; color: #8f9791; }
+.lc-steps h4 button { display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
+.lc-steps h4 button::before { content: '▸'; flex: none; width: 12px; color: #8f9791; }
+.lc-steps h4 button[aria-expanded="true"]::before { content: '▾'; }
+.lc-steps h4 button:hover { color: #fff2c8; }
+.lc-steps section.folded { margin-bottom: 7px; }
+.lc-steps section.folded p { margin-bottom: 0; padding-left: 18px; font-size: 16px; color: #aab2ad; }
+.lc-steps section.open p { padding-left: 18px; }
+.lc-steps section.folded p.longer::after { content: ' …'; color: #8f9791; }
 .lc-more > span { display: block; margin-top: 9px; }
 .lc-more[hidden], .lc-more-button[hidden] { display: none; }
 .lc-more-button { display: block; margin: 0 0 4px auto; padding: 5px 12px; border: 2px solid #edc557; border-radius: 7px; background: #3a3420; font-size: 16px; font-weight: 700; }
