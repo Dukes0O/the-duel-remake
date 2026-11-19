@@ -71,7 +71,7 @@ function chapter(seed, startedDuel) {
   };
   const finish = count => {
     if (!screen()) tick();
-    assert.equal(screen().line.words, night2Count(count).lines[0].words);
+    assert.equal(screen().line.words, night2Count(Math.max(0, count - 1)).lines[0].words);
     const state = duel.state, fighter = state.fighter;
     const position = fighter ? [fighter.x, fighter.y, fighter.z] : [state.s, state.lateral];
     advance(undefined);
@@ -310,7 +310,14 @@ pot.say('Carry one ember out to them, now');
 assert.equal(pot.stage(), 'pot');
 assert.equal(pot.view.ledger.stocks.embers, 3);
 assert(pot.world.actors.filter(actor => actor.renderCar).length === 3);
-pot.footAt({x: sites.car.x + 2.8, y: sites.car.y, z: sites.car.z});
+const parked = {x: sites.car.x + 18, y: sites.car.y, z: sites.car.z + 6};
+const relocated = pot.duel.course.nearest(parked.x, parked.z);
+Object.assign(pot.duel.state, {s: relocated.s, lateral: relocated.lateral, prevS: relocated.s,
+  prevLateral: relocated.lateral, speedMph: 0});
+pot.footAt({x: parked.x + 2, y: parked.y, z: parked.z});
+pot.tick();
+assert.equal(pot.world.job.stepState.loaded, undefined, 'The parked car needs to be boarded');
+assert(Math.hypot(pot.world.marker.x - parked.x, pot.world.marker.z - parked.z) < .05);
 pot.duel.setInput({interact: true});
 for (let i = 0; i < 120 && pot.duel.state.onFoot; i++) pot.tick();
 assert.equal(pot.duel.state.onFoot, false, 'The pot branch starts next to the usable car');

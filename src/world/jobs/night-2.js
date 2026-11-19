@@ -45,7 +45,7 @@ export function night2Job(seed) {
       talk('tower-outcome', 'camp'),
       {id: 'pot', kind: 'carry', load: 'everburn-ember-pot', ember: EMBER_RULE, destination: sites.camp,
         radius: sites.camp.radius, origin: sites.car, stopAtDestination: true, what: 'Get in the car and take the ember to the Walkers at the Wash.',
-        waitingActors: riders, pickup: {place: sites.car, radius: 4, lines: []}, braziers: [{id: 'tin-town-brazier', radius: 5, position: night2Point(sites.car.x + 5, sites.car.z)}]},
+        waitingActors: riders, pickup: {atCar: true, place: sites.car, radius: 4, lines: []}, braziers: [{id: 'tin-town-brazier', radius: 5, position: night2Point(sites.car.x + 5, sites.car.z)}]},
       talk('delivery', 'camp'), talk('close', 'hearth'),
     ]};
 }
@@ -97,7 +97,7 @@ export function night2Page(ledger) {
   const tonight = ledger.history.filter(change => change.night === 2);
   const known = new Set(tonight.filter(change => change.type === 'mark').map(change => change.key));
   const memories = Object.entries(memoryLines).filter(([id]) => known.has(id)).map(([, line]) => line);
-  return {...page, memories, tonight: ledger.night === 3 ? {
+  return {...page, memories, saltScrap: known.has('dace-kept-watch') ? 10 : 0, tonight: ledger.night === 3 ? {
     supplies: tonight.some(change => change.type === 'stock'),
     people: tonight.filter(change => change.type === 'met').map(change => change.key),
     obligations: tonight.some(change => ['debt', 'promise'].includes(change.type)),
@@ -108,7 +108,7 @@ function close(chapter) {
   const bank = bankHearth(chapter.ledger);
   chapter.ledger = bank.ledger;
   chapter.bank = {burned: bank.burned, needed: bank.needed};
-  chapter.page = {...night2Page(chapter.ledger), saltScrap: chapter.scrap};
+  chapter.page = night2Page(chapter.ledger);
 }
 
 function routeFrom(chapter, from, via) {
@@ -152,6 +152,10 @@ export function enterNight2Step(worldJob) {
   const chapter = worldJob.night2, step = worldJob.job.steps[worldJob.job.stepIndex];
   chapter.routes = [];
   if (!step) return {};
+  if (step.id === 'close' && !chapter.bank) {
+    if (chapter.answer !== 'watch') record(chapter, 'unseen-scout', NIGHT_2_EFFECTS['unseen-scout']);
+    close(chapter);
+  }
   if (step.kind === 'talk') step.scene = sceneFor(step, chapter);
   const set = step.set ?? {chase: 'chase', 'walk-to-gate': 'gate', 'walk-watch-post': 'scout', 'light-pump': 'pump'}[step.id];
   if (set && set !== chapter.set) {
@@ -214,10 +218,7 @@ function stageAfter(chapter, step, result, cue) {
     case 'pot':
       record(chapter, 'delivered-ember', NIGHT_2_EFFECTS['carry-ember']);
       return 'delivery';
-    case 'close':
-      if (chapter.answer !== 'watch') record(chapter, 'unseen-scout', NIGHT_2_EFFECTS['unseen-scout']);
-      close(chapter);
-      return null;
+    case 'close': return null;
     default: return NEXT[step.id];
   }
 }

@@ -502,7 +502,7 @@ function renderState(s) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; if(menu&&nextUpOn)refreshNextUp(); ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
-    const night2Page = s.arena?.result?.winnerId === 'player' ? s.arena.worldJob?.night2?.page : null;
+    const night2Page = s.arena?.result?.night2Page;
     const night2Modal = night2Page ? '<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="ledger-title">' +
       '<div class="yard-home-content">' + ledgerPageMarkup(night2Page, escapeHTML) + '</div>' +
       (s.arena.result.night2SaveIssue ? '<p role="status">' + escapeHTML(s.arena.result.night2SaveIssue) + '</p>' : '') +

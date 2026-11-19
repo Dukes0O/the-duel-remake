@@ -3,7 +3,8 @@ import {bankLedgerHearth, beginLedger, recordLedgerChoice, savedLedger} from './
 // Write the example only on completion. Quit/retry keeps the chapter's
 // transient choices out of the profile, and a replay never awards salt twice.
 export function settleNight2(profile, chapter) {
-  if (savedLedger(profile)) return {profile, changed: false};
+  const kept = savedLedger(profile);
+  if (kept) return {profile, changed: false, kept};
   let result = beginLedger(profile, chapter.opening);
   if (!result.ok) return {...result, profile};
   for (const choice of chapter.journal) {

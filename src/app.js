@@ -78,7 +78,7 @@ import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
-import {NIGHT_2_ID, night2Job} from './world/jobs/night-2.js';
+import {NIGHT_2_ID, night2Job, night2Page} from './world/jobs/night-2.js';
 import {settleNight2} from './story/night-2-save.js';
 import {playLedgerPageTurn} from './story/ledger-ui.js';
 import {emberStoryProps} from './story/ember-road.js';
@@ -1518,7 +1518,8 @@ export class App {
         this.profile = updated.profile;
         result.settlementSaved = this._saveShopProfile(previous);
       }
-      result.night2SaveIssue = updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
+      result.night2Page = updated.kept ? night2Page(updated.kept) : chapter.page;
+      result.night2SaveIssue = updated.kept ? 'This replay was not kept.' : updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
       playLedgerPageTurn(this.audio);
       return result.settlementSaved;
     }
