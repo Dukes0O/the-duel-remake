@@ -111,7 +111,7 @@ test('a course with the trial off builds no placement indexes', async () => {
   assert.deepEqual(thingIndexStatus(), {road: false, routes: false});
 });
 
-test('cars meet trunks and clear them three metres to the side at three headings', async () => {
+test('cars meet trunks and clear them two metres to the side at three headings', async () => {
   const {Course} = await import('../src/course.js');
   const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
   const {_staticContacts} = await import('../src/sim-contacts.js');
@@ -121,7 +121,7 @@ test('cars meet trunks and clear them three metres to the side at three headings
     const trunk = course.solidGrid.solids.find(solid => solid.kind === kind);
     assert.ok(trunk);
     course.solidGrid = createSolidGrid([trunk]);
-    for (const heading of [0, Math.PI / 4, Math.PI / 2]) for (const offset of [0, 3]) {
+    for (const heading of [0, Math.PI / 4, Math.PI / 2]) for (const offset of [0, 2]) {
       const c = Math.cos(heading), sn = Math.sin(heading);
       course.worldAt = s => ({x: trunk.x + c * offset + sn * s, z: trunk.z - sn * offset + c * s});
       course.at = () => ({heading});
@@ -138,6 +138,103 @@ test('cars meet trunks and clear them three metres to the side at three headings
     }
     course.solidGrid = thingSolidGrid(course.realismThings.fixed, course.realismThings.loneBoulders);
   }
+});
+
+// QA-ROUND-SOLID-HEADING. Whether a car's body touches a solid is decided here from the body itself: the car is a rectangle
+// 2.04 m by 4.70 m that slides along its path, and the answer is found by small steps along that path, not by the sweep under test.
+const CAR_BODY = {halfWidth: 1.02, halfLength: 2.35};
+function bodyTouchesRound(post, radius, from, to, carHeading) {
+  const right = [Math.cos(carHeading), -Math.sin(carHeading)], forward = [Math.sin(carHeading), Math.cos(carHeading)];
+  for (let step = 0; step <= 4000; step++) {
+    const t = step / 4000, x = post.x - (from.x + (to.x - from.x) * t), z = post.z - (from.z + (to.z - from.z) * t);
+    const across = Math.max(0, Math.abs(x * right[0] + z * right[1]) - CAR_BODY.halfWidth);
+    const along = Math.max(0, Math.abs(x * forward[0] + z * forward[1]) - CAR_BODY.halfLength);
+    if (Math.hypot(across, along) < radius) return true;
+  }
+  return false;
+}
+
+test('a car passing a round post is touched or not by its body alone, whatever the post\'s heading (QA-ROUND-SOLID-HEADING)', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {_staticContacts} = await import('../src/sim-contacts.js');
+  const {createSolidGrid} = await import('../src/world/scablands-solids.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  const trunk = course.solidGrid.solids.find(solid => solid.kind === 'dead-tree');
+  const radius = trunk.halfX;
+  const seen = new Map();
+  for (const road of [0, Math.PI / 4]) for (const turn of [0, Math.PI / 4]) for (const offset of [1.5, 2, 3]) {
+    const c = Math.cos(road), sn = Math.sin(road);
+    const at = s => ({x: trunk.x + c * offset + sn * s, z: trunk.z - sn * offset + c * s});
+    const touched = bodyTouchesRound(trunk, radius, at(-5), at(5), road + turn);
+    for (const postHeading of [0, Math.PI / 4, Math.PI / 2]) {
+      course.solidGrid = createSolidGrid([{...trunk, heading: postHeading, collision: {...trunk.collision, heading: postHeading}}]);
+      course.worldAt = at;
+      course.at = () => ({heading: road});
+      const car = {prevS: -5, s: 5, prevLateral: 0, lateral: 0, speedMph: 10, slipAngle: turn};
+      const duel = {course, state: {opponents: []}, car: {}, _obstacles: () => [], _vehicleSpec: () => ({}),
+        roadsideKnockAwayEnabled: () => false, destructionEnabled: () => false,
+        _roadPosition: p => ({s: sn * (p.x - trunk.x) + c * (p.z - trunk.z), lateral: 0}), _surface: () => ({mainRoad: false}), emit() {}};
+      _staticContacts.call(duel, car, false);
+      const name = `road ${Math.round(road * 180 / Math.PI)}, car turned ${Math.round(turn * 180 / Math.PI)}, ${offset} m, post at ${Math.round(postHeading * 180 / Math.PI)}`;
+      const key = `${road}:${turn}:${offset}`;
+      if (!seen.has(key)) seen.set(key, car.speedMph);
+      assert.equal(car.speedMph < 10, seen.get(key) < 10, `${name}: the post's heading changes nothing`);
+      if (touched) assert.ok(car.speedMph < 10, `${name}: the body meets the post and the car is slowed`);
+      else assert.equal(car.speedMph, 10, `${name}: the body is clear and the car keeps its speed`);
+    }
+  }
+  // The geometry itself: along its path the body clears at 1.5 m, and turned 45 degrees it reaches 2.38 m to the side.
+  assert.equal(bodyTouchesRound(trunk, radius, {x: trunk.x + 1.5, z: trunk.z - 5}, {x: trunk.x + 1.5, z: trunk.z + 5}, 0), false);
+  assert.equal(bodyTouchesRound(trunk, radius, {x: trunk.x + 2, z: trunk.z - 5}, {x: trunk.x + 2, z: trunk.z + 5}, Math.PI / 4), true);
+  assert.equal(bodyTouchesRound(trunk, radius, {x: trunk.x + 3, z: trunk.z - 5}, {x: trunk.x + 3, z: trunk.z + 5}, Math.PI / 4), false);
+});
+
+test('the sweep meets a long oval where the car\'s body meets it, at any heading of either (QA-ROUND-SOLID-HEADING)', async () => {
+  const {sweepObstacle} = await import('../src/collision.js');
+  // The body is sampled round its edge and the oval round its own; two convex shapes touch when an edge point of one lies in the other.
+  const inOval = (o, x, z, grow) => {
+    const dx = x - o.x, dz = z - o.z, c = Math.cos(o.heading), s = Math.sin(o.heading);
+    return ((dx * c - dz * s) / (o.halfX + grow)) ** 2 + ((dx * s + dz * c) / (o.halfZ + grow)) ** 2 <= 1;
+  };
+  const touches = (o, from, to, heading, grow) => {
+    const r = [Math.cos(heading), -Math.sin(heading)], f = [Math.sin(heading), Math.cos(heading)];
+    for (let step = 0; step <= 600; step++) {
+      const t = step / 600, cx = from.x + (to.x - from.x) * t, cz = from.z + (to.z - from.z) * t;
+      for (let k = 0; k < 160; k++) {
+        const u = k / 40, side = Math.floor(u), w = (u - side) * 2 - 1;
+        const [a, b] = [[w, -1], [1, w], [-w, 1], [-1, -w]][side];
+        const x = cx + r[0] * a * CAR_BODY.halfWidth + f[0] * b * CAR_BODY.halfLength;
+        const z = cz + r[1] * a * CAR_BODY.halfWidth + f[1] * b * CAR_BODY.halfLength;
+        if (inOval(o, x, z, grow)) return true;
+      }
+      for (let k = 0; k < 180; k++) {
+        const angle = k / 180 * Math.PI * 2, lx = Math.cos(angle) * (o.halfX + grow), lz = Math.sin(angle) * (o.halfZ + grow);
+        const c = Math.cos(o.heading), s = Math.sin(o.heading);
+        const x = o.x + lx * c + lz * s - cx, z = o.z - lx * s + lz * c - cz;
+        if (Math.abs(x * r[0] + z * r[1]) <= CAR_BODY.halfWidth && Math.abs(x * f[0] + z * f[1]) <= CAR_BODY.halfLength) return true;
+      }
+    }
+    return false;
+  };
+  let checked = 0;
+  for (const heading of [0, .5, Math.PI / 4, 1.2, Math.PI / 2]) for (const carHeading of [0, .7, Math.PI / 4]) {
+    for (const travel of [0, Math.PI / 3]) for (const offset of [1.4, 2.2, 3, 3.8]) {
+      const oval = {x: 0, z: 0, halfX: 2, halfZ: .6, heading, shape: 'ellipse'};
+      const c = Math.cos(travel), s = Math.sin(travel);
+      const from = {x: c * offset - s * 8, z: -s * offset - c * 8}, to = {x: c * offset + s * 8, z: -s * offset + c * 8};
+      const hit = !!sweepObstacle(from, to, oval, carHeading);
+      const inner = touches(oval, from, to, carHeading, -.03), outer = touches(oval, from, to, carHeading, .03);
+      if (inner !== outer) continue;
+      checked++;
+      assert.equal(hit, inner, `oval at ${heading}, car at ${carHeading}, travel ${travel}, ${offset} m`);
+      const round = {x: 0, z: 0, halfX: .45, halfZ: .45, heading, shape: 'ellipse'};
+      const roundHit = sweepObstacle(from, to, round, carHeading), unturned = sweepObstacle(from, to, {...round, heading: 0}, carHeading);
+      assert.equal(!!roundHit, !!unturned, 'a round post gives the same answer at every heading');
+      if (roundHit) assert.ok(Math.abs(roundHit.t - unturned.t) < 1e-9, 'and meets the car at the same moment');
+    }
+  }
+  assert.ok(checked > 100, `${checked} cases far enough from the edge to judge`);
 });
 
 test('fixed trees pass footprint clearance and leave room at job starts', () => {
@@ -160,13 +257,13 @@ test('cleared trees have solid trunks at their full height', () => {
     assert.equal(trunk.halfX, tree.kind === 'snag' ? .35 : .45);
     assert.equal(trunk.halfZ, trunk.halfX);
     assert.equal(trunk.height, tree.height);
-    assert.equal(trunk.heading, 0);
+    assert.equal(trunk.heading, tree.heading);
     assert.equal(trunk.y, scablandsSurfaceHeightAt(tree.x, tree.z));
     assert.ok(grid.near(tree.x, tree.z, tree.x, tree.z, 0).includes(trunk));
   }
 });
 
-test('tree drawings retain distinct seeded headings while trunks stay unturned', () => {
+test('trees and their trunks share distinct seeded headings', () => {
   const fixed = clearedFixedThings(1989, []);
   const first = fixed.trees[0];
   const second = fixed.trees.find(tree => tree.heading !== first.heading);
@@ -176,9 +273,8 @@ test('tree drawings retain distinct seeded headings while trunks stay unturned',
   const rotations = [];
   for (const tree of [first, second]) {
     const trunk = solids.find(solid => solid.id === tree.id);
-    assert.equal(trunk.heading, 0);
-    assert.equal(trunk.collision.heading, 0);
-    assert.equal(trunk.drawHeading, tree.heading);
+    assert.equal(trunk.heading, tree.heading);
+    assert.equal(trunk.collision.heading, tree.heading);
     view.update(tree.x, tree.z);
     const mesh = view.group.getObjectByName(`Scablands ${tree.kind}`);
     let rotation;
