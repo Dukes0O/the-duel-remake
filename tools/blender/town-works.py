@@ -198,11 +198,12 @@ def plate(mesh, key, picture, strip, corners, thickness=.02, under=None):
     mesh.face(low, (upicture.uv(ux0, uy1), upicture.uv(ux1, uy1), upicture.uv(ux1, uy0), upicture.uv(ux0, uy0)), ukey, -normal)
 
 
-def mound(mesh, key, centre, rx, rz, height, uv, rings=5, sides=14, seed=1, rough=.12, profile=None, lean=(0, 0)):
+def mound(mesh, key, centre, rx, rz, height, uv, rings=5, sides=14, seed=1, rough=.12, profile=None, lean=(0, 0), corner=1.0):
     """A heap as a polar height field with an uneven outline and lumps.
 
     `uv(x, z, fraction, angle)` gives each point's place in the picture; x and z
     are metres from the centre, fraction runs from 0 at the top to 1 at the foot.
+    `corner` below 1 squares the outline towards a rounded rectangle.
     """
     rng = random.Random(seed)
     profile = profile or (lambda f: (1 - f) ** 1.1 * (1 + .3 * f))
@@ -216,8 +217,10 @@ def mound(mesh, key, centre, rx, rz, height, uv, rings=5, sides=14, seed=1, roug
         for k in range(sides):
             angle = 2 * math.pi * k / sides
             wobble = 1 + (edge[k] - 1) * f + rng.uniform(-rough, rough) * .3
-            x = math.cos(angle) * rx * f * wobble + lean[0] * (1 - f)
-            z = math.sin(angle) * rz * f * wobble + lean[1] * (1 - f)
+            cos_a, sin_a = math.cos(angle), math.sin(angle)
+            cos_a, sin_a = math.copysign(abs(cos_a) ** corner, cos_a), math.copysign(abs(sin_a) ** corner, sin_a)
+            x = cos_a * rx * f * wobble + lean[0] * (1 - f)
+            z = sin_a * rz * f * wobble + lean[1] * (1 - f)
             y = height * profile(f) * (1 + rng.uniform(-rough, rough)) if r < rings else 0
             row.append((mesh.vertex((cx + x, cy + y, cz + z)), x, z, f))
         rows.append(row)
@@ -834,7 +837,8 @@ if want('sawmill'):
     obj = mesh.finish('sawmill-sawn-board-stacks', {'top': bench_top.material(), 'side': bench_side.material()})
     obj.parent = boards_root
     dust = photo('sawmill-sawdust.jpg')
-    dust_uv = lambda x, z, f, angle: dust.uv(408 + math.cos(angle) * f * 320, 398 + f * 262)
+    # Only the middle of the photographed heap: its thin edge and the studio floor stay out of the picture.
+    dust_uv = lambda x, z, f, angle: dust.uv(408 + math.cos(angle) * f * 215, 545 + math.sin(angle) * f * 75)
     mesh = Mesh()
     mound(mesh, 'dust', (6.4, 0, -5.3), 2.5, 1.7, 1.2, dust_uv, rings=5, sides=16, seed=4, rough=.1)
     mound(mesh, 'dust', (3.4, 0, -2.5), 1.0, .8, .42, dust_uv, rings=3, sides=10, seed=9, rough=.14)
@@ -988,11 +992,13 @@ if want('pile-clay'):
     piece = node('pile-clay', family)
     clay = photo('clay-wet-red-brown.jpg')
     mesh = Mesh()
-    dome = lambda f: (1 - f ** 1.7) * (1 - .25 * f)
-    mound(mesh, 'clay', (.2, 0, .1), 2.7, 2.2, 1.15, tiled(clay, 2.2), rings=6, sides=16, seed=31, rough=.2, profile=dome, lean=(.3, -.2))
-    for seed, (x, z, r, h) in enumerate(((-2.1, -1.9, .85, .5), (2.3, 1.7, .8, .42), (2.2, -1.9, .6, .34), (-2.3, 1.7, .55, .3)), 40):
-        mound(mesh, 'clay', (x, 0, z), r, r * .8, h, tiled(clay, 2.2), rings=3, sides=9, seed=seed, rough=.22, profile=dome)
-    tools = place_tool(mesh, 'tools', 2, (-2.9, .09, .3), .95, right=(0, 0, 1), up=(1, .12, .1))
+    # Dug clay stands in rounded lumps: a broad heap of several mounds run together, not one cone.
+    dome = lambda f: (1 - f ** 2.2) * (1 - .12 * f)
+    mound(mesh, 'clay', (.1, 0, .1), 2.5, 2.2, 1.35, tiled(clay, 2.2), rings=6, sides=18, seed=31, rough=.07, profile=dome, lean=(.35, -.2))
+    for seed, (x, z, r, h) in enumerate(((-1.9, -1.5, 1.2, .8), (1.9, 1.4, 1.15, .75), (1.8, -1.6, .95, .6), (-1.9, 1.5, .9, .55),
+                                         (-2.8, -.1, .6, .35), (.2, 2.5, .6, .32)), 40):
+        mound(mesh, 'clay', (x, 0, z), r, r * .88, h, tiled(clay, 2.2), rings=4, sides=11, seed=seed, rough=.08, profile=dome)
+    tools = place_tool(mesh, 'tools', 2, (-2.7, .05, 3.2), .95, right=(1, 0, 0), up=(0, .04, -1))
     obj = mesh.finish('pile-clay-heap', {'clay': clay.material(), 'tools': tools.material()})
     obj.parent = piece
     check_piece(piece, 3.5, 3.5, 1800)
@@ -1006,7 +1012,7 @@ if want('pile-salvage'):
     print('salvage heap photo: centre', scx, scy, 'radius', srad)
     mesh = Mesh()
     R = 2.75
-    mound(mesh, 'scrap', (0, 0, 0), R, R, 1.55, lambda x, z, f, a: scrap.uv(scx + x / R * srad * .86, scy + z / R * srad * .86),
+    mound(mesh, 'scrap', (0, 0, 0), R, R, 1.55, lambda x, z, f, a: scrap.uv(scx + x / R * srad * .74, scy + z / R * srad * .74),
           rings=6, sides=18, seed=51, rough=.13, profile=lambda f: (1 - f ** 1.35) * (1 - .15 * f))
     rubber_skin = (8, 8, rubber.w - 8, rubber.h - 8)
     ring_tyre(mesh, 'rubber', rubber, (2.45, .42, 1.3), (.5, .25, .83), .44, skin=rubber_skin)
@@ -1107,16 +1113,19 @@ if want('pile-brick'):
         block(mesh, 'brick', brick, (x, .1, z), (1.22, height, 1.22), yaw=yaw, shift=(rng.uniform(0, 300), rng.uniform(0, 300)))
         if height < 1.1:
             block(mesh, 'brick', brick, (x - .2, .1 + height, z + .15), (.75, .2, .9), yaw=yaw, shift=(rng.uniform(0, 300), 60))
-    tumble = lambda x, z, f, a: (x / 1.05 + .5 + .3 * math.sin(a * 3), z / 1.05 + .5)
-    mound(mesh, 'brick', (1.7, 0, -1.5), 1.75, 1.45, .7, tumble, rings=4, sides=12, seed=82, rough=.24,
-          profile=lambda f: (1 - f ** 1.4))
-    for index in range(9):
-        angle = rng.uniform(0, 6.28)
-        x, z = 1.7 + math.cos(angle) * rng.uniform(1.2, 2.2) * .8, -1.5 + math.sin(angle) * rng.uniform(1.0, 1.7)
-        z = max(z, -3.3)
-        block(mesh, 'brick', brick, (min(x, 3.3), 0, z), (.22, .075, .105), yaw=rng.uniform(0, 3.1), metres=.22,
-              shift=(40 + rng.randrange(4) * 105, 30 + rng.randrange(6) * 72), side=(60, 100, 150, 130))
-    obj = mesh.finish('pile-brick-stacks', {'brick': brick.material(), 'plank': planks.material()})
+    # Broken and loose bricks: a low bank of brick rubble with whole bricks lying on it every way.
+    rubble = photo('rubble.jpg')
+    mound(mesh, 'rubble', (1.7, 0, -1.5), 1.6, 1.4, .5, tiled(rubble, 1.6), rings=4, sides=12, seed=82, rough=.1,
+          profile=lambda f: (1 - f ** 1.6))
+    for index in range(62):
+        angle, reach = rng.uniform(0, 6.28), rng.random() ** .7
+        x, z = 1.7 + math.cos(angle) * reach * 1.75, -1.5 + math.sin(angle) * reach * 1.5
+        y = max(0, .5 * (1 - reach ** 1.6) - .03) + (rng.uniform(0, .1) if reach < .5 else 0)
+        size = rng.choice(((.22, .075, .105), (.22, .105, .075), (.105, .22, .075), (.12, .075, .105)))
+        block(mesh, 'brick', brick, (min(x, 3.35), y, max(z, -3.35)), size, yaw=rng.uniform(0, 3.1), metres=.22,
+              shift=(40 + rng.randrange(4) * 105, 30 + rng.randrange(6) * 72),
+              side=(60 + rng.randrange(3) * 105, 100, 150 + rng.randrange(3) * 105, 130))
+    obj = mesh.finish('pile-brick-stacks', {'brick': brick.material(), 'plank': planks.material(), 'rubble': rubble.material()})
     obj.parent = piece
     check_piece(piece, 3.5, 3.5, 1800)
 
@@ -1255,12 +1264,12 @@ if want('salvage-yard'):
     tx0, ty0, tx1, ty1 = extent(subject(tyres))
     tcx, tcy, trad = (tx0 + tx1) / 2, (ty0 + ty1) / 2, min(tx1 - tx0, ty1 - ty0) / 2
     mesh = Mesh()
-    mound(mesh, 'tyres', (-8.95, 0, 8.6), 1.95, 2.3, 1.35, lambda x, z, f, a: tyres.uv(tcx + x / 1.95 * trad * .84, tcy + z / 2.3 * trad * .84),
+    mound(mesh, 'tyres', (-8.95, 0, 8.6), 1.95, 2.3, 1.35, lambda x, z, f, a: tyres.uv(tcx + x / 1.95 * trad * .72, tcy + z / 2.3 * trad * .72),
           rings=5, sides=14, seed=103, rough=.12, profile=lambda f: (1 - f ** 1.5) * (1 - .1 * f))
     rubber_skin = (8, 8, rubber.w - 8, rubber.h - 8)
     for centre, axis, r in (((-8.2, .5, 6.1), (.2, .3, 1), .45), ((-9.9, .14, 6.3), (0, 1, .05), .43), ((-7.6, .13, 5.2), (.05, 1, 0), .4),
                             ((-8.9, 1.45, 8.9), (.3, 1, .2), .42)):
-        ring_tyre(mesh, 'rubber', rubber, centre, axis, r, sides=10, skin=rubber_skin)
+        ring_tyre(mesh, 'rubber', rubber, centre, axis, r, sides=8, skin=rubber_skin)
     # steel
     bearers(mesh, 'plank', planks, (-5.9, -3.1), 6.4, 10.6, y=.06, size=.12)
     for index in range(6):
@@ -1289,8 +1298,8 @@ if want('salvage-yard'):
             x = 3.2 + (i + row * .5) * .33
             y = .1 + .16 * (1 + row * 1.74)
             shift = rng.uniform(-.25, .25)
-            pipe(mesh, 'pipe', pipe_photo, (x, y, 6.0 + shift), (x, y, 10.8 + shift * .5), .16, sides=7, skin=PIPE_SKIN, bore=bore)
-    pipe(mesh, 'pipe', pipe_photo, (5.7, .16, 6.3), (5.95, .16, 10.6), .13, sides=7, skin=PIPE_SKIN, bore=bore)
+            pipe(mesh, 'pipe', pipe_photo, (x, y, 6.0 + shift), (x, y, 10.8 + shift * .5), .16, sides=6, skin=PIPE_SKIN, bore=bore)
+    pipe(mesh, 'pipe', pipe_photo, (5.7, .16, 6.3), (5.95, .16, 10.6), .13, sides=6, skin=PIPE_SKIN, bore=bore)
     # drums
     for index, (x, z) in enumerate(((7.5, 10.5), (8.15, 10.45), (8.8, 10.5), (9.45, 10.4), (10.1, 10.45), (7.55, 9.8), (8.2, 9.75),
                                     (10.2, 9.7), (8.5, 10.1), (9.15, 10.05))):
@@ -1309,11 +1318,18 @@ if want('salvage-yard'):
     sx0, sy0, sx1, sy1 = extent(subject(scrap))
     scx, scy, srad = (sx0 + sx1) / 2, (sy0 + sy1) / 2, min(sx1 - sx0, sy1 - sy0) / 2
     mesh = Mesh()
-    mound(mesh, 'scrap', (-7.0, 0, -4.6), 3.5, 4.4, 2.3, lambda x, z, f, a: scrap.uv(scx + x / 3.5 * srad * .86, scy + z / 4.4 * srad * .86),
+    mound(mesh, 'scrap', (-7.0, 0, -4.6), 3.5, 4.4, 2.3, lambda x, z, f, a: scrap.uv(scx + x / 3.5 * srad * .74, scy + z / 4.4 * srad * .74),
           rings=6, sides=18, seed=105, rough=.14, profile=lambda f: (1 - f ** 1.35) * (1 - .15 * f))
-    mound(mesh, 'scrap', (1.2, 0, 1.3), 1.7, 1.5, .8, lambda x, z, f, a: scrap.uv(scx + z / 1.7 * srad * .8, scy - x / 1.5 * srad * .8),
-          rings=4, sides=12, seed=106, rough=.16, profile=lambda f: (1 - f ** 1.35))
-    ring_tyre(mesh, 'rubber', rubber, (-4.1, .45, -6.9), (1, .2, .5), .46, sides=10, skin=rubber_skin)
+    # Things pulled from the heap and not yet carried to a bay: tyres stacked, sheets, a few pipes.
+    for level in range(4):
+        ring_tyre(mesh, 'rubber', rubber, (1.4 + level * .03, .12 + level * .23, 1.2 - level * .02), (.03 * level, 1, .02), .44,
+                  sides=8, skin=rubber_skin)
+    ring_tyre(mesh, 'rubber', rubber, (2.3, .44, .7), (.9, .15, .4), .44, sides=8, skin=rubber_skin)
+    corrugated(mesh, 'tin', tin, [(-.4, .04, 1.9), (.5, .04, 2.1), (.0, .06, 4.3), (-.9, .06, 4.1)], waves=8)
+    corrugated(mesh, 'tin', tin, [(-.1, .08, 2.2), (.8, .09, 2.0), (1.3, .1, 4.1), (.4, .1, 4.3)], waves=8)
+    pipe(mesh, 'pipe', pipe_photo, (2.2, .12, 2.2), (3.9, .12, -.4), .11, sides=6, skin=PIPE_SKIN)
+    pipe(mesh, 'pipe', pipe_photo, (2.5, .12, 2.5), (4.3, .12, .1), .11, sides=6, skin=PIPE_SKIN)
+    ring_tyre(mesh, 'rubber', rubber, (-4.1, .45, -6.9), (1, .2, .5), .46, sides=8, skin=rubber_skin)
     pipe(mesh, 'pipe', pipe_photo, (-7.6, 1.5, -3.2), (-4.3, 2.9, -1.9), .09, sides=6, skin=PIPE_SKIN)
     corrugated(mesh, 'tin', tin, [(-5.1, 1.5, -6.6), (-4.25, 1.2, -6.9), (-3.5, .05, -5.0), (-4.3, .3, -4.7)], waves=8)
     obj = mesh.finish('salvage-yard-unsorted-heaps', {'scrap': scrap.material(), 'rubber': rubber.material(),
@@ -1344,10 +1360,12 @@ if want('salvage-yard'):
         # The stove pipe stands at a different place in each view, so it leaves every mask.
         'cut': {'side': [(120, 90, 180, 188)], 'front': [(226, 50, 278, 150)], 'rear': [(822, 120, 868, 199)]},
         'grey': 22, 'tolerance': 26, 'bleed_tolerance': 38,
-        'voxel': .12, 'target': 1500, 'mask_dir': str(render_masks),
+        # A fine grain, so that smoothing rounds the corners by a hand and not into a cushion.
+        'voxel': .07, 'target': 2300, 'mask_dir': str(render_masks),
     }
     shed_root = node('salvage-yard:shed', yard, at=SHED_AT)
     shed_body = carve_object('salvage-yard-shed-body', textures, shed_table)
+    shed_body.location.z -= .06          # voxel centres leave the lower edge above the floor; seat it
     shed_body.parent = shed_root
     shed_side = Photo(textures / 'salvage-shed-side.jpg')         # a copy the carve has not painted over
     mesh = Mesh()
@@ -1396,44 +1414,17 @@ if want('salvage-yard'):
     check_piece(yard, 11.5, 11.5, 9000)
 
 
-def limb(mesh, key, picture, points, to_world, sides=6):
-    """A tapering bough through `points` [(px, py, radius in pixels, depth in metres)].
-
-    It wears the photo along its own length, so from the photo's side it shows the photo's own
-    bough, and it is round from every other side.
-    """
-    rings = []
-    count = len(points)
-    for i, (px, py, radius, depth) in enumerate(points):
-        before, after = points[max(i - 1, 0)], points[min(i + 1, count - 1)]
-        tx, ty = after[0] - before[0], after[1] - before[1]
-        length = math.hypot(tx, ty) or 1
-        nx, ny = -ty / length, tx / length
-        centre = Vector(to_world(px, py, depth))
-        tangent = (Vector(to_world(after[0], after[1], after[3])) - Vector(to_world(before[0], before[1], before[3]))).normalized()
-        side = Vector(to_world(px + nx, py + ny, depth)) - centre
-        metre = side.length
-        side = (side - tangent * side.dot(tangent)).normalized()
-        other = tangent.cross(side).normalized()
-        ring = []
-        for k in range(sides + 1):
-            angle = 2 * math.pi * k / sides
-            out_way = side * math.cos(angle) + other * math.sin(angle)
-            ring.append((mesh.vertex(centre + out_way * radius * metre),
-                         picture.uv(px + nx * math.cos(angle) * radius * .8, py + ny * math.cos(angle) * radius * .8), out_way))
-        rings.append(ring)
-    for i in range(count - 1):
-        for k in range(sides):
-            (a, ua, na), (b, ub, nb) = rings[i][k], rings[i][k + 1]
-            (c, uc, _), (d, ud, _) = rings[i + 1][k + 1], rings[i + 1][k]
-            mesh.indexed((a, b, c, d), (ua, ub, uc, ud), key, na + nb, True)
-    px, py, radius, depth = points[-1]
-    before = points[-2]
-    tip = Vector(to_world(px + (px - before[0]) * .15, py + (py - before[1]) * .15, depth))
-    tip_index = mesh.vertex(tip)
-    for k in range(sides):
-        (a, ua, na), (b, ub, nb) = rings[-1][k], rings[-1][k + 1]
-        mesh.indexed((a, b, tip_index), (ua, ub, picture.uv(px, py)), key, na + nb, True)
+def cutout(mesh, key, picture, loops, to_world):
+    """A flat, two-sided shape cut along a photo's own outline. `to_world(px, py)` places a picture point."""
+    from photo_model import fill
+    first = None
+    for triangle in fill(loops):
+        points = [Vector(to_world(*corner)) for corner in triangle]
+        if first is None:
+            first = (points[1] - points[0]).cross(points[2] - points[0])
+        uvs = [picture.uv(*corner) for corner in triangle]
+        mesh.face(points, uvs, key, first)
+        mesh.face(points, uvs, key, -first)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1502,20 +1493,7 @@ if want('old-ground'):
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     glow.data.materials.append(lamp_material); glow.parent = lamp_root
 
-    # A swept sand path from the gate to the tree's shade.
-    sand = photo('sand-pale-fine.jpg')
-    mesh = Mesh()
-    stations = [(-HALF + .2, 0), (-7.5, .05), (-4.5, -.08), (-1.5, .06), (1.5, -.05), (4.4, .3), (6.3, 1.1)]
-    edges = []
-    for index, (z, bend) in enumerate(stations):
-        half_width = .95 + rng.uniform(-.1, .1) if index < len(stations) - 1 else 1.5
-        edges.append(((bend - half_width, .012, z), (bend + half_width, .012, z)))
-    for (l0, r0), (l1, r1) in zip(edges, edges[1:]):
-        mesh.face((l0, r0, r1, l1), [sand.uv(p[0] * 190 + 256, p[2] * 190) for p in (l0, r0, r1, l1)], 'sand', (0, 1, 0))
-    obj = mesh.finish('old-ground-swept-path', {'sand': sand.material()})
-    obj.parent = node('old-ground:path', ground_root)
-
-    # Twelve graves in four plots of three, either side of the path.
+    # Twelve graves in four plots of three, either side of the way in from the gate.
     grave, markers = photo('old-ground-grave-top.jpg'), photo('old-ground-markers.jpg')
     marker_mask = subject(markers)
     MARKER_BOXES = [(100, 60, 280, 453), (326, 55, 483, 453), (529, 85, 704, 453), (739, 160, 921, 453)]
@@ -1528,10 +1506,10 @@ if want('old-ground'):
         grave_root = node(f'old-ground:marker-{number}', ground_root, at=(x, 0, z))
         mesh = Mesh()
         def grave_uv(gx, gz, f, angle):
-            return grave.uv(505 - (gz + 1.14) / GRAVE_SCALE * .96, 261 + gx / GRAVE_SCALE * .96)
-        mound(mesh, 'grave', (0, 0, -1.14), .5, 1.12, .26, grave_uv, rings=4, sides=14, seed=130 + number, rough=.03,
-              profile=lambda f: (1 - f ** 2.4) * .9 + .1 * (1 - f))
-        box_index = (number * 3 + slot) % 4
+            return grave.uv(505 - gz / GRAVE_SCALE * .9, 261 + gx / GRAVE_SCALE * .9)
+        mound(mesh, 'grave', (0, 0, -1.14), .5, 1.12, .26, grave_uv, rings=4, sides=16, seed=130 + number, rough=.02,
+              profile=lambda f: (1 - f ** 2.4) * .9 + .1 * (1 - f), corner=.6)
+        box_index = (0, 1, 3, 2, 1, 2, 0, 3, 2, 0, 1, 3)[number - 1]
         bx0, by0, bx1, by1 = MARKER_BOXES[box_index]
         lean_x, lean_z = rng.uniform(-.06, .06), rng.uniform(-.03, .07)
         turn = rng.uniform(-.12, .12)
@@ -1543,39 +1521,40 @@ if want('old-ground'):
         obj = mesh.finish(f'old-ground-grave-{number}', {'grave': grave.material(), 'marker': markers.material()})
         obj.parent = grave_root
 
-    # The dead tree: each bough follows its bough in the photo and wears that part of the photo.
+    # The dead tree.
     tree = photo('old-ground-tree.jpg')
     TREE_SCALE = 6.4 / (910 - 95)
-    TREE_AT, TREE_TURN = (6.9, 0, 6.6), math.radians(205)
-    def tree_world(px, py, depth):
-        lx, ly = (px - 372) * TREE_SCALE, (910 - py) * TREE_SCALE
-        c, s = math.cos(TREE_TURN), math.sin(TREE_TURN)
-        return (TREE_AT[0] + lx * c + depth * s, ly, TREE_AT[2] - lx * s + depth * c)
-    boughs = [
-        [(372, 908, 92, 0), (368, 850, 62, 0), (360, 760, 48, 0), (372, 660, 50, 0), (385, 585, 54, 0), (392, 540, 46, 0)],
-        [(350, 545, 34, 0), (300, 440, 26, .3), (265, 350, 21, .5), (245, 270, 13, .7), (265, 165, 6, .9)],
-        [(255, 290, 10, .6), (190, 245, 7, .2), (140, 225, 4, -.1), (95, 182, 2.5, -.3)],
-        [(150, 235, 4, -.1), (150, 140, 2, -.2)],
-        [(340, 565, 30, 0), (280, 522, 22, -.5), (215, 482, 16, -.9), (150, 462, 10, -1.3), (85, 470, 5, -1.6)],
-        [(165, 463, 8, -1.2), (165, 410, 6, -1.4), (138, 350, 3, -1.6)],
-        [(398, 548, 36, 0), (415, 440, 28, -.4), (425, 330, 21, -.7), (400, 250, 14, -.9), (368, 190, 9, -1.0), (385, 120, 4, -1.1), (420, 98, 2, -1.2)],
-        [(372, 185, 6, -1.0), (330, 180, 3, -1.2)],
-        [(380, 185, 6, -1.0), (430, 180, 4, -.8), (468, 215, 2, -.7)],
-        [(415, 532, 32, 0), (480, 482, 24, .5), (545, 442, 18, .9), (600, 427, 11, 1.2), (650, 440, 6, 1.5), (688, 412, 2.5, 1.7)],
-        [(560, 437, 12, 1.0), (585, 387, 7, 1.3), (600, 372, 4, 1.4)],
-        [(428, 410, 17, -.6), (470, 370, 15, -.3), (530, 330, 11, .1), (590, 300, 7, .5), (665, 285, 2.5, .9)],
-        [(575, 305, 6, .4), (580, 250, 5, .7), (630, 225, 3, .9), (682, 212, 1.5, 1.1)],
-        [(330, 880, 34, .1), (245, 893, 15, .5), (188, 904, 6, .7)],
-        [(412, 880, 34, -.1), (480, 890, 16, -.4), (555, 902, 6, -.6)],
-        [(372, 880, 34, .3), (366, 898, 15, 1.0), (360, 906, 6, 1.5)],
-        [(372, 880, 34, -.3), (380, 898, 15, -1.0), (386, 906, 6, -1.45)],
-    ]
+    TREE_AT, TREE_TURN = (6.6, 0, 6.4), math.radians(205)
+    # Three cut-outs of the photo stand through the trunk a third of a turn apart, the middle one
+    # mirrored, so that every side shows the photo's own boughs and twigs. (Round boughs built along
+    # the photo's limbs smeared its grain twice running: see docs/ART_LINE.md.)
+    tree_mask = subject(tree)
+    tree_mask[912:, :] = False
+    tree_loops = trace(tree_mask, (60, 80, 705, 913), tolerance=3.2, min_area=260)
     mesh = Mesh()
-    for index, bough in enumerate(boughs):
-        limb(mesh, 'tree', tree, bough, tree_world, sides=8 if index == 0 else 5)
+    for index, quarter in enumerate((0, math.radians(60), math.radians(120))):
+        mirror = -1 if index == 1 else 1
+        def tree_plane(px, py, quarter=quarter, mirror=mirror):
+            lx, ly = (px - 372) * TREE_SCALE * mirror, (910 - py) * TREE_SCALE
+            turn = TREE_TURN + quarter
+            return (TREE_AT[0] + lx * math.cos(turn), ly, TREE_AT[2] - lx * math.sin(turn))
+        cutout(mesh, 'tree', tree, tree_loops, tree_plane)
     obj = mesh.finish('old-ground-dead-tree', {'tree': tree.material()})
     obj.parent = node('old-ground:tree', ground_root)
     print('old ground tree triangles', sum(len(p.vertices) - 2 for p in obj.data.polygons))
+
+    # A plain plank bench in the tree's shade, cut along the trestle bench photo's own outline.
+    seat_side = photo('bench-side.jpg')
+    seat_parts = [rect(12, 258, 990, 322), rect(100, 322, 178, 575), rect(88, 560, 185, 612),
+                  rect(820, 322, 895, 575), rect(808, 560, 910, 612), rect(178, 472, 820, 520)]
+    seat_loops = trace(polygon_mask(seat_side, seat_parts), (5, 250, 1000, 615), tolerance=2.0, min_area=60)
+    SEAT_SCALE = 2.1 / 978
+    mesh = Mesh()
+    slab(mesh, 'seat', seat_side, seat_loops,
+         lambda px, py, d: (3.6 + (px - 501) * SEAT_SCALE * .8 - d * .6, (612 - py) * SEAT_SCALE * .62, 7.9 + (px - 501) * SEAT_SCALE * .6 + d * .8),
+         -.2, .2, wall_scale=SEAT_SCALE)
+    obj = mesh.finish('old-ground-plank-bench', {'seat': seat_side.material()})
+    obj.parent = node('old-ground:bench', ground_root)
 
     check_piece(ground_root, 11.5, 11.5, 9000)
 
@@ -1758,7 +1737,7 @@ if want('handcart'):
     axle_z, axle_y = cart_world(wheel_cx, wheel_cy, 0)[2], (CART_GROUND - wheel_cy) * CS
     strut(mesh, 'rust', rust, RUST_STRIP, (-HALF_W - .12, axle_y, axle_z), (HALF_W + .12, axle_y, axle_z), .05, .05)
     strut(mesh, 'side', cart_side, (620, 341, 860, 357), (-.4, .56, z1 + .76), (.4, .56, z1 + .76), .055, .055)
-    strut(mesh, 'side', cart_side, (864, 365, 878, 535), (0, .54, z1 + .7), (0, 0, z1 + .72), .06, .06, up=(1, 0, 0))
+    strut(mesh, 'side', cart_side, (864, 368, 878, 505), (0, .54, z1 + .7), (0, 0, z1 + .72), .06, .06, up=(1, 0, 0))
     obj = mesh.finish('handcart-deck-wheels-and-shafts', {'side': cart_side.material(), 'top': cart_top.material(), 'rust': rust.material()})
     obj.parent = piece
     check_piece(piece, 3.5, 3.5, 1800)
@@ -1798,7 +1777,8 @@ if want('flatbed'):
         # The front photo shapes the cab and the rear photo the deck behind it.
         'ends_split': side_z(350),
         'underside': .6,
-        'wheels': [(axles[0], WHEEL_R, .72), (axles[1], WHEEL_R, .6)],
+        # The rear arch is cut smaller than its tyre, so that the cut stays below the deck's planks.
+        'wheels': [(axles[0], WHEEL_R, .72), (axles[1], WHEEL_R * .76, .6)],
         'grey': 22, 'tolerance': 26, 'bleed_tolerance': 38,
         'voxel': .07, 'target': 1050, 'mask_dir': str(render_masks),
     }
@@ -1819,7 +1799,7 @@ if want('flatbed'):
     load_root = node('flatbed:load', piece, at=(0, deck_y, (side_z(360) + side_z(985)) / 2))
     mesh = Mesh()
     # The load lies along the deck: the photo's long axis runs along Z.
-    loaf(mesh, 'load', lambda fx, fz: load_photo.uv(19 + fz * (1004 - 19), 17 + fx * (491 - 17)), (0, 0, 0), 2.05, 3.9, .95, seed=161)
+    loaf(mesh, 'load', lambda fx, fz: load_photo.uv(60 + fz * (964 - 60), 45 + fx * (463 - 45)), (0, 0, 0), 2.05, 3.9, .95, seed=161)
     obj = mesh.finish('flatbed-salvage-load', {'load': load_photo.material()})
     obj.parent = load_root
     check_piece(piece, 3.5, 3.5, 1800)
@@ -2000,18 +1980,18 @@ if renders:
             show(['old-ground'], parts=['old-ground:gate', 'old-ground:lamp'])
             gate_view = shoot('gate', 'ortho', (0, 1.45, -60), (0, 1.45, -10.3), 4.4, (1024, 768))
             show(['old-ground'], parts=all_markers[:4])
-            marker_view = shoot('markers', 'persp', (0, 1.5, -12.5), (0, .5, -3.2), 9.5, (1024, 512))
+            marker_view = shoot('markers', 'persp', (-4, 1.2, -10.5), (-4, .5, -2.4), 5.2, (1024, 512))
             grave_view = shoot('grave', 'ortho', (-2.8, 30, -3.45), (-2.8, 0, -3.45), 3.0, (1024, 512), roll=math.radians(90))
-            show(['old-ground'], parts=['old-ground:tree'])
+            show(['old-ground'], parts=['old-ground:tree', 'old-ground:bench'])
             turn = math.radians(205)
-            tree_view = shoot('tree', 'ortho', (6.9 + 60 * math.sin(turn), 3.3, 6.6 + 60 * math.cos(turn)), (6.9, 3.3, 6.6), 8.2, (768, 1024))
-            tree_other = shoot('tree-other', 'ortho', (6.9 + 60 * math.cos(turn), 3.3, 6.6 - 60 * math.sin(turn)), (6.9, 3.3, 6.6), 8.2, (768, 1024))
+            tree_view = shoot('tree', 'ortho', (6.6 + 60 * math.sin(turn), 3.3, 6.4 + 60 * math.cos(turn)), (6.6, 3.3, 6.4), 8.2, (768, 1024))
+            tree_other = shoot('tree-other', 'ortho', (6.6 + 60 * math.cos(turn + .5), 3.3, 6.4 - 60 * math.sin(turn + .5)), (6.6, 3.3, 6.4), 8.2, (768, 1024))
             rows = [
                 {'label': 'DRY-STONE WALL AND GATEWAY | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 330,
                  'panels': [ref('old-ground-wall-side.jpg'), wall_view, ref('old-ground-gate.jpg'), gate_view], 'weights': [1.3, 1.3, .9, .9]},
                 {'label': 'MARKERS AND ONE GRAVE | SOURCE PHOTOS  /  EXPORTED MODEL', 'height': 300,
                  'panels': [ref('old-ground-markers.jpg'), marker_view, ref('old-ground-grave-top.jpg'), grave_view]},
-                {'label': 'THE DEAD TREE | SOURCE PHOTO  /  MODEL FROM THE SAME SIDE  /  MODEL FROM A QUARTER TURN ROUND', 'height': 560,
+                {'label': 'THE DEAD TREE AND BENCH | SOURCE PHOTO  /  MODEL FROM THE SAME SIDE  /  MODEL FROM PART-WAY ROUND', 'height': 560,
                  'panels': [ref('old-ground-tree.jpg'), tree_view, tree_other]},
             ]
             show(['old-ground'], hidden=few)
@@ -2031,7 +2011,7 @@ if renders:
             def pair(piece_id, side_photo, top_photo, side_scale, side_res, top_scale, top_res, side_height, hidden=()):
                 show([piece_id], hidden=hidden)
                 return [ref(side_photo), shoot(f'{piece_id}-side', 'ortho', (-40, side_height, 0), (0, side_height, 0), side_scale, side_res),
-                        ref(top_photo), shoot(f'{piece_id}-top', 'ortho', (0, 30, 0), (0, 0, 0), top_scale, top_res, roll=math.radians(90))]
+                        ref(top_photo), shoot(f'{piece_id}-top', 'ortho', (0, 30, 0), (0, 0, 0), top_scale, top_res, roll=math.radians(-90))]
             rows = [
                 {'label': 'FLATBED, WITHOUT ITS LOAD | SIDE AND TOP | SOURCE PHOTO  /  EXPORTED MODEL, SAME ORTHOGRAPHIC CAMERA', 'height': 250,
                  'panels': pair('flatbed', 'flatbed-side.jpg', 'flatbed-top.jpg', 7.05, (1024, 512), 7.05, (1024, 512), 1.25, hidden={'flatbed:load'})},
