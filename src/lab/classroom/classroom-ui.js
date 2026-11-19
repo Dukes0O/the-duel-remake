@@ -227,15 +227,16 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     setHtml($('.lc-words-count'), 'wordCount', words.length ? `(${words.length})` : '');
     keepPlace = false;
     // The rest of Brian's words stays in the bubble, hidden, so a reader of the page's text still finds every word.
-    const [opening = '', ...rest] = paragraphs(brian.text), more = rest.length > 0, told_ = toldMore.has(brian.text);
+    const [opening = '', ...rest] = paragraphs(brian.text), more = rest.length > 0, toldAll = toldMore.has(brian.text);
     moreText = more ? brian.text : null;
-    const bubble = setHtml($('.lc-bubble'), 'bubble', `${escape(opening)}${more ? ` <span class="lc-more"${told_ ? '' : ' hidden'}>${rest.map(part => `<span>${escape(part)}</span>`).join(' ')}</span>` : ''}`);
-    const offer = more && !told_;
+    const bubble = setHtml($('.lc-bubble'), 'bubble', `${escape(opening)}${more ? ` <span class="lc-more"${toldAll ? '' : ' hidden'}>${rest.map(part => `<span>${escape(part)}</span>`).join(' ')}</span>` : ''}`);
+    const offer = more && !toldAll;
     if ($('.lc-more-button').hidden === offer) $('.lc-more-button').hidden = !offer;
     if (bubble || moved) pageMoved = true;
     // Opening the fold brings it into view, below Brian's words.
     if (revealWords) { revealWords = false; if (open) fold.scrollIntoView?.({block: 'nearest'}); }
-  }  function paintPhysics(v) {
+  }
+  function paintPhysics(v) {
     const formulas = v.formulas ?? [], open = formulas.length > 0 && physicsOpen();
     if ($('.lc-physics').hidden === open) $('.lc-physics').hidden = !open;
     if (root.classList.contains('lc-physics-open') !== open) root.classList.toggle('lc-physics-open', open);
