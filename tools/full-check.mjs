@@ -6,6 +6,7 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { discoverSuites, localDependencies, readsPath, wideSuitesForChanges, SMOKE_SUITES, LANE_GUARDS } from './run-tests.mjs';
 import { nightIsFullTierPass } from './build-status.mjs';
+import { evidenceDate } from './evidence-date.mjs';
 
 
 const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
@@ -49,9 +50,8 @@ const FRAME_ENTRIES=Object.freeze([path('src','main.js'),path('tools','browser-h
 const FRAME_FILES=Object.freeze(['index.html',path('tools','vite-qa.config.js')]);
 const RUN_LOG=path('docs','board','run-log.md');
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-function localDate(now=new Date()) {
-  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-}
+// The night's evidence folder takes its date from the shared clock (evidence-date.mjs): the laptop's local date.
+const localDate=evidenceDate;
 export function parseNightArguments(args=[]) {
   const options={idleAwake:false,noPush:false,date:localDate()},seen=new Set();
   for(let index=0;index<args.length;index++) {

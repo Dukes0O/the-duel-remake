@@ -8,6 +8,7 @@ import {createMachineView, MACHINE_SOUND_CUES} from '../src/machines/view.js';
 import {MACHINE_CAMERA_MODES, updateMachineCamera} from '../src/machines/camera.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {createDrillView} from '../src/machines/drill-view.js';
+import {ROAD_MACHINE_SEATS, roadMachineModel, machinePart} from '../src/machines/roads-view.js';
 import {updateBorerCamera} from '../src/machines/dig-game.js';
 
 const definition = machineDefinition('excavator');
@@ -71,10 +72,11 @@ async function asset(name) {
   loader.register(() => ({name:'HEADLESS_TEXTURE', loadTexture:() => Promise.resolve(new THREE.Texture())}));
   return (await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '')).scene;
 }
-const family = await asset('machines-1'), borer = await asset('borer');
+const family = await asset('machines-1'), secondFamily = await asset('machines-2'), borer = await asset('borer');
 for (const id of ['excavator', 'dumpTruck', 'trencher', 'drill', 'dozer', 'borer']) {
   const def = machineDefinition(id);
-  const source = (id === 'borer' ? borer : family).getObjectByName(id === 'dumpTruck' ? 'dump-truck' : id === 'drill' ? 'trencher' : id);
+  // The drill rig is the truck with a lattice mast in the second family of machines.
+  const source = (id === 'borer' ? borer : id === 'drill' ? secondFamily : family).getObjectByName(id === 'dumpTruck' ? 'dump-truck' : id === 'drill' ? 'drill-rig' : id);
   assert.ok(source, `${id} model exists`);
   let model = source.clone(true); model.position.set(0, 0, 0);
   if (id === 'borer') {
@@ -90,6 +92,32 @@ for (const id of ['excavator', 'dumpTruck', 'trencher', 'drill', 'dozer', 'borer
   assert.ok(camera.position.y > bounds.max.y, `${id} eye is above its model`);
   const ahead = new THREE.Raycaster(camera.position, camera.getWorldDirection(new THREE.Vector3()), 0, 3);
   assert.equal(ahead.intersectObject(machine.body, true).length, 0, `${id} cab view clears its model`);
+  machine.dispose();
+}
+// The road machines say where their driver sits, so that the tool the driver works is in the picture.
+const gameCamera = new THREE.PerspectiveCamera(55, 16 / 9, .1, 900);
+for (const [id, tool] of [['dozer', 'dozer:blade'], ['roller', 'roller:drum'], ['paver', 'paver rigid assembly']]) {
+  const def = machineDefinition(id);
+  const source = (id === 'dozer' ? family : secondFamily).getObjectByName(id);
+  assert.ok(source, `${id} model exists`);
+  let model = source.clone(true); model.position.set(0, 0, 0);
+  if (id !== 'dozer') model = roadMachineModel(model);
+  const machine = createMachineView({model, definition:def, parent:scene});
+  const posed = createMachineState(def, {x:4, z:8, heading:0.7});
+  machine.update(posed, 0); scene.updateMatrixWorld(true);
+  updateMachineCamera(gameCamera, def, posed, 'cab', {body:machine.body, seat:ROAD_MACHINE_SEATS[id]});
+  gameCamera.updateMatrixWorld(true);
+  const eye = new THREE.Raycaster(gameCamera.position, gameCamera.getWorldDirection(new THREE.Vector3()), 0, 1);
+  assert.equal(eye.intersectObject(machine.body, true).length, 0, `${id} seat is clear of its model`);
+  // Somewhere in the lower half of the picture, the tool is the first thing the eye meets.
+  const part = machinePart(machine.body, tool), look = new THREE.Raycaster();
+  const seen = [-.6, -.3, 0, .3, .6].flatMap(x => [-.9, -.7, -.5, -.3, -.1].map(y => new THREE.Vector2(x, y))).some(point => {
+    look.setFromCamera(point, gameCamera);
+    let node = look.intersectObject(machine.body, true)[0]?.object;
+    while (node && node !== part) node = node.parent;
+    return node === part;
+  });
+  assert.ok(seen, `${id} driver can see the ${tool}`);
   machine.dispose();
 }
 view.dispose();

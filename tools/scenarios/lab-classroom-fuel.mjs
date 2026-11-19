@@ -1,6 +1,7 @@
 // LAB-CLASSROOM-FUEL: the Fuel and weight classroom played by keyboard (and one mouse click on the tap), from the Lab
 // map's click-to-go to the wind tunnel, through Brian's job, to the pass and the Fuel load row open on the Tune page.
 // Memory-only saves.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html');
@@ -32,10 +33,10 @@ export async function run(c) {
   await c.evaluate(`document.querySelector('[data-lab-lesson="start:fuel"]').click()`);
   await at('wonder');
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
-  await wait(1900); await shot('wonder-racing'); await at('wonder', 's.ready'); await shot('wonder');
+  await wait(5000); await shot('wonder-racing'); await at('wonder', 's.ready'); await shot('wonder');
   await next('wonder');
   // The litre comes first, because the fuel load is measured in litres.
-  await at('word-litre'); await shot('word-litre'); await press('Space'); await at('word-litre', 's.ready'); await shot('word-litre-done');
+  await at('word-litre'); await shot('word-litre'); await openFormulaPanel(c); await press('Space'); await at('word-litre', 's.ready'); await shot('word-litre-done');
   await next('word-litre');
   await at('word-kilogram'); await shot('word-kilogram'); await press('Digit1'); await wait(300); await shot('word-kilogram-water'); await press('Digit2'); await at('word-kilogram', 's.ready'); await shot('word-kilogram-done');
   await next('word-kilogram');
@@ -78,7 +79,7 @@ export async function run(c) {
   await press('ArrowUp'); await press('Space'); await at('try-weigh', 's.ready'); await shot('try-weigh-done');
   await next('try-weigh');
   // Brian's job: a full tank on race one carries too much; then the least that lasts; Show me on race two.
-  await at('alone'); await shot('alone'); await press('Space'); await saying('extra mass', 'too much fuel says why'); await shot('alone-too-much');
+  await at('alone'); await shot('alone'); await press('Space'); await saying('more petrol than this race needs', 'too much fuel says why'); await shot('alone-too-much');
   await press('ArrowDown', 7); await press('Space'); await saying('The next race is three quarters', 'race one passes');
   for (const rung of [1, 2, 3]) { await press('KeyH'); await at('alone', `s.help === ${rung}`); }
   await wait(1000); await shot('alone-show-me');
@@ -93,7 +94,7 @@ export async function run(c) {
   }
   await at('recap'); await wait(800); await shot('recap');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
-  if (!(await c.evaluate(`!window.__qaApp.profile.lab?.done?.fuel && ['fuel-word-0', 'fuel-word-1', 'fuel-word-2'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
+  if (!(await c.evaluate(`!window.__qaApp.profile.lab?.done?.fuel && ['fuel-word-0', 'fuel-word-1', 'fuel-word-2', 'fuel-mass', 'fuel-density', 'fuel-speed', 'fuel-acceleration', 'fuel-force'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.includes('Finish the lesson'))`))) throw Error('The last step should say Finish the lesson.');
   // Enter finishes: the lesson's own races pass the bench's goal; Brian says what it opened, and Enter goes back to the Lab.
   await press('Enter');

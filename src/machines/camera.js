@@ -10,7 +10,12 @@ export function updateMachineCamera(camera, definition, state, mode = 'chase', l
   const heading = Number.isFinite(state.heading) ? state.heading : 0;
   const sin = Math.sin(heading), cos = Math.cos(heading), ground = Number.isFinite(state.y) ? state.y : 0;
   let target;
-  if (selected === 'cab') {
+  if (selected === 'cab' && look.seat) {
+    // A machine's own view may say where its driver sits, in the machine's metres (right, up, forward).
+    const at = ([right, up, forward]) => new THREE.Vector3(state.x + right * cos + forward * sin, ground + up, state.z + forward * cos - right * sin);
+    camera.position.copy(at(look.seat.eye));
+    target = at(look.seat.target);
+  } else if (selected === 'cab') {
     const yaw = heading + (definition.cabTurnsWith ? state.jointAngles?.[definition.cabTurnsWith] ?? 0 : 0);
     const eye = definition.cabEye ?? [0, 2.25, 0.35], s = Math.sin(yaw), c = Math.cos(yaw);
     camera.position.set(state.x + eye[0] * c + eye[2] * s, ground + eye[1], state.z + eye[2] * c - eye[0] * s);

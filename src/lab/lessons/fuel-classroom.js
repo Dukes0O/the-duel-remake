@@ -15,6 +15,9 @@ export const WEIGH_KG = fuelKg(WEIGH_LITRES);
 const HELD_GAP_S = .14, SETTLE_S = .8, FILL_S = 1.2, DRAIN_LPS = 20, LEVEL_LPS = 60;
 // Brian's job races run this long when the petrol lasts to the flag.
 export const RACE_S = 2.6;
+// The wonder and the watch have two or three cars, stopwatches, speed readouts and a photo finish moving together, so their races play slowly enough to follow
+// (the stopwatches count the same seconds, just slower), about 10 seconds, and R plays them again. The races the player sets up keep real speed.
+const WATCH_PACE = .4;
 // The speed the lesson times the car to: 100 km/h. The sums use the rounded figure in metres per second.
 export const KMH_PER_MS = 3.6;
 export const TARGET_KMH = 100;
@@ -37,8 +40,11 @@ export const pct = share => `${Math.round(share * 100)}%`;
 // "55%" when that is exact, and "about 47%" when it is rounded.
 export const pctAbout = share => Math.abs(share * 100 - Math.round(share * 100)) < 1e-9 ? pct(share) : `about ${pct(share)}`;
 export const gapWords = metres => metres >= 1 ? `${metres.toFixed(1)} m` : `${Math.round(metres * 100)} cm`;
-export const secondsTo100 = litres => toTarget(fuelRun(litres).zeroToSixtyS);
-export const secondsOf = (litres, car = CAR) => toTarget(fuelBench.run({car, litres}).zeroToSixtyS);
+// The bench's run for a car and a tank is always the same, and the board asks for it on every frame, so each answer is kept.
+const kept = (cache, key, make) => { if (!cache.has(key)) cache.set(key, make()); return cache.get(key); };
+const SECONDS = new Map(), SUMS = new Map(), SECONDS_100 = new Map();
+export const secondsTo100 = litres => kept(SECONDS_100, litres, () => toTarget(fuelRun(litres).zeroToSixtyS));
+export const secondsOf = (litres, car = CAR) => kept(SECONDS, `${car}/${litres}`, () => toTarget(fuelBench.run({car, litres}).zeroToSixtyS));
 // The car t seconds after the start, whichever car it is: the same push all the way to the speed, then that speed on.
 function movedBy(seconds, t) {
   const a = FINISH_MS / seconds;
@@ -53,7 +59,8 @@ const lowerFirst = s => s[0].toLowerCase() + s.slice(1);
 
 // The sums as the panel shows them, from rounded figures, so that they come out on a calculator from the numbers on the screen.
 // The force is the bench's rule: the car's own acceleration with a full tank, multiplied by its mass with a full tank.
-export function sumsOf(litres, car = CAR) {
+export const sumsOf = (litres, car = CAR) => kept(SUMS, `${car}/${litres}`, () => workedSums(litres, car));
+function workedSums(litres, car) {
   const full = fuelBench.run({car, litres: TANK_LITRES});
   const force = Math.round(full.carMassKg * SIXTY_MS / full.zeroToSixtyS), fuel = Number((litres * PETROL_KG_PER_LITRE).toFixed(2));
   const empty = Number((full.carMassKg - TANK_LITRES * PETROL_KG_PER_LITRE).toFixed(1)), total = Number((empty + fuel).toFixed(2));
@@ -68,10 +75,10 @@ export const leastLitres = share => Math.ceil(litresFor(share) / POUR_LITRES - 1
 export const STEPS = Object.freeze([
   {id: 'wonder', part: 0, title: 'Why did one car win?'},
   {id: 'word-litre', part: 1, title: 'Litre', word: 'fuel-word-1'},
-  {id: 'word-kilogram', part: 1, title: 'Kilogram and density', word: 'fuel-word-2'},
+  {id: 'word-kilogram', part: 1, title: 'Kilogram and density', word: 'fuel-word-2', words: ['fuel-mass', 'fuel-density']},
   {id: 'word-fuel-load', part: 1, title: 'Fuel load', word: 'fuel-word-0'},
-  {id: 'word-speed', part: 1, title: 'Speed and acceleration'},
-  {id: 'watch', part: 2, title: 'Force, mass and acceleration'},
+  {id: 'word-speed', part: 1, title: 'Speed and acceleration', words: ['fuel-speed', 'fuel-acceleration']},
+  {id: 'watch', part: 2, title: 'Force, mass and acceleration', words: ['fuel-force']},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'try-half', part: 3, title: 'Half a tank'},
   {id: 'try-weigh', part: 3, title: 'Pouring by mass'},
@@ -94,6 +101,11 @@ export const WORDS = Object.freeze([
   {id: 'fuel-word-0', word: 'Fuel load', meaning: 'The amount of petrol that a car carries, measured in litres.'},
   {id: 'fuel-word-1', word: 'Litre', meaning: 'A measure of how much space a liquid fills, written L. One litre fills a box 10 cm wide, 10 cm deep and 10 cm tall.'},
   {id: 'fuel-word-2', word: 'Kilogram', meaning: 'A measure of mass, written kg. Mass is how much matter an object contains, and a scale reads it in kilograms.'},
+  {id: 'fuel-mass', word: 'Mass', meaning: 'Mass is how much matter an object contains. It is measured in kilograms, written kg.'},
+  {id: 'fuel-density', word: 'Density', meaning: 'Density is the mass of one litre of a liquid, written in kg per litre.'},
+  {id: 'fuel-speed', word: 'Speed', meaning: 'Speed is how fast something is moving. It is given in km/h, or in metres per second, written m/s.'},
+  {id: 'fuel-acceleration', word: 'Acceleration', meaning: 'Acceleration is how fast the speed of something changes. It is measured in metres per second, per second, written m/s².'},
+  {id: 'fuel-force', word: 'Force', meaning: 'A force is a push or a pull, measured in newtons, written N. One newton gives one kilogram an acceleration of 1 m/s².'},
 ].map(Object.freeze));
 
 // ---- keys (the screen shows them on its buttons and the board) ----
@@ -101,14 +113,14 @@ const POUR_KEYS = Object.freeze({'↑': 'pour:in', '↓': 'pour:out'});
 const CAR_KEYS = Object.freeze({'←': 'car:prev', '→': 'car:next'});
 const ANSWER_KEYS = Object.freeze({1: 'answer:0', 2: 'answer:1', 3: 'answer:2'});
 const DONE = Object.freeze(['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.']);
-const PICK = 'Pick a card by clicking it, or press 1, 2 or 3.';
+const PICK = 'Pick the card with your answer.';
 // go: the Space button's words (Race, or Weigh it), or none.
 const pouring = (go, target) => ({keys: {...POUR_KEYS, ...(go ? {Space: 'go'} : {})}, repeat: ['↑', '↓'], waiting: true, target, glow: 'pour',
   buttons: [{action: 'pour:out', label: 'Pour out', key: '↓'}, {action: 'pour:in', label: 'Pour in', key: '↑'}, ...(go ? [{action: 'go', label: go, key: 'Space'}] : [])]});
 
 // ---- the formulas beside the board (the numbers are the ones on the gauge, the scale and the car now) ----
 const DENSITY_NOTE = 'Density is the mass of one litre of a liquid.';
-const FORCE_NOTE = 'In this game the engine’s force stays the same until the stopwatch stops. A real car’s force changes with its gears.';
+const FORCE_NOTE = 'The engine pushes with the same force whatever the tank holds.';
 const fuelSum = litres => ({title: 'Mass of the petrol', formula: 'mass of petrol = litres × density', worked: `${litres} litres × ${PETROL_KG_PER_LITRE} kg per litre = ${num(sumsOf(litres).fuel)} kg`, note: DENSITY_NOTE});
 const totalSum = (litres, car = CAR) => { const s = sumsOf(litres, car); return {title: 'Total mass of the car', formula: 'total mass = car with an empty tank + petrol', worked: `${num(s.empty)} kg + ${num(s.fuel)} kg = ${num(s.total)} kg`}; };
 const accelWorked = (litres, car = CAR) => { const s = sumsOf(litres, car); return `${whole(s.force)} N ÷ ${num(s.total)} kg = ${s.accel.toFixed(3)} m/s^2`; };
@@ -119,7 +131,7 @@ const speedSum = () => ({title: 'Speed in metres per second', formula: 'm/s = km
 const allSums = (litres, car = CAR, note = FORCE_NOTE) => [fuelSum(litres), totalSum(litres, car), accelSum(litres, car, note), timeSum(litres, car)];
 const raceSums = rows => rows.map(([label, litres]) => ({title: label, worked: accelWorked(litres), note: timeWorked(litres)}));
 const shareSum = litres => ({title: 'How far the petrol lasts', formula: `share of a Grand Prix = litres ÷ ${TANK_LITRES} × ${pct(GRAND_PRIX.fullTankShare)}`,
-  worked: litres == null ? null : `${litres} ÷ ${TANK_LITRES} × ${pct(GRAND_PRIX.fullTankShare)} = ${Number((lastsShare(litres) * 100).toFixed(1))}%`, note: `In this game a full tank of ${TANK_LITRES} litres lasts ${pct(GRAND_PRIX.fullTankShare)} of a Grand Prix.`});
+  worked: litres == null ? null : `${litres} ÷ ${TANK_LITRES} × ${pct(GRAND_PRIX.fullTankShare)} = ${Number((lastsShare(litres) * 100).toFixed(1))}%`, note: `A full tank of ${TANK_LITRES} litres lasts ${pct(GRAND_PRIX.fullTankShare)} of a Grand Prix.`});
 const LITRE_SUM = Object.freeze([{title: 'One litre', formula: '1 litre = 10 cm × 10 cm × 10 cm', worked: '10 × 10 × 10 = 1,000 cubic centimetres', note: 'A cubic centimetre is the space inside a box that is 1 cm wide, 1 cm deep and 1 cm tall.'}]);
 
 // ---- the checks ----
@@ -151,7 +163,7 @@ const CHECKS = {
   },
   'check-game': {
     question: 'In the game, you set Fuel load to Half tank on the Tune page for a Grand Prix. What happens during the race?',
-    answers: [{label: 'The car accelerates faster, but its petrol runs out past half way, and it is slow until it stops in the pit lane to refill', picture: {kind: 'game', what: 'pit'}}, {label: 'The petrol lasts the whole race', picture: {kind: 'game', what: 'flag'}},
+    answers: [{label: 'Faster at first, but the petrol runs out past half way', picture: {kind: 'game', what: 'pit'}}, {label: 'The petrol lasts the whole race', picture: {kind: 'game', what: 'flag'}},
       {label: 'The car is slower for the whole race', picture: {kind: 'game', what: 'slow'}}],
     correct: 0,
     formulas: answered => [shareSum(answered ? HALF : null)],
@@ -227,7 +239,7 @@ export function createModel() {
       m.onScale = what;
       if (!m.weighed.includes(what)) m.weighed.push(what);
       if (m.weighed.length < 2) {
-        m.say = what === 'water' ? `One litre of water has a mass of ${kg2(WATER_KG_PER_LITRE)}. Now weigh the litre of petrol by pressing 2.` : `One litre of petrol has a mass of ${kg2(PETROL_KG_PER_LITRE)}. Now weigh the litre of water by pressing 1.`;
+        m.say = what === 'water' ? `One litre of water has a mass of ${kg2(WATER_KG_PER_LITRE)}. Now weigh the litre of petrol.` : `One litre of petrol has a mass of ${kg2(PETROL_KG_PER_LITRE)}. Now weigh the litre of water.`;
         return {kind: 'progress', sound: 'lab.clunk', say: m.say};
       }
       m.phase = 'done'; seen.add(id);
@@ -278,7 +290,7 @@ export function createModel() {
     const id = step().id, sound = held ? null : 'lab.splash';
     if (id === 'word-fuel-load' && m.phase === 'pour' && m.litres === TANK_LITRES) {
       m.phase = 'done'; m.auto = null; seen.add(id);
-      m.say = `A full tank holds ${TANK_LITRES} litres of petrol, and that petrol has a mass of ${kg1(fuelKg(TANK_LITRES))}. You can keep pouring with ↑ and ↓ to watch the scale and the sum change.`;
+      m.say = `A full tank holds ${TANK_LITRES} litres of petrol, and that petrol has a mass of ${kg1(fuelKg(TANK_LITRES))}. You can keep pouring to watch the scale and the panel change.`;
       return {kind: 'right', say: m.say};
     }
     // "The tank is full" is true only until the next pour, so the next pour clears it.
@@ -310,8 +322,8 @@ export function createModel() {
         m.say = `The scale reads ${kg1(WEIGH_KG)}, which is correct. Every litre has a mass of ${PETROL_KG_PER_LITRE} kg, so ${kg1(WEIGH_KG)} of petrol fills ${WEIGH_LITRES} litres of the tank.`;
         return {kind: 'right', say: m.say};
       }
-      m.say = kg > WEIGH_KG ? `The scale reads ${kg1(kg)}, which is ${kg1(off)} too heavy. Each press of ↓ lets out ${kg1(fuelKg(POUR_LITRES))}.`
-        : `The scale reads ${kg1(kg)}, which is ${kg1(off)} too light. Each press of ↑ pours in ${kg1(fuelKg(POUR_LITRES))}.`;
+      m.say = kg > WEIGH_KG ? `The scale reads ${kg1(kg)}, which is ${kg1(off)} too heavy. Each pour out removes ${kg1(fuelKg(POUR_LITRES))}.`
+        : `The scale reads ${kg1(kg)}, which is ${kg1(off)} too light. Each pour in adds ${kg1(fuelKg(POUR_LITRES))}.`;
       return {kind: 'fail', say: m.say};
     }
     if (id === 'alone') {
@@ -333,7 +345,7 @@ export function createModel() {
     const saved = Number(full.toFixed(2)) - Number(seconds.toFixed(2));
     m.say = `The ${CARS[car].name} with ${litres} litres has a total mass of ${num(s.total)} kg and an acceleration of ${s.accel.toFixed(3)} m/s², and the stopwatch stopped at ${s2(seconds)}. ` +
       (litres === TANK_LITRES ? 'Its tank is full, so no fuel load gives this car a longer time.' : saved < .005 ? `With a full tank this car also stops the stopwatch at ${s2(full)}, so ${TANK_LITRES - litres} fewer litres made no difference that the stopwatch can show.` : `With a full tank this car stops the stopwatch at ${s2(full)}, so carrying ${TANK_LITRES - litres} fewer litres saved ${saved.toFixed(2)} s.`) +
-      ` ${m.tries >= FREE_TRIES ? 'Press Enter when you have tested enough settings.' : 'Change a setting and test a different one.'}`;
+      ` ${m.tries >= FREE_TRIES ? 'You have tested enough settings, and you can test another.' : 'Change a setting and test a different one.'}`;
     return {kind: 'right', say: m.say};
   }
   function judgeHalf() {
@@ -345,9 +357,9 @@ export function createModel() {
       return {kind: 'right', say: m.say};
     }
     m.result = {right: false};
-    if (mine === TANK_LITRES) m.say = `Both tanks were full, with ${TANK_LITRES} litres each, so the two cars tied at ${s2(FULL_S)}. Half of ${TANK_LITRES} is ${HALF}, so pour out ${TANK_LITRES - HALF} litres with ↓ and race again.`;
-    else if (mine > HALF) m.say = `${mine} litres is more than half, and that car stopped the stopwatch at ${s2(mineS)} against ${s2(FULL_S)} for the full tank. Half of ${TANK_LITRES} is ${HALF}, so pour out ${mine - HALF} more litres with ↓ and race again.`;
-    else m.say = `${mine} litres is less than half. That car won, stopping the stopwatch at ${s2(mineS)} against ${s2(FULL_S)} for the full tank, but half of ${TANK_LITRES} is ${HALF}, so pour in ${HALF - mine} litres with ↑ and race again.`;
+    if (mine === TANK_LITRES) m.say = `Both tanks were full, with ${TANK_LITRES} litres each, so the two cars tied at ${s2(FULL_S)}. Half of ${TANK_LITRES} is ${HALF}, so pour out ${TANK_LITRES - HALF} litres and race again.`;
+    else if (mine > HALF) m.say = `${mine} litres is more than half, and that car stopped the stopwatch at ${s2(mineS)} against ${s2(FULL_S)} for the full tank. Half of ${TANK_LITRES} is ${HALF}, so pour out ${mine - HALF} more litres and race again.`;
+    else m.say = `${mine} litres is less than half. That car won, stopping the stopwatch at ${s2(mineS)} against ${s2(FULL_S)} for the full tank, but half of ${TANK_LITRES} is ${HALF}, so pour in ${HALF - mine} litres and race again.`;
     return {kind: 'wrong', say: m.say};
   }
 
@@ -360,7 +372,7 @@ export function createModel() {
       return {kind: 'fail', say: m.say};
     }
     if (litres > least) {
-      m.say = `The car finished, but ${litres} litres lasts ${pctAbout(lasts)} of a Grand Prix, so ${litres - least} litres, which is ${kg1(fuelKg(litres - least))}, was extra mass that the car carried for nothing. Set the tank to ${least} litres and race again.`;
+      m.say = `The car finished, but ${litres} litres lasts ${pctAbout(lasts)} of a Grand Prix, so ${litres - least} litres, which is ${kg1(fuelKg(litres - least))}, was more petrol than this race needs. Set the tank to ${least} litres and race again.`;
       return {kind: 'fail', say: m.say};
     }
     m.day += 1; m.saved += TANK_LITRES - litres;
@@ -403,7 +415,7 @@ export function createModel() {
     if (m.race.t == null) { if (m.time < m.race.at) return null; m.race.t = 0; }
     const end = Math.max(...m.lanes.map(l => secondsOf(l.litres, l.car))) + SETTLE_S, before = m.race.t;
     if (before >= end) return null;
-    m.race.t = Math.min(end, before + dt);
+    m.race.t = Math.min(end, before + dt * (id === 'wonder' || id === 'watch' ? WATCH_PACE : 1));
     const crossed = m.lanes.some(l => before < secondsOf(l.litres, l.car) && m.race.t >= secondsOf(l.litres, l.car));
     if (m.race.t < end) return crossed ? {kind: 'sound', sound: 'lab.tick'} : null;
     // The race has just settled: a question's race only shows; the others are judged or done.
@@ -428,6 +440,7 @@ export function createModel() {
     if (id === 'word-speed' && m.phase === 'done') { m.race = null; m.phase = 'running'; startRace(.2); return null; }
     if (CHECKS[id]?.race && m.phase === 'answered') { m.race = null; startRace(.3); return null; }
     if (id === 'try-half' && m.phase === 'result') return go();
+    if (id === 'alone' && m.gp?.over && m.phase === 'pour') { m.gp = {litres: m.gp.litres, share: m.gp.share, t: 0, dryAt: null}; m.phase = 'running'; }
     return null;
   }
 
@@ -450,40 +463,40 @@ export function createModel() {
 
   function view() {
     const id = step().id;
-    const base = {scene: 'shop', time: m.time, litres: m.litres, level: m.level, kg: fuelKg(m.litres), can: m.can, tank: false, scale: true, gauge: true, covered: false,
+    const base = {scene: 'shop', slowRace: false, time: m.time, litres: m.litres, level: m.level, kg: fuelKg(m.litres), can: m.can, tank: false, scale: true, gauge: true, covered: false,
       half: false, jug: null, jugs: null, lanes: m.lanes.length ? laneViews() : [], plain: false, laneSums: false, graph: null, free: null, job: null, tune: null, best: null, runs: [...runs], formulas: [],
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), asking: false};
-    if (id === 'wonder') return {...base, actions: ['replay'], plain: true,
+    if (id === 'wonder') return {...base, actions: ['replay'], plain: true, slowRace: true,
       say: m.phase === 'done' ? `The car with half a tank reached ${TARGET_TEXT} first, in ${s2(HALF_S)}, and the car with a full tank reached it in ${s2(FULL_S)}. The only difference between the cars was the petrol in their tanks, so why did the car with less petrol win?${MORE}The picture shows the moment when the first car got there, with the other car ${Math.round(gapAtWin(HALF, TANK_LITRES) * 100)} centimetres, written cm, behind.`
         : `Here are two identical cars with the same engine. One car has a full tank of petrol and the other has half a tank. Both start from a standstill and race until they reach ${TARGET_KMH} kilometres per hour, which is written km/h.${MORE}The road is marked in metres, written m, and the stopwatches count in seconds, written s. Watch which car gets there first.`,
-      prompt: m.phase === 'done' ? 'Press Enter when you are ready to find out, or press R to watch again.' : seen.has(id) ? 'Watch the two cars, or press Enter when you are ready to find out.' : 'Watch the two cars.',
+      prompt: m.phase === 'done' ? 'Press Enter when you are ready to find out.' : seen.has(id) ? 'Watch the two cars, or press Enter when you are ready to find out.' : 'Watch the two cars.',
       hints: [`Watch which car reaches ${TARGET_TEXT} first.`, 'The only difference is the petrol in the tanks.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch until both stopwatches have stopped, then press Enter.']};
     if (id === 'word-litre') {
       const ready = m.phase === 'jug', done = m.phase === 'done';
       return {...base, scale: false, jug: {fill: m.jug}, formulas: LITRE_SUM, ...(ready ? {keys: {Space: 'fill'}, buttons: [{action: 'fill', label: 'Fill the jug', key: 'Space'}], waiting: true, target: 'fill', glow: 'jug'} : {}),
         say: done ? m.say : m.phase === 'filling' ? 'Watch the jug fill to its line.' : 'A litre, written L, measures how much space a liquid fills. One litre fills a box that is 10 cm wide, 10 cm deep and 10 cm tall. Fill this jug to its line.',
-        prompt: ready ? 'Press Space to fill the jug, or click it.' : done ? 'Press Enter to continue.' : 'Watch the jug fill.',
-        hints: done ? DONE : ['The jug has a line marked 1 litre.', 'Press Space, or click the jug.', 'Watch my pointer. I will fill the jug.']};
+        prompt: ready ? 'Fill the jug.' : done ? 'Press Enter to continue.' : 'Watch the jug fill.',
+        hints: done ? DONE : ['The jug has a line marked 1 litre.', 'Fill the jug to its line.', 'Watch my pointer. I will fill the jug.']};
     }
     if (id === 'word-kilogram') {
       const done = m.phase === 'done', bestJug = ['water', 'petrol'].find(w => !m.weighed.includes(w));
       const rows = m.weighed.map(what => { const d = what === 'water' ? WATER_KG_PER_LITRE : PETROL_KG_PER_LITRE; return {title: what === 'water' ? 'Water' : 'Petrol', worked: `${kg2(d)} ÷ 1 litre = ${d.toFixed(2)} kg per litre`}; });
       return {...base, jugs: {weighed: [...m.weighed], on: m.onScale ?? null},
-        formulas: [{title: 'Density', formula: 'density = mass ÷ litres', note: m.weighed.length ? null : 'Put a jug on the scale to fill in this sum.'}, ...rows],
+        formulas: [{title: 'Density', formula: 'density = mass ÷ litres', note: m.weighed.length ? null : 'Put a jug on the scale to fill in this calculation.'}, ...rows],
         ...(done ? {} : {keys: {1: 'weigh:water', 2: 'weigh:petrol'}, waiting: true, target: 'weigh:best', glow: 'jugs',
           bestJug, buttons: [{action: 'weigh:water', label: 'Weigh the water', key: '1'}, {action: 'weigh:petrol', label: 'Weigh the petrol', key: '2'}]}),
-        say: done || m.weighed.length ? m.say : `A kilogram, written kg, measures mass. Mass is how much matter an object contains, and a scale reads it in kilograms. Density is the mass of one litre of a liquid, written in kg per litre.${MORE}When people ask what something weighs, they usually mean its mass in kilograms. Here are one litre of water and one litre of petrol. Put each jug on the scale and compare the readings.`,
-        prompt: done ? 'Press Enter to continue.' : m.weighed.length ? `Press ${bestJug === 'water' ? 1 : 2} to weigh the ${bestJug}, or click its jug.` : 'Press 1 for the water and 2 for the petrol, or click a jug.',
-        hints: done ? DONE : ['Both jugs hold one litre.', `Press ${bestJug === 'water' ? 1 : 2} to weigh the ${bestJug}, and read the scale.`, `Watch my pointer. I will weigh the ${bestJug}.`]};
+        say: done || m.weighed.length ? m.say : `A kilogram, written kg, measures mass, which is how much matter an object contains. Density is the mass of one litre of a liquid, written in kg per litre. Put the litre of water and the litre of petrol on the scale, and compare the readings.${MORE}A scale reads mass in kilograms. When people ask what something weighs, they usually mean its mass in kilograms.`,
+        prompt: done ? 'Press Enter to continue.' : m.weighed.length ? `Now weigh the ${bestJug}.` : 'Weigh each jug and compare the readings.',
+        hints: done ? DONE : ['Both jugs hold one litre.', `Weigh the ${bestJug} and read the scale.`, `Watch my pointer. I will weigh the ${bestJug}.`]};
     }
     if (id === 'word-fuel-load') {
       const done = m.phase === 'done';
       return {...base, tank: true, formulas: [fuelSum(m.litres)],
         ...(done ? {keys: POUR_KEYS, repeat: ['↑', '↓'], buttons: [{action: 'pour:out', label: 'Pour out', key: '↓'}, {action: 'pour:in', label: 'Pour in', key: '↑'}]}
           : {keys: {'↑': 'pour:in'}, repeat: ['↑'], waiting: m.auto == null, target: m.auto == null ? 'pour:best' : null, glow: 'nozzle', best: TANK_LITRES, buttons: [{action: 'pour:in', label: 'Pour in', key: '↑'}]}),
-        say: done ? m.say : m.auto != null ? autoSay() : `Fuel load is the amount of petrol that the car carries, and we measure it in litres. This tank is empty. Fill it, and watch the sum beside the picture change.${MORE}Every litre adds mass, so the scale under the tank reads higher as the tank fills.`,
-        prompt: done ? `The tank holds ${m.litres} litres. Press Enter to continue, or keep pouring with ↑ and ↓.` : `The tank holds ${m.litres} litres. Press ↑ to pour petrol in (hold it to keep pouring), or click the nozzle.`,
-        hints: done ? DONE : ['The pump nozzle is over the tank.', `Press ↑ until the gauge reads ${TANK_LITRES} litres.`, 'Watch my pointer. I will fill the tank.']};
+        say: done ? m.say : m.auto != null ? autoSay() : `Fuel load is the amount of petrol that the car carries, and we measure it in litres. This tank is empty. Fill it, and watch the scale and the mass of the petrol in the panel.${MORE}Every litre adds mass, so the scale under the tank reads higher as the tank fills.`,
+        prompt: done ? `The tank holds ${m.litres} litres. Press Enter to continue, or pour more petrol in or out.` : `The tank holds ${m.litres} litres. Pour petrol in.`,
+        hints: done ? DONE : ['The pump nozzle is over the tank.', `Pour until the gauge reads ${TANK_LITRES} litres.`, 'Watch my pointer. I will fill the tank.']};
     }
     if (id === 'word-speed') {
       const ready = m.phase === 'ready', done = m.phase === 'done', told = Boolean(m.say), seconds = secondsTo100(TANK_LITRES), rise = risePerSecond();
@@ -491,19 +504,19 @@ export function createModel() {
         formulas: [speedSum(), ...(told ? [{title: 'Acceleration', formula: 'acceleration = change in speed ÷ time', worked: `${TARGET_MS} m/s ÷ ${s2(seconds)} = ${rise.toFixed(2)} m/s^2`, note: 'Acceleration is measured in metres per second, per second, written m/s^2.'}] : [])],
         ...(ready ? {keys: {Space: 'go'}, waiting: true, target: 'go', glow: 'strip', buttons: [{action: 'go', label: 'Race', key: 'Space'}]} : {}),
         say: told ? m.say : m.phase === 'running' ? 'Watch the speed climb on the graph.'
-          : `Speed is how fast the car is moving. We usually give speed in km/h, but the sums use metres per second, written m/s, which is the number of metres travelled during each second.${MORE}To change km/h into m/s you divide by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The stopwatch stops when the car reaches ${TARGET_TEXT}, which is the same as ${TARGET_MS} m/s. Press Space to race the car to that speed, and watch how its speed grows.`,
-        prompt: ready ? 'Press Space to race, or click the road.' : done ? 'Press Enter to continue, or press R to watch the race again.' : 'Watch the graph.',
-        hints: done ? DONE : ['The graph shows the speed during every second of the race.', 'Press Space, or click the road.', 'Watch my pointer. I will start the race.']};
+          : `Speed is how fast the car is moving. We usually give speed in km/h, but the panel uses metres per second, written m/s, which is the number of metres travelled during each second. Race the car to ${TARGET_TEXT}, and watch how its speed grows.${MORE}To change km/h into m/s, divide by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The stopwatch stops when the car reaches ${TARGET_TEXT}, which is the same as ${TARGET_MS} m/s.`,
+        prompt: ready ? 'Race the car.' : done ? 'Press Enter to continue.' : 'Watch the graph.',
+        hints: done ? DONE : ['The graph shows the speed during every second of the race.', 'Race the car.', 'Watch my pointer. I will start the race.']};
     }
     if (id === 'watch') {
       const done = m.phase === 'done', draining = m.phase === 'drain', shown = Math.round(m.litres);
-      return {...base, tank: true, laneSums: !draining, actions: ['replay', 'slow'],
+      return {...base, tank: true, laneSums: !draining, actions: ['replay', 'slow'], slowRace: true,
         formulas: draining ? [fuelSum(shown), totalSum(shown), accelSum(shown)] : [{title: 'Acceleration', formula: 'acceleration = force ÷ total mass', note: FORCE_NOTE}, ...raceSums([['Full tank', TANK_LITRES], ['Half tank', HALF], ['Empty tank', 0]])],
-        say: done ? `The car with the least mass reached ${TARGET_TEXT} first, in ${s2(EMPTY_S)} with an empty tank, ${s2(HALF_S)} with half a tank and ${s2(FULL_S)} with a full tank. The reason is that the same force speeds up every kilogram of the car. With fewer kilograms to speed up, each kilogram receives a larger share of the force, so the whole car accelerates faster.${MORE}The sum shows the same thing, because when the total mass goes down and the force stays the same, the acceleration goes up. The difference is small, because a full tank is only ${kg1(fuelKg(TANK_LITRES))} of a ${whole(sumsOf(TANK_LITRES).total)} kg car, so the empty tank beat the full tank by only ${gapWords(gapAtWin(0, TANK_LITRES))}.`
-          : draining ? `A force is a push or a pull, and we measure force in newtons, written N. One newton gives one kilogram an acceleration of 1 m/s². In this game the engine pushes this car with the same force, ${whole(sumsOf(TANK_LITRES).force)} N, whatever the tank holds.${MORE}Every litre of petrol adds ${PETROL_KG_PER_LITRE} kg to the car. Watch the scale as I empty the tank, and then three identical cars will race with a full tank, half a tank and an empty tank.`
+        say: done ? `The car with the least mass reached ${TARGET_TEXT} first, in ${s2(EMPTY_S)} with an empty tank, ${s2(HALF_S)} with half a tank and ${s2(FULL_S)} with a full tank. The same force speeds up every kilogram of the car, so with fewer kilograms the whole car accelerates faster.${MORE}The panel shows the same thing, because when the total mass goes down and the force stays the same, the acceleration goes up. The difference is small, because a full tank is only ${kg1(fuelKg(TANK_LITRES))} of a ${whole(sumsOf(TANK_LITRES).total)} kg car, so the empty tank beat the full tank by only ${gapWords(gapAtWin(0, TANK_LITRES))}.`
+          : draining ? `Watch the scale as I empty the tank, and then three identical cars race with a full tank, half a tank and an empty tank. A force is a push or a pull, measured in newtons, written N. The engine pushes this car with the same force, ${whole(sumsOf(TANK_LITRES).force)} N, whatever the tank holds.${MORE}One newton gives one kilogram an acceleration of 1 m/s². Every litre of petrol adds ${PETROL_KG_PER_LITRE} kg to the car.`
             : 'Now three identical cars are racing, with a full tank, half a tank and an empty tank. Watch the stopwatches.',
-        prompt: done ? 'Press Enter to continue, or press R to watch again.' : draining ? 'Watch the scale.' : 'Watch the three cars.',
-        hints: ['Watch the kilograms on the scale fall as the litres pour out.', `Watch which car reaches ${TARGET_TEXT} first.`, done ? 'Press R to watch again.' : 'Wait a moment.']};
+        prompt: done ? 'Press Enter to continue.' : draining ? 'Watch the scale.' : 'Watch the three cars.',
+        hints: ['Watch the kilograms on the scale fall as the litres pour out.', `Watch which car reaches ${TARGET_TEXT} first.`, done ? 'Watch again to see the three cars race.' : 'Wait a moment.']};
     }
     if (id === 'try-free') {
       const running = m.phase === 'running', to = goal();
@@ -512,14 +525,14 @@ export function createModel() {
       if (running) return {...v, say: m.say || `The ${CARS[m.car].name} is racing with ${m.litres} litres of petrol.`, prompt: 'Watch the stopwatch.', hints: ['Watch the stopwatch.', 'Compare the time with the sum in the panel.', 'Wait a moment.']};
       const ready = seen.has(id);
       return {...v, ...pouring('Race', m.auto != null ? null : to === m.litres ? 'go' : 'pour:best'), keys: {...POUR_KEYS, ...CAR_KEYS, Space: 'go'}, waiting: !ready && m.auto == null, glow: null,
-        say: m.auto != null ? autoSay() : m.say || `Now you can experiment. Press ↑ and ↓ to change the fuel load, and ← and → to change the car. The panel shows the sums for your settings before you race, so predict the time and then press Space to check it.${MORE}Every car in this test has a ${TANK_LITRES} litre tank, and each car has its own engine and its own mass. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
-        prompt: ready ? 'Press Enter to continue, or test another setting.' : `${to === m.litres ? 'Press Space to race with these settings, or change them first.' : 'Change a setting, then press Space to race.'} You have tested ${m.tries} of ${FREE_TRIES} different settings.`,
-        hints: [to === m.litres ? 'Press Space to test the settings as they are.' : 'You have tested these settings, so change the fuel load or the car.', 'Try the same fuel load on the Falcone Sirena and on the Titan Monster, and compare how much time the petrol costs each car.', to === m.litres ? 'Watch my pointer. I will race with the settings as they are.' : `Watch my pointer. I will set the tank to ${to} litres, and then race.`]};
+        say: m.auto != null ? autoSay() : m.say || `Test at least ${FREE_TRIES} different settings. Choose the fuel load and the car, work out the time from the panel, and then race to check it.${MORE}Every car in this test burns petrol and has a ${TANK_LITRES} litre tank, and each car has its own engine and its own mass. The table keeps your results so that you can compare them.`,
+        prompt: ready ? 'Press Enter to continue, or test another setting.' : `${to === m.litres ? 'Race with these settings, or change them first.' : 'Change a setting, then race.'} You have tested ${m.tries} of ${FREE_TRIES} different settings.`,
+        hints: [to === m.litres ? 'Race with the settings as they are.' : 'You have tested these settings, so change the fuel load or the car.', 'Try the same fuel load on the Falcone Sirena and on the Titan Monster, and compare how much time the petrol costs each car.', to === m.litres ? 'Watch my pointer. I will race with the settings as they are.' : `Watch my pointer. I will set the tank to ${to} litres, and then race.`]};
     }
     if (id === 'try-half' || id === 'try-weigh') {
       const weigh = id === 'try-weigh', want = weigh ? WEIGH_LITRES : HALF;
       const target = m.auto != null ? null : m.litres === want && m.phase === 'pour' ? 'go' : 'pour:best';
-      const racing = m.lanes[0]?.litres ?? m.litres, press = m.litres > want ? '↓' : '↑';
+      const racing = m.lanes[0]?.litres ?? m.litres, way = m.litres > want ? 'Pour out' : 'Pour in';
       const off = Number((fuelKg(m.litres) - WEIGH_KG).toFixed(1));
       // Under the cloth the panel never shows the litres in the tank; the sum follows the scale instead.
       const weighSums = [{title: 'Mass of one press', formula: 'mass = litres × density', worked: `${POUR_LITRES} litres × ${PETROL_KG_PER_LITRE} kg per litre = ${kg1(fuelKg(POUR_LITRES))}`},
@@ -528,12 +541,12 @@ export function createModel() {
       const view = {...base, tank: true, covered: weigh, half: !weigh, best: want, laneSums: !weigh, formulas: weigh ? weighSums : allSums(m.phase === 'running' ? racing : m.litres)};
       if (m.phase === 'running') return {...view, say: `Your tank holds ${racing} litres and is racing a full tank.`, prompt: 'Watch the stopwatches.', hints: ['Watch the two cars.', `Which car reaches ${TARGET_TEXT} first?`, 'Wait a moment.']};
       if (m.phase === 'done' || m.phase === 'result' && m.result?.right) return {...view, ...(weigh ? {} : pouring('Race', null)), waiting: false, actions: weigh ? [] : ['replay'], mood: 'cheer', say: m.say,
-        prompt: weigh ? 'Press Enter to continue.' : 'Press Enter to continue, or press R to watch the race again.', hints: DONE};
+        prompt: 'Press Enter to continue.', hints: DONE};
       return {...view, ...pouring(weigh ? 'Weigh it' : 'Race', target), waiting: m.auto == null, actions: m.phase === 'result' ? ['replay'] : [],
-        say: m.auto != null ? autoSay() : m.phase === 'result' || weigh && m.say ? m.say : weigh ? `The gauge is covered, so you must use the scale. Pour petrol in or out until the scale reads ${kg1(WEIGH_KG)}, then press Space to weigh it.` : 'Pour petrol in or out until the tank is half full, then race it against a full tank.',
-        prompt: weigh ? `The scale reads ${kg1(fuelKg(m.litres))}. ${m.litres === want ? 'Press Space to weigh it.' : 'Press ↓ to pour out, ↑ to pour in, or Space to weigh it.'}` : `The tank holds ${m.litres} litres of petrol, which is ${kg1(fuelKg(m.litres))}. ${m.litres === want ? 'Press Space to race.' : 'Press ↓ to pour out, ↑ to pour in, or Space to race.'}`,
-        hints: weigh ? ['Watch the scale, because the gauge is covered.', `Every ${POUR_LITRES} litres has a mass of ${kg1(fuelKg(POUR_LITRES))}. ${m.litres === want ? `The scale reads ${kg1(WEIGH_KG)}, so press Space.` : `Press ${press} until the scale reads ${kg1(WEIGH_KG)}, then press Space.`}`, m.litres === want ? 'Watch my pointer. I will weigh the petrol.' : 'Watch my pointer. I will pour the petrol and weigh it.']
-          : ['The gauge has a line at half.', `Half of ${TANK_LITRES} litres is ${HALF} litres. ${m.litres === want ? `The gauge reads ${HALF} litres, so press Space.` : `Press ${press} until the gauge reads ${HALF} litres, then press Space.`}`, m.litres === want ? 'Watch my pointer. I will race.' : 'Watch my pointer. I will pour the petrol and race.']};
+        say: m.auto != null ? autoSay() : m.phase === 'result' || weigh && m.say ? m.say : weigh ? `The gauge is covered, so you must use the scale. Pour petrol in or out until the scale reads ${kg1(WEIGH_KG)}, and then weigh it. This shows you how to work out the litres from the mass alone.` : 'Pour petrol in or out until the tank is half full, then race it against a full tank.',
+        prompt: weigh ? `The scale reads ${kg1(fuelKg(m.litres))}. ${m.litres === want ? 'Weigh it.' : `Pour until the scale reads ${kg1(WEIGH_KG)}, then weigh it.`}` : `The tank holds ${m.litres} litres of petrol, which is ${kg1(fuelKg(m.litres))}. ${m.litres === want ? 'Race.' : 'Pour petrol in or out, then race.'}`,
+        hints: weigh ? ['Watch the scale, because the gauge is covered.', `Every ${POUR_LITRES} litres has a mass of ${kg1(fuelKg(POUR_LITRES))}. ${m.litres === want ? `The scale reads ${kg1(WEIGH_KG)}, so weigh it.` : `${way} until the scale reads ${kg1(WEIGH_KG)}, then weigh it.`}`, m.litres === want ? 'Watch my pointer. I will weigh the petrol.' : 'Watch my pointer. I will pour the petrol and weigh it.']
+          : ['The gauge has a line at half.', `Half of ${TANK_LITRES} litres is ${HALF} litres. ${m.litres === want ? `The gauge reads ${HALF} litres, so race.` : `${way} until the gauge reads ${HALF} litres, then race.`}`, m.litres === want ? 'Watch my pointer. I will race.' : 'Watch my pointer. I will pour the petrol and race.']};
     }
     if (id === 'alone') {
       const day = DAYS[Math.min(m.day, DAYS.length - 1)], least = leastLitres(day.share);
@@ -543,10 +556,10 @@ export function createModel() {
       if (m.phase === 'done') return {...view, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       if (m.phase === 'running') return {...view, say: `The car is racing ${lowerFirst(day.name)} on ${m.gp.litres} litres.`, prompt: 'Watch the race.', hints: ['Watch the car and its petrol.', 'Does the car reach the flag?', 'Wait a moment.']};
       const target = m.auto != null ? null : m.litres === least ? 'go' : 'pour:best';
-      return {...view, ...pouring('Race', target), waiting: m.auto == null,
-        say: m.auto != null ? autoSay() : m.day === 0 && !m.say ? `Here is a job for you. A Grand Prix is one of the game’s long races, on a course with a pit lane, which is the place where a car stops to refill its tank. Carry the petrol you need and no more, so pour the least that lasts the race and then press Space.${MORE}In this game a full tank lasts ${pct(GRAND_PRIX.fullTankShare)} of a Grand Prix, which is the whole race and a little more. You will run three races of different lengths, and the tank starts full each time. The first race is ${lowerFirst(DAYS[0].name)}.` : m.say,
-        prompt: `The tank holds ${m.litres} litres, which lasts ${pctAbout(lastsShare(m.litres))} of a Grand Prix. This race is ${pct(day.share)} of a Grand Prix. ${m.litres === least ? 'Press Space to race.' : 'Pour petrol in or out, then press Space to race.'}`,
-        hints: [`This race is ${pct(day.share)} of a Grand Prix. The card on the board shows how far your petrol lasts.`, m.litres === least ? 'The tank holds the least that lasts this race, so press Space.' : `Set the tank to ${least} litres, which is the least that lasts this race, then press Space.`, m.litres === least ? 'Watch my pointer. I will race.' : 'Watch my pointer. I will pour the petrol and race.']};
+      return {...view, ...pouring('Race', target), waiting: m.auto == null, actions: m.gp?.over ? ['replay'] : [],
+        say: m.auto != null ? autoSay() : m.day === 0 && !m.say ? `Pour the least petrol that lasts each race, and then race. A Grand Prix is a long race on a course with a pit lane, where a car stops to refill its tank. Carry the petrol you need and no more.${MORE}A full tank lasts ${pct(GRAND_PRIX.fullTankShare)} of a Grand Prix. You will run three races of different lengths, and the tank starts full each time. The first race is ${lowerFirst(DAYS[0].name)}.` : m.say,
+        prompt: `The tank holds ${m.litres} litres, which lasts ${pctAbout(lastsShare(m.litres))} of a Grand Prix. This race is ${pct(day.share)} of a Grand Prix. ${m.litres === least ? 'Race.' : 'Pour petrol in or out, then race.'}`,
+        hints: [`This race is ${pct(day.share)} of a Grand Prix. The card on the board shows how far your petrol lasts.`, m.litres === least ? 'The tank holds the least that lasts this race, so race.' : `Set the tank to ${least} litres, which is the least that lasts this race, then race.`, m.litres === least ? 'Watch my pointer. I will race.' : 'Watch my pointer. I will pour the petrol and race.']};
     }
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
@@ -570,7 +583,7 @@ function speedResult() {
   const rise = risePerSecond().toFixed(2);
   return `The car gained speed steadily and reached ${TARGET_MS} m/s in ${s2(secondsTo100(TANK_LITRES))}. How fast the speed changes is called acceleration, and we measure acceleration in metres per second, per second, written m/s².${MORE}This car’s acceleration is ${rise} m/s², which means that its speed rises by ${rise} m/s during every second. So m/s measures how fast the car is moving, and m/s² measures how fast that speed is changing.`;
 }
-const RECAP_SAY = `Every litre of petrol has a mass of ${PETROL_KG_PER_LITRE} kg, so a full tank of ${TANK_LITRES} litres adds ${kg1(fuelKg(TANK_LITRES))} to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster.${MORE}In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more. All of this belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full or empty, so an electric car has no Fuel load to set.`;
+const RECAP_SAY = `Every litre of petrol has a mass of ${PETROL_KG_PER_LITRE} kg, so a full tank of ${TANK_LITRES} litres adds ${kg1(fuelKg(TANK_LITRES))} to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster.${MORE}In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more.`;
 
 // The lesson's own races, as the bench's challenge reads them: the bench's goal (a full tank and half a tank or
 // less) must pass on these, so finishing the lesson can never pass without them. The free test's races are the
