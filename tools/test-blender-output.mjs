@@ -597,6 +597,9 @@ try {
         const meshes=new Set(descendants(machineIndex).map(i=>gltf.nodes[i].mesh).filter(Number.isInteger));
         const triangles=[...meshes].reduce((sum,mesh)=>sum+gltf.meshes[mesh].primitives.reduce((part,p)=>part+gltf.accessors[p.indices].count/3,0),0);
           assert.ok(triangles>0&&triangles<=15_000,`${id} has ${triangles} triangles, outside the 1-15,000 range`);
+          // A part left outside its machine stands metres away: a paver wheel stood 22 m off (MACHINE-ROADS, 19 November 2026).
+          for(const mesh of meshes)for(const p of gltf.meshes[mesh].primitives){const span=gltf.accessors[p.attributes.POSITION];
+            assert.ok(Math.max(Math.abs(span.max[0]),Math.abs(span.min[0]))<4,`${id} has a part more than 4 m to one side of its root`);}
         }
         const jsonLength=bytes.readUInt32LE(12),binaryStart=20+jsonLength+8;
         const data=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);

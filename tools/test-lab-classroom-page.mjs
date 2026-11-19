@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createClassroomSession} from '../src/lab/classroom/classroom-frame.js';
+import {createClassroomSession, definesWord} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 
 const projectile = CLASSROOM_LESSONS.projectile;
@@ -86,4 +86,40 @@ test('a rewritten lesson shows formulas on every step after the first', () => {
       if (!HOLDS_FORMULAS_BACK[id]?.includes(step.id)) assert.ok(model.view().formulas?.length > 0, `${step.id} shows the physics`);
     });
   }
+});
+
+// LAB-PAGE (docs/board/cards/LAB-PAGE.md): only steps that define a word stay on the page, in the Words so far fold; the page rows say which.
+test('the page marks the steps that define a word, in every lesson, and no step that only gave an instruction, ran a test or asked a question', () => {
+  for (const [id, lesson] of Object.entries(CLASSROOM_LESSONS)) {
+    const marked = lesson.steps.filter(definesWord).map(step => step.id);
+    assert.ok(marked.length >= 3, `${id} keeps its words`);
+    for (const step of lesson.steps) {
+      if (/^(wonder|watch.*|try-.*|alone|challenge|check-.*|recap|why-.*|guess-.*)$/.test(step.id) && !step.words?.length) assert.ok(!definesWord(step), `${id}/${step.id} leaves the page once done`);
+      if (step.word || step.id.startsWith('word-')) assert.ok(definesWord(step), `${id}/${step.id} defines a word`);
+    }
+  }
+});
+
+test('the session’s page rows carry the word mark, and going back shows that step as the newest row', () => {
+  const session = createClassroomSession(projectile);
+  until(session, v => v.ready); session.act('next');
+  session.act('drop'); until(session, v => v.ready); session.act('next');
+  const rows = session.view().page;
+  assert.deepEqual(rows.map(row => row.word), [false, true, true], 'the question left no word; the two definitions did');
+  session.act('back');
+  const back = session.view();
+  assert.equal(back.page.at(-1).title, 'Metres per second', 'Previous step shows that step in full, as the newest row');
+  assert.deepEqual(back.page.map(row => row.word), [false, true]);
+});
+
+test('every Watch again button restarts something: pressing it changes what the lesson shows', () => {
+  for (const [id, lesson] of Object.entries(CLASSROOM_LESSONS)) lesson.steps.forEach((step, i) => {
+    if (step.part !== 0 && step.part !== 2) return;
+    const model = lesson.createModel(); model.enter(i);
+    for (let t = 0; t < 40; t += .05) model.tick(.05);
+    const done = model.view({help: 0});
+    if (!done.actions.includes('replay')) return;
+    model.act('replay');
+    assert.notEqual(JSON.stringify(model.view({help: 0})), JSON.stringify(done), `${id}/${step.id}: Watch again does nothing`);
+  });
 });

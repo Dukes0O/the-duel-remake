@@ -15,11 +15,14 @@
 //      Keys: the arrows, Space, Escape, Enter, Tab, ShiftLeft and the letters W A S D Q P C F E H M V G R X and the digits 1 to 4 (as ArrowUp, KeyW, Digit4 and so on).
 //   4. node tools/hand-drive.mjs stop       closes that Chrome and deletes its throwaway profile
 // Pictures are saved as .evidence/hand-drive/<name>.jpg under the folder the tool is run from, and are deleted after the review.
+// Two sessions driving at once: each gives its own Chrome a port of its own, HAND_DRIVE_PORT=9341 before every command (the
+// default, 9333, belongs to whoever started first). Never save a source file the page loads while a drive is running: the
+// page reloads and the drive is lost (MACHINE-ROADS, 19 November 2026).
 import {spawn} from 'node:child_process';
 import {writeFile, readFile, rm, mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 
-const here = join(process.cwd(), '.evidence', 'hand-drive'), PORT = 9333, profile = join(here, 'chrome-profile'), pidFile = join(here, 'chrome.pid');
+const here = join(process.cwd(), '.evidence', 'hand-drive'), PORT = Number(process.env.HAND_DRIVE_PORT) || 9333, profile = join(here, 'chrome-profile'), pidFile = join(here, 'chrome.pid');
 const sleep = ms => new Promise(done => setTimeout(done, ms));
 const VK = {ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Space: 32, Escape: 27, KeyP: 80, KeyC: 67, KeyF: 70, KeyE: 69, KeyH: 72, KeyM: 77, Enter: 13, KeyW: 87, KeyA: 65, KeyS: 83, KeyD: 68, KeyQ: 81, Tab: 9, ShiftLeft: 16, KeyV: 86, KeyG: 71, KeyR: 82, KeyX: 88, Digit1: 49, Digit2: 50, Digit3: 51, Digit4: 52};
 

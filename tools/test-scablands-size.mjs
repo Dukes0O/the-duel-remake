@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import test from 'node:test';
+import {bestRun} from './timing-guard.mjs';
 import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {Course} from '../src/course.js';
@@ -447,8 +448,21 @@ test('the detailed ground moves in whole cells, keeps every corner on one lattic
   window.follow(100, 100); const settled = window.centreX; assert.equal(window.follow(settled + cellX * .4, 100), false); assert.equal(window.centreX, settled);
   assert.equal(window.follow(settled + cellX * 1.1, 100), true); assert.ok(Math.abs(window.centreX - settled - cellX) < 1e-9, 'one cell on, exactly one cell');
   // Moving the window by one cell works out only the new strip: 200 steps along the east axis cost almost nothing.
-  const t0 = performance.now(); for (let step = 0; step < 200; step++) window.follow(100 + cellX * (step + 2), 100); const ms = performance.now() - t0;
-  assert.ok(ms < 400, `200 one-cell moves cost ${ms.toFixed(0)} ms in all`);
+  // What this proves is that a move works out only the strip it uncovers, not the whole window. So the limit is a
+  // multiple of the cost of working out the whole window, measured in this same process just before each batch of
+  // moves (a jump far from the window works out every corner, as a fresh window does), not a number of
+  // milliseconds: milliseconds measure the laptop's other jobs as much as this code. A move that rebuilt the window
+  // would cost 200 rebuilds a batch; a strip costs about 8 to 12 (the shading and normals are worked out over the whole window on every move), so 20 leaves room and still fails a move that is twice as slow. The best batch against the best rebuild judges, and a
+  // batch slowed by other work is measured again (tools/timing-guard.mjs); code that is slower at moving is slower
+  // on every batch, so it still fails.
+  const FAR = [[2500, 1900], [-3000, -2000], [5000, 3000], [-6000, 2500]], REBUILDS_ALLOWED = 20;
+  let rebuildMs = Infinity, jumps = 0;
+  const batch = () => {
+    for (const [x, z] of [FAR[jumps++ % FAR.length], [100 + cellX, 100]]) { const t0 = performance.now(); window.follow(x, z); rebuildMs = Math.min(rebuildMs, performance.now() - t0); }
+    const t0 = performance.now(); for (let step = 0; step < 200; step++) window.follow(100 + cellX * (step + 2), 100); return performance.now() - t0;
+  };
+  const timing = bestRun(batch(), batch, ms => ms / (REBUILDS_ALLOWED * rebuildMs), 30);
+  assert.ok(timing.bestScore < 1, `200 one-cell moves cost ${timing.best.toFixed(0)} ms, ${(timing.best / rebuildMs).toFixed(1)} times the ${rebuildMs.toFixed(0)} ms that working out the whole window costs (limit ${REBUILDS_ALLOWED}; best of ${timing.runs})`);
   // The height as drawn there (what a thing laid on the ground reads) is the straight slope between corners.
   const x = window.centreX + 33.3, z = window.centreZ - 21.7;
   assert.ok(Math.abs(window.heightAtDrawn(x, z) - nearGroundHeightAt(x, z, landHeight)) < 1e-3, 'the drawn height read from the window matches the lattice formula');

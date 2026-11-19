@@ -29,7 +29,41 @@ effects.update(2);
 assert.equal(effects.particleCount, 0, 'the effect releases particles after their short flight');
 effects.dispose(); view.dispose();
 assert.equal(group.children.length, 0, 'disposing the view and effects removes their meshes');
-console.log('Ground view: sparse fine meshes, material colour, seam skirts, incremental refresh and seeded dig effects pass.');
+// A heap is drawn as made ground where it stands, not at its mirror across the chunk's diagonal (DIG-YARD-TOY's pale ring:
+// with the two swapped, a heap was drawn as bare rock with pale scree round its foot, and its spoil lay on the flat beside it).
+{
+  const heaped = createGroundEdit({region: {id: 'test', editable: true}, naturalHeight: () => 10});
+  const heapGroup = new THREE.Group(), heapView = createGroundView({group: heapGroup, groundEdit: heaped});
+  heaped.fill({x: 6, z: 24, radius: 2}, 'topsoil', 20);
+  heapView.update();
+  const made = heapGroup.children[0].geometry.attributes.aMade, colour = heapGroup.children[0].geometry.attributes.color;
+  const corner = (x, z) => z * 33 + x;
+  assert.ok(heaped.heightAt(6, 24) > 10.3, 'the fill makes a heap');
+  assert.ok(made.getX(corner(6, 24)) > .3, 'the heap\'s own corner carries its fill');
+  assert.equal(made.getX(corner(24, 6)), 0, 'the mirrored corner carries no fill');
+  assert.ok(colour.getX(corner(6, 24)) < colour.getX(corner(24, 6)) * .8, 'the turned earth is darkened on the heap, not on its mirror');
+  // Flat ground along the chunk's edge faces up: the skirt's upright faces do not tilt it into a pale kerb of rock.
+  const normal = heapGroup.children[0].geometry.attributes.normal;
+  for (const [x, z] of [[0, 10], [32, 10], [10, 0], [10, 32], [0, 0], [32, 32]])
+    assert.ok(normal.getY(corner(x, z)) > .999, `the edge corner ${x}, ${z} faces up`);
+  heapView.dispose();
+}
+// Beside a ditch the cut and its own ridge sum to nothing. The ground there was still worked, and the drawing reads that from
+// how much was moved, so it is drawn as earth and not as a scarp's rock with pale scree (the trencher's ditch, DIG-YARD-TOY).
+{
+  const delta = new Float32Array(32 * 32), material = new Uint8Array(32 * 32);
+  for (let z = 8; z < 20; z++) { delta[z * 32 + 10] = -1.5; delta[z * 32 + 11] = .75; delta[z * 32 + 12] = .75; }
+  const ditchGroup = new THREE.Group();
+  const ditchView = createGroundView({group: ditchGroup, groundEdit: {toSave: () => ({chunks: [{x: 0, z: 0, delta, material}]}),
+    heightAt: (x, z) => 10 + (x >= 0 && x < 32 && z >= 0 && z < 32 ? delta[z * 32 + x] : 0)}});
+  ditchView.update();
+  const attributes = ditchGroup.children[0].geometry.attributes, corner = 7 * 33 + 11;
+  assert.ok(Math.abs(attributes.aMade.getX(corner)) < 1e-6, 'the cut and its ridge sum to nothing at the ditch\'s end');
+  assert.ok(attributes.aMoved.getX(corner) > .3, 'the ground there still shows that it was worked');
+  assert.equal(attributes.aMoved.getX(3 * 33 + 25), 0, 'untouched ground shows no work');
+  ditchView.dispose();
+}
+console.log('Ground view: sparse fine meshes, material colour, seam skirts, incremental refresh, made ground in place and seeded dig effects pass.');
 
 // Use the same three meshes as the Dig, including an edit after they exist.
 {
