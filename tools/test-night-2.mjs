@@ -951,6 +951,10 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
         const dx = man.x - carBox.x, dz = man.z - carBox.z, sin = Math.sin(carBox.heading), cos = Math.cos(carBox.heading);
         assert(Math.abs(dx * cos - dz * sin) >= RIDER_RULE.crewClearHalfWidth - 1e-9 ||
           Math.abs(dx * sin + dz * cos) >= RIDER_RULE.crewClearHalfLength - 1e-9, 'No bailing man stands in the player’s car');
+        // Nor in his own wreck: the man whose door met the player's car climbs out of the far door.
+        const own = state.opponents.find(rider => man.id.startsWith(rider.jobId + '/')), wreck = worldPose(duel, own);
+        const ws = Math.sin(wreck.heading), wc = Math.cos(wreck.heading), wx = man.x - wreck.x, wz = man.z - wreck.z;
+        assert(Math.abs(wx * wc - wz * ws) >= 1.2 || Math.abs(wx * ws + wz * wc) >= 2.3, 'No bailing man stands in his own wreck');
         assert.deepEqual(man.approachTarget, {x: sites.camp.position.x, z: sites.camp.position.z}, 'The crews run for the camp');
       }
       duel.step(1 / 120);

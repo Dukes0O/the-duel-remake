@@ -12,7 +12,7 @@ import {worldPose} from '../arena/arena-floor.js';
 // and thin out within about a second and a half. Drawing only; it reads the cast and moves nothing.
 export const NIGHT_2_BREATH = Object.freeze({
   wisps: 3, wispGapSec: .14, lifeSec: 1.35, cycleSec: 2 * Math.PI / 1.87,
-  startRadius: .03, endRadius: .15, forward: .22, aside: .34, rise: .3, opacity: .11,
+  startRadius: .03, endRadius: .17, forward: .22, aside: .34, rise: .3, opacity: .2,
 });
 // The mouth sits a little above and in front of the head bone (measured on the cast: the head bone is at about 0.85 of
 // standing height, the face front about 0.11 m ahead of it on a 1.75 m figure).

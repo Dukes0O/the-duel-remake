@@ -253,6 +253,10 @@ function boxPressure(duel, cars, dt) {
 
 // A door that opens onto the player's car puts its man on the ground beside it, never standing in it (STORY-NIGHT-2-FLOW,
 // Kyle's picture of 19 November 2026): the point is moved out of the car's box, the short way.
+function inCarBox(x, z, carAt) {
+  const sin=Math.sin(carAt.heading), cos=Math.cos(carAt.heading), dx=x-carAt.x, dz=z-carAt.z;
+  return Math.abs(dx*cos-dz*sin)<R.crewClearHalfWidth && Math.abs(dx*sin+dz*cos)<R.crewClearHalfLength;
+}
 function besideCar(x, z, carAt) {
   const sin=Math.sin(carAt.heading), cos=Math.cos(carAt.heading), dx=x-carAt.x, dz=z-carAt.z;
   const side=dx*cos-dz*sin, ahead=dx*sin+dz*cos;
@@ -265,8 +269,11 @@ function besideCar(x, z, carAt) {
 function crewBail(duel, world, car, goal) {
   const at=worldPose(duel,car), target=worldPose(duel,duel.state), away=Math.atan2(at.x-target.x,at.z-target.z);
   for(let index=0;index<R.crewPerCar;index++) {
-    const side=index%2 ? 1 : -1;
-    const {x,z}=besideCar(at.x+Math.cos(at.heading)*side*R.crewDoor, at.z-Math.sin(at.heading)*side*R.crewDoor, target);
+    let side=index%2 ? 1 : -1, along=0;
+    const door=(s,a)=>({x:at.x+Math.cos(at.heading)*s*R.crewDoor+Math.sin(at.heading)*a, z:at.z-Math.sin(at.heading)*s*R.crewDoor+Math.cos(at.heading)*a});
+    // A door against the player's car is shut: that man climbs out of the far door, a little ahead of his mate.
+    if (inCarBox(door(side,0).x, door(side,0).z, target)) { side=-side; along=R.crewFarDoorAhead; }
+    const {x,z}=besideCar(door(side,along).x, door(side,along).z, target);
     // At the Wash they run for the Walkers' camp; elsewhere they scatter away from the player.
     const yaw=goal ? Math.atan2(goal.x-x,goal.z-z) : away+side*R.swerveRadians;
     const run=goal ? {x:goal.x,z:goal.z} : {x:x+Math.sin(yaw)*R.crewRunMetres,z:z+Math.cos(yaw)*R.crewRunMetres};
