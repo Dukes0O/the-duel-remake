@@ -388,16 +388,6 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-ART-REX.md"
 
-  - id: QA-REVIEW-EVIDENCE-MIDNIGHT
-    title: "test-review-evidence fails around midnight: two clocks"
-    owner: "codex"
-    lane: "TOOLS"
-    size: "S"
-    status: "backlog"
-    needs: []
-    details: "docs/board/cards/QA-REVIEW-EVIDENCE-MIDNIGHT.md"
-
-
   - id: QA-WAVE1-AUDIO-FLIGHT
     title: "Check the moving weapon flight sound alone"
     owner: "claude"
@@ -407,17 +397,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
-
-  - id: QA-TEMP-CLEANUP
-    title: "Browser checks leave folders in Temp; one-time disk cleanup"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-TEMP-CLEANUP.md"
-
 
   - id: QA-TIMING-UNDER-LOAD
     title: "Town timing checks fail when art jobs run beside them"
@@ -525,16 +504,6 @@ tasks:
     locks: []
     details: "docs/board/cards/SCABLANDS-LAND.md"
 
-  - id: QA-EVIDENCE-MIDNIGHT
-    title: "The evidence-folder test fails for a while after midnight"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
-
   - id: QA-ROUND-SOLID-HEADING
     title: "A car passing a round solid thing is slowed when the thing's heading differs from the car's"
     owner: "claude"
@@ -595,17 +564,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-NIGHT-19-NOV.md"
-
-  - id: QA-EVIDENCE-DATE-BOUNDARY
-    title: "One clock names every evidence folder: the browser runner and the round planner disagreed at midnight"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-EVIDENCE-DATE-BOUNDARY.md"
 
   - id: STORY-CHOICES
     title: "The story rebuilt around choices: the form, the ledger, the map of choices, one chapter in full (Kyle, 18 November)"

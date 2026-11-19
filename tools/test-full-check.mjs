@@ -922,6 +922,9 @@ test('a partial night pass is never a full-tier pass for a release',async()=>{
     assert.equal(night.size,'partial');assert.equal(night.fullTierPass,false);assert.equal(night.result,'passed');
     await writeFile(join(folder,'docs/board/checks',`night-${date}.json`),JSON.stringify(full));
     assert.equal(latestNight(folder,'2026-10-13T00:00:00Z').fullTierPass,true);
+    // How many nights ago it ran counts local days, as the night's own date does (QA-EVIDENCE-DATE-BOUNDARY).
+    assert.equal(latestNight(folder,new Date(2026,9,13,23,59)).nights,Math.round((Date.UTC(2026,9,13)-Date.parse(date+'T00:00:00Z'))/86400000));
+    assert.equal(latestNight(folder,new Date(2026,9,14,0,1)).nights,Math.round((Date.UTC(2026,9,14)-Date.parse(date+'T00:00:00Z'))/86400000));
   }finally {await rm(folder,{recursive:true,force:true});}
   // And a real partial night writes a record that says so.
   const f=fixture({changed:['src/lab/lab-tune.js'],planOptions:{size:'partial',frames:true,combat:false,scenarios:['smoke-extra']}});
