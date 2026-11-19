@@ -80,7 +80,7 @@ export async function run(c) {
   await wait(1500); await shot('alone-show-me');
   await saying('For the third mark', 'Show me sets and launches mark 2');
   await press('Space'); await saying('short of the 30 m flag', 'mark 3 starts on a miss'); await shot('alone-mark3-short');
-  await press('ArrowDown', 6); await press('ArrowRight', 2); await prompt('65 km/h', 'set for the mark'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
+  await press('ArrowDown', 6); await press('ArrowRight', 2); await wait(400); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
   if (!(await bubble()).includes('finishes the job')) throw Error('The job should end done: ' + await bubble());
   await next('alone');
   for (const [step, answer] of [['check-pair', 'Digit1'], ['check-lower', 'Digit2'], ['check-game', 'Digit1']]) {

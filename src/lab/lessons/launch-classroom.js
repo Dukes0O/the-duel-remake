@@ -524,7 +524,7 @@ export function createModel() {
       if (flying) return {...v, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands.', 'Compare this launch with the first row.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, focus: 'tape', mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: DONE_PROMPT, hints: DONE};
       return {...v, buttons: setNow ? [GUESS] : [], say: m.auto ? autoSay() : m.say || `Where will the skier land with the dial at ${kmh(SLOW_MS)} km/h? The ramp stays at 45 degrees, and at ${kmh(SHOW_MS)} km/h the skier landed ${D(45)} along the tape. Turn the dial down to ${kmh(SLOW_MS)} km/h, then make your guess.`,
-        prompt: `Turn the dial down to ${kmh(SLOW_MS)} km/h, then make your guess.`,
+        prompt: `The dial reads ${kmh(set.ms)} km/h. Turn it down to ${kmh(SLOW_MS)} km/h, then make your guess.`,
         hints: ['The speed dial is on the right.', `Press ← until the dial reads ${kmh(SLOW_MS)} km/h, then press Space.`, 'Watch my pointer. I will turn the dial and launch.']};
     }
     // Brian's job.
