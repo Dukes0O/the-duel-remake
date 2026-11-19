@@ -317,7 +317,7 @@ function pourMixer(plant, dtSeconds, events) {
     const near = plant.spills.find(spill => Math.hypot(spill.x - tip.x, spill.z - tip.z) < 0.8);
     if (near) { near.kg += spilled; near.set = 0; }
     else plant.spills.push({x:tip.x, z:tip.z, kg:spilled, set:0});
-    events.push({type:'spill', cue:'plant.pour', message:form ? `The ${form.name} is full. The rest is spilling over.` : 'The chute is not over a form. The concrete is going on the ground.'});
+    events.push({type:'concrete-spill', cue:'plant.pour', message:form ? `The ${form.name} is full. The rest is spilling over.` : 'The chute is not over a form. The concrete is going on the ground.'});
   }
   mixer.action = 'pouring';
   events.push({type:'pouring', cue:'plant.pour', kg, intoForm, form:form?.id ?? null});

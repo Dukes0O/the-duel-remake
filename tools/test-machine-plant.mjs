@@ -7,6 +7,10 @@ import {machineLoadMassKg} from '../src/machines/tools.js';
 import {stockpileAt, priceForGood} from '../src/town/town-goods.js';
 import {GOODS} from '../src/town/content/goods.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/index.js';
+import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
+import {plantYardControls, plantYardWords} from '../src/machines/plant-yard.js';
+import {machineDefinition} from '../src/machines/content/machines.js';
+import {machineToolPosition} from '../src/machines/machine.js';
 
 const STEP = 1 / 60;
 const close = (actual, expected, tolerance, message) =>
@@ -198,5 +202,38 @@ assert.ok(priceForGood(loaded, 'cement') > 0, 'cement has a market price');
 const old = deserializeTown(serializeTown(createTown(4312, 'Old Town')));
 assert.equal(stockpileAt(old, townPlant.cells.silo).cement, undefined, 'an older town has no cement and loads');
 assert.ok(createPlantLedger().goods.stockpiles, 'the yard ledger has the town goods shape');
+
+// The machine yard: the rock heap is rock, a truck tipped at the hopper feeds the crusher,
+// and the loader and mixer are in the Q list after Mabel. The yard plant needs the town switch.
+assert.equal(createDigSandbox({town:false, playerId:'plant-off'}).plant, null, 'no plant without the town switch');
+closeDigSandbox();
+let yard = createDigSandbox({town:true, playerId:'plant-yard'});
+assert.equal(yard.ground.materialAt(PLANT_YARD.rockHeap.x, yard.ground.heightAt(PLANT_YARD.rockHeap.x, PLANT_YARD.rockHeap.z) - 0.2, PLANT_YARD.rockHeap.z), 'rock');
+const bed = machineDefinition('dumpTruck').tools.bed.offset[2];
+yard.activeMachine = 'dumpTruck';
+yard.mode = 'work';
+yard.haul.machines.dumpTruck = {...yard.haul.machines.dumpTruck, x:PLANT_YARD.hopper.x - bed, z:PLANT_YARD.hopper.z, heading:Math.PI / 2, load:{rock:1.5, topsoil:0.1}};
+const rear = machineToolPosition(machineDefinition('dumpTruck'), yard.haul.machines.dumpTruck, 'bed');
+check(Math.hypot(rear.x - PLANT_YARD.hopper.x, rear.z - PLANT_YARD.hopper.z), 0, 1e-9, 'the bed is over the hopper');
+for (let i = 0; i < 60 * 3; i++) yard = stepDigSandbox(yard, {controls:{}, action:'tip'}, STEP);
+assert.deepEqual(yard.haul.machines.dumpTruck.load, {}, 'the truck emptied into the hopper');
+assert.ok(yard.plant.screenedM3 > 0.099, 'the topsoil was screened out onto the ground');
+for (let i = 0; i < 60 * 90; i++) yard = stepDigSandbox(yard, {controls:{}}, STEP);
+check(pileKg(yard.plant, 'gravel'), machineLoadMassKg({load:{rock:1.5}}), 1e-6, 'the yard crusher made the gravel pile while the truck stood by');
+const order = [];
+for (let i = 0; i < 12 && !order.includes('mixer'); i++) { yard = switchDigMachine(yard); order.push(yard.activeMachine); }
+assert.deepEqual(order.slice(-3), ['borer', 'loader', 'mixer']);
+assert.match(plantYardWords(yard).hint, /batch plant/);
+while (yard.activeMachine !== 'loader') yard = switchDigMachine(yard);
+assert.equal(yard.activeMachine, 'loader');
+const startX = digSandboxMachineState(yard).x;
+for (let i = 0; i < 60; i++) yard = stepDigSandbox(yard, {controls:plantYardControls('loader', {KeyW:true})}, STEP);
+assert.ok(Math.abs(digSandboxMachineState(yard).x - startX) > 0.5, 'the loader drives in the yard');
+assert.deepEqual(plantYardControls('mixer', {KeyA:true, Space:true}, 'work'), {chute:-1, pour:true});
+const started = performance.now();
+for (let i = 0; i < 600; i++) yard = stepDigSandbox(yard, {controls:{}}, STEP);
+const perStep = (performance.now() - started) / 600;
+assert.ok(perStep < 1, `a yard step with the plant takes ${perStep.toFixed(3)} ms`);
+closeDigSandbox();
 
 console.log(`Machine plant passed ${checks} measured checks: mass is kept at every step, the mix holds, and concrete sets in two minutes.`);
