@@ -819,3 +819,34 @@ LAB-BRIAN-SHORT (9 November 2026).
 - An earlier step stays on the page as its heading and first sentence, and a click opens it
   in full. Write a step's first sentence so that it makes sense alone.
 - `tools/test-lab-brian-short.mjs` checks every step's opening words in all sixteen lessons.
+
+### 13.2 Kyle's review of Rust (19 November 2026): rules for every lesson
+
+Kyle played Rust and asked for every lesson to be checked against these rules before fixes
+start. They add to 13.1 and win over it where they differ.
+
+- **No hedging.** A lesson states its rule plainly: "The rate is the percentage of the nail that
+  rusts during one day." Never add "in this game", "a simplification" or "real rust is less
+  regular". The last thing read is what a learner remembers, so a caveat erases the rule.
+- **Correct maths words.** A sum is an addition, a product a multiplication, a difference a
+  subtraction. `rust = rate × days` is a product. Never call a multiplication "the sum"; say
+  "multiply" or "work out the rust".
+- **Every task says plainly what to do and what it is for**, so that a newcomer understands it
+  on first reading. "Now you can use the sum yourself" failed with an adult who has a master's
+  degree. A step that leads to a question names the question first.
+- **No instructions the screen already gives.** The key labels on the controls say how to
+  change them; Brian does not repeat "choose the number of days with ↑ and ↓".
+- **Less reading.** Cut each step to what the learner needs at that moment.
+- **Watch animations long enough to watch.** When several things move together (the
+  calendar, the nail, the graph and the "how rust forms" box), the run lasts about 10 seconds
+  or plays twice, and R replays it. A simple change, such as the garden gate in the rain,
+  keeps its quick pace.
+- **Pictures show the real process.** Rust grows over all of the nail that is under water, not
+  from the tip.
+- **The page keeps what helps.** The step being worked on is at the top of Brian's page, in
+  full. Word definitions (Rust, Salt water, Zinc coat) stay, grouped behind one fold, "Words so
+  far". Steps that only gave an instruction ("Three days", "Four jars, one week") leave the page
+  once done.
+- **Wanted when it fits:** a dial the player can drag with the mouse, in place of Fewer and More
+  buttons. A dial is a nice idea, not a rule.
+
