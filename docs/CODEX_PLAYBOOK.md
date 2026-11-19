@@ -107,7 +107,10 @@ never passes through a hub (a module that imports 20 or more of the game's
 own files, such as `game.js`, `app.js` or `world.js`), and the shared files
 (`game.js`, `main.js`, `render3d.js`, `app.js`, `config.js`,
 `feature-flags.js`) select only their owner suites and the suites that read
-them as text: the smoke set and replay guards drive them in every lane. Suites
+them as text: the smoke set and replay guards drive them in every lane. So do
+the course tables and small helpers listed with their owners in `SHARED_FILES`
+(QA-WIDE-FILES, 19 November 2026); `progression.js`, `rng.js`, `course.js`,
+`combat-weapons.js` and `drivers.js` stay ordinary files on purpose. Suites
 in `NIGHT_ONLY_SUITES` run only in the full tier, and every suite that takes
 three minutes or more alone belongs there (Kyle, 16 November 2026, after the
 audit: two suites of 69 and 26 minutes were 63% of a lane run's check

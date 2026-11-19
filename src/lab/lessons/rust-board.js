@@ -46,7 +46,7 @@ export function hoverInfo(view, x, y) {
   if (!scene(view)) return null;
   if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'The day dial is locked for now.' : 'The day dial sets how many days the nail sits in its jar.';
   if (view.switch && inRect(x, y, SWITCH)) return view.switch.locked ? 'The protection is locked for now.' : 'This switch leaves the steel bare or gives it a zinc coat.';
-  if (view.chart && inRect(x, y, CHART)) return 'This graph shows the rust growing day by day. Each line is straight, because in this game the rate stays the same every day.';
+  if (view.chart && inRect(x, y, CHART)) return 'This graph shows the rust growing day by day. Each line is straight, because the rate is the same every day.';
   if (inRect(x, y, CAL)) return 'The calendar counts the days as they run.';
   if (view.jarPick && x > 40 && x < 190 && y > 208 && y < 345) return 'These buttons choose the jar that the nail sits in.';
   const n = view.shelf.length;
@@ -78,9 +78,10 @@ function glowBox(ctx, view, x, y, w, h) {
 }
 
 
-// A steel nail standing up, `len` long from its head at (x, y). Rust covers `rust` of it in rough orange-brown patches and
-// flakes from the tip up; a zinc coat is a pale dull-silver skin, thinner as `coat` (the share left) falls.
-export function nail(ctx, x, y, len, {rust = 0, coat = null, width = 8} = {}) {
+// A steel nail standing up, `len` long from its head at (x, y). Rust forms over all of the nail that is under water, from `water` (the
+// height of the water line; the whole shaft when there is none) down to the tip, in orange-brown patches and flakes that spread and thicken
+// as the `rust` share grows. A zinc coat is a pale dull-silver skin, thinner as `coat` (the share left) falls.
+export function nail(ctx, x, y, len, {rust = 0, coat = null, width = 8, water = null} = {}) {
   const w = width, shaftEnd = y + len - w, tipY = y + len;
   const shaft = (grow = 0) => { ctx.beginPath(); ctx.moveTo(x - w / 2 - grow, y); ctx.lineTo(x + w / 2 + grow, y); ctx.lineTo(x + w / 2 + grow, shaftEnd); ctx.lineTo(x, tipY + grow * .8); ctx.lineTo(x - w / 2 - grow, shaftEnd); ctx.closePath(); };
   // The zinc skin goes on first, a little wider than the steel, with matte specks in it.
@@ -105,29 +106,33 @@ export function nail(ctx, x, y, len, {rust = 0, coat = null, width = 8} = {}) {
   ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = .8; ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(x - w * 1.1, y - w * .46, w * 2.2, Math.max(.8, w * .08));
   if (rust > 0) {
-    // A crust from the tip upward over the rusted share, rough at its edge, thinning into separate patches at its top end.
-    const span = (len - w) * Math.min(1, rust), top = shaftEnd - span, outline = [];
-    for (let k = 0; k <= 10; k++) outline.push([x + w * (.6 + grain(k + 40) * .22), shaftEnd - span * k / 10]);
-    const crust = () => {
-      ctx.beginPath(); ctx.moveTo(x - w * .7, shaftEnd); ctx.lineTo(x, tipY + w * .22); ctx.lineTo(x + w * .7, shaftEnd);
-      for (const [px, py] of outline) ctx.lineTo(px, py);
-      for (let k = 10; k >= 0; k--) ctx.lineTo(x - w * (.6 + grain(k + 60) * .22), shaftEnd - span * k / 10);
-      ctx.closePath();
-    };
-    const body = ctx.createLinearGradient(0, shaftEnd, 0, top - 1); body.addColorStop(0, 'rgba(176,84,30,1)'); body.addColorStop(.7, 'rgba(190,96,40,.92)'); body.addColorStop(1, 'rgba(200,110,50,.35)');
-    ctx.fillStyle = body; crust(); ctx.fill();
-    ctx.save(); crust(); ctx.clip();
-    const colours = ['#c4622d', '#8a3d1a', '#e8803a', '#6b3014', '#a2501f'];
-    for (let k = 0, n = Math.ceil(span / (w * .35)); k < n; k++) {
-      const py = shaftEnd - (k + .5) * span / n + (grain(k + 80) - .5) * w, r = w * (.14 + grain(k + 90) * .22);
-      ctx.fillStyle = colours[k % colours.length]; ctx.globalAlpha = .75; ctx.beginPath(); ctx.ellipse(x + (grain(k + 100) - .5) * w * 1.1, py, r, r * .8, grain(k + 110) * 3, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(255,190,120,.35)'; ctx.fillRect(x - w * .5, top, Math.max(.8, w * .1), span);
-    ctx.restore();
-    // Flakes standing out from the crust along its edges.
-    for (let k = 0, n = Math.floor(span / (w * 1.1)); k < n; k++) {
-      const side = k % 2 ? 1 : -1, py = shaftEnd - (k + .5) * span / Math.max(1, n), ex = x + side * w * .7;
-      ctx.fillStyle = k % 3 ? '#8a3d1a' : '#c4622d'; ctx.beginPath(); ctx.moveTo(ex, py - w * .25); ctx.lineTo(ex + side * w * (.22 + grain(k + 120) * .2), py); ctx.lineTo(ex, py + w * .25); ctx.closePath(); ctx.fill();
+    // The part under water rusts along its whole length at once: a few patches at first, then a crust that grows thicker, rough at its edge.
+    const s = Math.min(1, rust), top = water === null ? y + w * .4 : Math.max(y + w * .4, water), span = shaftEnd - top, rows = 10;
+    if (span > 0) {
+      const at = k => shaftEnd - span * k / rows, half = (k, side) => w * (.56 + s * (.12 + grain(k + (side > 0 ? 40 : 60)) * .4));
+      const crust = () => {
+        ctx.beginPath(); ctx.moveTo(x - half(0, -1), shaftEnd); ctx.lineTo(x, tipY + w * .22); ctx.lineTo(x + half(0, 1), shaftEnd);
+        for (let k = 1; k <= rows; k++) ctx.lineTo(x + half(k, 1), at(k));
+        for (let k = rows; k >= 1; k--) ctx.lineTo(x - half(k, -1), at(k));
+        ctx.closePath();
+      };
+      const body = ctx.createLinearGradient(0, shaftEnd, 0, top - 1), cover = Math.min(.95, .12 + s * 1.7);
+      body.addColorStop(0, `rgba(176,84,30,${cover})`); body.addColorStop(.7, `rgba(190,96,40,${cover * .95})`); body.addColorStop(1, `rgba(200,110,50,${cover * .85})`);
+      ctx.fillStyle = body; crust(); ctx.fill();
+      ctx.save(); crust(); ctx.clip();
+      const colours = ['#c4622d', '#8a3d1a', '#e8803a', '#6b3014', '#a2501f'], shown = Math.min(1, .3 + s * 2);
+      for (let k = 0, n = Math.ceil(span / (w * .3)); k < n; k++) {
+        if (grain(k + 95) > shown) continue;
+        const py = shaftEnd - (k + .5) * span / n + (grain(k + 80) - .5) * w * .6, r = w * (.12 + (.08 + s * .3) * grain(k + 90));
+        ctx.fillStyle = colours[k % colours.length]; ctx.globalAlpha = .8; ctx.beginPath(); ctx.ellipse(x + (grain(k + 100) - .5) * w * 1.2, py, r, r * .8, grain(k + 110) * 3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(255,190,120,.3)'; ctx.fillRect(x - w * .5, top, Math.max(.8, w * .1), span);
+      ctx.restore();
+      // Flakes standing out from the crust along its edges, more of them as it thickens.
+      for (let k = 0, n = Math.floor(span / (w * 1.1) * Math.min(1, s * 2.5)); k < n; k++) {
+        const side = k % 2 ? 1 : -1, py = shaftEnd - (k + .5) * span / Math.max(1, n), ex = x + side * half(Math.round((k + .5) * rows / Math.max(1, n)), side);
+        ctx.fillStyle = k % 3 ? '#8a3d1a' : '#c4622d'; ctx.beginPath(); ctx.moveTo(ex, py - w * .25); ctx.lineTo(ex + side * w * (.18 + s * .2 + grain(k + 120) * .15), py); ctx.lineTo(ex, py + w * .25); ctx.closePath(); ctx.fill();
+      }
     }
   }
 }
@@ -180,7 +185,7 @@ function jarFront(ctx, cx, top, w, h, {water = false, salt = false, waterTop = t
 function jar(ctx, cx, row) {
   const top = 150, bottom = SHELF.plank - 4, wet = jarOf(row.jar)?.water, salty = jarOf(row.jar)?.salt, kit = {water: wet, salt: salty, waterTop: top + 46};
   jarBack(ctx, cx, top, 76, bottom - top, kit);
-  nail(ctx, cx, top + 20, bottom - top - 34, {rust: row.rust, coat: row.coat === 'zinc' ? row.left : null});
+  nail(ctx, cx, top + 20, bottom - top - 34, {rust: row.rust, coat: row.coat === 'zinc' ? row.left : null, water: wet ? kit.waterTop : null});
   jarFront(ctx, cx, top, 76, bottom - top, kit);
   // Its name and reading under the shelf.
   smallLines(ctx, row.name, cx, SHELF.plank + 20, 15);
@@ -374,9 +379,12 @@ function closeRust(ctx, view) {
     ball(ctx, x, y, 5, '#d7f0ff');
     ctx.strokeStyle = '#d7f0ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y + 8); ctx.lineTo(x, y + 16); ctx.moveTo(x - 3, y + 12); ctx.lineTo(x, y + 16); ctx.lineTo(x + 3, y + 12); ctx.stroke();
   }
-  steelSlab(ctx, left, floor, width, 46);
-  text(ctx, 'steel, which is mostly iron', left + width / 2, floor + 24, {size: 16, colour: '#1d2224'});
-  if (rust > 0) rustLayer(ctx, left, floor, width, 3 + rust * 44);
+  // Rust uses up the iron under it, so the steel gets thinner as the rust layer grows above the old surface.
+  const eaten = rust * 18;
+  steelSlab(ctx, left, floor + eaten, width, 46 - eaten);
+  text(ctx, 'steel, which is mostly iron', left + width / 2, floor + eaten + (46 - eaten) / 2, {size: 16, colour: '#1d2224'});
+  if (rust > 0) rustLayer(ctx, left, floor + eaten, width, 3 + rust * 44 + eaten);
+  if (rust > .15) text(ctx, 'rust', left + width - 40, floor - 3 - rust * 18 + eaten / 2, {size: 15, colour: '#fff', weight: 800});
   text(ctx, 'iron + water + oxygen → rust', 745, 432, {size: 22, colour: theme.accent, weight: 800});
   if (wet) text(ctx, `The nail in fresh water has ${pct(wet.shown)} rust.`, 745, 484, {size: 18});
   if (dry) text(ctx, `The nail in dry air has ${pct(dry.shown)} rust.`, 745, 516, {size: 18});
@@ -500,7 +508,7 @@ function jobCard(ctx, view) {
   text(ctx, 'Use the least protection that keeps it clean.', LOW.x + 24, LOW.y + 198, {size: 15, align: 'left', colour: MUTED});
   text(ctx, 'Your runs', 520, LOW.y + 48, {size: 15, align: 'left', colour: MUTED, weight: 800});
   const rows = view.rows.filter(r => r.job).slice(-5);
-  if (!rows.length) text(ctx, 'There are no runs yet. Press Space to run the week.', 500, LOW.y + 90, {size: 17, align: 'left', colour: MUTED});
+  if (!rows.length) text(ctx, 'There are no runs yet.', 500, LOW.y + 90, {size: 17, align: 'left', colour: MUTED});
   rows.forEach((row, i) => {
     const y = LOW.y + 84 + i * 34;
     ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(510, y - 16, 440, 32);
@@ -527,29 +535,27 @@ function drawShelf(ctx, view) {
   else if (view.glow === 'set' && view.switch && !view.switch.locked) glowBox(ctx, view, SWITCH.x - 4, SWITCH.y - 4, SWITCH.w + 8, SWITCH.h + 8);
 }
 
-// ---- the questions: a nail after its days, and the Sirena's soak ----
+// ---- the questions: a nail after its days, and the Sirena in the sea ----
 function drawCheck(ctx, view) {
   background(ctx);
   panel(ctx, 60, 70, 880, 520);
   if (view.scene === 'check-sirena') {
-    text(ctx, 'THE SIRENA’S SOAK', 80, 96, {size: 13, align: 'left', colour: MUTED, weight: 800});
+    text(ctx, 'THE SIRENA IN THE SEA', 80, 96, {size: 13, align: 'left', colour: MUTED, weight: 800});
     waterFill(ctx, 140, 250, 720, 260);
     ctx.strokeStyle = theme.iron[0]; ctx.lineWidth = 4; ctx.strokeRect(140, 250, 720, 260); ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1; ctx.strokeRect(143, 253, 714, 254);
     sirena(ctx, 500, 440, 1.3);
-    text(ctx, 'fresh water, for weeks', 500, 220, {size: 20});
-    if (view.reveal) for (let k = 0; k < 6; k++) {
-      const x = 260 + k * 95, y0 = 330 - (k % 2) * 30;
-      const sy = y0 - (view.time * 40 % 60); ctx.fillStyle = 'rgba(245,247,242,.92)'; ctx.beginPath(); ctx.moveTo(x + 3, sy - 1); ctx.lineTo(x + 7, sy + 3); ctx.lineTo(x + 3, sy + 7); ctx.lineTo(x - 1, sy + 3); ctx.closePath(); ctx.fill();
+    text(ctx, 'salt water, for sixty years', 500, 220, {size: 20});
+    if (view.reveal) {
+      labelPlate(ctx, 290, 150, 400, 34, .7); text(ctx, `A week in salt water: ${pct(shareOf('salt', RUST_WEEK))} rust`, 290, 150, {size: 18, colour: BRIGHT_RUST, weight: 800});
+      labelPlate(ctx, 710, 150, 400, 34, .7); text(ctx, `A week in fresh water: ${pct(shareOf('fresh', RUST_WEEK))} rust`, 710, 150, {size: 18, colour: '#70bfd2', weight: 800});
     }
-    if (view.reveal) labelPlate(ctx, 500, 350, 250, 28, .7);
-    if (view.reveal) text(ctx, 'salt moving out of the metal', 500, 350, {size: 17, colour: theme.accent});
     return;
   }
   const five = view.scene === 'check-five', x = 360;
   text(ctx, five ? 'A BARE NAIL IN SALT WATER' : 'A ZINC-COATED NAIL IN SALT WATER', 80, 96, {size: 13, align: 'left', colour: MUTED, weight: 800});
   const r = view.reveal, kit = {water: true, salt: true, waterTop: 210, lid: false};
   jarBack(ctx, x, 150, 148, 392, kit);
-  nail(ctx, x, 190, 320, {rust: r ? r.rust : 0, coat: five ? null : r ? r.left : 1, width: 16});
+  nail(ctx, x, 190, 320, {rust: r ? r.rust : 0, coat: five ? null : r ? r.left : 1, width: 16, water: kit.waterTop});
   jarFront(ctx, x, 150, 148, 392, kit);
   text(ctx, five ? '5 days' : '22 days', 680, 220, {size: 40, weight: 800});
   if (r) {
@@ -584,7 +590,7 @@ export function drawBoard(ctx, view, width, height) {
     else drawCheck(ctx, view);
   });
 }
-// The answer cards' pictures: a nail with its rust and coat, or the Sirena's soak.
+// The answer cards' pictures: a nail with its rust and coat.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
   cardScene(ctx, w, h, {floorAt: h});
@@ -596,16 +602,5 @@ export function drawPicture(ctx, picture, w, h) {
     ctx.save(); ctx.translate(w / 2 + 8, h * .62); ctx.rotate(-Math.PI / 2);
     nail(ctx, 0, -h * .9, h * 1.8 > w * .8 ? w * .8 : h * 1.8, {rust: picture.rust, coat: picture.coat ?? null, width: Math.max(8, h * .14)});
     ctx.restore();
-  }
-  if (picture.kind === 'soak') {
-    // The Sirena standing in the salt water over the sand, as in the board's sea panel.
-    waterFill(ctx, 0, h * .36, w, h * .64);
-    const sand = ctx.createLinearGradient(0, h - 22, 0, h); sand.addColorStop(0, '#9c8860'); sand.addColorStop(1, '#5a4c32');
-    ctx.fillStyle = sand; ctx.fillRect(0, h - 22, w, 22);
-    for (let k = 0; k < 24; k++) { ctx.fillStyle = k % 2 ? 'rgba(255,240,200,.14)' : 'rgba(0,0,0,.2)'; ctx.fillRect(grain(k + 700) * w, h - 20 + grain(k + 710) * 18, 2, 2); }
-    sirena(ctx, w / 2, h - 36, Math.min(.36, w / 620));
-    const say = {salt: 'salt out', wash: 'rust off', stop: 'no more rust'}[picture.what];
-    labelPlate(ctx, w / 2, h * .17, 150, 30, .55);
-    text(ctx, say, w / 2, h * .17, {size: 22, colour: theme.accent, weight: 800});
   }
 }

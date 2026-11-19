@@ -3,6 +3,7 @@
 // machine is covered by tools/scenarios/lab-classroom.mjs. Its wording follows LAB-CLASSROOM-LANGUAGE.md.
 import {forestGrid, litFire, grown, frontCell, dropOn, JOB_HEAD_START, MIDDLE} from '../../src/lab/lessons/fire-classroom.js';
 import {spreadStep} from '../../src/lab/benches/fire.js';
+import {openFormulaPanel} from './lab-classroom.mjs';
 
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
@@ -56,12 +57,13 @@ async function play(c) {
   await at('wonder', 's.ready'); await shot('wonder');
   await next('wonder');
   // The words: wood in, gas on, lid shut, lid open, each by its number key.
-  await at('word-fuel'); await shot('word-fuel-empty'); await press('Digit1'); await at('word-fuel', 's.ready'); await shot('word-fuel');
+  await at('word-fuel'); await shot('word-fuel-empty'); await openFormulaPanel(c); await press('Digit1'); await at('word-fuel', 's.ready'); await shot('word-fuel');
   await next('word-fuel');
   await at('word-heat'); await press('Digit2'); await at('word-heat', 's.ready'); await shot('word-heat');
   await next('word-heat');
   await at('word-oxygen'); await press('Digit3'); await at('word-oxygen', 's.ready'); await says('That is why my lid worked', 'the wonder answered'); await shot('word-oxygen');
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-past h4')].map(e => e.textContent).join() === 'Why did the lid work?,Fuel,Heat,Oxygen'`))) throw Error('Earlier words should stay on the page.');
+  // LAB-PAGE: the step being worked on is at the top, the earlier words are in the closed Words so far fold, and the opening question left the page.
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-past h4')].map(e => e.textContent).join() === 'Oxygen' && [...document.querySelectorAll('.lc-word-list h4')].map(e => e.textContent).join() === 'Fuel,Heat' && document.querySelector('.lc-word-list').hidden`))) throw Error('The step now should be at the top and the earlier words in the closed Words so far fold.');
   await next('word-oxygen');
   await at('word-triangle'); await press('Digit3'); await at('word-triangle', 's.ready'); await shot('word-triangle');
   await next('word-triangle');
@@ -89,7 +91,7 @@ async function play(c) {
   // How a forest fire spreads: one press, one spread; the sums follow.
   await at('try-spread'); await shot('try-spread'); await sum('25 + 25 = 50', 'the marked cell’s sum');
   await press('Space'); await sum('50 + 25 = 75', 'the marked cell grows'); await wait(200); await shot('try-spread-pressed');
-  await press('Space'); await press('Space'); await press('Space'); await at('try-spread', 's.ready'); await says('0.29 metres per second', 'the front’s speed'); await shot('try-spread-done');
+  await press('Space'); await press('Space'); await press('Space'); await at('try-spread', 's.ready'); await says('A fire left alone reaches the road', 'the conclusion comes first'); await shot('try-spread-done');
   await next('try-spread');
   // The strip: rake, guess, let it burn.
   await at('try-strip'); await shot('try-strip-setup'); await sum('6 × 3 = 18 cells', 'all the forest in reach'); await press('Space');

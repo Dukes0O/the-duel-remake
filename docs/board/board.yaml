@@ -388,16 +388,6 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-ART-REX.md"
 
-  - id: QA-REVIEW-EVIDENCE-MIDNIGHT
-    title: "test-review-evidence fails around midnight: two clocks"
-    owner: "codex"
-    lane: "TOOLS"
-    size: "S"
-    status: "backlog"
-    needs: []
-    details: "docs/board/cards/QA-REVIEW-EVIDENCE-MIDNIGHT.md"
-
-
   - id: QA-WAVE1-AUDIO-FLIGHT
     title: "Check the moving weapon flight sound alone"
     owner: "claude"
@@ -407,17 +397,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
-
-  - id: QA-TEMP-CLEANUP
-    title: "Browser checks leave folders in Temp; one-time disk cleanup"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-TEMP-CLEANUP.md"
-
 
   - id: QA-TIMING-UNDER-LOAD
     title: "Town timing checks fail when art jobs run beside them"
@@ -449,28 +428,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
-
-  - id: LAB-PAGE
-    title: "Lab: Brian's page keeps the current step on top and the words behind one fold; formulas start closed"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude (Director) with a Sonnet helper, since 19 November 2026"
-    needs: []
-    locks: [lab-classroom-frame]
-    details: "docs/board/cards/LAB-PAGE.md"
-
-  - id: LAB-REVIEW-WORKSHOP
-    title: "Lab: Rust, Fire, Strength and Fuel meet Kyle's rules of 19 November"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude (Director) with a Sonnet helper, since 19 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/LAB-REVIEW-WORKSHOP.md"
 
   - id: LAB-REVIEW-FLYING
     title: "Lab: Lift, Pendulums, Air and altitude, and Headings meet Kyle's rules of 19 November"
@@ -547,16 +504,6 @@ tasks:
     locks: []
     details: "docs/board/cards/SCABLANDS-LAND.md"
 
-  - id: QA-EVIDENCE-MIDNIGHT
-    title: "The evidence-folder test fails for a while after midnight"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
-
   - id: QA-ROUND-SOLID-HEADING
     title: "A car passing a round solid thing is slowed when the thing's heading differs from the car's"
     owner: "claude"
@@ -576,16 +523,6 @@ tasks:
     claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
-
-  - id: QA-WIDE-FILES
-    title: "Some game files still pick hundreds of suites each: rule which suites own them"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
-    needs: []
-    details: "docs/board/cards/QA-WIDE-FILES.md"
 
   - id: QA-STANDING-BROWSER
     title: "The seven things that fail every night: cure each or say why it cannot pass"
@@ -627,17 +564,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-NIGHT-19-NOV.md"
-
-  - id: QA-EVIDENCE-DATE-BOUNDARY
-    title: "One clock names every evidence folder: the browser runner and the round planner disagreed at midnight"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-EVIDENCE-DATE-BOUNDARY.md"
 
   - id: STORY-CHOICES
     title: "The story rebuilt around choices: the form, the ledger, the map of choices, one chapter in full (Kyle, 18 November)"
