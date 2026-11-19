@@ -501,7 +501,7 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townOutposts=null,townSeconds=0;
+  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townSeconds=0;
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
@@ -523,6 +523,16 @@ export function createScablandsScene(course,options={}){
       mesh.position.set(x,scablandsSurfaceHeightAt(x,z)+.12,z);mesh.rotation.y=-Math.atan2(dz,dx);mesh.name=`Town road ${road.id}`;root.add(mesh);
     }
     group.add(root);townDraw=root;
+    // TOWN-VIEW-LIFE: the town's people, carts and smoke near the car, drawn from the saved layout (drawing only).
+    const [{createTownWalkers},{createTownFx}]=await Promise.all([import('../town/view/town-walkers.js'),import('../town/view/town-fx.js')]);
+    if(retired)return;
+    // Each person lives at their own spot from the layout. The drive has no town clock, so its people keep a working day
+    // at the town's own pace, a game hour every 1.875 s from 8:00 to 17:00, and then start the next day.
+    const lifeTown={seed:townLayout.seed,buildings:townLayout.buildings||[],homePlots:[],people:(townLayout.walkers||[]).map(walker=>({id:walker.id,spot:{x:walker.x,z:walker.z}}))};
+    const lifeHour=()=>Math.floor(townLifeClock/1.875);
+    townLife=createTownWalkers({town:lifeTown,hourAt:()=>8+lifeHour()%10,dayAt:()=>Math.floor(lifeHour()/10)});
+    townFx=createTownFx({town:lifeTown,buildings:root,fog:false,light:false,hourAt:()=>8+lifeHour()%10});
+    group.add(townLife.group,townFx.group);
     // The neighbours' outposts, drawn from the same layout that makes them solid (TOWN-OUTPOST-SCENE).
     if(townLayout.outposts?.outposts?.length&&featureFlags.enabled('wasteland-town')){
       const {createTownOutpostsScene}=await import('../town/view/town-outposts-scene.js');
@@ -905,6 +915,7 @@ export function createScablandsScene(course,options={}){
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
         group.userData.drawnFeet?.refresh();
+        townLifeClock+=presentationDt;townLife?.update({dt:presentationDt,focus:here,distance:60,car:here});townFx?.update({dt:presentationDt,focus:here,distance:60});
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
@@ -1124,7 +1135,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townOutposts?.dispose(); townOutposts=null;
+    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); townOutposts?.dispose(); townOutposts=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

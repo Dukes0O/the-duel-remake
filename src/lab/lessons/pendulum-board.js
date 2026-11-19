@@ -47,8 +47,8 @@ export function hoverInfo(view, x, y) {
   }
   if (view.pull && view.keys['↑'] && x > 38 && x < 162 && y > 190 && y < 345) return 'The pull-back is the angle between the string and straight down. A larger pull-back makes a longer trip.';
   if (view.keys[4] === 'weight:light') {
-    for (const [name, point] of Object.entries(SHELF)) if (near(point, 30)) return `This is the ${WEIGHTS[name]} kg weight. Click it, or press ${name === 'light' ? 4 : 5}, to hang it.`;
-    for (const length of LENGTHS) if (Math.abs(x - HOOK_X[length]) < 34 && y > PLATE_Y - 16 && y < BEAM_Y + 30) return `This is the ${length} m hook. Click it, or press ${LENGTHS.indexOf(length) + 1}, to hang the weight here.`;
+    for (const [name, point] of Object.entries(SHELF)) if (near(point, 30)) return `This is the ${WEIGHTS[name]} kg weight. Click it to hang it.`;
+    for (const length of LENGTHS) if (Math.abs(x - HOOK_X[length]) < 34 && y > PLATE_Y - 16 && y < BEAM_Y + 30) return `This is the ${length} m hook. Click it to hang the weight here.`;
   }
   if (y > BEAM_Y - 18 && y < BEAM_Y + 12 && x > 60 && x < 940) return 'This is the steel beam, and every string hangs from a hook on it.';
   if (view.startMark && near(bobPoint(view.pendulums[0], Math.abs(view.pendulums[0].amplitude ?? SWING_RAD)), 40)) return 'This green flag is where the weight starts, and one swing ends when the weight is back here.';
@@ -233,13 +233,13 @@ function tripLabel(ctx, p, y) {
   const deg = Math.round(Math.abs(p.held ? p.angle : p.amplitude ?? SWING_RAD) * 180 / Math.PI);
   text(ctx, `one swing travels ${tripMetres(p.lengthM, deg).toFixed(1)} m`, p.x, y, {size: 15, colour: p.ghost ? theme.ghost : theme.accent});
 }
-// The pull of gravity on a weight: a longer arrow for the heavier weight, and the sum under it.
+// The pull of gravity on a weight: a longer arrow for the heavier weight, and the pull on each kilogram under it.
 function pullArrow(ctx, p) {
   const [bx, by] = bobPoint(p), from = by + radius(p.weightKg) + 2, to = from + (p.weightKg > 100 ? 110 : 22);
   forceArrow(ctx, bx, from, to + 3 - from, false, theme.bad, 6);
   const pull = (p.weightKg * 9.81).toFixed(1);
   text(ctx, `pull of gravity: ${pull} newtons`, p.x, 578, {size: 16, colour: theme.bad});
-  text(ctx, `${pull} ÷ ${p.weightKg} kg = 9.81 m/s²`, p.x, 602, {size: 16, colour: theme.good});
+  text(ctx, `${pull} ÷ ${p.weightKg} kg = 9.81 N per kilogram`, p.x, 602, {size: 16, colour: theme.good});
 }
 // The free test's pull-back: the angle on the string while the weight is held, and its two buttons.
 function pullAngle(ctx, p) {

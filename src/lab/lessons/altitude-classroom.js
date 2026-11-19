@@ -79,6 +79,10 @@ export const WORDS = Object.freeze([
 // ---- the flight on the pad: where the helicopter is, its load and the lever (0 to 1, as the game's collective) ----
 export const HOVER_M = 1, CEILING_M = 4;
 const SETTLE_S = 1.6, LEVER_RATE = .8;
+// A guided try holds its picture longer, so that a load that stays on the ground is seen not to rise.
+export const TRY_SETTLE_S = 3.5;
+// The wonder holds for 8 seconds, so that both helicopters are watched.
+export const WONDER_S = 8;
 const flight = (place, load = {}) => ({place, crates: load.crates ?? 0, car: load.car ?? 0, lever: 0, h: 0});
 const loaded = f => f.crates > 0 || f.car > 0;
 const liftOf = f => f.lever * MOST[f.place];
@@ -121,7 +125,7 @@ function setLever(f, value) {
   f.lever = lever; return true;
 }
 
-// ---- the sums beside the board: each comes out on a calculator from exactly the numbers it shows ----
+// ---- the formulas beside the board: each comes out on a calculator from exactly the numbers it shows ----
 const whole = value => Math.round(value).toLocaleString('en-GB');
 const BASE_KG = KESTREL.maxThrust / GRAVITY, GROUND = 1 + KESTREL.groundEffect, SCALE_M = KESTREL.airScaleHeight;
 const BASE_SHOWN = BASE_KG.toLocaleString('en-GB', {minimumFractionDigits: 1, maximumFractionDigits: 1});
@@ -132,17 +136,17 @@ const leverShown = lever => Math.abs(Number(lever.toFixed(2)) - lever) < 1e-9 ? 
 export const pushAt = (place, lever) => Number(leverShown(lever)) * Math.round(MOST[place]);
 const airShown = place => Math.pow(1 - .0065 * HEIGHT[place] / 288.15, 4.256).toFixed(2);
 const shareShown = place => Math.pow(2.718, -HEIGHT[place] / SCALE_M).toFixed(4);
-// While a guess or a question is open, a sum shows only its general formula.
+// While a guess or a question is open, a formula shows only its general form.
 const general = ({title, formula}) => ({title, formula});
 const altitudeSum = place => ({title: 'Altitude', formula: 'altitude = height of the place − height of the sea', worked: `${whole(HEIGHT[place])} m − 0 m = ${whole(HEIGHT[place])} m`,
   note: 'The surface of the sea is counted as 0 m, so the altitude of a place is its height above the sea in metres.'});
-const airSum = (place, note = false) => ({title: 'Air density at this height', formula: 'air share = (1 − 0.0065 × height ÷ 288.15) ^ 4.256',
-  worked: `(1 − 0.0065 × ${whole(HEIGHT[place])} ÷ 288.15) ^ 4.256 = ${airShown(place)}, which is ${dots(AIR[place])} dots in the jar`,
-  note: note ? 'The mark ^ means “to the power of”. Air cools by 0.0065 degrees for each metre of height, and 288.15 is the temperature at Sea level, counted in degrees from the coldest temperature possible. Pilots use this rule as the average for the real air.' : null});
+const airSum = (place, note = false) => ({title: 'Air density at this height', formula: 'dots in the jar = 100 × air share',
+  worked: `100 × ${airShown(place)} = ${dots(AIR[place])} dots in the jar`,
+  note: note ? 'The air share is how much air a jar holds at this height, against a jar of the same size at Sea level. The shares come from the standard atmosphere, the average air at each height that pilots use.' : null});
 const shareSum = (place, note = false) => ({title: 'How much of the push remains', formula: `push share = 2.718 ^ (−height ÷ ${whole(SCALE_M)})`, worked: `2.718 ^ (−${whole(HEIGHT[place])} ÷ ${whole(SCALE_M)}) = ${shareShown(place)}`,
-  note: note ? `In this game one rule covers both effects of thin air, the smaller amount of air thrown down and the weaker engine. Every ${whole(SCALE_M)} m of height divides the push by 2.718, so the push falls a little faster than the air in the jar.` : null});
+  note: note ? `Every ${whole(SCALE_M)} m of height divides the push by 2.718, the number that describes a steady fall. Thin air costs the rotor twice, because there is less air to throw down and the engine, which burns its fuel with the same air, loses power. That is why the push falls to ${pct(LIFT_SHARE[place])} while the air in the jar falls to ${pct(AIR[place])}.` : null});
 const mostSum = (place, note = false) => ({title: 'The most the rotor can push', formula: `most push = ${BASE_SHOWN} kg × ${GROUND} × push share`, worked: `${BASE_SHOWN} × ${GROUND} × ${shareShown(place)} = ${kg(MOST[place])}`,
-  note: note ? `${BASE_SHOWN} kg is the most the rotor can push at Sea level when the helicopter is well above the ground. Close to the ground the air thrown down cannot get away so easily, which gives 15% more push, so we multiply by ${GROUND}. Every push in this lesson is measured on the pad, close to the ground.` : null});
+  note: note ? `${BASE_SHOWN} kg is the most the rotor can push at Sea level when the helicopter is well above the ground. Close to the ground the air thrown down cannot get away so easily, which gives 15% more push, so we multiply by ${GROUND}.` : null});
 const pushSum = (f, note = false) => ({title: 'The push at this lever setting', formula: 'push = lever × most push', worked: `${leverShown(f.lever)} × ${kg(MOST[f.place])} = ${kg(pushAt(f.place, f.lever))}`,
   note: note ? 'The lever’s percentage says how much of the most push is being used. A lever at 70% is the same as 0.70, because % means “out of every hundred”.' : null});
 const loadWords = f => f.car ? kg(CAR_KG) : `${f.crates} × ${kg(CRATE_KG)}`;
@@ -161,7 +165,7 @@ function cratesSum(place, hidden = false) {
 function fuelSum(lever, note = false) {
   const shown = leverShown(Math.min(1, lever));
   return {title: 'Fuel burned each minute', formula: `fuel = ${IDLE_SHOWN} kg + ${BURN_SHOWN} kg × lever`, worked: `${IDLE_SHOWN} + ${BURN_SHOWN} × ${shown} = ${(IDLE_SHOWN + BURN_SHOWN * Number(shown)).toFixed(1)} kg a minute`,
-    note: note ? `The engine burns ${IDLE_SHOWN} kg each minute with the lever all the way down, and up to ${BURN_SHOWN} kg more as the lever rises. The game weighs its fuel in kilograms, and a full tank holds ${kg(KESTREL.tankKg)}.` : null};
+    note: note ? `The engine burns ${IDLE_SHOWN} kg each minute with the lever all the way down, and up to ${BURN_SHOWN} kg more as the lever rises. Fuel is weighed in kilograms, and a full tank holds ${kg(KESTREL.tankKg)}.` : null};
 }
 
 const drawn = f => f && ({place: f.place, crates: f.crates, car: f.car, lever: f.lever, lift: pushAt(f.place, f.lever), weight: weightOf(f), most: MOST[f.place],
@@ -173,10 +177,12 @@ const LEVER_KEYS = Object.freeze({W: 'lever:up', '↑': 'lever:up', S: 'lever:do
 const LEVER_REPEAT = Object.freeze(['W', '↑', 'S', '↓']);
 const LOAD_KEYS = Object.freeze({1: 'crate:add', 2: 'crate:remove', Space: 'go'});
 const PICK_KEYS = n => Object.fromEntries(Array.from({length: n}, (_, i) => [String(i + 1), `${n === 2 ? 'guess' : 'answer'}:${i}`]));
-const DONE = Object.freeze(['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.']);
-const UP_HINTS = [`The mountain is on the left, with ${NAME[SEA]} at the foot and ${NAME[SUMMIT]} at the top.`, `Press ↑ until the stand is at ${NAME[SUMMIT]}, or click ${NAME[SUMMIT]}.`, `Watch my pointer, which is on ${NAME[SUMMIT]}.`];
+const CONTINUE_SAY = 'Continue when you are ready.';
+const DONE = Object.freeze([CONTINUE_SAY, CONTINUE_SAY, CONTINUE_SAY]);
+const PICK_ANSWER = 'Pick the card with your answer.', PICK_GUESS = 'Pick the card with your guess.';
+const UP_HINTS = [`The mountain is on the left, with ${NAME[SEA]} at the foot and ${NAME[SUMMIT]} at the top.`, `Click ${NAME[SUMMIT]}, at the top of the mountain, to move the stand there.`, `Watch my pointer, which is on ${NAME[SUMMIT]}.`];
 const WAIT = 'Please wait a moment.', ANY_GUESS = 'Any guess is fine, so pick one and then we will test it.';
-const MOVE_ON = 'You can move the stand with ↑ and ↓ to compare the places.';
+const MOVE_ON = 'You can move the stand to compare the places.';
 
 // ---- the guided tries ----
 const CAR_GUESSES = Object.freeze([
@@ -214,13 +220,13 @@ const CHECKS = {
     hints: [`The most the rotor can push is ${kg(MOST[SEA])} at ${NAME[SEA]}, ${kg(MOST[RIDGE])} at ${NAME[RIDGE]} and ${kg(MOST[SUMMIT])} at ${NAME[SUMMIT]}.`, `Which of those pushes are more than ${kg(CAR_W)}?`, `Pick the second card, which says ${NAME[SEA]} and ${NAME[RIDGE]}.`],
   },
   'check-game': {
-    question: `In the challenge you carry a ${GAME_CRATE_KG} kg crate up to ${NAME[SUMMIT]} without refuelling on the way, and you must land with 30% of the tank left. Which plan gives you the best chance of doing that?`,
+    question: `In the challenge you carry a ${GAME_CRATE_KG} kg crate up to ${NAME[SUMMIT]} without refuelling on the way, and you must land with 30% of the tank left. Remember that more lever burns more fuel every minute. Which plan gives you the best chance of doing that?`,
     answers: [{label: 'Fly straight there and land', picture: {kind: 'route', what: 'straight'}},
       {label: 'Keep the lever all the way up for the whole flight', picture: {kind: 'route', what: 'lever'}}, {label: 'Fill the tank at a pump on the way', picture: {kind: 'route', what: 'pump'}}],
     correct: 0,
     right: () => `Correct. With the crate on the cable, hovering by the pad at ${NAME[SUMMIT]} needs ${pct(GAME_TOP)} of the lever, against ${pct(GAME_SEA)} at ${NAME[SEA]}, and flying away from the ground needs more still. More lever burns more fuel every minute, so do not stay at ${NAME[SUMMIT]} for longer than you need.`,
     wrong: picked => picked === 1 ? `Keeping the lever all the way up burns the most fuel, ${perMinute(fuelPerMinute(1))}. Use only the lever that the helicopter needs, and fly straight there.`
-      : 'Refuelling once the crate is on the cable does not count in this challenge, because the crate must be carried on one tank. Fly straight there.',
+      : 'The question says there is no refuelling on the way, so the crate must be carried on one tank. Fly straight there.',
     hints: [`At ${NAME[SUMMIT]} every minute burns more fuel than at ${NAME[SEA]}.`, 'More lever burns more fuel, and this challenge allows no refuelling on the way.', 'Pick the first card, which says to fly straight there and land.'],
   },
 };
@@ -336,18 +342,18 @@ export function createModel() {
       const picks = car ? CAR_GUESSES : LEVER_GUESSES, kindOf = car ? 'guess' : 'answer', pick = picks[Number(value)];
       if (kind !== kindOf || !pick) return null;
       m.guess = pick.id; m.phase = 'lever';
-      return {kind: 'progress', say: car ? 'Now pull the lever all the way up by holding W.' : `Here is the answer: the red line is at ${pct(HOVER_TOP)}. Pull the lever up to the line by holding W.`};
+      return {kind: 'progress', say: car ? 'Now raise the lever all the way up.' : `Here is the answer: the red line is at ${pct(HOVER_TOP)}. Raise the lever up to the line.`};
     }
     if (m.phase !== 'lever' || !moveLever(kind, value, extra)) return null;
     if (car) {
-      if (f.lever >= 1 - 1e-6) { m.phase = 'running'; m.settleAt = m.time + SETTLE_S; return {kind: 'progress', say: 'The lever is all the way up. Watch the Dusthawk.'}; }
+      if (f.lever >= 1 - 1e-6) { m.phase = 'running'; m.settleAt = m.time + TRY_SETTLE_S; return {kind: 'progress', say: 'The lever is all the way up. Watch the Dusthawk.'}; }
       return null;
     }
     const mode = motion(f);
     if (mode !== 'climb') m.past = false;
     else if (m.past) return null;
-    if (mode === 'climb') { m.past = true; return {kind: 'fail', say: `The lever has gone past the red line, so the push of ${kg(pushAt(f.place, f.lever))} is more than the weight of ${kg(OWN_KG)} and the helicopter climbs. Bring the lever back to the line with S.`}; }
-    if (mode === 'hover') { m.phase = 'running'; m.settleAt = m.time + SETTLE_S; return {kind: 'progress', say: 'The lever is on the red line. Watch the helicopter.'}; }
+    if (mode === 'climb') { m.past = true; return {kind: 'fail', say: `The lever has gone past the red line, so the push of ${kg(pushAt(f.place, f.lever))} is more than the weight of ${kg(OWN_KG)} and the helicopter climbs. Bring the lever back down to the line.`}; }
+    if (mode === 'hover') { m.phase = 'running'; m.settleAt = m.time + TRY_SETTLE_S; return {kind: 'progress', say: 'The lever is on the red line. Watch the helicopter.'}; }
     return null;
   }
   const GUESS_CAR = `${NAME[SUMMIT]} is ${metres(HEIGHT[SUMMIT])} above the sea, and the air there is thinner. Kestrel One and the Dusthawk still weigh ${kg(CAR_W)} together. Will the helicopter lift the car at ${NAME[SUMMIT]}?`;
@@ -390,7 +396,7 @@ export function createModel() {
     if (!hover) { f.lever = 0; f.h = 0; }
     const what = hover ? `so the helicopter hovers with the lever at ${pct(hoverShare(f.place, f))}, and ${kg(most - w)} of push is left to spare.`
       : `so the load stays on the ground, because the load is ${kg(w - most)} too heavy.`;
-    const then = seen.has('try-free') ? 'Press Enter when you have tested enough settings.' : 'Change a setting and test a different one.';
+    const then = seen.has('try-free') ? 'You have tested enough settings, so continue when you are ready.' : 'Change a setting and test a different one.';
     m.say = `At ${here} with ${crateWords(f.crates)}, ${weighing(f)} and the rotor can push ${kg(most)}, ${what} ${then}`;
     return {kind: 'right', say: m.say};
   }
@@ -399,8 +405,8 @@ export function createModel() {
     const f = m.f, w = weightOf(f), most = MOST[f.place], best = bestCrates(f.place), here = NAME[f.place];
     m.settleAt = null;
     const reset = () => { m.phase = 'set'; f.lever = 0; f.h = 0; };
-    if (w > most + .5) { reset(); m.say = `A weight of ${kg(w)} is ${kg(w - most)} more than the ${kg(most)} that the rotor can push at ${here}, so the load stays on the ground. Take a crate off by pressing 2.`; return {kind: 'fail', say: m.say}; }
-    if (f.crates < best) { reset(); m.say = `The helicopter hovers with a weight of ${kg(w)}, and at ${here} the rotor can push ${kg(most)}, which leaves room for ${kg(most - w)} more. A crate weighs ${kg(CRATE_KG)}, so add one by pressing 1.`; return {kind: 'fail', say: m.say}; }
+    if (w > most + .5) { reset(); m.say = `A weight of ${kg(w)} is ${kg(w - most)} more than the ${kg(most)} that the rotor can push at ${here}, so the load stays on the ground. Click a crate on the cable to take it off.`; return {kind: 'fail', say: m.say}; }
+    if (f.crates < best) { reset(); m.say = `The helicopter hovers with a weight of ${kg(w)}, and at ${here} the rotor can push ${kg(most)}, which leaves room for ${kg(most - w)} more. A crate weighs ${kg(CRATE_KG)}, so click the crates to add one.`; return {kind: 'fail', say: m.say}; }
     m.delivery += 1;
     if (m.delivery >= PLACES.length) {
       m.phase = 'done'; seen.add('alone');
@@ -428,8 +434,14 @@ export function createModel() {
       if (m.f.lever < 1) { m.f.lever = Math.min(1, m.f.lever + LEVER_RATE * dt); if (m.f.lever >= 1) m.settleAt = m.time + 1; return null; }
       if (m.time < m.settleAt) return null;
       m.phase = 'done'; seen.add(id);
-      said[id] = m.say = `With the lever all the way up at ${NAME[SUMMIT]}, the rotor pushes ${kg(MOST[SUMMIT])}, against ${kg(MOST[SEA])} at ${NAME[SEA]}, which is ${pct(LIFT_SHARE[SUMMIT])} as much. The blades spin just as fast, but each sweep catches less air because the air is thinner, and throwing less air down makes a smaller push.${MORE}The engine also burns its fuel with air from outside, so thin air gives the engine less power. This game uses one rule for both effects, shown in the physics panel, which is why the push falls to ${pct(LIFT_SHARE[SUMMIT])} while the air in the jar falls to ${pct(AIR[SUMMIT])}. ${MOVE_ON}`;
+      said[id] = m.say = `With the lever all the way up at ${NAME[SUMMIT]}, the rotor pushes ${kg(MOST[SUMMIT])}, against ${kg(MOST[SEA])} at ${NAME[SEA]}, which is ${pct(LIFT_SHARE[SUMMIT])} as much. The blades spin just as fast, but each sweep catches less air because the air is thinner, and throwing less air down makes a smaller push.${MORE}The engine also burns its fuel with air from outside, so thin air gives the engine less power. That is why the push falls to ${pct(LIFT_SHARE[SUMMIT])} while the air in the jar falls to ${pct(AIR[SUMMIT])}. ${MOVE_ON}`;
       return {kind: 'right', say: m.say};
+    }
+    if ((id === 'try-car' || id === 'try-lever') && m.phase === 'replay') {
+      const target = m.replayLever;
+      if (m.f.lever < target) { m.f.lever = Math.min(target, m.f.lever + LEVER_RATE * dt); if (m.f.lever >= target) m.settleAt = m.time + TRY_SETTLE_S; return null; }
+      if (m.settleAt != null && m.time >= m.settleAt) { m.phase = 'result'; m.settleAt = null; }
+      return null;
     }
     if ((id === 'alone' || id === 'try-free') && m.phase === 'running') {
       const goal = Math.min(1, hoverShare(m.f.place, m.f));
@@ -459,14 +471,15 @@ export function createModel() {
   }
 
   // The wonder: the same load, the lever all the way up at both places; the car lifts at Sea level and stays down up high.
+  // Both pilots raise the lever over a second and a half and hold it, so that the summit helicopter is seen to stay down with its arrow showing.
   function wonder() {
     const t = m.time;
-    if (t >= .6) for (const f of m.sets) f.lever = 1;
-    if (t >= 4.5 && !seen.has('wonder')) seen.add('wonder');
+    if (t >= .6) for (const f of m.sets) f.lever = Math.min(1, (t - .6) / 1.5);
+    if (t >= WONDER_S && !seen.has('wonder')) seen.add('wonder');
     return null;
   }
   // The watch: the stand visits each place in turn, the lever goes all the way up, and the table fills in.
-  const WATCH_AT = [.6, 3.8, 7], WATCH_END = 10.2;
+  const WATCH_AT = [.6, 4.6, 8.6], WATCH_END = 12.8;
   function watch(dt) {
     const t = m.time, f = m.f, at = WATCH_AT.findLastIndex(a => t >= a);
     if (at >= 0 && f.place !== at) { f.place = at; f.lever = 0; f.h = 0; }
@@ -480,6 +493,10 @@ export function createModel() {
   function replay() {
     const id = step().id;
     if (id === 'wonder' || id === 'watch') enter(m.index);
+    // The thin air step runs again from the first place's lever, with the stand where it is.
+    if (id === 'word-thin' && m.phase !== 'set') { m.f.lever = 0; m.f.h = 0; m.phase = 'running'; m.settleAt = null; }
+    // A guided try plays the same run again: the lever goes back up to where the player left it, and the load is held as before.
+    if ((id === 'try-car' || id === 'try-lever') && m.phase === 'result') { m.replayLever = m.f.lever; m.f.lever = 0; m.f.h = 0; m.phase = 'replay'; m.settleAt = null; }
     return null;
   }
 
@@ -516,29 +533,30 @@ export function createModel() {
     if (id === 'wonder') return {...base, scene: 'wonder', actions: ['replay'],
       say: seen.has(id) ? `The two helicopters and the two cars are identical, and both levers are all the way up. At ${NAME[SEA]} the helicopter lifts the car, but at ${NAME[SUMMIT]} the car does not leave the ground. What is different at ${NAME[SUMMIT]}?`
         : `This helicopter is called Kestrel One, and a rally car called the Dusthawk hangs under the helicopter on a cable. One helicopter stands at ${NAME[SEA]} and an identical one stands at ${NAME[SUMMIT]}, which is high on the mountain. Both pilots will pull the control lever all the way up.${MORE}Watch the two cars.`,
-      prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the two cars.',
-      hints: ['Watch the two cars.', 'The helicopter and the car are the same in both pictures, and only the place is different.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch, and then press Enter.']};
+      prompt: seen.has(id) ? 'Continue when you are ready to find out why, or watch again.' : 'Watch the two cars.',
+      hints: ['Watch the two cars.', 'The helicopter and the car are the same in both pictures, and only the place is different.', seen.has(id) ? 'Continue when you are ready to find out why.' : 'Watch the two cars until the Continue button opens.']};
     if (id === 'word-altitude') {
       const done = seen.has(id);
       return {...base, keys: PLACE_KEYS, waiting: !done, target: done ? null : 'place:2', glow: done ? null : 'mountain',
-        say: done ? m.say : `Altitude is how high a place is above the sea. We measure height in metres, written m, and one metre is about the length of a long stride. ${NAME[SEA]}, the height of the surface of the sea, is 0 m.${MORE}Kestrel One is on its test stand, a pad where we can measure the helicopter, and the stand is at ${NAME[SEA]}. Move the stand up the mountain to ${NAME[SUMMIT]}.`,
-        prompt: done ? 'Press Enter to continue, or keep moving the stand with ↑ and ↓.' : `Press ↑ to move the stand up the mountain, or click ${NAME[SUMMIT]}.`, hints: done ? DONE : UP_HINTS};
+        say: done ? m.say : `Altitude is how high a place is above the sea, measured in metres, written m. ${NAME[SEA]} is the surface of the sea, at 0 m. Move the test stand, the pad where we measure Kestrel One, up the mountain to ${NAME[SUMMIT]} to see its altitude.${MORE}One metre is about the length of a long stride. The test stand is now at ${NAME[SEA]}.`,
+        prompt: done ? 'Continue when you are ready, or keep moving the stand to compare the places.' : `Click ${NAME[SUMMIT]} to move the stand up the mountain.`, hints: done ? DONE : UP_HINTS};
     }
     if (id === 'word-density') {
       const done = m.phase === 'done', filling = m.phase === 'running';
       const fill = done ? AIR[here] : filling ? AIR[SUMMIT] * Math.min(1, (m.time - m.scoop.at) / 1.2) : 0;
       return {...base, column: true, jar: {share: fill, sea: true, scooping: filling}, keys: m.phase === 'set' ? {Space: 'scoop'} : done ? PLACE_KEYS : {}, waiting: m.phase === 'set', target: m.phase === 'set' ? 'scoop' : null, glow: m.phase === 'set' ? 'jar' : null,
-        say: done ? m.say : `Air density is how much air is packed into one space, such as one jar. The jar on the right was filled at ${NAME[SEA]}, and we draw it with 100 dots. Fill the empty jar with the air at ${NAME[SUMMIT]}.${MORE}Air is made of tiny particles, far too small to see, and gravity pulls them towards the ground, so air has weight. The air at ${NAME[SEA]} has all of the air above pressing down on it, which squeezes the particles close together. Higher up there is less air above to press down, so the particles spread apart, as the tall column in the picture shows.`,
-        prompt: done ? 'Press Enter to continue, or keep moving the stand with ↑ and ↓.' : filling ? 'Watch the jar.' : 'Press Space to fill the jar, or click the empty jar.',
-        hints: done ? DONE : [`The empty jar is on the right, beside the jar from ${NAME[SEA]}.`, 'Press Space.', 'Watch my pointer, which is on the jar.']};
+        say: done ? m.say : `Air density is how much air is packed into one space, such as one jar. The jar on the right was filled at ${NAME[SEA]}, and we draw it with 100 dots. Fill the empty jar with the air at ${NAME[SUMMIT]}, and compare the two jars.${MORE}Air is made of tiny particles that gravity pulls towards the ground, so at ${NAME[SEA]} all of the air above presses them close together, while higher up there is less air above and the particles spread apart, as the tall column in the picture shows.`,
+        prompt: done ? 'Continue when you are ready, or keep moving the stand to compare the places.' : filling ? 'Watch the jar.' : `Click the empty jar to fill it with the air from ${NAME[SUMMIT]}.`,
+        hints: done ? DONE : [`The empty jar is on the right, beside the jar from ${NAME[SEA]}.`, 'Click the empty jar.', 'Watch my pointer, which is on the jar.']};
     }
     if (id === 'word-thin') {
       const done = m.phase === 'done', set = m.phase === 'set';
       return {...base, jar: {share: AIR[here]}, readouts: {most: true, seaMost: true}, lever: {red: false}, air: !set, caption: !set,
         keys: set ? {Space: 'rotor'} : done ? PLACE_KEYS : {}, waiting: set, target: set ? 'rotor' : null, glow: set ? 'rotor' : null,
-        say: done ? m.say : `Thin air is air with a low density, as the air at ${NAME[SUMMIT]} has. To see what thin air does, we need the rotor, which is the set of long blades on top of Kestrel One. The spinning blades throw air down, and the air pushes back up on the blades with an equal force.${MORE}We call that force the push. A litre of water weighs one kilogram, written kg, and we measure the push in kilograms too, because one kilogram of push can hold up one kilogram of weight. The collective lever, on the left of the picture, sets how much of the rotor’s greatest push the pilot is using. A lever at 0% gives no push, and a lever at 100% gives the most push the rotor can make at that place. Start the rotor, and the lever will go all the way up to 100%.`,
-        prompt: done ? 'Press Enter to continue, or keep moving the stand with ↑ and ↓.' : set ? 'Press Space to start the rotor, or click the rotor.' : 'Watch the green arrow.',
-        hints: done ? DONE : ['The rotor is the set of long blades on top of Kestrel One.', 'Press Space.', 'Watch my pointer, which is on the rotor.']};
+        actions: set ? [] : ['replay'],
+        say: done ? m.say : `Thin air is air with a low density, as the air at ${NAME[SUMMIT]} has. Start the rotor, the set of long blades on top of Kestrel One, and watch the green arrow, which shows the push of the air back up on the blades.${MORE}The spinning blades throw air down, and the air pushes back up on the blades with an equal force. We call that force the push. A litre of water weighs one kilogram, written kg, and we measure the push in kilograms too, because one kilogram of push can hold up one kilogram of weight. The collective lever, on the left of the picture, sets how much of the rotor’s greatest push the pilot is using. A lever at 0% gives no push, and a lever at 100% gives the most push the rotor can make at that place. The lever will go all the way up to 100%.`,
+        prompt: done ? 'Continue when you are ready, or keep moving the stand to compare the places.' : set ? 'Click the rotor to start it.' : 'Watch the green arrow.',
+        hints: done ? DONE : ['The rotor is the set of long blades on top of Kestrel One.', 'Click the rotor to start it.', 'Watch my pointer, which is on the rotor.']};
     }
     if (id === 'watch') {
       const done = seen.has(id);
@@ -546,8 +564,8 @@ export function createModel() {
         table: PLACES.map((_, i) => m.rows[i] ?? null),
         say: m.phase === 'done' ? `The higher the place, the less air a jar holds, and the less the rotor can push. The most push is ${kg(MOST[SEA])} at ${NAME[SEA]}, ${kg(MOST[RIDGE])} at ${NAME[RIDGE]} and ${kg(MOST[SUMMIT])} at ${NAME[SUMMIT]}.`
           : 'Now the stand will visit each place in turn. At each place the lever goes all the way up, and we write down the most that the rotor can push.',
-        prompt: m.phase === 'done' ? 'Press Enter to continue, or press R to watch again.' : 'Watch the jar and the green arrow.',
-        hints: ['Watch the jar at each place.', 'Then watch the most that the rotor can push.', done ? 'Press R to watch again.' : WAIT]};
+        prompt: m.phase === 'done' ? 'Continue when you are ready, or watch again.' : 'Watch the jar and the green arrow.',
+        hints: ['Watch the jar at each place.', 'Then watch the most that the rotor can push.', done ? 'Watch again to see it once more.' : WAIT]};
     }
     if (id === 'try-car' || id === 'try-lever') return tryView(id, base);
     if (id === 'try-free') return freeView(base);
@@ -558,11 +576,11 @@ export function createModel() {
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
         check: id, answered,
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? CONTINUE_SAY : PICK_ANSWER, hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', mountain: false, ready: true, ideas: KEY_IDEAS,
-      say: `Higher up there is less air above to press down, so the air is thinner. The rotor then has less air to throw down, and the engine has less air to burn its fuel with.${MORE}At ${NAME[SUMMIT]} a jar holds about three quarters of the air that it holds at ${NAME[SEA]}, and in this game the rotor pushes ${pct(LIFT_SHARE[SUMMIT])} as much. So plan your load for the height where you will land, and fly straight there, because at high altitude the helicopter burns fuel faster.`,
-      prompt: 'Press Enter to try this in the helicopter, or press Esc to go back to the Lab.', hints: KEY_IDEAS.map(i => i.text)};
+      say: `Higher up there is less air above to press down, so the air is thinner. The rotor then has less air to throw down, and the engine has less air to burn its fuel with.${MORE}At ${NAME[SUMMIT]} a jar holds about three quarters of the air that it holds at ${NAME[SEA]}, and the rotor pushes ${pct(LIFT_SHARE[SUMMIT])} as much. So plan your load for the height where you will land, and fly straight there, because at high altitude the helicopter burns fuel faster.`,
+      prompt: 'Try this in the helicopter, or go back to the Lab.', hints: KEY_IDEAS.map(i => i.text)};
   }
 
   function tryView(id, base) {
@@ -571,32 +589,32 @@ export function createModel() {
     const common = {...base, jar: {share: AIR[f.place]}, readouts: {most: !asking, weight: true, hover: !car && m.phase !== 'setup' && !asking},
       lever: {red: !car && m.phase !== 'setup' && !asking, ghost: car ? null : HOVER_SEA, unknown: !car && (m.phase === 'setup' || asking)}, air: f.lever > 0};
     if (m.phase === 'setup') return {...common, keys: PLACE_KEYS, waiting: true, target: 'place:2', glow: 'mountain',
-      say: m.say || (car ? `With the Dusthawk on the cable, Kestrel One and the car weigh ${kg(CAR_W)} together. That is less than the ${kg(MOST[SEA])} that the rotor can push at ${NAME[SEA]}, so the helicopter can lift the car there. Now move the stand, with the Dusthawk, up to ${NAME[SUMMIT]}.`
-        : `Now there is no load on the cable. To hover means to stay still in the air, which happens when the push exactly equals the weight. The red line on the lever marks the setting that makes the helicopter hover.${MORE}At ${NAME[SEA]} the red line is at ${pct(HOVER_SEA)}, because the helicopter’s ${kg(OWN_KG)} is ${pct(HOVER_SEA)} of the ${kg(MOST[SEA])} that the rotor can push. Move the stand up to ${NAME[SUMMIT]}.`),
-      prompt: `Press ↑ to move the stand up, or click ${NAME[SUMMIT]}.`, hints: UP_HINTS};
+      say: m.say || (car ? `We will test whether the helicopter can still lift the Dusthawk higher up the mountain. At ${NAME[SEA]} the rotor can push ${kg(MOST[SEA])}, more than the ${kg(CAR_W)} that Kestrel One and the Dusthawk weigh together. First, move the stand, with the Dusthawk, up to ${NAME[SUMMIT]}.`
+        : `To hover means to stay still in the air, which happens when the push exactly equals the weight. The red line on the lever marks the setting that makes the helicopter hover, and we will test where it moves higher up the mountain. First, move the stand, with no load on the cable, up to ${NAME[SUMMIT]}.${MORE}At ${NAME[SEA]} the red line is at ${pct(HOVER_SEA)}, because the helicopter’s ${kg(OWN_KG)} is ${pct(HOVER_SEA)} of the ${kg(MOST[SEA])} that the rotor can push.`),
+      prompt: `Click ${NAME[SUMMIT]} to move the stand up.`, hints: UP_HINTS};
     if (asking) {
       const picks = car ? CAR_GUESSES : LEVER_GUESSES;
       return {...common, keys: PICK_KEYS(picks.length), waiting: true,
         cards: picks.map((g, i) => ({id: `${car ? 'guess' : 'answer'}:${i}`, key: String(i + 1), label: g.label, picture: g.picture, state: null})),
         say: car ? GUESS_CAR : GUESS_LEVER,
-        prompt: `Pick a card by clicking it, or press 1${picks.length === 3 ? ', 2 or 3' : ' or 2'}.`,
+        prompt: car ? PICK_GUESS : PICK_ANSWER,
         hints: car ? [`Think back to the table in the Three places step, and compare the weight of ${kg(CAR_W)} with the most push at ${NAME[SUMMIT]}.`, 'If the weight is greater than the most push, the car stays on the ground.', ANY_GUESS]
           : [`At ${NAME[SUMMIT]} each sweep of the blades throws less air.`, 'The same lever gives less push here, so to match the weight, should the lever be higher or lower?', ANY_GUESS]};
     }
     if (m.phase === 'lever') {
       const target = car ? 'lever:top' : 'lever:weight', above = !car && f.lever > hoverShare(f.place, f) + 1e-6;
       return {...common, keys: LEVER_KEYS, repeat: LEVER_REPEAT, waiting: true, target, glow: target, guess: m.guess,
-        say: car ? 'Now pull the lever all the way up.' : `The red line is at ${pct(HOVER_TOP)}. Bring the lever to the line.`,
-        prompt: car ? 'Hold W or ↑, or drag the lever, all the way to the top.' : above ? 'Hold S or ↓, or drag the lever, down to the red line.' : 'Hold W or ↑, or drag the lever, up to the red line.',
-        hints: car ? ['The lever is on the left of the pad.', 'Hold W until the lever stops at the top.', 'Watch my pointer, which is on the top of the lever.']
-          : ['The red line marks the lever setting at which the helicopter hovers at this place.', `Hold ${above ? 'S' : 'W'} until the lever reaches the red line, and the lever will stop there for you.`, 'Watch my pointer, which is on the red line.']};
+        say: car ? 'Now raise the lever all the way up.' : `The red line is at ${pct(HOVER_TOP)}. Bring the lever to the line.`,
+        prompt: car ? 'Raise the lever all the way to the top.' : above ? 'Lower the lever down to the red line.' : 'Raise the lever up to the red line.',
+        hints: car ? ['The lever is on the left of the pad.', 'Raise the lever until it stops at the top.', 'Watch my pointer, which is on the top of the lever.']
+          : ['The red line marks the lever setting at which the helicopter hovers at this place.', `${above ? 'Lower' : 'Raise'} the lever until it reaches the red line, and the lever will stop there for you.`, 'Watch my pointer, which is on the red line.']};
     }
     if (m.phase === 'running') return {...common, guess: m.guess, say: car ? 'The lever is all the way up. Watch the Dusthawk.' : 'The lever is on the red line. Watch the helicopter.', prompt: 'Watch the pad.', hints: ['Watch the load.', 'Watch the push and the weight.', WAIT]};
     const picks = car ? CAR_GUESSES : LEVER_GUESSES;
     return {...common, ready: true, mood: m.result.right ? 'cheer' : 'explain', guess: m.guess, readouts: {...common.readouts, fuel: !car},
       cards: picks.map((g, i) => ({id: `${car ? 'guess' : 'answer'}:${i}`, key: String(i + 1), label: g.label, picture: g.picture,
         state: g.id === m.result.actual ? 'right' : g.id === m.guess ? 'wrong' : null})),
-      say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
+      say: m.say, actions: ['replay'], prompt: 'Continue when you are ready, or watch again.', hints: ['Watch again to see the run once more.', CONTINUE_SAY, CONTINUE_SAY]};
   }
 
   function freeView(base) {
@@ -604,21 +622,21 @@ export function createModel() {
     const common = {...base, jar: {share: AIR[f.place]}, readouts: {most: true, weight: true, hover: true}, lever: {red: true}, rack: true, air: f.lever > 0, results: m.results};
     if (m.phase === 'running') return {...common, say: goingUp(f), prompt: 'Watch the pad.', hints: ['Watch the push and the weight.', 'Compare this result with the table.', WAIT]};
     return {...common, keys: {...PLACE_KEYS, ...LOAD_KEYS}, target: tested ? 'set:next' : 'go', waiting: !seen.has(id),
-      say: m.say || `Now you can experiment. Press ↑ and ↓ to move the stand between the three places, and press 1 and 2 to add or remove a crate of ${kg(CRATE_KG)}. Test at least ${FREE_TRIES} different settings.${MORE}Watch the physics panel change as you do, and predict what the helicopter will do before you press Space to test it. The table keeps your results so that you can compare them.`,
-      prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the place or the crates, then press Space to test. Different settings tested so far: ${m.tested.size} of ${FREE_TRIES}.`,
-      hints: ['Press Space to test the settings as they are.', 'Try a heavy load at the top of the mountain, and the same load at the bottom.', tested ? 'Watch my pointer. I will choose a different setting and test it.' : 'Watch my pointer. I will test the settings as they are.']};
+      say: m.say || `Now you can test any place and any number of crates of ${kg(CRATE_KG)}. Test at least ${FREE_TRIES} different settings.${MORE}Watch the physics panel change as you do, and predict what the helicopter will do before you test it. The table keeps your results so that you can compare them.`,
+      prompt: seen.has(id) ? 'Continue when you are ready, or test another setting.' : `Change the place or the crates, then lift off to test. Different settings tested so far: ${m.tested.size} of ${FREE_TRIES}.`,
+      hints: ['Lift off to test the settings as they are.', 'Try a heavy load at the top of the mountain, and the same load at the bottom.', tested ? 'Watch my pointer. I will choose a different setting and test it.' : 'Watch my pointer. I will test the settings as they are.']};
   }
 
   function jobView(base) {
     const f = m.f, best = bestCrates(f.place), done = m.phase === 'done';
     const job = {delivery: Math.min(m.delivery, PLACES.length - 1) + 1, of: PLACES.length, done};
     const common = {...base, jar: {share: AIR[f.place]}, readouts: {most: true, weight: true}, lever: {red: true}, rack: true, job, air: f.lever > 0};
-    if (done) return {...common, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
+    if (done) return {...common, ready: true, mood: 'cheer', say: m.say, prompt: CONTINUE_SAY, hints: DONE};
     if (m.phase === 'running') return {...common, say: goingUp(f), prompt: 'Watch the pad.', hints: ['Does the helicopter lift the crates?', 'Does the helicopter hover with no room for another crate?', WAIT]};
     const target = f.crates < best ? 'crate:add' : f.crates > best ? 'crate:remove' : 'go';
     return {...common, keys: LOAD_KEYS, waiting: true, target, glow: target,
-      say: m.say || `Here is my job for you, which is three deliveries, one to each place. At each place, load as many crates as the helicopter can lift and still hover, and then lift off. Each crate weighs ${kg(CRATE_KG)}.${MORE}The first delivery is at ${NAME[SEA]}.`,
-      prompt: `At ${NAME[f.place]} ${onCable(f.crates)}, so the weight is ${kg(weightOf(f))}. Press 1 to add a crate, 2 to take one off, or Space to lift off.`,
+      say: m.say || `Your job is three deliveries, one to each place. At each place, load as many crates as the helicopter can lift and still hover, and then lift off. Each crate weighs ${kg(CRATE_KG)}.${MORE}The first delivery is at ${NAME[SEA]}.`,
+      prompt: `At ${NAME[f.place]} ${onCable(f.crates)}, so the weight is ${kg(weightOf(f))}. Add or take off crates, then lift off.`,
       hints: [`At this place the rotor can push ${kg(MOST[f.place])}. The helicopter weighs ${kg(OWN_KG)} by itself, and each crate weighs ${kg(CRATE_KG)}.`,
         `${kg(MOST[f.place])} minus ${kg(OWN_KG)} leaves ${kg(MOST[f.place] - OWN_KG)}. How many crates of ${kg(CRATE_KG)} fit into that?`,
         target === 'go' ? 'Watch my pointer, which is on the pad. I will lift off.' : target === 'crate:add' ? 'Watch my pointer, which is on the crates. I will add one crate.' : 'Watch my pointer, which is on the last crate. I will take that crate off.']};
