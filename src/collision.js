@@ -61,8 +61,14 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
   const startLocal = local(start), endLocal = local(end);
   const width = obstacle.halfX + halfWidth * c + halfLength * s, length = obstacle.halfZ + halfLength * c + halfWidth * s;
   // An ellipse meets the car's own turned rectangle (QA-ROUND-SOLID-HEADING); a box keeps its established envelope.
+  // A body with equal half-widths is round (a person, a shot or a sight line; no vehicle is square). It meets an
+  // ellipse as a point meets that ellipse grown by its radius, so its contact faces out from the solid's centre and
+  // a person slides round a post or another person instead of meeting a flat face head on.
+  const round = halfWidth === halfLength;
   const sweep = obstacle.shape === 'ellipse'
-    ? (from, to, grow = 0) => sweepCarEllipse(from, to, obstacle.halfX, obstacle.halfZ, relative, halfWidth, halfLength, grow)
+    ? round
+      ? (from, to, grow = 0) => sweepCarEllipse(from, to, obstacle.halfX + halfWidth, obstacle.halfZ + halfWidth, 0, 0, 0, grow)
+      : (from, to, grow = 0) => sweepCarEllipse(from, to, obstacle.halfX, obstacle.halfZ, relative, halfWidth, halfLength, grow)
     : (from, to, grow = 0) => {
       const boxHit = sweepBox(from, to, width + grow, length + grow);
       return obstacle.exactCarCorners ? orientedCarSweep(from, to, boxHit, obstacle, relative, halfWidth, halfLength, width, length) : boxHit;

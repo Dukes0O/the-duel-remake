@@ -255,6 +255,18 @@ test('a sight line is a point to an oval, and a car caught inside a long rock le
   }
 });
 
+test('a person is round: walking into a post a little off centre meets it from its centre, so the walk slides round it (QA-ROUND-SOLID-HEADING)', async () => {
+  const {sweepObstacle} = await import('../src/collision.js');
+  const person = {halfWidth: .34, halfLength: .34, height: 1.7};
+  const reach = .37 + .34, offset = .2, gap = Math.sqrt(reach * reach - offset * offset);
+  for (const heading of [0, Math.PI / 4, Math.PI / 2]) {
+    const post = {x: 0, z: 0, halfX: .37, halfZ: .37, heading, shape: 'ellipse'};
+    const hit = sweepObstacle({x: -3, z: offset}, {x: 3, z: offset}, post, 0, person);
+    assert.ok(hit && Math.abs(hit.t - (3 - gap) / 6) < 1e-9, `post at ${heading}: met where the two round bodies touch`);
+    assert.ok(Math.abs(hit.nx + gap / reach) < 1e-9 && Math.abs(hit.nz - offset / reach) < 1e-9, 'the contact faces out from the post\'s centre');
+  }
+});
+
 test('fixed trees pass footprint clearance and leave room at job starts', () => {
   const candidates = deadTreeCandidates(1989);
   const fixed = clearedFixedThings(1989, []);
