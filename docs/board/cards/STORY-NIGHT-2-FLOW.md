@@ -51,3 +51,23 @@ STORY-DIALOGUE-PLAIN, Claude's). Codex's card, for its cloud. Everything stays b
 - For Claude to run: the `story-night-2` scenario, a hand play to dawn on each branch, the breath at the gate camera.
 
 Sound: `story.journal.note` for the one-line "Remembered" notice, from the bank's own layers.
+
+## Builder decided (Claude to review)
+
+- **Esc (item 1)** sits behind `story-choices` like the rest: with the switch off, releasing the mouse still pauses, as in the
+  released game. `onfoot-controls-camera` now runs with the switch on.
+- **The arrival (item 3)** is skipped on every way back to the yard from Night 2 (Continue at dawn, and BACK TO THE YARD from a
+  night left unfinished). Other jobs still replay it on their way back; whether it should play only once in a whole career is
+  left for Claude.
+- **The Remembered line** comes from tonight's ledger: the latest promise or debt; else the Ash Men taking the camp; else the
+  latest mark with a page line; else how the Walkers now stand. A scout nobody saw is never named. Five new sentences for the
+  last case, one per word (Sworn, Friendly, Strangers, Wary, Cold).
+- **The scout (item 4)** can be stopped by rule: he walks 84 m from the pump to the wall at 2.4 m/s (35 s), and the player starts
+  9.5 m from him and walks at 4.5 m/s, so he is within the flamer's 6 m in about two seconds. The design does not make him
+  always escape. The HUD now says when he is in reach and whether to turn to face him.
+- **The siege rider** stands still on its circle while the tower talks, because a talk holds the world still; it drives the
+  circle in play. It wears a forward headlight beam as well as its roof lamps.
+- **A taken camp** skips Rell's thanks; the win still counts against the Ash Men, but the Walkers' word is not set again.
+  The fight is not won while a crewman still runs for the camp; one that cannot move for 4 s has given up.
+- **The figure in the car (item 6)** was a crewman from a rider wrecked alongside the player's car: his door point lay inside the
+  car (the Wash test reproduced it before the fix). Bailing men are now put on the ground beside the car.
