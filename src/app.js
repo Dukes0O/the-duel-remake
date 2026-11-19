@@ -73,6 +73,7 @@ import {featureFlags} from './feature-flags.js';
 import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
@@ -148,6 +149,8 @@ const warlordHold = (profile, id) => {
 };
 
 const SIMULATION_STEP = 1 / 120;
+const footMouseActive = state => state.onFoot && !state.paused && ['racing', 'countdown', 'exploring'].includes(state.status);
+const footMouseLocked = () => !!globalThis.document?.pointerLockElement?.closest?.('#view3d canvas');
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
 function readRoutePreference(){try{const value=globalThis.localStorage?.getItem(ROUTE_PREFERENCE_KEY);return isRouteVariant(value)?value:DEFAULT_ROUTE_VARIANT;}catch{return DEFAULT_ROUTE_VARIANT;}}
 
@@ -232,6 +235,8 @@ export class App {
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
+      if (event.talkOpened) this._clearHiddenRoadInput();
+      if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
       if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
@@ -272,18 +277,13 @@ export class App {
         }
       }
       if(event.boundaryReset||event.recovered||event.checkpointReset){this.ghostRecorder?.discontinuity();this.grandPrixLapRecorder?.discontinuity();this.lapTelemetryRecorder?.discontinuity();}
+      if (event.fighterExited || event.fighterEntered || event.arenaResult) {
+        this._footPointer = {lookX:0, lookY:0, fire:false, aim:false};
+        if ((event.fighterEntered || event.arenaResult) && footMouseLocked()) document.exitPointerLock();
+      }
       if(event.fighterExited||event.fighterEntered){
         this.inputContext=null;
         this.keys={};
-        this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
-        if(event.fighterEntered && typeof document!=='undefined' &&
-            document.pointerLockElement) document.exitPointerLock();
-        // Capture the mouse as soon as the fighter steps out, so the mouse
-        // looks around without a first click. The F press that got him out
-        // still counts as a user action; if the browser refuses, a click works.
-        if(event.fighterExited && typeof document!=='undefined' && !document.pointerLockElement){
-          try{document.querySelector('#view3d canvas')?.requestPointerLock?.()?.catch?.(()=>{});}catch{}
-        }
         this._resetKeyboardInput();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
@@ -465,7 +465,7 @@ export class App {
         this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
       }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
-      this._applyInput(SIMULATION_STEP);
+      if (!activeTalkStep(this.duel.state)) this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
       this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
@@ -2487,8 +2487,10 @@ export class App {
     st.paused = !st.paused;
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
-    if(st.paused && st.onFoot && typeof document!=='undefined' &&
-        document.pointerLockElement) document.exitPointerLock();
+    if (st.paused) {
+      this._footPointer.capture = null;
+      if (footMouseLocked()) document.exitPointerLock();
+    }
     this.keys = {};
     this._resetKeyboardInput();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
@@ -2515,8 +2517,8 @@ export class App {
     this._settleAbandoned();
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
-    if (this.duel.state.onFoot && typeof document !== 'undefined' &&
-        document.pointerLockElement) document.exitPointerLock();
+    this._footPointer.capture = null;
+    if (footMouseLocked()) document.exitPointerLock();
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
@@ -2826,13 +2828,21 @@ export class App {
     d.setInput({throttle,brake,steer,boost:false});
   }
 
+  get footMouseHint() {
+    if (!footMouseActive(this.duel.state)) return '';
+    if (this._footPointer.capture === 'held') return 'Esc frees the mouse';
+    if (this._footPointer.capture === 'refused') return 'Mouse capture unavailable. Move over the picture to look.';
+    return 'Click the picture to capture the mouse.';
+  }
+
   _bindKeys() {
     if (typeof window === 'undefined') return;
     this._inputEvents=new AbortController();const signal=this._inputEvents.signal;
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof Element && e.target.closest('input, select, textarea, summary, [contenteditable="true"]')) return;
       if(e.code==='Escape' && this.duel.state.onFoot){
-        if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
+        if(footMouseLocked()){document.exitPointerLock();e.preventDefault();return;}
+        if(globalThis.document?.pointerLockElement)return;
         if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
       }
       if(e.code==='Escape'&&this.duel.drivingLesson){this.lessonEscape();e.preventDefault();return;}
@@ -2854,14 +2864,19 @@ export class App {
     // Mouse events report each button in a chord; pointerdown only reports
     // the first button, losing left-click while right-click is already held.
     window.addEventListener('mousedown', e => {
-      if (!this.duel.state.onFoot || this.duel.state.paused ||
-          !['racing', 'countdown', 'exploring'].includes(this.duel.state.status) ||
+      if (!footMouseActive(this.duel.state) ||
           ![0, 2].includes(e.button) || !(e.target instanceof Element)) return;
       const canvas = e.target.closest('#view3d canvas');
       if (!canvas) return;
       e.preventDefault();
-      if (!document.pointerLockElement) {
-        try { canvas.requestPointerLock?.()?.catch?.(() => {}); } catch {}
+      const pointer = this._footPointer;
+      if (!document.pointerLockElement && pointer.capture !== 'requesting') {
+        pointer.capture = 'requesting';
+        const refused = () => { if (pointer.capture === 'requesting') pointer.capture = 'refused'; };
+        try {
+          if (canvas.requestPointerLock) canvas.requestPointerLock()?.catch?.(refused);
+          else refused();
+        } catch { refused(); }
       }
       if (e.button === 0) this._footPointer.fire = true;
       if (e.button === 2) this._footPointer.aim = true;
@@ -2871,14 +2886,13 @@ export class App {
       if (e.button === 2) this._footPointer.aim = false;
     }, {signal});
     window.addEventListener('mousemove', e => {
-      if (!this.duel.state.onFoot || this.duel.state.paused ||
-          !['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) return;
+      if (!footMouseActive(this.duel.state)) return;
       // Canvas movement remains usable before the first click and when the
       // browser refuses pointer lock. Menus and the rest of the page stay inert.
-      if (document.pointerLockElement == null &&
-          !(e.target instanceof Element && e.target.closest('#view3d canvas'))) return;
-      this._footPointer.lookX += Math.max(-300, Math.min(300, e.movementX || 0));
-      this._footPointer.lookY += Math.max(-300, Math.min(300, e.movementY || 0));
+      const picture = document.pointerLockElement ?? e.target;
+      if (!(picture instanceof Element && picture.closest('#view3d canvas'))) return;
+      if (Number.isFinite(e.movementX)) this._footPointer.lookX += e.movementX;
+      if (Number.isFinite(e.movementY)) this._footPointer.lookY += e.movementY;
     }, {signal});
     window.addEventListener('contextmenu',e=>{
       if(this.duel.state.onFoot && e.target instanceof Element &&
@@ -2886,11 +2900,32 @@ export class App {
     },{signal});
     // Headless tests provide a window without a document; pointer lock needs both.
     if(typeof document!=='undefined')document.addEventListener('pointerlockchange',()=>{
-      if(document.pointerLockElement || !this.duel.state.onFoot)return;
+      const pointer = this._footPointer;
+      if (footMouseLocked()) {
+        // A capture is the player's whenever the fighter is walking, even if its request's state was lost on the way.
+        if (footMouseActive(this.duel.state)) {
+          pointer.capture = 'held';
+        } else {
+          // Capture may arrive after a pause, car entry or the return to the menu.
+          pointer.capture = null;
+          pointer.fire = pointer.aim = false;
+          pointer.lookX = pointer.lookY = 0;
+          document.exitPointerLock();
+        }
+        return;
+      }
+      // A release reported while a request waits: the browser answered without capturing, so the next click may ask again.
+      if (pointer.capture === 'requesting') pointer.capture = null;
+      if (pointer.capture !== 'held') return;
+      pointer.capture = null;
       this._footPointer.fire=this._footPointer.aim=false;
+      if (document.pointerLockElement || !footMouseActive(this.duel.state)) return;
       this._footPointerReleasedAt=performance.now();
-      if(!this.duel.state.paused)this.togglePause();
+      if(!this.duel.state.paused && !activeTalkStep(this.duel.state))this.togglePause();
     },{signal});
+    if (typeof document !== 'undefined') document.addEventListener('pointerlockerror', () => {
+      if (this._footPointer.capture === 'requesting') this._footPointer.capture = 'refused';
+    }, {signal});
     window.addEventListener('blur', () => {
       this.keys = {};
       this.heliSession?.cancelHook();

@@ -283,8 +283,10 @@ merge promptly. A clean union keeps its existing green evidence. Send a conflict
 back for one fresh lane/build after its fix. Commit one run-log sentence and
 shared metadata immediately. Recycle only caller-proven newly created clean lanes.
 
-Full check: run `node tools/full-check.mjs --idle-awake --no-push` once a day; report the first merge after the last green full check for a
-failure, put its fix first and allow other merges.
+Full check: Claude's, not Codex's (Kyle, 18 November 2026, to save Codex's allowance). The Windows task runs
+`node tools/full-check.mjs --idle-awake --no-push` once a day; Claude reads the report, names the first merge after the
+last green full check for a failure, puts its fix first and allows other merges. Codex runs or cures a night check only
+when Claude hands it a card.
 Release Manager: only after Kyle says “go live”, require full on the exact
 release commit and all applicable evidence, then follow OPERATIONS safely.
 

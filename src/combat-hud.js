@@ -276,7 +276,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-foot-action combat-lamp-progress" role="status" hidden><b></b><div class="combat-armor-track"><i></i></div></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
     <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
-    <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
+    <div class="combat-foot-gear" aria-label="On-foot equipment and controls"><b></b><strong></strong><small class="combat-foot-mouse"></small></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
     </div>`;
@@ -323,6 +323,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const townArrow = townPointer.querySelector('span');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
+  const footMouse = host.querySelector('.combat-foot-mouse');
   const footAction = host.querySelector('.combat-foot-action');
   const footReticle = host.querySelector('.combat-foot-reticle');
   const lampProgress = host.querySelector('.combat-lamp-progress');
@@ -417,6 +418,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);
+      setText(footMouse, app.footMouseHint || '');
       const action = footActionPresentation(state);
       setText(footAction, action.text);
       footReticle.classList.toggle('is-locked', action.locked);

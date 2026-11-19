@@ -578,11 +578,35 @@ export function createTunnelMesh(tunnels, previous = null) {
 // A graded dirt road: a flat ribbon whose vertices carry (across, along): `across` is metres from the middle over the road's half
 // width, so -1.2 to 1.2. The surface has fine streaks left by the grader's blade, a crown between two dark worn ruts, a berm of loose
 // gravel along each edge, and an uneven edge that wears away into the ground. Drawn with a soft edge, so the material is transparent.
-export function createRoadLook({dirt = 0x6e5d47, photo = null} = {}) {
+export function createRoadLook({dirt = 0x6e5d47, photo = null, gate = null} = {}) {
   const uniforms = {uRoadNoise: {value: scrapNoise()}, uRoadDirt: {value: new THREE.Color(dirt)}};
   // The realism trial, step 2: the road's own photograph (graded gravel), laid as the ground's are.
   if (photo) Object.assign(uniforms, {uRoadPhoto: {value: photo.map}, uRoadPhotoN: {value: photo.normal}, uRoadPhotoMean: {value: photo.mean}});
   const size = photo ? photo.size.toFixed(1) : '1.0';
+  const gateStudy = Boolean(photo && gate);
+  if (gateStudy) uniforms.uRoadGate = {value: new THREE.Vector4(gate.x, gate.z, gate.through.x, gate.through.z)};
+  // Gate-local distances are metres. The road ribbon’s aRoad.x is normalized by its half width.
+  const gateSurface = gateStudy ? `
+          float lampPool = 0.0;
+          vec2 gateOffset = vRoadPos.xz - uRoadGate.xy;
+          float approach = -dot(gateOffset, uRoadGate.zw);
+          float acrossGate = dot(gateOffset, vec2(uRoadGate.w, -uRoadGate.z));
+          if (approach > -6.0 && approach < 48.0 && abs(acrossGate) < 8.3) {
+            // Replace the grader's wider ruts through the gate; leave its outer berm alone.
+            float widthFade = 1.0 - smoothstep(6.3, 8.3, abs(acrossGate));
+            float roadFade = smoothstep(-2.0, 1.0, approach) * (1.0 - smoothstep(42.0, 48.0, approach));
+            float drift = .28 * sin(approach * .13) + .13 * (rWide.g - .5);
+            float wheel = (abs(acrossGate - drift) - 1.16) / .34;
+            // Metre-scale gaps between tyre impressions must survive the chase camera's mip levels.
+            float broken = .02 + .98 * smoothstep(.38, .62, rWide.g) * (.76 + .24 * rFine.g);
+            rut = mix(rut, exp(-wheel * wheel) * broken, widthFade * roadFade);
+            vec2 lampDistance = vec2(acrossGate / 3.65, approach / 5.5);
+            float lamp = max(0.0, 1.0 - dot(lampDistance, lampDistance));
+            lampPool = lamp * lamp;
+          }` : '';
+  const gateLight = gateStudy ? `
+          // The light falls on the photographed gravel and the dark impressions worn into it.
+          totalEmissiveRadiance += lampPool * rc * vec3(1.2, .85, .46);` : '';
   function apply(material) {
     if (!material?.isMeshStandardMaterial || material.userData.roadLook) return material;
     material.userData.roadLook = true;
@@ -595,7 +619,7 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null} = {}) {
           vRoad=aRoad;vRoadPos=(modelMatrix*vec4(transformed,1.0)).xyz;${photo ? 'vRoadNormal=mat3(modelMatrix)*objectNormal;' : ''}`);
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', `#include <common>
-          uniform sampler2D uRoadNoise;uniform vec3 uRoadDirt;varying vec2 vRoad;varying vec3 vRoadPos;${photo ? `
+          ${gateStudy ? 'uniform vec4 uRoadGate;' : ''}uniform sampler2D uRoadNoise;uniform vec3 uRoadDirt;varying vec2 vRoad;varying vec3 vRoadPos;${photo ? `
           uniform sampler2D uRoadPhoto;uniform sampler2D uRoadPhotoN;uniform vec3 uRoadPhotoMean;varying vec3 vRoadNormal;vec2 rRelief;${PHOTO_FUNCTIONS}` : ''}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
           float ru=vRoad.x,rau=abs(ru);
@@ -606,7 +630,7 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null} = {}) {
           vec3 rc=uRoadDirt*(.82+.36*rWide.r)*(.9+.2*rBlade);
           // The crown between the ruts is a little paler; the ruts are worn dark and smooth.
           rc*=1.0+.1*(1.0-smoothstep(.0,.34,rau));
-          float rut=exp(-pow((rau-.4)/.085,2.0));
+          float rut=exp(-pow((rau-.4)/.085,2.0));${gateSurface}
           rc*=1.0-.42*rut*(.7+.5*rFine.g);
           // The berm: loose pale gravel thrown up along the edge, with stones in it.
           float berm=exp(-pow((rau-1.0)/.1,2.0));
@@ -615,14 +639,15 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null} = {}) {
           vec2 rq=vRoadPos.xz,rDx=dFdx(rq),rDy=dFdy(rq);float rFar=smoothstep(.012,.09,max(fwidth(rq.x),fwidth(rq.y)));
           rc*=clamp(mix(vec3(1.0),gPhotoCol(uRoadPhoto,rq,${size},rDx,rDy,rFar)/uRoadPhotoMean,.92),.2,2.4);
           rRelief=gPhotoRel(uRoadPhotoN,rq,${size},rDx,rDy,rFar);` : ''}
-          diffuseColor.rgb=rc;
+          diffuseColor.rgb=rc;${gateLight}
           // The edge is uneven and wears away into the ground.
           float rEdge=1.04+.1*rWide.g+.06*rFine.r;
           diffuseColor.a*=1.0-smoothstep(rEdge,rEdge+.13,rau);`);
       if (photo) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vRoadNormal)+vec3(rRelief.x,0.0,rRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => photo ? 'road-look-1-photo' : 'road-look-1';
+    const programKey = photo ? 'road-look-1-photo' : 'road-look-1';
+    material.customProgramCacheKey = () => gateStudy ? programKey + '-tin-gate-2' : programKey;
     material.needsUpdate = true;
     return material;
   }

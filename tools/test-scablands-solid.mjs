@@ -279,20 +279,27 @@ function runHimDownDuel() {
   return duel;
 }
 
-test('Run Him Down drives through the gate at 20, 40 and 60 km/h', () => {
+test('Run Him Down clears the gate straight and at 15, 30 and 45 degrees on either side', () => {
   const gate = TIN_TOWN_GATE;
-  for (const kmh of [20, 40, 60]) {
+  const passes = [[20,0], [40,0], [60,0]];
+  for (const kmh of [10,20]) for (const angle of [-45,-30,-15,15,30,45]) passes.push([kmh,angle]);
+  for (const [kmh, angle] of passes) {
     const duel = runHimDownDuel(), collisions = [];
-    duel.onChange((state, event) => { if (event.scablandsHit || event.crash) collisions.push(event); });
-    put(duel, gate.x, gate.z - 12, 0, kmh);
-    let crossingSpeed;
-    for (let tick = 0; tick < 1200 && where(duel).z < gate.z + 10; tick++) {
-      drive(duel, {x:gate.x, z:gate.z + 50}, kmh);
+    duel.onChange((state, event) => { if (event.scablandsHit || event.crash || event.scrape || event.fenceSnap) collisions.push(event); });
+    const heading = angle * Math.PI / 180, dx = Math.sin(heading), dz = Math.cos(heading);
+    put(duel, gate.x - 12*dx, gate.z - 12*dz, heading, kmh);
+    const goal = {x:gate.x + 50*dx, z:gate.z + 50*dz};
+    let crossingSpeed, progress = -12;
+    for (let tick = 0; tick < 1200 && progress < 10; tick++) {
+      drive(duel, goal, kmh);
       duel.step(1/120);
-      if (crossingSpeed === undefined && where(duel).z >= gate.z) crossingSpeed = kmhOf(duel);
+      const at = where(duel);
+      progress = (at.x - gate.x)*dx + (at.z - gate.z)*dz;
+      if (crossingSpeed === undefined && at.z >= gate.z) crossingSpeed = kmhOf(duel);
     }
-    assert.ok(where(duel).z >= gate.z + 10 && Math.abs(crossingSpeed - kmh) < 2, `clear at ${kmh} km/h`);
-    assert.deepEqual(collisions, []);
+    const label = `${kmh} km/h at ${angle}°`;
+    assert.ok(progress >= 10 && Math.abs(crossingSpeed - kmh) < 2, label);
+    assert.deepEqual(collisions, [], label);
   }
 });
 

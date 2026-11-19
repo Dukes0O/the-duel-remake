@@ -16,6 +16,7 @@ import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
   stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
+import {activeTalkStep} from '../world/jobs/steps/talk.js';
 import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, worldJobPilotGoal, prepareWorldJobControls} from './modes/world-job.js';
 import {stepRaiders} from '../raiders.js';
 import {sweepObstacle} from '../collision.js';
@@ -291,6 +292,11 @@ export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
   const ambush = arena.mode === 'ambush-alley';
   const scablands = !!duel.course.def.scablands;
+  if (activeTalkStep(state)) {
+    const decision = stepWorldJob(duel, 0);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   state.stageTimeSec += dt; state.totalTimeSec += dt;
   if (arena.mode === 'world-job' && (arena.worldJob?.arrivalHold || arena.worldJob?.job.stepState.townEnding)) {
     state.speedMph = 0; state.pushVelocity = 0;

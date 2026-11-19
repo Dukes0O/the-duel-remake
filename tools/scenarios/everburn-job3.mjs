@@ -26,6 +26,42 @@ export const pageFunctions = {
       // The job's actors exist only once its own countdown has run out.
       window.__qaApp.duel.state.status === 'racing';
   },
+  gateNotice: () => {
+    const app = window.__qaApp, duel = app.duel, state = duel.state, world = state.arena.worldJob;
+    const step = world.job.steps[0], gate = step.townGate.position, thief = world.actors.find(actor => actor.id === step.targetId);
+    app.stop();
+    Object.assign(state,{onFoot:false, fighter:null, speedMph:0, pushVelocity:0, yawVelocity:0});
+    const atGate = dz => {
+      const pose = duel.course.nearest(gate.x, gate.z + dz);
+      Object.assign(state,{s:pose.s, prevS:pose.s, lateral:pose.lateral, prevLateral:pose.lateral,
+        headingError:-duel.course.at(pose.s).heading});
+      duel.step(1/120);
+    };
+    thief.position = {...step.bellowsRoute.wrecks.at(-1).position};
+    thief.pathIndex = step.path.length - 1;
+    duel._storyCallout('Another line is on screen.', 3, true);
+    atGate(-1);
+    if (world.job.stepState.returnNotice) throw Error('The return fired inside the town.');
+    atGate(1);
+    app.onFrame?.(state,0); window.__render.renderFrame();
+    const notice = world.job.stepState.returnNotice, panel = document.querySelector('#race-callout');
+    if (!notice || panel.hidden || panel.querySelector('#callout-text').textContent !== notice.text)
+      throw Error('The return reason did not take the screen at the gate.');
+    const at = duel.course.worldAt(state.s,state.lateral);
+    return {text:notice.text, seconds:notice.remaining, start:{x:at.x,z:at.z}};
+  },
+  finishReturn: sample => {
+    const app = window.__qaApp, duel = app.duel, state = duel.state, read = () => duel.course.worldAt(state.s,state.lateral);
+    for (let tick=1; tick<Math.ceil(sample.seconds*120); tick++) duel.step(1/120);
+    app.onFrame?.(state,0);
+    if (Math.hypot(read().x-sample.start.x, read().z-sample.start.z)>.05 ||
+        document.querySelector('#callout-text').textContent !== sample.text) throw Error('The view moved before the reason was read.');
+    duel.step(1/120); app.onFrame?.(state,0);
+    const at = read(), job = state.arena.worldJob.job, entrance = job.steps[0].bellowsRoute.wrecks[0].position;
+    if (Math.hypot(at.x-entrance.x, at.z-entrance.z)>.05 || job.stepState.returnNotice || job.stepState.furnaceArrivals!==1)
+      throw Error('The chase did not return once to the Boneyard.');
+    return {x:at.x,z:at.z};
+  },
   scene: which => {
     const app=window.__qaApp, duel=app.duel, state=duel.state, world=state.arena.worldJob;
     const step=world.job.steps[0];
@@ -102,6 +138,11 @@ export async function run(context) {
       if (which==='ending' && (!measured.loaded || !measured.thiefFled || !measured.furnaceLeaving))
         report.failures.push('Collection must send the thief and furnace away.');
       await context.screenshot(`everburn-job3-${which}`);
+      if (which==='opponent') {
+        report.gateReturn = await page('gateNotice');
+        await context.screenshot('everburn-job3-gate-notice');
+        report.gateReturn.destination = await page('finishReturn', report.gateReturn);
+      }
     }
   } catch (error) { report.failures.push(error.message); }
   if (report.pictures.length!==4) report.failures.push('The review needs all four pictures.');

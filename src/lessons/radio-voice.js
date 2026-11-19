@@ -56,6 +56,7 @@ export function createRadioChain(context, destination, filter = RADIO_FILTER) {
     try { source.stop(when); } catch { /* already ended */ }
   }
   function click() {
+    if (disposed) return;
     const source = context.createBufferSource(), shape = context.createBiquadFilter(), level = context.createGain();
     const now = context.currentTime, length = filter.clickMs / 1000;
     source.buffer = clickBuffer;
@@ -107,5 +108,5 @@ export function createRadioChain(context, destination, filter = RADIO_FILTER) {
     live.clear();
     for (const node of [input, high, low, clip, output, hissGain, hissFilter]) node.disconnect();
   }
-  return {input, output, keyOn, keyOff, dispose, get keyed() { return keyed; }};
+  return {input, output, click, keyOn, keyOff, dispose, get keyed() { return keyed; }};
 }

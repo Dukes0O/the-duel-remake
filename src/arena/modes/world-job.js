@@ -1420,6 +1420,28 @@ function finishWorldJob(duel, worldJob) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (talkStep?.kind === 'talk') {
+    if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
+    const previousStep = worldJob.job.stepIndex;
+    const before = worldJob.job.stepState.talk;
+    const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
+    worldJob.talkAction = null;
+    worldJob.job = next;
+    if (!before) duel.emit({talkOpened: true});
+    const screen = next.stepState.screen;
+    const chosen = next.events.find(event => event.type === 'talkChoice');
+    worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
+    if (chosen) duel.emit({storyChoice: chosen});
+    if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
+    const changed = !before || chosen || before.phase !== screen?.phase || before.index !== next.stepState.talk?.index;
+    if (changed) {
+      const cue = chosen ? 'story.talk.choose' : screen?.line ? 'story.talk.line' : screen?.phase === 'thoughts' ? 'story.thought' : null;
+      if (screen?.line?.radio) duel.emit({talkRadio: true});
+      else if (cue) duel.emit({arenaTell: {id: 'story-talk', targetId: 'player', seconds: 0, cue}});
+    }
+    return next.done ? finishWorldJob(duel, worldJob) : null;
+  }
   // The town's ending clock belongs to its rule. Freeze combat and foot motion
   // through the arena's existing hold path, while continuing captions and actors.
   if (worldJob.job.stepState.townEnding) {
@@ -1639,6 +1661,7 @@ export function stepWorldJob(duel, dt) {
       playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
         (state.combat?.flameBursts ?? []).some(burst => burst.ownerId === 'player')} : {}),
     ...bellowsFacts,
+    combatWrecking:state.combatWrecking === true,
     ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
     ashMen: currentStep?.brand ? actors.filter(actor =>
       worldJob.actors.some(source => source.brandAsh && source.id === actor.id)) : [],

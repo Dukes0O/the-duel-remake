@@ -203,17 +203,29 @@ assert.equal(smothered.state.lamps.tower, false);
 assert.equal(lighting.state.lamps.tower, true, 'do not mutate the previous state');
 assert.equal(tick(smothered.state, foot(100), 2).state.lamps.tower, true);
 const down = {onFoot: true, difficulty: 'easy', fighter: {knockedDown: true}};
-const recovered = tick(lighting.state, down);
+const downFirst = tick(lighting.state, down);
+assert.equal(downFirst.requests.length, 0);
+assert(downFirst.events.some(event => event.type === 'brandOut'));
+assert.match(downFirst.state.returnNotice.text, /down.*lamp/i);
+assert(downFirst.state.returnNotice.remaining >= 2.5 && downFirst.state.returnNotice.remaining < 3);
+const downLast = tick(downFirst.state, down, downFirst.state.returnNotice.remaining - 1/120);
+assert.equal(downLast.requests.length, 0);
+const recovered = tick(downLast.state, down, 1/120);
 assert.equal(recovered.requests[0].place.id, 'tower');
 assert.equal(recovered.state.lamps.tower, true);
 assert.equal(recovered.state.brandSeconds, 0);
 assert.equal(recovered.state.brandsUsed, 1);
-assert(recovered.events.some(event => event.type === 'brandOut'));
+assert.equal(recovered.state.returnNotice, null);
+assert(!recovered.events.some(event => event.type === 'brandOut'));
 const standingAgain = tick(recovered.state, foot(100));
 assert.equal(standingAgain.state.brandsUsed, 2);
 assert.equal(standingAgain.state.brandSeconds, 90);
 assert.equal(tick(recovered.state, down).requests.length, 0);
-assert.equal(tick(lighting.state, {...down, difficulty: 'medium'}).requests[0].place.id, 'hearth');
+const mediumDown = {...down, difficulty:'medium'}, mediumStart = tick(lighting.state, mediumDown);
+assert.equal(mediumStart.requests.length, 0);
+assert.match(mediumStart.state.returnNotice.text, /down.*hearth/i);
+assert(mediumStart.state.returnNotice.remaining >= 2.5 && mediumStart.state.returnNotice.remaining < 3);
+assert.equal(tick(mediumStart.state, mediumDown, mediumStart.state.returnNotice.remaining).requests[0].place.id, 'hearth');
 
 // Job 2.6: time starts with the first brand, continues in the car and caps at dusk.
 assert.equal(tick({}, foot(10), 100).state.dusk, 0);
@@ -981,6 +993,41 @@ for (const place of [sites.hearth, ...sites.lamps]) {
   assert.equal(fighter.knockedDown,false);
 }
 console.log('PASS Light the Town: clear hearth and lamp recovery, facing the fire.');
+{
+  const {knockdownFighter} = await import('../src/onfoot.js');
+  const {worldReturnNotice} = await import('../src/screen-hud.js');
+  for (const cpuDifficulty of ['medium','easy']) {
+    const game = new Duel({seed:1989, featureFlags:{'hidden-road':true,'story-everburn':true,'scablands-realism':true}});
+    const s = game.state; s.wastelandGateDiscovered = true;
+    assert(game.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:1989, cpuDifficulty, opponents:[], job:definition}));
+    Object.assign(s,{countdown:0, status:'racing'});
+    game.step(1/120); game.setInput({interact:true});
+    for (let tick=0; tick<80; tick++) game.step(1/120);
+    game.setInput({interact:false}); game.step(1/120);
+    const f = s.fighter, rule = s.arena.worldJob.job.stepState, lamp = actualStep.places[0];
+    if (cpuDifficulty === 'easy') { rule.lastLamp = lamp.id; rule.lamps[lamp.id] = true; }
+    assert(knockdownFighter(f));
+    const before = {x:f.x, z:f.z}, target = (cpuDifficulty === 'easy' ? lamp : actualStep.hearth).position;
+    game.step(1/120);
+    const notice = worldReturnNotice(s);
+    assert.match(notice,cpuDifficulty === 'easy' ? /lamp/ : /hearth/);
+    const readingTicks = Math.ceil(s.arena.worldJob.job.stepState.returnNotice.remaining*120);
+    for (let tick=1; tick<readingTicks; tick++) {
+      // The job's clock and ordinary three-second fighter clock both run in the real arena.
+      assert.equal(worldReturnNotice(s), notice);
+      assert(Math.hypot(f.x-before.x,f.z-before.z)<.01);
+      game.step(1/120);
+    }
+    assert.equal(worldReturnNotice(s), notice);
+    assert(Math.hypot(f.x-before.x,f.z-before.z)<.01);
+    game.step(1/120);
+    assert.equal(f.knockedDown, false);
+    assert.equal(f.respawns, 1);
+    assert(Math.hypot(f.x-target.x,f.z-target.z)<3.1);
+    game.step(1/120);
+    assert.equal(worldReturnNotice(s), '');
+  }
+}
 
 // Two pairs approach the same point and cross paths, without player driving.
 const {moveJobRaiders} = await import('../src/arena/modes/world-job.js');
