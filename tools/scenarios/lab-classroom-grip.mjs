@@ -1,4 +1,6 @@
 // Keyboard-only Grip classroom play at the full physics-panel resolution. Saves stay in memory.
+// The formula panel starts closed; the lesson opens it with F at the formula step.
+import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = Object.freeze({
   Enter: ['Enter', 13], Space: [' ', 32], KeyE: ['e', 69], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51],
@@ -46,6 +48,7 @@ export async function run(c) {
   await at('word-slide'); await press('ArrowUp'); await at('word-slide', 'value.ready'); await next('word-slide');
   await next('word-grip'); await next('word-limit');
   await at('formula');
+  await openFormulaPanel(c);
   await press('ArrowUp', 10);
   const showedFormula = await c.evaluate(
     `[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('× 100 ='))`,
