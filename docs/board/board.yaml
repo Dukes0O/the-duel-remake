@@ -589,16 +589,6 @@ tasks:
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2.md"
 
-  - id: STORY-PLATE-NIGHT-2
-    title: "One painted plate, tried once: the Walkers at the gate at dusk, drawn over the game's own scene (Kyle, 18 November)"
-    owner: "codex"
-    lane: "ART"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/STORY-PLATE-NIGHT-2.md"
-
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
