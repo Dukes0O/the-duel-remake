@@ -70,7 +70,11 @@ function chapter(seed, startedDuel) {
   const finish = count => {
     if (!screen()) tick();
     assert.equal(screen().line.words, night2Count(count).lines[0].words);
+    const state = duel.state, fighter = state.fighter;
+    const position = fighter ? [fighter.x, fighter.y, fighter.z] : [state.s, state.lateral];
     advance(undefined);
+    assert.deepEqual(fighter ? [fighter.x, fighter.y, fighter.z] : [state.s, state.lateral], position,
+      'The closing camera cut leaves the player where they were');
     assert.equal(duel.state.arena.result.winnerId, 'player');
     assert.equal(view.ledger.night, 3);
     assert.deepEqual(view.bank, {burned: Math.min(1, count), needed: 1});
@@ -114,7 +118,9 @@ for (const [answer, count, word, mark] of [
   run.say(NIGHT_2_CHOICES[0].words);
   run.advance('theft');
   assert(run.cues.includes('luck.unkind'));
+  const {x, y, z} = run.duel.state.fighter;
   run.advance('chase');
+  assert.deepEqual([run.duel.state.fighter.x, run.duel.state.fighter.y, run.duel.state.fighter.z], [x, y, z]);
   const dace = run.world.storyPeople.find(person => person.id === 'dace');
   run.tick();
   assert.equal(run.view.routes.length, 2);
@@ -143,6 +149,9 @@ for (const stopped of [false, true]) {
   assert.equal(run.view.ledger.roadWord, 1);
   assert.equal(run.view.ledger.words.walkers, 'Friendly');
   assert(run.view.ledger.obligations.some(item => item.id === 'walkers-watch'));
+  run.advance('walk-watch-post');
+  run.footAt(sites.watchPost);
+  run.tick(2);
   run.advance('scout');
   assert(run.cues.includes('night.whistle'));
   if (stopped) {
@@ -242,6 +251,13 @@ for (let i = 0; i < 800 && drive.stage() === 'walk-to-gate'; i++) {
 assert.equal(drive.stage(), 'gate');
 drive.duel.setFighterInput({forward: false});
 drive.say(NIGHT_2_CHOICES[1].words);
+drive.advance('walk-watch-post');
+for (let i = 0; i < 1800 && drive.stage() === 'walk-watch-post'; i++) {
+  const route = drive.view.routes[0];
+  if (route) pointAt(drive.duel, route.point, {forward: true, sprint: true});
+  drive.tick();
+}
+assert.equal(drive.stage(), 'whistle');
 drive.advance('scout');
 for (let i = 0; i < 3600 && drive.stage() === 'scout'; i++) {
   const route = drive.view.routes[0];
@@ -269,6 +285,7 @@ pot.say('Carry one ember out to them, now');
 assert.equal(pot.stage(), 'pot');
 assert.equal(pot.view.ledger.stocks.embers, 3);
 assert(pot.world.actors.filter(actor => actor.renderCar).length === 3);
+pot.footAt({x: sites.car.x + 2.8, y: sites.car.y, z: sites.car.z});
 pot.duel.setInput({interact: true});
 for (let i = 0; i < 120 && pot.duel.state.onFoot; i++) pot.tick();
 assert.equal(pot.duel.state.onFoot, false, 'The pot branch starts next to the usable car');

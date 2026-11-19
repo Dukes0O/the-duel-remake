@@ -1420,17 +1420,7 @@ function night2Cue(duel, cue) {
 }
 
 function enterNight2(duel, worldJob) {
-  const {stand, scout, riders = []} = enterNight2Step(worldJob);
-  if (stand) {
-    const fighter = duel.state.fighter;
-    if (!duel.state.onFoot || !fighter) initializeWorldFootStart(duel, stand);
-    else {
-      const pose = duel.course.nearest(stand.x, stand.z);
-      Object.assign(fighter, stand, {s: pose.s, lateral: pose.lateral, groundY: stand.y,
-        airHeight: 0, verticalSpeed: 0, speed: 0});
-      if (Number.isFinite(stand.heading)) fighter.yaw = stand.heading;
-    }
-  }
+  const {scout, riders = []} = enterNight2Step(worldJob);
   if (scout) {
     applyBrandRequest(duel, worldJob, {type: 'spawnBrandAsh', ...NIGHT_2_SCOUT});
     const actor = worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id);

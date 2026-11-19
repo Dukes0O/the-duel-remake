@@ -1057,7 +1057,7 @@ export function attachRenderer(host, app) {
       firstPersonView = false;
     }
     const talk = townStep?.kind === 'talk' && st.status === 'racing' && !st.paused ? townJob.stepState.screen : null;
-    const tower = st.arena?.worldJob?.night2?.camera;
+    const storyCut = st.arena?.worldJob?.night2?.camera;
     let head = null;
     if (talk) {
       const lastSpeaker = talk.history.findLast(line => !line.radio && line.speaker !== 'you')?.speaker;
@@ -1072,10 +1072,10 @@ export function attachRenderer(host, app) {
         player.visible = true;
       }
     }
-    if (talk && tower) {
-      camera.position.copy(tower.position);
-      lookTarget.copy(tower.target);
-      camera.fov = tower.fov;
+    if (talk && storyCut) {
+      camera.position.copy(storyCut.position);
+      lookTarget.copy(storyCut.target);
+      camera.fov = storyCut.fov;
       firstPersonView = false;
       player.visible = false;
     }
@@ -1093,7 +1093,7 @@ export function attachRenderer(host, app) {
     if (talk) {
       camera.updateMatrixWorld();
       let projected = null;
-      if (head && !tower && talk.line && !talk.line.radio) {
+      if (head && talk.line && !talk.line.radio && (!storyCut || townStep.id !== 'tower')) {
         if (talk.line.speaker === 'you') {
           talkProjection.copy(st.onFoot && st.fighter ? st.fighter : player.position);
           talkProjection.y += st.onFoot ? 1.65 : 1.1;

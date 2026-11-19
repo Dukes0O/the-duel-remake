@@ -8,18 +8,17 @@ import {createStoryPeople, setStoryPersonAction} from './story-people.js';
 
 export const NIGHT_2_ID = 'story-night-2';
 const hearthStart = {...sites.hearthFront.position, heading: Math.PI};
-const watchStart = night2Point(sites.pump.position.x + 3, sites.pump.position.z + 9);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const riders = [
   {id: 'wash-rider-1', start: {x: sites.camp.position.x + 42, z: 236}, heading: .8, renderCar: 'dusthawk_rally'},
   {id: 'wash-rider-2', start: {x: sites.camp.position.x + 31, z: 210}, heading: 2, renderCar: 'falcone_f42'},
   {id: 'wash-rider-3', start: {x: sites.camp.position.x + 48, z: 264}, heading: -.6, renderCar: 'dusthawk_rally'},
 ];
-const points = [sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach];
+const points = [sites.gateOutside, sites.westGap, sites.scoutWall, sites.scoutGate, sites.hearthApproach, sites.watchPost];
 const at = place => place.position ?? place;
 
 const talk = (id, set, options = {}) => ({id, kind: 'talk', scene: NIGHT_2_SCENES[id], set, ...options});
-const walk = (id, place) => ({id, kind: 'reach', onFoot: true, place, radius: place.radius});
+const walk = (id, place, what) => ({id, kind: 'reach', onFoot: true, place, radius: place.radius, what});
 
 export function night2Opening(seed) {
   return {seed: seed >>> 0, night: 2, embers: 4};
@@ -29,22 +28,23 @@ export function night2Job(seed) {
   return {id: NIGHT_2_ID, name: 'Strangers at the gate', title: 'Strangers at the gate', seed,
     steps: [
       talk('hearth', 'hearth', {carStart: sites.car, footStart: hearthStart}),
-      walk('walk-to-gate', sites.gateOutside),
+      walk('walk-to-gate', sites.gateOutside, 'Walk to the gate.'),
       talk('gate', 'gate', {plateHook: 'walkers-at-the-gate'}),
       talk('gift', 'gate'), talk('salt', 'salt'), talk('theft', 'hearth'),
       {id: 'chase', kind: 'night-2-action', action: 'chase'},
       talk('caught', 'caught'), talk('take-dace-to-rell', 'rell-at-gate'), talk('send-away', 'rell-at-gate'),
-      talk('escaped', 'rell-at-gate'), talk('watch', 'gate'), talk('whistle', 'scout'),
+      talk('escaped', 'rell-at-gate'), talk('watch', 'gate'),
+      walk('walk-watch-post', sites.watchPost, 'Walk to the watch by the pump.'), talk('whistle', 'scout'),
       {id: 'scout', kind: 'night-2-action', action: 'scout', lentWeapon: 'cinders-hand-flamer'},
       talk('scout-stopped', 'scout'), talk('scout-escaped', 'scout'),
-      talk('inside', 'gate'), talk('lamp', 'pump'),
+      talk('inside', 'gate'), talk('lamp', 'gate'),
       {id: 'light-pump', kind: 'onfoot', brand: true, hearth: sites.hearth,
-        places: [sites.pump], ashEntries: [], what: 'Light the pump lamp for the Walkers.'},
-      walk('back-to-hearth', sites.hearthApproach), talk('at-hearth', 'sleep'),
+        places: [sites.pump], ashEntries: [], wayAround: sites.around, what: 'Light the pump lamp for the Walkers.'},
+      walk('back-to-hearth', sites.hearthApproach, 'Walk back to the hearth.'), talk('at-hearth', 'sleep'),
       talk('refuse', 'gate'), talk('tell-mall', 'gate'), talk('tower', 'camp'),
       talk('tower-outcome', 'camp'),
       {id: 'pot', kind: 'carry', load: 'everburn-ember-pot', ember: EMBER_RULE, destination: sites.camp,
-        radius: sites.camp.radius, origin: sites.car, stopAtDestination: true,
+        radius: sites.camp.radius, origin: sites.car, stopAtDestination: true, what: 'Get in the car and take the ember to the Walkers at the Wash.',
         waitingActors: riders, pickup: {place: sites.car, radius: 4, lines: []}, braziers: [{id: 'tin-town-brazier', radius: 5, position: night2Point(sites.car.x + 5, sites.car.z)}]},
       talk('delivery', 'camp'), talk('close', 'hearth'),
     ]};
@@ -126,23 +126,33 @@ function beginChase(worldJob) {
   chapter.chasePath = path;
 }
 
+const worldRellAtGate = night2Point(sites.gate.x - 1.4, sites.gate.z + 19);
+
 function dressing(chapter, step) {
   chapter.props.salt = step.id === 'salt';
   chapter.props.ladle = ['chase', 'caught'].includes(step.id);
   chapter.props.shawl = step.id === 'at-hearth';
   chapter.props.shelter = ['camp', 'caught', 'chase', 'pump', 'sleep'].includes(chapter.set);
   chapter.props.torches = ['tower', 'pot', 'delivery'].includes(step.id);
-  chapter.camera = ['tower', 'tower-outcome'].includes(step.id) ? sites.tower : null;
+  const cut = (look, x, z) => ({
+    position: {...night2Point(look.x + x, look.z + z), y: look.y + 1.8},
+    target: {...look, y: look.y + 1.35}, fov: 49,
+  });
+  if (['tower', 'tower-outcome'].includes(step.id)) chapter.camera = sites.tower;
+  else if (['escaped', 'take-dace-to-rell', 'send-away'].includes(step.id))
+    chapter.camera = cut(worldRellAtGate, 2, -4);
+  else if (step.id === 'close') chapter.camera = cut(sites.auntie.position, 3.5, 1.5);
+  else chapter.camera = null;
 }
 
-// Authored cuts change only the chapter cast and, where overnight time passes,
-// the player's stand. The fighter owns movement between those cuts.
+// Authored cuts change the cast, light and camera. The player’s position
+// stays under the fighter or car controls throughout the chapter.
 export function enterNight2Step(worldJob) {
   const chapter = worldJob.night2, step = worldJob.job.steps[worldJob.job.stepIndex];
   chapter.routes = [];
   if (!step) return {};
   if (step.kind === 'talk') step.scene = sceneFor(step, chapter);
-  const set = step.set ?? {chase: 'chase', 'walk-to-gate': 'gate'}[step.id];
+  const set = step.set ?? {chase: 'chase', 'walk-to-gate': 'gate', 'walk-watch-post': 'scout', 'light-pump': 'pump'}[step.id];
   if (set && set !== chapter.set) {
     const dace = worldJob.storyPeople?.find(person => person.id === 'dace');
     chapter.set = set;
@@ -158,13 +168,7 @@ export function enterNight2Step(worldJob) {
     chapter.night = false;
     chapter.evening = .27;
   }
-  const stands = {
-    salt: at(sites.gateOutside), escaped: at(sites.gateOutside),
-    'take-dace-to-rell': at(sites.gateOutside), 'send-away': at(sites.gateOutside),
-    theft: night2Point(6030, 18), whistle: watchStart, lamp: at(sites.hearthFront),
-    close: hearthStart, pot: night2Point(sites.car.x + 2.8, sites.car.z),
-  };
-  return {stand: stands[step.id], scout: step.id === 'scout', riders: ['tower', 'tower-outcome', 'pot', 'delivery'].includes(step.id) ? riders : []};
+  return {scout: step.id === 'scout', riders: ['tower', 'tower-outcome', 'pot', 'delivery'].includes(step.id) ? riders : []};
 }
 
 function stageAfter(chapter, step, result, cue) {
@@ -219,7 +223,7 @@ function stageAfter(chapter, step, result, cue) {
 
 const NEXT = {
   hearth: 'walk-to-gate', 'walk-to-gate': 'gate', salt: 'close', theft: 'chase',
-  escaped: 'close', 'take-dace-to-rell': 'close', 'send-away': 'close', watch: 'whistle',
+  escaped: 'close', 'take-dace-to-rell': 'close', 'send-away': 'close', watch: 'walk-watch-post', 'walk-watch-post': 'whistle',
   whistle: 'scout', 'scout-stopped': 'close', 'scout-escaped': 'close', inside: 'lamp',
   lamp: 'light-pump', 'back-to-hearth': 'at-hearth', 'at-hearth': 'close',
   'tell-mall': 'tower', 'tower-outcome': 'close', delivery: 'close',
@@ -276,8 +280,10 @@ export function night2Action(worldJob, point, onFoot) {
     return {arrival: dist(scout, at(goal)) <= goal.radius ?
       (chapter.scoutTurned ? 'scout-stopped' : 'scout-escaped') : null};
   }
-  if (step.kind === 'reach') chapter.routes = [{name: step.id === 'walk-to-gate' ? 'The gate' : 'The hearth',
-    ...direction(chapter, point, step.place)}];
+  if (step.kind === 'reach') {
+    const name = {'walk-to-gate': 'The gate', 'walk-watch-post': 'Dace’s watch', 'back-to-hearth': 'The hearth'}[step.id];
+    chapter.routes = [{name, ...direction(chapter, point, step.place)}];
+  }
   return {};
 }
 

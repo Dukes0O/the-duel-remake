@@ -833,8 +833,6 @@ export class App {
     this.leaveWorldJob();
     const definition=this.duel.state.arena?.worldJob?.definition;
     if(!definition)return false;
-    if (definition.id === NIGHT_2_ID)
-      return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0, job: definition});
     if(definition.run===true)return this.gasRun(definition.road);
     const side=sideJobKey(definition);
     if(side)return this.everburnSideJob(side);

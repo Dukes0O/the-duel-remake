@@ -187,7 +187,7 @@ export function brandWaysFor(step, grid = SOLID_GRID) {
   if (!step?.brand || !step.hearth || !step.places?.length) return null;
   let ways = kept.get(step);
   if (!ways || ways.grid !== grid) {
-    ways = {grid, ways: createBrandWays({places: [step.hearth, ...step.places], around: step.ashEntries ?? [], grid,
+    ways = {grid, ways: createBrandWays({places: [step.hearth, ...step.places], around: step.wayAround ?? step.ashEntries ?? [], grid,
       reach: place => place.id === step.hearth.id ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius})};
     kept.set(step, ways);
   }

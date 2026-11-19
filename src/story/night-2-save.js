@@ -13,7 +13,7 @@ export function settleNight2(profile, chapter) {
   result = bankLedgerHearth(result.profile, chapter.opening.night);
   if (!result.ok) return {...result, profile};
   if (chapter.scrap) {
-    const wasteland = result.profile.wasteland;
+    const wasteland = result.profile.wasteland ?? {};
     result.profile = {...result.profile, wasteland: {...wasteland, scrap: (wasteland.scrap ?? 0) + chapter.scrap}};
   }
   return result;

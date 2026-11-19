@@ -133,6 +133,8 @@ export async function run(context) {
   await gateOptions();
   await evaluate('choose', "for two nights' watch");
   await advance('watch', 4);
+  await wait('step', 'walk-watch-post');
+  await evaluate('at', sites.watchPost);
   await advance('whistle', 1);
   await wait('step', 'scout');
   await context.screenshot('night-2-scout');
