@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, JOBS, shareOf, coatOf, weekRust, bestFor, TRY_DAYS, ZINC_TO, FREE_TRIES, FREE_MAX_DAYS} from '../src/lab/lessons/rust-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/rust-board.js';
+import {STEPS, JOBS, shareOf, coatOf, weekRust, bestFor, TRY_DAYS, ZINC_TO, FREE_TRIES, FREE_MAX_DAYS, WATCH_S} from '../src/lab/lessons/rust-classroom.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, nail} from '../src/lab/lessons/rust-board.js';
 import {JARS, jarAfter, rustBench} from '../src/lab/benches/rust.js';
 import {RUST_PARTS, rustOf, rightProtection, checkProtections} from '../src/lab/lab-workshop.js';
 import {CHALLENGE_KIND} from '../src/lab/lab-model.js';
@@ -23,7 +23,7 @@ function playThroughTo(session, id) {
     else if (step === 'try-zinc') { session.act('answer:1'); session.act('go'); until(session, x => x.ready); }
     else if (step === 'try-free') { runWeek(session); for (let i = 1; i < FREE_TRIES; i++) { session.act('days:down'); runWeek(session); } }
     else if (step === 'alone') for (const job of JOBS) { session.act(`coat:${bestFor(job.jar)}`); runWeek(session); }
-    else if (step.startsWith('check-')) session.act(`answer:${{'check-five': 1, 'check-zinc': 1, 'check-sirena': 0}[step]}`);
+    else if (step.startsWith('check-')) session.act(`answer:${{'check-five': 1, 'check-zinc': 1, 'check-sirena': 1}[step]}`);
     assert.ok(session.view().ready, `${step} is ready`);
     session.act('next');
   }
@@ -96,9 +96,9 @@ test('the tries: Space at the wrong day, and every wrong guess, say why with the
   playThroughTo(days, 'try-days');
   assert.equal(days.view().dial.days, 7, 'it starts away from its answer');
   days.act('go');
-  assert.match(days.view().brian.text, /This test runs for 3 days, so press ↓ until the dial reads 3/);
+  assert.match(days.view().brian.text, /This test runs for 3 days, so turn the dial down to 3 days/);
   setDays(days, 3); days.act('go');
-  assert.deepEqual(days.view().cards.map(c => c.label), ['About 6%', 'About 36%', 'About 84%']);
+  assert.deepEqual(days.view().cards.map(c => c.label), ['6%', '36%', '84%'], 'the answers are exact, never "about"');
   days.act('answer:0'); until(days, x => x.ready);
   assert.match(days.view().brian.text, /^The nail has 36% rust\. You would get 6% in fresh water at 2% a day, but salt water rusts the nail at 12% a day/);
   const week = createClassroomSession(lesson);
@@ -125,7 +125,7 @@ test('Brian’s job: too little, too much and the slow gate each say why; each t
   assert.equal(v.switch.coat, 'bare'); assert.equal(v.job.name, 'The boat trailer');
   assert.notEqual(v.target, 'go', 'Brian does not point at the calendar before a choice is made');
   runWeek(session);
-  assert.match(session.view().brian.text, /^Left bare, the boat trailer reaches 84% rust in a week\. That is more than 10%, so it is not clean\. Press → to give it a zinc coat/);
+  assert.match(session.view().brian.text, /^Left bare, the boat trailer reaches 84% rust in a week\. That is more than 10%, so it is not clean\. It needs a zinc coat/);
   session.act('coat:zinc'); runWeek(session);
   assert.match(session.view().brian.text, /^Correct\. The zinc coat keeps the trailer clean, with 0% rust against 84% if it were bare\. The next thing is the toolbox/);
   v = session.view();
@@ -173,7 +173,7 @@ test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
     'check-five': [[0, /^The rust is greater than that\. Salt water rusts the nail at 12% a day, so 5 days give 60%/], [2, /^The nail has not rusted all the way through yet, because that needs more than 8 days\. 12% a day for 5 days gives 60%/]],
     'check-zinc': [[0, /^The coat lasts only 20 days, so by day 22 the coat has gone, and the steel has rusted for 2 days at 12% a day, which gives 24%/], [2, /^The zinc kept the steel clean for 20 days, so the steel has rusted for only 2 days, which gives 24% rather than the 100% of a bare nail/]],
-    'check-sirena': [[1, /^Rust is part of the metal now, so water does not wash it off\. The soak draws the salt out of the metal, because salt keeps the rust forming at 12% a day against 2% a day in fresh water/], [2, /^Fresh water still rusts steel, by 14% in a week, although salt water rusts steel 6 times as fast/]],
+    'check-sirena': [[0, /^Fresh water rusts the nail at 2% a day and salt water at 12% a day, so a week gives 14% in fresh water and 84% in salt water, not the same/], [2, /^Salt water is the faster one, at 12% a day against 2% a day, so the fresh water nail has 14% rust, which is less than the 84% of the salt water nail/]],
   };
   for (const [id, picks] of Object.entries(answers)) for (const [pick, why] of picks) {
     const session = createClassroomSession(lesson);
@@ -213,7 +213,7 @@ test('the sums: the day dial, the protection switch and the jar change the worke
   assert.equal(worked(word)[0], '2% a day × 7 days = 14%');
   word.act('days:down');
   assert.equal(worked(word)[0], '2% a day × 6 days = 12%', 'the dial changes the sum at once');
-  word.act('go'); run(word, 2.1);
+  word.act('go'); run(word, 3.1);
   assert.equal(worked(word)[0], `2% a day × ${Math.floor(word.view().day)} days = ${2 * Math.floor(word.view().day)}%`, 'the sum follows the calendar while it runs');
   assert.equal(word.view().shelf[1].shown, shareOf('fresh', Math.floor(word.view().day)), 'and the jar reads the same whole day');
   until(word, x => x.ready);
@@ -338,10 +338,10 @@ test('the hint and the note say which way to turn the dial from every setting', 
   for (let days = 1; days <= 7; days++) {
     setDays(session, days);
     const hint = session.view().hints[1];
-    if (days === 3) { assert.match(hint, /^The dial reads 3, so press Space/); continue; }
-    assert.match(hint, days < 3 ? /^Press ↑ until the dial reads 3/ : /^Press ↓ until the dial reads 3/);
+    if (days === 3) { assert.match(hint, /^The dial reads 3 days, so go to the question/); continue; }
+    assert.match(hint, days < 3 ? /^Turn the dial up to 3 days/ : /^Turn the dial down to 3 days/);
     session.act('go');
-    assert.match(session.view().brian.text, days < 3 ? /so press ↑ until the dial reads 3/ : /so press ↓ until the dial reads 3/);
+    assert.match(session.view().brian.text, days < 3 ? /so turn the dial up to 3 days/ : /so turn the dial down to 3 days/);
   }
 });
 
@@ -417,4 +417,88 @@ test('the board draws every step and card', () => {
     calls.clear(); drawBoard(fake(), session.view(), 1000, 680);
     assert.ok(calls.has('fillText'), `${id} draws its answered picture`);
   }
+});
+
+test('Kyle’s rules of 19 November 2026: no hedging, correct maths words, no key labels repeated, and the Three days names its question first', () => {
+  const session = createClassroomSession(lesson);
+  const said = new Set();
+  const note = text => { if (text) said.add(String(text)); };
+  for (const id of STEPS.map(s => s.id)) {
+    playThroughTo(session, id);
+    const v = session.view();
+    note(v.say); note(v.prompt); (v.hints ?? []).forEach(note); (v.cards ?? []).forEach(c => note(c.label)); (v.formulas ?? []).forEach(f => { note(f.note); note(f.title); note(f.worked); });
+  }
+  // The results, every wrong answer and the job's failures.
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'alone');
+  runWeek(free); note(free.view().brian.text);
+  free.act('coat:zinc'); runWeek(free); runWeek(free); note(free.view().brian.text);
+  for (const [id, picks] of [['check-five', [0, 1, 2]], ['check-zinc', [0, 1, 2]], ['check-sirena', [0, 1, 2]]]) for (const pick of picks) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id); s.act(`answer:${pick}`); note(s.view().brian.text);
+  }
+  const text = [...said].join('\n');
+  assert.doesNotMatch(text, /in this game|simplification|the game’s|real (rust|nails|zinc)|belong to this game/i, 'no hedging');
+  assert.doesNotMatch(text, /\b(the sums?|sums beside|work out the sum)\b/i, 'a multiplication is not a sum');
+  assert.doesNotMatch(text, /\babout \d/i, 'exact numbers');
+  assert.doesNotMatch(text, /Press [↑↓←→]|press Space|Press Space|Press [123],? |press 1|Press 1/, 'the screen shows its own key labels');
+  const three = createClassroomSession(lesson);
+  playThroughTo(three, 'try-days');
+  assert.match(three.view().brian.text, /^A bare nail sits in salt water for 3 days\. What percentage of it rusts\? Turn the day dial to 3 and multiply the rate by the days\.$/);
+  const zinc = createClassroomSession(lesson);
+  playThroughTo(zinc, 'word-zinc');
+  assert.match(zinc.view().brian.text, /the zinc wears away first, and the bare steel rusts after it/i);
+});
+
+test('the watch runs last about ten seconds and R plays them again; the garden gate and the free test keep their quick pace', () => {
+  const session = createClassroomSession(lesson);
+  assert.ok(session.view().actions.includes('replay'));
+  let t = 0;
+  while (!session.view().ready && t < 60) { session.tick(.05); t += .05; }
+  assert.ok(t >= WATCH_S && t < WATCH_S + 3, `the wonder run took ${t.toFixed(1)} s`);
+  session.act('replay');
+  assert.equal(session.view().running, true, 'R plays the run again');
+  assert.equal(session.view().day, 0);
+  for (const id of ['word-rust', 'word-salt', 'word-zinc']) {
+    const word = createClassroomSession(lesson);
+    playThroughTo(word, id);
+    word.act('go'); let s = 0;
+    while (!word.view().ready && s < 60) { word.tick(.05); s += .05; }
+    assert.ok(s >= WATCH_S - .1 && s < WATCH_S + 2, `${id} took ${s.toFixed(1)} s`);
+    assert.ok(word.view().actions.includes('replay'), `${id} offers Watch again`);
+    word.act('replay'); assert.equal(word.view().ready, false, `${id}: R plays it again`);
+    until(word, x => x.ready);
+  }
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  job.act('go'); let q = 0;
+  while (!job.view().ready && job.view().keys.Space !== 'go' && q < 60) { job.tick(.05); q += .05; }
+  assert.ok(q < 6, `Brian’s job keeps its quick pace (${q.toFixed(1)} s)`);
+});
+
+test('the nail rusts along all of its length under the water, thicker as the days pass, and keeps its head clean', () => {
+  // A recording context: every point the nail's paths visit.
+  const points = rust => {
+    const list = [];
+    const ctx = new Proxy({}, {get: (target, name) => {
+      if (name in target) return target[name];
+      if (name === 'measureText') return v => ({width: String(v).length * 9});
+      if (['createLinearGradient', 'createRadialGradient'].includes(name)) return () => ({addColorStop() {}});
+      if (name === 'moveTo' || name === 'lineTo') return (x, y) => list.push([x, y]);
+      return () => {};
+    }, set: (target, name, value) => { target[name] = value; return true; }});
+    nail(ctx, 100, 20, 110, {rust, water: 50});
+    return list;
+  };
+  const bare = points(0), few = points(.1), many = points(1);
+  const added = (list, base) => list.slice(base.length);
+  for (const [name, list] of [['10%', few], ['100%', many]]) {
+    const extra = added(list, bare);
+    assert.ok(extra.length > 10, `${name}: rust is drawn`);
+    assert.ok(Math.min(...extra.map(p => p[1])) >= 50 - 1e-6, `${name}: no rust above the water line at y 50`);
+    const ys = extra.map(p => p[1]);
+    assert.ok(Math.max(...ys) > 125, `${name}: rust reaches the tip`);
+    assert.ok(ys.filter(y => y < 60).length >= 2, `${name}: and it starts at the water line, not at the tip`);
+  }
+  const width = list => { const xs = added(list, bare).map(p => p[0]); return Math.max(...xs) - Math.min(...xs); };
+  assert.ok(width(many) > width(few) + 2, 'the rust gets thicker as the share grows');
 });

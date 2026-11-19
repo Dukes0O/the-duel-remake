@@ -5,8 +5,9 @@ import {JARS, RUST, jarAfter} from '../benches/rust.js';
 import {RUST_OK, RUST_WEEK} from '../lab-workshop.js';
 import {MORE} from '../classroom/brian-text.js';
 
-// The calendar turns a day about every half second; a free test of many days runs faster, so it is not a wait.
-export const DAY_S = .45, HOLD_S = .8;
+// A quick change (the coat's test, the free test, Brian's job) turns a day about every half second. A watch with several things moving
+// (the calendar, the nails, the graph and the close-up) takes about 10 seconds for its week, and R plays it again.
+export const DAY_S = .45, HOLD_S = .8, WATCH_S = 10, WATCH_DAY_S = WATCH_S / RUST_WEEK;
 const HELD_GAP_S = .14, FREE_RUN_S = 4;
 export const MIN_DAYS = 1, MAX_DAYS = RUST_WEEK;
 // The free test's dial reaches past the coat's last day; its jars; how many different settings open Continue.
@@ -29,9 +30,9 @@ export const bestFor = jarId => clean(weekRust(jarId, 'bare')) ? 'bare' : 'zinc'
 export const TRY_DAYS = 3, ZINC_TO = 25;
 // Brian's job: three things in the yard, each kept like the nail in one of the bench's jars.
 export const JOBS = Object.freeze([
-  {name: 'The boat trailer', thing: 'the boat trailer', lives: 'It is dunked in the sea at every launch.', where: 'which is dunked in the sea at every launch', jar: 'salt'},
+  {name: 'The boat trailer', thing: 'the boat trailer', lives: 'It stays under sea water in the harbour all week.', where: 'which stays under sea water in the harbour all week', jar: 'salt'},
   {name: 'The toolbox', thing: 'the toolbox', lives: 'It sits on the dry shelf in the shed.', where: 'which sits on the dry shelf in the shed', jar: 'dry'},
-  {name: 'The garden gate', thing: 'the garden gate', lives: 'It stands out in the rain.', where: 'which stands out in the rain', jar: 'fresh'},
+  {name: 'The garden gate', thing: 'the garden gate', lives: 'It stands in a puddle of rain water all week.', where: 'which stands in a puddle of rain water all week', jar: 'fresh'},
 ].map(Object.freeze));
 
 export const STEPS = Object.freeze([
@@ -66,9 +67,9 @@ export const CHALLENGE_CARD = Object.freeze({title: 'Use zinc where water reache
   text: `Pick the protection for each part of the car. A part with more than ${pct(RUST_OK)} rust after a week is not protected.`});
 // The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them (Paint included).
 export const WORDS = Object.freeze([
-  {id: 'rust-rust', word: 'Rust', meaning: 'The flaky orange material that forms when water and oxygen reach iron. Steel is mostly iron, so steel rusts too.'},
-  {id: 'rust-salt-water', word: 'Salt water', meaning: 'Water with salt dissolved in it. Salt helps water carry electric charge, which makes iron rust faster.'},
-  {id: 'rust-zinc-coat', word: 'Zinc coat', meaning: 'A thin layer of the metal zinc on steel. The zinc corrodes first, and that protects the steel underneath until the zinc has gone.'},
+  {id: 'rust-rust', word: 'Rust', meaning: 'The flaky orange material that forms when water and oxygen, a gas in the air, reach iron. Steel is mostly iron, so steel rusts too.'},
+  {id: 'rust-salt-water', word: 'Salt water', meaning: 'Water with salt dissolved in it. Salt breaks into charged particles that let electric charge flow through the water, which makes iron rust faster.'},
+  {id: 'rust-zinc-coat', word: 'Zinc coat', meaning: 'A thin layer of the metal zinc on steel. The zinc wears away first, and the bare steel rusts after it.'},
   {id: 'rust-paint', word: 'Paint', meaning: 'A coating that keeps water and air away from the metal underneath.'},
 ].map(Object.freeze));
 
@@ -81,15 +82,15 @@ const DONE = Object.freeze(['Press Enter to continue.', 'Press Enter to continue
 const RUN = Object.freeze({action: 'go', label: 'Run the days', key: 'Space'});
 const TO_GUESS = Object.freeze({action: 'go', label: 'Go to the question', key: 'Space'});
 
-const DAY_GUESSES = Object.freeze([FRESH_DAY * TRY_DAYS, SALT_DAY * TRY_DAYS, W('salt')].map(share => ({share, label: `About ${pct(share)}`})));
-const ZINC_GUESSES = Object.freeze([{days: 10, label: 'About 10 days'}, {days: ZINC_DAYS, label: `About ${ZINC_DAYS} days`}, {days: null, label: 'Never, because zinc does not wear away'}]);
+const DAY_GUESSES = Object.freeze([FRESH_DAY * TRY_DAYS, SALT_DAY * TRY_DAYS, W('salt')].map(share => ({share, label: pct(share)})));
+const ZINC_GUESSES = Object.freeze([{days: 10, label: '10 days'}, {days: ZINC_DAYS, label: `${ZINC_DAYS} days`}, {days: null, label: 'Never, because zinc does not wear away'}]);
 
 // ---- the formulas beside the board (the numbers are the ones on the calendar, the dial and the switch now) ----
 const rateOf = id => jarOf(id).water ? (jarOf(id).salt ? SALT_DAY : FRESH_DAY) : 0;
 const FULL_NOTE = 'A nail cannot rust more than all the way through, so the rust stops at 100%.';
 const rateNote = {
   dry: 'With no water, the rate is 0% a day, so the nail does not rust.',
-  fresh: 'The rate is the percentage of the nail that rusts during one day. In this game the rate stays the same every day, which is a simplification.',
+  fresh: 'The rate is the percentage of the nail that rusts during one day.',
   salt: `This rate is ${TIMES} times the rate in fresh water.`,
 };
 function bareFormula(id, d) {
@@ -100,8 +101,7 @@ function coatFormula(id, d) {
   if (!jarOf(id).water) return {title: 'Zinc coat left', worked: 'No water reaches the coat, so 100% of the coat is left.'};
   const sum = 100 - COAT_PER_DAY * d;
   return {title: 'Zinc coat left', formula: `coat left = 100% − ${COAT_PER_DAY}% a day × days`, worked: `100% − ${COAT_PER_DAY}% a day × ${dayWord(d)} = ${sum < 0 ? `−${-sum}` : sum}%${sum <= 0 ? ', so the coat has gone' : ''}`,
-    note: id === 'fresh' ? `In this game the coat lasts ${ZINC_DAYS} days in fresh water as well, which is a simplification, because real zinc lasts far longer in fresh water than in salt water.`
-      : `In this game the coat wears away by the same amount every day, ${COAT_PER_DAY}% of the coat, which is a simplification.`};
+    note: `The coat wears away by ${COAT_PER_DAY}% of the coat each day, in fresh water and in salt water.`};
 }
 function underFormula(id, d) {
   if (!jarOf(id).water) return {title: 'Rust under the coat', worked: 'With no water, the rust stays at 0%.'};
@@ -111,11 +111,11 @@ function underFormula(id, d) {
 }
 // Before the coat's own test, nothing says how many days the coat lasts, because that test asks.
 const coatHolds = () => ({title: 'Rust under the coat', worked: 'While the coat lasts, the rust stays at 0%.', note: 'The steel starts to rust only when the coat has gone.'});
-// While the player is working out the 3 days, the sum waits for its answer.
+// While the player works out the 3 days, the worked line waits for its answer.
 const openSum = (id, d) => ({...bareFormula(id, d), worked: `${whole(rateOf(id))}% a day × ${dayWord(d)} = ?`});
 const thingFormulas = (id, coat, d) => coat === 'zinc' ? [coatFormula(id, d), underFormula(id, d)] : [bareFormula(id, d)];
 const fasterFormula = () => ({title: 'How much faster salt water is', formula: 'salt water rate ÷ fresh water rate', worked: `${whole(SALT_DAY)}% ÷ ${whole(FRESH_DAY)}% = ${TIMES} times as fast`,
-  note: 'These rates belong to this game. They are much faster than the rates of real nails, so that one week shows a clear result.'});
+  note: `Salt water rusts a nail ${TIMES} times as fast as fresh water.`});
 const cleanFormula = rust => ({title: 'The test for clean', formula: `clean means rust of ${pct(RUST_OK)} or less after ${RUST_WEEK} days`, ...(rust === null ? {} : {worked: `${pct(rust)} is ${clean(rust) ? 'not more than' : 'more than'} ${pct(RUST_OK)}, so this is ${clean(rust) ? 'clean' : 'not clean'}.`})});
 
 const S5 = shareOf('salt', 5), Z22 = shareOf('zinc', 22), AFTER = 22 - RUST.zincLastDays;
@@ -145,15 +145,15 @@ const CHECKS = {
     after: () => [coatFormula('salt', 22), underFormula('salt', 22)],
   },
   'check-sirena': {
-    question: 'Before restoring the Sirena, Brian soaks the wreck in fresh water for several weeks. What is the purpose of the soak?',
-    answers: [{label: 'To draw the salt out of the metal', picture: {kind: 'soak', what: 'salt'}},
-      {label: 'To wash the rust off the metal', picture: {kind: 'soak', what: 'wash'}},
-      {label: 'To stop the metal from rusting at all', picture: {kind: 'soak', what: 'stop'}}],
-    correct: 0,
-    right: () => `Correct. Salt left in the metal would keep the rust forming quickly, at ${pct(SALT_DAY)} a day against ${pct(FRESH_DAY)} a day in fresh water. During the soak, the salt slowly dissolves out into the water.`,
-    wrong: picked => picked === 1 ? `Rust is part of the metal now, so water does not wash it off. The soak draws the salt out of the metal, because salt keeps the rust forming at ${pct(SALT_DAY)} a day against ${pct(FRESH_DAY)} a day in fresh water.`
-      : `Fresh water still rusts steel, by ${pct(W('fresh'))} in a week, although salt water rusts steel ${TIMES} times as fast. The soak draws the salt out of the metal.`,
-    hints: ['Which jar rusted its nail fastest?', 'Sixty years in the sea left salt in the metal of the Sirena.', 'Pick the first card.'],
+    question: 'The Sirena lay in the sea, which is salt water. A nail of the same steel sits in fresh water for a week. How does its rust compare with a nail that sat in the sea for a week?',
+    answers: [{label: 'It has the same rust', picture: {kind: 'nail', rust: W('salt')}},
+      {label: 'It has one sixth of the rust', picture: {kind: 'nail', rust: W('fresh')}},
+      {label: 'It has twice the rust', picture: {kind: 'nail', rust: 1}}],
+    correct: 1,
+    right: () => `Correct. Fresh water rusts the nail at ${pct(FRESH_DAY)} a day and salt water at ${pct(SALT_DAY)} a day, so a week gives ${pct(W('fresh'))} against ${pct(W('salt'))}, which is one sixth.`,
+    wrong: picked => picked === 0 ? `Fresh water rusts the nail at ${pct(FRESH_DAY)} a day and salt water at ${pct(SALT_DAY)} a day, so a week gives ${pct(W('fresh'))} in fresh water and ${pct(W('salt'))} in salt water, not the same.`
+      : `Salt water is the faster one, at ${pct(SALT_DAY)} a day against ${pct(FRESH_DAY)} a day, so the fresh water nail has ${pct(W('fresh'))} rust, which is less than the ${pct(W('salt'))} of the salt water nail.`,
+    hints: ['Which jar rusted its nail fastest?', `Salt water rusts ${TIMES} times as fast as fresh water.`, 'Pick the second card.'],
     before: () => [bareFormula('fresh', RUST_WEEK), bareFormula('salt', RUST_WEEK), fasterFormula()],
     after: () => [bareFormula('fresh', RUST_WEEK), bareFormula('salt', RUST_WEEK), fasterFormula()],
   },
@@ -169,12 +169,12 @@ export function createModel() {
   function enter(index, keep = {}) {
     m = {index, time: 0, phase: 'ready', run: null, shelf: [], rows: [], guess: null, answered: null, say: '', auto: null, lastPress: -1, job: 0, tries: 0, tested: new Set(), ...keep};
     const id = STEPS[index].id;
-    if (id === 'wonder') { m.shelf = ['dry', 'salt']; runDays(RUST_WEEK, .6); }
+    if (id === 'wonder') { m.shelf = ['dry', 'salt']; runDays(RUST_WEEK, .6, WATCH_DAY_S); }
     if (isWord(id)) set.days = RUST_WEEK;
     if (id === 'word-rust') m.shelf = ['dry', 'fresh'];
     if (id === 'word-salt') m.shelf = ['fresh', 'salt'];
     if (id === 'word-zinc') m.shelf = ['salt', 'zinc'];
-    if (id === 'watch') { m.shelf = JARS.map(j => j.id); runDays(RUST_WEEK, .6); }
+    if (id === 'watch') { m.shelf = JARS.map(j => j.id); runDays(RUST_WEEK, .6, WATCH_DAY_S); }
     if (id === 'try-days') { m.shelf = ['salt']; set.days = RUST_WEEK; m.phase = 'set'; }
     if (id === 'try-zinc') { m.shelf = ['zinc']; m.phase = 'guess'; }
     if (id === 'try-free') { set.days = RUST_WEEK; set.coat = 'bare'; set.jar = 'salt'; m.shelf = [set.jar]; m.phase = 'set'; }
@@ -186,10 +186,10 @@ export function createModel() {
   // The calendar runs from day 0 to `to`; the shelf's nails rust as the bench says.
   function runDays(to, delay = 0, dayS = DAY_S) { m.run = {day: 0, to, t: -delay, held: 0, dayS}; m.phase = 'running'; }
   const day = () => m.run?.day ?? 0;
-  // The days the sums show: the calendar's whole day while it runs or after it stops, otherwise the dial's setting.
+  // The days the worked lines show: the calendar's whole day while it runs or after it stops, otherwise the dial's setting.
   const sumDays = () => m.run ? Math.floor(m.run.day + 1e-9) : set.days;
   const setting = () => ['try-days', 'try-free', 'alone'].includes(step().id) && m.phase === 'set';
-  // The word steps stay open after their first run, so the player can go on turning the dial and watching the sums.
+  // The word steps stay open after their first run, so the player can go on turning the dial and watching the worked lines.
   const wordOpen = () => isWord(step().id) && (m.phase === 'ready' || m.phase === 'done');
   const canDays = () => (setting() && step().id !== 'alone') || wordOpen();
   const canCoat = () => setting() && step().id !== 'try-days';
@@ -244,13 +244,13 @@ export function createModel() {
     if (kind === 'answer' && m.phase === 'guess') {
       const picked = Number(value);
       if (id === 'try-days' && DAY_GUESSES[picked]) {
-        m.guess = picked; runDays(TRY_DAYS);
-        m.say = `You chose ${DAY_GUESSES[picked].label.toLowerCase()}. Watch the nail as the days run.`;
+        m.guess = picked; runDays(TRY_DAYS, 0, WATCH_DAY_S);
+        m.say = `You chose ${DAY_GUESSES[picked].label}. Watch the nail as the days run.`;
         return {kind: 'progress', say: m.say};
       }
       if (id === 'try-zinc' && ZINC_GUESSES[picked]) {
         m.guess = picked; m.phase = 'ready';
-        m.say = `You chose “${ZINC_GUESSES[picked].label.toLowerCase()}”. Press Space to run the calendar on to day ${ZINC_TO}, and watch the grey coat on the nail.`;
+        m.say = `You chose ${ZINC_GUESSES[picked].label}. Run the calendar on to day ${ZINC_TO} and watch the grey coat on the nail.`;
         return {kind: 'progress', say: m.say};
       }
       return null;
@@ -259,7 +259,7 @@ export function createModel() {
     return null;
   }
 
-  // ↑ one more day, ↓ one fewer, within the dial's range. A press clears the calendar, so the sums show the new setting at once.
+  // ↑ one more day, ↓ one fewer, within the dial's range. A press clears the calendar, so the worked lines show the new setting at once.
   function turn(way, held) {
     if (!canDays() || m.auto || (way !== 'up' && way !== 'down')) return null;
     if (held && m.time - m.lastPress < HELD_GAP_S) return null;
@@ -288,7 +288,7 @@ export function createModel() {
   function go() {
     const id = step().id;
     if (wordOpen()) {
-      runDays(set.days);
+      runDays(set.days, 0, WATCH_DAY_S);
       m.say = `The calendar is running for ${dayWord(set.days)}. Watch the nails.`;
       return {kind: 'progress', say: m.say};
     }
@@ -299,9 +299,9 @@ export function createModel() {
     }
     if (!setting() || m.auto) return null;
     if (id === 'try-days') {
-      if (set.days !== TRY_DAYS) return {kind: 'note', say: `This test runs for ${TRY_DAYS} days, so press ${set.days > TRY_DAYS ? '↓' : '↑'} until the dial reads ${TRY_DAYS}.`};
+      if (set.days !== TRY_DAYS) return {kind: 'note', say: `This test runs for ${TRY_DAYS} days, so turn the dial ${set.days > TRY_DAYS ? 'down' : 'up'} to ${TRY_DAYS} days.`};
       m.phase = 'guess';
-      m.say = `A bare nail will sit in salt water for ${TRY_DAYS} days. What percentage of the nail will have rusted by then? Pick a card.`;
+      m.say = `A bare nail sits in salt water for ${TRY_DAYS} days. What percentage of the nail rusts? Pick a card.`;
       return {kind: 'progress', say: m.say};
     }
     if (id === 'try-free') {
@@ -326,17 +326,17 @@ export function createModel() {
     if (id === 'wonder' || id === 'watch') { m.phase = 'done'; seen.add(id); return null; }
     if (id === 'word-rust') {
       m.phase = 'done'; seen.add(id);
-      m.say = `After ${dayWord(days)} the nail in fresh water has ${pct(shareOf('fresh', days))} rust, because water and oxygen both reached the iron. The nail in dry air met oxygen but no water, so it has ${pct(shareOf('dry', days))} rust. In this game the rust grows by the same amount every day, which draws a straight line on the graph. Real rust is less regular than that, and real nails rust far more slowly, so this rule is a simplification that keeps the sums easy to follow. You can choose other days and run them, or press Enter to continue.`;
+      m.say = `After ${dayWord(days)} the nail in fresh water has ${pct(shareOf('fresh', days))} rust, because water and oxygen both reached the iron. The nail in dry air met oxygen but no water, so it has ${pct(shareOf('dry', days))} rust. The rust grows by the same share each day, so the graph is a straight line.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-salt') {
       m.phase = 'done'; seen.add(id);
-      m.say = `After ${dayWord(days)} the nail in salt water has ${pct(shareOf('salt', days))} rust and the nail in fresh water has ${pct(shareOf('fresh', days))} rust, so the salt water has made ${TIMES} times as much rust. Salt water rusts the nail at ${pct(SALT_DAY)} a day and fresh water at ${pct(FRESH_DAY)} a day, because the salt helps the water carry electric charge.${MORE}You can choose other days and run them, or press Enter to continue.`;
+      m.say = `After ${dayWord(days)} the nail in salt water has ${pct(shareOf('salt', days))} rust and the nail in fresh water has ${pct(shareOf('fresh', days))} rust, so the salt water has made ${TIMES} times as much rust. Salt water rusts the nail at ${pct(SALT_DAY)} a day and fresh water at ${pct(FRESH_DAY)} a day, because the salt helps the water carry electric charge.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-zinc') {
       m.phase = 'done'; seen.add(id);
-      m.say = `After ${dayWord(days)} the bare nail has ${pct(shareOf('salt', days))} rust, but the nail with the zinc coat has ${pct(shareOf('zinc', days))} rust, and ${pct(coatOf('zinc', days))} of its coat is left. The zinc wears away first, and the steel under it stays free of rust. You can choose other days and run them, or press Enter to continue.`;
+      m.say = `After ${dayWord(days)} the bare nail has ${pct(shareOf('salt', days))} rust, but the nail with the zinc coat has ${pct(shareOf('zinc', days))} rust, and ${pct(coatOf('zinc', days))} of its coat is left. The zinc wears away first, and the bare steel rusts only after the coat has gone.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'try-days') {
@@ -362,7 +362,7 @@ export function createModel() {
       const r = rustAfter(set.jar, set.coat, days), name = set.coat === 'zinc' ? 'nail with a zinc coat' : 'bare nail';
       const coatTold = set.coat !== 'zinc' ? '' : r.zincLeft > 0 ? `, and ${pct(r.zincLeft)} of its coat is left` : ', and its coat has gone';
       const full = r.rust >= 1 ? ' The nail has rusted all the way through, so the rust stops at 100%.' : '';
-      m.say = `After ${dayWord(days)} in ${jarWords(set.jar)}, the ${name} has ${pct(r.rust)} rust${coatTold}.${full} ${m.tries >= FREE_TRIES ? 'The table keeps your results. Press Enter when you have tested enough settings.' : 'Change the jar, the days or the protection and test a different setting.'}`;
+      m.say = `After ${dayWord(days)} in ${jarWords(set.jar)}, the ${name} has ${pct(r.rust)} rust${coatTold}.${full} ${m.tries >= FREE_TRIES ? 'The table keeps your results, and you have tested enough settings.' : 'Change the jar, the days or the protection and test a different setting.'}`;
       return {kind: 'right', say: m.say};
     }
     // Brian's job: clean enough, with no more protection than it needed?
@@ -370,11 +370,11 @@ export function createModel() {
     m.rows = [...m.rows, {jar: thing.jar, days, coat: set.coat, rust, left: set.coat === 'zinc' ? rustAfter(thing.jar, 'zinc', days).zincLeft : null, job: thing.name}].slice(-6);
     m.phase = 'set';
     if (!clean(rust)) {
-      m.say = `${thing.jar === 'fresh' ? 'Fresh water rusts steel slowly, but left' : 'Left'} bare, ${thing.thing} reaches ${pct(rust)} rust in a week. That is more than ${pct(RUST_OK)}, so it is not clean. Press → to give it a zinc coat, then press Space.`;
+      m.say = `${thing.jar === 'fresh' ? 'Fresh water rusts steel slowly, but left' : 'Left'} bare, ${thing.thing} reaches ${pct(rust)} rust in a week. That is more than ${pct(RUST_OK)}, so it is not clean. It needs a zinc coat.`;
       return {kind: 'fail', say: m.say};
     }
     if (set.coat !== best) {
-      m.say = `${thing.name} stayed clean, but it would stay just as clean when bare, because a bare nail in ${jarWords(thing.jar)} has ${pct(weekRust(thing.jar, 'bare'))} rust after a week. Keep the zinc for places that water reaches. Press ← to leave it bare, then press Space.`;
+      m.say = `${thing.name} stayed clean, but it would stay just as clean when bare, because a bare nail in ${jarWords(thing.jar)} has ${pct(weekRust(thing.jar, 'bare'))} rust after a week. Keep the zinc for places that water reaches.`;
       return {kind: 'fail', say: m.say};
     }
     m.job += 1;
@@ -414,6 +414,12 @@ export function createModel() {
   function replay() {
     const id = step().id;
     if (id === 'wonder' || id === 'watch') enter(m.index);
+    else if (m.phase === 'done' && (isWord(id) || id === 'try-days' || id === 'try-zinc')) {
+      // The word steps and the days' test play their run again; the coat's test runs from day 0 to its end once more.
+      if (id === 'try-days') { runDays(TRY_DAYS, 0, WATCH_DAY_S); m.say = 'Watch the nail as the days run.'; }
+      else if (id === 'try-zinc') { runDays(ZINC_TO); m.say = `The calendar is running on to day ${ZINC_TO}. Watch the grey coat first, and then the steel.`; }
+      else return go();
+    }
     return null;
   }
 
@@ -453,11 +459,11 @@ export function createModel() {
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
       return {...base, scene: id, asking: !answered, answered, shelf: [],
-        reveal: !answered ? null : id === 'check-five' ? {jar: 'salt', days: 5, rust: S5} : id === 'check-zinc' ? {jar: 'zinc', days: 22, rust: Z22, left: 0} : {soak: true},
+        reveal: !answered ? null : id === 'check-five' ? {jar: 'salt', days: 5, rust: S5} : id === 'check-zinc' ? {jar: 'zinc', days: 22, rust: Z22, left: 0} : {sea: true},
         keys: answered ? {} : ANSWER_KEYS, waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick the card with your answer.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, shelf: [],
       say: `Iron rusts when water and oxygen both reach it, and salt water makes the rust form ${TIMES} times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it. Now you can protect three parts of a car.`,
@@ -466,30 +472,30 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, actions: ['replay'], focus: 'shelf', sirena: true,
         say: done ? `The two nails are made of the same steel and sat for the same week, but the nail in the dry jar has ${pct(W('dry'))} rust and the nail in salt water has ${pct(W('salt'))} rust. What did the salt water do to the nail?`
-          : `The Sirena is a car that lay wrecked on the sea floor for sixty years, and it came up crusted in rust, the flaky orange material that forms on iron.${MORE}To find out why, we will watch two nails made of steel, which is mostly iron, for a week, one in a dry jar and one in a jar of salt water. The number above each jar shows how much of its nail has rusted, given as a percentage, which means a number of parts out of every 100. So 50% rust means that 50 parts out of every 100 of the nail have turned to rust, which is half of the nail.`,
-        prompt: done ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the nails.',
+          : `The Sirena lay on the sea floor for sixty years and came up crusted in rust, the orange flakes that form on iron. Two steel nails sit in jars for a week, one in dry air and one in salt water. Each jar shows the percentage of its nail that has rusted, which means the parts out of every 100.`,
+        prompt: done ? 'Press Enter when you are ready to find out.' : 'Watch the nails.',
         hints: ['Watch the two nails.', 'One jar has water in it.', done ? 'Press Enter when you are ready to find out.' : 'Watch, then press Enter.']};
     }
     if (isWord(id)) {
       const open = wordOpen(), ready = m.phase === 'ready', done = m.phase === 'done';
       const intro = {
-        'word-rust': `Rust is the flaky orange material that forms when water and oxygen reach iron. Oxygen is a gas in the air, and some of it dissolves in water. Steel is made mostly of iron, which is why a steel nail can rust.${MORE}We measure how quickly a nail rusts by its rate, which is the percentage of the nail that rusts during one day. In fresh water the rate in this game is ${pct(FRESH_DAY)} a day, so the sum is rust = rate × days. Choose the number of days with ↑ and ↓, watch the sum change, then press Space to run the days.`,
-        'word-salt': `Salt water is water with salt dissolved in it. Here are two nails, one in fresh water and one in salt water. Choose the days, then press Space.${MORE}Rusting works a little like a very slow battery. Tiny particles called electrons, which carry electric charge, pass from the iron to the oxygen, and electric charge must also travel through the water for the rusting to continue. When salt dissolves, it breaks up into charged particles, which carry electric charge through the water easily, so salt water carries charge far better than fresh water does, and the rust forms faster.`,
-        'word-zinc': `A zinc coat is a thin layer of the metal zinc on the steel. Here are a bare nail and a nail with a zinc coat, both in salt water. Choose the days, then press Space.${MORE}To corrode means to be slowly eaten away by a chemical change, and rust is the name for the corrosion of iron. Zinc gives up its electrons more easily than iron does, so while the two metals touch in water, the zinc corrodes instead of the iron. Electrons from the zinc flow into the steel, and that protects the iron from rusting.`,
+        'word-rust': `Rust is the flaky orange material that forms when water and oxygen, a gas in the air, reach iron. Steel is mostly iron, so a steel nail rusts. The rate is the percentage of the nail that rusts during one day.${MORE}In fresh water the rate is ${pct(FRESH_DAY)} a day. Multiply the rate by the days to work out the rust.`,
+        'word-salt': `Salt water is water with salt dissolved in it. Here are two nails, one in fresh water and one in salt water. Run the days and compare how much each nail rusts.${MORE}Rusting works like a very slow battery. The salt breaks into charged particles, and they let electric charge flow through the water, so the rust forms faster.`,
+        'word-zinc': `A zinc coat is a thin layer of the metal zinc on the steel. In salt water the zinc wears away first, and the bare steel rusts after it. Run the days and compare a bare nail with a coated nail.${MORE}To corrode means to be slowly eaten away by a chemical change. Zinc gives up electrons, the tiny particles that carry electric charge, more easily than iron does, so electrons flow from the zinc into the steel and protect the iron.`,
       }[id];
       return {...base, focus: 'shelf', low: {'word-rust': 'rust', 'word-salt': 'salt', 'word-zinc': 'coat'}[id], chart: true, dial: {days: set.days, locked: !open},
-        ...(open ? {keys: {...DAY_KEYS, Space: 'go'}, repeat: ['↑', '↓'], buttons: [RUN]} : {}),
+        ...(open ? {keys: {...DAY_KEYS, Space: 'go'}, repeat: ['↑', '↓'], buttons: [RUN]} : {}), ...(done ? {actions: ['replay']} : {}),
         ...(ready ? {waiting: true, target: 'go', glow: 'calendar'} : {}),
-        say: done ? m.say : intro, prompt: ready ? 'Press ↑ or ↓ to choose the days, then press Space to run them, or click the calendar.' : done ? 'Press Enter to continue, or choose other days and press Space.' : 'Watch the nails.',
-        hints: done ? DONE : ['The calendar on the wall counts the days.', 'Press Space to run the days.', 'Watch my pointer, which is on the calendar. I will run the days.']};
+        say: done ? m.say : intro, prompt: ready ? 'Choose the days and run them, or click the calendar.' : done ? 'Press Enter to continue, or choose other days and run them.' : 'Watch the nails.',
+        hints: done ? DONE : ['The calendar on the wall counts the days.', 'Run the days and watch the nails.', 'Watch my pointer, which is on the calendar. I will run the days.']};
     }
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'], focus: 'shelf',
         say: done ? `After a week the nail in dry air has ${pct(W('dry'))} rust, the nail in fresh water has ${pct(W('fresh'))} rust and the nail in salt water has ${pct(W('salt'))} rust. The nail with a zinc coat in salt water has ${pct(W('zinc'))} rust, and ${pct(coatOf('zinc', RUST_WEEK))} of its coat is left.${MORE}So rust needs water, salt makes the rust form faster, and zinc protects the steel while the coat lasts.`
           : 'Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water. Watch the nails and the table.',
-        prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the nails.',
-        hints: ['Watch the orange rust grow on the nails.', 'Which jar rusts its nail fastest, and which does not rust its nail at all?', done ? 'Press R to watch again.' : 'Wait a moment.']};
+        prompt: done ? 'Press Enter to continue.' : 'Watch the nails.',
+        hints: ['Watch the orange rust grow on the nails.', 'Which jar rusts its nail fastest, and which does not rust its nail at all?', done ? 'Watch again to see the rust grow.' : 'Wait a moment.']};
     }
     if (id === 'try-days') {
       const setNow = setting() && !m.auto;
@@ -498,32 +504,32 @@ export function createModel() {
         target: !setNow ? null : set.days === TRY_DAYS ? 'go' : 'set:best', glow: setNow ? 'dial' : null, waiting: setNow || m.phase === 'guess'};
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, target: null, glow: null,
         cards: DAY_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'nail', rust: c.share}, state: null})),
-        say: m.say, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`Salt water rusted the nail by ${pct(W('salt'))} in ${RUST_WEEK} days.`, `That is ${pct(SALT_DAY)} a day.`, 'Pick a card. Any guess lets you go on.']};
+        say: m.say, prompt: 'Pick the card with your answer.', hints: [`Salt water rusted the nail by ${pct(W('salt'))} in ${RUST_WEEK} days.`, `That is ${pct(SALT_DAY)} a day.`, 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, focus: 'shelf', say: m.say, prompt: 'Watch the nail.', hints: ['Watch the nail.', 'Count the days on the calendar.', 'Wait a moment.']};
-      if (m.phase === 'done') return {...v, focus: 'shelf', mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
-      return {...v, say: m.auto ? autoSay() : m.say || `Now you can use the sum yourself. A bare nail sits in salt water. Turn the day dial to ${TRY_DAYS} days and work out the sum beside the picture, then press Space to answer a question.`,
-        prompt: `The dial reads ${dayWord(set.days)}. Press ↓ for fewer or ↑ for more, then press Space.`,
-        hints: ['The day dial is on the right.', set.days === TRY_DAYS ? `The dial reads ${TRY_DAYS}, so press Space.` : `Press ${set.days > TRY_DAYS ? '↓' : '↑'} until the dial reads ${TRY_DAYS}, then press Space.`, 'Watch my pointer. I will turn the dial, and then you can answer the question.']};
+      if (m.phase === 'done') return {...v, focus: 'shelf', actions: ['replay'], mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
+      return {...v, say: m.auto ? autoSay() : m.say || `A bare nail sits in salt water for ${TRY_DAYS} days. What percentage of it rusts? Turn the day dial to ${TRY_DAYS} and multiply the rate by the days.`,
+        prompt: `The dial reads ${dayWord(set.days)}. ${set.days === TRY_DAYS ? 'Go to the question.' : `Set it to ${dayWord(TRY_DAYS)}, then go to the question.`}`,
+        hints: ['The day dial is on the right.', set.days === TRY_DAYS ? `The dial reads ${TRY_DAYS} days, so go to the question.` : `Turn the dial ${set.days > TRY_DAYS ? 'down' : 'up'} to ${TRY_DAYS} days, then go to the question.`, 'Watch my pointer. I will turn the dial, and then you can answer the question.']};
     }
     if (id === 'try-zinc') {
       const v = {...base, low: 'coat', focus: 'shelf'};
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, waiting: true,
         cards: ZINC_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'nail', rust: 0, coat: c.days === null ? 1 : .5}, state: null})),
         say: `A week in salt water wore away ${pct(1 - coatOf('zinc', RUST_WEEK))} of the zinc coat. At that rate, when will the whole coat be gone?`,
-        prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`The nail lost ${pct(1 - coatOf('zinc', RUST_WEEK))} of its coat in ${RUST_WEEK} days.`, 'How many weeks would it need to lose all of the coat?', 'Pick a card. Any guess lets you go on.']};
+        prompt: 'Pick the card with your answer.', hints: [`The nail lost ${pct(1 - coatOf('zinc', RUST_WEEK))} of its coat in ${RUST_WEEK} days.`, 'How many weeks would it need to lose all of the coat?', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'ready') return {...v, keys: {Space: 'go'}, waiting: true, target: 'go', glow: 'calendar', buttons: [RUN], say: m.say,
-        prompt: `Press Space to run the calendar on to day ${ZINC_TO}, or click the calendar.`, hints: ['Watch the grey coat on the nail.', 'Press Space to run the days.', 'Watch my pointer. I will run the days.']};
+        prompt: `Run the calendar on to day ${ZINC_TO}, or click the calendar.`, hints: ['Watch the grey coat on the nail.', 'Run the calendar and watch the coat.', 'Watch my pointer. I will run the days.']};
       if (m.phase === 'running') return {...v, say: m.say, prompt: 'Watch the coat.', hints: ['Watch the coat become thinner.', 'What happens when the coat has gone?', 'Wait a moment.']};
-      return {...v, mood: ZINC_GUESSES[m.guess]?.days === ZINC_DAYS ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
+      return {...v, actions: ['replay'], mood: ZINC_GUESSES[m.guess]?.days === ZINC_DAYS ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
     }
     if (id === 'try-free') {
       const setNow = setting() && !m.auto;
       const v = {...base, dial: {days: set.days, locked: !setNow}, switch: {coat: set.coat, locked: !setNow}, jarPick: {jar: set.jar, locked: !setNow}, best: goal(),
         keys: setNow ? {...DAY_KEYS, ...COAT_KEYS, ...JAR_KEYS, Space: 'go'} : {}, repeat: setNow ? ['↑', '↓'] : [], buttons: setNow ? [RUN] : [], target: !setNow ? null : testedNow() ? 'set:best' : 'go', glow: setNow ? 'set' : null, waiting: setNow && !seen.has(id)};
       if (m.phase === 'running') return {...v, focus: 'shelf', say: m.say, prompt: 'Watch the nail.', hints: ['Watch the nail.', 'Compare this result with the table.', 'Wait a moment.']};
-      return {...v, say: m.auto ? autoSay() : m.say || `Now you can experiment. Press 1, 2 or 3 to choose the jar, ↑ and ↓ to choose the days, up to ${FREE_MAX_DAYS}, and ← and → to choose bare steel or a zinc coat. Test at least ${FREE_TRIES} different settings.${MORE}The sums beside the picture change as you change the settings, so you can work out the rust before you press Space. The table keeps your results so that you can compare them.`,
-        prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to run the days. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
-        hints: ['Change at least one setting, then press Space to test it.', `Try a zinc coat for more than ${ZINC_DAYS} days, and see what happens after the coat has gone.`, 'Watch my pointer. I will test a setting that you have not tested yet.']};
+      return {...v, say: m.auto ? autoSay() : m.say || `Test at least ${FREE_TRIES} different settings. Choose a jar, a number of days up to ${FREE_MAX_DAYS}, and bare steel or a zinc coat, then run the days.${MORE}The table keeps your results so that you can compare them.`,
+        prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings and run the days. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
+        hints: ['Change at least one setting, then run the days.', `Try a zinc coat for more than ${ZINC_DAYS} days, and see what happens after the coat has gone.`, 'Watch my pointer. I will test a setting that you have not tested yet.']};
     }
     // Brian's job.
     const setNow = setting() && !m.auto, at = Math.min(m.job, JOBS.length - 1), thing = JOBS[at], g = goal();
@@ -533,12 +539,12 @@ export function createModel() {
       target: !setNow ? null : set.coat === g.coat ? 'go' : 'set:best', glow: setNow ? 'set' : null, waiting: setNow};
     if (m.phase === 'done') return {...jv, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
     if (m.phase === 'running') return {...jv, focus: 'shelf', say: m.say, prompt: 'Watch the week.', hints: ['Watch the nail.', `Clean means ${pct(RUST_OK)} rust or less after a week.`, 'Wait a moment.']};
-    const intro = `Here is a job for you. Three things stand in the yard, and each one must stay clean, which means that it has ${pct(RUST_OK)} rust or less after a week. Give each one the least protection that keeps it clean, because a zinc coat costs time and money to put on.${MORE}The first thing is ${thing.thing}, ${thing.where}.`;
+    const intro = `Three things stand in the yard, and each one must stay clean, which means ${pct(RUST_OK)} rust or less after a week. Give each one a zinc coat only where the bare steel would not stay clean.${MORE}The first thing is ${thing.thing}, ${thing.where}.`;
     return {...jv,
       say: m.auto ? autoSay() : m.job === 0 && !m.say ? intro : m.say,
-      prompt: `${thing.name} ${thing.where.replace('which ', '')}. ${set.coat === 'zinc' ? 'It has a zinc coat.' : 'It is bare.'} Press ← for bare or → for a zinc coat, then press Space to run the week.`,
+      prompt: `${thing.name} ${thing.where.replace('which ', '')}. ${set.coat === 'zinc' ? 'It has a zinc coat.' : 'It is bare.'} Choose bare or a zinc coat, then run the week.`,
       hints: [`${thing.name} is like the nail in ${jarWords(thing.jar)}. How much rust did a bare nail have there after a week?`,
-        `A bare nail there has ${pct(weekRust(thing.jar, 'bare'))} rust after a week. ${clean(weekRust(thing.jar, 'bare')) ? 'That is clean, so leave it bare.' : `That is more than ${pct(RUST_OK)}, so it needs a zinc coat.`} Then press Space.`,
+        `A bare nail there has ${pct(weekRust(thing.jar, 'bare'))} rust after a week. ${clean(weekRust(thing.jar, 'bare')) ? 'That is clean, so leave it bare.' : `That is more than ${pct(RUST_OK)}, so it needs a zinc coat.`}`,
         'Watch my pointer. I will set the protection and run the week.']};
   }
 

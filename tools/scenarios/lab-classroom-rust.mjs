@@ -44,10 +44,10 @@ export async function run(c) {
     if (step === 'word-salt') { await press('Backspace'); await at('word-rust', 's.ready'); await press('Enter'); await at('word-salt', 's.ready'); }
     await press('Enter');
   }
-  await at('watch'); await wait(2500); await shot('watch-running'); await at('watch', 's.ready'); await shot('watch');
+  await at('watch'); await wait(6000); await shot('watch-running'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
   // Three days: Space at 7 days says to turn the dial; 3 days, a wrong guess says why.
-  await at('try-days'); await shot('try-days'); await press('Space'); await saying('press ↓ until the dial reads 3', 'the wrong day says why');
+  await at('try-days'); await shot('try-days'); await press('Space'); await saying('turn the dial down to 3 days', 'the wrong day says why');
   await press('ArrowDown', 4); await prompt('3 days', 'the dial reads 3'); await summing('12% a day × 3 days = ?', 'the sum follows the dial and waits for the answer'); await press('Space'); await at('try-days', 's.cards === 3'); await wait(300); await shot('try-days-guess');
   await press('Digit1'); await at('try-days', 's.ready'); await saying('salt water rusts the nail at 12% a day', 'a wrong guess says why'); await summing('12% a day × 3 days = 36%', 'the sum shows its answer after the run'); await shot('try-days-done');
   await next('try-days');
@@ -65,7 +65,7 @@ export async function run(c) {
   await press('Digit1'); await press('ArrowLeft'); await press('Space'); await at('try-free', 's.ready'); await saying('in dry air', 'the third run says its result'); await shot('try-free-three');
   await next('try-free');
   // Brian's job: the trailer bare is too little; one click on the switch for zinc; Show me for the toolbox; the gate.
-  await at('alone'); await shot('alone'); await summing('12% a day × 7 days = 84%', 'the job shows the sum of the bare trailer'); await press('Space'); await saying('so it is not clean. Press →', 'too little says why'); await wait(300); await shot('alone-too-little');
+  await at('alone'); await shot('alone'); await summing('12% a day × 7 days = 84%', 'the job shows the sum of the bare trailer'); await press('Space'); await saying('so it is not clean. It needs a zinc coat', 'too little says why'); await wait(300); await shot('alone-too-little');
   const zinc = await toScreen(870, 262);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: zinc.x, y: zinc.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: zinc.x, y: zinc.y, button: 'left', buttons: 0, clickCount: 1});
@@ -78,7 +78,7 @@ export async function run(c) {
   await press('ArrowRight'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
   if (!(await bubble()).includes('finishes the job')) throw Error('The job should end done: ' + await bubble());
   await next('alone');
-  for (const [step, answer] of [['check-five', 'Digit2'], ['check-zinc', 'Digit1'], ['check-sirena', 'Digit1']]) {
+  for (const [step, answer] of [['check-five', 'Digit2'], ['check-zinc', 'Digit1'], ['check-sirena', 'Digit2']]) {
     await at(step); await wait(300); await shot(step);
     if (!(await c.evaluate(`(() => { const p = document.querySelector('.lc-page').getBoundingClientRect(), b = document.querySelector('.lc-bubble').getBoundingClientRect(); return b.top >= p.top - 1 && (b.bottom <= p.bottom + 1 || b.height > p.height); })()`))) throw Error(`${step}: Brian's question is cut off.`);
     await press(answer); await at(step, 's.ready'); await wait(500); await shot(`${step}-answered`);
