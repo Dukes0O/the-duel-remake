@@ -53,11 +53,11 @@ export async function run(c) {
   await next('word-wax');
   await at('word-glide'); await shot('word-glide-ready'); await press('Space'); await wait(4000); await shot('word-glide-running'); await at('word-glide', 's.ready'); await shot('word-glide');
   await next('word-glide');
-  // Friction: the arrows, the bars and the sums follow the tin.
+  // Friction: the arrows, the bars and the formulas follow the tin.
   await at('word-friction'); await shot('word-friction');
-  if (!(await worked('0.05 × 9.81 × 0.98481'))) throw Error('The sums should start on a ski with no wax.');
+  if (!(await worked('0.05 × 9.81 × 0.98481'))) throw Error('The formulas should start on a ski with no wax.');
   await press('Digit1'); await at('word-friction', 's.ready'); await wait(300); await shot('word-friction-hard');
-  if (!(await worked('0.045 × 9.81 × 0.98481'))) throw Error('The sums did not follow the tin.');
+  if (!(await worked('0.045 × 9.81 × 0.98481'))) throw Error('The formulas did not follow the tin.');
   await next('word-friction');
   await at('word-crystals'); await shot('word-crystals-cold'); await press('ArrowRight', 3); await at('word-crystals', 's.ready'); await shot('word-crystals-warm');
   // The dial stays open after the answer.
@@ -71,14 +71,14 @@ export async function run(c) {
   await next('why-wet');
   await at('watch'); await wait(5000); await shot('watch-racing'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
-  // The free test: the snow and the wax move the sums at once, the table keeps the results, and three settings open Continue.
+  // The free test: the snow and the wax move the formulas at once, the table keeps the results, and three settings open Continue.
   await at('try-free'); await shot('try-free');
   await press('ArrowRight'); await wait(200);
-  if (!(await worked('√(2 × 50 ÷ 1.124)'))) throw Error('The sums did not follow the snow.');
+  if (!(await worked('√(2 × 50 ÷ 1.124)'))) throw Error('The formulas did not follow the snow.');
   await press('Digit2'); await wait(200);
-  if (!(await worked('√(2 × 50 ÷ 1.269)'))) throw Error('The sums did not follow the wax.');
+  if (!(await worked('√(2 × 50 ÷ 1.269)'))) throw Error('The formulas did not follow the wax.');
   await shot('try-free-set');
-  await press('Space'); await wait(3000); await shot('try-free-racing'); await saying('test a different setting', 'the first race says its result');
+  await press('Space'); await wait(3000); await shot('try-free-racing'); await saying('has a friction number of 0.045', 'the first race says its result');
   await press('Digit3'); await press('Space'); await saying('so the ski was slower', 'the second race says its result'); await c.waitFor(`document.querySelector('.lc-prompt')?.textContent.includes('tested so far: 2')`, 'two settings counted', 10_000);
   await shot('try-free-two');
   await press('ArrowRight'); await press('Digit1'); await wait(200); await shot('try-free-wet-hard');
@@ -99,7 +99,7 @@ export async function run(c) {
   await press('Digit1'); await press('Space'); await wait(300); await shot('alone-day-two');
   for (const rung of [1, 2, 3]) { await press('KeyH'); await at('alone', `s.help === ${rung}`); }
   await wait(1200); await shot('alone-show-me');
-  await c.waitFor(`document.querySelector('.lc-bubble').textContent.includes("Wet snow, -1 °C")`, 'day three', 10_000);
+  await c.waitFor(`document.querySelector('.lc-bubble').textContent.includes("Wet snow, 0 °C")`, 'day three', 10_000);
   await press('Digit3'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
   await next('alone');
   for (const [step, answer] of [['check-cold', 'Digit1'], ['check-rule', 'Digit1'], ['check-game', 'Digit1']]) {

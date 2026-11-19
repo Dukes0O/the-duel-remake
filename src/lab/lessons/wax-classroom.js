@@ -31,7 +31,7 @@ export const band = snow => {
 const snowAt = celsius => Math.round(celsius) <= SNOW_DAYS.powder.high ? 'powder' : Math.round(celsius) <= SNOW_DAYS.cold.high ? 'cold' : 'wet';
 
 // Brian's job: three days on the ski menu, in the game's own words (each inside the day's band).
-export const DAYS = Object.freeze([{snow: 'powder', celsius: -13}, {snow: 'cold', celsius: -3}, {snow: 'wet', celsius: -1}].map(Object.freeze));
+export const DAYS = Object.freeze([{snow: 'powder', celsius: -13}, {snow: 'cold', celsius: -3}, {snow: 'wet', celsius: 0}].map(Object.freeze));
 export const todayLine = day => `Today's snow: ${SNOWS[day.snow].name}, ${tidy(day.celsius)}`;
 const menuSays = day => `The ski menu reads “${todayLine(day)}”.`;
 
@@ -44,11 +44,11 @@ const FREE_ORDER = Object.freeze([['powder', 'soft'], ['wet', 'hard'], ['cold', 
 export const STEPS = Object.freeze([
   {id: 'wonder', part: 0, title: 'Why did one win?'},
   {id: 'word-wax', part: 1, title: 'Wax', word: 'wax-wax'},
-  {id: 'word-glide', part: 1, title: 'Glide', word: 'wax-glide'},
-  {id: 'word-friction', part: 1, title: 'Friction'},
+  {id: 'word-glide', part: 1, title: 'Glide', word: 'wax-glide', words: ['wax-acceleration']},
+  {id: 'word-friction', part: 1, title: 'Friction', word: 'wax-friction'},
   {id: 'word-crystals', part: 1, title: 'Snow crystals', word: 'wax-snow-crystals'},
-  {id: 'why-cold', part: 2, title: 'Why cold snow needs a hard wax'},
-  {id: 'why-wet', part: 2, title: 'Why wet snow needs a soft wax'},
+  {id: 'why-cold', part: 2, title: 'Why cold snow needs a hard wax', words: ['wax-film']},
+  {id: 'why-wet', part: 2, title: 'Why wet snow needs a soft wax', words: ['wax-suction']},
   {id: 'watch', part: 2, title: 'Three snows, three waxes'},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'try-cool', part: 3, title: 'Cool snow'},
@@ -62,7 +62,7 @@ export const STEPS = Object.freeze([
 
 export const KEY_IDEAS = Object.freeze([
   {id: 'rule', text: 'The colder the snow, the harder the wax. Dry powder needs a hard wax, cool snow needs a medium wax, and wet snow needs a soft wax.'},
-  {id: 'glide', text: 'A wax that suits the snow glides faster than no wax. In this game, a wax that does not suit the snow glides slower than no wax.'},
+  {id: 'glide', text: 'A wax that suits the snow glides faster than no wax, and a wax that does not suit the snow glides slower than no wax.'},
   {id: 'game', text: 'In the game, read today’s snow on the ski menu and pick the wax that suits that snow.'},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Cold snow needs a hard wax, and warm snow needs a soft wax.',
@@ -72,9 +72,13 @@ export const WORDS = Object.freeze([
   {id: 'wax-wax', word: 'Wax', meaning: 'Wax is a thin coat on the base of a ski that helps the ski slide over snow.'},
   {id: 'wax-glide', word: 'Glide', meaning: 'Glide is how smoothly a ski slides over the snow.'},
   {id: 'wax-snow-crystals', word: 'Snow crystals', meaning: 'Snow crystals are tiny pieces of ice, which are sharp and hard when the snow is very cold, and rounded and wet near 0 °C.'},
+  {id: 'wax-friction', word: 'Friction', meaning: 'Friction is the force that resists when one surface slides over another. The friction number compares that force with the weight of the ski pressing on the snow, so a smaller number means less friction.'},
+  {id: 'wax-acceleration', word: 'Acceleration (m/s²)', meaning: 'Acceleration is how quickly a speed grows. An acceleration of 1 m/s² adds 1 m/s to the speed during every second.'},
+  {id: 'wax-film', word: 'Film of water', meaning: 'A film is a very thin layer of water that melts under a ski as it slides, and helps the ski to slide.'},
+  {id: 'wax-suction', word: 'Suction', meaning: 'Suction is the pull that holds two surfaces together through a sheet of water, like a wet glass on a smooth table.'},
 ].map(Object.freeze));
 
-// ---- the sums beside the board, from the numbers they show, so that each comes out on a calculator ----
+// ---- the formulas beside the board, from the numbers they show, so that each comes out on a calculator ----
 const G = GRAVITY, SIN_SHOWN = 0.17365, COS_SHOWN = 0.98481, SLOPE = GLIDE.slopeDeg;
 const r3 = value => Number(value.toFixed(3));
 const PULL = r3(G * SIN_SHOWN);
@@ -83,17 +87,17 @@ export function sumOf(friction) {
   return {friction, pull: PULL, slowing, acceleration, seconds: Number(Math.sqrt(2 * STRIP_M / acceleration).toFixed(2))};
 }
 const A3 = value => value.toFixed(3);
-const FRICTION_NOTE = `In this game, a wax that suits the snow has ${FRICTION.right}, no wax has ${FRICTION.none}, and a wax that does not suit the snow has ${FRICTION.wrong}. A smaller number leaves more acceleration.`;
+const FRICTION_NOTE = `The friction number is ${FRICTION.right} with a wax that suits the snow, ${FRICTION.none} with no wax and ${FRICTION.wrong} with a wax that does not suit the snow. A smaller number leaves more acceleration.`;
 const pullFormula = teach => ({title: 'How much gravity pulls the ski along the slope', formula: 'pull = g × sin(slope)', worked: `${G} × ${SIN_SHOWN} = ${A3(PULL)} m/s^2`,
-  ...(teach ? {note: `g is the acceleration caused by gravity. sin, short for sine, turns an angle into a share, and sin ${SLOPE}° is ${SIN_SHOWN}.`} : {})});
+  ...(teach ? {note: `g is the speed gravity adds to a falling object during every second, ${G} m/s, so g is ${G} m/s^2. On a calculator, type ${SLOPE} and press sin to get ${SIN_SHOWN}, the share of g that pulls the ski along the slope.`} : {})});
 const TIME_NOTE = '√ means the square root, the number that gives the number inside when it is multiplied by itself.';
-// Every sum for one wax on one snow. The Friction step explains g, sin and cos, and later steps leave those notes out, so the time stays in view.
+// Every formula for one wax on one snow. The Friction step explains g, sin and cos, and later steps leave those notes out, so the time stays in view.
 function sums(wax, snow, teach = false) {
   const s = sumOf(frictionOf(wax, snow)), what = wax ? `${lower(WAX_NAMES[wax])} wax` : 'no wax';
   return [
     {title: `The friction number with ${what} on ${snowName(snow)}`, formula: `friction = ${s.friction}`, note: FRICTION_NOTE},
     pullFormula(teach),
-    {title: 'How much friction slows the ski', formula: 'slowing = friction × g × cos(slope)', worked: `${s.friction} × ${G} × ${COS_SHOWN} = ${A3(s.slowing)} m/s^2`, ...(teach ? {note: `cos, short for cosine, also turns an angle into a share. That share of the ski’s weight presses into the snow.`} : {})},
+    {title: 'How much friction slows the ski', formula: 'slowing = friction × g × cos(slope)', worked: `${s.friction} × ${G} × ${COS_SHOWN} = ${A3(s.slowing)} m/s^2`, ...(teach ? {note: `On a calculator, type ${SLOPE} and press cos to get ${COS_SHOWN}, the share of the ski’s weight that presses into the snow.`} : {})},
     {title: 'The acceleration that is left', formula: 'acceleration = pull − slowing', worked: `${A3(s.pull)} − ${A3(s.slowing)} = ${A3(s.acceleration)} m/s^2`},
     {title: 'The time down the strip', formula: 'time = √(2 × distance ÷ acceleration)', worked: `√(2 × ${STRIP_M} ÷ ${A3(s.acceleration)}) = ${s2(s.seconds)}`},
   ];
@@ -111,27 +115,27 @@ const threeTimes = () => [['A wax that suits the snow', FRICTION.right], ['No wa
   const s = sumOf(friction);
   return {title, formula: `friction = ${friction}`, worked: `√(2 × ${STRIP_M} ÷ ${A3(s.acceleration)}) = ${s2(s.seconds)}`};
 });
-// The first word step's sum: the gap between two times on the dry powder of the race.
+// The first word step's formula: the gap between two times on the dry powder of the race.
 function gapFormula(pick) {
   // Hard wax is compared with the soft wax it raced, because a time against itself would show nothing.
   const faster = sumOf(FRICTION.right).seconds, slower = sumOf(frictionOf(pick && pick !== 'hard' ? pick : 'soft', 'powder')).seconds;
   const title = !pick ? 'The gap in the race you watched' : pick === 'hard' ? 'Hard wax against soft wax on dry powder' : `${WAX_NAMES[pick]} wax against hard wax on dry powder`;
   return [{title, formula: 'gap = slower time − faster time', worked: `${s2(slower)} − ${s2(faster)} = ${s2(slower - faster)}`,
-    note: 'The stopwatches show one decimal place, and the sums use two.'}];
+    note: 'The stopwatches show one decimal place, and the formulas use two.'}];
 }
-// The glide step's sums, at the whole seconds gone so far.
+// The glide step's formulas, at the whole seconds gone so far.
 function glideFormulas(lane) {
   const a = sumOf(FRICTION.right).acceleration;
   const motion = t => {
     const speed = Number((a * t).toFixed(2));
     return [
-      {title: 'The speed after each second', formula: 'speed = acceleration × time', worked: `${A3(a)} m/s^2 × ${t} s = ${speed.toFixed(2)} m/s`, note: `In this example the speed grows by ${A3(a)} m/s during every second. The next step shows where that number comes from.`},
+      {title: 'The speed after each second', formula: 'speed = acceleration × time', worked: `${A3(a)} m/s^2 × ${t} s = ${speed.toFixed(2)} m/s`, note: `With hard wax on dry powder, the speed grows by ${A3(a)} m/s during every second. A later step shows where that number comes from.`},
       {title: 'The speed in kilometres per hour', formula: 'km/h = m/s × 3.6', worked: `${speed.toFixed(2)} m/s × 3.6 = ${(speed * 3.6).toFixed(1)} km/h`},
     ];
   };
   if (lane.done) {
     const s = sumOf(FRICTION.right);
-    return [...motion(s.seconds), {title: 'The time down the strip', formula: 'time = √(2 × distance ÷ acceleration)', worked: `√(2 × ${STRIP_M} ÷ ${A3(a)}) = ${s2(s.seconds)}`, note: `This comes from the sum for distance, which is distance = 0.5 × acceleration × time^2. ${TIME_NOTE}`}];
+    return [...motion(s.seconds), {title: 'The time down the strip', formula: 'time = √(2 × distance ÷ acceleration)', worked: `√(2 × ${STRIP_M} ÷ ${A3(a)}) = ${s2(s.seconds)}`, note: `This comes from the distance formula, distance = 0.5 × acceleration × time^2. ${TIME_NOTE}`}];
   }
   const t = Math.floor(lane.t);
   return [...motion(t), {title: 'The distance so far', formula: 'distance = 0.5 × acceleration × time^2', worked: `0.5 × ${A3(a)} × ${t}^2 = ${(.5 * a * t * t).toFixed(1)} m`}];
@@ -151,39 +155,41 @@ const picking = (go, target) => ({keys: {...PICK_KEYS, ...(go ? {Space: 'go'} : 
   buttons: go ? [{action: 'go', label: go, key: 'Space'}] : []});
 
 // ---- the checks ----
+// The tins on Question 1 sit in this order, so that the right one is not always the first card.
+const COLD_ORDER = Object.freeze(['medium', 'soft', 'hard']);
 const CHECKS = {
   'check-cold': {
     question: `The ski menu shows that the snow is dry powder at ${SNOWS.powder.celsius} °C. Which wax should you put on the ski?`,
-    answers: WAXES.map(wax => ({label: `${WAX_NAMES[wax]} wax`, picture: {kind: 'tin', wax}})),
-    correct: 0, snow: 'powder',
+    answers: COLD_ORDER.map(wax => ({label: `${WAX_NAMES[wax]} wax`, picture: {kind: 'tin', wax}})),
+    correct: 2, snow: 'powder',
     right: () => 'Correct. Very cold snow has hard, sharp crystals, and a hard wax is too hard for the points of those crystals to press into.',
-    wrong: picked => `${WAX_NAMES[WAXES[picked]]} wax suits ${picked === 1 ? 'cool snow' : 'wet snow near 0 °C'}. Very cold snow has hard, sharp crystals, which press into a softer wax, so this snow needs a hard wax. Watch the two skis race.`,
-    race: picked => picked === 0 ? 'soft' : WAXES[picked],
+    wrong: picked => `${WAX_NAMES[COLD_ORDER[picked]]} wax suits ${COLD_ORDER[picked] === 'medium' ? 'cool snow' : 'wet snow near 0 °C'}. Very cold snow has hard, sharp crystals, which press into a softer wax, so this snow needs a hard wax. Watch the two skis race.`,
+    race: picked => COLD_ORDER[picked] === 'hard' ? 'soft' : COLD_ORDER[picked],
     hints: ['Think of the sharp, cold crystals in the magnifier.', 'The colder the snow, the harder the wax.', 'Pick hard wax.'],
   },
   'check-rule': {
     question: 'As the snow gets colder, how should the wax change?',
-    answers: [{label: 'The wax should get harder', picture: {kind: 'rule', way: 'harder'}}, {label: 'The wax should get softer', picture: {kind: 'rule', way: 'softer'}}, {label: 'The wax can stay the same', picture: {kind: 'rule', way: 'same'}}],
-    correct: 0, snow: null,
+    answers: [{label: 'The wax should get softer', picture: {kind: 'rule', way: 'softer'}}, {label: 'The wax should get harder', picture: {kind: 'rule', way: 'harder'}}, {label: 'The wax can stay the same', picture: {kind: 'rule', way: 'same'}}],
+    correct: 1, snow: null,
     right: () => 'Correct. Cold, sharp crystals need a hard wax, and wet snow near 0 °C needs a soft wax.',
-    wrong: picked => picked === 1 ? 'It is the other way round. Cold, sharp crystals need a hard wax, and wet snow near 0 °C needs a soft wax.'
+    wrong: picked => picked === 0 ? 'It is the other way round. Cold, sharp crystals need a hard wax, and wet snow near 0 °C needs a soft wax.'
       : `One wax does not suit every snow. On dry powder, the ski with the wax that suits the snow glided the strip in ${s1(runSeconds('hard', 'powder'))}, and the ski with a wax that does not suit the snow glided the strip in ${s1(runSeconds('soft', 'powder'))}. The colder the snow, the harder the wax.`,
-    hints: ['Hard wax went on the coldest tray.', 'Cold snow needs a hard wax, and wet snow needs a soft wax.', 'Pick the first card.'],
+    hints: ['Hard wax went on the coldest tray.', 'Cold snow needs a hard wax, and wet snow needs a soft wax.', 'Pick the card that says the wax should get harder.'],
   },
   'check-game': {
     question: 'Before a ski run in the game, where can you read today’s snow and its temperature?',
     answers: [{label: 'On the ski menu', picture: {kind: 'game', what: 'menu'}}, {label: 'On the paint of the skis', picture: {kind: 'game', what: 'skis'}}, {label: 'In the shop', picture: {kind: 'game', what: 'shop'}}],
     correct: 0, snow: null,
     right: () => 'Correct. The ski menu shows today’s snow and its temperature, so you can pick the wax that suits that snow.',
-    wrong: picked => picked === 1 ? 'The paint of the skis is only colour, so the paint shows nothing about the snow. The ski menu shows today’s snow and its temperature, such as “Cool snow, -5 °C”.'
-      : 'The shop sells the Wax kit, but the shop does not show today’s snow. The ski menu does, such as “Cool snow, -5 °C”.',
+    wrong: picked => picked === 1 ? `The paint of the skis is only colour, so the paint shows nothing about the snow. The ski menu shows today’s snow and its temperature, such as “${todayLine({snow: 'cold', celsius: -5})}”.`
+      : `The shop sells the Wax kit, but the shop does not show today’s snow. The ski menu does, such as “${todayLine({snow: 'cold', celsius: -5})}”.`,
     hints: ['Before the slalom, one screen shows the snow.', 'That screen says “Today’s snow” and gives the temperature.', 'Pick the first card.'],
   },
 };
 // What the two steps on the reason say once the player has changed to the wax that suits the snow.
 const WHY_CLOSING = {
-  'why-cold': `A soft wax is soft enough for the sharp points to press into it, so each point catches on the wax as the ski moves, and that adds friction. A hard wax is too hard for the points to press into, so the points stay on the surface and there is less friction.${MORE}On this snow the friction number is ${FRICTION.wrong} with soft wax and ${FRICTION.right} with hard wax. You can keep changing the wax to compare them.`,
-  'why-wet': `A softer wax repels water better, so the water gathers into separate beads instead of spreading into one sheet, and less of a sheet means less suction. The grains here are round, so there are no sharp points to press into the soft wax.${MORE}On this snow the friction number is ${FRICTION.wrong} with hard wax and ${FRICTION.right} with soft wax. Racing skis also have fine grooves in the base, which let the water escape. You can keep changing the wax to compare them.`,
+  'why-cold': `A soft wax is soft enough for the sharp points to press into it, so each point catches on the wax as the ski moves, and that adds friction. A hard wax is too hard for the points to press into, so the points stay on the surface and there is less friction.${MORE}On this snow the friction number is ${FRICTION.wrong} with soft wax and ${FRICTION.right} with hard wax.`,
+  'why-wet': `With soft wax the water gathers into separate beads instead of spreading into one sheet, and less of a sheet means less suction. The grains here are round, so there are no sharp points to press into the soft wax.${MORE}On this snow the friction number is ${FRICTION.wrong} with hard wax and ${FRICTION.right} with soft wax.`,
 };
 
 export function createModel() {
@@ -244,7 +250,7 @@ export function createModel() {
       const wax = value === 'best' ? 'hard' : value;
       if (!WAXES.includes(wax)) return null;
       m.pick = wax; lanes()[0].wax = wax; m.phase = 'result'; seen.add(id);
-      m.say = `That is ${wax} wax. The wax goes onto the base of the ski as a thin coat, and the base now shows the colour of the wax. On dry powder, a ski with ${wax} wax glides the ${STRIP_M} m strip in ${s1(runSeconds(wax, 'powder'))}, as the sum beside the picture shows. You can pick another tin to compare.`;
+      m.say = `That is ${wax} wax. It goes onto the base of the ski as a thin coat, and the base now shows the colour of the wax. On dry powder, a ski with ${wax} wax glides the ${STRIP_M} m strip in ${s1(runSeconds(wax, 'powder'))}.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-glide') {
@@ -270,10 +276,10 @@ export function createModel() {
   function warmed() {
     if (m.celsius < 0 || m.warmed) return null;
     m.warmed = true; m.phase = 'result'; seen.add('word-crystals');
-    m.say = `At ${SNOWS.wet.celsius} °C the crystals are rounded and wet, because the ice has begun to melt. At ${COLD_C} °C the crystals are sharp and hard. You can keep changing the temperature to watch them change.`;
+    m.say = `At ${SNOWS.wet.celsius} °C the crystals are rounded and wet, because the ice has begun to melt. At ${COLD_C} °C the crystals are sharp and hard.`;
     return {kind: 'right', say: m.say};
   }
-  // Friction: any tin, or no wax, moves the arrows and the sums. The first change closes the word and the tins stay free.
+  // Friction: any tin, or no wax, moves the arrows and the formulas. The first change closes the word and the tins stay free.
   function frictionAct(kind, value) {
     if (kind !== 'pick') return null;
     const wax = value === 'best' ? 'hard' : value === 'none' ? null : value;
@@ -281,7 +287,7 @@ export function createModel() {
     m.pick = wax;
     if (m.phase === 'done') return {kind: 'sound', sound: 'lab.tick'};
     m.phase = 'done'; seen.add('word-friction');
-    m.say = 'The sums beside the picture follow the rule. Gravity’s pull along the slope stays the same, and friction’s slowing depends on the friction number. The acceleration is what remains of the pull after the slowing is subtracted. A smaller friction number leaves more acceleration, so the ski reaches the finish sooner. You can keep changing the wax to watch the arrows and the sums change.';
+    m.say = 'The pull along the slope stays the same, and the slowing depends on the friction number. The acceleration is what remains of the pull after the slowing is subtracted. A smaller friction number leaves more acceleration, so the ski reaches the finish sooner.';
     return {kind: 'right', sound: 'lab.tick', say: m.say};
   }
   // The reasons: any tin changes the close-up and the sums, and the wax that suits the snow closes the step.
@@ -295,7 +301,7 @@ export function createModel() {
     return {kind: 'right', sound: 'lab.tick', say: m.say};
   }
 
-  // The free test: any snow with any tin. The sums follow each press, and Space races the setting against a ski with no wax.
+  // The free test: any snow with any tin. The formulas follow each press, and Space races the setting against a ski with no wax.
   function freeAct(kind, value) {
     if (m.phase === 'running') return null;
     if (kind === 'pick') {
@@ -329,7 +335,7 @@ export function createModel() {
     if (m.tries >= FREE_TRIES) seen.add('try-free');
     const told = `${WAX_NAMES[pick]} wax on ${snowAndHeat(snow)} has a friction number of ${sum.friction}, so the ski reached the finish in ${s1(runSeconds(pick, snow))}, and the ski with no wax reached the finish in ${s1(runSeconds(null, snow))}.`;
     const why = right ? 'This wax suits this snow, so the ski reached the finish before the ski with no wax.' : 'This wax does not suit this snow, so the ski was slower than the ski with no wax.';
-    m.say = `${told} ${why} ${m.tries >= FREE_TRIES ? 'Press Enter when you have tested enough settings.' : 'Change the snow or the wax and test a different setting.'}`;
+    m.say = `${told} ${why}`;
     return {kind: right ? 'right' : 'wrong', say: m.say};
   }
 
@@ -346,7 +352,7 @@ export function createModel() {
       return null;
     }
     if (kind === 'go') {
-      if (!m.pick) return {kind: 'note', say: 'Pick a tin first by pressing 1, 2 or 3.'};
+      if (!m.pick) return {kind: 'note', say: 'Pick a tin first.'};
       if (m.phase === 'result') m.strips = [raceStrip(snow, m.pick)];
       return race();
     }
@@ -358,7 +364,7 @@ export function createModel() {
     const snow = snowNow(), right = SNOWS[snow].wax === m.pick, mine = runSeconds(m.pick, snow), plain = runSeconds(null, snow), heat = tidy(SNOWS[snow].celsius);
     m.phase = 'result'; seen.add(id); m.result = {right};
     if (right) m.say = `Correct. ${WAX_NAMES[m.pick]} wax suits ${snowName(snow)} at ${heat}. The ski with ${m.pick} wax reached the finish in ${s1(mine)}, and the ski with no wax reached the finish in ${s1(plain)}.`;
-    else m.say = `${WAX_NAMES[m.pick]} wax suits ${m.pick === 'hard' ? 'snow at -10 °C and colder' : m.pick === 'medium' ? 'cool snow, from -9 °C to -2 °C' : 'wet snow at -1 °C or 0 °C'}, and this snow is at ${heat}. The ski with ${m.pick} wax reached the finish in ${s1(mine)}, and the ski with no wax reached the finish in ${s1(plain)}, so this wax was slower than no wax at all. ${SNOWS[snow].name} needs ${SNOWS[snow].wax} wax, so press ${1 + WAXES.indexOf(SNOWS[snow].wax)} and then Space.`;
+    else m.say = `${WAX_NAMES[m.pick]} wax suits ${m.pick === 'hard' ? 'snow at -10 °C and colder' : m.pick === 'medium' ? 'cool snow, from -9 °C to -2 °C' : 'wet snow at -1 °C or 0 °C'}, and this snow is at ${heat}. The ski with ${m.pick} wax reached the finish in ${s1(mine)}, and the ski with no wax reached the finish in ${s1(plain)}, so this wax was slower than no wax at all. ${SNOWS[snow].name} needs ${SNOWS[snow].wax} wax.`;
     return {kind: right ? 'right' : 'wrong', say: m.say};
   }
 
@@ -371,9 +377,9 @@ export function createModel() {
       m.pick = wax;
       if (value !== 'best') return null;
     } else if (kind !== 'go') return null;
-    if (!m.pick) return {kind: 'note', say: 'Pick a tin first by pressing 1, 2 or 3.'};
+    if (!m.pick) return {kind: 'note', say: 'Pick a tin first.'};
     if (SNOWS[day.snow].wax !== m.pick) {
-      m.say = `${menuSays(day)} ${SNOWS[day.snow].name} is ${band(day.snow)}, so this snow needs ${SNOWS[day.snow].wax} wax, not ${m.pick} wax. Pick again and press Space.`;
+      m.say = `${menuSays(day)} ${SNOWS[day.snow].name} is ${band(day.snow)}, so this snow needs ${SNOWS[day.snow].wax} wax, not ${m.pick} wax. Pick again.`;
       return {kind: 'fail', say: m.say};
     }
     const fitted = SNOWS[day.snow].wax;
@@ -381,7 +387,7 @@ export function createModel() {
     if (m.day >= DAYS.length) {
       m.phase = 'done'; seen.add('alone');
       const {right, wrong} = slalomTimes();
-      m.say = `You have picked the right wax for all three days, which finishes the job. On the slalom, the right wax reaches the finish about ${(wrong - right).toFixed(1)} s sooner than the wrong wax.`;
+      m.say = `You have picked the right wax for all three days, which finishes the job. On the slalom, the right wax reaches the finish ${(wrong - right).toFixed(1)} s sooner than the wrong wax.`;
       return {kind: 'pass', say: m.say};
     }
     m.say = `Correct. ${WAX_NAMES[fitted]} wax suits that snow. On the next day, the ski menu reads “${todayLine(DAYS[m.day])}”.`;
@@ -397,7 +403,7 @@ export function createModel() {
     const id = step().id;
     if (m.autoStart != null && m.time >= m.autoStart) { m.autoStart = null; release(); }
     if (m.auto && id === 'word-crystals') {
-      m.celsius = Math.min(0, m.celsius + 12 * dt);
+      m.celsius = Math.min(0, m.celsius + 5 * dt);
       if (m.celsius >= 0) { m.auto = false; return warmed(); }
       return null;
     }
@@ -415,7 +421,7 @@ export function createModel() {
     m.phase = 'done'; seen.add(id);
     if (id === 'word-glide') {
       const s = sumOf(FRICTION.right), finish = Number((s.acceleration * s.seconds).toFixed(2));
-      m.say = `The ski glided ${STRIP_M} m in ${s1(runSeconds('hard', 'powder'))}. The marks on the strip show where the ski was at the end of each second, and the marks grow further apart because the ski moves faster during each second.${MORE}With hard wax on this snow, the speed grew by ${A3(s.acceleration)} m/s during every second, so the ski reached ${finish.toFixed(2)} m/s at the finish, which is ${(finish * 3.6).toFixed(1)} km/h.`;
+      m.say = `The ski glided ${STRIP_M} m in ${s1(runSeconds('hard', 'powder'))}. The marks on the strip show where the ski was at the end of each second, and they grow further apart because the ski moves faster. With hard wax the speed grew by ${A3(s.acceleration)} m/s every second, so the ski reached ${finish.toFixed(2)} m/s, which is ${(finish * 3.6).toFixed(1)} km/h.`;
       return {kind: 'right', say: m.say};
     }
     return null;
@@ -425,6 +431,7 @@ export function createModel() {
     const id = step().id;
     if (id === 'wonder' || id === 'watch') { enter(m.index); return null; }
     if (id === 'word-glide' && m.phase === 'done') { enter(m.index); m.phase = 'running'; release(); return null; }
+    if (id === 'try-free' && m.phase === 'set' && m.rows.length) return freeRace(`You are testing ${m.pick} wax on ${snowAndHeat(m.snow)} again. Watch the stopwatches.`);
     if ((id === 'try-cool' || id === 'try-wet') && m.phase === 'result') { const snow = snowNow(); m.strips = [raceStrip(snow, m.pick)]; return race(); }
     if (CHECKS[id] && m.phase === 'answered') { enter(m.index, {answered: m.answered}); release(); return null; }
     return null;
@@ -444,14 +451,14 @@ export function createModel() {
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), magnifier: false};
     if (id === 'wonder') return {...base, tins: false, actions: ['replay'],
       say: m.phase === 'done' ? `The ski with hard wax reached the finish first, in ${s1(runSeconds('hard', 'powder'))}, and the ski with soft wax followed in ${s1(runSeconds('soft', 'powder'))}. The skis, the slope and the snow were the same, so the difference came from the wax. How can such a thin coat change the time, and why did hard wax give the shorter time on this snow?`
-        : `Here are two skis on a test strip of snow that is ${STRIP_M} metres long, written ${STRIP_M} m. The snow is dry powder at ${COLD_C} °C, and that temperature is read as “minus 15 degrees Celsius”. Water freezes at 0 °C, and the minus sign means below freezing.${MORE}The two skis are the same except for a thin coat on the base, which is the underside of the ski that touches the snow. One ski has a coat of hard wax and the other has a coat of soft wax. Each stopwatch counts seconds, written s. Watch which ski reaches the finish first.`,
-      prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the two skis.',
+        : `Here are two skis on the same test strip of snow. One ski has a coat of hard wax on its base and the other has a coat of soft wax. Watch which ski reaches the finish first.${MORE}The strip is ${STRIP_M} metres long, written ${STRIP_M} m. The snow is dry powder at ${COLD_C} °C, which is read as “minus 15 degrees Celsius”, and the minus sign means below the freezing point of water, 0 °C. The base is the underside of the ski that touches the snow, and each stopwatch counts seconds, written s.`,
+      prompt: seen.has(id) ? 'Continue when you are ready to find out, or watch it again.' : 'Watch the two skis.',
       hints: ['Watch which ski is in front.', 'The only difference between the skis is the wax on the base.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch until both skis stop, then press Enter.']};
     if (id === 'word-wax') {
       const done = m.phase === 'result';
       return {...base, formulas: gapFormula(m.pick), ...(done ? {keys: PICK_KEYS} : picking(null, 'pick:best')),
-        say: done ? m.say : `Wax is a thin coat that is rubbed onto the base of a ski to help the ski slide over snow. Ski wax is made in different hardnesses. The three tins hold a hard wax, a medium wax and a soft wax.${MORE}A hard wax is firm, like a candle, and a soft wax is easy to mark with a fingernail.`,
-        prompt: done ? 'Press Enter to continue, or pick another tin by pressing 1, 2 or 3.' : 'Pick a tin by pressing 1, 2 or 3, or by clicking the tin.',
+        say: done ? m.say : `Wax is a thin coat that is rubbed onto the base of a ski to help the ski slide over snow. The three tins hold a hard wax, a medium wax and a soft wax. Pick a tin, and see the glide time that wax gives on dry powder.${MORE}A hard wax is firm, like a candle, and a soft wax is easy to mark with a fingernail.`,
+        prompt: done ? 'Continue when you are ready, or pick another tin to compare.' : 'Pick a tin to put its wax on the ski.',
         hints: done ? DONE : ['The three tins are at the bottom of the picture.', 'Press 1, 2 or 3, or click a tin.', 'Watch my pointer. I will pick the hard wax.']};
     }
     if (id === 'word-glide') {
@@ -460,16 +467,16 @@ export function createModel() {
         ...(ready ? {keys: {Space: 'go'}, buttons: [{action: 'go', label: 'Release', key: 'Space'}], waiting: true, target: 'go', glow: 'ski'} : {}),
         actions: m.phase === 'done' ? ['replay'] : [],
         say: m.phase === 'done' ? m.say : m.phase === 'running' ? 'Watch the ski and the stopwatch, which runs at real speed.'
-          : `Glide is how smoothly a ski slides over the snow, and the stopwatch times the ski down the strip. The ski starts at rest. Gravity, the pull of the Earth, makes the ski move faster and faster down the slope.${MORE}The slope is ${SLOPE} degrees, and this kind of degree measures an angle, not a temperature. Level ground is 0 degrees and straight up is 90 degrees. We give speed in metres per second, written m/s, the metres travelled during each second. The game’s own screens show kilometres per hour, written km/h. To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. How quickly the speed grows is called acceleration, and we give acceleration in metres per second, per second, written m/s². An acceleration of 1 m/s² adds 1 m/s to the speed during every second.`,
-        prompt: ready ? 'Press Space to release the ski.' : m.phase === 'running' ? 'Watch the stopwatch.' : 'Press Enter to continue, or press R to watch again.',
+          : `Glide is how smoothly a ski slides over the snow, and the stopwatch times the ski down the strip. The ski starts at rest, and gravity, the pull of the Earth, makes it move faster and faster down the slope. Release the ski, and watch the speed grow each second.${MORE}The slope is ${SLOPE} degrees, and this kind of degree measures an angle, not a temperature. Level ground is 0 degrees and straight up is 90 degrees. We give speed in metres per second, written m/s, the metres travelled during each second. To change m/s into kilometres per hour, written km/h, you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. How quickly the speed grows is called acceleration, written in metres per second, per second, or m/s². An acceleration of 1 m/s² adds 1 m/s to the speed during every second.`,
+        prompt: ready ? 'Release the ski.' : m.phase === 'running' ? 'Watch the stopwatch.' : 'Continue when you are ready, or watch it again.',
         hints: ready ? ['The ski waits at the top of the strip.', 'Press Space, or click the ski.', 'Watch my pointer. I will release the ski.'] : m.phase === 'running' ? ['Watch the ski.', 'Watch the stopwatch.', 'Wait a moment.'] : DONE_REPLAY};
     }
     if (id === 'word-friction') {
       const done = m.phase === 'done';
       return {...base, forces: {...sumOf(frictionOf(m.pick, m.snow)), wax: m.pick, snow: m.snow}, formulas: sums(m.pick, m.snow, true),
         ...(done ? {} : picking(null, 'pick:best')), keys: {...PICK_KEYS, 4: 'pick:none'}, buttons: [{action: 'pick:none', label: 'No wax', key: '4'}],
-        say: done ? m.say : `Friction is the force that resists when one surface slides over another, and it is the resistance you feel when you rub your hands together. Two things act on the ski on this slope. Gravity pulls the ski down the slope, and friction acts up the slope and holds the ski back.${MORE}The friction number shows how strong the friction is compared with the weight of the ski pressing on the snow, so a smaller number means less friction. The ski on the board has no wax, and its friction number on this snow is ${FRICTION.none}. Put a wax on the ski, and watch the arrows and the sums.`,
-        prompt: done ? 'Press Enter to continue, or change the wax with 1, 2, 3 or 4.' : 'Press 1, 2 or 3 to put a wax on the ski, or click a tin.',
+        say: done ? m.say : `Friction is the force that resists when one surface slides over another. On this slope gravity pulls the ski down, and friction acts up the slope and holds the ski back. Put a wax on the ski, and watch the arrows and the numbers change.${MORE}Friction is the resistance you feel when you rub your hands together. The friction number compares the strength of the friction with the weight of the ski pressing on the snow, so a smaller number means less friction. The ski on the board has no wax, and its friction number on this snow is ${FRICTION.none}.`,
+        prompt: done ? 'Continue when you are ready, or change the wax to compare.' : 'Put a wax on the ski.',
         hints: done ? DONE : ['The red arrow shows friction, and the green arrow shows gravity’s pull.', 'Press 1, 2 or 3.', 'Watch my pointer. I will put the hard wax on the ski.']};
     }
     if (id === 'word-crystals') {
@@ -478,57 +485,57 @@ export function createModel() {
         buttons: m.auto ? [] : [{action: 'cool', label: 'Colder', key: '←'}, {action: 'warm', label: 'Warmer', key: '→'}],
         ...(done ? {} : {waiting: !m.auto, target: m.auto ? null : 'warm:best', glow: 'thermometer'}),
         say: done ? m.say : m.auto ? 'Watch the thermometer. I will warm the tray to 0 °C.' : `Snow crystals are tiny pieces of ice. Look at them through the magnifier while the tray is at ${COLD_C} °C, and then warm the tray to 0 °C, which is the temperature at which ice begins to melt.`,
-        prompt: m.auto ? 'Watch the thermometer.' : done ? `The tray is at ${tidy(m.celsius)}. Press Enter to continue, or ${m.celsius >= 0 ? 'press ← to cool the tray' : m.celsius <= COLD_C ? 'press → to warm the tray' : 'press → to warm the tray and ← to cool the tray'}.` : `The tray is at ${tidy(m.celsius)}. Press → to warm the tray, or click the thermometer, until the tray reads 0 °C.`,
+        prompt: m.auto ? 'Watch the thermometer.' : done ? `The tray is at ${tidy(m.celsius)}. Continue when you are ready, or ${m.celsius >= 0 ? 'cool the tray' : m.celsius <= COLD_C ? 'warm the tray' : 'warm or cool the tray'} to watch the crystals change.` : `The tray is at ${tidy(m.celsius)}. Warm the tray to 0 °C.`,
         hints: done ? DONE : ['Watch the crystals in the magnifier.', 'Press → until the thermometer reads 0 °C.', 'Watch my pointer. I will warm the tray.']};
     }
     if (id === 'why-cold' || id === 'why-wet') {
       const done = m.phase === 'done', cold = id === 'why-cold', key = 1 + WAXES.indexOf(best);
       const setup = cold
-        ? `When a ski slides, the rubbing warms the snow a little and melts a very thin film of water under the base, and that film helps the ski to slide. At ${COLD_C} °C the snow is so cold that almost no water melts, so the hard, sharp points of the crystals press directly against the wax.${MORE}The picture is a close-up of the base and the snow, and the ski now has soft wax on the base. Change to hard wax, and watch the points of the crystals.`
-        : `At 0 °C the snow is already wet and the crystals have rounded into grains, so there is too much water rather than too little. The ski now has hard wax on the base. Change to soft wax, and watch the water.${MORE}The water spreads into one sheet between the base and the snow, and the sheet holds the ski to the snow by suction. Suction is the same pull that makes a wet glass hard to lift from a smooth table.`;
+        ? `Which wax suits dry powder at ${COLD_C} °C? The ski has soft wax on its base now. Try the tins, and watch how the points of the crystals meet the wax.${MORE}When a ski slides, the rubbing warms the snow a little and melts a very thin film of water under the base, and that film helps the ski to slide. At ${COLD_C} °C almost no water melts, so the hard, sharp points of the crystals press directly against the wax.`
+        : `Which wax suits wet snow at 0 °C? The ski has hard wax on its base now. Try the tins, and watch the water between the base and the snow.${MORE}At 0 °C the snow is already wet and the crystals have rounded into grains, so there is too much water rather than too little. The water spreads into one sheet between the base and the snow, and the sheet holds the ski to the snow by suction. Suction is the pull that makes a wet glass hard to lift from a smooth table.`;
       return {...base, closeup: {snow: m.snow, wax: m.pick}, formulas: sums(m.pick, m.snow), ...(done ? {keys: PICK_KEYS} : picking(null, 'pick:best')),
         say: done ? m.say : setup,
-        prompt: done ? 'Press Enter to continue, or change the wax with 1, 2 or 3.' : `Press ${key} to change to ${best} wax, or click the tin.`,
+        prompt: done ? 'Continue when you are ready, or change the wax to compare.' : 'Try each tin, and find the wax that suits this snow.',
         hints: done ? DONE : [cold ? 'Watch how far the points of the crystals press into the wax.' : 'Watch the blue water between the base and the snow.', `Press ${key}.`, `Watch my pointer. I will change to ${best} wax.`]};
     }
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, tins: false, formulas: threeTimes(), actions: ['replay', 'slow'],
-        say: done ? `On every tray, the ski with the wax that suits the snow finished first, which was hard wax on dry powder, medium wax on cool snow and soft wax on wet snow. Cool snow lies between the other two, because the crystals are less sharp and there is a little water, so a wax of medium hardness suits that snow. The colder the snow, the harder the wax. In this game, every wax that suits its snow has a friction number of ${FRICTION.right} and every wax that does not suit its snow has ${FRICTION.wrong}, which is why all three trays show the same two times, ${s1(glideSeconds(FRICTION.right, STRIP_M))} and ${s1(glideSeconds(FRICTION.wrong, STRIP_M))}.`
+        say: done ? `On every tray, the ski with the wax that suits the snow finished first, which was hard wax on dry powder, medium wax on cool snow and soft wax on wet snow. The colder the snow, the harder the wax. Every ski with the right wax took ${s1(glideSeconds(FRICTION.right, STRIP_M))}, and every ski with the wrong wax took ${s1(glideSeconds(FRICTION.wrong, STRIP_M))}.${MORE}Cool snow lies between the other two, because the crystals are less sharp and there is a little water, so a wax of medium hardness suits that snow. A wax that suits its snow has the friction number ${FRICTION.right} and a wax that does not has ${FRICTION.wrong}, so the same two times show on all three trays.`
           : `Here are three trays, with dry powder at ${SNOWS.powder.celsius} °C, cool snow at ${SNOWS.cold.celsius} °C and wet snow at ${SNOWS.wet.celsius} °C. On each tray, a ski with the wax that suits the snow races a ski with a wax that does not. Watch which ski finishes first on each tray.`,
-        prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the three races.',
+        prompt: done ? 'Continue when you are ready, or watch it again.' : 'Watch the three races.',
         hints: ['Watch which ski finishes first on each tray.', 'Hard wax finishes first on the coldest tray, and soft wax finishes first on the wet tray.', 'Press R to watch again.']};
     }
     if (id === 'try-free') {
       const running = m.phase === 'running';
       const free = {...base, compact: true, closeup: {snow: m.snow, wax: m.pick}, snowTabs: {current: m.snow, open: !running}, formulas: sums(m.pick, m.snow)};
-      if (running) return {...free, say: m.say, prompt: 'Watch the stopwatches.', hints: ['Watch the two skis.', 'Compare the time with the sum beside the picture.', 'Wait a moment.']};
-      return {...free, keys: {...PICK_KEYS, '←': 'snow:colder', '→': 'snow:warmer', Space: 'go'}, target: 'free:next', waiting: !seen.has(id),
+      if (running) return {...free, actions: ['slow'], say: m.say, prompt: 'Watch the stopwatches.', hints: ['Watch the two skis.', 'Compare the time with the formulas beside the picture.', 'Wait a moment.']};
+      return {...free, actions: m.rows.length ? ['replay'] : [], keys: {...PICK_KEYS, '←': 'snow:colder', '→': 'snow:warmer', Space: 'go'}, target: 'free:next', waiting: !seen.has(id),
         buttons: [{action: 'snow:colder', label: 'Colder snow', key: '←'}, {action: 'snow:warmer', label: 'Warmer snow', key: '→'}, {action: 'go', label: 'Race', key: 'Space'}],
-        say: m.say || `Now you can experiment with any snow and any wax. Press ← and → to change the snow, and press 1, 2 or 3 to change the wax. Test at least ${FREE_TRIES} different settings, and try a wax on a snow that it does not suit.${MORE}The sums beside the picture change as you do, so you can work out the time before you race. Your ski then races a ski with no wax, and the table keeps your results so that you can compare them.`,
-        prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the snow or the wax, then press Space to race. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
+        say: m.say || `What happens when a wax does not suit the snow? Test ${FREE_TRIES} different settings of the snow and the wax, and include a wax that does not suit its snow.${MORE}The formulas beside the picture change with each setting, so you can work out the time before you race. Your ski races a ski with no wax, and the table keeps your results so that you can compare them.`,
+        prompt: seen.has(id) ? 'Continue when you are ready, or test another setting.' : `Test ${FREE_TRIES} different settings. Settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
         hints: ['Press Space to test the settings as they are.', 'Try soft wax on dry powder, and hard wax on wet snow.', m.tested.size < FREE_ORDER.length ? 'Watch my pointer. I will test a setting that you have not tested yet.' : 'Watch my pointer. You have tested every setting, so I will race the first one again.']};
     }
     if (id === 'try-cool' || id === 'try-wet') {
       const snow = snowNow(), name = `${SNOWS[snow].name} at ${tidy(SNOWS[snow].celsius)}`;
       if (m.phase === 'pick') return {...base, formulas: general(), ...picking('Race', 'pick:best'),
-        say: `Now you can use what you have found. ${name} is on the strip. Pick the wax that suits this snow, then race your ski against a ski with no wax.`,
-        prompt: m.pick ? `${WAX_NAMES[m.pick]} wax is on the ski. Press Space to race, or pick another tin.` : 'Pick a tin by pressing 1, 2 or 3, then press Space to race.',
+        say: `Which wax suits ${name}? Pick a wax for the snow on the strip, then race your ski against a ski with no wax.`,
+        prompt: m.pick ? `${WAX_NAMES[m.pick]} wax is on the ski. Race it, or pick another tin.` : 'Pick a wax for this snow, then race.',
         hints: [snow === 'cold' ? 'Cool snow is in the middle, because it is neither the coldest snow nor wet.' : 'Wet snow is the warmest snow, near 0 °C.', `The colder the snow, the harder the wax. Press ${1 + WAXES.indexOf(SNOWS[snow].wax)}, then Space.`, 'Watch my pointer. I will pick the wax and race the ski.']};
       if (m.phase === 'running') return {...base, formulas: sums(m.pick, snow), say: `The ski with ${m.pick} wax now races the ski with no wax. Watch the stopwatches.`, prompt: 'Watch the stopwatches.', hints: ['Watch the two skis.', 'Which ski is in front?', 'Wait a moment.']};
       return {...base, formulas: sums(m.pick, snow), ...picking('Race again', null), waiting: false, actions: ['replay'], mood: m.result?.right ? 'cheer' : 'explain', say: m.say,
-        prompt: m.result?.right ? 'Press Enter to continue, or press R to watch again.' : 'Press Enter to continue, or pick a tin and press Space to race again.', hints: DONE};
+        prompt: m.result?.right ? 'Continue when you are ready, or watch it again.' : 'Continue when you are ready, or pick a tin and race again.', hints: DONE};
     }
     if (id === 'alone') {
       const day = DAYS[Math.min(m.day, DAYS.length - 1)], menu = {line: todayLine(day), day: Math.min(m.day, DAYS.length - 1) + 1, of: DAYS.length}, scene = {celsius: day.celsius, magnifier: true};
       if (m.phase === 'done') {
         const {right, wrong} = slalomTimes();
-        return {...base, ...scene, menu: {...menu, done: true}, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE,
+        return {...base, ...scene, menu: {...menu, done: true}, ready: true, mood: 'cheer', say: m.say, prompt: 'Continue when you are ready.', hints: DONE,
           formulas: [...general(), {title: 'The gap on the slalom', formula: 'gap = time with the wrong wax − time with the right wax', worked: `${wrong.toFixed(1)} s − ${right.toFixed(1)} s = ${(wrong - right).toFixed(1)} s`}]};
       }
-      return {...base, ...scene, formulas: general(), menu, ...picking('Ski', 'pick:best'),
-        say: m.day === 0 && !m.say ? `Here is a job for you, over three days. Each day the ski menu shows the day’s snow and its temperature. Read the menu, pick the wax that suits that snow, and press Space to ski.${MORE}${menuSays(day)}` : m.say,
-        prompt: m.pick ? `${WAX_NAMES[m.pick]} wax is on the ski. Press Space to ski, or pick another tin.` : 'Read today’s snow, pick a tin by pressing 1, 2 or 3, then press Space.',
+      return {...base, ...scene, formulas: general(), menu, ...picking('Check my wax', 'pick:best'),
+        say: m.day === 0 && !m.say ? `Your job is to pick the right wax on three days. The ski menu shows the day’s snow and its temperature, and today it reads “${todayLine(day)}”. Pick the wax that suits that snow.` : m.say,
+        prompt: m.pick ? `${WAX_NAMES[m.pick]} wax is on the ski. Check it, or pick another tin.` : 'Read today’s snow on the menu, then pick a wax.',
         hints: [`${SNOWS[day.snow].name} is ${band(day.snow)}.`, `The colder the snow, the harder the wax, so ${snowName(day.snow)} needs ${SNOWS[day.snow].wax} wax. Press ${1 + WAXES.indexOf(SNOWS[day.snow].wax)}, then Space.`, 'Watch my pointer. I will pick the wax for you.']};
     }
     if (CHECKS[id]) {
@@ -540,11 +547,11 @@ export function createModel() {
         keys: answered ? {} : ANSWER_KEYS, actions: answered && check.snow ? ['replay'] : [], waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Continue when you are ready.' : 'Pick the card with your answer.', hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [...threeTimes(), ...general().slice(1)],
       say: `Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax.${MORE}Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.`,
-      prompt: 'Press Enter to go to the helicopter. Then fly to a ski drop, choose the slalom, and pick the wax for today’s snow.', hints: KEY_IDEAS.map(i => i.text)};
+      prompt: 'Go to the helicopter. Then fly to a ski drop, choose the slalom, and pick the wax for today’s snow.', hints: KEY_IDEAS.map(i => i.text)};
   }
 
   return {enter, act, tick, view, state: () => m};
