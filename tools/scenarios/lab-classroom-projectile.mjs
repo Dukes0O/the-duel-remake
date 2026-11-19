@@ -1,5 +1,7 @@
 // LAB-CLASSROOM-PROJECTILE: the Projectile motion classroom played by keyboard (and one mouse drag of the flag),
-// from walking up to the drop tower to the helicopter challenge, on the harness's memory-only origin.
+// from walking up to the drop tower to the helicopter challenge, on the harness's memory-only origin. The formula panel starts closed; the lesson opens it with F at its first formulas,
+// and the free test later hides and shows it again with F.
+import {openFormulaPanel} from './lab-classroom.mjs';
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
@@ -44,6 +46,7 @@ async function play(c) {
   await next('wonder');
   // Metres per second: the dial changes the sum at once, and the sum says so on the screen.
   await at('word-metres'); await shot('word-metres');
+  await openFormulaPanel(c);
   await press('ArrowRight');
   if (!(await c.evaluate(`document.querySelector('.lc-worked')?.textContent.includes('15 m ÷ 1 s = 15 m/s')`))) throw Error('The formula did not change with the dial.');
   await press('Space'); await wait(3500); await shot('word-metres-marks'); await at('word-metres', 's.ready'); await shot('word-metres-done');

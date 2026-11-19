@@ -8,9 +8,10 @@ import {fileURLToPath} from 'node:url';
 import {measureLoudness} from './audio/measurements.mjs';
 import {ffmpeg} from './audio/codec.mjs';
 import {nativeRecorderEntry} from './scenarios/audio-crash-peak.mjs';
+import {evidenceDate} from './evidence-date.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const runDir=join(root,'.evidence',new Date().toISOString().slice(0,10),'AUD-CRASH-PEAK',
+const runDir=join(root,'.evidence',evidenceDate(),'AUD-CRASH-PEAK',
   'native-'+new Date().toISOString().replace(/[:.]/g,'-'));
 const scratchDir=join(root,'.qa-dist','audio-crash-peak-'+new Date().toISOString().replace(/[:.]/g,'-'));
 let capture,report,checks=0;
