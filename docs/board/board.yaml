@@ -550,7 +550,7 @@ tasks:
 
   - id: QA-NIGHT-SIZED
     title: "The night check sizes itself from the day's merges: none, partial or full (Kyle, 18 November)"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
@@ -590,16 +590,6 @@ tasks:
     locks: []
     details: "docs/board/cards/WORLD-FAULTS-18-NOV.md"
 
-  - id: STORY-TALK
-    title: "Talk bubbles and thought bubbles: people speak over their heads, the player weighs in thoughts, no prices listed"
-    owner: "codex"
-    lane: "UI"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/STORY-TALK.md"
-
   - id: ROAD-RIDERS
     title: "Riders on the open land fight back, crash and can be wrecked (Kyle: the cars don't fight back)"
     owner: "codex"
@@ -616,7 +606,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["STORY-TALK"]
+    needs: []
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2.md"
 

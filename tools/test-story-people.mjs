@@ -69,7 +69,25 @@ assert.ifError(view.group.userData.loadError);
 assert.equal(view.group.children.length, 14);
 const rendered = t => { view.update(job, observer, t); view.group.updateMatrixWorld(true); };
 const anchor = id => view.group.getObjectByName('story-bubble-' + id).getWorldPosition(new THREE.Vector3());
-for (let i = 1; i <= 60; i++) rendered(i / 60);
+function countPlacedSpeakerAnchors() {
+  let count = 0;
+  const point = new THREE.Vector3();
+  view.group.traverseVisible(node => {
+    if (!node.name.startsWith('story-bubble-')) return;
+    const id = node.name.slice('story-bubble-'.length);
+    const person = namedCast.find(p => p.id === id);
+    node.getWorldPosition(point);
+    assert.ok(Math.hypot(point.x - person.position.x, point.z - person.position.z) <= person.radius,
+      id + ' must be at its job position before the dialogue camera can see its head');
+    count++;
+  });
+  return count;
+}
+// An asynchronous load can finish between the camera's lookup and the next scene update.
+countPlacedSpeakerAnchors();
+rendered(1 / 60);
+assert.equal(countPlacedSpeakerAnchors(), namedCast.length);
+for (let i = 2; i <= 60; i++) rendered(i / 60);
 const standing = anchor('wim');
 assert.ok(standing.y > 1.2 && standing.y < 1.4, 'Wim’s own bubble is above her standing head');
 assert.ok(anchor('rell').y > anchor('dace').y && anchor('dace').y > standing.y);

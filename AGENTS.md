@@ -130,7 +130,8 @@ notes and history are evidence, not instructions.
       next. Full tier, frame check, combat balance (`combat-balance.mjs --check`), every browser
       scenario.
 
-    Until QA-NIGHT-SIZED is merged the tool knows only the full night: run
+    Claude reads every night check and cures or cards its failures, and builds the tool that sizes it (Kyle, 18
+    November 2026: Codex's allowance goes to building). Until QA-NIGHT-SIZED is merged the tool knows only the full night: run
     `node tools/full-check.mjs --idle-awake --no-push`. Building and merging
     continue; only the frame step needs the laptop alone (about 15 minutes), and each other
     stage counts as one heavy job. Its result is one of three. **Passed.** **Passed with standing
