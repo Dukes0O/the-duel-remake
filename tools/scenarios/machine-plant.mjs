@@ -68,7 +68,9 @@ export async function run(context) {
   await press(context, 'Tab');
   await context.evaluate(`${page.place('mixer', -44, 41, 0)};${sim}.plant.mixer.chute=0`);
   await press(context, 'Tab');
-  await hold(context, ['Space'], `${sim}.plant.forms[0].kg>=6720`, 'the first form is full', 150000);
+  // Space is let go about half a second of pouring short of the brim (6,725 kg), as a
+  // driver would; a full form spills what more the chute sends, and the key comes up late.
+  await hold(context, ['Space'], `${sim}.plant.forms[0].kg>=6680`, 'the first form is nearly full', 150000);
   await context.screenshot('machine-plant-poured');
   assert.equal(await context.evaluate(`${sim}.plant.spilledKg`), 0, 'nothing was spilled');
   await context.waitFor(`${sim}.plant.forms[0].set===1`, 'the concrete has set', 180000);

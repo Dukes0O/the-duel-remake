@@ -28,7 +28,7 @@ import {roadYardControls} from './roads.js';
 import {createBorerSounds} from './borer-sounds.js';
 import {createSparks} from '../world/scrap-look.js';
 import {createPlantYardView} from './plant-view.js';
-import {isPlantMachine, plantYardControls, plantYardWords} from './plant-yard.js';
+import {isPlantMachine, plantCameraOrbit, plantYardControls, plantYardWords} from './plant-yard.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 // The roller, the paver and the drill rig are in the second family of machines.
@@ -609,7 +609,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
       if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer',machineViews.get('borer')?.body);
       else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target,
-        chaseOrbit:wide?35*Math.PI/180:mastUp?48*Math.PI/180:0,body:mode==='cab'?machineViews.get(sim.activeMachine)?.body??plantView?.body(sim.activeMachine):null,
+        chaseOrbit:plantCameraOrbit(sim)??(wide?35*Math.PI/180:mastUp?48*Math.PI/180:0),body:mode==='cab'?machineViews.get(sim.activeMachine)?.body??plantView?.body(sim.activeMachine):null,
         seat:ROAD_MACHINE_SEATS[sim.activeMachine]??(sim.activeMachine==='drill'?drillView?.seat(sim.drill):null)});
       previousCameraMachine=sim.activeMachine;
       sun.position.set(active.x+SUN_OFFSET.x,y+SUN_OFFSET.y,active.z+SUN_OFFSET.z);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();

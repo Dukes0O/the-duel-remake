@@ -8,7 +8,7 @@ import {stockpileAt, priceForGood} from '../src/town/town-goods.js';
 import {GOODS} from '../src/town/content/goods.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/index.js';
 import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
-import {plantYardControls, plantYardWords} from '../src/machines/plant-yard.js';
+import {plantCameraOrbit, plantYardControls, plantYardWords} from '../src/machines/plant-yard.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
 import {machineToolPosition} from '../src/machines/machine.js';
 
@@ -235,6 +235,9 @@ const order = [];
 for (let i = 0; i < 12 && !order.includes('mixer'); i++) { yard = switchDigMachine(yard); order.push(yard.activeMachine); }
 assert.deepEqual(order.slice(-3), ['borer', 'loader', 'mixer']);
 assert.match(plantYardWords(yard).hint, /batch plant/);
+assert.equal(plantCameraOrbit(yard), null, 'away from the plant the mixer keeps the usual chase view');
+const underPlant = {...yard, plant:{...yard.plant, mixer:{...yard.plant.mixer, machine:{...yard.plant.mixer.machine, x:-64, z:21.9, heading:0}}}};
+assert.equal(plantCameraOrbit(underPlant), Math.PI / 2, 'under the batch plant the mixer is watched from the side');
 while (yard.activeMachine !== 'loader') yard = switchDigMachine(yard);
 assert.equal(yard.activeMachine, 'loader');
 const startX = digSandboxMachineState(yard).x;

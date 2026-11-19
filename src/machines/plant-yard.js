@@ -74,7 +74,12 @@ export function tipTruckIntoHopper(sim, truck, dtSeconds) {
   message, dirty:screened};
 }
 
-const tonnes = kg => `${(kg / 1000).toFixed(1)} t`;
+/** Backed under the batch plant, the mixer truck is watched from the side, so the camera stays out of the tower. */
+export function plantCameraOrbit(sim) {
+  return sim.plant && sim.activeMachine === 'mixer' && mixerUnderPlant(sim.plant) ? Math.PI / 2 : null;
+}
+
+const tonnes = kg =>`${(kg / 1000).toFixed(1)} t`;
 
 /** The yard's two lines for a plant machine: what it holds, and what to do next. */
 export function plantYardWords(sim) {

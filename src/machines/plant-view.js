@@ -101,7 +101,8 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
   concreteStream.name = 'Concrete falling'; concreteStream.visible = false; group.add(concreteStream);
   const spillGeometry = own(new THREE.CylinderGeometry(1, 1.1, 0.08, 16));
   const spills = [];
-  const wetColour = new THREE.Color(0x4e4d4a), dryColour = new THREE.Color(0xb9b5ab);
+  // Colours in this yard come out pale under its bright sun, so fresh concrete starts dark.
+  const wetColour = new THREE.Color(0x45433f), dryColour = new THREE.Color(0xd2cec4);
   const parts = {crusher:null, jaw:null, falling:[], forms:[], loader:null, mixer:null, bins:null, binHeaps:{}};
   let failed = false, time = 0, bursts = 0;
   // The layout is known from the first state seen; models that arrive first wait for it.
@@ -142,11 +143,10 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
       ownMaterials(model);
       model.scale.set(form.halfM / FORM_INSIDE_HALF_M, form.depthM / FORM_SURFACE_M, form.halfM / FORM_INSIDE_HALF_M);
       place(model, form).name = `Form ${form.id}`;
-      // The model's own wet and set concrete colours are the two ends of setting.
+      // The model's wet and set slabs share one white photo material, so the view tints the
+      // wet slab itself: dark while fresh, pale once set.
       const setNode = findModelNode(model, 'formwork-1:set');
       const surface = findModelNode(model, 'formwork-1:wet');
-      if (setNode?.material?.color && !parts.forms.length) dryColour.copy(setNode.material.color);
-      if (surface?.material?.color && !parts.forms.length) wetColour.copy(surface.material.color);
       setNode?.removeFromParent();
       if (surface) surface.visible = false;
       parts.forms.push({id:form.id, model, surface});
