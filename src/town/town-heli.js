@@ -150,9 +150,9 @@ export function heliScout(town, {chunks = []} = {}) {
 // The first visit over the wall, so Roger's surprise is said once.
 export function heliFlown(town) {
   const state = heliState(town);
-  if (state.flown) return {ok: true, already: true};
+  if (state.flown) return {ok: true, already: true, message: 'Kestrel One has been over the wall before.'};
   state.flown = true;
-  return {ok: true, already: false};
+  return {ok: true, already: false, message: 'Kestrel One came over the wall for the first time.'};
 }
 
 registerTownCommand('heliSendDune', town => sendDuneToRidge(town));
