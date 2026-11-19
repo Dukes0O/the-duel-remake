@@ -54,7 +54,9 @@ const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sa
   'borer.stall', 'borer.call', 'borer.refuse', 'borer.breakthrough', 'borer.daylight'];
 const added = new Set(CUES);
 // STORY-NIGHT-2 adds four chapter-only cues. The pre-P4 bank pin is unchanged.
-const NIGHT_2_CUES = new Set(['town.gate.bell', 'night.whistle', 'luck.kind', 'luck.unkind']);
+// STORY-NIGHT-2-FLOW adds three more: the Remembered notice, an Ash Man run down, and the camp taken.
+const NIGHT_2_CUES = new Set(['town.gate.bell', 'night.whistle', 'luck.kind', 'luck.unkind',
+  'story.journal.note', 'night.ash-man.down', 'night.camp.taken']);
 // Five Cold Nights' ledger adds two dev cues. The historical projection keeps all earlier cues.
 const LEDGER_CUES = new Set(['story.ledger.open', 'story.ledger.choose']);
 const hash = data => createHash('sha256').update(data).digest('hex');
