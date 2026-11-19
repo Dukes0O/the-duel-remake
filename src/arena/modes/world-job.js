@@ -2,7 +2,8 @@ import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal} from 
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
-import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination} from '../../world/jobs/night-2.js';
+import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination,
+  stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
@@ -1428,6 +1429,17 @@ export function moveJobRaiders(duel, worldJob, dt) {
   }
 }
 
+// STORY-NIGHT-2-FLOW item 4: when the scout is within the hand flamer's reach, the HUD says so. 'burn' when the walker faces
+// him inside the flame's cone, 'turn' when he is near enough but to one side. The rule is brandCombatView's own.
+function scoutReach(state, scout, chapter) {
+  const fighter = state.onFoot && state.fighter;
+  if (!fighter || chapter.scoutTurned || chapter.scoutDowned || scout.knockedDown) return null;
+  const dx = scout.x - fighter.x, dz = scout.z - fighter.z, distance = Math.hypot(dx, dz);
+  if (!(distance > 0) || distance > BRAND_RULE.handFlamerRadius || Math.abs(scout.y - fighter.y) >= 2) return null;
+  const yaw = fighter.yaw || 0, facing = (dx * Math.sin(yaw) + dz * Math.cos(yaw)) / distance;
+  return facing >= Math.cos(signatureFor('cinder').cone / 2) ? 'burn' : 'turn';
+}
+
 function night2Cue(duel, cue) {
   duel.emit({arenaTell: {id: cue, targetId: 'player', seconds: 0, cue}});
 }
@@ -1475,6 +1487,8 @@ export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
+  // STORY-NIGHT-2-FLOW: the rider laying siege circles the Walkers' camp (a talk passes no time, so it stands still then).
+  if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt)) syncJobCarSolids(worldJob);
   if (talkStep?.kind === 'talk') {
     if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
     const previousStep = worldJob.job.stepIndex;
@@ -1717,13 +1731,28 @@ export function stepWorldJob(duel, dt) {
   }
   const carriedCar = position(duel, state);
   if (worldJob.night2 && currentStep?.id === 'scout') {
-    const fire = brandCombatView(state, worldJob);
-    const burning = fire.handFlamerHits.includes(NIGHT_2_SCOUT.id);
-    const place = night2ScoutDestination(worldJob, burning);
-    applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: NIGHT_2_SCOUT.id, place});
-    if (burning) worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id).approachSpeed = 4.5;
+    const scout = worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id);
+    const chapter = worldJob.night2;
+    // One rule for an Ash Man on foot (STORY-NIGHT-2-FLOW item 7): the ambush rule's car hit knocks the scout flat for good,
+    // as it does a rider's crew at the Wash.
+    if (scout && !scout.knockedDown && !state.onFoot && !state.combatWrecking &&
+        Math.abs(state.speedMph || 0) * DRIVE.mphToWorld >= AMBUSH_RUN_DOWN_MPS &&
+        Math.hypot(scout.x - point.x, scout.z - point.z) <= AMBUSH_RUN_DOWN_METRES) {
+      Object.assign(scout, {knockedDown: true, health: 0, approachSpeed: 0, approachTarget: null});
+      chapter.scoutDowned = true;
+      night2Cue(duel, 'night.ash-man.down');
+    }
+    if (scout && !scout.knockedDown) {
+      const fire = brandCombatView(state, worldJob);
+      const burning = fire.handFlamerHits.includes(NIGHT_2_SCOUT.id);
+      const place = night2ScoutDestination(worldJob, burning);
+      applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: NIGHT_2_SCOUT.id, place});
+      if (burning) scout.approachSpeed = 4.5;
+    }
+    chapter.scoutReach = scout ? scoutReach(state, scout, chapter) : null;
   }
   if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
+  if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
   const view = {player: playerView, onFoot: !!state.onFoot,
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
     ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot, carriedCar)} : {}),

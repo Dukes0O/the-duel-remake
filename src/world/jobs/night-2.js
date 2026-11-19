@@ -1,20 +1,31 @@
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow, plainStockChange} from '../../story/ledger.js';
+import {LEDGER_MARK_LINES} from '../../story/ledger-ui.js';
 import {NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
 import {sweepObstacle} from '../../collision.js';
 import {createJobSolidGrid} from '../scablands-solids.js';
-import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
+import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {sees} from '../scablands-ways.js';
 import {createBrandWays, townCarWay} from './brand-ways.js';
 import {BRAND_RULE} from './brand-rule.js';
 import {EMBER_RULE} from './ember-rule.js';
 import {NIGHT_2_SITES as sites, night2Cast, night2Point} from './night-2-sites.js';
-import {createStoryPeople, setStoryPersonAction} from './story-people.js';
+import {HANDCART, createStoryPeople, setStoryPersonAction} from './story-people.js';
+import {SALT_RIDERS} from './ember-rule.js';
 
 export const NIGHT_2_ID = 'story-night-2';
 const hearthStart = {...sites.hearthFront.position, heading: Math.PI};
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+// STORY-NIGHT-2-FLOW (Claude's decision, 19 November 2026): the riders lay siege. One rider circles the camp at about 30 m
+// with its headlights on, so that no Walker slips away and a player can find a dark camp by its lights; the others turn to
+// meet the player. It starts on the circle on the camp's +x side.
+export const NIGHT_2_SIEGE = Object.freeze({riderId: 'wash-rider-1', radius: 30, mps: 9,
+  steps: Object.freeze(['tower', 'tower-outcome', 'wash-get-car', 'wash-drive'])});
+const siegeAt = angle => ({x: sites.camp.position.x + Math.cos(angle) * NIGHT_2_SIEGE.radius,
+  z: sites.camp.position.z + Math.sin(angle) * NIGHT_2_SIEGE.radius});
+// Heading is measured as the game measures it, atan2(dx, dz): the way the circle runs at this angle.
+const siegeHeading = angle => Math.atan2(-Math.sin(angle), Math.cos(angle));
 const riders = [
-  {id: 'wash-rider-1', start: {x: sites.camp.position.x + 42, z: 236}, heading: .8, renderCar: 'dusthawk_rally'},
+  {id: NIGHT_2_SIEGE.riderId, start: siegeAt(0), heading: siegeHeading(0), renderCar: 'dusthawk_rally'},
   {id: 'wash-rider-2', start: {x: sites.camp.position.x + 31, z: 210}, heading: 2, renderCar: 'falcone_f42'},
   {id: 'wash-rider-3', start: {x: sites.camp.position.x + 48, z: 264}, heading: -.6, renderCar: 'dusthawk_rally'},
 ];
@@ -31,9 +42,12 @@ export function night2Opening(seed) {
 const drive = (id, place, what) => ({id, kind: 'reach', inCar: true, place, radius: place.radius, what});
 const returnOnFoot = 'The car will be towed in at dawn. Walk back to the hearth.';
 const washRiders = riders.map(({id, start, renderCar: car}, index) => ({
-  id, name: `Ash rider ${index + 1}`, car, weapon: 'ash-sack', start, approach: true,
+  id, name: `Ash rider ${index + 1}`, car, weapon: 'ash-sack', start, approach: id !== NIGHT_2_SIEGE.riderId,
   home: {x: sites.camp.position.x - 145 - index * 30, z: sites.camp.position.z + (index - 1) * 75},
+  ...(id === NIGHT_2_SIEGE.riderId ? {circle: {x: sites.camp.position.x, z: sites.camp.position.z, radius: NIGHT_2_SIEGE.radius}} : {}),
 }));
+// The crew who leave a wrecked rider car run for the Walkers' camp; any that reach it take it (src/arena/modes/road-riders.js).
+const washCrewGoal = {x: sites.camp.position.x, z: sites.camp.position.z, radius: sites.camp.radius};
 
 export function night2Job(seed, {washFight = false} = {}) {
   const tower = talk('tower', 'camp');
@@ -44,7 +58,7 @@ export function night2Job(seed, {washFight = false} = {}) {
   const washSteps = washFight ? [
     {id: 'wash-get-car', kind: 'night-2-action', action: 'board', what: 'Find your car and hold F to get in.'},
     drive('wash-drive', sites.washApproach, 'Drive out to the Walkers’ camp at the Wash.'),
-    {id: 'wash-fight', kind: 'rider-fight', riders: washRiders, onLost: 'continue',
+    {id: 'wash-fight', kind: 'rider-fight', riders: washRiders, onLost: 'continue', crewGoal: washCrewGoal,
       what: 'Drive off the three Ash riders at the Wash.'},
     talk('wash-fight-won', 'camp-won'),
     drive('wash-drive-home', sites.carHome, 'Drive back to Tin Town.'),
@@ -97,7 +111,33 @@ const memoryLines = {
   'dace-sent-away': 'You sent Dace away.',
   'changed-mind-in-night': 'You changed your mind in the night.',
   'wash-car-towed-at-dawn': 'Your car will be towed in at dawn. Bess leaves late.',
+  'wash-camp-taken': LEDGER_MARK_LINES['wash-camp-taken'],
 };
+
+// STORY-NIGHT-2-FLOW: the one line at the top of the screen when the night ends (Kyle, 19 November 2026), in place of the
+// journal page. A promise or debt made tonight comes first (the latest), then the Ash Men taking the camp, then the latest
+// thing people will remember, and last how the Walkers now stand with you. A scout nobody saw is never named here.
+const WALKER_WORD_LINES = {
+  Sworn: 'The Walkers are sworn to you.',
+  Friendly: 'The Walkers count you as a friend.',
+  Strangers: 'The Walkers still do not know what to make of you.',
+  Wary: 'The Walkers do not trust you.',
+  Cold: 'The Walkers will not forget that you turned them away.',
+};
+const HIDDEN_MARKS = new Set(['unseen-night-2-scout']);
+const lowerFirst = text => /^(The|You|Your|An|A) /.test(text) ? text[0].toLowerCase() + text.slice(1) : text;
+export function night2Remembered(ledger, night = 2) {
+  const tonight = (ledger?.history ?? []).filter(change => change.night === night);
+  const line = id => memoryLines[id] ?? LEDGER_MARK_LINES[id];
+  // A first-version save kept only the key of a debt; its words are still on the ledger's own list.
+  const debtText = change => change.after?.text ?? ledger.obligations?.find(item => item.id === change.key)?.text;
+  const debt = tonight.findLast(change => ['debt', 'promise'].includes(change.type) && debtText(change));
+  const marks = tonight.filter(change => change.type === 'mark' && !HIDDEN_MARKS.has(change.key) && line(change.key));
+  const taken = marks.find(change => change.key === 'wash-camp-taken');
+  const word = ledger?.words?.walkers;
+  const text = (debt && debtText(debt)) ?? (taken && line(taken.key)) ?? (marks.length ? line(marks.at(-1).key) : WALKER_WORD_LINES[word]);
+  return text ? 'Remembered: ' + lowerFirst(text) : null;
+}
 
 const presentPeople = (people, words) => people.map(person => ({type: 'met', person, text: words}));
 function record(chapter, id, effects) {
@@ -143,6 +183,7 @@ function close(chapter) {
   chapter.ledger = bank.ledger;
   chapter.bank = {burned: bank.burned, needed: bank.needed};
   chapter.page = night2Page(chapter.ledger);
+  chapter.remembered = night2Remembered(chapter.ledger);
 }
 
 function routeFrom(chapter, from, via) {
@@ -162,13 +203,31 @@ function beginChase(worldJob) {
 
 const worldRellAtGate = night2Point(sites.gate.x, sites.gate.z + 4.8);
 
+// The camp is solid (STORY-NIGHT-2-FLOW, Claude's decision): the lean-tos, the handcarts and the fires when they are lit stop a car.
+// The same two fire sites and two lean-tos the picture draws (src/world/night-2-look.js).
+export const NIGHT_2_CAMP_FIRES = [[-5, -5], [-2, 6]].map(([x, z]) => night2Point(sites.camp.position.x + x, sites.camp.position.z + z));
+export const NIGHT_2_CAMP_SETS = Object.freeze(['camp', 'camp-won', 'camp-escape', 'caught', 'chase']);
+export function night2CampSolids(chapter, cast = []) {
+  if (!NIGHT_2_CAMP_SETS.includes(chapter.set)) return [];
+  const {x, z} = sites.campShelter.position;
+  const shelters = [-5, 5].map(offset => ({id: `walkers-lean-to-${offset}`, kind: 'building', x, z: z + offset,
+    halfX: SALT_RIDERS.shelterHalfX, halfZ: SALT_RIDERS.shelterHalfZ, height: SALT_RIDERS.shelterHeight}));
+  const carts = cast.filter(person => person.cart).map(person => ({id: `walkers-cart-${person.id}`, kind: 'prop',
+    x: person.cart.x, z: person.cart.z, heading: person.cart.yaw, halfX: HANDCART.width / 2, halfZ: HANDCART.length / 2, height: 1.1}));
+  const fires = chapter.props.campLights ? NIGHT_2_CAMP_FIRES.map((at, index) => ({id: `walkers-fire-${index + 1}`, kind: 'prop',
+    shape: 'ellipse', x: at.x, z: at.z, halfX: .65, halfZ: .65, height: 1.15})) : [];
+  return [...shelters, ...carts, ...fires];
+}
+
 function dressing(chapter, step) {
   chapter.props.salt = step.id === 'salt';
   chapter.props.ladle = ['chase', 'caught'].includes(step.id);
   chapter.props.shawl = step.id === 'at-hearth';
   chapter.props.shelter = ['camp', 'camp-won', 'camp-escape', 'caught', 'chase', 'pump', 'sleep'].includes(chapter.set);
-  chapter.props.campLights = ['escaped', 'tower', 'tower-outcome', 'pot', 'delivery', 'wash-get-car', 'wash-drive',
-    'wash-fight', 'wash-fight-won', 'wash-drive-home', 'wash-walk-to-cut'].includes(step.id);
+  // STORY-NIGHT-2-FLOW (Claude's decision): fire follows the ember. The Walkers came to Tin Town because they had no fire, so
+  // their camp has firelight only where they got an ember: Dace's stolen two, or the one carried out in the night. On every
+  // refuse branch the camp is dark and cold, from the tower and at the Wash alike.
+  chapter.props.campLights = ['escaped', 'delivery'].includes(step.id);
   const cut = (look, x, z) => ({
     position: {...night2Point(look.x + x, look.z + z), y: look.y + 1.8},
     target: {...look, y: look.y + 1.35}, fov: 49,
@@ -213,6 +272,7 @@ export function enterNight2Step(worldJob) {
     worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
   }
   dressing(chapter, step);
+  worldJob.solidGrid.setCamp?.(night2CampSolids(chapter, worldJob.storyPeople));
   if (step.id === 'chase') beginChase(worldJob);
   if (step.id === 'gate') record(chapter, 'meet-walkers',
     presentPeople(['rell', 'dace', 'wim'], NIGHT_2_GATE_ENCOUNTER));
@@ -267,12 +327,15 @@ function stageAfter(chapter, step, result, cue, wrecked) {
     case 'wash-fight': {
       const outcome = result.storyMarks?.riderFight?.outcome;
       const won = outcome === 'won';
-      if (won) record(chapter, 'wash-fight-won', NIGHT_2_EFFECTS['wash-fight-won']);
+      // A camp taken by the crews is not a night Rell thanks you for: the riders still count as driven off, but the
+      // Walkers' word has already dropped for the camp, so the win does not set it again.
+      if (won) record(chapter, 'wash-fight-won', chapter.campTaken
+        ? NIGHT_2_EFFECTS['wash-fight-won'].filter(effect => effect.type !== 'word') : NIGHT_2_EFFECTS['wash-fight-won']);
       if (wrecked || outcome === 'lost') {
         chapter.washCarUnavailable = true;
         record(chapter, 'wash-car-towed', NIGHT_2_EFFECTS['wash-car-towed']);
       }
-      if (won) return 'wash-fight-won';
+      if (won && !chapter.campTaken) return 'wash-fight-won';
       return chapter.washCarUnavailable ? 'wash-walk-to-cut' : 'wash-drive-home';
     }
     case 'wash-fight-won': return chapter.washCarUnavailable ? 'wash-walk-to-cut' : 'wash-drive-home';
@@ -294,6 +357,37 @@ const NEXT = {
   'wash-walk-to-cut': 'wash-walk-to-gap', 'wash-walk-to-gap': 'wash-walk-home', 'wash-walk-home': 'close',
 };
 
+// STORY-NIGHT-2-FLOW: the riders' siege, and the camp the crews can take. A talk holds the world still (its step has no
+// time), so the rider stands on its circle while the tower talks and drives it in play.
+export function stepNight2Siege(worldJob, dt) {
+  const chapter = worldJob.night2, step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (!chapter || !NIGHT_2_SIEGE.steps.includes(step?.id)) return false;
+  const rider = worldJob.actors.find(actor => actor.id === NIGHT_2_SIEGE.riderId);
+  if (!rider?.position) return false;
+  chapter.siegeAngle = (chapter.siegeAngle ?? 0) + Math.max(0, dt) * NIGHT_2_SIEGE.mps / NIGHT_2_SIEGE.radius;
+  const {x, z} = siegeAt(chapter.siegeAngle);
+  Object.assign(rider.position, {x, z, y: scablandsActorHeightAt(x, z)});
+  rider.heading = siegeHeading(chapter.siegeAngle);
+  return true;
+}
+
+// The first crew member to reach the camp takes it (src/arena/modes/road-riders.js marks the moment). The Walkers leave
+// with their carts, west along the approach, and the ledger records it at once.
+export function watchNight2Camp(worldJob, cue) {
+  const chapter = worldJob.night2;
+  if (!chapter || chapter.campTaken || !worldJob.crewGoalTaken) return false;
+  chapter.campTaken = true;
+  record(chapter, 'wash-camp-taken', NIGHT_2_EFFECTS['wash-camp-taken']);
+  cue('night.camp.taken');
+  for (const person of worldJob.storyPeople ?? []) {
+    if (['auntie-solder', 'clinker'].includes(person.id)) continue;
+    const {x, z} = person.position, away = [{x: x - 35, z: z + 6}, {x: x - 90, z: z + 14}];
+    if (person.seat) { person.seat = null; person.position.y = scablandsActorHeightAt(x, z); }
+    setStoryPersonAction(person, person.cart ? 'push-cart' : 'walk', away);
+  }
+  return true;
+}
+
 export function routeNight2(worldJob, previous, result, cue, wrecked = false) {
   const chapter = worldJob.night2;
   const step = result.steps[previous];
@@ -305,6 +399,13 @@ export function routeNight2(worldJob, previous, result, cue, wrecked = false) {
   result.events = result.events.filter(event => event.type !== 'done');
   if (result.done) {
     chapter.completed = step.id === 'close';
+    // The night ends in the world at dawn (STORY-NIGHT-2-FLOW): the light comes up over the hearth while the one line
+    // of what people remember shows at the top of the screen.
+    if (chapter.completed) {
+      chapter.night = false;
+      chapter.evening = .27;
+      chapter.dawn = true;
+    }
     result.events.push({type: 'done'});
   }
 }
@@ -375,6 +476,8 @@ export function night2Action(worldJob, point, onFoot, car) {
     const scout = worldJob.actors.find(actor => actor.id === 'night-2-scout');
     const goal = chapter.scoutTurned ? sites.scoutGate : sites.scoutWall;
     chapter.routes = [{name: 'Ash scout', point: scout, metres: dist(point, scout)}];
+    // One rule for an Ash Man on foot (STORY-NIGHT-2-FLOW item 7): a hit from your car knocks him flat for good, here as at the Wash.
+    if (chapter.scoutDowned) return {arrival: 'scout-stopped'};
     return {arrival: dist(scout, at(goal)) <= goal.radius ?
       (chapter.scoutTurned ? 'scout-stopped' : 'scout-escaped') : null};
   }

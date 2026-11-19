@@ -26,6 +26,7 @@ import {worldPose} from '../src/arena/arena-floor.js';
 import {RIDER_RULE} from '../src/world/jobs/rider-rule.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {createHudScreen} from '../src/screen-hud.js';
+import {arenaPauseScreen} from '../src/screen-arena.js';
 import {placeWashSurroundReview, startWashSurroundReview} from './night-2-wash-review.js';
 import {PLAYERS_KEY, createPlayer, loadPlayers, replacePlayerProfile, savePlayers, selectPlayer} from '../src/progression.js';
 
@@ -340,8 +341,17 @@ for (const stopped of [false, true]) {
     Object.assign(run.duel.state.fighter, {yaw: Math.PI, pitch: 0});
     pumpFalloff(findScene(run, 'Town lamp: pump'), 25, 100);
     assert.equal(findScene(run, 'Night 2 hearth light').visible, true);
+    run.tick();
+    assert.equal(run.view.scoutReach, 'burn');
+    assert.equal(worldHudModel({worldJob: run.world, player: run.duel.state.fighter, onFoot: true}).line,
+      'The scout is in reach. Hold the left mouse button to burn him.');
+    Object.assign(run.duel.state.fighter, {yaw: Math.PI / 2});
+    run.tick();
+    assert.equal(run.view.scoutReach, 'turn', 'Near enough but to one side');
+    Object.assign(run.duel.state.fighter, {yaw: Math.PI, pitch: 0});
     withMouse(run, () => run.tick(12));
     assert(run.view.scoutTurned, 'The canvas press works with the loaned hand flamer');
+    assert.equal(run.view.scoutReach, null, 'A turned scout needs no more fire');
     run.duel.setFighterInput({fire: false});
   }
   for (let i = 0; i < 750 && run.stage() === 'scout'; i++) run.tick(7);
@@ -349,6 +359,32 @@ for (const stopped of [false, true]) {
   assert.equal(run.view.ledger.feud, stopped ? 'Watching' : 'Raiding');
   run.advance('close');
   run.finish(3);
+}
+
+// STORY-NIGHT-2-FLOW item 7: a hit from your car knocks the scout flat for good, as it does an Ash Man on foot at the Wash.
+{
+  const run = chapter(giftSeed);
+  run.openGate();
+  run.say(NIGHT_2_CHOICES[1].words);
+  run.advance('walk-watch-post');
+  run.footAt(sites.watchPost);
+  run.tick(2);
+  run.advance('scout');
+  const scout = run.world.actors.find(actor => actor.brandAsh);
+  run.footAt(sites.car);
+  run.duel.setInput({interact: true});
+  for (let i = 0; i < 120 && run.duel.state.onFoot; i++) run.tick();
+  run.duel.setInput({interact: false});
+  assert(!run.duel.state.onFoot, 'The player can take the car during the watch');
+  const {s, lateral} = run.duel.course.nearest(scout.x, scout.z);
+  Object.assign(run.duel.state, {s, lateral, prevS: s, prevLateral: lateral, speedMph: 20});
+  run.tick();
+  assert(scout.knockedDown && run.view.scoutDowned, 'A car hit stops the scout for good');
+  assert(run.cues.includes('night.ash-man.down'));
+  run.tick();
+  assert.equal(run.stage(), 'scout-stopped');
+  assert.equal(run.view.ledger.feud, 'Watching');
+  console.log('PASS Night 2 scout run down by the car.');
 }
 
 const lamp = chapter(23);
@@ -424,20 +460,21 @@ for (const [seed, mall, outcome] of [
   assert.match(options[0].detail, mall ? /^Rell will probably turn Clinker down/ : /^Rell might take Clinker/);
   if (mall) {
     const camera = run.view.camera, eye = camera.position;
+    // STORY-NIGHT-2-FLOW: fire follows the ember. A refused camp is dark; the riders' lights are what the tower sees.
     const fires = findScene(run, 'Walkers’ camp fires');
-    assert(fires.visible && fires.children.length === 2);
-    checkCampSmoke(run);
-    const points = fires.children.map(fire => {
-      assert(fire.visible && Math.hypot(fire.position.x - sites.camp.position.x, fire.position.z - sites.camp.position.z) < 8);
-      return fire.children.find(object => object.renderOrder === 3);
-    });
+    assert(!fires.visible, 'The refused Walkers have no fire');
+    assert(!run.world.solidGrid.camp.some(solid => solid.id.startsWith('walkers-fire-')), 'An unlit fire is not a solid');
+    const points = [];
     for (const [index, actor] of run.world.actors.filter(actor => actor.id.startsWith('wash-rider-')).entries()) {
       const pair = nightScene.group.getObjectByName(`Wash rider ${index + 1} lights`);
-      assert(pair.visible && pair.children.length === 2);
+      const lenses = pair.children.filter(object => object.isMesh);
+      assert(pair.visible && lenses.length === 2);
+      // The siege rider also throws a headlight beam ahead along the ground.
+      assert.equal(pair.children.some(object => object.isSpotLight), index === 0);
       assert.deepEqual([pair.position.x, pair.position.z], [actor.position.x, actor.position.z]);
-      points.push(...pair.children);
+      points.push(...lenses);
     }
-    assert.equal(points.length, 8);
+    assert.equal(points.length, 6);
     const screenPoints = points.map(light => {
       const at = light.getWorldPosition(new Vector3());
       const center = project(camera, at);
@@ -455,9 +492,10 @@ for (const [seed, mall, outcome] of [
     });
     assert(screenPoints.every((point, index) => screenPoints.every((other, j) => index === j ||
       Math.hypot((point.x - other.x) * 640, (point.y - other.y) * 360) >= 4)), 'The projected lights stay distinct');
-    const [first, second] = screenPoints;
-    const fireGap = Math.hypot((first.x - second.x) * 640, (first.y - second.y) * 360);
-    console.log(`Tower camera resolves two camp fires (${fireGap.toFixed(1)} px apart) and six rider lights through actual scene geometry.`);
+    // The rider laying siege stands on its 30 m circle round the dark camp (the talk holds the world still).
+    const circler = run.world.actors.find(actor => actor.id === 'wash-rider-1');
+    assert(Math.abs(Math.hypot(circler.position.x - sites.camp.position.x, circler.position.z - sites.camp.position.z) - 30) < .01);
+    console.log(`Tower camera resolves six rider lights round a dark camp through actual scene geometry.`);
   }
   run.say('Stay on the tower and watch');
   assert.equal(run.view.watchOutcome, outcome);
@@ -528,6 +566,11 @@ drive.finish(3);
 assert.equal(savedLedger(app.profile).night, 3);
 assert.equal(savedLedger(app.profile).feud, 'Watching');
 assert.equal(app.duel.state.arena.result.settlementSaved, true);
+// STORY-NIGHT-2-FLOW: the night ends in the world at dawn with one line of what people remember, not the journal page.
+assert.equal(app.duel.state.arena.result.night2Remembered, "Remembered: the Walkers owe you two nights' watch.");
+assert(app.duel.state.arena.result.night2Page, 'The journal stays, for the pause card and the Story Wall');
+assert.equal(drive.view.night, false, 'Dawn comes up over the hearth');
+assert.equal(drive.view.evening, .27);
 console.log('PASS Night 2 scripted play: the watch, hearth to close, scout driven out by the gate.');
 
 // The carry uses the ordinary pot from pickup to arrival. Set the car's
@@ -622,8 +665,18 @@ console.log(`PASS Night 2 chase: real route caught Dace, ${seen} visible steps a
 // Use the same installed player for each replay through the ordinary result path.
 const firstSave = memory.get(PLAYERS_KEY);
 const keptBefore = savedLedger(app.profile);
+const yardPhases = [];
+app.duel.onChange((_state, event) => { if (event.hiddenRoadPhase) yardPhases.push(event.hiddenRoadPhase.phase); });
 function reachReplayClose(tellMall = false) {
-  assert(app.returnToYard());
+  // STORY-NIGHT-2-FLOW: Continue at dawn (or the way back from a night left unfinished) goes straight to the yard, and the
+  // Wasteland arrival never plays again on the way.
+  yardPhases.length = 0;
+  assert(app.night2Continue() || app.returnToYard());
+  assert(app.isYardHomeActive(), 'The night returns straight to the yard');
+  // The visit is set up at its gate and arrives in the same call, so no frame draws the gate opening, its subtitle or the
+  // gatekeeper's welcome (the sound plays only while a frame finds the journey still opening).
+  assert.equal(app.duel.state.hiddenRoadJourney.phase, 'arrived', 'without the gate opening or the gatekeeper’s welcome');
+  assert(!yardPhases.includes('entering') && yardPhases.at(-1) === 'arrived');
   app.advance(8);
   assert(app.startNight2());
   const replay = chapter(app.seed, app.duel);
@@ -637,6 +690,13 @@ function reachReplayClose(tellMall = false) {
 }
 reachReplayClose();
 assert.equal(app.chooseNight2Replay('replace'), false);
+// The pause card opens the journal; it holds tonight's night as it stands.
+app.togglePause();
+const pauseCard = arenaPauseScreen(app.duel.state, {metric: () => '', time: String,
+  action: (label, act) => `<button data-action="${act}">${label}</button>`});
+assert.match(pauseCard.actions, /data-action="story-journal">THE JOURNAL</);
+assert.doesNotMatch(pauseCard.actions, /world-job-retry/);
+app.togglePause();
 assert(app.leaveWorldJob());
 assert.equal(app.duel.state.arena.result.night2Replay, undefined);
 assert.equal(memory.get(PLAYERS_KEY), firstSave);
@@ -649,6 +709,8 @@ assert.equal(memory.get(PLAYERS_KEY), firstSave);
 assert.equal(savedLedger(new App().profile).stocks.embers, keptBefore.stocks.embers, 'reload before choice');
 assert(app.chooseNight2Replay('keep'));
 assert.equal(firstReplay.duel.state.arena.result.night2Page.embers, keptBefore.stocks.embers);
+assert.equal(firstReplay.duel.state.arena.result.night2Remembered, "Remembered: the Walkers owe you two nights' watch.",
+  'The telling kept is the one remembered');
 assert.equal(memory.get(PLAYERS_KEY), firstSave);
 
 const secondReplay = reachReplayClose();
@@ -771,7 +833,9 @@ function inspectWashHud(duel, check) {
 
 // Use a fresh memory profile for each outcome so the existing replay policy
 // can never mask an incorrect durable Wash result.
-for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
+for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken']) {
+  // STORY-NIGHT-2-FLOW: 'camp-taken' beats the riders but lets their crews run on into the Walkers' camp.
+  const campTaken = result === 'camp-taken';
   const won = result.startsWith('win'), surrounded = result === 'surrounded', towed = result.includes('wreck');
   const washApp = new App();
   washApp.audio.unlock = () => {};
@@ -788,7 +852,8 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
   assert.equal(world.riderReserve.length, riderCount);
   run.openGate();
   run.say(NIGHT_2_CHOICES[3].words);
-  run.say('Say nothing');
+  // The camp-taken telling first tells Rell of the Mall, so that the camp's loss has a word to drop from.
+  run.say(campTaken ? NIGHT_2_SCENES.refuse.choices[0].words : 'Say nothing');
   run.advance('tower');
   const tower = world.job.steps[world.job.stepIndex];
   assert.deepEqual(tower.scene.choices.map(option => option.id), ['watch-clinker', 'drive-riders-off', 'carry-ember']);
@@ -796,12 +861,17 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
   assert.equal(run.stage(), 'wash-get-car');
   assert.equal(view.ledger.stocks.embers, 4);
   const parked = worldPose(duel, state);
+  const circler = world.actors.find(actor => actor.id === 'wash-rider-1');
+  const siegeStart = {...circler.position};
   for (let frame = 0; frame < 850; frame++) {
     const route = view.routes[0];
     if (route) pointAt(duel, route.point, {forward: route.metres > 2.3, sprint: true});
     run.tick();
   }
   assert.equal(run.stage(), 'wash-get-car', 'Approaching the marker cannot board for the player');
+  // STORY-NIGHT-2-FLOW: while the player goes for the car, the siege rider drives its 30 m circle round the camp.
+  assert(Math.abs(Math.hypot(circler.position.x - sites.camp.position.x, circler.position.z - sites.camp.position.z) - 30) < .01 &&
+    Math.hypot(circler.position.x - siegeStart.x, circler.position.z - siegeStart.z) > 20, 'The siege rider drives its circle');
   assert(Math.hypot(state.fighter.x - parked.x, state.fighter.z - parked.z) < 3);
   duel.setFighterInput({forward: false});
   duel.setInput({interact: true});
@@ -825,7 +895,12 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
   assert(state.opponents.every(actor => actor.roadRider?.weapon === 'ash-sack'));
   assert.equal(world.actors.filter(actor => actor.id.startsWith('wash-rider-')).length, 0, 'The fight replaces the three distant silhouettes');
   if (!surrounded) assert(findScene(run, 'Wash rider 1 lights').visible, 'The real arena cars have the lights seen from the tower');
-  checkCampSmoke(run);
+  // STORY-NIGHT-2-FLOW: the refused camp is dark and cold, and solid: its lean-tos and carts stop a car.
+  assert(!findScene(run, 'Walkers’ camp fires').visible, 'The refused Walkers have no fire at the Wash');
+  assert(world.solidGrid.camp.filter(solid => solid.id.startsWith('walkers-lean-to-')).length === 2 &&
+    world.solidGrid.camp.filter(solid => solid.id.startsWith('walkers-cart-')).length === 4, 'The camp is solid');
+  assert(world.solidGrid.near(sites.campShelter.position.x, sites.campShelter.position.z,
+    sites.campShelter.position.x, sites.campShelter.position.z, 1).some(solid => solid.id === 'walkers-lean-to--5'));
   const at = worldPose(duel, state);
   assert(Math.hypot(at.x - sites.washApproach.position.x, at.z - sites.washApproach.position.z) < sites.washApproach.radius);
   let wreckAt;
@@ -843,10 +918,50 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
       assert(applyArmorDamage(duel, state, 'crossbow', {owner: state.opponents[0].arenaId}));
       assert(state.combatWrecking);
     };
-    if (won) {
-      for (const rider of state.opponents) {
+    if (won || campTaken) {
+      // In the plain win the two riders who came to meet the player are wrecked, and the one laying siege breaks off last.
+      const circler = state.opponents.find(rider => rider.roadRider.circle);
+      assert(circler, 'One rider lays siege to the camp');
+      const wrecked = result === 'win' ? state.opponents.filter(rider => rider !== circler) : state.opponents;
+      for (const rider of wrecked) {
         rider.armor = 2;
         assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
+      }
+      duel.step(1 / 120);
+      if (result === 'win') {
+        assert.equal(circler.roadRider.phase, 'withdrawing', 'The siege rider breaks off once the others are beaten');
+        assert(run.cues.includes('rider.breaks-off'));
+      }
+      const crew = world.actors.filter(actor => actor.riderCrew);
+      assert.equal(crew.length, wrecked.length * RIDER_RULE.crewPerCar, 'Each wrecked rider puts out its crew');
+      const carBox = worldPose(duel, state);
+      for (const man of crew) {
+        const dx = man.x - carBox.x, dz = man.z - carBox.z, sin = Math.sin(carBox.heading), cos = Math.cos(carBox.heading);
+        assert(Math.abs(dx * cos - dz * sin) >= RIDER_RULE.crewClearHalfWidth - 1e-9 ||
+          Math.abs(dx * sin + dz * cos) >= RIDER_RULE.crewClearHalfLength - 1e-9, 'No bailing man stands in the player’s car');
+        assert.deepEqual(man.approachTarget, {x: sites.camp.position.x, z: sites.camp.position.z}, 'The crews run for the camp');
+      }
+      duel.step(1 / 120);
+      assert.equal(world.riderFight.outcome, null, 'The fight is not won while Ash Men on foot still run for the camp');
+      if (campTaken) {
+        for (let i = 0; i < 4800 && !view.campTaken; i++) duel.step(1 / 60);
+        assert(view.campTaken && world.crewGoalTaken, 'An Ash Man on foot who reaches the camp takes it');
+        assert(run.cues.includes('night.camp.taken'));
+        assert.equal(view.ledger.words.walkers, 'Cold', 'The Walkers’ word drops one step');
+        assert(view.ledger.marks.includes('wash-camp-taken'));
+        assert(world.storyPeople.filter(person => person.id !== 'auntie-solder' && person.id !== 'clinker')
+          .every(person => ['walk', 'push-cart'].includes(person.action)), 'The Walkers are driven off');
+      } else {
+        // A hit from the player's car knocks each one flat for good (the ambush rule: within 2.2 m at 4 m/s or more).
+        for (const man of crew) {
+          park({x: man.x, z: man.z}, 0);
+          state.speedMph = 20;
+          duel.step(1 / 120);
+          assert(man.knockedDown && man.approachTarget === null, 'A car hit stops an Ash Man on foot for good');
+        }
+        assert(run.cues.includes('night.ash-man.down'));
+        duel.setInput({throttle: 0, brake: 1});
+        state.speedMph = 0;
       }
       if (towed) {
         const fight = world.riderFight;
@@ -880,8 +995,9 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
     assert(ui['race-callout'].hidden, 'The wreck leaves the story objective as the only notice');
   });
   else finishFight();
-  assert.equal(world.riderFight.outcome, won ? 'won' : surrounded ? 'surrounded' : 'lost');
+  assert.equal(world.riderFight.outcome, won || campTaken ? 'won' : surrounded ? 'surrounded' : 'lost');
   assert.equal(state.arena.result, null, 'The fight hands back to the chapter');
+  if (campTaken) assert.equal(run.stage(), 'wash-drive-home', 'Rell does not thank you for a camp the crews took');
   if (won) {
     assert.equal(run.stage(), 'wash-fight-won');
     run.tick();
@@ -917,9 +1033,15 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
   const kept = savedLedger(washApp.profile);
   assert.equal(kept.stocks.embers, 3);
   assert.equal(kept.marks.includes('wash-car-towed-at-dawn'), towed);
-  assert.equal(kept.history.some(change => change.choiceId === 'wash-fight-won'), won);
+  assert.equal(kept.history.some(change => change.choiceId === 'wash-fight-won'), won || campTaken);
   assert.equal(kept.words.walkers, won ? 'Strangers' : 'Cold');
-  assert.equal(kept.feud, won ? 'Hunting' : 'Raiding');
+  assert.equal(kept.feud, won || campTaken ? 'Hunting' : 'Raiding');
+  assert.equal(kept.marks.includes('wash-camp-taken'), campTaken);
+  assert.equal(washApp.duel.state.arena.result.night2Remembered, campTaken
+    ? "Remembered: the Ash Men took the Walkers' camp at the Wash."
+    : towed ? 'Remembered: your car will be towed in at dawn. Bess leaves late.'
+      : won ? 'Remembered: the Walkers still do not know what to make of you.'
+        : 'Remembered: the Walkers will not forget that you turned them away.');
   assert.equal(view.page.memories.some(line => line.includes('Bess leaves late')), towed);
   assert(washApp.returnToYard());
   washApp.dispose();

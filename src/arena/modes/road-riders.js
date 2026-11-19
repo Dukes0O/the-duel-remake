@@ -11,6 +11,7 @@ import {targetFor} from '../../arsenal/targeting.js';
 import {scablandsActorHeightAt} from '../../world/scablands-ground.js';
 import {stepMover, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {RIDER_RULE as R} from '../../world/jobs/rider-rule.js';
+import {AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS} from '../../world/jobs/steps/escort.js';
 
 const sides = ['front', 'back', 'left', 'right'];
 const diff = duel => R.difficulty[duel.state.cpuDifficulty] ?? R.difficulty.medium;
@@ -112,7 +113,8 @@ export function startRoadFight(duel, world) {
     car.weaponLoadout = [definition.weapon];
     car.roadRider = {id:definition.id, weapon:definition.weapon, home:definition.home,
       fightToEnd:definition.fightToEnd === true, slot:definition.boxIn ? slot++ : null,
-      targetId, phase:'fighting', ashWait:0, approach:definition.approach === true};
+      targetId, phase:'fighting', ashWait:0, approach:definition.approach === true,
+      circle:definition.circle ?? null};
     Object.assign(participant,{name:definition.name || definition.id, team:'road-riders', targetId});
     state.opponents.push(car); state.arena.participants.push(participant); fight.riders.push(car.arenaId);
   }
@@ -204,6 +206,11 @@ export function roadRiderGoal(duel,car,dt) {
     } else return reachableGoal(duel,car,{...rider.home,speedMph:R.retreatMph,boost:false});
   }
   if (rider.phase !== 'fighting') return {...me,speedMph:0,boost:false};
+  // STORY-NIGHT-2-FLOW: a rider laying siege drives its circle round the camp until the others are beaten.
+  if (rider.circle) {
+    const c=rider.circle, angle=Math.atan2(me.z-c.z,me.x-c.x)+R.circleLeadRadians;
+    return reachableGoal(duel,car,{x:c.x+Math.cos(angle)*c.radius,z:c.z+Math.sin(angle)*c.radius,speedMph:R.circleMph,boost:false});
+  }
   const target=arenaActor(duel,rider.targetId);
   if (!target || outOfPlay(duel,target)) return {...me,speedMph:0,boost:false};
   if (rider.slot !== null) return reachableGoal(duel,car,boxGoal(duel,car,target));
@@ -244,17 +251,59 @@ function boxPressure(duel, cars, dt) {
   return sides.every(side=>occupied.has(side));
 }
 
-function crewBail(duel, world, car) {
+// A door that opens onto the player's car puts its man on the ground beside it, never standing in it (STORY-NIGHT-2-FLOW,
+// Kyle's picture of 19 November 2026): the point is moved out of the car's box, the short way.
+function besideCar(x, z, carAt) {
+  const sin=Math.sin(carAt.heading), cos=Math.cos(carAt.heading), dx=x-carAt.x, dz=z-carAt.z;
+  const side=dx*cos-dz*sin, ahead=dx*sin+dz*cos;
+  const outSide=R.crewClearHalfWidth-Math.abs(side), outAhead=R.crewClearHalfLength-Math.abs(ahead);
+  if (outSide<=0 || outAhead<=0) return {x,z};
+  const lateral=outSide<=outAhead, push=lateral ? (Math.sign(side)||1)*outSide : (Math.sign(ahead)||1)*outAhead;
+  return lateral ? {x:x+cos*push,z:z-sin*push} : {x:x+sin*push,z:z+cos*push};
+}
+
+function crewBail(duel, world, car, goal) {
   const at=worldPose(duel,car), target=worldPose(duel,duel.state), away=Math.atan2(at.x-target.x,at.z-target.z);
   for(let index=0;index<R.crewPerCar;index++) {
     const side=index%2 ? 1 : -1;
-    const x=at.x+Math.cos(at.heading)*side*R.crewDoor, z=at.z-Math.sin(at.heading)*side*R.crewDoor;
-    const yaw=away+side*R.swerveRadians;
+    const {x,z}=besideCar(at.x+Math.cos(at.heading)*side*R.crewDoor, at.z-Math.sin(at.heading)*side*R.crewDoor, target);
+    // At the Wash they run for the Walkers' camp; elsewhere they scatter away from the player.
+    const yaw=goal ? Math.atan2(goal.x-x,goal.z-z) : away+side*R.swerveRadians;
+    const run=goal ? {x:goal.x,z:goal.z} : {x:x+Math.sin(yaw)*R.crewRunMetres,z:z+Math.cos(yaw)*R.crewRunMetres};
     world.actors.push({id:car.jobId+'/crew/'+index,riderCrew:true,steps:0,x,y:scablandsActorHeightAt(x,z,car.groundHeight),z,yaw,
-      health:1,approachSpeed:R.crewMps,approachTarget:{x:x+Math.sin(yaw)*R.crewRunMetres,z:z+Math.cos(yaw)*R.crewRunMetres}});
+      health:1,approachSpeed:R.crewMps,approachTarget:run});
   }
   duel.emit({arenaTell:{id:car.arenaId,cue:'rider.crew-bail',position:point(duel,car)}});
 }
+
+// STORY-NIGHT-2-FLOW: on a step with a crew goal, the crews run for it. A hit from the player's car (the ambush rule: its middle
+// within 2.2 m while it moves at 4 m/s or more) knocks one flat for good; the first to reach the goal takes it. A man who has
+// not moved for crewStuckSec has given up the run.
+function stepRiderCrew(duel, world, step, dt) {
+  const goal=step?.crewGoal;
+  if (!goal) return;
+  const state=duel.state, car=worldPose(duel,state);
+  const moving=!state.onFoot && !state.combatWrecking && Math.abs(state.speedMph || 0)*DRIVE.mphToWorld >= AMBUSH_RUN_DOWN_MPS;
+  for (const crew of world.actors) {
+    if (!crew.riderCrew || crew.knockedDown || crew.atGoal || crew.gaveUp) continue;
+    if (moving && dist(car,crew) <= AMBUSH_RUN_DOWN_METRES) {
+      Object.assign(crew,{knockedDown:true,health:0,approachSpeed:0,approachTarget:null});
+      duel.emit({arenaTell:{id:crew.id,targetId:'player',seconds:0,cue:'night.ash-man.down',position:{x:crew.x,y:crew.y,z:crew.z}}});
+      continue;
+    }
+    if (dist(crew,goal) <= goal.radius) {
+      Object.assign(crew,{atGoal:true,approachSpeed:0,approachTarget:null});
+      world.crewGoalTaken=true;
+      continue;
+    }
+    const moved=crew.lastAt && (crew.lastAt.x!==crew.x || crew.lastAt.z!==crew.z);
+    crew.stuckSec=moved || !crew.lastAt ? 0 : (crew.stuckSec ?? 0)+dt;
+    crew.lastAt={x:crew.x,z:crew.z};
+    if (crew.stuckSec>=R.crewStuckSec) Object.assign(crew,{gaveUp:true,approachSpeed:0,approachTarget:null});
+  }
+}
+const crewLoose=(world, step) => !!step?.crewGoal && !world.crewGoalTaken &&
+  world.actors.some(crew => crew.riderCrew && !crew.knockedDown && !crew.atGoal && !crew.gaveUp);
 
 function stepAsh(duel,world,step,dt) {
   const fight=world.riderFight;
@@ -304,13 +353,24 @@ export function updateRoadFight(duel, world, dt) {
   const step=world.job.steps[fight.index];
   stepAsh(duel,world,step,dt);
   const cars=fight.riders.map(id=>arenaActor(duel,id)).filter(Boolean);
+  stepRiderCrew(duel,world,step,dt);
   for (const car of cars) {
     const rider=car.roadRider;
     rider.ashWait=Math.max(0,rider.ashWait-dt);
     if (car.combatWrecking && rider.phase!=='wrecked') {
-      rider.phase='wrecked'; crewBail(duel,world,car);
+      rider.phase='wrecked'; crewBail(duel,world,car,step?.crewGoal);
       car.arenaTellSec=0;
     } else if (!fight.outcome && rider.phase==='fighting' && !rider.fightToEnd && car.armor<=car.maxArmor*R.retreatFraction) {
+      rider.phase='withdrawing';
+      car.arenaTellSec=0;
+      duel.emit({arenaTell:{id:rider.id,targetId:rider.targetId,seconds:0,cue:'rider.breaks-off',sourceId:car.arenaId,position:point(duel,car)}});
+    }
+  }
+  // The rider laying siege breaks off last, once every other rider is wrecked or gone.
+  if (!fight.outcome && cars.every(car => car.roadRider.circle || car.roadRider.phase!=='fighting')) {
+    for (const car of cars) {
+      const rider=car.roadRider;
+      if (!rider.circle || rider.phase!=='fighting') continue;
       rider.phase='withdrawing';
       car.arenaTellSec=0;
       duel.emit({arenaTell:{id:rider.id,targetId:rider.targetId,seconds:0,cue:'rider.breaks-off',sourceId:car.arenaId,position:point(duel,car)}});
@@ -327,7 +387,7 @@ export function updateRoadFight(duel, world, dt) {
   const target=arenaActor(duel,fight.targetId);
   const outcome=duel.state.combatWrecking || !target || target.combatWrecking || target.finished || target.crushed
     ? 'lost' : fight.heldSec>=R.boxSeconds ? 'surrounded' :
-    cars.every(car=>car.roadRider.phase!=='fighting') ? 'won' : null;
+    cars.every(car=>car.roadRider.phase!=='fighting') && !crewLoose(world,step) ? 'won' : null;
   if (!outcome) return;
   fight.outcome=outcome; fight.endedAt=fight.elapsed;
   (world.completedRiderFights ??= {})[fight.index]=fight;

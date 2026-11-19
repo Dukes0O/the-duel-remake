@@ -199,8 +199,9 @@ export function mountTalkView(stage, send) {
     options.replaceChildren(...page.options.map((option, index) => {
       const button = create('button', 'story-cloud');
       button.type = 'button';
-      const shortcut = index < 10 ? String((index + 1) % 10) + ' · ' : '';
-      button.append(create('small', '', shortcut + (option.kind === 'ask' ? 'Ask' : 'Say')), doc.createTextNode(option.words));
+      // The words alone, with the number key small beside them (Kyle, 19 November 2026: no SAY or ASK label).
+      if (index < 10) button.append(create('small', 'story-option-key', String((index + 1) % 10)));
+      button.append(doc.createTextNode(option.words));
       if (option.detail) button.append(create('small', 'story-option-detail', option.detail));
       if (option.disabled) {
         button.disabled = true;

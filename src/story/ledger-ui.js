@@ -5,6 +5,11 @@ export function playLedgerPageTurn(audio) {
   if (audio?.context?.state === 'running' && !audio.muted) audio._playCue('story.ledger.open');
 }
 
+// STORY-NIGHT-2-FLOW: the one-line "Remembered" notice when a night ends.
+export function playJournalNote(audio) {
+  if (audio?.context?.state === 'running' && !audio.muted) audio._playCue('story.journal.note');
+}
+
 export function playLedgerChoice(audio) {
   if (audio?.context?.state === 'running' && !audio.muted) audio._playCue('story.ledger.choose');
 }
@@ -31,7 +36,7 @@ export function bindLedgerReplayKeys(window, currentPage, signal) {
   window.addEventListener('blur', () => pressedOn.clear(), {signal});
 }
 
-const marks = {
+export const LEDGER_MARK_LINES = Object.freeze({
   'know-south-ford': 'The Walkers told you about the South Ford.',
   'dace-knows-the-count': 'You told Dace how many embers the town has.',
   'gave-rell-an-ember': 'You gave Rell an ember and asked nothing.',
@@ -48,7 +53,9 @@ const marks = {
   'ash-men-know-footpaths': 'The Ash Men know the footpaths.',
   'ash-men-know-south-ford': 'The Ash Men know the South Ford.',
   'changed-mind-in-night': 'You changed your mind in the night.',
-};
+  'wash-camp-taken': "The Ash Men took the Walkers' camp at the Wash.",
+});
+const marks = LEDGER_MARK_LINES;
 
 function tellingLine({slot, key}, value, other) {
   switch (slot) {
@@ -80,6 +87,22 @@ export function ledgerReplayMarkup({differences, confirming, issue}, escapeHTML)
     '<h3 id="ledger-title">What people remember</h3>' +
     '<div class="story-replay-comparison yard-home-intro" role="region" aria-label="Compare tellings" tabindex="0">' +
     content + '</div>' + warning + status + '<footer>' + controls + '</footer></section>';
+}
+
+// STORY-NIGHT-2-FLOW: the end of a night in the world. One line of what people remember at the top of the screen and a
+// Continue at the foot; the dawn over the hearth stays in view between them.
+export function night2DawnMarkup({remembered, issue = ''}, escapeHTML) {
+  return '<section class="story-dawn" aria-label="Dawn">' +
+    (remembered ? '<p class="story-dawn-note" role="status">' + escapeHTML(remembered) + '</p>' : '') +
+    (issue ? '<p class="story-dawn-issue" role="status">' + escapeHTML(issue) + '</p>' : '') +
+    '<footer><button type="button" data-action="night-2-continue">Continue</button></footer></section>';
+}
+
+// The journal from the pause menu: the same page the Story Wall shows, with the way back to the pause card.
+export function night2JournalMarkup(page, escapeHTML) {
+  return '<section class="yard-home-panel story-journal" role="dialog" aria-modal="true" aria-labelledby="ledger-title">' +
+    '<div class="yard-home-content">' + ledgerPageMarkup(page, escapeHTML) + '</div>' +
+    '<footer><button type="button" data-action="story-journal-close">Back</button></footer></section>';
 }
 
 export function ledgerPageMarkup(page, escapeHTML) {

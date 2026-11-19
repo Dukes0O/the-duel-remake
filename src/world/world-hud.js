@@ -142,6 +142,10 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     if (step.brand && job.stepState.brandSeconds > 0) next.line = job.stepState.lightingLamp
       ? 'Stay by the pump lamp.' : 'Carry the brand to the pump lamp.';
   }
+  // STORY-NIGHT-2-FLOW item 4: say when the Ash scout is within the hand flamer's reach.
+  if (chapter && step?.id === 'scout' && chapter.scoutReach) next.line = chapter.scoutReach === 'burn'
+    ? 'The scout is in reach. Hold the left mouse button to burn him.'
+    : 'The scout is in reach. Turn to face him and hold the left mouse button.';
   if (step?.pickup?.atCar && !job.stepState.loaded) {
     next.target = markerOf({name: 'Your car', position: worldJob.marker}, places);
     next.line = onFoot ? 'Find your car and hold F to get in with the ember.' : 'Stop the car to load the ember.';

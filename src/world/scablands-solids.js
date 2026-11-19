@@ -214,6 +214,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     barricades: [],
     yard: [],
     shelter: [],
+    camp: [],
     townGate: [],
     near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
@@ -221,6 +222,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.shelter) found.push(solid);
+      for (const solid of this.camp) found.push(solid);
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
       for (const solid of this.people) found.push(solid);
@@ -259,6 +261,8 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
         halfX:x - .3, halfZ:.25, height:1.26}));
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
+    // STORY-NIGHT-2-FLOW: the Walkers' camp at the Wash (its lean-tos, carts and lit fires) stops a car and a man on foot.
+    setCamp(solids) { this.camp = solids.map(solid => make(solid)); },
     setTownGate(gate, progress = 0) {
       const pose = gate && tinTownDoorPose(gate, progress);
       this.townGate = gate ? [make({id:'hot-delivery-town-door', kind:'wall', x:pose.x, z:pose.z,
