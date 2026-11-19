@@ -398,15 +398,18 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
 
-  - id: QA-WATER-ROAD-AUTOPILOT
-    title: "water-road scenario: Sal's road autopilot sometimes misses Easy within three tries"
+  - id: WILD-HIT
+    title: "Cars knock roadside animals down, with a small heap and a bit of blood (Kyle, 19 November)"
     owner: "claude"
-    lane: "TOOLS"
+    lane: "UI"
     size: "S"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
+    status: "review"
+    claimed_by: "Claude, since 19 November 2026: merged behind the dev switch; Kyle tries it next"
+    waiting_on: "kyle"
     needs: []
-    details: "docs/board/cards/QA-WATER-ROAD-AUTOPILOT.md"
+    locks: []
+    flag: "wildlife-hits"
+    details: "docs/board/cards/WILD-HIT.md"
 
   - id: LAB-LOOK
     title: "The Lab's lessons: a compelling place to learn (look and lesson UX)"
