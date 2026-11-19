@@ -1333,9 +1333,7 @@ export function attachRenderer(host, app) {
       const preparationMs=performance.now()-preparationStarted;
       const renderStarted=performance.now();renderMainView(renderer,composer,high);
       const kits = trackKitsOf(world);
-      // A conversation fills the picture: the mirror is not drawn behind its words.
-      if (talk) rearView.hide();
-      else if (kits) {
+      if (kits) {
         const previousRender = renderer.render;
         renderer.render = function(renderedScene, renderedCamera, ...args) {
           if (renderedScene !== scene || renderedCamera !== rearView.camera)
