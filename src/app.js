@@ -73,6 +73,7 @@ import {featureFlags} from './feature-flags.js';
 import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
@@ -232,6 +233,8 @@ export class App {
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
+      if (event.talkOpened) this._clearHiddenRoadInput();
+      if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
       if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
@@ -465,7 +468,7 @@ export class App {
         this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
       }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
-      this._applyInput(SIMULATION_STEP);
+      if (!activeTalkStep(this.duel.state)) this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
       this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
@@ -2889,7 +2892,7 @@ export class App {
       if(document.pointerLockElement || !this.duel.state.onFoot)return;
       this._footPointer.fire=this._footPointer.aim=false;
       this._footPointerReleasedAt=performance.now();
-      if(!this.duel.state.paused)this.togglePause();
+      if(!this.duel.state.paused && !activeTalkStep(this.duel.state))this.togglePause();
     },{signal});
     window.addEventListener('blur', () => {
       this.keys = {};

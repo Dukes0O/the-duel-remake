@@ -11,12 +11,13 @@ import { stepBoard } from './steps/board.js';
 import { stepDrivetrain } from './steps/drivetrain.js';
 import { stepRunaway } from './steps/runaway.js';
 import { stepDig } from './steps/dig.js';
+import { stepTalk } from './steps/talk.js';
 import { stepWhistle } from './steps/whistle.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
 
 const runners = { reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
-  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle };
+  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle, talk: stepTalk };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);
@@ -70,7 +71,13 @@ export function stepJob(job, view = {}, dt = 0) {
     result.failedStep = true;
   } else if (lined.complete) {
     const waiting = result.stepState.lineQueue ?? [], showing = result.stepState.lineRemaining ?? 0;
-    result.stepIndex += 1;
+    const choice = lined.events?.find(event => event.type === 'talkChoice');
+    const destination = choice && step.branches?.[choice.id];
+    if (destination != null) {
+      result.stepIndex = result.steps.findIndex(candidate => candidate.id === destination);
+      if (result.stepIndex < 0) throw new Error('Unknown talk branch: ' + destination);
+    } else result.stepIndex += 1;
+    if (choice) result.talkResult = choice;
     const following = result.steps[result.stepIndex];
     if (following?.opening?.length) result.stepState = waiting.length ? { carriedLines: waiting } : {};
     else result.stepState = waiting.length || showing > 0 ? { lineQueue: waiting, lineRemaining: showing } : {};
