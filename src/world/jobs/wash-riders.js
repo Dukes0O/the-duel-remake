@@ -21,7 +21,9 @@ export function washRiderJob({seed=1, count=3, boxIn=false, weapon='ash-sack', f
     };
   });
   const what = boxIn ? 'Keep turning to escape the roadblock.' : 'Drive off the Ash riders and keep your car running.';
-  return {id:'wash-road-riders', name:'Riders at the Wash', steps:[
+  return {id:'wash-road-riders', name:'Riders at the Wash', resultLine:'You drove the Ash riders from the Wash.',
+    riderResultLines:{lost:'The Ash riders wrecked your car at the Wash.',surrounded:'The Ash riders held your car on all four sides.'},
+    steps:[
     {kind:'rider-fight',id:'wash',what,carStart,riders,onSurrounded:'lose'},
   ]};
 }

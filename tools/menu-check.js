@@ -65,19 +65,37 @@ const gateFound=document.createElement('button');gateFound.textContent='Create t
 if (qaParams.has('road-riders-review')) {
   gateFound.dataset.washPlayer='';
   const {washRiderJob}=await import('../src/world/jobs/wash-riders.js');
-  for (const difficulty of ['easy','medium','hard']) {
+  let cancelArrival;
+  const encounters=['easy','medium','hard'].map(difficulty=>({id:difficulty,difficulty,label:'Fight at the Wash · '+difficulty}));
+  encounters.push({id:'roadblock',difficulty:'easy',label:'Escape the five-car Wash roadblock · easy',count:5,boxIn:true});
+  for (const encounter of encounters) {
     const button=document.createElement('button');
-    button.dataset.washFight=difficulty;
-    button.textContent='Fight at the Wash · '+difficulty;
+    button.dataset.washFight=encounter.id;
+    button.textContent=encounter.label;
     button.onclick=()=>{
+      cancelArrival?.();
+      cancelArrival=null;
+      const begin=()=>{
+        app.cpuDifficulty=encounter.difficulty;
+        const job=washRiderJob({count:encounter.count,boxIn:encounter.boxIn});
+        const started=app._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job});
+        if (started) panel.open=false;
+        else note.textContent='Enter the Wasteland yard with the road-riders and story-everburn switches, then choose a fight.';
+      };
       if (app.duel.state.status==='menu') {
         if (!gateFound.disabled) gateFound.click();
         app.visitWasteland();
       }
-      app.cpuDifficulty=difficulty;
-      const started=app._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job:washRiderJob()});
-      if (started) panel.open=false;
-      else note.textContent='Enter the Wasteland yard with the road-riders and story-everburn switches, then choose a fight.';
+      if (app.isYardHomeActive() || app.duel.state.arena || !app.duel.state.hiddenRoadVisit) return begin();
+      // The menu visit plays its normal arrival. Start after its simulation tick has finished.
+      cancelArrival=app.duel.onChange(state=>{
+        if (app.isYardHomeActive()) {
+          cancelArrival?.(); cancelArrival=null;
+          queueMicrotask(begin);
+        } else if (state.status==='menu') {
+          cancelArrival?.(); cancelArrival=null;
+        }
+      });
     };
     panel.append(button);
   }

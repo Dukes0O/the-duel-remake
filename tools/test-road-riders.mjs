@@ -9,6 +9,7 @@ import {createCombatEffects, smokeHazeOpacity} from '../src/combat-effects.js';
 import {syncScene} from '../src/scene-systems.js';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
+import {arenaResultsScreen} from '../src/screen-arena.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 import {placeActor} from '../src/arena/arena-event.js';
@@ -74,13 +75,17 @@ function rulesAndRoster() {
   app.profile={...app.profile,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};
   assert.ok(app._saveProfile());
   assert.ok(app.visitWasteland());
+  for(let tick=0;tick<60/DT&&!app.isYardHomeActive();tick++) app.duel.step(DT);
+  assert.ok(app.isYardHomeActive(),'the real gate opens and the memory-only player reaches the yard');
   for(const difficulty of ['easy','medium','hard']) {
     app.cpuDifficulty=difficulty;
     assert.ok(app._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job:washRiderJob()}));
     assert.equal(app.duel.state.cpuDifficulty,difficulty);
     assert.equal(app.duel.state.arena.worldJob.riderFight.riders.length,3);
   }
-  for (const pageSource of [readySource,prepareSource,visitReadySource,visitSource,yardSource,loadedSource,stateSource,...['easy','medium','hard'].map(fightSource)]) new Function('return '+pageSource);
+  assert.ok(app.worldJobAgain(),'the Wash replay action starts the same event');
+  assert.equal(app.duel.state.arena.worldJob.definition.id,'wash-road-riders');
+  for (const pageSource of [readySource,prepareSource,visitReadySource,visitSource,yardSource,loadedSource,stateSource,...['easy','medium','hard','roadblock'].map(fightSource)]) new Function('return '+pageSource);
   const gated = new Duel({seed:7,featureFlags:{...FLAGS,'road-riders':false}});
   gated.state.wastelandGateDiscovered = true;
   assert.equal(gated.startArenaEvent({venueId:'scablands',mode:'world-job',opponents:[],job:washRiderJob()}),false);
@@ -214,13 +219,18 @@ function fireAndCrew() {
   assert.ok(crew.every((a,i)=>distance(a,positions[i])>.5));
   assert.equal(toEnd.world.actors.filter(a=>a.riderCrew).length,crew.length);
   assert.equal(stubborn.roadRider.phase,'wrecked');
+  advance(toEnd,RULE.aftermathSec+DT*3);
+  assert.equal(toEnd.state.arena.result?.winnerId,'player');
+  const result=arenaResultsScreen(toEnd.state,{metric:()=>'',action:(_text,id)=>id,escapeHTML:String});
+  assert.match(result.description,/drove the Ash riders from the Wash/);
+  assert.ok(!result.actions.includes('ember-next-job'),'practice never opens an unrelated Everburn job');
   console.log('Ash aim, smoke, smothering, missed throw, smoking retreat and living crew passed.');
 }
 
 function chaseAndLoss() {
   for (const difficulty of ['easy','medium','hard']) {
     const sim = runEvent({difficulty,count:3}), {duel,state,world,fight,events}=sim;
-    const car=state.opponents[0], gap=distance(worldPose(duel,state),worldPose(duel,car));
+    const car=state.opponents[0], parked=worldPose(duel,state), gap=distance(parked,worldPose(duel,car));
     advance(sim,1.2);
     assert.ok(distance(worldPose(duel,state),worldPose(duel,car))<gap-5);
     advance(sim,110,undefined,()=>!!fight.outcome);
@@ -228,10 +238,14 @@ function chaseAndLoss() {
     assert.ok(events.some(e=>e.combatRamHit&&e.attackerIndex>=0&&e.victimIndex===-1&&e.armorRemoved>0));
     assert.ok(events.some(e=>e.combatRamHit&&e.attackerIndex===-1&&e.victimIndex>=0&&e.armorRemoved>0));
     assert.ok(events.some(e=>e.vehicleSmash?.dvMph>0));
+    assert.ok(distance(parked,worldPose(duel,state))>1,'the real crash shoves the unpowered player car');
     assert.ok(state.opponents.some(c=>c.armor<c.maxArmor));
     assert.equal(world.job.storyMarks.riderFight.outcome,'lost');
     advance(sim,RULE.aftermathSec+DT*3);
     assert.equal(state.arena.result?.winnerId,'raiders');
+    const result=arenaResultsScreen(state,{metric:()=>'',action:(_text,id)=>id,escapeHTML:String});
+    assert.match(result.description,/wrecked your car/);
+    assert.ok(!result.actions.includes('ember-next-job'));
     assert.equal(events.filter(e=>e.riderFight).length,1);
     if(difficulty==='easy') {
       const record=run=>run.events.flatMap(e=>e.combatRamHit?[[e.attackerIndex,e.victimIndex,e.closingKph,e.armorRemoved]]:
@@ -251,9 +265,9 @@ function roadblock(boxIn, weaving, seed=1) {
   const sim=runEvent({count:5,boxIn,seed}), {state,duel,fight,events}=sim;
   let heldFrames=0, topHold=0;
   const initial=state.opponents.map(c=>distance(worldPose(duel,state),worldPose(duel,c)));
-  assert.ok(initial.some(d=>d>RULE.boxRange));
+  assert.ok(initial[0]>RULE.boxRange && initial[1]>RULE.boxRange,'both ends of the roadblock must close a real gap');
   advance(sim,65,(_sim,i)=>{
-    duel.setInput({throttle:1,steer:weaving?Math.sin(i*DT*1.1)*.62:0});
+    duel.setInput({throttle:1,steer:weaving?Math.sin(i*DT*1.1+1.3)*.62:0});
     if(fight.heldSec>0) {
       assert.ok(Math.abs(state.speedMph)<RULE.boxMph);
       heldFrames++; topHold=Math.max(topHold,fight.heldSec);
@@ -325,6 +339,7 @@ function balance() {
     }
     const wins=result.filter(outcome=>outcome==='won').length;
     console.log(difficulty+' Wash driver '+wins+'/10 ('+result.join(', ')+')');
+    assert.ok(result.every(outcome=>outcome==='won'||outcome==='lost'),'all ten fights must finish');
     assert.ok(difficulty==='easy' ? wins>=7 : wins<5);
   }
 }
@@ -361,17 +376,33 @@ function sampleWeapon(weapon, rider, range=30, crossHazard=false) {
     evidence.disabled ||= !!carEffect(target,'disabled');
     evidence.slick ||= !!carEffect(target,'slick');
     evidence.grip ||= !!carEffect(target,'grip');
-    evidence.hidden ||= smokeHazeOpacity(hazardsFor(duel).filter(h=>h.kind==='smoke'),{...worldPose(duel,target),y:target.groundHeight+1})>0;
+    if (weapon==='smoke') {
+      const clouds=hazardsFor(duel).filter(h=>h.kind==='smoke').map(h=>{
+        const at=duel.course.nearest(h.x,h.z);
+        return {...h,y:duel.course.groundAt(at.s,at.lateral).y};
+      });
+      const eye={...worldPose(duel,target),y:target.groundHeight+1};
+      evidence.hidden ||= smokeHazeOpacity(clouds,eye)>0 && !targetFor(duel,state,{range:100});
+    }
   }
   evidence.armor=Math.round((initial-target.armor)*1000)/1000;
   return evidence;
 }
 
 function weaponParity() {
+  const charge=runEvent({fightToEnd:true,weaponLoadout:['nitro']});
+  const foil=charge.state.opponents[0], at=worldPose(charge.duel,charge.state);
+  place(charge,charge.state,at,0,45);
+  place(charge,foil,{x:at.x,z:at.z+13});
+  foil.weaponsDisabledUntil=Infinity;
+  assert.ok(charge.duel.fireWeapon('nitro'));
+  charge.duel.setInput({throttle:1});
+  advance(charge,2,undefined,()=>charge.events.some(e=>e.combatRamHit&&e.attackerIndex===-1&&e.armorRemoved>0));
+  assert.ok(charge.events.some(e=>e.combatRamHit&&e.attackerIndex===-1&&e.armorRemoved>0),'a real nitro charge damages a rider');
   for(const weapon of nativeWeapons) {
     const standard=sampleWeapon(weapon,false), rider=sampleWeapon(weapon,true);
     assert.deepEqual(rider,standard,weapon+' at 30 m');
-    if (['crossbow','rockets','mortar'].includes(weapon)) assert.ok(rider.armor>0,weapon+' hits at 30 m');
+    if (['bomb','crossbow','rockets','mortar'].includes(weapon)) assert.ok(rider.armor>0,weapon+' hits at 30 m');
     if (weapon==='harpoon') assert.ok(rider.tether&&rider.armor>0);
     if (weapon==='star') assert.ok(rider.ownerShield);
     if (weapon==='ufo') assert.ok(rider.jumped);
@@ -420,18 +451,25 @@ async function crewPresentation() {
     advance(sim,DT);
     syncScene(scene.group,state,DT);
     effects.update({state,course:duel.course,dt:DT});
+    assert.ok(effects.group.getObjectByName('combat-vfx-wreck-5-fire')?.visible);
     assert.ok(effects.group.getObjectByName('combat-vfx-wreck-5-explosion')?.visible);
+    assert.equal(effects.group.getObjectByName('combat-vfx-wreck-5-smoke')?.visible,false);
     assert.equal(legs.count,RULE.crewPerCar*8);
-    const boot=()=>{const p=new THREE.Matrix4(),q=new THREE.Matrix4();legs.getMatrixAt(4,p);legs.getMatrixAt(5,q);
-      return new THREE.Vector3().setFromMatrixPosition(p).sub(new THREE.Vector3().setFromMatrixPosition(q));};
-    const offset=boot();
+    const shinOffset=index=>{
+      const thigh=new THREE.Matrix4(), shin=new THREE.Matrix4();
+      legs.getMatrixAt(index*8+4,thigh);
+      legs.getMatrixAt(index*8+5,shin);
+      return new THREE.Vector3().setFromMatrixPosition(shin).sub(new THREE.Vector3().setFromMatrixPosition(thigh));
+    };
+    const offsets=Array.from({length:RULE.crewPerCar},(_,index)=>shinOffset(index));
     for(let frame=0;frame<15;frame++) {
       duel.step(DT);
       syncScene(scene.group,state,DT);
       effects.update({state,course:duel.course,dt:DT});
     }
     assert.ok(effects.group.getObjectByName('combat-vfx-wreck-5-smoke')?.visible);
-    assert.ok(boot().distanceTo(offset)>.01,'the shared foot rig articulates while its crew runs');
+    for(const [index,offset] of offsets.entries())
+      assert.ok(shinOffset(index).distanceTo(offset)>.01,'crew member '+index+' articulates while running');
     const retreating=state.opponents[3];
     retreating.roadRider.fightToEnd=false;
     retreating.armor=retreating.maxArmor*RULE.retreatFraction;

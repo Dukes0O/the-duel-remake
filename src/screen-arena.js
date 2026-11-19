@@ -218,9 +218,11 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
-    const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
+    const storyIndex = EVERBURN_JOBS.findIndex(item => item.id === job?.id);
+    // Only an authored Everburn chapter can follow a rider fight.
+    const jobIndex = arena.worldJob?.riderFight ? storyIndex : Math.max(0,storyIndex);
     // A notice-board job has no next job: it ends at BACK TO THE YARD.
-    const candidate = won && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;
+    const candidate = won && jobIndex >= 0 && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;
     const next = candidate && REMADE_EVERBURN_JOBS.includes(candidate.id) ? candidate : null;
     const awaitingRemake = won && candidate && !next && REMADE_EVERBURN_JOBS.includes(job?.id);
     // RUN-GAS: a gas run says where the Ash Men stand now, and how many runs have arrived.
@@ -229,8 +231,11 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const lineId = bellows ? bellowsClosingLineId(bellows.bellows) : job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
     const storyLine = lineId ? (job?.captions?.[lineId] ?? EMBER_CAPTIONS[lineId]?.text) : null;
     // FIELD-BATTLE-ASH: the battle's result says in one sentence which ending it was.
+    const riderOutcome = result.reason === 'rider-fight-lost' && arena.worldJob?.job?.storyMarks?.riderFight?.outcome;
+    const riderLine = riderOutcome && (job?.riderResultLines?.[riderOutcome] ||
+      (riderOutcome === 'surrounded' ? 'The riders held your car on all four sides.' : 'The riders wrecked their target.'));
     const description = run ? (run.battle ? EMBER_BATTLE_RESULTS[run.battle] : `Big Bess is in Tin Town. ${emberFeudSentence(run.feud)}`) : won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
-      (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.');
+      (riderLine || (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.'));
     // EVERBURN-REMAKE: Hot Delivery says in one plain sentence how the ember arrived.
     const emberSentence = won ? arena.worldJob?.emberResult?.sentence : null;
     const bellowsSentence = won ? arena.worldJob?.bellowsResult?.sentence : null;

@@ -4,7 +4,7 @@ export const RIDER_RULE = Object.freeze({
   wash: Object.freeze({
     bankOffset: 250, scatter: 9, homeScale: 3, roadblockScatter: 1.5, approachMph: 22,
     starts: [[0,76], [52,53], [-61,45], [-41,-43], [49,-56], [0,-65]],
-    roadblock: [[0,6.5], [0,-7.5], [-4,.5], [4,-.5], [5,11], [-6,-15]],
+    roadblock: [[0,16], [0,-15], [-8,2], [8,1], [5,19], [-6,-18]],
   }),
   // Six wrecked cars fit the existing twelve-person foot-figure rig.
   maximumField: 6, crewPerCar: 2, crewDoor: 1.7, crewRunMetres: 48, crewMps: 5.7,
@@ -21,7 +21,7 @@ export const RIDER_RULE = Object.freeze({
   difficulty: Object.freeze({
     easy: Object.freeze({armor: .60, pace: .55, aim: .27, lead: .15}),
     medium: Object.freeze({armor: .85, pace: .76, aim: .46, lead: .55}),
-    hard: Object.freeze({armor: 1.56, pace: 1, aim: .70, lead: 1}),
+    hard: Object.freeze({armor: 1.90, pace: 1, aim: .70, lead: 1}),
   }),
 });
 
