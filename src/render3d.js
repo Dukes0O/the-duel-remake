@@ -361,7 +361,7 @@ export function attachRenderer(host, app) {
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
   // WILD-VIEW: the animals, a group of their own beside the cars; with the switch off nothing is drawn and nothing loads.
-  const wildlifeView=createWildlifeView({scene,host});let wildlifeRevision=0;
+  const wildlifeView=createWildlifeView({scene,host,onHit:strength=>app.audio?.animalHit?.(strength)});let wildlifeRevision=0;
   // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
   const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
@@ -1298,6 +1298,7 @@ export function attachRenderer(host, app) {
     snowmenView?.update(menu?null:st,high);
     avalancheView?.update(menu?null:st,high);
     wildlifeView.update({enabled:(app._switches?.()??app.duel.featureFlags).enabled('wildlife')===true,hidden:menu||!!deepPose,course,runId:app.runId,dt:st.paused?0:dt,
+      hits:(app._switches?.()??app.duel.featureFlags).enabled('wildlife-hits')===true,crusher:CARS[carKey]?.kind==='monster',
       worldVisible:world.visible,heli:heliNow,player,rival,extras:extraOpponents,traffic});
     if(wildlifeView.revision!==wildlifeRevision){wildlifeRevision=wildlifeView.revision;sceneRevision++;ambientShading.refresh();}
     yetiView.update(menu?null:st,course,high);

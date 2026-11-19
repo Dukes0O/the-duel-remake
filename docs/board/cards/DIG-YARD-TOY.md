@@ -111,7 +111,22 @@ spread earth on flat ground is drawn as earth. Still to do, Claude's:
   brown material and add the land's drawing back one part at a time.
 - **The road roller and the paver have no models** (MACHINE-ROADS). When they have, that card removes the rule that hides them.
 
+### The pale ring found and cured (19 November 2026, builder session)
+
+The ring was the heap drawn as rock. `src/world/ground-view.js` read each corner's samples with x and z swapped, so a chunk's
+spoil, darkening and soil lay at the heap's mirror across the chunk's diagonal, and the heap itself carried no made value. That
+is why the earlier tests moved nothing: forcing `made` to zero or switching the rock off "for made ground" changed nothing on a
+heap whose made value was already zero. Measured by rays and by painting the shader's terms on screen: the heap was the rock
+share, the ring the rock's scree band, and the spoil a patch on flat ground beside it. `docs/changes/DIG-YARD-TOY.md` has the
+numbers.
+
+**Builder decided (Claude to review):** two smaller pale bands of the same kind are cured in the same change, because Kyle would
+see both at once: the kerb round every dug square (edge normals leaned by the skirt) and the fleck at a ditch's end (cut and
+ridge summed to nothing, now read from how much ground moved). Not touched, for a card of its own if Claude wants it: a dug
+square is drawn in a warmer brown than the plain round it (the edited ground draws the dirt picture and the vertex colour; the
+near ground draws the plain colour), so its straight edges still show.
+
 ### Before the switch goes on
 
-The pale ring cured or accepted by Claude; one frame check on Performance in the Dig
+The pale ring cured (19 November, Claude to look); one frame check on Performance in the Dig
 yard with the laptop alone; Kyle's own try on the private address. Then Claude decides (rule 18).
