@@ -17,6 +17,7 @@ const DRIVELINE_SHARE = 0.8;
 const GEAR_PULL_SHARE = 0.75;
 // Holding the bell key rings it again at a bell-rope pace.
 export const BELL_REPEAT_SECONDS = 0.8;
+// The bell's sound cue. World Job sends it as a `townBell` event; TOWN-FIRE-JOB adds the bank row and plays it.
 export const BELL_CUE = 'town.bell';
 
 const finite = Number.isFinite;

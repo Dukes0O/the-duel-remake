@@ -195,7 +195,7 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
-  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags.enabled('wasteland-town')});
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
@@ -332,13 +332,17 @@ export function prepareWorldJobControls(duel) {
 }
 
 // TOWN-VEHICLES: a truck has no nitro. Its boost key rings the bell, if it has one, and its steering keeps to its turning circle.
+// While a line waits for the player, or a step asks for the whistle, the key does that as it does in any car, and the bell stays still.
 function driveWorkVehicle(duel, worldJob, input) {
-  const stepped = stepWorkVehicleControls(worldJob.vehicle, input,
+  const waiting = worldJob.job.stepState?.lineBlocking === true || worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'whistle';
+  const stepped = stepWorkVehicleControls(worldJob.vehicle, {steer: input.steer, boost: input.boost === true && !waiting},
     {speedMph: duel.state.speedMph, clockSec: duel.state.arena.clockSec, course: duel.course});
   worldJob.vehicle = stepped.vehicle;
+  if (!waiting) worldJob.controls.whistle = false;
   input.steer = stepped.steer;
   duel.state.boost = 0;
-  if (stepped.rang) duel.emit({arenaTell: {id: 'town-bell', targetId: 'player', seconds: 0, cue: BELL_CUE}});
+  // The sound (cue town.bell) is added by TOWN-FIRE-JOB with the bank row; the event is the sim's whole part.
+  if (stepped.rang) duel.emit({townBell: {cue: BELL_CUE, position: worldJobPosition(duel, duel.state)}});
 }
 
 function syncJobCarSolids(worldJob) {

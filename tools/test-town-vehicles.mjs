@@ -10,7 +10,7 @@ import {createTownWorld} from '../src/town/town-world.js';
 import {setScablandsTownLayout, clearScablandsTownLayout} from '../src/world/scablands-ground.js';
 import {cleanupWorldJobLoan} from '../src/arena/modes/world-job.js';
 import {defineMachine} from '../src/machines/content/machines.js';
-import {WORK_VEHICLE_DEFINITIONS, WORK_VEHICLE_IDS, BELL_CUE, startWorkVehicle, loadWorkVehicle, unloadWorkVehicle,
+import {WORK_VEHICLE_DEFINITIONS, WORK_VEHICLE_IDS, startWorkVehicle, loadWorkVehicle, unloadWorkVehicle,
   fillWorkVehicleTank, pumpWorkVehicleTank, workVehicleTurnRadiusM} from '../src/town/work-vehicles.js';
 
 const dt = 1 / 120;
@@ -168,27 +168,42 @@ test('a truck turns no tighter than its own turning circle, at any speed', () =>
 
 test('the fire truck rings its bell on the boost key, and no truck fires nitro', () => {
   const duel = drive('fire-truck'), rings = [];
-  duel.onChange((state, event) => { if (event.arenaTell?.cue === BELL_CUE) rings.push(state.arena.clockSec); });
-  launch(duel, 20);
+  duel.onChange((state, event) => {
+    if (event.townBell) rings.push(state.arena.clockSec);
+    assert.equal(event.arenaTell, undefined, 'the bell sends no cue to the audio until its bank row exists');
+  });
+  // At junction pace the truck's own turning circle holds the steering in, which is when a press could be scaled twice.
+  launch(duel, 8);
   const steady = drive('fire-truck');
-  launch(steady, 20);
-  // The app writes the input once a frame and a frame can run several steps; a held key is one press.
+  launch(steady, 8);
+  // The app writes the input once a frame and a frame can run several steps: the held key must steer as one
+  // press on every step, the same as a driver whose input is written before each step.
   for (let frame = 0; frame < 60; frame++) {
-    duel.setInput({throttle:1, brake:0, steer:0.5, boost:true});
-    steady.setInput({throttle:1, brake:0, steer:0.5, boost:false});
-    for (let step = 0; step < 4; step++) { duel.step(dt); steady.step(dt); }
+    duel.setInput({throttle:0.2, brake:0, steer:0.5, boost:true});
+    for (let step = 0; step < 4; step++) {
+      steady.setInput({throttle:0.2, brake:0, steer:0.5, boost:false});
+      duel.step(dt); steady.step(dt);
+    }
   }
   assert.equal(rings.length, 3, 'two seconds held rings at once and every 0.8 s');
   assert.equal(duel.state.boosting, false);
   assert.ok(Math.abs(duel.state.speedMph - steady.state.speedMph) < 1e-9, 'holding the key adds no speed');
-  assert.deepEqual(pose(duel), pose(steady), 'the steering of a held key is the same press on every step');
+  assert.deepEqual(pose(duel), pose(steady), 'several steps in one frame steer as one press');
   duel.setInput({boost:false}); duel.step(dt);
   duel.setInput({boost:true}); duel.step(dt);
   assert.equal(rings.length, 4, 'a new press rings at once');
   assert.equal(duel.state.arena.worldJob.vehicle.bell.rings, 4);
+  const worldJob = duel.state.arena.worldJob;
+  assert.equal(worldJob.controls.whistle, false, 'the bell does not also skip a line');
+  // While a line waits for the player, the key moves the line on and the bell stays still.
+  duel.setInput({boost:false}); duel.step(dt);
+  worldJob.job = {...worldJob.job, stepState:{...worldJob.job.stepState, lineBlocking:true}};
+  duel.setInput({boost:true}); duel.step(dt);
+  assert.equal(rings.length, 4);
+  assert.equal(worldJob.controls.whistle, true);
   finish(duel); finish(steady);
   const tanker = drive('water-tanker'), quiet = [];
-  tanker.onChange((state, event) => { if (event.arenaTell) quiet.push(event); });
+  tanker.onChange((state, event) => { if (event.townBell) quiet.push(event); });
   tanker.setInput({throttle:1, boost:true});
   for (let i = 0; i < 240; i++) tanker.step(dt);
   assert.equal(quiet.length, 0, 'only the fire truck has a bell');
