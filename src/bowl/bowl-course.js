@@ -9,8 +9,11 @@
 // The same shape of floor layout as the Scrapdome's (src/arena/venues.js), so the
 // arena rules (walls, floor width, floor speed, start slots) read the Bowl's own.
 export const BOWL_FLOOR = Object.freeze({
-  // A Titan (half width 1.4 m) at the floor edge is 0.5 m from either wall face.
-  floorHalfWidth: 6.5,
+  // A Titan (half width 1.4 m) at the floor edge is 0.5 m from the island wall's
+  // face (8 m out; at least 0.4 m where its pieces cross the tight ends) and 1 m
+  // from the stand wall's (8.5 m out).
+  floorHalfWidth: 6.1,
+  // Read only in arena events (state.arena), as at the Scrapdome.
   floorSpeedMph: 42, floorSpeedReferenceMph: 200, floorSpeedExponent: .35,
   floorTraction: .95, floorScrub: .02, floorRoughness: .12,
   // The island wall round the podium, and the wall in front of the stands.

@@ -6,6 +6,7 @@ import {Duel} from '../src/game.js';
 import {BOWL_COURSE, bowlCentre} from '../src/bowl/bowl-course.js';
 import {createBowlView} from '../src/bowl/bowl-view.js';
 import {addArenaCrushables} from '../src/arena-props.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 const check=(condition,message)=>assert.ok(condition,message);
 const DT=1/120;
@@ -31,8 +32,8 @@ const closest=Math.min(...bowl.features.barriers.filter(wall=>wall.arenaWall).fl
     return Math.min(...line.map(p=>Math.hypot(p.x-x,p.z-z)));
   });
 }));
-check(closest>=floor.floorHalfWidth+1.4-.05,'No wall piece stands out into the floor a Titan drives on.');
-check(bowl.roadHalfWidthAt(0)===floor.floorHalfWidth&&floor.floorHalfWidth+1.4+.5<=Math.min(floor.wallOffset,floor.outerWallOffset),
+check(closest>=floor.floorHalfWidth+1.4+.4,'Every wall piece keeps at least 0.4 m from a Titan at the floor edge.');
+check(bowl.roadHalfWidthAt(0)===floor.floorHalfWidth&&floor.floorHalfWidth+1.4+.5<=Math.min(floor.wallOffset,floor.outerWallOffset)-.5,
   'A Titan at the floor edge is clear of both walls.');
 for(const prop of bowl.features.crushables)
   check(Math.abs(prop.off)+prop.halfX<=floor.floorHalfWidth,`${prop.id} stands on the floor.`);
@@ -65,7 +66,6 @@ for(const [index,ramp] of bowl.features.ramps.entries()){
     if(state.airborne)air++;else if(air)landed=true;
   }
   check(air*DT>.5&&landed,`Ramp ${index} launches the Titan at 30 mph and it lands.`);
-  check(30<=floor.floorSpeedMph,'The launch speed is within the Bowl floor speed.');
 }
 
 // A real crush of each kind of item in the line.
@@ -120,9 +120,16 @@ const fakeCrush=()=>{
   return {scene};
 };
 const fireTexture=new THREE.DataTexture(new Uint8Array([255,160,32,255]),1,1);
+// Like the stadium model's merged meshes: one box crossing the stand wall's line, one in a corner.
+const scrapBoxes=()=>{
+  const mesh=new THREE.Mesh(mergeGeometries([new THREE.BoxGeometry(2.2,1.2,2.2).translate(36.5,.6,0),
+    new THREE.BoxGeometry(2.2,1.2,2.2).translate(31,.6,-23)]),new THREE.MeshStandardMaterial());
+  mesh.name='bowl-scrap-boxes';return mesh;
+};
+const withScrap=model=>{model.scene.add(scrapBoxes());return model;};
 const view=createBowlView({loadModel:async path=>path.endsWith('stadium.glb')?
-  fakeModel([['stadium'],['bowl-ramp-0-plate',[-24,.75,2]],['bowl-crushed-car-wrecks',[-33,.55,-7]],
-    ['bowl-rustwall-panels',[33,.9,0]],['bowl-handrails',[31,.9,-23]],['bowl-podium-concrete',[0,.45,-1]],['bowl-concrete-terraces',[0,2.6,30]]]):
+  withScrap(fakeModel([['stadium'],['bowl-ramp-0-plate',[-24,.75,2]],['bowl-crushed-car-wrecks',[-33,.55,-7]],
+    ['bowl-rustwall-panels',[33,.9,0]],['bowl-handrails',[31,.9,-23]],['bowl-podium-concrete',[0,.45,-1]],['bowl-concrete-terraces',[0,2.6,30]]])):
   fakeCrush(),
   loadFireTexture:async()=>fireTexture});
 view.update(bowl,{},1000,true);
@@ -135,6 +142,8 @@ check(Math.hypot(stadium.position.x-centre.x,stadium.position.z-centre.z)<1e-9,'
 check(!stadium.getObjectByName('bowl-ramp-0-plate'),'The stadium model\'s own ramps are not left on the ring.');
 const triangles=name=>stadium.getObjectByName(name).children[0].geometry.index.count/3;
 check(triangles('bowl-rustwall-panels')===0&&triangles('bowl-crushed-car-wrecks')===0,'Low props on the ring are cut out of the stadium model.');
+const scrap=stadium.getObjectByName('bowl-scrap-boxes').geometry.index.count/3;
+check(scrap===12,'A merged box crossing the wall line goes whole; the box in the corner stays whole.');
 check(triangles('bowl-podium-concrete')===12&&triangles('bowl-concrete-terraces')===12&&triangles('bowl-handrails')===12,
   'The podium, the stands and a prop in a corner off the ring stay whole.');
 check(view.group.getObjectByName('Bowl faded junk car crush line')?.userData.crushableCount===9,
@@ -159,6 +168,10 @@ const busProp=view.group.getObjectByName(`Bowl authored crush ${bus.id}`);
 for(let i=0;i<60;i++)view.update(bowl,{crushedProps:[bus.id]},1000,true);
 check(busProp.scale.y===.5&&view.group.getObjectByName('Bowl burning bus stack').scale.y===1,
   'A crushed bus settles lower and the props not crushed stay as they are.');
+const heap=bowl.features.crushables.find(prop=>prop.sourceKind==='bowlBurningHeap'&&prop.off===0);
+const heapFire=view.group.getObjectByName(`Bowl heap fire ${heap.id}`),fireBefore=heapFire.position.y;
+for(let i=0;i<60;i++)view.update(bowl,{crushedProps:[heap.id]},1000,true);
+check(heapFire.position.y<fireBefore-.3,'The fire of a crushed stack sinks with it.');
 let tongues=0;view.group.traverse(node=>{if(node.name==='curling-flame-tongue')tongues++;});
 check(tongues===0,'The model\'s cone flames are not used.');
 const jets=()=>view.group.children.filter(child=>child.name.startsWith('Bowl flame jet bowl-'));

@@ -272,7 +272,7 @@ export class Course {
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
     // The Bowl's ramps fill its floor from wall face to wall face; its walls stand within 15 m.
-    if(this.def.bowl){const floor=this.def.scrapdome;return Math.abs(off)<=(off>0?floor.outerWallOffset:floor.wallOffset)-.5?this.jumpAt(s):0;}
+    if(this.def.bowl&&this.def.scrapdome){const floor=this.def.scrapdome;return Math.abs(off)<=(off>0?floor.outerWallOffset:floor.wallOffset)-.5?this.jumpAt(s):0;}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
     // The section is found once (themeAt(p) is sectionAt(p).theme), and the wave terms, which do not depend on the
     // ground type, are worked out once for both types the blend below asks about.

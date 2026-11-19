@@ -53,16 +53,37 @@ function clearRing(stadium, ring) {
   const inside = (x, z, a, b) => (x / a) ** 2 + (z / b) ** 2 < 1;
   const onRing = (x, z) => inside(x, z, ring.a + ring.outer, ring.b + ring.outer) &&
     !inside(x, z, Math.max(.1, ring.a - ring.inner), Math.max(.1, ring.b - ring.inner));
+  // The model's meshes merge many separate boxes. Triangles that share a corner
+  // position belong to one box; a low box with any corner on the ring goes whole,
+  // so nothing is left half cut where it crosses a wall.
   let cut = 0;
   stadium.updateMatrixWorld(true);
   stadium.traverse(node => {
     if (!node.isMesh || node.name === 'bowl-dirt-floor' || !node.geometry?.index) return;
-    const position = node.geometry.getAttribute('position'), index = node.geometry.index.array, kept = [];
+    const position = node.geometry.getAttribute('position'), index = node.geometry.index.array;
     const local = new THREE.Matrix4().copy(stadium.matrixWorld).invert().multiply(node.matrixWorld), p = new THREE.Vector3();
+    const points = [], corner = new Map(), parent = [];
+    const find = i => { while (parent[i] !== i) i = parent[i] = parent[parent[i]]; return i; };
+    for (let v = 0; v < position.count; v++) {
+      points.push(p.fromBufferAttribute(position, v).applyMatrix4(local).clone());
+      const key = `${points[v].x.toFixed(3)},${points[v].y.toFixed(3)},${points[v].z.toFixed(3)}`;
+      parent[v] = v;
+      if (corner.has(key)) parent[find(v)] = find(corner.get(key)); else corner.set(key, v);
+    }
     for (let i = 0; i < index.length; i += 3) {
-      let x = 0, y = 0, z = 0;
-      for (let k = 0; k < 3; k++) { p.fromBufferAttribute(position, index[i + k]).applyMatrix4(local); x += p.x / 3; y += p.y / 3; z += p.z / 3; }
-      if (y < 2.2 && onRing(x, z)) { cut++; continue; }
+      parent[find(index[i + 1])] = find(index[i]);
+      parent[find(index[i + 2])] = find(index[i]);
+    }
+    const low = new Map(), touches = new Map();
+    for (let v = 0; v < points.length; v++) {
+      const box = find(v);
+      low.set(box, (low.get(box) ?? true) && points[v].y < 2.5);
+      if (onRing(points[v].x, points[v].z)) touches.set(box, true);
+    }
+    const kept = [];
+    for (let i = 0; i < index.length; i += 3) {
+      const box = find(index[i]);
+      if (low.get(box) && touches.get(box)) { cut++; continue; }
       kept.push(index[i], index[i + 1], index[i + 2]);
     }
     if (kept.length < index.length) node.geometry.setIndex(kept);
@@ -144,6 +165,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     mesh.scale.set(3.8, 5.7, 1);
     group.add(mesh);
     fires.push({mesh, position: position.clone(), phase});
+    return fires.at(-1);
   }
 
   function build(next, now) {
@@ -188,7 +210,9 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
           // The fire burns out of the top of its stack, its foot a little below the top.
           const top = prop ? new THREE.Box3().setFromObject(prop).max.y - feature.y : 0;
           const p = new THREE.Vector3(feature.x, feature.y + Math.max(1.8, top + .8), feature.z);
-          installFire(fireTexture, p, `Bowl heap fire ${feature.id}`, feature.s * .001);
+          const fire = installFire(fireTexture, p, `Bowl heap fire ${feature.id}`, feature.s * .001);
+          // It sinks with its stack when the stack is crushed.
+          if (prop) Object.assign(fire, {stack: prop, base: feature.y, top});
         }
       }
       const jets = next.features.flameJets || [];
@@ -242,6 +266,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
       }).catch(error => { group.userData.fireError = error?.message || 'Bowl fire texture could not load'; });
     }
     for (const [index, fire] of fires.entries()) {
+      if (fire.stack) fire.mesh.position.y = fire.base + Math.max(1.8, fire.top * fire.stack.scale.y + .8);
       const cycle = ((now * .001 + fire.phase) % 3.2 + 3.2) % 3.2;
       const active = fire.mesh.name.startsWith('Bowl heap fire') || cycle < 1.55;
       fire.mesh.visible = !!fireTexture && active;
@@ -289,7 +314,8 @@ function paintCrushProp(root, {tint = null, burnt = 0} = {}) {
         clone.metalness = known[2];
       }
       if (color && /enamel|paint/.test(material.name)) clone.color?.lerp(color, .58);
-      if (burnt && !clone.emissive?.getHex()) clone.color?.lerp(SOOT, burnt);
+      // The fire blackens the stack, but not its glowing coals.
+      if (burnt && !/ember|flame/.test(material.name) && !clone.emissive?.getHex()) clone.color?.lerp(SOOT, burnt);
       return clone;
     });
     if (node.material.length === 1) node.material = node.material[0];
