@@ -336,6 +336,14 @@ the game.
   0.07 m above the ground (`createRoadWorkView` in `src/machines/roads-view.js`), on the same one-metre corners and the
   same diagonal as the edited ground so that the two lie parallel, with its states drawn by a shader the way wear is
   drawn on a machine. (MACHINE-ROADS, 19 November 2026.)
+- **A drawn ground colour comes out two or three times too pale.** A colour written into a shader is multiplied by the
+  yard's sun and sky light before the picture is toned. Loose earth written as it should look came out as pale sand, a
+  road mat as grey, and standing water as a white disc. Start from about a third of the colour wanted, look at it in
+  the game beside the ground it lies on, and keep a made surface rough: a smooth one mirrors the pale sky and reads as
+  mist. (MACHINE-ROADS and MACHINE-DRILL, 19 November 2026.)
+- **Cracks drawn from the level lines of a noise picture run in loops** and read as worm trails. A surface that has
+  broken up is a net of small plates: draw the walls between scattered cell centres (`roadPlates` in
+  `src/machines/roads-view.js`). (19 November 2026.)
 - **A heap or a pit taken for worked ground.** The yard starts with a one-metre heap and a one-metre ditch recorded as
   road cells. Drawn as "cut" they came out as one flat pale slab, the paper fault again. Only what a tool did is drawn as
   work; a heap or a hole is the ground's own shape and the ground draws it. (19 November 2026.)
@@ -364,6 +372,13 @@ the game.
 - **A rule that hurts and draws nothing.** The furnace's cinders took Big Bess's health under a caption and a sound, with nothing in the air and nothing on her, and the machine's death drew nothing either (the field battle, 12 November). Every event that costs health, and every death, needs something drawn. Find these by taking pictures from a camera placed beside the machines while the fight runs; the game's own camera sits on the player's car, and a parked car's pictures prove nothing.
 - **Points drawn too small to see.** A point's size is given in pixels of the drawn picture, not in metres: lumps sized at 23 pixels at 30 m showed as dots in the game's pictures. Size a drawn point for the far end of the distance it will be seen from, and look at it in a picture from there.
 
+- **Pictures taken by the clock miss their subject.** A hand play on a busy laptop runs slower than the clock, and on a
+  free one faster: the same script photographed a dozer with a full blade in one round and an empty one in the next,
+  and a strip of fill and then bare ground. Take each picture by what the game says (the load carried, where the fill
+  lies), read from the page, not after a count of seconds. (MACHINE-ROADS round 2, 19 November 2026.)
+- **`tools/test-blender-output.mjs` starts Blender for every recipe.** It is a heavy job and takes a turn
+  (`docs/FACTORY.md` section 8), and it is not a quick look at one file. To check one model file's own claims, read the
+  file's node list, positions and bounds with a few lines of Node. (19 November 2026.)
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,

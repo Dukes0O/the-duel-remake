@@ -24,7 +24,7 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 - **The ground now.** Worked ground is its own drawn surface 0.07 m above the ground, on the same corners as the edited
   ground. Scraped by the blade: plain, the ground's grain showing through. Loose fill: dark clods with a ragged edge.
   Rolled: paler and flatter with each pass. Paved: a dark mat with a straight edge. Paved on fill that was never made
-  firm: crazed, with earth in the cracks. Paved too fast, off its line or over a bump: rippled and torn, with a ragged
+  firm: broken into small plates with earth in the joints. Paved too fast, off its line or over a bump: rippled and torn, with a ragged
   edge. A heap or a pit is not drawn as work; it is the ground's own shape.
 - **A fault found in the model file.** One paver track wheel stood 22 m from the paver and the roller's root sat on top
   of the loader, because the recipe used the name `roller` twice. The wheel is back on its track (72 points moved by
@@ -35,13 +35,19 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
   drawn surface: work shows and changes height, it reaches across the drum and no further, bad work and repaired work
   differ, a paved edge is clean, loose, firm and paved are three different surfaces, and removing work removes the
   drawing. Two claims are added (cut ground is drawn apart from fill; ground the roller only measured is not drawn).
-  Nothing is loosened. `tools/test-machine-view.mjs` now takes the drill from `machines-2.glb`, where the game takes
+  Nothing is loosened. `tools/test-blender-output.mjs` gains one claim in its existing check of this family (no part
+  of a machine lies more than 4 m to one side of its root); the file as it was also failed that check's existing claim
+  that each machine has its own place in the row. `tools/test-machine-view.mjs` now takes the drill from `machines-2.glb`, where the game takes
   it, and adds a check for each road machine that its seat is clear of the model and that the eye meets the blade, the
   drum or the paver's own front in the lower half of the picture.
 - **Played by hand** in a visible window with real keys: cut through the heap, filled the ditch, scraped a stretch,
   spread the load, rolled six passes, paved too fast, at a steady pace, and over unrolled fill. What I met: machines
   pass through each other (I rolled into the parked dozer); six passes are needed before fill counts as firm, because
   each pass also pushes fill sideways; a paver cannot lay on scraped ground, only on fill, and nothing says so.
+- **Verdict: passes for the yard behind `wasteland-town`**, after three rounds, each better than the last. Short of
+  right and written on the round-3 note: ground the blade only scraped hardly shows from standing height; the roller's
+  yokes and a pale panel behind the paver's seat are faults in the models and want a Blender round on
+  TOWN-ART-MACHINES-2; the heap ahead of the blade is one shape.
 - **Ready for the Dig?** Yes for their look. The roller and the paver read as themselves from 30 m and from the seat.
   `digMachineIds` still leaves them out without the town's switch; DIG-YARD-TOY decides when to add them.
 

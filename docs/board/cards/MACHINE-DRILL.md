@@ -33,8 +33,8 @@ rule in `src/machines/` changed; only what is drawn. Sheets and review notes: `d
 - **What comes up.** A heap by the hole in the colour of the layer the bit is in, and behind the rig a row of small
   sample piles, one for each whole metre, laid out ten to a row: red clay, brown gravel, pale rock, and one dark wet
   pile last. A player can read the ground from the row.
-- **Water arriving.** A brown jet comes up the hole, clears, and sinks back to a low boil; the ground round the hole
-  goes dark and wet and open water spreads on it.
+- **Water arriving.** A jet comes up the hole, muddy for its first moment, and sinks back to a low boil; the ground
+  round the hole goes dark and wet and open water spreads on it, with rings moving out from the hole.
 - **The wellhead.** While the rig still stands on the hole only the casing shows. When the mast is laid down and the
   rig moves off, a wellhead is left: a concrete pad, a painted casing with flanges and a cap, a red valve with a hand
   wheel, and a standpipe that bends over and runs water onto the ground. It lasts for the visit, as before.
@@ -46,7 +46,11 @@ rule in `src/machines/` changed; only what is drawn. Sheets and review notes: `d
 - **Changed assertions:** none in `tools/test-machine-drill.mjs`. `tools/test-machine-view.mjs` takes the drill from
   `machines-2.glb`, where the game now takes it; its two claims (the eye is above the model and the view ahead is
   clear) are unchanged.
-- **Played by hand** in a visible window with real keys: drove to a spot, stood the mast up, drilled through clay,
+- **Verdict: passes for the yard behind `wasteland-town`**, after three rounds, each better than the last. Short of
+  right and written on the round-3 note: the first water is pale and its muddy moment is short; the truck's deck is
+  blurred where its photos meet and its outriggers are plain bars (faults in the model, for a Blender round on
+  TOWN-ART-MACHINES-2); the hole itself is not drawn; I did not judge the sounds.
+- **Played by hand** in a visible window with real keys, three times: drove to a spot, stood the mast up, drilled through clay,
   gravel and rock, jammed the bit once with a hard feed and backed it out, struck water, laid the mast down and drove
   on. What I met: a hole 13 m deep takes about two and a half minutes of holding Space, with the rock the slow part
   and nothing to do but hold the key; machines pass through each other.
