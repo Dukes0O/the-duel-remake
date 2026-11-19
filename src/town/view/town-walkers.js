@@ -34,6 +34,8 @@ export const TOWN_LIFE_BUDGET = Object.freeze({walkers:160, nearMetres:120, farM
 
 // Where canvas families sleep before they have a plot: the dirt outside the Dome's gate (docs/WASTELAND_TOWN.md section 1).
 export const TOWN_CAMP = Object.freeze({x:0, z:-64});
+/** How far a built road's top stands above its cell's ground: town-instances.js lifts its 0.14 m slab by 0.08 m. */
+export const TOWN_ROAD_TOP = 0.15;
 
 // Sound cues the view names for what it shows (it plays nothing itself).
 export const TOWN_LIFE_SOUNDS = Object.freeze({crowd:'town.crowd'});
@@ -76,8 +78,10 @@ export function townLifePlaces(town) {
     const id = String(building.buildingId ?? ''), state = String(building.state ?? 'plan');
     if (state === 'ruined' || state.startsWith('burnt')) continue;
     if (id.startsWith('road-')) {
+      // A built road is drawn as a slab whose top is 15 cm above its ground (town-instances.js), so feet stand on that.
+      const top = state === 'finished' && Number.isFinite(building.groundY) ? building.groundY + TOWN_ROAD_TOP : null;
       for (let dx = 0; dx < (building.width || 1); dx++) for (let dz = 0; dz < (building.depth || 1); dz++)
-        roads.set(`${building.x + dx}:${building.z + dz}`, {x:building.x + dx, z:building.z + dz});
+        roads.set(`${building.x + dx}:${building.z + dz}`, {x:building.x + dx, z:building.z + dz, top});
       continue;
     }
     if (/^(pipe|sewer|wire|fence|wall)-/.test(id)) continue;
@@ -129,6 +133,8 @@ function cached(map, key, list, point) {
 function homeOf(person, places) {
   const plot = places.plots.get(person.home);
   if (plot && !plot.burning) return {point:plot.door, place:plot, key:plot.id};
+  // The town drive knows each person only by a spot beside a building (town-world.js): that is where they live there.
+  if (Number.isFinite(person.spot?.x) && Number.isFinite(person.spot?.z)) return {point:{x:person.spot.x, z:person.spot.z}, place:null, key:`spot:${person.id}`};
   // Canvas homes stand round the camp, each family's own spot.
   const family = String(person.family ?? person.home ?? person.id);
   const angle = townLifeHash(7, family) * Math.PI * 2, radius = 7 + townLifeHash(11, family) * 12;
@@ -506,6 +512,8 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
     if (y === undefined) {
       try { y = groundAt(Math.round(x), Math.round(z)); } catch { y = 0; }
       if (!Number.isFinite(y)) y = 0;
+      const road = state.places.roads.get(`${Math.floor(Math.round(x) / TOWN_CELL_METRES)}:${Math.floor(Math.round(z) / TOWN_CELL_METRES)}`);
+      if (road?.top != null) y = Math.max(y, road.top);
       if (heights.size > 60000) heights.clear();
       heights.set(key, y);
     }
@@ -576,7 +584,7 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
   const refresh = () => {
     const started = globalThis.performance?.now?.() ?? Date.now();
     const signature = townLifeSignature(town);
-    if (signature !== state.signature) { state.signature = signature; state.places = townLifePlaces(town); for (const walker of state.walkers.values()) walker.routeKey = null; }
+    if (signature !== state.signature) { state.signature = signature; state.places = townLifePlaces(town); heights.clear(); for (const walker of state.walkers.values()) walker.routeKey = null; }
     // Earthworks change the ground now and then, so the kept heights are worked out afresh every 20 seconds.
     state.refreshes = (state.refreshes ?? 0) + 1;
     if (state.refreshes % 20 === 0) heights.clear();

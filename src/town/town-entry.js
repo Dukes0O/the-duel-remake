@@ -119,11 +119,16 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
   // TOWN-VIEW-LIFE: a click on a walker finds that person: their card opens and a ring follows them.
   let personCard=null;
   const closePerson=()=>{personCard?.remove();personCard=null;sceneView.selectPerson(null);};
-  const showPerson=id=>{const card=townCardModel(town,{kind:'person',id});if(!card){closePerson();return;}personCard?.remove();personCard=document.createElement('div');personCard.className='town-person-card';
+  const showPerson=(id,at=null)=>{const card=townCardModel(town,{kind:'person',id});if(!card){closePerson();return;}personCard?.remove();personCard=document.createElement('div');personCard.className='town-person-card';
     personCard.style.cssText='position:absolute;right:186px;top:118px;width:270px;max-height:60%;overflow:auto;z-index:2;background:#15211dee;color:#f7edd9;padding:12px;box-shadow:0 4px 20px #000';
-    personCard.innerHTML=`${townCardMarkup(card)}<button type="button" data-town-person-close>CLOSE</button>`;personCard.querySelector('[data-town-person-close]').onclick=closePerson;host.append(personCard);sceneView.selectPerson(id);};
-  canvas.addEventListener('click',event=>{const placement=input.getPlacement();if(placement.buildingId||placement.homeTool)return;const hit=sceneView.pickPerson(event.clientX,event.clientY,canvas.getBoundingClientRect());if(hit)showPerson(hit.personId);else if(personCard)closePerson();});
-  if(qa)host.__townPickPerson=(x,y)=>sceneView.pickPerson(x,y,canvas.getBoundingClientRect());
+    personCard.innerHTML=`${townCardMarkup(card)}<button type="button" data-town-person-close>CLOSE</button>`;personCard.querySelector('[data-town-person-close]').onclick=closePerson;host.append(personCard);
+  // The card opens beside the person clicked, on whichever side has room, so it never hides that person.
+  if(at){const box=host.getBoundingClientRect(),x=at.x-box.left,y=at.y-box.top,width=personCard.offsetWidth,height=personCard.offsetHeight,gap=48;
+    const left=x+gap+width<=box.width-8?x+gap:Math.max(8,x-gap-width),top=Math.min(Math.max(8,y-height/2),Math.max(8,box.height-height-8));
+    personCard.style.right='auto';personCard.style.left=`${left}px`;personCard.style.top=`${top}px`;}
+  sceneView.selectPerson(id);};
+  canvas.addEventListener('click',event=>{const placement=input.getPlacement();if(placement.buildingId||placement.homeTool)return;const hit=sceneView.pickPerson(event.clientX,event.clientY,canvas.getBoundingClientRect());if(hit)showPerson(hit.personId,{x:event.clientX,y:event.clientY});else if(personCard)closePerson();});
+  if(qa){host.__townPickPerson=(x,y)=>sceneView.pickPerson(x,y,canvas.getBoundingClientRect());host.__townLife=()=>sceneView.state;}
   canvas.addEventListener('pointercancel',()=>{dragStart=null;rightDrag=null;});canvas.addEventListener('contextmenu',event=>event.preventDefault());
   canvas.addEventListener('wheel',zoomTown,{passive:false});
   key=event=>{

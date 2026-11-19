@@ -8,7 +8,7 @@ import {storeGood} from '../src/town/town-goods.js';
 import {createHauler, stepHauler} from '../src/town/town-haulers.js';
 import {createTownScene} from '../src/town/view/town-scene.js';
 import {createTownWalkers, townLifePlaces, townLifeSample, townLifeHash, townLifeSeed, townPersonErrand, townWalkRoute, townWalkerFeet,
-  TOWN_LIFE_BUDGET, TOWN_WALKER_MODELS} from '../src/town/view/town-walkers.js';
+  TOWN_LIFE_BUDGET, TOWN_WALKER_MODELS, TOWN_ROAD_TOP} from '../src/town/view/town-walkers.js';
 import {createTownFx, townWaterLevel, townFireSources} from '../src/town/view/town-fx.js';
 
 let checks = 0;
@@ -120,6 +120,10 @@ function foundTown(seed) {
   }
   const corner = route.find(point => Math.abs(point.x - 156) < 3 && Math.abs(point.z - 44) < 3);
   check(corner, 'the walk turns at the road corner instead of cutting across');
+  // Feet stand on a built road's top, not on the ground under its slab; a planned road has no top yet.
+  const built = townLifePlaces({buildings:[{id:'b', buildingId:'road-dirt', regionId:'scablands', x:0, z:0, width:1, depth:1, state:'finished', groundY:1.2},
+    {id:'p', buildingId:'road-dirt', regionId:'scablands', x:1, z:0, width:1, depth:1, state:'plan', groundY:1.2}], homePlots:[]});
+  check(Math.abs(built.roads.get('0:0').top - (1.2 + TOWN_ROAD_TOP)) < 1e-9 && built.roads.get('1:0').top === null, 'walkers stand on the top of a built road');
 }
 
 // 4. Feet stand still on the ground for half of each stride: they do not slide.
@@ -294,6 +298,9 @@ function foundTown(seed) {
   check(noonish.pose === 'work' && Math.hypot(noonish.to.x - 64, noonish.to.z - 64) < 9, 'in working hours a town hand works on the open site');
   const night = townPersonErrand(worker, places, {hour:2, day:0, hash:.5});
   check(night.pose === 'inside' && !night.outdoors, 'at night most people are indoors and not drawn');
+  // The town drive knows a person only by a spot beside a building: they live there, not at the camp.
+  const visitor = townPersonErrand({id:'drive-1', spot:{x:40, z:90}}, places, {hour:2, day:0, hash:.5});
+  check(visitor.to.x === 40 && visitor.to.z === 90, 'a person known only by a spot lives at that spot');
   const sample = townLifeSample({people:[worker]}, places, {focus:{x:64, z:64}, radius:80, budget:10, hour:9});
   check(sample.length === 1, 'a worker on a site near the camera is in the sample');
 }
