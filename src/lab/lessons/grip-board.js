@@ -98,7 +98,7 @@ function drawGraph(ctx, view) {
   if (!view.predictionPending) {
     ctx.strokeStyle = '#dfb84e'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
     ctx.beginPath(); ctx.moveTo(px(limit), graph.top); ctx.lineTo(px(limit), graph.bottom); ctx.stroke(); ctx.setLineDash([]);
-    text(ctx, 'BEST ANGLE ABOUT 4.3°', px(limit), graph.top - 13, {size: 11, align: 'center', weight: 900, colour: '#e4c56d'});
+    text(ctx, `BEST ANGLE ${limit.toFixed(1)}°`, px(limit), graph.top - 13, {size: 11, align: 'center', weight: 900, colour: '#e4c56d'});
     brassPointer(ctx, px(limit), graph.bottom + 2);
 
     // The grip curve: a soft blue glow, the blue line, and a bright core.
@@ -118,7 +118,7 @@ function drawGraph(ctx, view) {
     ctx.strokeStyle = 'rgba(30,18,4,.85)'; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.strokeStyle = '#f1cf66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
   }
-  for (const value of [0, 3, 4, 4.5, 9, 12]) {
+  for (const value of [0, 2, 3, 4, 4.5, 9, 12]) {
     const x = px(value); ctx.strokeStyle = '#c5c2b7'; ctx.beginPath(); ctx.moveTo(x, graph.bottom); ctx.lineTo(x, graph.bottom + 6); ctx.stroke();
     text(ctx, `${value}°`, x, graph.bottom + 23, {size: 11, colour: '#d1caba'});
   }
@@ -218,7 +218,7 @@ function drawControls(ctx, view) {
 }
 
 function drawRows(ctx, view) {
-  const rows = view.rows.slice(-3);
+  const rows = view.rows.slice(-4);
   if (!rows.length) return;
   panel(ctx, 690, 435, 280, 212);
   text(ctx, 'RECORDED SETTINGS', 712, 463, {size: 13, align: 'left', weight: 900, colour: '#d5b65f'});
@@ -260,8 +260,8 @@ function drawRecap(ctx, view) {
       text(ctx, 'SLIDE ANGLE', gx, 555, {size: 12, weight: 900, colour: '#c2d3d8'});
     }
     if (idea.id === 'limit') {
-      text(ctx, 'ABOUT 4.3°', x + width / 2, 430, {size: 23, weight: 900, colour: '#e3c56f'});
-      text(ctx, 'best grip in this game', x + width / 2, 462, {size: 13});
+      text(ctx, `${bestSlideDegrees().toFixed(1)}°`, x + width / 2, 430, {size: 23, weight: 900, colour: '#e3c56f'});
+      text(ctx, 'best angle', x + width / 2, 462, {size: 13});
     }
     if (idea.id === 'target') {
       text(ctx, '3° and 4°  →  100%', x + width / 2, 420, {size: 15, weight: 900, colour: '#a8dba6'});

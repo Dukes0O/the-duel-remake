@@ -16,7 +16,7 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {STEPS as GFORCE_STEPS, KEY_IDEAS as GFORCE_IDEAS, createModel as createGforceModel} from '../src/lab/lessons/gforce-classroom.js';
 import * as gforceBoard from '../src/lab/lessons/gforce-board.js';
 import {lateralG} from '../src/lab/benches/gforce.js';
-import {STEPS as GRIP_STEPS, createModel as createGripModel, lesson as gripLesson} from '../src/lab/lessons/grip-classroom.js';
+import {STEPS as GRIP_STEPS, WATCH_S, createModel as createGripModel, lesson as gripLesson} from '../src/lab/lessons/grip-classroom.js';
 import * as gripBoard from '../src/lab/lessons/grip-board.js';
 import {gripBench, slipAtAngle, bestSlideDegrees} from '../src/lab/benches/tunnel.js';
 import {tyreSlipGrip} from '../src/config.js';
@@ -1180,9 +1180,9 @@ function reachGripFreeTest(session) {
   session.act('slide:up'); session.act('next');
   session.act('next'); session.act('next'); // formula
   for (let index = 0; index < 10; index++) session.act('slide:up');
-  assert.match(session.view().formulas[0].worked, /0\.94 × 100 = 94%/);
+  assert.match(session.view().formulas[0].worked, /0\.939 × 100 = 93\.9%/);
   session.act('next'); // watch the rolling-road readings
-  until(session, view => view.ready, 5);
+  until(session, view => view.ready, 14);
   session.act('next'); // open the first prediction
   assert.equal(session.view().step.id, 'try-edge');
   session.act('answer:0'); session.act('run');
@@ -1198,7 +1198,7 @@ function reachGripQuestion(session) {
   session.act('slide:up'); session.act('next');
   session.act('next'); session.act('next'); session.act('next');
   session.act('next'); // rolling-road watch
-  until(session, view => view.ready, 5);
+  until(session, view => view.ready, 14);
   session.act('next');
   assert.equal(session.view().step.id, 'try-edge');
   assert.equal(session.view().cards.length, 3);
@@ -1207,7 +1207,7 @@ function reachGripQuestion(session) {
 test('Grip is registered as the classroom lesson with the kept notebook ids and challenge wording', () => {
   assert.equal(CLASSROOM_LESSONS.grip.id, 'grip');
   assert.equal(CLASSROOM_LESSONS.grip.name, 'Grip');
-  assert.deepEqual(gripLesson.words.map(word => word.id), ['grip', 'slip', 'limit']);
+  assert.deepEqual(gripLesson.words.map(word => word.id), ['grip', 'slip', 'limit', 'grip-slide']);
   assert.equal(gripLesson.challengeCard.title, 'Find full grip, then find where it starts to fall.');
   assert.equal(GRIP_STEPS.at(-1).voice, 'lab.brian.grip.explain');
   const flags = {enabled: name => name === 'lab' || name === 'lab-classroom' || name === 'lab-tuning'};
@@ -1226,9 +1226,9 @@ test('a player can follow each Grip prompt, compare three settings, and pass the
   session.act('next'); session.act('next'); session.act('next');
   assert.equal(session.view().step.id, 'formula');
   for (let index = 0; index < 10; index++) session.act('slide:up');
-  assert.equal(session.view().formulas[0].worked, '0.94 × 100 = 94%');
+  assert.equal(session.view().formulas[0].worked, '0.939 × 100 = 93.9%');
   session.act('next');
-  until(session, view => view.ready, 5);
+  until(session, view => view.ready, 14);
   session.act('next');
   assert.equal(session.view().step.id, 'try-edge');
   assert.equal(session.view().cards.length, 3);
@@ -1236,7 +1236,7 @@ test('a player can follow each Grip prompt, compare three settings, and pass the
   assert.ok(session.view().formulas.every(row => row.worked === ''), 'the open guess has no worked result');
   session.act('answer:0'); session.act('run');
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  assert.match(session.view().brian.text, /4\.5 degrees.*99\.7%.*100% minus 99\.7% is 0\.3% lost/);
   session.act('next');
   assert.equal(session.view().step.id, 'try-far');
   assert.equal(session.view().cards.length, 3);
@@ -1284,7 +1284,7 @@ test('Grip predictions explain the small loss at 4.5 degrees with rounded, reada
   session.act('answer:1'); session.act('run');
   const view = session.view();
   assert.equal(view.brian.mood, 'explain');
-  assert.match(view.brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  assert.match(view.brian.text, /4\.5 degrees.*99\.7%.*100% minus 99\.7% is 0\.3% lost/);
   assert.doesNotMatch(view.brian.text, /\d+\.\d{3,}/);
 });
 
@@ -1318,30 +1318,98 @@ test('Grip percent formula uses rounded displayed values and open guesses hide r
     assert.match(view.formulas[0].formula, /grip kept as a fraction × 100/);
     assert.equal(view.grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
     assert.equal(view.percent, pctForGrip(view.grip));
-    if (angle === 9) assert.equal(view.formulas[0].worked, '0.94 × 100 = 94%');
-    assert.doesNotMatch(JSON.stringify(view.formulas), /clamp|\d+\.\d{3,}/i);
+    if (angle === 9) assert.equal(view.formulas[0].worked, '0.939 × 100 = 93.9%');
+    assert.doesNotMatch(JSON.stringify(view.formulas), /clamp|\d+\.\d{4,}/i);
   }
   model.enter(GRIP_STEPS.findIndex(step => step.id === 'try-edge'));
   assert.ok(model.view().formulas.every(row => row.worked === ''));
   assert.equal(model.view().percent, null);
 });
 
-test('the Grip watch moves through four settings without giving away either prediction', () => {
+test('the Grip watch runs about ten seconds through four settings, fills its table as it goes, and does not give away either prediction', () => {
   const model = createGripModel();
   model.enter(GRIP_STEPS.findIndex(step => step.id === 'watch'));
   assert.equal(model.view().slideDeg, 2);
-  for (const angle of [3, 4, 12]) {
-    model.tick(.8);
+  assert.equal(model.view().rows.length, 0, 'the table starts empty');
+  for (const [index, angle] of [3, 4, 12].entries()) {
+    model.tick(WATCH_S / 4);
     assert.equal(model.view().slideDeg, angle);
     assert.equal(model.view().grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
+    assert.equal(model.view().rows.length, index + 2, 'each angle joins the table when the tyre reaches it');
   }
-  const event = model.tick(.8);
+  const event = model.tick(WATCH_S / 4);
   assert.equal(event.kind, 'right');
-  assert.match(event.say, /2, 3 and 4 degrees.*100%.*12 degrees.*loss grows/);
+  assert.match(event.say, /2, 3 and 4 degrees.*100%.*12 degrees.*90%.*falls/);
   assert.doesNotMatch(event.say, /4\.5|9 degrees/);
   assert.equal(model.view().rows.length, 4);
   assert.deepEqual(model.view().rows.map(row => row.slideDeg), [2, 3, 4, 12]);
   assert.deepEqual(GRIP_STEPS.map(step => step.part), [...GRIP_STEPS.map(step => step.part)].sort((a, b) => a - b));
+  // R plays it again: the angle goes back to 2 degrees and the table empties.
+  assert.ok(model.view().actions.includes('replay'));
+  model.act('replay');
+  assert.equal(model.view().ready, false);
+  assert.equal(model.view().slideDeg, 2);
+  assert.equal(model.view().rows.length, 0);
+});
+
+test('the Grip watch runs exactly the angles Brian names, and the reading is full from 0 to 4 degrees', () => {
+  const model = createGripModel();
+  model.enter(GRIP_STEPS.findIndex(step => step.id === 'watch'));
+  const named = [...model.view().say.split('. ')[0].matchAll(/\d+(?:\.\d+)?/g)].map(hit => Number(hit[0]));
+  assert.deepEqual(named, [2, 3, 4, 12], 'Brian names 2, 3, 4 and 12');
+  const seen = [];
+  for (let t = 0; t < WATCH_S; t += .05) { model.tick(.05); seen.push(model.view().slideDeg); }
+  assert.deepEqual([...new Set(seen)], [2, 3, 4, 12], 'the tyre runs exactly the angles Brian names');
+  for (const angle of [0, 1, 2, 3, 4]) assert.equal(gripBench.run({slideDeg: angle, driver: 'casual'}).grip, 1, `${angle} degrees keeps all of its grip`);
+});
+
+test('the Grip wonder slides the tyre from 0 to 12 degrees over about ten seconds, and R plays it again', () => {
+  const model = createGripModel();
+  model.enter(0);
+  assert.equal(model.view().slideDeg, 0);
+  let seconds = 0, atBest = null;
+  while (!model.view().ready && seconds < 30) {
+    model.tick(.05); seconds += .05;
+    if (atBest === null && model.view().slideDeg >= 4.3) atBest = model.view().percent;
+  }
+  assert.ok(seconds >= WATCH_S - .1 && seconds < WATCH_S + 1, `the wonder took ${seconds.toFixed(1)} s`);
+  assert.equal(model.view().slideDeg, 12);
+  assert.equal(model.view().percent, 90);
+  assert.ok(atBest > 99, 'the grip is still nearly full when the tyre reaches the best angle');
+  assert.ok(model.view().actions.includes('replay'));
+  model.act('replay');
+  assert.equal(model.view().ready, false);
+  assert.equal(model.view().slideDeg, 0);
+});
+
+// Kyle's rules of 19 November 2026 (docs/LAB.md 13.2): no hedging, no "sum" for a multiplication, no "about" before a number the
+// lesson states exactly, and no key labels that the screen already shows.
+const KYLE_HEDGES = /in this game|this game|a simplification|real life|in real|the game’s|\bthe game\b/i;
+const KYLE_KEY_LABELS = /Press [↑↓←→]|press Space|Press Space|Press [123],? |press 1|Press 1|use the arrows/;
+const noteView = (said, v) => {
+  for (const text of [v.say, v.prompt, ...(v.hints ?? []), ...(v.cards ?? []).map(card => card.label), ...(v.formulas ?? []).flatMap(row => [row.title, row.formula, row.worked, row.note])]) if (text) said.add(String(text));
+};
+
+test('Kyle’s rules of 19 November 2026 hold for every text the Grip lesson shows, wrong answers and results included', () => {
+  const said = new Set();
+  const model = createGripModel();
+  GRIP_STEPS.forEach((step, index) => { model.enter(index); noteView(said, model.view()); });
+  for (const step of ['try-edge', 'try-far']) for (const pick of [0, 1, 2]) {
+    model.enter(GRIP_STEPS.findIndex(item => item.id === step)); model.act(`answer:${pick}`); noteView(said, model.view()); model.act('run'); noteView(said, model.view());
+  }
+  for (const step of ['check-best', 'check-loss', 'check-driving']) for (const pick of [0, 1, 2]) {
+    model.enter(GRIP_STEPS.findIndex(item => item.id === step)); model.act(`answer:${pick}`); noteView(said, model.view());
+  }
+  model.enter(GRIP_STEPS.findIndex(item => item.id === 'challenge'));
+  for (const angle of [0, 2, 4, 4.5]) { while (model.view().slideDeg < angle) model.act('slide:up'); model.act('run'); noteView(said, model.view()); }
+  model.enter(GRIP_STEPS.findIndex(item => item.id === 'try-free')); model.act('run'); noteView(said, model.view());
+  model.enter(GRIP_STEPS.findIndex(item => item.id === 'watch')); model.tick(WATCH_S + .1); noteView(said, model.view());
+  const copy = [...said, ...gripLesson.words.map(word => word.meaning), ...gripLesson.keyIdeas.map(item => item.text), gripLesson.challengeCard.text, gripLesson.passSay].join('\n');
+  assert.doesNotMatch(copy, KYLE_HEDGES, 'no hedging');
+  assert.doesNotMatch(copy, /\bsums?\b/i, 'a multiplication is not a sum');
+  assert.doesNotMatch(copy, /\babout \d|\bto the nearest\b/i, 'exact numbers');
+  assert.doesNotMatch(copy, KYLE_KEY_LABELS, 'the screen shows its own key labels');
+  assert.doesNotMatch(copy, /pushes harder|squeal|grip loss/i, 'only what the numbers show');
 });
 
 test('the Grip graph plots smooth unrounded readings past the best angle', () => {
