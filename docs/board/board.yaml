@@ -558,16 +558,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-EVIDENCE-DATE-BOUNDARY.md"
 
-  - id: QA-NIGHT-SIZED
-    title: "The night check sizes itself from the day's merges: none, partial or full (Kyle, 18 November)"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-NIGHT-SIZED.md"
-
   - id: STORY-CHOICES
     title: "The story rebuilt around choices: the form, the ledger, the map of choices, one chapter in full (Kyle, 18 November)"
     owner: "claude"

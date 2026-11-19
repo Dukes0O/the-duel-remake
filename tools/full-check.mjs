@@ -4,12 +4,51 @@ import { spawn, spawnSync } from 'node:child_process';
 import { appendFile, mkdir, mkdtemp, readFile, readdir, writeFile, rmdir } from 'node:fs/promises';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { discoverSuites, localDependencies, readsPath, wideSuitesForChanges, SMOKE_SUITES, LANE_GUARDS } from './run-tests.mjs';
+import { nightIsFullTierPass } from './build-status.mjs';
 
 
 const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const path=(...parts)=>join(...parts).replaceAll('\\','/');
-const usage='Usage: node tools/full-check.mjs --idle-awake --no-push [--date YYYY-MM-DD] [--strict]';
+const usage='Usage: node tools/full-check.mjs --idle-awake --no-push [--date YYYY-MM-DD] [--strict] [--full]';
 const commitPattern=/^[a-f0-9]{40}$/;
+// QA-NIGHT-SIZED. The night chooses its size from the files changed since the last night that
+// passed (none, partial or full; AGENTS rule 13). A change to any file below makes the night full.
+// run-tests.mjs has no list of save or physics files (rule 19 names them only in words; its
+// SHARED_FILES table also holds feature-flags.js, which the card does not count), so they are
+// named here, once: the five shared game files, the files that hold the save's shape, and the
+// physics. Claude to review.
+// These paths are built with path() on purpose: a whole path written out as text is read by the lane
+// picker as a file this tool reads, which would pick this tool's suite for every edit to a document.
+const under=(folder,names)=>names.map(name=>path(folder,name));
+export const NIGHT_FULL_FILES=Object.freeze([
+  // The shared game files (rule 13), the save's shape (career, backups, restores, the budget, the town,
+  // helicopter and Lab saves) and the physics (the simulation steps, contacts, crashes, off-road, tyres, engine).
+  ...under('src',['game.js','main.js','render3d.js','app.js','config.js',
+    'progression.js','career-archives.js','career-backup.js','career-budget.js','career-restore.js',
+    'wasteland-career.js','wasteland-progress.js','grand-prix-career.js',
+    'sim-common.js','sim-contacts.js','sim-crash.js','sim-driving.js','sim-laps.js',
+    'sim-police.js','sim-results.js','sim-rival.js','sim-scablands.js','offroad-physics.js',
+    'collision.js','vehicle-collision.js','vehicle-impact.js','vehicle-surface.js','engine-curve.js',
+    // Saved records outside the career file, and the cars' own contact and grounding rules.
+    'leaderboard.js','ghost.js','lap-telemetry.js','vehicles.js','vehicle-contact-modifiers.js','vehicle-grounding.js',
+    'vehicle-knock.js']),
+  ...under(path('src','town'),['town-store.js','town-state.js','town-migrate.js']),
+  path('src','heli','heli-save.js'),path('src','lab','lab-save.js')
+]);
+// Every save file holds part of the save's shape, including ones added after this list (src/**/...save.js).
+export const saveFile=file=>/^src\/(?:[^/]+\/)*[^/]*save\.js$/.test(file)||/^src\/career-[^/]*\.js$/.test(file);
+const gameFile=file=>/^(?:src|public)\//.test(file)||/^index\.html$/.test(file)||/\.css$/.test(file);
+// Combat balance runs on a partial night only when one of these changed.
+const combatFile=file=>/^src\/(?:arsenal|arena)\//.test(file)||/^src\/combat-[^/]*\.js$/.test(file);
+// Notes, the board, run logs and review sheets never reach a suite.
+const noteFile=file=>/^docs\//.test(file)||/\.md$/i.test(file);
+// The timed scene and its code: what the browser game loads, plus the frame scenarios themselves.
+const FRAME_ENTRIES=Object.freeze([path('src','main.js'),path('tools','browser-harness.mjs'),
+  ...under(path('tools','scenarios'),['frame-pacing.mjs','tremblant-snow.mjs','tremblant-views.mjs'])]);
+const FRAME_FILES=Object.freeze(['index.html',path('tools','vite-qa.config.js')]);
+const RUN_LOG=path('docs','board','run-log.md');
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function localDate(now=new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 }
@@ -18,6 +57,7 @@ export function parseNightArguments(args=[]) {
   for(let index=0;index<args.length;index++) {
     const arg=args[index];if(seen.has(arg))throw Error(usage);seen.add(arg);
     if(arg==='--strict')options.strict=true;
+    else if(arg==='--full')options.full=true;
     else if(arg==='--idle-awake')options.idleAwake=true;
     else if(arg==='--no-push')options.noPush=true;
     else if(arg==='--date') {
@@ -29,10 +69,16 @@ export function parseNightArguments(args=[]) {
   if(!options.idleAwake||!options.noPush)throw Error(usage);
   return options;
 }
-export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evidence',date,'FAC-03','night'),previousSource=null,strict=false}={}) {
+// A full night (the default) runs everything. A partial night (size 'partial') runs the wide pick of
+// suites since `previousSource`, the named browser scenarios, and the frame and combat stages only
+// when `frames` or `combat` is true. `scenarios` is the exact list for a partial night.
+export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evidence',date,'FAC-03','night'),previousSource=null,strict=false,
+  size='full',frames=true,combat=true,scenarios=null}={}) {
   const frameDir=path(evidence,'frames'),browserDir=path(evidence,'browser');
-  return [
-    {id:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
+  const partial=size==='partial';
+  const stages=[
+    partial?{id:'full',tier:'wide',args:['tools/run-tests.mjs','--tier','wide','--since',previousSource,'--jobs','4','--keep-going','--json']}
+      :{id:'full',tier:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
     {id:'frames',args:['tools/run-browser-scenarios.mjs','--scenarios','frame-pacing,tremblant-snow,tremblant-views',
       '--timing-only','--headed','--jobs','1','--output-dir',frameDir],
       env:{DUEL_NIGHT_FRAMES:'1',DUEL_NIGHT_IDLE_AWAKE:'1'},packet:path(frameDir,'frame-pacing','frame-pacing.json'),
@@ -40,10 +86,13 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
         {name:'tremblant-snow',packet:path(frameDir,'tremblant-snow','tremblant-snow-frame-pacing.json')},
         {name:'tremblant-views',packet:path(frameDir,'tremblant-views','tremblant-frame-pacing.json')}]},
     {id:'combat',args:['tools/combat-balance.mjs','--check']},
-    {id:'browser',args:['tools/run-browser-scenarios.mjs',...(strict || new Date(date+'T12:00:00Z').getUTCDay()===6 || !previousSource ? ['--all'] : ['--changed-since',previousSource]),'--jobs','4','--output-dir',browserDir],
+    {id:'browser',scenarios:partial?scenarios:null,
+      args:['tools/run-browser-scenarios.mjs',...(partial?['--scenarios',(scenarios||[]).join(',')]:
+        strict || new Date(date+'T12:00:00Z').getUTCDay()===6 || !previousSource ? ['--all'] : ['--changed-since',previousSource]),'--jobs','4','--output-dir',browserDir],
       env:{DUEL_NIGHT_FRAME_REUSE:'1',DUEL_NIGHT_FRAME_PACKET:path(frameDir,'frame-pacing','frame-pacing.json')},
       packet:path(browserDir,'summary.json')}
-  ].map(row=>({...row,log:path(evidence,row.id+'.log')}));
+  ].filter(row=>!partial||(row.id==='frames'?frames:row.id==='combat'?combat:row.id==='browser'?scenarios?.length>0:true));
+  return stages.map(row=>({...row,log:path(evidence,row.id+'.log')}));
 }
 export function validateFramePacket(packet,{warn=()=>{}}={}) {
   if(packet?.schema!==1||packet.mode!=='night-simple'||packet.reports?.length!==2)
@@ -212,8 +261,8 @@ async function consumeFullReport(dependencies,copy,source,original,result,eviden
   await dependencies.writeText(target,original);
   return retained;
 }
-function validateFull(packet) {
-  if(packet?.schema!==1||packet.kind!=='result'||packet.tier!=='full'||packet.jobs!==4||
+function validateFull(packet,tier='full') {
+  if(packet?.schema!==1||packet.kind!=='result'||packet.tier!==tier||packet.jobs!==4||
     !Number.isInteger(packet.total)||packet.total<1||packet.passed!==packet.total||
     packet.failures?.length!==0||packet.notRun!==0||packet.results?.length!==packet.total||
     packet.results.some(row=>row.passed!==true))throw Error('Full tier has failures, unrun suites or an incomplete actual packet.');
@@ -249,10 +298,121 @@ function validateCombat(packet) {
     throw Error('Missing actual current-rules combat balance aggregate.');
 }
 
-async function previousNight(date,dependencies) {
+// Every recorded night up to `date`, newest first. A record with no size was written before nights
+// had sizes and counts as a full night.
+async function nightHistory(date,dependencies) {
   const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&name.slice(6,16)<=date).sort().reverse();
-  for(const name of names) try { const row=json(await dependencies.readText(path(dependencies.root,'docs/board/checks',name))); if(row.schema===1&&commitPattern.test(row.source))return row; } catch {}
-  return null;
+  const rows=[];
+  for(const name of names) try {
+    const row=json(await dependencies.readText(path(dependencies.root,'docs/board/checks',name)));
+    if(row.schema===1&&commitPattern.test(row.source))rows.push({...row,date:row.date||name.slice(6,16)});
+  } catch {}
+  return rows;
+}
+const framesPassCommit=row=>row.stages?.some(stage=>stage.id==='frames'&&stage.passed===true)?row.source:
+  commitPattern.test(row.framesFrom||'')?row.framesFrom:null;
+
+const shortCommit=commit=>String(commit).slice(0,9);
+const plural=(count,word)=>count+' '+word+(count===1?'':'s');
+const joinWords=items=>items.length<2?items.join(''):items.slice(0,-1).join(', ')+' and '+items.at(-1);
+const areaOf=file=>{
+  const parts=file.split('/');
+  if(parts.length===1)return 'the project root';
+  return parts[0]==='src'&&parts.length>2?parts[0]+'/'+parts[1]+'/':parts[0]+'/';
+};
+export function describeAreas(files) {
+  const areas=[...new Set(files.map(areaOf))].sort();
+  return areas.length<=4?'all under '+joinWords(areas):'across '+areas.length+' areas';
+}
+const nameFiles=files=>files.length<=3?joinWords(files):files.slice(0,3).join(', ')+' and '+(files.length-3)+' more';
+// The reach of a set of changed files: the suites that reach them at any depth (the wide pick), and
+// the changed files that no suite reaches.
+export function realReach(root,files) {
+  const suites=discoverSuites({projectRoot:root});
+  const picked=wideSuitesForChanges(suites,files,{projectRoot:root});
+  return {suites:[...picked],unreached:[...(picked.unmapped??[])],total:suites.length};
+}
+// The changed files that belong to the timed scene or its code (rule 19: a frame pass counts while the
+// scene and its code are unchanged): what the browser game loads, and the frame scenarios themselves.
+export function realFrameScope(root,files) {
+  const inScope=new Set(FRAME_FILES),dependencyCache=new Map();
+  let assets=new Map();
+  for(const entry of FRAME_ENTRIES) {
+    const found=localDependencies(entry,{projectRoot:root,dependencyCache});
+    found.forEach(file=>inScope.add(file));
+    // Only the game's own reads count as scene files: the harness and scenarios also read tools and notes.
+    if(entry===FRAME_ENTRIES[0])assets=found.reads;
+  }
+  // The build also pulls in every course file and the reference laps by pattern (import.meta.glob),
+  // which the import walk does not see.
+  const byPattern=file=>/^src\/circuits\/[^/]+\.js$/.test(file)||/^src\/generated\/reference-laps\/[^/]+\.json$/.test(file);
+  return files.filter(file=>inScope.has(file)||byPattern(file)||(/^public\//.test(file)&&readsPath(assets,file)));
+}
+// The size of the night (QA-NIGHT-SIZED, AGENTS rule 13), chosen from the files changed since the last
+// night that passed. `previous` is that night's record, `lastFull` the last night that was full, `changed`
+// the files changed between that night's commit and this one, and `reach(files)` says which suites
+// reach them. Returns the size and the reason in plain words.
+export function chooseNightSize({date,force=false,previous=null,lastFull=null,changed=[],reach=()=>({suites:[],unreached:[],total:0})}={}) {
+  const full=reason=>({size:'full',reason});
+  if(force)return full('a full check was asked for by hand, for a release');
+  if(!previous)return full('no earlier night that passed is on record to compare with');
+  const noon=day=>Date.parse(day+'T12:00:00Z');
+  const saturday=new Date(noon(date)).getUTCDay()===6;
+  const stale=!lastFull||(noon(date)-noon(lastFull.date))/86400000>7;
+  const code=changed.filter(file=>!noteFile(file));
+  const triggers=changed.filter(file=>NIGHT_FULL_FILES.includes(file)||saveFile(file));
+  // Looking up which suites reach the files takes a while, so it waits until the answer is needed.
+  let reached;
+  const lookup=()=>reached??=code.length?reach(code):{suites:[],unreached:[],total:0};
+  // A file the game loads (source, styles, page, assets) is seen by the browser scenarios and the frame check even when
+  // no Node suite reaches it, so it never makes a night empty. Only tool files no suite reads can.
+  const unread=!triggers.length&&code.every(file=>!gameFile(file)&&lookup().unreached.includes(file));
+  // Nothing to check. On a Saturday, or when the last full night is old, a night that is not itself a full
+  // pass still runs in full, as the weekly safety net; a full pass that still counts (rule 19) needs no rerun.
+  if(unread&&(!(saturday||stale)||nightIsFullTierPass(previous))) {
+    return {size:'none',reason:changed.length?
+      'only notes, board files or files that no suite reads changed since '+shortCommit(previous.source)+' ('+plural(changed.length,'file')+')':
+      'nothing to check since '+shortCommit(previous.source)};
+  }
+  if(saturday)return full('it is Saturday night');
+  if(stale)return full(lastFull?'the last full night was on '+lastFull.date+', more than seven days ago':'no full night is on record');
+  if(triggers.length)return full(nameFiles(triggers)+' changed, which '+(triggers.length===1?'holds':'hold')+
+    ' shared game code, the save\'s shape or the physics');
+  const {suites,total}=lookup();
+  return {size:'partial',reason:plural(changed.length,'file')+' changed, '+describeAreas(changed),suites,total};
+}
+export function nightSizeLine(size) {
+  if(size.size==='none')return 'No night check: '+size.reason+'.';
+  if(size.size==='full')return 'Full night: '+size.reason+'. Every suite, the frame check, combat balance and the browser scenarios are checked.';
+  return 'Partial night: '+size.reason+'; '+size.suites.picked+' of '+size.suites.total+' suites, '+
+    size.scenarios.picked+' of '+size.scenarios.total+' browser scenarios, frames '+size.frames.note+', combat balance '+size.combat.note+'.';
+}
+// Choose the size and, for a partial night, what it runs. Any failure to read the history falls back to a full night.
+async function decideNight({options,source,history,previous,dependencies}) {
+  // A failed full night does not reset the seven-day clock: only a full night that passed counts.
+  const lastFull=history.find(row=>nightIsFullTierPass(row))??null;
+  const force=options.full===true||options.strict===true;
+  const changed=previous&&!force?await dependencies.changedFiles(previous.source,source):[];
+  const choice=chooseNightSize({date:options.date,force,previous,lastFull,changed,reach:files=>dependencies.reach(files)});
+  const size={size:choice.size,reason:choice.reason,base:previous?.source??null,changedFiles:changed.length};
+  if(choice.size==='partial') {
+    const picked=new Set([...SMOKE_SUITES,...LANE_GUARDS,...choice.suites]);
+    size.suites={picked:picked.size,total:choice.total};
+    const framesBase=history.map(framesPassCommit).find(Boolean)??null;
+    const sceneChanges=framesBase?await dependencies.frameScope(await dependencies.changedFiles(framesBase,source)):[];
+    const framesRun=!framesBase||sceneChanges.length>0;
+    size.frames={run:framesRun,reusedFrom:framesRun?null:framesBase,
+      note:framesRun?'run ('+(framesBase?'the timed scene or its code changed':'no earlier frame pass is on record')+')':'reused from '+shortCommit(framesBase)};
+    const combatRun=changed.some(combatFile);
+    size.combat={run:combatRun,note:combatRun?'run':'not needed'};
+    const names=await dependencies.scenarioNames(dependencies.root);
+    const chosen=(await dependencies.scenarioSelection(dependencies.root,names,previous.source)).map(row=>row.name)
+      // Reusing the frame pass leaves no frame packet for this night's frame-pacing scenario to copy.
+      .filter(name=>framesRun||name!=='frame-pacing');
+    size.scenarios={picked:chosen.length,total:names.length,names:chosen};
+  }
+  size.line=nightSizeLine(size);
+  return size;
 }
 async function previousGreen(date,dependencies) {
   const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&
@@ -393,17 +553,45 @@ export async function runNight(options,overrides={}) {
     mkdir:dir=>mkdir(dir,{recursive:true}),makeTemp:mkdtemp,
     refreshStatus:()=>refreshNightStatus(root),recycleText:file=>recycleNightDraft(file,root),
     listNightFiles:()=>readdir(path(root,'docs/board/checks')).catch(error=>{if(error.code==='ENOENT')return[];throw error;}),
+    changedFiles:async (from,to)=>String(await dependencies.git(['diff','--name-only','--no-renames','-z',from,to,'--'])).split('\0').filter(Boolean),
+    reach:files=>realReach(root,files),frameScope:files=>realFrameScope(root,files),
     ...overrides};
   const source=(await dependencies.git(['rev-parse','HEAD'])).trim();
   if(!commitPattern.test(source))throw Error('Missing actual source commit.');
-  const packet={schema:1,date:options.date,source,started:dependencies.now().toISOString(),status:'failed',
+  const history=await nightHistory(options.date,dependencies);
+  const previous=await previousGreen(options.date,dependencies);
+  // The size of the night comes first (rule 13). If it cannot be worked out, the full night runs.
+  let sizing;
+  try {
+    await assertNightSource(dependencies,null);
+    sizing=await decideNight({options,source,history,previous,dependencies});
+  }catch(error) {
+    sizing={size:'full',reason:'the size could not be chosen ('+error.message+'), so everything runs',base:previous?.source??null};
+    sizing.line=nightSizeLine(sizing);
+  }
+  if(sizing.size==='none') {
+    const day=Number(options.date.slice(8,10))+' '+MONTHS[Number(options.date.slice(5,7))-1];
+    const line=`- ${day}, night: no night check: nothing to check since ${shortCommit(previous.source)}`+
+      (sizing.changedFiles?` (${plural(sizing.changedFiles,'file')} changed; only notes, board files or files no suite reads).`:'.');
+    // The integration folder stays clean: the line waits in the ignored evidence folder, and Claude folds it into the
+    // run log with the next real commit (AGENTS rule 5). A dirty run log would block the day's fast-forwards.
+    const note=path(root,'.evidence',options.date,'FAC-03','night','no-check.txt');
+    await dependencies.mkdir(path(root,'.evidence',options.date,'FAC-03','night'));
+    await dependencies.writeText(note,line+'\n');
+    return {schema:1,size:'none',sizeLine:sizing.line,date:options.date,source,status:'none',
+      runLogLine:line,note,stages:[],failures:[]};
+  }
+  const {size:_size,line:_line,reason:_reason,scenarios:chosenScenarios,...sizeDetail}=sizing;
+  if(chosenScenarios)sizeDetail.scenarios={picked:chosenScenarios.picked,total:chosenScenarios.total};
+  const packet={schema:1,size:sizing.size,sizeLine:sizing.line,date:options.date,source,started:dependencies.now().toISOString(),status:'failed',
+    sizeDetail,
     context:{operatorDeclaredIdleAwake:true,operatorDeclaredNoOtherGpuWorkload:true,
       displayPowerMeasured:false,processIsolationObserved:false},stages:[],failures:[],
     compaction:{status:'disabled',reason:'Separate Kyle authorization required; no history rewrite this run.'},
     push:{status:'disabled',reason:'--no-push; no push authorized this run.'}};
-  const lastNight=await previousNight(options.date,dependencies);
-  const previous=await previousGreen(options.date,dependencies);packet.lastGreen=previous?.source||null;
-  packet.lastGreenNight=previous?{schema:1,status:previous.status,source:previous.source,date:previous.date}:null;
+  if(sizing.size==='partial'&&sizing.frames.reusedFrom)packet.framesFrom=sizing.frames.reusedFrom;
+  packet.lastGreen=previous?.source||null;
+  packet.lastGreenNight=previous?{schema:1,status:previous.status,source:previous.source,date:previous.date,...(previous.size?{size:previous.size}:{})}:null;
   let firstMerge=null,attribution='Unknown: no previous green night.';
   if(previous) {
     try {
@@ -420,7 +608,9 @@ export async function runNight(options,overrides={}) {
     await assertNightSource(dependencies,null);
     copy=await dependencies.createCopy(source);
     const copyEvidence=path(copy.root,'.evidence',options.date,'FAC-03',packet.evidence.split('/').at(-1));
-    const plan=nightPlan({root:copy.root,date:options.date,evidence:copyEvidence,previousSource:lastNight?.source,strict:options.strict});
+    const partial=sizing.size==='partial';
+    const plan=nightPlan({root:copy.root,date:options.date,evidence:copyEvidence,previousSource:previous?.source,strict:options.strict,
+      ...(partial?{size:'partial',frames:sizing.frames.run,combat:sizing.combat.run,scenarios:sizing.scenarios.names}:{})});
     const assertCopy=async()=>{
       if((await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source||
         (await dependencies.git(['status','--porcelain'],copy.root)).trim())throw Error('Copied source changed.');
@@ -474,7 +664,7 @@ export async function runNight(options,overrides={}) {
         if(stage.id==='browser') {
           const actual=json(await dependencies.readText(stage.packet));
           const allNames=await dependencies.scenarioNames(copy.root);
-          const selected=stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,lastNight.source)).map(row=>row.name) : allNames;
+          const selected=stage.scenarios ?? (stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,previous.source)).map(row=>row.name) : allNames);
           if(actual?.schema!==1 || !Array.isArray(actual.rows) || actual.count!==selected.length ||
             actual.rows.length!==selected.length || actual.rows.some((item,index)=>item.name!==selected[index] || typeof item.passed!=='boolean') ||
             new Set(selected).size!==selected.length || actual.passed!==actual.rows.filter(item=>item.passed).length ||
@@ -529,7 +719,7 @@ export async function runNight(options,overrides={}) {
         if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
         if(stage.id==='full'&&result.exitCode!==0) {
           const actual=fullPacket(result.stdout);
-          if(actual?.schema===1&&actual.kind==='result'&&actual.tier==='full'&&actual.jobs===4&&
+          if(actual?.schema===1&&actual.kind==='result'&&actual.tier===(stage.tier||'full')&&actual.jobs===4&&
             actual.exitCode===result.exitCode&&actual.notRun===0&&Array.isArray(actual.results)&&
             actual.results.length===actual.total&&actual.passed===actual.results.filter(item=>item.passed).length&&
             JSON.stringify(actual.failures)===JSON.stringify(actual.results.filter(item=>!item.passed).map(item=>item.label))&&
@@ -543,12 +733,12 @@ export async function runNight(options,overrides={}) {
           }
         }
         if(result.exitCode!==0&&!(stage.id==='browser'&&browserResult.failed))throw Error(row.measuredFailure?frameError.message:result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
-        if(stage.id==='full')validateFull(fullPacket(result.stdout));
+        if(stage.id==='full')validateFull(fullPacket(result.stdout),stage.tier||'full');
         else if(stage.id==='frames') {if(frameError)throw frameError;}
         else if(stage.id==='browser') {
           const actual=json(await dependencies.readText(stage.packet));
           const allNames=await dependencies.scenarioNames(copy.root);
-          const selected=stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,lastNight.source)).map(row=>row.name) : allNames;
+          const selected=stage.scenarios ?? (stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,previous.source)).map(row=>row.name) : allNames);
           if(!actual.failed)validateBrowser(actual,selected);
         }
         else validateCombat(json(result.stdout));
@@ -578,7 +768,8 @@ export async function runNight(options,overrides={}) {
   packet.status=result.status;packet.failures=result.failures;packet.nowPassing=result.nowPassing;
   if(result.nowPassing.length)dependencies.standingUpdate={original:standingText,remaining:result.remaining};
 
-  const morning=[`Full check ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
+  const morning=[sizing.line,`Full check ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
+    ...(sizing.size==='partial'?['A partial night is not a full-tier pass for a release; only a full night counts.']:[]),
     ...(result.fresh.length?[`New failures: ${result.fresh.map(row=>row.name).join(', ')}. First merge: ${firstMerge||attribution}`]:[]),
     ...result.fresh.filter(row=>row.news).map(row=>`${row.name}: ${row.news}. Listed: ${row.listedCause} Actual: ${row.error}`),
     ...packet.nowPassing.map(row=>`Now passing: ${row.stage}: ${row.name}.`),
@@ -591,13 +782,14 @@ export async function runNight(options,overrides={}) {
     'Compaction and push disabled; separate Kyle authorization is pending.',
     `Details: docs/board/checks/night-${options.date}.json`];
   await publishNightReports(packet,morning.join('\n')+'\n',dependencies);
-  morning[0]=`Night ${options.date}: ${packet.status.toUpperCase()} (${source}).`;
+  morning[1]=`Night ${options.date}: ${packet.status.toUpperCase()} (${source}).`;
   await dependencies.writeText(path(packet.evidence,'night-report.json'),JSON.stringify(packet,null,2)+'\n');
   await dependencies.writeText(path(packet.evidence,'morning.md'),morning.join('\n')+'\n'+(packet.publication.status==='refused'?'Publication refused: '+packet.publication.reason+'\n':''));
   return packet;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
   runNight(parseNightArguments(process.argv.slice(2))).then(packet=>{
+    if(packet.size==='none'){console.log(`Night ${packet.date}: ${packet.sizeLine} For the run log: ${packet.runLogLine}`);return;}
     console.log(`Full check ${packet.date}: ${packet.status}; docs/board/checks/night-${packet.date}.json`);
     process.exitCode=packet.status==='failed'?1:0;
   }).catch(error=>{console.error(error.message);process.exitCode=2;});

@@ -130,9 +130,9 @@ notes and history are evidence, not instructions.
       next. Full tier, frame check, combat balance (`combat-balance.mjs --check`), every browser
       scenario.
 
-    Claude reads every night check and cures or cards its failures, and builds the tool that sizes it (Kyle, 18
-    November 2026: Codex's allowance goes to building). Until QA-NIGHT-SIZED is merged the tool knows only the full night: run
-    `node tools/full-check.mjs --idle-awake --no-push`. Building and merging
+    Claude reads every night check and cures or cards its failures (Kyle, 18 November 2026: Codex's allowance goes to
+    building). `node tools/full-check.mjs --idle-awake --no-push` sizes the night itself; on a night with nothing to
+    check it writes its one line to the evidence folder, and Claude puts it in the run log with the next real commit. Building and merging
     continue; only the frame step needs the laptop alone (about 15 minutes), and each other
     stage counts as one heavy job. Its result is one of three. **Passed.** **Passed with standing
     failures:** every failure is on the list in `docs/board/checks/standing-failures.json`, where
