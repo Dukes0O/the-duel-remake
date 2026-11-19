@@ -59,6 +59,7 @@ function leaderIds(arena) {
 export function chooseTarget(duel, participant) {
   const arena = duel.state.arena, self = arenaActor(duel, participant.id);
   if (!self) return null;
+  if (self.roadRider) return self.roadRider.targetId;
   const me = worldPose(duel, self), leaders = leaderIds(arena);
   const cap = brainDifficulty(duel).huntersOnPlayer;
   const huntersOnPlayer = arena.participants.filter(other =>
@@ -159,7 +160,7 @@ export function decideGoal(duel, participant, actor) {
   const at = worldPose(duel, targetPose), distance = Math.hypot(at.x - me.x, at.z - me.z);
   const selectedStyle = styleOf(duel, participant, actor);
   const style = duel.state.arena.mode === 'fuel-run' && selectedStyle === 'hunter' ? 'rammer' : selectedStyle;
-  const intercept = ringIntercept(duel, actor, targetPose, top);
+  const intercept = !actor.roadRider && ringIntercept(duel, actor, targetPose, top);
   if (intercept) return {x: intercept.x, z: intercept.z, speedMph: top, boost: difficulty.boost === 'always'};
   if (style === 'rammer') {
     const R = STYLES.rammer;

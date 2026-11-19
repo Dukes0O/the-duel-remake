@@ -83,6 +83,17 @@ test('offscreen marker distinguishes a car ahead from one behind', () => {
   assert.equal(fallbackOpponentPosition(course, player, {s: 80, lateral: 0}, 0).direction, 'BEHIND');
 });
 
+test('offscreen riders flank the mirror in the direction they are coming from', () => {
+  const course = {worldAt: (s, lateral) => ({x: lateral, z: s, heading: 0})};
+  const player = {s: 100, lateral: 0};
+  const marker = (s, lateral, index) => fallbackOpponentPosition(course, player, {s,lateral,roadRider:{}}, index);
+  const left = marker(91,-2,1), right = marker(-6,6,0);
+  assert.equal(left.direction,'BEHIND');
+  assert.equal(right.direction,'BEHIND');
+  assert.ok(left.x < .4 && right.x > .6 && left.y < .53 && right.y < .53);
+  assert.ok(marker(91,0,0).x < .4 && marker(-6,0,1).x > .6);
+});
+
 test('on-foot car pointer follows fighter position and facing', () => {
   const course = {groundAt: (s, lateral) => ({x: lateral, z: s})};
   const state = {s: 100, lateral: 0, fighter: {x: 0, z: 90, yaw: 0}};

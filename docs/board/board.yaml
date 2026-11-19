@@ -568,16 +568,6 @@ tasks:
     needs: []
     details: "docs/board/cards/STORY-CHOICES.md"
 
-  - id: ROAD-RIDERS
-    title: "Riders on the open land fight back, crash and can be wrecked (Kyle: the cars don't fight back)"
-    owner: "codex"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/ROAD-RIDERS.md"
-
   - id: STORY-REPLAY-PICK
     title: "A story night played again: the player picks at the end which telling stands (Kyle, 18 November)"
     owner: "codex"

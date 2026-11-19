@@ -654,6 +654,7 @@ export function createScablandsScene(course,options={}){
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
   const brandAshView=createBrandAshView();group.add(brandAshView.group);
+  let roadRidersView;
   const brandThief=createBrandThief();group.add(brandThief.group);
   const bellowsView=createBellowsView(course);group.add(bellowsView.group);
   let cinderRequested=false;
@@ -914,6 +915,11 @@ export function createScablandsScene(course,options={}){
       }
       night2?.update(worldJob, peopleSeconds, drawnShift);
       brandAshView.update(worldJob,drawnShift);
+      if (worldJob?.riderFight && !roadRidersView) {
+        roadRidersView = createBrandAshView({road:true});
+        group.add(roadRidersView.group);
+      }
+      roadRidersView?.update(worldJob,drawnShift);
       brandThief.update(worldJob,drawnShift);
       bellowsView.update(state,drawnShift);
       const glass = hotDeliveryGlass(worldJob);
@@ -1109,7 +1115,7 @@ export function createScablandsScene(course,options={}){
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
     storyPeople.dispose(); night2?.dispose();
-    barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();bellowsView.dispose();
+    barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

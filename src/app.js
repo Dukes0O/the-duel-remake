@@ -836,6 +836,8 @@ export class App {
     if(definition.run===true)return this.gasRun(definition.road);
     const side=sideJobKey(definition);
     if(side)return this.everburnSideJob(side);
+    if(definition.steps?.some(step=>step.kind==='rider-fight') && !EVERBURN_JOBS.some(job=>job.id===definition.id))
+      return this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job:definition});
     const id=EMBER_JOBS[definition.number-1];
     return id?this.everburnStep(id):false;
   }
