@@ -4,6 +4,7 @@
 // the snows, their temperature bands and the right wax for each are the ones the game's day draws (snowOfDay).
 import {SNOWS, SNOW_DAYS, WAXES, FRICTION, GLIDE, glideAcceleration, glideSeconds, waxRunFacts} from '../benches/wax.js';
 import {GRAVITY} from '../../ski/ski-physics.js';
+import {MORE} from '../classroom/brian-text.js';
 
 // The test strip, in metres; how long after both skis finish a run counts as over.
 export const STRIP_M = 50;
@@ -181,8 +182,8 @@ const CHECKS = {
 };
 // What the two steps on the reason say once the player has changed to the wax that suits the snow.
 const WHY_CLOSING = {
-  'why-cold': `A soft wax is soft enough for the sharp points to press into it, so each point catches on the wax as the ski moves, and that adds friction. A hard wax is too hard for the points to press into, so the points stay on the surface and there is less friction. On this snow the friction number is ${FRICTION.wrong} with soft wax and ${FRICTION.right} with hard wax. You can keep changing the wax to compare them.`,
-  'why-wet': `A softer wax repels water better, so the water gathers into separate beads instead of spreading into one sheet, and less of a sheet means less suction. The grains here are round, so there are no sharp points to press into the soft wax. On this snow the friction number is ${FRICTION.wrong} with hard wax and ${FRICTION.right} with soft wax. Racing skis also have fine grooves in the base, which let the water escape. You can keep changing the wax to compare them.`,
+  'why-cold': `A soft wax is soft enough for the sharp points to press into it, so each point catches on the wax as the ski moves, and that adds friction. A hard wax is too hard for the points to press into, so the points stay on the surface and there is less friction.${MORE}On this snow the friction number is ${FRICTION.wrong} with soft wax and ${FRICTION.right} with hard wax. You can keep changing the wax to compare them.`,
+  'why-wet': `A softer wax repels water better, so the water gathers into separate beads instead of spreading into one sheet, and less of a sheet means less suction. The grains here are round, so there are no sharp points to press into the soft wax.${MORE}On this snow the friction number is ${FRICTION.wrong} with hard wax and ${FRICTION.right} with soft wax. Racing skis also have fine grooves in the base, which let the water escape. You can keep changing the wax to compare them.`,
 };
 
 export function createModel() {
@@ -414,7 +415,7 @@ export function createModel() {
     m.phase = 'done'; seen.add(id);
     if (id === 'word-glide') {
       const s = sumOf(FRICTION.right), finish = Number((s.acceleration * s.seconds).toFixed(2));
-      m.say = `The ski glided ${STRIP_M} m in ${s1(runSeconds('hard', 'powder'))}. The marks on the strip show where the ski was at the end of each second, and the marks grow further apart because the ski moves faster during each second. With hard wax on this snow, the speed grew by ${A3(s.acceleration)} m/s during every second, so the ski reached ${finish.toFixed(2)} m/s at the finish, which is ${(finish * 3.6).toFixed(1)} km/h.`;
+      m.say = `The ski glided ${STRIP_M} m in ${s1(runSeconds('hard', 'powder'))}. The marks on the strip show where the ski was at the end of each second, and the marks grow further apart because the ski moves faster during each second.${MORE}With hard wax on this snow, the speed grew by ${A3(s.acceleration)} m/s during every second, so the ski reached ${finish.toFixed(2)} m/s at the finish, which is ${(finish * 3.6).toFixed(1)} km/h.`;
       return {kind: 'right', say: m.say};
     }
     return null;
@@ -443,13 +444,13 @@ export function createModel() {
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), magnifier: false};
     if (id === 'wonder') return {...base, tins: false, actions: ['replay'],
       say: m.phase === 'done' ? `The ski with hard wax reached the finish first, in ${s1(runSeconds('hard', 'powder'))}, and the ski with soft wax followed in ${s1(runSeconds('soft', 'powder'))}. The skis, the slope and the snow were the same, so the difference came from the wax. How can such a thin coat change the time, and why did hard wax give the shorter time on this snow?`
-        : `Here are two skis on a test strip of snow that is ${STRIP_M} metres long, written ${STRIP_M} m. The snow is dry powder at ${COLD_C} °C, and that temperature is read as “minus 15 degrees Celsius”. Water freezes at 0 °C, and the minus sign means below freezing. The two skis are the same except for a thin coat on the base, which is the underside of the ski that touches the snow. One ski has a coat of hard wax and the other has a coat of soft wax. Each stopwatch counts seconds, written s. Watch which ski reaches the finish first.`,
+        : `Here are two skis on a test strip of snow that is ${STRIP_M} metres long, written ${STRIP_M} m. The snow is dry powder at ${COLD_C} °C, and that temperature is read as “minus 15 degrees Celsius”. Water freezes at 0 °C, and the minus sign means below freezing.${MORE}The two skis are the same except for a thin coat on the base, which is the underside of the ski that touches the snow. One ski has a coat of hard wax and the other has a coat of soft wax. Each stopwatch counts seconds, written s. Watch which ski reaches the finish first.`,
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the two skis.',
       hints: ['Watch which ski is in front.', 'The only difference between the skis is the wax on the base.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch until both skis stop, then press Enter.']};
     if (id === 'word-wax') {
       const done = m.phase === 'result';
       return {...base, formulas: gapFormula(m.pick), ...(done ? {keys: PICK_KEYS} : picking(null, 'pick:best')),
-        say: done ? m.say : 'Wax is a thin coat that is rubbed onto the base of a ski to help the ski slide over snow. Ski wax is made in different hardnesses. A hard wax is firm, like a candle, and a soft wax is easy to mark with a fingernail. The three tins hold a hard wax, a medium wax and a soft wax.',
+        say: done ? m.say : `Wax is a thin coat that is rubbed onto the base of a ski to help the ski slide over snow. Ski wax is made in different hardnesses. The three tins hold a hard wax, a medium wax and a soft wax.${MORE}A hard wax is firm, like a candle, and a soft wax is easy to mark with a fingernail.`,
         prompt: done ? 'Press Enter to continue, or pick another tin by pressing 1, 2 or 3.' : 'Pick a tin by pressing 1, 2 or 3, or by clicking the tin.',
         hints: done ? DONE : ['The three tins are at the bottom of the picture.', 'Press 1, 2 or 3, or click a tin.', 'Watch my pointer. I will pick the hard wax.']};
     }
@@ -459,7 +460,7 @@ export function createModel() {
         ...(ready ? {keys: {Space: 'go'}, buttons: [{action: 'go', label: 'Release', key: 'Space'}], waiting: true, target: 'go', glow: 'ski'} : {}),
         actions: m.phase === 'done' ? ['replay'] : [],
         say: m.phase === 'done' ? m.say : m.phase === 'running' ? 'Watch the ski and the stopwatch, which runs at real speed.'
-          : `Glide is how smoothly a ski slides over the snow, and the stopwatch times the ski down the strip. The ski starts at rest. Gravity, the pull of the Earth, makes the ski move faster and faster down the slope. The slope is ${SLOPE} degrees, and this kind of degree measures an angle, not a temperature. Level ground is 0 degrees and straight up is 90 degrees. We give speed in metres per second, written m/s, the metres travelled during each second. The game’s own screens show kilometres per hour, written km/h. To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. How quickly the speed grows is called acceleration, and we give acceleration in metres per second, per second, written m/s². An acceleration of 1 m/s² adds 1 m/s to the speed during every second.`,
+          : `Glide is how smoothly a ski slides over the snow, and the stopwatch times the ski down the strip. The ski starts at rest. Gravity, the pull of the Earth, makes the ski move faster and faster down the slope.${MORE}The slope is ${SLOPE} degrees, and this kind of degree measures an angle, not a temperature. Level ground is 0 degrees and straight up is 90 degrees. We give speed in metres per second, written m/s, the metres travelled during each second. The game’s own screens show kilometres per hour, written km/h. To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. How quickly the speed grows is called acceleration, and we give acceleration in metres per second, per second, written m/s². An acceleration of 1 m/s² adds 1 m/s to the speed during every second.`,
         prompt: ready ? 'Press Space to release the ski.' : m.phase === 'running' ? 'Watch the stopwatch.' : 'Press Enter to continue, or press R to watch again.',
         hints: ready ? ['The ski waits at the top of the strip.', 'Press Space, or click the ski.', 'Watch my pointer. I will release the ski.'] : m.phase === 'running' ? ['Watch the ski.', 'Watch the stopwatch.', 'Wait a moment.'] : DONE_REPLAY};
     }
@@ -467,7 +468,7 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, forces: {...sumOf(frictionOf(m.pick, m.snow)), wax: m.pick, snow: m.snow}, formulas: sums(m.pick, m.snow, true),
         ...(done ? {} : picking(null, 'pick:best')), keys: {...PICK_KEYS, 4: 'pick:none'}, buttons: [{action: 'pick:none', label: 'No wax', key: '4'}],
-        say: done ? m.say : `Friction is the force that resists when one surface slides over another, and it is the resistance you feel when you rub your hands together. Two things act on the ski on this slope. Gravity pulls the ski down the slope, and friction acts up the slope and holds the ski back. The friction number shows how strong the friction is compared with the weight of the ski pressing on the snow, so a smaller number means less friction. The ski on the board has no wax, and its friction number on this snow is ${FRICTION.none}. Put a wax on the ski, and watch the arrows and the sums.`,
+        say: done ? m.say : `Friction is the force that resists when one surface slides over another, and it is the resistance you feel when you rub your hands together. Two things act on the ski on this slope. Gravity pulls the ski down the slope, and friction acts up the slope and holds the ski back.${MORE}The friction number shows how strong the friction is compared with the weight of the ski pressing on the snow, so a smaller number means less friction. The ski on the board has no wax, and its friction number on this snow is ${FRICTION.none}. Put a wax on the ski, and watch the arrows and the sums.`,
         prompt: done ? 'Press Enter to continue, or change the wax with 1, 2, 3 or 4.' : 'Press 1, 2 or 3 to put a wax on the ski, or click a tin.',
         hints: done ? DONE : ['The red arrow shows friction, and the green arrow shows gravity’s pull.', 'Press 1, 2 or 3.', 'Watch my pointer. I will put the hard wax on the ski.']};
     }
@@ -483,8 +484,8 @@ export function createModel() {
     if (id === 'why-cold' || id === 'why-wet') {
       const done = m.phase === 'done', cold = id === 'why-cold', key = 1 + WAXES.indexOf(best);
       const setup = cold
-        ? `When a ski slides, the rubbing warms the snow a little and melts a very thin film of water under the base, and that film helps the ski to slide. At ${COLD_C} °C the snow is so cold that almost no water melts, so the hard, sharp points of the crystals press directly against the wax. The picture is a close-up of the base and the snow, and the ski now has soft wax on the base. Change to hard wax, and watch the points of the crystals.`
-        : 'At 0 °C the snow is already wet and the crystals have rounded into grains, so there is too much water rather than too little. The water spreads into one sheet between the base and the snow, and the sheet holds the ski to the snow by suction. Suction is the same pull that makes a wet glass hard to lift from a smooth table. The ski now has hard wax on the base. Change to soft wax, and watch the water.';
+        ? `When a ski slides, the rubbing warms the snow a little and melts a very thin film of water under the base, and that film helps the ski to slide. At ${COLD_C} °C the snow is so cold that almost no water melts, so the hard, sharp points of the crystals press directly against the wax.${MORE}The picture is a close-up of the base and the snow, and the ski now has soft wax on the base. Change to hard wax, and watch the points of the crystals.`
+        : `At 0 °C the snow is already wet and the crystals have rounded into grains, so there is too much water rather than too little. The ski now has hard wax on the base. Change to soft wax, and watch the water.${MORE}The water spreads into one sheet between the base and the snow, and the sheet holds the ski to the snow by suction. Suction is the same pull that makes a wet glass hard to lift from a smooth table.`;
       return {...base, closeup: {snow: m.snow, wax: m.pick}, formulas: sums(m.pick, m.snow), ...(done ? {keys: PICK_KEYS} : picking(null, 'pick:best')),
         say: done ? m.say : setup,
         prompt: done ? 'Press Enter to continue, or change the wax with 1, 2 or 3.' : `Press ${key} to change to ${best} wax, or click the tin.`,
@@ -504,7 +505,7 @@ export function createModel() {
       if (running) return {...free, say: m.say, prompt: 'Watch the stopwatches.', hints: ['Watch the two skis.', 'Compare the time with the sum beside the picture.', 'Wait a moment.']};
       return {...free, keys: {...PICK_KEYS, '←': 'snow:colder', '→': 'snow:warmer', Space: 'go'}, target: 'free:next', waiting: !seen.has(id),
         buttons: [{action: 'snow:colder', label: 'Colder snow', key: '←'}, {action: 'snow:warmer', label: 'Warmer snow', key: '→'}, {action: 'go', label: 'Race', key: 'Space'}],
-        say: m.say || `Now you can experiment with any snow and any wax. Press ← and → to change the snow, and press 1, 2 or 3 to change the wax. The sums beside the picture change as you do, so you can work out the time before you race. Your ski then races a ski with no wax, and the table keeps your results so that you can compare them. Test at least ${FREE_TRIES} different settings, and try a wax on a snow that it does not suit.`,
+        say: m.say || `Now you can experiment with any snow and any wax. Press ← and → to change the snow, and press 1, 2 or 3 to change the wax. Test at least ${FREE_TRIES} different settings, and try a wax on a snow that it does not suit.${MORE}The sums beside the picture change as you do, so you can work out the time before you race. Your ski then races a ski with no wax, and the table keeps your results so that you can compare them.`,
         prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the snow or the wax, then press Space to race. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
         hints: ['Press Space to test the settings as they are.', 'Try soft wax on dry powder, and hard wax on wet snow.', m.tested.size < FREE_ORDER.length ? 'Watch my pointer. I will test a setting that you have not tested yet.' : 'Watch my pointer. You have tested every setting, so I will race the first one again.']};
     }
@@ -526,7 +527,7 @@ export function createModel() {
           formulas: [...general(), {title: 'The gap on the slalom', formula: 'gap = time with the wrong wax − time with the right wax', worked: `${wrong.toFixed(1)} s − ${right.toFixed(1)} s = ${(wrong - right).toFixed(1)} s`}]};
       }
       return {...base, ...scene, formulas: general(), menu, ...picking('Ski', 'pick:best'),
-        say: m.day === 0 && !m.say ? `Here is a job for you, over three days. Each day the ski menu shows the day’s snow and its temperature. Read the menu, pick the wax that suits that snow, and press Space to ski. ${menuSays(day)}` : m.say,
+        say: m.day === 0 && !m.say ? `Here is a job for you, over three days. Each day the ski menu shows the day’s snow and its temperature. Read the menu, pick the wax that suits that snow, and press Space to ski.${MORE}${menuSays(day)}` : m.say,
         prompt: m.pick ? `${WAX_NAMES[m.pick]} wax is on the ski. Press Space to ski, or pick another tin.` : 'Read today’s snow, pick a tin by pressing 1, 2 or 3, then press Space.',
         hints: [`${SNOWS[day.snow].name} is ${band(day.snow)}.`, `The colder the snow, the harder the wax, so ${snowName(day.snow)} needs ${SNOWS[day.snow].wax} wax. Press ${1 + WAXES.indexOf(SNOWS[day.snow].wax)}, then Space.`, 'Watch my pointer. I will pick the wax for you.']};
     }
@@ -542,7 +543,7 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [...threeTimes(), ...general().slice(1)],
-      say: 'Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax. Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.',
+      say: `Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax.${MORE}Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.`,
       prompt: 'Press Enter to go to the helicopter. Then fly to a ski drop, choose the slalom, and pick the wax for today’s snow.', hints: KEY_IDEAS.map(i => i.text)};
   }
 

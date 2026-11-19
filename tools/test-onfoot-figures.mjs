@@ -38,6 +38,13 @@ for (const mesh of meshes) {
     'distant mirror or photo camera retains all twelve figures');
 }
 
+figures.update(roster,{active:true,drawnShift:()=>.8});
+nearEye.position.set(local.x,local.y+1.62+.8,local.z);
+for(const mesh of meshes){
+  mesh.onBeforeRender(null,null,nearEye);
+  assert.equal(mesh.count,11*(mesh.instanceMatrix.count/12),'The shifted eye omits only the local fallback fighter.');
+}
+
 local.y += 1.1; local.airHeight = 1.1;
 figures.update(roster, {active: true});
 assert.ok(Math.abs(position(figures.meshes.joints, 11 * 5).y - 4.66) < .01,

@@ -5,6 +5,7 @@ import {createClassroomSession, PARTS, STUCK_OFFER_S, STUCK_HINT_S, SHOW_ME_S} f
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {KEY_NAMES} from '../src/lab/classroom/classroom-keys.js';
 import {readFileSync} from 'node:fs';
+import {fitBoard, BOARD} from '../src/lab/classroom/board-art.js';
 import {STEPS, LENGTHS, HOOK_X, KEY_IDEAS, FREE_TRIES, MIN_PULL, PI_SHOWN, G_SHOWN, sumSeconds} from '../src/lab/lessons/pendulum-classroom.js';
 import {createLoad, stepCable} from '../src/heli/heli-cable.js';
 import {HELI_STEP} from '../src/heli/heli-flight.js';
@@ -22,7 +23,7 @@ import {tyreSlipGrip} from '../src/config.js';
 import {STEPS as SUSPENSION_STEPS, WORDS as SUSPENSION_WORDS, createModel as createSuspensionModel} from '../src/lab/lessons/suspension-classroom.js';
 import * as suspensionBoard from '../src/lab/lessons/suspension-board.js';
 import {suspensionBench} from '../src/lab/benches/tunnel.js';
-import {lessonOpenState} from '../src/lab/lab-lessons.js';
+import {lessonOpenState, challengeOpenState, CHALLENGE_NEEDS_DRIVING} from '../src/lab/lab-lessons.js';
 
 const lesson = CLASSROOM_LESSONS.pendulum;
 const fakeCanvas = (labels = null) => new Proxy({}, {
@@ -583,10 +584,11 @@ test('Suspension keeps its notebook terms, bench challenge and ordered classroom
   assert.equal(suspension.challengeCard.text, 'Run the suspension rig with soft and stiff springs on the bumpy and smooth roads. Complete all four setting pairs.');
 });
 
-test('Suspension opens only after driving lesson 1, matching the Lab lesson gate', () => {
+test('Suspension is open from the start, and its challenge needs driving lesson 1 (LAB-OPEN-DOOR)', () => {
   const flags={enabled:name=>name==='lab'};
-  assert.deepEqual(lessonOpenState({},'suspension',flags),{open:false,note:'Opens after driving lesson 1'});
-  assert.deepEqual(lessonOpenState({drivingLessons:{version:1,done:{corner:true}}},'suspension',flags),{open:true,note:''});
+  assert.deepEqual(lessonOpenState({},'suspension',flags),{open:true,note:''});
+  assert.deepEqual(challengeOpenState({},'suspension',flags),{open:false,note:CHALLENGE_NEEDS_DRIVING});
+  assert.deepEqual(challengeOpenState({drivingLessons:{version:1,done:{corner:true}}},'suspension',flags),{open:true,note:''});
 });
 
 test('the Suspension classroom challenge submits the same four settings to the unchanged bench goal', () => {
@@ -761,6 +763,8 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
   assert.equal(hoverInfo(v, 500, 660), null);
 });
 
+const KMH_PER_MPH = 1.609344;
+
 function reachGforceFreeTest(session) {
   run(session, 2.6);
   assert.equal(session.view().step.id, 'wonder');
@@ -788,7 +792,7 @@ function reachGforceFreeTest(session) {
 
 function finishGuidedGforceTries(session) {
   session.act('answer:0');
-  for (let press = 0; press < 4; press++) session.act('speed:up');
+  for (let press = 0; press < 10; press++) session.act('speed:up');
   session.act('run');
   assert.equal(session.view().ready, true);
   session.act('next');
@@ -810,6 +814,8 @@ test('G-force is registered with its old notebook words, challenge and seven les
   ]);
   assert.deepEqual(gforce.words.map(word => word.id), ['gforce', 'one-g', 'radius', 'gforce-speed', 'gforce-acceleration']);
   assert.equal(gforce.challengeCard.title, 'Reach 2 g in three different corners.');
+  // The last button leaves the Lab for a lap, so it says so (LAB-LOOK routine fix); the bench lessons that pass in place say "Finish the lesson".
+  assert.equal(gforce.finishLabel, 'Start the lap');
   assert.equal(GFORCE_STEPS.find(step => step.id === 'recap').voice, 'lab.brian.gforce.explain');
 });
 
@@ -857,14 +863,14 @@ test('G-force screen contract uses sendable classroom keys and complete views', 
   assert.equal(model.state().speed, speed, 'held repeats wait for their pacing gap');
   model.tick(.15);
   model.act('speed:up:held');
-  assert.equal(model.state().speed, speed + 5, 'a held repeat moves after the pacing gap');
+  assert.equal(model.state().speed, speed + 10, 'a held repeat moves after the pacing gap');
 });
 
 test('G-force formula sums calculate from the exact metric values they show and match the challenge rule', () => {
   const model = createGforceModel();
   const formulaIndex = GFORCE_STEPS.findIndex(step => step.id === 'formula');
   const radii = [10, 25, 50, 75, 100, 125, 150, 175, 200];
-  for (let speed = 10; speed <= 150; speed += 5) {
+  for (let speed = 20; speed <= 240; speed += 10) {
     for (const radius of radii) {
       model.enter(formulaIndex);
       let state = model.state();
@@ -877,9 +883,9 @@ test('G-force formula sums calculate from the exact metric values they show and 
       assert.ok(match, worked);
       const [, metresPerSecond, shownRadius, shownG] = match;
       const calculated = (Number(metresPerSecond) ** 2 / Number(shownRadius) / 9.81).toFixed(2);
-      assert.equal(shownG, calculated, `${speed} dial setting and ${radius} m radius`);
-      assert.equal(model.view().g.toFixed(2), lateralG(speed, radius).toFixed(2), 'the board meter matches the challenge function');
-      assert.equal(model.view().speedKmh.toFixed(1), (speed * 1.609344).toFixed(1));
+      assert.equal(shownG, calculated, `${speed} km/h on the dial and ${radius} m radius`);
+      assert.equal(model.view().g.toFixed(2), lateralG(speed / KMH_PER_MPH, radius).toFixed(2), 'the board meter matches the challenge function');
+      assert.equal(model.view().speedKmh, speed);
     }
   }
 });
@@ -887,7 +893,7 @@ test('G-force formula sums calculate from the exact metric values they show and 
 test('a child can follow the G-force prompts through the speed and radius lessons', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
   reachGforceFreeTest(session);
-  assert.match(session.view().brian.text, /96\.6 km\/h and radius stays at 50 m/);
+  assert.match(session.view().brian.text, /150 km\/h and radius stays at 50 m/);
   assert.equal(session.view().g, null, 'the open prediction has no live result');
   assert.ok(session.view().formulas.every(entry => entry.worked === ''), 'the open prediction has no worked answer');
   assert.ok(session.view().formulas.every(entry => entry.title.length > 0), 'every formula row has a title');
@@ -910,17 +916,17 @@ test('the watch changes both settings over time and keeps the board, meter and f
   const watch = GFORCE_STEPS.findIndex(step => step.id === 'watch');
   model.enter(watch);
   model.tick(1);
-  assert.equal(model.view().speedKmh, 64.4);
+  assert.equal(model.view().speedKmh, 50);
   model.tick(1);
-  assert.equal(model.view().speedKmh, 128.7);
+  assert.equal(model.view().speedKmh, 100);
   assert.equal(model.view().radiusM, 50);
-  assert.equal(model.view().g.toFixed(2), lateralG(80, 50).toFixed(2));
-  assert.match(model.view().formulas[0].worked, /128\.7 km\/h/);
+  assert.equal(model.view().g.toFixed(2), lateralG(100 / KMH_PER_MPH, 50).toFixed(2));
+  assert.match(model.view().formulas[0].worked, /^100 km\/h/);
   model.tick(2);
-  assert.equal(model.view().speedKmh, 64.4);
+  assert.equal(model.view().speedKmh, 50);
   model.tick(1);
   assert.equal(model.view().radiusM, 100);
-  assert.equal(model.view().g.toFixed(2), lateralG(40, 100).toFixed(2));
+  assert.equal(model.view().g.toFixed(2), lateralG(50 / KMH_PER_MPH, 100).toFixed(2));
   assert.match(model.view().formulas.at(-1).worked, /100 m/);
 });
 
@@ -931,21 +937,21 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   assert.equal(open.g, null);
   assert.ok(open.formulas.every(entry => entry.worked === ''));
   session.act('answer:1');
-  for (let press = 0; press < 4; press++) session.act('speed:up');
+  for (let press = 0; press < 10; press++) session.act('speed:up');
   session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
-  assert.match(session.view().brian.text, /96\.6 km\/h/);
-  assert.match(session.view().brian.text, /1\.47 g/);
-  assert.match(session.view().brian.text, /0\.65 g/);
-  assert.match(session.view().brian.text, /1\.5 × 1\.5 = 2\.25/);
+  assert.match(session.view().brian.text, /150 km\/h/);
+  assert.match(session.view().brian.text, /3\.54 g/);
+  assert.match(session.view().brian.text, /0\.39 g/);
+  assert.match(session.view().brian.text, /150 ÷ 50 = 3, and 3 × 3 = 9/);
   session.act('next');
   session.act('answer:1');
   session.act('radius:up');
   session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
   assert.match(session.view().brian.text, /75 m/);
-  assert.match(session.view().brian.text, /0\.43 g/);
-  assert.match(session.view().brian.text, /0\.65 g/);
+  assert.match(session.view().brian.text, /0\.26 g/);
+  assert.match(session.view().brian.text, /0\.39 g/);
   assert.match(session.view().brian.text, /one and a half times 50 m.*two thirds as large/);
 });
 
@@ -986,11 +992,11 @@ test('Brian’s 2 g test has a working Space key and needs a changed setting', (
   assert.match(session.view().brian.text, /below the 2 g target/);
   for (let press = 0; press < 8; press++) session.act('speed:up');
   view = session.view();
-  assert.equal(view.speedKmh, 128.7);
+  assert.equal(view.speedKmh, 130);
   assert.equal(view.keys.Space, 'run');
   session.act(view.keys.Space);
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /2\.61 g/);
+  assert.match(session.view().brian.text, /2\.66 g/);
 });
 
 test('G-force questions have literal answers and keep their result sums hidden until answered', () => {
@@ -1086,6 +1092,89 @@ test('G-force board draws the car, radius line, speed arrow, sideways push, cord
   }
 });
 
+// LAB-ROUND-NUMBERS: every speed the lesson shows or lets the player set is a whole number of tens.
+test('every G-force speed the player sets or reads is a multiple of 10 km/h, and every target is on the dial', () => {
+  const seen = [];
+  const speedsIn = copy => [...String(copy).matchAll(/(?:(\d+(?:\.\d+)?) to )?(\d+(?:\.\d+)?) km\/h/g)].flatMap(match => [match[1], match[2]]).filter(Boolean);
+  const note = (where, ...copy) => { for (const value of copy.flatMap(speedsIn)) seen.push([where, value]); };
+  const look = (where, view) => {
+    assert.equal(view.speedKmh % 10, 0, `${where}: the dial reads ${view.speedKmh} km/h`);
+    assert.equal(view.best.speed % 10, 0, `${where}: Brian's target speed is ${view.best.speed} km/h`);
+    const labels = [];
+    gforceBoard.drawBoard(fakeCanvas(labels), view);
+    note(where, view.say, view.prompt, view.brian?.text ?? '', ...view.hints, ...view.cards.map(card => card.label),
+      ...view.formulas.flatMap(row => [row.title, row.formula, row.worked, row.note]),
+      ...Object.values(view.ideaRows ?? {}).flat(), ...view.rows.map(row => `${row.speed} km/h`),
+      gforceBoard.hoverInfo(view, 690, 145) ?? '', ...labels);
+  };
+
+  // Every step, every answer, and Brian's own demonstration of each target.
+  for (let index = 0; index < GFORCE_STEPS.length; index++) {
+    const id = GFORCE_STEPS[index].id;
+    for (const answer of [null, 0, 1, 2]) {
+      const model = createGforceModel();
+      model.enter(index);
+      look(id, model.view());
+      if (answer !== null) {
+        if (!model.view().asking) break;
+        note(id, model.act(`answer:${answer}`).say);
+        look(id, model.view());
+      }
+      for (let turn = 0; turn < 3 && model.view().target === 'set:best'; turn++) {
+        const best = model.view().best;
+        const arrived = () => model.state().speed === best.speed && model.state().radius === best.radius;
+        note(id, model.act('set:best').say);
+        for (let ticks = 0; ticks < 400; ticks++) {
+          const event = model.tick(.05);
+          if (event) note(id, event.say);
+          look(id, model.view());
+          if (arrived() && (model.view().ready || event && event.kind !== 'progress')) break;
+        }
+        assert.ok(arrived(), `${id}: Brian reaches ${best.speed} km/h and ${best.radius} m with the controls`);
+      }
+    }
+  }
+
+  // The whole dial, down to its bottom and up to its top, with a run recorded at every setting.
+  const model = createGforceModel();
+  model.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-free'));
+  for (let press = 0; press < 30; press++) note('dial', model.act('speed:down').say);
+  assert.equal(model.state().speed, 20, 'the dial stops at 20 km/h');
+  const dial = [model.state().speed];
+  for (let press = 0; press < 30; press++) {
+    note('dial', model.act('speed:up').say, model.act('run')?.say ?? '');
+    look('dial', model.view());
+    if (model.state().speed !== dial.at(-1)) dial.push(model.state().speed);
+  }
+  assert.deepEqual(dial, Array.from({length: 23}, (_, i) => 20 + i * 10), 'the dial moves in tens from 20 to 240 km/h');
+  while (model.state().speed > 50) model.act('speed:down');
+  assert.equal(model.state().speed, 50, 'the dial comes back to exactly 50 km/h');
+  assert.equal(model.view().g, lateralG(50 / KMH_PER_MPH, 50), 'the same km/h gives the identical reading');
+
+  assert.ok(seen.length > 100, 'the lesson shows speeds in its words, sums and board');
+  for (const [where, value] of seen) assert.ok(/^\d+$/.test(value) && Number(value) % 10 === 0, `${where}: ${value} km/h is not a whole multiple of 10`);
+  for (const taught of ['50', '100', '150']) assert.ok(seen.some(([, value]) => value === taught), `the lesson teaches at ${taught} km/h`);
+});
+
+test('G-force readings come from the turning rule: twice the speed gives four times the reading', () => {
+  const rule = (speedKmh, radius) => (speedKmh / 3.6) ** 2 / radius / 9.81;
+  const model = createGforceModel();
+  const at = (speed, radius) => {
+    model.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-free'));
+    while (model.state().speed !== speed) model.act(model.state().speed < speed ? 'speed:up' : 'speed:down');
+    while (model.state().radius !== radius) model.act(model.state().radius < radius ? 'radius:up' : 'radius:down');
+    return model.view().g;
+  };
+  for (const [speed, radius] of [[50, 50], [100, 50], [150, 50], [50, 100], [50, 25], [50, 75], [200, 200], [240, 10]]) {
+    assert.ok(Math.abs(at(speed, radius) - rule(speed, radius)) < 1e-9, `${speed} km/h and ${radius} m`);
+    assert.equal(at(speed, radius), lateralG(speed / KMH_PER_MPH, radius), 'the lesson and the challenge use one function');
+  }
+  assert.ok(Math.abs(at(100, 50) / at(50, 50) - 4) < 1e-9, 'twice the speed, four times the reading');
+  assert.ok(Math.abs(at(150, 50) / at(50, 50) - 9) < 1e-9, 'three times the speed, nine times the reading');
+  assert.ok(Math.abs(at(50, 100) / at(50, 50) - .5) < 1e-9, 'twice the radius, half the reading');
+  assert.ok(at(100, 50) < 2 && at(150, 50) >= 2, "Brian's 2 g test needs more than twice the starting speed");
+});
+
 function reachGripFreeTest(session) {
   until(session, view => view.ready); session.act('next');
   session.act('slide:up'); session.act('next');
@@ -1123,7 +1212,8 @@ test('Grip is registered as the classroom lesson with the kept notebook ids and 
   assert.equal(GRIP_STEPS.at(-1).voice, 'lab.brian.grip.explain');
   const flags = {enabled: name => name === 'lab' || name === 'lab-classroom' || name === 'lab-tuning'};
   assert.deepEqual(lessonOpenState({drivingLessons: {version: 1, done: {corner: true}}}, 'grip', flags), {open: true, note: ''});
-  assert.equal(lessonOpenState({}, 'grip', flags).open, false, 'the Wind tunnel remains locked before driving lesson 1');
+  assert.equal(lessonOpenState({}, 'grip', flags).open, true, 'the Wind tunnel lesson is open before driving lesson 1');
+  assert.deepEqual(challengeOpenState({}, 'grip', flags), {open: false, note: CHALLENGE_NEEDS_DRIVING}, 'its challenge still needs driving lesson 1');
 });
 
 test('a player can follow each Grip prompt, compare three settings, and pass the real two-run challenge', () => {
@@ -1404,4 +1494,15 @@ test('Grip screen contract uses sendable keys, complete views and board points f
     assert.deepEqual(gripBoard.hitTest(view, ...point), {action: action === 'run' ? 'run' : action});
   }
   assert.equal(Number(bestSlideDegrees().toFixed(1)), 4.3);
+});
+
+// LAB-LOOK, the wide board: a board with no size is fitted exactly as before (1000 x 680), whatever the canvas.
+test('fitBoard fits a board that names no size exactly as it always did, and fits a named size by its own shape', () => {
+  const ctx = new Proxy({}, {get: (target, name) => ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : () => {}, set: () => true});
+  assert.deepEqual({...BOARD}, {width: 1000, height: 680});
+  assert.deepEqual(fitBoard(ctx, 1300, 600, () => {}), {scale: 600 / 680, left: (1300 - 1000 * 600 / 680) / 2, top: 0});
+  assert.deepEqual(fitBoard(ctx, 800, 900, () => {}), {scale: .8, left: 0, top: (900 - 680 * .8) / 2});
+  assert.deepEqual(fitBoard(ctx, 1300, 600, () => {}, BOARD), fitBoard(ctx, 1300, 600, () => {}), 'naming the usual size changes nothing');
+  assert.deepEqual(fitBoard(ctx, 1320, 680, () => {}, {width: 1320, height: 680}), {scale: 1, left: 0, top: 0});
+  assert.deepEqual(fitBoard(ctx, 1000, 800, () => {}, {width: 1320, height: 680}), {scale: 1000 / 1320, left: 0, top: (800 - 680 * 1000 / 1320) / 2});
 });

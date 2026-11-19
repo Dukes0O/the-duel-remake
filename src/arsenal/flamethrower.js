@@ -23,6 +23,35 @@ export function flameCpuAim(distance, angleRadians) {
     distance <= FLAME_RULES.range + EPS && distance >= 0 &&
     Math.abs(angleRadians) <= FLAME_RULES.halfConeRadians + EPS;
 }
+// Clip the fence segment to the flame cone, then test the nearest remaining point against its range.
+export function flameHitsSegment(at, heading, ends, halfDepth = 0) {
+  // Move the fence line to the face nearest the flame.
+  const dx = ends[1].x - ends[0].x, dz = ends[1].z - ends[0].z;
+  const length = Math.hypot(dx, dz);
+  if (halfDepth && length) {
+    const nx = -dz / length, nz = dx / length;
+    const side = (at.x - ends[0].x) * nx + (at.z - ends[0].z) * nz >= 0 ? 1 : -1;
+    ends = ends.map(p => ({x:p.x + nx * side * halfDepth, z:p.z + nz * side * halfDepth}));
+  }
+  const sin = Math.sin(heading), cos = Math.cos(heading);
+  const local = ends.map(p => {
+    const dx = p.x - at.x, dz = p.z - at.z;
+    return {x: dx * cos - dz * sin, z: dx * sin + dz * cos};
+  });
+  const a = local[0], segmentDx = local[1].x - a.x, segmentDz = local[1].z - a.z;
+  const slope = Math.tan(FLAME_RULES.halfConeRadians);
+  let lo = 0, hi = 1;
+  for (const [start, delta] of [[a.z, segmentDz], [slope * a.z - a.x, slope * segmentDz - segmentDx],
+    [slope * a.z + a.x, slope * segmentDz + segmentDx]]) {
+    if (Math.abs(delta) < EPS) { if (start < -EPS) return false; continue; }
+    const crossing = -start / delta;
+    if (delta > 0) lo = Math.max(lo, crossing); else hi = Math.min(hi, crossing);
+    if (lo > hi + EPS) return false;
+  }
+  const lengthSquared = segmentDx * segmentDx + segmentDz * segmentDz;
+  const nearest = lengthSquared ? Math.max(lo, Math.min(hi, -(a.x * segmentDx + a.z * segmentDz) / lengthSquared)) : lo;
+  return Math.hypot(a.x + nearest * segmentDx, a.z + nearest * segmentDz) <= FLAME_RULES.range + EPS;
+}
 function insideCone(duel, owner, actor) {
   const at = point(duel, owner), target = point(duel, actor);
   const dx = target.x - at.x, dz = target.z - at.z;
@@ -96,16 +125,21 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
       }
       burst.worldJobHits ??= [];
       for (const thing of worldJobHitTargets(duel)) {
-        if (burst.worldJobHits.includes(thing.id)) continue;
+        const bellows = duel.state.arena.worldJob?.job;
+        const bellowsStep = bellows?.steps[bellows.stepIndex];
+        const loadContact = bellowsStep?.bellows && thing.id === bellowsStep.targetId;
+        const timedBarricade = bellowsStep?.gasLoad && thing.kind === 'barricade' && thing.burnable;
+        if (!loadContact && !timedBarricade && burst.worldJobHits.includes(thing.id)) continue;
         const dx = thing.position.x - at.x, dz = thing.position.z - at.z;
         const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
           Math.cos(Math.atan2(dx, dz) - heading));
-        if (Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
-            Math.abs(angle) <= FLAME_RULES.halfConeRadians &&
+        if ((thing.segment ? flameHitsSegment(at, heading, thing.segment, thing.halfDepth) :
+            Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
+            Math.abs(angle) <= FLAME_RULES.halfConeRadians) &&
             Math.abs((thing.position.y || 0) - at.y) < 3) {
-          burst.worldJobHits.push(thing.id);
+          if (!burst.worldJobHits.includes(thing.id)) burst.worldJobHits.push(thing.id);
           reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined,
-            burnable: thing.kind === 'barricade' && thing.burnable});
+            burnable: thing.kind === 'barricade' && thing.burnable, flame: true});
         }
       }
     }

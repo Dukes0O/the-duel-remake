@@ -2019,3 +2019,76 @@ Full tier alone on 8aa0b620: 584 passed, 1 failed. The failure was test-review-e
 Browser scenarios on 7f957dee, 13 of 15: lab-classroom-grip, lab-classroom-suspension, lab-walk, lab-restore, lab-view, career-writer-lock, lap-telemetry, warlord-pay, warlord-cards, wildlife-view, arena-shove, heli-jobs, ski-finish. Failing, both carded and no fix attempted here: preview-storage (QA-PREVIEW-STORAGE-SEED) and drive-lesson-run (QA-DRIVE-LESSON-RUN-BOARD).
 No frame check: the new code in game.js, render3d.js, course.js, sim-driving.js and vehicle-grounding.js runs only for world jobs, the Scablands and the Bowl, all off, so no reachable race scene changed. race-field.js moves one Medium field pace from .858 to .862. The night check of d292a621 recorded a frame failure whose log is gone, so it was not read; WILD-FRAMES and QA-HARBOUR-PERFORMANCE-PACING remain open. Combat balance --check on f12a474d, after the install: passed.
 Build 26.11.05 13:44 UTC, master f12a474d; staged build checked on 5188.
+
+
+## Release, 10 November 2026, the menu's Next up line and two Lab cards (Claude, Release Manager)
+
+MENU-NEXT-UP (switch `menu-next-up` on), LAB-BRIAN-SHORT and LAB-ROUND-NUMBERS. `story-everburn`, `titan-bowl`, `wasteland-town` and `deep-vasca` stay off. The range also holds town, Iron Mule and art work that players cannot reach yet.
+Full tier in the night check on dd7e09c97: 639 passed, 0 failed, 0 not run. Since then only the menu card's code changed; its lane tier passed 60 of 60 with the switch on, and the build passes (rule 19).
+Combat balance: pass, same night check.
+Browser scenarios, same night check: 195 of 203, all 23 Lab checks among the passes. arena-shove, drive-lesson-run, everburn and ski-finish have QA cards (ski-finish passes alone); deep-frames, frame-pacing, arsenal-wave1-audio and p4-audio need the laptop alone. After the menu merge: drive-lessons-view-2, earned-cars, heli-first-flight, lessons-v2-view, menu-front-door, story-kogane, hidden-road and lab-classroom-braking pass, 8 of 8.
+Frames: no race scene changed (rule 9 for the lesson boards; the menu line is one row of text). The night check's own run had a menu build beside it and is not counted; it read Performance p95 18.2 ms.
+Seen by Claude: Pendulums read start to finish, one changed board in each of the four lessons, and the menu at 1920 by 1000 and 1440 by 900 with the line pressed.
+
+## Release, 10 November 2026 (second), the LAB button and open lessons (Claude, Release Manager)
+
+LAB-OPEN-DOOR. The range also holds WW-BOSS, EVERBURN-WELL-ART and EVERBURN-FURNACE-LOOK round 1, all behind `story-everburn`, which stays off with `titan-bowl`, `wasteland-town` and `deep-vasca`.
+Full tier in the night check on dd7e09c97: 639 passed, 0 failed, 0 not run. Since then each change ran its own lane tier (rule 19): MENU-NEXT-UP 60 of 60, WW-BOSS 61 of 61, EVERBURN-WELL-ART 29 of 29, EVERBURN-FURNACE-LOOK 49 of 49, LAB-OPEN-DOOR 65 of 65. The build passes on the merged result, with test-earned-cars-ui and test-medals.
+Browser scenarios: all 23 Lab checks and menu-front-door pass, with six neighbouring ones; everburn-well passes; everburn still fails on its two known screen facts (QA-EVERBURN-SCREENS, story off).
+Frames: no race scene a player can reach changed (rule 9).
+Seen by Claude: the menu as a new player with the LAB button and its NEW tag, the Lab opened from it, and Downforce started with no driving lesson passed.
+
+## Release, 12 November 2026, the Lab's new look (Claude, Release Manager)
+
+LAB-LOOK rounds 1 to 10 and LAB-UX-FIXES. The range also holds EVERBURN-FURNACE-LOOK rounds 2 and 3, SCABLANDS-LAND, EVERBURN-RUN-AT-TOWN, RUN-GAS, FIELD-BATTLE-ASH and SCABLANDS-JOB-MAP, all behind `story-everburn` and `scablands-runs`, which stay off with `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca`.
+Full tier, alone, on 7ddcc3791 (the last commit that changed code): 645 passed, 0 failed, 0 not run. The Everburn save gained `furnaceDead` since the night check's pass on 299f3dac3, which is why the whole tier ran again. Only notes changed after it (rule 19). The build passes on the merged result.
+Browser scenarios on 7ddcc3791: 39 of 39, all 24 Lab checks with grand-prix, scrapdome, arena-fuel-run, combat-hud, map-view, menu-front-door, weapon-bar, crash-counter, opponents, qualifying, the-dig, everburn-well, field-battle, run-gas and release-controls. The night check on 299f3dac3 ran all 206: 198 passed; the eight that failed are the known ones (arena-shove, drive-lesson-run, everburn and ski-finish have QA cards; deep-frames, frame-pacing, p4-audio and convoy-frames need the laptop alone). Combat balance passed in that check and no combat number has changed since.
+Frames: no race scene a player can reach changed (rule 9). The race screen gained one comparison a frame for the job map, which draws only in a world job.
+Seen by Claude: every board from the browser harness's pictures (sheets `docs/board/looks/lab-look/round-6.jpg`, `round-8.jpg` and `round-10.jpg`). Not seen in a visible browser window: the session had no window open, so the first look in a real window is the players'.
+
+## Release, 13 November 2026, four more wide Lab boards (Claude, Release Manager; steps run by a Sonnet helper)
+
+LAB-LOOK rounds 11 to 13. The range also holds SCABLANDS-LAND round 3, QA-EVERBURN-SCREENS, the redesigned FIELD-BATTLE-ASH hunt and EVERBURN-PLAY-FIXES, all behind `story-everburn` and `scablands-runs`, which stay off with `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca`. `src/render3d.js` changed for every race: the explosion effects of a finished race are now released after the next scene has warmed up, which removes an old timing fault the everburn browser check had found.
+Full tier in the night check on 649257807: 649 passed, 0 failed, 0 not run. Since then only notes, the status page, the check's report and the field-battle browser check changed (the check now waits for the yard button), so that pass covers this release (rule 19).
+Browser scenarios in the same check: 199 of 207. Six of the eight failures are the ones 9 November had (arena-shove, drive-lesson-run, ski-finish and p4-audio have QA cards; deep-frames and frame-pacing run only in the frame step). audio-baseline has its card. field-battle clicked the yard button before the menu had redrawn; it passed alone twice on the same code. Combat balance passed in the same check.
+Frames, 13 November, the HDMI Dell as the only screen and the laptop alone: Performance p95 16.8 ms, world build 228 ms, first-race load 3048 ms. High p95 16.8 ms, reported and not judged on this monitor (Kyle, 30 October).
+Seen by Claude: the four boards from the browser harness's pictures (sheets `docs/board/looks/lab-look/round-11.jpg` and `round-12.jpg`). Not seen in a visible browser window.
+## Release, 13 November 2026, the Everburn story (Claude, Release Manager)
+
+EVERBURN-PLAY-FIXES go-live round, with everything built behind `story-everburn` and `scablands-runs` since October: the six Everburn jobs, Tin Town's notice board, the gas runs, the Ash Men's feud and the battle on the Boneyard road. Both switches are now on. `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca` stay off. The save shape is unchanged; an existing career loses nothing.
+Played: a Sonnet helper's scripted drivers finished all six jobs, both gas roads, the battle and the three notice-board jobs in the real game on Medium with memory-only saves, each from its button to the results screen. Not played by hand.
+Full tier on 8b16fb042 (switches on): 651 suites, 650 passed, 1 failed, 0 not run. The failure is `tools/test-town-people.mjs`, a speed limit (37.49 ms against 30 ms beside other work; 29.38 ms alone) in town code this release does not touch; it is on card QA-TIMING-UNDER-LOAD. The two commits after that pass change Hot Soup's definition, the pause card of a world job and their checks; the lane tier passed 124 of 124 on each, so the pass covers this release (rule 19). Replay fingerprints did not move (`test-replays` 297, `test-combat-replays` 12).
+Browser scenarios on the go-live branch: everburn, everburn-play, everburn-well, everburn-side-jobs, run-gas, field-battle, scrapdome, grand-prix, arena-fuel-run, menu-front-door, map-view, combat-hud and release-controls, 13 of 13; everburn-side-jobs, everburn-play, scrapdome and combat-hud again after the last commit, 4 of 4. Combat balance passed in the night check of 13 November and no combat number changed since.
+Frames in the Scablands, 13 November, on the merged result, the HDMI Dell as the only screen and the laptop alone: Performance p95 18.1 ms against 18.5 ms (p50 17.6 ms, 120 frames, Big Bess, a raider and the furnace in view), world build 204 ms. The race courses keep the morning's pass (Performance p95 16.8 ms), their scenes and code unchanged.
+Seen by Claude: sheet `docs/board/looks/everburn-play/round-8.jpg` (nine pictures from the browser harness). Not seen in a visible browser window.
+Known and not fixed: a hard crash never spills the ember pot or the soup (card EVERBURN-SPILL); the notice board's jobs carry no tick and pay each time; Lost Prospector and Survey Flags have no spoken lines; the Hand Flamer is drawn as a launcher tube; the small map shows job 2's lamps as one mark.
+## Release, 14 November 2026, the Everburn is taken out (Claude, Release Manager)
+
+Kyle played the Everburn's first two jobs by hand and found them not fit to be seen (card EVERBURN-REMAKE has his findings). `story-everburn` and `scablands-runs` are `dev` again; no other code changed since the 13 November release.
+The 13 November release proved only that each job could be finished by a script. That was the wrong proof for a new world, and the card now asks for a play by hand, by Claude and then by Kyle, before either switch is on.
+Checks on 45d463106: the smoke set and replay guards 9 of 9 (four in one run; five rerun alone after a quote mark in the switch check's message was mended), `test-feature-flags` 129, `test-ember-side-jobs` 216, `test-run-gas` 1116, `test-field-battle` 796, `test-board` 640, hygiene pass; replay fingerprints unchanged. Build 26.11.14 14:19 UTC made in the live folder, served on port 5188 and read: both switches are `dev` in the built script. The game on port 5174 serves that build. No full tier, browser scenario or frame check was run: the only code change turns two switches off.
+Saves: nothing is wiped. Everburn progress and scrap stay in the save and are not shown while the switches are off.
+
+
+## Release, 17 November 2026 (Claude, Release Manager)
+
+HELI-EDGE (Kyle, 16 November: Summit Run could not be reached; the helicopter went off the map and
+stopped; show the headings): the flying area's edge always holds the helicopter; with a place chosen the
+cruise starts by itself after 3 s (not in a Lab challenge other than the altitude flight); HEAD FOR beside
+HEADING. Flown by hand in a visible Chrome (memory-only save) to Summit Run. FREESTYLE-MOUNTAINS (Gratian's
+Koenigsegg crashed far from the quarry mountains and in mid-air): on the practice course every car drives
+on the mountains' real surface, with slope gravity and tilt while on one; ramps and flat ground unchanged
+(a Jesko's big-air jump identical, every sample). CAREER-GRANT: Spikey Ferns to notoriety rank 9 and
+20,000 more scrap, once, at start-up after a saved copy. Five heli fingerprints re-recorded with reasons
+(four hash the view's new fields, old pins return with them left out; the autopilot pin's three leg-end
+samples stand on the edge, 163 of 166 unchanged). One review: points fixed and confirmed; save review of
+the grant confirmed. Lane tier, build, browser scenarios ski-drop-trip and heli-jobs.
+
+Also in this release, merged since the last one and on in the game: EASY-NO-PENALTY (Kyle said yes on 9 November; a
+Duel lost on Easy charges nothing; a burnt course closes for 3 play days and its buy-back starts at 3,000), checked
+at its merge. Everything else merged since 14 November is behind switches that stay off (story-everburn,
+scablands-runs, scablands-realism, the-dig, wasteland-town, titan-bowl).
+
+Full tier 672/672 on c3795328c (the release commit's code; notes and inbox only since), alone, 6,606 s.
+Driving physics files changed (sim-contacts, sim-crash, sim-driving, offroad-physics), so the full tier ran.
+No save shape change.

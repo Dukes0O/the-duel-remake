@@ -27,6 +27,7 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.magnet.hum',
 ]);
 const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy', 'warlord.nitroSpent']);
+const HAND_FLAMER_CUES = new Set(['weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end']);
 const ARSENAL_WAVE_THREE_CUES = new Set([
   'weapon.mortar.fire', 'weapon.mortar.hit', 'weapon.tesla.charge',
   'weapon.tesla.pulse', 'weapon.decoy.deploy', 'weapon.decoy.burst', 'weapon.nitro.start',
@@ -39,6 +40,16 @@ const BOARDING_CUES = Object.freeze({
   'crew.boarding.release': 'vehicle.landing',
 });
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+export const FOOT_ENGINE_SOUND = Object.freeze({fullMetres: 5, silentMetres: 30});
+// Scab plates borrowed the car-crash recording. Ground alone uses the bank's low suspension thump instead.
+function footEngineGain(state, course) {
+  if (!state?.onFoot || !state.fighter) return 1;
+  const car = course?.worldAt?.(state.s, state.lateral || 0);
+  if (!car) return 1;
+  const distance = Math.hypot(state.fighter.x - car.x, state.fighter.z - car.z);
+  return clamp((FOOT_ENGINE_SOUND.silentMetres - distance) /
+    (FOOT_ENGINE_SOUND.silentMetres - FOOT_ENGINE_SOUND.fullMetres), 0, 1);
+}
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
 // retain the same tonal target, so switching recordings cannot reset the pitch.
 const engineTone = (revs) => 52 * 2 ** (clamp(revs, 0, 1.15) * 1.55);
@@ -364,7 +375,7 @@ export class EngineAudio {
     if (this._ambiencePromise) return this._ambiencePromise;
     this.ambienceStatus = 'loading';
     this._ambiencePromise = Promise.allSettled(
-      Object.entries(AMBIENCE).filter(([,def]) => !def.flag || this.flags.enabled(def.flag)).map(async ([biome, def]) => {
+      Object.entries(AMBIENCE).filter(([,def]) => def.file && (!def.flag || this.flags.enabled(def.flag))).map(async ([biome, def]) => {
         const response = await fetch(`/assets/audio/${def.file}`);
         if (!response.ok) throw Error(def.file);
         const buffer = await this.context.decodeAudioData(
@@ -396,6 +407,18 @@ export class EngineAudio {
     return this._ambiencePromise;
   }
 
+  _noiseAmbience(biome, def) {
+    const gain = this.context.createGain();
+    gain.gain.value = 0;
+    this._connect(gain, this.buses.ambience);
+    const layers = def.layers.map(recipe => {
+      const layer = this._noiseLayer(recipe.type, recipe.frequency, gain);
+      layer.gain.gain.value = recipe.volume;
+      return layer;
+    });
+    this.ambience[biome] = {gain, layers};
+  }
+
   _updateAmbience(st, environment, t) {
     const active =
       ['countdown', 'racing', 'ticket'].includes(st.status) && !st.paused;
@@ -412,6 +435,10 @@ export class EngineAudio {
       (1 - clamp(Number(environment.tunnel) || 0, 0, 1) * 0.88);
     const chosen = environment.course?.def.ambience ?? environment.biome;
     const bed = AMBIENCE[chosen];
+    // A job may be enabled after audio unlock. Build its wind from the existing
+    // noise buffer when first needed, without fetching a recording.
+    if (bed?.layers && !this.ambience[chosen] && (!bed.flag || this.flags.enabled(bed.flag)))
+      this._noiseAmbience(chosen, bed);
     const night = bed?.nightBiome ? clamp(((sampleCourseLightPath(environment.course,
       {distance:st.s})?.settings.nightAmount ?? (environment.night ? 1 : 0)) - bed.nightFrom) /
       (1-bed.nightFrom), 0, 1) : 0;
@@ -437,23 +464,27 @@ export class EngineAudio {
     maxDuration = Infinity,
     onEnd = null,
     attack = 0.008,
+    loop = false,
   ) {
     const ctx = this.context,
       source = ctx.createBufferSource(),
       gain = ctx.createGain(),
       start = ctx.currentTime;
     source.buffer = buffer;
+    source.loop = loop;
     source.playbackRate.value = rate;
     const duration = Math.min(buffer.duration / rate, maxDuration);
     gain.gain.setValueAtTime(0, start);
     gain.gain.linearRampToValueAtTime(volume, start + attack);
-    gain.gain.setValueAtTime(volume, start + Math.max(0.009, duration - 0.035));
-    gain.gain.linearRampToValueAtTime(0, start + duration);
+    if (!loop) {
+      gain.gain.setValueAtTime(volume, start + Math.max(0.009, duration - 0.035));
+      gain.gain.linearRampToValueAtTime(0, start + duration);
+    }
     source.connect(gain);
     this._connect(gain, destination);
     source.start();
     if (Number.isFinite(maxDuration)) source.stop(start + duration + 0.01);
-    const voice = { source, gain, endAt: start + duration + 0.01 };
+    const voice = { source, gain, endAt: loop ? Infinity : start + duration + 0.01 };
     this.activeShots.add(voice);
     source.onended = () => {
       source.disconnect();
@@ -488,6 +519,18 @@ export class EngineAudio {
         this._disconnect(panner);
       },
     };
+  }
+
+  _updateRiderNotes(state, course) {
+    if (!this.riderNotes?.size || !course || !this.context) return;
+    for (const note of this.riderNotes) {
+      const car = state.opponents.find(actor => actor.arenaId === note.sourceId && actor.roadRider);
+      if (!car) continue;
+      const hitPosition = point({course}, car);
+      const space = combatAudioSpace({hitPosition, combatHit:true}, state, course);
+      note.output.level.gain.value = space.gain;
+      note.output.panner.pan.value = space.pan;
+    }
   }
 
   _balanceBlasts() {
@@ -660,6 +703,7 @@ export class EngineAudio {
     destination = this._cueOutput || this.buses?.interface || this.master,
     onEnd = null,
     delay = 0,
+    rise = null,
   ) {
     const ctx = this.context,
       start = ctx.currentTime + delay;
@@ -669,9 +713,13 @@ export class EngineAudio {
     source.buffer = this.noiseBuffer;
     filter.type = type;
     filter.frequency.value = frequency;
+    if (rise) {
+      filter.frequency.setValueAtTime(frequency, start);
+      filter.frequency.exponentialRampToValueAtTime(rise.endFrequency, start + rise.seconds);
+    }
     filter.Q.value = 0.65;
     gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(volume, start + 0.005);
+    gain.gain.linearRampToValueAtTime(volume, start + (rise ? rise.seconds : 0.005));
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
     source.connect(filter);
     filter.connect(gain);
@@ -710,6 +758,7 @@ export class EngineAudio {
         destination,
         onEnd,
         layer.delay || 0,
+        layer.rise ?? null,
       );
     return this._tone(
       layer.frequency,
@@ -1038,7 +1087,7 @@ export class EngineAudio {
     });
   }
 
-  _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false, summitAttack = false } = {}) {
+  _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false, summitAttack = false, worldHandFlamer = false } = {}) {
     this._syncMixer();
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
@@ -1048,13 +1097,14 @@ export class EngineAudio {
     const admittedSnowman=id==='snowman.burst' && this.flags.enabled('snowmen');
     const admittedAvalanche=['avalanche.rumble','avalanche.slide'].includes(id) && this.flags.enabled('summit-run');
     const admittedAttack=id==='race.finish.flag' && summitAttack===true && this.flags.enabled('summit-run');
-    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche && !admittedAttack && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
+    const admittedFlamer = worldHandFlamer && HAND_FLAMER_CUES.has(id);
+    if (def.flag && !this.flags.enabled(def.flag) && !admittedFlamer && !admittedShock && !admittedSnowman && !admittedAvalanche && !admittedAttack && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
     if (def.flag === 'arsenal-wave3' && !this.flags.enabled('arsenal')) return null;
     return this._runCue(
       id,
       () => {
         const buffer = this._cueBuffer(id);
-        if (buffer) this._sample(buffer, def.volume * scale);
+        if (buffer) this._sample(buffer, def.volume * scale, 1, undefined, Infinity, null, .008, admittedFlamer && def.loop === true);
         else
           for (const layer of def.layers || [])
             this._layer(
@@ -1186,6 +1236,8 @@ export class EngineAudio {
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
+      this._clearLampLighting();
+      this._clearWorldHandFlamer();
       this.mixer?.stopAll();
     }
   }
@@ -1211,6 +1263,8 @@ export class EngineAudio {
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
+      this._clearLampLighting();
+      this._clearWorldHandFlamer();
       this.mixer?.stopAll();
     }
   }
@@ -1231,7 +1285,7 @@ export class EngineAudio {
     this.turboArmed = false;
   }
 
-  _updateTurbo(st, running, load, throttle, t) {
+  _updateTurbo(st, running, load, throttle, t, engineDistance = 1) {
     const enabled = this.carVoice.turbo && this.flags.enabled('nissan-skyline');
     if (!enabled || !running || this.muted || this.paused) {
       this._clearTurbo();
@@ -1256,7 +1310,7 @@ export class EngineAudio {
       const {osc, gain} = this.turboLoop;
       osc.frequency.setTargetAtTime(def.oscillator.lowHz +
         clamp(st.revs, 0, 1) * (def.oscillator.highHz - def.oscillator.lowHz), t, .055);
-      gain.gain.setTargetAtTime(def.volume * clamp((load - .35) / .65, 0, 1), t, .045);
+      gain.gain.setTargetAtTime(def.volume * engineDistance * clamp((load - .35) / .65, 0, 1), t, .045);
       if (load <= .35 || throttle <= .35) {
         this.turboLoop.voice.stop();
         this.turboLoop = null;
@@ -1266,19 +1320,66 @@ export class EngineAudio {
       if (throttle >= .7 && st.revs > .55) this.turboArmed = true;
       if (throttle < .2 && this.turboArmed && st.revs > .55 &&
           t >= (this.nextBlowoff || 0)) {
-        this.blowoffVoice = this._playCue('vehicle.blowoff');
+        this.blowoffVoice = this._playCue('vehicle.blowoff', {scale: engineDistance});
         this.nextBlowoff = t + 1.2;
       }
       if (throttle < .2) this.turboArmed = false;
     } else this.turboArmed = false;
   }
 
+  _clearLampLighting() {
+    this.lampLightingVoice?.stop();
+    this.lampLightingVoice = null;
+    this.lampLightingId = null;
+    this.lampLightingSeconds = 0;
+  }
+
+  _clearWorldHandFlamer() {
+    this.worldHandFlamerVoice?.stop();
+    this.worldHandFlamerVoice = null;
+    this.worldHandFlamerFighter = null;
+  }
+
+  _updateWorldHandFlamer(state) {
+    const inJob = state.arena?.mode === 'world-job';
+    const audible = inJob && state.status === 'racing' && !state.paused && !this.muted && this.context?.state === 'running';
+    const fighter = audible && state.onFoot && state.footWeapons?.selected === 'hand-flamer' &&
+      !state.fighter?.knockedDown && state.fighter?.flaming ? state.fighter : null;
+    if (this.worldHandFlamerFighter && this.worldHandFlamerFighter !== fighter) {
+      this._clearWorldHandFlamer();
+      if (audible) this._playCue('weapon.flame.end', {worldHandFlamer: true});
+    }
+    if (fighter && !this.worldHandFlamerFighter && this.cueBuffers['weapon.flame.start'] && this.cueBuffers['weapon.flame.loop']) {
+      this._playCue('weapon.flame.start', {worldHandFlamer: true});
+      this.worldHandFlamerVoice = this._playCue('weapon.flame.loop', {worldHandFlamer: true});
+      this.worldHandFlamerFighter = fighter;
+    }
+  }
+
+  _updateLampLighting(state) {
+    const job = state.arena?.mode === 'world-job' && state.arena.worldJob?.job;
+    const step = job?.steps?.[job.stepIndex], count = job?.stepState;
+    const id = state.status === 'racing' && !state.paused && !this.muted && state.onFoot &&
+      step?.brand && !count?.townEnding && count?.brandSeconds > 0 && count?.lightingSeconds > 0
+      ? count.lightingLamp : null;
+    if (!id || this.lampLightingId !== id || count.lightingSeconds < this.lampLightingSeconds)
+      this._clearLampLighting();
+    if (id && this.context?.state === 'running') {
+      if (!this.lampLightingId) this.lampLightingVoice = this._playCue('world.lamp.lighting');
+      this.lampLightingId = id;
+      this.lampLightingSeconds = count.lightingSeconds;
+    }
+  }
+
   update(st, environment = {}) {
+    this._updateLampLighting(st);
+    this._updateWorldHandFlamer(st);
     this._syncGrandPrix(st);
     this._syncMixer(st);
     this.updateFightVoices(st);
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
+    this._updateRiderNotes(st, environment.course);
     this._updateArsenalFields(st, environment);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') { this._clearTurbo(); this._clearVehicleVoices(); return; }
@@ -1292,13 +1393,17 @@ export class EngineAudio {
     this.lastUpdateTime = t;
     const racing =
       (st.status === 'racing' || st.status === 'exploring') && !st.paused;
+    const driving = racing && !st.onFoot;
     const impacting = st.impactTimer > 0;
     const running =
       (racing && !impacting) || (st.status === 'countdown' && !st.paused);
     const grounded = !st.airborne && (st.airHeight || 0) < 0.12,
       looseSurface = !!st.offRoad || !!environment.looseSurface;
-    const voice = (this.carVoice =
-      CAR_VOICES[st.car] || CAR_VOICES.falcone_f42);
+    const baseVoice = (this.carVoice = CAR_VOICES[st.car] || CAR_VOICES.falcone_f42);
+    const engineDistance = footEngineGain(st, environment.course);
+    const voice = {...baseVoice, gain: baseVoice.gain * engineDistance,
+      exhaust: baseVoice.exhaust * engineDistance, intake: baseVoice.intake * engineDistance,
+      accent: baseVoice.accent * engineDistance};
     const perspective =
       environment.cameraMode === 'hood'
         ? { gain: 1, brightness: 1.08, exhaust: 0.58, intake: 1.38 }
@@ -1377,7 +1482,7 @@ export class EngineAudio {
       0.1,
     );
     this.wind.gain.gain.setTargetAtTime(
-      racing ? speed * speed * 0.085 : 0,
+      driving ? speed * speed * 0.085 : 0,
       t,
       0.12,
     );
@@ -1531,7 +1636,7 @@ export class EngineAudio {
         0.07,
       );
     }
-    this._updateTurbo(st, running, load, throttle, t);
+    this._updateTurbo(st, running, load, throttle, t, engineDistance);
     if (running && racing && !this.muted) {
       if (
         throttle > 0.6 &&
@@ -1588,7 +1693,7 @@ export class EngineAudio {
         0.08,
       );
       sample.gain.gain.setTargetAtTime(
-        racing && grounded && !looseSurface && !impacting ? squeal * 0.4 : 0,
+        driving && grounded && !looseSurface && !impacting ? squeal * 0.4 : 0,
         t,
         0.075,
       );
@@ -1606,7 +1711,7 @@ export class EngineAudio {
       0.09,
     );
     this.tires.gain.gain.setTargetAtTime(
-      racing && grounded ? Math.max(impactGrind, roadBed + roadScrub) : 0,
+      driving && grounded ? Math.max(impactGrind, roadBed + roadScrub) : 0,
       t,
       0.065,
     );
@@ -1616,7 +1721,7 @@ export class EngineAudio {
       0.1,
     );
     this.gravel.gain.gain.setTargetAtTime(
-      racing && grounded && looseSurface
+      driving && grounded && looseSurface
         ? Math.min(
             0.23,
             speed * (0.055 + (st.roughness || 0) * 0.14) + slip * 0.035,
@@ -1693,7 +1798,7 @@ export class EngineAudio {
 
   event(ev, state, course) {
     if (ev?.menu) { this._clearTurbo(); this._clearVehicleVoices(); }
-    this.fightVoices.event(ev, state);
+    this.fightVoices.event(ev, state, course);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
     if (
@@ -1717,6 +1822,8 @@ export class EngineAudio {
       this._yetiAudioHits=new Set();
       this._clearProjectiles();
       this._clearArsenalFields();
+      this._clearLampLighting();
+      this._clearWorldHandFlamer();
       this.mixer?.stopAll();
       this._stopHiddenRoadVoices();
       this.hiddenRoadId = null;
@@ -1836,7 +1943,9 @@ export class EngineAudio {
           this.arsenalFieldVoices.delete(effect);
         }
     }
-    if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue) {
+    const worldHandFlamerEvent = state?.arena?.mode === 'world-job' && !ev.enemy && !ev.actor &&
+      ['crew.flamer.start', 'crew.flamer.stop'].includes(ev.crewGearCue);
+    if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue && !worldHandFlamerEvent) {
       const output = this._spatialOutput(
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
       );
@@ -1866,12 +1975,12 @@ export class EngineAudio {
       if (this.samples.shift)
         this.shiftVoice = this._sample(
           this.samples.shift,
-          0.5 * this.carVoice.accent,
+          0.5 * this.carVoice.accent * footEngineGain(state, course),
           this.carVoice.pitch,
           this.buses?.engine || this.vehicleBus,
           0.16,
         );
-      else this._playCue('engine.shift-fallback');
+      else this._playCue('engine.shift-fallback', {scale: footEngineGain(state, course)});
     }
     // A new medal or an earned car on the results screen (docs/EARNED_CARS.md 5.2).
     if (ev.medalEarned) this._playCue('interface.bonus');
@@ -1962,10 +2071,13 @@ export class EngineAudio {
         state,
         course,
       );
-      this._playCue(ev.arenaTell.cue || 'arena.tell', {
-        destination: output.level,
-        onEnd: output.disconnect,
-      });
+      const note = ev.arenaTell.sourceId ? {sourceId:ev.arenaTell.sourceId, output} : null;
+      const onEnd = note ? () => {
+        this.riderNotes?.delete(note);
+        output.disconnect();
+      } : output.disconnect;
+      const voice = this._playCue(ev.arenaTell.cue || 'arena.tell', {destination:output.level,onEnd});
+      if (note && voice) (this.riderNotes ??= new Set()).add(note);
     }
     if (ev.warlordWindow?.open && ev.warlordWindow.soundCue)
       this._playCue(ev.warlordWindow.soundCue);
@@ -1990,6 +2102,17 @@ export class EngineAudio {
     if (ev.arenaRespawn) this._playCue('arena.respawn');
     if (ev.arenaWreck?.creditedId === 'player')
       this._playCue('arena.wreck-credit');
+    // SCABLANDS-LAND round 4, slice 2b: ground too steep to climb is a hit (the scab plates' impact cue) and a landing after a fall is the landing cue,
+    // both from sounds the game has, scaled by the size of the hit.
+    if (ev.fenceSnap) this._playCue(ev.fenceSnap.cue, {scale: .7});
+    if (ev.scablandsHit?.player)
+      this._playCue(ev.scablandsHit.cue, {
+        scale: clamp(0.5 + (ev.scablandsHit.kind === 'fall' ? (Number(ev.scablandsHit.kmh) || 0) / 50 : (Number(ev.scablandsHit.impactMph) || 0) / 60), 0.5, 1.6),
+      });
+    if (ev.groundChanged)
+      this._playCue(ev.groundChanged.cue, {
+        scale: clamp(0.4 + Math.abs(Number(ev.groundChanged.speedMph) || 0) / 90, 0.4, 1.4),
+      });
     if (ev.muddyHollowSplash)
       this._playCue('world.muddy-hollow-splash', {
         scale: clamp(

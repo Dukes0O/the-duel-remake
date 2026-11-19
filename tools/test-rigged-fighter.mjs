@@ -207,6 +207,20 @@ check('first-person draw hides only the local rig and restores distant views', a
   camera.position.x += 5; assert.equal(countDrawn(), 2, 'distant camera must see both bodies'); view.dispose();
 });
 
+check('first-person draw follows the shifted eye',async()=>{
+  const local=fighter({x:9}),roster=[fighter(),{fighter:local,local:true}];
+  const {view}=await ready(roster),camera=new THREE.PerspectiveCamera();
+  view.update(roster,{...options(0),drawnShift:()=>.80380556});
+  camera.position.set(local.x,local.y+1.62+.80380556,local.z);
+  const drawn=skins(view.group).filter(mesh=>{
+    mesh.onBeforeRender(null,null,camera);
+    const present=visible(mesh)&&mesh.geometry.drawRange.count>0;
+    mesh.onAfterRender();return present;
+  });
+  assert.equal(drawn.length,1,'The shifted eye hides only the local body.');
+  view.dispose();
+});
+
 check('dispose releases loaded resources once and removes scene objects', async () => {
   const {view, asset} = await ready(); const parent = new THREE.Group(); parent.add(view.group);
   view.dispose(); view.dispose();

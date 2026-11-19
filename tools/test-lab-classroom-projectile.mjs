@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {STEPS, JOB, RING_M, HIGH_M, LOW_M, BEST_LET_GO_M, TOP_FALL_MS, FREE_TRIES, landing, dropPoint, dropSpeed, metres} from '../src/lab/lessons/projectile-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, dragAngle} from '../src/lab/lessons/projectile-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, dragAngle, strip, size, geometry} from '../src/lab/lessons/projectile-board.js';
 import {projectileBench, waterDrop, waterTrace, stoneDrop, stoneFallAfter} from '../src/lab/benches/projectile.js';
 import {BUCKET} from '../src/heli/heli-bucket.js';
 import {GRAVITY} from '../src/heli/heli-flight.js';
@@ -277,7 +277,8 @@ test('mouse: the flag drags on the water, the helicopter can be clicked, and hov
   playThroughTo(session, 'alone');
   v = session.view();
   assert.equal(hitTest(v, ...targetPoint(v, 'drop'))?.action, 'drop');
-  assert.match(hoverInfo(v, 200 + JOB.buoyM * 12, 596), /buoy/);
+  const g = geometry(v);
+  assert.match(hoverInfo(v, g.post + JOB.buoyM * g.metre, 610), /buoy/);
 });
 
 test('the board draws every step and card', () => {
@@ -315,7 +316,7 @@ test('replays: the wonder loops, and the watch steps start again', () => {
 });
 
 test('review fixes: Show me works at any moment of the job, holds the keys while Brian flies, and lands on the board', () => {
-  const inBoard = v => { const [x, y] = targetPoint(v, 'drop:best'); return x > 0 && x < 1000 && y > 0 && y < 680; };
+  const inBoard = v => { const [x, y] = targetPoint(v, 'drop:best'); return x > 0 && x < size.width && y > 0 && y < size.height; };
   const showMe = session => { for (let i = 0; i < 3; i++) session.act('help'); assert.ok(inBoard(session.view()), 'the pointer is on the board'); run(session, SHOW_ME_S + .2); };
   // Early in a run: Brian takes over, and the child's Space does nothing while he flies.
   let session = createClassroomSession(lesson);
@@ -384,4 +385,99 @@ test('review fixes: help after a finished step or an answered check names a key 
   playThroughTo(session, 'check-over');
   session.act('answer:2');
   assert.equal(session.view().hints[0], 'Press R to watch it again.');
+});
+
+// The wide board (docs/board/cards/LAB-LOOK.md, round 11): it names its size, the clock and the tables of results are in the strip under it,
+// no text on it is smaller than 15 board units (a laptop shows the board at about 0.8, which is 12 pixels), and every fall stays on it.
+const textSizes = (view, width = 1320, height = 680) => {
+  const sizes = [], store = {};
+  const ctx = new Proxy(store, {get: (target, name) => {
+    if (name in target) return target[name];
+    if (name === 'measureText') return value => ({width: String(value).length * 9});
+    if (['createLinearGradient', 'createRadialGradient'].includes(name)) return () => ({addColorStop() {}});
+    if (name === 'fillText') return value => { sizes.push([Number(/(\d+(?:\.\d+)?)px/.exec(store.font)?.[1]), String(value)]); };
+    return () => {};
+  }, set: (target, name, value) => { target[name] = value; return true; }});
+  drawBoard(ctx, view, width, height);
+  return sizes;
+};
+test('the wide board hands the clock and the tables of results to the strip', () => {
+  assert.deepEqual({...size}, {width: 1320, height: 680});
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'watch-water');
+  assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['The stone landed', '…'], ['The water landed', '…'], ['Top falling speed of water', '…']]);
+  until(session, v => v.ready, 10);
+  assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['The stone landed', '25 m ahead'], ['The water landed', '10 m ahead'], ['Top falling speed of water', `${TOP_FALL_MS} m/s`]]);
+  assert.equal(strip(session.view()).readouts.length, 0, 'the clock belongs to the gravity step and the speeds step');
+  session.act('next');
+  playThroughTo(session, 'watch-speeds');
+  until(session, v => v.ready, 10);
+  const s = strip(session.view());
+  assert.deepEqual(s.tables[0].rows.map(r => [r.label, r.value]), [['5 m/s (18 km/h)', '6 m'], ['10 m/s (36 km/h)', '10 m'], ['20 m/s (72 km/h)', '15 m']]);
+  assert.match(s.readouts[0].value, /^\d\.\d s since the release$/);
+  const gravity = createClassroomSession(lesson);
+  playThroughTo(gravity, 'word-gravity');
+  assert.equal(strip(gravity.view()), null, 'nothing to read before the stone is released');
+  gravity.act('drop'); run(gravity, 1);
+  assert.match(strip(gravity.view()).readouts[0].value, /^1\.0 s since the release$/);
+  const check = createClassroomSession(lesson);
+  playThroughTo(check, 'check-over');
+  assert.equal(strip(check.view()), null);
+});
+test('the wide board draws no text under 15 units, at any step', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  let drawn = 0;
+  for (let i = 0; i < STEPS.length; i++) {
+    session.act(`go:${i}`);
+    for (const t of [0, 1.5, 2.5, 2.5]) {
+      run(session, t);
+      for (const [px, words] of textSizes(session.view())) { drawn++; assert.ok(px >= 15, `${STEPS[i].id}: “${words}” is drawn at ${px}`); }
+    }
+  }
+  assert.ok(drawn > 300, 'the scan saw the text');
+});
+test('every fall stays on the wide board: the highest helicopter, the furthest stone, the buoys and the flag', () => {
+  const left = 40, right = size.width - 40;
+  // The free test: every height and speed the dials allow.
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  const g = geometry(free.view());
+  assert.equal(g.metre, 12.5, 'the free test is drawn smaller, because its helicopter goes 40 m up');
+  for (const h of [10, 20, 30, 40]) for (const speed of [5, 10, 15, 20]) {
+    const end = landing('stone', h, speed), top = 625 - (h + 3.8) * g.metre - 14 * g.k - 40 * g.k;
+    assert.ok(g.post + end.distanceM * g.metre <= right, `${h} m at ${speed} m/s: the stone lands on the board`);
+    assert.ok(top >= 8, `${h} m: the helicopter and its label are under the top (${top})`);
+    assert.ok(g.post - 8 * g.metre >= left, 'the helicopter waits on the board');
+  }
+  assert.ok(g.post + 65 * g.metre <= size.width, 'the whole ruler is on the board');
+  // The other steps: where the water and the stone land.
+  for (const id of ['wonder', 'word-forward-speed', 'word-arc', 'watch-water', 'watch-speeds', 'try-height', 'check-over', 'check-faster', 'check-game']) {
+    const s = createClassroomSession(lesson);
+    playThroughTo(s, id);
+    if (id === 'try-height') { s.act('answer:0'); s.act('drop'); }
+    else if (['word-forward-speed', 'word-arc'].includes(id)) s.act('drop');
+    else if (id.startsWith('check-')) s.act('answer:0');
+    const post = geometry(s.view()).post, metre = geometry(s.view()).metre;
+    let landedAt = 0;
+    for (let t = 0; t < 12; t += .1) { s.tick(.1); for (const k of s.view().marks) landedAt = Math.max(landedAt, k.x); }
+    assert.ok(post + landedAt * metre <= right && post + landedAt * metre >= left, `${id}: the splash is on the board (${post + landedAt * metre})`);
+    assert.ok(post - 8 * metre >= left, `${id}: the helicopter waits on the board`);
+  }
+  // Every number on the ruler stays on the board, in every step that has one.
+  const rulerSteps = createClassroomSession(lesson);
+  playThroughTo(rulerSteps, 'recap');
+  for (let i = 0; i < STEPS.length; i++) {
+    rulerSteps.act(`go:${i}`);
+    const v = rulerSteps.view(), r = geometry(v);
+    if (v.ruler === 'post') assert.ok(r.post + 60 * r.metre + 12 <= size.width && r.post >= left, `${STEPS[i].id}: the ruler’s 60 m mark is on the board`);
+    if (v.ruler === 'buoy') assert.ok(r.post + JOB.buoyM * r.metre + RING_M * r.metre <= right, `${STEPS[i].id}: the buoy is on the board`);
+  }
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  assert.ok(geometry(job.view()).post + JOB.buoyM * 16 + RING_M * 16 <= right, 'the job’s buoy and its ring');
+  const flag = createClassroomSession(lesson);
+  playThroughTo(flag, 'try-flag');
+  const f = geometry(flag.view());
+  assert.ok(f.post + 45 * f.metre <= right && f.post - 40 >= 0, 'the flag can go to 45 m and stay on the board');
 });

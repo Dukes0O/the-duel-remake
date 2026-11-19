@@ -49,9 +49,9 @@ app.profile.personalBests[bestKey(valid)]=valid.timeSec;app._saveProfile();
 s.status='racing';s.stageTimeSec=20;s.s=app.duel.raceLength;s.completedLaps=s.lapsTotal;s.lap=s.currentLap=s.lapsTotal;s.lapTimes=[10,10];s.checkpointRush.passed=required-1;s.checkpointRush.nextGate=required;s.checkpointRush.missed=1;
 const before=app.profile.credits;app.duel._finishStage();result=s.results;
 check(result.completed&&!result.won&&result.objectiveMissed,'valid laps with a missed gate lose the objective');
-check(result.creditReward===-CPU_REWARDS.easy/2&&result.creditBreakdown.personalBest===0,'missed gate charges half the win reward without a faster-time bonus');
+check(result.creditReward===0&&result.creditBreakdown.personalBest===0,'Easy missed gate has no charge or faster-time bonus');
 check(app.profile.personalBests[bestKey(valid)]===valid.timeSec&&app.leaderboard.entries.length===0&&app.ghosts.records.length===0,'failed checkpoint goal cannot overwrite a PB, board or ghost');
-app.duel.emit({stageResult:result});check(app.profile.credits===before-CPU_REWARDS.easy/2,'failed objective settles only once');
+app.duel.emit({stageResult:result});check(app.profile.credits===before,'failed Easy objective leaves credits unchanged');
 
 app.returnToMenu();app.startCampaign({startStage:index,cpuDifficulty:'hard'});s=app.duel.state;app.advance(4);const timeoutBalance=app.profile.credits;s.stageTimeSec=s.timeLimitSec;app.duel._deadline();result=s.results;
 check(result.timeout&&!result.completed&&!result.won,'clock expiry produces an incomplete objective result');
@@ -71,7 +71,7 @@ check(!app.startCampaign({startStage:index}),'second player does not inherit cou
 
 for(const invalid of [{won:false},{targetsMet:false},{objectiveMissed:true},{checkpointsPassed:required-1},{checkpointsPassed:required+1},{checkpointsRequired:required-1},{checkpointMisses:1},{checkpointMisses:NaN},{timeSec:stage.checkpointRush.initialTimeSec.easy+required*stage.checkpointRush.extensionSec.easy+1},{completed:false},{abandoned:true},{timeout:true},{laps:1},{car:'missing'}]){
   const outcome={...valid,...invalid};check(!isValidFinish(outcome),'incomplete or malformed checkpoint result cannot qualify for records');
-  const payment=settleRace({...createProfile(),credits:1000},outcome);check(payment.breakdown.personalBest===0&&payment.breakdown.base===(outcome.abandoned?0:-CPU_REWARDS.easy/2),'invalid result earns no best bonus; abandonment preserves bank while genuine loss retains its charge');
+  const payment=settleRace({...createProfile(),credits:1000},outcome);check(payment.breakdown.personalBest===0&&payment.breakdown.base===0,'invalid Easy result earns no best bonus and has no charge');
   check(!recordFinish(createLeaderboard(),outcome,{id:'p',name:'Player'}).recorded,'leaderboard rejects invalid checkpoint metadata');
 }
 const recorded=recordFinish(createLeaderboard(),valid,{id:'p',name:'Player'});check(recorded.recorded,'valid fixture can be recorded');saveLeaderboard(recorded.board);check(loadLeaderboard().entries.length===1,'valid checkpoint board row normalizes on reload');

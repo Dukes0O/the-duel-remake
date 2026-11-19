@@ -1,3 +1,4 @@
+import {registerTownSystem} from './town-sim.js';
 const ROAD_SPEED_KMH=Object.freeze({dirt:15,plank:25,paved:40});
 const nodeKey=cell=>`${cell.regionId||'scablands'}:${cell.x}:${cell.z}`;
 const parseNode=key=>{const [regionId,x,z]=key.split(':');return {regionId,x:Number(x),z:Number(z)};};
@@ -59,15 +60,15 @@ export function stepHauler(agent,roads) {
     const nextRoad=roadIndex.get(nodeKey(next));
     const speed=Math.min(ROAD_SPEED_KMH[road?.roadClass||'dirt'],ROAD_SPEED_KMH[nextRoad?.roadClass||'dirt'])*(agent.speedFactor||1);
     const edgeKm=distance(here,next)/1000;
-    const edgeHours=edgeKm/speed;
-    const remainingKm=Math.min(edgeKm,hours*speed);
+    const remainingEdgeKm=edgeKm*(1-(agent.progress||0));
+    const remainingKm=Math.min(remainingEdgeKm,hours*speed);
     const fuelNeeded=remainingKm*(agent.fuelKm||0);
     if(fuelNeeded>agent.fuelLitres) {
       agent.status='out-of-fuel';agent.message='The truck has run out of fuel and stopped.';
       return {status:agent.status,message:agent.message};
     }
     agent.fuelLitres-=fuelNeeded;
-    if(remainingKm>=edgeKm) {agent.position=next;agent.pathIndex++;hours-=edgeHours;}
+    if(remainingKm>=remainingEdgeKm) {agent.position=next;agent.pathIndex++;agent.progress=0;hours-=remainingEdgeKm/speed;}
     else {agent.progress=(agent.progress||0)+remainingKm/edgeKm;hours=0;}
   }
   if(agent.pathIndex>=agent.path.length-1) agent.status='arrived';
@@ -92,3 +93,11 @@ export function stepSalvageGang(agent,roads,salvageKg=2000) {
   return stepHauler(agent,roads);
 }
 import {goodDefinition} from './town-goods.js';
+
+// Machine-built roads and their haulers remain optional on older towns.
+registerTownSystem('machine-road-haulers', 25, 1, ({town}) => {
+  if (!town.machineRoads?.length || !Array.isArray(town.haulers)) return;
+  for (const hauler of town.haulers) {
+    if (hauler?.status === 'moving' && Array.isArray(hauler.path)) stepHauler(hauler, town.machineRoads);
+  }
+});

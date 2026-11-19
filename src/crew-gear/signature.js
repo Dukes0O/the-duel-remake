@@ -8,6 +8,7 @@ import {gearDirection, gearContact, enemyCars, fighterTargets,
   damageGearCar, damageGearFighter} from './contacts.js';
 import {launchGearProjectile} from './projectiles.js';
 import {signatureFor, rechargeFor, crewGearEnabled, GEAR_EPSILON} from './gear.js';
+import {bellowsWeaponTarget, reportWorldJobThingHit} from '../arena/modes/world-job.js';
 
 export {crewGearEnabled, crewRpgTiming, signatureFor} from './gear.js';
 export {stepGearProjectile} from './projectiles.js';
@@ -201,6 +202,9 @@ export function stepGearDeployables(duel, dt) {
     turret.shotSeconds = Math.max(0, turret.shotSeconds - gear.cadence);
     let chosen = null, distance = gear.range + GEAR_EPSILON;
     const candidates = enemyCars(duel).map(actor => ({actor, at: carBodyPoint(duel, actor)}));
+    const bellows = bellowsWeaponTarget(duel);
+    if (bellows) candidates.push({bellows, at:{...bellows.position,
+      y:bellows.position.y + bellows.obstacle.height / 2}});
     for (const target of fighterTargets(duel)) candidates.push({target,
       at: {x: target.fighter.x, y: target.fighter.y + .85, z: target.fighter.z}});
     for (const candidate of candidates) {
@@ -214,7 +218,11 @@ export function stepGearDeployables(duel, dt) {
           {hitPosition: contact.point});
       else if (chosen.target && contact?.target?.fighter === chosen.target.fighter)
         damageGearFighter(duel, chosen.target, gear.fighterDamage, duel.state);
-      turret.targetId = chosen.actor ? targetIdentity(duel, chosen.actor) : chosen.target.fighter.id;
+      else if (chosen.bellows && contact?.bellows?.id === chosen.bellows.id)
+        reportWorldJobThingHit(duel, {...chosen.bellows, weapon:gear.id,
+          hitId:`${turret.id}-${++user.serial}`});
+      turret.targetId = chosen.actor ? targetIdentity(duel, chosen.actor)
+        : chosen.bellows?.id ?? chosen.target.fighter.id;
       duel.emit({crewGearCue: 'crew.turret.fire', turret, hitPosition: {x: turret.x, y: turret.y, z: turret.z}});
     }
   }

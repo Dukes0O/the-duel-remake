@@ -98,7 +98,7 @@ if (!flag('--rates')) {
     (rules.attackClock ? ', fire on the Easy clock' : '') + (rules.homing ? ', the assisted comparison player' : ''));
   const below = rows.filter(row => row.wins < count * .8);
   if (below.length) {
-    console.log('The claim fails for: ' + below.map(row => row.item.id).join(', ') + ' (docs/changes/WATER-EASY.md).');
+    console.log('The claim fails for: ' + below.map(row => row.item.id).join(', ') + '.');
     process.exitCode = 1;
   } else checks++;
 }

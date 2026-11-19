@@ -18,10 +18,10 @@ export async function run(context) {
     if (!await context.evaluate(`!!document.elementFromPoint(${p[0]},${p[1]})?.closest(${JSON.stringify(selector)})`)) throw Error('Covered control ' + selector);
     await click(...p);
   }
-  // A rebuilt lesson opens as a classroom (LAB-CLASSROOM); the rest open the lesson panel.
+  // Every lesson opens as a classroom (LAB-CLASSROOM); the panel the notebook and word meanings use is also counted as open.
   const panel = `!!document.querySelector('.lab-classroom:not([hidden]), .lab-teaching:not([hidden]), .lab-bench, .lab-machine-choice, .lab-brian, .lab-door-board')`;
   async function closePanel() {
-    const selector = await context.evaluate(`document.querySelector('.lab-classroom') ? '[data-lc="leave"]' : document.querySelector('.lab-teaching:not([hidden])') ? '[data-teach="back"]' : document.querySelector('[data-lab="walk-back"]') ? '[data-lab="walk-back"]' : '[data-lab="back"]'`);
+    const selector = await context.evaluate(`document.querySelector('.lab-classroom') ? '[data-lc="leave"]' : document.querySelector('[data-lab="walk-back"]') ? '[data-lab="walk-back"]' : '[data-lab="back"]'`);
     await clickSelector(selector);
     await context.waitFor(`!(${panel})`, 'back in walking room');
   }

@@ -3,7 +3,12 @@ import { constrainTunnelCamera } from './camera-clearance.js';
 
 export const REAR_VIEW_FAR = 220;
 export const REAR_VIEW_INTERVAL_MS = 1000 / 30;
-export const rearViewActive = state => !state?.onFoot && ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
+// The mirror is put away while a world job holds at its end (Hot Delivery's forge takes the fire): the car is stopped and the
+// crane's hook passes where the mirror hangs.
+// A world job holding at its end, or on a conversation, fills the picture without the mirror.
+const worldJobHidesMirror = job => !!job && (!!job.arrivalHold || job.job?.steps?.[job.job.stepIndex]?.kind === 'talk');
+export const rearViewActive = state => !state?.onFoot && !(state?.arena?.mode === 'world-job' && worldJobHidesMirror(state.arena.worldJob)) &&
+  ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
 
 // CSS owns the frame placement; WebGL uses the same measured interior. The
 // rectangle is clipped in logical canvas pixels, not device-resolution pixels.

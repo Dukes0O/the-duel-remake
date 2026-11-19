@@ -30,6 +30,7 @@ for datablocks in (bpy.data.materials, bpy.data.meshes, bpy.data.curves, bpy.dat
             datablocks.remove(item)
 
 def material(name, colour, metal=.0, rough=.8, emission=None):
+    metal = min(metal, .2)
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = (*colour, 1)
     mat.use_nodes = True
@@ -44,7 +45,7 @@ def material(name, colour, metal=.0, rough=.8, emission=None):
 
 steel = material('everburn-blackened-welded-steel', (.075,.082,.075), .7, .82)
 rust = material('everburn-layered-iron-oxide', (.29,.105,.045), .38, .93)
-flaking = material('everburn-ash-grey-paint', (.23,.245,.22), .48, .9)
+flaking = material('everburn-ash-grey-paint', (.195,.2075,.18), .48, .9)
 ground = material('everburn-charred-gravel', (.105,.091,.068), .05, .98)
 ember = material('everburn-embers', (.95,.24,.025), .05, .5, ((1,.09,.008),2.2))
 flame_outer = material('everburn-flame-orange', (.88,.055,.003), 0, .35, ((1,.055,.002),.7))
@@ -52,27 +53,9 @@ flame_inner = material('everburn-flame-yellow', (1,.34,.012), 0, .3, ((1,.28,.00
 flame_core = material('everburn-flame-core', (1,.84,.35), 0, .24, ((1,.62,.12),1.5))
 cap_mat = material('everburn-ash-men-cap', (.12,.13,.11), .76, .75)
 
-# Patchy noise breaks up the broad painted steel faces without a new texture.
-for mat in (steel, rust, flaking, cap_mat):
-    nodes=mat.node_tree.nodes; links=mat.node_tree.links
-    shader=nodes.get('Principled BSDF')
-    noise=nodes.new('ShaderNodeTexNoise'); noise.inputs['Scale'].default_value=7.0
-    noise.inputs['Detail'].default_value=3.0; noise.inputs['Roughness'].default_value=.78
-    ramp=nodes.new('ShaderNodeValToRGB')
-    base=shader.inputs['Base Color'].default_value
-    if mat == steel or mat == cap_mat:
-        ramp.color_ramp.elements[0].position=.08; ramp.color_ramp.elements[0].color=(.018,.023,.022,1)
-        ramp.color_ramp.elements[1].position=.53; ramp.color_ramp.elements[1].color=(.105,.12,.115,1)
-        oxide=ramp.color_ramp.elements.new(.79); oxide.color=(.38,.105,.025,1)
-        oxide_high=ramp.color_ramp.elements.new(.96); oxide_high.color=(.55,.22,.06,1)
-    elif mat == rust:
-        ramp.color_ramp.elements[0].position=.15; ramp.color_ramp.elements[0].color=(.095,.035,.016,1)
-        ramp.color_ramp.elements[1].position=.55; ramp.color_ramp.elements[1].color=(.32,.105,.035,1)
-        oxide=ramp.color_ramp.elements.new(.86); oxide.color=(.49,.19,.055,1)
-    else:
-        ramp.color_ramp.elements[0].position=.16; ramp.color_ramp.elements[0].color=(.09,.10,.09,1)
-        ramp.color_ramp.elements[1].position=.78; ramp.color_ramp.elements[1].color=(.30,.31,.27,1)
-    links.new(noise.outputs['Fac'],ramp.inputs['Fac']); links.new(ramp.outputs['Color'],shader.inputs['Base Color'])
+# The steel, rust, paint and cap were drawn through a noise node, which the exporter does not write: they arrived white.
+# Each keeps one plain base colour (the ash-grey paint takes the middle of its old two-colour noise), metal at .2 or
+# less, and the game draws the rust, runs and grain over them in code (SCABLANDS-LAND).
 
 root_obj = bpy.data.objects.new('everburn-root', None)
 bpy.context.collection.objects.link(root_obj)

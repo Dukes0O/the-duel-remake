@@ -47,20 +47,30 @@ try{
   check(!isCarUnlocked(app.profile,'falcone_sirena'),'maxing the fleet does not earn the Sirena: only the Lab restores it');
   check(!isCarUnlocked(app.profile,'nissan_skyline_gtr_r34'),'maxing the fleet does not earn the Skyline: only the Kogane story wins it');
   check(OWNABLE_CARS.every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
-  const bank=app.profile.credits;let airOnlyRefusals=0;
+  const bank=app.profile.credits;
   for(const car of OWNABLE_CARS)for(const [startStage,event]of COURSE.entries()){
     app.setRaceSettings({car,startStage,mode:'timetrial'});same(app.getRaceChoices().car,car,'all course changes preserve every owned car');same(app.getRaceChoices().startStage,startStage,'all vehicle changes preserve the course');
     same(new App().getRaceChoices(),app.getRaceChoices(),'per-player setup persists any owned vehicle/course pairing');
-    // Medal cars still start only at Tremblant Woods. The Jesko needs no flight.
-    const expectRefused=['ferrari_enzo','mclaren_f1','bugatti_bolide'].includes(car)&&event.id!=='tremblant-woods';
-    same(app._airOnlyRefused(car,event.id),expectRefused,`${car} at ${event.id}: air-only refusal only for the medal cars away from Tremblant Woods`);
-    if(expectRefused){airOnlyRefusals++;check(!app.startCampaign(),'an air-only car is refused away from where it sits');
-      check(app.courseAccessMessage.includes('travels only by air'),'the refusal says why');same(app.duel.state.status,'menu','a refused start stays on the menu');continue;}
+    same(app._airOnlyRefused(car,event.id),false,`${car} at ${event.id}: owned cars in this fleet can race anywhere`);
     check(app.startCampaign(),'saved pairing starts');same(app.duel.state.car,car,'raw simulation receives the chosen owned car');same(app.duel.state.stageIndex,startStage,'raw simulation receives the chosen course');
     same(app.duel.state.mode,event.practice||event.stuntTrial||['chase','drift','checkpoint'].includes(event.kind)?'duel':'timetrial','objective-only modes remain enforced without vehicle forcing');
     app.restart();same(app.duel.state.car,car,'restart preserves any chosen vehicle');same(app.duel.state.stageIndex,startStage,'restart preserves the course');app.returnToMenu();
   }
-  same(airOnlyRefusals,3*(COURSE.length-1),'the Enzo, the F1 and the Bolide each start on exactly one course, where they sit');
+  // The McMurtry still needs to be flown to every course away from its saved position.
+  app.profile.unlockedCars=[...app.profile.unlockedCars,'mcmurtry_speirling'];
+  app.profile.heli={...app.profile.heli,carsAt:{mcmurtry_speirling:'tremblant-woods'}};app._saveProfile();
+  for(const [startStage,event]of COURSE.entries()){
+    const refused=event.id!=='tremblant-woods';
+    same(app._airOnlyRefused('mcmurtry_speirling',event.id),refused,`McMurtry at ${event.id}: only its saved course permits entry`);
+    if(refused){
+      check(!app.startCampaign({car:'mcmurtry_speirling',startStage}),`McMurtry is refused at ${event.id}`);
+      same(app.courseAccessMessage,`The ${CARS.mcmurtry_speirling.name} travels only by air. Fly it here from the helipad first.`,'the refusal explains how to bring the car');
+      same(app.duel.state.status,'menu','a refused start stays on the menu');
+    }else{
+      check(app.startCampaign({car:'mcmurtry_speirling',startStage}),'McMurtry starts where it was set down');
+      same(app.duel.state.car,'mcmurtry_speirling','the race uses the McMurtry');app.returnToMenu();
+    }
+  }
   // An old helicopter position must not restrict any Jesko mode on any course.
   app.profile={...app.profile,heli:{...foundAll.heli,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
   check(app._switches().enabled('helicopter'),'the helicopter is on for the Jesko regression');

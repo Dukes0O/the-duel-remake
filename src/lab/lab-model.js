@@ -1,6 +1,6 @@
 // What the Lab screen shows and does, as plain data (docs/LAB.md sections 2 to 4). Pure: a profile and the switches go in,
 // rows, readouts and next profiles come out. src/lab/lab-view.js draws them; nothing here draws, plays or saves.
-import {LAB_LESSONS, lessonRows, lessonOpenState} from './lab-lessons.js';
+import {LAB_LESSONS, lessonRows, challengeOpenState} from './lab-lessons.js';
 import {labOf, passLesson, setRing, setCable} from './lab-save.js';
 import {LAB_UPGRADES, buyUpgrade} from './lab-shop.js';
 import {LAB_LINES} from './lab-lines.js';
@@ -122,7 +122,7 @@ export const goalMet = state => state.bench.goalMet(state.history);
 // {kind, state: 'locked'|'waiting'|'ready'|'passed', label, note}: waiting until the bench's goal is met.
 export function challengeState(lessonId, {profile, flags, met, helicopterOn = false}) {
   const kind = challengeKindOf(lessonId, flags) ?? 'bench'; // LAB-TUNE-VIEW
-  const open = lessonOpenState(profile, lessonId, flags);
+  const open = challengeOpenState(profile, lessonId, flags);
   const passed = labOf(profile).done[lessonId] === true;
   if (!open.open) return {kind, state: 'locked', label: '', note: open.note};
   const base = {kind, passed};

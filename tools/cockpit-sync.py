@@ -1,4 +1,4 @@
-"""Keep Kyle's Cockpit project "The Duel" in step with the board (AGENTS rule 18).
+"""Keep Kyle's Cockpit project "The Duel" in step with the board (AGENTS rule 20).
 
 Each Cockpit task names its board cards in its notes ("Board cards A, B.").
 This sets the task's status from those cards and never blocks a merge: a

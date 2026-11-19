@@ -7,7 +7,7 @@ const escape = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;
 export function doorBoardMarkup(rows) {
   return `<section class="lab-door-board"><h3>Plan your next discovery</h3><p>Walk to a machine and press E to try it.</p>${CORNERS.map(c =>
     `<h4>${c.name}</h4><ul>${machinePrompts(rows).filter(r => r.group === c.name).map(r =>
-      `<li><b>${r.state === 'passed' ? '✓ ' : ''}${escape(r.name)}</b><span>${r.state === 'locked' ? escape(r.note) : r.state === 'passed' ? 'Passed' : 'Open'}</span><small>Opens: ${escape(r.reward)}</small></li>`).join('')}</ul>`).join('')}</section>`;
+      `<li><b data-name>${r.state === 'passed' ? '✓ ' : ''}${escape(r.name)}</b><span>${r.state === 'locked' ? escape(r.note) : r.state === 'passed' ? 'Passed' : 'Open'}</span><small>Opens: <span data-name>${escape(r.reward)}</span></small></li>`).join('')}</ul>`).join('')}</section>`;
 }
 
 export function createWalkRoom({scene, camera, host, canvas, manifest, models, modelOf, ready, load, release, onUse}) {

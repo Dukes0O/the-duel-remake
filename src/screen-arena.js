@@ -4,7 +4,9 @@ import {teamTotal} from './arena/warlord-event.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
 import {EMBER_CAPTIONS} from './story/ember-lines.js';
-import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS, sideJobKey} from './world/jobs/everburn.js';
+import {EMBER_BATTLE_RESULTS, emberFeudSentence} from './story/ember-road.js';
+import {bellowsClosingLineId} from './world/jobs/bellows-rule.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
 
@@ -216,18 +218,42 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
-    const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
-    const next = won ? EVERBURN_JOBS[jobIndex + 1] : null;
-    const lineId = job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
-    const storyLine = lineId ? EMBER_CAPTIONS[lineId]?.text : null;
-    const description = won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
-      (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.');
+    if (arena.worldJob?.night2) return {eyebrow: 'FIVE COLD NIGHTS',
+      title: 'STRANGERS AT THE GATE', description: 'You left Night 2 unfinished.',
+      metrics: '', extra: '', actions: action('BACK TO THE YARD', 'arena-yard', true) + action('MAIN MENU', 'menu')};
+    const storyIndex = EVERBURN_JOBS.findIndex(item => item.id === job?.id);
+    // Only an authored Everburn chapter can follow a rider fight.
+    const jobIndex = arena.worldJob?.riderFight ? storyIndex : Math.max(0,storyIndex);
+    // A notice-board job has no next job: it ends at BACK TO THE YARD.
+    const candidate = won && jobIndex >= 0 && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;
+    const next = candidate && REMADE_EVERBURN_JOBS.includes(candidate.id) ? candidate : null;
+    const awaitingRemake = won && candidate && !next && REMADE_EVERBURN_JOBS.includes(job?.id);
+    // RUN-GAS: a gas run says where the Ash Men stand now, and how many runs have arrived.
+    const run = job?.run === true && won ? result.gasRun : null;
+    const bellows = arena.worldJob?.bellowsResult;
+    const lineId = bellows ? bellowsClosingLineId(bellows.bellows) : job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
+    const storyLine = lineId ? (job?.captions?.[lineId] ?? EMBER_CAPTIONS[lineId]?.text) : null;
+    // FIELD-BATTLE-ASH: the battle's result says in one sentence which ending it was.
+    const riderOutcome = result.reason === 'rider-fight-lost' && arena.worldJob?.job?.storyMarks?.riderFight?.outcome;
+    const riderLine = riderOutcome && (job?.riderResultLines?.[riderOutcome] ||
+      (riderOutcome === 'surrounded' ? 'The riders held your car on all four sides.' : 'The riders wrecked their target.'));
+    const description = run ? (run.battle ? EMBER_BATTLE_RESULTS[run.battle] : `Big Bess is in Tin Town. ${emberFeudSentence(run.feud)}`) : won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
+      (riderLine || (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.'));
+    // EVERBURN-REMAKE: Hot Delivery says in one plain sentence how the ember arrived.
+    const emberSentence = won ? arena.worldJob?.emberResult?.sentence : null;
+    const bellowsSentence = won ? arena.worldJob?.bellowsResult?.sentence : null;
+    const gasSentence = won ? arena.worldJob?.gasResult?.sentence : null;
+    const brandSentence = won ? arena.worldJob?.brandResult?.sentence : null;
+    // EVERBURN-PLAY-FIXES: the story lines said as the job was decided, in order, "Who: words", above the result line. A line the result
+    // line already shows is not said twice.
+    const closing = won ? [...new Set((arena.worldJob?.endLines ?? []).filter(line => line.lineId !== lineId &&
+      !(EMBER_CAPTIONS[line.lineId]?.text && description.includes(EMBER_CAPTIONS[line.lineId].text))).map(line => line.text))] : [];
     const rewards = won && result.settlementSaved ? metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`, true) : '';
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
-    return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description,
-      metrics: rewards + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
-      extra: '', actions: won ? (next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : action('BACK TO THE YARD', 'arena-yard', true)) +
-        action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu') :
+    return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description: `${description}${emberSentence ? ` ${emberSentence}` : ''}${brandSentence ? ` ${brandSentence}` : ''}${bellowsSentence ? ` ${bellowsSentence}` : ''}${gasSentence ? ` ${gasSentence}` : ''}${awaitingRemake ? ' The next job is being made.' : ''}`, closing,
+      metrics: rewards + (run ? metric('THE ASH MEN', escapeHTML(String(run.word).toUpperCase())) + metric('GAS RUNS', String(run.runs)) : '') + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
+      extra: '', actions: won ? (job?.run === true ? action('DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : '') +
+        action('BACK TO THE YARD', 'arena-yard', !next && job?.run !== true) + (awaitingRemake ? '' : action('MAIN MENU', 'menu')) :
         action('TRY AGAIN', 'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
   }
   if (arena.mode === 'ambush-alley') {
@@ -297,7 +323,18 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
       action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
 }
 
-export function arenaPauseScreen(state, {metric, action, time}) {
+export function arenaPauseScreen(state, {metric, action, time, escapeHTML = String}) {
+  // A world job (the Everburn's jobs, the gas runs, the battle, the notice-board jobs) has no fight to put on hold: the card names the job and
+  // what it asks, shows the time spent on it, and offers BACK TO THE JOB, START AGAIN (the action TRY AGAIN uses on the results screen) and the yard.
+  if (state.arena?.mode === 'world-job') {
+    const worldJob = state.arena.worldJob, step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+    const name = worldJob?.definition?.name ?? 'The job';
+    const place = worldJob?.definition?.id === 'everburn-hot-delivery' ? ', the Scablands' : '';
+    return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',
+      description: escapeHTML(step?.what ? `${name}${place}. ${step.what}` : `${name}${place}.`),
+      metrics: metric('TIME ON THE JOB', time(Math.max(0, state.stageTimeSec ?? 0)), true),
+      extra: '', actions: action('BACK TO THE JOB', 'resume', true) + (worldJob?.night2 ? '' : action('START AGAIN', 'world-job-retry')) + action('BACK TO THE YARD', 'arena-yard')};
+  }
   const hud = arenaHud(state);
   if (!hud) return null;
   return {eyebrow: 'SCRAPDOME / PAUSED', title: 'FIGHT<br>ON HOLD.',

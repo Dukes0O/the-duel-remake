@@ -1,4 +1,5 @@
 // Cue data is the single home for assets, routing and authored sound recipes.
+import {BRAND_RULE} from './world/jobs/brand-rule.js';
 import {FIGHT_VOICE_LINES} from './fight-voices.js';
 import {HELI_CUES} from './heli/heli-audio.js';
 import {DRIVE_LESSON_CUES} from './lessons/drive-radio-lines.js';
@@ -41,7 +42,26 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   volume,
   type,
 });
+// The Dig's short machine sounds share their recipes with the players that synthesize them.
+export const DIG_MACHINE_TONES = Object.freeze({
+  'drill-engine':[75, 'sawtooth', 0.18], 'drill-feed':[135, 'sawtooth', 0.12],
+  'drill-clay':[190, 'triangle', 0.1], 'drill-gravel':[310, 'square', 0.07],
+  'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
+  'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
+  'dozer-blade':[110, 'sawtooth', 0.18], 'roller-ground':[75, 'triangle', 0.18],
+  'paver-surface':[165, 'square', 0.18],
+  'borer.stall':[85, 'square', 0.4], 'borer.call':[260, 'triangle', 0.6],
+  'borer.refuse':[180, 'triangle', 0.25], 'borer.breakthrough':[460, 'triangle', 0.45],
+  'borer.daylight':[360, 'triangle', 0.8],
+});
+
 export const SOUND_BANK = {
+  'story.ledger.open': cue('interface', {flag: 'story-choices', volume: .18, limit: 1,
+    layers: [{...noise(2000, .18, .35), endFrequency: 650, attack: .03}, noise(780, .06, .15, 'highpass')]}),
+  'story.ledger.choose': cue('interface', {flag: 'story-choices', volume: .16, limit: 1,
+    layers: [noise(970, .09, .22), tone(180, .075, .08)]}),
+  ...Object.fromEntries(Object.entries(DIG_MACHINE_TONES).map(([name, [frequency, type, duration]]) =>
+    [name, cue('vehicle', {flag: 'the-dig', layers: [tone(frequency, duration, 0.06, type)]})])),
   // The Deep adapter lazy-loads these only during a submerged visit.
   // The helicopter (docs/HELICOPTER.md): radio lines, rotor and cable sounds, behind its switch.
   ...HELI_CUES,
@@ -59,13 +79,13 @@ export const SOUND_BANK = {
   'deep.cave': cue('ambience', {flag: 'the-deep', file: 'deep/cave.ogg', volume: .4, loop: true, priority: 30, limit: 1}),
   // DEEP-GO-LIVE: quiet story sounds, synthesized by the Deep adapter.
   // MACHINE-VIEW: machines reuse the bank's own recipes: a low diesel, a hiss of oil, earth and a load sliding.
-  'machine.engine': cue('vehicle', {flag: 'wasteland-town', volume: .3, limit: 1,
+  'machine.engine': cue('vehicle', {flag: 'the-dig', volume: .3, limit: 1,
     layers: [noise(150, .75, .5, 'lowpass'), tone(52, .75, .35, 'sawtooth')]}),
-  'machine.hydraulic': cue('vehicle', {flag: 'wasteland-town', volume: .14, limit: 1,
+  'machine.hydraulic': cue('vehicle', {flag: 'the-dig', volume: .14, limit: 1,
     layers: [{...noise(1500, .7, .4), endFrequency: 1900, attack: .08}, tone(115, .7, .18, 'triangle', 0, 135)]}),
-  'machine.dig': cue('impacts', {flag: 'wasteland-town', volume: .28, limit: 2,
+  'machine.dig': cue('impacts', {flag: 'the-dig', volume: .28, limit: 2,
     layers: [noise(340, .24, .5, 'lowpass'), tone(70, .16, .3, 'triangle', 0, 42)]}),
-  'machine.tip': cue('impacts', {flag: 'wasteland-town', volume: .32, limit: 1,
+  'machine.tip': cue('impacts', {flag: 'the-dig', volume: .32, limit: 1,
     layers: [{...noise(380, 1.5, .7, 'lowpass'), endFrequency: 110, attack: .15}]}),
   'deep.sonar': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
     layers: [tone(960, .4, .6), tone(960, .55, .18, 'sine', .28)]}),
@@ -392,6 +412,10 @@ export const SOUND_BANK = {
     cutoff: 4200,
     loop: true,
   }),
+  'ambience.scablands': cue('ambience', {
+    flag: 'story-everburn', biome: 'scablands', gain: .2, loop: true,
+    layers: [noise(330, 2, .65, 'lowpass'), noise(1700, 2, .18, 'bandpass')],
+  }),
   'ambience.kogane': cue('ambience', {flag: 'kogane-pass', biome: 'kogane',
     file: 'ambience-kogane.flac', gain: .14, cutoff: 7000, loop: true,
     nightBiome: 'kogane-night', nightFrom: .55}),
@@ -605,6 +629,83 @@ export const SOUND_BANK = {
       tone(184, 0.55, 0.06, 'square', 0.06, 370),
     ],
   }),
+  'town.gate.bell': cue('interface', {flag: 'story-choices', volume: .47, limit: 1,
+    layers: [tone(496, 1.2, .6, 'sine'), tone(1197, .56, .22, 'triangle'), tone(1746, .26, .14, 'sine')]}),
+  'night.whistle': cue('interface', {flag: 'story-choices', volume: .33, limit: 1,
+    layers: [tone(1870, .27, .64, 'sine', 0, 1490), tone(1510, .21, .46, 'sine', .29, 1850)]}),
+  'luck.kind': cue('interface', {flag: 'story-choices', volume: .13, limit: 1,
+    layers: [tone(392, .16, .54, 'triangle'), tone(523, .2, .56, 'sine', .10)]}),
+  'luck.unkind': cue('interface', {flag: 'story-choices', volume: .13, limit: 1,
+    layers: [tone(392, .16, .54, 'triangle'), tone(277, .2, .56, 'sine', .10)]}),
+  'story.talk.line': cue('interface', {flag: 'story-choices', volume: .32, limit: 1,
+    layers: [tone(760, .035, .22, 'triangle', 0, 500)]}),
+  'story.thought': cue('interface', {flag: 'story-choices', volume: .22, limit: 1,
+    layers: [tone(590, .065, .18, 'sine', 0, 460)]}),
+  'story.talk.choose': cue('interface', {flag: 'story-choices', volume: .42, limit: 1,
+    layers: [noise(2800, .12, .36, 'highpass'), tone(780, .075, .1, 'triangle', .015, 290)]}),
+  // EVERBURN-REMAKE: Cinder's open pot. A spark thrown off by a jolt, the ember going out, a fresh scoop at a brazier.
+  // Made in code like the machine cues; the world job plays them through the arena tell event.
+  'world.ember.spark': cue('impacts', {priority: 60, limit: 2, volume: .5,
+    layers: [noise(2600, .16, .5, 'highpass'), tone(1400, .1, .15, 'triangle', 0, 900)]}),
+  'world.ember.out': cue('impacts', {priority: 78, limit: 1, volume: .6,
+    layers: [{...noise(900, .9, .6, 'lowpass'), endFrequency: 200, attack: .02}, tone(180, .7, .25, 'sine', 0, 70)]}),
+  // SCABLANDS-LAND round 4, slice 2a: the sound of driving on to a new ground in the Scablands (src/world/scablands-regions.js names one
+  // cue for each ground; src/audio.js plays it when the car's ground changes, scaled by its speed). Nothing new is recorded: the rough
+  // grounds reuse the recorded crashes and the muddy hollow's mud, and the others are the same kind of filtered noise the crush and the
+  // landing are made of.
+  'world.ground.road': cue('vehicle', {filter: ['lowpass', 900], duration: .2, tail: .25, noiseVolume: .14, priority: 40, limit: 2, layers: [tone(82, .2, .05, 'sine', 0, 60)]}),
+  'world.ground.flats': cue('vehicle', {filter: ['bandpass', 720], duration: .22, tail: .26, noiseVolume: .18, priority: 40, limit: 2, layers: [tone(145, .18, .04, 'triangle', 0, 80)]}),
+  'world.ground.salt-pan': cue('vehicle', {filter: ['highpass', 1800], duration: .3, tail: .3, noiseVolume: .12, priority: 40, limit: 2, layers: [tone(1400, .12, .02, 'triangle', 0, 900)]}),
+  'world.fence.snap': cue('impacts', {buffersFrom: 'vehicle.crash.recorded', volume: .45, priority: 40, limit: 2, farCutoff: 300, layers: [tone(180, .12, .08, 'triangle', 0, 80)]}),
+  'world.ground.river-bed': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 1.1, priority: 52, limit: 2, layers: [tone(110, .2, .05, 'sine', 0, 70)]}),
+  'world.ground.river-soft': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 2, priority: 60, limit: 2, layers: [tone(90, .3, .08, 'sine', 0, 45)]}),
+  'world.ground.sand': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 1.3, priority: 52, limit: 2, layers: [tone(100, .25, .06, 'sine', 0, 60)]}),
+  'world.ground.wreck-fields': cue('vehicle', {filter: ['bandpass', 2400], duration: .18, tail: .2, noiseVolume: .2, priority: 45, limit: 2, layers: [tone(1100, .1, .04, 'square', 0, 500)]}),
+  'world.ground.burn': cue('vehicle', {filter: ['lowpass', 500], duration: .3, tail: .35, noiseVolume: .2, priority: 45, limit: 2, layers: [tone(60, .3, .08, 'sine', 0, 40)]}),
+  'world.ember.scoop': cue('interface', {priority: 70, limit: 1, volume: .5,
+    layers: [{...noise(500, .5, .5, 'lowpass'), endFrequency: 1800, attack: .3}, tone(220, .5, .2, 'triangle', .05, 440)]}),
+  'world.ashmen.horn': cue('impacts', {flag: 'story-everburn', priority: 85, limit: 1, volume: .6,
+    layers: [tone(165, .7, .35, 'sawtooth', 0, 158), tone(247, .7, .2, 'triangle', 0, 237)]}),
+  'world.furnace.horn': cue('impacts', {priority: 85, limit: 1, volume: .6,
+    layers: [tone(110, 1.4, .35, 'sawtooth', 0, 105), tone(165, 1.4, .2, 'triangle', 0, 158)]}),
+  'world.salt.horn': cue('impacts', {flag:'story-everburn', priority:85, limit:1, volume:.6,
+    layers:[tone(145, .9, .35, 'sawtooth', 0, 138), tone(217, .9, .2, 'triangle', 0, 207)]}),
+  'world.bridge.ash': cue('impacts', {flag:'story-everburn', priority:70, limit:1, volume:.5,
+    layers:[noise(800, 1.8, .3, 'lowpass'), tone(70, .4, .1, 'triangle', 0, 40)]}),
+  'world.gas.flash': cue('impacts', {flag:'story-everburn', priority:80, limit:1, volume:.6,
+    layers:[noise(900, .35, .5, 'lowpass'), tone(80, .2, .2, 'sawtooth', 0, 40)]}),
+  'world.bess.plug': cue('impacts', {flag:'story-everburn', priority:70, limit:1, volume:.5,
+    layers:[noise(700, .22, .3, 'lowpass'), tone(180, .12, .2, 'triangle', 0, 90)]}),
+  'world.bess.leak': cue('impacts', {flag:'story-everburn', priority:70, limit:3, volume:.5,
+    layers:[noise(2400, .6, .35, 'highpass'), tone(160, .12, .15, 'triangle', 0, 80)]}),
+  'world.tintown.gate': cue('impacts', {priority: 70, limit: 1, volume: .5,
+    layers: [{...noise(400, 1, .3, 'lowpass'), endFrequency:180}, tone(90, 1, .15, 'triangle', 0, 55)]}),
+  'world.forge.catch': cue('impacts', {priority: 75, limit: 1, volume: .5,
+    layers: [{...noise(600, 1.2, .4, 'lowpass'), endFrequency:1800, attack:.25}, tone(180, .9, .12, 'triangle', .1, 300)]}),
+  // Light the Town reuses the bank's filtered-noise and oscillator recipes.
+  'world.lamp.lighting': cue('impacts', {priority: 60, limit: 1, volume: .18,
+    layers: [{...noise(450, BRAND_RULE.lampSeconds, .25, 'lowpass'),
+      rise: {endFrequency: 1800, seconds: BRAND_RULE.lampSeconds * .9}}]}),
+  'world.brand.catch': cue('impacts', {priority: 70, limit: 2, volume: .5,
+    layers: [{...noise(600, .5, .4, 'lowpass'), endFrequency: 1800, attack: .12}, tone(220, .4, .12, 'triangle', .05, 440)]}),
+  'world.brand.out': cue('impacts', {priority: 78, limit: 1, volume: .6,
+    layers: [{...noise(900, .6, .6, 'lowpass'), endFrequency: 200, attack: .02}, tone(180, .5, .2, 'sine', 0, 70)]}),
+  'rider.breaks-off': cue('vehicle', {flag:'road-riders', priority: 60, limit: 2, volume: .5,
+    layers: [tone(118, .55, .24, 'sawtooth', 0, 48), tone(62, .68, .17, 'triangle', .04, 32)]}),
+  'rider.crew-bail': cue('vehicle', {flag:'road-riders', priority: 65, limit: 2, volume: .44,
+    layers: [noise(850, .17, .35, 'bandpass'), tone(100, .16, .2, 'triangle', .08, 48)]}),
+  'rider.won': cue('interface', {flag:'road-riders', priority: 75, limit: 1, volume: .42,
+    layers: [tone(196, .27, .25, 'triangle'), tone(294, .48, .23, 'triangle', .17)]}),
+  'rider.surrounded': cue('interface', {flag:'road-riders', priority: 80, limit: 1, volume: .5,
+    layers: [tone(123, .5, .28, 'triangle', 0, 72), tone(59, .67, .25, 'sine', .11, 46)]}),
+  'world.ash.throw': cue('impacts', {priority: 70, limit: 2, volume: .5,
+    layers: [{...noise(1800, .6, .45, 'bandpass'), endFrequency: 500, attack: .05}]}),
+  'world.town.wake': cue('impacts', {priority: 75, limit: 1, volume: .5,
+    layers: [{...noise(600, 1.2, .4, 'lowpass'), endFrequency: 1800, attack: .25}, tone(180, .9, .12, 'triangle', .1, 300)]}),
+  'world.thief.ash': cue('impacts', {priority: 70, limit: 2, volume: .5,
+    layers: [{...noise(1800, .8, .45, 'bandpass'), endFrequency: 350, attack: .05}]}),
+  'world.bellows.load': cue('impacts', {priority: 75, limit: 1, volume: .5,
+    layers: [noise(450, .2, .35, 'lowpass'), tone(110, .25, .2, 'triangle', .05, 75)]}),
   'arena.toll-gate': cue('impacts', {
     priority: 85,
     limit: 1,

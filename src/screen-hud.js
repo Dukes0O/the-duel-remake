@@ -1,3 +1,5 @@
+import {createCaptionQueue} from './story/caption-queue.js';
+import {worldJobMapRoad} from './route-map.js';
 import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
@@ -112,15 +114,56 @@ export function speedGearPresentation(s) {
 }
 export function presentJumpHeight(readout, s, app, ui, text) {
   const jumpHeight=readout.update(s,app.duel.course);
-  ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden';
+  ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden'||s.arena?.mode==='world-job';
   ui['jump-height-panel'].dataset.phase=jumpHeight.phase;
   text('jump-height-label',jumpHeight.phase==='landed'?'JUMP PEAK':'HEIGHT ABOVE GROUND');
   text('jump-height-value',(jumpHeight.phase==='landed'?jumpHeight.peakMeters:jumpHeight.heightMeters).toFixed(1));
   text('jump-height-peak',jumpHeight.phase==='landed'?'LANDED':`PEAK ${jumpHeight.peakMeters.toFixed(1)} m`);
   text('jump-distance',`DISTANCE ${(jumpHeight.distanceMeters||0).toFixed(1)} m · ${(jumpHeight.durationSeconds||0).toFixed(1)} s`);
 }
+// EVERBURN-PLAY-FIXES, third round: in a world job the crash message (and its kicker) shows only while the car is wrecked and
+// recovering or the crash is the catastrophic one. A plain collision shows nothing there and does not pause or cut the caption.
+const walkingFromWash = state => state.onFoot && state.arena?.worldJob?.night2?.washCarUnavailable === true;
+const jobCrashShown = s => !walkingFromWash(s) && (s.crashFlash > 0 || s.impactTimer > 0) &&
+  (s.combatWrecking === true || s.catastrophic === true);
+export function worldReturnNotice(state) {
+  if (state.arena?.mode !== 'world-job' || walkingFromWash(state)) return '';
+  const job = state.arena.worldJob?.job;
+  if (state.onFoot && state.fighter?.knockedDown) {
+    return job?.stepState?.brandKnockdown && job.stepState.returnNotice
+      ? job.stepState.returnNotice.text : 'Down. Getting up by your car.';
+  }
+  if (state.combatWrecking) return 'Wrecked. Open ground in ' + Math.ceil(state.combatWreckTimer) + ' s.';
+  return job?.stepState?.returnNotice?.text ?? '';
+}
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
+  const positionPanel=ui['race-position'].closest?.('.race-position');
+  const clockPanel=ui['race-time'].closest?.('.race-clock');
+  const mapHeading=ui['route-section'].closest?.('.route-hud')?.querySelector('.route-hud-top .field-label');
+  let lastWorldJob=false, lastJobHeading='CIRCUIT / LIVE';
+  const captions = createCaptionQueue();
+  let captionJob = null;
+  app.duel.onStoryCaption = (line, urgent, state, fixedTime) => {
+    const job = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+    if (!job) return;
+    if (job !== captionJob) { captions.clear(state.stageTimeSec); captionJob = job; }
+    captions.add(line, urgent, state.stageTimeSec, fixedTime, jobCrashShown(state) || !!worldReturnNotice(state));
+  };
   function updateHud(s) {
+    const worldJob=s.arena?.mode==='world-job';
+    if (clockPanel) clockPanel.hidden=worldJob;
+    const jobRoad=worldJob ? worldJobMapRoad(s) : null;
+    if (!worldJob || s.arena.worldJob.job?.done || !['countdown', 'racing'].includes(s.status)) { captions.clear(s.stageTimeSec); captionJob = null; }
+    const returnNotice = worldReturnNotice(s);
+    const storyCaption = worldJob ? captions.advance(s.stageTimeSec, jobCrashShown(s) || !!returnNotice) : '';
+    if(worldJob!==lastWorldJob) {
+      if(positionPanel && positionPanel.hidden!==worldJob) positionPanel.hidden=worldJob;
+      lastWorldJob=worldJob;
+    }
+    if(worldJob || lastJobHeading!=='CIRCUIT / LIVE') {
+      const heading=worldJob ? (s.arena.worldJob.definition?.name ?? 'WORLD JOB').toUpperCase() : 'CIRCUIT / LIVE';
+      if(heading!==lastJobHeading) { if(mapHeading) mapHeading.textContent=heading; lastJobHeading=heading; }
+    }
     // Controls are shown only on request (the H key), never by themselves.
     const helpShown = app.helpVisible === true && !s.paused &&
       ['racing', 'countdown', 'exploring'].includes(s.status);
@@ -162,7 +205,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const drift=s.objective?.kind==='driftTrial',rush=s.objective?.kind==='checkpointRush';
     ui['drift-panel'].hidden=!drift;
     ui['checkpoint-panel'].hidden=!rush;
-    ui['style-score-panel'].hidden=drift||rush;
+    ui['style-score-panel'].hidden=worldJob||drift||rush;
     if(rush){
       const gates=s.checkpointRush,notice=app.checkpointNotice,left=Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0));
       text('checkpoint-passed',`${gates.passed} / ${gates.total}`);
@@ -214,7 +257,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     if(opponents.length<=1&&ui['rival-legend'].lastChild)ui['rival-legend'].lastChild.textContent=' RIVAL';
     if(opponents.length)text('position-total',`/${String(opponents.length+1).padStart(2,'0')}`);
     ui['position-total'].hidden=!s.rival;
-    ui['rival-legend'].hidden=!s.rival;
+    const hideRival=!s.rival || !!jobRoad;
+    if(ui['rival-legend'].hidden!==hideRival) ui['rival-legend'].hidden=hideRival;
     presentField(ui,text,s);
     const hits=s.combat?s.majorCrashes||0:Math.max(0,LIVES.start-s.lives),limit=s.combat?DRIVE.majorCrashLimit:LIVES.start,persistent=!!app.duel.stageDef.persistentVehicle;
     const armored=s.mode==='wasteland'&&!!s.combat&&wastelandRulesActive(s)&&Number.isFinite(s.armor)&&Number.isFinite(s.maxArmor);
@@ -239,18 +283,26 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('countdown-number',Math.max(1,Math.ceil(s.countdown)));
       text('countdown-word',s.countdown>1?'GET READY':'MAKE IT COUNT');
     }
-    const crash=s.crashFlash>0||s.impactTimer>0;
-    ui['crash-flash'].hidden=!crash;
+    const crashFlashing=!walkingFromWash(s)&&(s.crashFlash>0||s.impactTimer>0);
+    // In a world job only a wreck (the car recovering) or the catastrophic crash takes the caption's place; a bump shows nothing here.
+    const crash=worldJob?jobCrashShown(s):crashFlashing;
+    ui['crash-flash'].hidden=!crashFlashing;
     const dirtCourse=!!app.duel.stageDef.offroad||!!app.duel.stageDef.arena;
     const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
     // DEEP-RAMP-2: the concrete ramp has its own calm guidance, not a loose-surface warning.
     const boatRamp=!!app.duel.course.deepRamp&&!!app.duel.course.surfaceAt(s.s,s.lateral).deepRamp;
-    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
-    ui['race-callout'].hidden=!callout||!!s.paused;
-    text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
-    text('callout-text',callout);
+    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):worldJob?storyCaption:s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
+    ui['race-callout'].hidden=!callout||(!!s.paused && !(worldJob && app.worldMapOpen));
+    text('callout-kicker',worldJob&&!crash?'':s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
+    if (returnNotice) {
+      ui['race-callout'].hidden = !!s.paused;
+      text('callout-kicker','');
+    }
+    text('callout-text',returnNotice || callout);
     ui['race-callout'].classList.toggle('crash-callout',crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
+    // A world job moves the spoken-line subtitle below the story caption, off the rear-view mirror (src/combat-hud.css).
+    ui.stage.classList.toggle('is-world-job',worldJob);
     ui['arena-crush'].hidden=!app.duel.stageDef.arena||!!s.arena;
     const crushed=Math.max(0,Math.floor(s.crushCount||0));
     text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);
@@ -297,17 +349,17 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('race-time',arena.ambush && arena.remainingSec === 0 ? `${arena.fortHealth} / 300` : arena.fuel && arena.phase==='sudden-death' ? 'NEXT DELIVERY' : time(arena.remainingSec));
       text('penalty-time','');
       text('lap-number',arena.modeLabel);
-      text('lap-time',arena.scoreText);
+      text('lap-time',worldJob ? '' : arena.scoreText);
       text('stage-label',arena.worldJob ? `${arena.modeLabel.toUpperCase()} · STEP ${s.arena.worldJob.job.stepIndex+1}` : `${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
-      text('stage-objective',arena.worldJob ? arena.scoreText : arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
+      text('stage-objective',arena.worldJob ? '' : arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
         'FIRST TO THREE WRECKS' : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
           arena.fuel ? `BRING FUEL TO YOUR ${arena.fuelColorName ?? 'MATCHING'} DEPOT` : 'WRECK THEM MORE THAN THEY WRECK YOU');
       // The objective line takes the colour of the player's own depot.
       ui['stage-objective'].style.color=arena.fuel&&arena.fuelColor?arena.fuelColor:'';
       text('route-percent','');
-      text('route-remaining',arena.scoreText);
-      text('route-lap','ARENA');
-      text('route-section',arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
+      text('route-remaining',worldJob ? '' : arena.scoreText);
+      text('route-lap',worldJob ? '' : 'ARENA');
+      text('route-section',worldJob ? (s.arena.worldJob.definition?.road ? `${s.arena.worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS') : 'THE SCRAPDOME');
       ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
       text('race-position',String(arena.place).padStart(2,'0'));
       text('position-total',`/${String(arena.field).padStart(2,'0')}`);
@@ -327,6 +379,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       }
       if(s.status==='countdown')text('countdown-word',arena.worldJob ? 'THE SCABLANDS' : s.countdown>1?'SCRAPDOME':arena.bounty?'HUNT THE BEACON':arena.fuel?'BRING IT HOME':'WRECK THEM');
     }
+    if(worldJob && ui['callout-kicker'].textContent==='KEEP YOUR LINE') text('callout-kicker','');
   }
   return updateHud;
 }

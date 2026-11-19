@@ -71,7 +71,7 @@ function practiceSymbol(ctx,kind,x,y,color,size=5){
 }
 export function drawPracticeMarkers(ctx,map){
   if(!map.practiceMarkers)return;
-  ctx.save();ctx.font='bold 11px Segoe UI, sans-serif';ctx.textAlign='right';ctx.fillStyle='#ffce75';ctx.fillText('DRAG STRIP 4 KM →',map.width-10,18);ctx.restore();
+  ctx.save();ctx.font='bold 11px Segoe UI, sans-serif';ctx.textAlign='right';ctx.fillStyle='#ffce75';ctx.fillText('DRAG STRIP 4 KM â†’',map.width-10,18);ctx.restore();
   for(const feature of map.practiceMarkers){const style=PRACTICE_MAP_LEGEND.find(item=>item.kind===feature.kind);practiceSymbol(ctx,feature.kind,feature.marker.x,feature.marker.y,style.color);}
   ctx.save();ctx.font='10px Segoe UI, sans-serif';ctx.textAlign='left';
   for(const [i,item]of PRACTICE_MAP_LEGEND.entries()){const x=9+i*(map.width-12)/4,y=map.height-11;practiceSymbol(ctx,item.kind,x+4,y,item.color,3.5);ctx.fillStyle=item.color;ctx.fillText(item.label,x+12,y+3);}
@@ -82,6 +82,67 @@ export function routeActorPose(course,geometry,actor,out={}){
 }
 function makePath(points){const path=new Path2D();for(let i=0;i<points.length;i+=2)i?path.lineTo(points[i],points[i+1]):path.moveTo(points[i],points[i+1]);return path;}
 function stroke(ctx,path,color,width,dash=[]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke(path);ctx.setLineDash([]);}
+
+// Cache the current step's map data without changing simulation state.
+const jobRoadCache = new WeakMap();
+const placeName = place => String(place?.name ?? place?.id ?? '').replace(/-/g, ' ').toUpperCase();
+const pointOf = place => place?.position ?? place;
+const validPlace = place => Number.isFinite(pointOf(place)?.x) && Number.isFinite(pointOf(place)?.z);
+const namedPlace = (place, fallback) => ({position: pointOf(place), name: placeName(place) || fallback});
+export function worldJobMapRoad(state) {
+  const worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+  if (!worldJob) return null;
+  const step = worldJob.job?.steps?.[worldJob.job.stepIndex];
+  if (!step) return {path: [], places: [], margin: 120};
+  const sources = [step.path, step.origin, step.safePoints, step.destination, step.returnPath,
+    step.place, step.places, step.zone, step.carPlace, step.escapePlace, step.people, step.home, step.finds];
+  const cached = jobRoadCache.get(step);
+  if (cached && sources.every((source, index) => source === cached.sources[index])) return cached;
+  const path = Array.isArray(step.path) && step.path.length >= 2 && step.path.every(validPlace) ? step.path :
+    validPlace(step.origin) && validPlace(step.destination) && (step.safePoints ?? []).every(validPlace) ?
+      [step.origin, ...(step.safePoints ?? []), step.destination] :
+    Array.isArray(step.returnPath) && step.returnPath.length >= 2 && step.returnPath.every(validPlace) ? step.returnPath : null;
+  // A rescue's people and home and an exploration's finds are places too (the notice-board jobs; they have no road).
+  const places = path ? [] : [step.place, ...(step.places ?? []), step.zone, step.carPlace, step.escapePlace, ...(step.people ?? []), step.home, ...(step.finds ?? [])]
+    .filter(validPlace).map((place, index) => namedPlace(place, `PLACE ${index + 1}`));
+  const namedPath = path?.map((place, index) => namedPlace(place, index === 0 ? 'START' : 'DESTINATION')) ?? places;
+  const mainPlace = step.place ?? step.zone ?? step.places?.[0] ?? step.carPlace ?? step.escapePlace;
+  const last = path?.at(-1), target = pointOf(step.destination), end = pointOf(last);
+  const destination = path && validPlace(step.destination) && target.x === end.x && target.z === end.z ?
+    namedPlace(step.destination, 'DESTINATION') : !path && validPlace(mainPlace) ?
+      namedPlace(mainPlace, 'PLACE') : namedPath.at(-1);
+  const road = {sources, path: namedPath.map(place => place.position), places,
+    start: namedPath[0] ?? null, destination: destination ?? null, margin: path ? 0 : 120};
+  jobRoadCache.set(step, road);
+  return road;
+}
+
+// A read-only view of the current job: its ground, its places and the marks of the actors on it (the escorted truck, the furnace,
+// riders). The Scablands' maps (src/world/scablands-map.js, drawn from src/world/scablands-picture.js) read the marks; the job's
+// own road is not drawn on them (SCABLANDS-LAND round 4, slice 4).
+export function worldJobMapData(course, state) {
+  const road = worldJobMapRoad(state);
+  if (!road) return null;
+  const worldJob = state.arena.worldJob, step = worldJob.job?.steps?.[worldJob.job.stepIndex];
+  const actors = worldJob.actors ?? [];
+  const player = state.onFoot && state.fighter ? state.fighter : course.worldAt(state.s, state.lateral || 0);
+  const fallback = {position: player, name: 'CURRENT POSITION'};
+  const marks = [{kind: 'player', position: player}];
+  const defenders = new Set(Object.values(worldJob.waveZones ?? {}).flatMap(zone => zone.raiders ?? []));
+  for (const actor of actors) {
+    const position = actor.position ?? (Number.isFinite(actor.x) && Number.isFinite(actor.z) ? {x: actor.x, z: actor.z} : null);
+    if (!Number.isFinite(position?.x) || !Number.isFinite(position?.z)) continue;
+    if (actor.id === step?.actorId && step?.actor?.escort) marks.push({kind: 'escort', position});
+    else if (actor.furnace) marks.push({kind: 'hunter', position});
+    else if (step?.gasLoad && step.gasRaiders?.some(def => def.id === actor.id) && actor.health > 0 && !actor.gasDrivenOff || actor.ambushKey || actor.id === step?.scout?.id && worldJob.job.stepState.scoutWarned ||
+      step?.kind === 'defend' && defenders.has(actor)) marks.push({kind: 'rider', position});
+  }
+  return {path: road.path.length ? road.path : [player], start: road.start ?? fallback,
+    destination: road.destination ?? fallback, places: road.places, margin: road.margin, marks,
+    jobName: (worldJob.definition?.name ?? 'WORLD JOB').toUpperCase(),
+    roadName: worldJob.definition?.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS'};
+}
+
 
 export class RouteMap {
   constructor(canvas,{getDiscovery=()=>null}={}){this.getDiscovery=getDiscovery;this.discoveryKey=null;this.canvas=canvas;this.context=canvas.getContext('2d');this.cache=new WeakMap();this.course=null;this.current=null;this.lastDraw=-Infinity;this.pose={};this.lastLabel='';}
@@ -103,6 +164,10 @@ export class RouteMap {
   }
   update(course,state,now=performance.now()){
     if(!this.context||!course?.samples?.length)return;
+    // In a job in the Scablands the circuit panel is not shown: the Scablands' own map (src/world/world-hud.js) is drawn instead, and
+    // nothing is drawn here. When the job ends the circuit map is drawn afresh.
+    if (state.arena?.mode === 'world-job') { this.showingJob = true; return; }
+    if (this.showingJob) { this.showingJob = false; this.course = null; }
     const discovery=this.getDiscovery(),discoveryKey=hiddenRoadMapKey(discovery);
     const changed=discoveryKey!==this.discoveryKey||course!==this.course||this.current?.width!==this.canvas.width||this.current?.height!==this.canvas.height;
     if(!changed&&now-this.lastDraw<60)return;

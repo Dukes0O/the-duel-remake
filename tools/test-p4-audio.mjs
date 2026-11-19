@@ -24,6 +24,17 @@ const SKYLINE_CUES = new Set(['vehicle.turbo-whistle', 'vehicle.blowoff']);
 // Eifel forest and birds bed and the village bell behind the Eifel switch. Exactly those are left out here.
 const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landmark.shrine-bell', 'ambience.eifel', 'landmark.village-bell']);
 
+// EVERBURN-REMAKE adds Cinder's pot cues, made in code. Exactly those three are left out; the pinned hash below is unchanged.
+// EVERBURN-REMAKE job 1 (16 November 2026) adds the furnace's horn, Tin Town's gate and the forge catching, left out of the old pin too.
+const EMBER_CUES = new Set(['world.lamp.lighting', 'world.ember.spark', 'world.ember.out', 'world.ember.scoop', 'world.furnace.horn', 'world.ashmen.horn', 'world.tintown.gate', 'world.forge.catch', 'ambience.scablands',
+  // Five Cold Nights adds three composed conversation cues to the same Wasteland bank.
+  'story.talk.line', 'story.thought', 'story.talk.choose',
+  'world.gas.flash', 'world.bess.plug', 'world.bess.leak', 'world.bridge.ash', 'world.salt.horn', 'world.brand.catch', 'world.brand.out', 'world.ash.throw', 'world.town.wake', 'world.thief.ash', 'world.bellows.load']);
+// SCABLANDS-LAND round 4, slice 2a: one cue for each ground of the Scablands, new cues left out of the old pin as the ember's three were.
+const GROUND_CUES = new Set(['road', 'flats', 'salt-pan', 'river-bed', 'river-soft', 'sand', 'wreck-fields', 'burn'].map(id => 'world.ground.' + id));
+// SCABLANDS-LAND realism step 3: a fence post knocked down by a car. One new cue, left out of the old pin as the ember's three were.
+const FENCE_CUES = new Set(['world.fence.snap']);
+
 const CUES = [
   'race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final',
   'race.finish.flag', 'pit.limiter', 'pit.wrench', 'pit.go', 'surface.gravel',
@@ -36,14 +47,23 @@ const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sa
   'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave',
   'deep.sonar', 'deep.liftbag', 'deep.lift-cancel', 'deep.raised', 'deep.squeak',
   // MACHINE-VIEW adds these four, behind wasteland-town.
-  'machine.engine', 'machine.hydraulic', 'machine.dig', 'machine.tip'];
+  'machine.engine', 'machine.hydraulic', 'machine.dig', 'machine.tip',
+  // DIG-YARD-TOY adds these machine tones behind the-dig.
+  'drill-engine', 'drill-feed', 'drill-clay', 'drill-gravel', 'drill-rock', 'drill-jam',
+  'drill-reverse', 'drill-water', 'dozer-blade', 'roller-ground', 'paver-surface',
+  'borer.stall', 'borer.call', 'borer.refuse', 'borer.breakthrough', 'borer.daylight'];
 const added = new Set(CUES);
+// STORY-NIGHT-2 adds four chapter-only cues. The pre-P4 bank pin is unchanged.
+const NIGHT_2_CUES = new Set(['town.gate.bell', 'night.whistle', 'luck.kind', 'luck.unkind']);
+// Five Cold Nights' ledger adds two dev cues. The historical projection keeps all earlier cues.
+const LEDGER_CUES = new Set(['story.ledger.open', 'story.ledger.choose']);
 const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 // Full pre-P4 objects are pinned; no old record or credit can silently change.
 assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !SKI_BANK_CUES.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) && !id.startsWith('deep.ana.') && !LAB_BANK_CUES.has(id) &&
-  id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id)))),
+  !LEDGER_CUES.has(id) && !NIGHT_2_CUES.has(id) && !['rider.breaks-off', 'rider.crew-bail', 'rider.won', 'rider.surrounded'].includes(id) &&
+  id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id) && !EMBER_CUES.has(id) && !GROUND_CUES.has(id) && !FENCE_CUES.has(id)))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
 assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !SKI_BANK_CUES.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !String(row.cue).startsWith('deep.ana.') && !String(row.cue).startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue) && !SKYLINE_CUES.has(row.cue) && !KOGANE_CUES.has(row.cue))}),
   '772989c2d66e55d6c7c6f795b85cbf3395c30abe4edc8a6cc3a526421a06e8f0', 'pre-P4 catalog changed');

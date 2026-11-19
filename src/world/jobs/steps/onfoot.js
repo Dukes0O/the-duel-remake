@@ -1,5 +1,8 @@
+import {stepBrand} from '../brand-rule.js';
+
 const distance = (a, b) => Math.hypot((a?.x ?? 0) - (b?.x ?? 0), (a?.y ?? 0) - (b?.y ?? 0), (a?.z ?? 0) - (b?.z ?? 0));
-export function stepOnFoot(step, state, view) {
+export function stepOnFoot(step, state, view, dt = 0) {
+  if (step.brand) return stepBrand(step, state, view, dt);
   if (!view.onFoot && !(step.requiresExit && (state.index ?? 0) >= (step.places?.length ?? 0)))
     return { state, requests: [{ type: 'marker', place: step.places?.[state.index ?? 0]?.position }, { type: 'say', lineId: step.exitCarLineId }] };
   if (view.fighter?.knockedDown) {

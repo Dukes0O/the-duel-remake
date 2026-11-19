@@ -6,20 +6,22 @@
 // attribute, its value is `start:<id>`).
 const escape = text => String(text ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
-const row = (item, action) => {
+const row = (item, action, name) => {
   const state = item.done ? 'done' : item.open ? 'open' : 'locked';
   const button = item.open || item.done
     ? `<button type="button" ${action}="start:${escape(item.id)}">${item.done ? 'Retake' : 'Start'}</button>`
     : `<small>${escape(item.note || 'Opens later')}</small>`;
-  return `<li class="lesson-board-${state}"><span>${item.done ? '✓ ' : ''}${escape(item.name)}</span>${button}</li>`;
+  return `<li class="lesson-board-${state}"><span${name}>${item.done ? '✓ ' : ''}${escape(item.name)}</span>${button}</li>`;
 };
 
-export function lessonBoardMarkup(rows, {action = 'data-lesson'} = {}) {
+// markNames: the Lab asks for data-name on each lesson's name, so its word links never break a title up (src/lab/word-links.js).
+export function lessonBoardMarkup(rows, {action = 'data-lesson', markNames = false} = {}) {
+  const name = markNames ? ' data-name' : '';
   if (!rows?.length) return '';
   const groups = [...new Set(rows.map(item => item.group))];
   const items = groups.length > 1
     ? groups.map(group => `<li class="lesson-board-group">${escape(group)}</li>${
-      rows.filter(item => item.group === group).map(item => row(item, action)).join('')}`).join('')
-    : rows.map(item => row(item, action)).join('');
+      rows.filter(item => item.group === group).map(item => row(item, action, name)).join('')}`).join('')
+    : rows.map(item => row(item, action, name)).join('');
   return `<ul class="lesson-board">${items}</ul>`;
 }

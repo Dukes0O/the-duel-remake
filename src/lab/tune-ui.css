@@ -14,7 +14,7 @@
 .tune-name b{font-size:12px;font-weight:650}
 .tune-name em{font-style:normal;font-size:9px;color:#d6bc90;line-height:1.4}
 .tune-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:10px 0 0}
-.tune-step{padding:9px 0;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--ink,#f3eddf);background:#d0d4b60b;border:1px solid #d6dbb940;cursor:pointer}
+.tune-step{padding:9px 0;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--ink,#f5f0dc);background:#d0d4b60b;border:1px solid #d6dbb940;cursor:pointer}
 .tune-step:hover:not(:disabled){border-color:#e8a977;background:#dc9b6610}
 .tune-step.on{border-color:#abc9a77a;background:#bed0a31f;color:#b8d3ab}
 .tune-step:disabled{cursor:default;opacity:.5}

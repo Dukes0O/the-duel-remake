@@ -94,7 +94,7 @@ export const LEGACY_SUITE_ORDER=Object.freeze([
 ]);
 
 const HELP=[
-  'Usage: node tools/run-tests.mjs [--list] [--filter NAME] [--jobs N] [--keep-going] [--tier lane|merge|full] [--changed] [--json]',
+  'Usage: node tools/run-tests.mjs [--list] [--filter NAME] [--jobs N] [--keep-going] [--tier lane|merge|full|wide] [--changed] [--since COMMIT] [--json]',
   '',
   'Each suite runs in its own Node process. Full tier splits the long campaign matrix into eight shards and the any-car instructor suite into four.',
   '  --list          Show the selected suites without running them.',
@@ -104,6 +104,8 @@ const HELP=[
   '  --keep-going    Run every selected suite after failures.',
   '  --tier NAME     lane: near imports and reads of changed files, smoke and replay guards; merge: all short suites; full: all suites.',
   '  --changed       Select suites affected by Git changes and the smoke set.',
+  '                  wide: the partial night\'s pick, every suite that reaches a changed file at any depth, long suites included; needs --since.',
+  '  --since COMMIT  Compare lane or wide changes with a commit, including working-tree and untracked files.',
   '  --json          Emit one machine-readable result object, including captured suite output.',
   '  --help, -h      Show this help.',
   '',
@@ -112,7 +114,7 @@ const HELP=[
 ].join('\n');
 
 export function parseArguments(args){
-  const options={list:false,help:false,filters:[],jobs:1,keepGoing:false,tier:null,changed:false,json:false};
+  const options={list:false,help:false,filters:[],jobs:1,keepGoing:false,tier:null,changed:false,since:null,json:false};
   for(let index=0;index<args.length;index++){
     const argument=args[index];
     if(argument==='--list')options.list=true;
@@ -129,12 +131,18 @@ export function parseArguments(args){
       if(!/^\d+$/.test(value||''))throw Error('--jobs requires a whole number from 1 to 32.');
       options.jobs=Number(value);
       if(options.jobs<1||options.jobs>32)throw Error('--jobs requires a whole number from 1 to 32.');
+    }else if(argument==='--since'||argument.startsWith('--since=')){
+      const value=argument==='--since'?args[++index]:argument.slice('--since='.length);
+      if(!value||value.startsWith('-'))throw Error('--since requires a commit.');
+      options.since=value;
     }else if(argument==='--tier'||argument.startsWith('--tier=')){
       const value=argument==='--tier'?args[++index]:argument.slice('--tier='.length);
-      if(!['lane','merge','full'].includes(value))throw Error('--tier requires lane, merge or full.');
+      if(!['lane','merge','full','wide'].includes(value))throw Error('--tier requires lane, merge, full or wide.');
       options.tier=value;
     }else throw Error('Unknown argument: '+argument+'. Use --help for options.');
   }
+  if(options.since&&!['lane','wide'].includes(options.tier))throw Error('--since requires --tier lane or wide.');
+  if(options.tier==='wide'&&!options.since)throw Error('--tier wide requires --since COMMIT.');
   if(options.changed&&['merge','full'].includes(options.tier))throw Error('--changed cannot narrow a merge or full tier.');
   return options;
 }
@@ -204,6 +212,9 @@ export const LANE_GUARDS=Object.freeze([
 // Proven native child workloads belong to the idle night full tier. Keep this
 // explicit: importing a browser/balance helper does not make a pure test heavy.
 export const NIGHT_ONLY_SUITES=Object.freeze([
+  // QA-CHECKS-BY-CARD (16 November 2026): suites taking at least three minutes.
+  'tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs',
+  'tools/test-arena-shove.mjs','tools/test-old-smoke.mjs','tools/test-field-battle.mjs',
   'tools/test-audio-crash-peak.mjs',
   'tools/test-convoy-tanker-art.mjs',
   'tools/test-first-person-contact.mjs',
@@ -223,19 +234,26 @@ export const NIGHT_ONLY_SUITES=Object.freeze([
 const normalized=path=>path.replaceAll('\\','/').replace(/^\.\//,'');
 const relativeName=(root,path)=>normalized(relative(root,path));
 
-export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync}={}){
+export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync,since=null}={}){
   const execute=args=>{
     const result=git('git',args,{cwd,encoding:'utf8',shell:false,windowsHide:true});
     if(result.error||result.status!==0)throw Error('Git change lookup failed: '+(result.error?.message||result.stderr?.trim()||result.status));
     return result.stdout.split('\0').filter(Boolean).map(normalized);
   };
-  const merge=git('git',['merge-base','HEAD','integration/wasteland'],{cwd,encoding:'utf8',shell:false,windowsHide:true});
-  if(merge.error||merge.status!==0||!merge.stdout?.trim())
-    throw Error('Git change lookup failed: cannot find merge base with integration/wasteland: '+
-      (merge.error?.message||merge.stderr?.trim()||merge.status));
-  const base=merge.stdout.trim();
+  let base=since;
+  if(since){
+    const commit=git('git',['rev-parse','--verify','--quiet',since+'^{commit}'],{cwd,encoding:'utf8',shell:false,windowsHide:true});
+    if(commit.error||commit.status!==0||!commit.stdout?.trim())throw Error('Cannot find commit: '+since+'.');
+    base=commit.stdout.trim();
+  }else{
+    const merge=git('git',['merge-base','HEAD','integration/wasteland'],{cwd,encoding:'utf8',shell:false,windowsHide:true});
+    if(merge.error||merge.status!==0||!merge.stdout?.trim())
+      throw Error('Git change lookup failed: cannot find merge base with integration/wasteland: '+
+        (merge.error?.message||merge.stderr?.trim()||merge.status));
+    base=merge.stdout.trim();
+  }
   return [...new Set([
-    ...execute(['diff','--name-only','-z',base,'--']),
+    ...execute(['diff','--no-renames','--name-only','-z',base,'--']),
     ...execute(['ls-files','--others','--exclude-standard','-z'])
   ])];
 }
@@ -425,7 +443,9 @@ export const SHARED_FILES=Object.freeze({
   'src/game.js':[],'src/main.js':[],'src/render3d.js':[],'src/app.js':[],'src/config.js':[],
   'src/feature-flags.js':['tools/test-feature-flags.mjs','tools/test-preview-launcher.mjs']
 });
-export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_IMPORTS,...options}={}){
+// `wide` is the partial night's picker: the same walk with no reach limit, no hub limit and the
+// shared files counted like any other, so a suite that reaches a changed file at any depth runs.
+export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_IMPORTS,wide=false,dependencyCache=new Map(),graphCache=new Map(),presentationFallback=true,...options}={}){
   const changed=new Set(paths.map(normalized));
   if(!changed.size)return [];
   if([...changed].some(fullScope))return [...suites];
@@ -435,14 +455,18 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_I
     if(row)presentation.set(path,row);
   }
   const mapped=new Set(),requiredReaders=new Set([...presentation.values()].flatMap(row=>row.readers));
-  const affected=[],covered=new Set(),dependencyCache=new Map(),
+  const affected=[],covered=new Set(),
     gameChange=[...changed].some(path=>/^(?:src|public|tools)\//.test(path)||path.endsWith('.css'));
   for(const suite of suites){
     mapped.add(suite);
-    const dependencies=localDependencies(suite,{...options,dependencyCache,hubImports});
+    let dependencies=graphCache.get(suite);
+    if(!dependencies){
+      dependencies=localDependencies(suite,{...options,dependencyCache,hubImports});
+      graphCache.set(suite,dependencies);
+    }
     if(!dependencies.complete)return [...suites];
     for(const path of dependencies)mapped.add(path);
-    const near=path=>!Object.hasOwn(SHARED_FILES,path)&&(dependencies.depths.get(path)??Infinity)<=reach;
+    const near=path=>(wide||!Object.hasOwn(SHARED_FILES,path))&&dependencies.depths.has(path)&&dependencies.depths.get(path)<=reach;
     [...changed].filter(path=>readsPath(dependencies.reads,path)).forEach(path=>mapped.add(path));
     const reading=[...changed].filter(path=>near(path)||readsPath(dependencies.reads,path,reach-1));
     // A file reader that names no bounded path could read anything it is handed.
@@ -458,7 +482,7 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_I
     }
   }
   // Explicit mappings must have their real readers in this inventory.
-  if([...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
+  if(presentationFallback&&[...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
   // A changed game file no selected suite reaches is named, not a reason to run everything.
   // The night full tier and the release full tier still cover it.
   const unmapped=[...changed].filter(path=>!path.startsWith('docs/')&&!path.endsWith('.md')&&
@@ -466,11 +490,26 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_I
   return Object.defineProperty(affected,'unmapped',{value:unmapped});
 }
 
+// The partial night's pick (QA-NIGHT-SIZED): a superset of the lane pick for the same files.
+// It is the wide walk joined with the lane's own pick, so it can never leave out a suite the lane tier
+// would run (a suite that follows a longer chain of reads stops counting as one that reads anything).
+export function wideSuitesForChanges(suites,paths,{dependencyCache=new Map(),graphCache,...options}={}){
+  const lane=suitesForChanges(suites,paths,{...options,dependencyCache});
+  const wide=suitesForChanges(suites,paths,{...options,dependencyCache,graphCache,reach:Infinity,hubImports:Infinity,wide:true});
+  // A full-scope change returns every suite with no list of unmapped files.
+  if(!Object.hasOwn(lane,'unmapped')||!Object.hasOwn(wide,'unmapped'))return wide.length>=lane.length?wide:lane;
+  const picked=new Set([...lane,...wide]);
+  return Object.defineProperty(suites.filter(suite=>picked.has(suite)),'unmapped',
+    {value:wide.unmapped.filter(path=>lane.unmapped.includes(path))});
+}
+
 export function selectPlan(suites,{tier=null,filters=[],changed=false,affected=[]}={}){
   let selected;
-  if(tier==='lane'||changed){
+  const wide=tier==='wide';
+  if(tier==='lane'||changed||wide){
     const selectedNames=new Set([...SMOKE_SUITES,...LANE_GUARDS,...affected]);
-    selected=suites.filter(suite=>selectedNames.has(suite)&&!NIGHT_ONLY_SUITES.includes(suite));
+    // The night runs its long suites too; a lane leaves them to the night.
+    selected=suites.filter(suite=>selectedNames.has(suite)&&(wide||!NIGHT_ONLY_SUITES.includes(suite)));
   }else selected=[...suites];
   if(tier==='merge')selected=selected.filter(suite=>suite!==CAMPAIGN_SUITE);
   if(filters.length)selected=selectSuites(selected,filters);
@@ -478,7 +517,7 @@ export function selectPlan(suites,{tier=null,filters=[],changed=false,affected=[
   const shards=(suite,count)=>Array.from({length:count},(_,index)=>({
     suite,label:suite+' ['+(index+1)+'/'+count+']',args:['--shard='+(index+1)+'/'+count]
   }));
-  const sampled=tier==='lane'||changed;
+  const sampled=(tier==='lane'||changed)&&!wide;
   return selected.flatMap(suite=>suite===CAMPAIGN_SUITE?shards(suite,CAMPAIGN_SHARDS)
     // Every instructor car runs as parallel shards; lane plans sample two cars in one run.
     :suite===INSTRUCTOR_SUITE&&!sampled?shards(suite,INSTRUCTOR_SHARDS)
@@ -543,24 +582,35 @@ export async function runSuitesConcurrent(tasks,{cwd=PROJECT_ROOT,execPath=proce
 }
 
 export async function main(args=process.argv.slice(2),{discover=discoverSuites,run=runSuitesConcurrent,
-  getChanges=changedFiles,affected=suitesForChanges,log=console.log,error=console.error,
-  projectRoot,now=()=>new Date()}={}){
+  getChanges=changedFiles,affected=suitesForChanges,wideAffected=wideSuitesForChanges,
+  log=console.log,error=console.error,projectRoot,now=()=>new Date()}={}){
   let options;
   try{
     options=parseArguments(args);
     if(options.help){log(HELP);return 0;}
     const root=projectRoot??PROJECT_ROOT;
     const suites=discover({projectRoot:root});
-    const paths=options.tier==='lane'||options.changed?getChanges({cwd:root}):[];
-    const impacted=paths.length?affected(suites,paths,{projectRoot:root}):[];
-    if(impacted.unmapped?.length)
+    const wide=options.tier==='wide';
+    const paths=options.tier==='lane'||options.changed||wide?getChanges({cwd:root,since:options.since}):[];
+    const dependencyCache=new Map(),graphCache=new Map();
+    const impacted=paths.length?(wide?wideAffected:affected)(suites,paths,{projectRoot:root,dependencyCache,graphCache}):[];
+    if(impacted.unmapped?.length&&!options.json)
       log('No suite imports or reads '+impacted.unmapped.join(', ')+'; the night full tier covers it.');
     const plan=selectPlan(suites,{...options,affected:impacted});
+    const deferred=[];
+    if((options.tier==='lane'||options.changed)&&!wide){
+      const candidates=selectSuites(suites.filter(suite=>NIGHT_ONLY_SUITES.includes(suite)&&impacted.includes(suite)),options.filters);
+      for(const suite of candidates){
+        const file=paths.find(path=>affected([suite],[path],{projectRoot:root,dependencyCache,graphCache,presentationFallback:false}).includes(suite));
+        deferred.push({suite,pickedBy:file||'the change as a whole'});
+      }
+    }
+    const reportDeferred=()=>deferred.forEach(({suite,pickedBy})=>log(`Left to the night: ${suite} (picked by ${pickedBy})`));
     if(!plan.length)throw Error('No test suites match: '+(options.filters.join(', ')||'(none)'));
     if(options.list){
       if(options.json)log(JSON.stringify({schema:1,kind:'plan',tier:options.tier||'default',
-        changedFiles:paths,suites:plan.map(task=>task.label)}));
-      else plan.forEach(task=>log(task.label));
+        changedFiles:paths,suites:plan.map(task=>task.label),leftToTheNight:deferred}));
+      else{plan.forEach(task=>log(task.label));reportDeferred();}
       return 0;
     }
     // Injected unit-test runners cannot write real project evidence. A fixture
@@ -580,11 +630,12 @@ export async function main(args=process.argv.slice(2),{discover=discoverSuites,r
       }});
     if(record)writeFullTierEvidence(root,start,{result,plan,now});
     if(options.json)log(JSON.stringify({schema:1,kind:'result',tier:options.tier||'default',
-      jobs:options.jobs,keepGoing:options.keepGoing,changedFiles:paths,...result}));
+      jobs:options.jobs,keepGoing:options.keepGoing,changedFiles:paths,...result,leftToTheNight:deferred}));
     else{
       const summary='Tests: '+result.passed+' passed, '+result.failures.length+' failed, '+
         result.notRun+' not run in '+seconds(result.durationMs)+'.';
       if(result.exitCode)error(summary);else log(summary);
+      reportDeferred();
     }
     return result.exitCode;
   }catch(cause){

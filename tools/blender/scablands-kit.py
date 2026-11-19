@@ -30,17 +30,11 @@ scene = bpy.context.scene
 def mat(name, color, metallic=.55, rough=.78, emission=None):
     m = bpy.data.materials.new(name); m.diffuse_color = (*color, 1); m.use_nodes = True
     b = m.node_tree.nodes['Principled BSDF']; b.inputs['Base Color'].default_value = (*color, 1)
-    b.inputs['Metallic'].default_value = metallic; b.inputs['Roughness'].default_value = rough
+    # Plain base colour and little metal: the exporter writes no colour for a texture node, and the game draws
+    # the rust, runs and grain in code (SCABLANDS-LAND; docs/ART_LINE.md, "A model that is black in the game").
+    b.inputs['Metallic'].default_value = min(metallic, .2); b.inputs['Roughness'].default_value = rough
     if emission:
         b.inputs['Emission Color'].default_value = (*color, 1); b.inputs['Emission Strength'].default_value = emission
-    noise = m.node_tree.nodes.new('ShaderNodeTexNoise'); noise.inputs['Scale'].default_value = 5.0
-    noise.inputs['Detail'].default_value = 3.0; noise.inputs['Roughness'].default_value = .8
-    ramp = m.node_tree.nodes.new('ShaderNodeValToRGB')
-    dark = tuple(c * .30 for c in color) + (1,); light = tuple(min(1, c * 1.35 + .025) for c in color) + (1,)
-    ramp.color_ramp.elements[0].position = .24; ramp.color_ramp.elements[0].color = dark
-    ramp.color_ramp.elements[1].position = .76; ramp.color_ramp.elements[1].color = light
-    m.node_tree.links.new(noise.outputs['Fac'], ramp.inputs['Fac'])
-    m.node_tree.links.new(ramp.outputs['Color'], b.inputs['Base Color'])
     return m
 
 RUST = mat('Scale rust over old mill steel', (.15,.075,.045), .78)

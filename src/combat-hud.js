@@ -10,8 +10,53 @@ import {arsenalEnabled} from './combat-weapons.js';
 import {carEffect} from './arsenal/car-effects.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {convoyPrompt} from './convoy-prompt.js';
+import {brandHudStep} from './world/world-hud.js';
+import {BRAND_RULE} from './world/jobs/brand-rule.js';
+import {brandWaysFor, prepareBrandWays, townCarWay} from './world/jobs/brand-ways.js';
+import {brandSites} from './world/jobs/brand-sites.js';
+
+export function footBrandDirection(state) {
+  const worldJob = state?.arena?.mode === 'world-job' && state.arena.worldJob;
+  const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
+  if (state?.status !== 'racing' || !state.onFoot || !state.fighter || !step?.brand) return null;
+  const fighter = state.fighter;
+  const target = brandHudStep(step, job.stepState, fighter).target;
+  if (!target) return null;
+  const at = target.position ?? target;
+  // The arrow leads by a way that can be walked (round the forge and the shacks), and the metres are that walk's; where
+  // no way is known it points straight at the place, as it always did.
+  const grid = worldJob.solidGrid?.movers ?? worldJob.solidGrid;
+  const way = grid && target.id ? brandWaysFor(step, grid)?.aim(fighter, target.id) : null;
+  const toward = way ?? at;
+  const dx = toward.x - fighter.x, dz = toward.z - fighter.z;
+  const bearing = Math.atan2(dx, dz) - (fighter.yaw || 0);
+  const name = target.id === step.hearth?.id ? 'THE HEARTH'
+    : ['pump', 'tower', 'mast'].includes(target.id) ? `${target.id.toUpperCase()} LAMP`
+      : (target.name ?? 'Auntie Solder').toUpperCase();
+  const flatGap = Math.hypot(at.x - fighter.x, at.z - fighter.z);
+  // "AT THE LAMP" is said only where standing lights it: a dark lamp, with the brand burning. A lit lamp that relights the
+  // brand has its own, shorter reach, and the row keeps its metres there (the review of 18 November 2026).
+  const atLamp = step.places?.includes(target) && !job.stepState?.lamps?.[target.id] && (job.stepState?.brandSeconds ?? 0) > 0 &&
+    flatGap <= BRAND_RULE.lampRadius;
+  const metres = atLamp ? flatGap : way ? way.metres : flatGap;
+  return {name, distance: metres < BRAND_RULE.lampDistanceDecimalsBelow ? metres.toFixed(1) : Math.round(metres),
+    atLamp,
+    angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
+}
+
+export function footLampProgress(state) {
+  const job = state?.arena?.mode === 'world-job' && state.arena.worldJob?.job;
+  const step = job?.steps?.[job.stepIndex], count = job?.stepState;
+  if (!state.onFoot || !step?.brand || count?.townEnding || !(count?.brandSeconds > 0)) return null;
+  const lamp = step.places?.find(place => place.id === count.lightingLamp);
+  if (!lamp || !(count.lightingSeconds > 0)) return null;
+  return {text: `LIGHTING THE ${(lamp.name ?? `${lamp.id} lamp`).toUpperCase()}`,
+    fraction: Math.min(1, count.lightingSeconds / BRAND_RULE.lampSeconds)};
+}
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
+export const combatSlotHidden = (slot, id, loanButton) =>
+  slot === 3 ? loanButton !== (id === 'flamethrower') : loanButton;
 // Rectangles include the pointer below the label. Stable actor order keeps
 // stacked names predictable when several cars share one screen position.
 export function stackOpponentLabels(labels, width, height, gap = 6) {
@@ -80,6 +125,12 @@ export function fallbackOpponentPosition(course, player, opponent, index) {
   const z = (target?.z || 0) - (at?.z || 0);
   const right = x * Math.cos(heading) - z * Math.sin(heading);
   const forward = x * Math.sin(heading) + z * Math.cos(heading);
+  if (opponent.roadRider && forward < 0) {
+    // A directly trailing car sits beside the mirror, with left and right threats at their respective edges.
+    const side = Math.abs(right) < .1 ? (index % 2 ? 1 : -1) : Math.sign(right);
+    const bearing = Math.atan2(Math.abs(right), -forward);
+    return {x: .5 + side * Math.min(.38, .18 + bearing / Math.PI), y: .24 + Math.min(.28, bearing / Math.PI), direction: 'BEHIND'};
+  }
   return {
     x: right < -5 ? .12 : right > 5 ? .88 : .5,
     y: forward < 0 ? .68 + index * .065 : .29 + index * .065,
@@ -87,14 +138,22 @@ export function fallbackOpponentPosition(course, player, opponent, index) {
   };
 }
 
+let keptTownEntries = null;
+const townEntries = () => keptTownEntries ??= brandSites().ashEntries;
 export function footCarDirection(course, state) {
   const fighter = state?.fighter;
   if (!fighter) return {distance: 0, angle: 0};
   const car = course?.groundAt?.(state.s, state.lateral || 0);
   if (!car) return {distance: 0, angle: 0};
-  const dx = car.x - fighter.x, dz = car.z - fighter.z;
+  // Run Him Down starts on foot among Tin Town's shacks: there the arrow leads by a way that can be walked, as the
+  // lamps' arrow does (it pointed through a shack, and Claude stood against a wall 36 m from the car).
+  const world = state.arena?.mode === 'world-job' ? state.arena.worldJob : null, step = world?.job?.steps?.[world.job.stepIndex];
+  const grid = world?.solidGrid?.movers ?? world?.solidGrid;
+  const way = step?.bellows && grid ? townCarWay(step, grid, car, townEntries())?.aim(fighter, 'car') : null;
+  const toward = way ?? car;
+  const dx = toward.x - fighter.x, dz = toward.z - fighter.z;
   const bearing = Math.atan2(dx, dz) - (fighter.yaw || 0);
-  return {distance: Math.round(Math.hypot(dx, dz)),
+  return {distance: Math.round(way ? way.metres : Math.hypot(dx, dz)),
     angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
 }
 
@@ -139,6 +198,10 @@ export function footAmmoPresentation(state) {
   if (!gear || typeof gear.name !== 'string')
     return {name: 'NO FOOT WEAPON', ammo: 'AMMO —'};
   if (gear.name === 'WRENCH') return {name: gear.name, ammo: 'REPAIR +40'};
+  // The Hand Flamer holds seconds of fuel, not rounds: it burns while fire is held and fills again while it is not.
+  // (It showed "AMMO 4" when full and "AMMO" with a dash at every other moment.)
+  if (gear.name === 'HAND FLAMER' && Number.isFinite(gear.ammo))
+    return {name: gear.name, ammo: `FUEL ${Math.max(0, gear.ammo).toFixed(1)} s`};
   const ammo = Number.isSafeInteger(gear.ammo) && gear.ammo >= 0
     ? String(gear.ammo) : '—';
   return {name: gear.name, ammo: `AMMO ${ammo}`};
@@ -160,7 +223,8 @@ export function footActionPresentation(state) {
       ? 'RELEASE FIRE TO REPAIR AGAIN' : 'HOLD FIRE NEAR YOUR CAR', locked: false};
   }
   if (gear.name !== 'LONGHORN RPG') {
-    if (gear.name === 'HAND FLAMER' && state.fighter?.flaming) return {text: 'FLAMING', locked: false};
+    if (gear.name === 'HAND FLAMER') return {text: state.fighter?.flaming ? 'FLAMING'
+      : gear.ammo === 0 ? 'OUT OF FUEL / LET GO TO REFILL' : 'HOLD FIRE TO BURN', locked: false};
     if (gear.ammo === 0) return {text: 'OUT OF GEAR', locked: false};
     const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
     return {text: reload > 0 ? `READY IN ${reload.toFixed(1)}s` : 'FIRE TO USE', locked: false};
@@ -215,8 +279,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-fight-subtitle" role="status" aria-live="polite" hidden></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
+    <div class="combat-foot-action combat-lamp-progress" role="status" hidden><b></b><div class="combat-armor-track"><i></i></div></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
-    <div class="combat-foot-gear" aria-label="On-foot weapon and ammunition"><b></b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town night-2-alternative-route" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
+    <div class="combat-foot-gear" aria-label="On-foot equipment and controls"><b></b><strong></strong><small class="combat-foot-mouse"></small></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
     </div>`;
@@ -254,12 +321,38 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const armorFill = playerArmor.querySelector('i');
   const footHealthValue = footHealth.querySelector('strong');
   const footHealthFill = footHealth.querySelector('i');
-  const carDistance = host.querySelector('.combat-foot-car strong');
-  const carArrow = host.querySelector('.combat-foot-car-arrow');
+  const carPointer = host.querySelector('.combat-foot-car');
+  const carDistance = carPointer.querySelector('strong');
+  const carArrow = carPointer.querySelector('.combat-foot-car-arrow');
+  const townPointer = host.querySelector('.combat-foot-town');
+  townPointer.style.bottom = `${BRAND_RULE.footMarkerBottomPixels}px`;
+  const townName = townPointer.querySelector('b');
+  const townDistance = townPointer.querySelector('strong');
+  const townArrow = townPointer.querySelector('span');
+  const alternativePointer = host.querySelector('.night-2-alternative-route');
+  alternativePointer.style.bottom = (BRAND_RULE.footMarkerBottomPixels + 45) + 'px';
+  const alternativeName = alternativePointer.querySelector('b');
+  const alternativeDistance = alternativePointer.querySelector('strong');
+  const alternativeArrow = alternativePointer.querySelector('span');
+  const footGearBox = host.querySelector('.combat-foot-gear');
   const footGearName = host.querySelector('.combat-foot-gear b');
   const footGearAmmo = host.querySelector('.combat-foot-gear strong');
+  const footMouse = host.querySelector('.combat-foot-mouse');
   const footAction = host.querySelector('.combat-foot-action');
   const footReticle = host.querySelector('.combat-foot-reticle');
+  const lampProgress = host.querySelector('.combat-lamp-progress');
+  lampProgress.style.top = `calc(50% + ${BRAND_RULE.lampProgressTopPixels}px)`;
+  lampProgress.style.width = `${BRAND_RULE.lampProgressWidthPixels}px`;
+  // The existing action row and armor track supply the same border, lettering and fill as the other rows.
+  const drawLampProgress = state => {
+    const progress = footLampProgress(state);
+    lampProgress.hidden = !progress;
+    lampProgress.style.display = progress ? 'block' : 'none';
+    if (progress) {
+      setText(lampProgress.querySelector('b'), progress.text);
+      setFraction(lampProgress.querySelector('i'), progress.fraction);
+    }
+  };
   let hitUntil = -1, damageUntil = -1, xpUntil = -1, damageDirection = 'front';
   let previousZones = null;
 
@@ -294,20 +387,30 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   });
 
   function update(state) {
+    // Light the Town's walking ways are worked out while the countdown runs, not at the walker's first step.
+    if (state.status === 'countdown' && state.arena?.mode === 'world-job') {
+      const world = state.arena.worldJob, step = world?.job?.steps?.[world.job.stepIndex];
+      if (step?.brand && world.solidGrid) prepareBrandWays(step, world.solidGrid.movers ?? world.solidGrid);
+    }
     const active = combatHudVisible(app.duel, state);
     const subtitle = active ? readFightSubtitle(state) : null;
     if (fightSubtitle.hidden !== !subtitle) fightSubtitle.hidden = !subtitle;
     setText(fightSubtitle, subtitle || '');
     const onFoot = active && state.onFoot && !!state.fighter;
-    if (host.hidden === active) host.hidden = !active;
+    // Light the Town's ending is watched from over the town: the walker's gauges, arrows and aiming mark go for those seconds.
+    const watching = state.arena?.mode === 'world-job' && state.arena.worldJob?.job?.stepState?.townEnding === true;
+    if (host.hidden === (active && !watching)) host.hidden = !active || watching;
     if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;
-    if (footHealth.hidden === onFoot) footHealth.hidden = !onFoot;
+    if (footHealth.hidden === (onFoot && !watching)) footHealth.hidden = !onFoot || watching;
     const stage = root.querySelector('#stage');
     stage.classList.toggle('combat-upgraded', active);
     stage.classList.toggle('on-foot', onFoot);
     host.classList.toggle('on-foot', onFoot);
+    drawLampProgress(state);
     if (!active) return;
 
+    const worldJob = state.arena?.worldJob, chapter = worldJob?.night2;
+    carPointer.hidden = !onFoot || chapter?.washCarUnavailable === true;
     if (onFoot) {
       const maxHealth=Math.max(1,Number(state.fighter.maxHealth)||100);
       const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
@@ -315,18 +418,48 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setFraction(footHealthFill, health / maxHealth);
       footHealth.classList.toggle('is-critical', health <= maxHealth*.25);
       footHealth.classList.toggle('is-knocked-down', !!state.fighter.knockedDown);
-      const direction = footCarDirection(app.duel.course, state);
-      setText(carDistance, `${direction.distance} m`);
-      const rotation = `rotate(${direction.angle}deg)`;
-      if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
+      if (!carPointer.hidden) {
+        const direction = footCarDirection(app.duel.course, state);
+        setText(carDistance, `${direction.distance} m`);
+        const rotation = `rotate(${direction.angle}deg)`;
+        if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
+      }
+      const walkingRoutes = chapter?.routes ?? [];
+      const [firstWalk, secondWalk] = walkingRoutes;
+      const walkPointer = route => {
+        const bearing = Math.atan2(route.point.x - state.fighter.x, route.point.z - state.fighter.z) - state.fighter.yaw;
+        return {name: route.name, distance: Math.round(route.metres), angle: bearing * 180 / Math.PI};
+      };
+      const town = firstWalk ? walkPointer(firstWalk) : footBrandDirection(state);
+      alternativePointer.hidden = !secondWalk;
+      if (secondWalk) {
+        const alternate = walkPointer(secondWalk);
+        setText(alternativeName, alternate.name);
+        setText(alternativeDistance, `${alternate.distance} m`);
+        alternativeArrow.style.transform = `rotate(${alternate.angle}deg)`;
+      }
+
+      townPointer.hidden = !town;
+      if (town) {
+        setText(townName, town.name);
+        setText(townDistance, town.atLamp ? 'AT THE LAMP' : `${town.distance} m`);
+        townArrow.style.transform = `rotate(${town.angle}deg)`;
+        townPointer.setAttribute('aria-label', `${town.name}, ${town.distance} metres away`);
+      }
+      const holstered = chapter?.holstered === true;
+      footGearBox.hidden = holstered && !app.footMouseHint;
+      footGearName.hidden = holstered;
+      footGearAmmo.hidden = holstered;
+      footAction.hidden = holstered;
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);
+      setText(footMouse, app.footMouseHint || '');
       const action = footActionPresentation(state);
       setText(footAction, action.text);
       footReticle.classList.toggle('is-locked', action.locked);
       const aim=projectFootAim();
-      footReticle.hidden=aim?.visible===false;
+      footReticle.hidden=holstered || aim?.visible===false;
       const left=`${((aim?.x??.5)*100).toFixed(3)}%`,top=`${((aim?.y??.5)*100).toFixed(3)}%`;
       if(footReticle.style.left!==left)footReticle.style.left=left;
       if(footReticle.style.top!==top)footReticle.style.top=top;
@@ -345,7 +478,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     for (const button of buttons) {
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
-      button.hidden = slot === 3 && ((button === loanSlot) !== (id === 'flamethrower'));
+      button.hidden = combatSlotHidden(slot, id, button === loanSlot);
       if (button === loanSlot) {
         if (button.hidden) button.remove();
         else if (!button.isConnected) slotBar.append(button);
@@ -403,9 +536,10 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       markers.push(marker);
       layer.append(marker);
     }
+    const washEnded = chapter && worldJob.riderFight?.outcome;
     for (let index = 0; index < markers.length; index++) {
       const marker = markers[index], opponent = opponents[index];
-      if (!opponent || opponent.drone) {marker.hidden = true; continue;}
+      if (!opponent || opponent.drone || washEnded && opponent.roadRider) {marker.hidden = true; continue;}
       const projection = projected.find(item => item.index === index);
       const exact = projection?.visible === true;
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course,

@@ -33,11 +33,19 @@
 
 .lc-brian { flex: 0 0 410px; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 2px solid #4a524e; border-radius: 8px; background: #1d2322; }
 .lc-who { flex: none; display: flex; align-items: center; gap: 12px; }
-.lc-portrait { flex: none; width: 72px; height: 72px; border-radius: 50%; border: 4px solid #8f9791; overflow: hidden; background: radial-gradient(#3a4448, #1a1f21);
-  display: grid; place-items: center; transition: border-color .25s, transform .25s; }
-.lc-portrait img { width: 100%; height: 100%; object-fit: cover; }
-.lc-portrait span { font: 800 32px "Segoe UI", sans-serif; color: #8f9791; }
-.lc-portrait[data-mood="cheer"] { border-color: #56d683; transform: scale(1.06); }
+.lc-portrait { position: relative; flex: none; width: 132px; height: 132px; border-radius: 14px; border: 4px solid #8f9791; overflow: hidden; background: radial-gradient(#3a4448, #1a1f21);
+  display: grid; place-items: center; transition: border-color .15s; }
+.lc-portrait span { font: 800 56px "Segoe UI", sans-serif; color: #8f9791; }
+/* Brian's four painted faces (brian-faces.js), one over the other; the mood on the portrait shows its own and the others fade out in 150 ms.
+   Each is enlarged from a corner chosen so that his face and one hand stay in the frame. */
+.lc-face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.45); opacity: 0; transition: opacity .15s; }
+.lc-face[data-face="talk"] { transform-origin: 23% 0; }
+.lc-face[data-face="cheer"] { transform-origin: 23% 0; }
+.lc-face[data-face="hint"] { transform-origin: 6% 0; }
+.lc-face[data-face="explain"] { transform-origin: 30% 0; }
+.lc-portrait[data-mood="talk"] .lc-face[data-face="talk"].ready, .lc-portrait[data-mood="cheer"] .lc-face[data-face="cheer"].ready,
+.lc-portrait[data-mood="hint"] .lc-face[data-face="hint"].ready, .lc-portrait[data-mood="explain"] .lc-face[data-face="explain"].ready { opacity: 1; }
+.lc-portrait[data-mood="cheer"] { border-color: #56d683; }
 .lc-portrait[data-mood="hint"] { border-color: #edc557; }
 .lc-portrait[data-mood="explain"] { border-color: #f0a148; }
 .lc-name { font-size: 18px; color: #c9cfca; }
@@ -53,6 +61,10 @@
 /* The physics panel: the formulas of this step, with the numbers now on the board. */
 .lc-physics { flex: 0 0 300px; min-width: 0; display: flex; flex-direction: column; border: 2px solid #4a524e; border-radius: 8px; background: #161c1d; overflow: hidden; }
 .lc-physics[hidden], .lc-show-physics[hidden] { display: none; }
+/* A wide board with the physics panel open (LAB-LOOK round 13): the two columns narrow so that the picture keeps its size. */
+.lc-wide.lc-physics-open .lc-main { gap: 10px; }
+.lc-wide.lc-physics-open .lc-brian { flex-basis: 340px; }
+.lc-wide.lc-physics-open .lc-physics { flex-basis: 264px; }
 .lc-physics header { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px 5px 12px; border-bottom: 1px solid #343c39; }
 .lc-physics h3 { margin: 0; font-size: 19px; color: #edc557; }
 .lc-physics header button { padding: 2px 8px; border: 1px solid #8f9791; border-radius: 5px; background: #252c29; font-size: 14px; }
@@ -85,3 +97,38 @@
 .lc-actions button[aria-pressed="true"] { border-color: #edc557; color: #edc557; }
 .lc-actions .primary { border-color: #edc557; background: #edc557; color: #1d2224; }
 .lc-actions .primary:disabled { border-color: #4a524e; background: #2a302e; color: #7d857f; }
+/* LAB-BRIAN-SHORT: an earlier step is its heading and first sentence until it is clicked; "Tell me more" opens the rest of Brian's words. */
+.lc-past h4 button { display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
+.lc-past h4 button::before { content: '▸'; flex: none; width: 12px; color: #8f9791; }
+.lc-past h4 button[aria-expanded="true"]::before { content: '▾'; }
+.lc-past h4 button:hover { color: #fff2c8; }
+.lc-past section.folded { margin-bottom: 7px; }
+.lc-past section.folded p { margin-bottom: 0; padding-left: 18px; font-size: 16px; color: #aab2ad; }
+.lc-past section.open p { padding-left: 18px; }
+.lc-past section.folded p.longer::after { content: ' …'; color: #8f9791; }
+.lc-more > span { display: block; margin-top: 9px; }
+.lc-more[hidden], .lc-more-button[hidden] { display: none; }
+.lc-more-button { display: block; margin: 0 0 4px auto; padding: 5px 12px; border: 2px solid #edc557; border-radius: 7px; background: #3a3420; font-size: 16px; font-weight: 700; }
+/* The stage step (docs/board/cards/LAB-LOOK.md): the strip under a board holds its readouts and tables, so that the board is for
+   the picture. At the board's usual width it is one row, at most 86 px high (on a board narrowed by the open physics panel it wraps
+   to more rows rather than cutting words off). A lesson that supplies none shows none, and a lesson with a strip has a tighter frame. */
+.lab-classroom.lc-staged { gap: 6px; padding: 8px 18px 10px; }
+.lc-staged .lc-step { padding: 3px 14px; }
+.lc-strip { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 3px 6px; border-top: 1px solid #343c39; background: #161c1d; }
+.lc-strip[hidden] { display: none; }
+.lc-readouts { display: flex; flex-wrap: wrap; align-content: center; gap: 4px 8px; min-width: 0; }
+.has-table .lc-readouts { flex: 0 1 392px; }
+.lc-readout { display: flex; align-items: baseline; gap: 8px; margin: 0; padding: 0 10px; border: 2px solid #4a524e; border-radius: 6px; background: #1d2322; line-height: 1.25; white-space: nowrap; }
+.lc-readout span { font-size: 18px; font-weight: 600; color: #c9cfca; }
+.lc-readout b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.lc-parts { display: flex; align-items: center; gap: 18px; margin: 0; padding: 0 10px; list-style: none; white-space: nowrap; border: 2px solid #4a524e; border-radius: 6px; background: #1d2322; font-size: 18px; font-weight: 600; color: #c9cfca; line-height: 1.25; }
+.lc-table { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 1px 12px; border: 2px solid #4a524e; border-radius: 6px; background: #1d2322; }
+.lc-table h4 { flex: none; margin: 0; font-size: 18px; color: #edc557; }
+.lc-rows { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 24px; }
+.lc-table.wide .lc-rows { grid-auto-flow: column; grid-template-rows: repeat(3, auto); grid-template-columns: none; grid-auto-columns: minmax(0, 1fr); }
+.lc-rows p { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 14px; margin: 0; font-size: 18px; line-height: 22px; font-weight: 600; white-space: nowrap; }
+.lc-rows b { margin-left: auto; font-size: 18px; }
+.lc-strip .tone-good { color: #56d683; }
+.lc-strip .tone-bad { color: #f07a5a; }
+.lc-strip .tone-accent { color: #edc557; }
+.lc-strip .tone-faint { color: #8f9791; }

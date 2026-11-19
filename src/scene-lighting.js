@@ -4,12 +4,14 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createAtmosphericSky, SUN_OFFSET } from './atmosphere.js';
 import { resolveLightingSettings, circuitLighting } from './lighting-moods.js';
 import { createLocalLighting } from './local-lighting.js';
-import { sampleCourseLightPath } from './light-path.js';
+import { sampleCourseLightPath, lightPathLook } from './light-path.js';
 import { createVehicleNightLighting } from './vehicles.js';
 
 // One owner for scene lights, the sky and environment targets. The renderer
 // owns the composer passes and decides when pending GPU work permits disposal.
-export function createSceneLighting({ scene, renderer, bloom, host }, {
+// `useTrialLight` says whether a course's trial light (`trialLight` in its definition, such as the Scablands' realism trial) is
+// laid over the day's look in place of the course's own `light`. Asked once for each course.
+export function createSceneLighting({ scene, renderer, bloom, host, useTrialLight = () => false }, {
   createPMREM = () => new THREE.PMREMGenerator(renderer),
   createRoom = () => new RoomEnvironment(),
   loadEnvironment = (loaded, failed) => new RGBELoader().load('/assets/textures/sunset-lighting.hdr', loaded, undefined, failed),
@@ -17,6 +19,10 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
   let stopped = false, disposed = false, course, naturalEnvironment, pmremReleased = false, pathSample = null;
   const sampleBuffer = {}, sampleInputs = {}, vehicleUpdate = {}, worldUpdate = {}, vehicleLights = new Map(), vehicleInputs = new Map(), worldDetails = new Map();
   let activeWorld = null, activeWinter = false, winterDryPalette = null;
+  // The sun's shadow box: its half width, how far ahead of the camera its middle lies and how deep it is. A course's light may
+  // widen it (`shadowReach`, `shadowAhead`, `shadowFar`); every other course keeps 45 m round the car.
+  let trialLight = null, shadowReach = 45, shadowAhead = 0, shadowFar = 240;
+  const shadowRight = new THREE.Vector3(), shadowUp = new THREE.Vector3(), shadowDir = new THREE.Vector3(), shadowMiddle = new THREE.Vector3();
   const pmrem = createPMREM(), room = createRoom();
   const releasePMREM = () => { if (!pmremReleased) { pmremReleased = true; pmrem.dispose(); } };
   const environment = pmrem.fromScene(room, .04);
@@ -57,6 +63,41 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
   const sunOffset = new THREE.Vector3(SUN_OFFSET.x, SUN_OFFSET.y, SUN_OFFSET.z);
   const targetSun = new THREE.Vector3();
   const colour = value => Array.isArray(value) ? lightColor.setRGB(value[0], value[1], value[2]) : lightColor.set(value);
+  // An evening that comes on during a job (Light the Town, EVERBURN-REMAKE job 2): the place's own light of day with the
+  // golden look and then the dusk look mixed over it by `amount` (0 is the day, 1 is dusk). The sun goes low and red
+  // and then out, the sky deepens, and the lamps the player lights are what the ground is seen by.
+  const EVENING = Object.freeze({goldenBy: .55, duskFrom: .4, goldenShare: .9, duskShare: .66,
+    colours: ['fog', 'top', 'horizon', 'ground', 'sunColor', 'cloudTint'],
+    scalars: ['sun', 'hemi', 'env', 'fogNear', 'fogFar', 'exposure', 'bloom', 'sunStrength', 'cloudCover']});
+  const evening = {sunOffset: {x: 0, y: 0, z: 0}}, eveningColours = Object.fromEntries(EVENING.colours.map(key => [key, [0, 0, 0]]));
+  const eased = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
+  function eveningOver(day, amount, theme, nightShare = 0) {
+    const golden = lightPathLook('golden', theme), dusk = lightPathLook('dusk', theme);
+    const nocturnal = nightShare ? lightPathLook('night', theme) : null;
+    const moonlit = nocturnal ? {...nocturnal, sun: .64, hemi: 1.32, env: .19,
+      exposure: 1.26, sunOffset: {x: -970, y: 180, z: 160}} : nocturnal;
+    const toGolden = eased(amount / EVENING.goldenBy) * EVENING.goldenShare;
+    const toDusk = eased((amount - EVENING.duskFrom) / (1 - EVENING.duskFrom)) * EVENING.duskShare;
+    const mixed = (from, a, b, night = null) => {
+      const first = from + (a - from) * toGolden, dusk = first + (b - first) * toDusk;
+      return night === null ? dusk : dusk + (night - dusk) * nightShare;
+    };
+    for (const key of Object.keys(day)) evening[key] = day[key];
+    for (const key of EVENING.scalars) evening[key] = mixed(day[key], golden[key], dusk[key], moonlit?.[key]);
+    for (const key of EVENING.colours) {
+      const from = colour(day[key]), out = eveningColours[key], r = from.r, g = from.g, b = from.b;
+      out[0] = mixed(r, golden[key][0], dusk[key][0], moonlit?.[key]?.[0]); out[1] = mixed(g, golden[key][1], dusk[key][1], moonlit?.[key]?.[1]); out[2] = mixed(b, golden[key][2], dusk[key][2], moonlit?.[key]?.[2]);
+      evening[key] = out;
+    }
+    const sunFrom = day.sunOffset ?? SUN_OFFSET;
+    evening.sunOffset = evening.sunPlace ??= {x: 0, y: 0, z: 0};
+    for (const axis of ['x', 'y', 'z']) evening.sunOffset[axis] = mixed(sunFrom[axis], golden.sunOffset[axis], dusk.sunOffset[axis], moonlit?.sunOffset[axis]);
+    // Only the sun's direction changes: it stays as far off as by day, because a place's light may set that distance to
+    // keep its whole shadow box inside the sun's light (the Scablands' is 320 m; the looks' own are about 130 m).
+    const far = Math.hypot(sunFrom.x, sunFrom.y, sunFrom.z), now = Math.hypot(evening.sunOffset.x, evening.sunOffset.y, evening.sunOffset.z) || 1;
+    for (const axis of ['x', 'y', 'z']) evening.sunOffset[axis] *= far / now;
+    return evening;
+  }
 
   const paletteFields = ['fog','top','horizon','cloudTint','ground','sunColor'];
   const paletteComponents = ['r','g','b'], dryPaletteKey = new Float64Array(18);
@@ -77,16 +118,21 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
 
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = 0 }) {
       if (stopped) return;
+      if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
       const night = theme === 'city' || course.def.timeOfDay === 'night';
       sampleInputs.distance = distance;sampleInputs.raceLength = raceLength;sampleInputs.theme = theme;
       sampleInputs.tunnel = tunnel;sampleInputs.menu = menu;
       pathSample = sampleCourseLightPath(course, sampleInputs, sampleBuffer);
       let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
-      if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, course.def.light);
-      const settings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
+      if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, trialLight || course.def.light);
+      const daySettings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
+      const chapterNight = !pathSample && !tunnel ? Math.max(0, Math.min(1, storyNight)) : 0;
+      const settings = !pathSample && !tunnel && (eveningAmount > 0 || chapterNight > 0)
+        ? eveningOver(daySettings, eveningAmount, theme, chapterNight) : daySettings;
+      host.dataset.evening = eveningAmount > 0 ? eveningAmount.toFixed(2) : '0';
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {
         winterDryPalette = {key:hasDryPalette ? dryPaletteKey.slice() : null,colours:{
@@ -101,7 +147,17 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
         ? winterDryPalette.colours : null;
       activeWinter = !!winter;
       if (!winter) {winterDryPalette = null;paletteKey(baseSettings,dryPaletteKey,true);hasDryPalette = true;}
-      atmosphere.setLightPath(!!pathSample);
+      atmosphere.setLightPath(!!pathSample || chapterNight > 0);
+      const reach = settings.shadowReach || 45, far = settings.shadowFar || 240;
+      shadowAhead = settings.shadowAhead || 0;
+      if (reach !== shadowReach || far !== shadowFar) {
+        shadowReach = reach;shadowFar = far;
+        Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, far });
+        sun.shadow.camera.updateProjectionMatrix();
+        // The same offsets in metres as the 45 m box: the depth offset is a share of the box's depth, the other of a texel.
+        sun.shadow.bias = -.00035 * 240 / far;sun.shadow.normalBias = .03 * reach / 45;
+        host.dataset.shadowReach = String(reach);
+      }
       if (!scene.fog) scene.fog = new THREE.Fog(colour(settings.fog), 260, 1650);
       scene.fog.color.lerp(colour(settings.fog), amount);
       scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, settings.fogNear, amount);
@@ -137,11 +193,15 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       }
       host.dataset.theme = theme;
       host.dataset.tunnel = String(tunnel);
-      host.dataset.lightingMood = pathSample ? 'light-path' : night ? 'night' : mood || 'clear';
+      host.dataset.lightingMood = pathSample ? 'light-path' : night || chapterNight ? 'night' : mood || 'clear';
       if (pathSample) {
         uniforms.stars.value = settings.stars;uniforms.moon.value = settings.moon;
         host.dataset.lightPath = 'true';host.dataset.nightAmount = String(settings.nightAmount);
       } else {
+        if (chapterNight) {
+          if (uniforms.stars) uniforms.stars.value = chapterNight;
+          if (uniforms.moon) uniforms.moon.value = chapterNight;
+        }
         delete host.dataset.lightPath;delete host.dataset.nightAmount;
       }
     },
@@ -149,8 +209,23 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       if (stopped) return;
       sky.position.copy(camera.position);
       atmosphere.update(seconds);
-      sun.position.set(position.x + sunOffset.x, position.y + sunOffset.y, position.z + sunOffset.z);
-      sun.target.position.set(position.x, position.y, position.z);
+      shadowMiddle.set(position.x, position.y, position.z);
+      if (shadowReach !== 45 || shadowAhead) {
+        // A wide box lies ahead of the camera, where the player looks, and moves in whole shadow texels so that the edges of
+        // shadows do not crawl as the car moves.
+        camera.getWorldDirection(shadowDir);
+        const flat = Math.hypot(shadowDir.x, shadowDir.z);
+        if (flat > .2) { shadowMiddle.x += shadowDir.x / flat * shadowAhead;shadowMiddle.z += shadowDir.z / flat * shadowAhead; }
+        shadowDir.copy(sunOffset).normalize();
+        shadowRight.set(shadowDir.z, 0, -shadowDir.x).normalize();
+        shadowUp.crossVectors(shadowDir, shadowRight);
+        const texel = 2 * shadowReach / sun.shadow.mapSize.x;
+        const across = Math.round(shadowMiddle.dot(shadowRight) / texel) * texel, up = Math.round(shadowMiddle.dot(shadowUp) / texel) * texel;
+        const along = shadowMiddle.dot(shadowDir);
+        shadowMiddle.set(0, 0, 0).addScaledVector(shadowRight, across).addScaledVector(shadowUp, up).addScaledVector(shadowDir, along);
+      }
+      sun.position.set(shadowMiddle.x + sunOffset.x, shadowMiddle.y + sunOffset.y, shadowMiddle.z + sunOffset.z);
+      sun.target.position.copy(shadowMiddle);
       sun.target.updateMatrixWorld();
     },
     updateVehicles({ course: current, position, player, police, distance, tall, now, high, menu }) {

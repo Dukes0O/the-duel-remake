@@ -459,12 +459,12 @@ const closureProfile = day => ({...createProfile(), credits: 20_000, heli: {...c
 check('burning, buying back, scars and healing work through the save helpers', () => {
   let profile = burnCourse(closureProfile(4), 'tremblant-woods', 4, on).profile;
   assert.equal(courseClosed(profile, 'tremblant-woods', undefined, on), true);
-  profile = {...profile, credits: 9_999};
+  profile = {...profile, credits: 2_999};
   const short = buyBack(profile, 'tremblant-woods', on);
   assert.deepEqual([short.ok, short.reason, short.profile], [false, 'You need 1 more credit.', profile]);
-  profile = {...profile, credits: 10_000};
+  profile = {...profile, credits: 3_000};
   const bought = buyBack(profile, 'tremblant-woods', on);
-  assert.deepEqual([bought.ok, bought.price, bought.profile.credits], [true, 10_000, 0]);
+  assert.deepEqual([bought.ok, bought.price, bought.profile.credits], [true, 3_000, 0]);
   assert.equal(courseClosed(bought.profile, 'tremblant-woods', undefined, on), false, 'buying back reopens it at once');
   assert.equal(burnStage(bought.profile, 'tremblant-woods', undefined, on), 'black');
   assert.equal(buyBack(bought.profile, 'tremblant-woods', on).ok, false, 'an open course cannot be bought');

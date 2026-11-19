@@ -8,6 +8,45 @@ import {sweepObstacle} from '../src/collision.js';
 import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import {TREMBLANT_SNOW} from '../src/circuits/tremblant-snow.js';
 import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
+import {nearGroundHeightAt} from '../src/world/near-ground.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {HILLS} from '../src/world/scablands-height.js';
+{
+ const mesa=HILLS.find(hill=>hill.kind==='mesa');
+ const x=mesa.x+mesa.radius+35, z=mesa.z, ground=(x,z)=>nearGroundHeightAt(x,z,scablandsSurfaceHeightAt);
+ const car={x,y:ground(x,z)+25,z}, position={x:x-8.7,y:ground(x-8.7,z)+3.65,z};
+ const target={x:x+26,y:car.y+1.05,z};
+ const course={def:{scablands:true}};
+ let blend=clearance.scablandsLandingCamera(course,position,target,car,Math.PI/2,8.7,3.65,25,true,0,1/60,ground);
+ assert.equal(blend,1);
+ assert.ok(position.y>=car.y+3.65 && position.y>ground(position.x,position.z),'camera clears the car and drawn ground');
+ assert.ok(Math.abs(position.x-(car.x-8.7))<1e-8 && Math.abs(position.z-car.z)<1e-8,'camera stays behind the car');
+ const camera=new THREE.PerspectiveCamera(55,1280/800,.15,2400);
+ camera.position.set(position.x,position.y,position.z);camera.lookAt(target.x,target.y,target.z);camera.updateMatrixWorld();
+ const landing=new THREE.Vector3(car.x+20,ground(car.x+20,car.z),car.z).project(camera);
+ assert.ok(Math.abs(landing.x)<1 && Math.abs(landing.y)<1 && landing.z>=-1 && landing.z<=1,'landing projects inside the picture');
+ blend=clearance.scablandsLandingCamera(course,position,target,car,Math.PI/2,8.7,3.65,2,true,blend,.25,ground);
+ assert.equal(blend,1,'the landing view stays until the car lands');
+ blend=clearance.scablandsLandingCamera(course,position,target,car,Math.PI/2,8.7,3.65,0,false,blend,.25,ground);
+ assert.equal(blend,.5,'landing view eases halfway back in a quarter second');
+ position.y=car.y-20;
+ blend=clearance.scablandsLandingCamera(course,position,target,car,Math.PI/2,8.7,3.65,0,false,blend,.1,ground);
+ assert.ok(position.y>=car.y,'the easing camera never falls below the car');
+ assert.equal(clearance.scablandsLandingCamera(course,position,target,car,Math.PI/2,8.7,3.65,0,false,blend,.25,ground),0);
+ const before=JSON.stringify({position,target});
+ assert.equal(clearance.scablandsLandingCamera({def:{}},position,target,car,0,8.7,3.65,25,true,0,1/60,ground),0);
+ assert.equal(JSON.stringify({position,target}),before,'ordinary races keep their camera');
+}
+{
+ const place=LAND.place('ridge'), position={x:place.x,y:-100,z:place.z};
+ const drawn=(x,z)=>nearGroundHeightAt(x,z,scablandsSurfaceHeightAt);
+ const before=drawn(position.x,position.z);
+ assert.ok(clearance.raiseScablandsCamera({def:{scablands:true}},position,position,before,drawn));
+ assert.ok(Math.abs(position.y-before-1.2)<1e-8,'chase camera clears the drawn hill');
+ const ordinary={x:0,y:-100,z:0};
+ assert.equal(clearance.raiseScablandsCamera({def:{}},ordinary,ordinary,0,()=>20),false);
+}
 let checks=0;
 for(const def of COURSE)for(const seed of[1989,42]){
  const course=new Course(def,seed);

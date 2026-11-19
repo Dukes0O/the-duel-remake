@@ -1,0 +1,80 @@
+.in-story-talk #race-hud, .in-story-talk .world-hud, .in-story-talk .combat-hud, .in-story-talk .combat-upgraded-hud,
+body:has(.in-story-talk) #story-caption, .in-story-talk .rear-view-frame, .in-story-talk .race-only { visibility: hidden }
+.story-talk {
+  --paper: #f2e7cd; --ink: #292722; --muted-ink: #62523a;
+  position: absolute; inset: 0; z-index: 15; overflow: hidden; outline: 0;
+  color: var(--ink); background: linear-gradient(0deg, #100d0b99, transparent 27%);
+  font: 500 clamp(15px, 1.35vw, 21px)/1.38 Georgia, serif;
+}
+.story-talk button { color: inherit; font: inherit }
+.story-talk button:focus-visible { outline: 3px solid #e3ac53; outline-offset: 4px }
+.story-talk button:active { transform: none }
+.story-speech {
+  position: absolute; max-width: min(31ch, 78vw); width: max-content; padding: .65em 1.03em .8em;
+  border: 1px solid #37372c; border-radius: 16px 19px 18px 12px; background: var(--paper);
+  box-shadow: 0 .25rem .85rem #090b0d55; text-align: left;
+}
+.story-speech::after {
+  content: ''; position: absolute; top: calc(100% - 1px); left: var(--tail); width: 16px; height: 16px;
+  background: var(--paper); clip-path: polygon(0 100%, 0 0, 100% 0);
+}
+.story-speech.below::after { top: auto; bottom: calc(100% - 1px); transform: scaleY(-1) }
+.story-speaker, .story-cloud small, .story-stock small {
+  display: block; color: var(--muted-ink); font: 800 .62em/1.8 system-ui, sans-serif;
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.story-speech.low .story-words { font-size: .85em }
+.story-speech.radio {
+  top: 13%!important; right: 4%; left: auto!important; padding: 1em 1.4em; color: #f3eddb;
+  border: 0; border-radius: 0; background: #343c37;
+  clip-path: polygon(0 8%, 6% 4%, 9% 8%, 20% 2%, 25% 6%, 40% 2%, 45% 6%, 63% 1%, 69% 6%, 83% 0%, 87% 7%, 100% 4%, 98% 24%, 100% 41%, 97% 57%, 100% 90%, 92% 94%, 86% 90%, 69% 98%, 62% 93%, 42% 100%, 38% 93%, 19% 97%, 15% 91%, 2% 98%, 3% 73%, 0 60%, 2% 37%);
+}
+.story-speech.radio::after { display: none }
+.story-speech.radio b { color: #ddbe86 }
+.story-thoughts, .story-options {
+  position: absolute; left: 50%; bottom: 10%; transform: translateX(-50%);
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center;
+  width: min(700px, 84%); gap: .58em 1em; max-height: 62%; overflow: auto; padding: .4em;
+}
+.story-cloud {
+  position: relative; margin: 0; padding: .7em 1.35em .78em; text-align: left; color: var(--ink);
+  --cloud-color: #f4ead4; background: var(--cloud-color); border: 1px solid #bbaa8b;
+  border-radius: 43% 32% 36% 26% / 30% 45% 36% 40%; box-shadow: 0 3px 7px #201a1755;
+}
+.story-thoughts .story-cloud::after { content: ''; position: absolute; right: 12%; bottom: -6px; width: 11px; height: 8px; background: var(--cloud-color); border-radius: 50%; box-shadow: 8px 5px 0 -2px var(--cloud-color) }
+.story-options button.weighing { --cloud-color: #ffe7af; background: var(--cloud-color); border-color: #ddb266 }
+.story-inner-voice { position: absolute; top: 13%; left: 50%; transform: translateX(-50%); width: min(28ch, 50%); margin: 0; padding: .65em 1.25em; text-align: center; font-style: italic; border-radius: 40%; background: var(--paper) }
+.story-stocks { position: absolute; left: 3%; top: 4%; display: flex; gap: 1px }
+.story-stock { display: flex; align-items: baseline; gap: .65em; padding: .35em .8em; color: #f4e4c3; background: #22251fe8; border-bottom: 2px solid #d99846 }
+.story-stock small { color: #e8bd7f }
+.story-stock strong { font: 700 1.2em system-ui, sans-serif; font-variant-numeric: tabular-nums }
+.story-stock.is-changing strong { animation: story-stock-blink .75s ease-in-out infinite }
+@keyframes story-stock-blink { 50% { opacity: .5; color: #ffc46e } }
+@media(prefers-reduced-motion: reduce) { .story-stock.is-changing strong { animation: none; color: #ffc46e } }
+.story-talk-controls { position: absolute; right: 3%; bottom: 2.5%; z-index: 1; display: flex; gap: .6em }
+.story-talk-controls button { background: #20251fe6; color: #f3e4c6; padding: .4em .75em; border: 1px solid #aa9974; border-radius: 3px; font: 650 12px/1.4 system-ui, sans-serif }
+.story-recall { position: absolute; right: 3%; bottom: 9%; margin: 0; max-height: 66%; width: min(48ch, 90%); overflow: auto; list-style: none; padding: .9em 1.3em; color: #f4ead4; background: #20241ff5; border-left: 3px solid #ce9a54 }
+.story-recall li + li { margin-top: .6em }
+.story-recall li b { display: block; color: #dec79d; font: bold .7em system-ui, sans-serif }
+.story-talk.recalling :is(.story-speech,.story-thoughts,.story-options,.story-inner-voice,.story-talk-controls button:first-child) { visibility: hidden }
+.story-options .story-option-detail { display: block; margin-top: .2em; }
+.story-options button:disabled { opacity: .55; cursor: default; }
+
+/* Keep the gate tableau clear while all seven options are on screen. */
+.story-talk[data-scene="gate"][data-phase="options"] .story-options {
+  bottom: 8px;
+  width: min(1200px, 96%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px 8px;
+  padding: 0 4px;
+  align-items: stretch;
+}
+.story-talk[data-scene="gate"] .story-options .story-cloud {
+  font: 500 clamp(12px, 1.08vw, 15px)/1.2 Georgia, serif;
+  padding: 4px 12px 5px;
+  border-radius: 14px;
+}
+.story-talk[data-scene="gate"][data-phase="options"] .story-talk-controls {
+  top: 4%;
+  bottom: auto;
+}

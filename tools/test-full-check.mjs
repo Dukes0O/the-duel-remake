@@ -8,7 +8,9 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseNightArguments, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy } from './full-check.mjs';
+import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy, chooseNightSize, nightSizeLine, NIGHT_FULL_FILES, saveFile, realFrameScope } from './full-check.mjs';
+import { nightIsFullTierPass, latestNight } from './build-status.mjs';
+import { fileURLToPath } from 'node:url';
 
 const date = '2026-10-12', head = 'a'.repeat(40), previous = 'b'.repeat(40), merge = 'c'.repeat(40);
 const root = 'C:/qa/the-duel-remake';
@@ -18,11 +20,12 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,timingPatch={},timingMissing=false}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,frameSuiteFail=false,timingPatch={},timingMissing=false,browserPatch={},changed=['src/game.js'],planOptions={}}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
   files.set(copyRoot+'/'+reportName,sourceReport);
+  files.set(root+'/docs/board/checks/standing-failures.json','[]\n');
   let active=0, maximum=0, heads=0, invocations=0;
   let plan = nightPlan({date,root});
   if(lastGreen)files.set(`${root}/docs/board/checks/night-2026-10-11.json`,
@@ -58,11 +61,13 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
       if(files.get(copyRoot+'/'+reportName)!==sourceReport||files.has(copyRoot+'/src/game.js'))throw Error('Copy is changed; nonforced cleanup refused.');
       copies.push(['remove',copy.source]);
     },
-    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1)});return evidence;},
+    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1),previousSource:(lastGreen || files.has(`${root}/docs/board/checks/night-${date}.json`))?previous:null,...planOptions});return evidence;},
     refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
     recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
     processes:async()=>busy?[{pid:99,command:'node tools/run-tests.mjs --tier lane'}]:[],
-    scenarioNames:async()=>['smoke-extra'], listNightFiles:async()=>lastGreen?['night-2026-10-11.json']:[],
+    scenarioNames:async()=>['smoke-extra'], scenarioSelection:async()=>[{name:'smoke-extra'}], listNightFiles:async()=>lastGreen?['night-2026-10-11.json']:[],
+    // QA-NIGHT-SIZED: these older cases are full nights; the size is chosen from the changed files, and a shared game file makes it full.
+    changedFiles:async()=>changed,
     readText:async path=>{if(!files.has(path))throw Error('ENOENT');return files.get(path);},
     writeText:async(path,text)=>files.set(path,text), mkdir:async()=>{},
     appendText:async(path,text)=>{logs.push([path,text]);files.set(path,(files.get(path)||'')+text);},
@@ -77,6 +82,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
         let text='';
         if(stage.id==='full') {
           const packet=full();
+          if(stage.tier==='wide')packet.tier='wide';
           if(fullFailures.length)Object.assign(packet,{exitCode:1,passed:0,total:fullFailures.length,failures:fullFailures,
             results:fullFailures.map(label=>({label,passed:false,exitCode:1}))});
           if(partialFull)packet.notRun=1;
@@ -91,8 +97,9 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
           assert.match(messages.at(-1),/laptop panel off.*Second screen only/);
           const packet=frames();Object.assign(packet.reports[0],framePatch);
           files.set(stage.packet,frameText??JSON.stringify(packet));
-          files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:3,failed:0,timingMode:'timing-only',
-            rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
+          const measuredFailure=frameSuiteFail;
+          files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:measuredFailure?2:3,failed:measuredFailure?1:0,timingMode:'timing-only',
+            rows:['frame-pacing','tremblant-snow','tremblant-views'].map((name,index)=>({name,passed:!measuredFailure||index!==0,...(measuredFailure&&index===0?{error:'High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.'}:{})}))}));
           if(!timingMissing)for(const recipe of stage.timingPackets) {
             const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
             const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
@@ -101,7 +108,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
             files.set(recipe.packet,JSON.stringify({mode:'timing',reports,misses:0}));
           }
         }
-        if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(browser()));
+        if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify({...browser(),...browserPatch}));
         if(stage.id==='combat')text=JSON.stringify({flags:[],policyRuns:51,baselineRaces:90,
           crossbowAim:{hitRate:.5},ownBombs:{maxSpeedLossPct:10}})+'\n';        child.stdout.end(text);child.stderr.end(fail===stage.id?'actual fixture error\n':'');
         active--;child.emit('close',fail===stage.id||stage.id==='full'&&fullFailures.length?1:0,null);
@@ -461,7 +468,7 @@ test('concurrent source commit keeps its new committed STATUS during publication
 });
 test('Night browser frame row reuses the same leaf without measuring, and failed/missing originals fail',async()=>{
   const outputDir=root+'/.evidence/'+date+'/FAC-03/night-owned/browser/frame-pacing';
-  const packetPath=root+'/.evidence/'+date+'/FAC-03/night-owned/frames/frame-pacing.json';
+  const packetPath=root+'/.evidence/'+date+'/FAC-03/night-owned/frames/frame-pacing/frame-pacing.json';
   let measurements=0,writes=0;
   const context={outputDir,evaluate:()=>{measurements++;throw Error('must not measure');},
     command:()=>{measurements++;throw Error('must not render');},navigate:()=>{measurements++;throw Error('must not navigate');}};
@@ -663,4 +670,264 @@ test('full-check cannot count successful pictures as completed Tremblant timing'
   const f=fixture(),packet=await runNight(opts(),f.deps),stage=packet.stages.find(row=>row.id==='frames');
   assert.equal(stage.tremblantReports.length,6,'all original measurement points retained');
   assert.equal(stage.passed,true);assert.equal(packet.status,'passed');
+});
+
+
+test('standing results, new failures, passed entries and strict release',()=>{
+  const list=[{stage:'frames',name:'frames',since:'2026-11-05',card:'QA',cause:'slow'},
+    {stage:'browser',name:'old',since:'2026-11-05',card:'QA',cause:'error'},
+    {stage:'browser',name:'unrun',since:'2026-11-05',card:'QA',cause:'error'}];
+  const failures=[{name:'frames',error:'slow'},{name:'browser: new',error:'new'}];
+  const stages=[{id:'frames',passed:false,measuredFailure:true},{id:'browser',passed:false,passedNames:['old']}];
+  const result=classifyNight(failures,stages,list);
+  assert.equal(result.status,'failed');assert.deepEqual(result.failures.map(row=>row.name),['browser: new','frames']);
+  assert.deepEqual(result.nowPassing,[list[1]]);assert.deepEqual(result.remaining,[list[0],list[2]]);
+  assert.equal(classifyNight([failures[0]],stages,list).status,'standing');
+  assert.equal(classifyNight([failures[0]],stages,list,true).status,'failed');
+  assert.equal(classifyNight([],[],list).status,'failed');
+  assert.equal(classifyNight([],[],list).failures[0].error,'no stage ran');
+  assert.equal(parseNightArguments(['--idle-awake','--no-push','--strict']).strict,true);
+});
+
+
+test('standing causes match normalized messages only for completed failures',()=>{
+  const list=[{stage:'browser',name:'old',cause:'value # exceeded #'}];
+  const good={id:'browser',validatedFailures:['old']};
+  const failure={name:'browser: old',error:'  value 4.2 exceeded 10  '};
+  assert.equal(classifyNight([failure],[good],list).status,'standing');
+  const changed=classifyNight([{...failure,error:'different 4'}],[good],list);
+  assert.equal(changed.status,'failed');
+  assert.equal(changed.fresh[0].news,'a listed item failed in a new way');
+  assert.equal(changed.fresh[0].listedCause,list[0].cause);
+  for(const stage of [undefined,{id:'browser'},{id:'browser',validatedFailures:[]}])
+    assert.equal(classifyNight([failure],stage?[stage]:[],list).status,'failed');
+  const frame=[{stage:'frames',name:'frames',cause:'slow #'}];
+  for(const stage of [undefined,{id:'frames'},{id:'frames',measuredFailure:false}])
+    assert.equal(classifyNight([{name:'frames',error:'slow 3'}],stage?[stage]:[],frame).status,'failed');
+  assert.equal(classifyNight([{name:'frames',error:'slow 3'}],[{id:'frames',measuredFailure:true}],frame).status,'standing');
+});
+
+test('standing failures are published and passing entries are removed only after a completed check',async()=>{
+  const f=fixture({fail:'frames',framePatch:{p95:19},frameSuiteFail:true}),file=root+'/docs/board/checks/standing-failures.json';
+  const cause='High: real eight-car night frames require delivered p# <=# ms, finite world build <# ms and finite full first-race load.';
+  const list=[{stage:'frames',name:'frames',since:date,card:'QA',cause},
+    {stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'old'}];
+  f.files.set(file,JSON.stringify(list));
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'standing');assert.deepEqual(result.nowPassing,[list[1]]);
+  assert.deepEqual(JSON.parse(f.files.get(file)),[list[0]]);
+  assert.equal(result.publication.status,'committed');
+  const strict=fixture({fail:'frames'});strict.files.set(file,JSON.stringify(list));
+  const release=await runNight({...opts(),strict:true},strict.deps);
+  assert.equal(release.status,'failed');assert.equal(strict.files.get(file),JSON.stringify(list));
+});
+
+
+test('browser failure messages are matched only after packet and exit validation',async()=>{
+  const file=root+'/docs/board/checks/standing-failures.json';
+  const list=[{stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'broken #'}];
+  const row=error=>({browserPatch:{passed:0,failed:1,rows:[{name:'smoke-extra',passed:false,error}]},fail:'browser'});
+  for(const [error,status] of [['broken 42','standing'],['broken elsewhere','failed'],['timeout 42','failed']]) {
+    const f=fixture(row(error));f.files.set(file,JSON.stringify(list));
+    const result=await runNight(opts(),f.deps);
+    assert.equal(result.status,status);
+    if(error==='broken elsewhere')assert.equal(result.failures[0].news,'a listed item failed in a new way');
+  }
+});
+
+test('an invalid, partial, unselected or crashed browser result clears no standing entry',async()=>{
+  const file=root+'/docs/board/checks/standing-failures.json';
+  const list=[{stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'old'}];
+  for(const settings of [{missing:'browser'},{fail:'browser'},
+    {browserPatch:{count:2}},{browserPatch:{rows:[{name:'other',passed:true}]}}]) {
+    const f=fixture(settings);f.files.set(file,JSON.stringify(list));
+    const result=await runNight(opts(),f.deps);
+    assert.deepEqual(result.nowPassing,[]);
+    assert.equal(f.files.get(file),JSON.stringify(list));
+  }
+});
+
+
+test('a copied source change after browser packet validation fails the stage and keeps its standing entries',async()=>{
+  const file=root+'/docs/board/checks/standing-failures.json';
+  const list=[{stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'broken #'},
+    {stage:'browser',name:'other',since:date,card:'QA',cause:'old'}];
+  const f=fixture({fail:'browser',browserPatch:{count:2,passed:1,failed:1,rows:[
+    {name:'smoke-extra',passed:false,error:'broken 42'},{name:'other',passed:true}]}});
+  f.deps.scenarioNames=async()=>['smoke-extra','other'];
+  f.deps.scenarioSelection=async()=>[{name:'smoke-extra'},{name:'other'}];
+  const git=f.deps.git;let browserChecks=0;
+  f.deps.git=async(args,cwd)=>{
+    if(cwd===root+'-copy/source'&&args[0]==='rev-parse'&&f.calls.includes('browser')&&++browserChecks===1)
+      return 'e'.repeat(40);
+    return git(args,cwd);
+  };
+  f.files.set(file,JSON.stringify(list));
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'failed');
+  assert.ok(result.failures.some(row=>row.name==='browser'&&row.error==='Copied source changed.'));
+  assert.deepEqual(result.nowPassing,[]);
+  assert.equal(f.files.get(file),JSON.stringify(list));
+});
+
+test('weekday, Saturday and strict plans choose the expected browser scope',()=>{
+  const args = (date,strict=false) => nightPlan({date,previousSource:previous,strict})[3].args;
+  assert.deepEqual(args('2026-11-16').slice(1,3), ['--changed-since',previous]);
+  assert.equal(args('2026-11-14')[1], '--all');
+  assert.equal(args('2026-11-16',true)[1], '--all');
+  assert.equal(nightPlan({date:'2026-11-16'})[3].args[1], '--all');
+});
+
+// ---- QA-NIGHT-SIZED: the night's size comes from the files changed since the last night that passed ----
+const last={source:previous,status:'passed',date:'2026-10-11'};
+const reachStub=files=>({suites:['tools/test-a.mjs'],unreached:files.filter(file=>file.endsWith('.py')),total:100});
+const choose=(changed,extra={})=>chooseNightSize({date,previous:last,lastFull:{date:'2026-10-11'},changed,reach:reachStub,...extra});
+
+test('night size: nothing to check, or only notes and files no suite reads, is no night at all',()=>{
+  const nothing=choose([]);
+  assert.equal(nothing.size,'none');assert.match(nothing.reason,/^nothing to check since bbbbbbbbb$/);
+  const notes=choose(['docs/board/STATUS.md','docs/changes/X.md','docs/board/looks/rustwall/sheet.jpg','README.md','tools/scratch.py']);
+  assert.equal(notes.size,'none');assert.match(notes.reason,/only notes, board files or files that no suite reads changed since bbbbbbbbb \(5 files\)/);
+  assert.match(nightSizeLine(notes),/^No night check: /);
+});
+test('night size: a shared game file, the save shape or the physics makes the night full',()=>{
+  for(const file of ['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']) {
+    assert.ok(NIGHT_FULL_FILES.includes(file),file+' is a shared game file');
+    const size=choose(['docs/x.md',file,'tools/a.mjs']);
+    assert.equal(size.size,'full');assert.match(size.reason,new RegExp(file.replace('.','\\.')+' changed, which holds shared game code'));
+  }
+  for(const file of ['src/progression.js','src/career-backup.js','src/town/town-state.js','src/sim-driving.js','src/offroad-physics.js'])
+    assert.equal(choose([file]).size,'full',file+' holds the save shape or the physics');
+  assert.match(choose(['src/game.js','src/app.js','src/main.js','src/config.js']).reason,/src\/game\.js, src\/app\.js, src\/main\.js and 1 more changed, which hold/);
+  assert.equal(NIGHT_FULL_FILES.length,new Set(NIGHT_FULL_FILES).size);
+  for(const file of ['src/story/ledger-save.js','src/story/night-2-save.js','src/world/world-save.js','src/bowl/bowl-save.js'])
+    assert.ok(saveFile(file),file+' holds part of the save');
+  assert.ok(!saveFile('src/story/ledger.js')&&!saveFile('tools/test-story-save.mjs'));
+  assert.ok(saveFile('src/career-grant-2026-11-16.js'),'a dated career one-off touches the save');
+});
+test('night size: any other change is a partial night that says where the files are',()=>{
+  const size=choose(['src/lab/lab-tune.js','src/lab/lab-save-view.js','tools/test-lab.mjs','docs/changes/X.md']);
+  assert.equal(size.size,'partial');assert.equal(size.reason,'4 files changed, all under docs/, src/lab/ and tools/');
+  assert.deepEqual(size.suites,['tools/test-a.mjs']);
+  assert.equal(choose(['src/lab/lab-tune.js']).reason,'1 file changed, all under src/lab/');
+  assert.equal(choose(['a/x.js','b/x.js','c/x.js','d/x.js','e/x.js']).reason,'5 files changed, across 5 areas');
+});
+test('night size: Saturday, a last full night older than seven days, no earlier night, and --full all make it full',()=>{
+  const saturday=choose(['src/lab/lab-tune.js'],{date:'2026-10-17'});
+  assert.equal(saturday.size,'full');assert.match(saturday.reason,/Saturday/);
+  assert.equal(choose(['src/lab/lab-tune.js'],{date:'2026-10-16'}).size,'partial','Friday is an ordinary night');
+  // The seven-day rule: seven days is still fine, eight is not, and no full night on record is the same as old.
+  assert.equal(choose(['src/lab/lab-tune.js'],{lastFull:{date:'2026-10-05'}}).size,'partial');
+  const old=choose(['src/lab/lab-tune.js'],{lastFull:{date:'2026-10-04'}});
+  assert.equal(old.size,'full');assert.match(old.reason,/last full night was on 2026-10-04, more than seven days ago/);
+  assert.match(choose(['src/lab/lab-tune.js'],{lastFull:null}).reason,/no full night is on record/);
+  assert.match(choose(['src/lab/lab-tune.js'],{previous:null}).reason,/no earlier night/);
+  const forced=choose([],{force:true});
+  assert.equal(forced.size,'full');assert.match(forced.reason,/asked for by hand, for a release/);
+  assert.equal(parseNightArguments(['--idle-awake','--no-push','--full']).full,true);
+  assert.throws(()=>parseNightArguments(['--idle-awake','--no-push','--full','--full']));
+});
+test('night size: a file the game loads never makes a night empty, even when no Node suite reaches it',()=>{
+  const reach=files=>({suites:[],unreached:files,total:100});
+  for(const file of ['src/world/look.css','public/assets/x.jpg','index.html','src/data/table.json'])
+    assert.notEqual(chooseNightSize({date,previous:last,lastFull:{date:'2026-10-11'},changed:[file],reach}).size,'none',file);
+  assert.equal(chooseNightSize({date,previous:last,lastFull:{date:'2026-10-11'},changed:['tools/blender/recipe.py'],reach}).size,'none',
+    'a tool file no suite reads still needs no night');
+});
+test('night size: on a Saturday or an old week, a night with nothing to check reruns only when no full pass still counts',()=>{
+  const docsOnly=['docs/board/STATUS.md'];
+  assert.equal(choose(docsOnly,{date:'2026-10-17'}).size,'none','the full pass of the last night still counts (rule 19)');
+  assert.equal(choose(docsOnly,{date:'2026-10-17',previous:{...last,size:'partial'}}).size,'full');
+  assert.equal(choose(docsOnly,{lastFull:{date:'2026-10-01'},previous:{...last,size:'partial'}}).size,'full');
+  assert.equal(choose(docsOnly,{lastFull:{date:'2026-10-01'}}).size,'none');
+});
+
+test('night report: the first line gives the size and reason, a partial night runs only what changed and frames are reused',async()=>{
+  const lastRow={schema:1,status:'passed',source:previous,date:'2026-10-11',size:'full',stages:[{id:'frames',passed:true}]};
+  const options={changed:['src/lab/lab-tune.js'],planOptions:{size:'partial',frames:false,combat:false,scenarios:['smoke-extra']}};
+  const f=fixture(options);
+  f.files.set(`${root}/docs/board/checks/night-2026-10-11.json`,JSON.stringify(lastRow));
+  f.deps.reach=reachStub;f.deps.frameScope=()=>[];
+  const packet=await runNight(opts(),f.deps);
+  assert.equal(packet.status,'passed',JSON.stringify(packet.failures));
+  assert.equal(packet.size,'partial');
+  assert.deepEqual(f.calls,['full','browser'],'no frame or combat stage when neither changed');
+  const stage=packet.stages.find(row=>row.id==='full');
+  assert.deepEqual(stage.args,['tools/run-tests.mjs','--tier','wide','--since',previous,'--jobs','4','--keep-going','--json']);
+  assert.equal(packet.framesFrom,previous);
+  const morning=f.files.get(`${root}/docs/board/checks/night-${date}.md`),json=f.files.get(`${root}/docs/board/checks/night-${date}.json`);
+  assert.match(morning.split('\n')[0],/^Partial night: 1 file changed, all under src\/lab\/; \d+ of 100 suites, 1 of 1 browser scenarios, frames reused from bbbbbbbbb, combat balance not needed\.$/);
+  assert.equal(morning.split('\n')[0],packet.sizeLine);
+  assert.match(json,/^\{\n  "schema": 1,\n  "size": "partial",\n  "sizeLine": "Partial night: /,'the record begins with the size and its reason');
+  assert.match(morning,/not a full-tier pass for a release/);
+  assert.equal(f.files.get(root+'-copy/source/docs/board/checks/full-tier.json'),'original copied report\n','a partial night leaves the full-tier report alone');
+  assert.ok(morning.trim().split('\n').length<20);
+});
+test('night report: a partial night runs frames when the timed scene changed and combat balance when a combat file changed',async()=>{
+  const f=fixture({changed:['src/arsenal/crossbow.js'],planOptions:{size:'partial',frames:true,combat:true,scenarios:['smoke-extra']}});
+  f.files.set(`${root}/docs/board/checks/night-2026-10-11.json`,JSON.stringify({schema:1,status:'passed',source:previous,date:'2026-10-11',size:'full',stages:[{id:'frames',passed:true}]}));
+  f.deps.reach=reachStub;f.deps.frameScope=files=>files;
+  const packet=await runNight(opts(),f.deps);
+  assert.equal(packet.size,'partial');assert.equal(packet.status,'passed',JSON.stringify(packet.failures));
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
+  assert.match(packet.sizeLine,/frames run \(the timed scene or its code changed\), combat balance run\.$/);
+  assert.equal(packet.framesFrom,undefined);
+  // With no frame pass on record, frames run too.
+  const first=fixture({changed:['src/arsenal/crossbow.js'],planOptions:{size:'partial',frames:true,combat:true,scenarios:['smoke-extra']}});
+  first.deps.reach=reachStub;first.deps.frameScope=()=>[];
+  assert.match((await runNight(opts(),first.deps)).sizeLine,/frames run \(no earlier frame pass is on record\)/);
+});
+test('night report: a full night begins with its reason, and --full runs everything even when only notes changed',async()=>{
+  const f=fixture(),packet=await runNight(opts(),f.deps);
+  assert.equal(packet.size,'full');assert.match(f.files.get(`${root}/docs/board/checks/night-${date}.md`).split('\n')[0],/^Full night: src\/game\.js changed, which holds shared game code/);
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
+  const notesOnly=fixture({changed:['docs/board/STATUS.md']});
+  const forced=await runNight({...opts(),full:true},notesOnly.deps);
+  assert.equal(forced.size,'full');assert.match(forced.sizeLine,/asked for by hand, for a release/);
+  assert.deepEqual(notesOnly.calls,['full','frames','combat','browser']);
+});
+test('night report: a night with nothing to check starts no job and records nothing that could pass a later commit',async()=>{
+  const f=fixture({changed:['docs/board/STATUS.md','docs/board/looks/rustwall/sheet.jpg']});
+  f.deps.reach=()=>{throw Error('notes need no suite lookup');};
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.size,'none');assert.equal(result.status,'none');
+  assert.equal(f.calls.length,0);assert.deepEqual(f.copies,[]);
+  assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
+  assert.equal(f.metadata.some(args=>args[0]==='commit'),false,'no commit for a run-log line (rule 5)');
+  assert.equal(f.files.has(root+'/docs/board/run-log.md'),false,'the integration folder stays clean: no run-log edit');
+  const note=f.files.get(`${root}/.evidence/${date}/FAC-03/night/no-check.txt`);
+  assert.match(note,/^- 12 October, night: no night check: nothing to check since bbbbbbbbb \(2 files changed; only notes, board files or files no suite reads\)\.\n$/);
+  assert.equal(result.runLogLine+'\n',note);
+});
+test('night frames are rerun only for files of the timed scene or its code',()=>{
+  const real=fileURLToPath(new URL('../',import.meta.url));
+  const scene=['src/sim-driving.js','src/screen-menu.js','src/circuits/harbour-lights.js','tools/scenarios/frame-pacing.mjs'];
+  const other=['docs/board/STATUS.md','tools/blender/hull_model.py','tools/test-full-check.mjs','package.json'];
+  assert.deepEqual(realFrameScope(real,[...other,...scene]),scene);
+});
+test('a partial night pass is never a full-tier pass for a release',async()=>{
+  const full={schema:1,date,source:head,status:'passed',size:'full'};
+  assert.equal(nightIsFullTierPass(full),true);
+  assert.equal(nightIsFullTierPass({...full,status:'standing'}),true);
+  assert.equal(nightIsFullTierPass({...full,size:'partial'}),false);
+  assert.equal(nightIsFullTierPass({...full,status:'failed'}),false);
+  const {size:_ignored,...legacy}=full;
+  assert.equal(nightIsFullTierPass(legacy),true,'a record from before nights had sizes was a full night');
+  // The status page and the release question read the recorded size.
+  const folder=await mkdtemp(join(tmpdir(),'duel-night-size-'));
+  try {
+    await mkdir(join(folder,'docs/board/checks'),{recursive:true});
+    await writeFile(join(folder,'docs/board/checks',`night-${date}.json`),JSON.stringify({...full,size:'partial'}));
+    const night=latestNight(folder,'2026-10-13T00:00:00Z');
+    assert.equal(night.size,'partial');assert.equal(night.fullTierPass,false);assert.equal(night.result,'passed');
+    await writeFile(join(folder,'docs/board/checks',`night-${date}.json`),JSON.stringify(full));
+    assert.equal(latestNight(folder,'2026-10-13T00:00:00Z').fullTierPass,true);
+  }finally {await rm(folder,{recursive:true,force:true});}
+  // And a real partial night writes a record that says so.
+  const f=fixture({changed:['src/lab/lab-tune.js'],planOptions:{size:'partial',frames:true,combat:false,scenarios:['smoke-extra']}});
+  f.deps.reach=reachStub;f.deps.frameScope=files=>files;
+  const packet=await runNight(opts(),f.deps);
+  const record=JSON.parse(f.files.get(`${root}/docs/board/checks/night-${date}.json`));
+  assert.equal(record.size,'partial');assert.equal(record.status,'passed');assert.equal(nightIsFullTierPass(record),false);
+  assert.equal(packet.size,'partial');
 });

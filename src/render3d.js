@@ -1,3 +1,6 @@
+import {scablandsActorFeet, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {forgePlan} from './world/forge-look.js';
+import {solidsNear} from './world/scablands-solids.js';
 import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
@@ -42,7 +45,11 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
+import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
+import {createTalkSpeakerLookup, mountTalkView, talkCameraPose} from './story/talk-view.js';
+import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView, townEveningAmount, night2LightBlend } from './world-job-camera.js';
+import { brandThiefPose } from './world/jobs/brand-rule.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
@@ -50,10 +57,11 @@ import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { renderMainView } from './scene-presentation.js';
 import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
+import {createEmberPot} from './world/ember-pot.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
-import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
+import { placeGroundedVehicle, placeWorldJobVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose as applyPhysicalVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
@@ -171,9 +179,25 @@ export function attachRenderer(host, app) {
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  host.replaceChildren(renderer.domElement);
+  const daceMarker = document.createElement('span');
+  daceMarker.className = 'night-2-dace-marker';
+  daceMarker.textContent = 'Dace';
+  daceMarker.hidden = true;
+  host.replaceChildren(renderer.domElement, daceMarker);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  let talkView, heldWorldSeconds, litChapter, chapterNightShare = 0;
+  const talkHead = new THREE.Vector3(), talkProjection = new THREE.Vector3(), daceProjection = new THREE.Vector3();
+  const findTalkSpeaker = createTalkSpeakerLookup(scene);
+  function speakerHead(step, speaker, now) {
+    if (!speaker) return null;
+    const person = findTalkSpeaker(speaker, now);
+    if (person) return person.getWorldPosition(talkHead);
+    // Jobs using existing figures can author the head's world point until
+    // the rigged figure supplies its animated story-bubble anchor.
+    const fixed = step.anchors?.[speaker];
+    return fixed ? talkHead.set(fixed.x, fixed.y, fixed.z) : null;
+  }
   const coachView = new THREE.Group();coachView.name = 'Coach braking and apex guides';
   scene.add(coachView);
   const driveLessonView=new THREE.Group();driveLessonView.name='Driving lesson cones and red board';scene.add(driveLessonView);
@@ -317,7 +341,7 @@ export function attachRenderer(host, app) {
   const ambientShading=createAmbientShading(scene,camera);ambientShading.name='Contact shading';composer.addPass(ambientShading);
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
-  const lighting=createSceneLighting({scene,renderer,bloom,host});
+  const lighting=createSceneLighting({scene,renderer,bloom,host,useTrialLight:()=>(app._switches?.()??app.duel.featureFlags).enabled('scablands-realism')});
   const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createExtras:createSirenaScene,
     createPipeline(privateScene,privateCamera,ambient,high){
       const privateComposer=new EffectComposer(renderer);
@@ -359,6 +383,21 @@ export function attachRenderer(host, app) {
   worldJobCrate.visible=false;scene.add(worldJobCrate);
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
+  let drawingSeconds=0;
+  const cameraFeetRig={userData:{}};
+  const actorMeshes=new WeakMap();
+  const drawnShift=(x,z,support,airborneFeet,object,actor)=>{
+    if(object&&actor)actorMeshes.set(actor,object);
+    const feet=world?.userData?.drawnFeet;
+    return feet?(object?feet.shiftFor(object,drawingSeconds,x,z,support,airborneFeet):feet.shift(x,z,support,airborneFeet)):0;
+  };
+  drawnShift.forActor=actor=>world?.userData?.drawnFeet?actorMeshes.get(actor)?.userData.scablandsFeet?.value:0;
+  const effectPoint=(at,actor)=>({...at,y:at.y+(drawnShift.forActor(actor)??drawnShift(at.x,at.z))});
+  const carShift=(x,z,actor,object)=>drawnShift(x,z,actor?.groundHeight,actor?.airborne?scablandsActorFeet(actor,actor.groundHeight):undefined,object);
+  const applyVehicleTerrainPose=(mesh,course,actor)=>{
+    applyPhysicalVehicleTerrainPose(mesh,course,actor);
+    if(course.def?.scablands){actorMeshes.set(actor,mesh);mesh.position.y+=carShift(mesh.position.x,mesh.position.z,actor,mesh);}
+  };
   let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
   const hasAvalanche=next=>(next.def.id==='summit-run'||isSummitAttack(next.def)) && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
@@ -452,6 +491,8 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
+  // EVERBURN-REMAKE: Cinder's ember pot rides on the player's car in Hot Delivery. It only reads the job's state.
+  const emberPot=createEmberPot(),emberPotAt=new THREE.Vector3();
   // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
   // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
   const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
@@ -639,7 +680,7 @@ export function attachRenderer(host, app) {
       for (const [object, visible] of visibility) object.visible = visible;
     }
   }
-  let ready = false, lastMenu = null, previousT = performance.now();
+  let ready = false, lastMenu = null, previousT = performance.now(), machineLiftNow = 0, machineLiftApplied = 0, landingBlend = 0;
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
@@ -649,8 +690,12 @@ export function attachRenderer(host, app) {
       clearTrackSnapshot();
     }
     const diagnosticTime = Number.isFinite(presentation.presentationSeconds);
-    const presentationSeconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
-    const ambientNow = diagnosticTime ? presentationSeconds*1000 : now;
+    const speaking = activeTalkStep(app.duel.state);
+    const seconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
+    heldWorldSeconds = speaking ? (heldWorldSeconds ?? seconds) : null;
+    const presentationSeconds = heldWorldSeconds ?? seconds;
+    drawingSeconds=presentationSeconds;
+    const ambientNow = presentationSeconds * 1000;
     lastPresentationSeconds = presentationSeconds; lastSaltHeatEnabled = false;
     const phaseProbe=measure&&app.frameDiagnostics?.active?app.frameDiagnostics:null;
     const updateStarted=phaseProbe?phaseProbe.now():0;
@@ -658,7 +703,7 @@ export function attachRenderer(host, app) {
     if(!capture)frameMetrics.suspend();
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.deepRuntime?.raceCourse??app.duel.course;
-    const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
+    const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused && !speaking && !st.deepJourney?.controlsLocked;
     updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     wantTerrain(next);
@@ -693,7 +738,7 @@ export function attachRenderer(host, app) {
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
     if (carKey !== loadedCar || player?.userData.finish !== (modelFinish ?? undefined)) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
-      if (player) {roadRoof.detachVehicle(player);retireObject(player);}
+      if (player) {emberPot.detach();roadRoof.detachVehicle(player);retireObject(player);}
       if(rival){retireObject(rival);rival=null;}
       for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
@@ -747,9 +792,14 @@ export function attachRenderer(host, app) {
     const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
     if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==wreckCars)){
-      combatPlayerExplosion.dispose();combatPlayerExplosion=null;
-      opponentExplosions.forEach(effect=>effect.dispose());
-      opponentExplosions=null;sceneRevision++;
+      // Three's compileAsync polls every material it collected until its program is ready, and a disposed material has no
+      // program. A player who leaves a job soon after it starts can retire these effects while that poll is still open, so
+      // they leave the scene now and release their materials once the warmup is idle (the same rule retireObject follows).
+      const retiredEffects=[combatPlayerExplosion,...opponentExplosions];
+      combatPlayerExplosion=null;opponentExplosions=null;sceneRevision++;
+      for(const effect of retiredEffects)effect.group.removeFromParent();
+      const releaseEffects=()=>{for(const effect of retiredEffects)effect.dispose();};
+      if(warmup)warmup.releaseWhenIdle(releaseEffects);else releaseEffects();
     }
     if(effectsField&&!combatEffectsPrepared){
       if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
@@ -798,8 +848,12 @@ export function attachRenderer(host, app) {
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     // WATER-SCREENS: the water works show the Water Road's progress (null while the story is off: nothing loads).
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
+    const chapter = !menu ? st.arena?.worldJob?.night2 : null;
+    if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
+    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night, st.paused ? 0 : dt);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
-        winter:winterEnabled(course)?winterLightingSettings:undefined,
+        winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
+      chapterNight: chapterNightShare,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});
@@ -874,6 +928,8 @@ export function attachRenderer(host, app) {
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       const pose=onFootCameraPose(course,st.fighter,footMode);
+      const shift=drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0),st.fighter.airHeight>0?st.fighter.y:undefined,cameraFeetRig);
+      pose.position.y+=shift;pose.target.y+=shift;
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
       camera.fov=pose.fov;
@@ -886,11 +942,19 @@ export function attachRenderer(host, app) {
       const back = mode === 'hood' ? .8 : mode === 'wide' ? -16 : tall?-12:-8.7;
       const height = mode === 'hood' ? (tall?3.2:1.38) : mode === 'wide' ? (tall?7.5:5.6) : tall?5.8:3.65;
       const cp = worldAtExtended(course, distance + back, lateral);
-      const supportLift=Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0;
+      const supportLift=(Number.isFinite(st.groundHeight)?st.groundHeight-course.groundAt(distance,lateral).y:0)+carShift(pp.x,pp.z,st,player);
       const groundLift = pp.y - course.at(distance).y+supportLift+(st.airHeight||0)*.65;
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
       lookTarget.set(aim.x, aim.y + (tall?1.65:1.05) + groundLift, aim.z);
+      // EVERBURN-PLAY-FIXES: a world job's chase camera stands behind the car along the car's own facing, not along the oval.
+      if(st.arena?.mode==='world-job'&&(mode==='chase'||mode==='wide')){
+        const facing=facingChaseView({x:pp.x,y:pp.y+supportLift+(st.airHeight||0)*.65,z:pp.z},pp.heading+(st.headingError||0),
+          {back:-back,height,aimHeight:tall?1.65:1.05});
+        camTarget.set(facing.position.x,facing.position.y,facing.position.z);lookTarget.set(facing.target.x,facing.target.y,facing.target.z);
+        const behind=course.nearest(camTarget.x,camTarget.z,distance);
+        camTarget.y=Math.max(camTarget.y,course.groundAt(behind.s,behind.lateral).y+.65);
+      }
       const view=directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
       if(view){
         camTarget.set(view.position.x,view.position.y,view.position.z);lookTarget.set(view.target.x,view.target.y,view.target.z);
@@ -899,7 +963,9 @@ export function attachRenderer(host, app) {
         camTarget.y=Math.max(camTarget.y,course.groundAt(near.s,near.lateral).y+.65);
       }
       camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(speed / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
-      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10 + (avalancheView?summitAvalancheShake(st):0);
+      // Scab rock and the river bed shake the camera, more the faster the car goes (SCABLANDS-LAND round 4, slice 2a: the sim names the ground's shake in metres, src/world/scablands-regions.js).
+      const groundShake = menu ? 0 : (st.groundShake || 0) * Math.min(1, (speed / 70) ** 1.4);
+      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10 + groundShake + (avalancheView?summitAvalancheShake(st):0);
       camTarget.x += Math.sin(motionTime * 81) * shake;
       camTarget.y += Math.cos(motionTime * 93) * shake * .62;
       if(st.catastrophic){
@@ -935,6 +1001,11 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
+    const groundChase=!menu&&!st.onFoot&&['chase','wide'].includes(app.cameraMode||'chase')&&
+      !deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera;
+    const cameraFeet=scablandsActorFeet(st,pp.y)+carShift(pp.x,pp.z,st,player), drawnGround=world?.userData?.drawnFeet?.groundAt??world?.userData?.drawnGroundHeightAt;
+    if(groundChase)raiseScablandsCamera(course,camTarget,player.position,cameraFeet,drawnGround);
+    camera.position.y-=machineLiftApplied;machineLiftApplied=0; // the height a big machine gave the camera last frame is not part of where it stands
     if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
@@ -948,15 +1019,109 @@ export function attachRenderer(host, app) {
     if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
+    // EVERBURN-PLAY-FIXES: the camera never sits inside the furnace or Big Bess (a world job that has one): it rises above the machine and
+    // looks down at the car, and comes down smoothly when clear. Drawing only; nothing here reads or writes race state.
+    {
+      const jobActors=!menu&&!st.onFoot&&st.arena?.mode==='world-job'&&app.cameraMode!=='hood'?st.arena.worldJob?.actors:null;
+      const machines=jobActors?.length?world?.userData?.bigMachineBoxes?.().filter(box=>jobActors.some(actor=>actor.id===box.id)):null;
+      const required=machines?.length?machineLift(camera.position,machines):0;
+      machineLiftNow=jobActors?easeMachineLift(machineLiftNow,required,dt):0;
+      if(machineLiftNow>0){
+        camera.position.y+=machineLiftNow;machineLiftApplied=machineLiftNow;
+        const carAt=player.position,blend=machineLookBlend(machineLiftNow);
+        lookTarget.lerp(cameraBodyTarget.set(carAt.x,carAt.y+(tall?1.65:1.05),carAt.z),blend);
+      }
+    }
+    if(!menu&&!st.onFoot&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+      constrainScablandsCamera(course,camera.position,player.position,cameraFeet);
+    if (groundChase && course.def?.scablands) {
+      const mode = app.cameraMode || 'chase';
+      const height = mode === 'wide' ? (tall ? 7.5 : 5.6) : (tall ? 5.8 : 3.65);
+      landingBlend = scablandsLandingCamera(course, camera.position, lookTarget, player.position,
+        pp.heading + (st.headingError || 0), mode === 'wide' ? 16 : (tall ? 12 : 8.7), height, st.airHeight || 0, st.airborne, landingBlend, dt,
+        drawnGround || scablandsSurfaceHeightAt);
+    } else landingBlend = 0;
+    if(groundChase)raiseScablandsCamera(course,camera.position,player.position,cameraFeet,drawnGround);
+    const forgeHold = !menu && st.arena?.mode === 'world-job' && st.arena.worldJob?.arrivalHold;
+    if (forgeHold) {
+      const pose = forgeHoldView(player.position, forgePlan(), drawnGround || scablandsSurfaceHeightAt);
+      const t = Math.max(0, Math.min(1, forgeHold.elapsed)), blend = t * t * (3 - 2 * t);
+      camera.position.lerp(new THREE.Vector3(pose.position.x, pose.position.y, pose.position.z), blend);
+      lookTarget.lerp(new THREE.Vector3(pose.target.x, pose.target.y, pose.target.z), blend);
+      raiseScablandsCamera(course, camera.position, player.position, cameraFeet, drawnGround || scablandsSurfaceHeightAt);
+      raiseCameraOutOfSolids(camera.position, solidsNear(camera.position.x, camera.position.z, camera.position.x, camera.position.z));
+      player.visible = true;
+      firstPersonView = false;
+    }
+    // Job 2's ending is seen from over the town, not from where the player happened to stand (src/world-job-camera.js).
+    const townJob = !menu && st.arena?.mode === 'world-job' ? st.arena.worldJob?.job : null, townStep = townJob?.steps?.[townJob.stepIndex];
+    if (townStep?.brand && townJob.stepState?.townEnding) {
+      const ending = townJob.stepState, ground = drawnGround || scablandsSurfaceHeightAt;
+      const pose = townEndingView(townStep, ground, brandThiefPose(townStep, ending));
+      const t = Math.max(0, Math.min(1, ending.endingElapsed)), blend = t * t * (3 - 2 * t);
+      camera.position.lerp(new THREE.Vector3(pose.position.x, pose.position.y, pose.position.z), blend);
+      lookTarget.lerp(new THREE.Vector3(pose.target.x, pose.target.y, pose.target.z), blend);
+      raiseCameraOutOfSolids(camera.position, solidsNear(camera.position.x, camera.position.z, camera.position.x, camera.position.z));
+      firstPersonView = false;
+    }
+    const talk = townStep?.kind === 'talk' && st.status === 'racing' && !st.paused ? townJob.stepState.screen : null;
+    const storyCut = st.arena?.worldJob?.night2?.camera;
+    let head = null;
+    if (talk) {
+      const lastSpeaker = talk.history.findLast(line => !line.radio && line.speaker !== 'you')?.speaker;
+      head = speakerHead(townStep, lastSpeaker ?? townStep.focus, now);
+      if (head) {
+        const listener = st.onFoot && st.fighter ? st.fighter : player.position;
+        const pose = talkCameraPose(listener, head, st.onFoot);
+        camera.position.copy(pose.position);
+        lookTarget.copy(pose.target);
+        raiseCameraOutOfSolids(camera.position, solidsNear(camera.position.x, camera.position.z, camera.position.x, camera.position.z));
+        firstPersonView = false;
+        player.visible = true;
+      }
+    }
+    if (talk && storyCut) {
+      camera.position.copy(storyCut.position);
+      lookTarget.copy(storyCut.target);
+      camera.fov = storyCut.fov;
+      firstPersonView = false;
+      player.visible = false;
+    }
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
-        !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
+        !yardHomePose&&!app.inspectionCamera&&!landingBlend&&!forgeHold&&!talk&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
       cameraBodyProjection.copy(cameraBodyTarget).project(camera);
       const aim=selectCameraAim(cameraBodyProjection,lookTarget,cameraBodyTarget);
       if(aim!==lookTarget){
         lookTarget.copy(aim);camera.lookAt(lookTarget);camera.updateMatrixWorld();
+      }
+    }
+    if (talk) {
+      camera.updateMatrixWorld();
+      let projected = null;
+      if (head && talk.line && !talk.line.radio && (!storyCut || townStep.id !== 'tower')) {
+        if (talk.line.speaker === 'you') {
+          talkProjection.copy(st.onFoot && st.fighter ? st.fighter : player.position);
+          talkProjection.y += st.onFoot ? 1.65 : 1.1;
+        } else talkProjection.copy(head);
+        talkProjection.project(camera);
+        projected = {x: .5 + talkProjection.x * .5, y: .5 - talkProjection.y * .5};
+      }
+      talkView ??= mountTalkView(host.parentElement, (action, screen) => app.duel.talkInput(action, screen));
+      talkView.update(talk, projected, townStep.id);
+    } else talkView?.update(null);
+    const inSight = !menu && st.status === 'racing' && !st.paused && chapter?.daceTrack?.visible;
+    daceMarker.hidden = true;
+    if (inSight) {
+      const {x,y,z} = chapter.daceTrack.position;
+      camera.updateMatrixWorld();
+      daceProjection.set(x, y + 1.85, z).project(camera);
+      if (Math.abs(daceProjection.x) < .94 && Math.abs(daceProjection.y) < .92 && Math.abs(daceProjection.z) < 1) {
+        daceMarker.style.left = (50 + daceProjection.x * 50) + '%';
+        daceMarker.style.top = (50 - daceProjection.y * 50) + '%';
+        daceMarker.hidden = false;
       }
     }
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
@@ -977,18 +1142,14 @@ export function attachRenderer(host, app) {
       if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;applyVehicleTerrainPose(ghost,course,ghostPose);}
     }
     if(!convoy)updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
-    rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650 &&
+    rival.visible = !menu && !!st.rival && st.rival.roadRider?.phase !== 'home' && Math.abs(visualGap(st.rival.s)) < 650 &&
       !(st.rival.arenaRole === 'ambush-buggy' && !st.rival.ambushWave);
     if (rival.visible&&st.field)setCarShadows(rival,Math.abs(visualGap(st.rival.s))<FIELD_SHADOW_RANGE);
     for(const entry of worldJobVehicles){
       const actor=jobActors.find(item=>item.id===entry.id);entry.mesh.visible=!menu&&!!actor;
       if(!entry.mesh.visible)continue;
-      const near=course.nearest(actor.position.x,actor.position.z,st.s);
-      const ground=course.groundAt(near.s,near.lateral);
-      entry.mesh.position.set(actor.position.x,ground.y+(actor.position.y||0),actor.position.z);
-      if(Number.isFinite(entry.previousX))entry.mesh.rotation.y=Math.atan2(
-        actor.position.x-entry.previousX,entry.previousZ-actor.position.z);
-      entry.previousX=actor.position.x;entry.previousZ=actor.position.z;
+      placeWorldJobVehicle(entry.mesh,actor,course,st.s);
+      entry.mesh.position.y+=drawnShift(actor.position.x,actor.position.z,actor.hasFloorHeight?actor.position.y:undefined,undefined,entry.mesh);
     }
     const refillCrate=st.arena?.mode==='world-job'?st.arena.worldJob?.refillCrate:null;
     worldJobCrate.visible=!menu&&!!refillCrate;
@@ -1002,7 +1163,7 @@ export function attachRenderer(host, app) {
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];
       updateNpcVehicleDamage(mesh,menu?null:actor,combatVehicleWear(actor,combatWearEnabled));
-      mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
+      mesh.visible=!menu&&!!actor&&actor.roadRider?.phase!=='home'&&Math.abs(visualGap(actor.s))<650;
       if(!mesh.visible)return;
       if(st.field)setCarShadows(mesh,Math.abs(visualGap(actor.s))<FIELD_SHADOW_RANGE);
       place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));
@@ -1033,12 +1194,12 @@ export function attachRenderer(host, app) {
       for(const lamp of police.userData.brakeLights||[])lamp.material.emissiveIntensity=pursuit.braking?4:1.4;
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(ambientNow / 130) % 2 === i; });
     }
-    effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now:ambientNow });
-    const effectDt = st.paused ? 0 : dt;
-    explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
+    effects.update({ p: pp, course, drawnShift, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused || speaking ? 0 : dt, now:ambientNow });
+    const effectDt = st.paused || speaking ? 0 : dt;
+    explosion.update(effectPoint(pp,st),st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
     crashPoseState=st;
     combatEffects?.update({state:effectsField?st:null,course,dt:effectDt,
-      crashEnabled:crashEffectsEnabled,resolveCrashTyres});
+      crashEnabled:crashEffectsEnabled,resolveCrashTyres,drawnShift});
     const measureCombatWarmup=effectsField&&!combatEffectsWarmupMeasured&&
       combatEffects?.available;
     const combatWarmupStart=measureCombatWarmup?performance.now():0;
@@ -1054,7 +1215,7 @@ export function attachRenderer(host, app) {
       renderer.domElement.style.visibility='hidden';
       rearView.hide();frameMetrics.suspend();return;
     }
-    combatPlayerExplosion?.update(pp,
+    combatPlayerExplosion?.update(effectPoint(pp,st),
       {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);
     if (!menu && st.arena && updateArenaTells([{mesh: player, actor: st}, {mesh: rival, actor: st.rival},
       ...extraOpponents.map(({mesh}, index) => ({mesh, actor: opponents[index + 1]}))],
@@ -1062,10 +1223,10 @@ export function attachRenderer(host, app) {
     updateArenaMarkers(arenaMarkers, !menu ? st.arena?.markers : null, diagnosticTime?presentationSeconds:performance.now() / 1000);
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
-      effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
+      effect.update(actor ? effectPoint(course.groundAt(actor.s, actor.lateral),actor) : pp,
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
-    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera,
+    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera,drawnShift,
       smokeTexture:combatEffects?.resources.textures.smoke,
       quality:app.ambientOcclusionEnabled!==false?'high':'performance'},useCombatAtlas);
     if(st.arena?.mode==='fuel-run'){
@@ -1095,7 +1256,7 @@ export function attachRenderer(host, app) {
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
     firstPersonOptions.enabled=armoredField;
-    firstPersonOptions.active=!menu&&st.onFoot&&st.status==='racing';
+    firstPersonOptions.active=!menu&&st.onFoot&&st.status==='racing'&&!st.arena?.worldJob?.night2?.holstered;
     firstPersonOptions.firstPerson=firstPersonView;
     firstPersonOptions.time=st.stageTimeSec;
     firstPersonGear.update(firstPersonEntry,firstPersonOptions);
@@ -1103,7 +1264,16 @@ export function attachRenderer(host, app) {
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?presentationSeconds:st.totalTimeSec);
     lastSaltHeatEnabled = setSaltFlatsHeatEnabled(world,presentation.saltHeatEnabled !== false);
     animateScene(world,presentationSeconds);
-    syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
+    syncScene(world,menu?{crushedProps:[]}:st,effectDt,st.paused?0:dt);
+    {
+      const worldJob=!menu&&st.arena?.mode==='world-job'?st.arena.worldJob:null,carry=worldJob?.job?.steps?.[worldJob.job.stepIndex],held=worldJob?.job?.stepState;
+      // Once the pot is handed over at the forge it is the crane's to draw (src/world/forge-look.js), so it leaves the car.
+      emberPot.update(carry?.ember&&(!carry.pickup||held.loaded)&&!st.onFoot&&!worldJob.forgeFire?player:null,carry?.ember&&(!carry.pickup||held.loaded)?{ember:held.ember??carry.ember.start,max:carry.ember.start,out:held.out===true,rate:held.rate??0,jolts:held.joltCount??0}:null,presentationSeconds);
+      // Where the pot stands on the car, in the world's own metres, for the forge's crane to find it (src/world/forge-look.js).
+      // It is forgotten whenever the pot is off the car for any other reason, so that a later job never reads an old place.
+      if(emberPot.group.visible&&emberPot.group.parent)world.userData.emberPotAt=world.worldToLocal(emberPot.group.getWorldPosition(emberPotAt));
+      else if(!worldJob?.forgeFire)world.userData.emberPotAt=null;
+    }
     world.userData.updatePitCrew?.(st);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
     lighting.updateCar(player, !!braking && !menu);
@@ -1271,6 +1441,8 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
+    talkView?.dispose();
+    daceMarker.remove();
     if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();wildlifeView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
@@ -1283,6 +1455,7 @@ export function attachRenderer(host, app) {
       tanker?.dispose();
       rearView.dispose();
       firstPersonGear.dispose();
+      emberPot.dispose();
       combatScene.dispose();
       combatEffects?.dispose();
       vehicleAttachments.clear();

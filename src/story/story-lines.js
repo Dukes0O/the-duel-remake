@@ -125,6 +125,13 @@ export function captionText(id) {
   return TOWN_CAPTIONS.get(id)?.text ?? null;
 }
 
+// The whole record of a caption ({who, where, text, ...}) in any registered story, or null. The jobs read their captions through
+// this, so the core never imports a story's lines; a story's lines are registered when the story's own modules are loaded.
+export function captionRecord(id) {
+  for (const table of TABLES.values()) if (Object.hasOwn(table.captions, id)) return table.captions[id];
+  return TOWN_CAPTIONS.get(id) ?? null;
+}
+
 // A story's letter, or null.
 export const storyLetter = key => TABLES.get(key)?.letter ?? null;
 // The ids of a story's named sequence, or null.

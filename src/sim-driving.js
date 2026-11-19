@@ -2,10 +2,13 @@
 import { DRIVE, BOOST, launchScale, boostLaunch, steeringYawAuthority, TYRE_SLIP, tyreSlipSteering, stepTyreSlip, tyreSlipGrip, tyreSlipScrub, tyreSlipAngle } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
 import { enginePull, engineFitFor, autoShiftGear } from './engine-curve.js';
-import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
+import { offroadCapability, QUARRY_ROAD_CAR, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
+import { sampleMountainSupport } from './mountain-support.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
+import { scablandsDriveAt } from './world/scablands-regions.js';
+import { scablandsDeckRoofAt } from './world/scablands-ground.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
@@ -32,9 +35,19 @@ export function _roadGrip(distance, lateral, car = this.car, tyre) {
 
 export function _drivingSurface(distance, lateral, car = this.car, hasContact = true, tyre) {
   const floor = this.state.arena && this.course.def.scrapdome;
-  if (floor) return { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
-    boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
-    scrub: floor.floorScrub, roughness: floor.floorRoughness };
+  if (floor) {
+    const surface = { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
+      boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
+      scrub: floor.floorScrub, roughness: floor.floorRoughness };
+    if (!this.course.def.scablands) return surface;
+    // The Scablands floor drives by region (SCABLANDS-LAND round 4, slice 2a, src/world/scablands-regions.js): the region's share
+    // of the floor's top speed (the salt pan's is above 1, up to the car's own top speed), its grip, drag and shake. Every other
+    // venue keeps the one floor it has.
+    const at = this.course.worldAt(distance, lateral), ground = scablandsDriveAt(at.x, at.z);
+    surface.traction = ground.grip; surface.speedLimit = Math.min(car.topSpeed, surface.speedLimit * ground.top);
+    surface.scrub = ground.scrub; surface.roughness = ground.roughness; surface.region = ground;
+    return surface;
+  }
   const hidden = car === this.car && onHiddenRoad(this.course, { s: distance, lateral });
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
@@ -97,7 +110,12 @@ export function _drive(dt) {
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
     if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;
+    // The Pipe's shove uses the Scablands floor and flight rules, including
+    // the landing hit. The knock still supplies the sideways motion.
+    const groundFlight = s.knock.scablandsFlight && this.course.def.scablands;
+    const airborne = s.airborne, airHeight = s.airHeight;
     stepKnock(this, s, dt);
+    if (groundFlight) { s.airborne = airborne; s.airHeight = airHeight; }
     s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
     s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;
     this._boundary(s);
@@ -176,6 +194,17 @@ export function _drive(dt) {
   // water and their entry latch until the tyres have ground contact.
   const surface = this._drivingSurface(s.s, s.lateral, car, !s.airborne);
   if (nitroSpeedShare > 1) surface.speedLimit *= nitroSpeedShare;
+  if (surface.region) {
+    // The ground a Scablands car is on: the camera shakes with it and the dust takes its colour (the renderer reads these), and a
+    // change of ground is a sound cue (src/audio.js), at most one in half a second so that an edge never chatters.
+    const ground = surface.region;
+    s.groundShake = ground.shake; s.groundDust = ground.dust; s.groundRegion = ground.id;
+    if (this._ground?.course !== this.course) this._ground = { course: this.course, cue: null, at: -Infinity };
+    if (this._ground.cue !== ground.cue && s.stageTimeSec - this._ground.at >= .5) {
+      if (this._ground.cue !== null) this.emit({ groundChanged: { id: ground.id, soft: ground.soft, cue: ground.cue, speedMph: s.speedMph } });
+      this._ground.cue = ground.cue; this._ground.at = s.stageTimeSec;
+    }
+  }
   const mud = surface.mud || 0, waterDepth = surface.waterDepth || 0;
   const surfaceEntrySpeed = Math.abs(s.speedMph);
   const wasInWater = (s.waterDepth || 0) >= .05;
@@ -253,7 +282,14 @@ export function _drive(dt) {
     const offRoadLimit = surface.speedLimit * (s.boosting ? boostTopSpeed : 1);
     const scrub = surface.scrub;
     s.speedMph *= Math.exp(-scrub * dt * (s.speedMph > offRoadLimit ? 1 : .25));
-    if (s.speedMph > offRoadLimit) s.speedMph -= (s.speedMph - offRoadLimit) * (1 - Math.exp(-1.4 * dt));
+    // A car at full throttle settles a little over the limit (the pull against it is 1.4 a second). On the Scablands' regions the pull is
+    // 4 a second, so that a region's share of the top speed is the speed a car settles at, give or take a few percent; but it never takes
+    // more than 40 mph in a second, so that a car leaving a road at speed is dragged down over a second or two and is not stopped as if by
+    // a wall (at 4 a second alone a car coming off the salt pan onto rock shed 9 km/h in one step, which the ember's rule read as a hit).
+    if (s.speedMph > offRoadLimit) {
+      const over = s.speedMph - offRoadLimit;
+      s.speedMph -= surface.region ? Math.min(over * (1 - Math.exp(-4 * dt)), 40 * dt) : over * (1 - Math.exp(-1.4 * dt));
+    }
     if (!surface.boostAllowed) s.boosting = false;
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
@@ -306,8 +342,23 @@ export function _drive(dt) {
   this._boundary(s);
 }
 
+// FREESTYLE-MOUNTAINS: a road car on the practice course standing on a quarry mountain (not on its ramps or flat ground).
+function onQuarryMountain(game, s) {
+  if (game.course.def?.practice !== true || offroadCapability(game.car) || !game.course.features?.mountains?.length) return false;
+  const p = game.course.worldAt(s.s, s.lateral);
+  return sampleMountainSupport(game.course, p.x, p.z) != null;
+}
+
 export function _terrainPose(actor = this.state) {
-  if (actor !== this.state || !offroadCapability(this.car)) return;
+  if (actor !== this.state) return;
+  if (!offroadCapability(this.car)) {
+    // Off the mountain a road car is drawn as it always was: the pose the mountain gave it is dropped, anything else kept.
+    if (!onQuarryMountain(this, actor)) {
+      if (actor._quarryPose) { actor._quarryPose = false; actor.groundHeight = null; actor.terrainPitch = null; actor.terrainRoll = null; }
+      return;
+    }
+    actor._quarryPose = true;
+  }
   const point = this._supportAt(actor.s, actor.lateral), spec = this._vehicleSpec(actor);
   const heading = this.course.at(actor.s).heading + actor.headingError;
   const sample = (forward, side) => {
@@ -321,8 +372,12 @@ export function _terrainPose(actor = this.state) {
 }
 
 export function _offroadStep(dt, offPreparedRoute) {
-  const s = this.state, capability = offroadCapability(this.car, { titanClimb: true });
-  if (!capability || s.tumble) return;
+  const s = this.state;
+  // FREESTYLE-MOUNTAINS: on the practice course a road car drives the quarry's slopes with QUARRY_ROAD_CAR's rules.
+  const quarry = !offroadCapability(this.car) && this.course.def?.practice === true;
+  const capability = offroadCapability(this.car, { titanClimb: true }) ?? (quarry && (onQuarryMountain(this, s) ||
+    onQuarryMountain(this, { s: s.prevS, lateral: s.prevLateral })) ? QUARRY_ROAD_CAR : null);
+  if (!capability || s.tumble) { if (quarry && !s.tumble) this._terrainPose(); return; }
   const before = this._supportAt(s.prevS, s.prevLateral), after = this._supportAt(s.s, s.lateral);
   if (![before.y, after.y, s.s, s.lateral].every(Number.isFinite)) {
     s.s = Number.isFinite(s.prevS) ? s.prevS : 0; s.lateral = Number.isFinite(s.prevLateral) ? s.prevLateral : 0;
@@ -387,13 +442,16 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     }
     setCarMortarHop(actor, false);
   }
-  const arena = this.course.def.kind === 'arena';
+  // The Scablands is an arena only for who is in it: its ground has its own shape, so a car there leaves it and lands by the natural-terrain
+  // rules (a crest, a lip, a bank), with no authored ramp to cap it (SCABLANDS-LAND round 4, slice 2b; src/sim-scablands.js sizes the landing).
+  const scablands = !!this.course.def.scablands;
+  const arena = this.course.def.kind === 'arena' && !scablands;
   const road = actor === this.state && this.featureFlags?.enabled('the-deep') === true
     ? this._roadGrip(actor.s, actor.lateral) : null;
   const seaFloor = road?.kind === 'sea-floor';
   const diveHop = seaFloor && actor.deepJourney?.phase === 'underwater';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
-  if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain && !seaFloor) || !Number.isFinite(dt) || dt <= 0) {
+  if (actor.tumble || (!arena && !scablands && this.course.def.airborne !== true && !allTerrain && !seaFloor) || !Number.isFinite(dt) || dt <= 0) {
     // On the prepared road or a shortcut the all-terrain rules sleep. Forget
     // the height they last tracked, or the next step off the road measures
     // from a stale height and drops the car from the air (DUSTHAWK-AIR).
@@ -423,9 +481,16 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     // signed tangent velocity while the road falls away faster. The arena
     // retains its authored upward-ramp threshold and exact existing timing.
     const fastEnough = (arena ? actor.speedMph : Math.abs(actor.speedMph)) > 28;
-    if (predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
+    // On the Scablands a car also leaves the ground, at any speed, over a lip: where the ground falls away more than 15 cm further in a step than the
+    // car's own free fall from the speed it had (a ledge, the edge of a deck). It falls, it does not follow the edge down (the averaged speed above
+    // follows any slope, however steep, so it never lets go of a lip).
+    const lipped = scablands && actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5 > ground + .15;
+    if (lipped || predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
-      actor._verticalSpeed = verticalSpeed;
+      // On the Scablands a car leaves with the upward or downward speed it had on the ground before the step, not the average with the ground's own speed over the
+      // step (which, off a lip or a wall of ground, is hundreds of metres a second and made the fall hit the ground at that).
+      actor._verticalSpeed = scablands ? actor._verticalSpeed : verticalSpeed;
+      if (scablands) predicted = actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5;
       actor._airOrigin = { x: previousPoint.x, z: previousPoint.z,
         time: simulationTime - dt };
       actor.airDistance = 0; actor.airTime = 0;
@@ -435,7 +500,9 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
       actor._jumpOrigin = index >= 0 ? { s: actor.s, world: this.course.worldAt(actor.s, actor.lateral), rampId: `ramp-${index}`, lap: Math.floor(actor.s / this.course.length) + 1 } : null;
     } else {
       actor._verticalSpeed = groundVelocity;
-      actor._jumpY = ground; actor.airHeight = 0; return;
+      actor._jumpY = ground; actor.airHeight = 0;
+      if (scablands) actor.groundHeight = ground;
+      return;
     }
   }
   // A reef lip must stay a small hop even when the seabed drops away below it.
@@ -443,6 +510,18 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   if (diveHop && predicted > ground + 1.5) {
     predicted = ground + 1.5;
     actor._verticalSpeed = Math.min(0, actor._verticalSpeed);
+  }
+  if (scablands && actor._verticalSpeed > 0) {
+    const tube = this.course.groundTunnels?.tubeAt(groundPoint, actor._jumpY);
+    // A covered surface can be selected even while the feet overlap the
+    // bore. Its floor has no tunnel roof above it.
+    const tunnelRoof = tube && Math.abs(ground - tube.floor) < 1e-6 ? tube.ceiling : Infinity;
+    const roof = Math.min(scablandsDeckRoofAt(groundPoint.x, groundPoint.z, actor._jumpY), tunnelRoof);
+    const highestFeet = Math.max(ground, roof - this._vehicleSpec(actor).height);
+    if (predicted > highestFeet) {
+      predicted = highestFeet;
+      actor._verticalSpeed = 0;
+    }
   }
   actor._jumpY = predicted;
   actor._verticalSpeed -= gravity * dt;
@@ -454,7 +533,11 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   if (actor._jumpY > ground) return;
   // Rejoin a descending road at its tangent speed. Zeroing this for natural
   // roads would manufacture a second hop on the next downhill step.
+  // The speed the Scablands' car fell at when it met the ground, for the landing's hit (src/sim-scablands.js). Only its own fall counts: the ground's rise or fall under
+  // it is not added (against a wall of ground it would be hundreds of metres a second).
+  if (scablands) actor._scablandsLanding = Math.max(0, -actor._verticalSpeed);
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
+  if (scablands) actor.groundHeight = ground;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
   if (seaFloor) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });

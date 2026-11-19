@@ -157,13 +157,15 @@ async function install(recorder) {
       // Only what the real _settleResult writes into a result on this run may differ from the unpaid clone; every
       // other result field, and every other state field, must still match exactly. The clone's _settleResult stops at
       // the player-identity check (it has no run owner), so it writes none of these. Fields the real call cannot write
-      // on this run are NOT listed: drift scores, cup, tuned lap, Coast Cup, Yeti, medals and earned cars (earned-cars
-      // is off), notoriety and scrap (Wasteland only), and ghostRecorded (only Time Trial records a ghost).
+      // on this run are NOT listed: drift scores, cup, tuned lap, Coast Cup, Yeti, notoriety and scrap (Wasteland only),
+      // and ghostRecorded (only Time Trial records a ghost). Earned cars were released on 3 November 2026, so the real call now
+      // writes the medal and any earned car into a first finish's result; the unpaid clone cannot.
       const PAY_FIELDS = new Set([
         'lapChoiceEnabled', 'raceDistance', // lap-choice block, after the identity check, completed races only
         'creditPositionReward', // Grand Prix position pay, inside the awarded.awarded block
         'creditReward', 'creditCharge', 'policeFineCharge', 'creditBreakdown', // the Object.assign of the settlement
         'personalBest', 'personalBestStatus', 'previousBest', 'best', 'winStreak', 'milestoneAwards', // same Object.assign
+        'medal', 'earnedCars', // earned-cars block of the Object.assign, only when a medal or car is newly earned
         'creditBalance']); // final line of _settleResult
       const withoutPay = results => Object.fromEntries(Object.entries(results ?? {}).filter(([key]) => !PAY_FIELDS.has(key)));
       const same = key => key === 'results' ? JSON.stringify(withoutPay(state.results)) === JSON.stringify(withoutPay(control.state.results))
@@ -171,7 +173,12 @@ async function install(recorder) {
       report.replayDifference = [...new Set([...Object.keys(state), ...Object.keys(control.state)])].filter(key => !same(key));
       report.raceFingerprint = await digest(JSON.stringify(state));
       report.replayFingerprint = await digest(JSON.stringify(control.state));
-      demand(report.replayDifference.length === 0, 'Native input replay differs with audio: ' + report.replayDifference.join(', '));
+      // Name the result fields that differ, so a failure says which one.
+      const resultA = withoutPay(state.results), resultB = withoutPay(control.state.results);
+      const resultFields = [...new Set([...Object.keys(resultA), ...Object.keys(resultB)])]
+        .filter(key => JSON.stringify(resultA[key]) !== JSON.stringify(resultB[key]));
+      demand(report.replayDifference.length === 0, 'Native input replay differs with audio: ' +
+        report.replayDifference.map(key => key === 'results' ? 'results (' + resultFields.join(', ') + ')' : key).join(', '));
       report.result = {position: state.results.position, time: state.results.stageTimeSec,
         laps: state.completedLaps, fieldSize: state.results.fieldSize, creditReward: state.results.creditReward};
       const native = kind => report.native.filter(row => row.phase === 'race' && row.kind === kind).length;

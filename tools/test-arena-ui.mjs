@@ -98,6 +98,11 @@ test('results and pause screens offer rematch and the way back to the yard', () 
   const paused = fight();
   paused.state.paused = true;
   const pause = arenaPauseScreen(paused.state, views);
+  // A Scrapdome fight's pause screen is as it was (the world-job pause screen is its own, tools/test-ember-side-jobs.mjs).
+  assert.equal(pause.eyebrow, 'SCRAPDOME / PAUSED');
+  assert.equal(pause.title, 'FIGHT<br>ON HOLD.');
+  assert.match(pause.metrics, /TIME LEFT/);
+  assert.match(pause.actions, /BACK TO THE FIGHT/);
   assert.match(pause.actions, /resume/);
   assert.match(pause.actions, /arena-rematch/);
   assert.match(pause.actions, /arena-yard/);

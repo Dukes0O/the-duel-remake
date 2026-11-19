@@ -5,6 +5,9 @@ import {crewPerks} from './crew.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
+import {sees} from './world/scablands-ways.js';
+import {scablandsActorHeightAt, scablandsActorFeet, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {stepMover, FOOT_GRADE} from './world/scablands-movers.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
 // Wasteland simulation state, so ordinary races retain their original route.
@@ -14,6 +17,87 @@ const FIRE_METERS = 82;
 const SHOT_GAP_SECONDS = {easy: 1.6, medium: .8, hard: .8};
 const RAID_SALT = 0x7a1d0b5e;
 const T = COMBAT_TUNING.raider;
+const raiderSightOptions = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: null, eye: 1.48, target: 1.5, step: 2};
+const aimScratch = {};
+
+// Only Scablands camps use its land for cover. Other venues keep their shot rules.
+export function raiderHasClearShot(course, raider, target) {
+  if (!course.def.scablands) return true;
+  raiderSightOptions.tunnels = course.groundTunnels;
+  return sees(raider, target, raiderSightOptions);
+}
+
+// A camp raider remembers only the last place it could see. It searches there
+// for five seconds, then returns to its post; seeing the car starts this over.
+export function stepRaiderSearch(raider, target, dt, move = stepMover, course = {def: {scablands: true}}) {
+  const memory = raider.search ??= {home: {x: raider.x, z: raider.z}, last: null, phase: 'post', seconds: 0};
+  const visible = target && Math.hypot(target.x - raider.x, target.z - raider.z) <= FIRE_METERS &&
+    raiderHasClearShot(course, raider, target);
+  if (visible) {
+    memory.last = {x: target.x, z: target.z};
+    memory.phase = 'seen'; memory.seconds = 0;
+  }
+  if (!visible && memory.phase === 'seen') memory.phase = 'going';
+  if (memory.phase === 'post') return;
+  if (memory.phase === 'searching') {
+    memory.seconds += dt;
+    if (memory.seconds >= 5) memory.phase = 'returning';
+    else return;
+  }
+  const destination = memory.phase === 'returning' ? memory.home : memory.last;
+  const dx = destination.x - raider.x, dz = destination.z - raider.z;
+  const distance = Math.hypot(dx, dz);
+  // Keep a little room to fire while following a car in sight.
+  const travel = Math.min(Math.max(0, distance - (memory.phase === 'seen' ? 12 : 0)), 3 * dt);
+  if (distance > 1e-6 && travel > 0) {
+    const heading = Math.atan2(dx, dz);
+    const options = {radius: .4, grade: FOOT_GRADE, height: scablandsActorFeet(raider, raider.groundY)};
+    const tryHeading = (angle, length) => move(raider,
+      {x: raider.x + Math.sin(angle) * length, z: raider.z + Math.cos(angle) * length}, options);
+    const clear = (next, length) => !next.blocked && Math.hypot(next.x - raider.x, next.z - raider.z) >= length * .9;
+    // Keep the chosen side until there is room ahead. This prevents alternating
+    // around the same corner when a solid or a steep bank blocks the direct way.
+    const pathClear = length => {
+      let from = {x: raider.x, z: raider.z};
+      const steps = Math.ceil(length / .75), stride = length / steps;
+      for (let i = 0; i < steps; i++) {
+        const next = move(from, {x: from.x + Math.sin(heading) * stride, z: from.z + Math.cos(heading) * stride}, options);
+        if (next.blocked || Math.hypot(next.x - from.x, next.z - from.z) < stride * .9) return false;
+        from = next;
+      }
+      return true;
+    };
+    if (memory.detour && pathClear(Math.min(distance, 6))) memory.detour = 0;
+    const side = memory.detour || 1;
+    const turns = memory.detour ? [side, -side] : [0, side, -side];
+    let next = null, usedHeading = heading;
+    for (const turn of turns) {
+      for (const angle of turn === 0 ? [0] : [Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4]) {
+        const candidateHeading = heading + turn * angle;
+        const candidate = tryHeading(candidateHeading, travel);
+        if (!clear(candidate, travel)) continue;
+        next = candidate; usedHeading = candidateHeading; memory.detour = turn;
+        break;
+      }
+      if (next) break;
+    }
+    if (!next) return;
+    raider.x = next.x; raider.z = next.z; raider.yaw = usedHeading;
+    raider.y = raider.groundY = scablandsActorHeightAt(raider.x, raider.z, options.height);
+  }
+  if (memory.phase !== 'seen' && Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {
+    if (memory.phase === 'returning') { memory.phase = 'post'; memory.last = null; }
+    else { memory.phase = 'searching'; memory.seconds = 0; }
+  }
+}
+
+// One notice covers all camp raiders, so moving between their views does not
+// produce a lost and seen pair while another raider still watches the car.
+export function campSightChange(wasSeen, zones) {
+  const seen = zones.some(zone => !zone.ambushWave && zone.raiders.some(raider =>
+    !raider.ambushKey && !raider.knockedDown && raider.search?.phase === 'seen'));
+  return {seen, change: seen === !!wasSeen ? null : seen ? 'seen' : 'lost'};
+}
 
 function clearRoadside(course, s, lateral) {
   if (course.tunnelAt(s)) return false;
@@ -170,20 +254,49 @@ function collectSalvage(duel, zone) {
     hitPosition: {x: crate.x, y: crate.y + 1, z: crate.z}});
 }
 
-function targetFor(duel, zone, preview = null) {
+export function targetFor(duel, zone, preview = null, seconds = 0, ready = false) {
   const state = duel.state;
-  const available = [state, ...state.opponents];
   let best = null, distance = Infinity;
-  for (let index = 0; index < available.length; index++) {
-    const original = available[index];
+  for (let index = 0; index <= state.opponents.length; index++) {
+    const original = index === 0 ? state : state.opponents[index - 1];
     const actor = original === preview?.actor ? preview.pose : original;
     if (!actor || actor.finished || actor.crushed || actor.combatWrecking ||
-        Math.abs(actor.speedMph || 0) < 8) continue;
-    const gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
+        (!duel.course.def.scablands && Math.abs(actor.speedMph || 0) < 8)) continue;
+    let gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
+    if (duel.course.def.scablands) {
+      const at = point(duel, actor, aimScratch);
+      at.y = scablandsActorFeet(actor, undefined);
+      gap = Infinity;
+      for (const member of zone.raiders) {
+        if ((member.knockedDown && !(member.knockdownRemaining <= seconds)) || member.firedLap === state.currentLap ||
+            (ready && (member.sightTime?.get(original) || 0) < 1.2)) continue;
+        const memberGap = Math.hypot(member.x - at.x, member.z - at.z);
+        if (memberGap <= FIRE_METERS && memberGap < gap && raiderHasClearShot(duel.course, member, at)) gap = memberGap;
+      }
+    }
     if (gap > FIRE_METERS) continue;
     if (gap < distance) {best = {actor: original, targetIndex: index - 1}; distance = gap;}
   }
   return best;
+}
+
+// Sight time belongs to each watcher and car. Losing sight resets the clock.
+export function stepRaiderAim(duel, zone, dt) {
+  const state = duel.state;
+  for (const member of zone.raiders) {
+    const times = member.sightTime ??= new Map();
+    for (let index = -1; index < state.opponents.length; index++) {
+      const actor = index < 0 ? state : state.opponents[index];
+      let visible = !member.knockedDown && !actor.finished && !actor.crushed && !actor.combatWrecking;
+      if (visible) {
+        const at = point(duel, actor, aimScratch);
+        at.y = scablandsActorFeet(actor, undefined);
+        visible = Math.hypot(member.x - at.x, member.z - at.z) <= FIRE_METERS &&
+          raiderHasClearShot(duel.course, member, at);
+      }
+      times.set(actor, visible ? (times.get(actor) || 0) + dt : 0);
+    }
+  }
 }
 
 // Read-only stop admission: reuse the current native camp target and shot rules.
@@ -195,7 +308,7 @@ export function raiderShotScheduled(duel, actor, seconds, pose = actor) {
     zone.nextShotAt <= state.stageTimeSec + seconds &&
     zone.raiders.some(member => (!member.knockedDown || member.knockdownRemaining <= seconds) &&
       member.firedLap !== state.currentLap) &&
-    targetFor(duel, zone, {actor, pose})?.actor === actor);
+    targetFor(duel, zone, {actor, pose}, seconds)?.actor === actor);
 }
 
 function fire(duel, zone, raider, target) {
@@ -301,6 +414,8 @@ export function stepRaiders(duel, dt = 0) {
     }
     for (const raider of zone.raiders) {
       if (!raider.knockedDown || !(dt > 0)) continue;
+      // RUN-GAS: a raider of an ambush on an escort's road, once knocked down, stays down for the rest of that ambush.
+      if (raider.ambushKey) continue;
       raider.knockdownRemaining = Math.max(0,
         raider.knockdownRemaining - dt);
       if (raider.knockdownRemaining <= 1e-8) {
@@ -310,6 +425,12 @@ export function stepRaiders(duel, dt = 0) {
       }
     }
     collectSalvage(duel, zone);
+    if (duel.course.def.scablands && dt > 0 && !zone.ambushWave && !zone.raiders.some(raider => raider.ambushKey)) {
+      const car = !state.finished && !state.crushed && !state.combatWrecking ? point(duel, state) : null;
+      if (car) car.y = scablandsActorFeet(state, undefined);
+      for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt, stepMover, duel.course);
+    }
+    if (duel.course.def.scablands && dt > 0) stepRaiderAim(duel, zone, dt);
     const ahead = duel.relativeS(zone.s, state.s) - state.s;
     if (ahead > 0 && ahead < WARNING_METERS && zone.warnedLap !== state.currentLap) {
       zone.warnedLap = state.currentLap;
@@ -317,10 +438,24 @@ export function stepRaiders(duel, dt = 0) {
       duel.emit({raiderWarning: true, zone: zone.id});
     }
     if (state.stageTimeSec < zone.nextShotAt) continue;
-    const target = targetFor(duel, zone);
+    const target = targetFor(duel, zone, null, 0, !!duel.course.def.scablands);
     if (!target) continue;
+    const targetPoint = point(duel, target.actor);
+    if (duel.course.def.scablands) targetPoint.y = scablandsActorFeet(target.actor, undefined);
     const raider = zone.raiders.find(member =>
-      !member.knockedDown && member.firedLap !== state.currentLap);
+      !member.knockedDown && member.firedLap !== state.currentLap &&
+      (!duel.course.def.scablands || (member.sightTime?.get(target.actor) || 0) >= 1.2) &&
+      (!duel.course.def.scablands || Math.hypot(member.x - targetPoint.x, member.z - targetPoint.z) <= FIRE_METERS) &&
+      raiderHasClearShot(duel.course, member, targetPoint));
     if (raider) fire(duel, zone, raider, target);
+  }
+  if (duel.course.def.scablands && dt > 0) {
+    const sight = campSightChange(raids.campSawCar, raids.zones);
+    raids.campSawCar = sight.seen;
+    if (sight.change) {
+      duel._callout(sight.seen ? 'Raiders can see your car.' : 'Raiders have lost sight of your car.', 2.2);
+      duel.emit({arenaTell: {id: 'raider-sight', targetId: 'player', seconds: 0,
+        cue: sight.seen ? 'arena.tell' : 'gate.latch', position: point(duel, state)}});
+    }
   }
 }

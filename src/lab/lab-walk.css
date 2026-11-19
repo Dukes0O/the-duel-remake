@@ -41,5 +41,3 @@
 .lab-map-people { margin-top: 6px; }
 .lab-map-people button { flex: 1; min-height: 30px; }
 .lab-map button:hover, .lab-map button.selected, .lab-map button:focus-visible { outline: 2px solid #edc557; }
-@media (max-width: 800px) { .lab-map { width: 180px; } .lab-map-floor { height: 130px; }
-  .lab-walk-hover { left: auto; right: 8px; transform: none; max-width: 45%; } .lab-walk-help { font-size: 13px; } }

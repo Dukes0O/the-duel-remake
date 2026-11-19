@@ -3,6 +3,7 @@
 // Teaching state only, no DOM and no saves. Every bar and every hook arm is the strength bench's own run (loadBar and
 // hookArm, the challenge's bench), and the hook arm's limits are the bench's ARM.
 import {GRAVITY, MATERIALS, RIG, ARM, BASE_HOOK_KG, loadBar, hookArm, lightestArm} from '../benches/strength.js';
+import {MORE} from '../classroom/brian-text.js';
 
 export const NAMES = Object.freeze(Object.keys(MATERIALS));
 const [ALUMINIUM, STEEL, CARBON] = NAMES;
@@ -307,7 +308,7 @@ export function createModel() {
     m.picked.add(name);
     if (m.picked.size === NAMES.length) {
       m.phase = 'done'; seen.add('word-density');
-      m.say = `Steel has the highest density of the three, so its 1 kg bar is the thinnest, at ${mm1(barMm(STEEL))}. Aluminium has about a third of the density of steel, so its 1 kg bar is about three times as thick, at ${mm1(barMm(ALUMINIUM))}. Carbon fibre has the lowest density, so its 1 kg bar is the thickest, at ${mm1(barMm(CARBON))}. You can keep pressing 1, 2 and 3 to compare the bars and watch the sum change.`;
+      m.say = `Steel has the highest density of the three, so its 1 kg bar is the thinnest, at ${mm1(barMm(STEEL))}. Aluminium has about a third of the density of steel, so its 1 kg bar is about three times as thick, at ${mm1(barMm(ALUMINIUM))}.${MORE}Carbon fibre has the lowest density, so its 1 kg bar is the thickest, at ${mm1(barMm(CARBON))}. You can keep pressing 1, 2 and 3 to compare the bars and watch the sum change.`;
       return {kind: 'right', sound: 'lab.clunk', say: m.say};
     }
     const left = NAMES.findIndex(n => !m.picked.has(n));
@@ -442,7 +443,7 @@ export function createModel() {
       m.ram.t += dt;
       if (m.ram.t < DIP_S) return null;
       m.phase = 'done'; seen.add(id);
-      m.say = `Under the same ${WEIGHT_KG} kg, the steel bar dipped ${mm1(loadBar(STEEL, WEIGHT_KG).tipDropMm)} and the carbon fibre bar dipped only ${mm1(loadBar(CARBON, WEIGHT_KG).tipDropMm)}, and both bars sprang back when the weights came off. Steel is in fact the stiffer material, but the carbon fibre bar is about five times as thick, because carbon fibre has a much lower density. Thickness counts three times in the sum for the dip, so the thicker bar is far stiffer.`;
+      m.say = `Under the same ${WEIGHT_KG} kg, the steel bar dipped ${mm1(loadBar(STEEL, WEIGHT_KG).tipDropMm)} and the carbon fibre bar dipped only ${mm1(loadBar(CARBON, WEIGHT_KG).tipDropMm)}, and both bars sprang back when the weights came off. Steel is in fact the stiffer material, but the carbon fibre bar is about five times as thick, because carbon fibre has a much lower density.${MORE}Thickness counts three times in the sum for the dip, so the thicker bar is far stiffer.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-brittle' && m.phase === 'ram') {
@@ -529,12 +530,12 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [carrySum(STEEL, BAR_WIDE, shownBarMm(STEEL), 'What the 1 kg steel bar can carry'), carrySum(CARBON, BAR_WIDE, shownBarMm(CARBON), 'What the 1 kg carbon fibre bar can carry'), specificSum(), armWeightSum(LIGHTEST.material, LIGHTEST.thicknessMm, 'Weight of the lightest arm')],
-      say: 'Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.',
+      say: `Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good.${MORE}For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.`,
       prompt: 'Press Enter to finish the lesson and open the Heavy hook in the Lab shop.', hints: KEY_IDEAS.map(i => i.text)};
     const rigs = rigView();
     if (id === 'wonder') return {...base, rigs, actions: ['replay'],
       say: seen.has(id) ? `Both arms hold the same ${kg0(CAR_KG)} car. The steel arm weighs ${kg1(CHECK_STEEL.arm.massKg)}, but the carbon fibre arm weighs only ${kg1(LIGHTEST.massKg)}. How can the much lighter arm hold just as much?`
-        : `Here are two hook arms. A hook arm is the short, strong bar that carries the hook below a helicopter. One arm is steel, a heavy metal made mostly of iron, and the other is carbon fibre, a material made of thin threads of carbon set in hard plastic. The number beside each arm is its thickness in millimetres, written mm, and a millimetre is one thousandth of a metre. I will hang a car of ${num(CAR_KG)} kilograms, written ${kg0(CAR_KG)}, from each arm, so watch what happens.`,
+        : `Here are two hook arms. A hook arm is the short, strong bar that carries the hook below a helicopter. I will hang a car of ${num(CAR_KG)} kilograms, written ${kg0(CAR_KG)}, from each arm, so watch what happens.${MORE}One arm is steel, a heavy metal made mostly of iron, and the other is carbon fibre, a material made of thin threads of carbon set in hard plastic. The number beside each arm is its thickness in millimetres, written mm, and a millimetre is one thousandth of a metre.`,
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the two arms.',
       hints: ['Read what each arm is made of and how much each arm weighs.', 'Both arms hold the car, and one arm is much lighter than the other.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch the car come onto the arms, then press Enter.']};
     if (id === 'word-density') {
@@ -542,7 +543,7 @@ export function createModel() {
       return {...base, rigs, density: {material: m.material, densities: NAMES.map(name => ({material: name, density: densityOf(name)}))}, rack: {chosen: m.material, locked: false}, keys: MATERIAL_KEYS, buttons: materialButtons(),
         formulas: [thicknessSum(m.material), {title: 'Lengths in metres', worked: `${LENGTH_MM} mm is ${RIG.lengthM} m, and ${BAR_WIDE} mm is ${RIG.widthM} m.`, note: 'Density is in kilograms per cubic metre, so this sum uses metres.'}],
         ...(done ? {} : {waiting: true, target: `material:${left}`}),
-        say: m.say || `Density is how heavy a material is for its size. We measure density in kilograms per cubic metre, written kg/m³, which is the weight of a block measuring one metre along each edge. A test bar always weighs 1 kg and is half a metre long and ${BAR_WIDE} mm wide, so a material with a lower density has to make a thicker bar. This 1 kg bar is steel, with a density of ${num(densityOf(STEEL))} kg/m³. Press 1 to see the same bar in aluminium, a light metal, and press 3 to see the bar in carbon fibre.`,
+        say: m.say || `Density is how heavy a material is for its size. We measure density in kilograms per cubic metre, written kg/m³, which is the weight of a block measuring one metre along each edge.${MORE}A test bar always weighs 1 kg and is half a metre long and ${BAR_WIDE} mm wide, so a material with a lower density has to make a thicker bar. This 1 kg bar is steel, with a density of ${num(densityOf(STEEL))} kg/m³. Press 1 to see the same bar in aluminium, a light metal, and press 3 to see the bar in carbon fibre.`,
         prompt: done ? 'Press Enter to continue, or keep pressing 1, 2 and 3 to compare the bars.' : `The bar is ${m.material}. Press 1, 2 or 3 to pick a material, or click a material in the rack.`,
         hints: done ? DONE : ['The rack at the bottom of the board holds the three materials.', `Press ${left + 1} to see the bar in ${NAMES[left]}.`, 'Watch my pointer. I will pick the next material.']};
     }
@@ -551,7 +552,7 @@ export function createModel() {
       const buttons = [...(done ? [] : [{action: 'load:add', label: `Add ${WEIGHT_KG} kg`, key: '↑'}]), ...(done || m.load ? [{action: 'load:off', label: done ? 'Fit a fresh bar' : `Take off ${WEIGHT_KG} kg`, key: '↓'}] : [])];
       return {...base, rigs, section: true, formulas: barFormulas(STEEL, m.load), keys: done ? {'↓': 'load:off'} : {'↑': 'load:add', '↓': 'load:off'}, repeat: done ? [] : ['↑'], buttons,
         ...(!done && first ? {waiting: true, target: 'load:add', glow: 'weights'} : {}),
-        say: m.closing || m.say || `A load is the weight that hangs from a part. A load on the end of this bar bends the bar, which stretches the top of the bar and squeezes the bottom, as the arrows will show. Stress is the force on each square millimetre of the material, and we measure stress in newtons per square millimetre, written N/mm². A newton, written N, is a unit of force, and gravity pulls on each kilogram with a force of 9.81 N. The strength of a material is the greatest stress that it can withstand before it bends for good or breaks, and bending for good means staying bent after the load comes off. The strength of steel is ${num(strengthOf(STEEL))} N/mm². Press ↑ to hang ${WEIGHT_KG} kg on this steel bar, and watch the Strength used gauge, which shows the stress as a percentage of the strength.`,
+        say: m.closing || m.say || `A load is the weight that hangs from a part. Stress is the force on each square millimetre of the material, and we measure stress in newtons per square millimetre, written N/mm².${MORE}A newton, written N, is a unit of force, and gravity pulls on each kilogram with a force of 9.81 N. The strength of a material is the greatest stress that it can withstand before it bends for good or breaks, and bending for good means staying bent after the load comes off. The strength of steel is ${num(strengthOf(STEEL))} N/mm². A load on the end of this bar bends the bar, which stretches the top of the bar and squeezes the bottom, as the arrows will show. Press ↑ to hang ${WEIGHT_KG} kg on this steel bar, and watch the Strength used gauge, which shows the stress as a percentage of the strength.`,
         prompt: done ? 'Press Enter to continue, or press ↓ to fit a fresh bar and test it again.' : `The load on the bar is ${m.load} kg. Press ↑ to hang ${m.load ? 'another ' : ''}${WEIGHT_KG} kg, or click the hanger.`,
         hints: done || !first ? DONE : ['The hanger is at the end of the bar.', `Press ↑ to hang ${WEIGHT_KG} kg, and watch the needle.`, 'Watch my pointer. I will hang a weight.']};
     }
@@ -573,7 +574,7 @@ export function createModel() {
       const done = m.phase === 'done';
       const table = NAMES.map(name => ({material: name, mm: barMm(name), failKg: failKg(name), state: m.fails[name] != null ? (MATERIALS[name].brittle ? 'snapped' : 'bent') : null}));
       return {...base, rigs, table, ramKg: m.ram.kg, actions: ['replay', 'slow'], formulas: done ? watchFormulas() : [generalCarry('The sum fills in for each bar when the ram has finished.')],
-        say: done ? `All three bars weigh 1 kg. The steel bar bent for good at ${kg0(failKg(STEEL))}, the aluminium bar bent for good at ${kg0(failKg(ALUMINIUM))}, and the carbon fibre bar carried ${kg0(failKg(CARBON))} and then snapped. The strength of aluminium is about the same as the strength of steel, but its 1 kg bar is about 2.9 times as thick, and thickness counts twice in the sum, so the aluminium bar carries about nine times as much. For the same weight, a lighter material makes a thicker bar, and a thicker bar is far stronger.`
+        say: done ? `All three bars weigh 1 kg. The steel bar bent for good at ${kg0(failKg(STEEL))}, the aluminium bar bent for good at ${kg0(failKg(ALUMINIUM))}, and the carbon fibre bar carried ${kg0(failKg(CARBON))} and then snapped. For the same weight, a lighter material makes a thicker bar, and a thicker bar is far stronger.${MORE}The strength of aluminium is about the same as the strength of steel, but its 1 kg bar is about 2.9 times as thick, and thickness counts twice in the sum, so the aluminium bar carries about nine times as much.`
           : 'Here are three bars of the same weight, made of aluminium, steel and carbon fibre. The ram will load all three together until each one bends for good or snaps.',
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the three bars.',
         hints: ['Watch which bar gives way first.', 'Look at how thick each 1 kg bar is.', done ? 'Press R to watch again.' : 'Wait a moment.']};
@@ -603,12 +604,12 @@ export function createModel() {
     if (tryId === 'try-steel') {
       if (m.phase === 'hanging') return {...v, say: m.say, prompt: 'Watch the gauges.', hints: ['Watch the Strength used gauge.', 'Is the needle inside the green?', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
-      return {...v, say: m.auto ? autoSay() : m.say || `Now make a steel arm that holds the ${kg0(CAR_KG)} car. I have two rules for a hook arm. The first rule is my safety line, which keeps a metal arm at no more than two thirds (${pct(safeLine(STEEL))}) of its strength, so that a bump on the cable cannot bend the arm for good. The second rule is that the end of the arm may dip no more than ${DIP_MM} mm. The sums beside the picture change with the thickness, so you can work out the answer before you press Space.`,
+      return {...v, say: m.auto ? autoSay() : m.say || `Now make a steel arm that holds the ${kg0(CAR_KG)} car. I have two rules for a hook arm. The first rule is my safety line, which keeps a metal arm at no more than two thirds (${pct(safeLine(STEEL))}) of its strength, so that a bump on the cable cannot bend the arm for good.${MORE}The second rule is that the end of the arm may dip no more than ${DIP_MM} mm. The sums beside the picture change with the thickness, so you can work out the answer before you press Space.`,
         prompt: `The steel arm is ${m.mm} mm thick and weighs ${kg1(now.arm.massKg)}. Press ↑ to make the arm thicker or ↓ to make it thinner, then press Space to hang the car.`,
         hints: ['A thicker arm is stronger, and the arrows on the handle change the thickness.', towards(m.mm, STEEL_HOLDS.mm), m.mm < STEEL_HOLDS.mm ? 'Watch my pointer. I will make the arm thicker and hang the car.' : m.mm > STEEL_HOLDS.mm ? 'Watch my pointer. I will make the arm thinner and hang the car.' : 'Watch my pointer. I will hang the car on this arm.']};
     }
     if (tryId === 'try-free') {
-      const tests = m.tests.map(t => ({...t})), intro = `Now you can experiment. Press 1, 2 and 3 to change the material, and ↑ and ↓ to change the thickness. The sums change as you do, so predict what will happen before you press Space. A carbon fibre arm has a lower safety line of one third (${pct(safeLine(CARBON))}), because carbon fibre snaps with no warning. Test at least ${FREE_TRIES} different arms. The table keeps your results so that you can compare them.`;
+      const tests = m.tests.map(t => ({...t})), intro = `Now you can experiment. Press 1, 2 and 3 to change the material, and ↑ and ↓ to change the thickness. The sums change as you do, so predict what will happen before you press Space.${MORE}A carbon fibre arm has a lower safety line of one third (${pct(safeLine(CARBON))}), because carbon fibre snaps with no warning. Test at least ${FREE_TRIES} different arms. The table keeps your results so that you can compare them.`;
       if (m.phase === 'hanging') return {...v, tests, say: m.say || intro, prompt: 'Watch the gauges.', hints: ['Watch both needles.', 'Compare this arm with the table.', 'Wait a moment.']};
       return {...v, tests, glow: setNow && target === 'go' ? 'build' : null, waiting: setNow && !seen.has(id),
         say: m.say || intro,
@@ -620,7 +621,7 @@ export function createModel() {
     if (m.phase === 'done') return {...v, job, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
     if (m.phase === 'hanging') return {...v, job, say: m.say, prompt: 'Watch the gauges.', hints: ['Watch both needles.', 'The arm must stay inside the green and dip no more than the line.', 'Wait a moment.']};
     return {...v, job,
-      say: m.auto ? autoSay() : m.say || `Here is a job for you. Kestrel One, the helicopter, needs a Heavy hook, so please build the lightest arm that holds the ${kg0(CAR_KG)} car under both of my rules. You may use any material and any thickness. Your steel arm weighs ${kg1(steelKg())}.`,
+      say: m.auto ? autoSay() : m.say || `Here is a job for you. Kestrel One, the helicopter, needs a Heavy hook, so please build the lightest arm that holds the ${kg0(CAR_KG)} car under both of my rules. You may use any material and any thickness.${MORE}Your steel arm weighs ${kg1(steelKg())}.`,
       prompt: `The ${m.material} arm is ${m.mm} mm thick and weighs ${kg1(now.arm.massKg)}. Press 1, 2 or 3 to pick the material, ↑ or ↓ to change the thickness, and Space to hang the car.`,
       hints: ['Which material has the lowest density? Try that material, thick enough that both needles stay in the green.', `${m.material === CARBON ? '' : 'Press 3 for carbon fibre. '}${towards(m.mm, LIGHTEST.thicknessMm)}`, atGoal ? 'Watch my pointer. I will hang the car on this arm.' : 'Watch my pointer. I will build the arm and hang the car.']};
   }

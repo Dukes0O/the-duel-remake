@@ -5,6 +5,7 @@
 // watered and coated by the game's own fire rules, with the game's 600-litre bucket.
 import {fireBench, TAKES_AWAY as REMOVES, FIRE, RETARDANT, BUCKET, RETARDANT_LITRES, cellId, cellIJ, spreadStep, applyWater, applyRetardant} from '../benches/fire.js';
 import {CHALLENGE_RULES} from '../lab-challenges.js';
+import {MORE} from '../classroom/brian-text.js';
 
 // ---- the numbers ----
 const RULE = CHALLENGE_RULES.fire;
@@ -546,19 +547,19 @@ export function createModel() {
       ['The switches are under the pit.', 'Press 1 for the Wood switch.', 'Watch my pointer, which is on the Wood switch.']);
     if (id === 'word-heat') return wordView({...base, triangle: false, known: ['fuel', 'heat'], thermometer: true, formulas: [soFarFormula(m.pit, ['fuel', 'heat']),
       {title: 'The temperature wood needs', formula: `wood burns above about ${WOOD_BURNS_C} °C`, note: `${celsiusNote} This is a fact about real wood, not a rule of the game.`}]}, id, {2: 'gas:on'}, 'gas:on',
-      `Heat is the energy that makes something hot. Wood does not catch fire until it reaches about ${WOOD_BURNS_C} degrees Celsius, so it needs a source of heat first. Degrees Celsius, written °C, are measured on the scale where water freezes at 0 and boils at 100. The gas burner under the wood is the source of heat here. Light the gas, and watch the thermometer on the left.`, 'Press 2, or click the Gas switch.',
+      `Heat is the energy that makes something hot. The gas burner under the wood is the source of heat here. Light the gas, and watch the thermometer on the left.${MORE}Wood does not catch fire until it reaches about ${WOOD_BURNS_C} degrees Celsius, so it needs a source of heat first. Degrees Celsius, written °C, are measured on the scale where water freezes at 0 and boils at 100.`, 'Press 2, or click the Gas switch.',
       ['The Gas switch is under the pit.', 'Press 2 for the Gas switch.', 'Watch my pointer, which is on the Gas switch.']);
     if (id === 'word-oxygen') return wordView({...base, triangle: false, formulas: [soFarFormula(m.pit, ['fuel', 'heat', 'air'])]}, id, {3: 'lid:shut'}, 'lid:shut',
-      'Oxygen is a gas that makes up about one fifth of the air. Burning is a chemical change in which the fuel combines with oxygen and gives off heat and light, so a fire uses up oxygen all the time and needs fresh air to replace it. The open lid lets fresh air reach the flames. Shut the lid.', 'Press 3, or click the Lid switch.',
+      `Oxygen is a gas that makes up about one fifth of the air. The open lid lets fresh air reach the flames. Shut the lid.${MORE}Burning is a chemical change in which the fuel combines with oxygen and gives off heat and light, so a fire uses up oxygen all the time and needs fresh air to replace it.`, 'Press 3, or click the Lid switch.',
       ['The Lid switch is under the pit.', 'Press 3 for the Lid switch.', 'Watch my pointer, which is on the Lid switch.']);
     if (id === 'word-triangle') return wordView({...base, formulas: [ruleFormula(m.pit)]}, id, {3: 'lid:open'}, 'lid:open',
-      'The fire triangle is a picture of what every fire needs. Its three sides are heat, fuel and oxygen, and a fire burns only when all three are present at the same time. The gas and the wood are in place, but the lid is shut, so the oxygen side is missing. Open the lid again.', 'Press 3, or click the Lid switch.',
+      `The fire triangle is a picture of what every fire needs. Its three sides are heat, fuel and oxygen, and a fire burns only when all three are present at the same time. Open the lid again.${MORE}The gas and the wood are in place, but the lid is shut, so the oxygen side is missing.`, 'Press 3, or click the Lid switch.',
       ['Look at the triangle on the right, where one side is missing.', 'Press 3, and the lid will open.', 'Watch my pointer, which is on the Lid switch.']);
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'], table: WATCH.map((w, k) => m.rows[k] ?? null), formulas: [ruleFormula(m.pit)],
         say: done ? 'Turning the gas off removed the heat, lifting the wood out removed the fuel, and shutting the lid removed the oxygen. Each time one side was removed, the fire went out. In this pit the gas burner is the only source of heat. A large fire in real life makes so much heat of its own that turning off a burner would not stop it, which is why firefighters use water to cool it.'
-          : 'This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. I will remove one side of the triangle at a time. Watch the switches and the triangle.',
+          : `This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. Watch the switches and the triangle.${MORE}I will remove one side of the triangle at a time.`,
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the switches and the triangle.',
         hints: ['Watch which switch changes.', 'Then watch which side of the triangle goes dark.', done ? 'Press R to watch again.' : 'Wait a moment.']};
     }
@@ -567,7 +568,7 @@ export function createModel() {
     if (id === 'word-retardant') {
       const done = m.phase === 'done', set = m.phase === 'set';
       return {...base, plates: false, triangle: false, arrows: true, numbers: true, formulas: [tankFormula, stripCoatFormula], keys: set ? {Space: 'coat'} : {}, waiting: set, target: set ? 'coat' : null, glow: set ? 'coat' : null, tool: 'coat',
-        say: done ? m.say : `Retardant is a chemical sprayed on trees and other plants before a fire reaches them. When a coated plant is heated it chars, which means that it blackens slowly and gives off almost no gas that can burn, so flames cannot spread through it. In this way retardant removes the fuel while the trees are still standing. We measure retardant in litres. A litre is a measure of volume, and one litre of water weighs one kilogram. In this game ${COAT_L} litres coat one cell. Coat the trees in front of the flames.`,
+        say: done ? m.say : `Retardant is a chemical sprayed on trees and other plants before a fire reaches them. When a coated plant is heated it chars, which means that it blackens slowly and gives off almost no gas that can burn, so flames cannot spread through it. In this way retardant removes the fuel while the trees are still standing.${MORE}We measure retardant in litres. A litre is a measure of volume, and one litre of water weighs one kilogram. In this game ${COAT_L} litres coat one cell. Coat the trees in front of the flames.`,
         prompt: done ? 'Press Enter to continue.' : set ? 'Press Space, or click the spray over the trees.' : 'Watch the flames.',
         hints: done ? DONE : ['The spray is over the column of trees in front of the flames.', 'Press Space.', 'Watch my pointer, which is on the spray.']};
     }
@@ -585,7 +586,7 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', plates: false, ready: true, ideas: KEY_IDEAS, formulas: [{title: 'The rule of the fire triangle', formula: RULE_WORDS, note: 'One “no” is enough to stop the fire.'}, bucketFormula, tankFormula, challengeFormula],
-      say: 'A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen. A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road.',
+      say: `A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen.${MORE}A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road.`,
       prompt: 'Try it for real in the helicopter, or go back to the Lab.', hints: KEY_IDEAS.map(i => i.text)};
   }
 
@@ -604,14 +605,14 @@ export function createModel() {
     const target = switchAction(p, untested);
     return {...base, keys, target, glow: seen.has('try-free') ? null : target, waiting: !seen.has('try-free'), freeRows: [...tested.values()],
       formulas: [ruleFormula(p, 'In this pit the gas burner is the only source of heat. A large fire in real life makes enough heat of its own to keep burning when a burner is turned off.')],
-      say: m.say || `Now you can experiment. Press 1 for the wood, 2 for the gas and 3 for the lid, in any order and any combination. Each switch changes the rule beside the picture at once, so predict what the flame will do and then watch it. I will tell you the reason each time, and the table keeps your results. Test at least ${FREE_TRIES} different settings.`,
+      say: m.say || `Now you can experiment. Press 1 for the wood, 2 for the gas and 3 for the lid, in any order and any combination. Test at least ${FREE_TRIES} different settings.${MORE}Each switch changes the rule beside the picture at once, so predict what the flame will do and then watch it. I will tell you the reason each time, and the table keeps your results.`,
       prompt: seen.has('try-free') ? 'Press Enter to continue, or change a switch and test another setting.' : `Press 1, 2 or 3, or click a switch. Different settings tested so far: ${tested.size} of ${FREE_TRIES}.`,
       hints: ['Press any of the switches, 1, 2 or 3, and watch the flame.', 'Try removing two sides at once, and then put one back. Does the fire return?', 'Watch my pointer, which is on a switch. I will press it for you.']};
   }
 
   function spreadView(base) {
     const done = m.phase === 'done';
-    const opening = `A forest fire is far too big for a lid, so let us look at how one grows. This picture shows a patch of forest from above, with the lake on the left and the road on the right. The game divides the forest into square patches called cells, each ${CELL_M} metres across. The number on a burning cell is its strength. Fire moves in jumps called spreads, and in the helicopter challenge one spread comes every ${SPREAD_EVERY_S} seconds. At each spread, every burning cell grows stronger by ${GROW}, up to 100, and each cell of trees touching a burning cell has a ${Math.round(CHANCE * 100)} percent chance of catching fire. Press Space to run one spread.`;
+    const opening = `A forest fire is far too big for a lid, so let us look at how one grows. Fire moves in jumps called spreads, and in the helicopter challenge one spread comes every ${SPREAD_EVERY_S} seconds. Press Space to run one spread.${MORE}This picture shows a patch of forest from above, with the lake on the left and the road on the right. The game divides the forest into square patches called cells, each ${CELL_M} metres across. The number on a burning cell is its strength. At each spread, every burning cell grows stronger by ${GROW}, up to 100, and each cell of trees touching a burning cell has a ${Math.round(CHANCE * 100)} percent chance of catching fire.`;
     return {...base, plates: false, triangle: false, arrows: !done, numbers: true, marked: MARKED_CELL, spread: {steps: m.fz.fire.steps, seconds: m.fz.fire.steps * SPREAD_EVERY_S},
       formulas: spreadFormulas(m.fz, m.lit), keys: done ? {} : {Space: 'spread'}, waiting: !done, target: done ? null : 'spread', glow: done ? null : 'spread',
       say: m.say || opening, prompt: done ? 'Press Enter to continue.' : 'Press Space to run one spread.',
@@ -656,7 +657,7 @@ export function createModel() {
       hints: ['Watch the flames.', 'Which flames are nearest the road now?', 'Wait a moment.']};
     const [fi, fj] = frontCell(fz.fire), target = `drop:${fi}:${fj}`;
     return {...common, keys: AIM_KEYS, waiting: true, target, glow: target,
-      say: fz.trips === 0 && !m.say ? `Here is a job for you. The practice fire is spreading toward the road. On each trip you drop one ${BUCKET_L}-litre bucket of water, and the fire spreads once while you fly back for more. Put the fire out before it reaches the road. The sums beside the picture follow the cell you aim at.` : m.say,
+      say: fz.trips === 0 && !m.say ? `Here is a job for you. The practice fire is spreading toward the road. Put the fire out before it reaches the road.${MORE}On each trip you drop one ${BUCKET_L}-litre bucket of water, and the fire spreads once while you fly back for more. The sums beside the picture follow the cell you aim at.` : m.say,
       prompt: 'Aim with ← → ↑ ↓ and drop with Space, or click a cell.',
       hints: [`A cell burning at full strength, which is 100, needs ${litres(FLAT_OUT_L)} to go out. The bucket holds ${litres(BUCKET_L)}.`, 'Aim at the flames nearest the road, the strongest of those, and drop the water there.',
         'Watch my pointer, which is on the cell to drop on.']};

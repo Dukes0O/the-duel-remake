@@ -1,3 +1,4 @@
+import {stepRiderJob} from './rider-rule.js';
 import { stepReach } from './steps/reach.js';
 import { stepCarry } from './steps/carry.js';
 import { stepChase } from './steps/chase.js';
@@ -11,12 +12,14 @@ import { stepBoard } from './steps/board.js';
 import { stepDrivetrain } from './steps/drivetrain.js';
 import { stepRunaway } from './steps/runaway.js';
 import { stepDig } from './steps/dig.js';
+import { stepTalk } from './steps/talk.js';
+import { stepNight2Action } from './steps/night-2-action.js';
 import { stepWhistle } from './steps/whistle.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
 
-const runners = { reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
+const runners = { 'rider-fight': stepRiderJob, reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
-  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle };
+  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle, talk: stepTalk, 'night-2-action': stepNight2Action };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);
@@ -51,12 +54,18 @@ export function stepJob(job, view = {}, dt = 0) {
   }
   const stepView=result.storyMarks?.lastStopMetres!==undefined&&view.playerStopMetres===undefined
     ?{...view,playerStopMetres:result.storyMarks.lastStopMetres}:view;
-  const outcome = runners[step.kind](step, result.stepState, stepView, dt, result.seed);
+  const riderView = step.kind === 'rider-fight'
+    ? {...stepView, riderFightReported:result.storyMarks?.riderFightReports?.[result.stepIndex] === true}
+    : stepView;
+  const outcome = runners[step.kind](step, result.stepState, riderView, dt, result.seed);
   const triggered = stepLineTriggers(step, result.stepState, view, outcome);
   const lined = stepLines(step, result.stepState, view, dt, triggered);
   result.stepState = lined.state ?? result.stepState;
   result.events = lined.events ?? [];
   result.requests = lined.requests ?? [];
+  const riderResult=result.events.find(event=>event.type==='riderFight');
+  if (riderResult) result.storyMarks={...result.storyMarks,riderFight:riderResult,
+    riderFightReports:{...result.storyMarks?.riderFightReports,[result.stepIndex]:true}};
   const stopRequest=result.requests.find(request=>request.type==='stopMark');
   if(stopRequest) {
     const marks={...(result.storyMarks?.stopMarks??{})},previous=marks[stopRequest.id];
@@ -70,7 +79,13 @@ export function stepJob(job, view = {}, dt = 0) {
     result.failedStep = true;
   } else if (lined.complete) {
     const waiting = result.stepState.lineQueue ?? [], showing = result.stepState.lineRemaining ?? 0;
-    result.stepIndex += 1;
+    const choice = lined.events?.find(event => event.type === 'talkChoice');
+    const destination = choice && step.branches?.[choice.id];
+    if (destination != null) {
+      result.stepIndex = result.steps.findIndex(candidate => candidate.id === destination);
+      if (result.stepIndex < 0) throw new Error('Unknown talk branch: ' + destination);
+    } else result.stepIndex += 1;
+    if (choice) result.talkResult = choice;
     const following = result.steps[result.stepIndex];
     if (following?.opening?.length) result.stepState = waiting.length ? { carriedLines: waiting } : {};
     else result.stepState = waiting.length || showing > 0 ? { lineQueue: waiting, lineRemaining: showing } : {};

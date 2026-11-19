@@ -529,9 +529,12 @@ in `tools/blender/` is the recipe; a downloaded asset is recorded in
 changed) and cached outside the repository in `C:\Users\kyleb\dev\art-library\`;
 only the finished runtime model ships in `public/`. Credits appear in game.
 
-**Round limit (Kyle, 6 November 2026).** At most six rounds per art card. Art generally needs more than three, and a round that was stopped short taught nothing. A new method can earn more rounds on a card that ran out, if Kyle agrees. If two rounds in a
-row do not raise the score, stop, record the gap, and propose a different
-starting asset instead of continuing. No more ten-round loops.
+**Rounds: a guide, not a stop (Kyle, 16 November 2026; it was three, then six on 6 November).** Six rounds is what an art
+card usually needs, and the same holds for the slices of a job. It is not a hard rule: "if we need more slices, then we
+need more slices." A card gets another round or slice for as long as each one makes the thing better. "There comes a time
+when another slice wastes time": if two rounds in a row do not raise the score, stop, record the gap, and change the
+method or the starting asset instead of continuing. A round that was stopped short taught nothing. What every round is
+for is play that stays engaging, so a round is judged by playing and by pictures from the game, not by its count.
 
 **Cards.** GFX-01-P3 (crew), GFX-02-P3 (first-person hands) and EGG-02-P3
 (Rustwall and wash) now start with a sourcing step: find two or three

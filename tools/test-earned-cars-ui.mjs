@@ -176,7 +176,7 @@ test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, sh
   assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
   assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
   assert.deepEqual(shownCarIds(false), today);
-  assert.deepEqual(AIR_ONLY_CARS, [...medalCars, sirena, 'falcone_vasca', 'mcmurtry_speirling']);
+  assert.deepEqual(AIR_ONLY_CARS, [sirena, 'falcone_vasca', 'mcmurtry_speirling']);
   assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
   const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0},
     arrow: '', sound: true, escapeHTML: String, earnedCars: on});
@@ -200,7 +200,7 @@ test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, sh
 
 // The final rung does not exist yet, so the screens are also checked on a
 // scratch copy of the code with three test cars. Nothing is added to src/.
-test('medal cars: hidden while off; labels, locked pages, rewards and air-only while on', async () => {
+test('medal cars: hidden while off; labels, locked pages, rewards and racing anywhere while on', async () => {
   await mkdir(join(root, '.qa-dist'), {recursive: true});
   const scratch = await mkdtemp(join(root, '.qa-dist', 'earned-ui-test-'));
   try {
@@ -236,8 +236,8 @@ assert.equal(markup(false).includes('medal_test_a'), false, 'the menu car picker
 assert.ok(markup(true).includes('<option value="medal_test_a">'));
 assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\\'s while off');
 assert.ok(markup(true).includes(' 13 EARNABLE CARS'));
-// Air only, never a customer's car.
-assert.deepEqual(AIR_ONLY_CARS, [...medalCars, 'falcone_sirena', 'falcone_vasca', 'mcmurtry_speirling']);
+// The medal cars race anywhere and are never a customer's car.
+assert.deepEqual(AIR_ONLY_CARS, ['falcone_sirena', 'falcone_vasca', 'mcmurtry_speirling']);
 assert.ok(medalCars.every(id => !JOB_CARS.includes(id)));
 // The garage, with the real renderer.
 const flags = {};
@@ -261,7 +261,7 @@ assert.ok(html.includes('aria-label="MEDALS: 0 of 6"'));
 assert.equal(html.includes('data-action="unlock-car"'), false, 'no Buy button');
 assert.equal(html.includes('Kestrel One brings it'), false);
 flags.helicopter = true; html = garage();
-assert.ok(html.includes('Kestrel One brings it to Tremblant Woods.'));
+assert.ok(html.includes('Race it on any course as soon as you earn it.'));
 garageCar = 'medal_test_c'; html = garage();
 assert.ok(html.includes('aria-label="GOLD MEDALS: 0 of 6"'));
 // Reaching six medals earns the first car, with its lines.
@@ -274,10 +274,10 @@ assert.deepEqual(win.earnedCars, ['ferrari_enzo', 'medal_test_a']);
 // The medal line stays a single line (its colour dot is drawn by the results screen).
 assert.deepEqual(medalResultLines(win), ['NEW MEDAL · BRONZE · STUTTGART 959-S · DUEL · EASY · +150 CR']);
 assert.deepEqual(earnedCarCards(win, {helicopter: true}), [
-  {id: 'ferrari_enzo', name: 'FERRARI ENZO', text: 'Earned with 6 medals. Kestrel One will bring it to Tremblant Woods.'},
-  {id: 'medal_test_a', name: 'MEDAL TEST A', text: 'Earned with 6 medals. Kestrel One will bring it to Tremblant Woods.'}]);
-assert.deepEqual(earnedCarCards(win).map(card => card.text), ['Earned with 6 medals. In your garage now.', 'Earned with 6 medals. In your garage now.']);
-assert.equal(earnedCarCards({earnedCars: ['bugatti_bolide']})[0].text, 'Earned with 24 medals, 6 of them gold. In your garage now.');
+  {id: 'ferrari_enzo', name: 'FERRARI ENZO', text: 'Earned with 6 medals. It is in your garage and ready to race anywhere.'},
+  {id: 'medal_test_a', name: 'MEDAL TEST A', text: 'Earned with 6 medals. It is in your garage and ready to race anywhere.'}]);
+assert.deepEqual(earnedCarCards(win).map(card => card.text), ['Earned with 6 medals. It is in your garage and ready to race anywhere.', 'Earned with 6 medals. It is in your garage and ready to race anywhere.']);
+assert.equal(earnedCarCards({earnedCars: ['bugatti_bolide']})[0].text, 'Earned with 24 medals, 6 of them gold. It is in your garage and ready to race anywhere.');
 assert.deepEqual(earnedCarCards({}), []);
 saved = win.profile; garageCar = 'medal_test_a'; html = garage();
 assert.ok(html.includes('data-action="medal-sheet"') && html.includes('MEDALS 6/12 · NEXT CAR AT 12'), 'the garage has the medal chip near the build name');

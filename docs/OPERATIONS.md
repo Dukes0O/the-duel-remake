@@ -93,7 +93,11 @@ as the full check, once a day, on a copy of one commit, so builders keep merging
 while it runs; only its frame step needs the laptop to itself. Run
 `node tools/full-check.mjs --idle-awake --no-push` from clean integration.
 The tool checks a detached sibling copy and records its starting SHA even
-when integration advances. Kyle changes the Windows task himself. Tonight's
+when integration advances. The Windows task "The Duel full check" starts it
+every day at 04:00 and wakes the laptop for it (the laptop must be on mains
+power). Until 16 November 2026 the task held a single date, 15 October, which
+is why no night ran by itself after that; Claude gave it a daily trigger that
+day at Kyle's word. Any other change to the task is Kyle's. Tonight's
 03:45 to Record night/06:30 pause still applies (next-run.md). A full-check failure puts its fix
 first while other clean merges continue. A release always needs full green on its exact final commit.
 Do not claim an unmeasured check passed.
@@ -122,8 +126,10 @@ git worktree remove as a substitute for this Recycle Bin policy.
 ## Release
 
 The Release Manager is the only role that updates the live folder. It first
-collects change notes into `README.md` and `VERIFICATION.md` and commits them
-on integration. It runs the full check on that final integration commit,
+collects the changes since the last release (from the merge commit messages, which carry
+each change note's essentials) into `README.md` and `VERIFICATION.md` and commits them
+on integration. It runs the full check on that final integration commit with `--strict`
+(every browser scenario, and any failure at all fails it; the standing list is not read),
 checks that the live tree is clean, then fast-forwards `master`. It installs locked
 dependencies if needed and builds a release in `dist-next`. It checks the
 staged build on a private port. Keep no rollback build; faults receive a

@@ -10,9 +10,12 @@ import {carAlongPush} from './arsenal/car-effects.js';
 
 const T = COMBAT_TUNING;
 
-export function point(duel, actor) {
+export function point(duel, actor, out) {
   const at = duel.course.groundAt(actor.s, actor.lateral);
-  return {...at, y: at.y + T.pointHeight + (actor.airHeight || 0)};
+  if (!out) return {...at, y: at.y + T.pointHeight + (actor.airHeight || 0)};
+  Object.assign(out, at);
+  out.y = at.y + T.pointHeight + (actor.airHeight || 0);
+  return out;
 }
 
 // A carrier's aim follows the fighter; point() remains the physical car hitbox.

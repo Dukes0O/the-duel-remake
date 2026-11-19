@@ -5,7 +5,7 @@ import {KESTREL} from '../heli/heli-flight.js';
 import {BUCKET} from '../heli/heli-bucket.js';
 import {CABLE} from '../heli/heli-cable.js';
 import {labOf, setCable, passLesson} from './lab-save.js';
-import {lessonOpenState} from './lab-lessons.js';
+import {challengeOpenState} from './lab-lessons.js';
 
 export const LAB_HELI = Object.freeze({engine1: 1.05, engine2: 1.10, lightFrameKg: 80, heavyHookKg: 2000, bigBucketLitres: 800,
   longCableM: 25, altitudeScaleM: 10_000});
@@ -42,7 +42,7 @@ const challengeFlags = Object.freeze({enabled: name => name === 'lab' || name ==
 // Passing a challenge passes its Lab lesson (and, for Projectile motion, moves the drop ring on); false when it is not open.
 export const passLabChallenge = (profile, id, ring) => passLesson(profile, id, {flags: challengeFlags, ring});
 export const labChallengesDone = profile => labOf(profile).done;
-export const labChallengeOpen = (profile, id) => lessonOpenState(profile, id, challengeFlags);
+export const labChallengeOpen = (profile, id) => challengeOpenState(profile, id, challengeFlags);
 
 // What heli-skiing asks of the Lab (docs/LAB.md 4.3, docs/HELI_SKIING.md section 7): the day's snow and the wax rules, the
 // Wax kit's pick, the Aerials reward and the wax challenge. `flags` are the switches in force: {enabled(name)}.

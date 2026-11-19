@@ -1,0 +1,163 @@
+# MACHINE-BORER-APPRENTICE
+
+**The boring machine's apprentice: two cuts by hand, the rest sent, and a way to look in.**
+
+## Kyle's direction (16 November 2026)
+
+> "the two 9.4km cuts will take too long for game play to be enjoyable. that means the first 2 cuts need to train an
+> apprentice who can be sent off on the other 2 cuts. We should be able to check in and see the apprentice's progress"
+
+Kyle was reading a table of four ways for Hot Delivery (driving routes, two of them 9.4 km) as four cuts of the boring
+machine. No cut is that long today: the trial mesa is 306 m and takes ten minutes by hand. The direction holds all the same,
+and it is the rule from now on for every long piece of machine work: **the player does the first two by hand, which teaches
+an apprentice; the apprentice is sent on the rest; and the player can look in on the work at any time.** The Far Side's
+tunnel through the Ridge is over a kilometre, forty minutes by hand, and nobody should have to hold a lever for that.
+`docs/MACHINES.md` section 2 ("Do it, teach it, hand it over") already says this in general; this card builds it for her.
+
+## The design, settled before code (Claude, 16 November 2026)
+
+**Teaching: two cuts.**
+- An apprentice rides with the player from the first bore. The player picks who (anyone in the town who is free; with no
+  town yet, the Dig offers one person).
+- **The first cut** is the player's, start to daylight. The screen shows the apprentice watching and what has been seen:
+  the survey read, the lever eased at a stall, the grade held. Words, not a bare bar: "{name} has seen you free a stall."
+- **The second cut** is the player's too, with the apprentice calling the survey's numbers aloud as the screen shows them.
+  At its daylight the apprentice is taught. A cut counts if it is 100 m or more and reaches daylight.
+- **They learn what the player did** (MACHINES section 2). From the two cuts the game keeps three numbers, and they become
+  the apprentice's own: how far off level the player came out (the apprentice's error on a line), how often the player
+  stalled her in each 100 m (the apprentice's stalls), and the player's pace against what the rock allowed (the apprentice's
+  pace). A player who came out dead level with no stalls has an apprentice who does. On Easy nobody learns badly enough to
+  be a problem (error at most 0.5 m, pace at least four fifths).
+- The player can always ride along again on a later cut and show them again; the better figures replace the worse.
+
+**Sending.**
+- At any face the face rule accepts, with a survey line that finds a far side, the Dig offers "Send {name}". That makes a
+  work order of kind `bore`: the mouth, the heading, the grade the survey gives and the metres to the far side. It uses the
+  town's own orders and `advanceDelegatedWork` (`src/town/town-apprentices.js`); no second apprentice system.
+- There is one Mabel, so bores are done one after another, in the order they were sent. The player may not take her for
+  another bore while one is being cut, but may take her over at the working face (below).
+- A delegated bore goes on while the player does anything else in the game, at the pace `docs/MACHINES.md` section 2 sets
+  for delegated work, and only while the game is open (the town's rule: nothing happens while it is closed).
+- The ground is cut and the spoil laid in steps as the order advances, by the same two functions her hand-driven cut uses.
+
+**Looking in (Kyle's "check in and see the apprentice's progress").**
+- **The bore board,** on the yard's screen and in the Dig: for each bore, who is cutting, metres done of metres to go, how
+  far the floor is off the line, stalls so far, and about how many minutes to daylight; and for a finished bore, how level it
+  came out and who cut it.
+- **Go and see.** Choosing a bore puts the Dig's camera at the working face. She is there cutting, the lining grows behind
+  her, the spoil bank grows, and the apprentice is at the lever. The player's own cameras work (following, from the mouth).
+- **Take the lever.** At the face the player may take over at once, cut for as long as wanted, and hand back. The work is
+  one piece of work whoever holds the lever: nothing is thrown away and nothing is done twice.
+- **She calls.** When the work needs the player, a line is said wherever the player is, once, with the bore's name: a stall
+  the apprentice has failed to free three times; a line gone more than a metre off; coming out more than a metre up a face
+  (spoil is wanted below the mouth). The apprentice keeps trying, slowly; the player is never made to come.
+- **Daylight is told** wherever the player is: "{name}: Daylight. She is through, 0.4 m off level." The tunnel is then on
+  the map and can be driven.
+
+**Saved.** Bores, their orders and what an apprentice has learned are kept with the town. That changes the save's shape, so
+it is the second slice, built with the save checker (AGENTS rule 6), and nothing a player has is touched.
+
+## Slices
+
+1. **In one sitting of the Dig, nothing saved:** teaching over two cuts, sending, the order advancing while the player uses
+   another machine, the bore board, go and see, take the lever, she calls, daylight told.
+2. **Kept with the town:** bores, orders and apprentices saved and loaded; the board on the yard's screen.
+
+## Words (Odessa has the story's lines in `docs/story/the-far-side.md`; these are the Dig's own, plain)
+
+- "{name} is riding with you. Cut two tunnels and {name} can cut the rest."
+- "{name} has seen you read the survey." / "...free a stall." / "...hold a grade." / "...come out to daylight."
+- "{name} can run her now. At a face, choose Send {name}."
+- "{name}: She's stopped at {metres} m. Hard rock. Come and look, or I'll keep at it."
+- "{name}: We're {drift} m off the line at {metres} m. Come and set her straight."
+- "{name}: Daylight. She is through, {off} m off level."
+
+## Slice 1, first handing over (Codex built it in about thirty runs; 16 November 2026): not merged yet
+
+- **Built:** two cuts teach, with the apprentice's three numbers taken from what the player did; "Send"; a sent bore cut by
+  her own step at the taught pace while any machine is in hand; the bore board; go and see; the lever taken and handed back;
+  the three calls; daylight told. Pim is the Dig's one apprentice. The Dig keeps a town of its own for the record, with the
+  town's own functions and shapes; no second apprentice system.
+- **The spoil heap** (owed from MACHINE-BORER): the bank was a wall 3 m wide and 4.6 m high with upright sides. It is now a
+  heap at its angle of repose: steepest side 0.699 m in a metre, crest 4.77 m, volume within 0.6 percent of what was cut.
+  Claude's limit of 2,000 height reads over 100 cutting steps was set for the wall and stalled Codex for ten runs; it is
+  6,000 now (the fault it guards against cost 372,100).
+- **Picture check** `machine-borer-apprentice` (Claude, visible window): passes; the board reads "Bore 1: Pim is cutting.
+  15.3 m cut, 288.7 m to go. Floor 0.0 m below the line. 0 stalls. About 10 minutes to daylight." with the excavator in hand.
+  The older `machine-borer` check broke on the heap's new shape; with Codex.
+- **Independent review by Codex:** the design is in the code. Four faults: her step runs twice on the daylight step when she
+  is selected; a second bore cannot really be queued, because she starts the first at once and no other face can then be
+  surveyed (ruled: the survey and "Send here next" work from whichever machine the player is in at a face); the survey can
+  go stale when the ground changes; a check on protected ground was dropped with the old bank. All with Codex.
+- **Claude's hand drive froze the Dig.** On the first teaching cut, after a stall freed by pulling the lever back into
+  reverse and a tilt of the head, her step threw "Tunnel segments must join without a gap or a step" every frame and the
+  Dig's clock stopped: the picture still drew, nothing moved, no key answered. No test and no review had found it. With
+  Codex, with the inputs, her state and the two segment lists; and a rule added: an error in her step stops her and says so,
+  and never stops the Dig.
+- Seen before the freeze: "Pim is riding with you. Cut two tunnels and Pim can cut the rest. Pim has seen you read the
+  survey. Pim has seen you free a stall." That is the teaching shown in words, as designed.
+
+## Slice 1 result (Codex built it; one Codex review; Claude designed, ruled and drove it, 16 November 2026): merged, switch off
+
+Look sheet `docs/board/looks/machine-borer/round-2.jpg` with Claude's review. Full notes: `docs/changes/MACHINE-BORER-APPRENTICE.md`.
+
+- **Built, in the Dig, behind `wasteland-town`, nothing saved:** everything in "Slice 1, first handing over" above, and
+  since then: the freeze cured at its cause (a new segment after a stall and a reverse was handed on as an extension of the
+  last) with a test that repeats Claude's inputs; an error in her step now stops her, says "Mabel has stopped. Back her up and
+  try again." and never stops the Dig; one step of hers a simulation step; a second bore queued from whichever machine the
+  player is in at a face ("Send here next"), started by the apprentice when the first reaches daylight; the survey refreshed
+  when the ground under its line changes; the board's words.
+- **Claude's second drive:** the sequence that froze the Dig cuts on (7.7 m to 17.5 m, the clock running). The first teaching
+  cut driven to its end by hand: 307 m, "Daylight. She is through, 0.0 m off level.", and the screen reading "Pim has seen
+  you read the survey. Pim has seen you free a stall. Pim has seen you hold a grade. Pim has seen you come out to daylight."
+  One cut did not teach, as designed. The running survey and the hill's strip had gone from the screen after the survey's
+  refresh was added; found by hand and by the older picture check, cured, and both checks pass.
+- **The spoil heap:** crest 4.96 m, steepest side 0.53 m in a metre, 283 frames in 5 s while cutting with it. Drawn by
+  Claude as loose rock (round 2).
+- **Changed assertions, reviewed by Claude (rule 18):** the limit on heights asked of the land over 100 cutting steps, 2,000
+  to 6,000, Claude's own number and reason (a heap touches five times the ground of the old wall; the fault it guards cost
+  372,100); the narrow bank's shape checks replaced by the heap's (slope, crest, volume, connected) and its protected-ground
+  check put back for the heap after the review found it dropped; the mouth's clearance measured as a distance and not along
+  one axis, which is right once a bore can bend. Nothing else is loosened.
+- **Not built, on purpose:** slice 2 (bores, orders and apprentices kept with the town's save).
+- **Open:**
+  - Claude drove one teaching cut, not two, and used the check's own setter to see sending; the two-cut path to a taught
+    apprentice is proved by rules and by Codex's tests, not yet by hand from end to end.
+  - `tools/test-machine-borer.mjs` now takes about six minutes and `test-machine-borer-apprentice.mjs` over two (the heap made
+    her scripted bores heavier). Card QA-BORER-SUITE-TIME.
+  - Kyle has not tried it. It is his direction; it should be shown to him in the Dig before slice 2 is built.
+
+**Checks at the merge (Claude):** lane tier 65 of 67 on the candidate (79 minutes): `test-town-core` failed its timing check
+beside other work (11.8 ms against 10 ms; card QA-TIMING-UNDER-LOAD) and `test-review-evidence` failed in the hour after
+midnight (card QA-EVIDENCE-MIDNIGHT); each passes alone on the same code (rule 3). On Codex's last commit, which touches
+only the Dig's screen: `test-machine-borer`, `-apprentice`, `-survey` and `-freeze` pass. `npm run build` passes. Both browser
+scenarios pass in a visible window (six pictures and two, no failure listed).
+
+## Checks (named before code)
+
+1. Rules: after two hand cuts the apprentice's three numbers equal the player's; one cut does not teach; a cut under 100 m
+   does not count; Easy's floor holds.
+2. Rules: a sent bore on the real Dig ground reaches daylight with two mouths while the player's machine is another, the
+   ground cut and spoil laid match a hand cut of the same line within 0.1 m, and nothing advances with the game closed.
+3. Rules: each of the three calls is made once at its cause, and the work goes on.
+4. Browser scenario (Claude runs it): the board with a bore under way, "go and see" at the working face, taking the lever
+   and handing back, and the daylight line said while another machine is in use.
+5. Claude drives it by hand before it is called done: two cuts, a send, a look in, a take-over.
+
+Sound: `borer.call` (the apprentice's call), `borer.daylight` as now.
+
+Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil bank's look (it is a flat pale slab).
+
+## Codex decided (Claude to review)
+
+- The Dig offers Pim because it has no town available without a save. The town record stores the measured line error separately and expresses accuracy as 1 / (1 + error in metres). Later lessons improve each measured figure independently.
+- The Dig uses the current Easy setting (`cpuDifficulty`) for the apprentice's Easy limits.
+- Mabel is free to start another cut after driving 12 m beyond a daylight mouth. Until then she can reverse back into the tunnel.
+
+- A held grade means 50 consecutive metres within 1 in 50 of the surveyed grade.
+
+- A face already in the bore queue cannot be sent a second time with the same heading.
+
+- Only the active bore offers a visit. Waiting bores have no working face yet.
+
+- At a delegated stall, Pim first makes three short attempts to ease the lever. Each is too short to free the head. Pim then holds it off long enough to free her, within the existing 20-second wait.

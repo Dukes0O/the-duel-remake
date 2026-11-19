@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {STEPS, DAYS, STRIP_M, FREE_TRIES, SNOW_ORDER, KEY_IDEAS, runSeconds, metresAt, band, todayLine, frictionOf, sumOf} from '../src/lab/lessons/wax-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/wax-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, size} from '../src/lab/lessons/wax-board.js';
 import {SNOWS, SNOW_DAYS, WAXES, GLIDE, glideSeconds, snowOfDay, waxRunResult} from '../src/lab/benches/wax.js';
 import {SKI, GRAVITY} from '../src/ski/ski-physics.js';
 
@@ -394,11 +394,11 @@ test('the free test: any snow with any wax, only different settings count, three
   session.act('snow:powder'); session.act('snow:colder');
   assert.match(session.view().brian.text, /^Dry powder is the coldest snow in this test/);
   // The tabs along the top change the snow with the mouse, and hovering names each part.
-  const tab = hitTest(session.view(), 780, 30);
+  const tab = hitTest(session.view(), 1080, 30);
   assert.equal(tab?.action, 'snow:cold');
   session.act(tab.action);
   assert.equal(session.view().closeup.snow, 'cold');
-  for (const point of [[780, 30], [800, 400], [500, 600]]) assert.ok(hoverInfo(session.view(), ...point), `hover at ${point}`);
+  for (const point of [[1080, 30], [800, 400], [660, 600]]) assert.ok(hoverInfo(session.view(), ...point), `hover at ${point}`);
   assert.ok(session.view().keys['←'] && session.view().keys['→'] && session.view().keys['1'], 'every control has a key');
 });
 
@@ -450,7 +450,7 @@ test('the panel never gives away an open guess or question', () => {
     noAnswer(session.view(), id);
     assert.ok(session.view().strips.every(s => s.lanes.length === 0), `${id}: no skis suggest an answer`);
     assert.equal(session.view().menu, null, `${id}: the board does not show the ski menu`);
-    for (const t of [[330, 600], [500, 600], [670, 600]]) { const hover = hoverInfo(session.view(), ...t); if (hover) assert.match(hover, /^(Hard|Medium|Soft) wax\.$/); }
+    for (const t of [[430, 596], [660, 596], [890, 596]]) { const hover = hoverInfo(session.view(), ...t); if (hover) assert.match(hover, /^(Hard|Medium|Soft) wax\.$/); }
     session.act('answer:0');
     if (id === 'check-game') assert.ok(session.view().menu, 'the ski menu shows after the answer');
   }
@@ -559,5 +559,31 @@ test('a hint or a prompt holds from every setting of its control', () => {
     playThroughTo(s, 'try-cool');
     s.act(key(wax)); s.act('go'); until(s, x => x.ready);
     assert.match(s.view().brian.text, /press 2 and then Space\.$/);
+  }
+});
+
+// LAB-LOOK round 11: no text on the wide board is smaller than 15 board units. The surface notes every text with its size in board
+// units (the font size times every scale in force when it is drawn).
+function smallestText(view) {
+  const stack = [], state = {scale: 1};
+  const target = {font: '10px x', found: [], save() { stack.push(state.scale); }, restore() { state.scale = stack.pop() ?? 1; }, scale(a) { state.scale *= a; }, setTransform(a) { state.scale = a; },
+    measureText: value => ({width: String(value).length * 9}), createLinearGradient: () => ({addColorStop() {}}), createRadialGradient: () => ({addColorStop() {}}),
+    fillText(value) { this.found.push([String(value), Number(/(\d+(?:\.\d+)?)px/.exec(this.font)[1]) * state.scale]); }};
+  const ctx = new Proxy(target, {get: (t, name) => name in t ? t[name] : () => {}, set: (t, name, value) => { t[name] = value; return true; }});
+  drawBoard(ctx, view, size.width, size.height);
+  return target.found.reduce((least, found) => found[1] < least[1] ? found : least, ['', Infinity]);
+}
+test('LAB-LOOK round 11: the wide board names its size and draws no text smaller than 15 board units, on any step', () => {
+  assert.deepEqual({...size}, {width: 1320, height: 680});
+  for (const step of STEPS) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, step.id);
+    // The step as it opens, and while it plays (a ski shows its marks and its place).
+    if (session.view().keys.Space === 'go') session.act('go');
+    for (let t = 0; t < 10; t += .5) {
+      const [word, least] = smallestText(session.view());
+      assert.ok(least >= 14.99, `${step.id}: “${word}” is ${least.toFixed(1)} units`);
+      run(session, .5);
+    }
   }
 });

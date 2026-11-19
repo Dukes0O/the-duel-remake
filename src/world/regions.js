@@ -1,10 +1,14 @@
 import {scablandsHeightAt} from './scablands-height.js';
+import {SCABLANDS_LAYOUT} from './scablands.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
-const WHITES_ORIGIN=Object.freeze({x:1500,z:0});
+// The Whites lie beyond the land's east edge, and the cut that leads to them starts 140 m inside it: both are held as offsets
+// from that edge (SCABLANDS_LAYOUT.halfWidth), so they move with it.
+const EAST=SCABLANDS_LAYOUT.halfWidth,fromEastEdge=(dx,dz)=>Object.freeze({x:EAST+dx,z:dz});
+const WHITES_ORIGIN=fromEastEdge(800,0),BRANCH_START=fromEastEdge(-140,-120);
 const WHITES_BOUNDS=Object.freeze({minX:-500,maxX:500,minZ:-500,maxZ:500});
-export const WHITES_BASE=scablandsHeightAt(560,-120);
+export const WHITES_BASE=scablandsHeightAt(BRANCH_START.x,BRANCH_START.z);
 const WHITES_FOOT_X=-480;
 const WHITES_TOP_X=20;
 const WHITES_HEIGHT=17;
@@ -38,13 +42,13 @@ function distanceAlongPolyline(point,points){
 }
 
 const branchPoints=Object.freeze([
-  Object.freeze({x:560,z:-120}),Object.freeze({x:610,z:-190}),
-  Object.freeze({x:650,z:-225}),Object.freeze({x:690,z:-250}),
+  BRANCH_START,fromEastEdge(-90,-190),
+  fromEastEdge(-50,-225),fromEastEdge(-10,-250),
 ]);
-const whitesPoints=Object.freeze([branchPoints.at(-1),Object.freeze({x:1020,z:0})]);
+const whitesPoints=Object.freeze([branchPoints.at(-1),fromEastEdge(320,0)]);
 
 export const CUTS=Object.freeze([
-  Object.freeze({id:'branch-cut',points:branchPoints,floorAtStart:scablandsHeightAt(560,-120),
+  Object.freeze({id:'branch-cut',points:branchPoints,floorAtStart:scablandsHeightAt(BRANCH_START.x,BRANCH_START.z),
     floorHeight:WHITES_BASE,floorHalfWidth:12,shoulder:45,opensWith:'branch-points',grade:true}),
   Object.freeze({id:'whites-cut',points:whitesPoints,floorHeight:WHITES_BASE,
     floorHalfWidth:12,shoulder:45,opensWith:'branch-open'}),

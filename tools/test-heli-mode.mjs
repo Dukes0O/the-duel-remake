@@ -216,10 +216,61 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
   run(session, 4, () => ({lift: 1}));
   session.setDestination('panorama-ridge');
   const area = session.view().area;
-  run(session, 60, () => ({lift: 1}), v => v.heli.y > area.ceiling);
+  run(session, 60, () => ({lift: 1}), v => v.heli.y >= area.ceiling);
   ok(session.cruiseOffered, 'offered');
   ok(!session.acceptCruise(), 'refused with 100 kg for a 120 kg leg');
   ok(session.takeEvents().some(e => e.type === 'cruiseRefused' && e.needKg === 120), 'the refusal says what the leg needs');
+  assert.equal(session.courseId, HOME_COURSE, 'still at home'); checks++;
+}
+
+// HELI-EDGE (Kyle, 16 November 2026: "it just goes off the map and stops", and "you should also be able to see the
+// headings where you are trying to fly to"): flying into the edge by hand with a destination, the helicopter is held on
+// the edge, the cruise starts by itself after HELI_SESSION.cruiseWait seconds, and HEAD FOR names the way all along.
+{
+  const session = createHeliSession({profile: freshProfile(), enabled: true, loadCourse});
+  session.start(); session.buyFuel();
+  ok(session.view().toward === null, 'nowhere chosen: no HEAD FOR');
+  session.setDestination('tremblant-snow');
+  const toward = session.view().toward;
+  ok(toward && toward.name === 'Tremblant Snow' && toward.heading >= 0 && toward.heading < 360 && toward.km > 0, 'HEAD FOR names the place, a heading and its distance');
+  run(session, 4, () => ({lift: 1}));
+  // Turn to the HEAD FOR heading and fly it: the edge is met on that side.
+  const turn = v => { const want = v.toward.heading * DEG, have = -v.heli.heading; return Math.max(-1, Math.min(1, Math.atan2(Math.sin(have - want), Math.cos(have - want)) * 2)); };
+  const area = session.view().area;
+  const reached = run(session, 240, v => ({lift: v.heli.y < 60 ? 0.6 : 0.45, pitch: 1, yaw: turn(v)}), () => session.cruiseOffered);
+  ok(reached.some(e => e.type === 'cruiseOffered'), 'flying the HEAD FOR heading reaches the edge and offers the cruise');
+  const v = session.view(), inside = v.heli.x >= area.minX && v.heli.x <= area.maxX && v.heli.z >= area.minZ && v.heli.z <= area.maxZ;
+  ok(inside && v.cruiseIn > 0 && v.cruiseIn <= HELI_SESSION.cruiseWait, 'held on the edge with the countdown running');
+  const held = run(session, HELI_SESSION.cruiseWait - 0.5, () => ({pitch: 1}));
+  const w = session.view();
+  ok(!held.some(e => e.type === 'cruise') && w.heli.x >= area.minX && w.heli.x <= area.maxX && w.heli.z >= area.minZ && w.heli.z <= area.maxZ, 'stick still forward: she stays on the edge, not off the map');
+  const gone = run(session, 3);
+  ok(gone.some(e => e.type === 'cruise' && e.to === 'tremblant-snow'), 'the cruise starts by itself');
+  ok(gone.some(e => e.type === 'entered' && e.courseId === 'tremblant-snow'), 'and arrives');
+}
+{
+  // With nowhere chosen the edge holds her in and says so; choosing a place there starts the countdown.
+  const session = createHeliSession({profile: freshProfile(), enabled: true, loadCourse});
+  session.start(); session.buyFuel();
+  run(session, 4, () => ({lift: 1}));
+  run(session, 240, () => ({pitch: 1, lift: 0.45}), v => v.heldAtEdge);
+  ok(session.view().heldAtEdge && !session.cruiseOffered, 'nowhere chosen: held at the edge, and the view says so');
+  session.setDestination('panorama-ridge');
+  run(session, 0.1, () => ({pitch: 1, lift: 0.45}));
+  ok(session.cruiseOffered && session.view().cruiseIn > 0 && !session.view().heldAtEdge, 'choosing a place at the edge starts the countdown');
+}
+{
+  // A refused leg stops the countdown and says the fuel it needs; the view keeps that for the prompt.
+  const session = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, lessons: TRAINED, fuelKg: 100, refuels: 3}}),
+    enabled: true, loadCourse});
+  session.start();
+  run(session, 4, () => ({lift: 1}));
+  session.setDestination('panorama-ridge');
+  const area = session.view().area;
+  run(session, 60, () => ({lift: 1}), v => v.heli.y >= area.ceiling);
+  const after = run(session, HELI_SESSION.cruiseWait + 0.5, () => ({lift: 0.5}));
+  ok(after.some(e => e.type === 'cruiseRefused' && e.needKg === 120) && session.view().cruiseShort === 120 && session.view().cruiseIn === null,
+    'the countdown ends in a refusal that names 120 kg, and stops');
   assert.equal(session.courseId, HOME_COURSE, 'still at home'); checks++;
 }
 
@@ -352,18 +403,18 @@ const second = flightToPanorama();
 assert.equal(second.fingerprint, first.fingerprint, 'the same flight every run'); checks++;
 console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...`);
 
-// EARN-FINISH: every earned car (docs/EARNED_CARS.md section 4.2) waits at Tremblant Woods, is
-// carried by the same flight, and races only where it was set down. The Bolide (1,450 kg) can
+// EARN-FINISH: medal cars remain liftable and race anywhere before and after a flight.
+// The Bolide (1,450 kg) can
 // touch down a little over the gentle line with this scripted pilot; it is still delivered clean.
 for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['bugatti_bolide', {gentle: false}]]) {
   const before = freshProfile(carId);
   const at = (profile, courseId) => airOnlyNote({enabled: true, profile, carId, courseId}) === null;
   ok(at(before, 'tremblant-woods'), `${carId}: waits at Tremblant Woods`);
-  ok(!at(before, 'pacific-canyon') && !at(before, 'tremblant-snow') && !at(before, 'panorama-ridge'), `${carId}: refused everywhere else`);
+  ok(at(before, 'pacific-canyon') && at(before, 'tremblant-snow') && at(before, 'panorama-ridge'), `${carId}: races everywhere before the flight`);
   ok(airOnlyNote({enabled: false, profile: before, carId, courseId: 'pacific-canyon'}) === null, `${carId}: no note with the switch off`);
   const flown = flightToPanorama(carId, options);
   ok(at(flown.profile, 'panorama-ridge'), `${carId}: races at Panorama Ridge once set down there`);
-  ok(!at(flown.profile, 'tremblant-woods') && !at(flown.profile, 'pacific-canyon'), `${carId}: no longer at Tremblant Woods or anywhere else`);
+  ok(at(flown.profile, 'tremblant-woods') && at(flown.profile, 'pacific-canyon'), `${carId}: still races everywhere after the flight`);
 }
 
 // Import guard: src/heli is reached only through its named hooks, and its

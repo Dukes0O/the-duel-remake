@@ -10,7 +10,7 @@ import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {unstuckInput} from './demo-unstuck.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
-import {settleCup} from './progression.js';
+import {isSavedCarId, settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
@@ -72,10 +72,16 @@ import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import {featureFlags} from './feature-flags.js';
 import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_VENUES} from './arena/venues.js';
-import {ARENA_FIELD} from './arena/arena-event.js';
+import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
-import {EMBER_JOBS, markEmberJob, markEmberRead} from './story/ember-save.js';
-import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
+import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
+import {NIGHT_2_ID, night2Job, night2Page} from './world/jobs/night-2.js';
+import {keepNight2Replay, settleNight2} from './story/night-2-save.js';
+import {playLedgerChoice, playLedgerPageTurn} from './story/ledger-ui.js';
+import {savedLedger} from './story/ledger-save.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
@@ -118,8 +124,7 @@ function validWarlordRegistry(registry) {
   for (const player of registry.players) {
     const profile = player?.profile, name = playerName(player?.name);
     const carsValid = profile?.version === 1 && profile.unlockedCars === undefined ||
-      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(id =>
-        typeof id === 'string' && Object.hasOwn(CARS, id));
+      Array.isArray(profile?.unlockedCars) && profile.unlockedCars.every(isSavedCarId);
     const careerValid = profile?.version === 1 && profile.wasteland === undefined ||
       record(profile?.wasteland) && profile.wasteland.version === 1;
     if (!record(player) || typeof player.id !== 'string' || !/^[\w-]{1,80}$/.test(player.id) ||
@@ -147,6 +152,8 @@ const warlordHold = (profile, id) => {
 };
 
 const SIMULATION_STEP = 1 / 120;
+const footMouseActive = state => state.onFoot && !state.paused && ['racing', 'countdown', 'exploring'].includes(state.status);
+const footMouseLocked = () => !!globalThis.document?.pointerLockElement?.closest?.('#view3d canvas');
 export const ROUTE_PREFERENCE_KEY='duel_route_variant';
 function readRoutePreference(){try{const value=globalThis.localStorage?.getItem(ROUTE_PREFERENCE_KEY);return isRouteVariant(value)?value:DEFAULT_ROUTE_VARIANT;}catch{return DEFAULT_ROUTE_VARIANT;}}
 
@@ -231,6 +238,8 @@ export class App {
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
+      if (event.talkOpened) this._clearHiddenRoadInput();
+      if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
       if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
@@ -271,18 +280,13 @@ export class App {
         }
       }
       if(event.boundaryReset||event.recovered||event.checkpointReset){this.ghostRecorder?.discontinuity();this.grandPrixLapRecorder?.discontinuity();this.lapTelemetryRecorder?.discontinuity();}
+      if (event.fighterExited || event.fighterEntered || event.arenaResult) {
+        this._footPointer = {lookX:0, lookY:0, fire:false, aim:false};
+        if ((event.fighterEntered || event.arenaResult) && footMouseLocked()) document.exitPointerLock();
+      }
       if(event.fighterExited||event.fighterEntered){
         this.inputContext=null;
         this.keys={};
-        this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
-        if(event.fighterEntered && typeof document!=='undefined' &&
-            document.pointerLockElement) document.exitPointerLock();
-        // Capture the mouse as soon as the fighter steps out, so the mouse
-        // looks around without a first click. The F press that got him out
-        // still counts as a user action; if the browser refuses, a click works.
-        if(event.fighterExited && typeof document!=='undefined' && !document.pointerLockElement){
-          try{document.querySelector('#view3d canvas')?.requestPointerLock?.()?.catch?.(()=>{});}catch{}
-        }
         this._resetKeyboardInput();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
@@ -464,7 +468,7 @@ export class App {
         this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
       }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
-      this._applyInput(SIMULATION_STEP);
+      if (!activeTalkStep(this.duel.state)) this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
       this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
@@ -669,7 +673,12 @@ export class App {
   // The plain object the Story card and the other screens draw from (docs/story/kogane-invitation.md 12.1).
   storyProps(key='kogane'){
     if(key==='water')return this._waterRoad().props(this.isYardHomeActive()?'yard':'menu');
-    if(key==='ember')return emberStoryProps(this.profile,{available:this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()});
+    if(key==='ember'){
+      // RUN-GAS: the gas run's entry needs its own switch as well as the Everburn's, and the sixth job won.
+      const runs=this._switches().enabled('scablands-runs')===true;
+      return emberStoryProps(this.profile,{available:this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked(),runs,
+        runPay:runs?{...Object.fromEntries(GAS_RUN_ROADS.map(road=>[road,gasRunPay(road,this.cpuDifficulty)])),battle:fieldBattlePay(this.cpuDifficulty)}:{}});
+    }
     const none={available:false,step:null,read:false,steps:[],fireClosed:null,skylineOwned:false,lead:''};
     if(!this._storyAvailable())return none;
     const profile=this.profile,step=koganeStep(profile),k=storyOf(profile).kogane,won=typeof k.duel==='string';
@@ -789,6 +798,63 @@ export class App {
     const index=EMBER_JOBS.indexOf(id),open=props.steps.find(step=>step.id===id);
     if(index<0||open?.state!=='open'||props.read!==true)return false;
     return this.startArenaEvent({venueId:'scablands',mode:'world-job',job:EVERBURN_JOBS[index]});
+  }
+  // The Tin Town notice board (the Story Wall's "Take job"): a side job starts exactly as a story job does, in the same world-job mode.
+  // It is on the board once the second story job is won, and it stays on the board: nothing about it is written to the save except the
+  // scrap the settlement pays for any finished world job.
+  _sideJobOpen(job){
+    const props=emberStoryProps(this.profile,{available:true});
+    return props.read===true&&props.sideJobs.some(item=>`everburn-${item.id}`===job?.id);
+  }
+  everburnSideJob(key){
+    if(this._switches().enabled('story-everburn')!==true||!this.wastelandUnlocked())return false;
+    const job=sideJobOf(key);
+    if(!job||!this._sideJobOpen(job))return false;
+    return this.startArenaEvent({venueId:'scablands',mode:'world-job',job});
+  }
+  // Leaving a world job that is still in play, from the pause screen's BACK TO THE YARD: the game's own resume clears the pause, then the job
+  // ends as left (nothing is paid) and its results screen, with TRY AGAIN and BACK TO THE YARD, shows at once.
+  leaveWorldJob(){
+    const state=this.duel.state;
+    if(state.arena?.mode!=='world-job'||state.status==='arena_result')return false;
+    this.resume();
+    finishArenaEvent(this.duel,'job-quit','raiders');
+    return true;
+  }
+  startNight2() {
+    if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
+    return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0,
+      job: night2Job(this.seed, {washFight: this._switches().enabled('road-riders')})});
+  }
+
+  // A job still in play is left first.
+  // A gas run starts again on its road (the battle is chosen by the save, as on the wall), a notice-board job by its board name, a story job by its number.
+  worldJobAgain(){
+    this.leaveWorldJob();
+    const definition=this.duel.state.arena?.worldJob?.definition;
+    if(!definition)return false;
+    if(definition.run===true)return this.gasRun(definition.road);
+    const side=sideJobKey(definition);
+    if(side)return this.everburnSideJob(side);
+    if(definition.steps?.some(step=>step.kind==='rider-fight') && !EVERBURN_JOBS.some(job=>job.id===definition.id))
+      return this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job:definition});
+    const id=EMBER_JOBS[definition.number-1];
+    return id?this.everburnStep(id):false;
+  }
+  // RUN-GAS: the gas run needs both switches (the run's own and the Everburn's) and the sixth Everburn job won.
+  gasRunAvailable(){
+    return this._switches().enabled('scablands-runs')===true&&this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()&&
+      EMBER_JOBS.every(id=>(emberOf(this.profile).jobs??[]).includes(id));
+  }
+  // A road button on the Story Wall's gas run: Big Bess drives from the well to Tin Town by that road ('long' or 'boneyard').
+  gasRun(road){
+    if(!this.gasRunAvailable()||!GAS_RUN_ROADS.includes(road))return false;
+    // FIELD-BATTLE-ASH: at War party, while the furnace is alive, the Boneyard road is the battle (four shares), not an ordinary run.
+    // Once the furnace is dead a Boneyard run is the ordinary run again, with the wreck on the road.
+    const runs=emberRuns(this.profile),difficulty=this.cpuDifficulty;
+    const job=road==='boneyard'&&emberBattleOpen(this.profile)?fieldBattleJob({runs,difficulty}):
+      gasRunJob({road,feud:emberFeud(this.profile),runs,difficulty,furnaceDead:emberFurnaceDead(this.profile)});
+    return this.startArenaEvent({venueId:'scablands',mode:'world-job',job});
   }
   // Another mode or venue picked in the yard's Scrapdome panel cancels a story game.
   waterArenaChoice(choice){this._water?.arenaChoice(choice);}
@@ -1445,6 +1511,25 @@ export class App {
       this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return false;
     this._refreshPlayer();
     if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
+    const chapter = state.arena.worldJob?.night2;
+    if (chapter) {
+      if (!chapter.completed || result.winnerId !== 'player' || result.night2Page || result.night2Replay) return false;
+      const previous = this.profile;
+      const updated = settleNight2(previous, chapter);
+      if (updated.replay) {
+        result.night2Replay = updated.replay;
+        playLedgerPageTurn(this.audio);
+        return false;
+      }
+      if (updated.changed) {
+        this.profile = updated.profile;
+        result.settlementSaved = this._saveShopProfile(previous);
+      }
+      result.night2Page = chapter.page;
+      result.night2SaveIssue = updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
+      playLedgerPageTurn(this.audio);
+      return result.settlementSaved;
+    }
     const previous=this.profile,settled=settleArenaResult(previous,{runId:this.runId,
       ownerPlayerId:this._runPlayerId,activePlayerId:this.player.id,
       cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,arena:state.arena});
@@ -1455,7 +1540,18 @@ export class App {
     const water=this._water?.settle(settled.profile,{runId:this.runId,won:result.winnerId==='player'}); // WATER-HOOKS
     let awardedProfile=water?.profile??settled.profile;
     if(water)result.waterJob=water.mark;
-    if(state.arena.mode==='world-job'&&result.winnerId==='player'&&state.arena.worldJob?.definition?.storyId==='everburn'){
+    const runDefinition=state.arena.mode==='world-job'?state.arena.worldJob?.definition:null;
+    if(state.arena.mode==='world-job'&&result.winnerId==='player'&&isGasRun(runDefinition)){
+      // RUN-GAS: an arrived run moves the feud one step and counts one run. A run that is left or not finished writes nothing.
+      // FIELD-BATTLE-ASH: the battle on the Boneyard road writes by how it ended: 'won' (the furnace is dead) or 'arrived' (Big
+      // Bess is home with the furnace still rolling).
+      const battle=runDefinition.battle===true,ending=state.arena.worldJob?.battleEnding;
+      const arrived=this.gasRunAvailable()?(battle?applyBattleEnding(awardedProfile,ending):applyArrivedRun(awardedProfile,runDefinition.road)):null;
+      if(arrived?.ok){awardedProfile=arrived.profile;result.won=true;
+        result.gasRun={road:runDefinition.road,feud:arrived.feudAfter,word:emberFeudWord(arrived.feudAfter),runs:arrived.runs,reachedWarParty:arrived.reachedWarParty===true,
+          ...(battle?{battle:ending}:{})};}
+    }
+    else if(state.arena.mode==='world-job'&&result.winnerId==='player'&&state.arena.worldJob?.definition?.storyId==='everburn'){
       const id=EMBER_JOBS[state.arena.worldJob.definition.number-1],marked=markEmberJob(awardedProfile,id);
       if(marked.ok){awardedProfile=marked.profile;result.emberJob=id;result.won=true;}
     }
@@ -1466,6 +1562,69 @@ export class App {
     Object.assign(result,{scrapEarned:settled.scrapEarned,
       scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
       hold:settled.hold,settlementSaved:true});
+    return true;
+  }
+  chooseNight2Replay(action) {
+    const state = this.duel.state, result = state.arena?.result;
+    const replay = result?.night2Replay, chapter = state.arena?.worldJob?.night2;
+    if (state.status !== 'arena_result' || !replay || !chapter?.completed ||
+        !this.runId || this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId) return false;
+    if (action === 'review' && !replay.confirming) {
+      playLedgerChoice(this.audio);
+      replay.confirming = true;
+      replay.issue = '';
+      return true;
+    }
+    if (action === 'cancel' && replay.confirming) {
+      replay.confirming = false;
+      replay.issue = '';
+      return true;
+    }
+    if (action === 'keep' && !replay.confirming) {
+      playLedgerChoice(this.audio);
+      this._refreshPlayer();
+      result.night2Page = night2Page(savedLedger(this.profile));
+    } else if (action === 'replace' && replay.confirming) {
+      const durable = readWarlordRegistry();
+      const registry = durable.registry;
+      const owner = registry?.players.find(player => player.id === this._runPlayerId);
+      if (durable.status !== 'ready' || !owner || registry.activePlayerId !== owner.id) {
+        replay.issue = 'Your saved telling could not be opened. Try again.';
+        return false;
+      }
+      let profile = owner.profile;
+      if (this.profileSaved === false) {
+        // Keep live earnings from a failed save only when the stored owner is
+        // still the last verified copy, just as in Warlord settlement.
+        const verified = this._warlordVerifiedOwner;
+        if (verified?.ownerId !== owner.id || verified.snapshot !== JSON.stringify(owner.profile)) {
+          replay.issue = 'Your progress could not be saved with this telling. Try again.';
+          return false;
+        }
+        profile = this.profile;
+        const live = {...registry, players: registry.players.map(player =>
+          player.id === owner.id ? {...player, profile} : player)};
+        if (!validWarlordRegistry(live)) {
+          replay.issue = 'Your progress could not be saved with this telling. Try again.';
+          return false;
+        }
+      }
+      const updated = keepNight2Replay(profile, chapter, replay.expected);
+      if (!updated.ok) {
+        replay.issue = updated.reason;
+        return false;
+      }
+      const candidate = replacePlayerProfile(registry, owner.id, updated.profile);
+      if (!savePlayers(candidate)) {
+        replay.issue = 'The saved telling is still in place. Try again.';
+        return false;
+      }
+      this._adoptWarlordRegistry(candidate, true);
+      result.night2Page = night2Page(savedLedger(this.profile));
+      result.settlementSaved = true;
+    } else return false;
+    if (result.night2Page) result.night2Page.saltScrap = 0;
+    delete result.night2Replay;
     return true;
   }
   _settleFuelResult(event, state) {
@@ -1841,7 +2000,11 @@ export class App {
   }
   startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3, job = null} = {}) {
     if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'convoy-raid', 'ambush-alley', 'world-job'].includes(mode)) return false;
-    if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||!EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open'))return false;
+    // A gas run is the one job here that is not one of the six: it is allowed only when gasRunAvailable() says so.
+    // A notice-board job is the other job allowed here (the very definition the board hands over): only once the board is open and the note is read.
+    if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||(isGasRun(job)?!this.gasRunAvailable():
+      EVERBURN_SIDE_JOBS.includes(job)?!this._sideJobOpen(job):
+      !EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open')))return false;
     return this._startArenaFight({venueId, mode, opponents, job});
   }
   async startTownDrive(town) {
@@ -1861,7 +2024,8 @@ export class App {
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
     const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
-      (job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
+      (job.id === NIGHT_2_ID ? this._switches().enabled('story-choices') === true :
+        job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();
@@ -2417,8 +2581,10 @@ export class App {
     st.paused = !st.paused;
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
-    if(st.paused && st.onFoot && typeof document!=='undefined' &&
-        document.pointerLockElement) document.exitPointerLock();
+    if (st.paused) {
+      this._footPointer.capture = null;
+      if (footMouseLocked()) document.exitPointerLock();
+    }
     this.keys = {};
     this._resetKeyboardInput();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
@@ -2445,8 +2611,8 @@ export class App {
     this._settleAbandoned();
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
-    if (this.duel.state.onFoot && typeof document !== 'undefined' &&
-        document.pointerLockElement) document.exitPointerLock();
+    this._footPointer.capture = null;
+    if (footMouseLocked()) document.exitPointerLock();
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
@@ -2756,13 +2922,21 @@ export class App {
     d.setInput({throttle,brake,steer,boost:false});
   }
 
+  get footMouseHint() {
+    if (!footMouseActive(this.duel.state)) return '';
+    if (this._footPointer.capture === 'held') return 'Esc frees the mouse';
+    if (this._footPointer.capture === 'refused') return 'Mouse capture unavailable. Move over the picture to look.';
+    return 'Click the picture to capture the mouse.';
+  }
+
   _bindKeys() {
     if (typeof window === 'undefined') return;
     this._inputEvents=new AbortController();const signal=this._inputEvents.signal;
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof Element && e.target.closest('input, select, textarea, summary, [contenteditable="true"]')) return;
       if(e.code==='Escape' && this.duel.state.onFoot){
-        if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
+        if(footMouseLocked()){document.exitPointerLock();e.preventDefault();return;}
+        if(globalThis.document?.pointerLockElement)return;
         if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
       }
       if(e.code==='Escape'&&this.duel.drivingLesson){this.lessonEscape();e.preventDefault();return;}
@@ -2784,14 +2958,19 @@ export class App {
     // Mouse events report each button in a chord; pointerdown only reports
     // the first button, losing left-click while right-click is already held.
     window.addEventListener('mousedown', e => {
-      if (!this.duel.state.onFoot || this.duel.state.paused ||
-          !['racing', 'countdown', 'exploring'].includes(this.duel.state.status) ||
+      if (!footMouseActive(this.duel.state) ||
           ![0, 2].includes(e.button) || !(e.target instanceof Element)) return;
       const canvas = e.target.closest('#view3d canvas');
       if (!canvas) return;
       e.preventDefault();
-      if (!document.pointerLockElement) {
-        try { canvas.requestPointerLock?.()?.catch?.(() => {}); } catch {}
+      const pointer = this._footPointer;
+      if (!document.pointerLockElement && pointer.capture !== 'requesting') {
+        pointer.capture = 'requesting';
+        const refused = () => { if (pointer.capture === 'requesting') pointer.capture = 'refused'; };
+        try {
+          if (canvas.requestPointerLock) canvas.requestPointerLock()?.catch?.(refused);
+          else refused();
+        } catch { refused(); }
       }
       if (e.button === 0) this._footPointer.fire = true;
       if (e.button === 2) this._footPointer.aim = true;
@@ -2801,14 +2980,13 @@ export class App {
       if (e.button === 2) this._footPointer.aim = false;
     }, {signal});
     window.addEventListener('mousemove', e => {
-      if (!this.duel.state.onFoot || this.duel.state.paused ||
-          !['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) return;
+      if (!footMouseActive(this.duel.state)) return;
       // Canvas movement remains usable before the first click and when the
       // browser refuses pointer lock. Menus and the rest of the page stay inert.
-      if (document.pointerLockElement == null &&
-          !(e.target instanceof Element && e.target.closest('#view3d canvas'))) return;
-      this._footPointer.lookX += Math.max(-300, Math.min(300, e.movementX || 0));
-      this._footPointer.lookY += Math.max(-300, Math.min(300, e.movementY || 0));
+      const picture = document.pointerLockElement ?? e.target;
+      if (!(picture instanceof Element && picture.closest('#view3d canvas'))) return;
+      if (Number.isFinite(e.movementX)) this._footPointer.lookX += e.movementX;
+      if (Number.isFinite(e.movementY)) this._footPointer.lookY += e.movementY;
     }, {signal});
     window.addEventListener('contextmenu',e=>{
       if(this.duel.state.onFoot && e.target instanceof Element &&
@@ -2816,11 +2994,32 @@ export class App {
     },{signal});
     // Headless tests provide a window without a document; pointer lock needs both.
     if(typeof document!=='undefined')document.addEventListener('pointerlockchange',()=>{
-      if(document.pointerLockElement || !this.duel.state.onFoot)return;
+      const pointer = this._footPointer;
+      if (footMouseLocked()) {
+        // A capture is the player's whenever the fighter is walking, even if its request's state was lost on the way.
+        if (footMouseActive(this.duel.state)) {
+          pointer.capture = 'held';
+        } else {
+          // Capture may arrive after a pause, car entry or the return to the menu.
+          pointer.capture = null;
+          pointer.fire = pointer.aim = false;
+          pointer.lookX = pointer.lookY = 0;
+          document.exitPointerLock();
+        }
+        return;
+      }
+      // A release reported while a request waits: the browser answered without capturing, so the next click may ask again.
+      if (pointer.capture === 'requesting') pointer.capture = null;
+      if (pointer.capture !== 'held') return;
+      pointer.capture = null;
       this._footPointer.fire=this._footPointer.aim=false;
+      if (document.pointerLockElement || !footMouseActive(this.duel.state)) return;
       this._footPointerReleasedAt=performance.now();
-      if(!this.duel.state.paused)this.togglePause();
+      if(!this.duel.state.paused && !activeTalkStep(this.duel.state))this.togglePause();
     },{signal});
+    if (typeof document !== 'undefined') document.addEventListener('pointerlockerror', () => {
+      if (this._footPointer.capture === 'requesting') this._footPointer.capture = 'refused';
+    }, {signal});
     window.addEventListener('blur', () => {
       this.keys = {};
       this.heliSession?.cancelHook();

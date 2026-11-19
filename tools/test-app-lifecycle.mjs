@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {finishArenaEvent} from '../src/arena/arena-event.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 
 let checks=0;const check=(value,label)=>{assert(value,label);checks++;};
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
@@ -39,19 +42,27 @@ Object.assign(inputApp, {
   _keyboardThrottle: {reset() {}}, togglePause() { this.duel.state.paused = true; }
 });
 inputApp._bindKeys();
-const mouse = (type, button, movementX = 0, movementY = 0) => {
+const mouse = (type, button, movementX = 0, movementY = 0, target = canvas) => {
   const event = new Event(type, {cancelable: true});
-  Object.defineProperty(event, 'target', {value: canvas});
+  Object.defineProperty(event, 'target', {value: target});
   Object.assign(event, {button, movementX, movementY});
   window.dispatchEvent(event);
+  return event;
 };
 try {
+  const outside = new Element(); outside.closest = () => null;
+  assert.equal(inputApp.footMouseHint, 'Click the picture to capture the mouse.');
+  assert(!mouse('mousedown', 0, 0, 0, outside).defaultPrevented);
+  mouse('mousemove', 0, 400, 400, outside);
+  assert.equal(inputApp._footPointer.lookX, 0);
+  assert.equal(requests, 0);
   mouse('mousemove', 0, 12, -7);
   check(inputApp._footPointer.lookX === 12 && inputApp._footPointer.lookY === -7,
     'mouse look works over the live canvas before locking or firing a round');
   mouse('mousedown', 2);
   check(requests === 1 && inputApp._footPointer.aim && !inputApp._footPointer.fire,
     'right-click alone activates aim and tries to capture the mouse without shooting');
+  assert.match(inputApp.footMouseHint, /unavailable.*picture/);
   mouse('mousedown', 0);
   check(inputApp._footPointer.aim && inputApp._footPointer.fire,
     'left-click fires while the right mouse button remains held');
@@ -62,6 +73,54 @@ try {
   check(!inputApp._footPointer.aim && inputApp._footPointer.fire,
     'releasing aim preserves the held fire button');
   mouse('mouseup', 0);
+  const measured = (pixels, target) => {
+    inputApp._footPointer.lookX = inputApp._footPointer.lookY = 0;
+    for (const delta of pixels) mouse('mousemove', 0, delta, -delta, target);
+    return [inputApp._footPointer.lookX, inputApp._footPointer.lookY];
+  };
+  assert.deepEqual(measured([400], canvas), [400,-400]);
+  assert.deepEqual(measured([100,100,100,100], canvas), [400,-400]);
+  let pending = 0; canvas.requestPointerLock = () => { pending++; };
+  mouse('mousedown', 0); mouse('mousedown', 2);
+  assert.equal(pending, 1, 'Clicks during the same pending request keep the original gesture.');
+  document.dispatchEvent(new Event('pointerlockerror'));
+  assert.match(inputApp.footMouseHint, /unavailable.*picture/);
+  mouse('mousedown', 0);
+  assert.equal(pending, 2);
+  document.pointerLockElement = canvas;
+  document.dispatchEvent(new Event('pointerlockchange'));
+  assert.equal(inputApp.footMouseHint, 'Esc frees the mouse');
+  assert.deepEqual(measured([400], outside), [400,-400]);
+  document.exitPointerLock = () => { document.pointerLockElement = null; document.dispatchEvent(new Event('pointerlockchange')); };
+  window.dispatchEvent(key('Escape'));
+  assert.equal(document.pointerLockElement, null);
+  assert.equal(inputApp.duel.state.paused, true);
+  assert.equal(inputApp.footMouseHint, '');
+  assert.equal(inputApp._footPointer.fire || inputApp._footPointer.aim, false);
+  inputApp.duel.state.paused = false;
+  assert.equal(inputApp.footMouseHint, 'Click the picture to capture the mouse.');
+  for (const next of [{paused:true}, {onFoot:false}, {status:'menu'}]) {
+    Object.assign(inputApp.duel.state,{onFoot:true, paused:false, status:'racing'});
+    mouse('mousedown',0);
+    assert.equal(inputApp._footPointer.capture, 'requesting');
+    Object.assign(inputApp.duel.state,next);
+    const stateBeforeGrant = {...inputApp.duel.state};
+    document.pointerLockElement = canvas;
+    document.dispatchEvent(new Event('pointerlockchange'));
+    assert.equal(document.pointerLockElement, null, 'A late grant must release the game canvas.');
+    assert.equal(inputApp._footPointer.capture, null);
+    assert.equal(inputApp._footPointer.fire || inputApp._footPointer.aim, false);
+    assert.deepEqual(inputApp.duel.state, stateBeforeGrant);
+  }
+  Object.assign(inputApp.duel.state,{onFoot:true, paused:false, status:'racing'});
+  document.pointerLockElement = outside;
+  document.dispatchEvent(new Event('pointerlockchange'));
+  const otherEscape = key('Escape'); window.dispatchEvent(otherEscape);
+  assert.equal(document.pointerLockElement, outside);
+  assert.equal(otherEscape.defaultPrevented, false);
+  assert.equal(inputApp.duel.state.paused, false);
+  document.pointerLockElement = null;
+  document.dispatchEvent(new Event('pointerlockchange'));
   inputApp.duel.state.paused = true;
   const look = inputApp._footPointer.lookX;
   mouse('mousedown', 2); mouse('mousemove', 0, 9, 9);
@@ -82,9 +141,44 @@ try {
   inputApp._inputEvents.abort(); inputApp.duel.state.paused = false;
   mouse('mousedown', 0);
   check(!inputApp._footPointer.fire, 'disposed mouse handlers cannot fire again');
+  // The game can finish a job while the player is still on foot and holding the mouse.
+  document.querySelector = () => null;
+  for (const lockAtFinish of [canvas, outside]) {
+    const app = new App(), duel = app.duel, state = duel.state;
+    try {
+      duel.featureFlags = createFeatureFlags({storage:null, overrides:{'hidden-road':true,'story-everburn':true,arsenal:true}});
+      state.wastelandGateDiscovered = true;
+      assert(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:1989, opponents:[], job:EVERBURN_JOBS[2]}));
+      Object.assign(state, {status:'racing',countdown:0}); duel.step(1/120);
+      assert.equal(state.onFoot, true);
+      let releases = 0, pauses = 0;
+      const pause = app.togglePause.bind(app);
+      app.togglePause = () => { pauses++; pause(); };
+      const lock = element => {
+        document.pointerLockElement = element;
+        document.dispatchEvent(new Event('pointerlockchange'));
+      };
+      canvas.requestPointerLock = () => lock(canvas);
+      document.exitPointerLock = () => { releases++; lock(null); };
+      mouse('mousedown', 0); mouse('mousedown', 2);
+      assert.equal(app.footMouseHint, 'Esc frees the mouse');
+      if (lockAtFinish === outside) lock(outside);
+      finishArenaEvent(duel, 'job-complete', 'player');
+      assert.equal(state.status, 'arena_result');
+      assert.equal(document.pointerLockElement, lockAtFinish === canvas ? null : outside);
+      assert.equal(releases, lockAtFinish === canvas ? 1 : 0);
+      assert.equal(pauses, 0);
+      assert.equal(state.paused, false);
+      assert.equal(app.footMouseHint, '');
+      assert.equal(!!(app._footPointer.capture || app._footPointer.fire || app._footPointer.aim), false);
+    } finally {
+      document.pointerLockElement = null;
+      app.dispose();
+    }
+  }
 } finally {
   inputApp._inputEvents.abort();
   if (originalDocument === undefined) delete globalThis.document;
   else globalThis.document = originalDocument;
 }
-console.log('Mouse aim/fire chord and pre-shot look acceptance passed.');
+console.log('Mouse aim/fire, pre-shot look, delayed capture and both arena-result lock owners passed.');

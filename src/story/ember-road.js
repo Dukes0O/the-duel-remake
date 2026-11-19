@@ -1,14 +1,15 @@
 // The Everburn's screen state (docs/WASTELAND_WORLD.md section 5). Reads the
 // save and returns plain display props; the app owns navigation and saving.
-import {EMBER_JOBS, emberOf} from './ember-save.js';
+import {EMBER_JOBS, EMBER_FEUD_WORDS, EMBER_RUN_ROADS, emberOf, emberFeud, emberFeudWord, emberRuns, emberBattleOpen, emberFurnaceDead} from './ember-save.js';
+import {REMADE_EVERBURN_JOBS} from '../world/jobs/everburn.js';
 
 export const EMBER_JOB_NAMES = Object.freeze([
-  'Hot Delivery', 'Get Out and Walk', 'Run Him Down', 'Slow Ride',
+  'Hot Delivery', 'Light the Town', 'Run Him Down', 'Slow Ride',
   'The Key Under the Mall', 'The Everburn',
 ]);
 const JOB_NOTES = Object.freeze([
   'Carry Cinder’s ember pot to Tin Town. She lends you a flamethrower for the trip.',
-  'Hold F to get out. Light the three forge lamps with Cinder’s Hand Flamer.',
+  'Take a brand from the hearth. Light the three town lamps and drive off the Ash Men.',
   'Catch the thief through the Boneyard and bring back the bellows.',
   'Keep the Ash Men away from Big Bess on the road to Tin Town.',
   'Park outside the Dead Mall, take the valve key, and get back to your car.',
@@ -17,21 +18,52 @@ const JOB_NOTES = Object.freeze([
 const SIDE_JOBS = Object.freeze([
   {id: 'lost-prospector', name: 'Lost Prospector', kind: 'Rescue', note: 'Find two stranded people near the Boneyard and bring them home.'},
   {id: 'survey-flags', name: 'Survey Flags', kind: 'Explore', note: 'Find five old survey flags. One is up on the Ridge.'},
-  {id: 'hot-soup', name: 'Hot Soup', kind: 'Delivery', note: 'Carry Auntie Solder’s soup across town without spilling it.'},
+  {id: 'hot-soup', name: 'Hot Soup', kind: 'Delivery', note: 'Carry Auntie Solder’s soup to the diggers at the Everburn well without spilling it.'},
 ]);
 
-export function emberStoryProps(profile, {available = false} = {}) {
+// RUN-GAS: how things stand with the Ash Men, one sentence for each word of the feud (docs/board/cards/RUN-GAS.md).
+export const EMBER_FEUD_SENTENCES = Object.freeze([
+  'The Ash Men are watching the Boneyard road.', 'The Ash Men are raiding the Boneyard road.',
+  'The Ash Men are hunting Big Bess.', 'The Ash Men have gathered a war party.',
+]);
+export const emberFeudSentence = feud => EMBER_FEUD_SENTENCES[emberFeudWordIndex(feud)];
+const emberFeudWordIndex = feud => EMBER_FEUD_WORDS.indexOf(emberFeudWord(feud));
+
+// FIELD-BATTLE-ASH (docs/board/cards/FIELD-BATTLE-ASH.md): at War party, while the furnace is alive, the wall says this in place of
+// the War party sentence, the Boneyard road's button reads BONEYARD ROAD: THE BATTLE and carries the battle's pay.
+export const EMBER_BATTLE_SENTENCE = 'The Ash Men have dragged the furnace out of the well. They are waiting on the Boneyard road.';
+export const EMBER_BATTLE_BUTTON = 'BONEYARD ROAD: THE BATTLE';
+// The one sentence the result screen says for each ending of the battle.
+export const EMBER_BATTLE_RESULTS = Object.freeze({
+  won: 'The furnace has stopped for good on the Boneyard road, and Big Bess is in Tin Town.',
+  arrived: 'Big Bess is in Tin Town, but the furnace is still rolling and will be back on the next Boneyard run.',
+});
+
+// `runs`: the gas run is wanted (the scablands-runs switch is on). `runPay`: what each road pays now, {long, boneyard, battle}.
+export function emberStoryProps(profile, {available = false, runs = false, runPay = {}} = {}) {
   if (!available) return {available: false, step: null, read: false, steps: [], sideJobs: []};
   const ember = emberOf(profile), jobs = ember.jobs ?? [];
   const step = ember.read !== true ? 'read' : EMBER_JOBS.find(id => !jobs.includes(id)) ?? 'done';
   const next = EMBER_JOBS.indexOf(step);
   const steps = EMBER_JOBS.map((id, index) => ({id,
-    state: jobs.includes(id) ? 'done' : index === next ? 'open' : 'locked',
-    note: jobs.includes(id) ? `${EMBER_JOB_NAMES[index]} is done.` : JOB_NOTES[index],
-    button: index === next ? (index === 0 ? 'Go to the back gate' : `Start ${EMBER_JOB_NAMES[index]}`) : '',
+    state: jobs.includes(id) ? 'done' : index === next && REMADE_EVERBURN_JOBS.includes(`everburn-${id}`) ? 'open' : 'locked',
+    note: jobs.includes(id) ? `${EMBER_JOB_NAMES[index]} is done.` : index === next && !REMADE_EVERBURN_JOBS.includes(`everburn-${id}`) ? 'The next job is being made.' : JOB_NOTES[index],
+    button: index === next && REMADE_EVERBURN_JOBS.includes(`everburn-${id}`) ? (index === 0 ? 'Go to the back gate' : `Start ${EMBER_JOB_NAMES[index]}`) : '',
   }));
   if (step === 'read') steps[0] = {...steps[0], state: 'open', button: 'Read Hollis’s note'};
-  return {available: true, step, read: ember.read === true, steps,
-    notes: [], sideJobs: jobs.includes(EMBER_JOBS[1]) ? SIDE_JOBS : [],
+  const props = {available: true, step, read: ember.read === true, steps,
+    notes: [], noticeBoardOpen: jobs.includes(EMBER_JOBS[1]),
+    noticeBoardWaiting: SIDE_JOBS.some(job => !REMADE_EVERBURN_JOBS.includes(`everburn-${job.id}`)),
+    sideJobs: jobs.includes(EMBER_JOBS[1]) ? SIDE_JOBS.filter(job => REMADE_EVERBURN_JOBS.includes(`everburn-${job.id}`)) : [],
     ended: step === 'done' && ember.end === true};
+  // The gas run: shown only with its switch on and the sixth job won. It never finishes, so it never carries a tick.
+  if (runs === true && EMBER_JOBS.every(id => jobs.includes(id))) {
+    const feud = emberFeud(profile), battle = emberBattleOpen(profile);
+    props.run = {feud, word: emberFeudWord(feud), sentence: battle ? EMBER_BATTLE_SENTENCE : emberFeudSentence(feud), runs: emberRuns(profile),
+      battle, furnaceDead: emberFurnaceDead(profile),
+      roads: EMBER_RUN_ROADS.map(id => id === 'boneyard' && battle ?
+        {id, name: EMBER_BATTLE_BUTTON, pay: runPay.battle ?? null} :
+        {id, name: id === 'long' ? 'LONG ROAD' : 'BONEYARD ROAD', pay: runPay[id] ?? null})};
+  }
+  return props;
 }

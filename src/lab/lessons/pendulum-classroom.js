@@ -2,6 +2,7 @@
 // LAB-CLASSROOM-LANGUAGE.md). Teaching state only, no DOM and no saves. Every swing time on screen comes from
 // stringPeriod(), the function the pendulum bench and its tests use.
 import {GRAVITY, stringPeriod} from '../benches/pendulum.js';
+import {MORE} from '../classroom/brian-text.js';
 
 export const LENGTHS = Object.freeze([5, 15, 25]);
 export const WEIGHTS = Object.freeze({light: 20, heavy: 200});
@@ -123,7 +124,7 @@ const TRIES = {
       : `The string is now ${p.lengthM} m, but this test needs the short 5 m string. Press 1 for the 5 m hook.`,
     question: 'Your weight hangs on the 5 m string and the grey weight hangs on the 15 m string. Both weights are 20 kg and both start together. Will your weight finish one full swing sooner than the grey weight, later than the grey weight, or at the same moment?',
     guessHints: ['Think about how far each weight has to travel in one swing.', 'A shorter string makes the weight follow a smaller circle, so the trip is shorter.', 'Any guess lets you go on. Pick a card, and then we will test it.'],
-    why: 'A shorter string makes the weight follow a smaller circle, so the weight has a shorter trip, and the labels under the weights show the two trips. Gravity pulls along the path just as hard at the same angle, so the shorter trip needs less time.',
+    why: `A shorter string makes the weight follow a smaller circle, so the weight has a shorter trip, and the labels under the weights show the two trips.${MORE}Gravity pulls along the path just as hard at the same angle, so the shorter trip needs less time.`,
     right: () => `Correct. Your weight finished in ${s1(T(5))} and the grey weight finished in ${s1(T(15))}. `,
     wrong: () => `Your weight finished first, in ${s1(T(5))}, and the grey weight needed ${s1(T(15))}. `,
   },
@@ -182,8 +183,8 @@ const CHECKS = {
       {label: 'Release the car straight away', picture: {kind: 'heli', move: 'drop'}},
     ], correct: 0,
     board: () => [],
-    right: () => `Correct. While the helicopter hovers still, nothing gives the car a new push, and the friction of the air and of the hook slowly use up the swing. On the 15 m cable one swing needs about ${s1(T(15))}, and a swing of 3 m to one side falls below 1 m in about 16 seconds, which is about two full swings.`,
-    wrong: picked => `${picked === 1 ? 'Flying forward pulls the top of the cable sideways, which gives the car a new push and makes the swing bigger.' : 'A car released while it is swinging is still moving sideways, so it does not land where you want it, and the challenge does not count it.'} Hover still instead, because then nothing gives the car a new push, and the friction of the air and of the hook slowly use up the swing. On the 15 m cable a swing of 3 m to one side falls below 1 m in about 16 seconds.`,
+    right: () => `Correct. While the helicopter hovers still, nothing gives the car a new push, and the friction of the air and of the hook slowly use up the swing.${MORE}On the 15 m cable one swing needs about ${s1(T(15))}, and a swing of 3 m to one side falls below 1 m in about 16 seconds, which is about two full swings.`,
+    wrong: picked => `${picked === 1 ? 'Flying forward pulls the top of the cable sideways, which gives the car a new push and makes the swing bigger.' : 'A car released while it is swinging is still moving sideways, so it does not land where you want it, and the challenge does not count it.'} Hover still instead, because then nothing gives the car a new push, and the friction of the air and of the hook slowly use up the swing.${MORE}On the 15 m cable a swing of 3 m to one side falls below 1 m in about 16 seconds.`,
     hints: ['Each time the helicopter moves, it pulls the top of the cable and pushes the car.', 'A swing gets smaller only when nothing keeps pushing it.', 'Pick the first card.'],
     formulas: () => [],
     answered: () => [swingEntry(15, 'The car on the 15 m cable', 'The car hangs on the helicopter’s 15 m cable, so the car swings like a weight on a 15 m string. The weight of the car makes no difference.')],
@@ -459,7 +460,7 @@ export function createModel() {
     if (id === 'word-pendulum') {
       const swinging = m.board[0].pullAt !== null;
       return {...base, labels: true, keys: {Space: 'release'}, waiting: !swinging, target: swinging ? null : 'release', glow: swinging ? null : 'release',
-        say: 'A pendulum is a weight that hangs on a string and can swing freely from side to side. The string hangs from a hook on a steel beam. The number on the weight is how heavy the weight is in kilograms, written kg. A litre of water weighs one kilogram, so this weight is as heavy as 20 litres of water.',
+        say: `A pendulum is a weight that hangs on a string and can swing freely from side to side. The string hangs from a hook on a steel beam. The number on the weight is how heavy the weight is in kilograms, written kg.${MORE}A litre of water weighs one kilogram, so this weight is as heavy as 20 litres of water.`,
         prompt: swinging ? 'Press Enter to continue.' : 'Drag the weight sideways and let go, or press Space.',
         hints: swinging ? DONE : ['Find the ball at the bottom of the string, which is the weight.', 'Press Space, or drag the weight sideways and let go.', 'Watch my pointer. I will let the weight go.']};
     }
@@ -474,7 +475,7 @@ export function createModel() {
     }
     if (id === 'word-length') return {...base, keys: {1: 'measure:5', 2: 'measure:15', 3: 'measure:25'}, waiting: m.chosen !== 25, target: m.chosen === 25 ? null : 'measure:25',
       tapes: m.chosen === 25 ? LENGTHS : m.chosen ? [m.chosen] : [], numbered: true, scale: true,
-      say: 'We measure length in metres, written m. A metre is about one long stride of a grown-up, and a door is about two metres tall. String length is the distance from the hook to the middle of the weight, so a 25 m string is 25 metres long. These three strings have different lengths.',
+      say: `We measure length in metres, written m. String length is the distance from the hook to the middle of the weight, so a 25 m string is 25 metres long. These three strings have different lengths.${MORE}A metre is about one long stride of a grown-up, and a door is about two metres tall.`,
       prompt: m.chosen === 25 ? 'Press Enter to continue.' : 'Click the longest string, or press its number, which is 1, 2 or 3.',
       hints: m.chosen === 25 ? DONE : ['Which weight hangs lowest?', 'The string on the right is the longest. Click it, or press 3.', 'Watch my pointer. I will click the longest string.']};
     if (id === 'watch-lengths') {
@@ -499,7 +500,7 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to continue.' : PICK_CARD, hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [swingEntry(15, 'The car on the 15 m cable', 'The car hangs on the helicopter’s 15 m cable, so the car swings like a weight on a 15 m string.')],
-      say: 'A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back makes no difference either, because a wider swing travels further but also faster. In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down.',
+      say: `A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back makes no difference either, because a wider swing travels further but also faster.${MORE}In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down.`,
       prompt: 'Press Enter to fly the helicopter. Press H to hook the car, carry the car to the orange light, lower the car until it touches the ground inside the ring, and press H again to let go.',
       hints: KEY_IDEAS.map(i => i.text)};
   }
@@ -509,7 +510,7 @@ export function createModel() {
     const target = !m.changedHook ? `hook:${p.lengthM === 25 ? 5 : 25}` : !m.changedWeight ? `weight:${p.weightKg === WEIGHTS.heavy ? 'light' : 'heavy'}` : null;
     return {...base, hooks: true, shelf: true, chosen: {lengthM: p.lengthM, weightKg: p.weightKg}, keys: SETUP_KEYS_NO_RELEASE, waiting: !done, target, glow: target,
       formulas: [swingEntry(p.lengthM), pullEntry(p.weightKg)],
-      say: `Here is the rule for the swing time, and it needs a few symbols. π is a Greek letter, said “pie”, and it stands for one number, about ${PI_SHOWN}. The distance around any circle is about ${PI_SHOWN} times the distance across it, and π appears here because the weight follows part of a circle. √ means the square root, which is the number that gives you the starting number when you multiply it by itself, so √9 is 3, because 3 × 3 = 9. Speed can be measured in metres per second, written m/s, which is the number of metres travelled during each second. g is the acceleration caused by gravity, ${G_SHOWN} m/s², read as “metres per second, per second”, because gravity adds ${G_SHOWN} m/s to the speed of a falling object during every second. T is the swing time and L is the string length. The rule is T = 2 × π × √(L ÷ g), which is the sum beside the picture. The square root is there because a weight on a longer string has further to go but also moves faster, so five times the length gives only about 2.2 times the time, as 10.03 ÷ 4.48 shows.`,
+      say: `Here is the rule for the swing time, and it needs a few symbols. π is a Greek letter, said “pie”, and it stands for one number, about ${PI_SHOWN}.${MORE}The distance around any circle is about ${PI_SHOWN} times the distance across it, and π appears here because the weight follows part of a circle. √ means the square root, which is the number that gives you the starting number when you multiply it by itself, so √9 is 3, because 3 × 3 = 9. Speed can be measured in metres per second, written m/s, which is the number of metres travelled during each second. g is the acceleration caused by gravity, ${G_SHOWN} m/s², read as “metres per second, per second”, because gravity adds ${G_SHOWN} m/s to the speed of a falling object during every second. T is the swing time and L is the string length. The rule is T = 2 × π × √(L ÷ g), which is the sum beside the picture. The square root is there because a weight on a longer string has further to go but also moves faster, so five times the length gives only about 2.2 times the time, as 10.03 ÷ 4.48 shows.`,
       prompt: done ? 'Press Enter to continue, or keep pressing the hooks and the weights.' : `The string is ${p.lengthM} m and the weight is ${p.weightKg} kg. Press 1, 2 or 3 to change the hook, and press 4 or 5 to change the weight, and watch the sums change.`,
       hints: done ? DONE : [`Look at the sums beside the picture, which use the ${p.lengthM} m string and the ${p.weightKg} kg weight.`, target ? WHERE[target][0] : 'Press Enter to continue.', target ? `Watch my pointer. I will ${WHERE[target][1]}.` : 'Press Enter to continue.']};
   }
@@ -522,7 +523,7 @@ export function createModel() {
     if (!setting) return {...v, say: m.auto ? autoSay() : m.say, prompt: m.auto ? 'Watch Brian change the settings.' : 'The stopwatch stops after one full swing.',
       hints: ['Watch the stopwatch.', 'The stopwatch stops after one full swing.', 'Wait for the stopwatch to stop.']};
     return {...v, keys: FREE_KEYS, waiting: !done, target: 'set:best', glow: 'release',
-      say: m.say || `Now you can experiment with all three settings. Press 1, 2 or 3 to choose the string length, press 4 or 5 to choose the weight, and press ↑ or ↓ to change how far the weight is pulled back. The pull-back is measured in degrees. A degree is a small step of turning, a full turn is 360 degrees, and a string hanging straight down is at 0 degrees. Watch the sums change as you press, and predict the stopwatch before you press Space. Test at least ${FREE_TRIES} different settings, and the table keeps your results so that you can compare them.`,
+      say: m.say || `Now you can experiment with all three settings. Press 1, 2 or 3 to choose the string length, press 4 or 5 to choose the weight, and press ↑ or ↓ to change how far the weight is pulled back.${MORE}The pull-back is measured in degrees. A degree is a small step of turning, a full turn is 360 degrees, and a string hanging straight down is at 0 degrees. Watch the sums change as you press, and predict the stopwatch before you press Space. Test at least ${FREE_TRIES} different settings, and the table keeps your results so that you can compare them.`,
       prompt: done ? 'Press Enter to continue, or test another setting.' : `The string is ${p.lengthM} m, the weight is ${p.weightKg} kg and the pull-back is ${m.pull} degrees. Change the settings, then press Space to let go. Different settings tested so far: ${m.tested.size} of ${FREE_TRIES}.`,
       hints: ['Press Space to test the settings as they are.', 'Try the same string with the other weight, and then try a different string.', 'Watch my pointer. I will choose a setting you have not tested yet, and let the weight go.']};
   }

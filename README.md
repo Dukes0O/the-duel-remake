@@ -6,6 +6,43 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Summit Run can be reached from the air, and you can see which way to go.**
+  Beside HEADING a new HEAD FOR gauge shows the heading to turn to and how far
+  it is, "320, Summit Run · 15.6 km" (once there, the landing pad or the ski
+  pad). The edge of the flying area now holds the helicopter in instead of
+  letting it fly off over empty land; with a place chosen the cruise there
+  starts by itself after 3 seconds (ENTER goes at once), and with none the
+  screen says to choose one in FLY TO or on the pilot's map.
+- **The Freestyle quarry's mountains are solid ground for every car.** The
+  Koenigsegg and the other road cars no longer crash into an invisible wall
+  far from a mountain or in mid-air above it: they drive up its real slopes
+  as the Titan does, slowing as they climb.
+- **Losing a Duel on Easy costs nothing.** The menu says "LOSS 0 CR" on Easy
+  and the results screen says your credits are safe (Medium and Hard are
+  unchanged). A burnt course now closes for 3 play days instead of 10, and
+  buying it back starts at 3,000 credits instead of 10,000.
+- **Spikey Ferns' Wasteland career:** notoriety rank 9 and 20,000 more scrap,
+  added once when the game next starts (a copy of the career is saved first).
+- **The Everburn story is off again.** It was in the game for one night (13 November). Kyle
+  played its first two jobs on 14 November and found them not ready to be seen, so the story and
+  the gas runs are hidden until they are rebuilt. Progress already saved in it is kept.
+- **Four more Lab lessons have the wide board.** Fuel, Ski wax, Launch and Projectile now draw a
+  larger picture with their numbers in a strip underneath, as Braking does, and no label on a board
+  is smaller than Braking's. With the physics panel open, the picture keeps more of the width than
+  before.
+- **The Lab has a new look.** Every lesson's board is redrawn as a lit workshop scene: a real floor and
+  wall, the car, the helicopter and the tools drawn as things, and arrows that glow. The pictures on
+  the answer cards are redrawn to match, and Brian has painted portraits with four moods. In Lift
+  and in Braking the numbers and tables sit in a strip under the board, so the picture is larger;
+  Braking's board is wider and its close-up car is bigger.
+- **The Lab has its own button.** LAB stands on the menu beside INSTRUCTOR and HELIPAD. Every lesson is
+  open from the start; a challenge that flies or drives says which lessons it needs first.
+- **The menu says what to do next.** A "Next up" line under the top bar names one thing to try and
+  takes you there, and a small NEW tag marks a button with something new behind it. Nothing else on
+  the menu has moved.
+- **Brian says three sentences at a time.** Each Lab step opens with at most three sentences; press T
+  for "Tell me more". Braking, Downforce, G-force and Fuel now use round speeds such as 100 and
+  200 km/h.
 - **European animals.** Roe deer, red deer, red foxes and wild boar beside the Ardennes, Eifel Crown and
   Azure Riviera roads (a black stork now and then at Eifel; gulls by the sea on the Riviera); chamois,
   ibex, alpine marmots and red deer on the Alpine Serpent, with a golden eagle as its rare sight.

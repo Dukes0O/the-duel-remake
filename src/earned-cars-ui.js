@@ -68,7 +68,7 @@ export function medalUnlockCard(profile, carId, { helicopter = false } = {}) {
     `<progress value="${Math.min(have, need)}" max="${need}" aria-label="${label}: ${Math.min(have, need)} of ${need}"></progress>`;
   return `<div class="unlock-card medal-unlock"><div><p class="eyebrow">EARNED, NOT BOUGHT</p><h3>${escape(CARS[carId].name)}</h3>` +
     `<p>Win medals with any of your cars. Each new medal also pays credits once.</p>` +
-    `${helicopter ? '<p>Kestrel One brings it to Tremblant Woods.</p>' : ''}</div>` +
+    `<p>Race it on any course as soon as you earn it.</p></div>` +
     `<div class="unlock-price">${bar(progress.medals, progress.needMedals, 'MEDALS')}` +
     `${progress.needGold ? bar(progress.gold, progress.needGold, 'GOLD MEDALS') : ''}` +
     `<p>Unlocks the moment you reach it. No credits.</p></div></div>`;
@@ -113,7 +113,7 @@ export function earnedCarCards(result, { helicopter = false } = {}) {
     const rule = medalRequirement(id);
     const earned = rule ? `Earned with ${rule.medals} medals${rule.gold ? `, ${rule.gold} of them gold` : ''}. ` : '';
     cards.push({ id, name: CARS[id].name.toUpperCase(),
-      text: earned + (helicopter ? 'Kestrel One will bring it to Tremblant Woods.' : 'In your garage now.') });
+      text: earned + 'It is in your garage and ready to race anywhere.' });
   }
   return cards;
 }

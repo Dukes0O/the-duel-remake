@@ -7,6 +7,7 @@ import {gearContact, gearDirection, enemyCars, fighterTargets,
   damageGearCar, damageGearFighter, cannonShove} from './contacts.js';
 import {signatureFor, GEAR_EPSILON} from './gear.js';
 import {convoyBlastDistance} from '../arena/convoy.js';
+import {bellowsWeaponTarget, reportWorldJobThingHit} from '../arena/modes/world-job.js';
 
 const GRAVITY = COMBAT_TUNING.bomb.gravity;
 export function launchGearProjectile(duel, fighter, gear, serial, motion = {x: 0, z: 0}) {
@@ -69,6 +70,10 @@ function explodeSticky(duel, shot) {
   const gear = signatureFor(shot.crewId), owner = actorForTarget(duel, shot.attackerId);
   if (!owner) return;
   const radius = gear.radius * (crewPerks(shot.crewId).blastRadiusMultiplier || 1);
+  const bellows = owner === duel.state && bellowsWeaponTarget(duel);
+  if (bellows && Math.hypot(bellows.position.x - shot.x,
+      bellows.position.y - shot.y, bellows.position.z - shot.z) < radius)
+    reportWorldJobThingHit(duel, {...bellows, weapon:shot.kind, hitId:shot.id});
   for (const actor of [duel.state, ...duel.state.opponents]) {
     const at = carBodyPoint(duel, actor);
     if (shot.attachedId === targetIdentity(duel, actor) ||
@@ -166,7 +171,9 @@ export function stepGearProjectile(duel, shot, dt) {
       shot.y = Math.max(ground + .05, shot.y);
       return landGrenade(duel, shot, hit);
     }
-    if (hit.actor) {
+    if (hit.bellows) {
+      reportWorldJobThingHit(duel, {...hit.bellows, weapon:shot.kind, hitId:shot.id});
+    } else if (hit.actor) {
       const removed = damageGearCar(duel, hit.actor, gear.carDamage, owner,
         {x: hit.nx, z: hit.nz}, {hitPosition: hit.point});
       if (gear.id === 'scrap-cannon' && removed > 0 && !hit.actor.combatWrecking)

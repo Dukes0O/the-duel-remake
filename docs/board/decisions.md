@@ -14,6 +14,118 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   (restored by FUN-TITAN-LAUNCH).
 
 
+## Kyle, 17 November 2026: earned cars race in most places; what the helicopter needs
+
+- "An earned car should be able to race in most places." No limit that differs by difficulty: that "is adding difficulty
+  without adding anything interesting". Perhaps one top of the line car must be flown to a top of the line course, "maybe
+  that's it" (card EARNED-CARS-ANYWHERE: the McMurtry Speirling).
+- Gratian is not excited about the helicopter at this point. Kyle expects two things to change that: the wildlife, and a
+  joystick ("that's gonna make a big impact on the fun of playing").
+- "It took me over 40 minutes to put out a forest fire yesterday, so that makes gameplay challenging." Not yet acted on:
+  the helicopter's story waits for Kyle's word.
+- Open, Kyle's own question: how a player is meant to discover the other courses from the air. The map shows many places;
+  the world cannot be a hundred kilometres.
+
+## Kyle, 16 November 2026 (evening): rounds and slices are a guide, not a stop
+
+Said on seeing a Codex job stop several times on the Everburn's sixth slice: "at some point the rule was 3 turns, then I
+said it could increase to something more, like 6, but it ended up being taken as a hard rule. if we need more slices, then
+we need more slices. there comes a time when another slice wastes time, but I think we're improving with the
+photorealistic multi-turn cuts and builds. it's turning out nicely. We just need to make sure the game play remains
+engaging."
+
+- No count of rounds or slices stops a card. A card gets another for as long as each one makes the thing better; it stops
+  when two in a row have not, and then the method changes (SPEC 0.11, AGENTS.md "Stop rule").
+- The look built in several rounds is going the right way.
+- What every round is for is play that stays engaging. Claude judges that by playing by hand before Kyle tries a thing.
+- What stopped Codex that evening was not this rule (Claude's note): Claude's own script ran each job for eight starts
+  and ended it after three starts with no commit, and four times Codex rightly stopped to ask for a design ruling.
+
+## Kyle, 14 November 2026: the Scablands (after playing the Everburn, and on seeing the land rebuilt)
+
+- The Everburn's first two jobs are not fit to be seen and Gratian must not find them. Both
+  switches are off until Kyle has tried a remade job (card EVERBURN-REMAKE).
+- Build the land before the jobs: "doesn't it make sense to expand the scablands first so we
+  have a larger canvas to work on?"
+- "When our race courses run many km, then the scablands must be even larger. The art must
+  reflect a new land, the danger must be felt from game play. Route choices must be decisions
+  the player should weigh."
+- The small map on screen "is entirely ridiculous".
+- Hills and other terrain: "hills and obstacles that we can hide behind or drive over and
+  likewise the opponents do the same". "A wide flat land is great for a major skirmish, but
+  sometimes a hide and seek game could be fun too."
+- An idea for later: a version of the old "Scorched Earth" game tied to the Lab's lessons on
+  parabolas, with "our tank in one place" firing at fixed places, "or maybe a catapult".
+- "You can't walk or drive through buildings. If we drive through buildings, they must collapse
+  and cost scrap to rebuild."
+- On seeing the new map and the regions: "This is so far really good. Coming along nicely."
+  "Curious what it would take to make things more photo-realistic? I think more photo realism
+  (doesn't need perfection) could make a lot of the game play really enticing."
+
+Where each is built: card SCABLANDS-LAND, round 4.
+
+## Kyle, 11 November 2026: draw in code before building model files
+
+On Old Smoke's furnace, round 2: "this art looks toy like." Then: "are we putting effort into creating 3d assets
+where we could instead just be using impressive HTML?" and "elsewhere in the game I see the potential ... we're
+grinding away on assets that are insufficient."
+
+- Fire, smoke, sparks, light, dust, water, weather and surface wear are drawn by the game's own code.
+- Flat pictures (story cards, portraits, maps, menus, Lab pictures) are drawn as HTML pictures.
+- Model files are for shapes a player drives around; their surfaces come from photos (`docs/ART_LINE.md`).
+- Claude lists where code-drawn work would lift the rest of the game most, and new Blender art cards wait for that
+  list. To reverse: Kyle says so; the art line's older kits are unchanged.
+
+## Kyle, 11 November 2026: a boss needs a reason
+
+"Each of these bosses just runs around in a circle... We should have something lead up to a boss fight that is
+compelling, not just new bosses." "Escorting cargo could be a kind of recurring mission in the scablands that results
+in skirmishes and battles." "I just don't want all this effort being put into a graphic if we're not going to bring
+it out for good reason." On Claude's design page: "I won't have time to read it - do your best then build from it."
+
+- The design is `docs/FEUDS_AND_RUNS.md`: feuds between communities, recurring escort runs, field battles and
+  Scrapdome challenges, and three rules every boss must pass. Claude builds from it.
+- A machine gets photo-quality art only when that page gives it minutes on screen. To reverse: Kyle says so.
+
+## Kyle's decisions on how we work (moved here from AGENTS.md, 9 November 2026)
+
+`AGENTS.md` now states today's rules only. These are the decisions behind them, oldest first.
+
+- **24 September 2026.** AI-written code: redoing is cheap, so fix forward, keep the recipe and
+  not the output, one version of every binary, evidence used once, replace means remove, delete
+  and do not archive (SPEC 0.7 and 0.8). History was rewritten that day (CLEAN-09).
+- **4 October.** Build more, record less: this is a game for two people on one laptop. Check
+  once, 30 minutes at most on one failure, one run-log line per merge, extra helpers only for
+  saves, releases, money and pay, and art rounds (rules 1 to 6).
+- **11 October.** "Yes", after one shared test slot held every team's merges back for hours:
+  only frame timing needs a quiet laptop; a frame check is one simple run; no frame checks on
+  art; no new test machinery without a card (rules 7 to 10).
+- **12 October.** The factory (`docs/FACTORY.md`): test by what changed, merge as soon as it is
+  green, one daily full check, limits on lanes, Kyle sets direction (rules 11 to 15). Claude
+  answers a question on its card (rule 16). Reviews by kind (rule 17). Kyle follows the build
+  in Cockpit (rule 20; merged 25 October).
+- **13 October.** Codex's lead may settle a small question after an hour (rule 16). The Release
+  Manager pushes `integration/wasteland` after every release, replacing D8 of 24 September.
+  Claude may run the binary compaction and force-push it without asking; `master` is never
+  rewritten (rule 22).
+- **14 October.** A first-race load over 5 seconds is a warning, not a failure (rule 8).
+- **15 October.** Ship when green: "many things are being held up because they need my
+  explicit approval to merge or go live after tests pass... it's a bottle neck when I'm not
+  around, and it's a bottle neck when I am around... I trust yours and Codex' ability to run
+  these builds together. I don't need much involvement during the building phase." Standing
+  approval and never redo a passing check (rules 18 and 19). Fix forward covers live releases.
+- **24 October.** Right-sized checks replace "lane tier before every merge" (Gates). At most
+  two heavy jobs at once: three caused timeouts that cost reruns (rule 7). Cloud sessions start
+  from `integration/wasteland` and never merge.
+- **30 October.** "Use Performance": the frame check gates on Performance on the HDMI screen
+  alone; High keeps its pass while its scene and code are unchanged (rule 8).
+- **5 November.** "We don't have to recreate absolutely everything": a permissively licensed
+  library may be named on a card by Claude (`docs/MACHINES.md` section 12).
+- **6 November.** Art generally needs more than three rounds; six rounds per art card (SPEC
+  0.11). The factory learns: what we learn goes where the next job will read it (rule 21).
+- **Undated.** Stop rule: if a card cannot meet its acceptance with the tools we have, stop
+  and ask; never ship a placeholder or stub as the finished thing.
+
 ## 2026-09-22 PDT — FND-10/FND-11 order
 
 - Decision: Use FND-10's integrated seven historical fixtures as the
@@ -1553,3 +1665,113 @@ Day/Night and Dossier remain waiting on that shared renderer dependency.
   list; the medal cars and the restored Sirena keep the fly-it-there rule.
 - Ski radio lines stay as on-screen text for now; no voice credits spent on
   them (Kyle, 26 October 2026). Heli-skiing does not wait on voice.
+
+## Long machine work is taught and sent (Kyle, 16 November 2026)
+
+Kyle: "the two 9.4km cuts will take too long for game play to be enjoyable. that means the first 2 cuts need to train an
+apprentice who can be sent off on the other 2 cuts. We should be able to check in and see the apprentice's progress".
+
+- A long piece of machine work is never the player's to do in full. The first two are done by hand and teach an apprentice;
+  the apprentice is sent on the rest; the player can look in on the work at any time, see it, and take over.
+- First built for the boring machine (card MACHINE-BORER-APPRENTICE). It applies to every machine line after it.
+- Recorded by Claude. Kyle was reading a table of driving routes as cuts; the rule he drew from it stands by itself.
+- To reverse: Kyle says so.
+
+## By hand, or set running: the player chooses, and sees the sum (Kyle, 16 November 2026)
+
+Kyle, on the ember run and the boring machine: "maybe we could have the boring machine option presented as a safe way to
+"automate" or have recurring runs where we can make money in the background instead of always having to run the course in the
+car. this is a kind of incentive, but also a real world thing that I'd like Gratian to be faced with, choose to always do
+things manually, or automate something that could bring ROI without constant manual intervention."
+
+- A job that comes round again may be given a way to run by itself, built by the player's own work, at a cost in scrap and
+  time, bringing less each time than doing it by hand but without the player.
+- The game shows the sum in plain words (what it costs, what it brings back, how long until it has paid for itself) and
+  keeps the tally afterwards. Neither answer is made the right one; doing it by hand is never taken away.
+- First designed for the fire run to Tin Town (card RUN-FIRE-LINE). Recorded by Claude.
+- Kyle, the same day: a future enhancement, to be handled later in development. The forge's timer is forty minutes of play,
+  not twenty, counted across sittings (twenty minutes one day and ten the next make thirty), with a warning when the
+  embers are getting low. Nothing is to be built from this now.
+- To reverse: Kyle says so.
+
+## Integration is pushed to GitHub after each merge batch (Kyle, 18 November 2026)
+
+Kyle is setting Codex up in its cloud to build from Claude's cards. The cards live in this repository, and a cloud reads
+it from GitHub. Asked "May integration be pushed to GitHub after each merge, so Codex's cloud can read the cards?", Kyle
+answered "Yes, push". Until then integration was pushed only after a release. The rule is in AGENTS.md, "Gates". The
+repository on GitHub is public, so the rule also says what may never go up. To reverse: remove that bullet; the release
+gate's own push stays.
+
+## The story is rebuilt around choices (Kyle, 18 November 2026)
+
+Kyle tried jobs 2 and 3 of the remade Everburn and rejected the story a second time (the first was 14 November). His
+words: "the most extremely uninteresting, boring, the weapons don't work, the cars don't fight back, I keep getting
+reset ... There's no challenge. There's no reward because there's no challenge ... It's not clear how you could fail."
+
+His direction:
+- "This whole thing needs rewriting as a choose your own adventure. Like a serious choose your own adventure." The
+  branches may be written ahead ("we can pre-author the directions that you can go").
+- A decision changes something later in the story. His example: the people who come for the ember. Share it, or do not.
+  Sharing may make an ally, or bring them back to take it; word may spread until many come asking; the embers run out
+  sooner and force another run for more, and that run is dangerous.
+- "There should be more dialogue ... There's no interaction with people."
+- "With no risk, there's no reward." A player can fail, and can see how.
+- "We need a massive storyline overhaul, and I think that's probably the most important thing." Claude designs it.
+  Codex, working in its cloud, builds mechanics and graphics once they are defined.
+
+What follows from it (Claude):
+- No more slices of jobs 2 to 4 as designed. EVERBURN-REMAKE keeps what is built, hidden, as parts to reuse.
+- The design is card STORY-CHOICES (Claude's). It shows the map of choices and one chapter worked in full before
+  anything is built, and Kyle reads it first.
+- The faults of the world itself that he met the same day (card WORLD-FAULTS-18-NOV) are cured whatever the story
+  becomes, because any story is played in that world.
+
+To reverse: nothing is deleted by this decision; the remade jobs stay behind their switch.
+
+## The night check is sized by the day's merges (Kyle, 18 November 2026)
+
+Kyle, after a morning spent sorting the 31 failures of the first night check to finish in six days: "Maybe we need to
+evaluate what was accomplished during the working hours of the day and determine whether full or partial testing to be
+done at night? Then if partial testing, we can keep building instead." Claude's recommendation, which he accepted
+("yes, write it into the rules"):
+
+- The rule "one lane tier per change" stays. It is the cheap check (12 minutes and 74 of 667 suites that morning).
+- The night check has three sizes, chosen by the tool from what was merged since the last one: none, partial or full.
+  AGENTS.md rule 13 holds the wording. A full night took 3 hours 34 minutes on 18 November (full tier 70 minutes, browser
+  scenarios 2 hours 18 minutes, frames 15 minutes with the laptop alone).
+- A partial night picks widely (every suite that reaches a changed file at any depth), because what it misses waits
+  until Saturday's full night.
+- Two cheaper cures go with it: a night that was due and did not run is news the next morning, and a card that changes
+  a job brings the older checks that name the job up to date in the same card.
+
+Known limit, said to Kyle: while the Everburn's rules are loaded by the game's core files, most nights of this work
+will still be full nights. The saving comes on art, lesson and tooling days.
+
+To reverse: restore rule 13's first sentence to "runs once a day" with the full list of stages, and remove the size
+choice from `tools/full-check.mjs` (card QA-NIGHT-SIZED).
+
+## Checks sized to the card, and a nightly check that tells news (Kyle, 16 November 2026)
+
+Kyle asked for an audit of how the game is built: "I've found many times in the past where we ended up doing more testing
+than building. we've made many successful corrections, but I'm curious where things stand now." The audit (a Sonnet
+session, read-only, the same day) found that writing checks is no longer the larger share of the work (23% of changed
+lines since 24 September, against 38% game and art and 39% notes) but that running them has grown: the full set from 9
+minutes to about an hour, the nightly run from 76 to 172 minutes, and two suites of 69 and 26 minutes making 63% of the
+check minutes in a lane run. On Hot Delivery about 6.4 of 10.5 Codex hours went to check code. Every recorded nightly run
+reads "failed" because of the same browser failures, and none ran after 13, 14 or 15 November. It proposed five changes.
+Kyle: "go ahead with the first four audit changes".
+
+- **Checks are picked by what the card touches.** A suite of three minutes or more runs in a lane only when the card names
+  it, and otherwise at night. (AGENTS rule 11; card QA-CHECKS-BY-CARD.)
+- **One lane run per card.** A fix made after it runs only the suites for the files changed since. (Rules 1 and 19.)
+- **The nightly check tells news.** Its failures that are known stand on a list, each with a card; only a new failure makes
+  the night "failed". Browser scenarios run for what changed, and all of them once a week. A night without a full check is
+  made up the next morning. (Rule 13; cards QA-NIGHTLY-NEWS and QA-STANDING-BROWSER.)
+- **One scripted proof drive per card.** Hand drives do the finding. (Gates; `docs/CODEX_PLAYBOOK.md` section 7.)
+- Not decided: the audit's fifth change (one short note per card, which changes rule 5's wording) and a "Background" view
+  in the Cockpit. Both wait for Kyle.
+- To reverse: Kyle says so.
+- **18 November 2026. Old Smoke can be made peace with.** Kyle: "Yes, peace possible." Five Cold Nights keeps its third ending, Shared fire, as `docs/story/five-cold-nights.md` section 15 writes it. The other three questions of section 11 (people leaving for good, the act's size, which telling stands) are still open.
+- **18 November 2026. Five Cold Nights: the last three rulings.** Kyle: five nights is the right size for this story line, because there are others to play; a person can leave for good (a return in another story is not planned now); when a story is played again, the player picks at the end which outcome stands. With the ruling on Old Smoke above, all four questions of `docs/story/five-cold-nights.md` section 11 are settled.
+- **18 November 2026. The overnight testing is Claude's, not Codex's.** Kyle: "I'd like you to do the overnight testing rather than codex, it'll run out of quota." Claude reads each night check, cures or cards its failures, keeps the standing list and builds QA-NIGHT-SIZED. Codex's allowance goes to building cards. The Windows task "The Duel full check" still starts the run at 04:00; it uses no one's allowance.
+- **19 November 2026. The night check may run up to six hours.** Kyle: "Yes, six hours." The Windows task "The Duel full check" now stops a run after six hours (was four), as a ceiling only; its start stays at 04:00. A full night with every browser check took just over four hours on 19 November and was cut off.

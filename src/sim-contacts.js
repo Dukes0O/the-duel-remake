@@ -1,3 +1,4 @@
+import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
 import {hitSnowman} from './snowmen.js';
@@ -26,6 +27,7 @@ import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 import {carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 import {actorForTarget} from './arsenal/targeting.js';
 import {CONVOY_BODY, isConvoyRig} from './arena/modes/convoy-raid.js';
+import {scablandsContactObstacles} from './sim-scablands.js';
 
 function recordBoardingCrash(duel, a, b, crash) {
   const boarding = duel.state.boarding;
@@ -92,17 +94,30 @@ function combatShieldForActor(duel, actor) {
 }
 
 function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, specB,
-  impactMph, zoneA, zoneB, pairKey}) {
+  impactMph, zoneA, zoneB, pairKey, worldFrame}) {
   const incidents = duel._combatRamIncidents;
   const firstImpact = !incidents.has(pairKey);
   const correction = Math.max(0, nx ? width + .04 - end.x * nx : length + .04 - end.z * nz);
   const shareA = specB.mass / (specA.mass + specB.mass), shareB = 1 - shareA;
   // Continue to separate solid bodies while the incident is latched. Only the
   // first contact transfers momentum or armor and emits a hit.
-  a.lateral += nx * correction * shareA;
-  b.lateral -= nx * correction * shareB;
-  a.s += nz * correction * shareA;
-  b.s -= nz * correction * shareB;
+  if (worldFrame) {
+    // A lane metre far outside the Scablands oval can span several metres on the ground.
+    // Apply the same separation in world space that was measured by the swept bodies.
+    const dx = nx * worldFrame.cos + nz * worldFrame.sin;
+    const dz = -nx * worldFrame.sin + nz * worldFrame.cos;
+    for (const [car, share] of [[a,shareA],[b,-shareB]]) {
+      const at = duel.course.worldAt(car.s, car.lateral);
+      const next = duel.course.nearest(at.x+dx*correction*share, at.z+dz*correction*share, car.s);
+      car.s = next.s;
+      car.lateral = next.lateral;
+    }
+  } else {
+    a.lateral += nx * correction * shareA;
+    b.lateral -= nx * correction * shareB;
+    a.s += nz * correction * shareA;
+    b.s -= nz * correction * shareB;
+  }
   a.offRoad = !duel._surface(a.s, a.lateral).mainRoad;
   b.offRoad = !duel._surface(b.s, b.lateral).mainRoad;
   if (!firstImpact) return true;
@@ -265,14 +280,27 @@ export function _roadPosition(world, hintS) {
 }
 
 export function _supportAt(distance, lateral, actor = this.state) {
-  const ground = this.course.groundAt(distance, lateral);
+  const height = this.course.def?.scablands || this.course.groundTunnels
+    ? scablandsActorFeet(actor) : undefined;
+  const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
-  if (!capability) return ground;
+  // FREESTYLE-MOUNTAINS (Kyle, 16 November 2026: Gratian's Koenigsegg crashed far from the Freestyle quarry's mountains
+  // and in mid-air above them): in the playground every car drives on the mountains' real surface, as the off-road
+  // trucks do; they are ground there, not walls.
+  const quarry = this.course.def?.practice === true && actor === this.state;
+  if (!capability && !quarry) return ground;
+  // Surface obstacles must not lift an underground car back onto the hill.
+  const tunnels = this.course.groundTunnels;
+  if (tunnels && Number.isFinite(height)) {
+    const tube = tunnels.tubeAt(ground, height, 0.6);
+    if (tube && Math.abs(ground.y - tube.floor) < 1e-6) return ground;
+  }
   const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);
   if (!inMuddyHollow && this.course.features.mountains?.length) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);
     if (mountain != null) ground.y = Math.max(ground.y, mountain);
   }
+  if (!capability) return ground;
   for (const obstacle of this._obstacles(distance - 5, distance + 5)) {
     const height = rockSupportHeight(obstacle, ground.x, ground.z, capability);
     if (height != null) ground.y = Math.max(ground.y, height);
@@ -289,17 +317,46 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
-  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null) {
-    start.y = (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
-    end.y = (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+  const layeredGround = this.course.def?.scablands;
+  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
+      ((this.course.groundTunnels || layeredGround) && Number.isFinite(car._jumpY))) {
+    start.y = (car.prevGroundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
+    if (this.course.def?.scablands) {
+      end.y = scablandsActorFeet(car);
+      if (!Number.isFinite(end.y)) end.y = this.course.groundAt(car.s, car.lateral).y;
+    } else {
+      end.y = (car.groundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+    }
   } else {
     // Grounded cars keep the established horizontal contact rules; only
     // airborne vehicles need extra terrain samples and vertical clearance.
     start.y = end.y = undefined;
   }
+  // A surface above a bore is a separate floor, even when feet overlap the
+  // crown. Only apply bore walls when one end selects the tunnel floor.
+  if (this.course.groundTunnels && Number.isFinite(start.y) && Number.isFinite(end.y)) {
+    const tunnels = this.course.groundTunnels;
+    const startTube = tunnels.tubeAt(start, start.y, 0.6);
+    const startFloor = startTube?.floor;
+    const endTube = tunnels.tubeAt(end, end.y, 0.6);
+    const endFloor = endTube?.floor;
+    const selectedStart = startTube && Math.abs(this.course.groundAt(oldS, oldLateral, start.y).y - startFloor) < 1e-6;
+    const selectedEnd = endTube && Math.abs(this.course.groundAt(car.s, car.lateral, end.y).y - endFloor) < 1e-6;
+    const constrained = selectedStart || selectedEnd || (!startTube && !endTube)
+      ? tunnels.constrainMotion(start, end, this._vehicleSpec(car).halfWidth)
+      : {hit: false};
+    if (constrained.hit) {
+      end = constrained.position;
+      const road = this._roadPosition(end, car.s);
+      if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) {
+        car.s = road.s; car.lateral = road.lateral;
+      }
+    }
+  }
   const travelHeading = this.course.at(car.s).heading + (car.headingError || 0) + (car.dir < 0 ? Math.PI : 0);
   const heading = travelHeading + (car.slipAngle || 0);
-  const obstacles = this._obstacles(oldS, car.s);
+  // The Scablands' solids are found by a grid by world position (src/world/scablands-solids.js), not by the car's place along the oval frame.
+  const obstacles = this.course.def.scablands ? scablandsContactObstacles(this, car, start, end, this._obstacles(oldS, car.s)) : this._obstacles(oldS, car.s);
   const dimensions = {...this._vehicleSpec(car),
     useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;
@@ -310,8 +367,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
       if(obstacle.snowmanId && (this._brokenSnowmanIds?.has(obstacle.snowmanId) ||
         Math.hypot(end.x-start.x,end.z-start.z)<.0001))continue;
-      if (capability && (obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight
-        || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) continue;
+      if (capability && obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight) continue;
+      // A mountain the car drives on is no wall (FREESTYLE-MOUNTAINS: every car in the playground).
+      if ((capability || this.course.def.practice === true && player) && obstacle.kind === 'mountain' && !obstacle.tunnelCover &&
+        this.course.features.mountains?.includes(obstacle)) continue;
       const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
       if (cactus && this._fallenCactusIds?.has(obstacle.id)) continue;
       // Older/custom courses without measurements keep their scale-aware shell.
@@ -320,13 +379,17 @@ export function _staticContacts(car, player, journeyColliders = null) {
       // Authored overhead roofs need height even when a grounded car has none.
       // Local copies leave every unflagged obstacle's historical sweep exact.
       let hit;
+      // Scablands bridge and pipe solids use the same 2.5 m actor height
+      // as job movers. Other solids keep their established contact envelope.
+      const contactDimensions = this.course.def.scablands && obstacle.verticalClearance
+        ? {...dimensions, height: 2.5} : dimensions;
       if (obstacle.verticalClearance && (!Number.isFinite(start.y) || !Number.isFinite(end.y))) {
         verticalStart ??= {...start, y: Number.isFinite(start.y) ? start.y :
           (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0)};
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
-        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, dimensions);
-      } else hit = sweepObstacle(start, end, collider, heading, dimensions);
+        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
+      } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
     if (!first) break;
@@ -343,6 +406,20 @@ export function _staticContacts(car, player, journeyColliders = null) {
     const impactMph = Math.max(0, Math.abs(car.speedMph) * incoming +
       Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld -
       alongPush * alongNormal / DRIVE.mphToWorld);
+    if (player && obstacle.jobActor) {
+      const rider = obstacle.jobActor, world = this.state.arena.worldJob;
+      const riderToward = (Math.sin(rider.heading || 0) * nx + Math.cos(rider.heading || 0) * nz) * (rider.speed || 0);
+      (world.carContacts ??= []).push({actor:rider, nx, nz,
+        kmh:Math.max(0, impactMph * DRIVE.mphToWorld + riderToward) * 3.6});
+    }
+    if (!journeyColliders && obstacle.canFall && this.course.fallenFenceIds && impactMph * 1.609344 > 25) {
+      this.course.fallenFenceIds.add(obstacle.id);
+      car.speedMph *= .92;
+      this.emit({fenceSnap: {id: obstacle.id, impactMph, cue: 'world.fence.snap'}});
+      obstacles.splice(obstacles.indexOf(obstacle), 1);
+      attempt--;
+      continue;
+    }
     // A shallow hit on a continuous rail/lining is a sliding scrape, not a
     // crash. Measure incidence against the actual contacted face: striking
     // a rail end remains head-on. Signed reverse travel and sideways pushes
@@ -450,7 +527,13 @@ export function _staticContacts(car, player, journeyColliders = null) {
         this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
       else if (impactMph > 4) this._scrape(zone, impactMph);
     }
+    const beforeSolidMph = car.speedMph;
     car.speedMph *= Math.max(.08, 1 - incoming * .94);
+    if (player && obstacle.jobActor?.health > 0 && (obstacle.jobActor.ramContact || obstacle.jobActor.ramRetreat)) {
+      // Pursuit already charged this meeting. Keep the physical stop, without a second pot jolt.
+      const world = this.state.arena.worldJob;
+      world.riderContactShedKmh = (world.riderContactShedKmh || 0) + Math.abs(beforeSolidMph - car.speedMph) * 1.609344;
+    }
     if (!player) { car.contactCooldown = 1.2; car.headingError = clamp((car.headingError || 0) - Math.sign(car.lateral) * .25, -.65, .65); }
   }
   car.offRoad = !this._surface(car.s, car.lateral).mainRoad;
@@ -480,6 +563,21 @@ export function _vehicleContact(a, b, reason) {
   const phase = this.relativeS(b.s, a.s) - b.s;
   const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
   const end = { x: a.lateral - b.lateral, z: a.s - b.s - phase };
+  let worldFrame;
+  if (armoredPair && this.state.arena?.worldJob?.riderFight) {
+    // The arena envelope and crash response are shared. At a world job's remote coordinates
+    // the ring's distance along its centreline is not the distance between the two bumpers.
+    const heading = this.course.at(a.s).heading;
+    worldFrame = {sin:Math.sin(heading), cos:Math.cos(heading)};
+    const relative = (to, at, other) => {
+      const dx = at.x - other.x, dz = at.z - other.z;
+      to.x = dx * worldFrame.cos - dz * worldFrame.sin;
+      to.z = dx * worldFrame.sin + dz * worldFrame.cos;
+    };
+    relative(start, this.course.worldAt(a.prevS??a.s,a.prevLateral??a.lateral),
+      this.course.worldAt(b.prevS??b.s,b.prevLateral??b.lateral));
+    relative(end, this.course.worldAt(a.s,a.lateral), this.course.worldAt(b.s,b.lateral));
+  }
   // A road-aligned envelope is intentionally a little generous to avoid
   // the visible cars interpenetrating while their bodies drift.
   const angleA = (a.headingError || 0) + (a.slipAngle || 0), angleB = (b.headingError || 0) + (b.slipAngle || 0);
@@ -547,7 +645,7 @@ export function _vehicleContact(a, b, reason) {
   const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
-    specA,specB,impactMph,zoneA:zone,zoneB,pairKey});
+    specA,specB,impactMph,zoneA:zone,zoneB,pairKey,worldFrame});
   // A solid hulk or shoved car touched below shove speed just stays in
   // contact; the older contact rules must not restart it as a live car.
   if (solidTraffic(this, b) && impactMph < COMBAT_TUNING.roadside.minimumImpactMph) return true;

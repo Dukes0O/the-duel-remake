@@ -74,7 +74,7 @@ test('lists, the shop, the medal ladder and the day\'s jobs are exactly what the
   }
   assert.ok(!MEDAL_CARS.includes(SIRENA_CAR), 'not a medal car');
   assert.ok(!JOB_CARS.includes(SIRENA_CAR), 'never a customer\'s car, so the day\'s jobs are the same');
-  assert.deepEqual(JOB_CARS, OTHER_CARS.filter(id => liftCheck(id).ok && !isAirOnlyCar(id) && id !== 'koenigsegg_jesko'));
+  assert.deepEqual(JOB_CARS, ['falcone_f42', 'stuttgart_959s', 'falcone_heritage', 'aurora_gt', 'dusthawk_rally', 'viper_proto']);
   assert.equal(isCarUnlocked(createProfile(), SIRENA_CAR), false, 'nobody owns it at the start');
   assert.equal(normalizeProfile({...createProfile(), unlockedCars: ['falcone_f42', SIRENA_CAR]}).unlockedCars.includes(SIRENA_CAR), true, 'and a save that has it keeps it');
 });

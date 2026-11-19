@@ -25,8 +25,25 @@ const playerAction = (event, state) => !event.enemy &&
     /\.(fire|deploy|start)$/.test(event.arsenalCue || '') ||
     /\.(fire|throw|launch|deploy|start)$/.test(event.crewGearCue || ''));
 
+// Light the Town is walked through alleys with a brand: a crew's road callout ("That road is mine.") has no place there.
+function walkingTheTown(state) {
+  const job = state.arena?.mode === 'world-job' && state.arena.worldJob?.job;
+  return !!job && job.steps?.[job.stepIndex]?.brand === true;
+}
+
+function roadDanger(state, course) {
+  const world = state.arena?.mode === 'world-job' && state.arena.worldJob;
+  if (!world?.job || !course?.worldAt) return false;
+  const car = course.worldAt(state.s, state.lateral);
+  const nearby = (point, distance) => point && Math.hypot(point.x - car.x, point.z - car.z) <= distance;
+  const step = world.job.steps[world.job.stepIndex];
+  const burnt = world.job.stepState?.burntBarricades ?? [];
+  return (step?.barriers ?? []).some(fence => !burnt.includes(fence.id) && nearby(fence.position ?? fence, 150)) ||
+    (world.actors ?? []).some(actor => /rider/.test(actor.id ?? '') && actor.health > 0 && nearby(actor.position, 200));
+}
+
 export function createFightVoices({enabled, audible, play, duration}) {
-  let state = null, active = null, queue = [], seen = new Set();
+  let state = null, course = null, active = null, queue = [], seen = new Set();
   const stop = () => {
     active?.voice?.stop?.();
     if (active) active.voice = null;
@@ -41,6 +58,7 @@ export function createFightVoices({enabled, audible, play, duration}) {
     if (state === next) return;
     clear();
     state = next;
+    course = null;
     seen = new Set();
   }
   function start(id) {
@@ -52,6 +70,10 @@ export function createFightVoices({enabled, audible, play, duration}) {
   function update(next) {
     follow(next);
     if (!enabled() || !playing(state)) {clear(); return;}
+    if (roadDanger(state, course)) {
+      queue = queue.filter(id => id !== 'crew.rook.callout');
+      if (active?.id === 'crew.rook.callout') clearActive();
+    }
     if (!audible()) stop();
     if (active && (Number(state.stageTimeSec) || 0) >= active.until) {
       clearActive();
@@ -73,12 +95,14 @@ export function createFightVoices({enabled, audible, play, duration}) {
     update,
     mute: stop,
     clear,
-    event(event, next) {
+    event(event, next, nextCourse) {
       follow(next);
+      if (nextCourse) course = nextCourse;
       if (event?.stageLoaded != null) {clear(); seen.clear(); return;}
       update(next);
       if (!enabled() || !playing(state) || !event) return;
-      if (playerAction(event, state)) enqueue(`crew.${state.crewId}.callout`, 'crew');
+      if (playerAction(event, state) && !walkingTheTown(state) && !(state.crewId === 'rook' && roadDanger(state, course)))
+        enqueue(`crew.${state.crewId}.callout`, 'crew');
       if (event.raiderWarning) enqueue('raider.toll', `raider:${event.zone ?? 'warning'}`);
     },
   };

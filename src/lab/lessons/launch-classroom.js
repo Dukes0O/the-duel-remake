@@ -3,6 +3,7 @@
 // Teaching state only, no DOM and no saves. Every distance is the launch bench's own run (launchBench, the challenge's
 // bench) with the skier's own air and a level landing; question 2's landing is the bench's 10 m lower one.
 import {launchBench, launchDragAcceleration, rangeOf, TARGET} from '../benches/launch.js';
+import {MORE} from '../classroom/brian-text.js';
 
 export const KMH_PER_MS = 3.6;
 // The ramp tilts 5 degrees a press on the bench's 1-degree grid; the speed dial moves 1 m/s a press, shown in km/h.
@@ -435,7 +436,7 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, rig: null,
-      say: 'On level ground, a ramp of about 45 degrees sends the skier furthest, because it divides the speed evenly between moving forward and staying in the air. Greater speed carries the skier further, because the skier moves forward faster and also stays in the air for longer. When the landing is lower than the ramp, the skier has longer to fall, so a flatter ramp goes furthest. On the Aerials run the kicker sets the angle, so the part you can change is your speed.',
+      say: `On level ground, a ramp of about 45 degrees sends the skier furthest, because it divides the speed evenly between moving forward and staying in the air. Greater speed carries the skier further, because the skier moves forward faster and also stays in the air for longer.${MORE}When the landing is lower than the ramp, the skier has longer to fall, so a flatter ramp goes furthest. On the Aerials run the kicker sets the angle, so the part you can change is your speed.`,
       prompt: 'Enter finishes the lesson and opens the Aerials run on the mountain.', hints: KEY_IDEAS.map(i => i.text)};
     if (id === 'wonder') {
       const done = m.phase === 'done';
@@ -449,7 +450,7 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, ramp: {angle: set.angle, locked: false}, focus: 'ramp', low: 'angle', best: goal(), split: true,
         ...(done ? {keys: ANGLE_KEYS, repeat: ['↑', '↓']} : {keys: ANGLE_KEYS, repeat: ['↑', '↓'], waiting: !m.auto, target: m.auto ? null : 'set:best', glow: 'ramp'}),
-        say: done ? m.say : m.auto ? autoSay() : 'Launch angle is how far the ramp points up from level ground, measured in degrees. Level ground is 0 degrees and straight up is 90 degrees. The ramp starts at 60 degrees. Tilt it to 45 degrees, and watch the two arrows at the end of the ramp.',
+        say: done ? m.say : m.auto ? autoSay() : `Launch angle is how far the ramp points up from level ground, measured in degrees. The ramp starts at 60 degrees. Tilt it to 45 degrees, and watch the two arrows at the end of the ramp.${MORE}Level ground is 0 degrees and straight up is 90 degrees.`,
         prompt: done ? 'Press Enter to continue, or keep tilting the ramp with ↑ and ↓.' : `The ramp is at ${set.angle} degrees. Press ↓ to tilt it flatter or ↑ to tilt it steeper, or click Flatter or Steeper.`,
         hints: done ? DONE : ['Watch the angle on the ramp panel.', 'Press ↓ until the panel reads 45°.', 'Watch my pointer. I will tilt the ramp.']};
     }
@@ -457,7 +458,7 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, ramp: {angle: set.angle, locked: true}, dial: {ms: set.ms, kmh: kmh(set.ms), locked: false}, focus: 'dial', low: 'speed', best: goal(), split: false,
         ...(done ? {keys: SPEED_KEYS, repeat: ['←', '→']} : {keys: SPEED_KEYS, repeat: ['←', '→'], waiting: !m.auto, target: m.auto ? null : 'set:best', glow: 'dial'}),
-        say: done ? m.say : m.auto ? autoSay() : `Speed is how fast the skier is moving at the moment of leaving the ramp. We usually give speed in kilometres per hour, written km/h. The formulas use metres per second, written m/s, which is the number of metres travelled during each second. To change km/h into m/s you divide by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The dial starts at ${kmh(SLOW_MS)} km/h. Turn it up to ${kmh(SHOW_MS)} km/h, and watch the formula beside the picture change.`,
+        say: done ? m.say : m.auto ? autoSay() : `Speed is how fast the skier is moving at the moment of leaving the ramp. We usually give speed in kilometres per hour, written km/h. The formulas use metres per second, written m/s, which is the number of metres travelled during each second.${MORE}To change km/h into m/s you divide by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The dial starts at ${kmh(SLOW_MS)} km/h. Turn it up to ${kmh(SHOW_MS)} km/h, and watch the formula beside the picture change.`,
         prompt: done ? 'Press Enter to continue, or keep turning the dial with ← and →.' : `The dial reads ${kmh(set.ms)} km/h. Press → for faster or ← for slower, or click Faster or Slower.`,
         hints: done ? DONE : ['The speed dial is on the right.', `Press → until the dial reads ${kmh(SHOW_MS)} km/h.`, 'Watch my pointer. I will turn the dial.']};
     }
@@ -486,7 +487,7 @@ export function createModel() {
       glow: setNow ? 'set' : null, waiting: setNow || m.phase === 'guess', best: g};
     if (id === 'try-free') {
       if (flying) return {...v, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands.', 'Compare it with the table.', 'Wait a moment.']};
-      return {...v, target: 'set:best', say: m.say || `Now you can experiment. Press ↑ and ↓ to tilt the ramp, and ← and → to change the speed. Watch the arrows and the formulas change as you do, and predict where the skier will land before you press Space. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
+      return {...v, target: 'set:best', say: m.say || `Now you can experiment. Press ↑ and ↓ to tilt the ramp, and ← and → to change the speed. Test at least ${FREE_TRIES} different settings.${MORE}Watch the arrows and the formulas change as you do, and predict where the skier will land before you press Space. The table keeps your results so that you can compare them.`,
         waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to launch. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
         hints: ['Press Space to test the settings as they are.', 'Try a very steep ramp, a very flat ramp, and a fast and a slow dial.', 'Watch my pointer. I will set a ramp you have not tested yet, and launch.']};
     }
@@ -494,7 +495,7 @@ export function createModel() {
       const flagged = {...v, flag: FLAG_M};
       if (m.phase === 'guess') return {...flagged, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: TILT_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'tilt', way: c.way}, state: null})),
-        say: `A flag stands at ${FLAG_M} m on the tape. With the ramp at 45 degrees and the dial at ${kmh(SHOW_MS)} km/h, the skier lands ${D(45)}, which is beyond the flag. The speed must stay at ${kmh(SHOW_MS)} km/h. Which way should you tilt the ramp to bring the skier back to the flag?`,
+        say: `A flag stands at ${FLAG_M} m on the tape. With the ramp at 45 degrees and the dial at ${kmh(SHOW_MS)} km/h, the skier lands ${D(45)}, which is beyond the flag. Which way should you tilt the ramp to bring the skier back to the flag?${MORE}The speed must stay at ${kmh(SHOW_MS)} km/h.`,
         prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: ['A ramp at 45 degrees sends the skier furthest.', 'Does a steeper ramp land shorter? Does a flatter ramp?', 'Pick a card. Any guess lets you go on.']};
       if (flying) return {...flagged, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands against the flag.', 'Compare this launch with the 45 degree row.', 'Wait a moment.']};
       if (m.phase === 'done') return {...flagged, focus: 'tape', mood: TILT_GUESSES[m.guess]?.way === 'either' ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};

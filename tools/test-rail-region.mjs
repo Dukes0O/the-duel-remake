@@ -4,29 +4,29 @@ import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {getScablandsOpenMarks,resetScablandsGroundEdit,scablandsGroundEdit,scablandsNaturalHeightAt,
   scablandsSurfaceAt,scablandsSurfaceHeightAt,setScablandsOpenMarks} from '../src/world/scablands-ground.js';
 import {CUTS,REGIONS,WHITES_BASE,regionAt,regionNaturalHeightAt,placeToWorld} from '../src/world/regions.js';
+import {riverDepthAt} from '../src/world/scablands-regions.js';
+import {scablandsTerrainHeightAt} from '../src/world/scablands-height.js';
 import {Duel} from '../src/game.js';
 import {applySaltStormFog,saltStormActive,THE_WHITES_NODES,createTheWhitesScene} from '../src/world/the-whites-scene.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
 function originalScablandsHeightAt(x,z){
-  const nx=x/SCABLANDS_LAYOUT.halfWidth,nz=z/SCABLANDS_LAYOUT.halfDepth,edge=Math.hypot(nx,nz);
-  const rolling=2.1*Math.sin(x*.007+z*.002)*Math.cos(z*.009-x*.003);
-  const ridge=smooth((edge-SCABLANDS_LAYOUT.ridgeStart)/.1)*
-    (1-smooth((edge-SCABLANDS_LAYOUT.ridgeCrest)/.16))*108;
-  const wall=smooth((edge-SCABLANDS_LAYOUT.wallStart)/.035)*175;
-  let height=rolling+ridge+wall;
+  // The closed region retains the land's terrain, including hills and mesa ramps.
+  let height=scablandsTerrainHeightAt(x,z);
   for(const place of SCABLANDS_PLACES){
     const distance=Math.hypot(x-place.x,z-place.z),weight=1-smooth((distance-place.flatRadius)/18);
     height+=(place.height-height)*weight;
   }
-  return height;
+  return height-riverDepthAt(x,z);
 }
+// SCABLANDS-LAND round 4: the Whites and their cut are offsets from the land's east edge; EAST is that edge (the cut began 140 m inside the old edge at 700 m).
+const EAST=SCABLANDS_LAYOUT.halfWidth;
 const openMarks=new Set(['branch-open']);
 const branchPlaces=[
-  {id:'rail-east-run',x:560,z:-120},{id:'branch-post-1',x:610,z:-190},
-  {id:'branch-post-2',x:650,z:-225},{id:'drift-foot',x:690,z:-250},
-  {id:'bank-foot',x:1020,z:0},{id:'bank-top',x:1520,z:0},
+  {id:'rail-east-run',x:EAST-140,z:-120},{id:'branch-post-1',x:EAST-90,z:-190},
+  {id:'branch-post-2',x:EAST-50,z:-225},{id:'drift-foot',x:EAST-10,z:-250},
+  {id:'bank-foot',x:EAST+320,z:0},{id:'bank-top',x:EAST+820,z:0},
 ];
 const heightsByMarks={};
 const whites=REGIONS.find(region=>region.id==='the-whites');
@@ -50,7 +50,7 @@ check(regionNaturalHeightAt(whites.origin.x,whites.origin.z,[])===
   originalScablandsHeightAt(whites.origin.x,whites.origin.z),'closed region lookup preserves Scablands height');
 
 const foot=whites.heightAt(-480,0),top=whites.heightAt(20,0);
-near(foot,1,0.1,'bank foot starts at the Scablands floor');
+near(foot,WHITES_BASE,0.1,'bank foot starts at the Scablands floor');
 near(top-foot,17,.34,'bank top is 17 m above the foot within two percent');
 check(foot<25&&top<25,'the bank stays below 25 m');
 let plateauLow=Infinity,plateauHigh=-Infinity;
@@ -84,9 +84,9 @@ check(CUTS.length===2&&CUTS[0].floorHalfWidth===12&&CUTS[0].shoulder===45,
 check(CUTS[1].floorHalfWidth===12&&CUTS[1].shoulder===45,'both cut shoulders keep the specified width');
 check(CUTS[0].opensWith==='branch-points'&&CUTS[1].opensWith==='branch-open',
   'each cutting opens at its story mark');
-assert.deepEqual(CUTS[0].points.map(({x,z})=>[x,z]),[[560,-120],[610,-190],[650,-225],[690,-250]],
+assert.deepEqual(CUTS[0].points.map(({x,z})=>[x,z]),[[EAST-140,-120],[EAST-90,-190],[EAST-50,-225],[EAST-10,-250]],
   'branch-cut follows the rail and branch story places');
-assert.deepEqual(CUTS[1].points.map(({x,z})=>[x,z]),[[690,-250],[1020,0]],
+assert.deepEqual(CUTS[1].points.map(({x,z})=>[x,z]),[[EAST-10,-250],[EAST+320,0]],
   'whites-cut runs from drift-foot to bank-foot');
 near(CUTS[0].floorHeight,WHITES_BASE,.001,'branch-cut grades to the Whites base');
 near(CUTS[1].floorHeight,WHITES_BASE,.001,'whites-cut uses the Whites base as its floor');
@@ -97,20 +97,20 @@ assert.equal(placeToWorld(ordinaryPlace),ordinaryPlace,'places without a region 
 
 setScablandsOpenMarks(['branch-points']);
 assert.deepEqual([...getScablandsOpenMarks()],['branch-points'],'open marks are kept by the ground');
-check(regionAt(1020,0,getScablandsOpenMarks())===null,'branch-points alone do not open the Whites');
-near(scablandsSurfaceHeightAt(1020,0),originalScablandsHeightAt(1020,0),.001,
+check(regionAt(EAST+320,0,getScablandsOpenMarks())===null,'branch-points alone do not open the Whites');
+near(scablandsSurfaceHeightAt(EAST+320,0),originalScablandsHeightAt(EAST+320,0),.001,
   'the wall remains untouched past drift-foot until branch-open');
 heightsByMarks.branchPoints=branchPlaces.map(place=>scablandsSurfaceHeightAt(place.x,place.z));
 setScablandsOpenMarks(['branch-points','branch-open']);
 heightsByMarks.both=branchPlaces.map(place=>scablandsSurfaceHeightAt(place.x,place.z));
-check(regionAt(1020,0,getScablandsOpenMarks())===whites,'both marks open the Whites');
-assert.equal(scablandsSurfaceAt(1500,0).gripKind,'salt','the Whites use a salt surface');
-assert.equal(scablandsSurfaceAt(850,-125).gripKind,'salt','the whites-cut uses a salt surface');
-check(scablandsSurfaceAt(850,-125).road,'the whites-cut is the road and rail join');
-check(scablandsSurfaceAt(650,-225).road,'the opened branch-cut carries the road too');
-near(WHITES_BASE,scablandsSurfaceHeightAt(560,-120),.1,'the bank uses the rail-east-run ground height');
+check(regionAt(EAST+320,0,getScablandsOpenMarks())===whites,'both marks open the Whites');
+assert.equal(scablandsSurfaceAt(EAST+800,0).gripKind,'salt','the Whites use a salt surface');
+assert.equal(scablandsSurfaceAt(EAST+150,-125).gripKind,'salt','the whites-cut uses a salt surface');
+check(scablandsSurfaceAt(EAST+150,-125).road,'the whites-cut is the road and rail join');
+check(scablandsSurfaceAt(EAST-50,-225).road,'the opened branch-cut carries the road too');
+near(WHITES_BASE,scablandsSurfaceHeightAt(EAST-140,-120),.1,'the bank uses the rail-east-run ground height');
 
-const cutRoute=[{x:560,z:-120},...CUTS[0].points.slice(1),...CUTS[1].points.slice(1)];
+const cutRoute=[{x:EAST-140,z:-120},...CUTS[0].points.slice(1),...CUTS[1].points.slice(1)];
 const sampleRoute=(points,maxSlope,label)=>{
   for(let index=1;index<points.length;index++){
     const a=points[index-1],b=points[index],length=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.ceil(length/2);
@@ -126,32 +126,32 @@ const sampleRoute=(points,maxSlope,label)=>{
   }
 };
 sampleRoute(cutRoute,1/12,'cut');
-const bankTop={x:1520,z:0};
-sampleRoute([{x:1020,z:0},bankTop,{x:1820,z:0}],1/25,'bank and plateau');
-const bankFoot=scablandsSurfaceHeightAt(1020,0),bankTopHeight=scablandsSurfaceHeightAt(bankTop.x,bankTop.z);
-near(bankFoot,1,.1,'reachable bank foot height');
+const bankTop={x:EAST+820,z:0};
+sampleRoute([{x:EAST+320,z:0},bankTop,{x:EAST+1120,z:0}],1/25,'bank and plateau');
+const bankFoot=scablandsSurfaceHeightAt(EAST+320,0),bankTopHeight=scablandsSurfaceHeightAt(bankTop.x,bankTop.z);
+near(bankFoot,WHITES_BASE,.1,'reachable bank foot height');
 near(bankTopHeight-bankFoot,17,.34,'reachable bank rise');
-const driftHeight=scablandsSurfaceHeightAt(690,-250);
-check(scablandsSurfaceHeightAt(560,-120)<25&&driftHeight<25,'branch route remains below 25 m');
+const driftHeight=scablandsSurfaceHeightAt(EAST-10,-250);
+check(scablandsSurfaceHeightAt(EAST-140,-120)<25&&driftHeight<25,'branch route remains below 25 m');
 
-const beforeFill=scablandsGroundEdit.heightAt(560,-120);
-scablandsGroundEdit.fill({x:560,z:-120,radius:2},'rock',50);
-const filledHeight=scablandsGroundEdit.heightAt(560,-120);
+const beforeFill=scablandsGroundEdit.heightAt(EAST-140,-120);
+scablandsGroundEdit.fill({x:EAST-140,z:-120,radius:2},'rock',50);
+const filledHeight=scablandsGroundEdit.heightAt(EAST-140,-120);
 check(filledHeight>beforeFill,'ground edit raises the rail approach');
-near(scablandsSurfaceHeightAt(560,-120),filledHeight,.001,'the shared surface reads the edited approach');
+near(scablandsSurfaceHeightAt(EAST-140,-120),filledHeight,.001,'the shared surface reads the edited approach');
 setScablandsOpenMarks(['branch-points']);
-near(scablandsGroundEdit.heightAt(560,-120)-scablandsNaturalHeightAt(560,-120),filledHeight-beforeFill,.001,
+near(scablandsGroundEdit.heightAt(EAST-140,-120)-scablandsNaturalHeightAt(EAST-140,-120),filledHeight-beforeFill,.001,
   'changing marks rebuilds natural ground while keeping edits');
 setScablandsOpenMarks(['branch-points','branch-open']);
 resetScablandsGroundEdit();
 assert.deepEqual([...getScablandsOpenMarks()],[],'ground reset clears story marks');
 heightsByMarks.none=branchPlaces.map(place=>scablandsSurfaceHeightAt(place.x,place.z));
-near(scablandsSurfaceHeightAt(1020,0),originalScablandsHeightAt(1020,0),.001,'reset restores the closed-world wall');
+near(scablandsSurfaceHeightAt(EAST+320,0),originalScablandsHeightAt(EAST+320,0),.001,'reset restores the closed-world wall');
 setScablandsOpenMarks(['branch-points','branch-open']);
 const race=new Duel({seed:1989,featureFlags:{}});
 race.startCampaign({mode:'duel',startStage:0,seed:1989});
 assert.deepEqual([...getScablandsOpenMarks()],[],'starting a race clears story marks');
-near(scablandsSurfaceHeightAt(1020,0),originalScablandsHeightAt(1020,0),.001,
+near(scablandsSurfaceHeightAt(EAST+320,0),originalScablandsHeightAt(EAST+320,0),.001,
   'a race starts on the closed-world ground after story marks were set');
 
 console.log('Branch place ground heights (m):');

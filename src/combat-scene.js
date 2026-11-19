@@ -1,9 +1,10 @@
 import {createFlameResources, createFlameView, createFlameScorch, createFlameLighting} from './flame-view.js';
 import {FLAME_RULES} from './arsenal/flamethrower.js';
+import {handFlameMuzzle} from './world/jobs/hand-flame.js';
 import {SIGNATURE_GEAR} from './crew-gear/gear.js';
 import {createSmokeCloud, smokeHazeOpacity} from './combat-effects.js';
 import {
-  arsenalEnabled, hazardsActive, point
+  arsenalEnabled, hazardsActive, point as physicalPoint
 } from './combat-weapons.js';
 import {
   carEffect
@@ -41,6 +42,16 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
 } = {
 }){
   const group=new THREE.Group();
+  let drawnShift;
+  const shiftEffect=(object,owner)=>{
+    object.position.y+=(owner?drawnShift?.forActor?.(owner):undefined)??
+      drawnShift?.(object.position.x,object.position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:owner?undefined:object.position.y,object)??0;
+  };
+  const point=(duel,actor)=>{
+    const at=physicalPoint(duel,actor);
+    at.y+=drawnShift?.forActor?.(actor)??drawnShift?.(at.x,at.z,actor.groundHeight,actor.airborne?actor._jumpY:undefined)??0;
+    return at;
+  };
   group.name='Wasteland weapons and shockwaves';
   const onFootFigures=createRiggedFighterFigures({
     loadAsset:loadFighterAsset
@@ -227,6 +238,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         view.smokeCloud.update(hazard, null, vehicles.smokeTexture);
         smokeClouds.push({...hazard, y: ground.y});
       }
+      shiftEffect(view.holder);
+      if(view.smoke.visible)smokeClouds[smokeClouds.length-1].y=view.holder.position.y-.025;
       view.oilMaterial.opacity=.9*hazard.opacity;
 
     });
@@ -300,21 +313,29 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const flameLightSources = [];
   let flameScorchTimes = new WeakMap();
   let flameRaceState = null;
-  function presentFlame(view, {active, at, heading = 0, seconds, camera, quality, age,
+  // A burst from a barrel whose middle is higher than this above the ground leaves no burn on it. A level burst from a
+  // standing walker's barrel is 1.3 m up and does burn the ground under it.
+  const FLAME_SCORCH_REACH_METRES = 1.6;
+  // pitch: how far the burst is tilted up (radians), for a flame that follows a barrel; the burst turns to the heading first.
+  // followsBarrel: the burst starts at a barrel's mouth, well above the ground, so it burns the ground only where it comes down to it.
+  function presentFlame(view, {active, at, heading = 0, pitch = 0, followsBarrel = false, seconds, camera, quality, age,
     range = FLAME_RULES.range, coneHalfAngle, body = false}, duel) {
     if (active) {
-      view.group.position.set(at.x, at.y, at.z); view.group.rotation.set(0, heading, 0);
+      view.group.position.set(at.x, at.y, at.z); view.group.rotation.set(-pitch, heading, 0, 'YXZ');
     }
     view.update({active, seconds, camera, quality, age, coneHalfAngle});
     if (!active) {flameScorchTimes.delete(view); return;}
-    const center = body ? 0 : range * .45;
+    const center = (body ? 0 : range * .45) * Math.cos(pitch);
     const x = at.x + Math.sin(heading) * center, z = at.z + Math.cos(heading) * center;
-    flameLightSources.push({x, y: at.y, z, range, body});
+    const centreY = at.y + (body ? 0 : range * .45) * Math.sin(pitch);
+    flameLightSources.push({x, y: centreY, z, range, body});
     const last = flameScorchTimes.get(view) ?? -Infinity;
     if (seconds - last >= .24) {
       const nearest = duel.course.nearest?.(x, z);
       const ground = nearest ? duel.course.groundAt(nearest.s, nearest.lateral) : at;
-      flameScorch.stamp({x, y: ground.y, z, heading, size: body ? 1.1 : range * .32}, seconds);
+      // A burst from a barrel that passes over the ground leaves no burn on it.
+      if (followsBarrel && centreY - ground.y > FLAME_SCORCH_REACH_METRES) return;
+      flameScorch.stamp({x, y: ground.y+(drawnShift?.(x,z)??0), z, heading, size: body ? 1.1 : range * .32}, seconds);
       flameScorchTimes.set(view, seconds);
     }
   }
@@ -367,11 +388,13 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       view.marker.visible = view.shell.visible = !!shell;
       if (!shell) return;
       view.marker.position.set(shell.x, shell.y + .08, shell.z);
+      shiftEffect(view.marker);
       view.marker.scale.setScalar(shell.radius);
       const part = Math.min(1, shell.age / shell.lifetime);
       view.shell.position.set(shell.from.x + (shell.x - shell.from.x) * part,
         shell.from.y + (shell.y - shell.from.y) * part + 16 * part * (1 - part),
         shell.from.z + (shell.z - shell.from.z) * part);
+      shiftEffect(view.shell);
       view.shell.rotation.set(0, Math.atan2(shell.x - shell.from.x, shell.z - shell.from.z),
         Math.PI / 2 - Math.atan2(16 * (1 - 2 * part) + shell.y - shell.from.y,
           Math.hypot(shell.x - shell.from.x, shell.z - shell.from.z)));
@@ -383,7 +406,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       if (owner) {
         const at = teslaChargePoint(duel,charge,owner), positions = view.arcs.geometry.attributes.position;
         view.arcs.scale.setScalar(charge.crewShock ? .55 : 1);
-        view.arcs.position.set(at.x, at.y + .5, at.z);
+        view.arcs.position.set(at.x, at.y + .5, at.z);shiftEffect(view.arcs,owner);
         for (let arc = 0; arc < 12; arc++) {
           const angle = arc * Math.PI / 6 + charge.age * 11;
           const length = 2.1 + .8 * Math.sin(charge.age * 80 + arc * 3);
@@ -397,6 +420,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       view.pulse.visible = !!pulse;
       if (pulse) {
         view.pulse.position.set(pulse.x, pulse.y - COMBAT_TUNING.pointHeight + .1, pulse.z);
+        shiftEffect(view.pulse);
         view.pulse.scale.setScalar(pulse.radius * Math.min(1, .15 + pulse.age / pulse.lifetime));
       }
     });
@@ -598,6 +622,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   }
   function update(duel, vehicles = {
   }, useAtlas = false){
+    drawnShift=vehicles.drawnShift;
     const s = duel.state, c = s.combat;
     const active = !!c && s.status !== 'menu';
     group.visible = active;
@@ -652,7 +677,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       localFighterEntry.fighter = showDeparted ? departed.fighter : s.fighter;
       localFighterEntry.presentation = showDeparted ? departed.presentation : s.fighter.presentation;
       localFighterEntry.input = s.fighterInput;
-      localFighterEntry.weapons = showDeparted ? null : s.footWeapons;
+      localFighterEntry.weapons = showDeparted || s.arena?.worldJob?.night2?.holstered ? null : s.footWeapons;
       fighterRoster[fighterCount++] = localFighterEntry;
     }
     for (let index = fighterCount; index < fighterRoster.length; index++) fighterRoster[index] = null;
@@ -660,6 +685,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     fighterOptions.enabled = s.mode === 'wasteland' && wastelandRulesActive(s);
     fighterOptions.time = s.stageTimeSec ?? 0;
     fighterOptions.cameraPosition = vehicles.camera?.position || null;
+    fighterOptions.drawnShift = vehicles.drawnShift;
     onFootFigures.update(fighterRoster, fighterOptions);
     raiderMarkers.update(duel);
     salvageMarkers.update(duel);
@@ -691,7 +717,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       g.visible=!!p;
       if(!p)return;
       const at=duel.course.groundAt(p.s,p.lateral??0);
-      g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);
+      g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4+(drawnShift?.(at.x,at.z,undefined,undefined,g)??0),at.z);
       const repair=p.kind==='armor';
       box.visible=!repair;
       armorCross.visible=repair;
@@ -709,7 +735,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const p=c.projectiles[i];
       g.visible=!!p;
       if(!p){rocket.visible=false;return;}
-      g.position.set(p.x,p.y,p.z);
+      g.position.set(p.x,p.y,p.z);shiftEffect(g,p.ownerId?actorForTarget(duel,p.ownerId):undefined);
       bomb.visible=p.kind==='bomb'||(p.crewGearShot&&p.kind!=='marksman');
       arrow.visible=p.kind==='crossbow'||p.kind==='harpoon'||p.kind==='marksman';
       rocket.visible=p.kind==='rpg'||p.kind==='rocket-pod';
@@ -738,7 +764,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const turret=s.crewGear?.turret;
     crewTurret.visible=active&&duel.featureFlags?.enabled('crew-gear')===true&&!!turret;
     if(crewTurret.visible){
-      crewTurret.position.set(turret.x,turret.y,turret.z);
+      crewTurret.position.set(turret.x,turret.y,turret.z);shiftEffect(crewTurret,s);
       const target=turret.targetId?actorForTarget(duel,turret.targetId):null;
       if(target){const at=point(duel,target);turretHead.rotation.y=Math.atan2(at.x-turret.x,at.z-turret.z);}
       turretBase.rotation.y=s.stageTimeSec*.3;
@@ -746,20 +772,28 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const fighter=s.fighter;
     // The native hand-flamer test uses fighter x/z as its origin. Pitch narrows
     // its horizontal sector through the same projected direction cosine.
-    const cinderCosine = Math.cos(cinderGear.cone / 2) / Math.max(1e-9, Math.cos(fighter?.pitch || 0));
+    // In Light the Town, Run Him Down and Slow Ride the flamer's aim is judged on the flat (src/arena/modes/world-job.js), so the flame
+    // is drawn at its full width however the view is tilted; a walker looking down saw no flame at all there.
+    const jobNow = s.arena?.mode === 'world-job' ? s.arena.worldJob?.job : null, stepNow = jobNow?.steps?.[jobNow.stepIndex];
+    const flatAim = stepNow?.brand === true || stepNow?.gasLoad === true || stepNow?.bellows === true;
+    const cinderCosine = Math.cos(cinderGear.cone / 2) / Math.max(1e-9, flatAim ? 1 : Math.cos(fighter?.pitch || 0));
     const cinderHalfAngle = Math.acos(Math.min(1, cinderCosine));
+    // In those jobs the burst leaves the barrel's mouth and follows the barrel (Kyle, 18 November 2026: aimed at a lamp
+    // overhead, the fire still ran along the ground from the walker's hip). In the arenas it is drawn as before.
+    const muzzle = fighter && flatAim ? handFlameMuzzle(fighter) : null;
+    const flameLift = fighter ? (drawnShift?.forActor?.(fighter)??drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0) : 0;
     presentFlame(crewFlame, {...flameFrame,
       active: active && duel.featureFlags?.enabled('crew-gear') === true &&
         s.onFoot && fighter?.flaming === true && cinderHalfAngle > 0,
-      at: fighter && {x: fighter.x, y: fighter.y + .85, z: fighter.z},
-      heading: fighter?.yaw, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
+      at: fighter && (muzzle ? {x: muzzle.x, y: muzzle.y + flameLift, z: muzzle.z} : {x: fighter.x, y: fighter.y + .85 + flameLift, z: fighter.z}),
+      heading: fighter?.yaw, pitch: muzzle ? fighter.pitch || 0 : 0, followsBarrel: !!muzzle, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
     cpuGearViews.forEach((view, index) => {
       const crew = s.opponents?.[index]?.cpuCrew;
       const enabled = active && duel.featureFlags?.enabled('cpu-crews') === true;
       const turret = enabled && crew?.turret, fighter = enabled && crew?.fighter;
       view.turret.visible = !!turret;
       if (turret) {
-        view.turret.position.set(turret.x, turret.y, turret.z);
+        view.turret.position.set(turret.x, turret.y, turret.z);shiftEffect(view.turret,s.opponents[index]);
         const target = actorForTarget(duel, turret.targetId);
         if (target) {
           const at = target === s && s.onFoot && s.fighter || point(duel, target);
@@ -767,7 +801,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         }
       }
       presentFlame(view.flame, {...flameFrame, active: fighter?.flaming === true,
-        at: fighter && {x: fighter.x, y: fighter.y + .85, z: fighter.z},
+        at: fighter && {x: fighter.x, y: fighter.y + .85+(drawnShift?.forActor?.(fighter)??drawnShift?.(fighter.x,fighter.z,fighter.groundY,fighter.airHeight>0?fighter.y:undefined)??0), z: fighter.z},
         heading: fighter?.yaw, range: cinderGear.range}, duel);
     });
     burningCars.forEach((view, index) => {
@@ -786,7 +820,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     if (chargeTarget) {
       const roof = duel.course.groundAt(chargeTarget.s, chargeTarget.lateral);
       boardingCharge.position.set(roof.x,
-        roof.y + (chargeTarget.airHeight || 0) + duel._vehicleSpec(chargeTarget).height + .11,
+        roof.y + (chargeTarget.airHeight || 0) + duel._vehicleSpec(chargeTarget).height + .11 +
+          (drawnShift?.forActor?.(chargeTarget)??drawnShift?.(roof.x,roof.z,chargeTarget.groundHeight,undefined,boardingCharge)??0),
         roof.z);
       boardingCharge.rotation.y = roof.heading + (chargeTarget.headingError || 0);
       chargeLamp.visible = Math.floor((s.stageTimeSec || 0) * 10) % 2 === 0;
@@ -797,7 +832,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const b=c.bursts[i];
       g.visible=!!b&&!(useAtlas&&(b.kind==='blast'||b.kind==='spark'));
       if(!b)return;
-      g.position.set(b.x,b.y,b.z);
+      g.position.set(b.x,b.y,b.z);shiftEffect(g,b.ownerId?actorForTarget(duel,b.ownerId):undefined);
       const warp=b.kind==='ufo',star=b.kind==='star',fade=Math.max(0,1-b.age/1.4),size=b.kind==='blast'?1:0.45;
       saucer.visible=warp;
       saucer.position.y=10+b.age*4;

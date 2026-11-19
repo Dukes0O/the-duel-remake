@@ -2,7 +2,11 @@
 
 Claude, 5 November 2026. A new strand, as `docs/story/the-long-dry.md` section 12 allows, and the first story of The Teeth (`docs/MACHINES.md` sections 6 and 13). Every line and every job. Kyle and Gratian can overrule anything, and this is a good one for Gratian to change, since it is his machine.
 
-**It waits for TUNNEL-TRIAL's go.** Nothing here gets built until Claude has played that trial and passed it. If it fails, this page's people and jobs stay, and Claude rewrites jobs 4 to 7 around another way over the mountains.
+**TUNNEL-TRIAL passed on 15 November 2026** (`docs/board/cards/TUNNEL-TRIAL.md`, "Claude's verdict"), so the tunnel stays in the story. Three things changed since this page was written, and they win over anything below that disagrees:
+
+- **The land is ten times as wide.** Every position in the data at the foot of this page was measured on the old, small Scablands. Places are now given by name from `src/world/scablands-names.js`, never by bare numbers; FAR-REGION names the portal, its approach and the lookout on the southern Ridge of the larger land and FAR-JOBS-1 reads them from there.
+- **A tunnel begins and ends in a face.** The machine starts only where the ground rises the bore's full height within 12 m. Where the southern Ridge is not that steep, job 4 opens with the excavator: the player digs a cutting into the slope until its end wall stands 6 m high, and Odessa says why (`far.4.cutting`).
+- **The bore is 6 m across,** so that a truck and Big Bess fit, a road and a pipe run side by side, and the machine reads as the biggest thing the player has built. The table of real numbers below is corrected to match.
 
 ## 1. The story in one breath
 
@@ -45,7 +49,7 @@ The people of Highwater are very surprised, and very damp. Water is the one thin
 | The Teeth's wet side | About 1,500 mm of rain a year. The Scablands get about 100 mm | Comparable to the wet side of real ranges |
 | A helicopter's ceiling | Thin air gives the rotor less to push on. Brian's Air and Altitude lesson showed that | `docs/` Lab lesson; Kestrel One already loses push as she climbs |
 | A boring machine's name | Real ones are given women's names by tradition, for luck, after Saint Barbara, who looks after miners | Real tunnelling custom |
-| The tunnel | 4 m wide, so 12.6 m² of rock for each metre. At about 2.6 tonnes a m³, that is about 33 tonnes a metre, and about 40,000 tonnes for all of it | Solid rock |
+| The tunnel | 6 m wide, so about 28 m² of rock for each metre. At about 2.6 tonnes a m³, that is about 74 tonnes a metre, and about 88,000 tonnes for all of it | Solid rock |
 | How fast | A real machine of this size makes about 15 m a day, so about 80 days for the whole tunnel. An apprentice works real days | Real small tunnel boring machines |
 | The water | A burst of stored water at first, then a steady 3 litres a second, which is about 260,000 L a day | A real water-bearing fault drains down over days |
 | Rain | One millimetre on one square metre is one litre. So 100 mm on 10 km² is a million tonnes of water | Simple, and true |
@@ -123,9 +127,17 @@ Rules: `docs/story/the-long-dry.md` section 9. Ids go in `src/story/far-lines.js
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
 | `far.4.start` | Odessa | Job starts | There's your hill. W pushes her forward, A and D steer her a little, and you won't feel it for a while. {machine} doesn't do fast. Hold the head on the rock and don't let go. |
-| `far.4.first` | Odessa | First metre | LISTEN to that. Look at the dirt come off the back! That's rock. A metre of that's thirty-three tonnes. |
+| `far.4.cutting` | Odessa | If the slope is too gentle to start | She needs a wall of rock to bite, driver, as tall as she is. Six metres. Take the digger and cut into the hill till you've got one. |
+| `far.4.stall` | Odessa | First time the head stalls | You've stalled her. That's hard rock, and you pushed. Ease off, let the head spin up, and lean on her gently. |
+| `far.4.survey` | Odessa | At the face, before the first push | I've shot the line. The far side's {distance} metres on and {rise} metres {higher}. Tip her head {up} a hair with the arrows and hold a grade of one in {grade}. Watch the numbers, not the rock. |
+| `far.4.drift` | Odessa | Her floor is more than a metre off the line | You're drifting off the line, driver. A tunnel that misses the far side is a cave. Bring her head back. |
+| `far.4.daylight` | Odessa | Break-through within half a metre of level | DAYLIGHT! And dead level, look at that. You could roll a marble through. |
+| `far.4.offlevel` | Odessa | Break-through by an exit cutting | Daylight, and a bit of a climb to reach it. She's through. We'll call the ramp a feature. |
+| `far.4.trench` | Odessa | The exit cutting runs past 60 m | That's a trench, not a tunnel. Lift her head and bring her up to the ground. |
+| `far.4.lip` | Odessa | She comes out more than a metre up the face | You've come out of the side of the hill like a cork, driver. Don't you dare drive her off that. Get the truck and tip me a ramp. |
+| `far.4.first` | Odessa | First metre | LISTEN to that. Look at the dirt come off the back! That's rock. A metre of that's seventy-four tonnes. |
 | `far.4.fans` | Odessa | Ten metres in | Air gets bad in a tunnel. There's fans behind you and a long bag blowing air up to the face. And we set a ring of steel every metre so it doesn't come down on your head. |
-| `far.4.pile` | Odessa | Spoil pile | That heap out the back is forty thousand tonnes by the time we're through. Somebody will find a use for it. Somebody always wants a road. |
+| `far.4.pile` | Odessa | Spoil pile | That heap out the back is near ninety thousand tonnes by the time we're through. Somebody will find a use for it. Somebody always wants a road. |
 | `far.4.pim` | Pim | Pile, if the Causeway is open | I would be glad of that heap. I have a bank to build. I'll bring a train. |
 | `far.4.teach` | Odessa | Apprentice riding along | {apprentice} is watching. Keep it straight for a bit longer. Whatever you do, your apprentice will do too. |
 | `far.4.taught` | {apprentice} | Taught | I've got it. I think I've got it. Go on, go and do something else. I'll call you if she stops. |

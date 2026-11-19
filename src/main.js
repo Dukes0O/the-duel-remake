@@ -3,6 +3,7 @@ import {kelpCoastProvider} from './deep/zones/kelp-coast.js';
 import {mountScreenRouter} from './screen-router.js';
 import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareerExport, createIndexedDbBackupStore, requestPersistentStorage, retireSharedBest} from './career-backup.js';
 import {restoreLostCareers, restoreNoticeText, showRestoreFailure, showRestoreNotice} from './career-restore.js';
+import {grantCareer, grantNoticeText} from './career-grant-2026-11-16.js';
 import {acquireCareerWriter, CAREER_WRITER_LOCK, prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
 
 const root = document.querySelector('#app');
@@ -57,6 +58,13 @@ await (async()=>{
   if(!qaBuild&&!import.meta.env?.DEV||new URLSearchParams(location.search).has('restore-career')){
     try{const result=await restoreLostCareers({storage:budgetStorage.storage,backupStore});if(result.restored)restoreNotice=restoreNoticeText(result);}
     catch(error){if(error.code?.startsWith('CAREER_WRITER_'))throw error;console.warn('Career restore skipped: '+error.message);showRestoreFailure();}
+    writer.assertActive();
+  }
+  // One-time grant for Spikey Ferns (Kyle, 16 November 2026; CAREER-GRANT-REMOVE deletes this block). Test builds run it
+  // only when the address asks for it. A failure leaves the career as it was and tries again next start.
+  if(!qaBuild&&!import.meta.env?.DEV||new URLSearchParams(location.search).has('grant-career')){
+    try{const result=await grantCareer({storage:budgetStorage.storage,backupStore});if(result.granted)restoreNotice=[restoreNotice,grantNoticeText(result)].filter(Boolean).join(' ');}
+    catch(error){if(error.code?.startsWith('CAREER_WRITER_'))throw error;console.warn('Career grant skipped: '+error.message);}
     writer.assertActive();
   }
 })().catch(error=>{

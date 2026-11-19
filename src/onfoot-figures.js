@@ -41,6 +41,8 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     group.add(mesh);
     return [kind, mesh];
   }));
+  const actorShifts=new Float64Array(capacity);
+  const feetRigs=Array.from({length:capacity},()=>({userData:{}}));
   const color = new THREE.Color();
   const colorParts = {
     plates: ['coat', 'vest', 'trousers', 'armor', 'pack', 'boots', 'boots',
@@ -79,14 +81,14 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
   const matrix = new THREE.Matrix4(), from = new THREE.Vector3(), to = new THREE.Vector3();
   const direction = new THREE.Vector3(), lastPositions = new WeakMap();
   const eye = new THREE.Vector3();
-  let actorCount = 0, localFighter = null, disposed = false;
+  let actorCount = 0, localFighter = null, localShift = 0, disposed = false;
   for (const [kind, mesh] of Object.entries(meshes)) {
     mesh.onBeforeRender = (_renderer, _scene, camera) => {
       // The local figure remains available in a distant mirror or photo view.
       // The first-person eye is inside its helmet, so omit only its last slot
       // for a camera at the fighter's eye. No matrix upload is needed here.
       const hideLocal = localFighter && camera.position.distanceToSquared(
-        eye.set(localFighter.x, localFighter.y + 1.62, localFighter.z)) < .7 ** 2;
+        eye.set(localFighter.x, localFighter.y + localShift + 1.62, localFighter.z)) < .7 ** 2;
       mesh.count = (actorCount - (hideLocal ? 1 : 0)) * PARTS[kind];
     };
   }
@@ -111,7 +113,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     part.scale.set(width, length, width);
     store('limbs', actor, index);
   }
-  function pose(fighter, actor) {
+  function pose(fighter, actor, drawnShift) {
     const appearance=crewAppearance(fighter.crewId);
     const last = lastPositions.get(fighter);
     const distance = last ? Math.hypot(fighter.x - last.x, fighter.z - last.z) : 0;
@@ -121,6 +123,8 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     const gait = !down && !airborne && distance > .003
       ? Math.sin((fighter.steps || 0) * .11) * .17 : 0;
     root.position.set(fighter.x, fighter.y + (down ? .48 : 0), fighter.z);
+    actorShifts[actor]=drawnShift?.(fighter.x,fighter.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined,feetRigs[actor],fighter)??0;
+    root.position.y+=actorShifts[actor];
     root.rotation.set(down ? -Math.PI / 2 : 0, fighter.yaw || 0, 0, 'YXZ');
     root.updateMatrix();
 
@@ -168,7 +172,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     }
   }
 
-  function update(fighters = [], {active = false} = {}) {
+  function update(fighters = [], {active = false, drawnShift} = {}) {
     if (disposed) return 0;
     const valid = (Array.isArray(fighters) ? fighters : []).filter(entry => {
       const fighter = entry?.fighter || entry;
@@ -180,19 +184,21 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = f
     if (local) ordered.push(local);
     actorCount = active ? ordered.length : 0;
     localFighter = active ? local?.fighter || local : null;
+    localShift=0;
     group.visible = actorCount > 0;
     for (const [kind, mesh] of Object.entries(meshes)) mesh.count = actorCount * PARTS[kind];
     if (!group.visible) return 0;
     ordered.forEach((entry, index) => {
       const fighter=entry.fighter||entry;
       paint(index,fighter.crewId||entry.crewId||'rook');
-      pose(fighter,index);
+      pose(fighter,index,drawnShift);
     });
+    localShift=localFighter?actorShifts[ordered.length-1]:0;
     for (const mesh of Object.values(meshes)) mesh.instanceMatrix.needsUpdate = true;
     return actorCount;
   }
 
-  return {group, meshes, capacity, drawCallBudget: Object.keys(meshes).length, update,
+  return {group, meshes, capacity, drawnShiftAt:index=>actorShifts[index]??0, drawCallBudget: Object.keys(meshes).length, update,
     dispose() {
       if (disposed) return;
       disposed = true;

@@ -60,7 +60,9 @@ import {WARLORDS, BUILT_WARLORD_IDS} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {initializeWorldJob} from './arena/modes/world-job.js';
+import {riderOpponentSpecs} from './arena/modes/road-riders.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
 const FACTORY_MAX_UPGRADES = Object.freeze(Object.fromEntries(UPGRADE_KEYS.map(key => [key, 3])));
@@ -330,6 +332,7 @@ export class Duel {
     const definition = laps === original.laps ? original : {...original, laps};
     this.course = new Course(definition, this.seed, {
       hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
+      tunnelsEnabled: this.featureFlags.enabled('wasteland-town'),
       muddyHollow: s.wastelandGateDiscovered === true,
       ...(this.deepProviders.length ? {deep:{providers:this.deepProviders,enabled:this.featureFlags.enabled('the-deep'),kit:this._deepKit,mode:s.mode,found:this._deepFound,qualifying:!!s.qualifying&&s.qualifying.phase!=='complete'}} : {}),
     });
@@ -546,10 +549,17 @@ export class Duel {
           !['pit', 'salt-flats'].includes(venueId) || !Number.isSafeInteger(arsenalRank) ||
           arsenalRank < 12)) || !venue || !rules ||
         !Array.isArray(opponents) || mode === 'world-job' && !Array.isArray(job?.steps) ||
+        (mode === 'world-job' && job.steps.some(step => step?.kind === 'talk') && !this.featureFlags.enabled('story-choices')) ||
         (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
         opponents.length < (ambush || mode === 'world-job' ? 0 : 1) || opponents.length > maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
+    if (mode === 'world-job' && job.steps.some(step => step.kind === 'rider-fight')) {
+      if (!this.featureFlags.enabled('road-riders') || !venue.scablands) return false;
+      const roster = riderOpponentSpecs(job, opponents, maxOpponents);
+      if (!roster) return false;
+      opponents = roster;
+    }
     setScablandsOpenMarks([]);
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
       upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];
@@ -595,7 +605,7 @@ export class Duel {
     // Keep a valid index for code that reads the course list; the arena
     // itself always reads `this.course` and `state.arena`.
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
-    this.course = new Course(venue, this.seed);
+    this.course = new Course(venue, this.seed, {tunnelsEnabled: this.featureFlags.enabled('wasteland-town'), scablandsRealism: this.featureFlags.enabled('scablands-realism')});
     delete s.tyreSlipRules; delete s.tyreSlip; delete s.engineCurve;
     delete s.tune; delete s.fuel; // LAB-TUNE: an arena event is never tuned, and never inherits a tank
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
@@ -694,7 +704,7 @@ export class Duel {
     }
     if (s.arena) {
       if (s.status === 'racing') {
-        stepArenaJunk(this, dt);
+        if (!activeTalkStep(s)) stepArenaJunk(this, dt);
         stepArenaEvent(this, dt);
       }
       return;
@@ -889,6 +899,18 @@ export class Duel {
 
   // ---- input helpers ---------------------------------------------------
   _callout(text, seconds = 2.2) { this.state.callout = text; this.state.calloutTimer = seconds; }
+  _storyCallout(text, seconds = 2.2, urgent = false, fixedTime = false) {
+    this._callout(text, seconds);
+    this.onStoryCaption?.(text, urgent, this.state, fixedTime ? seconds : undefined);
+  }
+  // Accept one action for the displayed screen. A click from an old bubble cannot answer a new question.
+  talkInput(action, screen) {
+    const world = this.state.arena?.worldJob;
+    if (this.state.paused || !screen || !activeTalkStep(this.state) || world.job.stepState.screen !== screen || world.talkAction) return false;
+    world.talkAction = action;
+    return true;
+  }
+
   setInput(partial) {
     if(this.state.deepJourney?.controlsLocked)partial={throttle:0,brake:0,steer:0,boost:false,shiftUp:false,shiftDown:false,interact:false};
     const input = this.state.input;

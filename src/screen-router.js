@@ -21,6 +21,7 @@ import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
+import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
 import {finishArenaEvent} from './arena/arena-event.js';
@@ -37,6 +38,7 @@ import {createHudScreen, presentJumpHeight, nitroHudLabel} from './screen-hud.js
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {createWorldHud} from './world/world-hud.js';
 import './world/world-hud.css';
+import './story/talk-view.css';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
@@ -92,12 +94,16 @@ const frontDoorOn=app._switches?.().enabled('menu-front-door')===true;
 const currentDoorFacts=()=>frontDoorFacts({profile:profile(),flags:app._switches?.(),
   wastelandOpen:hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu===true,heliOn:app.heliAvailable?.()===true,
   labOn:app.labAvailable?.()===true,lessonsOn:app.drivingLessonsAvailable?.()===true,story:app._switches?.().enabled('kogane-invitation')===true?app.storyProps?.():null,...app.menuNextUpExtras?.()});
-root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null});
+// MENU-NEXT-UP: the old menu's Next up line and NEW tags, only with their switch on and the front door off.
+const nextUpOn=app._switches?.().enabled('menu-next-up')===true&&!frontDoorOn;
+root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null, nextUp: nextUpOn?{facts:currentDoorFacts()}:null});
+// Listen before the story dialogue's window handler can consume a held key.
+bindLedgerReplayKeys(window, () => root.querySelector('#modal-layer > .story-replay'), domEvents.signal);
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
 const sirenaHud=createSirenaHud({host:root.querySelector('#stage'),app}); // DEEP-SIRENA-VIEW
-const worldHud=createWorldHud({host:root.querySelector('#stage')});
+const worldHud=createWorldHud({host:root.querySelector('#stage'),app});
 const heliUi=createHeliUi({host:root.querySelector('#stage'),app,onMenu:()=>refreshRaceSetup()});
 const labUi=createLabUi({host:root.querySelector('#stage'),app}); // LAB-VIEW: the Lab screen
 // Presentation-only QA switch, absent from normal production builds.
@@ -151,8 +157,9 @@ const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textConten
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
 
-const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor, onRaceSetup:()=>refreshRaceSetup()});
-const {updateMenuCar, updateMenuScene, updatePlayers} = menuScreen;
+const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor, nextUpFacts:nextUpOn?currentDoorFacts:null, onRaceSetup:()=>refreshRaceSetup()});
+const {updateMenuCar, updateMenuScene, updatePlayers, refreshNextUp} = menuScreen;
+let labWasOpen=false;
 const playerScreen = createPlayerScreen({app, profile, escapeHTML, credits, getPlayerMessage:()=>playerMessage, getBackupMessage:()=>backupMessage});
 const leaderboardScreen = createLeaderboardScreen({app, boardFilter, escapeHTML, credits, time});
 const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getGarageCar:()=>garageCar, getGarageMessage:()=>garageMessage, arrow, action:(label,verb,primary)=>screenAction(label,verb,primary,arrow), clamp});
@@ -258,7 +265,9 @@ root.addEventListener('click',e => {
     if(out?.setup==='race'){refreshRaceSetup();return;}
     lastScreen=null;renderState(app.duel.state);return;
   }
+  if(button.dataset.emberRun){const ok=app.gasRun?.(button.dataset.emberRun);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
   if(button.dataset.emberStep){const ok=app.everburnStep?.(button.dataset.emberStep);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
+  if(button.dataset.emberSideJob){const ok=app.everburnSideJob?.(button.dataset.emberSideJob);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
   if(button.dataset.action==='ember-next-job'){
     const job=app.duel.state.arena?.worldJob?.definition,index=job?.number;
     const id=EMBER_JOBS[index];
@@ -315,6 +324,12 @@ root.addEventListener('click',e => {
     garageMessage = result.ok ? 'Car weapon fitted.' : result.reason;
     lastScreen = null; renderState(app.duel.state); return;
   }
+  if (button.dataset.action?.startsWith('night-2-replay-')) {
+    app.chooseNight2Replay(button.dataset.action.slice('night-2-replay-'.length));
+    lastScreen = null;
+    renderState(app.duel.state);
+    return;
+  }
   switch (button.dataset.action) {
     case 'yard-career': openYardPanel('career'); return;
     case 'yard-territory': openYardPanel('territory'); return;
@@ -322,7 +337,7 @@ root.addEventListener('click',e => {
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
     case 'yard-the-dig': {
-      if(!app.isYardHomeActive()||app._switches().enabled('wasteland-town')!==true)return;
+      if(!app.isYardHomeActive()||app._switches().enabled('the-dig')!==true)return;
       void import('./machines/dig-game.js').then(({startTheDig})=>startTheDig({app,onExit:()=>{lastScreen=null;renderState(app.duel.state);}}))
         .then(game=>{if(game)window.__theDig=game;})
         .catch(error=>{garageMessage='The machine yard could not open. Return to the yard and try again.';lastScreen=null;renderState(app.duel.state);console.warn('THE DIG failed to open:',error?.message||error);});
@@ -348,13 +363,20 @@ root.addEventListener('click',e => {
       return;
     case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
-    case 'world-job-retry': {const number=app.duel.state.arena?.worldJob?.definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
+    // TRY AGAIN on the results screen and START AGAIN on the pause screen: the app leaves the job if it is still in play, then starts it again.
+    case 'world-job-retry': app.worldJobAgain?.();lastScreen=null;renderState(app.duel.state);return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
-      finishArenaEvent(app.duel,'job-quit','raiders');lastScreen=null;renderState(app.duel.state);return;
+      app.leaveWorldJob?.();lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
     // Opening a presentation screen must not mark story notes read or save a profile.
-    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
+    case 'yard-ledger':
+      if (app.wastelandUnlocked() && app._switches().enabled('story-choices') && openYardPanel('ledger')) {
+        playLedgerPageTurn(app.audio);
+      }
+      return;
+    case 'story-night-2': if (app.startNight2?.()) { lastScreen = null; renderState(app.duel.state); } return;
+    case 'yard-cards': if(app.wastelandUnlocked() && (app._switches().enabled('warlord-cards') || app._switches().enabled('story-choices'))){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
@@ -441,6 +463,8 @@ function renderState(s) {
   if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
       !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
   const yardActive=app.isYardHomeActive?.()===true;
+  // MENU-NEXT-UP: closing the Lab can change what is next, and it does not change the screen key below.
+  if(nextUpOn&&s.status==='menu'&&labWasOpen!==(app.labOpen===true)){labWasOpen=app.labOpen===true;refreshNextUp();}
   if(!yardActive)yardPanel='home';
   const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);
   if(s.status==='menu'&&discoveryKey!==menuDiscoveryKey){menuDiscoveryKey=discoveryKey;updateMenuScene();lastScreen=null;}
@@ -483,10 +507,16 @@ function renderState(s) {
       focused?.dataset?.weaponUpgrade?['weaponUpgrade',focused.dataset.weaponUpgrade]:
       focused?.dataset?.kitTier?['kitTier',focused.dataset.kitTier]:
       focused?.dataset?.crewSelect?['crewSelect',focused.dataset.crewSelect]:null;
-    lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
+    lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; if(menu&&nextUpOn)refreshNextUp(); ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const night2Result = s.arena?.result;
+    const night2Modal = night2Result?.night2Replay ? ledgerReplayMarkup(night2Result.night2Replay, escapeHTML)
+      : night2Result?.night2Page ? '<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="ledger-title">' +
+      '<div class="yard-home-content">' + ledgerPageMarkup(night2Result.night2Page, escapeHTML) + '</div>' +
+      (night2Result.night2SaveIssue ? '<p role="status">' + escapeHTML(night2Result.night2SaveIssue) + '</p>' : '') +
+      '<footer><button type="button" data-action="arena-yard">Back to the yard</button></footer></section>' : null;
+    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':night2Modal ?? modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);
     const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
     if(cardPictures.length){
@@ -533,7 +563,27 @@ function renderState(s) {
   if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)
     ui.stage.style.setProperty('--hidden-road-hud-opacity',hudOpacity);
 }
-document.addEventListener('keydown',e=>{if(e.code==='Escape'&&app.isYardHomeActive?.()){e.preventDefault();if(yardPanel!=='home')yardPanel='home';else app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);return;}if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
+document.addEventListener('keydown',e=>{
+  if (e.code === 'Escape' && !e.defaultPrevented && app.chooseNight2Replay('cancel')) {
+    e.preventDefault();
+    lastScreen = null;
+    renderState(app.duel.state);
+    return;
+  }
+  if (e.target?.matches?.('.story-replay-comparison') &&
+      ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', 'Space'].includes(e.code)) {
+    // Let the focused comparison scroll without the global driving bindings.
+    e.stopPropagation();
+    return;
+  }
+  if(e.code==='Escape'&&app.isYardHomeActive?.()){e.preventDefault();if(yardPanel!=='home')yardPanel='home';else app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);return;}if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}
+  if (e.code !== 'Tab' || ui['modal-layer'].hidden) return;
+  const controls = [...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary,.story-replay-comparison')];
+  const first = controls[0], last = controls.at(-1);
+  if (!first) return;
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();
   return {refreshRaceSetup};
 }

@@ -36,21 +36,10 @@ def material(name, color, metallic=0.0, rough=.92, noise_scale=5.0):
     n = m.node_tree.nodes
     bsdf = n.get('Principled BSDF')
     bsdf.inputs['Base Color'].default_value = (*color, 1)
-    bsdf.inputs['Metallic'].default_value = metallic
+    # Plain base colour and little metal: the exporter writes no colour for a texture node, and the game draws
+    # the rust, runs and grain in code (SCABLANDS-LAND; docs/ART_LINE.md, "A model that is black in the game").
+    bsdf.inputs['Metallic'].default_value = min(metallic, .2)
     bsdf.inputs['Roughness'].default_value = rough
-    tex = n.new('ShaderNodeTexNoise'); tex.inputs['Scale'].default_value = noise_scale
-    tex.inputs['Detail'].default_value = 3.0; tex.inputs['Roughness'].default_value = .78
-    ramp = n.new('ShaderNodeValToRGB')
-    dark = tuple(c * .48 for c in color) + (1,)
-    light = tuple(min(.95, c * 1.20 + .025) for c in color) + (1,)
-    ramp.color_ramp.elements[0].position = .22; ramp.color_ramp.elements[0].color = dark
-    ramp.color_ramp.elements[1].position = .82; ramp.color_ramp.elements[1].color = light
-    m.node_tree.links.new(tex.outputs['Fac'], ramp.inputs['Fac'])
-    m.node_tree.links.new(ramp.outputs['Color'], bsdf.inputs['Base Color'])
-    bump = n.new('ShaderNodeBump'); bump.inputs['Strength'].default_value = .20
-    bump.inputs['Distance'].default_value = .035
-    m.node_tree.links.new(tex.outputs['Fac'], bump.inputs['Height'])
-    m.node_tree.links.new(bump.outputs['Normal'], bsdf.inputs['Normal'])
     return m
 
 steel = material('Tin Town • pitted galvanized and rusted steel', (.24,.22,.18), .60, .88, 8)

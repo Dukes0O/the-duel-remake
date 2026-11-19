@@ -14,7 +14,7 @@ const crewOf = entry => {
   return CREW.has(id) ? id : 'rook';
 };
 
-function releaseAsset(asset) {
+export function disposeFigureAsset(asset) {
   const geometries = new Set(), materials = new Set(), textures = new Set(), skeletons = new Set();
   asset?.scene?.traverse(node => {
     if (node.geometry) geometries.add(node.geometry);
@@ -92,7 +92,7 @@ export function createRiggedFighterFigures({
     group.userData.crews[id] = 'loading';
     refreshStatus();
     Promise.resolve().then(() => loadAsset(id)).then(loaded => {
-      if (disposed) { releaseAsset(loaded); return; }
+      if (disposed) { disposeFigureAsset(loaded); return; }
       try {
         validateAsset(loaded);
         // Prepare bounded pools when each asset resolves, never during frames.
@@ -100,7 +100,7 @@ export function createRiggedFighterFigures({
           record.figures.push(makeFigure(id, index, loaded));
       } catch (error) {
         releaseFigures(record);
-        releaseAsset(loaded);
+        disposeFigureAsset(loaded);
         throw error;
       }
       record.asset = loaded;
@@ -134,7 +134,7 @@ export function createRiggedFighterFigures({
       mesh.onBeforeRender = (_renderer, _scene, camera) => {
         const fighter = figure.fighter;
         const hidden = figure.local && fighter && camera.position.distanceToSquared(
-          eye.set(fighter.x, fighter.y + 1.62, fighter.z)) < .7 ** 2;
+          eye.set(figure.root.position.x, figure.root.position.y + 1.62, figure.root.position.z)) < .7 ** 2;
         mesh.geometry.setDrawRange(range.start, hidden ? 0 : range.count);
       };
       mesh.onAfterRender = () => mesh.geometry.setDrawRange(range.start, range.count);
@@ -166,7 +166,9 @@ export function createRiggedFighterFigures({
     action.enabled = true;
     figure.mixer.setTime(clipTime);
     const at = selected.pose;
+    const fighter=entry.fighter||entry;
     figure.root.position.set(at.x, at.y, at.z);
+    figure.root.position.y+=options.drawnShift?.(at.x,at.z,fighter.groundY??fighter.y-(fighter.airHeight||0),fighter.airHeight>0?fighter.y:undefined,figure.root,fighter)??0;
     figure.root.rotation.set(0, at.yaw, 0);
     figure.root.visible = true;
     // Retain the original active-roster names used by the GFX-00 control.
@@ -217,6 +219,7 @@ export function createRiggedFighterFigures({
     for (let index = missing; index < MAX_FIGHTER_FIGURES; index++) fallbackRoster[index] = null;
     if (missing) {
       fallbackOptions.active = true;
+      fallbackOptions.drawnShift = options.drawnShift;
       fallback.update(fallbackRoster, fallbackOptions);
     } else fallback.group.visible = false;
     return count;
@@ -230,7 +233,7 @@ export function createRiggedFighterFigures({
     for (const record of assets.values()) {
       releaseFigures(record);
       if (record.asset && !released.has(record.asset)) {
-        releaseAsset(record.asset); released.add(record.asset);
+        disposeFigureAsset(record.asset); released.add(record.asset);
       }
     }
     group.removeFromParent();

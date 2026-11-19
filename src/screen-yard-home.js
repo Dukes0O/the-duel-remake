@@ -7,6 +7,9 @@ import {warlordEnabled} from './warlords/index.js';
 import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
 import {waterNextUp, waterWallMarkup} from './story/water-ui.js';
 import {emberNextUp, emberWallMarkup} from './story/ember-ui.js';
+import {savedLedger} from './story/ledger-save.js';
+import {night2Page} from './world/jobs/night-2.js';
+import {ledgerPageMarkup} from './story/ledger-ui.js';
 import {yardThingsToTry} from './yard-things-to-try.js';
 
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
@@ -55,7 +58,9 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
-  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${career?.discoveredGate && featureFlags?.enabled('warlord-cards') ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}${featureFlags?.enabled('wasteland-town')===true?button('THE DIG','yard-the-dig')+button('THE TOWN','yard-the-town'):''}</nav>`;
+  const ledgerAvailable = career?.discoveredGate && featureFlags?.enabled('story-choices') === true;
+  const storyWall = career?.discoveredGate && featureFlags?.enabled('warlord-cards');
+  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${(storyWall || ledgerAvailable) ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}${featureFlags?.enabled('the-dig')===true?button('THE DIG','yard-the-dig'):''}${featureFlags?.enabled('wasteland-town')===true?button('THE TOWN','yard-the-town'):''}</nav>`;
   const intro = '<p>Win Mad Max Duel events to earn scrap and build territory hold. The yard is your place to prepare for the next fight.</p>';
   const claimed = Object.values(career?.territories || {}).filter(territory => territory.claimed).length;
   const canFight = !!arenaMarkup && warlordsAvailable;
@@ -68,14 +73,23 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   if (panel === 'scrapdome' && arenaMarkup) content = arenaMarkup;
   else if (panel === 'territory') content = territoryPanel(profile,
     canFight ? {featureFlags} : {builtWarlordIds: [], featureFlags});
-  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) content = emberWallMarkup(ember) + waterWallMarkup(water) + cardWallScreen(profile,escapeHTML);
+  else if (panel === 'cards' && (storyWall || ledgerAvailable)) {
+    content = (ledgerAvailable ? '<article class="yard-home-intro"><h3>Five Cold Nights</h3>' +
+      '<p>Night 1 is still to come. Night 2 begins with four embers.</p>' +
+      button('Night 2 · Strangers at the gate', 'story-night-2') + button('What people remember', 'yard-ledger') + '</article>' : '') +
+      emberWallMarkup(ember) + waterWallMarkup(water) + (storyWall ? cardWallScreen(profile,escapeHTML) : '');
+  } else if (panel === 'ledger' && ledgerAvailable) {
+    content = ledgerPageMarkup(night2Page(savedLedger(profile)), escapeHTML) + button('Back to Story Wall', 'yard-cards');
+  }
   else if (panel === 'crew') content = crewPanel(profile, escapeHTML,{gearEnabled:featureFlags?.enabled('crew-gear')===true,warlordCardsEnabled:featureFlags?.enabled('warlord-cards')===true && featureFlags?.enabled('crew-gear')===true});
   else if (panel === 'armory') content = armoryMarkup;
   else if (panel === 'career') content = careerContent;
   else {
     const homeCopy = canFight ? `The Scrapdome is open. ${fightCopy}` :
       arenaMarkup ? 'The Scrapdome is open. Warlord fights are coming later.' : 'Warlord fights and the arena are coming later.';
-    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${featureFlags?.enabled('gear-find') ? yardThingsToTry(profile, escapeHTML) : ''}`;
+    const gear = featureFlags?.enabled('gear-find') === true;
+    const dig = featureFlags?.enabled('the-dig') === true;
+    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${gear || dig ? yardThingsToTry(profile, escapeHTML, {gear, dig, town:featureFlags?.enabled('wasteland-town') === true}) : ''}`;
   }
   return `<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="yard-home-title" data-yard-panel="${panel}">${header}${nav}<div class="yard-home-content">${content}</div><p class="yard-home-message" role="status">${escapeHTML(message)}</p><footer>${panel === 'home' ? '' : button('BACK TO YARD', 'yard-home')}${button('RETURN TO MAIN MENU', 'yard-menu')}</footer></section>`;
 }

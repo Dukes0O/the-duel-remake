@@ -1,4 +1,4 @@
-import {isSummitAttack} from './summit-attack.js';
+﻿import {isSummitAttack} from './summit-attack.js';
 import {installDeepCourse} from './deep/deep-journey.js';
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
@@ -19,8 +19,15 @@ import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
-import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {buildBowlFeatures} from './bowl/bowl-course.js';
+import {createGroundTunnels} from './world/ground-tunnels.js';
+import {featureFlags} from './feature-flags.js';
+import {SCABLANDS_LAYOUT} from './world/scablands.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './world/jobs/everburn.js';
+import {gasRunJob, GAS_RUN_ROADS, fieldBattleJob} from './world/jobs/gas-run.js';
+import {realismThingsData, thingSolids} from './world/scablands-things.js';
+import {SCABLANDS_SOLIDS, createSolidGrid} from './world/scablands-solids.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -73,8 +80,17 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep,tunnelsEnabled=false,scablandsRealism}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
+    this._groundTunnelsEnabled=Boolean(def.scablands) && tunnelsEnabled===true;
+    this.groundTunnels=null;this.groundTunnelsRevision=0;
+    if(def.scablands && (scablandsRealism ?? featureFlags.enabled('scablands-realism'))){
+      const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
+      const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
+      this.realismThings={jobStarts,...realismThingsData({enabled:true,seed:this.seed,jobStarts,...SCABLANDS_LAYOUT})};
+      this.fallenFenceIds=new Set();
+      this.solidGrid=createSolidGrid([...SCABLANDS_SOLIDS,...thingSolids(this.realismThings.fixed,this.realismThings.loneBoulders)],this.fallenFenceIds);
+    }
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
     this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
     this._solveShortcuts=solveShortcuts===true;
@@ -179,6 +195,10 @@ export class Course {
         f.crushables.push({id:`scrapdome-junk-${i}`,kind:'junkCar',s:distance,off,...p,halfX:1.06,halfZ:2.25,height:1.30,shape:'box',color:[0x53645b,0x935143,0x557185][i%3]});
       }
     }
+    else if(arena&&this.def.scablands){
+      // The Scablands has no ramps and no junk cars: it inherited the Titan arena's three ramps and six junk cars on its oval frame, which stood in the
+      // yard's ring and capped every flight at their slope (SCABLANDS-LAND round 4, slice 2b). Its jumps are its own ground's.
+    }
     else if(arena){
       for(const frac of [.17,.55,.78])f.ramps.push({start:this.length*frac,end:this.length*frac+38,height:2.6});
       for(const [row,s]of[330,680,960].entries())for(let i=0;i<2;i++){
@@ -229,6 +249,14 @@ export class Course {
     const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
     if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
     return surface;}
+  // Replace the trial bore atomically; the scene follows the revision.
+  setGroundTunnels(segments){
+    if(!Array.isArray(segments))throw new TypeError('Tunnel segments must be a list.');
+    if(segments.length&&!this._groundTunnelsEnabled)throw new Error('Tunnel trial is not enabled.');
+    const next=segments.length?createGroundTunnels(segments,{heightAt:scablandsSurfaceHeightAt}):null;
+    this.groundTunnels=next;this.groundTunnelsRevision++;
+    return next;
+  }
   tunnelAt(s,lateral=0){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end&&(t.roofWidth==null||Math.abs(lateral)<=t.roofWidth))||null;}
   jumpAt(s){if(this.def.pit)return pitRampHeight(this,s);
     if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
@@ -287,8 +315,11 @@ export class Course {
       p.y=lerp(p.y,hidden.y,blend);
     }
     return p;}
-  groundAt(s,off=0){const p=this._baseGroundAt(s,off);
+  groundAt(s,off=0,actorHeight){const p=this._baseGroundAt(s,off);
     if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
+    if(this.def.scablands && Number.isFinite(actorHeight))p.y=scablandsActorHeightAt(p.x,p.z,actorHeight);
+    if(this.def.scablands && Number.isFinite(actorHeight) && this.groundTunnels)
+      p.y=this.groundTunnels.groundAt({x:p.x,y:actorHeight,z:p.z},actorHeight,p.y);
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;

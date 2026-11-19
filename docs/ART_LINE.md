@@ -7,9 +7,9 @@ job has to learn it twice. The kits' own instructions are in
 
 ## The method
 
-Six rounds per card is the limit (Kyle, 6 November 2026), counted per building or
-vehicle on a card that holds several. If two rounds in a row show no improvement,
-stop adjusting and change the method.
+Six rounds per card is a guide, not a stop (Kyle, 16 November 2026), counted per building or
+vehicle on a card that holds several. A piece gets another round for as long as each one makes
+it better. If two rounds in a row show no improvement, stop adjusting and change the method.
 
 1. **Start from what already passed.** Read the recipe nearest your subject, and
    copy its structure.
@@ -22,7 +22,12 @@ stop adjusting and change the method.
    for each photo and read off the ground, the ends, the centre line, each wheel's
    centre and radius, and each lamp. Do not read numbers by eye. All of an
    object's photos should share one scale.
-4. **Choose the kit by the shape:**
+4. **Split the piece between photos and drawing code** (Kyle, 11 November 2026). Photos give a body its surface;
+   the game's own drawing code gives it everything that moves or glows. Fire, smoke, sparks, firelight, dust and
+   scorch marks are never modelled: they are drawn by `src/world/scrap-look.js`, which also draws rust, runs and
+   grain over plain-coloured parts that have no photo. Flat pictures (story cards, portraits, maps) are drawn as
+   HTML pictures, not rendered from models. A piece that is only boxes and flat colours is not submitted.
+5. **Choose the kit by the shape:**
 
    | Subject | Kit | Worked example |
    | --- | --- | --- |
@@ -32,19 +37,36 @@ stop adjusting and change the method.
    | Plate-work, planks, drums, a steam engine | `photo_model.py` flat parts and lathes | `rail-trains.py` |
    | Wheels, lamps, reels, cannon | `tyre`, `headlamp` and `lathe` | `town-trucks-1.py` |
 
-5. **One piece first, then the family.** A job with a long list adjusts old
+6. **One piece first, then the family.** A job with a long list adjusts old
    recipes and fails. A job with few pieces and an example passes. Jobs asked to
    copy carving code kept going back to shapes made by eye, so the code is one
    call now: if you find yourself writing boxes, stop and fill in the table.
-6. **Moving parts are their own pieces,** with their origin on their true pivot.
-7. **Render from the exported model,** imported into an empty scene, beside the
+7. **Moving parts are their own pieces,** with their origin on their true pivot.
+8. **Render from the exported model,** imported into an empty scene, beside the
    photo at the same camera, in flat light with the Standard view transform.
    In Blender, give cameras a valid local up axis. For a camera tracking local
    `-Z`, use local `Y` as up; using `Z` for both track and up creates an arbitrary
    roll and can make a correct Y-up model look tipped.
-8. **Look at it yourself before you submit.** Then commit, including a poor
+9. **Look at it yourself before you submit.** Then commit, including a poor
    result with honest scores. Never delete work because it falls short: Claude
    judges. Commit after every piece.
+
+## Route test: who builds, and how (Old Smoke's furnace, 10 and 11 November 2026)
+
+One piece taken three ways, all judged in the game on the card's four points (facing and doors, stoke and glow,
+damage, a gritty furnace on wheels), each out of 5.
+
+| Route | Turns | Facing | Glow | Damage | Gritty | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| Boxes and drums in flat colours, Claude in Blender (round 2) | 2 | 4 | 4 | 3 | 1 | Kyle: toy-like |
+| The same boxes with wear, fire, smoke and sparks drawn in code (round 3, A) | 1 | 4 | 5 | 3 | 3 | better, still a simple shape |
+| Body carved from four photos, plus the code-drawn fire and smoke (round 3, B) | 1 | 5 | 5 | 4 | 5 | Claude's pick |
+
+What the test showed: the photo job for Codex was small (four pictures, about six minutes), the carve took Claude
+one turn with the table kit, and the drawn effects took one turn and serve every later machine. The slow part of
+the old way was restyling shapes by hand. A Sonnet helper then carved Big Bess from four photos in one job with
+this recipe as its example (four build rounds, scores 4, 3.5, 4, 4), so carving goes to helpers and Claude judges in
+the game.
 
 ## What to watch for
 
@@ -109,6 +131,25 @@ stop adjusting and change the method.
   TOWN-ART-PLANTS, 7 November).
 
 ### Vehicles
+
+- **A part that stands on a different side in each photo** (Old Smoke's chimney: left in the rear view, right in the
+  overhead view, centred in the front view) is carved away to nothing. Cut it from every mask and build it as its
+  own piece wearing the side photo (`old-smoke-photo.py`).
+- **A shield made from a crop of the photo wears a tyre** if the crop reaches into a wheel arch. Read the crop's box
+  on the grid like any other measurement.
+- **Lights that sit on a photographed door** hide the door when they are dark. Hide them until they glow.
+- **A one-sided part lands on the wrong flank.** For a vehicle (`forward: 1`) `carve_object` reads the overhead photo
+  mirrored left to right, so a part that is on one side only (Big Bess's ladder) lands on the other flank. Turn the
+  overhead photo left to right in a working copy at build time and check a one-sided part. (`big-bess-photo.py`,
+  11 November.)
+- **A part built after the carve is painted over.** The carve's bleed paints over everything outside the mask,
+  including cut rectangles, in its own copy of the photo. A part built after the carve must read a fresh copy of the
+  photo. (`big-bess-photo.py`, 11 November.)
+- **A tube that wears the photo's outline shows the photo's pale edge** along its sides. Sample inside the outline,
+  at half the tube's radius. (Big Bess's exhaust stack, 11 November.)
+- **An end photo that shows the tank behind the cab makes the cab as wide as the tank.** Use `ends_split` with a
+  cab-only `keep` test, so the cab keeps the front photo and the tank keeps the rear one. (`big-bess-photo.py`,
+  11 November.)
 
 - **Tyres** (Kyle, 6 November). Use `tyre` and `wheel_well`. Without them, the
   arch's wall wears a ghost of the photo's tyre, the tread shows the background,
@@ -184,8 +225,17 @@ stop adjusting and change the method.
 - **Hats that float, or shards behind a head:** photos that do not show the same
   person, or a part not joined. Use `largest_part` and check all views.
 
+- At conversation distance, a photo hull can carry a second profile on a cheek, a bright studio edge on a sleeve and a patch of floor between the boots. Measure the garment and each limb separately. Give the head one continuous front-to-back texture, keep the two boot soles separate, and inspect the exported skin in a turned pose. A long coat retains one skirt across both thighs with a vent down the front (STORY-PEOPLE, 18 November).
+- A rigid outfit added to a skin can appear metres away even when its head anchor is correct. Transform the garment vertices from their old world position through the new joint's inverse bind pose. Check the actual deformed garment bounds in standing and resting poses.
+
 ### Placement and export
 
+- **Two ground layers can share the wrong shader.** A material that changes the
+  fragment shader in `onBeforeCompile` needs a distinct Three.js program cache
+  key. Otherwise drawing the near ground first can make the coarse horizon cover
+  the car. Compare the compiled program IDs and the pixels under the car with
+  the horizon visible and hidden. On Tin Road the coarse layer stood 1.388 m
+  above the car's support. (WORLD-FAULTS-18-NOV, 18 November 2026.)
 - **An empty render sheet or a tiny prop:** an exported glTF is Y-up, but a
   Blender render scene is Z-up. Convert camera positions and targets with the
   same game-to-Blender transform as the model before judging framing; inspect
@@ -194,6 +244,31 @@ stop adjusting and change the method.
   already put the building's front at the top of the frame. Check the roof
   courses and front edge against the source before copying another camera's
   roll; a needless 90-degree roll turns both. (TOWN-ART-PLANTS, 7 November.)
+- **A model that is black in the game** had its colour made by a noise texture. The exporter writes no colour for a
+  material whose colour comes from a texture node; the material arrives white, and any metal setting then draws black
+  where there is no sky to reflect. Set plain base colours and keep metal at .2 or less for Scablands art. (Old Smoke's
+  furnace, 10 November.)
+- **A vehicle standing on its nose in the game** was authored +Y up and then exported with the exporter's own Y-up turn.
+  A recipe authored +Y up exports with `export_yup=False`. (`scablands-vehicles.py`, 10 November.)
+- **Fine gravel can make interrupted wheel marks look like continuous rails in chase view.** Measure the tyre centres
+  on the driving mesh. Break up the marks over metres using the road's world-space wear texture, then use its fine
+  grain inside each impression. Check the gaps from the moving driver's camera. At a gate, fade the old grader ruts
+  across their whole width so the approach shows a single pair. (Tin Town, 18 November.)
+- **Check a road lamp from the driver's approach.** Tin Town's first pool was too faint to read from 24 m in the
+  game's dusk chase view. Compare the same exposure at 24 m and at 5 m. Up close, check that gravel and wheel
+  marks remain legible inside the light. (Tin Town, 18 November.)
+- **Look at the piece in the game before accepting it.** Both faults above passed three rounds of Blender renders,
+  because the renders showed the noise colour and the review camera was turned to suit. A piece nobody has loaded in
+  the game is not checked: its scene test must use the names and the file the real loader gives.
+- **Art near black in the game while its file has good colours** was darkened in the game's code once for every part
+  that shared a material: a rust used by forty parts ended at a thousandth of its colour, while a paint used by three
+  kept most of it. Code that tints loaded art copies each material and tints it once. If one colour of a model reads
+  and another is black, count the parts that share each material before touching the recipe. (`tintArt` in the
+  Scablands scene, 10 November; round 1 of the furnace lightened the recipe's colours for nothing.)
+- **Boxes and drums in flat colour look like a toy** (Kyle, 10 November, Old Smoke's furnace round 2). A recipe of
+  plain cubes and cylinders with one colour per part reads as a furnace at 30 m and still looks like a toy, however
+  the colours are chosen. A piece the player looks at for a whole chase is built from photos with the kits in "The
+  method" above. Do not spend a round restyling box art.
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
@@ -223,15 +298,51 @@ stop adjusting and change the method.
   backwards, is this.
 - **Flat colour where a picture should be:** lost picture coordinates. Every
   layer is named `UVMap`, and each primitive has only `TEXCOORD_0`, with a range.
+- A joined home can have a healthy UV range even when an entire wall samples
+  one line of the picture. Compare the UV area of each triangle on the colour
+  texture's sampled channel with its area in square metres. Recover the original
+  island from a secondary channel where possible. A vertical wall needs a
+  horizontal coordinate that varies along that wall (Founding homes, 18 November).
 - **Text reads backwards** on a far side, whose coordinates run the other way.
   A sign is its own `slab`.
 - `metallicFactor` at most 0.3, since nothing is there to reflect.
+
+### Ground that a machine has changed
+
+- **Dug ground that reads as paper** (pale patches with hard straight edges) was three grounds drawn in one place: the
+  yard floor, the coarse near ground and the fine edited chunks, and only the chunks know what was heaped or cut. Where
+  either of the other two stood above them the player saw the wrong one. Measure it in the running game with a ray
+  straight down over every changed cell and name the mesh it meets first; cure it by keeping the other grounds below the
+  edited ground inside every edited chunk. (The Dig, 16 November 2026.)
+- **Every heap was drawn as a tunnel's spoil**, grey broken rock, because the drawing of made ground was written for
+  Mabel. A heap of topsoil or clay is the ground's own earth turned over, darker and duller. The chunk carries which
+  it is (`aSoil` in `src/world/ground-view.js`). (16 November 2026.)
+- **Tell colour from light before changing a colour.** Switch the sun off in the running game: what stays pale is colour,
+  what goes dark was only lit. A heap's body turned out to be light and its pale ring colour. (16 November 2026.)
+
+### Moments (a thing that happens, not a thing that stands)
+
+- **A drawn moment that no player sees.** Hot Delivery's hand-over and the
+  forge taking the fire played behind the results screen, which comes up within
+  a second of the car stopping (found by hand, 16 November 2026). Before drawing
+  a moment, take pictures in the real game at that moment and for the seconds
+  after it, with the game's own camera and every screen the game puts up. Three
+  things must hold: the camera faces it, no screen covers it, and the game waits
+  for it. Where the game does not wait, the cure is a rule (a timed hold in the
+  job) and a camera, built by Codex, and it comes before the drawing.
+- **A moment keeps one clock.** The drawing's timing is set in seconds after
+  the event that starts it (`FORGE.times` in `src/world/forge-look.js`), never
+  by how far something has to travel, so that the job's rule and its sound can
+  be timed to the same numbers and a test can hold the two equal.
 
 ### Sheets
 
 - **Sheets show other buildings.** A family file holds every building at its own origin, so a building's review views must hide the others, or a stray block appears (the big wheel, 7 November).
 - **Triangles run away in traces and rings.** A traced seat at a fine tolerance cost 4,880 triangles and a ring of 128 by 12 steps 6,144 (the big wheel). Count each piece's triangles before submitting, and coarsen what the mayor's camera cannot see.
 - **Check open drift meshes before UV export.** In Blender 4.5.13, the joined two-sided ship sand bank had loops pointing beyond its vertex list. `mesh.validate()` repaired the mesh before export; use a coarser source grid for this broad surface and validate meshes before assigning UVs.
+
+- **A rule that hurts and draws nothing.** The furnace's cinders took Big Bess's health under a caption and a sound, with nothing in the air and nothing on her, and the machine's death drew nothing either (the field battle, 12 November). Every event that costs health, and every death, needs something drawn. Find these by taking pictures from a camera placed beside the machines while the fight runs; the game's own camera sits on the player's car, and a parked car's pictures prove nothing.
+- **Points drawn too small to see.** A point's size is given in pixels of the drawn picture, not in metres: lumps sized at 23 pixels at 30 m showed as dots in the game's pictures. Size a drawn point for the far end of the distance it will be seen from, and look at it in a picture from there.
 
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
@@ -261,3 +372,6 @@ stop adjusting and change the method.
 - **Bevel modifiers can hide real triangle growth.** Count the evaluated meshes or read the exported GLB; raw cube faces undercount rounded parts. The shop sign bevels added 192 triangles per shop after export (7 November).
 
 - **Photo-mapped surfaces need the photo material assigned at export.** A surface can have measured UVs and still render as a flat colour if its shader is replaced after carving. Keep the source image on the exported material, then tune each copy's roughness for the intended state (TOWN-ART-PLANTS, 7 November).
+- **Lettering that grows from its origin lands off its sign.** A Blender text object starts at its origin and grows to the right (left-aligned). Turn it half way round to face the other side and it grows the other way, so three of five shop words in the mall stood 6 m from their boards and one hung outside the wall (SCABLANDS-LAND round 3, 12 November). Set `align_x="CENTER"` and put the origin on the sign's middle, then read the exported GLB's lettering and sign boxes against each other.
+
+- **Timed flame needs contact throughout the burst.** The weapon normally reports a world object once per burst. A four-second burn rule then receives only one frame of heat. Slow Ride's timber blocks report each touching frame behind `step.gasLoad`; Hot Delivery keeps its immediate burn. Check a real burst against the block as well as injected contact facts (EVERBURN-REMAKE, 17 November).

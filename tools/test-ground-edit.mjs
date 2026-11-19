@@ -36,6 +36,19 @@ const reserved = createGroundEdit({region:{editable:true},naturalHeight:flat,
 assert.equal(reserved.fill(shape,'clay',20).reason,'Tin Town is protected.');
 assert.throws(()=>a.fill(shape,'constructor',1),TypeError,'inherited material keys are rejected');
 
+const underground = createGroundEdit({region:{editable:true}, seed:42, naturalHeight:()=>20});
+const boreCut = underground.cut({x:0,z:0,radius:3}, 3, Infinity, {length:40});
+assert.ok(Math.abs(boreCut.volume - Math.PI * 9 * 40) < 1e-9);
+assert.ok(Math.abs(boreCut.looseVolume - boreCut.volume * 1.25) < 1e-9);
+assert.ok(Math.abs(boreCut.volumes.rock - boreCut.volume) < 1e-9);
+const layeredBore = underground.cut({x:0,z:0,radius:3}, 17, Infinity, {length:1});
+assert.ok(layeredBore.volumes.topsoil > 0 && layeredBore.volumes.clay > 0 && layeredBore.volumes.gravel > 0);
+assert.ok(Math.abs(Object.values(layeredBore.volumes).reduce((sum, value) => sum + value, 0) - layeredBore.volume) < 1e-9);
+assert.equal(underground.heightAt(0,0), 20, 'An underground cut leaves the surface above it intact.');
+assert.equal(underground.chunkCount, 0, 'The tunnel owns the void, not the surface edit grid.');
+assert.equal(protectedGround.cut(shape, -3, Infinity, {length:1}).ok, false);
+assert.throws(()=>underground.cut(shape, -3, Infinity, {length:-1}), TypeError);
+
 const unedited = createGroundEdit({region:{editable:true},seed:42,naturalHeight:scablandsNaturalHeightAt});
 for(const [x,z] of [[0,0],[600,0],[-424,304],[39.25,-17.5]])
   assert.equal(scablandsSurfaceHeightAt(x,z),scablandsSurfaceHeightAt(x,z,unedited),'no edits preserve the current Scablands height');

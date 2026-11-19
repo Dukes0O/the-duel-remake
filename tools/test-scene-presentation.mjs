@@ -34,10 +34,14 @@ assert.match(source,/quality\.update\(high,adaptiveResolution\.scale\)/);
 assert.match(source,/adaptiveResolution\.sample\(now,capture&&!loadingFrame&&!high&&moving\)/,'only presented visible Performance driving frames train resolution');
 const movingCondition=source.match(/const moving = ([^;\n]+);/);
 assert.ok(movingCondition,'renderer keeps an explicit active-presentation condition');
-const movingFor=new Function('st',`return (${movingCondition[1]});`);
-for(const status of ['racing','exploring','menu','countdown','ticket','stage_result','gameover','complete','unknown'])
-  for(const paused of [false,true])assert.equal(movingFor({status,paused}),
-    ['racing','exploring'].includes(status)&&!paused,`${status}, paused=${paused}: only active driving trains presentation`);
+const movingFor = new Function('st', 'speaking', `return (${movingCondition[1]});`);
+for (const status of ['racing','exploring','menu','countdown','ticket','stage_result','gameover','complete','unknown']) {
+  for (const paused of [false, true]) {
+    assert.equal(movingFor({status, paused}, false), ['racing', 'exploring'].includes(status) && !paused,
+      `${status}, paused=${paused}: only active driving trains presentation`);
+    assert.equal(movingFor({status, paused}, true), false, 'talk holds presentation sampling');
+  }
+}
 assert.match(source,/const capture=measure&&!document\.hidden/);
 assert.match(source,/if \(!next\).*adaptiveResolution\.reset\(\);return;/);
 assert.match(source,/if\(!prepareVehicle\(carKey,\{finish:modelFinish\}\)\).*adaptiveResolution\.reset\(\);return;/);

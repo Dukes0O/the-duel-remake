@@ -6,12 +6,6 @@ import archiveFixtureText from './fixtures/saves/07-records-and-ghosts.json?raw'
 installIsolatedStorage();
 window.__qaPhysicalStorage=window.localStorage;
 const qaParams=new URLSearchParams(window.location.search);
-if(qaParams.get('lab-lesson-example')==='1'){
-  const [{registerLesson},{exampleLesson,exampleHooks}]=await Promise.all([
-    import('../src/lab/lesson-frame.js'),import('./fixtures/lab-lesson-example.js'),
-  ]);
-  registerLesson(exampleLesson,exampleHooks);
-}
 if(qaParams.get('memory-backups')==='1'){
   window.__duelQaBackupStore=createMemoryBackupStore(window);
 }
@@ -38,9 +32,18 @@ if(qaParams.get('p4-kits-native')==='1'){
 }
 const {app,refreshRaceSetup}=await import('../src/main.js');
 window.__qaApp=app;
+if (qaParams.has('night-2-surround-review')) {
+  const {startWashSurroundReview, placeWashSurroundReview} = await import('./night-2-wash-review.js');
+  window.__qaNight2Surround = Object.freeze({
+    start: () => startWashSurroundReview(app), place: () => placeWashSurroundReview(app.duel),
+  });
+}
+
 const {CARS}=await import('../src/config.js');
 const {UPGRADE_TYPES}=await import('../src/progression.js');
-const panel=document.createElement('details');panel.open=true;
+// The box closes when anything outside it is pressed, so that it never lies over a menu button the tester wants.
+const panel=document.createElement('details');panel.className='qa-temporary-saves';panel.open=true;
+document.addEventListener('pointerdown',event=>{if(panel.open&&!panel.contains(event.target))panel.open=false;},true);
 panel.style.cssText='position:fixed;left:12px;top:76px;z-index:999;padding:8px 12px;background:#10212cf0;color:white;font:12px/1.5 system-ui;border:1px solid #7198a0;max-width:330px';
 const summary=document.createElement('summary');summary.textContent='MENU QA · TEMPORARY SAVES';panel.append(summary);
 const note=document.createElement('p');note.textContent='Real menu and garage. Test saves stay in this private tab across reloads and disappear when the tab closes.';panel.append(note);
@@ -58,6 +61,80 @@ const completion=document.createElement('button');completion.textContent='Create
   app.profile={...app.profile,credits:50000,unlockedCars:prerequisites,upgrades};app._saveProfile();
   refreshRaceSetup();completion.disabled=true;panel.open=false;
 };panel.append(completion);
+// For a try by hand of things kept behind switches in the wasteland (Hot Delivery, the Dig): a temporary player who has
+// already found the gate, so the menu offers the visit to the Scrapdome.
+const gateFound=document.createElement('button');gateFound.textContent='Create temporary player who has found the wasteland';gateFound.onclick=()=>{
+  if(app.duel.state.status!=='menu')return;
+  app.addPlayer('Wasteland QA');
+  app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};app._saveProfile();
+  refreshRaceSetup();gateFound.disabled=true;panel.open=false;
+};panel.append(gateFound);
+if (qaParams.has('road-riders-review')) {
+  gateFound.dataset.washPlayer='';
+  const {washRiderJob}=await import('../src/world/jobs/wash-riders.js');
+  let cancelArrival;
+  const encounters=['easy','medium','hard'].map(difficulty=>({id:difficulty,difficulty,label:'Fight at the Wash · '+difficulty}));
+  encounters.push({id:'roadblock',difficulty:'easy',label:'Escape the five-car Wash roadblock · easy',count:5,boxIn:true});
+  for (const encounter of encounters) {
+    const button=document.createElement('button');
+    button.dataset.washFight=encounter.id;
+    button.textContent=encounter.label;
+    button.onclick=()=>{
+      cancelArrival?.();
+      cancelArrival=null;
+      const begin=()=>{
+        app.cpuDifficulty=encounter.difficulty;
+        const job=washRiderJob({count:encounter.count,boxIn:encounter.boxIn});
+        const started=app._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job});
+        if (started) panel.open=false;
+        else note.textContent='Enter the Wasteland yard with the road-riders and story-everburn switches, then choose a fight.';
+      };
+      if (app.duel.state.status==='menu') {
+        if (!gateFound.disabled) gateFound.click();
+        app.visitWasteland();
+      }
+      if (app.isYardHomeActive() || app.duel.state.arena || !app.duel.state.hiddenRoadVisit) return begin();
+      // The menu visit plays its normal arrival. Start after its simulation tick has finished.
+      cancelArrival=app.duel.onChange(state=>{
+        if (app.isYardHomeActive()) {
+          cancelArrival?.(); cancelArrival=null;
+          queueMicrotask(begin);
+        } else if (state.status==='menu') {
+          cancelArrival?.(); cancelArrival=null;
+        }
+      });
+    };
+    panel.append(button);
+  }
+}
+// For a try by hand of a later job of the Everburn: a temporary player who has found the wasteland, read Hollis's note and
+// finished the jobs before it, so the Story Wall offers that job at once.
+const night2 = document.createElement('button');
+night2.textContent = 'Create temporary player ready for Night 2';
+night2.hidden = !app.duel.featureFlags.enabled('story-choices');
+night2.onclick = () => {
+  if (app.duel.state.status !== 'menu') return;
+  let suffix = 1;
+  while (app.players.players.some(player => player.name === 'Night 2 QA ' + suffix)) suffix++;
+  if (!app.addPlayer('Night 2 QA ' + suffix).ok) return;
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
+  app._saveProfile();
+  refreshRaceSetup();
+  night2.disabled = true;
+  panel.open = false;
+};
+panel.append(night2);
+const {EMBER_JOBS}=await import('../src/story/ember-save.js');
+const {EMBER_JOB_NAMES}=await import('../src/story/ember-road.js');
+for(const index of [1,2,3]){
+  const ready=document.createElement('button');ready.textContent=`Create temporary player ready for job ${index+1}: ${EMBER_JOB_NAMES[index]}`;ready.onclick=()=>{
+    if(app.duel.state.status!=='menu')return;
+    app.addPlayer(`Everburn ${index+1} QA`);
+    app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true},
+      story:{version:1,...app.profile.story,ember:{read:true,jobs:EMBER_JOBS.slice(0,index)}}};app._saveProfile();
+    refreshRaceSetup();ready.disabled=true;panel.open=false;
+  };panel.append(ready);
+}
 let frozenPaint=0;
 const mirror=document.createElement('button');mirror.textContent='Freeze rear-view traffic sample';mirror.onclick=()=>{
   if(app.duel.state.status!=='menu')return;

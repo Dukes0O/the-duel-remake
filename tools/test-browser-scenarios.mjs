@@ -1,11 +1,41 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import * as suite from './run-browser-scenarios.mjs';
 
 const root = resolve('browser runner mock project');
 const archive = resolve(suite.PROJECT_ROOT ?? root, '.evidence', 'FAC-07-pure');
 const turn = () => new Promise(setImmediate);
+
+test('Night 2 captures the approved pose in a fresh or pre-staged scenario directory', async () => {
+  const {run}=await import('./scenarios/story-plate-reference.mjs');
+  const approved=JSON.parse(await readFile(new URL('./art/story-plates/night-2-pose.json',import.meta.url),'utf8'));
+  const outputDir=await mkdtemp(join(tmpdir(),'duel-night-two-'));
+  const stagedFile=join(outputDir,'camera-and-cast.json');
+  const reachedDraw=new Error('Reached the native screenshot command');
+  async function trace() {
+    const calls=[];
+    await assert.rejects(run({outputDir,
+      command:(name,options)=>calls.push([name,options]),
+      navigate:url=>calls.push(url), waitFor:source=>calls.push(source),
+      evaluate:source=>{
+        new Function('return '+source);
+        calls.push(source);
+        if (source.includes('canvas.toDataURL')) throw reachedDraw;
+      }}), error=>error===reachedDraw);
+    return calls;
+  }
+  try {
+    const fresh=await trace();
+    assert.equal(fresh[0][0],'Emulation.setDeviceMetricsOverride');
+    await writeFile(stagedFile,JSON.stringify({...approved,ids:['offline object IDs']}));
+    assert.deepEqual(await trace(),fresh);
+    await writeFile(stagedFile,JSON.stringify({...approved,camera:{...approved.camera,far:9000}}));
+    await assert.rejects(run({outputDir}),/disagrees with the approved camera/);
+  } finally { await rm(outputDir,{recursive:true,force:true}); }
+});
 
 function fixture(names, overrides = {}) {
   const calls = [], reports = new Map(), rows = [];
@@ -230,4 +260,29 @@ test('named Snow timing rejects the legacy Woods course override without removin
     process.env.DUEL_TREMBLANT_QA_MODE='combined';
     assert.equal(typeof (await import('./scenarios/tremblant-snow.mjs?legacy-course-guard')).run,'function');
   } finally {keys.forEach((key,i)=>{if(old[i]===undefined)delete process.env[key];else process.env[key]=old[i];});}
+});
+
+
+test('saved progress scenarios always run and temporary player setup does not qualify', async () => {
+  const names = ['career-writer-lock','preview-storage','lab-restore','town-migration',
+    'custom-save','custom-backup','custom-archive','warlord-reward','warlord-pay','warlord-format',
+    'grand-prix-pay','drive-lesson-run','earned-cars','town-opens','future-pay','future-reward','lab-view'];
+  const selected = await suite.changedSelection(names, 'HEAD');
+  assert.deepEqual(selected, names.slice(0, -1).map(name => ({name, reason:'guards saved progress or pay'})));
+  assert.equal(suite.guardsSavedProgress('lab-view'), false);
+  const discovered = await suite.namedScenarios();
+  const rows = await suite.changedSelection(discovered, 'HEAD');
+  assert.ok(rows.filter(row => row.reason === 'no area').length < 60);
+});
+
+test('warlord settlement and world job files select their scenario areas', () => {
+  const warlord=suite.SCENARIO_AREAS.find(row=>row.prefixes.includes('warlord-'));
+  assert.ok(warlord.paths.includes('src/arena/warlord-settlement.js'));
+  const everburn=suite.SCENARIO_AREAS.filter(row=>row.prefixes.some(prefix=>prefix.startsWith('everburn')));
+  assert.equal(everburn.length,2);
+  for(const row of everburn) for(const file of ['src/arena/modes/world-job.js','src/arena/arena-event.js'])
+    assert.ok(row.paths.includes(file));
+  const riders=suite.SCENARIO_AREAS.find(row=>row.prefixes.includes('road-riders'));
+  for (const file of ['src/arena/modes/road-riders.js','src/sim-contacts.js','src/combat-hud.js','src/sound-bank.js'])
+    assert.ok(riders.paths.includes(file));
 });

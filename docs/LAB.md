@@ -32,8 +32,8 @@ October. Sections 4 to 6 are for players and builders; 9 to 11 for builders.
 
 The Lab is a workshop in the hangar beside the home helipad at Tremblant
 Woods: benches, a fire pit, a pendulum frame, a test rig and a small wind
-tunnel. You reach it from a **Lab** tab in the garage and from the helipad
-(no new main-menu button). Each lesson has three parts. **The bench:** a
+tunnel. You reach it from the **LAB** button on the old main menu (LAB-OPEN-DOOR),
+from a **Lab** tab in the garage and from the helipad. Each lesson has three parts. **The bench:** a
 hands-on experiment, two or three controls and a Run button; Brian, in
 person (his clean voice, no radio), explains what you see in two or three
 lines. **The challenge:** one short task in the game that uses what the
@@ -47,16 +47,33 @@ sentence. Every explanation in section 4 is true as written.
 
 ## 3. Which lessons are open
 
-| Group | Lessons | Opens when |
+Every lesson is open from the start (LAB-OPEN-DOOR, Kyle, 9 November 2026): a new
+player can walk in and take any lesson, in any order. A lesson is shut only
+when its switch is off.
+
+| Group | Lessons | Open when |
 | --- | --- | --- |
-| Flying | Lift and weight, Projectile motion, Fire triangle, Pendulums, Air and altitude | The helicopter's first lessons are done |
-| Workshop | Strength against weight, Rust, G-force, Headings and maps | From the start (G-force after driving lesson 1) |
-| Wind tunnel | Grip, Downforce, Braking, Suspension, Fuel | Driving lesson 1 is passed |
+| Flying | Lift and weight, Projectile motion, Fire triangle, Pendulums, Air and altitude | The helicopter switch is on |
+| Workshop | Strength against weight, Rust, G-force, Headings and maps | Always |
+| Wind tunnel | Grip, Downforce, Braking, Suspension, Fuel | Always |
 | Snow (with H5) | Launch angles, Ski wax | Heli-skiing is on (`docs/HELI_SKIING.md`) |
 
 Without the helicopter switch, the Flying group shows "Opens with the
-helicopter". Each group lists its lessons in the order above; any open
-lesson can be taken in any order.
+helicopter". Each group lists its lessons in the order above.
+
+**The game challenges keep their conditions.** The lesson and its bench never
+read the player's other lessons, but the challenge step does, and says so in
+one plain sentence that also names where to go:
+
+| Challenge | Needs | The sentence |
+| --- | --- | --- |
+| Flying (the helicopter challenges) | The four helicopter lessons | "This challenge needs the four helicopter lessons, so finish them first, at the HELIPAD button on the main menu." |
+| Wind tunnel (Grip, Downforce, Braking, Suspension, Fuel) and the G-force lap | Driving lesson 1 | "This challenge needs driving lesson 1, so pass it first, at the INSTRUCTOR button on the main menu." |
+
+Passing a lesson (the Lab's pass call) asks the same condition, so a shut
+challenge cannot pass a lesson. What a passed lesson or challenge opens
+(tuning settings, upgrades) is unchanged. The rule is in `challengeOpenState`
+in `src/lab/lab-lessons.js`; `lessonOpenState` reads only the switches.
 
 ## 4. The lessons
 
@@ -65,8 +82,8 @@ lesson can be taken in any order.
 | Lesson | The bench | What Brian explains (true) | Challenge | Opens (credits) |
 | --- | --- | --- | --- | --- |
 | **Lift and weight** | Kestrel One on a weighing pad. Add fuel and cargo, raise the collective, see if it leaves the ground. A bar shows weight against the most lift | To hover, the rotor must push the air down as hard as gravity pulls the helicopter down. More weight needs more push, and every rotor has a most it can give | Lift the Dusthawk (1,280 kg) with a full tank and hover 10 s at 2 to 5 m over the home pad | **Engine 1** (2,500): thrust x 1.05. **Engine 2** (4,000, after Engine 1): x 1.10. **Light frame** (3,000): empty mass -80 kg |
-| **Projectile motion** | A drop tower over a sand pit. Set height (10 to 60 m) and forward speed (0 to 30 m/s), drop a water parcel (the bucket's own parcel model), watch the arc. The ring shows where it will land | A dropped thing keeps the forward speed it had, so it lands ahead of where you let go. It falls about 5 m in the first second, 20 m in two and 45 m in three. Air slows a spray of water more than a stone, so water falls shorter | Three floating buoys on the home lake: hit each with a bucket drop (within 5 m) using the ring you have. Pass with the 12 m ring, then again with 8, 5 and no ring | Each pass moves you down one ring (12, 8, 5, none); you can pick any ring you have earned. **Bigger bucket** (2,500, after the first pass): 800 litres (it weighs 200 kg more) |
-| **Fire triangle** | A steel fire pit with three switches: the gas (heat), the wood (fuel), a lid (air). Water, sand and a cleared strip each put it out a different way | Fire needs heat, fuel and oxygen; take away any one and it dies. Water takes heat away, a lid takes the air, a cleared strip takes the fuel. Fire retardant coats plants with salts that make them char instead of burn, so planes drop it in front of a fire, not on it | A practice fire beside the home pad: stop it reaching the road within 3 minutes | **Retardant tank** (3,000): a 600-litre load filled only at the home pad. Forest it lands on can no longer catch fire for the rest of that fire; it does not put flames out |
+| **Projectile motion** | A drop tower over a sand pit. Set height (10 to 60 m) and forward speed (0 to 30 m/s), drop a water parcel (the bucket's own parcel model), watch the arc. The ring shows where it will land | A dropped thing keeps the forward speed it had, so it lands ahead of where you let go. It falls about 5 m in the first second, 20 m in two and 45 m in three. Air slows a spray of water more than a stone, so water falls shorter | Three floating buoys on the home lake: hit each with a bucket drop (within 10 m) using the ring you have. Pass with the 12 m ring, then again with 8, 5 and no ring | Each pass moves you down one ring (12, 8, 5, none); you can pick any ring you have earned. **Bigger bucket** (2,500, after the first pass): 800 litres (it weighs 200 kg more) |
+| **Fire triangle** | A steel fire pit with three switches: the gas (heat), the wood (fuel), a lid (air). Water, sand and a cleared strip each put it out a different way | Fire needs heat, fuel and oxygen; take away any one and it dies. Water takes heat away, a lid takes the air, a cleared strip takes the fuel. Fire retardant coats plants with salts that make them char instead of burn, so planes drop it in front of a fire, not on it | A practice fire beside the home pad: stop it reaching the road within 7 minutes (420 seconds) | **Retardant tank** (3,000): a 600-litre load filled only at the home pad. Forest it lands on can no longer catch fire for the rest of that fire; it does not put flames out |
 | **Pendulums** | Three weights on 5, 15 and 25 m strings, then a heavier weight on the same string. A stopwatch times each swing | A swing's time depends on the string's length, not the weight: about 4.5 s on 5 m, 7.8 s on 15 m and 10 s on 25 m. A slower swing is gentler and easier to calm, but a longer cable needs more height | Carry a car across Tremblant Woods and set it down with the swing under 1 m when you let go | **Long cable** (1,500): choose 15 m or 25 m before each flight |
 | **Air and altitude** | A rotor on a test stand at sea level, Panorama Ridge (860 m) and Summit Run (2,860 m). Measure its lift at each | Higher up the air is thinner. At 2,860 m each lungful holds about three quarters of the air it would at the sea, so the rotor has less to push on and the engine makes less power. (The game rounds this down a little, to 71%) | Fly a 300 kg crate to Summit Run and land with at least 30% fuel left | **Altitude tune** (3,500): the engine keeps more power high up (thrust falls with e^(-altitude / 10,000 m) instead of 8,500), so Kestrel One has more lift to spare high up (at the Summit pad a full heli-ski group on a full tank has about 5% to spare without it, H5) |
 
@@ -225,10 +242,14 @@ the show; the Sea wreck finish stays selectable for good. LAB-RESTORE's single
   (weights on the pad), `lab.fizz` (rust current), `heli.buoy-hit` (water
   on a buoy, a soft bell), `car.speirling` (electric whine and fan roar).
   Passing and buying use the existing confirm and purchase sounds.
-- **Art:** the hangar room and bench props from one Blender recipe
-  (`tools/blender/lab.py`), reusing Kestrel One, the car models, tyres, the
+- **Art:** the hangar room and the bench models are written by one script,
+  `tools/art/lab-props.mjs` (the room in `lab-hangar.mjs`, the benches in
+  `lab-benches.mjs` and its two companions), into `public/assets/models/lab/`;
+  Brian from `tools/blender/lab-brian.py`, the workshop props from
+  `lab-workshop-props.py` and the wind tunnel's parts from `lab-tunnel-parts.py`
+  in the same folder. They reuse Kestrel One, the car models, tyres, the
   fire and smoke effects and the Deep's crust for the rust jars; the
-  Spéirling from `tools/blender/speirling.py`. At most three rounds each;
+  Spéirling from `tools/blender/speirling-tries.py`. At most three rounds each;
   Claude judges; no frame checks for the Lab (rule 9), only for the
   Spéirling in races.
 
@@ -364,8 +385,10 @@ Heli-skiing's two lessons (Launch angles, Ski wax) are built with H5's cards
 
 ## 11. Picked for Kyle (24 October 2026)
 
-- The Lab is a tab in the garage and a door at the helipad, not a main-menu
-  button, so the menu stays as it is.
+- The Lab is a tab in the garage and a door at the helipad. (Changed
+  9 November 2026, LAB-OPEN-DOOR: the old main menu also has a LAB button,
+  shown whenever the Lab is available, so a player need not own the helicopter
+  to find it. The rest of the menu is unchanged.)
 - Brian teaches in the Lab too, in person (no radio), so there is one
   teacher and no new voice to pay for.
 - Prices sit between 400 and 4,000 credits (one to four good wins), and the
@@ -402,9 +425,9 @@ the same change (replace means remove).
   tower, fire pit, pendulum frame, rotor stand), Workshop (bending rig, nail
   jars, turning arm, map table), Wind tunnel, Snow (launcher, snow trays).
 - **Visit a machine** by walking up to it. Its name lights on the floor in
-  front of it with "E: use the Lift bench". A machine whose lesson is not
-  open yet shows a small card: "Opens when you pass helicopter lesson 3."
-  A passed machine shows a green tick.
+  front of it with "E: use the Lift bench". A machine whose lesson is shut
+  (its switch is off) shows a small card with the reason, such as "Opens with
+  the helicopter". A passed machine shows a green tick.
 - **Brian is in the room**, standing by the machine you used last. Walk up
   and press E to ask him: "What should I try next?" or "Tell me about this
   machine."
@@ -776,3 +799,54 @@ notices a stuck player, gives help that climbs to pointing at the exact
 control, and cheers right answers; a progress strip and a recap. The pendulum
 is first; section 6 of that card ranks the other fifteen, each with its own
 `LAB-CLASSROOM-<NAME>` card. Section 12's five steps stay the scaffold.
+
+### 13.1 Three sentences at a time (the wording rule for every classroom lesson)
+
+This rule is for the classroom lessons (`src/lab/lessons/*-classroom.js`), from card
+LAB-BRIAN-SHORT (9 November 2026).
+
+- Brian's newest words are at most three sentences, about 45 words and never more than 60.
+  This holds for a step's opening words, a question, a result and a hint.
+- A text that needs more puts `${MORE}` (from `src/lab/classroom/brian-text.js`) where the
+  opening ends. The player reads the rest by pressing "Tell me more" (T). One mark per text.
+- The opening holds what the player needs now: the sentence that defines the step's new
+  word, the question, and what to do. The reason why, a comparison, a second example and
+  how a unit is read can wait behind the mark.
+- Shorten by moving sentences behind the mark, never by cutting what the lesson teaches.
+  Every defined word keeps its definition, and a word is still defined before it is used.
+- The screen cuts any unmarked text after three sentences by itself, so a text built from
+  parts never shows more. Mark a built text where that cut would hide the next instruction.
+- An earlier step stays on the page as its heading and first sentence, and a click opens it
+  in full. Write a step's first sentence so that it makes sense alone.
+- `tools/test-lab-brian-short.mjs` checks every step's opening words in all sixteen lessons.
+
+### 13.2 Kyle's review of Rust (19 November 2026): rules for every lesson
+
+Kyle played Rust and asked for every lesson to be checked against these rules before fixes
+start. They add to 13.1 and win over it where they differ.
+
+- **No hedging.** A lesson states its rule plainly: "The rate is the percentage of the nail that
+  rusts during one day." Never add "in this game", "a simplification" or "real rust is less
+  regular". The last thing read is what a learner remembers, so a caveat erases the rule.
+- **Correct maths words.** A sum is an addition, a product a multiplication, a difference a
+  subtraction. `rust = rate × days` is a product. Never call a multiplication "the sum"; say
+  "multiply" or "work out the rust".
+- **Every task says plainly what to do and what it is for**, so that a newcomer understands it
+  on first reading. "Now you can use the sum yourself" failed with an adult who has a master's
+  degree. A step that leads to a question names the question first.
+- **No instructions the screen already gives.** The key labels on the controls say how to
+  change them; Brian does not repeat "choose the number of days with ↑ and ↓".
+- **Less reading.** Cut each step to what the learner needs at that moment.
+- **Watch animations long enough to watch.** When several things move together (the
+  calendar, the nail, the graph and the "how rust forms" box), the run lasts about 10 seconds
+  or plays twice, and R replays it. A simple change, such as the garden gate in the rain,
+  keeps its quick pace.
+- **Pictures show the real process.** Rust grows over all of the nail that is under water, not
+  from the tip.
+- **The page keeps what helps.** The step being worked on is at the top of Brian's page, in
+  full. Word definitions (Rust, Salt water, Zinc coat) stay, grouped behind one fold, "Words so
+  far". Steps that only gave an instruction ("Three days", "Four jars, one week") leave the page
+  once done.
+- **Wanted when it fits:** a dial the player can drag with the mouse, in place of Fewer and More
+  buttons. A dial is a nice idea, not a rule.
+

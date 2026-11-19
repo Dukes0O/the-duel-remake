@@ -2,6 +2,8 @@
 // Teaching state only: the lesson model, where the player is, Brian's help and
 // whether the player looks stuck. No DOM, no saves, no race state.
 
+import {SHOWN} from './brian-text.js';
+
 export const PARTS = Object.freeze(['Wonder', 'Words', 'Watch', 'Try with help', 'On your own', 'Check', 'Recap']);
 // Brian offers help after this long without progress, and gives the first hint himself after the second.
 export const STUCK_OFFER_S = 12;
@@ -82,7 +84,7 @@ export function createClassroomSession(lesson) {
         pointer.done = true;
         handle(model.act(pointer.action));
         celebrate = null; help = 0;
-        bubble = {text: `That is how it is done. ${current().say}`, mood: 'talk'};
+        bubble = {text: `${SHOWN} ${current().say}`, mood: 'talk'};
         return;
       }
       if (!v.waiting) { idle = 0; return; }

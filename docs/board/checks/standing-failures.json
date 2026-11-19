@@ -1,0 +1,23 @@
+[
+  {
+    "stage": "frames",
+    "name": "frames",
+    "since": "2026-11-05",
+    "card": "QA-STANDING-BROWSER",
+    "cause": "High: real eight-car night frames require delivered p# <=# ms, finite world build <# ms and finite full first-race load."
+  },
+  {
+    "stage": "browser",
+    "name": "deep-frames",
+    "since": "2026-11-05",
+    "card": "QA-STANDING-BROWSER",
+    "cause": "Deep frames require headed mode"
+  },
+  {
+    "stage": "browser",
+    "name": "frame-pacing",
+    "since": "2026-11-05",
+    "card": "QA-STANDING-BROWSER",
+    "cause": "The original simple frame stage failed; no second measurement is allowed."
+  }
+]

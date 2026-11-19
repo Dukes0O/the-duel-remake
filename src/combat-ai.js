@@ -1,3 +1,4 @@
+import {throwRiderAsh} from './arena/modes/road-riders.js';
 import {CPU_COMBAT, WEAPONS, COMBAT_TUNING} from './wasteland-tuning.js';
 import {point, aimPoint, velocity, fireWeapon, arsenalEnabled} from './combat-weapons.js';
 import {cpuPickupCharges} from './combat-pickups.js';
@@ -133,6 +134,14 @@ export function stepCombatAI(duel, dt) {
     if (opponent.decoy || cpuCrewStopped(opponent) || warlordFight(duel, opponent)?.mayFire?.(duel, opponent) === false ||
         opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
+    if (opponent.roadRider) {
+      if (opponent.roadRider.phase !== 'fighting') continue;
+      if (opponent.roadRider.weapon === 'ash-sack') {
+        if (!throwRiderAsh(duel,opponent)) continue;
+        combat.aiTurn = (index + 1) % opponents.length;
+        break;
+      }
+    }
     const attacker = point(duel, opponent);
     if (arsenalEnabled(duel)) {
       let usedArsenal = false;

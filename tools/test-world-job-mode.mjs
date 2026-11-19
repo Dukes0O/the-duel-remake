@@ -5,8 +5,12 @@ import {canLeaveCar} from '../src/onfoot-transition.js';
 import {finishArenaEvent} from '../src/arena/arena-event.js';
 import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {worldHudModel} from '../src/world/world-hud.js';
+import {worldReturnNotice} from '../src/screen-hud.js';
+import {captionSeconds} from '../src/story/caption-queue.js';
 import {arenaHud, arenaResultsScreen} from '../src/screen-arena.js';
-import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {stepWorldJob} from '../src/arena/modes/world-job.js';
+import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
 
 const dt = 1 / 120;
 for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps)
@@ -42,9 +46,16 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.match(jobHud.scoreText,/Cinder's ember pot/);
   assert(Number.isFinite(jobHud.remainingSec),'job HUD shows finite elapsed time');
   assert.deepEqual(jobHud.rows,[],'world jobs do not show an arena table');
-  assert.equal(worldHudModel({worldJob:app.duel.state.arena.worldJob,
-    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)}).target.id,'tin-town',
-    'the Scablands map guidance carries the job destination marker');
+  // EVERBURN-REMAKE job 1 (16 November 2026): the job starts by sending the car to Cinder for the pot, and to Tin Town once the pot is on.
+  const guide=()=>worldHudModel({worldJob:app.duel.state.arena.worldJob,
+    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)}).target.id;
+  assert.equal(guide(),'cinder','the Scablands map guidance carries the first marker of the job, Cinder with the pot');
+  {
+    const job=app.duel.state.arena.worldJob.job;
+    job.stepState={...job.stepState,loaded:true,ember:job.steps[0].ember.start};
+    app.advance(.1);
+    assert.equal(guide(),'cold-forge','and the job destination marker once the pot is on the car');
+  }
   const arena=app.duel.state.arena,worldJob=arena.worldJob;
   worldJob.job.stepIndex=worldJob.job.steps.length;worldJob.job.done=true;
   finishArenaEvent(app.duel,'job-complete','player');
@@ -58,8 +69,16 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.match(wonScreen.description,/A live ember\./,'results use the existing story completion line');
   assert.match(wonScreen.metrics,/SCRAP EARNED/,'won job results show scrap');
   assert.doesNotMatch(wonScreen.metrics,/HOLD|WRECKS|PLACE/,'world job results omit arena metrics');
-  assert.match(wonScreen.actions,/NEXT JOB: GET OUT AND WALK/,'first win names the next job');
+  // The checked evening now offers job 2 as the next primary action.
+  assert.match(wonScreen.actions,/NEXT JOB: LIGHT THE TOWN/,'first win names the remade next job');
   assert.match(wonScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
+  // Keep proving that an unremade job cannot be offered.
+  const remadeIndex=REMADE_EVERBURN_JOBS.indexOf(EVERBURN_JOBS[1].id);
+  REMADE_EVERBURN_JOBS.splice(remadeIndex,1);
+  try {
+    const lockedScreen=arenaResultsScreen(app.duel.state,{metric:()=>'',action:label=>label,escapeHTML:String});
+    assert.doesNotMatch(lockedScreen.actions,/NEXT JOB/,'an unremade next job stays locked');
+  } finally { REMADE_EVERBURN_JOBS.splice(remadeIndex,0,EVERBURN_JOBS[1].id); }
   const failedScreen=arenaResultsScreen({...app.duel.state,arena:{...arena,result:{winnerId:'raiders',reason:'job-failed'},worldJob:arena.worldJob}},
     {metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
   assert.match(failedScreen.actions,/TRY AGAIN/,'failed job offers a retry');
@@ -225,4 +244,154 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   app.dispose?.();
 }
 
-console.log('PASS world-job: real Duel inputs, fire, F out/in, and saved loadout cleanup on win, fail, menu quit, and paused exit');
+// Light the Town: rule snapshots exercise the real arena adapter, not a walk.
+{
+  const place = (id, x, z) => ({id, position: {x, y: 0, z}});
+  const hearth = place('hearth', 0, 0);
+  const lamps = [place('pump', 20, 0), place('tower', 40, 0), place('mast', 60, 0)];
+  const job = {id: 'test-town-brand', steps: [{kind: 'onfoot', brand: true, hearth, hearthFront:place('hearth-front',0,2.8),
+    places: lamps, auntie: place('town-auntie-solder', 5, 5), ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
+  const {app} = start({job});
+  const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
+  assert.equal(worldJob.solidGrid.brandLamps.length, 3, 'The arena installs the three solid lamp posts.');
+  assert.equal(worldJob.solidGrid.brandLamps[0].x, lamps[0].position.x);
+  assert.equal(worldJob.solidGrid.people[0].id, 'town-auntie-solder');
+  assert.equal(worldJob.solidGrid.people[0].x, 5);
+  const ashTells = [];
+  const originalEmit = duel.emit.bind(duel);
+  duel.emit = event => { if (event.arenaTell) ashTells.push(event.arenaTell); originalEmit(event); };
+  worldJob.job.stepState = {brandsUsed: 1, brandSeconds: 90, lamps: {pump: true}};
+  state.onFoot = true;
+  state.fighter = {x: 20, y: 0, z: 0, speed: 0, s: state.s,
+    maxHealth: 100, health: 100, respawns: 0, yaw: 0, pitch: 0};
+  const originalZones = state.raids?.zones.length ?? 0;
+  stepWorldJob(duel, 0);
+  const ash = worldJob.actors.find(actor => actor.brandAsh);
+  assert(ash, 'the arena creates the first Ash Man from the existing factory');
+  assert.equal(ash.x, -100, 'he starts at the farthest wall');
+  assert.equal(state.raids?.zones.length ?? 0, originalZones, 'he has no roadside rocket zone');
+  stepWorldJob(duel, 0);
+  assert.deepEqual(ash.brandAlley.goal,lamps[0].position,'the rule still targets the lit lamp');
+  assert(Math.hypot(ash.approachTarget.x-lamps[0].position.x,ash.approachTarget.z-lamps[0].position.z)<BRAND_RULE.smotherRadius,
+    'the route stops beside the solid lamp within its unchanged smothering radius');
+  const before = ash.x;
+  stepWorldJob(duel, .1);
+  assert(ash.x > before, 'the ordinary foot mover carries out the request');
+  assert(ash.x - before <= BRAND_RULE.ashWalkMps * .1 + 1e-8);
+  Object.assign(ash, {x: 20, y: 0, z: 1, approachTarget: null});
+  state.footWeapons.selected = 'wrench'; state.fighterInput.fire = true;
+  stepWorldJob(duel, 0);
+  assert.equal(worldJob.job.stepState.brandAsh.men[ash.id].fleeing, true,
+    'the existing on-foot attack key drives him off without damage');
+  assert.equal(ash.health, ash.maxHealth);
+  Object.assign(ash,worldJob.job.stepState.brandAsh.men[ash.id].wall.position);
+  stepWorldJob(duel, 0);
+  assert(!worldJob.actors.includes(ash), 'a fleeing man is removed at the wall');
+  // One swing per press; holding fire while changing range is no extra swing.
+  worldJob.job.stepState.lamps.tower = true;
+  stepWorldJob(duel, 0);
+  const thrower = worldJob.actors.find(actor => actor.brandAsh);
+  Object.assign(thrower, {x: 20, y: 0, z: 1, approachTarget: null});
+  stepWorldJob(duel, 0);
+  assert.equal(worldJob.job.stepState.brandAsh.men[thrower.id].fleeing, undefined);
+  assert.equal(ashTells.filter(tell => tell.cue === 'world.ash.throw').length, 1);
+  assert.equal(ashTells.find(tell => tell.cue === 'world.ash.throw').position.x, state.fighter.x);
+  state.footWeapons.selected = 'hand-flamer'; state.fighter.flaming = true;
+  Object.assign(thrower, {x: 20, y: 0, z: -1});
+  stepWorldJob(duel, 0);
+  assert.equal(worldJob.job.stepState.brandAsh.men[thrower.id].fleeing, undefined,
+    'flame aimed away cannot drive an opponent off');
+  Object.assign(thrower, {x: 20, y: 0, z: 6, approachTarget: null});
+  stepWorldJob(duel, 0);
+  assert.equal(worldJob.job.stepState.brandAsh.men[thrower.id].fleeing, true,
+    'the existing Hand Flamer cone drives an opponent off at six metres');
+  assert.equal(thrower.health, thrower.maxHealth);
+  state.fighterInput.fire = false;
+  worldJob.job.stepState.lastLamp = 'pump';
+  for (const difficulty of ['easy','medium','hard']) {
+    state.cpuDifficulty = difficulty;
+    const fighter = state.fighter, respawns = fighter.respawns;
+    const start = {x:fighter.x,z:fighter.z};
+    Object.assign(fighter, {knockedDown:true, health:0});
+    stepWorldJob(duel, 0);
+    const reason = worldReturnNotice(state), reading = captionSeconds(reason);
+    assert.match(reason, difficulty === 'easy' ? /down.*lamp/i : /down.*hearth/i);
+    assert.equal(worldJob.job.stepState.returnNotice.remaining, reading);
+    assert.equal(ashTells.at(-1).cue, 'world.brand.out');
+    stepWorldJob(duel, reading - dt);
+    assert.equal(worldReturnNotice(state), reason);
+    assert.equal(fighter.knockedDown, true);
+    assert.equal(fighter.health, 0);
+    assert.equal(fighter.respawns, respawns);
+    assert.deepEqual({x:fighter.x,z:fighter.z}, start);
+    stepWorldJob(duel, dt);
+    assert.equal(fighter.knockedDown, false);
+    assert.equal(fighter.health, 100);
+    assert.equal(fighter.respawns, respawns + 1);
+    const place = difficulty === 'easy' ? lamps[0] : hearth;
+    assert.equal(fighter.x, place.position.x);
+    assert.equal(fighter.z, place.position.z + (difficulty === 'easy' ? BRAND_RULE.recoveryLampMetres : 2.8));
+    assert.equal(worldJob.job.stepState.brandSeconds, 0);
+    assert.equal(worldJob.job.stepState.lamps.pump, true);
+    stepWorldJob(duel, 0);
+    assert.equal(worldReturnNotice(state), '');
+    assert.equal(fighter.respawns, respawns + 1, 'recovery happens once');
+    assert.equal(worldJob.job.stepState.brandSeconds, BRAND_RULE.burnSeconds);
+    assert.equal(ashTells.at(-1).cue, 'world.brand.catch');
+  }
+  app.returnToMenu(); app.dispose?.();
+}
+
+// The town's ending uses the arena hold path even while the player is on foot.
+// These are rule snapshots, not a second scripted walk through the job.
+{
+  const place = (id, x) => ({id, position: {x, y: 0, z: 0}});
+  const lamps = [place('pump', 20), place('tower', 40), place('mast', 60)];
+  const {app} = start({job: {id: 'test-brand-ending', captions: {
+    'brand.awake': 'Auntie Solder: Three lamps. Now we can see how bad it is.',
+    'brand.thief': "Auntie Solder: Thief! He's got my bellows!",
+  }, steps: [{kind: 'onfoot', brand: true, townEnding: true,
+    hearth: place('hearth', 0), places: lamps}]}});
+  const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
+  const tells = [], captions = [];
+  const emit = duel.emit.bind(duel), callout = duel._storyCallout.bind(duel);
+  duel.emit = event => { if (event.arenaTell) tells.push(event.arenaTell); emit(event); };
+  duel._storyCallout = (...args) => { captions.push(args[0]); callout(...args); };
+  state.onFoot = true;
+  state.fighter = {x: 0, y: 0, z: 0, speed: 0, s: state.s,
+    maxHealth: 100, health: 100, yaw: 0, pitch: 0};
+  stepWorldJob(duel, 0);
+  assert.equal(tells.at(-1).cue, 'world.brand.catch');
+  state.fighter.x = 10;
+  worldJob.job.stepState.brandSeconds = .1;
+  stepWorldJob(duel, .1);
+  assert.equal(tells.at(-1).cue, 'world.brand.out');
+  state.fighter.x = 0;
+  stepWorldJob(duel, 0);
+  assert.equal(tells.at(-1).cue, 'world.brand.catch');
+  state.fighter.x = 60;
+  worldJob.job.stepState.lamps = {pump: true, tower: true};
+  stepWorldJob(duel, 2);
+  assert.equal(worldJob.job.stepState.townEnding, true);
+  assert.deepEqual(tells.slice(-2).map(tell => tell.cue), ['world.brand.catch', 'world.town.wake']);
+  assert.equal(tells.at(-2).position.x, 60, 'the lamp catches at its own position');
+  const held = {x: state.fighter.x, y: state.fighter.y, z: state.fighter.z, s: state.s, lateral: state.lateral};
+  state.fighter.speed = 4; state.fighter.flaming = true;
+  duel.setInput({throttle: 1, interact: true});
+  state.fighterInput.fire = true;
+  for (let tick = 0; tick < 1081 && state.status === 'racing'; tick++) duel.step(dt);
+  assert.equal(state.status, 'arena_result');
+  assert.deepEqual({x: state.fighter.x, y: state.fighter.y, z: state.fighter.z,
+    s: state.s, lateral: state.lateral}, held, 'holding movement and F cannot leave the ending');
+  assert.equal(state.fighter.flaming, false);
+  assert.equal(state.onFoot, true);
+  assert.equal(worldJob.brandResult.brandsUsed, 2);
+  assert.equal(worldJob.brandResult.pay, 70);
+  assert.equal(worldJob.brandResult.sentence, 'You lit the town with two brands.');
+  assert.equal(captions.filter(text => text.includes('Three lamps.')).length, 1);
+  assert.equal(captions.filter(text => text.includes('Thief!')).length, 1);
+  assert.equal(tells.filter(tell => tell.cue === 'world.town.wake').length, 1);
+  app.returnToMenu(); app.dispose?.();
+}
+
+console.log('PASS world-job: real Duel inputs, fire, F out/in, saved loadout cleanup, town Ash Men, sound cues and ending hold');

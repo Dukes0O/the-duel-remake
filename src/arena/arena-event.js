@@ -16,10 +16,12 @@ import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
   stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
+import {activeTalkStep} from '../world/jobs/steps/talk.js';
 import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, worldJobPilotGoal, prepareWorldJobControls} from './modes/world-job.js';
 import {stepRaiders} from '../raiders.js';
 import {sweepObstacle} from '../collision.js';
 import {armorDamageFor} from '../combat-armor.js';
+import {scablandsGround, scablandsLanded} from '../sim-scablands.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
@@ -92,7 +94,10 @@ export function placeActor(duel, actor, pose, speedMph = 0) {
   actor.steerVisual = 0; actor.drifting = false; actor.boosting = false;
   actor.airborne = false; actor.airHeight = 0; actor.prevAirHeight = 0; actor._jumpY = null;
   actor._verticalSpeed = 0; actor._jumpOrigin = null; actor._ramVerticalSpeed = 0;
-  actor.groundHeight = null; actor.prevGroundHeight = null; actor.terrainPitch = null;
+  // A caller placing a car on a lower floor supplies its height. Without one,
+  // support chooses the upper floor on the next step as before.
+  actor.groundHeight = Number.isFinite(pose.height) ? pose.height : null;
+  actor.prevGroundHeight = actor.groundHeight; actor.terrainPitch = null;
   actor.terrainRoll = null; actor.tumble = null; actor.impactTimer = 0;
   actor._arenaWatch = null; actor._arenaReverseSec = 0; actor._arenaGraceSec = 0; actor._arenaUTurn = 0;
   actor.knock = null;
@@ -219,7 +224,7 @@ function finish(duel, reason, winnerId = null) {
   state.status = 'arena_result';
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
-  duel._callout(arena.mode === 'world-job' ? 'JOB COMPLETE / YOU WIN' : arena.mode === 'ambush-alley' ?
+  duel._callout(arena.mode === 'world-job' && reason === 'rider-fight-lost' ? 'THE RIDERS WON' : arena.mode === 'world-job' ? 'JOB COMPLETE / YOU WIN' : arena.mode === 'ambush-alley' ?
     winnerId === 'player' ? 'AMBUSH ALLEY / YOU WIN' : 'THE FORT FELL' : winner.id === 'player' ?
     arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
       arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' :
@@ -286,7 +291,23 @@ function stepWreckedActor(duel, actor, dt) {
 export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
   const ambush = arena.mode === 'ambush-alley';
+  const scablands = !!duel.course.def.scablands;
+  if (activeTalkStep(state)) {
+    const decision = stepWorldJob(duel, 0);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   state.stageTimeSec += dt; state.totalTimeSec += dt;
+  if (arena.mode === 'world-job' && (arena.worldJob?.arrivalHold || arena.worldJob?.job.stepState.townEnding)) {
+    state.speedMph = 0; state.pushVelocity = 0;
+    if (arena.worldJob.job.stepState.townEnding && state.fighter) {
+      state.fighter.speed = 0;
+      state.fighter.flaming = false;
+    }
+    const decision = stepWorldJob(duel, dt);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   if (state.crashFlash > 0) state.crashFlash = Math.max(0, state.crashFlash - dt);
   state.invulnerableSec = Math.max(0, state.invulnerableSec - dt);
   state.damageCooldown = Math.max(0, state.damageCooldown - dt);
@@ -328,13 +349,16 @@ export function stepArenaEvent(duel, dt) {
     if (!onFoot || state.airborne || state.knock || state.tumble ||
         Math.abs(state.speedMph) > .1 || Math.abs(state.pushVelocity || 0) > .001) {
       duel._drive(dt);
+      if (scablands) scablandsGround(duel, state, dt);
       duel._jump(state, dt);
+      if (scablands) scablandsLanded(duel, state);
     } else { state.prevS = state.s; state.prevLateral = state.lateral; }
     containInArena(duel, state, dt);
   }
   // A warlord's think may add or burst decoy cars: step a snapshot and skip any that left.
   for (const actor of [...state.opponents]) {
-    if (!state.opponents.includes(actor) || ambush && actor.finished) continue;
+    if (!state.opponents.includes(actor) || ambush && actor.finished || actor.roadRider?.phase === 'home') continue;
+    if (actor.roadRider?.phase === 'wrecked') { stepWreckedActor(duel, actor, dt); continue; }
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
@@ -351,14 +375,16 @@ export function stepArenaEvent(duel, dt) {
       containInArena(duel, actor, dt);
       continue;
     }
-    const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor) : null;
+    const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor, dt) : null;
     const pilotGoal = goal || thinkBrain(duel, participant, actor, dt);
     if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
       continue;
     }
     pilotStep(duel, actor, pilotGoal, dt);
+    if (scablands) scablandsGround(duel, actor, dt);
     if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
+    if (scablands) scablandsLanded(duel, actor);
     containInArena(duel, actor, dt);
   }
   duel._collisions();
@@ -400,6 +426,12 @@ export function stepArenaEvent(duel, dt) {
   if (fuelDecision) { finish(duel, fuelDecision.reason, fuelDecision.winnerId); return; }
   if (ambushDecision) { finish(duel, ambushDecision.reason, ambushDecision.winnerId); return; }
   if (worldJobDecision) { finish(duel, worldJobDecision.reason, worldJobDecision.winnerId); return; }
-  if (!ambush) for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
+  if (!ambush) for (const actor of respawns) {
+    const fight = arena.worldJob?.riderFight;
+    const lostTarget = fight?.outcome === 'lost' && fight.index === arena.worldJob.job.stepIndex &&
+      (actor === state || actor.arenaId === fight.targetId);
+    if (actor.roadRider || lostTarget || actor === state && arena.worldJob?.night2?.washCarUnavailable) continue;
+    respawn(duel, arenaParticipant(duel, actor), actor);
+  }
   stepClock(duel, dt);
 }

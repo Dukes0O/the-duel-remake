@@ -6,3 +6,20 @@
 .yard-home-content{min-height:0;max-height:50vh;overflow-y:auto;overflow-x:hidden}.yard-home-intro{font-size:14px;line-height:1.55}.yard-home-message{min-height:18px;color:#f3bd77;font-size:13px}.yard-home-panel footer{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.yard-home-panel .garage-panel{width:auto;margin:0;padding:12px;background:#1c2522;border:1px solid #605b4d}.yard-home-panel .garage-panel[role="dialog"]{box-shadow:none}.yard-home-panel .shop-heading{flex-wrap:wrap}
 .yard-home-panel .crew-grid,.yard-home-panel .upgrade-grid,.yard-home-panel .armory-loadout-grid,.yard-home-panel .kit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .yard-home-panel .crew-card,.yard-home-panel .upgrade-card,.yard-home-panel .kit-card{min-width:0}.yard-home-panel .crew-card h3{overflow-wrap:anywhere}
+
+.yard-home-panel.story-replay {
+  width: min(820px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  margin: auto;
+  padding: clamp(12px, 3vw, 28px);
+  overflow: auto;
+}
+.story-replay h3 { margin: 0 0 .8em; }
+.story-replay-comparison { min-height: 0; overflow: auto; }
+.story-replay-comparison:focus-visible { outline: 2px solid #f3c565; outline-offset: -2px; }
+.story-replay table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.story-replay th, .story-replay td { padding: .45em .7em; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.story-replay th, .story-replay tr + tr td { border-bottom: 1px solid #dda75055; }
+.story-replay td + td, .story-replay th + th { border-inline-start: 1px solid #dda75055; }
+.story-replay-warning { margin: .75em 0 0; color: #f7d8a3; font-weight: bold; }
+.story-replay footer { flex-shrink: 0; }

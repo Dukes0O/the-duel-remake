@@ -1,3 +1,64 @@
+import {scablandsActorHeightAt, scablandsDeckRoofAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+
+// Keep the landing in sight during a fall, then return to the usual view in half a second.
+export function scablandsLandingCamera(course, position, target, car, heading, back, height, airHeight, airborne, blend, dt, groundAt) {
+  if (!course.def?.scablands) return 0;
+  const next = airHeight > 3 ? 1 : airborne ? blend : Math.max(0, blend - Math.max(0, dt) / .5);
+  if (!next) return 0;
+  const sin = Math.sin(heading), cos = Math.cos(heading);
+  const x = car.x + sin * 20, z = car.z + cos * 20;
+  const ground = groundAt(x, z);
+  position.x += (car.x - sin * back - position.x) * next;
+  position.z += (car.z - cos * back - position.z) * next;
+  position.y += (Math.max(position.y, car.y + height) - position.y) * next;
+  position.y = Math.max(position.y, car.y);
+  target.x += (x - target.x) * next;
+  target.y += (ground - target.y) * next;
+  target.z += (z - target.z) * next;
+  return next;
+}
+
+// Keep the camera over the visible ground, while using the car's floor under a roof.
+export function raiseScablandsCamera(course, position, car, feet, drawnHeightAt) {
+  if (!course.def?.scablands || !Number.isFinite(feet) || !drawnHeightAt) return false;
+  const tunnels = course.groundTunnels;
+  const carBore = tunnels?.tubeAt(car, feet, .6);
+  const cameraBore = carBore && tunnels.tubeAt(position, feet, .6);
+  let ground;
+  if (cameraBore) {
+    ground = cameraBore.floor;
+  } else {
+    ground = drawnHeightAt(position.x, position.z);
+    // On a deck the drawn river bed is below the car's actual floor.
+    if (!Number.isFinite(scablandsDeckRoofAt(position.x, position.z, feet)))
+      ground = Math.max(ground, scablandsActorHeightAt(position.x, position.z, feet));
+  }
+  if (!Number.isFinite(ground) || position.y >= ground + 1.2) return false;
+  position.y = ground + 1.2;
+  return true;
+}
+
+// Keep the chase view on the car's floor. Ordinary ground keeps its old path.
+export function constrainScablandsCamera(course, position, car, feet) {
+  if (!course.def?.scablands || !Number.isFinite(feet)) return false;
+  let changed = false;
+  const tunnels = course.groundTunnels;
+  const bore = tunnels?.tubeAt(car, feet, .6);
+  if (bore && Math.abs(tunnels.groundAt(car, feet, scablandsSurfaceHeightAt(car.x, car.z)) - bore.floor) < 1e-6) {
+    const start = {x: car.x, y: feet, z: car.z};
+    const end = {x: position.x, y: feet, z: position.z};
+    const limited = tunnels.constrainMotion(start, end, .3);
+    if (limited.hit) { position.x = limited.position.x; position.z = limited.position.z; changed = true; }
+    const atCamera = tunnels.tubeAt(position, feet, .6);
+    if (atCamera && position.y > atCamera.ceiling - .3) {
+      position.y = atCamera.ceiling - .3; changed = true;
+    }
+  }
+  const roof = scablandsDeckRoofAt(position.x, position.z, feet);
+  if (position.y > roof - .3) { position.y = roof - .3; changed = true; }
+  return changed;
+}
+
 // The tunnel roof is an elliptical arch above 3.6 m vertical side walls.
 // Apply this after camera damping as well as to its target: otherwise a tall
 // camera can interpolate through the roof on the first frame inside a portal.
@@ -56,4 +117,16 @@ export function selectCameraAim(projected,forward,body) {
   const inside=[projected.x,projected.y,projected.z].every(Number.isFinite)&&
     Math.abs(projected.x)<=1&&Math.abs(projected.y)<=1&&projected.z>=-1&&projected.z<=1;
   return inside?forward:body;
+}
+
+// Keep the standing camera above any solid it would otherwise occupy.
+export function raiseCameraOutOfSolids(position, solids) {
+  for (const solid of solids) {
+    const dx = position.x - solid.x, dz = position.z - solid.z;
+    const cos = Math.cos(solid.heading || 0), sin = Math.sin(solid.heading || 0);
+    const x = dx * cos - dz * sin, z = dx * sin + dz * cos;
+    if (Math.abs(x) <= solid.halfX + .3 && Math.abs(z) <= solid.halfZ + .3 &&
+        position.y >= solid.y - .3 && position.y <= solid.y + solid.height + .3)
+      position.y = solid.y + solid.height + .3;
+  }
 }

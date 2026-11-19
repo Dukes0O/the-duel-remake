@@ -2,6 +2,7 @@
 // formulas follow LAB-CLASSROOM-LANGUAGE.md). Teaching state only, no DOM and no saves. Every weight and lift on screen
 // comes from padForces(), which reads the helicopter's own flight rules (heliMass, availableThrust) with a full tank.
 import {GRAVITY, KESTREL, PAD, padForces} from '../benches/lift-pad.js';
+import {MORE} from '../classroom/brian-text.js';
 
 const forces = load => padForces({fuel: KESTREL.tankKg, crates: load.crates ?? 0, car: load.car ?? 0}, 0);
 export const weightOf = load => forces(load).massKg;
@@ -481,14 +482,14 @@ export function createModel() {
     const base = {scene: 'pad', time: m.time, flight: m.f ? drawn(m.f) : null, sets: m.sets?.map(drawn) ?? null, formulas: [], keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null,
       waiting: false, ready: seen.has(id), gauge: false, readouts: false, stock: false, leverRow: true, blade: false};
     if (id === 'wonder') return {...base, scene: 'wonder', actions: ['replay'],
-      say: 'This helicopter is called Kestrel One. A load is whatever hangs from the helicopter’s cable, and here the load is a rally car called the Dusthawk and three crates. The engine is at full power, but the load does not leave the ground. Then two crates are taken off, and the rest of the load rises. Why did taking crates off make the difference?',
+      say: `This helicopter is called Kestrel One. A load is whatever hangs from the helicopter’s cable, and here the load is a rally car called the Dusthawk and three crates. The engine is at full power, but the load does not leave the ground.${MORE}Then two crates are taken off, and the rest of the load rises. Why did taking crates off make the difference?`,
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the load on the pad.',
       hints: ['Watch what happens when the crates come off.', 'With two crates fewer, the load is lighter, and the helicopter can lift it.', 'Press Enter when you are ready to find out why.']};
     if (id === 'word-weight') {
       const done = m.f.crates > 0;
       return {...base, readouts: 'weight', stock: 'crates', keys: done ? {} : {1: 'crate:add'}, waiting: !done, target: done ? null : 'crate:add', glow: done ? null : 'crate:add', leverRow: false,
         formulas: [massSum(m.f, true), newtonSum(m.f, true)],
-        say: `Mass is how much matter an object contains, and we measure it in kilograms, written kg. Weight is how hard the Earth pulls on that mass. Weight is a force, which means a push or a pull, and scientists measure forces in newtons, written N. The Earth pulls on each kilogram with a force of 9.81 N, so a greater mass has a greater weight. The pull on every kilogram is the same, so a weighing scale can show a weight in kilograms, and this game does that too. When we say that a helicopter weighs ${kg(OWN_KG)}, we mean the pull of the Earth on ${kg(OWN_KG)} of mass. That is the weight of Kestrel One with its pilot and a full tank of fuel, standing on this weighing pad.`,
+        say: `Mass is how much matter an object contains, and we measure it in kilograms, written kg. Weight is how hard the Earth pulls on that mass. Weight is a force, which means a push or a pull, and scientists measure forces in newtons, written N.${MORE}The Earth pulls on each kilogram with a force of 9.81 N, so a greater mass has a greater weight. The pull on every kilogram is the same, so a weighing scale can show a weight in kilograms, and this game does that too. When we say that a helicopter weighs ${kg(OWN_KG)}, we mean the pull of the Earth on ${kg(OWN_KG)} of mass. That is the weight of Kestrel One with its pilot and a full tank of fuel, standing on this weighing pad.`,
         prompt: done ? 'Press Enter to continue.' : 'Click the crates to put one on the weighing pad, or press 1.',
         hints: done ? DONE : ['The crates are stacked on the right of the pad.', 'Click the crates, or press 1.', 'Watch my pointer. I will put a crate on the pad.']};
     }
@@ -496,7 +497,7 @@ export function createModel() {
       const done = m.f.lift > 0;
       return {...base, readouts: 'lift', keys: done ? {} : {Space: 'rotor'}, waiting: !done, target: done ? null : 'rotor', glow: done ? null : 'rotor', air: done, forces: done, blade: true, leverRow: false,
         formulas: [kgPushSum(m.f), padSum(m.f)],
-        say: 'The rotor is the set of long blades on top of the helicopter. Each blade is tilted a little, like a hand held out of a car window, so the spinning blades throw air downward. When one object pushes on another, the second object pushes back just as hard in the opposite direction, which is a rule of physics called Newton’s third law. The rotor pushes the air down, so the air pushes the rotor up, and that upward push is called lift. We give lift in kilograms too, so that we can compare it with weight. A lift of 500 kg is a push that could hold up a mass of 500 kg.',
+        say: `The rotor is the set of long blades on top of the helicopter. Each blade is tilted a little, like a hand held out of a car window, so the spinning blades throw air downward. The rotor pushes the air down, so the air pushes the rotor up, and that upward push is called lift.${MORE}When one object pushes on another, the second object pushes back just as hard in the opposite direction, which is a rule of physics called Newton’s third law. We give lift in kilograms too, so that we can compare it with weight. A lift of 500 kg is a push that could hold up a mass of 500 kg.`,
         prompt: done ? 'Press Enter to continue.' : 'Click the rotor to start it, or press Space.',
         hints: done ? DONE : ['The rotor is on top of Kestrel One.', 'Click the rotor, or press Space.', 'Watch my pointer. I will start the rotor.']};
     }
@@ -504,7 +505,7 @@ export function createModel() {
       const done = seen.has(id);
       return {...base, readouts: 'lift', gauge: 'plain', air: true, forces: true, blade: true, keys: LEVER_KEYS, repeat: REPEAT, waiting: !done, target: done ? null : 'lever:mark', glow: done ? null : 'lever:up', mark: 2 * NOTCH_KG,
         formulas: [pushSum(m.f, true), mostSum(), padSum(m.f)],
-        say: 'The collective lever, which we will simply call the lever, sits by the pilot’s left hand, and the pilot uses it to control the lift. Raising the lever tilts every blade of the rotor more steeply, all at the same moment, which is why it is called collective. A more steeply tilted blade throws more air down each second, so the air pushes back harder and the lift grows. Lowering the lever flattens the blades, and the lift falls. The engine supplies the extra power that this needs. The scale beside the lever shows the lift in kilograms, and at the top stop the rotor is pushing as hard as it can. In this lesson, W raises the lever and S lowers it, and the same is true in the helicopter’s Real flying. In its Assisted flying, W asks for a climb, S asks for a descent, and the helicopter moves the lever for you.',
+        say: `The collective lever, which we will simply call the lever, sits by the pilot’s left hand, and the pilot uses it to control the lift. Raising the lever tilts every blade of the rotor more steeply, all at the same moment, which is why it is called collective.${MORE}A more steeply tilted blade throws more air down each second, so the air pushes back harder and the lift grows. Lowering the lever flattens the blades, and the lift falls. The engine supplies the extra power that this needs. The scale beside the lever shows the lift in kilograms, and at the top stop the rotor is pushing as hard as it can. In this lesson, W raises the lever and S lowers it, and the same is true in the helicopter’s Real flying. In its Assisted flying, W asks for a climb, S asks for a descent, and the helicopter moves the lever for you.`,
         prompt: done ? 'Press Enter to continue, or keep moving the lever with W and S and watch the sums change.' : `Pull the lever up to the ${kg(2 * NOTCH_KG)} mark by dragging it, or press W (or ↑).`,
         hints: done ? DONE : ['The lever is on the left of the board, with kilograms up its side.', `Press W until the lever reaches the ${kg(2 * NOTCH_KG)} mark, or drag the handle up to it.`, 'Watch my pointer. I will move the lever to the mark.']};
     }
@@ -512,7 +513,7 @@ export function createModel() {
       const done = seen.has(id), above = m.f.lift > OWN_KG + .5;
       return {...base, readouts: 'both', gauge: 'weight', air: true, forces: true, keys: LEVER_KEYS, repeat: REPEAT, waiting: !done, target: done ? null : 'lever:weight', glow: done ? null : 'lever:weight',
         formulas: [pushSum(m.f), hoverSum(m.f, {note: true}), extraSum(m.f, true)],
-        say: 'To hover is to stay still in the air. Two forces act on the helicopter, lift pushing it up and weight pulling it down. When lift is exactly as great as weight, the two forces cancel each other, so no force is left over to move the helicopter, and it stays where it is. The red line on the lever’s scale marks the helicopter’s weight, so with the lever on that line, lift equals weight.',
+        say: `To hover is to stay still in the air. Two forces act on the helicopter, lift pushing it up and weight pulling it down. The red line on the lever’s scale marks the helicopter’s weight, so with the lever on that line, lift equals weight.${MORE}When lift is exactly as great as weight, the two forces cancel each other, so no force is left over to move the helicopter, and it stays where it is.`,
         prompt: done ? 'Press Enter to continue, or keep moving the lever with W and S and watch the sums change.' : 'Move the lever onto the red line. Press W (or ↑) to raise it, press S (or ↓) to lower it, or drag it.',
         hints: done ? DONE : ['Find the red line on the lever’s scale, which marks the helicopter’s weight.', above ? 'Press S until the lever comes back down to the red line.' : 'Press W until the lever reaches the red line, or drag the handle onto it.', 'Watch my pointer. I will move the lever to the red line.']};
     }
@@ -539,7 +540,7 @@ export function createModel() {
       const f = m.f, ended = seen.has(id);
       return {...base, readouts: 'both', gauge: 'weight', air: f.lift > 0, forces: true, stock: 'all', keys: {...LOAD_KEYS, ...LEVER_KEYS, Space: 'go'}, repeat: REPEAT, buttons: FREE_BUTTONS, target: 'set:best', waiting: !ended,
         formulas: [massSum(f), newtonSum(f), pushSum(f), extraSum(f), hoverSum(f)], freeTable: m.rows,
-        say: m.say || `Now you can experiment. Press 1 and 2 to add and remove crates, press 3 to hang the Dusthawk from the cable or take it off, and press W and S to move the lever. Watch the sums change as you do, and predict what the helicopter will do. Then press Space to write the result in the table. Test at least ${FREE_TRIES} different settings, so that you can compare them.`,
+        say: m.say || `Now you can experiment. Press 1 and 2 to add and remove crates, press 3 to hang the Dusthawk from the cable or take it off, and press W and S to move the lever. Test at least ${FREE_TRIES} different settings, so that you can compare them.${MORE}Watch the sums change as you do, and predict what the helicopter will do. Then press Space to write the result in the table.`,
         prompt: ended ? 'Press Enter to continue, or test another setting.' : `Change the load or the lever, then press Space to test the setting. Different settings tested so far: ${m.tested.size} of ${FREE_TRIES}.`,
         hints: ['Press Space to test the setting as it is now.', 'Try a load at the red line, then the same load with the lever above or below the line.', 'Watch my pointer. I will set a load and a lever that you have not tested yet, and test them.']};
     }

@@ -32,6 +32,12 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
   for (const shape of reservedShapes) validShape(shape);
   let chunks = new Map();
   const numericSeed = Number.isFinite(seed) ? seed | 0 : 1;
+  let revision = 0, loadedRevision = 0;
+  const editHistory = new Array(2048);
+  const markChanged = shape => {
+    revision++;
+    editHistory[revision % editHistory.length] = {revision, ...shape};
+  };
 
   const chunkKey = (cx, cz) => `${cx},${cz}`;
   function sampleAt(x, z, create = false) {
@@ -69,13 +75,50 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     return naturalHeight(x, z) + north * (1 - tz) + south * tz;
   }
 
-  function cut(shape, target, maxVolume = Infinity) {
+  // Use the same seeded layers as cut(), including material placed above
+  // the natural surface. Coordinates select the same one-metre ground cell.
+  function materialAt(x, y, z) {
+    if (![x, y, z].every(finite)) throw new TypeError('Material coordinates must be finite.');
+    const sx = Math.floor(x), sz = Math.floor(z);
+    const natural = naturalHeight(sx, sz);
+    const sample = sampleAt(sx, sz);
+    if (sample && y > natural && sample.chunk.delta[sample.index] > 0)
+      return GROUND_MATERIALS[sample.chunk.material[sample.index]];
+    const depth = Math.max(0, natural - y), roll = hash(numericSeed, sx, sz);
+    const topsoilEnd = 1 + roll, clayEnd = topsoilEnd + 2 + roll * 2;
+    const gravelEnd = clayEnd + 4 + roll * 3;
+    return depth < topsoilEnd ? 'topsoil' : depth < clayEnd ? 'clay' :
+      depth < gravelEnd ? 'gravel' : 'rock';
+  }
+
+  function cut(shape, target, maxVolume = Infinity, bore = null) {
     validShape(shape);
     if (!finite(target)) throw new TypeError('Cut target must be a finite height.');
     if (!(maxVolume >= 0)) throw new TypeError('Cut volume limit must be non-negative.');
+    if (bore !== null && (!bore || !finite(bore.length) || bore.length < 0))
+      throw new TypeError('An underground cut needs a non-negative length.');
     const reason = refusal(shape);
     if (reason) return emptyResult(reason);
     const result = emptyResult();
+    if (bore !== null) {
+      // The tunnel segments own the void. Do not lower the surface above it.
+      // Sample equal-area strips across the circular face for the land's layers.
+      const volume = Math.min(Math.PI * shape.radius ** 2 * bore.length, maxVolume);
+      const strips = 32;
+      let weightSum = 0;
+      const weights = [];
+      for (let i = 0; i < strips; i++) {
+        const offset = (2 * (i + 0.5) / strips - 1) * shape.radius;
+        const weight = Math.sqrt(shape.radius ** 2 - offset ** 2);
+        weights.push({offset, weight});
+        weightSum += weight;
+      }
+      for (const {offset, weight} of weights)
+        result.volumes[materialAt(shape.x, target + offset, shape.z)] += volume * weight / weightSum;
+      result.volume = volume;
+      result.looseVolume = volume * BULKING;
+      return result;
+    }
     const minX = Math.ceil(shape.x - shape.radius), maxX = Math.floor(shape.x + shape.radius);
     const minZ = Math.ceil(shape.z - shape.radius), maxZ = Math.floor(shape.z + shape.radius);
     for (let z = minZ; z <= maxZ; z++) for (let x = minX; x <= maxX; x++) {
@@ -104,6 +147,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       result.volume += removed;
     }
     result.looseVolume = result.volume * BULKING;
+    if (result.volume > 0) markChanged(shape);
     return result;
   }
 
@@ -129,6 +173,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       chunk.delta[index] += each;
       chunk.material[index] = id;
     }
+    markChanged(shape);
     result.volumes[material] = compacted;
     result.volume = compacted;
     result.looseVolume = volume;
@@ -156,8 +201,24 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       nextChunks.set(chunkKey(row.x, row.z), {x: row.x, z: row.z, delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
     }
     chunks = nextChunks;
+    loadedRevision = ++revision;
   }
 
-  return Object.freeze({heightAt, cut, fill, refusal, toSave, loadSave, get chunkCount() { return chunks.size; },
+  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave,
+    hasChunkAt(x, z) { return chunks.has(chunkKey(Math.floor(x / CHUNK_METRES), Math.floor(z / CHUNK_METRES))); },
+    get revision() { return revision; },
+    changedAlongSince(since, position, distance) {
+      if (since < loadedRevision || revision - since > editHistory.length) return true;
+      const dx = Math.sin(position.heading), dz = Math.cos(position.heading);
+      for (let r = revision; r > since; r--) {
+        const edit = editHistory[r % editHistory.length];
+        if (!edit || edit.revision !== r) return true;
+        const x = edit.x - position.x, z = edit.z - position.z;
+        const along = clamp(x * dx + z * dz, 0, distance);
+        if (Math.hypot(x - dx * along, z - dz * along) <= edit.radius + 4) return true;
+      }
+      return false;
+    },
+    get chunkCount() { return chunks.size; },
     get saveByteLength() { return chunks.size * SAMPLE_COUNT * 5 + chunks.size * 8 + 16; }});
 }

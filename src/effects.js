@@ -97,6 +97,7 @@ export function createDrivingEffects() {
   let previousAirborne = false, peakAirHeight = 0, previousCourse;
   let previousMarkContacts = null;
   let previousCrushSerial = 0;
+  let groundDust = null, groundDustHex = null;
   let liveParticles=0,liveMarks=0,liveChips=0,emitted=false,marksAdded=false,chipsAdded=false;
 
   function emit(x, y, z, vx, vy, vz, type, strength = 1, contact = null) {
@@ -118,22 +119,30 @@ export function createDrivingEffects() {
     color[n] = (type === 2 ? 3.4 : type === 1 ? .45 : .72) * shade;
     color[n + 1] = (type === 2 ? 1.8 : type === 1 ? .31 : .49) * shade;
     color[n + 2] = (type === 2 ? .32 : type === 1 ? .18 : .28) * shade;
+    // In the Scablands the dust takes the colour of the ground the car is on (the sim names it, src/world/scablands-regions.js).
+    if(type===0&&groundDust){color[n]=groundDust.r*shade;color[n+1]=groundDust.g*shade;color[n+2]=groundDust.b*shade;}
     if(type===3){color[n]=.72*shade;color[n+1]=.75*shade;color[n+2]=.78*shade;}
     if(type===4){color[n]=.19*shade;color[n+1]=.105*shade;color[n+2]=.045*shade;}
     if(type===5){color[n]=.75*shade;color[n+1]=.92*shade;color[n+2]=1.0*shade;}
     opacity[i] = type === 0 ? .28 * strength : .95;
   }
 
-  function update({ p, state, dt, now = 0, course = null }) {
+  function update({ p, state, dt, now = 0, course = null, drawnShift }) {
     if (!(dt > 0) || !p || !state) return;
     dt = Math.min(dt, .06);
     emitted=false;marksAdded=false;chipsAdded=false;
+    if ((state.groundDust ?? null) !== groundDustHex) {
+      groundDustHex = state.groundDust ?? null;
+      groundDust = groundDustHex === null ? null : {r: (groundDustHex >> 16 & 255) / 255 * 1.25, g: (groundDustHex >> 8 & 255) / 255 * 1.25, b: (groundDustHex & 255) / 255 * 1.25};
+    }
     const activeDrive = !state.status || state.status === 'racing' ||
       state.status === 'exploring' && state.muddyHollowDeparture?.departed === true;
     const speed = Math.abs(state.speedMph || 0), direction = state.speedMph < 0 ? -1 : 1, moving = speed > 9 && activeDrive;
     const heading = (p.heading || 0) + (state.headingError || 0) + (state.slipAngle || 0);
     const fx = Math.sin(heading), fz = Math.cos(heading), rx = Math.cos(heading), rz = -Math.sin(heading);
-    const ground = Number.isFinite(state.groundHeight)?state.groundHeight:p.y || 0, vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
+    const support = Number.isFinite(state.groundHeight)?state.groundHeight:p.y || 0;
+    const ownerShift=drawnShift?.forActor?.(state);
+    const ground = support+(ownerShift??drawnShift?.(p.x,p.z,support,undefined,group)??0), vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
     const roughness = Math.max(monster ? .65 : .2, state.roughness || 0);
     const airborne = !!state.airborne || !!state.tumble || (state.airHeight || 0) > .08;
     const dirt = !!state.offRoad || !!course?.def.arena || !!course?.def.offroad;
@@ -151,7 +160,7 @@ export function createDrivingEffects() {
       const point = vehicleGroundPoint(course, distance, lateral), surface = course.surfaceAt(distance, lateral);
       // Follow the same visible surface as the tires, including flattened
       // shortcut joins. Decals need only a small lift to avoid depth flicker.
-      return { x: point.x, y: point.y + (surface.road ? .009 : .026), z: point.z };
+      return { x: point.x, y: point.y + (ownerShift??drawnShift?.(point.x,point.z,point.y)??0) + (surface.road ? .009 : .026), z: point.z };
     };
     const roadContactAt = (distance, lateral) => {
       const center = surfacePoint(distance, lateral), front = surfacePoint(distance + .4, lateral), back = surfacePoint(distance - .4, lateral);

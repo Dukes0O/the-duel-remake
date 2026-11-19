@@ -132,7 +132,8 @@ async function play(c) {
   await new Promise(r => setTimeout(r, 1500));
   if (!(await c.evaluate(`(() => {
     const card = document.querySelector('.lab-key-idea').getBoundingClientRect();
-    return [...document.querySelectorAll('button,input,select,a[href]')].every(el => {
+    // The test page's own QA panel is not part of the game and is left out.
+    return [...document.querySelectorAll('button,input,select,a[href]')].filter(el => !el.closest('.qa-temporary-saves')).every(el => {
       const r = el.getBoundingClientRect();
       return !r.width || !r.height || r.right <= card.left || r.left >= card.right || r.bottom <= card.top || r.top >= card.bottom;
     });

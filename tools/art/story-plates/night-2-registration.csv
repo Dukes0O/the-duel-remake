@@ -1,0 +1,127 @@
+label,base_x,base_y,plate_x,plate_y
+rell crown,955,705,955,705
+rell feet,958,855,958,855
+rell left outline,927,774,927,774
+rell right outline,987,774,987,774
+dace crown,1067,722,1067,723
+dace feet,1063,844,1063,844
+dace left outline,1053,761,1053,761
+dace right outline,1082,760,1082,760
+wim crown,848,759,848,759
+wim feet,834,841,834,841
+wim left outline,830,799,830,799
+wim right outline,867,799,867,799
+walker-1 crown,819,709,818,710
+walker-1 feet,809,838,809,838
+walker-1 left outline,798,768,797,768
+walker-1 right outline,842,771,842,771
+walker-2 crown,714,718,713,718
+walker-2 feet,700,833,700,833
+walker-2 left outline,691,766,690,766
+walker-2 right outline,733,765,732,765
+walker-3 crown,1016,703,1016,703
+walker-3 feet,1003,835,1003,835
+walker-3 left outline,987,764,987,764
+walker-3 right outline,1041,769,1041,769
+walker-4 crown,1160,714,1159,714
+walker-4 feet,1175,837,1175,837
+walker-4 left outline,1142,773,1141,774
+walker-4 right outline,1183,775,1183,776
+walker-5 crown,1210,711,1209,711
+walker-5 feet,1221,828,1221,828
+walker-5 left outline,1197,765,1196,765
+walker-5 right outline,1224,762,1224,763
+walker-6 crown,788,720,787,721
+walker-6 feet,774,828,773,828
+walker-6 left outline,767,762,766,762
+walker-6 right outline,806,761,805,761
+walker-7 crown,892,706,892,706
+walker-7 feet,908,823,908,823
+walker-7 left outline,871,764,871,764
+walker-7 right outline,915,763,915,763
+walker-8 crown,1095,715,1095,716
+walker-8 feet,1089,819,1089,819
+walker-8 left outline,1083,761,1083,761
+walker-8 right outline,1108,759,1108,759
+walker-1 cart top,808,770,807,770
+walker-1 cart ground contact,812,849,812,849
+walker-1 cart outer left,799,825,799,825
+walker-1 cart outer right,897,807,897,807
+walker-3 cart top,989,769,989,769
+walker-3 cart ground contact,1045,846,1045,846
+walker-3 cart outer left,963,835,963,835
+walker-3 cart outer right,1050,824,1050,824
+walker-6 cart top,777,772,776,772
+walker-6 cart ground contact,769,837,768,837
+walker-6 cart outer left,762,817,761,817
+walker-6 cart outer right,845,820,845,820
+walker-8 cart top,1102,765,1102,765
+walker-8 cart ground contact,1105,827,1105,827
+walker-8 cart outer left,1035,792,1035,792
+walker-8 cart outer right,1115,809,1115,809
+left lamp cord,535,97,532,98
+left lamp bulb tip,532,241,530,238
+left lamp shade left,495,203,495,205
+left lamp shade right,566,209,563,208
+middle lamp cord,943,92,942,93
+middle lamp bulb tip,943,238,944,237
+middle lamp shade left,907,205,908,207
+middle lamp shade right,979,205,978,207
+right lamp cord,1357,87,1358,89
+right lamp bulb tip,1360,234,1361,234
+right lamp shade left,1325,202,1328,204
+right lamp shade right,1399,200,1398,206
+gate left top flange outside,71,66,68,67
+gate left inside top knee,455,125,454,126
+gate left upper drum clip,199,171,196,170
+gate left upper opening knee,420,168,418,169
+gate left middle rail inner,431,452,431,452
+gate left red drum rim,176,452,174,454
+gate left lower rail at upright,383,713,383,714
+gate left pier inner sole,412,902,414,907
+gate left pier front sole,266,949,273,953
+gate right inside top knee,1443,125,1442,127
+gate right top inside cut,1763,86,1764,86
+gate right upper opening knee,1451,155,1450,157
+gate right middle upright outer edge,1469,452,1468,452
+gate right drum join,1746,609,1747,611
+gate right lower rail at upright,1520,711,1520,713
+gate right pier inner sole,1491,906,1489,908
+gate right pier front sole,1626,955,1618,958
+gate left beam over cord,536,97,534,98
+gate middle beam over cord,943,92,942,93
+gate right beam over cord,1355,87,1356,89
+left fence post cap,111,562,110,563
+left fence post foot,89,894,93,896
+right fence post cap,1798,556,1799,556
+right fence post foot,1820,899,1819,899
+shack visible metal high edge,341,671,344,673
+shack visible metal right edge,451,684,452,685
+shack visible metal lower edge,445,769,446,768
+near road and distant land at x597,597,716,597,716
+beam brace opening 1424,1424,44,1425,46
+beam brace opening 1338,1338,41,1339,43
+beam brace opening 1234,1234,46,1235,47
+beam brace opening 1138,1138,51,1139,52
+beam brace opening 1045,1045,48,1045,49
+beam brace opening 958,958,45,960,45
+beam brace opening 858,858,54,858,54
+beam brace opening 766,766,56,764,56
+beam brace opening 674,674,54,674,54
+beam brace opening 587,587,50,584,49
+beam brace opening 491,491,58,490,58
+beam brace opening 401,401,60,398,60
+far terrain skyline at x450,450,602,450,602
+far terrain skyline at x550,550,610,550,609
+far terrain skyline at x620,620,617,620,615
+far terrain skyline at x760,760,629,760,628
+far terrain skyline at x830,830,661,830,659
+far terrain skyline at x900,900,664,900,663
+far terrain skyline at x970,970,715,970,714
+far terrain skyline at x1040,1040,716,1040,716
+far terrain skyline at x1110,1110,714,1110,715
+far terrain skyline at x1180,1180,712,1180,714
+far terrain skyline at x1250,1250,709,1250,710
+far terrain skyline at x1320,1320,706,1320,710
+far terrain skyline at x1390,1390,703,1390,707
+far terrain skyline at x1450,1450,702,1450,706

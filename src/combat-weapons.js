@@ -54,9 +54,9 @@ export function arsenalWaveThreeEnabled(duel) {
 }
 
 // Road hazards and car effects also run in warlord fights, whose moves use
-// them before the arsenal is released (docs/ARSENAL.md, Switch).
+// them before the arsenal is released (docs/ARSENAL.md, Switch), and for a world job's thrown ash.
 export function hazardsActive(duel) {
-  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord';
+  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord' || !!duel.state.arena?.worldJob?.riderFight;
 }
 
 export function createCombat(levels) {
@@ -237,9 +237,11 @@ function fireCpuUfo(duel, actor, departure) {
 
 export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.rival) {
   const state = duel.state;
+  if (!enemy && state.arena?.worldJob?.arrivalHold) return false;
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
+  if (enemy && actor?.roadRider && (actor.roadRider.phase !== 'fighting' || actor.roadRider.weapon !== weapon)) return false;
   let target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
     ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
         !opponent.combatWrecking)

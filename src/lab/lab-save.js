@@ -2,7 +2,7 @@
 // Pure functions: a profile goes in and a new profile comes out; nothing is changed in place.
 // Every function needs the `lab` switch (pass `{flags}`); with it off the profile is returned as it was.
 import {CARS, COURSE} from '../config.js';
-import {LAB_LESSONS, FREE_REWARDS, TUNE_SETTING_OF, TUNNEL_LESSONS, lessonOpenState} from './lab-lessons.js';
+import {LAB_LESSONS, FREE_REWARDS, TUNE_SETTING_OF, TUNNEL_LESSONS, challengeOpenState} from './lab-lessons.js';
 
 export const LAB_SAVE_VERSION = 1;
 export const TUNE_SETTINGS = Object.freeze(['pressure', 'wing', 'brakes', 'springs', 'fuel']);
@@ -111,7 +111,7 @@ export function passLesson(profile, id, {flags, ring} = {}) {
   if (refusal) return refusal;
   const row = LAB_LESSONS.find(item => item.id === id);
   if (!row) return failure(profile, 'That lesson does not exist.');
-  const state = lessonOpenState(profile, id, flags);
+  const state = challengeOpenState(profile, id, flags);
   if (!state.open) return failure(profile, state.note);
   const next = {...lab, done: {...lab.done, [id]: true}, owned: {...lab.owned}};
   for (const reward of FREE_REWARDS[id] ?? []) next.owned[reward] = true;

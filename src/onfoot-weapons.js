@@ -3,6 +3,7 @@ import {targetFor,targetIdentity} from './arsenal/targeting.js';
 import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
+import {brandSwingReady} from './world/jobs/brand-rule.js';
 import {AMBUSH_RULES, ambushRepairTarget} from './arena/modes/ambush-alley.js';
 import {initializeCrewGear, crewGearEnabled, crewRpgTiming, selectSignatureGear,
   showSignatureGear, resetCrewGearUser, stepSignatureGear, restoreRpgTiming,
@@ -243,10 +244,28 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
 }
 
 export function stepFootWeapons(duel, dt) {
+  const state = duel.state;
+  if (!brandSwingReady(state) || !state.fighterInput?.fire) return stepFootWeaponInput(duel, dt);
+  // Let normal weapon upkeep stop a flame, but reserve this attack for the brand.
+  const input = state.fighterInput;
+  state.fighterInput = {...input, fire:false};
+  try {
+    return stepFootWeaponInput(duel, dt);
+  } finally {
+    state.fighterInput = input;
+  }
+}
+
+function stepFootWeaponInput(duel, dt) {
   const state = duel.state, fighter = state.fighter, weapons = state.footWeapons;
   if (!state.onFoot || !fighter || !weapons || !combatArmorEnabled(duel) ||
       state.status !== 'racing' || state.paused || !(dt > 0)) return;
   const input = state.fighterInput;
+  if (state.arena?.worldJob?.night2?.holstered) {
+    weapons.fireHeld = !!input.fire;
+    fighter.flaming = false;
+    return;
+  }
   const hit = fighter.knockedDown ||
     weapons.lastHealth !== null && fighter.health < weapons.lastHealth - EPSILON ||
     state.armor < weapons.lastArmor - EPSILON;

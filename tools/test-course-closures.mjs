@@ -17,14 +17,14 @@ const profileOn = (day, burnt = {}, extra = {}) => ({...createProfile(), credits
 const burntOn = (burnDay, today, boughtBack = false) => profileOn(today, {'tremblant-woods': {day: burnDay, boughtBack}});
 
 check('the closure numbers match the design', () => {
-  assert.deepEqual({...CLOSURE}, {closedDays: 10, buybackStart: 10_000, buybackPerDay: 1_000, healedDay: 60, scarHealedDay: 40});
+  assert.deepEqual({...CLOSURE}, {closedDays: 3, buybackStart: 3_000, buybackPerDay: 1_000, healedDay: 60, scarHealedDay: 40});
   assert.deepEqual(BURN_STAGES.map(row => [row.stage, row.from]), [['closed', 0], ['black', 10], ['shoots', 20], ['fireweed', 35], ['healed', 60]]);
   assert.deepEqual(SCAR_STAGES.map(row => [row.stage, row.from]), [['black', 0], ['shoots', 10], ['fireweed', 25], ['healed', 40]]);
 });
 
-check('closed for play days 0 to 9, open by itself on day 10', () => {
-  for (let days = 0; days < 10; days++) assert.equal(courseClosed(burntOn(4, 4 + days), 'tremblant-woods', undefined, on), true, 'day ' + days);
-  assert.equal(courseClosed(burntOn(4, 14), 'tremblant-woods', undefined, on), false);
+check('closed for play days 0 to 2, open by itself on day 3', () => {
+  for (let days = 0; days < 3; days++) assert.equal(courseClosed(burntOn(4, 4 + days), 'tremblant-woods', undefined, on), true, 'day ' + days);
+  assert.equal(courseClosed(burntOn(4, 7), 'tremblant-woods', undefined, on), false);
   assert.equal(courseClosed(burntOn(4, 90), 'tremblant-woods', undefined, on), false);
   assert.equal(courseClosed(burntOn(4, 6), 'tremblant-snow', undefined, on), false, 'Tremblant Snow stays open');
   assert.equal(courseClosed(burntOn(4, 6), 'panorama-ridge', undefined, on), false);
@@ -34,9 +34,9 @@ check('closed for play days 0 to 9, open by itself on day 10', () => {
   assert.equal(courseClosed(burntOn(4, 99), 'tremblant-woods', 5, on), true);
 });
 
-check('buyback costs 10,000 less 1,000 a play day, and nothing once open', () => {
-  const prices = Array.from({length: 11}, (_, days) => buybackPrice(burntOn(0, days), 'tremblant-woods', undefined, on));
-  assert.deepEqual(prices, [10_000, 9_000, 8_000, 7_000, 6_000, 5_000, 4_000, 3_000, 2_000, 1_000, null]);
+check('buyback costs 3,000 less 1,000 a play day, and nothing once open', () => {
+  const prices = Array.from({length: 4}, (_, days) => buybackPrice(burntOn(0, days), 'tremblant-woods', undefined, on));
+  assert.deepEqual(prices, [3_000, 2_000, 1_000, null]);
   assert.equal(buybackPrice(burntOn(0, 3, true), 'tremblant-woods', undefined, on), null, 'bought back');
   assert.equal(buybackPrice(profileOn(3), 'tremblant-woods', undefined, on), null, 'never burnt');
 });
@@ -50,6 +50,12 @@ check('the regrowth stages follow the play days since the burn, also after a buy
   assert.equal(burnStage(profileOn(5), 'tremblant-woods', undefined, on), null);
 });
 
+check('an old burn opens after five play days while its look stays burnt', () => {
+  const profile = burntOn(4, 9);
+  assert.equal(courseClosed(profile, 'tremblant-woods', undefined, on), false);
+  assert.equal(burnStage(profile, 'tremblant-woods', undefined, on), 'closed');
+});
+
 check('scars heal sooner and are drawn cell by cell', () => {
   const scars = [{courseId: 'tremblant-woods', day: 0, cells: [1, 2]}, {courseId: 'tremblant-woods', day: 20, cells: [3]},
     {courseId: 'tremblant-snow', day: 20, cells: [4]}];
@@ -61,16 +67,16 @@ check('scars heal sooner and are drawn cell by cell', () => {
 });
 
 check('the menu card shows days left, the price and what is short', () => {
-  const card = closureCard(burntOn(4, 7), 'tremblant-woods', undefined, {...on, credits: 6_550, name: 'Tremblant Woods'});
-  assert.deepEqual([card.closed, card.daysLeft, card.price, card.short], [true, 7, 7_000, 450]);
-  assert.deepEqual([...card.lines], ['Closed: burnt in a forest fire.', 'Reopens in 7 play days.']);
+  const card = closureCard(burntOn(4, 5), 'tremblant-woods', undefined, {...on, credits: 1_550, name: 'Tremblant Woods'});
+  assert.deepEqual([card.closed, card.daysLeft, card.price, card.short], [true, 2, 2_000, 450]);
+  assert.deepEqual([...card.lines], ['Closed: burnt in a forest fire.', 'Reopens in 2 play days.']);
   assert.equal(card.refusal, 'Tremblant Woods is closed after a forest fire.');
-  const last = closureCard(burntOn(4, 13), 'tremblant-woods', undefined, {...on, credits: 99_999});
+  const last = closureCard(burntOn(4, 6), 'tremblant-woods', undefined, {...on, credits: 99_999});
   assert.deepEqual([last.lines[1], last.price, last.short], ['Reopens in 1 play day.', 1_000, 0]);
-  const reopened = closureCard(burntOn(4, 14), 'tremblant-woods', undefined, on);
+  const reopened = closureCard(burntOn(4, 7), 'tremblant-woods', undefined, on);
   assert.deepEqual([reopened.closed, reopened.reopened, [...reopened.lines]], [false, true, ['Reopened after the fire.']]);
-  assert.equal(closureCard(burntOn(4, 15), 'tremblant-woods', undefined, on), null, 'the reopening note shows one play day');
-  assert.equal(closureCard(burntOn(4, 14, true), 'tremblant-woods', undefined, on), null, 'a course bought back has no reopening day');
+  assert.equal(closureCard(burntOn(4, 8), 'tremblant-woods', undefined, on), null, 'the reopening note shows one play day');
+  assert.equal(closureCard(burntOn(4, 7, true), 'tremblant-woods', undefined, on), null, 'a course bought back has no reopening day');
   assert.equal(closureCard(profileOn(3), 'tremblant-woods', undefined, on), null);
 });
 
@@ -90,8 +96,8 @@ check('with the switch off nothing is closed or burnt, whatever the save says', 
 check('each player has their own closures', () => {
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/saves/11-heli-fire.json', import.meta.url), 'utf8'));
   const [fire, other] = fixture.storage['the-duel-players-v2'].players.map(player => player.profile);
-  assert.equal(courseClosed(fire, 'panorama-ridge', undefined, on), true);
-  assert.equal(buybackPrice(fire, 'panorama-ridge', undefined, on), 7_000);
+  assert.equal(courseClosed(fire, 'panorama-ridge', 6, on), true);
+  assert.equal(buybackPrice(fire, 'panorama-ridge', 6, on), 1_000);
   assert.equal(courseClosed(other, 'panorama-ridge', undefined, on), false, "one player's burnt course is open for the other");
 });
 

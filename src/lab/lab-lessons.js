@@ -34,25 +34,42 @@ const doneOf = profile => {
 };
 
 // {open, note}: note says why a shut lesson is shut, and is '' when it is open.
+// LAB-OPEN-DOOR: a lesson is shut only when its switch is off. A player's helicopter lessons and driving lessons are not
+// read here; they are the conditions of the lesson's game challenge (challengeOpenState below).
 export function lessonOpenState(profile, id, flags) {
   const row = LAB_LESSONS.find(item => item.id === id);
   if (!row) return {open: false, note: 'That lesson does not exist.'};
   const on = name => flags?.enabled?.(name) === true;
   if (!on('lab')) return {open: false, note: 'The Lab is not available yet.'};
-  // A driving-lesson field from a newer game is not read, and never makes the board fail.
-  const driving = profile?.drivingLessons;
-  const taught = isObject(driving) && driving.version === 1 && normalizeDrivingLessons(driving).done.corner === true;
-  if (row.group === 'Flying') {
-    if (!on('helicopter')) return {open: false, note: 'Opens with the helicopter'};
-    const flown = heliOf(profile).lessons;
-    return HELI_LESSONS.every(name => flown[name] === true)
-      ? {open: true, note: ''} : {open: false, note: 'Finish the helicopter lessons first'};
-  }
+  if (row.group === 'Flying') return on('helicopter') ? {open: true, note: ''} : {open: false, note: 'Opens with the helicopter'};
   if (row.group === 'Snow')
     return on('helicopter') && on('heli-skiing') ? {open: true, note: ''} : {open: false, note: 'Opens with heli-skiing'};
-  if ((row.group === 'Wind tunnel' || row.id === 'gforce') && !taught)
-    return {open: false, note: 'Opens after driving lesson 1'};
   return {open: true, note: ''};
+}
+
+// What a lesson's challenge needs from the player. A Flying challenge flies Kestrel One, so it needs the four helicopter
+// lessons; a Wind tunnel challenge and the G-force lap are driven, so they need driving lesson 1. Both are one plain
+// sentence that also says where to go.
+export const CHALLENGE_NEEDS_HELI = 'This challenge needs the four helicopter lessons, so finish them first, at the HELIPAD button on the main menu.';
+export const CHALLENGE_NEEDS_DRIVING = 'This challenge needs driving lesson 1, so pass it first, at the INSTRUCTOR button on the main menu.';
+
+// {open, note}: the lesson's own state first, then the player's lessons. Passing a lesson also asks this, so a challenge
+// that is shut cannot pass a lesson.
+export function challengeOpenState(profile, id, flags) {
+  const state = lessonOpenState(profile, id, flags);
+  if (!state.open) return state;
+  const row = LAB_LESSONS.find(item => item.id === id);
+  if (row.group === 'Flying') {
+    const flown = heliOf(profile).lessons;
+    return HELI_LESSONS.every(name => flown[name] === true) ? state : {open: false, note: CHALLENGE_NEEDS_HELI};
+  }
+  if (row.group === 'Wind tunnel' || row.id === 'gforce') {
+    // A driving-lesson field from a newer game is not read, and never makes the board fail.
+    const driving = profile?.drivingLessons;
+    const taught = isObject(driving) && driving.version === 1 && normalizeDrivingLessons(driving).done.corner === true;
+    if (!taught) return {open: false, note: CHALLENGE_NEEDS_DRIVING};
+  }
+  return state;
 }
 
 // Rows for the shared board: {group, id, name, open, done, note}. Empty while the Lab is off.

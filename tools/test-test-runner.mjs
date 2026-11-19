@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {EventEmitter} from 'node:events';
 import {join,relative,sep} from 'node:path';
-import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,INSTRUCTOR_SUITE,INSTRUCTOR_SHARDS,LANE_GUARDS,SHARED_FILES,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
+import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,INSTRUCTOR_SUITE,INSTRUCTOR_SHARDS,LANE_GUARDS,SHARED_FILES,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,wideSuitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
 
 let checks=0;const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;},check=(value,label)=>{assert.ok(value,label);checks++;};
 same(LEGACY_SUITE_ORDER.length,80,'all 80 original package.json commands are retained');
@@ -12,12 +12,17 @@ same(new Set(LEGACY_SUITE_ORDER).size,80,'legacy suite order contains no duplica
 same(createHash('sha256').update(LEGACY_SUITE_ORDER.join('\n')).digest('hex'),'948bc2c6bb4aa171d73d10af114b079e10c87885c93a2799bd08ab3ba010a40b','migration preserves the exact complete legacy order');
 check(Object.isFrozen(LEGACY_SUITE_ORDER),'discovery cannot mutate the historical order');
 
-const defaults={list:false,help:false,filters:[],jobs:1,keepGoing:false,tier:null,changed:false,json:false};
+const defaults={list:false,help:false,filters:[],jobs:1,keepGoing:false,tier:null,changed:false,since:null,json:false};
 same(parseArguments([]),defaults,'default runs all suites');
 same(parseArguments(['--list','--filter','Reverse','--filter=HEIGHT']),{...defaults,list:true,filters:['reverse','height']},'listing and repeated case-insensitive filters compose');
 same(parseArguments(['--filter','  core  ','-h']),{...defaults,help:true,filters:['core']},'filter whitespace is normalized and short help works');
 same(parseArguments(['--tier','full','--jobs=8','--keep-going','--json']),{...defaults,tier:'full',jobs:8,keepGoing:true,json:true},'new full-run options compose');
+same(parseArguments(['--tier=lane','--since=HEAD']),{...defaults,tier:'lane',since:'HEAD'},'since selects the supplied commit');
 same(parseArguments(['--tier=lane','--changed','--jobs','2']),{...defaults,tier:'lane',changed:true,jobs:2},'lane change selection and separate jobs argument compose');
+same(parseArguments(['--tier','wide','--since','abc123','--jobs','4']),{...defaults,tier:'wide',since:'abc123',jobs:4},'the partial night tier compares with a commit');
+for(const args of [['--tier','wide'],['--tier=merge','--since=HEAD'],['--since=HEAD']]){
+  assert.throws(()=>parseArguments(args),/requires/,'wide needs a commit and only lane or wide takes one');checks++;
+}
 for(const args of [['--filter'],['--filter='],['--filter',' '],['--filter','--list'],['--unknown'],['reverse'],['--jobs'],['--jobs=0'],['--jobs=33'],['--jobs=abc'],['--tier'],['--tier=wrong'],['--tier','full','--changed']]){
   assert.throws(()=>parseArguments(args),/requires|Unknown argument|cannot narrow/,'malformed CLI input is rejected');checks++;
 }
@@ -102,7 +107,8 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
 
 // FAC-03: only proven native heavyweight suites leave daytime lane dispatch.
 {
-  const heavy=['tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
+  const heavy=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs','tools/test-arena-shove.mjs','tools/test-old-smoke.mjs','tools/test-field-battle.mjs',
+    'tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
     'tools/test-first-person-contact.mjs','tools/test-first-person-cloth.mjs','tools/test-first-person-polish.mjs',
     'tools/test-rustwall-p2-relief.mjs','tools/test-rook-p2-candidate.mjs',
     'tools/test-rustwall-p2.mjs','tools/test-rustwall-atlas-isolation.mjs',
@@ -124,8 +130,61 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'full/default plans remain byte-for-byte equal after daytime deferral');
   check(heavy.every(suite=>selectPlan(actual,{tier:'full'}).some(task=>task.suite===suite)),
     'the night full tier still runs every heavy suite');
+  // QA-NIGHT-SIZED: the partial night keeps the long suites a lane leaves to the night.
+  const wide=selectPlan(actual,{tier:'wide',affected:heavy});
+  check(heavy.every(suite=>wide.some(task=>task.suite===suite)),'the wide plan runs the long suites it picks');
+  check(wide.length<selectPlan(actual,{tier:'full'}).length,'the wide plan is smaller than the full tier');
+  check(LANE_GUARDS.every(suite=>wide.some(task=>task.suite===suite)),'the wide plan keeps the replay and world-signature guards');
+  check(selectPlan(actual,{tier:'wide',affected:[INSTRUCTOR_SUITE]}).filter(task=>task.suite===INSTRUCTOR_SUITE).length===INSTRUCTOR_SHARDS,
+    'the wide plan shards the instructor suite like the full tier');
+  const wideAll=new Set(selectPlan(actual,{tier:'wide',affected:actual}).map(task=>task.suite));
+  check(selectPlan(actual,{tier:'lane',affected:actual}).every(task=>wideAll.has(task.suite)),
+    'every suite a lane runs for the same pick is in the wide plan');
   same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
     'fully affected lane loses exactly the listed full-tier-only suites');
+}
+// QA-CHECKS-BY-CARD: explanations identify a changed file and survive JSON output.
+{
+  const suite='tools/test-everburn-easy.mjs',file='src/world/jobs/everburn.js';
+  const args=['--tier','lane','--list'];
+  const dependencies={discover:()=>[CORE_SUITE,suite],getChanges:()=>[file],
+    affected:(suites,paths)=>paths.includes(file)?suites.filter(name=>name===suite):[],
+    log:()=>{},error:()=>{}};
+  const messages=[];
+  same(await main(args,{...dependencies,log:message=>messages.push(message)}),0,'deferred list succeeds');
+  check(messages.includes(`Left to the night: ${suite} (picked by ${file})`),'plan names the file that picked a deferred suite');
+  const json=[];
+  await main([...args,'--json'],{...dependencies,log:message=>json.push(message)});
+  same(JSON.parse(json[0]).leftToTheNight,[{suite,pickedBy:file}],'JSON plan includes deferred suite and reason');
+  const run=[];
+  await main(['--tier','lane','--json'],{...dependencies,log:message=>run.push(message),
+    run:async()=>({exitCode:0,passed:1,failures:[],notRun:0,durationMs:0})});
+  same(JSON.parse(run[0]).leftToTheNight,[{suite,pickedBy:file}],'JSON run includes deferred suite and reason');
+}
+// Missing presentation readers must not claim an unrelated asset selected a suite.
+{
+  const suite='tools/test-everburn-easy.mjs',asset='public/assets/textures/pine-bough.png',file='src/world/jobs/everburn.js';
+  const messages=[];
+  const plan=async paths=>{messages.length=0;return main(['--tier','lane','--list'],{
+    discover:()=>[CORE_SUITE,suite],getChanges:()=>paths,log:message=>messages.push(message),error:()=>{}});};
+  same(await plan([asset,file]),0,'mixed presentation plan succeeds');
+  check(messages.includes(`Left to the night: ${suite} (picked by ${file})`),'real reader wins over missing presentation reader fallback');
+  same(await plan([asset]),0,'presentation fallback plan succeeds');
+  check(messages.includes(`Left to the night: ${suite} (picked by the change as a whole)`),'fallback alone names the change as a whole');
+}
+// The real dependency graph defers both long drives for a file that both import. It was src/world/jobs/everburn.js until
+// 18 November 2026, when the gas run's Medium check lost its case for the old job 4 and with it that import.
+{
+  const file='src/world/jobs/gas-run.js', deferred=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs'];
+  const impacted=suitesForChanges(actual,[file]);
+  check(deferred.every(suite=>impacted.includes(suite)),'the gas run alone picks both long drives');
+  check(deferred.every(suite=>!selectPlan(actual,{tier:'lane',affected:impacted}).some(task=>task.suite===suite)),
+    'the gas run in a lane defers both long drives');
+  const messages=[];
+  same(await main(['--list','--tier','lane','--changed'],{getChanges:()=>[file],log:message=>messages.push(message)}),0,
+    'Everburn lane plan succeeds');
+  check(deferred.every(suite=>messages.includes(`Left to the night: ${suite} (picked by ${file})`)),
+    'Everburn lane names both deferred drives and their cause');
 }
 // Instructor sampling uses the existing per-suite arguments, only in lane plans.
 {
@@ -298,6 +357,29 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same([...suitesForChanges(pathSuites,['src/b.js'],{...graphOptions,hubImports:1})],[],'a hub passes no change through it');
   same(suitesForChanges(pathSuites,['src/a.js'],{...graphOptions,hubImports:1}),['tools/test-deep.mjs'],'a hub that changes selects its importers');
   same(suitesForChanges(pathSuites,['src/c.js'],{...graphOptions,reach:3}),['tools/test-deep.mjs'],'reach is adjustable');
+  // QA-NIGHT-SIZED: the partial night's wide pick has no reach or hub limit and never drops a lane pick.
+  same(wideSuitesForChanges(pathSuites,['src/c.js'],graphOptions),['tools/test-deep.mjs'],'the wide pick reaches a file three steps away');
+  same(suitesForChanges(pathSuites,['src/c.js'],graphOptions).length,0,'the lane pick still waits for the night for the same file');
+  for(const files of [['src/a.js'],['src/b.js'],['src/c.js'],['public/assets/audio/boom.ogg'],['docs/board/board.yaml'],['src/bank.js','src/c.js'],['src/nobody-reads-this.js']]){
+    const lane=suitesForChanges(pathSuites,files,graphOptions),wide=wideSuitesForChanges(pathSuites,files,graphOptions);
+    check(lane.every(suite=>wide.includes(suite)),'the wide pick is a superset of the lane pick for '+files.join(', '));
+  }
+  same(wideSuitesForChanges(virtualSuites,['src/unmapped-source.js'],graphOptions).unmapped,['src/unmapped-source.js'],'the wide pick names a file no suite reaches');
+  same(wideSuitesForChanges(possibleSuites,['public/assets/unknown.bin'],graphOptions),possibleSuites.slice(3),
+    'the wide pick keeps the unbounded readers the lane pick runs');
+  same(wideSuitesForChanges(virtualSuites,['package.json'],graphOptions),virtualSuites,'a runner or dependency change still selects every suite in the wide pick');
+  same(wideSuitesForChanges(pathSuites,[],graphOptions),[],'no changed file picks nothing');
+  {
+    // A shared file counts as reached when a suite imports it, and a hub passes the change on through it.
+    const shared=new Map([['tools/test-shared.mjs',"import '../src/game.js';"],['tools/test-hub.mjs',"import '../src/hub.js';"],
+      ['src/game.js',''],['src/hub.js',"import './h1.js';import './h2.js';"],['src/h1.js',''],['src/h2.js','']]);
+    const options={projectRoot:virtualRoot,hasFile:path=>shared.has(nameOf(path)),readSource:path=>shared.get(nameOf(path))};
+    const names=['tools/test-shared.mjs','tools/test-hub.mjs'];
+    same(suitesForChanges(names,['src/game.js'],options).length,0,'a lane never picks a suite for importing a shared file');
+    same(wideSuitesForChanges(names,['src/game.js'],options),['tools/test-shared.mjs'],'the wide pick runs the importers of a shared file');
+    same(suitesForChanges(names,['src/h1.js'],{...options,hubImports:2}).length,0,'a lane stops at a hub');
+    same(wideSuitesForChanges(names,['src/h1.js'],options),['tools/test-hub.mjs'],'the wide pick follows a hub');
+  }
 
 
   const brokenOptions={...graphOptions,readSource:path=>{if(nameOf(path)==='src/vegetation.js')throw Error('unreadable');return graphOptions.readSource(path);}};
@@ -319,7 +401,10 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   };
   same(changedFiles({git}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],
     'changed mode includes branch, working-tree and untracked paths without duplicates');
-  check(calls[1].includes('base123'),'changed mode compares with integration merge base');
+  check(calls[1].includes('base123')&&calls[1].includes('--no-renames'),'changed mode compares with integration merge base without rename detection');
+  same(changedFiles({git,since:'HEAD'}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],'since includes tracked and untracked changes');
+  check(calls[4].includes('--no-renames'),'since compares without rename detection');
+  assert.throws(()=>changedFiles({since:'missing',git:()=>({status:1,stdout:''})}),/Cannot find commit: missing/);checks++;
   const failedCalls=[];
   assert.throws(()=>changedFiles({git:(executable,args)=>{
     failedCalls.push([executable,...args]);

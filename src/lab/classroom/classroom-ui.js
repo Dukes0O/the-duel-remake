@@ -3,7 +3,8 @@
 // Notebook words go through app.labCommit; challenges go through the Lab's own challenge path.
 import {createClassroomSession} from './classroom-frame.js';
 import {KEY_NAMES} from './classroom-keys.js';
-import {brianPortrait} from './brian-portrait.js';
+import {splitSay, fullText, firstSentence, paragraphs} from './brian-text.js';
+import {mountBrianFaces} from './brian-faces.js';
 import {learnLabWord, labNotebookOf} from '../lab-save.js';
 import './classroom.css';
 
@@ -17,33 +18,46 @@ let physicsChoice = null;
 export function createClassroomUi({stage, app, lesson, name, onLeave, startChallenge, sayVoice = () => {}, onCue = () => {}}) {
   const doc = stage.ownerDocument, win = doc.defaultView;
   const session = createClassroomSession(lesson), board = lesson.board;
+  // The board's own size when its lesson names one (the wide board), else the usual 1000 x 680.
+  const area = board.size ?? board.BOARD;
   const root = doc.createElement('section');
   root.className = 'lab-classroom'; root.setAttribute('aria-label', `${name} lesson`);
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-back" data-lc="back" hidden>Previous step ${kbd('Backspace')}</button><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
-    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
+    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><div class="lc-strip" hidden></div><p class="lc-hover" hidden></p></div>
     <aside class="lc-physics" aria-label="The physics" hidden><header><h3>The physics</h3><button type="button" data-lc="physics">Hide ${kbd('F')}</button></header><div class="lc-formulas"></div></aside>
-    <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b></div>
-      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
+    <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk" role="img" aria-label="Brian"><span>B</span></div><b class="lc-name">Brian</b></div>
+      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p><button type="button" class="lc-more-button" data-lc="more" hidden>Tell me more ${kbd('T')}</button></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
+  // A lesson that hands its numbers to the page (the stage step) gets a tighter frame, so that the board keeps its height.
+  if (board.strip) root.classList.add('lc-staged');
+  // A wide board (LAB-LOOK round 13): while the physics panel is open, Brian's column and the panel give up width to the picture.
+  if (area.width > 1000) root.classList.add('lc-wide');
   stage.append(root);
   const $ = selector => root.querySelector(selector);
   const canvas = $('.lc-canvas'), ctx = canvas.getContext('2d');
-  let pageMoved = false, layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '', disposed = false;
+  let pageMoved = false, layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '';
   // A lesson passed in the classroom (a bench challenge): what Brian says, and the sparks it throws.
   let passed = null, burst = false;
+  // LAB-BRIAN-SHORT: Brian says three sentences at a time. toldMore holds the texts of this step whose rest the player asked for;
+  // openRows holds the earlier steps the player has clicked open. keepPlace stops the page jumping when a step is opened or folded.
+  let toldMore = new Set(), toldStep = -1, moreText = null, keepPlace = false;
+  const openRows = new Set();
 
-  brianPortrait(doc).then(url => {
-    if (!url || disposed) return;
-    const portrait = $('.lc-portrait');
-    portrait.innerHTML = `<img alt="Brian" src="${url}">`;
-  });
+  // Brian's four painted faces are asked for now, so a change of mood never shows a blank (the letter B stays if one is missing).
+  mountBrianFaces($('.lc-portrait'));
 
   // The formula panel starts closed so that the words and the picture teach first; F or the button opens it (Kyle, 9 November 2026).
   const physicsOpen = () => physicsChoice ?? false;
   function setHtml(element, key, html) { if (last[key] !== html) { element.innerHTML = html; last[key] = html; return true; } return false; }
   function act(action) {
+    if (action === 'more') { if (moreText !== null && !toldMore.has(moreText)) { toldMore.add(moreText); onCue('lab.tick'); } return; }
+    if (action.startsWith('row:')) {
+      const row = Number(action.slice(4));
+      if (openRows.has(row)) openRows.delete(row); else openRows.add(row);
+      keepPlace = true; onCue('lab.tick'); return;
+    }
     note = '';
     if (action === 'leave') { onLeave(); return; }
     if (action === 'physics') { physicsChoice = !physicsOpen(); return; }
@@ -74,6 +88,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (event.code === 'Escape') action = 'leave';
     else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? passed ? 'leave' : 'challenge' : v.ready ? 'next' : null;
     else if (event.code === 'KeyH') action = 'help';
+    else if (event.code === 'KeyT') action = moreText !== null && !toldMore.has(moreText) ? 'more' : null;
     else if (event.code === 'KeyF' && v.formulas?.length) action = 'physics';
     else if (event.code === 'Backspace') action = v.index > 0 && !(passed && v.last) ? 'back' : null;
     else if (event.code === 'KeyR' && v.actions.includes('replay')) action = 'replay';
@@ -141,6 +156,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const brian = note ? {text: note, mood: 'explain'} : passed && v.last ? {text: passed, mood: 'cheer'} : v.brian;
     paintPage(v, brian);
     paintPhysics(v);
+    paintStrip(v);
     // Brian's offer of help sits under his words, so a slow reader never loses them.
     const nudgeText = !note && !(passed && v.last) && v.nudge ? v.nudge.text : '';
     setHtml($('.lc-nudge'), 'nudge', escape(nudgeText));
@@ -179,26 +195,60 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const page = $('.lc-page'), words = $('.lc-bubble');
     page.scrollTop = words.offsetHeight > page.clientHeight ? words.offsetTop : page.scrollHeight;
   }
-  // The running page: every step so far, oldest first, with the newest words last.
+  // The running page: every step so far, oldest first, with the newest words last. An earlier step is its heading and first
+  // sentence until it is clicked (its other words stay in the page's text, hidden, as the bubble's do); the newest words are at most three sentences, with the rest behind "Tell me more".
   function paintPage(v, brian) {
+    if (toldStep !== v.index) { toldStep = v.index; toldMore = new Set(); }
+    const told = text => (toldMore.has(text) ? paragraphs(text) : [splitSay(text).opening]).map(part => `<p>${escape(part)}</p>`).join('');
     const rows = v.page.map((row, i) => {
+      const newest = i === v.page.length - 1;
+      if (!newest) {
+        const open = openRows.has(i), texts = [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n), lines = texts.map(fullText);
+        const whole = lines.join(' '), first = firstSentence(row.setup), rest = whole.startsWith(first) ? whole.slice(first.length).trim() : whole;
+        const body = open ? texts.flatMap(paragraphs).map(text => `<p>${escape(text)}</p>`).join('') : `<p class="${rest ? 'longer' : ''}">${escape(first)}${rest ? ` <span class="lc-more" hidden>${escape(rest)}</span>` : ''}</p>`;
+        return `<section class="${open ? 'open' : 'folded'}"><h4><button type="button" data-lc="row:${i}" aria-expanded="${open}" title="${open ? 'Show less' : 'Show all of this step'}">${escape(row.title)}</button></h4>${body}</section>`;
+      }
       // The newest step shows only what comes before Brian's words now, so a step done again starts from its opening words.
-      const newest = i === v.page.length - 1, again = newest && brian.text === row.setup;
-      const lines = again ? [] : [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && !(newest && text === brian.text));
-      return `<section class="${i === v.page.length - 1 ? 'now' : ''}"><h4>${escape(row.title)}</h4>${lines.map(text => `<p>${escape(text)}</p>`).join('')}</section>`;
+      const again = brian.text === row.setup;
+      const lines = again ? [] : [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && text !== brian.text);
+      return `<section class="now"><h4>${escape(row.title)}</h4>${lines.map(told).join('')}</section>`;
     }).join('');
-    const moved = setHtml($('.lc-past'), 'past', rows);
-    if (setHtml($('.lc-bubble'), 'bubble', escape(brian.text)) || moved) pageMoved = true;
+    const moved = setHtml($('.lc-past'), 'past', rows) && !keepPlace;
+    keepPlace = false;
+    // The rest of Brian's words stays in the bubble, hidden, so a reader of the page's text still finds every word.
+    const [opening = '', ...rest] = paragraphs(brian.text), more = rest.length > 0, open = toldMore.has(brian.text);
+    moreText = more ? brian.text : null;
+    const words = setHtml($('.lc-bubble'), 'bubble', `${escape(opening)}${more ? ` <span class="lc-more"${open ? '' : ' hidden'}>${rest.map(part => `<span>${escape(part)}</span>`).join(' ')}</span>` : ''}`);
+    const offer = more && !open;
+    if ($('.lc-more-button').hidden === offer) $('.lc-more-button').hidden = !offer;
+    if (words || moved) pageMoved = true;
   }
   function paintPhysics(v) {
     const formulas = v.formulas ?? [], open = formulas.length > 0 && physicsOpen();
     if ($('.lc-physics').hidden === open) $('.lc-physics').hidden = !open;
+    if (root.classList.contains('lc-physics-open') !== open) root.classList.toggle('lc-physics-open', open);
     const offer = formulas.length > 0 && !open;
     if ($('.lc-show-physics').hidden === offer) $('.lc-show-physics').hidden = !offer;
     if (!open) return;
     setHtml($('.lc-formulas'), 'formulas', formulas.map(f => `<section><h4>${escape(f.title)}</h4>` +
       (f.formula ? `<p class="lc-formula">${math(f.formula)}</p>` : '') + (f.worked ? `<p class="lc-worked">${math(f.worked)}</p>` : '') +
       (f.note ? `<p class="lc-formula-note">${math(f.note)}</p>` : '') + '</section>').join(''));
+  }
+
+  // The strip under the board (the stage step, docs/board/cards/LAB-LOOK.md): the readouts, tables and small pictures with
+  // numbers that a lesson's board hands to the page, in HTML so that they are sharp and large. A board with no strip() shows none.
+  function paintStrip(v) {
+    const strip = $('.lc-strip'), data = board.strip?.(v) ?? null;
+    if (!data) { if (!strip.hidden) strip.hidden = true; setHtml(strip, 'strip', ''); return; }
+    const tone = value => value ? ` tone-${escape(value)}` : '';
+    const readouts = data.readouts.map(r => `<p class="lc-readout${tone(r.tone)}">${r.label ? `<span>${escape(r.label)}</span>` : ''}<b>${escape(r.value)}</b></p>`).join('') +
+      (data.parts?.length ? `<ul class="lc-parts">${data.parts.map(part => `<li>${escape(part)}</li>`).join('')}</ul>` : '');
+    const tables = (data.tables ?? []).map(table => `<div class="lc-table${table.rows.length > 3 ? ' wide' : ''}">${table.title ? `<h4>${escape(table.title)}</h4>` : ''}<div class="lc-rows">` +
+      table.rows.map(row => `<p><span>${escape(row.label)}</span><b class="${tone(row.tone).trim()}">${escape(row.value)}</b></p>`).join('') + '</div></div>').join('');
+    setHtml(strip, 'strip', `${readouts ? `<div class="lc-readouts">${readouts}</div>` : ''}${tables}`);
+    strip.classList.toggle('has-table', tables !== '');
+    if (data.hint) strip.title = data.hint; else strip.removeAttribute('title');
+    if (strip.hidden) strip.hidden = false;
   }
 
   function paintBoard(v, dt) {
@@ -211,14 +261,14 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     ctx.setTransform(dpr * layout.scale, 0, 0, dpr * layout.scale, dpr * layout.left, dpr * layout.top);
     if (v.slow) {
       ctx.fillStyle = 'rgba(237,197,87,.9)'; ctx.font = '800 18px "Segoe UI", sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-      ctx.fillText('SLOW MOTION: half speed', board.BOARD.width - 16, 12);
+      ctx.fillText('SLOW MOTION: half speed', area.width - 16, 12);
     }
     if (v.pointer) pointer(v);
     // A right answer throws workshop sparks from where the player was working.
     if (v.celebrate && celebrated !== v.celebrate.at || burst) {
       if (v.celebrate) celebrated = v.celebrate.at;
       const big = burst || v.celebrate.big; burst = false;
-      const from = board.targetPoint(v, 'release') ?? [board.BOARD.width / 2, board.BOARD.height / 2];
+      const from = board.targetPoint(v, 'release') ?? [area.width / 2, area.height / 2];
       for (let i = 0; i < (big ? 90 : 45); i++) {
         const a = -Math.PI / 2 + (Math.random() - .5) * 2.4, speed = 220 + Math.random() * 380;
         sparks.push({x: from[0], y: from[1], vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: .7 + Math.random() * .7, colour: SPARK_COLOURS[i % 4]});
@@ -237,7 +287,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const to = board.targetPoint(v, v.pointer.action);
     if (!to) return;
     const k = Math.min(1, v.pointer.age / .9), e = k * k * (3 - 2 * k);
-    const x = board.BOARD.width + 40 + (to[0] - board.BOARD.width - 40) * e, y = board.BOARD.height * .45 + (to[1] - board.BOARD.height * .45) * e;
+    const x = area.width + 40 + (to[0] - area.width - 40) * e, y = area.height * .45 + (to[1] - area.height * .45) * e;
     const tap = k >= 1 ? Math.abs(Math.sin(v.pointer.age * 4)) * 6 : 0;
     if (k >= 1) { ctx.strokeStyle = 'rgba(237,197,87,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(to[0], to[1], 22 + tap * 2, 0, Math.PI * 2); ctx.stroke(); }
     ctx.save(); ctx.translate(x + 6, y + 8 + tap);
@@ -275,7 +325,6 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     view: () => session.view(),
     act,
     dispose() {
-      disposed = true;
       win.removeEventListener('keydown', onKey, true);
       root.removeEventListener('click', onClick);
       root.remove();

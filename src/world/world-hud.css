@@ -1,18 +1,77 @@
 .world-hud{position:absolute;z-index:8;inset:0;pointer-events:none;color:#f3eddf;font-family:inherit;text-shadow:0 2px 8px #000b}
 .world-hud[hidden],.world-hud [hidden]{display:none!important}
 .world-hud-line{position:absolute;top:20px;left:50%;transform:translateX(-50%);max-width:min(76vw,46rem);padding:9px 18px;background:#171711dc;border:1px solid #e4d4b255;border-left:4px solid #e69a38;border-radius:4px;text-align:center;font-size:16px;font-weight:750;letter-spacing:.035em}
-.world-hud-prompt,.world-hud-progress{position:absolute;top:73px;left:50%;transform:translateX(-50%);padding:5px 12px;background:#171711dc;border:1px solid #e4d4b255;border-radius:3px;font-size:12px;font-weight:800;letter-spacing:.08em}
-.world-hud-progress{top:105px;display:grid;grid-template-columns:auto minmax(72px,130px);align-items:center;gap:3px 8px;color:#f3c36e;text-align:left}
+.world-hud-prompt,.world-hud-progress{position:absolute;top:90px;padding:5px 12px;background:#171711dc;border:1px solid #e4d4b255;border-radius:3px;font-size:12px;font-weight:800;letter-spacing:.08em}
+/* EVERBURN-PLAY-FIXES, go-live: nothing is drawn over the rear-view mirror (top 90 px, 30vw wide, centred). The key prompt stands to its right,
+   level with its top, and the wave and well bars stand to its left, under the job's heading (which ends about 150 px down) and above the small map; both are clear of
+   the story caption and the spoken-line strip, which are under the mirror. */
+.world-hud-prompt{left:calc(65vw + 24px);max-width:calc(35vw - 24px - 150px)}
+.world-hud-progress{left:35px;top:170px;width:min(300px,calc(35vw - 59px));display:grid;grid-template-columns:auto minmax(72px,130px);align-items:center;gap:3px 8px;color:#f3c36e;text-align:left}
 .world-hud-progress progress{width:100%;height:8px;accent-color:#e69a38}
+.world-hud-truck{position:absolute;left:35px;bottom:78px;width:188px;padding:5px 8px 6px;background:#171711dc;border:1px solid #e4d4b255;border-left:3px solid #e69a38;border-radius:3px;display:grid;gap:4px;color:#f3c36e;font-size:10px;font-weight:800;letter-spacing:.08em}
+.world-hud-truck progress{width:100%;height:8px;accent-color:#e69a38}
+/* EVERBURN-REMAKE: the ember gauge stands just above the speed readout at the lower right, clear of the weapon bar (bottom centre), the rear-view mirror (top) and the caption strip. */
+.world-hud-ember{--ember-glow:1;position:absolute;right:35px;bottom:262px;width:240px;box-sizing:border-box;padding:6px 10px 7px;background:#171711dc;border:1px solid #e4d4b255;border-left:3px solid #e69a38;border-radius:3px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:3px 9px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#f3c36e}
+.world-hud-seen{position:absolute;left:50%;top:100px;transform:translateX(-50%);padding:8px 12px;display:flex;align-items:center;gap:12px;background:#171711dc;border:1px solid #e4d4b2;color:#fff2c4;font-size:14px}
+.world-hud-seen progress{width:160px;height:14px;accent-color:#fff2c4}
+.world-hud-ember-bar{height:14px;background:#0c0b0a;border:1px solid #5b4a35;border-radius:2px;overflow:hidden}
+.world-hud-ember-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#8a2a08,#e8631a 55%,#ffb347);box-shadow:0 0 calc(18px*var(--ember-glow)) calc(4px*var(--ember-glow)) #ff7a2aa0;filter:brightness(calc(.45 + .75*var(--ember-glow)))}
+.world-hud-ember em{font-style:normal;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.world-hud-ember.is-losing .world-hud-ember-bar i{animation:ember-flicker .35s steps(2) infinite}
+.world-hud-ember.is-flashing{animation:ember-flash .5s ease-out}
+.world-hud-ember.is-out{grid-template-columns:1fr;border-left-color:#7a3b3b;color:#f0a58f}
+.world-hud-ember.is-out .world-hud-ember-bar{display:none}
+.world-hud-ember.is-out b{color:#ff6a4a;font-size:15px}
+.world-hud-ember.is-out em{text-align:left;font-size:10px}
+.world-hud-brazier-arrow{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;padding:4px 7px;background:#171711e8;border:1px solid #e69a38;border-radius:3px;color:#ffc26a;font-size:12px;font-weight:800;white-space:nowrap}
+.world-hud-brazier-arrow i{display:inline-block;font-style:normal;font-size:20px;line-height:1}
+@keyframes ember-flash{0%{background:#ff6a2af0;box-shadow:0 0 22px #ff7a2a}100%{background:#171711dc;box-shadow:none}}
+@keyframes ember-flicker{50%{filter:brightness(1.25)}}
 .world-hud-compass{position:absolute;top:20px;right:22px;width:58px;height:58px;border:1px solid #e4d4b277;border-radius:50%;background:#171711c9;text-align:center}
 .world-hud-compass b{position:absolute;top:3px;left:0;right:0;font-size:10px;color:#e4d4b2}
 .world-hud-compass i{position:absolute;left:24px;top:17px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:25px solid #ff7139;transform-origin:50% 12px}
-.world-hud-map-button{position:absolute;top:91px;right:22px;padding:7px 10px;pointer-events:auto;color:inherit;background:#171711d9;border:1px solid #e4d4b277;border-radius:3px;font-weight:700}
-.world-hud-map{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(680px,94vw);padding:12px;background:#191914f2;border:1px solid #e4d4b277;border-radius:5px;box-shadow:0 1rem 3rem #000b;pointer-events:auto}
-.world-hud-map header{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px;letter-spacing:.12em}
+.world-hud-map-button{position:absolute;top:145px;right:22px;padding:7px 10px;pointer-events:auto;color:inherit;background:#171711d9;border:1px solid #e4d4b277;border-radius:3px;font-weight:700}
+/* SCABLANDS-LAND round 4, slice 4: the small map, always on the screen in a job, at the lower left where the circuit panel stands in a
+   race (the circuit panel is hidden while it is there). A dark panel with a border, so that it reads over any ground. */
+.world-hud-minimap{position:absolute;left:35px;bottom:139px;box-sizing:border-box;width:max(300px,40vh);padding:4px;background:#14120ef7;border:2px solid #e4d4b2b8;border-radius:4px;box-shadow:0 .4rem 1.2rem #000a;pointer-events:none}
+.world-hud-minimap canvas{display:block;width:100%;height:auto;border:1px solid #e4d4b240}
+.world-minimap-on .route-hud{display:none!important}
+.world-map-open .world-hud-minimap{visibility:hidden}
+.world-hud-map{--map-width:min(1480px,97vw);--ways-width:clamp(290px,28vw,380px);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:var(--map-width);padding:12px;background:#16140ff7;border:2px solid #e4d4b2a0;border-radius:5px;box-shadow:0 1rem 3rem #000b;pointer-events:auto}
+.world-hud-map header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:0 0 8px;letter-spacing:.12em}
+.world-hud-map-sub{flex:1;font-size:12px;letter-spacing:.04em;color:#c9bd9c;text-shadow:none}
 .world-hud-map button{padding:5px 9px;color:inherit;background:#292820;border:1px solid #e4d4b255;border-radius:3px}
 .world-hud-map canvas{display:block;width:100%;height:auto;border:1px solid #e4d4b266}
+.world-hud-map-body{display:grid;grid-template-columns:minmax(0,1fr) var(--ways-width);gap:12px;align-items:start}
+/* The list of ways is as tall as the map beside it (the map is 1,400 by 1,000) and scrolls when there is more than fits. */
+.world-hud-ways{box-sizing:border-box;max-height:calc((var(--map-width) - 36px - var(--ways-width)) * .7143);overflow:auto;padding:2px 6px 2px 2px;font-size:12.5px;line-height:1.3;color:#f3eddf;text-shadow:none;letter-spacing:0;scrollbar-width:thin;scrollbar-color:#6b5f48 #1b1913}
+.world-hud-ways h3{margin:0 0 7px;font-size:11px;font-weight:800;letter-spacing:.15em;color:#e4d4b2}
+.world-hud-ways h3:not(:first-child){margin-top:12px}
+.world-hud-ways ol{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.world-hud-way{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;padding:6px 8px 7px 8px;background:#222018;border:1px solid #e4d4b230;border-left:4px solid var(--way,#ffce75)}
+.world-hud-way>b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--way,#ffce75);color:#14120e;font-size:13px}
+.world-hud-way strong{font-size:14px}
+.world-hud-way em{margin-left:6px;font-style:normal;font-weight:800;color:var(--way,#ffce75)}
+.world-hud-way span{display:block;color:#cfc3a4}
+.world-hud-way ul,.world-hud-learnt{margin:4px 0 0;padding-left:15px;color:#f3c36e}
+.world-hud-none{margin:0;color:#a39877}
 .world-hud-find-label{margin:9px 0 3px;font-size:10px;font-weight:800;letter-spacing:.15em;color:#e4d4b2}
 .world-hud-finds{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;padding:0;list-style:none;font-size:12px}
 .world-hud-finds .is-found{color:#91d29a}
 .world-hud-map-button:focus-visible,.world-hud-map button:focus-visible{outline:2px solid #f4bb58;outline-offset:2px}
+/* EVERBURN-PLAY-FIXES, fourth round: the story caption (the stage's .race-callout) is drawn above the open big map, on its own plate. */
+.world-map-open .race-callout{z-index:9;top:auto;bottom:8px;width:auto;max-width:min(76vw,52rem);padding:8px 22px 10px;background:#191914f6;border:1px solid #e4d4b277;border-left:4px solid #e69a38;border-radius:4px;box-shadow:0 .5rem 1.5rem #000a}
+.in-race.world-map-open .race-callout{top:auto}
+.world-map-open .race-callout>b{font-size:24px;letter-spacing:0}
+
+.night-2-dace-marker {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  padding: 2px 7px;
+  color: #ffe0a5;
+  background: #151719db;
+  border-bottom: 2px solid #e99c3e;
+  font: 700 12px/1.4 system-ui, sans-serif;
+}

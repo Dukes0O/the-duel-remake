@@ -1,8 +1,42 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {armorPresentation, combatHudEnabled, combatHudVisible, damageZoneFromChange,
+import {armorPresentation, combatSlotHidden, combatHudEnabled, combatHudVisible, damageZoneFromChange,
   fallbackOpponentPosition, footCarDirection, footAmmoPresentation,
-  footActionPresentation} from '../src/combat-hud.js';
+  footActionPresentation, footLampProgress, footBrandDirection} from '../src/combat-hud.js';
+
+test('lamp bar reads the rule count, and the lamp row names its circle and precise distance', () => {
+  const step = {brand: true, places: [{id: 'mast', position: {x: 0, z: 0}}]};
+  const count = {brandBriefed: true, brandSeconds: 80, lightingLamp: 'mast', lightingSeconds: 1};
+  const state = {status: 'racing', onFoot: true, fighter: {x: 3.4, z: 0},
+    arena: {mode: 'world-job', worldJob: {job: {steps: [step], stepIndex: 0, stepState: count}}}};
+  const before = JSON.stringify(state);
+  assert.deepEqual(footLampProgress(state), {text: 'LIGHTING THE MAST LAMP', fraction: .5});
+  assert.equal(footBrandDirection(state).atLamp, true);
+  assert.equal(JSON.stringify(state), before);
+  state.fighter.x = 3.6;
+  assert.equal(footBrandDirection(state).distance, '3.6');
+  assert.equal(footBrandDirection(state).atLamp, false);
+  // The review of 18 November: with the brand out the row leads to a lit lamp to relight at, whose reach is 3 m, so it
+  // keeps its metres at 3.2 m and does not say "AT THE LAMP".
+  const outState = {status: 'racing', onFoot: true, fighter: {x: 3.2, z: 0}, arena: {mode: 'world-job', worldJob: {job: {steps: [step], stepIndex: 0,
+    stepState: {brandBriefed: true, brandSeconds: 0, brandsUsed: 1, lamps: {mast: true}}}}}};
+  assert.equal(footBrandDirection(outState).name, 'MAST LAMP');
+  assert.equal(footBrandDirection(outState).atLamp, false);
+  assert.equal(footBrandDirection(outState).distance, '3.2');
+  count.townEnding = true;
+  assert.equal(footLampProgress(state), null);
+  count.townEnding = false; count.brandSeconds = 0;
+  assert.equal(footLampProgress(state), null);
+});
+
+test('every real car slot is visible, with one button for a borrowed flamethrower', () => {
+  for (const loadout of [['crossbow','tesla','decoy','flamethrower'], ['crossbow','tesla','decoy','nitro']]) {
+    for (let slot = 0; slot < 4; slot++) {
+      const buttons = [false, ...(slot === 3 ? [true] : [])];
+      assert.equal(buttons.filter(loan => !combatSlotHidden(slot, loadout[slot], loan)).length, 1);
+    }
+  }
+});
 
 test('combat HUD requires saved gate discovery and an active combat race', () => {
   const state = {mode: 'wasteland', status: 'racing', combat: {}, wastelandGateDiscovered: true};
@@ -49,6 +83,17 @@ test('offscreen marker distinguishes a car ahead from one behind', () => {
   assert.equal(fallbackOpponentPosition(course, player, {s: 80, lateral: 0}, 0).direction, 'BEHIND');
 });
 
+test('offscreen riders flank the mirror in the direction they are coming from', () => {
+  const course = {worldAt: (s, lateral) => ({x: lateral, z: s, heading: 0})};
+  const player = {s: 100, lateral: 0};
+  const marker = (s, lateral, index) => fallbackOpponentPosition(course, player, {s,lateral,roadRider:{}}, index);
+  const left = marker(91,-2,1), right = marker(-6,6,0);
+  assert.equal(left.direction,'BEHIND');
+  assert.equal(right.direction,'BEHIND');
+  assert.ok(left.x < .4 && right.x > .6 && left.y < .53 && right.y < .53);
+  assert.ok(marker(91,0,0).x < .4 && marker(-6,0,1).x > .6);
+});
+
 test('on-foot car pointer follows fighter position and facing', () => {
   const course = {groundAt: (s, lateral) => ({x: lateral, z: s})};
   const state = {s: 100, lateral: 0, fighter: {x: 0, z: 90, yaw: 0}};
@@ -65,6 +110,16 @@ test('on-foot ammo does not imply an unbuilt weapon is ready', () => {
     {name: 'NO FOOT WEAPON', ammo: 'AMMO —'});
   assert.deepEqual(footAmmoPresentation({footGear: {name: 'RPG', ammo: 3}}),
     {name: 'RPG', ammo: 'AMMO 3'});
+});
+
+test('the Hand Flamer shows seconds of fuel and says how it is used', () => {
+  const flamer = ammo => ({footGear: {name: 'HAND FLAMER', ammo}, footWeapons: {}, fighter: {}});
+  assert.deepEqual(footAmmoPresentation(flamer(4)), {name: 'HAND FLAMER', ammo: 'FUEL 4.0 s'});
+  assert.deepEqual(footAmmoPresentation(flamer(2.64)), {name: 'HAND FLAMER', ammo: 'FUEL 2.6 s'});
+  assert.deepEqual(footAmmoPresentation(flamer(0)), {name: 'HAND FLAMER', ammo: 'FUEL 0.0 s'});
+  assert.equal(footActionPresentation(flamer(2.64)).text, 'HOLD FIRE TO BURN');
+  assert.equal(footActionPresentation({...flamer(2.64), fighter: {flaming: true}}).text, 'FLAMING');
+  assert.equal(footActionPresentation(flamer(0)).text, 'OUT OF FUEL / LET GO TO REFILL');
 });
 
 test('on-foot status gives clear lock, reload and repair cues', () => {
