@@ -8,7 +8,8 @@ Nothing random: no `Math.random`, no frame-timed input, and no unseeded draw fee
 
 ## Checks
 - `water-road` browser scenario, new code, idle laptop: won on the first try in 107.82 s, 18 of 18 facts. Run again under four busy processes of the laptop's own: the same race, won on the first try in 107.82 s, 18 of 18 facts. Two loads, one race.
-- Headless: `node tools/test-water-easy.mjs` and the lane tier (see the report).
+- Run twice, at different loads, the same race: 107.82 s and a first-try win both times. Before the cure the same laptop idle lost try 1 (113.8 s) and won try 2 (108.04 s).
+- Lane tier on `99c8b063a` (integration merged in): 29 passed, 0 failed, 0 not run; replay fingerprints 297 checks across 33 cases unchanged (no `src/` change in this card). `npm run build` passes.
 
 ## Changed assertions
 None. The fact's wording and its three tries are unchanged.

@@ -10,7 +10,8 @@ The startle itself is sound: over 40 days on each of Tremblant Woods and Trembla
 
 ## Checks
 - `node tools/test-wildlife-view.mjs`: 3838 checks pass. `node tools/test-wildlife.mjs`: 33,644 pass.
-- Browser `wildlife-view`: before the cure fails (`Nothing ran: [0,0]`); after, passes twice (see the report for the commits).
+- Browser `wildlife-view`: before the cure fails on the same herd (`Nothing ran: [0,0]`, 19 November, `00382d70b`). After the cure passes twice (runs A and B, identical moves of 10.975 m and 16.596 m, planned-versus-drawn distance 0), on the merged tree (scenario files identical to `99c8b063a`, bundle built from the same `src`).
+- Lane tier on `99c8b063a` (integration merged in): 29 passed, 0 failed, 0 not run; replay fingerprints 297 checks across 33 cases unchanged. `npm run build` passes. The three long suites it left to the night (`test-arena-shove`, `test-convoy-tanker-art`, `test-first-person-polish`) do not name the changed wildlife or scenario code beyond the import graph.
 
 ## Changed assertions
 None weakened. The scenario's "a herd within sight" sweep became "the herd stands where the plan put it" (stricter: every planned animal must be drawn within 1.5 m).
