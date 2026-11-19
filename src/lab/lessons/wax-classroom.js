@@ -519,7 +519,7 @@ export function createModel() {
     if (id === 'try-cool' || id === 'try-wet') {
       const snow = snowNow(), name = `${SNOWS[snow].name} at ${tidy(SNOWS[snow].celsius)}`;
       if (m.phase === 'pick') return {...base, formulas: general(), ...picking('Race', 'pick:best'),
-        say: `Which wax suits ${name}? Pick a wax for the snow on the strip, then race your ski against a ski with no wax.`,
+        say: `Which wax suits ${snowAndHeat(snow)}? Pick a wax for the snow on the strip, then race your ski against a ski with no wax.`,
         prompt: m.pick ? `${WAX_NAMES[m.pick]} wax is on the ski. Race it, or pick another tin.` : 'Pick a wax for this snow, then race.',
         hints: [snow === 'cold' ? 'Cool snow is in the middle, because it is neither the coldest snow nor wet.' : 'Wet snow is the warmest snow, near 0 °C.', `The colder the snow, the harder the wax. Press ${1 + WAXES.indexOf(SNOWS[snow].wax)}, then Space.`, 'Watch my pointer. I will pick the wax and race the ski.']};
       if (m.phase === 'running') return {...base, formulas: sums(m.pick, snow), say: `The ski with ${m.pick} wax now races the ski with no wax. Watch the stopwatches.`, prompt: 'Watch the stopwatches.', hints: ['Watch the two skis.', 'Which ski is in front?', 'Wait a moment.']};
