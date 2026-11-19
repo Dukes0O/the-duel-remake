@@ -13,7 +13,7 @@ import {
 } from '../src/wildlife-models.js';
 import {
   WILDLIFE_VIEW, IDLE, FLEE, FLY, GONE, startleReach, nextMood, fleeLength, fadeAlpha, pickNearest, turnToward, yawToward, birdFlight,
-  calendarPlayDay, ringLook, viewPlayDay, createWildlifeView,
+  calendarPlayDay, ringLook, viewPlayDay, createWildlifeView, hitReach, bloodOutline, DOWN,
 } from '../src/wildlife-view.js';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
@@ -307,6 +307,89 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   drive(herd.at.s - 140, herd.at.s + 30);
   same(animals(), ran, 'a second car down the middle of the road leaves the herd where it ran to');
   view.dispose();
+}
+
+// ---- Hitting an animal (WILD-HIT, switch wildlife-hits, docs/HELI_WILDLIFE.md 3.5) ----------------
+// The same day's herd, drawn by the real view. A car on top of an animal knocks it down into a heap on its side
+// with a stain under it; the monster truck flattens it; drawing only.
+{
+  equal(hitReach(false), 2.4, 'a car knocks an animal down within 2.4 m of its middle');
+  equal(hitReach(true), 3.4, 'the monster truck within 3.4 m');
+  const outline = bloodOutline(.37);
+  same(bloodOutline(.37), outline, 'a stain has the same ragged outline every time for the same animal');
+  ok(outline.length === 14 && outline.every(share => share >= .7 && share <= 1.15), 'its radii are 70 to 115% of its size');
+  ok(JSON.stringify(bloodOutline(.71)) !== JSON.stringify(outline), "another animal's stain is another shape");
+
+  const TODAY = 20776, definition = COURSE.find(row => row.id === 'tremblant-woods'), course = new Course(definition, definition.layoutSeed ?? 1989);
+  const clips = new Set(Object.values(WILDLIFE_MODELS).flatMap(entry => [entry.idle, entry.move, entry.fly].filter(Boolean)));
+  const loadModel = async () => {
+    const scene = new THREE.Group(); scene.add(new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, .5).translate(0, .6, 0), new THREE.MeshBasicMaterial()));
+    return {scene, animations: [...clips].map(name => new THREE.AnimationClip(name, 1, []))};
+  };
+  const pause = ms => new Promise(done => setTimeout(done, ms));
+  const placed = wildlife.placeWildlife({courseId: 'tremblant-woods', playDay: TODAY, raceNumber: 1, course, approvedModels: APPROVED_MODEL_IDS,
+    referenceLap: referenceLap('tremblant-woods', 'fixed') ?? referenceLap('tremblant-woods', 'route_a')});
+  const herd = placed.spots.sort((p, q) => q.animals.length - p.animals.length)[0];
+  const target = herd.animals[0];
+  // One view per run; the car is the player (or the rival) put down at (x, z).
+  const run = async ({hits = true, crusher = false, by = 'player'} = {}) => {
+    const sounds = [], view = createWildlifeView({scene: new THREE.Scene(), loadModel, playDay: () => TODAY, onHit: strength => sounds.push(strength)});
+    const player = {position: new THREE.Vector3(), visible: true}, rival = {position: new THREE.Vector3(1e6, 0, 1e6), visible: true};
+    const car = by === 'player' ? player : rival;
+    const frame = (x, z) => {
+      car.position.set(x, 0, z);
+      if (by !== 'player') { const far = course.worldAt(course.nearest(x, z).s, 0); player.position.set(far.x, 0, far.z); }
+      view.update({enabled: true, hidden: false, course, runId: 'qa', dt: 1 / 60, worldVisible: true, heli: null, player, rival, extras: [], traffic: [], hits, crusher});
+    };
+    // Load the models from far away, then put the car on top of the animal.
+    const away = course.worldAt(course.nearest(target.x, target.z).s - 150, 0);
+    frame(away.x, away.z); await pause(30); frame(away.x, away.z);
+    frame(target.x + .5, target.z);
+    for (let i = 0; i < 30; i++) frame(target.x + .5, target.z);
+    const roots = [], blood = [];
+    view.group.traverse(node => { if (node.name === 'Wildlife blood') blood.push(node); else if (node.parent?.parent === view.group && node.visible) roots.push(node); });
+    const down = roots.filter(node => Math.abs(node.rotation.x - Math.PI / 2) < 1e-9);
+    return {view, sounds, roots, down, blood};
+  };
+
+  const off = await run({hits: false});
+  equal(off.down.length + off.blood.length, 0, 'with the switch off a car on top of an animal knocks nothing down');
+  off.view.dispose();
+
+  const hit = await run();
+  ok(hit.down.length >= 1, "the player's car on top of an animal knocks it down: it lies on its side");
+  const heap = hit.down.reduce((best, node) => Math.hypot(node.position.x - target.x, node.position.z - target.z) < Math.hypot(best.position.x - target.x, best.position.z - target.z) ? node : best),
+    heapBox = new THREE.Box3().setFromObject(heap), heapMiddle = heapBox.getCenter(new THREE.Vector3());
+  ok(heapBox.max.y - heapBox.min.y < .5, `a small heap: ${(heapBox.max.y - heapBox.min.y).toFixed(2)} m high (the animal stood 1.2 m)`);
+  ok(Math.hypot(heap.position.x - target.x, heap.position.z - target.z) > 1, 'thrown on from where it was hit');
+  equal(hit.blood.length, hit.down.length, 'with one stain under each animal knocked down');
+  const stain = hit.blood.reduce((best, node) => Math.hypot(node.position.x - heapMiddle.x, node.position.z - heapMiddle.z) < Math.hypot(best.position.x - heapMiddle.x, best.position.z - heapMiddle.z) ? node : best);
+  ok(stain.material.color.r > stain.material.color.g * 3 && stain.material.color.r > stain.material.color.b * 3, 'the stain is red');
+  ok(Math.abs(stain.position.y - heapBox.min.y) < .3 && Math.hypot(stain.position.x - heapMiddle.x, stain.position.z - heapMiddle.z) < .05,
+    'on the ground right under the middle of the heap (not under its feet, which the roll swings aside)');
+  equal(hit.sounds.length, hit.down.length, "each of the player's hits plays the crush sound once"); equal(hit.sounds[0], .7, 'at the ordinary strength');
+  const before = {x: heap.position.x, y: heap.position.y, z: heap.position.z};
+  hit.view.update({enabled: true, hidden: false, course, runId: 'qa', dt: 1 / 60, worldVisible: true, heli: null,
+    player: {position: new THREE.Vector3(target.x + 40, 0, target.z), visible: true}, rival: null, extras: [], traffic: [], hits: true});
+  same({x: heap.position.x, y: heap.position.y, z: heap.position.z}, before, 'the heap stays where it fell when the car drives on');
+  equal(hit.sounds.length, hit.down.length, 'and is not hit twice');
+  hit.view.dispose();
+  ok(!stain.parent, 'disposing the view takes the stain away with it');
+
+  const crush = await run({crusher: true});
+  ok(crush.down.length >= 1, 'the monster truck knocks it down too');
+  const flat = new THREE.Box3().setFromObject(crush.down[0]);
+  ok(flat.max.y - flat.min.y < (heapBox.max.y - heapBox.min.y) / 2, `and flattens it: ${(flat.max.y - flat.min.y).toFixed(2)} m against ${(heapBox.max.y - heapBox.min.y).toFixed(2)} m`);
+  ok(new THREE.Box3().setFromObject(crush.blood[0]).getSize(new THREE.Vector3()).x * new THREE.Box3().setFromObject(crush.blood[0]).getSize(new THREE.Vector3()).z >
+    new THREE.Box3().setFromObject(stain).getSize(new THREE.Vector3()).x * new THREE.Box3().setFromObject(stain).getSize(new THREE.Vector3()).z, 'with a wider stain');
+  equal(crush.sounds[0], 1, 'and a harder crunch');
+  crush.view.dispose();
+
+  const rivalHit = await run({by: 'rival'});
+  ok(rivalHit.down.length >= 1, 'another car knocks an animal down too');
+  equal(rivalHit.sounds.length, 0, "but only the player's own hits make the sound");
+  rivalHit.view.dispose();
+  equal(DOWN, 4, 'a knocked-down animal has a mood of its own, after GONE');
 }
 
 // ---- Drawing never reaches into the race ---------------------------------------

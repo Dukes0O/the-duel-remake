@@ -15,6 +15,15 @@
 // clip played faster, then idles again. A bird takes off and flies away and
 // does not come back that race. Beyond 250 m in a race (400 m from the air) an
 // animal fades out, and at most 12 are drawn at once, nearest first.
+//
+// Hitting one (switch `wildlife-hits`, docs/HELI_WILDLIFE.md section 3.5): a car
+// whose middle comes within 2.4 m of an animal on the ground knocks it down
+// (the monster truck, wider and heavier, within 3.4 m). It is thrown a little
+// way on, lies on its side as a small heap and stays for the race, with a dark
+// red stain on the ground under it; under the monster truck it is flattened and
+// the stain is wider. Drawing only, like everything here: the car feels nothing
+// and no race rule, replay or pay changes. A hit by the player's own car plays
+// the crush sound (`vehicle.crush`) through the `onHit` the renderer hands in.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
@@ -43,7 +52,32 @@ export const WILDLIFE_VIEW = Object.freeze({
   ringInner: 3.3, ringOuter: 4, // the pale ring on the ground around an animal that was counted (metres)
   ringPulse: .9,           // it swells and settles once over this many seconds...
   ringStay: .3,            // ...and then stays at this opacity until the count ends
+  hitReach: 2.4,           // a car's middle this close knocks an animal down
+  crushReach: 3.4,         // ...the monster truck's, this close
+  hitThrow: 1.2,           // the heap lies this far on from where it was hit, away from the car
+  heapHeight: .6,          // a knocked-down animal lies on its side at this share of its width...
+  crushHeight: .2,         // ...and under the monster truck is flattened to this share
+  bloodColor: 0x4a0707,    // the stain under it: dark red, wet
+  bloodOpacity: .9,
+  bloodSize: .55,          // the stain's radius as a share of the heap's longest side...
+  bloodMin: .6,            // ...but at least this, metres
+  crushBlood: 1.5,         // the monster truck's stain is this much wider
+  bloodSmear: 1.4,         // and every stain is drawn out this much along the way the car pushed
 });
+
+// How near a car's middle must come to knock an animal down.
+export const hitReach = crusher => crusher ? WILDLIFE_VIEW.crushReach : WILDLIFE_VIEW.hitReach;
+
+// The stain's outline: `count` radii (shares of its radius) around it, ragged but
+// the same every time for the same animal (`unit` from 0 to 1).
+export function bloodOutline(unit, count = 14) {
+  const radii = [];
+  for (let i = 0; i < count; i++) {
+    const n = Math.sin((unit * 97.31 + i * 1.7) * 12.9898) * 43758.5453;
+    radii.push(.7 + .45 * (n - Math.floor(n)));
+  }
+  return radii;
+}
 
 // The ring of a counted animal: opacity and size `age` seconds after the count. One pulse, then faint for good.
 export function ringLook(age) {
@@ -54,7 +88,7 @@ export function ringLook(age) {
 // ---------------------------------------------------------------------------
 // The pure decisions (tested without graphics)
 // ---------------------------------------------------------------------------
-export const IDLE = 0, FLEE = 1, FLY = 2, GONE = 3;
+export const IDLE = 0, FLEE = 1, FLY = 2, GONE = 3, DOWN = 4;   // DOWN: knocked down by a car, a heap for the rest of the race
 
 // How near a threat must come to startle an animal. A car startles at 35 m. The
 // helicopter startles only while it is low, and then at the count's reach;
@@ -68,7 +102,7 @@ export function startleReach(agl = null) {
 // than its reach; a fleeing one is idle again once it has arrived. Birds that
 // have flown off stay gone.
 export function nextMood(mood, distance, {arrived = false, reach = WILDLIFE_VIEW.startle, bird = false} = {}) {
-  if (mood === GONE) return GONE;
+  if (mood === GONE || mood === DOWN) return mood;
   if (mood === IDLE) return distance < reach ? (bird ? FLY : FLEE) : IDLE;
   if (mood === FLEE) return arrived ? IDLE : FLEE;
   return FLY;
@@ -144,8 +178,9 @@ function disposeModel(scene) {
 
 // options: scene (the parent the animals' group joins), host (an element that
 // shows the view's state in data-wildlife, for the browser checks), loadModel(url)
-// -> a glTF (tests give their own), playDay() -> a whole number.
-export function createWildlifeView({scene, host = null, loadModel = defaultLoad, playDay = viewPlayDay} = {}) {
+// -> a glTF (tests give their own), playDay() -> a whole number, onHit(strength)
+// -> called when the player's own car knocks an animal down (the sound).
+export function createWildlifeView({scene, host = null, loadModel = defaultLoad, playDay = viewPlayDay, onHit = null} = {}) {
   const group = new THREE.Group();
   group.name = 'Wildlife';
   group.visible = false;
@@ -157,8 +192,10 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   let entities = [];
   let distances = new Float64Array(0), picked = new Int32Array(WILDLIFE_VIEW.maxDrawn);
   const threats = new Float64Array(MAX_THREATS * 2);
+  const crushers = new Uint8Array(MAX_THREATS);   // 1 where that car is the monster truck
   const heliNow = {x: 0, y: 0, z: 0, agl: 0};
-  let threatCount = 0;
+  let threatCount = 0, playerThreat = -1, nearestIndex = -1, hitCount = 0;
+  const heapBox = new THREE.Box3(), heapSize = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tilt = new THREE.Quaternion(), turn = new THREE.Quaternion(), slope = new THREE.Vector3();
 
   const countIndex = new Map();       // the count's animal id -> its entity
   let ringGeometry = null;
@@ -167,7 +204,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   let revision = 0, retired = false, shown = false, lastStatus = '';
   let drawnCount = 0;
 
-  const shownState = () => `${planKey ? entities.length : 0} animals, ${drawnCount} drawn`;
+  const shownState = () => `${planKey ? entities.length : 0} animals, ${drawnCount} drawn${hitCount ? `, ${hitCount} hit` : ''}`;
   function report(text) {
     if (host && text !== lastStatus) { lastStatus = text; host.dataset.wildlife = text; }
   }
@@ -196,7 +233,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       yaw: unit * Math.PI * 2, yawTarget: null, mood: IDLE, drawn: false, picked: false, blend: 0, alpha: -1, shadow: null, flees: 0,
       fromX: 0, fromY: 0, fromZ: 0, toX: 0, toY: 0, toZ: 0, travel: 0, length: 0, speed: 0, age: 0, dirX: 0, dirZ: 0, startY: 0,
       root: null, mixer: null, idleAction: null, moveAction: null, materials: null, meshes: null,
-      scale: 1, unit, ring: null, ringAge: 0,
+      scale: 1, unit, ring: null, ringAge: 0, blood: null, crushed: false,
     };
   }
 
@@ -248,6 +285,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
 
   function planRace(course, raceNumber, day) {
     clearEntities('race');
+    hitCount = 0;
     const id = course.def.id;
     let placed = null;
     try {
@@ -314,6 +352,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
 
   function release(entity) {
     if (entity.ring) { entity.herd?.remove(entity.ring); entity.ring.material.dispose(); entity.ring = null; }
+    if (entity.blood) { entity.herd?.remove(entity.blood); entity.blood.geometry.dispose(); entity.blood.material.dispose(); entity.blood = null; }
     if (!entity.root) return;
     entity.herd?.remove(entity.root);
     entity.root.traverse(node => { if (node.isSkinnedMesh) node.skeleton.dispose(); });
@@ -324,24 +363,93 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
 
   // ---- what startles an animal ---------------------------------------------
   function gatherThreats(frame) {
-    threatCount = 0;
-    const add = object => {
-      if (!object || object.visible === false || threatCount >= MAX_THREATS) return;
-      threats[threatCount * 2] = object.position.x; threats[threatCount * 2 + 1] = object.position.z; threatCount++;
+    threatCount = 0; playerThreat = -1;
+    const add = (object, crusher = false) => {
+      if (!object || object.visible === false || threatCount >= MAX_THREATS) return false;
+      threats[threatCount * 2] = object.position.x; threats[threatCount * 2 + 1] = object.position.z;
+      crushers[threatCount] = crusher ? 1 : 0; threatCount++;
+      return true;
     };
-    add(frame.player); add(frame.rival);
+    if (add(frame.player, frame.crusher === true)) playerThreat = 0;
+    add(frame.rival);
     const extras = frame.extras, traffic = frame.traffic;
     if (extras) for (let i = 0; i < extras.length; i++) add(extras[i].mesh);
     if (traffic) for (let i = 0; i < traffic.length; i++) add(traffic[i]);
   }
 
+  // The distance to the nearest car; which car it is is left in nearestIndex.
   function nearestThreat(entity) {
-    let best = Infinity;
+    let best = Infinity; nearestIndex = -1;
     for (let i = 0; i < threatCount; i++) {
-      const dx = threats[i * 2] - entity.x, dz = threats[i * 2 + 1] - entity.z;
-      best = Math.min(best, dx * dx + dz * dz);
+      const dx = threats[i * 2] - entity.x, dz = threats[i * 2 + 1] - entity.z, d = dx * dx + dz * dz;
+      if (d < best) { best = d; nearestIndex = i; }
     }
     return Math.sqrt(best);
+  }
+
+  // ---- knocked down ---------------------------------------------------------
+  // The rendered ground's height where (x, z) is, or `fallback` off the course's ground.
+  function groundAt(course, x, z, fallback) {
+    const near = course.nearest(x, z);
+    const y = renderedGroundHeight(course, {x, z, s: near.s, off: near.lateral});
+    return Number.isFinite(y) ? y : fallback;
+  }
+
+  // Car `index` has hit this animal: it is thrown on, lies on its side as a heap
+  // (flattened under the monster truck) and a stain spreads under it.
+  function knockDown(entity, course, index) {
+    const crusher = crushers[index] === 1;
+    let dx = entity.x - threats[index * 2], dz = entity.z - threats[index * 2 + 1];
+    const length = Math.hypot(dx, dz);
+    if (length > .01) { dx /= length; dz /= length; } else { dx = Math.cos(entity.yaw); dz = -Math.sin(entity.yaw); }
+    entity.x += dx * WILDLIFE_VIEW.hitThrow; entity.z += dz * WILDLIFE_VIEW.hitThrow;
+    entity.y = groundAt(course, entity.x, entity.z, entity.y);
+    entity.mood = DOWN; entity.crushed = crusher; entity.yawTarget = null; entity.blend = 0;
+    entity.yaw = yawToward(dx, dz);   // it lies along the way it was pushed
+    // Still, in the model's rest pose (stopping the clips restores it); then onto its side (a roll about its own nose).
+    entity.mixer.stopAllAction();
+    const root = entity.root, s = entity.scale;
+    root.rotation.set(0, 0, 0); root.rotation.order = 'YXZ';
+    root.rotation.y = entity.yaw; root.rotation.x = Math.PI / 2;
+    root.scale.set(s * (crusher ? 1.2 : 1), s * (crusher ? 1.1 : .9), s * (crusher ? WILDLIFE_VIEW.crushHeight : WILDLIFE_VIEW.heapHeight));
+    root.position.set(entity.x, entity.y, entity.z);
+    root.updateMatrixWorld(true);
+    heapBox.setFromObject(root);
+    // Rest it on the ground (its feet were the origin, so on its side it would sink half in).
+    entity.lift = Number.isFinite(heapBox.min.y) ? entity.y + .02 - heapBox.min.y : 0;
+    root.position.y += entity.lift;
+    heapBox.getSize(heapSize);
+    // The roll swings the body off its feet line, so the stain goes under the body itself.
+    const centreX = Number.isFinite(heapBox.min.x) ? (heapBox.min.x + heapBox.max.x) / 2 : entity.x;
+    const centreZ = Number.isFinite(heapBox.min.z) ? (heapBox.min.z + heapBox.max.z) / 2 : entity.z;
+    addBlood(entity, course, crusher, Math.max(heapSize.x, heapSize.z) || 1, centreX, centreZ);
+    hitCount++; revision++;
+    if (index === playerThreat) onHit?.(crusher ? 1 : .7);
+  }
+
+  function addBlood(entity, course, crusher, size, x, z) {
+    const radius = Math.max(WILDLIFE_VIEW.bloodMin, size * WILDLIFE_VIEW.bloodSize) * (crusher ? WILDLIFE_VIEW.crushBlood : 1);
+    const outline = bloodOutline(entity.unit), shape = new THREE.Shape();
+    outline.forEach((share, i) => {
+      const angle = i / outline.length * Math.PI * 2, x = Math.cos(angle) * radius * share, y = Math.sin(angle) * radius * share;
+      if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
+    });
+    const geometry = new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
+    const material = new THREE.MeshStandardMaterial({color: WILDLIFE_VIEW.bloodColor, roughness: .3, metalness: 0, transparent: true,
+      opacity: WILDLIFE_VIEW.bloodOpacity, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2});
+    const blood = new THREE.Mesh(geometry, material);
+    blood.name = 'Wildlife blood'; blood.renderOrder = 2; blood.receiveShadow = true;
+    // Lie on the ground's own slope, drawn out along the way the car pushed.
+    const step = .8, here = groundAt(course, x, z, entity.y);
+    slope.set(-(groundAt(course, x + step, z, here) - here) / step, 1,
+      -(groundAt(course, x, z + step, here) - here) / step).normalize();
+    tilt.setFromUnitVectors(up, slope);
+    turn.setFromAxisAngle(up, entity.yaw);
+    blood.quaternion.copy(tilt).multiply(turn);
+    blood.scale.set(WILDLIFE_VIEW.bloodSmear, 1, 1);
+    blood.position.set(x, here + .04, z);
+    entity.herd.add(blood);
+    entity.blood = blood;
   }
 
   // ---- fleeing ---------------------------------------------------------------
@@ -403,8 +511,20 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     entity.drawn = false;
   }
 
-  function step(entity, dt, course, heli, limit, distance) {
+  function step(entity, dt, course, heli, limit, distance, hits) {
     if (!entity.root) dress(entity);
+    // A car on top of an animal on the ground knocks it down (a bird in the air is out of reach).
+    if (hits && !heli && entity.mood !== DOWN && entity.mood !== FLY && entity.mood !== GONE) {
+      const near = nearestThreat(entity);
+      if (nearestIndex >= 0 && near < hitReach(crushers[nearestIndex] === 1)) knockDown(entity, course, nearestIndex);
+    }
+    if (entity.mood === DOWN) {
+      // A heap: it stays where it fell and only fades with distance.
+      entity.root.position.set(entity.x, entity.y + entity.lift, entity.z);
+      fade(entity, distance, limit);
+      entity.root.visible = true; entity.drawn = true;
+      return;
+    }
     // Startle: the nearest threat decides, by the pure rule above. A car is the
     // nearest of the cars; the helicopter counts only while it is low.
     if (entity.mood === IDLE) {
@@ -435,7 +555,12 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     const root = entity.root;
     root.position.set(entity.x, entity.y, entity.z);
     root.rotation.y = entity.yaw;
-    // Fade and shadows.
+    fade(entity, distance, limit);
+    root.visible = true; entity.drawn = true;
+  }
+
+  // Fade and shadows.
+  function fade(entity, distance, limit) {
     const alpha = fadeAlpha(distance, limit);
     if (Math.abs(alpha - entity.alpha) > .01) {
       entity.alpha = alpha;
@@ -443,7 +568,6 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     }
     const shadow = distance < WILDLIFE_VIEW.shadowReach;
     if (shadow !== entity.shadow) { entity.shadow = shadow; for (let i = 0; i < entity.meshes.length; i++) entity.meshes[i].castShadow = shadow; }
-    root.visible = true; entity.drawn = true;
   }
 
   function hideAll() {
@@ -458,7 +582,8 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   // frame: enabled (the switch), hidden (menus and the Deep), course, runId (the
   // app's id for the race in hand), dt (0 while paused), worldVisible, heli (the
   // helicopter's view while flying, else null), and the cars: player, rival,
-  // extras (the extra opponents, each {mesh}) and traffic. Reads only.
+  // extras (the extra opponents, each {mesh}) and traffic; hits (the switch
+  // wildlife-hits) and crusher (the player drives the monster truck). Reads only.
   function update(frame) {
     if (retired) return;
     const course = frame.course;
@@ -519,16 +644,20 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     for (let i = 0; i < count; i++) entities[picked[i]].picked = true;
     for (let i = 0; i < entities.length; i++) if (entities[i].drawn && !entities[i].picked) hide(entities[i]);
     if (!heli) gatherThreats(frame);
-    const dt = Math.max(0, frame.dt ?? 0);
+    const dt = Math.max(0, frame.dt ?? 0), hits = frame.hits === true;
     for (let i = 0; i < count; i++) {
       const e = entities[picked[i]];
-      step(e, dt, course, heli, limit, distances[picked[i]]);
+      step(e, dt, course, heli, limit, distances[picked[i]], hits);
     }
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
-      if (!e.ring) continue;
-      const dx = e.x - vx, dy = e.y - vy, dz = e.z - vz;
-      stepRing(e, dt, Math.sqrt(dx * dx + dy * dy + dz * dz), limit);
+      if (!e.ring && !e.blood) continue;
+      const dx = e.x - vx, dy = e.y - vy, dz = e.z - vz, distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (e.ring) stepRing(e, dt, distance, limit);
+      if (e.blood) {
+        e.blood.material.opacity = WILDLIFE_VIEW.bloodOpacity * fadeAlpha(distance, limit);
+        e.blood.visible = e.blood.material.opacity > .01;
+      }
     }
     drawnCount = count;
     report(shownState());
