@@ -31,10 +31,11 @@ export async function run(context){
     const f=app.duel.state.fighter,c=window.__render.camera;
     return {onFoot:app.duel.state.onFoot,context:app.activeInputContext(),
       eye: c.position.y-f.y,range:Math.hypot(c.position.x-f.x,c.position.z-f.z),
-      reticle:document.querySelector('.combat-upgraded-hud')?.classList.contains('on-foot')};
+      reticle:document.querySelector('.combat-upgraded-hud')?.classList.contains('on-foot'),
+      locked:!!document.pointerLockElement, hint:document.querySelector('.combat-foot-mouse')?.textContent};
   })()`);
   if(!exited.onFoot||exited.context!=='foot'||exited.eye<.65||
-      exited.eye>2||exited.range>.05||!exited.reticle)
+      exited.eye>2||exited.range>.05||!exited.reticle||exited.locked||exited.hint!=='Click the picture to capture the mouse.')
     throw Error(`Fighter exit/camera failed: ${JSON.stringify(exited)}`);
   await key(context,'keyUp','KeyF','f',70);
   const point=await context.evaluate(`(()=>{
@@ -46,7 +47,7 @@ export async function run(context){
     {type:'mousePressed',button:'left',clickCount:1,x:point.x,y:point.y});
   await context.command('Input.dispatchMouseEvent',
     {type:'mouseReleased',button:'left',clickCount:1,x:point.x,y:point.y});
-  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas')",
+  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas') && window.__qaApp._footPointer.capture==='held'",
     `fighter pointer lock at ${point.target}`,10_000);
   const before=await context.evaluate('window.__qaApp.duel.state.fighter.yaw');
   await context.command('Input.dispatchMouseEvent',
@@ -59,6 +60,7 @@ export async function run(context){
     app.onFrame?.(app.duel.state);
     const c=window.__render.camera;
     return {distance:Math.hypot(f.x-start.x,f.z-start.z),
+      hint:document.querySelector('.combat-foot-mouse')?.textContent,
       cameraRange:Math.hypot(c.position.x-f.x,c.position.z-f.z),
       yaw:f.yaw,beforeYaw:${JSON.stringify(before)},yawDelta:f.yaw-(${JSON.stringify(before)}),
       carDistance:Math.hypot(f.x-app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral).x,
@@ -66,7 +68,7 @@ export async function run(context){
   })()`);
   await key(context,'keyUp','KeyW','w',87);
   if(moved.distance<.4||moved.cameraRange>.05||moved.yaw>=before||
-      moved.carDistance>3.5)
+      moved.carDistance>3.5||moved.hint!=='Esc frees the mouse')
     throw Error(`Fighter walk/look/camera failed: ${JSON.stringify(moved)}`);
   await context.screenshot('onfoot-controls-camera');
   await key(context,'keyDown','KeyF','f',70);
@@ -90,7 +92,7 @@ export async function run(context){
     {type:'mousePressed',button:'left',clickCount:1,x:point.x,y:point.y});
   await context.command('Input.dispatchMouseEvent',
     {type:'mouseReleased',button:'left',clickCount:1,x:point.x,y:point.y});
-  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas')",
+  await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas') && window.__qaApp._footPointer.capture==='held'",
     'pointer lock after second exit',10_000);
   await key(context,'keyDown','Escape','Escape',27);
   await context.waitFor('!document.pointerLockElement && window.__qaApp.duel.state.paused',

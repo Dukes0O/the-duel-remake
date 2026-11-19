@@ -30,6 +30,25 @@ export function sweepBox(start, end, halfX, halfZ) {
   return { t: entry, nx, nz, penetration: 0, inside: false };
 }
 
+// A box fits through a close opening only if its projections on both pairs of axes overlap
+// at the same time. The second sweep is in the car's axes; the returned normal is in the obstacle's.
+function orientedCarSweep(start, end, obstacleHit, obstacle, relative, halfWidth, halfLength, width, length) {
+  if (!obstacleHit) return null;
+  const cos = Math.cos(relative), sin = Math.sin(relative);
+  const toCar = p => ({x:p.x * cos - p.z * sin, z:p.x * sin + p.z * cos});
+  const a = toCar(start), b = toCar(end);
+  const across = halfWidth + obstacle.halfX * Math.abs(cos) + obstacle.halfZ * Math.abs(sin);
+  const along = halfLength + obstacle.halfX * Math.abs(sin) + obstacle.halfZ * Math.abs(cos);
+  const carHit = sweepBox(a, b, across, along);
+  if (!carHit) return null;
+  const t = Math.max(obstacleHit.t, carHit.t);
+  const outside = (from, to, hx, hz) => Math.abs(from.x + t * (to.x - from.x)) > hx + 1e-8 ||
+    Math.abs(from.z + t * (to.z - from.z)) > hz + 1e-8;
+  if (outside(start, end, width, length) || outside(a, b, across, along)) return null;
+  if (carHit.t < obstacleHit.t || (carHit.t === obstacleHit.t && obstacleHit.penetration <= carHit.penetration)) return obstacleHit;
+  return {...carHit, nx:carHit.nx * cos + carHit.nz * sin, nz:-carHit.nx * sin + carHit.nz * cos};
+}
+
 export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions = {}) {
   const halfWidth = dimensions.halfWidth ?? CAR_HALF_WIDTH, halfLength = dimensions.halfLength ?? CAR_HALF_LENGTH;
   const reach = Math.hypot(obstacle.halfX, obstacle.halfZ) + halfLength + halfWidth;
@@ -43,6 +62,7 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
   const startLocal = local(start), endLocal = local(end);
   const width = obstacle.halfX + halfWidth * c + halfLength * s, length = obstacle.halfZ + halfLength * c + halfWidth * s;
   let hit = sweep(startLocal, endLocal, width, length);
+  if (obstacle.exactCarCorners) hit = orientedCarSweep(startLocal, endLocal, hit, obstacle, relative, halfWidth, halfLength, width, length);
   if (!hit) return null;
   // Grounded cars explicitly retain their historical authored envelopes.
   // Airborne cars, fighters and projectile sweeps use model measurements.
@@ -64,7 +84,8 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
     }
     if (entryY > hit.t) {
       const point = { x: startLocal.x + (endLocal.x - startLocal.x) * entryY, z: startLocal.z + (endLocal.z - startLocal.z) * entryY };
-      const contact = sweep(point, point, width + 1e-8, length + 1e-8);
+      let contact = sweep(point, point, width + 1e-8, length + 1e-8);
+      if (obstacle.exactCarCorners) contact = orientedCarSweep(point, point, contact, obstacle, relative, halfWidth, halfLength, width, length);
       if (!contact) return null;
       hit = { ...contact, t: entryY };
     }
