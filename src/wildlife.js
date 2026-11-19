@@ -98,6 +98,13 @@ export const SPECIES = Object.freeze({
   'raccoon': { kind: 'ground' },
   'cat': { kind: 'ground' },
   'owl': { kind: 'bird' },
+  // The Wasteland and the player's town (on no course yet)
+  'goat': { kind: 'ground' },
+  'chicken': { kind: 'ground' },
+  'camp-dog': { kind: 'ground' },
+  'turkey-vulture': { kind: 'bird' },
+  'desert-monitor': { kind: 'ground' },
+  'scorpion': { kind: 'ground' },
 });
 export const SPECIES_IDS = Object.freeze(Object.keys(SPECIES));
 

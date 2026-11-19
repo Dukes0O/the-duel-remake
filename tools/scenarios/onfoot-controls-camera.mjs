@@ -2,7 +2,8 @@ const key=(context,type,code,keyName,virtual)=>context.command(
   'Input.dispatchKeyEvent',{type,key:keyName,code,windowsVirtualKeyCode:virtual});
 
 export async function run(context){
-  await context.navigate('/tools/menu-check.html');
+  // STORY-NIGHT-2-FLOW: Esc while captured frees the mouse without pausing behind story-choices; the switch is on here.
+  await context.navigate('/tools/menu-check.html?flags=story-choices');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'",
     'private Wasteland scene',60_000);
   await context.evaluate(`(()=>{
@@ -95,8 +96,16 @@ export async function run(context){
   await context.waitFor("document.pointerLockElement===document.querySelector('#view3d canvas') && window.__qaApp._footPointer.capture==='held'",
     'pointer lock after second exit',10_000);
   await key(context,'keyDown','Escape','Escape',27);
-  await context.waitFor('!document.pointerLockElement && window.__qaApp.duel.state.paused',
-    'Escape releases pointer and pauses',10_000);
+  await context.waitFor('!document.pointerLockElement',
+    'Escape releases the pointer',10_000);
   await key(context,'keyUp','Escape','Escape',27);
-  console.log(`On-foot exit, pointer lock, walk, camera, re-entry and Escape pause: ${JSON.stringify({exited,moved,entered})}`);
+  // A second look after the release: the game is still running.
+  await new Promise(resolve=>setTimeout(resolve,400));
+  if(await context.evaluate('window.__qaApp.duel.state.paused'))
+    throw Error('Escape while the mouse was captured paused the game');
+  await key(context,'keyDown','Escape','Escape',27);
+  await context.waitFor('window.__qaApp.duel.state.paused',
+    'Escape with the mouse free pauses',10_000);
+  await key(context,'keyUp','Escape','Escape',27);
+  console.log(`On-foot exit, pointer lock, walk, camera, re-entry, Escape release and Escape pause: ${JSON.stringify({exited,moved,entered})}`);
 }

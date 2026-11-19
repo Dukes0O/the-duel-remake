@@ -99,6 +99,24 @@ try {
   assert.equal(inputApp._footPointer.fire || inputApp._footPointer.aim, false);
   inputApp.duel.state.paused = false;
   assert.equal(inputApp.footMouseHint, 'Click the picture to capture the mouse.');
+  // STORY-NIGHT-2-FLOW: with story-choices on, Esc while captured only frees the mouse; Esc once it is free pauses.
+  inputApp.duel.featureFlags = {enabled: id => id === 'story-choices'};
+  inputApp.activeInputContext = () => 'foot';
+  inputApp._inputAction = action => { if (action === 'pause') inputApp.togglePause(); };
+  document.pointerLockElement = canvas;
+  document.dispatchEvent(new Event('pointerlockchange'));
+  assert.equal(inputApp.footMouseHint, 'Esc frees the mouse');
+  const freeing = key('Escape'); window.dispatchEvent(freeing);
+  assert.equal(document.pointerLockElement, null);
+  check(freeing.defaultPrevented && inputApp.duel.state.paused === false,
+    'Esc while the picture holds the mouse frees it and the game keeps running');
+  window.dispatchEvent(key('Escape'));
+  check(inputApp.duel.state.paused === false, 'the same press, arriving again just after the release, does not pause');
+  inputApp._footPointerReleasedAt = -Infinity;
+  window.dispatchEvent(key('Escape'));
+  check(inputApp.duel.state.paused === true, 'Esc once the mouse is free pauses');
+  inputApp.duel.state.paused = false;
+  delete inputApp.duel.featureFlags; delete inputApp.activeInputContext; delete inputApp._inputAction;
   for (const next of [{paused:true}, {onFoot:false}, {status:'menu'}]) {
     Object.assign(inputApp.duel.state,{onFoot:true, paused:false, status:'racing'});
     mouse('mousedown',0);

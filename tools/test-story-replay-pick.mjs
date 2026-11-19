@@ -3,7 +3,9 @@ import {activePlayer, createPlayerRegistry, createProfile, loadPlayers, savePlay
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {applyChoice, bankHearth, causeOf, createLedger, ledgerPageData, recordedTellCause} from '../src/story/ledger.js';
 import {bankLedgerHearth, beginLedger, recordLedgerChoice, savedLedger} from '../src/story/ledger-save.js';
-import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, playLedgerChoice} from '../src/story/ledger-ui.js';
+import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, night2DawnMarkup, night2JournalMarkup, playJournalNote,
+  playLedgerChoice} from '../src/story/ledger-ui.js';
+import {night2Remembered} from '../src/world/jobs/night-2.js';
 import {keepNight2Replay, settleNight2} from '../src/story/night-2-save.js';
 import {NIGHT_2_CHOICES, NIGHT_2_EFFECTS} from '../src/story/scenes/night-2.js';
 import {pageFunctions, pageSource} from './scenarios/story-night-2.mjs';
@@ -65,6 +67,26 @@ assert.equal(settleNight2(replacement.profile, finished(gift, 10)).profile.waste
 const unpayable = settleNight2(base, finished(inside)).profile;
 const reopen = settleNight2(unpayable, finished(gift, 10)).replay;
 assert.equal(keepNight2Replay(unpayable, finished(gift, 10), reopen.expected).profile.wasteland.scrap, 0);
+
+// STORY-NIGHT-2-FLOW: the end of the night is one remembered line from the telling that stands, not the journal page.
+assert.equal(night2Remembered(savedLedger(first)), 'Remembered: the Walkers owe you a great favour.');
+assert.equal(night2Remembered(legacyLedger), 'Remembered: the Walkers owe you a great favour.',
+  'a first-version debt keeps its words on the ledger list');
+assert.equal(night2Remembered(savedLedger(replacement.profile)), 'Remembered: you promised Dot a fire by Night 4.',
+  'the replacement telling is the one remembered');
+assert.equal(night2Remembered(finished([NIGHT_2_CHOICES[3], scene('unseen-scout', NIGHT_2_EFFECTS['unseen-scout'])]).ledger),
+  'Remembered: the Walkers will not forget that you turned them away.', 'an unseen scout is never named');
+const dawn = night2DawnMarkup({remembered: 'Remembered: <a & b>.'}, text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+assert.match(dawn, /<p class="story-dawn-note" role="status">Remembered: &lt;a &amp; b&gt;\.<\/p>/);
+assert.match(dawn, /data-action="night-2-continue">Continue</);
+assert(!/What people remember|aria-modal/.test(dawn), 'the dawn does not stop play with the journal page');
+const journal = night2JournalMarkup(ledgerPageData(savedLedger(first)), String);
+assert(/What people remember/.test(journal) && /data-action="story-journal-close">Back</.test(journal),
+  'the journal opens from the pause card as the same page');
+const noted = [];
+playJournalNote({context: {state: 'running'}, muted: false, _playCue: cue => noted.push(cue)});
+assert.deepEqual(noted, ['story.journal.note']);
+assert.equal(SOUND_BANK['story.journal.note'].flag, 'story-choices');
 
 const source = causeOf(legacyLedger, 'mark', 'dace-kept-watch');
 let later = recordLedgerChoice(old, 3, scene('night-3/wim', [

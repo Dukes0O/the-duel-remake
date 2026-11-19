@@ -72,6 +72,7 @@ import {createBowlView} from './bowl/bowl-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createWorkVehicleView} from './town/view/work-vehicle-view.js'; // TOWN-VEHICLES
 import {createTankerModel} from './arena/tanker-model.js';
 import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
 import {referenceLap} from './reference-laps.js';
@@ -360,7 +361,7 @@ export function attachRenderer(host, app) {
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
   // WILD-VIEW: the animals, a group of their own beside the cars; with the switch off nothing is drawn and nothing loads.
-  const wildlifeView=createWildlifeView({scene,host});let wildlifeRevision=0;
+  const wildlifeView=createWildlifeView({scene,host,onHit:strength=>app.audio?.animalHit?.(strength)});let wildlifeRevision=0;
   // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
   const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
@@ -459,6 +460,7 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
+  const workVehicleView=createWorkVehicleView(); // TOWN-VEHICLES: a job's work vehicle is drawn in place of the garage car
   function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
     let status=vehicleAssets.status(key,{finish});
@@ -862,7 +864,7 @@ export function attachRenderer(host, app) {
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
     applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
-    const tall=carKey==='titan_monster';
+    const tall=carKey==='titan_monster'||workVehicleView.drawsFor(st,app._switches?.()??app.duel.featureFlags); // TOWN-VEHICLES: a truck's camera sits as high as the Titan's
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;
@@ -1295,6 +1297,7 @@ export function attachRenderer(host, app) {
     snowmenView?.update(menu?null:st,high);
     avalancheView?.update(menu?null:st,high);
     wildlifeView.update({enabled:(app._switches?.()??app.duel.featureFlags).enabled('wildlife')===true,hidden:menu||!!deepPose,course,runId:app.runId,dt:st.paused?0:dt,
+      hits:(app._switches?.()??app.duel.featureFlags).enabled('wildlife-hits')===true,crusher:CARS[carKey]?.kind==='monster',
       worldVisible:world.visible,heli:heliNow,player,rival,extras:extraOpponents,traffic});
     if(wildlifeView.revision!==wildlifeRevision){wildlifeRevision=wildlifeView.revision;sceneRevision++;ambientShading.refresh();}
     yetiView.update(menu?null:st,course,high);
@@ -1341,6 +1344,7 @@ export function attachRenderer(host, app) {
       host.dataset.warmupStatus=warmupTicket.state.status;
       if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     }
+    if(workVehicleView.update({scene,player,camera,state:st,flags:app._switches?.()??app.duel.featureFlags})){sceneRevision++;ambientShading.refresh();}
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;

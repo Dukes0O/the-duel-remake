@@ -19,7 +19,7 @@ def cli(species, build=None, motion='Walk'):
     parser.add_argument('--paths-only', action='store_true')
     parser.add_argument('--cache', type=Path, default=Path('C:/Users/kyleb/dev/art-library/wild-north-woods'))
     parser.add_argument('--review', action='store_true', help='Render exported GLB, without rebuilding it')
-    parser.add_argument('--round', type=int, choices=(1, 2, 3), default=1)
+    parser.add_argument('--round', type=int, choices=range(1, 10), default=1)
     parser.add_argument('--candidate', action='store_true',
                         help='Build or review a candidate under the ignored .qa-dist/wildlife-candidates/ until it passes')
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])

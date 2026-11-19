@@ -338,8 +338,19 @@ assert.equal(canSendBorer(mesa,secondSurvey),true, 'The excavator can survey ano
 mesa = sendBorer(mesa,secondSurvey);
 assert.equal(mesa.boreOrders.length,2);
 const handGroundBase = createDigSandbox({playerId:'apprentice-mesa-hand'}).ground;
-const handGround = {...handGroundBase, refusal:shape=>borerLandRefusal(shape,handGroundBase),
-  spoilRefusal:shape=>borerSpoilRefusal(shape,handGroundBase)};
+// QA-BORER-SUITE-TIME: the land's answer to "may a cut or spoil go here" depends only on the place asked about, and a cut asks
+// about the same ground cells hundreds of times as it advances, so each answer is worked out once (same function, same
+// arguments, same answers). The sent bore runs inside the Dig and keeps the Dig's own checks.
+const rememberedByPlace = refusal => {
+  const answers = new Map();
+  return shape => {
+    const key = `${shape.x},${shape.z},${shape.radius}`;
+    if (!answers.has(key)) answers.set(key, refusal(shape));
+    return answers.get(key);
+  };
+};
+const handGround = {...handGroundBase, refusal:rememberedByPlace(shape=>borerLandRefusal(shape,handGroundBase)),
+  spoilRefusal:rememberedByPlace(shape=>borerSpoilRefusal(shape,handGroundBase))};
 let hand = createBorerState(mouth);
 const handTunnels = createGroundTunnels([], {heightAt:(px,pz)=>handGround.heightAt(px,pz)});
 const apprentice = mesa.apprenticeTown.apprenticeships[0];

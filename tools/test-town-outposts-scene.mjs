@@ -258,13 +258,20 @@ test('the scene draws each outpost on the drawn ground, people step aside, and a
   const loader = new GLTFLoader(), asked = [];
   const loadAsset = async path => { asked.push(path); const bytes = readFileSync(new URL('../public' + path, import.meta.url));
     return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), ''); };
-  // A stand-in goat for the test only (the real one comes from WILD-ART-WASTE): any approved model file, under the goat's name.
-  const wildlife = {goat: {file: 'ibex.glb', idle: 'Idle', move: 'Walk', scale: 1, run: {speed: 4.5, rate: 2.8}}};
-  assert.equal(outpostAnimalSpecies('goat'), null, 'no goat model yet: the goats are placed but not drawn');
-  assert.equal(outpostAnimalSpecies('goat', wildlife), 'goat');
-  assert.equal(outpostAnimalSpecies('dog', {dog: {}}), 'dog');
+  // The goat and the camp dog have their rows and files (WILD-ART-WASTE): they are taken by name from src/wildlife-models.js.
+  assert.equal(outpostAnimalSpecies('goat'), 'goat', 'Tam\'s goats are drawn as the goat');
+  assert.equal(outpostAnimalSpecies('dog'), 'camp-dog', 'Tuesday is drawn as the camp dog');
+  assert.equal(outpostAnimalSpecies('goat', {}), null, 'a species with no row is not drawn');
   const layout = townOutpostWorld(protectedTown);
-  const view = createTownOutpostsScene({outposts: layout.outposts, loadAsset, drawnHeightAt: drawnAt, wildlife});
+  // Without a species row, the scene still stands: every outpost and its people, and no animal.
+  const bare = createTownOutpostsScene({outposts: layout.outposts, loadAsset, drawnHeightAt: drawnAt, wildlife: {}});
+  try {
+    assert.equal(await bare.ready, true);
+    assert.deepEqual(bare.group.userData.loadErrors, []);
+    assert.ok(bare.group.userData.sites.every(site => site.site.children.length === 1 && site.animals.length === 0), 'no animals, every outpost drawn');
+  } finally { bare.dispose(); }
+  asked.length = 0;
+  const view = createTownOutpostsScene({outposts: layout.outposts, loadAsset, drawnHeightAt: drawnAt});
   try {
     assert.equal(await view.ready, true);
     assert.deepEqual(view.group.userData.loadErrors, []);
@@ -286,7 +293,11 @@ test('the scene draws each outpost on the drawn ground, people step aside, and a
       assert.equal(site.people.group.userData.loadError ?? null, null);
     }
     const camp = view.group.userData.sites.find(site => site.outpost.id === 'hermit-camp');
-    assert.equal(camp.animals.length, 8, 'the goats are drawn once a goat model exists');
+    assert.equal(camp.animals.length, 8, 'Tam\'s eight goats are drawn');
+    assert.ok(camp.animals.every(goat => goat.species === 'goat' && goat.idle && goat.move), 'each goat has its Idle and Walk clips');
+    const halt = view.group.userData.sites.find(site => site.outpost.id === 'rail-halt');
+    assert.deepEqual(halt.animals.map(dog => dog.species), ['camp-dog'], 'Tuesday is drawn at the halt');
+    assert.ok(halt.animals[0].idle && halt.animals[0].move, 'Tuesday has her Idle and Walk clips');
     // A car comes up to Dot: she steps aside, and goes back when it has gone.
     const diner = view.group.userData.sites.find(site => site.outpost.id === 'dot-diner'), dot = diner.cast[0], plan = diner.outpost.people[0];
     let seconds = 0;
@@ -300,8 +311,28 @@ test('the scene draws each outpost on the drawn ground, people step aside, and a
     const start = {...bo.position};
     run({x: school.outpost.x + 60, z: school.outpost.z}, 10);
     assert.ok(bo.distance > 5 && Math.hypot(bo.position.x - start.x, bo.position.z - start.z) > .5, 'Bo wanders');
-    run({x: camp.outpost.x + 30, z: camp.outpost.z}, 3);
+    // The animals stand on their ground (the goats on the drawn ground, Tuesday on the platform) and face the way they walk: the models'
+    // noses are along +x, so a turn of `yaw` points the nose at (cos yaw, -sin yaw).
+    const facing = (animals, viewer, time) => {
+      let walked = 0;
+      for (let t = 0; t < time; t += 1 / 30) {
+        const before = animals.map(animal => ({x: animal.x, z: animal.z}));
+        view.update(viewer, seconds += 1 / 30, null);
+        animals.forEach((animal, index) => {
+          const dx = animal.x - before[index].x, dz = animal.z - before[index].z, length = Math.hypot(dx, dz);
+          if (length < 1e-3) return;
+          walked++;
+          const nose = {x: Math.cos(animal.root.rotation.y), z: -Math.sin(animal.root.rotation.y)};
+          assert.ok((nose.x * dx + nose.z * dz) / length > .99, `${animal.plan.who} faces the way it walks`);
+        });
+      }
+      return walked;
+    };
+    assert.ok(facing(camp.animals, {x: camp.outpost.x + 30, z: camp.outpost.z}, 20) > 0, 'the goats graze about');
     for (const goat of camp.animals) assert.ok(Math.abs(goat.root.position.y - drawnAt(goat.root.position.x, goat.root.position.z)) < 1e-9, 'a goat stands on the drawn ground');
+    assert.ok(facing(halt.animals, {x: halt.outpost.x + 20, z: halt.outpost.z}, 12) > 0, 'Tuesday trots up and down');
+    const tuesday = halt.animals[0];
+    assert.ok(Math.abs(tuesday.root.position.y - (halt.site.position.y + .2)) < 1e-9, 'Tuesday stands on the platform');
   } finally {
     view.dispose();
     if (hadSelf) Object.defineProperty(globalThis, 'self', hadSelf); else delete globalThis.self;
