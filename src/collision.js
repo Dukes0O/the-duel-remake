@@ -101,40 +101,48 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
 // The car is a rectangle turned by `relative` in the ellipse's frame. Scaling that frame by 1/radiusX and 1/radiusZ makes the ellipse
 // a unit circle and the car a parallelogram; they touch when the car's centre is inside the parallelogram grown by the circle's radius.
 // The scaling keeps straight lines and the moment of contact, so the time is exact for round and long ellipses alike. A normal comes back
-// through the scaling's transpose, and a starting overlap's depth is measured along that normal in metres.
+// through the scaling's transpose, and a starting overlap is pushed out by the shortest way in metres. A body with no size (a sight line)
+// is a point, and a body with no width is a segment.
 function sweepCarEllipse(start, end, radiusX, radiusZ, relative, halfWidth, halfLength, grow = 0) {
   const rx = Math.max(radiusX, 1e-6), rz = Math.max(radiusZ, 1e-6), radius = 1 + grow;
   const cos = Math.cos(relative), sin = Math.sin(relative);
   const ux = halfWidth * cos / rx, uz = -halfWidth * sin / rz, vx = halfLength * sin / rx, vz = halfLength * cos / rz;
   const vertices = [[ux + vx, uz + vz], [vx - ux, vz - uz], [-ux - vx, -uz - vz], [ux - vx, uz - vz]];
-  const edges = vertices.map(([ax, az], index) => {
-    const [bx, bz] = vertices[(index + 1) % 4], ex = bx - ax, ez = bz - az, span = Math.hypot(ex, ez) || 1e-12;
+  const edges = [];
+  vertices.forEach(([ax, az], index) => {
+    const [bx, bz] = vertices[(index + 1) % 4], ex = bx - ax, ez = bz - az, span = Math.hypot(ex, ez);
+    if (span < 1e-9) return;
     const mx = (ax + bx) / 2, mz = (az + bz) / 2;
     let nx = ez / span, nz = -ex / span;
     if (nx * mx + nz * mz < 0) { nx = -nx; nz = -nz; }
-    return {ax, az, tx: ex / span, tz: ez / span, span, mx, mz, nx, nz, offset: nx * mx + nz * mz};
+    edges.push({ax, az, tx: ex / span, tz: ez / span, span, mx, mz, nx, nz, offset: nx * mx + nz * mz});
   });
   const qx = start.x / rx, qz = start.z / rz, dx = end.x / rx - qx, dz = end.z / rz - qz;
   const toLocal = (nx, nz, depth) => {
     const wx = nx / rx, wz = nz / rz, size = Math.hypot(wx, wz);
     return {nx: wx / size, nz: wz / size, penetration: depth / size};
   };
-  const insideBody = edges.every(edge => edge.nx * qx + edge.nz * qz <= edge.offset);
-  if (insideBody) {
+  // Only a body with area can hold the centre; the small allowance keeps a centre on a corner from rounding out of it.
+  if (edges.length === 4 && edges.every(edge => edge.nx * qx + edge.nz * qz <= edge.offset + 1e-12)) {
     let best = null;
     for (const edge of edges) {
-      const depth = edge.offset + radius - (edge.nx * qx + edge.nz * qz);
-      if (!best || depth < best.depth) best = {depth, nx: edge.nx, nz: edge.nz};
+      const way = toLocal(edge.nx, edge.nz, edge.offset + radius - (edge.nx * qx + edge.nz * qz));
+      if (!best || way.penetration < best.penetration) best = way;
     }
-    return {t: 0, ...toLocal(best.nx, best.nz, best.depth), inside: true};
+    return {t: 0, ...best, inside: true};
   }
-  let nearest = Infinity, px = 0, pz = 0;
+  let nearest = Math.hypot(qx - vertices[0][0], qz - vertices[0][1]), px = vertices[0][0], pz = vertices[0][1];
   for (const edge of edges) {
     const along = Math.max(0, Math.min(edge.span, (qx - edge.ax) * edge.tx + (qz - edge.az) * edge.tz));
     const cx = edge.ax + edge.tx * along, cz = edge.az + edge.tz * along, gap = Math.hypot(qx - cx, qz - cz);
     if (gap < nearest) { nearest = gap; px = cx; pz = cz; }
   }
   if (nearest < radius) {
+    // A centre exactly on the body has no direction of its own; back the way it came, as the old sweep did.
+    if (nearest < 1e-12) {
+      const bx = -dx, bz = -dz || 1, size = Math.hypot(bx, bz);
+      return {t: 0, ...toLocal(bx / size, bz / size, radius), inside: true};
+    }
     return {t: 0, ...toLocal((qx - px) / nearest, (qz - pz) / nearest, radius - nearest), inside: true};
   }
   const a = dx * dx + dz * dz;

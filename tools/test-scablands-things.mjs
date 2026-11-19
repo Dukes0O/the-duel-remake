@@ -237,6 +237,24 @@ test('the sweep meets a long oval where the car\'s body meets it, at any heading
   assert.ok(checked > 100, `${checked} cases far enough from the edge to judge`);
 });
 
+test('a sight line is a point to an oval, and a car caught inside a long rock leaves by the short way (QA-ROUND-SOLID-HEADING)', async () => {
+  const {sweepObstacle} = await import('../src/collision.js');
+  const sight = {halfWidth: 0, halfLength: 0, height: 0};
+  const post = {x: 0, z: 0, halfX: .45, halfZ: .45, heading: 0, shape: 'ellipse', y: 0, height: 6};
+  assert.equal(sweepObstacle({x: -3, y: 1.6, z: .55}, {x: 3, y: 1.1, z: .6}, post, 0, sight), null, 'a line 10 cm clear of a post is clear');
+  const through = sweepObstacle({x: -3, y: 1.6, z: 0}, {x: 3, y: 1.1, z: 0}, post, 0, sight);
+  assert.ok(through && Math.abs(through.t - 2.55 / 6) < 1e-9 && Math.abs(through.nx + 1) < 1e-9, 'a line through the post meets its near face');
+  const mountain = {x: 0, z: 0, halfX: 40, halfZ: 20, heading: .3, shape: 'ellipse'};
+  assert.equal(sweepObstacle({x: 35, z: 25}, {x: 45, z: 30}, mountain, 0, sight), null, 'a line outside the oval but inside its square is clear');
+  for (const heading of [0, Math.PI / 2]) {
+    const rock = {x: 0, z: 0, halfX: 6.7, halfZ: 2.1, heading: 0, shape: 'ellipse'};
+    const held = sweepObstacle({x: 0, z: 0}, {x: 0, z: 0}, rock, heading);
+    assert.ok(held.inside && Math.abs(held.nx) < 1e-9, `a car turned ${heading} at the rock's middle is pushed out across it, not along it`);
+    const reach = heading ? CAR_BODY.halfWidth : CAR_BODY.halfLength;
+    assert.ok(Math.abs(held.penetration - (rock.halfZ + reach)) < 1e-9, 'by just enough to clear its side');
+  }
+});
+
 test('fixed trees pass footprint clearance and leave room at job starts', () => {
   const candidates = deadTreeCandidates(1989);
   const fixed = clearedFixedThings(1989, []);
