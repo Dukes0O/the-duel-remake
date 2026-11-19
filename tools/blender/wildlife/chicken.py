@@ -115,7 +115,7 @@ def build(output, c, cache):
         thigh = o.near(a, ['thigh.' + side, 'body', 'shank.' + side])
         # A cone of thigh feathers that starts wide inside the belly and narrows to the hock.
         a.tube3([(HIP[0] + .014, y * .9, HIP[1] + .022), (-.014, y, .176), (-.030, y, .138), (-.042, y, .104)],
-                [.044, .036, .021, .0090], plumage, thigh, 8)
+                [.040, .029, .0150, .0080], plumage, thigh, 8)
         shank = o.near(a, ['shank.' + side, 'foot.' + side, 'thigh.' + side])
         a.tube3([(-.042, y, .108), (-.022, y, .058), (-.004, y, .016)], [.0085, .0068, .0072],
                 lambda p: o.mix(SHANK, DUST, .35 * o.mottle(p, 6)), shank, 6)

@@ -220,4 +220,4 @@ def build(ID, P, paint, output, c):
         o.turn(obj, 'head', -.05 * math.sin(w))
 
     o.finish(a, c, output, [('Idle', 120, idle), ('Fly', P.get('beat', 16), fly)], budget=2000,
-             roughness=P.get('roughness'), specular=P.get('specular'))
+             roughness=P.get('roughness'), specular=P.get('specular'), refine=P.get('refine'))

@@ -93,13 +93,40 @@ def build(output, c, cache):
         a.oval((.505, s * .029, .172), (.0075, .004, .006), BLACK, 'head', 3, 6)          # eye
         a.oval((.505, s * .026, .178), (.016, .008, .005), o.mix(SAND, DARK, .4), 'head', 3, 6)   # brow
 
-    def limb(p):
+    def scales(p):
         return o.mix(o.mix(DARK, SAND, .62), YELLOW, .8 * (o.speckle(p) > .62))
+
+    def limb(name, hip, knee, ankle, toe, radii, parent, s):
+        """One bent limb from inside the body to the wrist, a small palm, five long clawed toes."""
+        upper, lower, foot = name + '.upper', name + '.lower', name + '.foot'
+        a.bone(upper, hip, knee, parent)
+        a.bone(lower, knee, ankle, upper)
+        a.bone(foot, ankle, toe, lower)
+        h, k, w, t = Vector(hip), Vector(knee), Vector(ankle), Vector(toe)
+        r0, r1, r2 = radii
+        a.tube3([h, h.lerp(k, .5), k.lerp(h, .12), k, k.lerp(w, .12), k.lerp(w, .55), w],
+                [r0, r0 * .92, r1 * 1.05, r1, r1 * .98, r1 * .80, r2], scales, o.near(a, [upper, lower, foot, parent]), 8)
+        ahead = (t - w)
+        ahead.z = 0
+        reach = ahead.length
+        ahead.normalize()
+        a.tube3([w + Vector((0, 0, -.004)), w + ahead * reach * .40 + Vector((0, 0, -.010))], [r2 * 1.05, r2 * 1.20],
+                o.mix(SAND, DARK, .25), o.near(a, [foot, lower]), 8, .50)
+        for k5 in range(5):
+            angle = math.radians((k5 - 2) * 21 + 6 * s)
+            d = Vector((ahead.x * math.cos(angle) - ahead.y * math.sin(angle), ahead.x * math.sin(angle) + ahead.y * math.cos(angle), 0))
+            length = reach * (1.0 - .10 * abs(k5 - 2.4))
+            base = w + ahead * reach * .30 + Vector((0, 0, -.010))
+            tip = Vector((base.x, base.y, .004)) + d * length
+            a.tube3([base, base.lerp(tip, .55) + Vector((0, 0, .006)), tip], [r2 * .40, r2 * .30, r2 * .07],
+                    lambda p, tip=tip, length=length: BLACK if (Vector(p) - tip).length < length * .26 else o.mix(SAND, DARK, .30),
+                    foot, 4)
+
     for side, s in (('L', 1), ('R', -1)):
-        o.small_leg(a, 'front.' + side, (.250, s * .058, .132), (.222, s * .128, .092), (.256, s * .152, .022),
-                    (.306, s * .168, .009), (.030, .023, .016), limb, o.mix(SAND, DARK, .25), False, 'chest', claws=5)
-        o.small_leg(a, 'rear.' + side, (-.090, s * .056, .112), (-.040, s * .138, .084), (-.086, s * .164, .022),
-                    (-.030, s * .196, .009), (.038, .027, .018), limb, o.mix(SAND, DARK, .25), True, 'hips', claws=5)
+        limb('front.' + side, (.250, s * .058, .132), (.215, s * .150, .098), (.262, s * .186, .024),
+             (.326, s * .204, .009), (.027, .020, .014), 'chest', s)
+        limb('rear.' + side, (-.090, s * .056, .112), (-.030, s * .160, .088), (-.092, s * .196, .024),
+             (-.022, s * .236, .009), (.034, .023, .016), 'hips', s)
 
     o.finish(a, c, output, [('Idle', 150, idle), ('Walk', 30, walk)])
 

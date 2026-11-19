@@ -48,6 +48,15 @@ export const WILDLIFE_MODELS = Object.freeze({
   // little when running, as the beaver does. The wildcat has not passed.
   'wild-boar': model('wild-boar.glb', {speed: 5, rate: 4}),
   'golden-eagle': model('golden-eagle.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
+  // The Wasteland and the player's town (WILD-ART-WASTE). On no course yet: the town's
+  // view takes the goat, the chicken and the camp dog by file name. The chicken walks
+  // and pecks; it has no Fly clip. The scorpion is four times life size, to be seen from a car.
+  'goat': model('goat.glb', {speed: 4, rate: 3.6}),
+  'chicken': model('chicken.glb', {speed: 2.2, rate: 2.6}),
+  'camp-dog': model('camp-dog.glb', {speed: 6, rate: 4.4}),
+  'turkey-vulture': model('turkey-vulture.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
+  'desert-monitor': model('desert-monitor.glb', {speed: 3, rate: 2.8}),
+  'scorpion': model('scorpion.glb', {speed: 1.2, rate: 2.5}),
 });
 
 // The ids in the table, for availableSpecies() and the count's course list.

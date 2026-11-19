@@ -24,10 +24,10 @@ IVORY = (.56, .50, .40)
 LEG = (.44, .34, .30)
 
 P = {'body': .34, 'width': .100, 'height': .112, 'neck': (.046, .060), 'head': .029, 'neck_r': .95,
-     'bill': (.027, .021, .014, .70), 'tail': (.24, .105, 'round'), 'span': .85,
-     'primaries': (6, .30, .070, 58, True), 'body_sides': 14, 'fold_sides': 10, 'chord': (.43, .28), 'leg': .170, 'stance': .055,
-     'toe': .009, 'toes': [(0, .060), (30, .052), (-30, .052), (180, .030)], 'tilt': 35, 'beat': 72, 'flap': .07,
-     'dihedral': .28, 'teeter': .10, 'shag': .03, 'roughness': 1, 'specular': .25}
+     'bill': (.027, .021, .014, .70), 'tail': (.21, .105, 'round'), 'span': .85,
+     'primaries': (6, .30, .070, 58, True), 'body_sides': 14, 'fold_sides': 10, 'chord': (.43, .28), 'leg': .140, 'stance': .055,
+     'toe': .009, 'toes': [(0, .060), (30, .052), (-30, .052), (180, .030)], 'tilt': 38, 'beat': 72, 'flap': .07,
+     'dihedral': .28, 'teeter': .10, 'shag': .03, 'roughness': 1, 'specular': .25, 'refine': 1950}
 
 
 def head_centre(f):
@@ -83,7 +83,7 @@ def bill(f, p):
 
 def leg(f, p):
     import original as o
-    return plumage(f, p) if p.z > .105 else o.mix(LEG, (.60, .56, .50), .5 * o.mottle(p, 8))
+    return plumage(f, p) if p.z > .085 else o.mix(LEG, (.60, .56, .50), .5 * o.mottle(p, 8))
 
 
 PAINT = {'body': plumage, 'head': head, 'wing': wing, 'tail': tail, 'bill': bill, 'leg': leg}
