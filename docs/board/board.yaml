@@ -574,19 +574,9 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
-    needs: ["STORY-NIGHT-2"]
-    locks: []
-    details: "docs/board/cards/STORY-REPLAY-PICK.md"
-
-  - id: STORY-NIGHT-2
-    title: "Night 2, Strangers at the gate: the first chapter of Five Cold Nights a player can test"
-    owner: "codex"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
     needs: []
     locks: []
-    details: "docs/board/cards/STORY-NIGHT-2.md"
+    details: "docs/board/cards/STORY-REPLAY-PICK.md"
 
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"

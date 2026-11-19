@@ -123,9 +123,11 @@ export function presentJumpHeight(readout, s, app, ui, text) {
 }
 // EVERBURN-PLAY-FIXES, third round: in a world job the crash message (and its kicker) shows only while the car is wrecked and
 // recovering or the crash is the catastrophic one. A plain collision shows nothing there and does not pause or cut the caption.
-const jobCrashShown = s => (s.crashFlash > 0 || s.impactTimer > 0) && (s.combatWrecking === true || s.catastrophic === true);
+const walkingFromWash = state => state.onFoot && state.arena?.worldJob?.night2?.washCarUnavailable === true;
+const jobCrashShown = s => !walkingFromWash(s) && (s.crashFlash > 0 || s.impactTimer > 0) &&
+  (s.combatWrecking === true || s.catastrophic === true);
 export function worldReturnNotice(state) {
-  if (state.arena?.mode !== 'world-job') return '';
+  if (state.arena?.mode !== 'world-job' || walkingFromWash(state)) return '';
   const job = state.arena.worldJob?.job;
   if (state.onFoot && state.fighter?.knockedDown) {
     return job?.stepState?.brandKnockdown && job.stepState.returnNotice
@@ -281,7 +283,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('countdown-number',Math.max(1,Math.ceil(s.countdown)));
       text('countdown-word',s.countdown>1?'GET READY':'MAKE IT COUNT');
     }
-    const crashFlashing=s.crashFlash>0||s.impactTimer>0;
+    const crashFlashing=!walkingFromWash(s)&&(s.crashFlash>0||s.impactTimer>0);
     // In a world job only a wreck (the car recovering) or the catastrophic crash takes the caption's place; a bump shows nothing here.
     const crash=worldJob?jobCrashShown(s):crashFlashing;
     ui['crash-flash'].hidden=!crashFlashing;

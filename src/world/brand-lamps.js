@@ -10,6 +10,7 @@ import {createTownLamp} from './town-lamp-look.js';
 // make three pictures of their own.
 export const BRAND_LAMP_GLOW = Object.freeze({metres: 3.4, opacity: .6});
 const NIGHT_2_LAMPS = [...NIGHT_2_SITES.lamps, ...NIGHT_2_SITES.chaseLamps];
+const ALLEY_LAMPS = new Set(NIGHT_2_SITES.chaseLamps.map(place => place.id));
 export function createBrandLamps({surface = null} = {}) {
   const group = new THREE.Group();
   group.name = 'Light the Town lamps';
@@ -89,12 +90,13 @@ export function createBrandLamps({surface = null} = {}) {
         });
       }
       for (const lamp of lamps) {
-        const chaseLamp = chapter?.props.chaseLights && NIGHT_2_SITES.chaseLamps.some(place => place.id === lamp.id);
-        lamp.lit = step?.gasLoad || chaseLamp || chapter?.lamps[lamp.id] || worldJob.job.stepState.lamps?.[lamp.id] === true;
+        const alleyLamp = chapter?.night && ALLEY_LAMPS.has(lamp.id);
+        const watchLamp = chapter?.night && chapter.answer === 'watch' && lamp.id === 'pump';
+        lamp.lit = step?.gasLoad || alleyLamp || watchLamp || chapter?.lamps[lamp.id] || worldJob.job.stepState.lamps?.[lamp.id] === true;
         lamp.brightness = step?.gasLoad ? GAS_LOAD_RULE.lampBeforeGasShare + (1 - GAS_LOAD_RULE.lampBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : 1;
         lamp.look.setLit(lamp.lit, seconds, lamp.brightness);
-        lamp.glow.intensity = lamp.lit ? (chaseLamp ? 120 : 10) * lamp.brightness : 0;
-        lamp.glow.distance = chaseLamp ? 32 : BRAND_RULE.lanternLightRadius;
+        lamp.glow.intensity = lamp.lit ? (alleyLamp ? 120 : chapter ? 155 : 10) * lamp.brightness : 0;
+        lamp.glow.distance = alleyLamp ? 32 : chapter ? 34 : BRAND_RULE.lanternLightRadius;
         lamp.halo.visible = lamp.lit;
         lamp.ring.visible = step?.brand === true && (!chapter || step.places.some(place => place.id === lamp.id)) && !lamp.lit && worldJob.job.stepState.brandSeconds > 0 && !worldJob.job.stepState.townEnding;
         lamp.halo.material.opacity = lamp.lit ? BRAND_LAMP_GLOW.opacity * lamp.brightness : 0;

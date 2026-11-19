@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-19T04:30:48.999Z
+Observed at: 2026-11-19T06:20:25.419Z
 
-Observation commit: 9974f6b58d1317fe043d695e30051810a178fc8d
+Observation commit: 922710d96efe90e1c6acfd83cd1a9e485aa6c00b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9974f6b58d1317fe043d695e30051810a178fc8d
+Integration HEAD: 922710d96efe90e1c6acfd83cd1a9e485aa6c00b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -31,11 +31,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/road-riders | 0 | true | true | false | /workspace/card-sessions/road-riders |
+| codex/road-riders | 0 | false | true | true | /workspace/card-sessions/road-riders |
 | codex/story-ledger | 0 | false | true | true | /workspace/card-sessions/story-ledger |
-| codex/story-night-2 | 0 | false | false | false | /workspace/card-sessions/story-night-2 |
+| codex/story-night-2 | 0 | true | true | false | /workspace/card-sessions/story-night-2 |
 | codex/story-people | 0 | false | true | true | /workspace/card-sessions/story-people |
 | codex/story-plate-night-2 | 0 | false | true | true | /workspace/card-sessions/story-plate-night-2 |
+| codex/story-replay-pick | 0 | true | false | false | /workspace/card-sessions/story-replay-pick |
 | codex/story-talk | 0 | false | true | true | /workspace/card-sessions/story-talk |
 | codex/town-home-surfaces | 0 | false | true | true | /workspace/card-sessions/town-home-surfaces |
 | codex/wasteland-art-direction | 0 | false | true | true | /workspace/card-sessions/wasteland-art-direction |
@@ -48,7 +49,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/story-night-2 | unknown | 2026-11-19T04:27:55Z | 0 | last commit 2026-11-19T04:27:55Z | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/STORY-NIGHT-2.md, docs/board/questions/STORY-NIGHT-2.md, docs/changes/STORY-NIGHT-2.md |
+| codex/story-replay-pick | unknown | 2026-11-19T06:08:50Z | 0 | uncommitted changes; exact activity time unknown | docs/board/board.yaml, src/app.js, src/progression.js, src/screen-router.js, src/sound-bank.js |
 
 ## Size targets
 
@@ -56,15 +57,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 719,038,260 B | +23,899 B | 250,000,000 B |
+| Build `dist/` | 719,078,327 B | +418 B | 250,000,000 B |
 | Wasteland models | 431,213,000 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
 | Review `looks/` | 91,040,717 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 95,882 B | -8,371,563 B | 5,000,000 B |
+| Added bytes in last merge | 647,855 B | +0 B | 5,000,000 B |
 | All `public/` | 710,281,900 B | +0 B | unavailable |
-| Git objects | 1,035,432,960 B | +679,936 B | unavailable |
+| Git objects | 1,039,635,456 B | +1,409,024 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -81,6 +82,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: missing; cached commit missing.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: ahead of local; cached commit b298d24195f14c123fbfa61792af4fbf06af7ea3.
+- Remote origin/integration/wasteland: ahead of local; cached commit f20a59f3b88772f4c9c0ecacff8d023b0f494fd4.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.

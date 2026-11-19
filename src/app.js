@@ -824,7 +824,7 @@ export class App {
   startNight2() {
     if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
     return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0,
-      job: night2Job(this.seed)});
+      job: night2Job(this.seed, {washFight: this._switches().enabled('road-riders')})});
   }
 
   // A job still in play is left first.

@@ -853,7 +853,7 @@ export function attachRenderer(host, app) {
     chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night, st.paused ? 0 : dt);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
-      chapterNight: chapterNightShare, chaseLight: chapter?.props.chaseLights,
+      chapterNight: chapterNightShare,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});

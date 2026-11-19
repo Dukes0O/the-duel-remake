@@ -32,6 +32,13 @@ if(qaParams.get('p4-kits-native')==='1'){
 }
 const {app,refreshRaceSetup}=await import('../src/main.js');
 window.__qaApp=app;
+if (qaParams.has('night-2-surround-review')) {
+  const {startWashSurroundReview, placeWashSurroundReview} = await import('./night-2-wash-review.js');
+  window.__qaNight2Surround = Object.freeze({
+    start: () => startWashSurroundReview(app), place: () => placeWashSurroundReview(app.duel),
+  });
+}
+
 const {CARS}=await import('../src/config.js');
 const {UPGRADE_TYPES}=await import('../src/progression.js');
 // The box closes when anything outside it is pressed, so that it never lies over a menu button the tester wants.
