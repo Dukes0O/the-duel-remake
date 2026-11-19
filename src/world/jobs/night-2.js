@@ -296,16 +296,16 @@ export function night2Action(worldJob, point, onFoot) {
     if (inSight) chapter.daceTrack = {position: {...dace.position}, visible: true};
     else if (chapter.daceTrack) chapter.daceTrack.visible = false;
     const lastDace = chapter.daceTrack?.position;
-    const direct = lastDace && (beyondWest || inSight &&
+    const direct = lastDace && dist(point, lastDace) > 1.5 && (beyondWest || inSight &&
       !worldJob.solidGrid.near(point.x, point.z, lastDace.x, lastDace.z, 1).some(solid =>
         solid.kind !== 'person' && sweepObstacle(point, lastDace, solid, 0, {halfWidth: .4, halfLength: .4, height: 1.5})));
-    const follow = direct ? {point: lastDace, metres: dist(point, lastDace)}
-      : direction(chapter, point, sites.westGap, tail);
-    const outside = point.x < at(sites.westGap).x - 5 || point.z >= sites.gate.z + 11;
+    const outside = beyondWest || point.z >= sites.gate.z + 11;
     const cut = at(sites.westCut), end = at(sites.campWalk);
     const next = point.x > cut.x + 5 ? cut : end;
-    const round = outside ? {point: next, metres: dist(point, next) + (next === cut ? dist(cut, end) : 0)}
-      : direction(chapter, point, sites.gateOutside, tail);
+    const onward = {point: next, metres: dist(point, next) + (next === cut ? dist(cut, end) : 0)};
+    const follow = direct ? {point: lastDace, metres: dist(point, lastDace)}
+      : beyondWest ? onward : direction(chapter, point, sites.westGap, tail);
+    const round = outside ? onward : direction(chapter, point, sites.gateOutside, tail);
     chapter.routes = [follow && {name: 'Through the alleys', ...follow},
       round && {name: 'Round by the gate', ...round}].filter(Boolean);
     return {contact, arrival: dace.action === 'stand' ? 'escaped' : null};
