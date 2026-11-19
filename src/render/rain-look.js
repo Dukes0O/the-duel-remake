@@ -40,8 +40,7 @@ export const RAIN_LOOK = Object.freeze({
     runRadiusMm: 3,                  // a bead this big runs
     hitsPerSecond: 22,               // beads landing on the glass in view, standing still, in full rain
     hitsPer100Kmh: 38,               // more as the car drives into the rain
-    beadsHigh: 170,
-    beadsPerformance: 72,
+    beads: 170,                      // at most on the glass at once
     slideMmPerSecond: 70,            // a running bead, at its running size
     wobbleMm: 1.6,                   // a run does not go straight
     airLiftKmh: 55,                  // faster than this, beads go up the glass

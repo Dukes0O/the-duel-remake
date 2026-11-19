@@ -143,7 +143,7 @@ check(() => {
 // The arrival, on the rain's own clock.
 check(() => {
   const look = RAIN_LOOK.arrival, arrival = createRainArrival(look);
-  const glass = createRainGlass({kind: 'windscreen', capacity: RAIN_LOOK.glass.beadsHigh});
+  const glass = createRainGlass({kind: 'windscreen', capacity: RAIN_LOOK.glass.beads});
   const window = {width: 760, height: 430};
   let soundBefore = -1, wetAt = null, puddlesAt = null, ones = 0, seenMore = false;
   for (let t = 0; t < 200; t += 1 / 30) {

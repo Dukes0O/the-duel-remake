@@ -14,7 +14,7 @@ const BEAD = 0, TRAIL = 1;
 export function createRainGlass({kind = 'windscreen', capacity, seed = 0x52414e, look} = {}) {
   const lens = kind === 'lens';
   look ??= lens ? RAIN_LOOK.lens : RAIN_LOOK.glass;
-  capacity = Math.max(1, Math.floor(capacity ?? (lens ? look.beads : look.beadsHigh)));
+  capacity = Math.max(1, Math.floor(capacity ?? look.beads));
   const rng = makeRng(seed);
   const x = new Float32Array(capacity), y = new Float32Array(capacity), r = new Float32Array(capacity);
   const pin = new Float32Array(capacity), age = new Float32Array(capacity), life = new Float32Array(capacity);

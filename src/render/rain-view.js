@@ -5,12 +5,12 @@
 // - Draw calls: 3 from the chase camera (falling rain, wet ground, lens drops), 3 or 4 from the driver's seat
 //   (falling rain, wet ground, beads, and the wiper while it moves). No extra pass and no render target.
 // - Triangles: falling rain 2 per streak (High 14,000; Performance 4,800); wet ground High 49 tiles of 12 x 12 cells
-//   (14,100), Performance 25 tiles of 10 x 10 (5,000); beads 2 each (at most 340 and 144).
+//   (14,100), Performance 25 tiles of 10 x 10 (5,000); beads 2 each (at most 340).
 // - Fill: the wet ground covers the ground in view once with a short shader; the beads and streaks are thin.
 // - CPU: the beads, under 0.1 ms; finding the ground under new wet ground, a capped share of each frame (rain-look.js
 //   buildMs) and only while the car moves on to new ground.
-// Performance's lower-cost form: a third of the streaks, coarser and smaller wet ground, no rings in the puddles, and
-// fewer beads.
+// Performance's lower-cost form: a third of the streaks, coarser and smaller wet ground, and no rings in the puddles.
+// The beads are the same on both: at most 170 small quads.
 import * as THREE from 'three';
 import {COURSE} from '../config.js';
 import {featureFlags} from '../feature-flags.js';
@@ -371,17 +371,19 @@ export function createRainView({scene, look = RAIN_LOOK, qa = qaBuild(), host = 
   let wanted = false, place = null, forcedRegion = null, hold = false, speedKmh = 0, view = 'none';
   const eye = new THREE.Vector3(), eyeVelocity = new THREE.Vector3(), scratch = new THREE.Vector3(), windscreen = {width: 1, height: 1};
   const tickSize = makeRng(0x7469636b);
-  let haveEye = false, sheltered = false;
+  // The streaks and ripples run on a clock that only goes forward, even while the rain is fading away.
+  let haveEye = false, sheltered = false, clock = 0;
 
   // Returns true when it put new meshes in the scene.
   function build(quality) {
     if (built && high === quality) return false;
     if (built) { group.remove(built.ground.mesh); built.ground.dispose(); }
     high = quality;
-    glass = createRainGlass({kind: 'windscreen', capacity: high ? look.glass.beadsHigh : look.glass.beadsPerformance, look: look.glass, seed: 0x57494e44});
-    lens = createRainGlass({kind: 'lens', capacity: look.lens.beads, look: look.lens, seed: 0x4c454e53});
+    // The beads are kept through a change of quality: they cost next to nothing to draw either way.
+    glass ??= createRainGlass({kind: 'windscreen', capacity: look.glass.beads, look: look.glass, seed: 0x57494e44});
+    lens ??= createRainGlass({kind: 'lens', capacity: look.lens.beads, look: look.lens, seed: 0x4c454e53});
     if (!built) {
-      const beads = beadMesh(look.glass.beadsHigh, 'Rain on the windscreen', glassUniforms);
+      const beads = beadMesh(look.glass.beads, 'Rain on the windscreen', glassUniforms);
       const lensBeads = beadMesh(look.lens.beads, 'Rain on the lens', lensUniforms);
       const wiperMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({name: 'Rain wiper',
         vertexShader: SCREEN_VERTEX, fragmentShader: WIPER_FRAGMENT, uniforms: wiperUniforms, transparent: true, depthTest: false, depthWrite: false}));
@@ -449,7 +451,7 @@ export function createRainView({scene, look = RAIN_LOOK, qa = qaBuild(), host = 
       windscreen.height = 2 * Math.tan(fov / 2) * look.glass.distance * 1000; windscreen.width = windscreen.height * aspect;
       const onFoot = !!state?.onFoot, inspecting = !!app?.inspectionCamera;
       view = onFoot || inspecting || !state ? 'none' : (app?.cameraMode ?? 'chase') === 'hood' ? 'windscreen' : 'lens';
-      simulate(step);
+      simulate(step); clock += step;
       camera?.layers?.enable(RAIN_GLASS_LAYER);
       // The eye's own speed draws the streaks out the way the drops pass it.
       if (camera) {
@@ -485,13 +487,14 @@ export function createRainView({scene, look = RAIN_LOOK, qa = qaBuild(), host = 
       fall.visible = drawn > 0;
       fall.geometry.setDrawRange(0, drawn * 6);
       const u = fall.material.uniforms;
-      u.uTime.value = levels.elapsed; u.uEyeVelocity.value.copy(eyeVelocity);
+      u.uTime.value = clock; u.uEyeVelocity.value.copy(eyeVelocity);
       u.uPixel.value = 2 * Math.tan(fov / 2) / Math.max(1, renderer?.domElement?.height ?? 720) * look.fall.minPixels;
       u.uColour.value.copy(fog).multiplyScalar(look.fall.brightness);
       // Wet ground.
       const ground = built.ground, g = ground.mesh.material.uniforms;
       ground.mesh.visible = levels.wet > 0 || levels.puddles > 0;
-      if (ground.mesh.visible && camera && course?.nearest && course?.groundAt) {
+      // Laid from the moment the rain is wanted, so that it is ready before the ground starts to darken.
+      if ((wanted || ground.mesh.visible) && camera && course?.nearest && course?.groundAt) {
         const ahead = camera.getWorldDirection(scratch); ahead.y = 0;
         if (ahead.lengthSq() > 1e-6) ahead.normalize().multiplyScalar(ground.radius * .3);
         const cx = camera.position.x + ahead.x, cz = camera.position.z + ahead.z;
@@ -500,7 +503,7 @@ export function createRainView({scene, look = RAIN_LOOK, qa = qaBuild(), host = 
           high ? look.ground.buildMsHigh : look.ground.buildMsPerformance);
         g.uCentre.value.set(cx, cz); g.uRadius.value = ground.radius;
       }
-      g.uWet.value = levels.wet; g.uPuddles.value = levels.puddles; g.uTime.value = levels.elapsed; g.uRain.value = levels.fall;
+      g.uWet.value = levels.wet; g.uPuddles.value = levels.puddles; g.uTime.value = clock; g.uRain.value = levels.fall;
       g.uHorizon.value.copy(fog); g.uZenith.value.copy(fog).multiplyScalar(look.ground.zenithShare);
       g.uFog.value.set(scene?.fog?.near ?? 100, scene?.fog?.far ?? 600);
       sound.update({audio: app?.audio, level: levels.sound, inside: view === 'windscreen', sheltered});
@@ -519,7 +522,7 @@ export function createRainView({scene, look = RAIN_LOOK, qa = qaBuild(), host = 
     start(regionId = 'far-side') { forcedRegion = regionId; hold = true; arrival.reset(); glass?.clear(); lens?.clear(); wiper = createRainWiper(look.glass.wiper); built?.ground.reset(); return true; },
     stop() { forcedRegion = null; hold = false; return true; },
     hold(on = true) { hold = on !== false; return hold; },
-    advance(seconds, dt = 1 / 60) { for (let t = 0; t < seconds - 1e-9; t += dt) simulate(Math.min(dt, seconds - t)); return api.status(); },
+    advance(seconds, dt = 1 / 60) { for (let t = 0; t < seconds - 1e-9; t += dt) { const step = Math.min(dt, seconds - t); simulate(step); clock += step; } return qaApi.status(); },
     status() {
       const levels = arrival.levels;
       return {wanted, forcedRegion, place, hold, view, high, elapsed: levels.elapsed, drops: levels.drops, fall: levels.fall, grey: levels.grey,
