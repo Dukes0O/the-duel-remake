@@ -7,7 +7,7 @@ export const DIG_MACHINE_CONTROLS = Object.freeze({
   excavator: {name: 'EXCAVATOR', words: 'A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.'},
   dumpTruck: {name: 'DUMP TRUCK', words: 'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.'},
   trencher: {name: 'TRENCHER', words: 'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.'},
-  drill: {name: 'DRILL RIG', words: 'Drive with W, A, S and D. Press Tab to lower or raise the mast. Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.'},
+  drill: {name: 'DRILL RIG', words: 'Drive with W, A, S and D. Press Tab to stand the mast up or lay it down. Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.'},
   dozer: {name: 'DOZER', words: 'Drive with W, A, S and D. Hold Space while driving to work the ground. Press Q to choose another machine. Press C to change the view.'},
   roller: {name: 'ROAD ROLLER', words: 'Drive with W, A, S and D. Hold Space while driving to work the ground. Press Q to choose another machine. Press C to change the view.'},
   paver: {name: 'PAVER', words: 'Drive with W, A, S and D. Hold Space while driving to work the ground. Hold Shift to pave slowly and smoothly. Press Q to choose another machine. Press C to change the view.'},

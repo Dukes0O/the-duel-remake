@@ -655,7 +655,7 @@ def basic_family():
   for index,track_y in enumerate((-2.14,-1.43,-.72,0,.72,1.43,2.14)):
    radius=.43 if abs(track_y)>2 else .31
    bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=radius,depth=.64,location=(side*1.62,track_y,.70),rotation=(0,math.pi/2,0))
-   roller=bpy.context.object;roller.name=f'paver crawler roller {side} {index}';roller.data.materials.append(black);roller.data.uv_layers.active.name='UVMap';parent(roller,paver)
+   crawler_wheel=bpy.context.object;crawler_wheel.name=f'paver crawler roller {side} {index}';crawler_wheel.data.materials.append(black);crawler_wheel.data.uv_layers.active.name='UVMap';parent(crawler_wheel,paver)
    bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,major_radius=radius*.73,minor_radius=.035,location=(side*1.62+side*.34,track_y,.70),rotation=(0,math.pi/2,0))
    rim=bpy.context.object;rim.name=f'paver crawler roller rim {side} {index}';rim.data.materials.append(tin);rim.data.uv_layers.active.name='UVMap';parent(rim,paver)
   # Raised tread cleats cross each straight run and wrap around the end rollers.

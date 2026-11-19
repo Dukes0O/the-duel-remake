@@ -26,7 +26,9 @@ function prepare(node) {
   node.traverse(child => {
     if (!child.isMesh) return;
     child.castShadow = true; child.receiveShadow = true;
-    for (const mat of [].concat(child.material || [])) if (mat.metalness > 0.3) { mat.metalness = 0.3; mat.roughness = Math.max(mat.roughness, 0.6); }
+    // The machines file is shared with the yard's road machines, so its materials are copied, never changed.
+    const fix = mat => mat.metalness > 0.3 ? Object.assign(mat.clone(), {metalness:0.3, roughness:Math.max(mat.roughness, 0.6)}) : mat;
+    if (child.material) child.material = Array.isArray(child.material) ? child.material.map(fix) : fix(child.material);
   });
   return node;
 }
@@ -67,7 +69,8 @@ export function concreteLook(set, wet, dry) {
   return {color:wet.clone().lerp(dry, t), roughness:0.25 + 0.7 * t};
 }
 
-export function createPlantYardView({parent, heightAt, audio = null, effects = null, loader = new GLTFLoader()} = {}) {
+export function createPlantYardView({parent, heightAt, audio = null, effects = null, loader = new GLTFLoader(),
+  machinesLoad = null} = {}) {
   if (!parent?.isObject3D || typeof heightAt !== 'function') throw new TypeError('The plant view needs a scene and the ground height.');
   const group = new THREE.Group();
   group.name = 'Concrete plant';
@@ -105,7 +108,8 @@ export function createPlantYardView({parent, heightAt, audio = null, effects = n
   let layout = null, built = null;
 
   const ready = (async () => {
-    const [plants, machines] = await Promise.all([loader.loadAsync(PLANT_MODEL), loader.loadAsync(PLANT_MACHINE_MODEL)]);
+    // The yard passes its own load of the machines file, so the file is fetched once.
+    const [plants, machines] = await Promise.all([loader.loadAsync(PLANT_MODEL), machinesLoad ?? loader.loadAsync(PLANT_MACHINE_MODEL)]);
     return {plants, machines};
   })().then(({plants, machines}) => {
     if (!group.parent) return;
