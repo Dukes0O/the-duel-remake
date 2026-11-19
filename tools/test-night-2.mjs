@@ -923,6 +923,14 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
       const circler = state.opponents.find(rider => rider.roadRider.circle);
       assert(circler, 'One rider lays siege to the camp');
       const wrecked = result === 'win' ? state.opponents.filter(rider => rider !== circler) : state.opponents;
+      // Kyle's picture of 19 November 2026 showed a man standing in the player's car with a wreck's smoke behind: a rider
+      // wrecked alongside put its crew out of the door that touched the player's car. Wreck the first one there.
+      {
+        const me = worldPose(duel, state), side = {x: me.x + Math.cos(me.heading) * 2, z: me.z - Math.sin(me.heading) * 2};
+        const near = duel.course.nearest(side.x, side.z);
+        Object.assign(wrecked[0], {s: near.s, prevS: near.s, lateral: near.lateral, prevLateral: near.lateral,
+          headingError: me.heading - duel.course.at(near.s).heading, speedMph: 0});
+      }
       for (const rider of wrecked) {
         rider.armor = 2;
         assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
