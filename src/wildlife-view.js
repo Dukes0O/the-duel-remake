@@ -57,12 +57,12 @@ export const WILDLIFE_VIEW = Object.freeze({
   hitThrow: 1.2,           // the heap lies this far on from where it was hit, away from the car
   heapHeight: .6,          // a knocked-down animal lies on its side at this share of its width...
   crushHeight: .2,         // ...and under the monster truck is flattened to this share
-  bloodColor: 0x4a0707,    // the stain under it: dark red, wet
-  bloodOpacity: .9,
-  bloodSize: .55,          // the stain's radius as a share of the heap's longest side...
-  bloodMin: .6,            // ...but at least this, metres
-  crushBlood: 1.5,         // the monster truck's stain is this much wider
-  bloodSmear: 1.4,         // and every stain is drawn out this much along the way the car pushed
+  bloodColor: 0x6e0a0a,    // the stain under it: a bit of deep red, matte so it never mirrors the sky
+  bloodOpacity: .85,
+  bloodSize: .22,          // the stain's radius as a share of the heap's longest side...
+  bloodMin: .3,            // ...but at least this, metres
+  crushBlood: 1.6,         // the monster truck's stain is this much wider
+  bloodSmear: 1.3,         // and every stain is drawn out this much along the way the car pushed
 });
 
 // How near a car's middle must come to knock an animal down.
@@ -70,11 +70,12 @@ export const hitReach = crusher => crusher ? WILDLIFE_VIEW.crushReach : WILDLIFE
 
 // The stain's outline: `count` radii (shares of its radius) around it, ragged but
 // the same every time for the same animal (`unit` from 0 to 1).
-export function bloodOutline(unit, count = 14) {
+export function bloodOutline(unit, count = 28) {
   const radii = [];
   for (let i = 0; i < count; i++) {
-    const n = Math.sin((unit * 97.31 + i * 1.7) * 12.9898) * 43758.5453;
-    radii.push(.7 + .45 * (n - Math.floor(n)));
+    // Two gentle waves and a little grain: ragged, not jagged.
+    const angle = i / count * Math.PI * 2, n = Math.sin((unit * 97.31 + i * 1.7) * 12.9898) * 43758.5453;
+    radii.push(.85 + .12 * Math.sin(angle * 3 + unit * 6.3) + .08 * Math.sin(angle * 5 + unit * 11) + .1 * (n - Math.floor(n)));
   }
   return radii;
 }
@@ -435,7 +436,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
     });
     const geometry = new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
-    const material = new THREE.MeshStandardMaterial({color: WILDLIFE_VIEW.bloodColor, roughness: .3, metalness: 0, transparent: true,
+    const material = new THREE.MeshStandardMaterial({color: WILDLIFE_VIEW.bloodColor, roughness: .85, metalness: 0, envMapIntensity: 0, transparent: true,
       opacity: WILDLIFE_VIEW.bloodOpacity, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2});
     const blood = new THREE.Mesh(geometry, material);
     blood.name = 'Wildlife blood'; blood.renderOrder = 2; blood.receiveShadow = true;

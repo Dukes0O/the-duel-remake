@@ -317,7 +317,7 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   equal(hitReach(true), 3.4, 'the monster truck within 3.4 m');
   const outline = bloodOutline(.37);
   same(bloodOutline(.37), outline, 'a stain has the same ragged outline every time for the same animal');
-  ok(outline.length === 14 && outline.every(share => share >= .7 && share <= 1.15), 'its radii are 70 to 115% of its size');
+  ok(outline.length === 28 && outline.every(share => share >= .65 && share <= 1.15), 'its radii are 65 to 115% of its size');
   ok(JSON.stringify(bloodOutline(.71)) !== JSON.stringify(outline), "another animal's stain is another shape");
 
   const TODAY = 20776, definition = COURSE.find(row => row.id === 'tremblant-woods'), course = new Course(definition, definition.layoutSeed ?? 1989);

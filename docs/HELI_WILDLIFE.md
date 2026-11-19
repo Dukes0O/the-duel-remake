@@ -131,7 +131,8 @@ truck. leave them in a small heap with a bit of red blood on the ground."
   is flattened to 20%. It stays for the rest of the race and fades with
   distance like any animal. Flying the helicopter and landing again plans the
   race's animals afresh, so they stand again (as animals that ran do).
-- A stain spreads under it: dark red, wet, ragged (the same shape every
+- A small stain spreads under it (about a quarter of the body's length
+  across): deep red, matte, ragged (the same shape every
   time for the same animal), lying on the ground's slope and drawn out
   along the way the car pushed; half as wide again under the monster truck.
 - The player's own hits play the crush crunch (`vehicle.crush`), a harder
