@@ -18,7 +18,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['deep-'], paths:['src/deep/']},
   {prefixes:['heli-'], paths:['src/heli/']},
   {prefixes:['ski-'], paths:['src/ski/']},
-  {prefixes:['everburn-','scablands-','run-'], paths:['src/world/','src/story/','src/world.js','src/world-job-camera.js','src/arena/modes/world-job.js','src/arena/arena-event.js']},
+  {prefixes:['everburn-','scablands-','run-','ships-'], paths:['src/world/','src/story/','src/world.js','src/world-job-camera.js','src/arena/modes/world-job.js','src/arena/arena-event.js']},
   {prefixes:['road-riders'], paths:['src/arena/modes/road-riders.js','src/arena/modes/world-job.js','src/arena/arena-brains.js',
     'src/arena/arena-pilot.js','src/arena/arena-tell-view.js','src/world/jobs/rider-rule.js','src/world/jobs/wash-riders.js',
     'src/world/jobs/job-engine.js','src/world/brand-ash-view.js','src/combat-ai.js','src/combat-hud.js','src/sim-contacts.js',
