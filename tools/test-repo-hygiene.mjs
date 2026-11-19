@@ -65,6 +65,7 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
     if (name.startsWith('public/assets/audio/') && (/(?:-source|tire-squeal)\.(?:wav|mp3|ogg|flac)$/.test(name)))
       failures.push(`${name}: raw audio source belongs outside public; keep its recipe`);
     const roundSheet = extension === '.jpg' && (
+      name === 'docs/board/looks/story-plates/night-2.jpg' ||
       name === 'docs/board/looks/wildlife/north-woods-round-1.jpg' ||
       name === 'docs/board/looks/wildlife/north-woods-round-3.jpg' ||
       /^docs\/board\/looks\/wildlife\/west-australia-round-[1-3][ab]?\.jpg$/.test(name) ||
@@ -78,7 +79,9 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
       /^docs\/board\/looks\/earned-cars\/(?:car-[1-3]-round-[1-3]|outline-round)\.jpg$/.test(name) || /^docs\/board\/looks\/lab-2\/lab-lessons-workshop-[1-3]\.jpg$/.test(name));
     // SPEC 0.9: audio takes that cannot be regenerated live in audio-src/.
     const keptAudio = name.startsWith('audio-src/') && AUDIO_SOURCES.has(extension);
-    if (!name.startsWith('public/') && !roundSheet && !keptAudio && (RAW_EVIDENCE.has(extension) || IMAGE_EVIDENCE.has(extension)))
+    // The Night 2 trial keeps one original painting outside the game until its laptop look.
+    const keptPlate = name === 'tools/art/story-plates/night-2-painting.jpg';
+    if (!name.startsWith('public/') && !roundSheet && !keptAudio && !keptPlate && (RAW_EVIDENCE.has(extension) || IMAGE_EVIDENCE.has(extension)))
       failures.push(`${name}: raw capture belongs in ignored .evidence, not the repository`);
   }
   const advisory = {
