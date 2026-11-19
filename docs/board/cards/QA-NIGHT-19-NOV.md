@@ -33,8 +33,8 @@ The night check of 19 November 2026 on `a7b2f60c1`. Claude's card (Kyle moved th
 1. `wildlife-view`. Found so far (19 November, morning): `src/wildlife-view.js` places herds by `calendarPlayDay(new Date())`, so the herds stand somewhere new each calendar day. Today the scenario picks a herd of 8 at lateral -26 m on seed and lap; only 2 animals (of 3 in the scene) are drawn, and neither flees as the car passes, though `startle` is 35 m. Next: give the scenario a fixed play day (`createWildlifeView` already takes `playDay`), then see whether the herd still does not flee: if it does not, the startle has a real fault. Then find what the herd's start reads besides the code (search the wildlife modules and the scenario for
    `Date`, `performance.now`, time of day); make the scenario fix it, or show it is real.
 2. The four-hour limit: a full night with every browser scenario takes longer than four hours on this laptop.
-   QA-NIGHT-SIZED (merged 19 November) makes most nights smaller, but a full night still needs more time. The task's
-   settings are Kyle's: Claude asks him to raise the limit (to six hours) or to start the task earlier.
+   QA-NIGHT-SIZED (merged 19 November) makes most nights smaller, but a full night still needs more time. Done: Kyle raised
+   the limit to six hours on 19 November (decisions page).
 3. High at 28.3 ms: at the next frame check with the laptop alone, time the last commit that passed on High as the
    control first (rule 8).
 4. Fold the one-off misses into their existing cards only if they fail again.
