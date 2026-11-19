@@ -28,7 +28,7 @@ const DROP_RADIUS = 8;
 export const FREE_TRIES = 3;
 // The cell the spread step marks, so the player can follow its strength from press to press: lit at 25 by the head start.
 export const MARKED_CELL = Object.freeze([1, ROWS - 1]);
-// Facts about real fires, not game rules: the temperature at which wood catches fire and at which water boils.
+// The temperature at which wood catches fire and at which water boils.
 export const WOOD_BURNS_C = 300, WATER_BOILS_C = 100;
 
 export const SIDES = Object.freeze(['fuel', 'heat', 'air']);
@@ -50,7 +50,7 @@ function pitRun(p) {
 }
 export const pitBurning = p => pitRun(p).burning;
 export const pitMissing = p => pitRun(p).missing;
-const CATCH_S = 1, DIE_S = 1.6, POUR_S = 1.1, SETTLE_S = .45;
+const CATCH_S = 1, DIE_S = 1.6, POUR_S = 1.1, SETTLE_S = .45, POUR_PACE = .3;
 const pit = (on = {}) => ({fuel: true, heat: true, air: true, putOut: 'nothing', flame: 0, outAt: null, pour: null, ...on});
 function burn(p, dt, time) {
   const want = pitBurning(p) ? 1 : 0, was = p.flame;
@@ -218,7 +218,7 @@ const CHECKS = {
 
 // ---- the formulas beside the board (the numbers are the ones on the board now) ----
 const yesNo = has => has ? 'yes' : 'no';
-const RULE_WORDS = 'fire = fuel and heat and oxygen';
+const RULE_WORDS = 'fire needs fuel, heat and oxygen';
 function ruleFormula(p, note = 'One “no” is enough to stop the fire.') {
   const gone = pitMissing(p);
   return {title: 'The rule of the fire triangle', formula: RULE_WORDS,
@@ -228,12 +228,12 @@ function ruleFormula(p, note = 'One “no” is enough to stop the fire.') {
 function soFarFormula(p, sides) {
   const reads = {fuel: p.fuel ? 'The wood is in, so the fire has fuel.' : 'There is no wood in the pit, so the fire has no fuel.', heat: p.heat ? 'The gas is on, so the wood is being heated.' : 'The gas is off, so nothing is heating the wood.',
     air: p.air ? 'The lid is open, so fresh air can reach the fire.' : 'The lid is shut, so fresh air cannot reach the fire.'};
-  return {title: 'What a fire needs, so far', formula: `fire needs ${sides.map(lower).join(' and ')}`, worked: sides.map(side => reads[side]).join(' ')};
+  return {title: 'What a fire needs, so far', formula: `fire needs ${sides.map(lower).reduce((list, name, i) => i === 0 ? name : i === sides.length - 1 ? `${list} and ${name}` : `${list}, ${name}`, '')}`, worked: sides.map(side => reads[side]).join(' ')};
 }
 const celsiusNote = 'A temperature in degrees Celsius, written °C, is measured on the scale where water freezes at 0 and boils at 100.';
-const bucketFormula = {title: 'One full bucket', formula: 'cells put out = litres in the bucket ÷ litres for one cell', worked: `${BUCKET_L} ÷ ${FLAT_OUT_L} = about ${(BUCKET_L / FLAT_OUT_L).toFixed(2)} cells at full strength`, note: `So one bucket puts out ${Math.floor(BUCKET_L / FLAT_OUT_L)} cells at full strength, with ${BUCKET_L % FLAT_OUT_L} litres left over. These are the game’s own numbers.`};
+const bucketFormula = {title: 'One full bucket', formula: 'cells put out = litres in the bucket ÷ litres for one cell', worked: `${BUCKET_L} ÷ ${FLAT_OUT_L} = about ${(BUCKET_L / FLAT_OUT_L).toFixed(2)} cells at full strength`, note: `So one bucket puts out ${Math.floor(BUCKET_L / FLAT_OUT_L)} cells at full strength, with ${BUCKET_L % FLAT_OUT_L} litres left over.`};
 const tankFormula = {title: 'How much the tank coats', formula: 'cells coated = litres in the tank ÷ litres for one cell', worked: `${TANK_L} ÷ ${COAT_L} = ${TANK_L / COAT_L} cells`};
-const stripCoatFormula = {title: 'Coating the strip across this forest', formula: 'litres needed = cells × litres for one cell', worked: `${ROWS} × ${COAT_L} = ${ROWS * COAT_L} litres`, note: `The tank holds ${TANK_L} litres, so it can coat the whole strip. In this game a coated cell cannot catch fire for the rest of that fire.`};
+const stripCoatFormula = {title: 'Coating the strip across this forest', formula: 'litres needed = cells × litres for one cell', worked: `${ROWS} × ${COAT_L} = ${ROWS * COAT_L} litres`, note: `The tank holds ${TANK_L} litres, so it can coat the whole strip. A coated cell cannot catch fire for the rest of that fire.`};
 const challengeFormula = {title: 'Spreads during the challenge', formula: 'spreads = time ÷ time between spreads', worked: `${CHALLENGE_S} s ÷ ${SPREAD_EVERY_S} s = ${CHALLENGE_SPREADS} spreads`, note: `${MINUTES} minutes is ${CHALLENGE_S} seconds, written s.`};
 
 function spreadFormulas(fz, lit) {
@@ -242,8 +242,8 @@ function spreadFormulas(fz, lit) {
   return [
     {title: 'Strength of the marked cell', formula: `next strength = strength + ${GROW}, up to 100`, worked: s + GROW <= 100 ? `${s} + ${GROW} = ${s + GROW}` : `${s} + ${GROW} is more than 100, so the cell stays at 100.`,
       note: 'The strength of a cell is a percentage, which means a number out of 100.'},
-    {title: 'Chance of catching fire', formula: `chance = ${CHANCE} from each burning cell it touches`, worked: `${CHANCE} is ${Math.round(CHANCE * 100)} chances in 100. ${lit === null ? 'Press Space to see how many cells catch fire.' : `${cap(count(lit, 'cell'))} caught fire at the last spread.`}`,
-      note: `This is the game’s rule on level ground with no wind. A cell that catches fire starts at ${LIT} and can light its neighbours from the next spread. A cell weaker than ${FIRE.spreadFrom} after growing cannot light them.`},
+    {title: 'Chance of catching fire', formula: `chance = ${CHANCE} from each burning cell it touches`, worked: `${CHANCE} is ${Math.round(CHANCE * 100)} chances in 100. ${lit === null ? 'Run a spread to see how many cells catch fire.' : `${cap(count(lit, 'cell'))} caught fire at the last spread.`}`,
+      note: `A cell that catches fire starts at ${LIT} and can light its neighbours from the next spread. A cell weaker than ${FIRE.spreadFrom} after growing cannot light them.`},
     {title: 'How fast the front moves', formula: 'speed = distance ÷ time', worked: `${far} × ${CELL_M} m = ${distance} m, and ${steps} × ${SPREAD_EVERY_S} s = ${time} s, so ${distance} ÷ ${time} = about ${(distance / time).toFixed(2)} m/s`,
       note: `m stands for metres and s for seconds. m/s means metres per second, the number of metres travelled during each second. The front is the line of flames nearest the road, and it moves at most one cell, ${CELL_M} m, at each spread.`},
   ];
@@ -261,7 +261,7 @@ function jobFormulas(fz) {
   const aimed = fz.aim ? cellState(fz, ...fz.aim) : {state: 'none'}, s = strengthOf(aimed.percent ?? 0);
   return [
     {title: 'Water for the cell you are aiming at', formula: `litres = strength × ${FLAT_OUT_L} ÷ 100`, worked: aimed.state === 'burning' ? `${s} × ${FLAT_OUT_L} ÷ 100 = ${litresFor(s)} litres` : 'That cell is not burning, so it needs no water.',
-      note: `A cell at full strength, which is 100, needs ${FLAT_OUT_L} litres to go out. This is the game’s own rule.`},
+      note: `A cell at full strength, which is 100, needs ${FLAT_OUT_L} litres to go out.`},
     {title: 'Water for all the flames now', formula: `total = strengths added together × ${FLAT_OUT_L} ÷ 100`, worked: strengths.length ? `(${strengths.join(' + ')}) × ${FLAT_OUT_L} ÷ 100 = ${need} litres` : 'No cell is burning, so no more water is needed.'},
     {title: 'The fewest trips left', formula: `trips = total ÷ ${BUCKET_L}, rounded up`, worked: strengths.length ? `${need} ÷ ${BUCKET_L} = ${(need / BUCKET_L).toFixed(3)}, so ${count(Math.ceil(need / BUCKET_L), 'trip')}` : 'No more trips are needed.',
       note: `This is the count if the fire stopped growing now. It does not stop, because each burning cell gains ${GROW} at every spread, so waiting costs more water and more trips.`},
@@ -354,7 +354,7 @@ export function createModel() {
     const key = settingKey(p), fresh = !tested.has(key);
     if (fresh) tested.set(key, {fuel: p.fuel, heat: p.heat, air: p.air, burning: pitBurning(p), missing: pitMissing(p)});
     if (tested.size >= FREE_TRIES) seen.add('try-free');
-    m.say = `${freeReason(p)} ${tested.size >= FREE_TRIES ? 'Press Enter when you have tested enough settings, or change a switch and test another.' : 'Change a switch and test a different setting.'}`;
+    m.say = `${freeReason(p)} ${tested.size >= FREE_TRIES ? 'You have tested enough settings, and you can change a switch and test another.' : 'Change a switch and test a different setting.'}`;
     return fresh ? {kind: 'right', say: m.say} : {kind: 'note', say: m.say};
   }
 
@@ -369,15 +369,15 @@ export function createModel() {
     if (reachedRoad(fz.fire)) {
       m.phase = 'done'; seen.add('try-spread');
       const far = front(fz.fire) * CELL_M, time = fz.fire.steps * SPREAD_EVERY_S;
-      m.say = `That spread carried the fire into the trees beside the road, ${fz.fire.steps} spreads after it was lit. ${caught} In the challenge a spread comes every ${SPREAD_EVERY_S} seconds, so ${fz.fire.steps} spreads last ${time} seconds, which is less than the ${CHALLENGE_S} seconds of the challenge. The front travelled ${far} metres in that time, which is about ${(far / time).toFixed(2)} metres per second, written m/s. So a fire left alone reaches the road, and we must remove a side of the triangle somewhere in its path.`;
+      m.say = `That spread carried the fire into the trees beside the road, ${fz.fire.steps} spreads after it was lit. ${caught} A fire left alone reaches the road, so we must remove a side of the triangle somewhere in its path.${MORE}In the challenge a spread comes every ${SPREAD_EVERY_S} seconds, so ${fz.fire.steps} spreads last ${time} seconds, which is less than the ${CHALLENGE_S} seconds of the challenge. The front travelled ${far} metres in that time, which is about ${(far / time).toFixed(2)} metres per second, written m/s.`;
       return {kind: 'right', sound: 'lab.tick', say: m.say};
     }
-    m.say = `Every burning cell grew stronger by ${GROW}, up to 100. ${caught} Press Space to run the next spread.`;
+    m.say = `Every burning cell grew stronger by ${GROW}, up to 100. ${caught}`;
     return {kind: 'progress', sound: 'lab.tick', say: m.say};
   }
 
   // The forest spreads once every so often while a run is going.
-  const SPREAD_S = .7;
+  const SPREAD_S = 1.5;
   function spreads(n) { m.fz.left = n; m.fz.spreadAt = m.time + .5; }
   function spreadTick() {
     const fz = m.fz;
@@ -397,7 +397,7 @@ export function createModel() {
       const pick = SIDE_CARDS[Number(value)];
       if (kind !== 'answer' || !pick) return null;
       m.guess = pick.id; m.phase = 'tool';
-      return {kind: 'progress', say: id === 'try-strip' ? 'Now let the fire burn by pressing Space.' : `Now tip the ${t.name} bucket onto the fire by pressing Space.`};
+      return {kind: 'progress', say: id === 'try-strip' ? 'Now let the fire burn and watch it reach the strip.' : `Now tip the ${t.name} bucket onto the fire.`};
     }
     if (m.phase !== 'tool') return null;
     if (id === 'try-strip' && kind === 'burn') { m.phase = 'running'; spreads(TRY_SPREADS); return {kind: 'progress', say: 'Watch the flames reach the strip.'}; }
@@ -444,7 +444,7 @@ export function createModel() {
   }
   function jobTick() {
     const fz = m.fz;
-    if (m.phase === 'lost' && m.time - m.lostAt >= 2.6) { startJob(); return {kind: 'note', say: 'The job starts again. Aim at the flames nearest the road with ← → ↑ ↓, then press Space.'}; }
+    if (m.phase === 'lost' && m.time - m.lostAt >= 2.6) { startJob(); return {kind: 'note', say: 'The job starts again. Aim at the flames nearest the road.'}; }
     if (m.phase !== 'running' || m.time < fz.spreadAt) return null;
     fz.fire = spreadStep(fz.fire, fz.grid, null);
     if (reachedRoad(fz.fire)) {
@@ -456,8 +456,11 @@ export function createModel() {
   }
 
   function tick(dt) {
+    const id = step().id;
+    // The bucket's run has the swing, the stream, the steam, the thermometer, the triangle and the flame together, so it plays slowly enough to follow.
+    if ((id === 'try-water' || id === 'try-sand') && m.phase === 'running') dt *= POUR_PACE;
     m.time += dt;
-    const id = step().id, p = m.pit;
+    const p = m.pit;
     if (id === 'wonder') return wonder(dt);
     if (id === 'watch') return watch(dt);
     if (p) burn(p, dt, m.time);
@@ -499,12 +502,12 @@ export function createModel() {
   }
 
   // The wonder: the pit burns strongly, the lid slams shut and the flames go out.
-  const SLAM_AT = 1.6;
+  const SLAM_AT = 5.5, WONDER_HOLD_S = 2.4;
   function wonder(dt) {
     const p = m.pit;
     if (m.time >= SLAM_AT) p.air = false;
     burn(p, dt, m.time);
-    if (m.time >= SLAM_AT + DIE_S + 1 && m.phase !== 'done') { seen.add('wonder'); m.phase = 'done'; }
+    if (m.time >= SLAM_AT + DIE_S + WONDER_HOLD_S && m.phase !== 'done') { seen.add('wonder'); m.phase = 'done'; }
     return null;
   }
   // The watch: one side at a time, gas off, wood out, lid shut, lighting it again between; a row for each.
@@ -522,9 +525,19 @@ export function createModel() {
     return null;
   }
 
+  // Watch again: the runs with several things moving play from their start once more.
   function replay() {
     const id = step().id;
     if (id === 'wonder' || id === 'watch') enter(m.index);
+    else if (TRIES[id] && m.phase === 'result') {
+      const t = TRIES[id];
+      if (id === 'try-strip') { const grid = forestGrid({raked: true}); m.fz = {grid, fire: grown(litFire(), grid, TRY_HEAD_START), raked: true}; spreads(TRY_SPREADS); }
+      else { m.pit = pit({flame: 1}); m.pit.pour = {tool: t.tool, at: m.time}; }
+      m.phase = 'running';
+    } else if (id === 'word-retardant' && m.phase === 'done') {
+      const grid = forestGrid(); m.fz = {grid, fire: coatStrip(grown(litFire(), grid, TRY_HEAD_START), grid).fire, raked: false};
+      m.phase = 'running'; spreads(TRY_SPREADS);
+    }
     return null;
   }
 
@@ -540,50 +553,50 @@ export function createModel() {
       waiting: false, ready: seen.has(id), plates: true, triangle: true, known: SIDES, tools: null, table: null, job: null, formulas: [], thermometer: false, arrows: false, numbers: false, spread: null, freeRows: null};
     if (id === 'wonder') return {...base, scene: 'wonder', plates: false, triangle: false, actions: ['replay'],
       say: m.phase === 'done' ? 'The fire was burning strongly. I shut the lid without using any water at all, and the flames went out. Why did shutting a lid work?' : 'This is my fire pit, and the fire in it is burning strongly. Watch what I do to it.',
-      prompt: m.phase === 'done' ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the fire pit.',
+      prompt: m.phase === 'done' ? 'Press Enter when you are ready to find out.' : 'Watch the fire pit.',
       hints: ['Watch the lid.', 'I used no water and no sand. Only the lid moved.', m.phase === 'done' ? 'Press Enter when you are ready to find out.' : 'Watch, and then press Enter.']};
     if (id === 'word-fuel') return wordView({...base, triangle: false, known: ['fuel'], formulas: [soFarFormula(m.pit, ['fuel'])]}, id, {1: 'wood:in'}, 'wood:in',
-      'Fuel is anything that can burn, such as wood, dry grass or a whole tree. The fire pit is empty at the moment, so it has nothing to burn. Put the wood in.', 'Press 1, or click the Wood switch.',
-      ['The switches are under the pit.', 'Press 1 for the Wood switch.', 'Watch my pointer, which is on the Wood switch.']);
+      'Fuel is anything that can burn, such as wood, dry grass or a whole tree. This pit is empty, so there is nothing to burn. Put the wood in, and see whether it burns by itself.', 'Put the wood in the pit.',
+      ['The switches are under the pit.', 'The Wood switch is the first one.', 'Watch my pointer, which is on the Wood switch.']);
     if (id === 'word-heat') return wordView({...base, triangle: false, known: ['fuel', 'heat'], thermometer: true, formulas: [soFarFormula(m.pit, ['fuel', 'heat']),
-      {title: 'The temperature wood needs', formula: `wood burns above about ${WOOD_BURNS_C} °C`, note: `${celsiusNote} This is a fact about real wood, not a rule of the game.`}]}, id, {2: 'gas:on'}, 'gas:on',
-      `Heat is the energy that makes something hot. The gas burner under the wood is the source of heat here. Light the gas, and watch the thermometer on the left.${MORE}Wood does not catch fire until it reaches about ${WOOD_BURNS_C} degrees Celsius, so it needs a source of heat first. Degrees Celsius, written °C, are measured on the scale where water freezes at 0 and boils at 100.`, 'Press 2, or click the Gas switch.',
-      ['The Gas switch is under the pit.', 'Press 2 for the Gas switch.', 'Watch my pointer, which is on the Gas switch.']);
+      {title: 'The temperature wood needs', formula: `wood burns above about ${WOOD_BURNS_C} °C`, note: celsiusNote}]}, id, {2: 'gas:on'}, 'gas:on',
+      `Heat is the energy that makes something hot. The gas burner under the wood is the source of heat here. Light the gas, and watch the thermometer on the left.${MORE}Wood does not catch fire until it reaches about ${WOOD_BURNS_C} degrees Celsius, so it needs a source of heat first. Degrees Celsius, written °C, are measured on the scale where water freezes at 0 and boils at 100.`, 'Light the gas.',
+      ['The Gas switch is under the pit.', 'The Gas switch is the second one.', 'Watch my pointer, which is on the Gas switch.']);
     if (id === 'word-oxygen') return wordView({...base, triangle: false, formulas: [soFarFormula(m.pit, ['fuel', 'heat', 'air'])]}, id, {3: 'lid:shut'}, 'lid:shut',
-      `Oxygen is a gas that makes up about one fifth of the air. The open lid lets fresh air reach the flames. Shut the lid.${MORE}Burning is a chemical change in which the fuel combines with oxygen and gives off heat and light, so a fire uses up oxygen all the time and needs fresh air to replace it.`, 'Press 3, or click the Lid switch.',
-      ['The Lid switch is under the pit.', 'Press 3 for the Lid switch.', 'Watch my pointer, which is on the Lid switch.']);
+      `Oxygen is a gas that makes up about one fifth of the air. The open lid lets fresh air reach the flames. Shut the lid, and watch what the flame does.${MORE}Burning is a chemical change in which the fuel combines with oxygen and gives off heat and light, so a fire uses up oxygen all the time and needs fresh air to replace it.`, 'Shut the lid.',
+      ['The Lid switch is under the pit.', 'The Lid switch is the third one.', 'Watch my pointer, which is on the Lid switch.']);
     if (id === 'word-triangle') return wordView({...base, formulas: [ruleFormula(m.pit)]}, id, {3: 'lid:open'}, 'lid:open',
-      `The fire triangle is a picture of what every fire needs. Its three sides are heat, fuel and oxygen, and a fire burns only when all three are present at the same time. Open the lid again.${MORE}The gas and the wood are in place, but the lid is shut, so the oxygen side is missing.`, 'Press 3, or click the Lid switch.',
-      ['Look at the triangle on the right, where one side is missing.', 'Press 3, and the lid will open.', 'Watch my pointer, which is on the Lid switch.']);
+      `The fire triangle is a picture of what every fire needs. Its three sides are heat, fuel and oxygen, and a fire burns only when all three are present at the same time. Open the lid, and the fire has all three again.${MORE}The gas and the wood are in place, but the lid is shut, so the oxygen side is missing.`, 'Open the lid.',
+      ['Look at the triangle on the right, where one side is missing.', 'Open the lid, and the oxygen side comes back.', 'Watch my pointer, which is on the Lid switch.']);
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'], table: WATCH.map((w, k) => m.rows[k] ?? null), formulas: [ruleFormula(m.pit)],
-        say: done ? 'Turning the gas off removed the heat, lifting the wood out removed the fuel, and shutting the lid removed the oxygen. Each time one side was removed, the fire went out. In this pit the gas burner is the only source of heat. A large fire in real life makes so much heat of its own that turning off a burner would not stop it, which is why firefighters use water to cool it.'
+        say: done ? 'Turning the gas off removed the heat, lifting the wood out removed the fuel, and shutting the lid removed the oxygen. Each time one side was removed, the fire went out.'
           : `This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. Watch the switches and the triangle.${MORE}I will remove one side of the triangle at a time.`,
-        prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the switches and the triangle.',
-        hints: ['Watch which switch changes.', 'Then watch which side of the triangle goes dark.', done ? 'Press R to watch again.' : 'Wait a moment.']};
+        prompt: done ? 'Press Enter to continue.' : 'Watch the switches and the triangle.',
+        hints: ['Watch which switch changes.', 'Then watch which side of the triangle goes dark.', done ? 'Watch again to see each side removed.' : 'Wait a moment.']};
     }
     if (id === 'try-free') return freeView(base);
     if (id === 'try-spread') return spreadView(base);
     if (id === 'word-retardant') {
       const done = m.phase === 'done', set = m.phase === 'set';
-      return {...base, plates: false, triangle: false, arrows: true, numbers: true, formulas: [tankFormula, stripCoatFormula], keys: set ? {Space: 'coat'} : {}, waiting: set, target: set ? 'coat' : null, glow: set ? 'coat' : null, tool: 'coat',
-        say: done ? m.say : `Retardant is a chemical sprayed on trees and other plants before a fire reaches them. When a coated plant is heated it chars, which means that it blackens slowly and gives off almost no gas that can burn, so flames cannot spread through it. In this way retardant removes the fuel while the trees are still standing.${MORE}We measure retardant in litres. A litre is a measure of volume, and one litre of water weighs one kilogram. In this game ${COAT_L} litres coat one cell. Coat the trees in front of the flames.`,
-        prompt: done ? 'Press Enter to continue.' : set ? 'Press Space, or click the spray over the trees.' : 'Watch the flames.',
-        hints: done ? DONE : ['The spray is over the column of trees in front of the flames.', 'Press Space.', 'Watch my pointer, which is on the spray.']};
+      return {...base, plates: false, triangle: false, arrows: true, numbers: true, formulas: [tankFormula, stripCoatFormula], keys: set ? {Space: 'coat'} : {}, waiting: set, target: set ? 'coat' : null, glow: set ? 'coat' : null, tool: 'coat', actions: done ? ['replay'] : [],
+        say: done ? m.say : `Retardant is a chemical sprayed on trees before a fire reaches them. When a coated tree is heated it chars, which means that it blackens slowly and gives off almost no gas that can burn, so flames cannot spread through it. Coat the trees in front of the flames, and watch what the flames do.${MORE}So retardant removes the fuel while the trees are still standing. A litre is a measure of volume, and ${COAT_L} litres coat one cell.`,
+        prompt: done ? 'Press Enter to continue.' : set ? 'Coat the trees in front of the flames.' : 'Watch the flames.',
+        hints: done ? DONE : ['The spray is over the column of trees in front of the flames.', 'Coat the trees with the spray.', 'Watch my pointer, which is on the spray.']};
     }
     if (TRIES[id]) return tryView(id, base);
     if (id === 'alone') return jobView(base);
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
-      // The sums beside a question never give its answer away.
+      // The panel beside a question never gives its answer away.
       const formulas = id === 'check-lid' ? [answered ? {title: 'The rule of the fire triangle', formula: RULE_WORDS, worked: 'Oil yes, a hot stove yes, oxygen no, so no fire.'} : {title: 'The rule of the fire triangle', formula: RULE_WORDS}]
-        : id === 'check-coat' ? (answered ? [tankFormula, stripCoatFormula] : [tankFormula]) : [bucketFormula, challengeFormula];
+        : id === 'check-coat' ? (answered ? [tankFormula, stripCoatFormula] : [tankFormula]) : [bucketFormula];
       return {...base, scene: 'check', plates: false, keys: answered ? {} : PICK_KEYS(3), waiting: !answered, formulas,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
         check: id, answered,
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick the card with your answer.', hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', plates: false, ready: true, ideas: KEY_IDEAS, formulas: [{title: 'The rule of the fire triangle', formula: RULE_WORDS, note: 'One “no” is enough to stop the fire.'}, bucketFormula, tankFormula, challengeFormula],
       say: `A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen.${MORE}A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road.`,
@@ -604,19 +617,19 @@ export function createModel() {
     const untested = SIDES.find(side => !tested.has(settingKey({...p, [side]: !p[side]}))) ?? 'fuel';
     const target = switchAction(p, untested);
     return {...base, keys, target, glow: seen.has('try-free') ? null : target, waiting: !seen.has('try-free'), freeRows: [...tested.values()],
-      formulas: [ruleFormula(p, 'In this pit the gas burner is the only source of heat. A large fire in real life makes enough heat of its own to keep burning when a burner is turned off.')],
-      say: m.say || `Now you can experiment. Press 1 for the wood, 2 for the gas and 3 for the lid, in any order and any combination. Test at least ${FREE_TRIES} different settings.${MORE}Each switch changes the rule beside the picture at once, so predict what the flame will do and then watch it. I will tell you the reason each time, and the table keeps your results.`,
-      prompt: seen.has('try-free') ? 'Press Enter to continue, or change a switch and test another setting.' : `Press 1, 2 or 3, or click a switch. Different settings tested so far: ${tested.size} of ${FREE_TRIES}.`,
-      hints: ['Press any of the switches, 1, 2 or 3, and watch the flame.', 'Try removing two sides at once, and then put one back. Does the fire return?', 'Watch my pointer, which is on a switch. I will press it for you.']};
+      formulas: [ruleFormula(p)],
+      say: m.say || `Test at least ${FREE_TRIES} different settings of the wood, the gas and the lid, in any order.${MORE}Each switch changes the rule beside the picture at once, so predict what the flame will do and then watch it. I will tell you the reason each time, and the table keeps your results.`,
+      prompt: seen.has('try-free') ? 'Press Enter to continue, or change a switch and test another setting.' : `Different settings tested so far: ${tested.size} of ${FREE_TRIES}.`,
+      hints: ['Change any switch and watch the flame.', 'Try removing two sides at once, and then put one back. Does the fire return?', 'Watch my pointer, which is on a switch. I will press it for you.']};
   }
 
   function spreadView(base) {
     const done = m.phase === 'done';
-    const opening = `A forest fire is far too big for a lid, so let us look at how one grows. Fire moves in jumps called spreads, and in the helicopter challenge one spread comes every ${SPREAD_EVERY_S} seconds. Press Space to run one spread.${MORE}This picture shows a patch of forest from above, with the lake on the left and the road on the right. The game divides the forest into square patches called cells, each ${CELL_M} metres across. The number on a burning cell is its strength. At each spread, every burning cell grows stronger by ${GROW}, up to 100, and each cell of trees touching a burning cell has a ${Math.round(CHANCE * 100)} percent chance of catching fire.`;
+    const opening = `A forest fire is far too big for a lid, so we watch one grow in jumps called spreads. The forest is made of square cells, and the number on a burning cell is its strength, how strongly it burns. Run spreads until the fire reaches the road, and watch the numbers on the cells.${MORE}This picture shows a patch of forest from above, with the lake on the left and the road on the right. Each cell is ${CELL_M} metres across. At each spread, every burning cell grows stronger by ${GROW}, up to 100, and each cell of trees touching a burning cell has a ${Math.round(CHANCE * 100)} percent chance of catching fire. In the helicopter challenge one spread comes every ${SPREAD_EVERY_S} seconds.`;
     return {...base, plates: false, triangle: false, arrows: !done, numbers: true, marked: MARKED_CELL, spread: {steps: m.fz.fire.steps, seconds: m.fz.fire.steps * SPREAD_EVERY_S},
       formulas: spreadFormulas(m.fz, m.lit), keys: done ? {} : {Space: 'spread'}, waiting: !done, target: done ? null : 'spread', glow: done ? null : 'spread',
-      say: m.say || opening, prompt: done ? 'Press Enter to continue.' : 'Press Space to run one spread.',
-      hints: done ? DONE : ['Press Space and watch the numbers on the cells.', 'Press Space to run the next spread.', 'Watch my pointer, which is on the Space key.']};
+      say: m.say || opening, prompt: done ? 'Press Enter to continue.' : 'Run a spread and watch the numbers.',
+      hints: done ? DONE : ['Run a spread and watch the numbers on the cells.', 'Run the next spread.', 'Watch my pointer, which is on the Space key.']};
   }
 
   function tryView(id, base) {
@@ -624,29 +637,29 @@ export function createModel() {
     // While the guess is open, and until the test has shown the answer, the panel holds only what does not settle it.
     const shown = m.phase === 'result';
     const formulas = strip ? stripFormulas(m.fz, shown) : !shown ? [ruleFormula(m.pit, 'One “no” is enough to stop the fire.')] : id === 'try-water' ? [ruleFormula(m.pit, 'While the wood is wet the heat side is missing, even with the gas on.'),
-      {title: 'Why water cools the wood', formula: `wet wood stays near ${WATER_BOILS_C} °C`, worked: `${WATER_BOILS_C} °C is less than ${WOOD_BURNS_C} °C, so the wood cannot burn.`, note: 'These temperatures are facts about real wood and water, not rules of the game.'}]
+      {title: 'Why water cools the wood', formula: `wet wood stays near ${WATER_BOILS_C} °C`, worked: `${WATER_BOILS_C} °C is less than ${WOOD_BURNS_C} °C, so the wood cannot burn.`, note: celsiusNote}]
       : [ruleFormula(m.pit, 'While the sand covers the wood the oxygen side is missing, even with the lid open.')];
     const common = {...base, plates: !strip, triangle: true, tools: strip ? null : {inHand: t.tool}, tool: strip ? 'rake' : null, guess: m.guess, formulas, thermometer: id === 'try-water' && (m.phase === 'running' || shown), arrows: strip && m.phase !== 'guess' && m.phase !== 'tool', numbers: strip};
     if (m.phase === 'setup') return {...common, keys: {Space: 'rake'}, waiting: true, target: 'rake', glow: 'rake',
-      say: m.say || 'Here is the same fire again, burning at the lake end of the forest with the road at the other end. Raking means scraping away every tree, bush and dry leaf until only bare ground is left. Rake a strip of bare ground across the forest, one cell wide, in front of the flames.',
-      prompt: 'Press Space, or click the rake.', hints: ['The rake is over the column of trees in front of the flames.', 'Press Space.', 'Watch my pointer, which is on the rake.']};
+      say: m.say || 'The fire is at the lake end of the forest, and the road is at the other end. Raking means scraping away every tree, bush and leaf until only bare ground is left. Rake a strip across the forest in front of the flames, then say which side of the triangle it removes.',
+      prompt: 'Rake the strip across the forest.', hints: ['The rake is over the column of trees in front of the flames.', 'Rake the strip across that column.', 'Watch my pointer, which is on the rake.']};
     if (m.phase === 'guess') return {...common, keys: PICK_KEYS(3), waiting: true,
       cards: SIDE_CARDS.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: c.picture, state: null})),
-      say: t.ask, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
+      say: t.ask, prompt: 'Pick the card with your answer.',
       hints: [strip ? 'What is missing in the strip that the flames need?' : `What does ${t.name} do to the fire?`, 'Which one of heat, fuel and oxygen does it remove?', 'Any guess is fine. Pick one, and then we will test it.']};
     if (m.phase === 'tool') {
       const action = strip ? 'burn' : 'tip';
       return {...common, keys: {Space: action}, waiting: true, target: action, glow: action,
-        say: strip ? 'Now let the fire burn by pressing Space.' : `Now tip the ${t.name} bucket onto the fire by pressing Space.`,
-        prompt: strip ? 'Press Space to let the fire burn.' : `Press Space, or click the ${t.name} bucket.`,
-        hints: strip ? ['Press Space and watch.', 'Press Space.', 'Watch my pointer.'] : [`The ${t.name} bucket is on the left.`, 'Press Space.', `Watch my pointer, which is on the ${t.name} bucket.`]};
+        say: strip ? 'Now let the fire burn and watch it reach the strip.' : `Now tip the ${t.name} bucket onto the fire.`,
+        prompt: strip ? 'Let the fire burn.' : `Tip the ${t.name} bucket onto the fire.`,
+        hints: strip ? ['Let the fire burn and watch the strip.', 'Let the fire burn.', 'Watch my pointer.'] : [`The ${t.name} bucket is on the left.`, `Tip the ${t.name} bucket onto the fire.`, `Watch my pointer, which is on the ${t.name} bucket.`]};
     }
     if (m.phase === 'running') return {...common, say: strip ? 'Watch the flames reach the strip.' : `The ${t.name} is going on. Watch the fire and the triangle.`, prompt: 'Watch.',
       hints: ['Watch the flames.', 'Now watch the triangle.', 'Wait a moment.']};
     return {...common, ready: true, mood: m.result.right ? 'cheer' : 'explain', removed: t.removes,
       cards: SIDE_CARDS.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: c.picture,
         state: c.id === m.result.actual ? 'right' : c.id === m.guess ? 'wrong' : null})),
-      say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
+      say: m.say, prompt: 'Press Enter to continue.', hints: DONE, actions: ['replay']};
   }
 
   function jobView(base) {
@@ -657,8 +670,8 @@ export function createModel() {
       hints: ['Watch the flames.', 'Which flames are nearest the road now?', 'Wait a moment.']};
     const [fi, fj] = frontCell(fz.fire), target = `drop:${fi}:${fj}`;
     return {...common, keys: AIM_KEYS, waiting: true, target, glow: target,
-      say: fz.trips === 0 && !m.say ? `Here is a job for you. The practice fire is spreading toward the road. Put the fire out before it reaches the road.${MORE}On each trip you drop one ${BUCKET_L}-litre bucket of water, and the fire spreads once while you fly back for more. The sums beside the picture follow the cell you aim at.` : m.say,
-      prompt: 'Aim with ← → ↑ ↓ and drop with Space, or click a cell.',
+      say: fz.trips === 0 && !m.say ? `The practice fire is spreading toward the road. Put the fire out before it reaches the road. On each trip, choose a burning cell and drop one ${BUCKET_L}-litre bucket of water on it.${MORE}The fire spreads once while you fly back for more water. The panel beside the picture works out the water that the cell you aim at needs.` : m.say,
+      prompt: 'Choose a burning cell and drop the water on it.',
       hints: [`A cell burning at full strength, which is 100, needs ${litres(FLAT_OUT_L)} to go out. The bucket holds ${litres(BUCKET_L)}.`, 'Aim at the flames nearest the road, the strongest of those, and drop the water there.',
         'Watch my pointer, which is on the cell to drop on.']};
   }

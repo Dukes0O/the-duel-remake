@@ -8,6 +8,7 @@ import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { analyzeFolder } from './audio-analysis.mjs';
 import * as browserHarness from './browser-harness.mjs';
+import { clockNow, evidenceDate } from './evidence-date.mjs';
 import { wavFromPcm } from './scenarios/audio-race.mjs';
 import { inspectRepository } from './test-repo-hygiene.mjs';
 
@@ -132,6 +133,37 @@ test('browser, Blender and fidelity rounds plan the same raw evidence directory'
   }
   check(browserHarness.reviewRoundOutputDir('audio-race', new Date(), root, plainEnv) === null,
     'audio recordings must keep their separate timestamped evidence folder');
+});
+
+// QA-EVIDENCE-DATE-BOUNDARY: every tool names the evidence day by the laptop's local date, at any hour. These clocks are
+// built from local parts (new Date(y, m, d, h, min)), so they mean the same wall-clock time in any time zone the check runs in.
+test('every tool names the evidence folder by the same local day around midnight', () => {
+  const cases = [
+    [new Date(2026, 10, 18, 23, 56), '2026-11-18', '2026-11-18T23:56:00'],
+    [new Date(2026, 10, 18, 23, 59), '2026-11-18', '2026-11-18T23:59:00'],
+    [new Date(2026, 10, 19, 0, 1), '2026-11-19', '2026-11-19T00:01:00'],
+  ];
+  const plainEnv = { ...process.env };
+  delete plainEnv.DUEL_EVIDENCE_DIR;
+  for (const key of ['GFX_CREW_ROUND', 'GFX_FIRST_PERSON_ROUND', 'EGG_RUSTWALL_ROUND']) delete plainEnv[key];
+  for (const [clock, day, text] of cases) {
+    check(evidenceDate(clock) === day, `${text} local is evidence day ${day}, got ${evidenceDate(clock)}`);
+    const browserRound = browserHarness.reviewRoundOutputDir('crew-fighters', clock, root, plainEnv);
+    const browserRun = browserHarness.evidenceOutputDir('smoke', clock, root);
+    check(browserRound === join(root, '.evidence', day, 'crew', 'round-1'), `${text}: browser round folder uses ${day}: ${browserRound}`);
+    check(relative(root, browserRun).replaceAll('\\', '/').startsWith(`.evidence/${day}/smoke-`),
+      `${text}: browser run folder uses ${day}, not the UTC date: ${browserRun}`);
+    check(clockNow({ DUEL_EVIDENCE_NOW: text }).getTime() === clock.getTime(), `${text}: the test clock reads as local time`);
+    // The round planner, started as its own process with the same clock, plans the same folder as the browser runner.
+    const fidelity = spawnSync(process.execPath, [join(root, 'tools', 'fidelity-sheet.mjs'), '--crew-round', '1', '--paths-only'],
+      { cwd: root, env: { ...plainEnv, DUEL_EVIDENCE_NOW: text }, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
+    check(fidelity.status === 0, `fidelity path plan must run at ${text}: ${fidelity.stderr || fidelity.stdout}`);
+    check(JSON.parse(fidelity.stdout).directory === browserRound, `${text}: browser and fidelity plan one folder`);
+  }
+  // 23:56 local and 00:01 local fall on different evidence days, and a run never moves to the next day early.
+  check(evidenceDate(cases[0][0]) !== evidenceDate(cases[2][0]), 'the evidence day changes at local midnight');
+  assert.throws(() => clockNow({ DUEL_EVIDENCE_NOW: 'not a date' }), /DUEL_EVIDENCE_NOW/);
+  checks++;
 });
 
 test('Git ignores raw evidence and retained review sizes are reported against advisory targets', () => {
