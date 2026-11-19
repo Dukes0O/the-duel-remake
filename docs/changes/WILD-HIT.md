@@ -15,10 +15,19 @@ flag and the sound. New switch `wildlife-hits: 'dev'` in `src/feature-flags.js`.
   one red stain under the middle of each heap; sound once per player hit, none for other cars; heap stays; monster
   truck flattens and widens). Fails when the reach or the flattening is broken, or the stain sits off the heap.
 - `node tools/test-feature-flags.mjs`: 133 checks.
-- Browser look `tools/scenarios/wildlife-hits.mjs`, lane tier and build: see the report.
+- Browser look `tools/scenarios/wildlife-hits.mjs` on `2322c1589`: passed; car: 2 deer down on their sides (squash .6),
+  monster truck: 2 flattened (.17), one stain under each, sound once each. The first look (on `5fda7fbba`) showed stains
+  wider than the deer and purple from mirroring the sky; cured in `61f72af00` (smaller, matte deep red, smoother edge).
+- Lane tier on `2322c1589` (integration `bb7aace9c` merged in): 86 passed, 0 failed, 0 not run; replay fingerprints 297
+  checks unchanged. The first lane tier on `5fda7fbba` failed `test-preview-launcher` (the Preview must ask for every dev
+  switch); `start-preview.bat` now asks for `wildlife-hits`. `npm run build` passes.
+- Left to the night by the lane tier: `test-arena-shove`, `test-circuit-layouts`, `test-convoy-tanker-art`,
+  `test-first-person-polish`.
+- Stays behind the dev switch until Claude has seen it in the game (done, pictures sent to Kyle) and Kyle has tried it.
 
 ## Changed assertions
-`tools/test-feature-flags.mjs`: the switch count 58 -> 59 and `wildlife-hits` joins the stay-dev list (one new switch;
+`tools/test-wildlife-view.mjs`: the stain outline test follows the new 28-point outline and a 65-115% radius band
+(was 14 points, 70-115%), for the smoother edge. `tools/test-feature-flags.mjs`: the switch count 58 -> 59 and `wildlife-hits` joins the stay-dev list (one new switch;
 nothing loosened).
 
 ## Removed
