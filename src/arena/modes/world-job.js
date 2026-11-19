@@ -3,7 +3,7 @@ import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
 import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination,
-  stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
+  night2CampSolids, stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
@@ -1429,15 +1429,18 @@ export function moveJobRaiders(duel, worldJob, dt) {
   }
 }
 
-// STORY-NIGHT-2-FLOW item 4: when the scout is within the hand flamer's reach, the HUD says so. 'burn' when the walker faces
-// him inside the flame's cone, 'turn' when he is near enough but to one side. The rule is brandCombatView's own.
+// STORY-NIGHT-2-FLOW item 4: when the scout is within the hand flamer's reach, the HUD says so, by brandCombatView's own rule:
+// 'turn' when he is near enough but outside the flame's cone, 'aim' when the barrel is not on his chest, 'burn' when holding
+// fire would burn him.
 function scoutReach(state, scout, chapter) {
   const fighter = state.onFoot && state.fighter;
-  if (!fighter || chapter.scoutTurned || chapter.scoutDowned || scout.knockedDown) return null;
+  if (!fighter || chapter.scoutTurned || chapter.scoutDowned || scout.knockedDown ||
+      state.footWeapons?.selected !== 'hand-flamer') return null;
   const dx = scout.x - fighter.x, dz = scout.z - fighter.z, distance = Math.hypot(dx, dz);
   if (!(distance > 0) || distance > BRAND_RULE.handFlamerRadius || Math.abs(scout.y - fighter.y) >= 2) return null;
   const yaw = fighter.yaw || 0, facing = (dx * Math.sin(yaw) + dz * Math.cos(yaw)) / distance;
-  return facing >= Math.cos(signatureFor('cinder').cone / 2) ? 'burn' : 'turn';
+  if (facing < Math.cos(signatureFor('cinder').cone / 2)) return 'turn';
+  return handFlameAimsAt(fighter, scout) ? 'burn' : 'aim';
 }
 
 function night2Cue(duel, cue) {
@@ -1488,7 +1491,8 @@ export function stepWorldJob(duel, dt) {
   if (!worldJob || worldJob.settled || state.arena.result) return null;
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
   // STORY-NIGHT-2-FLOW: the rider laying siege circles the Walkers' camp (a talk passes no time, so it stands still then).
-  if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt)) syncJobCarSolids(worldJob);
+  if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt,
+    state.onFoot && state.fighter ? state.fighter : position(duel, state))) syncJobCarSolids(worldJob);
   if (talkStep?.kind === 'talk') {
     if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
     const previousStep = worldJob.job.stepIndex;
@@ -1584,6 +1588,8 @@ export function stepWorldJob(duel, dt) {
   if (worldJob.storyPeople && currentStep?.kind !== 'talk' &&
       advanceStoryPeople(worldJob.storyPeople, dt, scablandsActorHeightAt)) {
     worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
+    // Carts that move take their solids with them (STORY-NIGHT-2-FLOW: the Walkers leaving a taken camp).
+    if (worldJob.night2) worldJob.solidGrid.setCamp?.(night2CampSolids(worldJob.night2, worldJob.storyPeople));
   }
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);

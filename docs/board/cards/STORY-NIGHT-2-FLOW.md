@@ -68,6 +68,8 @@ Sound: `story.journal.note` for the one-line "Remembered" notice, from the bank'
 - **The siege rider** stands still on its circle while the tower talks, because a talk holds the world still; it drives the
   circle in play. It wears a forward headlight beam as well as its roof lamps.
 - **A taken camp** skips Rell's thanks; the win still counts against the Ash Men, but the Walkers' word is not set again.
-  The fight is not won while a crewman still runs for the camp; one that cannot move for 4 s has given up.
+  The fight is not won while a crewman still runs for the camp; one who comes no nearer it in 4 s has given up. The siege
+  rider waits for them too before it breaks off. When the fight is lost, crewmen already running can still take the camp
+  while the player walks home.
 - **The figure in the car (item 6)** was a crewman from a rider wrecked alongside the player's car: his door point lay inside the
   car (the Wash test reproduced it before the fix). Bailing men are now put on the ground beside the car.

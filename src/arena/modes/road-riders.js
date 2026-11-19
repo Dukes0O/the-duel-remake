@@ -278,7 +278,7 @@ function crewBail(duel, world, car, goal) {
 
 // STORY-NIGHT-2-FLOW: on a step with a crew goal, the crews run for it. A hit from the player's car (the ambush rule: its middle
 // within 2.2 m while it moves at 4 m/s or more) knocks one flat for good; the first to reach the goal takes it. A man who has
-// not moved for crewStuckSec has given up the run.
+// come no nearer the goal (by crewProgressMetres) in crewStuckSec has given up the run, even if he slides about in a corner.
 function stepRiderCrew(duel, world, step, dt) {
   const goal=step?.crewGoal;
   if (!goal) return;
@@ -296,9 +296,9 @@ function stepRiderCrew(duel, world, step, dt) {
       world.crewGoalTaken=true;
       continue;
     }
-    const moved=crew.lastAt && (crew.lastAt.x!==crew.x || crew.lastAt.z!==crew.z);
-    crew.stuckSec=moved || !crew.lastAt ? 0 : (crew.stuckSec ?? 0)+dt;
-    crew.lastAt={x:crew.x,z:crew.z};
+    const gap=dist(crew,goal);
+    if (!(crew.bestGoalGap-gap<R.crewProgressMetres)) { crew.bestGoalGap=gap; crew.stuckSec=0; }
+    else crew.stuckSec=(crew.stuckSec ?? 0)+dt;
     if (crew.stuckSec>=R.crewStuckSec) Object.assign(crew,{gaveUp:true,approachSpeed:0,approachTarget:null});
   }
 }
@@ -367,7 +367,7 @@ export function updateRoadFight(duel, world, dt) {
     }
   }
   // The rider laying siege breaks off last, once every other rider is wrecked or gone.
-  if (!fight.outcome && cars.every(car => car.roadRider.circle || car.roadRider.phase!=='fighting')) {
+  if (!fight.outcome && !crewLoose(world,step) && cars.every(car => car.roadRider.circle || car.roadRider.phase!=='fighting')) {
     for (const car of cars) {
       const rider=car.roadRider;
       if (!rider.circle || rider.phase!=='fighting') continue;

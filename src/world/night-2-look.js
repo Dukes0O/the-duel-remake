@@ -139,11 +139,10 @@ export function createNight2Look(course) {
   const mouth = new THREE.Vector3();
 
   // The rider laying siege drives with its headlights on: a beam forward along the ground, so a dark camp can be found by it.
-  const siegeBeam = new THREE.SpotLight(0xffe2b8, 70, 48, .42, .55, 2);
+  // It stays in the scene and goes dark (intensity 0) when the rider is not there, so the scene's light count never changes.
+  const siegeBeam = new THREE.SpotLight(0xffe2b8, 0, 48, .42, .55, 2);
   siegeBeam.name = 'Wash siege rider headlights';
-  siegeBeam.position.set(0, 1, 2.1);
-  siegeBeam.target.position.set(0, 0, 18);
-  riderLights[0].add(siegeBeam, siegeBeam.target);
+  group.add(siegeBeam, siegeBeam.target);
 
   return {group, update(worldJob, seconds, shift, opponents, view = {}) {
     const chapter = worldJob?.night2;
@@ -191,10 +190,16 @@ export function createNight2Look(course) {
       const pose = rider ? {...rider.position, heading: rider.heading}
         : fighter ? {...worldPose({course}, fighter), y: fighter.groundHeight} : null;
       pair.visible = Boolean(pose);
+      if (index === 0) siegeBeam.intensity = pose ? 70 : 0;
       if (!pose) return;
       const {x, y, z} = pose;
       pair.position.set(x, y + shift(x, z, y), z);
       pair.rotation.y = pose.heading;
+      if (index === 0) {
+        const sin = Math.sin(pose.heading), cos = Math.cos(pose.heading), lift = y + shift(x, z, y);
+        siegeBeam.position.set(x + sin * 2.1, lift + 1, z + cos * 2.1);
+        siegeBeam.target.position.set(x + sin * 18, lift, z + cos * 18);
+      }
     });
     const walkers = chapter.set === 'gate' ? cast.filter(person => !['auntie-solder', 'cinder'].includes(person.id)) : [];
     const viewer = view.viewer ?? chapter.camera?.position;

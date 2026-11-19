@@ -18,7 +18,7 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 // STORY-NIGHT-2-FLOW (Claude's decision, 19 November 2026): the riders lay siege. One rider circles the camp at about 30 m
 // with its headlights on, so that no Walker slips away and a player can find a dark camp by its lights; the others turn to
 // meet the player. It starts on the circle on the camp's +x side.
-export const NIGHT_2_SIEGE = Object.freeze({riderId: 'wash-rider-1', radius: 30, mps: 9,
+export const NIGHT_2_SIEGE = Object.freeze({riderId: 'wash-rider-1', radius: 30, mps: 9, yieldMetres: 6,
   steps: Object.freeze(['tower', 'tower-outcome', 'wash-get-car', 'wash-drive'])});
 const siegeAt = angle => ({x: sites.camp.position.x + Math.cos(angle) * NIGHT_2_SIEGE.radius,
   z: sites.camp.position.z + Math.sin(angle) * NIGHT_2_SIEGE.radius});
@@ -58,7 +58,7 @@ export function night2Job(seed, {washFight = false} = {}) {
   const washSteps = washFight ? [
     {id: 'wash-get-car', kind: 'night-2-action', action: 'board', what: 'Find your car and hold F to get in.'},
     drive('wash-drive', sites.washApproach, 'Drive out to the Walkers’ camp at the Wash.'),
-    {id: 'wash-fight', kind: 'rider-fight', riders: washRiders, onLost: 'continue', crewGoal: washCrewGoal,
+    {id: 'wash-fight', kind: 'rider-fight', riders: washRiders.map(rider => ({...rider})), onLost: 'continue', crewGoal: washCrewGoal,
       what: 'Drive off the three Ash riders at the Wash.'},
     talk('wash-fight-won', 'camp-won'),
     drive('wash-drive-home', sites.carHome, 'Drive back to Tin Town.'),
@@ -273,6 +273,11 @@ export function enterNight2Step(worldJob) {
   }
   dressing(chapter, step);
   worldJob.solidGrid.setCamp?.(night2CampSolids(chapter, worldJob.storyPeople));
+  // The fight's siege car starts where the rider was on its ring, heading along it, so its lights never jump.
+  if (step.id === 'wash-fight' && Number.isFinite(chapter.siegeAngle)) {
+    const siege = step.riders.find(rider => rider.id === NIGHT_2_SIEGE.riderId);
+    if (siege) siege.start = {...siegeAt(chapter.siegeAngle), heading: siegeHeading(chapter.siegeAngle)};
+  }
   if (step.id === 'chase') beginChase(worldJob);
   if (step.id === 'gate') record(chapter, 'meet-walkers',
     presentPeople(['rell', 'dace', 'wim'], NIGHT_2_GATE_ENCOUNTER));
@@ -359,13 +364,17 @@ const NEXT = {
 
 // STORY-NIGHT-2-FLOW: the riders' siege, and the camp the crews can take. A talk holds the world still (its step has no
 // time), so the rider stands on its circle while the tower talks and drives it in play.
-export function stepNight2Siege(worldJob, dt) {
+// The rider waits while the player (on foot or in the car) stands within yieldMetres of its next point on the ring.
+export function stepNight2Siege(worldJob, dt, player) {
   const chapter = worldJob.night2, step = worldJob.job.steps[worldJob.job.stepIndex];
   if (!chapter || !NIGHT_2_SIEGE.steps.includes(step?.id)) return false;
   const rider = worldJob.actors.find(actor => actor.id === NIGHT_2_SIEGE.riderId);
   if (!rider?.position) return false;
-  chapter.siegeAngle = (chapter.siegeAngle ?? 0) + Math.max(0, dt) * NIGHT_2_SIEGE.mps / NIGHT_2_SIEGE.radius;
-  const {x, z} = siegeAt(chapter.siegeAngle);
+  const angle = (chapter.siegeAngle ?? 0) + Math.max(0, dt) * NIGHT_2_SIEGE.mps / NIGHT_2_SIEGE.radius;
+  const next = siegeAt(angle);
+  if (player && Math.hypot(player.x - next.x, player.z - next.z) < NIGHT_2_SIEGE.yieldMetres) return false;
+  chapter.siegeAngle = angle;
+  const {x, z} = next;
   Object.assign(rider.position, {x, z, y: scablandsActorHeightAt(x, z)});
   rider.heading = siegeHeading(chapter.siegeAngle);
   return true;

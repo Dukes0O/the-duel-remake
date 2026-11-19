@@ -348,6 +348,9 @@ for (const stopped of [false, true]) {
     Object.assign(run.duel.state.fighter, {yaw: Math.PI / 2});
     run.tick();
     assert.equal(run.view.scoutReach, 'turn', 'Near enough but to one side');
+    Object.assign(run.duel.state.fighter, {yaw: Math.PI, pitch: -1.2});
+    run.tick();
+    assert.equal(run.view.scoutReach, 'aim', 'Facing him with the barrel off his chest');
     Object.assign(run.duel.state.fighter, {yaw: Math.PI, pitch: 0});
     withMouse(run, () => run.tick(12));
     assert(run.view.scoutTurned, 'The canvas press works with the loaned hand flamer');
@@ -469,8 +472,11 @@ for (const [seed, mall, outcome] of [
       const pair = nightScene.group.getObjectByName(`Wash rider ${index + 1} lights`);
       const lenses = pair.children.filter(object => object.isMesh);
       assert(pair.visible && lenses.length === 2);
-      // The siege rider also throws a headlight beam ahead along the ground.
-      assert.equal(pair.children.some(object => object.isSpotLight), index === 0);
+      // The siege rider also throws a headlight beam ahead along the ground; it never leaves the scene, it only goes dark.
+      if (index === 0) {
+        const beam = nightScene.group.getObjectByName('Wash siege rider headlights');
+        assert(beam.isSpotLight && beam.intensity > 0 && Math.hypot(beam.position.x - actor.position.x, beam.position.z - actor.position.z) < 3);
+      }
       assert.deepEqual([pair.position.x, pair.position.z], [actor.position.x, actor.position.z]);
       points.push(...lenses);
     }
@@ -936,10 +942,8 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
         assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
       }
       duel.step(1 / 120);
-      if (result === 'win') {
-        assert.equal(circler.roadRider.phase, 'withdrawing', 'The siege rider breaks off once the others are beaten');
-        assert(run.cues.includes('rider.breaks-off'));
-      }
+      if (result === 'win')
+        assert.equal(circler.roadRider.phase, 'fighting', 'The siege rider holds its ring while the crews still run');
       const crew = world.actors.filter(actor => actor.riderCrew);
       assert.equal(crew.length, wrecked.length * RIDER_RULE.crewPerCar, 'Each wrecked rider puts out its crew');
       const carBox = worldPose(duel, state);
@@ -970,6 +974,11 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
         assert(run.cues.includes('night.ash-man.down'));
         duel.setInput({throttle: 0, brake: 1});
         state.speedMph = 0;
+        if (result === 'win') {
+          duel.step(1 / 120);
+          assert.equal(circler.roadRider.phase, 'withdrawing', 'The siege rider breaks off last, once the others are beaten');
+          assert(run.cues.includes('rider.breaks-off'));
+        }
       }
       if (towed) {
         const fight = world.riderFight;
