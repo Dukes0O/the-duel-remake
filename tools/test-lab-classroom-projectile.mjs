@@ -13,14 +13,13 @@ const lesson = CLASSROOM_LESSONS.projectile;
 const run = (session, seconds) => { for (let t = 0; t < seconds; t += .05) session.tick(.05); };
 const until = (session, test, limit = 30) => { for (let t = 0; t < limit && !test(session.view()); t += .05) session.tick(.05); assert.ok(test(session.view()), `condition not reached on ${session.view().step.id}`); };
 const water = (v, h = HIGH_M) => waterDrop(h, v).distanceM;
-// The key a prompt names ("press Space", "press 1") must do what the prompt asks.
+// What each step asks of the player. The prompts name the thing to do, not a key (the screen shows its own key labels),
+// so the player here presses what the step offers: Space must be live and do the thing the step asks.
 function followPrompt(session) {
-  const v = session.view(), match = v.prompt.match(/press (Space|\d)/i);
-  assert.ok(match, `prompt names no key: ${v.prompt}`);
-  const action = v.keys[match[1]];
-  assert.ok(action, `the key in "${v.prompt}" does nothing`);
-  session.act(action);
-  return action;
+  const v = session.view();
+  assert.equal(v.keys.Space, 'drop', `${v.step.id}: the step offers a press that does what it asks`);
+  session.act('drop');
+  return 'drop';
 }
 // The job: Space sets the helicopter off, Space again when the bucket is over the release point.
 function flyAndLetGo(session, at) {
@@ -34,13 +33,13 @@ function playThroughTo(session, id, {flag = Math.round(water(15)), guess = 1} = 
     const v = session.view(), step = v.step.id;
     if (step.startsWith('watch') || step === 'wonder') until(session, x => x.ready, 20);
     else if (step === 'try-free') for (let i = 0; i < FREE_TRIES; i++) { if (i) session.act('speed:up'); followPrompt(session); until(session, x => x.keys.Space === 'drop', 15); }
-    else if (step.startsWith('word')) { followPrompt(session); until(session, x => x.ready, 10); }
+    else if (step.startsWith('word')) { followPrompt(session); until(session, x => x.ready, 14); }
     else if (step === 'try-flag') {
       for (let i = 0; i < flag; i++) session.act('flag:right');
-      followPrompt(session); until(session, x => x.ready, 10);
+      followPrompt(session); until(session, x => x.ready, 14);
     } else if (step === 'try-height') {
       assert.equal(v.cards.length, 3, 'the guess comes first');
-      session.act(`answer:${guess}`); followPrompt(session); until(session, x => x.ready, 10);
+      session.act(`answer:${guess}`); followPrompt(session); until(session, x => x.ready, 14);
     } else if (step === 'alone') flyAndLetGo(session, BEST_LET_GO_M);
     else if (step.startsWith('check')) session.act(`answer:${{'check-over': 2, 'check-faster': 0, 'check-game': 1}[step]}`);
     assert.ok(session.view().ready, `${step} is ready`);
@@ -78,7 +77,7 @@ test('every landing comes from the bucket’s own water parcels, the ones the ch
   assert.equal(BEST_LET_GO_M, JOB.buoyM - water(JOB.speed));
 });
 
-test('a child who does exactly what each prompt says passes every step with one press', () => {
+test('a child who does what each step asks passes every step with one press', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'recap');
   const end = session.view();
@@ -90,10 +89,11 @@ test('a child who does exactly what each prompt says passes every step with one 
   assert.ok(events.some(e => e.kind === 'sound' && e.sound === 'lab.splash'), 'a splash sounds');
 });
 
-test('metres per second: the dial changes the speed and the sum, and the result explains km/h', () => {
+test('metres per second: the dial changes the speed and the formula, and the result explains km/h', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-metres');
-  assert.match(session.view().brian.text, /measure speed in metres per second, which is written m\/s\. An object moving at 10 m\/s travels 10 metres during every second/);
+  assert.match(session.view().brian.text, /^To explain the miss we need to measure speed\. Speed is the distance an object travels in a certain amount of time, and we measure it in metres per second, written m\/s\. Fly the helicopter at a speed you choose, and count the metres between the marks/, 'the word, its unit and the task are in the opening');
+  assert.match(session.view().brian.text, /An object moving at 10 m\/s travels 10 metres during every second, so the marks are 10 metres apart/);
   assert.equal(session.view().formulas[1].worked, '10 m/s × 3.6 = 36 km/h');
   session.act('speed:up');
   assert.equal(session.view().formulas[0].worked, '15 m ÷ 1 s = 15 m/s', 'the formula changes with the control');
@@ -102,7 +102,7 @@ test('metres per second: the dial changes the speed and the sum, and the result 
   session.act('drop'); until(session, v => v.ready, 8);
   const v = session.view();
   assert.match(v.brian.text, /travelled 15 metres during each second, so its speed was 15 m\/s/);
-  assert.match(v.brian.text, /multiplying by 3\.6\. That makes 15 m\/s the same as 54 km\/h/);
+  assert.match(v.brian.text, /To change m\/s into km\/h, multiply by 3\.6, so 15 m\/s is 54 km\/h/);
   assert.equal(v.scale.v, 15);
   assert.ok(v.scale.t >= 3, 'three seconds are marked along the top');
   for (let i = 0; i < 5; i++) session.act('speed:up');
@@ -131,7 +131,7 @@ test('the free test: every control moves the sums at once, arcs stay to compare,
   session.act('speed:down'); session.act('drop'); until(session, x => x.ready, 15);
   v = session.view();
   assert.equal(v.ghosts.length, 4, 'every arc is kept to compare');
-  assert.match(v.prompt, /Press Enter to continue, or test another setting/);
+  assert.match(v.prompt, /Continue when you are ready, or test another setting/);
   for (let i = 0; i < 9; i++) { session.act('height:up'); session.act('speed:up'); }
   assert.equal(session.view().formulas[1].worked, '20 m/s × 2.86 s = 57.2 m', 'the dials stop where the arc still fits the board');
 });
@@ -154,25 +154,26 @@ test('the words: gravity marks 4.9 m then 14.7 m more, a stone stays under the h
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-gravity');
   assert.match(session.view().brian.text, /adds 9\.8 m\/s to the object’s downward speed during every second of the fall\. A steady gain in speed like this is called acceleration, and we write it as 9\.8 m\/s²/);
-  session.act('drop'); run(session, 1.05);
+  session.act('drop'); run(session, 1.05 / .4);
   let v = session.view();
   assert.ok(Math.abs(v.drops[0].h - dropPoint('stone', HIGH_M, 0, v.drops[0].t).y - stoneFallAfter(v.drops[0].t)) < 1e-9);
-  until(session, x => x.ready, 5);
-  assert.match(session.view().brian.text, /fell 4\.9 m during the first second and 14\.7 m during the next second, because by then it was moving faster\. It reached the water after 2\.5 s/);
+  until(session, x => x.ready, 12);
+  assert.match(session.view().brian.text, /The stone fell 4\.9 m during the first second\. In the next second it fell 14\.7 m, which makes 19\.6 m in all, because it was moving faster\. It reached the water after 2\.5 s, moving downward at 24 m\/s\./);
   assert.match(session.view().brian.text, /m\/s tells you how fast an object is moving at one moment, and m\/s² tells you how quickly that speed is changing/);
   session.act('next'); session.act('drop');
-  until(session, x => x.drops.length > 0, 3); run(session, 1);
+  until(session, x => x.drops.length > 0, 6); run(session, 1 / .5);
   v = session.view();
   const d = v.drops[0], p = dropPoint('stone', d.h, d.v, d.t);
   assert.ok(Math.abs(d.x0 + p.x - v.helis[0].x) < .01, 'the stone is directly below the helicopter as it falls');
   assert.equal(v.scale.v, 10, 'the marks along the top step at the forward speed');
   assert.ok(v.arrows, 'the speed arrows show on the stone');
-  until(session, x => x.ready, 5);
+  until(session, x => x.ready, 14);
+  assert.match(session.view().brian.text, /^The forward arrow stayed the same length, because the air does not slow the stone\./);
   assert.match(session.view().brian.text, /landed 25 m ahead of the post, and it stayed directly below the helicopter all the way down/);
   session.act('next');
   assert.equal(session.view().ghosts[0].v, 10, 'the 10 m/s arc stays faint beside the new one');
-  session.act('drop'); until(session, x => x.ready, 5);
-  assert.match(session.view().brian.text, /landed 49 m ahead of the post, about twice as far as the 25 m it travelled at 10 m\/s/);
+  session.act('drop'); until(session, x => x.ready, 14);
+  assert.match(session.view().brian.text, /landed 49\.4 m ahead of the post, which is twice the 24\.7 m it travelled at 10 m\/s/, 'the two distances are the panel’s own, and one is exactly twice the other');
 });
 
 test('the flag: a wrong guess says why with the real numbers, either side', () => {
@@ -181,7 +182,7 @@ test('the flag: a wrong guess says why with the real numbers, either side', () =
   session.act('drop'); until(session, v => v.ready, 10);
   let v = session.view();
   assert.equal(v.mood, 'explain');
-  assert.match(v.brian.text, /The water landed 13 m ahead of the post, which is 13 m beyond your flag\. At 15 m\/s the water travels further than your flag suggests, and it landed between the 10 m it reached at 10 m\/s and the 15 m it reached at 20 m\/s\./);
+  assert.match(v.brian.text, /The water landed 13 m ahead of the post, which is 13 m beyond your flag\. Water at 15 m\/s lands further than the 10 m it reached at 10 m\/s, and not as far as the 15 m it reached at 20 m\/s\./);
   assert.deepEqual(v.marks.map(k => k.label), ['13 m']);
   session = createClassroomSession(lesson);
   playThroughTo(session, 'try-flag');
@@ -190,16 +191,16 @@ test('the flag: a wrong guess says why with the real numbers, either side', () =
   for (let i = 0; i < 99; i++) session.act('flag:right:held');
   assert.equal(session.view().flag, 45, 'the flag stops at the end of the ruler');
   session.act('hold:25'); session.act('drop'); until(session, x => x.ready, 10);
-  assert.match(session.view().brian.text, /The water landed 13 m ahead of the post, which is 12 m short of your flag\. The friction of the air slows the water, so it lands well short of where a stone would/);
+  assert.match(session.view().brian.text, /The water landed 13 m ahead of the post, which is 12 m short of your flag\. A stone released at 15 m\/s lands 37 m ahead, but the air slows the water, so it lands between the 10 m it reached at 10 m\/s and the 15 m it reached at 20 m\/s\./);
   session.act('replay'); assert.equal(session.view().flag, 25, 'Watch again keeps the flag');
   until(session, x => x.drops.length && x.drops.every(d => d.landed), 10);
 });
 
 test('low or high: each wrong guess says why with both landings', () => {
-  for (const [guess, says] of [[0, /^The higher water landed only a little further: the water from 10 m landed 9 m ahead and the water from 30 m landed 10 m ahead\. The higher water does fall for longer, but the friction of the air has already removed nearly all of its forward speed/], [2, /^The higher water did not land any closer: the water from 10 m landed 9 m ahead and the water from 30 m landed 10 m ahead\./]]) {
+  for (const [guess, says] of [[0, /^The higher water landed only a little further: the water from 10 m landed 9 m ahead and the water from 30 m landed 10 m ahead\. The higher water falls for longer, but the air slows it so much that the extra 20 m of height adds only 1 m\./], [2, /^The higher water did not land any closer: the water from 10 m landed 9 m ahead and the water from 30 m landed 10 m ahead\./]]) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, 'try-height');
-    session.act(`answer:${guess}`); session.act('drop'); until(session, v => v.ready, 10);
+    session.act(`answer:${guess}`); session.act('drop'); until(session, v => v.ready, 14);
     const v = session.view();
     assert.match(v.brian.text, says);
     assert.deepEqual(v.cards.map(c => c.state), [guess === 0 ? 'wrong' : null, 'right', guess === 2 ? 'wrong' : null]);
@@ -222,7 +223,7 @@ test('Brian’s job: each miss says what to change with the real numbers; only a
   assert.equal(session.view().marks.at(-1).label, `${said} m short`, 'the mark on the water says what Brian says');
   assert.ok(adds(session.view().brian.text, /^You released the water (\d+) m before the buoy, but water at this speed travels only (\d+) m forward, so it landed (\d+) m short of the buoy\. Release it a little later\./, -1) >= 15);
   assert.ok(!session.view().ready);
-  session.act('drop'); until(session, v => v.prompt === 'Press Space to go round again.', 12);
+  session.act('drop'); until(session, v => v.prompt === 'Go round again.', 12);
   assert.match(session.view().brian.text, /The helicopter flew past the buoy without releasing any water/);
   flyAndLetGo(session, BEST_LET_GO_M + RING_M - .5);
   assert.ok(session.view().ready);
@@ -302,13 +303,16 @@ test('the board draws every step and card', () => {
   }
 });
 
-test('replays: the wonder loops, and the watch steps start again', () => {
+test('replays: the wonder holds its picture until R, and the watch steps start again', () => {
   const session = createClassroomSession(lesson);
-  until(session, v => v.ready, 10);
-  until(session, v => v.marks.length === 0, 6);
-  assert.ok(session.view().ready, 'the wonder plays again by itself and stays ready');
+  until(session, v => v.ready, 14);
+  run(session, 11);
+  assert.ok(session.view().marks.length > 0 && session.view().ready, 'the wonder keeps its splash on the screen while the player reads');
+  session.act('replay');
+  assert.equal(session.view().marks.length, 0, 'R plays the wonder again');
+  assert.ok(session.view().ready, 'and the step stays ready');
   playThroughTo(session, 'watch-speeds');
-  until(session, v => v.ready, 10);
+  until(session, v => v.ready, 14);
   assert.deepEqual(session.view().table.map(r => r.value), ['6 m', '10 m', '15 m']);
   session.act('replay');
   assert.deepEqual(session.view().table.map(r => r.value), [null, null, null]);
@@ -379,7 +383,7 @@ test('review fixes: no release while the helicopter speeds up; misses and hits a
 test('review fixes: help after a finished step or an answered check names a key that works', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-gravity');
-  session.act('drop'); until(session, v => v.ready, 5);
+  session.act('drop'); until(session, v => v.ready, 12);
   assert.deepEqual(session.view().hints, ['Press R to watch it again.', 'Press Enter to continue.', 'Press Enter to continue.']);
   session.act('next');
   playThroughTo(session, 'check-over');
@@ -406,19 +410,19 @@ test('the wide board hands the clock and the tables of results to the strip', ()
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'watch-water');
   assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['The stone landed', '…'], ['The water landed', '…'], ['Top falling speed of water', '…']]);
-  until(session, v => v.ready, 10);
+  until(session, v => v.ready, 14);
   assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['The stone landed', '25 m ahead'], ['The water landed', '10 m ahead'], ['Top falling speed of water', `${TOP_FALL_MS} m/s`]]);
   assert.equal(strip(session.view()).readouts.length, 0, 'the clock belongs to the gravity step and the speeds step');
   session.act('next');
   playThroughTo(session, 'watch-speeds');
-  until(session, v => v.ready, 10);
+  until(session, v => v.ready, 14);
   const s = strip(session.view());
   assert.deepEqual(s.tables[0].rows.map(r => [r.label, r.value]), [['5 m/s (18 km/h)', '6 m'], ['10 m/s (36 km/h)', '10 m'], ['20 m/s (72 km/h)', '15 m']]);
   assert.match(s.readouts[0].value, /^\d\.\d s since the release$/);
   const gravity = createClassroomSession(lesson);
   playThroughTo(gravity, 'word-gravity');
   assert.equal(strip(gravity.view()), null, 'nothing to read before the stone is released');
-  gravity.act('drop'); run(gravity, 1);
+  gravity.act('drop'); run(gravity, 1 / .4);
   assert.match(strip(gravity.view()).readouts[0].value, /^1\.0 s since the release$/);
   const check = createClassroomSession(lesson);
   playThroughTo(check, 'check-over');
