@@ -90,7 +90,7 @@ export const QUIET_SCENARIOS = Object.freeze([
   'grand-prix', 'gunn', 'harbour-night', 'hidden-road-discovery',
   'onfoot-camera-choice', 'p4-daynight', 'p4-snow', 'polish-arena', 'polish-flame',
   'rustwall', 'rustwall-frame', 'sal-art', 'salt-flats', 'scrapdome',
-  'scrapdome-review', 'track-kits',
+  'scrapdome-review', 'tin-town-gate-road', 'track-kits',
   'vesper-art', 'wasteland-beta',
 ]);
 

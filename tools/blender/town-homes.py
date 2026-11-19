@@ -1,21 +1,149 @@
 """Build the ten original Wasteland town homes and their review renders.
 
 Run with Blender 4.5: blender -b --python tools/blender/town-homes.py -- --root . --render .evidence/DATE/TOWN-ART-HOMES
+For a UV-only rebuild of the accepted art, extract the round-six homes.glb from
+82e2caf5b and run: python tools/blender/town-homes.py -- --root . --surface-source /path/to/round-six.glb
 Footprints and coordinates are in game metres, X right, Y up, front -Z.
 """
 import argparse, json, math, random, sys, struct
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
+p.add_argument('--surface-source', type=Path, help='adapt the accepted home GLB without rebuilding its meshes or encoding its pictures')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 out=root/'public/assets/models/wasteland/town/homes.glb';blend=root/'art-build/town/homes.blend'
 render=Path(a.render);render=render if render.is_absolute() else root/render
 if a.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(render)] if a.render else []}));raise SystemExit(0)
 
+import numpy as np
+
+
+def local_matrix(node):
+    if 'matrix' in node:
+        return np.array(node['matrix']).reshape(4, 4).T
+    x, y, z, w = node.get('rotation', (0, 0, 0, 1))
+    matrix = np.eye(4)
+    matrix[:3, :3] = np.array([
+        [1-2*(y*y+z*z), 2*(x*y-z*w), 2*(x*z+y*w)],
+        [2*(x*y+z*w), 1-2*(x*x+z*z), 2*(y*z-x*w)],
+        [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y)],
+    ]) * node.get('scale', (1, 1, 1))
+    matrix[:3, 3] = node.get('translation', (0, 0, 0))
+    return matrix
+
+
+def uv_areas(triangles):
+    ab = triangles[:, 1] - triangles[:, 0]
+    ac = triangles[:, 2] - triangles[:, 0]
+    return np.abs(ab[:, 0] * ac[:, 1] - ab[:, 1] * ac[:, 0])
+
+
+def home_coordinates(attributes, indices, sampled, transform):
+    """Find the tile coordinates on the actual world-space sheet."""
+    faces = indices.reshape(-1, 3)
+    positions = attributes['POSITION'] @ transform[:3, :3].T + transform[:3, 3]
+    points = positions[faces]
+    normals = np.cross(points[:, 1] - points[:, 0], points[:, 2] - points[:, 0])
+    areas = np.linalg.norm(normals, axis=1)
+    tile = attributes[sampled]
+    corners = tile[faces]
+    collapsed = (areas > 1e-7) & (uv_areas(corners) < .001 * areas)
+    if not collapsed.any():
+        return tile, 0
+
+    # Blender joins pieces that have different UV-layer names. If the door
+    # or repair patch still has its authored island in another layer, retain
+    # it at its real scale. The house recipe uses one repeat per two metres.
+    missing = collapsed.copy()
+    for name, extra in attributes.items():
+        if name.startswith('TEXCOORD_') and name != sampled:
+            other = extra[faces]
+            usable = missing & (uv_areas(other) >= .125 * areas)
+            corners[usable] = other[usable]
+            missing[usable] = False
+
+    # Project the remaining sheets in game metres. Y is up and glTF V grows
+    # downwards. The longitudinal coordinate follows Blender's home tile axes.
+    axes = np.abs(normals).argmax(axis=1)
+    for axis, (horizontal, vertical, u_sign, v_sign) in enumerate([
+        (2, 1, -1, -1), (0, 2, 1, 1), (0, 1, 1, -1),
+    ]):
+        chosen = missing & (axes == axis)
+        corners[chosen, :, 0] = points[chosen, :, horizontal] * (.5 * u_sign)
+        corners[chosen, :, 1] = 1 + points[chosen, :, vertical] * (.5 * v_sign)
+
+    # Hard edges and the original UV islands already split these vertices.
+    # Check that both triangles agree at each shared vertex before writing.
+    restored = tile.copy()
+    restored[faces.reshape(-1)] = corners.reshape(-1, 2)
+    if not np.array_equal(restored[faces], corners):
+        raise ValueError('Split the UV seam on this home surface before export')
+    return restored, int(collapsed.sum())
+
+
+def restore_surfaces(source, destination):
+    """Write only the sampled UVs in the accepted GLB or a fresh Blender export."""
+    raw = Path(source).read_bytes()
+    json_size = struct.unpack_from('<I', raw, 12)[0]
+    model = json.loads(raw[20:20 + json_size])
+    binary = 28 + json_size
+
+    def accessor(index):
+        a = model['accessors'][index]
+        v = model['bufferViews'][a['bufferView']]
+        dtype = {5121: 'u1', 5123: '<u2', 5125: '<u4', 5126: '<f4'}[a['componentType']]
+        width = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4}[a['type']]
+        assert 'byteStride' not in v, 'expected packed Blender home accessors'
+        start = binary + v.get('byteOffset', 0) + a.get('byteOffset', 0)
+        return start, np.frombuffer(raw, dtype, a['count'] * width, start).reshape(-1, width)
+
+    # This family shares some accessors across primitives. Collect every
+    # requested mapping against the original bytes before writing any of them.
+    patches = {}
+    corrected = 0
+    def visit(index, parent):
+        nonlocal corrected
+        node = model['nodes'][index]
+        matrix = parent @ local_matrix(node)
+        if 'mesh' in node:
+            for p in model['meshes'][node['mesh']]['primitives']:
+                texture = model['materials'][p['material']]['pbrMetallicRoughness'].get('baseColorTexture')
+                if not texture:
+                    continue
+                sampled = 'TEXCOORD_' + str(texture.get('texCoord', 0))
+                uv_accessor = model['accessors'][p['attributes'][sampled]]
+                assert not {'min', 'max'} & uv_accessor.keys(), 'home texture coordinates have bounds to update'
+                attributes = {name: accessor(i)[1] for name, i in p['attributes'].items()}
+                restored, count = home_coordinates(attributes, accessor(p['indices'])[1], sampled, matrix)
+                offset, _ = accessor(p['attributes'][sampled])
+                data = restored.tobytes()
+                if offset in patches and patches[offset] != data:
+                    raise ValueError('Split UV accessors shared by differently oriented home surfaces')
+                patches[offset] = data
+                corrected += count
+        for child in node.get('children', ()):
+            visit(child, matrix)
+
+    for index in model['scenes'][model.get('scene', 0)]['nodes']:
+        visit(index, np.eye(4))
+    output = bytearray(raw)
+    for offset, data in patches.items():
+        output[offset:offset + len(data)] = data
+    destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if corrected or destination.resolve() != Path(source).resolve():
+        destination.write_bytes(output)
+    return {'repaired_triangles': corrected, 'bytes': len(output)}
+
+if a.surface_source:
+    print(json.dumps(restore_surfaces(a.surface_source, out)))
+    raise SystemExit(0)
+
 import bpy
 from mathutils import Vector
-sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 out.parent.mkdir(parents=True,exist_ok=True);blend.parent.mkdir(parents=True,exist_ok=True)
 texture_dir=root/'public/assets/models/wasteland/town/textures'
@@ -26,9 +154,11 @@ materials=town.make_materials({
     'faded-hand-paint':str(texture_dir/'faded-yellow-steel.jpg'),
     'patched-canvas':str(texture_dir/'patched-canvas.jpg'),
 })
-def photo_material(name, source, color=(1,1,1), metallic=0):
-    image=bpy.data.images.load(str(source),check_existing=False);image.scale(192,192)
-    image.filepath_raw=str(texture_dir/(name+'.jpg'));image.file_format='JPEG';image.save();image.pack()
+def photo_material(name, color=(1,1,1), metallic=0):
+    # These six finished 192 px tiles are the pictures already shipped in the
+    # homes. Pack their original bytes without recompressing the input JPEGs.
+    image=bpy.data.images.load(str(texture_dir/(name+'.jpg')),check_existing=False)
+    image.pack()
     mat=bpy.data.materials.new('Town / '+name);mat.diffuse_color=(*color,1);mat.use_nodes=True
     bsdf=mat.node_tree.nodes.get('Principled BSDF');bsdf.inputs['Metallic'].default_value=min(metallic,.29);bsdf.inputs['Roughness'].default_value=.9
     tex=mat.node_tree.nodes.new('ShaderNodeTexImage');tex.image=image;tex.extension='REPEAT'
@@ -45,12 +175,12 @@ source_socket=canvas_link.from_socket;canvas.node_tree.links.remove(canvas_link)
 canvas_tint=canvas.node_tree.nodes.new('ShaderNodeRGB');canvas_tint.outputs[0].default_value=(.72,.66,.55,1)
 canvas_mix=canvas.node_tree.nodes.new('ShaderNodeMixRGB');canvas_mix.blend_type='MULTIPLY';canvas_mix.inputs[0].default_value=1
 canvas.node_tree.links.new(source_socket,canvas_mix.inputs[1]);canvas.node_tree.links.new(canvas_tint.outputs[0],canvas_mix.inputs[2]);canvas.node_tree.links.new(canvas_mix.outputs[0],canvas_bsdf.inputs['Base Color'])
-mat['paint-blue']=photo_material('paint-blue',texture_dir/'paint-blue.jpg',(.62,.72,.78))
-mat['container-white']=photo_material('container-white',texture_dir/'container-white.jpg',(.72,.70,.63))
-mat['tarp-blue']=photo_material('tarp-blue',texture_dir/'tarp-blue.jpg')
-mat['red-oxide']=photo_material('red-oxide',texture_dir/'rusted-corrugated-tin.jpg',(.78,.48,.38))
-mat['canvas-cream']=photo_material('canvas-cream',texture_dir/'canvas-patched-cream.jpg')
-mat['canvas-tan']=photo_material('canvas-tan',texture_dir/'canvas-patched-cream.jpg',(.78,.62,.44))
+mat['paint-blue']=photo_material('paint-blue',(.62,.72,.78))
+mat['container-white']=photo_material('container-white',(.72,.70,.63))
+mat['tarp-blue']=photo_material('tarp-blue')
+mat['red-oxide']=photo_material('red-oxide',(.78,.48,.38))
+mat['canvas-cream']=photo_material('canvas-cream')
+mat['canvas-tan']=photo_material('canvas-tan',(.78,.62,.44))
 mat['grey-tin']=materials['galvanised-tin']
 mat['paint-yellow']=materials['faded-hand-paint']
 mat['blue-painted']=mat['paint-blue']
@@ -571,6 +701,7 @@ for obj in list(bpy.context.scene.objects):
 bpy.context.view_layer.objects.active=root_obj
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
+restore_surfaces(out, out)
 blob=out.read_bytes();json_len=struct.unpack_from('<I',blob,12)[0];gltf=json.loads(blob[20:20+json_len])
 tris=sum(gltf['accessors'][prim['indices']]['count']//3 for mesh in gltf.get('meshes',[]) for prim in mesh['primitives'])
 node_names={node.get('name') for node in gltf.get('nodes',[])}
