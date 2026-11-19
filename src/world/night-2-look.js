@@ -1,9 +1,11 @@
 import * as THREE from 'three';
-import {NIGHT_2_SITES as sites} from './jobs/night-2-sites.js';
+import {NIGHT_2_SITES as sites, night2Point} from './jobs/night-2-sites.js';
+import {createBraziers} from './ember-pot.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
 import {SALT_RIDERS} from './jobs/ember-rule.js';
+import {worldPose} from '../arena/arena-floor.js';
 
-export function createNight2Look() {
+export function createNight2Look(course) {
   const group = new THREE.Group();
   group.name = 'Strangers at the gate';
   const resources = [];
@@ -39,10 +41,16 @@ export function createNight2Look() {
   mesh(bell, new THREE.SphereGeometry(.056, 8, 6), metal, 0, -.15);
   const gateLights = [-3.4, 3.4].map(x => {
     const light = new THREE.PointLight(0xffad61, 125, 34);
+    light.name = 'Night 2 gate lamp';
     light.position.set(sites.gate.x + x, 5.83, sites.gate.z);
     group.add(light);
     return light;
   });
+  const hearthLight = new THREE.PointLight(0xffa66b, 135, 24);
+  hearthLight.name = 'Night 2 hearth light';
+  hearthLight.position.copy(sites.hearth.position);
+  hearthLight.position.y += 1.8;
+  group.add(hearthLight);
   const saltPile = place('Salt blocks from the Walkers',
     {...sites.gateOutside.position, x: sites.gate.x - 2.8, z: sites.gate.z + 9.4});
   [[-.31,.14,0], [.25,.14,-.13], [-.15,.42,-.07], [.07,.14,.27], [.31,.42,.02]].forEach(([x,y,z], i) => {
@@ -71,14 +79,28 @@ export function createNight2Look() {
       height: SALT_RIDERS.shelterHeight}), canvas);
     return shelter;
   });
-  const torches = [[42, -14], [31, -40], [48, 14]].map(([x,z]) => {
-    const torch = place('Ash Men torch', {x: sites.camp.position.x + x, y: sites.camp.position.y, z: sites.camp.position.z + z});
-    mesh(torch, new THREE.CylinderGeometry(.038, .045, 1.6, 7), metal, 0, .8);
-    mesh(torch, new THREE.ConeGeometry(.19, .59, 8), flame, 0, 1.78);
-    const glow = new THREE.PointLight(0xff8f38, 15, 12);
-    glow.position.y = 1.8;
-    torch.add(glow);
-    return torch;
+  const campFires = createBraziers(2, {smokeLook: {height: 4.2, foot: .19, top: 1.4, lean: .45,
+    wind: {x: 1, z: .38}, colour: 0xc8bbb2, pale: 0xf3e6d5, strength: .37}});
+  campFires.group.name = 'Walkers’ camp fires';
+  const campFireSites = [[-5, -5], [-2, 6]].map(([x, z]) => night2Point(sites.camp.position.x + x, sites.camp.position.z + z));
+  campFires.group.children.forEach((fire, index) => {
+    fire.scale.setScalar(.72);
+    fire.add(new THREE.PointLight(0xff9f48, 30, 14).translateY(1.8));
+    fire.name = `Walkers’ camp fire ${index + 1}`;
+  });
+  group.add(campFires.group);
+  const lamps = new THREE.MeshBasicMaterial({color: 0xffd3a3, fog: false, toneMapped: false});
+  const glass = new THREE.SphereGeometry(.36, 8, 6);
+  resources.push(lamps, glass);
+  const riderLights = Array.from({length: 3}, (_, index) => {
+    const pair = place(`Wash rider ${index + 1} lights`, {x: 0, y: 0, z: 0});
+    for (const side of [-.8, .8]) {
+      const lens = new THREE.Mesh(glass, lamps);
+      // High enough for the tower to see both roof lamps over each car’s own body.
+      lens.position.set(side, 2.02, .45);
+      pair.add(lens);
+    }
+    return pair;
   });
   const breathGeometry = new THREE.SphereGeometry(.16, 8, 5);
   resources.push(breathGeometry);
@@ -90,13 +112,14 @@ export function createNight2Look() {
     return puff;
   });
 
-  return {group, update(worldJob, seconds, shift) {
+  return {group, update(worldJob, seconds, shift, opponents) {
     const chapter = worldJob?.night2;
     group.visible = Boolean(chapter);
     if (!chapter) return;
     const cast = worldJob.storyPeople;
     const {props} = chapter;
-    for (const light of gateLights) light.visible = props.chaseLights;
+    for (const light of gateLights) light.visible = chapter.night;
+    hearthLight.visible = chapter.night;
     saltPile.visible = props.salt;
     ladle.visible = props.ladle;
     if (ladle.visible) {
@@ -122,7 +145,23 @@ export function createNight2Look() {
       const zx = z + shelter.userData.offset + (camp === sites.pump ? 8 : 0);
       shelter.position.set(x - (camp === sites.pump ? 4 : 0), y + shift(x,zx,y), zx);
     }
-    for (const torch of torches) torch.visible = props.torches;
+    campFires.group.visible = props.campLights;
+    if (props.campLights) {
+      campFires.place(campFireSites.map(at => ({...at, y: at.y + shift(at.x, at.z, at.y)})));
+      campFires.animate(seconds);
+    }
+    riderLights.forEach((pair, index) => {
+      const id = `wash-rider-${index + 1}`;
+      const rider = props.campLights && worldJob.actors.find(actor => actor.id === id);
+      const fighter = props.campLights && opponents.find(car => car.roadRider?.id === id && !car.combatWrecking);
+      const pose = rider ? {...rider.position, heading: rider.heading}
+        : fighter ? {...worldPose({course}, fighter), y: fighter.groundHeight} : null;
+      pair.visible = Boolean(pose);
+      if (!pose) return;
+      const {x, y, z} = pose;
+      pair.position.set(x, y + shift(x, z, y), z);
+      pair.rotation.y = pose.heading;
+    });
     const walkers = chapter.set === 'gate' ? cast.filter(person => !['auntie-solder', 'cinder'].includes(person.id)) : [];
     breath.forEach((puff, index) => {
       const person = walkers[index];
@@ -137,6 +176,7 @@ export function createNight2Look() {
       puff.material.opacity = .17 * (1 - phase / .72);
     });
   }, dispose() {
+    campFires.dispose();
     for (const resource of resources) resource.dispose();
     group.removeFromParent();
   }};

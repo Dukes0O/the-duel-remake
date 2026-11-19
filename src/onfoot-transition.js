@@ -168,7 +168,7 @@ export function stepFootTransition(duel, dt) {
     if (state.boarding?.phase === 'roof') {transition.heldSeconds = 0; return true;}
     if (transition.needsRelease || !held || state.fighter.knockedDown ||
         state.fighter.bailTumbleSeconds > 0 ||
-        state.combatWrecking || fighterDistanceToCar(duel) > T.reentryRangeMeters) {
+        state.combatWrecking || state.arena?.worldJob?.night2?.washCarUnavailable || fighterDistanceToCar(duel) > T.reentryRangeMeters) {
       transition.heldSeconds = 0;
       return true;
     }

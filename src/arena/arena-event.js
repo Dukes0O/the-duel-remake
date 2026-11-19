@@ -430,7 +430,7 @@ export function stepArenaEvent(duel, dt) {
     const fight = arena.worldJob?.riderFight;
     const lostTarget = fight?.outcome === 'lost' && fight.index === arena.worldJob.job.stepIndex &&
       (actor === state || actor.arenaId === fight.targetId);
-    if (actor.roadRider || lostTarget) continue;
+    if (actor.roadRider || lostTarget || actor === state && arena.worldJob?.night2?.washCarUnavailable) continue;
     respawn(duel, arenaParticipant(duel, actor), actor);
   }
   stepClock(duel, dt);

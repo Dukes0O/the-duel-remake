@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {PerspectiveCamera, Vector3} from 'three';
+import {Group, PerspectiveCamera, Texture, Vector3} from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {night2LightBlend} from '../src/world-job-camera.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
@@ -15,6 +16,17 @@ import {night2Job, night2Odds, night2Opening} from '../src/world/jobs/night-2.js
 import {NIGHT_2_SITES as sites} from '../src/world/jobs/night-2-sites.js';
 import {savedLedger} from '../src/story/ledger-save.js';
 import {settleNight2} from '../src/story/night-2-save.js';
+import {createScablandsScene, SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
+import {syncScene} from '../src/scene-systems.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {sees} from '../src/world/scablands-ways.js';
+import {sweepObstacle} from '../src/collision.js';
+import {applyArmorDamage} from '../src/combat-armor.js';
+import {worldPose} from '../src/arena/arena-floor.js';
+import {RIDER_RULE} from '../src/world/jobs/rider-rule.js';
+import {createCombatHud} from '../src/combat-hud.js';
+import {createHudScreen} from '../src/screen-hud.js';
+import {placeWashSurroundReview, startWashSurroundReview} from './night-2-wash-review.js';
 import {PLAYERS_KEY, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
 
 const seedFor = (name, chance, outcome) => {
@@ -162,6 +174,47 @@ assert.equal(settleNight2(saved.profile, opening.view).profile, saved.profile);
 const newer = {story: {version: 7}, wasteland: {scrap: 91}};
 assert.equal(settleNight2(newer, opening.view).profile, newer);
 
+const nightScene = createScablandsScene(opening.duel.course, {loadAsset: async path => {
+  if (path === SCABLANDS_ASSETS.folk || path.endsWith('/story-walkers.glb') || path.endsWith('/cinder.glb')) {
+    const bytes = await readFile(new URL('../public' + path, import.meta.url));
+    const loader = new GLTFLoader();
+    loader.register(() => ({name: 'TEST_TEXTURE', loadTexture: () => Promise.resolve(new Texture())}));
+    return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+  }
+  const root = new Group();
+  if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace) {
+    const vehicle = new Group();
+    vehicle.name = path === SCABLANDS_ASSETS.bess ? 'Big Bess gas truck' : "Old Smoke's rolling furnace";
+    root.add(vehicle);
+  }
+  return {scene: root};
+}});
+assert(await nightScene.ready);
+const findScene = (run, name) => {
+  syncScene(nightScene.group, run.duel.state);
+  return nightScene.group.getObjectByName(name);
+};
+function checkCampSmoke(run) {
+  const fires = findScene(run, 'Walkers’ camp fires');
+  assert(fires.visible);
+  const smoke = fires.children.map(fire => fire.getObjectByName('Brazier smoke column'));
+  assert.equal(smoke.length, 2);
+  for (const plume of smoke) {
+    assert(plume.visible);
+    const {uHeight, uFoot, uTop, uWind, uLean, uDark, uPale, uStrength} = plume.material.uniforms;
+    assert(uHeight.value < 5 && uFoot.value < .3 && uTop.value < 1.6 && uFoot.value < uTop.value);
+    assert(uLean.value > .3 && uWind.value.length() > .9, 'Small plumes lean with the wind');
+    assert(uDark.value.g > .4 && uPale.value.g > uDark.value.g && uStrength.value < .45,
+      'Campfire smoke is pale and translucent');
+    assert(plume.geometry.attributes.position.count > 24, 'The plume bends over its visible height');
+  }
+  const seconds = () => smoke.map(plume => plume.material.uniforms.uTime.value);
+  const before = seconds();
+  assert.notEqual(before[0], before[1]);
+  syncScene(nightScene.group, run.duel.state, 0, .5);
+  assert(seconds().every((value, index) => value > before[index]));
+}
+
 for (const [answer, count, word, mark] of [
   [0, 3, 'Sworn', 'dace-runner'], [1, 2, 'Friendly', 'dace-secret'], [2, 3, 'Wary', 'dace-sent-away'], [null, 1, 'Friendly', null],
 ]) {
@@ -196,6 +249,29 @@ for (const [answer, count, word, mark] of [
     }
     assert(disappeared, 'Dace disappears behind a solid or beyond sight of the store');
     assert.equal(run.stage(), 'escaped');
+    const fires = findScene(run, 'Walkers’ camp fires');
+    assert(fires.visible && fires.children.every(fire => fire.visible));
+    checkCampSmoke(run);
+    const cast = run.world.storyPeople;
+    const carts = cast.filter(person => person.cart);
+    assert.equal(carts.length, 4);
+    const rell = cast.find(person => person.id === 'rell');
+    const peopleView = nightScene.group.getObjectByName('Wasteland story people');
+    await peopleView.userData.ready;
+    assert.ifError(peopleView.userData.loadError);
+    syncScene(nightScene.group, run.duel.state);
+    const drawnCarts = carts.map(({id}) => peopleView.getObjectByName('story-handcart-' + id));
+    assert(drawnCarts.every(cart => cart?.visible));
+    const rellDraw = peopleView.getObjectByName('story-person-' + rell.id);
+    assert(rellDraw.visible);
+    const targets = [rellDraw.getWorldPosition(new Vector3()), ...fires.children.map(fire => fire.position),
+      ...drawnCarts.map(cart => cart.getWorldPosition(new Vector3()))];
+    for (const target of targets) {
+      const image = project(run.view.camera, target);
+      assert(Math.abs(image.x) < .9 && Math.abs(image.y) < .9 && image.z > 0 && image.z < 1,
+        'Escape camera frames Rell, her fires and all four carts');
+    }
+    assert.match(run.world.job.steps[run.world.job.stepIndex].scene.lines[0].words, /ash in my fire/);
     assert(run.view.ledger.obligations.some(item => item.id === 'walkers-great-favour'));
   } else {
     run.footAt(dace.position);
@@ -207,6 +283,42 @@ for (const [answer, count, word, mark] of [
   assert.equal(run.view.ledger.words.walkers, word);
   run.advance('close');
   run.finish(count);
+}
+
+// Run the production App mouse handler against the native fighter. The laptop
+// scenario additionally dispatches a real CDP mouse press at the canvas.
+function withMouse(run, press) {
+  const win = new EventTarget(), doc = new EventTarget();
+  class Canvas {
+    closest(selector) { return selector === '#view3d canvas' ? this : null; }
+    requestPointerLock() { doc.pointerLockElement = this; }
+  }
+  const previous = {window: globalThis.window, document: globalThis.document, Element: globalThis.Element};
+  const input = Object.assign(Object.create(App.prototype), {duel: run.duel, _footPointer: {},
+    _resetKeyboardInput() {}, _readGamepad() { return {}; }, keys: {}});
+  try {
+    Object.assign(globalThis, {window: win, document: doc, Element: Canvas});
+    input._bindKeys();
+    const event = new Event('mousedown', {cancelable: true});
+    Object.defineProperties(event, {button: {value: 0}, target: {value: new Canvas()}});
+    win.dispatchEvent(event);
+    assert(event.defaultPrevented && input._footPointer.fire, 'The canvas press reaches the fighter input');
+    input._applyInput(1 / 60);
+    assert(run.duel.state.fighterInput.fire);
+    press();
+  } finally {
+    input._inputEvents?.abort();
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+}
+
+function pumpFalloff(lamp, radius, intensity) {
+  const light = lamp.children.find(object => object.isPointLight);
+  assert(light.intensity >= intensity && light.distance >= radius && light.decay === 2,
+    'The pump illuminates ground nearby with falloff');
 }
 
 for (const stopped of [false, true]) {
@@ -226,9 +338,10 @@ for (const stopped of [false, true]) {
     const scout = run.world.actors.find(actor => actor.brandAsh);
     run.footAt({x: scout.x, y: scout.y, z: scout.z + 3.5});
     Object.assign(run.duel.state.fighter, {yaw: Math.PI, pitch: 0});
-    run.duel.setFighterInput({fire: true});
-    run.tick(12);
-    assert(run.view.scoutTurned, 'The loaned hand flamer turns the real scout');
+    pumpFalloff(findScene(run, 'Town lamp: pump'), 25, 100);
+    assert.equal(findScene(run, 'Night 2 hearth light').visible, true);
+    withMouse(run, () => run.tick(12));
+    assert(run.view.scoutTurned, 'The canvas press works with the loaned hand flamer');
     run.duel.setFighterInput({fire: false});
   }
   for (let i = 0; i < 750 && run.stage() === 'scout'; i++) run.tick(7);
@@ -246,15 +359,49 @@ assert.equal(lamp.view.ledger.stocks.embers, 4);
 assert.equal(lamp.view.ledger.words['auntie-solder'], 'Wary');
 assert.equal(lamp.view.ledger.roadWord, 2);
 lamp.advance('light-pump');
+lamp.tick();
+const lampHud = () => worldHudModel({worldJob: lamp.world, player: lamp.duel.state.fighter, onFoot: true});
+assert.equal(lampHud().line, 'Take a brand from the hearth.');
+assert.equal(lampHud().target.name, 'The hearth');
+const darkLamp = findScene(lamp, 'Town lamp: pump');
+assert.equal(darkLamp.children.find(object => object.isPointLight).intensity, 0);
 lamp.footAt(sites.hearthFront);
 lamp.tick();
 assert(lamp.world.job.stepState.brandSeconds > 0);
-lamp.footAt({x: sites.pump.position.x + 1.6, y: sites.pump.position.y, z: sites.pump.position.z});
-lamp.tick(130);
+const guide = lampHud();
+assert.equal(guide.line, 'Carry the brand to the pump lamp.');
+assert.equal(guide.target.name, 'The pump lamp');
+assert.deepEqual([guide.target.x, guide.target.z], [lamp.world.marker.x, lamp.world.marker.z]);
+const weapon = lamp.duel.state.footWeapons;
+assert.equal(weapon.selected, 'rpg');
+assert(weapon.ammo > 0);
+const {ammo, serial} = weapon;
+withMouse(lamp, () => lamp.tick(5));
+assert.equal(weapon.ammo, ammo);
+assert.equal(weapon.serial, serial);
+assert(!lamp.duel.state.combat.projectiles.some(projectile => projectile.kind === 'rpg'));
+lamp.duel.setFighterInput({fire: false});
+// Use the new arrow from the hearth to the pump through the real foot mover.
+let atPump = false;
+for (let frame = 0; frame < 1800 && lamp.stage() === 'light-pump'; frame++) {
+  const fighter = lamp.duel.state.fighter;
+  if (!atPump && Math.hypot(fighter.x - sites.pump.position.x, fighter.z - sites.pump.position.z) < 8) {
+    atPump = true;
+    withMouse(lamp, () => lamp.tick(5));
+    assert.equal(weapon.ammo, ammo);
+    assert.equal(weapon.serial, serial);
+  }
+  const route = lamp.view.routes[0];
+  if (route) pointAt(lamp.duel, route.point, {forward: route.metres > .4, sprint: true});
+  lamp.tick();
+}
+assert(atPump, 'The mouse press also reaches the peaceful guard among the shacks by the pump');
 assert.equal(lamp.stage(), 'back-to-hearth');
 assert(lamp.view.lamps.pump);
-lamp.footAt(sites.hearthApproach);
-lamp.tick(2);
+pumpFalloff(findScene(lamp, 'Town lamp: pump'), 25, 100);
+assert.equal(findScene(lamp, 'Night 2 hearth light').visible, true);
+followRoute(lamp, 'back-to-hearth', 1800, true);
+assert.equal(lamp.stage(), 'at-hearth');
 lamp.advance('close');
 lamp.finish(4);
 
@@ -272,6 +419,46 @@ for (const [seed, mall, outcome] of [
   assert.equal(night2Odds(run.view).refuseClinker, mall ? .75 : .5);
   assert.equal(run.view.ledger.words.walkers, mall ? 'Wary' : 'Cold');
   assert.equal(run.view.ledger.roadWord, 0);
+  const options = run.world.job.steps[run.world.job.stepIndex].scene.choices;
+  assert.deepEqual(options.map(choice => choice.id), ['watch-clinker', 'carry-ember']);
+  assert.match(options[0].detail, mall ? /^Rell will probably turn Clinker down/ : /^Rell might take Clinker/);
+  if (mall) {
+    const camera = run.view.camera, eye = camera.position;
+    const fires = findScene(run, 'Walkers’ camp fires');
+    assert(fires.visible && fires.children.length === 2);
+    checkCampSmoke(run);
+    const points = fires.children.map(fire => {
+      assert(fire.visible && Math.hypot(fire.position.x - sites.camp.position.x, fire.position.z - sites.camp.position.z) < 8);
+      return fire.children.find(object => object.renderOrder === 3);
+    });
+    for (const [index, actor] of run.world.actors.filter(actor => actor.id.startsWith('wash-rider-')).entries()) {
+      const pair = nightScene.group.getObjectByName(`Wash rider ${index + 1} lights`);
+      assert(pair.visible && pair.children.length === 2);
+      assert.deepEqual([pair.position.x, pair.position.z], [actor.position.x, actor.position.z]);
+      points.push(...pair.children);
+    }
+    assert.equal(points.length, 8);
+    const screenPoints = points.map(light => {
+      const at = light.getWorldPosition(new Vector3());
+      const center = project(camera, at);
+      assert(Math.abs(center.x) < .75 && Math.abs(center.y) < .75 && center.z > -1 && center.z < 1,
+        'All camp flames and rider lights fit inside the actual tower camera');
+      assert(sees(eye, at, {heightAt: scablandsSurfaceHeightAt, eye: 0, target: 0, step: 2, actorFloors: true}),
+        'No land hides the light from the tower');
+      const nearby = run.world.solidGrid.near(eye.x, eye.z, at.x, at.z, 1);
+      assert(!nearby.some(solid => solid.kind !== 'person' && sweepObstacle(eye, at, solid, 0,
+        {halfWidth: 0, halfLength: 0, height: 0})), 'No town solid hides the light from the tower');
+      const radius = light.geometry.parameters.radius ?? light.geometry.parameters.width * light.getWorldScale(new Vector3()).x / 2;
+      const edge = project(camera, {...at, z: at.z + radius});
+      assert(Math.abs(edge.x - center.x) * 1280 >= 4, 'Projected light is at least four pixels across');
+      return center;
+    });
+    assert(screenPoints.every((point, index) => screenPoints.every((other, j) => index === j ||
+      Math.hypot((point.x - other.x) * 640, (point.y - other.y) * 360) >= 4)), 'The projected lights stay distinct');
+    const [first, second] = screenPoints;
+    const fireGap = Math.hypot((first.x - second.x) * 640, (first.y - second.y) * 360);
+    console.log(`Tower camera resolves two camp fires (${fireGap.toFixed(1)} px apart) and six rider lights through actual scene geometry.`);
+  }
   run.say('Watch');
   assert.equal(run.view.watchOutcome, outcome);
   run.advance('close');
@@ -503,3 +690,192 @@ const secondSave = memory.get(PLAYERS_KEY);
 assert.equal(app.chooseNight2Replay('replace'), false);
 assert.equal(memory.get(PLAYERS_KEY), secondSave);
 console.log('PASS Night 2 replay: unfinished, reload, both choices, failed write and retry through the App.');
+
+// Both mounted HUDs read the real arena state. This small DOM adapter records
+// their actual text and visibility without needing a browser or WebGL.
+function inspectWashHud(duel, check) {
+  function element() {
+    const children = new Map(), attrs = new Map(), styles = new Map();
+    return {dataset: {}, hidden: false, textContent: '', firstChild: {textContent: ''}, lastChild: {textContent: ''},
+      style: {getPropertyValue: key => styles.get(key) ?? '', setProperty: (key, value) => styles.set(key, value)},
+      classList: {toggle() {}}, append() {}, remove() {}, addEventListener() {},
+      getBoundingClientRect: () => ({left: 0, top: 0, width: 1280, height: 720}),
+      setAttribute: (key, value) => attrs.set(key, String(value)), getAttribute: key => attrs.get(key) ?? null,
+      querySelector(key) {
+        if (!children.has(key)) children.set(key, element());
+        return children.get(key);
+      }, querySelectorAll() { return []; }};
+  }
+  const previous = globalThis.document, created = [];
+  globalThis.document = {createElement() {const node = element(); created.push(node); return node;}};
+  const app = {duel, player: {name: 'QA'}}, ui = new Proxy({}, {get: (all, key) => all[key] ??= element()});
+  const raceHud = createHudScreen({app, ui, text: (key, value) => {ui[key].textContent = String(value);},
+    time: String, credits: String, clamp: value => Math.max(0, Math.min(1, value)), routeMap: {update() {}}});
+  const combatHud = createCombatHud({root: element(), app});
+  const refresh = () => {raceHud(duel.state); combatHud.update(duel.state);};
+  try { check({refresh, ui, nodes: created}); }
+  finally {
+    combatHud.dispose();
+    if (previous === undefined) delete globalThis.document;
+    else globalThis.document = previous;
+  }
+}
+
+// Use a fresh memory profile for each outcome so the existing replay policy
+// can never mask an incorrect durable Wash result.
+for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
+  const won = result.startsWith('win'), surrounded = result === 'surrounded', towed = result.includes('wreck');
+  const washApp = new App();
+  washApp.audio.unlock = () => {};
+  assert(washApp.addPlayer('Wash ' + result).ok);
+  washApp.profile = {...washApp.profile, wasteland: {...washApp.profile.wasteland, discoveredGate: true}};
+  assert(washApp._saveProfile());
+  washApp.duel.featureFlags = {enabled: id => id === 'road-riders' || flags.enabled(id)};
+  assert(washApp.visitWasteland());
+  washApp.advance(8);
+  assert(surrounded ? startWashSurroundReview(washApp) : washApp.startNight2());
+  const run = chapter(washApp.seed, washApp.duel), {duel, world, view} = run, state = duel.state;
+  assert.equal(state.opponents.length, 0, 'Reserved riders stay out of earlier chapter branches');
+  const riderCount = surrounded ? 5 : 3;
+  assert.equal(world.riderReserve.length, riderCount);
+  run.openGate();
+  run.say(NIGHT_2_CHOICES[3].words);
+  run.say('Say nothing');
+  run.advance('tower');
+  const tower = world.job.steps[world.job.stepIndex];
+  assert.deepEqual(tower.scene.choices.map(option => option.id), ['watch-clinker', 'drive-riders-off', 'carry-ember']);
+  run.say('Drive out and run the riders off');
+  assert.equal(run.stage(), 'wash-get-car');
+  assert.equal(view.ledger.stocks.embers, 4);
+  const parked = worldPose(duel, state);
+  for (let frame = 0; frame < 850; frame++) {
+    const route = view.routes[0];
+    if (route) pointAt(duel, route.point, {forward: route.metres > 2.3, sprint: true});
+    run.tick();
+  }
+  assert.equal(run.stage(), 'wash-get-car', 'Approaching the marker cannot board for the player');
+  assert(Math.hypot(state.fighter.x - parked.x, state.fighter.z - parked.z) < 3);
+  duel.setFighterInput({forward: false});
+  duel.setInput({interact: true});
+  for (let i = 0; i < 120 && run.stage() === 'wash-get-car'; i++) run.tick();
+  assert.equal(run.stage(), 'wash-drive');
+  assert(!state.onFoot && !world.riderFight);
+  duel.setInput({interact: false});
+  const park = ({x, z}, heading) => {
+    const {s, lateral} = duel.course.nearest(x, z);
+    Object.assign(state, {s, lateral, prevS: s, prevLateral: lateral, speedMph: 0,
+      headingError: heading - duel.course.at(s).heading});
+  };
+  // Sample the edge of the arrival ring, and cross it on the drivetrain.
+  if (surrounded) assert(placeWashSurroundReview(duel));
+  else park({...sites.washApproach.position, x: sites.washApproach.position.x + sites.washApproach.radius + 3}, -Math.PI / 2);
+  duel.setInput({throttle: 1});
+  for (let i = 0; i < 210 && run.stage() === 'wash-drive'; i++) run.tick();
+  assert.equal(run.stage(), 'wash-fight');
+  assert(!state.onFoot);
+  assert.equal(world.riderFight.riders.length, riderCount);
+  assert(state.opponents.every(actor => actor.roadRider?.weapon === 'ash-sack'));
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('wash-rider-')).length, 0, 'The fight replaces the three distant silhouettes');
+  if (!surrounded) assert(findScene(run, 'Wash rider 1 lights').visible, 'The real arena cars have the lights seen from the tower');
+  checkCampSmoke(run);
+  const at = worldPose(duel, state);
+  assert(Math.hypot(at.x - sites.washApproach.position.x, at.z - sites.washApproach.position.z) < sites.washApproach.radius);
+  let wreckAt;
+  const finishFight = (afterOutcome = () => {}) => {
+    if (surrounded) {
+      for (let i = 0; i < 3900 && !world.riderFight.outcome; i++) run.tick();
+      assert.equal(world.riderFight.outcome, 'surrounded');
+      assert(world.riderFight.heldSec >= RIDER_RULE.boxSeconds && !state.combatWrecking);
+      console.log(`QA roadblock reports intact surround at ${world.riderFight.elapsed.toFixed(2)} s.`);
+    }
+    duel.setInput({throttle: 0, brake: 1});
+    const wreckPlayer = () => {
+      wreckAt = worldPose(duel, state);
+      state.armor = 1;
+      assert(applyArmorDamage(duel, state, 'crossbow', {owner: state.opponents[0].arenaId}));
+      assert(state.combatWrecking);
+    };
+    if (won) {
+      for (const rider of state.opponents) {
+        rider.armor = 2;
+        assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
+      }
+      if (towed) {
+        const fight = world.riderFight;
+        const step = 1 / 120;
+        for (let i = 0; i < 400 && (!fight.outcome || fight.elapsed + step - fight.endedAt < RIDER_RULE.aftermathSec); i++)
+          duel.step(step);
+        assert.equal(fight.outcome, 'won');
+        assert.equal(run.stage(), 'wash-fight', 'Deliver the final hit in the same tick as the story settles the win');
+        wreckPlayer();
+        duel.step(step);
+        assert.equal(run.stage(), 'wash-fight-won');
+      }
+    } else if (towed) wreckPlayer();
+    for (let i = 0; i < 300 && !world.riderFight.outcome; i++) run.tick();
+    assert(world.riderFight.outcome);
+    afterOutcome();
+    for (let i = 0; i < 300 && run.stage() === 'wash-fight'; i++) run.tick();
+  };
+  if (result === 'wreck') inspectWashHud(duel, ({refresh, ui, nodes}) => {
+    refresh();
+    const riders = nodes.filter(node => node.className === 'combat-opponent-marker');
+    assert(riders.length === 3 && riders.every(node => node.querySelector('.combat-marker-heading').textContent.includes('HUNTING YOU')));
+    finishFight(() => {
+      assert.equal(run.stage(), 'wash-fight', 'The combat HUD updates during the aftermath');
+      refresh();
+      assert(riders.every(node => node.hidden), 'Resolved Wash riders lose their floating labels');
+    });
+    refresh();
+    assert(nodes[0].querySelector('.combat-foot-car').hidden, 'The towed-car arrow disappears');
+    assert(!ui['callout-text'].textContent.includes('Wrecked. Open ground'));
+    assert(ui['race-callout'].hidden, 'The wreck leaves the story objective as the only notice');
+  });
+  else finishFight();
+  assert.equal(world.riderFight.outcome, won ? 'won' : surrounded ? 'surrounded' : 'lost');
+  assert.equal(state.arena.result, null, 'The fight hands back to the chapter');
+  if (won) {
+    assert.equal(run.stage(), 'wash-fight-won');
+    run.tick();
+    assert.equal(run.screen().line.words, NIGHT_2_SCENES['wash-fight-won'].lines[0].words);
+    assert.equal(view.ledger.words.walkers, 'Strangers');
+    assert.equal(view.ledger.feud, 'Raiding');
+    run.advance(towed ? 'wash-walk-to-cut' : 'wash-drive-home');
+  }
+  assert.equal(view.washCarUnavailable, towed);
+  if (!towed) {
+    assert.equal(run.stage(), 'wash-drive-home');
+    assert(!state.onFoot && !state.combatWrecking, 'An intact car drives home even after a surround');
+    park({...sites.carHome.position, x: sites.carHome.position.x - sites.carHome.radius - 3}, Math.PI / 2);
+    duel.setInput({throttle: 1, brake: 0});
+    for (let i = 0; i < 210 && run.stage() === 'wash-drive-home'; i++) run.tick();
+  } else {
+    assert.equal(run.stage(), 'wash-walk-to-cut');
+    assert(state.onFoot && state.combatWrecking);
+    assert.match(worldHudModel({worldJob: world}).line, /towed in at dawn/);
+    assert(Math.hypot(state.fighter.x - wreckAt.x, state.fighter.z - wreckAt.z) < 12, 'The fighter comes out near the wreck');
+    duel.setInput({interact: true});
+    run.tick(120);
+    assert(state.onFoot && state.combatWrecking, 'Holding F and waiting cannot recover the wreck tonight');
+    duel.setInput({interact: false});
+    for (const name of ['wash-walk-to-cut', 'wash-walk-to-gap', 'wash-walk-home']) {
+      assert.equal(run.stage(), name);
+      followRoute(run, name, 4800, true);
+      assert.notEqual(run.stage(), name, 'The walker can follow the way back from the wreck');
+    }
+  }
+  assert.equal(run.stage(), 'close');
+  run.finish(4);
+  const kept = savedLedger(washApp.profile);
+  assert.equal(kept.stocks.embers, 3);
+  assert.equal(kept.marks.includes('wash-car-towed-at-dawn'), towed);
+  assert.equal(kept.history.some(change => change.choiceId === 'wash-fight-won'), won);
+  assert.equal(kept.words.walkers, won ? 'Strangers' : 'Cold');
+  assert.equal(kept.feud, won ? 'Hunting' : 'Raiding');
+  assert.equal(view.page.memories.some(line => line.includes('Bess leaves late')), towed);
+  assert(washApp.returnToYard());
+  washApp.dispose();
+  console.log('PASS Wash outcome ' + result);
+}
+nightScene.dispose();
+console.log('PASS Night 2 Wash: real boarding and approach, three actual rider cars, victory and wreck, distinct returns and saved ledgers.');

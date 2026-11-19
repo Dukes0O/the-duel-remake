@@ -36,6 +36,8 @@ export const NIGHT_2_QUESTIONS = [
     lines: [line('you', "It's four embers between a whole town and the cold."), dace('Four? Is that all? I thought you were rich.')]},
 ];
 
+export const NIGHT_2_WASH_CHOICE = choice('drive-riders-off', 'Drive out and run the riders off');
+
 export const NIGHT_2_CHOICES = [
   priced('gift', 'Take one. No terms.', -1,
     [walkers('Friendly'), road(1), mark('gave-rell-an-ember')],
@@ -129,7 +131,6 @@ export const NIGHT_2_SCENES = {
     ...scene(clinker('Cold, are you? Shut out by the fire-keepers? Old Smoke keeps a fire for everyone. He just keeps it himself. Come and be warm. And bring what you know about the footpaths.')),
     choices: [
       choice('watch-clinker', 'Watch'),
-      choice('drive-riders-off', 'Drive out and run the riders off', [], {disabled: 'Available when the Wash fight is ready'}),
       priced('carry-ember', 'Carry one ember out to them, now', -1, []),
     ],
   },
@@ -149,6 +150,7 @@ export const NIGHT_2_EFFECTS = {
   'walkers-go-with-clinker': [feud, mark('walkers-with-clinker'), mark('ash-men-know-footpaths'), mark('ash-men-know-south-ford')],
   'carry-ember': [walkers('Friendly'), mark('changed-mind-in-night')],
   'wash-fight-won': [walkers('Strangers'), feud],
+  'wash-car-towed': [mark('wash-car-towed-at-dawn')],
 };
 
 export const NIGHT_2_LATER = {
