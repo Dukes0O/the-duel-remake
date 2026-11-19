@@ -410,29 +410,32 @@ tasks:
 
   - id: QA-TEMP-CLEANUP
     title: "Browser checks leave folders in Temp; one-time disk cleanup"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-TEMP-CLEANUP.md"
 
 
   - id: QA-TIMING-UNDER-LOAD
     title: "Town timing checks fail when art jobs run beside them"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-TIMING-UNDER-LOAD.md"
 
   - id: QA-WATER-ROAD-AUTOPILOT
     title: "water-road scenario: Sal's road autopilot sometimes misses Easy within three tries"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-WATER-ROAD-AUTOPILOT.md"
 
@@ -494,28 +497,31 @@ tasks:
 
   - id: QA-EVIDENCE-MIDNIGHT
     title: "The evidence-folder test fails for a while after midnight"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
 
   - id: QA-ROUND-SOLID-HEADING
     title: "A car passing a round solid thing is slowed when the thing's heading differs from the car's"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-ROUND-SOLID-HEADING.md"
 
   - id: QA-BORER-SUITE-TIME
     title: "The boring machine's two suites take eight minutes between them"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
 
@@ -524,7 +530,8 @@ tasks:
     owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: []
     details: "docs/board/cards/QA-WIDE-FILES.md"
 
@@ -560,10 +567,11 @@ tasks:
 
   - id: STORY-NIGHT-2-FLOW
     title: "Night 2 from Kyle's try: Esc frees the mouse without pausing, breath that reads, no return to the yard at the end of the night"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: []
     locks: []
     details: "docs/board/cards/STORY-NIGHT-2-FLOW.md"
@@ -580,10 +588,11 @@ tasks:
 
   - id: QA-EVIDENCE-DATE-BOUNDARY
     title: "One clock names every evidence folder: the browser runner and the round planner disagreed at midnight"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Sonnet session Claude started (Kyle's push of 19 November)"
     needs: []
     locks: []
     details: "docs/board/cards/QA-EVIDENCE-DATE-BOUNDARY.md"
@@ -647,10 +656,11 @@ tasks:
 
   - id: BOWL-COURSE
     title: "The Bowl course and props"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: [BOWL-ART-STADIUM, BOWL-ART-CRUSH, BOWL-SHOW]
     locks: [circuit-registry]
     flag: "titan-bowl"
@@ -658,7 +668,7 @@ tasks:
 
   - id: BOWL-HOOKS
     title: "Show Night in the game"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -760,10 +770,11 @@ tasks:
 
   - id: WILD-ART-WASTE
     title: "Animals: the Wasteland and the farm"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Fable session Claude started (Kyle's push of 19 November)"
     needs: []
     locks: []
     details: "docs/board/cards/WILD-ART-WASTE.md"
@@ -925,10 +936,11 @@ tasks:
 
   - id: TOWN-VIEW-LIFE
     title: "Town: walkers, haulers, smoke and moving parts"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: ["TOWN-VIEW","TOWN-ART-WALKERS","TOWN-GOODS"]
     locks: []
     details: "docs/board/cards/TOWN-VIEW-LIFE.md"
@@ -948,10 +960,11 @@ tasks:
 
   - id: TOWN-VEHICLES
     title: "Town: drivable work vehicles"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: ["TOWN-ART-TRUCKS-1"]
     locks: ["busy-game-files"]
     details: "docs/board/cards/TOWN-VEHICLES.md"
@@ -959,7 +972,7 @@ tasks:
 
   - id: TOWN-HAUL-JOB
     title: "Town: the first drive, hauling salvage"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -969,7 +982,7 @@ tasks:
 
   - id: TOWN-FIRE-JOB
     title: "Town: the fire call"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1352,10 +1365,11 @@ tasks:
 
   - id: TOWN-ART-WORKS
     title: "Art: building sites, goods and the Old Ground"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Fable session Claude started (Kyle's push of 19 November)"
     needs: ["TOWN-ART-BASE"]
     locks: []
     details: "docs/board/cards/TOWN-ART-WORKS.md"
@@ -1370,10 +1384,11 @@ tasks:
 
   - id: MACHINE-PLANT
     title: "Machines: crusher, batch plant, mixer and pouring"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: built by a Opus session Claude started (Kyle's push of 19 November)"
     needs: ["MACHINE-HAUL","TOWN-WORK","TOWN-ART-PLANTS","TOWN-ART-MACHINES-2"]
     locks: []
     details: "docs/board/cards/MACHINE-PLANT.md"
