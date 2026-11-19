@@ -12,25 +12,33 @@ export function groundColour(x, z, turned = 0) {
 function makeChunk(row, heightAt) {
   // `made` is how far each corner stands above (filled) or below (cut) the ground as it was, in metres, smoothed over its
   // neighbours. The land's drawing uses it to draw spoil and fresh cuts (src/world/scablands-ground-look.js, GROUND_MADE).
+  // `moved` is how much ground was moved there at all, in metres, smoothed the same way. It tells the drawing that ground was
+  // worked even where a cut and its own spoil lie side by side and `made` sums to nothing (a trencher's ditch and its ridge).
   // `soils` is 1 where that ground is topsoil or clay and 0 where it is gravel or rock, smoothed the same way.
-  const positions = [], colours = [], uvs = [], indices = [], made = [], soils = [], skirtSources = [];
+  const positions = [], colours = [], uvs = [], indices = [], made = [], moved = [], soils = [], skirtSources = [];
   const x0 = row.x * SIDE, z0 = row.z * SIDE;
   for (let z = 0; z <= SIDE; z++) for (let x = 0; x <= SIDE; x++) {
-    const wx = x0 + x, wz = z0 + z, index = Math.min(SIDE - 1, z) * SIDE + Math.min(SIDE - 1, x);
-    let turned=0, change=0, soil=0;
+    const wx = x0 + x, wz = z0 + z;
+    // A sample's index is z * SIDE + x, as the ground edit layer stores it (src/world/ground-edit.js). Until 19 November 2026
+    // the two were swapped here, so every chunk's spoil, darkening and soil were drawn mirrored across its diagonal: a heap
+    // stood bare of them and was drawn as a scarp's rock, with the rock's pale scree as a ring round its foot (DIG-YARD-TOY).
+    let turned=0, change=0, shifted=0, soil=0;
     for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
-      const sx=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,z)+dz));
-      const sz=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,x)+dx));
-      turned+=Math.min(1,Math.abs(row.delta[sz*SIDE+sx])*1.5)/9;
-      change+=row.delta[sz*SIDE+sx]/9;
+      const sx=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,x)+dx));
+      const sz=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,z)+dz));
+      const sample=sz*SIDE+sx;
+      turned+=Math.min(1,Math.abs(row.delta[sample])*1.5)/9;
+      change+=row.delta[sample]/9;
+      shifted+=Math.abs(row.delta[sample])/9;
       // Topsoil and clay (the first two ground materials) are earth; gravel and rock are not.
-      soil+=(row.material[sz*SIDE+sx]<=1?1:0)/9;
+      soil+=(row.material[sample]<=1?1:0)/9;
     }
     const colour = groundColour(wx, wz, turned);
     positions.push(wx, heightAt(wx, wz) + .035, wz);
     colours.push(colour.r, colour.g, colour.b);
     uvs.push(wx*GROUND_UV,wz*GROUND_UV);
     made.push(change);
+    moved.push(shifted);
     soils.push(soil);
     if (x < SIDE && z < SIDE) {
       const a = z * (SIDE + 1) + x, b = a + 1, c = a + SIDE + 1, d = c + 1;
@@ -47,6 +55,7 @@ function makeChunk(row, heightAt) {
         colours.push(colours[source * 3], colours[source * 3 + 1], colours[source * 3 + 2]);
         uvs.push(uvs[source*2],uvs[source*2+1]);
         made.push(made[source]);
+        moved.push(moved[source]);
         soils.push(soils[source]);
         skirtSources.push(source);
       }
@@ -58,9 +67,13 @@ function makeChunk(row, heightAt) {
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setAttribute('aMade', new THREE.Float32BufferAttribute(made, 1));
+  geometry.setAttribute('aMoved', new THREE.Float32BufferAttribute(moved, 1));
   geometry.setAttribute('aSoil', new THREE.Float32BufferAttribute(soils, 1));
-  geometry.setIndex(indices);
+  // The ground's directions come from its top faces alone. Worked out with the skirt's upright faces too, every corner along a
+  // chunk's edge leaned half over (a slope of .55), and the land's drawing drew a pale band of rock and scree round the square.
+  geometry.setIndex(indices.slice(0, SIDE * SIDE * 6));
   geometry.computeVertexNormals();
+  geometry.setIndex(indices);
   // The skirt is lit and coloured as the ground at its top edge, not as a wall: where a chunk's edge shows as a lip above the
   // coarse ground it must not read as a pale kerb of rock. Each skirt corner takes its top corner's own direction.
   const normals = geometry.getAttribute('normal'), top = (SIDE + 1) * (SIDE + 1);

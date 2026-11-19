@@ -38,6 +38,8 @@ export const FEATURE_STATES = Object.freeze({
   rescue: 'on',
   // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Released 3 November 2026.
   wildlife: 'on',
+  // WILD-HIT (docs/HELI_WILDLIFE.md 3.5): cars knock animals down into a heap with a blood stain (Kyle, 19 November 2026). Drawing only.
+  'wildlife-hits': 'dev',
   // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Released 3 November 2026; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
   'heli-skins': 'on',
