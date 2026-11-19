@@ -446,6 +446,8 @@ for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['buga
     'src/lab/lab-lessons.js': name => name === 'heli/heli-save.js',
     // LAB-HELI-CHALLENGES: the challenges run the fire rules, the thrust tank and the clear-ground search of the helicopter.
     'src/lab/lab-challenges.js': name => /^heli\/heli-(?:flight|fire|search)\.js$/.test(name),
+    // TOWN-VIEW-LIFE: town fires are drawn in the helicopter's fire look (its drawing file only, never its rules).
+    'src/town/view/town-fx.js': name => name === 'heli/heli-fire-view.js',
   };
   // LAB-BENCHES: each bench runs the helicopter's own rules (never its drawing files).
   const labBench = name => !drawingFile.test(name);

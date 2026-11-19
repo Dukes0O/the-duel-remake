@@ -8,6 +8,6 @@
 
 **Checks** (commit in the merge message). `tools/test-town-view-life.mjs` (new, 77 checks): a town stepped 30 days with the view drawing, a fire and picks matches the same town stepped without it byte for byte; the view's seed is its own; walks keep to roads and turn at corners; the standing foot stays planted in the drawn matrices; walkers face the way they walk and stand on road tops; a click finds the person; carts only with their part; no animal file asked for before its row. `test-town-view`, `test-town-map-markers`, `test-town-hooks`, `test-town-visits`, `test-town-ui` pass.
 
-**Changed assertions.** None.
+**Changed assertions** (Claude's written review needed, rule 18). `tools/test-heli-mode.mjs`, the rule that only named hook files name a helicopter file: one hook added, `src/town/view/town-fx.js` may name `heli/heli-fire-view.js` and nothing else, because the card asks town fires to reuse the helicopter's fire look. No existing hook changed.
 
 **Removed.** Nothing: the town had no walkers or effects before.
