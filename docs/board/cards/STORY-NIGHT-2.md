@@ -72,11 +72,17 @@ The plate trial stopped at one picture: the game looks poor beside it (`docs/boa
 
 ## Claude review of Slice A
 
-Review the playable gate and on-foot chapter and the pot delivery at the
-candidate in `docs/changes/STORY-NIGHT-2.md`. This review covers Slice A only.
-Keep this card open for Slice B, after ROAD-RIDERS is on official integration
-and its laptop hand fights pass. Kyle’s try follows Claude’s play of all branches.
+PR #47 is back for Slice A review after the fixes since `f581d1fdb`. The chase fades into
+moonlight and lit alleys, gives directions and preserves Dace's last sighting. The seven gate
+choices use the bottom band. The peaceful approach follows a walkable route with the RPG
+holstered. The hearth shot includes the fire, Auntie counts after banking, the pot meets the
+car where it is parked, and the replay shows the first saved page and the replay message.
+The scenario now waits for the QA button and each rendered dialogue turn.
 
-Please review the four explicit new cue exclusions in `tools/test-p4-audio.mjs`.
-They keep the same fingerprint over the old cues, while `test-night-2.mjs`
-checks the names and switch for the four new cues.
+The [change note](../../changes/STORY-NIGHT-2.md) records the cloud checks and pending laptop
+checks. Run `story-night-2` four consecutive times on the laptop at 1280×720 before the
+verdict, then check the branches by hand. PR #47 approved the four explicit Night 2 cue
+exclusions in `tools/test-p4-audio.mjs`. The historical fingerprint is intact.
+
+Keep this card open for Slice B after ROAD-RIDERS reaches official integration and passes
+its laptop hand fights. Kyle’s try follows Claude’s play of all branches.
