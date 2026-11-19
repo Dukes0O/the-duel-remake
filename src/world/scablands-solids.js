@@ -215,6 +215,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     yard: [],
     shelter: [],
     townGate: [],
+    town: [],
     near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
@@ -223,6 +224,8 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.shelter) found.push(solid);
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
+      // The town's things in the land (the neighbours' outposts, TOWN-OUTPOST-SCENE): many, so asked of their own grid.
+      if (this.townGrid) for (const solid of this.townGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.people) found.push(solid);
       for (const solid of this.storyPeople) found.push(solid);
       for (const solid of this.brandLamps) found.push(solid);
@@ -259,6 +262,9 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
         halfX:x - .3, halfZ:.25, height:1.26}));
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
+    // A town drive's own solids (src/town/town-world.js gives them in its layout). Each row is {id, kind, shape, x, z, halfX, halfZ,
+    // heading, height, base}; `base` is the ground it stands on.
+    setTown(solids) { this.town = solids.map(solid => make(solid)); this.townGrid = this.town.length ? createSolidGrid(this.town) : null; },
     setTownGate(gate, progress = 0) {
       const pose = gate && tinTownDoorPose(gate, progress);
       this.townGate = gate ? [make({id:'hot-delivery-town-door', kind:'wall', x:pose.x, z:pose.z,

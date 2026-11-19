@@ -194,6 +194,11 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
+  // The neighbours' outposts are solid in a town drive only, from the layout the drive was started with (TOWN-OUTPOST-SCENE).
+  if(definition.kind==='town-drive'&&definition.layout?.outposts?.solids?.length){
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setTown(definition.layout.outposts.solids);
+  }
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setYard(yardPlan().solids);
