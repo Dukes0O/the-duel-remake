@@ -238,7 +238,8 @@ export function initializeWorldJob(duel, definition) {
     state.s=pose.s;state.lateral=pose.lateral;state.prevS=pose.s;state.prevLateral=pose.lateral;
     state.speedMph=0;state.headingError=0;state.townGatePrompt='';
   }
-  initializeWorldFootStart(duel, definition.steps[0]?.footStart ?? definition.steps[0]?.bellowsFootStart);
+  const footStart = definition.steps[0]?.footStart ?? definition.steps[0]?.bellowsFootStart;
+  if (footStart) placeWorldFighter(duel, footStart);
   if (definition.steps.some(step=>step.kind==='rider-fight')) reserveRoadRiders(duel, worldJob);
   if (definition.id === NIGHT_2_ID) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
@@ -251,13 +252,12 @@ export function initializeWorldJob(duel, definition) {
   return true;
 }
 
-// Only this job starts away from its parked car. The existing fighter checks
-// ground and solids and owns walking, weapons, knockdowns and getting back in.
-function initializeWorldFootStart(duel, start) {
+// A chapter can establish its first walking pose, or let the ordinary fighter
+// find a safe spot beside a wreck when the player has to return on foot.
+function placeWorldFighter(duel, start) {
   const state = duel.state;
-  if (!start) return;
-  const pose = duel.course.nearest(start.x, start.z);
-  const fighter = createFighter(duel.course, state, {...pose, yaw:start.heading});
+  const pose = start ? {...duel.course.nearest(start.x, start.z), yaw: start.heading} : undefined;
+  const fighter = createFighter(duel.course, state, pose);
   const perks = crewPerks(state.crewId);
   fighter.crewId = state.crewId || 'rook';
   fighter.maxHealth = Math.round(fighter.health * (perks.healthMultiplier || 1));
@@ -1293,9 +1293,10 @@ function applyRequests(duel, worldJob, requests) {
     if (applyBrandRequest(duel, worldJob, request)) continue;
     if (request.type === 'marker') {
       const step = worldJob.job.steps[worldJob.job.stepIndex], fighter = duel.state.fighter;
+      if (worldJob.night2 && step?.kind === 'rider-fight') continue;
       const chapter = duel.state.onFoot && worldJob.night2;
       if (chapter && step?.brand && request.place) night2BrandRoute(chapter, fighter, request.place);
-      const walking = chapter && (step?.kind === 'reach' || step?.brand);
+      const walking = chapter && (step?.kind === 'reach' || step?.brand || step?.action === 'board');
       const waypoint = walking && worldJob.night2.routes[0]?.point;
       const place = waypoint ? {...waypoint, y: scablandsSurfaceHeightAt(waypoint.x, waypoint.z), radius: 1.1}
         : walking ? null : request.place;
@@ -1433,6 +1434,11 @@ function night2Cue(duel, cue) {
 
 function enterNight2(duel, worldJob) {
   const {scout, riders = []} = enterNight2Step(worldJob);
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (step?.id === 'wash-walk-to-cut' && !duel.state.onFoot) {
+    placeWorldFighter(duel);
+    duel.emit({fighterExited: true});
+  }
   if (scout) {
     applyBrandRequest(duel, worldJob, {type: 'spawnBrandAsh', ...NIGHT_2_SCOUT});
     const actor = worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id);
@@ -1442,7 +1448,7 @@ function enterNight2(duel, worldJob) {
   if (!riders.length) worldJob.actors = worldJob.actors.filter(actor => !actor.id.startsWith('wash-rider-'));
   syncJobCarSolids(worldJob);
   if (!scout) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
-  if (worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'talk') {
+  if (step?.kind === 'talk' || step?.kind === 'rider-fight') {
     worldJob.marker = null;
     duel.state.arena.markers = [];
   }
@@ -1450,7 +1456,7 @@ function enterNight2(duel, worldJob) {
 
 function routeWorldNight2(duel, worldJob, previous, next) {
   if (worldJob.night2 && next.stepIndex !== previous)
-    routeNight2(worldJob, previous, next, cue => night2Cue(duel, cue));
+    routeNight2(worldJob, previous, next, cue => night2Cue(duel, cue), duel.state.combatWrecking);
 }
 
 function finishWorldJob(duel, worldJob) {
@@ -1720,7 +1726,7 @@ export function stepWorldJob(duel, dt) {
   if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
   const view = {player: playerView, onFoot: !!state.onFoot,
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
-    ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot)} : {}),
+    ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot, carriedCar)} : {}),
     ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],
       playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
         (state.combat?.flameBursts ?? []).some(burst => burst.ownerId === 'player')} : {}),
@@ -1767,7 +1773,6 @@ export function stepWorldJob(duel, dt) {
     const outcome = currentStep?.kind === 'rider-fight' && worldJob.riderFight.outcome;
     if (outcome === 'lost' && currentStep.onLost !== 'continue' || outcome === 'surrounded' && currentStep.onSurrounded === 'lose')
       return {reason:'rider-fight-lost', winnerId:'raiders'};
-    if (worldJob.night2) enterNight2(duel, worldJob);
     if (worldJob.riderReserve) startRoadFight(duel, worldJob);
     if (worldJob.night2) enterNight2(duel, worldJob);
     applyStepLoan(duel, worldJob);

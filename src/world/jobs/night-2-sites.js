@@ -30,12 +30,14 @@ const store = place('ember-store', 6024, 14, 2);
 const storeApproach = place('store-approach', store.position.x + 5, store.position.z + 3, 2);
 const chaseLamps = [place('store-alley', 6020, 18), place('west-alley', 5970, 13), place('west-opening', 5930, 2)];
 const campWalk = place('wash-edge', camp.position.x + 14, camp.position.z - 4, 5);
+const washApproach = place('wash-fight-approach', camp.position.x + 110, camp.position.z - 25, 25);
+const carHome = place('wash-car-home', gate.x, gate.z + 26, 8);
 const hearthApproach = place('hearth-approach', town.hearthFront.position.x, town.hearthFront.position.z + 2.2, 2.2);
 const pump = town.lamps[0];
 const watchPost = place('watch-post', pump.position.x + 3, pump.position.z + 9, 3);
 export const NIGHT_2_SITES = {
-  ...town, gate, gateTalk, gateView, gateOutside, westGap, westCut, scoutWall, scoutGate, store, storeApproach, chaseLamps, camp, campWalk, hearthApproach, around, pump, watchPost,
-  car: {...night2Point(gate.x, gate.z + 26), heading: -Math.PI / 2},
+  ...town, gate, gateTalk, gateView, gateOutside, westGap, westCut, scoutWall, scoutGate, store, storeApproach, chaseLamps, camp, campWalk, washApproach, carHome, hearthApproach, around, pump, watchPost,
+  car: {...carHome.position, heading: -Math.PI / 2},
   tower: {
     position: {...night2Point(gate.x + 4.8, gate.z + .5), y: gate.postHeight + 1.8},
     target: {...camp.position, y: camp.position.y + 1.1},
@@ -77,7 +79,8 @@ export function night2Cast(set, daceAt) {
     return people;
   };
   if (set === 'gate') return [solder, gateCinder, ...atGate()];
-  if (set === 'camp') return [solder, ...campPeople(), person('clinker', night2Point(camp.position.x + 1, camp.position.z - 7))];
+  if (['camp', 'camp-won', 'camp-escape'].includes(set)) return [solder, ...campPeople(),
+    ...(set === 'camp' ? [person('clinker', night2Point(camp.position.x + 1, camp.position.z - 7))] : [])];
   if (set === 'pump' || set === 'sleep') {
     const people = walkerGroupAt(night2Point(pump.position.x + 6, pump.position.z + 5), Math.PI / 2, heightAt);
     if (set === 'sleep') {

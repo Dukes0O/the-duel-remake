@@ -910,10 +910,10 @@ export function createScablandsScene(course,options={}){
       if (worldJob?.storyPeople) peopleSeconds += Math.max(0, presentationDt);
       storyPeople.update(worldJob, worldJob?.night2?.camera?.target ?? here, peopleSeconds, drawnShift);
       if (worldJob?.night2 && !night2) {
-        night2 = createNight2Look();
+        night2 = createNight2Look(course);
         group.add(night2.group);
       }
-      night2?.update(worldJob, peopleSeconds, drawnShift);
+      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? []);
       brandAshView.update(worldJob,drawnShift);
       if (worldJob?.riderFight && !roadRidersView) {
         roadRidersView = createBrandAshView({road:true});

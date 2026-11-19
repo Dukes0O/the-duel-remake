@@ -3,8 +3,9 @@ import {NIGHT_2_SITES as sites, night2Point} from './jobs/night-2-sites.js';
 import {createBraziers} from './ember-pot.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
 import {SALT_RIDERS} from './jobs/ember-rule.js';
+import {worldPose} from '../arena/arena-floor.js';
 
-export function createNight2Look() {
+export function createNight2Look(course) {
   const group = new THREE.Group();
   group.name = 'Strangers at the gate';
   const resources = [];
@@ -110,7 +111,7 @@ export function createNight2Look() {
     return puff;
   });
 
-  return {group, update(worldJob, seconds, shift) {
+  return {group, update(worldJob, seconds, shift, opponents) {
     const chapter = worldJob?.night2;
     group.visible = Boolean(chapter);
     if (!chapter) return;
@@ -149,12 +150,16 @@ export function createNight2Look() {
       campFires.animate(seconds);
     }
     riderLights.forEach((pair, index) => {
-      const rider = props.campLights && worldJob.actors.find(actor => actor.id === `wash-rider-${index + 1}`);
-      pair.visible = Boolean(rider);
-      if (!rider) return;
-      const {x, y, z} = rider.position;
+      const id = `wash-rider-${index + 1}`;
+      const rider = props.campLights && worldJob.actors.find(actor => actor.id === id);
+      const fighter = props.campLights && opponents.find(car => car.roadRider?.id === id && !car.combatWrecking);
+      const pose = rider ? {...rider.position, heading: rider.heading}
+        : fighter ? {...worldPose({course}, fighter), y: fighter.groundHeight} : null;
+      pair.visible = Boolean(pose);
+      if (!pose) return;
+      const {x, y, z} = pose;
       pair.position.set(x, y + shift(x, z, y), z);
-      pair.rotation.y = rider.heading;
+      pair.rotation.y = pose.heading;
     });
     const walkers = chapter.set === 'gate' ? cast.filter(person => !['auntie-solder', 'cinder'].includes(person.id)) : [];
     breath.forEach((puff, index) => {

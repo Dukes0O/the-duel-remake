@@ -134,13 +134,37 @@ export const pageFunctions = {
       fires?.visible && fires.children.every(fire => fire.visible) && [1, 2, 3].every(index =>
       scene.getObjectByName('Wash rider ' + index + ' lights')?.visible);
   },
-  towerOptions: () => {
+  towerOptions: washFight => {
     const buttons = [...document.querySelectorAll('.story-talk[data-scene="tower"] .story-options button')];
-    if (buttons.length !== 2 || buttons.some(button => button.disabled) ||
+    if (buttons.length !== (washFight ? 3 : 2) || buttons.some(button => button.disabled) ||
         !buttons[0].textContent.includes('Rell will probably turn Clinker down.') ||
-        !buttons[1].textContent.includes('Carry one ember out to them'))
-      throw Error('Slice A tower choices still show a missing fight or an unclear Watch hint.');
+        !buttons.at(-1).textContent.includes('Carry one ember out to them') ||
+        washFight && !buttons[1].textContent.includes('Drive out and run the riders off'))
+      throw Error('The tower is missing an available branch or the Watch hint.');
     return true;
+  },
+  advanceChase: () => {
+    const app = window.__qaApp, {worldJob: world} = app.duel.state.arena;
+    for (let i = 0; i < 24 && world.job.steps[world.job.stepIndex]?.id === 'chase'; i++) app.advance(5, .1);
+  },
+  escapeCamp: () => {
+    const {camera, scene} = window.__render;
+    const {worldJob: world} = window.__qaApp.duel.state.arena;
+    return Math.abs(camera.position.x - world.night2.camera.position.x) < .01 &&
+      scene.getObjectByName('Walkers’ camp fires')?.visible && world.storyPeople.some(person => person.id === 'rell') &&
+      world.storyPeople.filter(person => person.cart).every(person => scene.getObjectByName('story-handcart-' + person.id)?.visible);
+  },
+  carAt: ({x, y, z}) => {
+    const {duel} = window.__qaApp;
+    const {s, lateral} = duel.course.nearest(x, z);
+    Object.assign(duel.state, {s, lateral, prevS: s, prevLateral: lateral, groundHeight: y, speedMph: 0,
+      headingError: -Math.PI / 2 - duel.course.at(s).heading});
+  },
+  washBattle: () => {
+    const state = window.__qaApp.duel.state;
+    return !state.onFoot && state.opponents.length === 3 &&
+      state.opponents.every(actor => actor.roadRider) && [1, 2, 3].every(index =>
+        window.__render.scene.getObjectByName('Wash rider ' + index + ' lights')?.visible);
   },
   ledger: () => {
     const page = document.querySelector('.story-ledger');
@@ -170,8 +194,9 @@ export async function run(context) {
   const click = async action => { await wait('control', action); await evaluate('control', action, true); };
   const advance = (id, times) => advanceNight2Dialogue(context, id, 'lines', times);
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  async function reachGate() {
-    await context.navigate('/tools/menu-check.html?flags=hidden-road,story-choices,crew-gear,warlord-cards&harness=story-night-2');
+  async function reachGate(washFight = false) {
+    const flags = 'hidden-road,story-choices,crew-gear,warlord-cards' + (washFight ? ',road-riders' : '');
+    await context.navigate('/tools/menu-check.html?flags=' + flags + '&harness=story-night-2');
     await wait('ready');
     await evaluate('prepare', theftSeed);
     await click('wasteland-visit');
@@ -207,6 +232,10 @@ export async function run(context) {
   await wait('step', 'chase');
   await context.waitFor("document.querySelector('.night-2-alternative-route')?.hidden === false", 'both chase routes', 12000);
   await context.screenshot('night-2-chase');
+  await evaluate('advanceChase');
+  await wait('step', 'escaped', 'lines');
+  await wait('escapeCamp');
+  await context.screenshot('night-2-escape-camp');
 
   await reachGate();
   await gateOptions();
@@ -249,7 +278,7 @@ export async function run(context) {
   await wait('step', 'at-hearth', 'lines');
   await context.screenshot('night-2-back-at-the-hearth');
 
-  await reachGate();
+  await reachGate(true);
   await gateOptions();
   await evaluate('choose', "I can't.");
   await advance('refuse', 4);
@@ -261,5 +290,17 @@ export async function run(context) {
   await context.screenshot('night-2-tower');
   await advance('tower', 1);
   await wait('step', 'tower', 'options');
-  await evaluate('towerOptions');
+  await evaluate('towerOptions', true);
+  await evaluate('choose', 'Drive out and run the riders off');
+  await wait('step', 'wash-get-car');
+  await evaluate('at', sites.car);
+  for (const type of ['keyDown', 'keyUp']) {
+    await context.command('Input.dispatchKeyEvent', {type, key: 'f', code: 'KeyF', windowsVirtualKeyCode: 70});
+    if (type === 'keyDown') await context.evaluate('window.__qaApp.advance(.75)');
+  }
+  await wait('step', 'wash-drive');
+  await evaluate('carAt', sites.washApproach.position);
+  await wait('step', 'wash-fight');
+  await wait('washBattle');
+  await context.screenshot('night-2-wash-fight');
 }

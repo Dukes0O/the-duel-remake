@@ -20,6 +20,8 @@ import {syncScene} from '../src/scene-systems.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {sees} from '../src/world/scablands-ways.js';
 import {sweepObstacle} from '../src/collision.js';
+import {applyArmorDamage} from '../src/combat-armor.js';
+import {worldPose} from '../src/arena/arena-floor.js';
 
 const seedFor = (name, chance, outcome) => {
   for (let seed = 1; seed < 10_000; seed++)
@@ -166,6 +168,26 @@ assert.equal(settleNight2(saved.profile, opening.view).profile, saved.profile);
 const newer = {story: {version: 7}, wasteland: {scrap: 91}};
 assert.equal(settleNight2(newer, opening.view).profile, newer);
 
+const nightScene = createScablandsScene(opening.duel.course, {loadAsset: async path => {
+  const root = new Group();
+  if (path === SCABLANDS_ASSETS.folk) {
+    const auntie = new Group();
+    auntie.name = 'auntie-solder_root';
+    auntie.add(new Mesh(new BoxGeometry(.5, 2, .4), new MeshStandardMaterial()));
+    root.add(auntie);
+  }
+  if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace) {
+    const vehicle = new Group();
+    vehicle.name = path === SCABLANDS_ASSETS.bess ? 'Big Bess gas truck' : "Old Smoke's rolling furnace";
+    root.add(vehicle);
+  }
+  return {scene: root};
+}});
+assert(await nightScene.ready);
+const findScene = (run, name) => {
+  syncScene(nightScene.group, run.duel.state);
+  return nightScene.group.getObjectByName(name);
+};
 for (const [answer, count, word, mark] of [
   [0, 3, 'Sworn', 'dace-runner'], [1, 2, 'Friendly', 'dace-secret'], [2, 3, 'Wary', 'dace-sent-away'], [null, 1, 'Friendly', null],
 ]) {
@@ -200,6 +222,22 @@ for (const [answer, count, word, mark] of [
     }
     assert(disappeared, 'Dace disappears behind a solid or beyond sight of the store');
     assert.equal(run.stage(), 'escaped');
+    const fires = findScene(run, 'Walkers’ camp fires');
+    assert(fires.visible && fires.children.every(fire => fire.visible));
+    const cast = run.world.storyPeople;
+    const carts = cast.filter(person => person.cart);
+    assert.equal(carts.length, 4);
+    const rell = cast.find(person => person.id === 'rell');
+    const drawnCarts = carts.map(({id}) => nightScene.group.getObjectByName('story-handcart-' + id));
+    assert(drawnCarts.every(cart => cart?.visible));
+    const targets = [rell.position, ...fires.children.map(fire => fire.position),
+      ...drawnCarts.map(cart => cart.getWorldPosition(new Vector3()))];
+    for (const target of targets) {
+      const image = project(run.view.camera, target);
+      assert(Math.abs(image.x) < .9 && Math.abs(image.y) < .9 && image.z > 0 && image.z < 1,
+        'Escape camera frames Rell, her fires and all four carts');
+    }
+    assert.match(run.world.job.steps[run.world.job.stepIndex].scene.lines[0].words, /ash in my fire/);
     assert(run.view.ledger.obligations.some(item => item.id === 'walkers-great-favour'));
   } else {
     run.footAt(dace.position);
@@ -243,26 +281,6 @@ function withMouse(run, press) {
   }
 }
 
-const nightScene = createScablandsScene(opening.duel.course, {loadAsset: async path => {
-  const root = new Group();
-  if (path === SCABLANDS_ASSETS.folk) {
-    const auntie = new Group();
-    auntie.name = 'auntie-solder_root';
-    auntie.add(new Mesh(new BoxGeometry(.5, 2, .4), new MeshStandardMaterial()));
-    root.add(auntie);
-  }
-  if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace) {
-    const vehicle = new Group();
-    vehicle.name = path === SCABLANDS_ASSETS.bess ? 'Big Bess gas truck' : "Old Smoke's rolling furnace";
-    root.add(vehicle);
-  }
-  return {scene: root};
-}});
-assert(await nightScene.ready);
-const findScene = (run, name) => {
-  syncScene(nightScene.group, run.duel.state);
-  return nightScene.group.getObjectByName(name);
-};
 function pumpFalloff(lamp, radius, intensity) {
   const light = lamp.children.find(object => object.isPointLight);
   assert(light.intensity >= intensity && light.distance >= radius && light.decay === 2,
@@ -413,7 +431,6 @@ for (const [seed, mall, outcome] of [
   assert.equal(run.view.ledger.feud, outcome === 'walkers-go-with-clinker' ? 'Hunting' : 'Raiding');
 }
 
-nightScene.dispose();
 console.log('PASS Night 2 real world job: opening cast, both named throws, caught choices and escape, scout, lamp, Mall and bank.');
 
 // The scripted play follows the two real navigation arrows and uses only
@@ -584,3 +601,111 @@ assert.equal(replay.duel.state.arena.result.night2Page.embers, keptBefore.stocks
 assert.equal(replay.duel.state.arena.result.night2SaveIssue, 'This replay was not kept.');
 assert.deepEqual(savedLedger(app.profile), keptBefore);
 console.log('PASS Night 2 replay: the banked page from the first run remains in view and in the save.');
+
+// Use a fresh memory profile for each outcome so the existing replay policy
+// can never mask an incorrect durable Wash result.
+for (const won of [true, false]) {
+  const washApp = new App();
+  washApp.audio.unlock = () => {};
+  assert(washApp.addPlayer(won ? 'Wash win' : 'Wash wreck').ok);
+  washApp.profile = {...washApp.profile, wasteland: {...washApp.profile.wasteland, discoveredGate: true}};
+  assert(washApp._saveProfile());
+  washApp.duel.featureFlags = {enabled: id => id === 'road-riders' || flags.enabled(id)};
+  assert(washApp.visitWasteland());
+  washApp.advance(8);
+  assert(washApp.startNight2());
+  const run = chapter(washApp.seed, washApp.duel), {duel, world, view} = run, state = duel.state;
+  assert.equal(state.opponents.length, 0, 'Reserved riders stay out of earlier chapter branches');
+  assert.equal(world.riderReserve.length, 3);
+  run.openGate();
+  run.say(NIGHT_2_CHOICES[3].words);
+  run.say('Say nothing');
+  run.advance('tower');
+  const tower = world.job.steps[world.job.stepIndex];
+  assert.deepEqual(tower.scene.choices.map(option => option.id), ['watch-clinker', 'drive-riders-off', 'carry-ember']);
+  run.say('Drive out and run the riders off');
+  assert.equal(run.stage(), 'wash-get-car');
+  assert.equal(view.ledger.stocks.embers, 4);
+  const parked = worldPose(duel, state);
+  for (let frame = 0; frame < 850; frame++) {
+    const route = view.routes[0];
+    if (route) pointAt(duel, route.point, {forward: route.metres > 2.3, sprint: true});
+    run.tick();
+  }
+  assert.equal(run.stage(), 'wash-get-car', 'Approaching the marker cannot board for the player');
+  assert(Math.hypot(state.fighter.x - parked.x, state.fighter.z - parked.z) < 3);
+  duel.setFighterInput({forward: false});
+  duel.setInput({interact: true});
+  for (let i = 0; i < 120 && run.stage() === 'wash-get-car'; i++) run.tick();
+  assert.equal(run.stage(), 'wash-drive');
+  assert(!state.onFoot && !world.riderFight);
+  duel.setInput({interact: false});
+  const park = ({x, z}, heading) => {
+    const {s, lateral} = duel.course.nearest(x, z);
+    Object.assign(state, {s, lateral, prevS: s, prevLateral: lateral, speedMph: 0,
+      headingError: heading - duel.course.at(s).heading});
+  };
+  // Sample the edge of the arrival ring, and cross it on the drivetrain.
+  park({...sites.washApproach.position, x: sites.washApproach.position.x + sites.washApproach.radius + 3}, -Math.PI / 2);
+  duel.setInput({throttle: 1});
+  for (let i = 0; i < 210 && run.stage() === 'wash-drive'; i++) run.tick();
+  assert.equal(run.stage(), 'wash-fight');
+  assert(!state.onFoot);
+  assert.equal(world.riderFight.riders.length, 3);
+  assert(state.opponents.every(actor => actor.roadRider?.weapon === 'ash-sack'));
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('wash-rider-')).length, 0, 'The fight replaces the three distant silhouettes');
+  assert(findScene(run, 'Wash rider 1 lights').visible, 'The real arena cars have the lights seen from the tower');
+  const at = worldPose(duel, state);
+  assert(Math.hypot(at.x - sites.washApproach.position.x, at.z - sites.washApproach.position.z) < sites.washApproach.radius);
+  duel.setInput({throttle: 0, brake: 1});
+  if (won) {
+    for (const rider of state.opponents) {
+      rider.armor = 2;
+      assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
+    }
+  } else {
+    state.armor = 1;
+    assert(applyArmorDamage(duel, state, 'crossbow', {owner: state.opponents[0].arenaId}));
+    assert(state.combatWrecking, 'Loss starts with a native armor wreck');
+  }
+  for (let i = 0; i < 300 && run.stage() === 'wash-fight'; i++) run.tick();
+  assert.equal(world.riderFight.outcome, won ? 'won' : 'lost');
+  assert.equal(state.arena.result, null, 'The fight hands back to the chapter');
+  if (won) {
+    assert.equal(run.stage(), 'wash-fight-won');
+    run.tick();
+    assert.equal(run.screen().line.words, NIGHT_2_SCENES['wash-fight-won'].lines[0].words);
+    assert.equal(view.ledger.words.walkers, 'Strangers');
+    assert.equal(view.ledger.feud, 'Raiding');
+    run.advance('wash-drive-home');
+    park({...sites.carHome.position, x: sites.carHome.position.x - sites.carHome.radius - 3}, Math.PI / 2);
+    duel.setInput({throttle: 1, brake: 0});
+    for (let i = 0; i < 210 && run.stage() === 'wash-drive-home'; i++) run.tick();
+  } else {
+    assert.equal(run.stage(), 'wash-walk-to-cut');
+    assert(state.onFoot && state.combatWrecking && view.washCarUnavailable);
+    assert.match(worldHudModel({worldJob: world}).line, /towed in at dawn/);
+    assert(Math.hypot(state.fighter.x - at.x, state.fighter.z - at.z) < 12, 'The fighter comes out near the wreck');
+    duel.setInput({interact: true});
+    run.tick(120);
+    assert(state.onFoot && state.combatWrecking, 'Holding F and waiting cannot recover the wreck tonight');
+    duel.setInput({interact: false});
+    for (const name of ['wash-walk-to-cut', 'wash-walk-to-gap', 'wash-walk-home']) {
+      assert.equal(run.stage(), name);
+      followRoute(run, name, 4800, true);
+      assert.notEqual(run.stage(), name, 'The walker can follow the way back from the wreck');
+    }
+  }
+  assert.equal(run.stage(), 'close');
+  run.finish(4);
+  const kept = savedLedger(washApp.profile);
+  assert.equal(kept.stocks.embers, 3);
+  assert.equal(kept.marks.includes('wash-car-towed-at-dawn'), !won);
+  assert.equal(kept.words.walkers, won ? 'Strangers' : 'Cold');
+  assert.equal(kept.feud, won ? 'Hunting' : 'Raiding');
+  assert.equal(view.page.memories.some(line => line.includes('Bess leaves late')), !won);
+  assert(washApp.returnToYard());
+  washApp.dispose();
+}
+nightScene.dispose();
+console.log('PASS Night 2 Wash: real boarding and approach, three actual rider cars, victory and wreck, distinct returns and saved ledgers.');

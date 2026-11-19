@@ -135,9 +135,10 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     }
   }
   const chapter = worldJob?.night2;
-  if (chapter && onFoot && (step?.kind === 'reach' || step?.brand)) {
+  if (chapter && onFoot && (step?.kind === 'reach' || step?.brand || step?.action === 'board')) {
     const route = chapter.routes[0];
     next.target = route ? markerOf({name: route.name, position: route.point}, places) : null;
+    if (step.inCar) next.line = 'Find your car and hold F to get in.';
     if (step.brand && job.stepState.brandSeconds > 0) next.line = job.stepState.lightingLamp
       ? 'Stay by the pump lamp.' : 'Carry the brand to the pump lamp.';
   }
