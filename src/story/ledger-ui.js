@@ -9,6 +9,28 @@ export function playLedgerChoice(audio) {
   if (audio?.context?.state === 'running' && !audio.muted) audio._playCue('story.ledger.choose');
 }
 
+export function bindLedgerReplayKeys(window, currentPage, signal) {
+  const activation = new Set(['Enter', 'NumpadEnter', 'Space', 'Escape']);
+  const pressedOn = new Map();
+  const capture = {capture: true, signal};
+  window.addEventListener('keydown', event => {
+    if (!activation.has(event.code)) return;
+    const page = currentPage();
+    const held = pressedOn.has(event.code);
+    if (page && (held || event.repeat)) event.preventDefault();
+    // A repeat seen after window focus returns still needs a release.
+    if (!held) pressedOn.set(event.code, event.repeat ? null : page);
+  }, capture);
+  window.addEventListener('keyup', event => {
+    if (!activation.has(event.code)) return;
+    const page = currentPage();
+    // Space activates a button on keyup. Its press must belong to this page.
+    if (page && pressedOn.get(event.code) !== page) event.preventDefault();
+    pressedOn.delete(event.code);
+  }, capture);
+  window.addEventListener('blur', () => pressedOn.clear(), {signal});
+}
+
 const marks = {
   'know-south-ford': 'The Walkers told you about the South Ford.',
   'dace-knows-the-count': 'You told Dace how many embers the town has.',
@@ -31,12 +53,12 @@ const marks = {
 function tellingLine({slot, key}, value, other) {
   switch (slot) {
     case 'stocks': return value + (key === 'gas' ? ' gas in store.' : value === 1 ? ' ember in store.' : ' embers in store.');
-    case 'roadWord': return 'Word on the road ' + value + ' of 5.';
-    case 'feud': return 'The Ash Men are ' + value.toLowerCase() + '.';
-    case 'words': return STORY_PEOPLE[key] + ' — ' + (value ?? 'Strangers') + '.';
-    case 'encounters': return STORY_PEOPLE[key] + (value ? ' — ' + value : ' is absent from this telling.');
+    case 'roadWord': return 'Word on the road: ' + value + ' of 5.';
+    case 'feud': return 'The Ash Men: ' + value + '.';
+    case 'words': return STORY_PEOPLE[key] + ': ' + (value ?? 'Strangers') + '.';
+    case 'encounters': return STORY_PEOPLE[key] + (value ? ': ' + value : ' is absent from this telling.');
     case 'extraHeatFrom': return value === null ? 'The usual hearth burn.' : 'The hearth needs an extra ember every other night.';
-    case 'obligations': return value?.text ?? 'No ' + other?.type + ' — ' + other?.text;
+    case 'obligations': return value?.text ?? 'No ' + (other?.type ?? 'obligation') + '.';
     case 'made': return key.replaceAll('-', ' ') + (value ? ' was made.' : ' was left unmade.');
     case 'marks': return value ? marks[key] ?? key.replaceAll('-', ' ') : '—';
     default: return '';
@@ -45,19 +67,19 @@ function tellingLine({slot, key}, value, other) {
 
 export function ledgerReplayMarkup({differences, confirming, issue}, escapeHTML) {
   const button = (action, label) => '<button type="button" data-action="night-2-replay-' + action + '">' + label + '</button>';
-  const warning = confirming ? '<p class="story-replay-warning">The first telling will be forgotten.</p>' : '';
+  const warning = confirming ? '<p id="ledger-replay-warning" class="story-replay-warning">The first telling will be forgotten.</p>' : '';
   const status = issue ? '<p role="status">' + escapeHTML(issue) + '</p>' : '';
   const rows = differences.map(fact => '<tr><td>' + escapeHTML(tellingLine(fact, fact.kept, fact.played)) +
     '</td><td>' + escapeHTML(tellingLine(fact, fact.played, fact.kept)) + '</td></tr>').join('');
-  const content = rows ? '<table><thead><tr><th scope="col">As it stands</th><th scope="col">This time</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody></table>' : '<table><thead><tr><th scope="col">As it stands</th><th scope="col">This time</th></tr></thead>' +
-    '<tbody><tr><td colspan="2">The two tellings leave the same marks.</td></tr></tbody></table>';
+  const content = '<table><thead><tr><th scope="col">As it stands</th><th scope="col">This time</th></tr></thead>' +
+    '<tbody>' + (rows || '<tr><td colspan="2">The two tellings leave the same marks.</td></tr>') + '</tbody></table>';
   const controls = confirming ? button('cancel', 'Go back') + button('replace', 'Keep this time')
     : button('keep', 'Keep how it stands') + button('review', 'Keep this time');
-  return '<section class="yard-home-panel story-replay" role="dialog" aria-modal="true" aria-labelledby="ledger-title">' +
-    '<div class="yard-home-content"><article class="yard-home-intro story-ledger">' +
-    '<h3 id="ledger-title">What people remember</h3>' + content + warning + status + '</article></div>' +
-    '<footer>' + controls + '</footer></section>';
+  return '<section class="yard-home-panel story-replay" role="dialog" aria-modal="true" aria-labelledby="ledger-title"' +
+    (confirming ? ' aria-describedby="ledger-replay-warning"' : '') + '>' +
+    '<h3 id="ledger-title">What people remember</h3>' +
+    '<div class="story-replay-comparison yard-home-intro" role="region" aria-label="Compare tellings" tabindex="0">' +
+    content + '</div>' + warning + status + '<footer>' + controls + '</footer></section>';
 }
 
 export function ledgerPageMarkup(page, escapeHTML) {

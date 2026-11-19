@@ -21,7 +21,7 @@ import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
-import {ledgerPageMarkup, ledgerReplayMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
+import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
 import {finishArenaEvent} from './arena/arena-event.js';
@@ -97,6 +97,8 @@ const currentDoorFacts=()=>frontDoorFacts({profile:profile(),flags:app._switches
 // MENU-NEXT-UP: the old menu's Next up line and NEW tags, only with their switch on and the front door off.
 const nextUpOn=app._switches?.().enabled('menu-next-up')===true&&!frontDoorOn;
 root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null, nextUp: nextUpOn?{facts:currentDoorFacts()}:null});
+// Listen before the story dialogue's window handler can consume a held key.
+bindLedgerReplayKeys(window, () => root.querySelector('#modal-layer > .story-replay'), domEvents.signal);
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
@@ -562,13 +564,26 @@ function renderState(s) {
     ui.stage.style.setProperty('--hidden-road-hud-opacity',hudOpacity);
 }
 document.addEventListener('keydown',e=>{
-  if (e.code === 'Escape' && app.chooseNight2Replay('cancel')) {
+  if (e.code === 'Escape' && !e.defaultPrevented && app.chooseNight2Replay('cancel')) {
     e.preventDefault();
     lastScreen = null;
     renderState(app.duel.state);
     return;
   }
-  if(e.code==='Escape'&&app.isYardHomeActive?.()){e.preventDefault();if(yardPanel!=='home')yardPanel='home';else app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);return;}if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}if(e.code!=='Tab'||ui['modal-layer'].hidden)return;const buttons=[...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary')],first=buttons[0],last=buttons.at(-1);if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}},{signal:domEvents.signal});
+  if (e.target?.matches?.('.story-replay-comparison') &&
+      ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', 'Space'].includes(e.code)) {
+    // Let the focused comparison scroll without the global driving bindings.
+    e.stopPropagation();
+    return;
+  }
+  if(e.code==='Escape'&&app.isYardHomeActive?.()){e.preventDefault();if(yardPanel!=='home')yardPanel='home';else app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);return;}if(e.code==='Escape'&&(armoryOpen||coursesOpen||garageOpen||playersOpen||leaderboardOpen)){e.preventDefault();armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;lastScreen=null;updateMenuCar();renderState(app.duel.state);return;}
+  if (e.code !== 'Tab' || ui['modal-layer'].hidden) return;
+  const controls = [...ui['modal-layer'].querySelectorAll('button:not(:disabled),select,input,summary,.story-replay-comparison')];
+  const first = controls[0], last = controls.at(-1);
+  if (!first) return;
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+},{signal:domEvents.signal});
 app.onFrame=renderState;updatePlayers();updateMenuCar();updateMenuScene();renderState(app.duel.state);ensureRenderer();app.start();
   return {refreshRaceSetup};
 }
