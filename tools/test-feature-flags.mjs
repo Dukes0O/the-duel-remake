@@ -20,9 +20,9 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 57 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 58 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
     && FEATURE_STATES['gear-find'] === 'on'
-    && ['titan-bowl', 'snow-world', 'rival-voices', 'engine-curve', 'tyre-slip', 'story-everburn', 'story-choices', 'scablands-runs', 'scablands-realism', 'wasteland-town', 'the-dig', 'deep-vasca'].every(name => FEATURE_STATES[name] === 'dev')
+    && ['titan-bowl', 'snow-world', 'rival-voices', 'engine-curve', 'tyre-slip', 'story-everburn', 'story-choices', 'road-riders', 'scablands-runs', 'scablands-realism', 'wasteland-town', 'the-dig', 'deep-vasca'].every(name => FEATURE_STATES[name] === 'dev')
     && ['wildlife', 'heli-skins'].every(name => FEATURE_STATES[name] === 'on')
     && ['lap-choice', 'snowmen', 'the-deep', 'cpu-racecraft', 'lab', 'lab-tuning', 'lab-2', 'rescue', 'heli-logbook', 'heli-skiing', 'driving-lessons', 'pilot-map', 'nissan-skyline', 'kogane-invitation', 'lab-classroom', 'water-road', 'warlord-nine', 'earned-cars'].every(name => FEATURE_STATES[name] === 'on')
     && FEATURE_STATES['grand-prix-career'] === 'on' && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'
@@ -38,6 +38,13 @@ for (const manifest of CIRCUIT_MANIFESTS) {
     `${manifest.id}: every other course retains its own named switch`);
 }
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
+check(!productionFlags.enabled('road-riders'), 'ordinary production keeps road riders off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=road-riders'}).enabled('road-riders'),
+  'a production URL keeps road riders off');
+check(!createFeatureFlags({storage: null, qa: true, search: '?flags=story-everburn'}).enabled('road-riders'),
+  'opting into the Everburn alone keeps the old riders');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=road-riders'}).enabled('road-riders'),
+  'an explicit QA request enables road riders');
 // Wasteland switches were released on 9 October 2026, seekers on 10 October,
 // and The Deep and CPU racecraft on 25 October. Keep their development-switch
 // isolation checks by pinning each one to dev.
