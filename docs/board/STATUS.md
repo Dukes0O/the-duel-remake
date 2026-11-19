@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-19T05:35:53.065Z
+Observed at: 2026-11-19T06:20:25.419Z
 
-Observation commit: 20bb5e8ef99a187f977b8924768d84a588a27f63
+Observation commit: 922710d96efe90e1c6acfd83cd1a9e485aa6c00b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 20bb5e8ef99a187f977b8924768d84a588a27f63
+Integration HEAD: 922710d96efe90e1c6acfd83cd1a9e485aa6c00b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -49,7 +49,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/story-replay-pick | unknown | 2026-11-19T05:33:21Z | 0 | uncommitted changes; exact activity time unknown | docs/board/board.yaml, src/app.js, src/screen-router.js, src/sound-bank.js, src/story/ledger-replay.js |
+| codex/story-replay-pick | unknown | 2026-11-19T06:08:50Z | 0 | uncommitted changes; exact activity time unknown | docs/board/board.yaml, src/app.js, src/progression.js, src/screen-router.js, src/sound-bank.js |
 
 ## Size targets
 
@@ -57,15 +57,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 719,077,909 B | +39,649 B | 250,000,000 B |
+| Build `dist/` | 719,078,327 B | +418 B | 250,000,000 B |
 | Wasteland models | 431,213,000 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
 | Review `looks/` | 91,040,717 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 647,855 B | +551,973 B | 5,000,000 B |
+| Added bytes in last merge | 647,855 B | +0 B | 5,000,000 B |
 | All `public/` | 710,281,900 B | +0 B | unavailable |
-| Git objects | 1,038,226,432 B | +2,793,472 B | unavailable |
+| Git objects | 1,039,635,456 B | +1,409,024 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups

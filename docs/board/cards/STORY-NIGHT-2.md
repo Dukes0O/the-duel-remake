@@ -106,3 +106,13 @@ pump guidance, tower framing and canvas input are included and rechecked here. T
 [change note](../../changes/STORY-NIGHT-2.md) records the cloud results and laptop checks.
 The independent review covers Slice B and those supplemental fixes. Kyle’s try judges the
 chase margin after Claude’s play.
+
+## PR #48 review update
+
+An intact surround is a story loss and the car drives home. A wreck or native loss still tows,
+including a wreck in the tick that settles a win. The aftermath hides rider labels, the wreck
+walk keeps only its story objective, and both fires have small, pale smoke plumes.
+
+The [change note](../../changes/STORY-NIGHT-2.md) has the verified memory-only surround setup
+and laptop checks. The normal chapter still uses three riders. Claude’s quiet timing rerun
+passed on the previous revision.
