@@ -8,7 +8,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy, chooseNightSize, nightSizeLine, NIGHT_FULL_FILES, realFrameScope } from './full-check.mjs';
+import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy, chooseNightSize, nightSizeLine, NIGHT_FULL_FILES, saveFile, realFrameScope } from './full-check.mjs';
 import { nightIsFullTierPass, latestNight } from './build-status.mjs';
 import { fileURLToPath } from 'node:url';
 
@@ -800,6 +800,9 @@ test('night size: a shared game file, the save shape or the physics makes the ni
     assert.equal(choose([file]).size,'full',file+' holds the save shape or the physics');
   assert.match(choose(['src/game.js','src/app.js','src/main.js','src/config.js']).reason,/src\/game\.js, src\/app\.js, src\/main\.js and 1 more changed, which hold/);
   assert.equal(NIGHT_FULL_FILES.length,new Set(NIGHT_FULL_FILES).size);
+  for(const file of ['src/story/ledger-save.js','src/story/night-2-save.js','src/world/world-save.js','src/bowl/bowl-save.js'])
+    assert.ok(saveFile(file),file+' holds part of the save');
+  assert.ok(!saveFile('src/story/ledger.js')&&!saveFile('tools/test-story-save.mjs'));
 });
 test('night size: any other change is a partial night that says where the files are',()=>{
   const size=choose(['src/lab/lab-tune.js','src/lab/lab-save-view.js','tools/test-lab.mjs','docs/changes/X.md']);
@@ -883,10 +886,10 @@ test('night report: a night with nothing to check starts no job and records noth
   assert.equal(f.calls.length,0);assert.deepEqual(f.copies,[]);
   assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
   assert.equal(f.metadata.some(args=>args[0]==='commit'),false,'no commit for a run-log line (rule 5)');
-  const log=f.files.get(root+'/docs/board/run-log.md');
-  assert.match(log,/^- 12 October, night: no night check: nothing to check since bbbbbbbbb \(2 files changed; only notes, board files or files no suite reads\)\.\n$/);
-  await runNight(opts(),f.deps);
-  assert.equal(f.files.get(root+'/docs/board/run-log.md'),log,'the same line is not added twice');
+  assert.equal(f.files.has(root+'/docs/board/run-log.md'),false,'the integration folder stays clean: no run-log edit');
+  const note=f.files.get(`${root}/.evidence/${date}/FAC-03/night/no-check.txt`);
+  assert.match(note,/^- 12 October, night: no night check: nothing to check since bbbbbbbbb \(2 files changed; only notes, board files or files no suite reads\)\.\n$/);
+  assert.equal(result.runLogLine+'\n',note);
 });
 test('night frames are rerun only for files of the timed scene or its code',()=>{
   const real=fileURLToPath(new URL('../',import.meta.url));

@@ -33,6 +33,8 @@ export const NIGHT_FULL_FILES=Object.freeze([
   ...under(path('src','town'),['town-store.js','town-state.js','town-migrate.js']),
   path('src','heli','heli-save.js'),path('src','lab','lab-save.js')
 ]);
+// Every save file holds part of the save's shape, including ones added after this list (src/**/...save.js).
+export const saveFile=file=>/^src\/(?:[^/]+\/)*[^/]*save\.js$/.test(file);
 // Combat balance runs on a partial night only when one of these changed.
 const combatFile=file=>/^src\/(?:arsenal|arena)\//.test(file)||/^src\/combat-[^/]*\.js$/.test(file);
 // Notes, the board, run logs and review sheets never reach a suite.
@@ -354,7 +356,7 @@ export function chooseNightSize({date,force=false,previous=null,lastFull=null,ch
   const saturday=new Date(noon(date)).getUTCDay()===6;
   const stale=!lastFull||(noon(date)-noon(lastFull.date))/86400000>7;
   const code=changed.filter(file=>!noteFile(file));
-  const triggers=changed.filter(file=>NIGHT_FULL_FILES.includes(file));
+  const triggers=changed.filter(file=>NIGHT_FULL_FILES.includes(file)||saveFile(file));
   // Looking up which suites reach the files takes a while, so it waits until the answer is needed.
   let reached;
   const lookup=()=>reached??=code.length?reach(code):{suites:[],unreached:[],total:0};
@@ -465,8 +467,7 @@ async function assertNightSource(dependencies,source,allowed=[]) {
     throw Error('Actual night runs and publication require integration/wasteland.');
   if(source&&(await dependencies.git(['rev-parse','HEAD'])).trim()!==source)throw Error('Starting source commit changed.');
   const status=await dependencies.git(['status','--porcelain']);
-  // A "no night check" line in the run log waits there for the next real commit (AGENTS rule 5).
-  const unexpected=status.split(/\r?\n/).filter(Boolean).filter(line=>![...allowed,RUN_LOG].includes(line.slice(3)));
+  const unexpected=status.split(/\r?\n/).filter(Boolean).filter(line=>!allowed.includes(line.slice(3)));
   if(unexpected.length)throw Error('Source tree is dirty: '+unexpected.join('; '));
 }
 async function maybeRead(dependencies,file) {
@@ -565,10 +566,13 @@ export async function runNight(options,overrides={}) {
     const day=Number(options.date.slice(8,10))+' '+MONTHS[Number(options.date.slice(5,7))-1];
     const line=`- ${day}, night: no night check: nothing to check since ${shortCommit(previous.source)}`+
       (sizing.changedFiles?` (${plural(sizing.changedFiles,'file')} changed; only notes, board files or files no suite reads).`:'.');
-    const file=path(root,RUN_LOG),text=(await maybeRead(dependencies,file))??'';
-    if(!text.split(/\r?\n/).includes(line))await dependencies.appendText(file,(text&&!text.endsWith('\n')?'\n':'')+line+'\n');
+    // The integration folder stays clean: the line waits in the ignored evidence folder, and Claude folds it into the
+    // run log with the next real commit (AGENTS rule 5). A dirty run log would block the day's fast-forwards.
+    const note=path(root,'.evidence',options.date,'FAC-03','night','no-check.txt');
+    await dependencies.mkdir(path(root,'.evidence',options.date,'FAC-03','night'));
+    await dependencies.writeText(note,line+'\n');
     return {schema:1,size:'none',sizeLine:sizing.line,date:options.date,source,status:'none',
-      runLog:RUN_LOG,stages:[],failures:[]};
+      runLogLine:line,note,stages:[],failures:[]};
   }
   const {size:_size,line:_line,reason:_reason,scenarios:chosenScenarios,...sizeDetail}=sizing;
   if(chosenScenarios)sizeDetail.scenarios={picked:chosenScenarios.picked,total:chosenScenarios.total};
@@ -778,7 +782,7 @@ export async function runNight(options,overrides={}) {
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
   runNight(parseNightArguments(process.argv.slice(2))).then(packet=>{
-    if(packet.size==='none'){console.log(`Night ${packet.date}: ${packet.sizeLine} One line added to ${packet.runLog}.`);return;}
+    if(packet.size==='none'){console.log(`Night ${packet.date}: ${packet.sizeLine} For the run log: ${packet.runLogLine}`);return;}
     console.log(`Full check ${packet.date}: ${packet.status}; docs/board/checks/night-${packet.date}.json`);
     process.exitCode=packet.status==='failed'?1:0;
   }).catch(error=>{console.error(error.message);process.exitCode=2;});
