@@ -335,3 +335,48 @@ test('a browser that will not close is ended with its helpers, and its pipes are
   }
   if (alive(helperPid)) process.kill(helperPid);
 });
+
+// QA-TEMP-CLEANUP: a check removes its own Chrome profile folder, and a run starts by clearing folders left behind a day ago.
+test('browser profile folders: a check removes its own and a run clears only stale the-duel-browser-* folders', async () => {
+  const { mkdtemp, mkdir, rm, readdir, utimes, writeFile } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const fixtureTemp = await mkdtemp(join(tmpdir(), 'duel-profile-fixture-'));
+  const day = 24 * 60 * 60 * 1000, now = Date.now();
+  const make = async (name, ageMs, {file = false} = {}) => {
+    const path = join(fixtureTemp, name);
+    if (file) await writeFile(path, 'x'); else { await mkdir(path); await writeFile(join(path, 'Local State'), '{}'); }
+    const when = new Date(now - ageMs);
+    await utimes(path, when, when);
+  };
+  try {
+    await make('the-duel-browser-old1', 2 * day);
+    await make('the-duel-browser-old2', 9 * day);
+    await make('the-duel-browser-locked', 3 * day);
+    await make('the-duel-browser-fresh', 2 * 60 * 60 * 1000);
+    await make('other-tool-old', 5 * day);
+    await make('the-duel-browser-note.txt', 5 * day, {file: true});
+    const attempted = [];
+    const result = await browserHarness.removeStaleProfiles({ tempRoot: fixtureTemp, now,
+      remove: async (path, options) => {
+        attempted.push(path);
+        if (path.endsWith('the-duel-browser-locked')) throw Object.assign(Error('file in use'), { code: 'EBUSY' });
+        return rm(path, options);
+      } });
+    assert.deepEqual(result.removed.sort(), ['the-duel-browser-old1', 'the-duel-browser-old2']);
+    assert.deepEqual(result.kept, ['the-duel-browser-locked'], 'a folder with a file in use is skipped, not fatal');
+    assert.deepEqual((await readdir(fixtureTemp)).sort(), ['other-tool-old', 'the-duel-browser-fresh', 'the-duel-browser-locked', 'the-duel-browser-note.txt'],
+      'a fresh profile, a folder of another name and a plain file all stay');
+    assert.ok(attempted.every(path => /the-duel-browser-(old1|old2|locked)$/.test(path)), 'only stale the-duel-browser-* folders were touched');
+    assert.deepEqual(await browserHarness.removeStaleProfiles({ tempRoot: join(fixtureTemp, 'missing') }), { removed: [], kept: [] },
+      'a missing Temp folder is not an error');
+
+    // The end of a check: its own profile goes, pass or fail; no other folder may be removed this way.
+    const profile = await mkdtemp(join(fixtureTemp, 'the-duel-browser-'));
+    await writeFile(join(profile, 'DevToolsActivePort'), '1\n');
+    await browserHarness.cleanupProfile(profile, fixtureTemp);
+    assert.ok(!(await readdir(fixtureTemp)).includes(profile.split(/[\/]/).pop()), 'a finished check leaves no the-duel-browser-* folder behind');
+    await assert.rejects(browserHarness.cleanupProfile(join(fixtureTemp, 'other-tool-old'), fixtureTemp), /Refusing to remove/);
+    await assert.rejects(browserHarness.cleanupProfile(join(fixtureTemp, 'the-duel-browser-fresh', '..'), fixtureTemp), /Refusing to remove/);
+    assert.ok((await readdir(fixtureTemp)).includes('other-tool-old'), 'a refused removal leaves the folder in place');
+  } finally { await rm(fixtureTemp, { recursive: true, force: true }); }
+});

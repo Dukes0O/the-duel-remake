@@ -20,6 +20,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { heliOf } from '../src/heli/heli-save.js';
+import { evidenceDate } from './evidence-date.mjs';
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 export const FRAME_COUNT = 16;
@@ -58,7 +59,7 @@ export function parseArguments(args) {
 }
 
 const pad2 = number => String(number).padStart(2, '0');
-export function localDay(date) { return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`; }
+export function localDay(date) { return evidenceDate(date); }
 
 // High quality keeps the plain course folder; Performance gets its own so the
 // two never overwrite each other.

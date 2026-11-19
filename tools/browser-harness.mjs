@@ -6,6 +6,7 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { evidenceDate } from './evidence-date.mjs';
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const VITE_CLI = join(PROJECT_ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
@@ -60,8 +61,9 @@ export function parseArguments(args) {
 
 export function evidenceOutputDir(name, date = new Date(), root = PROJECT_ROOT) {
   if (!/^[a-z][a-z0-9-]*$/.test(name)) throw Error('Evidence scenario name must be simple.');
+  // The folder's day is the laptop's local date (evidence-date.mjs); the timestamp in the name stays UTC.
   const timestamp = date.toISOString().replace(/[:.]/g, '-');
-  return join(root, '.evidence', timestamp.slice(0, 10), `${name}-${timestamp}`);
+  return join(root, '.evidence', evidenceDate(date), `${name}-${timestamp}`);
 }
 
 export function resolveEvidenceDir(path, root = PROJECT_ROOT) {
@@ -138,8 +140,7 @@ export function reviewRoundOutputDir(name, date = new Date(), root = PROJECT_ROO
   if (!Number.isInteger(round) || round < 1 || round > 10)
     throw Error(`${roundKey} must be a round from 1 to 10.`);
   if (env.DUEL_EVIDENCE_DIR) return resolveEvidenceDir(env.DUEL_EVIDENCE_DIR, root);
-  const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  return join(root, '.evidence', day, family, `round-${round}`);
+  return join(root, '.evidence', evidenceDate(date), family, `round-${round}`);
 }
 
 export function assertPrivatePort(port) {
@@ -445,11 +446,37 @@ export async function stopBrowser(cdp, chrome, closeWaitMs = CLOSE_WAIT_MS) {
   child.stderr?.destroy();
 }
 
-async function cleanupProfile(profile) {
-  const tempRoot = await realpath(tmpdir());
+const PROFILE_PREFIX = 'the-duel-browser-';
+const STALE_PROFILE_MS = 24 * 60 * 60 * 1000;
+
+// Removes one Chrome profile folder this harness made. Only a folder directly inside the Temp folder whose name begins
+// `the-duel-browser-` is ever removed (QA-TEMP-CLEANUP).
+export async function cleanupProfile(profile, tempRootPath = tmpdir()) {
+  const tempRoot = await realpath(tempRootPath);
   const target = await realpath(profile);
-  if (!target.startsWith(tempRoot + sep) || !target.slice(tempRoot.length + 1).startsWith('the-duel-browser-')) throw Error(`Refusing to remove unexpected browser profile: ${target}`);
+  const name = target.startsWith(tempRoot + sep) ? target.slice(tempRoot.length + 1) : '';
+  if (!name || name.includes(sep) || !name.startsWith(PROFILE_PREFIX)) throw Error(`Refusing to remove unexpected browser profile: ${target}`);
   await rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+}
+
+// At the start of a run, removes profile folders that earlier checks left behind (a crash or a kill skips the cleanup in
+// main). Only real folders named `the-duel-browser-*` that were last changed more than a day ago go; anything else in
+// Temp, a newer folder (another check may be running) and a folder that will not delete (a file in use) stay.
+export async function removeStaleProfiles({ tempRoot = tmpdir(), now = Date.now(), maxAgeMs = STALE_PROFILE_MS,
+  list = readdir, status = stat, remove = rm } = {}) {
+  const removed = [], kept = [];
+  let entries;
+  try { entries = await list(tempRoot, { withFileTypes: true }); } catch { return { removed, kept }; }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith(PROFILE_PREFIX)) continue;
+    const path = join(tempRoot, entry.name);
+    try {
+      if (now - (await status(path)).mtimeMs <= maxAgeMs) continue;
+      await remove(path, { recursive: true, force: true, maxRetries: 2, retryDelay: 200 });
+      removed.push(entry.name);
+    } catch { kept.push(entry.name); }
+  }
+  return { removed, kept };
 }
 
 export async function main(args = process.argv.slice(2)) {
@@ -472,7 +499,8 @@ export async function main(args = process.argv.slice(2)) {
     ? resolveEvidenceDir(options.outputDir)
     : reviewRoundOutputDir(options.name) ?? evidenceOutputDir(options.name);
   await mkdir(outputDir, { recursive: true });
-  const profile = await mkdtemp(join(tmpdir(), 'the-duel-browser-'));
+  await removeStaleProfiles();
+  const profile = await mkdtemp(join(tmpdir(), PROFILE_PREFIX));
   let preview, chrome, cdp, report, launchMetadata;
   const issues = [], warnings = [], screenshots = [];
   try {
