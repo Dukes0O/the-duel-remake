@@ -2194,6 +2194,12 @@ export class EngineAudio {
     });
   }
 
+  // WILD-HIT: the player's car knocks an animal down beside the road (src/wildlife-view.js). Cue: vehicle.crush.
+  animalHit(strength = 0.7) {
+    if (!this.context || this.context.state !== 'running' || this.muted || this.paused) return null;
+    return this._crushImpact(strength);
+  }
+
   _crushImpact(strength = 0.7) {
     return this._runCue('vehicle.crush', () => {
       const def = bank('vehicle.crush');

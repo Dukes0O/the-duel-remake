@@ -2092,3 +2092,26 @@ scablands-runs, scablands-realism, the-dig, wasteland-town, titan-bowl).
 Full tier 672/672 on c3795328c (the release commit's code; notes and inbox only since), alone, 6,606 s.
 Driving physics files changed (sim-contacts, sim-crash, sim-driving, offroad-physics), so the full tier ran.
 No save shape change.
+
+
+## Release, 19 November 2026 (Claude, Release Manager)
+
+LAB-PAGE (Kyle's Rust play of 19 November, docs/LAB.md 13.2): the formula panel starts closed in every
+classroom lesson; Brian's page shows the step now in full, with word steps behind one closed "Words so far"
+fold and instruction, test and question steps leaving the page; Suspension's Watch again restarts its step.
+LAB-REVIEW-WORKSHOP: Rust, Fire, Strength and Fuel brought to 13.2 (no hedges, correct maths words, tasks that
+name their question, no key-label instructions, watch runs of about 10 s with R; rust along the whole wet nail;
+Rust's Question 3 asks what the lesson taught; the mooring chain replaces the boat trailer). Claude's review of
+the changed assertions is on each change note: they follow the new page and wording, and every suite gains checks.
+Line to re-record: lab.brian.fuel.explain.
+
+Checks: lane tiers in each lane (44 of 44; 38 of 38), all sixteen Lab classroom scenarios on the merged lanes,
+the four lessons' unit suites, test-lab-classroom-page and test-lab-brian-short, build. Lane tier on the merged
+integration for every change since a7b2f60c1: 653 of 654; test-town-core missed its 30 ms speed limit at 30.07 ms
+and 32.72 ms with the processor at 100% (26 Node and 31 Chrome processes from other sessions); town code is
+unchanged since a7b2f60c1, where it passed, so this is load, not a fault (Gates: a timeout on a busy laptop).
+Full tier 687/687, Performance frames 18.0 ms p95 and combat balance on a7b2f60c1 (the night of 19 November;
+browser stage sorted on QA-NIGHT-19-NOV). Since then: the Lab, src/story/scenes/night-2.js and src/machines
+(both behind switches that are off), tools and docs; no shared core, physics or save shape change, so that pass
+covers this release under rule 19. Everything else merged since 17 November (Night 2, the ledger, people and
+talk, the riders, the Dig's machines, the Scablands looks) stays behind switches that are off for players.
