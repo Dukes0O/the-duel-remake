@@ -71,6 +71,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
     scalars: ['sun', 'hemi', 'env', 'fogNear', 'fogFar', 'exposure', 'bloom', 'sunStrength', 'cloudCover']});
   const evening = {sunOffset: {x: 0, y: 0, z: 0}}, eveningColours = Object.fromEntries(EVENING.colours.map(key => [key, [0, 0, 0]]));
   const eased = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
+  let activeChapterNight = false;
   function eveningOver(day, amount, theme) {
     const golden = lightPathLook('golden', theme), dusk = lightPathLook('dusk', theme);
     const toGolden = eased(amount / EVENING.goldenBy) * EVENING.goldenShare;
@@ -192,12 +193,13 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
         uniforms.stars.value = settings.stars;uniforms.moon.value = settings.moon;
         host.dataset.lightPath = 'true';host.dataset.nightAmount = String(settings.nightAmount);
       } else {
-        if (chapterNight || uniforms.stars.value || uniforms.moon.value) {
-          uniforms.stars.value = chapterNight ? settings.stars : 0;
-          uniforms.moon.value = chapterNight ? settings.moon : 0;
+        if (chapterNight || activeChapterNight) {
+          if (uniforms.stars) uniforms.stars.value = chapterNight ? settings.stars : 0;
+          if (uniforms.moon) uniforms.moon.value = chapterNight ? settings.moon : 0;
         }
         delete host.dataset.lightPath;delete host.dataset.nightAmount;
       }
+      activeChapterNight = chapterNight;
     },
     followCamera(camera, position, seconds) {
       if (stopped) return;
