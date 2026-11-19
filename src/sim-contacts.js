@@ -564,7 +564,7 @@ export function _vehicleContact(a, b, reason) {
   const start = { x: (a.prevLateral ?? a.lateral) - (b.prevLateral ?? b.lateral), z: (a.prevS ?? a.s) - (b.prevS ?? b.s) - phase };
   const end = { x: a.lateral - b.lateral, z: a.s - b.s - phase };
   let worldFrame;
-  if (armoredPair && (a.roadRider || b.roadRider)) {
+  if (armoredPair && this.state.arena?.worldJob?.riderFight) {
     // The arena envelope and crash response are shared. At a world job's remote coordinates
     // the ring's distance along its centreline is not the distance between the two bumpers.
     const heading = this.course.at(a.s).heading;

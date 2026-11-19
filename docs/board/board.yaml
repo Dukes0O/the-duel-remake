@@ -593,9 +593,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "review"
+    status: "building"
     claimed_by: "Codex (cloud), 18 November 2026"
-    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/ROAD-RIDERS.md"

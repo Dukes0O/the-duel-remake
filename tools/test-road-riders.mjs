@@ -145,6 +145,12 @@ function rulesAndRoster() {
   const before=worldPose(remote.duel,foe);
   assert.equal(remote.duel._vehicleContact(remote.state,foe,'rival'),false,'11 actual metres leave both bumpers clear');
   assert.deepEqual(worldPose(remote.duel,foe),before);
+  place(escorted,escorted.state,pose,ringHeading);
+  place(escorted,truck,{x:pose.x+Math.sin(ringHeading)*11,z:pose.z+Math.cos(ringHeading)*11},ringHeading);
+  assert.ok(Math.abs(truck.s-escorted.state.s)<2,'the truck reproduces the compressed ring gap');
+  const truckBefore=worldPose(escorted.duel,truck);
+  assert.equal(escorted.duel._vehicleContact(escorted.state,truck,'rival'),false,'the allied truck uses the same 11 m world gap');
+  assert.deepEqual(worldPose(escorted.duel,truck),truckBefore);
   const continueJob=washRiderJob();
   continueJob.steps[0].onLost='continue';
   continueJob.steps.push({kind:'reach',id:'carry-on',place:{id:'far',position:{x:0,z:0},radius:5}});
@@ -170,6 +176,9 @@ function fireAndCrew() {
   assert.ok(targetFor(duel,rider,{range:50})===state);
   setCarEffect(state,'burning',{duration:5});
   state.combat.flameBurns={player:{remainingSec:5, ownerId:rider.arenaId}};
+  setCarEffect(rider,'disabled',{duration:5});
+  assert.equal(throwRiderAsh(duel,rider),false,'tesla lockout prevents the ash throw');
+  setCarEffect(rider,'disabled',{duration:0});
   assert.ok(throwRiderAsh(duel,rider));
   assert.equal(throwRiderAsh(duel,rider),false);
   advance(sim,RULE.ashFlightSec+DT*2);
@@ -179,6 +188,8 @@ function fireAndCrew() {
   assert.equal(carEffect(state,'burning'),null);
   assert.ok(hazardsFor(duel).some(h=>h.kind==='smoke'&&distance(h,at)<RULE.ashRadius));
   assert.equal(targetFor(duel,rider,{range:50}),null);
+  rider.roadRider.ashWait=0;
+  assert.equal(throwRiderAsh(duel,rider),false,'an otherwise available throw respects smoke');
   assert.equal(fireWeapon(duel,'crossbow',true,rider),false);
   const away=runEvent(), foe=away.state.opponents[0], location=worldPose(away.duel,away.state);
   place(away,foe,{x:location.x,z:location.z+22},Math.PI);

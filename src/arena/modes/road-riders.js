@@ -5,7 +5,8 @@ import {worldPose} from '../arena-floor.js';
 import {point, predictedPoint} from '../../combat-actors.js';
 import {thinkBrain} from '../arena-brains.js';
 import {addHazard} from '../../arsenal/hazards.js';
-import {setCarEffect} from '../../arsenal/car-effects.js';
+import {carEffect, setCarEffect} from '../../arsenal/car-effects.js';
+import {targetFor} from '../../arsenal/targeting.js';
 import {scablandsActorHeightAt} from '../../world/scablands-ground.js';
 import {stepMover, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {RIDER_RULE as R} from '../../world/jobs/rider-rule.js';
@@ -230,9 +231,10 @@ function stepAsh(duel,world,step,dt) {
 // The arena's scheduled CPU attack calls this only on its allotted turn. Ash is aimed at a point, so a moving car can dodge it.
 export function throwRiderAsh(duel,car) {
   const rider=car.roadRider, fight=duel.state.arena?.worldJob?.riderFight;
-  if (car.impactTimer>0 || car.weaponsDisabledUntil>duel.state.stageTimeSec || rider?.weapon!=='ash-sack' || rider.phase!=='fighting' || rider.ashWait>0 || !fight || fight.outcome) return false;
-  const target=arenaActor(duel,rider.targetId), at=worldPose(duel,car);
-  if (!target || outOfPlay(duel,target)) return false;
+  if (car.impactTimer>0 || car.weaponsDisabledUntil>duel.state.stageTimeSec || carEffect(car,'disabled') ||
+      rider?.weapon!=='ash-sack' || rider.phase!=='fighting' || rider.ashWait>0 || !fight || fight.outcome) return false;
+  const target=targetFor(duel,car,{range:R.ashRange}), at=worldPose(duel,car);
+  if (!target) return false;
   const aim=predictedPoint(duel,target,R.ashFlightSec*diff(duel).lead);
   const bearing=Math.atan2(aim.x-at.x,aim.z-at.z)-at.heading;
   if (dist(at,aim)>R.ashRange || Math.abs(Math.atan2(Math.sin(bearing),Math.cos(bearing)))>diff(duel).aim) return false;
