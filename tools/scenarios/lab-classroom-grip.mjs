@@ -2,7 +2,7 @@
 // The formula panel starts closed; the lesson opens it with F at the formula step.
 import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = Object.freeze({
-  Enter: ['Enter', 13], Space: [' ', 32], KeyE: ['e', 69], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
+  Enter: ['Enter', 13], Space: [' ', 32], KeyE: ['e', 69], KeyR: ['r', 82], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51],
 });
 const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
@@ -44,7 +44,12 @@ export async function run(c) {
   await c.waitFor(`!!document.querySelector('[data-lab-lesson="start:grip"]')`, 'Grip lesson choice');
   await c.evaluate(`document.querySelector('[data-lab-lesson="start:grip"]').click()`);
 
-  await at('wonder'); await wait(2_400); await at('wonder', 'value.ready'); await shot('grip-wonder'); await next('wonder');
+  // The wonder slides the tyre for about ten seconds; R plays it again (Kyle, 19 November 2026).
+  await at('wonder'); await wait(5_000); await shot('grip-wonder-midway'); await at('wonder', 'value.ready'); await shot('grip-wonder');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.startsWith('Watch again'))`))) throw new Error('The wonder should offer Watch again.');
+  await press('KeyR'); await wait(400);
+  if ((await c.evaluate(state)).ready) throw new Error('R should play the wonder again.');
+  await next('wonder');
   await at('word-slide'); await press('ArrowUp'); await at('word-slide', 'value.ready'); await next('word-slide');
   await next('word-grip'); await next('word-limit');
   await at('formula');
@@ -56,7 +61,11 @@ export async function run(c) {
   if (!showedFormula) throw new Error('The percent formula did not show a worked example.');
   await shot('grip-formula'); await next('formula');
 
-  await at('watch'); await wait(3_400); await at('watch', 'value.ready'); await shot('grip-watch'); await next('watch');
+  await at('watch'); await wait(5_200); await shot('grip-watch'); await at('watch', 'value.ready');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.startsWith('Watch again'))`))) throw new Error('The watch should offer Watch again.');
+  await press('KeyR'); await wait(400);
+  if ((await c.evaluate(state)).ready) throw new Error('R should play the watch again.');
+  await at('watch', 'value.ready'); await next('watch');
 
   await at('try-edge', 'value.cards > 0');
   const hidWorkedAnswer = await c.evaluate(
@@ -64,25 +73,25 @@ export async function run(c) {
   );
   if (!hidWorkedAnswer) throw new Error('An open guess shows a worked answer.');
   await shot('grip-guess'); await press('Digit1'); await press('Space'); await at('try-edge', 'value.ready'); await shot('grip-result');
-  await waitForWords('At 4.5 degrees the tyre keeps about 99.7% grip', 'the result explains the small grip loss');
+  await waitForWords('At 4.5 degrees the tyre keeps 99.7% of its grip', 'the result explains the small grip loss');
   await next('try-edge');
 
   await at('try-far', 'value.cards > 0');
   await shot('grip-far-guess'); await press('Digit2'); await press('Space');
   await at('try-far', 'value.ready');
-  await waitForWords('At 9 degrees the tyre keeps about 93.9% grip', 'the second prediction result');
+  await waitForWords('At 9 degrees the tyre keeps 93.9% of its grip', 'the second prediction result');
   await shot('grip-far-result'); await next('try-far');
 
   await at('try-free');
   for (const [target, presses] of [[3, 2], [4.5, 3], [9, 9]]) {
     await press('ArrowUp', presses); await press('Space');
-    await waitForWords(`At ${target} degrees, the tyre keeps about`, `${target} degree comparison`);
+    await waitForWords(`At ${target} degrees, the tyre keeps`, `${target} degree comparison`);
   }
   await at('try-free', 'value.ready'); await shot('grip-free-test'); await next('try-free');
 
   await at('challenge');
   await press('ArrowUp', 4); await press('Space');
-  await waitForWords('At 4 degrees the tyre kept 100% grip.', 'full-grip run');
+  await waitForWords('At 4 degrees the tyre kept 100% of its grip.', 'full-grip run');
   await press('ArrowUp'); await press('Space');
   await at('challenge', 'value.ready');
   await waitForWords('Together with your earlier run, this meets both targets', 'the two-run challenge result');

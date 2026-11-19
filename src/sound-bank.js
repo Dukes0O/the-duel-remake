@@ -60,6 +60,9 @@ export const SOUND_BANK = {
     layers: [{...noise(2000, .18, .35), endFrequency: 650, attack: .03}, noise(780, .06, .15, 'highpass')]}),
   'story.ledger.choose': cue('interface', {flag: 'story-choices', volume: .16, limit: 1,
     layers: [noise(970, .09, .22), tone(180, .075, .08)]}),
+  // STORY-NIGHT-2-FLOW: the one-line "Remembered" notice at the end of a night. A short pencil stroke and one soft note.
+  'story.journal.note': cue('interface', {flag: 'story-choices', volume: .17, limit: 1,
+    layers: [{...noise(2400, .14, .22, 'highpass'), endFrequency: 1300, attack: .02}, tone(523, .32, .2, 'sine', .07, 494)]}),
   ...Object.fromEntries(Object.entries(DIG_MACHINE_TONES).map(([name, [frequency, type, duration]]) =>
     [name, cue('vehicle', {flag: 'the-dig', layers: [tone(frequency, duration, 0.06, type)]})])),
   // The Deep adapter lazy-loads these only during a submerged visit.
@@ -694,6 +697,11 @@ export const SOUND_BANK = {
     layers: [tone(118, .55, .24, 'sawtooth', 0, 48), tone(62, .68, .17, 'triangle', .04, 32)]}),
   'rider.crew-bail': cue('vehicle', {flag:'road-riders', priority: 65, limit: 2, volume: .44,
     layers: [noise(850, .17, .35, 'bandpass'), tone(100, .16, .2, 'triangle', .08, 48)]}),
+  // STORY-NIGHT-2-FLOW: an Ash Man on foot knocked flat by the player's car (no gore), and the Walkers' camp taken by the crews.
+  'night.ash-man.down': cue('impacts', {flag:'story-choices', priority: 70, limit: 2, volume: .46,
+    layers: [{...noise(420, .22, .5, 'lowpass'), endFrequency: 160, attack: .005}, tone(74, .2, .26, 'sine', 0, 44)]}),
+  'night.camp.taken': cue('interface', {flag:'story-choices', priority: 80, limit: 1, volume: .42,
+    layers: [tone(147, .7, .26, 'triangle', 0, 110), tone(208, .55, .16, 'sine', .14, 156)]}),
   'rider.won': cue('interface', {flag:'road-riders', priority: 75, limit: 1, volume: .42,
     layers: [tone(196, .27, .25, 'triangle'), tone(294, .48, .23, 'triangle', .17)]}),
   'rider.surrounded': cue('interface', {flag:'road-riders', priority: 80, limit: 1, volume: .5,
@@ -859,6 +867,9 @@ export const SOUND_BANK = {
     pitchEnd: 0.86,
     noise: true,
   }),
+  // TOWN-VEHICLES: the fire truck's brass bell, one clang a press (B). Made like town.gate.bell, smaller and brighter.
+  'town.bell': cue('interface', {flag: 'wasteland-town', volume: .42, limit: 2,
+    layers: [tone(880, .9, .55, 'sine'), tone(2093, .5, .22, 'triangle'), tone(3270, .25, .12, 'sine')]}),
 };
 SOUND_BANK['arena.blackiron-barrage'] = cue('impacts', {
   flag: 'blackiron', priority: 70, limit: 1,

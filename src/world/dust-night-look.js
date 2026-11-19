@@ -3,6 +3,7 @@
 // weather through src/world/dust-night.js and its own clock, and never writes to the game's state.
 import * as THREE from 'three';
 import {DUST_NIGHT, beamHeading} from './dust-night.js';
+export {dustNightOf} from './dust-night.js';
 import {makeRng} from '../rng.js';
 
 const DUST_FOG = new THREE.Color(DUST_NIGHT.fogColor);

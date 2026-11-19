@@ -1,5 +1,6 @@
-// A rear view of the suspension rig, with the car body leaning by its measured
-// body-roll angle. The fixed key stays in the corner while the rig moves.
+// A rear view of the suspension rig. The bump test shows the wheel crossing bumps with the body level; the bend test shows the
+// body leaning by its measured body-roll angle. The fixed key stays in the corner while the rig moves.
+import {suspensionBench} from '../benches/tunnel.js';
 import {BOARD, theme, cardScene, labelPlate, background, text, keyCap, fitBoard, wrap, steelPanel, steel, bolt, lcd, coilSpring, damper, forceArrowTo, tarmac, shadow} from '../classroom/board-art.js';
 
 export {BOARD};
@@ -25,7 +26,7 @@ export function hitTest(view, x, y) {
 }
 
 export function hoverInfo(view, x, y) {
-  if (within(x, y, 275, 342, 185, 205)) return 'The outside spring compresses while the inside spring extends as the car body rolls.';
+  if (within(x, y, 275, 342, 185, 205)) return view.test === 'bumps' ? 'The wheel follows the bumps, and the springs squeeze and stretch under the body.' : 'In the bend the outside spring is squeezed while the inside spring stretches, as the car body rolls.';
   if (hit(x, y, SOFT) || hit(x, y, STIFF)) return `The selected spring is ${view.setup.spring}. Choose spring stiffness for this run.`;
   if (hit(x, y, BUMPY) || hit(x, y, SMOOTH)) return `The selected road is ${view.setup.road}. Choose a road surface for this run.`;
   if (hit(x, y, RUN)) return 'Run the car over the selected road and record its readings.';
@@ -47,8 +48,8 @@ function panel(ctx, x, y, width, height) { steelPanel(ctx, x, y, width, height);
 // A lit arrow along any direction; `width` is the shaft's width as the old flat arrows had it.
 function arrow(ctx, x1, y1, x2, y2, colour, width = 4) { forceArrowTo(ctx, x1, y1, x2, y2, colour, width * 1.6); }
 
-function fixedKey(ctx) {
-  const entries = [['BODY', '#e5decd'], ['COMPRESS', '#edc557'], ['EXTEND', '#79bce2'], ['SIDEWAYS PUSH', '#ef7654']];
+function fixedKey(ctx, test) {
+  const entries = [['BODY', '#e5decd'], ['SQUEEZED', '#edc557'], ['STRETCHED', '#79bce2'], ['SIDEWAYS PUSH', '#ef7654']].slice(0, test === 'bumps' ? 1 : 4);
   entries.forEach(([label, colour], index) => {
     const y = 62 + index * 23;
     ctx.fillStyle = colour; ctx.fillRect(38, y - 6, 12, 12);
@@ -129,14 +130,22 @@ function bodyFromBehind(ctx) {
 
 function carFromBehind(ctx, view) {
   const centreX = 275;
-  const rollDegrees = Number(view.rollDeg ?? view.result?.leanDeg ?? 0);
+  const test = view.test ?? 'both';
+  const bends = test !== 'bumps';
+  const rollKnown = view.rollDeg != null;
+  const rollDegrees = bends && rollKnown ? Number(view.rollDeg) : 0;
   const roll = Math.min(8, Math.max(0, rollDegrees)) * Math.PI / 180;
-  const roadBounce = view.setup.road === 'bumpy' ? Math.sin(view.time * 7) * 3 : Math.sin(view.time * 2) * .7;
-  const bodyY = 272 + roadBounce;
-  const wheelY = 414 + (view.setup.spring === 'soft' ? roadBounce * .6 : roadBounce * .25);
+  // The wheel follows the road. The body above it moves by its measured body shake, so the stiff spring shakes it more.
+  const shake = view.result ? view.result.bodyShake : 4;
+  const bumpy = view.setup.road === 'bumpy' && test !== 'bend';
+  const swing = Math.sin(view.time * 7);
+  const wheelBounce = bumpy ? swing * 6 : 0;
+  const bodyBounce = test === 'bend' ? 0 : swing * 5.5 * Math.min(1.2, shake / 4.77);
+  const bodyY = 272 + bodyBounce;
+  const wheelY = 414 + wheelBounce;
   // The body leans so that its left side drops: the left spring is the one that compresses, as the labels say. The body's
   // underside mounts (the springs' tops, the arms' pivots) move with it.
-  const centreY = bodyY + 52, tilt = -roll;
+  const centreY = bodyY + 52, tilt = -roll, springColour = side => bends ? (side < 0 ? '#edc557' : '#79bce2') : '#d9c06a';
   const at = (px, py) => [centreX + px * Math.cos(tilt) - py * Math.sin(tilt), centreY + px * Math.sin(tilt) + py * Math.cos(tilt)];
 
   // The wheels first, then the road over their feet, with the bumps the setting names and the car's shadow on it.
@@ -144,7 +153,7 @@ function carFromBehind(ctx, view) {
   const roadTop = 446;
   tarmac(ctx, 70, roadTop, 410, 32);
   ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(70, roadTop, 410, 2);
-  if (view.setup.road === 'bumpy') {
+  if (view.setup.road === 'bumpy' && test !== 'bend') {
     for (const [hx, hw, hh] of [[112, 20, 5], [236, 16, 4], [322, 22, 6], [436, 18, 5]]) {
       const hump = ctx.createLinearGradient(0, roadTop - hh, 0, roadTop + 3); hump.addColorStop(0, '#41444a'); hump.addColorStop(1, '#2a2c2f');
       ctx.fillStyle = hump; ctx.beginPath(); ctx.moveTo(hx - hw, roadTop + 2); ctx.quadraticCurveTo(hx, roadTop - hh * 2 + 2, hx + hw, roadTop + 2); ctx.closePath(); ctx.fill();
@@ -175,7 +184,7 @@ function carFromBehind(ctx, view) {
     // The spring and damper stand between the body's underside and the lower arm, a little inside the wheel.
     const t = (46 - 20) / (68 - 20), sx = centreX + s * 46, top = at(s * 46, 34)[1], bottom = lowY + t * (hubLow - lowY);
     damper(ctx, sx, top, bottom, {tube: 5.2, rod: 2.4});
-    coilSpring(ctx, sx, top, bottom, {radius: 12, coils: 6, wire: 3.1, colour: s < 0 ? '#edc557' : '#79bce2'});
+    coilSpring(ctx, sx, top, bottom, {radius: 12, coils: 6, wire: 3.1, colour: springColour(s)});
     suspensionArm(ctx, upX, upY, hubX, hubUp);
   }
 
@@ -184,13 +193,17 @@ function carFromBehind(ctx, view) {
   bodyFromBehind(ctx);
   ctx.restore();
 
-  const push = 24 + rollDegrees * 2.2;
-  arrow(ctx, centreX - 175, bodyY + 100, centreX - 175 - push, bodyY + 100, '#ef7654', 5);
-  arrow(ctx, centreX + 175, bodyY + 100, centreX + 175 + push, bodyY + 100, '#ef7654', 5);
-  text(ctx, `BODY ROLL ${rollDegrees.toFixed(1)}°`, centreX, 165, {size: 14, weight: 900, colour: '#edc557'});
-  text(ctx, 'LEFT SPRING COMPRESSES', centreX - 105, 493, {size: 11, weight: 900, colour: '#edc557'});
-  text(ctx, 'RIGHT SPRING EXTENDS', centreX + 105, 493, {size: 11, weight: 900, colour: '#79bce2'});
-  fixedKey(ctx);
+  if (bends) {
+    // The road pushes the tyres sideways, toward the inside of the bend, and the body tips the other way.
+    const push = 30 + rollDegrees * 2.2;
+    arrow(ctx, centreX - 215, wheelY, centreX - 215 + push, wheelY, '#ef7654', 5);
+    text(ctx, rollKnown ? `BODY ROLL ${rollDegrees.toFixed(1)}°` : 'BODY ROLL ?', centreX, 165, {size: 14, weight: 900, colour: '#edc557'});
+    text(ctx, 'LEFT SPRING SQUEEZED', centreX - 105, 493, {size: 11, weight: 900, colour: '#edc557'});
+    text(ctx, 'RIGHT SPRING STRETCHED', centreX + 105, 493, {size: 11, weight: 900, colour: '#79bce2'});
+  } else {
+    text(ctx, view.result ? `BODY SHAKE ${view.result.bodyShake.toFixed(2)} m/s²` : 'BODY SHAKE ?', centreX, 165, {size: 14, weight: 900, colour: '#edc557'});
+  }
+  fixedKey(ctx, test);
 }
 
 function button(ctx, [x, y], label, key, selected, enabled) {
@@ -247,6 +260,10 @@ function glow(ctx, view) {
   ctx.beginPath(); ctx.roundRect(...box, 10); ctx.stroke(); ctx.globalAlpha = 1;
 }
 
+// The recap's numbers come from the rig itself, so they follow it if its settings ever change.
+const soft = {bumpy: suspensionBench.run({spring: 'soft', road: 'bumpy'}), smooth: suspensionBench.run({spring: 'soft', road: 'smooth'})};
+const stiff = {bumpy: suspensionBench.run({spring: 'stiff', road: 'bumpy'}), smooth: suspensionBench.run({spring: 'stiff', road: 'smooth'})};
+
 function recap(ctx, view) {
   const width = 300, gap = 24, left = 26;
   view.ideas.forEach((idea, index) => {
@@ -257,22 +274,23 @@ function recap(ctx, view) {
     if (idea.id === 'spring') {
       lcd(ctx, x + 40, 352, width - 80, 78, '#a9d9aa'); lcd(ctx, x + 40, 444, width - 80, 78, '#a9d9aa');
       text(ctx, 'SOFT · BUMPY', x + width / 2, 374, {size: 14, weight: 900});
-      text(ctx, '4.09 m/s² body shake', x + width / 2, 410, {size: 16, colour: '#a9d9aa'});
+      text(ctx, `${soft.bumpy.bodyShake.toFixed(2)} m/s² body shake`, x + width / 2, 410, {size: 16, colour: '#a9d9aa'});
       text(ctx, 'STIFF · BUMPY', x + width / 2, 466, {size: 14, weight: 900});
-      text(ctx, '4.77 m/s² body shake', x + width / 2, 502, {size: 16, colour: '#a9d9aa'});
+      text(ctx, `${stiff.bumpy.bodyShake.toFixed(2)} m/s² body shake`, x + width / 2, 502, {size: 16, colour: '#a9d9aa'});
     }
     if (idea.id === 'transfer') {
-      arrow(ctx, x + 78, 398, x + 128, 398, '#ef7654', 5);
-      arrow(ctx, x + 222, 398, x + 172, 398, '#ef7654', 5);
+      arrow(ctx, x + 80, 398, x + 220, 398, '#ef7654', 5);
       text(ctx, 'SIDEWAYS PUSH', x + width / 2, 438, {size: 13, weight: 900, colour: '#ef7654'});
       text(ctx, 'OUTSIDE LOAD INCREASES', x + width / 2, 492, {size: 14, weight: 900, colour: '#edc557'});
     }
     if (idea.id === 'tradeoff') {
       lcd(ctx, x + 40, 352, width - 80, 78, '#a9d9aa'); lcd(ctx, x + 40, 444, width - 80, 78, '#a9d9aa');
-      text(ctx, 'SOFT · THIS BEND', x + width / 2, 374, {size: 14, weight: 900});
-      text(ctx, '6.5° body roll', x + width / 2, 410, {size: 17, colour: '#a9d9aa'});
-      text(ctx, 'STIFF · THIS BEND', x + width / 2, 466, {size: 14, weight: 900});
-      text(ctx, '2.2° body roll', x + width / 2, 502, {size: 17, colour: '#a9d9aa'});
+      text(ctx, 'SOFT SPRING', x + width / 2, 366, {size: 14, weight: 900});
+      text(ctx, `${soft.smooth.leanDeg.toFixed(1)}° body roll in the bend`, x + width / 2, 394, {size: 14, colour: '#a9d9aa'});
+      text(ctx, `${(soft.bumpy.contactShare * 100).toFixed(2)}% tyre contact on bumps`, x + width / 2, 416, {size: 14, colour: '#a9d9aa'});
+      text(ctx, 'STIFF SPRING', x + width / 2, 458, {size: 14, weight: 900});
+      text(ctx, `${stiff.smooth.leanDeg.toFixed(1)}° body roll in the bend`, x + width / 2, 486, {size: 14, colour: '#a9d9aa'});
+      text(ctx, `${(stiff.bumpy.contactShare * 100).toFixed(2)}% tyre contact on bumps`, x + width / 2, 508, {size: 14, colour: '#a9d9aa'});
     }
   });
 }

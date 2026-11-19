@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, COURSES, WINGS, CAR_KG, WING_TWO_LINE, FREE_TRIES, MIN_SPEED, MAX_SPEED, SPEED_STEP, bestWing, pushKg, dragKg, topOf, pushAt, kmh, msOf, pushSum, dragSum, topMsSum, timesSum, benchAttempts} from '../src/lab/lessons/downforce-classroom.js';
+import {STEPS, COURSES, WINGS, CAR_KG, WONDER_RAMP_S, WONDER_HOLD_S, WONDER_DELAY_S, LONG_RAMP_S, LONG_HOLD_S, KEY_IDEAS, WING_TWO_LINE, FREE_TRIES, MIN_SPEED, MAX_SPEED, SPEED_STEP, bestWing, pushKg, dragKg, topOf, pushAt, kmh, msOf, pushSum, dragSum, topMsSum, timesSum, benchAttempts} from '../src/lab/lessons/downforce-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/downforce-board.js';
 import {downforceBench, downforce, tunnelCar, kgForce} from '../src/lab/benches/tunnel.js';
 import {CARS, DRIVE} from '../src/config.js';
@@ -55,7 +55,7 @@ function benchPasses(attempts) {
 test('the lesson walks the seven parts in order, keeps the old notebook words, and finishes on the bench', () => {
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
-  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['downforce-word-0', 'downforce-word-1', 'downforce-word-2'], 'the old lesson’s notebook ids');
+  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['braking-metres-per-second', 'downforce-word-0', 'downforce-word-1', 'downforce-word-2'], 'the old lesson’s notebook ids, and Fan speed teaches the word that Braking saves');
   assert.deepEqual(lesson.words.map(w => w.word), ['Wing', 'Downforce', 'Drag']);
   assert.equal(lesson.name, 'Downforce');
   assert.equal(lesson.finishLabel, 'Finish the lesson');
@@ -135,7 +135,7 @@ test('words: the dial shows km/h and m/s, the wing tilts and turns the smoke, an
   session.act('speed:up');
   assert.equal(session.view().dial.kmh, 60);
   setTo(session, 100);
-  assert.match(session.view().brian.text, /^A dial reading of 100 km\/h is about the same as 27\.8 m\/s/);
+  assert.match(session.view().brian.text, /^A dial reading of 100 km\/h is 27\.78 m\/s/);
   session.act('next');
   assert.equal(session.view().wingPanel.wing, 'flat', 'the wing starts away from its answer');
   assert.equal(session.view().rig.on, true, 'the fan blows smoke past it');
@@ -149,7 +149,7 @@ test('words: the dial shows km/h and m/s, the wing tilts and turns the smoke, an
   session.act('next');
   assert.equal(session.view().rig.on, false, 'the fan waits for Space');
   session.act('go'); until(session, x => x.ready);
-  assert.match(session.view().brian.text, /^With the fan at 50 km\/h and the steep wing, the scale read 1,272 kg, which is the car’s 1,250 kg and 22 kg of downforce\./);
+  assert.match(session.view().brian.text, /^With the fan at 50 km\/h and the steep wing, the scale read 1,272 kg: the car’s 1,250 kg and 22 kg of downforce\./);
   assert.match(session.view().brian.text, /a tyre grips harder when it is pressed onto the road harder/, 'why the push matters in a bend');
   assert.equal(Math.round(session.view().rig.scale), 1272);
   session.act('next');
@@ -169,12 +169,12 @@ test('the tries: Space at the wrong speed, every wrong guess and the same wing t
   assert.equal(speed.view().dial.kmh, 60);
   assert.equal(speed.view().wingPanel.locked, true);
   speed.act('go');
-  assert.match(speed.view().brian.text, /press ↑ until the dial reads 120 km\/h/);
+  assert.match(speed.view().brian.text, /turn the dial up until it reads 120 km\/h/);
   setTo(speed, 120); speed.act('go');
   assert.equal(speed.view().cards.length, 3, 'set up, then guess from pictures of results');
-  assert.deepEqual(speed.view().cards.map(c => c.label), ['About 31 kg, which is twice as much', 'About 62 kg, which is four times as much', 'About 125 kg, which is eight times as much']);
+  assert.deepEqual(speed.view().cards.map(c => c.label), ['31.2 kg, which is twice as much', '62.4 kg, which is four times as much', '124.9 kg, which is eight times as much']);
   speed.act('answer:0'); until(speed, x => x.ready);
-  assert.match(speed.view().brian.text, /^The tilted wing pushed 62 kg, which is about four times as much as at 60 km\/h, not twice as much\. The speed went from 60 km\/h to 120 km\/h, which is exactly twice as fast/);
+  assert.match(speed.view().brian.text, /^The tilted wing pushed 62\.4 kg, which is four times as much as at 60 km\/h, not twice as much\. The speed went from 60 km\/h to 120 km\/h, which is exactly twice as fast/);
   assert.equal(speed.view().formulas.at(-1).worked, '(33.33 ÷ 16.67)^2 = 2.00^2 = 4.00 times', 'the sum compares with the speed the test started from');
 
   const cost = createClassroomSession(lesson);
@@ -185,7 +185,7 @@ test('the tries: Space at the wrong speed, every wrong guess and the same wing t
   fan(cost);
   assert.match(cost.view().brian.text, /^The tilted wing gave 43 kg of push and 39 kg on the rope, and it leaves a top speed of 300 km\/h\. Now test the flat wing and the steep wing/);
   cost.act('go');
-  assert.match(cost.view().brian.text, /^You have already run the tilted wing\. Press ← or →/);
+  assert.match(cost.view().brian.text, /^You have already run the tilted wing\. Choose another wing/);
   setTo(cost, null, 'flat'); fan(cost); setTo(cost, null, 'big'); fan(cost);
   assert.equal(cost.view().ready, true);
   assert.match(cost.view().brian.text, /^The steep wing gives more push, 87 kg, but it also has more drag, so the top speed is only 283 km\/h\. The flat wing has the least drag, 31 kg, which comes from the car’s body alone, and it leaves the full top speed of 323 km\/h\./);
@@ -210,9 +210,9 @@ test('Brian’s job: the least wing that holds each course; too little, too much
   assert.equal(session.view().dial.locked, true);
   assert.equal(session.view().job.kmh, 100);
   setTo(session, null, 'flat'); fan(session);
-  assert.match(session.view().brian.text, /^At 100 km\/h the flat wing pushes 0 kg, but this bend needs 40 kg, so the car slid wide\. Press → for a steeper wing/);
+  assert.match(session.view().brian.text, /^At 100 km\/h the flat wing pushes 0 kg, but this bend needs 40 kg, so the car slid wide\. Choose a steeper wing and run the fan again/);
   setTo(session, null, 'big'); fan(session);
-  assert.match(session.view().brian.text, /^The car held the bend with 87 kg of push, but the tilted wing gives enough with 43 kg and leaves a top speed of 300 km\/h instead of 283 km\/h\. Press ← for a flatter wing/);
+  assert.match(session.view().brian.text, /^The car held the bend with 87 kg of push, but the tilted wing gives enough with 43 kg and leaves a top speed of 300 km\/h instead of 283 km\/h\. Choose a flatter wing and run the fan again/);
   setTo(session, null, 'small'); fan(session);
   assert.match(session.view().brian.text, /^Correct\. The tilted wing pushes 43 kg, which is more than the 40 kg that the bend needs/);
   assert.equal(session.view().job.course, 2); assert.equal(session.view().dial.speed, 70, 'Brian sets the fan to the next course'); assert.equal(session.view().dial.kmh, 70);
@@ -251,7 +251,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
 
 test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
-    'check-nine': [[0, /^The push grows by more than that\. The steep wing pushes 22 kg at 50 km\/h and 195 kg at 150 km\/h, which is about nine times as much/], [1, /^The push is nine times as great, not six times\. To the nearest kilogram, the steep wing pushes 22 kg at 50 km\/h and 195 kg at 150 km\/h/]],
+    'check-nine': [[0, /^The push grows by more than that\. The steep wing pushes 21\.7 kg at 50 km\/h and 195.1 kg at 150 km\/h, which is nine times as much/], [1, /^The push is nine times as great, not six times\. The steep wing pushes 21\.7 kg at 50 km\/h and 195.1 kg at 150 km\/h/]],
     'check-bend': [[0, /^At 50 km\/h the steep wing pushes 22 kg, but at 150 km\/h the steep wing pushes 195 kg/], [1, /^At 100 km\/h the steep wing pushes 87 kg, but at 150 km\/h the steep wing pushes 195 kg/]],
     'check-game': [[1, /^The car does not become faster everywhere\. Two steps toward More wing give 6% more grip at 161 km\/h and more still at higher speeds, and they lower the top speed by 2%\./], [2, /^The setting does change the car/]],
   };
@@ -396,11 +396,11 @@ test('a direction is right from every setting of the dial', () => {
     const session = createClassroomSession(lesson);
     playThroughTo(session, 'try-speed');
     setTo(session, speed);
-    const way = speed < 120 ? '↑' : '↓', wrong = speed < 120 ? '↓' : '↑';
-    assert.match(session.view().hints[1], new RegExp(`^Press ${way} until the dial reads 120 km/h`), `the hint at ${speed}`);
+    const way = speed < 120 ? 'up' : 'down', wrong = speed < 120 ? 'down' : 'up';
+    assert.match(session.view().hints[1], new RegExp(`^Turn the dial ${way} until it reads 120 km/h`), `the hint at ${speed}`);
     session.act('go');
-    assert.match(session.view().brian.text, new RegExp(`press ${way} until the dial reads 120 km/h`), `the refusal at ${speed}`);
-    assert.doesNotMatch(session.view().brian.text, new RegExp(`press ${wrong}`));
+    assert.match(session.view().brian.text, new RegExp(`turn the dial ${way} until it reads 120 km/h`), `the refusal at ${speed}`);
+    assert.doesNotMatch(session.view().brian.text, new RegExp(`turn the dial ${wrong}`));
   }
   const set = createClassroomSession(lesson);
   playThroughTo(set, 'try-speed');
@@ -446,7 +446,7 @@ test('a step’s opening words do not change with a dial, and are true when they
   playThroughTo(watch, 'word-drag');
   watch.act('go'); until(watch, x => x.ready);
   watch.act('wing:flatter'); watch.act('next');
-  assert.match(watch.view().say, /^The wing is now steep/, 'the player may have left the wing flatter');
+  assert.match(watch.view().say, /The wing is now steep, and the fan will run at 50 km\/h/, 'the player may have left the wing flatter');
 });
 
 test('downforce and drag do not appear before the steps that define them', () => {
@@ -474,16 +474,19 @@ test('downforce and drag do not appear before the steps that define them', () =>
   assert.match(painted(session.view()), /drag/i, 'the picture names the drag once it is defined');
 });
 
-test('claims that add up: rounded figures say about, and exact words go with exact figures', () => {
+test('claims that add up: a ratio is claimed only beside figures that show it, and exact words go with exact figures', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'watch');
   until(session, x => x.ready);
-  assert.match(session.view().brian.text, /which is twice the speed and about four times the push.*which is three times the speed and about nine times the push/);
+  const said = session.view().brian.text;
+  assert.match(said, /^The steep wing pushed 21\.7 kg at 50 km\/h and 86\.7 kg at 100 km\/h, which is twice the speed and four times the push\. At 150 km\/h the steep wing pushed 195.1 kg, which is three times the speed and nine times the push\./);
+  assert.equal((86.7 / 21.7).toFixed(1), '4.0'); assert.equal((195.1 / 21.7).toFixed(1), '9.0');
+  assert.doesNotMatch(said, /about/);
   playThroughTo(session, 'check-nine');
   assert.match(session.view().say, /which is three times as fast\. How many times greater/);
   assert.deepEqual(session.view().cards.map(c => c.label), ['Three times as great', 'Six times as great', 'Nine times as great']);
   session.act('answer:2');
-  assert.match(session.view().brian.text, /about nine times as much/);
+  assert.match(session.view().brian.text, /^Correct\. The steep wing pushes 21\.7 kg at 50 km\/h and 195.1 kg at 150 km\/h, which is nine times as much\./);
 });
 
 test('the lesson’s words keep to one measurement system and name their objects', () => {
@@ -583,4 +586,80 @@ test('every speed in km/h that the lesson shows or lets the player set is a mult
   assert.equal(job.view().ready, true, 'the job ends done after its wrong turns');
   for (const id of ['check-nine', 'check-bend', 'check-game']) for (const pick of [0, 1, 2]) { const s = watched(); playThroughTo(s, id); s.act(`answer:${pick}`); }
   assert.ok(found > 500, `the walk read ${found} speeds`);
+});
+
+// Kyle's rules of 19 November 2026 (docs/LAB.md 13.2), LAB-REVIEW-TUNNEL.
+test('Kyle’s rules of 19 November 2026 hold for every text the Downforce lesson shows, wrong answers, tries and Brian’s job included', () => {
+  const said = new Set();
+  const note = v => {
+    for (const text of [v.say, v.prompt, ...(v.hints ?? []), ...(v.cards ?? []).map(card => card.label), v.brian?.text, ...(v.formulas ?? []).flatMap(f => [f.title, f.formula, f.worked, f.note])]) if (text) said.add(String(text));
+  };
+  for (const step of STEPS) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, step.id);
+    note(session.view());
+    if (session.view().keys.Space === 'go') { session.act('go'); until(session, x => x.ready || x.keys.Space === 'go', 15); note(session.view()); }
+  }
+  for (const [id, picks] of [['check-nine', [0, 1, 2]], ['check-bend', [0, 1, 2]], ['check-game', [0, 1, 2]]]) for (const pick of picks) {
+    const session = createClassroomSession(lesson); playThroughTo(session, id); session.act(`answer:${pick}`); note(session.view());
+  }
+  for (const guess of [0, 1, 2]) { const session = createClassroomSession(lesson); playThroughTo(session, 'try-speed'); setTo(session, 120); session.act('go'); session.act(`answer:${guess}`); until(session, x => x.ready); note(session.view()); }
+  const cost = createClassroomSession(lesson); playThroughTo(cost, 'try-cost'); cost.act('answer:2'); fan(cost); note(cost.view()); cost.act('go'); note(cost.view()); setTo(cost, null, 'flat'); fan(cost); setTo(cost, null, 'big'); fan(cost); note(cost.view());
+  const job = createClassroomSession(lesson); playThroughTo(job, 'alone');
+  setTo(job, null, 'flat'); fan(job); note(job.view()); setTo(job, null, 'big'); fan(job); note(job.view()); setTo(job, null, 'small'); fan(job); note(job.view());
+  fan(job); note(job.view()); setTo(job, null, 'big'); fan(job); note(job.view()); fan(job); note(job.view()); setTo(job, null, 'flat'); fan(job); note(job.view());
+  const free = createClassroomSession(lesson); playThroughTo(free, 'try-free'); fan(free); note(free.view());
+  const text = [...said, ...lesson.words.map(word => word.meaning), ...KEY_IDEAS.map(item => item.text), lesson.challengeCard.text].join('\n');
+  assert.doesNotMatch(text, /in this game|this game|a simplification|real life|\bthe game\b/i, 'no hedging');
+  assert.doesNotMatch(text, /\bsums?\b/i, 'a multiplication is not a sum');
+  assert.doesNotMatch(text, /\babout \d|\babout (four|nine|twice|the same)|\bto the nearest\b/i, 'exact numbers');
+  assert.doesNotMatch(text, /Press [↑↓←→]|press [↑↓←→]|press Space|Press Space|Press [123],? |press 1|Press 1|Press ← or →/, 'the screen shows its own key labels');
+  assert.doesNotMatch(text, /area ÷ g[^.]*is 0 when flat/, 'a flat wing keeps its area');
+});
+
+test('the wonder and the word steps that run the fan last about ten seconds, and R plays each one again', () => {
+  const wonder = createClassroomSession(lesson);
+  assert.ok(wonder.view().actions.includes('replay'));
+  let t = 0;
+  while (!wonder.view().ready && t < 60) { wonder.tick(.05); t += .05; }
+  assert.ok(Math.abs(t - (WONDER_DELAY_S + WONDER_RAMP_S + WONDER_HOLD_S)) < .2 && t > 9 && t < 10.5, `the wonder took ${t.toFixed(1)} s`);
+  wonder.act('replay');
+  assert.equal(wonder.view().ready, false, 'R plays the wonder again, and Continue waits for its end');
+  for (const id of ['word-downforce', 'word-drag']) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, id);
+    session.act('go'); let s = 0;
+    while (!session.view().ready && s < 60) { session.tick(.05); s += .05; }
+    assert.ok(s >= LONG_RAMP_S + LONG_HOLD_S - .1 && s < LONG_RAMP_S + LONG_HOLD_S + 1, `${id} took ${s.toFixed(1)} s`);
+    assert.ok(session.view().actions.includes('replay'), `${id} offers Watch again`);
+    session.act('replay');
+    assert.equal(session.view().ready, false, `${id}: R plays it again`);
+    assert.equal(session.view().keys['↑'], undefined, `${id}: the dial waits while the fan runs`);
+    until(session, x => x.ready);
+    assert.equal(session.view().actions.includes('replay'), true);
+  }
+  const watch = createClassroomSession(lesson);
+  playThroughTo(watch, 'watch');
+  watch.act('replay');
+  let w = 0;
+  while (!watch.view().ready && w < 60) { watch.tick(.05); w += .05; }
+  assert.ok(w > 8 && w < 10.5, `the watch took ${w.toFixed(1)} s`);
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  free.act('go'); let q = 0;
+  while (!free.view().ready && free.view().keys.Space !== 'go' && q < 60) { free.tick(.05); q += .05; }
+  assert.ok(q < 4, `the free test keeps its quick pace (${q.toFixed(1)} s)`);
+});
+
+test('Fan speed teaches the word Braking saves, and the lesson says what a flat wing and the scale mean', () => {
+  const speed = STEPS.find(step => step.id === 'word-speed');
+  assert.equal(speed.word, 'braking-metres-per-second');
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-wing');
+  const panel = session.view().formulas.map(f => `${f.formula} ${f.note}`).join(' ');
+  assert.match(panel, /turning area/);
+  assert.match(panel, /is 0 when flat, 0\.9 when tilted and 1\.8 when steep, so a steeper wing turns more air/);
+  const down = createClassroomSession(lesson);
+  playThroughTo(down, 'word-downforce'); down.act('go'); until(down, x => x.ready);
+  assert.match(down.view().brian.text.replace(/\n/g, ' '), /The scale shows the push in kilograms, so 22 kg of downforce presses as hard as a 22 kg weight would/);
 });

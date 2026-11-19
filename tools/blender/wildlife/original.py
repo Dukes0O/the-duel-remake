@@ -242,6 +242,22 @@ def two_bone(hip, target, l1, l2, knee_forward=True):
     return hip + Vector((math.sin(theta) * l1, 0, -math.cos(theta) * l1))
 
 
+def sprawl_step(obj, bone, side, phase, swing, lift, duty=.6):
+    """One sprawled leg (a lizard's, a scorpion's) stepping in place.
+
+    The limb swings about a vertical axis at its root: back along the ground
+    for `duty` of the loop, then forward with the foot lifted by a roll about
+    the body's long axis. `side` is 1 for a left limb and -1 for a right one.
+    """
+    if phase < duty:
+        angle, up = swing * (1 - 2 * phase / duty), 0
+    else:
+        u = (phase - duty) / (1 - duty)
+        angle, up = swing * (-1 + 2 * u), lift * math.sin(math.pi * u)
+    turn(obj, bone, -side * angle, (0, 0, 1))
+    turn(obj, bone, side * up, (1, 0, 0))
+
+
 # ---------------------------------------------------------------- export
 
 def finish(a, c, output, recipe, budget=5000, roughness=None, specular=None, refine=None):

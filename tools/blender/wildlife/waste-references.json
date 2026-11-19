@@ -1,0 +1,36 @@
+{
+  "use": "reference only, never runtime: real photographs shown beside each model on the WILD-ART-WASTE sheets",
+  "source": "Wikimedia Commons, public domain or CC0 only, fetched without an account by waste_references.py",
+  "directory": "C:/Users/kyleb/dev/art-library/wild-waste/reference",
+  "width": 1280,
+  "photos": {
+    "goat": [
+      {"file": "goat.jpg", "title": "File:Capra aegagrus hircus in isla Margarita.jpg", "author": "Wilfredor", "licence": "CC0",
+       "crop": [0.36, 0.12, 0.90, 0.98]}
+    ],
+    "chicken": [
+      {"file": "chicken.jpg", "title": "File:Black hen going.JPG", "author": "Bhaskaranaidu", "licence": "Public domain",
+       "crop": [0.18, 0.28, 0.80, 0.98]}
+    ],
+    "camp-dog": [
+      {"file": "camp-dog.jpg", "title": "File:The Indian Pariah Dog.jpg", "author": "Ryan.virgo", "licence": "Public domain",
+       "crop": [0.0, 0.18, 1.0, 1.0]}
+    ],
+    "turkey-vulture": [
+      {"file": "turkey-vulture.jpg", "title": "File:Turkey Vulture Lake Andes Wetland Management District South Dakota (52378781986).jpg",
+       "author": "USFWS Mountain-Prairie", "licence": "Public domain", "crop": [0.405, 0.325, 0.645, 0.525]},
+      {"file": "turkey-vulture-flight.jpg", "title": "File:Turkey vulture (Cathartes aura) (22031144541).jpg",
+       "author": "Joshua Tree National Park (NPS)", "licence": "Public domain", "crop": [0.22, 0.05, 0.82, 0.95]}
+    ],
+    "desert-monitor": [
+      {"file": "desert-monitor.jpg", "title": "File:Varanus griseus griseus 349843922 (cropped).jpg", "author": "Marius Burger",
+       "licence": "CC0", "crop": [0.0, 0.0, 1.0, 1.0]}
+    ],
+    "scorpion": [
+      {"file": "scorpion.jpg", "title": "File:Giant Hairy Scorpion, Hadrurus sp. (15871611825).jpg",
+       "author": "Joshua Tree National Park (NPS)", "licence": "Public domain", "crop": [0.05, 0.10, 0.95, 0.95]},
+      {"file": "scorpion-front.jpg", "title": "File:Giant hairy scorpion, Twentynine Palms, Ca 2813 RobbHannawacker.jpg",
+       "author": "Robb Hannawacker, Joshua Tree National Park (NPS)", "licence": "Public domain", "crop": [0.20, 0.05, 0.95, 1.0]}
+    ]
+  }
+}

@@ -363,6 +363,19 @@ the game.
   by how far something has to travel, so that the job's rule and its sound can
   be timed to the same numbers and a test can hold the two equal.
 
+### Animals (WILD-ART-WASTE, 19 November 2026)
+
+- **Judge an animal beside a photograph of the real one, at the player's distance.** `tools/blender/wildlife/waste_sheet.py` puts a public-domain photograph beside close views of the exported GLB and beside 1:1 crops of a 1080p frame from a car at 10 and 30 m and from the town's camera 60 m up. Fetch the photographs with `waste_references.py` (Wikimedia Commons, public domain or CC0 only); they stay in the art library.
+- **A dark coat comes out grey.** The default material's shine lays a grey veil over black fur and feathers, in Blender and in the game. Give dark animals roughness 1 and a low specular (`MATTE` in `adapt.py`; `roughness` and `specular` in a bird's table or in `original.finish`).
+- **A review scene that is too bright washes every coat out.** In Cycles a sun of strength S lights a white surface to S divided by pi. A sun of 2.7 with a weak sky exposes white at about 1; a sun of 4 made a black goat look grey for two drafts.
+- **Dust over the whole animal flattens it.** Keep dust to the legs and belly, a few per cent above.
+- **A tail or crest made of one sheet reads as a paddle.** Fan it from separate feather blades (the chicken).
+- **A sprawled limb built from two straight tubes with a pad reads as a peg from above.** Run one bent tube from inside the body through the elbow to the wrist, and give the foot separate toes (the desert monitor).
+- **Paint a pattern no finer than the mesh.** Coats are painted on vertices and then baked, so spots and narrow bands need vertices at their size: the monitor's body went from 14 to 18 sides and 12 mm steps before its bands could break up.
+- **Stilt legs, or a tail through the ground, on a standing bird:** in `bird.py` the tail's drop below the hip is about its reach behind the hip times the sine of `tilt`. Work it out before choosing `leg`.
+- **A smoothing pass rounds a faceted bird.** `refine` (one subdivision, then back to budget) now reaches birds through the table; the vulture's body and folded wings were flat plates without it.
+- **One Blender turn can carry a whole round.** With many sessions sharing two heavy places, build every animal and render every view in one batch, and judge the pictures while the next batch waits.
+
 ### Sheets
 
 - **Sheets show other buildings.** A family file holds every building at its own origin, so a building's review views must hide the others, or a stray block appears (the big wheel, 7 November).

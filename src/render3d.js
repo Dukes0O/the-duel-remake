@@ -7,8 +7,7 @@ import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {applySaltStormFog} from './world/the-whites-scene.js';
-import {dustNightOf} from './world/dust-night.js'; // SHIPS-DECKS: the night storm, view only
-import {applyDustNightFog} from './world/dust-night-look.js';
+import {dustNightOf, applyDustNightFog} from './world/dust-night-look.js'; // SHIPS-DECKS: the night storm, view only
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
@@ -74,6 +73,7 @@ import {createBowlView} from './bowl/bowl-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createWorkVehicleView} from './town/view/work-vehicle-view.js'; // TOWN-VEHICLES
 import {createTankerModel} from './arena/tanker-model.js';
 import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
 import {referenceLap} from './reference-laps.js';
@@ -461,6 +461,7 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
+  const workVehicleView=createWorkVehicleView(); // TOWN-VEHICLES: a job's work vehicle is drawn in place of the garage car
   function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
     let status=vehicleAssets.status(key,{finish});
@@ -866,7 +867,7 @@ export function attachRenderer(host, app) {
     const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
     applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
     applyDustNightFog(scene,dustNight,dt,renderer);
-    const tall=carKey==='titan_monster';
+    const tall=carKey==='titan_monster'||workVehicleView.drawsFor(st,app._switches?.()??app.duel.featureFlags); // TOWN-VEHICLES: a truck's camera sits as high as the Titan's
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;
@@ -1346,6 +1347,7 @@ export function attachRenderer(host, app) {
       host.dataset.warmupStatus=warmupTicket.state.status;
       if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     }
+    if(workVehicleView.update({scene,player,camera,state:st,flags:app._switches?.()??app.duel.featureFlags})){sceneRevision++;ambientShading.refresh();}
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;
