@@ -165,7 +165,7 @@ notebook. Partly wrong:
   keep their ids.
 - Every "Press 1", "Press ↑", "Press Space", "press R" left Brian's words, prompts and hints. "Which bar bends for good
   first?" became "Which bar gives way first?" (carbon fibre snaps, it does not bend for good). Question 3's cards read
-  "Steel, 80 mm, 16.9 kg" and its question is one sentence shorter.
+  "Steel, 80 mm, 18.8 kg" and its question is one sentence shorter.
 
 ### Tests
 
@@ -199,3 +199,72 @@ None. `lab.brian.strength.intro` and `lab.brian.strength.explain` match the unch
 
 The "press 3 first" note, the "Go on" button and the key press that forced carbon fibre in "Too thin"; the phrase "counts
 twice" and "counts three times".
+
+## Fuel
+
+### Audit checked against the code
+
+Confirmed as written: the hedges (including the force note, the 110% note and "timed at real speed"), the closing
+electric car caveat that erased the rule, "the sum" for multiplications and divisions, words defined and not saved, the
+repeated key labels, the 0.07 s gap that cannot be seen at real pace. Where the audit was partly wrong or left alone:
+
+- The audit says Brian's job fails the player "for a difference the lesson says cannot be seen". The free test's line is
+  about the stopwatch, and the job's rule is about the petrol carried (the lesson's point and the bench's goal), so the
+  rule is unchanged. Only the words changed: the message now says "more petrol than this race needs" instead of "extra
+  mass that the car carried for nothing", so the two lines no longer seem to contradict each other.
+- The title "Fuel and weight" is set in `src/lab/classroom/classroom-lessons.js`, which this card must not touch, so it
+  is unchanged. The scale's button and the step "Pouring by mass" keep "weigh", the ordinary word for using a scale.
+
+### Changed
+
+- Hedges removed: the force note, the 110% note, the job's opening ("In this game"), and "timed at real speed". The
+  force is stated plainly ("The engine pushes this car with the same force, 10,617 N, whatever the tank holds").
+- The last words of the lesson are the rule. The electric car sentences left the recap, and the free test's second
+  paragraph now says every car in it burns petrol.
+- "The sum" became "the panel", "the mass of the petrol in the panel" or "calculation"; "total mass = car with an empty
+  tank + petrol" is the only sum left. Every "Press ↑", "Press 1", "Press Space" and "with ↓" left Brian's words, prompts
+  and hints.
+- Tasks that did not say what they were for now do: the speed step races the car in its opening, "Pouring by mass" says
+  it shows how to work out the litres from the mass alone, the watch opens with what the learner will see, and the job
+  opens with the task ("Pour the least petrol that lasts each race, and then race").
+- Words saved to the notebook: Mass, Density, Speed, Acceleration and Force, each by the step that defines it. The
+  player's old three words keep their ids.
+- The wonder and the watch play their races at 0.4 of real speed (about 10 seconds; the board says "shown in slow
+  motion"), so the 0.07 s gap is a visible gap. R plays them again. A failed race in Brian's job can be watched again
+  with R. The races the player sets up keep real speed.
+- Question 3's first card is shorter ("Faster at first, but the petrol runs out past half way"). The bench's force and
+  stopwatch numbers are kept in a small cache, because the board asks for them on every frame.
+
+### Tests
+
+- `node --test tools/test-lab-classroom-fuel.mjs`: 27 of 27. `node tools/test-lab-brian-short.mjs`: 6 of 6.
+- `node tools/run-browser-scenarios.mjs --scenarios lab-classroom-fuel --jobs 2`: passed, 0 warnings, 0 errors.
+
+### Changed assertions (one reason each)
+
+1. The notebook holds eight words, not three: five steps define words that were never saved.
+2. The recap no longer holds the electric car sentences, and the test checks that it holds none: the lesson's last words keep the rule.
+3. "Weigh each jug and compare the readings", "Now weigh the litre of water" and "Now weigh the water": no key labels.
+4. "pour out 15 more litres and race again", "pour in 15 litres and race again": no key labels.
+5. "Each pour in adds 3.7 kg" and "Each pour out removes 3.7 kg" replace "Each press of ↑ pours in 3.7 kg": no key labels, and still no "litres" under the cloth.
+6. "Pour out until the gauge reads" and "so race", "so weigh it" replace "Press ↓ until" and "so press Space": no key labels.
+7. The job's "extra mass" became "more petrol than this race needs": the wording no longer contradicts the free test.
+8. The watch's result says "The same force speeds up every kilogram of the car, so with fewer kilograms the whole car accelerates faster": shorter, same claim.
+9. The scenario waits 5 s into the wonder for its midway picture, and expects the five new notebook words and the new job wording.
+
+### Added tests
+
+Kyle's wording rules over everything the lesson says; the length of the wonder and the watch with R, the real pace of the
+races the player sets up and R on a failed job race; the five notebook words.
+
+### Lines to re-record (1)
+
+- `lab.brian.fuel.explain` (`src/lab/lab-lines.js`, `tools/audio/catalog.json`): the recap no longer says "All of this
+  belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full
+  or empty, so an electric car has no Fuel load to set." The line is not changed and not re-recorded here: the catalog
+  must match the recording, and until it is re-recorded Brian's voice still says the caveat the screen no longer shows.
+
+### Removed
+
+The electric car caveat on the screen, the "In this game" and "real car" notes, "timed at real speed", and the keys in
+every prompt and hint.
