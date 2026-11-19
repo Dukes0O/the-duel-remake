@@ -3,7 +3,7 @@
 // on the Tune page. passDownforce is the short way through, which lab-tune-view uses to open the wing. Memory-only saves.
 import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
-  ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
+  ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Backspace: ['Backspace', 8], KeyR: ['r', 82], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
 const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -25,7 +25,14 @@ function driver(c) {
     await c.evaluate(`document.querySelector('[data-lab-lesson="start:downforce"]').click()`);
     await at('wonder');
   }
-  return {press, at, next, prompt, saying, open};
+  // LAB-PAGE: a step that plays an animation offers Watch again, and R plays it again without leaving the step.
+  async function replayOnR(step) {
+    if (!(await c.evaluate("[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.startsWith('Watch again'))"))) throw Error(`The ${step} step should offer Watch again.`);
+    await press('KeyR'); await wait(400);
+    if ((await c.evaluate(state)).ready) throw Error(`R should play the ${step} step again.`);
+    await at(step, 's.ready');
+  }
+  return {press, at, next, prompt, saying, open, replayOnR};
 }
 
 // The short way through: every step done as its prompt says, every question right. Ends with the pass saved and the
@@ -68,7 +75,7 @@ export async function run(c) {
   await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Downforce QA');
     a.profile = {...a.profile, drivingLessons: {version: 1, done: {corner: true}}}; a._saveProfile();
     document.querySelectorAll('body > details').forEach(e => e.hidden = true); a.openLab(); })()`);
-  const {press, at, next, prompt, saying, open} = driver(c);
+  const {press, at, next, prompt, saying, open, replayOnR} = driver(c);
   const shot = name => c.screenshot(name);
   const bubble = () => c.evaluate(`document.querySelector('.lc-bubble').textContent`);
   const sums = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
@@ -77,8 +84,10 @@ export async function run(c) {
 
   await open();
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
-  await wait(1800); await shot('wonder-fan'); await at('wonder', 's.ready'); await shot('wonder');
+  // The wonder runs about ten seconds, and R plays it again (Kyle, 19 November 2026).
+  await wait(5000); await shot('wonder-fan'); await at('wonder', 's.ready'); await shot('wonder');
   if (!(await bubble()).includes('1,337 kg')) throw Error('The wonder should end on the scale’s reading: ' + await bubble());
+  await replayOnR('wonder');
   await next('wonder');
   // Fan speed: km/h and m/s are defined, and the dial moves the sum.
   await at('word-speed'); await shot('word-speed');
@@ -93,12 +102,13 @@ export async function run(c) {
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: steeper.x, y: steeper.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: steeper.x, y: steeper.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
-  await prompt('The wing is tilted', 'the click on Steeper tilts the wing one notch');
+  await c.waitFor("[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('× 0.9 ÷'))", 'the click on Steeper tilts the wing one notch', 10_000);
   await wait(300); await shot('word-wing-tilted');
   await press('ArrowRight'); await at('word-wing', 's.ready'); await wait(300); await shot('word-wing-done');
   await next('word-wing');
   await at('word-downforce'); await shot('word-downforce'); await press('Space'); await at('word-downforce', 's.ready');
   await saying('1,272 kg', 'the scale reads the car and the push'); await wait(300); await shot('word-downforce-done');
+  await replayOnR('word-downforce');
   // The word stays open: the dial moves the sum and the scale, and doubling the speed gives four times the push.
   if (!(await sums('0.11239 × 13.89'))) throw Error('The push sum should show the fan’s speed.');
   await press('ArrowUp', 5); await prompt('keep turning the dial', 'the word stays open'); await wait(300);
@@ -108,8 +118,10 @@ export async function run(c) {
   await press('Backspace'); await at('word-wing', 's.ready'); await press('Enter');
   await next('word-downforce');
   await at('word-drag'); await press('Space'); await wait(700); await shot('word-drag-running'); await at('word-drag', 's.ready'); await wait(300); await shot('word-drag-done');
+  await replayOnR('word-drag');
   await next('word-drag');
-  await at('watch'); await wait(2600); await shot('watch-running'); await at('watch', 's.ready'); await wait(300); await shot('watch');
+  await at('watch'); await wait(4500); await shot('watch-running'); await at('watch', 's.ready'); await wait(300); await shot('watch');
+  await replayOnR('watch');
   await next('watch');
   // The free test: the dial and the wing move the sums at once, and three different settings open Continue.
   await at('try-free'); await shot('try-free');
@@ -121,7 +133,7 @@ export async function run(c) {
   await press('ArrowLeft'); await press('Space'); await at('try-free', 's.ready'); await wait(300); await shot('try-free-three');
   await next('try-free');
   // Twice the speed: Space at 60 km/h says to turn the dial; 120 km/h, a wrong guess says why.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 120 km/h', 'the wrong speed says why');
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('turn the dial up until it reads 120 km/h', 'the wrong speed says why');
   await press('ArrowUp', 6); await prompt('120 km/h', 'the dial reads 120 km/h'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
   await press('Digit1'); await at('try-speed', 's.ready'); await saying('not twice as much', 'a wrong guess says why'); await wait(300); await shot('try-speed-done');
   await next('try-speed');
@@ -133,7 +145,7 @@ export async function run(c) {
   await press('ArrowRight', 2); await press('Space'); await at('try-cost', 's.ready'); await saying('only 283 km/h', 'the wrong guess says why'); await wait(300); await shot('try-cost-done');
   await next('try-cost');
   // Brian's job: the steep wing on course 1 is too much; tilted holds; tilted on course 2 slides wide; Show me; flat.
-  await at('alone'); await shot('alone'); await press('Space'); await saying('Press ← for a flatter wing', 'too much wing says why'); await shot('alone-too-much');
+  await at('alone'); await shot('alone'); await press('Space'); await saying('Choose a flatter wing and run the fan again', 'too much wing says why'); await shot('alone-too-much');
   await press('ArrowLeft'); await press('Space'); await saying('Course 2', 'course 1 holds');
   await press('Space'); await saying('slid wide', 'too little wing says why'); await wait(200); await shot('alone-slid');
   for (let i = 0; i < 3 && !(await c.evaluate(`${state}?.help === 3`)); i++) await press('KeyH');

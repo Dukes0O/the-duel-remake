@@ -362,7 +362,7 @@ function closeSpeed(ctx, view) {
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   text(ctx, 'WHAT THE SPEED MEANS', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
   text(ctx, `${d.kmh} km/h`, 300, LOW.y + 56, {size: 34, colour: theme.accent, weight: 800});
-  text(ctx, 'is about the same as', 500, LOW.y + 58, {size: 16});
+  text(ctx, 'is', 500, LOW.y + 58, {size: 16});
   text(ctx, `${d.ms.toFixed(2)} m/s`, 700, LOW.y + 56, {size: 34, colour: theme.accent, weight: 800});
   text(ctx, `During each second, the air moves ${d.ms.toFixed(2)} metres.`, 500, LOW.y + 104, {size: 18});
   ctx.fillStyle = '#d9b24a'; ctx.fillRect(x0, y - 4, x1 - x0, 8);
@@ -414,7 +414,7 @@ function table(ctx, view) {
     text(ctx, `${row.kmh} km/h`, 90, y, {size: 18, align: 'left'});
     text(ctx, WING_NAME[row.wing], 250, y, {size: 18, align: 'left'});
     text(ctx, kg(row.push), 520, y, {size: 18, align: 'right', colour: GREEN});
-    if (view.times && first > 0 && row.push !== first) text(ctx, `about × ${Math.round(row.push / first)}`, 534, y, {size: 18, align: 'left', colour: theme.accent, weight: 800});
+    if (view.times && first > 0 && row.push !== first) text(ctx, `× ${Math.round(row.push / first)}`, 534, y, {size: 18, align: 'left', colour: theme.accent, weight: 800});
     text(ctx, kg(row.drag), 700, y, {size: 18, align: 'right', colour: ORANGE});
     text(ctx, `${row.top} km/h`, 900, y, {size: 18, align: 'right'});
   });

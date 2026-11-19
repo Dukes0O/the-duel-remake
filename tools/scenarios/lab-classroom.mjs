@@ -111,10 +111,13 @@ async function play(c) {
   await press('Digit2'); await press('Digit5'); await at('try-heavy', 's.cards === 3'); await new Promise(r => setTimeout(r, 300)); await shot('try-heavy-guess'); await noPanel('the heavy weight');
   await press('Digit3'); await press('Space');
   await at('try-heavy', 's.ready'); await new Promise(r => setTimeout(r, 1200)); await shot('try-heavy-right');
-  await openFormulaPanel(c);
-  if (!(await worked('(200 × 9.81) ÷ 200 = 9.81'))) throw Error('The heavy weight’s sum is missing.');
+  await openFormulaPanel(c); await shot('try-heavy-panel');
+  if (!(await worked('(200 × 9.81) ÷ 200 = 9.81 N per kilogram'))) throw Error('The heavy weight’s pull per kilogram is missing.');
   await next('try-heavy');
-  // The formula: a hook and a weight move the sums.
+  // The symbols of the formula have steps of their own (π and the square root, then g and metres per second), with nothing to press.
+  await at('word-pi'); await shot('word-pi'); await next('word-pi');
+  await at('word-gravity'); await shot('word-gravity'); await next('word-gravity');
+  // The formula: a hook and a weight move the formulas.
   await at('try-formula'); await new Promise(r => setTimeout(r, 300)); await shot('try-formula');
   if (!(await worked('√(15 ÷ 9.81) = 7.77 s'))) throw Error('The formula should start on the 15 m string.');
   await press('Digit1');
@@ -132,7 +135,7 @@ async function play(c) {
   await press('Digit5'); await new Promise(r => setTimeout(r, 200)); await press('Space'); await new Promise(r => setTimeout(r, 2000)); await shot('try-free-swinging');
   await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('Change a setting')`, 'the first test says its result', 20_000); await new Promise(r => setTimeout(r, 300));
   await press('Digit1'); await freeRun('the string length changed'); await shot('try-free-two');
-  await press('Digit3'); await press('ArrowDown'); await freeRun('Press Enter when you have tested enough'); await at('try-free', 's.ready'); await shot('try-free-three');
+  await press('Digit3'); await press('ArrowDown'); await freeRun('You have tested enough settings'); await at('try-free', 's.ready'); await shot('try-free-three');
   await next('try-free');
   await at('alone'); await new Promise(r => setTimeout(r, 300)); await shot('alone'); await press('Space'); await at('alone', 's.help === 1'); await shot('alone-too-quick');
   await press('Digit3'); await press('Space'); await at('alone', 's.ready'); await shot('alone-pass');

@@ -115,6 +115,8 @@ test('words: Space brakes to a measured stop; the pads shift the weight; the lev
   playThroughTo(session, 'word-weight');
   assert.equal(session.view().close.front, .5, 'standing, half and half');
   session.act('go'); until(session, x => x.lanes[0]?.braking);
+  assert.ok(session.view().close.front < FRONT_LOAD, 'the weight starts to tip forward when the brakes go on');
+  until(session, x => x.close.front === FRONT_LOAD, 5);
   assert.equal(session.view().close.front, FRONT_LOAD, 'braking, the weight tips forward');
   until(session, x => x.ready);
   assert.match(session.view().brian.text, /the front tyres carry 69% of the weight and the back tyres carry 31%/);
@@ -137,7 +139,7 @@ test('deceleration and energy: the marks fall by the same speed, and the energy 
   for (let i = 1; i < marks.length; i++) assert.ok(marks[i].metres - marks[i - 1].metres < (i > 1 ? marks[i - 1].metres - marks[i - 2].metres : marks[0].metres), 'the marks grow closer together');
   assert.match(slow.view().brian.text, /^The car lost the same 10\.6 m\/s during every half second/);
   assert.match(slow.view().brian.text, /41\.67 m\/s ÷ 21\.19 m\/s² = 1\.97 s/);
-  assert.match(slow.view().brian.text, /so this car brakes about twice as hard/);
+  assert.doesNotMatch(slow.view().brian.text, /real life|twice as hard|about/, 'no comparison with a road car, and no hedge');
   // The panel's last line comes out on a calculator from the figures it shows.
   const [, v, a, t, left] = slow.view().formulas.at(-1).worked.match(/^([\d.]+) m\/s − ([\d.]+) m\/s\^2 × ([\d.]+) s = ([\d.]+) m\/s$/).map(Number);
   assert.equal(left, 0);
@@ -150,7 +152,7 @@ test('deceleration and energy: the marks fall by the same speed, and the energy 
   assert.equal(energy.view().dial.kmh, 200);
   assert.match(panelText(energy.view()), /\(55\.56 m\/s\)\^2 ÷ \(2 × 21\.19 m\/s\^2\) = 72\.84 m/);
   assert.doesNotMatch(panelText(energy.view()), /The tape reads/, 'no reading before the car has braked');
-  assert.match(panelText(energy.view()), /The tape can differ from this sum by a few centimetres, because the sum uses rounded numbers and the game works out each stop in steps of 1\/120 of a second/, 'the difference is said, with its reason');
+  assert.doesNotMatch(panelText(energy.view()), /can differ|rounded numbers|the game works out/, 'no caveat about the tape: the formula and the tape agree to the tenth of a metre it shows');
   assert.match(panelText(energy.view()), /passive drag is part of a; without it the stop would be 0\.9 m longer/);
   assert.match(panelText(energy.view()), /\(55\.56 m\/s ÷ 27\.78 m\/s\)\^2 = 4\.00 times the road/);
   {
@@ -182,7 +184,7 @@ test('the free test: the sums follow the dial and the car, only different settin
   assert.match(free.view().formulas.at(-1).worked, /2 × 23\.52 m\/s\^2/, 'the car changes the sum');
   free.act('car:prev');
   brake(free);
-  assert.match(free.view().brian.text, /^The Falcone F42 stopped from 100 km\/h in 18\.2 m\. The sum predicted 18\.21 m/);
+  assert.match(free.view().brian.text, /^The Falcone F42 stopped from 100 km\/h in 18\.2 m\. The formula gave 18\.21 m/);
   assert.match(free.view().formulas.at(-1).note, /The tape reads 18\.2 m\./);
   free.act('speed:up');
   assert.doesNotMatch(free.view().formulas.at(-1).note, /The tape reads/, 'a new setting has no reading yet');
@@ -257,13 +259,13 @@ test('the wonder stops when the slower car has stopped, with the faster car stil
 test('the wording faults found in review stay gone', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-balance');
-  assert.match(session.view().say, /In this game, the back tyres/);
-  assert.match(session.view().say, /more braking at the front causes no slide, and the lever does not change the stopping distance/);
+  assert.doesNotMatch(session.view().say, /In this game|the game applies|the lever does not change the stopping distance/, 'no hedge, and no claim that the Tune page card contradicts');
+  assert.match(session.view().say, /Move the lever toward the front until the back brakes do less than 31%/, 'the task names what the lever is for');
   assert.doesNotMatch(session.view().say, /\bask\b/);
   for (const front of [50, 70, 90]) assert.equal(stopOf(100, front).stopMetres, stopOf(100, 70).stopMetres, 'what the words say of the lever is what the game does');
   assert.equal(stopOf(100, 90).rearSlides, false);
   playThroughTo(session, 'check-four');
-  assert.equal(session.view().prompt, 'Pick a card by clicking it, or press 1, 2 or 3.');
+  assert.equal(session.view().prompt, 'Pick the card with your answer.');
   playThroughTo(session, 'recap');
   assert.match(session.view().ideas[2].text, /^If the back brakes do more than 31% of the braking, which is the share of the weight on the back tyres/);
 });
@@ -311,21 +313,21 @@ test('every hint and message points the right way from any setting, and Show me 
   const low = createClassroomSession(lesson);
   playThroughTo(low, 'try-speed');
   low.act('go');
-  assert.match(low.view().brian.text, /press ↑ until the dial reads 200/);
-  assert.match(low.view().hints[1], /Press ↑ until the dial reads 200/);
+  assert.match(low.view().brian.text, /turn the dial up until it reads 200/);
+  assert.match(low.view().hints[1], /Turn the dial up until it reads 200/);
   assert.match(low.view().hints[2], /I will turn the dial, and then you can guess/, 'Show me stops at the question, and says so');
   setTo(low, 230);
   low.act('go');
-  assert.match(low.view().brian.text, /press ↓ until the dial reads 200/, 'above the answer, the dial turns down');
-  assert.match(low.view().hints[1], /Press ↓ until the dial reads 200/);
+  assert.match(low.view().brian.text, /turn the dial down until it reads 200/, 'above the answer, the dial turns down');
+  assert.match(low.view().hints[1], /Turn the dial down until it reads 200/);
   setTo(low, 200);
-  assert.match(low.view().hints[1], /^The dial is set, so press Space/);
-  assert.match(low.view().hints[2], /I will press Space, and then you can guess/);
+  assert.match(low.view().hints[1], /^The dial is set, so brake/);
+  assert.match(low.view().hints[2], /I will brake, and then you can guess/);
 
   const slide = createClassroomSession(lesson);
   playThroughTo(slide, 'try-slide');
   brake(slide);
-  assert.match(slide.view().hints[1], /Press → until the lever reads 70% front/);
+  assert.match(slide.view().hints[1], /Move the lever to 70% front/);
   setTo(slide, 100, 90);
   assert.match(slide.view().hints[1], /^The lever is far enough toward the front/, 'past the answer, no more presses of →');
 });
@@ -347,7 +349,9 @@ test('the sums on the screen add up from the figures shown', () => {
   const said = session.view().brian.text;
   assert.match(said, /50\.00 m\/s, is twice the speed at the first, 25\.00 m\/s/);
   assert.equal(50.00, 2 * 25.00);
-  assert.match(said, /59\.0 m is about four times the first stop of 14\.7 m/, '59.0 is not exactly 4 × 14.7, so it says about');
+  assert.match(said, /and its stop is four times as long/);
+  assert.ok(Math.abs(metresFrom(180) / metresFrom(90) - 4) < .001, 'four times as long, to three places');
+  assert.doesNotMatch(said, /about/);
   assert.equal(Number((4 * 18.2).toFixed(1)), 72.8);
 });
 
@@ -356,7 +360,7 @@ test('the tries: Space at the wrong speed, every wrong guess and every slide say
   playThroughTo(speed, 'try-speed');
   assert.equal(speed.view().dial.speed, 100, 'it starts away from its answer');
   speed.act('go');
-  assert.match(speed.view().brian.text, /press ↑ until the dial reads 200/);
+  assert.match(speed.view().brian.text, /turn the dial up until it reads 200/);
   setTo(speed, 200); speed.act('go');
   assert.equal(speed.view().cards.length, 3, 'set up, then guess from pictures of results');
   speed.act('answer:2'); until(speed, x => x.ready);
@@ -371,7 +375,7 @@ test('the tries: Space at the wrong speed, every wrong guess and every slide say
   playThroughTo(slide, 'try-slide');
   assert.equal(slide.view().lever.front, 50); assert.equal(slide.view().dial.locked, true);
   brake(slide);
-  assert.match(slide.view().brian.text, /^The back of the car slid, because the back brakes did 50% of the braking, which is more than the 31% of the weight on the back tyres\. Press →/);
+  assert.match(slide.view().brian.text, /^The back of the car slid, because the back brakes did 50% of the braking, which is more than the 31% of the weight on the back tyres\. Move the lever toward the front, then brake again/);
   assert.equal(slide.view().ready, false);
   setTo(slide, 100, 60); brake(slide);
   assert.match(slide.view().brian.text, /^The back of the car is still sliding at 60% front, because the back brakes did 40% of the braking, which is more than the 31%/);
@@ -386,13 +390,13 @@ test('Brian’s job: the fastest steady stop before each corner; too fast, too s
   assert.equal(session.view().line, 15);
   assert.match(panelText(session.view()), /√\(2 × 21\.19 m\/s\^2 × 15 m\) = 25\.21 m\/s/, 'the panel works the gap’s fastest speed');
   setTo(session, 100, STEADY_FRONT); brake(session);
-  assert.match(session.view().brian.text, /^From 100 km\/h the car needs 18\.2 m, but the gap is only 15 m, so the car ran 3\.2 m past the corner/);
+  assert.match(session.view().brian.text, /^From 100 km\/h the car needs 18\.2 m, but the corner is only 15 m after the marker, so the car ran 3\.2 m past the corner/);
   setTo(session, 80, STEADY_FRONT); brake(session);
   assert.match(session.view().brian.text, /^The car stopped 3\.3 m short of the corner\. From 90 km\/h the car would still stop in time, in 14\.7 m/);
   setTo(session, 90, 50); brake(session);
   assert.match(session.view().brian.text, /^The back of the car slid/);
   setTo(session, 90, STEADY_FRONT); brake(session);
-  assert.match(session.view().brian.text, /^Correct\. From 90 km\/h the car stops in 14\.7 m, which is inside the 15 m gap/);
+  assert.match(session.view().brian.text, /^Correct\. From 90 km\/h the car stops in 14\.7 m, which is inside the 15 m distance/);
   assert.equal(session.view().line, 45); assert.equal(session.view().ready, false);
   for (const gap of CORNERS.slice(1)) { setTo(session, fastestFor(gap), STEADY_FRONT); brake(session); }
   assert.equal(session.view().ready, true);
@@ -538,7 +542,7 @@ test('every speed in km/h that the lesson shows or lets the player set is a whol
     const v = session.view();
     for (const text of [v.say, v.brian?.text, v.prompt, ...v.hints, ...v.cards.map(c => c.label), ...v.lanes.map(l => l.label), ...(v.ideas ?? []).map(i => i.text),
       ...v.page.flatMap(row => [row.setup, row.result])]) round(text, where);
-    for (const f of v.formulas) for (const text of [f.title, f.formula, f.worked, f.title === 'The fastest speed that stops in the gap' ? '' : f.note]) round(text, where);
+    for (const f of v.formulas) for (const text of [f.title, f.formula, f.worked, f.title === 'The fastest speed that stops before the corner' ? '' : f.note]) round(text, where);
     for (const row of v.table ?? []) assert.equal(row.kmh % 10, 0, where);
     for (const stop of v.stops ?? []) assert.equal(stop.kmh % 10, 0, where);
     if (v.dial) { read++; assert.equal(v.dial.kmh % 10, 0, where); assert.equal(v.dial.kmh, v.dial.speed, 'the dial reads its own setting'); }
@@ -648,4 +652,80 @@ test('LAB-LOOK round 11: the wide board draws no text smaller than 15 board unit
       run(session, .5);
     }
   }
+});
+
+// Kyle's rules of 19 November 2026 (docs/LAB.md 13.2), LAB-REVIEW-TUNNEL.
+test('Kyle’s rules of 19 November 2026 hold for every text the Braking lesson shows, wrong answers, tries and Brian’s job included', () => {
+  const said = new Set();
+  const note = v => {
+    for (const text of [v.say, v.prompt, ...(v.hints ?? []), ...(v.cards ?? []).map(card => card.label), v.brian?.text, ...(v.formulas ?? []).flatMap(f => [f.title, f.formula, f.worked, f.note])]) if (text) said.add(String(text));
+  };
+  for (const step of STEPS) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, step.id);
+    note(session.view());
+    if (session.view().keys.Space === 'go') { session.act('go'); until(session, x => x.ready || x.keys.Space === 'go', 15); note(session.view()); }
+  }
+  for (const [id, picks] of [['check-four', [0, 1, 2]], ['check-balance', [0, 1, 2]], ['check-game', [0, 1, 2]]]) for (const pick of picks) {
+    const session = createClassroomSession(lesson); playThroughTo(session, id); session.act(`answer:${pick}`); note(session.view());
+  }
+  for (const guess of [0, 1, 2]) { const session = createClassroomSession(lesson); playThroughTo(session, 'try-speed'); setTo(session, 200); session.act('go'); session.act(`answer:${guess}`); until(session, x => x.ready); note(session.view()); }
+  const slide = createClassroomSession(lesson); playThroughTo(slide, 'try-slide'); brake(slide); note(slide.view()); setTo(slide, 100, 60); brake(slide); note(slide.view()); setTo(slide, 100, 70); brake(slide); note(slide.view());
+  const job = createClassroomSession(lesson); playThroughTo(job, 'alone');
+  setTo(job, 100, STEADY_FRONT); brake(job); note(job.view()); setTo(job, 80, STEADY_FRONT); brake(job); note(job.view()); setTo(job, 90, 50); brake(job); note(job.view());
+  const text = [...said, ...lesson.words.map(word => word.meaning), ...lesson.keyIdeas.map(item => item.text), lesson.challengeCard.text].join('\n');
+  assert.doesNotMatch(text, /in this game|this game|in real life|a simplification|the game applies|the game works|that the game|\bthe game\b/i, 'no hedging');
+  assert.doesNotMatch(text, /\bsums?\b/i, 'a formula is not a sum');
+  assert.doesNotMatch(text, /\babout \d|\babout four|\babout twice/i, 'exact numbers');
+  assert.doesNotMatch(text, /Press [↑↓←→]|press [↑↓←→]|press Space|Press Space|Press [123],? |press 1|Press 1/, 'the screen shows its own key labels');
+  assert.doesNotMatch(text, /does not change the stopping distance/, 'no claim that the Tune page card contradicts');
+  assert.doesNotMatch(text, /9\.8 m\/s² |steady stop at/, 'the weight shift is not claimed at a deceleration this car does not brake at');
+});
+
+test('the wonder and the watch play twice, a second apart, and R plays both again; the pads rise rather than jump', () => {
+  for (const [id, first] of [['wonder', 'Watch the two cars.'], ['watch', 'Watch where each car stops.']]) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, id);
+    until(session, x => x.ready);
+    session.act('replay'); // it has finished once: R starts it again, and Continue waits for the end
+    assert.equal(session.view().ready, false, `${id}: R plays it again`);
+    assert.equal(session.view().prompt, first);
+    let seconds = 0, restarts = 0, last = null, secondPrompt = null;
+    while (!session.view().ready && seconds < 60) {
+      session.tick(.05); seconds += .05;
+      const t = session.view().lanes[0] ? session.view().lanes[0].metres : null;
+      if (last !== null && t !== null && t < last - 1) restarts++;
+      if (id === 'watch' && restarts && secondPrompt === null) secondPrompt = session.view().prompt;
+      last = t;
+    }
+    assert.equal(restarts, 1, `${id}: the cars run a second time`);
+    assert.ok(seconds >= 2 * (id === 'wonder' ? 3 : 4), `${id} took ${seconds.toFixed(1)} s`);
+    if (id === 'watch') assert.equal(secondPrompt, 'Now watch the back of the third car.', 'the second look is for the back of the third car');
+    assert.ok(session.view().actions.includes('replay'));
+  }
+  const weight = createClassroomSession(lesson);
+  playThroughTo(weight, 'word-weight');
+  weight.act('go');
+  const fronts = [];
+  while (!weight.view().ready && fronts.length < 400) { weight.tick(.05); fronts.push(weight.view().close.front); }
+  const rising = fronts.filter(f => f > .5 && f < FRONT_LOAD);
+  assert.ok(rising.length >= 3, 'the pads pass through shares between 50% and 69% as the weight shifts');
+  assert.equal(Math.max(...fronts), FRONT_LOAD);
+});
+
+test('the watch and the guess cards say what the rig shows, with no hedge and no word the lesson has not taught', () => {
+  const watch = createClassroomSession(lesson);
+  playThroughTo(watch, 'watch');
+  until(watch, x => x.ready);
+  const brian = watch.view().brian.text;
+  assert.match(brian, /so the faster car needed more road/);
+  assert.match(brian, /locked and the back of the car slid/);
+  assert.doesNotMatch(brian, /does not change the stopping distance|in this game/i);
+  const guess = createClassroomSession(lesson);
+  playThroughTo(guess, 'try-speed'); setTo(guess, 200); guess.act('go');
+  assert.deepEqual(guess.view().cards.map(card => card.label), ['36.4 m, which is twice as far', '72.8 m, which is four times as far', '145.7 m, which is eight times as far']);
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  assert.match(job.view().brian.text, /^How fast can the car arrive at each corner and still stop before it, with the back of the car in line\?/, 'the question comes first');
+  assert.doesNotMatch(panelText(job.view()), /\bgap\b/i, 'the marker, the corner and the distance between them are the only words');
 });

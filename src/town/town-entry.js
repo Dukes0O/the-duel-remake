@@ -9,6 +9,7 @@ import {renderTownScreen} from './ui/town-screen.js';
 import {bindTownInput} from './ui/town-input.js';
 import {townReportsPanelMarkup, townReportsPanelModel} from './ui/town-reports-panel.js';
 import {townLedgerMarkup,townLedgerModel} from './ui/town-ledger.js';
+import {townCardMarkup,townCardModel} from './ui/town-card.js';
 import {bindTownWastelandMap,townWastelandMapMarkup,townWastelandMapModel} from './ui/town-wasteland-map.js';
 import {createTownSession,townsAvailableToVisit} from './town-session.js';
 import {townMissionCardMarkup,townMissionCardModel} from './ui/town-mission-card.js';
@@ -132,10 +133,23 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
     sceneView.state.ghost.visible=false;
     for(const cell of points)command({type:'placeBuilding',buildingId:row.id,x:cell.x,z:cell.z});
   });
+  // TOWN-VIEW-LIFE: a click on a walker finds that person: their card opens and a ring follows them.
+  let personCard=null;
+  const closePerson=()=>{personCard?.remove();personCard=null;sceneView.selectPerson(null);};
+  const showPerson=(id,at=null)=>{const card=townCardModel(town,{kind:'person',id});if(!card){closePerson();return;}personCard?.remove();personCard=document.createElement('div');personCard.className='town-person-card';
+    personCard.style.cssText='position:absolute;right:186px;top:118px;width:270px;max-height:60%;overflow:auto;z-index:2;background:#15211dee;color:#f7edd9;padding:12px;box-shadow:0 4px 20px #000';
+    personCard.innerHTML=`${townCardMarkup(card)}<button type="button" data-town-person-close>CLOSE</button>`;personCard.querySelector('[data-town-person-close]').onclick=closePerson;host.append(personCard);
+  // The card opens beside the person clicked, on whichever side has room, so it never hides that person.
+  if(at){const box=host.getBoundingClientRect(),x=at.x-box.left,y=at.y-box.top,width=personCard.offsetWidth,height=personCard.offsetHeight,gap=48;
+    const left=x+gap+width<=box.width-8?x+gap:Math.max(8,x-gap-width),top=Math.min(Math.max(8,y-height/2),Math.max(8,box.height-height-8));
+    personCard.style.right='auto';personCard.style.left=`${left}px`;personCard.style.top=`${top}px`;}
+  sceneView.selectPerson(id);};
+  canvas.addEventListener('click',event=>{const placement=input.getPlacement();if(placement.buildingId||placement.homeTool)return;const hit=sceneView.pickPerson(event.clientX,event.clientY,canvas.getBoundingClientRect());if(hit)showPerson(hit.personId,{x:event.clientX,y:event.clientY});else if(personCard)closePerson();});
+  if(qa){host.__townPickPerson=(x,y)=>sceneView.pickPerson(x,y,canvas.getBoundingClientRect());host.__townLife=()=>sceneView.state;}
   canvas.addEventListener('pointercancel',()=>{dragStart=null;rightDrag=null;});canvas.addEventListener('contextmenu',event=>event.preventDefault());
   canvas.addEventListener('wheel',zoomTown,{passive:false});
   key=event=>{
-    if(event.code==='Escape'){if(mapOpen){event.preventDefault();event.stopImmediatePropagation();closeWastelandMap();return;}if(input.getPlacement().buildingId){input.cancel();sceneView.state.ghost.visible=false;return;}event.preventDefault();event.stopImmediatePropagation();void leave('escape');return;}
+    if(event.code==='Escape'){if(personCard){event.preventDefault();event.stopImmediatePropagation();closePerson();return;}if(mapOpen){event.preventDefault();event.stopImmediatePropagation();closeWastelandMap();return;}if(input.getPlacement().buildingId){input.cancel();sceneView.state.ghost.visible=false;return;}event.preventDefault();event.stopImmediatePropagation();void leave('escape');return;}
     if(event.key.toLowerCase()==='m'&&!event.target.matches?.('input,textarea,button')){event.preventDefault();if(mapOpen)closeWastelandMap();else openWastelandMap();return;}
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)&&!event.target.matches?.('input,textarea')){flight=null;heldKeys.add(event.code);event.preventDefault();}
   };keyUp=event=>heldKeys.delete(event.code);blur=()=>heldKeys.clear();document.addEventListener('keydown',key,true);document.addEventListener('keyup',keyUp,true);window.addEventListener('blur',blur);

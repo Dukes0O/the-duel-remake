@@ -162,7 +162,7 @@ async function play(c) {
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-word-list h4')].some(e => e.textContent === 'The collective lever') && document.querySelector('.lc-word-list').textContent.includes('Newton’s third law')`))) throw Error('Earlier words did not stay in the Words so far fold.');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
   // Teaching writes the notebook words and never passes the lesson by itself.
-  if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.lift && ['lift-weight', 'lift-lift', 'lift-collective', 'lift-hover'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
+  if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.lift && ['lift-weight', 'lift-rotor', 'lift-lift', 'lift-collective', 'lift-hover'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   // The game challenge goes through the Lab's own path: the helicopter starts with the key idea card.
   await press('Enter');
   await c.waitFor(`!document.querySelector('.lab-classroom') && window.__qaApp.heliSession?.view?.()?.challenge?.id === 'lift'`, 'lift challenge in the helicopter', 60_000);

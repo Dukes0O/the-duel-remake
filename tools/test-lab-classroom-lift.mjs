@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {readFileSync} from 'node:fs';
-import {STEPS, OWN_KG, MOST_KG, CAR_KG, CRATE_KG, BEST_CRATES, BAND_M, HOLD_S, FREE_TRIES, kg, weightOf, leverShare} from '../src/lab/lessons/lift-classroom.js';
+import {STEPS, OWN_KG, MOST_KG, CAR_KG, CRATE_KG, BEST_CRATES, BAND_M, HOLD_S, FREE_TRIES, TRY_SETTLE_S, kg, weightOf, leverShare} from '../src/lab/lessons/lift-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, dragAngle, strip} from '../src/lab/lessons/lift-board.js';
 import {padForces, KESTREL, GRAVITY} from '../src/lab/benches/lift-pad.js';
 import {heliMass, availableThrust, createHeliState} from '../src/heli/heli-flight.js';
@@ -13,16 +13,19 @@ import {CHALLENGE_RULES} from '../src/lab/lab-challenges.js';
 const lesson = CLASSROOM_LESSONS.lift;
 const run = (session, seconds) => { for (let t = 0; t < seconds; t += .05) session.tick(.05); };
 const until = (session, test, limit = 30) => { for (let t = 0; t < limit && !test(session.view()); t += .05) session.tick(.05); assert.ok(test(session.view()), `condition not reached on ${session.view().step.id}`); };
-// The key a prompt names ("press 1", "press W", "Hold W") must do what the prompt asks. A held key
-// repeats until the lever stops, as a keyboard does.
-function followPrompt(session) {
-  const v = session.view(), match = v.prompt.match(/(press|hold) (Space|W|\d)/i);
-  assert.ok(match, `prompt names no key: ${v.prompt}`);
-  const [, how, key] = match, action = v.keys[key];
-  assert.ok(action, `the key in "${v.prompt}" does nothing`);
-  session.act(action);
-  if (/hold/i.test(how)) for (let i = 0; i < 20 && session.view().keys[key]; i++) session.act(`${action}:held`);
-  return action;
+// What each step asks of the player. The prompts name the thing to click, not a key (the screen shows its own key
+// labels), so the player here does what the step asks by its action.
+const WORD_ACTIONS = {'word-weight': 'crate:add', 'word-lift': 'rotor', 'word-collective': 'lever:up', 'word-hover': 'lever:up'};
+function doStep(session) {
+  const step = session.view().step.id;
+  if (WORD_ACTIONS[step]) return session.act(WORD_ACTIONS[step]);
+  if (step === 'try-car') return session.act('car');
+  if (step === 'try-heavy') { session.act('crate:add'); return session.act('crate:add'); }
+  throw Error(`no action for ${step}`);
+}
+function liftLever(session) {
+  const step = session.view().step.id;
+  session.act(step === 'try-heavy' ? 'lever:top' : 'lever:weight');
 }
 // Three different settings: the lever is moved up a notch between tests.
 function freeTests(session) { for (let i = 0; i < FREE_TRIES; i++) { session.act('lever:up'); session.act('go'); } }
@@ -30,12 +33,12 @@ function playThroughTo(session, id, {guesses = {'try-car': 'guess:0', 'try-heavy
   while (session.view().step.id !== id) {
     const v = session.view(), step = v.step.id;
     if (step.startsWith('watch') || step === 'wonder') until(session, x => x.ready, 20);
-    else if (step.startsWith('word')) followPrompt(session);
+    else if (step.startsWith('word')) doStep(session);
     else if (step === 'try-free') { freeTests(session); }
     else if (step.startsWith('try')) {
-      followPrompt(session); if (step === 'try-heavy') followPrompt(session);
+      doStep(session);
       assert.equal(session.view().cards.length, 2, `${step}: set-up done, cards to guess`);
-      session.act(guesses[step]); followPrompt(session); until(session, x => x.ready, 10);
+      session.act(guesses[step]); liftLever(session); until(session, x => x.ready, 10);
     } else if (step === 'alone') { session.act('crate:add'); session.act('lever:up'); for (let i = 0; i < 12; i++) session.act('lever:up:held'); until(session, x => x.ready, 10); }
     else if (step.startsWith('check')) session.act(`answer:${{'check-heavy': 2, 'check-more': 0, 'check-game': 1}[step]}`);
     assert.ok(session.view().ready, `${step} is ready`);
@@ -47,6 +50,8 @@ test('the lesson walks the seven parts in order, one idea per step, and is liste
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
   assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['lift-weight', 'lift-lift', 'lift-collective', 'lift-hover']);
+  assert.deepEqual(STEPS.find(s => s.id === 'word-lift').words, ['lift-rotor'], 'the step that defines the rotor saves it to the notebook');
+  assert.deepEqual(lesson.words.map(w => w.id), ['lift-weight', 'lift-rotor', 'lift-lift', 'lift-collective', 'lift-hover'], 'the notebook keeps its saved ids');
   assert.equal(lesson.name, 'Lift and weight');
 });
 
@@ -62,7 +67,7 @@ test('every weight and lift comes from the helicopter’s own flight rules', () 
   assert.deepEqual([CHALLENGE_RULES.lift.low, CHALLENGE_RULES.lift.high, CHALLENGE_RULES.lift.holdSeconds], [...BAND_M, HOLD_S], 'the lesson states the challenge’s own band and time');
 });
 
-test('a child who does exactly what each prompt says passes every step with one press or one held key', () => {
+test('a child who does what each step asks passes every step', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'recap');
   const end = session.view();
@@ -121,7 +126,7 @@ test('Brian’s job: each wrong load says what to change with the real numbers; 
   session.act('crate:add'); session.act('crate:add');
   assert.equal(session.view().flight.lift, 0, 'loading sets the helicopter down');
   session.act('lever:top'); until(session, v => v.help > 1, 5);
-  assert.match(session.view().brian.text, /23 kg more than the 3,887 kg that the rotor can push.*Take a crate off by pressing 2/);
+  assert.match(session.view().brian.text, /23 kg more than the 3,887 kg that the rotor can push.*Click a crate on the cable to take it off/);
   assert.ok(!session.view().ready);
   session.act('crate:remove'); session.act('lever:weight'); until(session, v => v.ready, 5);
   assert.match(session.view().brian.text, /Dusthawk and 1 crate on the cable, the total weight is 3,410 kg and the helicopter hovers/);
@@ -234,7 +239,7 @@ test('the sums: weight in newtons, the lever’s share and the force left over a
   playThroughTo(session, 'word-weight');
   assert.equal(worked(session.view(), 'The weight in newtons'), '1,630 kg × 9.81 = 15,990.3 N');
   session.act('crate:add');
-  assert.equal(worked(session.view(), 'The total mass'), '1,150 + 80 + 400 + 500 = 2,130 kg');
+  assert.equal(worked(session.view(), 'The total weight'), '1,150 + 80 + 400 + 500 = 2,130 kg');
   assert.equal(worked(session.view(), 'The weight in newtons'), '2,130 kg × 9.81 = 20,895.3 N');
   const free = createClassroomSession(lesson);
   playThroughTo(free, 'try-free');
@@ -245,7 +250,7 @@ test('the sums: weight in newtons, the lever’s share and the force left over a
   assert.match(worked(free.view(), 'The force left over'), /^500 − 1,630 = −1,130 kg, so the helicopter stays on the pad/);
   assert.match(worked(free.view(), 'The lever needed to hover'), /^1,630 kg ÷ 3,887 kg = 0\.4193, which is 42%/);
   free.act('car');
-  assert.equal(worked(free.view(), 'The total mass'), '1,150 + 80 + 400 + 1,280 = 2,910 kg', 'the load changes the sum');
+  assert.equal(worked(free.view(), 'The total weight'), '1,150 + 80 + 400 + 1,280 = 2,910 kg', 'the load changes the calculation');
   assert.match(worked(free.view(), 'The lever needed to hover'), /^2,910 kg ÷ 3,887 kg = 0\.7486, which is 75%/);
   free.act('crate:add'); free.act('crate:add');
   assert.match(worked(free.view(), 'The lever needed to hover'), /^3,910 kg ÷ 3,887 kg = 1\.0059, which is 101%, so the lever cannot reach it/);
@@ -325,9 +330,9 @@ test('nothing gives a guess or a question away while it is open', () => {
 test('a hint about the lever is right from either side of the red line', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-hover');
-  assert.match(session.view().hints[1], /Press W until/);
+  assert.match(session.view().hints[1], /Raise the lever until it reaches the red line/);
   session.act(`hold:${OWN_KG + 400}`); session.act('release');
-  assert.match(session.view().hints[1], /Press S until/);
+  assert.match(session.view().hints[1], /Lower the lever until it comes back down to the red line/);
 });
 
 test('a word does not appear before the step that defines it, and every view is free of the old faults', () => {
@@ -354,34 +359,34 @@ test('review: the free test follows both guided guesses, so that its Show me can
   assert.match(createClassroomSession(lesson).view().say, /a rally car called the Dusthawk/, 'the Dusthawk is named when it first appears');
 });
 
-test('review: what the words say about W and S holds in both Assisted and Real flying', () => {
+test('review: the lesson never says what W and S do in the helicopter’s flying modes; only the challenge card does', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'check-game');
-  const v = session.view();
-  assert.equal(v.cards.findIndex(c => /come back to equal the weight/.test(c.label)), 1);
+  assert.equal(session.view().cards.findIndex(c => /come back to equal the weight/.test(c.label)), 1);
   session.act('answer:1');
-  assert.match(session.view().brian.text, /In Assisted flying.*let go of W.*In Real flying you press S/);
+  assert.doesNotMatch(session.view().brian.text, /Assisted|Real flying|let go of W|press S/);
   const idea = lesson.keyIdeas.find(i => i.id === 'ease').text;
-  assert.match(idea, /In Assisted flying, letting go of W.*In Real flying, W and S move the lever/);
+  assert.doesNotMatch(idea, /Assisted|Real flying/);
   assert.match(lesson.challengeCard.text, /In Assisted flying.*In Real flying/);
-  assert.match(lesson.words.find(w => w.id === 'lift-collective').meaning, /In Real flying.*In Assisted flying/);
+  assert.match(lesson.challengeCard.text, /refuses a load of more than 1,500 kg until you own the Lab’s Heavy hook/, 'the hook’s limit is on the challenge card, not in the lesson');
+  assert.doesNotMatch(lesson.words.find(w => w.id === 'lift-collective').meaning, /Assisted|Real flying/);
   const word = createClassroomSession(lesson); playThroughTo(word, 'word-collective');
-  assert.match(word.view().say, /Real flying.*Assisted flying/);
+  assert.doesNotMatch(word.view().say, /Real flying|Assisted flying|W raises|W and S/);
 });
 
-test('review: the job separates the rotor’s limit from the hook’s, and its prompt is right above the line', () => {
+test('review: the job ends on its answer, with no caveat, and its prompt is right above the line', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   session.act('crate:add');
-  assert.match(session.view().prompt, /hold W/);
+  assert.match(session.view().prompt, /raise the lever up to the red line/);
   session.act('hold:3700'); session.act('release');
   assert.equal(session.view().flight.lift, 3700);
-  assert.match(session.view().prompt, /press S \(or ↓\), or drag the lever, back down to the red line/);
-  assert.doesNotMatch(session.view().prompt, /hold W/);
+  assert.match(session.view().prompt, /lower the lever back down to the red line/);
+  assert.doesNotMatch(session.view().prompt, /raise the lever/);
   session.act('lever:weight'); until(session, v => v.ready, 5);
   assert.equal(KESTREL.hookLimitKg, 1500);
-  assert.match(session.view().brian.text, /measures only the rotor.*separate limit.*more than 1,500 kg/);
-  assert.doesNotMatch(session.view().brian.text, /most that the helicopter can carry/);
+  assert.match(session.view().brian.text, /One more crate would be more than the rotor can hold up, so the job is done\.$/);
+  assert.doesNotMatch(session.view().brian.text, /hook|measures only|separate limit|test pad/);
 });
 
 test('review: the dial’s sum is true while the helicopter is off the pad, and it agrees with the dial', () => {
@@ -452,4 +457,51 @@ test('the stage step: every control sits where it is drawn, and the stock and th
   const [lx, ly] = targetPoint(v, 'lever:top');
   assert.equal(hitTest(v, lx, ly)?.drag, 'lever');
   assert.ok(Math.abs(dragAngle(v, 'lever', lx, ly) - MOST_KG) < 1);
+});
+
+// Kyle's review of Rust (19 November 2026, docs/LAB.md 13.2) applied to Lift: no hedging, no "the sum" for a formula, no key labels
+// repeated in Brian's words, the rotor saved to the notebook, and watches long enough to watch.
+test('Kyle’s rules of 19 November 2026: no hedging, no “sum”, no key labels, no flying-mode caveats in any text of the lesson', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  const texts = [];
+  const collect = v => texts.push(v.say, v.prompt, ...v.hints, ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]), ...v.cards.map(c => c.label), ...(v.ideas ?? []).map(i => i.text));
+  STEPS.forEach((step, i) => { session.act(`go:${i}`); collect(session.view()); });
+  for (const answer of [0, 1]) for (const id of ['check-heavy', 'check-more', 'check-game']) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id); s.act(`answer:${answer}`); collect(s.view()); texts.push(s.view().brian.text);
+  }
+  const all = [...texts, ...lesson.words.map(w => w.meaning), ...lesson.keyIdeas.map(i => i.text)].filter(Boolean).join('\n').replace(/Tell me more|‹more›/g, '');
+  const faults = [/\bin this game\b/i, /\bthis game\b/i, /\bin this lesson\b/i, /\bthis test pad\b/i, /\ba simplification\b/i, /\bthe sums?\b/i, /\bsums\b/i,
+    /\bpress [A-Z0-9↑↓←→]/i, /\bpress (Space|Enter|Return)\b/i, /\bhold W\b/i, /\(or [↑↓]\)/, /\bAssisted\b/, /\bReal flying\b/, /\bsimply\b/i, /\bengine is at full power\b/i];
+  for (const f of faults) assert.doesNotMatch(all, f, `the lesson says ${all.match(f)?.[0]}`);
+  assert.doesNotMatch(all, /total mass/i, 'the same number is not called mass in one panel and weight in the next');
+});
+
+test('the rotor is saved to the notebook with the lift, and no text before the rotor step defines the rotor', () => {
+  const step = STEPS.find(s => s.id === 'word-lift');
+  assert.deepEqual([step.word, ...step.words], ['lift-lift', 'lift-rotor']);
+  assert.ok(lesson.words.some(w => w.id === 'lift-rotor' && /long blades on top of a helicopter/.test(w.meaning)));
+});
+
+test('three loads take about ten seconds and Watch again plays them again; a guided try holds its picture for at least three seconds', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'watch-loads');
+  const start = session.view();
+  assert.ok(start.actions.length > 0 && JSON.stringify(start.actions).includes('replay'), 'Watch again is offered');
+  let time = 0;
+  while (!session.view().ready && time < 30) { session.tick(.05); time += .05; }
+  assert.ok(time >= 9.5 && time <= 11, `three loads are ready after ${time.toFixed(1)} s`);
+  session.act('replay');
+  assert.ok(session.view().sets.every(f => f.lift === 0 && f.h === 0), 'the three helicopters start again from the pad');
+  run(session, 4); assert.ok(session.view().sets[0].lift > 0 && session.view().sets[2].lift === 0, 'the loads go one after another, not together');
+  const car = createClassroomSession(lesson);
+  playThroughTo(car, 'try-car');
+  car.act('car'); car.act('guess:0'); car.act('lever:weight');
+  run(car, TRY_SETTLE_S - .3); assert.ok(!car.view().ready, 'the run is still on show after 3.2 s');
+  until(car, v => v.ready, 10);
+  const heavy = createClassroomSession(lesson);
+  playThroughTo(heavy, 'try-heavy');
+  heavy.act('crate:add'); heavy.act('crate:add'); heavy.act('guess:1'); heavy.act('lever:top');
+  run(heavy, TRY_SETTLE_S - .3); assert.ok(!heavy.view().ready, 'a load that stays on the pad is shown not rising for over three seconds');
+  assert.equal(heavy.view().flight.status, 'taut');
 });
