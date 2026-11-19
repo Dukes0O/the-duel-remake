@@ -8,3 +8,19 @@ Part of the animals line (`docs/board/cards/WILD-ART-SRC.md` has the full histor
 Goat, chicken, scruffy camp dog, turkey vulture, big desert monitor lizard, scorpion (large enough to see at 10 m). The goat, chicken and dog live in the player's town and must look like working animals on a poor farm: thin, dusty, not pets. The dog can come from the wolf donor, the goat from the deer donor.
 
 ## Claude answers
+
+**19 November 2026, round 1 (Claude, builder and judge).** Sheet `docs/board/looks/wild-art-waste/round-1.jpg`,
+review beside it. Scorpion PASS. Goat, chicken, camp dog, turkey vulture and desert monitor not yet: the dark
+coats lay under a grey veil of shine, the chicken's neck was a bowling pin, the dog's paws were clubs, the
+vulture's bill was an ibis's and its wing showed no silver from below, the monitor's pattern was soft stripes on
+pillar legs. Species settled here: the dog is a village (pariah) dog, the monitor is the desert monitor
+*Varanus griseus* at 1.4 m, the scorpion is the giant desert hairy scorpion *Hadrurus arizonensis* built at four
+times life size (0.55 m) so that it can be seen from a car at 10 m. Each is judged beside a public-domain or CC0
+photograph of the real animal (`tools/blender/wildlife/waste-references.json`).
+
+**19 November 2026, round 2, final (Claude).** Sheet `round-2.jpg`, review beside it. Goat PASS, chicken PASS,
+camp dog PASS, turkey vulture PASS, desert monitor PASS. All six are in `public/assets/wildlife/` with a row each
+in `src/wildlife-models.js` and `src/wildlife.js` (species only; on no course). They pass at the distances a
+player sees them, 10 to 30 m from a car and 60 m up over the town; none is a close-up model. Weak points, for a
+later card if they are ever seen close: the dog's even coat, the monitor's pale soft pattern, the vulture's plain
+wing from the side. From the town's camera at 60 m up a goat is about 10 pixels long and a hen 3.
