@@ -527,7 +527,7 @@ export function createScablandsScene(course,options={}){
     const [{createTownWalkers},{createTownFx}]=await Promise.all([import('../town/view/town-walkers.js'),import('../town/view/town-fx.js')]);
     if(retired)return;
     const lifeTown={seed:townLayout.seed,buildings:townLayout.buildings||[],homePlots:[],people:(townLayout.walkers||[]).map(walker=>({id:walker.id}))};
-    townLife=createTownWalkers({town:lifeTown});townFx=createTownFx({town:lifeTown,buildings:root,fog:false});
+    townLife=createTownWalkers({town:lifeTown});townFx=createTownFx({town:lifeTown,buildings:root,fog:false,light:false});
     group.add(townLife.group,townFx.group);
   };
   void addTown();

@@ -62,7 +62,7 @@ export function townLifeSeed(town) { return ((Number(town?.seed) || 1) ^ 0x51f3a
 function placeOf(row, kind) {
   const width = Math.max(1, row.width || 1), depth = Math.max(1, row.depth || 1);
   const x = (row.x + width / 2) * CELL, z = (row.z + depth / 2) * CELL;
-  // Every town model faces -Z, the road side, so its door is on that edge.
+  // Every town building faces -Z, the road side, so its door is on that edge.
   return {id:row.id, kind, buildingId:row.buildingId ?? null, x, z, halfX:width * CELL / 2, halfZ:depth * CELL / 2,
     door:{x, z:row.z * CELL - 1.1}, cellX:row.x, cellZ:row.z, width, depth};
 }
@@ -97,7 +97,9 @@ export function townLifePlaces(town) {
     plots.set(plot.id, place);
     if (plot.household && plot.building && !plot.burning) sites.push({...place, kind:'site', plotId:plot.id});
   }
-  return {roads, taps, shops, schools, sites, plots, buildings, pens, reedBeds, smokers, camp:TOWN_CAMP,
+  const siteById = new Map(), siteByPlot = new Map();
+  for (const site of sites) { siteById.set(site.id, site); if (site.plotId) siteByPlot.set(site.plotId, site); }
+  return {roads, taps, shops, schools, sites, siteById, siteByPlot, plots, buildings, pens, reedBeds, smokers, camp:TOWN_CAMP,
     nearestTap:new Map(), nearestShop:new Map(), nearestSchool:new Map(), routes:new Map(), profiles:new Map(), order:null};
 }
 
@@ -142,11 +144,11 @@ function sitePoint(site, hash) {
 function workOf(person, places, hash, age) {
   if (age < 16 || age >= 65) return null;
   if (person.homeType === 'Under construction') {
-    const site = places.sites.find(row => row.plotId === person.home);
+    const site = places.siteByPlot.get(person.home);
     if (site) return site;
   }
   const job = places.buildings.get(person.jobBuildingId);
-  if (job) return places.sites.find(row => row.id === job.id) ?? job;
+  if (job) return places.siteById.get(job.id) ?? job;
   if (places.sites.length && (person.job === 'townhand' || !person.job)) return places.sites[Math.floor(mix(hash, 7) * places.sites.length)];
   return null;
 }
@@ -233,9 +235,12 @@ export function townLifeSample(town, places, {focus, radius, budget, hour = 12, 
     places.order = {seed, count:people.length, first:people[0], last:people[people.length - 1], rows};
     places.orderAge = 0;
   }
+  let built = 0;
   for (const {person, hash} of places.order.rows) {
     if (found.length >= budget) break;
     const id = String(person.id);
+    // At most 1,000 people are looked at afresh each second after the town changes, so no frame waits for all of them.
+    if (!places.profiles.has(id) && ++built > 1000) break;
     const profile = profileOf(person, places, hash);
     // Most of a big town is far from the camera: skip anyone none of whose places is near.
     let close = false;
@@ -415,7 +420,10 @@ const STAND = Object.freeze({left:Object.freeze({forward:.11, lift:0}), right:Ob
 const temp = {body:new THREE.Matrix4(), left:new THREE.Matrix4(), right:new THREE.Matrix4(), base:new THREE.Matrix4(), part:new THREE.Matrix4(), turn:new THREE.Matrix4(), move:new THREE.Matrix4(),
   out:new THREE.Matrix4(), quaternion:new THREE.Quaternion(), scale:new THREE.Vector3(), position:new THREE.Vector3(), up:new THREE.Vector3(0, 1, 0)};
 
-function headingTo(dx, dz) { return Math.atan2(-dx, -dz); }
+// The walkers face +Z (tools/blender/town-walkers.py paints their front photo there, as src/world/jobs/story-people.js
+// turns them); the trucks face -Z, the road side, as every town model does.
+function headingTo(dx, dz) { return Math.atan2(dx, dz); }
+function truckHeadingTo(dx, dz) { return Math.atan2(-dx, -dz); }
 function turnToward(current, target, maxStep) {
   let delta = target - current;
   delta = Math.atan2(Math.sin(delta), Math.cos(delta));
@@ -437,8 +445,11 @@ function wheelParts(model) {
   return {spins, steers, radius};
 }
 
-/** The road an agent is on, as metres: [{x, z}], and how far along it the agent really is. */
-export function townVehicleRoutes(town, tick = town?.tick ?? 0n) {
+/**
+ * The road each of the town's haulers is on, as metres: [{x, z}], and how far along it the hauler really is. Trucks to
+ * the neighbours are not drawn here: they cover 30 km in a game hour, so they are past the town in two seconds.
+ */
+export function townVehicleRoutes(town) {
   const routes = [];
   for (const agent of town?.haulers ?? []) {
     if (!Array.isArray(agent?.path) || agent.path.length < 2) continue;
@@ -448,22 +459,8 @@ export function townVehicleRoutes(town, tick = town?.tick ?? 0n) {
     for (let step = 1; step <= index; step++) done += Math.hypot(points[step].x - points[step - 1].x, points[step].z - points[step - 1].z);
     if (index < points.length - 1) done += (Number(agent.progress) || 0) * Math.hypot(points[index + 1].x - points[index].x, points[index + 1].z - points[index].z);
     const goods = Object.keys(agent.goods ?? {});
-    routes.push({id:`hauler:${agent.id}`, kind:agent.vehicle === 'truck' ? 'truck' : 'handcart', points, done,
+    routes.push({id:`hauler:${agent.id}`, kind:agent.vehicle === 'truck' ? 'truck' : 'handcart', points, done, lengths:polylineLength(points),
       model:goods.includes('water') ? 'water-tanker' : 'supply-truck', moving:agent.status === 'moving'});
-  }
-  for (const [outpostId, outpost] of Object.entries(town?.outposts ?? {})) for (const truck of outpost?.trucks ?? []) {
-    if (truck?.status && truck.status !== 'on-road') continue;
-    const route = Array.isArray(truck?.route) ? truck.route : truck?.route?.points;
-    const points = [truck?.origin, ...(route ?? []), truck?.destination].filter(point => Number.isFinite(point?.x) && Number.isFinite(point?.z))
-      .map(point => ({x:point.x, z:point.z}));
-    if (points.length < 2) continue;
-    let total = 0;
-    for (let step = 1; step < points.length; step++) total += Math.hypot(points[step].x - points[step - 1].x, points[step].z - points[step - 1].z);
-    let elapsed = 0;
-    try { elapsed = Number(BigInt(tick ?? 0) - BigInt(truck.startedTick ?? truck.startTick ?? 0)); } catch { elapsed = 0; }
-    const duration = Number(truck.durationTicks) || 1;
-    routes.push({id:`truck:${outpostId}:${truck.id}`, kind:'truck', points, done:Math.max(0, Math.min(1, elapsed / duration)) * total,
-      model:'supply-truck', moving:true});
   }
   return routes;
 }
@@ -595,7 +592,7 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
     for (const {person, errand, hash} of chosen) {
       const id = String(person.id);
       let walker = state.walkers.get(id);
-      if (!walker && joined >= 40) continue;
+      if (!walker && (joined >= 40 || state.walkers.size >= count + 40)) continue;
       keep.add(id);
       if (!walker) {
         joined++;
@@ -620,11 +617,21 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
         walker.routeKey = routeKey; walker.fresh = false; walker.hidden = false;
       }
     }
+    // Someone already on the way finishes the walk, even after the hour that sent them has passed: a game hour is under
+    // two seconds, far too short to cross a street. Their walk ends indoors or where they were going.
+    for (const [id, walker] of state.walkers) {
+      if (!count || keep.has(id) || !walker.line || walker.hidden) continue;
+      if (walker.distance < walker.line.total - .05) keep.add(id);
+    }
     // The person the player chose stays drawn while they are out, even when a lower hash would take their place.
     const chosenWalker = state.walkers.get(state.selected);
     if (chosenWalker && !keep.has(state.selected)) {
       const errand = townPersonErrand(chosenWalker.person, state.places, {hour, day, hash:chosenWalker.hash});
-      if (errand.outdoors || errand.moving) { keep.add(state.selected); chosenWalker.errand = errand; }
+      if (errand.outdoors || errand.moving) {
+        keep.add(state.selected); chosenWalker.errand = errand;
+        chosenWalker.line = densify(townWalkRoute(state.places, {x:chosenWalker.position.x, z:chosenWalker.position.z}, errand.to, {lane:chosenWalker.lane}), ground);
+        chosenWalker.distance = 0; chosenWalker.routeKey = null;
+      }
     }
     for (const id of state.walkers.keys()) if (!keep.has(id)) state.walkers.delete(id);
     state.refreshMs = (globalThis.performance?.now?.() ?? Date.now()) - started;
@@ -662,10 +669,11 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
         if (!(isLeft ? leftReady : rightReady)) {
           const foot = isLeft ? left : right;
           if (variant.hipLegs) {
-            const angle = Math.asin(Math.max(-.9, Math.min(.9, foot.forward / variant.hip)));
+            // A leg swung forward (+Z) turns by a negative angle about X.
+            const angle = -Math.asin(Math.max(-.9, Math.min(.9, foot.forward / variant.hip)));
             move.makeTranslation(item.rest.x, item.rest.y + foot.lift, item.rest.z); turn.makeRotationX(angle);
           } else {
-            move.makeTranslation(item.rest.x, item.rest.y + foot.lift, item.rest.z - foot.forward); turn.makeRotationX(foot.lift * 2.5);
+            move.makeTranslation(item.rest.x, item.rest.y + foot.lift, item.rest.z + foot.forward); turn.makeRotationX(-foot.lift * 2.5);
           }
           leg.multiplyMatrices(base, move).multiply(turn);
           if (isLeft) leftReady = true; else rightReady = true;
@@ -716,7 +724,7 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
   };
 
   const placeVehicle = (route, dt, slot) => {
-    const lengths = polylineLength(route.points), total = lengths[lengths.length - 1];
+    const lengths = route.lengths, total = lengths[lengths.length - 1];
     let view = state.vehicles.get(route.id);
     const truck = route.kind === 'truck';
     if (!view) {
@@ -730,6 +738,10 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
       state.vehicles.set(route.id, view);
     }
     view.seen = true;
+    if (!view.object) {
+      const source = truck ? state.models.trucks && (state.models.trucks.getObjectByName(route.model) ?? state.models.trucks.getObjectByName('supply-truck')) : state.cart;
+      if (source) { view.object = source.clone(true); view.object.userData.sharedTownAsset = true; vehicleRoot.add(view.object); view.wheels = wheelParts(view.object); }
+    }
     // The drawn vehicle chases the real one along the real road at a speed that reads as driving or pushing.
     const pace = truck ? 9 : 1.3, gap = route.done - view.drawn;
     if (gap < -1 || gap > 220) view.drawn = gap > 220 ? route.done - 60 : route.done;
@@ -738,7 +750,7 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
     view.last = view.drawn;
     const at = pointOnPolyline(route.points, lengths, Math.min(total, view.drawn));
     const y = ground(at.x, at.z);
-    const heading = headingTo(at.dx, at.dz);
+    const heading = truckHeadingTo(at.dx, at.dz);
     const turnRate = view.heading === null ? 0 : Math.atan2(Math.sin(heading - view.heading), Math.cos(heading - view.heading)) / Math.max(dt, 1e-3);
     view.heading = view.heading === null ? heading : turnToward(view.heading, heading, dt * 2.5);
     if (view.object) {
@@ -847,7 +859,9 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
       if (state.status === 'ready' || state.models.trucks) {
         const radius = Math.max(budget.minRadius, distance * budget.radiusFactor) + 120;
         let count = 0;
-        for (const route of townVehicleRoutes(town)) {
+        state.routesAge = (state.routesAge ?? Infinity) + dt;
+        if (state.routesAge > .25) { state.routesAge = 0; state.routes = townVehicleRoutes(town); }
+        for (const route of state.routes) {
           if (count >= budget.vehicles || !state.focus) break;
           const near = route.points.some(point => Math.hypot(point.x - state.focus.x, point.z - state.focus.z) < radius);
           if (!near) continue;
@@ -900,7 +914,7 @@ export function createTownWalkers({town, loadModel = url => new GLTFLoader().loa
     dispose() {
       state.disposed = true;
       group.removeFromParent();
-      shadows.geometry.dispose(); shadows.material.dispose(); shadowMap.dispose(); ring.geometry.dispose(); ring.material.dispose();
+      shadows.dispose(); shadows.geometry.dispose(); shadows.material.dispose(); shadowMap.dispose(); ring.geometry.dispose(); ring.material.dispose();
       for (const variant of state.variants) for (const item of variant.parts) item.mesh.dispose();
       for (const animal of state.animals) animal.mixer?.stopAllAction();
       const geometries = new Set(), materials = new Set();

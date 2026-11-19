@@ -1,0 +1,11 @@
+# TOWN-VIEW-LIFE
+
+**What changed.** `src/town/view/town-walkers.js` draws a sample of the town's real people walking the road graph between home, work, the nearest tap and shop by the game hour, workers bending at open sites, children playing, a ring under the person clicked (whose card opens), carts and trucks chasing their real haulers and outpost trucks with turning wheels, and goats, hens and the camp dog once their `WILDLIFE_MODELS` rows exist. `src/town/view/town-fx.js` draws fire in the helicopter's fire look (its sprite layer and atlas) with a flickering light and steam when it goes out, chimney and work smoke leaning with the real wind, dust days, swaying reeds on reed beds, and turns `windmill:rotor` and `pump-house:flywheel` and shows the water tower's `fill-1` to `fill-3` gauge. Hooks: `town-scene.js` (attach, step, pick), `town-entry.js` (a click on a walker opens the person card), `src/world/scablands-scene.js` (the town drive draws the same life near the car). All behind `wasteland-town`; sound cues named: `town.fire`, `town.crowd`.
+
+**The sample and its cost.** Each person has a fixed hash from the view's own seed. Once a second the view scans people in hash order and takes the first who are out of doors near the camera's ground point (1.3 times the camera's distance, at least 70 m), up to 160 at the mayor's zoom, falling to none at 900 m; at most 40 join each second. A 10,000-person town with everyone near the camera (the worst case, in Node): choosing the sample 2 to 4 ms once a second, a frame of 160 walkers under 1 ms, draw calls one per model part in use (fixed, not per person) plus one for shadows.
+
+**Checks.** `tools/test-town-view-life.mjs` (new, 70 checks): a town stepped 30 days with the view drawing, a fire and picks matches the same town stepped without it byte for byte; the view's seed is its own; walks keep to road cells and turn at corners; the standing foot stays planted in the drawn matrices; a click finds the person; carts only with their part; no animal file asked for before its row. `test-town-view`, `test-town-map-markers`, `test-town-hooks`, `test-town-visits`, `test-town-ui` pass.
+
+**Changed assertions.** None.
+
+**Removed.** Nothing: the town had no walkers or effects before. The drive's walkers still come from `createTownWorld`'s ids only (no homes); a follow-up can pass home and job there.

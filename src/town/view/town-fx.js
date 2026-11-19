@@ -28,7 +28,7 @@ const defaultLoad = {
 export function townWind(town) {
   const weather = town?.weather ?? {};
   // The weather's direction is the way the wind blows toward, 0 degrees along +x (as town-fire.js spreads it).
-  const angle = (Number(weather.windDirection) || 45) * Math.PI / 180;
+  const angle = (Number.isFinite(weather.windDirection) ? weather.windDirection : 45) * Math.PI / 180;
   const speed = (Number.isFinite(weather.windSpeedKph) ? weather.windSpeedKph : 14) / 3.6;
   return {x:Math.cos(angle), z:Math.sin(angle), speed};
 }
@@ -59,7 +59,7 @@ export function townWaterLevel(town, hour = Number(town?.calendar?.hour ?? 12)) 
 }
 
 /** Chimney smoke: kitchens, kilns, forges, generators and the bathhouse while they work; the camp fire at dawn and dusk. */
-export function townWorkSmoke(town, places, hour) {
+export function townWorkSmoke(town, places, hour, camping = (town?.people ?? []).some(person => String(person?.homeType ?? 'Canvas').toLowerCase().includes('canvas'))) {
   const sources = [];
   const working = hour >= 6 && hour < 19;
   for (const place of places.smokers) {
@@ -70,7 +70,6 @@ export function townWorkSmoke(town, places, hour) {
     sources.push({id:place.id, x:place.x + place.halfX * .45, z:place.z + place.halfZ * .3, height,
       kind:id === 'generator' ? 'exhaust' : id === 'kiln' || id === 'forge' ? 'dark' : 'pale'});
   }
-  const camping = (town?.people ?? []).some(person => String(person?.homeType ?? 'Canvas').toLowerCase().includes('canvas'));
   if (camping && (hour >= 18 || hour < 7)) sources.push({id:'camp', x:TOWN_CAMP.x, z:TOWN_CAMP.z, height:.4, kind:'camp'});
   return sources;
 }
@@ -111,7 +110,7 @@ function reedMaterial(uniforms) {
  * Smoke, fire, dust, reeds and moving parts. `buildings` is the group the scene draws buildings in (its named parts
  * turn); `scene` lends its fog for dust days when `fog` is true. Call `update` each frame with the camera's ground point.
  */
-export function createTownFx({town, scene = null, buildings = null, fog = true, load = defaultLoad, groundAt = scablandsSurfaceHeightAt,
+export function createTownFx({town, scene = null, buildings = null, fog = true, light = true, load = defaultLoad, groundAt = scablandsSurfaceHeightAt,
   hourAt = () => Number(town?.calendar?.hour ?? 12), seed = 1} = {}) {
   if (!town || typeof town !== 'object') throw new TypeError('Choose a town to draw its smoke and fire.');
   const group = new THREE.Group(); group.name = 'Town smoke, fire and dust';
@@ -119,7 +118,9 @@ export function createTownFx({town, scene = null, buildings = null, fog = true, 
   const cover = spriteLayer(THREE, TOWN_FX_LIMITS.cover, THREE.NormalBlending, [6, 22]);
   cover.points.renderOrder = 2; glow.points.renderOrder = 3; cover.points.name = 'Town smoke and dust'; glow.points.name = 'Town flames';
   group.add(cover.points, glow.points);
-  const fireLight = new THREE.PointLight(0xff7a2e, 0, 55, 1.6); fireLight.name = 'Town fire light'; group.add(fireLight);
+  // A light at the nearest fire. Only where the scene is new: adding a light to a scene already drawn recompiles all of it.
+  const fireLight = new THREE.PointLight(0xff7a2e, 0, 55, 1.6); fireLight.name = 'Town fire light';
+  if (light) group.add(fireLight);
   const reedUniforms = {uTime:{value:0}, uWind:{value:new THREE.Vector2()}};
   const reeds = new THREE.Group(); reeds.name = 'Town reeds'; group.add(reeds);
   const reedTuft = reedGeometry(), reedLook = reedMaterial(reedUniforms);
@@ -317,9 +318,16 @@ export function createTownFx({town, scene = null, buildings = null, fog = true, 
       state.time += dt;
       heightsAge += dt;
       if (heightsAge > 20) { heightsAge = 0; heights.clear(); }
-      const signature = townLifeSignature(town);
-      if (signature !== state.signature) { state.signature = signature; state.places = townLifePlaces(town); }
-      const hour = hourAt(), wind = townWind(town), fires = townFireSources(town);
+      // The town is read twice a second: its places, its fires and whether anyone still camps.
+      state.readAge = (state.readAge ?? Infinity) + dt;
+      if (state.readAge > .5) {
+        state.readAge = 0;
+        const signature = townLifeSignature(town);
+        if (signature !== state.signature) { state.signature = signature; state.places = townLifePlaces(town); }
+        state.burning = townFireSources(town);
+        state.camping = (town?.people ?? []).some(person => String(person?.homeType ?? 'Canvas').toLowerCase().includes('canvas'));
+      }
+      const hour = hourAt(), wind = townWind(town), fires = state.burning;
       scanParts();
       turnParts(wind, hour, dt);
       rebuildReeds(focus);
@@ -339,7 +347,7 @@ export function createTownFx({town, scene = null, buildings = null, fog = true, 
         if (state.backgroundBase) scene.background.copy(state.backgroundBase).lerp(DUST_COLOUR, state.dust * .8);
       }
       glow.reset(); cover.reset();
-      const smoke = [...townWorkSmoke(town, state.places, hour), ...homeSmoke(hour)];
+      const smoke = [...townWorkSmoke(town, state.places, hour, state.camping), ...homeSmoke(hour)];
       if (fires.length || state.cooled.size || smoke.length || state.dust > .02) ensureArt();
       if (art.rects) {
         drawFires(fires, wind, focus);

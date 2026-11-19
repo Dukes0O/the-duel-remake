@@ -138,7 +138,7 @@ function foundTown(seed) {
 // 5. Drawn walkers: a sample of a 10,000-person town, a click finds the person, feet planted in the drawn picture.
 {
   const roads = Array.from({length:80}, (_, index) => ({id:`road-${index}`, buildingId:'road-dirt', regionId:'scablands', x:index - 40, z:0, width:1, depth:1, state:'plan'}));
-  const town = {seed:91, tick:24n * 10n + 9n, calendar:{hour:9}, buildings:[...roads,
+  const town = {seed:91, tick:24n * 10n + 7n, calendar:{hour:7}, buildings:[...roads,
     {id:'site', buildingId:'kiln', regionId:'scablands', x:2, z:2, width:2, depth:2, state:'plan'},
     {id:'well', buildingId:'hand-well', regionId:'scablands', x:-4, z:-2, width:1, depth:1, state:'finished'}], homePlots:[],
     people:Array.from({length:10000}, (_, index) => ({id:`person-${index}`, name:`Person ${index}`, age:18 + index % 50, family:`family-${index % 2500}`,
@@ -171,7 +171,8 @@ function foundTown(seed) {
   check(life.group.getObjectByName('Chosen person').visible, 'the chosen person has a ring under them');
   // Follow one walking hip-jointed walker on a straight road and watch its standing foot in the drawn matrices.
   const walking = [...life.state.walkers.values()].find(walker => walker.pose === 'walk' && walker.variant.hipLegs && walker.line?.total - walker.distance > 6);
-  if (walking) {
+  check(walking, 'someone is walking to work at seven in the morning');
+  {
     const legs = walking.variant.parts.filter(part => part.kind !== 'body'), matrix = new THREE.Matrix4(), foot = new THREE.Vector3();
     const order = [...life.state.walkers.values()].filter(walker => !walker.hidden && walker.variant === walking.variant);
     const slot = order.indexOf(walking);
@@ -186,9 +187,25 @@ function foundTown(seed) {
       previous = {x:foot.x, z:foot.z, part:standing};
     }
     check(planted > slipped * 3, `the standing foot stays planted in the drawn picture (${planted} still, ${slipped} moved)`);
+    // The walkers' fronts face +Z in their model (tools/blender/town-walkers.py), so +Z must point the way they walk.
+    const body = walking.variant.parts.find(part => part.kind === 'body'), front = new THREE.Vector3(0, 0, 1);
+    body.mesh.getMatrixAt(slot, matrix);
+    front.transformDirection(matrix);
+    const way = new THREE.Vector3(); const before = walking.position.clone();
+    for (let frame = 0; frame < 10; frame++) life.update({dt:1 / 60, focus:{x:0, z:0}, distance:90});
+    way.subVectors(walking.position, before).setY(0).normalize();
+    check(front.setY(0).normalize().dot(way) > .7, `a walker faces the way they walk (${front.dot(way).toFixed(2)})`);
   }
+  // The costly case: the camera far from anyone, so the whole town is looked at and nobody is found.
+  const far = createTownWalkers({town, loadModel:loader()});
+  await far.ready;
+  far.update({dt:1 / 60, focus:{x:4000, z:4000}, distance:90});
+  far.update({dt:1.1, focus:{x:4000, z:4000}, distance:90});
+  const farMs = far.stats().refreshMs;
+  check(far.stats().drawn === 0, 'nobody is drawn where nobody is');
+  far.dispose();
   assert.equal(JSON.stringify(town, (_key, value) => typeof value === 'bigint' ? String(value) : value), snapshot, 'drawing the sample only reads the town'); checks++;
-  console.log(`  Sample of a 10,000-person town: ${stats.drawn} drawn, ${stats.drawCalls} draw calls; choosing the sample took ${stats.refreshMs.toFixed(1)} ms (once a second), a frame ${perFrame.toFixed(2)} ms (first ${firstFrame.toFixed(1)} ms).`);
+  console.log(`  Sample of a 10,000-person town: ${stats.drawn} drawn, ${stats.drawCalls} draw calls; choosing the sample took ${stats.refreshMs.toFixed(1)} ms (once a second), a frame ${perFrame.toFixed(2)} ms (first ${firstFrame.toFixed(1)} ms); looking at the whole town from far away ${farMs.toFixed(1)} ms.`);
   life.dispose();
 }
 
@@ -247,6 +264,8 @@ function foundTown(seed) {
   const stats = fx.stats();
   check(stats.art === 'ready' && stats.flames > 0 && stats.light > 0, 'a burning building has flames from the fire atlas and a flickering light');
   check(rotor.rotation.z !== 0, 'the windmill rotor turns with the wind');
+  const {townWind} = await import('../src/town/view/town-fx.js');
+  check(Math.abs(townWind(town).x - 1) < 1e-9, 'a wind blowing at 0 degrees blows along +x');
   check(gauges.every(mark => mark.visible) && townWaterLevel(town, 3) > .8, 'a full tower at night shows all three marks on its gauge');
   check(townWaterLevel(town, 7) < townWaterLevel(town, 3), 'the tower is drawn down at the morning peak');
   const dry = {...town, utilities:{waterResult:{demand:1000, delivered:100}}};
@@ -254,7 +273,7 @@ function foundTown(seed) {
   check(stats.dust > .3 && !scene.fog.color.equals(new THREE.Color(0xb4a286)), 'a dust day closes the air in to dust colour');
   check(townFireSources(town).length === 1, 'the fire comes from the building on fire');
   delete town.buildings[0].fireStage;
-  fx.update({dt:1 / 30, focus:{x:0, z:0}});
+  fx.update({dt:.6, focus:{x:0, z:0}});
   check(fx.state.cooled.has('burn') && fx.stats().smoke > 0, 'a fire that goes out steams');
   const bed = {...town, buildings:[{id:'reeds', buildingId:'reed-bed', regionId:'scablands', x:4, z:4, width:3, depth:3, state:'finished'}], weather:{}};
   const reeds = createTownFx({town:bed, load:fireArt});
