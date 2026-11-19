@@ -1,3 +1,5 @@
+import {captionSeconds} from '../../story/caption-queue.js';
+
 // Light the Town's load and lamps. The existing fighter owns all movement.
 // All state here lasts for one job; none of it changes the career save.
 export const BRAND_RULE = Object.freeze({
@@ -318,12 +320,20 @@ export function stepBrand(step, state, view, dt) {
 
   // A knockdown's recovery request is issued once, even across many frames.
   if (view.onFoot && view.fighter?.knockedDown) {
+    const last = lamps.find(lamp => lamp.id === state.lastLamp);
+    const place = view.difficulty === 'easy' && last ? last : step.hearth;
     if (!state.brandKnockdown) {
-      const last = lamps.find(lamp => lamp.id === state.lastLamp);
-      requests.push({type: 'brandRecovery', place:
-        view.difficulty === 'easy' && last ? last : step.hearth});
+      const text = place === step.hearth ? 'Down. Returning to the hearth.' : 'Down. Returning to the lamp.';
+      next.returnNotice = {text, remaining:captionSeconds(text)};
       next.brandSeconds = 0;
       events.push({type: 'brandOut'});
+    } else if (state.returnNotice) {
+      const remaining = state.returnNotice.remaining - Math.max(0, dt);
+      if (remaining > 1e-8) next.returnNotice = {...state.returnNotice, remaining};
+      else {
+        next.returnNotice = null;
+        requests.push({type:'brandRecovery', place});
+      }
     }
     next.brandKnockdown = true;
     next.lightingLamp = null;
@@ -331,6 +341,7 @@ export function stepBrand(step, state, view, dt) {
     return {state: next, complete: false, events, requests};
   }
   if (state.brandKnockdown) {
+    next.returnNotice = null;
     next.brandSeconds = rule.burnSeconds;
     next.brandsUsed++;
     events.push({type: 'brandCatch'});

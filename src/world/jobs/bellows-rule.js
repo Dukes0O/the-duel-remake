@@ -1,4 +1,5 @@
 import {nearestOnLine} from '../scablands-ways.js';
+import {captionSeconds} from '../../story/caption-queue.js';
 
 // Run Him Down's load and meetings. These facts belong to one job, never a save.
 export const BELLOWS_RULE = Object.freeze({
@@ -301,6 +302,16 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
   const next = {...state, clouds: stepBellowsAsh(state.clouds ?? [], dt),
     sacksThrown: [...(state.sacksThrown ?? [])]};
   const events = [], requests = [];
+  if (state.returnNotice) {
+    const remaining = state.returnNotice.remaining - (facts.recovering ? 0 : Math.max(0, dt));
+    if (remaining > 1e-8) next.returnNotice = {...state.returnNotice, remaining};
+    else {
+      next.returnNotice = null;
+      events.push({type:'bellowsRestart'});
+      requests.push({type:'bellowsRestart', leadMetres:BELLOWS_RULE.restartLeadMetres});
+    }
+    return {state:next, events, requests};
+  }
   if (state.thiefStopped) return {state: next, events, requests};
   for (const [index, metres] of BELLOWS_RULE.ashAtRoadMetres.entries()) {
     if (next.sacksThrown.includes(index) || !(facts.roadMetres >= metres)) continue;
@@ -321,7 +332,7 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
     next.ridersStarted = true;
     requests.push({type: 'bellowsRiders'});
   }
-  if (facts.furnaceMetres <= BELLOWS_RULE.furnaceReachMetres) {
+  if (state.leftTownGate && facts.furnaceMetres <= BELLOWS_RULE.furnaceReachMetres) {
     // Reset only the chase meetings and position. Fire damage and earned knocks
     // remain facts of this attempt, as do the two sacks already thrown. Each arrival costs the bellows and slows his next pass.
     next.furnaceArrivals = (state.furnaceArrivals ?? 0) + 1;
@@ -329,9 +340,7 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
     next.meetingHeld = false;
     next.solidHeld = false;
     next.clouds = [];
-    events.push({type: 'bellowsRestart'});
-    requests.push({type: 'say', lineId: 'bellows.restart'},
-      {type: 'bellowsRestart', leadMetres: BELLOWS_RULE.restartLeadMetres});
+    next.returnNotice = {text:BELLOWS_LINES.restart, remaining:captionSeconds(BELLOWS_LINES.restart)};
   }
   return {state: next, events, requests};
 }
@@ -382,17 +391,33 @@ export function stepBellowsChase(step, state, view, dt = 0) {
   const car = view.carPosition ?? (!view.onFoot ? view.player?.position : null);
   const carGapMetres = car && target.position
     ? Math.hypot(car.x - target.position.x, car.z - target.position.z) : Infinity;
-  const facts = {...view.bellows, carGapMetres, onFoot:view.onFoot === true};
+  const facts = {...view.bellows, carGapMetres, onFoot:view.onFoot === true,
+    recovering:view.combatWrecking === true || view.fighter?.knockedDown === true};
   const chaseElapsed = (state.chaseElapsed ?? 0) + Math.max(0, dt);
   const launchEnded = state.launchEnded === true || chaseElapsed >= BELLOWS_RULE.launchSeconds ||
     !view.onFoot && Math.abs(view.speedKmh ?? 0) > BELLOWS_RULE.launchPlayerSpeedKmh;
   state = {...state, chaseElapsed, launchEnded};
-  const load = stepBellowsLoad(state, facts, dt);
+  // Crossing out through the mouth counts on foot or in the car. Passing outside along the fence does not.
+  const gate = step.townGate, player = view.onFoot ? view.fighter?.position : car;
+  if (!state.leftTownGate && gate && player) {
+    const dx = player.x - gate.position.x, dz = player.z - gate.position.z;
+    const outside = -(dx * gate.through.x + dz * gate.through.z);
+    const across = dx * gate.through.z - dz * gate.through.x;
+    const previous = state.gateApproach;
+    if (previous && outside > 0 && outside <= gate.opening && Math.abs(across - previous.across) <= gate.opening) {
+      const share = -previous.outside / (outside - previous.outside);
+      const atPlane = previous.across + share * (across - previous.across);
+      if (Math.abs(atPlane) <= gate.opening / 2) state.leftTownGate = true;
+    }
+    if (outside >= -gate.opening && outside <= 0 && Math.abs(across) <= gate.opening) state.gateApproach = {outside, across};
+    else if (previous) state.gateApproach = null;
+  }
+  const load = state.returnNotice ? {state, events:[]} : stepBellowsLoad(state, facts, dt);
   const pursuit = stepBellowsPursuit(load.state, facts, dt);
   const ending = stepBellowsEnding(pursuit.state, {carGapMetres, inBoneyard: facts.inBoneyard === true,
     onFoot: view.onFoot === true, playerSpeedKmh: view.speedKmh ?? Infinity}, dt);
   // A stopped thief stays stopped throughout collection and captions.
-  const speedKmh = ending.state.thiefStopped || !Number.isFinite(facts.playerTopSpeedKmh)
+  const speedKmh = ending.state.thiefStopped || ending.state.returnNotice || facts.furnaceMetres <= BELLOWS_RULE.furnaceReachMetres || !Number.isFinite(facts.playerTopSpeedKmh)
     ? 0 : facts.inBoneyard ? bellowsBoneyardSpeedKmh(ending.state.furnaceArrivals)
     : !launchEnded ? BELLOWS_RULE.launchSpeedKmh
     : bellowsThiefSpeedKmh(facts.playerTopSpeedKmh, false, facts.behindMetres,

@@ -65,13 +65,13 @@ function turnBox([x0, z0, x1, z1, height], turns) {
 }
 
 // ---- One solid ----------------------------------------------------------------------------------------------------------------------------
-function make({id, placeId = null, kind, shape = 'box', x, z, halfX, halfZ, heading = 0, height, base, verticalClearance = false}) {
+function make({id, placeId = null, kind, shape = 'box', x, z, halfX, halfZ, heading = 0, height, base, verticalClearance = false, exactCarCorners = false}) {
   const y = base ?? scablandsSurfaceHeightAt(x, z);
   const center = Object.freeze([x, y + height / 2, z]), size = Object.freeze([halfX * 2, height, halfZ * 2]);
   // `verticalClearance`: a thing under a deck (the bridge's piers), which a car on the deck passes over, or on it (the trusses), which a car in the bed passes under: its height is read for a car on the ground too
   // (src/sim-contacts.js reads it for the overhead roofs of other courses the same way).
   return Object.freeze({id, placeId, kind, shape, x, z, y, halfX, halfZ, heading, height, minY: y, maxY: y + height, center, size, ...(verticalClearance ? {verticalClearance: true} : {}),
-    collision: Object.freeze({center, halfExtents: Object.freeze([halfX, height / 2, halfZ]), heading})});
+    ...(exactCarCorners ? {exactCarCorners: true} : {}), collision: Object.freeze({center, halfExtents: Object.freeze([halfX, height / 2, halfZ]), heading})});
 }
 
 // The Girder Bridge's two trusses and the Pipe's pipeline, for a land: along the road that crosses at each, in the road's own frame

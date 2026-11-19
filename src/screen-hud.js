@@ -124,6 +124,16 @@ export function presentJumpHeight(readout, s, app, ui, text) {
 // EVERBURN-PLAY-FIXES, third round: in a world job the crash message (and its kicker) shows only while the car is wrecked and
 // recovering or the crash is the catastrophic one. A plain collision shows nothing there and does not pause or cut the caption.
 const jobCrashShown = s => (s.crashFlash > 0 || s.impactTimer > 0) && (s.combatWrecking === true || s.catastrophic === true);
+export function worldReturnNotice(state) {
+  if (state.arena?.mode !== 'world-job') return '';
+  const job = state.arena.worldJob?.job;
+  if (state.onFoot && state.fighter?.knockedDown) {
+    return job?.stepState?.brandKnockdown && job.stepState.returnNotice
+      ? job.stepState.returnNotice.text : 'Down. Getting up by your car.';
+  }
+  if (state.combatWrecking) return 'Wrecked. Open ground in ' + Math.ceil(state.combatWreckTimer) + ' s.';
+  return job?.stepState?.returnNotice?.text ?? '';
+}
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
   const positionPanel=ui['race-position'].closest?.('.race-position');
   const clockPanel=ui['race-time'].closest?.('.race-clock');
@@ -135,14 +145,15 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const job = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
     if (!job) return;
     if (job !== captionJob) { captions.clear(state.stageTimeSec); captionJob = job; }
-    captions.add(line, urgent, state.stageTimeSec, fixedTime, jobCrashShown(state));
+    captions.add(line, urgent, state.stageTimeSec, fixedTime, jobCrashShown(state) || !!worldReturnNotice(state));
   };
   function updateHud(s) {
     const worldJob=s.arena?.mode==='world-job';
     if (clockPanel) clockPanel.hidden=worldJob;
     const jobRoad=worldJob ? worldJobMapRoad(s) : null;
     if (!worldJob || s.arena.worldJob.job?.done || !['countdown', 'racing'].includes(s.status)) { captions.clear(s.stageTimeSec); captionJob = null; }
-    const storyCaption = worldJob ? captions.advance(s.stageTimeSec, jobCrashShown(s)) : '';
+    const returnNotice = worldReturnNotice(s);
+    const storyCaption = worldJob ? captions.advance(s.stageTimeSec, jobCrashShown(s) || !!returnNotice) : '';
     if(worldJob!==lastWorldJob) {
       if(positionPanel && positionPanel.hidden!==worldJob) positionPanel.hidden=worldJob;
       lastWorldJob=worldJob;
@@ -281,7 +292,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):worldJob?storyCaption:s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
     ui['race-callout'].hidden=!callout||(!!s.paused && !(worldJob && app.worldMapOpen));
     text('callout-kicker',worldJob&&!crash?'':s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
-    text('callout-text',callout);
+    if (returnNotice) {
+      ui['race-callout'].hidden = !!s.paused;
+      text('callout-kicker','');
+    }
+    text('callout-text',returnNotice || callout);
     ui['race-callout'].classList.toggle('crash-callout',crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
     // A world job moves the spoken-line subtitle below the story caption, off the rear-view mirror (src/combat-hud.css).

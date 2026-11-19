@@ -1721,6 +1721,7 @@ export function stepWorldJob(duel, dt) {
       playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
         (state.combat?.flameBursts ?? []).some(burst => burst.ownerId === 'player')} : {}),
     ...bellowsFacts,
+    combatWrecking:state.combatWrecking === true,
     ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
     ashMen: currentStep?.brand ? actors.filter(actor =>
       worldJob.actors.some(source => source.brandAsh && source.id === actor.id)) : [],
