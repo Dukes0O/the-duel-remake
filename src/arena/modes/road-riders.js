@@ -219,8 +219,8 @@ export function roadRiderGoal(duel,car,dt) {
   const goal=reachableGoal(duel,car,{...brain,speedMph,boost});
   const turn=wrapHeading(Math.atan2(goal.x-me.x,goal.z-me.z)-me.heading);
   if (!car._arenaUTurn && Math.abs(turn) < R.turnRadians) return goal;
-  // The arena pilot normally takes its U-turn speed from the floor limit. On
-  // open land that makes a rider steer a long loop at 81 mph after overshooting.
+  // The arena pilot normally takes its U-turn speed from the floor limit.
+  // Brake into the turn so an open-land rider can recover from an overshoot.
   const brakingMph=Math.abs(car.speedMph)-DRIVE.brakeAccel*dt;
   return {...goal,boost:false,speedCapMph:Math.max(R.turnMph,brakingMph)};
 }
