@@ -803,6 +803,7 @@ test('night size: a shared game file, the save shape or the physics makes the ni
   for(const file of ['src/story/ledger-save.js','src/story/night-2-save.js','src/world/world-save.js','src/bowl/bowl-save.js'])
     assert.ok(saveFile(file),file+' holds part of the save');
   assert.ok(!saveFile('src/story/ledger.js')&&!saveFile('tools/test-story-save.mjs'));
+  assert.ok(saveFile('src/career-grant-2026-11-16.js'),'a dated career one-off touches the save');
 });
 test('night size: any other change is a partial night that says where the files are',()=>{
   const size=choose(['src/lab/lab-tune.js','src/lab/lab-save-view.js','tools/test-lab.mjs','docs/changes/X.md']);
@@ -825,6 +826,13 @@ test('night size: Saturday, a last full night older than seven days, no earlier 
   assert.equal(forced.size,'full');assert.match(forced.reason,/asked for by hand, for a release/);
   assert.equal(parseNightArguments(['--idle-awake','--no-push','--full']).full,true);
   assert.throws(()=>parseNightArguments(['--idle-awake','--no-push','--full','--full']));
+});
+test('night size: a file the game loads never makes a night empty, even when no Node suite reaches it',()=>{
+  const reach=files=>({suites:[],unreached:files,total:100});
+  for(const file of ['src/world/look.css','public/assets/x.jpg','index.html','src/data/table.json'])
+    assert.notEqual(chooseNightSize({date,previous:last,lastFull:{date:'2026-10-11'},changed:[file],reach}).size,'none',file);
+  assert.equal(chooseNightSize({date,previous:last,lastFull:{date:'2026-10-11'},changed:['tools/blender/recipe.py'],reach}).size,'none',
+    'a tool file no suite reads still needs no night');
 });
 test('night size: on a Saturday or an old week, a night with nothing to check reruns only when no full pass still counts',()=>{
   const docsOnly=['docs/board/STATUS.md'];

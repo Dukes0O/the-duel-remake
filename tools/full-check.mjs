@@ -29,12 +29,16 @@ export const NIGHT_FULL_FILES=Object.freeze([
     'wasteland-career.js','wasteland-progress.js','grand-prix-career.js',
     'sim-common.js','sim-contacts.js','sim-crash.js','sim-driving.js','sim-laps.js',
     'sim-police.js','sim-results.js','sim-rival.js','sim-scablands.js','offroad-physics.js',
-    'collision.js','vehicle-collision.js','vehicle-impact.js','vehicle-surface.js','engine-curve.js']),
+    'collision.js','vehicle-collision.js','vehicle-impact.js','vehicle-surface.js','engine-curve.js',
+    // Saved records outside the career file, and the cars' own contact and grounding rules.
+    'leaderboard.js','ghost.js','lap-telemetry.js','vehicles.js','vehicle-contact-modifiers.js','vehicle-grounding.js',
+    'vehicle-knock.js']),
   ...under(path('src','town'),['town-store.js','town-state.js','town-migrate.js']),
   path('src','heli','heli-save.js'),path('src','lab','lab-save.js')
 ]);
 // Every save file holds part of the save's shape, including ones added after this list (src/**/...save.js).
-export const saveFile=file=>/^src\/(?:[^/]+\/)*[^/]*save\.js$/.test(file);
+export const saveFile=file=>/^src\/(?:[^/]+\/)*[^/]*save\.js$/.test(file)||/^src\/career-[^/]*\.js$/.test(file);
+const gameFile=file=>/^(?:src|public)\//.test(file)||/^index\.html$/.test(file)||/\.css$/.test(file);
 // Combat balance runs on a partial night only when one of these changed.
 const combatFile=file=>/^src\/(?:arsenal|arena)\//.test(file)||/^src\/combat-[^/]*\.js$/.test(file);
 // Notes, the board, run logs and review sheets never reach a suite.
@@ -360,7 +364,9 @@ export function chooseNightSize({date,force=false,previous=null,lastFull=null,ch
   // Looking up which suites reach the files takes a while, so it waits until the answer is needed.
   let reached;
   const lookup=()=>reached??=code.length?reach(code):{suites:[],unreached:[],total:0};
-  const unread=!triggers.length&&code.every(file=>lookup().unreached.includes(file));
+  // A file the game loads (source, styles, page, assets) is seen by the browser scenarios and the frame check even when
+  // no Node suite reaches it, so it never makes a night empty. Only tool files no suite reads can.
+  const unread=!triggers.length&&code.every(file=>!gameFile(file)&&lookup().unreached.includes(file));
   // Nothing to check. On a Saturday, or when the last full night is old, a night that is not itself a full
   // pass still runs in full, as the weekly safety net; a full pass that still counts (rule 19) needs no rerun.
   if(unread&&(!(saturday||stale)||nightIsFullTierPass(previous))) {
@@ -383,7 +389,8 @@ export function nightSizeLine(size) {
 }
 // Choose the size and, for a partial night, what it runs. Any failure to read the history falls back to a full night.
 async function decideNight({options,source,history,previous,dependencies}) {
-  const lastFull=history.find(row=>(row.size??'full')==='full')??null;
+  // A failed full night does not reset the seven-day clock: only a full night that passed counts.
+  const lastFull=history.find(row=>nightIsFullTierPass(row))??null;
   const force=options.full===true||options.strict===true;
   const changed=previous&&!force?await dependencies.changedFiles(previous.source,source):[];
   const choice=chooseNightSize({date:options.date,force,previous,lastFull,changed,reach:files=>dependencies.reach(files)});
