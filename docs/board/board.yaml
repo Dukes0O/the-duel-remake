@@ -573,8 +573,9 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: "Codex (cloud), 18 November 2026, slice 2"
+    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/WORLD-FAULTS-18-NOV.md"

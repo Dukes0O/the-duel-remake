@@ -1,0 +1,14 @@
+# WORLD-FAULTS-18-NOV, slice 2
+
+- Tin Town’s 9 m gate clears all twelve 10 and 20 km/h exits at ±15°, ±30° and ±45°. Each 45° exit used to record 29 near-post and 54 far-post contacts. Only these two posts use the additional car axes.
+- Run Him Down waits for an outward crossing and shows Cinder’s reason for 7.50 s before the Boneyard return. Light the Town shows its reason before the original one-time Easy lamp or hearth recovery. Existing knockdown and wreck notices name the destination.
+- On foot, click the picture to capture. The HUD says “Esc frees the mouse” while held and explains refusal. One 400 px move and four 100 px moves each turn 50.42°. Leaving for results releases a held canvas once. Late grants on pause, car entry or menu release too. Other interfaces retain their lock.
+- **Cloud lane.** At `40aa0cc07`, 174 of 179 suites passed, including all five focused suites and the race replays. The Vite build passed. Six selected suites belong to the laptop.
+- **Follow-up.** At `e6180d810` 66/67 passed, including the revised world-mode fixture. At `d553950ba` 25/26 passed, including both native results lock owners and 297 replay checks. Both builds passed. The same Pacific Canyon signature failed each time.
+- **Controls.** Clean `ea41c7aed` reproduced the fan WAV and Pacific Canyon signatures. The 200-cell run took 606 ms in the lane, then 420 ms here and 442 ms on clean integration. Twelve river actors took 0.263 ms in the lane, then 0.168 ms here and 0.109 ms on clean integration against a 0.150 ms limit. Warmed feature medians were 0.096–0.119 ms and clean medians were 0.102–0.112 ms.
+- **Review.** The lead matched all 2,819 hits in 24,000 independent sweeps. Current TALK and ROAD dry merges are clean. The combined TALK/WORLD tree passed the captured, delayed, dialogue, foreign-owner and normal-release cases.
+- **For Claude to run.** Browser scenarios `everburn-job3` (new gate-notice picture), `scablands-land` and `onfoot-controls-camera`. Repeat the river and grid CPU timings on the laptop. Laptop suites selected were `test-course-kit`, `test-drive-through`, `test-earned-cars-ui`, `test-medals`, `test-salt-flats` and `test-salt-flats-art`.
+- **Changed assertions.** Job 2 and the world-mode fixture now require the readable cue before the original Easy, Medium or Hard recovery. Job 3 requires a real exit and the full reading time. The wreck HUD expects a destination. Contact and capture regressions cover angled exits and real results.
+- **Codex decided.** Check the actual gate plane on foot or in the car. Preserve the original chase line, cost and earned knocks. Five Cold Nights gets no forced move or retry.
+- **Removed.** Automatic capture on car exit, the 300 px per-event cap, the instant chase return and its old duplicate queued caption.
+- **Still open.** Claude watches for the grey flash in hand play and listens for the landing thump.
