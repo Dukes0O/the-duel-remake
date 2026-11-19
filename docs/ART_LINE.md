@@ -274,6 +274,17 @@ the game.
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
 - **Wide seat-band cuts break a scaffold.** Removing horizontal seat bands from one whole stand mask also cuts through the posts and braces where they cross those bands, leaving broken supports. Trace seat rows as separate pieces and build or trace the open frame independently; inspect the full side view.
 
+- **A part stands 22 m from its machine because a name was used twice.** `town-machines-2.py` named a paver track
+  wheel `roller` inside a loop, after `roller` already meant the road roller. The line that lays the family out in a
+  row then moved that one wheel to x = 22 and left the roller on top of the loader. Every sheet hid the other machines,
+  so nobody saw it until the paver was loaded in the game, where a black lump hung in the air beside another machine.
+  A recipe that builds several machines gives every loop its own names, and its last step prints each machine's
+  bounds: a machine wider than its own table is this fault. (MACHINE-ROADS, 19 November 2026.)
+- **A stand-in shape hides a model that was never loaded.** The yard drew a yellow box for the roller and a green box
+  for the paver when their models were missing from the file it loaded, and so it never failed. The models had been
+  finished in another file for eleven days. Where a model is missing the game should say so, not draw a box.
+  (19 November 2026.)
+
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
 - **A drum spins around the wrong axis in a Blender review.** Town models convert game Y-up to Blender Z-up, so a part whose long axis is game Y spins around Blender Z (local Euler Z), after checking its imported joint orientation. The mixer-truck review pose originally rotated around Blender Y and looked unchanged end-on.
@@ -319,6 +330,15 @@ the game.
   it is (`aSoil` in `src/world/ground-view.js`). (16 November 2026.)
 - **Tell colour from light before changing a colour.** Switch the sun off in the running game: what stays pale is colour,
   what goes dark was only lit. A heap's body turned out to be light and its pale ring colour. (16 November 2026.)
+- **Work painted on a ground that lies under another ground is never seen.** The road machines coloured the yard's
+  floor, and the floor lies under the edited ground wherever a machine has worked, so a finished road showed nothing at
+  all for five days. A picture from straight above after one pass settles it. Worked ground is now its own thin surface
+  0.07 m above the ground (`createRoadWorkView` in `src/machines/roads-view.js`), on the same one-metre corners and the
+  same diagonal as the edited ground so that the two lie parallel, with its states drawn by a shader the way wear is
+  drawn on a machine. (MACHINE-ROADS, 19 November 2026.)
+- **A heap or a pit taken for worked ground.** The yard starts with a one-metre heap and a one-metre ditch recorded as
+  road cells. Drawn as "cut" they came out as one flat pale slab, the paper fault again. Only what a tool did is drawn as
+  work; a heap or a hole is the ground's own shape and the ground draws it. (19 November 2026.)
 
 ### Moments (a thing that happens, not a thing that stands)
 
