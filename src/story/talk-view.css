@@ -1,5 +1,5 @@
-.in-story-talk #race-hud, .in-story-talk .world-hud, .in-story-talk .combat-hud,
-.in-story-talk #story-caption, .in-story-talk .rear-view, .in-story-talk .race-only { visibility: hidden }
+.in-story-talk #race-hud, .in-story-talk .world-hud, .in-story-talk .combat-hud, .in-story-talk .combat-upgraded-hud,
+body:has(.in-story-talk) #story-caption, .in-story-talk .rear-view-frame, .in-story-talk .race-only { visibility: hidden }
 .story-talk {
   --paper: #f2e7cd; --ink: #292722; --muted-ink: #62523a;
   position: absolute; inset: 0; z-index: 15; overflow: hidden; outline: 0;
@@ -57,8 +57,3 @@
 .story-recall li + li { margin-top: .6em }
 .story-recall li b { display: block; color: #dec79d; font: bold .7em system-ui, sans-serif }
 .story-talk.recalling :is(.story-speech,.story-thoughts,.story-options,.story-inner-voice,.story-talk-controls button:first-child) { visibility: hidden }
-@media(max-width: 600px), (max-height: 520px) {
-  .story-options, .story-thoughts { width: 95%; font-size: 14px; bottom: 12%; gap: .4em; max-height: 60% }
-  .story-cloud { padding: .42em .8em }
-  .story-talk-controls { bottom: 1.5% }
-}

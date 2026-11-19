@@ -47,8 +47,9 @@ export const pageFunctions = {
     scene.add(anchor);
     window.__render.renderFrame();
   },
+  // A real key reaches the focused element first, never the window itself.
   press: (code, type) => {
-    window.dispatchEvent(new KeyboardEvent(type, {code, bubbles: true, cancelable: true}));
+    (document.activeElement || document.body).dispatchEvent(new KeyboardEvent(type, {code, bubbles: true, cancelable: true}));
   },
   state: (phase, text) => {
     const root = document.querySelector('.story-talk');
