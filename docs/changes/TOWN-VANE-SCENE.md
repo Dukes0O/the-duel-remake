@@ -6,6 +6,8 @@
 
 **Not run here (Claude's laptop).** Browser scenario `tools/scenarios/town-vane.mjs`: this container's software renderer times out on the drive to the yard. Laptop-only suites: none touched. No frame check.
 
-**Changed assertions.** None.
+**After TOWN-OUTPOST-SCENE's review.** Merged that branch with integration 3be1f37 (no conflict); `test-town-vane-scene`, `test-town-outposts-scene`, `test-town-world`, `test-scablands-solid`, `test-night-2` and `test-night-2-scenario` passed, and the build.
+
+**Changed assertions.** None in this card (TOWN-OUTPOST-SCENE's own note gives its test 7 change).
 
 **Removed.** Nothing; this is new.
