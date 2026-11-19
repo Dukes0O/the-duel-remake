@@ -18,6 +18,7 @@ import {createTrencherState, stepTrencher} from './trencher.js';
 import {createDrillRigState, stepDrillRig} from './drill.js';
 import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
 import {machineControlInput} from '../input-contexts.js';
+import {createYardPlant, fillYardRockHeap, isPlantMachine, stepYardPlant, tipTruckIntoHopper} from './plant-yard.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
@@ -161,6 +162,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
   // TOWN-STORE replaces this page-lifetime memory save; career storage is never used.
   if (!ground && !loaded) {
     for(const [radius,volume] of [[0.8,4],[1.6,7],[2.6,11]])edit.fill({x:DIG_HEAP.x,z:DIG_HEAP.z,radius},'topsoil',volume);
+    if (town) fillYardRockHeap(edit);
     memory[playerId]=edit.toSave();
   }
   setScablandsGroundEdit(edit);
@@ -177,6 +179,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
+    plant:town ? createYardPlant({playerId, remember:!ground}) : null, plantSupplied:!!ground,
     town,cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
@@ -535,6 +538,8 @@ function fixedStep(sim,input) {
     const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
     events.push(...result.events);
+  } else if(isPlantMachine(sim.activeMachine)){
+    // The plant step below moves the loader and the mixer truck.
   } else if(sim.activeMachine==='drill'){
     const result=stepDrillRig(sim.drill,input.controls,STEP);
     next={...next,drill:result.state}; events.push(...result.events);
@@ -549,6 +554,12 @@ function fixedStep(sim,input) {
     const bedAngle=Math.max(0,Math.min(.85,(truck.bedAngle??0)+(tipping?.6:-.5)*STEP));
     advanced={...advanced,machines:{...advanced.machines,dumpTruck:{...truck,bedAngle}}};
     if(input.action==='tip'&&bedAngle<.4)return {...next,haul:{...advanced,activeMachine:'excavator'},events};
+    const hopper=input.action==='tip'?tipTruckIntoHopper(next,advanced.machines.dumpTruck,STEP):{handled:false};
+    if(hopper.handled){
+      events.push(...hopper.events);
+      return {...next,plant:hopper.plant,lastMessage:hopper.message||next.lastMessage,dirty:next.dirty||hopper.dirty,
+        haul:{...advanced,machines:{...advanced.machines,dumpTruck:hopper.truck},activeMachine:'excavator'},events};
+    }
     if(input.action==='dig'||input.action==='load'||input.action==='tip'){
       if(input.action==='dig'){
         const machine=haul.machines.excavator,tip=machineToolPosition(machineDefinition('excavator'),machine,'bucket');
@@ -600,6 +611,8 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
   while(carry+1e-10>=STEP){
     const previousMessage=next.lastMessage;
     next=fixedStep({...next,lastMessage:''},input);
+    // The plant runs every step, whichever machine is in use.
+    if(next.plant){const works=stepYardPlant(next,input,STEP);next={...next,plant:works.plant,lastMessage:works.message||next.lastMessage,events:[...next.events,...works.events]};}
     if(next.lastMessage) next.events.push({type:'machine-message',message:next.lastMessage});
     else next.lastMessage=previousMessage;
     carry-=STEP;
@@ -615,5 +628,6 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
 }
 
 export function digSandboxMachineState(sim,id=sim.activeMachine) {
+  if(isPlantMachine(id))return sim.plant[id].machine;
   return sim.roadMachines[id]?.machine??(id==='borer'?sim.borer:id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
 }
