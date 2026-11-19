@@ -274,11 +274,13 @@ export class App {
         }
       }
       if(event.boundaryReset||event.recovered||event.checkpointReset){this.ghostRecorder?.discontinuity();this.grandPrixLapRecorder?.discontinuity();this.lapTelemetryRecorder?.discontinuity();}
+      if (event.fighterExited || event.fighterEntered || event.arenaResult) {
+        this._footPointer = {lookX:0, lookY:0, fire:false, aim:false};
+        if ((event.fighterEntered || event.arenaResult) && footMouseLocked()) document.exitPointerLock();
+      }
       if(event.fighterExited||event.fighterEntered){
         this.inputContext=null;
         this.keys={};
-        this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
-        if(event.fighterEntered && footMouseLocked()) document.exitPointerLock();
         this._resetKeyboardInput();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }

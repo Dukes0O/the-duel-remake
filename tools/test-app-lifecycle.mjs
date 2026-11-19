@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {finishArenaEvent} from '../src/arena/arena-event.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 
 let checks=0;const check=(value,label)=>{assert(value,label);checks++;};
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
@@ -138,9 +141,44 @@ try {
   inputApp._inputEvents.abort(); inputApp.duel.state.paused = false;
   mouse('mousedown', 0);
   check(!inputApp._footPointer.fire, 'disposed mouse handlers cannot fire again');
+  // The game can finish a job while the player is still on foot and holding the mouse.
+  document.querySelector = () => null;
+  for (const lockAtFinish of [canvas, outside]) {
+    const app = new App(), duel = app.duel, state = duel.state;
+    try {
+      duel.featureFlags = createFeatureFlags({storage:null, overrides:{'hidden-road':true,'story-everburn':true,arsenal:true}});
+      state.wastelandGateDiscovered = true;
+      assert(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:1989, opponents:[], job:EVERBURN_JOBS[2]}));
+      Object.assign(state, {status:'racing',countdown:0}); duel.step(1/120);
+      assert.equal(state.onFoot, true);
+      let releases = 0, pauses = 0;
+      const pause = app.togglePause.bind(app);
+      app.togglePause = () => { pauses++; pause(); };
+      const lock = element => {
+        document.pointerLockElement = element;
+        document.dispatchEvent(new Event('pointerlockchange'));
+      };
+      canvas.requestPointerLock = () => lock(canvas);
+      document.exitPointerLock = () => { releases++; lock(null); };
+      mouse('mousedown', 0); mouse('mousedown', 2);
+      assert.equal(app.footMouseHint, 'Esc frees the mouse');
+      if (lockAtFinish === outside) lock(outside);
+      finishArenaEvent(duel, 'job-complete', 'player');
+      assert.equal(state.status, 'arena_result');
+      assert.equal(document.pointerLockElement, lockAtFinish === canvas ? null : outside);
+      assert.equal(releases, lockAtFinish === canvas ? 1 : 0);
+      assert.equal(pauses, 0);
+      assert.equal(state.paused, false);
+      assert.equal(app.footMouseHint, '');
+      assert.equal(!!(app._footPointer.capture || app._footPointer.fire || app._footPointer.aim), false);
+    } finally {
+      document.pointerLockElement = null;
+      app.dispose();
+    }
+  }
 } finally {
   inputApp._inputEvents.abort();
   if (originalDocument === undefined) delete globalThis.document;
   else globalThis.document = originalDocument;
 }
-console.log('Mouse aim/fire chord and pre-shot look acceptance passed.');
+console.log('Mouse aim/fire, pre-shot look, delayed capture and both arena-result lock owners passed.');
