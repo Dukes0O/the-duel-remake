@@ -6,6 +6,17 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab's lessons read more plainly.** Kyle played Rust on 19 November and set
+  new rules for every lesson. Rust, Fire, Strength and Fuel are rewritten to them:
+  each rule is stated without caveats, a multiplication is never called a sum, every
+  task names its question first, and Brian no longer repeats what the key labels say.
+  Watch runs with several moving parts last about ten seconds, and R plays them
+  again. In Rust the rust now grows along the whole wet length of the nail, and
+  Brian's job protects a mooring chain, the toolbox and the garden gate.
+- **Brian's page in every Lab lesson:** the step being worked on sits at the top in
+  full; the words learned so far wait behind one fold, "Words so far"; steps that
+  only gave an instruction or asked a question leave the page once done. The
+  formula panel starts closed, and F opens it. Suspension's Watch again now works.
 - **Summit Run can be reached from the air, and you can see which way to go.**
   Beside HEADING a new HEAD FOR gauge shows the heading to turn to and how far
   it is, "320, Summit Run · 15.6 km" (once there, the landing pad or the ski

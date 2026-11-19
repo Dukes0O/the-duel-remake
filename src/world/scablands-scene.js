@@ -922,7 +922,8 @@ export function createScablandsScene(course,options={}){
         night2 = createNight2Look(course);
         group.add(night2.group);
       }
-      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? []);
+      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? [],
+        {mouthOf: storyPeople.mouthOf, viewer: worldJob?.night2?.camera?.position ?? here});
       brandAshView.update(worldJob,drawnShift);
       if (worldJob?.riderFight && !roadRidersView) {
         roadRidersView = createBrandAshView({road:true});

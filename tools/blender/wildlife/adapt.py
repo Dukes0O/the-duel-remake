@@ -9,9 +9,12 @@ from pathlib import Path
 ROUGH_FUR = {'black-bear', 'yellow-bellied-marmot', 'echidna', 'elk', 'bighorn-sheep', 'eastern-grey-kangaroo',
              'red-deer', 'wild-boar', 'chamois', 'ibex', 'alpine-marmot', 'wildcat'}
 
+# Dark coats: fully rough and low in shine, or a grey veil lies over the black.
+MATTE = {'black-bear', 'goat'}
+
 # Small animals and birds: a 512 coat map is plenty and saves runtime size.
 SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra',
-             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull'}
+             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull', 'chicken', 'turkey-vulture', 'scorpion'}
 
 
 def build(species, output, c, cache):
@@ -288,7 +291,7 @@ def static_donor(species, mesh, output, c):
 def export(mesh, rig, output, c, root=None):
     bpy = c.bpy
     c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR, size=512 if output.stem in SMALL_MAP else 1024)
-    if output.stem == 'black-bear':
+    if output.stem in MATTE:
         shader = mesh.data.materials[0].node_tree.nodes.get('Principled BSDF')
         shader.inputs['Roughness'].default_value = 1
         shader.inputs['Specular IOR Level'].default_value = .18

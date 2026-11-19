@@ -277,7 +277,18 @@ export function createStoryPeopleView(loadAsset) {
       group.add(figure.root);
     }));
   };
+  const mouthHead = new THREE.Vector3();
   return {group,
+    // STORY-NIGHT-2-FLOW: where a drawn figure's mouth is and the way its head faces, for the cold breath
+    // (src/world/night-2-look.js). Null until the figure is loaded and drawn.
+    mouthOf(id, out) {
+      const figure = figures.get(id);
+      if (!figure?.root.visible) return null;
+      const height = STORY_FIGURES[id].height, yaw = figure.facing.yaw + figure.facing.headYaw;
+      figure.joints.head.bone.getWorldPosition(mouthHead);
+      out.set(mouthHead.x + Math.sin(yaw) * .06 * height, mouthHead.y + .036 * height, mouthHead.z + Math.cos(yaw) * .06 * height);
+      return {position: out, yaw};
+    },
     update(worldJob, viewer, clock, drawnShift) {
       if (disposed) return;
       const people = worldJob?.storyPeople ?? EMPTY;

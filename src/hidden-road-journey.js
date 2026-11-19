@@ -70,6 +70,20 @@ export function prepareHiddenRoadVisit(duel) {
   return true;
 }
 
+// STORY-NIGHT-2-FLOW: a return to the yard from a story night skips the arrival (the gate opening and the gatekeeper's
+// welcome, which play once in a career). The car stands where the entering drive would have left it, inside the wall.
+export function arriveHiddenRoadVisitAtOnce(duel) {
+  const s = duel.state, j = s.hiddenRoadJourney;
+  if (!s.hiddenRoadVisit || !j?.departed || j.phase !== 'opening') return false;
+  j.gateOpen = 1;
+  commit(duel);
+  const gate = j._gate, distance = HIDDEN_ROAD_GATE.enterDistance;
+  place(duel, gate.x + Math.sin(gate.heading) * distance, gate.z + Math.cos(gate.heading) * distance, gate.heading, 0);
+  phase(duel, 'arrived');
+  duel.emit({hiddenRoadArrived: {journeyId: j.id}});
+  return true;
+}
+
 export function checkHiddenRoadDeparture(duel) {
   const s = duel.state, j = s.hiddenRoadJourney;
   if (!j || j.departed || s.status !== 'racing' || s.onFoot || !onHiddenRoad(duel.course, s)) return false;

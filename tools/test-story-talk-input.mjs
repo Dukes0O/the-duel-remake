@@ -109,6 +109,8 @@ requestWhileWalking();
 grant();
 assert.equal(document.pointerLockElement, canvas);
 document.exitPointerLock();
-assert.equal(pauses, 1, 'manual release outside a conversation still pauses once');
+// STORY-NIGHT-2-FLOW: with story-choices on, a release outside a conversation frees the mouse and the game keeps running.
+assert.equal(pauses, 0, 'manual release outside a conversation frees the mouse without pausing');
+assert.equal(duel.state.paused, false);
 app._inputEvents.abort();
-console.log('Story input passed: late, already-held and foreign lock ownership, conversation pause and normal release.');
+console.log('Story input passed: late, already-held and foreign lock ownership, conversation pause and a release that keeps playing.');

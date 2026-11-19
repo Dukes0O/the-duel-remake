@@ -160,6 +160,8 @@ export const NIGHT_2_EFFECTS = {
   'carry-ember': [walkers('Friendly'), mark('changed-mind-in-night')],
   'wash-fight-won': [walkers('Strangers'), feud],
   'wash-car-towed': [mark('wash-car-towed-at-dawn')],
+  // STORY-NIGHT-2-FLOW: Ash Men on foot who reach the camp take it. The Walkers are driven off and their word drops one step.
+  'wash-camp-taken': [mark('wash-camp-taken'), {type: 'word', person: 'walkers', by: -1}],
 };
 
 export const NIGHT_2_LATER = {
