@@ -15,7 +15,7 @@ export function washRiderJob({seed=1, count=3, boxIn=false, weapon='ash-sack', f
     const z = carStart.z + ahead + (rng.float()-.5)*scatter;
     const heading = boxIn ? carStart.heading : Math.atan2(carStart.x-x,carStart.z-z);
     return {
-      id:'ash-'+(index+1), name:'Ash rider '+(index+1), car:'dusthawk_rally', weapon, boxIn, fightToEnd,
+      id:'ash-'+(index+1), name:'Ash rider '+(index+1), car:'dusthawk_rally', weapon, boxIn, fightToEnd, approach:!boxIn,
       start:{x,z,heading,speedMph:boxIn ? rules.approachMph : 0},
       home:{x:carStart.x+side*rules.homeScale,z:carStart.z+ahead*rules.homeScale},
     };

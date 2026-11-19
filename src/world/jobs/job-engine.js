@@ -52,14 +52,18 @@ export function stepJob(job, view = {}, dt = 0) {
   }
   const stepView=result.storyMarks?.lastStopMetres!==undefined&&view.playerStopMetres===undefined
     ?{...view,playerStopMetres:result.storyMarks.lastStopMetres}:view;
-  const outcome = runners[step.kind](step, result.stepState, stepView, dt, result.seed);
+  const riderView = step.kind === 'rider-fight'
+    ? {...stepView, riderFightReported:result.storyMarks?.riderFightReports?.[result.stepIndex] === true}
+    : stepView;
+  const outcome = runners[step.kind](step, result.stepState, riderView, dt, result.seed);
   const triggered = stepLineTriggers(step, result.stepState, view, outcome);
   const lined = stepLines(step, result.stepState, view, dt, triggered);
   result.stepState = lined.state ?? result.stepState;
   result.events = lined.events ?? [];
   result.requests = lined.requests ?? [];
   const riderResult=result.events.find(event=>event.type==='riderFight');
-  if (riderResult) result.storyMarks={...result.storyMarks,riderFight:riderResult};
+  if (riderResult) result.storyMarks={...result.storyMarks,riderFight:riderResult,
+    riderFightReports:{...result.storyMarks?.riderFightReports,[result.stepIndex]:true}};
   const stopRequest=result.requests.find(request=>request.type==='stopMark');
   if(stopRequest) {
     const marks={...(result.storyMarks?.stopMarks??{})},previous=marks[stopRequest.id];

@@ -81,6 +81,10 @@ assert.equal(retreat.bus, 'vehicle');
 assert.equal(retreat.flag, 'road-riders');
 assert.equal(retreat.layers.length, 2);
 assert.ok(retreat.layers.every(layer => layer.endFrequency < layer.frequency), 'both retreat engine tones fall');
+for (const id of ['rider.crew-bail','rider.won','rider.surrounded']) {
+  assert.equal(SOUND_BANK[id].flag,'road-riders');
+  assert.ok(SOUND_BANK[id].layers.length>0);
+}
 const master = new Node(),
   vehicle = new Node();
 const mixer = new SoundMixer(context, master, { vehicle });

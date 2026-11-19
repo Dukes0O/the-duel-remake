@@ -1,6 +1,7 @@
 import {CARS, DRIVE} from '../../config.js';
 import {ARSENAL_WEAPONS, WEAPON_IDS} from '../../weapon-upgrades.js';
 import {arenaActor, arenaParticipant, outOfPlay} from '../../combat-teams.js';
+import {wrapHeading} from '../../offroad-physics.js';
 import {worldPose} from '../arena-floor.js';
 import {point, predictedPoint} from '../../combat-actors.js';
 import {thinkBrain} from '../arena-brains.js';
@@ -88,12 +89,19 @@ export function startRoadFight(duel, world) {
     state.arena.participants = state.arena.participants.filter(entry => !previous.has(entry.id));
     world.actors = world.actors.filter(actor => !actor.riderCrew);
   }
+  state.opponentCount = state.opponents.length;
+  const completed = world.completedRiderFights?.[index];
+  if (completed) {
+    world.riderFight = {...completed, riders:[], ash:[], elapsed:completed.endedAt + R.aftermathSec};
+    return;
+  }
   const target = step.targetId && step.targetId !== 'player' ? state.opponents.find(car => car.jobId === step.targetId || car.arenaId === step.targetId) : state;
-  if (!target) throw new Error(`Rider fight needs the named allied arena car: ${step.targetId}`);
-  if (index === 0 && Number.isFinite(step.carStart?.speedMph)) state.speedMph=step.carStart.speedMph;
-  const targetId = target === state ? 'player' : target.arenaId;
-  if (target !== state) arenaParticipant(duel,target).team = 'player';
+  const targetId = target === state ? 'player' : target?.arenaId ?? step.targetId;
   const fight = world.riderFight = {index, targetId, riders:[], ash:[], smothered:[], heldSec:0, elapsed:0, outcome:null};
+  // A previous step may have removed the protected car. The next tick records a normal loss.
+  if (!target) return;
+  if (index === 0 && Number.isFinite(step.carStart?.speedMph)) state.speedMph=step.carStart.speedMph;
+  if (target !== state) arenaParticipant(duel,target).team = 'player';
   let slot = 0;
   for (const definition of step.riders) {
     const entry = world.riderReserve.find(entry => entry.car.jobId === key(index,definition.id));
@@ -104,7 +112,7 @@ export function startRoadFight(duel, world) {
     car.weaponLoadout = [definition.weapon];
     car.roadRider = {id:definition.id, weapon:definition.weapon, home:definition.home,
       fightToEnd:definition.fightToEnd === true, slot:definition.boxIn ? slot++ : null,
-      targetId, phase:'fighting', ashWait:0};
+      targetId, phase:'fighting', ashWait:0, approach:definition.approach === true};
     Object.assign(participant,{name:definition.name || definition.id, team:'road-riders', targetId});
     state.opponents.push(car); state.arena.participants.push(participant); fight.riders.push(car.arenaId);
   }
@@ -159,6 +167,35 @@ function reachableGoal(duel, car, goal) {
   return {...me,speedMph:0,boost:false};
 }
 
+function openingGoal(duel, car, target, me, participant) {
+  const rider=car.roadRider, at=worldPose(duel,target), elapsed=duel.state.arena.worldJob.riderFight.elapsed;
+  const gap=dist(me,at), bearing=wrapHeading(Math.atan2(at.x-me.x,at.z-me.z)-me.heading);
+  if (elapsed < R.openingSafeSec && rider.chargeAt === undefined) {
+    const outward=Math.atan2(me.x-at.x,me.z-at.z), offNose=wrapHeading(outward-at.heading);
+    // If the driver charges down an approach lane, skirt their nose before committing to the ram.
+    if (rider.openingPass === undefined && target.speedMph*Math.cos(offNose) > R.openingAvoidMph)
+      rider.openingPass=outward+Math.sign(offNose || 1)*R.openingAvoidTurn;
+    if (rider.openingPass !== undefined) {
+      return {x:me.x+Math.sin(rider.openingPass)*R.openingAvoidLook,
+        z:me.z+Math.cos(rider.openingPass)*R.openingAvoidLook,speedMph:diff(duel).approachMph,boost:false};
+    }
+  }
+  if (rider.chargeAt === undefined && gap <= R.openingTellMetres && Math.abs(bearing) <= R.openingAlignRadians) {
+    rider.chargeAt=elapsed+R.openingTellSec;
+    car.arenaTellSec=R.openingTellSec;
+    duel.emit({arenaTell:{id:participant.id,targetId:rider.targetId,cue:'arena.tell',
+      seconds:R.openingTellSec,position:point(duel,car)}});
+  }
+  car.arenaTellSec=Math.max(0,(rider.chargeAt ?? elapsed)-elapsed);
+  if (rider.chargeAt !== undefined && elapsed >= rider.chargeAt) {
+    rider.approach=false;
+    participant.chargeReady=true;
+    return null;
+  }
+  const speed=Math.min(diff(duel).approachMph,Math.max(0,(gap-R.openingBrakeMetres)*R.openingBrakeGain));
+  return {...at,speedMph:car.arenaTellSec > 0 ? Math.min(speed,R.openingTellMph) : speed,boost:false};
+}
+
 export function roadRiderGoal(duel,car,dt) {
   const rider=car.roadRider, me=worldPose(duel,car);
   if (rider.phase === 'withdrawing') {
@@ -170,8 +207,22 @@ export function roadRiderGoal(duel,car,dt) {
   const target=arenaActor(duel,rider.targetId);
   if (!target || outOfPlay(duel,target)) return {...me,speedMph:0,boost:false};
   if (rider.slot !== null) return reachableGoal(duel,car,boxGoal(duel,car,target));
-  const goal=thinkBrain(duel,arenaParticipant(duel,car),car,dt);
-  return reachableGoal(duel,car,{...goal,speedMph:goal.speedMph*diff(duel).pace});
+  const participant=arenaParticipant(duel,car);
+  const opening=rider.approach && openingGoal(duel,car,target,me,participant);
+  const brain=opening || thinkBrain(duel,participant,car,dt);
+  const tune=diff(duel);
+  let speedMph=opening ? brain.speedMph : brain.speedMph*tune.pace, boost=brain.boost;
+  if (!opening && rider.chargeAt !== undefined && duel.state.arena.worldJob.riderFight.elapsed < rider.chargeAt+R.openingChargeSec) {
+    speedMph=Math.min(speedMph,tune.openingChargeMph);
+    boost=false;
+  }
+  const goal=reachableGoal(duel,car,{...brain,speedMph,boost});
+  const turn=wrapHeading(Math.atan2(goal.x-me.x,goal.z-me.z)-me.heading);
+  if (!car._arenaUTurn && Math.abs(turn) < R.turnRadians) return goal;
+  // The arena pilot normally takes its U-turn speed from the floor limit. On
+  // open land that makes a rider steer a long loop at 81 mph after overshooting.
+  const brakingMph=Math.abs(car.speedMph)-DRIVE.brakeAccel*dt;
+  return {...goal,boost:false,speedCapMph:Math.max(R.turnMph,brakingMph)};
 }
 
 // Check actual cars in the player's own four directions. Merely assigning a rider to a slot confers no hold.
@@ -202,6 +253,7 @@ function crewBail(duel, world, car) {
     world.actors.push({id:car.jobId+'/crew/'+index,riderCrew:true,steps:0,x,y:scablandsActorHeightAt(x,z,car.groundHeight),z,yaw,
       health:1,approachSpeed:R.crewMps,approachTarget:{x:x+Math.sin(yaw)*R.crewRunMetres,z:z+Math.cos(yaw)*R.crewRunMetres}});
   }
+  duel.emit({arenaTell:{id:car.arenaId,cue:'rider.crew-bail',position:point(duel,car)}});
 }
 
 function stepAsh(duel,world,step,dt) {
@@ -245,20 +297,22 @@ export function throwRiderAsh(duel,car) {
   return true;
 }
 
-export function updateRoadFight(duel, world, step, dt) {
+export function updateRoadFight(duel, world, dt) {
   const fight=world.riderFight;
   if (!fight) return;
   fight.elapsed+=dt;
+  const step=world.job.steps[fight.index];
   stepAsh(duel,world,step,dt);
-  const cars=fight.riders.map(id=>arenaActor(duel,id));
-  for (const car of duel.state.opponents) {
-    if (!car.roadRider) continue;
+  const cars=fight.riders.map(id=>arenaActor(duel,id)).filter(Boolean);
+  for (const car of cars) {
     const rider=car.roadRider;
     rider.ashWait=Math.max(0,rider.ashWait-dt);
     if (car.combatWrecking && rider.phase!=='wrecked') {
       rider.phase='wrecked'; crewBail(duel,world,car);
+      car.arenaTellSec=0;
     } else if (!fight.outcome && rider.phase==='fighting' && !rider.fightToEnd && car.armor<=car.maxArmor*R.retreatFraction) {
       rider.phase='withdrawing';
+      car.arenaTellSec=0;
       duel.emit({arenaTell:{id:rider.id,targetId:rider.targetId,seconds:0,cue:'rider.breaks-off',sourceId:car.arenaId,position:point(duel,car)}});
     }
   }
@@ -271,10 +325,17 @@ export function updateRoadFight(duel, world, step, dt) {
   }
   fight.heldSec = boxed && Math.abs(duel.state.speedMph)<R.boxMph ? fight.heldSec+dt : 0;
   const target=arenaActor(duel,fight.targetId);
-  const outcome=duel.state.combatWrecking || target?.combatWrecking ? 'lost' : fight.heldSec>=R.boxSeconds ? 'surrounded' :
+  const outcome=duel.state.combatWrecking || !target || target.combatWrecking || target.finished || target.crushed
+    ? 'lost' : fight.heldSec>=R.boxSeconds ? 'surrounded' :
     cars.every(car=>car.roadRider.phase!=='fighting') ? 'won' : null;
   if (!outcome) return;
   fight.outcome=outcome; fight.endedAt=fight.elapsed;
-  for (const car of cars) if (car.roadRider.phase==='fighting') car.roadRider.phase='holding';
+  (world.completedRiderFights ??= {})[fight.index]=fight;
+  for (const car of cars) if (car.roadRider.phase==='fighting') {
+    car.roadRider.phase='holding';
+    car.arenaTellSec=0;
+  }
   duel.emit({riderFight:{id:step.id,outcome,smothered:[...fight.smothered]}});
+  const cue=outcome==='won' ? 'rider.won' : outcome==='surrounded' ? 'rider.surrounded' : null;
+  if (cue) duel.emit({arenaTell:{id:step.id,cue,position:point(duel,duel.state)}});
 }

@@ -307,7 +307,7 @@ export function prepareWorldJobControls(duel) {
   if(!worldJob)return false;
   const step=worldJob.job.steps[worldJob.job.stepIndex];
   // Conversation choices and other external job transitions can enter a fight between simulation ticks.
-  if (step?.kind === 'rider-fight' && worldJob.riderReserve?.length) startRoadFight(duel,worldJob);
+  if (step?.kind === 'rider-fight' && worldJob.riderReserve) startRoadFight(duel,worldJob);
   const input=duel.state.input??{};
   worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
   if(step?.kind!=='drivetrain') return false;
@@ -1639,7 +1639,7 @@ export function stepWorldJob(duel, dt) {
     duel._storyCallout('Cold mist lies in the hollows. Steer round it.', 3);
   }
   const carriedCar = position(duel, state);
-  if (worldJob.riderFight) updateRoadFight(duel,worldJob,currentStep,dt);
+  if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
   const view = {player: playerView, onFoot: !!state.onFoot,
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
     ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],
@@ -1686,7 +1686,7 @@ export function stepWorldJob(duel, dt) {
     const outcome = currentStep?.kind === 'rider-fight' && worldJob.riderFight.outcome;
     if (outcome === 'lost' && currentStep.onLost !== 'continue' || outcome === 'surrounded' && currentStep.onSurrounded === 'lose')
       return {reason:'rider-fight-lost', winnerId:'raiders'};
-    if (worldJob.riderReserve?.length) startRoadFight(duel, worldJob);
+    if (worldJob.riderReserve) startRoadFight(duel, worldJob);
     applyStepLoan(duel, worldJob);
   }
   for (const event of next.events) {

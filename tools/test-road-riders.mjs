@@ -21,7 +21,8 @@ import {setCarEffect, carEffect} from '../src/arsenal/car-effects.js';
 import {hazardsFor} from '../src/arsenal/hazards.js';
 import {targetFor} from '../src/arsenal/targeting.js';
 import {WEAPON_IDS, ARSENAL_WEAPONS} from '../src/weapon-upgrades.js';
-import {scablandsActorHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {sees} from '../src/world/scablands-ways.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {stepJob} from '../src/world/jobs/job-engine.js';
 import {RIDER_RULE as RULE} from '../src/world/jobs/rider-rule.js';
@@ -109,6 +110,19 @@ function rulesAndRoster() {
   assert.equal(sim.world.riderFight.index,1);
   assert.ok(sim.world.riderFight.riders.every(id => !firstIds.includes(id)));
   assert.equal(sim.world.riderReserve.length,0);
+  const secondFight=sim.world.riderFight;
+  for (const car of sim.state.opponents) car.armor=car.maxArmor*RULE.retreatFraction;
+  advance(sim,DT*2);
+  assert.equal(secondFight.outcome,'won');
+  // A talk choice can reset the step state and point to the original fight after a different field has entered.
+  sim.world.job={...sim.world.job,stepIndex:0,stepState:{},done:false};
+  advance(sim,DT);
+  assert.equal(sim.world.job.stepIndex,1);
+  assert.equal(sim.world.riderFight.outcome,'won');
+  assert.equal(sim.state.opponents.length,0,'completed rosters do not spawn again');
+  assert.equal(sim.events.filter(event=>event.riderFight).length,2);
+  assert.equal(sim.events.filter(event=>event.arenaTell?.cue==='rider.won').length,2);
+  assert.deepEqual(sim.world.job.storyMarks.riderFightReports,{0:true,1:true});
   const branched=washRiderJob({count:3});
   const marker={x:1200,y:0,z:1200};
   branched.steps.unshift({kind:'reach',id:'choose',position:marker});
@@ -161,6 +175,22 @@ function rulesAndRoster() {
   assert.equal(continuing.world.job.stepIndex,1);
   assert.equal(continuing.world.job.storyMarks.riderFight.outcome,'lost');
   assert.equal(continuing.state.arena.result,null);
+  const missingJob=washRiderJob({count:1});
+  missingJob.riderAllies=[ally];
+  missingJob.steps[0].targetId=ally.jobId;
+  missingJob.steps[0].onLost='continue';
+  missingJob.steps.unshift({kind:'reach',id:'start',position:marker});
+  missingJob.steps.push({kind:'reach',id:'carry-on',position:{x:0,z:0}});
+  const missing=runEvent({job:missingJob});
+  const missingTruck=missing.state.opponents[0];
+  missing.state.opponents.splice(0,1);
+  missing.state.arena.participants=missing.state.arena.participants.filter(p=>p.id!==missingTruck.arenaId);
+  missing.world.job=stepJob(missing.world.job,{player:{position:marker}},DT);
+  advance(missing,RULE.aftermathSec+DT*5);
+  assert.equal(missing.world.job.stepIndex,2,'a missing target settles as authored and lets the game advance');
+  assert.equal(missing.world.job.storyMarks.riderFight.outcome,'lost');
+  assert.equal(missing.events.filter(event=>event.riderFight).length,1);
+  assert.equal(missing.state.opponents.length,0);
   console.log('Opt-in and subsequent rosters, four previous Everburn jobs, protected truck, world-metre contact and laptop page expressions passed.');
 }
 
@@ -230,6 +260,8 @@ function fireAndCrew() {
   assert.ok(crew.every((a,i)=>distance(a,positions[i])>.5));
   assert.equal(toEnd.world.actors.filter(a=>a.riderCrew).length,crew.length);
   assert.equal(stubborn.roadRider.phase,'wrecked');
+  assert.equal(toEnd.events.filter(event=>event.arenaTell?.cue==='rider.crew-bail').length,1);
+  assert.equal(toEnd.events.filter(event=>event.arenaTell?.cue==='rider.won').length,1);
   advance(toEnd,RULE.aftermathSec+DT*3);
   assert.equal(toEnd.state.arena.result?.winnerId,'player');
   const result=arenaResultsScreen(toEnd.state,{metric:()=>'',action:(_text,id)=>id,escapeHTML:String});
@@ -242,9 +274,34 @@ function chaseAndLoss() {
   for (const difficulty of ['easy','medium','hard']) {
     const sim = runEvent({difficulty,count:3}), {duel,state,world,fight,events}=sim;
     const car=state.opponents[0], parked=worldPose(duel,state), gap=distance(parked,worldPose(duel,car));
+    for (const rider of state.opponents) {
+      const start=worldPose(duel,rider);
+      assert.ok(distance(parked,start)>=150 && distance(parked,start)<=250,'the field approaches from across the bank');
+      assert.ok(sees(parked,start,{heightAt:scablandsSurfaceHeightAt,eye:3,target:1.5,step:5}),'each approach starts in clear view over the terrain');
+    }
+    let firstTouch, windup, windupTimer, armorAtContact;
+    duel.onChange((_state,event)=>{
+      if (!windup && event.arenaTell?.cue==='arena.tell') {
+        windup={...event.arenaTell,at:fight.elapsed};
+        windupTimer=car.arenaTellSec;
+      }
+      if (!firstTouch && event.combatRamHit && event.attackerIndex>=0 && event.victimIndex===-1 && event.armorRemoved>0) {
+        firstTouch={rider:state.opponents[event.attackerIndex].arenaId,at:fight.elapsed+DT};
+        armorAtContact=state.armor;
+      }
+    });
     advance(sim,1.2);
     assert.ok(distance(worldPose(duel,state),worldPose(duel,car))<gap-5);
+    advance(sim,4.8);
+    assert.equal(firstTouch,undefined,'the first ram gives the parked driver six seconds');
+    assert.equal(state.armor,state.maxArmor);
     advance(sim,110,undefined,()=>!!fight.outcome);
+    assert.ok(firstTouch.at>=6 && firstTouch.at<12,'the riders follow their visible approach with an actual crash');
+    assert.equal(firstTouch.rider,windup.id);
+    assert.equal(windup.seconds,RULE.openingTellSec);
+    assert.equal(windupTimer,RULE.openingTellSec);
+    assert.ok(firstTouch.at-windup.at>=RULE.openingTellSec);
+    assert.ok(armorAtContact>state.maxArmor*.65,'the first blow leaves armour to fight with');
     assert.equal(fight.outcome,'lost',difficulty);
     assert.ok(events.some(e=>e.combatRamHit&&e.attackerIndex>=0&&e.victimIndex===-1&&e.armorRemoved>0));
     assert.ok(events.some(e=>e.combatRamHit&&e.attackerIndex===-1&&e.victimIndex>=0&&e.armorRemoved>0));
@@ -263,12 +320,26 @@ function chaseAndLoss() {
         e.riderAsh?[[e.riderAsh.ownerId,e.riderAsh.position]]:e.riderFight?[[e.riderFight.outcome]]:[]);
       const again=runEvent({difficulty,count:3});
       advance(again,1.2);
+      advance(again,4.8);
       advance(again,110,undefined,()=>!!again.fight.outcome);
       advance(again,RULE.aftermathSec+DT*3);
       assert.deepEqual(record(again),record(sim),'same inputs repeat every impact and ash landing');
       assert.equal(again.fight.endedAt,fight.endedAt);
     }
-    console.log(difficulty+' idle car was wrecked in '+fight.endedAt.toFixed(2)+'s, '+events.filter(e=>e.combatRamHit).length+' native ram reports.');
+    console.log(difficulty+' first ram '+firstTouch.at.toFixed(2)+'s after a '+windup.seconds.toFixed(2)+'s charge tell, '
+      +(state.maxArmor-armorAtContact).toFixed(2)+' armour removed. Idle wreck '+fight.endedAt.toFixed(2)+'s.');
+    for (const boost of [false,true]) {
+      const driving=runEvent({difficulty,count:3});
+      advance(driving,RULE.openingSafeSec,({duel,state})=>{
+        const at=worldPose(duel,state), lead=worldPose(duel,state.opponents[0]);
+        const bearing=Math.atan2(lead.x-at.x,lead.z-at.z)-at.heading;
+        const steer=boost ? Math.max(-1,Math.min(1,-2*Math.atan2(Math.sin(bearing),Math.cos(bearing)))) : 0;
+        duel.setInput({steer,throttle:1,boost});
+      });
+      assert.equal(driving.state.armor,driving.state.maxArmor,difficulty+' preserves the opening for a moving driver');
+      assert.ok(!driving.events.some(event=>event.combatRamHit && (event.attackerIndex===-1 || event.victimIndex===-1) ||
+        event.vehicleSmash?.actor.roadRider),difficulty+' keeps real contact clear in the opening');
+    }
   }
 }
 
@@ -288,6 +359,7 @@ function roadblock(boxIn, weaving, seed=1) {
   if(fight.outcome) advance(sim,RULE.aftermathSec+DT*3);
   return {outcome:fight.outcome,elapsed,winner:state.arena.result?.winnerId,heldFrames,topHold,
     job:sim.world.job.storyMarks?.riderFight?.outcome, reports:events.filter(e=>e.riderFight).length,
+    surroundedCues:events.filter(event=>event.arenaTell?.cue==='rider.surrounded').length,
     armor:Math.round(state.armor*1000),positions:state.opponents.map(c=>[c.s,c.lateral,c.armor])};
 }
 
@@ -296,7 +368,7 @@ function formation() {
   place(rig,rig.state,at);
   const offsets=[[0,5],[0,-5],[-3,0],[3,0],[14,14]];
   for(const [i,car] of rig.state.opponents.entries()) place(rig,car,{x:at.x+offsets[i][0],z:at.z+offsets[i][1]});
-  const check=dt=>updateRoadFight(rig.duel,rig.world,rig.world.job.steps[0],dt);
+  const check=dt=>updateRoadFight(rig.duel,rig.world,dt);
   check(.1);
   assert.equal(rig.fight.heldSec,.1);
   const left=rig.state.opponents[2],leftAt=worldPose(rig.duel,left);
@@ -311,6 +383,7 @@ function formation() {
   assert.equal(held.outcome,'surrounded');
   assert.equal(held.job,'surrounded');
   assert.equal(held.reports,1);
+  assert.equal(held.surroundedCues,1);
   assert.equal(held.winner,'raiders');
   assert.ok(held.topHold>=RULE.boxSeconds-DT*2);
   const escaped=roadblock(true,true);
@@ -341,7 +414,8 @@ function carefulDriver({duel,state},frame) {
 }
 
 function balance() {
-  for (const difficulty of ['easy','hard']) {
+  const winsByDifficulty=[];
+  for (const difficulty of ['easy','medium','hard']) {
     const result=[];
     for(let seed=1;seed<=10;seed++) {
       const sim=runEvent({seed,count:3,difficulty});
@@ -351,8 +425,11 @@ function balance() {
     const wins=result.filter(outcome=>outcome==='won').length;
     console.log(difficulty+' Wash driver '+wins+'/10 ('+result.join(', ')+')');
     assert.ok(result.every(outcome=>outcome==='won'||outcome==='lost'),'all ten fights must finish');
-    assert.ok(difficulty==='easy' ? wins>=7 : wins<5);
+    winsByDifficulty.push(wins);
   }
+  const [easy,medium,hard]=winsByDifficulty;
+  assert.ok(easy>=7 && hard<5,'the same driver wins a clear majority on Easy and fewer than half on Hard');
+  assert.ok(easy>medium && medium>hard,'Medium is an intermediate fight for the same driver and ten seeds');
 }
 
 
