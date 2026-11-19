@@ -122,12 +122,12 @@ test('Brian’s job: too little, too much and the slow gate each say why; each t
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   let v = session.view();
-  assert.equal(v.switch.coat, 'bare'); assert.equal(v.job.name, 'The boat trailer');
+  assert.equal(v.switch.coat, 'bare'); assert.equal(v.job.name, 'The mooring chain');
   assert.notEqual(v.target, 'go', 'Brian does not point at the calendar before a choice is made');
   runWeek(session);
-  assert.match(session.view().brian.text, /^Left bare, the boat trailer reaches 84% rust in a week\. That is more than 10%, so it is not clean\. It needs a zinc coat/);
+  assert.match(session.view().brian.text, /^Left bare, the mooring chain reaches 84% rust in a week\. That is more than 10%, so it is not clean\. It needs a zinc coat/);
   session.act('coat:zinc'); runWeek(session);
-  assert.match(session.view().brian.text, /^Correct\. The zinc coat keeps the trailer clean, with 0% rust against 84% if it were bare\. The next thing is the toolbox/);
+  assert.match(session.view().brian.text, /^Correct\. The zinc coat keeps the chain clean, with 0% rust against 84% if it were bare\. The next thing is the toolbox/);
   v = session.view();
   assert.equal(v.switch.coat, 'zinc', 'the toolbox starts on zinc, away from its answer');
   runWeek(session);
@@ -139,12 +139,12 @@ test('Brian’s job: too little, too much and the slow gate each say why; each t
   assert.match(session.view().brian.text, /^Fresh water rusts steel slowly, but left bare, the garden gate reaches 14% rust in a week\. That is more than 10%, so it is not clean/);
   session.act('coat:zinc'); runWeek(session);
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /Zinc protects the trailer and the gate, which water reaches, and the toolbox stays bare because it stays dry\. That finishes the job/);
-  // A second visit starts the trailer bare again, away from its answer.
+  assert.match(session.view().brian.text, /Zinc protects the chain and the gate, which water reaches, and the toolbox stays bare because it stays dry\. That finishes the job/);
+  // A second visit starts the chain bare again, away from its answer.
   session.act('next'); session.act('back');
   assert.equal(session.view().step.id, 'alone'); assert.equal(session.view().switch.coat, 'bare');
   session.act('go'); until(session, x => x.keys.Space === 'go');
-  assert.match(session.view().brian.text, /^Left bare, the boat trailer reaches 84% rust/);
+  assert.match(session.view().brian.text, /^Left bare, the mooring chain reaches 84% rust/);
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me sets and runs', () => {

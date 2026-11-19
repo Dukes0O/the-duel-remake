@@ -288,3 +288,18 @@ every prompt and hint.
 - `lab.brian.fuel.explain` needs re-recording (see Fuel).
 - The page frame's "Words so far" fold, steps leaving the page once done, and the Watch again button belong to LAB-PAGE.
   Each lesson here now offers R (`actions: ['replay']`) on its long runs, so the button appears wherever the frame shows it.
+
+## After merging LAB-PAGE (integration/wasteland, `a9366a4b2`)
+
+The merge into the lane had no conflicts: the four lesson scenarios kept both LAB-PAGE's `openFormulaPanel` and the new
+wording and checks. No assertion was loosened.
+
+- Rust's job: "The boat trailer" became "The mooring chain" (it lies in the sea water of the harbour all week); the garden
+  gate is unchanged. One line each for what named the trailer: `rust-classroom.js` (the job, its results and a comment);
+  `test-lab-classroom-rust.mjs` (the job's name and the first, second, final and second-visit texts) and
+  `tools/scenarios/lab-classroom-rust.mjs` (comments and check labels) follow the new name because the thing in the job changed. The numbers are
+  the same (84% bare, 0% with zinc).
+- Four lesson suites (rust 20, fire 20, strength 27, fuel 27), `test-lab-classroom-page` 9 and `test-lab-brian-short` 6: all pass.
+- All `tools/scenarios/lab-classroom*.mjs`, `--jobs 2`: 16 of 16 passed, 0 warnings, 0 errors.
+- Lane tier (`--tier lane --changed --jobs 4`): 38 of 38 passed. `npm run build`: passed. `lab-walk`, run alone: passed.
+- The three Rust pictures in `.evidence/rust/` were taken again on the new page, with the formula panel closed.

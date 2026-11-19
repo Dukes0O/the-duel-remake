@@ -66,14 +66,14 @@ export async function run(c) {
   await press('Digit2'); await summing('2% a day × (22 − 20) days = 4%', 'the jar changes the sum'); await press('Space'); await saying('in fresh water', 'the second run says its result'); await prompt('tested so far: 2', 'two settings counted');
   await press('Digit1'); await press('ArrowLeft'); await press('Space'); await at('try-free', 's.ready'); await saying('in dry air', 'the third run says its result'); await shot('try-free-three');
   await next('try-free');
-  // Brian's job: the trailer bare is too little; one click on the switch for zinc; Show me for the toolbox; the gate.
-  await at('alone'); await shot('alone'); await summing('12% a day × 7 days = 84%', 'the job shows the sum of the bare trailer'); await press('Space'); await saying('so it is not clean. It needs a zinc coat', 'too little says why'); await wait(300); await shot('alone-too-little');
+  // Brian's job: the chain bare is too little; one click on the switch for zinc; Show me for the toolbox; the gate.
+  await at('alone'); await shot('alone'); await summing('12% a day × 7 days = 84%', 'the job shows the sum of the bare chain'); await press('Space'); await saying('so it is not clean. It needs a zinc coat', 'too little says why'); await wait(300); await shot('alone-too-little');
   const zinc = await toScreen(870, 262);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: zinc.x, y: zinc.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: zinc.x, y: zinc.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
   await prompt('It has a zinc coat.', 'the click switches to zinc'); await summing('100% − 5% a day × 7 days = 65%', 'the switch moves the sum');
-  await press('Space'); await saying('The next thing is the toolbox', 'the trailer is clean');
+  await press('Space'); await saying('The next thing is the toolbox', 'the chain is clean');
   for (let i = 0; i < 3 && !(await c.evaluate(`${state}?.help === 3`)); i++) await press('KeyH');
   await wait(1500); await shot('alone-show-me');
   await saying('The next thing is the garden gate', 'Show me sets and runs the toolbox');

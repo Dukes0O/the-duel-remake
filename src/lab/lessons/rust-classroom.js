@@ -30,7 +30,7 @@ export const bestFor = jarId => clean(weekRust(jarId, 'bare')) ? 'bare' : 'zinc'
 export const TRY_DAYS = 3, ZINC_TO = 25;
 // Brian's job: three things in the yard, each kept like the nail in one of the bench's jars.
 export const JOBS = Object.freeze([
-  {name: 'The boat trailer', thing: 'the boat trailer', lives: 'It stays under sea water in the harbour all week.', where: 'which stays under sea water in the harbour all week', jar: 'salt'},
+  {name: 'The mooring chain', thing: 'the mooring chain', lives: 'It lies in the sea water of the harbour all week.', where: 'which lies in the sea water of the harbour all week', jar: 'salt'},
   {name: 'The toolbox', thing: 'the toolbox', lives: 'It sits on the dry shelf in the shed.', where: 'which sits on the dry shelf in the shed', jar: 'dry'},
   {name: 'The garden gate', thing: 'the garden gate', lives: 'It stands in a puddle of rain water all week.', where: 'which stands in a puddle of rain water all week', jar: 'fresh'},
 ].map(Object.freeze));
@@ -178,7 +178,7 @@ export function createModel() {
     if (id === 'try-days') { m.shelf = ['salt']; set.days = RUST_WEEK; m.phase = 'set'; }
     if (id === 'try-zinc') { m.shelf = ['zinc']; m.phase = 'guess'; }
     if (id === 'try-free') { set.days = RUST_WEEK; set.coat = 'bare'; set.jar = 'salt'; m.shelf = [set.jar]; m.phase = 'set'; }
-    // The job starts bare on every visit, away from the trailer's answer; later things carry the switch.
+    // The job starts bare on every visit, away from the chain's answer; later things carry the switch.
     if (id === 'alone') { set.days = RUST_WEEK; set.coat = 'bare'; startJob(); }
     if (CHECKS[id]) m.phase = m.answered === null ? 'ask' : 'answered';
   }
@@ -380,12 +380,12 @@ export function createModel() {
     m.job += 1;
     if (m.job >= JOBS.length) {
       m.phase = 'done'; seen.add('alone');
-      m.say = `With a zinc coat, ${thing.thing} has ${pct(rust)} rust after a week. Zinc protects the trailer and the gate, which water reaches, and the toolbox stays bare because it stays dry. That finishes the job.`;
+      m.say = `With a zinc coat, ${thing.thing} has ${pct(rust)} rust after a week. Zinc protects the chain and the gate, which water reaches, and the toolbox stays bare because it stays dry. That finishes the job.`;
       return {kind: 'pass', say: m.say};
     }
     startJob();
     const next = JOBS[m.job];
-    m.say = m.job === 1 ? `Correct. The zinc coat keeps the trailer clean, with ${pct(rust)} rust against ${pct(weekRust(thing.jar, 'bare'))} if it were bare. The next thing is ${next.thing}, ${next.where}.`
+    m.say = m.job === 1 ? `Correct. The zinc coat keeps the chain clean, with ${pct(rust)} rust against ${pct(weekRust(thing.jar, 'bare'))} if it were bare. The next thing is ${next.thing}, ${next.where}.`
       : `Correct. The toolbox stays clean when it is bare, with ${pct(rust)} rust, because no water reaches it. The next thing is ${next.thing}, ${next.where}.`;
     return {kind: 'right', say: m.say};
   }
