@@ -1,0 +1,10 @@
+# STORY-PLATE-NIGHT-2 · Part 1, 18–19 November 2026
+
+- **Built** the native 1920 × 1080 Blender reference and one retained original painting of eleven Walkers, four handcarts and three warm lamps. The comparison sheet is 452,762 bytes. [Look and laptop commands](../board/looks/story-plates/night-2-review.md)
+- **Registration** found zero outline shifts over 38.4 px. The largest of 126 marked displacements was 8.5 px. An independent trace against the game's terrain reached 8.9 px over 901 unobstructed columns.
+- **Cloud at `c0b25300a`** passed the production build, board (630 checks), hygiene and hygiene-rule fixtures (165 checks), fresh/staged/mismatched capture regression, and 20 of 21 selected cloud suites, including both replay suites. The stage and pose reproduced byte for byte. The handoff board passed 631 checks, with Windows line-stamp fixtures reserved for the laptop.
+- **Outstanding** `tools/test-world-composition.mjs` produced Pacific Canyon `09c48ae2…` against fixture `8f2b1d5c…`. The exact pre-card parent `38e2498a3` produced the same hashes on Node 24.22.1. All six scene counts agree. The game sources, runtime assets, lockfile, suite and signature fixtures are identical on both commits.
+- **Changed assertions** allow the two exact card-authored JPEG paths in placement. New checks still reject unused paint takes, raw captures and another night. Claude reviews those placement entries with the art.
+- **For Claude to run** `tools/test-course-kit.mjs`, `tools/test-world-composition.mjs` and the headed `story-plate-reference` capture. Place the native game frame on the sheet and record whether the game and plate read as one place and whether the game looks poor beside it.
+- **Codex decided** on a 48° vertical lens, 9.4 m inside the gate at a 1.62 m eye, and the third painted take. The future scene must seat six-year-old Wim on the cart and suppress her automatic stool throughout the tableau.
+- **Removed** no existing game content. The painting stays under the art recipe. Part 2 requires Claude's written yes on this card.
