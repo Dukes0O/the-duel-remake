@@ -1592,7 +1592,24 @@ export class App {
         replay.issue = 'Your saved telling could not be opened. Try again.';
         return false;
       }
-      const updated = keepNight2Replay(owner.profile, chapter, replay.expected);
+      let profile = owner.profile;
+      if (this.profileSaved === false) {
+        // Keep live earnings from a failed save only when the stored owner is
+        // still the last verified copy, just as in Warlord settlement.
+        const verified = this._warlordVerifiedOwner;
+        if (verified?.ownerId !== owner.id || verified.snapshot !== JSON.stringify(owner.profile)) {
+          replay.issue = 'Your progress could not be saved with this telling. Try again.';
+          return false;
+        }
+        profile = this.profile;
+        const live = {...registry, players: registry.players.map(player =>
+          player.id === owner.id ? {...player, profile} : player)};
+        if (!validWarlordRegistry(live)) {
+          replay.issue = 'Your progress could not be saved with this telling. Try again.';
+          return false;
+        }
+      }
+      const updated = keepNight2Replay(profile, chapter, replay.expected);
       if (!updated.ok) {
         replay.issue = updated.reason;
         return false;
