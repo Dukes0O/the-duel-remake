@@ -23,6 +23,10 @@ import {sees} from '../src/world/scablands-ways.js';
 import {sweepObstacle} from '../src/collision.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {worldPose} from '../src/arena/arena-floor.js';
+import {RIDER_RULE} from '../src/world/jobs/rider-rule.js';
+import {createCombatHud} from '../src/combat-hud.js';
+import {createHudScreen} from '../src/screen-hud.js';
+import {placeWashSurroundReview, startWashSurroundReview} from './night-2-wash-review.js';
 
 const seedFor = (name, chance, outcome) => {
   for (let seed = 1; seed < 10_000; seed++)
@@ -189,6 +193,27 @@ const findScene = (run, name) => {
   syncScene(nightScene.group, run.duel.state);
   return nightScene.group.getObjectByName(name);
 };
+function checkCampSmoke(run) {
+  const fires = findScene(run, 'Walkers’ camp fires');
+  assert(fires.visible);
+  const smoke = fires.children.map(fire => fire.getObjectByName('Brazier smoke column'));
+  assert.equal(smoke.length, 2);
+  for (const plume of smoke) {
+    assert(plume.visible);
+    const {uHeight, uFoot, uTop, uWind, uLean, uDark, uPale, uStrength} = plume.material.uniforms;
+    assert(uHeight.value < 5 && uFoot.value < .3 && uTop.value < 1.6 && uFoot.value < uTop.value);
+    assert(uLean.value > .3 && uWind.value.length() > .9, 'Small plumes lean with the wind');
+    assert(uDark.value.g > .4 && uPale.value.g > uDark.value.g && uStrength.value < .45,
+      'Campfire smoke is pale and translucent');
+    assert(plume.geometry.attributes.position.count > 24, 'The plume bends over its visible height');
+  }
+  const seconds = () => smoke.map(plume => plume.material.uniforms.uTime.value);
+  const before = seconds();
+  assert.notEqual(before[0], before[1]);
+  syncScene(nightScene.group, run.duel.state, 0, .5);
+  assert(seconds().every((value, index) => value > before[index]));
+}
+
 for (const [answer, count, word, mark] of [
   [0, 3, 'Sworn', 'dace-runner'], [1, 2, 'Friendly', 'dace-secret'], [2, 3, 'Wary', 'dace-sent-away'], [null, 1, 'Friendly', null],
 ]) {
@@ -225,6 +250,7 @@ for (const [answer, count, word, mark] of [
     assert.equal(run.stage(), 'escaped');
     const fires = findScene(run, 'Walkers’ camp fires');
     assert(fires.visible && fires.children.every(fire => fire.visible));
+    checkCampSmoke(run);
     const cast = run.world.storyPeople;
     const carts = cast.filter(person => person.cart);
     assert.equal(carts.length, 4);
@@ -399,6 +425,7 @@ for (const [seed, mall, outcome] of [
     const camera = run.view.camera, eye = camera.position;
     const fires = findScene(run, 'Walkers’ camp fires');
     assert(fires.visible && fires.children.length === 2);
+    checkCampSmoke(run);
     const points = fires.children.map(fire => {
       assert(fire.visible && Math.hypot(fire.position.x - sites.camp.position.x, fire.position.z - sites.camp.position.z) < 8);
       return fire.children.find(object => object.renderOrder === 3);
@@ -609,21 +636,53 @@ assert.equal(replay.duel.state.arena.result.night2SaveIssue, 'This replay was no
 assert.deepEqual(savedLedger(app.profile), keptBefore);
 console.log('PASS Night 2 replay: the banked page from the first run remains in view and in the save.');
 
+// Both mounted HUDs read the real arena state. This small DOM adapter records
+// their actual text and visibility without needing a browser or WebGL.
+function inspectWashHud(duel, check) {
+  function element() {
+    const children = new Map(), attrs = new Map(), styles = new Map();
+    return {dataset: {}, hidden: false, textContent: '', firstChild: {textContent: ''}, lastChild: {textContent: ''},
+      style: {getPropertyValue: key => styles.get(key) ?? '', setProperty: (key, value) => styles.set(key, value)},
+      classList: {toggle() {}}, append() {}, remove() {}, addEventListener() {},
+      getBoundingClientRect: () => ({left: 0, top: 0, width: 1280, height: 720}),
+      setAttribute: (key, value) => attrs.set(key, String(value)), getAttribute: key => attrs.get(key) ?? null,
+      querySelector(key) {
+        if (!children.has(key)) children.set(key, element());
+        return children.get(key);
+      }, querySelectorAll() { return []; }};
+  }
+  const previous = globalThis.document, created = [];
+  globalThis.document = {createElement() {const node = element(); created.push(node); return node;}};
+  const app = {duel, player: {name: 'QA'}}, ui = new Proxy({}, {get: (all, key) => all[key] ??= element()});
+  const raceHud = createHudScreen({app, ui, text: (key, value) => {ui[key].textContent = String(value);},
+    time: String, credits: String, clamp: value => Math.max(0, Math.min(1, value)), routeMap: {update() {}}});
+  const combatHud = createCombatHud({root: element(), app});
+  const refresh = () => {raceHud(duel.state); combatHud.update(duel.state);};
+  try { check({refresh, ui, nodes: created}); }
+  finally {
+    combatHud.dispose();
+    if (previous === undefined) delete globalThis.document;
+    else globalThis.document = previous;
+  }
+}
+
 // Use a fresh memory profile for each outcome so the existing replay policy
 // can never mask an incorrect durable Wash result.
-for (const won of [true, false]) {
+for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck']) {
+  const won = result.startsWith('win'), surrounded = result === 'surrounded', towed = result.includes('wreck');
   const washApp = new App();
   washApp.audio.unlock = () => {};
-  assert(washApp.addPlayer(won ? 'Wash win' : 'Wash wreck').ok);
+  assert(washApp.addPlayer('Wash ' + result).ok);
   washApp.profile = {...washApp.profile, wasteland: {...washApp.profile.wasteland, discoveredGate: true}};
   assert(washApp._saveProfile());
   washApp.duel.featureFlags = {enabled: id => id === 'road-riders' || flags.enabled(id)};
   assert(washApp.visitWasteland());
   washApp.advance(8);
-  assert(washApp.startNight2());
+  assert(surrounded ? startWashSurroundReview(washApp) : washApp.startNight2());
   const run = chapter(washApp.seed, washApp.duel), {duel, world, view} = run, state = duel.state;
   assert.equal(state.opponents.length, 0, 'Reserved riders stay out of earlier chapter branches');
-  assert.equal(world.riderReserve.length, 3);
+  const riderCount = surrounded ? 5 : 3;
+  assert.equal(world.riderReserve.length, riderCount);
   run.openGate();
   run.say(NIGHT_2_CHOICES[3].words);
   run.say('Say nothing');
@@ -653,30 +712,70 @@ for (const won of [true, false]) {
       headingError: heading - duel.course.at(s).heading});
   };
   // Sample the edge of the arrival ring, and cross it on the drivetrain.
-  park({...sites.washApproach.position, x: sites.washApproach.position.x + sites.washApproach.radius + 3}, -Math.PI / 2);
+  if (surrounded) assert(placeWashSurroundReview(duel));
+  else park({...sites.washApproach.position, x: sites.washApproach.position.x + sites.washApproach.radius + 3}, -Math.PI / 2);
   duel.setInput({throttle: 1});
   for (let i = 0; i < 210 && run.stage() === 'wash-drive'; i++) run.tick();
   assert.equal(run.stage(), 'wash-fight');
   assert(!state.onFoot);
-  assert.equal(world.riderFight.riders.length, 3);
+  assert.equal(world.riderFight.riders.length, riderCount);
   assert(state.opponents.every(actor => actor.roadRider?.weapon === 'ash-sack'));
   assert.equal(world.actors.filter(actor => actor.id.startsWith('wash-rider-')).length, 0, 'The fight replaces the three distant silhouettes');
-  assert(findScene(run, 'Wash rider 1 lights').visible, 'The real arena cars have the lights seen from the tower');
+  if (!surrounded) assert(findScene(run, 'Wash rider 1 lights').visible, 'The real arena cars have the lights seen from the tower');
+  checkCampSmoke(run);
   const at = worldPose(duel, state);
   assert(Math.hypot(at.x - sites.washApproach.position.x, at.z - sites.washApproach.position.z) < sites.washApproach.radius);
-  duel.setInput({throttle: 0, brake: 1});
-  if (won) {
-    for (const rider of state.opponents) {
-      rider.armor = 2;
-      assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
+  const finishFight = (afterOutcome = () => {}) => {
+    if (surrounded) {
+      for (let i = 0; i < 3900 && !world.riderFight.outcome; i++) run.tick();
+      assert.equal(world.riderFight.outcome, 'surrounded');
+      assert(world.riderFight.heldSec >= RIDER_RULE.boxSeconds && !state.combatWrecking);
+      console.log(`QA roadblock reports intact surround at ${world.riderFight.elapsed.toFixed(2)} s.`);
     }
-  } else {
-    state.armor = 1;
-    assert(applyArmorDamage(duel, state, 'crossbow', {owner: state.opponents[0].arenaId}));
-    assert(state.combatWrecking, 'Loss starts with a native armor wreck');
-  }
-  for (let i = 0; i < 300 && run.stage() === 'wash-fight'; i++) run.tick();
-  assert.equal(world.riderFight.outcome, won ? 'won' : 'lost');
+    duel.setInput({throttle: 0, brake: 1});
+    const wreckPlayer = () => {
+      state.armor = 1;
+      assert(applyArmorDamage(duel, state, 'crossbow', {owner: state.opponents[0].arenaId}));
+      assert(state.combatWrecking);
+    };
+    if (won) {
+      for (const rider of state.opponents) {
+        rider.armor = 2;
+        assert(applyArmorDamage(duel, rider, 'crossbow', {owner: 'player', amount: 1}));
+      }
+      if (towed) {
+        const fight = world.riderFight;
+        const step = 1 / 120;
+        for (let i = 0; i < 400 && (!fight.outcome || fight.elapsed + step - fight.endedAt < RIDER_RULE.aftermathSec); i++)
+          duel.step(step);
+        assert.equal(fight.outcome, 'won');
+        assert.equal(run.stage(), 'wash-fight', 'Deliver the final hit in the same tick as the story settles the win');
+        wreckPlayer();
+        duel.step(step);
+        assert.equal(run.stage(), 'wash-fight-won');
+      }
+    } else if (towed) wreckPlayer();
+    for (let i = 0; i < 300 && !world.riderFight.outcome; i++) run.tick();
+    assert(world.riderFight.outcome);
+    afterOutcome();
+    for (let i = 0; i < 300 && run.stage() === 'wash-fight'; i++) run.tick();
+  };
+  if (result === 'wreck') inspectWashHud(duel, ({refresh, ui, nodes}) => {
+    refresh();
+    const riders = nodes.filter(node => node.className === 'combat-opponent-marker');
+    assert(riders.length === 3 && riders.every(node => node.querySelector('.combat-marker-heading').textContent.includes('HUNTING YOU')));
+    finishFight(() => {
+      assert.equal(run.stage(), 'wash-fight', 'The combat HUD updates during the aftermath');
+      refresh();
+      assert(riders.every(node => node.hidden), 'Resolved Wash riders lose their floating labels');
+    });
+    refresh();
+    assert(nodes[0].querySelector('.combat-foot-car').hidden, 'The towed-car arrow disappears');
+    assert(!ui['callout-text'].textContent.includes('Wrecked. Open ground'));
+    assert(ui['race-callout'].hidden, 'The wreck leaves the story objective as the only notice');
+  });
+  else finishFight();
+  assert.equal(world.riderFight.outcome, won ? 'won' : surrounded ? 'surrounded' : 'lost');
   assert.equal(state.arena.result, null, 'The fight hands back to the chapter');
   if (won) {
     assert.equal(run.stage(), 'wash-fight-won');
@@ -684,13 +783,18 @@ for (const won of [true, false]) {
     assert.equal(run.screen().line.words, NIGHT_2_SCENES['wash-fight-won'].lines[0].words);
     assert.equal(view.ledger.words.walkers, 'Strangers');
     assert.equal(view.ledger.feud, 'Raiding');
-    run.advance('wash-drive-home');
+    run.advance(towed ? 'wash-walk-to-cut' : 'wash-drive-home');
+  }
+  assert.equal(view.washCarUnavailable, towed);
+  if (!towed) {
+    assert.equal(run.stage(), 'wash-drive-home');
+    assert(!state.onFoot && !state.combatWrecking, 'An intact car drives home even after a surround');
     park({...sites.carHome.position, x: sites.carHome.position.x - sites.carHome.radius - 3}, Math.PI / 2);
     duel.setInput({throttle: 1, brake: 0});
     for (let i = 0; i < 210 && run.stage() === 'wash-drive-home'; i++) run.tick();
   } else {
     assert.equal(run.stage(), 'wash-walk-to-cut');
-    assert(state.onFoot && state.combatWrecking && view.washCarUnavailable);
+    assert(state.onFoot && state.combatWrecking);
     assert.match(worldHudModel({worldJob: world}).line, /towed in at dawn/);
     assert(Math.hypot(state.fighter.x - at.x, state.fighter.z - at.z) < 12, 'The fighter comes out near the wreck');
     duel.setInput({interact: true});
@@ -707,12 +811,14 @@ for (const won of [true, false]) {
   run.finish(4);
   const kept = savedLedger(washApp.profile);
   assert.equal(kept.stocks.embers, 3);
-  assert.equal(kept.marks.includes('wash-car-towed-at-dawn'), !won);
+  assert.equal(kept.marks.includes('wash-car-towed-at-dawn'), towed);
+  assert.equal(kept.history.some(change => change.choiceId === 'wash-fight-won'), won);
   assert.equal(kept.words.walkers, won ? 'Strangers' : 'Cold');
   assert.equal(kept.feud, won ? 'Hunting' : 'Raiding');
-  assert.equal(view.page.memories.some(line => line.includes('Bess leaves late')), !won);
+  assert.equal(view.page.memories.some(line => line.includes('Bess leaves late')), towed);
   assert(washApp.returnToYard());
   washApp.dispose();
+  console.log('PASS Wash outcome ' + result);
 }
 nightScene.dispose();
 console.log('PASS Night 2 Wash: real boarding and approach, three actual rider cars, victory and wreck, distinct returns and saved ledgers.');

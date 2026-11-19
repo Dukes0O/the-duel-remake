@@ -79,7 +79,8 @@ export function createNight2Look(course) {
       height: SALT_RIDERS.shelterHeight}), canvas);
     return shelter;
   });
-  const campFires = createBraziers(2);
+  const campFires = createBraziers(2, {smokeLook: {height: 4.2, foot: .19, top: 1.4, lean: .45,
+    wind: {x: 1, z: .38}, colour: 0xc8bbb2, pale: 0xf3e6d5, strength: .37}});
   campFires.group.name = 'Walkers’ camp fires';
   const campFireSites = [[-5, -5], [-2, 6]].map(([x, z]) => night2Point(sites.camp.position.x + x, sites.camp.position.z + z));
   campFires.group.children.forEach((fire, index) => {

@@ -87,7 +87,7 @@ export function createNight2(definition, grid) {
   paths.setBrandLamps([...sites.lamps, ...sites.chaseLamps]);
   return {opening, ledger: createLedger(opening), journal: [], set: null, evening: .65, night: false,
     ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius ?? (place === sites.hearth ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius), strict: true}),
-    lamps: {}, scrap: 0, props: {}, routes: []};
+    lamps: {}, scrap: 0, props: {}, routes: [], washCarUnavailable: false};
 }
 
 const memoryLines = {
@@ -265,13 +265,15 @@ function stageAfter(chapter, step, result, cue, wrecked) {
       return 'tower-outcome';
     }
     case 'wash-fight': {
-      const won = result.storyMarks?.riderFight?.outcome === 'won';
+      const outcome = result.storyMarks?.riderFight?.outcome;
+      const won = outcome === 'won';
       if (won) record(chapter, 'wash-fight-won', NIGHT_2_EFFECTS['wash-fight-won']);
-      if (!won || wrecked) {
+      if (wrecked || outcome === 'lost') {
         chapter.washCarUnavailable = true;
         record(chapter, 'wash-car-towed', NIGHT_2_EFFECTS['wash-car-towed']);
       }
-      return won ? 'wash-fight-won' : 'wash-walk-to-cut';
+      if (won) return 'wash-fight-won';
+      return chapter.washCarUnavailable ? 'wash-walk-to-cut' : 'wash-drive-home';
     }
     case 'wash-fight-won': return chapter.washCarUnavailable ? 'wash-walk-to-cut' : 'wash-drive-home';
     case 'pot':

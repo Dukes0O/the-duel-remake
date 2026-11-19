@@ -167,7 +167,7 @@ function bowlGeometry() {
   return mergeGeometries([bowl, ...legs, ring], false);
 }
 
-export function createBraziers(count = 3) {
+export function createBraziers(count = 3, {smokeLook} = {}) {
   const group = new THREE.Group(); group.name = 'Braziers at the scoop places'; group.visible = false;
   const wear = createScrapWear({paint: 1}), iron = wear.apply(SOOT_IRON());
   const bowls = bowlGeometry(), card = new THREE.PlaneGeometry(1, 1), standing = new THREE.PlaneGeometry(1, 1); standing.translate(0, .5, 0);
@@ -183,7 +183,7 @@ export function createBraziers(count = 3) {
     stand.add(flame);
     const glow = new THREE.Mesh(card, glowMaterial); glow.rotation.x = -Math.PI / 2; glow.position.y = .14; glow.scale.setScalar(13); glow.renderOrder = 1; stand.add(glow);
     const sparks = createSparks(18); sparks.name = 'Sparks from the brazier'; stand.add(sparks);
-    const smoke = createSmokeColumn({height: 40}); smoke.name = 'Brazier smoke column'; smoke.position.y = 1.1;
+    const smoke = createSmokeColumn(smokeLook); smoke.name = 'Brazier smoke column'; smoke.position.y = 1.1;
     stand.add(smoke);
     group.add(stand); stands.push({stand, flame, sparks, smoke});
   }
@@ -198,7 +198,7 @@ export function createBraziers(count = 3) {
       flameMaterial.uniforms.uTime.value = seconds; glowMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uHeat.value = 1;
       stands.forEach((entry, index) => {
         entry.flame.scale.y = 3.2 * (.86 + .2 * Math.abs(Math.sin(seconds * 4.7 + index * 2.1)));
-        entry.smoke.userData.update(seconds);
+        entry.smoke.userData.update(seconds + (smokeLook ? index * 2.9 : 0));
         entry.sparks.userData.place(seconds + index * .37, {x: 0, y: 1.3, z: 0}, {x: .3, z: .2}, 1);
       });
       wear.follow(group);

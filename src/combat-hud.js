@@ -321,8 +321,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const armorFill = playerArmor.querySelector('i');
   const footHealthValue = footHealth.querySelector('strong');
   const footHealthFill = footHealth.querySelector('i');
-  const carDistance = host.querySelector('.combat-foot-car strong');
-  const carArrow = host.querySelector('.combat-foot-car-arrow');
+  const carPointer = host.querySelector('.combat-foot-car');
+  const carDistance = carPointer.querySelector('strong');
+  const carArrow = carPointer.querySelector('.combat-foot-car-arrow');
   const townPointer = host.querySelector('.combat-foot-town');
   townPointer.style.bottom = `${BRAND_RULE.footMarkerBottomPixels}px`;
   const townName = townPointer.querySelector('b');
@@ -408,6 +409,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     drawLampProgress(state);
     if (!active) return;
 
+    const worldJob = state.arena?.worldJob, chapter = worldJob?.night2;
+    carPointer.hidden = !onFoot || chapter?.washCarUnavailable === true;
     if (onFoot) {
       const maxHealth=Math.max(1,Number(state.fighter.maxHealth)||100);
       const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
@@ -415,11 +418,13 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setFraction(footHealthFill, health / maxHealth);
       footHealth.classList.toggle('is-critical', health <= maxHealth*.25);
       footHealth.classList.toggle('is-knocked-down', !!state.fighter.knockedDown);
-      const direction = footCarDirection(app.duel.course, state);
-      setText(carDistance, `${direction.distance} m`);
-      const rotation = `rotate(${direction.angle}deg)`;
-      if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
-      const walkingRoutes = state.arena?.worldJob?.night2?.routes ?? [];
+      if (!carPointer.hidden) {
+        const direction = footCarDirection(app.duel.course, state);
+        setText(carDistance, `${direction.distance} m`);
+        const rotation = `rotate(${direction.angle}deg)`;
+        if (carArrow.style.transform !== rotation) carArrow.style.transform = rotation;
+      }
+      const walkingRoutes = chapter?.routes ?? [];
       const [firstWalk, secondWalk] = walkingRoutes;
       const walkPointer = route => {
         const bearing = Math.atan2(route.point.x - state.fighter.x, route.point.z - state.fighter.z) - state.fighter.yaw;
@@ -441,7 +446,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
         townArrow.style.transform = `rotate(${town.angle}deg)`;
         townPointer.setAttribute('aria-label', `${town.name}, ${town.distance} metres away`);
       }
-      const holstered = state.arena?.worldJob?.night2?.holstered === true;
+      const holstered = chapter?.holstered === true;
       footGearBox.hidden = holstered && !app.footMouseHint;
       footGearName.hidden = holstered;
       footGearAmmo.hidden = holstered;
@@ -531,9 +536,10 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       markers.push(marker);
       layer.append(marker);
     }
+    const washEnded = chapter && worldJob.riderFight?.outcome;
     for (let index = 0; index < markers.length; index++) {
       const marker = markers[index], opponent = opponents[index];
-      if (!opponent || opponent.drone) {marker.hidden = true; continue;}
+      if (!opponent || opponent.drone || washEnded && opponent.roadRider) {marker.hidden = true; continue;}
       const projection = projected.find(item => item.index === index);
       const exact = projection?.visible === true;
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course,
