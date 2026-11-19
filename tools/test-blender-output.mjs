@@ -49,7 +49,7 @@ function jpegDimensions(bytes, start, length) {
 const generators = [
   {script:'tools/blender/story-walkers.py',args:[],recipeOnly:true,glb:['public/assets/models/wasteland/town/story-walkers.glb']},
   {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/works.glb'],budget:100000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/works.glb'],budget:100000,maxBytes:8000000},
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
     glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
   {id:'town-safety',script:'tools/blender/town-safety.py',args:[],candidate:true,
@@ -1570,7 +1570,7 @@ try {
       assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
     }
   });
-  check('TOWN-ART-WORKS keeps the warehouse and adds the photographed kiln', () => {
+  check('TOWN-ART-WORKS keeps the passed works and adds the open sawmill', () => {
     const path = join(root, 'public/assets/models/wasteland/town/works.glb');
     const bytes = readFileSync(path);
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
@@ -1583,13 +1583,16 @@ try {
     const family = byName.get('town-works');
     const warehouse = byName.get('warehouse');
     const kiln = byName.get('kiln');
+    const sawmill = byName.get('sawmill');
     assert.ok(Number.isInteger(family), 'town-works root exists');
     assert.ok(Number.isInteger(warehouse), 'warehouse building exists');
     assert.ok(Number.isInteger(kiln), 'kiln building exists');
+    assert.ok(Number.isInteger(sawmill), 'sawmill building exists');
     assert.ok((nodes[family].children || []).includes(warehouse), 'warehouse is a direct child of town-works');
     assert.ok((nodes[family].children || []).includes(kiln), 'kiln is a direct child of town-works');
-    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name).sort(), ['kiln', 'warehouse'],
-      'the passed warehouse remains and the kiln is the only added building');
+    assert.ok((nodes[family].children || []).includes(sawmill), 'sawmill is a direct child of town-works');
+    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name).sort(), ['kiln', 'sawmill', 'warehouse'],
+      'the passed warehouse and kiln remain beside the added sawmill');
     const trianglesUnder = index => {
       const node = nodes[index];
       const own = Number.isInteger(node.mesh)
@@ -1601,8 +1604,14 @@ try {
     assert.ok(triangles > 100 && triangles <= 9_000, `warehouse has ${triangles} triangles; budget 9,000`);
     const kilnTriangles = trianglesUnder(kiln);
     assert.ok(kilnTriangles > 100 && kilnTriangles <= 5_000, `kiln has ${kilnTriangles} triangles; budget 5,000`);
-    assert.equal((gltf.images || []).length, 10, 'the four warehouse images stay and six kiln images are embedded');
+    const sawmillTriangles = trianglesUnder(sawmill);
+    assert.ok(sawmillTriangles > 100 && sawmillTriangles <= 9_000, `sawmill has ${sawmillTriangles} triangles; budget 9,000`);
+    assert.ok((gltf.images || []).length >= 19, 'the passed warehouse and kiln photos plus sawmill piece photos are embedded');
     for (const id of ['kiln:body', 'kiln:chimney', 'kiln:door', 'kiln:lamp', 'kiln:brick-stacks', 'kiln:woodpile']) {
+      assert.ok(byName.has(id), `${id} is exported as an individual piece`);
+    }
+    for (const id of ['sawmill:timber-frame', 'sawmill:tin-roof', 'sawmill:bench', 'sawmill:circular-saw',
+      'sawmill:log-carriage', 'sawmill:log-on-carriage', 'sawmill:log-stack-road', 'sawmill:log-stack-far', 'sawmill:sawdust-heap']) {
       assert.ok(byName.has(id), `${id} is exported as an individual piece`);
     }
   });

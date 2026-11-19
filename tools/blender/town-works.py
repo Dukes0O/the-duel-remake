@@ -1,4 +1,4 @@
-"""Build and review the warehouse and beehive kiln in the Scablands works family."""
+"""Build and review the warehouse, kiln and sawmill in the Scablands works family."""
 import argparse
 import json
 import math
@@ -10,14 +10,14 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render', action='store_true')
 parser.add_argument('--assemble-sheet', action='store_true')
-parser.add_argument('--evidence', default='.evidence/2026-11-09/TOWN-ART-WORKS/round-1')
+parser.add_argument('--evidence', default='.evidence/2026-11-09/TOWN-ART-WORKS/round-3')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/town/works.glb'
 textures = root / 'public/assets/models/wasteland/town/textures'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works-kiln/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-works-sawmill/round-3.jpg'
 blend = root / 'art-build/town/works.blend'
 
 if args.paths_only:
@@ -34,7 +34,7 @@ if args.assemble_sheet:
     draw = ImageDraw.Draw(canvas)
     font = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 27)
     small = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 21)
-    draw.text((28, 15), 'TOWN WORKS | BEEHIVE KILN | ROUND 1', font=font, fill=(238, 223, 198))
+    draw.text((28, 15), 'TOWN WORKS | SAWMILL | ROUND 3', font=font, fill=(238, 223, 198))
     def fit_panel(path, xy, size):
         with Image.open(path) as source:
             image = ImageOps.contain(source.convert('RGB'), size, method=Image.Resampling.LANCZOS)
@@ -43,14 +43,14 @@ if args.assemble_sheet:
     row_y = 65
     for view, label in labels:
         draw.text((28, row_y), f'{label} | SOURCE PHOTO  /  EXPORTED GLB, SAME ORTHOGRAPHIC CAMERA', font=small, fill=(223, 184, 132))
-        fit_panel(textures / f'kiln-dome-{"top" if view == "above" else view}.jpg', (16, row_y + 31), (1000, panel_h))
+        fit_panel(textures / f'sawmill-{"roof" if view == "above" else view}.jpg', (16, row_y + 31), (1000, panel_h))
         fit_panel(evidence / f'{view}.png', (1032, row_y + 31), (1000, panel_h))
         row_y += panel_h + 34
     draw.text((28, row_y), 'THREE-QUARTER VIEWS | EXPORTED GLB', font=small, fill=(223, 184, 132))
     fit_panel(evidence / 'front-three-quarter.png', (16, row_y + 31), (1000, panel_h))
     fit_panel(evidence / 'rear-three-quarter.png', (1032, row_y + 31), (1000, panel_h))
     row_y += panel_h + 34
-    draw.text((28, row_y), 'MAYOR VIEW | 45° DOWN, KILN DOME AND CHIMNEY', font=small, fill=(223, 184, 132))
+    draw.text((28, row_y), 'MAYOR VIEW | 45° DOWN, OPEN SHED AND WORKING SAW', font=small, fill=(223, 184, 132))
     fit_panel(evidence / 'mayor.png', (16, row_y + 31), (2016, panel_h))
     sheet.parent.mkdir(parents=True, exist_ok=True)
     for quality in (88, 84, 80, 76, 72, 68, 64, 60):
@@ -67,9 +67,8 @@ import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(root / 'tools/blender'))
 from photo_carve import carve_object
-from photo_model import Photo
+from photo_model import Photo, Mesh, Photo, lathe, trace, slab
 import town_base as town
-from photo_model import Mesh, Photo, lathe
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -315,6 +314,223 @@ for index in range(3):
                     (.07, .20, .20), kiln_mats['salvaged-brick'], .012)
     end.parent = wood_piece
 
+# TOWN-ART-WORKS, round 2: Sal's open saw shed. The roof and photographed frame
+# are separate so the open bays stay open. The workbench is the only carved body;
+# the blade, carriage log, log stacks and sawdust are separate round pieces.
+sawmill = bpy.data.objects.new('sawmill', None); bpy.context.collection.objects.link(sawmill); sawmill.parent = family
+sawmill.empty_display_type = 'CUBE'
+sawmill_mats = town.make_materials()
+roof_top = Photo(textures / 'sawmill-roof.jpg')
+roof_side = Photo(textures / 'sawmill-side.jpg')
+blade_photo = Photo(textures / 'sawmill-blade.jpg')
+bark_photo = Photo(textures / 'sawmill-bark.jpg')
+log_end_photo = Photo(textures / 'timber-weathered-logs.jpg')
+dust_photo = Photo(textures / 'sawmill-sawdust.jpg')
+
+def sawmill_piece(name):
+    parent = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(parent)
+    parent.parent = sawmill
+    return parent
+
+frame_piece = sawmill_piece('sawmill:timber-frame')
+def frame_beam(name, a, b, width):
+    obj = town.beam('sawmill-' + name, a, b, width, sawmill_mats['weathered-plank'])
+    obj.parent = frame_piece
+    return obj
+
+# The 3 x 2 plot is 24 m along X and 16 m along Z. The 20 m
+# shed runs along X; the photographed end frame spans 9 m across Z.
+mill_length = 20.0
+mill_half_span = 4.5
+mill_eave = 4.0
+mill_ridge = 6.5
+front = Photo(textures / 'sawmill-front.jpg')
+front_rgb = front.rgb()
+timber_mask = np.zeros(front_rgb.shape[:2], dtype=bool)
+# Keep only the measured timber members. The spaces between them are studio
+# background and must stay open even where the truss encloses them.
+timber_polygons = [
+    [(153,300),(196,300),(196,735),(153,735)],
+    [(825,300),(870,300),(870,735),(825,735)],
+    [(501,91),(523,91),(523,339),(501,339)],
+    [(132,295),(892,295),(892,329),(132,329)],
+    [(499,25),(520,25),(153,310),(132,300)],
+    [(505,25),(525,25),(892,300),(871,310)],
+    [(141,390),(163,400),(260,310),(239,300)],
+    [(879,390),(857,400),(760,310),(781,300)],
+    [(158,365),(177,376),(263,321),(248,307)],
+    [(862,365),(843,376),(757,321),(772,307)],
+]
+for polygon in timber_polygons:
+    xx, yy = np.meshgrid(np.arange(front.w), np.arange(front.h))
+    inside_poly = np.zeros_like(timber_mask)
+    for (x0, y0), (x1, y1) in zip(polygon, polygon[1:] + polygon[:1]):
+        crossing = ((y0 > yy) != (y1 > yy)) & (
+            xx < (x1 - x0) * (yy - y0) / (y1 - y0 + 1e-12) + x0)
+        inside_poly ^= crossing
+    timber_mask |= inside_poly
+# Include the entire outline: the old crop cut off the ridge and post feet.
+front_loops = trace(timber_mask, (65, 0, 955, 740), tolerance=2.0, min_area=70)
+front_ground, front_centre = 735, 512
+front_scale = (mill_half_span * 2) / (847 - 175)
+def gable_world(px, py, d):
+    # Anchor the photographed feet, eaves and ridge to the specified heights.
+    height = ((front_ground - py) * mill_eave / (front_ground - 312)
+              if py >= 312 else
+              mill_eave + (312 - py) * (mill_ridge - mill_eave) / (312 - 25))
+    return (d, height, (px - front_centre) * front_scale)
+frame_lines = []
+for line_index, x in enumerate((-9.75, -4.875, 0.0, 4.875, 9.75)):
+    frame_mesh = Mesh()
+    slab(frame_mesh, 'frame', front, front_loops, gable_world,
+         x - .20, x + .20, wall_scale=front_scale)
+    traced = frame_mesh.finish(f'sawmill-timber-frame-line-{line_index+1}',
+                               {'frame': front.material()})
+    traced.parent = frame_piece
+    frame_lines.append(traced)
+
+# A corrugated pitched skin carries a roof-plan photograph outside and the
+# saw shed's side photograph below. The folded strip geometry catches light.
+roof_piece = sawmill_piece('sawmill:tin-roof')
+verts = []; faces = []; uv_top = []; uv_under = []; material_ids = []
+steps = 12; across = 16; half_run = mill_half_span; ridge_y = mill_ridge; eave_y = mill_eave; half_depth = mill_length / 2
+top_base = []; bottom_base = []
+for hand in (-1, 1):
+    start = len(top_base)
+    for j in range(across + 1):
+        t = j / across
+        x = hand * half_run * t
+        base_y = ridge_y + (eave_y - ridge_y) * t
+        wave = .035 * (1 if j % 2 == 0 else -1)
+        y = base_y + wave
+        for i in range(steps + 1):
+            z = -half_depth + 2 * half_depth * i / steps
+            top_base.append(town.game_vector((z, y, x)))
+            bottom_base.append(town.game_vector((z, y - .07, x)))
+    for j in range(across):
+        for i in range(steps):
+            a = start + j * (steps + 1) + i
+            b = a + 1; c = b + steps + 1; d = a + steps + 1
+            verts.extend((top_base[a], top_base[b], top_base[c], top_base[d],
+                          bottom_base[d], bottom_base[c], bottom_base[b], bottom_base[a]))
+            base = len(verts) - 8
+            faces.extend(((base, base+1, base+2, base+3), (base+4, base+5, base+6, base+7)))
+            for px, py in ((a,0),(b,0),(c,0),(d,0),(d,1),(c,1),(b,1),(a,1)):
+                if py == 0:
+                    ti = px - start
+                    row = ti // (steps + 1); col = ti % (steps + 1)
+                    t = row / across; z = -half_depth + 2 * half_depth * col / steps
+                    # Repeat the full photographed roof width across both
+                    # slopes and map its full length to the shed's full length.
+                    py_uv = roof_top.h * (0.26 + t * .55)
+                    px_uv = roof_top.w * (z + half_depth) / (2 * half_depth)
+                    uv_top.append(roof_top.uv(px_uv, py_uv))
+                    side_x = col / steps * (roof_side.w - 1)
+                    side_y = 215 + t * 120
+                    uv_under.append(roof_side.uv(side_x, side_y))
+                else:
+                    uv_top.append((0, 0)); uv_under.append((0, 0))
+            material_ids.extend((0, 1))
+mesh = bpy.data.meshes.new('sawmill corrugated pitched roof skin'); mesh.from_pydata(verts, [], faces); mesh.update()
+uvlayer = mesh.uv_layers.new(name='photographed roof surfaces')
+for poly in mesh.polygons:
+    for li in poly.loop_indices:
+        uvlayer.data[li].uv = uv_top[li] if poly.index % 2 == 0 else uv_under[li]
+obj = bpy.data.objects.new('sawmill-roof-corrugated-tin', mesh); bpy.context.collection.objects.link(obj)
+obj.data.materials.append(roof_top.material()); obj.data.materials.append(roof_side.material())
+for poly in mesh.polygons: poly.material_index = 0 if poly.index % 2 == 0 else 1
+obj.parent = roof_piece
+
+# Bench carve measured from the 1024 px views: a 4.25 m long body with a
+# 1.58 m tabletop, on its own photographs, without the blade or carriage log.
+bench_table = {
+    'photos': {'side': 'bench-side.jpg', 'front': 'bench-front.jpg',
+               'rear': 'bench-rear.jpg', 'top': 'bench-top.jpg'},
+    'length': 4.25, 'width': 3.55, 'height': 1.58,
+    'side': {'start': 12, 'end': 1010, 'ground': 628},
+    'front': {'centre': 512, 'ground': 635, 'top': 171},
+    'rear': {'centre': 512, 'ground': 635, 'top': 171},
+    'top': {'front': 14, 'rear': 1008, 'centre': 390, 'along': 'x', 'x_scale': 3.55 / 520},
+    'grey': 26, 'tolerance': 38, 'bleed_tolerance': 46,
+    'voxel': .075, 'target': 4200, 'mask_dir': str(render_masks),
+}
+bench_piece = sawmill_piece('sawmill:bench')
+bench_body = carve_object('sawmill:bench', textures, bench_table)
+bench_body.location = town.game_vector((0, 0, 0))
+bench_body.parent = bench_piece
+
+# The blade is a thin photographed steel disc set into the leading edge of the
+# bench. Both faces use the actual single-face blade photo.
+blade_piece = sawmill_piece('sawmill:circular-saw')
+blade_mesh = Mesh()
+blade_radius = .60
+def blade_uv(index, distance, radius, angle):
+    return blade_photo.uv(blade_photo.w / 2 + math.cos(angle) * (radius / blade_radius) * blade_photo.w * .35,
+                          blade_photo.h / 2 + math.sin(angle) * (radius / blade_radius) * blade_photo.h * .35)
+lathe(blade_mesh, 'blade', (0, 1.60, -.25), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+      [(-.045, blade_radius), (.045, blade_radius)], blade_uv, sides=40,
+      cap_start=('blade', lambda a, f: blade_photo.uv(blade_photo.w/2 + math.cos(a)*f*blade_photo.w*.35,
+                                                        blade_photo.h/2 + math.sin(a)*f*blade_photo.h*.35)),
+      cap_end=('blade', lambda a, f: blade_photo.uv(blade_photo.w/2 + math.cos(a)*f*blade_photo.w*.35,
+                                                      blade_photo.h/2 + math.sin(a)*f*blade_photo.h*.35)))
+blade_obj = blade_mesh.finish('sawmill-thin-circular-blade', {'blade': blade_photo.material()})
+blade_obj.parent = blade_piece
+bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.21, depth=.13, location=town.game_vector((0, 1.60, -.31)))
+hub = bpy.context.object; hub.name = 'sawmill-blade-arbor-hub'; hub.rotation_euler[0] = math.pi / 2
+hub.data.materials.append(sawmill_mats['iron-dark']); hub.parent = blade_piece
+
+# The carriage rails and rollers meet the table; the long bark-covered log
+# lies on them, aimed from the front of the shed into the blade.
+carriage_piece = sawmill_piece('sawmill:log-carriage')
+for x in (-.72, .72):
+    rail = town.beam(f'sawmill-carriage-rail-{x}', (x, 1.42, -4.65), (x, 1.42, -1.00), .16, sawmill_mats['weathered-plank'])
+    rail.parent = carriage_piece
+for z in (-4.2, -3.2, -2.2, -1.2):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=.13, depth=1.55, location=town.game_vector((0, 1.53, z)))
+    roller = bpy.context.object; roller.name = f'sawmill-carriage-roller-{z}'; roller.rotation_euler[1] = math.pi / 2
+    roller.data.materials.append(sawmill_mats['iron-dark']); roller.parent = carriage_piece
+
+def bark_log(name, center, axis, length, radius, parent):
+    mesh = Mesh()
+    if axis == 'x':
+        origin=(center[0]-length/2, center[1], center[2]); direction=(1,0,0); u=(0,0,1); v=(0,1,0)
+    else:
+        origin=(center[0], center[1], center[2]-length/2); direction=(0,0,1); u=(1,0,0); v=(0,1,0)
+    stations=[(0,radius),(length,radius)]
+    def uv(i,d,r,a):
+        # The source is a side-on log, so its long pixel axis follows the log;
+        # sample only the bark strip and leave the grey studio out of the UVs.
+        return bark_photo.uv(14 + d/length * (bark_photo.w - 28), 391 + math.sin(a) * 72)
+    lathe(mesh,'bark',origin,direction,u,v,stations,uv,sides=16,
+          cap_start=('end',lambda a,f:log_end_photo.uv(256+math.cos(a)*f*142,250+math.sin(a)*f*142)),
+          cap_end=('end',lambda a,f:log_end_photo.uv(256+math.cos(a)*f*142,250+math.sin(a)*f*142)))
+    obj=mesh.finish(name,{'bark':bark_photo.material(),'end':log_end_photo.material()}); obj.parent=parent
+    return obj
+
+carriage_log_piece = sawmill_piece('sawmill:log-on-carriage')
+bark_log('sawmill-carriage-log', (0, 1.87, -2.85), 'z', 3.9, .34, carriage_log_piece)
+
+for side, x in (('road', -7.1), ('far', 7.1)):
+    stack = sawmill_piece(f'sawmill:log-stack-{side}')
+    for row in range(3):
+        for across_index in range(3 - row):
+            z = 3.65 + across_index * .72 + row * .36
+            bark_log(f'sawmill-{side}-stack-log-{row+1}-{across_index+1}',
+                     (x, .36 + row * .59, z), 'x', 3.45, .36, stack)
+
+# A low photographed sawdust heap rests directly on the shed floor near the
+# saw exit. Its turned profile keeps it a mound from every angle.
+dust_piece = sawmill_piece('sawmill:sawdust-heap')
+dust_mesh = Mesh()
+dust_stations=[(0,1.35),(.08,1.48),(.2,1.37),(.38,1.12),(.56,.73),(.72,.24),(.75,.03)]
+def dust_uv(i,d,r,a):
+    return dust_photo.uv(dust_photo.w/2 + math.cos(a)*r/1.48*dust_photo.w*.45,
+                         dust_photo.h*.82 - d/.75*dust_photo.h*.43)
+lathe(dust_mesh,'dust',(7.7,0,-2.7),(0,1,0),(1,0,0),(0,0,1),dust_stations,dust_uv,sides=28,
+      cap_start=('dust',lambda a,f:dust_photo.uv(dust_photo.w/2+math.cos(a)*f*dust_photo.w*.45,dust_photo.h-3)),
+      cap_end=('dust',lambda a,f:dust_photo.uv(dust_photo.w*.5,dust_photo.h*.47)))
+dust_obj=dust_mesh.finish('sawmill-sawdust-photo-mound',{'dust':dust_photo.material()}); dust_obj.parent=dust_piece
+
 out.parent.mkdir(parents=True, exist_ok=True)
 town.export_glb(out)
 
@@ -364,19 +580,58 @@ for item in kiln.children:
     assert touches_ground or touches_other, f'{item.name} floats free of the ground and other pieces'
 assert len(kiln_bounds) == 6, 'kiln body and five separate pieces are present'
 
+sawmill_bounds = {}
+for item in sawmill.children:
+    meshes = [obj for obj in descendants(item) if obj.type == 'MESH']
+    if item.type == 'MESH': meshes.append(item)
+    b = bounds_for(meshes)
+    sawmill_bounds[item.name] = b
+    print(f'{item.name} bounds x/y/z', b)
+    assert b[0][0] >= -11.5 and b[0][1] <= 11.5 and b[2][0] >= -7.5 and b[2][1] <= 7.5, f'{item.name} exceeds the 3x2 footprint margin'
+for item in sawmill.children:
+    b = sawmill_bounds[item.name]
+    touches_ground = b[1][0] <= .04
+    touches_other = any(other_name != item.name and all(
+        b[axis][0] <= other[axis][1] + .08 and b[axis][1] >= other[axis][0] - .08
+        for axis in range(3)) for other_name, other in sawmill_bounds.items())
+    assert touches_ground or touches_other, f'{item.name} floats free of the ground and other pieces'
+assert len(sawmill_bounds) == 9, 'sawmill frame, roof, bench, blade, carriage, log, two stacks and heap are present'
+
+roof_bounds = sawmill_bounds['sawmill:tin-roof']
+print('sawmill roof bounds x/y/z', roof_bounds)
+assert roof_bounds[1][0] > 3.5, 'roof must clear 3.5 m everywhere'
+# Check matching cross-sections at both ends, not just the overall bounds.
+roof_vertices = [obj.matrix_world @ v.co for v in obj.data.vertices]
+end_heights = []
+for x in (-half_depth, half_depth):
+    heights = sorted(round(v.z, 5) for v in roof_vertices if abs(v.x - x) < .001)
+    assert heights, 'roof end has no vertices'
+    end_heights.append(heights)
+assert end_heights[0] == end_heights[1], 'roof slopes along its length'
+print('sawmill roof ends: identical height profiles; no lengthwise slope')
+for frame in frame_lines:
+    b = bounds_for([frame])
+    print(f'{frame.name} bounds x/y/z', b)
+    for side in (-1, 1):
+        feet = [frame.matrix_world @ v.co for v in frame.data.vertices
+                if side * (frame.matrix_world @ v.co).y < -3.5]
+        assert feet and abs(min(v.z for v in feet)) < .04, f'{frame.name} post {side} does not reach ground'
+    assert b[1][1] > 6.3, f'{frame.name} does not reach ridge'
+
+
 if args.render:
     # Re-import the exported GLB in a clean scene; all review renders use that file.
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(out))
     for obj in bpy.data.objects:
-        if obj.name == 'warehouse' or obj.name.startswith('warehouse:') or obj.name.startswith('warehouse-'):
+        if obj.type == 'MESH' and not obj.name.startswith('sawmill'):
             obj.hide_render = True
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'; scene.cycles.samples = 12; scene.cycles.use_denoising = True
     scene.render.resolution_x = 1024; scene.render.resolution_y = 768; scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = 'PNG'
     scene.view_settings.view_transform = 'Standard'; scene.view_settings.look = 'Medium High Contrast'
-    scene.world = bpy.data.worlds.new('Kiln soft grey studio'); scene.world.use_nodes = True
+    scene.world = bpy.data.worlds.new('Sawmill soft grey studio'); scene.world.use_nodes = True
     scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.43, .43, .41, 1)
     scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
     bpy.ops.mesh.primitive_plane_add(size=100, location=(0, -.025, 0))
@@ -392,15 +647,13 @@ if args.render:
     def render_view(name, location, target, scale):
         camera.location = game_loc(location)
         camera.rotation_euler = (game_loc(target) - camera.location).to_track_quat('-Z', 'Y').to_euler()
-        if name == 'above':
-            camera.rotation_euler.rotate_axis('Z', math.pi)
         camera.data.ortho_scale = scale
         if name == 'side':
             scene.render.resolution_x, scene.render.resolution_y = 1024, 512
         elif name in ('front', 'rear'):
             scene.render.resolution_x, scene.render.resolution_y = 1024, 683
         elif name == 'above':
-            scene.render.resolution_x, scene.render.resolution_y = 683, 1024
+            scene.render.resolution_x, scene.render.resolution_y = 1024, 683
         elif name == 'mayor':
             scene.render.resolution_x, scene.render.resolution_y = 1280, 720
         else:
@@ -408,13 +661,13 @@ if args.render:
         scene.render.filepath = str(evidence / f'{name}.png')
         bpy.ops.render.render(write_still=True)
     evidence.mkdir(parents=True, exist_ok=True)
-    render_view('side', (12, 2.1, 0), (0, 2.0, 0), 8.8)
-    render_view('front', (0, 2.1, -12), (0, 2.0, 0), 8.8)
-    render_view('rear', (0, 2.1, 12), (0, 2.0, 0), 8.8)
-    render_view('above', (0, 15, 0), (0, 0, 0), 9.2)
-    render_view('front-three-quarter', (8, 7, -9), (0, 2.0, 0), 9.6)
-    render_view('rear-three-quarter', (-8, 7, 9), (0, 2.0, 0), 9.6)
-    render_view('mayor', (42, 56, -42), (0, 1.5, 0), 11.5)
+    render_view('side', (0, 6, -30), (0, 3.5, 0), 23)
+    render_view('front', (-30, 6, 0), (0, 3.4, 0), 19)
+    render_view('rear', (30, 6, 0), (0, 3.4, 0), 19)
+    render_view('above', (0, 28, 0), (0, 0, 0), 25)
+    render_view('front-three-quarter', (18, 12, -19), (0, 3.4, 0), 26)
+    render_view('rear-three-quarter', (-18, 12, 19), (0, 3.4, 0), 26)
+    render_view('mayor', (45, 64, -45), (0, 2.3, 0), 34)
     blend.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))
     import subprocess

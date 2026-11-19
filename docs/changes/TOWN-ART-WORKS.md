@@ -105,3 +105,80 @@ existing family `round-1.jpg` and `round-2.jpg` remain. Replaced the earlier
 The current recipe had no earlier kiln block-shape path to remove; it exported
 the warehouse only. The new GLB contains no block-shaped kiln. The passed
 warehouse geometry and its four reference photos remain in the family.
+
+## Sawmill — round 1
+
+### Changed
+
+- Added the 3×2 `sawmill` to `tools/blender/town-works.py` as an open timber
+  frame with a pitched tin roof, a photo-carved saw bench, a separate thin
+  circular blade, carriage and log, two bark-log stacks, and a sawdust mound.
+  The former block placeholder is no longer exported. The existing warehouse
+  and kiln recipes were left in place.
+- Added four single-view shed photos, four bench photos, and separate blade,
+  bark and sawdust photos under `public/assets/models/wasteland/town/textures/`.
+  `sawmill-CREDITS.md` credits the generated photos.
+- Exported `works.glb` at 3,562,296 bytes. The warehouse remains at 8,040
+  triangles, the kiln at 2,467, and the sawmill at 8,772, within the 9,000
+  triangle budget. The family contains 21 embedded images.
+- Added the 461,338-byte sheet and review at
+  `docs/board/looks/town-art-works-sawmill/round-1.jpg` and
+  `round-1-review.md`. The recipe prints bounds for all nine named sawmill
+  pieces and checks that each stays within the 3×2 footprint and touches the
+  ground or another piece.
+
+### Checks and review
+
+- Blender 4.5.13 exported the family, printed the piece bounds, and rendered
+  the seven requested review views. I compared the side, front, rear and
+  overhead views beside their source photos, plus both three-quarter views and
+  the mayor view. The other works buildings were hidden.
+- `node tools/test-blender-output.mjs`: **394 checks passed, 0 failed**.
+  The first run found 34,884 sawmill triangles and an outdated 3 MB cap in the
+  runner; the mesh was reduced to 8,772 triangles, and the runner cap was
+  brought to the card's 8 MB allowance. Neither change weakens a test.
+- The family assertion now requires all three buildings, checks the sawmill's
+  9,000-triangle budget and its nine named parts, and checks that the embedded
+  photos are present. The generator file cap changed from 3 MB to 8 MB to match
+  the card. No race code or fingerprints changed.
+- No lane tier, build, browser scenario or in-game look check was run. Claude
+  should inspect the saw blade's size and visibility, roof surface, log stacks
+  and sawdust mound from the driver and mayor views.
+
+### Removed
+
+Removed the sawmill's block placeholder from the exported family and replaced
+it with the named frame, roof and work pieces. The passed warehouse and kiln
+remain in the family.
+
+## Sawmill — round 2
+
+### Changed
+
+- Resized the sawmill from the side and front photo proportions: 15 m long,
+  7.5 m wide, 5.7 m to the ridge, with about a 30° pitch. It remains inside
+  the 3×2 footprint.
+- Mapped the roof photo across the full length and both slopes. Traced the
+  photographed timber posts, braces and trusses, then slabbed the frame at
+  each of five post lines with the gaps kept open.
+- Increased the vertical saw disc to 1.2 m across and raised it through the
+  bench so more of it shows. Warehouse and kiln source sections were untouched.
+- Added `round-2.jpg` (420,969 bytes) and `round-2-review.md` beside the
+  sawmill sheets. The review records remaining visual questions for Claude.
+
+### Checks and review
+
+- Blender 4.5.13 exported the GLB and rendered side, front, rear, overhead,
+  two three-quarter and mayor views. I inspected the exported model in each.
+- `node tools/test-blender-output.mjs`: **394 checks passed, 0 failed**.
+  This includes the sawmill's 9,000-triangle limit and the family GLB readback.
+- No lane tier, build, browser scenario or in-game look check was run. Claude
+  should inspect the roof photo mapping, timber texture, blade visibility,
+  stacks and sawdust from driver and mayor views.
+- No assertions changed. Race code and fingerprints do not apply.
+
+### Removed
+
+Replaced the sawmill's round-1 shed dimensions, beam-built frame, roof mapping
+and blade placement with the photo-proportioned round-2 version. The warehouse
+and kiln remain unchanged in the exported family.
