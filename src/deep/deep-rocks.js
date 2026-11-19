@@ -121,7 +121,10 @@ export function driveIntoDeepRocks(duel, start, dt = 1 / 120) {
       // Head on (the car's flat front against the rock): turn one way for the whole
       // touch, away from the side of the car the rock sits on, so the car swings
       // clear instead of rocking left and right on the spot (QA-ROUND-SOLID-HEADING).
-      const side = episode.side ??= ((rock.x - cx) * dz - (rock.z - cz) * dx) >= 0 ? 1 : -1;
+      // A new rock, or a change between forward and reverse, chooses afresh.
+      if (episode.sideRock !== rock || episode.sideSign !== sign) Object.assign(episode, {sideRock: rock, sideSign: sign,
+        side: ((rock.x - cx) * dz - (rock.z - cz) * dx) >= 0 ? 1 : -1});
+      const side = episode.side;
       tx = nz * side; tz = -nx * side;
     }
     else { tx /= slide; tz /= slide; }
