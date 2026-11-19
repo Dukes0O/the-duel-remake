@@ -67,7 +67,7 @@ export const TOWN_CAPTIONS = Object.freeze({
   'pim.night': caption('Pim', 'Night', 'Something goes by here most nights with no lights on, leaking water. I set my clock by it. That is rather the trouble.'),
   'pim.hook': caption('Hollis', 'After', 'A train nobody owns, carrying water nobody sold. Somebody\'s got a lot of nerve, or a lot of money.'),
   // HELI-RUSTWALL: written out as whole sentences (Kyle, 19 November 2026); Roger's line matches the helicopter's
-  // own copy in src/heli/heli-scablands.js, and a test keeps the two the same.
+  // own copy of it (the Scablands place's lines), and tools/test-heli-scablands.mjs keeps the two the same.
   'town.heli.tam': caption('Old Tam', 'The report', 'The scrub on the Ridge is on fire, and the goats have strong views about it. No truck can get up here, driver, so the help will have to come from the air.'),
   'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot, and I think it's you. Build a Helipad by the town, and I'll make a call over the wall."),
   'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, this is Tremblant. Please say your position again, because I didn't know that wall had another side."),

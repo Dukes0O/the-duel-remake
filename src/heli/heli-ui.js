@@ -96,6 +96,10 @@ export function noticeText(event) {
     case 'hooked': return 'Hooked on';
     // The pilot's map secrets (MAP-SECRETS): a sign found from the air, Roger's call about the Table, the logbook.
     case 'secretFound': case 'tableSpotted': return event.text;
+    // HELI-RUSTWALL: the Scablands' words (on screen; voice is a later card), a load set down at Old Tam's hut, the Ridge fire's end.
+    case 'scablandsSaid': return `${event.who}: ${event.text}`;
+    case 'scablandsLift': return event.liftId === 'tam-feed' ? 'Delivered: the goat feed is at Old Tam\'s hut' : 'Delivered: Old Tam\'s pickup is back at his hut';
+    case 'scablandsFire': return event.state === 'out' ? 'The fire on the Ridge is out' : event.state === 'lost' ? 'The scrub on the Ridge has burnt out' : null;
     case 'tableFound': return `${event.text} ${resultWords('Paid', event.pay, {balance: event.balance})}`;
     case 'hookRefused': return hookHintText(event);
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
@@ -336,7 +340,7 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   if (!view?.heli) return '';
   const here = view.courseId;
   const onPad = here === HOME_COURSE && view.heli.onGround && view.zone &&
-    Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
+    Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius || view.scablands?.atPad === true;
   // The places to fly to: the session's own list when it gives one (Summit Run on), else the usual three.
   const places = Array.isArray(view.destinations) ? view.destinations.map(id => HELI_DESTINATIONS_WITH_SUMMIT[id]).filter(Boolean) : Object.values(HELI_DESTINATIONS);
   const buttons = places.map(place => {
@@ -349,8 +353,10 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const atTruck = view.heli.onGround && view.rescue?.active?.sites?.atTruck === true;
   // SKI-FINISH: the pickup pad's pump during a ski flight sells fuel like the home pump (always for pay).
   const atSkiPump = view.heli.onGround && view.ski?.pump?.atPump === true;
-  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck || atSkiPump ? Math.max(1, refuels) : refuels});
-  const pump = onPad || atTruck || atSkiPump ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
+  // HELI-RUSTWALL: the fuel truck by the Ridge fire's dip tank, sold like the Summit trucks (always for pay).
+  const atRidgeFuel = view.heli.onGround && view.scablands?.atFuel === true;
+  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck || atSkiPump || atRidgeFuel ? Math.max(1, refuels) : refuels});
+  const pump = onPad || atTruck || atSkiPump || atRidgeFuel ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
   const truckTarget = atTruck ? `<label class="heli-fuel-target">Tank target
     <select data-heli-fuel-target aria-label="Fuel tank target">
       ${[190, 230, 330, 360, 400].map(kg => `<option value="${kg}"${kg === 330 ? ' selected' : ''}>${kg} kg</option>`).join('')}
@@ -544,6 +550,7 @@ export function createHeliUi({host, app, onMenu = null}) {
             if (text) radioLine = {text, until: now + RADIO_SECONDS};
           }
           if (event.type === 'crashed') radioLine = {text: HELI_RADIO_LINES['heli.radio.crash'].text, until: now + RADIO_SECONDS};
+          if (event.type === 'scablandsSaid') radioLine = {text: `${event.who}: ${event.text}`, until: now + RADIO_SECONDS};
           if (event.type === 'jobDone' && Number.isFinite(event.pay)) delivered = {pay: event.pay, until: now + DELIVERED_SECONDS};
         }
         seenLog = log;

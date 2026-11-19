@@ -60,7 +60,7 @@ export function scablandsVisitRefusal(town, {lessonsDone = null} = {}) {
   return null;
 }
 
-// The land as plain inputs for src/heli/heli-scablands.js. heightAt: the ground as the town has shaped it (the same one the
+// The land as plain inputs for the helicopter's Scablands place. heightAt: the ground as the town has shaped it (the same one the
 // town's scene and the cars use, unless a test passes another).
 export function scablandsHeliInputs(town, {heightAt = scablandsSurfaceHeightAt} = {}) {
   const pad = townHelipad(town), reservoirs = finished(town, 'reservoir');

@@ -10,7 +10,7 @@ import {ROAD_HALF_WIDTH} from '../src/world/scablands-road.js';
 import {HILLS} from '../src/world/scablands-height.js';
 import {SCABLANDS_ID, SCABLANDS_HELI, SCABLANDS_LIFTS, SCABLANDS_LINES, createScablandsWorld, ridgeFireRecord, openLifts, createScout,
   scablandsFlyable} from '../src/heli/heli-scablands.js';
-import {FIRE, cellIJ} from '../src/heli/heli-fire.js';
+import {FIRE, cellIJ, cellId, startCells, startFire, spreadStep, fireLost, fireOut, applyWater, hottestEdge, dayWind} from '../src/heli/heli-fire.js';
 import {KESTREL} from '../src/heli/heli-flight.js';
 import {TOWN_CAPTIONS} from '../src/town/content/lines.js';
 
@@ -93,7 +93,7 @@ ok(quiet.ground.water(quiet.tank.x, quiet.tank.z) === null, 'with the fire out t
 ok(quiet.water.length === 0, 'no Reservoir and no fire: nothing to scoop (the Scablands is dry)');
 
 // ---- The Ridge fire ------------------------------------------------------------------------------------------------------------
-ok(world.grid.forest >= 150, `the Ridge's scrub makes ${world.grid.forest} fire cells`);
+ok(world.grid.forest >= 100 && world.grid.lostAt < world.grid.forest, `the Ridge's scrub makes ${world.grid.forest} fire cells, more than a lost fire burns`);
 ok(world.grid.lostAt === FIRE.lostCells, 'a Ridge fire is lost at the usual 45 cells');
 for (const cell of world.grid.cells.values()) {
   const d = Math.hypot(cell.x - ridge.x, cell.z - ridge.z);
@@ -109,6 +109,37 @@ assert.deepEqual(ridgeFireRecord(createScablandsWorld(scablandsHeliInputs(town))
 const saved = {...fire, burning: fire.burning.slice(0, 1)};
 ok(ridgeFireRecord(world, {...inputs, ridgeFire: {state: 'burning', fire: saved}}) === saved, 'a saved fire carries on where it stopped');
 ok(ridgeFireRecord(world, {...inputs, ridgeFire: {state: 'out'}}) === null, 'a fire that is out stays out');
+
+// The fire rules' own targets (docs/HELI_FIRE.md section 4.5) hold on the Ridge, with the drop robot of tools/test-heli-fire.mjs.
+{
+  const grid = world.grid, starts = startCells(world.course, world.ground, grid);
+  ok(starts.length > 0, `the fire has cells to start in (${starts.length})`);
+  const CALM = {speed: 0.5, toward: {x: 1, z: 0}}, WINDY = {speed: 7, toward: {x: Math.SQRT1_2, z: Math.SQRT1_2}};
+  const SEEDS = Array.from({length: 50}, (_, k) => 1000 + k * 7919), median = list => [...list].sort((a, b) => a - b)[Math.floor(list.length / 2)];
+  const newFire = seed => startFire({id: 'ridge-fire', courseId: SCABLANDS_ID, grid, seed, startDay: 0, candidates: starts});
+  const robotDrop = (fire, wind) => {
+    const [ti, tj] = cellIJ(hottestEdge(fire, grid, wind)), burning = new Map(fire.burning), foot = [], dry = [];
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+      const n = cellId(ti + di, tj + dj);
+      if (burning.has(n)) foot.push(n); else if (grid.cells.has(n) && !fire.burnt.includes(n)) dry.push(n);
+    }
+    const total = foot.reduce((sum, c) => sum + burning.get(c), 0), wet = dry.length ? dry : foot;
+    const patches = foot.map(c => ({x: grid.cells.get(c).x, z: grid.cells.get(c).z, litres: 450 * burning.get(c) / total, radius: 4}));
+    for (const c of wet) patches.push({x: grid.cells.get(c).x, z: grid.cells.get(c).z, litres: 150 / wet.length, radius: 4});
+    return applyWater(fire, grid, patches).fire;
+  };
+  const alone = (seed, wind) => { let f = newFire(seed); for (let n = 1; n <= 60; n++) { f = spreadStep(f, grid, wind); if (fireLost(f, grid)) return n; } return 99; };
+  const fight = seed => {
+    let f = newFire(seed); const wind = dayWind(seed, 7);
+    for (let n = 0; n < 2; n++) f = spreadStep(f, grid, wind);
+    for (let drops = 1; drops <= 60; drops++) { if (fireLost(f, grid)) return 99; f = robotDrop(f, wind); if (fireOut(f)) return drops; f = spreadStep(f, grid, wind); }
+    return 99;
+  };
+  const rows = {calm: median(SEEDS.map(s => alone(s, CALM))), windy: median(SEEDS.map(s => alone(s, WINDY))), once: median(SEEDS.map(fight))};
+  ok(rows.calm >= 12 && rows.calm <= 16, `left alone and calm, the Ridge is lost after 12 to 16 steps (${rows.calm})`);
+  ok(rows.windy >= 8 && rows.windy <= 11 && rows.windy < rows.calm, `left alone and windy, after 8 to 11 (${rows.windy})`);
+  ok(rows.once >= 4 && rows.once <= 8, `answered at once, out in 4 to 8 drops (${rows.once})`);
+}
 
 // ---- The same town, the same world; the lifts; the lines ----------------------------------------------------------------------
 const again = createScablandsWorld(scablandsHeliInputs(town));

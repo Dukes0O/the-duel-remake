@@ -145,16 +145,17 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   // draws that one): the game's own car models, made on demand.
   const others = new Map();
   function otherMesh(load) {
-    // One model per car type, reused from job to job.
-    const key = load.id;
+    // One model per car type, reused from job to job. HELI-RUSTWALL: a Scablands load names the model it is drawn as
+    // (Old Tam's pickup has no model of its own yet), and keeps a mesh of its own.
+    const key = load.lift ? `lift:${load.lift}` : load.id, model = load.renderAs ?? load.id;
     let mesh = others.get(key);
     if (mesh) return mesh;
-    if (load.id === 'crate') mesh = buildCrate(THREE);
+    if (model === 'crate') mesh = buildCrate(THREE);
     else {
-      const status = vehicleAssets.status(load.id);
+      const status = vehicleAssets.status(model);
       if (status === 'error') return null;
-      if (status !== 'ready') { if (status === 'idle') void vehicleAssets.load(load.id); return null; }
-      mesh = vehicleAssets.create(load.id);
+      if (status !== 'ready') { if (status === 'idle') void vehicleAssets.load(model); return null; }
+      mesh = vehicleAssets.create(model);
       if (!mesh) return null;
     }
     others.set(key, mesh);

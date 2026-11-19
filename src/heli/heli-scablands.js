@@ -33,11 +33,17 @@ export const SCABLANDS_HELI = Object.freeze({
   // gallons) in a tank about 6.4 m across and 1.37 m deep (makers' tables). The fire truck fills it at the foot of the Ridge,
   // where a truck can still drive, and keeps it topped up. It stands beside a road, below Old Tam's hut.
   dipTank: Object.freeze({radius: 3.2, depth: 1.37, litres: 45000, fromRidge: Object.freeze([550, 1000]), roadside: Object.freeze([6, 30])}),
+  // While the Ridge burns a fuel truck stands with the dip tank, in a landing circle of the usual 12 m this far from it, as
+  // the lodge's crews stage fuel near a rescue at Summit Run (heli-session.js); it sells at the pump's price.
+  fuelFromTank: Object.freeze([25, 60]),
   // Old Tam's hut on the Ridge's flat top: the circle where lifted loads are set down.
   hutRadius: 12,
-  // Dry scrub on the Ridge's slopes: the fire grid's cells (20 m) between these distances from the Ridge's middle, with 3 to 6
-  // bushes each (desert scrub stands a few metres apart). None within hutClear of the hut or tankClear of the tank.
-  scrub: Object.freeze({inner: 110, outer: 420, perCell: Object.freeze([3, 6]), hutClear: 60, tankClear: 40}),
+  // Dry scrub on the Ridge's shoulder: a band two fire cells (20 m) deep between these distances from the Ridge's middle,
+  // with 3 to 6 bushes a cell (desert scrub stands a few metres apart). None within hutClear of the hut or tankClear of the
+  // tank. The fire rules were tuned on Tremblant Woods' strip of forest one or two cells deep; an open slope of scrub burns
+  // out in two spread steps under them, so the scrub is a band of that depth, chosen so the HELI_FIRE section 4.5 targets
+  // hold on the Ridge (tools/test-heli-scablands.mjs: left alone, calm 12 steps and windy 10; answered at once, 5 drops).
+  scrub: Object.freeze({inner: 245, outer: 280, perCell: Object.freeze([3, 6]), hutClear: 60, tankClear: 40}),
   // Old Tam's pickup slid off the track at the Ridge's foot, this far from its middle.
   truckFromRidge: Object.freeze([450, 1000]),
   // Scouting: flying at least this high over the ground uncovers the map chunk under the helicopter and the eight around it,
@@ -162,6 +168,10 @@ export function createScablandsWorld(rawInputs) {
   }, 48, towardYard);
   if (!tankAt) throw new Error('No level ground beside a road below the Ridge for the dip tank.');
   const tank = Object.freeze({x: tankAt.x, z: tankAt.z, y: dry.height(tankAt.x, tankAt.z), radius: tankSpec.radius, litres: tankSpec.litres});
+  const fuelAt = searchRings(tank, range(SCABLANDS_HELI.fuelFromTank[0], SCABLANDS_HELI.fuelFromTank[1], 5),
+    (x, z) => clearCircle(inputs, dry, x, z, SCABLANDS_HELI.padRadius, 1.5, {road: -inputs.roadHalfWidth}), 24, towardYard);
+  if (!fuelAt) throw new Error('No clear circle beside the dip tank for the fuel truck.');
+  const fuel = Object.freeze({x: fuelAt.x, z: fuelAt.z, y: dry.height(fuelAt.x, fuelAt.z), radius: SCABLANDS_HELI.padRadius});
   const truckAt = searchRings(ridge, range(SCABLANDS_HELI.truckFromRidge[0], SCABLANDS_HELI.truckFromRidge[1], 25), (x, z) => {
     const fromRoad = inputs.roadDistance(x, z) - inputs.roadHalfWidth;
     return fromRoad >= 4 && fromRoad <= 25 && below(x, z) && Math.hypot(x - tank.x, z - tank.z) > 60
@@ -216,7 +226,7 @@ export function createScablandsWorld(rawInputs) {
   const pad = site?.zone ?? {x: 0, z: 0, y: inputs.heightAt(0, 0)};
   const course = scablandsFrame(inputs, pad, scrub);
   const grid = fireGrid(course, ground, site);
-  return Object.freeze({course, ground, site, hut, tank, truck, ridge: Object.freeze({x: ridge.x, z: ridge.z}), grid,
+  return Object.freeze({course, ground, site, hut, tank, fuel, truck, ridge: Object.freeze({x: ridge.x, z: ridge.z}), grid,
     water: Object.freeze(bodies.map(body => Object.freeze({kind: body.kind, x: body.x, z: body.z, surface: body.surface,
       ...(body.kind === 'dipTank' ? {radius: body.radius} : {half: body.half})}))),
     scrubCount: scrub.length});
