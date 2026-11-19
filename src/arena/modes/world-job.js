@@ -189,7 +189,8 @@ const townWorldJob = definition => definition?.kind === 'town-drive' || definiti
 const HAUL_CUES = Object.freeze({haulLift:'world.bellows.load', haulUnload:'world.bellows.load', haulShed:'vehicle.crush',
   haulDelivered:'interface.bonus'});
 function haulShedSentence(event) {
-  const what = event.pieces.length === 1 ? `A ${event.pieces[0]}` : `${event.pieces.length} pieces`;
+  const count = ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'][event.pieces.length - 2];
+  const what = event.pieces.length === 1 ? `A ${event.pieces[0]}` : `${count ?? 'Many'} pieces`;
   const how = event.cause === 'rough' ? 'rattled loose and fell off' : event.cause === 'fall' ? 'flew off in the fall' : 'fell off the back';
   return `${what} ${how}. That is ${groupKg(event.kg)} kg lost.`;
 }
