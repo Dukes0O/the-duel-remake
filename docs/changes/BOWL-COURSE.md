@@ -1,35 +1,9 @@
 # BOWL-COURSE
 
-## Changed
+**Changed.** The Bowl (`titan-bowl`, dev) is rebuilt to fit its stadium model: a 140 m ring round the podium, 13 m wide, with the Scrapdome's shape of floor layout (walls, floor width, 42 mph arena floor speed). It is sampled every 2 m, its island-end wall pieces and rails shrink to the bend, and its ramps stop at the wall faces, all for the Bowl only (`src/course.js`, `src/race-structures.js`, `src/world-props.js`). Two ramps with a flame jet either side on the wall tops; the crush line runs junk cars, crushed buses and RV, then three burning stacks. The view puts the stadium at the ring's middle, removes the model's own ramps and the low props on the ring, and draws no Titan Arena stands. BOWL-ART-CRUSH round 3: the crush parts keep their root's turn (the stack stood on end and the bus and RV were never drawn), the model's white materials are coloured by name with each vehicle's own faded paint, fire burns from each stack top, crushed model props settle lower.
 
-- Added a Bowl-only view for the authored stadium, floodlights, colored light pools, crush props and fire. The view loads only when `def.bowl` and the `titan-bowl` switch are both active.
-- The crush line now uses nine game junk cars, then the authored crushed bus and RV, followed by the authored burning bus stack. Each car and shell has a faded individual tint. The cone flame is not used.
-- Flame jets use the game's fire flipbook and fire in a repeating cycle beside the course ramps. The heap uses the same animated fire effect continuously.
-- Added a small `render3d.js` hook to create, update and dispose the Bowl view. No other course renderer behavior or race state is changed.
-- Kept the course definition and simulation data scoped to `def.bowl`; existing course ordering and race fingerprints remain unchanged.
+**Checks** on `<commit>` with `integration/wasteland` at `00382d70b` merged: `node tools/test-bowl-course.mjs` (ring inside the stadium, walls clear of the floor, ramps launch at 30 mph, a junk car, bus, RV and stack each crush, Titan Arena unchanged, view); `test-bowl-air`, `test-feature-flags`; lane tier `<result>`; `npm run build` `<result>`. Look: pictures at night from truck height, the top row and above, in the real game on a private port (Claude's own look).
 
-## Checks
+**Changed assertions** (`tools/test-bowl-course.mjs`, all for the rebuilt Bowl): three ramps became two; three flame jets became four (two per ramp); the fake crush model now has a turned root like `crush.glb`. Nothing loosened; each new claim has its own check. **Pinned counts:** none moved; the Bowl's registry entry was already merged on 5 November and is in `COURSE` only with the dev switch on.
 
-- `node tools/test-bowl-course.mjs` — passed before and after the lane tier. Covers ramp launch, crush deformation, stadium and vehicle presentation, unique salvage rows, flame-jet timing, heap fire and existing course order.
-- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` — reached `[309/309]`; the Bowl course suite passed. The runner stayed open after the last result, so it was stopped after all entries had reported. Three suites failed and were each rerun once on the final code with the same result:
-  - `tools/test-audio.mjs` — runtime recording count assertion: “all eleven runtime recordings loaded.”
-  - `tools/test-circuit-eifel.mjs` — FFmpeg loudness measurement failed while measuring the Eifel sound bed.
-  - `tools/test-full-check.mjs` — its temporary Git-copy case could not start `pwsh` (`spawnSync pwsh EACCES`). The other 45 checks in that suite passed.
-- `npm.cmd run build` — passed on rerun (Vite exit code 0). Existing dynamic-import and large-chunk warnings remain.
-- Browser and look check — Claude runs in Chrome. No browser was run in this lane.
-- Race fingerprints — `test-replays.mjs` passed 297 checks across 33 cases and 31 events. Existing course and world geometry guards passed; no signature fixtures were regenerated.
-- Changed assertions — added Bowl presentation assertions. No existing assertion or tolerance was changed.
-
-## Claude look check
-
-In Chrome, with `titan-bowl` enabled, check:
-
-1. The Bowl reads as a night stadium: the stands wrap the venue, the crowd is visible, and the floodlights illuminate the dirt, ramps and crowd without washing out the scene.
-2. The three authored ramps sit within the stadium floor. Flame jets are beside the ramps, visibly turn on and off, and do not stay lit for the whole cycle.
-3. The crush line reads in order at truck height: varied faded junk cars, then distinct crushed bus and RV outlines, then the fallen burning heap. Props sit on the dirt at their crush targets.
-4. The burning stack uses its `crush.glb` geometry and animated fire from the game's fire effect, with no cone flame. Confirm the bus/RV paint remains readable under night lighting.
-5. Switching away from The Bowl leaves the existing Titan courses visually unchanged.
-
-## Removed
-
-Removed the old change-note claim that the Bowl visuals were unwired. No runtime file or asset was removed.
+**Removed:** the 1,280 m Titan-sized Bowl layout and its stadium-at-the-start-line placement; the four fixed show lights at world positions (now under the stadium's floodlight banks).
