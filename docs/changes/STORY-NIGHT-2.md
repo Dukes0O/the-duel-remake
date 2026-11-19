@@ -1,5 +1,16 @@
 # STORY-NIGHT-2 — Slice A, PR #47
 
+## Continued review since `480b1e594`
+
+- Moonlight and a cool fill now cover the whole chapter night. Gate and alley lamps, the hearth and the pump light the nearby ground. The pump is lit for the watch and lights after the player brings a brand on the inside branch.
+- The tower frames two fires at the Walkers’ camp and two roof lamps on each of the three actual rider cars. The tower offers Watch and Carry one ember. The Watch hint names Rell and Clinker. Slice B will add the Wash fight.
+- The banner and arrows switch from the hearth to the pump the tick the brand is taken. The native fighter follows both walks. Canvas input reaches the peaceful RPG guard with no rocket or ammo use, and a press at the scout uses the loaned hand flamer. The browser scenario now checks both presses through the canvas, as well as the tower choices and the return to the hearth.
+- Claude hand-played watch end to end on `f581d1f`, confirming Rell’s trade, the whistle and scout, the close and the saved watch. Claude also checked the inside dialogue, brand and pump progress bar, and refuse with the Dead Mall answer. The new lighting, the full foot chase, the pot drive to camp and “Carry one ember out to them” await laptop play.
+- Candidate `e4429f368` is based on official `ea19e0189`. Combined same-App smoke, the native Night 2 suite, historical P4 audio and the production build passed. At 1280×720 the actual tower view placed both camp fires 84.6 px apart and six separate rider lamps in frame, with no terrain or solid obstruction. The five affected lane suites passed at `154442dc7`. The scenario planner and harness passed again at `13dc16d43`.
+- Four consecutive `story-night-2` browser passes at 1280×720, visual and audio checks, and target-device timing are still for the laptop. This cloud revision ran zero browser plays. This review covers Slice A. ROAD-RIDERS is on official integration and passed Claude’s three laptop hand fights. Slice B can proceed separately.
+
+## Prior proof since `f581d1fdb`
+
 - Since `f581d1fdb`, the peaceful walk uses an alley-safe route for both the ground marker and the HUD. The RPG remains holstered and combat prompts are hidden on the peaceful walk.
 - The theft leads to the store without moving the player. Dusk fades over four seconds. The moon, gate and alley lamps light the chase, Dace carries the bright ladle and ember, and the banner names both routes. His on-screen marker needs line of sight. The map keeps the last visible position.
 - The 1280×720 check projects the approved cast’s feet at or above pixel 575.2 from the top. The seven gate choices sit in a bottom band, and the laptop scenario checks their actual clearance. The approved camera, cast, bell, wording and costs are retained.
