@@ -49,7 +49,7 @@ ring is now as wide as the floor:
 | Centre line of the ring | two 70 m straights and two half circles each 73 m round (23.24 m radius): 286 m round |
 | Floor | trucks drive anywhere 20 m either side of the centre line: 40 m across each straight |
 | Outer wall face | 21.9 m out from the centre line; wall to wall 160.3 m long and 90.3 m across |
-| The Spine | 2.7 m wide and 70 m long, between the two straights: a row of rusted shipping containers |
+| The Spine | 2.5 m wide and 70 m long, between the two straights: a row of rusted shipping containers |
 | Round the Spine's ends | a truck turns as tight as 3.2 m from its end, or as wide as 43 m against the end wall |
 
 The floor is about 12,500 square metres, five times today's. The lap goes Jump Straight, End 1, Crush Straight, End 2,
@@ -69,7 +69,7 @@ each other's mirror: a place and the place half a lap (143 m) further on are the
 - the lane kicker, the mirror of the first, s 165 to 177;
 - the crush line on the stand side, three across (off plus 9.4, 13.8 and 18.2): three rows of junk cars at s 165, 172 and
   179, the buses and the RV at 190, the burning stacks at 203;
-- the Table on the Spine side (off minus 20 to minus 6): a flat-topped jump 3.2 m high and 22 m long, s 186 to 208.
+- the Table on the Spine side (off minus 20 to minus 6): a flat-topped jump 3.2 m high and 19.5 m long, s 185.5 to 205.
 
 **The two ends** are the bowl: from 10 m outside the centre line the floor curves up towards the end wall, 3.2 m high at
 the wall face (2.3 m where a truck's centre can reach), so a truck can ride round the wall at speed. The middle of each
@@ -78,7 +78,7 @@ first and last 10 m, so both straights are flat between their jumps.
 
 **How high and how far** (measured in the simulation with a Titan from a standing start on the straight; a Titan
 settles near 50 mph at full throttle on this floor): the kickers throw it about 28 m with 1.2 s in the air and 4 m up,
-the Table about 40 m, 1.7 s and 7 m up, the Big Jump about 52 m, 2.2 s and 12 m up, landing in the open middle of End 1.
+the Table about 45 m, 1.9 s and 9 m up (it lands in End 2), the Big Jump about 52 m, 2.2 s and 12 m up, landing in the open middle of End 1.
 A flip takes 1.1 s, so every jump allows one.
 
 Every jump is on a straight and no two jumps share a stretch of the lap, so the game's jump scoring (which names a jump
@@ -144,9 +144,12 @@ number of its own:
 3. Laptop only: pictures at night from truck height, the top row and above; a hand drive (big air off the jumps, the
    crush line, a lap of the lanes). No frame check: the Bowl is switched off for players (rule 9).
 
-**Files:** `src/bowl/bowl-course.js`, `src/bowl/bowl-view.js`, `src/bowl/bowl-stadium.js` (new), the Bowl's branches in
-`src/course.js`, `src/race-structures.js`, `src/world-surfaces.js` and one line in `src/sim-driving.js`, the suites above,
-`docs/WASTELAND_WORLD.md` section 7, `docs/board/looks/bowl-expand/`. Removed: `public/assets/models/wasteland/bowl/stadium.glb`
+**Files:** `src/bowl/bowl-course.js`, `src/bowl/bowl-view.js`, `src/bowl/bowl-air.js`, `src/bowl/bowl-stadium.js` (new),
+`tools/bowl-plan.mjs` (new), the Bowl's branches in `src/course.js`, `src/race-structures.js`, `src/world.js`,
+`src/world-props.js`, `src/rally-detail.js` and `src/arena/arena-pickups.js`, two lines in `src/sim-driving.js`, the
+regenerated `src/generated-shortcut-presets.js`, the suites above, `docs/WASTELAND_WORLD.md` section 7,
+`docs/board/looks/bowl-expand/`. (Written as the work found them: the first list named `world-surfaces.js`, which did
+not need a change, and missed the others.) Removed: `public/assets/models/wasteland/bowl/stadium.glb`
 and `tools/blender/bowl-stadium.py`.
 
 ## Built (Claude, 19 November 2026, night)
