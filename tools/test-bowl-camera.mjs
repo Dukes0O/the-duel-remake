@@ -80,11 +80,20 @@ const viewYaw = pose => Math.atan2(pose.target.x - pose.position.x, pose.target.
 
 // The three rules of the card, on every frame of a drive.
 function steady(name, frames) {
-  let fastest = 0, furthest = 0, widest = 0, blockedRun = 0, longestBlocked = 0;
+  let fastest = 0, furthest = 0, widest = 0, blockedRun = 0, longestBlocked = 0, sharpest = 0, apart = 0;
   for (let index = 1; index < frames.length; index++) {
     const a = frames[index - 1].pose, b = frames[index].pose;
     fastest = Math.max(fastest, Math.abs(wrap(viewYaw(b) - viewYaw(a))) / FRAME / DEG);
     furthest = Math.max(furthest, Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y, b.position.z - a.position.z));
+    // Against the truck: how far the camera moved beyond the truck's own move (a snap sideways or up shows here).
+    const ta = frames[index - 1].truck, tb = frames[index].truck;
+    apart = Math.max(apart, Math.hypot(b.position.x - a.position.x - (tb.x - ta.x), b.position.y - a.position.y - (tb.y - ta.y),
+      b.position.z - a.position.z - (tb.z - ta.z)));
+    // The turn rate changes gradually while driving (the end swing has its own ease and is checked on its own).
+    if (index > 1 && !frames[index].ended) {
+      const before = wrap(viewYaw(a) - viewYaw(frames[index - 2].pose)) / FRAME, now = wrap(viewYaw(b) - viewYaw(a)) / FRAME;
+      sharpest = Math.max(sharpest, Math.abs(now - before) / FRAME / DEG);
+    }
     const seen = frames[index].seen;
     widest = Math.max(widest, seen.depth > 0 ? Math.max(Math.abs(seen.x), Math.abs(seen.y)) : Infinity);
     // A truck inside the stands (they have no height for a truck yet, BOWL-OUT-SIM) is hidden from every camera.
@@ -93,9 +102,13 @@ function steady(name, frames) {
   }
   ok(fastest <= BOWL_CAMERA.maxTurnDegPerSec + .5, `${name}: the camera turns at no more than 120 degrees a second (fastest ${fastest.toFixed(1)})`);
   ok(furthest <= 1.5, `${name}: the camera moves no more than 1.5 m between two frames (furthest ${furthest.toFixed(2)} m)`);
+  ok(apart <= .8, `${name}: against the truck the camera moves no more than 0.8 m a frame (most ${apart.toFixed(2)} m)`);
+  const easing = BOWL_CAMERA.maxTurnDegPerSec / BOWL_CAMERA.easeSec;
+  ok(sharpest <= easing * 1.05, `${name}: every change of turn rate is eased over 0.4 s (sharpest ${sharpest.toFixed(0)} deg/s each second)`);
   ok(widest <= .5, `${name}: the truck stays within the middle half of the picture (furthest out ${widest.toFixed(2)})`);
   ok(longestBlocked <= .5, `${name}: a wall, the fence or the stands never hide the truck for more than half a second (longest ${longestBlocked.toFixed(2)} s)`);
-  console.log(`  ${name}: ${frames.length} frames, fastest turn ${fastest.toFixed(1)} deg/s, furthest move ${furthest.toFixed(2)} m, ` +
+  console.log(`  ${name}: ${frames.length} frames, fastest turn ${fastest.toFixed(1)} deg/s, furthest move ${furthest.toFixed(2)} m ` +
+    `(${apart.toFixed(2)} m against the truck), sharpest change of turn ${sharpest.toFixed(0)} deg/s each second, ` +
     `truck at most ${widest.toFixed(2)} from the middle, longest hidden ${longestBlocked.toFixed(2)} s`);
 }
 
@@ -215,6 +228,20 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
     stepBowlCamera(camera, truckOf(a), SIM_DT, {solidTop: (x, z) => bowlSolidTop(a.course, x, z, a.state.s)});
   }
   ok(JSON.stringify(a.state) === JSON.stringify(b.state), 'stepping the camera changes nothing in the race');
+}
+
+// A new go, or a frame drawn by another camera, starts the camera afresh even when the truck has not moved: the old path
+// and angle are not carried over (the independent review of 20 November: a Turn Show go reuses the same try number).
+{
+  const camera = createBowlCamera(), first = {}, second = {};
+  const truck = (key, x, heading = 0) => ({key, x, y: 0, z: 0, air: 0, heading});
+  for (let frame = 1; frame <= 60; frame++) stepBowlCamera(camera, truck(first, frame * .2, Math.PI / 2), FRAME, {frame});
+  ok(camera.path.length > 30 && Math.abs(camera.yaw - Math.PI / 2) < .2, 'a camera follows a truck driving towards +x');
+  stepBowlCamera(camera, truck(second, 12, 0), FRAME, {frame: 61});
+  ok(camera.path.length === 1 && camera.yaw === 0, 'a new go starts the camera afresh, behind the nose of the truck');
+  for (let frame = 62; frame <= 120; frame++) stepBowlCamera(camera, truck(second, 12 + (frame - 61) * .2, 0), FRAME, {frame});
+  stepBowlCamera(camera, truck(second, 24, Math.PI), FRAME, {frame: 150});
+  ok(camera.path.length === 1 && camera.yaw === Math.PI, 'after frames drawn by another camera it starts afresh');
 }
 
 console.log(`test-bowl-camera: ${checks} checks passed`);

@@ -688,7 +688,7 @@ export function attachRenderer(host, app) {
     }
   }
   let ready = false, lastMenu = null, previousT = performance.now(), machineLiftNow = 0, machineLiftApplied = 0, landingBlend = 0;
-  const bowlCamera = createBowlCamera(); // BOWL-CAMERA: the show camera's own memory of the truck's path (drawing only)
+  const bowlCamera = createBowlCamera(); let bowlFrame = 0; // BOWL-CAMERA: the show camera's own memory of the truck's path (drawing only)
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
@@ -929,7 +929,7 @@ export function attachRenderer(host, app) {
       player.visible=!!load&&load.id===st.car;
       if(player.visible){player.position.set(load.x,load.y-.7,load.z);player.rotation.set(0,load.heading,0);}
     }
-    let firstPersonView=false,bowlShot=null;
+    let firstPersonView=false,bowlShot=null;bowlFrame++;
     if (menu) {
       const cp = worldAtExtended(course, distance + 6.4, lateral + 7.7 + Math.sin(ambientNow * .00009) * .6);
       camTarget.set(cp.x, cp.y + (tall?4.35:2.85), cp.z);
@@ -973,7 +973,7 @@ export function attachRenderer(host, app) {
       bowlShot=st.bowlNight&&course.def?.bowl&&(mode==='chase'||mode==='wide')&&
         (app._switches?.()??app.duel.featureFlags)?.enabled('titan-bowl')===true?stepBowlCamera(bowlCamera,
           {key:bowlCameraKey(st),x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z,air:st.airHeight||0,heading:pp.heading+(st.headingError||0)},
-          st.paused?0:dt,{ended:st.status==='bowl_break',wide:mode==='wide',solidTop:(x,z)=>bowlSolidTop(course,x,z,distance)}):null;
+          st.paused?0:dt,{ended:st.status==='bowl_break',wide:mode==='wide',frame:bowlFrame,solidTop:(x,z)=>bowlSolidTop(course,x,z,distance)}):null;
       if(bowlShot){camTarget.set(bowlShot.position.x,bowlShot.position.y,bowlShot.position.z);lookTarget.set(bowlShot.target.x,bowlShot.target.y,bowlShot.target.z);}
       const view=directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
       if(view){

@@ -64,7 +64,7 @@ export function easeTowards(value, rate, target, seconds, dt) {
 
 export function createBowlCamera() {
   return {key: null, time: 0, path: [], yaw: 0, turnRate: 0, turning: false, y: 0, yRate: 0, air: 0, airRate: 0,
-    lift: 0, liftRate: 0, end: null, holding: null};
+    lift: 0, liftRate: 0, end: null, holding: null, frame: null};
 }
 
 // How the truck is moving, from its path: {yaw, mph, hold}. `hold` names why the camera keeps its angle, or is null.
@@ -128,15 +128,18 @@ export function bowlSolidTop(course, x, z, referenceS) {
   return course.groundAt(near.s, lateral).y;
 }
 
-// One frame of the show camera. `truck` is {key, x, y, z, air, heading}: `key` names the event and its try (a new key
+// One frame of the show camera. `truck` is {key, x, y, z, air, heading}: `key` names the go (bowlCameraKey; a new key
 // starts the camera afresh), y is the truck's height with its height in the air, air that height in the air alone, and
 // heading the way its nose points (used only to tell when it backs up). Options: `ended` once the event is over, `wide`
-// for the wide camera mode, `solidTop(x, z)` for the walls (bowlSolidTop). Returns {position, target, yaw, lift, hold}.
-export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, solidTop = null} = {}) {
+// for the wide camera mode, `solidTop(x, z)` for the walls (bowlSolidTop), and `frame`, the renderer's count of frames:
+// when a frame was drawn by another camera (the hood or back view, a menu) the camera starts afresh, since its memory
+// of the path is old. Returns {position, target, yaw, lift, hold}.
+export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, solidTop = null, frame = null} = {}) {
   dt = Number.isFinite(dt) && dt > 0 ? Math.min(dt, .1) : 0;
-  const last = cam.path.at(-1);
-  const fresh = cam.key !== truck.key || !last || Math.hypot(truck.x - last.x, truck.z - last.z) > C.teleportMetres;
+  const last = cam.path.at(-1), skipped = frame != null && cam.frame != null && frame !== cam.frame + 1;
+  const fresh = skipped || cam.key !== truck.key || !last || Math.hypot(truck.x - last.x, truck.z - last.z) > C.teleportMetres;
   if (fresh) Object.assign(cam, createBowlCamera(), {key: truck.key, yaw: truck.heading, y: truck.y, air: truck.air});
+  cam.frame = frame;
   cam.time += dt;
   if (fresh || dt > 0) cam.path.push({t: cam.time, x: truck.x, z: truck.z});
   while (cam.path.length > 2 && cam.path[1].t <= cam.time - C.circleSec - C.pathSec) cam.path.shift();
@@ -204,9 +207,6 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   return {position, target, yaw, lift: cam.lift, hold: cam.holding};
 }
 
-// Which event and try the truck is in, so that a new event starts the camera afresh. (A restart from the pause screen
-// keeps the key; the truck's jump back to the start starts the camera afresh instead.)
-export function bowlCameraKey(state) {
-  const night = state?.bowlNight, event = night?.event;
-  return event ? `${night.night}:${event.eventIndex}:${event.type}:${event.attempt}` : null;
-}
+// Which go the truck is in, so that a new go starts the camera afresh: the night makes a new event object every time an
+// event is loaded (a new event, a try again, a restart from the pause screen, a Turn Show go), and keeps it to the result.
+export const bowlCameraKey = state => state?.bowlNight?.event ?? null;
