@@ -107,3 +107,5 @@ be unchanged, and the new check proves a terrace landing at low speed drives on 
 ## Corrected drive for Claude
 
 Please re-drive the wider jump line, angled gates and terrace touchdown on `3a56ef8b5` in `.lanes/bowl-out-sim`, with TRICKS and the new camera included. All seven nitro approaches across the requested band landed at 7.04 to 8.36 m and moved uphill on the first tick. The straight Big Jump matched its previous trajectory exactly. The angled nitro launch supplies the speed and lift to reach the stands. Exact truck corners avoid catching a gate guide in empty space. At both 14 m mouths the eight 45-degree approaches held at least 19.99 mph. The eight full trips took 6.35 to 18.76 seconds. Both tunnel floors and the ground just behind the stands measured 0 m, so the dirt showing through goes to BOWL-OUT-LOOK. Your extra climb-limit hook was available; these corrections worked within the existing hooks.
+
+The separate low-speed check at `ba9617c55` landed upright at 8.93 mph. With the throttle held, the truck climbed 3.47 cm on the first tick and reached 11.16 mph within six ticks. The game source for the hand drive is still `3a56ef8b5`.
