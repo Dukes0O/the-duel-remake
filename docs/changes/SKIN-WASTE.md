@@ -1,51 +1,8 @@
-# SKIN-WASTE
+# SKIN-WASTE round 2: Wasteland finishes drawn by code
 
-## Changed
-
-- Kept the exported `PAINT_PRESETS` catalog at its original 11 entries. The
-  eight Wasteland finishes live in a separate internal catalog and appear only
-  when `wasteland-town` is enabled and the player has found the gate.
-- Passed the switch through garage display, purchase and every race appearance
-  path. This follow-up fixes four race setup calls that omitted the town switch.
-  The garage now checks the filtered catalog before looking up a finish label.
-- Wasteland purchases use scrap, and the garage shows the scrap price and
-  balance. All eight finishes cost 250 scrap.
-- Added `tools/blender/skin-waste-sheet.py` and the Blender-rendered comparison
-  at `docs/board/looks/skin-waste/round-1.jpg`.
-
-## Checks
-
-- `node tools/test-paint-presets.mjs`: passed, 170 checks. The existing
-  11-entry catalog assertion is unchanged.
-- `node tools/test-paint-integration.mjs`: passed, 35 checks.
-- Follow-up regression: `node tools/test-paint-integration.mjs` passes, 39
-  checks. It buys Rust Patina for 250 scrap, confirms it reaches a race with
-  the town switch on, and confirms the saved finish remains while an off-switch
-  race uses factory paint.
-- A direct paint API probe passed: off hides all eight entries and the label
-  lookup; on exposes them and a purchase debits exactly 250 scrap.
-- `npm.cmd run build`: passed. Vite reported large-chunk and
-  ineffective dynamic-import warnings.
-- Blender 4.5.13 rendered the Titan, Dusthawk Rally and Bugatti Bolide in all
-  eight finishes. The comparison sheet is 369,724 bytes, below 500 KB.
-- No lane tier was run for this follow-up; Claude runs it. No browser check was
-  run in this lane. Claude should check the
-  garage with `wasteland-town` off and on, confirm the hidden catalog stays
-  unchanged while off, verify the 250-scrap purchase, and review every finish
-  on all three cars in the comparison sheet.
-
-## Changed assertions
-
-- None. Existing paint test files and assertions are unchanged.
-
-## Race fingerprints
-
-- No race rules, replay paths or course data changed. Fingerprints are not
-  applicable.
-
-## Removed
-
-- Removed the obsolete statement that an active full-tier hold blocked the
-  paint tests and build. The first inbox entry is a RELEASED line.
-
-Claude removed `tools/blender/skin-waste-sheet.py` from the merge. It did not meet the checks for a review helper, and round 1 does not pass. Round 2 of this open card brings its recipe back.
+What changed: the eight Wasteland finishes are drawn in the car's own paint material by `src/paint-finish-look.js`: rust at edges, seams, arches and low panels; welded, riveted patches; chevron stripes that follow the body; bleach strongest on top; soot low and behind the wheels; dust, blasting, brushing, flames and blisters. One look table at the top holds every number. Patterns use the car's positions and normals in its own metres, not UVs. The hook is two lines in `src/vehicle-paint.js`. It joins the paint shader the first time a drawn finish is chosen, after the wear shader, so dents and scratches still draw on top. The eight presets in `src/paint-presets.js` gain `pattern`. Prices, the `wasteland-town` gate and Ember are unchanged.
+Cost: 0 extra draw calls, materials or meshes per car; 7 noise samples (8 for Boneyard Silver) and about 150 arithmetic steps per painted pixel; shadows unaffected; one shader compile per car the first time a drawn finish is worn, none when changing finish.
+Checks (commit in the pull request): new `tools/test-paint-finish-look.mjs`; unchanged `test-paint-presets`, `test-paint-integration`, `test-vehicle-paint`, `test-combat-vehicle-wear`, `test-vehicle-assets` and `test-yeti` pass; lane tier and `npm run build` pass. No assertion changed.
+Browser: new scenario `skin-waste-look` (54 pictures). Run here on software rendering for tuning only; nobody has judged it on the laptop.
+Question: `docs/board/questions/SKIN-WASTE.md` (should the livery wear the finish too; round 2 leaves it clean).
+**Removed:** the round 1 flat-colour look of the eight finishes (their colour values stay as each finish's base colour).
