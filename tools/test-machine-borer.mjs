@@ -285,6 +285,21 @@ mesaDrives.steep = driveMesa('steep');
   assert.ok(Math.abs(total - 26) < 1e-7, 'Repeated deposits preserve the requested volume.');
 }
 
+// QA-BORER-SUITE-TIME: the step's planner keeps its cells in reused arrays. They are exactly the
+// cells, heights and order of the plain list of changes, at every heading, bank length and load.
+{
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:()=>0});
+  for (const angle of [0, Math.PI / 7, Math.PI / 4, Math.PI / 2, 2.6, -1.9, Math.PI]) {
+    const direction = {x:Math.sin(angle), z:Math.cos(angle)};
+    for (const origin of [{x:12.3, z:-2.6}, {x:2209.7, z:-488.2}])
+      for (const oldLength of [0, 0.9, 16.7, 40, 412.3]) for (const volume of [Math.PI * 9 * 0.5 / 120, 0.2, 30]) {
+        const plan = borerSpoilGridPlan(ground, origin, direction, oldLength, volume);
+        assert.deepStrictEqual(plan.cells, borerSpoilGridChanges(origin, direction, oldLength, plan.length),
+          'The planner lays exactly the listed changes.');
+      }
+  }
+}
+
 // Each spoil load changes only its neighbourhood, not the whole Dig window.
 {
   const ground = createGroundEdit({region:{editable:true}, naturalHeight:(_x,z)=>z>=6 ? 20 : 0});

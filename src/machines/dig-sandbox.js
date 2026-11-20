@@ -92,12 +92,9 @@ function touchesFootprint(shape, footprint) {
     Math.max(0, Math.abs(z) - footprint.halfZ)) <= shape.radius;
 }
 
-/** Protect the land's own structures, decks and public roads from the bore. */
-export function borerLandRefusal(shape, ground, {near = solidsNear, net = ROAD_NET, crossings = RIVER_LAND.crossings} = {}) {
-  const existing = ground.refusal(shape);
-  if (existing) return existing;
-  for (const solid of near(shape.x, shape.z, shape.x, shape.z, shape.radius))
-    if (touchesFootprint(shape, solid)) return 'She will not cut there. Something stands in the way.';
+// A deck's footprint depends only on the land, not on the place asked about.
+function crossingDecks(near, net, crossings) {
+  const decks = [];
   for (const crossing of crossings) {
     if (crossing.deckHalfWidth === undefined) continue;
     const hit = net.nearest(crossing.x, crossing.z);
@@ -105,10 +102,26 @@ export function borerLandRefusal(shape, ground, {near = solidsNear, net = ROAD_N
     const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
     const supports = near(crossing.x, crossing.z, crossing.x, crossing.z, crossing.deckHalfWidth + 2);
     const halfLength = Math.max(0, ...supports.filter(solid => solid.kind === 'girder').map(solid => solid.halfZ));
-    const deck = {...crossing, halfX:crossing.deckHalfWidth, halfZ:halfLength,
-      heading:Math.atan2(b.x - a.x, b.z - a.z)};
-    if (touchesFootprint(shape, deck)) return 'She will not cut there. Something stands in the way.';
+    decks.push({...crossing, halfX:crossing.deckHalfWidth, halfZ:halfLength,
+      heading:Math.atan2(b.x - a.x, b.z - a.z)});
   }
+  return decks;
+}
+// QA-BORER-SUITE-TIME: the land's own solids, roads and crossings never change, and Mabel asks
+// about hundreds of spoil cells a step, so their decks are worked out once. A check that supplies
+// its own land still has its decks worked out on every call.
+let landDecks = null;
+
+/** Protect the land's own structures, decks and public roads from the bore. */
+export function borerLandRefusal(shape, ground, {near = solidsNear, net = ROAD_NET, crossings = RIVER_LAND.crossings} = {}) {
+  const existing = ground.refusal(shape);
+  if (existing) return existing;
+  for (const solid of near(shape.x, shape.z, shape.x, shape.z, shape.radius))
+    if (touchesFootprint(shape, solid)) return 'She will not cut there. Something stands in the way.';
+  const decks = near === solidsNear && net === ROAD_NET && crossings === RIVER_LAND.crossings
+    ? (landDecks ??= crossingDecks(near, net, crossings)) : crossingDecks(near, net, crossings);
+  for (const deck of decks)
+    if (touchesFootprint(shape, deck)) return 'She will not cut there. Something stands in the way.';
   // The road index accepts points. Surround the bore with a circumscribed
   // octagon so its whole footprint, including its edge, is protected.
   if (net.nearest(shape.x, shape.z)) return 'She will not cut there. Something stands in the way.';
