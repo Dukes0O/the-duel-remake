@@ -75,3 +75,9 @@ score cue route.
 With the show truck on full throttle and no boost, roof-height descent reached (lap metres, cross-floor metres) at (48.53, 0.00) off the Jump Straight kicker, (191.53, 0.13) off the Crush Straight kicker and (230.34, −9.29) off the Table. Ground landings were at (50.46, 0.00), (193.46, 0.13) and (231.70, −8.46). Use those runs to place and prove the three readable pancake pickups.
 
 Keep the first 15 pieces in their existing positions as the design says. The old outer line is 3.7 m from the face at the centers, and the wide shells extend closer. I will measure the whole footprint of the new pieces against the 3 m wall clearance and test that the old line stays identical.
+
+## The unsteered run and the old outer line
+
+The live wall response guides the straight-throttle truck around the floor. In a memory-only run on the current Bowl from the Car Crush start, the old line gave five pieces by 5 seconds and another five on the next circuit by 25 seconds, even with no steering. The same 60-second run gave exactly the original center five when the outer pieces were 17.25 m out instead of 18.2 m. The new distance also leaves more than 3 m from the face to the full bus and heap shells.
+
+May the Car Crush dressing shift the five outer pieces inward by 0.95 m, leaving the other ten and every other event exactly where they are? The first pass still hits the same five in the same order at the same positions. No wall or truck behavior changes.
