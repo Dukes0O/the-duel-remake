@@ -45,12 +45,16 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   ok(Object.isFrozen(WILDLIFE_MODELS) && MODEL_IDS.every(id => Object.isFrozen(WILDLIFE_MODELS[id]) && Object.isFrozen(WILDLIFE_MODELS[id].run)), 'the table is frozen');
   ok(Object.isFrozen(HELD_FROM_COURSES) && HELD_FROM_COURSES.every(id => WILDLIFE_MODELS[id]), 'every held id has a model');
   same(APPROVED_MODEL_IDS, MODEL_IDS.filter(id => !HELD_FROM_COURSES.includes(id)), 'a course may use every model that is not held, and no held one');
-  same([...HELD_FROM_COURSES].sort(), ['collared-lizard', 'condor', 'desert-bighorn', 'jackrabbit', 'pelican', 'roadrunner'], 'held: the six desert and coast animals');
-  equal(wildlife.availableSpecies('red-mesa', APPROVED_MODEL_IDS).any, false, 'Red Mesa: no animals stand there while the desert models are held');
+  same([...HELD_FROM_COURSES].sort(), ['black-faced-spoonbill', 'black-kite', 'cat', 'collared-lizard', 'condor', 'desert-bighorn', 'egret', 'jackrabbit', 'owl', 'pelican', 'pigeon', 'raccoon', 'roadrunner'], 'held: the six desert and coast animals and the seven city animals');
+    equal(wildlife.availableSpecies('red-mesa', APPROVED_MODEL_IDS).any, false, 'Red Mesa: no animals stand there while the desert models are held');
   same(wildlife.availableSpecies('pacific-canyon', APPROVED_MODEL_IDS).common.map(row => row.species), ['coyote'], 'Pacific Canyon keeps its coyotes and gains nothing while they are held');
   equal(wildlife.availableSpecies('pacific-canyon', APPROVED_MODEL_IDS).rare, null, 'and has no condor yet');
   ok(wildlife.availableSpecies('red-mesa', MODEL_IDS).common.length === 4 && wildlife.availableSpecies('red-mesa', MODEL_IDS).rare?.species === 'condor', 'and Red Mesa has its four and the condor once they are let go');
   equal(WILDLIFE_MODELS['roadrunner'].move, 'Run', 'the roadrunner runs: a ground bird with no Fly clip');
+    for (const id of ['harbour-lights', 'harbor-highlands', 'neon-docks', 'midnight-chase', 'neon-drift-trial']) {
+    for (const night of [false, true]) equal(wildlife.availableSpecies(id, APPROVED_MODEL_IDS, {night}).any, false, `${id}: no animals stand there while the city models are held`);
+  }
+  ok(wildlife.availableSpecies('harbour-lights', MODEL_IDS, {night: true}).common.length === 4, 'and Harbour Lights has its four once they are let go');
   for (const id of MODEL_IDS) {
     const entry = WILDLIFE_MODELS[id];
     ok(wildlife.SPECIES[id], `${id} is a species wildlife.js knows`);

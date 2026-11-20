@@ -29,3 +29,13 @@ The WILD-ART-WASTE animals were judged against photographs from Wikimedia Common
 domain or CC0, listed in `tools/blender/wildlife/waste-references.json`). The photographs
 appear only on the review sheets under `docs/board/looks/wild-art-waste/`; no game file
 contains them.
+
+**WILD-ART-CITY** (the animals of Harbour Lights and the city courses):
+
+- **Quaternius**, CC0 1.0, the Wolf above: reshaped and given a new coat as the **street cat**
+  (`street-cat.glb`), with the donor's rig and clips.
+- **Original recipes for The Duel** (no third-party source): **black kite**, **little egret**,
+  **black-faced spoonbill**, **pigeon**, **owl** (a barn owl) and **raccoon**.
+- Judged against photographs from Wikimedia Commons (public domain or CC0, listed in
+  `tools/blender/wildlife/city-references.json`). The photographs appear only on the review
+  sheets under `docs/board/looks/wild-art-city/`; no game file contains them.

@@ -66,13 +66,26 @@ export const WILDLIFE_MODELS = Object.freeze({
   'turkey-vulture': model('turkey-vulture.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
   'desert-monitor': model('desert-monitor.glb', {speed: 3, rate: 2.8}),
   'scorpion': model('scorpion.glb', {speed: 1.2, rate: 2.5}),
+  // Harbour Lights and the city courses (WILD-ART-CITY); the town uses the pigeon and the cat.
+  // The ids are the ones src/wildlife.js already names on those courses: the egret is a little
+  // egret, the cat a thin street cat, the owl a barn owl. Held off the courses below.
+  'black-kite': model('black-kite.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
+  'egret': model('little-egret.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'black-faced-spoonbill': model('black-faced-spoonbill.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'pigeon': model('pigeon.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
+  'owl': model('owl.glb', {speed: 8, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'raccoon': model('raccoon.glb', {speed: 3, rate: 5}),
+  'cat': model('street-cat.glb', {speed: 4.5, rate: 6.4}),
 });
 
 // Models that have passed their art rounds but stand on no course yet. src/wildlife.js already
-// lists the desert and coast animals on Red Mesa and Pacific Canyon, so a row above would put
-// them there at once, on courses nobody has driven with them. Their placement card takes an id
-// off this list when its course has been looked at.
-export const HELD_FROM_COURSES = Object.freeze(['roadrunner', 'jackrabbit', 'desert-bighorn', 'collared-lizard', 'pelican', 'condor']);
+// lists the desert and coast animals on Red Mesa and Pacific Canyon and the city animals on Harbour
+// Lights and the city courses, so a row above would put them there at once, on courses nobody has
+// driven with them (and Harbour Lights at night is the scene the frame check times). Their placement
+// cards take an id off this list when its course has been looked at and timed. The town draws
+// animals straight from WILDLIFE_MODELS, so it may use a held one.
+export const HELD_FROM_COURSES = Object.freeze(['roadrunner', 'jackrabbit', 'desert-bighorn', 'collared-lizard', 'pelican', 'condor',
+  'black-kite', 'egret', 'black-faced-spoonbill', 'pigeon', 'owl', 'raccoon', 'cat']);
 
 // The ids a course may use, for availableSpecies() and the count's course list.
 export const APPROVED_MODEL_IDS = Object.freeze(Object.keys(WILDLIFE_MODELS).filter(id => !HELD_FROM_COURSES.includes(id)));

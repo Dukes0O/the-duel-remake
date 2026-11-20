@@ -413,6 +413,21 @@ the game.
 - **A smoothing pass rounds a faceted bird.** `refine` (one subdivision, then back to budget) now reaches birds through the table; the vulture's body and folded wings were flat plates without it.
 - **One Blender turn can carry a whole round.** With many sessions sharing two heavy places, build every animal and render every view in one batch, and judge the pictures while the next batch waits.
 
+### City animals (WILD-ART-CITY, 19 November 2026)
+
+- **A colour that changes part of the way down a bird's leg smears along half of it.** `bird.py`'s leg has three rings. Put a sleeve over the part with the other colour (`city_parts.stocking`): a raptor's feathered thigh, a heron's black shank above yellow feet, an owl's white legs.
+- **A bar on a folded wing is its own strip.** The folded wing has six rings, too few to carry a painted bar, and the cut back to budget moves what vertices there are. The pigeon's two bars are narrow blades lying just proud of the wing, on the fold bone, so they hide with it in flight (`city_parts.fold_bar`).
+- **A tail that forks, or ends in a dark band, is fanned from feathers** (`city_parts.fan`): a fork is the middle feathers shorter, a round tail the outer ones shorter. Give `bird.py`'s own tail a width of a few millimetres so that it hides underneath.
+- **The smoothing pass takes a face's rings with it.** `refine` subdivides and then cuts back to budget wherever it likes. The barn owl's face (white dish, tan rim, eyes) is lofted ring by ring so each colour has its own vertices, and the owl is built under 2,000 triangles with no `refine` at all.
+- **A heron's folded neck in flight, with one neck bone:** scale the neck bone down evenly and the head bone up by the inverse (`fly_pose` in `little-egret.py`). An even scale brings the head onto the shoulders without squashing it; an uneven one shears the head.
+- **A bird of prey on the thin-necked head reads as a dove.** The kite stood as a brown pigeon through five drafts. Use the `merged` head that the golden eagle uses (a big head sunk into the shoulders), add its brow ridges, and fade the head's pale colour into the body within one head radius, because the neck is painted by the head's function. A hooked bill drops further than it reaches forward, so tell the yellow cere from the dark tip by height, not by distance along the bill.
+- **One flat brown is not a brown bird.** The kite read as a kite only when its head and whole breast were tawny against dark wings: paint the breast by how far forward a point is as well as how low. Streaks narrower than the mesh average to nothing; `ROUGH_FUR` in `adapt.py` lays a coarse grain along the body that reads as streaking close up.
+- **The bake's grain darkens a coat by about a quarter.** White birds painted at 0.74 and then at 0.84 came out light grey beside their photographs; 0.97 reads as white under the review sun of 2.7 without burning out.
+- **A cat from the wolf donor:** a cat is deeper in the body and shorter in the leg. Bones cannot be shortened, so raise the back and let the belly down in the donor's frame and then scale the whole animal to a cat's height. Thin the legs only a little, enlarge the skull by a third, shorten the muzzle to a third, and set the ears forward on top of the skull.
+- **An original quadruped's legs read as flat boards when they taper fast and are paler than the body.** Keep them nearly even in width and darker than the coat above (the raccoon); leave the claws off a foot that is seen from 10 m.
+- **A photograph cropped close to the sheet cell's shape is cropped again to fit it.** Keep reference crops nearly square, so they are padded instead and nothing of the animal is cut off.
+- **A species that the course tables already name goes onto its courses the moment it has a model.** The city animals have rows on Harbour Lights and the city courses, so their models are listed in `HELD_FROM_COURSES` in `src/wildlife-models.js` until a placement card lets each one go.
+
 ### Sheets
 
 - **Sheets show other buildings.** A family file holds every building at its own origin, so a building's review views must hide the others, or a stray block appears (the big wheel, 7 November).
