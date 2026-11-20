@@ -201,6 +201,15 @@ function syncHaulVehicle(worldJob) {
   worldJob.vehicle = loadKg > vehicle.loadKg ? loadWorkVehicle(vehicle, loadKg - vehicle.loadKg).vehicle
     : unloadWorkVehicle(vehicle, vehicle.loadKg - loadKg).vehicle;
 }
+// TOWN-HAUL-JOB: a washout is marked where the player sees it coming: an amber ring across the road at each end, beside the job's
+// own ring. View-only: nothing reads these back.
+function markHaulWashouts(duel, step) {
+  const markers = duel.state.arena.markers ?? [];
+  const ends = (step.washouts ?? []).flatMap(washout => [washout.line[0], washout.line.at(-1)].map((end, index) => ({kind:'ring',
+    id:`haul-washout-${washout.id}-${index}`, color:'warn', radius:washout.halfWidth ?? 16, x:end.x, z:end.z,
+    y:scablandsSurfaceHeightAt(end.x, end.z)})));
+  duel.state.arena.markers = [...markers.filter(marker => !String(marker.id).startsWith('haul-washout-')), ...ends];
+}
 function playHaulEvent(duel, worldJob, event, point) {
   const cue = HAUL_CUES[event.type];
   if (!cue) return;
@@ -1979,6 +1988,7 @@ export function stepWorldJob(duel, dt) {
     }
   }
   applyRequests(duel, worldJob, next.requests);
+  if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
   worldJob.controls=null;
   standOnDeck(duel, next, previousStepState);
   const train=worldJob.actors.find(actor=>actor.train);

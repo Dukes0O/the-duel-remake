@@ -13,6 +13,9 @@ export const TOWN_MISSION_CARD_TEXT = Object.freeze({
   'town-steel-run':Object.freeze({title:'The Steel Run', lineId:'town.steel.card'}),
 });
 export const TOWN_MISSION_CARD_FACTS = Object.freeze({
+  chapter:Object.freeze([
+    'Drive the flatbed out along the East Road to the halfway camp. The gang has the first salvage waiting there.',
+  ]),
   salvage:Object.freeze([
     'Drive the flatbed to the Boneyard. The gang is waiting there with salvage.',
   ]),
@@ -24,6 +27,7 @@ export const TOWN_MISSION_CARD_FACTS = Object.freeze({
     'The flatbed carries up to 9,000 kg. Every piece makes it slower to pull away and longer to stop.',
     'A tall stack falls off more easily. A hard knock throws pieces off, and so does rough ground taken fast.',
     'Anything that falls off is lost, and the town only gets what you bring home.',
+    'A stretch of the East Road over the scab plates is washed out. Crawl over it, or go round it over the flats.',
   ]),
   later:'If you leave it for now, nothing is lost and the job stays open.',
 });
@@ -37,7 +41,7 @@ export function townMissionCardModel(town, {readOnly = false} = {}) {
   const bring = yard ? 'Bring it home to the Salvage Yard and stop there to unload.'
     : 'Bring it home to the salvage pile by the truck bay and stop there to unload.';
   return Object.freeze({jobId:job.id, title:text.title, who:line.who, line:townCaptionText(text.lineId, town),
-    facts:Object.freeze([...TOWN_MISSION_CARD_FACTS[job.kind], bring, ...TOWN_MISSION_CARD_FACTS.all]),
+    facts:Object.freeze([...TOWN_MISSION_CARD_FACTS[job.chapter ? 'chapter' : job.kind], bring, ...TOWN_MISSION_CARD_FACTS.all]),
     later:TOWN_MISSION_CARD_FACTS.later, readOnly});
 }
 

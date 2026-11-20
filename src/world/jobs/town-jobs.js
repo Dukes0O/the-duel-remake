@@ -7,6 +7,8 @@
 //   airliners, and home with what it will carry. After Chapter 3 the same drive is the salvage run, open whenever you like.
 // - The steel run opens when a building site has stopped for want of steel: the flatbed to Tin Town's steel stack and back.
 import {LAND} from '../scablands-names.js';
+import {ROAD_NET} from '../scablands-road.js';
+import {sliceLine} from '../scablands-ways.js';
 import {createTownWorld} from '../../town/town-world.js';
 import {TOWN_CELL_METRES} from '../../town/town-world-data.js';
 import {createTownMissionClock, townMissionDropCell, townMissionResult} from '../../town/town-missions.js';
@@ -48,13 +50,26 @@ function captionsFor(ids, town) {
   return Object.fromEntries(ids.filter(Boolean).map(id => [id, `${TOWN_CAPTIONS[id].who}: ${townCaptionText(id, town)}`]));
 }
 
+// TOWN-HAUL-JOB, Director's review of 20 November 2026: Chapter 3's first haul is short. The Boneyard's wreck fields begin 4.2 km
+// along the road from the truck bay (about 6 minutes at a child's 42 km/h), and nothing salvageable lies nearer, so the gang has
+// dragged its first cut pieces as far as the halfway camp: 2.5 km by the East Road, about 3.5 minutes each way. The pile stands
+// 29 m off the road on the scab plates, clear of it. The full Boneyard run stays as the repeatable salvage run.
+const CAMP_PILE = () => place('camp-pile', "the gang's first pile at the halfway camp", LAND.at('safe-road', -30, 30), 12);
+
+// The washout: 200 m of the East Road over the scab plates, 1,000 to 1,200 m from the yard end, where last spring's rain broke the
+// road up. Every haul that comes home by the East Road meets it (src/world/jobs/steps/haul.js says how it shakes the load). The way
+// round is over the flats south of the plates: smooth, and about 2 km longer from the halfway camp.
+export const TOWN_HAUL_WASHOUTS = Object.freeze([Object.freeze({id:'east-road-washout', name:'the washed-out road over the plates',
+  line:Object.freeze(sliceLine(ROAD_NET.road('east-road').points, 1000, 1200).map(point => Object.freeze({x:point.x, z:point.z}))),
+  halfWidth:16})]);
+
 const KINDS = Object.freeze({
   salvage:Object.freeze({
     good:'salvage', goodName:'salvage',
     pile:() => place('boneyard-pile', "the gang's pile at the Boneyard", LAND.at('boneyard', -10, 12), 12),
     pileKg:12000,
     lines:Object.freeze({start:'town.haul.go', atPile:'town.haul.pile', backAtPile:'town.haul.back', full:'town.haul.full',
-      setOff:'town.3.load', firstShed:'town.haul.shed', empty:'town.haul.empty', atDrop:'town.haul.drop'}),
+      setOff:'town.3.load', firstShed:'town.haul.shed', empty:'town.haul.empty', atDrop:'town.haul.drop', washout:'town.haul.washout'}),
   }),
   steel:Object.freeze({
     good:'steel', goodName:'steel',
@@ -62,7 +77,7 @@ const KINDS = Object.freeze({
     pile:() => place('tin-town-steel', "Tin Town's steel stack", LAND.at('tin-town', -60, 70), 12),
     pileKg:9000,
     lines:Object.freeze({start:'town.steel.go', atPile:'town.steel.pile', backAtPile:'town.haul.back', full:'town.haul.full',
-      setOff:'town.steel.load', firstShed:'town.haul.shed', empty:'town.haul.empty', atDrop:'town.haul.drop'}),
+      setOff:'town.steel.load', firstShed:'town.haul.shed', empty:'town.haul.empty', atDrop:'town.haul.drop', washout:'town.haul.washout'}),
   }),
 });
 
@@ -85,15 +100,17 @@ const CLOSING = Object.freeze({'town-haul-salvage':'town.3.won', 'town-salvage-r
 export function townJobDefinition(town, jobId, {seed = town?.seed ?? 1} = {}) {
   const open = openTownJobs(town).find(job => job.id === jobId);
   if (!open) return null;
-  const kind = KINDS[open.kind], closing = CLOSING[jobId];
-  const lineIds = [...Object.values(kind.lines), closing];
+  const chapter = jobId === 'town-haul-salvage', kind = KINDS[open.kind], closing = CLOSING[jobId];
+  const lines = chapter ? {...kind.lines, start:'town.haul.go.camp'} : kind.lines;
+  const pile = chapter ? CAMP_PILE() : kind.pile();
+  const lineIds = [...Object.values(lines), closing];
   const layout = createTownWorld(town);
   return {
     id:jobId, kind:TOWN_JOB_KIND, townJob:open.kind, chapter:open.chapter ? TOWN_HAUL_CHAPTER : null, name:NAMES[jobId], eyebrow:'THE TOWN',
     seed:seed >>> 0, vehicle:'flatbed', layout, resultLineId:closing, captions:captionsFor(lineIds, town),
     steps:[{kind:'haul', id:'haul', good:kind.good, goodName:kind.goodName, maxKg:FLATBED_KG,
-      pile:{...kind.pile(), kg:kind.pileKg}, drop:dropPlace(town), lines:kind.lines,
-      startLineId:kind.lines.start, closing:[closing]}],
+      pile:{...pile, kg:kind.pileKg}, drop:dropPlace(town), lines, washouts:TOWN_HAUL_WASHOUTS,
+      startLineId:lines.start, closing:[closing]}],
   };
 }
 

@@ -9,6 +9,11 @@
 // every tonne. A hard knock throws pieces off the top of the stack, and rough ground taken fast rattles them loose.
 // Everything thrown off is lost, and the result says how much was delivered and how much was lost.
 //
+// The way home has one thing the player sees coming and can take or leave: a washout (`step.washouts`), a stretch of road
+// over the scab plates that last spring's rain broke up. It is marked at both ends and named on the radio and the screen
+// line before the truck reaches it. Crawl over it and the stack holds; drive over it at speed and pieces shake off; or go
+// round it over the flats, which is smooth but longer. Inside a washout the stack rattles as on the Steps' ledges.
+//
 // Real numbers, and where they come from:
 // - The pieces are parts of the Boneyard's airliners (aluminium skin, ribs and beams, steel landing-gear legs) and of
 //   Tin Town's steel (plate, angle and rail). Masses are what one such part weighs, rounded: an airliner's main
@@ -32,6 +37,9 @@ export const HAUL_RULE = Object.freeze({
   // Rough ground (a ground's `roughness` of .2 and up: the river bed, its soft sand, the scab plates, the Steps) rattles
   // the stack: each metre adds roughness x (km/h / 30) squared x (1 + tonnes / 9). At `rattleLimit` a piece comes loose.
   roughFrom:.2, rattleKmh:30, rattleLimit:420,
+  // A washout: broken road as rough as the Steps' ledges (src/world/scablands-regions.js gives them .75), safe only at a crawl.
+  // It is named this far ahead of either end.
+  washoutRoughness:.75, washoutCrawlKmh:12, washoutWarnMetres:300,
   // Easy is kinder: a larger knock is needed, less comes off, and the stack rattles less.
   easy:Object.freeze({knockFreeBonus:10, shedScale:.5, rattleScale:.5}),
   hard:Object.freeze({knockFreeBonus:-4, shedScale:1.25, rattleScale:1.25}),
@@ -78,10 +86,29 @@ export function haulKnockKg(loadKg, hitKmh, difficulty = 'medium') {
 }
 
 /** Rattle added by one step on a ground of this roughness. */
-export function haulRattle({roughness = 0, kmh = 0, loadKg = 0, dt = 0, difficulty = 'medium'} = {}) {
+export function haulRattle({roughness = 0, kmh = 0, loadKg = 0, dt = 0, difficulty = 'medium', rattleKmh = HAUL_RULE.rattleKmh} = {}) {
   if (!(roughness >= HAUL_RULE.roughFrom) || !(kmh > 0) || !(dt > 0)) return 0;
   const metres = kmh / 3.6 * dt;
-  return roughness * (kmh / HAUL_RULE.rattleKmh) ** 2 * (1 + loadKg / 9000) * metres * scaleFor(difficulty).rattleScale;
+  return roughness * (kmh / rattleKmh) ** 2 * (1 + loadKg / 9000) * metres * scaleFor(difficulty).rattleScale;
+}
+
+// Where a point is against a washout's line: inside it, how far from its nearer end when outside, or null when well off it.
+function washoutAt(washout, point) {
+  const line = washout.line;
+  let best = null, before = 0;
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i], b = line[i + 1], dx = b.x - a.x, dz = b.z - a.z, square = dx * dx + dz * dz, span = Math.sqrt(square);
+    const raw = square > 0 ? ((point.x - a.x) * dx + (point.z - a.z) * dz) / square : 0, t = Math.max(0, Math.min(1, raw));
+    const beyond = raw < 0 && i === 0 ? -raw * span : raw > 1 && i === line.length - 2 ? (raw - 1) * span : 0;
+    // Beyond an end, across is measured square to the line, so that `ahead` is the true distance to the broken stretch.
+    const across = beyond > 0 && span > 0 ? Math.abs((point.x - a.x) * dz - (point.z - a.z) * dx) / span
+      : Math.hypot(point.x - a.x - dx * t, point.z - a.z - dz * t);
+    if (!best || across < best.across) best = {across, beyond};
+    before += span;
+  }
+  if (!best) return null;
+  const width = washout.halfWidth ?? 16;
+  return {inside:best.beyond === 0 && best.across <= width, ahead:Math.hypot(best.beyond, Math.max(0, best.across - width))};
 }
 
 /** The pile's stack in lift order: pieces drawn from the good's list until the pile's kilograms are used. Seeded. */
@@ -124,6 +151,8 @@ export function haulLine(step, state = {}) {
     return 'Hold still and they keep loading. Drive off when you have enough.';
   }
   if (phase === 'unloading') return 'Hold still while they take the load off.';
+  if (state.washout === 'inside') return `You are on the washed-out road. Keep below ${HAUL_RULE.washoutCrawlKmh} km/h and the load will hold.`;
+  if (state.washout === 'ahead') return `Washed-out road ahead. Crawl over it below ${HAUL_RULE.washoutCrawlKmh} km/h, or go round it over the flats to the south.`;
   return `Take the load to ${step.drop?.name ?? 'the drop'} and stop there. Hard knocks throw pieces off.`;
 }
 
@@ -141,6 +170,7 @@ export function stepHaul(step, state, view, dt = 0, seed = 0) {
     phase:state.phase ?? 'out', pile:state.pile ?? haulPileOrder(step, seed), load:state.load ?? [],
     shed:state.shed ?? [], delivered:state.delivered ?? [], clock:state.clock ?? 0, rattle:state.rattle ?? 0,
     full:state.full === true, trips:state.trips ?? 0, reported:state.reported === true,
+    washout:null, warned:state.warned ?? [], crossed:state.crossed ?? [],
   };
   const events = [], requests = [];
   const say = lineId => { if (lineId) requests.push({type:'say', lineId}); };
@@ -189,8 +219,31 @@ export function stepHaul(step, state, view, dt = 0, seed = 0) {
       const knocked = haulKnockKg(loadKg, hitKmh, difficulty);
       if (knocked > 0) { ({kept:next.load, gone} = shedTop(next.load, knocked)); cause = 'knock'; }
     }
+    // A washout is named once a trip, as the loaded truck comes within sight of either end of it.
+    let broken = null;
+    for (const [index, washout] of (step.washouts ?? []).entries()) {
+      const at = washoutAt(washout, here), key = `${next.trips}:${index}`;
+      if (!at) continue;
+      if (at.inside) {
+        broken = washout; next.washout = 'inside';
+        if (next.phase === 'carry' && !next.crossed.includes(key)) next.crossed = [...next.crossed, key];
+        break;
+      }
+      // Once over it, the washout is behind the truck for the rest of the trip.
+      if (at.ahead <= HAUL_RULE.washoutWarnMetres && next.phase === 'carry' && !next.crossed.includes(key)) {
+        next.washout ??= 'ahead';
+        if (!next.warned.includes(key)) {
+          next.warned = [...next.warned, key];
+          events.push({type:'haulWashoutAhead', id:washout.id});
+          say(step.lines?.washout);
+        }
+      }
+    }
     if (!gone.length && next.phase === 'carry') {
-      next.rattle += haulRattle({roughness:view.roughness ?? 0, kmh, loadKg, dt, difficulty});
+      next.rattle += broken
+        ? haulRattle({roughness:broken.roughness ?? HAUL_RULE.washoutRoughness, kmh, loadKg, dt, difficulty,
+          rattleKmh:broken.crawlKmh ?? HAUL_RULE.washoutCrawlKmh})
+        : haulRattle({roughness:view.roughness ?? 0, kmh, loadKg, dt, difficulty});
       if (next.rattle >= HAUL_RULE.rattleLimit && next.load.length) {
         next.rattle = 0;
         ({kept:next.load, gone} = shedTop(next.load, 1));

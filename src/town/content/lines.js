@@ -19,6 +19,8 @@ export const TOWN_CAPTIONS = Object.freeze({
   'town.3.won': caption('Odessa', 'Unloaded', 'Now that\'s a pile of scrap I can respect.'),
   // TOWN-HAUL-JOB: the haul's own lines (docs/board/cards/TOWN-HAUL-JOB.md). One plain job each.
   'town.haul.go': caption('Odessa', 'Setting out for the Boneyard', "Take the Boneyard Road past the halfway camp. My gang is cutting up the old airliners out there, and they'll load whatever you have room for."),
+  'town.haul.go.camp': caption('Odessa', 'Setting out for the first pile', "My gang has dragged the first pieces off the airliners as far as the halfway camp. Take the East Road out there, and they'll load you."),
+  'town.haul.washout': caption('Odessa', 'The washed-out road comes into sight', "Last spring's rain broke up the road over the plates, just ahead. Crawl over it and you'll keep your load, or go round it over the flats, which takes longer."),
   'town.haul.pile': caption('Odessa', 'At the pile', "Stop there and hold still. Every piece they lift on makes the truck heavier and the stack wobblier, so drive off when you think you have enough."),
   'town.haul.back': caption('Odessa', 'Back at the pile', "Back again? Hold still and they'll load you up."),
   'town.haul.full': caption('Odessa', 'The bed is full', "That's all the flatbed will take. Off you go, and take the bends gently."),

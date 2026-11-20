@@ -14,7 +14,7 @@ import {TOWN_CAPTIONS} from '../src/town/content/lines.js';
 import {createTownMissionClock, townMissionResult, townMissionDropCell, TOWN_MISSION_SETTLED_LIMIT} from '../src/town/town-missions.js';
 import {townMissionCardMarkup, townMissionCardModel, TOWN_MISSION_CARD_FACTS} from '../src/town/ui/town-mission-card.js';
 import {createTownJobRun, openTownJobs, townJobDefinition, townJobResult} from '../src/world/jobs/town-jobs.js';
-import {HAUL_RULE, haulKnockFreeKmh, haulKnockKg, haulPileOrder, haulRattle, haulSentence, stepHaul} from '../src/world/jobs/steps/haul.js';
+import {HAUL_RULE, haulKnockFreeKmh, haulKnockKg, haulLine, haulPileOrder, haulRattle, haulSentence, stepHaul} from '../src/world/jobs/steps/haul.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {setScablandsTownLayout, clearScablandsTownLayout} from '../src/world/scablands-ground.js';
 import {cleanupWorldJobLoan} from '../src/arena/modes/world-job.js';
@@ -111,6 +111,37 @@ test('a bed that empties sends the truck back to the pile, and the pile stops wh
   assert.equal(result.state.full, true);
   assert.ok(result.state.loadKg <= 9000 && result.state.loadKg > 7000, `full is near the flatbed's 9,000 kg (${result.state.loadKg})`);
   assert.ok(result.events.some(event => event.type === 'haulFull'));
+});
+
+test('the washout is named before it is reached, holds the stack at a crawl, and shakes pieces off at speed', () => {
+  const step = haulStep(), pile = at(step.pile), [a, b] = step.washouts[0].line;
+  assert.ok(Math.hypot(pile.x, pile.z + 112) < 2600, 'Chapter 3\'s first pile is at the halfway camp, about 2.5 km out');
+  const along = (share, side = 0) => ({x:a.x + (b.x - a.x) * share + side, z:a.z + (b.z - a.z) * share});
+  const loaded = () => {
+    let result = run(step, {}, 1, () => view(pile));
+    result = run(step, result.state, 30, () => view(pile));
+    return run(step, result.state, .3, () => view({x:pile.x + 40, z:pile.z}, {speedKmh:20})).state;
+  };
+  // Coming home, the truck is 250 m short of the washout's far (camp) end.
+  const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+  const ahead = {x:b.x + dx / length * 250, z:b.z + dz / length * 250};
+  const warned = stepHaul(step, loaded(), view(ahead, {speedKmh:40}), dt, 5);
+  assert.ok(warned.events.some(event => event.type === 'haulWashoutAhead'));
+  assert.ok(warned.requests.some(request => request.lineId === 'town.haul.washout'), 'Odessa names it');
+  assert.match(haulLine(step, warned.state), /^Washed-out road ahead\./);
+  assert.equal(stepHaul(step, warned.state, view(ahead, {speedKmh:40}), dt, 5).events.some(event => event.type === 'haulWashoutAhead'), false,
+    'named once a trip');
+  const cross = kmh => {
+    let state = warned.state, shed = 0;
+    for (let metres = 0; metres <= 200; metres += kmh / 3.6 * .1) {
+      const out = stepHaul(step, state, view(along(1 - metres / 200), {speedKmh:kmh}), .1, 5);
+      state = out.state; shed += out.events.filter(event => event.type === 'haulShed').length;
+    }
+    return {shed, line:haulLine(step, state)};
+  };
+  assert.equal(cross(10).shed, 0, 'at a crawl the stack holds');
+  assert.ok(cross(40).shed >= 2, `at 40 km/h pieces shake off (${cross(40).shed})`);
+  assert.equal(stepHaul(step, loaded(), view(along(.5, 400), {speedKmh:40}), dt, 5).state.washout, null, 'round it, over the flats, is clear of it');
 });
 
 test('the job engine runs the haul step, and the town jobs open from the town', () => {
@@ -253,8 +284,10 @@ function childDrive(seed) {
     while (duel.state.status === 'countdown') duel.step(dt);
     const pose = () => { const s = duel.state, p = duel.course.worldAt(s.s, s.lateral); return {x:p.x, z:p.z, heading:duel.course.at(s.s).heading + s.headingError}; };
     const steerSign = -1;
-    const wantKg = 3500 + rng.int(0, 5500), cruise = 36 + rng.int(0, 10), wobble = .1 + rng.float() * .15;
-    const outWay = routeFor([{road:'east-road', until:'safe-road'}, {road:'boneyard-road'}], {start:pose(), destination:step.pile.position});
+    // A careful child slows for the washout when the screen line names it, some a little less than others.
+    const wantKg = 3500 + rng.int(0, 5500), cruise = 36 + rng.int(0, 10), wobble = .1 + rng.float() * .15, crawl = 8 + rng.int(0, 6);
+    const outWay = routeFor([{road:'east-road', until:'safe-road'}], {start:pose(), destination:step.pile.position});
+    let setOffAt = null, deliveredAt = null;
     let path = outWay, goal = step.pile.position, heard = [], late = [];
     let lastSteer = 0;
     for (let t = 0; t < 1500; t += dt) {
@@ -262,7 +295,8 @@ function childDrive(seed) {
       if (duel.state.status !== 'racing') break;
       if (state.phase === 'carry' && goal !== step.drop.position) {
         goal = step.drop.position;
-        path = [...routeFor([{road:'boneyard-road'}, {road:'east-road', until:'safe-road'}], {start:pose(), destination:{x:26, z:15}}),
+        setOffAt ??= duel.state.stageTimeSec;
+        path = [...routeFor([{road:'east-road', until:'safe-road'}], {start:pose(), destination:{x:26, z:15}}),
           {x:20, z:-30}, {...goal}];
       }
       if (state.phase === 'out' && goal !== step.pile.position) { goal = step.pile.position; path = [...outWay].reverse().slice(0, 1).concat(outWay); }
@@ -281,7 +315,11 @@ function childDrive(seed) {
       const distance = Math.hypot(goal.x - p.x, goal.z - p.z), kmh = duel.state.speedMph * 1.609344;
       const loading = state.phase === 'loading' && state.loadKg < wantKg && !state.full;
       const unloading = state.phase === 'unloading';
-      const speed = loading || unloading ? 0 : state.phase === 'loading' ? cruise : Math.min(cruise, distance < 7 ? 0 : Math.max(6, distance * .45));
+      // The child keeps going until the broken road is close, then crawls over it.
+      const toWashout = Math.min(...step.washouts.flatMap(washout => washout.line.map(end => Math.hypot(end.x - p.x, end.z - p.z))));
+      const careful = state.washout === 'inside' || state.washout === 'ahead' && toWashout < 40 ? crawl : cruise;
+      const speed = loading || unloading ? 0 : state.phase === 'loading' ? cruise : Math.min(careful, distance < 7 ? 0 : Math.max(6, distance * .45));
+      if (unloading) deliveredAt ??= duel.state.stageTimeSec;
       if (Math.round(t / dt) % 30 === 0) lastSteer = steerSign * error * 2 + (rng.float() - .5) * wobble;
       duel.setInput({throttle:kmh < speed - 2 ? 1 : 0, brake:kmh > speed + 3 || speed === 0 && kmh > .3 ? 1 : 0,
         steer:Math.max(-1, Math.min(1, lastSteer)), boost:false});
@@ -290,7 +328,7 @@ function childDrive(seed) {
     }
     const worldJob = duel.state.arena.worldJob;
     const won = duel.state.arena.result?.winnerId === 'player' && worldJob.haulResult?.deliveredKg > 0;
-    return {won, result:worldJob.haulResult, seconds:duel.state.stageTimeSec, heard, town, runResult:won ? townJobResult(worldJob, `drive-${seed}`) : null,
+    return {won, result:worldJob.haulResult, seconds:duel.state.stageTimeSec, outSeconds:setOffAt, homeSeconds:deliveredAt - setOffAt, heard, town, runResult:won ? townJobResult(worldJob, `drive-${seed}`) : null,
       massRose:worldJob.vehicle.massKg};
   } finally { cleanupWorldJobLoan(duel); clearScablandsTownLayout(); }
 }
@@ -298,6 +336,15 @@ function childDrive(seed) {
 test('a child-pace driver on Easy finishes the haul at least 8 times in 10, and the town gets what reached it', () => {
   const drives = Array.from({length:10}, (_, index) => childDrive(index + 1));
   const wins = drives.filter(drive => drive.won).length;
+  const minutes = values => values.map(value => (value / 60).toFixed(1)).join(', ');
+  console.log(`minutes out to the camp and loaded: ${minutes(drives.map(drive => drive.outSeconds))}; home to the drop: ${minutes(drives.map(drive => drive.homeSeconds))}`);
+  // The first haul is short: each way under 6 minutes at a child's pace, loading and the crawl over the washout included (the
+  // Boneyard run is about 9 minutes each way).
+  for (const drive of drives.filter(row => row.won)) {
+    assert.ok(drive.outSeconds < 6 * 60, `out to the camp and loaded in ${(drive.outSeconds / 60).toFixed(1)} minutes`);
+    assert.ok(drive.homeSeconds < 6 * 60, `home in ${(drive.homeSeconds / 60).toFixed(1)} minutes`);
+  }
+  assert.ok(drives.some(drive => drive.heard.includes('haulWashoutAhead')), 'the washout is named on the way home');
   console.log(`child-pace haul on Easy: ${wins} of 10. Delivered ${drives.map(drive => drive.result?.deliveredKg ?? 0).join(', ')} kg; lost ${drives.map(drive => drive.result?.lostKg ?? 0).join(', ')} kg.`);
   assert.ok(wins >= 8, `${wins} of 10`);
   const drive = drives.find(row => row.won);
