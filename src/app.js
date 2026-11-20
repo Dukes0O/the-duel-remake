@@ -478,7 +478,7 @@ export class App {
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       if (!activeTalkStep(this.duel.state)) this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
-      this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
+      if(!this.duel.state.bowlNight)this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it; a Show Night is not a Lab lap (BOWL-HOOKS)
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
       this._driveLessonUi?.update();
       this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);
@@ -2717,7 +2717,7 @@ export class App {
     this._leaveHeli();
     if (st.heliVisit) st.heliVisit = null;
     st.paused = false; st.status = 'menu'; st.boosting = false;
-    const wasVisit = !!st.hiddenRoadVisit;
+    const wasVisit = !!st.hiddenRoadVisit || !!st.bowlNight; // a Show Night ran on its own seed, car and mode
     st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
     st.muddyHollowDeparture = null; st.arena = null;
     delete st.bowlNight; this._bowlRun = null; // BOWL-HOOKS: leaving ends the night and hands the show truck back

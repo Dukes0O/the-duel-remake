@@ -133,6 +133,10 @@ const settledProfile = (() => {
   ok(second.changed && second.purse === BOWL_PURSE[1] && second.profile.wasteland.scrap === 40 + BOWL_PURSE[0] + BOWL_PURSE[1],
     'the next night pays its own purse');
   ok(!settleShowNight(first.profile, {...result, won: false}).changed, 'an unfinished night pays nothing');
+  const newer = {...before, wasteland: {...before.wasteland, version: 2, laterField: true}};
+  const refused = settleShowNight(newer, result);
+  ok(!refused.ok && !refused.changed && refused.profile === newer && refused.purse === 0,
+    'a Wasteland save from a newer game is left exactly as it is');
   const {bowl, wasteland, ...rest} = first.profile, {wasteland: oldWasteland, ...oldRest} = before;
   equal(rest, oldRest, 'nothing else in the profile changes: credits, cars and upgrades stay as they were');
   equal({...wasteland, scrap: 0}, {...oldWasteland, scrap: 0}, 'only scrap changes in the Wasteland career');
