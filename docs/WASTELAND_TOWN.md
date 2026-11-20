@@ -367,9 +367,14 @@ These are settled. A card's own open question goes on the card in writing first.
   job difficulty (0 to 0.5), clamped to .1 to .95, shown in words (Risky, Even, Likely, Sure thing) and as a number. Failure means bruised
   (unavailable for a few days), and the job is still open.
 - **Switch.** `wasteland-town`, dev until finished. Off means no button and nothing loads: `src/town/` by dynamic import.
-- **Art.** `public/assets/models/wasteland/town/<family>.glb`; contract on the TOWN-ART cards. Instancing per node, level of detail and
-  chunk culling, so a big town holds rule 8's frame limit. Frame check once a big town can be reached, at Year 3 and at the test town of
-  10,000.
+- **Art.** `public/assets/models/wasteland/town/<family>.glb`; contract on the TOWN-ART cards: an 8 m cell, the footprint in cells, the
+  origin at the footprint's middle, the front facing -Z (the road side), `<id>:<part>` children and `<id>:lamp` parts lit at night. Which piece
+  stands for what is `src/town/view/town-art-table.js`; where each stands is `town-art-plan.js`, worked out from the town's records alone
+  (states, fires, plot tiers, the book's dead), with street things scattered by each road cell's own seeded stream and more as a street gets
+  older; `town-art.js` draws it. Each family file loads once, each piece is merged per material at three levels (near, mid, and a far level of
+  one coloured draw), and the town is one instanced mesh per piece, material and level, cut to what the camera can see, so draws follow the
+  kinds of thing in view and not the town's size. Homes never repeat the same model side by side or back to back. Frame check once a big town
+  can be reached, at Year 3 and at the test town of 10,000.
 - **Sound.** Every new event names a cue, reusing banks first: `town.place`, `town.ready`, `town.report`, `town.ledger`, `town.fire`, `town.bell`,
   `town.crowd`. No voice files in the first slices.
 
@@ -491,4 +496,4 @@ Other art-card buildings (`compost-heap`, `market-hall`, `paint-shop`, `searchli
 
 Everything new lives in `src/town/` (`content/`, `view/`, `ui/`), `src/world/jobs/`, `tools/test-town-*.mjs`, `tools/scenarios/town-*.mjs`, `tools/blender/town*.py`. Shared files are touched only through the named hook on each card: `src/screen-yard-home.js` and `src/screen-router.js` (one button), `src/feature-flags.js` (one line), `src/career-backup.js` (one key), `src/world/scablands-ground.js` (the grading layer), `src/arena/modes/world-job.js` (work vehicles, town solids, new step views), `src/story/story-radio.js` (town lines).
 
-**Removed:** nothing is replaced in the game. WASTELAND_WORLD section 6's stories are changed by `docs/story/the-long-dry.md` section 7. TOWN-ART-BASE's sample model goes when the first real family lands.
+**Removed:** nothing is replaced in the game. WASTELAND_WORLD section 6's stories are changed by `docs/story/the-long-dry.md` section 7. TOWN-VIEW-ART replaced the town view's coloured boxes with the art families and removed TOWN-ART-BASE's sample model.
