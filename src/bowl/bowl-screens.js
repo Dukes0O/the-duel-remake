@@ -30,7 +30,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   }
   ui.stage.ownerDocument.defaultView.addEventListener('keydown', event => {
     const state = app.duel.state;
-    const showing = help?.state === state;
+    const showing = help?.state === state && state.paused;
     if (!eventIsRunning(state) || event.code !== 'KeyH' && !(event.code === 'Escape' && showing)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -130,7 +130,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     // The race HUD's Show Night part, drawn every frame from the state.
     hud(state) {
       const show = state.bowlNight;
-      if (help && help.state !== state) help = null;
+      if (help && (help.state !== state || !state.paused)) help = null;
       const active = !!show && state.status !== 'menu';
       ui.stage.classList.toggle('bowl-night-active', active);
       const watchingFinish = state.status === 'bowl_break' && !bowlResultReady(show);

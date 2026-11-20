@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {bowlHudView, sayBowlLine} from '../src/bowl/bowl-night.js';
-import {bowlHealth, bowlHealthHit, bowlResultReady, bowlStrip, bowlTrickPopup} from '../src/bowl/bowl-hud.js';
+import {bowlHealth, bowlHealthHit, bowlResultReady, bowlStrip, bowlTrickPopup, playBowlHudCue} from '../src/bowl/bowl-hud.js';
 import {rearViewActive} from '../src/rear-view.js';
 
 const duel = new Duel({seed: 1989});
@@ -58,23 +58,27 @@ for (const [night, index, name, goal] of [
 }
 
 {
-  const actor = {armor: 50, maxArmor: 60, damageZones: {front: .2, right: 0, rear: .5, left: 0}};
+  const actor = {armor: 50, maxArmor: 60, damageZones: {front: 1, right: 0, rear: 2.5, left: 0}};
   const before = bowlHealth(actor);
   assert.deepEqual(before.segments.map(segment => Number(segment.toFixed(2))), [1, 1, 1, 1, .17]);
   assert.deepEqual(before.zones, {front: .8, right: 1, rear: .5, left: 1});
   assert.equal(before.danger, false);
   actor.armor = 12;
-  actor.damageZones.front = .9;
+  actor.damageZones.front = 4.5;
   const after = bowlHealth(actor);
   assert.deepEqual(after.segments, [1, 0, 0, 0, 0]);
   assert.equal(after.danger, true);
   assert.deepEqual(bowlHealthHit(before, after), {zone: 'front', lost: 38});
   assert.equal(bowlHealthHit(after, before), null);
+  const scorched = bowlHealth(actor, {value: 4, max: 5});
+  assert.deepEqual(bowlHealthHit(bowlHealth(actor, {value: 5, max: 5}), scorched), {zone: null, lost: 1});
 }
 
 {
   const record = {kind: 'backflip', turns: 2, base: 200, multiplier: 1.4, points: 280, fresh: true, at: 4};
   assert.deepEqual(bowlTrickPopup(record, 5.49), {name: 'DOUBLE BACKFLIP', points: '200 x1.4 = 280', fresh: true});
+  assert.equal(bowlTrickPopup({...record, multiplier: 1.44, points: 288}, 4).points, '200 x1.44 = 288');
+  assert.equal(bowlTrickPopup({...record, multiplier: 1.436, points: 287}, 4).points, '200 x1.44 ≈ 287');
   assert.equal(bowlTrickPopup(record, 5.5), null);
   assert.equal(bowlResultReady({clock: 11.99, resultAt: 10, lastResult: {won: true, event: 'freestyle'}}), false);
   assert.equal(bowlResultReady({clock: 12, resultAt: 10, lastResult: {won: true, event: 'freestyle'}}), true);
@@ -91,6 +95,32 @@ for (const [night, index, name, goal] of [
   assert.equal(night.event.trickPopups[0].points, night.event.score);
   assert.equal(bowlTrickPopup(night.event.trickPopups[0], night.clock).fresh, true);
   assert.equal(rearViewActive({status: 'racing'}, duel.course), true, 'a course alone does not disable the rear view');
+}
+
+{
+  const night = start(5, 3);
+  duel.state.status = 'racing';
+  for (const phase of ['lift', 'throw']) {
+    night.event.rex.phase = phase;
+    const view = bowlHudView(duel.state, duel.course);
+    assert.equal(bowlStrip(duel.state, view).goal, 'Dodge the thrown car.');
+  }
+  night.clock = 8;
+  duel.emit({bowlRex: {type: 'fall'}});
+  assert.equal(night.event.resultHoldSince, 8);
+  const result = {...night, resultAt: 11, lastResult: {won: true, event: 'scrapasaurus'}};
+  assert.equal(bowlResultReady({...result, clock: 17.99}), false);
+  assert.equal(bowlResultReady({...result, clock: 18}), true, 'the wait starts when the Rex falls');
+}
+
+{
+  const calls = [], output = {};
+  const audio = {paused: true, muted: false, output, context: {state: 'running'}, _playCue: (...args) => calls.push(args)};
+  playBowlHudCue({audio}, 'bowl.card.open');
+  assert.deepEqual(calls, [['interface.radar', {destination: output, scale: .42}]]);
+  audio.muted = true;
+  playBowlHudCue({audio}, 'bowl.card.open');
+  assert.equal(calls.length, 1, 'the paused cue still respects mute');
 }
 
 console.log('Bowl HUD goals, caption timing, trick results, damage and result timing passed.');

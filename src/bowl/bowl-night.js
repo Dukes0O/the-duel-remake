@@ -323,6 +323,8 @@ function addFact(duel, fact) {
 export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
+  // Count the Rex hold from the fall, including any time spent dragging the final box.
+  if (ev.bowlRex?.type === 'fall') night.event.resultHoldSince ??= night.clock;
   if (ev.bowlTrick) {
     const trick = ev.bowlTrick;
     addFact(duel, {type: 'bowlTrick', ...trick});

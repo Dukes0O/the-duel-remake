@@ -21,7 +21,8 @@ export const BOWL_TRICK_GUIDE = Object.freeze([
 const REX_GOALS = {
   tell: 'Stay out of the fire.',
   fire: 'Stay out of the fire.',
-  throwTell: 'Keep moving.',
+  lift: 'Dodge the thrown car.',
+  throw: 'Dodge the thrown car.',
   rest: 'Jump off the junk car.',
   fallen: 'Stay clear of the Scrapasaurus.',
 };
@@ -77,8 +78,11 @@ export function bowlTrickPopup(record, now) {
   if (!name) return null;
   const prefix = record.kind === 'cyclone' || record.turns < 2 ? '' :
     record.turns === 2 ? 'Double ' : record.turns === 3 ? 'Triple ' : `${record.turns}× `;
+  const base = Number(record.base.toFixed(1));
+  const multiplier = record.multiplier.toFixed(2).replace(/0$/, '');
+  const relation = Math.round(base * Number(multiplier)) === record.points ? '=' : '≈';
   return {name: (prefix + name).toUpperCase(),
-    points: `${whole(record.base)} x${record.multiplier.toFixed(1)} = ${whole(record.points)}`, fresh: record.fresh};
+    points: `${base.toLocaleString('en-US')} x${multiplier} ${relation} ${whole(record.points)}`, fresh: record.fresh};
 }
 
 export function bowlResultReady(night) {
@@ -90,12 +94,14 @@ export function bowlResultReady(night) {
 
 const clamp01 = value => Math.max(0, Math.min(1, Number(value) || 0));
 const ZONES = ['front', 'right', 'rear', 'left'];
+// The contact and armor rules record wear on a scale from zero to five.
+const ZONE_WEAR_MAX = 5;
 
 export function bowlHealth(actor, {value = actor.armor, max = actor.maxArmor, zones = actor.damageZones} = {}) {
   const fraction = max > 0 ? clamp01(value / max) : 0;
   return {value, max, fraction,
     segments: Array.from({length: 5}, (_, index) => clamp01(fraction * 5 - index)),
-    zones: Object.fromEntries(ZONES.map(zone => [zone, 1 - clamp01(zones?.[zone])])),
+    zones: Object.fromEntries(ZONES.map(zone => [zone, 1 - clamp01(zones?.[zone] / ZONE_WEAR_MAX)])),
     danger: fraction > 0 && fraction <= .2};
 }
 
@@ -106,7 +112,8 @@ export function bowlHealthHit(before, after) {
     const lost = before.zones[part] - after.zones[part];
     if (lost > biggest) { zone = part; biggest = lost; }
   }
-  return {zone, lost: Math.round(before.value - after.value)};
+  const lost = before.value - after.value;
+  return {zone, lost: Math.max(.1, Math.round(lost * 10) / 10)};
 }
 
 
@@ -130,17 +137,21 @@ export const bowlSegmentsMarkup = '<span class="bowl-health-segments" aria-hidde
   '<i></i>'.repeat(5) + '</span>';
 
 export function drawBowlSegments(node, health) {
-  node.dataset.tone = healthTone(health.fraction);
+  const tone = healthTone(health.fraction);
+  if (node.dataset.tone !== tone) node.dataset.tone = tone;
   node.classList.toggle('bowl-health-danger', health.danger);
   for (let index = 0; index < node.children.length; index++) {
-    node.children[index].style.setProperty('--filled', health.segments[index]);
+    const style = node.children[index].style, fill = String(health.segments[index]);
+    if (style.getPropertyValue('--filled') !== fill) style.setProperty('--filled', fill);
   }
 }
 
 export function playBowlHudCue(app, id) {
   const audio = app.audio, cue = BOWL_HUD_SOUNDS[id];
   if (!cue || audio?.muted || audio?.context?.state !== 'running') return;
-  audio._playCue(cue);
+  // The pause action mutes the race bus. The card's short UI cue still goes through the output limiter.
+  const options = id === 'bowl.card.open' ? {destination: audio.output, scale: .42} : undefined;
+  audio._playCue(cue, options);
 }
 
 function drawPlan(canvas, state, course) {
@@ -225,10 +236,11 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     ['.bowl-hud-crowd span', view => view.crowdLabel],
   ].map(([selector, value]) => [find(selector), value]);
   const meter = find('meter');
-  let lastEvent, previousHealth, lastHit, lastPopups;
+  let lastEvent, previousHealth, lastHit, lastPopups, popupSize;
   const text = (node, content) => { if (node.textContent !== content) node.textContent = content; };
+  const hide = (node, hidden) => { if (node.hidden !== hidden) node.hidden = hidden; };
   return (state, course, view) => {
-    host.hidden = !view;
+    hide(host, !view);
     if (!view) return;
     const night = state.bowlNight;
     if (lastEvent !== night.event) {
@@ -238,30 +250,34 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     for (const [node, value] of fields) {
       const label = value(view);
       text(node, label);
-      node.hidden = !label;
+      hide(node, !label);
     }
-    meter.value = view.crowd;
-    caption.hidden = !view.caption;
+    if (meter.value !== view.crowd) meter.value = view.crowd;
+    hide(caption, !view.caption);
     text(caption, view.caption ? `BIG MO: ${view.caption}` : '');
 
     const tricks = lastEvent.trickPopups ?? [];
     const popups = tricks.map(trick => bowlTrickPopup(trick, night.clock)).filter(Boolean);
     const marker = popups.length ? projectPlayer() : null;
-    popup.hidden = !marker?.visible;
+    hide(popup, !marker?.visible);
     if (!popup.hidden) {
       if (lastPopups !== tricks) {
         popup.innerHTML = popups.map(trick => `<p><b>${trick.name}</b> <span>${trick.points}</span>${trick.fresh ? ' <em>NEW</em>' : ''}</p>`).join('');
         lastPopups = tricks;
+        popupSize = null;
       }
-      const halfWidth = popup.offsetWidth / 2;
-      const left = Math.max(halfWidth, Math.min(stage.clientWidth - halfWidth, marker.x * stage.clientWidth));
+      const width = stage.clientWidth, height = stage.clientHeight;
+      if (!popupSize || popupSize.width !== width || popupSize.height !== height) {
+        popupSize = {width, height, half: popup.offsetWidth / 2, top: popup.offsetHeight + 12};
+      }
+      const left = Math.max(popupSize.half, Math.min(width - popupSize.half, marker.x * width));
       popup.style.left = `${left}px`;
-      popup.style.top = `${Math.max(marker.y * stage.clientHeight, popup.offsetHeight + 12)}px`;
+      popup.style.top = `${Math.max(marker.y * height, popupSize.top)}px`;
     }
     const fight = bowlFightActive(state);
-    plan.hidden = !(fight || state.bowlOutside) || !course.features?.bowl;
+    hide(plan, !(fight || state.bowlOutside) || !course.features?.bowl);
     if (!plan.hidden) drawPlan(plan, state, course);
-    healthNode.hidden = !fight;
+    hide(healthNode, !fight);
     if (!fight) return;
     const health = bowlHealthOf(state);
     const hit = bowlHealthHit(previousHealth, health);
@@ -274,16 +290,18 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     const showHit = lastHit && lastHit.until > night.clock;
     drawBowlSegments(segments, health);
     for (const zone of zoneNodes) {
-      zone.dataset.tone = healthTone(health.zones[zone.dataset.zone]);
-      zone.classList.toggle('bowl-zone-hit', !!showHit && lastHit.zone === zone.dataset.zone);
+      const tone = healthTone(health.zones[zone.dataset.zone]);
+      if (zone.dataset.tone !== tone) zone.dataset.tone = tone;
+      zone.classList.toggle('bowl-zone-hit', !!showHit && (!lastHit.zone || lastHit.zone === zone.dataset.zone));
     }
-    hitLabel.hidden = !showHit;
+    hide(hitLabel, !showHit);
     if (showHit) {
-      hitLabel.dataset.zone = lastHit.zone ?? '';
+      if (hitLabel.dataset.zone !== (lastHit.zone ?? '')) hitLabel.dataset.zone = lastHit.zone ?? '';
       text(hitLabel, `−${lastHit.lost}`);
       hitLabel.style.transform = `translateY(-${(.7 - (lastHit.until - night.clock)) * 28}px)`;
     }
-    danger.hidden = !health.danger;
-    healthNode.setAttribute('aria-label', `Truck health ${whole(health.value)} of ${whole(health.max)}${health.danger ? ', danger' : ''}`);
+    hide(danger, !health.danger);
+    const label = `Truck health ${whole(health.value)} of ${whole(health.max)}${health.danger ? ', danger' : ''}`;
+    if (healthNode.getAttribute('aria-label') !== label) healthNode.setAttribute('aria-label', label);
   };
 }

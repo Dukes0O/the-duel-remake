@@ -8,7 +8,7 @@ export const REAR_VIEW_INTERVAL_MS = 1000 / 30;
 // A world job holding at its end, or on a conversation, fills the picture without the mirror.
 const worldJobHidesMirror = job => !!job && (!!job.arrivalHold || job.job?.steps?.[job.job.stepIndex]?.kind === 'talk');
 export const rearViewActive = (state, course) => !state?.onFoot &&
-  !(state?.bowlNight && course?.def.bowl) &&
+  !(state?.bowlNight && course?.def?.bowl) &&
   !(state?.arena?.mode === 'world-job' && worldJobHidesMirror(state.arena.worldJob)) &&
   ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
 
