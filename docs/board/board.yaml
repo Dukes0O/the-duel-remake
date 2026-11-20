@@ -620,7 +620,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-crush"
     needs: [BOWL-TRICKS, BOWL-WALLS]
     locks: [bowl-night, bowl-floor]
     flag: "titan-bowl"
@@ -681,6 +682,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-rex-2"
+    waiting_on: "claude"
     needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
     locks: [bowl-screens]
     flag: "titan-bowl"
@@ -788,6 +790,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-tricks-all"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures, save-shape, busy-game-files]
     flag: "arena-tricks"
