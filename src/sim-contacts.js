@@ -1,3 +1,4 @@
+import {constrainTow, rexSolids} from './bowl/bowl-hook.js';
 import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
@@ -277,7 +278,7 @@ export function _collisions() {
         const points = SCORING.nearMissPoints * s.combo * this.scoreMultiplier;
         s.stageStyleScore += points; s.score += points;
         s.boost = Math.min(1, s.boost + BOOST.nearMissRefill);
-        this._callout(`NEAR MISS  +${points}${s.combo > 1 ? `  /  ${s.combo}× COMBO` : ''}`);
+        this._callout(`NEAR MISS  +${points}${s.combo > 1 ? `  /  ${s.combo}Ãƒâ€” COMBO` : ''}`);
         this.emit({ nearMiss: { points, combo: s.combo } });
       }
     }
@@ -377,6 +378,22 @@ export function _staticContacts(car, player, journeyColliders = null) {
   if (car.crushed || car.combatWrecking || car.tumble) return;
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
+  const fight=this.state.bowlNight?.event?.rex;
+  if(player && fight?.hook?.phase==='attached'){
+    const held=constrainTow(fight,this.course,car,end);
+    if(held!==end){
+      const dx=end.x-held.x,dz=end.z-held.z;
+      const angle=this.course.at(car.s).heading+(car.headingError||0);
+      const outward=(Math.sin(angle)*dx+Math.cos(angle)*dz)/Math.max(1e-8,Math.hypot(dx,dz));
+      if(outward*car.speedMph>0){
+        if(!fight.hook.tight)fight.hook.arrivalSpeed=Math.max(fight.hook.arrivalSpeed||0,car.speedMph);
+        car.speedMph*=Math.max(0,1-outward*outward);
+      }
+      const corrected=this._roadPosition(held,car.s);
+      car.s=corrected.s;car.lateral=corrected.lateral;end=held;
+    }
+    if(fight.hook.pulling && car.bowlPose)car.bowlPose.pitch=.49;
+  }
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
   const layeredGround = this.course.def?.scablands;
   if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
@@ -418,14 +435,16 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const heading = travelHeading + (car.slipAngle || 0);
   // The Scablands' solids are found by a grid by world position (src/world/scablands-solids.js), not by the car's place along the oval frame.
   const obstacles = this.course.def.scablands ? scablandsContactObstacles(this, car, start, end, this._obstacles(oldS, car.s)) : this._obstacles(oldS, car.s);
+  const beastParts=fight && !fight.done && fight.phase!=='gone' ? rexSolids(fight,this.course) : null;
+  const nearby=beastParts ? obstacles.concat(beastParts) : obstacles;
   const dimensions = {...this._vehicleSpec(car),
     useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;
   const exterior = this.course.features?.bowl?.outside;
   for (let attempt = 0; attempt < 4; attempt++) {
     let first = null, verticalStart, verticalEnd;
-    for (let index = 0; index < obstacles.length + (journeyColliders?.length || 0); index++) {
-      const obstacle = index < obstacles.length ? obstacles[index] : journeyColliders[index - obstacles.length];
+    for (let index = 0; index < nearby.length + (journeyColliders?.length || 0); index++) {
+      const obstacle = index < nearby.length ? nearby[index] : journeyColliders[index - nearby.length];
       if (obstacle.bowlGateAI && player) continue;
       if (obstacle.bowlBoundary) {
         if (obstacle.bowlBoundary === 'back' && car.lateral >= oldLateral && (oldLateral <= exterior.back || car.airborne)) continue;
@@ -490,6 +509,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
       car.speedMph *= .92;
       this.emit({fenceSnap: {id: obstacle.id, impactMph, cue: 'world.fence.snap'}});
       obstacles.splice(obstacles.indexOf(obstacle), 1);
+      if(nearby!==obstacles)nearby.splice(nearby.indexOf(obstacle),1);
       attempt--;
       continue;
     }
@@ -590,6 +610,9 @@ export function _staticContacts(car, player, journeyColliders = null) {
         bowlRebound(this, car, lateralNormal, alongNormal, tangent, bowlReturn(bowlRules, kind, mph), kind, Math.hypot(mph, tangent));
         bowlWear(this, car, kind, undefined, zone);
         this.emit({bowlWall: {kind, mph, cue: 'bowl.wall.' + kind}});
+        if(obstacle.rexPart && (!fight.bumpAt || this.state.stageTimeSec-fight.bumpAt>.7)){
+          fight.bumpAt=this.state.stageTimeSec;this.emit({bowlRex:{type:'bump',cue:'bowl.rex.bump'}});
+        }
       }
       return;
     }

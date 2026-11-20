@@ -1,337 +1,268 @@
-// BOWL-REX-FIGHT: night five's Scrapasaurus, headless. The rules are checked
-// without driving (three landings end it, fire never comes without its tell and
-// only goes where the tell showed); then one child-pace test driver plays the
-// fight on the real Duel on each level. Easy must be won at least 8 times in 10;
-// Medium and Hard are reported. Memory-only: nothing here touches a save.
+// BOWL-REX-2. The only complete drive uses normal controls in the real Duel.
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
-import {SHOW_NIGHTS, BOWL_EVENTS} from '../src/bowl/bowl-show.js';
-import {bowlHudView, bowlNightPlayable, settleShowNight} from '../src/bowl/bowl-night.js';
-import {REX_CUES, REX_EVENT, REX_RULES, REX_TROPHY, createRexFight, rexBoxS, rexFightOf,
-  rexInTheYard, rexPlaces, stepRexFight} from '../src/bowl/bowl-rex.js';
-import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
+import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
+import {bowlNightPlayable,settleShowNight,bowlHudView} from '../src/bowl/bowl-night.js';
+import {BOWL_GOALS,BOWL_SOUND_CUES,BIG_MO} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {createProfile} from '../src/progression.js';
-import * as THREE from 'three';
-import {COURSE} from '../src/config.js';
 import {Course} from '../src/course.js';
+import {COURSE} from '../src/config.js';
 import {createScrapdomeYard} from '../src/scrapdome-yard.js';
 import {createRexView} from '../src/bowl/bowl-rex-view.js';
+import {createRexFight,stepRexFight,REX_RULES,REX_CUES,REX_EVENT,REX_TROPHY,rexInTheYard} from '../src/bowl/bowl-rex.js';
+import {eyePoint,hookMarker,modelPoint,rexAnchor,signedAngle,truckPoint,stepHook,releaseHook,wrap} from '../src/bowl/bowl-hook.js';
+import {childDrive} from './scenarios/bowl-rex-fight.mjs';
 
-let checks = 0;
-const ok = (value, label) => { assert.ok(value, label); checks++; };
-const DT = 1 / 120;
-const showDuel = seed => {
-  const duel = new Duel({seed});
-  duel.featureFlags = {enabled: name => name === 'titan-bowl'};
-  return duel;
-};
-// The Bowl as Show Night loads it.
-const course = (() => { const duel = showDuel(1); assert.ok(duel.startBowlNight({night: 1})); return duel.course; })();
-const L = course.length;
-const wrap = value => ((value % L) + L) % L;
-const along = (a, b) => wrap(a - b + L / 2) - L / 2;
-// Every place in the fight comes from the course's data.
-const P = rexPlaces(course);
-ok(P.gateS === course.features.bowl.gates[0].s, 'the Rex and the driver use the same Car Park Gate');
-
-// ---- night five ----------------------------------------------------------
-{
-  const show = course.features.bowl;
-  ok(P.rail === show.rails.lateral && P.car.s === show.launchCars[0].s && P.car.lateral === show.rails.lateral &&
-    P.stageBoxS === wrap(P.car.s + REX_RULES.boxPastCar) && P.startS === wrap(show.crush.firstRowS - 2) && Math.abs(P.rail) < P.edge,
-    'the rails, the rest, the dropped car and the start come from the course\'s features.bowl');
-  ok(P.headTop >= 7.5 && P.headTop === Math.max(REX_RULES.headTop.min, REX_RULES.headTop.share * P.edge) &&
-    Math.abs(P.scale * REX_RULES.model.height - P.headTop) < 1e-9 && Math.abs(P.headAhead - REX_RULES.model.nozzleAhead * P.scale) < 1e-9 &&
-    P.boxTopStanding > REX_RULES.boxTop.resting, 'it stands at least 7.5 m to the top of its head, its size and reach scaled from the floor');
-  ok(SHOW_NIGHTS[4].events.at(-1) === BOWL_EVENTS.SCRAPASAURUS && SHOW_NIGHTS[4].events.length === 4 &&
-    SHOW_NIGHTS[4].events[2] === BOWL_EVENTS.LAST_TRUCK_ROLLING, 'night five is four events: Last Truck Rolling, then the Scrapasaurus');
-  ok(SHOW_NIGHTS.slice(0, 4).every(night => !night.events.includes(REX_EVENT)), 'only night five has the Scrapasaurus');
-  ok(bowlNightPlayable(5), 'night five has every event');
-  ok(BOWL_EVENT_NAMES[REX_EVENT] === 'The Scrapasaurus', 'the event has its name');
+const dt=1/120;
+function start(seed=101,level='easy'){
+  const d=new Duel({seed});
+  d.featureFlags={enabled:n=>n==='titan-bowl'};
+  assert.ok(d.startBowlNight({night:5,cpuDifficulty:level,seed}));
+  const night=d.state.bowlNight;
+  night.show.eventIndex=3;night.phase='result';
+  assert.ok(d.continueBowlNight());
+  return d;
+}
+const d=start(),course=d.course;
+const make=(difficulty='easy')=>createRexFight({difficulty,course});
+const still={s:d.state.s,lateral:d.state.lateral,input:{},speedMph:0};
+assert.ok(bowlNightPlayable(5));
+assert.equal(SHOW_NIGHTS[4].events.at(-1),REX_EVENT);
+assert.ok(SHOW_NIGHTS.slice(0,4).every(n=>!n.events.includes(REX_EVENT)));
+assert.equal(make().s,course.features.bowl.gates.find(g=>g.name==='Car Park Gate').s);
+assert.equal(make().places.rail,course.features.bowl.rails.lateral);
+assert.ok(Math.hypot(...['x','z'].map(k=>rexAnchor(make(),course)[k]-truckPoint(course,still)[k]))<26);
+function truckAt(point,heading,extra={}){
+  const road=d._roadPosition(point,14);
+  return {...road,speedMph:0,input:{},headingError:signedAngle(heading-course.at(road.s).heading),...extra};
+}
+function approach(f,range=12,angle=0,away=false){
+  const eye=eyePoint(f,course,Math.max(0,f.boxes.indexOf(false)));
+  // Approach from the centre of the floor, either facing the eye or facing away.
+  const heading=rexAnchor(f,course).heading+Math.PI/2*(f.direction<0?-1:1);
+  const spot=modelPoint({...eye,heading},0,0,-range);
+  return truckAt(spot,heading+angle+(away?Math.PI:0));
+}
+function tired(index=0,level='easy'){
+  const f=make(level);f.phase='rest';f.low=true;f.rests=1;f.first=false;
+  f.boxes=f.boxes.map((_,i)=>i<index);return f;
 }
 
-// ---- the rules, without driving ---------------------------------------------
-// A truck that sits still far from the Rex's path, and a scripted truck that the
-// rules see at chosen places. Each step returns events; nothing else is read.
-function runRules(level, truckAt, seconds = 400, dt = DT) {
-  const fight = createRexFight({difficulty: level, course}), log = [];
-  for (let t = 0; t < seconds && !fight.done; t += dt) {
-    const truck = truckAt(fight, t);
-    for (const event of stepRexFight(fight, truck, dt, course)) log.push({...event, t, phase: fight.phase,
-      truck: {...truck}});
+for(const level of ['easy','medium','hard']){
+  const f=make(level),events=[];
+  for(let i=1;i<=120*40 && !events.some(e=>e.type==='boxOpen');i++){
+    for(const e of stepRexFight(f,still,dt,course))events.push({...e,time:i*dt});
   }
-  return {fight, log};
+  const first=events.find(e=>e.type==='fire'),tell=events.find(e=>e.type==='tell');
+  assert.ok(first.time<=8 && first.time-tell.time>=REX_RULES.level[level].tellSec-dt);
+  assert.equal(first.cone.heading,tell.cone.heading);
+  assert.equal(first.cone.halfAngle,tell.cone.halfAngle);
+  assert.equal(events.filter(e=>e.type==='fire').length,level==='easy'?1:2);
+  const gate=tired(0,level);gate.rests=REX_RULES.level[level].rests;gate.t=100;
+  for(let i=0;i<1000 && !gate.done;i++)stepRexFight(gate,still,dt,course);
+  assert.equal(gate.done?.reason,'gate');
+  assert.equal(gate.s,gate.places.gateS);
+  const burned=make(level);
+  for(let i=0;i<300 && !burned.done;i++){
+    burned.phase='fire';burned.t=0;burned.scorched=false;
+    const at=truckPoint(course,still);
+    burned.cone={x:at.x,z:at.z-3,heading:0,halfAngle:.3,sweep:0,range:29};
+    stepRexFight(burned,still,dt,course);
+  }
+  assert.equal(burned.hits,{easy:5,medium:4,hard:3}[level]);
+  assert.equal(burned.done.reason,'toasted');
+  const collision=make(level);collision.hits=collision.maxHits+.01;
+  assert.deepEqual(stepRexFight(collision,still,dt,course),[{type:'toasted'}]);
 }
-// A truck that keeps behind its tail on the stands' side, out of every cone, and
-// steps away from the ring when a junk car is in the air.
-const parked = fight => ({s: wrap(fight.s + (fight.phase === 'throw' ? 40 : 25)), lateral: P.rail - P.side * 14,
-  airborne: false, airHeight: 0, speedMph: 0});
-// A truck that is over the open box in the air whenever a box is open, and keeps away otherwise.
-const lander = fight => fight.phase === 'rest'
-  ? {s: rexBoxS(fight, fight.boxes.indexOf(false)), lateral: P.car.lateral, airborne: true, airHeight: REX_RULES.boxTop.resting + .5,
-    verticalSpeed: -2, speedMph: 36}
-  : parked(fight);
-
 {
-  const {fight, log} = runRules('easy', lander);
-  const smashes = log.filter(event => event.type === 'smash');
-  ok(fight.done?.won === true && fight.done.reason === 'fallen', 'three landings on the open boxes bring it down');
-  ok(smashes.length === 3 && smashes.map(event => event.box).join() === '0,1,2', 'each landing smashes the next box, one to three');
-  ok(log.filter(event => event.type === 'fall').length === 1 && log.at(-1).type !== 'smash', 'it falls once, after the third');
-  ok(smashes.every(event => Math.abs(along(event.truck.s, P.stageBoxS)) < 1e-6),
-    'every open box is at the same resting place, past the dropped junk car');
-  // Two landings are not enough, and a landing with the box shut does nothing.
-  const twice = runRules('easy', f => f.phase === 'rest' && f.boxes.filter(Boolean).length < 2 ? lander(f) : parked(f));
-  const landed = twice.log.filter(event => event.type === 'smash').length;
-  ok(landed === 2 && twice.fight.done?.won === false && twice.fight.done.reason === 'gate',
-    'two landings do not stop it, and after its last rest it walks out of the gate');
-  const shut = runRules('easy', f => f.phase === 'walk' && Math.abs(along(f.s, P.startS)) > 30
-    ? {s: f.s, lateral: P.rail, airborne: true, airHeight: 2.4, speedMph: 30} : parked(f), 120);
-  ok(!shut.log.some(event => event.type === 'smash'), 'a truck over its back while it walks smashes nothing');
-  // Over the open box but still climbing hard, or far above it, the truck has not come down on it yet.
-  const over = (extra) => f => f.phase === 'rest' ? {...lander(f), ...extra} : parked(f);
-  ok(!runRules('easy', over({verticalSpeed: 4}), 120).log.some(event => event.type === 'smash') &&
-    !runRules('easy', over({airHeight: REX_RULES.boxTop.resting + REX_RULES.catch.maxAbove + .5}), 120).log.some(event => event.type === 'smash'),
-    'a truck still climbing, or flying high over the box, does not count as landing on it');
-  ok(runRules('easy', over({verticalSpeed: -3}), 120).log.some(event => event.type === 'smash'), 'a truck coming down on the box does');
+  const f=tired(),truck=approach(f);
+  assert.ok(hookMarker(f,truck,course).canBite);
+  assert.ok(!hookMarker(f,approach(f,12,Math.PI*.36),course).canBite);
+  assert.ok(!hookMarker(f,approach(f,26),course).canBite);
+  truck.input.interact=true;
+  const events=[];
+  for(let i=0;i<35;i++)events.push(...stepRexFight(f,truck,dt,course));
+  assert.equal(f.hook.phase,'flying');
+  events.push(...stepRexFight(f,truck,dt,course));
+  assert.equal(f.hook.phase,'attached');
+  assert.equal(events.filter(e=>e.type==='hookFire').length,1);
+  f.t=60;stepRexFight(f,truck,dt,course);assert.equal(f.phase,'rest');
+  truck.input.interact=false;stepRexFight(f,truck,dt,course);
+  truck.input.interact=true;stepRexFight(f,truck,dt,course);assert.equal(f.hook.phase,'idle');
+  const miss=tired();miss.low=false;miss.phase='walk';miss.s=14;
+  const side=rexAnchor(miss,course),point=modelPoint(side,8,0,-1.5);
+  const aiming=truckAt(point,side.heading-Math.PI/2,{input:{interact:true}});
+  miss.marker=null;
+  const ev=[];for(let i=0;i<260;i++)stepHook(miss,aiming,dt,course,ev);
+  assert.ok(ev.some(e=>e.type==='clang'));assert.equal(miss.hook.phase,'idle');
+  assert.ok(!ev.some(e=>e.type==='bite'));
+  const clean=tired(),wait=approach(clean,12,Math.PI);
+  const ev2=[];wait.input.interact=true;
+  for(let i=0;i<240;i++)ev2.push(...stepRexFight(clean,wait,dt,course));
+  assert.ok(!ev2.some(e=>e.type==='bite'));assert.equal(clean.hook.phase,'idle');
 }
-
 {
-  // Fire: every breath has its tell first, as long as the level says, and the
-  // cone it fills is the one the tell drew. A truck parked in the stage's cone
-  // is scorched by every stage breath and by nothing else.
-  for (const level of ['easy', 'medium', 'hard']) {
-    for (const truckAt of [parked, lander, () => ({s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0})]) {
-      const {log} = runRules(level, truckAt, 300);
-      let tell = null, fires = 0;
-      for (const event of log) {
-        if (event.type === 'tell') { assert.equal(tell, null, 'a tell is never doubled'); tell = event; }
-        if (event.type === 'fire') {
-          assert.ok(tell, `${level}: fire came without its tell`);
-          assert.ok(event.t - tell.t >= REX_RULES.level[level].tellSec - DT * 1.5, `${level}: the tell lasted its full time`);
-          assert.deepEqual(event.cone, tell.cone, `${level}: the fire went where the tell showed`);
-          tell = null; fires++;
-        }
-      }
-      ok(fires > 0, `${level}: fire always comes after a tell the player can see (${fires} breaths)`);
+  const tables={easy:[2,3,3],medium:[3,4,4],hard:[3,5,5]};
+  for(const [level,times] of Object.entries(tables))for(let box=0;box<3;box++){
+    const f=tired(box,level);
+    const truck=approach(f,14.8,0,true);
+    truck.input.throttle=1;truck.boosting=true;
+    Object.assign(f.hook,{phase:'attached',box});
+    const events=[];
+    for(let i=0;i<Math.round(times[box]/2/dt)-1;i++)events.push(...stepRexFight(f,truck,dt,course));
+    assert.equal(f.boxes[box],false);
+    events.push(...stepRexFight(f,truck,dt,course));
+    assert.equal(f.boxes[box],true);
+    assert.ok(events.some(e=>e.type==='boxOut'));
+    assert.equal(f.hook.phase,'dragging');
+    if(box===2)assert.ok(events.some(e=>e.type==='tell'));
+  }
+  const f=tired(1),truck=approach(f,14.6,0,true);truck.speedMph=23;truck.input.throttle=1;
+  Object.assign(f.hook,{phase:'attached',box:1});
+  const ev=stepRexFight(f,truck,dt,course);assert.ok(ev.some(e=>e.type==='jerk'));
+  assert.ok(ev.some(e=>e.type==='brace'));const first=f.hook.pulls[1];
+  assert.ok(f.hook.length<15);
+  stepRexFight(f,truck,dt,course);assert.ok(f.hook.pulls[1]<first+.1);
+  const kept=f.hook.pulls[1];releaseHook(f.hook,[]);f.t=100;stepRexFight(f,truck,dt,course);
+  assert.equal(f.hook.pulls[1],kept);assert.ok(!f.low);
+  const head=tired(2);Object.assign(head.hook,{phase:'attached',box:2});
+  const observer=approach(head,14.7,0,true);stepRexFight(head,observer,dt,course);
+  const fixed={...head.cone};assert.equal(head.phase,'tell');
+  const elsewhere=approach(head,14,Math.PI/2);
+  for(let i=0;i<330;i++)stepRexFight(head,elsewhere,dt,course);
+  assert.equal(head.phase,'fire');assert.equal(head.cone.heading,fixed.heading);
+  const anger=tired(2);anger.low=false;anger.phase='walk';anger.t=8;
+  stepRexFight(anger,still,dt,course);assert.equal(anger.cone.sweep,Math.PI/6);
+  anger.phase='walk';anger.throwDue=true;const ring=stepRexFight(anger,still,dt,course).find(e=>e.type==='lift');
+  assert.ok(ring);const trip=[];
+  for(let i=0;i<500;i++)trip.push(...stepRexFight(anger,{...still,s:still.s+60},dt,course));
+  const land=trip.find(e=>e.type==='thrownLand');
+  assert.ok(land && !land.hit);assert.deepEqual(land.at,ring.at);
+}
+for(const cue of Object.values(REX_CUES)){
+  if(['bowl.hook.tight','bowl.rex.box.drag'].includes(cue))continue;
+  assert.ok(SOUND_BANK[BOWL_SOUND_CUES[cue]],cue);
+}
+for(const name of ['noBox','slack','brace','scorch','tell','rest','out.1','out.2','out.3'])assert.ok(BIG_MO['rex.'+name]);
+for(const phase of ['walk','rest','tell','fire','lift','throw','fallen','exit']){
+  for(const h of ['idle','attached','dragging'])assert.ok(BOWL_GOALS.scrapasaurus({phase,hook:{phase:h},boxes:[false,false,false]}).split(' ').length<=5);
+}
+// Each trajectory starts outside and finishes beyond the part in one step.
+function crossing({low=false,fallen=false,localZ,y}){
+  const duel=start(),s=duel.state,f=s.bowlNight.event.rex;
+  f.low=low;f.phase=fallen?'fallen':low?'rest':'walk';f.t=fallen?3:0;
+  const frame=rexAnchor(f,duel.course);
+  const a=duel._roadPosition(modelPoint(frame,-13,0,localZ),f.s);
+  const b=duel._roadPosition(modelPoint(frame,13,0,localZ),f.s);
+  Object.assign(s,{prevS:a.s,prevLateral:a.lateral,s:b.s,lateral:b.lateral,
+    airborne:y>0,airHeight:y,prevAirHeight:y,groundHeight:0,prevGroundHeight:0,
+    speedMph:60,headingError:signedAngle(frame.heading+Math.PI/2-duel.course.at(b.s).heading)});
+  duel._obstacles=()=>[];
+  let hit=false;duel.onChange((_,ev)=>{if(ev.bowlRex?.type==='bump')hit=true;});
+  duel._staticContacts(s,true);
+  return hit;
+}
+for(const probe of [{localZ:-1.55,y:0},{localZ:0,y:6},{localZ:6.6,y:8.8},{localZ:-10,y:5.75},
+  {low:true,localZ:-10,y:0},{low:true,localZ:6,y:1},{low:true,fallen:true,localZ:0,y:3}]){
+  assert.ok(crossing(probe),'swept wall contact '+JSON.stringify(probe));
+}
+assert.ok(!crossing({localZ:-10,y:10}));
+assert.ok(!crossing({low:true,fallen:true,localZ:0,y:9}),'air above the fallen body is clear');
+
+// The yard trophy and its original save condition survive the change of fight.
+const profile=createProfile();
+assert.ok(!rexInTheYard(profile));
+const settled=settleShowNight(profile,{won:true,night:5,bests:{}});
+assert.ok(settled.ok&&rexInTheYard(settled.profile)&&settled.profile.bowl.trophies.includes(REX_TROPHY));
+
+
+function modelFixture(){
+  const scene=new THREE.Group();
+  for(let i=1;i<=3;i++){
+    const box=new THREE.Group(),socket=new THREE.Mesh(new THREE.BoxGeometry(1,.1,1));
+    box.name='battery-box-'+i;box.position.set(0,9.86,i-2);scene.add(box,socket);
+    socket.name='battery-socket-'+i;
+    for(const state of ['whole','open']){
+      const cell=new THREE.Mesh(new THREE.BoxGeometry(1,.5,1),new THREE.MeshStandardMaterial());
+      cell.name=box.name+'-'+state;cell.scale.setScalar(state==='open'?0:1);box.add(cell);
     }
   }
-  const tellSec = REX_RULES.level;
-  ok(tellSec.easy.tellSec > tellSec.medium.tellSec && tellSec.medium.tellSec > tellSec.hard.tellSec &&
-    tellSec.easy.lapSec > tellSec.medium.lapSec && tellSec.medium.lapSec > tellSec.hard.lapSec,
-    'Easy is slower, with a longer tell');
-  ok(P.range > 9 && REX_RULES.fire.halfAngle > 15 * Math.PI / 180, 'its cone is larger than the flamethrower\'s');
-  const inRamp = runRules('easy', () => ({s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0}), 200);
-  const stageFires = inRamp.log.filter(event => event.type === 'fire' && event.kind === 'stage').length;
-  ok(stageFires > 0 && inRamp.log.filter(event => event.type === 'scorch' && event.kind === 'stage').length === stageFires,
-    'a truck waiting on the run-up to the dropped car is caught by each breath there, once per breath');
-  const outside = runRules('easy', () => ({s: wrap(P.car.s - 4), lateral: P.rail - P.side * 12, airborne: false, airHeight: 0, speedMph: 0}), 200);
-  ok(!outside.log.some(event => event.type === 'scorch' && event.kind === 'stage'),
-    'the middle of the floor beside the dropped car is outside that cone');
-  const hits = REX_RULES.level.easy.hits, toasted = runRules('easy', () => ({s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0}), 600);
-  ok(toasted.fight.done?.reason === 'toasted' && toasted.fight.hits === hits, `${hits} scorches on Easy stop the show`);
+  return scene;
 }
-
 {
-  // The pen: it throws a junk car at where the truck was, and eats one to mend its limp when it is hurt.
-  // Two landings, then none: it eats after each and throws once it is mended.
-  const {log} = runRules('easy', f => f.phase === 'rest' && f.boxes.filter(Boolean).length < 2 ? lander(f) : parked(f));
-  const lifts = log.filter(event => event.type === 'lift'), lands = log.filter(event => event.type === 'thrownLand');
-  ok(lifts.length >= 1 && lands.length === lifts.length, 'it picks up a junk car to throw, and the car comes down');
-  ok(lifts.every((lift, index) => lands[index].t - lift.t >= REX_RULES.level.easy.throwTellSec + REX_RULES.thrown.flightSec - DT * 2),
-    'a thrown car always waits for its tell and its flight');
-  ok(lands.every((land, index) => land.at.x === lifts[index].at.x && land.at.z === lifts[index].at.z),
-    'the car lands in the ring drawn when it was picked up');
-  ok(log.some(event => event.type === 'eat') && log.filter(event => event.type === 'eat')
-    .every(eat => log.some(event => event.type === 'smash' && event.t < eat.t)), 'it eats only when a box has been smashed');
-  const still = runRules('easy', () => ({s: P.penS - 20, lateral: 5, airborne: false, airHeight: 0, speedMph: 0}), 200);
-  ok(still.log.some(event => event.type === 'thrownLand' && event.hit), 'a truck that stays in the ring is hit');
+  const path=new Course(COURSE.find(row=>row.id==='pacific-canyon'),1989,{hiddenRoad:true});
+  const model=modelFixture();let loads=0;
+  const yard=createScrapdomeYard(path,{loadAsset:async()=>({scene:new THREE.Group()}),
+    loadRex:async()=>{loads++;return {scene:model};}});
+  await yard.ready;yard.setRexOrnament(false);await Promise.resolve();assert.equal(loads,0);
+  yard.setRexOrnament(true);await new Promise(r=>setTimeout(r,0));
+  assert.equal(loads,1);const body=yard.group.getObjectByName('Beaten Scrapasaurus');assert.ok(body.visible);
+  for(let i=1;i<=3;i++)assert.ok(!model.getObjectByName('battery-box-'+i+'-whole').visible && model.getObjectByName('battery-socket-'+i).visible);
+  yard.group.updateMatrixWorld(true);assert.ok(Math.abs(new THREE.Box3().setFromObject(body).min.y-body.parent.getWorldPosition(new THREE.Vector3()).y)<1e-6);
+  yard.setRexOrnament(false);assert.ok(!body.visible);yard.dispose();
 }
-
 {
-  // The words: every fight line is in Big Mo's list, plain and whole, and every cue is a real sound.
-  const ids = ['event.scrapasaurus.intro', 'event.won.scrapasaurus', 'event.lost.scrapasaurus', 'rex.tell', 'rex.rest',
-    'rex.rest.last', 'rex.smash.1', 'rex.smash.2', 'rex.smash.3', 'rex.scorch', 'rex.bump', 'rex.lift', 'rex.eat', 'rex.ate',
-    'rex.gone', 'rex.toasted', 'rex.seen.1', 'rex.seen.2', 'rex.seen.3', 'rex.seen.4'];
-  const goals = ['walk', 'tell', 'fire', 'rest', 'lift', 'throw', 'eat', 'stagger', 'fallen'].flatMap(phase =>
-    [1, 2, 3].flatMap(left => [false, true].map(last => BOWL_GOALS.scrapasaurus({phase, left, last}))));
-  const words = [...ids.map(id => BIG_MO[id]), ...goals, BOWL_RESULTS.eventRexYard,
-    ...[0, 1, 2, 3].flatMap(boxes => ['gate', 'toasted', 'fallen'].flatMap(reason => BOWL_RESULTS.eventRex({boxes, reason})))];
-  ok(words.every(line => typeof line === 'string' && /^[A-Z]/.test(line) && /[.!?]$/.test(line) && !/[–—]/.test(line)),
-    'every fight line is a plain whole sentence with no dashes');
-  ok(Object.values(REX_CUES).every(cue => SOUND_BANK[BOWL_SOUND_CUES[cue]]), 'every fight event names a sound cue that plays');
-}
-
-// ---- the yard ---------------------------------------------------------------
-{
-  const profile = createProfile();
-  ok(!rexInTheYard(profile), 'before night five the yard has no Scrapasaurus');
-  const settled = settleShowNight(profile, {won: true, night: 5, bests: {}});
-  ok(settled.ok && rexInTheYard(settled.profile) && settled.profile.bowl.trophies.includes(REX_TROPHY),
-    'winning night five puts the Scrapasaurus in the yard, from the save alone');
-}
-
-{
-  // The yard's car park: nothing loads until the Rex is beaten; then it lies on its side on the ground, boxes smashed.
-  const yardCourse = new Course(COURSE.find(row => row.id === 'pacific-canyon'), 1989, {hiddenRoad: true});
-  const rexScene = new THREE.Group();
-  for (const index of [1, 2, 3]) for (const look of ['whole', 'smashed']) {
-    const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)); box.name = `battery-box-${index}-${look}`;
-    box.position.set(0, 4.3, index - 2); rexScene.add(box);
+  let loads=0;const model=modelFixture(),view=createRexView({loadModel:async()=>{loads++;return {scene:model,animations:[]};}});
+  const f=tired(),state={bowlNight:{night:5,event:{type:REX_EVENT,rex:f}}};
+  const first=t=>view.update(course,state,t,true);
+  first(0);await new Promise(r=>setTimeout(r,0));
+  f.marker=hookMarker(f,approach(f),course);
+  const snap=JSON.stringify(f);first(10);assert.equal(JSON.stringify(f),snap);
+  assert.ok(model.getObjectByName('battery-box-1-open').visible && model.getObjectByName('battery-box-1-open').scale.x===1);
+  assert.ok(!model.getObjectByName('battery-box-1-whole').visible);
+  const at=eyePoint(f,course,0);f.boxes[0]=true;f.hook.phase='dragging';f.hook.box=0;
+  f.hook.drag={...at,x:at.x+6};f.hook.tip=f.hook.drag;f.hook.origin=at;
+  first(20);assert.equal(view.group.getObjectByName('battery-box-1').position.x,at.x+6);
+  assert.ok(model.getObjectByName('battery-socket-1').visible);
+  assert.ok(view.group.getObjectByName('Scrapasaurus tow cable').visible);
+  f.phase='tell';f.cone={x:0,z:0,heading:.4,flameHeading:.2,sweep:0,range:29,halfAngle:.32};
+  first(30);const cone=view.group.getObjectByName('Scrapasaurus fire cone');
+  assert.ok(cone.visible&&!cone.material.depthTest);assert.equal(cone.rotation.y,.4);
+  assert.ok(!view.group.getObjectByName('Scrapasaurus fire').visible && view.group.getObjectByName('Scrapasaurus chest glow').visible);
+  f.phase='fire';first(40);assert.ok(view.group.getObjectByName('Scrapasaurus fire').visible);
+  for(const night of [1,3,4]){
+    view.update(course,{bowlNight:{night,event:{type:'carCrush'}}},50,true);
+    assert.equal(view.group.visible,night>=3);
   }
-  let loads = 0;
-  const yard = createScrapdomeYard(yardCourse, {loadAsset: async () => ({scene: new THREE.Group()}),
-    loadRex: async () => { loads++; return {scene: rexScene}; }});
-  await yard.ready;
-  yard.setRexOrnament(false);
-  await new Promise(resolve => setTimeout(resolve, 0));
-  ok(loads === 0, 'the yard loads no Scrapasaurus before night five is won');
-  yard.setRexOrnament(true);
-  await new Promise(resolve => setTimeout(resolve, 0));
-  const lying = yard.group.getObjectByName('Beaten Scrapasaurus');
-  ok(loads === 1 && lying?.visible, 'once it is won, the Scrapasaurus is in the yard');
-  ok([1, 2, 3].every(index => !rexScene.getObjectByName(`battery-box-${index}-whole`).visible &&
-    rexScene.getObjectByName(`battery-box-${index}-smashed`).visible), 'its battery boxes are smashed');
-  yard.group.updateMatrixWorld(true);
-  const bounds = new THREE.Box3().setFromObject(lying), floor = lying.parent.getWorldPosition(new THREE.Vector3()).y;
-  ok(Math.abs(bounds.min.y - floor) < 1e-6, 'it lies on the ground');
-  yard.setRexOrnament(false);
-  ok(!lying.visible && loads === 1, 'it hides with the switch off and does not load twice');
-}
-
-{
-  // The picture reads the fight and never writes it: the cone shows from the tell's
-  // start where the fire will go, the open box glows, a smashed box shows smashed.
-  const scene = new THREE.Group();
-  for (const index of [1, 2, 3]) for (const look of ['whole', 'smashed']) {
-    const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial());
-    box.name = `battery-box-${index}-${look}`; scene.add(box);
-  }
-  let rexLoads = 0;
-  const view = createRexView({loadModel: async () => { rexLoads++; return {scene, animations: []}; }});
-  const fight = createRexFight({difficulty: 'easy', course});
-  const state = {bowlNight: {night: 5, event: {type: REX_EVENT, rex: fight}}};
-  const parts = name => view.group.getObjectByName(name);
-  view.update(course, state, 0, true);
-  await new Promise(resolve => setTimeout(resolve, 0));
-  const truck = {s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0};
-  while (fight.phase !== 'tell') stepRexFight(fight, truck, DT, course);
-  const before = JSON.stringify(state);
-  view.update(course, state, 16, true);
-  ok(JSON.stringify(state) === before, 'drawing the fight changes nothing in it');
-  const cone = parts('Scrapasaurus fire cone');
-  ok(cone.visible && !parts('Scrapasaurus fire').visible && Math.abs(cone.rotation.y - fight.cone.heading) < 1e-9 &&
-    cone.scale.x === fight.cone.range, 'from the start of the tell the floor shows exactly where the fire will go');
-  ok(cone.material.depthTest === false && parts('Scrapasaurus throw ring').material.depthTest === false,
-    'the cone and the ring draw over the ramps, so no part of them is buried where a ramp rises');
-  ok(parts('Scrapasaurus chest glow').visible, 'its chest glows during the tell');
-  ok(Math.abs(parts('Scrapasaurus on its rails').scale.x - P.scale) < 1e-9, 'it is drawn at the size the rules use');
-  while (fight.phase !== 'fire') stepRexFight(fight, truck, DT, course);
-  view.update(course, state, 32, true);
-  ok(cone.visible && parts('Scrapasaurus fire').visible, 'the fire fills the cone that was shown');
-  while (fight.phase !== 'rest') stepRexFight(fight, truck, DT, course);
-  view.update(course, state, 48, true);
-  ok(scene.getObjectByName('battery-box-1-whole').material.emissive.getHex() !== 0 &&
-    scene.getObjectByName('battery-box-2-whole').material.emissive.getHex() === 0, 'the open box glows and the shut ones do not');
-  fight.boxes[0] = true;
-  view.update(course, state, 64, true);
-  ok(!scene.getObjectByName('battery-box-1-whole').visible && scene.getObjectByName('battery-box-1-smashed').visible,
-    'a smashed box shows smashed');
-  view.update(course, {bowlNight: {night: 1, event: {type: 'carCrush'}}}, 80, true);
-  ok(!view.group.visible, 'it is not in the Bowl on nights one and two');
-  view.update(course, {bowlNight: {night: 3, event: {type: 'lastTruckRolling'}}}, 96, true);
-  ok(view.group.visible && !parts('Scrapasaurus fire cone').visible, 'on nights three and four it stands behind the wall, seen before it is fought');
-  view.update({...course, def: course.def, features: course.features, length: course.length,
-    groundAt: course.groundAt.bind(course), worldAt: course.worldAt.bind(course)}, state, 112, true);
-  await new Promise(resolve => setTimeout(resolve, 0));
-  ok(rexLoads === 1, 'a new course (each event and retry) does not load the model again');
+  first(60);assert.equal(loads,1);
   view.dispose();
 }
-
-// ---- the child-pace driver on the real Duel ----------------------------------
-// It drives round at a child's pace inside the Scrapasaurus's rails, sees what it
-// does late (a child's reaction), keeps out of the cone and waits back from the
-// run-up while fire is coming, and lines up on the rails for the dropped junk car
-// only once a box is open. Its speed, lane and reaction wander from its seed.
-function fightAt(level, seed) {
-  const duel = showDuel(seed);
-  assert.ok(duel.startBowlNight({night: 5, cpuDifficulty: level, seed}), 'night five starts');
-  const night = duel.state.bowlNight;
-  night.show.eventIndex = SHOW_NIGHTS[4].events.indexOf(REX_EVENT); night.phase = 'result';
-  const rng = makeRng(seed * 7919 + 13), seen = [], result = {won: false, events: [], hud: null, captions: []};
-  duel.onChange((_, ev) => {
-    if (ev.bowlRex) result.events.push(ev.bowlRex.type);
-    if (ev.bowlCaption) result.captions.push(ev.bowlCaption.id);
-    if (ev.bowlEventResult) result.outcome = ev.bowlEventResult;
+function drive(seed){
+  const duel=start(seed),s=duel.state,night=s.bowlNight,f=night.event.rex;
+  const rng=makeRng(seed),driver={reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
+  const trace=[];let fall=null,ending=null;
+  duel.onChange((_,ev)=>{
+    if(ev.bowlRex){trace.push(ev.bowlRex.type);if(ev.bowlRex.type==='fall')fall=night.clock;}
+    if(ev.bowlEventResult)ending=night.clock;
   });
-  duel.continueBowlNight();
-  assert.equal(night.event.type, REX_EVENT);
-  const reaction = rng.range(.6, 1.1);
-  const lanePick = () => P.rail - P.side * rng.range(9.5, 12.5);
-  let pace = rng.range(33, 40), lane = lanePick(), wobble = rng.range(0, Math.PI * 2), lastLap = 0;
-  let going = false, stuck = 0, backing = 0;
-  for (let i = 0; i < 120 * 600 && duel.state.status !== 'bowl_break'; i++) {
-    const s = duel.state, fight = rexFightOf(night), time = s.stageTimeSec;
-    seen.push({time, phase: fight.phase});
-    while (seen.length > 1 && seen[1].time <= time - reaction) seen.shift();
-    const phase = seen[0].phase, at = wrap(s.s);
-    if (s.completedLaps !== lastLap) { lastLap = s.completedLaps; pace = rng.range(33, 40); lane = lanePick(); }
-    // How far it is past the dropped car's place (negative: still coming up to it).
-    const toCar = along(at, P.car.s);
-    if (phase === 'rest' && toCar > -34 && toCar < -12) going = true;
-    if (toCar > 25 || toCar < -45) going = false;
-    let target = going ? P.car.lateral : lane;
-    if (!going && (phase === 'tell' || phase === 'fire') && toCar > -30 && toCar < 20) target = P.rail - P.side * 12.5;
-    // While fire is coming at the rest, it waits back from the run-up, as the HUD says.
-    const waiting = (phase === 'tell' || phase === 'fire') && toCar > -90 && toCar < -35;
-    wobble += DT * 1.3;
-    target += Math.sin(wobble) * .25;
-    if (s.speedMph < 3 && s.status === 'racing' && time > 3) stuck += DT; else stuck = 0;
-    if (stuck > 1.2) { backing = 1; stuck = 0; }
-    if (s.airborne) {
-      duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
-    } else if (backing > 0) {
-      backing -= DT;
-      duel.setInput({throttle: 0, brake: 1, steer: 0, boost: false});
-    } else {
-      // Aim down the rail on the ground; in flight these keys would start a trick.
-      const aim = going ? (s.lateral - target) * .28 + (s.headingError || 0) * 3.2 :
-        (s.lateral - target) * .35 + (s.headingError || 0) * 1.6;
-      duel.setInput({throttle: s.speedMph < (waiting ? 18 : pace) ? 1 : 0, brake: waiting && s.speedMph > 22 ? .4 : 0, boost: false,
-        steer: Math.max(-1, Math.min(1, aim))});
+  for(let i=0;i<120*400 && s.status!=='bowl_break';i++){
+    childDrive(duel,driver);
+    if(f.hook.phase==='attached'){assert.equal(s.input.steer,0);assert.ok(!s.input.boost);}
+    if(f.phase==='fallen'){
+      assert.equal(f.hook.phase,'dragging');
+      assert.ok(f.hook.drag);
     }
-    duel.step(DT);
-    if (!result.hud && fight.phase === 'rest') result.hud = bowlHudView(duel.state, duel.course);
+    duel.step(dt);
   }
-  // The card stays up while Big Mo finishes what he is saying.
-  for (let wait = 0; wait < 120 * 10 && result.outcome; wait++) duel.step(DT);
-  result.won = result.outcome?.won === true;
-  return result;
+  assert.ok(night.lastResult,'fight ended, seed '+seed);
+  if(night.lastResult.won){
+    assert.equal(trace.filter(x=>x==='boxOut').length,3);
+    assert.equal(trace.filter(x=>x==='fall').length,1);
+    assert.ok(Math.abs(ending-fall-10)<dt*.01,'result exactly ten seconds after the third extraction');
+    assert.equal(night.event.resultHoldSince,fall);
+    assert.ok(bowlHudView(s,duel.course).goal.split(' ').length<=5);
+  }
+  return {won:night.lastResult.won,trace};
 }
+if(!process.argv.includes('--rules-only')){
+  const runs=Array.from({length:10},(_,i)=>drive(101+i));
+  assert.deepEqual(drive(101),runs[0]);
+  const wins=runs.filter(run=>run.won).length;
+  console.log('Easy ordinary-input tow wins:',wins,'of 10');
+  assert.ok(wins>=9,'child-pace driver must win at least nine of ten');
+}
+console.log('Scrapasaurus tow rules, continuous wall contacts, yard and read-only view passed.');
 
-const rates = {};
-for (const level of ['easy', 'medium', 'hard']) {
-  const runs = Array.from({length: 10}, (_, index) => fightAt(level, 101 + index));
-  rates[level] = {won: runs.filter(run => run.won).length, of: runs.length,
-    reasons: runs.filter(run => !run.won).map(run => run.outcome?.reason ?? 'unfinished'),
-    scorched: runs.map(run => run.outcome?.hits ?? 0),
-    boxes: runs.map(run => run.outcome?.boxes ?? 0)};
-  if (level === 'easy') {
-    const won = runs.find(run => run.won);
-    ok(won && won.events.filter(type => type === 'smash').length === 3 && won.outcome.boxes === 3,
-      'a won fight is three landings on the battery boxes');
-    ok(won.captions.includes('event.scrapasaurus.intro') && won.captions.includes('rex.rest') &&
-      won.captions.includes('event.won.scrapasaurus'), 'Big Mo introduces the fight, calls the rest and calls the win');
-    ok(won.hud?.name === 'The Scrapasaurus' && won.hud.goal === BOWL_GOALS.scrapasaurus({phase: 'rest'}),
-      'the HUD names the fight and says what to do now');
-    ok(runs.every(run => run.outcome), 'every Easy fight ends');
-    const again = fightAt(level, 101);
-    ok(JSON.stringify(again.events) === JSON.stringify(runs[0].events) && again.outcome.score === runs[0].outcome.score,
-      'the same seed and inputs give the same fight');
-  }
-}
-console.log(JSON.stringify(rates));
-ok(rates.easy.won >= 8, `the child-pace driver wins Easy at least 8 times in 10 (${rates.easy.won} of 10)`);
-console.log(`Bowl Scrapasaurus: ${checks} checks passed. Win rates for the child-pace driver: Easy ${rates.easy.won} of 10, Medium ${rates.medium.won} of 10, Hard ${rates.hard.won} of 10.`);

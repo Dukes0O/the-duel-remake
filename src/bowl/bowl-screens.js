@@ -81,6 +81,18 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       button(WORDS.menuButton, 'show-night-leave', ' data-to="menu"');
   }
 
+  function rexGuide() {
+    const truck='<path fill="#e2d2aa" d="M8 35h14l4-9h16l8 9h5v8H8z"/><g fill="#252522" stroke="#e2d2aa"><circle cx="18" cy="43" r="5"/><circle cx="44" cy="43" r="5"/></g>';
+    const box='<rect x="77" y="21" width="21" height="15" fill="#e8ab38"/><circle cx="88" cy="17" r="5" fill="none" stroke="#ddd5bb" stroke-width="3"/>';
+    const pictures=[
+      [truck+'<path d="M101 40L57 28l3 21z" fill="#ff832d"/>','Get out of the orange before it breathes fire.'],
+      [truck+box+'<path d="M52 32L86 17" stroke="#e8d181" stroke-dasharray="3 2"/>','When it sags, face the glowing box and press F to hook it.'],
+      ['<g transform="translate(66 0) scale(-1 1)">'+truck+'</g>'+box+'<path d="M56 35l30-18" stroke="#e8d181" stroke-width="2"/>','Drive away and keep pulling until the box comes out.'],
+    ];
+    return '<div class="bowl-rex-guide">'+pictures.map(([picture,line])=>
+      '<p><svg width="108" height="52" viewBox="0 0 108 52" aria-hidden="true">'+picture+'</svg> '+escapeHTML(line)+'</p>').join('')+'</div>';
+  }
+
   function eventCard(state) {
     const show = state.bowlNight, result = show.lastResult, name = BOWL_EVENT_NAMES[result.event] ?? result.event;
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
@@ -90,7 +102,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} Â· ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)==='scrapasaurus' ? rexGuide() : ''}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
   }
 
   function nightCard(state) {
