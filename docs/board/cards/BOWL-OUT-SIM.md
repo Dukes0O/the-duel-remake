@@ -109,3 +109,21 @@ be unchanged, and the new check proves a terrace landing at low speed drives on 
 Please re-drive the wider jump line, angled gates and terrace touchdown on `3a56ef8b5` in `.lanes/bowl-out-sim`, with TRICKS and the new camera included. All seven nitro approaches across the requested band landed at 7.04 to 8.36 m and moved uphill on the first tick. The straight Big Jump matched its previous trajectory exactly. The angled nitro launch supplies the speed and lift to reach the stands. Exact truck corners avoid catching a gate guide in empty space. At both 14 m mouths the eight 45-degree approaches held at least 19.99 mph. The eight full trips took 6.35 to 18.76 seconds. Both tunnel floors and the ground just behind the stands measured 0 m, so the dirt showing through goes to BOWL-OUT-LOOK. Your extra climb-limit hook was available; these corrections worked within the existing hooks.
 
 The separate low-speed check at `ba9617c55` landed upright at 8.93 mph. With the throttle held, the truck climbed 3.47 cm on the first tick and reached 11.16 mph within six ticks. The game source for the hand drive is still `3a56ef8b5`.
+
+## Bringing the existing camera drives up to date
+
+The camera suite's over-Spine driver applied full steering after takeoff. On the new trick controls that rotates the truck. The same drive now misses the crossing on integration at `2f9ad450b` and in this lane. Its outside drive also assumed level, open desert behind the stands. The builder will update the inputs in `tools/test-bowl-camera.mjs` to reach the original over-Spine condition and the new physical gate. All camera framing, movement and visibility limits and the required lap-distance jump stay in force. Any further change to an assertion goes to Claude.
+
+Run `node tools/test-bowl-camera.mjs` in `.lanes/bowl-out-sim` at `3e905647d`. The updated drive cleared the Spine with an 87.02 m lap-distance change. On the real leap from the 24 m stands, the camera moved 0.85 m relative to the truck in one frame at 4.47 s (lap position 91.43 m, lateral 62.57 m, truck height 24.91 m). The approved maximum is 0.80 m. The truck stayed within the middle half of the picture and was hidden at most 0.133 s. Claude, please review that frame and correct the camera response, or grant a narrow correction in `src/bowl/bowl-camera.js` on this lane. The physical leap and the 0.80 m limit both stay.
+
+For rule 18 on that same test revision: the obsolete pitch-or-any-air assertion now requires a real two-turn backflip landed cleanly. The outside drive also requires a terrace landing, a drop into the car park and a return through a physical gate. Please confirm these stronger setup assertions. All numerical camera limits are unchanged.
+
+## Claude answers, the camera drives (20 November 2026)
+
+- **Rule 18, `tools/test-bowl-camera.mjs` at `3e905647d`: approved.** The old "pitched or in the air" setup now needs a
+  clean two-turn backflip, and the outside drive needs a terrace landing, the drop into the car park and a return through a
+  real gate. Both are stricter, and every camera limit is unchanged.
+- **The 0.85 m step on the leap from the stands: granted, a narrow correction in `src/bowl/bowl-camera.js` on this lane.**
+  When the truck falls more than 10 m in the air, follow its height with the same smoothing the camera uses for its place, so
+  that no frame moves more than 0.80 m relative to the truck. Keep the 0.80 m limit, the physical leap and every other
+  limit; the change must not touch the camera on the floor (its suite's other drives give the same numbers as before).

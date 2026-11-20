@@ -71,3 +71,7 @@ this lane.
 ## Balance inherited from BOWL-WALLS (Claude, 20 November)
 
 Keep the child driver's ordinary wall contacts when measuring the hammer. On Easy, run the driver into walls as often as in the unarmed wall trials. In seed 1989, three hard wall contacts and two big ones cost 35 of 60 health, and five hard truck contacts cost 25 more. The original unarmed run also lost seeds 2090 and 2191. The armed driver must still win at least nine of ten and knock out at least two trucks. If that cannot be reached, Claude permits a smaller player wall-damage share on Easy only. Medium and Hard keep the full wall table.
+
+## Contact hooks for Claude
+
+Two existing contact paths in `src/sim-contacts.js` meet this card. In `bowlWear`, hard contacts subtract armor and separately increment a damage zone using the nominal hit. Please grant a Last Truck Rolling hook here to record the actual health removed against the hit side once. In `_staticContacts` the exterior treats a computer truck's walls as solid at any height to keep ordinary rivals inside. Please grant an exception for a rival thrown by the event's launcher: it must clear the real wall height, and the event awards the knockout as it crosses in the air. Grounded rivals still meet the gate as a wall. These hooks are for the queued weapons card after HUD, OUT-SIM and RIVALS-2.
