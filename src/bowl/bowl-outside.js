@@ -71,7 +71,7 @@ export function observeBowlOutside(duel, dt, addFact, say) {
   if (s.lateral <= outside.wall) {
     if (previous && event.visitedOutside && gate && !s.airborne) {
       duel.emit({bowlBackIn: {gate: gate.name}, bowlOutsideCue: 'bowl.out.back'});
-      addFact(duel, {type: 'bowlBackIn'});
+      addFact(duel, {type: 'bowlBackIn'}, null);
     }
     event.inTunnel = false;
     event.visitedOutside = false;
@@ -86,7 +86,7 @@ export function observeBowlOutside(duel, dt, addFact, say) {
     const repeat = !!event.overWall;
     event.overWall = true;
     duel.emit({bowlOverWall: {repeat}, bowlOutsideCue: 'bowl.out.over'});
-    addFact(duel, {type: 'bowlOverWall', repeat});
+    addFact(duel, {type: 'bowlOverWall', repeat}, null);
     say(duel, 'outside.gate', {once: true});
   }
   if (tunnel && !event.inTunnel) duel.emit({bowlGate: {gate: gate.name}, bowlOutsideCue: 'bowl.out.gate'});
@@ -98,6 +98,6 @@ export function observeBowlOutside(duel, dt, addFact, say) {
     event.standSeconds = Math.min(15, before + dt);
     if (before === 0) duel.emit({bowlInStands: true, bowlOutsideCue: 'bowl.out.stands'});
     const points = Math.floor(event.standSeconds * 4 + 1e-8) - Math.floor(before * 4 + 1e-8);
-    if (points) addFact(duel, {type: 'bowlInStands', points});
+    if (points) addFact(duel, {type: 'bowlInStands', points}, null);
   }
 }

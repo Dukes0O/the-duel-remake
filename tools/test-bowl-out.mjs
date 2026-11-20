@@ -59,7 +59,12 @@ console.log('Eight car-park returns (seconds):',returns.join(', '));
   const cues = [], flights = [];
   duel.onChange((_,ev) => {
     if (ev.bowlOutsideCue) cues.push(ev.bowlOutsideCue);
-    if (ev.bowlScore?.type === 'landedJump') flights.push(ev.bowlScore);
+    if (ev.bowlScore?.type === 'landedJump') {
+      assert.equal(ev.bowlScore.cue,'bowl.crowd.rise','ordinary landed stunts keep their cheer');
+      flights.push(ev.bowlScore);
+    }
+    if (['bowlInStands','bowlOverWall','bowlBackIn'].includes(ev.bowlScore?.type))
+      assert.equal(ev.bowlScore.cue,null,'only the exterior event plays its own cue');
   });
   place(duel,46,-14,.35,50);
   s.boost = 1;

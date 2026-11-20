@@ -299,14 +299,14 @@ export function retryBowlEvent(duel) {
   return true;
 }
 
-function addFact(duel, fact) {
+function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   const s = duel.state, event = duel.state.bowlNight.event, at = s.stageTimeSec;
   const timed = {...fact, atSeconds: at};
   const scored = scoreStuntEvent(timed, crowdAfter(event.crowd, at - event.crowdAt));
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
-  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: fact.type.startsWith('bowl') ? null : 'bowl.crowd.rise'}});
+  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue}});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
 }
