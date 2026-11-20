@@ -32,7 +32,8 @@ export function createBrandAshView({road = false} = {}) {
     update(worldJob, drawnShift) {
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
       const fight = worldJob?.riderFight;
-      group.visible = road ? Boolean(fight) : step?.brand === true || worldJob?.night2 != null && step?.id === 'scout';
+      // A scout knocked down by the car stays on the ground where he fell for the rest of the night's scenes.
+      group.visible = road ? Boolean(fight) : step?.brand === true || worldJob?.night2 != null && (step?.id === 'scout' || worldJob.night2.scoutDowned === true);
       const actors = group.visible ? (worldJob.actors ?? []).filter(actor => road ? actor.riderCrew : actor.brandAsh) : [];
       figures.update(actors, {active: group.visible, drawnShift});
       for (let index = 0; index < capacity; index++) {

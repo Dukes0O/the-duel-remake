@@ -3,22 +3,10 @@ import {NIGHT_2_SITES as sites, night2Point} from './jobs/night-2-sites.js';
 import {createBraziers} from './ember-pot.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
 import {SALT_RIDERS} from './jobs/ember-rule.js';
-import {STORY_FIGURES} from './jobs/story-people.js';
 import {worldPose} from '../arena/arena-floor.js';
 
-// STORY-NIGHT-2-FLOW item 2: cold breath that reads as breath. Kyle's play of 19 November 2026 showed a grey blob over the
-// Walkers' faces: one sphere a quarter of a metre across, at eye height, pushed straight out toward the gate camera. Now
-// each exhale is three small soft wisps that leave the mouth, slide to one side of the face as the picture sees it, then rise
-// and thin out within about a second and a half. Drawing only; it reads the cast and moves nothing.
-export const NIGHT_2_BREATH = Object.freeze({
-  wisps: 3, wispGapSec: .14, lifeSec: 1.35, cycleSec: 2 * Math.PI / 1.87,
-  startRadius: .03, endRadius: .17, forward: .22, aside: .34, rise: .3, opacity: .2,
-});
-// The mouth sits a little above and in front of the head bone (measured on the cast: the head bone is at about 0.85 of
-// standing height, the face front about 0.11 m ahead of it on a 1.75 m figure).
-export const NIGHT_2_MOUTH = Object.freeze({upShare: .036, forwardShare: .06});
-
-const STORY_FIGURE_INDEX = id => STORY_FIGURES[id]?.index ?? 0;
+// The cold breath was drawn here until 19 November 2026 and is out: at the gate camera it changed 1 to 8 levels of 255, so
+// nobody could see it. It comes back when it reads (STORY-NIGHT-2-FLOW item 2 left it optional).
 
 export function createNight2Look(course) {
   const group = new THREE.Group();
@@ -117,34 +105,13 @@ export function createNight2Look(course) {
     }
     return pair;
   });
-  // A soft round wisp made in code: full in the middle, nothing at the edge.
-  const wispSize = 32, wispPixels = new Uint8Array(wispSize * wispSize * 4);
-  for (let y = 0; y < wispSize; y++) for (let x = 0; x < wispSize; x++) {
-    const r = Math.hypot(x + .5 - wispSize / 2, y + .5 - wispSize / 2) / (wispSize / 2), i = (y * wispSize + x) * 4;
-    wispPixels.set([255, 255, 255, Math.round(255 * Math.max(0, 1 - r) ** 2)], i);
-  }
-  const wispTexture = new THREE.DataTexture(wispPixels, wispSize, wispSize);
-  wispTexture.needsUpdate = true;
-  resources.push(wispTexture);
-  const breathCast = 11;
-  const breath = Array.from({length: breathCast * NIGHT_2_BREATH.wisps}, () => {
-    const mist = new THREE.SpriteMaterial({map: wispTexture, color: 0xf1efea, transparent: true, depthWrite: false, opacity: 0});
-    resources.push(mist);
-    const wisp = new THREE.Sprite(mist);
-    wisp.name = 'Night 2 breath';
-    wisp.visible = false;
-    group.add(wisp);
-    return wisp;
-  });
-  const mouth = new THREE.Vector3();
-
   // The rider laying siege drives with its headlights on: a beam forward along the ground, so a dark camp can be found by it.
   // It stays in the scene and goes dark (intensity 0) when the rider is not there, so the scene's light count never changes.
   const siegeBeam = new THREE.SpotLight(0xffe2b8, 0, 48, .42, .55, 2);
   siegeBeam.name = 'Wash siege rider headlights';
   group.add(siegeBeam, siegeBeam.target);
 
-  return {group, update(worldJob, seconds, shift, opponents, view = {}) {
+  return {group, update(worldJob, seconds, shift, opponents) {
     const chapter = worldJob?.night2;
     group.visible = Boolean(chapter);
     if (!chapter) return;
@@ -199,39 +166,6 @@ export function createNight2Look(course) {
         const sin = Math.sin(pose.heading), cos = Math.cos(pose.heading), lift = y + shift(x, z, y);
         siegeBeam.position.set(x + sin * 2.1, lift + 1, z + cos * 2.1);
         siegeBeam.target.position.set(x + sin * 18, lift, z + cos * 18);
-      }
-    });
-    const walkers = chapter.set === 'gate' ? cast.filter(person => !['auntie-solder', 'cinder'].includes(person.id)) : [];
-    const viewer = view.viewer ?? chapter.camera?.position;
-    const B = NIGHT_2_BREATH;
-    breath.forEach(wisp => { wisp.visible = false; });
-    walkers.slice(0, breathCast).forEach((person, slot) => {
-      const index = STORY_FIGURE_INDEX(person.id);
-      // In step with the chest's own rise and fall in the people view: the exhale starts as the chest begins to fall.
-      const sinceExhale = ((seconds + (index * 1.5 - Math.PI / 2) / 1.87) % B.cycleSec + B.cycleSec) % B.cycleSec;
-      const drawn = view.mouthOf?.(person.id, mouth);
-      const yaw = drawn?.yaw ?? person.yaw;
-      if (!drawn) {
-        const {x, y, z} = person.position, h = person.height;
-        mouth.set(x + Math.sin(yaw) * NIGHT_2_MOUTH.forwardShare * h, y + shift(x, z, y) + h * (person.action === 'sit' ? .64 : .89),
-          z + Math.cos(yaw) * NIGHT_2_MOUTH.forwardShare * h);
-      }
-      // Aside is across the picture: perpendicular to the line from the camera, toward the side the night air leans.
-      let sideX = Math.cos(yaw), sideZ = -Math.sin(yaw);
-      if (viewer) {
-        const lx = mouth.x - viewer.x, lz = mouth.z - viewer.z, length = Math.hypot(lx, lz) || 1;
-        sideX = lz / length; sideZ = -lx / length;
-      }
-      if (sideX * 1 + sideZ * .38 < 0) { sideX = -sideX; sideZ = -sideZ; }
-      for (let w = 0; w < B.wisps; w++) {
-        const age = sinceExhale - w * B.wispGapSec, t = age / B.lifeSec;
-        if (t <= 0 || t >= 1) continue;
-        const wisp = breath[slot * B.wisps + w], out = 1 - (1 - t) ** 2, late = t * t;
-        wisp.visible = true;
-        wisp.position.set(mouth.x + Math.sin(yaw) * B.forward * out + sideX * B.aside * out,
-          mouth.y - .02 * out + B.rise * late, mouth.z + Math.cos(yaw) * B.forward * out + sideZ * B.aside * out);
-        wisp.scale.setScalar(2 * (B.startRadius + (B.endRadius - B.startRadius) * out));
-        wisp.material.opacity = B.opacity * Math.min(1, t / .12) * (1 - t) * (1 - w * .2);
       }
     });
   }, dispose() {

@@ -24,10 +24,16 @@ const westWildlife = [
   ['chamois', 'Walk', 'white-tailed-deer'], ['ibex', 'Walk', 'white-tailed-deer'], ['red-fox', 'Walk', 'eastern-wolf'],
   ['wildcat', 'Walk', 'eastern-wolf'], ['wild-boar', 'Walk'], ['alpine-marmot', 'Walk'],
   ['black-stork', 'Fly'], ['golden-eagle', 'Fly'], ['gull', 'Fly'],
+  // WILD-ART-DESERT: the roadrunner runs and keeps a bird's 2,000 triangles; the bighorn is from the deer.
+  ['roadrunner', 'Run', undefined, 2000], ['jackrabbit', 'Walk'], ['desert-bighorn', 'Walk', 'white-tailed-deer'],
+  ['collared-lizard', 'Walk'], ['pelican', 'Fly'], ['condor', 'Fly'],
   // WILD-ART-WASTE: the town's goat, chicken and camp dog, then three Wasteland animals.
   // The chicken walks, but it is a bird and keeps a bird's 2,000 triangles.
   ['goat', 'Walk', 'white-tailed-deer'], ['camp-dog', 'Walk', 'eastern-wolf'], ['chicken', 'Walk', undefined, 2000],
   ['turkey-vulture', 'Fly'], ['desert-monitor', 'Walk'], ['scorpion', 'Walk'],
+  // WILD-ART-CITY: five city birds, the raccoon (its own recipe) and the street cat (from the wolf).
+  ['black-kite', 'Fly'], ['little-egret', 'Fly'], ['black-faced-spoonbill', 'Fly'], ['pigeon', 'Fly'], ['owl', 'Fly'],
+  ['raccoon', 'Walk'], ['street-cat', 'Walk', 'eastern-wolf'],
 ].map(([id, motion, donor, budget]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
   glb: [`public/assets/wildlife/${id}.glb`], budget: budget ?? (motion === 'Fly' ? 2000 : 5000) }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
@@ -145,7 +151,6 @@ const generators = [
     glb: ['public/assets/models/wasteland/scablands/sea-camp.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
-  { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
   { script: 'tools/blender/bowl-crush.py', args: [], glb: ['public/assets/models/wasteland/bowl/crush.glb'], budget: 20000 },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
@@ -170,6 +175,9 @@ const generators = [
   { script: 'tools/blender/old-smoke-photo.py', args: [], glb: ['public/assets/models/wasteland/scablands/old-smoke.glb'] },
   { script: 'tools/blender/rattler-photo.py', args: [], glb: ['public/assets/models/wasteland/cars/rattler.glb'], budget: 25000, maxBytes: 8000000 },
   { id: 'longhaul', script: 'tools/blender/longhaul.py', args: [], glb: ['public/assets/models/wasteland/cars/longhaul.glb'], budget: 25000, maxBytes: 8000000 },
+  // CAR-ART-BULLY keeps the recipe, not a .blend. CAR-DRIVE-WASTE makes it drivable.
+  { id: 'bully', script: 'tools/blender/bully.py', args: [], candidate: true, recipeOnly: true,
+    glb: ['public/assets/models/wasteland/cars/bully.glb'], budget: 25000, maxBytes: 8000000 },
   // WW-SCENE owns installation; this card keeps its generated GLB out of public/.
     { script: 'tools/blender/scablands-mall.py', args: [], glb: ['public/assets/models/wasteland/scablands/mall.glb'] },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
@@ -1866,23 +1874,6 @@ try {
     const materials = gltf.materials.map(item => item.name);
     for (const name of ['everburn-flame-orange', 'everburn-flame-core', 'everburn-ash-men-cap']) {
       assert.ok(materials.includes(name), `missing state material ${name}`);
-    }
-  });
-
-  check('Bowl stadium GLB stays under its triangle and file budgets with named scene parts', () => {
-    const path = join(root, 'public/assets/models/wasteland/bowl/stadium.glb');
-    const bytes = readFileSync(path);
-    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
-    assert.equal(bytes.readUInt32LE(8), bytes.length);
-    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the 3 MB target`);
-    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
-    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
-      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
-    assert.ok(triangles > 10_000 && triangles <= 80_000, `${triangles} triangles`);
-    const names = new Set(gltf.nodes.map(node => node.name));
-    for (const part of ['bowl-stadium', 'bowl-dirt-floor', 'bowl-concrete-terraces', 'bowl-scoreboard-frame',
-      'bowl-podium-welded-cap', 'bowl-ramp-0-flame-jet-housings', 'bowl-floodlight-1-24-legs']) {
-      assert.ok(names.has(part), `missing named stadium part ${part}`);
     }
   });
 

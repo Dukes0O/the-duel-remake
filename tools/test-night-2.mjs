@@ -385,8 +385,14 @@ for (const stopped of [false, true]) {
   assert(scout.knockedDown && run.view.scoutDowned, 'A car hit stops the scout for good');
   assert(run.cues.includes('night.ash-man.down'));
   run.tick();
-  assert.equal(run.stage(), 'scout-stopped');
+  // Changed assertion (NIGHT-2-AND-TRUCK-POLISH, fix 4): a scout run down by the car has his own step, 'scout-downed', so Dace's
+  // line says what happened ('scout-stopped' stays for a scout turned back with fire).
+  assert.equal(run.stage(), 'scout-downed');
   assert.equal(run.view.ledger.feud, 'Watching');
+  assert(run.world.actors.some(actor => actor.id === 'night-2-scout' && actor.knockedDown), 'He stays down on the ground where he fell');
+  run.tick(30);
+  assert(run.world.actors.some(actor => actor.id === 'night-2-scout' && actor.knockedDown), 'and stays there while the scene is told');
+  assert(!/run/.test(NIGHT_2_SCENES['scout-downed'].lines[0].words), 'Dace does not say the man ran');
   console.log('PASS Night 2 scout run down by the car.');
 }
 
@@ -875,6 +881,12 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
     run.tick();
   }
   assert.equal(run.stage(), 'wash-get-car', 'Approaching the marker cannot board for the player');
+  // NIGHT-2-AND-TRUCK-POLISH, fix 5: one "Your car" distance pill on foot: the story's route one (the way round by the alley), not the straight-line one as well.
+  if (result === 'win') inspectWashHud(duel, ({refresh, nodes}) => {
+    refresh();
+    assert(view.routes.some(route => route.name === 'Your car'), 'the story names a Your car route');
+    assert(nodes[0].querySelector('.combat-foot-car').hidden, 'the straight-line car pill hides while the story shows its own');
+  });
   // STORY-NIGHT-2-FLOW: while the player goes for the car, the siege rider drives its 30 m circle round the camp.
   assert(Math.abs(Math.hypot(circler.position.x - sites.camp.position.x, circler.position.z - sites.camp.position.z) - 30) < .01 &&
     Math.hypot(circler.position.x - siegeStart.x, circler.position.z - siegeStart.z) > 20, 'The siege rider drives its circle');

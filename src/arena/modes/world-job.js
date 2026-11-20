@@ -39,7 +39,7 @@ import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
-import {BELL_CUE, loadWorkVehicle, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
+import {BELL_CUE, fillWorkVehicleTank, loadWorkVehicle, pumpWorkVehicleTank, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
 import {groupKg} from '../../world/jobs/steps/haul.js';
 
 export const worldJobPosition = (duel, actor) => {
@@ -210,6 +210,58 @@ function markHaulWashouts(duel, step) {
     y:scablandsSurfaceHeightAt(end.x, end.z)})));
   duel.state.arena.markers = [...markers.filter(marker => !String(marker.id).startsWith('haul-washout-')), ...ends];
 }
+// TOWN-FIRE-JOB: the douse step's events, heard and read (src/world/jobs/steps/douse.js). A building catching is the town's fire
+// (town.fire), the cannon opening is town.spray, a fire put out hisses (town.fire.out), a building lost is metal crushing as its
+// roof comes in (vehicle.crush), filling at a tap is town.fill, and the call done is the finished-step chime (interface.bonus).
+const DOUSE_CUES = Object.freeze({douseCaught:'town.fire', douseSpray:'town.spray', douseOut:'town.fire.out', douseLost:'vehicle.crush',
+  douseFill:'town.fill', douseDone:'interface.bonus'});
+const capitalised = text => text.charAt(0).toUpperCase() + text.slice(1);
+function douseCallout(event) {
+  if (event.type === 'douseCaught') return `The fire has caught ${event.name}.`;
+  if (event.type === 'douseOut') return `The fire at ${event.name} is out.`;
+  if (event.type === 'douseLost') return `${capitalised(event.name)} has burnt down.`;
+  if (event.type === 'douseDry') return `${capitalised(event.name)} has no more water.`;
+  if (event.type === 'douseFull') return 'The tank is full.';
+  return null;
+}
+// The tank's water is the truck's weight too: 1 kg a litre (src/town/work-vehicles.js). Changed in steps of 10 litres or more.
+function syncDouseVehicle(worldJob) {
+  const vehicle = worldJob.vehicle, tankL = worldJob.job.stepState?.tankL;
+  if (!vehicle || !Number.isFinite(tankL)) return;
+  const change = tankL - vehicle.tankL;
+  if (Math.abs(change) < 10 && !(tankL === 0 && vehicle.tankL > 0)) return;
+  const pumpLpm = vehicle.car && worldJob.job.steps[worldJob.job.stepIndex]?.tank?.pumpLpm || 1000;
+  worldJob.vehicle = change > 0 ? fillWorkVehicleTank(vehicle, change).vehicle : pumpWorkVehicleTank(vehicle, -change / pumpLpm * 60).vehicle;
+}
+// The water points are blue rings where the truck stops to fill up. View-only: nothing reads these back.
+function markDouseWater(duel, step, stepState) {
+  const markers = duel.state.arena.markers ?? [];
+  const rings = (step.water ?? []).filter(point => !(Number.isFinite(point.storeL) && point.storeL - (stepState?.drawn?.[point.id] ?? 0) <= 0))
+    .map(point => ({kind:'ring', id:`douse-${point.id}`, color:'magnet', radius:point.radius ?? 8, x:point.position.x, z:point.position.z,
+      y:scablandsSurfaceHeightAt(point.position.x, point.position.z)}));
+  duel.state.arena.markers = [...markers.filter(marker => !String(marker.id).startsWith('douse-')), ...rings];
+}
+function playDouseEvent(duel, worldJob, event, point) {
+  const said = douseCallout(event);
+  if (said) duel._storyCallout(said, 2.4, true);
+  if (event.type === 'douseDone') worldJob.fireResult = {savedIds:event.savedIds, lostIds:event.lostIds, mainSaved:event.mainSaved,
+    usedL:event.usedL, lineId:event.lineId, sentence:event.sentence};
+  const cue = DOUSE_CUES[event.type];
+  if (!cue) return;
+  const building = worldJob.job.steps[worldJob.job.stepIndex]?.buildings?.find(row => row.id === event.id);
+  duel.emit({arenaTell:{id:'town-fire', targetId:'player', seconds:0, cue,
+    position:building ? {x:building.x, y:scablandsSurfaceHeightAt(building.x, building.z), z:building.z} : {...point}}});
+}
+/** H held in the fire truck (the firetruck input context). Written to the input, as a pedal is; read once a step. */
+export function setJobVehicleSpray(duel, held) {
+  const state = duel.state, worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+  if (!state.input) return false;
+  state.input.spray = held === true && worldJob?.vehicle?.id === 'fire-truck' && !state.onFoot;
+  return state.input.spray;
+}
+/** True while the player drives the fire truck in a job: the app then uses the firetruck input context. */
+export const drivingFireTruck = state => state?.arena?.mode === 'world-job' && state.arena.worldJob?.vehicle?.id === 'fire-truck' && !state.onFoot;
+
 function playHaulEvent(duel, worldJob, event, point) {
   const cue = HAUL_CUES[event.type];
   if (!cue) return;
@@ -373,7 +425,8 @@ export function prepareWorldJobControls(duel) {
   // Conversation choices and other external job transitions can enter a fight between simulation ticks.
   if (step?.kind === 'rider-fight' && worldJob.riderReserve) startRoadFight(duel,worldJob);
   const input=duel.state.input??{};
-  worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
+  worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true,
+    spray:input.spray===true&&worldJob.vehicle?.id==='fire-truck'&&!duel.state.onFoot}; // TOWN-FIRE-JOB: H in the fire truck
   if(worldJob.vehicle&&!duel.state.onFoot)driveWorkVehicle(duel,worldJob,input);
   if(step?.kind!=='drivetrain') return false;
   Object.assign(worldJob.controls,{throttle:input.throttle??0,brake:input.brake??0});
@@ -1535,7 +1588,7 @@ function enterNight2(duel, worldJob) {
   for (const actor of riders) updateJobActor(duel, worldJob, actor, 0);
   if (!riders.length) worldJob.actors = worldJob.actors.filter(actor => !actor.id.startsWith('wash-rider-'));
   syncJobCarSolids(worldJob);
-  if (!scout) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
+  if (!scout && !worldJob.night2?.scoutDowned) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
   if (step?.kind === 'talk' || step?.kind === 'rider-fight') {
     worldJob.marker = null;
     duel.state.arena.markers = [];
@@ -1718,6 +1771,8 @@ export function stepWorldJob(duel, dt) {
     ? {...point, y: point.y - scablandsActorHeightAt(point.x, point.z, point.y)} : point;
   const playerView = {position: jobPoint, s: player.s, lateral: player.lateral,
     speed: player.speedMph ?? 0};
+  // TOWN-FIRE-JOB: the cannon sprays where the truck's nose points.
+  const douseHeading = currentStep?.kind === 'douse' ? worldPose(duel, player).heading : undefined;
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
   if (worldJob.brazierKey !== brazierKey) {
@@ -1844,6 +1899,7 @@ export function stepWorldJob(duel, dt) {
     ashMen: currentStep?.brand ? actors.filter(actor =>
       worldJob.actors.some(source => source.brandAsh && source.id === actor.id)) : [],
     speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id, roughness: ground.roughness,
+    ...(douseHeading !== undefined ? {heading: douseHeading} : {}),
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: carriedCar, carGroundRegion:state.onFoot ? scablandsDriveAt(carriedCar.x, carriedCar.z).id : ground.id,
     actors, crashSize: state.lastCrashSize || 0,
@@ -1863,6 +1919,10 @@ export function stepWorldJob(duel, dt) {
   if (currentStep?.kind === 'haul') {
     syncHaulVehicle(worldJob);
     for (const event of next.events) playHaulEvent(duel, worldJob, event, point);
+  }
+  if (currentStep?.kind === 'douse') {
+    syncDouseVehicle(worldJob);
+    for (const event of next.events) playDouseEvent(duel, worldJob, event, point);
   }
   if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
@@ -1996,6 +2056,7 @@ export function stepWorldJob(duel, dt) {
   }
   applyRequests(duel, worldJob, next.requests);
   if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
+  if (next.steps[next.stepIndex]?.kind === 'douse') markDouseWater(duel, next.steps[next.stepIndex], next.stepState);
   worldJob.controls=null;
   standOnDeck(duel, next, previousStepState);
   const train=worldJob.actors.find(actor=>actor.train);

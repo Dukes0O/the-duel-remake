@@ -1,0 +1,46 @@
+{
+  "use": "reference only, never runtime: real photographs shown beside each model on the WILD-ART-CITY sheets",
+  "source": "Wikimedia Commons, public domain or CC0 only, fetched without an account by waste_references.py city-references.json",
+  "directory": "C:/Users/kyleb/dev/art-library/wild-city/reference",
+  "width": 1280,
+  "photos": {
+    "black-kite": [
+      {"file": "black-kite.jpg", "title": "File:Black Kite, Welcome Reception - Flickr - birdsaspoetry.jpg", "author": "birdsaspoetry.com",
+       "licence": "CC0", "crop": [0.0, 0.05, 1.0, 0.8]},
+      {"file": "black-kite-flight.jpg", "title": "File:Milvus migrans parasitus - Hobbyfotowiki - 601175398.jpeg", "author": "Hobbyfotowiki",
+       "licence": "CC0", "crop": [0.28, 0.1, 0.72, 0.9]}
+    ],
+    "little-egret": [
+      {"file": "little-egret.jpg", "title": "File:Little egret (Egretta garzetta), La Gomera.jpg", "author": "Hobbyfotowiki",
+       "licence": "CC0", "crop": [0.12, 0.08, 0.7, 1.0]},
+      {"file": "little-egret-flight.jpg", "title": "File:Little egret flying, Las Salinas Natural Park, Ibiza.jpg", "author": "Joselodos",
+       "licence": "CC0", "crop": [0.28, 0.1, 0.95, 0.88]}
+    ],
+    "black-faced-spoonbill": [
+      {"file": "black-faced-spoonbill.jpg", "width": 500, "title": "File:Black-faced spoonbill 2006.jpg", "author": "Probophilic",
+       "licence": "Public domain", "crop": [0.05, 0.0, 0.9, 1.0]}
+    ],
+    "pigeon": [
+      {"file": "pigeon.jpg", "title": "File:Street pigeon, Gyeonggido, Guri (1).jpg", "author": "Drcbrothephotographer",
+       "licence": "CC0", "crop": [0.22, 0.25, 0.85, 0.95]},
+      {"file": "pigeon-flight.jpg", "title": "File:Feral pigeon in Andorra.jpg", "author": "Fernando Prada Sanroman",
+       "licence": "Public domain", "crop": [0.28, 0.10, 0.72, 0.92]}
+    ],
+    "raccoon": [
+      {"file": "raccoon.jpg", "title": "File:Raccoon animal mammal procyon lotor.jpg", "author": "John and Karen Hollingsworth, USFWS",
+       "licence": "Public domain", "crop": [0.42, 0.3, 0.78, 0.66]},
+      {"file": "raccoon-face.jpg", "title": "File:Procyon lotor raccoon Yucatan 0924.jpg", "author": "ImagePerson",
+       "licence": "CC0", "crop": [0.15, 0.05, 0.95, 0.98]}
+    ],
+    "street-cat": [
+      {"file": "street-cat.jpg", "title": "File:A stray cat in 'Tuol Sleng' prison campus..JPG", "author": "Rudolph.A.Furtado",
+       "licence": "CC0", "crop": [0.28, 0.18, 1.0, 0.95]}
+    ],
+    "owl": [
+      {"file": "owl.jpg", "title": "File:American Barn Owl at OWL Orphaned Wildlife Rehabilitation Society.jpg", "author": "StoppedTime",
+       "licence": "CC0", "crop": [0.0, 0.03, 1.0, 0.78]},
+      {"file": "owl-flight.jpg", "title": "File:Front view of a barn owl - Tyto alba - in flight.jpg", "author": "Dannymoore1973",
+       "licence": "CC0", "crop": [0.05, 0.0, 1.0, 1.0]}
+    ]
+  }
+}

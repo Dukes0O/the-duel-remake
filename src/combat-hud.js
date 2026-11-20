@@ -410,7 +410,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     if (!active) return;
 
     const worldJob = state.arena?.worldJob, chapter = worldJob?.night2;
-    carPointer.hidden = !onFoot || chapter?.washCarUnavailable === true;
+    // One "Your car" pill: a story that names its own route to the car (Night 2) shows that one, not this straight-line pointer too.
+    const storyNamesCar = chapter?.routes?.some(route => route.name === 'Your car') === true;
+    carPointer.hidden = !onFoot || chapter?.washCarUnavailable === true || storyNamesCar;
     if (onFoot) {
       const maxHealth=Math.max(1,Number(state.fighter.maxHealth)||100);
       const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
