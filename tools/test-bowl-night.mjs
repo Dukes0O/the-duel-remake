@@ -5,10 +5,12 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createProfile, isCarUnlocked, loadPlayers, savePlayers} from '../src/progression.js';
-import {BOWL_PURSE, SHOW_TRUCK, bowlHudView, bowlNightPlayable, settleShowNight,
+import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushRowName, crushRowsToWin, bowlHudView, bowlNightPlayable, settleShowNight,
   showTruckFor} from '../src/bowl/bowl-night.js';
-import {BIG_MO, BOWL_CRUSH_ROWS, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_CRUSH_ROW, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {Course} from '../src/course.js';
+import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -47,6 +49,29 @@ const showDuel = (enabled = true) => {
     'a Titan owner drives their own truck with its upgrades');
 }
 
+// Every distance comes from the course's data, so a bigger Bowl (BOWL-EXPAND) moves the events with it.
+{
+  const bowl = new Course(BOWL_COURSE, 1989), layout = bowlLayout(bowl);
+  const rowS = [...new Set(bowl.features.crushables.map(prop => prop.s))].sort((a, b) => a - b);
+  ok(layout.rows.length === rowS.length && layout.crush.firstRowS === rowS[0] && layout.crush.startS < rowS[0],
+    'the Car Crush starts a run-up before the first row of the crush line');
+  ok(layout.lane === BOWL_COURSE.scrapdome.floorHalfWidth / 2, 'the Side by Side lanes split the floor');
+  ok(layout.parked.every(car => !bowl.features.ramps.some(ramp => car.s >= ramp.start && car.s <= ramp.end) && car.s < rowS[0]),
+    'the parked cars stand on clear floor, off the ramps and before the crush line');
+  // The same rules on a made-up bigger floor: everything moves with the data.
+  const shift = 60, big = {length: 400, def: {scrapdome: {floorHalfWidth: 12}}, roadHalfWidthAt: () => 12,
+    features: {ramps: bowl.features.ramps.map(ramp => ({...ramp, start: ramp.start + shift, end: ramp.end + shift})),
+      crushables: [...bowl.features.crushables, ...bowl.features.crushables.slice(0, 3).map((prop, i) => ({...prop, id: `extra-${i}`, s: 140}))]
+        .map(prop => ({...prop, s: prop.s + shift}))}};
+  const moved = bowlLayout(big);
+  ok(moved.crush.startS === layout.crush.startS + shift && moved.lane === 6 && moved.rows.length === layout.rows.length + 1,
+    'on a bigger floor the start, the lanes and the rows follow the course');
+  ok(crushRowsToWin(big, {cpuDifficulty: 'hard'}) === moved.rows.length && crushRowsToWin(bowl, {cpuDifficulty: 'easy'}) === 3,
+    'each level needs its share of however many rows the course has');
+  ok(crushRowName(bowl, 0) === 'the first row of cars' && crushRowName(bowl, 3) === 'the buses' &&
+    crushRowName(bowl, layout.rows.length - 1) === 'the burning stack', 'rows are named by what stands in them');
+}
+
 // A lost event is tried again; nothing moves the night on.
 {
   const duel = showDuel(), results = [];
@@ -57,7 +82,7 @@ const showDuel = (enabled = true) => {
   ok(results.length === 1 && !results[0].won && results[0].event === 'carCrush', 'a truck that never moves loses the Car Crush');
   ok(duel.state.status === 'bowl_break' && night.phase === 'result' && night.show.eventIndex === 0, 'the night waits at the same event');
   ok(duel.continueBowlNight() && night.event.type === 'carCrush' && night.event.attempt === 2, 'the next start is the same event, attempt two');
-  ok(duel.state.s === 78 && duel.state.status === 'countdown', 'the retry starts at the head of the crush line');
+  ok(duel.state.s === bowlLayout(duel.course).crush.startS && duel.state.status === 'countdown', 'the retry starts at the head of the crush line');
 }
 
 // One scripted night, the way in to the results: night one on Easy in the lent truck.
@@ -86,7 +111,7 @@ const run = (() => {
     if (s.bowlNight.event.type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
     else duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
-    if (freestyle && s.stageTimeSec > 20 && !log.hud) log.hud = bowlHudView(s);
+    if (freestyle && s.stageTimeSec > 20 && !log.hud) log.hud = bowlHudView(s, duel.course);
   }
   return {duel, log};
 })();
@@ -174,7 +199,7 @@ for (const name of readdirSync(new URL('./fixtures/saves/', import.meta.url)).fi
 
 // Every word: plain, whole sentences with no dashes; every sound has a stand-in.
 {
-  const sentences = [...Object.values(BIG_MO), BOWL_GOALS.carCrush(BOWL_CRUSH_ROWS[2]), BOWL_GOALS.freestyle('400'),
+  const sentences = [...Object.values(BIG_MO), BOWL_GOALS.carCrush(BOWL_CRUSH_ROW.cars(3)), BOWL_GOALS.carCrush(BOWL_CRUSH_ROW.buses), BOWL_RESULTS.eventRows(BOWL_CRUSH_ROW.fire), BOWL_GOALS.freestyle('400'),
     BOWL_GOALS.sideBySide(), BOWL_GOALS.lastTruckRolling(),
     ...Object.entries(BOWL_RESULTS).filter(([key]) => !/Title$|Button$|^pickStart$/.test(key)).flatMap(([, value]) =>
       typeof value === 'function' ? [value(2), value(0), value(true), value(false), value('Freestyle')].filter(line => typeof line === 'string') : [value])];
@@ -204,7 +229,9 @@ for (const name of readdirSync(new URL('./fixtures/saves/', import.meta.url)).fi
   const s = app.duel.state;
   ok(app.duel.course.def.id === 'titan-bowl' && app.duel.course.def.bowl === true && app.duel.stageDef.bowl === true,
     'the App\'s race is on the Bowl');
-  ok(app.duel.course.features.flameJets.length === 4 && app.duel.course.features.crushables.length === 15,
+  const bowl = new Course(BOWL_COURSE, 1989);
+  ok(app.duel.course.features.flameJets.length === bowl.features.flameJets.length && app.duel.course.features.flameJets.length > 0 &&
+    app.duel.course.features.crushables.length === bowl.features.crushables.length,
     'the course the renderer draws carries the Bowl\'s flame jets and crush line');
   ok(s.car === SHOW_TRUCK && app._racePaintCar === SHOW_TRUCK && s.bowlNight.lent, 'the App\'s car is the lent show truck');
   app.advance(5);

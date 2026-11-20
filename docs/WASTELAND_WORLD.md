@@ -303,7 +303,10 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   Last Truck Rolling and replaces Side by Side's one computer truck, BOWL-TURNS runs the same runners one player
   at a time, BOWL-REX-FIGHT adds night five's fight. The Bowl is out of the circuit list: Show Night is the only
   way in, so every drive there is in a truck, the player's own Titan or the show's, lent and never saved.
-  Every word on screen is in `src/bowl/bowl-lines.js`.
+  Every word on screen is in `src/bowl/bowl-lines.js`. Every distance the events use comes from the course's data
+  through `bowlLayout(course)`: the crush line's rows and their names, the run-up, the parked cars in Freestyle (the
+  longest clear floor between ramps and crush line), the lanes (half the floor, or `features.bowlLanes.offset`) and
+  Side by Side's start stagger. A rebuilt Bowl (BOWL-EXPAND) moves the events with it.
 - **Air control** only when `def.bowl`, and the launch off cars (FUN-TITAN-LAUNCH) is
   unchanged and tested.
 - **Switches** (`src/feature-flags.js`): `gear-find` (on at its release), `scablands`,
