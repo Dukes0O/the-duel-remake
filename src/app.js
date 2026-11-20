@@ -74,7 +74,7 @@ import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUn
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
-import {cleanupWorldJobLoan, ringJobVehicleBell} from './arena/modes/world-job.js';
+import {cleanupWorldJobLoan, drivingFireTruck, ringJobVehicleBell, setJobVehicleSpray} from './arena/modes/world-job.js';
 import {jobForRun} from './world/jobs/job-vehicle.js'; // SHIPS-DECKS: the job-level vehicle field
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
@@ -2043,11 +2043,16 @@ export class App {
     if(this._switches().enabled('wasteland-town')!==true||!town||!(this.isYardHomeActive()||this.duel.state.arena))return false;
     const [{townJobDefinition,createTownJobRun},{setScablandsTownLayout,clearScablandsTownLayout},{saveTownFromDrive}]=await Promise.all([
       import('./world/jobs/town-jobs.js'),import('./world/scablands-ground.js'),import('./town/town-entry.js')]);
-    const job=townJobDefinition(town,jobId,{seed:(town.seed^((this._arenaSerial||0)+1)*7919)>>>0});
+    // TOWN-FIRE-JOB: the ash line after the first fire depends on the Everburn: started (Hollis's note read or a job done), and
+    // whether Old Smoke is beaten. Read here from the profile; the job never writes it.
+    const ember=emberOf(this.profile);
+    const job=townJobDefinition(town,jobId,{seed:(town.seed^((this._arenaSerial||0)+1)*7919)>>>0,
+      ember:{started:ember.read===true||(ember.jobs?.length??0)>0,smokeBeaten:emberFurnaceDead(this.profile)}});
     if(!job)return false;
     setScablandsTownLayout(job.layout);
     if(!this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job})){clearScablandsTownLayout();return false;}
-    this._townJob=createTownJobRun({town,runId:this.runId,save:(target,reason)=>saveTownFromDrive(target,reason)});
+    const holdFires=job.townJob==='fire'?job.steps[0].buildings.map(building=>building.id):[];
+    this._townJob=createTownJobRun({town,runId:this.runId,holdFires,save:(target,reason)=>saveTownFromDrive(target,reason)});
     return true;
   }
   _townJobFrame(seconds){
@@ -2731,7 +2736,7 @@ export class App {
   activeInputContext() {
     return this.inputContext ?? (this.duel.state.status === 'menu' ? 'menu' :
       this.duel.state.status === 'heli' && this.heliSession ? 'heli' :
-      this.duel.state.onFoot ? 'foot' : 'car');
+      this.duel.state.onFoot ? 'foot' : drivingFireTruck(this.duel.state) ? 'firetruck' : 'car'); // TOWN-FIRE-JOB: H sprays
   }
   setInputContext(context = null) {
     if (context !== null && !INPUT_CONTEXTS[context]) throw new Error(`Unknown input context: ${context}`);
@@ -2817,7 +2822,7 @@ export class App {
       this._footPointer.lookX=this._footPointer.lookY=0;
       return;
     }
-    if (context !== 'car') {this._resetKeyboardInput();return;}
+    if (context !== 'car' && context !== 'firetruck') {this._resetKeyboardInput();return;}
     if (this.autopilot) {this._resetKeyboardInput();this._driveAutopilot(dt);return;}
     const k = this.keys;
     const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
@@ -2836,6 +2841,7 @@ export class App {
       boost: heldInput(context, 'boost', k) || pad.boost,
       interact: heldInput(context, 'interact', k) || pad.interact,
     });
+    if (context === 'firetruck') setJobVehicleSpray(this.duel, heldInput(context, 'spray', k)); // TOWN-FIRE-JOB: hold H to spray
   }
 
   _readGamepad(dt = 1 / 120) {

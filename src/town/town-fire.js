@@ -7,7 +7,8 @@ const HOURS_PER_YEAR = 360 * 24;
 const BUILDING_FUEL = Object.freeze({timber:24, canvas:8, fuel:1});
 const SEASON_WIND = Object.freeze({Spring:1, Summer:0.65, Autumn:0.85, Winter:0.9});
 
-function fuelHours(building) {
+// TOWN-FIRE-JOB: exported so a fire call burns a building on the same fuel the town's own fire uses.
+export function fuelHours(building) {
   const row=buildingById.get(building.buildingId);
   if(!row) return 0;
   return Object.entries(row.materials).reduce((total,[material,amount])=>
