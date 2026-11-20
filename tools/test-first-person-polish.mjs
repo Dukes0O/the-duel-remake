@@ -915,6 +915,7 @@ test('P1 sheet direct CLI reaches evidence validation after module initializatio
   mkdirSync(directory, {recursive: true});
   mkdirSync(join(fixtureRoot, 'tools'), {recursive: true});
   copyFileSync(join(root, 'tools/fidelity-sheet.mjs'), join(fixtureRoot, 'tools/fidelity-sheet.mjs'));
+  copyFileSync(join(root, 'tools/evidence-date.mjs'), join(fixtureRoot, 'tools/evidence-date.mjs'));
   writeFileSync(captures, '{}\n');
   try {
     const result = spawnSync(process.execPath,

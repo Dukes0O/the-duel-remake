@@ -76,6 +76,8 @@ before(async()=>{
   ];
   for(const [from,to]of substitutions){if(!harness.includes(from))throw Error('Private harness recipe anchor changed: '+from);harness=harness.replaceAll(from,to);}
   await writeFile(join(scratchDir,'harness.mjs'),harness);
+  // The harness names its evidence folder with this helper (imported beside it).
+  await writeFile(join(scratchDir,'evidence-date.mjs'),await readFile(join(root,'tools/evidence-date.mjs'),'utf8'));
   await writeFile(join(scratchDir,'recorder-probe.js'),nativeRecorderEntry());
   await writeFile(join(scratchDir,'recorder-probe.html'),"<!doctype html><meta charset='utf-8'><link rel='icon' href='data:,'><script type='module' src='./recorder-probe.js'></script>");
   const plugin=new URL('./build-version-plugin.mjs',import.meta.url).href;

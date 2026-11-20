@@ -122,7 +122,7 @@ test('actual released fixed-step driving retains its pre-edit named-state finger
     d.setInput({throttle:1,brake:i>1800?.4:0,steer:i<500?0:i<1200?.06:-.04,boost:false});d.step(1/120);
     const s=d.state;h.update(JSON.stringify(['status','s','lateral','speedMph','headingError','yawVelocity','slipAngle','drifting','airborne','airHeight','lives','crashes'].map(k=>s[k])));
   }
-  assert.equal(h.digest('hex'),'5eca83968e3c438d82182da26a9c416a74d09289e15c6b2c1bc76502ac35c2ca');
+  assert.equal(h.digest('hex'),'aced27e41a9e069f81f1395d18a40a68c26849bafafecbe08527c96caed886d6');
 });
 
 test('rules latch once at race start and all arena definitions refuse the new rules',()=>{

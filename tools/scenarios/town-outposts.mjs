@@ -42,12 +42,14 @@ export async function run(context) {
     const app=window.__qaApp,job=app.duel.state.arena.worldJob,group=window.__render.scene.getObjectByName('Town outposts');
     const diner=job.definition.layout?.outposts?.outposts?.find(outpost=>outpost.id==='dot-diner');
     return {count:job.definition.layout?.outposts?.outposts?.length,solid:job.solidGrid?.town?.length??0,
-      layoutSolids:job.definition.layout?.outposts?.solids?.length??0,fencePieces:diner?.fence?.length??0,
+      layoutSolids:job.definition.layout?.outposts?.solids?.length??0,vaneSolids:job.definition.layout?.vane?.solids?.length??0,fencePieces:diner?.fence?.length??0,
       errors:group.userData.loadErrors,fence:group.userData.sites.find(site=>site.outpost.id==='dot-diner').fence.children.length};
   })()`);
   report.read.layout = layout;
   fact(layout.count === 5, 'the drive carries the five outposts');
-  fact(layout.layoutSolids > 0 && layout.solid === layout.layoutSolids, `every outpost solid is on the drive's grid (${layout.solid} of ${layout.layoutSolids})`);
+  // Mrs Vane's kiosks share the drive's town grid with the outposts (TOWN-VANE-SCENE, src/arena/modes/world-job.js).
+  fact(layout.layoutSolids > 0 && layout.solid === layout.layoutSolids + layout.vaneSolids,
+    `every outpost and Vane solid is on the drive's grid (${layout.solid} of ${layout.layoutSolids} + ${layout.vaneSolids})`);
   fact(!layout.errors?.length, 'the outposts drew without a load error');
   fact(layout.fencePieces >= 6 && layout.fence === layout.fencePieces, `Dot's fence is drawn (${layout.fence} of ${layout.fencePieces} pieces)`);
   for (const id of OUTPOSTS) {
