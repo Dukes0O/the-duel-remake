@@ -503,7 +503,7 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townLife=null,townFx=null,townLifeClock=0;
+  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townSeconds=0;
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
@@ -535,6 +535,14 @@ export function createScablandsScene(course,options={}){
     townLife=createTownWalkers({town:lifeTown,hourAt:()=>8+lifeHour()%10,dayAt:()=>Math.floor(lifeHour()/10)});
     townFx=createTownFx({town:lifeTown,buildings:root,fog:false,light:false,hourAt:()=>8+lifeHour()%10});
     group.add(townLife.group,townFx.group);
+    // The neighbours' outposts, drawn from the same layout that makes them solid (TOWN-OUTPOST-SCENE).
+    if(townLayout.outposts?.outposts?.length&&featureFlags.enabled('wasteland-town')){
+      const {createTownOutpostsScene}=await import('../town/view/town-outposts-scene.js');
+      if(retired)return;
+      townOutposts=createTownOutpostsScene({outposts:townLayout.outposts.outposts,loadAsset,
+        drawnHeightAt:(x,z)=>group.userData.drawnGroundHeightAt?.(x,z)});
+      group.add(townOutposts.group);group.userData.townOutposts=townOutposts;
+    }
   };
   void addTown();
   const furnaceVents=[],furnacePlates=[];
@@ -925,6 +933,7 @@ export function createScablandsScene(course,options={}){
       carriedBrand.update(state,drawnShift);
       if (worldJob?.storyPeople) peopleSeconds += Math.max(0, presentationDt);
       storyPeople.update(worldJob, worldJob?.night2?.camera?.target ?? here, peopleSeconds, drawnShift);
+      if(townOutposts){townSeconds+=Math.max(0,presentationDt);townOutposts.update(here,townSeconds,drawnShift);}
       if (worldJob?.night2 && !night2) {
         night2 = createNight2Look(course);
         group.add(night2.group);
@@ -1140,7 +1149,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose();
+    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

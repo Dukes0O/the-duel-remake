@@ -247,7 +247,8 @@ export class App {
       if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
-      if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
+      if(event.gameover&&['town-drive','town-job'].includes(state.arena?.worldJob?.definition?.kind))cleanupWorldJobLoan(this.duel);
+      if(event.arenaResult&&state.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(state.arena.worldJob); // TOWN-HAUL-JOB
       if(event.townGate&&state.arena?.mode==='world-job'){
         // The event fires inside duel.step(), which still needs the arena: leave once the step has finished.
         queueMicrotask(()=>{if(this.duel.state.arena?.mode==='world-job'&&this.returnToYard())this._openTownScrapdomePanel=true;});
@@ -464,6 +465,7 @@ export class App {
     }
     this._syncHiddenRoadDiscovery();
     if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();return;}
+    this._townJobFrame(seconds);
     this._stepAccumulator += seconds;
     while (this._stepAccumulator + 1e-10 >= SIMULATION_STEP) {
       if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();break;}
@@ -844,6 +846,7 @@ export class App {
     const definition=this.duel.state.arena?.worldJob?.definition;
     if(!definition)return false;
     if(definition.run===true)return this.gasRun(definition.road);
+    if(definition.kind==='town-job')return this._townJob?this.startTownJob(this._townJob.town,definition.id):false; // TOWN-HAUL-JOB
     const side=sideJobKey(definition);
     if(side)return this.everburnSideJob(side);
     if(definition.steps?.some(step=>step.kind==='rider-fight') && !EVERBURN_JOBS.some(job=>job.id===definition.id))
@@ -2045,6 +2048,26 @@ export class App {
     clearScablandsTownLayout();
     return false;
   }
+  // TOWN-HAUL-JOB: a town job (src/world/jobs/town-jobs.js) from the town's mission card. The town keeps ticking while it is
+  // driven, one tick every 10 real seconds outside race state, and serious news comes on the radio at most once a minute. Its
+  // one mission result is settled once per run id, and the town is saved, when the job ends.
+  async startTownJob(town, jobId) {
+    if(this._switches().enabled('wasteland-town')!==true||!town||!(this.isYardHomeActive()||this.duel.state.arena))return false;
+    const [{townJobDefinition,createTownJobRun},{setScablandsTownLayout,clearScablandsTownLayout},{saveTownFromDrive}]=await Promise.all([
+      import('./world/jobs/town-jobs.js'),import('./world/scablands-ground.js'),import('./town/town-entry.js')]);
+    const job=townJobDefinition(town,jobId,{seed:(town.seed^((this._arenaSerial||0)+1)*7919)>>>0});
+    if(!job)return false;
+    setScablandsTownLayout(job.layout);
+    if(!this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job})){clearScablandsTownLayout();return false;}
+    this._townJob=createTownJobRun({town,runId:this.runId,save:(target,reason)=>saveTownFromDrive(target,reason)});
+    return true;
+  }
+  _townJobFrame(seconds){
+    const state=this.duel.state,run=this._townJob;
+    if(!run||state.arena?.worldJob?.definition?.kind!=='town-job'||state.status!=='racing'||state.paused||state.arena.result)return;
+    const radio=run.frame(seconds);
+    if(radio)this._storyRadioNow().sayTownLine(radio.lineId,{radioReport:radio.report});
+  }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.
@@ -2052,7 +2075,7 @@ export class App {
     this._refreshPlayer();
     const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
       (job.id === NIGHT_2_ID ? this._switches().enabled('story-choices') === true :
-        job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
+        ['town-drive','town-job'].includes(job.kind)?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();
@@ -2715,6 +2738,7 @@ export class App {
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
+    if(st.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(st.arena.worldJob); // TOWN-HAUL-JOB: every way out saves the town
     cleanupWorldJobLoan(this.duel);
     this.duel.clearDeep();this.deepAudio.stop();
     const heliLanding = this._heliLandingChoice();
