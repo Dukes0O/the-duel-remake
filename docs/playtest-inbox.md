@@ -6,7 +6,7 @@ cards are on the board and Kyle's decisions are in `docs/board/decisions.md`.
 
 ## Holds
 
-None.
+NEXT HEAVY SLOT: ten-seed Rex check for BOWL-TRICKS, trick builder, 12:44.
 
 ## Questions with no card
 
