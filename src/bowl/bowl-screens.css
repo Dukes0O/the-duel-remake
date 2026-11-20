@@ -17,7 +17,8 @@
 .bowl-scores{list-style:none;padding:0;margin:10px 0;display:grid;gap:4px}
 .bowl-scores li{display:flex;justify-content:space-between;border-bottom:1px solid #4f3e2c;padding:4px 0}
 /* The race HUD keeps its speed and gear; the lap clock and rival gap give way to the show's own numbers. */
-.bowl-night-active .race-progress,.bowl-night-active .race-heading,.bowl-night-active .race-clock,.bowl-night-active .race-position{visibility:hidden}
+.bowl-night-active .race-progress,.bowl-night-active .race-heading,.bowl-night-active .race-clock,.bowl-night-active .race-position,
+.bowl-night-active #route-remaining,.bowl-night-active #arena-crush,.bowl-night-active #style-score-panel{visibility:hidden}
 .bowl-hud{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:4;width:min(620px,92vw);padding:10px 16px;color:#fff3dc;background:#120d0acc;border:1px solid #a1773f;text-align:center;pointer-events:none;font-size:14px}
 .bowl-hud[hidden]{display:none}
 .bowl-hud p{margin:4px 0}.bowl-hud-event{font-weight:800;letter-spacing:.08em;color:#ffc06a}

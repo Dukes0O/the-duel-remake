@@ -19,8 +19,11 @@ export const SHOW_NIGHTS = Object.freeze(Array.from({length: 5}, (_, index) => O
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
-const CROWD_DECAY_PER_SECOND = 0.12;
-const CROWD_GAIN_PER_POINT = 0.0015;
+// BOWL-HOOKS (Claude's review, 20 November 2026): at 0.0015 a point and 12 percent a second the
+// meter peaked near 8 in a good scripted Freestyle and Big Mo's crowd lines were never reached.
+// With these a 40-point jump adds 6 and the same Freestyle peaks near 70.
+const CROWD_DECAY_PER_SECOND = 0.06;
+const CROWD_GAIN_PER_POINT = 0.15;
 
 // Event protocol: landedJump {durationSeconds, distanceMeters, pitchTurns?},
 // carLaunch {durationSeconds, distanceMeters, pitchTurns?}, crush {},

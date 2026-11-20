@@ -111,6 +111,8 @@ const run = (() => {
   ok(log.hud && log.hud.name === 'Freestyle' && log.hud.timeLeft > 0 && log.hud.timeLeft < 90 &&
     Number.isFinite(log.hud.crowd) && log.hud.goal.startsWith('Do big jumps'), 'the HUD reads the event, clock, crowd and goal');
   ok(['bowl.mo', 'bowl.crowd.rise', 'bowl.event.won'].every(cue => log.cues.has(cue)), 'each new event names its sound cue');
+  const freestyle = log.events.find(result => result.event === 'freestyle');
+  ok(freestyle.crowdPeak >= 50 && freestyle.crowdPeak <= 100, `a good Freestyle lifts the crowd meter past half way (peak ${freestyle.crowdPeak})`);
 }
 
 // The purse pays once: a second settlement of the same run, or a later run of
@@ -177,6 +179,37 @@ for (const name of readdirSync(new URL('./fixtures/saves/', import.meta.url)).fi
     ok(/^[A-Z]/.test(line) && /[.!?]$/.test(line) && !/[–—]/.test(line) && !/ - /.test(line), `a plain sentence: ${line}`);
   }
   ok(Object.values(BOWL_SOUND_CUES).every(cue => Object.hasOwn(SOUND_BANK, cue)), 'every Show Night sound plays an existing cue');
+}
+
+// Through the real App, as the menu's START NIGHT button does: the night runs on the
+// Bowl in the show truck, the save does not gain the truck, and leaving puts the
+// menu's own race setup back. (The browser scenario bowl-night-pay checks the picture.)
+{
+  globalThis.localStorage = memory();
+  globalThis.window = new EventTarget(); window.location = {search: ''};
+  globalThis.Element ??= class {};
+  globalThis.requestAnimationFrame = () => 1; globalThis.cancelAnimationFrame = () => {};
+  const {App} = await import('../src/app.js');
+  const app = new App();
+  const released = app.duel.featureFlags.base || app.duel.featureFlags;
+  const flags = {...released, enabled: name => name === 'titan-bowl' || released.enabled(name)};
+  flags.base = flags;
+  app.duel.featureFlags = flags;
+  ok(app.addPlayer('Bowl App').ok && app.menuCar !== SHOW_TRUCK, 'a new player has no Titan and another car on the menu');
+  const menuSeed = app.duel.seed;
+  ok(app.showNightChoices().lent && app.startShowNight(1, {from: 'menu', cpuDifficulty: 'easy'}), 'the App starts night one');
+  const s = app.duel.state;
+  ok(app.duel.course.def.id === 'titan-bowl' && app.duel.course.def.bowl === true && app.duel.stageDef.bowl === true,
+    'the App\'s race is on the Bowl');
+  ok(app.duel.course.features.flameJets.length === 4 && app.duel.course.features.crushables.length === 15,
+    'the course the renderer draws carries the Bowl\'s flame jets and crush line');
+  ok(s.car === SHOW_TRUCK && app._racePaintCar === SHOW_TRUCK && s.bowlNight.lent, 'the App\'s car is the lent show truck');
+  app.advance(5);
+  ok(s.status === 'racing' && s.car === SHOW_TRUCK && app.duel.course.def.bowl, 'after the countdown the truck is still on the Bowl');
+  ok(!isCarUnlocked(app.profile, SHOW_TRUCK) && !(app.profile.unlockedCars || []).includes(SHOW_TRUCK), 'the save has not gained the truck');
+  ok(app.leaveShowNight('menu') && s.status === 'menu' && !s.bowlNight && app.duel.seed === menuSeed && s.car === app.menuCar,
+    'leaving ends the night and puts the menu\'s seed and car back');
+  app.dispose?.();
 }
 
 console.log(`test-bowl-night: ${checks} checks passed`);

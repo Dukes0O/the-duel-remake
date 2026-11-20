@@ -29,7 +29,8 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 export const BOWL_NIGHT_RULES = Object.freeze({
   carCrush: Object.freeze({startS: 62, endS: 128, leftS: 40, timeLimitSec: 20,
     stillMph: 1.5, stillSec: 1.5, rowsToWin: Object.freeze({easy: 3, medium: 4, hard: 5})}),
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 400, medium: 650, hard: 900})}),
+  // Raised with the crowd's gain (scores went up by about a quarter).
+  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 500, medium: 800, hard: 1100})}),
   // The computer truck's top pace on each level, until BOWL-RIVALS gives each rival its own.
   sideBySide: Object.freeze({timeLimitSec: 60, lane: 3, paceMph: Object.freeze({easy: 22, medium: 28, hard: 34})}),
   donutMaxMph: 15,
