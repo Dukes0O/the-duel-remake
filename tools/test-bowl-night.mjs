@@ -106,6 +106,8 @@ const run = (() => {
   for (let i = 0; i < 120 * 300; i++) {
     const s = duel.state;
     if (s.status === 'bowl_break') {
+      ok([s, ...s.opponents].every(truck => Object.values(truck.damageZones).every(value => value === 0)),
+        'Car Crush, Freestyle and Side by Side finish with no wear on any truck');
       // The results stay on screen while Big Mo finishes speaking.
       if (s.bowlNight.phase === 'complete') { for (let wait = 0; wait < 120 * 10; wait++) duel.step(DT); break; }
       duel.continueBowlNight(); continue;

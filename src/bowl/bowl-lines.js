@@ -23,6 +23,10 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.fall': 'combat.explosion',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'world.furnace.horn',    // it walks out through the car park gate
   'bowl.rex.drop': 'vehicle.crash',         // it drops a junk car on its rails to launch off
+  'bowl.wall.bounce': 'heli.setdown.thud',
+  'bowl.wall.hard': 'vehicle.crash',
+  'bowl.wall.big': 'vehicle.crash-impact',
+  'bowl.wall.scrape': 'vehicle.tires',
   'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
   'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
   'bowl.event.won': 'interface.win',       // an event is won
