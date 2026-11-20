@@ -29,6 +29,6 @@ On the 286 m Bowl (BOWL-EXPAND) the stunts come further apart. The crowd meter n
 - a Freestyle of kickers alone peaks near 40;
 - a good one, with a big stunt every 7 seconds, peaks near 62.
 
-The Freestyle targets are 450, 750 and 1,050.
+The Freestyle targets were first 450, 750 and 1,050. After the laptop check they are 150, 350 and 600, and jumps pay 8 points for each metre of height above the first. With these, a child-pace driver wins Easy 9 times in 10.
 
 Question 1 was answered: the purse table is accepted.

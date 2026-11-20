@@ -28,6 +28,19 @@ Freestyle counts every landing after a flight of at least 0.5 s. The crowd gains
 
 Checks on cfd838b: `test-bowl-night` passes 237 checks. The lane tier ran 77 passed and 3 failed: the same two laptop-only suites, plus `test-race-field` with its integration hash. Replays passed 297 checks, and the build passed.
 
+**Laptop check 3.**
+- **Fault:** the test driver lost Freestyle on Easy eight times in a row, at 404 against a target of 450.
+- **Scoring:** jumps now pay for height, 8 points for each metre above the first, so big air scores most.
+- **Targets:** Freestyle now needs 150, 350 and 600.
+- **Win rates,** measured with `tools/bowl-freestyle-balance.mjs` (ten seeded child-pace drivers that use the kickers, the big jumps and the launch cars):
+  - Easy: the child-pace driver wins 9 of 10.
+  - Medium: it wins 1 of 10.
+  - Hard: it wins none.
+  - The game's test driver scores 582: it wins Easy and Medium and loses Hard.
+- **Whole night through the App:** the Car Crush on W, the rest by the test driver, wins every event, and the 250 purse is paid and saved.
+- **Scenario:** every Car Crush run, retries included, is now driven on W.
+- **HUD:** the crash panel and the race callout are hidden during a night.
+
 **Changed assertions.** None. A new check in `test-bowl-night` covers the newer-save refusal added to `bowl-save.js`.
 
 **Removed:** The Bowl's place in the menu's circuit list and the course screen. Show Night replaces it as the only way in.

@@ -9,7 +9,7 @@ import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushRowName, crushRowsToWin, bowlHu
   showTruckFor} from '../src/bowl/bowl-night.js';
 import {BIG_MO, BOWL_CRUSH_ROW, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
-import {scoreFreestyle} from '../src/bowl/bowl-show.js';
+import {scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
 
@@ -153,6 +153,9 @@ const run = (() => {
     {type: 'landedJump', durationSeconds: 1.2, distanceMeters: 28}, {type: 'donut', seconds: 3}];
   const good = scoreFreestyle(Array.from({length: 13}, (_, i) => ({...stunts[i % stunts.length], atSeconds: 4 + 7 * i})));
   const goodPeak = Math.max(...good.events.map(event => event.crowd));
+  const jump = height => scoreStuntEvent({type: 'landedJump', durationSeconds: 1.5, distanceMeters: 30, heightMeters: height}, 0).points;
+  ok(jump(10) > jump(4) && jump(4) > jump(0) && jump(0) === scoreStuntEvent({type: 'landedJump', durationSeconds: 1.5, distanceMeters: 30}, 0).points,
+    'big air scores most: a higher jump pays more, and a jump with no height scores as before');
   ok(goodPeak >= 50 && goodPeak <= 100, `a good Freestyle lifts the crowd meter past half way (peak ${goodPeak.toFixed(1)})`);
 }
 

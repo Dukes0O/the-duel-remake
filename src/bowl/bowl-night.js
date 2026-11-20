@@ -34,10 +34,10 @@ export const BOWL_NIGHT_RULES = Object.freeze({
   carCrush: Object.freeze({runUpMetres: 8, timeLimitSec: 20,
     // The run is over when the truck has gained less than 3 m in two seconds (stopped, or grinding along a wall).
     stallMetres: 3, stallSec: 2, rowsShareToWin: Object.freeze({easy: .6, medium: .8, hard: 1})}),
-  // On the 286 m Bowl a lap is twice as long, so fewer stunts fit in 90 seconds: a line over the two
-  // kickers and one launch car scores about 540 (Easy); Medium and Hard need the Big Jump, the Table,
-  // flips and launches. BOWL-FINISH tunes these in play.
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 450, medium: 750, hard: 1050})}),
+  // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
+  // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
+  // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
+  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 150, medium: 350, hard: 600})}),
   // The computer truck's top pace on each level, until BOWL-RIVALS gives each rival its own.
   sideBySide: Object.freeze({timeLimitSec: 60, paceMph: Object.freeze({easy: 22, medium: 28, hard: 34})}),
   donutMaxMph: 15,
@@ -324,7 +324,8 @@ export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
   if (ev.jumpLanded?.rampId === 'car') {
-    addFact(duel, {type: 'carLaunch', durationSeconds: +(s.airTime || 0).toFixed(3), distanceMeters: ev.jumpLanded.distance || 0});
+    addFact(duel, {type: 'carLaunch', durationSeconds: +(s.airTime || 0).toFixed(3), distanceMeters: ev.jumpLanded.distance || 0,
+      heightMeters: +(night.event.flight?.peak ?? 0).toFixed(2)});
     say(duel, 'moment.carLaunch', {once: true});
   }
   if (ev.propCrushed?.byPlayer) {
@@ -340,12 +341,14 @@ function observeTruck(duel, dt) {
   // Every landing on the wheels after a real flight scores as a jump; a launch
   // off a car is scored from the Duel's own landing event, and the short hop a
   // crush gives is too brief to count.
-  if (s.airborne && !event.flight) event.flight = {carRamp: s._jumpOrigin?.carRamp === true};
+  if (s.airborne && !event.flight) event.flight = {carRamp: s._jumpOrigin?.carRamp === true, peak: 0};
+  if (s.airborne && event.flight) event.flight.peak = Math.max(event.flight.peak, s.airHeight || 0);
   else if (!s.airborne && event.flight) {
     const flight = event.flight, airTime = s.airTime || 0;
     event.flight = null;
     if (!flight.carRamp && !s.tumble && airTime >= BOWL_NIGHT_RULES.minJumpSec) {
-      addFact(duel, {type: 'landedJump', durationSeconds: +airTime.toFixed(3), distanceMeters: +(s.airDistance || 0).toFixed(1)});
+      addFact(duel, {type: 'landedJump', durationSeconds: +airTime.toFixed(3), distanceMeters: +(s.airDistance || 0).toFixed(1),
+        heightMeters: +flight.peak.toFixed(2)});
       if (airTime >= BOWL_NIGHT_RULES.bigJumpSec) say(duel, 'moment.bigJump', {once: true});
     }
   }

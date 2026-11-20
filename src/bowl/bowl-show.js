@@ -26,8 +26,13 @@ const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallbac
 const CROWD_DECAY_PER_SECOND = 0.03;
 const CROWD_GAIN_PER_POINT = 0.2;
 
-// Event protocol: landedJump {durationSeconds, distanceMeters, pitchTurns?},
-// carLaunch {durationSeconds, distanceMeters, pitchTurns?}, crush {},
+// Big air scores most (BOWL-HOOKS, for the 286 m Bowl of BOWL-EXPAND): each metre of a
+// jump's highest point above the first pays 8, so the 4 m kickers add 24 and the 10 m
+// Big Jump adds 72. A jump without a measured height scores as before.
+const heightBonus = event => Math.max(0, finite(event.heightMeters) - 1) * 8;
+
+// Event protocol: landedJump {durationSeconds, distanceMeters, heightMeters?, pitchTurns?},
+// carLaunch {durationSeconds, distanceMeters, heightMeters?, pitchTurns?}, crush {},
 // donut {seconds}, and crowdTick {seconds}. Only completed event facts count.
 export function scoreStuntEvent(event, crowd = 0) {
   if (!event || typeof event !== 'object') return {points: 0, crowd: clamp(finite(crowd), 0, 100)};
@@ -35,10 +40,10 @@ export function scoreStuntEvent(event, crowd = 0) {
   let base = 0;
   switch (event.type) {
     case 'landedJump':
-      base = 20 + Math.max(0, finite(event.durationSeconds)) * 8 + Math.max(0, finite(event.distanceMeters)) * 0.35;
+      base = 20 + Math.max(0, finite(event.durationSeconds)) * 8 + Math.max(0, finite(event.distanceMeters)) * 0.35 + heightBonus(event);
       break;
     case 'carLaunch':
-      base = 45 + Math.max(0, finite(event.durationSeconds)) * 12 + Math.max(0, finite(event.distanceMeters)) * 0.55;
+      base = 45 + Math.max(0, finite(event.durationSeconds)) * 12 + Math.max(0, finite(event.distanceMeters)) * 0.55 + heightBonus(event);
       break;
     case 'crush':
       base = 35;
