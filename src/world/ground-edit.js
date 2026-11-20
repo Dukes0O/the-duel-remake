@@ -19,8 +19,9 @@ function validShape(shape) {
     throw new TypeError('Ground shapes need a centre and a positive radius.');
 }
 
+// Every material at zero, in GROUND_MATERIALS order. A machine asks for one with every cut and fill.
 function emptyResult(reason = null) {
-  return {ok: reason === null, reason, volumes: Object.fromEntries(GROUND_MATERIALS.map(name => [name, 0])),
+  return {ok: reason === null, reason, volumes: {topsoil: 0, clay: 0, gravel: 0, rock: 0},
     volume: 0, looseVolume: 0};
 }
 
@@ -57,7 +58,10 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
   function refusal(shape) {
     if (!region.editable) return 'This region is protected ground.';
     for (const reserved of reservedShapes) {
-      if (Math.hypot(shape.x - reserved.x, shape.z - reserved.z) < shape.radius + reserved.radius)
+      const dx = shape.x - reserved.x, dz = shape.z - reserved.z, reach = shape.radius + reserved.radius;
+      // The distance is never less than either offset, so a place that far off along one axis is clear.
+      if (Math.abs(dx) >= reach || Math.abs(dz) >= reach) continue;
+      if (Math.hypot(dx, dz) < reach)
         return reserved.sentence || 'A building or protected place is in the way.';
     }
     return null;
@@ -80,8 +84,11 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
   function materialAt(x, y, z) {
     if (![x, y, z].every(finite)) throw new TypeError('Material coordinates must be finite.');
     const sx = Math.floor(x), sz = Math.floor(z);
-    const natural = naturalHeight(sx, sz);
-    const sample = sampleAt(sx, sz);
+    return cellMaterialAt(sx, sz, naturalHeight(sx, sz), sampleAt(sx, sz), y);
+  }
+
+  // The layer at height y in one ground cell, given that cell's natural height and edit sample.
+  function cellMaterialAt(sx, sz, natural, sample, y) {
     if (sample && y > natural && sample.chunk.delta[sample.index] > 0)
       return GROUND_MATERIALS[sample.chunk.material[sample.index]];
     const depth = Math.max(0, natural - y), roll = hash(numericSeed, sx, sz);
@@ -113,8 +120,14 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
         weights.push({offset, weight});
         weightSum += weight;
       }
-      for (const {offset, weight} of weights)
-        result.volumes[materialAt(shape.x, target + offset, shape.z)] += volume * weight / weightSum;
+      // Every strip is in the same ground cell, so its natural height and sample are read once.
+      const sx = Math.floor(shape.x), sz = Math.floor(shape.z);
+      const natural = naturalHeight(sx, sz), sample = sampleAt(sx, sz);
+      for (const {offset, weight} of weights) {
+        const y = target + offset;
+        if (!finite(y)) throw new TypeError('Material coordinates must be finite.');
+        result.volumes[cellMaterialAt(sx, sz, natural, sample, y)] += volume * weight / weightSum;
+      }
       result.volume = volume;
       result.looseVolume = volume * BULKING;
       return result;
