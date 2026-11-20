@@ -36,6 +36,10 @@ The Show Night listener in `src/app.js` may play this card's cue from the existi
 
 The Rex fight exposes its existing full-health scorch count at creation for fractional wall wear. The Bowl event listener plays the four stand-ins.
 
+## Director decision requested
+
+The existing Last Truck Rolling suite requires a child-pace player to win at least eight Easy trials in ten and knock out a rival in at least seven. The uniform wall-and-truck damage table replaces the Easy rivals' former one-fifth ram strength. In three Easy night-three trials the player wrecked with every rival still rolling. Should Last Truck Rolling gain its planned show weapons before these targets are judged, or should its current unarmed opponents change tactics to meet them? The builder recommends testing the planned weapons while keeping the uniform damage table and the original targets.
+
 ## Checks
 
 1. `tools/test-bowl-walls.mjs`: from seed and inputs, a truck driven into the stand wall, the Spine and an end at 10, 35
