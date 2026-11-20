@@ -91,3 +91,7 @@ The old player-credit sound is confirmed in `src/audio.js`: the event listener p
 ## Build decision
 
 Use armor as the sole health total and attribute actual loss to its contact side. Run the hammer balance proof through real driving and keep the measured Easy wall-contact pattern. The three toy weapons share the existing F input.
+
+## Applying a show weapon during real movement
+
+Please grant two narrow hooks in `src/arena/arena-event.js`, beside the player’s `_drive` and `_jump` calls and beside a rival’s `pilotStep` and `_jump` calls. They apply an active Last Truck Rolling weapon effect as the vehicle moves. The saw must halve travel for both trucks, the hammer must prevent the victim from steering for one second, and the launcher must move a truck through the 6 m high, 12 m long arc and the 2.5 second recovery. Outside the enabled event the existing movement runs as before. The weapon state and effects stay in `bowl-weapons.js`.
