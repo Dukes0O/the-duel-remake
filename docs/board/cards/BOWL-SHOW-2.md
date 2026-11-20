@@ -328,9 +328,7 @@ Three new events, each three goes with the truck put back on its run-up after ea
 - **Night 8, Champions' Night,** is back at the Bowl: Freestyle with the fallen Scrapasaurus lying on the floor as a
   ramp, Last Truck Rolling with five trucks, and a Side by Side final with Dragon Wagon, best of three.
 
-**For Kyle's word:** "the larger Titan arena that already exists" is read here as the Titan Monster Arena course. If Kyle
-meant the Bowl as enlarged on 19 November, nights 6 and 7 move to the Bowl with other floor layouts. Card BOWL-TOUR waits
-for the answer; nothing else does.
+**Kyle's answer, 20 November 2026:** "Titan Stadium course". Nights 6 and 7 are held on the Titan Monster Arena course.
 
 ### Slices
 

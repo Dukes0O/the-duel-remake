@@ -6,15 +6,12 @@ More nights: nights 6 to 8, the tour. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), sec
 nights, "using the larger Titan arena that already exists". This card follows the first release of nights 1 to 5 and is
 not needed for it.
 
-## Waiting for Kyle's word
+## Kyle's answer
 
-"The larger Titan arena that already exists" is read as the **Titan Monster Arena** course (`titan-arena`: a lap of
-1,120 m, about four times the Bowl's). If Kyle meant the Bowl as enlarged on 19 November, nights 6 and 7 stay at the Bowl
-with other floor layouts (the lap run the other way, a jump across an end, a mud night), which BOWL-EXPAND's layout
-already allows. Claude's pick is the Titan Monster Arena, because a long lap gives events the Bowl cannot. Do not start
-until `waiting_on` is cleared.
+Kyle, 20 November 2026: "Titan Stadium course". Nights 6 and 7 are held on the **Titan Monster Arena** course
+(`titan-arena`: a lap of 1,120 m, about four times the Bowl's).
 
-## What to build (on the pick above)
+## What to build
 
 1. **Night 6, Race Night, at Titan Stadium:** a **Stadium Race** of two laps against three named rivals at once, on the
    game's own race rules with the show truck lent as in the Bowl; a **Stunt Trial** of the stadium's jumps and crushes

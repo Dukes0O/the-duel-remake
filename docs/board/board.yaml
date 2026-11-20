@@ -815,7 +815,6 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    waiting_on: "kyle"
     needs: [BOWL-NIGHTS]
     locks: [bowl-night, bowl-rivals, save-shape]
     flag: "titan-bowl"
