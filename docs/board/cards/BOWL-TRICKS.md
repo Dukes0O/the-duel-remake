@@ -45,6 +45,10 @@ in flight on the Bowl only), `src/bowl/bowl-view.js` (draw the pose), `tools/bow
 `tools/test-bowl-tricks.mjs` (new, replacing `tools/test-bowl-air.mjs`), `tools/test-bowl-show.mjs`,
 `tools/test-bowl-night.mjs`. Lock: `bowl-night`.
 
+The existing Bowl pose hook in `src/vehicle-grounding.js` may read pitch, roll and yaw. The Bowl course may declare `tricks: true` in its venue data.
+
+The Show Night listener in `src/app.js` may play this card's cue from the existing sound bank.
+
 ## Checks
 
 1. `tools/test-bowl-tricks.mjs`: each trick in the table done by scripted keys on the real floor and named with its points;

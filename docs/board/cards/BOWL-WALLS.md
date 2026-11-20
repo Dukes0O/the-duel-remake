@@ -30,6 +30,10 @@ Walls that bounce, and no wear outside a fight. Design: [BOWL-SHOW-2](BOWL-SHOW-
 `tools/test-bowl-walls.mjs` (new), `tools/test-bowl-course.mjs`, `src/bowl/bowl-lines.js` (cue names only). Lock:
 `bowl-floor`.
 
+The Bowl-only branches of `_crash` in `src/sim-crash.js` and `containInArena` in `src/arena/arena-floor.js` are editing hooks. These functions otherwise apply generic wrecks and arena wall damage before the Bowl rules can act.
+
+The Show Night listener in `src/app.js` may play this card's cue from the existing sound bank.
+
 ## Checks
 
 1. `tools/test-bowl-walls.mjs`: from seed and inputs, a truck driven into the stand wall, the Spine and an end at 10, 35

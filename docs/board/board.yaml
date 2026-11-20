@@ -629,7 +629,7 @@ tasks:
     model: "astra"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: [bowl-floor]
     flag: "titan-bowl"
@@ -641,7 +641,7 @@ tasks:
     model: "astra"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: []
     locks: [bowl-night]
     flag: "titan-bowl"
