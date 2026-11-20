@@ -78,8 +78,20 @@ export const page = {
     };
     app.autopilot = true; return true; })()`,
   manual: `(() => { window.__qaApp.autopilot = false; return true; })()`,
-  card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result [data-action="show-night-next"]'))()`,
-  cardWon: `(() => document.querySelector('.bowl-result')?.dataset.bowlResult === 'won' && document.querySelector('.bowl-result').textContent.includes('all three of its battery boxes'))()`,
+  // A card after an event, or the night's results after its last event (which has no NEXT EVENT button).
+  card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result'))()`,
+  cardWon: `(() => { const result = window.__qaApp.duel.state.bowlNight?.lastResult; return result?.event === 'scrapasaurus' && result.won === true && result.boxes === 3; })()`,
+  // Where the pictures are taken from: the truck stands still on the floor short of the dropped car's
+  // place, facing along the lap, so the Scrapasaurus resting ahead, the cone on the floor, the fire,
+  // the junk car and the open box are all in front of the camera (out of the cone and the hunt's reach).
+  viewSpot: `(() => { const s = window.__qaApp.duel.state, places = s.bowlNight?.event?.rex?.places; if (!places) return false;
+    const L = places.length, ahead = ((places.car.s - 28 - s.s) % L + L) % L;
+    s.s = s.prevS = s.s + ahead; s.lateral = s.prevLateral = places.rail - places.side * 5;
+    s.speedMph = 0; s.headingError = 0; s.pushVelocity = 0; window.__qaApp.autopilot = false; return true; })()`,
+  // The Scrapasaurus is in front of the truck on screen, not off at the edge.
+  rexInFront: `(() => { const view = window.__render, rex = view?.scene?.getObjectByName('Scrapasaurus on its rails'); if (!rex || !view.camera) return false;
+    const p = rex.getWorldPosition(new rex.position.constructor()).project(view.camera);
+    return p.z < 1 && Math.abs(p.x) < .6 && Math.abs(p.y) < .9; })()`,
   nightDone: `(() => window.__qaApp.duel.state.bowlNight?.phase === 'complete' && !!document.querySelector('[data-bowl-result="night"]'))()`,
   nightYard: `(() => document.querySelector('[data-bowl-result="night"]').textContent.includes('stand in your yard'))()`,
   scrap: `(() => window.__qaApp.profile.wasteland?.scrap ?? 0)()`,
@@ -116,15 +128,18 @@ export async function run(context) {
   assert.ok(await context.evaluate(page.toFight), 'the night goes on to its fourth event, the fight');
   await waitInFight(context, page.hud, 'the HUD names the Scrapasaurus', 60000);
   await waitInFight(context, page.drawn, 'the stadium, the Titan and the Scrapasaurus are drawn', 240000);
+  assert.ok(await context.evaluate(page.viewSpot), 'the truck waits where the pictures face the Scrapasaurus');
   await picture(context, 'bowl-rex-start');
-  // The truck waits by the start line while the Scrapasaurus walks to where it rests.
+  // The truck waits short of the dropped car's place while the Scrapasaurus walks to where it rests.
   await waitInFight(context, page.tell, 'its tell where it rests', 120000);
+  assert.ok(await context.evaluate(page.rexInFront), 'the Scrapasaurus is in front of the truck in the picture');
   await picture(context, 'bowl-rex-tell-cone-on-floor');
   assert.equal(await context.evaluate(page.coneDrawn), true, 'the cone is on the floor and its chest glows during the tell, before any fire');
   await waitInFight(context, page.fire, 'the fire', 15000);
   await picture(context, 'bowl-rex-fire');
   await waitInFight(context, page.rest, 'its rest with a battery box open', 15000);
   assert.ok(await context.evaluate(page.restGoal), 'the HUD says to drive up the junk car now');
+  assert.ok(await context.evaluate(page.rexInFront), 'the resting Scrapasaurus and its open box are in front of the truck');
   await picture(context, 'bowl-rex-rest-box-open');
 
   const scrapBefore = await context.evaluate(page.scrap);
@@ -133,7 +148,9 @@ export async function run(context) {
   finally { await context.evaluate(page.manual); }
   await picture(context, 'bowl-rex-card');
   assert.ok(await context.evaluate(page.cardWon), 'the child-pace driver wins on Easy, all three boxes smashed');
-  await context.evaluate(`(() => { document.querySelector('[data-action="show-night-next"]')?.click(); return true; })()`);
+  // The fight is night five's last event, so its end is the night's results; any other card goes on to them.
+  if (!await context.evaluate(page.nightDone))
+    await context.evaluate(`(() => { document.querySelector('[data-action="show-night-next"]')?.click(); return true; })()`);
   await waitInFight(context, page.nightDone, 'night five reaches its results', 30000);
   await picture(context, 'bowl-rex-night-results');
   assert.ok(await context.evaluate(page.nightYard), 'the results say the Scrapasaurus goes to the yard');

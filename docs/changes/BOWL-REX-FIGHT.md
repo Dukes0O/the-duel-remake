@@ -5,7 +5,7 @@
 **Shared files touched.** `game.js` (one import), `app.js` (cue playback, `bowlRexInYard`), `render3d.js` (one line), `bowl-night.js` (the night-five hint), `bowl-show.js`, `bowl-lines.js` (the fight's words; "three events" made "every event" in two Turn Show lines and the picker's intro), `bowl-screens.js`, `bowl-view.js`, `scrapdome-yard.js`.
 
 **Checks**, after merging BOWL-RIVALS (d23e32e):
-- `test-bowl-rex`: 57 checks. Child-pace driver, 10 seeds each: Easy 10 of 10, Medium 6 of 10, Hard 2 of 10.
+- `test-bowl-rex`: 59 checks. Child-pace driver, 10 seeds each: Easy 10 of 10, Medium 7 of 10, Hard 5 of 10. Its size comes from the floor: 7.5 m to the top of its head on this Bowl.
 - `test-bowl-night` (276), `test-bowl-turns` (307), `test-bowl-rivals` (99) and `test-bowl-show` pass.
 - `test-replays` (297) and `test-combat-replays` (12) pass. `npm run build` passed.
 - Earlier, the lane suites on 97b0924: every failure also failed on unchanged integration/wasteland at 73d40fe, or was laptop-only.

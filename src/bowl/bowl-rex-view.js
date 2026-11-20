@@ -106,9 +106,11 @@ export function createRexView({loadModel}) {
     }
   }
 
+  // Drawn at the fight's size for this floor (rexPlaces: its head at places.headTop).
   function place(at, heading) {
     holder.position.set(at.x, at.y, at.z);
     holder.rotation.y = heading;
+    holder.scale.setScalar(places.scale);
   }
 
   return {group, update(next, state, now, show) {
@@ -137,14 +139,19 @@ export function createRexView({loadModel}) {
     pen.children.forEach((car, index) => { car.visible = index < fight.penCars; });
     place(next.groundAt(fight.s, places.rail), rexFacing(fight, next));
     // Poses: it rears for its tell, crouches to rest with its back low, and rolls over when it falls.
-    const crouch = REX_RULES.boxTop.standing - REX_RULES.boxTop.resting;
+    const crouch = places.boxTopStanding - REX_RULES.boxTop.resting;
     const low = fight.phase === 'rest' || fight.phase === 'stagger' ? 1 : 0;
-    pose.position.y += (-crouch * low - pose.position.y) * Math.min(1, dt * 4);
+    // pose is in the model's own metres (holder carries the scale).
+    pose.position.y += (-crouch / places.scale * low - pose.position.y) * Math.min(1, dt * 4);
     const pitch = fight.phase === 'tell' ? -.14 : fight.phase === 'rest' ? .1 : fight.phase === 'eat' ? .18 : 0;
     pose.rotation.x += (pitch - pose.rotation.x) * Math.min(1, dt * 3);
+    // While it rests it turns its head away from its rails, towards the wall, so a truck
+    // launched off the dropped car flies past its head and onto its back.
+    const turn = low ? -places.side * .35 : 0;
+    pose.rotation.y += (turn - pose.rotation.y) * Math.min(1, dt * 3);
     fallRoll = fight.phase === 'fallen' ? Math.min(1.45, 1.45 * fight.t / REX_RULES.fallSec) : 0;
     pose.rotation.z = -fallRoll;
-    if (fight.phase === 'fallen') pose.position.y = -crouch * .5 * fallRoll / 1.45;
+    if (fight.phase === 'fallen') pose.position.y = -crouch / places.scale * .5 * fallRoll / 1.45;
     // Its jaw works when it breathes, eats or lifts a car; its tail swings while it walks.
     const jaw = ['tell', 'fire', 'eat', 'lift'].includes(fight.phase), tail = fight.phase === 'walk';
     if (actions.jaw) { if (jaw) actions.jaw.play(); else actions.jaw.stop(); }
@@ -186,8 +193,8 @@ export function createRexView({loadModel}) {
       ring.position.set(target.x, target.y + .07, target.z);
       ring.visible = true;
       ring.material.opacity = .4 + .3 * Math.sin(seconds * 10);
-      const head = next.groundAt(fight.s - REX_RULES.headAhead, places.rail);
-      const from = new THREE.Vector3(head.x, head.y + REX_RULES.boxTop.standing + 1, head.z);
+      const head = next.groundAt(fight.s - places.headAhead, places.rail);
+      const from = new THREE.Vector3(head.x, head.y + places.headTop, head.z);
       thrown.visible = true;
       if (fight.phase === 'lift') thrown.position.copy(from);
       else {

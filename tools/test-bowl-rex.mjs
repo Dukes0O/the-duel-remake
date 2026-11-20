@@ -41,6 +41,9 @@ const P = rexPlaces(course);
   ok(P.rail === show.rails.lateral && P.car.s === show.launchCars[0].s && P.car.lateral === show.rails.lateral &&
     P.stageBoxS === wrap(P.car.s + REX_RULES.boxPastCar) && P.startS === wrap(show.crush.firstRowS - 2) && Math.abs(P.rail) < P.edge,
     'the rails, the rest, the dropped car and the start come from the course\'s features.bowl');
+  ok(P.headTop >= 7.5 && P.headTop === Math.max(REX_RULES.headTop.min, REX_RULES.headTop.share * P.edge) &&
+    Math.abs(P.scale * REX_RULES.model.height - P.headTop) < 1e-9 && Math.abs(P.headAhead - REX_RULES.model.nozzleAhead * P.scale) < 1e-9 &&
+    P.boxTopStanding > REX_RULES.boxTop.resting, 'it stands at least 7.5 m to the top of its head, its size and reach scaled from the floor');
   ok(SHOW_NIGHTS[4].events.at(-1) === BOWL_EVENTS.SCRAPASAURUS && SHOW_NIGHTS[4].events.length === 4 &&
     SHOW_NIGHTS[4].events[2] === BOWL_EVENTS.LAST_TRUCK_ROLLING, 'night five is four events: Last Truck Rolling, then the Scrapasaurus');
   ok(SHOW_NIGHTS.slice(0, 4).every(night => !night.events.includes(REX_EVENT)), 'only night five has the Scrapasaurus');
@@ -223,6 +226,7 @@ const lander = fight => fight.phase === 'rest'
   ok(cone.material.depthTest === false && parts('Scrapasaurus throw ring').material.depthTest === false,
     'the cone and the ring draw over the ramps, so no part of them is buried where a ramp rises');
   ok(parts('Scrapasaurus chest glow').visible, 'its chest glows during the tell');
+  ok(Math.abs(parts('Scrapasaurus on its rails').scale.x - P.scale) < 1e-9, 'it is drawn at the size the rules use');
   while (fight.phase !== 'fire') stepRexFight(fight, truck, DT, course);
   view.update(course, state, 32, true);
   ok(cone.visible && parts('Scrapasaurus fire').visible, 'the fire fills the cone that was shown');

@@ -60,3 +60,8 @@ Two findings for the Director:
 Pace is now the time to walk once round (Easy 42 s, Medium 34 s, Hard 28 s), so the rhythm keeps on any floor.
 Rests are Easy 20 s, Medium 14 s and Hard 11 s, a lap of the new floor being about 17 s at a child's pace. Hard has
 five rests.
+
+Size (the Director's laptop check): the model is drawn and ruled at a scale from the floor, with the top of its head at
+37.5 percent of the floor's half width and never under 7.5 m (7.5 m, 1.29 times the model, on this Bowl). Its legs,
+width, reach and standing box height scale with it. To rest it crouches until the open box is 4.8 m up, where a truck
+launched off the junk car comes down, and it turns its head towards the wall so the truck flies past it.

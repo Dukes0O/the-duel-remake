@@ -34,28 +34,35 @@ const DEG = Math.PI / 180;
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play. Every place
 // on the floor (the rails, where it rests, its pen, the gate and how far its fire
 // reaches) comes from the course's own data in rexPlaces, so the fight follows the
-// floor when the floor changes (BOWL-EXPAND). The numbers here are the model's
-// sizes, how long things take, and what a truck in the air does.
+// floor when the floor changes (BOWL-EXPAND). So does its size: it is drawn and
+// ruled at a scale that puts the top of its head at headTop of the floor's half
+// width (and never under minHeadTop), and every size of its body below is in the
+// model's own metres, scaled by rexPlaces. The other numbers are how long things
+// take and what a truck in the air does.
 export const REX_RULES = Object.freeze({
-  // Its body is 11 m long and 3.2 m wide (scrapasaurus.glb), and its fire nozzle
-  // is 5 m ahead of its middle. Only its legs and bogie stand on the floor (7.6 m);
-  // its head and neck are overhead.
-  halfLength: 3.8, halfWidth: 1.6, headAhead: 5, penCars: 8,
+  // scrapasaurus.glb (BOWL-ART-REX round 2): 5.8 m to the top of its head, 15.6 m from
+  // tail to jaw. Only its legs and bogie stand on the floor (7.6 m long, 3.2 m wide); its
+  // head and neck are overhead, and its fire nozzle is 6.5 m ahead of its middle.
+  model: Object.freeze({height: 5.8, halfLength: 3.8, halfWidth: 1.6, nozzleAhead: 6.5, boxTop: 4.66}),
+  headTop: Object.freeze({share: .375, min: 7.5}),
+  penCars: 8,
   // When it rests it drops a junk car on the floor in front of itself, at the show's
   // launch-car place (features.bowl.launchCars), and the open box is this far past that
   // car: a truck that drives up the car at 30 to 45 mph (the Titan's launch off cars,
   // FUN-TITAN-LAUNCH, unchanged) comes down on its back from 8 to 18 m past it.
   boxPastCar: 13,
-  // Each battery box's place along the body, metres towards the head, as in the
+  // Each battery box's place along the body, model metres towards the head, as in the
   // model (battery-box-1 to battery-box-3). They are smashed in that order.
   boxes: Object.freeze([-1.35, .1, 1.55]),
-  // The top of a battery box above the floor: standing, and lowered a little to rest.
-  boxTop: Object.freeze({standing: 4.7, resting: 4.2}),
-  // A truck in the air over its back (this far along from the open box and across from
-  // its rails), no lower than minBelow under the box's top and no more than maxAbove over
-  // it, and at or past the top of its jump (rising no faster than maxRiseMps), comes down
-  // on the open box.
-  catch: Object.freeze({along: 5, across: 3, minBelow: 1.6, maxAbove: 3.6, maxRiseMps: 1}),
+  // The top of the open box above the floor while it rests: it crouches to bring its
+  // back down to where a truck launched off the dropped car comes down (not scaled, since
+  // the truck's flight does not grow with the floor).
+  boxTop: Object.freeze({resting: 4.8}),
+  // A truck in the air over its back (this far along from the open box, and across from
+  // its rails no further than its half width and a truck's), no lower than minBelow under
+  // the box's top and no more than maxAbove over it, and at or past the top of its jump
+  // (rising no faster than maxRiseMps), comes down on the open box.
+  catch: Object.freeze({along: 5, truckHalfWidth: 1.4, minBelow: 1.6, maxAbove: 3.6, maxRiseMps: 1}),
   // The flamethrower's cone (src/arsenal/flamethrower.js: 9 m, 15 degrees), larger:
   // where it rests it reaches from its nozzle back past the dropped car and the truck's
   // run-up to it (rexPlaces), and never less than twice the flamethrower's. A hunt
@@ -113,12 +120,18 @@ export function rexPlaces(course) {
   // It drops the car onto its own rails in front of itself, so a truck that drives up it flies along its back.
   const car = {s: wrap(launch ? launch.s : big.end + 20, L), lateral: rail};
   const stageBoxS = wrap(car.s + REX_RULES.boxPastCar, L);
+  // Its size for this floor.
+  const model = REX_RULES.model, headTop = Math.max(REX_RULES.headTop.min, REX_RULES.headTop.share * half);
+  const scale = headTop / model.height;
+  const size = {scale, headTop, halfLength: model.halfLength * scale, halfWidth: model.halfWidth * scale,
+    headAhead: model.nozzleAhead * scale, boxTopStanding: model.boxTop * scale,
+    boxes: REX_RULES.boxes.map(along => along * scale)};
   // From its nozzle where it rests (the first box's rest) back past the car and the run-up.
   const range = Math.max(REX_RULES.fire.minRange,
-    REX_RULES.boxPastCar + REX_RULES.boxes[0] - REX_RULES.headAhead + REX_RULES.fire.runUp);
+    REX_RULES.boxPastCar + size.boxes[0] - size.headAhead + REX_RULES.fire.runUp);
   const startS = show.start?.s ?? 0;
   return {
-    length: L, rail, side, edge: half, car,
+    length: L, rail, side, edge: half, car, ...size,
     startS: wrap(crushStart - 2, L), stageBoxS,
     penS: wrap(crushEnd + (L - crushEnd + startS) / 2, L), penLateral: side * Math.min(half, Math.abs(rail) + 3.5),
     gateS: wrap(startS + ((ramps[0]?.start ?? 0) - startS) / 2, L),
@@ -143,10 +156,10 @@ export const rexNextBox = fight => fight.boxes.indexOf(false);
 export const rexBoxesLeft = fight => fight.boxes.filter(smashed => !smashed).length;
 export const rexWalkMps = fight => fight.length / REX_RULES.level[fight.level].lapSec * (fight.hurt ? REX_RULES.limp : 1);
 // Where its middle stops to rest so that the next box is at the resting place.
-const stageStop = fight => wrap(fight.places.stageBoxS + REX_RULES.boxes[Math.max(0, rexNextBox(fight))], fight.length);
+const stageStop = fight => wrap(fight.places.stageBoxS + fight.places.boxes[Math.max(0, rexNextBox(fight))], fight.length);
 // Where a box is along the ring: the body faces down the ring (towards lower s).
-export const rexBoxS = (fight, index) => wrap(fight.s - REX_RULES.boxes[index], fight.length);
-export const rexHeadS = fight => wrap(fight.s - REX_RULES.headAhead, fight.length);
+export const rexBoxS = (fight, index) => wrap(fight.s - fight.places.boxes[index], fight.length);
+export const rexHeadS = fight => wrap(fight.s - fight.places.headAhead, fight.length);
 // The way the body faces in the world (the course's own heading, turned round).
 export const rexFacing = (fight, course) => course.worldAt(rexHeadS(fight), fight.places.rail).heading + Math.PI;
 export const rexLastRest = fight => fight.rests >= REX_RULES.level[fight.level].rests;
@@ -241,7 +254,7 @@ export function stepRexFight(fight, truck, dt, course) {
     case 'rest': {
       const box = rexNextBox(fight);
       if (truck.airborne && air >= rules.boxTop.resting - rules.catch.minBelow && air <= rules.boxTop.resting + rules.catch.maxAbove &&
-          (truck.verticalSpeed ?? 0) <= rules.catch.maxRiseMps && Math.abs(across) <= rules.catch.across &&
+          (truck.verticalSpeed ?? 0) <= rules.catch.maxRiseMps && Math.abs(across) <= places.halfWidth + rules.catch.truckHalfWidth &&
           Math.abs(along(truck.s, rexBoxS(fight, box), L)) <= rules.catch.along) {
         fight.boxes[box] = true; fight.hurt = true; fight.t = 0;
         const left = rexBoxesLeft(fight);
@@ -281,12 +294,12 @@ export function stepRexFight(fight, truck, dt, course) {
   // onto the open box, is pushed back out on the stands' side and slowed.
   if (!fight.done && fight.phase !== 'fallen' && fight.phase !== 'gone' && !events.some(event => event.type === 'smash')) {
     // While it rests, a truck coming down from a jump lands on its back.
-    const top = fight.phase === 'rest' || fight.phase === 'stagger' ? rules.boxTop.resting - rules.catch.minBelow : rules.boxTop.standing;
-    if (fight.bumpCooldown <= 0 && air < top && Math.abs(across) <= rules.halfWidth + 1.5 &&
-        Math.abs(along(truck.s, fight.s, L)) <= rules.halfLength + 2) {
+    const top = fight.phase === 'rest' || fight.phase === 'stagger' ? rules.boxTop.resting - rules.catch.minBelow : places.boxTopStanding;
+    if (fight.bumpCooldown <= 0 && air < top && Math.abs(across) <= places.halfWidth + 1.5 &&
+        Math.abs(along(truck.s, fight.s, L)) <= places.halfLength + 2) {
       fight.bumpCooldown = rules.bumpCooldownSec;
       // Pushed out towards the middle of the floor, away from its rails.
-      events.push({type: 'bump', lateral: places.rail - places.side * (rules.halfWidth + 1.6)});
+      events.push({type: 'bump', lateral: places.rail - places.side * (places.halfWidth + 1.6)});
     }
   }
   if (!fight.done && fight.hits >= level.hits) {
