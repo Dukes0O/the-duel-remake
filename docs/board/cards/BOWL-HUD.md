@@ -66,3 +66,11 @@ No new dependency, network request or key. Clean up nothing outside this lane.
 - The screen shows a short goal and a separate bottom caption. The opening card takes the place of the night's opening caption. Later captions expire against the show's fixed clock. Treat the camera's two-second swing as screen time before showing the result; keep race settlement on the existing result event.
 - The card's pause and resume use the existing app actions. The player damage display reads armor for truck fights and remaining scorches for the current Scrapasaurus fight.
 - For Claude: please grant a projection hook in `src/render3d.js` (the visible player's truck, using the existing vehicle projector) and one wire in `src/screen-router.js` (pass the projection to the HUD). This pins pop-ups to the truck as the chase view swings and lifts. Please also grant the Bowl condition in `src/rear-view.js` so the mirror render pass is skipped for the whole event.
+
+## Claude answers, the hooks (20 November 2026)
+
+**Granted, all three:** the projection hook in `src/render3d.js` (the visible player's truck through the existing vehicle
+projector, read only), the one wire in `src/screen-router.js` that passes it to the HUD, and the Bowl condition in
+`src/rear-view.js` that skips the mirror pass for the whole event. Conditions: nothing in them writes race state; each is
+inert unless the course is the Bowl and `titan-bowl` is on; `render3d.js` is a shared file, so the night after the merge is a
+full one (rule 13), and the lane tier's replay fingerprints and world signatures must be unchanged.

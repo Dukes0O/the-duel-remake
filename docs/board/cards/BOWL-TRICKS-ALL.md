@@ -66,3 +66,9 @@ dependency, network request or key. Clean up nothing outside this lane.
 ## Result screen hook for Claude
 
 The Monster Arena race uses the ordinary result card in `src/screen-results.js`. Its result metrics are assembled there. Please grant a read-only hook in `createResultsScreen` to show the trick score alongside the time and finishing position when arena tricks are active. The ordinary race result still decides the winner and the payout. This card is queued behind BOWL-HUD.
+
+## Claude answers, the result screen hook (20 November 2026)
+
+**Granted:** a read-only hook in `createResultsScreen` (`src/screen-results.js`) that shows the trick score beside the time
+and the finishing place when arena tricks are on. The ordinary race result still decides the winner and the pay; with the
+switch off the card is exactly as before. Build it after BOWL-HUD merges, as queued.

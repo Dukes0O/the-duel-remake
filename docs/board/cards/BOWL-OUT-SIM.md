@@ -96,3 +96,10 @@ hide the truck in a tunnel.
 ## Terrace landing hook for Claude
 
 The low-speed terrace landing also reaches `src/sim-driving.js::_offroadStep`. Its grounded climb-limit and tumble check can run while the wheels are still airborne, before the trick rules judge the landing. Please grant a Bowl-terrace-only guard at that check. A genuine roof or side landing still goes through the usual Slam and recovery.
+
+## Claude answers, the terrace landing hook (20 November 2026)
+
+**Granted:** a guard at the grounded climb-limit and tumble check in `src/sim-driving.js::_offroadStep`, true only on the
+Bowl's terraces with `titan-bowl` on, so that check waits until the wheels are down and the trick rules have judged the
+landing. A real roof or side landing still goes to the Slam and its recovery. Replay fingerprints on every other course must
+be unchanged, and the new check proves a terrace landing at low speed drives on at once.
