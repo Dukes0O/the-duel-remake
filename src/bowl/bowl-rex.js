@@ -47,8 +47,10 @@ export const REX_RULES = Object.freeze({
   boxes: Object.freeze([-1.35, .1, 1.55]),
   // The top of a battery box above the floor: standing, and crouched to rest.
   boxTop: Object.freeze({standing: 4.7, resting: 2.6}),
-  // A truck in the air within this much of the open box, at least this high, lands on it.
-  catch: Object.freeze({along: 3.5, across: 2.4, minAir: 1.5}),
+  // A truck in the air within this much of the open box, at least this high, no more than
+  // maxAbove over the box's top, and at or past the top of its jump (rising no faster than
+  // maxRiseMps), comes down on it.
+  catch: Object.freeze({along: 3.5, across: 2.4, minAir: 1.5, maxAbove: 2.6, maxRiseMps: 1}),
   // The flamethrower's cone (src/arsenal/flamethrower.js: 9 m, 15 degrees), larger:
   // at the ramp it reaches from its nozzle back past the foot of the big ramp
   // (rexPlaces), and never less than twice the flamethrower's. A hunt reaches a
@@ -146,7 +148,7 @@ function startTell(fight, course, kind, aim) {
   return {type: 'tell', kind, cone: {...fight.cone}};
 }
 
-// One fixed step of the fight. truck: {s, lateral, airborne, airHeight, speedMph}.
+// One fixed step of the fight. truck: {s, lateral, airborne, airHeight, verticalSpeed, speedMph}.
 // Returns the events of the step; the runner applies their effects to the truck.
 export function stepRexFight(fight, truck, dt, course) {
   const events = [], rules = REX_RULES, level = rules.level[fight.level], L = fight.length, places = fight.places;
@@ -220,7 +222,8 @@ export function stepRexFight(fight, truck, dt, course) {
     }
     case 'rest': {
       const box = rexNextBox(fight);
-      if (truck.airborne && air >= rules.catch.minAir && Math.abs(across) <= rules.catch.across &&
+      if (truck.airborne && air >= rules.catch.minAir && air <= rules.boxTop.resting + rules.catch.maxAbove &&
+          (truck.verticalSpeed ?? 0) <= rules.catch.maxRiseMps && Math.abs(across) <= rules.catch.across &&
           Math.abs(along(truck.s, rexBoxS(fight, box), L)) <= rules.catch.along) {
         fight.boxes[box] = true; fight.hurt = true; fight.t = 0;
         const left = rexBoxesLeft(fight);
@@ -316,7 +319,7 @@ registerBowlEventRunner(REX_EVENT, {
   step(duel, night, dt) {
     const s = duel.state, fight = night.event.rex;
     const events = stepRexFight(fight, {s: s.s, lateral: s.lateral, airborne: !!s.airborne,
-      airHeight: s.airHeight || 0, speedMph: s.speedMph}, dt, duel.course);
+      airHeight: s.airHeight || 0, verticalSpeed: s._verticalSpeed || 0, speedMph: s.speedMph}, dt, duel.course);
     for (const event of events) {
       applyToTruck(duel, event);
       duel.emit({bowlRex: {...event, cue: REX_CUES[event.type] ?? null}});

@@ -36,7 +36,7 @@ export const page = {
   fire: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'fire')()`,
   rest: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'rest')()`,
   restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent.includes('jump the big ramp'))()`,
-  coneDrawn: `(() => { const cone = window.__qaRenderer?.scene?.getObjectByName?.('Scrapasaurus fire cone'); return cone ? cone.visible : null; })()`,
+  coneDrawn: `(() => { const scene = window.__render?.scene; return !!scene?.getObjectByName('Scrapasaurus fire cone')?.visible && !!scene.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
   // A child-pace driver in the page: round on the stands' side, out to the floor's edge while fire is
   // coming, and on to the rails for the big ramp once a box is open (tools/test-bowl-rex.mjs).
   driver: `(() => { const app = window.__qaApp;
@@ -85,8 +85,7 @@ export async function run(context) {
   // The truck waits by the start line while the Scrapasaurus walks to the big ramp.
   await context.waitFor(page.tell, 'its tell at the big ramp', 60000);
   await picture(context, 'bowl-rex-tell-cone-on-floor');
-  const drawn = await context.evaluate(page.coneDrawn);
-  if (drawn !== null) assert.equal(drawn, true, 'the cone is on the floor during the tell, before any fire');
+  assert.equal(await context.evaluate(page.coneDrawn), true, 'the cone is on the floor and its chest glows during the tell, before any fire');
   await context.waitFor(page.fire, 'the fire', 10000);
   await picture(context, 'bowl-rex-fire');
   await context.waitFor(page.rest, 'its rest with a battery box open', 10000);

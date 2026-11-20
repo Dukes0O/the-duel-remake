@@ -31,8 +31,9 @@ function fanGeometry(halfAngle, segments = 24) {
   return geometry;
 }
 
-const glowMaterial = color => new THREE.MeshBasicMaterial({color, transparent: true, opacity: .5,
-  depthWrite: false, side: THREE.DoubleSide, toneMapped: false, blending: THREE.AdditiveBlending});
+// Drawn over the floor and the ramps, so the cone and the ring are seen even where a ramp rises through them.
+const glowMaterial = (color, depthTest = false) => new THREE.MeshBasicMaterial({color, transparent: true, opacity: .5,
+  depthWrite: false, depthTest, side: THREE.DoubleSide, toneMapped: false, blending: THREE.AdditiveBlending});
 
 export function createRexView({loadModel}) {
   const group = new THREE.Group();
@@ -43,6 +44,13 @@ export function createRexView({loadModel}) {
   const holder = new THREE.Group(); holder.name = 'Scrapasaurus on its rails';
   const pose = new THREE.Group(); pose.name = 'Scrapasaurus pose';
   holder.add(pose);
+  // The tell's chest glow: a furnace light in its chest, under the neck, that brightens until the fire comes.
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(.9, 16, 10), glowMaterial(ORANGE, true));
+  chest.name = 'Scrapasaurus chest glow'; chest.position.set(0, 3.4, 2.6); chest.visible = false;
+  const chestLight = new THREE.PointLight(ORANGE, 0, 14, 2);
+  chestLight.position.copy(chest.position);
+  pose.add(chest, chestLight);
+  let asset = null;
   // The cone on the floor (the tell), and the fire filling it.
   const cone = new THREE.Mesh(fanGeometry(REX_RULES.fire.halfAngle), glowMaterial(ORANGE));
   cone.name = 'Scrapasaurus fire cone'; cone.renderOrder = 4; cone.visible = false;
@@ -61,19 +69,18 @@ export function createRexView({loadModel}) {
   const pen = new THREE.Group(); pen.name = 'Scrapasaurus pen of junk cars';
   group.add(holder, cone, fire, ring, thrown, pen);
 
+  // The model loads once for the view; each event on a new course only moves it and rebuilds the pen.
   function clear() {
-    for (const child of [...pose.children]) { child.removeFromParent(); disposeTree(child); }
     for (const child of [...pen.children]) { child.removeFromParent(); child.geometry?.dispose?.(); }
-    mixer?.stopAllAction(); mixer = null; actions = {}; model = null; boxes = []; loading = null;
     course = null; places = null;
   }
 
   function build(next) {
     clear();
     course = next; places = rexPlaces(next);
-    const current = next;
-    loading = loadModel(MODEL).then(asset => {
-      if (disposed || course !== current) { disposeTree(asset.scene); return; }
+    loading ??= loadModel(MODEL).then(loaded => {
+      if (disposed) { disposeTree(loaded.scene); return; }
+      asset = loaded;
       model = asset.scene;
       model.name = 'Scrapasaurus model';
       model.traverse(node => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
@@ -109,14 +116,15 @@ export function createRexView({loadModel}) {
     const teaser = !fight && (night?.night === 3 || night?.night === 4);
     const enabled = show === true && next?.def?.bowl === true && !disposed && (!!fight || teaser);
     group.visible = enabled;
-    if (!enabled) { lastNow = now; return; }
+    if (!enabled) { lastNow = now; chestLight.intensity = 0; return; }
     if (next !== course) build(next);
     const dt = lastNow == null ? 0 : Math.max(0, Math.min(.1, (now - lastNow) / 1000));
     lastNow = now;
     mixer?.update(dt);
     const seconds = now / 1000;
     pen.visible = !!fight;
-    cone.visible = fire.visible = ring.visible = thrown.visible = false;
+    cone.visible = fire.visible = ring.visible = thrown.visible = chest.visible = false;
+    chestLight.intensity = 0;
     if (teaser) {
       // Behind the wall in front of the stands, at the head of the crush line, looking in.
       const at = next.groundAt(places.startS, places.edge + 4.5);
@@ -159,9 +167,13 @@ export function createRexView({loadModel}) {
         item.scale.set(fight.cone.range, 1, fight.cone.range);
       }
       cone.visible = true;
-      // The tell: the cone pulses faster as the fire gets close. The fire: the cone burns.
+      // The tell: the cone pulses faster as the fire gets close, and its chest glows brighter. The fire: the cone burns.
       const level = REX_RULES.level[fight.level];
       const share = fight.phase === 'tell' ? Math.min(1, fight.t / level.tellSec) : 1;
+      chest.visible = true;
+      chest.material.opacity = .35 + .55 * share;
+      chest.scale.setScalar(.8 + .5 * share + .08 * Math.sin(seconds * 14));
+      chestLight.intensity = 40 + 260 * share;
       cone.material.opacity = fight.phase === 'tell' ? .22 + .3 * share * (.5 + .5 * Math.sin(seconds * (6 + share * 10))) : .6;
       fire.visible = fight.phase === 'fire';
       if (fire.visible) fire.children.forEach((sheet, layer) => {
@@ -187,6 +199,6 @@ export function createRexView({loadModel}) {
     }
   }, dispose() {
     if (disposed) return;
-    disposed = true; clear(); disposeTree(group);
+    disposed = true; clear(); mixer?.stopAllAction(); disposeTree(group);
   }};
 }

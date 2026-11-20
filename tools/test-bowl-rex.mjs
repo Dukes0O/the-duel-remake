@@ -83,6 +83,12 @@ const lander = fight => fight.phase === 'rest'
   const shut = runRules('easy', f => f.phase === 'walk' && Math.abs(along(f.s, P.startS)) > 30
     ? {s: f.s, lateral: P.rail, airborne: true, airHeight: 2.4, speedMph: 30} : parked(f), 120);
   ok(!shut.log.some(event => event.type === 'smash'), 'a truck over its back while it walks smashes nothing');
+  // Over the open box but still climbing hard, or far above it, the truck has not come down on it yet.
+  const over = (extra) => f => f.phase === 'rest' ? {...lander(f), ...extra} : parked(f);
+  ok(!runRules('easy', over({verticalSpeed: 4}), 120).log.some(event => event.type === 'smash') &&
+    !runRules('easy', over({airHeight: REX_RULES.boxTop.resting + REX_RULES.catch.maxAbove + .5}), 120).log.some(event => event.type === 'smash'),
+    'a truck still climbing, or flying high over the box, does not count as landing on it');
+  ok(runRules('easy', over({verticalSpeed: -3}), 120).log.some(event => event.type === 'smash'), 'a truck coming down on the box does');
 }
 
 {
@@ -197,7 +203,8 @@ const lander = fight => fight.phase === 'rest'
     const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial());
     box.name = `battery-box-${index}-${look}`; scene.add(box);
   }
-  const view = createRexView({loadModel: async () => ({scene, animations: []})});
+  let rexLoads = 0;
+  const view = createRexView({loadModel: async () => { rexLoads++; return {scene, animations: []}; }});
   const fight = createRexFight({difficulty: 'easy', course});
   const state = {bowlNight: {night: 5, event: {type: REX_EVENT, rex: fight}}};
   const parts = name => view.group.getObjectByName(name);
@@ -211,6 +218,9 @@ const lander = fight => fight.phase === 'rest'
   const cone = parts('Scrapasaurus fire cone');
   ok(cone.visible && !parts('Scrapasaurus fire').visible && Math.abs(cone.rotation.y - fight.cone.heading) < 1e-9 &&
     cone.scale.x === fight.cone.range, 'from the start of the tell the floor shows exactly where the fire will go');
+  ok(cone.material.depthTest === false && parts('Scrapasaurus throw ring').material.depthTest === false,
+    'the cone and the ring draw over the ramps, so no part of them is buried where a ramp rises');
+  ok(parts('Scrapasaurus chest glow').visible, 'its chest glows during the tell');
   while (fight.phase !== 'fire') stepRexFight(fight, truck, DT, course);
   view.update(course, state, 32, true);
   ok(cone.visible && parts('Scrapasaurus fire').visible, 'the fire fills the cone that was shown');
@@ -226,6 +236,10 @@ const lander = fight => fight.phase === 'rest'
   ok(!view.group.visible, 'it is not in the Bowl on nights one and two');
   view.update(course, {bowlNight: {night: 3, event: {type: 'lastTruckRolling'}}}, 96, true);
   ok(view.group.visible && !parts('Scrapasaurus fire cone').visible, 'on nights three and four it stands behind the wall, seen before it is fought');
+  view.update({...course, def: course.def, features: course.features, length: course.length,
+    groundAt: course.groundAt.bind(course), worldAt: course.worldAt.bind(course)}, state, 112, true);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  ok(rexLoads === 1, 'a new course (each event and retry) does not load the model again');
   view.dispose();
 }
 
