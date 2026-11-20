@@ -6,7 +6,7 @@ cards are on the board and Kyle's decisions are in `docs/board/decisions.md`.
 
 ## Holds
 
-NEXT HEAVY SLOT: None.
+None.
 
 ## Questions with no card
 
