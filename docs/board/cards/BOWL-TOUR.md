@@ -41,7 +41,8 @@ Yes: "the larger Titan arena that already exists" is the **Titan Monster Arena**
 ## Checks
 
 1. `tools/test-bowl-tour.mjs`: each of the three nights runs its events in order at its venue; a scripted child-pace
-   driver wins the Stadium Race on Easy at least 9 times in 10.
+   driver wins the Stadium Race on Easy at least 6 times in 10 and not on all ten (Kyle, 20 November 2026: the player is a
+   pre-teen).
 2. World signatures of `titan-arena` and `titan-stunt-trial` unchanged, and their replay fingerprints as BOWL-TRICKS-ALL
    left them; a night started in a light road car plays every event that needs no crushing; `tools/test-bowl-save.mjs`
    with nights 6 to 8, reviewed by the save checker.

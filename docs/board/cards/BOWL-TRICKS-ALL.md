@@ -292,3 +292,31 @@ The original 30 drives at `762a7292d` measured 310, 2690 and 930 by the existing
 The 4260 Hard mark is reachable with the new controls. The same expert route, ground pace, reaction and steering wobble won ordinary 90-second Freestyle on seeds 1, 2 and 3 with 5335, 5116 and 5035 points. The driver tapped brake plus right steering on air tick 4, then tapped brake on Big Jump tick 102. It landed the double backflip, combo and spin without any secret code. The matched Monster Arena final sector also gave identical race result objects with and without a clean backflip.
 
 The terrace cap now passes the original prescribed seeds on Easy and Medium, including 3, 7 and 8. Easy clean backflips measured ten of ten with no Slams on each of the Table, Big Jump and full-speed kicker. The Full Works control, discovery lines, switch and balance ladder have their rulings. The four old assertions listed under “Part 1 laptop drive and rule 18 review” still need their own written ruling before the suite can use them.
+
+## Kicker speed and the number of turns
+
+At the child's 30 mph run-up, holding brake after the lip gives one completed turn and one late notice on Easy. The same holds at 40 and 50 mph. The Hard drive Slams. At 60 mph the same physical kicker gives enough airtime for two Easy turns, and at the Titan's 116 mph factory top speed it gives time for three. The separate full-speed ten-seed check landed cleanly ten times. Please confirm that “no double off a kicker” describes the child-pace check and that higher-speed flights use the same allowed turn time. The builder has kept the flight and landing thresholds intact.
+
+Save checker approved `16b1cb81b` using the real App and memory-only players. After a failed write and a second discovery, a newer Bowl record and 717 credits added by another writer stayed byte-for-byte intact. The two Turn Show drivers kept separate tricks after a reload. The 151 Bowl save checks, 1,123 historical/forged-fixture checks, 3,654 damaged-field checks, backup and storage budget passed. The same revision passed the production build and 33-drive balance check.
+
+## Claude answers, kicker speed (20 November 2026)
+
+**Confirmed.** "No double off a kicker" describes the child-pace check (30 to 50 mph: one turn and a late notice on Easy).
+Faster flights use the same allowed turn time, so a kicker taken at 60 mph can give two turns and at the Titan's top speed
+three; that is a reward for speed, as it should be. The flight and landing thresholds stay as they are. The save checker's
+approval at `16b1cb81b` is noted.
+
+## Preview launcher
+
+The lane check `test-preview-launcher` failed with “preview URL must request arena-tricks”. The project preview launcher names each current dev switch explicitly. Please grant adding `arena-tricks` to `PREVIEW_FLAGS` in `start-preview.bat`. The release launcher stays on its current switches and the existing inventory check will run as written.
+
+## Claude answers, the preview launcher (20 November 2026)
+
+**Granted:** add `arena-tricks` to `PREVIEW_FLAGS` in `start-preview.bat`; the release launcher keeps its switches and the
+inventory check runs as written.
+
+## Local hand drive and four remaining checks at `358ee9fb4`
+
+All three parts are playable together on `codex/bowl-tricks-all`. The 143-suite lane passed 141, including all 297 replay checks. The two failures are the approved preview switch and the old held-key suite. The slide now reaches 36 mph exactly one second after a 72 mph landing. The skilled Hard driver earned 5,421 / 5,116 / 5,035 on the original seeds with the same double backflip, combo and spin.
+
+For rule 18, please mark the four Part 1 replacements approved or name the change needed: (1) a single released tap completes and pays a whole turn; (2) sideflip and the ongoing spin both complete, with 45 + 120 and a clean combo; (3) a genuinely late Hard press slams and pays zero with all truck damage zones unchanged; the separate parked-car check still requires the Titan to crush the car at takeoff and receive no launch reward after the roof landing; (4) W then S pays front 75, back 75 and Yo-Yo 100. The original suite still uses its old assertions pending that ruling. Please also record the named laptop drives on this candidate: ten Easy flips and four over-wall jumps, the seven discoveries on H, and the three Monster Arena vehicle classes at the finish.

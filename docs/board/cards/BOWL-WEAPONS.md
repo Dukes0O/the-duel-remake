@@ -131,3 +131,43 @@ Please drive Last Truck Rolling once with each weapon on `codex/bowl-weapons` at
 Bowl race and Rex cue dispatch in `src/app.js`, so the three weapons play their tells and hits. Normal arenas keep their sound
 and credit; `app.js` is shared, so the night after the merge is a full one. The laptop drive of the three weapons on
 `5c837fccb` is Claude's and follows here.
+
+## Easy fight balance after the wall trials
+
+With the inherited steering and 20% player wall wear, the simple F cue won 3/10, only two with at least two credited knockouts. With zero player wall wear and a closing-speed cue, the same ten drivers lost all ten, with ten credited knockouts in total. In seed order 1989, 2090, 2191, 2292, 2393, 2494, 2595, 2696, 2797 and 2898, the knockout counts were 3/0/0/1/1/1/0/1/1/2. Hard or big wall contacts were 8/8/3/10/4/6/5/5/4/20. Rams accounted for 456 of the 600 health lost and hammers for 144. Wall, saw and landing losses were zero in the control.
+
+Please rule on applying the existing Easy rival-hit share (0.2) to a rival-initiated ram against the player, or on reducing how often Easy rivals all target the player. We recommend testing the ram share first, measuring ten real fights with the same steering and the full weapon damage table, while keeping Medium and Hard intact. The target remains nine actual wins, each with at least two credited knockouts. The separate one-knockout audio request also awaits a ruling.
+
+Seed 1989's three credited knockouts in a loss are explained by a simultaneous finish. Each opponent was counted once. Big Kettle went out at 46.4667 s, Tin Lizard at 57.9583 s and Old Bess at 82.9250 s. That last contact took the player to zero first, then took Old Bess from two health to zero in the same tick. Both drivers received the appropriate credit.
+
+Sound is ready for the laptop at `837046539`. A physical elimination in the actual App produced one Bowl knockout and one mapped playback. The same credited wreck outside Show Night played its existing sound. The heavy-traffic control also confirmed that Easy already allows only one hunter to target the player at a time. The player rams opponents as part of the measured steering pattern, so a rival-initiated-only damage share will be measured from the two vehicles' pre-impact closing velocities.
+
+## Claude answers, the Easy fight balance (20 November 2026)
+
+**Approved: test the ram share first.** On Easy, apply the existing rival-hit share (0.2) to a ram that the rival starts
+against the player, judged from the two trucks' closing velocities before impact, so the player's own rams keep full effect.
+Measure ten real fights with the same steering and the full weapon table; the target stays nine wins in ten, each with at least
+two credited knockouts. Medium and Hard unchanged. If it falls short, report before reaching for the targeting rule. The
+knockout sound hooks were granted earlier today (section "Claude answers, hearing one knockout"); the drive of the three
+weapons on the laptop is under way.
+
+## Measured Easy rival-initiated ram share
+
+Using the approved 0.2 share and the same ten drivers and full weapon table, Easy won 3/10. Two wins had two or more credited knockouts. The player lost 450 health to rams, 54 to hammers and 61 to walls. The Hard driver who ignored tells lost with zero knockouts. Twelve head-on and lateral contacts checked both initiators on each difficulty. When the rival closed at 27 mph versus 8 mph, Easy cost the player 1 health. When the player closed faster, it cost 5. The contacted rival took 5 in both cases. Rival targeting was unchanged.
+
+Please rule on testing a smaller Easy recoil when the child initiates a ram. The current hit costs the attacker as much health as the target, which makes ordinary attacks expensive even when the child avoids the rival’s attack. Suggested trial: the player takes 20 percent recoil, then zero if needed, with full damage to the struck rival, all existing scoring, original steering and the full weapon table. Do you grant those Easy recoil trials, or prefer another change? The nine qualifying wins in ten remains the gate.
+
+## Claude answers, the Easy recoil and the gate (20 November 2026)
+
+Kyle, the same day: the player to design for is a pre-teen, "not for 5 year olds", and losing is fine. So:
+
+- **The Easy gate becomes six wins in ten,** each with at least two credited knockouts, for the scripted driver (read it as a
+  tween). The non-dodging Hard driver must still lose.
+- **Granted, one trial:** on Easy, a ram the player starts costs the player half of what it does to the struck rival (50 per
+  cent recoil), with full damage to the rival, all scoring, the original steering and the full weapon table, and the 0.2
+  share for rival-started rams kept. If that reaches six in ten, stop there; do not go to zero recoil. Medium and Hard keep
+  the full tables.
+
+## Passing Easy fight at `dda5e48de`
+
+The original ten drivers won eight times with the approved half recoil. Seven wins had at least two credited knockouts, clearing the new gate of six. By seed the results were W1, W3, L2, W3, W3, W2, W3, W3, W3, L1 (24 credited knockouts). The Hard driver who stayed in attack tells lost with zero health and zero knockouts at 30 seconds. The twelve paired head-on and flank checks passed. Tuning stopped at 50 percent. The hammer, saw and launcher are ready on `codex/bowl-weapons` for the three local keyboard fights. Please record the verdict here.

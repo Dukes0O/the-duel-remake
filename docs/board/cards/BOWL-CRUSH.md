@@ -19,8 +19,11 @@ pieces crushed and ten never touched.
    the open middle of End 2 (two buses with a third across their roofs; it gives way only at 30 mph or more, or to a truck
    coming down on it); five single cars in the open middle of End 1. No piece stands on a jump, within 8 m of a jump's
    foot on its run-up, or within 3 m of a wall. Every other event keeps today's line and nothing else.
-2. **The event:** 60 seconds (75 on Easy). It does not end when the truck stops or leaves the line. The goal is a count:
-   Easy 10 of the 31, Medium 18, Hard 26. All 31 is a Full House and each second left pays 20 points.
+2. **The event:** 60 seconds on every level. It does not end when the truck stops or leaves the line. The goal is a
+   count: Medium 18 of the 31, Hard 26. **Easy is set by measurement** (Kyle, 20 November 2026: the player is a pre-teen,
+   and Easy is won often, not almost always): the highest count that the scripted slow driver reaches on at least 6 of
+   ten seeds in the 60 seconds, and never more than 16. Report the ten counts in the change note. All 31 is a Full House
+   and each second left pays 20 points.
 3. **Chain:** each piece within 3 seconds of the last adds a link; each link adds a quarter to the points, up to two and a
    half times. **Pancake:** a piece crushed by a truck coming down out of the air pays three times.
 4. **Points:** a car 35, a bus or the RV 60, a burning stack 80, the Bus Pile 200.
@@ -37,7 +40,8 @@ picture shows the field). Locks: `bowl-night`, `bowl-floor`.
 ## Checks
 
 1. `tools/test-bowl-night.mjs`: a truck held on W with no steering crushes five pieces and the event runs its full
-   60 seconds; a scripted child-pace driver reaches 10 on Easy at least 9 times in 10; a chain of four pays as the rule
+   60 seconds; a scripted child-pace driver reaches the Easy count at least 6 times in 10 and
+   does not reach it on all ten; a chain of four pays as the rule
    says; a pancake pays three times; 31 crushed ends in a Full House.
 2. `tools/test-bowl-course.mjs`: the field's clearances; Freestyle, Side by Side and Last Truck Rolling are built without
    it; the Bowl's world signature re-recorded if it is pinned, with the reason in the change note.
@@ -86,3 +90,9 @@ first pass, as Kyle saw it, and the full bus and heap shells keep more than 3 m 
 The live wall response guides the straight-throttle truck around the floor. In a memory-only run on the current Bowl from the Car Crush start, the old line gave five pieces by 5 seconds and another five on the next circuit by 25 seconds, even with no steering. The same 60-second run gave exactly the original center five when the outer pieces were 17.25 m out instead of 18.2 m. The new distance also leaves more than 3 m from the face to the full bus and heap shells.
 
 May the Car Crush dressing shift the five outer pieces inward by 0.95 m, leaving the other ten and every other event exactly where they are? The first pass still hits the same five in the same order at the same positions. No wall or truck behavior changes.
+
+## Car Crush result cards, 20 November
+
+The solo result card and the shared-keyboard Turn Show both still say which row the driver reached. May I replace those two lines in `src/bowl/bowl-screens.js` and `src/bowl/bowl-turns-screens.js` with the number of pieces crushed and the Full House bonus? This also needs the one result-copy field in `src/bowl/bowl-turns.js` to pass the count and bonus to its screen. The Turn Show's scores and purse still use their existing rules.
+
+The older HUD, camera and Turn Show tests name the old count, early finish or straight-throttle win. I will keep their exact UI, two-second camera and progression checks with the new count and full clock, then submit the changed assertions for written review. The Easy preflight route has reached ten on the existing floor in 41.8 seconds by taking the same two lanes at 27 mph.

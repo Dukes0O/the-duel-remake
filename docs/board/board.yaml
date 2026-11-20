@@ -694,6 +694,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-weapons"
+    waiting_on: "claude"
     needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
     locks: [bowl-rivals, bowl-screens]
     flag: "titan-bowl"
