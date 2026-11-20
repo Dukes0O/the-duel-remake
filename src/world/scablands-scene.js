@@ -503,7 +503,7 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townLife=null,townFx=null,townLifeClock=0;
+  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0;
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
@@ -535,6 +535,21 @@ export function createScablandsScene(course,options={}){
     townLife=createTownWalkers({town:lifeTown,hourAt:()=>8+lifeHour()%10,dayAt:()=>Math.floor(lifeHour()/10)});
     townFx=createTownFx({town:lifeTown,buildings:root,fog:false,light:false,hourAt:()=>8+lifeHour()%10});
     group.add(townLife.group,townFx.group);
+    // The neighbours' outposts, drawn from the same layout that makes them solid (TOWN-OUTPOST-SCENE).
+    if(townLayout.outposts?.outposts?.length&&featureFlags.enabled('wasteland-town')){
+      const {createTownOutpostsScene}=await import('../town/view/town-outposts-scene.js');
+      if(retired)return;
+      townOutposts=createTownOutpostsScene({outposts:townLayout.outposts.outposts,loadAsset,
+        drawnHeightAt:(x,z)=>group.userData.drawnGroundHeightAt?.(x,z)});
+      group.add(townOutposts.group);group.userData.townOutposts=townOutposts;
+    }
+    // Mrs Vane's kiosks, her sites and Vane Reach, from the same layout that makes them solid (TOWN-VANE-SCENE).
+    if(townLayout.vane&&featureFlags.enabled('wasteland-town')){
+      const {createTownVaneScene}=await import('../town/view/town-vane-scene.js');
+      if(retired)return;
+      townVane=createTownVaneScene({vane:townLayout.vane,loadAsset,drawnHeightAt:(x,z)=>group.userData.drawnGroundHeightAt?.(x,z)});
+      group.add(townVane.group);group.userData.townVane=townVane;
+    }
   };
   void addTown();
   const furnaceVents=[],furnacePlates=[];
@@ -848,6 +863,10 @@ export function createScablandsScene(course,options={}){
     tunnelLining.userData.look.update({car:tunnelCar,forward:tunnelForward,mouths,headlights:state.onFoot?0:1});
   }
   function locate(state){
+    // HELI-RUSTWALL: over the land in Kestrel One the drawing follows the helicopter (render3d.js sets the point each frame;
+    // the car stays parked at the gate). Drawing only.
+    const follow=group.userData.followPoint;
+    if(follow&&Number.isFinite(follow.x)&&Number.isFinite(follow.z)){here.x=follow.x;here.z=follow.z;return true;}
     if(state?.onFoot&&Number.isFinite(state.fighter?.x)&&Number.isFinite(state.fighter?.z)){here.x=state.fighter.x;here.z=state.fighter.z;return true;}
     if(!Number.isFinite(state?.s)||!Number.isFinite(state?.lateral))return false;
     const {samples,step,length}=course,p=((state.s%length)+length)%length,index=Math.min(samples.length-2,Math.floor(p/step));
@@ -925,6 +944,8 @@ export function createScablandsScene(course,options={}){
       carriedBrand.update(state,drawnShift);
       if (worldJob?.storyPeople) peopleSeconds += Math.max(0, presentationDt);
       storyPeople.update(worldJob, worldJob?.night2?.camera?.target ?? here, peopleSeconds, drawnShift);
+      if(townOutposts){townSeconds+=Math.max(0,presentationDt);townOutposts.update(here,townSeconds,drawnShift);}
+      townVane?.update(here);
       if (worldJob?.night2 && !night2) {
         night2 = createNight2Look(course);
         group.add(night2.group);
@@ -1140,7 +1161,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose();
+    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

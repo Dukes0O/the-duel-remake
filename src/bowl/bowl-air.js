@@ -24,8 +24,16 @@ export function stepBowlAir(duel, actor, dt) {
   }
   air.stageTime = stageTime;
   if (s.airborne && !s.tumble) {
+    const input = s.input || {};
+    // A key held from before take-off tips nothing until it is let go and pressed
+    // again in the air: a driver who keeps the throttle down over a jump lands
+    // straight (BOWL-EXPAND hand drive: a held throttle put the Titan on its roof).
+    if (!air.active) air.held = {throttle: input.throttle > 0, brake: input.brake > 0};
     air.active = true;
-    air.angle += ((s.input?.brake || 0) - (s.input?.throttle || 0)) * AIR_PITCH_RATE * dt;
+    if (!(input.throttle > 0)) air.held.throttle = false;
+    if (!(input.brake > 0)) air.held.brake = false;
+    const throttle = air.held.throttle ? 0 : input.throttle || 0, brake = air.held.brake ? 0 : input.brake || 0;
+    air.angle += (brake - throttle) * AIR_PITCH_RATE * dt;
     s.bowlAirPitch = wrappedAngle(air.angle);
     return;
   }

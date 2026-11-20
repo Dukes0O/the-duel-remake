@@ -3,6 +3,8 @@ import {createMachineState, stepMachine} from './machine.js';
 import {machineDefinition} from './content/machines.js';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const key = (x, z) => `${x}:${z}`;
+/** Rolled fill counts as firm from this compaction. */
+export const FIRM_COMPACTION = 0.9;
 
 export function createRoadWork() {
   return {cells:{}, bladeLoad:0};
@@ -88,7 +90,7 @@ export function workRoadCell(work, action) {
 
 export function roadCondition(cell) {
   if (!cell.surface) return 'unfinished';
-  if (cell.compaction < 0.9) return 'soft';
+  if (cell.compaction < FIRM_COMPACTION) return 'soft';
   return cell.roughness > 0.2 ? 'rough' : 'good';
 }
 
@@ -104,7 +106,7 @@ export function workTownRoadCell(town, action) {
   let grade = 2;
   for (let dx = 0; dx < 8; dx++) for (let dz = 0; dz < 8; dz++) {
     const cell = roadCell(result.work, x * 8 + dx, z * 8 + dz);
-    const cellGrade = roadCondition(cell) === 'good' ? 2 : cell.spread > 0 && cell.compaction >= 0.9 ? 1 : 0;
+    const cellGrade = roadCondition(cell) === 'good' ? 2 : cell.spread > 0 && cell.compaction >= FIRM_COMPACTION ? 1 : 0;
     grade = Math.min(grade, cellGrade);
   }
   const roads = town.machineRoads ?? (town.machineRoads = []);
@@ -115,6 +117,65 @@ export function workTownRoadCell(town, action) {
   }
   road.roadClass = ['dirt', 'plank', 'paved'][grade];
   return result.events;
+}
+
+const metres = value => `${value} ${value === 1 ? 'metre' : 'metres'}`;
+
+/** Where a place lies from a machine, in a driver's words: ahead, behind, left or right, nearest way first. */
+function directionWords(machine, x, z) {
+  const dx = x - machine.x, dz = z - machine.z, heading = machine.heading ?? 0;
+  // The machine's own +X is the driver's left; D turns it towards -X.
+  const ahead = dx * Math.sin(heading) + dz * Math.cos(heading);
+  const left = dx * Math.cos(heading) - dz * Math.sin(heading);
+  const along = [Math.round(Math.abs(ahead)), ahead >= 0 ? 'ahead' : 'behind'];
+  const across = [Math.round(Math.abs(left)), left >= 0 ? 'to the left' : 'to the right'];
+  const [first, second] = Math.abs(ahead) >= Math.abs(left) ? [along, across] : [across, along];
+  const words = `${metres(Math.max(1, first[0]))} ${first[1]}`;
+  return second[0] >= 1 && second[0] >= first[0] * 0.4 ? `${words} and ${metres(second[0])} ${second[1]}` : words;
+}
+
+/** The nearest ground cell holding spread fill, or null. */
+export function nearestFill(work, x, z) {
+  let best = null, bestDistance = Infinity;
+  for (const [cellKey, cell] of Object.entries(work.cells)) {
+    if (!(cell.spread > 0)) continue;
+    const [cx, cz] = cellKey.split(':').map(Number);
+    const distance = Math.hypot(cx - x, cz - z);
+    if (distance < bestDistance - 1e-9 || (Math.abs(distance - bestDistance) <= 1e-9 && cellKey < best.key)) {
+      best = {x:cx, z:cz, key:cellKey};
+      bestDistance = distance;
+    }
+  }
+  return best && {x:best.x, z:best.z, distanceM:bestDistance};
+}
+
+/** How firm the fill under the roller is, as the yard shows it while the roller is driven. */
+export function rollerFirmnessWords(cell) {
+  if (!(cell.spread > 0)) return 'There is no fill under the roller.';
+  const percent = Math.min(100, Math.round(cell.compaction * 100));
+  return cell.compaction >= FIRM_COMPACTION ? `The fill under the roller is firm, at ${percent} percent.`
+    : `The fill under the roller is ${percent} percent firm, and it is firm at ${Math.round(FIRM_COMPACTION * 100)} percent.`;
+}
+
+/** Why the paver lays nothing here, and where it can. Null when it stands on fill and works as it should. */
+export function paverRefusalWords(work, machine) {
+  const x = Math.round(machine.x), z = Math.round(machine.z);
+  if (roadCell(work, x, z).spread > 0) return null;
+  const fill = nearestFill(work, machine.x, machine.z);
+  return fill ? `The paver lays only on fill, and the nearest fill is ${directionWords(machine, fill.x, fill.z)}.`
+    : 'The paver lays only on fill, and there is none yet, so spread some with the dozer first.';
+}
+
+/** The yard's two lines for a road machine: what it is working on, and what to do next. */
+export function roadYardWords(kind, work, machine) {
+  const working = 'Hold Space while driving to work.';
+  if (kind === 'dozer') return {load:working,
+    hint:'Hold Space while driving to gather ground. Let go of Space and drive to spread it.'};
+  if (kind === 'roller') return {load:rollerFirmnessWords(roadCell(work, Math.round(machine.x), Math.round(machine.z))),
+    hint:'Hold Space and drive over the spread ground until it is firm. Each pass also pushes a little fill to the sides, so it takes several passes.'};
+  if (kind === 'paver') return {load:working,
+    hint:paverRefusalWords(work, machine) ?? 'Hold Space and Shift while driving over firm ground to lay a smooth surface.'};
+  throw new RangeError('Choose a road machine.');
 }
 
 /** Shift gives the paver a steady working pace with a keyboard. */

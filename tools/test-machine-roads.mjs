@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {readdir, readFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {createRoadMachineState, createRoadWork, roadCell, roadCondition, roadYardControls, stepRoadMachine, workRoadCell, workTownRoadCell} from '../src/machines/roads.js';
+import {createRoadMachineState, createRoadWork, FIRM_COMPACTION, nearestFill, paverRefusalWords, roadCell, roadCondition, roadYardControls, roadYardWords,
+  rollerFirmnessWords, stepRoadMachine, workRoadCell, workTownRoadCell} from '../src/machines/roads.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/town-state.js';
 import {stepTown} from '../src/town/index.js';
 import {machineControlInput} from '../src/input-contexts.js';
@@ -220,6 +221,8 @@ for (const action of [
     assert.ok(roadCell(material,1,0).height>0, 'The roller pushes the rest onto neighbouring ground.');
   }
 }
+// Machines are solid to each other, so a machine that has done its part is driven out of the next one's lane.
+const park = (sim, machine, x) => Object.assign(digSandboxMachineState(sim, machine), {x, z:-60, heading:0, speedMps:0});
 // The trencher and road machines all alter the same yard ground.
 let sharedYard = createDigSandbox({playerId:'shared-road-ground-test'});
 sharedYard.activeMachine='trencher';
@@ -227,6 +230,7 @@ Object.assign(sharedYard.trencher.machine, {x:60,z:10,heading:0,speedMps:0});
 const originalHeight=sharedYard.ground.heightAt(60,15);
 sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1},action:'trench'}, 12);
 assert.ok(sharedYard.ground.heightAt(60,15)<originalHeight-1, 'The trencher digs the shared ground.');
+park(sharedYard, 'trencher', 90);
 sharedYard.activeMachine='dozer';
 Object.assign(sharedYard.roadMachines.dozer.machine, {x:60,z:-120,heading:0,speedMps:0});
 sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1,working:true}}, 100);
@@ -236,6 +240,7 @@ for (const x of [59,61]) {
   sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1,working:true}}, 100);
 }
 for (const kind of ['roller','roller','roller','paver']) {
+  if (kind === 'paver') park(sharedYard, 'roller', 100);
   sharedYard.activeMachine=kind;
   Object.assign(sharedYard.roadMachines[kind].machine, {x:60,z:13,heading:0,speedMps:0});
   sharedYard=stepDigSandbox(sharedYard, {controls:{forward:kind==='paver'?0.5:1,working:true}}, 5);
@@ -280,11 +285,13 @@ function driveKeys(until, slow=false) {
 driveKeys(() => keyboardYard.roadWork.bladeLoad>0);
 driveKeys(() => roadCell(keyboardYard.roadWork, 40, 19).spread>0);
 keyboardYard=switchDigMachine(keyboardYard);
+park(keyboardYard, 'dozer', 90);
 for (let pass=1; pass<=3; pass++) {
   Object.assign(keyboardYard.roadMachines.roller.machine, {x:40,z:15,heading:0,speedMps:0});
   driveKeys(() => roadCell(keyboardYard.roadWork, 40, 17).compaction>=Math.min(1, pass*0.35)-0.01);
 }
 keyboardYard=switchDigMachine(keyboardYard);
+park(keyboardYard, 'roller', 100);
 Object.assign(keyboardYard.roadMachines.paver.machine, {x:40,z:15,heading:0,speedMps:0});
 driveKeys(() => roadCell(keyboardYard.roadWork, 40, 17).surface===1);
 assert.equal(roadCondition(roadCell(keyboardYard.roadWork,40,17)), 'rough');
@@ -316,6 +323,7 @@ assert.ok(roadCell(practice.roadWork, 40, 16).spread > 0, 'Driving the blade car
 closeDigSandbox();
 let revisitedPractice = createDigSandbox({playerId:'practice-revisit-test'});
 revisitedPractice.activeMachine = 'trencher';
+park(revisitedPractice, 'dozer', 90);
 Object.assign(revisitedPractice.trencher.machine, {x:40,z:10,heading:0,speedMps:0});
 revisitedPractice = stepDigSandbox(revisitedPractice, {controls:{forward:1},action:'trench'}, 12);
 const dugPracticeHeight = revisitedPractice.ground.heightAt(40,15);
@@ -324,6 +332,46 @@ revisitedPractice = createDigSandbox({playerId:'practice-revisit-test'});
 assert.ok(Math.abs(revisitedPractice.ground.heightAt(40,15) - dugPracticeHeight) < 1e-5,
   'Reopening the yard does not lay practice ground over a dug cell.');
 closeDigSandbox();
+// MACHINE-YARD-NEXT: the paver says why it lays nothing on scraped ground, and where the fill is.
+{
+  const ground = createRoadWork();
+  assert.equal(paverRefusalWords(ground, {x:40, z:10, heading:0}),
+    'The paver lays only on fill, and there is none yet, so spread some with the dozer first.');
+  ground.cells['40:16'] = {...roadCell(ground, 40, 16), spread:0.4};
+  ground.cells['40:30'] = {...roadCell(ground, 40, 30), spread:0.4};
+  assert.deepEqual(nearestFill(ground, 40, 10), {x:40, z:16, distanceM:6});
+  assert.equal(paverRefusalWords(ground, {x:40, z:10, heading:0}), 'The paver lays only on fill, and the nearest fill is 6 metres ahead.');
+  assert.equal(paverRefusalWords(ground, {x:40, z:10, heading:Math.PI}), 'The paver lays only on fill, and the nearest fill is 6 metres behind.');
+  // The machine's own +X is its driver's left, so fill at lower X is to the right of a paver facing +Z.
+  assert.equal(paverRefusalWords(ground, {x:44, z:16, heading:0}), 'The paver lays only on fill, and the nearest fill is 4 metres to the right.');
+  assert.equal(paverRefusalWords(ground, {x:44, z:13, heading:0}),
+    'The paver lays only on fill, and the nearest fill is 4 metres to the right and 3 metres ahead.');
+  assert.equal(paverRefusalWords(ground, {x:40.2, z:15.9, heading:0}), null, 'On fill the paver says nothing new.');
+  assert.match(roadYardWords('paver', ground, {x:40, z:16, heading:0}).hint, /Shift/);
+  assert.match(roadYardWords('paver', ground, {x:40, z:10, heading:0}).hint, /^The paver lays only on fill, and the nearest fill is 6 metres ahead\.$/);
+  // Where it refuses, it does no work: the scraped cell stays bare.
+  let paving = createRoadMachineState('paver', {x:40, z:9.5});
+  const scraped = stepRoadMachine(paving, ground, {forward:1, working:true}, 2);
+  assert.equal(roadCell(scraped.work, 40, 10).surface, 0);
+  assert.equal(roadCell(scraped.work, 40, 11).surface, 0);
+  // The roller says how firm the fill under it is, rising with each pass.
+  assert.equal(rollerFirmnessWords(roadCell(createRoadWork(), 0, 0)), 'There is no fill under the roller.');
+  let strip = createRoadWork();
+  for (let z = 0; z < 5; z++) strip.cells[`0:${z}`] = {...roadCell(strip, 0, z), spread:0.3};
+  const shown = [];
+  for (let pass = 0; pass < 8; pass++) {
+    strip = workRoadCell(strip, {kind:'roller', x:0, z:2}).work;
+    shown.push(rollerFirmnessWords(roadCell(strip, 0, 2)));
+  }
+  assert.equal(shown[0], 'The fill under the roller is 35 percent firm, and it is firm at 90 percent.');
+  assert.ok(shown.some(words => /^The fill under the roller is firm, at \d+ percent\.$/.test(words)), 'Enough passes make it firm.');
+  assert.equal(FIRM_COMPACTION, 0.9);
+  assert.equal(roadYardWords('roller', strip, {x:0.1, z:2.2}).load, shown.at(-1), 'The roller reads the cell it is rolling.');
+  assert.match(roadYardWords('roller', strip, {x:0, z:2}).hint, /pushes a little fill to the sides/);
+  assert.match(roadYardWords('dozer', strip, {x:0, z:2}).hint, /gather ground/);
+  for (const kind of ['dozer', 'roller', 'paver']) for (const line of Object.values(roadYardWords(kind, ground, {x:40, z:10, heading:0.3})))
+    assert.ok(!/\u2014/.test(line) && /^[A-Z].*\.$/.test(line), `The ${kind} speaks in whole sentences.`);
+}
 console.log('Road work rules pass.');
 import * as THREE from 'three';
 import {createRoadWorkView, roadSurface, ROAD_SKIN_LIFT} from '../src/machines/roads-view.js';

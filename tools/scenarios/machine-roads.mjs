@@ -33,6 +33,10 @@ async function select(context, machine) {
 async function position(context, machine, z) {
   await context.evaluate(`Object.assign(window.__theDig.simulation.roadMachines[${JSON.stringify(machine)}].machine,{x:40,z:${z},heading:0,speedMps:0})`);
 }
+// Machines are solid to each other: one that has done its part is moved out of the strip before the next comes.
+async function park(context, machine, x) {
+  await context.evaluate(`Object.assign(window.__theDig.simulation.roadMachines[${JSON.stringify(machine)}].machine,{x:${x},z:-60,heading:0,speedMps:0})`);
+}
 async function drive(context, {slow=false, picture=null, until}) {
   if (slow) await key(context, 'ShiftLeft', 'keydown');
   await key(context, 'Space', 'keydown');
@@ -67,13 +71,21 @@ export async function run(context) {
   assert.doesNotMatch(await context.evaluate('document.querySelector(".the-dig-controls").textContent'), /bucket|mast|Shift/i);
   await drive(context, {picture:'machine-roads-dozer', until:'window.__theDig.simulation.roadWork.bladeLoad>0'});
   await drive(context, {until:'window.__theDig.simulation.roadWork.cells["40:19"]?.spread>0'});
+  await park(context, 'dozer', 90);
   await select(context, 'roller');
   for (let pass=0; pass<3; pass++) {
     await position(context, 'roller', 15);
     await drive(context, {picture:pass===0?'machine-roads-roller':null,
       until:`window.__theDig.simulation.roadWork.cells["40:17"]?.compaction>=${Math.min(1, (pass+1)*0.35)-0.01}`});
   }
+  // The roller says how firm the fill under it is.
+  await waitFor(context, '/fill under the roller is/.test(document.querySelector(".the-dig-load").textContent)', 'roller firmness', 10000);
+  await park(context, 'roller', 100);
   await select(context, 'paver');
+  // Standing on ground the blade only scraped, the paver says it lays only on fill and where the fill is.
+  await position(context, 'paver', 12);
+  await waitFor(context, '/^The paver lays only on fill, and the nearest fill is \\d+ metres? ahead/.test(document.querySelector(".the-dig-message").textContent)', 'paver refusal', 10000);
+  await context.screenshot('machine-roads-paver-refusal');
   await position(context, 'paver', 15);
   await drive(context, {picture:'machine-roads-paver', until:'window.__theDig.simulation.roadWork.cells["40:17"]?.surface===1'});
   assert.ok(await context.evaluate('window.__theDig.simulation.roadWork.cells["40:17"].roughness>0.2'), 'Fast paving leaves rough work.');

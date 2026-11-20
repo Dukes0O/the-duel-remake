@@ -72,6 +72,7 @@ the game.
 
 - **A family export can omit special-stage geometry.** When a recipe conditionally adds shared ground or drift meshes, include the family/export stage as well as the review stages; the GLB check caught missing standalone ship drifts in `scablands-ships.py`.
 - **A branch-level `continue` can omit every later building.** Keep it inside the matching building branch, then confirm each registered child is actually emitted; the helipad's top-level `continue` skipped the notice board in `town-services-2.py`.
+- **Something left on the ground, parented to a moving machine, is drawn twice as far out** (MACHINE-YARD-NEXT, 20 November). The yard's dust puffs were children of the machine's own moved and turned root but were given map places, so a puff stood as far from the machine as the machine stood from the map's centre: 47 m for the roller at its start. Put dust, marks and anything else a machine leaves behind in a world group, at the ground's own height, and check one puff's world place against the machine's.
 - **A named part can sit at the world origin.** Geometry helpers return independent objects; parent every piece that belongs to a place before family export. Otherwise local coordinates are read as map coordinates and can look like a stray prop on the horizon.
 
 ### Flat photographed shapes
