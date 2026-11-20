@@ -289,3 +289,4 @@ The original 30 drives at `762a7292d` measured 310, 2690 and 930 by the existing
   middle driver clears Medium on at least eight, and the skilled tap driver beats the Hard mark on seeds 1, 2 and 3 (5,335,
   5,116 and 5,035 today), landing the double backflip, the combo and the spin. Every seeded driving and move check stays. So
   the marks stay proven reachable at each level, and nothing is loosened.
+The 4260 Hard mark is reachable with the new controls. The same expert route, ground pace, reaction and steering wobble won ordinary 90-second Freestyle on seeds 1, 2 and 3 with 5335, 5116 and 5035 points. The driver tapped brake plus right steering on air tick 4, then tapped brake on Big Jump tick 102. It landed the double backflip, combo and spin without any secret code. The matched Monster Arena final sector also gave identical race result objects with and without a clean backflip.
