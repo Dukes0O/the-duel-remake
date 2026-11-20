@@ -170,6 +170,7 @@ const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   kitsEnabled:()=>app.wastelandUnlocked(),
   arsenalEnabled:()=>app._switches().enabled('arsenal')===true,
   arsenalWave3Enabled:()=>app._switches().enabled('arsenal-wave3')===true,
+  townGear:()=>app._townGearOptions?.()??{}, // WEAPON-WATER-CANNON: the water cannon waits for the town's Fire Station
   loadoutsEnabled:()=>app.wastelandUnlocked(),
   crewEnabled:()=>app.wastelandUnlocked(),
   crewGearEnabled:()=>app._switches().enabled('crew-gear')===true,

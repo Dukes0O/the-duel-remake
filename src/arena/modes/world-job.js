@@ -41,6 +41,9 @@ import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
 import {BELL_CUE, fillWorkVehicleTank, loadWorkVehicle, pumpWorkVehicleTank, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
 import {groupKg} from '../../world/jobs/steps/haul.js';
+import {sprayWater, waterStreamStart} from '../../arsenal/water-cannon.js';
+import {point as combatPoint} from '../../combat-actors.js';
+import {targetIdentity} from '../../arsenal/targeting.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -258,6 +261,33 @@ export function setJobVehicleSpray(duel, held) {
   if (!state.input) return false;
   state.input.spray = held === true && worldJob?.vehicle?.id === 'fire-truck' && !state.onFoot;
   return state.input.spray;
+}
+// WEAPON-WATER-CANNON: H in the fire truck is also the water cannon's stream on a car (src/arsenal/water-cannon.js): the
+// same straight 14 m line from the nose that the Armory's car cannon throws, shoving the first car in it and putting out its
+// fire, never damaging it. One tank: in a fire call the call's (the douse step drains it, told by `waterOnCar`), anywhere
+// else the truck's own, at the pump's 1,000 L a minute. Water flows only while something is in front, as the fire call's
+// cannon does, so holding H wastes none. The stream on a car starts with the truck's one spray sound (town.spray).
+function sprayFromFireTruck(duel, worldJob, step, dt) {
+  const state = duel.state, vehicle = worldJob.vehicle;
+  if (!(dt > 0)) return null; // a step that passes no time (a talk, a held arrival) leaves the stream as it was
+  const douse = step?.kind === 'douse';
+  const tankL = douse && Number.isFinite(worldJob.job.stepState?.tankL) ? worldJob.job.stepState.tankL : vehicle?.tankL;
+  if (worldJob.controls?.spray !== true || vehicle?.id !== 'fire-truck' || state.onFoot || !(tankL > 0)) {
+    worldJob.truckStream = null;
+    return null;
+  }
+  const at = combatPoint(duel, state);
+  const stream = worldJob.truckStream ??= {pushed:{}, hitId:null};
+  const result = sprayWater(duel, state, stream, dt, waterStreamStart(at, at.heading + (state.headingError || 0)));
+  const hitId = result.hit ? targetIdentity(duel, result.hit) : null;
+  if (hitId && hitId !== stream.hitId) duel.emit({arenaTell:{id:'town-water', targetId:'player', seconds:0, cue:'town.spray',
+    position:{x:at.x, y:at.y, z:at.z}}});
+  stream.hitId = hitId; stream.reach = result.reach;
+  const start = waterStreamStart(at, at.heading + (state.headingError || 0));
+  // Where the water lands on the car, for the drawing (a plain point: the view reads it and nothing reads it back).
+  stream.to = hitId ? {x:start.x + Math.sin(start.heading) * result.reach, z:start.z + Math.cos(start.heading) * result.reach} : null;
+  if (hitId && !douse) worldJob.vehicle = pumpWorkVehicleTank(vehicle, dt).vehicle;
+  return result;
 }
 /** True while the player drives the fire truck in a job: the app then uses the firetruck input context. */
 export const drivingFireTruck = state => state?.arena?.mode === 'world-job' && state.arena.worldJob?.vehicle?.id === 'fire-truck' && !state.onFoot;
@@ -1693,6 +1723,7 @@ export function stepWorldJob(duel, dt) {
         worldJob.gateOpened=true;duel.emit?.({townGate:true});
       }
     }
+    sprayFromFireTruck(duel, worldJob, null, dt); // WEAPON-WATER-CANNON: H in the fire truck on a free drive
     return null;
   }
   worldJob.clockSec = state.stageTimeSec;
@@ -1880,7 +1911,8 @@ export function stepWorldJob(duel, dt) {
   }
   if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
   if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
-  const view = {player: playerView, onFoot: !!state.onFoot,
+  const truckWater = sprayFromFireTruck(duel, worldJob, currentStep, dt);
+  const view = {player: playerView, onFoot: !!state.onFoot, ...(truckWater?.hit ? {waterOnCar: true} : {}),
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
     ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot, carriedCar)} : {}),
     ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],

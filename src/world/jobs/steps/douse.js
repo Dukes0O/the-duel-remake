@@ -252,7 +252,15 @@ export function stepDouse(step, state, view, dt = 0) {
     const flowLpm = dt > 0 ? litres / dt * 60 * share * DOUSE_RULE.landShare : 0;
     fire.heat -= flowLpm / douseNeedLpm(target.areaM2) / DOUSE_RULE.knockSeconds * dt;
     if (!base.spraying) events.push({type:'douseSpray', id:target.id});
-  } else if (base.spraying) events.push({type:'douseSprayStop'});
+  } else {
+    // WEAPON-WATER-CANNON: with no flames in front, the stream may be on a car (src/arsenal/water-cannon.js, told by the
+    // World Job as `waterOnCar`). It is the same cannon, so the same tank pays for it at the pump's rate.
+    if (view.waterOnCar === true && view.controls?.spray === true && !view.onFoot && next.tankL > 0) {
+      const litres = Math.min(next.tankL, pumpLpm / 60 * dt);
+      next.tankL -= litres; next.usedL += litres;
+    }
+    if (base.spraying) events.push({type:'douseSprayStop'});
+  }
 
   burnFires(step, next, dt, scale, target?.id ?? null, events, sayOnce);
 

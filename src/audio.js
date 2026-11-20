@@ -26,6 +26,8 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end',
   'weapon.magnet.hum',
 ]);
+// WEAPON-WATER-CANNON: the car's water cannon, behind its own switch as well as the arsenal's.
+const WATER_CANNON_CUES = new Set(['weapon.water.spray', 'weapon.water.douse']);
 const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy', 'warlord.nitroSpent']);
 const HAND_FLAMER_CUES = new Set(['weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end']);
 const ARSENAL_WAVE_THREE_CUES = new Set([
@@ -1914,6 +1916,7 @@ export class EngineAudio {
     }
     if (recordedAudio && bank(ev.arsenalCue) && (
       (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
+      (this.flags.enabled('arsenal') && this.flags.enabled('water-cannon') && WATER_CANNON_CUES.has(ev.arsenalCue)) ||
       (this.flags.enabled('arsenal') && this.flags.enabled('arsenal-wave3') &&
         ARSENAL_WAVE_THREE_CUES.has(ev.arsenalCue)) ||
       (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue)) ||
