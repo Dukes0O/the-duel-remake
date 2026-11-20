@@ -5,7 +5,7 @@ export function createBowlOutside(course, floor, stadium, gateS) {
   const back = front + stadium.rows * stadium.rowDepth;
   const top = stadium.firstRowHeight + stadium.rows * stadium.rowRise;
   const gates = ['Car Park Gate', 'Pit Gate'].map((name, i) => ({
-    name, s: gateS + i * course.length / 2, lateral: wall, width: 8,
+    name, s: gateS + i * course.length / 2, lateral: wall, width: 8, mouthWidth: 14, guideLength: 10,
   }));
   const parking = [];
   for (let i = 0; i < 20; i++) {
@@ -18,7 +18,12 @@ export function createBowlOutside(course, floor, stadium, gateS) {
   return {wall, front, back, top, fenceTop: stadium.wallHeight + stadium.fenceHeight, firstHeight: stadium.firstRowHeight, bank: back + 80, gates, parking};
 }
 
-export const outsideGateAt = (outside, phase) => outside.gates.find(g => Math.abs(phase - g.s) <= g.width / 2);
+export function outsideGateAt(outside, phase, lateral = outside.wall) {
+  return outside.gates.find(g => {
+    const flare = Math.max(0, (g.mouthWidth - g.width) / 2 + Math.min(0, lateral - outside.back));
+    return Math.abs(phase - g.s) <= g.width / 2 + flare;
+  });
+}
 
 export function terraceHeight(outside, off) {
   if (off < outside.wall + .5 || off > outside.back) return 0;
@@ -27,10 +32,11 @@ export function terraceHeight(outside, off) {
 }
 
 // Cut each wall piece at the actual jamb, including the partial pieces.
-export function openGateSegments(gates, s, half) {
+export function openGateSegments(gates, s, half, mouth = false) {
   let low = s - half, high = s + half;
   for (const gate of gates) {
-    const left = gate.s - gate.width / 2, right = gate.s + gate.width / 2;
+    const width = mouth ? gate.mouthWidth : gate.width;
+    const left = gate.s - width / 2, right = gate.s + width / 2;
     if (low >= right || high <= left) continue;
     if (low < left) high = left;
     else low = right;
@@ -45,28 +51,41 @@ function nearestGate(course, outside, actor) {
   const delta = gate => ((gate.s - phase + 1.5 * course.length) % course.length) - course.length / 2;
   const gate = Math.abs(delta(outside.gates[0])) <= Math.abs(delta(outside.gates[1])) ? outside.gates[0] : outside.gates[1];
   const ds = delta(gate), mouth = course.worldAt(gate.s, outside.back + 8);
-  const entering = actor.bowlOutside?.gate?.name === gate.name && actor.bowlOutside.gate.entering;
-  const aligned = Math.abs(ds) < 3 || entering && Math.abs(ds) < 8;
-  const around = Math.abs(ds) > 10;
+  const previous = actor.bowlOutside?.gate?.name === gate.name ? actor.bowlOutside.gate : null;
+  const side = previous?.side ?? (ds > 0 ? -1 : 1);
+  const depth = actor.lateral - outside.back;
+  const stage = 14;
+  const nearLine = Math.abs(ds + side * depth) < 4 && depth >= 0 && depth <= stage + 4;
+  const headOn = depth > 0 && depth < stage+6 && Math.abs(ds) < depth*.65;
+  const entering = previous?.entering && depth < stage+12 && Math.abs(ds) < stage+12 || nearLine || headOn || depth < 3 && Math.abs(ds) < gate.mouthWidth/2;
   let aimS = gate.s, aimOff = outside.wall - 5;
-  if (actor.lateral > outside.back && !aligned) {
-    aimS = around ? phase + Math.sign(ds) * Math.min(8, Math.abs(ds)) : gate.s;
-    aimOff = around ? Math.max(outside.back + 10, Math.min(actor.lateral, outside.back + 20)) : outside.back + 9;
+  if (depth > 0 && !entering) {
+    if (Math.abs(ds) > stage + 10) {
+      aimS = phase + Math.sign(ds)*8;
+      aimOff = outside.back + stage;
+    } else {
+      aimS = gate.s + side*stage;
+      aimOff = outside.back + stage;
+    }
+  } else if (depth > 2 && entering) {
+    // Aim seven metres ahead along the diagonal into the open mouth.
+    const ahead = Math.max(0, depth - 7);
+    aimS = gate.s + side*Math.min(ahead, Math.max(0, Math.abs(ds)-3));
+    aimOff = outside.back + ahead;
   }
-  if (actor.lateral <= outside.back && !outsideGateAt(outside, phase)) {
-    // On the seating deck the exit is over its back, not through the fence.
+  if (actor.lateral <= outside.back && !outsideGateAt(outside, phase, actor.lateral)) {
     aimS = phase; aimOff = outside.back + 8;
   }
   const destination = course.worldAt(gate.s, gate.lateral);
-  const metres = actor.lateral > outside.back && !aligned
+  const metres = actor.lateral > outside.back && !entering
     ? Math.hypot(here.x - mouth.x, here.z - mouth.z) + outside.back + 8 - outside.wall
     : Math.hypot(here.x - destination.x, here.z - destination.z);
-  return {...gate, metres, entering: aligned, aim: course.worldAt(aimS, aimOff)};
+  return {...gate, metres, entering, side, aim: course.worldAt(aimS, aimOff)};
 }
 
 export function observeBowlOutside(duel, dt, addFact, say) {
   const s = duel.state, event = s.bowlNight.event, course = duel.course, outside = course.features.bowl.outside;
-  const gate = outsideGateAt(outside, course.phase(s.s));
+  const gate = outsideGateAt(outside, course.phase(s.s), s.lateral);
   const previous = s.bowlOutside;
   if (s.lateral <= outside.wall) {
     if (previous && event.visitedOutside && gate && !s.airborne) {
@@ -78,7 +97,7 @@ export function observeBowlOutside(duel, dt, addFact, say) {
     delete s.bowlOutside;
     return;
   }
-  const tunnel = gate && !s.airborne && (s.groundHeight || 0) < outside.firstHeight - .5;
+  const tunnel = gate && s.lateral <= outside.back && !s.airborne && (s.groundHeight || 0) < outside.firstHeight - .5;
   const where = s.lateral > outside.back || tunnel ? 'carpark' : 'stands';
   s.bowlOutside = {where, gate: nearestGate(course, outside, s)};
   if (!tunnel) event.visitedOutside = true;

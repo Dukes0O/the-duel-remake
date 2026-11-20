@@ -145,6 +145,14 @@ for (const car of exterior.parking) {
 for (const gate of bowl.gates) {
   const [x,y]=outMap(gate.s,exterior.front), [bx,by]=outMap(gate.s,exterior.back);
   parts.push(`<line x1="${x}" y1="${y}" x2="${bx}" y2="${by}" stroke="#c4ebd0" stroke-width="${gate.width*1.3}"/>`);
+  const throat = exterior.back - (gate.mouthWidth-gate.width)/2;
+  const reach = gate.guideLength/Math.sqrt(2);
+  const guides = [-1,1].map(side => [
+    outMap(gate.s+side*gate.width/2,throat),
+    outMap(gate.s+side*(gate.width/2+reach),throat+reach)
+  ]);
+  parts.push(`<polygon points="${[...guides[0],...guides[1].slice().reverse()].map(p=>p.join(',')).join(' ')}" fill="#c4ebd0"/>`);
+  for (const [a,b] of guides) parts.push(`<path d="M${a.join(',')} L${b.join(',')}" stroke="#183c30"/>`);
   parts.push(text(bx,by + (by>1175?17:-7),gate.name,12,'#183c30','middle',700));
 }
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="Segoe UI, Arial, sans-serif">

@@ -338,7 +338,7 @@ export function _supportAt(distance, lateral, actor = this.state) {
   if (outside && lateral > outside.wall && lateral <= outside.back) {
     const deck = terraceHeight(outside, lateral);
     const feet = actor._jumpY ?? actor.groundHeight ?? 0;
-    if (outsideGateAt(outside, this.course.phase(distance)) && feet >= deck - .6)
+    if (outsideGateAt(outside, this.course.phase(distance), lateral) && feet >= deck - .6)
       ground.y = deck;
     // A car approaching the retaining wall from below remains at car-park
     // level until its contact sweep, even when its nose overlaps the back row.
@@ -429,7 +429,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
       if (obstacle.bowlGateAI && player) continue;
       if (obstacle.bowlBoundary) {
         if (obstacle.bowlBoundary === 'back' && car.lateral >= oldLateral && (oldLateral <= exterior.back || car.airborne)) continue;
-        if (obstacle.bowlBoundary === 'tunnel' && (car._jumpY ?? car.groundHeight ?? 0) >= terraceHeight(exterior, car.lateral) - .6 && car.lateral > exterior.wall + 1) continue;
+        if ((obstacle.bowlBoundary === 'tunnel' || obstacle.bowlBoundary === 'guide') && car.lateral <= exterior.back && (car._jumpY ?? car.groundHeight ?? 0) >= terraceHeight(exterior, car.lateral) - .6 && car.lateral > exterior.wall + 1) continue;
       }
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
       if(obstacle.snowmanId && (this._brokenSnowmanIds?.has(obstacle.snowmanId) ||

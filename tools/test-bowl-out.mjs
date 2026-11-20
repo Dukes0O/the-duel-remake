@@ -31,7 +31,7 @@ for (let i=0; i<8; i++) {
   const duel = freestanding(), s = duel.state, course = duel.course, o = course.features.bowl.outside;
   const start = (i+.25)*course.length/8;
   const lane = o.back+18;
-  place(duel,start,lane,0);
+  place(duel,start,lane,0,20);
   duel.step(dt);
   const gate = s.bowlOutside.gate;
   const here = course.at(s.s), target = gate.aim;
@@ -40,8 +40,7 @@ for (let i=0; i<8; i++) {
   let ticks=0, back=0;
   duel.onChange((_,ev)=>{ if(ev.bowlBackIn) back++; });
   for (; ticks<30/dt && s.bowlOutside; ticks++) {
-    const ds = Math.abs(((gate.s-course.phase(s.s)+1.5*course.length)%course.length)-course.length/2);
-    steerToward(duel,s.bowlOutside.gate.aim, ds < 17 && s.lateral > o.back-2 ? 11 : s.lateral>o.back+3 ? 30 : 17);
+    steerToward(duel,s.bowlOutside.gate.aim,20);
     duel.step(dt);
   }
   assert.ok(ticks*dt<30 && back===1, `start ${i}: ${gate.name}, at ${s.s.toFixed(1)},${s.lateral.toFixed(1)} in ${(ticks*dt).toFixed(1)} s`);
@@ -51,6 +50,77 @@ for (let i=0; i<8; i++) {
 }
 assert.equal(gatesReached.size,2);
 console.log('Eight car-park returns (seconds):',returns.join(', '));
+
+// Seven equally spaced starts across the Big Jump's eight-metre approach band.
+const touchdowns = [], uphill = [];
+for (let line=0; line<7; line++) {
+  const duel=freestanding(), s=duel.state, o=duel.course.features.bowl.outside;
+  place(duel,43,-13-4+8*line/6,.35,50);
+  s.boost=1;
+  duel.setInput({throttle:1,boost:true,steer:0,brake:0});
+  let flew=false;
+  for (let k=0;k<600;k++) {
+    duel.step(dt);
+    if (s.airborne) flew=true;
+    if (flew && !s.airborne) break;
+  }
+  assert.ok(flew && !s.airborne && s.bowlLanding==='clean' && s.groundHeight>o.firstHeight && s.lateral<o.back);
+  const contact=s.lateral, height=s.groundHeight;
+  for (let k=0;k<20;k++) {
+    const before=s.lateral;
+    duel.step(dt);
+    assert.ok(s.lateral>before && !s.tumble,'forward traction on every tick from touchdown');
+  }
+  touchdowns.push(height.toFixed(2)); uphill.push((s.lateral-contact).toFixed(2));
+}
+console.log('Seven terrace heights (m)',touchdowns.join(', '),'and first 1/6 second uphill (m)',uphill.join(', '));
+
+// Compare the ordinary straight jump with the outward launch disabled.
+function straightJump(enableExit) {
+  const duel=freestanding(), s=duel.state;
+  if (!enableExit) duel.course.features.ramps.find(r=>r.id==='big-jump').exitNitroRise=0;
+  place(duel,43,-13,0,50);
+  s.boost=1; duel.setInput({throttle:1,boost:true,steer:0,brake:0});
+  let peak=0;
+  for (let k=0;k<600;k++) {
+    duel.step(dt); peak=Math.max(peak,s.airHeight||0);
+    if (peak && !s.airborne) return [k,s.s,s.lateral,peak,s.speedMph];
+  }
+  assert.fail('ordinary Big Jump must land');
+}
+assert.deepEqual(straightJump(true),straightJump(false));
+
+const arrivals=[];
+for (const gateIndex of [0,1]) for (const side of [-1,1]) for (const miss of [-1,1]) {
+  const duel=freestanding(), s=duel.state, course=duel.course, o=course.features.bowl.outside, gate=o.gates[gateIndex];
+  assert.deepEqual([gate.width,gate.mouthWidth,gate.guideLength],[8,14,10]);
+  for (const offset of [0, 2, -2]) {
+    for (let lateral=o.wall+1;lateral<=o.back+4;lateral+=.5)
+      assert.equal(course.groundAt(gate.s+offset,lateral).y,0,'tunnel floor');
+  }
+  for (let phase=0;phase<course.length;phase+=2)
+    assert.equal(course.groundAt(phase,o.back+.1).y,0,'car park beside the retaining wall');
+  place(duel,gate.s+side*(9+miss),o.back+9,-Math.PI/2-side*Math.PI/4,20);
+  let minSpeed=20;
+  for(let k=0;k<1200 && s.lateral>o.wall-2;k++) {
+    if(s.lateral>o.back+4) duel.setInput({throttle:s.speedMph<20?1:0,steer:0,brake:0});
+    else steerToward(duel,course.worldAt(gate.s,o.wall-6),20);
+    duel.step(dt); minSpeed=Math.min(minSpeed,s.speedMph);
+    assert.ok(!s.airborne && s.groundHeight<.01,'real truck stays level through the gate');
+  }
+  assert.ok(s.lateral<=o.wall-2 && minSpeed>15,'rolling diagonal entry through '+gate.name);
+  arrivals.push(minSpeed.toFixed(2));
+}
+console.log('Eight 45-degree gate entries, minimum mph',arrivals.join(', '));
+
+{
+  const duel=freestanding(), cheers=[];
+  place(duel,7,1,0);
+  duel.onChange((_,ev)=>{if(ev.bowlScore?.type==='bowlTrick') cheers.push(ev.bowlScore);});
+  duel.setInput({throttle:1,boost:true,steer:0,brake:0});
+  for(let k=0;k<200;k++) duel.step(dt);
+  assert.ok(cheers.some(e=>e.points>0 && e.cue==='bowl.crowd.rise'),'clean trick keeps its crowd cheer');
+}
 
 // The truck enters the Big Jump already at speed, holds nitro on the ramp,
 // lands on the terraces and drives up the slope. No state is moved between legs.

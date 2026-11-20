@@ -90,7 +90,7 @@ export function bowlRingPoint(ring, t) {
 // one curve; a table climbs, runs flat and drops.
 const RAMPS = [
   {id: 'jump-kicker', name: 'Jump Straight kicker', start: 22, length: 12, height: 1.8, off: 0, halfWidth: 3, flank: 2.2, profile: 'mound'},
-  {id: 'big-jump', name: 'Big Jump', start: 43, length: 18, height: 4.5, off: -13, halfWidth: 3.5, flank: 3.5, profile: 'mound'},
+  {exitNitroRise: 24, exitNitroMph: 64, exitMinSine: .25, id: 'big-jump', name: 'Big Jump', start: 43, length: 18, height: 4.5, off: -13, halfWidth: 3.5, flank: 3.5, profile: 'mound'},
   {id: 'crush-kicker', name: 'Crush Straight kicker', start: 22 + BOWL_HALF_LAP, length: 12, height: 1.8, off: 0, halfWidth: 3, flank: 2.2, profile: 'mound'},
   // The Table ends 8 m before End 2, so a hop off End 2's bank is never scored as the Table.
   {id: 'table', name: 'the Table', start: 185.5, length: 19.5, height: 3.2, off: -13, halfWidth: 3, flank: 3.5, profile: 'table'},
@@ -155,7 +155,7 @@ export function bowlReliefAt(course, s, off) {
   const phase = course.phase(s);
   const outside = course.features.bowl?.outside;
   if (outside && off > outside.wall + .5) {
-    if (outsideGateAt(outside, phase)) return 0;
+    if (outsideGateAt(outside, phase, off)) return 0;
     return terraceHeight(outside, off);
   }
   let height = bowlBankHeight(phase, off);

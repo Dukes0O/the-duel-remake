@@ -130,6 +130,7 @@ export function _drive(dt) {
   s.prevGroundHeight = s.groundHeight;
   const tricks = tricksEnabled(this, s);
   const showFlight = tricks && s.airborne;
+  const exitFlightSpeed = showFlight && s._jumpOrigin?.exitNitro ? s.speedMph : null;
   const showGround = tricks && s.input.boost && (s.input.brake || s.input.throttle && (s.bowlGroundTrick || s.speedMph < 15));
   // Balancing on one axle uses a gentle pull so there is time to hold the pose.
   const balancing = showGround && Math.abs(s.input.steer) <= .5 && (s.speedMph < 10 || s.bowlGroundTrick === 'wheelie');
@@ -318,6 +319,9 @@ export function _drive(dt) {
   if (seaFloor) s.speedMph = Math.sign(s.speedMph) * Math.min(Math.abs(s.speedMph), car.topSpeed * road.topShare);
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
   limitPitSpeed(this.course,s);
+  // Once this outward nitro jump has left the lip, ground drag below it
+  // cannot slow it. Trick keys stay free and releasing nitro costs no range.
+  if (exitFlightSpeed !== null) s.speedMph = exitFlightSpeed;
   const metresPerSec = s.speedMph * DRIVE.mphToWorld, alongPush = carAlongPush(s);
   if (onHiddenRoad(this.course, s)) s.hiddenRoadDriving = true;
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
@@ -511,7 +515,18 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
       // Natural crests share flight/landing physics, but only authored arena
       // ramps can create a scored jump token. Resets still clear that token.
       const phase = this.course.phase(actor.s), index = arena ? this.course.features.ramps.findIndex(ramp => phase >= ramp.start && phase <= ramp.end + 8) : -1;
-      actor._jumpOrigin = index >= 0 ? { s: actor.s, world: this.course.worldAt(actor.s, actor.lateral), rampId: `ramp-${index}`, lap: Math.floor(actor.s / this.course.length) + 1 } : null;
+      const launch = this.course.features?.ramps?.[index];
+      const exitNitro = launch?.exitNitroRise && actor === this.state && actor.boosting &&
+        Math.abs((actor.prevLateral ?? actor.lateral) - launch.off) < launch.halfWidth + launch.flank &&
+        Math.sin(actor.headingError || 0) > launch.exitMinSine;
+      if (exitNitro) {
+        // The outward nitro line has enough lift to reach the stands across
+        // the width of the ramp. A straight jump keeps its usual trajectory.
+        actor.speedMph = Math.max(actor.speedMph, launch.exitNitroMph);
+        actor._verticalSpeed = Math.max(actor._verticalSpeed, launch.exitNitroRise);
+        predicted = actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5;
+      }
+      actor._jumpOrigin = index >= 0 ? { ...(exitNitro ? {exitNitro:true} : {}), s: actor.s, world: this.course.worldAt(actor.s, actor.lateral), rampId: `ramp-${index}`, lap: Math.floor(actor.s / this.course.length) + 1 } : null;
     } else {
       actor._verticalSpeed = groundVelocity;
       actor._jumpY = ground; actor.airHeight = 0;

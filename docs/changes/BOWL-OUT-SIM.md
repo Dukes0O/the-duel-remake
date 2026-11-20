@@ -7,5 +7,7 @@
 - The eight seeded gate returns took 9.04, 11.63, 16.29, 28.88, 9.04, 11.63, 16.29 and 28.92 seconds. Both gates admitted the player in both directions and blocked the moving computer trucks.
 - Sound events name bowl.out.over, bowl.out.stands, bowl.out.leap, bowl.out.gate and bowl.out.back. The stands event has a name only pending sound selection.
 - Lane at 78133021d passed 195/196. A minimal tunnel course lacked the optional Bowl features. Fixed at 0eca72b2c; 25/25 correction suites, tunnel and OUT-SIM checks and final build passed. Existing replay fingerprints and world signatures matched.
+- Claude's hand drive requested a wider launch, 14 m gate mouths with 10 m guides at 45°, and immediate terrace traction. All seven 50 mph nitro starts across ±4 m landed clean at 7.04–8.36 m; each moved uphill from its next tick, covering 4.59–4.83 m in 1/6 s. The ordinary straight launch matched its control exactly.
+- All eight 20 mph diagonal entries stayed above 19.99 mph. Across eight far starts, gate returns took 6.35–18.76 s. The tunnel and ground alongside the back wall are level at 0 m; the dirt slabs belong to BOWL-OUT-LOOK.
 - Assertions added for the physical routes, ordinary two-sided walls, scoring and shared gate position. Existing assertions retained. Claude runs the required hand drive.
-- **Removed** — Empty desert beyond the stands and generic missed-checkpoint resets in the Bowl's exterior. BOWL-OUT-LOOK draws the outside.
+- **Removed** â€” Empty desert beyond the stands and generic missed-checkpoint resets in the Bowl's exterior. BOWL-OUT-LOOK draws the outside.
