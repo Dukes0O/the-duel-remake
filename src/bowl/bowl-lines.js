@@ -84,7 +84,7 @@ export const BIG_MO = Object.freeze({
   'rex.gone': 'It walked straight out of the gate and into the car park. The crowd is not happy about their cars.',
   'rex.toasted': 'That truck has been toasted too many times, so we have to stop the show and cool it down.',
   'event.won.scrapasaurus': 'The Scrapasaurus is down, and the crowd is going wild! It will make a lovely ornament for your yard.',
-  'event.lost.scrapasaurus': 'The Scrapasaurus won that round, but the show truck is ready, so let us try that again.',
+  'event.lost.scrapasaurus': 'The Scrapasaurus won that round, but your truck is ready for another go, so let us try that again.',
   'night.1.open': 'Ladies and gentlemen, and also dogs, welcome to the Bowl! Tonight we have a brand new driver, so let us make some noise.',
   'night.2.open': 'Welcome back to the Bowl! Our new driver came back for more, and I can see a few more dogs in the crowd tonight.',
   'night.3.open': 'Tonight there are four trucks in the Bowl, and only one of them will still be rolling at the end.',
