@@ -17,6 +17,7 @@ import { raceFeatureFlags, wastelandRulesActive } from './wasteland-access.js';
 import { createFightVoices } from './fight-voices.js';
 import {point, velocity} from './combat-weapons.js';
 import {actorForTarget} from './arsenal/targeting.js';
+import {bowlCrushCues} from './bowl/bowl-lines.js';
 const bank = (id) => SOUND_BANK[id];
 const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
@@ -54,6 +55,23 @@ function footEngineGain(state, course) {
 }
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
 // retain the same tonal target, so switching recordings cannot reset the pitch.
+// BOWL-SOUND-CRUSH: the pitch each piece of the Bowl's crush line plays its take at, by its number.
+const BOWL_CRUSH_RATES = Object.freeze([1, .93, 1.04, .97, 1.07]);
+// The crushed wreck the player's wheels are on, if any: within the piece's footprint along and across the
+// floor, and not higher above it than a bounce. Reads the course and the truck only.
+function bowlWreckUnder(st, course) {
+  const crushed = st.crushedProps;
+  if (!crushed?.length) return null;
+  const s = course.phase ? course.phase(st.s) : st.s, length = course.length;
+  for (const prop of course.features?.crushables || []) {
+    if (!crushed.includes(prop.id)) continue;
+    let along = Math.abs(s - prop.s);
+    if (course.closed && length) along = Math.min(along, length - along);
+    if (along <= (prop.halfZ || 2) + .6 && Math.abs((st.lateral || 0) - prop.off) <= (prop.halfX || 1) + .9 &&
+        (st.airHeight || 0) <= (prop.height || 1.3) + .8) return prop;
+  }
+  return null;
+}
 const engineTone = (revs) => 52 * 2 ** (clamp(revs, 0, 1.15) * 1.55);
 const engineRate = (tone, reference, pitch, ceiling = 2.2) =>
   clamp((tone / reference) * pitch, 0.48, ceiling);
@@ -292,6 +310,7 @@ export class EngineAudio {
             cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' && cue.flag !== 'lab' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
+            (cue.flag !== 'titan-bowl' || this.flags.enabled('titan-bowl')) &&
             (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti || id==='race.finish.flag' && addSummitAttack),
         )
         .map(async ([id, cue]) => {
@@ -1386,6 +1405,7 @@ export class EngineAudio {
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') { this._clearTurbo(); this._clearVehicleVoices(); return; }
     if (this.paused !== st.paused) this.setPaused(st.paused);
+    this._updateBowlCrush(st, environment.course);
     const t = ctx.currentTime;
     const engineCutoff = cutoff => deepEngineCutoff(
       cutoff, environment.deepDepth, this.flags.enabled('the-deep'),
@@ -1799,7 +1819,7 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
-    if (ev?.menu) { this._clearTurbo(); this._clearVehicleVoices(); }
+    if (ev?.menu) { this._clearTurbo(); this._clearVehicleVoices(); this._clearBowlCrush(); }
     this.fightVoices.event(ev, state, course);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
@@ -1818,6 +1838,7 @@ export class EngineAudio {
       this._clearTurbo();
       this.nextBlowoff = 0;
       this._clearVehicleVoices();
+      this._clearBowlCrush();
       this._snowmanAudioStage=(this._snowmanAudioStage ?? 0)+1;
       this._snowmanAudioHits=new Set();
       this._avalancheAudioHits=new Set();
@@ -1996,7 +2017,7 @@ export class EngineAudio {
         scale: 1 + clamp((ev.jumpLanded.distance || 0) / 16, 0, 1),
       });
     if (ev.jumpLanded && state?.car === 'falcone_vasca' && this.flags.enabled('deep-vasca')) this._playCue('deep.squeak');
-    if (ev.propCrushed?.byPlayer) this._crushImpact(ev.propCrushed.strength);
+    if (ev.propCrushed?.byPlayer && !this._bowlCrush(ev.propCrushed, course)) this._crushImpact(ev.propCrushed.strength);
     if (ev.boostStarted) this._playCue('vehicle.boost-start');
     if (ev.nearMiss) {
       this._playCue('interface.near-miss');
@@ -2238,6 +2259,75 @@ export class EngineAudio {
       };
       this._layer(def.layers[0], this._cueOutput, force);
     });
+  }
+
+  // BOWL-SOUND-CRUSH: a crush on the Bowl plays its own set (src/bowl/bowl-lines.js bowlCrushCues), behind
+  // titan-bowl. Sound only: this reads the course's pieces and the player's truck and changes neither.
+  _bowlCrushOn(course) {
+    return !!course?.def?.bowl && this.flags.enabled('titan-bowl') && this.context?.state === 'running';
+  }
+
+  // The bite, and the glass and crowd queued after it. False when the Bowl's takes are not loaded yet, so the
+  // caller plays the old crush in their place.
+  _bowlCrush(burst, course) {
+    if (!this._bowlCrushOn(course)) return false;
+    const prop = course.features?.crushables?.find(piece => piece.id === burst.id);
+    const now = this.context.currentTime;
+    const pancake = burst.pancake ?? (this._bowlFallingAt != null && now - this._bowlFallingAt < .35);
+    this._bowlJustCrushed = {id: burst.id, at: now};
+    const force = .7 + clamp(Number(burst.strength) || 0, 0, 1) * .3;
+    // Each piece of the line has its own pitch as well as its own take, so fifteen pieces are fifteen sounds.
+    const rate = BOWL_CRUSH_RATES[(Number(String(burst.id).match(/(\d+)$/)?.[1]) || 0) % BOWL_CRUSH_RATES.length];
+    let played = false;
+    for (const item of bowlCrushCues({kind: burst.kind ?? prop?.sourceKind ?? prop?.kind, pancake})) {
+      if (item.at > 0) (this._bowlCrushPending ??= []).push({...item, scale: item.scale * force, rate, due: now + item.at});
+      else played = !!this._bowlCrushPlay(item.cue, item.scale * force, rate) || played;
+    }
+    return played;
+  }
+
+  _bowlCrushPlay(id, scale = 1, rate = 1) {
+    if (!this.cueBuffers[id]) return null;
+    const def = bank(id);
+    return this._runCue(id, () => {
+      const buffer = this._cueBuffer(id);
+      if (buffer) this._sample(buffer, def.volume * scale, rate);
+    });
+  }
+
+  // Each frame on the Bowl: the queued glass and crowd, the height the truck is falling from (for a pancake),
+  // and the wheels going on and off a crushed wreck (the groan, the clank, and the flat crunch of a second run).
+  _updateBowlCrush(st, course) {
+    if (!st || !this._bowlCrushOn(course)) {
+      if (this._bowlOn || this._bowlCrushPending?.length) this._clearBowlCrush();
+      return;
+    }
+    const now = this.context.currentTime;
+    if (st.airborne && (st.airHeight || 0) >= 1 && (st._verticalSpeed || 0) < 0) this._bowlFallingAt = now;
+    const pending = this._bowlCrushPending ?? [];
+    this._bowlCrushPending = pending.filter(item => item.due > now);
+    for (const item of pending) if (item.due <= now) this._bowlCrushPlay(item.cue, item.scale, item.rate);
+    const driving = (st.status === 'racing' || st.status === 'exploring') && !st.paused && !st.onFoot && !st.tumble;
+    const wreck = driving ? bowlWreckUnder(st, course) : null;
+    if ((wreck?.id ?? null) === (this._bowlOn?.id ?? null)) return;
+    if (this._bowlOn) {
+      this._bowlOn.groan?.stop();
+      this._bowlCrushPlay('bowl.crush.off');
+    }
+    this._bowlOn = null;
+    if (!wreck) return;
+    const fresh = this._bowlJustCrushed?.id === wreck.id && now - this._bowlJustCrushed.at < 1.5;
+    if (!fresh) for (const item of bowlCrushCues({kind: wreck.sourceKind ?? wreck.kind, flat: true}))
+      this._bowlCrushPlay(item.cue, item.scale);
+    this._bowlOn = {id: wreck.id, groan: this._bowlCrushPlay('bowl.crush.groan', fresh ? 1 : .6)};
+  }
+
+  _clearBowlCrush() {
+    this._bowlOn?.groan?.stop?.();
+    this._bowlOn = null;
+    this._bowlCrushPending = [];
+    this._bowlJustCrushed = null;
+    this._bowlFallingAt = null;
   }
 
   updateFightVoices(state) {

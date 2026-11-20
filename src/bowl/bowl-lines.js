@@ -33,7 +33,42 @@ export const BOWL_SOUND_CUES = Object.freeze({
   // BOWL-RIVALS: a rival knocked out in Last Truck Rolling plays the arena's wreck
   // cue when the player did it ('arena.wreck-credit', already played by the game's
   // audio for an arena wreck) and Big Mo's chime with his line otherwise.
+  // BOWL-SOUND-CRUSH: the crush set, each its own recording (src/sound-bank.js); bowlCrushCues picks them.
+  'bowl.crush.car': 'bowl.crush.car',         // the truck's wheels first bite a junk car (four takes in turn)
+  'bowl.crush.bus': 'bowl.crush.bus',         // a bus or the RV: longer and deeper, with a boom from the hollow body
+  'bowl.crush.stack': 'bowl.crush.stack',     // a burning stack: the deepest, with a rush of sparks
+  'bowl.crush.glass': 'bowl.crush.glass',     // a quarter of a second after the bite, on cars and buses: windows going
+  'bowl.crush.groan': 'bowl.crush.groan',     // while the wheels are on the wreck: metal groaning, held and let go
+  'bowl.crush.off': 'bowl.crush.off',         // the truck comes off the wreck: a clank as it settles
+  'bowl.crush.flat': 'bowl.crush.flat',       // a wreck run over again: a dull flat crunch, half as loud
+  'bowl.crush.pancake': 'bowl.crush.pancake', // a piece crushed by a truck coming down out of the air
+  'bowl.crush.ooh': 'bowl.crush.ooh',         // a bus, the RV, a stack or the Bus Pile: the crowd's "ooh"
 });
+
+// What a crushed piece is, for its sound: the course's pieces name their kind (junkCar, bowlBus, bowlRv,
+// bowlBurningHeap) and BOWL-CRUSH's field adds the Bus Pile.
+export function bowlCrushKind(kind) {
+  const name = String(kind || '');
+  if (/pile/i.test(name)) return 'pile';
+  if (/heap|stack/i.test(name)) return 'stack';
+  if (/bus|rv/i.test(name)) return 'bus';
+  return 'car';
+}
+
+// The sounds of one crush, in order: {cue, at (seconds after the bite), scale}. A pancake on a car replaces the
+// bite with the heavier one; on a bigger piece it lands under that piece's own bite. Glass goes a quarter of a
+// second later on everything but a stack; the crowd says "ooh" for everything but a car. A wreck run over again
+// is the flat crunch alone. The groan and the clank follow the wheels on and off the wreck (src/audio.js).
+export function bowlCrushCues({kind, pancake = false, flat = false} = {}) {
+  const piece = bowlCrushKind(kind);
+  if (flat) return [{cue: 'bowl.crush.flat', at: 0, scale: 1}];
+  const bite = piece === 'car' ? 'bowl.crush.car' : piece === 'stack' ? 'bowl.crush.stack' : 'bowl.crush.bus';
+  const cues = pancake && piece === 'car' ? [{cue: 'bowl.crush.pancake', at: 0, scale: 1}]
+    : [{cue: bite, at: 0, scale: 1}, ...(pancake ? [{cue: 'bowl.crush.pancake', at: 0, scale: .6}] : [])];
+  if (piece !== 'stack') cues.push({cue: 'bowl.crush.glass', at: .25, scale: 1});
+  if (piece !== 'car') cues.push({cue: 'bowl.crush.ooh', at: .35, scale: 1});
+  return cues;
+}
 
 // The rivals' names joined as a person would say them: "A", "A and B", "A, B and C".
 // Also used by the Turn Show's lines (BOWL-TURNS) below.
