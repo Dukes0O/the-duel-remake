@@ -34,3 +34,8 @@ Written by the cloud session building the card. Each has my pick, and the work c
    card), and the feed crate as the lesson's crate.
 9. **Where a visit ends.** Leaving the Scablands goes to the main menu, as any helicopter visit does, not back to the yard or
    the town. **Pick:** leave it so for this card; going back to the town is a small follow-up in `app.returnToMenu`.
+10. **The salt pan on the Ridge.** The land's region map (`src/world/scablands-regions.js`, SCABLANDS-LAND) makes the
+    north-east "from the Pipe to the Ridge's foot" a salt pan (0xe9e5db), but its outline also takes in the Ridge's middle
+    (4240, -3040): the dip tank, the pickup, the scrub and Old Tam's hut all stand on white salt, from the ground as from the
+    air. The region is also the cars' grip and dust. **Pick:** leave the region map as it is in this card (it is the land's
+    and the cars'), and suggest a small world card to pull the pan's edge back to the Ridge's foot.
