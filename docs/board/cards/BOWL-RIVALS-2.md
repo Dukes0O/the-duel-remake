@@ -51,3 +51,8 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 with a Removed line. Before CARD DONE, search `tools/` for `sideBySide`, `side-by-side`, `pace` and each rival's id and
 bring each older suite and scenario that names them up to date. No Chrome under `codex exec`: any browser scenario is
 "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Build decisions, 20 November
+
+- Measure the reference on the current Bowl after the wall and trick cards. Tune a lap against a neutral, repeatable driver before measuring the Easy and Hard head-to-head results.
+- Use continuous track progress from each truck's own start to compare the two lanes. A gap over 25 m changes the pace only at Easy and Medium. Leave weapon behavior with BOWL-WEAPONS.

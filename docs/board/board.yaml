@@ -659,7 +659,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-rivals-2"
     needs: [BOWL-WALLS, BOWL-TRICKS]
     locks: [bowl-rivals, bowl-night]
     flag: "titan-bowl"
@@ -788,6 +789,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures]
     flag: "arena-tricks"
