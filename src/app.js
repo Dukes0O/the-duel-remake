@@ -74,7 +74,7 @@ import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUn
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
-import {cleanupWorldJobLoan, ringJobVehicleBell} from './arena/modes/world-job.js';
+import {cleanupWorldJobLoan, drivingFireTruck, ringJobVehicleBell, setJobVehicleSpray} from './arena/modes/world-job.js';
 import {jobForRun} from './world/jobs/job-vehicle.js'; // SHIPS-DECKS: the job-level vehicle field
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
@@ -246,7 +246,9 @@ export class App {
       if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
-      if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
+      if(this.cameraMode==='hood'&&state.arena?.worldJob?.vehicle)this.cameraMode='chase';
+      if(event.gameover&&['town-drive','town-job'].includes(state.arena?.worldJob?.definition?.kind))cleanupWorldJobLoan(this.duel);
+      if(event.arenaResult&&state.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(state.arena.worldJob); // TOWN-HAUL-JOB
       if(event.townGate&&state.arena?.mode==='world-job'){
         // The event fires inside duel.step(), which still needs the arena: leave once the step has finished.
         queueMicrotask(()=>{if(this.duel.state.arena?.mode==='world-job'&&this.returnToYard())this._openTownScrapdomePanel=true;});
@@ -462,6 +464,7 @@ export class App {
     }
     this._syncHiddenRoadDiscovery();
     if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();return;}
+    this._townJobFrame(seconds);
     this._stepAccumulator += seconds;
     while (this._stepAccumulator + 1e-10 >= SIMULATION_STEP) {
       if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();break;}
@@ -822,6 +825,12 @@ export class App {
   }
   // Leaving a world job that is still in play, from the pause screen's BACK TO THE YARD: the game's own resume clears the pause, then the job
   // ends as left (nothing is paid) and its results screen, with TRY AGAIN and BACK TO THE YARD, shows at once.
+  // One press of BACK TO THE YARD ends a town drive and reaches the yard (a town drive has no result page worth reading).
+  leaveTownDrive(){
+    const state=this.duel.state;
+    if(state.arena?.worldJob?.definition?.kind!=='town-drive'||state.status==='arena_result'||!this.leaveWorldJob())return false;
+    return this.returnToYard();
+  }
   leaveWorldJob(){
     const state=this.duel.state;
     if(state.arena?.mode!=='world-job'||state.status==='arena_result')return false;
@@ -842,6 +851,7 @@ export class App {
     const definition=this.duel.state.arena?.worldJob?.definition;
     if(!definition)return false;
     if(definition.run===true)return this.gasRun(definition.road);
+    if(definition.kind==='town-job')return this._townJob?this.startTownJob(this._townJob.town,definition.id):false; // TOWN-HAUL-JOB
     const side=sideJobKey(definition);
     if(side)return this.everburnSideJob(side);
     if(definition.steps?.some(step=>step.kind==='rider-fight') && !EVERBURN_JOBS.some(job=>job.id===definition.id))
@@ -2041,6 +2051,51 @@ export class App {
     clearScablandsTownLayout();
     return false;
   }
+  // HELI-RUSTWALL: FLY from the town's finished Helipad. The Scablands is loaded as the town's drive loads it (so it is drawn
+  // with the town on it), then the helicopter visit runs there with the land handed to the session as plain inputs. What the
+  // visit does goes back to the town as commands, and the town is saved when the visit ends.
+  async startTownHeli(town) {
+    if(this._switches().enabled('wasteland-town')!==true||!this.heliAvailable()||!town||!this.isYardHomeActive())return false;
+    const [{createTownWorld},{setScablandsTownLayout,clearScablandsTownLayout},townHeli,{dispatchTownCommand},{saveTownAfterFlight}]=await Promise.all([
+      import('./town/town-world.js'),import('./world/scablands-ground.js'),import('./town/town-heli.js'),import('./town/town-commands.js'),import('./town/town-page-store.js')]);
+    if(townHeli.scablandsVisitRefusal(town,{lessonsDone:heliOf(this.profile).lessons}))return false;
+    const layout=createTownWorld(town);
+    setScablandsTownLayout(layout);
+    const job={id:'town-drive',kind:'town-drive',seed:town.seed??0,steps:[],layout};
+    if(!this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job})){clearScablandsTownLayout();return false;}
+    this._townHeli={town,commands:events=>{for(const command of townHeli.townCommandsForHeliEvents(events))dispatchTownCommand(town,command);},
+      save:()=>saveTownAfterFlight(town),clear:clearScablandsTownLayout};
+    const st=this.duel.state;
+    st.status='menu';
+    if(this.visitHeli({scablands:townHeli.scablandsHeliInputs(town)}))return true;
+    this._townHeli=null;this.returnToMenu();clearScablandsTownLayout();
+    return false;
+  }
+  // TOWN-HAUL-JOB: a town job (src/world/jobs/town-jobs.js) from the town's mission card. The town keeps ticking while it is
+  // driven, one tick every 10 real seconds outside race state, and serious news comes on the radio at most once a minute. Its
+  // one mission result is settled once per run id, and the town is saved, when the job ends.
+  async startTownJob(town, jobId) {
+    if(this._switches().enabled('wasteland-town')!==true||!town||!(this.isYardHomeActive()||this.duel.state.arena))return false;
+    const [{townJobDefinition,createTownJobRun},{setScablandsTownLayout,clearScablandsTownLayout},{saveTownFromDrive}]=await Promise.all([
+      import('./world/jobs/town-jobs.js'),import('./world/scablands-ground.js'),import('./town/town-entry.js')]);
+    // TOWN-FIRE-JOB: the ash line after the first fire depends on the Everburn: started (Hollis's note read or a job done), and
+    // whether Old Smoke is beaten. Read here from the profile; the job never writes it.
+    const ember=emberOf(this.profile);
+    const job=townJobDefinition(town,jobId,{seed:(town.seed^((this._arenaSerial||0)+1)*7919)>>>0,
+      ember:{started:ember.read===true||(ember.jobs?.length??0)>0,smokeBeaten:emberFurnaceDead(this.profile)}});
+    if(!job)return false;
+    setScablandsTownLayout(job.layout);
+    if(!this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job})){clearScablandsTownLayout();return false;}
+    const holdFires=job.townJob==='fire'?job.steps[0].buildings.map(building=>building.id):[];
+    this._townJob=createTownJobRun({town,runId:this.runId,holdFires,save:(target,reason)=>saveTownFromDrive(target,reason)});
+    return true;
+  }
+  _townJobFrame(seconds){
+    const state=this.duel.state,run=this._townJob;
+    if(!run||state.arena?.worldJob?.definition?.kind!=='town-job'||state.status!=='racing'||state.paused||state.arena.result)return;
+    const radio=run.frame(seconds);
+    if(radio)this._storyRadioNow().sayTownLine(radio.lineId,{radioReport:radio.report});
+  }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.
@@ -2048,7 +2103,7 @@ export class App {
     this._refreshPlayer();
     const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
       (job.id === NIGHT_2_ID ? this._switches().enabled('story-choices') === true :
-        job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
+        ['town-drive','town-job'].includes(job.kind)?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();
@@ -2113,6 +2168,9 @@ export class App {
     this._cancelStoryThanks();
     this.heliSession = null; this.heliMapOpen = false; // MAP-VIEW
     const left = session.leave();
+    // HELI-RUSTWALL: the visit's last word to the town (the fire still burning, the map seen), then the town is saved.
+    const town = this._townHeli;
+    if (town) { this._townHeli = null; town.commands(session.takeEvents()); town.clear(); void town.save().catch(error => console.error('The town could not be saved after the flight:', error)); }
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
     this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {}), ...(left.lab ? {lab: left.lab} : {}), ...(left.story ? {story: left.story} : {})};
     this._saveProfile();
@@ -2193,7 +2251,7 @@ export class App {
     return !!this.player && this._switches().enabled('helicopter') === true;
   }
   // From the main menu to the helipad: where the helicopter last stood, else Tremblant Woods (HELI-JOB-CLARITY).
-  visitHeli({mode = 'assisted'} = {}) {
+  visitHeli({mode = 'assisted', scablands = null} = {}) {
     if (this.duel.state.status !== 'menu' || !this.heliAvailable()) return false;
     this._refreshPlayer();
     this._storyPending = null; this._storyLeave();
@@ -2224,6 +2282,7 @@ export class App {
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       // SKI-VIEW: heli-skiing needs Summit Run (the session checks that too).
       heliSkiingEnabled: this._switches().enabled('heli-skiing') === true,
+      scablands, // HELI-RUSTWALL: the Scablands' land when flown from the town's Helipad (startTownHeli), else null
       wildlife: wildlifeRules, wildlifeApproved, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
@@ -2235,6 +2294,8 @@ export class App {
         this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {}), ...(profile.lab ? {lab: profile.lab} : {}), ...(profile.story ? {story: profile.story} : {})};
         this._saveProfile();
       }});
+    // HELI-RUSTWALL: in the Scablands the game is already on the land (startTownHeli); it shows the helicopter now.
+    if (scablands) { this.duel.state.status = 'heli'; this.duel.state.heliVisit = {courseId: 'scablands'}; }
     this.setInputContext(null);
     this._heliEvents(this.heliSession.start());
     return true;
@@ -2255,6 +2316,7 @@ export class App {
         this._storyThanks = this._storyTimer(() => { this._storyThanks = null; this._storySay('story.kogane.daichi.thanks'); }, 3200);
       }
     }
+    this._townHeli?.commands(events);
     if (events.length) this.heliLog = [...this.heliLog, ...events].slice(-40);
     if (events.length) this.duel.emit({heli: true});
   }
@@ -2711,9 +2773,11 @@ export class App {
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
+    if(st.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(st.arena.worldJob); // TOWN-HAUL-JOB: every way out saves the town
     cleanupWorldJobLoan(this.duel);
     this.duel.clearDeep();this.deepAudio.stop();
     const heliLanding = this._heliLandingChoice();
+    const townFlight = !!this._townHeli; // HELI-RUSTWALL: a flight from the town's Helipad ends in the yard, as a town drive does
     this._leaveHeli();
     if (st.heliVisit) st.heliVisit = null;
     st.paused = false; st.status = 'menu'; st.boosting = false;
@@ -2733,6 +2797,7 @@ export class App {
     this._storyRace = null; this._storyPending = null; this._water?.clear(); this._waterStartLine = null; // the story's race ends with the race (quitting grants nothing)
     this.duel.emit({ menu: true });
     this.storyMenuOpened(); // Ana's message, the next time the menu opens after the win
+    if (townFlight) this.visitWasteland();
   }
   get footCameraMode() {
     return wastelandRulesActive(this.duel.state) && this._footCameraMode === 'overhead'
@@ -2752,9 +2817,12 @@ export class App {
   cycleFootCamera() {
     return this.setFootCamera(this.footCameraMode === 'first-person' ? 'overhead' : 'first-person');
   }
+  // The hood camera sits a truck's cab over the town's near-black road as a flat slab; a work truck has no hood camera.
+  _inWorkTruck(){return !!this.duel.state.arena?.worldJob?.vehicle;}
   setCamera(mode) {
     this.cameraMode=normalizeCameraMode(this.cameraMode);
     if(['front','right','left'].includes(mode))mode='chase';
+    if(mode==='hood'&&this._inWorkTruck())mode='chase';
     if(!CAMERA_MODES.includes(mode))return this.cameraMode;
     this.cameraMode=mode;
     this.duel.emit({ camera: this.cameraMode });
@@ -2762,7 +2830,9 @@ export class App {
   }
   cycleCamera() {
     if(!CAMERA_MODES.includes(this.cameraMode))return this.setCamera('chase');
-    return this.setCamera(CAMERA_MODES[(CAMERA_MODES.indexOf(this.cameraMode)+1)%CAMERA_MODES.length]);
+    const at=CAMERA_MODES.indexOf(this.cameraMode);let next=CAMERA_MODES[(at+1)%CAMERA_MODES.length];
+    if(next==='hood'&&this._inWorkTruck())next=CAMERA_MODES[(at+2)%CAMERA_MODES.length];
+    return this.setCamera(next);
   }
 
   // Headless fixed-step advance (tests / scripted runs without rAF).
@@ -2780,7 +2850,7 @@ export class App {
   activeInputContext() {
     return this.inputContext ?? (this.duel.state.status === 'menu' ? 'menu' :
       this.duel.state.status === 'heli' && this.heliSession ? 'heli' :
-      this.duel.state.onFoot ? 'foot' : 'car');
+      this.duel.state.onFoot ? 'foot' : drivingFireTruck(this.duel.state) ? 'firetruck' : 'car'); // TOWN-FIRE-JOB: H sprays
   }
   setInputContext(context = null) {
     if (context !== null && !INPUT_CONTEXTS[context]) throw new Error(`Unknown input context: ${context}`);
@@ -2866,7 +2936,7 @@ export class App {
       this._footPointer.lookX=this._footPointer.lookY=0;
       return;
     }
-    if (context !== 'car') {this._resetKeyboardInput();return;}
+    if (context !== 'car' && context !== 'firetruck') {this._resetKeyboardInput();return;}
     if (this.autopilot) {this._resetKeyboardInput();this._driveAutopilot(dt);return;}
     const k = this.keys;
     const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
@@ -2885,6 +2955,7 @@ export class App {
       boost: heldInput(context, 'boost', k) || pad.boost,
       interact: heldInput(context, 'interact', k) || pad.interact,
     });
+    if (context === 'firetruck') setJobVehicleSpray(this.duel, heldInput(context, 'spray', k)); // TOWN-FIRE-JOB: hold H to spray
   }
 
   _readGamepad(dt = 1 / 120) {

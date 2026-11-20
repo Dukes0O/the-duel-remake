@@ -5,6 +5,8 @@ export const MACHINE_CONTENT = Object.freeze({
   ...PLANT_MACHINES,
   excavator: Object.freeze({
     id:'excavator', name:'Excavator', driveKind:'tracks', massKg:18_000, maxSpeedMps:2.2,
+    // Footprints are the posed model's plan outline in metres, the machine facing +Z; the excavator's is its tracks and house.
+    footprint:Object.freeze({minX:-1.53, maxX:1.5, minZ:-2.63, maxZ:2.13}),
     turnRateRadPerSecond:0.9, trackWidthM:2.2, maxLoadKg:3_200, startAngles:Object.freeze({boom:0.42}),
     cabEye:Object.freeze([-0.72,3.05,0.1]), cabTurnsWith:'house',
     // A tool's radius is at least 0.71 m, so it always covers a sample of the 1 m ground grid wherever it lands.
@@ -20,12 +22,14 @@ export const MACHINE_CONTENT = Object.freeze({
   }),
   dumpTruck: Object.freeze({
     id:'dump-truck', name:'Dump truck', driveKind:'wheels', massKg:12_000, maxSpeedMps:12,
+    footprint:Object.freeze({minX:-1.55, maxX:1.55, minZ:-4.49, maxZ:3.77}),
     turnRateRadPerSecond:0.7, maxLoadKg:18_000, joints:Object.freeze([]), cabEye:Object.freeze([-0.6,3.05,2.6]),
     tools:Object.freeze({bed:Object.freeze({kind:'bed', capacityM3:8, radiusM:1.8, widthM:2.5, lengthM:5, centerZ:-0.8, offset:[0,0,-5.2], dischargeRateM3s:2})}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['bed'])}),
   }),
   trencher: Object.freeze({
     id:'trencher', name:'Trencher', driveKind:'tracks', massKg:8_500, maxSpeedMps:0.8,
+    footprint:Object.freeze({minX:-0.9, maxX:1.21, minZ:-5.76, maxZ:1.92}),
     turnRateRadPerSecond:0.55, trackWidthM:1.8, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0.2]),
     joints:Object.freeze([
       Object.freeze({name:'boom', control:'boom', modelNode:'trencher:boom', parent:null, origin:[0,1.02,-1.82], axis:[1,0,0], limits:[-0.9,0.2], rate:0.8}),
@@ -42,24 +46,29 @@ export const MACHINE_CONTENT = Object.freeze({
   }),
   drill: Object.freeze({
     id:'drill', name:'Drill rig', driveKind:'tracks', massKg:10_000, maxSpeedMps:1.2,
+    // The rig stands over its hole at its rear, so the truck reaches forward of its own place.
+    footprint:Object.freeze({minX:-2.08, maxX:2.08, minZ:-0.56, maxZ:6.25}),
     trackWidthM:2, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0.2]),
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['mast','feed'])}),
   }),
   dozer: Object.freeze({
     id:'dozer', name:'Dozer', driveKind:'tracks', massKg:14_000, maxSpeedMps:1.5,
+    footprint:Object.freeze({minX:-1.9, maxX:1.9, minZ:-2.01, maxZ:2.22}),
     trackWidthM:2.2, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0]),
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['blade'])}),
   }),
   roller: Object.freeze({
     id:'roller', name:'Road roller', driveKind:'wheels', massKg:10_000, maxSpeedMps:1,
+    footprint:Object.freeze({minX:-1.04, maxX:1.04, minZ:-2.19, maxZ:2.79}),
     maxLoadKg:0, cabEye:Object.freeze([0,2.65,0]),
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['roller'])}),
   }),
   paver: Object.freeze({
     id:'paver', name:'Paver', driveKind:'tracks', massKg:12_000, maxSpeedMps:1,
+    footprint:Object.freeze({minX:-2.79, maxX:2.79, minZ:-4.6, maxZ:3.97}),
     trackWidthM:2, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0]),
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['paver'])}),

@@ -95,14 +95,20 @@ export async function run(context) {
   for (let round = 1; round <= 8 && !await context.evaluate(page.nightDone); round++) {
     await context.evaluate(page.next);
     const type = await context.evaluate(page.event);
-    await context.evaluate(page.autopilot);
-    if (type === 'freestyle' && !freestyleSeen) {
-      await context.waitFor(page.freestyleCrowd, 'Freestyle under way', 60000);
-      await picture(context, 'bowl-night-freestyle-hud');
-      freestyleSeen = true;
+    // The Car Crush (and any retry of it) is driven as a child drives it, W held down: the
+    // test driver keeps to its lane and misses the crush line on the stand side.
+    const crush = type === 'carCrush';
+    if (crush) await key(context, 'KeyW', 'keydown'); else await context.evaluate(page.autopilot);
+    try {
+      if (type === 'freestyle' && !freestyleSeen) {
+        await context.waitFor(page.freestyleCrowd, 'Freestyle under way', 60000);
+        await picture(context, 'bowl-night-freestyle-hud');
+        freestyleSeen = true;
+      }
+      await waitForCard(context, `${type} ends`, crush ? 180000 : 150000);
+    } finally {
+      if (crush) await key(context, 'KeyW', 'keyup'); else await context.evaluate(page.manual);
     }
-    await waitForCard(context, `${type} ends`, 150000);
-    await context.evaluate(page.manual);
     await picture(context, `bowl-night-card-${round}-${String(type).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`);
   }
   assert.ok(await context.evaluate(page.nightDone), 'the night reaches its results');

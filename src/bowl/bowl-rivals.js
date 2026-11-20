@@ -4,9 +4,9 @@
 // replaces Side by Side's one computer truck and adds Last Truck Rolling; both
 // run from seed and inputs alone, with no DOM, graphics or storage.
 //
-// Side by Side keeps the duel's own rival rules on the inside lane: the rival's
-// pace for the night's level caps its speed, and its start delay is how long it
-// takes to get going when the lights go.
+// Side by Side keeps the duel's own rival rules on the course's second lane: the
+// rival's pace for the night's level caps its speed, and its start delay is how
+// long it takes to get going when the lights go.
 //
 // Last Truck Rolling is the arena's own fight on the Bowl (src/arena): its
 // teams (every truck for itself), its computer drivers (src/arena/arena-brains.js
@@ -15,7 +15,7 @@
 // truck, and a wrecked truck is knocked out and stays where it stopped instead
 // of coming back.
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, bowlLayout, registerBowlEventRunner,
-  sayBowlLine, startBowlEventAt, outsideLaneStart} from './bowl-night.js';
+  sayBowlLine, startBowlEventAt} from './bowl-night.js';
 import {BOWL_GOALS} from './bowl-lines.js';
 
 const LEVELS = ['easy', 'medium', 'hard'];
@@ -36,19 +36,19 @@ const levelOf = night => LEVELS.includes(night?.cpuDifficulty) ? night.cpuDiffic
 export const BOWL_RIVALS = Object.freeze({
   'old-bess': Object.freeze({name: 'Old Bess', brain: 'brawler', startDelaySec: 1,
     way: 'Old Bess is Moss\'s cousin. She is slow off the line and never in a hurry, but she never gives up.',
-    pace: Object.freeze({easy: 13, medium: 21, hard: 28})}),
+    pace: Object.freeze({easy: 13, medium: 24, hard: 28})}),
   'big-kettle': Object.freeze({name: 'Big Kettle', brain: 'rammer', startDelaySec: 1.6,
     way: 'Big Kettle takes a long time to get the boiler going, and then it pushes everything out of the way.',
-    pace: Object.freeze({easy: 14, medium: 22, hard: 29})}),
+    pace: Object.freeze({easy: 14, medium: 24, hard: 29})}),
   'rust-rhino': Object.freeze({name: 'Rust Rhino', brain: 'rammer', startDelaySec: .3,
     way: 'Rust Rhino puts its head down and charges at whatever is in front of it.',
-    pace: Object.freeze({easy: 14, medium: 23, hard: 30})}),
+    pace: Object.freeze({easy: 14, medium: 24, hard: 30})}),
   'tin-lizard': Object.freeze({name: 'Tin Lizard', brain: 'brawler', startDelaySec: .2,
     way: 'Tin Lizard is quick and slippery, and it runs away when it gets hurt.',
-    pace: Object.freeze({easy: 15, medium: 24, hard: 31})}),
+    pace: Object.freeze({easy: 15, medium: 25, hard: 31})}),
   'dragon-wagon': Object.freeze({name: 'Dragon Wagon', brain: 'rammer', startDelaySec: .2,
     way: 'Dragon Wagon is the fastest truck in the show, and it loves a crowd.',
-    pace: Object.freeze({easy: 15, medium: 25, hard: 32})}),
+    pace: Object.freeze({easy: 15, medium: 26, hard: 32})}),
 });
 export const BOWL_RIVAL_IDS = Object.freeze(Object.keys(BOWL_RIVALS));
 
@@ -98,28 +98,19 @@ function holdPace(duel, actor, rivalId, level) {
 
 // ---- Side by Side -------------------------------------------------------
 
-// Where the player and the rival start and finish, from the course's own data.
-// A course that names its Side by Side lanes (`features.bowl.lanes`, BOWL-EXPAND:
-// both on the centre line, half a lap apart) gives each truck its own start, and
-// each finishes one full lap from where it started. Otherwise the lanes are
-// BOWL-HOOKS' bowlLayout lane either side of the middle, the rival inside, and
-// the player starts ahead by the outside lane's extra length, as on a running
-// track; both finish at the line. Nothing here assumes the floor's size.
+// Where the player and the rival start and finish, from the course's own data:
+// Show Night's bowlLayout reads the two lanes from course.features.bowl.lanes
+// (BOWL-EXPAND: both on the centre line, half a lap apart), and each truck
+// finishes one full lap from where it started. Nothing here assumes the floor's size.
 export function sideBySideLanes(course) {
-  const named = course.features?.bowl?.lanes;
-  if (Array.isArray(named) && named.length >= 2 && named.every(lane => Number.isFinite(lane?.s) && Number.isFinite(lane?.lateral))) {
-    const [player, rival] = named;
-    return {player: {s: player.s, lateral: player.lateral, finishS: player.s + course.length},
-      rival: {s: rival.s, lateral: rival.lateral, finishS: rival.s + course.length}};
-  }
-  const lane = bowlLayout(course).lane, start = outsideLaneStart(course, {inside: -lane, outside: lane});
-  return {player: {s: start, lateral: lane, finishS: course.length}, rival: {s: 0, lateral: -lane, finishS: course.length}};
+  const [player, rival] = bowlLayout(course).lanes;
+  return {player: {s: player.s, lateral: player.lateral, finishS: player.s + course.length},
+    rival: {s: rival.s, lateral: rival.lateral, finishS: rival.s + course.length}};
 }
 
 registerBowlEventRunner('sideBySide', {
-  // Each truck's finish is a distance (sideBySideLanes), so the lap count only
-  // has to keep the rival driving until then: a rival that has done its laps stops.
-  laps: 2,
+  // Each truck's finish is a distance (sideBySideLanes); the Duel's own lap count
+  // is left at the runners' default, so the rival never stops for having done its laps.
   place(duel, night) {
     const lanes = sideBySideLanes(duel.course), rivalId = sideBySideRival(night);
     startBowlEventAt(duel, lanes.player.s, lanes.player.lateral);

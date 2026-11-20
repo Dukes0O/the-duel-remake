@@ -208,6 +208,15 @@ This is what lets a town of 10,000 exist and also lets you dig a trench by hand.
   (bucket tip from joint angles, cutting into a height field).
 - **Drivable in the arena.** A machine is a participant with position, heading, speed, mass and collision, so raiders can hit it and
   it fits `world-job`. Wheels use the work-vehicle path; tracks are a differential drive with the same interface.
+- **Machines are solid to each other** (MACHINE-YARD-NEXT). Each definition carries a `footprint`, the posed model's plan outline
+  (the excavator's is its tracks and house, not its reach), and `src/machines/yard-solids.js` tests a move with the game's own
+  oriented-box sweep in `src/collision.js`. The yard tries each driven machine's move before any work is done with it; a move into
+  another machine, or into the old parked dozer, is not made, and the first stop at speed says so (cue `machine-contact`). Mabel
+  works in her own bore and is not in the list.
+- **Yard pace and words** (MACHINE-YARD-NEXT). The drill's feed rates are `DRILL_FEED_RATES_MPS`: a 13 m well is about a minute at
+  the steady feed, and a hard feed still jams in rock. The roller shows how firm the fill under it is, in percent, firm at 90; each
+  pass also pushes a little fill to the sides, which is why a strip takes several passes. The paver, on ground with no fill, says it
+  lays only on fill and where the nearest fill is.
 - **Loose material** is real: bucket, bed and hopper hold a volume and a material. Tipping makes a heap in the ground layer or feeds a
   recipe. Weight changes how a truck drives. Particles are for show only.
 - **Demonstrations.** `src/machines/demo.js` records joint angles and drive at a low rate, as `src/ghost.js` does for cars, compact and

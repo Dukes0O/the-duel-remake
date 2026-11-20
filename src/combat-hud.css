@@ -75,3 +75,5 @@
 .bounty-screen-arrow span{display:block;font-size:29px;line-height:1}
 .bounty-screen-arrow b{padding:3px 6px;background:#251b10e0;border:1px solid #ffb52e99;white-space:nowrap}
 .combat-opponent-marker.is-marked{border-color:#ffb52e;box-shadow:0 0 0 1px #ffb52e}
+/* A town work truck: none of the car's four weapon buttons, the NITRO bar or the car's armor line. */
+#stage.is-work-truck .combat-slot-bar,#stage.is-work-truck .boost-readout,#stage.is-work-truck .combat-player-armor{display:none}

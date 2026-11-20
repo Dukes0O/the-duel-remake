@@ -7,7 +7,7 @@ import {DIG_MACHINE_HELP, DIG_MACHINE_CONTROLS, digMachineControls, digMachineId
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, createBorerSurveyCache} from './borer.js';
-import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digBoreSurveyPosition, digSandboxMachineState, stepDigSandbox, switchDigMachine, teachBorerForCheck, toggleBoreLever, visitBore} from './dig-sandbox.js';
+import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digBoreSurveyPosition, digSandboxMachineState, PARKED_DOZER, stepDigSandbox, switchDigMachine, teachBorerForCheck, toggleBoreLever, visitBore} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -24,7 +24,7 @@ import {machineToolPosition} from './machine.js';
 import {drillYardControls} from './drill.js';
 import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView, drillDepthWords} from './drill-view.js';
 import {createRoadSounds, createRoadWorkView, createRoadMachinePose, roadMachineModel, ROAD_MACHINE_SEATS} from './roads-view.js';
-import {roadYardControls} from './roads.js';
+import {roadYardControls, roadYardWords} from './roads.js';
 import {createBorerSounds} from './borer-sounds.js';
 import {createSparks} from '../world/scrap-look.js';
 import {createPlantYardView} from './plant-view.js';
@@ -454,7 +454,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     modelAsset=machineAsset;
     const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
     const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
-    if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
+    if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(PARKED_DOZER.x,scablandsNaturalHeightAt(PARKED_DOZER.x,PARKED_DOZER.z),PARKED_DOZER.z);parkedDozer.rotation.y=PARKED_DOZER.heading;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
     for(const id of digMachineIds(sim.town).filter(id=>!isPlantMachine(id))){
       let root;
       if(id==='borer'){
@@ -633,7 +633,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       nearGround.refreshBounds(expanded); yardFloor.userData.refreshGround(expanded);
     }
     effects.update(elapsed);
-    const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=plantYardWords(sim)?.load ?? (sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?drillDepthWords(sim.drill.hole) : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
+    const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=plantYardWords(sim)?.load ?? (sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? roadYardWords(sim.activeMachine,sim.roadWork,sim.roadMachines[sim.activeMachine].machine).load : sim.activeMachine==='drill'?drillDepthWords(sim.drill.hole) : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
       `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`);
     host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} · ${sim.mode.toUpperCase()} MODE`;
@@ -689,10 +689,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     } else if(!failed && sim.activeMachine==='borer' && sim.activeBoreId && sim.boreOrders.some(order=>order.id===sim.activeBoreId && order.status!=='finished'))message.textContent=sim.borePlayerAtLever?'You have the lever. Press V to hand it back.':'Pim is cutting. Press V to take the lever.';
     else if(!failed && sim.activeMachine==='borer')message.textContent=sim.mode==='drive'?'Drive to the rock. Press Tab to start work.':'Hold W to push the lever forward and S to pull it back. Keep the head turning.';
     else if(!failed && sim.activeMachine==='drill')message.textContent=sim.drill.hole?.jammed?'The bit is jammed. Hold S to back it out.':sim.drill.hole?.struckWater?'Water reached. Press Tab to lay the mast down before driving on.':'Drive to a spot. Press Tab to stand the mast up. Hold Space to drill. Add W for a harder feed. Hold S to reverse.';
-    else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent=sim.activeMachine==='dozer'
-      ? 'Hold Space while driving to gather ground. Let go of Space and drive to spread it.'
-      : sim.activeMachine==='roller' ? 'Hold Space and drive over the spread ground until it is firm.'
-      : 'Hold Space and Shift while driving over firm ground to lay a smooth surface.';
+    else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent=roadYardWords(sim.activeMachine,sim.roadWork,sim.roadMachines[sim.activeMachine].machine).hint;
     else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
     renderer.render(scene,camera);

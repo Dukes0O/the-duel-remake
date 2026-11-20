@@ -21,6 +21,7 @@ import {CHALLENGE_RULES} from '../lab/lab-challenges.js'; // LAB-VIEW: the numbe
 import {CARS, COURSE} from '../config.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {CABLE} from './heli-cable.js';
+import {compassBearing} from './heli-flight.js';
 import {atAnyPad} from './heli-board.js';
 import {SUMMIT_PADS} from '../ski/runs/summit-zones.js';
 import {jobCardText, jobCardMarkup, hookPromptText, DELIVERED_SECONDS} from './heli-job-card.js'; // HELI-JOB-CLARITY
@@ -96,6 +97,10 @@ export function noticeText(event) {
     case 'hooked': return 'Hooked on';
     // The pilot's map secrets (MAP-SECRETS): a sign found from the air, Roger's call about the Table, the logbook.
     case 'secretFound': case 'tableSpotted': return event.text;
+    // HELI-RUSTWALL: the Scablands' words (on screen; voice is a later card), a load set down at Old Tam's hut, the Ridge fire's end.
+    case 'scablandsSaid': return `${event.who}: ${event.text}`;
+    case 'scablandsLift': return event.liftId === 'tam-feed' ? 'Delivered: the goat feed is at Old Tam\'s hut' : 'Delivered: Old Tam\'s pickup is back at his hut';
+    case 'scablandsFire': return event.state === 'out' ? 'The fire on the Ridge is out' : event.state === 'lost' ? 'The scrub on the Ridge has burnt out' : null;
     case 'tableFound': return `${event.text} ${resultWords('Paid', event.pay, {balance: event.balance})}`;
     case 'hookRefused': return hookHintText(event);
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
@@ -336,9 +341,10 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   if (!view?.heli) return '';
   const here = view.courseId;
   const onPad = here === HOME_COURSE && view.heli.onGround && view.zone &&
-    Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
-  // The places to fly to: the session's own list when it gives one (Summit Run on), else the usual three.
-  const places = Array.isArray(view.destinations) ? view.destinations.map(id => HELI_DESTINATIONS_WITH_SUMMIT[id]).filter(Boolean) : Object.values(HELI_DESTINATIONS);
+    Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius || view.scablands?.atPad === true;
+  // The places to fly to: the session's own list when it gives one (Summit Run on), else the usual three. HELI-RUSTWALL: over the
+  // Scablands there is nowhere else to fly, so the panel lists this land's places with their heading and distance instead.
+  const places = view.scablands ? [] : Array.isArray(view.destinations) ? view.destinations.map(id => HELI_DESTINATIONS_WITH_SUMMIT[id]).filter(Boolean) : Object.values(HELI_DESTINATIONS);
   const buttons = places.map(place => {
     const leg = place.id === here ? null : legFuelKg(here, place.id);
     const chosen = view.destination === place.id;
@@ -349,8 +355,10 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const atTruck = view.heli.onGround && view.rescue?.active?.sites?.atTruck === true;
   // SKI-FINISH: the pickup pad's pump during a ski flight sells fuel like the home pump (always for pay).
   const atSkiPump = view.heli.onGround && view.ski?.pump?.atPump === true;
-  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck || atSkiPump ? Math.max(1, refuels) : refuels});
-  const pump = onPad || atTruck || atSkiPump ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
+  // HELI-RUSTWALL: the fuel truck by the Ridge fire's dip tank, sold like the Summit trucks (always for pay).
+  const atRidgeFuel = view.heli.onGround && view.scablands?.atFuel === true;
+  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck || atSkiPump || atRidgeFuel ? Math.max(1, refuels) : refuels});
+  const pump = onPad || atTruck || atSkiPump || atRidgeFuel ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
   const truckTarget = atTruck ? `<label class="heli-fuel-target">Tank target
     <select data-heli-fuel-target aria-label="Fuel tank target">
       ${[190, 230, 330, 360, 400].map(kg => `<option value="${kg}"${kg === 330 ? ' selected' : ''}>${kg} kg</option>`).join('')}
@@ -358,8 +366,27 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const destination = view.destination ? HELI_DESTINATIONS_WITH_SUMMIT[view.destination]?.name : null;
   // MAP-VIEW: with the pilot's map on, the route panel also opens it (the view carries `secrets` only then).
   const mapButton = view.secrets !== undefined ? `<button type="button" class="heli-map-open" data-heli-map="open">PILOT'S MAP <kbd>${MAP_KEY}</kbd></button>` : '';
+  if (view.scablands) return `<div class="heli-route heli-scablands-places" role="group" aria-label="The Scablands"><span>THE SCABLANDS</span>${scablandsPlacesMarkup(view)}${pump}</div>
+    ${edgePrompt(view)}`;
   return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${mapButton}${pump}${truckTarget}</div>
     ${edgePrompt(view, destination ?? view.toward?.name)}${challengeMarkup(view)}`;
+}
+
+// HELI-RUSTWALL: the Scablands' places, each with the heading to turn to and how far it is, rounded so the panel changes
+// only every few seconds: the pad, the dip tank and the fire while the Ridge burns, Old Tam's hut and the pickup while it waits.
+export function scablandsPlacesMarkup(view) {
+  const sc = view?.scablands, h = view?.heli;
+  if (!sc || !h) return '';
+  const rows = [['The pad', view.zone]];
+  if (sc.tank) rows.push(['The dip tank', sc.tank]);
+  if (view.fire?.target) rows.push(['The fire on the Ridge', view.fire.target]);
+  rows.push(['Old Tam\'s hut', sc.hut]);
+  if (sc.lifts?.some(lift => lift.id === 'tam-truck' && !lift.hooked)) rows.push(['Old Tam\'s pickup', sc.truck]);
+  return rows.filter(([, at]) => at).map(([name, at]) => {
+    const dx = at.x - h.x, dz = at.z - h.z, km = Math.hypot(dx, dz) / 1000;
+    const heading = String(Math.round(compassBearing(dx, dz) / 5) * 5 % 360).padStart(3, '0');
+    return `<span class="heli-place heli-place-here" data-heli-scablands-place>${escape(name)} · ${km < 0.05 ? 'here' : `${heading} · ${km.toFixed(1)} km`}</span>`;
+  }).join('');
 }
 
 // HELI-EDGE: at the edge of the flying area. With a place chosen, the cruise leg's countdown (or why it cannot go);
@@ -372,6 +399,7 @@ export function edgePrompt(view, destination = null) {
     if (Number.isFinite(view.cruiseIn)) return `<div class="heli-prompt" role="status">Flying to ${to} in <span class="heli-live-cruise">${Math.ceil(view.cruiseIn)}</span>. Press <kbd>ENTER</kbd> to go now.</div>`;
     return `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${to}.</div>`;
   }
+  if (view?.heldAtEdge && view.scablands) return `<div class="heli-prompt" role="status">This is the edge of the Scablands. Turn back over the land.</div>`;
   if (view?.heldAtEdge) return `<div class="heli-prompt" role="status">This is the edge of the flying area. Choose where to fly: FLY TO on the right${view.secrets !== undefined ? `, or the pilot's map (<kbd>N</kbd>)` : ''}.</div>`;
   return '';
 }
@@ -544,6 +572,7 @@ export function createHeliUi({host, app, onMenu = null}) {
             if (text) radioLine = {text, until: now + RADIO_SECONDS};
           }
           if (event.type === 'crashed') radioLine = {text: HELI_RADIO_LINES['heli.radio.crash'].text, until: now + RADIO_SECONDS};
+          if (event.type === 'scablandsSaid') radioLine = {text: `${event.who}: ${event.text}`, until: now + RADIO_SECONDS};
           if (event.type === 'jobDone' && Number.isFinite(event.pay)) delivered = {pay: event.pay, until: now + DELIVERED_SECONDS};
         }
         seenLog = log;

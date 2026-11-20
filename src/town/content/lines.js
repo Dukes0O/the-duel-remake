@@ -17,6 +17,24 @@ export const TOWN_CAPTIONS = Object.freeze({
   'town.3.nothing': caption('Odessa', 'Chapter 3', "We've nothing to build with. There's a whole graveyard of airliners out in the Boneyard, and a flatbed in the truck bay. It'd do you good to get out of that chair."),
   'town.3.load': caption('Odessa', 'Driving back', "Slowly. That's a month's work on the back of that truck."),
   'town.3.won': caption('Odessa', 'Unloaded', 'Now that\'s a pile of scrap I can respect.'),
+  // TOWN-HAUL-JOB: the haul's own lines (docs/board/cards/TOWN-HAUL-JOB.md). One plain job each.
+  'town.haul.go': caption('Odessa', 'Setting out for the Boneyard', "Take the Boneyard Road past the halfway camp. My gang is cutting up the old airliners out there, and they'll load whatever you have room for."),
+  'town.haul.go.camp': caption('Odessa', 'Setting out for the first pile', "My gang has dragged the first pieces off the airliners as far as the halfway camp. Take the East Road out there, and they'll load you."),
+  'town.haul.washout': caption('Odessa', 'The washed-out road comes into sight', "Last spring's rain broke up the road over the plates, just ahead. Crawl over it and you'll keep your load, or go round it over the flats, which takes longer."),
+  'town.haul.pile': caption('Odessa', 'At the pile', "Stop there and hold still. Every piece they lift on makes the truck heavier and the stack wobblier, so drive off when you think you have enough."),
+  'town.haul.back': caption('Odessa', 'Back at the pile', "Back again? Hold still and they'll load you up."),
+  'town.haul.full': caption('Odessa', 'The bed is full', "That's all the flatbed will take. Off you go, and take the bends gently."),
+  'town.haul.shed': caption('Odessa', 'The first piece falls off', "You've lost a piece off the back. Whatever falls off stays out there, so go easy over the bumps."),
+  'town.haul.empty': caption('Odessa', 'Everything has fallen off', "The bed's empty, so there's nothing to bring home. Go back to the pile and they'll load you again."),
+  'town.haul.drop': caption('Odessa', 'At the drop', "Stop there and hold still while we take it off."),
+  'town.haul.won': caption('Odessa', 'A salvage run unloaded', "That all goes on the pile. This town will find a use for every last kilo of it."),
+  'town.steel.go': caption('Odessa', 'Setting out for Tin Town', "A site has stopped because it's short of steel, and Tin Town has a stack of it. Take the flatbed along the East Road and over the Girder Bridge."),
+  'town.steel.pile': caption('Odessa', "At Tin Town's steel", "Stop by the steel and hold still. Steel is heavy, so you'll feel every piece they put on."),
+  'town.steel.load': caption('Odessa', 'Driving back with steel', "Steel doesn't bounce, it slides. Brake early and you'll keep it."),
+  'town.steel.won': caption('Odessa', 'Steel unloaded', "That's the site moving again. Thank you for not dropping any more of it than you did."),
+  'town.haul.card.run': caption('Odessa', 'The salvage run, on the mission card', "The gang has cut more off the airliners at the Boneyard. Bring it home whenever the flatbed is free."),
+  'town.steel.card': caption('Odessa', 'The steel run, on the mission card', "A building site has stopped because it ran out of steel. Tin Town has a stack of it, and the flatbed can bring it home."),
+  'town.radio.report': caption('Hollis', 'Serious news from the town while you drive', "News from town. {report}"),
   'town.4.soup': caption('Odessa', 'Chapter 4', 'They have water, so now they want dinner. People are like that. Build a soup kitchen.'),
   'town.4.homes': caption('Odessa', 'Soup built', "Paint some ground for homes and they'll put up their own. You don't build houses. You build reasons to stay."),
   'town.5.smell': caption('Odessa', 'Chapter 5', "You smell that? That is a lot of people and no plan. Build a latrine, downhill and well away from the well. I'll explain why if you make me."),
@@ -26,10 +44,25 @@ export const TOWN_CAPTIONS = Object.freeze({
   'town.6.short': caption('Odessa', 'Site short of tin', "We're out of tin. The Boneyard's got more, if somebody'd go and get it. I'm looking at you."),
   'town.6.made': caption('Hollis', 'All under tin by the frost', "That's all of them under a roof. They'll remember who did that."),
   'town.6.late': caption('Hollis', 'Not all under tin', "Some of them spent that winter in canvas. They got through it. They'll remember that too."),
-  'town.7.fire': caption('Odessa', 'The fire report', 'FIRE! The soup kitchen! There\'s an old engine in the truck bay. She started last Tuesday. GO!'),
+  // TOWN-FIRE-JOB: the fire report and the end line say the same as before in whole sentences.
+  'town.7.fire': caption('Odessa', 'The fire report', "The soup kitchen is on fire! There's an old fire engine in the truck bay, and she started last Tuesday, so take her and go!"),
   'town.7.spray': caption('Odessa', 'First in the truck', 'Drive right up to it. Hold H to spray. She holds three minutes of water. When the tank runs dry, stop at any tap to fill up.'),
-  'town.7.won': caption('Odessa', 'Fire out', 'Still standing. You smell terrible. Well done.'),
+  'town.7.won': caption('Odessa', 'Fire out', "It's still standing. You smell terrible, and you did well."),
+  'town.7.burnt': caption('Odessa', 'Fire out, the soup kitchen burnt down', "We've lost the kitchen, but everyone got out. We'll build it again, and next time we'll be quicker."),
   'town.7.ash': caption('Hollis', 'After the fire', "There's ash on the ground, and it isn't from the fire. Somebody started this. There's a woman named Cinder who knows about ash."),
+  // TOWN-FIRE-JOB: the ash line has three versions (Claude, on the card), picked when the job ends.
+  'town.7.ash.going': caption('Hollis', 'After the fire, the Everburn started and Old Smoke not beaten', "There's ash on the ground, and it isn't from the fire. That's Ash Men's work. Cinder said they'd come this way."),
+  'town.7.ash.done': caption('Cinder', 'After the fire, Old Smoke beaten', "That's Ash Men's work. They're what is left of Old Smoke's gang, with nobody in charge of them now. I'll go and have a word."),
+  // TOWN-FIRE-JOB: a fire call, after Chapter 7. One plain job each.
+  'town.fire.go': caption('Odessa', 'A fire call starts', "There's a fire at {building}. Take the fire truck and get there before the wind carries it to the next building."),
+  'town.fire.card': caption('Odessa', 'A fire call, on the mission card', "There's a fire at {building}. The fire truck is in the truck bay with a full tank."),
+  'town.fire.spread': caption('Odessa', 'The fire catches another building', "It's caught the next building. The wind is carrying it, so put out whatever is downwind first."),
+  'town.fire.lost': caption('Odessa', 'A building burns down', "We've lost that building. Save what you can of the rest."),
+  'town.fire.low': caption('Odessa', 'The tank is nearly empty', "You're nearly out of water. Fill up at the well or a tap before the tank runs dry."),
+  'town.fire.empty': caption('Odessa', 'The tank is empty', "The tank's empty. Drive into a blue ring at the well or a tap, and hold still while she fills."),
+  'town.fire.dry': caption('Odessa', 'A well runs dry', "That one's run dry, so you'll have to fill up somewhere else."),
+  'town.fire.won': caption('Odessa', 'A fire call, all out', "That's the last of it out. Thank you, driver."),
+  'town.fire.burnt': caption('Odessa', 'A fire call, the building on fire burnt down', "The fire's out, but we lost {building}. Nobody was hurt, and we can build it again."),
   'town.8.payday': caption('Hollis', 'Chapter 8', "Bills are in. The till is the town's money and your scrap is yours. Bills only ever come out of the till. Have a look at the Ledger."),
   'town.8.books': caption('Hollis', 'Ledger opened, Vultures not at peace', "Money in, money out. What's left is the profit. I have added it up twice and got two answers."),
   'town.8.vultures': caption('The Vultures', 'Ledger opened, at peace', 'Two columns. One of you. Do the math.'),
@@ -66,10 +99,12 @@ export const TOWN_CAPTIONS = Object.freeze({
   'pim.fix': caption('Pim', 'Job', 'My water crane\'s seized. Bring your wrench. Tuesday will show you where. Tuesday is the dog.'),
   'pim.night': caption('Pim', 'Night', 'Something goes by here most nights with no lights on, leaking water. I set my clock by it. That is rather the trouble.'),
   'pim.hook': caption('Hollis', 'After', 'A train nobody owns, carrying water nobody sold. Somebody\'s got a lot of nerve, or a lot of money.'),
-  'town.heli.tam': caption('Old Tam', 'The report', 'The Ridge is on fire. The goats have views on it. No truck\'s getting up here, driver.'),
-  'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot. That's you, isn't it? Build a pad. I'll make a call."),
-  'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, Tremblant. Say again your position? I didn't know that wall had another side."),
-  'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask."),
+  // HELI-RUSTWALL: written out as whole sentences (Kyle, 19 November 2026); Roger's line matches the helicopter's
+  // own copy of it (the Scablands place's lines), and tools/test-heli-scablands.mjs keeps the two the same.
+  'town.heli.tam': caption('Old Tam', 'The report', 'The scrub on the Ridge is on fire, and the goats have strong views about it. No truck can get up here, driver, so the help will have to come from the air.'),
+  'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot, and I think it's you. Build a Helipad by the town, and I'll make a call over the wall."),
+  'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, this is Tremblant. Please say your position again, because I didn't know that wall had another side."),
+  'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I can't fly, but I know a man who owes me a helicopter, so please don't ask me how."),
 });
 
 const RADIO_CAPTIONS = Object.fromEntries(Object.entries(TOWN_CAPTIONS).map(([id, value]) => [`story.town.${id.replace(/^town\./, '')}`, value]));
@@ -103,5 +138,6 @@ export function townCaptionText(id, town = {}) {
     if (age !== null) text=TOWN_CAPTIONS[age<18?'town.bo.16':'town.bo.grown'].text;
   }
   const year = BigInt(town?.calendar?.year ?? 1);
-  return text.replaceAll('{founders}', founderNames(town)).replaceAll('{aground}', numberWords(30n + year));
+  return text.replaceAll('{founders}', founderNames(town)).replaceAll('{aground}', numberWords(30n + year))
+    .replaceAll('{report}', typeof town?.radioReport === 'string' ? town.radioReport : 'Something needs you back home.');
 }

@@ -26,6 +26,10 @@ HERE = Path(__file__).resolve().parent
 CELL = (498, 250)
 FRAME_H = 1080
 CAR_FOV, TOWN_FOV = 54, 48
+# What another card's sheet script (city_sheet.py) sets for its own animals.
+CARD, LOOKS, REFS = 'WILD-ART-WASTE', 'wild-art-waste', 'waste-references.json'
+GROUND = ((.215, .160, .105, 1), (.330, .265, .185, 1))
+FOOT = 'Goat from the CC0 Quaternius deer, dog from the CC0 Quaternius wolf; the rest are original recipes.'
 
 # name: (clip, phase, kind, settings). Close: direction from the animal to the camera.
 # Field: distance in metres and the animal's turn towards the camera in degrees.
@@ -61,12 +65,16 @@ CAPTIONS = {'photo': 'Photograph', 'photo2': 'Photograph', 'side': 'Model: side,
             'below': 'Model: Fly, from below', 'soar': 'Model: Fly, from the side', 'overhead': 'From a car: 25 m up, 30 m ahead (1:1 crop)'}
 
 
+# The clips a sheet looks for beside Idle; the last one an animal has names its motion (the roadrunner runs).
+MOTIONS = ('Walk', 'Run', 'Fly')
+
+
 def home(root, candidate):
     return root / ('.qa-dist/wildlife-candidates' if candidate else 'public/assets/wildlife')
 
 
 def evidence(root, round_number):
-    return root / '.qa-dist/wild-art-waste' / ('round-' + str(round_number))
+    return root / '.qa-dist' / LOOKS / ('round-' + str(round_number))
 
 
 def glb_facts(path):
@@ -82,7 +90,7 @@ def glb_facts(path):
 
 # ------------------------------------------------------------------ Blender
 
-def render(root, round_number, ids, candidate):
+def render(root, round_number, ids, candidate, only=None):
     import bpy
     from mathutils import Vector
     out = evidence(root, round_number)
@@ -125,8 +133,7 @@ def render(root, round_number, ids, candidate):
         noise.inputs['Scale'].default_value = 900
         noise.inputs['Detail'].default_value = 6
         ramp = nodes.new('ShaderNodeValToRGB')
-        ramp.color_ramp.elements[0].color = (.215, .160, .105, 1)
-        ramp.color_ramp.elements[1].color = (.330, .265, .185, 1)
+        ramp.color_ramp.elements[0].color, ramp.color_ramp.elements[1].color = GROUND
         links.new(noise.outputs['Fac'], ramp.inputs[0])
         links.new(ramp.outputs['Color'], nodes['Principled BSDF'].inputs['Base Color'])
         nodes['Principled BSDF'].inputs['Roughness'].default_value = 1
@@ -164,10 +171,12 @@ def render(root, round_number, ids, candidate):
         lo, hi = pose('Idle', 0)
         facts['size'] = [round(hi[i] - lo[i], 3) for i in range(3)]
         facts['lowest'] = {}
-        for clip in ('Idle', 'Walk', 'Fly'):
+        for clip in ('Idle',) + MOTIONS:
             if bpy.data.actions.get(clip):
                 facts['lowest'][clip] = round(min(pose(clip, k / 12)[0].z for k in range(12)) * 1000, 1)
         for name, clip, phase, kind, setting in VIEWS[species]:
+            if only and name not in only:
+                continue
             # Seen from below against the sky, the ground still throws its light up at the bird.
             ground.visible_camera = kind not in ('sky', 'overhead')
             if kind in ('close', 'sky'):
@@ -210,7 +219,7 @@ def render(root, round_number, ids, candidate):
 
 def sheet(root, round_number, ids, candidate, title, draft):
     from PIL import Image, ImageDraw, ImageFont, ImageOps
-    refs = json.loads((HERE / 'waste-references.json').read_text(encoding='utf-8'))
+    refs = json.loads((HERE / REFS).read_text(encoding='utf-8'))
     out = evidence(root, round_number)
     gap, label, head = 10, 26, 40
     block = head + 2 * (CELL[1] + label) + 14
@@ -218,7 +227,7 @@ def sheet(root, round_number, ids, candidate, title, draft):
     page = Image.new('RGB', (width, 92 + len(ids) * block + 34), '#1b1a17')
     draw = ImageDraw.Draw(page)
     font = lambda size: ImageFont.truetype('C:/Windows/Fonts/arial.ttf', size)
-    draw.text((gap, 12), f'WILD-ART-WASTE | ROUND {round_number} | {title}', font=font(34), fill='#efe7d7')
+    draw.text((gap, 12), f'{CARD} | ROUND {round_number} | {title}', font=font(34), fill='#efe7d7')
     draw.text((gap, 56), 'Actual GLB imports beside photographs of the real animal. Top row: close. Bottom row: what the player sees.',
               font=font(19), fill='#bdb6a6')
     credits, rows = [], []
@@ -227,7 +236,7 @@ def sheet(root, round_number, ids, candidate, title, draft):
         facts = json.loads((out / (species + '-facts.json')).read_text(encoding='utf-8'))
         rows.append({'species': species, **facts})
         size = facts['size']
-        motion = 'Fly' if 'Fly' in facts['clips'] else 'Walk'
+        motion = next(name for name in reversed(MOTIONS) if name in facts['clips'])
         extra = len(facts['clips']) - 2
         draw.text((gap, y + 6), f'{species.replace("-", " ").title()}  |  {facts["triangles"]:,} triangles  |  {facts["bytes"] / 1e6:.2f} MB  |  '
                   f'map {facts["map"]}  |  {size[0]:.2f} x {size[1]:.2f} x {size[2]:.2f} m  |  Idle, {motion}'
@@ -255,13 +264,12 @@ def sheet(root, round_number, ids, candidate, title, draft):
                 page.paste(cell, (x, top))
                 draw.text((x + 2, top + CELL[1] + 3), caption, font=font(17), fill='#bdb6a6')
         y += block
-    draw.text((gap, page.height - 30), 'Photographs from Wikimedia Commons, public domain or CC0; credits in the review note. '
-              'Goat from the CC0 Quaternius deer, dog from the CC0 Quaternius wolf; the rest are original recipes.',
+    draw.text((gap, page.height - 30), 'Photographs from Wikimedia Commons, public domain or CC0; credits in the review note. ' + FOOT,
               font=font(17), fill='#bdb6a6')
     # A draft is looked at and fixed first; only a submitted sheet is a round.
-    output = out / 'draft.jpg' if draft else root / f'docs/board/looks/wild-art-waste/round-{round_number}.jpg'
+    output = out / 'draft.jpg' if draft else root / f'docs/board/looks/{LOOKS}/round-{round_number}.jpg'
     output.parent.mkdir(parents=True, exist_ok=True)
-    for quality in (88, 84, 80, 76, 72, 68, 64, 60, 56):
+    for quality in (88, 84, 80, 76, 72, 68, 64, 60, 56, 52, 48):
         page.save(output, quality=quality, optimize=True, subsampling=2)
         if output.stat().st_size <= 500000:
             break
@@ -279,10 +287,11 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--render', nargs='+', choices=sorted(VIEWS))
     mode.add_argument('--sheet', nargs='+', choices=sorted(VIEWS))
+    parser.add_argument('--only', nargs='+', help='With --render: only these views (a quick look while fixing)')
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     root = args.root.resolve()
     if args.render:
-        render(root, args.round, args.render, args.candidate)
+        render(root, args.round, args.render, args.candidate, args.only)
     else:
         sheet(root, args.round, args.sheet, args.candidate, args.title, args.draft)
 

@@ -11,14 +11,25 @@ function actor(overrides = {}) {
     input: {throttle: 0, brake: 0}, ...overrides};
 }
 
+// A key pressed in the air tips the nose; the first step airborne is the take-off.
+function pressInAir(duel, state, input) {
+  const pressed = {...state.input};
+  state.input = {throttle: 0, brake: 0};
+  stepBowlAir(duel, state, DT);
+  state.input = pressed;
+  Object.assign(state.input, input);
+}
+
 test('W/S pitch only the Bowl truck and do not change flight velocity', () => {
   const state = actor({input: {throttle: 1, brake: 0}});
   const bowl = {course: {def: {bowl: true}}, featureFlags: {enabled: name => name === 'titan-bowl'}, state};
+  pressInAir(bowl, state, {throttle: 1});
   stepBowlAir(bowl, state, DT);
   assert.ok(state.bowlAirPitch < 0, 'W pitches the nose down');
   assert.equal(state.speedMph, 72, 'air control does not change velocity');
 
   const reversePitch = actor({input: {throttle: 0, brake: 1}});
+  pressInAir({...bowl, state: reversePitch}, reversePitch, {brake: 1});
   stepBowlAir({...bowl, state: reversePitch}, reversePitch, DT);
   assert.ok(reversePitch.bowlAirPitch > 0, 'S pitches the nose up');
 
@@ -49,13 +60,16 @@ test('a full backflip from a big jump lands upright and counts once', () => {
   state.airHeight = 0;
   state._jumpY = null;
   state._verticalSpeed = 0;
-  state.input.brake = 1;
+  state.input.brake = 0;
   let airborneTicks = 0;
   for (let i = 0; i < 1000 && state.bowlAirFlips !== 1; i++) {
     state.prevS = state.s;
     state.s += state.speedMph * (1 / 120) * 0.44704;
     duel._jump(state, DT);
     if (state.airborne) {
+      // S pressed once the truck has left the ramp (a key already down on the first
+      // step in the air counts as held from before take-off).
+      if (airborneTicks === 1) state.input.brake = 1;
       airborneTicks++;
       if (state.bowlAirPitch < -3) state._bowlAirPassedHalfTurn = true;
       if (state._bowlAirPassedHalfTurn && state.bowlAirPitch > 0) state.input.brake = 0;
@@ -78,7 +92,7 @@ test('a roof landing uses the existing tumble and recovery', () => {
   state.speedMph = 45;
   state.airborne = true;
   state.airHeight = 5;
-  state.input.brake = 1;
+  pressInAir(duel, state, {brake: 1});
   for (let i = 0; i < 66; i++) stepBowlAir(duel, state, DT);
   state.airborne = false;
   stepBowlAir(duel, state, DT);
@@ -87,6 +101,20 @@ test('a roof landing uses the existing tumble and recovery', () => {
   for (let i = 0; i < 300 && state.tumble; i++) duel._rollover(DT);
   assert.equal(state.tumble, null, 'the existing recovery returns the truck to its wheels');
   assert.equal(state.status, 'racing', 'the existing recovery leaves the truck drivable');
+});
+
+test('a key held from before take-off tips nothing until it is pressed again', () => {
+  const state = actor({airborne: false, input: {throttle: 1, brake: 0}});
+  const bowl = {course: {def: {bowl: true}}, featureFlags: {enabled: name => name === 'titan-bowl'}, state};
+  stepBowlAir(bowl, state, DT);
+  state.airborne = true;
+  for (let i = 0; i < 60; i++) stepBowlAir(bowl, state, DT);
+  assert.equal(state.bowlAirPitch, 0, 'the throttle held over the lip leaves the nose level');
+  state.input.throttle = 0; stepBowlAir(bowl, state, DT);
+  state.input.throttle = 1; stepBowlAir(bowl, state, DT);
+  assert.ok(state.bowlAirPitch < 0, 'pressed again in the air, W tips the nose down');
+  state.airborne = false; stepBowlAir(bowl, state, DT);
+  assert.ok(!state.tumble, 'a small tip lands on the wheels');
 });
 
 function carLaunch(enabled) {

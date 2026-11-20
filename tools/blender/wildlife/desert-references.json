@@ -1,0 +1,44 @@
+{
+  "use": "reference only, never runtime: real photographs shown beside each model on the WILD-ART-DESERT sheets",
+  "source": "Wikimedia Commons, public domain or CC0 only, fetched without an account by waste_references.py desert-references.json",
+  "directory": "C:/Users/kyleb/dev/art-library/wild-desert/reference",
+  "width": 1280,
+  "photos": {
+    "roadrunner": [
+      {"file": "roadrunner.jpg", "title": "File:Greater roadrunner (Geococcyx californianus) - 12938204193.jpg",
+       "author": "Robb Hannawacker, Joshua Tree National Park (NPS)", "licence": "Public domain", "crop": [0.08, 0.26, 0.74, 0.90]},
+      {"file": "roadrunner-low.jpg", "title": "File:Greater roadrunner (52013993686).jpg",
+       "author": "Joshua Tree National Park (NPS)", "licence": "Public domain", "crop": [0.0, 0.22, 0.64, 0.72]}
+    ],
+    "jackrabbit": [
+      {"file": "jackrabbit.jpg", "title": "File:Black-tailed jackrabbit (Lepus californicus) (51248643020).jpg",
+       "author": "Joshua Tree National Park (NPS)", "licence": "Public domain", "crop": [0.47, 0.30, 0.90, 0.92]},
+      {"file": "jackrabbit-sitting.jpg", "title": "File:Black tailed jackrabbit animal.jpg",
+       "author": "Scott Rheam, U.S. Fish and Wildlife Service", "licence": "Public domain", "crop": [0.22, 0.02, 0.82, 0.92]}
+    ],
+    "desert-bighorn": [
+      {"file": "desert-bighorn.jpg", "title": "File:Desert Bighorn Sheep (919bea27-fe50-48ce-b7ec-d57875ae2d77).jpg",
+       "author": "Andrew Cattoir, Lake Mead National Recreation Area (NPS)", "licence": "Public domain", "crop": [0.16, 0.06, 0.90, 0.92]},
+      {"file": "desert-bighorn-head.jpg", "title": "File:Desert Bighorn Sheep (f40a6833-4f3b-434e-964c-e98b94ac74f7).jpg",
+       "author": "Andrew Cattoir, Lake Mead National Recreation Area (NPS)", "licence": "Public domain", "crop": [0.0, 0.0, 1.0, 1.0]}
+    ],
+    "collared-lizard": [
+      {"file": "collared-lizard.jpg", "title": "File:Collared lizard in Arizona (27845951554).jpg",
+       "author": "David Whelan", "licence": "CC0", "crop": [0.0, 0.22, 1.0, 0.94]},
+      {"file": "collared-lizard-above.jpg", "title": "File:Crotaphytus collaris - Flickr - aspidoscelis.jpg",
+       "author": "Patrick Alexander", "licence": "CC0", "crop": [0.10, 0.22, 0.82, 1.0]}
+    ],
+    "pelican": [
+      {"file": "pelican.jpg", "title": "File:Brown Pelican at Seawolf Park.jpg",
+       "author": "LunarEcho87", "licence": "CC0", "crop": [0.06, 0.12, 0.76, 1.0]},
+      {"file": "pelican-flight.jpg", "title": "File:Brown pelican (Pelecanus occidentalis) in flight, Costa Rica.jpg",
+       "author": "Hobbyfotowiki", "licence": "CC0", "crop": [0.0, 0.14, 1.0, 0.64]}
+    ],
+    "condor": [
+      {"file": "condor.jpg", "title": "File:Gymnogyps californianus us fish 3.jpg",
+       "author": "U.S. Fish and Wildlife Service", "licence": "Public domain", "crop": [0.0, 0.02, 1.0, 0.86]},
+      {"file": "condor-flight.jpg", "title": "File:Condor in flight.JPG",
+       "author": "Phil Armitage", "licence": "Public domain", "crop": [0.0, 0.02, 1.0, 0.98]}
+    ]
+  }
+}

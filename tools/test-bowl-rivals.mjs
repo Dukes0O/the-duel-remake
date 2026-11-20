@@ -140,29 +140,22 @@ function race(duel, drive, aim, limitSec) {
   'Big Mo names the night\'s own rivals');
 }
 
-// The lanes come from the course, so a bigger floor (BOWL-EXPAND) moves them.
+// The lanes come from the course's own data (course.features.bowl.lanes), so the
+// rebuilt Bowl (BOWL-EXPAND) and any later floor move them.
 {
   const duel = showAt(1, 'sideBySide'), lanes = sideBySideLanes(duel.course), course = duel.course;
-  const named = course.features.bowl?.lanes;
-  if (named) {
-    ok(lanes.player.s === named[0].s && lanes.rival.s === named[1].s && lanes.player.finishS === named[0].s + course.length &&
-      lanes.rival.finishS === named[1].s + course.length, 'the course\'s own lanes: each truck starts on its own and drives one full lap');
-  } else {
-    const half = course.def.scrapdome.floorHalfWidth;
-    ok(lanes.rival.lateral === -half / 2 && lanes.player.lateral === half / 2 && lanes.player.s > 0 && lanes.rival.s === 0 &&
-      lanes.player.finishS === course.length && lanes.rival.finishS === course.length,
-    'with no lanes named, each lane is the middle of half the floor, the outside one staggered, and both finish at the line');
-  }
+  const named = course.features.bowl.lanes;
+  ok(lanes.player.s === named[0].s && lanes.player.lateral === named[0].lateral &&
+    lanes.rival.s === named[1].s && lanes.rival.lateral === named[1].lateral, 'the player and the rival take the course\'s two lanes');
+  ok(lanes.player.finishS === named[0].s + course.length && lanes.rival.finishS === named[1].s + course.length,
+    'each truck drives one full lap from its own start');
   ok(duel.state.s === lanes.player.s && duel.state.lateral === lanes.player.lateral &&
     duel.state.opponents[0].s === lanes.rival.s && duel.state.opponents[0].lateral === lanes.rival.lateral,
   'the player and the rival start on their lanes');
-  const floor = extra => ({length: 300, features: {crushables: [], ramps: [], ...extra}, def: {scrapdome: {floorHalfWidth: 12}},
-    worldAt: (s, off) => ({x: off, z: s})});
-  const wide = sideBySideLanes(floor());
-  ok(wide.rival.lateral === -6 && wide.player.lateral === 6, 'a wider floor gives wider lanes');
-  const halfLap = sideBySideLanes(floor({bowl: {lanes: [{s: 6, lateral: 0}, {s: 156, lateral: 0}]}}));
-  ok(halfLap.player.s === 6 && halfLap.rival.s === 156 && halfLap.rival.finishS === 456 && halfLap.player.lateral === 0,
-    'lanes the course names are used as they are, one full lap each');
+  const floor = extra => ({length: 300, features: {crushables: [], ramps: [], ...extra}, def: {scrapdome: {floorHalfWidth: 12}}});
+  const other = sideBySideLanes(floor({bowl: {lanes: [{s: 10, lateral: 4}, {s: 160, lateral: -4}]}}));
+  ok(other.player.s === 10 && other.player.lateral === 4 && other.rival.s === 160 && other.rival.lateral === -4 &&
+    other.rival.finishS === 460, 'lanes another floor names are used as they are');
 }
 
 // ---- Side by Side: every rival finishes on every level -------------------

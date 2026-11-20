@@ -80,7 +80,7 @@ export function night2Job(seed, {washFight = false} = {}) {
       talk('escaped', 'camp-escape'), talk('watch', 'gate'),
       walk('walk-watch-post', sites.watchPost, 'Walk to the watch by the pump.'), talk('whistle', 'scout'),
       {id: 'scout', kind: 'night-2-action', action: 'scout', what: 'Turn the Ash scout with fire. Drive him out of the gate.', lentWeapon: 'cinders-hand-flamer'},
-      talk('scout-stopped', 'scout'), talk('scout-escaped', 'scout'),
+      talk('scout-stopped', 'scout'), talk('scout-downed', 'scout'), talk('scout-escaped', 'scout'),
       talk('inside', 'gate'), talk('lamp', 'gate'),
       {id: 'light-pump', kind: 'onfoot', brand: true, hearth: sites.hearth,
         places: [sites.pump], ashEntries: [], wayAround: sites.around, what: 'Light the pump lamp for the Walkers.'},
@@ -165,13 +165,14 @@ function sceneFor(step, chapter) {
   return {...scene, choices: options, stocks: {embers: chapter.ledger.stocks.embers}};
 }
 
-export function night2Page(ledger) {
+// `inNight`: the journal opened from the pause card in the middle of the night marks what changed so far tonight, as the dawn page does.
+export function night2Page(ledger, {inNight = false} = {}) {
   const page = ledgerPageData(ledger);
   if (!page) return null;
   const tonight = ledger.history.filter(change => change.night === 2);
   const known = new Set(tonight.filter(change => change.type === 'mark').map(change => change.key));
   const memories = Object.entries(memoryLines).filter(([id]) => known.has(id)).map(([, line]) => line);
-  return {...page, memories, saltScrap: known.has('dace-kept-watch') ? 10 : 0, tonight: ledger.night === 3 ? {
+  return {...page, memories, saltScrap: known.has('dace-kept-watch') ? 10 : 0, tonight: ledger.night === 3 || inNight ? {
     supplies: tonight.some(change => change.type === 'stock'),
     people: tonight.filter(change => change.type === 'met').map(change => change.key),
     obligations: tonight.some(change => ['debt', 'promise'].includes(change.type)),
@@ -355,7 +356,7 @@ function stageAfter(chapter, step, result, cue, wrecked) {
 const NEXT = {
   hearth: 'walk-to-gate', 'walk-to-gate': 'gate', salt: 'close', theft: 'reach-store', 'reach-store': 'chase',
   escaped: 'close', 'take-dace-to-rell': 'close', 'send-away': 'close', watch: 'walk-watch-post', 'walk-watch-post': 'whistle',
-  whistle: 'scout', 'scout-stopped': 'close', 'scout-escaped': 'close', inside: 'lamp',
+  whistle: 'scout', 'scout-stopped': 'close', 'scout-downed': 'close', 'scout-escaped': 'close', inside: 'lamp',
   lamp: 'light-pump', 'back-to-hearth': 'at-hearth', 'at-hearth': 'close',
   'tell-mall': 'tower', 'tower-outcome': 'close', delivery: 'close',
   'wash-get-car': 'wash-drive', 'wash-drive': 'wash-fight', 'wash-drive-home': 'close',
@@ -486,7 +487,7 @@ export function night2Action(worldJob, point, onFoot, car) {
     const goal = chapter.scoutTurned ? sites.scoutGate : sites.scoutWall;
     chapter.routes = [{name: 'Ash scout', point: scout, metres: dist(point, scout)}];
     // One rule for an Ash Man on foot (STORY-NIGHT-2-FLOW item 7): a hit from your car knocks him flat for good, here as at the Wash.
-    if (chapter.scoutDowned) return {arrival: 'scout-stopped'};
+    if (chapter.scoutDowned) return {arrival: 'scout-downed'};
     return {arrival: dist(scout, at(goal)) <= goal.radius ?
       (chapter.scoutTurned ? 'scout-stopped' : 'scout-escaped') : null};
   }
