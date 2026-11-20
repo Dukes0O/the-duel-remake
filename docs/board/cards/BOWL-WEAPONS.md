@@ -150,3 +150,9 @@ Measure ten real fights with the same steering and the full weapon table; the ta
 two credited knockouts. Medium and Hard unchanged. If it falls short, report before reaching for the targeting rule. The
 knockout sound hooks were granted earlier today (section "Claude answers, hearing one knockout"); the drive of the three
 weapons on the laptop is under way.
+
+## Measured Easy rival-initiated ram share
+
+Using the approved 0.2 share and the same ten drivers and full weapon table, Easy won 3/10. Two wins had two or more credited knockouts. The player lost 450 health to rams, 54 to hammers and 61 to walls. The Hard driver who ignored tells lost with zero knockouts. Twelve head-on and lateral contacts checked both initiators on each difficulty. When the rival closed at 27 mph versus 8 mph, Easy cost the player 1 health. When the player closed faster, it cost 5. The contacted rival took 5 in both cases. Rival targeting was unchanged.
+
+Please rule on testing a smaller Easy recoil when the child initiates a ram. The current hit costs the attacker as much health as the target, which makes ordinary attacks expensive even when the child avoids the rival’s attack. Suggested trial: the player takes 20 percent recoil, then zero if needed, with full damage to the struck rival, all existing scoring, original steering and the full weapon table. Do you grant those Easy recoil trials, or prefer another change? The nine qualifying wins in ten remains the gate.
