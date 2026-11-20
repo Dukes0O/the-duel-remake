@@ -220,6 +220,13 @@ are. **The Bowl** is new: a big concrete stadium with a dirt floor and a full cr
 at night, under floodlights, with flame jets by the ramps. Everyone gets to drive a
 truck there, whether or not you have bought the Titan; it is the show's truck.
 
+**The floor** (`src/bowl/bowl-course.js`) is the size of a real monster-truck floor and
+fits inside the stadium model: a 140 m ring round the podium, 16.5 m wide between an
+island wall and a wall in front of the stands. Two ramps on one long side (a kicker and a big
+jump, each with a flame jet on the wall either side) and the crush line on the other:
+junk cars, then the crushed buses and RV, then three burning stacks. Both ramps throw a
+truck into the air from 30 mph. Run as an arena event, the floor holds trucks to 42 mph.
+
 **Show Night.** Five nights, with a little story, told by an announcer, **Big Mo**
 ("LADIES AND GENTLEMEN AND ALSO DOGS"), and the crowd's roar. A night is three events
 in a row:

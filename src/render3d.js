@@ -7,6 +7,7 @@ import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {applySaltStormFog} from './world/the-whites-scene.js';
+import {dustNightOf, applyDustNightFog} from './world/dust-night-look.js'; // SHIPS-DECKS: the night storm, view only
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
@@ -72,11 +73,13 @@ import {createBowlView} from './bowl/bowl-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createWorkVehicleView} from './town/view/work-vehicle-view.js'; // TOWN-VEHICLES
 import {createTankerModel} from './arena/tanker-model.js';
 import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
 import {referenceLap} from './reference-laps.js';
 import {telemetryRoute} from './lap-telemetry.js';
 import {coachAllowed,coachRaceContext,buildCoachMarkers} from './coach-markers.js';
+import {createRainView} from './render/rain-view.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -366,6 +369,8 @@ export function attachRenderer(host, app) {
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
   // H2 Fire: a burnt course's look (docs/HELI_FIRE.md 8.4), drawing only.
   const burntLook=createBurntLook({THREE,scene});
+  // FAR-RAIN: rain in a region that has it, drawing only (src/render/rain-view.js). Nothing is drawn or loaded until then.
+  const farRain=createRainView({scene});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
@@ -459,6 +464,7 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
+  const workVehicleView=createWorkVehicleView(); // TOWN-VEHICLES: a job's work vehicle is drawn in place of the garage car
   function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
     let status=vehicleAssets.status(key,{finish});
@@ -852,19 +858,21 @@ export function attachRenderer(host, app) {
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
     const chapter = !menu ? st.arena?.worldJob?.night2 : null;
     if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
-    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night, st.paused ? 0 : dt);
+    const dustNight = !menu && (app._switches?.() ?? app.duel.featureFlags).enabled('wasteland-town') ? dustNightOf(st) : null;
+    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night || !!dustNight, st.paused ? 0 : dt);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
       chapterNight: chapterNightShare,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
-      menu});
+      menu, weather: farRain.lighting});
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
     applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
-    const tall=carKey==='titan_monster';
+    applyDustNightFog(scene,dustNight,dt,renderer);
+    const tall=carKey==='titan_monster'||workVehicleView.drawsFor(st,app._switches?.()??app.duel.featureFlags); // TOWN-VEHICLES: a truck's camera sits as high as the Titan's
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
     const wheelTravel = mph => moving ? mph * (DRIVE.mphToWorld || .44704) * dt : 0;
@@ -1312,6 +1320,7 @@ export function attachRenderer(host, app) {
         dt:st.paused?0:dt,high,vehicles:snowVehicles});
     }
     trackKitsOf(world)?.update({high,position:camera.position,camera,state:menu?{status:'menu'}:st});
+    if(farRain.update({app,state:menu?null:st,course,camera,renderer,dt})){sceneRevision++;ambientShading.refresh();}
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();
     const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricFootCamera!==`${!!st.onFoot}:${app.footCameraMode}`||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
@@ -1344,6 +1353,7 @@ export function attachRenderer(host, app) {
       host.dataset.warmupStatus=warmupTicket.state.status;
       if(!warmup.canDraw(warmupKey)){rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     }
+    if(workVehicleView.update({scene,player,camera,state:st,flags:app._switches?.()??app.duel.featureFlags})){sceneRevision++;ambientShading.refresh();}
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;

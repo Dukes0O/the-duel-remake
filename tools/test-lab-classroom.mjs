@@ -16,11 +16,11 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {STEPS as GFORCE_STEPS, KEY_IDEAS as GFORCE_IDEAS, createModel as createGforceModel} from '../src/lab/lessons/gforce-classroom.js';
 import * as gforceBoard from '../src/lab/lessons/gforce-board.js';
 import {lateralG} from '../src/lab/benches/gforce.js';
-import {STEPS as GRIP_STEPS, createModel as createGripModel, lesson as gripLesson} from '../src/lab/lessons/grip-classroom.js';
+import {STEPS as GRIP_STEPS, WATCH_S, createModel as createGripModel, lesson as gripLesson} from '../src/lab/lessons/grip-classroom.js';
 import * as gripBoard from '../src/lab/lessons/grip-board.js';
 import {gripBench, slipAtAngle, bestSlideDegrees} from '../src/lab/benches/tunnel.js';
 import {tyreSlipGrip} from '../src/config.js';
-import {STEPS as SUSPENSION_STEPS, WORDS as SUSPENSION_WORDS, createModel as createSuspensionModel} from '../src/lab/lessons/suspension-classroom.js';
+import {STEPS as SUSPENSION_STEPS, WORDS as SUSPENSION_WORDS, KEY_IDEAS as SUSPENSION_KEY_IDEAS, WATCH_S as SUSPENSION_WATCH_S, createModel as createSuspensionModel} from '../src/lab/lessons/suspension-classroom.js';
 import * as suspensionBoard from '../src/lab/lessons/suspension-board.js';
 import {suspensionBench} from '../src/lab/benches/tunnel.js';
 import {lessonOpenState, challengeOpenState, CHALLENGE_NEEDS_DRIVING} from '../src/lab/lab-lessons.js';
@@ -49,15 +49,18 @@ const goTo = (session, id) => {
     session.act('next');
   }
 };
-// The key a prompt names ("press 1", "press Space") must do what the prompt asks.
+// The control a pendulum prompt asks for is the control Brian points at, and the prompt names it by what it is ("Click the
+// 5 m hook", "Drag the weight", "Click Tap"), not by a key: the screen shows its own key labels (LAB-REVIEW-FLYING).
 function followPrompt(session) {
-  const v = session.view(), key = v.prompt.match(/press (Space|\d)/i)?.[1];
-  assert.ok(key, `prompt names no key: ${v.prompt}`);
-  assert.ok(v.keys[key], `the key in "${v.prompt}" does nothing`);
-  session.act(v.keys[key]);
-  return v.keys[key];
+  const v = session.view(), action = v.target;
+  assert.ok(action, `no control to use: ${v.prompt}`);
+  assert.match(v.prompt, /\b(click|drag|tap|let go)\b/i, `prompt names no control: ${v.prompt}`);
+  assert.ok(Object.values(v.keys).includes(action), `the control in "${v.prompt}" does nothing`);
+  session.act(action);
+  return action;
 }
 const FREE_TEST = [['hook:5'], ['hook:25'], ['weight:heavy']];
+const WEIGHTS_BY_NAME = {light: 20, heavy: 200};
 function playFree(session) {
   for (const actions of FREE_TEST) { actions.forEach(action => session.act(action)); session.act('release'); until(session, v => v.keys.Space === 'release', 15); }
 }
@@ -75,6 +78,7 @@ function playThrough(session, {check = () => {}} = {}) {
     session.act(guess); assert.equal(followPrompt(session), 'release');
     until(session, v => v.ready, 15); check(session.view()); session.act('next');
   }
+  for (const id of ['word-pi', 'word-gravity']) { assert.equal(session.view().step.id, id); assert.ok(session.view().ready, `${id} has nothing to press`); session.act('next'); }
   session.act(session.view().target); session.act(session.view().target); assert.ok(session.view().ready, 'the formula step opens after a hook and a weight'); session.act('next');
   playFree(session); assert.ok(session.view().ready, 'three settings open Continue'); session.act('next');
   session.act('hook:25'); session.act('release'); until(session, v => v.ready, 15); session.act('next');
@@ -87,6 +91,7 @@ function playThroughTo(session, id) {
     'word-length': () => session.act('measure:25'), 'watch-lengths': () => until(session, v => v.ready, 15),
     'try-short': () => { session.act('hook:5'); session.act('guess:0'); session.act('release'); until(session, v => v.ready, 15); },
     'try-heavy': () => { session.act('weight:heavy'); session.act('guess:2'); session.act('release'); until(session, v => v.ready, 15); },
+    'word-pi': () => {}, 'word-gravity': () => {},
     'try-formula': () => { session.act(session.view().target); session.act(session.view().target); },
     'try-free': () => playFree(session),
     alone: () => { session.act('hook:25'); session.act('release'); until(session, v => v.ready, 15); },
@@ -139,9 +144,10 @@ test('a wrong press never leaves a prompt that cannot be followed: from every se
     playThroughTo(shown, id);
     for (const press of [first, second]) if (shown.view().cards.length === 0) shown.act(press);
     for (let i = 0; i < 3 && session.view().cards.length === 0; i++) {
-      const v = session.view(), key = v.prompt.match(/press (\d)/)?.[1];
-      assert.equal(v.keys[key], v.target, `${id} after ${first}, ${second}: "${v.prompt}" presses the control Brian points at`);
-      session.act(v.keys[key]);
+      const v = session.view(), [kind, value] = v.target.split(':');
+      assert.match(v.prompt, new RegExp(kind === 'hook' ? `the ${value} m hook` : `the ${WEIGHTS_BY_NAME[value]} kg weight`), `${id} after ${first}, ${second}: "${v.prompt}" names the control Brian points at`);
+      assert.ok(Object.values(v.keys).includes(v.target));
+      session.act(v.target);
     }
     assert.equal(session.view().cards.length, 3, `${id} after ${first}, ${second}: following the prompt reaches the guess`);
     for (let i = 0; i < 3 && shown.view().cards.length === 0; i++) {
@@ -164,7 +170,7 @@ test('a wrong guess says why with the real swing times, and the player can carry
   assert.deepEqual(v.cards.map(c => c.state), ['right', 'wrong', null]);
   assert.ok(session.act('next'));
   session.act('hook:25');
-  assert.equal(session.view().brian.text, 'The string is now 25 m, but this test changes only the weight, so the string must stay at 15 m. Press 2 to go back to the 15 m hook.');
+  assert.equal(session.view().brian.text, 'The string is now 25 m, but this test changes only the weight, so the string must stay at 15 m. Click the 15 m hook to go back.');
 });
 
 test('no guess or open question is settled early: the words, the panel and the board wait for the result', () => {
@@ -192,7 +198,7 @@ test('no guess or open question is settled early: the words, the panel and the b
   for (const earlier of heavy.page.flatMap(row => [row.setup, row.result])) assert.doesNotMatch(earlier ?? '', /weight (does not|makes no)|cancel|same swing time/, 'no earlier step states the weight’s answer');
   session.act('guess:2'); session.act('release'); until(session, v => v.ready, 15);
   assert.ok(session.view().pulls);
-  assert.deepEqual(session.view().formulas.map(f => f.worked), ['(20 × 9.81) ÷ 20 = 9.81 m/s²', '(200 × 9.81) ÷ 200 = 9.81 m/s²']);
+  assert.deepEqual(session.view().formulas.map(f => f.worked), ['(20 × 9.81) ÷ 20 = 9.81 N per kilogram', '(200 × 9.81) ÷ 200 = 9.81 N per kilogram']);
   const checks = createClassroomSession(lesson);
   playThroughTo(checks, 'check-slowest');
   assert.ok(checks.view().formulas.every(f => !f.worked), 'question 1 shows only the general formula');
@@ -202,16 +208,25 @@ test('no guess or open question is settled early: the words, the panel and the b
   assert.deepEqual(checks.view().formulas, [], 'question 3 shows no sums');
 });
 
-test('the formula: π and √ are defined first, the hook and the weight move the sums, and every sum comes out on a calculator', () => {
+test('the formula: π, √, m/s and g are defined in their own steps first, the hook and the weight move the formulas, and every worked line comes out on a calculator', () => {
   const session = createClassroomSession(lesson);
-  playThroughTo(session, 'try-formula');
+  playThroughTo(session, 'word-pi');
+  assert.match(session.view().say, /π, a Greek letter said “pie”.*√, which means the square root/);
+  assert.ok(session.view().ready, 'a symbol step has nothing to press');
+  session.act('next');
+  assert.equal(session.view().step.id, 'word-gravity');
+  assert.ok(session.view().say.indexOf('written m/s') < session.view().say.indexOf('m/s²'), 'm/s comes before m/s²');
+  assert.equal(session.view().formulas[1].worked, '9.81 × 2 = 19.62 m/s after 2 seconds');
+  assert.equal((3.14 * 10).toFixed(1), '31.4', 'a circle 10 m across is 31.4 m around, as the panel says');
+  assert.equal(session.view().formulas[0].worked, '20 m ÷ 4 s = 5 m/s');
+  session.act('next');
   let v = session.view();
-  assert.ok(v.say.indexOf('π is a Greek letter') < v.say.indexOf('T = 2 × π'), 'π comes before the formula');
-  assert.ok(v.say.indexOf('√ means the square root') < v.say.indexOf('T = 2 × π'), '√ comes before the formula');
-  assert.ok(v.say.indexOf('written m/s') < v.say.indexOf('m/s²'), 'm/s comes before m/s²');
+  assert.equal(v.step.id, 'try-formula');
+  assert.match(v.say, /^The swing time is T = 2 × π × √\(L ÷ g\), where T is the swing time in seconds, L is the string length in metres/);
+  assert.match(v.say, /Change the hook, then change the weight, and see which one changes the swing time T\./);
   assert.equal(v.formulas[0].formula, 'T = 2 × π × √(L ÷ g)');
   assert.equal(v.formulas[0].worked, '2 × 3.14 × √(15 ÷ 9.81) = 7.77 s');
-  assert.equal(v.formulas[1].worked, '(20 × 9.81) ÷ 20 = 9.81 m/s²');
+  assert.equal(v.formulas[1].worked, '(20 × 9.81) ÷ 20 = 9.81 N per kilogram');
   assert.ok(!v.ready);
   session.act('hook:5');
   v = session.view();
@@ -219,7 +234,7 @@ test('the formula: π and √ are defined first, the hook and the weight move th
   session.act('weight:heavy');
   v = session.view();
   assert.equal(v.formulas[0].worked, '2 × 3.14 × √(5 ÷ 9.81) = 4.48 s', 'the weight leaves the swing time alone');
-  assert.equal(v.formulas[1].worked, '(200 × 9.81) ÷ 200 = 9.81 m/s²', 'and moves the numbers in the lower sum, not the answer');
+  assert.equal(v.formulas[1].worked, '(200 × 9.81) ÷ 200 = 9.81 N per kilogram', 'and moves the numbers in the lower calculation, not the answer');
   assert.ok(v.ready);
   const closing = v.brian.text;
   session.act('hook:25');
@@ -230,7 +245,8 @@ test('the formula: π and √ are defined first, the hook and the weight move th
     assert.ok(Math.abs(calculated - answer) < .005, `${length} m on a calculator`);
     assert.equal(answer.toFixed(1), stringPeriod(length).toFixed(1), `the sum agrees with the stopwatch at ${length} m`);
   }
-  assert.ok(Math.abs(10.03 / 4.48 - 2.2) < .05, 'about 2.2 times, as Brian says');
+  assert.doesNotMatch(v.say, /2\.2 times|4\.48/, 'the five-times-the-length remark, which did not match the 4.5 s elsewhere, is gone');
+  assert.equal(sumSeconds(5), 4.48, 'the 5 m worked line is 4.48 s on a calculator');
   assert.equal(G_SHOWN, 9.81);
 });
 
@@ -240,7 +256,7 @@ test('the free test: string, weight and pull-back all move the sums, three diffe
   let v = session.view();
   assert.equal(FREE_TRIES, 3);
   assert.equal(v.ready, false);
-  assert.deepEqual(v.formulas.map(f => f.worked), ['2 × 3.14 × √(15 ÷ 9.81) = 7.77 s', '(20 × 9.81) ÷ 20 = 9.81 m/s²', '4 × 15 × (20 ÷ 57.3) = 20.9 m', '20.9 ÷ 7.77 = 2.69 m/s']);
+  assert.deepEqual(v.formulas.map(f => f.worked), ['2 × 3.14 × √(15 ÷ 9.81) = 7.77 s', '(20 × 9.81) ÷ 20 = 9.81 N per kilogram', '4 × 15 × (20 ÷ 57.3) = 20.9 m', '20.9 ÷ 7.77 = 2.69 m/s']);
   for (const f of v.formulas) assert.ok(f.title, 'every entry has a heading');
   session.act('pull:up');
   assert.deepEqual(session.view().formulas.slice(2).map(f => f.worked), ['4 × 15 × (25 ÷ 57.3) = 26.2 m', '26.2 ÷ 7.77 = 3.37 m/s'], 'the pull-back moves the trip and the speed');
@@ -249,12 +265,13 @@ test('the free test: string, weight and pull-back all move the sums, three diffe
   session.act('pull:down');
   for (let i = 0; i < 6; i++) session.act('pull:down');
   assert.equal(session.view().pull.deg, MIN_PULL);
-  assert.match(session.view().brian.text, /5 degrees is as small/, 'the end of the range says so');
+  assert.match(session.view().brian.text, /5 degrees is as small as the pull-back goes/, 'the end of the range says so');
+  assert.match(session.view().formulas[3].note, /for every pull-back up to 30 degrees\.$/, 'the range is stated plainly, with no real-pendulum caveat');
   for (let i = 0; i < 3; i++) session.act('pull:up');
   assert.equal(session.view().pull.deg, 20);
   const test = () => { session.act('release'); until(session, x => x.keys.Space === 'release', 15); };
   test();
-  assert.match(session.view().brian.text, /^With a 15 m string, a 20 kg weight and a pull-back of 20 degrees, one swing needed 7\.8 s, which is the sum’s 7\.77 s to one decimal place\. Change a setting/);
+  assert.match(session.view().brian.text, /^With a 15 m string, a 20 kg weight and a pull-back of 20 degrees, one swing needed 7\.8 s, which is the formula’s 7\.77 s to one decimal place\. Change a setting/);
   test();
   assert.match(session.view().brian.text, /already tested this exact setting/);
   assert.equal(session.view().ready, false, 'the same setting again does not count');
@@ -490,9 +507,9 @@ test('the pictures show the idea: the trip, the pull arrow’s sum, the pull-bac
   assert.match(short, /one swing travels 7\.0 m/); assert.match(short, /one swing travels 20\.9 m/);
   session.act('next'); session.act('weight:heavy'); session.act('guess:2'); session.act('release'); until(session, v => v.ready, 15);
   const heavy = drawn(session);
-  assert.match(heavy, /1962\.0 ÷ 200 kg = 9\.81 m\/s²/); assert.match(heavy, /196\.2 ÷ 20 kg = 9\.81 m\/s²/);
+  assert.match(heavy, /1962\.0 ÷ 200 kg = 9\.81 N per kilogram/); assert.match(heavy, /196\.2 ÷ 20 kg = 9\.81 N per kilogram/);
   assert.ok(Math.abs(1962 / 200 - 9.81) < 1e-9 && Math.abs(196.2 / 20 - 9.81) < 1e-9);
-  session.act('next'); session.act(session.view().target); session.act(session.view().target); session.act('next');
+  session.act('next'); session.act('next'); session.act('next'); session.act(session.view().target); session.act(session.view().target); session.act('next');
   assert.match(drawn(session), /20°/);
   session.act('pull:up');
   assert.match(drawn(session), /25°/);
@@ -543,6 +560,7 @@ test('review fixes: slow motion ends with its step; Show me presses the control;
   session.act('weight:light');
   assert.equal(session.view().help, 0, 'pressing the weight already hanging is not a failed try');
   session.act('weight:heavy'); session.act('guess:2'); session.act('release'); until(session, x => x.ready, 15); session.act('next');
+  for (let i = 0; i < 2; i++) session.act('next');
   session.act(session.view().target); session.act(session.view().target); session.act('next');
   playFree(session); session.act('next');
   session.act('hook:25'); session.act('release'); until(session, x => x.ready, 15);
@@ -554,7 +572,7 @@ test('review fixes: in the short-string try a weight press keeps the comparison 
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-short');
   session.act('weight:heavy');
-  assert.match(session.view().brian.text, /this test changes only the string, so the weight must stay at 20 kg\. Press 4/);
+  assert.match(session.view().brian.text, /this test changes only the string, so the weight must stay at 20 kg\. Click the 20 kg weight to put it back\./);
   session.act('hook:5');
   assert.equal(session.view().cards.length, 0, 'heavy on 5 m changes two things, so no guess yet');
   assert.equal(session.view().target, 'weight:light', 'and the prompt now asks for the weight, not the hook');
@@ -600,15 +618,32 @@ test('the Suspension classroom challenge submits the same four settings to the u
   assert.equal(suspensionBench.goalMet(attempts.map(attempt=>({result:{settings:attempt.input}}))),true);
 });
 
-test('the Suspension Watch changes the rig settings and live readings as Brian describes', () => {
+test('the Suspension Watch runs about ten seconds, changes the rig settings and fills the table as Brian describes, and R plays it again', () => {
   const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='watch'));
   model.tick(.5); assert.deepEqual(model.view().setup,{spring:'soft',road:'bumpy'});
+  assert.equal(model.view().rows.length,1);
   const softShake=model.view().result.bodyShake;
-  model.tick(.8); assert.deepEqual(model.view().setup,{spring:'stiff',road:'bumpy'});
+  model.tick(SUSPENSION_WATCH_S/4); assert.deepEqual(model.view().setup,{spring:'stiff',road:'bumpy'});
   const stiffShake=model.view().result.bodyShake; assert.notEqual(stiffShake,softShake);
-  model.tick(1.2); assert.deepEqual(model.view().setup,{spring:'soft',road:'smooth'});
+  assert.equal(model.view().rows.length,2);
+  model.tick(SUSPENSION_WATCH_S/4); assert.deepEqual(model.view().setup,{spring:'soft',road:'smooth'});
   assert.notEqual(model.view().result.bodyShake,stiffShake);
-  model.tick(1); assert.equal(model.view().ready,true); assert.match(model.view().say,/6\.5° and 2\.2°/);
+  model.tick(SUSPENSION_WATCH_S/4); assert.deepEqual(model.view().setup,{spring:'stiff',road:'smooth'});
+  assert.equal(model.view().ready,false,'the run is not over before ten seconds');
+  model.tick(SUSPENSION_WATCH_S/4-.5); assert.equal(model.view().ready,true); assert.match(model.view().say,/soft spring leans 6\.5° and the stiff spring leans 2\.2°/);
+  assert.equal(model.view().rows.length,4);
+  model.act('replay'); assert.equal(model.view().ready,false,'R plays the watch again'); assert.equal(model.view().rows.length,0); assert.deepEqual(model.view().setup,{spring:'soft',road:'bumpy'});
+});
+
+test('the Suspension wonder takes about ten seconds, bumps then a bend, and R plays it again', () => {
+  const model=createSuspensionModel(); model.enter(0);
+  assert.ok(model.view().actions.includes('replay'));
+  let bumps=null, bend=null, seconds=0;
+  while(!model.view().ready&&seconds<30) { model.tick(.05); seconds+=.05; const v=model.view(); if(v.test==='bumps') bumps=v; else bend=v; }
+  assert.ok(seconds>=SUSPENSION_WATCH_S-.1&&seconds<SUSPENSION_WATCH_S+1,`the wonder took ${seconds.toFixed(1)} s`);
+  assert.equal(bumps.rollDeg,0,'the bumps leave the body level'); assert.ok(bend.rollDeg>0,'the bend leans the body');
+  assert.match(model.view().say,/What makes the body shake, and what makes it lean/);
+  model.act('replay'); assert.equal(model.view().ready,false); assert.equal(model.view().test,'bumps');
 });
 
 test('Suspension exposes the complete screen contract and drawable targets on every step', () => {
@@ -644,9 +679,10 @@ test('Suspension guided prompts keep the measured roll comparison and three dist
   const initial=model.view().formulas.at(-1).worked;
   model.act('spring:stiff'); model.act('road:smooth');
   assert.equal(model.view().formulas.at(-1).worked,initial,'the roll comparison uses the same measured test readings');
-  assert.match(initial,/6\.5° ÷ 2\.2° ≈ 3/);
+  assert.match(initial,/60,000 ÷ 20,000 = 3\. The stiff spring leans 2\.2° where the soft spring leans 6\.5°\./);
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-shake'));
-  assert.match(model.view().say,/one body-shake reading for this test/);
+  assert.match(model.view().say,/Body shake is how hard the body shakes up and down during a test/);
+  assert.match(model.view().say,/tyre contact, the share of the test during which the tyre touches the road/);
   assert.match(SUSPENSION_WORDS.at(-1).meaning,/m\/s², means how quickly the body’s speed changes/);
   assert.ok(model.view().formulas.every(row=>!row.title.toLowerCase().includes('shake')),'body shake has no formula panel');
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
@@ -667,23 +703,91 @@ test('Show me selects and runs a different setting pair each time in the free te
   assert.equal(model.view().ready,true);
 });
 
-test('Suspension roll comparison shows the measured numbers and a simple calculator sum', () => {
+test('Suspension roll comparison shows the measured numbers, and every figure in the roll rule comes out on a calculator', () => {
   const model=createSuspensionModel();
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='formula'));
-  const row=model.view().formulas.find(item=>item.title==='What this bend showed');
-  assert.match(row.worked,/6\.5° ÷ 2\.2° ≈ 3/);
-  assert.match(row.worked,/stiff spring leans about a third as much/);
-  assert.match(row.worked,/numbers come from this test/);
+  const rows=model.view().formulas;
+  const row=rows.find(item=>item.title==='What this bend showed');
+  assert.match(row.worked,/60,000 ÷ 20,000 = 3/);
+  assert.match(row.worked,/stiff spring leans 2\.2° where the soft spring leans 6\.5°/);
+  assert.doesNotMatch(row.worked,/numbers come from this test|about|≈/);
+  const number=text=>Number(text.replaceAll(',',''));
+  for(const spring of ['soft','stiff']) {
+    const rule=rows.find(item=>item.title===`The roll rule, ${spring} spring`);
+    const [, push, stiffness, track1, track2, radians, degrees]=rule.worked.match(/^([\d,]+) N·m ÷ \(([\d,]+) N\/m × ([\d.]+) m × ([\d.]+) m\) = ([\d.]+) rad = ([\d.]+)°$/);
+    assert.ok(Math.abs(number(push)/(number(stiffness)*track1*track2)-radians)<.0005,`${spring}: the division gives the radians shown`);
+    assert.equal((radians*180/Math.PI).toFixed(1),degrees,`${spring}: the radians convert to the degrees shown`);
+    assert.equal(degrees,suspensionBench.run({spring,road:'smooth'}).leanDeg.toFixed(1),`${spring}: the degrees are the rig’s own reading`);
+    assert.match(rule.note,/1,300 kg × 0\.8 × 9\.81 m\/s² × 0\.5 m = 5,101 N·m/);
+  }
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='check-formula'));
+  assert.ok(model.view().formulas.every(item=>!item.worked),'the open question hides the worked roll rule');
 });
 
 test('Suspension reading words define body shake and explain tyre contact plainly', () => {
   const model=createSuspensionModel();
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-shake'));
-  assert.match(model.view().say,/one body-shake reading for this test/);
-  assert.match(SUSPENSION_WORDS.at(-1).meaning,/m\/s², means how quickly the body’s speed changes/);
+  assert.match(model.view().say,/tyre contact, the share of the test during which the tyre touches the road/);
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
   model.act('run');
-  assert.match(model.view().say,/Tyre contact shows how much of the test the tyre touched the road/);
+  assert.match(model.view().say,/gave 4\.09 m\/s² of body shake, 6\.5° of body roll and 87\.87% tyre contact/);
+});
+
+test('what the Suspension lesson says about the stiff spring matches the rig: more body shake, less roll, more tyre contact', () => {
+  const soft=suspensionBench.run({spring:'soft',road:'bumpy'}), stiff=suspensionBench.run({spring:'stiff',road:'bumpy'});
+  assert.ok(stiff.bodyShake>soft.bodyShake&&stiff.leanDeg<soft.leanDeg&&stiff.contactShare>soft.contactShare);
+  const text=[...SUSPENSION_KEY_IDEAS.map(item=>item.text)].join(' ');
+  assert.match(text,/keeps the tyre on the road for more of the bumpy test/);
+  assert.doesNotMatch(text,/lift a tyre|briefly lift/i);
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='recap'));
+  const recap=model.view().say.replace(/\n/g,' ');
+  assert.match(recap,/93\.12% against 87\.87%/);
+  assert.doesNotMatch(recap,/lift a tyre|briefly lift/i);
+});
+
+test('the Suspension picture shows the bump test with a level body, the bend test with a leaning body, and an open prediction without its answer', () => {
+  const model=createSuspensionModel(), lines=[];
+  const at=id=>{ model.enter(SUSPENSION_STEPS.findIndex(step=>step.id===id)); return model.view(); };
+  const bumps=at('word-spring'); assert.equal(bumps.test,'bumps'); assert.equal(bumps.rollDeg,0);
+  const bend=at('word-roll'); assert.equal(bend.test,'bend'); assert.ok(bend.rollDeg>6);
+  const open=at('guess-roll'); assert.equal(open.test,'bend'); assert.equal(open.rollDeg,null,'the open prediction does not lean the body');
+  assert.equal(at('guess-bumps').rollDeg,0);
+  lines.length=0; suspensionBoard.drawBoard(fakeCanvas(lines),bumps); const bumpText=lines.join(' ');
+  assert.doesNotMatch(bumpText,/BODY ROLL|SQUEEZED|STRETCHED|SIDEWAYS PUSH/,'the bump test draws no bend labels');
+  assert.match(bumpText,/BODY SHAKE/);
+  lines.length=0; suspensionBoard.drawBoard(fakeCanvas(lines),bend); const bendText=lines.join(' ');
+  assert.match(bendText,/BODY ROLL 6\.5°/); assert.match(bendText,/LEFT SPRING SQUEEZED/); assert.match(bendText,/SIDEWAYS PUSH/);
+  lines.length=0; suspensionBoard.drawBoard(fakeCanvas(lines),open); assert.match(lines.join(' '),/BODY ROLL \?/);
+  lines.length=0; suspensionBoard.drawBoard(fakeCanvas(lines),at('recap')); assert.match(lines.join(' '),/93\.12% tyre contact on bumps/);
+});
+
+// Kyle's rules of 19 November 2026 (docs/LAB.md 13.2), as for Grip: no hedging, no "sum" for a division, no key labels.
+test('Kyle’s rules of 19 November 2026 hold for every text the Suspension lesson shows, wrong answers and results included', () => {
+  const said=new Set(), note=v=>{ for(const text of [v.say,v.prompt,...(v.hints??[]),...(v.cards??[]).map(card=>card.label),...(v.formulas??[]).flatMap(row=>[row.title,row.formula,row.worked,row.note])]) if(text) said.add(String(text)); };
+  const model=createSuspensionModel();
+  SUSPENSION_STEPS.forEach((step,index)=>{ model.enter(index); note(model.view()); });
+  for(const id of ['guess-bumps','guess-roll','check-spring','check-transfer','check-formula']) for(const pick of [0,1,2]) { model.enter(SUSPENSION_STEPS.findIndex(step=>step.id===id)); model.act(`answer:${pick}`); note(model.view()); }
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='alone'));
+  for(const [spring,road] of [['soft','bumpy'],['stiff','bumpy'],['stiff','smooth']]) { model.act(`spring:${spring}`); model.act(`road:${road}`); note(model.view()); model.act('run'); note(model.view()); }
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='watch')); model.tick(SUSPENSION_WATCH_S+.1); note(model.view());
+  const copy=[...said,...SUSPENSION_WORDS.map(word=>word.meaning),...SUSPENSION_KEY_IDEAS.map(item=>item.text)].join('\n');
+  assert.doesNotMatch(copy,/in this game|this game|a simplification|simplified|the game’s|\bthe game\b/i,'no hedging');
+  assert.doesNotMatch(copy,/\bsums?\b/i,'a division is not a sum');
+  assert.doesNotMatch(copy,/\babout \d|\babout a third|≈|numbers come from this test|\bto the nearest\b/i,'exact numbers');
+  assert.doesNotMatch(copy,/Press [↑↓←→]|press Space|Press Space|Press [123],? |press 1|Press 1|use the arrows/i,'the screen shows its own key labels');
+  assert.doesNotMatch(copy,/lift a tyre|wants to/i,'only what the numbers show; no wishes for a car');
+});
+
+test('the Suspension on-your-own step asks for the least body shake with under 3° of roll, and does not keep rows from the free test', () => {
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  model.act('run');
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='alone'));
+  assert.equal(model.view().rows.length,0,'the free test’s rows are gone');
+  model.act('spring:stiff'); model.act('run');
+  assert.equal(model.view().ready,false,'under 3° of roll is not enough: the body shake is high on the bumpy road');
+  assert.match(model.view().say,/Try the other road/);
+  model.act('road:smooth'); model.act('run');
+  assert.equal(model.view().ready,true);
 });
 
 test('Suspension held controls use classroom arrows and wait for their repeat interval', () => {
@@ -755,8 +859,8 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-short');
   const v = session.view(), [hx, hy] = targetPoint(v, 'hook:5');
-  assert.match(hoverInfo(v, hx, hy), /5 m hook\. Click it, or press 1/);
-  assert.match(hoverInfo(v, ...targetPoint(v, 'weight:heavy')), /200 kg weight\. Click it, or press 5/);
+  assert.match(hoverInfo(v, hx, hy), /5 m hook\. Click it to hang the weight here\./);
+  assert.match(hoverInfo(v, ...targetPoint(v, 'weight:heavy')), /200 kg weight\. Click it to hang it\./);
   const grey = v.pendulums.find(p => p.ghost);
   assert.match(hoverInfo(v, ...bobPoint(grey)), /grey weight/);
   assert.match(hoverInfo(v, grey.x - 30, 50), /stopwatch/i);
@@ -766,7 +870,7 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
 const KMH_PER_MPH = 1.609344;
 
 function reachGforceFreeTest(session) {
-  run(session, 2.6);
+  run(session, 10.1);
   assert.equal(session.view().step.id, 'wonder');
   assert.equal(session.view().ready, true);
   session.act('next');
@@ -784,7 +888,7 @@ function reachGforceFreeTest(session) {
   session.act('next');
   session.act('next');
   assert.equal(session.view().step.id, 'watch');
-  run(session, 6.1);
+  run(session, 10.6);
   assert.equal(session.view().ready, true);
   session.act('next');
   assert.equal(session.view().step.id, 'try-speed');
@@ -797,7 +901,7 @@ function finishGuidedGforceTries(session) {
   assert.equal(session.view().ready, true);
   session.act('next');
   session.act('answer:0');
-  session.act('radius:up');
+  session.act('radius:down');
   session.act('run');
   assert.equal(session.view().ready, true);
   session.act('next');
@@ -819,12 +923,17 @@ test('G-force is registered with its old notebook words, challenge and seven les
   assert.equal(GFORCE_STEPS.find(step => step.id === 'recap').voice, 'lab.brian.gforce.explain');
 });
 
-test('the short G-force wonder ends with its prediction question', () => {
+test('the G-force wonder watches the cord for ten seconds, then asks why it leans, and R plays it again', () => {
   const model = createGforceModel();
   model.enter(0);
-  assert.match(model.view().say, /car on an arm.*cord.*meter.*words come next/i);
-  model.tick(2.5);
-  assert.match(model.view().say, /Which change could make the meter show a larger reading\?/);
+  assert.match(model.view().say, /car on an arm.*cord.*meter.*Watch the cord lean outward/i);
+  model.tick(9.9);
+  assert.equal(model.view().ready, false, 'the run is not over before ten seconds');
+  model.tick(.2);
+  assert.match(model.view().say, /^The cord leaned outward as the car went round, and the meter read 0\.39 g\. Why does the cord lean, and which change would make the meter read more\?/);
+  assert.ok(model.view().actions.includes('replay'));
+  model.act('replay');
+  assert.equal(model.view().ready, false, 'R plays the wonder again');
 });
 
 test('G-force screen contract uses sendable classroom keys and complete views', () => {
@@ -866,7 +975,7 @@ test('G-force screen contract uses sendable classroom keys and complete views', 
   assert.equal(model.state().speed, speed + 10, 'a held repeat moves after the pacing gap');
 });
 
-test('G-force formula sums calculate from the exact metric values they show and match the challenge rule', () => {
+test('G-force formulas calculate from the exact metric values they show and match the challenge rule', () => {
   const model = createGforceModel();
   const formulaIndex = GFORCE_STEPS.findIndex(step => step.id === 'formula');
   const radii = [10, 25, 50, 75, 100, 125, 150, 175, 200];
@@ -879,11 +988,12 @@ test('G-force formula sums calculate from the exact metric values they show and 
       while (state.radius < radius) { model.act('radius:up'); state = model.state(); }
       while (state.radius > radius) { model.act('radius:down'); state = model.state(); }
       const worked = model.view().formulas.at(-1).worked;
-      const match = worked.match(/\((\d+\.\d{2}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = about (\d+\.\d{2}) g/);
+      const match = worked.match(/\((\d+\.\d{4}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = (\d+\.\d{2}) g$/);
       assert.ok(match, worked);
       const [, metresPerSecond, shownRadius, shownG] = match;
       const calculated = (Number(metresPerSecond) ** 2 / Number(shownRadius) / 9.81).toFixed(2);
       assert.equal(shownG, calculated, `${speed} km/h on the dial and ${radius} m radius`);
+      assert.equal(shownG, model.view().g.toFixed(2), `${speed} km/h and ${radius} m: the line gives the meter's own reading, with no “about”`);
       assert.equal(model.view().g.toFixed(2), lateralG(speed / KMH_PER_MPH, radius).toFixed(2), 'the board meter matches the challenge function');
       assert.equal(model.view().speedKmh, speed);
     }
@@ -893,7 +1003,7 @@ test('G-force formula sums calculate from the exact metric values they show and 
 test('a child can follow the G-force prompts through the speed and radius lessons', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
   reachGforceFreeTest(session);
-  assert.match(session.view().brian.text, /150 km\/h and radius stays at 50 m/);
+  assert.match(session.view().brian.text, /150 km\/h and the radius stays at 50 m/);
   assert.equal(session.view().g, null, 'the open prediction has no live result');
   assert.ok(session.view().formulas.every(entry => entry.worked === ''), 'the open prediction has no worked answer');
   assert.ok(session.view().formulas.every(entry => entry.title.length > 0), 'every formula row has a title');
@@ -922,9 +1032,9 @@ test('the watch changes both settings over time and keeps the board, meter and f
   assert.equal(model.view().radiusM, 50);
   assert.equal(model.view().g.toFixed(2), lateralG(100 / KMH_PER_MPH, 50).toFixed(2));
   assert.match(model.view().formulas[0].worked, /^100 km\/h/);
-  model.tick(2);
-  assert.equal(model.view().speedKmh, 50);
-  model.tick(1);
+  model.tick(3.5);
+  assert.equal(model.view().speedKmh, 50, 'the speed goes back before the radius changes');
+  model.tick(1.5);
   assert.equal(model.view().radiusM, 100);
   assert.equal(model.view().g.toFixed(2), lateralG(50 / KMH_PER_MPH, 100).toFixed(2));
   assert.match(model.view().formulas.at(-1).worked, /100 m/);
@@ -936,7 +1046,7 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   let open = session.view();
   assert.equal(open.g, null);
   assert.ok(open.formulas.every(entry => entry.worked === ''));
-  session.act('answer:1');
+  session.act('answer:0');
   for (let press = 0; press < 10; press++) session.act('speed:up');
   session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
@@ -944,15 +1054,16 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   assert.match(session.view().brian.text, /3\.54 g/);
   assert.match(session.view().brian.text, /0\.39 g/);
   assert.match(session.view().brian.text, /150 ÷ 50 = 3, and 3 × 3 = 9/);
+  assert.doesNotMatch(session.view().brian.text, /\babout\b/, 'the reading is 9 times as large, with no “about”');
   session.act('next');
-  session.act('answer:1');
-  session.act('radius:up');
+  session.act('answer:0');
+  session.act('radius:down');
   session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
-  assert.match(session.view().brian.text, /75 m/);
-  assert.match(session.view().brian.text, /0\.26 g/);
+  assert.match(session.view().brian.text, /25 m/);
+  assert.match(session.view().brian.text, /0\.79 g/);
   assert.match(session.view().brian.text, /0\.39 g/);
-  assert.match(session.view().brian.text, /one and a half times 50 m.*two thirds as large/);
+  assert.match(session.view().brian.text, /half of 50 m.*the reading is twice as large/);
 });
 
 test('Show me points to a live control and records a new free-test setting on each use', () => {
@@ -986,7 +1097,7 @@ test('Brian’s 2 g test has a working Space key and needs a changed setting', (
   assert.equal(session.view().step.id, 'alone');
   let view = session.view();
   assert.equal(view.keys.Space, 'run');
-  assert.match(view.prompt, /press Space/i);
+  assert.match(view.prompt, /run the turn/i);
   session.act(view.keys.Space);
   assert.equal(session.view().brian.mood, 'explain');
   assert.match(session.view().brian.text, /below the 2 g target/);
@@ -999,7 +1110,7 @@ test('Brian’s 2 g test has a working Space key and needs a changed setting', (
   assert.match(session.view().brian.text, /2\.66 g/);
 });
 
-test('G-force questions have literal answers and keep their result sums hidden until answered', () => {
+test('G-force questions have literal answers and keep their results hidden until answered', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
   reachGforceFreeTest(session);
   finishGuidedGforceTries(session);
@@ -1016,11 +1127,12 @@ test('G-force questions have literal answers and keep their result sums hidden u
     }
     const view = session.view();
     assert.equal(view.asking, true);
-    assert.ok(view.formulas.every(entry => entry.worked === ''), `${id}: the panel has no answer sum`);
-    session.act('answer:1');
+    assert.ok(view.formulas.every(entry => entry.worked === ''), `${id}: the panel has no worked answer`);
+    const wrongPick = id === 'check-rule' ? 0 : 1;
+    session.act(`answer:${wrongPick}`);
     assert.equal(session.view().ready, true);
     assert.match(session.view().brian.text, /g|radius|speed/i);
-    assert.equal(session.view().cards[1].state, 'wrong');
+    assert.equal(session.view().cards[wrongPick].state, 'wrong');
   }
 });
 
@@ -1175,14 +1287,67 @@ test('G-force readings come from the turning rule: twice the speed gives four ti
   assert.ok(at(100, 50) < 2 && at(150, 50) >= 2, "Brian's 2 g test needs more than twice the starting speed");
 });
 
+test('review of 19 November: the right card moves, the tighter turn is tighter, and no step hedges or calls a division a sum', () => {
+  const position = id => [0, 1, 2].findIndex(i => { const probe = createGforceModel(); probe.enter(GFORCE_STEPS.findIndex(step => step.id === id)); return probe.act(`answer:${i}`).kind === 'right'; });
+  assert.deepEqual(['check-speed', 'check-radius', 'check-rule'].map(position), [2, 0, 1], 'the right card is not always the first');
+  // The two predictions: the right reading is on a different card each time, and the common mistake is offered.
+  for (const [id, right, labels] of [['try-speed', 1, ['1.18 g.', '3.54 g.', '1.57 g.']], ['try-radius', 2, ['0.20 g.', '0.39 g.', '0.79 g.']]]) {
+    const model = createGforceModel();
+    model.enter(GFORCE_STEPS.findIndex(step => step.id === id));
+    assert.deepEqual(model.view().cards.map(c => c.label), labels, id);
+    assert.equal(model.view().target, `answer:${right}`);
+    model.act(`answer:${right}`);
+    for (let press = 0; press < (id === 'try-speed' ? 10 : 1); press++) model.act(id === 'try-speed' ? 'speed:up' : 'radius:down');
+    assert.equal(model.act('run').kind, 'right', `${id}: the card with the real reading is right`);
+  }
+  const tighter = createGforceModel();
+  tighter.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-radius'));
+  tighter.act('answer:2'); tighter.act('radius:down');
+  assert.ok(tighter.view().radiusM < 50, 'a tighter turn has a smaller radius');
+  assert.ok(tighter.view().g > createGforceModel().view().g, 'and a bigger reading');
+  // Words: no hedge, no “sum” for a division, and Show me keeps its line while Brian sets the dials.
+  const texts = [];
+  const model = createGforceModel();
+  for (let index = 0; index < GFORCE_STEPS.length; index++) {
+    model.enter(index);
+    const view = model.view();
+    texts.push(view.say, view.prompt, ...view.hints, ...view.cards.map(c => c.label), ...view.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]));
+  }
+  texts.push(...GFORCE_IDEAS.map(i => i.text), ...CLASSROOM_LESSONS.gforce.words.map(w => w.meaning));
+  const faults = texts.filter(t => /\bin this game\b|\bthe game squares\b|\bsums?\b|\babout\b|simplif|\bapproximate/i.test(t ?? ''));
+  assert.deepEqual(faults, []);
+  const free = createGforceModel();
+  free.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-free'));
+  free.act('set:best');
+  for (let i = 0; i < 5; i++) free.tick(.15);
+  assert.match(free.view().say, /^I will set the speed dial to 100 km\/h and run the turn\.$/, 'the dials moving do not replace what Brian said');
+});
+
+test('review of 19 November: the cord hangs at the real angle of the reading, and the car goes round at the dial’s own rate', () => {
+  const arcs = [];
+  const ctx = new Proxy({}, {get: (_, name) => name === 'measureText' ? value => ({width: String(value).length * 8}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : (...args) => { if (name === 'arc') arcs.push(args); }, set: () => true});
+  for (const [speed, radius] of [[50, 50], [100, 50], [150, 50], [50, 25]]) {
+    const model = createGforceModel();
+    model.enter(GFORCE_STEPS.findIndex(step => step.id === 'try-free'));
+    while (model.state().speed < speed) model.act('speed:up');
+    while (model.state().radius > radius) model.act('radius:down');
+    arcs.length = 0;
+    gforceBoard.drawBoard(ctx, model.view());
+    const weight = arcs.filter(a => a[2] === 8.4 && a[3] === 0 && a[0] > 150 && a[0] < 240 && a[1] > 555).at(-1);
+    assert.ok(weight, `${speed} km/h and ${radius} m: the weight is drawn`);
+    const lean = Math.atan2(weight[0] - 168, weight[1] - 558) * 180 / Math.PI;
+    assert.ok(Math.abs(lean - Math.atan(lateralG(speed / KMH_PER_MPH, radius)) * 180 / Math.PI) < .01, `${speed} km/h and ${radius} m: the cord is at ${lean.toFixed(1)}°`);
+  }
+});
+
 function reachGripFreeTest(session) {
   until(session, view => view.ready); session.act('next');
   session.act('slide:up'); session.act('next');
   session.act('next'); session.act('next'); // formula
   for (let index = 0; index < 10; index++) session.act('slide:up');
-  assert.match(session.view().formulas[0].worked, /0\.94 × 100 = 94%/);
+  assert.match(session.view().formulas[0].worked, /0\.939 × 100 = 93\.9%/);
   session.act('next'); // watch the rolling-road readings
-  until(session, view => view.ready, 5);
+  until(session, view => view.ready, 14);
   session.act('next'); // open the first prediction
   assert.equal(session.view().step.id, 'try-edge');
   session.act('answer:0'); session.act('run');
@@ -1198,7 +1363,7 @@ function reachGripQuestion(session) {
   session.act('slide:up'); session.act('next');
   session.act('next'); session.act('next'); session.act('next');
   session.act('next'); // rolling-road watch
-  until(session, view => view.ready, 5);
+  until(session, view => view.ready, 14);
   session.act('next');
   assert.equal(session.view().step.id, 'try-edge');
   assert.equal(session.view().cards.length, 3);
@@ -1207,7 +1372,7 @@ function reachGripQuestion(session) {
 test('Grip is registered as the classroom lesson with the kept notebook ids and challenge wording', () => {
   assert.equal(CLASSROOM_LESSONS.grip.id, 'grip');
   assert.equal(CLASSROOM_LESSONS.grip.name, 'Grip');
-  assert.deepEqual(gripLesson.words.map(word => word.id), ['grip', 'slip', 'limit']);
+  assert.deepEqual(gripLesson.words.map(word => word.id), ['grip', 'slip', 'limit', 'grip-slide']);
   assert.equal(gripLesson.challengeCard.title, 'Find full grip, then find where it starts to fall.');
   assert.equal(GRIP_STEPS.at(-1).voice, 'lab.brian.grip.explain');
   const flags = {enabled: name => name === 'lab' || name === 'lab-classroom' || name === 'lab-tuning'};
@@ -1226,9 +1391,9 @@ test('a player can follow each Grip prompt, compare three settings, and pass the
   session.act('next'); session.act('next'); session.act('next');
   assert.equal(session.view().step.id, 'formula');
   for (let index = 0; index < 10; index++) session.act('slide:up');
-  assert.equal(session.view().formulas[0].worked, '0.94 × 100 = 94%');
+  assert.equal(session.view().formulas[0].worked, '0.939 × 100 = 93.9%');
   session.act('next');
-  until(session, view => view.ready, 5);
+  until(session, view => view.ready, 14);
   session.act('next');
   assert.equal(session.view().step.id, 'try-edge');
   assert.equal(session.view().cards.length, 3);
@@ -1236,7 +1401,7 @@ test('a player can follow each Grip prompt, compare three settings, and pass the
   assert.ok(session.view().formulas.every(row => row.worked === ''), 'the open guess has no worked result');
   session.act('answer:0'); session.act('run');
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  assert.match(session.view().brian.text, /4\.5 degrees.*99\.7%.*100% minus 99\.7% is 0\.3% lost/);
   session.act('next');
   assert.equal(session.view().step.id, 'try-far');
   assert.equal(session.view().cards.length, 3);
@@ -1284,7 +1449,7 @@ test('Grip predictions explain the small loss at 4.5 degrees with rounded, reada
   session.act('answer:1'); session.act('run');
   const view = session.view();
   assert.equal(view.brian.mood, 'explain');
-  assert.match(view.brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  assert.match(view.brian.text, /4\.5 degrees.*99\.7%.*100% minus 99\.7% is 0\.3% lost/);
   assert.doesNotMatch(view.brian.text, /\d+\.\d{3,}/);
 });
 
@@ -1318,30 +1483,98 @@ test('Grip percent formula uses rounded displayed values and open guesses hide r
     assert.match(view.formulas[0].formula, /grip kept as a fraction × 100/);
     assert.equal(view.grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
     assert.equal(view.percent, pctForGrip(view.grip));
-    if (angle === 9) assert.equal(view.formulas[0].worked, '0.94 × 100 = 94%');
-    assert.doesNotMatch(JSON.stringify(view.formulas), /clamp|\d+\.\d{3,}/i);
+    if (angle === 9) assert.equal(view.formulas[0].worked, '0.939 × 100 = 93.9%');
+    assert.doesNotMatch(JSON.stringify(view.formulas), /clamp|\d+\.\d{4,}/i);
   }
   model.enter(GRIP_STEPS.findIndex(step => step.id === 'try-edge'));
   assert.ok(model.view().formulas.every(row => row.worked === ''));
   assert.equal(model.view().percent, null);
 });
 
-test('the Grip watch moves through four settings without giving away either prediction', () => {
+test('the Grip watch runs about ten seconds through four settings, fills its table as it goes, and does not give away either prediction', () => {
   const model = createGripModel();
   model.enter(GRIP_STEPS.findIndex(step => step.id === 'watch'));
   assert.equal(model.view().slideDeg, 2);
-  for (const angle of [3, 4, 12]) {
-    model.tick(.8);
+  assert.equal(model.view().rows.length, 0, 'the table starts empty');
+  for (const [index, angle] of [3, 4, 12].entries()) {
+    model.tick(WATCH_S / 4);
     assert.equal(model.view().slideDeg, angle);
     assert.equal(model.view().grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
+    assert.equal(model.view().rows.length, index + 2, 'each angle joins the table when the tyre reaches it');
   }
-  const event = model.tick(.8);
+  const event = model.tick(WATCH_S / 4);
   assert.equal(event.kind, 'right');
-  assert.match(event.say, /2, 3 and 4 degrees.*100%.*12 degrees.*loss grows/);
+  assert.match(event.say, /2, 3 and 4 degrees.*100%.*12 degrees.*90%.*falls/);
   assert.doesNotMatch(event.say, /4\.5|9 degrees/);
   assert.equal(model.view().rows.length, 4);
   assert.deepEqual(model.view().rows.map(row => row.slideDeg), [2, 3, 4, 12]);
   assert.deepEqual(GRIP_STEPS.map(step => step.part), [...GRIP_STEPS.map(step => step.part)].sort((a, b) => a - b));
+  // R plays it again: the angle goes back to 2 degrees and the table empties.
+  assert.ok(model.view().actions.includes('replay'));
+  model.act('replay');
+  assert.equal(model.view().ready, false);
+  assert.equal(model.view().slideDeg, 2);
+  assert.equal(model.view().rows.length, 0);
+});
+
+test('the Grip watch runs exactly the angles Brian names, and the reading is full from 0 to 4 degrees', () => {
+  const model = createGripModel();
+  model.enter(GRIP_STEPS.findIndex(step => step.id === 'watch'));
+  const named = [...model.view().say.split('. ')[0].matchAll(/\d+(?:\.\d+)?/g)].map(hit => Number(hit[0]));
+  assert.deepEqual(named, [2, 3, 4, 12], 'Brian names 2, 3, 4 and 12');
+  const seen = [];
+  for (let t = 0; t < WATCH_S; t += .05) { model.tick(.05); seen.push(model.view().slideDeg); }
+  assert.deepEqual([...new Set(seen)], [2, 3, 4, 12], 'the tyre runs exactly the angles Brian names');
+  for (const angle of [0, 1, 2, 3, 4]) assert.equal(gripBench.run({slideDeg: angle, driver: 'casual'}).grip, 1, `${angle} degrees keeps all of its grip`);
+});
+
+test('the Grip wonder slides the tyre from 0 to 12 degrees over about ten seconds, and R plays it again', () => {
+  const model = createGripModel();
+  model.enter(0);
+  assert.equal(model.view().slideDeg, 0);
+  let seconds = 0, atBest = null;
+  while (!model.view().ready && seconds < 30) {
+    model.tick(.05); seconds += .05;
+    if (atBest === null && model.view().slideDeg >= 4.3) atBest = model.view().percent;
+  }
+  assert.ok(seconds >= WATCH_S - .1 && seconds < WATCH_S + 1, `the wonder took ${seconds.toFixed(1)} s`);
+  assert.equal(model.view().slideDeg, 12);
+  assert.equal(model.view().percent, 90);
+  assert.ok(atBest > 99, 'the grip is still nearly full when the tyre reaches the best angle');
+  assert.ok(model.view().actions.includes('replay'));
+  model.act('replay');
+  assert.equal(model.view().ready, false);
+  assert.equal(model.view().slideDeg, 0);
+});
+
+// Kyle's rules of 19 November 2026 (docs/LAB.md 13.2): no hedging, no "sum" for a multiplication, no "about" before a number the
+// lesson states exactly, and no key labels that the screen already shows.
+const KYLE_HEDGES = /in this game|this game|a simplification|real life|in real|the game’s|\bthe game\b/i;
+const KYLE_KEY_LABELS = /Press [↑↓←→]|press Space|Press Space|Press [123],? |press 1|Press 1|use the arrows/;
+const noteView = (said, v) => {
+  for (const text of [v.say, v.prompt, ...(v.hints ?? []), ...(v.cards ?? []).map(card => card.label), ...(v.formulas ?? []).flatMap(row => [row.title, row.formula, row.worked, row.note])]) if (text) said.add(String(text));
+};
+
+test('Kyle’s rules of 19 November 2026 hold for every text the Grip lesson shows, wrong answers and results included', () => {
+  const said = new Set();
+  const model = createGripModel();
+  GRIP_STEPS.forEach((step, index) => { model.enter(index); noteView(said, model.view()); });
+  for (const step of ['try-edge', 'try-far']) for (const pick of [0, 1, 2]) {
+    model.enter(GRIP_STEPS.findIndex(item => item.id === step)); model.act(`answer:${pick}`); noteView(said, model.view()); model.act('run'); noteView(said, model.view());
+  }
+  for (const step of ['check-best', 'check-loss', 'check-driving']) for (const pick of [0, 1, 2]) {
+    model.enter(GRIP_STEPS.findIndex(item => item.id === step)); model.act(`answer:${pick}`); noteView(said, model.view());
+  }
+  model.enter(GRIP_STEPS.findIndex(item => item.id === 'challenge'));
+  for (const angle of [0, 2, 4, 4.5]) { while (model.view().slideDeg < angle) model.act('slide:up'); model.act('run'); noteView(said, model.view()); }
+  model.enter(GRIP_STEPS.findIndex(item => item.id === 'try-free')); model.act('run'); noteView(said, model.view());
+  model.enter(GRIP_STEPS.findIndex(item => item.id === 'watch')); model.tick(WATCH_S + .1); noteView(said, model.view());
+  const copy = [...said, ...gripLesson.words.map(word => word.meaning), ...gripLesson.keyIdeas.map(item => item.text), gripLesson.challengeCard.text, gripLesson.passSay].join('\n');
+  assert.doesNotMatch(copy, KYLE_HEDGES, 'no hedging');
+  assert.doesNotMatch(copy, /\bsums?\b/i, 'a multiplication is not a sum');
+  assert.doesNotMatch(copy, /\babout \d|\bto the nearest\b/i, 'exact numbers');
+  assert.doesNotMatch(copy, KYLE_KEY_LABELS, 'the screen shows its own key labels');
+  assert.doesNotMatch(copy, /pushes harder|squeal|grip loss/i, 'only what the numbers show');
 });
 
 test('the Grip graph plots smooth unrounded readings past the best angle', () => {
@@ -1505,4 +1738,79 @@ test('fitBoard fits a board that names no size exactly as it always did, and fit
   assert.deepEqual(fitBoard(ctx, 1300, 600, () => {}, BOARD), fitBoard(ctx, 1300, 600, () => {}), 'naming the usual size changes nothing');
   assert.deepEqual(fitBoard(ctx, 1320, 680, () => {}, {width: 1320, height: 680}), {scale: 1, left: 0, top: 0});
   assert.deepEqual(fitBoard(ctx, 1000, 800, () => {}, {width: 1320, height: 680}), {scale: 1000 / 1320, left: 0, top: (800 - 680 * 1000 / 1320) / 2});
+});
+
+// Kyle's review of Rust (19 November 2026, docs/LAB.md 13.2) applied to Pendulums (LAB-REVIEW-FLYING).
+test('Pendulums: no hedging, no “sum” for a formula, no key labels, and no free-fall maths for a weight on a string', () => {
+  const texts = [];
+  const collect = v => texts.push(v.say, v.prompt, ...v.hints, ...v.cards.map(c => c.label), ...(v.ideas ?? []).map(i => i.text), ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]), ...(v.table ?? []).map(r => r.label));
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  STEPS.forEach((step, i) => { session.act(`go:${i}`); run(session, 12); collect(session.view()); });
+  const full = createClassroomSession(lesson);
+  playThrough(full, {check: v => collect(v)});
+  for (const id of ['check-slowest', 'check-heavy', 'check-settle']) for (const answer of [0, 1, 2]) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id); s.act(`answer:${answer}`); texts.push(s.view().brian.text); collect(s.view());
+  }
+  const wrongs = createClassroomSession(lesson);
+  playThroughTo(wrongs, 'try-short');
+  for (const press of ['weight:heavy', 'hook:25', 'hook:15']) { wrongs.act(press); texts.push(wrongs.view().brian.text); }
+  wrongs.act('weight:light'); wrongs.act('hook:5'); wrongs.act('guess:1'); wrongs.act('release'); until(wrongs, v => v.ready, 15); texts.push(wrongs.view().brian.text);
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  collect(job.view()); job.act('hook:5'); job.act('release'); until(job, v => v.lastTry, 15); texts.push(job.view().brian.text);
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  collect(free.view()); free.act('release'); until(free, x => x.keys.Space === 'release', 15); texts.push(free.view().brian.text); free.act('pull:down'); texts.push(free.view().brian.text);
+  const all = [...texts, ...lesson.words.map(w => w.meaning), ...KEY_IDEAS.map(i => i.text)].filter(Boolean).join('\n').replace(/Tell me more|‹more›/g, '');
+  const faults = [/\bin this game\b/i, /\bthis game\b/i, /\ba simplification\b/i, /\bthe sums?\b/i, /\bsums\b/i, /\bthis sum\b/i, /\bpress [0-9↑↓←→WASD]\b/i, /\bpress (Space|Enter|Return)\b/i, /\bor press\b/i,
+    /\breal pendulum\b/i, /speeding up = \(weight × g\)/, /\bspeeds up (at|by) 9\.81/i, /9\.81 m\/s² .*(weight|speeds)/i, /\bsimply\b/i];
+  for (const f of faults) assert.doesNotMatch(all, f, `the lesson says ${all.match(f)?.[0]}`);
+  assert.match(all, /N per kilogram/);
+});
+
+test('Pendulums: the symbols are defined in steps of their own before the formula, each in three sentences or fewer, and the formula step names its task first', () => {
+  const at = id => STEPS.findIndex(s => s.id === id);
+  assert.ok(at('word-pi') < at('word-gravity') && at('word-gravity') < at('try-formula') && at('try-heavy') < at('word-pi'));
+  const session = createClassroomSession(lesson);
+  for (const id of ['word-pi', 'word-gravity', 'try-formula']) {
+    playThroughTo(session, id);
+    const v = session.view(), words = v.say.split(/\s+/).length;
+    assert.ok(words <= 105, `${id} says ${words} words in all`);
+  }
+  playThroughTo(session, 'try-formula');
+  const v = session.view();
+  assert.ok(v.say.indexOf('Change the hook') < v.say.indexOf('square root is there because'), 'the task comes before the reason');
+  assert.ok(!v.say.includes('Greek letter'), 'π is defined in its own step');
+  assert.match(v.prompt, /^The string is 15 m and the weight is 20 kg\. Change the hook, then change the weight, and watch which one changes T\.$/);
+});
+
+test('Pendulums: Watch again restarts the wonder, the two lengths and the check swings from the start', () => {
+  const session = createClassroomSession(lesson);
+  run(session, 6); session.act('replay'); run(session, .1);
+  assert.ok(session.view().time < .3 || session.view().ready, 'the wonder starts again');
+  playThroughTo(session, 'watch-lengths');
+  until(session, v => v.ready, 15);
+  assert.ok(session.view().pendulums.every(p => p.stopwatch?.done), 'both swings have finished');
+  session.act('replay'); run(session, 1);
+  assert.ok(session.view().pendulums.every(p => !p.stopwatch?.done && (p.stopwatch?.elapsed ?? 0) < 1), 'both swings start again together');
+  const check = createClassroomSession(lesson);
+  playThroughTo(check, 'check-slowest');
+  check.act('answer:1'); run(check, 4);
+  assert.ok(check.view().pendulums.every(p => p.stopwatch?.elapsed > 2));
+  check.act('replay'); run(check, .2);
+  assert.ok(check.view().pendulums.every(p => (p.stopwatch?.elapsed ?? 0) < 1), 'the check swings start again');
+});
+
+test('Pendulums: Let go has a button that shows its key, so no prompt has to name Space', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-pendulum');
+  assert.deepEqual(session.view().buttons, [{action: 'release', label: 'Let go', key: 'Space'}]);
+  assert.doesNotMatch(session.view().prompt, /Space/);
+  session.act('release');
+  assert.deepEqual(session.view().buttons, []);
+  for (const id of ['try-free', 'alone']) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id);
+    assert.deepEqual(s.view().buttons.map(b => b.key), ['Space'], `${id} offers Let go`);
+  }
 });

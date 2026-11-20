@@ -482,7 +482,7 @@ export function strip(view) {
       const gap = row.none - row.seconds;
       return {label: `${row.name}, ${row.celsius} °C, ${WAX_NAMES[row.wax]} wax, friction ${row.friction}`, value: `acceleration ${row.acceleration.toFixed(3)} m/s², time ${row.seconds.toFixed(2)} s, ${Math.abs(gap).toFixed(2)} s ${gap > 0 ? 'faster' : 'slower'} against no wax`, tone: gap > 0 ? 'good' : 'bad'};
     });
-    out.tables.push({title: 'YOUR RESULTS', rows: rows.length ? rows : [{label: 'There are no results yet. Press Space to race.', value: '', tone: 'faint'}]});
+    out.tables.push({title: 'YOUR RESULTS', rows: rows.length ? rows : [{label: 'There are no results yet.', value: '', tone: 'faint'}]});
   }
   return out.readouts.length || out.tables.length ? out : null;
 }

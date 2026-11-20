@@ -117,7 +117,16 @@ export function driveIntoDeepRocks(duel, start, dt = 1 / 120) {
     if (into >= 0 || speed === 0) continue;
     let tx = dx - into * nx, tz = dz - into * nz;
     const slide = Math.hypot(tx, tz);
-    if (slide < 1e-3) { const side = (dx * nz - dz * nx) >= 0 ? 1 : -1; tx = nz * side; tz = -nx * side; }
+    if (slide < 1e-3) {
+      // Head on (the car's flat front against the rock): turn one way for the whole
+      // touch, away from the side of the car the rock sits on, so the car swings
+      // clear instead of rocking left and right on the spot (QA-ROUND-SOLID-HEADING).
+      // A new rock, or a change between forward and reverse, chooses afresh.
+      if (episode.sideRock !== rock || episode.sideSign !== sign) Object.assign(episode, {sideRock: rock, sideSign: sign,
+        side: ((rock.x - cx) * dz - (rock.z - cz) * dx) >= 0 ? 1 : -1});
+      const side = episode.side;
+      tx = nz * side; tz = -nx * side;
+    }
     else { tx /= slide; tz /= slide; }
     state.speedMph = sign * Math.min(speed, Math.max(speed * slide, BOUNCE_KEEPS * episode.entry));
     const aim = Math.atan2(tx * sign, tz * sign), turn = clamp(wrap(aim - heading), -TURN_RATE * dt, TURN_RATE * dt);

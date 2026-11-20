@@ -147,7 +147,7 @@ function closeUp(ctx, view) {
   }
   if (c.locked) text(ctx, 'back tyre locked', wheel(-74), tip - (30 + 120 * back + 6) - 16, {size: 16, colour: theme.bad});
   text(ctx, c.braking ? 'BRAKING' : 'STANDING', nose - 520, 56, {size: 15, align: 'left', colour: c.braking ? theme.accent : theme.faint, weight: 800});
-  // The lever's share against the weight on the back tyres, in the same words as the sum.
+  // The lever's share against the weight on the back tyres, in the same words as the lesson.
   if (view.balance && view.lever) {
     const backBrakes = 100 - view.lever.front, steady = view.lever.front >= STEADY_FRONT;
     text(ctx, `The back brakes do ${backBrakes}% of the braking, and the back tyres carry ${pct(REAR_LOAD)} of the weight.`, nose - 195, 26, {size: 15, colour: steady ? GREEN : theme.bad});
@@ -289,7 +289,7 @@ function roadStrip(ctx, view) {
       else text(ctx, m1(l.stopMetres), x + 12, y - 22, {size: 15, align: 'left', colour: theme.accent});
     }
   });
-  if (view.keys.Space === 'go' && !view.lanes.length && !view.perSecond) text(ctx, 'Press Space to brake', stripX(20), laneY(0, 1) + 4, {size: 15, align: 'left', colour: theme.faint});
+  if (view.keys.Space === 'go' && !view.lanes.length && !view.perSecond) text(ctx, 'Brake to start the run', stripX(20), laneY(0, 1) + 4, {size: 15, align: 'left', colour: theme.faint});
 }
 // ---- the page under the board: the readings and the table of tests ----
 // The board draws none of these. The classroom page (classroom-ui.js) shows what strip() returns, in HTML.
@@ -306,8 +306,8 @@ export function strip(view) {
   }
   if (view.table) {
     const rows = view.table.length
-      ? view.table.map(row => ({label: `${row.car}, ${row.kmh} km/h, deceleration ${row.a.toFixed(2)} m/s²`, value: `sum ${row.sum.toFixed(2)} m, tape ${m1(row.strip)}`, tone: 'good'}))
-      : [{label: 'There are no tests yet. Press Space to brake.', value: '', tone: 'faint'}];
+      ? view.table.map(row => ({label: `${row.car}, ${row.kmh} km/h, deceleration ${row.a.toFixed(2)} m/s²`, value: `formula ${row.sum.toFixed(2)} m, tape ${m1(row.strip)}`, tone: 'good'}))
+      : [{label: 'There are no tests yet.', value: '', tone: 'faint'}];
     out.tables.push({title: 'Your tests', rows});
     out.hint = 'This table keeps the result of each test.';
   }

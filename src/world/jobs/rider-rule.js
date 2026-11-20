@@ -9,6 +9,9 @@ export const RIDER_RULE = Object.freeze({
   // Six wrecked cars fit the existing twelve-person foot-figure rig.
   maximumField: 6, crewPerCar: 2, crewDoor: 1.7, crewRunMetres: 48, crewMps: 5.7,
   retreatFraction: .25, retreatMph: 39, homeRadius: 7, aftermathSec: 3,
+  // STORY-NIGHT-2-FLOW: the siege circle, the box a bailing man is kept out of round the player's car, and the run he gives up.
+  circleMph: 20, circleLeadRadians: .45, crewClearHalfWidth: 1.45, crewClearHalfLength: 2.85, crewStuckSec: 4,
+  crewProgressMetres: .5, crewFarDoorAhead: 1.1,
 
   minimumBoxRiders: 5, verticalReach: 2.5, boxMph: 10 / MPH_TO_KMH, boxSeconds: 3,
   boxRange: 8, bumperLength: 7.5, bumperHalfWidth: 2.1, boxStopMetres: 9,

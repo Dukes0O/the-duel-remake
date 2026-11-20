@@ -18,7 +18,7 @@ const s1 = seconds => `${seconds.toFixed(1)} s`;
 const nb = value => value.replace(' ', '\u00a0'); // A number and its unit stay on one line of a recap card.
 const RAD = Math.PI / 180, MIN_DRAG_RAD = 4 * RAD, MAX_DRAG_RAD = 32 * RAD;
 
-// The sums as the panel shows them, computed from exactly the numbers on the screen, so that a calculator agrees.
+// The formulas as the panel shows them, computed from exactly the numbers on the screen, so that a calculator agrees.
 export const PI_SHOWN = 3.14, G_SHOWN = GRAVITY, DEG_SHOWN = 57.3;
 export const sumSeconds = lengthM => Number((2 * PI_SHOWN * Math.sqrt(lengthM / G_SHOWN)).toFixed(2));
 export const tripMetres = (lengthM, deg) => Number((4 * lengthM * (deg / DEG_SHOWN)).toFixed(1));
@@ -26,17 +26,17 @@ const SWING_FORMULA = 'T = 2 × π × √(L ÷ g)';
 const SWING_NOTE = 'T is the swing time in seconds and L is the string length in metres. π is about 3.14, √ means the square root, and g is 9.81 m/s².';
 const swingWorked = lengthM => `2 × ${PI_SHOWN} × √(${lengthM} ÷ ${G_SHOWN}) = ${sumSeconds(lengthM).toFixed(2)} s`;
 const swingEntry = (lengthM, title = 'Swing time', note = SWING_NOTE) => ({title, formula: SWING_FORMULA, worked: swingWorked(lengthM), note});
-const pullWorked = kg => `(${kg} × ${G_SHOWN}) ÷ ${kg} = ${G_SHOWN.toFixed(2)} m/s²`;
+const pullWorked = kg => `(${kg} × ${G_SHOWN}) ÷ ${kg} = ${G_SHOWN.toFixed(2)} N per kilogram`;
 const pullOf = kg => (kg * G_SHOWN).toFixed(1);
-const pullEntry = (kg, title = 'Why the weight makes no difference', note = `The pull of gravity on ${kg} kg is ${kg} × ${G_SHOWN} = ${pullOf(kg)} newtons, and a newton is the unit of force. Dividing by the weight gives how quickly the weight speeds up, and the answer is the same for every weight.`) =>
-  ({title, formula: 'speeding up = (weight × g) ÷ weight', worked: pullWorked(kg), note});
+const pullEntry = (kg, title = 'Why the weight makes no difference', note = `The pull of gravity on ${kg} kg is ${kg} × ${G_SHOWN} = ${pullOf(kg)} newtons, and a newton is the unit of force. Dividing by the ${kg} kg gives the pull on each kilogram, and the answer is the same for every weight, so every weight speeds up at the same rate along its path.`) =>
+  ({title, formula: 'pull on each kilogram = (kg × g) ÷ kg', worked: pullWorked(kg), note});
 function freeEntries(lengthM, kg, deg) {
   const trip = tripMetres(lengthM, deg), sum = sumSeconds(lengthM);
-  return [swingEntry(lengthM, 'Swing time', 'String length is the only setting in this sum.'), pullEntry(kg, 'Why the weight makes no difference', `The weight appears twice, so it cancels out and the answer stays at ${G_SHOWN.toFixed(2)} m/s².`),
+  return [swingEntry(lengthM, 'Swing time', 'String length is the only setting in this formula.'), pullEntry(kg, 'Why the weight makes no difference', `The weight appears twice, so it cancels out and the pull on each kilogram stays at ${G_SHOWN.toFixed(2)} N.`),
     {title: 'The trip of one swing', formula: `trip = 4 × L × (angle ÷ ${DEG_SHOWN})`, worked: `4 × ${lengthM} × (${deg} ÷ ${DEG_SHOWN}) = ${trip.toFixed(1)} m`,
       note: `One swing covers the pull-back distance four times. A curve of ${DEG_SHOWN} degrees on a circle is as long as the string.`},
     {title: 'The average speed on that trip', formula: 'average speed = trip ÷ T', worked: `${trip.toFixed(1)} ÷ ${sum.toFixed(2)} = ${(trip / sum).toFixed(2)} m/s`,
-      note: 'Pull back twice as far and the trip and the speed both double, so T stays the same. In this game that holds for every pull-back. A real pendulum pulled back very far needs slightly longer.'}];
+      note: `Pull back twice as far and the trip and the speed both double, so T stays the same for every pull-back up to ${MAX_PULL} degrees.`}];
 }
 
 export const STEPS = Object.freeze([
@@ -47,6 +47,8 @@ export const STEPS = Object.freeze([
   {id: 'watch-lengths', part: 2, title: 'Two lengths', voice: 'lab.brian.pendulum.intro'},
   {id: 'try-short', part: 3, title: 'The short string'},
   {id: 'try-heavy', part: 3, title: 'The heavy weight'},
+  {id: 'word-pi', part: 3, title: 'π and the square root'},
+  {id: 'word-gravity', part: 3, title: 'g and metres per second'},
   {id: 'try-formula', part: 3, title: 'The swing time formula'},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'alone', part: 4, title: 'Brian’s crane'},
@@ -99,8 +101,11 @@ const SETUP_KEYS = Object.freeze({1: 'hook:5', 2: 'hook:15', 3: 'hook:25', 4: 'w
 const SETUP_KEYS_NO_RELEASE = Object.freeze(Object.fromEntries(Object.entries(SETUP_KEYS).filter(([key]) => key !== 'Space')));
 const FREE_KEYS = Object.freeze({...SETUP_KEYS, '↑': 'pull:up', '↓': 'pull:down'});
 const PICK_KEYS = prefix => ({1: `${prefix}:0`, 2: `${prefix}:1`, 3: `${prefix}:2`});
-const DONE = Object.freeze(['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.']);
-const PICK_CARD = 'Pick a card by clicking it, or press 1, 2 or 3.';
+const CONTINUE_SAY = 'Continue when you are ready.';
+const DONE = Object.freeze([CONTINUE_SAY, CONTINUE_SAY, CONTINUE_SAY]);
+const PICK_CARD = 'Pick the card with your answer.', PICK_GUESS = 'Pick the card with your guess.';
+// Letting go has its own button, so that the screen shows its key.
+const LET_GO = Object.freeze([{action: 'release', label: 'Let go', key: 'Space'}]);
 const GUESSES = Object.freeze([
   {id: 'quicker', label: 'Sooner than the grey weight', caption: 'sooner', picture: {kind: 'compare', mine: 'quicker'}},
   {id: 'slower', label: 'Later than the grey weight', caption: 'later', picture: {kind: 'compare', mine: 'slower'}},
@@ -110,18 +115,18 @@ export const GUESS_CAPTIONS = Object.freeze(Object.fromEntries(GUESSES.map(g => 
 
 // The control that a target names, in the words of a prompt and of Brian's pointer. Every one of them is true from any setting,
 // because the guided tries work out their target from what is hanging now.
-const WHERE = {'hook:5': ['Click the 5 m hook on the left, or press 1.', 'press the 5 m hook'], 'hook:15': ['Click the 15 m hook in the middle, or press 2.', 'press the 15 m hook'],
-  'hook:25': ['Click the 25 m hook on the right, or press 3.', 'press the 25 m hook'], 'weight:light': ['Click the 20 kg weight on the shelf, or press 4.', 'press the 20 kg weight'],
-  'weight:heavy': ['Click the 200 kg weight on the shelf, or press 5.', 'press the 200 kg weight']};
+const WHERE = {'hook:5': ['Click the 5 m hook on the left.', 'press the 5 m hook'], 'hook:15': ['Click the 15 m hook in the middle.', 'press the 15 m hook'],
+  'hook:25': ['Click the 25 m hook on the right.', 'press the 25 m hook'], 'weight:light': ['Click the 20 kg weight on the shelf.', 'press the 20 kg weight'],
+  'weight:heavy': ['Click the 200 kg weight on the shelf.', 'press the 200 kg weight']};
 
 // ---- the guided tries ----
 const TRIES = {
   'try-short': {
     lengthM: 5, weightKg: WEIGHTS.light,
-    setupSay: 'Now it is your turn. The grey weight on the right stays on its 15 m string with its 20 kg weight, so that you can compare your weight with it. Hang your weight on the short 5 m hook, and keep the 20 kg weight so that only the string changes.',
+    setupSay: 'We will predict whether your weight finishes one swing before the grey weight. The grey weight stays on its 15 m string with its 20 kg weight, for comparison. First, hang your 20 kg weight on the short 5 m hook, so that only the string changes.',
     weightFirst: true,
-    still: p => p.weightKg !== WEIGHTS.light ? `The weight is now ${p.weightKg} kg, but this test changes only the string, so the weight must stay at 20 kg. Press 4 to put the 20 kg weight back.`
-      : `The string is now ${p.lengthM} m, but this test needs the short 5 m string. Press 1 for the 5 m hook.`,
+    still: p => p.weightKg !== WEIGHTS.light ? `The weight is now ${p.weightKg} kg, but this test changes only the string, so the weight must stay at 20 kg. Click the 20 kg weight to put it back.`
+      : `The string is now ${p.lengthM} m, but this test needs the short 5 m string. Click the 5 m hook.`,
     question: 'Your weight hangs on the 5 m string and the grey weight hangs on the 15 m string. Both weights are 20 kg and both start together. Will your weight finish one full swing sooner than the grey weight, later than the grey weight, or at the same moment?',
     guessHints: ['Think about how far each weight has to travel in one swing.', 'A shorter string makes the weight follow a smaller circle, so the trip is shorter.', 'Any guess lets you go on. Pick a card, and then we will test it.'],
     why: `A shorter string makes the weight follow a smaller circle, so the weight has a shorter trip, and the labels under the weights show the two trips.${MORE}Gravity pulls along the path just as hard at the same angle, so the shorter trip needs less time.`,
@@ -130,13 +135,13 @@ const TRIES = {
   },
   'try-heavy': {
     lengthM: 15, weightKg: WEIGHTS.heavy,
-    setupSay: 'Now we will change only the weight. Your string stays at 15 m, the same as the grey string. Swap your 20 kg weight for the heavy 200 kg weight, which is ten times as heavy.',
+    setupSay: 'We will predict whether a much heavier weight finishes one swing before the grey weight. Your string stays at 15 m, the same as the grey string. First, swap your 20 kg weight for the heavy 200 kg weight, which is ten times as heavy.',
     weightFirst: false,
-    still: p => p.lengthM !== 15 ? `The string is now ${p.lengthM} m, but this test changes only the weight, so the string must stay at 15 m. Press 2 to go back to the 15 m hook.`
-      : 'The weight is still 20 kg, and this test needs the 200 kg weight. Press 5 for the 200 kg weight.',
+    still: p => p.lengthM !== 15 ? `The string is now ${p.lengthM} m, but this test changes only the weight, so the string must stay at 15 m. Click the 15 m hook to go back.`
+      : 'The weight is still 20 kg, and this test needs the 200 kg weight. Click the 200 kg weight.',
     question: 'Both strings are 15 m long. Your weight is 200 kg and the grey weight is 20 kg, and both start together. Will your weight finish one full swing sooner than the grey weight, later than the grey weight, or at the same moment?',
     guessHints: ['Only the weight has changed, because the two strings have the same length.', 'A heavier weight is pulled harder, but what else is different about moving something heavy?', 'Any guess lets you go on. Pick a card, and then we will test it.'],
-    why: 'Gravity pulls the 200 kg weight ten times as hard, but the 200 kg weight is also ten times as hard to get moving. Those two effects cancel out, so both weights speed up at the same rate and stay side by side. The sums beside the picture show this.',
+    why: 'Gravity pulls the 200 kg weight ten times as hard, but the 200 kg weight is also ten times as hard to get moving. Those two effects cancel out, so both weights speed up at the same rate and stay side by side. The panel beside the picture shows this.',
     right: () => `Correct. Both weights needed ${s1(T(15))}. `,
     wrong: () => `Both weights needed ${s1(T(15))}, so they finished at the same moment. `,
   },
@@ -147,7 +152,7 @@ function guidedTarget(guided, p) {
   const hook = p.lengthM !== guided.lengthM ? `hook:${guided.lengthM}` : null, weight = p.weightKg !== guided.weightKg ? `weight:${guided.weightKg === WEIGHTS.heavy ? 'heavy' : 'light'}` : null;
   return guided.weightFirst ? weight ?? hook : hook ?? weight;
 }
-const RELEASE_HINTS = Object.freeze(['Your weight is the ball on the string that you chose.', 'Press Space, or drag your weight sideways and let go.', 'Watch my pointer. I will let your weight go.']);
+const RELEASE_HINTS = Object.freeze(['Your weight is the ball on the string that you chose.', 'Drag your weight sideways and let go, or use the Let go button.', 'Watch my pointer. I will let your weight go.']);
 
 // ---- the checks ----
 const CHECKS = {
@@ -163,7 +168,7 @@ const CHECKS = {
     wrong: picked => `${picked === 2 ? `The 200 kg weight does not slow the swing, so the 5 m string still needs only ${s1(T(5))}.` : `The 5 m string needs only ${s1(T(5))}.`} The 25 m string needs ${s1(T(25))}, the most of the three, because the length changes the swing time and the weight does not.`,
     hints: ['Which string is the longest?', 'The string length changes the swing time, so the longest string makes the slowest swing.', 'Pick the card for the 25 m string.'],
     formulas: () => [{title: 'Swing time', formula: SWING_FORMULA, note: SWING_NOTE}],
-    answered: () => [swingEntry(5, 'The 5 m string'), swingEntry(25, 'The 25 m string', 'The weight is not in this sum, so the 200 kg weight on 5 m needs the same time as the 20 kg weight on 5 m.')],
+    answered: () => [swingEntry(5, 'The 5 m string'), swingEntry(25, 'The 25 m string', 'The weight is not in this formula, so the 200 kg weight on 5 m needs the same time as the 20 kg weight on 5 m.')],
   },
   'check-heavy': {
     question: `A 20 kg weight on a 15 m string needs ${s1(T(15))} for one full swing. How long will a 200 kg weight on a 15 m string need?`,
@@ -210,7 +215,7 @@ export function createModel() {
     if (id === 'word-swing-time') { m.board = [pendulum('bob', 500, 15, 20)]; letGo(m.board[0], 0); }
     if (id === 'word-length') m.board = LENGTHS.map((length, i) => pendulum(`l${length}`, 300 + i * 200, length, 20));
     if (id === 'watch-lengths') { m.board = [15, 25].map((length, i) => pendulum(`l${length}`, 340 + i * 280, length, 20)); m.board.forEach(p => letGo(p, .4)); }
-    if (TRIES[id] || id === 'alone' || id === 'try-formula' || id === 'try-free') {
+    if (TRIES[id] || id === 'alone' || id === 'try-formula' || id === 'try-free' || id === 'word-pi' || id === 'word-gravity') {
       m.player = pendulum('you', HOOK_X[15], 15, 20);
       if (TRIES[id]) m.reference = pendulum('reference', REFERENCE_X, 15, 20, {ghost: true});
     }
@@ -239,7 +244,7 @@ export function createModel() {
       if (kind === 'hold' && bob.pullAt === null) bob.held = clamp(Number(value));
       if (kind === 'release' && bob.pullAt === null) {
         letGo(bob, m.time); bob.held = 0; seen.add(id);
-        return {kind: 'right', say: 'The weight is now swinging on its string, so you have made a pendulum work. Gravity pulls the weight down towards the lowest point. The weight is moving fast when it gets there, so it carries on up the other side until gravity slows it and pulls it back. That is why a pendulum keeps swinging, and it is also why the car keeps swinging after the helicopter stops.'};
+        return {kind: 'right', say: 'The weight swings on its string because gravity pulls it down towards the lowest point. It moves fast at the lowest point, so it carries on up the other side until gravity slows it and pulls it back. That is why a pendulum keeps swinging, and why the car keeps swinging after the helicopter stops.'};
       }
       return null;
     }
@@ -277,7 +282,7 @@ export function createModel() {
     if (phase >= .3 && phase <= .7) return {kind: 'fail', say: 'The weight is near the far side, so it is only halfway through the swing. One swing ends when the weight is back at the green flag.'};
     if (elapsed < period * .5) return {kind: 'fail', say: 'The weight has only just set off. Wait for the weight to swing out to the far side and come all the way back.'};
     if (phase > .7) return {kind: 'fail', say: 'That was nearly right, but the weight had not reached the green flag yet. Wait until the weight gets there.'};
-    return {kind: 'fail', say: 'That was a little late, because the weight had already left the green flag. Press Space just as the weight gets back to the flag.'};
+    return {kind: 'fail', say: 'That was a little late, because the weight had already left the green flag. Click Tap just as the weight gets back to the flag.'};
   }
 
   function setHook(p, value) {
@@ -332,7 +337,7 @@ export function createModel() {
     if (kind === 'hook') m.changedHook = true; else m.changedWeight = true;
     if (m.changedHook && m.changedWeight && !seen.has('try-formula')) {
       seen.add('try-formula');
-      return {kind: 'right', sound: 'lab.clunk', say: 'You have now seen both changes. A different hook puts a different L into the sum, so the swing time T changes. A different weight changes both numbers in the lower sum, but the answer stays at 9.81 m/s², so the weight speeds up at the same rate and T does not change. That is why length changes the swing time and weight does not. You can keep pressing the hooks and the weights to watch the sums change.'};
+      return {kind: 'right', sound: 'lab.clunk', say: `A different hook puts a different L into the formula, so the swing time T changes. A different weight leaves T alone, because every weight is pulled with the same ${G_SHOWN} N for each kilogram and speeds up at the same rate. That is why length changes the swing time and weight does not.${MORE}A different weight does change both numbers in the lower calculation, but its answer stays at ${G_SHOWN} N per kilogram. Keep clicking the hooks and the weights to watch the physics panel change.`};
     }
     return {kind: 'sound', sound: 'lab.clunk'};
   }
@@ -351,7 +356,7 @@ export function createModel() {
     if (kind === 'weight') { if (WEIGHTS[value] === p.weightKg || !setWeight(p, value)) return null; return {kind: 'sound', sound: 'lab.clunk'}; }
     if (kind === 'pull') {
       const next = Math.max(MIN_PULL, Math.min(MAX_PULL, m.pull + (value === 'up' ? PULL_STEP : -PULL_STEP)));
-      if (next === m.pull) return {kind: 'note', say: value === 'up' ? `${MAX_PULL} degrees is as far as these keys pull the weight back.` : `${MIN_PULL} degrees is as small as these keys make the pull-back.`};
+      if (next === m.pull) return {kind: 'note', say: value === 'up' ? `${MAX_PULL} degrees is as far back as the weight can be pulled.` : `${MIN_PULL} degrees is as small as the pull-back goes.`};
       m.pull = next; holdPull();
       return {kind: 'sound', sound: 'lab.tick'};
     }
@@ -385,8 +390,8 @@ export function createModel() {
       compared = previous.lengthM !== row.lengthM ? ` Compared with your last test, the string length changed, so the swing time changed from ${s1(previous.seconds)} to ${s1(row.seconds)}.`
         : ` Compared with your last test, the string length stayed the same, so the swing time stayed at ${s1(row.seconds)}, even though you changed ${changed}.`;
     }
-    const close = m.tested.size >= FREE_TRIES ? 'Press Enter when you have tested enough settings.' : 'Change a setting and test a different one.';
-    m.say = `With ${freeLine(row.lengthM, row.weightKg, deg)}, one swing needed ${s1(row.seconds)}, which is the sum’s ${sumSeconds(row.lengthM).toFixed(2)} s to one decimal place.${compared} ${close}`;
+    const close = m.tested.size >= FREE_TRIES ? 'You have tested enough settings, so continue when you are ready.' : 'Change a setting and test a different one.';
+    m.say = `With ${freeLine(row.lengthM, row.weightKg, deg)}, one swing needed ${s1(row.seconds)}, which is the formula’s ${sumSeconds(row.lengthM).toFixed(2)} s to one decimal place.${compared} ${close}`;
     return {kind: 'right', say: m.say};
   }
 
@@ -408,6 +413,8 @@ export function createModel() {
     }
     if (id === 'watch-lengths' && m.board.every(p => swingElapsed(p, m.time) >= T(p.lengthM))) seen.add(id);
     if (id === 'wonder' && m.time >= 5) seen.add(id);
+    // The two steps that only define symbols have nothing to press: they are done when they are opened.
+    if (id === 'word-pi' || id === 'word-gravity') seen.add(id);
     return sound;
   }
 
@@ -425,9 +432,9 @@ export function createModel() {
     if (Math.abs(period - T(25)) < .05) { m.phase = 'result'; seen.add(id); return {kind: 'pass', say: craneSay(p)}; }
     stop(p); m.phase = 'setup';
     const heavyAndStill = p.weightKg === WEIGHTS.heavy;
-    return {kind: 'fail', say: `One swing needed ${s1(period)}, which is too quick for my crane, because the crane needs about 10 seconds. ${heavyAndStill ? 'The heavy weight did not slow the swing. ' : ''}A longer string makes a slower swing, so choose a longer hook and press Space again.`};
+    return {kind: 'fail', say: `One swing needed ${s1(period)}, which is too quick for my crane, because the crane needs about 10 seconds. ${heavyAndStill ? 'The heavy weight did not slow the swing. ' : ''}A longer string makes a slower swing, so choose a longer hook and let the weight go again.`};
   }
-  const craneSay = p => `Correct. One swing on the 25 m string needed ${s1(T(p.lengthM))}, which is what my crane needs. The weight of ${p.weightKg} kg made no difference, because only the string length is in the sum.`;
+  const craneSay = p => `Correct. One swing on the 25 m string needed ${s1(T(p.lengthM))}, which is what my crane needs. The weight of ${p.weightKg} kg made no difference, because only the string length is in the formula.`;
   function triedSay(id) {
     const guided = TRIES[id];
     return `${m.result.right ? guided.right() : guided.wrong()}${guided.why}`;
@@ -454,39 +461,41 @@ export function createModel() {
       const ready = seen.has(id);
       return {...base, scene: 'wonder', actions: ['replay'],
         say: 'When the helicopter stopped, the car kept swinging on its cable under the helicopter. Why does the car keep swinging, and how long does one swing need? This lesson will answer both questions.',
-        prompt: ready ? 'Press Enter to continue, or press R to watch again.' : 'Watch the car under the helicopter.',
-        hints: ['Watch where the car goes when the helicopter stops.', 'The car is still moving when the helicopter stops, so the car swings past the point under the helicopter.', ready ? 'Press Enter to continue.' : 'The Continue button opens after a few seconds of watching.']};
+        prompt: ready ? 'Continue when you are ready, or watch again.' : 'Watch the car under the helicopter.',
+        hints: ['Watch where the car goes when the helicopter stops.', 'The car is still moving when the helicopter stops, so the car swings past the point under the helicopter.', ready ? CONTINUE_SAY : 'The Continue button opens after a few seconds of watching.']};
     }
     if (id === 'word-pendulum') {
       const swinging = m.board[0].pullAt !== null;
       return {...base, labels: true, keys: {Space: 'release'}, waiting: !swinging, target: swinging ? null : 'release', glow: swinging ? null : 'release',
-        say: `A pendulum is a weight that hangs on a string and can swing freely from side to side. The string hangs from a hook on a steel beam. The number on the weight is how heavy the weight is in kilograms, written kg.${MORE}A litre of water weighs one kilogram, so this weight is as heavy as 20 litres of water.`,
-        prompt: swinging ? 'Press Enter to continue.' : 'Drag the weight sideways and let go, or press Space.',
-        hints: swinging ? DONE : ['Find the ball at the bottom of the string, which is the weight.', 'Press Space, or drag the weight sideways and let go.', 'Watch my pointer. I will let the weight go.']};
+        buttons: swinging ? [] : LET_GO,
+        say: `A pendulum is a weight that hangs on a string and can swing freely from side to side. The number on the weight is how heavy the weight is in kilograms, written kg. Drag the weight sideways and let go to make the pendulum swing.${MORE}The string hangs from a hook on a steel beam. A litre of water weighs one kilogram, so this weight is as heavy as 20 litres of water.`,
+        prompt: swinging ? CONTINUE_SAY : 'Drag the weight sideways and let go.',
+        hints: swinging ? DONE : ['Find the ball at the bottom of the string, which is the weight.', 'Drag the weight sideways and let go, or use the Let go button.', 'Watch my pointer. I will let the weight go.']};
     }
     if (id === 'word-swing-time') {
       const bob = m.board[0], elapsed = swingElapsed(bob, m.time) ?? 0, period = T(bob.lengthM), phase = (elapsed % period) / period, done = m.goodTaps > 0;
       return {...base, startMark: true, outAndBack: true, keys: done ? {} : {Space: 'tap'}, actions: done ? ['replay'] : ['tap'], waiting: !done, target: done ? null : 'tap', pointOnly: true,
         tapFlash: !done && (assist || help >= 2) && elapsed > period / 2 && (phase > .9 || phase < .04),
         lap: {elapsed: elapsed % period, last: elapsed >= period ? period : null},
-        say: 'One full swing is the journey out to the far side and back to where the weight started. Swing time is how long that journey lasts, measured in seconds, written s. The weight starts at the green flag, and the stopwatch times the journey.',
-        prompt: done ? 'Press Enter to continue.' : 'Wait for the weight to swing out and come back, then press Space, or click Tap, as the weight reaches the green flag.',
-        hints: done ? DONE : ['Watch the weight leave the green flag, swing out to the far side, and come back.', `Press Space just as the weight gets back to the green flag, which happens every ${s1(period)}.`, 'Watch the ring on the green flag, and press Space when the ring flashes.']};
+        say: `One full swing is the journey out to the far side and back to where the weight started. Swing time is how long that journey lasts, measured in seconds, written s. Click Tap when the weight is back at the green flag, which ends one full swing.${MORE}The weight starts at the green flag, and the stopwatch times the journey.`,
+        prompt: done ? CONTINUE_SAY : 'Wait for the weight to swing out and come back, then click Tap as it reaches the green flag.',
+        hints: done ? DONE : ['Watch the weight leave the green flag, swing out to the far side, and come back.', `Click Tap just as the weight gets back to the green flag, which happens every ${s1(period)}.`, 'Watch the ring on the green flag, and click Tap when the ring flashes.']};
     }
     if (id === 'word-length') return {...base, keys: {1: 'measure:5', 2: 'measure:15', 3: 'measure:25'}, waiting: m.chosen !== 25, target: m.chosen === 25 ? null : 'measure:25',
       tapes: m.chosen === 25 ? LENGTHS : m.chosen ? [m.chosen] : [], numbered: true, scale: true,
-      say: `We measure length in metres, written m. String length is the distance from the hook to the middle of the weight, so a 25 m string is 25 metres long. These three strings have different lengths.${MORE}A metre is about one long stride of a grown-up, and a door is about two metres tall.`,
-      prompt: m.chosen === 25 ? 'Press Enter to continue.' : 'Click the longest string, or press its number, which is 1, 2 or 3.',
-      hints: m.chosen === 25 ? DONE : ['Which weight hangs lowest?', 'The string on the right is the longest. Click it, or press 3.', 'Watch my pointer. I will click the longest string.']};
+      say: `We measure length in metres, written m. String length is the distance from the hook to the middle of the weight, so a 25 m string is 25 metres long. Click the longest of these three strings.${MORE}A metre is about one long stride of a grown-up, and a door is about two metres tall.`,
+      prompt: m.chosen === 25 ? CONTINUE_SAY : 'Click the longest string.',
+      hints: m.chosen === 25 ? DONE : ['Which weight hangs lowest?', 'The string on the right is the longest. Click it.', 'Watch my pointer. I will click the longest string.']};
     if (id === 'watch-lengths') {
       const finished = m.board.every(p => swingElapsed(p, m.time) >= T(p.lengthM));
       return {...base, actions: ['replay', 'slow'], stopwatches: true,
         table: m.board.map(p => ({label: `${p.lengthM} m string`, value: swingElapsed(p, m.time) >= T(p.lengthM) ? s1(T(p.lengthM)) : null})),
         say: finished ? `The weight on the 15 m string needed ${s1(T(15))} for one full swing, and the weight on the 25 m string needed ${s1(T(25))}. Both strings carried the same 20 kg weight, so only the length was different.`
           : 'Here are two strings of different lengths, 15 metres and 25 metres, with the same 20 kilogram weight on each. Both weights start together, and a stopwatch above each string times one full swing.',
-        prompt: finished || seen.has(id) ? 'Press Enter to continue, or press R to watch again.' : 'Watch each stopwatch stop when its weight is back.',
-        hints: ['Watch the stopwatches above the two strings.', 'Each stopwatch stops after one full swing.', 'Press R to watch again.']};
+        prompt: finished || seen.has(id) ? 'Continue when you are ready, or watch again.' : 'Watch each stopwatch stop when its weight is back.',
+        hints: ['Watch the stopwatches above the two strings.', 'Each stopwatch stops after one full swing.', 'Watch again to see it once more.']};
     }
+    if (id === 'word-pi' || id === 'word-gravity') return symbolView(id, base);
     if (id === 'try-formula') return formulaView(base);
     if (id === 'try-free') return freeView(base);
     if (TRIES[id] || id === 'alone') return tryView(id, base);
@@ -497,11 +506,11 @@ export function createModel() {
         keys: answered ? {} : PICK_KEYS('answer'), actions: answered ? ['replay'] : [], waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : PICK_CARD, hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? CONTINUE_SAY : PICK_CARD, hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [swingEntry(15, 'The car on the 15 m cable', 'The car hangs on the helicopter’s 15 m cable, so the car swings like a weight on a 15 m string.')],
-      say: `A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back makes no difference either, because a wider swing travels further but also faster.${MORE}In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down.`,
-      prompt: 'Press Enter to fly the helicopter. Press H to hook the car, carry the car to the orange light, lower the car until it touches the ground inside the ring, and press H again to let go.',
+      say: `A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back, up to ${MAX_PULL} degrees, makes no difference either, because a wider swing travels further but also faster.${MORE}In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down.`,
+      prompt: 'Try it in the helicopter. Press H to hook the car, carry the car to the orange light, lower the car until it touches the ground inside the ring, and press H again to let go.',
       hints: KEY_IDEAS.map(i => i.text)};
   }
 
@@ -510,9 +519,25 @@ export function createModel() {
     const target = !m.changedHook ? `hook:${p.lengthM === 25 ? 5 : 25}` : !m.changedWeight ? `weight:${p.weightKg === WEIGHTS.heavy ? 'light' : 'heavy'}` : null;
     return {...base, hooks: true, shelf: true, chosen: {lengthM: p.lengthM, weightKg: p.weightKg}, keys: SETUP_KEYS_NO_RELEASE, waiting: !done, target, glow: target,
       formulas: [swingEntry(p.lengthM), pullEntry(p.weightKg)],
-      say: `Here is the rule for the swing time, and it needs a few symbols. π is a Greek letter, said “pie”, and it stands for one number, about ${PI_SHOWN}.${MORE}The distance around any circle is about ${PI_SHOWN} times the distance across it, and π appears here because the weight follows part of a circle. √ means the square root, which is the number that gives you the starting number when you multiply it by itself, so √9 is 3, because 3 × 3 = 9. Speed can be measured in metres per second, written m/s, which is the number of metres travelled during each second. g is the acceleration caused by gravity, ${G_SHOWN} m/s², read as “metres per second, per second”, because gravity adds ${G_SHOWN} m/s to the speed of a falling object during every second. T is the swing time and L is the string length. The rule is T = 2 × π × √(L ÷ g), which is the sum beside the picture. The square root is there because a weight on a longer string has further to go but also moves faster, so five times the length gives only about 2.2 times the time, as 10.03 ÷ 4.48 shows.`,
-      prompt: done ? 'Press Enter to continue, or keep pressing the hooks and the weights.' : `The string is ${p.lengthM} m and the weight is ${p.weightKg} kg. Press 1, 2 or 3 to change the hook, and press 4 or 5 to change the weight, and watch the sums change.`,
-      hints: done ? DONE : [`Look at the sums beside the picture, which use the ${p.lengthM} m string and the ${p.weightKg} kg weight.`, target ? WHERE[target][0] : 'Press Enter to continue.', target ? `Watch my pointer. I will ${WHERE[target][1]}.` : 'Press Enter to continue.']};
+      say: `The swing time is T = 2 × π × √(L ÷ g), where T is the swing time in seconds, L is the string length in metres, and π, √ and g are the symbols from the last two steps. Change the hook, then change the weight, and see which one changes the swing time T.${MORE}The square root is there because a weight on a longer string has further to go but also moves faster. The weight is not in the formula, because every weight is pulled with the same ${G_SHOWN} N for each kilogram, as the lower calculation shows.`,
+      prompt: done ? 'Continue when you are ready, or keep changing the hooks and the weights.' : `The string is ${p.lengthM} m and the weight is ${p.weightKg} kg. Change the hook, then change the weight, and watch which one changes T.`,
+      hints: done ? DONE : [`Look at the formulas beside the picture, which use the ${p.lengthM} m string and the ${p.weightKg} kg weight.`, target ? WHERE[target][0] : CONTINUE_SAY, target ? `Watch my pointer. I will ${WHERE[target][1]}.` : CONTINUE_SAY]};
+  }
+
+  // The two steps that define the symbols of the formula: nothing to press, the panel carries the examples.
+  function symbolView(id, base) {
+    const p = m.player;
+    const common = {...base, hooks: true, shelf: true, chosen: {lengthM: p.lengthM, weightKg: p.weightKg}, ready: true};
+    if (id === 'word-pi') return {...common,
+      formulas: [{title: 'The number π', formula: 'distance around a circle = π × distance across', worked: `${PI_SHOWN} × 10 = ${(PI_SHOWN * 10).toFixed(1)} m around a circle 10 m across`, note: `π is a Greek letter, said “pie”, and it is about ${PI_SHOWN}.`},
+        {title: 'The square root', formula: '√9 = 3', worked: '3 × 3 = 9', note: 'The square root of a number is the number that gives the starting number when it is multiplied by itself.'}],
+      say: `The swing time uses a few symbols, and the first is π, a Greek letter said “pie”, which stands for the number about ${PI_SHOWN}. The second is √, which means the square root: the number that gives the starting number when it is multiplied by itself, so √9 is 3, because 3 × 3 = 9.${MORE}The distance around any circle is about ${PI_SHOWN} times the distance across it, and π appears in the swing time because the weight follows part of a circle.`,
+      prompt: CONTINUE_SAY, hints: [CONTINUE_SAY, CONTINUE_SAY, CONTINUE_SAY]};
+    return {...common,
+      formulas: [{title: 'Metres per second', formula: 'speed = distance ÷ time', worked: '20 m ÷ 4 s = 5 m/s', note: 'm/s is read as “metres per second”.'},
+        {title: 'Gravity', formula: `speed of a falling stone = ${G_SHOWN} × seconds`, worked: `${G_SHOWN} × 2 = ${(G_SHOWN * 2).toFixed(2)} m/s after 2 seconds`, note: `g is ${G_SHOWN} m/s², read as “metres per second, per second”.`}],
+      say: `Speed can be measured in metres per second, written m/s, which is the number of metres travelled during each second. g is the acceleration caused by gravity, ${G_SHOWN} m/s², read as “metres per second, per second”, because gravity adds ${G_SHOWN} m/s to the speed of a falling object during every second.`,
+      prompt: CONTINUE_SAY, hints: [CONTINUE_SAY, CONTINUE_SAY, CONTINUE_SAY]};
   }
 
   function freeView(base) {
@@ -523,9 +548,10 @@ export function createModel() {
     if (!setting) return {...v, say: m.auto ? autoSay() : m.say, prompt: m.auto ? 'Watch Brian change the settings.' : 'The stopwatch stops after one full swing.',
       hints: ['Watch the stopwatch.', 'The stopwatch stops after one full swing.', 'Wait for the stopwatch to stop.']};
     return {...v, keys: FREE_KEYS, waiting: !done, target: 'set:best', glow: 'release',
-      say: m.say || `Now you can experiment with all three settings. Press 1, 2 or 3 to choose the string length, press 4 or 5 to choose the weight, and press ↑ or ↓ to change how far the weight is pulled back.${MORE}The pull-back is measured in degrees. A degree is a small step of turning, a full turn is 360 degrees, and a string hanging straight down is at 0 degrees. Watch the sums change as you press, and predict the stopwatch before you press Space. Test at least ${FREE_TRIES} different settings, and the table keeps your results so that you can compare them.`,
-      prompt: done ? 'Press Enter to continue, or test another setting.' : `The string is ${p.lengthM} m, the weight is ${p.weightKg} kg and the pull-back is ${m.pull} degrees. Change the settings, then press Space to let go. Different settings tested so far: ${m.tested.size} of ${FREE_TRIES}.`,
-      hints: ['Press Space to test the settings as they are.', 'Try the same string with the other weight, and then try a different string.', 'Watch my pointer. I will choose a setting you have not tested yet, and let the weight go.']};
+      buttons: LET_GO,
+      say: m.say || `Now you can test any string length, weight and pull-back. Test at least ${FREE_TRIES} different settings, and predict the stopwatch before you let go each time.${MORE}The pull-back is measured in degrees. A degree is a small step of turning, a full turn is 360 degrees, and a string hanging straight down is at 0 degrees. Watch the physics panel change as you choose, and the table keeps your results so that you can compare them.`,
+      prompt: done ? 'Continue when you are ready, or test another setting.' : `The string is ${p.lengthM} m, the weight is ${p.weightKg} kg and the pull-back is ${m.pull} degrees. Change the settings, then let go. Different settings tested so far: ${m.tested.size} of ${FREE_TRIES}.`,
+      hints: ['Let go to test the settings as they are.', 'Try the same string with the other weight, and then try a different string.', 'Watch my pointer. I will choose a setting you have not tested yet, and let the weight go.']};
   }
 
   function tryView(id, base) {
@@ -534,17 +560,18 @@ export function createModel() {
     if (m.phase === 'setup') {
       const target = guided ? guidedTarget(guided, p) : p.lengthM !== 25 ? 'hook:25' : 'release';
       return {...common, keys: guided ? SETUP_KEYS_NO_RELEASE : SETUP_KEYS, waiting: true, target, glow: guided ? target : null, lastTry: m.lastTry,
-        say: guided ? guided.setupSay : 'Here is a job for you. A crane lifts heavy loads on a long cable, and my crane needs a slow swing that lasts about 10 seconds. Choose a hook and a weight, use the sums beside the picture to predict the time, and then let the weight go to test it.',
-        prompt: guided ? WHERE[target][0] : 'Press 1, 2 or 3 to choose a hook and 4 or 5 to choose a weight, then press Space to let go.',
+        buttons: guided ? [] : LET_GO,
+        say: guided ? guided.setupSay : 'Your job is to pick the hook and the weight whose swing time is about 10 seconds, for Brian’s crane, which lifts heavy loads on a long cable. Use T = 2 × π × √(L ÷ g) to predict the time, and then let the weight go to test it.',
+        prompt: guided ? WHERE[target][0] : 'Choose a hook and a weight, then let the weight go.',
         hints: guided ? ['Each hook shows its length on a plate, and the weights sit on the shelf on the left.', WHERE[target][0], `Watch my pointer. I will ${WHERE[target][1]}.`]
           : ['Which makes a swing slower, a longer string or a heavier weight?', 'Only the string length changes the swing time, and the longest string is on the 25 m hook.',
             p.lengthM !== 25 ? 'Watch my pointer. I will press the 25 m hook.' : 'Watch my pointer. I will let your weight go.']};
     }
     if (m.phase === 'guess') return {...common, keys: PICK_KEYS('guess'), waiting: true,
       cards: GUESSES.map((g, i) => ({id: `guess:${i}`, key: String(i + 1), label: g.label, picture: g.picture, state: null})),
-      say: guided.question, prompt: PICK_CARD, hints: guided.guessHints};
+      say: guided.question, prompt: PICK_GUESS, hints: guided.guessHints};
     if (m.phase === 'release') return {...common, keys: {Space: 'release'}, waiting: true, target: 'release', glow: 'release', guess: m.guess,
-      say: 'Now let your weight go, and the grey weight will start at the same moment.', prompt: 'Drag your weight sideways and let go, or press Space.', hints: RELEASE_HINTS};
+      buttons: LET_GO, say: 'Now let your weight go, and the grey weight will start at the same moment.', prompt: 'Drag your weight sideways and let go.', hints: RELEASE_HINTS};
     if (m.phase === 'running') return {...common, guess: m.guess, say: guided ? 'Watch the two stopwatches. Each one stops after one full swing.' : 'Watch the stopwatch. It stops after one full swing.', prompt: guided ? 'Each stopwatch stops after one full swing.' : 'The stopwatch stops after one full swing.',
       hints: ['Watch the numbers beside the stopwatch.', 'A stopwatch stops after one full swing.', 'Wait for the swing to finish.']};
     const right = guided ? m.result.right : true;
@@ -554,7 +581,7 @@ export function createModel() {
       cards: guided ? GUESSES.map((g, i) => ({id: `guess:${i}`, key: String(i + 1), label: g.label, picture: g.picture,
         state: g.id === m.result.actual ? 'right' : g.id === m.guess ? 'wrong' : null})) : [],
       say: guided ? triedSay(id) : craneSay(p),
-      mood: right ? 'cheer' : 'explain', prompt: 'Press Enter to continue, or press R to watch again.', hints: [guided ? 'Press R to watch the two swings again.' : 'Press R to watch the swing again.', 'Press Enter to continue.', 'Press Enter to continue.']};
+      mood: right ? 'cheer' : 'explain', prompt: 'Continue when you are ready, or watch again.', hints: [guided ? 'Watch again to see the two swings once more.' : 'Watch again to see the swing once more.', CONTINUE_SAY, CONTINUE_SAY]};
   }
 
   return {enter, act, tick, view, state: () => m};

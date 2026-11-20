@@ -2,13 +2,20 @@
 // The formula panel starts closed; the lesson opens it with F at its first formulas (the watch step).
 import {openFormulaPanel} from './lab-classroom.mjs';
 const KEYS = Object.freeze({
-  Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69],
+  Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], KeyR: ['r', 82],
   Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51],
   ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39],
 });
 const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// LAB-PAGE: a watch step that animates offers Watch again, and R restarts it without leaving the step.
+async function replayOnR(c, d, step) {
+  if (!(await c.evaluate("[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.startsWith('Watch again'))"))) throw new Error(`The ${step} step should offer Watch again.`);
+  await d.press('KeyR'); await wait(400);
+  if ((await c.evaluate(state)).ready) throw new Error(`R should play the ${step} step again.`);
+}
 
 function driver(c) {
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {
@@ -57,12 +64,15 @@ export async function run(c) {
   const select = async code => d.press(code);
 
   // From the Lab map, walk to the tunnel, open its list, and choose Suspension.
-  await d.open(); await shot('wonder'); await d.next('wonder');
+  // The wonder drives over bumps for half of its ten seconds, then takes a bend; R plays it again (Kyle, 19 November 2026).
+  await d.open(); await shot('wonder'); await wait(7_000); await shot('wonder-bend'); await d.at('wonder', 'value.ready');
+  await replayOnR(c, d, 'wonder');
+  await d.next('wonder');
   for (const step of ['word-spring', 'word-stiffness', 'word-weight', 'word-roll', 'word-shake']) {
     await d.at(step); await shot(step);
     if (step === 'word-shake') {
       const words = await c.evaluate(`(() => ({brian: document.querySelector('.lc-bubble')?.textContent ?? '', formulas: document.querySelector('.lc-formulas')?.textContent ?? ''}))()`);
-      if (!words.brian.includes('one body-shake reading for this test')) throw new Error(`Body shake words are missing: ${words.brian}`);
+      if (!words.brian.includes('Body shake is how hard the body shakes up and down')) throw new Error(`Body shake words are missing: ${words.brian}`);
       if (words.formulas.includes('body shake')) throw new Error(`Body shake still has a formula panel: ${words.formulas}`);
     }
     await d.next(step);
@@ -78,13 +88,15 @@ export async function run(c) {
   await d.next('guess-roll');
 
   // Watch runs through all four spring-road settings; the values really change.
-  await d.at('watch'); await shot('watch-start'); await openFormulaPanel(c); await wait(2500); await shot('watch-changing');
-  await d.at('watch', 'value.ready'); await shot('watch-finished'); await d.next('watch');
+  await d.at('watch'); await shot('watch-start'); await openFormulaPanel(c); await wait(5000); await shot('watch-changing');
+  await d.at('watch', 'value.ready'); await shot('watch-finished');
+  await replayOnR(c, d, 'watch'); await d.at('watch', 'value.ready');
+  await d.next('watch');
 
   await d.at('formula'); await shot('formula');
   {
     const shown = await c.evaluate(`document.querySelector('.lc-formulas')?.textContent`);
-    if (!shown?.includes('6.5° ÷ 2.2° ≈ 3')) throw new Error(`Roll panel does not show the calculator sum: ${shown}`);
+    if (!shown?.includes('60,000 ÷ 20,000 = 3')) throw new Error(`Roll panel does not show the roll rule and its comparison: ${shown}`);
   }
   await d.next('formula');
 

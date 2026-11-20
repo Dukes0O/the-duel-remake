@@ -91,7 +91,7 @@ test('a child who does exactly what each prompt says passes every step', () => {
   playThroughTo(session, 'recap');
   assert.equal(session.view().ready, true);
   assert.equal(session.view().last, true);
-  assert.match(session.view().prompt, /try this in the helicopter/);
+  assert.match(session.view().prompt, /^Try this in the helicopter, or go back to the Lab.$/);
 });
 
 test('the words: the stand climbs the mountain, a jar scooped up high holds less, and thin air pushes less', () => {
@@ -147,7 +147,7 @@ test('the guided tries set up first, then ask, then test; a wrong guess says why
   const again = createClassroomSession(lesson);
   playThroughTo(again, 'try-lever'); toSummit(again); again.act('answer:2');
   again.act('hold:0.8');
-  assert.match(say(again), /gone past the red line, .* and the helicopter climbs\. Bring the lever back to the line with S/);
+  assert.match(say(again), /gone past the red line, .* and the helicopter climbs\. Bring the lever back down to the line\./);
 });
 
 test('Brian’s job: too many and too few each say why with the numbers; four, three and two crates pass', () => {
@@ -176,7 +176,7 @@ test('the questions: each wrong answer says why with the numbers', () => {
   const answers = {
     'check-why': [[1, /The helicopter weighs 1,630 kg at Sea level and at Summit Run/], [2, /The rotor spins just as fast/], [0, /Correct\. A jar of air at Summit Run holds 75 dots/]],
     'check-car': [[0, /At Panorama Ridge the rotor can still push 3,513 kg, which is more than 2,910 kg/], [2, /At Summit Run the rotor can push only 2,777 kg, which is 133 kg short/], [1, /Correct\./]],
-    'check-game': [[1, /burns the most fuel, 48\.0 kg a minute/], [2, /Refuelling once the crate is on the cable does not count/], [0, /hovering by the pad at Summit Run needs 70% of the lever, against 50% at Sea level, and flying away from the ground needs more still/]],
+    'check-game': [[1, /burns the most fuel, 48\.0 kg a minute/], [2, /The question says there is no refuelling on the way, so the crate must be carried on one tank/], [0, /hovering by the pad at Summit Run needs 70% of the lever, against 50% at Sea level, and flying away from the ground needs more still/]],
   };
   for (const [step, tries] of Object.entries(answers)) for (const [answer, why] of tries) {
     const session = createClassroomSession(lesson);
@@ -272,7 +272,7 @@ test('review fixes: Previous step shows a finished word as it was; one drag past
   until(session, x => x.ready);
   session.act('replay');
   assert.doesNotMatch(say(session), /3,513 kg/, 'watching again starts with an empty table and says so');
-  run(session, 11);
+  run(session, 14);
   assert.match(say(session), /3,887 kg at Sea level, 3,513 kg at Panorama Ridge and 2,777 kg at Summit Run/);
   playThroughTo(session, 'try-lever'); toSummit(session); session.act('answer:2');
   for (const share of [.7, .75, .8, .85]) session.act(`hold:${share}`);
@@ -295,10 +295,10 @@ test('the word steps stay open, their closing words stay true, and the height mo
   assert.equal(session.view().ready, true);
   session.act('next');
   session.act('scoop'); until(session, x => x.ready);
-  assert.match(worked(session, 'Air density at this height'), /2,860 ÷ 288\.15\) \^ 4\.256 = 0\.75, which is 75 dots/);
+  assert.match(worked(session, 'Air density at this height'), /^100 × 0\.75 = 75 dots in the jar$/);
   session.act('place:down'); session.act('place:down');
   assert.equal(session.view().jar.share, AIR[0], 'the jar follows the stand');
-  assert.match(worked(session, 'Air density at this height'), /= 1\.00, which is 100 dots/);
+  assert.match(worked(session, 'Air density at this height'), /^100 × 1\.00 = 100 dots in the jar$/);
   session.act('next');
   session.act('rotor'); until(session, x => x.ready);
   assert.equal(worked(session, 'The most the rotor can push'), '3,380.4 × 1.15 × 0.7143 = 2,777 kg');
@@ -420,12 +420,12 @@ test('nothing on the panel or the board settles a guess or a question while it i
 test('directions are right from every setting, words are defined before use, and each step has physics to show', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-lever'); toSummit(session); session.act('answer:2');
-  assert.match(session.view().prompt, /Hold W or ↑.*up to the red line/);
+  assert.match(session.view().prompt, /Raise the lever up to the red line/);
   session.act('hold:.85');
-  assert.match(session.view().prompt, /Hold S or ↓.*down to the red line/, 'above the line the prompt says to go down');
-  assert.match(session.view().hints[1], /^Hold S until/);
+  assert.match(session.view().prompt, /Lower the lever down to the red line/, 'above the line the prompt says to go down');
+  assert.match(session.view().hints[1], /^Lower the lever until/);
   session.act('hold:.2');
-  assert.match(session.view().prompt, /Hold W or ↑/);
+  assert.match(session.view().prompt, /Raise the lever/);
 
   // No kilograms before the Thin air step, no dots before the Air density step, no hover before the lever step.
   const reader = createClassroomSession(lesson);
@@ -472,4 +472,73 @@ test('with no crates on the cable, Brian names no load', () => {
   assert.match(say(session), /^At Sea level with no crates, the helicopter weighs 1,630 kg by itself and the rotor can push 3,887 kg, so the helicopter hovers with the lever at 42%, and 2,257 kg of push is left to spare\./);
   session.act('crate:add'); session.act('go');
   assert.match(say(session), /^With one crate on the cable, the helicopter and its load weigh 2,130 kg\./);
+});
+
+// Kyle's review of Rust (19 November 2026, docs/LAB.md 13.2) applied to Air and altitude (LAB-REVIEW-FLYING).
+test('Kyle’s rules of 19 November 2026: no hedging, no key labels, one rule for thin air stated plainly, no unexplained constants in the panel', () => {
+  const texts = [];
+  const collect = v => texts.push(v.say, v.prompt, ...v.hints, ...v.cards.map(c => c.label), ...(v.ideas ?? []).map(i => i.text), ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]));
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  STEPS.forEach((step, i) => { session.act(`go:${i}`); run(session, 14); collect(session.view()); });
+  for (const id of ['check-why', 'check-car', 'check-game']) for (const answer of [0, 1, 2]) {
+    const s = createClassroomSession(lesson); playThroughTo(s, id); s.act(`answer:${answer}`); texts.push(s.view().brian.text); collect(s.view());
+  }
+  const wrong = createClassroomSession(lesson); playThroughTo(wrong, 'try-lever'); toSummit(wrong); wrong.act('answer:2'); wrong.act('hold:.9'); texts.push(wrong.view().brian.text);
+  const job = createClassroomSession(lesson); playThroughTo(job, 'alone'); deliver(job, 3); texts.push(say(job)); deliver(job, 5); texts.push(say(job));
+  const free = createClassroomSession(lesson); playThroughTo(free, 'try-free');
+  for (let i = 0; i < 3; i++) { testFree(free); texts.push(say(free)); free.act('crate:add'); }
+  const thin = createClassroomSession(lesson); playThroughTo(thin, 'word-thin'); thin.act('rotor'); until(thin, x => x.ready); texts.push(thin.view().say);
+  const all = [...texts, ...WORDS.map(w => w.meaning)].filter(Boolean).join('\n').replace(/Tell me more|‹more›/g, '');
+  const faults = [/\bin this game\b/i, /\bthis game\b/i, /\bin this lesson\b/i, /\ba simplification\b/i, /\bthe sums?\b/i, /\bsums\b/i, /\bpress [0-9↑↓←→WASD]\b/i, /\bpress (Space|Enter|Return)\b/i, /\bor press\b/i, /\bhold [WS]\b/i,
+    /\bone rule for both\b/i, /\bPilots use this rule as the average for the real air\b/, /\bdoes not count in this challenge\b/i, /0\.0065|288\.15|4\.256/, /\bsimply\b/i];
+  for (const f of faults) assert.doesNotMatch(all, f, `the lesson says ${all.match(f)?.[0]}`);
+  assert.match(all, /That is why the push falls to 71% while the air in the jar falls to 75%/, 'the two numbers are explained in plain words');
+});
+
+test('the wonder shows both helicopters for about 8 seconds with the lever eased up, and R plays it again; the watch gives each place about 4 seconds', () => {
+  const session = createClassroomSession(lesson);
+  run(session, 1.4);
+  const mid = session.view();
+  assert.ok(mid.sets[0].lever > 0 && mid.sets[0].lever < 1, 'the lever is pulled up, not jumped');
+  assert.ok(!mid.ready);
+  run(session, 4); assert.ok(!session.view().ready, 'still on show at 5.4 seconds');
+  assert.equal(session.view().sets[1].lever, 1);
+  assert.ok(['stays', 'pad'].includes(session.view().sets[1].status), 'the summit helicopter holds with the lever at the top, so its arrow is seen');
+  until(session, v => v.ready, 10);
+  session.act('replay'); run(session, .5);
+  assert.equal(session.view().sets[0].lever, 0, 'R starts the wonder again');
+  assert.ok(!session.view().ready || session.view().say.startsWith('The two helicopters'), 'and says its question after it');
+  const watch = createClassroomSession(lesson);
+  playThroughTo(watch, 'watch');
+  let rows = [];
+  for (let t = 0, last = 0; t < 20 && rows.length < 3; t += .05) { watch.tick(.05); const n = watch.view().table.filter(Boolean).length; if (n > last) { rows.push(t); last = n; } }
+  assert.equal(rows.length, 3);
+  assert.ok(rows[1] - rows[0] >= 3.9 && rows[2] - rows[1] >= 3.9, `each place gets about 4 seconds: ${rows.map(r => r.toFixed(1))}`);
+});
+
+test('a guided try holds its picture for about three and a half seconds, and Watch again plays the run again', () => {
+  for (const [id, guess, setup] of [['try-car', 'guess:1', s => holdUp(s)], ['try-lever', 'answer:2', s => holdUp(s)]]) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, id); toSummit(session); session.act(guess); setup(session);
+    run(session, 3); assert.ok(!session.view().ready, `${id}: not finished after 3 seconds`);
+    until(session, v => v.ready, 10);
+    assert.ok(session.view().actions.includes('replay'), `${id}: Watch again is offered`);
+    const lever = session.view().flight.lever, said = say(session);
+    session.act('replay'); run(session, .1);
+    assert.equal(session.view().flight.lever < lever, true, `${id}: the lever starts again from the bottom`);
+    assert.equal(session.view().flight.h, 0);
+    until(session, v => v.flight.lever >= lever - 1e-9, 10);
+    run(session, 3.5);
+    assert.equal(session.view().flight.lever, lever, `${id}: the same lever setting`);
+    assert.equal(say(session), said, `${id}: the same words after the replay`);
+    assert.equal(session.view().ready, true);
+  }
+  const thin = createClassroomSession(lesson);
+  playThroughTo(thin, 'word-thin'); thin.act('rotor'); until(thin, x => x.ready);
+  assert.ok(thin.view().actions.includes('replay'), 'the thin air step offers Watch again');
+  thin.act('replay'); run(thin, .5);
+  assert.ok(thin.view().flight.lever > 0 && thin.view().flight.lever < 1, 'the lever goes up again');
+  until(thin, x => x.flight.lever >= 1, 5); run(thin, 1.2);
+  assert.match(say(thin), /the rotor pushes 2,777 kg, against 3,887 kg/);
 });

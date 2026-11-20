@@ -206,8 +206,10 @@ def build(ID, P, paint, output, c):
         o.turn(obj, 'neck', -tilt * .25)
         axis = tuple(f.tilt @ Vector((1, 0, 0)))
         amp = P.get('flap', .62)
+        # A soaring bird (P['teeter']) rocks from side to side on wings held in a V.
+        o.turn(obj, 'body', P.get('teeter', 0) * math.sin(w), (1, 0, 0))
         for side, s in (('L', 1), ('R', -1)):
-            o.turn(obj, 'wing1.' + side, s * (amp * math.sin(w) + .10), axis)
+            o.turn(obj, 'wing1.' + side, s * (amp * math.sin(w) + P.get('dihedral', .10)), axis)
             # The hand lags the arm, bending gently through the downstroke,
             # and sweeps back a little on the upstroke.
             o.turn(obj, 'wing2.' + side, s * (amp * .45 * math.sin(w - .8) - .10), axis)
@@ -218,4 +220,4 @@ def build(ID, P, paint, output, c):
         o.turn(obj, 'head', -.05 * math.sin(w))
 
     o.finish(a, c, output, [('Idle', 120, idle), ('Fly', P.get('beat', 16), fly)], budget=2000,
-             roughness=P.get('roughness'), specular=P.get('specular'))
+             roughness=P.get('roughness'), specular=P.get('specular'), refine=P.get('refine'))

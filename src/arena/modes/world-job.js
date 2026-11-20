@@ -2,7 +2,8 @@ import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal} from 
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
-import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination} from '../../world/jobs/night-2.js';
+import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination,
+  night2CampSolids, stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
@@ -14,6 +15,7 @@ import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, 
 import {FURNACE_LEAVING, pathShare, stepSkylineSight, stepRidgeSight, hotDeliveryGlass, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
+import {groundBeside, DECK_CUES} from '../../world/deck-plates.js';
 import {captionRecord} from '../../story/story-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
 import {startKnock} from '../../vehicle-knock.js';
@@ -37,6 +39,7 @@ import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
+import {BELL_CUE, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls} from '../../town/work-vehicles.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -193,6 +196,10 @@ export function initializeWorldJob(duel, definition) {
   worldJob.originalFootWeaponSelected = state.footWeapons?.selected ?? null;
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
+  // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
+  // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
+  if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
@@ -320,11 +327,31 @@ export function prepareWorldJobControls(duel) {
   if (step?.kind === 'rider-fight' && worldJob.riderReserve) startRoadFight(duel,worldJob);
   const input=duel.state.input??{};
   worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
+  if(worldJob.vehicle&&!duel.state.onFoot)driveWorkVehicle(duel,worldJob,input);
   if(step?.kind!=='drivetrain') return false;
   Object.assign(worldJob.controls,{throttle:input.throttle??0,brake:input.brake??0});
   input.throttle=0;input.brake=0;input.steer=0;input.boost=false;
   duel.state.speedMph=0;duel.state.pushVelocity=0;
   return true;
+}
+
+// TOWN-VEHICLES: a truck has no nitro, and its steering keeps to its turning circle. Space is left for a vehicle's tool.
+function driveWorkVehicle(duel, worldJob, input) {
+  const stepped = stepWorkVehicleControls(worldJob.vehicle, input, {speedMph: duel.state.speedMph, course: duel.course});
+  worldJob.vehicle = stepped.vehicle;
+  input.steer = stepped.steer;
+  duel.state.boost = 0;
+}
+
+// TOWN-VEHICLES: B rings the driven work vehicle's bell, if it has one (sound cue town.bell), as the weapon keys fire.
+export function ringJobVehicleBell(duel) {
+  const state = duel.state, worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+  if (!worldJob?.vehicle || state.status !== 'racing' || state.paused || state.onFoot) return false;
+  const rung = ringWorkVehicleBell(worldJob.vehicle);
+  worldJob.vehicle = rung.vehicle;
+  if (rung.rang) duel.emit({arenaTell: {id: 'town-bell', targetId: 'player', seconds: 0, cue: BELL_CUE,
+    position: worldJobPosition(duel, state)}});
+  return rung.rang;
 }
 
 function syncJobCarSolids(worldJob) {
@@ -1428,6 +1455,20 @@ export function moveJobRaiders(duel, worldJob, dt) {
   }
 }
 
+// STORY-NIGHT-2-FLOW item 4: when the scout is within the hand flamer's reach, the HUD says so, by brandCombatView's own rule:
+// 'turn' when he is near enough but outside the flame's cone, 'aim' when the barrel is not on his chest, 'burn' when holding
+// fire would burn him.
+function scoutReach(state, scout, chapter) {
+  const fighter = state.onFoot && state.fighter;
+  if (!fighter || chapter.scoutTurned || chapter.scoutDowned || scout.knockedDown ||
+      state.footWeapons?.selected !== 'hand-flamer') return null;
+  const dx = scout.x - fighter.x, dz = scout.z - fighter.z, distance = Math.hypot(dx, dz);
+  if (!(distance > 0) || distance > BRAND_RULE.handFlamerRadius || Math.abs(scout.y - fighter.y) >= 2) return null;
+  const yaw = fighter.yaw || 0, facing = (dx * Math.sin(yaw) + dz * Math.cos(yaw)) / distance;
+  if (facing < Math.cos(signatureFor('cinder').cone / 2)) return 'turn';
+  return handFlameAimsAt(fighter, scout) ? 'burn' : 'aim';
+}
+
 function night2Cue(duel, cue) {
   duel.emit({arenaTell: {id: cue, targetId: 'player', seconds: 0, cue}});
 }
@@ -1475,6 +1516,9 @@ export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
+  // STORY-NIGHT-2-FLOW: the rider laying siege circles the Walkers' camp (a talk passes no time, so it stands still then).
+  if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt,
+    state.onFoot && state.fighter ? state.fighter : position(duel, state))) syncJobCarSolids(worldJob);
   if (talkStep?.kind === 'talk') {
     if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
     const previousStep = worldJob.job.stepIndex;
@@ -1570,6 +1614,8 @@ export function stepWorldJob(duel, dt) {
   if (worldJob.storyPeople && currentStep?.kind !== 'talk' &&
       advanceStoryPeople(worldJob.storyPeople, dt, scablandsActorHeightAt)) {
     worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
+    // Carts that move take their solids with them (STORY-NIGHT-2-FLOW: the Walkers leaving a taken camp).
+    if (worldJob.night2) worldJob.solidGrid.setCamp?.(night2CampSolids(worldJob.night2, worldJob.storyPeople));
   }
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
@@ -1717,13 +1763,28 @@ export function stepWorldJob(duel, dt) {
   }
   const carriedCar = position(duel, state);
   if (worldJob.night2 && currentStep?.id === 'scout') {
-    const fire = brandCombatView(state, worldJob);
-    const burning = fire.handFlamerHits.includes(NIGHT_2_SCOUT.id);
-    const place = night2ScoutDestination(worldJob, burning);
-    applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: NIGHT_2_SCOUT.id, place});
-    if (burning) worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id).approachSpeed = 4.5;
+    const scout = worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id);
+    const chapter = worldJob.night2;
+    // One rule for an Ash Man on foot (STORY-NIGHT-2-FLOW item 7): the ambush rule's car hit knocks the scout flat for good,
+    // as it does a rider's crew at the Wash.
+    if (scout && !scout.knockedDown && !state.onFoot && !state.combatWrecking &&
+        Math.abs(state.speedMph || 0) * DRIVE.mphToWorld >= AMBUSH_RUN_DOWN_MPS &&
+        Math.hypot(scout.x - point.x, scout.z - point.z) <= AMBUSH_RUN_DOWN_METRES) {
+      Object.assign(scout, {knockedDown: true, health: 0, approachSpeed: 0, approachTarget: null});
+      chapter.scoutDowned = true;
+      night2Cue(duel, 'night.ash-man.down');
+    }
+    if (scout && !scout.knockedDown) {
+      const fire = brandCombatView(state, worldJob);
+      const burning = fire.handFlamerHits.includes(NIGHT_2_SCOUT.id);
+      const place = night2ScoutDestination(worldJob, burning);
+      applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: NIGHT_2_SCOUT.id, place});
+      if (burning) scout.approachSpeed = 4.5;
+    }
+    chapter.scoutReach = scout ? scoutReach(state, scout, chapter) : null;
   }
   if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
+  if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
   const view = {player: playerView, onFoot: !!state.onFoot,
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
     ...(worldJob.night2 ? {night2Action: night2Action(worldJob, point, state.onFoot, carriedCar)} : {}),
@@ -1864,7 +1925,12 @@ export function stepWorldJob(duel, dt) {
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};
+      // SHIPS-DECKS: a ladder's top is a still plate; the fighter stands on it rather than landing on it.
+      if(event.ladderId)Object.assign(state.fighter,{airHeight:0,verticalSpeed:0});
     }
+    if(event.type==='deckGround'&&state.fighter)putFighterOnGround(duel,state.fighter,event.position);
+    if(currentStep?.climbs&&DECK_CUES[event.type])duel.emit({arenaTell:{id:'deck-climb', targetId:'player', seconds:0,
+      cue:DECK_CUES[event.type], position:state.fighter ? {x:state.fighter.x, y:state.fighter.y, z:state.fighter.z} : {...point}}});
     if (event.type === 'done') {
       if (currentStep?.arrivalHold) {
         worldJob.arrivalHold = {elapsed:0, ...currentStep.arrivalHold, gasLoad:currentStep.gasLoad === true,
@@ -1879,6 +1945,7 @@ export function stepWorldJob(duel, dt) {
   }
   applyRequests(duel, worldJob, next.requests);
   worldJob.controls=null;
+  standOnDeck(duel, next, previousStepState);
   const train=worldJob.actors.find(actor=>actor.train);
   if(train&&state.onFoot&&state.fighter&&next.stepState.stage==='roof') {
     if(worldJob.roofRide&&trainBefore) {
@@ -1906,6 +1973,26 @@ export function stepWorldJob(duel, dt) {
     state.headingError=0;state.speedMph=train.speed*2.236936;
   }
   return null;
+}
+
+// SHIPS-DECKS: put an on-foot fighter on the ground at (x, z), after a fall from a plate or a climb down to the ground.
+function putFighterOnGround(duel, fighter, at) {
+  const nearest = duel.course.nearest(at.x, at.z, fighter.s), ground = duel.course.groundAt(nearest.s, nearest.lateral);
+  Object.assign(fighter, {x:at.x, z:at.z, s:nearest.s, lateral:nearest.lateral, y:ground.y, groundY:ground.y, airHeight:0, verticalSpeed:0});
+}
+
+// The walk reads the plate the fighter stands on (src/onfoot.js) from `fighter.deckPlate`, the climbing step's own `plate`. A step
+// that ends with the fighter still up there (its last place on a deck) leaves them on the ground beside the ship for the next one.
+function standOnDeck(duel, next, previousStepState) {
+  const fighter = duel.state.onFoot ? duel.state.fighter : null;
+  if (!fighter) return;
+  const step = next.steps[next.stepIndex], plate = !next.done && step?.climbs ? next.stepState.plate ?? null : null;
+  if (plate) { fighter.deckPlate = plate; return; }
+  if (!fighter.deckPlate) return;
+  const left = previousStepState?.plate === fighter.deckPlate && next.stepState.plate !== fighter.deckPlate && !next.done &&
+    !next.events.some(event => event.type === 'deckGround') ? groundBeside(fighter.deckPlate) : null;
+  delete fighter.deckPlate;
+  if (left) putFighterOnGround(duel, fighter, left);
 }
 
 // Combat paths call this after a real projectile or flame contact. It only

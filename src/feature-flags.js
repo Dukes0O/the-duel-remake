@@ -75,6 +75,9 @@ export const FEATURE_STATES = Object.freeze({
   'scablands-runs': 'dev',
   // SCABLANDS-LAND, "Kyle on realism": the realism trial on the Scablands (light and air first, then photographed surfaces, then things at every size). Off in the game.
   'scablands-realism': 'dev',
+  // FAR-RAIN: rain on the far side of The Teeth (docs/story/the-far-side.md), drawing and sound only. One switch per
+  // region with rain (src/render/rain-regions.js). Off in the game; no released course ever uses it.
+  'far-rain': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.
