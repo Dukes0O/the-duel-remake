@@ -620,7 +620,8 @@ tasks:
     model: "sol"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-hud"
     needs: [BOWL-TRICKS]
     locks: [bowl-screens]
     flag: "titan-bowl"

@@ -60,3 +60,9 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 a Removed line. Before CARD DONE, search `tools/` for every id and name this card changes and bring each older suite and
 scenario that names it up to date. No Chrome under `codex exec`: any browser scenario is "Claude runs". Memory-only saves.
 No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Build decisions, 20 November
+
+- The screen shows a short goal and a separate bottom caption. The opening card takes the place of the night's opening caption. Later captions expire against the show's fixed clock. Treat the camera's two-second swing as screen time before showing the result; keep race settlement on the existing result event.
+- The card's pause and resume use the existing app actions. The player damage display reads armor for truck fights and remaining scorches for the current Scrapasaurus fight.
+- For Claude: please grant a projection hook in `src/render3d.js` (the visible player's truck, using the existing vehicle projector) and one wire in `src/screen-router.js` (pass the projection to the HUD). This pins pop-ups to the truck as the chase view swings and lifts. Please also grant the Bowl condition in `src/rear-view.js` so the mirror render pass is skipped for the whole event.
