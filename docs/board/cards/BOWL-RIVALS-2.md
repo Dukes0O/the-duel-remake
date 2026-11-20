@@ -93,3 +93,9 @@ The old tests pinned one lap, speed caps and at least eight Easy wins for a diff
 Please run `bowl-rivals` on lane `codex/bowl-rivals-2` at `915619b86` while the builder’s lane tier runs. The scenario keeps the HUD opening confirmation and the short Last Truck Rolling goal. It checks both Rust Rhino starting distances, waits for the first finish signal and captures the gate before the result. All 32 browser expressions parse, and the independent check of the scenario passed.
 
 The review also checked that two crossings in one simulation tick use the first actual crossing, that a sound rival leaves its retreat after two seconds, and that Dragon Wagon’s final flip costs time against the same pilot with the flip disabled on each level. The production build passed at `915619b86`. Ordinary combat balance passed at `f6a1298c6`, before joining the HUD scenario conflict.
+
+## Builder gate complete, 20 November
+
+Handoff commit `6303ea683`. The lane tier at `915619b86` passed 118 of 119 suites, including all 216 Rivals checks, 297 race replay checks, 12 combat replay checks and the world signatures. The one-wall Easy driver won by less than six seconds in 10 of 10 runs on each of nights one and two.
+
+The HUD suite held two exact copies of the old text. At `e091d596d` it still checks the whole line, now “Beat Old Bess: 310.” and “Beat Old Bess over two laps.” The focused suite passed. Please review those two assertion changes with the earlier list. No game code changed after the laptop candidate.

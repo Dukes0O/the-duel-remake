@@ -645,8 +645,9 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: "Codex, codex/bowl-rivals-2"
+    waiting_on: claude
     needs: [BOWL-WALLS, BOWL-TRICKS]
     locks: [bowl-rivals, bowl-night]
     flag: "titan-bowl"
