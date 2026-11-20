@@ -103,3 +103,7 @@ The low-speed terrace landing also reaches `src/sim-driving.js::_offroadStep`. I
 Bowl's terraces with `titan-bowl` on, so that check waits until the wheels are down and the trick rules have judged the
 landing. A real roof or side landing still goes to the Slam and its recovery. Replay fingerprints on every other course must
 be unchanged, and the new check proves a terrace landing at low speed drives on at once.
+
+## Corrected drive for Claude
+
+Please re-drive the wider jump line, angled gates and terrace touchdown on `3a56ef8b5` in `.lanes/bowl-out-sim`, with TRICKS and the new camera included. All seven nitro approaches across the requested band landed at 7.04 to 8.36 m and moved uphill on the first tick. The straight Big Jump matched its previous trajectory exactly. The angled nitro launch supplies the speed and lift to reach the stands. Exact truck corners avoid catching a gate guide in empty space. At both 14 m mouths the eight 45-degree approaches held at least 19.99 mph. The eight full trips took 6.35 to 18.76 seconds. Both tunnel floors and the ground just behind the stands measured 0 m, so the dirt showing through goes to BOWL-OUT-LOOK. Your extra climb-limit hook was available; these corrections worked within the existing hooks.
