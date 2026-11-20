@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { applyPaintFinish, isPaintFinish } from './paint-finish-look.js';
 
 const finishes = ['metalness', 'roughness', 'clearcoat', 'clearcoatRoughness'];
 const states = new WeakMap(), owners = new WeakMap();
@@ -26,8 +27,8 @@ function privatePaint(vehicle) {
   return data.paint;
 }
 
-function appearanceKey(id, name, tint, finish) {
-  return `${id}:${name}:${tint.r}:${tint.g}:${tint.b}:${finishes.map(key => finish[key]).join(':')}`;
+function appearanceKey(id, name, tint, finish, pattern = '') {
+  return `${id}:${name}:${tint.r}:${tint.g}:${tint.b}:${finishes.map(key => finish[key]).join(':')}:${pattern}`;
 }
 
 /**
@@ -68,7 +69,9 @@ export function applyVehiclePaint(vehicle, appearance = null) {
     state.finish[key] = typeof value === 'number' && Number.isFinite(value)
       ? THREE.MathUtils.clamp(value, 0, 1) : state.factory[key];
   }
-  const key = appearanceKey(id, name, color, state.finish);
+  // A drawn finish (src/paint-finish-look.js) rides on the same paint material; plain presets have none.
+  const pattern = !factory && isPaintFinish(appearance.pattern) ? appearance.pattern : '';
+  const key = appearanceKey(id, name, color, state.finish, pattern);
   if (key === state.key) return false;
   state.key = key;
   const paint = state.paint, hadClearcoat = paint.clearcoat > 0;
@@ -77,6 +80,7 @@ export function applyVehiclePaint(vehicle, appearance = null) {
   // Crossing zero changes Three's clearcoat shader feature. Normal preset
   // changes only update uniforms and preserve the existing wear shader.
   if (hadClearcoat !== (paint.clearcoat > 0)) paint.needsUpdate = true;
+  applyPaintFinish(vehicle, paint, pattern || null, color);
   if (data.originalColor) data.originalColor.copy(color);
   else data.originalColor = color.clone();
   data.damageBase ||= {};

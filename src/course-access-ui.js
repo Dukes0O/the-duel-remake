@@ -96,6 +96,7 @@ export function courseAccessPanel(profile, selectedStage = 0, message = '', {
 } = {}) {
   const groups = {grandPrix: [], classic: []};
   for (const [index, course] of COURSE.entries()) {
+    if (course.bowl) continue; // BOWL-HOOKS: the Bowl is reached only on Show Night, always in a truck
     const grandPrix = grandPrixCareerEnabled === true && grandPrixAvailable(course) === true;
     const selected = index === selectedStage && (!grandPrix || selectedMode === 'grandprix');
     groups[grandPrix ? 'grandPrix' : 'classic'].push(courseCard(profile, course, selected, {teamRoomEnabled, grandPrix, lapChoiceFor, forestFire, leaderboard, playerId}));

@@ -35,6 +35,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['audio-','weapon-audio','fight-voices'], paths:['src/audio.js','src/audio-output.js']},
   {prefixes:['onfoot-','first-person-'], paths:['src/onfoot.js','src/onfoot-camera.js','src/onfoot-figures.js','src/onfoot-hints.js','src/onfoot-race.js','src/onfoot-transition.js','src/onfoot-weapons.js']},
   {prefixes:['machine-','the-dig'], paths:['src/machines/']},
+  {prefixes:['bowl-'], paths:['src/bowl/']},
   {prefixes:['town-'], paths:['src/town/']},
   {prefixes:['armor-kit-','armored-ram','car-loadout-'], paths:['src/armor-kits.js','src/armor-kit-meshes.js','src/car-loadout.js','src/screen-armory.js']},
   {prefixes:['raider-'], paths:['src/raiders.js','src/raider-markers.js']},
@@ -46,6 +47,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['mclaren-f1-look'], paths:['src/mclaren-f1-vehicle.js']},
   {prefixes:['skyline-audio'], paths:['src/skyline-vehicle.js','src/audio.js']},
   {prefixes:['earned-cars'], paths:['src/earned-cars-ui.js','src/unlock-vehicles.js']},
+  {prefixes:['skin-waste'], paths:['src/paint-finish-look.js','src/vehicle-paint.js','src/paint-presets.js']},
   {prefixes:['far-rain'], paths:['src/render/','src/scene-lighting.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.

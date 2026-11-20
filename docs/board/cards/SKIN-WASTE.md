@@ -20,3 +20,8 @@ merge-ready; do not loosen the test or add files outside this card's scope.
 ## Claude's verdict
 
 Round 1 does not pass (Claude, 5 November 2026). These are eight flat colours. The card asks for gritty finishes and they are not: Scrap Patchwork shows no patches, Hazard Stripe has no stripes, and Rust Patina is plain brown. The code can merge because the finishes stay behind the development switch, but this card stays open. Round 2 must find how the paint can carry real wear. Read how the car renderer applies paint first. If paint values alone cannot show rust, patches or stripes, say so on this card with what small renderer hook would.
+
+## Round 2 merged (Claude, 20 November 2026)
+
+Drawn in code (`src/paint-finish-look.js`), behind `wasteland-town`. Verdict and what round 3 should fix (straight hazard bands, a
+Salt Bleach that differs from white paint, the livery over the finish): `docs/board/looks/skin-waste/round-2-review.md`.

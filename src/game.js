@@ -62,6 +62,7 @@ import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {initializeWorldJob} from './arena/modes/world-job.js';
+import {startBowlNight, continueBowlNight, retryBowlEvent, stepBowlNight, observeBowlNight} from './bowl/bowl-night.js';
 import {riderOpponentSpecs} from './arena/modes/road-riders.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -153,6 +154,7 @@ export class Duel {
     ev = qualifyingLapEvent(this, ev);
     if (ev.stageResult || ev.gameover || ev.arenaResult || ev.menu || ev.complete)
       clearArsenalState(this);
+    observeBowlNight(this, ev); // Show Night reads the stunts the race announces (BOWL-HOOKS)
     for (const fn of this.listeners) fn(this.state, ev);
   }
   destructionEnabled() {
@@ -188,7 +190,7 @@ export class Duel {
     return LESSON_MANUAL_BOX.get(setting);
   }
   get scoreMultiplier() { return this.state.difficulty === 'pro' ? SCORING.manualMultiplier : 1; }
-  get stageDef() { return this.state.arena ? this.course.def : COURSE[this.state.stageIndex]; }
+  get stageDef() { return this.state.arena || this.state.bowlNight ? this.course.def : COURSE[this.state.stageIndex]; }
   get raceLength() { return this.course?.raceLength || this.course?.length || 0; }
   _parTime(...args) { return simResults._parTime.apply(this, args); }
   relativeS(value, reference = this.state.s) {
@@ -299,6 +301,11 @@ export class Duel {
     if(this.drivingLesson)this.resetDriveLessonAttempt();
   }
 
+  // Show Night (BOWL-HOOKS): the night's events run in src/bowl/bowl-night.js.
+  startBowlNight(options = {}) { return startBowlNight(this, options); }
+  continueBowlNight() { return continueBowlNight(this); }
+  retryBowlEvent() { return retryBowlEvent(this); }
+
   startHiddenRoadVisit(options = {}) {
     if (!this.featureFlags.enabled('hidden-road')) return false;
     const startStage = COURSE.findIndex(course => course.id === 'pacific-canyon');
@@ -329,8 +336,11 @@ export class Duel {
     s.stageIndex = idx;
     const grandPrix = s.mode === 'grandprix' && grandPrixCourse(COURSE[idx]);
     if (s.mode === 'grandprix' && !grandPrix) s.mode = 'duel';
-    const original = grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx];
-    const laps = this.featureFlags.enabled('lap-choice') && supportsLapChoice(COURSE[idx],s.mode)
+    // Show Night (src/bowl/bowl-night.js) loads each event on the Bowl; any other load ends the night.
+    const bowlEvent = this._bowlEventCourse ?? null; this._bowlEventCourse = null;
+    if (!bowlEvent) delete s.bowlNight;
+    const original = bowlEvent ?? (grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx]);
+    const laps = bowlEvent ? bowlEvent.laps : this.featureFlags.enabled('lap-choice') && supportsLapChoice(COURSE[idx],s.mode)
       ? chosenRaceLaps(COURSE[idx],s.mode,this._requestedLaps,true) : original.laps;
     const definition = laps === original.laps ? original : {...original, laps};
     this.course = new Course(definition, this.seed, {
@@ -604,6 +614,7 @@ export class Duel {
   }
 
   _loadArena(venue, mode, opponentSpecs, job = null) {
+    delete this.state.bowlNight;
     clearArsenalState(this);
     const s = this.state;
     // Keep a valid index for code that reads the course list; the arena
@@ -698,6 +709,7 @@ export class Duel {
       return;
     }
     if(this.drivingLesson){this._stepDriveLesson(dt);return;}
+    if (s.bowlNight && stepBowlNight(this, dt)) return;
     if (s.status === 'countdown') {
       if (s.field) { stepStartSequence(this, dt); return; }
       const beat = Math.ceil(s.countdown);
@@ -804,7 +816,7 @@ export class Duel {
     if (this._deadline()) return;
 
     this._advanceLaps(s, dt);
-    if (s.completedLaps >= s.lapsTotal && !finishQualifying(this)) this._finishStage();
+    if (s.completedLaps >= s.lapsTotal && !s.bowlNight && !finishQualifying(this)) this._finishStage();
   }
 
   _commitDrift(...args) { return simDriving._commitDrift.apply(this, args); }

@@ -34,6 +34,8 @@ const result = (profile, changed = false, reason) => ({
   ok: reason === undefined, changed, profile, ...(reason === undefined ? {} : {reason}),
 });
 const ownsNewerBowl = profile => Number.isSafeInteger(profile?.bowl?.version) && profile.bowl.version > 1;
+// The purse goes into the Wasteland wallet, which only a version 1 career may be written to (as armor kits and crew do).
+const ownsNewerWasteland = profile => Number.isSafeInteger(profile?.wasteland?.version) && profile.wasteland.version > 1;
 
 export function recordBowlScore(profile, event, score) {
   if (ownsNewerBowl(profile)) return result(profile, false, 'This Bowl save belongs to a newer version of the game.');
@@ -56,6 +58,7 @@ export function settleBowlNight(profile, {night, won, scrap = 0, trophy = null,
       !Array.isArray(boltOns) || boltOns.some(id => !validId(id)))
     return result(profile, false, 'Choose a valid night and prize.');
   if (!won) return result(profile);
+  if (ownsNewerWasteland(profile)) return result(profile, false, 'This Wasteland save belongs to a newer version of the game.');
 
   const bowl = bowlOf(profile), key = `night:${night}`;
   if (bowl.settledNights.includes(key)) return result(profile);

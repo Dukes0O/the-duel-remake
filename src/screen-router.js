@@ -21,6 +21,7 @@ import {createLeaderboardScreen} from './screen-leaderboard.js';
 import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
+import {createBowlScreens} from './bowl/bowl-screens.js'; // BOWL-HOOKS: Show Night
 import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, night2DawnMarkup, night2JournalMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
 import {night2Page} from './world/jobs/night-2.js';
 import {arenaYardPanel} from './screen-arena.js';
@@ -177,6 +178,7 @@ const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
+const bowlScreens = createBowlScreens({app, ui, escapeHTML});
 const readiness = createRendererReadiness({app, ui, choices, profile, isDisposed:()=>uiDisposed});
 const combatHud = createCombatHud({root, app,
   projectFootAim:()=>readiness.handle?.projectFootAim?.() || null,
@@ -347,6 +349,7 @@ root.addEventListener('click',e => {
     renderState(app.duel.state);
     return;
   }
+  if (bowlScreens.handle(button)) { lastScreen = null; renderState(app.duel.state); return; }
   switch (button.dataset.action) {
     case 'yard-career': openYardPanel('career'); return;
     case 'yard-territory': openYardPanel('territory'); return;
@@ -518,7 +521,7 @@ function renderState(s) {
   if (!(arenaMode === 'ambush-alley' && arenaVenue === 'pit' &&
     app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${app.ghostSaveStatus}:${app.ghostSaved}:${app.grandPrixGhostSaveStatus}:${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${app.ghostSaveStatus}:${app.ghostSaved}:${app.grandPrixGhostSaveStatus}:${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}:${bowlScreens.key(s)}`;
   if (screen!==lastScreen) {
     const focused=document.activeElement;
     const focusKey=focused?.dataset?.action?['action',focused.dataset.action]:
@@ -538,7 +541,7 @@ function renderState(s) {
       : dawn ? night2DawnMarkup({remembered: night2Result.night2Remembered, issue: night2Result.night2SaveIssue}, escapeHTML)
       : journalOpen ? night2JournalMarkup(night2Page(night2Chapter.ledger, {inNight: true}), escapeHTML) : null;
     ui.stage.classList.toggle('story-dawn-active', dawn);
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':night2Modal ?? modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const modal=bowlScreens.modal(s,{yardActive})??(yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':night2Modal ?? modalScreen(s)); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);
     const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
     if(cardPictures.length){
@@ -571,6 +574,7 @@ function renderState(s) {
   const muted=!!app.audio?.muted; ui['sound-toggle'].classList.toggle('muted',muted); ui['sound-toggle'].setAttribute('aria-label',muted?'Enable sound':'Mute sound'); text('sound-caption',muted?'SOUND OFF':'SOUND ON'); ui['test-driver'].hidden=!app.autopilot;
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
+  bowlScreens.hud(s);
   combatHud.update(s);
   worldHud.update(s,app.duel,profile());
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);

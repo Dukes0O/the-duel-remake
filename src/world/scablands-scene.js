@@ -503,19 +503,28 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0,lifeTown=null,lifeFireKey='';
+  let townDraw=null,townLife=null,townFx=null,townArt=null,townArtLibrary=null,townArtReplan=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0,lifeTown=null,lifeFireKey='';
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
   const addTown=async()=>{
     if(!townLayout)return;
-    const {buildTownChunkInstances}=await import('../town/view/town-instances.js');
+    const [{buildTownChunkInstances},{createTownArtLibrary,createTownArtDrawing},{townArtPlan}]=await Promise.all([
+      import('../town/view/town-instances.js'),import('../town/view/town-art.js'),import('../town/view/town-art-plan.js')]);
     if(retired)return;
-    const town={regions:{scablands:{}},buildings:townLayout.buildings||[],zones:[]};
+    const town={seed:townLayout.seed,regions:{scablands:{}},buildings:townLayout.buildings||[],zones:[]};
     const chunks=new Set();
     for(const building of town.buildings)if(building.regionId==='scablands')chunks.add(`${Math.floor(building.x/16)}:${Math.floor(building.z/16)}`);
     const root=new THREE.Group();root.name='Town roads, sites and buildings';
     for(const key of chunks){const [x,z]=key.split(':').map(Number);for(const mesh of buildTownChunkInstances(town,{x,z},'near'))root.add(mesh);}
+    // TOWN-VIEW-ART: the town's buildings, sites, ruins and street things from the art families, as in the town view.
+    // The layout is read once at the start of the drive; the art is drawing only and is never a solid.
+    townArtLibrary=createTownArtLibrary({loadModel:url=>loadAsset(url).then(result=>result?.scene??result),onLoad:()=>townArt?.markDirty()});
+    townArt=createTownArtDrawing({library:townArtLibrary,parent:root});
+    // A fire call changes the drawn copy of the buildings (drawJobFires): the art is planned again from that copy, so a building
+    // lost to the fire stands as its burnt ruin and one still burning keeps standing under its flames.
+    townArtReplan=buildings=>townArt.setPlan(townArtPlan({...town,buildings},{world:false}).placements);
+    townArtReplan(town.buildings);
     const roadMat=new THREE.MeshStandardMaterial({color:0x756b59,roughness:1});
     for(const road of townLayout.roads||[]){
       const dx=road.b.x-road.a.x,dz=road.b.z-road.a.z,length=Math.hypot(dx,dz);
@@ -569,6 +578,7 @@ export function createScablandsScene(course,options={}){
       if(fire?.state==='lost')return {...building,fireStage:undefined,state:'burnt-1'};
       return building.fireStage?{...building,fireStage:undefined}:building;
     });
+    townArtReplan?.(lifeTown.buildings);
   };
   const furnaceVents=[],furnacePlates=[];
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
@@ -950,6 +960,8 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
         group.userData.drawnFeet?.refresh();
         townLifeClock+=presentationDt;townLife?.update({dt:presentationDt,focus:here,distance:60,car:here});drawJobFires(state);townFx?.update({dt:presentationDt,focus:here,distance:60});
+        // Pieces past 1.2 km from the car are not drawn: the town is a speck there and the Scablands' own scenery stands beyond.
+        townArt?.update({viewer:{x:here.x,y:scablandsSurfaceHeightAt(here.x,here.z)+2,z:here.z},fogFar:1200,hour:8+Math.floor(townLifeClock/1.875)%10,dt:presentationDt});
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
@@ -1178,7 +1190,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
+    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); townArt?.dispose(); townArtLibrary?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

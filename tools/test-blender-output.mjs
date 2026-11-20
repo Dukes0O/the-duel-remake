@@ -67,8 +67,6 @@ const generators = [
     glb:['public/assets/models/wasteland/town/safety.glb'],budget:60000,maxBytes:8000000},
   {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
-  {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
   {id:'town-trucks-1',script:'tools/blender/town-trucks-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:8000000},
   {id:'town-trucks-2',script:'tools/blender/town-trucks-2.py',args:[],candidate:true,
@@ -222,7 +220,6 @@ const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
 const reviewHelpers = [
   {script:'tools/blender/story-people-review.py',args:[],render:'folder',extension:'jpg',
     views:['current-20m','gate-walkers-20m','gate-talk','travellers','actions','at-rest']},
-  {script:'tools/blender/town-sheet.py',args:[],render:false,summary:['docs','board','looks','town-art-base','round-3.jpg']},
   {script:'tools/blender/deep-art-sheet.py',args:[],render:false,summary:['docs','board','looks','deep-art','round-2.jpg']},
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
   // EARN-CAR-3: four review renders of a code-built car into one evidence folder.
