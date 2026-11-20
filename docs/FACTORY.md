@@ -276,7 +276,7 @@ or a Blender render. At most two run at once across every chat (AGENTS 7).
 Every session, Claude or Codex, follows the same four steps; no other tool
 or queue exists.
 
-1. **Look.** Read the top of `docs/playtest-inbox.md` for a hold
+1. **Look.** Read the Holds section of `docs/playtest-inbox.md` for a hold
    (FRAME CHECK, FULL TIER FOR RELEASE, NEXT HEAVY SLOT) and count the jobs
    already running. A job counts once, by its outermost process; its
    children are never counted again:
@@ -288,7 +288,7 @@ or queue exists.
    turn. Never stop another session's job. A release full tier and the 04:00
    full check are never the job that stops.
 4. **Reserving the next turn.** A session whose green work is only waiting
-   for one short job may write one line at the top of the inbox:
+   for one short job may write one line under Holds in the inbox:
    `NEXT HEAVY SLOT: <job>, <session>, <HH:MM>`. The next freed turn is its
    own; the line expires 20 minutes after its time or when the job starts,
    and the owner deletes it then. One reservation at a time; a later one

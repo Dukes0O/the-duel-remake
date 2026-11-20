@@ -243,7 +243,7 @@ after every release as a plain fast-forward; AGENTS rule 22 covers history.
 
 Kyle plays the live game, leaves notes in playtest-inbox and can stop work at any time.
 The Director routes notes into cards. Lost progress, crashes and broken races
-go first. After release, the inbox states what changed in plain language.
+go first. After release, the inbox's Latest release line is replaced: what changed, in one or two plain sentences.
 
 ## 10. Files and notes
 

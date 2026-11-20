@@ -139,7 +139,7 @@ page load never meets a half-copied build. It does not refresh an open game
 tab. It verifies the new build manifest and landing page on `localhost:5174`.
 Then it cleans up: `robocopy dist-next dist /MIR` leaves `dist` holding
 exactly the new build (older builds' files go; Kyle reloads any open tab), and
-`dist-next` is deleted. It records what players can try in
+`dist-next` is deleted. It replaces the Latest release line of
 `docs/playtest-inbox.md`. Push `master` to GitHub after a release as the
 approved backup step. A failed check or a non-fast-forward update stops the
 release.

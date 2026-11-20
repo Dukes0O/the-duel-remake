@@ -15,7 +15,7 @@ sizes. A status snapshot applies only to its stated commit.
 | [decisions.md](board/decisions.md) | Director choices that the spec did not settle. |
 | [parked.md](board/parked.md) | Work waiting for an explicit reason or decision. |
 | [run-log.md](board/run-log.md) | Recent run events and handoffs; keep seven days. |
-| [playtest-inbox.md](playtest-inbox.md) | Player feedback and release trial notes. |
+| [playtest-inbox.md](playtest-inbox.md) | Open items only: holds, questions with no card, the latest release. |
 
 The live game is the separate `master` checkout. Development merges into
 `integration/wasteland`; only the Release Manager works in the live checkout,
