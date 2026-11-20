@@ -17,9 +17,9 @@
 import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle,
   scoreStuntEvent} from './bowl-show.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
-import {BIG_MO, BOWL_CRUSH_ROWS, BOWL_EVENT_NAMES, BOWL_GOALS} from './bowl-lines.js';
+import {BIG_MO, BOWL_CRUSH_ROW, BOWL_EVENT_NAMES, BOWL_GOALS} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
-import {CARS, COURSE, DRIVE} from '../config.js';
+import {CARS, COURSE} from '../config.js';
 import {DEFAULT_DRIVER} from '../drivers.js';
 import {freshDamageZones} from '../sim-common.js';
 
@@ -29,12 +29,21 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play.
 export const BOWL_NIGHT_RULES = Object.freeze({
-  carCrush: Object.freeze({startS: 62, endS: 128, leftS: 40, timeLimitSec: 20,
-    stillMph: 1.5, stillSec: 1.5, rowsToWin: Object.freeze({easy: 3, medium: 4, hard: 5})}),
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 400, medium: 650, hard: 900})}),
+  // Every distance comes from the course (bowlLayout below), so a rebuilt Bowl (BOWL-EXPAND) moves
+  // the events with it. The run starts runUpMetres before the first row: on today's Bowl that is past
+  // the ring's tight end, and a truck held at full throttle with no steering reaches the buses.
+  // A level must reach this share of the rows (3, 4 and 5 of today's five).
+  carCrush: Object.freeze({runUpMetres: 8, timeLimitSec: 20,
+    // The run is over when the truck has gained less than 3 m in two seconds (stopped, or grinding along a wall).
+    stallMetres: 3, stallSec: 2, rowsShareToWin: Object.freeze({easy: .6, medium: .8, hard: 1})}),
+  // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
+  // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
+  // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
+  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 150, medium: 350, hard: 600})}),
   // The computer truck's top pace on each level, until BOWL-RIVALS gives each rival its own.
-  sideBySide: Object.freeze({timeLimitSec: 60, lane: 3, paceMph: Object.freeze({easy: 22, medium: 28, hard: 34})}),
+  sideBySide: Object.freeze({timeLimitSec: 60, paceMph: Object.freeze({easy: 22, medium: 28, hard: 34})}),
   donutMaxMph: 15,
+  minJumpSec: .5,
   bigJumpSec: 1.2,
   captionSec: 4,
   crowdMarks: Object.freeze([25, 50, 75, 100]),
@@ -62,7 +71,7 @@ const flagOn = duel => duel.featureFlags?.enabled('titan-bowl') === true;
 
 const RUNNERS = new Map();
 
-// runner: {laps, place(duel, night), target(night), goal(night), step(duel, night, dt)}.
+// runner: {laps, place(duel, night), target(night, course), goal(night, course), step(duel, night, dt)}.
 // step returns null while the event runs, or {won, ...facts} when it ends.
 export function registerBowlEventRunner(type, runner) {
   if (typeof type !== 'string' || !runner || typeof runner.step !== 'function' ||
@@ -95,66 +104,95 @@ export function addComputerTruck(duel, {s: start = 0, lateral = 0, car = SHOW_TR
   return truck;
 }
 
-// Where a truck on the outside lane starts so that it drives as far to the line
-// as a truck on the inside lane does from the start. Measured on the course.
-const STAGGERS = new WeakMap();
-function outsideStagger(course, lane) {
-  if (STAGGERS.has(course)) return STAGGERS.get(course);
-  const step = .25, path = off => {
-    const points = [];
-    for (let s = 0; s <= course.length + 1e-9; s += step) points.push(course.worldAt(s, off));
-    return points;
+// Where each event happens. The Bowl gives the show's places as data in
+// course.features.bowl (BOWL-EXPAND): the crush line, the launch cars, the two
+// mirrored lanes and the start. A course without them falls back to its own
+// shapes: the crush line's rows (crushables), the ramps and the floor's width.
+// Nothing here is a fixed distance, so a rebuilt Bowl moves the events with it.
+const LAYOUTS = new WeakMap();
+export function bowlLayout(course) {
+  if (LAYOUTS.has(course)) return LAYOUTS.get(course);
+  const features = course.features, show = features.bowl ?? null, props = features.crushables || [];
+  const rowS = [...new Set(props.map(prop => prop.s))].sort((a, b) => a - b);
+  const rows = rowS.map(s => {
+    const first = props.find(prop => prop.s === s);
+    return {s, kind: first.sourceKind ?? first.kind, end: Math.max(...props.filter(prop => prop.s === s).map(prop => prop.s + prop.halfZ))};
+  });
+  const firstRow = rows[0]?.s ?? 0, lineEnd = rows.length ? Math.max(...rows.map(row => row.end)) : 0;
+  const runUp = BOWL_NIGHT_RULES.carCrush.runUpMetres;
+  const floorHalf = course.def.scrapdome?.floorHalfWidth ?? course.roadHalfWidthAt(0);
+  // Without the show's own launch cars, they go in the longest stretch of clear
+  // floor between the ramps and the crush line that does not cross the start line.
+  const parked = () => {
+    const crushStart = firstRow - Math.min(...props.filter(prop => prop.s === firstRow).map(prop => prop.halfZ));
+    const busy = [...(features.ramps || []).map(ramp => [ramp.start, ramp.end]),
+      ...(rows.length ? [[crushStart, lineEnd]] : [])].sort((a, b) => a[0] - b[0]);
+    let gap = [0, course.length], at = 0;
+    for (const [start, end] of [...busy, [course.length, course.length]]) {
+      if (start - at > gap[1] - gap[0] || gap[0] === 0 && gap[1] === course.length) gap = [at, start];
+      at = Math.max(at, end);
+    }
+    return [1 / 3, 2 / 3].map((share, index) => ({s: +(gap[0] + (gap[1] - gap[0]) * share).toFixed(2),
+      dir: index ? -1 : 1, lateral: (index ? 1 : -1) * floorHalf / 2}));
   };
-  const inside = path(-lane), outside = path(lane);
-  const length = points => points.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - points[i].x, p.z - points[i].z), 0);
-  let left = length(outside) - length(inside), index = 0;
-  while (left > 0 && index < outside.length - 1) {
-    left -= Math.hypot(outside[index + 1].x - outside[index].x, outside[index + 1].z - outside[index].z);
-    index++;
-  }
-  const start = +(index * step).toFixed(2);
-  STAGGERS.set(course, start);
-  return start;
+  const crush = show?.crush ? {startS: show.crush.startS, lateral: show.crush.lateral ?? 0,
+    firstRowS: show.crush.firstRowS ?? firstRow, endS: show.crush.endS, leftS: show.crush.leftS}
+    : {startS: firstRow - runUp, lateral: 0, firstRowS: firstRow, endS: lineEnd + 3, leftS: firstRow - runUp - 20};
+  const lanes = show?.lanes?.length >= 2 ? show.lanes
+    : [{s: 0, lateral: 0}, {s: course.length / 2, lateral: 0}];
+  const layout = Object.freeze({
+    rows: Object.freeze(rows),
+    crush: Object.freeze(crush),
+    parked: Object.freeze((show?.launchCars ?? parked()).map(car => Object.freeze({s: car.s, lateral: car.lateral, dir: car.dir ?? 1}))),
+    // Side by Side: the player on the first lane, the computer truck on the second.
+    lanes: Object.freeze(lanes.slice(0, 2).map(lane => Object.freeze({s: lane.s, lateral: lane.lateral ?? 0}))),
+    start: Object.freeze(show?.start ?? {s: 0, lateral: 0}),
+  });
+  LAYOUTS.set(course, layout);
+  return layout;
 }
 
-// The rows of the crush line, nearest first, from the course's own props.
-function crushRows(course) {
-  const rows = [...new Set((course.features.crushables || []).map(prop => prop.s))].sort((a, b) => a - b);
-  return id => rows.indexOf(course.features.crushables.find(prop => prop.id === id)?.s);
+// How many rows each level must reach, from the course's own row count.
+export const crushRowsToWin = (course, night) =>
+  Math.max(1, Math.ceil(bowlLayout(course).rows.length * BOWL_NIGHT_RULES.carCrush.rowsShareToWin[difficultyOf(night)]));
+// A row named by what stands in it: the second row of cars, the buses, the burning stack.
+export function crushRowName(course, rowIndex) {
+  const rows = bowlLayout(course).rows, row = rows[rowIndex];
+  if (!row) return BOWL_CRUSH_ROW.last;
+  if (/bus|rv/i.test(row.kind)) return BOWL_CRUSH_ROW.buses;
+  if (/heap|fire|stack/i.test(row.kind)) return BOWL_CRUSH_ROW.fire;
+  return BOWL_CRUSH_ROW.cars(rows.slice(0, rowIndex + 1).filter(other => !/bus|rv|heap|fire|stack/i.test(other.kind)).length);
 }
 
 registerBowlEventRunner('carCrush', {
-  place(duel) { startAt(duel, BOWL_NIGHT_RULES.carCrush.startS, 0); },
-  target: night => BOWL_NIGHT_RULES.carCrush.rowsToWin[difficultyOf(night)],
-  goal: night => BOWL_GOALS.carCrush(BOWL_CRUSH_ROWS[BOWL_NIGHT_RULES.carCrush.rowsToWin[difficultyOf(night)] - 1]),
+  place(duel) { const line = bowlLayout(duel.course).crush; startAt(duel, line.startS, line.lateral); },
+  target: (night, course) => crushRowsToWin(course, night),
+  goal: (night, course) => BOWL_GOALS.carCrush(crushRowName(course, crushRowsToWin(course, night) - 1)),
   observe(duel, night, ev) {
     if (!ev.propCrushed?.byPlayer) return;
-    const row = crushRows(duel.course)(ev.propCrushed.id);
+    const s = duel.course.features.crushables.find(prop => prop.id === ev.propCrushed.id)?.s;
+    const row = bowlLayout(duel.course).rows.findIndex(entry => entry.s === s);
     if (row >= 0) night.event.rows = Math.max(night.event.rows, row + 1);
   },
-  step(duel, night, dt) {
-    const s = duel.state, rules = BOWL_NIGHT_RULES.carCrush, event = night.event;
-    const still = s.stageTimeSec > 3 && Math.abs(s.speedMph) < rules.stillMph && !s.airborne && !(s.impactTimer > 0);
-    event.stillSec = still ? event.stillSec + dt : 0;
-    const firstRow = Math.min(...duel.course.features.crushables.map(prop => prop.s));
-    event.metres = Math.max(event.metres, Math.min(rules.endS, s.s) - firstRow);
-    if (s.s < rules.endS && s.s > rules.leftS && event.stillSec < rules.stillSec && s.stageTimeSec < rules.timeLimitSec) return null;
-    return {won: event.rows >= rules.rowsToWin[difficultyOf(night)], rows: event.rows};
+  step(duel, night) {
+    const s = duel.state, rules = BOWL_NIGHT_RULES.carCrush, event = night.event, line = bowlLayout(duel.course).crush;
+    if (s.s > event.progressS + rules.stallMetres || s.airborne || s.impactTimer > 0) { event.progressS = Math.max(event.progressS, s.s); event.progressAt = s.stageTimeSec; }
+    const stalled = s.stageTimeSec > 3 && s.stageTimeSec - event.progressAt >= rules.stallSec;
+    event.metres = Math.max(event.metres, Math.min(line.endS, s.s) - line.firstRowS);
+    if (s.s < line.endS && s.s > line.leftS && !stalled && s.stageTimeSec < rules.timeLimitSec) return null;
+    return {won: event.rows >= crushRowsToWin(duel.course, night), rows: event.rows};
   },
 });
 
 // Two parked cars on the ring in Freestyle, so the Titan's launch off cars
 // (FUN-TITAN-LAUNCH, docs/board/decisions.md "Keep these") can be done in the
 // show. They are ordinary parked traffic: the launch rules are not touched.
-export const FREESTYLE_PARKED_CARS = Object.freeze([
-  Object.freeze({s: 62, dir: 1}), Object.freeze({s: 74, dir: -1}),
-]);
-
+// Where they stand comes from bowlLayout(course).parked.
 registerBowlEventRunner('freestyle', {
   place(duel) {
-    startAt(duel, 0, 0);
-    duel.state.traffic = FREESTYLE_PARKED_CARS.map(({s, dir}) => {
-      const lateral = dir < 0 ? DRIVE.laneOffset : -DRIVE.laneOffset;
+    const layout = bowlLayout(duel.course);
+    startAt(duel, layout.start.s, layout.start.lateral);
+    duel.state.traffic = layout.parked.map(({s, dir, lateral}) => {
       return {s, prevS: s, lateral, prevLateral: lateral, dir, speedMph: 0, headingError: 0, pushVelocity: 0,
         car: 'falcone_f42', alive: true, damageZones: freshDamageZones(), damageCooldown: 0, bowlParked: true};
     });
@@ -168,22 +206,22 @@ registerBowlEventRunner('freestyle', {
   },
 });
 
+// Side by Side: two mirrored lanes from the course, half a lap apart, so both
+// trucks drive the same ground. Each races one full lap from its own start (the
+// Duel's own lap count is left alone, as the two starts are on opposite sides).
 registerBowlEventRunner('sideBySide', {
-  laps: 1,
   place(duel) {
-    const lane = BOWL_NIGHT_RULES.sideBySide.lane;
-    // The computer truck keeps to the rival's own lane, the inside one. The
-    // outside lane is longer, so the player starts ahead by the difference, as
-    // on a running track.
-    startAt(duel, outsideStagger(duel.course, lane), lane);
-    addComputerTruck(duel, {s: 0, lateral: -lane});
+    const [mine, theirs] = bowlLayout(duel.course).lanes;
+    startAt(duel, mine.s, mine.lateral);
+    addComputerTruck(duel, {s: theirs.s, lateral: theirs.lateral});
   },
   goal: () => BOWL_GOALS.sideBySide(),
   step(duel, night) {
     const s = duel.state, rival = s.opponents[0], event = night.event;
+    const [mine, theirs] = bowlLayout(duel.course).lanes, lap = duel.course.length;
     if (rival) rival.speedMph = Math.min(rival.speedMph, BOWL_NIGHT_RULES.sideBySide.paceMph[difficultyOf(night)]);
-    if (event.playerDoneAt == null && s.completedLaps >= 1) event.playerDoneAt = s.stageTimeSec;
-    if (event.rivalDoneAt == null && rival?.completedLaps >= 1) event.rivalDoneAt = s.stageTimeSec;
+    if (event.playerDoneAt == null && s.s - mine.s >= lap) event.playerDoneAt = s.stageTimeSec;
+    if (event.rivalDoneAt == null && rival && rival.s - theirs.s >= lap) event.rivalDoneAt = s.stageTimeSec;
     if (event.playerDoneAt != null) return {won: event.rivalDoneAt == null || event.playerDoneAt <= event.rivalDoneAt};
     if (event.rivalDoneAt != null || s.stageTimeSec >= BOWL_NIGHT_RULES.sideBySide.timeLimitSec) return {won: false};
     return null;
@@ -252,7 +290,7 @@ function loadBowlEvent(duel) {
   night.phase = 'event';
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
     crowdPeak: 0, crowdMark: 0, flips: 0, roof: null, donutTurn: 0, donutSec: 0, heading: null,
-    rows: 0, metres: 0, stillSec: 0, playerDoneAt: null, rivalDoneAt: null};
+    flight: null, rows: 0, metres: 0, progressS: duel.state.s, progressAt: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   say(duel, `event.${type}.intro`);
 }
@@ -286,16 +324,16 @@ function addFact(duel, fact) {
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
 }
 
-// Facts that the Duel announces: jumps, launches off cars and crushes.
+// Facts that the Duel announces: launches off cars and crushes. Other jumps are
+// counted from the truck's own landings (observeTruck), because the Duel names a
+// jump once a lap and on the Bowl a truck goes back to the same jump many times.
 export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
-  if (ev.jumpLanded) {
-    const car = ev.jumpLanded.rampId === 'car';
-    addFact(duel, {type: car ? 'carLaunch' : 'landedJump', durationSeconds: +(s.airTime || 0).toFixed(3),
-      distanceMeters: ev.jumpLanded.distance || 0});
-    if (car) say(duel, 'moment.carLaunch', {once: true});
-    else if ((s.airTime || 0) >= BOWL_NIGHT_RULES.bigJumpSec) say(duel, 'moment.bigJump', {once: true});
+  if (ev.jumpLanded?.rampId === 'car') {
+    addFact(duel, {type: 'carLaunch', durationSeconds: +(s.airTime || 0).toFixed(3), distanceMeters: ev.jumpLanded.distance || 0,
+      heightMeters: +(night.event.flight?.peak ?? 0).toFixed(2)});
+    say(duel, 'moment.carLaunch', {once: true});
   }
   if (ev.propCrushed?.byPlayer) {
     addFact(duel, {type: 'crush'});
@@ -307,6 +345,20 @@ export function observeBowlNight(duel, ev) {
 // Facts the night reads from the truck: flips (BOWL-AIR), roof landings and donuts.
 function observeTruck(duel, dt) {
   const s = duel.state, event = s.bowlNight.event;
+  // Every landing on the wheels after a real flight scores as a jump; a launch
+  // off a car is scored from the Duel's own landing event, and the short hop a
+  // crush gives is too brief to count.
+  if (s.airborne && !event.flight) event.flight = {carRamp: s._jumpOrigin?.carRamp === true, peak: 0};
+  if (s.airborne && event.flight) event.flight.peak = Math.max(event.flight.peak, s.airHeight || 0);
+  else if (!s.airborne && event.flight) {
+    const flight = event.flight, airTime = s.airTime || 0;
+    event.flight = null;
+    if (!flight.carRamp && !s.tumble && airTime >= BOWL_NIGHT_RULES.minJumpSec) {
+      addFact(duel, {type: 'landedJump', durationSeconds: +airTime.toFixed(3), distanceMeters: +(s.airDistance || 0).toFixed(1),
+        heightMeters: +flight.peak.toFixed(2)});
+      if (airTime >= BOWL_NIGHT_RULES.bigJumpSec) say(duel, 'moment.bigJump', {once: true});
+    }
+  }
   const flips = s.bowlAirFlips || 0;
   if (flips < event.flips) event.flips = flips;
   if (flips > event.flips) {
@@ -383,13 +435,13 @@ export function stepBowlNight(duel, dt) {
 }
 
 // What the HUD shows, read from the state only.
-export function bowlHudView(state) {
+export function bowlHudView(state, course) {
   const night = state?.bowlNight, event = night?.event;
   if (!night || !event) return null;
   const runner = RUNNERS.get(event.type);
   const limit = runner?.timeLimitSec;
   return {night: night.night, event: event.type, name: BOWL_EVENT_NAMES[event.type] ?? event.type,
-    goal: runner?.goal(night) ?? '', score: event.score, target: runner?.target(night) ?? null,
+    goal: runner?.goal(night, course) ?? '', score: event.score, target: runner?.target(night, course) ?? null,
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),
     rows: event.rows, timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
     attempt: event.attempt, eventNumber: event.eventIndex + 1,

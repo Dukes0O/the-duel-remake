@@ -3,6 +3,8 @@
 // work vehicle; otherwise it removes what it drew and leaves the garage car exactly as the renderer made it.
 // The truck takes the garage car's pose for the frame (position, heading, pitch, roll, bounce), so every pose rule
 // the renderer already has applies to it too.
+// TOWN-HAUL-JOB: on a haul, the pieces on the bed are drawn as a stack that grows as the gang loads and shrinks as
+// pieces fall, and every piece thrown off lies on the ground where it fell until the job ends.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {workVehicleDefinition} from '../work-vehicles.js';
@@ -17,6 +19,29 @@ export const WORK_VEHICLE_LAYER = 7;
 const ALONG_Y = new THREE.Vector3(0, 1, 0), ALONG_X = new THREE.Vector3(1, 0, 0);
 // GLTFLoader takes the colons out of node names and keeps the model's own name in userData.name.
 const modelName = object => object.userData?.name ?? object.name;
+
+// TOWN-HAUL-JOB: a piece's box, from its mass: aluminium salvage is light for its size, steel is dense.
+const PIECE_COLOURS = Object.freeze({salvage:0x9ea3a6, steel:0x6e4a33});
+const PIECE_DENSITY = Object.freeze({salvage:180, steel:900}); // kilograms per cubic metre of a loose piece, air and all
+function pieceSize(piece, good) {
+  const volume = Math.max(.15, piece.kg / (PIECE_DENSITY[good] ?? 300));
+  const length = Math.min(3.4, Math.cbrt(volume) * 1.8), width = Math.min(1.1, Math.cbrt(volume) * .9);
+  return {length, width, height:Math.max(.12, volume / (length * width))};
+}
+/** The haul step's pieces on the bed and on the ground, or null when no haul is being driven. Reads only. */
+export function haulPiecesToDraw(state) {
+  const job = state?.arena?.worldJob?.job, step = job?.steps?.[job.stepIndex];
+  if (step?.kind !== 'haul') return null;
+  return {good:step.good, load:job.stepState?.load ?? [], shed:job.stepState?.shed ?? []};
+}
+
+// TOWN-FIRE-JOB: while the fire truck sprays, the water's arc from the cannon on its roof to the flames it is aimed at. Reads only.
+export function douseJetToDraw(state) {
+  const job = state?.arena?.worldJob?.job, step = job?.steps?.[job.stepIndex];
+  if (step?.kind !== 'douse' || job.stepState?.spraying !== true) return null;
+  const building = (step.buildings ?? []).find(row => row.id === job.stepState.targetId);
+  return building ? {x:building.x, z:building.z, halfX:building.halfX, halfZ:building.halfZ} : null;
+}
 
 export function workVehicleToDraw(state, flags) {
   if (flags?.enabled?.('wasteland-town') !== true || state?.arena?.mode !== 'world-job') return null;
@@ -70,14 +95,100 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     turned.updateMatrixWorld(true);
     const tyres = new THREE.Box3();
     for (const wheel of [...steers, ...spins]) tyres.expandByObject(wheel.object);
+    // The bed: the box of the model's own load (hidden on the flatbed), in the turned frame, where a stack is put.
+    const bedNode = loadNode ?? (definition.model.hide ?? []).find(name => name.endsWith(':load')) ?? null;
+    const bedObject = bedNode ? findModelNode(body, bedNode) : null;
+    const bedBox = bedObject ? new THREE.Box3().setFromObject(bedObject) : null;
+    if (bedBox) { const inverse = turned.matrixWorld.clone().invert(); bedBox.applyMatrix4(inverse); }
+    const stack = new THREE.Group();
+    stack.name = 'haul-stack';
+    turned.add(stack);
     return {id:vehicle.id, group, turned, contactY:tyres.isEmpty() ? 0 : tyres.min.y, steers, spins,
+      bedBox:bedBox && !bedBox.isEmpty() ? bedBox : null, stack, stackKey:'',
       load:loadNode ? findModelNode(body, loadNode) : null,
       maxSteer:definition.maxSteerDeg * Math.PI / 180, roll:0, clock:null};
+  }
+
+  // Pieces lying where they fell, by piece id; kept until the job ends.
+  const fallen = new Map();
+  const pieceMesh = (piece, good) => {
+    const size = pieceSize(piece, good);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(size.length, size.height, size.width),
+      new THREE.MeshStandardMaterial({color:PIECE_COLOURS[good] ?? 0x8a7a66, roughness:.85, metalness:good === 'steel' ? .4 : .6}));
+    mesh.castShadow = true; mesh.receiveShadow = true; mesh.layers.set(WORK_VEHICLE_LAYER);
+    mesh.userData.size = size;
+    return mesh;
+  };
+  function clearFallen() {
+    for (const mesh of fallen.values()) { mesh.removeFromParent(); mesh.geometry.dispose(); mesh.material.dispose(); }
+    fallen.clear();
+  }
+  function drawStack(pieces) {
+    const key = pieces?.load.map(piece => piece.id).join(',') ?? '';
+    if (!shown || key === shown.stackKey) return;
+    shown.stackKey = key;
+    for (const mesh of [...shown.stack.children]) { mesh.removeFromParent(); mesh.geometry.dispose(); mesh.material.dispose(); }
+    if (!pieces || !shown.bedBox) return;
+    // Two rows along the bed, laid from the cab back, then a layer up: a tall stack is plain to see.
+    const box = shown.bedBox, rows = 2, along = box.max.z - box.min.z, across = box.max.x - box.min.x;
+    const slots = Math.max(1, Math.floor(along / 1.3));
+    let layerY = box.min.y;
+    pieces.load.forEach((piece, index) => {
+      const slot = index % (rows * slots), row = slot % rows, column = Math.floor(slot / rows);
+      if (index > 0 && slot === 0) layerY += .45;
+      const mesh = pieceMesh(piece, pieces.good), size = mesh.userData.size;
+      mesh.rotation.y = Math.PI / 2;
+      mesh.position.set(box.min.x + across * (row + .5) / rows, layerY + size.height / 2,
+        box.min.z + along * (column + .5) / slots);
+      shown.stack.add(mesh);
+    });
+  }
+  function drawFallen(scene, pieces, groundY) {
+    for (const piece of pieces?.shed ?? []) {
+      if (fallen.has(piece.id)) continue;
+      const mesh = pieceMesh(piece, pieces.good);
+      // The scene is in world metres (as the job's floor ring is), so the piece lies where the truck was when it fell.
+      const turnSeed = [...piece.id].reduce((total, char) => total + char.charCodeAt(0), 0);
+      mesh.position.set(piece.x, (Number.isFinite(piece.y) ? piece.y : groundY) + mesh.userData.size.height / 2, piece.z);
+      mesh.rotation.y = turnSeed * .7;
+      scene.add(mesh);
+      fallen.set(piece.id, mesh);
+    }
+  }
+
+  // The jet: drops of water along a curve from the cannon to the nearest side of the flames, moving out along it.
+  const JET_DROPS = 36, CANNON = new THREE.Vector3(0, 3.1, 2.2);
+  let jet = null;
+  const dropAt = new THREE.Object3D(), from = new THREE.Vector3(), to = new THREE.Vector3();
+  function drawJet(scene, player, target, clock) {
+    if (!target) { if (jet) jet.visible = false; return; }
+    if (!jet) {
+      jet = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 6, 4),
+        new THREE.MeshBasicMaterial({color:0xd8ecff, transparent:true, opacity:.55, depthWrite:false}), JET_DROPS);
+      jet.name = 'fire-truck-jet'; jet.layers.set(WORK_VEHICLE_LAYER); jet.frustumCulled = false;
+    }
+    if (!jet.parent) scene.add(jet);
+    jet.visible = true;
+    from.copy(CANNON).applyQuaternion(player.quaternion).add(player.position);
+    to.set(Math.max(target.x - target.halfX, Math.min(target.x + target.halfX, from.x)), player.position.y + 2,
+      Math.max(target.z - target.halfZ, Math.min(target.z + target.halfZ, from.z)));
+    const length = from.distanceTo(to), rise = Math.min(6, length * .18);
+    for (let index = 0; index < JET_DROPS; index++) {
+      const share = ((index / JET_DROPS) + clock * 1.6) % 1;
+      dropAt.position.lerpVectors(from, to, share);
+      dropAt.position.y += rise * 4 * share * (1 - share);
+      dropAt.scale.setScalar(.6 + share * 1.6);
+      dropAt.updateMatrix();
+      jet.setMatrixAt(index, dropAt.matrix);
+    }
+    jet.instanceMatrix.needsUpdate = true;
   }
 
   function remove() {
     shown?.group.removeFromParent();
     shown = null;
+    clearFallen();
+    jet?.removeFromParent();
   }
 
   const turn = new THREE.Quaternion();
@@ -107,7 +218,11 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     shown.group.quaternion.copy(player.quaternion);
     shown.group.visible = player.visible;
     player.visible = false;
-    if (shown.load) shown.load.visible = vehicle.loadKg > 0;
+    const pieces = haulPiecesToDraw(state);
+    if (shown.load) shown.load.visible = vehicle.loadKg > 0 && !pieces;
+    drawStack(pieces);
+    drawFallen(scene, pieces, player.position.y);
+    drawJet(scene, player, douseJetToDraw(state), Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0);
     // Wheels: the front ones turn with the steering, all of them roll with the distance driven.
     const clock = Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0;
     const seconds = shown.clock === null ? 0 : Math.max(0, Math.min(0.25, clock - shown.clock));

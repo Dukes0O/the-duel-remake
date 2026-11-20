@@ -14,6 +14,9 @@ export function atHomePad(view) {
   return Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
 }
 
+// HELI-RUSTWALL: the town's Helipad in the Scablands sells fuel and fits the bucket like the home pad (nothing else of it).
+export const atBasePad = view => atHomePad(view) || (view?.phase === 'flying' && view?.scablands?.atPad === true);
+
 // MAP-VIEW: on the ground inside the landing circle of whatever course this is.
 export function atAnyPad(view) {
   if (!view || view.phase !== 'flying' || !view.heli?.onGround || !view.zone) return false;
@@ -99,7 +102,7 @@ function radioBox(fire, rescue = null, heli = null) {
   return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire at ${course}: ${fire.shareOut}% out, ${esc(wind)}</span></div>`;
 }
 function bucketBox(view, {repairCost = 0}, skins = null) {
-  if (!atHomePad(view)) return '';
+  if (!atBasePad(view)) return '';
   // The fire service coat's water gauge shows litres instead of words.
   const bucket = view.bucket, words = bucket?.reading?.text ?? bucket?.words ?? null;
   const wear = !bucket && skins?.offers?.bucket;

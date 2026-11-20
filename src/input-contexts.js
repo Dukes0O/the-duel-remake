@@ -65,6 +65,10 @@ export const INPUT_CONTEXTS = Object.freeze({
       boomUp: Object.freeze(['KeyW']), boomDown: Object.freeze(['KeyS']),
       armIn: Object.freeze(['KeyI']), armOut: Object.freeze(['KeyK']),
       bucketCurl: Object.freeze(['KeyJ']), bucketDump: Object.freeze(['KeyL']) }) }),
+  // TOWN-FIRE-JOB: the fire truck is driven as a car, but H is the water, as it is in the helicopter (Claude, 5 November: one
+  // key for water everywhere is easier for a child to remember). Holding H sprays; help stays on the gamepad's Back button.
+  firetruck: Object.freeze({ keyboard: Object.freeze({ ...carKeyboard, KeyH: 'spray' }), gamepad: carGamepad,
+    held: Object.freeze({ ...carHeld, spray: Object.freeze(['KeyH']) }) }),
 });
 
 const MACHINE_AXES = Object.freeze(['swing', 'boom', 'arm', 'bucket']);

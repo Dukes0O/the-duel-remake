@@ -87,7 +87,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false,preload
   const preloaded=preload?.take(course,winter)??null;
   const terrain = new THREE.Mesh(preloaded?preloaded.terrain:terrainFor(terrainGeometry(course)), groundMat); terrain.receiveShadow = true; group.add(terrain);
   const farTerrain = new THREE.Mesh(preloaded?preloaded.farTerrain:terrainFor(farTerrainGeometry(course)), groundMat); farTerrain.receiveShadow = true; group.add(farTerrain);
-  const trailMat=new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.035,color:course.def.arena?0xb39372:0xbeb4a3,roughness:1});
+  const trailMat=new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.035,color:course.def.bowl?0x8f6c4e:course.def.arena?0xb39372:0xbeb4a3,roughness:1}); // the Bowl's floor is darker show clay
   const road = new THREE.Mesh(strip(course, s=>-course.roadHalfWidthAt(s), s=>course.roadHalfWidthAt(s), .035), course.def.arena||course.def.offroad?trailMat:roadMat); road.receiveShadow = true; group.add(road);
   const shoulder = createPavedShoulderMaterial({gravel:surfaceTexture('gravel'),alpine,course});
   for (const side of [-1, 1]) {
@@ -176,7 +176,8 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false,preload
   if(course.def.practice)addFreestyleScenery(group,course);else addRaceStructures(group,course);
   addCourseLandmarks(group,course);
   addRallyDetail(group,course);
-  if(!course.def.practice)addFinish(group, course);
+  // The Bowl has no road gantry across its floor: its show starts where each event puts it.
+  if(!course.def.practice&&!course.def.bowl)addFinish(group, course);
   addCheckpointGates(group,course);
   addCircuitLandmarks(group,course);
   if (trackKits || course.def.kitPlacements?.length || winter) {

@@ -34,6 +34,7 @@ export const LEGACY_SUITE_ORDER=Object.freeze([
   'tools/test-paint-presets.mjs',
   'tools/test-paint-integration.mjs',
   'tools/test-vehicle-paint.mjs',
+  'tools/test-paint-finish-look.mjs',
   'tools/test-tunnel-detail.mjs',
   'tools/test-npc-route.mjs',
   'tools/test-police-route-reset.mjs',

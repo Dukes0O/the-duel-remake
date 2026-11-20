@@ -104,6 +104,19 @@ function startDispatch(town, command) {
 
 registerTownCommand('dispatchCrew', startDispatch);
 
+// Map chunks seen some other way (Kestrel One's scouting from the air, src/town/town-heli.js), each once. Returns how many were new.
+export function addExploredChunks(town, regionId, chunks) {
+  const state = dispatchState(town);
+  const known = new Set(state.explored.map(area => `${area.regionId}:${area.x},${area.z}`));
+  let added = 0;
+  for (const chunk of chunks) {
+    const key = `${regionId}:${chunk.x},${chunk.z}`;
+    if (known.has(key)) continue;
+    known.add(key); state.explored.push({regionId, x:chunk.x, z:chunk.z}); added++;
+  }
+  return added;
+}
+
 function addExplored(state, target) {
   const known = new Set(state.explored.map(area => `${area.regionId}:${area.x},${area.z}`));
   for (let z = target.chunkZ - 1; z <= target.chunkZ + 1; z++) {

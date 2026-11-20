@@ -110,6 +110,7 @@ export const NIGHT_2_SCENES = {
   ),
   whistle: scene({...dace("There's a man by your pump lamp, grey with ash from head to foot. He's counting something on his fingers."), cue: 'night.whistle'}),
   'scout-stopped': scene(dace('Did you see him run? I spotted him first, so make sure you tell Rell that I spotted him first.')),
+  'scout-downed': scene(dace('Your car put him flat on the ground, and he is not getting up. Make sure you tell Rell that I spotted him first.')),
   'scout-escaped': scene(dace("He was counting your lamps, and now he's gone over the wall to tell somebody how many you have.")),
   inside: scene(
     auntie('Eleven more people inside my fence? Where are they all going to sleep, on top of the lamps?', radio),

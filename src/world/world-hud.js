@@ -6,6 +6,8 @@ import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
+import {groupKg, haulLine} from './jobs/steps/haul.js';
+import {douseLine, groupLitres} from './jobs/steps/douse.js';
 import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
 import {BELLOWS_RULE, bellowsSentence} from './jobs/bellows-rule.js';
 import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
@@ -59,6 +61,18 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
       target = step.place ?? step.destination;
       line = step.what ?? `Drive to ${labelOf(target, places)}`;
       break;
+    case 'haul':
+      // TOWN-HAUL-JOB: to the pile until the truck sets off loaded, then to the drop.
+      target = ['carry', 'unloading'].includes(stepState.phase) ? step.drop : step.pile;
+      line = haulLine(step, stepState);
+      break;
+    case 'douse': {
+      // TOWN-FIRE-JOB: to the fire, or to the nearest water while the tank is empty.
+      target = [...(step.water ?? []), ...(step.buildings ?? [])].find(place => place.id === stepState.markId) ??
+        (step.buildings ?? []).find(building => building.id === step.mainId) ?? null;
+      line = douseLine(step, stepState);
+      break;
+    }
     case 'carry':
       target = step.pickup && !stepState.loaded ? step.pickup.place : step.destination ?? step.origin;
       line = step.pickup && !stepState.loaded ? 'Drive to Cinder and stop.' : step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
@@ -218,6 +232,12 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
       value: job.stepState.brandSeconds ?? 0, max: BRAND_RULE.burnSeconds,
       out: !(job.stepState.brandSeconds > 0), brandsUsed: job.stepState.brandsUsed,
     } : null,
+    // TOWN-HAUL-JOB: what is on the bed and what has fallen off, in kilograms.
+    // TOWN-FIRE-JOB: the water in the fire truck's tank, in litres.
+    water: step?.kind === 'douse' ? {value: job.stepState.tankL ?? step.tank?.startL ?? 3000, max: step.tank?.capacityL ?? 3000,
+      spraying: job.stepState.spraying === true} : null,
+    load: step?.kind === 'haul' ? {value: job.stepState.loadKg ?? 0, max: step.maxKg ?? 9000, lostKg: job.stepState.shedKg ?? 0,
+      deliveredKg: job.stepState.deliveredKg ?? 0} : null,
     bellows: step?.bellows ? {
       value: job.stepState.bellows ?? BELLOWS_RULE.start, max: BELLOWS_RULE.start,
     } : null,
@@ -245,6 +265,29 @@ export function drawGasGauge(gas, gauge, bar, label, note) {
   // Rounded down, so that the figure shown is never above the grade the gas is paid at (79.2 is paid as under 80).
   note.textContent = `${Math.floor(gas.value)} / ${gas.max}. ${holes}`;
   gauge.setAttribute('aria-label', `Gas is ${Math.floor(gas.value)} out of ${gas.max}. ${holes}`);
+}
+
+export function drawLoadGauge(load, gauge, bar, label, note) {
+  const share = Math.max(0, Math.min(1, load.value / load.max));
+  bar.style.width = `${(share * 100).toFixed(1)}%`;
+  gauge.style.setProperty('--ember-glow', share.toFixed(2));
+  gauge.classList.remove('is-out', 'is-losing', 'is-flashing');
+  label.textContent = 'LOAD';
+  const lost = load.lostKg > 0 ? ` ${groupKg(load.lostKg)} kg lost.` : '';
+  note.textContent = `${groupKg(load.value)} kg on the bed.${lost}`;
+  gauge.setAttribute('aria-label', `${groupKg(load.value)} kilograms on the bed out of ${groupKg(load.max)}.${lost}`);
+}
+
+export function drawWaterGauge(water, gauge, bar, label, note) {
+  const share = Math.max(0, Math.min(1, water.value / water.max));
+  bar.style.width = `${(share * 100).toFixed(1)}%`;
+  gauge.style.setProperty('--ember-glow', share.toFixed(2));
+  gauge.classList.remove('is-out', 'is-losing', 'is-flashing');
+  if (!(water.value > 0)) gauge.classList.add('is-out');
+  else if (water.spraying) gauge.classList.add('is-losing');
+  label.textContent = 'WATER';
+  note.textContent = `${groupLitres(water.value)} litres in the tank.`;
+  gauge.setAttribute('aria-label', `${groupLitres(water.value)} litres of water in the tank out of ${groupLitres(water.max)}.`);
 }
 
 export function drawBellowsGauge(bellows, gauge, bar, label, note) {
@@ -543,7 +586,9 @@ export function createWorldHud({host, app = null, picture = null}) {
         seenMeter.max = model.seen.max;
         seenMeter.value = model.seen.value;
       }
-      emberGauge.hidden = !model.ember && !model.brand && !model.bellows && !model.gas;
+      emberGauge.hidden = !model.ember && !model.brand && !model.bellows && !model.gas && !model.load && !model.water;
+      if (model.load) drawLoadGauge(model.load, emberGauge, emberBar, emberLabel, emberNote);
+      if (model.water) drawWaterGauge(model.water, emberGauge, emberBar, emberLabel, emberNote);
       if (model.gas) drawGasGauge(model.gas, emberGauge, emberBar, emberLabel, emberNote);
       if (model.bellows) drawBellowsGauge(model.bellows, emberGauge, emberBar, emberLabel, emberNote);
       if (model.brand) drawBrandGauge(model.brand, emberGauge, emberBar, emberLabel, emberNote);

@@ -49,7 +49,7 @@ export const DIG_MACHINE_TONES = Object.freeze({
   'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
   'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
   'dozer-blade':[110, 'sawtooth', 0.18], 'roller-ground':[75, 'triangle', 0.18],
-  'paver-surface':[165, 'square', 0.18],
+  'paver-surface':[165, 'square', 0.18], 'machine-contact':[58, 'square', 0.3],
   'borer.stall':[85, 'square', 0.4], 'borer.call':[260, 'triangle', 0.6],
   'borer.refuse':[180, 'triangle', 0.25], 'borer.breakthrough':[460, 'triangle', 0.45],
   'borer.daylight':[360, 'triangle', 0.8],
@@ -871,6 +871,13 @@ export const SOUND_BANK = {
   'town.bell': cue('interface', {flag: 'wasteland-town', volume: .42, limit: 2,
     layers: [tone(880, .9, .55, 'sine'), tone(2093, .5, .22, 'triangle'), tone(3270, .25, .12, 'sine')]}),
 };
+// TOWN-FIRE-JOB: a fire call's sounds, made from the helicopter's fire recordings (src/heli/heli-audio.js) so that fire and water
+// sound the same from the truck as from Kestrel One: a building catching crackles, the cannon opening pours, a fire put out hisses,
+// and filling at a tap is the bucket filling.
+SOUND_BANK['town.fire'] = cue('ambience', {flag: 'wasteland-town', files: ['heli/fire-crackle.ogg'], volume: .5, priority: 55, limit: 2});
+SOUND_BANK['town.spray'] = cue('vehicle', {flag: 'wasteland-town', files: ['heli/bucket-pour.ogg'], volume: .6, priority: 55, limit: 1});
+SOUND_BANK['town.fire.out'] = cue('ambience', {flag: 'wasteland-town', files: ['heli/fire-hiss.ogg'], volume: .7, priority: 55, limit: 2});
+SOUND_BANK['town.fill'] = cue('vehicle', {flag: 'wasteland-town', files: ['heli/bucket-scoop.ogg'], volume: .6, priority: 50, limit: 1});
 SOUND_BANK['arena.blackiron-barrage'] = cue('impacts', {
   flag: 'blackiron', priority: 70, limit: 1,
   layers: SOUND_BANK['arena.gunn-barrage'].layers,

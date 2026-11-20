@@ -220,12 +220,19 @@ are. **The Bowl** is new: a big concrete stadium with a dirt floor and a full cr
 at night, under floodlights, with flame jets by the ramps. Everyone gets to drive a
 truck there, whether or not you have bought the Titan; it is the show's truck.
 
-**The floor** (`src/bowl/bowl-course.js`) is the size of a real monster-truck floor and
-fits inside the stadium model: a 140 m ring round the podium, 16.5 m wide between an
-island wall and a wall in front of the stands. Two ramps on one long side (a kicker and a big
-jump, each with a flame jet on the wall either side) and the crush line on the other:
-junk cars, then the crushed buses and RV, then three burning stacks. Both ramps throw a
-truck into the air from 30 mph. Run as an arena event, the floor holds trucks to 42 mph.
+**The floor** (`src/bowl/bowl-course.js`, BOWL-EXPAND) is a real monster-truck stadium floor,
+160 m by 90 m between its walls, larger than a football field, with 40 m of floor across each
+straight. Down the middle runs the Spine, a row of rusted containers with Big Mo's booth on
+top; the ends are banked like a bowl, rising to 3.2 m at the wall. The Jump Straight has a
+1.8 m kicker in the middle and the 4.5 m Big Jump, which throws a Titan about 50 m into the
+open end; the Crush Straight has the mirror kicker, the 3.2 m Table and the crush line (junk
+cars, then the crushed buses and RV, then three burning stacks). A flame jet stands either
+side of each jump. In every event the floor holds a Titan near 50 mph, and a truck turns any
+way it likes. Side by Side runs two mirrored lanes half a lap apart, one each side of the
+Spine. The layout, its sizes and what each event uses are on the card (git history of
+`docs/board/cards/BOWL-EXPAND.md`) and in `docs/board/looks/bowl-expand/look-1.jpg`; the
+stadium (stands, wall and fence, about 24,000 people, four floodlight towers, two big screens)
+is drawn in code by `src/bowl/bowl-stadium.js`.
 
 **Show Night.** Five nights, with a little story, told by an announcer, **Big Mo**
 ("LADIES AND GENTLEMEN AND ALSO DOGS"), and the crowd's roar. A night is three events
@@ -303,7 +310,10 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   Last Truck Rolling and replaces Side by Side's one computer truck, BOWL-TURNS runs the same runners one player
   at a time, BOWL-REX-FIGHT adds night five's fight. The Bowl is out of the circuit list: Show Night is the only
   way in, so every drive there is in a truck, the player's own Titan or the show's, lent and never saved.
-  Every word on screen is in `src/bowl/bowl-lines.js`.
+  Every word on screen is in `src/bowl/bowl-lines.js`. Every distance the events use comes from the course's data
+  through `bowlLayout(course)`: the crush line's rows and their names, the run-up, the parked cars in Freestyle (the
+  longest clear floor between ramps and crush line), the lanes (half the floor, or `features.bowlLanes.offset`) and
+  Side by Side's start stagger. A rebuilt Bowl (BOWL-EXPAND) moves the events with it.
 - **Turn Show** (BOWL-TURNS) runs in `src/bowl/bowl-turns.js`, pure rules with no race state: two to four named
   players take one go each at every event, event by event, in the order they were picked. Every go, the first
   too, opens on "NAME IS UP. PASS THE KEYBOARD." at the menu and starts only on a fresh key press (a held or
@@ -341,7 +351,6 @@ Nothing times frames on art (rule 9).
 | Big Bess's gas truck, carved from four photos; her exhaust smoke, shade and road dust are drawn by the game | `big-bess-photo.py` | `.../scablands/big-bess.glb` | 12,000, 1.5 MB |
 | Old Smoke's furnace, carved from four photos; its fire, smoke and sparks are drawn by the game | `old-smoke-photo.py` | `.../scablands/old-smoke.glb` | 12,000, 1.5 MB |
 | Iron Mule train and wagons, rails, station | `scablands-mule.py` | `.../scablands/mule.glb` | 40,000, 2 MB |
-| Bowl stadium shell, ramps, flame jets, floodlights | `bowl-stadium.py` | `public/assets/models/wasteland/bowl/stadium.glb` | 80,000, 3 MB |
 | Crush stack: van, bus, RV, burning stack (junk cars reused) | `bowl-crush.py` | `.../bowl/crush.glb` | 20,000, 1 MB |
 | Rival truck bolt-ons on the Titan | `bowl-trucks.py` | `.../bowl/trucks.glb` | 8,000 each, 1 MB |
 | The Scrapasaurus, with moving jaw, tail and battery boxes | `bowl-scrapasaurus.py` | `.../bowl/scrapasaurus.glb` | 60,000, 2.5 MB |

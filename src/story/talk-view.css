@@ -82,6 +82,9 @@ body:has(.in-story-talk) #story-caption, .in-story-talk .rear-view-frame, .in-st
 
 /* STORY-NIGHT-2-FLOW: the end of a night stays in the world. One line of what people remember at the top, Continue at the foot. */
 .story-dawn-active .modal-layer { background: none; backdrop-filter: none; pointer-events: none }
+/* The dawn note shows over a clear picture: no racing HUD (speedometer with gear and nitro, lap map, armor, car buttons). */
+.story-dawn-active .speedometer, .story-dawn-active .route-hud, .story-dawn-active .race-health, .story-dawn-active .combat-player-armor,
+.story-dawn-active .combat-slot-bar, .story-dawn-active .style-score, .story-dawn-active .rear-view-frame { display: none }
 .story-dawn { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center }
 .story-dawn-note, .story-dawn-issue { margin: 22px auto 0; max-width: min(70ch, 86%); padding: .55em 1.2em; color: #f6ecd6; background: #17201dd9;
   border-bottom: 2px solid #d0a55c; font: 600 15px/1.45 system-ui, sans-serif; text-align: center; animation: story-dawn-in .9s ease-out both }

@@ -7,11 +7,10 @@ import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {PLAYERS_KEY, createPlayerRegistry, createProfile, loadPlayers, savePlayers} from '../src/progression.js';
-import {BOWL_NIGHT_RULES, BOWL_PURSE, FREESTYLE_PARKED_CARS, bowlHudView} from '../src/bowl/bowl-night.js';
-import {DRIVE} from '../src/config.js';
+import {BOWL_PURSE, bowlHudView, bowlLayout} from '../src/bowl/bowl-night.js';
 import {TURN_SHOW_RULES, beginGo, createTurnShow, currentTurn, nightOpenFor, passKeyboard, playerNightResult,
   recordGo, settleTurnGo, turnOrder, turnScoreboard, turnShowNights} from '../src/bowl/bowl-turns.js';
-import {BIG_MO, BOWL_CRUSH_ROWS, BOWL_SOUND_CUES, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_CRUSH_ROW, BOWL_SOUND_CUES, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 
 let checks = 0;
@@ -114,7 +113,7 @@ const won = (...nights) => ({...createProfile(), bowl: {version: 1, nightsWon: n
   const night = duel.state.bowlNight;
   ok(night.turn && night.event.type === 'freestyle' && duel.state.status === 'countdown', 'the go is Freestyle, from a countdown');
   ok(seen[0] === 'turn.open' && !seen.includes('night.1.open'), 'Big Mo welcomes the next driver, not a new night');
-  equal(bowlHudView(duel.state).driver, 'Kyle', "the HUD names who is driving");
+  equal(bowlHudView(duel.state, duel.course).driver, 'Kyle', "the HUD names who is driving");
   ok(!duel.retryBowlEvent(), 'a go has no restart: it is one go');
   for (let i = 0; i < 120 * 100 && duel.state.status !== 'bowl_break'; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
   ok(night.phase === 'turn' && duel.state.status === 'bowl_break', 'the go ends in the turn phase');
@@ -151,19 +150,19 @@ const events = [];
 app.duel.onChange((state, ev) => { if (ev.bowlEventResult) events.push({player: state.playerId, ...ev.bowlEventResult}); });
 const key = (code, repeat = false) => app._turnHandoffKey({code, repeat, target: null, preventDefault() {}});
 // The scripted driver from test-bowl-night; Kyle waits in the Car Crush and so loses it.
-// In Freestyle it swings over to the first parked car, on that car's own lane, to launch off it.
-const PARKED = FREESTYLE_PARKED_CARS[0], PARKED_LATERAL = PARKED.dir < 0 ? DRIVE.laneOffset : -DRIVE.laneOffset;
-const PARKED_APPROACH = 22, PARKED_PAST = 8; // metres before and after the car: how the driver lines up, not the Bowl's size
+// Every place comes from the course's own data (bowlLayout reads course.features.bowl), whatever size the Bowl is.
+// In the Car Crush W is held down with no steering; in Freestyle the driver swings out to the first launch car.
 function drive(idle) {
   const duel = app.duel;
   for (let i = 0; i < 120 * 150; i++) {
     const s = duel.state;
     if (s.status === 'bowl_break') return;
-    const type = s.bowlNight.event.type, freestyle = type === 'freestyle';
-    // Positions come from the show's own data, never fixed numbers: the Bowl's size may change (BOWL-EXPAND).
-    const near = freestyle && s.s > PARKED.s - PARKED_APPROACH && s.s < PARKED.s + PARKED_PAST;
-    const line = near ? PARKED_LATERAL : type === 'sideBySide' ? BOWL_NIGHT_RULES.sideBySide.lane : 0;
-    duel.setInput(idle ? {throttle: 0, brake: 0, steer: 0} : {throttle: s.speedMph < 32 ? 1 : 0, brake: 0,
+    const type = s.bowlNight.event.type, freestyle = type === 'freestyle', layout = bowlLayout(duel.course);
+    const car = layout.parked[0], lapS = ((s.s % duel.course.length) + duel.course.length) % duel.course.length;
+    const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : type === 'sideBySide' ? layout.lanes[0].lateral : 0;
+    if (idle) duel.setInput({throttle: 0, brake: 0, steer: 0});
+    else if (type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+    else duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0,
       steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
     assert.equal(s.playerId, app.player.id, 'the driver is the active player at every step');
@@ -265,7 +264,7 @@ ok(createPlayerRegistry().players.every(entry => !Object.hasOwn(entry.profile, '
   // Each line function with the facts it takes, both ways where it has two.
   const samples = {setupCount: [[2], [4]], setupNightOpen: [[1]], setupNightLocked: [[2]],
     handoffEvent: [['Gratian', 'Car Crush']], goScore: [['Gratian', 1200, 'Freestyle']],
-    goRows: [['Kyle', BOWL_CRUSH_ROWS[2]], ['Kyle', undefined]], goRace: [['Gratian', true], ['Gratian', false]],
+    goRows: [['Kyle', BOWL_CRUSH_ROW.cars(2)], ['Kyle', BOWL_CRUSH_ROW.buses], ['Kyle', BOWL_CRUSH_ROW.fire], ['Kyle', null]], goRace: [['Gratian', true], ['Gratian', false]],
     goBest: [['Kyle', 'Side by Side']], goNightWon: [['Gratian', 1]], goPurse: [['Gratian', 250]],
     goPurseAlready: [['Gratian']], goUnsaved: [['Kyle']], goNext: [['Kyle', 'Car Crush']],
     boardWinner: [['Gratian', 3, 900], ['Kyle', 1, 10], ['Kyle', 0, 0]], boardLeading: [['Gratian', 2, 640]],

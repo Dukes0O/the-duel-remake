@@ -2,7 +2,8 @@
 // pass-the-keyboard screen, the card after each go and the night's scoreboard.
 // They read the app's turnShowView() and state.bowlNight and never change race
 // state; buttons call the app's Turn Show methods. Every word is in bowl-lines.js.
-import {BOWL_CRUSH_ROWS, BOWL_EVENT_NAMES, BOWL_RESULTS, BOWL_TURN_LINES as WORDS} from './bowl-lines.js';
+import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS, BOWL_TURN_LINES as WORDS} from './bowl-lines.js';
+import {crushRowName} from './bowl-night.js';
 import {TURN_SHOW_RULES} from './bowl-turns.js';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -68,7 +69,8 @@ export function createTurnScreens({app, escapeHTML}) {
     const go = view.lastGo, turn = view.turn, name = nameOf(view, go.playerId), event = eventName(go.event);
     const settled = go.settled ?? {};
     const lines = [WORDS.goScore(name, go.score, event), go.won ? WORDS.goWon : WORDS.goLost];
-    if (go.event === 'carCrush') lines.push(WORDS.goRows(name, BOWL_CRUSH_ROWS[go.rows - 1]));
+    // The row's name comes from the course's own crush line (bowlLayout), whatever size the Bowl is.
+    if (go.event === 'carCrush') lines.push(WORDS.goRows(name, go.rows > 0 ? crushRowName(app.duel.course, go.rows - 1) : null));
     if (go.event === 'sideBySide') lines.push(WORDS.goRace(name, go.won));
     for (const best of settled.bests || []) lines.push(WORDS.goBest(name, eventName(best)));
     if (settled.wonNight) lines.push(WORDS.goNightWon(name, view.show.night));
@@ -76,7 +78,8 @@ export function createTurnScreens({app, escapeHTML}) {
     else if (settled.alreadyPaid) lines.push(WORDS.goPurseAlready(name));
     if (settled.saved === false || settled.ok === false) lines.push(WORDS.goUnsaved(name));
     lines.push(turn.next ? WORDS.goNext(turn.next.name, eventName(turn.next.event)) : WORDS.goLastNext);
-    const caption = state.bowlNight?.caption ? `<p class="bowl-mo">${escapeHTML(state.bowlNight.caption.text)}</p>` : '';
+    const moId = go.won ? 'turn.won' : 'turn.lost';
+    const caption = BIG_MO[moId] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[moId])}</p>` : '';
     return `<section class="bowl-panel bowl-result bowl-turns" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${go.won ? 'won' : 'lost'}" data-turn-go="${go.index}"><header><p class="eyebrow">${escapeHTML(name.toUpperCase())} · ${escapeHTML(event.toUpperCase())}</p><h2 id="bowl-title">${go.won ? WORDS.goWonTitle : WORDS.goLostTitle}</h2></header>${caption}${lines.map(say).join('')}${board(view)}<footer>${button(turn.next ? WORDS.passButton : WORDS.scoreboardButton, 'show-turns-pass', '', true)}${button(WORDS.leaveButton, 'show-turns-leave')}</footer>${turn.next ? say(WORDS.leaveNote) : ''}</section>`;
   }
 
@@ -88,7 +91,7 @@ export function createTurnScreens({app, escapeHTML}) {
     open() { setup = {picked: [], level: null}; },
     key(state) {
       const view = app.turnShowView?.();
-      return `${setup ? `setup:${setup.picked.join(',')}:${setup.level ?? ''}` : ''}:${view ? `${view.show.phase}:${view.show.turn}:${view.show.goes.length}:${view.lastGo?.settled ? 'saved' : ''}` : ''}:${state.bowlNight?.turn ? state.bowlNight.caption?.id ?? '' : ''}`;
+      return `${setup ? `setup:${setup.picked.join(',')}:${setup.level ?? ''}` : ''}:${view ? `${view.show.phase}:${view.show.turn}:${view.show.goes.length}:${view.lastGo?.settled ? 'saved' : ''}` : ''}`;
     },
     // The modal for the Turn Show, or null when it has nothing to show.
     modal(state, {yardActive = false} = {}) {

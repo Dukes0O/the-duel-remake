@@ -6,26 +6,28 @@ import {Duel} from '../src/game.js';
 import {BOWL_COURSE, bowlCentre} from '../src/bowl/bowl-course.js';
 import {createBowlView} from '../src/bowl/bowl-view.js';
 import {addArenaCrushables} from '../src/arena-props.js';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 const check=(condition,message)=>assert.ok(condition,message);
 const DT=1/120;
-const bowl=new Course(BOWL_COURSE,1989),centre=bowlCentre(bowl),floor=BOWL_COURSE.scrapdome;
+const bowl=new Course(BOWL_COURSE,1989),centre=bowlCentre(bowl),floor=BOWL_COURSE.scrapdome,data=bowl.features.bowl;
 check(BOWL_COURSE.bowl&&BOWL_COURSE.timeOfDay==='night','The Bowl is a distinct night course.');
 
-// The ring stands inside the authored stadium (tools/blender/bowl-stadium.py): its side
-// walls' faces are 38.4 m from the middle and the front row of the stands is 26.7 m.
-const outer=bowl.features.barriers.filter(wall=>wall.arenaWall&&wall.off>0);
-check(outer.length>0&&outer.every(wall=>Math.abs(wall.x-centre.x)+.5<38.4&&Math.abs(wall.z-centre.z)+.5<26.7),
-  'The outer wall stands inside the stadium, in front of its stands and side walls.');
-const island=bowl.features.barriers.filter(wall=>wall.arenaWall&&wall.off<0);
-check(island.every(wall=>Math.abs(wall.z-centre.z)>5.5||Math.abs(wall.x-centre.x)>5),
-  'The island wall goes round the podium in the middle of the stadium.');
+// BOWL-EXPAND: a stadium floor in proportion to the trucks, at least a football field's size
+// (110 m by 49 m) with room round it, where the old Bowl was a 140 m ring 16.5 m wide.
+const walls=bowl.features.barriers.filter(wall=>wall.arenaWall),outer=walls.filter(wall=>wall.off>0),spine=walls.filter(wall=>wall.off<0);
+const span=(list,axis)=>Math.max(...list.map(wall=>wall[axis]))-Math.min(...list.map(wall=>wall[axis]));
+const long=Math.max(span(outer,'x'),span(outer,'z')),wide=Math.min(span(outer,'x'),span(outer,'z'));
+check(long>150&&wide>85,`The floor is at least 150 m by 85 m between its walls (${long.toFixed(1)} by ${wide.toFixed(1)}).`);
+check(2*floor.floorHalfWidth>=40,'Each straight is 40 m of floor across: 14 Titans side by side.');
+// The Spine: the two straights' inner walls meet in a narrow divider on the stadium's long axis.
+check(spine.every(wall=>Math.abs(wall.x-centre.x)<1.5),
+  'The inner walls form the Spine, a divider under 3 m wide down the middle of the floor.');
 const end=bowl.worldAt(bowl.length-.05,0);
 check(Math.hypot(end.x,end.z)<.1&&bowl.samples.every((p,i)=>!i||Math.abs(p.heading-bowl.samples[i-1].heading)<.25),
-  'The ring closes at the start line and bends smoothly round its tight ends.');
+  'The ring closes at the start line and bends smoothly round its ends.');
+check(Math.abs(bowl.length/bowl.step-Math.round(bowl.length/bowl.step))<1e-9,'The lap is a whole number of the course\'s samples.');
 const line=[];for(let s=0;s<bowl.length;s+=.25)line.push(bowl.worldAt(s,0));
-const closest=Math.min(...bowl.features.barriers.filter(wall=>wall.arenaWall).flatMap(wall=>{
+const closest=Math.min(...walls.flatMap(wall=>{
   const sn=Math.sin(wall.heading),cs=Math.cos(wall.heading);
   return [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0]].map(([u,v])=>{
     const x=wall.x+cs*u*wall.halfX+sn*v*wall.halfZ,z=wall.z-sn*u*wall.halfX+cs*v*wall.halfZ;
@@ -37,35 +39,86 @@ check(bowl.roadHalfWidthAt(0)===floor.floorHalfWidth&&floor.floorHalfWidth+1.4+.
   'A Titan at the floor edge is clear of both walls.');
 for(const prop of bowl.features.crushables)
   check(Math.abs(prop.off)+prop.halfX<=floor.floorHalfWidth,`${prop.id} stands on the floor.`);
-
-check(bowl.features.ramps.length===2,'The Bowl has a kicker and a big ramp.');
 check(bowl.features.crushables.map(prop=>prop.sourceKind).join(',')===
   'junkCar,junkCar,junkCar,junkCar,junkCar,junkCar,junkCar,junkCar,junkCar,bowlBus,bowlBus,bowlRv,bowlBurningHeap,bowlBurningHeap,bowlBurningHeap',
   'The crush line grows from junk cars to buses and the RV, then the burning heap.');
-check(bowl.features.barriers.every(wall=>!wall.arenaWall||wall.y===0)&&
-  bowl.features.flameJets.every(jet=>bowl.groundAt(jet.s,jet.off).y===0),
-  'The ramps fill the floor between the walls; the walls and flame jets stand on the ground.');
-check(bowl.features.flameJets.length===4&&bowl.features.ramps.every(ramp=>
-  bowl.features.flameJets.filter(jet=>jet.s>ramp.start&&jet.s<ramp.end).length===2),
-  'A flame jet stands either side of each ramp.');
+check(bowl.features.signs.length===0,'No road sign stands in the stands.');
 
-// A real ride over each ramp: the Titan leaves the ground at a speed the floor allows.
+// The jumps: several heights, all on the straights, none sharing a stretch of the lap (the
+// jump scoring names a jump by where it is along the lap).
+const ramps=[...bowl.features.ramps].sort((a,b)=>a.start-b.start),onStraight=(s,[a,b])=>s>=a&&s<=b;
+check(new Set(ramps.map(ramp=>ramp.height)).size>=3,'The jumps come in at least three heights.');
+check(ramps.every(ramp=>[data.zones.jumpStraight,data.zones.crushStraight].some(zone=>onStraight(ramp.start,zone)&&onStraight(ramp.end,zone))),
+  'Every jump stands on a straight.');
+check(ramps.every((ramp,i)=>!i||ramp.start>ramps[i-1].end+8),'No two jumps share a stretch of the lap.');
+check(ramps.every(ramp=>bowl.groundAt((ramp.start+ramp.end)/2,ramp.off).y>ramp.height*.95&&
+  bowl.groundAt((ramp.start+ramp.end)/2,ramp.off+ramp.halfWidth+ramp.flank+.5).y===0),'Each jump is its own height and ends at its sides.');
+// The banked ends rise towards the wall; the straights stay flat beside their jumps.
+for(const [a,b] of [data.zones.end1,data.zones.end2]){
+  const middle=(a+b)/2;
+  check(bowl.groundAt(middle,floor.floorHalfWidth).y>1.5&&bowl.groundAt(middle,5).y===0,'Each end is a bowl, rising towards its wall.');
+}
+check(bowl.groundAt(10,floor.floorHalfWidth).y===0&&bowl.groundAt(data.halfLap+10,floor.floorHalfWidth).y===0,'The straights are flat at the wall.');
+check(bowl.features.flameJets.length===2*ramps.length&&ramps.every(ramp=>
+  bowl.features.flameJets.filter(jet=>jet.s>ramp.start&&jet.s<ramp.end).length===2),
+  'A flame jet stands either side of each jump.');
+
+// The show's places, for the cards that run events on this floor.
+check(data.lanes.length===2&&data.lanes[0].lateral===data.lanes[1].lateral&&Math.abs(data.lanes[1].s-data.lanes[0].s-bowl.length/2)<1e-9,
+  'Side by Side has two lanes on the same line, half a lap apart.');
+const meets=lane=>ramps.filter(ramp=>Math.abs(lane.lateral-ramp.off)<ramp.halfWidth).map(ramp=>[ramp.height,
+  ((ramp.start-lane.s)%bowl.length+bowl.length)%bowl.length].join('@')).sort().join(',');
+check(meets(data.lanes[0])===meets(data.lanes[1])&&meets(data.lanes[0]).length,'The two lanes meet the same jumps at the same distances: mirrors.');
+check(data.crush.startS<data.crush.firstRowS&&Math.min(...bowl.features.crushables.map(prop=>prop.s))===data.crush.firstRowS,
+  'Car Crush starts before the first row of the line.');
+check(onStraight(data.crush.startS,data.zones.crushStraight)&&bowl.features.crushables.every(prop=>onStraight(prop.s,data.zones.crushStraight)),
+  'Car Crush starts on the straight that holds the whole line, so a truck driven straight ahead meets it.');
+check(data.rails.lateral>12&&data.rails.lateral<floor.floorHalfWidth,'The Scrapasaurus\'s rails run round the edge of the floor.');
+check(data.launchCars.every(car=>Math.abs(car.lateral)<floor.floorHalfWidth&&bowl.groundAt(car.s,car.lateral).y===0),
+  'The launch cars stand on flat floor.');
+
+// Real drives on the floor, outside an arena event, as Car Crush, Freestyle and Side by Side run.
 function bowlDuel(){
   const duel=new Duel({seed:1989});
   duel.startCampaign({startStage:COURSE.findIndex(course=>course.id==='titan-arena'),mode:'timetrial',car:'titan_monster'});
   duel.course=new Course(BOWL_COURSE,1989);
+  for(let i=0;i<300;i++)duel.step(1/60); // the countdown
   Object.assign(duel.state,{status:'racing',traffic:[],rival:null,crushedProps:[]});
   return duel;
 }
-for(const [index,ramp] of bowl.features.ramps.entries()){
-  const duel=bowlDuel(),state=duel.state;
-  Object.assign(state,{s:ramp.start-6,prevS:ramp.start-6,speedMph:30,airborne:false,airHeight:0,_jumpY:null,_verticalSpeed:0});
-  let air=0,landed=false;
-  for(let tick=0;tick<360&&!landed;tick++){
-    state.prevS=state.s;state.s+=state.speedMph*DT*DRIVE.mphToWorld;duel._jump(state,DT);
-    if(state.airborne)air++;else if(air)landed=true;
+function place(duel,s,lateral){Object.assign(duel.state,{s,prevS:s,lateral,prevLateral:lateral,speedMph:0,headingError:0,yawVelocity:0,
+  airborne:false,airHeight:0,_jumpY:null,_verticalSpeed:0,collectedJumps:[]});}
+// Each jump, from the start of its straight at full throttle: the truck flies and lands upright.
+const flights=new Map();
+for(const ramp of ramps){
+  const duel=bowlDuel(),state=duel.state,zone=onStraight(ramp.start,data.zones.jumpStraight)?data.zones.jumpStraight:data.zones.crushStraight;
+  place(duel,zone[0],ramp.off);duel.setInput({throttle:1,steer:0});
+  let air=0,landed=false,from=null,distance=0;
+  for(let tick=0;tick<900&&!landed;tick++){
+    duel.step(1/60);
+    if(state.airborne){air++;from??=duel.course.worldAt(state.s,state.lateral);}
+    else if(air>6){landed=true;const to=duel.course.worldAt(state.s,state.lateral);distance=Math.hypot(to.x-from.x,to.z-from.z);}
   }
-  check(air*DT>.5&&landed,`Ramp ${index} launches the Titan at 30 mph and it lands.`);
+  check(landed&&air/60>.9&&!state.tumble,`${ramp.name} throws a Titan for more than 0.9 s and it lands on its wheels.`);
+  flights.set(ramp.id,distance);
+}
+check(flights.get('big-jump')>flights.get('table')&&flights.get('table')>flights.get('jump-kicker'),
+  'The higher the jump, the further the Titan flies.');
+// The floor holds a Titan to the same top speed in every event: it settles near 50 mph.
+{
+  const duel=bowlDuel(),state=duel.state;place(duel,data.zones.crushStraight[0],floor.floorHalfWidth-3);
+  duel.setInput({throttle:1});let top=0;
+  for(let i=0;i<240;i++){duel.step(1/60);top=Math.max(top,state.speedMph);}
+  check(top>40&&top<60,`The floor holds a Titan near 50 mph outside an arena event too (${top.toFixed(1)} mph).`);
+}
+// A truck turns any way it likes on the floor: more than a full half turn, in the open end.
+{
+  const duel=bowlDuel(),state=duel.state;place(duel,(data.zones.end1[0]+data.zones.end1[1])/2,2);
+  duel.setInput({throttle:.45,steer:-1});
+  let last=duel.course.at(state.s).heading+state.headingError,turned=0;
+  for(let i=0;i<480;i++){duel.step(1/60);const heading=duel.course.at(state.s).heading+state.headingError;
+    turned+=Math.atan2(Math.sin(heading-last),Math.cos(heading-last));last=heading;}
+  check(Math.abs(turned)>Math.PI,`A Titan turns round on the Bowl's floor (${(Math.abs(turned)/Math.PI*180).toFixed(0)} degrees in 8 s).`);
 }
 
 // A real crush of each kind of item in the line.
@@ -95,17 +148,7 @@ check(titan.roadHalfWidthAt(0)===13&&titan.features.ramps.map(ramp=>[ramp.end-ra
   titan.features.barriers.filter(wall=>wall.arenaWall).every(wall=>Math.abs(wall.off)===22),
   'The Titan Monster Arena keeps its floor, ramps and walls.');
 
-// The view: the stadium stands round the ring, and its own floor props are cleared off the ring.
-const fakeModel=parts=>{
-  const scene=new THREE.Group();
-  for(const [name,[x,y,z]=[0,0,0]] of parts){
-    const assembly=new THREE.Group();assembly.name=name;
-    const mesh=new THREE.Mesh(new THREE.BoxGeometry(2.2,1.4,5.2),new THREE.MeshStandardMaterial({color:0xb45d53}));
-    mesh.name=name;mesh.position.set(x,y,z);assembly.add(mesh);
-    scene.add(assembly);
-  }
-  return {scene};
-};
+// The view: the stadium is drawn in code round the floor; the crush line uses its models.
 // Like crush.glb: sibling parts under one root, whose turn about X stands them upright
 // (each part is long along its own Y, as Blender's Z-up export leaves it).
 const fakeCrush=()=>{
@@ -120,32 +163,29 @@ const fakeCrush=()=>{
   return {scene};
 };
 const fireTexture=new THREE.DataTexture(new Uint8Array([255,160,32,255]),1,1);
-// Like the stadium model's merged meshes: one box crossing the stand wall's line, one in a corner.
-const scrapBoxes=()=>{
-  const mesh=new THREE.Mesh(mergeGeometries([new THREE.BoxGeometry(2.2,1.2,2.2).translate(36.5,.6,0),
-    new THREE.BoxGeometry(2.2,1.2,2.2).translate(31,.6,-23)]),new THREE.MeshStandardMaterial());
-  mesh.name='bowl-scrap-boxes';return mesh;
-};
-const withScrap=model=>{model.scene.add(scrapBoxes());return model;};
-const view=createBowlView({loadModel:async path=>path.endsWith('stadium.glb')?
-  withScrap(fakeModel([['stadium'],['bowl-ramp-0-plate',[-24,.75,2]],['bowl-crushed-car-wrecks',[-33,.55,-7]],
-    ['bowl-rustwall-panels',[33,.9,0]],['bowl-handrails',[31,.9,-23]],['bowl-podium-concrete',[0,.45,-1]],['bowl-concrete-terraces',[0,2.6,30]]])):
-  fakeCrush(),
-  loadFireTexture:async()=>fireTexture});
+const loaded=[];
+const view=createBowlView({loadModel:async path=>{loaded.push(path);return fakeCrush();},loadFireTexture:async()=>fireTexture});
 view.update(bowl,{},1000,true);
+const firstStadium=view.group.getObjectByName('Bowl stadium, floodlights and crowd');
 await new Promise(resolve=>setTimeout(resolve,0));
 await new Promise(resolve=>setTimeout(resolve,0));
+check(view.group.userData.flameJetCount&&view.group.getObjectByName('Bowl stadium, floodlights and crowd')===firstStadium,
+  'The stadium is drawn once: rebuilding the fires keeps it.');
 check(view.group.visible,'The Bowl presentation is visible when its switch and course definition are active.');
+check(loaded.length&&loaded.every(path=>path.endsWith('crush.glb')),'Only the crush models are loaded: the stadium model is gone.');
 const stadium=view.group.getObjectByName('Bowl stadium, floodlights and crowd');
-check(view.group.userData.stadiumReady&&stadium,'The authored night stadium is rendered.');
-check(Math.hypot(stadium.position.x-centre.x,stadium.position.z-centre.z)<1e-9,'The stadium stands round the middle of the ring.');
-check(!stadium.getObjectByName('bowl-ramp-0-plate'),'The stadium model\'s own ramps are not left on the ring.');
-const triangles=name=>stadium.getObjectByName(name).children[0].geometry.index.count/3;
-check(triangles('bowl-rustwall-panels')===0&&triangles('bowl-crushed-car-wrecks')===0,'Low props on the ring are cut out of the stadium model.');
-const scrap=stadium.getObjectByName('bowl-scrap-boxes').geometry.index.count/3;
-check(scrap===12,'A merged box crossing the wall line goes whole; the box in the corner stays whole.');
-check(triangles('bowl-podium-concrete')===12&&triangles('bowl-concrete-terraces')===12&&triangles('bowl-handrails')===12,
-  'The podium, the stands and a prop in a corner off the ring stay whole.');
+check(view.group.userData.stadiumReady&&stadium,'The night stadium is drawn.');
+const terraces=new THREE.Box3().setFromObject(stadium.getObjectByName('Bowl terraces'));
+const floorBox=new THREE.Box3();for(const wall of outer)floorBox.expandByPoint(new THREE.Vector3(wall.x,0,wall.z));
+check(terraces.min.x<floorBox.min.x-30&&terraces.max.x>floorBox.max.x+30&&terraces.min.z<floorBox.min.z-30&&terraces.max.z>floorBox.max.z+30&&terraces.max.y>20,
+  'The terraces stand all round the floor, behind its wall, rising above 20 m.');
+check(stadium.userData.crowdCards>10000,`The stands hold a crowd of more than ten thousand (${stadium.userData.crowdCards}).`);
+const lights=stadium.userData.lights;
+check(lights.length===4&&lights.every(light=>floorBox.containsPoint(new THREE.Vector3(light.target.position.x,0,light.target.position.z))),
+  'Four floodlights are aimed at the floor.');
+const containers=stadium.getObjectByName('Bowl Spine').children.filter(child=>child.name.startsWith('Bowl Spine container'));
+check(containers.length===6&&containers.every(box=>{const b=new THREE.Box3().setFromObject(box);
+  return spine.some(wall=>Math.hypot(wall.x-box.position.x,wall.z-box.position.z)<8);}),'The Spine\'s containers stand on the Spine.');
 check(view.group.getObjectByName('Bowl faded junk car crush line')?.userData.crushableCount===9,
   'The opening crush rows reuse the game junk-car props.');
 check(view.group.children.filter(child=>child.name.startsWith('Bowl authored crush')).length===3,
@@ -160,31 +200,33 @@ const flat=name=>{
 };
 const bus=bowl.features.crushables.find(prop=>prop.sourceKind==='bowlBus');
 check(flat(`Bowl authored crush ${bus.id}`),'The crushed bus lies flat along the course, not on end.');
-check(view.group.getObjectByName('Bowl burning bus stack')&&flat('Bowl burning bus stack'),
+const middleHeap=bowl.features.crushables.find(prop=>prop.sourceKind==='bowlBurningHeap'&&prop.off===13.8);
+check(view.group.getObjectByName(`Bowl burning bus stack ${middleHeap.id}`)&&flat(`Bowl burning bus stack ${middleHeap.id}`),
   'The authored burning stack lies along the course between its ground fire sprites.');
 check(view.group.children.filter(child=>child.name.startsWith('Bowl burning bus stack')).length===3,
   'A burning stack stands on each of the heap\'s three places.');
 const busProp=view.group.getObjectByName(`Bowl authored crush ${bus.id}`);
 for(let i=0;i<60;i++)view.update(bowl,{crushedProps:[bus.id]},1000,true);
-check(busProp.scale.y===.5&&view.group.getObjectByName('Bowl burning bus stack').scale.y===1,
+check(busProp.scale.y===.5&&view.group.getObjectByName(`Bowl burning bus stack ${middleHeap.id}`).scale.y===1,
   'A crushed bus settles lower and the props not crushed stay as they are.');
-const heap=bowl.features.crushables.find(prop=>prop.sourceKind==='bowlBurningHeap'&&prop.off===0);
-const heapFire=view.group.getObjectByName(`Bowl heap fire ${heap.id}`),fireBefore=heapFire.position.y;
-for(let i=0;i<60;i++)view.update(bowl,{crushedProps:[heap.id]},1000,true);
+const heapFire=view.group.getObjectByName(`Bowl heap fire ${middleHeap.id}`),fireBefore=heapFire.position.y;
+for(let i=0;i<60;i++)view.update(bowl,{crushedProps:[middleHeap.id]},1000,true);
 check(heapFire.position.y<fireBefore-.3,'The fire of a crushed stack sinks with it.');
 let tongues=0;view.group.traverse(node=>{if(node.name==='curling-flame-tongue')tongues++;});
 check(tongues===0,'The model\'s cone flames are not used.');
 const jets=()=>view.group.children.filter(child=>child.name.startsWith('Bowl flame jet bowl-'));
-check(view.group.userData.flameJetCount===4&&jets().length===4&&
-  view.group.children.filter(child=>child.name.startsWith('Bowl flame jet housing')).length===4,
-  'Four timed fire-flipbook jets render on their housings at the course positions.');
+check(view.group.userData.flameJetCount===8&&jets().length===8&&
+  view.group.children.filter(child=>child.name.startsWith('Bowl flame jet housing')).length===8,
+  'Eight timed fire-flipbook jets render on their housings at the course positions.');
 check(view.group.userData.heapFireCount===3&&view.group.children.filter(child=>
   child.name.startsWith('Bowl heap fire')).length===3,
   'The three heap props use the game fire-flipbook effect with no cone flame.');
+// The four pairs fire a beat apart, so all eight burn together only early in the cycle.
+view.update(bowl,{},100,true);
 check(jets().every(child=>child.visible),'Flame jets are active during their firing part of the cycle.');
 view.update(bowl,{},8000,true);
 check(jets().every(child=>!child.visible),'Flame jets extinguish during the rest of their cycle.');
 view.update(bowl,{},4000,false);
 check(!view.group.visible,'The Bowl presentation stays hidden with its feature switch off.');
 view.dispose();
-console.log('Bowl course: ring inside the stadium, ramps launch, crush line crushes, art view and existing courses passed.');
+console.log('Bowl course: a stadium floor in proportion, jumps that fly, mirrored lanes, free turning, crush line, stadium view and existing courses passed.');

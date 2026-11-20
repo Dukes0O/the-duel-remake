@@ -5,7 +5,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // Small race furniture and vegetation are kept outside the legal driving
 // corridors. Ruts are translucent surface detail, never collision geometry.
 export function addRallyDetail(world, course) {
-  if (!course.def.offroad) return null;
+  // The Bowl is a stadium floor, not a rally trail (it is `offroad` only for its floor's speed).
+  if (!course.def.offroad || course.def.bowl) return null;
   const group = new THREE.Group(); group.name = 'Rally trail dressing';
   const rng = makeRng(course.seed ^ 0x6d927b), placements = [];
   const mats = {
