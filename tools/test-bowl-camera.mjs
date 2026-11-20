@@ -5,7 +5,6 @@
 // Run: node tools/test-bowl-camera.mjs
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
-import {bowlCentre} from '../src/bowl/bowl-course.js';
 import {BOWL_CAMERA, bowlCameraKey, bowlSolidTop, createBowlCamera, stepBowlCamera} from '../src/bowl/bowl-camera.js';
 
 const SIM_DT = 1 / 120, FRAME = 1 / 60, DEG = Math.PI / 180;
@@ -25,6 +24,14 @@ function showDuel(eventIndex) {
     duel.continueBowlNight();
   }
   return duel;
+}
+
+// Place the truck on its approach. From here on only the player's controls move it.
+function approach(duel, s, lateral, headingError, speedMph) {
+  while (duel.state.status === 'countdown') duel.step(SIM_DT);
+  const y = duel.course.groundAt(s, lateral).y;
+  Object.assign(duel.state, {s, prevS: s, lateral, prevLateral: lateral, headingError, speedMph,
+    groundHeight: y, prevGroundHeight: y, _jumpY: y, boost: 1});
 }
 
 const truckOf = duel => {
@@ -101,7 +108,7 @@ function steady(name, frames) {
     }
     const seen = frames[index].seen;
     widest = Math.max(widest, seen.depth > 0 ? Math.max(Math.abs(seen.x), Math.abs(seen.y)) : Infinity);
-    // A truck inside the stands (they have no height for a truck yet, BOWL-OUT-SIM) is hidden from every camera.
+    // An overlapping solid at the truck itself cannot be resolved by moving the camera.
     blockedRun = frames[index].blocked && !frames[index].inside ? blockedRun + FRAME : 0;
     longestBlocked = Math.max(longestBlocked, blockedRun);
   }
@@ -134,11 +141,12 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
   steady('round the end of the Spine', frames);
 }
 
-// 2. Over the Spine: full throttle, then full lock off the jump, so the truck flies over the Spine and its place on the
-//    lap jumps by half a lap while it goes on the same way through the air.
+// 2. Aim across the Spine before takeoff. Release nitro once the truck leaves the ramp.
 {
   const duel = showDuel(1);
-  const frames = record('over the Spine', duel, 8, (d, t) => ({throttle: 1, brake: 0, steer: t > 1.5 ? 1 : 0, boost: false}));
+  approach(duel, 44, -12, -.5, 65);
+  const frames = record('over the Spine', duel, 8, (_, t) =>
+    ({throttle: t < .5 ? 1 : 0, brake: 0, steer: t < .18 ? .3 : 0, boost: t < .5}));
   const jump = frames.findIndex((frame, index) => index && Math.abs(frame.truck.s - frames[index - 1].truck.s) > 40);
   ok(jump > 0, 'over the Spine: the truck\'s place on the lap jumped (the case that jerked the old camera)');
   steady('over the Spine', frames);
@@ -175,36 +183,42 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
   steady('a donut', frames);
 }
 
-// 5. A double flip off the Big Jump: nitro up the jump (13 m towards the Spine), S held in the air to turn the truck over.
-//    The camera draws back with height and never reads the truck's pitch.
+// 5. A double backflip on the Big Jump. Press S after takeoff, release it after two turns.
 {
   const duel = showDuel(1);
-  const frames = record('a double flip off the Big Jump', duel, 7, (d, t, truck) =>
-    ({throttle: d.state.airborne ? 0 : 1, brake: d.state.airborne ? 1 : 0, boost: !d.state.airborne,
-      // A gentle line over to the jump: since BOWL-WALLS a hard swerve bounces off the Spine's wall and misses it.
-      steer: Math.max(-.3, Math.min(.3, keepLine(d, truck, -13)))}));
+  approach(duel, 38, -13, 0, 53);
+  let airTicks = 0, trick;
+  duel.onChange((_, event) => { if (event.bowlTrick) trick = event.bowlTrick; });
+  const frames = record('a double flip off the Big Jump', duel, 7, d => {
+    const tick = d.state.airborne ? ++airTicks : 0;
+    return {throttle: 0, brake: tick > 2 && tick <= 218 ? 1 : 0, steer: 0, boost: false};
+  });
   const high = frames.filter(frame => frame.truck.air > 8);
   ok(high.length > 10, 'a double flip off the Big Jump: the truck flew more than 8 m up');
   const reach = Math.max(...high.map(frame => Math.hypot(frame.pose.position.x - frame.truck.x, frame.pose.position.z - frame.truck.z)));
   ok(reach > BOWL_CAMERA.backMetres + 2, `a double flip off the Big Jump: the camera draws back in the air (${reach.toFixed(1)} m behind)`);
-  ok(Math.abs(duel.state.bowlAirPitch ?? 0) > 0 || frames.some(frame => frame.truck.air > 0), 'a double flip off the Big Jump: the truck was turned over in the air');
+  ok(trick?.kind === 'backflip' && trick.turns === 2 && trick.landing === 'clean', 'the truck landed the double flip');
   steady('a double flip off the Big Jump', frames);
 }
 
-// 6. Over the wall and back: off the kicker with nitro, aimed at the stands, over the wall and out of the arena, round,
-//    and back to the wall from outside. (The stands have no height for a truck yet and there is no gate to come back in
-//    by: both are BOWL-OUT-SIM's. The truck goes through the stands at floor level and stops against the wall's back.)
-//    The camera rises over the wall, the fence and the stands, and follows the truck outside.
+// 6. Launch onto the terraces, climb to the last row, leap into the car park,
+// and follow the nearest gate through its tunnel back onto the floor.
 {
-  const duel = showDuel(1);
-  const frames = record('over the wall and back', duel, 14, (d, t, truck) => {
-    if (truck.lateral > 60) d._turned = true;
-    if (t < 1.2) return {throttle: 1, brake: 0, steer: keepLine(d, truck, 0), boost: true};
-    if (!d._turned) return {throttle: 1, brake: 0, steer: keepLine(d, truck, 80), boost: true};
-    // Back to the middle of the stadium, steering by the world (the lap's frame means little out here).
-    const middle = bowlCentre(d.course);
-    return {...pace(truck, 30), steer: steerTo(truck, Math.atan2(middle.x - truck.x, middle.z - truck.z)), boost: false};
+  const duel = showDuel(1), outside = duel.course.features.bowl.outside;
+  approach(duel, 43, -13, .35, 50);
+  let terrace = false, park = false, back = false;
+  duel.onChange((_, event) => { if (event.bowlBackIn) back = true; });
+  const frames = record('over the wall and back', duel, 42, (d, t, truck) => {
+    const s = d.state;
+    if (!s.airborne && s.bowlOutside?.where === 'stands') terrace = true;
+    if (!s.airborne && s.lateral > outside.back) park = true;
+    if (!terrace) return {throttle: 1, brake: 0, boost: true, steer: 0};
+    let aim = d.course.worldAt(s.s, s.lateral + 30);
+    if (back) aim = d.course.worldAt(s.s + 12, s.lateral);
+    else if (park) aim = s.bowlOutside.gate.aim;
+    return {...pace(truck, park ? 20 : 25), steer: steerTo(truck, Math.atan2(aim.x-truck.x, aim.z-truck.z)), boost: false};
   });
+  ok(terrace && park && back, 'landed on the terrace, dropped into the park, and returned through a real gate');
   ok(frames.some(frame => frame.truck.lateral > 30), 'over the wall and back: the truck went out past the stand wall');
   ok(frames.some(frame => frame.pose.lift > 2), 'over the wall and back: the camera rose over what stood between it and the truck');
   const out = frames.findIndex(frame => frame.truck.lateral > 45);

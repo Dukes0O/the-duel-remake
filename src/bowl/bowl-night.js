@@ -17,6 +17,7 @@
 //   to BIG_MO in bowl-lines.js.
 import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle,
   scoreStuntEvent} from './bowl-show.js';
+import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
 import {BIG_MO, BOWL_CRUSH_ROW, BOWL_EVENT_NAMES, BOWL_GOALS} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
@@ -271,6 +272,7 @@ function loadBowlEvent(duel) {
     cpuDifficulty: night.cpuDifficulty, rival: null});
   const s = duel.state;
   s.bowlNight = night;
+  delete s.bowlOutside;
   night.phase = 'event';
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
     crowdPeak: 0, crowdMark: 0,
@@ -296,14 +298,14 @@ export function retryBowlEvent(duel) {
   return true;
 }
 
-function addFact(duel, fact) {
+function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   const s = duel.state, event = duel.state.bowlNight.event, at = s.stageTimeSec;
   const timed = {...fact, atSeconds: at};
   const scored = scoreStuntEvent(timed, crowdAfter(event.crowd, at - event.crowdAt));
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
-  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: scored.points ? 'bowl.crowd.rise' : null}});
+  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: scored.points ? cue : null}});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
 }
@@ -396,6 +398,7 @@ export function stepBowlNight(duel, dt) {
     return true;
   }
   if (s.status !== 'racing') return false;
+  observeBowlOutside(duel, dt, addFact, say);
   observeTruck(duel, dt);
   const done = RUNNERS.get(night.event.type).step(duel, night, dt);
   if (!done) return false;
