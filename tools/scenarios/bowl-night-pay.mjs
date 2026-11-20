@@ -24,7 +24,18 @@ export const page = {
     if (!app.visualReady || canvas?.parentElement?.dataset?.vehicleAsset !== 'ready' || !view?.scene) return false;
     let titan = false; view.scene.traverse(node => { if (node.userData?.vehicleKey === 'titan_monster' && node.visible) titan = true; });
     return titan && !!view.scene.getObjectByName('Bowl stadium, floodlights and crowd'); })()`,
-  card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result [data-action="show-night-next"]'))()`,
+  // A card after an event, or the night's results after the last one (which has no NEXT EVENT button).
+  card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result'))()`,
+  // Where the night stands, for a timeout's report: both trucks' lap progress, the event's step and the clock.
+  eventState: `(() => { const app = window.__qaApp, s = app.duel.state, night = s.bowlNight, rival = s.opponents?.[0];
+    const truck = actor => actor && {s: +actor.s.toFixed(1), lateral: +actor.lateral.toFixed(2), mph: +actor.speedMph.toFixed(1),
+      completedLaps: actor.completedLaps, nextLapGate: actor.nextLapGate};
+    return JSON.stringify({status: s.status, paused: !!s.paused, countdown: s.countdown, stageTimeSec: +(s.stageTimeSec || 0).toFixed(2),
+      night: night && {phase: night.phase, event: night.event?.type, eventIndex: night.show?.eventIndex, attempt: night.event?.attempt,
+        clock: +night.clock.toFixed(1), playerDoneAt: night.event?.playerDoneAt, rivalDoneAt: night.event?.rivalDoneAt, attempts: night.attempts.length},
+      truck: {...truck(s), crashes: s.stageCrashes, impactTimer: s.impactTimer, tumble: !!s.tumble, airborne: !!s.airborne},
+      rival: truck(rival), autopilot: app.autopilot === true, visualReady: app.visualReady,
+      card: document.querySelector('.bowl-result')?.dataset.bowlResult ?? null}); })()`,
   cardWon: `(() => document.querySelector('.bowl-result')?.dataset.bowlResult === 'won')()`,
   next: `(() => { document.querySelector('[data-action="show-night-next"]').click(); return true; })()`,
   freestyleCrowd: `(() => { const hud = document.querySelector('.bowl-hud'); return !hud.hidden && hud.textContent.includes('FREESTYLE') && window.__qaApp.duel.state.stageTimeSec > 15; })()`,
@@ -46,6 +57,15 @@ const key = (context, code, type) => {
   return context.evaluate(expression);
 };
 const picture = async (context, name) => { await context.evaluate(page.frame); await context.screenshot(name); };
+// Wait for an event to end; on a timeout the error (and so report.json) carries the night's state.
+async function waitForCard(context, label, timeout) {
+  try { await context.waitFor(page.card, label, timeout); }
+  catch (error) {
+    let state = 'unreadable';
+    try { state = await context.evaluate(page.eventState); } catch {}
+    throw Error(`${error.message} Night state: ${state}`);
+  }
+}
 
 export async function run(context) {
   await context.navigate('/tools/menu-check.html?flags=titan-bowl');
@@ -67,7 +87,7 @@ export async function run(context) {
   await context.waitFor(page.drawn, 'the Bowl stadium and the Titan are drawn', 120000);
   await picture(context, 'bowl-night-car-crush-start');
   await key(context, 'KeyW', 'keydown');
-  try { await context.waitFor(page.card, 'the Car Crush ends', 180000); }
+  try { await waitForCard(context, 'the Car Crush ends', 180000); }
   finally { await key(context, 'KeyW', 'keyup'); }
   await picture(context, 'bowl-night-car-crush-card');
   // Every later event (and any retry) is driven by the test driver.
@@ -81,7 +101,7 @@ export async function run(context) {
       await picture(context, 'bowl-night-freestyle-hud');
       freestyleSeen = true;
     }
-    await context.waitFor(page.card, `${type} ends`, 150000);
+    await waitForCard(context, `${type} ends`, 150000);
     await context.evaluate(page.manual);
     await picture(context, `bowl-night-card-${round}-${String(type).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`);
   }
