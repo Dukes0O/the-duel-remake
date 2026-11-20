@@ -1,4 +1,4 @@
-# BOWL-WALLS — held for Last Truck Rolling
+# BOWL-WALLS
 
 - The stand wall, Spine containers, ends and rival trucks bounce or scrape by the incoming normal speed. Show Night plays four existing sound cues.
 - Hard and big hits cost 1/12 and 1/6 of health in a fight. Other Bowl events protect truck zones and cannot wreck the driver.
@@ -6,6 +6,6 @@
 - At dd8fd0035 the build and seeded wall tests passed, including a moving CPU pair in both orders, both health systems and held throttle from each start.
 - The correction tier passed 29/29. Race fingerprints (297), combat replays (12), and world signatures (63 checks) matched their existing baselines.
 - Easy night 3 seeds 1989, 2090 and 2191 each ended in a player wreck with all rivals rolling. At 1989 five hard rams cost both trucks 25 health. Three hard and two big wall hits cost the player the other 35.
-- The old Easy rams dealt one fifth as much damage from rivals. The new fight table uses the same loss for each truck. The Director must settle how Easy meets the existing win and knockout targets under those rules.
-- Assertions added for zero wear and wall physics. Existing assertions and baselines retained. Browser and listening review awaits Claude.
+- The old Easy rams dealt one fifth as much damage from rivals. The new fight table uses the same loss for each truck. Claude transferred the unarmed balance targets to BOWL-WEAPONS, with these wall costs and baseline contacts.
+- Assertions added for zero wear and wall physics. Claude approved replacing unarmed Easy knockout and win rates with direct player knockout credit, cue and Big Mo checks. Weapons inherits the child-pace targets because players first meet the armed fight. Side by Side thresholds stay. Browser and listening review awaits Claude.
 - **Removed** — Generic arena wall braking, ordinary collision wear and road-style crash handling for these Bowl contacts. Other courses retain them.
