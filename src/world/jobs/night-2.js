@@ -165,13 +165,14 @@ function sceneFor(step, chapter) {
   return {...scene, choices: options, stocks: {embers: chapter.ledger.stocks.embers}};
 }
 
-export function night2Page(ledger) {
+// `inNight`: the journal opened from the pause card in the middle of the night marks what changed so far tonight, as the dawn page does.
+export function night2Page(ledger, {inNight = false} = {}) {
   const page = ledgerPageData(ledger);
   if (!page) return null;
   const tonight = ledger.history.filter(change => change.night === 2);
   const known = new Set(tonight.filter(change => change.type === 'mark').map(change => change.key));
   const memories = Object.entries(memoryLines).filter(([id]) => known.has(id)).map(([, line]) => line);
-  return {...page, memories, saltScrap: known.has('dace-kept-watch') ? 10 : 0, tonight: ledger.night === 3 ? {
+  return {...page, memories, saltScrap: known.has('dace-kept-watch') ? 10 : 0, tonight: ledger.night === 3 || inNight ? {
     supplies: tonight.some(change => change.type === 'stock'),
     people: tonight.filter(change => change.type === 'met').map(change => change.key),
     obligations: tonight.some(change => ['debt', 'promise'].includes(change.type)),
