@@ -17,7 +17,7 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongP
 import {FIELD, nitroLocked} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
-import {landBowlTricks, stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
+import {carriedSteer, landBowlTricks, stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -135,7 +135,7 @@ export function _drive(dt) {
   const balancing = showGround && Math.abs(s.input.steer) <= .5 && (s.speedMph < 10 || s.bowlGroundTrick === 'wheelie');
   const throttle = showFlight ? 0 : balancing ? s.input.throttle * .12 : s.input.throttle;
   const brake = showFlight ? 0 : showGround ? s.input.brake * .22 : s.input.brake;
-  const steer = showFlight ? 0 : s.input.steer;
+  const steer = showFlight ? carriedSteer(s) : s.input.steer;
   const previousGear = s.gear;
   // S / Down / LT brakes first, then backs up after a deliberate hold at
   // rest. This works in both transmissions; Q/E still shift forward gears.

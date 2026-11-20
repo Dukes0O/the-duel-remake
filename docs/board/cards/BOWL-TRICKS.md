@@ -93,3 +93,7 @@ The branch is `codex/bowl-tricks`. The card replaces the old damaging roof tumbl
   and the player's own truck, so other courses cannot move; the lane tier's replay fingerprints must confirm it.
 
 Merge when the lane tier and build are green.
+
+## Follow-up driver review
+
+Turn Show uses the same 30 mph Freestyle approach and keys-up flight approved for the solo night. All 307 checks still pass. The Scrapasaurus driver and its browser twin keep the existing open-box cue, approach window, pace and ground target. The driver straightens along the rail before take-off and releases the new trick controls in flight. The headless run keeps the same ten seeds, reaction delay and wobble. All ten Easy drivers smashed three boxes; the required rate stays eight out of ten. No assertions changed in either suite or browser scenario.

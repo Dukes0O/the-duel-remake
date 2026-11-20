@@ -9,6 +9,15 @@ export function tricksEnabled(duel, actor) {
     duel.featureFlags?.enabled('titan-bowl') === true && actor.bowlNight?.event?.type !== 'lastTruckRolling';
 }
 
+// A steering direction already down at the lip keeps its driving function.
+// A fresh direction in flight belongs to the trick, never the trajectory.
+export function carriedSteer(actor) {
+  const state = states.get(actor);
+  const carried = (state?.flight?.held ?? state?.groundKeys)?.steer;
+  const steer = actor.input.steer;
+  return carried && Math.sign(steer) === Math.sign(carried) ? steer : 0;
+}
+
 function award(duel, state, kind, turns, points, combo = 1, landing = 'clean', firstOnLanding = false) {
   const {fresh, repeat} = landing === 'slam' ? {fresh: false, repeat: 1} : trickVariety(state, kind);
   const cues = [];
