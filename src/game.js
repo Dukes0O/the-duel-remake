@@ -63,6 +63,7 @@ import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlot
 import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {initializeWorldJob} from './arena/modes/world-job.js';
 import {startBowlNight, continueBowlNight, retryBowlEvent, stepBowlNight, observeBowlNight} from './bowl/bowl-night.js';
+import './bowl/bowl-rivals.js'; // BOWL-RIVALS: Side by Side and Last Truck Rolling against the named rivals
 import {riderOpponentSpecs} from './arena/modes/road-riders.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];

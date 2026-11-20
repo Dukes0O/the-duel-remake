@@ -5,6 +5,7 @@
 import {SHOW_NIGHTS} from './bowl-show.js';
 import {bowlHudView} from './bowl-night.js';
 import {BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS} from './bowl-lines.js';
+import {BOWL_RIVALS} from './bowl-rivals.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -42,7 +43,9 @@ export function createBowlScreens({app, ui, escapeHTML}) {
   function eventCard(state) {
     const show = state.bowlNight, result = show.lastResult, name = BOWL_EVENT_NAMES[result.event] ?? result.event;
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
-    const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won) : result.event === 'carCrush' ? WORDS.eventRows(result.rows) : null,
+    const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won, BOWL_RIVALS[result.rival]?.name)
+      : result.event === 'lastTruckRolling' ? WORDS.eventKnockouts(result) // BOWL-RIVALS
+        : result.event === 'carCrush' ? WORDS.eventRows(result.rows) : null,
       WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
     return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${show.caption ? `<p class="bowl-mo">${escapeHTML(show.caption.text)}</p>` : ''}${lines.map(say).join('')}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
   }

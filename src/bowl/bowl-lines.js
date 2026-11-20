@@ -12,7 +12,13 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.event.won': 'interface.win',       // an event is won
   'bowl.event.lost': 'interface.lose',     // an event is lost and can be tried again
   'bowl.purse': 'interface.bonus',         // the purse is paid into the scrap wallet
+  // BOWL-RIVALS: a rival knocked out in Last Truck Rolling plays the arena's wreck
+  // cue when the player did it ('arena.wreck-credit', already played by the game's
+  // audio for an arena wreck) and Big Mo's chime with his line otherwise.
 });
+
+// The rivals' names joined as a person would say them: "A", "A and B", "A, B and C".
+const names = list => list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
 
 export const BOWL_EVENT_NAMES = Object.freeze({
   carCrush: 'Car Crush',
@@ -25,8 +31,10 @@ export const BOWL_EVENT_NAMES = Object.freeze({
 export const BOWL_GOALS = Object.freeze({
   carCrush: target => `Drive straight down the line and crush everything you can. Reach ${target} to go on.`,
   freestyle: target => `Do big jumps, flips and crushes to score ${target} points before the clock runs out.`,
-  sideBySide: () => 'Race the other truck once round the Bowl and cross the line first.',
-  lastTruckRolling: () => 'Knock the other trucks out and be the last one still rolling.',
+  sideBySide: (rival = 'the other truck') => `Race ${rival} once round the Bowl and cross the line first.`,
+  lastTruckRolling: (left = []) => left.length
+    ? `Knock out ${names(left)}, and be the last truck still rolling.`
+    : 'Knock the other trucks out and be the last one still rolling.',
 });
 
 // The rows of the Car Crush line, by how far the truck got.
@@ -65,6 +73,20 @@ export const BIG_MO = Object.freeze({
   'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
   'event.lost.lastTruckRolling': 'Our driver was knocked out, but the trucks are lining up again.',
+  // BOWL-RIVALS: who is in the other lane, who is in the Bowl tonight, and who is out.
+  'rival.old-bess': 'In the other lane is Old Bess, Moss\'s cousin. She has never once been in a hurry, but she never gives up.',
+  'rival.rust-rhino': 'In the other lane is Rust Rhino. Watch out for that horn, because Rust Rhino likes to charge.',
+  'rival.big-kettle': 'In the other lane is Big Kettle. It takes a while to get the boiler going, and then it is hard to stop.',
+  'rival.tin-lizard': 'In the other lane is Tin Lizard, the quickest and most slippery truck in the show.',
+  'rival.dragon-wagon': 'In the other lane is Dragon Wagon, the fastest truck in the show, and it breathes fire on the ramps.',
+  'rivals.night.3': 'In the Bowl with our driver tonight are Big Kettle, Tin Lizard and Old Bess.',
+  'rivals.night.4': 'In the Bowl with our driver tonight are Rust Rhino, Tin Lizard and Big Kettle.',
+  'rivals.night.5': 'In the Bowl with our driver tonight are Dragon Wagon, Rust Rhino and Tin Lizard.',
+  'out.old-bess': 'Old Bess is out! She is going to have a little rest now.',
+  'out.rust-rhino': 'Rust Rhino is out! That horn will not be charging at anybody else tonight.',
+  'out.big-kettle': 'Big Kettle is out, and all the steam has gone out of it.',
+  'out.tin-lizard': 'Tin Lizard is out! It was not quick enough to get away this time.',
+  'out.dragon-wagon': 'Dragon Wagon is out, and its fire has gone out too.',
   'night.won': 'That is the end of the show, and what a show it was. Thank you all for coming, and that includes the dogs.',
 });
 
@@ -83,7 +105,16 @@ export const BOWL_RESULTS = Object.freeze({
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
   eventRows: rows => rows > 0 ? `You crushed your way into ${BOWL_CRUSH_ROWS[rows - 1]}.` : 'You did not reach the first row of cars.',
-  eventRace: won => won ? 'You crossed the line ahead of the other truck.' : 'The other truck crossed the line before you.',
+  eventRace: (won, rival = 'the other truck') => won ? `You crossed the line ahead of ${rival}.`
+    : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before you.`,
+  // BOWL-RIVALS: how Last Truck Rolling ended.
+  eventKnockouts: ({won, knockouts = 0, timeUp = false}) => won && timeUp
+    ? 'The clock ran out, and of the trucks still rolling, yours hit the others hardest, so the win is yours.'
+    : won ? 'Every other truck was knocked out, and yours was the last one still rolling.'
+      : timeUp ? 'The clock ran out, and another truck still rolling had hit the others harder than yours.'
+        : knockouts === 1 ? 'You knocked out one truck before your own truck was knocked out.'
+          : knockouts > 1 ? `You knocked out ${knockouts} trucks before your own truck was knocked out.`
+            : 'Your truck was knocked out before it could knock anyone else out.',
   eventNext: name => `Next up is ${name}.`,
   eventRetry: name => `Have another go at ${name}. Your score from that run does not count towards the night.`,
   nextButton: 'NEXT EVENT',
