@@ -1,4 +1,9 @@
-"""Build the Bowl's welded tyrannosaur in metres, Y up and nose towards +Z."""
+"""Build the Bowl's welded tyrannosaur in metres, Y up and nose towards +Z.
+
+Run the recipe inside Blender with --root . to export and render. Then run
+python tools/blender/bowl-scrapasaurus.py --root . --sheet-only to lay out
+the Blender views with the earlier generated reference photograph.
+"""
 import argparse
 import json
 import math
@@ -27,11 +32,12 @@ if args.sheet_only:
     from io import BytesIO
     import subprocess
     from PIL import Image, ImageDraw, ImageFont
-    if sheet.exists():
-        reference=Image.open(sheet).crop((0,32,560,355))
+    photo_blob='77ba0483c7363b03ba8bb63352c23ae7794f9cf1'
+    previous=subprocess.run(['git','cat-file','blob',photo_blob],cwd=root,capture_output=True)
+    if previous.returncode==0:
+        reference=Image.open(BytesIO(previous.stdout)).crop((0,60,560,375))
     else:
-        previous=subprocess.check_output(['git','show','codex/bowl-art-rex:docs/board/looks/bowl-art-rex/round-4.jpg'],cwd=root)
-        reference=Image.open(BytesIO(previous)).crop((0,60,560,375))
+        reference=Image.open(sheet).crop((0,32,560,355))
     panels=[('Welded sculpture reference',reference),('Clay silhouette',Image.open(evidence/'clay.png'))]
     for title,name in [('Standing beside the Titan','side'),('Three-quarter view','quarter'),('From the driver seat','driver'),('Tired ramp - 4.8 m wide, 22.7 degrees','tired'),('Open hip battery','above'),('Salvaged grille and spring teeth','detail'),('Crushed hip battery','crushed')]:
         panels.append((title,Image.open(evidence/(name+'.png'))))
@@ -87,7 +93,7 @@ def group(name, parent=None, origin=(0,0,0)):
     obj.location=origin
     return obj
 
-asset=group('scrapasaurus')
+asset=group('scrapasaurus-root')
 body=group('thorax',asset)
 tail=group('scrapasaurus-tail',body,(0,7,-2.6))
 neck=group('folding-neck',body,(0,7.7,2.35))
@@ -320,22 +326,51 @@ for index,z in enumerate((-2.9,-.22,2.56),1):
     opened.scale=(0,0,0)
     boxes.append((whole,opened,smashed))
 
-def clip(obj,name,channel,steps):
+def hinge(pivot,name):
+    # Bind the rigidly welded parts to a single hinge bone. The parent
+    # remains an independent anchor so the tired posture can fold the neck
+    # and lower the tail while the bite or sway clip plays.
+    parts=list(pivot.children)
+    bones=bpy.data.armatures.new(name)
+    rig=bpy.data.objects.new(name,bones)
+    scene.collection.objects.link(rig)
+    rig.parent=pivot
+    bpy.context.view_layer.objects.active=rig
+    rig.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bone=bones.edit_bones.new(name+' hinge')
+    bone.head=(0,0,0)
+    bone.tail=(0,1,0)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for part in parts:
+        part.parent=rig
+        weights=part.vertex_groups.new(name=name+' hinge')
+        weights.add(list(range(len(part.data.vertices))),1,'REPLACE')
+        modifier=part.modifiers.new('Welded hinge','ARMATURE')
+        modifier.object=rig
+    joint=rig.pose.bones[name+' hinge']
+    joint.rotation_mode='XYZ'
+    return rig,joint
+
+def clip(obj,name,channel,steps,target=None):
+    target=target or obj
     for frame,value in steps:
-        setattr(obj,channel,value)
-        obj.keyframe_insert(data_path=channel,frame=frame)
+        setattr(target,channel,value)
+        target.keyframe_insert(data_path=channel,frame=frame)
     anim=obj.animation_data
     action=anim.action
     action.name=name+' '+obj.name
     track=anim.nla_tracks.new(); track.name=name
     track.strips.new(name,1,action)
     anim.action=None
-    setattr(obj,channel,steps[0][1])
+    setattr(target,channel,steps[0][1])
 
-clip(jaw,'jaw-bite','rotation_euler',[(1,(0,0,0)),(9,(.18,0,0)),(16,(-.20,0,0)),(28,(0,0,0))])
-clip(tail,'tail-swing','rotation_euler',[(1,(0,0,0)),(13,(0,.18,0)),(37,(0,-.18,0)),(49,(0,0,0))])
+jaw_rig,jaw_joint=hinge(jaw,'Jaw linkage')
+tail_rig,tail_joint=hinge(tail,'Tail linkage')
+clip(jaw_rig,'jaw-bite','rotation_euler',[(1,(0,0,0)),(9,(.18,0,0)),(16,(-.20,0,0)),(28,(0,0,0))],jaw_joint)
+clip(tail_rig,'tail-swing','rotation_euler',[(1,(0,0,0)),(13,(0,.18,0)),(37,(0,-.18,0)),(49,(0,0,0))],tail_joint)
 for obj,channel,start,end in ((legs,'scale',(1,1,1),(1,.49,1)),(body,'location',(0,0,0),(0,-4,0)),
-        (neck,'rotation_euler',(0,0,0),(1.03,0,0)),(tail,'rotation_euler',(0,0,0),(-.14,0,0)),
+        (neck,'rotation_euler',(0,0,0),(.992,0,0)),(tail,'rotation_euler',(0,0,0),(-.14,0,0)),
         (bridge,'scale',(.001,.001,.001),(1,1,1))):
     clip(obj,'tired',channel,[(1,start),(25,end),(49,end)])
 scene.frame_set(1)
