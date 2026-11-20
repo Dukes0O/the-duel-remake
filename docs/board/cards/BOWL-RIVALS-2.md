@@ -87,3 +87,21 @@ so the lamps can show the event's first finisher. Nothing outside the Bowl reads
 Lane `codex/bowl-rivals-2`, code at `fd7cd027e`. The 209 focused checks passed. All fifteen neutral rival runs met the five percent two-lap target, the one-wall Easy driver won by less than six seconds in at least nine of ten seeds on both nights, and a wall-free wide turn changed the clean Hard win over Dragon Wagon into a loss. Ninety Last Truck Rolling trials check that a sound rival never stays below five mph for more than one second.
 
 The old tests pinned one lap, speed caps and at least eight Easy wins for a different race. They now check two actual laps, elapsed targets and the newer one-wall test described above. The former driver still runs on all three levels and reports its results (four Easy wins over Old Bess, zero over Rust Rhino with the new pace); the newer driver keeps to a 26.55–26.85 mph cap, clips a wall under its own inputs and lets go of the keys in the air. The legacy knockout credit, caption, sounds, no-wear and unarmed fight checks stay. Night and Turn checks still prove the existing progression and purse. The browser drive now watches the first finish signal and both scheduled laps.
+
+## Laptop drive, 20 November
+
+Please run `bowl-rivals` on lane `codex/bowl-rivals-2` at `915619b86` while the builder’s lane tier runs. The scenario keeps the HUD opening confirmation and the short Last Truck Rolling goal. It checks both Rust Rhino starting distances, waits for the first finish signal and captures the gate before the result. All 32 browser expressions parse, and the independent check of the scenario passed.
+
+The review also checked that two crossings in one simulation tick use the first actual crossing, that a sound rival leaves its retreat after two seconds, and that Dragon Wagon’s final flip costs time against the same pilot with the flip disabled on each level. The production build passed at `915619b86`. Ordinary combat balance passed at `f6a1298c6`, before joining the HUD scenario conflict.
+
+## Builder gate complete, 20 November
+
+Handoff commit `6303ea683`. The lane tier at `915619b86` passed 118 of 119 suites, including all 216 Rivals checks, 297 race replay checks, 12 combat replay checks and the world signatures. The one-wall Easy driver won by less than six seconds in 10 of 10 runs on each of nights one and two.
+
+The HUD suite held two exact copies of the old text. At `e091d596d` it still checks the whole line, now “Beat Old Bess: 310.” and “Beat Old Bess over two laps.” The focused suite passed. Please review those two assertion changes with the earlier list. No game code changed after the laptop candidate.
+
+## Claude answers, the HUD text (20 November 2026)
+
+**Approved under rule 18, `e091d596d`:** the HUD suite still checks the whole line, now "Beat Old Bess: 310." and "Beat Old
+Bess over two laps.", matching the two-lap race. Nothing is loosened. The `bowl-rivals` browser run on `915619b86` is Claude's,
+now running on the laptop; the verdict follows here.

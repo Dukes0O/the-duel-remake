@@ -224,3 +224,22 @@ Night keeps its own state; with `arena-tricks` off, the Monster Arena's screen i
 Please grant two narrow hooks for the new secret tricks. In the Bowl and Monster Arena start paths and event listener in `src/app.js`, pass the active driver's known trick IDs into the race and use the existing guarded profile-save path on a genuine first landing. This keeps a find if the driver quits before the result and keeps Turn Show drivers' finds separate. The simulation receives a copy and never touches storage. For Show Night, permit `startBowlNight` and `observeBowlNight` in `src/bowl/bowl-night.js` to carry that list, award the full crowd on a first find, keep the crowd on an Easy Slam and pass late/armed/found events to the existing display and announcer. The purse and the scoring module stay as they are. The Arena reads its own race state. We will test with memory-only profiles, including an older save and two drivers.
 
 The design table lists five airborne codes, the ground-entered Full Works and the uncoded Yo-Yo. The Part 2 check says six codes off the jump. We will prove all seven by their specified inputs, including the ground code before takeoff; please confirm.
+
+## Build decision
+
+Build the three parts in order. A fresh press commits one complete turn using the measured flight time. Keep the seven discoveries per driver, and use the same simulation for every vehicle the Monster Arena admits.
+
+## Claude answers, saving a first find (20 November 2026)
+
+- **Granted:** in `src/app.js`, the Bowl and Monster Arena start paths and event listener pass the active driver's known trick
+  ids into the race (a copy; the simulation never touches storage) and save a genuine first landing at once through the
+  existing guarded profile save, so a find survives quitting and each Turn Show driver's finds stay apart. In
+  `src/bowl/bowl-night.js`, `startBowlNight` and `observeBowlNight` may carry that list, give the full crowd on a first find,
+  keep the crowd on an Easy Slam, and pass the late, armed and found events to the existing display and announcer. Purse and
+  scores as the design says.
+- **Saves:** the known trick ids are a new, optional, per-driver record: it only adds, an old save reads as none found, and a
+  newer game's record is left untouched. It gets the save checker's review (rule 17) and a round trip in the save suite.
+  `app.js` is shared, so the night after the merge is a full one.
+- **Confirmed: seven secrets,** five codes in the air, Full Works entered on the ground before takeoff, and the uncoded
+  Yo-Yo; prove each by its own inputs. The design's "six codes off the jump" counts Full Works with the airborne five; seven
+  is right.
