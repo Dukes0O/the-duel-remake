@@ -14,7 +14,18 @@ MATTE = {'black-bear', 'goat'}
 
 # Small animals and birds: a 512 coat map is plenty and saves runtime size.
 SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra',
-             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull', 'chicken', 'turkey-vulture', 'scorpion'}
+             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull', 'chicken', 'turkey-vulture', 'scorpion',
+             'roadrunner', 'jackrabbit', 'collared-lizard', 'pelican', 'condor'}
+
+
+# Markings finer than the mesh, drawn when the coat is baked (common.finish_coat). The recipe
+# says where and in what colour (original.Body.mark); this says what the pattern is, in metres.
+MARKS = {
+    'roadrunner': {'scale': (30, 340, 340), 'at': .50, 'soft': .035},          # streaks 3 mm wide, 3 cm long
+    'jackrabbit': {'scale': (150, 400, 400), 'at': .56, 'soft': .04},          # the dark flecks of an agouti coat
+    'pelican': {'scale': (22, 240, 240), 'at': .52, 'soft': .04},                # long dark shaft streaks on silver
+    'collared-lizard': {'scale': (115, 115, 115), 'at': .27, 'soft': .05, 'spots': True},   # round spots about 5 mm across
+}
 
 
 def build(species, output, c, cache):
@@ -290,7 +301,8 @@ def static_donor(species, mesh, output, c):
 
 def export(mesh, rig, output, c, root=None):
     bpy = c.bpy
-    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR, size=512 if output.stem in SMALL_MAP else 1024)
+    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR, size=512 if output.stem in SMALL_MAP else 1024,
+                  marks=MARKS.get(output.stem))
     if output.stem in MATTE:
         shader = mesh.data.materials[0].node_tree.nodes.get('Principled BSDF')
         shader.inputs['Roughness'].default_value = 1

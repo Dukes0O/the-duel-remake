@@ -69,7 +69,12 @@ def build(ID, P, paint, output, c):
     prof = [(-.50, .35, .35), (-.38, .74, .72), (-.20, .98, .96), (.02, 1, 1), (.22, .92, .95),
             (.38, .76, .80), (.50, .52, .62)]
     sections = [(tuple(f.w((x * bl, 0, -.04 * bh * (x > .1)))), w * bw, h * bh) for x, w, h in prof]
+    # P['marks']: part name -> function(frame, point) -> (r, g, b, strength), the fine marks baked over the coat there.
+    marks = P.get('marks', {})
+    mark = lambda part: (lambda p: marks[part](f, p)) if part in marks else None
+    a.mark = mark('body')
     a.fur(sections, lambda p: paint['body'](f, p), body, P.get('body_sides', 14), P.get('shag', .015))
+    a.mark = None
     if P.get('merged'):
         # One big round head sunk into the shoulders: a head ball, a broad
         # nape-and-throat ball bridging it to the body, and the face tapering
@@ -85,21 +90,25 @@ def build(ID, P, paint, output, c):
         a.oval(tuple(head_c + Vector((hr * .62, 0, -hr * .10))), (hr * .45, hr * .62, hr * .58), colour, 'head', 4, 10)
     else:
         # Neck joins chest and head; the head is level in the world.
-        a.fur([(tuple(f.w((.30 * bl, 0, .12 * bh))), bw * .80, bh * .82),
-               (tuple(chest.lerp(head_c, .5)), hr * P.get('neck_r', .80), hr * P.get('neck_r', .80) * 1.02),
+        # A long neck (P['neck_path']: rows of place along it, lean forward, radius in head radii)
+        # gets its own rings, so that it can curve and carry its own colours.
+        path = P.get('neck_path', [(.5, 0, P.get('neck_r', .80))])
+        a.fur([(tuple(f.w((.30 * bl, 0, .12 * bh))), bw * .80, bh * .82)] +
+              [(tuple(chest.lerp(head_c, t) + Vector((lean, 0, 0))), hr * r, hr * r * 1.02) for t, lean, r in path] + [
                (tuple(head_c + Vector((-hr * .55, 0, 0))), hr * .85, hr * .88),
                (tuple(head_c), hr, hr * .96),
                (tuple(head_c + Vector((hr * .50, 0, -hr * .04))), hr * .84, hr * .82),
                (tuple(head_c + Vector((hr * .78, 0, -hr * .09))), hr * .60, hr * .60),
                (tuple(head_c + Vector((hr * .94, 0, -hr * .12))), hr * .26, hr * .28)],
-              lambda p: paint['head'](f, p), o.near(a, ['head', 'neck', 'body']), 14, .01)
+              lambda p: paint['head'](f, p), o.near(a, ['head', 'neck', 'body']), P.get('neck_sides', 14), .01)
     # Bill: deep at the base, tapering and curving down to the tip.
     depth, width, hook = P['bill'][1], P['bill'][2], P['bill'][3]
     bill = []
     for k in range(6):
         u = k / 5
-        centre = bill_base.lerp(bill_tip, u) + Vector((0, 0, -hook * P['bill'][0] * .6 * u * u))
-        bill.append((tuple(centre), max(.0015, width * (1 - u ** 1.4)), max(.0015, depth * (1 - u ** 1.25))))
+        centre = bill_base.lerp(bill_tip, u) + Vector((0, 0, -hook * P['bill'][0] * P.get('bill_curve', .6) * u * u))
+        taper = P.get('bill_taper', (1.4, 1.25))       # a pelican's long bill keeps its width and depth to the tip
+        bill.append((tuple(centre), max(.0015, width * (1 - u ** taper[0])), max(.0015, depth * (1 - u ** taper[1]))))
     a.loft(bill, lambda p: paint['bill'](f, p), 'head', 8)
     for s in (1, -1):
         eye = head_c + Vector((hr * .42, s * hr * .80, hr * .22))
@@ -172,8 +181,10 @@ def build(ID, P, paint, output, c):
                   ((-.42 * bl, bw * .70, .16 * bh), .012, .44 * bh),
                   ((-.5 * bl - fold * .55, bw * .36, .18 * bh), .008, .24 * bh),
                   ((-.5 * bl - fold, bw * .15, .18 * bh), .002, .03 * bh)]
+        a.mark = mark('fold')
         a.loft([(tuple(f.w((x, s * y, z))), wdt, hgt) for (x, y, z), wdt, hgt in folded],
                lambda p: paint['wing'](f, p), 'fold.' + side, P.get('fold_sides', 8))
+        a.mark = None
         # Leg and toes: tarsus from the belly feathers to a gripping foot.
         hip = f.hip_w + Vector((0, s * P['stance'], .01))
         foot = Vector((.008, s * P['stance'], .008))
@@ -197,6 +208,8 @@ def build(ID, P, paint, output, c):
         o.turn(obj, 'head', .10 * math.sin(3 * w))
         o.turn(obj, 'tail', .08 * max(0, math.sin(5 * w)) ** 4)
         o.stretch(obj, 'body', (1 + .02 * math.sin(4 * w), 1, 1 + .02 * math.sin(4 * w)))
+        if 'idle_extra' in P:
+            P['idle_extra'](obj, t)
 
     def fly(obj, t):
         w = 2 * math.pi * t
@@ -218,6 +231,8 @@ def build(ID, P, paint, output, c):
             o.stretch(obj, 'fold.' + side, (.001, .001, .001))
         o.turn(obj, 'tail', .06 * math.sin(w - 1.2))
         o.turn(obj, 'head', -.05 * math.sin(w))
+        if 'fly_extra' in P:
+            P['fly_extra'](obj, t)                       # a species' own flight posture (the pelican's drawn-back neck)
 
     o.finish(a, c, output, [('Idle', 120, idle), ('Fly', P.get('beat', 16), fly)], budget=2000,
              roughness=P.get('roughness'), specular=P.get('specular'), refine=P.get('refine'))

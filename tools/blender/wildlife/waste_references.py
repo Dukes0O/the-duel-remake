@@ -1,11 +1,13 @@
-"""Fetch the WILD-ART-WASTE reference photographs named in waste-references.json.
+"""Fetch an animal card's reference photographs (waste-references.json unless --plan names another).
 
 The photographs are public domain or CC0 on Wikimedia Commons and need no
 account. They are kept outside the repository (the art library) and are
 only ever shown beside a model on a review sheet; no game file uses them.
 Run with plain Python: python tools/blender/wildlife/waste_references.py
+WILD-ART-DESERT: add --plan desert-references.json
 """
 import json
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -24,7 +26,8 @@ def read(url):
 
 
 def main():
-    plan = json.loads((Path(__file__).parent / 'waste-references.json').read_text(encoding='utf-8'))
+    name = sys.argv[sys.argv.index('--plan') + 1] if '--plan' in sys.argv else 'waste-references.json'
+    plan = json.loads((Path(__file__).parent / name).read_text(encoding='utf-8'))
     home = Path(plan['directory'])
     home.mkdir(parents=True, exist_ok=True)
     photos = [photo for group in plan['photos'].values() for photo in group]
