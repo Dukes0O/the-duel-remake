@@ -18,6 +18,7 @@ tasks:
     lane: "UI"
     size: "S"
     status: "building"
+    waiting_on: "kyle"
     claimed_by: "Claude: slices 1 and 2 merged 16 November with the switch off; the pale ring cured 19 November; owed: a frame check in the Dig yard, then Kyle's try"
     needs: []
     locks: []
@@ -603,10 +604,32 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT]
+    needs: [BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
+
+  - id: BOWL-SHOW-2
+    title: "Show Night round 2 from Kyle's try: a real first event, the trick set, out of the arena and back, damage, weapons, variety (first priority, for Gratian)"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SHOW-2.md"
+
+  - id: NIGHT-2-TRY-FIXES
+    title: "Night 2 from Kyle's try: no countdown, clear arrows, riders that vanish, long pauses"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/NIGHT-2-TRY-FIXES.md"
 
 
 
@@ -644,6 +667,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["MULE-RAILS","MULE-LINES","CREW-STORY-JOIN","TOWN-JOBS-2","TOWN-VANE"]
     locks: []
     flag: "wasteland-town"
@@ -655,6 +679,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["MULE-RAILS","WW-ART-MULE","WW-ART-DAM","WW-SCENE"]
     locks: []
     flag: "wasteland-town"
@@ -666,6 +691,7 @@ tasks:
     lane: "FINISH"
     size: "S"
     status: "backlog"
+    waiting_on: "kyle"
     needs: ["MULE-JOBS","MULE-SCENE"]
     locks: []
     flag: "wasteland-town"
@@ -678,6 +704,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["SHIPS-DECKS","SHIPS-LINES","MULE-JOBS","TOWN-JOBS-2","TOWN-VANE","TOWN-VEHICLES"]
     locks: []
     flag: "wasteland-town"
@@ -689,6 +716,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["SHIPS-DECKS","WW-ART-SHIPS","WW-ART-DAM","MULE-SCENE","TOWN-OUTPOST-SCENE"]
     locks: []
     flag: "wasteland-town"
@@ -700,6 +728,7 @@ tasks:
     lane: "FINISH"
     size: "S"
     status: "backlog"
+    waiting_on: "kyle"
     needs: ["SHIPS-JOBS","SHIPS-SCENE"]
     locks: []
     flag: "wasteland-town"
@@ -728,6 +757,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "backlog"
+    waiting_on: "kyle"
     needs: []
     locks: []
     flag: "wasteland-town"
@@ -739,6 +769,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
+    waiting_on: "kyle"
     needs: []
     locks: []
     flag: "wasteland-town"
@@ -770,6 +801,7 @@ tasks:
     lane: "UI"
     size: "S"
     status: "ready"
+    waiting_on: "kyle"
     needs: []
     locks: []
     flag: "wasteland-town"
@@ -781,6 +813,7 @@ tasks:
     lane: "UI"
     size: "S"
     status: "ready"
+    waiting_on: "kyle"
     needs: []
     locks: []
     flag: "wasteland-town"
@@ -924,6 +957,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["TUNNEL-TRIAL"]
     locks: []
     flag: "wasteland-town"
@@ -1016,6 +1050,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["RAIL-STEPS","MULE-JOBS","WW-ART-RAIL"]
     locks: []
     flag: "wasteland-town"
@@ -1027,6 +1062,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["RAIL-JOBS-1","RAIL-REGION"]
     locks: []
     flag: "wasteland-town"
@@ -1038,6 +1074,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["RAIL-JOBS-2"]
     locks: []
     flag: "wasteland-town"
@@ -1049,6 +1086,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["RAIL-PROPERTY"]
     locks: []
     flag: "wasteland-town"
@@ -1060,6 +1098,7 @@ tasks:
     lane: "UI"
     size: "L"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["RAIL-JOBS-3"]
     locks: []
     flag: "wasteland-town"
@@ -1126,6 +1165,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "backlog"
+    waiting_on: "kyle"
     needs: []
     locks: []
     flag: "wasteland-town"
