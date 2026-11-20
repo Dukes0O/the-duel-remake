@@ -822,6 +822,16 @@ export const SOUND_BANK = {
     rate: 0.72,
     layers: [tone(145, 0.18, 0.045, 'triangle', 0, 80)],
   }),
+  // BOWL-SOUND-CRUSH: the Bowl's crush set, built by tools/audio/build-bowl-crush.mjs from CC0 recordings. Every
+  // take plays at the car-to-car crash's gain (4.2); each file's own loudness sets the balance: the bite -16 LUFS
+  // (the crash files are about -17.5), a bus -15, a stack -14.5, a pancake -14, and the glass, clank, crowd and a
+  // second run over a flat wreck about -21, the held groan -22. A cue with several takes plays them in turn, so two
+  // crushes in a row never play the same one (EngineAudio._cueBuffer). Only on the Bowl (src/audio.js _bowlCrush).
+  ...Object.fromEntries([
+    ['car', 4, 74, 3], ['bus', 2, 76, 2], ['stack', 1, 78, 2], ['glass', 2, 60, 2], ['groan', 1, 55, 1],
+    ['off', 2, 58, 2], ['flat', 2, 56, 2], ['pancake', 2, 78, 2], ['ooh', 2, 62, 1],
+  ].map(([name, takes, priority, limit]) => [`bowl.crush.${name}`, cue('impacts', {flag: 'titan-bowl', priority, limit, volume: 4.2,
+    files: takes === 1 ? [`bowl/crush-${name}.ogg`] : Array.from({length: takes}, (_, i) => `bowl/crush-${name}-${'abcd'[i]}.ogg`)})])),
   'combat.explosion-fallback': cue('impacts', {
     layers: [
       tone(44, 2, 0.6, 'sine', 0, 20),

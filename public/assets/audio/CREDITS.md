@@ -204,3 +204,30 @@ audio catalog. No author endorsement is implied.
 - [Sheep - Bleat; Close Perspective](https://freesound.org/people/TheKingOfGeeks360/sounds/803460/), by **TheKingOfGeeks360**: sheep.
 - [Ground Squirrel First Chirp](https://freesound.org/people/burgersmoke/sounds/640992/), by **burgersmoke**: the marmot's whistle (a ground squirrel's alarm chirp; marmots are large ground squirrels).
 - [Raven Croak or Crow Caw](https://freesound.org/people/fudgealtoid/sounds/716962/), by **fudgealtoid**: raven.
+
+## Show Night crushes
+
+Selected public HQ previews, all [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The recipes in
+`tools/audio/build-bowl-crush.mjs` cut, re-pitch, filter, layer and level them into the Bowl's nine crush cues
+(`bowl.crush.*`, mono Vorbis in `bowl/`). Source and runtime hashes are in the audio catalog. No author endorsement is
+implied.
+
+- [S38-24 Big heavy car crash.wav](https://freesound.org/people/craigsmith/sounds/675902/), by **craigsmith**: car, bus, pancake.
+- [Fall debris (crash)](https://freesound.org/people/xkeril/sounds/703248/), by **xkeril**: car, flat.
+- [S37-04 Car hits three news stands; good crunch.wav](https://freesound.org/people/craigsmith/sounds/675910/), by **craigsmith**: car, flat.
+- [S37-14 Two cars crash foley; good metallic bump.wav](https://freesound.org/people/craigsmith/sounds/675466/), by **craigsmith**: car.
+- [Loud Bang Crashing Metal Chunk Dropped in Metal Dumpster](https://freesound.org/people/qubodup/sounds/859154/), by **qubodup**: car, bus.
+- [Car Crash](https://freesound.org/people/squareal/sounds/237375/), by **squareal**: car.
+- [S37-34 Big auto car crash with glass.wav](https://freesound.org/people/craigsmith/sounds/675901/), by **craigsmith**: bus.
+- [Big falling debris (crash)](https://freesound.org/people/xkeril/sounds/703247/), by **xkeril**: bus, stack.
+- [Explosion.wav](https://freesound.org/people/morganpurkis/sounds/397691/), by **morganpurkis**: stack, pancake.
+- [road flare ignite burns.wav](https://freesound.org/people/frankelmedico/sounds/348767/), by **frankelmedico**: stack.
+- [BROKEN CAR WINDOW.wav](https://freesound.org/people/thecommondanger/sounds/587928/), by **thecommondanger**: glass.
+- [Glass Break 8](https://freesound.org/people/ElevatorFan2020/sounds/848289/), by **ElevatorFan2020**: glass.
+- [Bending Metal](https://freesound.org/people/NachtmahrTV/sounds/556714/), by **NachtmahrTV**: groan.
+- [Metal Clank (Medium)](https://freesound.org/people/Mish7913/sounds/741351/), by **Mish7913**: off.
+- [Clank Car Crash Collision](https://freesound.org/people/qubodup/sounds/151624/), by **qubodup**: off.
+- [car crash long 1](https://freesound.org/people/Logicogonist/sounds/807437/), by **Logicogonist**: pancake.
+- [Medium Thud 1](https://freesound.org/people/sgrowe/sounds/342535/), by **sgrowe**: pancake.
+- [Crowd gasp.wav](https://freesound.org/people/deleted_user_2104797/sounds/324895/), by **deleted_user_2104797**: ooh.
+- [Group Ooh Aah](https://freesound.org/people/CHallSmith/sounds/870652/), by **CHallSmith**: ooh.
