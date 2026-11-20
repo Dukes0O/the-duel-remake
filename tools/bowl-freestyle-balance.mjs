@@ -84,7 +84,7 @@ export function balance() {
   assert.ok(rows[0].scores.every(s => s < targets.hard));
   assert.ok(['wheelie', 'donut'].every(kind => rows[0].kinds.includes(kind)) && !rows[0].kinds.includes('backflip'));
   assert.ok(rows[1].kinds.includes('backflip') && rows[1].scores.every(s => s < targets.hard));
-  assert.ok(rows[2].kinds.includes('spin') && rows[2].kinds.includes('backflip'));
+  assert.ok(['double backflip', 'combo', 'spin'].every(kind => rows[2].kinds.includes(kind)));
   return rows;
 }
 

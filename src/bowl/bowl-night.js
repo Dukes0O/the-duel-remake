@@ -40,7 +40,7 @@ export const BOWL_NIGHT_RULES = Object.freeze({
   // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
   // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
   // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 310, medium: 1930, hard: 3460})}),
+  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 310, medium: 1810, hard: 4260})}),
   // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS); the lanes are bowlLayout's.
   sideBySide: Object.freeze({timeLimitSec: 60}),
   minJumpSec: .5,
