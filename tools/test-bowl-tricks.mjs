@@ -347,6 +347,9 @@ test('each newly loaded Arena stage begins with a fresh trick score', () => {
   stepBowlTricks(duel,s,DT);
   assert.notEqual(s.arenaTrickShow,before);
   assert.equal(s.arenaTrickShow.event.score,0);
+  duel._loadStage(COURSE.findIndex(c=>c.id==='titan-stunt-trial'));
+  stepBowlTricks(duel,s,DT);
+  assert.ok(!s.arenaTrickShow && !s.bowlPose,'the next ordinary course drops the Arena pose and score');
 });
 
 test('the child-pace kicker admits one held turn and tells the driver once about a late repeat', () => {

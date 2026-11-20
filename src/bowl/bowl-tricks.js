@@ -14,9 +14,10 @@ export function tricksEnabled(duel, actor) {
 
 export function startArenaTrickShow(duel, foundTricks = []) {
   const s = duel.state;
-  if (s.arenaTrickShow) {
+  if (s.arenaTrickShow || s.bowlPose && !duel.course?.def.bowl) {
     delete s.bowlPose; delete s.bowlLanding; delete s.bowlGroundTrick;
     delete s.arenaTrickShow;
+    states.delete(s);
   }
   arenaCourses.set(s, duel.course);
   if (!duel.course?.def.tricks || duel.course.def.bowl || !tricksEnabled(duel, s)) return;
@@ -289,7 +290,11 @@ export function landBowlTricks(duel, actor) {
   }
 }
 export function stepBowlTricks(duel, actor, dt) {
-  if (!tricksEnabled(duel, actor) || !(dt > 0)) return;
+  if (!tricksEnabled(duel, actor) || !(dt > 0)) {
+    if (actor === duel.state && actor.arenaTrickShow && arenaCourses.get(actor) !== duel.course)
+      startArenaTrickShow(duel);
+    return;
+  }
   if (!duel.course.def.bowl) {
     const show = arenaCourses.get(actor) === duel.course && actor.arenaTrickShow || startArenaTrickShow(duel);
     show.clock = actor.stageTimeSec ?? 0;

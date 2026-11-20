@@ -25,15 +25,18 @@ function drive(id, schedule, {full = false, seed = 1989, repeat = false, control
   duel.featureFlags = {enabled: key => key === 'titan-bowl'};
   Object.assign(s, {s: ramp.start - 2, prevS: ramp.start - 2, lateral: ramp.off, prevLateral: ramp.off,
     headingError:0, speedMph:60, gear:2});
-  let air = 0;
+  let air = 0, takeoff;
   for (let i=0; i<650; i++) {
     duel.setInput(s.airborne ? keyed(schedule.get(++air)) : neutral);
     duel.step(DT);
-    if (s.airborne) trace.push([s.s, s.lateral, s.airHeight, s.speedMph]);
+    if (s.airborne) {
+      takeoff ??= [s.s,s.lateral,s.headingError,s._jumpY,s._verticalSpeed,s.speedMph];
+      trace.push([s.s, s.lateral, s.airHeight, s.speedMph]);
+    }
     else if (air) break;
   }
   assert.ok(air > 0, 'the floor launched the car');
-  return {events, trace, state:s};
+  return {events, trace, takeoff, state:s};
 }
 const taps = code => new Map(code.map((key,i) => [3 + 30*i, key]));
 const plain = drive('big-jump', new Map());
@@ -47,6 +50,7 @@ for (const secret of SECRETS) {
   assert.equal(result.events.filter(ev => ev.bowlSecretFound?.kind === secret.id).length, 1);
   assert.equal(result.state.bowlNight.event.crowd, 100);
   const baseline = full ? drive('big-jump',new Map(),{full:true,repeat:true,control:true}) : plain;
+  assert.deepEqual(result.takeoff,baseline.takeoff);
   assert.deepEqual([result.state.s,result.state.lateral],[baseline.state.s,baseline.state.lateral]);
   assert.deepEqual(result.trace, baseline.trace, secret.name + ' preserves flight');
   if (full) assert.equal(result.events.filter(ev => ev.bowlSecretArmed).length, 1);
