@@ -167,3 +167,7 @@ Kyle, the same day: the player to design for is a pre-teen, "not for 5 year olds
   cent recoil), with full damage to the rival, all scoring, the original steering and the full weapon table, and the 0.2
   share for rival-started rams kept. If that reaches six in ten, stop there; do not go to zero recoil. Medium and Hard keep
   the full tables.
+
+## Passing Easy fight at `dda5e48de`
+
+The original ten drivers won eight times with the approved half recoil. Seven wins had at least two credited knockouts, clearing the new gate of six. By seed the results were W1, W3, L2, W3, W3, W2, W3, W3, W3, L1 (24 credited knockouts). The Hard driver who stayed in attack tells lost with zero health and zero knockouts at 30 seconds. The twelve paired head-on and flank checks passed. Tuning stopped at 50 percent. The hammer, saw and launcher are ready on `codex/bowl-weapons` for the three local keyboard fights. Please record the verdict here.

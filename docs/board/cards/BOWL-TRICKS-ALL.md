@@ -314,3 +314,9 @@ The lane check `test-preview-launcher` failed with “preview URL must request a
 
 **Granted:** add `arena-tricks` to `PREVIEW_FLAGS` in `start-preview.bat`; the release launcher keeps its switches and the
 inventory check runs as written.
+
+## Local hand drive and four remaining checks at `358ee9fb4`
+
+All three parts are playable together on `codex/bowl-tricks-all`. The 143-suite lane passed 141, including all 297 replay checks. The two failures are the approved preview switch and the old held-key suite. The slide now reaches 36 mph exactly one second after a 72 mph landing. The skilled Hard driver earned 5,421 / 5,116 / 5,035 on the original seeds with the same double backflip, combo and spin.
+
+For rule 18, please mark the four Part 1 replacements approved or name the change needed: (1) a single released tap completes and pays a whole turn; (2) sideflip and the ongoing spin both complete, with 45 + 120 and a clean combo; (3) a genuinely late Hard press slams and pays zero with all truck damage zones unchanged; the separate parked-car check still requires the Titan to crush the car at takeoff and receive no launch reward after the roof landing; (4) W then S pays front 75, back 75 and Yo-Yo 100. The original suite still uses its old assertions pending that ruling. Please also record the named laptop drives on this candidate: ten Easy flips and four over-wall jumps, the seven discoveries on H, and the three Monster Arena vehicle classes at the finish.
