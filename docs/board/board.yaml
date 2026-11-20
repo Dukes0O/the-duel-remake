@@ -670,7 +670,6 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-rex-2"
-    waiting_on: "claude"
     needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
     locks: [bowl-screens]
     flag: "titan-bowl"

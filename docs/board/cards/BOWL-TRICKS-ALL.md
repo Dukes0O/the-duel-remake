@@ -261,3 +261,15 @@ The seven tricks are playable on `codex/bowl-tricks-all` at `492201763`. Please 
 Please include the exact feature-switch inventory in the rule 18 review. Its list gains the card's `arena-tricks: dev` entry. Keep the existing release and QA switch checks, and explicitly check that this switch is off in release and on in QA.
 
 The Monster Arena is ready for Claude's three-car drive at `762a7292d` on `codex/bowl-tricks-all`. Please enter through the ordinary race picker, look at the wheelie and flip of the Falcone road car, Dusthawk rally car and Titan, and check that H pauses/resumes the race and the finish shows the trick score beside the result. The focused floor checks landed a backflip, a 360 spin, a wheelie and a donut on each vehicle, and checked the switch off. The Falcone landed the backflip at 95 and 110 mph on the course ramp.
+
+## Claude answers, the control, the lines and the switch (20 November 2026)
+
+- **Rule 18, the Full Works trajectory control: approved.** Both drivers now get the same eight ground presses, the same
+  seed and run-up and neutral controls in flight, with only the code's recognition switched off in the control; identical
+  takeoff, place, height and speed at every airborne step and the same landing are required, and the separate proof that the
+  code arms once stays. That is a fairer and stricter comparison than before.
+- **The lines are confirmed** as written: the seven "You found the ...!" lines, "Something has got into that engine!", "You
+  have found every secret trick in the show!" and "You found all seven secret tricks."
+- **The switch inventory:** adding `arena-tricks: dev` is approved, with the checks that it is off in release and on in QA.
+- **The laptop pictures** of the seven secrets and the three-car Monster Arena drive are Claude's, now running; the verdict
+  follows here.

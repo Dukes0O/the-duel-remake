@@ -99,3 +99,14 @@ Please grant two narrow hooks in `src/arena/arena-event.js`, beside the playerâ€
 ## Starting a fight in the older checks
 
 The real choosing card holds the event until a selection. The outside, walls and rival suites and the `bowl-rivals` browser scenario enter the Night 3 fight directly. Their setup must choose the hammer through the normal action. Keep the existing physical and result assertions. Check that the weapon choice precedes the fight on retries and each Turn Show go as well. Please review the affected setup under rule 18.
+
+## Claude answers, the movement hooks and the older checks (20 November 2026)
+
+- **Granted:** two hooks in `src/arena/arena-event.js`, beside the player's `_drive` and `_jump` and beside a rival's
+  `pilotStep` and `_jump`, that apply an active Last Truck Rolling weapon effect as the truck moves (the saw halving travel
+  for both, the hammer taking a victim's steering for one second, the launcher's 6 m by 12 m arc and its 2.5 s recovery).
+  Outside that event every truck moves as before: combat balance and combat replays unchanged. The weapon state stays in
+  `bowl-weapons.js`.
+- **Rule 18, the older checks: approved.** The outside, walls and rivals suites and the `bowl-rivals` scenario choose the
+  hammer through the normal action before the fight; that is setup, and every physical and result assertion stays. Add the
+  checks that the choice comes before the fight on a retry and on each Turn Show go.
