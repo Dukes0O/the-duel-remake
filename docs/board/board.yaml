@@ -569,8 +569,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "building"
-    claimed_by: "Claude, since 19 November 2026: a local Fable session at high effort"
+    status: "review"
+    claimed_by: "Claude, since 19 November 2026: round 1 merged 20 November behind titan-bowl; waits for Kyle's try and the Bowl cards to move onto course.features.bowl"
     needs: []
     locks: [circuit-registry]
     flag: "titan-bowl"

@@ -34,7 +34,8 @@ export function _roadGrip(distance, lateral, car = this.car, tyre) {
 }
 
 export function _drivingSurface(distance, lateral, car = this.car, hasContact = true, tyre) {
-  const floor = this.state.arena && this.course.def.scrapdome;
+  // The Bowl's floor drives the same in every show event, arena or not (BOWL-EXPAND): its grip and its top speed.
+  const floor = (this.state.arena || this.course.def.bowl === true) && this.course.def.scrapdome;
   if (floor) {
     const surface = { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
       boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
@@ -314,7 +315,9 @@ export function _drive(dt) {
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
   // A returning road car may join the asphalt facing back along the circuit.
   // Keep its physical heading until the driver has steered into the race lane.
-  const freeHeading = this._deepProtected?.() === true || !!s.arena || this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
+  // The Bowl's floor is free like the Freestyle Playground's: a truck turns any way it likes there, for donuts and to go back
+  // to a jump (BOWL-EXPAND). Elsewhere outside an arena a car keeps within 1.45 rad of the line of the lap.
+  const freeHeading = this._deepProtected?.() === true || !!s.arena || this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || this.course.def.bowl === true || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
   if (freeHeading) {
     const heading = frame.heading + s.headingError + s.yawVelocity * dt;
     const old = this.course.worldAt(s.s, s.lateral);
