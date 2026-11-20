@@ -39,3 +39,13 @@ One comparison sheet under `docs/board/looks/bowl-out/` with Claude's verdict, s
 ## Sound cues
 
 None new: the events and their cues are BOWL-OUT-SIM's.
+
+## Owed from the hand drive of BOWL-OUT-SIM (Claude, 20 November 2026)
+
+- A gate marker the player can see from the moment the truck lands outside the arena: an arrow with the distance, as
+  Night 2's markers, and both gates on the lap map. Without it the gates are found only by knowing where they are.
+- Arches drawn at both openings in the stand back, which now reads as one blank concrete wall.
+- The 16 parked cars in the car park drawn (none is drawn today, though they can be crushed).
+- The drawn dirt slabs cleared from the tunnels and the foot of the stand back; the tunnel floor drawn.
+- The camera checked outside the arena with the merged BOWL-CAMERA: the truck in view on the terraces and in the car park,
+  and never hidden by the stands inside a tunnel.

@@ -69,3 +69,28 @@ saves. No new dependency, network request or key. Clean up nothing outside this 
 ## Hand drive for Claude
 
 The gates and terraces are ready in `.lanes/bowl-out-sim` at `e4921c524`. Please drive the Big Jump with nitro, land on the terraces, drive off the back, then come back through each gate in memory-only play. Eight simulated returns reached the floor in 9.04 to 28.92 seconds. The uninterrupted jump landed on the terrace at 4.72 m and the truck came down into the car park without wear. Please record how the drive and both entrances felt here.
+
+## Claude answers, the hand drive (20 November 2026)
+
+Driven by hand on lane commit `0eca72b2c` (Night 1 Freestyle, Easy, memory-only). Over the wall, the terraces, the drop off
+the back and both gates all work, with no damage, no falling through and nothing stuck in a tunnel; the payments and Big
+Mo's line came at the right moments. **Not ready to merge; three fixes in this card first:**
+
+1. **The jump over the wall is too narrow.** One try in six cleared it; one or two metres off line at the ramp was enough
+   to miss, and one try rolled the truck. Kyle's favourite moment must be one a child finds: the Big Jump with nitro clears
+   the wall from anywhere within 4 m either side of the ramp's middle. Check it from seven lines across that band.
+2. **The gates are too hard to drive into.** The mouth is 8 m in a 24 m wall and five of seven angled approaches struck
+   the wall beside it; the only sure way in was to stop, reverse into line and drive straight. Make each mouth 14 m wide,
+   with splayed walls 10 m long at 45 degrees on both sides that turn an angled truck into the tunnel. Check: from each of
+   the eight car-park places, a truck steered at the gate at 20 mph and 45 degrees off its line goes in without stopping.
+3. **The landing on the terraces stalls.** For about 1.2 s after landing the truck has no drive and slides back a metre.
+   It must drive on at once.
+
+Also check whether the ground heights are flat where the dirt slabs show through beside the stand back and across the
+tunnels; if they are physical, flatten them here; if only drawn, BOWL-OUT-LOOK clears them.
+
+**For BOWL-OUT-LOOK (Claude's), not this card:** a gate marker the player can see (an arrow with the distance, as Night 2's
+markers, and each gate on the lap map) from the moment the truck lands outside; arches drawn at both openings in the stand
+back; the 16 parked cars drawn; the drawn ground cleared from the tunnels. The camera on that drive was the old one: the
+merged BOWL-CAMERA follows the way of travel, and BOWL-OUT-LOOK checks it again outside, including that the stands never
+hide the truck in a tunnel.
