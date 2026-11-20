@@ -4,7 +4,7 @@
 // call the app's Show Night methods.
 import {SHOW_NIGHTS} from './bowl-show.js';
 import {bowlHudView} from './bowl-night.js';
-import {BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS} from './bowl-lines.js';
+import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS} from './bowl-lines.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -15,6 +15,8 @@ const clock = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(second
 export function createBowlScreens({app, ui, escapeHTML}) {
   let pickerFrom = null, level = null, hudElement = null, hudKey = '';
   const say = text => `<p>${escapeHTML(text)}</p>`;
+  // A card shows Big Mo's line for what just happened, whatever he is still saying aloud.
+  const moLine = id => BIG_MO[id] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[id])}</p>` : '';
   const night = () => app.duel.state.bowlNight ?? null;
 
   function picker() {
@@ -44,7 +46,7 @@ export function createBowlScreens({app, ui, escapeHTML}) {
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
     const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won) : result.event === 'carCrush' ? WORDS.eventRows(result.rows) : null,
       WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${show.caption ? `<p class="bowl-mo">${escapeHTML(show.caption.text)}</p>` : ''}${lines.map(say).join('')}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
   }
 
   function nightCard(state) {
@@ -55,14 +57,14 @@ export function createBowlScreens({app, ui, escapeHTML}) {
     if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);
     for (const event of settled?.bests || []) lines.push(WORDS.nightBest(BOWL_EVENT_NAMES[event] ?? event));
     if (result.lent) lines.push(WORDS.nightTruckBack);
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="night"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.nightTitle(result.night)}</h2></header>${state.bowlNight.caption ? `<p class="bowl-mo">${escapeHTML(state.bowlNight.caption.text)}</p>` : ''}<ul class="bowl-scores">${result.events.map(entry => `<li><span>${escapeHTML(BOWL_EVENT_NAMES[entry.event] ?? entry.event)}</span><b>${entry.score.toLocaleString()}</b></li>`).join('')}</ul>${lines.map(say).join('')}<footer>${button(WORDS.pickButton, 'show-night-pick', '', true)}${leaveButtons()}</footer></section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="night"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.nightTitle(result.night)}</h2></header>${moLine('night.won')}<ul class="bowl-scores">${result.events.map(entry => `<li><span>${escapeHTML(BOWL_EVENT_NAMES[entry.event] ?? entry.event)}</span><b>${entry.score.toLocaleString()}</b></li>`).join('')}</ul>${lines.map(say).join('')}<footer>${button(WORDS.pickButton, 'show-night-pick', '', true)}${leaveButtons()}</footer></section>`;
   }
 
   return {
     // The parts of the screen that change what the modal layer shows.
     key(state) {
       const show = night();
-      return `${pickerFrom ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${show?.caption?.id ?? ''}:${state.status === 'bowl_break'}`;
+      return `${pickerFrom ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${state.status === 'bowl_break'}`;
     },
     modal(state, {yardActive = false} = {}) {
       if (state.bowlNight && state.status === 'bowl_break')

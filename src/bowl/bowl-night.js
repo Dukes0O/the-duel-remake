@@ -27,8 +27,11 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play.
 export const BOWL_NIGHT_RULES = Object.freeze({
-  carCrush: Object.freeze({startS: 62, endS: 128, leftS: 40, timeLimitSec: 20,
-    stillMph: 1.5, stillSec: 1.5, rowsToWin: Object.freeze({easy: 3, medium: 4, hard: 5})}),
+  // The run starts past the ring's tight end (radius about 11 m at s 68 to 72): from there a truck
+  // held at full throttle with no steering reaches the buses without meeting a wall.
+  carCrush: Object.freeze({startS: 78, endS: 128, leftS: 40, timeLimitSec: 20,
+    // The run is over when the truck has gained less than 3 m in two seconds (stopped, or grinding along a wall).
+    stallMetres: 3, stallSec: 2, rowsToWin: Object.freeze({easy: 3, medium: 4, hard: 5})}),
   // Raised with the crowd's gain (scores went up by about a quarter).
   freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 500, medium: 800, hard: 1100})}),
   // The computer truck's top pace on each level, until BOWL-RIVALS gives each rival its own.
@@ -133,11 +136,11 @@ registerBowlEventRunner('carCrush', {
   },
   step(duel, night, dt) {
     const s = duel.state, rules = BOWL_NIGHT_RULES.carCrush, event = night.event;
-    const still = s.stageTimeSec > 3 && Math.abs(s.speedMph) < rules.stillMph && !s.airborne && !(s.impactTimer > 0);
-    event.stillSec = still ? event.stillSec + dt : 0;
+    if (s.s > event.progressS + rules.stallMetres || s.airborne || s.impactTimer > 0) { event.progressS = Math.max(event.progressS, s.s); event.progressAt = s.stageTimeSec; }
+    const stalled = s.stageTimeSec > 3 && s.stageTimeSec - event.progressAt >= rules.stallSec;
     const firstRow = Math.min(...duel.course.features.crushables.map(prop => prop.s));
     event.metres = Math.max(event.metres, Math.min(rules.endS, s.s) - firstRow);
-    if (s.s < rules.endS && s.s > rules.leftS && event.stillSec < rules.stillSec && s.stageTimeSec < rules.timeLimitSec) return null;
+    if (s.s < rules.endS && s.s > rules.leftS && !stalled && s.stageTimeSec < rules.timeLimitSec) return null;
     return {won: event.rows >= rules.rowsToWin[difficultyOf(night)], rows: event.rows};
   },
 });
@@ -247,7 +250,7 @@ function loadBowlEvent(duel) {
   night.phase = 'event';
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
     crowdPeak: 0, crowdMark: 0, flips: 0, roof: null, donutTurn: 0, donutSec: 0, heading: null,
-    rows: 0, metres: 0, stillSec: 0, playerDoneAt: null, rivalDoneAt: null};
+    rows: 0, metres: 0, progressS: duel.state.s, progressAt: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   say(duel, `event.${type}.intro`);
 }

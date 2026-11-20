@@ -57,7 +57,7 @@ const showDuel = (enabled = true) => {
   ok(results.length === 1 && !results[0].won && results[0].event === 'carCrush', 'a truck that never moves loses the Car Crush');
   ok(duel.state.status === 'bowl_break' && night.phase === 'result' && night.show.eventIndex === 0, 'the night waits at the same event');
   ok(duel.continueBowlNight() && night.event.type === 'carCrush' && night.event.attempt === 2, 'the next start is the same event, attempt two');
-  ok(duel.state.s === 62 && duel.state.status === 'countdown', 'the retry starts at the head of the crush line');
+  ok(duel.state.s === 78 && duel.state.status === 'countdown', 'the retry starts at the head of the crush line');
 }
 
 // One scripted night, the way in to the results: night one on Easy in the lent truck.
@@ -82,7 +82,9 @@ const run = (() => {
     }
     const freestyle = s.bowlNight.event.type === 'freestyle';
     const line = freestyle && s.s > 40 && s.s < 70 ? -3.4 : s.bowlNight.event.type === 'sideBySide' ? 3 : 0;
-    duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
+    // The Car Crush as a child plays it: W held down, no steering.
+    if (s.bowlNight.event.type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+    else duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
     if (freestyle && s.stageTimeSec > 20 && !log.hud) log.hud = bowlHudView(s);
   }
@@ -99,7 +101,8 @@ const run = (() => {
     const points = log.scores.filter(score => score.event === result.event).reduce((sum, score) => sum + score.points, 0);
     ok(Number.isSafeInteger(result.score) && points === result.score, `${result.event}: the score is the sum of its scored stunts`);
   }
-  ok(log.events[0].rows >= 3, 'the Car Crush reached the row Easy needs');
+  ok(log.events[0].rows >= 3, 'holding W with no steering, the Car Crush reaches the row Easy needs');
+  ok(night.attempts[0].event === 'carCrush' && night.attempts[0].won, 'the first Car Crush run is won, with no wall in the way');
   const launch = log.scores.find(score => score.type === 'carLaunch' && score.event === 'freestyle');
   ok(launch, 'the Titan launches off a parked car in Freestyle');
   ok(log.scores.filter(score => score.type === 'landedJump').every(jump => jump.points < launch.points),

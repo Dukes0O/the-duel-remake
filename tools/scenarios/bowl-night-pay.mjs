@@ -67,7 +67,7 @@ export async function run(context) {
   await context.waitFor(page.drawn, 'the Bowl stadium and the Titan are drawn', 120000);
   await picture(context, 'bowl-night-car-crush-start');
   await key(context, 'KeyW', 'keydown');
-  try { await context.waitFor(page.card, 'the Car Crush ends', 60000); }
+  try { await context.waitFor(page.card, 'the Car Crush ends', 180000); }
   finally { await key(context, 'KeyW', 'keyup'); }
   await picture(context, 'bowl-night-car-crush-card');
   // Every later event (and any retry) is driven by the test driver.
