@@ -1,4 +1,5 @@
-import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offeredArsenalWeapons, ARSENAL_WEAPON_COST, ARSENAL_WEAPONS} from './weapon-upgrades.js';
+import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offeredArsenalWeapons, ARSENAL_WEAPON_COST, ARSENAL_WEAPONS,
+  TOWN_GEAR_BUILDING_NAMES, townGearReady} from './weapon-upgrades.js';
 import {rankForXp} from './notoriety.js';
 import {shownCars, wonCars} from './earned-cars-ui.js';
 import {WEAPONS} from './combat.js';
@@ -12,19 +13,24 @@ import {availableCarWeapons,getCarLoadout,CAR_SLOT_DIRECTIONS,
 import {crewPanel} from './crew-ui.js';
 import {territoryPanel} from './screen-territory.js';
 
+// WEAPON-WATER-CANNON: what the Armory says about town gear when it is offered.
+const TOWN_GEAR_OFFERS = Object.freeze({water: "Your town's Fire Station can fit it. It sprays the car ahead aside and puts out flames. It never does damage."});
+
 export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessage,
   getArmoryCar = () => 'falcone_f42', kitsEnabled = () => false,
   loadoutsEnabled = () => false, arsenalEnabled = () => false,
-  arsenalWave3Enabled = () => false, crewEnabled = () => false, crewGearEnabled = () => false, featureFlags, action}) {
+  arsenalWave3Enabled = () => false, crewEnabled = () => false, crewGearEnabled = () => false, featureFlags, action,
+  townGear = () => ({})}) {
+  // WEAPON-WATER-CANNON: townGear gives the water cannon's switch and the buildings the player's town has finished.
   const arsenalOptions = () => ({wastelandEnabled:kitsEnabled(), arsenalEnabled:arsenalEnabled(),
-    arsenalWave3Enabled: arsenalWave3Enabled()});
+    arsenalWave3Enabled: arsenalWave3Enabled(), ...townGear()});
   const crewContext = saved => ({gearEnabled: crewGearEnabled() === true &&
     saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true,
     warlordCardsEnabled: featureFlags?.enabled('warlord-cards') === true && crewGearEnabled() === true &&
       saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true});
   function weaponUpgradePanel(saved, wastelandEnabled = false) {
     const weapons = getProfileWeapons(saved);
-    const details = {ufo:'Adds four metres to your one safe forward jump per lap.',bomb:'More bombs, wider blasts and stronger knockback.',crossbow:'Faster arrows, stronger knockback and quicker reloads.',star:'Faster recharge. Invincibility always lasts five seconds.'};
+    const details = {water:'Quicker recharge. The push and the stream stay the same.',ufo:'Adds four metres to your one safe forward jump per lap.',bomb:'More bombs, wider blasts and stronger knockback.',crossbow:'Faster arrows, stronger knockback and quicker reloads.',star:'Faster recharge. Invincibility always lasts five seconds.'};
     const scrapCareer=wastelandEnabled&&saved.wasteland?.discoveredGate===true;
     const costs=scrapCareer?WASTELAND_UPGRADE_COSTS:WEAPON_UPGRADE_COSTS;
     const balance=scrapCareer?saved.wasteland.scrap:saved.credits;
@@ -37,7 +43,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const offered=offeredArsenalWeapons(saved,arsenalOptions());
     if(!offered.length)return '';
     return `<section class="weapon-shop"><h3>ARSENAL WEAPONS</h3><div class="upgrade-grid">${offered.map(id=>
-      `<article class="upgrade-card"><h3>${escapeHTML(WEAPONS[id].name)}</h3><button data-arsenal-purchase="${id}" ${saved.wasteland.scrap<ARSENAL_WEAPON_COST?'disabled':''}>BUY · ${ARSENAL_WEAPON_COST} SCRAP</button></article>`).join('')}</div></section>`;
+      `<article class="upgrade-card"><h3>${escapeHTML(WEAPONS[id].name)}</h3>${ARSENAL_WEAPONS[id]?.town?`<p>${escapeHTML(TOWN_GEAR_OFFERS[id]??'')}</p>`:''}<button data-arsenal-purchase="${id}" ${saved.wasteland.scrap<ARSENAL_WEAPON_COST?'disabled':''}>BUY · ${ARSENAL_WEAPON_COST} SCRAP</button></article>`).join('')}</div></section>`;
   }
   function loadoutPanel(saved) {
     const loadout = getCarLoadout(saved,arsenalOptions());
@@ -48,20 +54,25 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const rank = rankForXp(saved?.wasteland?.xp);
     const owned = getProfileWeapons(saved).unlocked;
     const loadout = getCarLoadout(saved, arsenalOptions());
-    const ids = [...new Set([...Object.keys(WEAPONS), ...Object.keys(ARSENAL_WEAPONS)])];
+    const options = arsenalOptions();
+    // Town gear is listed only behind its switch, and opens with its town building, not a rank.
+    const ids = [...new Set([...Object.keys(WEAPONS), ...Object.keys(ARSENAL_WEAPONS)])].filter(id =>
+      !ARSENAL_WEAPONS[id]?.town || options.waterCannonEnabled === true);
     const effects = {ufo: 'A short forward hop.', bomb: 'Drop an explosive behind your car.',
       crossbow: 'Fire a bolt ahead.', star: 'Gain a short burst of invincibility.',
       oil: 'Lay slippery oil behind you.', harpoon: 'Pull a rival toward you.',
       caltrops: 'Scatter spikes behind your car.', smoke: 'Hide your car in smoke.',
       rockets: 'Fire a guided rocket.', flamethrower: 'Burn rivals and barricades ahead.',
       magnet: 'Pull nearby cars toward you.', mortar: 'Fire an arcing shell.',
-      tesla: 'Shock nearby cars.', decoy: 'Send a decoy car ahead.', nitro: 'Ram with a burst of speed.'};
+      tesla: 'Shock nearby cars.', decoy: 'Send a decoy car ahead.', nitro: 'Ram with a burst of speed.',
+      water: 'Spray the car ahead aside and put out its flames. It never does damage.'};
     const rankNeeded = id => ARSENAL_WEAPONS[id]?.rank ?? 1;
     return `<section class="weapon-shop"><h3>CAR WEAPONS</h3><div class="upgrade-grid">${ids.map(id => {
-      const needed = rankNeeded(id), unlocked = owned.includes(id), open = unlocked || rank >= needed;
+      const town = ARSENAL_WEAPONS[id]?.town, built = townGearReady(id, options);
+      const needed = rankNeeded(id), unlocked = owned.includes(id), open = unlocked || rank >= needed && built;
       const newlyOpen = unlocked && rank === needed;
       const slot = Math.max(0, loadout.findIndex(item => !owned.includes(item)));
-      return `<article class="upgrade-card"><h3>${escapeHTML(WEAPONS[id]?.name ?? id)}${newlyOpen ? ' <span>NEW</span>' : ''}</h3><p>${escapeHTML(effects[id] || 'A weapon for your car.')}</p>${open ? unlocked ? `<b>${newlyOpen ? 'NEW' : 'OPEN'}</b>` : `<b>Rank ${needed} reached · NEW</b>` : `<b>Rank ${needed} · you are rank ${rank}</b>`}${open && unlocked ? `<button type="button" data-weapon-fit="${escapeHTML(id)}" data-weapon-fit-slot="${slot}">FIT</button>` : ''}</article>`;
+      return `<article class="upgrade-card"><h3>${escapeHTML(WEAPONS[id]?.name ?? id)}${newlyOpen ? ' <span>NEW</span>' : ''}</h3><p>${escapeHTML(effects[id] || 'A weapon for your car.')}</p>${open ? unlocked ? `<b>${newlyOpen ? 'NEW' : 'OPEN'}</b>` : `<b>${town ? `Your town has ${TOWN_GEAR_BUILDING_NAMES[town]}` : `Rank ${needed} reached`} · NEW</b>` : town && !built ? `<b>Build ${TOWN_GEAR_BUILDING_NAMES[town]} in your town to open this.</b>` : `<b>Rank ${needed} · you are rank ${rank}</b>`}${open && unlocked ? `<button type="button" data-weapon-fit="${escapeHTML(id)}" data-weapon-fit-slot="${slot}">FIT</button>` : ''}</article>`;
     }).join('')}</div></section>`;
   }
   function armorKitPanel(saved) {

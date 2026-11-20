@@ -12,6 +12,7 @@ import {stepMortars} from './arsenal/mortar.js';
 import {stepTeslaCharges} from './arsenal/tesla.js';
 import {stepDecoyDrones, clearDroneHistory} from './arsenal/decoy-drone.js';
 import {stepNitroRuns} from './arsenal/nitro-ram.js';
+import {stepWaterCannons} from './arsenal/water-cannon.js';
 import {cpuArsenalLoadout} from './weapon-upgrades.js';
 import {makeRng} from './rng.js';
 import {clearHazards, stepHazards} from './arsenal/hazards.js';
@@ -42,6 +43,7 @@ export function clearArsenalState(duel) {
     duel.state.combat.teslaCharges = [];
     duel.state.combat.teslaPulses = [];
     duel.state.combat.nitroRuns = [];
+    if (duel.state.combat.waterStreams) duel.state.combat.waterStreams = [];
   }
   for (const actor of [duel.state, ...duel.state.opponents, ...duel.state.traffic,
     duel.state.police?.pursuit]) {
@@ -91,6 +93,8 @@ export function stepCombat(duel, dt) {
   if (arsenalEnabled(duel)) {
     stepRocketVolleys(duel, dt);
     stepFlamethrowers(duel, dt);
+    // WEAPON-WATER-CANNON: after the flames, so a burst the water ends this step says its end cue on the next.
+    stepWaterCannons(duel, dt);
   }
   if (arsenalWaveThreeEnabled(duel)) {
     stepMortars(duel, dt);

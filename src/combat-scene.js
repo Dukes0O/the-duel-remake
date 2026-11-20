@@ -1,5 +1,7 @@
 import {createFlameResources, createFlameView, createFlameScorch, createFlameLighting} from './flame-view.js';
 import {FLAME_RULES} from './arsenal/flamethrower.js';
+import {waterStreamStart} from './arsenal/water-cannon.js';
+import {createWaterStreamView} from './arsenal/water-stream-view.js';
 import {handFlameMuzzle} from './world/jobs/hand-flame.js';
 import {SIGNATURE_GEAR} from './crew-gear/gear.js';
 import {createSmokeCloud, smokeHazeOpacity} from './combat-effects.js';
@@ -310,6 +312,9 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const arsenalFlames = Array.from({length: 12}, (_, index) => flameView(`arsenal-flame-${index}`,
     {range: FLAME_RULES.range, halfAngle: FLAME_RULES.halfConeRadians}));
   const burningCars = Array.from({length: 13}, (_, index) => flameView(`burning-car-${index}`, {body: true}));
+  // WEAPON-WATER-CANNON: the car cannon's stream, drawn as the fire truck's is (src/arsenal/water-stream-view.js), from the
+  // nose to where the water lands: the first car in it, or the end of its 14 m.
+  const waterStreams = Array.from({length: 12}, (_, index) => createWaterStreamView({name: `arsenal-water-${index}`}));
   const flameLightSources = [];
   let flameScorchTimes = new WeakMap();
   let flameRaceState = null;
@@ -752,6 +757,15 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       presentFlame(view, {...flameFrame, active: !!owner, at,
         heading: at ? at.heading + (owner.headingError || 0) : 0, age: burst?.age}, duel);
     });
+    waterStreams.forEach((view, index) => {
+      const stream = arsenalEnabled(duel) && c.waterStreams?.[index];
+      const owner = stream && actorForTarget(duel, stream.ownerId);
+      if (!owner) { view.hide(); return; }
+      const at = point(duel, owner), start = waterStreamStart(at, at.heading + (owner.headingError || 0));
+      const from = {x: start.x, y: start.y + .35, z: start.z}, reach = Number.isFinite(stream.reach) ? stream.reach : 0;
+      const to = {x: start.x + Math.sin(start.heading) * reach, y: start.y, z: start.z + Math.cos(start.heading) * reach};
+      view.draw(group, from, to, flameSeconds);
+    });
     arsenalMagnets.forEach((view, index) => {
       const magnet = arsenalEnabled(duel) && c.magnets?.[index];
       const owner = magnet && actorForTarget(duel, magnet.ownerId);
@@ -862,6 +876,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     detachVehicle,
     prepareSmokeCamera,
     dispose(){
+      for (const view of waterStreams) view.dispose();
       onFootFigures.dispose();
       raiderMarkers.dispose();
       salvageMarkers.dispose();

@@ -17,6 +17,10 @@ export function addCarSidewaysPush(car, speed, headingError) {
   alongPushByCar.set(car, carAlongPush(car) - speed * Math.sin(headingError));
 }
 export function carAlongPush(car) { return alongPushByCar.get(car) || 0; }
+// WEAPON-WATER-CANNON: a push along the road (the water cannon's shove has a part along the road and a part across it).
+export function addCarAlongPush(car, speed) {
+  if (Number.isFinite(speed) && speed !== 0) alongPushByCar.set(car, carAlongPush(car) + speed);
+}
 export function dampCarAlongPush(car, factor) {
   const push = alongPushByCar.get(car);
   if (push !== undefined) alongPushByCar.set(car, push * factor);

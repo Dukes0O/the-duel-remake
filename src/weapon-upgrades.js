@@ -19,7 +19,13 @@ export const ARSENAL_WEAPONS = Object.freeze({
   tesla: Object.freeze({rank: 17, wave: 3, cpuRole: 'control', warlordId: 'magnus'}),
   decoy: Object.freeze({rank: 19, wave: 3, cpuRole: 'control', warlordId: 'mirage'}),
   nitro: Object.freeze({rank: 21, wave: 3, cpuRole: 'front'}),
+  // WEAPON-WATER-CANNON: town gear. Offered once the player's town has a finished Fire Station (`town`), at any rank, behind
+  // the water-cannon switch. Computer cars never carry it: it is the town's, and every existing loadout stays as it was.
+  water: Object.freeze({rank: 1, wave: 1, cpuRole: 'none', town: 'fire-station'}),
 });
+
+// The town building a town-gear weapon needs, in words, for the Armory.
+export const TOWN_GEAR_BUILDING_NAMES = Object.freeze({'fire-station': 'a Fire Station'});
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const levelFor = value => Number.isFinite(value) ? Math.max(0, Math.min(3, Math.floor(value))) : 0;
@@ -67,9 +73,17 @@ export function getProfileWeapons(profile) {
 }
 
 export function implementedArsenalWeapons({implemented = Object.keys(ARSENAL_WEAPONS),
-  arsenalWave3Enabled = false} = {}) {
+  arsenalWave3Enabled = false, waterCannonEnabled = false} = {}) {
   return Object.keys(ARSENAL_WEAPONS).filter(id => Array.isArray(implemented) &&
-    implemented.includes(id) && (ARSENAL_WEAPONS[id].wave !== 3 || arsenalWave3Enabled === true));
+    implemented.includes(id) && (ARSENAL_WEAPONS[id].wave !== 3 || arsenalWave3Enabled === true) &&
+    (!ARSENAL_WEAPONS[id].town || waterCannonEnabled === true));
+}
+
+// Town gear is offered when the player's own town has finished its building. `townBuildings` lists the ids of the
+// finished buildings in that town (the caller reads it; nothing here reads a town save).
+export function townGearReady(id, {townBuildings = []} = {}) {
+  const building = ARSENAL_WEAPONS[id]?.town;
+  return !building || (Array.isArray(townBuildings) && townBuildings.includes(building));
 }
 
 export function arsenalCareerAvailable(profile, {wastelandEnabled = false, arsenalEnabled = false} = {}) {
@@ -84,7 +98,7 @@ export function offeredArsenalWeapons(profile, options = {}) {
   const owned = getProfileWeapons(profile).unlocked;
   const rank = rankForXp(profile.wasteland.xp);
   return implementedArsenalWeapons(options).filter(id =>
-    rank >= ARSENAL_WEAPONS[id].rank && !owned.includes(id));
+    rank >= ARSENAL_WEAPONS[id].rank && townGearReady(id, options) && !owned.includes(id));
 }
 
 function withWeapons(profile, weapons, careerFields = {}) {
@@ -110,6 +124,8 @@ export function purchaseArsenalWeapon(profile, id, options = {}) {
   const rank = rankForXp(profile.wasteland.xp);
   if (rank < ARSENAL_WEAPONS[id].rank)
     return {ok: false, profile, reason: 'Reach rank ' + ARSENAL_WEAPONS[id].rank + ' to buy this weapon.'};
+  if (!townGearReady(id, options))
+    return {ok: false, profile, reason: 'Build ' + TOWN_GEAR_BUILDING_NAMES[ARSENAL_WEAPONS[id].town] + ' in your town to buy this.'};
   const balance = profile.wasteland.scrap;
   if (!Number.isSafeInteger(balance) || balance < ARSENAL_WEAPON_COST)
     return {ok: false, profile, reason: 'You need ' + ARSENAL_WEAPON_COST + ' scrap for this weapon.'};
@@ -156,7 +172,7 @@ export function cpuArsenalLoadout(rank, difficulty, {implemented, arsenalWave3En
   const safeRank = Number.isSafeInteger(rank) ? Math.max(1, Math.min(30, rank)) : 1;
   const maximumWave = {easy: 1, medium: 2, hard: 3}[difficulty] ?? 1;
   const candidates = [...WEAPON_IDS, ...implementedArsenalWeapons({implemented, arsenalWave3Enabled}).filter(id =>
-    ARSENAL_WEAPONS[id].rank <= safeRank && ARSENAL_WEAPONS[id].wave <= maximumWave)];
+    ARSENAL_WEAPONS[id].rank <= safeRank && ARSENAL_WEAPONS[id].wave <= maximumWave && !ARSENAL_WEAPONS[id].town)];
   // Fisher-Yates uses the supplied src/rng generator; native scheduling owns
   // when this function is called and how that generator is seeded per car.
   for (let index = candidates.length - 1; index > 0; index--) {

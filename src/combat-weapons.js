@@ -17,6 +17,7 @@ import {launchMortar} from './arsenal/mortar.js';
 import {startTeslaCharge} from './arsenal/tesla.js';
 import {deployDecoyDrone} from './arsenal/decoy-drone.js';
 import {startNitroRam} from './arsenal/nitro-ram.js';
+import {startWaterCannon} from './arsenal/water-cannon.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {warlordFight} from './warlords/index.js';
@@ -51,6 +52,10 @@ export function arsenalEnabled(duel) {
 }
 export function arsenalWaveThreeEnabled(duel) {
   return arsenalEnabled(duel) && duel.featureFlags?.enabled('arsenal-wave3') === true;
+}
+// WEAPON-WATER-CANNON: the car's water cannon is town gear behind its own switch, on top of the arsenal's.
+export function waterCannonEnabled(duel) {
+  return arsenalEnabled(duel) && duel.featureFlags?.enabled('water-cannon') === true;
 }
 
 // Road hazards and car effects also run in warlord fights, whose moves use
@@ -260,6 +265,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   const waveTwo = ['rockets', 'flamethrower', 'magnet'].includes(weapon);
   const waveThree = ['mortar', 'tesla', 'decoy', 'nitro'].includes(weapon);
   if ((rearHazard || weapon === 'harpoon' || waveTwo || waveThree) && !arsenal) return false;
+  // Town gear: the player's only (computer cars never carry it), and only behind its switch.
+  if (weapon === 'water' && (enemy || !waterCannonEnabled(duel))) return false;
   if (waveThree && !arsenalWaveThreeEnabled(duel) &&
       !(enemy && warlordFight(duel, actor)?.fullArsenal === true)) return false;
   if (enemy && warlordFight(duel, actor)?.mayUseWeapon?.(duel, actor, weapon) === false) return false;
@@ -309,6 +316,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     if (!deployDecoyDrone(duel, actor)) return false;
   } else if (weapon === 'nitro') {
     if (!startNitroRam(duel, actor, level)) return false;
+  } else if (weapon === 'water') {
+    if (!startWaterCannon(duel, actor, level)) return false;
   } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);
