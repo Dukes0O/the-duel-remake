@@ -33,6 +33,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['audio-','weapon-audio','fight-voices'], paths:['src/audio.js','src/audio-output.js']},
   {prefixes:['onfoot-','first-person-'], paths:['src/onfoot.js','src/onfoot-camera.js','src/onfoot-figures.js','src/onfoot-hints.js','src/onfoot-race.js','src/onfoot-transition.js','src/onfoot-weapons.js']},
   {prefixes:['machine-','the-dig'], paths:['src/machines/']},
+  {prefixes:['bowl-'], paths:['src/bowl/']},
   {prefixes:['town-'], paths:['src/town/']},
   {prefixes:['armor-kit-','armored-ram','car-loadout-'], paths:['src/armor-kits.js','src/armor-kit-meshes.js','src/car-loadout.js','src/screen-armory.js']},
   {prefixes:['raider-'], paths:['src/raiders.js','src/raider-markers.js']},

@@ -1,0 +1,29 @@
+/* Show Night (BOWL-HOOKS): picker, cards between events, results and the HUD. */
+.bowl-panel{box-sizing:border-box;pointer-events:auto;width:min(560px,94vw);max-height:calc(100vh - 48px);overflow-y:auto;margin:24px auto;padding:24px;color:#f6ecd6;background:#1a1512ee;border:1px solid #a1773f;border-top:3px solid #f08a2c;box-shadow:0 12px 36px #0009;font-size:15px;line-height:1.5}
+.bowl-panel h2{font-size:clamp(26px,3.2vw,42px);line-height:1;margin:4px 0 12px}
+.bowl-panel p{margin:8px 0}
+.bowl-panel button{min-height:42px;padding:10px 14px;background:#2e241c;border:1px solid #a1773f;color:#f6ecd6;font:inherit;font-weight:700;letter-spacing:.04em;cursor:pointer}
+.bowl-panel button.primary-action{background:#b5571c;border-color:#f08a2c}
+.bowl-panel button:hover{background:#4a3828}.bowl-panel button.primary-action:hover{background:#cf6a26}
+.bowl-panel button:focus-visible{outline:3px solid #ffc75f;outline-offset:2px}
+.bowl-panel .segmented{display:flex;gap:6px;margin:12px 0}.bowl-panel .choice.on{background:#6d4524;border-color:#ffc75f}
+.bowl-panel footer{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.bowl-nights{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.bowl-night-row{display:grid;grid-template-columns:90px 1fr;gap:4px 12px;align-items:center;padding:8px 10px;background:#241c16;border:1px solid #4f3e2c}
+.bowl-night-row p{margin:0}.bowl-night-row button{grid-column:2;justify-self:start}
+.bowl-night-row[data-night-state="locked"],.bowl-night-row[data-night-state="later"]{opacity:.7}
+.bowl-mo{padding:10px 12px;background:#2c1f12;border-left:3px solid #f08a2c;font-style:italic}
+.bowl-message{color:#ffc06a}
+.bowl-scores{list-style:none;padding:0;margin:10px 0;display:grid;gap:4px}
+.bowl-scores li{display:flex;justify-content:space-between;border-bottom:1px solid #4f3e2c;padding:4px 0}
+/* The race HUD keeps its speed and gear; the lap clock and rival gap give way to the show's own numbers. */
+.bowl-night-active .race-progress,.bowl-night-active .race-heading,.bowl-night-active .race-clock,.bowl-night-active .race-position,
+.bowl-night-active #route-remaining,.bowl-night-active #arena-crush,.bowl-night-active #style-score-panel,
+.bowl-night-active .race-health,.bowl-night-active #race-callout{visibility:hidden}
+.bowl-hud{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:4;width:min(620px,92vw);padding:10px 16px;color:#fff3dc;background:#120d0acc;border:1px solid #a1773f;text-align:center;pointer-events:none;font-size:14px}
+.bowl-hud[hidden]{display:none}
+.bowl-hud p{margin:4px 0}.bowl-hud-event{font-weight:800;letter-spacing:.08em;color:#ffc06a}
+.bowl-hud-numbers{display:flex;justify-content:center;gap:24px;font-size:22px;font-weight:800}
+.bowl-hud-crowd{display:flex;justify-content:center;align-items:center;gap:8px;font-weight:700;letter-spacing:.08em}
+.bowl-hud-crowd meter{width:220px;height:14px}
+.bowl-hud-mo{min-height:1.4em;font-style:italic;color:#ffe2b0}

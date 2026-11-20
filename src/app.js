@@ -112,6 +112,8 @@ import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDri
   footGamepadInput,footControlInput,preventCarKeyDefault,heliControls} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
+import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
+import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
 import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {collectMuddyHollowHubcap, discoverMuddyHollow,
   muddyHollowSnapshot} from './wasteland-progress.js';
@@ -257,13 +259,17 @@ export class App {
       if (event.stageResult) {
         this._settleResult(event.stageResult,state);
       }
-      else if(event.gameover)this._settleResult(state.results||{},state);
-      if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
+      else if(event.gameover&&!state.bowlNight)this._settleResult(state.results||{},state);
+      // BOWL-HOOKS: Show Night pays its purse once, and each new event has its sound.
+      if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
+      if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
+      if(event.bowlEventResult)this._showNightCue(event.cue);
+      if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
       if(event.qualifyingLap)this._updateLapTelemetry(state);
-      if(event.lapCompleted)this._recordIntelLap(event,state);
+      if(event.lapCompleted&&!state.bowlNight)this._recordIntelLap(event,state);
       if(event.lapCompleted && state.mode==='grandprix' && this._switches().enabled('grand-prix-career')===true){
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
@@ -475,7 +481,7 @@ export class App {
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       if (!activeTalkStep(this.duel.state)) this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
-      this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
+      if(!this.duel.state.bowlNight)this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it; a Show Night is not a Lab lap (BOWL-HOOKS)
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
       this._driveLessonUi?.update();
       this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);
@@ -895,6 +901,7 @@ export class App {
     if(this.duel.drivingLesson)this._clearDriveLesson();
     this._refreshPlayer();
     const stageIndex=Math.max(0,Math.min(COURSE.length-1,Math.floor(options.startStage??this.menuStage))),stage=COURSE[stageIndex];
+    if(stage.bowl){this.courseAccessMessage='The Bowl is open only on Show Night, so press SHOW NIGHT to go there.';return false;} // BOWL-HOOKS: its ramps are for trucks
     if(!isCourseUnlocked(this.profile,stage)){this.courseAccessMessage='Unlock this course with credits before starting.';return false;}
     this.courseAccessMessage='';
     this.helpVisible=false;
@@ -1027,6 +1034,7 @@ export class App {
   }
   restart() {
     if(this.duel.drivingLesson)return this.nextLessonAttempt();
+    if(this.duel.state.bowlNight)return this.duel.retryBowlEvent(); // BOWL-HOOKS: the same event again
     // A helicopter visit has no run to restart; the pause menu leaves it.
     if (this.duel.state.status === 'heli') return false;
     if (this.duel.state.arena?.mode === 'warlord')
@@ -1827,7 +1835,7 @@ export class App {
   }
   _settleAbandoned(){
     const state=this.duel.state;
-    if(this.runId&&(['racing','ticket','countdown'].includes(state.status)||state.status==='exploring'&&state.deepJourney&&!state.deepJourney.committed)&&(state.stageTimeSec>0||this.profile.activeRace?.key===`${this.runId}:${state.stageIndex}`))this._settleResult({won:false,completed:false,abandoned:true},state);
+    if(this.runId&&!state.bowlNight&&(['racing','ticket','countdown'].includes(state.status)||state.status==='exploring'&&state.deepJourney&&!state.deepJourney.committed)&&(state.stageTimeSec>0||this.profile.activeRace?.key===`${this.runId}:${state.stageIndex}`))this._settleResult({won:false,completed:false,abandoned:true},state);
   }
   _settleDeepDeparture(event,state) {
     const journey=state?.deepJourney,runtime=this.duel.deepRuntime;
@@ -2474,6 +2482,70 @@ export class App {
     if (started && arrived === true) arriveHiddenRoadVisitAtOnce(this.duel);
     return started;
   }
+  // ---- Show Night (BOWL-HOOKS; src/bowl/bowl-night.js) ----
+  // The way in from the yard and the menu. The show's truck is lent to a player
+  // who has no Titan: it is this race's car only, and nothing adds it to a save.
+  showNightAvailable(){return this._switches().enabled('titan-bowl')===true;}
+  showNightChoices(){
+    if(!this.showNightAvailable())return null;
+    this._refreshPlayer();
+    const won=new Set((Array.isArray(this.profile.bowl?.nightsWon)?this.profile.bowl.nightsWon:[]).filter(Number.isSafeInteger));
+    const nights=[1,2,3,4,5].map(night=>({night,state:!bowlNightPlayable(night)?'later':won.has(night)?'won':night===1||won.has(night-1)?'open':'locked'}));
+    return {nights,lent:!isCarUnlocked(this.profile,SHOW_TRUCK),level:this.cpuDifficulty,message:this._showNightMessage||''};
+  }
+  clearShowNightMessage(){this._showNightMessage='';}
+  showNightRun(){return this._bowlRun&&this._bowlRun.playerId===this.player.id?this._bowlRun:null;}
+  startShowNight(night,{from='menu',cpuDifficulty}={}){
+    const entry=this.showNightChoices()?.nights.find(item=>item.night===night);
+    if(!entry||!['open','won'].includes(entry.state))return false;
+    if(this.duel.state.status!=='menu'&&!this.isYardHomeActive())return false;
+    if(this.duel.state.status!=='menu')this.returnToMenu();
+    this._refreshPlayer();
+    this.helpVisible=false;
+    const owned=isCarUnlocked(this.profile,SHOW_TRUCK);
+    this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this._runPlayerId=this.player.id;this._markedRaceKey=null;
+    this.ghostRecorder=this.ghostRecord=this.ghostPose=this.grandPrixLapRecorder=null;this.lapTelemetryRecorder=null;this.ghostStatus='none';
+    this._racePaint=getPaintAppearance(this.profile,SHOW_TRUCK,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep'),wastelandTownEnabled:this._switches().enabled('wasteland-town')});
+    this._racePaintCar=SHOW_TRUCK;this._raceRoof=getRoadRoofLook(this.profile,SHOW_TRUCK,{yetiEnabled:this._switches().enabled('yeti')});
+    this.audio.unlock();this.audio.setPaused(false);
+    this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
+    const started=this.duel.startBowlNight({night,owned,upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
+      playerId:this.player.id,driverId:getEquippedDriverId(this.profile),difficulty:this._raceSettings.difficulty,
+      cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989});
+    if(!started)return false;
+    this._bowlRun={runId:this.runId,playerId:this.player.id,night,from:from==='yard'?'yard':'menu',settled:null};
+    return true;
+  }
+  continueShowNight(){
+    if(!this.showNightRun()||this._bowlRun.runId!==this.runId)return false;
+    this.keys={};this._resetKeyboardInput();
+    return this.duel.continueBowlNight();
+  }
+  leaveShowNight(to='menu'){
+    if(!this.duel.state.bowlNight)return false;
+    this.returnToMenu();
+    if(to==='yard'&&this.wastelandUnlocked())this.visitWasteland({arrived:true});
+    return true;
+  }
+  // The purse and the night's records, saved once for the run that won them.
+  _settleShowNight(result,state){
+    const run=this._bowlRun;
+    if(!run||run.settled||run.runId!==this.runId||state!==this.duel.state||state.playerId!==this.player.id||
+      run.playerId!==this.player.id||result?.playerId!==this.player.id)return false;
+    this._refreshPlayer();
+    const {profile,...outcome}=settleShowNight(this.profile,result);
+    let saved=true;
+    if(outcome.changed){this.profile=profile;saved=this._saveProfile();}
+    run.settled={...outcome,saved};
+    if(outcome.purse>0)this._showNightCue('bowl.purse');
+    return true;
+  }
+  _showNightCue(id){
+    const cue=BOWL_SOUND_CUES[id];
+    if(!cue||this.audio?.muted||this.audio?.context?.state!=='running')return;
+    try{this.audio._playCue(cue);}catch{/* a missing sound is not a fault */}
+  }
   _clearHiddenRoadInput() {
     this.keys = {};
     this._resetKeyboardInput();
@@ -2493,7 +2565,7 @@ export class App {
     if(this.duel.drivingLesson)return;
     const yetiInput=(COURSE[state.stageIndex]?.id==='summit-run'||isSummitAttack(COURSE[state.stageIndex]))&&validYetiSeed(state.yetiSeed)&&
       this._switches().enabled('summit-run')&&this._switches().enabled('yeti');
-    if(state.arena||state.mode==='grandprix'&&!yetiInput)return;
+    if(state.arena||state.bowlNight||state.mode==='grandprix'&&!yetiInput)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
@@ -2709,9 +2781,10 @@ export class App {
     this._leaveHeli();
     if (st.heliVisit) st.heliVisit = null;
     st.paused = false; st.status = 'menu'; st.boosting = false;
-    const wasVisit = !!st.hiddenRoadVisit;
+    const wasVisit = !!st.hiddenRoadVisit || !!st.bowlNight; // a Show Night ran on its own seed, car and mode
     st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
     st.muddyHollowDeparture = null; st.arena = null;
+    delete st.bowlNight; this._bowlRun = null; // BOWL-HOOKS: leaving ends the night and hands the show truck back
     if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.grandPrixLapRecorder=null;this.lapTelemetryRecorder=null;this.ghostStatus='none';
