@@ -7,7 +7,7 @@ import {bowlHudView, crushRowName} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {BOWL_RIVALS} from './bowl-rivals.js';
-import {BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
+import {secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -46,6 +46,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     return `<section class="bowl-panel bowl-trick-card" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
       <h2 id="bowl-title">Trick card</h2>
       <ul>${BOWL_TRICK_GUIDE.map(entry => `<li>${bowlTrickEntryMarkup(entry, landed.includes(entry.kind))}</li>`).join('')}</ul>
+      ${secretCardMarkup(state.bowlNight.foundTricks)}
       <footer>${button(help.resume ? 'Keep driving' : 'Back to pause', 'show-night-tricks-close', '', true)}</footer>
     </section>`;
   }
@@ -102,6 +103,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     else if (settled?.alreadyPaid) lines.push(WORDS.nightPurseAlready);
     if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);
     for (const event of settled?.bests || []) lines.push(WORDS.nightBest(BOWL_EVENT_NAMES[event] ?? event));
+    if (state.bowlNight.secretHint) lines.push('Secret trick hint: ' + state.bowlNight.secretHint);
     if (result.lent) lines.push(WORDS.nightTruckBack);
 
     if (result.events.some(entry => entry.event === 'scrapasaurus')) lines.push(WORDS.eventRexYard); // BOWL-REX-FIGHT

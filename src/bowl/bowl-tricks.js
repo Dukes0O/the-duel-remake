@@ -1,3 +1,4 @@
+import {readCode, secretOf} from './bowl-secrets.js';
 import {landingPoints, trickVariety} from './bowl-show.js';
 
 const TURN = Math.PI * 2;
@@ -28,8 +29,32 @@ function award(duel, state, kind, turns, points, combo = 1, landing = 'clean', f
   duel.emit({bowlTrick: {kind, turns, points, combo, fresh, landing, repeat, cues}});
 }
 
+export function genuineSecretFind(duel, event) {
+  return !!event && states.get(duel.state)?.finding === event;
+}
+function findSecret(duel, state, kind) {
+  const owner = duel.state.bowlNight ?? duel.state;
+  owner.foundTricks ??= [];
+  if (owner.foundTricks.includes(kind)) return;
+  owner.foundTricks.push(kind);
+  const event = {kind, cue: 'bowl.secret.found'};
+  state.finding = event;
+  try { duel.emit({bowlSecretFound: event}); } finally { state.finding = null; }
+}
+
 function ground(duel, state, dt) {
   const s = duel.state, input = s.input, speed = Math.abs(s.speedMph);
+  const keys = directionKeys(input);
+  if (speed >= 5) state.code.length = 0;
+  else if (!state.usedFull) {
+    for (const key of ['Up','Down','Left','Right']) {
+      if (keys[key] && !state.groundPrevious?.[key] && readCode(state.code, key, state.elapsed, true)) {
+        state.armed = state.usedFull = true;
+        duel.emit({bowlSecretArmed: {kind: 'fullWorks', cue: 'bowl.secret.armed'}});
+      }
+    }
+  }
+  state.groundPrevious = keys;
   let kind = null;
   if (input.boost) {
     if (input.throttle && Math.abs(input.steer) > .5 && speed < 15) kind = 'donut';
@@ -82,6 +107,7 @@ function late(duel, flight, kind) {
   duel.emit?.({bowlTrickLate: {kind, cue: 'bowl.trick.late'}});
 }
 function begin(duel, flight, axis, request, airLeft) {
+  if (axis === 'roll') request = {...request, kind: Math.abs(wrap(flight.yaw)) > Math.PI / 4 ? 'sideFlip' : 'barrelRoll'};
   const time = moves[request.kind].time;
   const hard = difficulty(duel.state) === 'hard';
   if (!hard && airLeft + 1e-8 < .75 * time) { late(duel, flight, request.kind); return; }
@@ -89,12 +115,23 @@ function begin(duel, flight, axis, request, airLeft) {
   duel.emit?.({bowlTrickGo: {kind: request.kind, cue: 'bowl.trick.go'}});
 }
 function bank(f, kind) { f.turns[kind] = (f.turns[kind] || 0) + 1; }
+function beginSecret(duel, flight, trick, airLeft) {
+  const hard = difficulty(duel.state) === 'hard';
+  if (!hard && airLeft + 1e-8 < trick.duration*.75) { late(duel, flight, trick.id); return false; }
+  flight.active = {}; flight.queue = {}; flight.pitch = flight.yaw = flight.roll = 0;
+  flight.secret = {trick, elapsed: 0, duration: hard ? trick.duration : Math.min(airLeft, trick.duration)};
+  flight.code.length = 0;
+  duel.emit({bowlSecretStart: {kind: trick.id, cue: 'bowl.secret.start'}});
+  return true;
+}
 function air(duel, state, dt) {
   const s = duel.state, input = s.input;
   if (!state.flight) {
     s.bowlLanding = null;
     const held = {...(state.groundKeys ?? input)};
-    state.flight = {held, previous: directionKeys(held), active: {}, queue: {}, turns: {}, pitch: 0, yaw: 0, roll: 0};
+    state.flight = {held, previous: directionKeys(held), active: {}, queue: {}, turns: {}, code: [], pitch: 0, yaw: 0, roll: 0};
+    state.code.length = 0;
+    if (state.armed && remainingAir(s) >= .9) { state.armed = false; beginSecret(duel, state.flight, secretOf('fullWorks'), remainingAir(s)); }
     state.kind = s.bowlGroundTrick = null;
   }
   const f = state.flight, keys = directionKeys(input), fresh = [];
@@ -102,6 +139,18 @@ function air(duel, state, dt) {
   f.previous = keys;
   for (const key of ['throttle', 'brake', 'steer', 'boost']) {
     if (!input[key] || Math.sign(input[key]) !== Math.sign(f.held[key])) f.held[key] = 0;
+  }
+  const airLeft = remainingAir(s);
+  if (!f.secret) for (const key of fresh.filter(k => k !== 'Space')) {
+    const secret = readCode(f.code, key, state.elapsed, false);
+    if (secret && beginSecret(duel, f, secret, airLeft)) break;
+  }
+  if (f.secret) {
+    const turn = f.secret;
+    turn.elapsed += dt;
+    Object.assign(s.bowlPose, turn.trick.pose(turn.elapsed / turn.duration));
+    if (turn.elapsed + 1e-8 >= turn.duration) { bank(f, turn.trick.id); delete f.secret; }
+    return;
   }
   const held = {};
   for (const [key, blocked] of [['Up', f.held.throttle], ['Down', f.held.brake], ['Left', f.held.steer], ['Right', f.held.steer]]) {
@@ -113,7 +162,6 @@ function air(duel, state, dt) {
     held[axis] = {kind, sign};
     if (fresh.includes(key) || axis === 'roll' && fresh.includes('Space')) f.queue[axis] = held[axis];
   }
-  const airLeft = remainingAir(s);
   for (const axis of ['pitch', 'yaw', 'roll']) {
     if (!f.active[axis] && f.queue[axis]) {
       begin(duel, f, axis, f.queue[axis], airLeft);
@@ -143,6 +191,10 @@ export function landBowlTricks(duel, actor) {
     else if (axis !== 'yaw') landing = 'slam';
     else if (landing === 'clean') landing = 'slide';
   }
+  if (f.secret) {
+    if ((1 - f.secret.elapsed / f.secret.duration)*360 <= window + 1e-8) bank(f, f.secret.trick.id);
+    else landing = 'slam';
+  }
   actor.bowlLanding = landing;
   if (landing === 'slam') {
     state.recovery = level === 'easy' ? 1 : 1.5;
@@ -151,23 +203,32 @@ export function landBowlTricks(duel, actor) {
   } else state.levelTime = .2;
   if (landing === 'slide') state.slide = 1;
   const tricks = Object.keys(moves).filter(kind => f.turns[kind]);
+  if (f.turns.frontFlip && f.turns.backflip) bank(f, 'yoYo');
   const paidLanding = landing === 'slam' ? 'clean' : landing;
   for (const [index, kind] of tricks.entries()) {
     const turns = f.turns[kind];
     award(duel, state, kind, turns, landingPoints(kind, turns, tricks.length, paidLanding),
       tricks.length, paidLanding, index === 0 && landing === 'clean');
   }
+  for (const [kind, turns] of Object.entries(f.turns)) {
+    const trick = secretOf(kind);
+    if (!trick) continue;
+    award(duel, state, kind, turns, trick.points * turns * (paidLanding === 'slide' ? .5 : 1),
+      1, paidLanding, !tricks.length && landing === 'clean');
+    findSecret(duel, state, kind);
+  }
 }
 export function stepBowlTricks(duel, actor, dt) {
   if (!tricksEnabled(duel, actor) || !(dt > 0)) return;
   let state = states.get(actor);
   if (!state || state.event !== actor.bowlNight?.event || actor.stageTimeSec < state.clock) {
-    state = {event: actor.bowlNight?.event, seen: new Set(), repeat: 1, recovery: 0, slide: 0};
+    state = {event: actor.bowlNight?.event, seen: new Set(), code: [], elapsed: 0, repeat: 1, recovery: 0, slide: 0};
     states.set(actor, state);
     actor.bowlPose = {pitch: 0, roll: 0, yaw: 0};
     actor.bowlLanding = null;
   }
   state.clock = actor.stageTimeSec;
+  state.elapsed += dt;
   if (state.recovery > 0) {
     const share = Math.max(0, 1 - dt / state.recovery);
     for (const axis of ['pitch', 'yaw', 'roll']) actor.bowlPose[axis] *= share;

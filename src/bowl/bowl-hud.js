@@ -1,4 +1,5 @@
 // Read-only presentation for the Bowl. These views can also be checked without a DOM.
+import {SECRETS, secretOf} from './bowl-secrets.js';
 import {BOWL_FLOOR} from './bowl-course.js';
 import {BIG_MO} from './bowl-lines.js';
 export const BOWL_HUD_SOUNDS = Object.freeze({
@@ -90,9 +91,9 @@ export function bowlOpeningLines(night, lent) {
 
 export function bowlTrickPopup(record, now) {
   if (!popupActive(record, now)) return null;
-  if (record.notice) return {name: record.notice, points: '', fresh: false};
+  if (record.notice) return {name: record.notice, points: record.detail ?? '', fresh: false};
   const trick = BOWL_TRICK_GUIDE.find(entry => entry.kind === record.kind);
-  const name = trick?.name ?? (record.kind === 'cyclone' ? 'Cyclone' : '');
+  const name = trick?.name ?? secretOf(record.kind)?.name ?? (record.kind === 'cyclone' ? 'Cyclone' : '');
   if (!name) return null;
   const prefix = record.kind === 'cyclone' || record.turns < 2 ? '' :
     record.turns === 2 ? 'Double ' : record.turns === 3 ? 'Triple ' : `${record.turns}× `;
@@ -142,6 +143,15 @@ export function bowlHealthOf(state) {
   return rex ? bowlHealth(state, {value: Math.max(0, rex.maxHits - rex.hits), max: rex.maxHits}) : bowlHealth(state);
 }
 
+export function secretCardMarkup(found = []) {
+  const rows = SECRETS.map(trick => {
+    if (!found.includes(trick.id)) return '<li aria-label="Undiscovered secret trick">? ? ?</li>';
+    const entry = {kind: trick.id, name: trick.name, points: trick.points + ' points.',
+      keys: (trick.code.length ? trick.code : ['Front flip', 'Backflip']).map(key => [key])};
+    return '<li>' + bowlTrickEntryMarkup(entry, true) + '</li>';
+  });
+  return '<h3>SECRET TRICKS: ' + SECRETS.filter(t => found.includes(t.id)).length + ' of 7</h3><ul>' + rows.join('') + '</ul>';
+}
 export function bowlTrickEntryMarkup(entry, done = false) {
   const keys = entry.keys.map(group => group.map(key => `<kbd>${key}</kbd>`).join(' ')).join(' then ');
   return `<div class="bowl-trick-picture" data-trick="${entry.kind}" aria-hidden="true"><i></i></div>

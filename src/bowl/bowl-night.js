@@ -15,7 +15,8 @@
 //   'turn' phase, pays nothing and cannot be retried (src/bowl/bowl-turns.js).
 // - BOWL-REX-FIGHT registers its own runner for night five and adds its lines
 //   to BIG_MO in bowl-lines.js.
-import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle,
+import {secretOf, secretHint} from './bowl-secrets.js';
+import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent,
   scoreStuntEvent} from './bowl-show.js';
 import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
@@ -203,7 +204,7 @@ registerBowlEventRunner('freestyle', {
   timeLimitSec: BOWL_NIGHT_RULES.freestyle.timeLimitSec,
   step(duel, night) {
     if (duel.state.stageTimeSec < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;
-    return {won: scoreFreestyle(night.event.facts).score >= BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)]};
+    return {won: night.event.score >= BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)]};
   },
 });
 
@@ -257,7 +258,7 @@ export function startBowlNight(duel, options = {}) {
     lent: truck.lent, start: {car: truck.car, upgrades: truck.upgrades, playerId: options.playerId ?? null,
       driverId: options.driverId, difficulty: options.difficulty, seed: options.seed},
     playerId: options.playerId ?? null, clock: 0, caption: null, captionQueue: [], said: [],
-    event: null, attempts: [], lastResult: null, resultAt: null, result: null, trickKinds: [],
+    event: null, attempts: [], lastResult: null, resultAt: null, result: null, trickKinds: [], foundTricks: [...(options.foundTricks ?? [])],
     rivals: Array.isArray(options.rivals) ? options.rivals.filter(id => typeof id === 'string').slice(0, 3) : null,
   };
   loadBowlEvent(duel);
@@ -327,6 +328,19 @@ export function observeBowlNight(duel, ev) {
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
   // Count the Rex hold from the fall, including any time spent dragging the final box.
   if (ev.bowlRex?.type === 'fall') night.event.resultHoldSince ??= night.clock;
+  if (ev.bowlSecretFound) {
+    const secret = secretOf(ev.bowlSecretFound.kind);
+    if (secret) {
+      night.event.crowd = night.event.crowdPeak = 100;
+      night.event.crowdAt = s.stageTimeSec;
+      night.event.trickPopups = [{notice: 'SECRET TRICK FOUND', detail: secret.name, at: night.clock}];
+      say(duel, 'secret.' + secret.id);
+    }
+  }
+  if (ev.bowlSecretArmed) {
+    night.event.trickPopups = [{notice: 'FULL WORKS ARMED', at: night.clock}];
+    say(duel, 'secret.armed');
+  }
   if (ev.bowlTrickLate) night.event.trickPopups = [{notice: 'NOT ENOUGH AIR', at: night.clock}];
   if (ev.bowlTrick) {
     const trick = ev.bowlTrick;
@@ -369,7 +383,7 @@ function observeTruck(duel, dt) {
 
 function finishEvent(duel, outcome) {
   const s = duel.state, night = s.bowlNight, event = night.event;
-  const score = scoreFreestyle(event.facts).score;
+  const score = event.score;
   const result = {...outcome, event: event.type, eventIndex: event.eventIndex, attempt: event.attempt,
     won: outcome.won === true, score, rows: event.rows, metres: +event.metres.toFixed(1),
     crowdPeak: +event.crowdPeak.toFixed(1), playerId: night.playerId};
@@ -392,6 +406,8 @@ function finishEvent(duel, outcome) {
     night.result = {night: night.night, won: true, score: won.reduce((sum, entry) => sum + entry.score, 0),
       events: won.map(entry => ({event: entry.event, score: entry.score})), bests,
       purse: BOWL_PURSE[night.night - 1], lent: night.lent, playerId: night.playerId};
+    night.secretHint = secretHint((night.start.seed ?? 1989) + night.night, night.foundTricks);
+    if (night.secretHint) duel.emit({bowlSecretHint: {cue: 'bowl.secret.hint'}});
     duel.emit({bowlNightResult: night.result});
     say(duel, 'night.won');
   }

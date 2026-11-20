@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {backupCareer} from '../src/career-backup.js';
 import {createProfile, loadPlayers, savePlayers} from '../src/progression.js';
-import {recordBowlScore, settleBowlNight} from '../src/bowl/bowl-save.js';
+import {foundBowlTricks, recordBowlSecret, recordBowlScore, settleBowlNight} from '../src/bowl/bowl-save.js';
 
 let checks = 0;
 const equal = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
@@ -90,4 +90,17 @@ const memory = (initial = {}) => {
   equal(loadPlayers(restored).players[0].profile, stored, 'career backup restores Bowl state exactly');
 }
 
+{
+  const old = createProfile();
+  equal(foundBowlTricks(old), [], 'old profiles have no found secrets');
+  const found = recordBowlSecret(old, 'gyro').profile;
+  equal(foundBowlTricks(found), ['gyro'], 'a genuine kind can be recorded');
+  ok(recordBowlSecret(found, 'gyro').profile === found && recordBowlSecret(found, 'unknown').profile === found, 'duplicate or invalid finds do not write');
+  const newer = {...found, bowl: {...found.bowl, version: 8}};
+  ok(recordBowlSecret(newer, 'yoYo').profile === newer, 'newer records remain untouched');
+  const storage = memory();
+  const registry = {version:2,activePlayerId:'one',players:[{id:'one',name:'One',profile:found},{id:'two',name:'Two',profile:old}]};
+  ok(savePlayers(registry,storage),'two independent drivers saved in memory');
+  equal(loadPlayers(storage).players.map(p => foundBowlTricks(p.profile)), [['gyro'],[]], 'finds survive loading and stay with the finder');
+}
 console.log(`test-bowl-save: ${checks} checks passed`);

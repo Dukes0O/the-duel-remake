@@ -114,6 +114,8 @@ import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
 import {rexInTheYard} from './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: the beaten Scrapasaurus in the yard
+import {foundBowlTricks, recordBowlSecret} from './bowl/bowl-save.js';
+import {genuineSecretFind} from './bowl/bowl-tricks.js';
 import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
 import {beginGo, createTurnShow, currentTurn, noteSettled, passKeyboard, recordGo, settleTurnGo, turnScoreboard,
   turnShowNights} from './bowl/bowl-turns.js'; // BOWL-TURNS
@@ -266,6 +268,17 @@ export class App {
       // BOWL-HOOKS: Show Night pays its purse once, and each new event has its sound.
       if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
+      const secret = event.bowlSecretFound;
+      if (secret && state === this.duel.state && state.playerId === this.player?.id && genuineSecretFind(this.duel, secret)) {
+        this._refreshPlayer();
+        if (state.playerId === this.player.id) {
+          const found = recordBowlSecret(this.profile, secret.kind);
+          if (found.changed) { this.profile = found.profile; this._saveProfile(); }
+        }
+        this._showNightCue('bowl.secret.cheer');
+      }
+      for (const message of [secret, event.bowlSecretStart, event.bowlSecretArmed, event.bowlTrickLate, event.bowlSecretHint])
+        if (message?.cue) this._showNightCue(message.cue);
       if(event.bowlTrick)for(const cue of event.bowlTrick.cues)this._showNightCue(cue);
       if(event.bowlEventResult)this._showNightCue(event.cue);
       if(event.bowlEventResult&&state.bowlNight?.turn)this._recordTurnGo(event.bowlEventResult,state); // BOWL-TURNS
@@ -2525,7 +2538,7 @@ export class App {
     this._racePaintCar=SHOW_TRUCK;this._raceRoof=getRoadRoofLook(this.profile,SHOW_TRUCK,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock();this.audio.setPaused(false);
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
-    const started=this.duel.startBowlNight({night,owned,upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
+    const started=this.duel.startBowlNight({night,owned,foundTricks:foundBowlTricks(this.profile),upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
       playerId:this.player.id,driverId:getEquippedDriverId(this.profile),difficulty:this._raceSettings.difficulty,
       cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989,
       eventIndex,turn});

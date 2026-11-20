@@ -1,6 +1,8 @@
 // Bowl career records and rewards. These pure profile operations do not touch
 // the race, storage, or another part of the player's career.
 
+import {secretOf} from './bowl-secrets.js';
+
 export const BOWL_EVENTS = Object.freeze([
   'car-crush', 'freestyle', 'side-by-side', 'last-truck-rolling',
 ]);
@@ -36,6 +38,16 @@ const result = (profile, changed = false, reason) => ({
 const ownsNewerBowl = profile => Number.isSafeInteger(profile?.bowl?.version) && profile.bowl.version > 1;
 // The purse goes into the Wasteland wallet, which only a version 1 career may be written to (as armor kits and crew do).
 const ownsNewerWasteland = profile => Number.isSafeInteger(profile?.wasteland?.version) && profile.wasteland.version > 1;
+
+export function foundBowlTricks(profile) {
+  return uniqueIds(profile?.bowl?.foundTricks).filter(id => secretOf(id));
+}
+export function recordBowlSecret(profile, kind) {
+  if (!object(profile) || profile.bowl != null && !object(profile.bowl) || ownsNewerBowl(profile) || !secretOf(kind)) return result(profile, false, 'Unknown Bowl record.');
+  const found = foundBowlTricks(profile);
+  if (found.includes(kind)) return result(profile);
+  return result({...profile, bowl: {...profile.bowl, foundTricks: [...(Array.isArray(profile.bowl?.foundTricks) ? profile.bowl.foundTricks : []), kind]}}, true);
+}
 
 export function recordBowlScore(profile, event, score) {
   if (ownsNewerBowl(profile)) return result(profile, false, 'This Bowl save belongs to a newer version of the game.');
