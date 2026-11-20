@@ -832,17 +832,16 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-VIEW-ART.md"
 
-  - id: TOWN-EXPORT-BIGINT
-    title: "Town BACK UP cannot write a file: a town's BigInt fields break the export"
-    owner: "claude-cloud"
+  - id: TOWN-STORE-RESTORE
+    title: "Town restore: migrate, save lock and career pointer before any screen offers RESTORE"
+    owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "building"
-    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/TOWN-EXPORT-BIGINT, pull request into integration/wasteland"
+    status: "backlog"
     needs: []
     locks: []
     flag: "wasteland-town"
-    details: "docs/board/cards/TOWN-EXPORT-BIGINT.md"
+    details: "docs/board/cards/TOWN-STORE-RESTORE.md"
 
   - id: TOWN-HAUL-JOB
     title: "Town: the first drive, hauling salvage"
