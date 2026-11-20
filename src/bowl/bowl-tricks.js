@@ -4,6 +4,7 @@ import {crowdAfter, landingPoints, scoreStuntEvent, trickVariety} from './bowl-s
 const TURN = Math.PI * 2;
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const states = new WeakMap();
+const arenaCourses = new WeakMap();
 
 export function tricksEnabled(duel, actor) {
   return actor === duel.state && duel.course?.def.tricks === true &&
@@ -12,7 +13,11 @@ export function tricksEnabled(duel, actor) {
 
 export function startArenaTrickShow(duel, foundTricks = []) {
   const s = duel.state;
-  delete s.arenaTrickShow;
+  if (s.arenaTrickShow) {
+    delete s.bowlPose; delete s.bowlLanding; delete s.bowlGroundTrick;
+    delete s.arenaTrickShow;
+  }
+  arenaCourses.set(s, duel.course);
   if (!duel.course?.def.tricks || duel.course.def.bowl || !tricksEnabled(duel, s)) return;
   s.arenaTrickShow = {clock: 0, trickKinds: [], foundTricks: [...foundTricks],
     event: {score: 0, crowd: 0, crowdAt: 0, trickPopups: []}};
@@ -80,6 +85,7 @@ function ground(duel, state, dt) {
     for (const key of ['Up','Down','Left','Right']) {
       if (keys[key] && !state.groundPrevious?.[key] && readCode(state.code, key, state.elapsed, true)) {
         state.armed = state.usedFull = true;
+        if (s.arenaTrickShow) s.arenaTrickShow.event.trickPopups = [{notice:'FULL WORKS ARMED', at:s.arenaTrickShow.clock}];
         duel.emit({bowlSecretArmed: {kind: 'fullWorks', cue: 'bowl.secret.armed'}});
       }
     }
@@ -253,7 +259,7 @@ export function landBowlTricks(duel, actor) {
 export function stepBowlTricks(duel, actor, dt) {
   if (!tricksEnabled(duel, actor) || !(dt > 0)) return;
   if (!duel.course.def.bowl) {
-    const show = actor.arenaTrickShow ?? startArenaTrickShow(duel);
+    const show = arenaCourses.get(actor) === duel.course && actor.arenaTrickShow || startArenaTrickShow(duel);
     show.clock = actor.stageTimeSec ?? 0;
   }
   const event = actor.bowlNight?.event ?? actor.arenaTrickShow?.event;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {createProfile,settleRace} from '../src/progression.js';
 import {COURSE} from '../src/config.js';
 import {makeRng} from '../src/rng.js';
 import {Duel} from '../src/game.js';
@@ -306,4 +307,41 @@ test('the normal Monster Arena race accepts road, rally and monster vehicles and
   }
   const off=arenaJump('falcone_f42',{brake:1},false);
   assert.ok(!off.s.arenaTrickShow && !off.s.bowlPose && !off.events.length);
+});
+
+test('a scored Arena backflip preserves the finish of the final race sector', () => {
+  function finish(trick) {
+    const {duel,s,events} = arenaRace('falcone_f42',true);
+    const ramp = duel.course.features.ramps.at(-1);
+    const start = duel.course.length*(s.lapsTotal-1) + ramp.start-3;
+    const y = duel.course.groundAt(start,0).y;
+    Object.assign(s,{s:start,prevS:start,lateral:0,prevLateral:0,groundHeight:y,prevGroundHeight:y,
+      _jumpY:y,_verticalSpeed:0,airborne:false,speedMph:100,gear:duel.car.gears.length-1,
+      completedLaps:s.lapsTotal-1,nextLapGate:duel._lapGates.filter(g=>g<ramp.start-3).length});
+    let air=0;
+    for(let i=0;i<9000 && s.status==='racing';i++){
+      const steer = Math.max(-1,Math.min(1,s.headingError*2.5+s.lateral*.08));
+      if(s.airborne)air++;
+      duel.setInput(s.airborne ? {...neutral,brake:+(trick&&air===2)} : {...neutral,steer,throttle:+(s.speedMph<80)});
+      duel.step(DT);
+    }
+    assert.ok(s.results?.completed,'the car finishes the race through its finish gate');
+    assert.equal(events.some(e=>e.kind==='backflip'),trick);
+    const outcome = settleRace(createProfile(),{...s.results,runId:'matched-sector',car:s.car,mode:s.mode,
+      seed:s.seed,difficulty:s.difficulty,cpuDifficulty:s.cpuDifficulty,upgrades:s.upgrades,rival:s.rivalSettings});
+    assert.ok(outcome.awarded && outcome.reward>0, 'the completed race earns its normal reward');
+    return {results:s.results,reward:outcome.reward};
+  }
+  assert.deepEqual(finish(true),finish(false),'winner, elapsed time, lap times and race pay are identical');
+});
+
+test('each newly loaded Arena stage begins with a fresh trick score', () => {
+  const {duel,s} = arenaRace('falcone_f42',true);
+  stepBowlTricks(duel,s,DT);
+  const before = s.arenaTrickShow;
+  before.event.score = 423;
+  duel._loadStage(s.stageIndex);
+  stepBowlTricks(duel,s,DT);
+  assert.notEqual(s.arenaTrickShow,before);
+  assert.equal(s.arenaTrickShow.event.score,0);
 });

@@ -285,7 +285,10 @@ export class App {
       if(event.bowlOutsideCue)this._showNightCue(event.bowlOutsideCue);
       if(event.bowlWall?.cue)this._showNightCue(event.bowlWall.cue);
       if(event.bowlRex?.cue)this._showNightCue(event.bowlRex.cue); // BOWL-REX-FIGHT: each thing the Scrapasaurus does has its sound
-      if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
+      if(event.stageLoaded!=null){
+        startArenaTrickShow(this.duel, this.duel.course.def.tricks && !this.duel.course.def.bowl &&
+      this.duel.featureFlags.enabled('arena-tricks') ? this._bowlFoundForDriver() : []);
+        this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
@@ -990,8 +993,6 @@ export class App {
       deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),deepSave:this.profile.deep??null,
       tune:this._labTuneOf(car), // LAB-TUNE
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
-    startArenaTrickShow(this.duel, this.duel.course.def.tricks && !this.duel.course.def.bowl &&
-      this.duel.featureFlags.enabled('arena-tricks') ? this._bowlFoundForDriver() : []);
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
     this._storyRace=storyRun?{runId:this.runId,level:storyRun.level}:null;

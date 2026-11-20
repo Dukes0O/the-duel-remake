@@ -107,6 +107,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);
     for (const event of settled?.bests || []) lines.push(WORDS.nightBest(BOWL_EVENT_NAMES[event] ?? event));
     if (state.bowlNight.secretHint) lines.push('Secret trick hint: ' + state.bowlNight.secretHint);
+    if (state.bowlNight.foundTricks?.length === 7) lines.push('You found all seven secret tricks.');
     if (result.lent) lines.push(WORDS.nightTruckBack);
 
     if (result.events.some(entry => entry.event === 'scrapasaurus')) lines.push(WORDS.eventRexYard); // BOWL-REX-FIGHT

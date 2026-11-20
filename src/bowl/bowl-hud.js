@@ -301,7 +301,7 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
       previousHealth = lastHit = lastPopups = null;
     }
     for (const [node, value] of fields) {
-      const label = value(view);
+      const label = value(view) ?? '';
       text(node, label);
       hide(node, !label);
     }

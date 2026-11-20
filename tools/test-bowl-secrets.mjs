@@ -7,7 +7,7 @@ const DT = 1/120;
 const neutral = {throttle:0, brake:0, steer:0, boost:false};
 const keyed = key => ({...neutral, throttle: +(key === 'Up'), brake: +(key === 'Down'),
   steer: key === 'Right' ? 1 : key === 'Left' ? -1 : 0});
-function drive(id, schedule, {full = false, seed = 1989, repeat = false} = {}) {
+function drive(id, schedule, {full = false, seed = 1989, repeat = false, control = false} = {}) {
   const duel = new Duel({seed});
   duel.featureFlags = {enabled: key => key === 'titan-bowl'};
   duel.startBowlNight({night:1, eventIndex:1, cpuDifficulty:'easy', playerId:'driver', seed});
@@ -16,11 +16,13 @@ function drive(id, schedule, {full = false, seed = 1989, repeat = false} = {}) {
   duel.onChange((_, ev) => events.push(ev));
   s.status = 'racing';
   if (full) {
+    if (control) duel.featureFlags = {enabled: () => false};
     for (let go = 0; go < (repeat ? 2 : 1); go++) for (const key of secretOf('fullWorks').code) {
       duel.setInput(keyed(key)); duel.step(DT);
       duel.setInput(neutral); duel.step(DT);
     }
   }
+  duel.featureFlags = {enabled: key => key === 'titan-bowl'};
   Object.assign(s, {s: ramp.start - 2, prevS: ramp.start - 2, lateral: ramp.off, prevLateral: ramp.off,
     headingError:0, speedMph:60, gear:2});
   let air = 0;
@@ -44,13 +46,17 @@ for (const secret of SECRETS) {
   assert.equal(scored.landing, 'clean');
   assert.equal(result.events.filter(ev => ev.bowlSecretFound?.kind === secret.id).length, 1);
   assert.equal(result.state.bowlNight.event.crowd, 100);
-  assert.deepEqual(result.trace, plain.trace, secret.name + ' preserves flight');
+  const baseline = full ? drive('big-jump',new Map(),{full:true,repeat:true,control:true}) : plain;
+  assert.deepEqual([result.state.s,result.state.lateral],[baseline.state.s,baseline.state.lateral]);
+  assert.deepEqual(result.trace, baseline.trace, secret.name + ' preserves flight');
   if (full) assert.equal(result.events.filter(ev => ev.bowlSecretArmed).length, 1);
   else if (secret.code.length) {
     const kicker = drive('jump-kicker', schedule);
     assert.ok(!kicker.events.some(ev => ev.bowlSecretFound || ev.bowlTrick?.kind === 'slam'), secret.name + ' on a kicker');
   }
 }
+assert.equal(secretHint(33,SECRETS.filter(t=>t.id!=='yoYo').map(t=>t.id)),'Front flip then ?');
+assert.equal(secretHint(33,SECRETS.map(t=>t.id)),'');
 let wins = 0;
 for (let seed=1; seed<=10; seed++) {
   const rng = makeRng(seed), schedule = new Map();

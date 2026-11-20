@@ -335,6 +335,7 @@ export function observeBowlNight(duel, ev) {
       night.event.crowdAt = s.stageTimeSec;
       night.event.trickPopups = [{notice: 'SECRET TRICK FOUND', detail: secret.name, at: night.clock}];
       say(duel, 'secret.' + secret.id);
+      if (night.foundTricks.length === 7) say(duel,'secret.all');
     }
   }
   if (ev.bowlSecretArmed) {
