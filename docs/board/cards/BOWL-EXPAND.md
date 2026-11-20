@@ -164,3 +164,13 @@ and `tools/blender/bowl-stadium.py`.
   floor; the Bowl has none now.
 - Measured in the real game by hand: the kicker 4.0 m up, 28.9 m, 1.2 s; the Big Jump 10 m up, 43.7 m; End 1 taken at
   52 mph; the crush line crushed at 45 mph.
+
+## Changed assertions: Claude's review
+
+`tools/test-bowl-course.mjs` was written for the old ring and its stadium model; every claim it made about the ring,
+its two ramps, its four jets and the model's cuts is replaced by a claim about the new floor that is at least as strong
+(real full-throttle drives over each jump that must land upright, flight distances in order of height, wall clearances
+measured on every piece, the floor's top speed, free turning, mirrored lanes, a stadium drawn once). The jets' firing
+check now looks early in the cycle because four pairs fire a beat apart. `tools/test-bowl-air.mjs` presses keys after
+take-off because the rule changed on purpose (a key held from before take-off tips nothing), and a new case proves that
+rule. Nothing is loosened. The independent reviewer read the same changes and agreed.
