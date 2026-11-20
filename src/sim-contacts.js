@@ -594,10 +594,15 @@ export function _staticContacts(car, player, journeyColliders = null) {
     const bowlRules = this.course.def.scrapdome?.wallBounce;
     if (bowlRules && obstacle.arenaWall) {
       if (car.bowlFlight) {
-        // A low launch has struck the wall. Its arc continues vertically here.
-        car.bowlFlight.range=0;
-        const at=this.course.worldAt(car.s,car.lateral);
-        car.bowlFlight.x=at.x; car.bowlFlight.z=at.z;
+        const flight = car.bowlFlight;
+        const at = this.course.worldAt(car.s, car.lateral);
+        // A rising truck slides up the wall. Discard only the distance blocked
+        // this tick so it can continue forward once its tires clear the top.
+        const risingAtRim = flight.owner && obstacle.off === exterior?.wall && car._verticalSpeed > 0;
+        if (!risingAtRim) flight.range = 0;
+        const distance = flight.range * flight.elapsed / flight.duration;
+        flight.x = at.x - Math.sin(flight.heading) * distance;
+        flight.z = at.z - Math.cos(flight.heading) * distance;
       }
       const mph = -(velocityX * nx + velocityZ * nz) / DRIVE.mphToWorld;
       if (mph > 0) {

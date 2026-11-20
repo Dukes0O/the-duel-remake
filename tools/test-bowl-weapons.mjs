@@ -69,11 +69,12 @@ for(const night of [3,4,5]) {
   assert.equal(s.bowlHeldStill,.5);assert.equal(s.bowlWeapon.phase,'rest');
 }
 {
-  const d=fight('saw'),s=d.state,v=line(d,.1);
+  const d=fight('saw'),s=d.state,v=line(d,1.49);
   s.input.interact=true; ticks(d,120);
   assert.equal(v.armor,52.5);assert.ok(v.bowlCut&&s.bowlCut);sums(v);
   ticks(d,360);assert.equal(v.armor,30);assert.equal(s.bowlWeapon.phase,'rest');assert.equal(s.bowlWeapon.time,3);
   ticks(d,359);assert.equal(v.armor,30);
+  line(d,1.51);ticks(d,120);assert.equal(v.armor,30,'a bumper gap over 1.5 m is out of reach');
 }
 {
   const d=fight(),s=d.state;
@@ -118,6 +119,25 @@ for(const night of [3,4,5]) {
   const out=s.bowlNight.event.rivals[0];
   assert.ok(out.out && out.by==='player' && s.bowlNight.event.knockouts===1,'a real airborne wall crossing has one credited knockout');
   sums(v);
+}
+{
+  // Reproduce the laptop setup on the straight side and the rounded stadium end.
+  for (const road of [34,106]) for (const low of [false,true]) {
+    const d=fight('launcher'),s=d.state,[v]=s.opponents,wall=d.course.features.bowl.outside.wall;
+    line(d);place(d,s,road,wall-8,Math.PI/2);place(d,v,road,wall-3.4,Math.PI/2);
+    s.input.interact=true;d.step(dt);
+    assert.ok(v.bowlFlight);
+    if (low) v.bowlFlight.height=1;
+    let crossed=false;
+    for (let k=0;k<240;k++) {
+      d.step(dt);
+      if (v.airborne && v.lateral>wall) crossed=true;
+    }
+    assert.equal(crossed,!low,'only a flight above the rim crosses it');
+    assert.equal(s.bowlNight.event.knockouts,low?0:1);
+    assert.equal(s.bowlNight.event.rivals[0].out,!low);
+    if (!low) assert.equal(s.bowlNight.event.rivals[0].by,'player');
+  }
 }
 {
   const d=fight(),s=d.state,night=s.bowlNight,o=d.course.features.bowl.outside;
@@ -189,6 +209,19 @@ for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   audio.muted=false; audio.paused=false; audio._syncMixer=()=>{};
   audio._playCue=id=>played.push(id);
   audio.event=(ev,...args)=>{if(ev.arenaWreck) receive(ev,...args);};
+  const key=type=>{
+    const event=new Event(type,{cancelable:true});
+    Object.defineProperty(event,'code',{value:'KeyF'});
+    window.dispatchEvent(event);
+    app._applyInput(dt);
+  };
+  key('keydown');assert.equal(d.state.input.interact,true);ticks(d,1);
+  assert.equal(d.state.bowlWeapon.phase,'tell');
+  key('keyup');assert.equal(d.state.input.interact,false);
+  for (let tick=0;tick<480;tick++) d.step(dt);
+  key('keydown');assert.equal(d.state.input.interact,true);ticks(d,1);
+  assert.equal(d.state.bowlWeapon.phase,'tell','a second physical F press starts another hammer swing');
+  key('keyup');
   bowlHealthLoss(d,d.state.opponents[0],1,'player','front');
   d.step(dt);d.step(dt);
   assert.equal(named.filter(id=>id==='bowl.knockout').length,1);

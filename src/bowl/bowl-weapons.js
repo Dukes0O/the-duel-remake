@@ -8,7 +8,7 @@ import {freshDamageZones} from '../sim-common.js';
 
 export const SHOW_WEAPONS = Object.freeze({
   hammer: {name:'Hammer', reach:4, rest:2.5, cue:'bowl.hammer.rise', picture:'🔨', line:'Swing at a truck in front. A miss holds you still.'},
-  saw: {name:'Saw', reach:.35, rest:3, cue:'bowl.saw.spin', picture:'⚙', line:'Hold F against a truck to cut. Four seconds of cutting heats the saw.'},
+  saw: {name:'Saw', reach:1.5, rest:3, cue:'bowl.saw.spin', picture:'⚙', line:'Hold F against a truck to cut. Four seconds of cutting heats the saw.'},
   launcher: {name:'Launcher', reach:2.5, rest:4, cue:'bowl.launcher.fire', picture:'↗', line:'Throw a truck over the wall. An empty shot hops your own truck.'},
   horn: {reach:.6, rest:2.5, cue:'bowl.rhino.horn'},
   fire: {reach:6, rest:1, cue:'bowl.dragon.fire'},
