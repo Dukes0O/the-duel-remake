@@ -2595,7 +2595,9 @@ export class App {
   // Keys on the pass-the-keyboard screen: a fresh press starts the go, and nothing is held for driving.
   _turnHandoffKey(e){
     if(this._turnShow?.phase!=='handoff'||this.duel.state.status!=='menu')return false;
-    if(e.repeat||['Tab','Escape','ShiftLeft','ShiftRight','ControlLeft','ControlRight','AltLeft','AltRight','MetaLeft','MetaRight'].includes(e.code))return true;
+    // A key still held from the last screen repeats: it must not press READY for the next player either.
+    if(e.repeat){e.preventDefault();return true;}
+    if(['Tab','Escape','ShiftLeft','ShiftRight','ControlLeft','ControlRight','AltLeft','AltRight','MetaLeft','MetaRight'].includes(e.code))return true;
     if(['Enter','NumpadEnter','Space'].includes(e.code)&&e.target?.closest?.('button'))return true; // the focused button acts
     e.preventDefault();
     this.beginTurn();

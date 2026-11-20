@@ -176,6 +176,13 @@ while (app.turnShowView()?.show.phase === 'handoff') {
   app.advance(3);
   ok(app.duel.state.status === 'menu' && !app.duel.state.bowlNight, 'a held key starts nothing');
   ok(key('KeyW', true) && app.duel.state.status === 'menu', 'a key held down until it repeats starts nothing');
+  {
+    // A held Enter from the last card repeats onto the focused READY button: the browser must not press it.
+    let prevented = false;
+    const ready = {closest: selector => selector === 'button' ? ready : null};
+    ok(app._turnHandoffKey({code: 'Enter', repeat: true, target: ready, preventDefault() { prevented = true; }}) && prevented &&
+      app.duel.state.status === 'menu', 'a repeating Enter on the READY button is stopped and starts nothing');
+  }
   ok(key('Tab') && key('ShiftLeft') && key('Escape') && app.duel.state.status === 'menu', 'Tab, Shift and Escape start nothing');
   ok(key('KeyW') && app.duel.state.status === 'countdown' && app.duel.state.bowlNight?.turn, 'a fresh key press starts the go');
   ok(!app.keys.KeyW && app.duel.state.speedMph === 0, 'the key that started the go is not held for driving');

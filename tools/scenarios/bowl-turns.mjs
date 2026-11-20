@@ -24,6 +24,7 @@ export const page = {
   start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-turns-start"][data-night="1"]').click(); return true; })()`,
   handoff: `(() => { const panel = document.querySelector('.bowl-handoff'); return panel ? panel.querySelector('h2').textContent : ''; })()`,
   status: `(() => window.__qaApp.duel.state.status)()`,
+  enterOnReady: `(() => { const ready = document.querySelector('[data-action="show-turns-ready"]'); ready.focus(); const event = new KeyboardEvent('keydown', {code: 'Enter', key: 'Enter', repeat: true, bubbles: true, cancelable: true}); ready.dispatchEvent(event); return event.defaultPrevented; })()`,
   active: `(() => window.__qaApp.player.name)()`,
   driver: `(() => window.__qaApp.duel.state.bowlNight?.turn?.driver ?? '')()`,
   hud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('IS DRIVING'); })()`,
@@ -69,10 +70,11 @@ export async function run(context) {
     assert.equal(await context.evaluate(page.handoff), `${expected.toUpperCase()} IS UP. PASS THE KEYBOARD.`, `go ${go} names its player`);
     assert.equal(await context.evaluate(page.active), expected, `${expected} is the active player for their own go`);
     if (go <= 2) await picture(context, `bowl-turns-handoff-${go}`);
-    // A key held from the last go repeats; it must not start the next one.
+    // A key held from the last go repeats; it must not start the next one, even on the focused READY button.
     await key(context, 'KeyW', 'keydown', true);
+    assert.ok(await context.evaluate(page.enterOnReady), 'a repeating Enter on READY is stopped');
     await context.evaluate(page.frame);
-    assert.equal(await context.evaluate(page.status), 'menu', 'a repeating held key starts nothing');
+    assert.equal(await context.evaluate(page.status), 'menu', 'a repeating held key, Enter on READY too, starts nothing');
     await key(context, 'KeyW', 'keyup');
     await key(context, 'KeyJ', 'keydown');
     await key(context, 'KeyJ', 'keyup');
