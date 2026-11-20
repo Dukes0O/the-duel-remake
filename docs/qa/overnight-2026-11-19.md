@@ -3,6 +3,21 @@
 Branch `c/overnight-qa-bd8ec4`, built from `integration/wasteland` at `a9d18cabc`. Gathered, not judged: the Director gives every verdict.
 Pictures are kept only where a group names them, under `.evidence/` of this worktree (ignored by git).
 
+## Summary for the Director (read this first)
+
+Built from `a9d18cabc`. Kyle's copy is on port 5192 (group 1). Findings, most important first; each has its facts and a picture in its group.
+
+1. **`story-night-2` scenario fails twice at the journal step** (not a flake; group 2). The pause-card journal works by hand but has no `.ledger-tonight` highlight; decide whether to update the scenario or restore the highlight.
+2. **The Bowl cannot be started from the menu path** (group 5): `titan-bowl` is not in `COURSE_PRICES`, so every start or purchase says "Unlock this course with credits before starting." The repo's tests start it by calling the Duel directly.
+3. **The town view runs at 18 to 20 frames a second** at both zoom levels in my Chrome (p95 67 ms) while the town drive and the Bowl run a steady 60 (group 3). Not a frame check; worth timing alone.
+4. **Cold breath at the gate camera is invisible** (group 2): largest measured change from the wisps is 1 to 8 levels of 255.
+5. **Looks wrong on screen:** the dawn screen of Night 2 shows the racing HUD and, on the Wash branch, a car still driving at 83 km/h under the Continue button (group 2); a cream wedge and black bar float on the player's car in every picture (group 2); the five work trucks show the car's four buttons and nitro bar, and the hood camera shows a black slab (group 3); a town drive ends on a screen headed "THE EVERBURN" (group 3); the knocked-down Ash Man vanishes at once and Dace says "Did you see him run?" (group 2); two "Your car" distance pills disagree (group 2).
+6. **Wash fight:** winnable by hand in the stock Falcone only with the four car buttons (bomb storm and crossbow), about 3.5 minutes, ending with 58 percent armor; ramming alone loses (group 2). The foot chase after Dace gains under 1 m/s (group 2).
+7. **Animals are 24 to 26 m off the road among trees**; neither car got near them by hand and the camera sat inside a spruce (group 6).
+8. The machine-plant scenario and the wildlife-hits scenario both pass (groups 4 and 6). No pale ring found at the Dig heaps' feet (group 4). No road is visible behind the paver (group 4).
+
+I changed no game code, no test and no board file. The only things committed are this page.
+
 ## Group 1: Kyle's test copy on port 5192
 
 - **Built** 19 November 2026, about 21:05 local, from `a9d18cabc`: `node node_modules/vite/bin/vite.js build --config tools/vite-qa.config.js --outDir .evidence/kyle-try` in this worktree (8.7 MB, under 1 s).
@@ -16,7 +31,7 @@ Pictures are kept only where a group names them, under `.evidence/` of this work
 | Night 2 | `?flags=hidden-road,story-choices,road-riders,crew-gear,warlord-cards,arsenal,arsenal-wave3` | MENU QA box, "Create temporary player ready for Night 2", WASTELAND, Story Wall, "Night 2 · Strangers at the gate" |
 | The town | `?flags=wasteland-town` | MENU QA, "Create temporary player who has found the wasteland", WASTELAND (the yard), THE TOWN, name it, then DRIVE |
 | The machine yard and the Dig | `?flags=wasteland-town,the-dig` | same player, WASTELAND, the yard's THE DIG button (with `wasteland-town` on too, the town button is also there) |
-| The Bowl | `?flags=titan-bowl` | "Create funded temporary player", then pick the course "The Bowl" in the race setup, but see group 5: the menu refuses to start it ("Unlock this course with credits before starting."); for Kyle's try use the Wash-free route the Director chooses |
+| The Bowl | `?flags=titan-bowl` | "Create funded temporary player", then pick the course "The Bowl" in the race setup, but see group 5: the menu path refuses to start it ("Unlock this course with credits before starting."), so Kyle cannot try it this way until the Director decides how he reaches it |
 | Animal hits | `?flags=wildlife,wildlife-hits` | "Create funded temporary player", Tremblant Woods, start a race (the monster truck needs `titan_monster` owned: the funded player has 50,000 credits) |
 | Wash fights (road riders) | add `road-riders-review` to the query | extra buttons "Fight at the Wash · easy/medium/hard" appear in the MENU QA box |
 
@@ -163,3 +178,20 @@ Commit `a9d18cabc`. Pictures `.evidence/qa-night/g5-*`.
 - **Driving the monster truck by hand:** with `titan_monster` (the Titan) the start is on the left end of the oval, where the course turns at once. Holding only ArrowUp the truck goes into the wall within 2 s (heading error 0.44 rad and lateral 1.25 m after 1 s at 46 km/h, lateral 5.6 m after 2 s). ArrowRight turns it into the corner, ArrowLeft makes it worse. With a feedback loop (steering by what the game reports) the truck drove the first 97 m (the corner, the kicker at about s 21 and the big ramp at s 39), at 40 to 75 km/h, getting airborne at s 47 and s 83, and touched the wall once at 6.7 m. **A hand driver who just holds the throttle is pinned to the wall at 2 to 5 km/h**, with "+30 SEC PENALTIES" and "1 / 5 CRASHES" showing, and reversing then steering did not free the truck for several tries; about 25 s of tries in all. It may be my driving, but the first corner leaves a new player almost no room.
 - **Frame pacing, not a frame check** (laptop not alone, visible browser, DPR 1.5): driving with the throttle held for 6 s: 360 frames, p50 16.7 ms, p95 16.8 ms, p99 16.9 ms, max 16.9 ms, 558 draw calls. Steady.
 - The HUD from the Duel-direct start shows 3 laps ("LAP 1 / 3") where the course says 2; that is the `startCampaign` default I used, not the app's.
+
+## Group 6: animal hits (`wildlife,wildlife-hits`)
+
+Commit `a9d18cabc`. Pictures `.evidence/qa-night/g6-*`. The scripted look check `wildlife-hits` **passed** (exit 0, "Browser smoke passed ... 2 screenshots, 0 warnings, 0 errors"). It starts a fresh page for each car, puts the car on the planned animal at 40 mph (play day 20776, race 1 at Tremblant Woods) and checks the result. Output line: `HITS {"day":20776, "animal": {"x":-58.17, "z":-155.40, "s":4242.1, "lateral":-26.1, "species":"white-tailed-deer"}, "car": {"down":2, "squash":[0.6, 0.6], "status":"3 animals, 2 drawn, 2 hit"}, "monster": {"down":2, "squash":[0.17, 0.17], "status":"3 animals, 2 drawn, 2 hit"}}`.
+
+- `g6-car-heap.png` (Falcone F42, the starter car): two white-tailed deer lie on their sides on a meadow, each on an oval red stain, legs stretched stiffly out in a running pose, antlers on the ground. Body thickness 0.6 of normal.
+- `g6-monster-heap.png` (the monster truck, `titan_monster`): the same two deer, much flatter (0.17 of normal thickness), on a larger and brighter red pool. The monster truck clearly flattens more: the check asserts it and the picture agrees.
+- The stain is a flat red ellipse that lies on the grass like a sticker; it has a hard edge and no variation. The bodies keep the running pose with straight legs (the model's own animation frame tipped over), so they look posed rather than fallen. Neither is a fault of the rules; it is how it looks.
+- Where the animals are: two deer 24 and 26 m to the left of the road at s 4240 and 4242 (herd of 2, a third animal elsewhere), on a meadow with spruce trees between them and the road.
+
+### What I could not do by hand: reach the deer in the car
+
+I drove at the deer with real keys, steering from the game's own heading numbers (the same loop as the Wash).
+- **Starter car:** from the road side the car reaches lateral -24 m (17 m short of the deer along the road) and then creeps at 1 to 3 km/h for the rest of the run (about 25 bursts of half a second to a second). The HUD says "LOOSE SURFACE / FIND THE TARMAC", and **the camera sits inside a spruce**: the whole picture is needles (`g6-car-camera-in-spruce.jpg`). Placing the car 16 m before the herd by script gave the same needles. So in the starter car the deer cannot be reached by driving: the trees (or the off-road slow-down) stop the car 17 m before them, and the player sees only foliage.
+- **Monster truck:** it got through the first stretch of meadow at 77 km/h, then stopped against trees at lateral -34 m (+60 sec penalties, 2 of 5 crashes: `g6-monster-stopped-at-trees.jpg`, the truck among spruce with the road in the background). It never got within 15 m of a deer. In that second run in the same page the HUD showed "3 animals, 0 drawn" the whole time (the first run said "2 drawn"); the scripted check reloads the page for each car and sees 2 drawn, so I take the zero as an effect of starting a second race in one page without a reload, not as a game fault, but I did not prove it.
+- So the picture of an animal being hit is only what the scripted check shows. The "hit" happens in the rules (the check shows 2 down with a stain under each) but a player may find it hard to get to a herd 24 m off the road in the first place. Whether these animals should stand where a car can reach them is the Director's call.
+- A frame check was not made.
