@@ -64,6 +64,12 @@ engaging."
 
 Where each is built: card SCABLANDS-LAND, round 4.
 
+## Kyle, 19 November 2026: three Blender art cards go ahead
+
+Asked whether to start the held Blender model cards on Fable overnight: "Yes, start them." The 11 November hold on new
+Blender art cards (below) is lifted for CAR-ART-BULLY, WILD-ART-DESERT and WILD-ART-CITY only. Every other new Blender
+model card still waits for the list of code-drawn work.
+
 ## Kyle, 11 November 2026: draw in code before building model files
 
 On Old Smoke's furnace, round 2: "this art looks toy like." Then: "are we putting effort into creating 3d assets
