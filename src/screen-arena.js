@@ -23,7 +23,8 @@ export function arenaStyleLabel(participant) {
 // Everything the in-fight display needs, from the event state alone.
 export function arenaHud(state) {
   const arena = state?.arena;
-  if (!arena) return null;
+  // Show Night's Last Truck Rolling runs on the arena's rules with the Bowl's own HUD and pause (BOWL-RIVALS).
+  if (!arena || state.bowlNight) return null;
   if (arena.mode === 'world-job') {
     const worldJob = arena.worldJob;
     const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];

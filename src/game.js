@@ -63,6 +63,7 @@ import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlot
 import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {initializeWorldJob} from './arena/modes/world-job.js';
 import {startBowlNight, continueBowlNight, retryBowlEvent, stepBowlNight, observeBowlNight} from './bowl/bowl-night.js';
+import './bowl/bowl-rivals.js'; // BOWL-RIVALS: Side by Side and Last Truck Rolling against the named rivals
 import {riderOpponentSpecs} from './arena/modes/road-riders.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -688,7 +689,8 @@ export class Duel {
   _spawnTraffic(...args) { return simRival._spawnTraffic.apply(this, args); }
 
   // ---- the core step ---------------------------------------------------
-  fireWeapon(weapon){return fireWeapon(this,weapon);}
+  // Show Night has no weapons in any event, Last Truck Rolling's arena fight too (BOWL-RIVALS).
+  fireWeapon(weapon){return this.state.bowlNight?false:fireWeapon(this,weapon);}
   selectFootGear(slot){return selectFootGear(this,slot);}
   deepEnvironment() { return deepEnvironment(this); }
   clearDeep() { clearDeepJourney(this); }
