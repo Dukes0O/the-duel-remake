@@ -1,8 +1,8 @@
 // BOWL-RIVALS: the five rivals, Side by Side and Last Truck Rolling, headless.
 // Kyle's rule: Easy must be winnable by a young driver. Every rival finishes
 // Side by Side on every level, every Last Truck Rolling ends with a result, and
-// a child-pace test driver wins Easy at least 8 times in 10. The Medium and
-// Hard win rates are printed for the change note. Memory only: no saves.
+// the child driver wins at least 8 of 10 Easy Side by Side races. Unarmed fight
+// wins are reported; BOWL-WEAPONS measures armed balance. Memory-only storage.
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
