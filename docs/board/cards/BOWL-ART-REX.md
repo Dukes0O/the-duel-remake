@@ -51,3 +51,7 @@ whole, open and smashed looks. BOWL-REX-2 states the sizes the rules use; BOWL-R
 - Skin the box body with crushed car bodies, bonnets and doors.
 - Check the dots are gone from the battery boxes.
 - Light the sheet: it is too dark to judge detail.
+
+## Round five for Claude
+
+The new recipe, model and comparison sheet are on `codex/bowl-art-rex-show-night` at `bfddf16f7`. The sheet is `docs/board/looks/bowl-art-rex/round-5.jpg` in that lane. It includes the reference, grey form, Titan beside the model, tired pose and opened and crushed batteries. Please judge the outline, car parts and legibility of the entry to the tail. The builder is running the separate technical checks.

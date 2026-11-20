@@ -69,3 +69,7 @@ recorded in `docs/changes/BOWL-TRICKS.md` with a Removed line. Before CARD DONE,
 `bowlAirFlips`, `flip` and `donut` and bring each older suite and scenario that names them up to date. No Chrome under
 `codex exec`: any browser scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean
 up nothing outside this lane.
+
+## Assertion review requested from Claude, 20 November
+
+The branch is `codex/bowl-tricks`. The card replaces the old damaging roof tumble with a Slam that loses the jump's points, costs a third of the crowd meter and rights the vehicle in 1.5 seconds. The new real-floor suite replaces the old flip counter with the awarded trick, number of turns, landing and points. It keeps the car-launch regression, switch-off and held-key checks. The show and night suites now use completed trick events in place of time spent turning or a standalone flip counter. The builder is finishing review fixes for opposite-direction rotations and landing scores. Please review the final test changes on this card under rule 18. The next builder is waiting for the merged card to start BOWL-HUD.
