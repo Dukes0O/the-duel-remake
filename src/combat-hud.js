@@ -259,8 +259,7 @@ function createOpponentMarker(index) {
   marker.className = 'combat-opponent-marker';
   marker.dataset.opponentIndex = String(index);
   marker.innerHTML = `<span class="combat-marker-pointer" aria-hidden="true">⌄</span><span class="combat-marker-heading"></span><span class="combat-marker-value"></span><span class="combat-marker-track"><i></i></span>`;
-  marker.insertAdjacentHTML('beforeend', bowlSegmentsMarkup);
-  marker.lastElementChild.hidden = true;
+
   return marker;
 }
 
@@ -552,8 +551,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const exact = projection?.visible === true;
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course,
         onFoot ? state.fighter : state, opponent, index);
-      marker.hidden = !!opponent.finished || !!opponent.crushed || (bowlFight && !exact);
-      if (marker.hidden) continue;
+      if (bowlFight && !exact) { marker.hidden = true; continue; }
+      marker.hidden = !!opponent.finished || !!opponent.crushed;
       marker.dataset.placement = exact ? 'over-car' : 'direction';
       // Keep the whole label on screen when the car reaches the camera edge.
       marker.style.left = `${(Math.max(.11, Math.min(.89, clamp(position.x))) * 100).toFixed(1)}%`;
@@ -577,16 +576,19 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       marker.classList.toggle('is-protected', !!arena?.protected);
       const valueLabel = marker.querySelector('.combat-marker-value');
       const continuousBar = marker.querySelector('.combat-marker-track');
-      const bowlBar = marker.querySelector('.bowl-health-segments');
       valueLabel.hidden = continuousBar.hidden = bowlFight;
-      bowlBar.hidden = !bowlFight;
+      if (bowlFight && !marker.bowlBar) {
+        marker.insertAdjacentHTML('beforeend', bowlSegmentsMarkup);
+        marker.bowlBar = marker.lastElementChild;
+      }
+      if (marker.bowlBar) marker.bowlBar.hidden = !bowlFight;
       if (bowlFight) {
         const health = bowlHealth(opponent);
-        drawBowlSegments(bowlBar, health);
+        drawBowlSegments(marker.bowlBar, health);
         setAttribute(marker, 'aria-label', `${arena?.heading ?? 'Rival'} health ${Math.round(health.value)} of ${Math.round(health.max)}`);
       } else {
         setText(valueLabel, exact ? `${barPrefix}${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${barPrefix}${opponentArmor.value} / ${opponentArmor.max}`);
-        setFraction(continuousBar.firstElementChild, opponentArmor.fraction);
+        setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
         setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} ${barName} ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
       }
       marker.classList.toggle('is-critical', opponentArmor.fraction <= .25);
