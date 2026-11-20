@@ -240,6 +240,31 @@ function spine(course, centre, wear) {
     box.castShadow = box.receiveShadow = true;
     group.add(box);
   }
+  // A rounded concrete nose at each end, where the Spine's wall rounds past the last
+  // container, striped so a driver sees it, with a stack of tyres on top.
+  const half = course.features.bowl.spine.halfWidth;
+  const stripes = drawn(256, 64, (g, w, h) => {
+    g.fillStyle = '#b8b2a4'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#c9a227'; for (let x = -h; x < w; x += 48) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 24, h); g.lineTo(x + 24 + h, 0); g.lineTo(x + h, 0); g.fill(); }
+  });
+  const noseMaterial = wear.apply(new THREE.MeshStandardMaterial({color: 0xd8d2c4, map: stripes, roughness: .92}));
+  const rubber = new THREE.MeshStandardMaterial({color: 0x1b1a19, roughness: .95});
+  for (const end of [-1, 1]) {
+    const nose = new THREE.Group();
+    nose.name = `Bowl Spine nose ${end > 0 ? 'end 1' : 'end 2'}`;
+    const block = new THREE.Mesh(new THREE.CylinderGeometry(half, half, 1.25, 20, 1, false, -Math.PI / 2, Math.PI), noseMaterial);
+    block.position.y = .625;
+    nose.add(block);
+    for (let k = 0; k < 4; k++) {
+      const tyre = new THREE.Mesh(new THREE.TorusGeometry(.38, .17, 8, 16), rubber);
+      tyre.rotation.x = Math.PI / 2;
+      tyre.position.set(Math.cos(k * 1.1) * .25, 1.42 + k * .3, .45 + Math.sin(k * 1.1) * .2);
+      nose.add(tyre);
+    }
+    nose.position.set(centre.x + axis.x * end * straight / 2, 0, centre.z + axis.z * end * straight / 2);
+    nose.rotation.y = heading + (end > 0 ? 0 : Math.PI);
+    group.add(nose);
+  }
   // Big Mo's booth on the middle containers, its windows lit.
   const booth = new THREE.Group();
   booth.name = 'Big Mo booth';

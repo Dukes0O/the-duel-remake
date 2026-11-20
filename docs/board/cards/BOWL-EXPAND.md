@@ -67,8 +67,8 @@ each other's mirror: a place and the place half a lap (143 m) further on are the
 **The Crush Straight** (s 143 to 213, in front of the far stand):
 
 - the lane kicker, the mirror of the first, s 165 to 177;
-- the crush line on the stand side, three across (off plus 9.4, 13.8 and 18.2): three rows of junk cars at s 152, 159 and
-  166, the buses and the RV at 177, the burning stacks at 190;
+- the crush line on the stand side, three across (off plus 9.4, 13.8 and 18.2): three rows of junk cars at s 165, 172 and
+  179, the buses and the RV at 190, the burning stacks at 203;
 - the Table on the Spine side (off minus 20 to minus 6): a flat-topped jump 3.2 m high and 22 m long, s 186 to 208.
 
 **The two ends** are the bowl: from 10 m outside the centre line the floor curves up towards the end wall, 3.2 m high at
@@ -94,8 +94,10 @@ The old stadium model (`stadium.glb`, built for the small ring) is removed with 
 
 **How each Show Night event uses the floor.**
 
-- **Car Crush**: the truck starts in End 1 on the stand side (s 122, off plus 13.8) and runs straight down the crush
-  line: 30 m to the first row, then the cars, the buses and RV, the burning stacks, 38 m of line in all.
+- **Car Crush**: the truck starts at the head of the Crush Straight on the stand side (s 145, off plus 13.8) and runs
+  straight down the crush line: 20 m to the first row, then the cars, the buses and RV, the burning stacks, 38 m of line
+  in all. (The first layout started it in End 1; the hand drive showed that a truck driven straight ahead from there
+  meets the wall, so the line moved 13 m down the straight.)
 - **Freestyle**: the whole floor for 90 seconds: two kickers, the Big Jump, the Table, the launch cars, the banked ends to
   ride and the open ends for donuts. The truck can turn any way it likes on the Bowl's floor, as on the Freestyle
   Playground. Today, outside an arena event, a truck on the Bowl cannot turn more than about 80 degrees from the line of
@@ -146,3 +148,16 @@ number of its own:
 `src/course.js`, `src/race-structures.js`, `src/world-surfaces.js` and one line in `src/sim-driving.js`, the suites above,
 `docs/WASTELAND_WORLD.md` section 7, `docs/board/looks/bowl-expand/`. Removed: `public/assets/models/wasteland/bowl/stadium.glb`
 and `tools/blender/bowl-stadium.py`.
+
+## Built (Claude, 19 November 2026, night)
+
+- The course and its data: `src/bowl/bowl-course.js`; the stadium drawn in code: `src/bowl/bowl-stadium.js`; the plan
+  is drawn from the data by `tools/bowl-plan.mjs` (`docs/board/looks/bowl-expand/look-1.jpg`).
+- Found by driving, and changed: outside an arena event the Titan reached 98 mph in 3 s on the Bowl and could not turn
+  more than 80 degrees from the lap's line; the floor's grip and top speed now apply in every event and a truck turns
+  freely (a Titan settles near 50 mph). Holding the throttle over a jump pitched the nose down (the Bowl's air control
+  uses W and S) and landed the Titan on its roof; now a key held from before take-off tips nothing until it is let go
+  and pressed again in the air. A start/finish gantry, finish posts and guard rails drawn for every road stood on the
+  floor; the Bowl has none now.
+- Measured in the real game by hand: the kicker 4.0 m up, 28.9 m, 1.2 s; the Big Jump 10 m up, 43.7 m; End 1 taken at
+  52 mph; the crush line crushed at 45 mph.
