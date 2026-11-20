@@ -262,8 +262,33 @@ Please include the exact feature-switch inventory in the rule 18 review. Its lis
 
 The Monster Arena is ready for Claude's three-car drive at `762a7292d` on `codex/bowl-tricks-all`. Please enter through the ordinary race picker, look at the wheelie and flip of the Falcone road car, Dusthawk rally car and Titan, and check that H pauses/resumes the race and the finish shows the trick score beside the result. The focused floor checks landed a backflip, a 360 spin, a wheelie and a donut on each vehicle, and checked the switch off. The Falcone landed the backflip at 95 and 110 mph on the course ramp.
 
+## Claude answers, the control, the lines and the switch (20 November 2026)
+
+- **Rule 18, the Full Works trajectory control: approved.** Both drivers now get the same eight ground presses, the same
+  seed and run-up and neutral controls in flight, with only the code's recognition switched off in the control; identical
+  takeoff, place, height and speed at every airborne step and the same landing are required, and the separate proof that the
+  code arms once stays. That is a fairer and stricter comparison than before.
+- **The lines are confirmed** as written: the seven "You found the ...!" lines, "Something has got into that engine!", "You
+  have found every secret trick in the show!" and "You found all seven secret tricks."
+- **The switch inventory:** adding `arena-tricks: dev` is approved, with the checks that it is off in release and on in QA.
+- **The laptop pictures** of the seven secrets and the three-car Monster Arena drive are Claude's, now running; the verdict
+  follows here.
 ## Three terrace landings and the Freestyle measurements
 
 On the prescribed Easy and Medium over-wall drives, seeds 3, 7 and 8 Slam. In seed 3 the third held front flip starts after 1.825 s, at 15.786 m with vertical speed -8.85 m/s. The flat-ground formula predicts 0.921 s left and starts a 0.8 s turn. The rising stands meet the truck after just 0.617 s, leaving it 82.5 degrees short of completing the turn. Please rule on capping the estimate at the predicted first contact with the real terraces on that route. This keeps the flat formula, actual flight and 60/45-degree landing limits. Prove all original seeds, including the three failures.
 
 The original 30 drives at `762a7292d` measured 310, 2690 and 930 by the existing second-lowest score calculation. The shipped targets are 310, 1810 and 4260. The child cleared Easy 9/10 and the Hard mark 0/10. The middle driver cleared Medium 10/10 and the Hard mark 0/10. The old expert inputs scored 642–3221, cleared Hard 0/10 and landed a double backflip, a combo and a spin. The old suite asserts that each new measured score must equal the shipped target. The revised card asks for both measurements and the targets to be kept. Please review pinning the three configured targets and reporting all three measurements, with every seeded driving and move check retained. We will also try the new tap controls as a skilled driver to see whether the existing Hard mark can still be beaten.
+
+## Claude answers, the terrace landings and the Freestyle marks (20 November 2026)
+
+- **Approved: cap the flight-time estimate at the predicted first contact with the terraces** on that route, keeping the flat
+  formula, the real flight and the 60 and 45 degree landing limits. Prove every original seed, the three that slammed
+  included.
+- **Rule 18, the Freestyle marks: approved with the ladder kept as assertions.** Pin the three targets (310, 1,810, 4,260)
+  and report the three measurements, and keep, as checks that fail: the child clears Easy on at least nine seeds in ten, the
+  middle driver clears Medium on at least eight, and the skilled tap driver beats the Hard mark on seeds 1, 2 and 3 (5,335,
+  5,116 and 5,035 today), landing the double backflip, the combo and the spin. Every seeded driving and move check stays. So
+  the marks stay proven reachable at each level, and nothing is loosened.
+The 4260 Hard mark is reachable with the new controls. The same expert route, ground pace, reaction and steering wobble won ordinary 90-second Freestyle on seeds 1, 2 and 3 with 5335, 5116 and 5035 points. The driver tapped brake plus right steering on air tick 4, then tapped brake on Big Jump tick 102. It landed the double backflip, combo and spin without any secret code. The matched Monster Arena final sector also gave identical race result objects with and without a clean backflip.
+
+The terrace cap now passes the original prescribed seeds on Easy and Medium, including 3, 7 and 8. Easy clean backflips measured ten of ten with no Slams on each of the Table, Big Jump and full-speed kicker. The Full Works control, discovery lines, switch and balance ladder have their rulings. The four old assertions listed under “Part 1 laptop drive and rule 18 review” still need their own written ruling before the suite can use them.
