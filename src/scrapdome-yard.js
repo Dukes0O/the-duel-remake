@@ -6,6 +6,10 @@ const ASSET_PATH = '/assets/models/wasteland/scrapdome/yard.glb';
 const WATER_PATH = '/assets/models/wasteland/scrapdome/water-works.glb';
 // The Water Road's water works stand on open ground between the gate and the first wreck banks (WATER-YARD-ART).
 const WATER_PLACE = Object.freeze({x: -4, y: 0, z: 31});
+// BOWL-REX-FIGHT: the beaten Scrapasaurus lies on its side in the yard's car park, on open ground across from the
+// water works, with its three battery boxes smashed (docs/WASTELAND_WORLD.md section 7).
+const REX_PATH = '/assets/models/wasteland/bowl/scrapasaurus.glb';
+const REX_PLACE = Object.freeze({x: 17, z: 28, heading: -1.1, roll: 1.35});
 
 // Which part of the water works shows at a stage (the number of Water Road chapters done, 0 to 8). Parts not named
 // here always show. The tower holds one water level at a time: level n after chapter n.
@@ -32,7 +36,8 @@ function resourcesOf(scene, into = new Set()) {
 /** The physical yard is visible through the gate; only its home camera is gated. */
 export function createScrapdomeYard(course, {
   loadAsset = () => new GLTFLoader().loadAsync(ASSET_PATH),
-  loadWaterWorks = () => new GLTFLoader().loadAsync(WATER_PATH)
+  loadWaterWorks = () => new GLTFLoader().loadAsync(WATER_PATH),
+  loadRex = () => new GLTFLoader().loadAsync(REX_PATH)
 } = {}) {
   const road = course.hiddenRoad;
   const group = new THREE.Group();
@@ -67,6 +72,39 @@ export function createScrapdomeYard(course, {
   group.userData.setHomeVisible = setHomeVisible;
   group.userData.homeCamera = homeCamera;
   group.userData.setWaterStage = setWaterStage;
+  // The Scrapasaurus loads only once night five is won; until then nothing here runs.
+  const rex = {status: 'none', root: null, shown: false};
+  group.userData.rexOrnament = rex;
+  group.userData.setRexOrnament = setRexOrnament;
+  function setRexOrnament(shown) {
+    if (retired || !road) return;
+    rex.shown = shown === true;
+    if (rex.root) rex.root.visible = rex.shown;
+    if (!rex.shown || rex.status !== 'none') return;
+    rex.status = 'loading';
+    ready.then(placed => placed ? loadRex() : null).then(asset => {
+      if (!asset?.scene || retired || !placementGroup) { if (asset) releaseUnattached(asset); rex.status = retired ? 'disabled' : 'failed'; return; }
+      const model = asset.scene;
+      model.traverse(node => {
+        if (/^battery-box-\d-whole$/.test(node.name)) node.visible = false;
+        if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; }
+      });
+      // On its side: rolled about its length, then stood on the ground where it lies.
+      const holder = new THREE.Group();
+      holder.name = 'Beaten Scrapasaurus';
+      model.rotation.z = REX_PLACE.roll;
+      holder.add(model);
+      holder.rotation.y = REX_PLACE.heading;
+      holder.updateMatrixWorld(true);
+      const bounds = new THREE.Box3().setFromObject(holder);
+      holder.position.set(REX_PLACE.x, -bounds.min.y, REX_PLACE.z);
+      holder.visible = rex.shown;
+      placementGroup.add(holder);
+      rex.root = holder; rex.status = 'ready';
+    }).catch(error => {
+      if (!retired) { group.userData.loadErrors.push(String(error?.message || error)); rex.status = 'failed'; }
+    });
+  }
 
   function applyWaterStage() {
     if (!water.root) return;
@@ -144,5 +182,5 @@ export function createScrapdomeYard(course, {
     return false;
   }) : Promise.resolve(false);
 
-  return {group, ready, dispose, setHomeVisible, homeCamera, setWaterStage};
+  return {group, ready, dispose, setHomeVisible, homeCamera, setWaterStage, setRexOrnament};
 }

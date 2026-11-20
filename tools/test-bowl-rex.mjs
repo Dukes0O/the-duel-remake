@@ -13,6 +13,11 @@ import {REX_CUES, REX_EVENT, REX_RULES, REX_TROPHY, createRexFight, rexBoxS, rex
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {createProfile} from '../src/progression.js';
+import * as THREE from 'three';
+import {COURSE} from '../src/config.js';
+import {Course} from '../src/course.js';
+import {createScrapdomeYard} from '../src/scrapdome-yard.js';
+import {createRexView} from '../src/bowl/bowl-rex-view.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -154,6 +159,74 @@ const lander = fight => fight.phase === 'rest'
   const settled = settleShowNight(profile, {won: true, night: 5, bests: {}});
   ok(settled.ok && rexInTheYard(settled.profile) && settled.profile.bowl.trophies.includes(REX_TROPHY),
     'winning night five puts the Scrapasaurus in the yard, from the save alone');
+}
+
+{
+  // The yard's car park: nothing loads until the Rex is beaten; then it lies on its side on the ground, boxes smashed.
+  const yardCourse = new Course(COURSE.find(row => row.id === 'pacific-canyon'), 1989, {hiddenRoad: true});
+  const rexScene = new THREE.Group();
+  for (const index of [1, 2, 3]) for (const look of ['whole', 'smashed']) {
+    const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)); box.name = `battery-box-${index}-${look}`;
+    box.position.set(0, 4.3, index - 2); rexScene.add(box);
+  }
+  let loads = 0;
+  const yard = createScrapdomeYard(yardCourse, {loadAsset: async () => ({scene: new THREE.Group()}),
+    loadRex: async () => { loads++; return {scene: rexScene}; }});
+  await yard.ready;
+  yard.setRexOrnament(false);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  ok(loads === 0, 'the yard loads no Scrapasaurus before night five is won');
+  yard.setRexOrnament(true);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const lying = yard.group.getObjectByName('Beaten Scrapasaurus');
+  ok(loads === 1 && lying?.visible, 'once it is won, the Scrapasaurus is in the yard');
+  ok([1, 2, 3].every(index => !rexScene.getObjectByName(`battery-box-${index}-whole`).visible &&
+    rexScene.getObjectByName(`battery-box-${index}-smashed`).visible), 'its battery boxes are smashed');
+  yard.group.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(lying), floor = lying.parent.getWorldPosition(new THREE.Vector3()).y;
+  ok(Math.abs(bounds.min.y - floor) < 1e-6, 'it lies on the ground');
+  yard.setRexOrnament(false);
+  ok(!lying.visible && loads === 1, 'it hides with the switch off and does not load twice');
+}
+
+{
+  // The picture reads the fight and never writes it: the cone shows from the tell's
+  // start where the fire will go, the open box glows, a smashed box shows smashed.
+  const scene = new THREE.Group();
+  for (const index of [1, 2, 3]) for (const look of ['whole', 'smashed']) {
+    const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial());
+    box.name = `battery-box-${index}-${look}`; scene.add(box);
+  }
+  const view = createRexView({loadModel: async () => ({scene, animations: []})});
+  const fight = createRexFight({difficulty: 'easy', course});
+  const state = {bowlNight: {night: 5, event: {type: REX_EVENT, rex: fight}}};
+  const parts = name => view.group.getObjectByName(name);
+  view.update(course, state, 0, true);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const truck = {s: P.rampStart + 4, lateral: P.rail, airborne: false, airHeight: 0, speedMph: 0};
+  while (fight.phase !== 'tell') stepRexFight(fight, truck, DT, course);
+  const before = JSON.stringify(state);
+  view.update(course, state, 16, true);
+  ok(JSON.stringify(state) === before, 'drawing the fight changes nothing in it');
+  const cone = parts('Scrapasaurus fire cone');
+  ok(cone.visible && !parts('Scrapasaurus fire').visible && Math.abs(cone.rotation.y - fight.cone.heading) < 1e-9 &&
+    cone.scale.x === fight.cone.range, 'from the start of the tell the floor shows exactly where the fire will go');
+  while (fight.phase !== 'fire') stepRexFight(fight, truck, DT, course);
+  view.update(course, state, 32, true);
+  ok(cone.visible && parts('Scrapasaurus fire').visible, 'the fire fills the cone that was shown');
+  while (fight.phase !== 'rest') stepRexFight(fight, truck, DT, course);
+  view.update(course, state, 48, true);
+  ok(scene.getObjectByName('battery-box-1-whole').material.emissive.getHex() !== 0 &&
+    scene.getObjectByName('battery-box-2-whole').material.emissive.getHex() === 0, 'the open box glows and the shut ones do not');
+  fight.boxes[0] = true;
+  view.update(course, state, 64, true);
+  ok(!scene.getObjectByName('battery-box-1-whole').visible && scene.getObjectByName('battery-box-1-smashed').visible,
+    'a smashed box shows smashed');
+  view.update(course, {bowlNight: {night: 1, event: {type: 'carCrush'}}}, 80, true);
+  ok(!view.group.visible, 'it is not in the Bowl on nights one and two');
+  view.update(course, {bowlNight: {night: 3, event: {type: 'lastTruckRolling'}}}, 96, true);
+  ok(view.group.visible && !parts('Scrapasaurus fire cone').visible, 'on nights three and four it stands behind the wall, seen before it is fought');
+  view.dispose();
 }
 
 // ---- the child-pace driver on the real Duel ----------------------------------
