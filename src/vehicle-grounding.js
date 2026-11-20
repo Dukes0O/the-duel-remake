@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {CARS} from './config.js';
 import {vehicleGroundPoint, TIRE_CLEARANCE} from './vehicle-surface.js';
 export {vehicleGroundPoint, TIRE_CLEARANCE} from './vehicle-surface.js';
 
@@ -96,6 +97,38 @@ export function placeGroundedVehicle(vehicle,p,turn=0,travel=0){
   for(const wheel of vehicle.userData.wheels||[])wheel.rotation.x+=travel/(wheel.parent?.userData.radius||.36);
 }
 
+// The ground code flashes the front lamps. Its next full turn throws sparks from
+// the vehicle. Each effect belongs to the drawn car and reads only the race pose.
+function fullWorksEffects(vehicle, actor) {
+  const pose = actor?.bowlPose, now = actor?.stageTimeSec ?? 0;
+  const flash = pose?.flashUntil > now && Math.floor((pose.flashUntil-now)*10)%2 === 1;
+  let effects = vehicle.userData.fullWorksEffects;
+  if (!effects && (flash || pose?.sparks)) {
+    const model = CARS[actor.car];
+    const x = (model?.collision?.halfWidth ?? 1)*.75;
+    const y = (model?.height ?? 1.6)*.36;
+    const z = (model?.collision?.halfLength ?? 2.3)+.06;
+    const lamps = new THREE.BufferGeometry();
+    lamps.setAttribute('position',new THREE.Float32BufferAttribute([-x,y,z,x,y,z],3));
+    const lights = new THREE.Points(lamps,new THREE.PointsMaterial({color:0xfff4bb,size:.6,depthWrite:false}));
+    const rays = [];
+    for(let i=0;i<21;i++){
+      const a=i*2.4, x=Math.cos(a), z=Math.sin(a), y=Math.sin(i*1.87);
+      rays.push(x*1.8,1+y,z*2.7,x*2.3,1+y*1.3,z*3.3);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(rays,3));
+    const sparks=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color:0xffbe42,depthWrite:false}));
+    vehicle.add(lights,sparks);
+    effects=vehicle.userData.fullWorksEffects={lights,sparks};
+  }
+  if (effects) {
+    effects.lights.visible=!!flash;
+    effects.sparks.visible=!!pose?.sparks;
+    if (effects.sparks.visible) effects.sparks.rotation.y=now*11;
+  }
+}
+
 // Optional physics-owned wheel support and orientation. Ordinary road actors
 // omit these fields and keep the exact existing grounding path. Pitch in the
 // simulation is nose-up positive; Three's +X rotation points the nose down.
@@ -108,6 +141,7 @@ export function applyVehicleTerrainPose(vehicle,course,actor){
     // YXZ applies roll before pitch, so remove that pitch cross-coupling.
     vehicle.rotation.z=actor.tumble?roll:Math.atan2(Math.sin(roll)*Math.cos(pitch),Math.cos(roll));
   }
+  if (vehicle.userData?.fullWorksEffects || actor?.bowlPose?.flashUntil || actor?.bowlPose?.sparks) fullWorksEffects(vehicle,actor);
   if(course?.def?.tricks && actor?.bowlPose) {
     vehicle.rotation.x -= actor.bowlPose.pitch;
     vehicle.rotation.y += actor.bowlPose.yaw;

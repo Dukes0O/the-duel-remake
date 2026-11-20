@@ -93,6 +93,12 @@ const memory = (initial = {}) => {
 {
   const old = createProfile();
   equal(foundBowlTricks(old), [], 'old profiles have no found secrets');
+  for (const invalid of [null, undefined, {bowl:4},{bowl:{version:1,foundTricks:'damaged'}}]) {
+    const edit = recordBowlSecret(invalid,'gyro');
+    ok(!edit.ok && edit.profile === invalid,'refuse a malformed discovery record in place');
+  }
+  const futureIds = {bowl:{version:1,foundTricks:['future-kind','gyro']}};
+  equal(recordBowlSecret(futureIds,'corkscrew').profile.bowl.foundTricks,['future-kind','gyro','corkscrew'],'unrecognized stored IDs survive');
   const found = recordBowlSecret(old, 'gyro').profile;
   equal(foundBowlTricks(found), ['gyro'], 'a genuine kind can be recorded');
   ok(recordBowlSecret(found, 'gyro').profile === found && recordBowlSecret(found, 'unknown').profile === found, 'duplicate or invalid finds do not write');

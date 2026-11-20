@@ -208,26 +208,28 @@ function seededFlight(id, level, seed, habit, wall = false) {
   const {duel, events} = onFloor(50);
   const s = duel.state, ramp = duel.course.features.ramps.find(r=>r.id===id), rng = makeRng(seed*7919);
   s.bowlNight.cpuDifficulty = level;
+  const fullSpeed = id === 'jump-kicker' && !habit;
   const start = wall ? 46 : ramp.start-2;
   const line = wall ? -14 : ramp.off;
   const y = duel.course.groundAt(start,line).y;
   Object.assign(s,{s:start,prevS:start,lateral:line,prevLateral:line,groundHeight:y,prevGroundHeight:y,
-    airborne:false,_jumpY:y,_verticalSpeed:0,boost:1,headingError:wall?.35:0,speedMph:wall?50:60});
-  let air = 0, outside = false;
+    airborne:false,_jumpY:y,_verticalSpeed:0,boost:1,headingError:wall ? .35 : 0,speedMph:wall ? 50 : fullSpeed ? duel.car.topSpeed : 30,gear:fullSpeed ? duel.car.gears.length-1 : 2});
+  let air = 0, outside = false, late = 0;
+  duel.onChange((_,event)=>{ if(event.bowlTrickLate) late++; });
   const release = rng.range(0,.3), tap = rng.range(habit ? .1 : .2,habit ? .8 : .7), hold = rng.range(.05,1.5);
   for (let i=0; i<850; i++) {
     const t = air*DT;
-    const input = !s.airborne ? {throttle:1,boost:wall} : habit === 'carry' ? {throttle:1} :
+    const input = !s.airborne ? {throttle:1,boost:wall} : habit === 'hold brake' ? {brake:+(air>1)} : habit === 'carry' ? {throttle:1} :
       habit ? {throttle:+(t>=tap)} : {throttle:+(t<release),brake:+(t>=tap && t<tap+hold)};
     duel.setInput({...neutral,...input});
     if(s.airborne) air++;
     duel.step(DT);
-    outside ||= !!s.bowlOutside?.inStands || !!s.bowlOutside?.outside;
+    outside ||= s.lateral > duel.course.features.bowl.outside.wall;
     if(air && !s.airborne) break;
   }
   assert.ok(air>0);
   duel.setInput(neutral); duel.step(DT); // Show Night observes the landing at the next fixed step.
-  return {events,landing:s.bowlLanding,score:s.bowlNight.event.score,outside};
+  return {events,landing:s.bowlLanding,score:s.bowlNight.event.score,outside,late};
 }
 test('seeded children can tap a backflip and hold the throttle again on real jumps', () => {
   for(const ramp of ['jump-kicker','table','big-jump']) {
@@ -240,6 +242,7 @@ test('seeded children can tap a backflip and hold the throttle again on real jum
   for(const level of ['easy','medium']) for(const wall of [false,true]) {
     const runs = Array.from({length:10},(_,i)=>seededFlight('big-jump',level,i+1,true,wall));
     assert.ok(runs.every(r=>r.landing==='clean' && r.events.every(e=>e.kind==='frontFlip')));
+    if (wall) assert.ok(runs.every(r=>r.outside),'every over-wall drive physically crossed the outer wall');
     const carried = seededFlight('big-jump',level,7,'carry',wall);
     assert.ok(carried.score>0 && carried.events.length===0);
   }
@@ -251,12 +254,12 @@ test('the landing window and Easy recovery depend on the requested turn, not the
     const duel={state:s,course:{def:{bowl:true,tricks:true}},featureFlags:{enabled:()=>true},
       emit:ev=>{if(ev.bowlTrick)events.push(ev.bowlTrick);}};
     stepBowlTricks(duel,s,DT);
-    for(let t=0;t<ticks;t++) { s.input={brake:+(t===0 || second && t===98)};stepBowlTricks(duel,s,DT); }
+    for(let t=0;t<ticks;t++) { s.input={brake:+(t===0 || second && t===98)};stepBowlTricks(duel,s,Math.min(1,ticks-t)*DT); }
     s.airborne=false;stepBowlTricks(duel,s,DT);
     return {s,events,duel};
   };
-  assert.equal(trial('easy',82).s.bowlLanding,'clean');
-  assert.equal(trial('hard',82).s.bowlLanding,'slam');
+  assert.equal(trial('easy',96*(1-55/360)).s.bowlLanding,'clean');
+  assert.equal(trial('hard',96*(1-55/360)).s.bowlLanding,'slam');
   const easy=trial('easy',112,true);
   assert.ok(easy.events.some(e=>e.kind==='backflip' && e.points===50));
   assert.equal(easy.s.bowlLanding,'slam');
@@ -344,4 +347,14 @@ test('each newly loaded Arena stage begins with a fresh trick score', () => {
   stepBowlTricks(duel,s,DT);
   assert.notEqual(s.arenaTrickShow,before);
   assert.equal(s.arenaTrickShow.event.score,0);
+});
+
+test('the child-pace kicker admits one held turn and tells the driver once about a late repeat', () => {
+  const easy = seededFlight('jump-kicker','easy',1,'hold brake');
+  assert.ok(easy.events.some(e=>e.kind==='backflip' && e.turns===1));
+  assert.equal(easy.late,1);
+  assert.equal(easy.landing,'clean');
+  const hard = seededFlight('jump-kicker','hard',1,'hold brake');
+  assert.equal(hard.landing,'slam');
+  assert.equal(hard.late,0);
 });

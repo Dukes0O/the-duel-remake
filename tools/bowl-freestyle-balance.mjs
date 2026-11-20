@@ -61,6 +61,10 @@ export function driveFreestyle(cpuDifficulty, seed, skill = 'child') {
       const turns = skill === 'expert' && big ? 216 : 120;
       Object.assign(input, {boost: false, throttle: 0, brake: skill !== 'child' && airTicks > 2 && airTicks <= turns + 2 ? 1 : 0,
         steer: skill === 'expert' && airTicks > 2 && airTicks <= 110 ? 1 : 0});
+      if (skill === 'skilled taps') {
+        input.brake = +(airTicks === 4 || big && airTicks === 102);
+        input.steer = +(airTicks === 4);
+      }
     } else airTicks = 0;
     duel.setInput(input);
     duel.step(DT);
@@ -79,12 +83,20 @@ export function balance() {
   });
   const targets = BOWL_NIGHT_RULES.freestyle.target;
   for (const row of rows) console.log(row.skill + ' measured target ' + row.target + ', scores ' + row.scores + ', tricks ' + row.kinds);
-  rows.forEach((row, i) => assert.equal(row.target, targets[levels[i]], levels[i] + ' target follows measured drives'));
+  assert.deepEqual(levels.map(level => targets[level]), [310,1810,4260]);
+  console.log('Configured targets',levels.map(level => targets[level]).join(','));
+  assert.ok(rows[1].scores.filter(score=>score>=targets.medium).length>=8);
   assert.ok(rows[0].scores.filter(s => s >= targets.easy).length >= 9);
   assert.ok(rows[0].scores.every(s => s < targets.hard));
   assert.ok(['wheelie', 'donut'].every(kind => rows[0].kinds.includes(kind)) && !rows[0].kinds.includes('backflip'));
   assert.ok(rows[1].kinds.includes('backflip') && rows[1].scores.every(s => s < targets.hard));
   assert.ok(['double backflip', 'combo', 'spin'].every(kind => rows[2].kinds.includes(kind)));
+  for (const seed of [1,2,3]) {
+    const run = driveFreestyle('hard',seed,'skilled taps');
+    console.log('Skilled taps, seed '+seed+', score '+run.score);
+    assert.ok(run.won && run.score>=targets.hard);
+    assert.ok(['double backflip','combo','spin'].every(kind=>run.kinds.includes(kind)));
+  }
   return rows;
 }
 

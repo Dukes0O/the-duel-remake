@@ -1,3 +1,4 @@
+import {outsideGateAt, terraceHeight} from './bowl-outside.js';
 import {readCode, secretOf} from './bowl-secrets.js';
 import {crowdAfter, landingPoints, scoreStuntEvent, trickVariety} from './bowl-show.js';
 
@@ -36,6 +37,7 @@ function arenaAward(actor, trick) {
   if (event.trickPopups[0]?.at !== now) event.trickPopups = [];
   event.trickPopups.push({kind:trick.kind, turns:trick.turns, fresh:trick.fresh, at:now,
     points:scored.points, base:trick.points * (trick.fresh ? 1.5 : trick.repeat), multiplier:1+crowd/100});
+  return true;
 }
 
 // A steering direction already down at the lip keeps its driving function.
@@ -55,7 +57,7 @@ function award(duel, state, kind, turns, points, combo = 1, landing = 'clean', f
   if (kind === 'wheelie' || kind === 'cyclone') cues.push('bowl.trick.' + kind);
   if (fresh) cues.push('bowl.trick.new');
   const trick = {kind, turns, points, combo, fresh, landing, repeat, cues};
-  arenaAward(duel.state, trick);
+  if (arenaAward(duel.state, trick)) cues.push('bowl.crowd.rise');
   duel.emit({bowlTrick: trick});
 }
 
@@ -85,6 +87,7 @@ function ground(duel, state, dt) {
     for (const key of ['Up','Down','Left','Right']) {
       if (keys[key] && !state.groundPrevious?.[key] && readCode(state.code, key, state.elapsed, true)) {
         state.armed = state.usedFull = true;
+        s.bowlPose.flashUntil = (s.stageTimeSec ?? 0) + .8;
         if (s.arenaTrickShow) s.arenaTrickShow.event.trickPopups = [{notice:'FULL WORKS ARMED', at:s.arenaTrickShow.clock}];
         duel.emit({bowlSecretArmed: {kind: 'fullWorks', cue: 'bowl.secret.armed'}});
       }
@@ -133,9 +136,35 @@ const directionKeys = input => ({
   Up: input.throttle > 0, Down: input.brake > 0,
   Left: input.steer < 0, Right: input.steer > 0, Space: !!input.boost,
 });
-function remainingAir(s) {
+function remainingAir(duel, s, dt) {
   const velocity = s._verticalSpeed || 0;
-  return (velocity + Math.sqrt(velocity ** 2 + 36 * Math.max(0, s.airHeight || 0))) / 18;
+  const flat = (velocity + Math.sqrt(velocity ** 2 + 36 * Math.max(0, s.airHeight || 0))) / 18;
+  const course = duel.course, outside = course.features?.bowl?.outside;
+  if (!outside || !Number.isFinite(s._jumpY) || !(s.lateral > s.prevLateral)) return flat;
+  const here = course.worldAt(s.s,s.lateral), prev = course.worldAt(s.prevS,s.prevLateral);
+  const vx = (here.x-prev.x)/dt, vz = (here.z-prev.z)/dt;
+  if (s.lateral + Math.hypot(vx,vz)*flat < outside.wall) return flat;
+  // The world-space velocity is already known. Read the rising terrace along that
+  // path only when starting a turn; the real flight keeps its normal ground solver.
+  function meetsDeck(t) {
+    const p = duel._roadPosition({x:here.x+vx*t,z:here.z+vz*t},s.s);
+    const deck = terraceHeight(outside,p.lateral);
+    return deck>0 && !outsideGateAt(outside,course.phase(p.s),p.lateral) &&
+      s._jumpY+velocity*t-9*t*t <= deck;
+  }
+  let low=0;
+  for(let i=1;i<=12;i++) {
+    let high=flat*i/12;
+    if (meetsDeck(high)) {
+      for(let j=0;j<7;j++) {
+        const mid=(low+high)/2;
+        if (meetsDeck(mid)) high=mid; else low=mid;
+      }
+      return high;
+    }
+    low=high;
+  }
+  return flat;
 }
 function late(duel, flight, kind) {
   if (flight.late) return;
@@ -169,7 +198,7 @@ function air(duel, state, dt) {
     const held = {...(state.groundKeys ?? input)};
     state.flight = {held, previous: directionKeys(held), active: {}, queue: {}, turns: {}, code: [], pitch: 0, yaw: 0, roll: 0};
     state.code.length = 0;
-    if (state.armed && remainingAir(s) >= .9) { state.armed = false; beginSecret(duel, state.flight, secretOf('fullWorks'), remainingAir(s)); }
+    if (state.armed && remainingAir(duel,s,dt) >= .9) { state.armed = false; beginSecret(duel, state.flight, secretOf('fullWorks'), remainingAir(duel,s,dt)); }
     state.kind = s.bowlGroundTrick = null;
   }
   const f = state.flight, keys = directionKeys(input), fresh = [];
@@ -178,15 +207,17 @@ function air(duel, state, dt) {
   for (const key of ['throttle', 'brake', 'steer', 'boost']) {
     if (!input[key] || Math.sign(input[key]) !== Math.sign(f.held[key])) f.held[key] = 0;
   }
-  const airLeft = remainingAir(s);
+  let airLeft;
+  const airTime = () => airLeft ??= remainingAir(duel,s,dt);
   if (!f.secret) for (const key of fresh.filter(k => k !== 'Space')) {
     const secret = readCode(f.code, key, state.elapsed, false);
-    if (secret && beginSecret(duel, f, secret, airLeft)) break;
+    if (secret && beginSecret(duel, f, secret, airTime())) break;
   }
   if (f.secret) {
     const turn = f.secret;
     turn.elapsed += dt;
     Object.assign(s.bowlPose, turn.trick.pose(turn.elapsed / turn.duration));
+    if (turn.trick.id === 'fullWorks') s.bowlPose.sparks = turn.elapsed < turn.duration;
     if (turn.elapsed + 1e-8 >= turn.duration) { bank(f, turn.trick.id); delete f.secret; }
     return;
   }
@@ -202,7 +233,7 @@ function air(duel, state, dt) {
   }
   for (const axis of ['pitch', 'yaw', 'roll']) {
     if (!f.active[axis] && f.queue[axis]) {
-      begin(duel, f, axis, f.queue[axis], airLeft);
+      begin(duel, f, axis, f.queue[axis], airTime());
       delete f.queue[axis];
     }
     const turn = f.active[axis];
@@ -233,6 +264,7 @@ export function landBowlTricks(duel, actor) {
     if ((1 - f.secret.elapsed / f.secret.duration)*360 <= window + 1e-8) bank(f, f.secret.trick.id);
     else landing = 'slam';
   }
+  if (actor.bowlPose.sparks) actor.bowlPose.sparks = false;
   actor.bowlLanding = landing;
   if (landing === 'slam') {
     state.recovery = level === 'easy' ? 1 : 1.5;

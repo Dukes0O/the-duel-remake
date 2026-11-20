@@ -43,7 +43,8 @@ export function foundBowlTricks(profile) {
   return uniqueIds(profile?.bowl?.foundTricks).filter(id => secretOf(id));
 }
 export function recordBowlSecret(profile, kind) {
-  if (!object(profile) || profile.bowl != null && !object(profile.bowl) || ownsNewerBowl(profile) || !secretOf(kind)) return result(profile, false, 'Unknown Bowl record.');
+  if (!object(profile) || profile.bowl != null && !object(profile.bowl) ||
+      profile.bowl?.foundTricks != null && !Array.isArray(profile.bowl.foundTricks) || ownsNewerBowl(profile) || !secretOf(kind)) return result(profile, false, 'Unknown Bowl record.');
   const found = foundBowlTricks(profile);
   if (found.includes(kind)) return result(profile);
   return result({...profile, bowl: {...profile.bowl, foundTricks: [...(Array.isArray(profile.bowl?.foundTricks) ? profile.bowl.foundTricks : []), kind]}}, true);
