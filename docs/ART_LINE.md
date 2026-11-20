@@ -151,6 +151,24 @@ the game.
   cab-only `keep` test, so the cab keeps the front photo and the tank keeps the rear one. (`big-bess-photo.py`,
   11 November.)
 
+- **An overhead photo that disagrees with the side photo along the vehicle** (the Bully, 19 November: its roof began
+  0.89 m behind the bumper from above and 1.08 m from the side). Read four or five landmarks on both photos and move
+  the overhead photo's rows between them in a working copy before the carve (`working_top` in `bully.py`). The same
+  copy is where its tyres are painted out, and where it is turned left to right.
+- **Wings the overhead photo does not show.** A carve keeps only what every photo shows, so a bonnet came out as
+  narrow as the overhead photo's with bare tyres beside it. Let `keep` allow a shell over each front tyre, and lay a
+  strip of the vehicle's own plate where the shell's top will be in the working overhead copy, or its top wears tread.
+- **A pale line under the body** is the studio floor seen beyond the vehicle between its wheels, walled in by the
+  tyres and their shadow. Cut that rectangle from the side mask, from the skirt's lower edge down.
+- **A pale streak down the bonnet's corner** is the headlamp's glass seen edge-on in the side photo. Lay the rust
+  beside it over it in a working copy; the lamp is its own piece.
+- **A curved plate (a plough blade) is a curve read from its side photo and swept across, wearing its front photo.**
+  Take the first subject pixel of each row; bolt heads notch the ends, so give each point the middle value of five.
+  Trace the arms a few pixels behind the blade's face so that no edge lies in the blade's surface. The back wears a
+  plate photo at its own size: a narrow strip stretched across it comes out as stripes.
+- **Lugs in one colour read as boxes stuck on a tyre.** Give each a piece of the tread from the end photo.
+- **Wheels and lamps can wear the carve's own copies of the photos** when they lie inside the subject. Opening fresh
+  copies embedded three photos twice, 1.2 MB of the file.
 - **Tyres** (Kyle, 6 November). Use `tyre` and `wheel_well`. Without them, the
   arch's wall wears a ghost of the photo's tyre, the tread shows the background,
   and the tread smears into stripes.
@@ -402,6 +420,10 @@ the game.
 - **`tools/test-blender-output.mjs` starts Blender for every recipe.** It is a heavy job and takes a turn
   (`docs/FACTORY.md` section 8), and it is not a quick look at one file. To check one model file's own claims, read the
   file's node list, positions and bounds with a few lines of Node. (19 November 2026.)
+- A scale figure in rust and leather vanishes against a rusty vehicle. Stand it clear, against the grey ground.
+- Eleven pictures of one vehicle came back from one `codex exec` job in about twelve minutes, alike from every side,
+  because the brief gave the first picture to every later call as its reference and named what must not be on the
+  vehicle (plough, mirrors, stack) so that those could be photographed alone.
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,

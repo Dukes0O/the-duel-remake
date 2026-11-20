@@ -172,6 +172,9 @@ const generators = [
   { script: 'tools/blender/old-smoke-photo.py', args: [], glb: ['public/assets/models/wasteland/scablands/old-smoke.glb'] },
   { script: 'tools/blender/rattler-photo.py', args: [], glb: ['public/assets/models/wasteland/cars/rattler.glb'], budget: 25000, maxBytes: 8000000 },
   { id: 'longhaul', script: 'tools/blender/longhaul.py', args: [], glb: ['public/assets/models/wasteland/cars/longhaul.glb'], budget: 25000, maxBytes: 8000000 },
+  // CAR-ART-BULLY keeps the recipe, not a .blend. CAR-DRIVE-WASTE makes it drivable.
+  { id: 'bully', script: 'tools/blender/bully.py', args: [], candidate: true, recipeOnly: true,
+    glb: ['public/assets/models/wasteland/cars/bully.glb'], budget: 25000, maxBytes: 8000000 },
   // WW-SCENE owns installation; this card keeps its generated GLB out of public/.
     { script: 'tools/blender/scablands-mall.py', args: [], glb: ['public/assets/models/wasteland/scablands/mall.glb'] },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
