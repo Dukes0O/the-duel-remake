@@ -330,12 +330,13 @@ Voice is a later card, and no release waits for it.
 | `town.6.short` | Odessa | Site short of tin | We're out of tin. The Boneyard's got more, if somebody'd go and get it. I'm looking at you. |
 | `town.6.made` | Hollis | All under tin by the frost | That's all of them under a roof. They'll remember who did that. |
 | `town.6.late` | Hollis | Not all under tin | Some of them spent that winter in canvas. They got through it. They'll remember that too. |
-| `town.7.fire` | Odessa | The fire report | FIRE! The soup kitchen! There's an old engine in the truck bay. She started last Tuesday. GO! |
+| `town.7.fire` | Odessa | The fire report | The soup kitchen is on fire! There's an old fire engine in the truck bay, and she started last Tuesday, so take her and go! |
 | `town.7.spray` | Odessa | First in the truck | Drive right up to it. Hold H to spray. She holds three minutes of water. When the tank runs dry, stop at any tap to fill up. |
-| `town.7.won` | Odessa | Fire out | Still standing. You smell terrible. Well done. |
+| `town.7.won` | Odessa | Fire out | It's still standing. You smell terrible, and you did well. |
+| `town.7.burnt` | Odessa | Fire out, the soup kitchen burnt down | We've lost the kitchen, but everyone got out. We'll build it again, and next time we'll be quicker. |
 | `town.7.ash` | Hollis | After the fire | There's ash on the ground, and it isn't from the fire. Somebody started this. There's a woman named Cinder who knows about ash. |
 | `town.7.ash.going` | Hollis | After the fire, Everburn started and Old Smoke not beaten | There's ash on the ground, and it isn't from the fire. That's Ash Men's work. Cinder said they'd come this way. |
-| `town.7.ash.done` | Cinder | After the fire, Old Smoke beaten | That's Ash Men's work. Leftovers, with no boss. I'll have a word. |
+| `town.7.ash.done` | Cinder | After the fire, Old Smoke beaten | That's Ash Men's work. They're what is left of Old Smoke's gang, with nobody in charge of them now. I'll go and have a word. |
 | `town.8.payday` | Hollis | Chapter 8 | Bills are in. The till is the town's money and your scrap is yours. Bills only ever come out of the till. Have a look at the Ledger. |
 | `town.8.books` | Hollis | Ledger opened, Vultures not at peace | Money in, money out. What's left is the profit. I have added it up twice and got two answers. |
 | `town.8.vultures` | The Vultures | Ledger opened, at peace | Two columns. One of you. Do the math. |

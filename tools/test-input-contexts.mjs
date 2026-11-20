@@ -5,7 +5,14 @@ import { App } from '../src/app.js';
 
 globalThis.cancelAnimationFrame ??= () => {};
 
-assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'heli', 'photo', 'machine']);
+// TOWN-FIRE-JOB: the fire truck's own context, the car's keys with H holding the water.
+assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'heli', 'photo', 'machine', 'firetruck']);
+assert.equal(keyboardAction('firetruck', 'KeyH'), 'spray');
+assert.equal(heldInput('firetruck', 'spray', { KeyH: true }), true);
+assert.equal(heldInput('car', 'spray', { KeyH: true }), false, 'H never sprays in any other car');
+assert.equal(keyboardAction('firetruck', 'KeyB'), 'town-bell');
+for (const name of ['throttle', 'brake', 'boost', 'interact'])
+  assert.deepEqual(INPUT_CONTEXTS.firetruck.held[name], INPUT_CONTEXTS.car.held[name], `the fire truck drives as a car: ${name}`);
 assert.equal(keyboardAction('car', 'KeyC'), 'camera-cycle');
 assert.equal(keyboardAction('menu', 'KeyC'), 'camera-cycle');
 for (const code of ['KeyD', 'KeyV', 'KeyX']) assert.equal(keyboardAction('car', code), null, `${code} is not a camera key`);

@@ -871,6 +871,13 @@ export const SOUND_BANK = {
   'town.bell': cue('interface', {flag: 'wasteland-town', volume: .42, limit: 2,
     layers: [tone(880, .9, .55, 'sine'), tone(2093, .5, .22, 'triangle'), tone(3270, .25, .12, 'sine')]}),
 };
+// TOWN-FIRE-JOB: a fire call's sounds, made from the helicopter's fire recordings (src/heli/heli-audio.js) so that fire and water
+// sound the same from the truck as from Kestrel One: a building catching crackles, the cannon opening pours, a fire put out hisses,
+// and filling at a tap is the bucket filling.
+SOUND_BANK['town.fire'] = cue('ambience', {flag: 'wasteland-town', files: ['heli/fire-crackle.ogg'], volume: .5, priority: 55, limit: 2});
+SOUND_BANK['town.spray'] = cue('vehicle', {flag: 'wasteland-town', files: ['heli/bucket-pour.ogg'], volume: .6, priority: 55, limit: 1});
+SOUND_BANK['town.fire.out'] = cue('ambience', {flag: 'wasteland-town', files: ['heli/fire-hiss.ogg'], volume: .7, priority: 55, limit: 2});
+SOUND_BANK['town.fill'] = cue('vehicle', {flag: 'wasteland-town', files: ['heli/bucket-scoop.ogg'], volume: .6, priority: 50, limit: 1});
 SOUND_BANK['arena.blackiron-barrage'] = cue('impacts', {
   flag: 'blackiron', priority: 70, limit: 1,
   layers: SOUND_BANK['arena.gunn-barrage'].layers,
