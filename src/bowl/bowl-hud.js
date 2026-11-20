@@ -1,6 +1,6 @@
 // Read-only presentation for the Bowl. These views can also be checked without a DOM.
 import {BOWL_FLOOR} from './bowl-course.js';
-import {BIG_MO} from './bowl-lines.js';
+import {BIG_MO, BOWL_GOALS} from './bowl-lines.js';
 export const BOWL_HUD_SOUNDS = Object.freeze({
   'bowl.health.hit': 'vehicle.crash',
   'bowl.health.danger': 'raider.warning',
@@ -18,15 +18,6 @@ export const BOWL_TRICK_GUIDE = Object.freeze([
   {kind: 'sideFlip', name: 'Side flip', keys: [['← or →'], ['Space', '← or →']], points: '80, 320 or 720 points.'},
 ]);
 
-const REX_GOALS = {
-  tell: 'Stay out of the fire.',
-  fire: 'Stay out of the fire.',
-  lift: 'Dodge the thrown car.',
-  throw: 'Dodge the thrown car.',
-  rest: 'Jump off the junk car.',
-  fallen: 'Stay clear of the Scrapasaurus.',
-};
-
 function shortGoal(view, event, rivalName) {
   const text = view.goal?.trim();
   if (text && text.split(/\s+/).length <= (view.event === 'scrapasaurus' ? 5 : 8)) return text;
@@ -42,7 +33,7 @@ function shortGoal(view, event, rivalName) {
       const goal = `Outlast ${names.join(', ')}.`;
       return names.length && goal.split(/\s+/).length <= 8 ? goal : 'Be the last truck rolling.';
     }
-    case 'scrapasaurus': return REX_GOALS[event?.rex?.phase] ?? 'Smash its battery boxes.';
+    case 'scrapasaurus': return BOWL_GOALS.scrapasaurus(event?.rex);
     default: return 'Finish the event.';
   }
 }
