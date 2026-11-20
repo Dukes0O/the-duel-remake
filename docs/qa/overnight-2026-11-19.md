@@ -15,7 +15,7 @@ Pictures are kept only where a group names them, under `.evidence/` of this work
 | Night 2 | `?flags=hidden-road,story-choices,road-riders,crew-gear,warlord-cards,arsenal,arsenal-wave3` | MENU QA box, "Create temporary player ready for Night 2", WASTELAND, Story Wall, "Night 2 · Strangers at the gate" |
 | The town | `?flags=wasteland-town` | MENU QA, "Create temporary player who has found the wasteland", WASTELAND (the yard), THE TOWN, name it, then DRIVE |
 | The machine yard and the Dig | `?flags=wasteland-town,the-dig` | same player, WASTELAND, the yard's THE DIG button (with `wasteland-town` on too, the town button is also there) |
-| The Bowl | `?flags=titan-bowl` | "Create funded temporary player", then pick the course "The Bowl" in the race setup (it is the last course; a time trial or campaign start) |
+| The Bowl | `?flags=titan-bowl` | "Create funded temporary player", then pick the course "The Bowl" in the race setup (its place in the list is confirmed in group 5) |
 | Animal hits | `?flags=wildlife,wildlife-hits` | "Create funded temporary player", Tremblant Woods, start a race (the monster truck needs `titan_monster` owned: the funded player has 50,000 credits) |
 | Wash fights (road riders) | add `road-riders-review` to the query | extra buttons "Fight at the Wash · easy/medium/hard" appear in the MENU QA box |
 
