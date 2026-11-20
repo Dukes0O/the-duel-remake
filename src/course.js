@@ -20,6 +20,7 @@ import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 import {scablandsActorHeightAt,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {openGateSegments} from './bowl/bowl-outside.js';
 import {buildBowlFeatures, bowlRingPoint, bowlReliefAt} from './bowl/bowl-course.js';
 import {createGroundTunnels} from './world/ground-tunnels.js';
 import {featureFlags} from './feature-flags.js';
@@ -461,7 +462,32 @@ export class Course {
         // side is longer, so each piece grows to meet its neighbours (no open gaps).
         const layout=this.def.scrapdome,off=side*((side>0?layout?.outerWallOffset:null)??layout?.wallOffset??22);
         const grow=1-this.at(s).curvature*off,length=bowl?Math.max(.15,grow)*step*.52:4.2*Math.max(1,grow);
-        f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,length,0,{barrier:true,arenaWall:true}));
+        const outside = f.bowl?.outside;
+        if (outside && side > 0) {
+          const piece = openGateSegments(outside.gates, s, length);
+          if (piece) f.barriers.push(add(`arena-wall-${s}-1`,'prop',piece.s,off,.5,piece.half,0,{barrier:true,arenaWall:true}));
+          for (const [radius, kind] of [[outside.back, 'back'], [outside.bank, 'bank']]) {
+            const span = Math.max(.15, 1 - this.at(s).curvature * radius) * step * .52;
+            const section = kind === 'back' ? openGateSegments(outside.gates, s, span, true) : {s, half: span};
+            if (section) add(`bowl-${kind}-${s}`, 'prop', section.s, radius, .5, section.half, 0,
+              {arenaWall:true, bowlBoundary:kind, exactCarCorners:kind === 'back', minY:-1, maxY:kind === 'back' ? outside.top - .5 : 100});
+          }
+        } else f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,length,0,{barrier:true,arenaWall:true}));
+      }
+      if (f.bowl?.outside) for (const gate of f.bowl.gates) {
+        const o = f.bowl.outside;
+        add('bowl-cpu-' + gate.name,'prop',gate.s,o.wall,.5,gate.width/2,0,{arenaWall:true,bowlGateAI:true,minY:-1,maxY:100});
+        // An eight-metre throat flares to fourteen at the back. The two
+        // ten-metre guide faces continue out into the car park at 45 degrees.
+        const throatEnd = o.back - (gate.mouthWidth-gate.width)/2;
+        const reach = gate.guideLength / Math.sqrt(2);
+        for (const side of [-1,1]) {
+          const jamb = gate.s + side*(gate.width/2+.2);
+          add('bowl-jamb-' + gate.name + side,'prop',jamb,(o.wall+throatEnd)/2,
+            (throatEnd-o.wall)/2,.2,0,{arenaWall:true,bowlBoundary:'tunnel',exactCarCorners:true,minY:-1,maxY:o.top});
+          add('bowl-guide-' + gate.name + side,'prop',jamb+side*reach/2,throatEnd+reach/2,
+            gate.guideLength/2,.2,-side*Math.PI/4,{arenaWall:true,bowlBoundary:'guide',exactCarCorners:true,minY:-1,maxY:o.top});
+        }
       }
     }
     // The Bowl is a stadium floor: no road signs or chevrons stand in its stands.

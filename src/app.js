@@ -275,6 +275,7 @@ export class App {
         this._showNightCue(cue);
       }
       if(event.bowlEventResult&&state.bowlNight?.turn)this._recordTurnGo(event.bowlEventResult,state); // BOWL-TURNS
+      if(event.bowlOutsideCue)this._showNightCue(event.bowlOutsideCue);
       if(event.bowlWall?.cue)this._showNightCue(event.bowlWall.cue);
       if(event.bowlRex?.cue)this._showNightCue(event.bowlRex.cue); // BOWL-REX-FIGHT: each thing the Scrapasaurus does has its sound
       if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
