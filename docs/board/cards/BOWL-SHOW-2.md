@@ -273,35 +273,70 @@ a rest after it, so that a child can see a hit coming and get out of its way.
 
 ### 10. The Scrapasaurus: how it is beaten, and how the driver learns it
 
-The idea stays: keep out of its fire, smash three battery boxes, and it falls. What changes is that the driver can see
-what to do and can do it with the driving already learned.
+The idea stays: keep out of its fire, take its three battery boxes, and it falls. What changes is that the driver can
+see what to do and can do it with a truck.
 
-- **It is solid.** Legs, body and tail bounce a truck off by the wall rules. Its back is ground a truck can stand on.
-- **It comes to the driver.** It walks its rails by the shorter way round towards the truck, bursts out of the Car Park
-  Gate beside the truck to begin, and breathes its first fire within 8 seconds. No more waiting for it to come round.
+**Kyle, 20 November 2026,** on the first version of this section (when it tires, drive up its tail onto its back): "a
+ramp up the back of the scraposaurus is a bit too on the nose. there must be a better way." Three ways were weighed.
+
+- **Option A, Claude's pick: tear the boxes out with a tow hook.** When it tires, a box opens. The driver fires a hook
+  at the glowing box (F), drives away until the cable is tight, and pulls until the box comes out. The verb is the
+  truck's own strength, and a pull is a real monster truck show event that nothing else in the night uses. There is no
+  line to find and no landing to hit: the hook finds the open box by itself, so a child needs only F and the throttle.
+  A tight, glowing cable between truck and beast says what is happening from anywhere on the floor. On the later boxes
+  it gives the driver a real choice, to hold on or to let go. It reuses the harpoon the game already has.
+- **Option B: knock it over.** When it tires it sways; a ram into a hind leg at 25 mph or more topples it onto its side,
+  and the boxes on its flank are then at bumper height, where a second ram smashes the glowing one. It is the simplest to
+  learn and the cheapest to build. Against it: every box is the same two rams, and it falls over four times, so the last
+  fall is no longer the moment of the night. It is the fallback if the pull does not feel good in the hand drive.
+- **Option C: three boxes, three ways.** One box on a knee is rammed; one on a hip needs the night's weapon; one on its
+  back is landed on from whichever of the arena's jumps it has stumbled beside. It has the most variety. Against it: three
+  different lines to work out, which is hard to learn without being told, and the third is the landing on its back that
+  Kyle could not do on 20 November.
+
+**The fight, on the pick.**
+
+- **It is solid.** Its legs, body and tail bounce a truck off by the wall rules. A truck never passes through it.
+- **It comes to the driver.** It bursts out of the Car Park Gate beside the truck to begin, walks its rails by the shorter
+  way round towards the truck, and breathes its first fire within 8 seconds. No more waiting for it to come round.
 - **The loop, in three beats a child can say back:** it rears and its chest glows, so get out of the orange on the floor;
-  it breathes fire into exactly that orange; then it is **tired**: it sags with its head on the floor and steam coming
-  off it, **its tail lies flat on the floor as a ramp** with lit arrows running up it, one battery box opens and a beam of
-  light stands up from that box, tall enough to see from anywhere on the floor. Drive up the tail and over the box.
-- **Where it tires:** wherever it is on a straight, after each breath of fire on Easy and after every second one on
-  Medium and Hard. On an end it walks on to the straight first, because the tail needs flat floor.
-- **Three boxes in a row up its back:** the first at the root of the tail (any speed gets there), the second in the
-  middle of the back (a run at the tail at 25 mph or more), the third on the shoulders (40 mph or more). Wheels on the
-  open box smash it. One box each time it tires. After each box it is angrier: its fire sweeps from side to side, then
-  it throws cars as well (a ring on the floor first, as today).
-- **The show-off way stays:** a truck that comes down on the open box out of the air, from a jump or a launch off a car,
-  smashes it too and earns "From the sky", 300 points. It is never needed.
-- **How the driver learns it.** A card before the fight has three pictures and three short sentences, the three beats
-  above. During the fight the goal line is never longer than five words and changes with the beast: "GET OUT OF THE
-  ORANGE", "DRIVE UP ITS TAIL", "SMASH THE GLOWING BOX", "TWO BOXES LEFT". While it is tired a marker with an arrow and a
-  distance points at the foot of the tail, and then at the box. Its three boxes are three battery pictures at the top of
-  the screen; the driver's scorches are the health bar. On Easy it stays tired the first time for up to 45 seconds or
-  until the first box is smashed, so the first lesson cannot be missed. A try that fails says why: "It got up before you
-  reached the box, so go the moment it sags."
+  it breathes fire into exactly that orange; then it is **tired**: it sags with its head low and steam coming off it,
+  one battery box opens, and a beam of light stands up from that box, tall enough to see from anywhere on the floor.
+  Hook the box and pull it out.
+- **Where it tires:** wherever it stands, after each breath of fire on Easy and after every second one on Medium and
+  Hard.
+- **The tow hook** is bolted on for this event in place of the night's weapon, and Big Mo says so. F fires it. When an
+  open box is within 25 m and within 60 degrees of the truck's nose, the hook flies to the steel ring on that box by
+  itself, and the marker over the box shows the F key whenever a shot would bite. Fired at any other time it flies 15 m,
+  falls and winds back in; a hook that strikes the beast anywhere but an open box clangs off, which tells a child "not
+  yet". The cable is 15 m long. F again lets go.
+- **The pull.** Drive away. When the cable is tight and the throttle is held, the truck strains with its nose up and its
+  wheels throwing dirt, and a ring round the box fills. Nitro (Space) pulls twice as hard. A truck that reaches the end of
+  the cable at 20 mph or more gives it a jerk worth a second of pulling, so a run-up pays. **What has been pulled is
+  never lost:** a box half out stays half out if the driver lets go or the beast gets up.
+- **Three boxes, each a little more of a fight:**
+  1. **The hip.** It stays down. A pull of 2 seconds on Easy (3 on Medium and Hard) brings the box out.
+  2. **The back.** After a second of pulling it braces its legs and pulls back, dragging the truck towards it. Nitro or a
+     jerk wins; on Easy the throttle alone still wins, in 4 seconds.
+  3. **Behind the head.** As the cable goes tight it lifts its head and its chest glows: the fire will come down the
+     cable. The driver swings to one side at the cable's end and keeps pulling, or lets go with F and comes back.
+- **A box that comes out** flies out in a shower of sparks, the truck leaps forward, and the box bounces along behind on
+  the cable until the driver lets go.
+- **Angrier each time:** after the first box its fire sweeps from side to side; after the second it also throws cars (a
+  ring on the floor first, as today).
+- **How the driver learns it.** A card before the fight has three pictures and three short sentences: get out of the
+  orange; when it sags, hook the glowing box with F; drive away and pull until the box comes out. During the fight the
+  goal line is never longer than five words and changes with the beast: "GET OUT OF THE ORANGE", "HOOK THE GLOWING BOX",
+  "DRIVE AWAY AND PULL", "KEEP PULLING", "TWO BOXES LEFT". Its three boxes are three battery pictures at the top of the
+  screen; the driver's scorches are the health bar. On Easy it stays tired the first time for up to 45 seconds or until
+  the first box is out, so the first lesson cannot be missed. A try that fails says why: "The hook only bites a glowing
+  box, so wait until it sags." "The cable was slack, so drive away until it is tight." "It pulled you in, so press Space
+  as you pull."
 - **Losing:** too many scorches (five on Easy, four on Medium, three on Hard), or it has tired six times (five on Medium
-  and Hard) without losing its three boxes and walks out through the Car Park Gate.
-- **The ending:** it falls, the flame jets go off together, and the result card waits until the truck is standing on it
-  or 12 seconds have passed.
+  and Hard) with a box still in it and walks out through the Car Park Gate.
+- **The ending:** with the third box out its lights die, it sways and falls full length along the floor, and the flame
+  jets go off together. The last box is still on the cable, and the result card waits 10 seconds so that the driver can
+  drag it round the floor in front of the crowd.
 
 ### 11. What makes each night different
 
@@ -333,8 +368,8 @@ Three new events, each three goes with the truck put back on its run-up after ea
   already in the game: a lap of 1,120 m, about four times the Bowl's. Its events are the ones a long lap suits: a
   **Stadium Race** of two laps against three named rivals at once, a **Stunt Trial** of its jumps and crushes against the
   clock (the existing Titan Stunt Trial's rules, scored with the trick set), and a Long Jump at its largest ramp.
-- **Night 8, Champions' Night,** is back at the Bowl: Freestyle with the fallen Scrapasaurus lying on the floor as a
-  ramp, Last Truck Rolling with five trucks, and a Side by Side final with Dragon Wagon, best of three.
+- **Night 8, Champions' Night,** is back at the Bowl: Freestyle with the fallen Scrapasaurus lying on the floor to
+  jump over, Last Truck Rolling with five trucks, and a Side by Side final with Dragon Wagon, best of three.
 
 **Kyle, 20 November 2026:** yes, "the larger Titan arena that already exists" is the Titan Monster Arena course. On the
 tour nights the driver takes the show truck or any unlocked vehicle of the driver's own, since all of them have the
@@ -363,7 +398,7 @@ follows it.
 | BOWL-WEAPONS | Codex | hammer, saw and launcher as rules; health as the one measure | 7, 9 |
 | BOWL-WEAPONS-LOOK | Claude | the weapons, rivals' bolt-ons and damage drawn | 7, 9 |
 | BOWL-REX-2 | Codex | the Scrapasaurus fight remade | 10 |
-| BOWL-REX-LOOK | Claude | the tired pose, the tail ramp, the beams and the fire drawn | 10 |
+| BOWL-REX-LOOK | Claude | the tired pose, the hook and cable, the beams and the fire drawn | 10 |
 | BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump, Home Run | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |
 | BOWL-SOUND | Claude | every other new cue chosen and listened to | all |

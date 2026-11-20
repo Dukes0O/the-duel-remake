@@ -29,13 +29,27 @@ Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, t
 recorded in `docs/changes/BOWL-ART-REX.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
 
-## Round 3 must also serve the remade fight (Claude, 20 November 2026)
+## The tail is no longer a ramp: what the model must do instead (Claude, 20 November 2026)
 
-BOWL-SHOW-2 section 10 remakes the fight: the driver goes up its tail onto its back. Round 3 therefore needs, besides
-reading as a dinosaur from every side: a tail that lies flat on the floor as a ramp at least 4.5 m wide and no steeper
-than 25 degrees up to its back (a pose named `tired`, head on the floor); a back flat enough for a truck's wheels; and
-the three battery boxes in a row up the back (the root of the tail, the middle, the shoulders), each a named part with
-whole, open and smashed looks. BOWL-REX-2 states the sizes the rules use; BOWL-REX-LOOK draws the arrows, beams and fire.
+Kyle, on the fight's design: "a ramp up the back of the scraposaurus is a bit too on the nose. there must be a better
+way." BOWL-SHOW-2 section 10 now has the driver fire a tow hook at the open battery box and pull it out. The earlier
+note on this card that asked for a tail to drive up, and the words "entry to the tail" in round 5's verdict, are withdrawn.
+
+- **What round 5 built stays:** the outline, the tired pose (sagged, head low, tail on the floor) and the three yellow
+  boxes with black stripes in a row up the back. Nothing is driven on any more, so the tail's width and slope no longer
+  matter, and the tail should look like a tail: no plate, no stripes and no arrows on it.
+- **Each box must be able to leave the body.** `battery-box-1` to `battery-box-3` are objects of their own, each with
+  its origin at its own middle, so that the game can pull one away along a cable and drag it on the floor.
+- **A steel ring on each box,** a towing eye about 0.6 m across on the top or the outer face, plain enough that a child
+  sees where a hook would go.
+- **A socket under each box** (`battery-socket-1` to `battery-socket-3`): what is left when the box has gone, dark,
+  with torn cable ends.
+- **Each box stands clear of the spine,** so that it is seen from the floor on either side of the animal; the hook comes
+  from whichever side the truck is on.
+- **Looks for each box:** closed (a cage or hatch over it), open (the cage up and the box bright), and gone (the socket).
+  Round 5's crushed look is not used by the fight.
+
+If round 5 is already merged, this is one short further round on the same recipe. The outline is not judged again.
 
 ## Claude answers
 
