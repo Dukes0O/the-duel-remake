@@ -118,7 +118,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
 
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = 0 }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0, chapterNight: storyNight = 0, weather }) {
       if (stopped) return;
       if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
@@ -130,8 +130,10 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
       if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, trialLight || course.def.light);
       const daySettings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
       const chapterNight = !pathSample && !tunnel ? Math.max(0, Math.min(1, storyNight)) : 0;
-      const settings = !pathSample && !tunnel && (eveningAmount > 0 || chapterNight > 0)
+      const lit = !pathSample && !tunnel && (eveningAmount > 0 || chapterNight > 0)
         ? eveningOver(daySettings, eveningAmount, theme, chapterNight) : daySettings;
+      // Weather (FAR-RAIN) is laid over last; with no weather the settings are the same object as before.
+      const settings = weather && !tunnel ? weather(lit) : lit;
       host.dataset.evening = eveningAmount > 0 ? eveningAmount.toFixed(2) : '0';
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {

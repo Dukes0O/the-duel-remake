@@ -1,5 +1,6 @@
 import {sweepObstacle} from './collision.js';
 import {SOLID_GRID} from './world/scablands-solids.js';
+import {deckFloorHeightAt} from './world/deck-plates.js';
 
 export const FIGHTER_STEP_SECONDS = 1 / 120;
 export const FIGHTER_RULES = Object.freeze({
@@ -147,14 +148,19 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
   const nearest = course.nearest(x, z, fighter.s);
   const ground = course.groundAt(nearest.s, nearest.lateral,
     course.def?.scablands || course.groundTunnels ? feetY : undefined);
+  // SHIPS-DECKS: a fighter on a still plate (src/world/deck-plates.js) walks on its floor, and a step off its edge drops to the
+  // ground, which the job turns into a fall beside the ship. Without `deckPlate` nothing here changes.
+  const deckY = fighter.deckPlate ? deckFloorHeightAt(fighter.deckPlate, x, z) : null;
+  if (deckY !== null) ground.y = deckY;
+  const offDeck = !!fighter.deckPlate && deckY === null;
   const candidate = {...ground, s: nearest.s, lateral: nearest.lateral};
   if (!allowedGround(course, candidate, car)) {
     fighter.boundaryStops++;
     return {moved: false};
   }
   const distance = Math.hypot(dx, dz);
-  if ((!airborne && Math.abs(ground.y - fighter.groundY) / distance > MAX_GRADE) ||
-      (airborne && ground.y > feetY + 1e-8)) {
+  if (!offDeck && ((!airborne && Math.abs(ground.y - fighter.groundY) / distance > MAX_GRADE) ||
+      (airborne && ground.y > feetY + 1e-8))) {
     fighter.slopeStops++;
     return {moved: false};
   }

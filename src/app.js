@@ -75,6 +75,7 @@ import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {cleanupWorldJobLoan, ringJobVehicleBell} from './arena/modes/world-job.js';
+import {jobForRun} from './world/jobs/job-vehicle.js'; // SHIPS-DECKS: the job-level vehicle field
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
@@ -2057,7 +2058,11 @@ export class App {
     if (!available || !venueAvailable || mode === 'convoy-raid' && venueId !== 'salt-flats' ||
         !(this.isYardHomeActive() || state.arena)) return false;
     const count = ambush||mode==='world-job' ? 0 : mode === 'convoy-raid' ? 3 : Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
-    const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
+    // SHIPS-DECKS: a job's `vehicle` may pick one of the player's cars or lend one for this run; a loan writes nothing to the save.
+    const run = mode==='world-job'&&this._switches().enabled('wasteland-town') ? jobForRun(job,{chosenCar:this.menuCar,owns:id=>isCarUnlocked(this.profile,id)}) : null;
+    if (run?.refused) return false;
+    if (run) job = run.job;
+    const car = run?.car ?? (isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42');
     if (this._airOnlyRefused(car, venueId)) return false;
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,
