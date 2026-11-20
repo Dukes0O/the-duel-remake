@@ -126,3 +126,7 @@ contact suites on every other course must be unchanged.
 ## Build decision
 
 Use the round-six towing eyes for aim and cable placement. Use the visible beast outline for swept wall contacts, keep pull progress per cartridge, and start the ten-second ending at the third extraction.
+
+## Keeping the F key in a fight
+
+The drive context already passes F to `Duel.setInput`, but `src/game.js` discards it unless a foot transition exists. Please grant the single input condition in `setInput` to keep the held F button in a running, enabled Bowl fight as well. The tow hook needs a fresh press, and the later saw needs a held button. All other input paths retain their current behaviour. Please also grant the Rex fallback in `src/bowl/bowl-hud.js::shortGoal` so the old jump-off-the-junk-car and smash-the-batteries instructions can be removed. The runner supplies the new goal in five words or fewer.
