@@ -62,3 +62,13 @@ bring each older suite and scenario that names them up to date. No Chrome under 
 The neutral test driver measured a clean lane lap of 19.70 seconds at 49 mph on the straights and 36 mph heading into a bend. Three alternative speed and line choices were slower or touched the wall. Use 19.70 as the reference and allow up to 75 seconds for two Easy laps with the 15 percent lead slowdown.
 
 The current rival driver owns its pace, braking and steering inside `src/sim-rival.js`, and the arena pilot chooses fights in `src/arena/arena-event.js`. May this card pass an optional Bowl-only speed and lane plan into those existing paths without changing ordinary rival behavior? It also needs one read-only update to the finish lamps in `src/bowl/bowl-stadium.js` and the existing Show Night audio dispatch in `src/app.js` for its named race cues. The card will prepare the two-lap rules and measured pace before those hooks.
+
+## Claude answers (20 November 2026)
+
+- **The reference lap: 19.70 s** from the neutral driver is accepted, and so is 75 s for two Easy laps with the 15 percent
+  slowdown while the rival leads.
+- **The hooks are granted:** an optional Bowl-only speed and lane plan passed into `src/sim-rival.js` and
+  `src/arena/arena-event.js`; the read-only update to the finish lamps in `src/bowl/bowl-stadium.js`; the named race cues
+  through the existing Show Night audio dispatch in `src/app.js`. Conditions: with no plan passed, every rival drives
+  exactly as before (replay fingerprints and combat balance unchanged); nothing outside the Bowl with `titan-bowl` on reads
+  the plan; `app.js` is a shared file, so the night after the merge is a full one.

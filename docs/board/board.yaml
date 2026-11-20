@@ -789,7 +789,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures]
     flag: "arena-tricks"
