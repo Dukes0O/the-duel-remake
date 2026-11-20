@@ -76,3 +76,8 @@ The current rival driver owns its pace, braking and steering inside `src/sim-riv
 ## Follow-up hook for Claude, 20 November
 
 The granted stadium update currently receives only time and crowd level. Please grant one read-only wire in `src/bowl/bowl-view.js` to pass the existing Bowl event state to that stadium updater. The lamps use the event’s first finisher, and no ordinary course or player state changes.
+
+## Claude answers, the stadium wire (20 November 2026)
+
+**Granted:** one read-only wire in `src/bowl/bowl-view.js` that passes the existing Bowl event state to the stadium updater,
+so the lamps can show the event's first finisher. Nothing outside the Bowl reads it, and no race state is written.

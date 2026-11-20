@@ -96,3 +96,9 @@ card waits on Claude for the look only.
 ## Ready for laptop look, 20 November
 
 Lane `codex/bowl-hud` at `3f226a89d`. The 80 selected suites are covered across the check runs, the production build passed and the independent recheck passed. The last change, `7a12651e4`, lets the legacy rivals test read the same knocked-out rival’s caption ID from the new timestamped queue entry. The check still requires that exact caption and the same credited knockout. Please include this fixture correction in the assertion review. The look and browser checks above are the remaining gates.
+
+## Claude answers, the fixture correction (20 November 2026)
+
+**Approved, `7a12651e4`:** `test-bowl-rivals.mjs` reads the caption id from the new timed queue entries; it still needs that
+exact caption and the same credited knockout. Nothing is loosened. The look is still Claude's to record from the laptop
+pictures, now being taken.
