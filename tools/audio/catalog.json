@@ -8871,6 +8871,1213 @@
       "sha256": "3410610451ef0fde08e2242bb02d0b3dc010525e865da1ed00dd13574203e826",
       "bytes": 75275,
       "generated": "2026-11-05"
+    },
+    {
+      "source": "freesound",
+      "key": "675902",
+      "title": "S38-24 Big heavy car crash.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675902/",
+      "download": "https://cdn.freesound.org/previews/675/675902_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.4586,
+      "file": "freesound/675902-s38-24-big-heavy-car-crash-wav.ogg",
+      "sha256": "a9bac4a401d63824241ee4a65a9dfac1ae81ae673ddce3d02a929632196070a5",
+      "bytes": 33063,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.car",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-car-a.ogg",
+            "source": "675902",
+            "start": 0.17,
+            "duration": 1.5,
+            "rate": 0.9,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -16
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-car-a.ogg",
+          "sha256": "8d832e20c5a572135c16ecaa2fc1a3e13c868e1d619460f86e9412bb94a3ccba",
+          "bytes": 19723,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.667,
+          "integratedLufs": -16.15,
+          "truePeakDbtp": -1.7
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "703248",
+      "title": "Fall debris (crash)",
+      "author": "xkeril",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/xkeril/sounds/703248/",
+      "download": "https://cdn.freesound.org/previews/703/703248_13504080-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.92571,
+      "file": "freesound/703248-fall-debris-crash.ogg",
+      "sha256": "962c383f06d1439a8f11521e96e0fe8e28b83394066d9260670044f7d3e6f336",
+      "bytes": 81475,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.car",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-car-a.ogg",
+            "source": "703248",
+            "start": 0,
+            "duration": 1.2,
+            "rate": 1,
+            "gain": 0.5,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 300,
+            "loudness": -16
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "675910",
+      "title": "S37-04 Car hits three news stands; good crunch.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675910/",
+      "download": "https://cdn.freesound.org/previews/675/675910_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 7.77998,
+      "file": "freesound/675910-s37-04-car-hits-three-news-stands-good-crunch-wav.ogg",
+      "sha256": "1afd914603a9859e34720ac238483b88a4a358a4b5d8b1bb076a2b34d6a6a711",
+      "bytes": 77790,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.car",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-car-b.ogg",
+            "source": "675910",
+            "start": 0.38,
+            "duration": 1.6,
+            "rate": 0.88,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 6000,
+            "loudness": -16
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-car-b.ogg",
+          "sha256": "d9aeb66344a952612c968847079deb07a13a4750ff4cc534cd9e627b4d029f99",
+          "bytes": 15245,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.818,
+          "integratedLufs": -15.99,
+          "truePeakDbtp": -3.09
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "675466",
+      "title": "S37-14 Two cars crash foley; good metallic bump.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675466/",
+      "download": "https://cdn.freesound.org/previews/675/675466_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 5.55094,
+      "file": "freesound/675466-s37-14-two-cars-crash-foley-good-metallic-bump-wav.ogg",
+      "sha256": "9d8f9c4bc424723ff95191e151cc5e1fe86a224f2ddf36897c3476a20a9e93b6",
+      "bytes": 64663,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.car",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-car-c.ogg",
+            "source": "675466",
+            "start": 0.05,
+            "duration": 1.3,
+            "rate": 0.85,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -16
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-car-c.ogg",
+          "sha256": "ed4c823bed725360d61e782acb82efb433cd97405083c44b7f1d012b2a267fdb",
+          "bytes": 17988,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.529,
+          "integratedLufs": -16.07,
+          "truePeakDbtp": -2.12
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "859154",
+      "title": "Loud Bang Crashing Metal Chunk Dropped in Metal Dumpster",
+      "author": "qubodup",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/qubodup/sounds/859154/",
+      "download": "https://cdn.freesound.org/previews/859/859154_71257-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.98933,
+      "file": "freesound/859154-loud-bang-crashing-metal-chunk-dropped-in-metal-dumpster.ogg",
+      "sha256": "01fe28ee9131c5d134890d2511cb78c74fefa23f1f1a07057ba090f11e34821c",
+      "bytes": 41385,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.car",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-car-c.ogg",
+            "source": "859154",
+            "start": 0,
+            "duration": 1,
+            "rate": 1,
+            "gain": 0.4,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 400,
+            "loudness": -16
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "237375",
+      "title": "Car Crash",
+      "author": "squareal",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/squareal/sounds/237375/",
+      "download": "https://cdn.freesound.org/previews/237/237375_1502374-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.36719,
+      "file": "freesound/237375-car-crash.ogg",
+      "sha256": "37ae23c264a02eda12d0539a215efb1223a77ad8f0cfe5727a1cfda62e0ad5aa",
+      "bytes": 81399,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.car",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-car-d.ogg",
+            "source": "237375",
+            "start": 0.3,
+            "duration": 1.6,
+            "rate": 0.9,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -16
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-car-d.ogg",
+          "sha256": "d5fca212801b7f36123dd720537e1b65aac68ea510e66c649e40655aeee8f1cd",
+          "bytes": 21212,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.778,
+          "integratedLufs": -16.26,
+          "truePeakDbtp": -1.65
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "675901",
+      "title": "S37-34 Big auto car crash with glass.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675901/",
+      "download": "https://cdn.freesound.org/previews/675/675901_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.19406,
+      "file": "freesound/675901-s37-34-big-auto-car-crash-with-glass-wav.ogg",
+      "sha256": "169e161900fb23bb7775f51d68cecf12f7fed37e5d5316d8e0a59441af8698a5",
+      "bytes": 48077,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.bus",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-bus-a.ogg",
+            "source": "675901",
+            "start": 0,
+            "duration": 2.6,
+            "rate": 0.8,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -15
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-bus-a.ogg",
+          "sha256": "92a9d283f8dafca3cac500aa2b715bd465eac563b28adfd3458bc3d73a2c07ae",
+          "bytes": 30928,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 3.25,
+          "integratedLufs": -15.09,
+          "truePeakDbtp": -1.54
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "859154",
+      "title": "Loud Bang Crashing Metal Chunk Dropped in Metal Dumpster",
+      "author": "qubodup",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/qubodup/sounds/859154/",
+      "download": "https://cdn.freesound.org/previews/859/859154_71257-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.98933,
+      "file": "freesound/859154-loud-bang-crashing-metal-chunk-dropped-in-metal-dumpster.ogg",
+      "sha256": "01fe28ee9131c5d134890d2511cb78c74fefa23f1f1a07057ba090f11e34821c",
+      "bytes": 41385,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.bus",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-bus-a.ogg",
+            "source": "859154",
+            "start": 0,
+            "duration": 2.2,
+            "rate": 0.75,
+            "gain": 0.8,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 900,
+            "loudness": -15
+          },
+          {
+            "take": "bowl/crush-bus-b.ogg",
+            "source": "859154",
+            "start": 0,
+            "duration": 2.2,
+            "rate": 0.7,
+            "gain": 0.8,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 900,
+            "loudness": -15
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "703247",
+      "title": "Big falling debris (crash)",
+      "author": "xkeril",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/xkeril/sounds/703247/",
+      "download": "https://cdn.freesound.org/previews/703/703247_13504080-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.66992,
+      "file": "freesound/703247-big-falling-debris-crash.ogg",
+      "sha256": "862a8abdd92006d442a567efe13b9f759fe7f19c74c756ab49cd324e8b8634e6",
+      "bytes": 93997,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.bus",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-bus-b.ogg",
+            "source": "703247",
+            "start": 0,
+            "duration": 2.6,
+            "rate": 0.85,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -15
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-bus-b.ogg",
+          "sha256": "05998b7a2aab40539e8bcca957d76f8092e5f0554a09583d727ebc7db7f6ce8a",
+          "bytes": 30650,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 3.143,
+          "integratedLufs": -15.16,
+          "truePeakDbtp": -1.5
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "675902",
+      "title": "S38-24 Big heavy car crash.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675902/",
+      "download": "https://cdn.freesound.org/previews/675/675902_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.4586,
+      "file": "freesound/675902-s38-24-big-heavy-car-crash-wav.ogg",
+      "sha256": "a9bac4a401d63824241ee4a65a9dfac1ae81ae673ddce3d02a929632196070a5",
+      "bytes": 33063,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.bus",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-bus-b.ogg",
+            "source": "675902",
+            "start": 1,
+            "duration": 1.2,
+            "rate": 0.8,
+            "gain": 0.5,
+            "at": 0.15,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -15
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "703247",
+      "title": "Big falling debris (crash)",
+      "author": "xkeril",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/xkeril/sounds/703247/",
+      "download": "https://cdn.freesound.org/previews/703/703247_13504080-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.66992,
+      "file": "freesound/703247-big-falling-debris-crash.ogg",
+      "sha256": "862a8abdd92006d442a567efe13b9f759fe7f19c74c756ab49cd324e8b8634e6",
+      "bytes": 93997,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.stack",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-stack.ogg",
+            "source": "703247",
+            "start": 0,
+            "duration": 2.8,
+            "rate": 0.7,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 2500,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-stack.ogg",
+          "sha256": "74ef61a5fc166debb0ba08467d701657d8579e62cd143f9399adee36af985abe",
+          "bytes": 36455,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 4,
+          "integratedLufs": -14.57,
+          "truePeakDbtp": -1.2
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "397691",
+      "title": "Explosion.wav",
+      "author": "morganpurkis",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/morganpurkis/sounds/397691/",
+      "download": "https://cdn.freesound.org/previews/397/397691_5937039-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.02551,
+      "file": "freesound/397691-explosion-wav.ogg",
+      "sha256": "63f26ecb72b3c4adcda7f915fcd373ad625752a6bce0fa43eeb673a33a381137",
+      "bytes": 49728,
+      "fetched": "2026-09-25",
+      "cue": "bowl.crush.stack",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-stack.ogg",
+            "source": "397691",
+            "start": 0,
+            "duration": 2.6,
+            "rate": 0.8,
+            "gain": 0.6,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 220,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "348767",
+      "title": "road flare ignite burns.wav",
+      "author": "frankelmedico",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/frankelmedico/sounds/348767/",
+      "download": "https://cdn.freesound.org/previews/348/348767_299928-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 6.25,
+      "file": "freesound/348767-road-flare-ignite-burns-wav.ogg",
+      "sha256": "ce2397937bbeffb1df9fc36449ffb4f5cc589c19f912914620d1e90ccb68fdb2",
+      "bytes": 113429,
+      "fetched": "2026-10-15",
+      "cue": "bowl.crush.stack",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-stack.ogg",
+            "source": "348767",
+            "start": 0.3,
+            "duration": 2,
+            "rate": 1,
+            "gain": 0.45,
+            "at": 0.1,
+            "highpass": 2500,
+            "lowpass": 12000,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "587928",
+      "title": "BROKEN CAR WINDOW.wav",
+      "author": "thecommondanger",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/thecommondanger/sounds/587928/",
+      "download": "https://cdn.freesound.org/previews/587/587928_8805852-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 1.2771,
+      "file": "freesound/587928-broken-car-window-wav.ogg",
+      "sha256": "ff9e6b2bafda0ef9f4f80538d5c446a7e0026e1637f696275cf05276fdc54ccb",
+      "bytes": 30622,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.glass",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-glass-a.ogg",
+            "source": "587928",
+            "start": 0,
+            "duration": 1.2,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 900,
+            "lowpass": 12000,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-glass-a.ogg",
+          "sha256": "cf1cf3ac20fa55ebeae168718546ab2c13de0be9fa31abf7dcfbb4c7f8239f47",
+          "bytes": 16293,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.2,
+          "integratedLufs": -20.94,
+          "truePeakDbtp": -9.26
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "848289",
+      "title": "Glass Break 8",
+      "author": "ElevatorFan2020",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/ElevatorFan2020/sounds/848289/",
+      "download": "https://cdn.freesound.org/previews/848/848289_14269391-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.745556,
+      "file": "freesound/848289-glass-break-8.ogg",
+      "sha256": "799afd8a80028d6b412e952b32c6400fd6e8992cf2d0ba564e4c97d75a170dcf",
+      "bytes": 18928,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.glass",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-glass-b.ogg",
+            "source": "848289",
+            "start": 0,
+            "duration": 0.75,
+            "rate": 0.95,
+            "gain": 1,
+            "at": 0,
+            "highpass": 900,
+            "lowpass": 12000,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-glass-b.ogg",
+          "sha256": "685b066c19c4dcb6e97fa56d1572f3b52fd61734736bc979bbe511b35b57f9de",
+          "bytes": 12745,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 0.785,
+          "integratedLufs": -20.99,
+          "truePeakDbtp": -3.73
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "556714",
+      "title": "Bending Metal",
+      "author": "NachtmahrTV",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/NachtmahrTV/sounds/556714/",
+      "download": "https://cdn.freesound.org/previews/556/556714_5620304-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 5.85073,
+      "file": "freesound/556714-bending-metal.ogg",
+      "sha256": "181924c060366fa7ad70c631b51dbc160ca75fa9b210fb2d4db98f7406cd7be9",
+      "bytes": 80544,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.groan",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-groan.ogg",
+            "source": "556714",
+            "start": 0.35,
+            "duration": 2.8,
+            "rate": 0.75,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 3000,
+            "loudness": -22
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-groan.ogg",
+          "sha256": "7f59d333b55861c943bf62ad36c3144698cc056182808160dae067085a806054",
+          "bytes": 21957,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 3.733,
+          "integratedLufs": -21.99,
+          "truePeakDbtp": -3.6
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "741351",
+      "title": "Metal Clank (Medium)",
+      "author": "Mish7913",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Mish7913/sounds/741351/",
+      "download": "https://cdn.freesound.org/previews/741/741351_16104671-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.10955,
+      "file": "freesound/741351-metal-clank-medium.ogg",
+      "sha256": "3aa5e795cdbd7543a9a2613d07d8d48d47e4348e7002c22a0d8295ad7d5490d8",
+      "bytes": 32127,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.off",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-off-a.ogg",
+            "source": "741351",
+            "start": 0.17,
+            "duration": 1.1,
+            "rate": 0.8,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-off-a.ogg",
+          "sha256": "26eb1358855512ad6e970088d7230190577792ed4e3073025b4e765aeffeb08c",
+          "bytes": 15017,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.375,
+          "integratedLufs": -20.72,
+          "truePeakDbtp": -1.65
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "151624",
+      "title": "Clank Car Crash Collision",
+      "author": "qubodup",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/qubodup/sounds/151624/",
+      "download": "https://cdn.freesound.org/previews/151/151624_71257-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.539773,
+      "file": "freesound/151624-clank-car-crash-collision.ogg",
+      "sha256": "7dae26f7a5a8a9e0c2e9efe6bcc8c82b10e5b1820927b8a4a5787f721dd73d02",
+      "bytes": 17846,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.off",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-off-b.ogg",
+            "source": "151624",
+            "start": 0,
+            "duration": 0.54,
+            "rate": 0.8,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 4000,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-off-b.ogg",
+          "sha256": "0795048470e4490f0feeccc7a0229a18190924b14642457cacf3189bec46d870",
+          "bytes": 9499,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 0.675,
+          "integratedLufs": -20.97,
+          "truePeakDbtp": -4.37
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "675910",
+      "title": "S37-04 Car hits three news stands; good crunch.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675910/",
+      "download": "https://cdn.freesound.org/previews/675/675910_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 7.77998,
+      "file": "freesound/675910-s37-04-car-hits-three-news-stands-good-crunch-wav.ogg",
+      "sha256": "1afd914603a9859e34720ac238483b88a4a358a4b5d8b1bb076a2b34d6a6a711",
+      "bytes": 77790,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.flat",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-flat-a.ogg",
+            "source": "675910",
+            "start": 5.4,
+            "duration": 1,
+            "rate": 0.85,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 1100,
+            "loudness": -22
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-flat-a.ogg",
+          "sha256": "27d532f54c58b2b65eb8526231d1e288832d19ccea9f686e65fade2d1bf1e607",
+          "bytes": 10219,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.176,
+          "integratedLufs": -22.03,
+          "truePeakDbtp": -7.84
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "703248",
+      "title": "Fall debris (crash)",
+      "author": "xkeril",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/xkeril/sounds/703248/",
+      "download": "https://cdn.freesound.org/previews/703/703248_13504080-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.92571,
+      "file": "freesound/703248-fall-debris-crash.ogg",
+      "sha256": "962c383f06d1439a8f11521e96e0fe8e28b83394066d9260670044f7d3e6f336",
+      "bytes": 81475,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.flat",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-flat-b.ogg",
+            "source": "703248",
+            "start": 0.05,
+            "duration": 1,
+            "rate": 0.9,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 1100,
+            "loudness": -22
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-flat-b.ogg",
+          "sha256": "0b547a061a4aba5715273899681ecb0ca0fd43b1b07ae394bd0e2025a2084beb",
+          "bytes": 11339,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.111,
+          "integratedLufs": -22,
+          "truePeakDbtp": -6.91
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "807437",
+      "title": "car crash long 1",
+      "author": "Logicogonist",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Logicogonist/sounds/807437/",
+      "download": "https://cdn.freesound.org/previews/807/807437_3797507-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.960146,
+      "file": "freesound/807437-car-crash-long-1.ogg",
+      "sha256": "aeb54ba2dbcc5c2c79d7dec5c35eee420de4e62ccaa8565fbf538cfd1e31367b",
+      "bytes": 27391,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.pancake",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-pancake-a.ogg",
+            "source": "807437",
+            "start": 0,
+            "duration": 0.96,
+            "rate": 0.85,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-pancake-a.ogg",
+          "sha256": "5593b4559cb21ba7321dfeb2fb0a9330fa1f632b513a796852a070f2a7cf3fe1",
+          "bytes": 15504,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.273,
+          "integratedLufs": -13.81,
+          "truePeakDbtp": -1.09
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "342535",
+      "title": "Medium Thud 1",
+      "author": "sgrowe",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/sgrowe/sounds/342535/",
+      "download": "https://cdn.freesound.org/previews/342/342535_6148875-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.951042,
+      "file": "freesound/342535-medium-thud-1.ogg",
+      "sha256": "6f7b89be36cc3512760d470e8bfa5f447d35f51cdef23cbbd19e2114e2cb2159",
+      "bytes": 19041,
+      "fetched": "2026-10-14",
+      "cue": "bowl.crush.pancake",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-pancake-a.ogg",
+            "source": "342535",
+            "start": 0.15,
+            "duration": 0.7,
+            "rate": 0.55,
+            "gain": 2,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 250,
+            "loudness": -14
+          },
+          {
+            "take": "bowl/crush-pancake-b.ogg",
+            "source": "342535",
+            "start": 0.15,
+            "duration": 0.7,
+            "rate": 0.55,
+            "gain": 2,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 250,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "397691",
+      "title": "Explosion.wav",
+      "author": "morganpurkis",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/morganpurkis/sounds/397691/",
+      "download": "https://cdn.freesound.org/previews/397/397691_5937039-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.02551,
+      "file": "freesound/397691-explosion-wav.ogg",
+      "sha256": "63f26ecb72b3c4adcda7f915fcd373ad625752a6bce0fa43eeb673a33a381137",
+      "bytes": 49728,
+      "fetched": "2026-09-25",
+      "cue": "bowl.crush.pancake",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-pancake-a.ogg",
+            "source": "397691",
+            "start": 0,
+            "duration": 1,
+            "rate": 1,
+            "gain": 0.5,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 120,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "675902",
+      "title": "S38-24 Big heavy car crash.wav",
+      "author": "craigsmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/craigsmith/sounds/675902/",
+      "download": "https://cdn.freesound.org/previews/675/675902_2524442-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.4586,
+      "file": "freesound/675902-s38-24-big-heavy-car-crash-wav.ogg",
+      "sha256": "a9bac4a401d63824241ee4a65a9dfac1ae81ae673ddce3d02a929632196070a5",
+      "bytes": 33063,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.pancake",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-pancake-b.ogg",
+            "source": "675902",
+            "start": 0.17,
+            "duration": 1.4,
+            "rate": 0.85,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -14
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-pancake-b.ogg",
+          "sha256": "fff802a3da205e19bff16646807f81d8d5e29519cd9cb77caeb19c79315289ef",
+          "bytes": 19011,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.648,
+          "integratedLufs": -14.17,
+          "truePeakDbtp": -1.71
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "324895",
+      "title": "Crowd gasp.wav",
+      "author": "deleted_user_2104797",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/deleted_user_2104797/sounds/324895/",
+      "download": "https://cdn.freesound.org/previews/324/324895_2104797-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 7.36963,
+      "file": "freesound/324895-crowd-gasp-wav.ogg",
+      "sha256": "8853130061dd7ca61eb63e064c8cf66cd301af136468226edee9142b3db6d6fc",
+      "bytes": 52386,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.ooh",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-ooh-a.ogg",
+            "source": "324895",
+            "start": 0.75,
+            "duration": 1.6,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -21
+          },
+          {
+            "take": "bowl/crush-ooh-b.ogg",
+            "source": "324895",
+            "start": 3.3,
+            "duration": 1.5,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-ooh-a.ogg",
+          "sha256": "46123e77d9dc4c6fd46781299b35f8928283f3c712cb4bea3765e989d9c4614a",
+          "bytes": 22802,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 2.05,
+          "integratedLufs": -20.99,
+          "truePeakDbtp": -6.97
+        },
+        {
+          "file": "public/assets/audio/bowl/crush-ooh-b.ogg",
+          "sha256": "79aedb437972569b55b6cd3ea0004370faba0851d1ec6e241983f45fe1f41fef",
+          "bytes": 20637,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.85,
+          "integratedLufs": -20.99,
+          "truePeakDbtp": -7.02
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "870652",
+      "title": "Group Ooh Aah",
+      "author": "CHallSmith",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/CHallSmith/sounds/870652/",
+      "download": "https://cdn.freesound.org/previews/870/870652_18412227-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 6.2694,
+      "file": "freesound/870652-group-ooh-aah.ogg",
+      "sha256": "084c5088fb2cbe55d980263bc2b41cfaaa572cd6f95bc599ab88763b26577438",
+      "bytes": 71768,
+      "fetched": "2026-11-20",
+      "cue": "bowl.crush.ooh",
+      "processing": {
+        "script": "tools/audio/build-bowl-crush.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-ooh-a.ogg",
+            "source": "870652",
+            "start": 0.15,
+            "duration": 2,
+            "rate": 1,
+            "gain": 0.6,
+            "at": 0.05,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -21
+          },
+          {
+            "take": "bowl/crush-ooh-b.ogg",
+            "source": "870652",
+            "start": 3.8,
+            "duration": 1.8,
+            "rate": 1,
+            "gain": 0.6,
+            "at": 0.05,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": []
     }
   ]
 }
