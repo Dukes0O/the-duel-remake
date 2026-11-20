@@ -7,7 +7,8 @@ import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {PLAYERS_KEY, createPlayerRegistry, createProfile, loadPlayers, savePlayers} from '../src/progression.js';
-import {BOWL_PURSE, bowlHudView} from '../src/bowl/bowl-night.js';
+import {BOWL_NIGHT_RULES, BOWL_PURSE, FREESTYLE_PARKED_CARS, bowlHudView} from '../src/bowl/bowl-night.js';
+import {DRIVE} from '../src/config.js';
 import {TURN_SHOW_RULES, beginGo, createTurnShow, currentTurn, nightOpenFor, passKeyboard, playerNightResult,
   recordGo, settleTurnGo, turnOrder, turnScoreboard, turnShowNights} from '../src/bowl/bowl-turns.js';
 import {BIG_MO, BOWL_CRUSH_ROWS, BOWL_SOUND_CUES, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
@@ -150,13 +151,18 @@ const events = [];
 app.duel.onChange((state, ev) => { if (ev.bowlEventResult) events.push({player: state.playerId, ...ev.bowlEventResult}); });
 const key = (code, repeat = false) => app._turnHandoffKey({code, repeat, target: null, preventDefault() {}});
 // The scripted driver from test-bowl-night; Kyle waits in the Car Crush and so loses it.
+// In Freestyle it swings over to the first parked car, on that car's own lane, to launch off it.
+const PARKED = FREESTYLE_PARKED_CARS[0], PARKED_LATERAL = PARKED.dir < 0 ? DRIVE.laneOffset : -DRIVE.laneOffset;
+const PARKED_APPROACH = 22, PARKED_PAST = 8; // metres before and after the car: how the driver lines up, not the Bowl's size
 function drive(idle) {
   const duel = app.duel;
   for (let i = 0; i < 120 * 150; i++) {
     const s = duel.state;
     if (s.status === 'bowl_break') return;
     const type = s.bowlNight.event.type, freestyle = type === 'freestyle';
-    const line = freestyle && s.s > 40 && s.s < 70 ? -3.4 : type === 'sideBySide' ? 3 : 0;
+    // Positions come from the show's own data, never fixed numbers: the Bowl's size may change (BOWL-EXPAND).
+    const near = freestyle && s.s > PARKED.s - PARKED_APPROACH && s.s < PARKED.s + PARKED_PAST;
+    const line = near ? PARKED_LATERAL : type === 'sideBySide' ? BOWL_NIGHT_RULES.sideBySide.lane : 0;
     duel.setInput(idle ? {throttle: 0, brake: 0, steer: 0} : {throttle: s.speedMph < 32 ? 1 : 0, brake: 0,
       steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
