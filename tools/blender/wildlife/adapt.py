@@ -42,6 +42,20 @@ def build(species, output, c, cache):
         static_donor(species, mesh, output, c)
 
 
+# WILD-ART-DESERT, added here, apart from the sets at the top, so that two cards can add species at once.
+SMALL_MAP |= {'roadrunner', 'jackrabbit', 'collared-lizard', 'pelican', 'condor'}
+
+# Markings finer than the mesh, drawn when the coat is baked (common.finish_coat). The recipe
+# says where and in what colour (original.Body.mark); this says what the pattern is, in metres.
+MARKS = {
+    'roadrunner': {'scale': (30, 340, 340), 'at': .50, 'soft': .035},          # streaks 3 mm wide, 3 cm long
+    'jackrabbit': {'scale': (150, 400, 400), 'at': .56, 'soft': .04},          # the dark flecks of an agouti coat
+    'pelican': {'scale': (22, 240, 240), 'at': .52, 'soft': .04},                # long dark shaft streaks on silver
+    'condor': {'scale': (55, 150, 150), 'at': .56, 'soft': .03},                 # the paler edges of big black feathers
+    'collared-lizard': {'scale': (115, 115, 115), 'at': .27, 'soft': .05, 'spots': True},   # round spots about 5 mm across
+}
+
+
 def animated_donor(species, mesh, rig, output, c):
     bpy, Vector = c.bpy, c.Vector
     deer = species == 'white-tailed-deer'
@@ -290,7 +304,8 @@ def static_donor(species, mesh, output, c):
 
 def export(mesh, rig, output, c, root=None):
     bpy = c.bpy
-    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR, size=512 if output.stem in SMALL_MAP else 1024)
+    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR, size=512 if output.stem in SMALL_MAP else 1024,
+                  marks=MARKS.get(output.stem))
     if output.stem in MATTE:
         shader = mesh.data.materials[0].node_tree.nodes.get('Principled BSDF')
         shader.inputs['Roughness'].default_value = 1

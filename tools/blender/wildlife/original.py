@@ -14,7 +14,20 @@ from mathutils import Quaternion, Vector
 
 
 class Body(common.Animal):
-    """common.Animal whose colours may be functions of the vertex position."""
+    """common.Animal whose colours may be functions of the vertex position.
+
+    `mark`, when a recipe sets it before adding a part, is a function of the vertex position
+    giving (r, g, b, strength): the colour of the fine markings baked over the coat there
+    (adapt.MARKS has each species' pattern). None means no markings on the parts that follow.
+    """
+    mark = None
+
+    def surface(self, vertices, faces, colour, weight, region='detail'):
+        if not hasattr(self, 'marks'):
+            self.marks = []
+        self.marks += [(0, 0, 0, 0)] * (len(self.verts) - len(self.marks))
+        self.marks += [tuple(self.mark(Vector(p))) if self.mark else (0, 0, 0, 0) for p in vertices]
+        super().surface(vertices, faces, colour, weight, region)
 
     def paint(self, p, base, region):
         if callable(base):
@@ -270,6 +283,11 @@ def finish(a, c, output, recipe, budget=5000, roughness=None, specular=None, ref
     coat = data.color_attributes.new(name='Coat', type='FLOAT_COLOR', domain='POINT')
     for i, colour in enumerate(a.colours):
         coat.data[i].color = colour
+    if any(mark[3] for mark in getattr(a, 'marks', [])):
+        marks = data.color_attributes.new(name='Marks', type='FLOAT_COLOR', domain='POINT')
+        for i, mark in enumerate(a.marks + [(0, 0, 0, 0)] * (len(a.verts) - len(a.marks))):
+            marks.data[i].color = mark
+        data.color_attributes.active_color = coat
     data.materials.append(c.material())
     for face in data.polygons:
         face.use_smooth = True

@@ -18,6 +18,13 @@ holds each one's source, licence and file hash. The credits page shown to player
   wild boar, the birds, and from WILD-ART-WASTE the **chicken**, **turkey vulture**, **desert
   monitor** and **scorpion**.
 
+- **WILD-ART-DESERT** (for Red Mesa and Pacific Canyon; on no course yet): the **desert bighorn** is
+  reshaped from the Quaternius Deer above (CC0 1.0), keeping its rig and clips. The **roadrunner**,
+  **jackrabbit**, **collared lizard**, **brown pelican** and **California condor** are original
+  recipes for The Duel. They were judged against photographs from Wikimedia Commons (public
+  domain or CC0, listed in `tools/blender/wildlife/desert-references.json`), which appear only
+  on the review sheets under `docs/board/looks/wild-art-desert/`.
+
 The WILD-ART-WASTE animals were judged against photographs from Wikimedia Commons (public
 domain or CC0, listed in `tools/blender/wildlife/waste-references.json`). The photographs
 appear only on the review sheets under `docs/board/looks/wild-art-waste/`; no game file
