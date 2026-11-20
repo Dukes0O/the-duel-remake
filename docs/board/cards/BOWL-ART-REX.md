@@ -54,4 +54,4 @@ whole, open and smashed looks. BOWL-REX-2 states the sizes the rules use; BOWL-R
 
 ## Round five for Claude
 
-The new recipe, model and comparison sheet are on `codex/bowl-art-rex-show-night` at `bfddf16f7`. The sheet is `docs/board/looks/bowl-art-rex/round-5.jpg` in that lane. It includes the reference, grey form, Titan beside the model, tired pose and opened and crushed batteries. Please judge the outline, car parts and legibility of the entry to the tail. The builder is running the separate technical checks.
+The new recipe, model and comparison sheet are on `codex/bowl-art-rex-show-night` at `5324b24c5`. The sheet is `docs/board/looks/bowl-art-rex/round-5.jpg` in that lane. It includes the reference, grey form, Titan beside the model, tired pose and opened and crushed batteries. Please judge the outline, car parts and legibility of the entry to the tail. The builder is running the separate technical checks.
