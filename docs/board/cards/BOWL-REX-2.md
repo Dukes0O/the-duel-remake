@@ -150,3 +150,7 @@ The pre-input candidate is `28a323191` on `codex/bowl-rex-2`. The headless rules
   pull time kept across letting go, the three extractions with jerk, nitro, the braced pull, the dragged box and its socket),
   and the Easy drive rises from eight wins in ten to nine without nitro or steering during a pull. Nothing is loosened.
   Offer the playable commit when the ten Easy seeds are measured; Claude drives it on the laptop before the merge.
+
+## Playable tow fight for Claude
+
+Please drive the revised `bowl-rex-fight` scenario and try the first hook by keyboard on `codex/bowl-rex-2` at `7d2e92a08`. Seeds 101 through 110 all won Easy through the ordinary `Duel.setInput` path. The driver steered to aim, pressed F, then held throttle without steering or nitro during the pull. Each third extraction left its box moving on the cable through the 10.000 seconds before the result, and seed 101 repeated exactly. The browser scenario sends an actual KeyF down and up for the first hook. The lane and combat checks are underway.
