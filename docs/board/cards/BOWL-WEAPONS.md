@@ -91,3 +91,13 @@ The old player-credit sound is confirmed in `src/audio.js`: the event listener p
 ## Build decision
 
 Use armor as the sole health total and attribute actual loss to its contact side. Run the hammer balance proof through real driving and keep the measured Easy wall-contact pattern. The three toy weapons share the existing F input.
+
+## Applying a show weapon during real movement
+
+Please grant two narrow hooks in `src/arena/arena-event.js`, beside the player’s `_drive` and `_jump` calls and beside a rival’s `pilotStep` and `_jump` calls. They apply an active Last Truck Rolling weapon effect as the vehicle moves. The saw must halve travel for both trucks, the hammer must prevent the victim from steering for one second, and the launcher must move a truck through the 6 m high, 12 m long arc and the 2.5 second recovery. Outside the enabled event the existing movement runs as before. The weapon state and effects stay in `bowl-weapons.js`.
+
+## Starting a fight in the older checks
+
+The real choosing card holds the event until a selection. The outside, walls and rival suites and the `bowl-rivals` browser scenario enter the Night 3 fight directly. Their setup must choose the hammer through the normal action. Keep the existing physical and result assertions. Check that the weapon choice precedes the fight on retries and each Turn Show go as well. Please review the affected setup under rule 18.
+
+The old no-weapon assertions at `1d5bfbca6` now check that the arena arsenal is empty and that the correct named show weapons are fitted. The knockout checks keep the same credited driver and Big Mo line and expect the Bowl cue. The one-second low-speed rival check still applies to every free-moving, sound truck. It excludes trucks in an authored throw, a missed hammer's half-second hold or the 2.5 second side recovery. Armed Easy requires a win with two credited knockouts in at least nine of ten drives, and a non-dodging Hard driver must lose. The two-lap racing checks stay. Before arming the child on the merged rival rules, the three inherited seeds still lose: seed 1989 takes six hard wall hits and five truck hits costing 30 health each in total; 2090 and 2191 each take five hard wall hits. The armed driver keeps those steering inputs.
