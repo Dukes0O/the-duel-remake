@@ -154,3 +154,7 @@ The pre-input candidate is `28a323191` on `codex/bowl-rex-2`. The headless rules
 ## Playable tow fight for Claude
 
 Please drive the revised `bowl-rex-fight` scenario and try the first hook by keyboard on `codex/bowl-rex-2` at `7d2e92a08`. Seeds 101 through 110 all won Easy through the ordinary `Duel.setInput` path. The driver steered to aim, pressed F, then held throttle without steering or nitro during the pull. Each third extraction left its box moving on the cable through the 10.000 seconds before the result, and seed 101 repeated exactly. The browser scenario sends an actual KeyF down and up for the first hook. The lane and combat checks are underway.
+
+## Showing the guide to the next driver
+
+The solo result and retry now show the three pictured instructions before the boss. The shared-keyboard Turn Show enters the same fight from its own handoff card and therefore misses them. Please grant `createTurnScreens` and its `handoff` function in `src/bowl/bowl-turns-screens.js` one optional event guide, supplied by the existing Bowl screen. For a Scrapasaurus turn it draws the same three pictures and sentences before the named driver's ready button. Other handoffs keep their current content.
