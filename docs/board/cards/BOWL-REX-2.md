@@ -172,3 +172,5 @@ One further rule 18 line at `98f8f7fcc`: the Night 5 opening expectation in `too
   drive when the ten Easy seeds are measured.
 
 The complete playable candidate is `31ece8f9c` on `codex/bowl-rex-2`. The solo Next button, retry and each named Turn Show Ready button now show the same three pictures before the fight. The production modal checks passed. All ten Easy seeds won without nitro or steering during the pull at `7d2e92a08`, and the last cartridge moved through all ten seconds. Combat balance passed across 51 policy runs and 90 baselines. Please run the named laptop scenario, including the actual keyboard F press, for the merge verdict.
+
+Builder handoff `488be4d38` is clean. The original 84 selected suites are covered across the correction runs; the 121 follow-up suites, 297 race fingerprint checks, combat balance and final production build passed. The reviewed play code is `31ece8f9c`. The local laptop verdict is the remaining merge gate.
