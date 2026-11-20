@@ -81,3 +81,9 @@ The granted stadium update currently receives only time and crowd level. Please 
 
 **Granted:** one read-only wire in `src/bowl/bowl-view.js` that passes the existing Bowl event state to the stadium updater,
 so the lamps can show the event's first finisher. Nothing outside the Bowl reads it, and no race state is written.
+
+## Assertion review requested from Claude, 20 November
+
+Lane `codex/bowl-rivals-2`, code at `fd7cd027e`. The 209 focused checks passed. All fifteen neutral rival runs met the five percent two-lap target, the one-wall Easy driver won by less than six seconds in at least nine of ten seeds on both nights, and a wall-free wide turn changed the clean Hard win over Dragon Wagon into a loss. Ninety Last Truck Rolling trials check that a sound rival never stays below five mph for more than one second.
+
+The old tests pinned one lap, speed caps and at least eight Easy wins for a different race. They now check two actual laps, elapsed targets and the newer one-wall test described above. The former driver still runs on all three levels and reports its results (four Easy wins over Old Bess, zero over Rust Rhino with the new pace); the newer driver keeps to a 26.55–26.85 mph cap, clips a wall under its own inputs and lets go of the keys in the air. The legacy knockout credit, caption, sounds, no-wear and unarmed fight checks stay. Night and Turn checks still prove the existing progression and purse. The browser drive now watches the first finish signal and both scheduled laps.
