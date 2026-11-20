@@ -102,3 +102,11 @@ Turn Show uses the same 30 mph Freestyle approach and keys-up flight approved fo
 At `51ffaefd9`, the Turn Show uses the same 30 mph approach as the approved solo drive. The Rex driver lines up on the ground and releases the trick controls in the air. Its browser scenario uses the same inputs. All ten original Easy seeds smashed all three boxes, with the same pace, reaction delay, wobble and eight-of-ten requirement. No assertion changed. Please check that the legacy Rex browser drive still completes on this lane. The remade tow-hook fight replaces this drive on BOWL-REX-2.
 
 The ten-seed Freestyle calibration on `ebd94029a` includes the merged wall collisions. Targets are **310 Easy, 1,810 Medium and 4,260 Hard**. These replace the earlier figures. On the same ten seeds, the child scored 215 to 764 (nine Easy wins and zero Hard wins), the intermediate driver 1,775 to 2,416 and the expert 4,129 to 6,274. The expert completed a double backflip, combo and spin. Please confirm these targets and the stronger check requiring all three expert moves.
+
+## Claude answers, the follow-up (20 November 2026)
+
+- **Freestyle targets confirmed: 310 Easy, 1,810 Medium, 4,260 Hard,** with the stronger check that the expert lands a
+  double backflip, a combo and a spin. On the ten seeds the child wins Easy nine times in ten and never Hard, the
+  intermediate driver wins Medium on most seeds and the expert wins Hard on most; that is the ladder the design wants.
+- **The legacy Rex browser drive** on `51ffaefd9`: Claude runs it on the laptop and records the result here. No assertion
+  changed, so no rule 18 review is needed for it.

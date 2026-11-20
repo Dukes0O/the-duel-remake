@@ -4,6 +4,8 @@
 - Real Big Jump: single/double backflip 50/200, backflip plus spin 120. Opposite flips bank both kinds; a Slam pays nothing, drops the actual crowd a third and does zero damage.
 - The 32 mph clearance case stays; a 30 mph Freestyle pilot takes the parked car. Seven trick tests, 22 score checks, 280 solo-night and 307 Turn Show checks passed.
 - Rex (59 checks, ebd94029a): all ten original Easy seeds smashed all three boxes after aligning on the ground and releasing the controls in flight. Pace, reaction, wobble and eight-win threshold unchanged.
-- Assertions: roof tumble becomes Slam recovery and no pay; flip counter/donut timer become landed turns, pose and event points. Claude approved through 967ecb28b. Turn/Rex pilot assertions unchanged.
-- Initial lane started at 0682ce770 and stopped on the two old Turn/Rex pilots. Build passed at ebd94029a. Final rule 19 gate pending. Browser and art checks: Claude runs.
+- Assertions: roof tumble becomes Slam recovery and no pay; flip counter/donut timer become landed turns, pose and event points. Claude approved 967ecb28b and the calibrated targets and expert proof in a6f7aec3b. Turn/Rex pilot assertions unchanged.
+- Initial lane at 0682ce770 exposed the old Turn/Rex pilot failures. Rule 19 at ebd94029a covered all 81 selected suites: four separately and 77 in the batch. The runner self-check failed during a suite inventory change; its stable rerun passed all 266 checks on c4ebbf4a4.
+- Race fingerprints unchanged: 297 checks across 33 cases, 31 events, three frame rates and three runs. All 12 combat fingerprints across four encounters passed.
+- c4ebbf4a4 passed the measured balance, stronger expert proof, named trick/show/night suites, Turn Show and production build. Browser: Claude runs the legacy Rex drive.
 - Removed: src/bowl/bowl-air.js and tools/test-bowl-air.mjs, the flip counter, and the separate night donut counter. Replaced by shared trick rules and real-floor checks.

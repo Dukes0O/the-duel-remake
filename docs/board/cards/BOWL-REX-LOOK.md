@@ -55,3 +55,5 @@ None new: the events and their cues are BOWL-REX-2's.
 The outline passed; the surface did not. Panels as dented painted steel with rust, bare edges and a sheen (as the welded
 reference on round 5's sheet); legs as thick as the reference's; no plinth or rails under the feet. The tail is no longer
 a ramp (see BOWL-ART-REX), so nothing is drawn on it.
+From round 6: set the three battery boxes down into the body, strapped into the ribs, not on tall square posts; the torn
+leads in an empty socket thick, bright and sparking, readable from the truck.

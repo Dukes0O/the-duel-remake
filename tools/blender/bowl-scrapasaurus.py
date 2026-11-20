@@ -1,481 +1,522 @@
-"""Build the Scrapasaurus, a two-storey welded junk dinosaur for Bowl Night five.
+"""Build the Bowl's welded tyrannosaur in metres, Y up and nose towards +Z.
 
-Run with Blender:
-  blender -b --python-exit-code 1 --python tools/blender/bowl-scrapasaurus.py -- --root . --round 2
-
-The model is authored in metres with +Y up and +Z forward. Separate identity
-transform nodes keep the jaw, tail and three battery boxes easy to animate or
-swap. The round-two render writes private PNG views and replaces the old look
-sheet with a compressed side-by-side comparison of rounds one and two.
+Run the recipe inside Blender with --root . to export and render. Then run
+python tools/blender/bowl-scrapasaurus.py --root . --sheet-only to lay out
+the Blender views with the earlier generated reference photograph.
 """
 import argparse
 import json
 import math
+import random
+import struct
 import sys
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--round', type=int, default=2)
-parser.add_argument('--skip-renders', action='store_true')
+parser.add_argument('--round', type=int, default=6, choices=[6])
 parser.add_argument('--paths-only', action='store_true')
+parser.add_argument('--skip-renders', action='store_true')
+parser.add_argument('--sheet-only', action='store_true')
+parser.add_argument('--clay-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
-output = root / 'public/assets/models/wasteland/bowl/scrapasaurus.glb'
 blend = root / 'art-build/bowl-scrapasaurus/scrapasaurus.blend'
-evidence = root / '.evidence/2026-11-05/BOWL-ART-REX/round-2'
-look_dir = root / 'docs/board/looks/bowl-art-rex'
-previous_sheet = look_dir / 'round-1.jpg'
-sheet = look_dir / 'round-1.jpg'
+output = root / 'public/assets/models/wasteland/bowl/scrapasaurus.glb'
+sheet = root / 'docs/board/looks/bowl-art-rex/round-6.jpg'
+evidence = root / '.qa-dist/rex'
 if args.paths_only:
-    print(json.dumps({'blend': [str(blend)], 'glb': [str(output)],
-                      'evidence': [str(evidence / f'{name}.png') for name in ('front', 'quarter', 'side-rest', 'side-bite', 'top')],
-                      'summary': [str(sheet)]}))
-    raise SystemExit(0)
-if args.round != 2:
-    parser.error('BOWL-ART-REX round two is the active review round')
+    print(json.dumps(dict(blend=[str(blend)], glb=[str(output)], evidence=[str(evidence/'clay.png')], summary=[str(sheet)])))
+    raise SystemExit
+
+if args.sheet_only:
+    from io import BytesIO
+    import subprocess
+    from PIL import Image, ImageDraw, ImageFont
+    photo_blob='77ba0483c7363b03ba8bb63352c23ae7794f9cf1'
+    previous=subprocess.run(['git','cat-file','blob',photo_blob],cwd=root,capture_output=True)
+    if previous.returncode==0:
+        reference=Image.open(BytesIO(previous.stdout)).crop((0,60,560,375))
+    else:
+        reference=Image.open(sheet.with_name('round-5.jpg')).crop((0,32,560,355))
+    panels=[('Welded sculpture reference',reference),('Clay silhouette',Image.open(evidence/'clay.png'))]
+    for title,name in [('Three closed batteries','side'),('Sagging after the fire','tired'),
+                       ('Hip battery - hatch closed','closed'),('Hatch raised - hook the steel eye','open'),
+                       ('Open eye from the far side','far'),('Box pulled clear of its socket','detach'),
+                       ('Empty socket and torn leads','socket')]:
+        panels.append((title,Image.open(evidence/(name+'.png'))))
+    canvas=Image.new('RGB',(1680,1065),'#252927')
+    draw=ImageDraw.Draw(canvas)
+    font=ImageFont.truetype('arial.ttf',19)
+    for i,(title,tile) in enumerate(panels):
+        x=(i%3)*560; y=(i//3)*355
+        draw.text((x+12,y+5),title,fill='#ede6d8',font=font)
+        tile.thumbnail((560,323))
+        canvas.paste(tile,(x+(560-tile.width)//2,y+32+(323-tile.height)//2))
+    for quality in (86,80,75,70):
+        canvas.save(sheet,quality=quality,optimize=True)
+        if sheet.stat().st_size<=500000: break
+    raise SystemExit
 
 import bpy
-import numpy as np
-from mathutils import Euler, Matrix, Vector
+from mathutils import Vector, Matrix
+from math import sin, cos, pi
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
-output.parent.mkdir(parents=True, exist_ok=True)
+scene = bpy.context.scene
+rng = random.Random(553)
+evidence.mkdir(parents=True, exist_ok=True)
 blend.parent.mkdir(parents=True, exist_ok=True)
-if not args.skip_renders:
-    evidence.mkdir(parents=True, exist_ok=True)
-    sheet.parent.mkdir(parents=True, exist_ok=True)
 
-def mat(name, color, metallic=.45, roughness=.82, emission=0.0):
+def mat(name, color, metal=.45, rough=.62):
     m = bpy.data.materials.new(name)
-    m.diffuse_color = (*color, 1)
+    m.diffuse_color = (*color,1)
     m.use_nodes = True
-    bsdf = m.node_tree.nodes.get('Principled BSDF')
-    bsdf.inputs['Base Color'].default_value = (*color, 1)
-    bsdf.inputs['Metallic'].default_value = metallic
-    bsdf.inputs['Roughness'].default_value = roughness
-    noise = m.node_tree.nodes.new('ShaderNodeTexNoise')
-    noise.inputs['Scale'].default_value = 28.0
-    noise.inputs['Detail'].default_value = 3.0
-    noise.inputs['Roughness'].default_value = .78
-    bump = m.node_tree.nodes.new('ShaderNodeBump')
-    bump.inputs['Strength'].default_value = .16 if metallic > .3 else .08
-    bump.inputs['Distance'].default_value = .045
-    m.node_tree.links.new(noise.outputs['Fac'], bump.inputs['Height'])
-    m.node_tree.links.new(bump.outputs['Normal'], bsdf.inputs['Normal'])
-    if emission:
-        bsdf.inputs['Emission Color'].default_value = (*color, 1)
-        bsdf.inputs['Emission Strength'].default_value = emission
+    bs = m.node_tree.nodes.get('Principled BSDF')
+    bs.inputs['Base Color'].default_value = (*color,1)
+    bs.inputs['Metallic'].default_value = metal
+    bs.inputs['Roughness'].default_value = rough
     return m
 
-steel = mat('Scrapasaurus · scale-pitted welded steel', (.105, .112, .108), .72, .9)
-rust = mat('Scrapasaurus · red oxide and old paint', (.32, .105, .038), .38, .93)
-paint = mat('Scrapasaurus · faded industrial ochre', (.48, .31, .085), .45, .88)
-rubber = mat('Scrapasaurus · soot and tire rubber', (.025, .028, .027), .05, .98)
-iron = mat('Scrapasaurus · chain and rail iron', (.17, .15, .125), .82, .78)
-copper = mat('Scrapasaurus · battery terminals', (.42, .20, .075), .65, .72)
-glass = mat('Scrapasaurus · dead headlamp glass', (.25, .16, .055), .25, .55, .12)
-hazard = mat('Scrapasaurus · scraped hazard yellow', (.82, .43, .045), .38, .86)
-cable = mat('Scrapasaurus · insulated battery cable', (.035, .36, .29), .12, .72)
-MATS = [steel, rust, paint, rubber, iron, copper, glass, hazard, cable]
+oxide = mat('Pitted steel', (.13,.067,.039))
+clay = mat('Unpainted clay', (.48,.48,.47),0)
+paint = [mat(n,c) for n,c in [('Oxblood',(.39,.083,.053)),('Petrol blue',(.075,.175,.235)),('Mustard',(.51,.285,.074)),('Primer',(.19,.21,.19)),('Old ivory',(.54,.47,.32)),('Burnt umber',(.24,.11,.047))]]
+iron = mat('Worn steel',(.235,.22,.18))
+rubber = mat('Tyre rubber',(.031,.032,.028),.07)
+glass = mat('Dusty glazing',(.056,.102,.105))
+hazard = mat('Industrial amber',(.93,.49,.028))
+lamp = mat('Lit headlamp',(.95,.82,.49))
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value=(1,.72,.28,1)
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=2
 
-root_obj = bpy.data.objects.new('scrapasaurus-root', None)
-bpy.context.collection.objects.link(root_obj)
-root_obj.empty_display_type = 'PLAIN_AXES'
-root_obj['units'] = 'metres'
-root_obj['forward'] = '+Z'
-
-def adopt(obj, name, material, parent=True):
-    obj.name = name
-    obj.data.materials.append(material)
-    if parent:
-        obj.parent = root_obj
+def group(name, parent=None, origin=(0,0,0)):
+    obj=bpy.data.objects.new(name,None)
+    scene.collection.objects.link(obj)
+    obj.parent=parent
+    obj.location=origin
     return obj
 
-def bevel(obj, amount=.035, segments=1):
-    mod = obj.modifiers.new('hammered and torn edges', 'BEVEL')
-    mod.width = amount
-    mod.segments = segments
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
-    bpy.ops.object.modifier_apply(modifier=mod.name)
-    obj.select_set(False)
-
-def cube(name, pos, size, material=steel, bevel_size=.025, parent=True):
-    bpy.ops.mesh.primitive_cube_add(size=1, location=pos)
-    obj = bpy.context.object
-    obj.dimensions = size
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    adopt(obj, name, material, parent)
-    if bevel_size:
-        bevel(obj, min(bevel_size, min(size) * .22))
+asset=group('scrapasaurus-root')
+body=group('thorax',asset)
+tail=group('scrapasaurus-tail',body,(0,7,-2.6))
+neck=group('folding-neck',body,(0,7.7,2.35))
+jaw=group('scrapasaurus-jaw',neck,(0,1.65,2.05))
+legs=group('crouching-haunches',asset)
+def mesh(name, verts, faces, material, parent):
+    data=bpy.data.meshes.new(name)
+    data.from_pydata(verts,[],faces)
+    data.materials.append(material)
+    data.update()
+    obj=bpy.data.objects.new(name,data)
+    scene.collection.objects.link(obj)
+    obj.parent=parent
     return obj
 
-def cyl(name, pos, radius, depth, material=iron, axis='Y', vertices=12, parent=True):
-    direction = {'X': (0, math.pi/2, 0), 'Y': (0, 0, 0), 'Z': (math.pi/2, 0, 0)}[axis]
-    bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth,
-                                        location=pos, rotation=direction)
-    obj = bpy.context.object
-    return adopt(obj, name, material, parent)
-
-def beam(name, a, b, width, material=iron, depth=None, vertices=8):
-    a, b = Vector(a), Vector(b)
-    delta = b - a
-    obj = cyl(name, (a+b)*.5, width*.5, delta.length, material, 'Y', vertices)
-    obj.rotation_euler = delta.to_track_quat('Z', 'Y').to_euler()
+# Each section has a centre, half-width and depth perpendicular to the spine.
+# Smooth subdivided rings carry the volume continuously through the bent limbs.
+forms=[]
+def loft(name, sections, parent, limb=False):
+    verts=[]
+    for x,y,z,w,d in sections:
+        for i in range(12):
+            a=i*2*pi/12
+            verts.append((x+w*cos(a),y if limb else y+d*sin(a),z+d*sin(a) if limb else z))
+    faces=[tuple(reversed(range(12)))]
+    for j in range(len(sections)-1):
+        for k in range(12):
+            a=12*j+k; b=12*j+(k+1)%12
+            faces.append((a,b,b+12,a+12))
+    faces.append(tuple(range(len(verts)-12,len(verts))))
+    obj=mesh(name,verts,faces,oxide,parent)
+    mod=obj.modifiers.new('Cast shell','SUBSURF'); mod.levels=2
+    for f in obj.data.polygons: f.use_smooth=True
+    forms.append((obj,sections,limb))
     return obj
 
-def wheel(name, x, y, z, radius=.48, width=.28):
-    tire = cyl(name+'-tire', (x, y, z), radius, width, rubber, 'X', 16)
-    cyl(name+'-hub-rim', (x, y, z), radius*.54, width*1.05, rust, 'X', 12)
-    cyl(name+'-hub-cap', (x + (width*.55 if x >= 0 else -width*.55), y, z), radius*.2, .025, iron, 'X', 10)
-    return tire
-
-def panel(name, pos, size, material=rust, rotation=(0,0,0)):
-    obj = cube(name, pos, size, material, min(size)*.08)
-    obj.rotation_euler = rotation
-    return obj
-
-def profile_prism(name, profile, width, material, pivot=(0,0,0)):
-    """Extrude a side silhouette in the X direction around a named pivot."""
-    px,py,pz=pivot
-    vertices=[(sx*width*.5,y-py,z-pz) for sx in (-1,1) for y,z in profile]
-    count=len(profile)
-    faces=[tuple(range(count)),tuple(range(count,2*count))]
-    faces.extend((i,(i+1)%count,(i+1)%count+count,i+count) for i in range(count))
-    mesh=bpy.data.meshes.new(name+'-mesh');mesh.from_pydata(vertices,[],faces);mesh.materials.append(material);mesh.update()
-    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
-    obj.location=pivot;obj.parent=root_obj
-    bevel(obj,.045,1)
-    return obj
-
-def plate_ribs(prefix, center, count, width, height, zspan, material=rust):
-    x,y,z=center
-    for i in range(count):
-        t = i/max(1,count-1)-.5
-        panel(f'{prefix}-corrugated-{i+1}', (x,y,z+t*zspan), (width,height,.11),
-              material if i%3 else paint, (0,0,(i%2-.5)*.035))
-
-# Rail bogie and two weathered rails, set up as a compact stage prop rather than a vehicle chassis.
-for x in (-.68, .68):
-    cube('rail-bogie-longitudinal-frame', (x,1.62,0), (.20,.20,7.4), iron, .04)
-    for z in (-3.0,-1.5,0,1.5,3.0):
-        beam('bogie-crossmember', (-.92,1.62,z), (.92,1.62,z), .16, rust)
-    for z in (-2.8,-1.4,0,1.4,2.8):
-        wheel('rail-wheel', x*1.12, 1.76, z, .30, .22)
-    cyl('rail-bogie-axle', (x*1.12,1.76,0), .08, 1.8, iron, 'X', 10)
-    cube('forged-rail', (x*1.12,1.44,0), (.18,.12,7.5), iron, .035)
-    for z in (-3.2,-2.4,-1.2,0,1.2,2.4,3.2):
-        cube('rail-sleeper', (0,1.35,z), (1.85,.10,.18), rust, .025)
-
-# Lower storey: a heavy wreck body over the rail bogie. Four articulated
-# haunches break the old ladder silhouette into a walking animal.
-cube('lower-storey-main-girder', (0,1.28,0), (2.55,.48,8.1), steel, .08)
-cube('deep-welded-ribcage', (0,2.30,-.25), (2.72,1.45,5.7), rust, .25)
-for x in (-1.35,1.35):
-    for z in (-2.0,1.65):
-        knee_y = .94 if z < 0 else 1.02
-        knee_z = z - .34 if z < 0 else z + .25
-        foot_z = knee_z - .32 if z < 0 else knee_z + .30
-        beam('scrapasaurus-heavy-thigh', (x*.76,2.05,z), (x,knee_y,knee_z), .82, steel, .62)
-        beam('scrapasaurus-bent-shin', (x,knee_y,knee_z), (x*.96,.39,foot_z), .58, rust, .48)
-        cube('scrapasaurus-broad-welded-foot', (x*.96,.24,foot_z+.10), (1.16,.38,1.22), iron, .16)
-        for toe in (-1,1):
-            cube('scrapasaurus-steel-toe', (x*.96+toe*.30,.17,foot_z+.56), (.34,.26,.46), paint, .08)
-        beam('leg-piston', (x*.84,1.58,z-.2), (x*.98,.65,knee_z), .16, copper)
-for x in (-1.28,1.28):
-    beam('lower-storey-side-truss', (x,.98,-3.65), (x,2.65,2.85), .21, iron)
-    beam('lower-storey-brace', (x,1.05,2.6), (x,2.35,-2.5), .16, rust)
-    for z in (-2.8,-1.0,1.0,2.5):
-        panel('lower-storey-crushed-door-skin', (x*1.015,1.72,z), (.13,1.02,1.25), rust if z%2 else paint,
-              (0,0.03*(z%2),.08*(1 if x>0 else -1)))
-        for yy in (1.38,1.55,1.72,1.89,2.06):
-            cube('door-stamped-ridge', (x*1.09,yy,z), (.035,.025,1.12), iron, .008)
-    for y in (1.0,2.55):
-        beam('ribbed-steel-arch', (x,y,-3.8), (x,y,3.5), .16, steel)
-    panel('long-salvaged-door-side-skin', (x*1.10,1.78,-.05), (.13,.92,7.05), rust)
-
-# A recognizable lower-deck pair of crushed car shells and their torn rooflines.
-for idx,z in enumerate((-1.65,1.15)):
-    width=2.0 if idx==0 else 2.15
-    cube(f'lower-car-{idx+1}-crushed-floor', (0,2.06,z), (width,.16,2.65), steel, .04)
-    for x in (-width*.45,width*.45):
-        beam('crumpled-car-window-pillar', (x,2.05,z-1.05), (x*.82,3.05,z-.68), .13, rust)
-        beam('crumpled-car-window-pillar', (x*.82,3.05,z-.68), (x*.94,2.50,z+.52), .13, iron)
-        panel('crushed-fender', (x,2.17,z+.83), (.22,.40,.83), paint,(.12,0,.06))
-    panel('flattened-car-roof', (0,2.86,z-.06), (width*.82,.13,1.8), rust, (.04,0,.05))
-
-# Upper deck: distinct shoulders and wreck panels follow the ribcage instead of
-# leaving a bare, boxy gantry.
-cube('upper-storey-deck-girder', (0,3.25,-.25), (2.25,.38,5.7), iron, .06)
+loft('Deep ribcage',[(0,7,-3.8,1.35,1.25),(0,7,-2.8,2.35,1.85),(0,7.05,-1.4,2.7,2.25),(0,7.1,.7,2.55,2.25),(0,7.45,2.1,2.15,1.87),(0,7.9,3.2,1.32,1.25)],body)
+loft('Counterweight',[(0,-1.65,-10,.09,.11),(0,-1.45,-8.9,.27,.24),(0,-1.35,-7.2,.53,.43),(0,-1.18,-5.2,.76,.67),(0,-.78,-3.2,1.12,.88),(0,-.35,-1.55,1.47,1.15),(0,0,.45,1.85,1.48)],tail)
+loft('Sinewed neck',[(0,0,-.35,1.54,1.45),(0,.4,.48,1.37,1.32),(0,1.03,1.18,1.08,1.16),(0,1.85,1.64,.98,1.2),(0,2.2,2.53,1.12,1)],neck)
+loft('Deep skull',[(0,2.08,1.65,.83,.84),(0,2.4,2.19,1.25,1.24),(0,2.65,2.9,1.4,1.19),(0,2.71,3.55,1.30,.89),(0,2.6,4.15,1.04,.67),(0,2.58,5.11,.91,.59),(0,2.54,5.42,.74,.48)],neck)
+loft('Mandible',[(0,.19,-.2,.83,.48),(0,.08,.35,1.13,.49),(0,-.22,1.1,.94,.39),(0,-.48,1.95,.68,.27),(0,-.53,2.72,.62,.22),(0,-.45,3.02,.48,.19)],jaw)
 for side in (-1,1):
-    beam('thick-neck-main', (side*.56,2.75,1.55), (side*.48,4.20,3.95), .43, steel, .36)
-    beam('thick-neck-brace', (side*.92,2.82,1.10), (side*.78,4.08,3.7), .19, rust)
-    panel('crushed-hood-shoulder', (side*1.0,3.15,1.38), (.32,.82,1.62), paint, (side*.08,.05,side*.12))
-for x in (-.98,.98):
-    beam('upper-storey-upright', (x,2.65,-2.5), (x*.85,4.05,-2.35), .17, rust)
-    beam('upper-storey-upright', (x,2.65,2.2), (x*.85,4.05,1.95), .17, steel)
-    beam('upper-deck-cross-girder', (x,3.38,-3.0), (x,3.38,2.8), .14, iron)
-    plate_ribs('upper-deck-wreck-skin', (x*1.03,3.73,-.1), 7, .12,.62,4.9, rust)
-for z in (-2.45,-.65,1.15):
-    cube('upper-crushed-cabin-roof', (0,4.02,z), (1.75,.14,1.58), paint if z<0 else rust, .05)
-    for x in (-.8,.8):
-        beam('upper-cabin-pillar', (x,3.68,z-.67), (x*.82,4.62,z-.45), .11, steel)
-        beam('upper-cabin-pillar', (x*.82,4.62,z-.45), (x,3.88,z+.57), .11, rust)
+    s=side
+    dz=.65*s
+    loft('Hind leg',[(s*1.79,8.5,-1.85,.49,.64),(s*1.83,7.75,-1.6,1.16,1.54),(s*1.93,6.55,-1.33,1.23,1.67),(s*1.91,5.24,-.79+.25*dz,.91,1.25),(s*1.9,4.16,-.32+dz,.67,.82),(s*1.91,3.57,-.71+dz,.57,.65),(s*1.93,2.47,-1.75+dz,.43,.55),(s*1.95,1.84,-2.04+dz,.36,.48),(s*1.97,.55,-1.68+dz,.34,.37)],legs,True)
+    for digit in (-1,0,1):
+        loft('Car-front toe',[(s*1.97,.49,-1.99+dz,.34,.34),(s*1.97+digit*.24,.46,-1.4+dz,.40,.31),(s*1.97+digit*.55,.32,-.68+dz,.33,.24),(s*1.97+digit*.81,.2,-.11+dz-.32*abs(digit),.08,.10)],legs)
+    loft('Little forelimb',[(s*1.6,7.45,2.02,.43,.44),(s*1.69,7,2.57,.34,.38),(s*1.66,6.42,2.3,.24,.24),(s*1.72,6.13,2.82,.15,.16),(s*1.73,5.94,3.10,.075,.085)],body,True)
 
-# Three clearly separated back targets. Each has whole and smashed states;
-# broad hazard bands and heavy cables replace the old face-like paired dots.
-for index,z in enumerate((-1.35,.10,1.55),1):
-    x = -.48 if index == 2 else .48
-    whole = cube(f'battery-box-{index}-whole', (x,4.30,z), (.92,.72,1.05), paint if index==1 else rust, .075)
-    whole['state'] = 'whole'
-    whole['batteryIndex'] = index
-    for dx in (-.27,.27):
-        cyl(f'battery-{index}-terminal', (x+dx,4.68,z), .10,.12,copper,'Y',10)
-    for yy in (4.38,4.55,4.72):
-        cube(f'battery-{index}-fluting', (x,yy,z+.535), (.66,.035,.035), iron, .01)
-    for stripe in (-1,1):
-        band = cube(f'battery-{index}-hazard-band-{stripe}', (x+stripe*.20,4.32,z+.538), (.13,.56,.035), hazard, .012)
-        band.rotation_euler[2] = stripe * -.18
-    beam(f'battery-{index}-green-live-cable', (x-.27,4.48,z),(x-.75,4.15,z-.52),.105,cable)
-    beam(f'battery-{index}-copper-return-cable', (x+.27,4.48,z),(x+.76,4.08,z+.40),.09,copper)
-    smashed = cube(f'battery-box-{index}-smashed', (x,4.16,z), (1.00,.38,1.0), rust, .025)
-    smashed.rotation_euler=(.11*(index%2),0,(-1 if index%2 else 1)*.18)
-    smashed['state'] = 'smashed'
-    smashed['batteryIndex'] = index
-    for dx in (-.30,.30):
-        beam(f'battery-{index}-torn-strap', (x+dx,4.40,z-.4),(x+dx*.6,4.64,z+.42),.045,iron)
+def aim(pos,target):
+    direction=(Vector(target)-Vector(pos)).normalized()
+    up=Vector((0,1,0)) if abs(direction.y)<.995 else Vector((0,0,-1))
+    right=direction.cross(up).normalized()
+    return Matrix((right,right.cross(direction),-direction)).transposed().to_euler()
 
-# The skull is a broad, angular side profile assembled from welded car panels.
-# Its long upper muzzle and deep, separate lower jaw create a readable bite.
-profile_prism('scrap-head-skull',[(4.42,3.65),(5.42,3.78),(5.76,4.30),(5.72,4.93),
-    (5.42,5.45),(5.16,6.35),(4.78,6.55),(4.68,5.78),(4.30,5.20)],2.20,steel)
-profile_prism('long-welded-dinosaur-muzzle',[(4.70,4.78),(5.20,4.90),(5.15,6.38),
-    (4.78,6.55),(4.62,5.88)],1.72,rust)
-panel('forehead-armor', (0,5.50,4.63), (1.88,.22,1.02),paint,(-.08,0,0))
-for x in (-.87,.87):
-    cyl('headlamp-rim', (x*1.12,4.96,4.54),.31,.25,iron,'X',16)
-    cyl('headlamp-glass', (x*1.26,4.96,4.54),.205,.05,glass,'X',16)
-    beam('welded-brow', (x*.88,5.30,4.67),(x*.64,5.55,4.75),.15,steel)
-jaw_pivot=(0,4.18,4.08)
-jaw=profile_prism('scrapasaurus-jaw',[(4.18,4.08),(3.58,4.12),(3.28,5.58),
-    (3.35,6.45),(3.66,6.20),(3.92,5.05),(4.10,4.35)],1.78,steel,jaw_pivot)
-jaw['hinge']=[0,4.18,4.08]
-for x in (-.72,.72):
-    beam('upper-jaw-tooth',(x,4.67,5.08),(x,4.10,5.38),.16,paint)
-    beam('upper-jaw-tooth',(x,4.64,5.70),(x,4.12,5.88),.14,iron)
-    beam('lower-jaw-tooth',(x,3.86,5.20),(x,4.28,5.43),.15,iron)
-    beam('lower-jaw-tooth',(x,3.78,5.78),(x,4.15,5.98),.13,paint)
-for frame, angle in ((1,.14),(16,.55),(31,.14)):
-    jaw.rotation_euler[0]=angle
-    jaw.keyframe_insert(data_path='rotation_euler',frame=frame,group='Jaw opens and bites')
+bpy.ops.object.camera_add()
+cam=bpy.context.object
+scene.camera=cam
+cam.data.type='ORTHO'
+scene.render.engine='BLENDER_WORKBENCH'
+display=scene.display.shading
+display.light='STUDIO'
+display.studio_light='paint.sl'
+display.color_type='MATERIAL'
+display.show_shadows=True
+display.show_cavity=True
+display.cavity_type='WORLD'
+display.background_type='WORLD'
+scene.world=bpy.data.worlds.new('Daylight')
+scene.world.color=(.43,.46,.47)
+scene.render.resolution_x=780
+scene.render.resolution_y=450
+scene.render.resolution_percentage=100
+def render(name,pos,target,span):
+    cam.location=pos
+    cam.rotation_euler=aim(pos,target)
+    cam.data.ortho_scale=span
+    scene.render.filepath=str(evidence/(name+'.png'))
+    bpy.ops.render.render(write_still=True)
 
-# Tail spine, articulated segmented sheet armor, and visible piston rods.
-tail = bpy.data.objects.new('scrapasaurus-tail', None)
-bpy.context.collection.objects.link(tail); tail.parent=root_obj
-tail['pivot']=[0,2.75,-3.05]
-tail.location=(0,2.75,-3.05)
-tail.matrix_parent_inverse=root_obj.matrix_world.inverted()
+if not args.skip_renders:
+    display.color_type='SINGLE'; display.single_color=(.64,.64,.61)
+    render('clay',(30,8,5),(0,5.6,-2.5),24.5)
+    display.color_type='MATERIAL'
+if args.clay_only: raise SystemExit
+
+
+def solid(name,center,size,material,parent):
+    x,y,z=center
+    verts=[(x+dx*size[0]/2,y+dy*size[1]/2,z+dz*size[2]/2)
+           for dz in (-1,1) for dy in (-1,1) for dx in (-1,1)]
+    return mesh(name,verts,[(0,2,3,1),(4,5,7,6),(0,1,5,4),(2,6,7,3),(0,4,6,2),(1,3,7,5)],material,parent)
+
+def tube(name,a,b,r1,r2,material,parent,count=10):
+    direction=(Vector(b)-Vector(a)).normalized()
+    normal=direction.cross(Vector((0,0,1)) if abs(direction.z)<.9 else Vector((1,0,0))).normalized()
+    second=direction.cross(normal)
+    verts=[Vector(end)+r*(normal*cos(2*pi*i/count)+second*sin(2*pi*i/count))
+           for end,r in ((a,r1),(b,r2)) for i in range(count)]
+    faces=[tuple(reversed(range(count))),tuple(range(count,2*count))]
+    faces.extend((i,(i+1)%count,(i+1)%count+count,i+count) for i in range(count))
+    return mesh(name,verts,faces,material,parent)
+
+# Folded door skins sit proud of the rust shell. Offset the seams from ring to
+# ring and leave torn corners and patches of exposed primer between the hoods.
+for obj,sections,limb in forms:
+    if 'toe' in obj.name or 'forelimb' in obj.name: continue
+    verts=[]; faces=[]; indices=[]
+    materials=[*paint,oxide,iron,glass]
+    def patch(points,color):
+        start=len(verts)
+        verts.extend(points)
+        faces.append(tuple(range(start,start+len(points))))
+        indices.append(color)
+    for j,(a,b) in enumerate(zip(sections,sections[1:])):
+        count=8 if 'skull' in obj.name.lower() or 'Mandible' in obj.name else 10
+        for i in range(count):
+            phase=(i+.21*(j%2))*2*pi/count
+            angle=2*pi/count
+            def skin(t,u,lift=.02):
+                x,y,z,w,d=[v+(q-v)*t for v,q in zip(a,b)]
+                c,s=cos(phase+u*angle),sin(phase+u*angle)
+                return (x+(w+lift)*c, y if limb else y+(d+lift)*s,
+                        z+(d+lift)*s if limb else z)
+            base=rng.choices(range(6),[3,2,1,2,1,4])[0]
+            low=rng.uniform(.015,.085)
+            high=rng.uniform(.90,.98)
+            p=[skin(.015,low+.07),skin(.08,low),skin(.935,low+.03),skin(.986,.13+low),
+               skin(.974,high-.055),skin(.90,high),skin(.10,high-.015),skin(.032,high-.12)]
+            centre=skin(.48,.51,.065)
+            for k in range(8): patch((p[k],p[(k+1)%8],centre),base)
+            if i%3==j%3 and 'Counterweight' not in obj.name:
+                patch([skin(t,u,.075) for t,u in ((.17,.49),(.73,.49),(.84,.79),(.22,.82))],8)
+                patch([skin(t,u,.081) for t,u in ((.15,.38),(.36,.38),(.36,.41),(.15,.41))],7)
+            for k in range(2):
+                t=rng.uniform(.12,.76); u=rng.uniform(.14,.83)
+                patch([skin(t,u,.084),skin(t+.13,u+.018,.084),skin(t+.035,u+.026,.084)],6)
+    skin_obj=mesh(obj.name+' salvaged doors and hoods',verts,faces,materials[0],obj.parent)
+    for m in materials[1:]: skin_obj.data.materials.append(m)
+    for f,idx in zip(skin_obj.data.polygons,indices): f.material_index=idx
+
+for s in (-1,1):
+    for x,y,z,r,parent in ((s*3.03,7.18,-1.29,.89,legs),(s*1.91,7.55,2.12,.52,body)):
+        tube('Sidewall',(x-s*.14,y,z),(x+s*.1,y,z),r,r,rubber,parent,24)
+        tube('Wheel rim',(x+s*.09,y,z),(x+s*.13,y,z),r*.65,r*.63,iron,parent,16)
+        for k in range(6):
+            a=k*pi/3
+            tube('Lug recess',(x+s*.13,y+r*.38*cos(a),z+r*.38*sin(a)),(x+s*.145,y+r*.38*cos(a),z+r*.38*sin(a)),r*.10,r*.10,rubber,parent,8)
+    tube('Headlamp bezel',(s*1.17,2.91,3.07),(s*1.42,2.91,3.19),.33,.30,iron,neck)
+    tube('Headlamp lens',(s*1.41,2.91,3.19),(s*1.46,2.91,3.21),.24,.21,lamp,neck)
+    tube('Swept brow',(s*1.21,3.31,2.72),(s*1.30,3.02,3.67),.18,.13,paint[0],neck)
+    tube('Nostril',(s*.83,2.77,4.76),(s*.93,2.79,4.8),.13,.14,rubber,neck)
+    for i in range(9):
+        z=3.12+i*.245
+        x=s*(1.12-.042*i)
+        tube('Leaf spring fang',(x,2.13,z),(x*.97,1.76-.09*(i%3==1),z-.08),.097,.014,paint[4],neck,7)
+        tube('Bent exhaust tooth',(x*.78,-.17,1.12+i*.209),(x*.79,.11,1.13+i*.209),.072,.009,iron,jaw,7)
+    dz=.65*s
+    for digit in (-1,0,1):
+        x=s*1.97+digit*.58
+        solid('Crumpled car bonnet',(x,.43,-.78+dz),(.54,.17,.66),paint[(digit+2)%6],legs)
+        solid('Chrome bumper',(x,.35,-.42+dz),(.56,.12,.09),iron,legs)
+# A wrecked bus grille spans the snout. Rear-quarter doors with frames,
+# recessed windows, handles and hinges can be picked out from truck height.
+solid('Bus grille recess',(0,2.64,5.408),(1.37,.46,.09),rubber,neck)
 for i in range(7):
-    t=i/6
-    z=-3.0-5.4*t
-    y=3.05-1.30*t+math.sin(t*math.pi)*.75
-    width=1.42*(1-t)+.10
-    seg=cube(f'tail-welded-segment-{i+1}',(0,y,z),(width,.76*(1-t)+.08,.96),rust if i%2==0 else steel,.035)
-    seg.parent=tail; seg.matrix_parent_inverse=tail.matrix_world.inverted()
-    for x in (-width*.4,width*.4):
-        fin=panel('tail-torn-fin',(x,y+.21,z),(width*.34,.09,.50*(1-t)+.12),paint,(0,0,(-1 if x<0 else 1)*.22))
-        fin.parent=tail; fin.matrix_parent_inverse=tail.matrix_world.inverted()
-    if i<6:
-        link=beam('tail-spine-link',(0,y,z-.4),(0,y-.12,z-.72),.13,iron)
-        link.parent=tail;link.matrix_parent_inverse=tail.matrix_world.inverted()
-for frame, angle in ((1,-.24),(16,.28),(31,-.24)):
-    tail.rotation_euler[1]=angle
-    tail.keyframe_insert(data_path='rotation_euler',frame=frame,group='Tail sways')
+    solid('Bent chrome grille bar',((i-3)*.181,2.64,5.464),(.055,.37,.045),iron,neck)
+for side in (-1,1):
+    s=side
+    tube('Bent bus bumper',(s*.76,2.30,5.26),(s*.40,2.30,5.54),.09,.09,iron,neck)
+    tube('Bent bus bumper',(s*.40,2.30,5.54),(0,2.33,5.56),.09,.09,iron,neck)
+    # A complete salvage door stands above each shoulder. The original glass
+    # and chrome waist trim sit inside a pinched, slightly twisted perimeter.
+    corners=[(s*2.36,6.65,-.35),(s*2.41,6.57,1.08),(s*2.31,7.59,1.41),
+             (s*1.98,8.39,.95),(s*2.03,8.48,-.21),(s*2.35,7.61,-.51)]
+    mesh('Faded shoulder car door',corners,[(0,1,2,3,4,5)],paint[1],body)
+    window=[(s*2.48,7.67,-.38),(s*2.42,7.67,1.25),(s*2.09,8.28,.89),(s*2.14,8.33,-.19)]
+    mesh('Cracked door glazing',window,[(0,1,2,3)],glass,body)
+    for i in range(4):
+        tube('Salvaged window frame',window[i],window[(i+1)%4],.034,.034,iron,body,7)
+    tube('Chrome waist trim',(s*2.54,7.60,-.44),(s*2.48,7.60,1.28),.038,.038,iron,body)
+    solid('Salvaged door handle',(s*2.57,7.43,-.22),(.095,.084,.26),iron,body)
+    for y in (6.82,7.13):
+        solid('Exposed hinge',(s*2.52,y,1.12),(.11,.16,.13),oxide,body)
+    dz=.65*s
+    solid('Foot grille',(s*1.97,.39,-.34+dz),(.87,.22,.11),rubber,legs)
+    for j in range(4):
+        solid('Foot grille slat',(s*1.97+(j-1.5)*.16,.39,-.27+dz),(.047,.16,.042),iron,legs)
+    for delta in (-.5,.5):
+        tube('Foot headlamp',(s*1.97+delta,.43,-.39+dz),(s*1.97+delta,.43,-.29+dz),.12,.11,paint[4],legs)
+tube('Furnace nozzle',(0,1.77,2.53),(0,1.64,3.49),.31,.24,iron,neck)
+tube('Nozzle bore',(0,1.64,3.49),(0,1.63,3.51),.18,.18,rubber,neck)
+for s in (-1,1):
+    solid('Ground rail',(s*1.84,.12,-1.18),(.16,.16,5.8),iron,asset)
+    for z in (-2.82,-.15):
+        tube('Bogie roller',(s*1.72,.38,z),(s*1.95,.38,z),.26,.26,rubber,asset)
+solid('Low rail bogie',(0,.39,-1.42),(3.7,.26,3.42),oxide,asset)
 
-# Jaw tendons and a clearly visible pair of forward fire-breath nozzles. The
-# game supplies the flame effect.
-for x in (-.7,.7):
-    beam('jaw-tendon-cable',(x,3.85,4.12),(x*.82,4.27,4.55),.075,copper)
-    beam('fire-breath-nozzle',(x*1.18,3.88,5.92),(x*1.18,3.88,6.54),.44,rust)
-    cyl('fire-breath-nozzle-rim',(x*1.18,3.88,6.55),.30,.08,iron,'Z',16)
-    cyl('nozzle-dark-mouth',(x*1.18,3.88,6.60),.215,.04,rubber,'Z',12)
-for z in (-2.8,2.6):
-    for x in (-1.0,1.0):
-        cyl('exposed-shock-coil',(x,1.08,z),.18,.54,paint,'Z',12)
-        beam('shock-link',(x,1.25,z),(x*.8,1.83,z),.10,iron)
+# The sockets belong to the spine. Each lift-out cartridge has a centre-local
+# origin and carries the cage, cell and tow eye as a unit.
+live_cell=mat('Charged amber enamel',(.96,.49,.035))
+live_shader=live_cell.node_tree.nodes.get('Principled BSDF')
+live_shader.inputs['Emission Color'].default_value=(1,.38,.015,1)
+live_shader.inputs['Emission Strength'].default_value=.65
 
-# Sparse chipped patches and weld beads break the repeated flat panel surfaces.
-rng=np.random.default_rng(7231)
-for i in range(112):
-    side = -1 if i%2 else 1
-    z = rng.uniform(-3.0,2.6)
-    y = rng.uniform(1.45,3.9)
-    size = (rng.uniform(.035,.11),rng.uniform(.025,.075),rng.uniform(.035,.13))
-    cube('flaked-orange-oxide-scar',(side*rng.uniform(1.30,1.38),y,z),size,
-         rust if i%4 else paint,.008)
-for i in range(52):
-    x=rng.uniform(-1.15,1.15);z=rng.uniform(-3.5,3.0)
-    cyl('round-weld-bead',(x,2.39,z),.025,.018,iron,'Y',8)
+bare_steel=mat('Polished towing eye',(.46,.49,.46),.78,.33)
 
-# Make all meshes child objects of one root, with identity transforms for named nodes.
-# Tail children intentionally retain local pivots under the animated tail node.
-for obj in list(bpy.context.scene.objects):
-    if obj.type=='MESH' and obj.parent is None:
-        obj.parent=root_obj
-        obj.location=(0,0,0);obj.rotation_euler=(0,0,0);obj.scale=(1,1,1)
-        # Geometry is already expressed in scene space; preserve it in mesh coordinates.
-        obj.matrix_parent_inverse= root_obj.matrix_world.inverted()
+def tow_eye(name,parent):
+    # A forged annulus with a through-hole across X is readable from both sides.
+    radius=.272
+    gauge=.060
+    verts=[]
+    faces=[]
+    for i in range(28):
+        a=2*pi*i/28
+        for j in range(8):
+            b=2*pi*j/8
+            verts.append((gauge*sin(b),(radius+gauge*cos(b))*cos(a),(radius+gauge*cos(b))*sin(a)))
+    for i in range(28):
+        for j in range(8):
+            k=i*8+j
+            faces.append((k,i*8+(j+1)%8,((i+1)%28)*8+(j+1)%8,((i+1)%28)*8+j))
+    eye=mesh(name,verts,faces,bare_steel,parent)
+    eye.location.y=.66
+    for face in eye.data.polygons: face.use_smooth=True
+    solid('Forged eye foot',(0,.395,0),(.23,.18,.30),iron,parent)
+    return eye
 
-scene=bpy.context.scene
-scene.frame_start=1;scene.frame_end=31
-scene.render.engine='BLENDER_EEVEE_NEXT'
-scene.render.resolution_x=1280;scene.render.resolution_y=720;scene.render.resolution_percentage=100
-scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
-scene.world=bpy.data.worlds.new('Bowl night studio')
-scene.world.color=(.035,.035,.035)
-scene.world.use_nodes=True
-scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.035,.04,.04,1)
-scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.55
-scene.view_settings.view_transform='AgX'
-for loc,energy,color,size in [((-8,13,9),2100,(1.0,.72,.46),9),((9,8,-8),1600,(.38,.55,.75),8),((2,11,-2),900,(1.0,.42,.16),6)]:
-    bpy.ops.object.light_add(type='AREA',location=loc)
-    lamp=bpy.context.object;lamp.data.energy=energy;lamp.data.color=color;lamp.data.shape='DISK';lamp.data.size=size
-    lamp.rotation_euler=(Vector((0,2.5,0))-lamp.location).to_track_quat('-Z','Y').to_euler()
-bpy.ops.object.camera_add(location=(20,9,20))
-camera=bpy.context.object;scene.camera=camera
-camera.data.lens=38
+boxes=[]
+for index,z in enumerate((-2.9,-.22,2.56),1):
+    socket=group(f'battery-socket-{index}',body,(0,9.46,z))
+    solid('Saddle welded to spine',(0,-.58,0),(1.53,1.12,1.08),oxide,socket)
+    solid('Black socket floor',(0,0,0),(1.68,.07,1.18),rubber,socket)
+    for side in (-1,1):
+        solid('Socket side lip',(side*.82,.094,0),(.08,.19,1.2),iron,socket)
+        solid('Socket end lip',(0,.094,side*.56),(1.6,.19,.08),iron,socket)
+        end=(side*.39,.22,side*.22)
+        tube('Torn lead insulation',(side*.76,.075,side*.33),end,.058,.055,rubber,socket)
+        for wire in (-1,0,1):
+            tube('Frayed copper strand',end,(side*.27,.27+wire*.045,side*.23+wire*.07),.019,.008,paint[2],socket,6)
+    box=group(f'battery-box-{index}',body,(0,9.86,z))
+    whole=solid(f'battery-box-{index}-whole',(0,0,0),(1.50,.65,1.04),hazard,box)
+    opened=solid(f'battery-box-{index}-open',(0,0,0),(1.50,.65,1.04),live_cell,box)
+    for state in (whole,opened):
+        for side in (-1,1):
+            # The stripes wrap the sides, so they are visible from the floor.
+            for k in (-1,0,1):
+                z0=k*.29
+                mesh('Black hazard slash',[(side*.756,-.25,z0-.11),(side*.756,-.25,z0+.015),
+                    (side*.756,.23,z0+.17),(side*.756,.23,z0+.045)],[(0,1,2,3)],rubber,state)
+            tube('Lift handle',(side*.6,-.06,-.53),(side*.6,.13,-.53),.043,.043,iron,state)
+        tow_eye(f'towing-eye-{index}-'+('open' if state==opened else 'closed'),state)
+    for side in (-1,1):
+        for state,tip in ((whole,(side*.19,.37)),(opened,(side*1.14,.72))):
+            heel=(side*.67,.35)
+            a=(heel[0],heel[1],-.43); b=(tip[0],tip[1],-.43)
+            c=(tip[0],tip[1],.43); d=(heel[0],heel[1],.43)
+            for start,end in ((a,b),(b,c),(c,d),(d,a)):
+                tube('Hinged battery cage',start,end,.038,.038,iron,state)
+            for pos in (-.28,0,.28):
+                tube('Cage crossbar',(heel[0],heel[1],pos),(tip[0],tip[1],pos),.028,.028,iron,state)
+    boxes.append((box,whole,opened,socket))
 
-def aim(position,target):
-    camera.location=position
-    direction=(Vector(target)-camera.location).normalized()
-    up_axis=Vector((0,1,0))
-    right=direction.cross(up_axis)
-    if right.length_squared<1e-8:
-        up_axis=Vector((0,0,1));right=direction.cross(up_axis)
-    right.normalize()
-    up=right.cross(direction).normalized()
-    camera.rotation_euler=Matrix((right,up,-direction)).transposed().to_euler()
+def hinge(pivot,name):
+    # Bind the rigidly welded parts to a single hinge bone. The parent
+    # remains an independent anchor so the tired posture can fold the neck
+    # and lower the tail while the bite or sway clip plays.
+    parts=list(pivot.children)
+    bones=bpy.data.armatures.new(name)
+    rig=bpy.data.objects.new(name,bones)
+    scene.collection.objects.link(rig)
+    rig.parent=pivot
+    bpy.context.view_layer.objects.active=rig
+    rig.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bone=bones.edit_bones.new(name+' hinge')
+    bone.head=(0,0,0)
+    bone.tail=(0,1,0)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for part in parts:
+        part.parent=rig
+        weights=part.vertex_groups.new(name=name+' hinge')
+        weights.add(list(range(len(part.data.vertices))),1,'REPLACE')
+        modifier=part.modifiers.new('Welded hinge','ARMATURE')
+        modifier.object=rig
+    joint=rig.pose.bones[name+' hinge']
+    joint.rotation_mode='XYZ'
+    return rig,joint
 
-views=[('front',(0,8,23),(0,2.5,-3.5),1),
-       ('quarter',(24,12,18),(0,2.6,-4.0),1),
-       ('side-rest',(30,7,-4.5),(0,2.5,-4.5),1),
-       ('side-bite',(30,7,-4.5),(0,2.5,-4.5),16),
-       ('top',(0,29,-4.0),(0,0,-4.0),16)]
+def clip(obj,name,channel,steps,target=None):
+    target=target or obj
+    for frame,value in steps:
+        setattr(target,channel,value)
+        target.keyframe_insert(data_path=channel,frame=frame)
+    anim=obj.animation_data
+    action=anim.action
+    action.name=name+' '+obj.name
+    track=anim.nla_tracks.new(); track.name=name
+    track.strips.new(name,1,action)
+    anim.action=None
+    setattr(target,channel,steps[0][1])
 
-reference_objects=set()
-stage=None
-if not args.skip_renders:
-    # The Titan is an actual game model, used only as a scale reference.
-    before=set(scene.objects)
-    bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/models/unlocks/titan_monster.glb'))
-    reference_objects=set(scene.objects)-before
-    bpy.context.view_layer.update()
-    reference_meshes=[obj for obj in reference_objects if obj.type=='MESH']
-    titan_to_y_up=Euler((-math.pi/2,0,0)).to_matrix()
-    corners=[titan_to_y_up @ (obj.matrix_world @ Vector(corner)) for obj in reference_meshes for corner in obj.bound_box]
-    min_y=min(point.y for point in corners); max_y=max(point.y for point in corners)
-    min_x=min(point.x for point in corners); max_x=max(point.x for point in corners)
-    min_z=min(point.z for point in corners); max_z=max(point.z for point in corners)
-    scale=2.25/max(.01,max_y-min_y)
-    anchor=bpy.data.objects.new('review-only-titan-anchor',None);scene.collection.objects.link(anchor)
-    for obj in reference_objects:
-        if obj.parent is None:
-            world=obj.matrix_world.copy();obj.parent=anchor;obj.matrix_parent_inverse=anchor.matrix_world.inverted();obj.matrix_world=world
-    anchor.rotation_euler=(-math.pi/2,0,0)
-    anchor.scale=(scale,scale,scale)
-    anchor.location=(4.7-(min_x+max_x)*.5*scale,-min_y*scale,-11.7-(min_z+max_z)*.5*scale)
-    reference_objects.add(anchor)
-    bpy.ops.mesh.primitive_plane_add(size=200, location=(0,.06,-3), rotation=(-math.pi/2,0,0))
-    stage=bpy.context.object;stage.name='review-only-flat-floor';stage.data.materials.append(rubber)
+jaw_rig,jaw_joint=hinge(jaw,'Jaw linkage')
+tail_rig,tail_joint=hinge(tail,'Tail linkage')
+clip(jaw_rig,'jaw-bite','rotation_euler',[(1,(0,0,0)),(9,(.18,0,0)),(16,(-.20,0,0)),(28,(0,0,0))],jaw_joint)
+clip(tail_rig,'tail-swing','rotation_euler',[(1,(0,0,0)),(13,(0,.18,0)),(37,(0,-.18,0)),(49,(0,0,0))],tail_joint)
+for obj,channel,start,end in ((legs,'scale',(1,1,1),(1,.49,1)),(body,'location',(0,0,0),(0,-4,0)),
+        (neck,'rotation_euler',(0,0,0),(.992,0,0)),(tail,'rotation_euler',(0,0,0),(-.125,0,0))):
+    clip(obj,'tired',channel,[(1,start),(25,end),(49,end)])
+scene.frame_set(1)
+scene.frame_end=49
+# The pictured patina is baked into portable glTF colour maps. Broad oxide
+# blooms, bright scratches and gritty speckles survive at different distances.
+import numpy as np
+size=160
+yy,xx=np.mgrid[0:size,0:size]
+noise=np.random.default_rng(111)
+for index,m in enumerate([*paint,oxide,iron,hazard]):
+    tint=np.asarray(m.diffuse_color[:3])
+    phase=index*1.83
+    wave=(np.sin(xx*.07+np.cos(yy*.046)*2+phase)+np.cos(yy*.11+np.sin(xx*.09))+np.sin(xx*.16+yy*.15))*.31
+    grain=noise.normal(0,.105,(size,size))
+    pits=np.clip((wave+grain-.30)*1.8,0,.93)[...,None]
+    rgb=tint*(1+grain[...,None])*(1-pits)+np.array([.19,.074,.033])*pits
+    for scratch in range(38):
+        x,y=noise.integers(0,size,2)
+        length=int(noise.integers(2,18))
+        for k in range(length):
+            rgb[(y+k//4)%size,(x+k)%size]=tint*.65+.13
+    tex=bpy.data.images.new(m.name+' enamel wear',width=size,height=size)
+    rgba=np.ones((size,size,4),dtype=np.float32)
+    rgba[:,:,:3]=np.clip(rgb,0,1)**(1/2.2)
+    tex.pixels.foreach_set(rgba.ravel())
+    tex.pack()
+    node=m.node_tree.nodes.new('ShaderNodeTexImage'); node.image=tex
+    m.node_tree.links.new(node.outputs['Color'],m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+for obj in asset.children_recursive:
+    if obj.type!='MESH': continue
+    uv=obj.data.uv_layers.new(name='Pressed sheet UV')
+    for face in obj.data.polygons:
+        axis=max(range(3),key=lambda i:abs(face.normal[i]))
+        u,v=[i for i in range(3) if i!=axis]
+        for li in face.loop_indices:
+            co=obj.data.vertices[obj.data.loops[li].vertex_index].co
+            uv.data[li].uv=(co[u]*.67,co[v]*.67)
 
-def load_pixels(path):
-    image=bpy.data.images.load(str(path),check_existing=False)
-    w,h=image.size;pix=np.empty(w*h*4,dtype=np.float32);image.pixels.foreach_get(pix)
-    pixels=pix.reshape(h,w,4)[::-1].copy();bpy.data.images.remove(image)
-    return pixels
-
-def draw_label(pixels, text, x, y, color=(.83,.76,.61)):
-    font={'R':('11110','10001','10001','11110','10100','10010','10001'),
-          'O':('01110','10001','10001','10001','10001','10001','01110'),
-          'U':('10001','10001','10001','10001','10001','10001','01110'),
-          'N':('10001','11001','11001','10101','10011','10011','10001'),
-          'D':('11110','10001','10001','10001','10001','10001','11110'),
-          '1':('00100','01100','00100','00100','00100','00100','01110'),
-          '2':('01110','10001','00001','00010','00100','01000','11111'),
-          ' ':('00000','00000','00000','00000','00000','00000','00000')}
-    cursor=x
-    for char in text:
-        glyph=font[char]
-        for row,line in enumerate(glyph):
-            for col,bit in enumerate(line):
-                if bit=='1': pixels[y+row*3:y+row*3+2,cursor+col*3:cursor+col*3+2,:3]=color
-        cursor+=18
-
-if not args.skip_renders:
-    if not previous_sheet.exists():
-        raise RuntimeError(f'Round-one comparison sheet is missing: {previous_sheet}')
-    old_sheet=load_pixels(previous_sheet)
-    round2=[]
-    for name,position,target,frame in views:
-        scene.frame_set(frame)
-        aim(position,target)
-        scene.render.filepath=str(evidence/f'{name}.png')
-        bpy.ops.render.render(write_still=True)
-        round2.append(load_pixels(evidence/f'{name}.png'))
-    tile_w,tile_h=560,315;label_h=30;gap=12
-    panel_w=tile_w*2;panel_h=(tile_h+label_h+gap)*3
-    sheet_pixels=np.zeros((panel_h+label_h,panel_w*2,4),dtype=np.float32)
-    sheet_pixels[:,:,:3]=(.035,.040,.039);sheet_pixels[:,:,3]=1
-    draw_label(sheet_pixels,'ROUND 1',18,9)
-    draw_label(sheet_pixels,'ROUND 2',panel_w+18,9)
-    old_h,old_w=old_sheet.shape[:2]
-    old_scale=min(panel_w/old_w,panel_h/old_h)
-    old_w2,old_h2=round(old_w*old_scale),round(old_h*old_scale)
-    old_resized=old_sheet[(np.arange(old_h2)/old_scale).astype(int)[:,None],(np.arange(old_w2)/old_scale).astype(int)[None,:]]
-    old_x=(panel_w-old_w2)//2;old_y=label_h+(panel_h-old_h2)//2
-    sheet_pixels[old_y:old_y+old_h2,old_x:old_x+old_w2]=old_resized
-    for i,pix in enumerate(round2):
-        h,w=pix.shape[:2];scale=min(tile_w/w,tile_h/h)
-        nw,nh=round(w*scale),round(h*scale)
-        sampled=pix[(np.arange(nh)/scale).astype(int)[:,None],(np.arange(nw)/scale).astype(int)[None,:]]
-        ox=panel_w+(i%2)*tile_w+(tile_w-nw)//2
-        oy=label_h+(i//2)*(tile_h+label_h+gap)+label_h+(tile_h-nh)//2
-        sheet_pixels[oy:oy+nh,ox:ox+nw]=sampled
-    sheet_img=bpy.data.images.new('BOWL ART REX rounds one and two',width=panel_w*2,height=panel_h+label_h,alpha=True)
-    sheet_img.pixels.foreach_set(sheet_pixels[::-1].ravel())
-    scene.render.image_settings.file_format='JPEG'
-    for quality in (82,76,70,64,58):
-        scene.render.image_settings.quality=quality
-        sheet_img.filepath_raw=str(sheet);sheet_img.file_format='JPEG';sheet_img.save()
-        if sheet.stat().st_size<=500_000: break
-    bpy.data.images.remove(sheet_img)
-    if sheet.stat().st_size>500_000:
-        raise RuntimeError(f'Comparison sheet exceeds 500 KB: {sheet.stat().st_size}')
-    for obj in list(reference_objects):
-        if obj.name in bpy.data.objects: bpy.data.objects.remove(obj,do_unlink=True)
-    if stage and stage.name in bpy.data.objects: bpy.data.objects.remove(stage,do_unlink=True)
-
-# Export only the asset hierarchy, not review lights or camera.
-def under_asset_root(obj):
-    current=obj
-    while current:
-        if current==root_obj: return True
-        current=current.parent
-    return False
-asset_objects=[obj for obj in bpy.context.scene.objects if obj.type in {'MESH','EMPTY'} and under_asset_root(obj)]
 bpy.ops.object.select_all(action='DESELECT')
-for obj in asset_objects: obj.select_set(True)
-bpy.context.view_layer.objects.active=root_obj
-bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',use_selection=True,
-    export_yup=False,export_animations=True,export_materials='EXPORT',export_extras=True)
+for obj in [asset,*asset.children_recursive]: obj.select_set(True)
+bpy.context.view_layer.objects.active=asset
+bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',use_selection=True,export_yup=False,
+    export_animation_mode='NLA_TRACKS',export_extras=True)
+# Blender derives each child's local matrix from its parent's inverse.
+# Export at unit scale, then park only the three open nodes in the GLB.
+# The game can reveal a complete cage and eye with one scale change.
+raw=output.read_bytes()
+json_length=struct.unpack_from('<I',raw,12)[0]
+manifest=json.loads(raw[20:20+json_length])
+open_names={opened.name for _,_,opened,_ in boxes}
+for node in manifest['nodes']:
+    if node.get('name') in open_names:
+        node['scale']=[0,0,0]
+encoded=json.dumps(manifest,separators=(',',':')).encode('utf8')
+encoded+=b' '*((-len(encoded))%4)
+tail_chunks=raw[20+json_length:]
+output.write_bytes(struct.pack('<4sII',b'glTF',2,20+len(encoded)+len(tail_chunks))
+                   +struct.pack('<I4s',len(encoded),b'JSON')+encoded+tail_chunks)
+for _,_,opened,_ in boxes:
+    opened.scale=(0,0,0)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+if args.skip_renders: raise SystemExit
 
-triangles=sum(sum(len(poly.vertices)-2 for poly in obj.data.polygons) for obj in asset_objects if obj.type=='MESH')
-if not (1000 < triangles <= 60000):
-    raise RuntimeError(f'Scrapasaurus triangle budget failed: {triangles}')
-print('BOWL_SCRAPASAURUS_RESULT '+json.dumps({'triangles':triangles,'bytes':output.stat().st_size,
-      'sheetBytes':sheet.stat().st_size if sheet.exists() else None,
-      'nodes':len(asset_objects),'round':args.round,'views':[name for name,_,_,_ in views],
-      'sheet':str(sheet) if not args.skip_renders else None}))
+# Light the painted surface from both sides so a driver can read the parts.
+scene.render.engine='BLENDER_EEVEE_NEXT'
+scene.eevee.taa_render_samples=16
+scene.view_settings.exposure=-.8
+scene.world.use_nodes=True
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.56,.63,.68,1)
+scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
+for loc,power,color in [((9,21,10),8200,(1,.92,.82)),((-9,11,5),5400,(.85,.90,1)),((0,15,-12),6600,(1,.85,.68))]:
+    bpy.ops.object.light_add(type='AREA',location=loc)
+    light=bpy.context.object
+    light.data.energy=power
+    light.data.color=color
+    light.data.shape='DISK'
+    light.data.size=11
+    light.rotation_euler=aim(loc,(0,5,-2))
+# Review-only scale reference from the actual game's truck.
+before=set(scene.objects)
+bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/models/unlocks/titan_monster.glb'))
+new=set(scene.objects)-before
+anchor=group('review-only Titan')
+for obj in new:
+    if not obj.parent: obj.parent=anchor
+anchor.rotation_euler.x=-pi/2
+bpy.context.view_layer.update()
+points=[obj.matrix_world@Vector(p) for obj in new if obj.type=='MESH' for p in obj.bound_box]
+scale=2.25/(max(p.y for p in points)-min(p.y for p in points))
+anchor.scale=(scale,)*3
+anchor.location=(4,-min(p.y for p in points)*scale,-5.3)
+solid('Studio floor',(0,-.14,0),(200,.22,200),mat('Concrete',(.38,.37,.33),0),None)
+for obj in (legs,body,neck,tail):
+    for track in obj.animation_data.nla_tracks: track.mute=track.name=='tired'
+scene.frame_set(1)
+render('side',(30,7,-2),(0,5.4,-2.3),24)
+for obj in (legs,body,neck,tail):
+    for track in obj.animation_data.nla_tracks: track.mute=track.name!='tired'
+scene.frame_set(30)
+render('tired',(25,12,-14),(0,3,-3.4),25)
+box,whole,opened,socket=boxes[0]
+render('closed',(6,8,-6.4),(0,6.05,-2.9),3.4)
+whole.hide_render=True
+for child in whole.children_recursive: child.hide_render=True
+opened.scale=(1,1,1)
+render('open',(6,8,-6.4),(0,6.05,-2.9),3.4)
+render('far',(-8,6.8,-6.2),(0,5.85,-2.9),5.3)
+box.location.x=3.1
+box.location.y-=.35
+box.rotation_euler.z=-.22
+render('detach',(8,9,-8),(1.2,5.95,-2.9),6.2)
+box.hide_render=True
+for child in box.children_recursive: child.hide_render=True
+render('socket',(4.5,9.1,-5.7),(0,5.5,-2.9),2.9)
