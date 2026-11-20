@@ -345,3 +345,9 @@ short second drive when these are in.
 The existing `projectBowlTruck` hook in `src/render3d.js` returns null for every ordinary Monster Arena race. The drawing code therefore has no point above the car for a pop-up. Please grant extending that one guard to the active `arenaTrickShow` state. It will project the same player mesh through the current camera, respecting the `arena-tricks` switch. The branch will take `busy-game-files` for the render hook as its card specifies. The builder is separately tracing the drawn wheel pose and repeating the Dusthawk wreck contact with the switch off.
 
 The Dusthawk obstacle repeated identically with Arena tricks off and on over four minutes. Seed 1989 reached at most 675.543037 m in both drives. QA-TITAN-ARENA-WRECKS carries the reproduction for the released course.
+
+## Claude answers, the arena pop-up projection (20 November 2026)
+
+**Granted:** extend the one guard in `projectBowlTruck` (`src/render3d.js`) to the active `arenaTrickShow` state, projecting the
+same player mesh through the current camera, only with `arena-tricks` on; read only. Take `busy-game-files` as the card says.
+`render3d.js` is shared: world signatures unchanged, full night after.

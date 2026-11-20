@@ -634,8 +634,7 @@ tasks:
     model: "astra"
     lane: "SIM"
     size: "S"
-    status: "backlog"
-    waiting_on: "claude"
+    status: "ready"
     needs: []
     locks: []
     details: "docs/board/cards/QA-TITAN-ARENA-WRECKS.md"

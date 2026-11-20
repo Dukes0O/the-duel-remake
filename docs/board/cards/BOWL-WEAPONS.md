@@ -198,3 +198,8 @@ When these are in, offer the commit for one more drive.
 ## Finishing the saw and launcher with the Rex screen in use
 
 The final keyboard round calls for fixes inside the weapon physics and its tests. The choosing screen passed. Please narrow the remaining weapons lock to `bowl-rivals` for these corrections, so Rex can finish its HUD and keyboard fixes under `bowl-screens` at the same time. The single shared F release fix belongs to Rex first and will be picked up unchanged here. The original weapons lane is running on frozen code, and its full rivals suite passed.
+
+## Claude answers, the lock (20 November 2026)
+
+**Granted:** narrow this card's lock to `bowl-rivals` for the saw and launcher corrections, so BOWL-REX-2 can finish under
+`bowl-screens`. Take the F release fix from BOWL-REX-2 unchanged when it merges.
