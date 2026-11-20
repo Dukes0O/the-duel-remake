@@ -17,7 +17,8 @@ export function childDrive(duel, driver) {
     throttle=1;
   }else if(h.phase==='dragging'){
     if(f.phase!=='fallen' && !s.input.interact)interact=true;
-    brake=s.speedMph>0 ? 1 : 0;
+    if(f.phase==='fallen')throttle=s.speedMph<12 ? .6 : 0;
+    else brake=s.speedMph>0 ? 1 : 0;
   }else if(mark?.canBite){
     driver.aim=(driver.aim||0)+dt;
     if(driver.aim>=(driver.reaction||.45) && !s.input.interact){
@@ -102,7 +103,12 @@ export const page = {
   restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent === 'HOOK THE GLOWING BOX')()`,
   coneDrawn: `(() => { const scene = window.__render?.scene; return !!scene?.getObjectByName('Scrapasaurus fire cone')?.visible && !!scene.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
   driver: `(() => { const app=window.__qaApp, control=${childDrive.toString()}, driver={};
-    app._driveAutopilot=function(){control(this.duel,driver);};app.autopilot=true;return true; })()`,
+    app._driveAutopilot=function(){
+      if(!driver.firstTap && this.duel.state.bowlNight?.event?.rex?.marker?.canBite){
+        driver.firstTap=true;this.autopilot=false;return;
+      }
+      control(this.duel,driver);
+    };app.autopilot=true;return true; })()`,
   manual: `(() => { window.__qaApp.autopilot = false; return true; })()`,
   // A card after an event, or the night's results after its last event (which has no NEXT EVENT button).
   card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result'))()`,
@@ -163,6 +169,15 @@ export async function run(context) {
 
   const scrapBefore = await context.evaluate(page.scrap);
   await context.evaluate(page.driver);
+  await waitInFight(context, 'window.__qaApp.autopilot === false', 'the first open eye is in reach', 90000);
+  const hookKey={key:'f',code:'KeyF',windowsVirtualKeyCode:70};
+  await context.command('Input.dispatchKeyEvent',{...hookKey,type:'keyDown'});
+  try {
+    await waitInFight(context,"window.__qaApp.duel.state.bowlNight.event.rex.hook.phase === 'attached'",'F catches the first eye',5000);
+  } finally {
+    await context.command('Input.dispatchKeyEvent',{...hookKey,type:'keyUp'});
+  }
+  await context.evaluate('window.__qaApp.autopilot = true');
   try { await waitInFight(context, page.card, 'the fight ends', 420000); }
   finally { await context.evaluate(page.manual); }
   await picture(context, 'bowl-rex-card');

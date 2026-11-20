@@ -233,7 +233,7 @@ function modelFixture(){
 function drive(seed){
   const duel=start(seed),s=duel.state,night=s.bowlNight,f=night.event.rex;
   const rng=makeRng(seed),driver={reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
-  const trace=[];let fall=null,ending=null;
+  const trace=[];let fall=null,ending=null,firstDrag=null,dragDistance=0;
   duel.onChange((_,ev)=>{
     if(ev.bowlRex){trace.push(ev.bowlRex.type);if(ev.bowlRex.type==='fall')fall=night.clock;}
     if(ev.bowlEventResult)ending=night.clock;
@@ -243,7 +243,9 @@ function drive(seed){
     if(f.hook.phase==='attached'){assert.equal(s.input.steer,0);assert.ok(!s.input.boost);}
     if(f.phase==='fallen'){
       assert.equal(f.hook.phase,'dragging');
-      assert.ok(f.hook.drag);
+      const drag=f.hook.drag;assert.ok(drag);
+      firstDrag??={...drag};
+      dragDistance=Math.max(dragDistance,Math.hypot(drag.x-firstDrag.x,drag.z-firstDrag.z));
     }
     duel.step(dt);
   }
@@ -253,6 +255,7 @@ function drive(seed){
     assert.equal(trace.filter(x=>x==='fall').length,1);
     assert.ok(Math.abs(ending-fall-10)<dt*.01,'result exactly ten seconds after the third extraction');
     assert.equal(night.event.resultHoldSince,fall);
+    assert.ok(dragDistance>1,'the final box moves behind the truck during the fall');
     assert.ok(bowlHudView(s,duel.course).goal.split(' ').length<=5);
   }
   return {won:night.lastResult.won,trace};

@@ -52,7 +52,7 @@ function phase(fight,name){
   fight.phase=name;fight.t=0;
 }
 function tell(fight,course,target,alongCable,events){
-  const head=modelPoint(rexAnchor(fight,course),0,0,fight.low ? 5.3 : 7.6);
+  const head=alongCable ? eyePoint(fight,course,2) : modelPoint(rexAnchor(fight,course),0,0,fight.low ? 5.3 : 7.6);
   const aim=Math.atan2(target.x-head.x,target.z-head.z);
   // Mark the full swept sector before any flame appears. The fire traverses
   // this fixed sector and cannot follow a truck that has left it.
@@ -65,6 +65,7 @@ function tell(fight,course,target,alongCable,events){
 function stand(fight,events){
   if(fight.hook.phase==='attached'||fight.hook.phase==='flying')releaseHook(fight.hook,events);
   fight.low=false;fight.marker=null;fight.cone=null;fight.cableBreath=false;
+  fight.throwDue=fight.boxes[1];
   events.push({type:'rise'});
   phase(fight,rexLastRest(fight)?'exit':'walk');
 }
@@ -85,7 +86,6 @@ function extract(fight,index,events){
   if(rexBoxesLeft(fight)===0){
     fight.low=true;phase(fight,'fallen');events.push({type:'fall'});
   }else{
-    fight.throwDue=index===1;
     stand(fight,events);
   }
 }

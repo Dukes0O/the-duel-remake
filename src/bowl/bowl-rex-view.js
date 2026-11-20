@@ -144,7 +144,7 @@ export function createRexView({loadModel}) {
       place(at, at.heading - Math.PI / 2);
       pose.position.y = 0; pose.rotation.set(0, 0, 0);
       for(const {part,whole,open,parent,origin} of boxes){
-        if(part){parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);part.visible=true;}
+        if(part){if(part.parent!==parent)parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);part.visible=true;}
         if(whole)whole.visible=true;
         if(open)open.scale.setScalar(0);
       }
@@ -171,9 +171,9 @@ export function createRexView({loadModel}) {
       const detached=fight.boxes[index];
       const position=hook.phase==='dragging' && hook.box===index ? hook.drag : fight.dropped[index];
       if(detached && position){
-        group.add(part);part.position.copy(position);part.rotation.set(0,hook.origin?.heading||0,0);
+        if(part.parent!==group)group.add(part);part.position.copy(position);part.rotation.set(0,hook.origin?.heading||0,0);
       }else{
-        parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);
+        if(part.parent!==parent)parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);
       }
       part.visible=!detached || !!position;
       const lit=detached || fight.marker?.box===index;
