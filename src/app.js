@@ -281,6 +281,12 @@ export class App {
         if (message?.cue) this._showNightCue(message.cue);
       if(event.bowlTrick)for(const cue of event.bowlTrick.cues)this._showNightCue(cue);
       if(event.bowlEventResult)this._showNightCue(event.cue);
+      if (event.bowlRaceCue) {
+        let cue = event.bowlRaceCue;
+        if (event.bowlRaceWinner === 'rival') cue = 'bowl.event.lost';
+        if (cue === 'bowl.rival.jump' && this._switches().enabled('helicopter') !== true) cue = 'bowl.rival.jump.fallback';
+        this._showNightCue(cue);
+      }
       if(event.bowlEventResult&&state.bowlNight?.turn)this._recordTurnGo(event.bowlEventResult,state); // BOWL-TURNS
       if(event.bowlOutsideCue)this._showNightCue(event.bowlOutsideCue);
       if(event.bowlWall?.cue)this._showNightCue(event.bowlWall.cue);

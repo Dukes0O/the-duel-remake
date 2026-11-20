@@ -21,3 +21,6 @@ This card waits for BOWL-SHOW-2 and its seventeen slices for nights 1 to 5 (the 
 nights 6 to 8, follows the first release and is not needed here. When the slices are merged: the freestyle targets and each
 event's numbers tuned in play, the frame check at the busiest view of the Bowl with eight trucks, the switch, the release,
 and pictures to Kyle.
+- From the BOWL-RIVALS-2 browser run (20 November 2026): pausing in the Bowl shows the ordinary "ROAD ON HOLD" card naming the
+  event "Titan Monster Arena"; it should name the night and the event. Watch by hand that Rust Rhino visibly races and that
+  the rivals in Last Truck Rolling come at the truck.

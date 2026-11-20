@@ -46,6 +46,10 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.wall.hard': 'vehicle.crash',
   'bowl.wall.big': 'vehicle.crash-impact',
   'bowl.wall.scrape': 'vehicle.tires',
+  'bowl.race.lights': 'interface.countdown',
+  'bowl.race.finish': 'interface.win',
+  'bowl.rival.jump': 'heli.setdown.thud',
+  'bowl.rival.jump.fallback': 'vehicle.landing',
   'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
   'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
   'bowl.event.won': 'interface.win',       // an event is won
@@ -106,6 +110,7 @@ export const BOWL_EVENT_NAMES = Object.freeze({
 });
 
 // What the player must do now: the HUD's one line for each event.
+const FREESTYLE_SCORE_NAMES = ['Old Bess', 'Rust Rhino', 'Tin Lizard', 'Big Kettle', 'Dragon Wagon'];
 export const BOWL_GOALS = Object.freeze({
   // BOWL-REX-FIGHT: what to do now, by what the Scrapasaurus is doing.
   scrapasaurus: ({phase, left = 3, last = false} = {}) => phase === 'tell' || phase === 'fire'
@@ -116,8 +121,8 @@ export const BOWL_GOALS = Object.freeze({
           : last ? `It is heading for the car park gate, and you still have ${REX_BOXES[left]} to smash.`
             : `Smash ${REX_BOXES[left]}. It rests after it breathes fire on the Jump Straight, so meet it there.`,
   carCrush: target => `Drive straight down the line and crush everything you can. Reach ${target} to go on.`,
-  freestyle: target => `Do big jumps, flips and crushes to score ${target} points before the clock runs out.`,
-  sideBySide: (rival = 'the other truck') => `Race ${rival} once round the Bowl and cross the line first.`,
+  freestyle: (target, night = 1) => `Beat ${FREESTYLE_SCORE_NAMES[night - 1] ?? FREESTYLE_SCORE_NAMES[0]}: ${target}.`,
+  sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
   lastTruckRolling: (left = []) => left.length
     ? `Knock out ${names(left)}, and be the last truck still rolling.`
     : 'Knock the other trucks out and be the last one still rolling.',
@@ -170,7 +175,7 @@ export const BIG_MO = Object.freeze({
   'lent.truck': 'Our driver has no truck yet, so tonight the show lends its own. Please bring it back in one piece.',
   'event.carCrush.intro': 'First up is the Car Crush. Drive down that line and see how far you can get before the junk stops you.',
   'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
-  'event.sideBySide.intro': 'It is time for Side by Side. Two trucks go once round the Bowl, and the first one over the line goes on.',
+  'event.sideBySide.intro': 'It is time for Side by Side. Two trucks race two laps, and the first one across the line wins.',
   'event.lastTruckRolling.intro': 'Here comes Last Truck Rolling. Four trucks go in, and the last one still moving wins.',
   'moment.crush': 'That car is now a pancake, and the crowd loves pancakes.',
   'moment.carLaunch': 'Did you see that? The truck drove up a car and took off like a rocket.',

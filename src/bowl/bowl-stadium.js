@@ -376,6 +376,48 @@ function screen(text) {
   return group;
 }
 
+function raceGate(course, lane, driver) {
+  const gate = new THREE.Group();
+  gate.name = `Side by Side ${driver} gate`;
+  const at = course.groundAt(lane.s, lane.lateral);
+  gate.position.set(at.x, at.y, at.z);
+  gate.rotation.y = at.heading;
+  const metal = new THREE.MeshStandardMaterial({color: 0x4b3c30, metalness: .6, roughness: .56});
+  const support = new THREE.BoxGeometry(.32, 5.6, .4);
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(11.5, .48, .6), metal);
+  beam.position.y = 5.6;
+  gate.add(beam);
+  for (const x of [-5.5, 5.5]) {
+    const leg = new THREE.Mesh(support, metal);
+    leg.position.set(x, 2.8, 0);
+    gate.add(leg);
+  }
+  const lamps = [];
+  const geometry = new THREE.BoxGeometry(.64, .44, .69);
+  for (const x of [-1.1, 0, 1.1]) {
+    const material = new THREE.MeshStandardMaterial({color: 0x302928, emissive: 0x000000, roughness: .35});
+    const lamp = new THREE.Mesh(geometry, material);
+    lamp.position.set(x, 5.6, 0);
+    gate.add(lamp);
+    lamps.push(material);
+  }
+  return {gate, lamps, driver};
+}
+
+function updateRaceGates(gates, state, event) {
+  const countdown = state.status === 'countdown' ? Math.ceil(state.countdown) : 0;
+  for (const {lamps, driver} of gates) {
+    for (let index = 0; index < lamps.length; index++) {
+      const signal = event.finishWinner ? (event.finishWinner === driver ? 0x5fef8a : 0xec433b)
+        : countdown > index ? (countdown === 1 ? 0xffb52e : 0xec433b)
+          : countdown === 0 && state.stageTimeSec < 1.2 ? 0x5fef8a : 0;
+      lamps[index].color.setHex(signal || 0x302928);
+      lamps[index].emissive.setHex(signal);
+      lamps[index].emissiveIntensity = signal ? 1.2 : 0;
+    }
+  }
+}
+
 export function createBowlStadium(course) {
   const group = new THREE.Group();
   group.name = 'Bowl stadium, floodlights and crowd';
@@ -434,7 +476,21 @@ export function createBowlStadium(course) {
     board.rotation.y = p.heading - Math.PI / 2;
     group.add(board);
   }
-  group.userData.update = (now, cheer = .35) => { uniforms.uCrowdTime.value = now * .001; uniforms.uCrowdCheer.value = cheer; };
+  let raceGates;
+  group.userData.update = (now, cheer = .35, state) => {
+    uniforms.uCrowdTime.value = now * .001;
+    uniforms.uCrowdCheer.value = cheer;
+    const event = state?.bowlNight?.event;
+    const sideBySide = event?.type === 'sideBySide';
+    if (sideBySide && !raceGates) {
+      raceGates = course.features.bowl.lanes.map((lane, index) => raceGate(course, lane, index ? 'rival' : 'player'));
+      group.add(...raceGates.map(({gate}) => gate));
+    }
+    if (raceGates) {
+      for (const {gate} of raceGates) gate.visible = sideBySide;
+      if (sideBySide) updateRaceGates(raceGates, state, event);
+    }
+  };
   group.userData.crowdCards = people.mesh.userData.cards;
   group.userData.lights = lights;
   group.userData.size = {face: FACE, back: BACK, top: TOP};

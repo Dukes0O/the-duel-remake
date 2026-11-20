@@ -83,3 +83,25 @@ against the side that was hit, once per hit, so the four-part display shows the 
 exception for a rival thrown by the event's launcher, which must clear the real wall height and is knocked out by the event as
 it crosses in the air. A rival on the ground still meets the wall and the gates as solid. Both are inert outside Last Truck
 Rolling with `titan-bowl` on; replay fingerprints and the contact suites on every other course must be unchanged.
+
+## Hearing one knockout
+
+The old player-credit sound is confirmed in `src/audio.js`: the event listener plays `arena.wreck-credit` for every `arenaWreck` credited to the player, including Last Truck Rolling. Its Bowl knockout event also names that sound. Please grant a condition around that one generic playback call for Last Truck Rolling with `titan-bowl` on, and a weapon-event dispatch alongside the existing Bowl race and Rex cue dispatch in `src/app.js`. The Bowl will play its named knockout once for each eliminated truck; normal arenas keep their current sound and player credit. These two hooks let the three show weapons play their own tells and hits on the ordinary game path.
+
+## Build decision
+
+Use armor as the sole health total and attribute actual loss to its contact side. Run the hammer balance proof through real driving and keep the measured Easy wall-contact pattern. The three toy weapons share the existing F input.
+
+## Applying a show weapon during real movement
+
+Please grant two narrow hooks in `src/arena/arena-event.js`, beside the player’s `_drive` and `_jump` calls and beside a rival’s `pilotStep` and `_jump` calls. They apply an active Last Truck Rolling weapon effect as the vehicle moves. The saw must halve travel for both trucks, the hammer must prevent the victim from steering for one second, and the launcher must move a truck through the 6 m high, 12 m long arc and the 2.5 second recovery. Outside the enabled event the existing movement runs as before. The weapon state and effects stay in `bowl-weapons.js`.
+
+## Starting a fight in the older checks
+
+The real choosing card holds the event until a selection. The outside, walls and rival suites and the `bowl-rivals` browser scenario enter the Night 3 fight directly. Their setup must choose the hammer through the normal action. Keep the existing physical and result assertions. Check that the weapon choice precedes the fight on retries and each Turn Show go as well. Please review the affected setup under rule 18.
+
+The old no-weapon assertions at `1d5bfbca6` now check that the arena arsenal is empty and that the correct named show weapons are fitted. The knockout checks keep the same credited driver and Big Mo line and expect the Bowl cue. The one-second low-speed rival check still applies to every free-moving, sound truck. It excludes trucks in an authored throw, a missed hammer's half-second hold or the 2.5 second side recovery. Armed Easy requires a win with two credited knockouts in at least nine of ten drives, and a non-dodging Hard driver must lose. The two-lap racing checks stay. Before arming the child on the merged rival rules, the three inherited seeds still lose: seed 1989 takes six hard wall hits and five truck hits costing 30 health each in total; 2090 and 2191 each take five hard wall hits. The armed driver keeps those steering inputs.
+
+## Playable weapons for the laptop
+
+Please drive Last Truck Rolling once with each weapon on `codex/bowl-weapons` at `5c837fccb`. The chooser, weapon effects and gates use the real race paths. The focused checks cover the hammer, saw, 6 m high/12 m long throw, real wall clearance, driver’s 15-second return and damage by side. At full wall damage the first three armed Easy seeds still lost, with 1, 0 and 0 credited knockouts. The builder is measuring the authorized Easy player wall share and F timing with the same steering; Medium and Hard keep the full wall table. The earlier request under “Hearing one knockout” still needs a ruling before checking the finished sound.

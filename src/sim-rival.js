@@ -106,6 +106,8 @@ export function _traffic(dt) {
 export function _rival(dt, opponent = this.state.rival) {
   const s = this.state, r = opponent;
   if (!r) return;
+  const bowlDrive = r.bowlRaceDrive && this.course.def.bowl &&
+    this.featureFlags?.enabled('titan-bowl') === true ? r.bowlRaceDrive : null;
   // A Grand Prix racer drives by the field rules (src/race-field-driver.js).
   if (s.field) return stepFieldRacer(this, r, dt);
   const summitAggression=avalancheEnabled(this)
@@ -177,10 +179,11 @@ export function _rival(dt, opponent = this.state.rival) {
   const cruiseSkill = easyWasteland ? .875 : skill.skill;
   const cornerSkill = easyWasteland ? .895 : skill.cornerSkill;
   const summitChoice=observeSummitRoute(this,r,summitAggression);
-  if ((s.cpuDifficulty !== 'easy' || summitChoice!==undefined) && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
+  if (!bowlDrive && (s.cpuDifficulty !== 'easy' || summitChoice!==undefined) &&
+      (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
     this._npcRoutePlanner = new NpcRoutePlanner(this.course, { car, surfaceAt: (distance, lateral) => this._drivingSurface(distance, lateral, car) });
   }
-  const route = s.cpuDifficulty === 'easy' && summitChoice===undefined ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents, ...(summitChoice!==undefined?{summitChoice}:{}) });
+  const route = bowlDrive || (s.cpuDifficulty === 'easy' && summitChoice === undefined) ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents, ...(summitChoice!==undefined?{summitChoice}:{}) });
   r.routeId = route?.routeId || null; r.routeLap = route?.routeLap || null;
   const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
   const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
@@ -224,12 +227,13 @@ export function _rival(dt, opponent = this.state.rival) {
   r.offRoad = !rivalSurface.mainRoad; r.preparedGravel = rivalSurface.preparedGravel;
   if (r.offRoad) target = Math.min(target * (rivalSurface.preparedGravel ? 1 : .7), rivalSurface.speedLimit);
   if (r.contactCooldown > 0) target *= .55;
-  let lane = route?.targetLateral ?? -DRIVE.laneOffset + Math.sin(r.s * .007) * 1.05;
+  if (bowlDrive) target = bowlDrive.speedMph;
+  let lane = bowlDrive?.lane ?? route?.targetLateral ?? -DRIVE.laneOffset + Math.sin(r.s * .007) * 1.05;
   // A committed shortcut has its own corridor. Its planner brakes for traffic
   // on that path; ordinary main-road lane changes would cut across the gap.
   const laneBlockers=s.opponents.length>1?[...s.traffic,...s.opponents.filter(opponent=>opponent!==r)]:s.traffic;
   const activeBlocker=actor=>actor.alive || s.opponents.length>1 && s.opponents.includes(actor);
-  if (!route) for (const traffic of laneBlockers) {
+  if (!route && !bowlDrive) for (const traffic of laneBlockers) {
     if (!activeBlocker(traffic)) continue;
     const ahead = this.relativeS(traffic.s, r.s) - r.s;
     if (ahead > -8 && ahead < 85 && Math.abs(traffic.lateral - lane) < 2.8) {
@@ -284,11 +288,12 @@ export function _rival(dt, opponent = this.state.rival) {
   const deliberateAttack = ramAttack || fighterIntent?.attack || boarded;
   const plannedHeading = (deliberateAttack || oil) ? clamp((lane - r.lateral) * .095, -.55, .55)
     : route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
-  const yieldPlan = deliberateAttack
+  const yieldPlan = (deliberateAttack || bowlDrive)
     ? {yielding:false,targetMph:Math.max(0,target),braking:DRIVE.brakeAccel}
     : this._npcYield(r, Math.max(0, target), plannedHeading);
   target = yieldPlan.targetMph;
   if (route?.mustYield) { r.yieldingToPlayer = route.yieldingToPlayer; r.braking = r.speedMph > target; }
+  if (bowlDrive) r.braking = r.speedMph > target + 1;
   if (yieldPlan.yielding) {
     r.yieldingToPlayer = true;
     r.braking = r.speedMph > target;
