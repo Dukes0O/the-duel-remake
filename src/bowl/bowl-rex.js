@@ -11,7 +11,7 @@ export const REX_RULES=Object.freeze({
   fire:{halfAngle:18*Math.PI/180, sweep:Math.PI/6, seconds:1.65, range:29},
   thrown:{flightSec:1,hitRadius:3.5},
   level:{
-    easy:{walk:5,tellSec:2.6,restSec:32,throwTellSec:2.1,breaths:1,rests:6,hits:5,pull:[2,3,3]},
+    easy:{walk:5,tellSec:2.6,restSec:24,throwTellSec:2.1,breaths:1,rests:6,hits:5,pull:[2,3,3]},
     medium:{walk:7,tellSec:2,restSec:19,throwTellSec:1.65,breaths:2,rests:5,hits:4,pull:[3,4,4]},
     hard:{walk:9,tellSec:1.5,restSec:15,throwTellSec:1.25,breaths:2,rests:5,hits:3,pull:[3,5,5]},
   },
