@@ -25,6 +25,8 @@ export const SCENARIO_AREAS = [
     'src/audio.js','src/sound-bank.js','tools/menu-check.js']},
   {prefixes:['arena-'], paths:['src/arena/','src/arena-props.js','src/screen-arena.js']},
   {prefixes:['arsenal-'], paths:['src/arsenal/']},
+  // WEAPON-WATER-CANNON: the water cannon's scenario also guards the Armory's town gear and the town's Fire Station read.
+  {prefixes:['arsenal-water-cannon'], paths:['src/weapon-upgrades.js','src/screen-armory.js','src/town/town-gear.js']},
   {prefixes:['crew-'], paths:['src/crew-gear/','src/crew.js','src/crew-ui.js']},
   {prefixes:['warlord-'], paths:['src/warlords/','src/warlords.js','src/warlord-cards.js','src/arena/warlord-settlement.js']},
   {prefixes:['drive-lesson-'], paths:['src/lessons/']},
