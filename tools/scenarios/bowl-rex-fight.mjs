@@ -28,7 +28,7 @@ export const page = {
   picker: `(() => !!document.querySelector('.bowl-panel [data-action="show-night-start"][data-night="5"]'))()`,
   noRexYet: `(() => window.__qaApp.bowlRexInYard() === false)()`,
   easy: `(() => { document.querySelector('[data-action="show-night-level"][data-level="easy"]').click(); return true; })()`,
-  start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="5"]').click(); return true; })()`,
+  start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="5"]').click(); document.querySelector('[data-action="show-night-confirm"]').click(); return true; })()`,
   onNightFive: `(() => window.__qaApp.duel.state.bowlNight?.night === 5 && window.__qaApp.duel.state.status !== 'menu')()`,
   // Straight to the night's fourth event, the fight (the events before it have their own scenarios).
   toFight: `(() => { const app = window.__qaApp, night = app.duel.state.bowlNight;
@@ -66,7 +66,7 @@ export const page = {
   tell: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'tell')()`,
   fire: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'fire')()`,
   rest: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'rest')()`,
-  restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent.includes('drive fast up the junk car'))()`,
+  restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent === 'Jump off the junk car.')()`,
   coneDrawn: `(() => { const scene = window.__render?.scene; return !!scene?.getObjectByName('Scrapasaurus fire cone')?.visible && !!scene.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
   // A child-pace driver in the page: round inside the rails, out of the cone and waiting back while fire is
   // coming, and on to the rails for the dropped junk car once a box is open (tools/test-bowl-rex.mjs).

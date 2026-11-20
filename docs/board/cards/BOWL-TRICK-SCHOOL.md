@@ -13,14 +13,19 @@ driver does the thing, and a failed try says why.
 
 1. **Trick School,** an event of its own on the Bowl with no clock, no target and no purse, opened by a TRICK SCHOOL button
    on the Show Night picker and offered once before a driver's first night ("First time here? Come to Trick School first",
-   with "Not now"). Eight lessons in the order of the design's table: wheelie, stoppie, donut, spin, front flip, backflip,
-   barrel roll, side flip. Each lesson shows the trick's picture and key caps (BOWL-HUD's trick card pictures), one
+   with "Not now"). Eight lessons: wheelie, stoppie, donut, spin, backflip, front flip, barrel roll, side flip. The
+   backflip comes before the front flip, because S is a new press in the air and W is a key the driver is already
+   holding. The lessons in the air teach BOWL-TRICKS-ALL's rules (its part 1) in its words: "tap S", and "keep it held for another
+   turn"; the front flip's lesson says to let go of W as the truck leaves the ramp and then tap it. Each lesson shows the trick's picture and key caps (BOWL-HUD's trick card pictures), one
    sentence saying what the word means, and waits until `bowlTrick` reports that trick; then it is ticked and the next one
-   opens. For the lessons in the air the truck is put on the run-up to the right jump (a kicker for single turns). After
-   the last lesson the floor stays open for free practice until the driver leaves.
+   opens. For the lessons in the air the truck is put on the run-up to the Table, which gives a single turn to a tap made at any
+   time in the first second of the flight. After
+   the last lesson Big Mo says, in one sentence, that there are secret tricks nobody will teach and that their taps must
+   be quick (BOWL-TRICKS-ALL, part 2; the school names none of them). The floor then stays open for free practice until the driver
+   leaves.
 2. **Why a try failed:** one sentence, said once for each cause in a lesson and once an event elsewhere, from what the
-   truck did: too fast for a wheelie; too slow for a stoppie; let go before the turn was complete; landed on the roof;
-   the jump was too small for a double; the roll was made nose first, so it was a barrel roll and not a side flip.
+   truck did: too fast for a wheelie; too slow for a stoppie; still holding W from the run-up, so nothing turned; not
+   enough air left when the key was tapped (`bowlTrickLate`); landed on the roof; the jump was too small for a double; the roll was made nose first, so it was a barrel roll and not a side flip.
 3. **Tonight's trick:** a night's data names one or two tricks. The picture and keys are on the card before the event,
    and that trick pays double that night (BOWL-NIGHTS supplies the table; here the rule and the card).
 4. **Lessons done** are kept with the driver's Bowl records, so the offer is made once and ticks stay.
@@ -53,3 +58,23 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 changes and bring each older suite and scenario that names it up to date. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside this
 lane.
+
+## Preflight question for Claude, 20 November
+
+I propose an optional record with the driver’s completed trick IDs and whether the offer has been shown. An old save reads as no lessons complete and no prior offer. Accepting or declining the offer records it once. Each lesson tick is recorded as soon as the trick is completed. School uses the Show Night truck and has no purse.
+
+May this card extend the existing Show Night launch and save wiring in `src/app.js` for Trick School, including the same active-player and run checks used by Show Night? May it report failed attempts from `src/bowl/bowl-tricks.js`, where the controls, turns remaining and landing result are known? The report changes no trick rules. The School or Bowl event shows each reason once, and the hook is silent in other game modes.
+
+## Claude answers, the save and the failed tries (20 November 2026)
+
+- **The record is agreed:** an optional, versioned record of the completed trick ids and whether the offer has been shown; an
+  old save reads as no lessons done and no offer made; accepting or declining is written once; a tick is written when the
+  trick is done; no purse. It only adds: it never changes or removes another field. Because it touches saves, it gets one
+  independent review by the save checker (rule 17), and `tools/test-bowl-save.mjs` proves an old save, a round trip and a
+  newer game's record left untouched.
+- **The hooks are granted:** the Show Night launch and save wiring in `src/app.js` extended for Trick School with the same
+  active-player and run checks; and a report of each failed try from `src/bowl/bowl-tricks.js`, changing no rule, silent
+  outside the Bowl. `app.js` is a shared file, so the night after the merge is a full one.
+- **Note:** the Fable session is making the trick rules kinder to a child (BOWL-SHOW-2 section 2, from the hand drive of
+  20 November). Write the reasons from whatever the rules are when this card builds, and bring them up to date if the rules
+  change first.

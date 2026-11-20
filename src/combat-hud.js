@@ -14,6 +14,7 @@ import {brandHudStep} from './world/world-hud.js';
 import {BRAND_RULE} from './world/jobs/brand-rule.js';
 import {brandWaysFor, prepareBrandWays, townCarWay} from './world/jobs/brand-ways.js';
 import {brandSites} from './world/jobs/brand-sites.js';
+import {bowlHealth, bowlSegmentsMarkup, drawBowlSegments} from './bowl/bowl-hud.js';
 
 export function footBrandDirection(state) {
   const worldJob = state?.arena?.mode === 'world-job' && state.arena.worldJob;
@@ -258,6 +259,7 @@ function createOpponentMarker(index) {
   marker.className = 'combat-opponent-marker';
   marker.dataset.opponentIndex = String(index);
   marker.innerHTML = `<span class="combat-marker-pointer" aria-hidden="true">⌄</span><span class="combat-marker-heading"></span><span class="combat-marker-value"></span><span class="combat-marker-track"><i></i></span>`;
+
   return marker;
 }
 
@@ -541,6 +543,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       layer.append(marker);
     }
     const washEnded = chapter && worldJob.riderFight?.outcome;
+    const bowlFight = state.bowlNight?.event?.type === 'lastTruckRolling';
     for (let index = 0; index < markers.length; index++) {
       const marker = markers[index], opponent = opponents[index];
       if (!opponent || opponent.drone || washEnded && opponent.roadRider) {marker.hidden = true; continue;}
@@ -548,6 +551,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const exact = projection?.visible === true;
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course,
         onFoot ? state.fighter : state, opponent, index);
+      if (bowlFight && !exact) { marker.hidden = true; continue; }
       marker.hidden = !!opponent.finished || !!opponent.crushed;
       marker.dataset.placement = exact ? 'over-car' : 'direction';
       // Keep the whole label on screen when the car reaches the camera edge.
@@ -570,11 +574,25 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       marker.classList.toggle('is-hunting', !!arena?.hunting);
       marker.classList.toggle('is-marked', !!arena?.marked);
       marker.classList.toggle('is-protected', !!arena?.protected);
-      setText(marker.querySelector('.combat-marker-value'), exact ? `${barPrefix}${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${barPrefix}${opponentArmor.value} / ${opponentArmor.max}`);
-      setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
+      const valueLabel = marker.querySelector('.combat-marker-value');
+      const continuousBar = marker.querySelector('.combat-marker-track');
+      valueLabel.hidden = continuousBar.hidden = bowlFight;
+      if (bowlFight && !marker.bowlBar) {
+        marker.insertAdjacentHTML('beforeend', bowlSegmentsMarkup);
+        marker.bowlBar = marker.lastElementChild;
+      }
+      if (marker.bowlBar) marker.bowlBar.hidden = !bowlFight;
+      if (bowlFight) {
+        const health = bowlHealth(opponent);
+        drawBowlSegments(marker.bowlBar, health);
+        setAttribute(marker, 'aria-label', `${arena?.heading ?? 'Rival'} health ${Math.round(health.value)} of ${Math.round(health.max)}`);
+      } else {
+        setText(valueLabel, exact ? `${barPrefix}${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${barPrefix}${opponentArmor.value} / ${opponentArmor.max}`);
+        setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
+        setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} ${barName} ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
+      }
       marker.classList.toggle('is-critical', opponentArmor.fraction <= .25);
       marker.classList.toggle('is-wrecked', !!opponent.combatWrecking);
-      setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} ${barName} ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
     }
     const layerRect = layer.getBoundingClientRect();
     const visibleLabels = markers.filter(marker => !marker.hidden).map(marker => {

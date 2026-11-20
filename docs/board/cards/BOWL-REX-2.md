@@ -122,3 +122,7 @@ The wall rebound and swept truck contact live in `src/sim-contacts.js::_staticCo
 from its current pose, to the existing contact pass, so a truck meets it with the wall rules (BOWL-SHOW-2 section 8) and a
 jump passes over a part it truly clears. Nothing outside the Scrapasaurus fight adds solids; replay fingerprints and the
 contact suites on every other course must be unchanged.
+
+## Build decision
+
+Use the round-six towing eyes for aim and cable placement. Use the visible beast outline for swept wall contacts, keep pull progress per cartridge, and start the ten-second ending at the third extraction.

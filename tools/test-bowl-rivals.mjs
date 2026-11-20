@@ -361,7 +361,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   assert.deepEqual(events, [{rival, by: 'player', cue: 'arena.wreck-credit'}]);
   ok(night.event.knockouts === 1 && night.event.rivals[0].by === 'player' && night.event.rivals[0].out,
     'the scoring collision credits exactly one player knockout');
-  ok(night.caption?.id === 'out.' + rival || night.captionQueue.includes('out.' + rival),
+  ok(night.caption?.id === 'out.' + rival || night.captionQueue.some(line => line.id === 'out.' + rival),
     'Big Mo names the knocked-out rival');
 }
 const rates = {};

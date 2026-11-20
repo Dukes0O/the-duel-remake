@@ -178,8 +178,9 @@ const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   action:(label,verb,primary)=>screenAction(label,verb,primary,arrow)});
 const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time, arrow});
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
-const bowlScreens = createBowlScreens({app, ui, escapeHTML});
 const readiness = createRendererReadiness({app, ui, choices, profile, isDisposed:()=>uiDisposed});
+const bowlScreens = createBowlScreens({app, ui, escapeHTML,
+  projectPlayer: () => readiness.handle?.projectBowlTruck?.() ?? null});
 const combatHud = createCombatHud({root, app,
   projectFootAim:()=>readiness.handle?.projectFootAim?.() || null,
   projectOpponents:()=>readiness.handle?.projectOpponents?.() || []});

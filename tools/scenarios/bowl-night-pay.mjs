@@ -16,7 +16,15 @@ export const page = {
   openPicker: `(() => { document.querySelector('#show-night-visit').click(); return true; })()`,
   picker: `(() => { const panel = document.querySelector('.bowl-panel'); return !!panel && panel.textContent.includes('lend you its truck') && !!panel.querySelector('[data-action="show-night-start"][data-night="1"]') && !panel.querySelector('[data-night="3"][data-action="show-night-start"]'); })()`,
   easy: `(() => { document.querySelector('[data-action="show-night-level"][data-level="easy"]').click(); return true; })()`,
-  start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="1"]').click(); return true; })()`,
+  chooseNight: `(() => { document.querySelector('[data-action="show-night-start"][data-night="1"]').click(); return true; })()`,
+  opening: `(() => { const panel = document.querySelector('.bowl-opening'); return window.__qaApp.duel.state.status === 'menu' &&
+    panel?.textContent.includes('welcome to the Bowl') && !!panel.querySelector('[data-action="show-night-confirm"]'); })()`,
+  start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-confirm"]').click(); return true; })()`,
+  spaceForTruck: `(() => ['.route-hud', '.lap-readout', '.gear', '.rear-view-frame'].every(selector => {
+    const node = document.querySelector(selector); return !!node && !node.getClientRects().length; }))()`,
+  tricks: `(() => { const card = document.querySelector('.bowl-trick-card'); return window.__qaApp.duel.state.paused &&
+    card?.querySelectorAll('.bowl-trick-picture').length === 8 && !!card.querySelector('kbd'); })()`,
+  resumed: `(() => !window.__qaApp.duel.state.paused && !document.querySelector('.bowl-trick-card'))()`,
   hud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('CAR CRUSH') && !!hud.querySelector('meter'); })()`,
   onShowTruck: `(() => { const s = window.__qaApp.duel.state; return s.car === 'titan_monster' && window.__qaApp.duel.course.def.bowl === true && s.bowlNight?.lent === true; })()`,
   // The HUD is drawn at once, the world a little later: wait until the Bowl's stadium and the Titan are in the picture.
@@ -81,11 +89,21 @@ export async function run(context) {
   await picture(context, 'bowl-night-picker');
   assert.equal(await context.evaluate(page.storage), before, 'opening the picker saves nothing');
 
+  await context.evaluate(page.chooseNight);
+  await context.waitFor(page.opening, 'Big Mo welcomes the driver before the countdown', 10000);
+  assert.equal(await context.evaluate(page.storage), before, 'opening the night card saves nothing');
   await context.evaluate(page.start);
   await context.waitFor(page.hud, 'the Car Crush HUD', 60000);
   assert.ok(await context.evaluate(page.onShowTruck), 'the night is on the Bowl in the lent show truck');
   await context.waitFor(page.drawn, 'the Bowl stadium and the Titan are drawn', 120000);
   await picture(context, 'bowl-night-car-crush-start');
+  assert.ok(await context.evaluate(page.spaceForTruck), 'the standard route map, lap number, gear and mirror are out of view');
+  await key(context, 'KeyH', 'keydown');
+  await key(context, 'KeyH', 'keyup');
+  await context.waitFor(page.tricks, 'H pauses and opens all eight pictured tricks', 10000);
+  await key(context, 'KeyH', 'keydown');
+  await key(context, 'KeyH', 'keyup');
+  await context.waitFor(page.resumed, 'H closes the trick card and continues the event', 10000);
   await key(context, 'KeyW', 'keydown');
   try { await waitForCard(context, 'the Car Crush ends', 180000); }
   finally { await key(context, 'KeyW', 'keyup'); }

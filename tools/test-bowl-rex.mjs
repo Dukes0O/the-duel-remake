@@ -260,14 +260,14 @@ function fightAt(level, seed) {
   assert.ok(duel.startBowlNight({night: 5, cpuDifficulty: level, seed}), 'night five starts');
   const night = duel.state.bowlNight;
   night.show.eventIndex = SHOW_NIGHTS[4].events.indexOf(REX_EVENT); night.phase = 'result';
-  duel.continueBowlNight();
-  assert.equal(night.event.type, REX_EVENT);
   const rng = makeRng(seed * 7919 + 13), seen = [], result = {won: false, events: [], hud: null, captions: []};
   duel.onChange((_, ev) => {
     if (ev.bowlRex) result.events.push(ev.bowlRex.type);
     if (ev.bowlCaption) result.captions.push(ev.bowlCaption.id);
     if (ev.bowlEventResult) result.outcome = ev.bowlEventResult;
   });
+  duel.continueBowlNight();
+  assert.equal(night.event.type, REX_EVENT);
   const reaction = rng.range(.6, 1.1);
   const lanePick = () => P.rail - P.side * rng.range(9.5, 12.5);
   let pace = rng.range(33, 40), lane = lanePick(), wobble = rng.range(0, Math.PI * 2), lastLap = 0;

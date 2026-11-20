@@ -19,7 +19,7 @@ export const page = {
   openPicker: `(() => { document.querySelector('#show-night-visit').click(); return true; })()`,
   picker: `(() => ['2', '3'].every(night => !!document.querySelector('[data-action="show-night-start"][data-night="' + night + '"]')))()`,
   easy: `(() => { document.querySelector('[data-action="show-night-level"][data-level="easy"]').click(); return true; })()`,
-  start: night => `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="${night}"]').click(); return true; })()`,
+  start: night => `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="${night}"]').click(); document.querySelector('[data-action="show-night-confirm"]').click(); return true; })()`,
   // Straight to the night's last event, as a won Car Crush and Freestyle would.
   skipTo: `(() => { const app = window.__qaApp, night = app.duel.state.bowlNight;
     night.show = {...night.show, eventIndex: 2}; night.phase = 'result'; return app.continueShowNight(); })()`,
@@ -52,7 +52,7 @@ export const page = {
   raceAssist: `(() => { window.__qaApp.autopilot = true; return true; })()`,
   manual: `(() => { window.__qaApp.autopilot = false; return true; })()`,
   finishSignal: `(() => ['player','rival'].includes(window.__qaApp.duel.state.bowlNight?.event?.finishWinner))()`,
-  truckHud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('LAST TRUCK ROLLING') && hud.textContent.includes('Knock out Big Kettle, Tin Lizard and Old Bess'); })()`,
+  truckHud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('LAST TRUCK ROLLING') && hud.textContent.includes('Outlast Big Kettle, Tin Lizard, Old Bess.'); })()`,
   // The scoreboard's markup is always in the page, hidden; what must not show is the board or the word on screen.
   arenaHidden: `(() => { const board = document.querySelector('#arena-board'); return (!board || board.hidden) && !document.body.innerText.includes('SCRAPDOME'); })()`,
   fourTrucks: `(() => { const s = window.__qaApp.duel.state; return s.arena?.mode === 'last-car-rolling' && s.opponents.length === 3 && s.opponents.every(truck => truck.car === 'titan_monster'); })()`,

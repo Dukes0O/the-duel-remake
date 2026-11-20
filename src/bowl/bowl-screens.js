@@ -7,20 +7,57 @@ import {bowlHudView, crushRowName} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {BOWL_RIVALS} from './bowl-rivals.js';
+import {BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
 const button = (label, action, extra = '', primary = false) =>
   `<button type="button" class="${primary ? 'primary-action' : 'secondary-action'}" data-action="${action}"${extra}>${label}</button>`;
-const clock = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
-
-export function createBowlScreens({app, ui, escapeHTML}) {
-  let pickerFrom = null, level = null, hudElement = null, hudKey = '';
+export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
+  let pickerFrom = null, level = null, openingNight = null, help = null;
+  const renderHud = createBowlHud({stage: ui.stage, app, projectPlayer});
   const turns = createTurnScreens({app, escapeHTML});
   const say = text => `<p>${escapeHTML(text)}</p>`;
   // A card shows Big Mo's line for what just happened, whatever he is still saying aloud.
   const moLine = id => BIG_MO[id] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[id])}</p>` : '';
   const night = () => app.duel.state.bowlNight ?? null;
+
+  const eventIsRunning = state => !!state.bowlNight?.event && ['countdown', 'racing'].includes(state.status);
+  function closeHelp() {
+    const opened = help;
+    help = null;
+    if (opened?.resume && app.duel.state === opened.state && opened.state.paused) app.togglePause();
+  }
+  ui.stage.ownerDocument.defaultView.addEventListener('keydown', event => {
+    const state = app.duel.state;
+    const showing = help?.state === state && state.paused;
+    if (!eventIsRunning(state) || event.code !== 'KeyH' && !(event.code === 'Escape' && showing)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (event.repeat) return;
+    if (showing) return closeHelp();
+    help = {state, resume: !state.paused};
+    if (help.resume) app.togglePause();
+    playBowlHudCue(app, 'bowl.card.open');
+  }, {capture: true, signal: app._inputEvents?.signal});
+
+  function trickCard(state) {
+    const landed = state.bowlNight.trickKinds;
+    return `<section class="bowl-panel bowl-trick-card" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
+      <h2 id="bowl-title">Trick card</h2>
+      <ul>${BOWL_TRICK_GUIDE.map(entry => `<li>${bowlTrickEntryMarkup(entry, landed.includes(entry.kind))}</li>`).join('')}</ul>
+      <footer>${button(help.resume ? 'Keep driving' : 'Back to pause', 'show-night-tricks-close', '', true)}</footer>
+    </section>`;
+  }
+
+  function openingCard() {
+    const choices = app.showNightChoices?.();
+    return `<section class="bowl-panel bowl-opening" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
+      <h2 id="bowl-title">Night ${openingNight}</h2>
+      ${bowlOpeningLines(openingNight, choices?.lent).map(line => `<p class="bowl-mo">${escapeHTML(line)}</p>`).join('')}
+      <footer>${button('Start the night', 'show-night-confirm', '', true)}${button('Back to nights', 'show-night-back')}</footer>
+    </section>`;
+  }
 
   function picker() {
     const choices = app.showNightChoices?.();
@@ -68,60 +105,60 @@ export function createBowlScreens({app, ui, escapeHTML}) {
     if (result.lent) lines.push(WORDS.nightTruckBack);
 
     if (result.events.some(entry => entry.event === 'scrapasaurus')) lines.push(WORDS.eventRexYard); // BOWL-REX-FIGHT
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="night"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.nightTitle(result.night)}</h2></header>${moLine('night.won')}<ul class="bowl-scores">${result.events.map(entry => `<li><span>${escapeHTML(BOWL_EVENT_NAMES[entry.event] ?? entry.event)}</span><b>${entry.score.toLocaleString()}</b></li>`).join('')}</ul>${lines.map(say).join('')}<footer>${button(WORDS.pickButton, 'show-night-pick', '', true)}${leaveButtons()}</footer></section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="night"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.nightTitle(result.night)}</h2></header>${moLine('night.won')}${moLine(`rex.seen.${result.night}`)}<ul class="bowl-scores">${result.events.map(entry => `<li><span>${escapeHTML(BOWL_EVENT_NAMES[entry.event] ?? entry.event)}</span><b>${entry.score.toLocaleString()}</b></li>`).join('')}</ul>${lines.map(say).join('')}<footer>${button(WORDS.pickButton, 'show-night-pick', '', true)}${leaveButtons()}</footer></section>`;
   }
 
   return {
     // The parts of the screen that change what the modal layer shows.
     key(state) {
       const show = night();
-      return `${pickerFrom ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${state.status === 'bowl_break'}:${turns.key(state)}`;
+      return `${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${bowlResultReady(show)}:${help?.state === state}:${turns.key(state)}`;
     },
     modal(state, {yardActive = false} = {}) {
+      if (eventIsRunning(state) && state.paused && help?.state === state) return trickCard(state);
+      if (state.bowlNight && state.status === 'bowl_break' && !bowlResultReady(state.bowlNight)) return '';
       // BOWL-TURNS: a Turn Show, or its setup, has its own screens.
       const turn = turns.modal(state, {yardActive});
       if (turn) { pickerFrom = null; return turn; }
       if (state.bowlNight?.turn || app.turnShowView?.()) return null;
       if (state.bowlNight && state.status === 'bowl_break')
         return state.bowlNight.phase === 'complete' ? nightCard(state) : eventCard(state);
-      if (pickerFrom && (state.status === 'menu' || yardActive)) return picker();
-      if (pickerFrom && state.status !== 'menu' && !yardActive) pickerFrom = null;
+      if (pickerFrom && (state.status === 'menu' || yardActive)) return openingNight ? openingCard() : picker();
+      if (pickerFrom && state.status !== 'menu' && !yardActive) { pickerFrom = null; openingNight = null; }
       return null;
     },
     // The race HUD's Show Night part, drawn every frame from the state.
     hud(state) {
-      const view = ['countdown', 'racing'].includes(state.status) && !state.paused ? bowlHudView(state, app.duel.course) : null;
-      ui.stage.classList.toggle('bowl-night-active', !!state.bowlNight && state.status !== 'menu');
-      if (!hudElement) {
-        hudElement = document.createElement('section');
-        hudElement.className = 'bowl-hud'; hudElement.setAttribute('aria-label', 'Show Night');
-        hudElement.innerHTML = '<p class="bowl-hud-event"></p><p class="bowl-hud-goal"></p><div class="bowl-hud-numbers"><span class="bowl-hud-score"></span><span class="bowl-hud-clock"></span></div><label class="bowl-hud-crowd">CROWD <meter min="0" max="100" value="0"></meter></label><p class="bowl-hud-mo" role="status"></p>';
-        ui.stage.append(hudElement);
-      }
-      hudElement.hidden = !view;
-      if (!view) return;
-      const key = [view.driver, view.eventNumber, view.name, view.goal, view.score, view.target, view.timeLeft == null ? '' : Math.ceil(view.timeLeft), view.crowd, view.caption].join('|');
-      if (key === hudKey) return;
-      hudKey = key;
-      hudElement.querySelector('.bowl-hud-event').textContent = `${view.driver ? `${BOWL_TURN_LINES.hudDriver(view.driver)} · ` : ''}EVENT ${view.eventNumber} OF ${view.eventCount} · ${view.name.toUpperCase()}`;
-      hudElement.querySelector('.bowl-hud-goal').textContent = view.goal;
-      hudElement.querySelector('.bowl-hud-score').textContent = `${view.score.toLocaleString()} POINTS`;
-      hudElement.querySelector('.bowl-hud-clock').textContent = view.timeLeft == null ? '' : clock(Math.ceil(view.timeLeft));
-      hudElement.querySelector('meter').value = view.crowd;
-      hudElement.querySelector('.bowl-hud-mo').textContent = view.caption ? `BIG MO: ${view.caption}` : '';
+      const show = state.bowlNight;
+      if (help && (help.state !== state || !state.paused)) help = null;
+      const active = !!show && state.status !== 'menu';
+      ui.stage.classList.toggle('bowl-night-active', active);
+      const watchingFinish = state.status === 'bowl_break' && !bowlResultReady(show);
+      const course = app.duel.course;
+      const view = !state.paused && (eventIsRunning(state) || watchingFinish) ? bowlHudView(state, course) : null;
+      renderHud(state, course, bowlStrip(state, view, id => BOWL_RIVALS[id]?.name));
     },
     // A Show Night button. Returns true when it was one.
     handle(target) {
       const action = target.dataset.action;
-      if (action === 'show-turns-open') { pickerFrom = null; turns.open(); return true; }
+      if (action === 'show-turns-open') { pickerFrom = null; openingNight = null; turns.open(); return true; }
       if (turns.handle(target)) return true;
       if (!action?.startsWith('show-night-')) return false;
-      if (action === 'show-night-open') { pickerFrom = target.dataset.from === 'yard' ? 'yard' : 'menu'; level = null; app.clearShowNightMessage?.(); }
-      else if (action === 'show-night-close') pickerFrom = null;
+      if (action === 'show-night-open') {
+        pickerFrom = target.dataset.from === 'yard' ? 'yard' : 'menu';
+        openingNight = level = null;
+        app.clearShowNightMessage?.();
+      } else if (action === 'show-night-close') { pickerFrom = null; openingNight = null; }
       else if (action === 'show-night-level') level = target.dataset.level;
-      else if (action === 'show-night-start') {
-        if (app.startShowNight?.(Number(target.dataset.night), {from: pickerFrom ?? 'menu', cpuDifficulty: level})) pickerFrom = null;
-      } else if (action === 'show-night-next') app.continueShowNight?.();
+      else if (action === 'show-night-start') openingNight = Number(target.dataset.night);
+      else if (action === 'show-night-back') openingNight = null;
+      else if (action === 'show-night-confirm' && openingNight) {
+        if (app.startShowNight?.(openingNight, {from: pickerFrom ?? 'menu', cpuDifficulty: level})) {
+          pickerFrom = null;
+          openingNight = null;
+        }
+      } else if (action === 'show-night-tricks-close') closeHelp();
+      else if (action === 'show-night-next') app.continueShowNight?.();
       else if (action === 'show-night-leave') { pickerFrom = null; app.leaveShowNight?.(target.dataset.to); }
       else if (action === 'show-night-pick') {
         const from = app.showNightRun?.()?.from ?? 'menu';

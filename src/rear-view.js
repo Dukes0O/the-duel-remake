@@ -7,7 +7,9 @@ export const REAR_VIEW_INTERVAL_MS = 1000 / 30;
 // crane's hook passes where the mirror hangs.
 // A world job holding at its end, or on a conversation, fills the picture without the mirror.
 const worldJobHidesMirror = job => !!job && (!!job.arrivalHold || job.job?.steps?.[job.job.stepIndex]?.kind === 'talk');
-export const rearViewActive = state => !state?.onFoot && !(state?.arena?.mode === 'world-job' && worldJobHidesMirror(state.arena.worldJob)) &&
+export const rearViewActive = (state, course) => !state?.onFoot &&
+  !(state?.bowlNight && course?.def?.bowl) &&
+  !(state?.arena?.mode === 'world-job' && worldJobHidesMirror(state.arena.worldJob)) &&
   ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
 
 // CSS owns the frame placement; WebGL uses the same measured interior. The
@@ -68,7 +70,7 @@ export function createRearView({ renderer, scene, host }) {
     resize() { dirty = true; },
     render({ state, player, course, now = performance.now() }) {
       if (disposed) return false;
-      if (!rearViewActive(state) || !player || !course) { hide(); return false; }
+      if (!rearViewActive(state, course) || !player || !course) { hide(); return false; }
       if (frame.hidden) { frame.hidden = false; dirty = true; }
       if (previousCourse !== course || previousPlayer !== player) { previousCourse = course; previousPlayer = player; dirty = true; }
       if (dirty && !measure()) { host.dataset.rearView = 'unavailable'; return false; }
