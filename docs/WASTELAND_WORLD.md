@@ -296,6 +296,14 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
 - **Bowl is a course, not an arena mode.** `src/bowl/bowl-course.js`, in the same way as
   `titan-arena`, with scoring in `src/bowl/bowl-show.js` on the stunt trial's pattern. Bowl
   physics changes are behind `def.bowl`, so no replay or other course moves.
+- **Show Night** (BOWL-HOOKS) runs in `src/bowl/bowl-night.js`: `startBowlNight` loads each event on the Bowl
+  through the Duel (`_bowlEventCourse`), `stepBowlNight` and `observeBowlNight` turn the race's own facts (jumps,
+  launches off cars, crushes, BOWL-AIR flips, donuts) into `bowl-show.js` scores, and the app settles the purse
+  once with `settleShowNight`. Each event is a registered runner (`registerBowlEventRunner`): BOWL-RIVALS adds
+  Last Truck Rolling and replaces Side by Side's one computer truck, BOWL-TURNS runs the same runners one player
+  at a time, BOWL-REX-FIGHT adds night five's fight. The Bowl is out of the circuit list: Show Night is the only
+  way in, so every drive there is in a truck, the player's own Titan or the show's, lent and never saved.
+  Every word on screen is in `src/bowl/bowl-lines.js`.
 - **Air control** only when `def.bowl`, and the launch off cars (FUN-TITAN-LAUNCH) is
   unchanged and tested.
 - **Switches** (`src/feature-flags.js`): `gear-find` (on at its release), `scablands`,
