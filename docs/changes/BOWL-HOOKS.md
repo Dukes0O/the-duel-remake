@@ -13,7 +13,7 @@
 
 **Review.** An independent review of the pay and save path found and confirmed three faults, all fixed: a Lab lap saved during a night, the menu's seed not restored after a night, and a purse written into a newer Wasteland save.
 
-**Director's laptop check.** The first picture was taken before the Bowl was drawn (the menu's last frame under the new HUD). The scenario now waits for the stadium and the Titan, and its picture names are lower case. An App-level check (`test-bowl-night`, 226 checks) covers the course, car, save and way out. Chromium here showed the Bowl and the Titan. Two faults were fixed: the Car Crush started in the ring's tight bend, so it now starts at 78, and a truck grinding a wall never ended its run. The crowd gains 0.15 a point and loses 6 percent a second, with Freestyle targets at 500, 800 and 1,100.
+**Director's laptop check.** The first picture was taken before the Bowl was drawn (the menu's last frame under the new HUD). The scenario now waits for the stadium and the Titan, and its picture names are lower case. An App-level check (`test-bowl-night`, 226 checks) covers the course, car, save and way out. The lane suites picked since 7c2ef0c pass on 9fde19c (31 of 31), and so does the build. Chromium here showed the Bowl and the Titan. Two faults were fixed: the Car Crush started in the ring's tight bend, so it now starts at 78, and a truck grinding a wall never ended its run. The crowd gains 0.15 a point and loses 6 percent a second, with Freestyle targets at 500, 800 and 1,100.
 
 **Changed assertions.** None. A new check in `test-bowl-night` covers the newer-save refusal added to `bowl-save.js`.
 
