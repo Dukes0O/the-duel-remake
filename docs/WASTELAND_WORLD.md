@@ -246,6 +246,10 @@ scores most.
 **Rival trucks**, each the Titan's body with its own paint and bolt-ons: **Rust
 Rhino** (horn), **Big Kettle** (boiler and steam), **Tin Lizard** (tail), **Old Bess**
 (Moss's cousin), and **Dragon Wagon** (breathes fire on the ramps).
+Each drives in a way of their own (BOWL-RIVALS): Old Bess is slow off the line and never gives up; Big Kettle
+takes a long time to get going and then pushes everything aside; Rust Rhino charges; Tin Lizard is quick and runs
+away when hurt; Dragon Wagon is the fastest. Old Bess races night one's Side by Side and Rust Rhino night two's;
+nights three to five put three of them in the Bowl with the player.
 
 **Night five: the Scrapasaurus.** A two-storey dinosaur made of crushed cars, walking
 on rails round the Bowl. It eats junk cars and breathes fire. Jump and land on the
@@ -304,6 +308,16 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   at a time, BOWL-REX-FIGHT adds night five's fight. The Bowl is out of the circuit list: Show Night is the only
   way in, so every drive there is in a truck, the player's own Titan or the show's, lent and never saved.
   Every word on screen is in `src/bowl/bowl-lines.js`.
+- **Rivals** (BOWL-RIVALS) are data in `src/bowl/bowl-rivals.js`: name, way of driving (one of the arena's brains
+  and a start delay) and top pace in mph for Easy, Medium and Hard, and who drives on which night. Side by Side
+  keeps the duel's rival rules on the inside lane, its speed held to the rival's pace. Last Truck Rolling loads the
+  Bowl as the arena's own fight (`_loadArena`, mode `last-car-rolling`): its teams, computer drivers and wreck
+  credit, with no weapons and no crates, the same show armor for every truck, and a wrecked truck knocked out for
+  the rest of the event. The show's two-minute clock decides it: the last truck rolling wins, or at the clock the
+  hardest hitter still rolling. Rivals' rams are scaled by level (`BOWL_RIVAL_HITS`), and the player's nose does
+  not tip in the air there, because the arena turns a roof landing into a knock. Open points are in
+  `docs/board/questions/BOWL-RIVALS.md` until the card merges. `tools/test-bowl-rivals.mjs` holds Kyle's rule:
+  a child-pace driver wins every Easy event at least 8 times in 10.
 - **Air control** only when `def.bowl`, and the launch off cars (FUN-TITAN-LAUNCH) is
   unchanged and tested.
 - **Switches** (`src/feature-flags.js`): `gear-find` (on at its release), `scablands`,
