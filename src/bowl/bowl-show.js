@@ -34,9 +34,22 @@ const CROWD_GAIN_PER_POINT = 0.2;
 // Big Jump adds 72. A jump without a measured height scores as before.
 const heightBonus = event => Math.max(0, finite(event.heightMeters) - 1) * 8;
 
-// Event protocol: landedJump {durationSeconds, distanceMeters, heightMeters?, pitchTurns?},
-// carLaunch {durationSeconds, distanceMeters, heightMeters?, pitchTurns?}, crush {},
-// donut {seconds}, and crowdTick {seconds}. Only completed event facts count.
+const AIR_TRICK_POINTS = {frontFlip: 50, backflip: 50, spin: 30, barrelRoll: 60, sideFlip: 80};
+
+export function landingPoints(kind, turns, combo, landing) {
+  if (landing === 'slam') return 0;
+  return AIR_TRICK_POINTS[kind] * turns ** 2 * (1 + .5 * (combo - 1)) * (landing === 'slide' ? .5 : 1);
+}
+
+export function trickVariety(history, kind) {
+  const fresh = !history.seen.has(kind);
+  history.repeat = history.last === kind ? Math.max(.4, history.repeat * .8) : 1;
+  history.last = kind;
+  history.seen.add(kind);
+  return {fresh, repeat: history.repeat};
+}
+
+// A completed trick carries its base points; the night adds variety and crowd.
 export function scoreStuntEvent(event, crowd = 0) {
   if (!event || typeof event !== 'object') return {points: 0, crowd: clamp(finite(crowd), 0, 100)};
   const meter = clamp(finite(crowd), 0, 100);
@@ -51,13 +64,9 @@ export function scoreStuntEvent(event, crowd = 0) {
     case 'crush':
       base = 35;
       break;
-    case 'donut':
-      // Donuts are event facts from turning on the spot, not steering input.
-      base = Math.max(0, finite(event.seconds)) * 9;
-      break;
-    case 'flip':
-      // BOWL-AIR supplies landed pitch turns; only a full landed rotation counts.
-      base = Math.floor(Math.abs(finite(event.pitchTurns))) * 30;
+    case 'bowlTrick':
+      if (event.landing === 'slam') return {points: 0, crowd: meter * 2 / 3};
+      base = finite(event.points) * (event.fresh ? 1.5 : event.repeat ?? 1);
       break;
     default:
       return {points: 0, crowd: meter};

@@ -17,7 +17,7 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongP
 import {FIELD, nitroLocked} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
-import {stepBowlAir} from './bowl/bowl-air.js';
+import {carriedSteer, landBowlTricks, stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -128,13 +128,21 @@ export function _drive(dt) {
   s.prevLateral = s.lateral;
   s.prevAirHeight = s.airHeight || 0;
   s.prevGroundHeight = s.groundHeight;
+  const tricks = tricksEnabled(this, s);
+  const showFlight = tricks && s.airborne;
+  const showGround = tricks && s.input.boost && (s.input.brake || s.input.throttle && (s.bowlGroundTrick || s.speedMph < 15));
+  // Balancing on one axle uses a gentle pull so there is time to hold the pose.
+  const balancing = showGround && Math.abs(s.input.steer) <= .5 && (s.speedMph < 10 || s.bowlGroundTrick === 'wheelie');
+  const throttle = showFlight ? 0 : balancing ? s.input.throttle * .12 : s.input.throttle;
+  const brake = showFlight ? 0 : showGround ? s.input.brake * .22 : s.input.brake;
+  const steer = showFlight ? carriedSteer(s) : s.input.steer;
   const previousGear = s.gear;
   // S / Down / LT brakes first, then backs up after a deliberate hold at
   // rest. This works in both transmissions; Q/E still shift forward gears.
   // Signed speed preserves the chassis heading while travelling backwards.
   if (s.speedMph < 0) s.gear = -1;
   else if (s.speedMph > 0 && s.gear < 0) s.gear = 0;
-  if (s.gear >= 0 && s.speedMph === 0 && s.input.brake > .1 && s.input.throttle === 0) {
+  if (s.gear >= 0 && s.speedMph === 0 && brake > .1 && throttle === 0) {
     s.reverseHoldSec += dt;
     if (s.reverseHoldSec + 1e-9 >= DRIVE.reverseHoldSec) s.gear = -1;
   } else s.reverseHoldSec = 0;
@@ -163,29 +171,29 @@ export function _drive(dt) {
   const gearMax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
   if (reversing) {
-    if (s.input.throttle > 0) {
-      s.speedMph = Math.min(0, s.speedMph + DRIVE.brakeAccel * car.braking * s.input.throttle * road.grip * dt);
+    if (throttle > 0) {
+      s.speedMph = Math.min(0, s.speedMph + DRIVE.brakeAccel * car.braking * throttle * road.grip * dt);
       if (s.speedMph === 0) { s.gear = 0; s.reverseHoldSec = 0; }
-    } else if (s.input.brake > 0) s.speedMph -= seaFloor
-      ? DRIVE.reverseAccel * s.input.brake * dt * road.accelerationShare
-      : DRIVE.reverseAccel * s.input.brake * dt;
-    s.speedMph = Math.min(0, s.speedMph + DRIVE.dragCoeff * dt * (s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1));
+    } else if (brake > 0) s.speedMph -= seaFloor
+      ? DRIVE.reverseAccel * brake * dt * road.accelerationShare
+      : DRIVE.reverseAccel * brake * dt;
+    s.speedMph = Math.min(0, s.speedMph + DRIVE.dragCoeff * dt * (brake > 0 && throttle === 0 ? .2 : 1));
   } else {
-    if (s.input.throttle > 0) {
+    if (throttle > 0) {
       const ceil = Math.min(car.topSpeed * nitroSpeedShare * road.topShare, gearMax * DRIVE.gearCeilFrac, road.topSpeedMph ?? Infinity);
       if (s.speedMph < ceil) {
         const launch = launchScale(this.course, s.crashLaunchSec > 0, s.tyreSlipRules === true);
         // ENGINE-CURVE (dev switch, latched per race): the pull is the engine's at these revs times the gear's multiplication.
-        if (s.engineCurve === true && car.electric !== true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car, car.factoryMaxed ? 0 : s.upgrades?.engine | 0), gears: car.gears, gear: s.gear, revs: s.revs }) * s.input.throttle * dt * accelerationShare;
-        else s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launch * accelerationShare;
+        if (s.engineCurve === true && car.electric !== true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car, car.factoryMaxed ? 0 : s.upgrades?.engine | 0), gears: car.gears, gear: s.gear, revs: s.revs }) * throttle * dt * accelerationShare;
+        else s.speedMph += car.accel * accelFactor * throttle * dt * launch * accelerationShare;
       }
     }
-    if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
-    s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
+    if (brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * brake * road.grip * dt;
+    s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (throttle > 0 ? 0.2 : 1));
   }
   if (seaFloor) {
-    const turnDrag = DRIVE.dragCoeff * (road.turningDragShare - 1) * Math.min(1, Math.abs(s.input.steer)) * dt
-      * (reversing ? s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1 : s.input.throttle > 0 ? .2 : 1);
+    const turnDrag = DRIVE.dragCoeff * (road.turningDragShare - 1) * Math.min(1, Math.abs(steer)) * dt
+      * (reversing ? brake > 0 && throttle === 0 ? .2 : 1 : throttle > 0 ? .2 : 1);
     s.speedMph = Math.sign(s.speedMph) * Math.max(0, Math.abs(s.speedMph) - turnDrag);
   }
   if (s.gear !== previousGear) this.emit({ shift: s.gear });
@@ -211,7 +219,7 @@ export function _drive(dt) {
   const wasInWater = (s.waterDepth || 0) >= .05;
   s.surfaceMud = mud;
   s.waterDepth = waterDepth;
-  s.mudWheelSpin = mud * clamp(s.input.throttle || 0, 0, 1) *
+  s.mudWheelSpin = mud * clamp(throttle || 0, 0, 1) *
     clamp(1 - Math.abs(s.speedMph) / (car.offRoadSpeed ?? 68), 0, 1);
   if(waterDepth >= .05 && !wasInWater){
     const position = this.course.groundAt(s.s, s.lateral);
@@ -221,7 +229,7 @@ export function _drive(dt) {
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
-  s.boosting = !(hazardsActive(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0 && !nitroLocked(s, s.field);
+  s.boosting = !showFlight && !showGround && !(hazardsActive(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && brake === 0 && !nitroLocked(s, s.field);
   if (s.boosting) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);
@@ -237,7 +245,7 @@ export function _drive(dt) {
   if (s.status === 'exploring' &&
       (s.hiddenRoadJourney?.departed || s.muddyHollowDeparture?.departed)) {
     s.overrevSec = 0;
-  } else if (!reversing && !d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && s.input.throttle > 0) {
+  } else if (!reversing && !d.autoShift && d.engineBlow && s.revs > DRIVE.overRevFrac && throttle > 0) {
     s.overrevSec += dt;
     if (s.overrevSec > DRIVE.overRevBlowSec) { this._crash('engine_blew'); return; }
   } else {
@@ -255,14 +263,14 @@ export function _drive(dt) {
   const roughTarget = surface.preparedGravel ? surface.roughness : s.offRoad ? Math.min(1, .32 + shoulderDepth * .12 + s.offRoadTime * .2) * car.roughnessScale : 0;
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
-  s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
+  s.steerVisual += (steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
   const fan = car.fanGrip && this.featureFlags?.enabled('lab') === true;
-  const gripNow = car.tune || fan ? tunedGrip(car, s.speedMph, s.input.brake, {fan: !!fan}) : car.grip;
+  const gripNow = car.tune || fan ? tunedGrip(car, s.speedMph, brake, {fan: !!fan}) : car.grip;
   let targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), gripNow * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
   const tyreRules = s.tyreSlipRules === true && this.course.def.arena !== true && !s.onFoot;
   if (tyreRules) {
     const {peakYaw, steerGain} = tyreSlipSteering({speedMph: Math.abs(s.speedMph),
-      grip: gripNow * (hazardsActive(this) ? carGrip(s) : 1), traction, car, brake: s.input.brake});
+      grip: gripNow * (hazardsActive(this) ? carGrip(s) : 1), traction, car, brake: brake});
     const demand = Math.abs(s.steerVisual) * steerGain;
     s.tyreSlip = stepTyreSlip(s.tyreSlip, peakYaw > 0 ? demand / peakYaw : 0, dt,
       {reversing, airborne: s.airborne, knock: !!s.knock, speedMph: s.speedMph});
@@ -274,8 +282,8 @@ export function _drive(dt) {
   // release or counter-steer settles the slide without steering toward the road.
   const driftSpeed=Math.max(0,Math.min(1,(s.speedMph-38)/85));
   const slipTarget=tyreRules ? tyreSlipAngle(s.tyreSlip, s.steerVisual, surface.preparedGravel?'gravel':s.offRoad?'offroad':'road')
-    : -s.steerVisual*driftSpeed*(surface.preparedGravel?.25:s.offRoad?.31:.21)*(1+s.input.brake*.6);
-  s.slipAngle+=(slipTarget-s.slipAngle)*(1-Math.exp(-(s.input.steer*s.slipAngle>0?13:7)*dt));
+    : -s.steerVisual*driftSpeed*(surface.preparedGravel?.25:s.offRoad?.31:.21)*(1+brake*.6);
+  s.slipAngle+=(slipTarget-s.slipAngle)*(1-Math.exp(-(steer*s.slipAngle>0?13:7)*dt));
   s.drifting=Math.abs(s.slipAngle)>.075&&s.speedMph>40;
   if (tyreRules && !reversing && !s.airborne && s.speedMph > TYRE_SLIP.minSpeedMph && (surface.mainRoad || surface.preparedGravel))
     s.speedMph = Math.max(0, s.speedMph - tyreSlipScrub(s.tyreSlip, s.difficulty) * dt);
@@ -436,7 +444,7 @@ function rampLaunchGrade(course) {
 }
 
 export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
-  stepBowlAir(this, actor, dt);
+  stepBowlTricks(this, actor, dt);
   // Idle ram speed can be zero on arena cars; only Mortar owns this delegation.
   if (carMortarHop(actor)) {
     if (actor._ramVerticalSpeed != null && (actor._ramVerticalSpeed > 0 || actor.airHeight > 0)) {
@@ -542,6 +550,8 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
   if (scablands) actor.groundHeight = ground;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
+  landBowlTricks(this, actor);
+  if (actor.bowlLanding === 'slam' && tricksEnabled(this, actor)) return;
   if (seaFloor) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });
     return;

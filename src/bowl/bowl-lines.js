@@ -23,6 +23,11 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.fall': 'combat.explosion',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'world.furnace.horn',    // it walks out through the car park gate
   'bowl.rex.drop': 'vehicle.crash',         // it drops a junk car on its rails to launch off
+  'bowl.trick.land': 'interface.bonus',
+  'bowl.trick.new': 'interface.win',
+  'bowl.trick.slam': 'vehicle.crash',
+  'bowl.trick.cyclone': 'crowd.cheer',
+  // bowl.trick.wheelie is the engine note; it has no stand-in.
   'bowl.wall.bounce': 'heli.setdown.thud',
   'bowl.wall.hard': 'vehicle.crash',
   'bowl.wall.big': 'vehicle.crash-impact',

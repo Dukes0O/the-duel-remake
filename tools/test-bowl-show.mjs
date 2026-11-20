@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {BOWL_EVENTS, SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
+import {BOWL_EVENTS, SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle, scoreStuntEvent, landingPoints, trickVariety} from '../src/bowl/bowl-show.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -8,8 +8,8 @@ const scripted = Object.freeze([
   Object.freeze({type: 'landedJump', atSeconds: 1, durationSeconds: 1.5, distanceMeters: 24}),
   Object.freeze({type: 'crush', atSeconds: 3}),
   Object.freeze({type: 'carLaunch', atSeconds: 5, durationSeconds: 2, distanceMeters: 38}),
-  Object.freeze({type: 'donut', atSeconds: 9, seconds: 2}),
-  Object.freeze({type: 'flip', atSeconds: 13, pitchTurns: 1}),
+  Object.freeze({type: 'bowlTrick', kind: 'donut', atSeconds: 9, points: 15, fresh: true}),
+  Object.freeze({type: 'bowlTrick', kind: 'backflip', atSeconds: 13, points: 50, fresh: true}),
   Object.freeze({type: 'crowdTick', atSeconds: 17, seconds: 5}),
 ]);
 
@@ -32,8 +32,20 @@ check(scripted[0].distanceMeters === 24, 'scoring does not mutate source events'
 
 const equalJump = {durationSeconds: 2, distanceMeters: 30};
 check(scoreStuntEvent({type: 'carLaunch', ...equalJump}).points > scoreStuntEvent({type: 'landedJump', ...equalJump}).points, 'launching off a car outscores an equal ramp jump');
-check(scoreStuntEvent({type: 'flip', pitchTurns: 0.9}).points === 0 && scoreStuntEvent({type: 'flip', pitchTurns: 1}).points > 0, 'only a landed full pitch turn scores a flip');
-check(scoreStuntEvent({type: 'donut', seconds: 2}).points > 0, 'a completed on-the-spot donut scores');
+const trick = {type: 'bowlTrick', kind: 'backflip', points: 50};
+check(scoreStuntEvent({...trick, fresh: true}).points === 75, 'first of a kind pays 1.5 times');
+check(scoreStuntEvent({...trick, repeat: .8}).points === 40, 'a repeat pays four fifths');
+check(scoreStuntEvent({...trick, repeat: .4}).points === 20, 'repeat floor pays two fifths');
+check(scoreStuntEvent({...trick, landing: 'slam'}, 90).crowd === 60, 'a Slam costs a third of the crowd');
+check([1, 2, 3].every((turns, i) => landingPoints('backflip', turns, 1, 'clean') === [50, 200, 450][i]), 'one, two and three flips pay their squared turn count');
+check([1, 2, 3, 4].every(combo => landingPoints('spin', 1, combo, 'clean') === 30 * (combo + 1) / 2), 'each extra kind raises the whole combo multiplier by half');
+const history = {seen: new Set(), repeat: 1};
+check(trickVariety(history, 'spin').fresh && trickVariety(history, 'spin').repeat === .8, 'first spin is new and its repeat fades');
+for (let i = 0; i < 8; i++) trickVariety(history, 'spin');
+check(history.repeat === .4, 'a run of spins reaches the floor');
+trickVariety(history, 'backflip');
+const spin = trickVariety(history, 'spin');
+check(!spin.fresh && spin.repeat === 1, 'another kind resets the repeat but never awards NEW twice');
 const highCrowd = scoreStuntEvent({type: 'crush'}, 75);
 check(highCrowd.points > scoreStuntEvent({type: 'crush'}, 0).points, 'a higher crowd meter increases event score');
 check(crowdAfter(highCrowd.crowd, 10) < highCrowd.crowd, 'crowd meter falls during a quiet interval');

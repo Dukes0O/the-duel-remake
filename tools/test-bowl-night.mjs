@@ -90,6 +90,22 @@ const showDuel = (enabled = true) => {
   ok(duel.state.s === bowlLayout(duel.course).crush.startS && duel.state.status === 'countdown', 'the retry starts at the head of the crush line');
 }
 
+// Keep the original 32 mph approach as a clearance check. At that pace the
+// centre kicker sends the truck past the first car well inside its lane.
+{
+  const duel = showDuel();
+  duel.startBowlNight({night: 1, eventIndex: 1, cpuDifficulty: 'easy', seed: 1989});
+  const s = duel.state, car = duel.state.traffic[0];
+  for (let i = 0; i < 1200 && s.s < car.s; i++) {
+    const line = s.s > car.s - 14 && s.s < car.s + 4 ? car.lateral : 0;
+    duel.setInput(s.airborne ? {throttle: 0, brake: 0, steer: 0, boost: false} :
+      {throttle: +(s.speedMph < 32), brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + s.headingError * 1.5)), boost: false});
+    duel.step(DT);
+  }
+  ok(s.s >= car.s && Math.abs(s.lateral - car.lateral) > 7 && !car.crushed,
+    'at 32 mph the truck passes the parked car on a separate line without crushing it');
+}
+
 // One scripted night, the way in to the results: night one on Easy in the lent truck.
 // The driver keeps to the middle of the floor, and in Freestyle swings over to the
 // first parked car to launch off it.
@@ -118,7 +134,8 @@ const run = (() => {
     const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : s.bowlNight.event.type === 'sideBySide' ? layout.lanes[0].lateral : 0;
     // The Car Crush as a child plays it: W held down, no steering.
     if (s.bowlNight.event.type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
-    else duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
+    else if (freestyle && s.airborne) duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+    else duel.setInput({throttle: s.speedMph < (freestyle ? 30 : 32) ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
     if (freestyle && s.stageTimeSec > 20 && !log.hud) log.hud = bowlHudView(s, duel.course);
   }
@@ -152,8 +169,8 @@ const run = (() => {
   ok(freestyle.crowdPeak >= 25, `the crowd meter rises visibly even on a plain line over the kickers (peak ${freestyle.crowdPeak})`);
   // A good Freestyle: a big stunt every 7 seconds (big air, a launch off a car, the Table, a flip, a kicker, a donut).
   const stunts = [{type: 'landedJump', durationSeconds: 2.2, distanceMeters: 50}, {type: 'carLaunch', durationSeconds: 1.3, distanceMeters: 30},
-    {type: 'landedJump', durationSeconds: 1.9, distanceMeters: 45}, {type: 'flip', pitchTurns: 1},
-    {type: 'landedJump', durationSeconds: 1.2, distanceMeters: 28}, {type: 'donut', seconds: 3}];
+    {type: 'landedJump', durationSeconds: 1.9, distanceMeters: 45}, {type: 'bowlTrick', kind: 'backflip', points: 50},
+    {type: 'landedJump', durationSeconds: 1.2, distanceMeters: 28}, {type: 'bowlTrick', kind: 'donut', points: 15}];
   const good = scoreFreestyle(Array.from({length: 13}, (_, i) => ({...stunts[i % stunts.length], atSeconds: 4 + 7 * i})));
   const goodPeak = Math.max(...good.events.map(event => event.crowd));
   const jump = height => scoreStuntEvent({type: 'landedJump', durationSeconds: 1.5, distanceMeters: 30, heightMeters: height}, 0).points;

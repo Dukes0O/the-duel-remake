@@ -81,8 +81,11 @@ export const page = {
       let target = this.__rexGoing ? places.car.lateral : places.rail - places.side * 11;
       if (!this.__rexGoing && fire && toCar > -30 && toCar < 20) target = places.rail - places.side * 12.5;
       const waiting = fire && toCar > -90 && toCar < -35;
+      if (s.airborne) { duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false}); return; }
+      const aim = this.__rexGoing ? (s.lateral - target) * .28 + (s.headingError || 0) * 3.2 :
+        (s.lateral - target) * .35 + (s.headingError || 0) * 1.6;
       duel.setInput({throttle: s.speedMph < (waiting ? 18 : 37) ? 1 : 0, brake: waiting && s.speedMph > 22 ? .4 : 0, boost: false,
-        steer: Math.max(-1, Math.min(1, (s.lateral - target) * .35 + (s.headingError || 0) * 1.6))});
+        steer: Math.max(-1, Math.min(1, aim))});
     };
     app.autopilot = true; return true; })()`,
   manual: `(() => { window.__qaApp.autopilot = false; return true; })()`,
