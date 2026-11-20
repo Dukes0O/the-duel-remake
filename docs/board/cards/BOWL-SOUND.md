@@ -13,6 +13,7 @@ Each building card names its cues and points each at a stand-in already in the s
 
 - **BOWL-WALLS:** `bowl.wall.bounce`, `bowl.wall.hard`, `bowl.wall.big`, `bowl.wall.scrape`.
 - **BOWL-TRICKS:** `bowl.trick.land`, `bowl.trick.new`, `bowl.trick.slam`, `bowl.trick.wheelie`, `bowl.trick.cyclone`.
+- **BOWL-TRICKS-ALL:** `bowl.trick.go`, `bowl.trick.late`, `bowl.secret.start`, `bowl.secret.found`, `bowl.secret.armed`, `bowl.secret.hint`.
 - **BOWL-HUD:** `bowl.health.hit`, `bowl.health.danger`, `bowl.card.open`.
 - **BOWL-TRICK-SCHOOL:** `bowl.school.tick`, `bowl.school.next`, `bowl.school.why`, `bowl.school.done`.
 - **BOWL-CRUSH:** `bowl.crush.chain`, `bowl.crush.fullhouse`.

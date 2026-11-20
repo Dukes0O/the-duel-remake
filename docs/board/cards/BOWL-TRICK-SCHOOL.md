@@ -13,14 +13,19 @@ driver does the thing, and a failed try says why.
 
 1. **Trick School,** an event of its own on the Bowl with no clock, no target and no purse, opened by a TRICK SCHOOL button
    on the Show Night picker and offered once before a driver's first night ("First time here? Come to Trick School first",
-   with "Not now"). Eight lessons in the order of the design's table: wheelie, stoppie, donut, spin, front flip, backflip,
-   barrel roll, side flip. Each lesson shows the trick's picture and key caps (BOWL-HUD's trick card pictures), one
+   with "Not now"). Eight lessons: wheelie, stoppie, donut, spin, backflip, front flip, barrel roll, side flip. The
+   backflip comes before the front flip, because S is a new press in the air and W is a key the driver is already
+   holding. The lessons in the air teach BOWL-TRICKS-ALL's rules (its part 1) in its words: "tap S", and "keep it held for another
+   turn"; the front flip's lesson says to let go of W as the truck leaves the ramp and then tap it. Each lesson shows the trick's picture and key caps (BOWL-HUD's trick card pictures), one
    sentence saying what the word means, and waits until `bowlTrick` reports that trick; then it is ticked and the next one
-   opens. For the lessons in the air the truck is put on the run-up to the right jump (a kicker for single turns). After
-   the last lesson the floor stays open for free practice until the driver leaves.
+   opens. For the lessons in the air the truck is put on the run-up to the Table, which gives a single turn to a tap made at any
+   time in the first second of the flight. After
+   the last lesson Big Mo says, in one sentence, that there are secret tricks nobody will teach and that their taps must
+   be quick (BOWL-TRICKS-ALL, part 2; the school names none of them). The floor then stays open for free practice until the driver
+   leaves.
 2. **Why a try failed:** one sentence, said once for each cause in a lesson and once an event elsewhere, from what the
-   truck did: too fast for a wheelie; too slow for a stoppie; let go before the turn was complete; landed on the roof;
-   the jump was too small for a double; the roll was made nose first, so it was a barrel roll and not a side flip.
+   truck did: too fast for a wheelie; too slow for a stoppie; still holding W from the run-up, so nothing turned; not
+   enough air left when the key was tapped (`bowlTrickLate`); landed on the roof; the jump was too small for a double; the roll was made nose first, so it was a barrel roll and not a side flip.
 3. **Tonight's trick:** a night's data names one or two tricks. The picture and keys are on the card before the event,
    and that trick pays double that night (BOWL-NIGHTS supplies the table; here the rule and the card).
 4. **Lessons done** are kept with the driver's Bowl records, so the offer is made once and ticks stay.

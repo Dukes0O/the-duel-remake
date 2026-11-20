@@ -107,26 +107,67 @@ Tricks are rules over the truck's ordinary driving, on the Bowl only. A trick se
 | **Wheelie** | Nearly stopped (under 10 mph), hold W and Space together | the front wheels have been up for 1 second; it ends at 30 mph, when a key is let go or on a hard turn | 8 a second; a wheelie of 3 seconds or more adds 25 |
 | **Stoppie** | Above 25 mph, hold S and Space together | the back wheels have been up for 1 second; it ends under 8 mph or when a key is let go | 10 a second |
 | **Donut** | Under 15 mph, hold W and Space and Left or Right | each full turn on the spot | 15, then 5 more for each turn in a row, up to 40; three in a row is a **Cyclone**, 30 more, once |
-| **Spin (a 360)** | In the air, hold Left or Right | each full turn flat, landed on the wheels | 30, 120, 270 |
-| **Front flip** | In the air, hold W | each full turn nose first, landed on the wheels | 50, 200, 450 |
-| **Backflip** | In the air, hold S | each full turn tail first, landed on the wheels | 50, 200, 450 |
-| **Barrel roll** | In the air, hold Space and Left or Right while the truck flies nose first | each full roll, landed on the wheels | 60, 240, 540 |
-| **Side flip** | In the air, turn the truck sideways first (a quarter spin), then hold Space and Left or Right | each full roll made while the nose points more than 45 degrees away from the line of flight | 80, 320, 720 |
+| **Spin (a 360)** | In the air, tap Left or Right; keep it held for another turn | each full turn flat, landed on the wheels | 30, 120, 270 |
+| **Front flip** | In the air, tap W; keep it held for another turn | each full turn nose first, landed on the wheels | 50, 200, 450 |
+| **Backflip** | In the air, tap S; keep it held for another turn | each full turn tail first, landed on the wheels | 50, 200, 450 |
+| **Barrel roll** | In the air, hold Space and tap Left or Right while the truck flies nose first | each full roll, landed on the wheels | 60, 240, 540 |
+| **Side flip** | In the air, tap Left or Right to start a spin, then hold Space and tap Left or Right while the truck is sideways | each full roll begun while the nose points more than 45 degrees away from the line of flight | 80, 320, 720 |
 
 - **A double pays four times a single and a triple nine times**, for every trick in the air. That is Kyle's "far more".
 - **Combos:** two kinds of trick in one jump pay one and a half times their sum, three kinds twice, four kinds two and a
   half times. A backflip with a spin is (50 + 30) x 1.5 = 120.
-- **Turning speed:** the first turn of a flip takes 1.0 second and each turn after it 0.8, so a double takes 1.8 seconds
-  and a triple 2.6. The kickers give 1.2 seconds in the air (one flip), the Table 1.9 and the Big Jump 2.2 (a double),
-  the Big Jump with nitro 2.4, and the leap off the back of the stands (section 3) more than that: a triple needs the
-  biggest air in the building. A spin turns once in 0.9 seconds and a roll once in 1.0.
 - **In the air the keys only turn the truck.** W and S no longer change its speed in flight. A key held from before
-  take-off still tips nothing until it is let go and pressed again (BOWL-EXPAND's rule, kept).
-- **Landing:** on the wheels within 45 degrees of level, the tricks of that jump pay. Pointing more than 45 degrees away
-  from the line of flight, the truck slides, its speed halves over a second and the tricks pay half. On the roof or a
-  side it is a **Slam**: the tricks of that jump pay nothing, the crowd meter loses a third, the truck rolls back onto its
-  wheels in 1.5 seconds and drives on, and nothing is damaged. On Easy a truck within 30 degrees of level when the keys
-  are let go eases itself level.
+  take-off still does nothing until it is let go and pressed again (BOWL-EXPAND's rule, kept), so a driver who holds W
+  over every jump is not flipped without asking.
+- **Turning and landing** are in "Flips that finish themselves" below, which replaces the first rules (a turn lasted
+  only as long as the key was held, and a landing had to be within 45 degrees of level).
+
+**Flips that finish themselves (Claude, 20 November 2026, after the hand drives of the built rules).** On Night 1's
+Freestyle on Easy a clean single front flip took five tries: W had to be held for about 1.18 seconds, give or take 0.15,
+and the other four holds (0.85, 1.0, 1.4 and 1.5 seconds) slammed. A driver who let go of W over the lip and pressed it
+again, as any child will, tipped the nose down and slammed, on 2 of 4 jumps over the wall. The cause is in the rule: a
+turn counted only when it was complete, and the landing had to be within 45 degrees, so the key had to come up within
+an eighth of a second of the right moment. The rules must forgive the timing and not test it.
+
+1. **A tap is a whole turn.** A fresh press in the air of W, S, Left or Right (or Space with Left or Right) starts one
+   whole turn of that kind, and the truck finishes the turn by itself and stops level, whether the key is held or not.
+   A key still down when a turn ends asks for another turn. So one tap is a single, and holding on is a double or a
+   triple. A tap made during a turn is remembered (the latest one only) and starts when that turn ends, so a tap of W
+   and then a tap of S is a front flip followed by a backflip in one jump. Kyle, 20 November 2026: "totally impossible
+   physics but amazing." It stays, and it has a name (the Yo-Yo, under "Secret tricks" below).
+2. **Turn times:** a flip turns once in 0.8 seconds, every turn (the first was 1.0), a spin in 0.9 and a roll in 1.0.
+3. **The truck knows how much air is left.** The rules work it out each step from the truck's height above the ground
+   under it and its upward speed (the game's own flight, gravity 18 m a second each second).
+   - **On Easy and Medium a turn starts only when there is air to finish it.** A turn is made up to a quarter faster
+     when the air left is a little short for its plain time (a flip in as little as 0.6 seconds, a spin in 0.68, a roll
+     in 0.75), and at its plain time otherwise. A press with too little air left even for that turns nothing, and "NOT
+     ENOUGH AIR" comes up over the truck, once a jump.
+   - **On Hard every turn asked for starts,** at its plain time. A key held too long starts a turn that cannot be
+     finished, and that is a Slam. Hard keeps the skill; the window for letting go is a whole turn wide, not an eighth
+     of a second.
+4. **What each jump allows** on Easy and Medium, measured from leaving the lip: a kicker (1.2 seconds in the air) gives a
+   single flip to a tap in the first 0.6 seconds. The Table (1.9) gives a single to a tap in the first 1.3 seconds and a
+   double (at least 1.4 seconds of turning: 0.8, then 0.6) to a tap in the first 0.5 with the key held on. The Big Jump
+   (2.2) gives a double to a tap in the first 0.8. A triple needs at least 2.2 seconds of turning: the leap off the back
+   of the stands (section 3), or the Big Jump with nitro (2.4) and a tap in the first 0.2. On Hard a single takes 0.8 seconds, a double 1.6 and a triple
+   2.4. A triple still needs the biggest air in the building.
+5. **Landing:** a turn within 60 degrees of complete when the wheels touch counts as complete on Easy and Medium (45
+   degrees on Hard), and the truck is drawn level over 0.2 seconds. This covers a landing that comes sooner than the
+   rules worked out (on a ramp's far side, a wreck or the stands).
+   - Pointing more than 45 degrees away from the line of flight, the truck slides, its speed halves over a second and
+     the tricks pay half.
+   - Further round than the window, it is a **Slam**. On Medium and Hard the tricks of that jump pay nothing, the crowd
+     meter loses a third, the truck rolls back onto its wheels in 1.5 seconds and drives on. On Easy the turns already
+     finished in that jump still pay, the crowd meter keeps what it had and the truck is on its wheels in 1 second.
+     Nothing is damaged on any level.
+6. **A child's habit cannot spoil a jump.** Letting go of W over the lip and pressing it again is now a front flip that
+   the truck finishes, or nothing at all when the air is too short. Holding W from the run-up through the whole flight
+   is a plain jump.
+
+Not picked: making W and S do nothing in the air unless Space is held. A flip would then take two keys, which is harder
+for a child to find and to do, and rule 6 already removes the harm. Not picked on its own: a wider landing window or a
+truck that rights itself at the end of the fall. Each helps, but the key would still have to come up at the right
+moment, and that is the thing a child cannot do. Card BOWL-TRICKS-ALL, part 1.
 - **The crowd is the multiplier**, as today (points times one to two), now written on the meter: "CROWD x1.4". The first
   time each kind of trick is done in an event it pays one and a half times and the pop-up says NEW. The same kind done
   again and again pays four fifths of the last time, down to two fifths; another kind in between sets it back. A child
@@ -136,6 +177,43 @@ Tricks are rules over the truck's ordinary driving, on the Bowl only. A trick se
   `tools/bowl-freestyle-balance.mjs` and three scripted drivers: Easy is won 9 times in 10 by a child-pace driver who uses
   the kickers, wheelies and donuts and no flips; Medium needs single flips and one big jump; Hard needs doubles or combos.
   Starting numbers before measurement: 300, 800 and 1,500.
+
+**Secret tricks (Kyle, 20 November 2026).** "We could honestly build in some super crazy spin flips with key combos...
+a couple of things like up up up down up, or up up down down left right left right... just a bunch of mystery combos to
+uncover." Seven tricks that no lesson teaches and no card lists until a driver has found them. Up, Down, Left and Right
+below are W, S, A and D or the arrow keys.
+
+| Secret trick | The code | What the truck does | Points |
+| --- | --- | --- | --- |
+| **The Yo-Yo** | no code: a front flip and a backflip in one jump, in either order | forwards, then back the way it came | 100 on top of the two flips |
+| **The Corkscrew** | Up Up Down Down | flips and rolls at once, twice round, like a screw going in | 300 |
+| **The Tornado** | Left Left Right Right | four flat turns in the time of one | 300 |
+| **The Rocking Horse** | Down Up Down Up | nods nose down and nose up twice, then a backflip | 300 |
+| **The Gyro** | Up Right Down Left (round the keys in a circle) | turns on all three axes at once, like a gyroscope | 350 |
+| **The Tumble Dryer** | Up Up Up Down Up (Kyle's) | three front flips in the time of one, a stop upside down, then one back | 400 |
+| **The Full Works** | Up Up Down Down Left Right Left Right (Kyle's, the old code) | every turn there is, all at once, with sparks | 1,000 |
+
+- **Reading a code:** the fresh presses made in one flight, each within 0.4 seconds of the one before. When the last
+  presses match a code, the secret trick starts and takes the place of any turn under way; turns already finished in
+  that jump still pay. The truck does the whole secret trick by itself in 1.0 second (0.75 when the air is short, by the
+  same rule as a flip) and lands level. Until a code is complete, each tap does what a tap always does.
+- **The air it needs:** four taps and the trick take about 1.8 seconds, so the four-key codes fit the Table and the Big
+  Jump, and the Tumble Dryer fits the Big Jump. A kicker is too small for any of them.
+- **The Full Works is entered on the ground,** as the old code was entered before the game began: under 5 mph, eight
+  taps, each within 0.6 seconds of the one before. The truck's lights flash, Big Mo says that something has got into
+  that truck, and the truck's next jump with at least 0.9 seconds of air is the Full Works. Once an event.
+- **They are poses and points only.** A secret trick changes how the truck is drawn and what the jump pays. It never
+  changes the flight, so it cannot win a race or carry a truck further.
+- **Finding them:** the trick card (H) ends with seven rows of question marks and "SECRET TRICKS: 2 of 7". A found
+  trick's row gets its name, its picture and its code, and is kept with the driver's Bowl records. The first time a
+  driver ever lands one, "SECRET TRICK FOUND" comes up, the crowd meter fills and Big Mo names it. Kyle and Gratian each
+  keep their own list, so one can find a trick and show the other.
+- **Hints, one a night:** the result card of each night shows one code the driver has not found, with one key hidden
+  ("Up Up ? Down"), and a banner in the crowd carries the same arrows (owed to BOWL-OUT-LOOK). Trick School says only
+  that there are secret tricks and that the taps must be quick.
+- **Pay:** the variety rule applies (the same secret trick again and again pays four fifths, down to two fifths), and
+  Freestyle's targets are measured without them, so a secret trick is a bonus and never a need.
+- **Every vehicle** does them, by the same rule as the rest of the trick set. Card BOWL-TRICKS-ALL, part 2.
 
 **Every vehicle (Kyle, 20 November 2026).** "The freestyle mechanics should be enabled for all vehicles that can play in
 the Monster Arena." Any unlocked car can enter the Monster Arena today (the Titan is only recommended there, because
@@ -149,13 +227,14 @@ whenever it is played, from the menu as well as on a tour night. Card BOWL-TRICK
 
 - **Trick School** opens from the Show Night picker and is offered once before a driver's first night ("First time here?
   Come to Trick School first", with "Not now"). It has no clock and no target. Big Mo asks for one trick at a time, in the
-  order of the table. Each lesson shows a small picture of the truck doing the trick with the keys drawn as key caps, one
+  order of the table, but with the backflip before the front flip. Each lesson shows a small picture of the truck doing the trick with the keys drawn as key caps, one
   sentence that says what the word means ("A wheelie is driving along on the back wheels with the front wheels in the
   air"), and waits. When the trick is done the lesson is ticked and the next one opens. After the last lesson the floor
   stays open for free practice until the driver leaves. Lessons done are kept with the driver's Bowl records.
 - **A failed try says why**, once, in one sentence, from what the truck did: "You were going too fast for a wheelie, so
-  slow right down first." "You let go before the truck was all the way round, so hold S a little longer." "That jump is
-  too small for a double, so take the Big Jump."
+  slow right down first." "You were still holding W from the run-up, so let go of it and tap it again in the air."
+  "There was not enough air left for a flip, so tap S as soon as the truck leaves the ramp." "That jump is too small for
+  a double, so take the Big Jump."
 - **The trick card:** H opens the list, paused, in any Bowl event: each trick's picture, keys and points, with a tick on
   those the driver has landed.
 - **The pop-up:** each trick's name and points come up over the truck for a second and a half as it lands: "DOUBLE
@@ -402,7 +481,7 @@ follows it.
 | BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump, Home Run | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |
 | BOWL-SOUND | Claude | every other new cue chosen and listened to | all |
-| BOWL-TRICKS-ALL | Codex | the trick set for every vehicle, and on the Titan Monster Arena | 2 |
+| BOWL-TRICKS-ALL | Codex | flips that finish themselves, seven secret tricks, and the trick set for every vehicle and on the Titan Monster Arena (first release: Kyle put the first two on this card) | 2 |
 | BOWL-TOUR | Codex | nights 6 to 8 | 11 |
 
 Words on screen and Big Mo's lines: the builder writes each new line as one full plain sentence

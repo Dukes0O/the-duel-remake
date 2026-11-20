@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -606,7 +606,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Claude: the design is written and cut into slices (20 November 2026); the card closes with Claude's drive by hand of every night once the slices are merged, then Kyle's try"
-    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SHOW-2.md"
@@ -684,7 +684,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "ready"
-    needs: [BOWL-TRICKS, BOWL-HUD]
+    needs: [BOWL-TRICKS, BOWL-HUD, BOWL-TRICKS-ALL]
     locks: [bowl-night, bowl-screens, save-shape]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-TRICK-SCHOOL.md"
@@ -794,14 +794,14 @@ tasks:
     details: "docs/board/cards/BOWL-TOUR.md"
 
   - id: BOWL-TRICKS-ALL
-    title: "The trick set for every vehicle that can play in the Monster Arena, and on that course (Kyle, 20 November)"
+    title: "Tricks: flips that finish themselves, seven secret tricks, and the trick set for every vehicle at the Monster Arena (Kyle, 20 November)"
     owner: "codex"
     model: "astra"
     lane: "SIM"
-    size: "M"
+    size: "L"
     status: "ready"
     needs: [BOWL-TRICKS, BOWL-HUD]
-    locks: [bowl-night, replay-fixtures]
+    locks: [bowl-night, replay-fixtures, save-shape]
     flag: "arena-tricks"
     details: "docs/board/cards/BOWL-TRICKS-ALL.md"
 

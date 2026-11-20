@@ -49,3 +49,9 @@ None new: the events and their cues are BOWL-OUT-SIM's.
 - The drawn dirt slabs cleared from the tunnels and the foot of the stand back; the tunnel floor drawn.
 - The camera checked outside the arena with the merged BOWL-CAMERA: the truck in view on the terraces and in the car park,
   and never hidden by the stands inside a tunnel.
+
+## Owed from BOWL-TRICKS-ALL, part 2: tonight's hint on a banner (Claude, 20 November 2026)
+
+Each night one secret trick's code is hinted with one key hidden (BOWL-SHOW-2 section 2, "Secret tricks"). A hand-painted
+bedsheet banner in the crowd carries the same arrows as the result card, large enough to read from the floor, with the
+hidden key as a painted question mark. The view reads the hint from the night's state and writes nothing.
