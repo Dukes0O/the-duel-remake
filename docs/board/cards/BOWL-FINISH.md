@@ -10,9 +10,14 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 
 ## Owed from the Bowl cards merged on 20 November 2026 (Claude)
 
-- The Scrapasaurus's fire is plain glowing fan sheets; draw it as fire (the flamethrower's look, larger). From behind the beast
-  still reads as an orange machine more than a dinosaur: BOWL-ART-REX round 3.
-- A truck held on W with no steering on an end bank turns its nose to the wall and grinds there; decide whether W alone should slide
-  it back down (BOWL-EXPAND).
-- Nobody has listened to the Bowl's stand-in cues.
 - Play the whole season by hand on Easy and Hard, and a Turn Show for two at the one keyboard.
+- Moved to round 2's slices (20 November 2026): the Scrapasaurus's fire drawn as fire and the beast reading as a dinosaur
+  (BOWL-REX-LOOK, with BOWL-ART-REX round 3); the truck that grinds on an end wall (settled by BOWL-WALLS: the wall turns it
+  along and carries it round); listening to the Bowl's stand-in cues (BOWL-SOUND).
+
+## Round 2 comes first (Kyle, 20 November 2026)
+
+This card waits for BOWL-SHOW-2 and its seventeen slices for nights 1 to 5 (the board lists them under `needs`). BOWL-TOUR,
+nights 6 to 8, follows the first release and is not needed here. When the slices are merged: the freestyle targets and each
+event's numbers tuned in play, the frame check at the busiest view of the Bowl with eight trucks, the switch, the release,
+and pictures to Kyle.

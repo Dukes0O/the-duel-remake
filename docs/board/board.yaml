@@ -604,7 +604,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2]
+    needs: [BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -614,11 +614,212 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "ready"
-    needs: []
+    status: "building"
+    claimed_by: "Claude: the design is written and cut into slices (20 November 2026); the card closes with Claude's drive by hand of every night once the slices are merged, then Kyle's try"
+    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SHOW-2.md"
+
+  # Show Night round 2, the slices of BOWL-SHOW-2 (its "Design" section). Nights 1 to 5 are the first release; BOWL-TOUR follows it.
+  - id: BOWL-WALLS
+    title: "Bowl: walls that bounce, and no wear outside a fight"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-WALLS.md"
+
+  - id: BOWL-TRICKS
+    title: "Bowl: the trick set as rules and scores (wheelie, stoppie, donut, spin, flips, barrel roll, side flip, doubles, combos)"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: []
+    locks: [bowl-night]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-TRICKS.md"
+
+  - id: BOWL-CAMERA
+    title: "Bowl: a steady show camera, and the end of each event seen"
+    owner: "claude"
+    lane: "RENDER"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [busy-game-files]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-CAMERA.md"
+
+  - id: BOWL-SOUND-CRUSH
+    title: "Bowl: more sounds of cars being crushed"
+    owner: "claude"
+    lane: "AUDIO"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [sound-bank]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SOUND-CRUSH.md"
+
+  - id: BOWL-HUD
+    title: "Bowl: its own screen, trick pop-ups and card, health that can be read, Big Mo on time"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-TRICKS]
+    locks: [bowl-screens]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-HUD.md"
+
+  - id: BOWL-CRUSH
+    title: "Bowl: Car Crush as a 60 second count on the whole floor, with chains and pancakes"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-TRICKS, BOWL-WALLS]
+    locks: [bowl-night, bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-CRUSH.md"
+
+  - id: BOWL-OUT-SIM
+    title: "Bowl: over the wall, the stands as ground, the car park and two gates back in"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [BOWL-WALLS]
+    locks: [bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-OUT-SIM.md"
+
+  - id: BOWL-RIVALS-2
+    title: "Bowl: rivals that compete (pace from lap time, Side by Side twice round, rivals' scores)"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-WALLS, BOWL-TRICKS]
+    locks: [bowl-rivals, bowl-night]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-RIVALS-2.md"
+
+  - id: BOWL-TRICK-SCHOOL
+    title: "Bowl: Trick School, tonight's trick, and why a try failed"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-TRICKS, BOWL-HUD]
+    locks: [bowl-night, bowl-screens, save-shape]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-TRICK-SCHOOL.md"
+
+  - id: BOWL-OUT-LOOK
+    title: "Bowl: the crowd scatters, the tunnels, the car park and the tyre walls drawn"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-OUT-SIM]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-OUT-LOOK.md"
+
+  - id: BOWL-REX-2
+    title: "Bowl: the Scrapasaurus fight remade (solid, comes to the driver, up its tail, three boxes)"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
+    locks: [bowl-screens]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-2.md"
+
+  - id: BOWL-REX-LOOK
+    title: "Bowl: the Scrapasaurus fight drawn so that it explains itself"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-REX-2]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-LOOK.md"
+
+  - id: BOWL-WEAPONS
+    title: "Bowl: hammer, saw and launcher for Last Truck Rolling, and health as the one measure"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
+    locks: [bowl-rivals, bowl-screens]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-WEAPONS.md"
+
+  - id: BOWL-WEAPONS-LOOK
+    title: "Bowl: the weapons, the rivals' bolt-ons and the damage drawn"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-WEAPONS]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-WEAPONS-LOOK.md"
+
+  - id: BOWL-JUMP-EVENTS
+    title: "Bowl: three new events (Long Jump, High Jump, Home Run)"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-TRICKS, BOWL-OUT-SIM, BOWL-CRUSH]
+    locks: [bowl-night, bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-JUMP-EVENTS.md"
+
+  - id: BOWL-NIGHTS
+    title: "Bowl: the season of five different nights as data, the picker and the saved records"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-CRUSH, BOWL-TRICK-SCHOOL, BOWL-JUMP-EVENTS, BOWL-WEAPONS, BOWL-REX-2, BOWL-RIVALS-2]
+    locks: [bowl-night, bowl-screens, bowl-rivals, save-shape]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-NIGHTS.md"
+
+  - id: BOWL-SOUND
+    title: "Bowl: every other new cue chosen and listened to"
+    owner: "claude"
+    lane: "AUDIO"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH]
+    locks: [sound-bank]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SOUND.md"
+
+  - id: BOWL-TOUR
+    title: "Bowl: nights 6 to 8, the tour (after the first release)"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    waiting_on: "kyle"
+    needs: [BOWL-NIGHTS]
+    locks: [bowl-night, bowl-rivals, save-shape]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-TOUR.md"
 
   - id: NIGHT-2-TRY-FIXES
     title: "Night 2 from Kyle's try: no countdown, clear arrows, riders that vanish, long pauses"

@@ -1,0 +1,67 @@
+# BOWL-WEAPONS
+
+The short board entry controls current state, ownership, dependencies and locks.
+
+Weapons for Last Truck Rolling, and health as the one measure of damage. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), sections
+7 and 9 (the table there is the specification). Kyle, 20 November 2026: Last Truck Standing has no weapons; "robot-wars
+weapons: a saw, a hammer, a launcher".
+
+**Measured before (Claude's hand drive):** two measures run side by side. In one drive the front damage zone reached 0.98
+while the armor had lost 4 of 60. The driver's armor is shown nowhere.
+
+## What to build
+
+1. **Health.** In Last Truck Rolling one number from full to nothing decides a knock-out for every truck, and the four
+   parts (front, back, left, right) record where it was lost, for the picture. The damage zones and the armor no longer
+   disagree: the event keeps one of them and derives the other. Wall hits cost what BOWL-WALLS says.
+2. **Three show weapons,** `src/bowl/bowl-weapons.js`, rules from seed and inputs alone, fired with F:
+   - **Hammer:** the arm rises for 0.4 seconds, then hits whatever is within 4 m of the nose: three tenths of full health,
+     and the truck hit cannot steer for 1 second. A miss holds the swinger still for 0.5 seconds. 2.5 seconds between
+     swings.
+   - **Saw:** F held spins it. While it touches a truck: an eighth of full health a second, both trucks slowed to half
+     speed. After 4 seconds of cutting it must cool for 3.
+   - **Launcher:** throws a truck within 2.5 m of the nose 6 m up and 12 m away along the launcher's facing. It lands on
+     its side, loses a sixth of full health and rights itself in 2.5 seconds. Fired with nothing in front, it hops the
+     firing truck 1.5 m. 4 seconds to fill again.
+3. **Out of the Bowl:** a truck that crosses the wall in the air is knocked out at once, credited to whoever launched or
+   hit it last. The driver's own truck over the wall has 15 seconds, counted in state for the screen, to come back
+   through a gate (BOWL-OUT-SIM).
+4. **The rivals' weapons,** fixed: Rust Rhino's horn (a charge takes a tenth of full health for each 10 mph over 20), Big
+   Kettle a hammer, Tin Lizard a saw, Old Bess a launcher, Dragon Wagon a breath of fire 6 m long (a tenth a second).
+   Their tells last 0.8 seconds on Easy, 0.6 on Medium, 0.4 on Hard. A rival fires only at a truck in its reach.
+5. **Choosing:** state for a card before the event with the weapons open that night (a night's data names them: BOWL-NIGHTS
+   supplies the table; until then night 3 the hammer, night 4 the hammer or the saw, night 5 all three).
+6. **What Kyle heard:** find which sound plays in today's event that could be taken for a launcher (the knock-out cue
+   `arena.wreck-credit` is the likely one), say so in the change note, and give the Bowl's knock-out its own cue.
+7. **Balance,** measured: on Easy a scripted child-pace driver with the hammer wins 9 times in 10 and knocks out at least
+   two trucks; on Hard a scripted driver who never dodges a tell loses.
+
+## Files and locks
+
+`src/bowl/bowl-weapons.js` (new), the Last Truck Rolling runner in `src/bowl/bowl-rivals.js`, `src/bowl/bowl-lines.js`,
+one line for F on the Bowl in `src/input-contexts.js`, `src/bowl/bowl-screens.js` (the choosing card),
+`tools/test-bowl-weapons.mjs` (new), `tools/test-bowl-rivals.mjs`. Locks: `bowl-rivals`, `bowl-screens`.
+
+## Checks
+
+1. `tools/test-bowl-weapons.mjs`: each weapon's tell, reach, cost and rest as the table says; a launch beside the wall
+   puts a truck out; the driver's 15 seconds; health and its four parts agree after any run of hits.
+2. `tools/test-bowl-rivals.mjs`: the balance in item 7, with every changed assertion listed for Claude's review.
+3. Laptop only, Claude runs: one Last Truck Rolling by hand with each weapon.
+
+## Sound cues
+
+`bowl.hammer.rise` (the tell; stand-in `raider.warning`), `bowl.hammer.hit` (stand-in `combat.explosion`),
+`bowl.hammer.miss` (into the dirt; stand-in `heli.setdown.thud`), `bowl.saw.spin` (a held scream; stand-in
+`weapon.tesla.charge`), `bowl.saw.cut` (sparks on metal; stand-in `vehicle.crash`), `bowl.saw.hot` (it must cool;
+stand-in `weapon.flame.end`), `bowl.launcher.fire` (a blast of air; stand-in `weapon.tesla.pulse`),
+`bowl.launcher.fill` (the hiss and the gauge full; stand-in `interface.radar`), `bowl.rhino.horn`, `bowl.dragon.fire`
+(stand-in `weapon.flame.start`), `bowl.out.of.the.bowl` (a truck goes over the wall; stand-in `crowd.cheer`),
+`bowl.knockout` (the Bowl's own knock-out; stand-in `combat.explosion`), `bowl.weapon.pick` (the choosing card; stand-in
+`interface.bonus`).
+
+Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, recorded in `docs/changes/BOWL-WEAPONS.md`
+with a Removed line. Before CARD DONE, search `tools/` for `lastTruckRolling`, `last-truck-rolling`, `showArmor` and
+`BOWL_RIVAL_HITS` and bring each older suite and scenario that names them up to date. No Chrome under `codex exec`: any
+browser scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside
+this lane.

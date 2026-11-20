@@ -54,8 +54,15 @@ never build at the same time; the board shows the second as waiting.
 | `surfaces` | `src/race-surfaces.js` surface and tyre tables | stays; one card changing surfaces at a time |
 | `track-kit-placement` | `src/track-kits.js`, named kit collision transforms in `src/track-script-course.js` | stays; one placement-hook builder at a time, frozen readers do not edit |
 | `release` | switch flips, README, VERIFICATION, COURSE_ACCESS | stays; one release at a time, several cards per release |
+| `bowl-floor` | `src/bowl/bowl-course.js`, the Bowl's wall pieces in `src/course.js`, the Bowl's branch in `src/sim-contacts.js` | BOWL-FINISH |
+| `bowl-night` | `src/bowl/bowl-night.js`, `src/bowl/bowl-show.js` | BOWL-FINISH |
+| `bowl-screens` | `src/bowl/bowl-screens.js`, `src/bowl/bowl-screens.css` | BOWL-FINISH |
+| `bowl-rivals` | `src/bowl/bowl-rivals.js` | BOWL-FINISH |
 
 After FAC-04, a new course holds only `release`, and only at release time.
+
+`src/bowl/bowl-lines.js` has no lock: each Bowl card adds its own lines and cue names there, and two cards' additions
+are joined at the merge.
 
 ## 3. The production lines
 

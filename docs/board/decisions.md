@@ -12,6 +12,9 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   the mountain and jump back up onto the course. Keep it driveable.
 - **Monster truck big air:** the Titan launches off cars it drives over
   (restored by FUN-TITAN-LAUNCH).
+- **Out of the Bowl (Kyle, 20 November 2026):** a truck that jumps high enough
+  flies over the Bowl's wall into the stands and beyond. Kyle: the best moment
+  of the night. Keep it; BOWL-OUT-SIM gives it ground to land on and a way back in.
 
 
 ## Kyle, 17 November 2026: earned cars race in most places; what the helicopter needs

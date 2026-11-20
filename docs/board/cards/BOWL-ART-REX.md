@@ -27,6 +27,14 @@ Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, t
 recorded in `docs/changes/BOWL-ART-REX.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
 
+## Round 3 must also serve the remade fight (Claude, 20 November 2026)
+
+BOWL-SHOW-2 section 10 remakes the fight: the driver goes up its tail onto its back. Round 3 therefore needs, besides
+reading as a dinosaur from every side: a tail that lies flat on the floor as a ramp at least 4.5 m wide and no steeper
+than 25 degrees up to its back (a pose named `tired`, head on the floor); a back flat enough for a truck's wheels; and
+the three battery boxes in a row up the back (the root of the tail, the middle, the shoulders), each a named part with
+whole, open and smashed looks. BOWL-REX-2 states the sizes the rules use; BOWL-REX-LOOK draws the arrows, beams and fire.
+
 ## Claude answers
 
 **Round 1: no, go to round 2.** It lies on its side in the picture and the views are cropped, and what shows is a ladder of girders, not a dinosaur. The bolted frame and wheels are good material, so keep them inside the body.
