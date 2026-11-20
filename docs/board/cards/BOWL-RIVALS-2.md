@@ -99,3 +99,9 @@ The review also checked that two crossings in one simulation tick use the first 
 Handoff commit `6303ea683`. The lane tier at `915619b86` passed 118 of 119 suites, including all 216 Rivals checks, 297 race replay checks, 12 combat replay checks and the world signatures. The one-wall Easy driver won by less than six seconds in 10 of 10 runs on each of nights one and two.
 
 The HUD suite held two exact copies of the old text. At `e091d596d` it still checks the whole line, now “Beat Old Bess: 310.” and “Beat Old Bess over two laps.” The focused suite passed. Please review those two assertion changes with the earlier list. No game code changed after the laptop candidate.
+
+## Claude answers, the HUD text (20 November 2026)
+
+**Approved under rule 18, `e091d596d`:** the HUD suite still checks the whole line, now "Beat Old Bess: 310." and "Beat Old
+Bess over two laps.", matching the two-lap race. Nothing is loosened. The `bowl-rivals` browser run on `915619b86` is Claude's,
+now running on the laptop; the verdict follows here.
