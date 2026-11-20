@@ -42,3 +42,9 @@ with a pick. Then Claude wins the fight by hand on Easy and Hard.
 ## Sound cues
 
 None new: the events and their cues are BOWL-REX-2's.
+
+## Owed from BOWL-ART-REX round 5 (Claude, 20 November 2026)
+
+The outline passed; the surface did not. Panels as dented painted steel with rust, bare edges and a sheen (as the welded
+reference on round 5's sheet); legs as thick as the reference's; no plinth or rails under the feet; the tired ramp drawn
+as car roofs and steel plate with hazard stripes at its foot.
