@@ -10,6 +10,7 @@
 - After the line fixes, on c9aa24c: the 27 suites picked since ddb92b1 passed, `test-bowl-rivals` at 82 checks.
 - Side by Side's lanes now come from the course (the Director, for BOWL-EXPAND); night two's Easy rate is now 9 in 10.
 - After merging BOWL-HOOKS b9c90fd (its `bowlLayout` is now the lanes' source), on 3644167: the 32 suites picked since f542141 passed, `test-bowl-night` at 249 and `test-bowl-rivals` at 86 with the same win rates.
+- Side by Side reads BOWL-EXPAND's `features.bowl.lanes` when the course has them (half a lap apart, one lap each). On fb68920 the 26 suites picked since 2663af4 passed. In a scratch merge with integration's BOWL-EXPAND, `test-bowl-rivals` passed 86 checks with Easy 10/10 every night; Side by Side Medium rose to 10/10 and 5/10, for BOWL-FINISH to tune.
 - `npm run build` passed. Not run here: browser scenario `bowl-rivals`, the night's long suites `test-field-battle` and `test-opponents`, play by hand, the look.
 
 **Changed assertions.** `test-bowl-night`: "nights three to five wait for Last Truck Rolling" now reads that they can be played, because this card registers the event. The check that an unbuilt night does not start now uses night six.
