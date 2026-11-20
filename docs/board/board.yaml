@@ -788,6 +788,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-tricks-all"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures, save-shape, busy-game-files]
     flag: "arena-tricks"

@@ -355,3 +355,5 @@ same player mesh through the current camera, only with `arena-tricks` on; read o
 ## Second Arena drive at `06d562baf`
 
 Please check the wheelie and stoppie while holding the scoring keys in the Falcone, Dusthawk and Titan. The free axle now lifts 1.299 m, 1.210 m and 1.525 m respectively. The supporting axle stays at its original height within one micrometre on all six poses. The existing pop-up now has a projected point above the actual Arena car. Please check it in motion and record the result. The four exact changes to the old trick assertions are listed under the combined trick build above for the written rule 18 ruling.
+
+The combined game source is frozen at 06d562baf for the second laptop drive. All 61 suites selected for the renderer correction passed, including all 297 race replay checks and both world guards. The Falcone's scored wheelie projected its pop-up above the actual model at (640, 284) on a 1280 by 720 viewport. Car Crush may take the shared Bowl night lock during the review.
