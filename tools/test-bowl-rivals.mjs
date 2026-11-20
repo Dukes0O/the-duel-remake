@@ -78,7 +78,7 @@ function childDriver(seed) {
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 // Side by Side: keep to the outside lane, roughly.
 const laneAim = (duel, offset) => {
-  const s = duel.state, line = sideBySideLanes(duel.course).outside + offset * .5;
+  const s = duel.state, line = sideBySideLanes(duel.course).player.lateral + offset * .5;
   return {steer: (s.lateral - line) * .2 + (s.headingError || 0) * 1};
 };
 // Last Truck Rolling: drive at the nearest truck still rolling and hit it.
@@ -142,20 +142,41 @@ function race(duel, drive, aim, limitSec) {
 
 // The lanes come from the course, so a bigger floor (BOWL-EXPAND) moves them.
 {
-  const duel = showAt(1, 'sideBySide'), lanes = sideBySideLanes(duel.course);
-  const half = duel.course.def.scrapdome.floorHalfWidth;
-  ok(lanes.inside === -half / 2 && lanes.outside === half / 2, 'with no lanes named, each lane is the middle of half the floor');
-  ok(duel.state.lateral === lanes.outside && duel.state.opponents[0].lateral === lanes.inside, 'the player and the rival start on their lanes');
-  const floor = extra => ({length: 300, features: {crushables: [], ramps: [], ...extra}, def: {scrapdome: {floorHalfWidth: 12}}});
+  const duel = showAt(1, 'sideBySide'), lanes = sideBySideLanes(duel.course), course = duel.course;
+  const named = course.features.bowl?.lanes;
+  if (named) {
+    ok(lanes.player.s === named[0].s && lanes.rival.s === named[1].s && lanes.player.finishS === named[0].s + course.length &&
+      lanes.rival.finishS === named[1].s + course.length, 'the course\'s own lanes: each truck starts on its own and drives one full lap');
+  } else {
+    const half = course.def.scrapdome.floorHalfWidth;
+    ok(lanes.rival.lateral === -half / 2 && lanes.player.lateral === half / 2 && lanes.player.s > 0 && lanes.rival.s === 0 &&
+      lanes.player.finishS === course.length && lanes.rival.finishS === course.length,
+    'with no lanes named, each lane is the middle of half the floor, the outside one staggered, and both finish at the line');
+  }
+  ok(duel.state.s === lanes.player.s && duel.state.lateral === lanes.player.lateral &&
+    duel.state.opponents[0].s === lanes.rival.s && duel.state.opponents[0].lateral === lanes.rival.lateral,
+  'the player and the rival start on their lanes');
+  const floor = extra => ({length: 300, features: {crushables: [], ramps: [], ...extra}, def: {scrapdome: {floorHalfWidth: 12}},
+    worldAt: (s, off) => ({x: off, z: s})});
   const wide = sideBySideLanes(floor());
-  ok(wide.inside === -6 && wide.outside === 6, 'a wider floor gives wider lanes');
-  const named = sideBySideLanes(floor({bowlLanes: {offset: 4.5}}));
-  ok(named.inside === -4.5 && named.outside === 4.5, 'lanes the course names are used as they are');
+  ok(wide.rival.lateral === -6 && wide.player.lateral === 6, 'a wider floor gives wider lanes');
+  const halfLap = sideBySideLanes(floor({bowl: {lanes: [{s: 6, lateral: 0}, {s: 156, lateral: 0}]}}));
+  ok(halfLap.player.s === 6 && halfLap.rival.s === 156 && halfLap.rival.finishS === 456 && halfLap.player.lateral === 0,
+    'lanes the course names are used as they are, one full lap each');
 }
 
 // ---- Side by Side: every rival finishes on every level -------------------
+// The player waits beside the rival's line, so a rival that comes round to the
+// player's start is not held up behind a truck that never moves.
+function idleBesideLane(duel) {
+  const s = duel.state, lane = sideBySideLanes(duel.course).rival.lateral;
+  const half = duel.course.def.scrapdome?.floorHalfWidth ?? 6;
+  const side = Math.min(half - 2, Math.abs(lane) + 5) * (lane > 0 ? -1 : 1);
+  if (Math.abs(s.lateral - lane) < 3) s.lateral = s.prevLateral = side;
+  return duel;
+}
 for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
-  const duel = showAt(1, 'sideBySide', {level, rivals: [id]});
+  const duel = idleBesideLane(showAt(1, 'sideBySide', {level, rivals: [id]}));
   ok(duel.state.opponents.length === 1 && duel.state.opponents[0].bowlRival === id &&
     duel.state.opponents[0].car === SHOW_TRUCK, `${id} drives the show's truck in Side by Side`);
   const result = race(duel, null, null, BOWL_NIGHT_RULES.sideBySide.timeLimitSec + 2);
@@ -165,7 +186,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
 
 // Pace is data: on each level the slowest rival takes longer than the fastest.
 {
-  const time = (id, level) => race(showAt(1, 'sideBySide', {level, rivals: [id]}), null, null, 62).rivalDoneAt;
+  const time = (id, level) => race(idleBesideLane(showAt(1, 'sideBySide', {level, rivals: [id]})), null, null, 62).rivalDoneAt;
   for (const level of LEVELS) ok(time('old-bess', level) > time('dragon-wagon', level), `Old Bess is slower than Dragon Wagon on ${level}`);
   ok(time('rust-rhino', 'easy') > time('rust-rhino', 'medium') && time('rust-rhino', 'medium') > time('rust-rhino', 'hard'),
     'a rival is quicker round on each harder level');

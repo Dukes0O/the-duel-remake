@@ -98,25 +98,35 @@ function holdPace(duel, actor, rivalId, level) {
 
 // ---- Side by Side -------------------------------------------------------
 
-// The two lanes, from the course's own data through BOWL-HOOKS' bowlLayout:
-// the course's `features.bowlLanes.offset`, or the middle of each half of the
-// floor. The rival takes the inside lane (the nearer the island), the player
-// the outside one. Nothing here assumes the floor's size.
+// Where the player and the rival start and finish, from the course's own data.
+// A course that names its Side by Side lanes (`features.bowl.lanes`, BOWL-EXPAND:
+// both on the centre line, half a lap apart) gives each truck its own start, and
+// each finishes one full lap from where it started. Otherwise the lanes are
+// BOWL-HOOKS' bowlLayout lane either side of the middle, the rival inside, and
+// the player starts ahead by the outside lane's extra length, as on a running
+// track; both finish at the line. Nothing here assumes the floor's size.
 export function sideBySideLanes(course) {
-  const lane = bowlLayout(course).lane;
-  return {inside: -lane, outside: lane};
+  const named = course.features?.bowl?.lanes;
+  if (Array.isArray(named) && named.length >= 2 && named.every(lane => Number.isFinite(lane?.s) && Number.isFinite(lane?.lateral))) {
+    const [player, rival] = named;
+    return {player: {s: player.s, lateral: player.lateral, finishS: player.s + course.length},
+      rival: {s: rival.s, lateral: rival.lateral, finishS: rival.s + course.length}};
+  }
+  const lane = bowlLayout(course).lane, start = outsideLaneStart(course, {inside: -lane, outside: lane});
+  return {player: {s: start, lateral: lane, finishS: course.length}, rival: {s: 0, lateral: -lane, finishS: course.length}};
 }
 
 registerBowlEventRunner('sideBySide', {
-  laps: 1,
+  // Each truck's finish is a distance (sideBySideLanes), so the lap count only
+  // has to keep the rival driving until then: a rival that has done its laps stops.
+  laps: 2,
   place(duel, night) {
     const lanes = sideBySideLanes(duel.course), rivalId = sideBySideRival(night);
-    // The rival keeps to the inside lane. The outside lane is longer, so the
-    // player starts ahead by the difference, as on a running track.
-    startBowlEventAt(duel, outsideLaneStart(duel.course, lanes), lanes.outside);
-    const truck = addComputerTruck(duel, {s: 0, lateral: lanes.inside});
+    startBowlEventAt(duel, lanes.player.s, lanes.player.lateral);
+    const truck = addComputerTruck(duel, {s: lanes.rival.s, lateral: lanes.rival.lateral});
     truck.bowlRival = rivalId;
     night.event.rival = rivalId;
+    night.event.finishS = {player: lanes.player.finishS, rival: lanes.rival.finishS};
   },
   goal: night => BOWL_GOALS.sideBySide(BOWL_RIVALS[night.event?.rival]?.name),
   step(duel, night) {
@@ -124,8 +134,8 @@ registerBowlEventRunner('sideBySide', {
     // Big Mo says who is in the other lane once he has named the event.
     if (!event.rivalSaid) { event.rivalSaid = true; sayBowlLine(duel, `rival.${event.rival}`); }
     if (rival) holdPace(duel, rival, event.rival, levelOf(night));
-    if (event.playerDoneAt == null && s.completedLaps >= 1) event.playerDoneAt = s.stageTimeSec;
-    if (event.rivalDoneAt == null && rival?.completedLaps >= 1) event.rivalDoneAt = s.stageTimeSec;
+    if (event.playerDoneAt == null && s.s >= event.finishS.player) event.playerDoneAt = s.stageTimeSec;
+    if (event.rivalDoneAt == null && rival?.s >= event.finishS.rival) event.rivalDoneAt = s.stageTimeSec;
     const facts = {rival: event.rival, rivalDoneAt: event.rivalDoneAt};
     if (event.playerDoneAt != null) return {...facts, won: event.rivalDoneAt == null || event.playerDoneAt <= event.rivalDoneAt};
     if (event.rivalDoneAt != null || s.stageTimeSec >= BOWL_NIGHT_RULES.sideBySide.timeLimitSec) return {...facts, won: false};
