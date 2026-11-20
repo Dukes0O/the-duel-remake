@@ -1,6 +1,7 @@
 // NIGHT-2-AND-TRUCK-POLISH: the fixes the Director asked for after the overnight QA of 19 November 2026.
 // Each section names the fix. A section fails on the code before its fix and passes after it.
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {applyChoice, createLedger} from '../src/story/ledger.js';
 import {NIGHT_2_CHOICES} from '../src/story/scenes/night-2.js';
 import {night2Page} from '../src/world/jobs/night-2.js';
@@ -29,6 +30,18 @@ const escapeHTML = text => String(text).replace(/[&<>"']/g, ch => ({'&': '&amp;'
   look.group.traverse(object => { if (/breath/i.test(object.name)) names.push(object.name); });
   check(names.length === 0, 'the Night 2 look draws no breath sprites (found ' + names.length + ')');
   look.dispose();
+}
+
+// 3. The dawn note shows over a clear picture: the racing HUD (speedometer with gear and nitro, lap map, armor, car buttons) is hidden.
+// The simulation itself stands still at the result (Duel.step returns for an arena that is not racing), so nothing drives under Continue.
+{
+  const css = readFileSync(new URL('../src/story/talk-view.css', import.meta.url), 'utf8');
+  const rules = css.replace(/\/\*[^]*?\*\//g, '').match(/[^{}]+{[^}]*}/g) ?? [];
+  const hidden = rules.filter(rule => /\.story-dawn-active/.test(rule) && /display\s*:\s*none/.test(rule)).join(' ');
+  for (const part of ['.speedometer', '.route-hud', '.race-health', '.combat-player-armor', '.combat-slot-bar', '.style-score', '.rear-view-frame'])
+    check(hidden.includes(part), 'the dawn hides ' + part);
+  const game = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  check(/if \(s\.arena\) \{\s*if \(s\.status === 'racing'\) \{[\s\S]*?\}\s*return;\s*\}/.test(game), 'an arena that is not racing (the result) is not stepped');
 }
 
 console.log(`PASS test-night-2-polish: ${checks} checks.`);
