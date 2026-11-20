@@ -1011,7 +1011,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "building"
-    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/FAR-RAIN, pull request into integration/wasteland"
+    claimed_by: "Claude (cloud), since 19 November 2026: round 1 merged behind far-rain (dev); round 2 of the look on branch cloud/FAR-RAIN-2 from Claude's verdict in docs/board/looks/far-rain/round-1-review.md"
     needs: ["TUNNEL-TRIAL"]
     locks: []
     details: "docs/board/cards/FAR-RAIN.md"

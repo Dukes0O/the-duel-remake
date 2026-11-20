@@ -79,6 +79,7 @@ import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analys
 import {referenceLap} from './reference-laps.js';
 import {telemetryRoute} from './lap-telemetry.js';
 import {coachAllowed,coachRaceContext,buildCoachMarkers} from './coach-markers.js';
+import {createRainView} from './render/rain-view.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -368,6 +369,8 @@ export function attachRenderer(host, app) {
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
   // H2 Fire: a burnt course's look (docs/HELI_FIRE.md 8.4), drawing only.
   const burntLook=createBurntLook({THREE,scene});
+  // FAR-RAIN: rain in a region that has it, drawing only (src/render/rain-view.js). Nothing is drawn or loaded until then.
+  const farRain=createRainView({scene});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
@@ -860,7 +863,7 @@ export function attachRenderer(host, app) {
       chapterNight: chapterNightShare,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
-      menu});
+      menu, weather: farRain.lighting});
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
@@ -1315,6 +1318,7 @@ export function attachRenderer(host, app) {
         dt:st.paused?0:dt,high,vehicles:snowVehicles});
     }
     trackKitsOf(world)?.update({high,position:camera.position,camera,state:menu?{status:'menu'}:st});
+    if(farRain.update({app,state:menu?null:st,course,camera,renderer,dt})){sceneRevision++;ambientShading.refresh();}
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();
     const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricFootCamera!==`${!!st.onFoot}:${app.footCameraMode}`||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
