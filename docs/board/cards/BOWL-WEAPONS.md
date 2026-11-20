@@ -131,3 +131,9 @@ Please drive Last Truck Rolling once with each weapon on `codex/bowl-weapons` at
 Bowl race and Rex cue dispatch in `src/app.js`, so the three weapons play their tells and hits. Normal arenas keep their sound
 and credit; `app.js` is shared, so the night after the merge is a full one. The laptop drive of the three weapons on
 `5c837fccb` is Claude's and follows here.
+
+## Easy fight balance after the wall trials
+
+With the inherited steering and 20% player wall wear, the simple F cue won 3/10, only two with at least two credited knockouts. With zero player wall wear and a closing-speed cue, the same ten drivers lost all ten, with ten credited knockouts in total. In seed order 1989, 2090, 2191, 2292, 2393, 2494, 2595, 2696, 2797 and 2898, the knockout counts were 3/0/0/1/1/1/0/1/1/2. Hard or big wall contacts were 8/8/3/10/4/6/5/5/4/20. Rams accounted for 456 of the 600 health lost and hammers for 144. Wall, saw and landing losses were zero in the control.
+
+Please rule on applying the existing Easy rival-hit share (0.2) to a rival-initiated ram against the player, or on reducing how often Easy rivals all target the player. We recommend testing the ram share first, measuring ten real fights with the same steering and the full weapon damage table, while keeping Medium and Hard intact. The target remains nine actual wins, each with at least two credited knockouts. The separate one-knockout audio request also awaits a ruling.
