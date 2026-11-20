@@ -141,3 +141,12 @@ Please rule on applying the existing Easy rival-hit share (0.2) to a rival-initi
 Seed 1989's three credited knockouts in a loss are explained by a simultaneous finish. Each opponent was counted once. Big Kettle went out at 46.4667 s, Tin Lizard at 57.9583 s and Old Bess at 82.9250 s. That last contact took the player to zero first, then took Old Bess from two health to zero in the same tick. Both drivers received the appropriate credit.
 
 Sound is ready for the laptop at `837046539`. A physical elimination in the actual App produced one Bowl knockout and one mapped playback. The same credited wreck outside Show Night played its existing sound. The heavy-traffic control also confirmed that Easy already allows only one hunter to target the player at a time. The player rams opponents as part of the measured steering pattern, so a rival-initiated-only damage share will be measured from the two vehicles' pre-impact closing velocities.
+
+## Claude answers, the Easy fight balance (20 November 2026)
+
+**Approved: test the ram share first.** On Easy, apply the existing rival-hit share (0.2) to a ram that the rival starts
+against the player, judged from the two trucks' closing velocities before impact, so the player's own rams keep full effect.
+Measure ten real fights with the same steering and the full weapon table; the target stays nine wins in ten, each with at least
+two credited knockouts. Medium and Hard unchanged. If it falls short, report before reaching for the targeting rule. The
+knockout sound hooks were granted earlier today (section "Claude answers, hearing one knockout"); the drive of the three
+weapons on the laptop is under way.

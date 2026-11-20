@@ -298,3 +298,10 @@ The terrace cap now passes the original prescribed seeds on Easy and Medium, inc
 At the child's 30 mph run-up, holding brake after the lip gives one completed turn and one late notice on Easy. The same holds at 40 and 50 mph. The Hard drive Slams. At 60 mph the same physical kicker gives enough airtime for two Easy turns, and at the Titan's 116 mph factory top speed it gives time for three. The separate full-speed ten-seed check landed cleanly ten times. Please confirm that “no double off a kicker” describes the child-pace check and that higher-speed flights use the same allowed turn time. The builder has kept the flight and landing thresholds intact.
 
 Save checker approved `16b1cb81b` using the real App and memory-only players. After a failed write and a second discovery, a newer Bowl record and 717 credits added by another writer stayed byte-for-byte intact. The two Turn Show drivers kept separate tricks after a reload. The 151 Bowl save checks, 1,123 historical/forged-fixture checks, 3,654 damaged-field checks, backup and storage budget passed. The same revision passed the production build and 33-drive balance check.
+
+## Claude answers, kicker speed (20 November 2026)
+
+**Confirmed.** "No double off a kicker" describes the child-pace check (30 to 50 mph: one turn and a late notice on Easy).
+Faster flights use the same allowed turn time, so a kicker taken at 60 mph can give two turns and at the Titan's top speed
+three; that is a reward for speed, as it should be. The flight and landing thresholds stay as they are. The save checker's
+approval at `16b1cb81b` is noted.
