@@ -9,5 +9,5 @@ Freestyle at 16b1cb81b measured 310/2690/930 across the 30 old drives. Targets s
 All seven landed and the seeded child Corkscrews were clean 10/10. Save reviewer approved 16b1cb81b with two Turn Show owners, quota retries, newer data, 151 Bowl save checks, 1123 fixture checks, 3654 damaged fields, backup and budget.
 Falcone, Dusthawk and Titan each landed a backflip, spin, wheelie and donut. Matched final sectors produced the same winner, times and pay. The old Monster ramp had no roof-angle test. Its separate terrain rollover stopped for 2.2 seconds and damaged the rear.
 Arena replay at 30/60/144 FPS with the switch off and on: 63bbadfa36719b73822128cf0fe7d87415d42c1027a7961409913612b1b66d31.
-The named production build passed on 16b1cb81b. Lane checks and Claude’s laptop verdict are pending.
+The named build passed on 16b1cb81b. Lane 48e7a15e5 passed 141/143. The preview inventory and prior held-key assertions await the card rulings. A focused correction proves that the slide halves 72 mph to 36 mph in its first second, including the 0.2-second pose levelling.
 **Removed**: held-key partial turns and Easy’s old 30-degree levelling.

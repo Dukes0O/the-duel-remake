@@ -309,6 +309,11 @@ export function stepBowlTricks(duel, actor, dt) {
   }
   state.clock = actor.stageTimeSec;
   state.elapsed += dt;
+  if (state.slide > 0 && !actor.airborne) {
+    const elapsed = Math.min(dt, state.slide);
+    actor.speedMph *= .5 ** elapsed;
+    state.slide -= elapsed;
+  }
   if (state.recovery > 0) {
     const share = Math.max(0, 1 - dt / state.recovery);
     for (const axis of ['pitch', 'yaw', 'roll']) actor.bowlPose[axis] *= share;
@@ -321,11 +326,6 @@ export function stepBowlTricks(duel, actor, dt) {
   } else if (actor.airborne && !actor.tumble) air(duel, state, dt);
   else if (state.flight) landBowlTricks(duel, actor);
   else {
-    if (state.slide > 0) {
-      const elapsed = Math.min(dt, state.slide);
-      actor.speedMph *= .5 ** elapsed;
-      state.slide -= elapsed;
-    }
     state.groundKeys ??= {};
     Object.assign(state.groundKeys, actor.input);
     ground(duel, state, dt);

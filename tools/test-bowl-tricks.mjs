@@ -204,7 +204,7 @@ test('the next roll uses the heading at its own start', () => {
   assert.deepEqual(starts,['spin','barrelRoll','barrelRoll']);
 });
 
-function seededFlight(id, level, seed, habit, wall = false) {
+function seededFlight(id, level, seed, habit, wall = false, approachMph) {
   const {duel, events} = onFloor(50);
   const s = duel.state, ramp = duel.course.features.ramps.find(r=>r.id===id), rng = makeRng(seed*7919);
   s.bowlNight.cpuDifficulty = level;
@@ -213,7 +213,7 @@ function seededFlight(id, level, seed, habit, wall = false) {
   const line = wall ? -14 : ramp.off;
   const y = duel.course.groundAt(start,line).y;
   Object.assign(s,{s:start,prevS:start,lateral:line,prevLateral:line,groundHeight:y,prevGroundHeight:y,
-    airborne:false,_jumpY:y,_verticalSpeed:0,boost:1,headingError:wall ? .35 : 0,speedMph:wall ? 50 : fullSpeed ? duel.car.topSpeed : 30,gear:fullSpeed ? duel.car.gears.length-1 : 2});
+    airborne:false,_jumpY:y,_verticalSpeed:0,boost:1,headingError:wall ? .35 : 0,speedMph:approachMph ?? (wall ? 50 : fullSpeed ? duel.car.topSpeed : 30),gear:fullSpeed || approachMph > 60 ? duel.car.gears.length-1 : 2});
   let air = 0, outside = false, late = 0;
   duel.onChange((_,event)=>{ if(event.bowlTrickLate) late++; });
   const release = rng.range(0,.3), tap = rng.range(habit ? .1 : .2,habit ? .8 : .7), hold = rng.range(.05,1.5);
@@ -360,4 +360,21 @@ test('the child-pace kicker admits one held turn and tells the driver once about
   const hard = seededFlight('jump-kicker','hard',1,'hold brake');
   assert.equal(hard.landing,'slam');
   assert.equal(hard.late,0);
+  for (const [speed,turns] of [[40,1],[50,1],[60,2],[116,3]]) {
+    const run=seededFlight('jump-kicker','easy',1,'hold brake',false,speed);
+    assert.ok(run.events.some(e=>e.kind==='backflip' && e.turns===turns),speed+' mph held run');
+  }
+});
+
+test('a slide halves speed during its first second, including the time spent levelling',()=> {
+  const s=actor({airHeight:20,_verticalSpeed:6,cpuDifficulty:'hard'});
+  const duel={state:s,course:{def:{tricks:true,bowl:true}},featureFlags:{enabled:()=>true},emit(){}};
+  stepBowlTricks(duel,s,DT);
+  s.input={steer:1};stepBowlTricks(duel,s,DT);
+  s.input={};
+  for(let i=0;i<55;i++)stepBowlTricks(duel,s,DT);
+  s.airborne=false;stepBowlTricks(duel,s,DT);
+  assert.equal(s.bowlLanding,'slide');
+  for(let i=0;i<120;i++)stepBowlTricks(duel,s,DT);
+  assert.ok(Math.abs(s.speedMph-36)<1e-8);
 });
