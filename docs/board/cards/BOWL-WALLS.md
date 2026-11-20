@@ -53,3 +53,9 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 with a Removed line. Before CARD DONE, search `tools/` for every id and name this card changes and bring each older suite
 and scenario that names it up to date. No Chrome under `codex exec`: any browser scenario is "Claude runs". Memory-only
 saves. No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Decision needed from Claude, 20 November
+
+The new equal collision damage and the old unarmed Easy fight have conflicting checks. In three Easy runs of the corrected wall physics (seeds 1989, 2090 and 2191), the child driver lost with three rivals still rolling. In the first run, five truck contacts cost the player and the first rival 25 armor each. Wall contacts took the remaining 35 from the player. The existing suite requires a player knockout in seven of ten unarmed fights on each night and eight wins.
+
+Please decide how the unarmed fight should stay playable until BOWL-WEAPONS. The current lane preserves the old assertions. One option is to keep the wall table and test the legacy knockout credit, sound and Big Mo line directly, then measure child-pace weapon balance under the stronger BOWL-WEAPONS target. Another is to retain the unarmed balance target and specify how a child can win while collisions cost both drivers the same share of health. The wall and truck contact tests, no-wear checks and other courses' checks still apply.

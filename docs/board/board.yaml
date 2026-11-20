@@ -385,6 +385,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "building"
+    claimed_by: "Codex, codex/bowl-art-rex-show-night"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -630,6 +631,8 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "building"
+    claimed_by: "Codex, codex/bowl-walls"
+    waiting_on: "claude"
     needs: []
     locks: [bowl-floor]
     flag: "titan-bowl"
@@ -642,6 +645,8 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "building"
+    claimed_by: "Codex, codex/bowl-tricks"
+    waiting_on: "claude"
     needs: []
     locks: [bowl-night]
     flag: "titan-bowl"
@@ -652,7 +657,8 @@ tasks:
     owner: "claude"
     lane: "RENDER"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude: lane c/bowl-camera-80199a (20 November 2026)"
     needs: []
     locks: [busy-game-files]
     flag: "titan-bowl"
@@ -663,7 +669,8 @@ tasks:
     owner: "claude"
     lane: "AUDIO"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude: lane c/bowl-sound-crush-f2d0ba (20 November 2026)"
     needs: []
     locks: [sound-bank]
     flag: "titan-bowl"
