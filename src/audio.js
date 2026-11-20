@@ -2273,16 +2273,19 @@ export class EngineAudio {
     if (!this._bowlCrushOn(course)) return false;
     const prop = course.features?.crushables?.find(piece => piece.id === burst.id);
     const now = this.context.currentTime;
-    const pancake = burst.pancake ?? (this._bowlFallingAt != null && now - this._bowlFallingAt < .35);
-    this._bowlJustCrushed = {id: burst.id, at: now};
+    // A pancake: the truck was still coming down from a height in the frame before (the record clears the
+    // moment it is back on the ground, so a landing followed by a crush is an ordinary bite).
+    const pancake = burst.pancake ?? (this._bowlFallingAt != null && now - this._bowlFallingAt < .2);
+    (this._bowlJustCrushed ??= new Map()).set(burst.id, now);
     const force = .7 + clamp(Number(burst.strength) || 0, 0, 1) * .3;
     // Each piece of the line has its own pitch as well as its own take, so fifteen pieces are fifteen sounds.
     const rate = BOWL_CRUSH_RATES[(Number(String(burst.id).match(/(\d+)$/)?.[1]) || 0) % BOWL_CRUSH_RATES.length];
+    const cues = bowlCrushCues({kind: burst.kind ?? prop?.sourceKind ?? prop?.kind, pancake});
     let played = false;
-    for (const item of bowlCrushCues({kind: burst.kind ?? prop?.sourceKind ?? prop?.kind, pancake})) {
-      if (item.at > 0) (this._bowlCrushPending ??= []).push({...item, scale: item.scale * force, rate, due: now + item.at});
-      else played = !!this._bowlCrushPlay(item.cue, item.scale * force, rate) || played;
-    }
+    for (const item of cues) if (item.at === 0) played = !!this._bowlCrushPlay(item.cue, item.scale * force, rate) || played;
+    // The glass and the crowd follow only a bite that played; otherwise the old crush stands in alone.
+    if (played) for (const item of cues) if (item.at > 0)
+      (this._bowlCrushPending ??= []).push({...item, scale: item.scale * force, rate, due: now + item.at});
     return played;
   }
 
@@ -2303,23 +2306,42 @@ export class EngineAudio {
       return;
     }
     const now = this.context.currentTime;
+    const driving = (st.status === 'racing' || st.status === 'exploring') && !st.paused && !st.onFoot && !st.tumble;
+    if (!driving) {
+      // A pause or a stop: the groan goes without a clank, the queued glass and crowd are dropped, and the wreck
+      // is remembered so that driving on from it makes no sound.
+      if (this._bowlOn) { this._bowlOn.groan?.stop(); this._bowlOn.groan = null; }
+      this._bowlCrushPending = [];
+      return;
+    }
     if (st.airborne && (st.airHeight || 0) >= 1 && (st._verticalSpeed || 0) < 0) this._bowlFallingAt = now;
+    else if (!st.airborne || (st.airHeight || 0) < 1) this._bowlFallingAt = null;
     const pending = this._bowlCrushPending ?? [];
     this._bowlCrushPending = pending.filter(item => item.due > now);
     for (const item of pending) if (item.due <= now) this._bowlCrushPlay(item.cue, item.scale, item.rate);
-    const driving = (st.status === 'racing' || st.status === 'exploring') && !st.paused && !st.onFoot && !st.tumble;
-    const wreck = driving ? bowlWreckUnder(st, course) : null;
-    if ((wreck?.id ?? null) === (this._bowlOn?.id ?? null)) return;
+    for (const [id, at] of this._bowlJustCrushed ?? []) if (now - at >= 1.5) this._bowlJustCrushed.delete(id);
+    const wreck = bowlWreckUnder(st, course);
+    if (wreck && wreck.id === this._bowlOn?.id) { this._bowlOn.leftAt = null; return; }
+    if (!wreck && !this._bowlOn) return;
+    // Off a wreck only after a tenth of a second away from it, so a bounce on its edge is not a clank each time.
+    if (!wreck) {
+      this._bowlOn.leftAt ??= now;
+      if (now - this._bowlOn.leftAt < .1) return;
+    }
     if (this._bowlOn) {
       this._bowlOn.groan?.stop();
       this._bowlCrushPlay('bowl.crush.off');
     }
     this._bowlOn = null;
     if (!wreck) return;
-    const fresh = this._bowlJustCrushed?.id === wreck.id && now - this._bowlJustCrushed.at < 1.5;
-    if (!fresh) for (const item of bowlCrushCues({kind: wreck.sourceKind ?? wreck.kind, flat: true}))
-      this._bowlCrushPlay(item.cue, item.scale);
-    this._bowlOn = {id: wreck.id, groan: this._bowlCrushPlay('bowl.crush.groan', fresh ? 1 : .6)};
+    const fresh = this._bowlJustCrushed?.has(wreck.id);
+    // A second run is the flat crunch, at most once a second for one wreck.
+    const flats = this._bowlLastFlat ??= new Map();
+    if (!fresh && !(now - (flats.get(wreck.id) ?? -Infinity) < 1)) {
+      flats.set(wreck.id, now);
+      for (const item of bowlCrushCues({kind: wreck.sourceKind ?? wreck.kind, flat: true})) this._bowlCrushPlay(item.cue, item.scale);
+    }
+    this._bowlOn = {id: wreck.id, leftAt: null, groan: this._bowlCrushPlay('bowl.crush.groan', fresh ? 1 : .6)};
   }
 
   _clearBowlCrush() {
@@ -2327,6 +2349,7 @@ export class EngineAudio {
     this._bowlOn = null;
     this._bowlCrushPending = [];
     this._bowlJustCrushed = null;
+    this._bowlLastFlat = null;
     this._bowlFallingAt = null;
   }
 

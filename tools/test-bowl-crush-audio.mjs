@@ -116,6 +116,9 @@ const crush = (audio, st, id, strength = .8) => {
   check(played.at(-1).cue === 'bowl.crush.groan', 'the metal groans while the wheels are on the wreck');
   st.s = 170;
   audio._updateBowlCrush(st, course());
+  check(!stopped.length, 'a moment off the edge is not yet off the wreck');
+  audio.context.currentTime += .15;
+  audio._updateBowlCrush(st, course());
   check(stopped.includes('bowl.crush.groan') && played.at(-1).cue === 'bowl.crush.off', 'the groan lets go and the truck clanks off');
   audio.context.currentTime += 5;
   st.s = 164;
@@ -123,6 +126,58 @@ const crush = (audio, st, id, strength = .8) => {
   check(names(played.slice(-2)) === 'flat,groan' && played.at(-1).volume < SOUND_BANK['bowl.crush.groan'].volume,
     'running over the wreck again is the flat crunch and a lighter groan');
   check(!played.some(item => item.cue === 'bowl.crush.flat' && played.indexOf(item) < played.length - 2), 'the first run is not a flat crunch');
+}
+{
+  // A pause on the wreck: the groan stops with no clank, and driving on from the same wreck makes no sound.
+  const {audio, played, stopped} = makeAudio(), st = truck({s: 165, lateral: 9.4});
+  crush(audio, st, 'bowl-crush-0');
+  audio._updateBowlCrush(st, course());
+  const heard = played.length;
+  audio.context.currentTime += .3;
+  st.paused = true;
+  audio._updateBowlCrush(st, course());
+  check(stopped.includes('bowl.crush.groan') && played.length === heard, 'pausing on a wreck stops the groan with no clank and no glass');
+  audio.context.currentTime += 5;
+  st.paused = false;
+  audio._updateBowlCrush(st, course());
+  check(played.length === heard, 'unpausing on the same wreck plays nothing');
+}
+{
+  // A ramp landing on the ground and then a crush is an ordinary bite, not a pancake.
+  const {audio, played} = makeAudio(), st = truck({airborne: true, airHeight: 3, _verticalSpeed: -8});
+  audio._updateBowlCrush(st, course());
+  audio.context.currentTime += 1 / 60;
+  Object.assign(st, {airborne: false, airHeight: 0, _verticalSpeed: 0});
+  audio._updateBowlCrush(st, course());
+  audio.context.currentTime += .1;
+  crush(audio, st, 'bowl-crush-0');
+  check(played[0].cue === 'bowl.crush.car', 'a crush just after a landing is the ordinary bite');
+}
+{
+  // Bouncing on a wreck's edge, and two pieces crushed in one frame.
+  const {audio, played} = makeAudio(), st = truck({s: 165, lateral: 9.4});
+  crush(audio, st, 'bowl-crush-0');
+  crush(audio, st, 'bowl-crush-1');
+  audio._updateBowlCrush(st, course());
+  for (let i = 0; i < 6; i++) {
+    audio.context.currentTime += 1 / 30;
+    st.s = i % 2 ? 165 : 168.2;
+    audio._updateBowlCrush(st, course());
+  }
+  check(!played.some(item => item.cue === 'bowl.crush.off' || item.cue === 'bowl.crush.flat'), 'a bounce on the edge is no clank and no crunch');
+  st.lateral = 13.8;
+  audio.context.currentTime += .05;
+  audio._updateBowlCrush(st, course());
+  check(!played.some(item => item.cue === 'bowl.crush.flat'), 'a second piece crushed in the same frame is not a second run');
+}
+{
+  // A bite that did not play brings no glass or crowd after the old crush.
+  const {audio, played, old} = makeAudio();
+  delete audio.cueBuffers['bowl.crush.bus'];
+  crush(audio, truck(), 'bowl-crush-9');
+  audio.context.currentTime += .5;
+  audio._updateBowlCrush(truck(), course());
+  check(old.length === 1 && played.length === 0, 'the old crush stands in alone when the bite cannot play');
 }
 {
   // Everywhere else, and before the takes load, the old crush plays.
