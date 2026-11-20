@@ -12,7 +12,7 @@ const button = (label, action, extra = '', primary = false) =>
   `<button type="button" class="${primary ? 'primary-action' : 'secondary-action'}" data-action="${action}"${extra}>${label}</button>`;
 const eventName = type => BOWL_EVENT_NAMES[type] ?? type;
 
-export function createTurnScreens({app, escapeHTML}) {
+export function createTurnScreens({app, escapeHTML, eventGuide}) {
   let setup = null; // {picked: [ids], level} while the setup panel is open
   const say = text => `<p>${escapeHTML(text)}</p>`;
   const nameOf = (view, id) => view.show.players.find(player => player.id === id)?.name ?? '';
@@ -63,7 +63,7 @@ export function createTurnScreens({app, escapeHTML}) {
 
   function handoff(view) {
     const turn = view.turn;
-    return `<section class="bowl-panel bowl-turns bowl-handoff" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-turn-player="${escapeHTML(turn.playerId)}"><header><p class="eyebrow">NIGHT ${view.show.night} · ${escapeHTML(eventName(turn.event).toUpperCase())}</p><h2 id="bowl-title">${escapeHTML(WORDS.handoffTitle(turn.name))}</h2></header>${say(WORDS.handoffEvent(turn.name, eventName(turn.event)))}${say(WORDS.handoffKey)}${board(view)}<footer>${button(WORDS.readyButton, 'show-turns-ready', '', true)}${button(WORDS.leaveButton, 'show-turns-leave')}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-turns bowl-handoff" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-turn-player="${escapeHTML(turn.playerId)}"><header><p class="eyebrow">NIGHT ${view.show.night} · ${escapeHTML(eventName(turn.event).toUpperCase())}</p><h2 id="bowl-title">${escapeHTML(WORDS.handoffTitle(turn.name))}</h2></header>${say(WORDS.handoffEvent(turn.name, eventName(turn.event)))}${say(WORDS.handoffKey)}${board(view)}${eventGuide?.(turn.event) ?? ''}<footer>${button(WORDS.readyButton, 'show-turns-ready', '', true)}${button(WORDS.leaveButton, 'show-turns-leave')}</footer>${say(WORDS.leaveNote)}</section>`;
   }
 
   function goCard(view, state) {

@@ -16,7 +16,7 @@ const button = (label, action, extra = '', primary = false) =>
 export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   let pickerFrom = null, level = null, openingNight = null, help = null;
   const renderHud = createBowlHud({stage: ui.stage, app, projectPlayer});
-  const turns = createTurnScreens({app, escapeHTML});
+  const turns = createTurnScreens({app, escapeHTML, eventGuide});
   const say = text => `<p>${escapeHTML(text)}</p>`;
   // A card shows Big Mo's line for what just happened, whatever he is still saying aloud.
   const moLine = id => BIG_MO[id] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[id])}</p>` : '';
@@ -81,7 +81,8 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       button(WORDS.menuButton, 'show-night-leave', ' data-to="menu"');
   }
 
-  function rexGuide() {
+  function eventGuide(event) {
+    if(event!=='scrapasaurus')return '';
     const truck='<path fill="#e2d2aa" d="M8 35h14l4-9h16l8 9h5v8H8z"/><g fill="#252522" stroke="#e2d2aa"><circle cx="18" cy="43" r="5"/><circle cx="44" cy="43" r="5"/></g>';
     const box='<rect x="77" y="21" width="21" height="15" fill="#e8ab38"/><circle cx="88" cy="17" r="5" fill="none" stroke="#ddd5bb" stroke-width="3"/>';
     const pictures=[
@@ -102,7 +103,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)==='scrapasaurus' ? rexGuide() : ''}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
   }
 
   function nightCard(state) {
