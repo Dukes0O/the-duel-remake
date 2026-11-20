@@ -421,13 +421,13 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const dimensions = {...this._vehicleSpec(car),
     useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;
+  const exterior = this.course.features?.bowl?.outside;
   for (let attempt = 0; attempt < 4; attempt++) {
     let first = null, verticalStart, verticalEnd;
     for (let index = 0; index < obstacles.length + (journeyColliders?.length || 0); index++) {
       const obstacle = index < obstacles.length ? obstacles[index] : journeyColliders[index - obstacles.length];
       if (obstacle.bowlGateAI && player) continue;
       if (obstacle.bowlBoundary) {
-        const exterior = this.course.features.bowl.outside;
         if (obstacle.bowlBoundary === 'back' && car.lateral >= oldLateral && (oldLateral <= exterior.back || car.airborne)) continue;
         if (obstacle.bowlBoundary === 'tunnel' && (car._jumpY ?? car.groundHeight ?? 0) >= terraceHeight(exterior, car.lateral) - .6 && car.lateral > exterior.wall + 1) continue;
       }
@@ -456,11 +456,11 @@ export function _staticContacts(car, player, journeyColliders = null) {
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
         hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
-      } else if (!player && this.course.features.bowl?.outside && obstacle.arenaWall) {
+      } else if (!player && exterior && obstacle.arenaWall) {
         hit = sweepObstacle({...start, y: undefined}, {...end, y: undefined}, collider, heading, contactDimensions);
-      } else if (this.course.features.bowl?.outside && obstacle.arenaWall && obstacle.off === this.course.features.bowl.outside.wall &&
+      } else if (exterior && obstacle.arenaWall && obstacle.off === exterior.wall &&
           oldLateral > obstacle.off && car.lateral <= oldLateral) {
-        const fenceTop = obstacle.y + this.course.features.bowl.outside.fenceTop;
+        const fenceTop = obstacle.y + exterior.fenceTop;
         hit = sweepObstacle(start, end, {...collider, maxY: fenceTop, modelMaxY: fenceTop}, heading, contactDimensions);
       } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
