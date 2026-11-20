@@ -622,6 +622,7 @@ tasks:
     size: "M"
     status: "building"
     claimed_by: "Codex, codex/bowl-hud"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS]
     locks: [bowl-screens]
     flag: "titan-bowl"

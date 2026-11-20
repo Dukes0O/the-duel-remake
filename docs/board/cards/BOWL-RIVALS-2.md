@@ -72,3 +72,7 @@ The current rival driver owns its pace, braking and steering inside `src/sim-riv
   through the existing Show Night audio dispatch in `src/app.js`. Conditions: with no plan passed, every rival drives
   exactly as before (replay fingerprints and combat balance unchanged); nothing outside the Bowl with `titan-bowl` on reads
   the plan; `app.js` is a shared file, so the night after the merge is a full one.
+
+## Follow-up hook for Claude, 20 November
+
+The granted stadium update currently receives only time and crowd level. Please grant one read-only wire in `src/bowl/bowl-view.js` to pass the existing Bowl event state to that stadium updater. The lamps use the event’s first finisher, and no ordinary course or player state changes.
