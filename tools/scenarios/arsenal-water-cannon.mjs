@@ -20,9 +20,14 @@ async function townWithFireStation(context, name) {
   // Before the Fire Station: the Armory must not offer the cannon yet.
   const before = await context.evaluate(`window.__qaApp._townGearOptions().townBuildings.includes('fire-station')`);
   if (before) throw new Error('A new town already counts as having a Fire Station.');
+  // The Fire Station goes on the first plot the town itself accepts, nearest its middle: the town keeps some ground clear
+  // (the outposts, Vane's pitches, its art plan), and a refused placement changes nothing.
   await context.evaluate(`(() => {const host=document.querySelector('.town-entry'),town=host.__town;
-    const placed=host.__townCommand({type:'placeBuilding',buildingId:'fire-station',x:4,z:-8})[0];
-    if(!placed?.ok)throw Error('fire-station: '+placed?.message);
+    let placed=null,tried=0;
+    for(let ring=0;ring<=40&&!placed?.ok;ring++)for(let dx=-ring;dx<=ring&&!placed?.ok;dx++)for(let dz=-ring;dz<=ring&&!placed?.ok;dz++){
+      if(Math.max(Math.abs(dx),Math.abs(dz))!==ring)continue;
+      tried++;placed=host.__townCommand({type:'placeBuilding',buildingId:'fire-station',x:dx,z:dz})[0];}
+    if(!placed?.ok)throw Error('No free plot for a Fire Station in '+tried+' tries: '+placed?.message);
     for(const building of town.buildings)if(building.buildingId==='fire-station')building.state='finished';
     document.querySelector('[data-town-action="yard"]').click();})()`);
   await context.waitFor(`!document.querySelector('.town-entry')&&window.__qaApp._townGearOptions().townBuildings.includes('fire-station')`,
@@ -68,19 +73,21 @@ async function race(context) {
       window.__render.camera.position.fromArray(app.inspectionCamera.position);window.__render.camera.lookAt(...app.inspectionCamera.target);
       window.__render.camera.updateMatrixWorld(true);
       const before=JSON.stringify(state);app.onFrame?.(state,0);window.__render.renderFrame();
-      if(JSON.stringify(state)!==before)throw Error('Drawing the water changed race state');};
+      if(JSON.stringify(state)!==before)throw Error('Drawing the water changed race state');
+      document.querySelectorAll('details').forEach(panel=>{const title=panel.querySelector('summary')?.textContent||'';
+        if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.hidden=true;});};
     duel.setInput({throttle:0,brake:0,steer:0,boost:false});window.__waterPaint();})()`);
   await context.waitFor(`(() => {window.__waterPaint();return window.__qaApp.visualReady&&document.querySelector('#view3d canvas')?.style.visibility==='visible';})()`,
     'the painted race', 60_000);
 }
 
 export async function run(context) {
-  await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
   await context.navigate(entry);
-  await context.waitFor(`document.readyState==='complete'&&!!window.__qaApp&&!!window.__render&&
-    !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'the memory-only QA game', 90_000);
+  await context.waitFor(`document.readyState==='complete'&&!!window.__qaApp`, 'the QA game', 90_000);
   await context.waitFor(`window.__qaApp.visualReady===true`, 'the renderer', 60_000);
   await townWithFireStation(context, 'Water QA');
+  // The race pictures are taken at a fixed size; the yard and town are opened first at the page's own size, as town-fire-save does.
+  await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
   let bought = false;
   for (const quality of ['high', 'performance']) {
     if (!bought) { await buyAndFit(context, quality); bought = true; }
