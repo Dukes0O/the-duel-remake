@@ -205,6 +205,12 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setYard(yardPlan().solids);
   }
+  // The neighbours' outposts are solid in a town drive only, from the layout the drive was started with (TOWN-OUTPOST-SCENE).
+  // After the yard's grid, which replaces any grid made before it.
+  if(definition.kind==='town-drive'&&definition.layout?.outposts?.solids?.length){
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setTown(definition.layout.outposts.solids);
+  }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
     const post = definition.steps[0].saltPost.position;
