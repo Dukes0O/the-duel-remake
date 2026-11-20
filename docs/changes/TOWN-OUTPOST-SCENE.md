@@ -8,6 +8,8 @@
 
 **After review (merged integration 3be1f37).** The `scablands-solids.js` conflict kept both Night 2's camp and the town's solids; `test-scablands-solid`, `test-night-2`, `test-night-2-scenario`, `test-town-world` and `test-town-outposts-scene` passed, and the build.
 
-**Changed assertions.** `test-town-outposts-scene.mjs` test 7: "no goat model yet: the goats are placed but not drawn" became "Tam's goats are drawn as the goat" and "Tuesday is drawn as the camp dog", because the goat and camp dog models and rows merged today. Added: the goats and Tuesday stand on their ground and face the way they walk, and the scene stands with no species row. Nothing loosened.
+**After the laptop's browser run.** `neighbourProtection`, `neighbourRaid` and `neighbourHelpEnemy` answered without a sentence, so the town's dispatcher refused them and protection could not be set from the game: `src/town/town-outposts.js` now gives each a plain message. The town solids are set after the yard's grid in `world-job.js`. The scenario compares with the layout and records what it read. New test 6 fails on the old code (both faults). Lane tier since 4f666e9: 65 passed; build passed.
+
+**Changed assertions.** `test-town-outposts-scene.mjs` test 7: "no goat model yet: the goats are placed but not drawn" became "Tam's goats are drawn as the goat" and "Tuesday is drawn as the camp dog", because the goat and camp dog models and rows merged today. Added: the goats and Tuesday stand on their ground and face the way they walk, and the scene stands with no species row. Scenario: "the outposts are solid in the drive" (more than 50) became "every outpost solid is on the drive's grid" (equal to the layout's count); 50 was a guess, one protected outpost gives 40. Nothing loosened.
 
 **Removed.** Nothing; this is new.

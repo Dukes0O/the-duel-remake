@@ -28,22 +28,28 @@ export async function run(context) {
   const protection = await context.evaluate(`(()=>{
     const host=document.querySelector('.town-entry');
     const result=host.__townCommand({type:'neighbourProtection',neighbourId:'dot',protected:true});
+    const read={answers:result,protectedInTown:host.__town?.outposts?.dot?.protected===true};
     host.querySelector('[data-town-action="drive"]').click();
-    return result?.[0]?.ok===true;
+    return read;
   })()`);
-  fact(protection, 'Dot is protected before the drive (her fence should stand)');
+  report.read = {protection};
+  fact(Array.isArray(protection.answers) && protection.answers[0]?.ok === true, 'the town accepts Dot\'s protection');
+  fact(protection.protectedInTown, 'Dot is protected before the drive (her fence should stand)');
   await context.waitFor(`(()=>{const app=window.__qaApp;return app.duel.state.arena?.worldJob?.definition?.kind==='town-drive'&&app.duel.state.status==='racing';})()`, 'the town drive started', 90_000);
   await context.waitFor(`!!window.__render?.scene?.getObjectByName('Town outposts')?.userData?.sites?.length`, 'the outposts drawn in the Scablands', 90_000);
   await context.waitFor(`window.__render.scene.getObjectByName('Town outposts').userData.sites.every(site=>site.site.children.length===1)`, 'every outpost model loaded', 90_000);
   const layout = await context.evaluate(`(()=>{
     const app=window.__qaApp,job=app.duel.state.arena.worldJob,group=window.__render.scene.getObjectByName('Town outposts');
+    const diner=job.definition.layout?.outposts?.outposts?.find(outpost=>outpost.id==='dot-diner');
     return {count:job.definition.layout?.outposts?.outposts?.length,solid:job.solidGrid?.town?.length??0,
+      layoutSolids:job.definition.layout?.outposts?.solids?.length??0,fencePieces:diner?.fence?.length??0,
       errors:group.userData.loadErrors,fence:group.userData.sites.find(site=>site.outpost.id==='dot-diner').fence.children.length};
   })()`);
+  report.read.layout = layout;
   fact(layout.count === 5, 'the drive carries the five outposts');
-  fact(layout.solid > 50, 'the outposts are solid in the drive');
+  fact(layout.layoutSolids > 0 && layout.solid === layout.layoutSolids, `every outpost solid is on the drive's grid (${layout.solid} of ${layout.layoutSolids})`);
   fact(!layout.errors?.length, 'the outposts drew without a load error');
-  fact(layout.fence >= 6, 'Dot\'s fence is drawn');
+  fact(layout.fencePieces >= 6 && layout.fence === layout.fencePieces, `Dot's fence is drawn (${layout.fence} of ${layout.fencePieces} pieces)`);
   for (const id of OUTPOSTS) {
     const stand = await context.evaluate(`(()=>{
       const app=window.__qaApp,state=app.duel.state,course=app.duel.course;
@@ -64,6 +70,7 @@ export async function run(context) {
   }
   const bo = await context.evaluate(`(()=>{const site=window.__render.scene.getObjectByName('Town outposts').userData.sites.find(item=>item.outpost.id==='plane-school');
     return site.cast.find(person=>person.id==='wim')?.distance??0;})()`);
+  report.read.boWalked = bo;
   fact(bo > 0, 'Bo went round the school while the car stood there');
   report.notes.push('Claude: at each picture, look at the pad edges (in the ground, no gap, not buried to the roof), the people (standing on the ground or on Deck Town\'s walkways and the halt\'s platform), Bo near the school, the fence round Dot\'s Diner with its open gate on the road side, and Tam\'s goats and Tuesday once WILD-ART-WASTE has added their models.');
   report.notes.push('Then drive into the diner and along the fence by hand: the car should stop at the walls and the fence, and Dot should step aside.');
