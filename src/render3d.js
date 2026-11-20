@@ -7,6 +7,7 @@ import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {applySaltStormFog} from './world/the-whites-scene.js';
+import {dustNightOf, applyDustNightFog} from './world/dust-night-look.js'; // SHIPS-DECKS: the night storm, view only
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
@@ -852,7 +853,8 @@ export function attachRenderer(host, app) {
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
     const chapter = !menu ? st.arena?.worldJob?.night2 : null;
     if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
-    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night, st.paused ? 0 : dt);
+    const dustNight = !menu && (app._switches?.() ?? app.duel.featureFlags).enabled('wasteland-town') ? dustNightOf(st) : null;
+    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night || !!dustNight, st.paused ? 0 : dt);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
       chapterNight: chapterNightShare,
@@ -864,6 +866,7 @@ export function attachRenderer(host, app) {
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
     applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
+    applyDustNightFog(scene,dustNight,dt,renderer);
     const tall=carKey==='titan_monster'||workVehicleView.drawsFor(st,app._switches?.()??app.duel.featureFlags); // TOWN-VEHICLES: a truck's camera sits as high as the Titan's
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.

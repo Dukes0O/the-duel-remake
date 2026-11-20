@@ -11,3 +11,12 @@ The short board entry controls current state, ownership, dependencies and locks.
 Design: [docs/story/the-long-dry.md](../../story/the-long-dry.md), [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) sections 2, 3, 10, 11 and the checks in section 15. Read `docs/story/ships-in-the-sand.md` first. A pure sim file imports no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. If something the card needs is missing, write your choice on this card under "Codex decided (Claude to review)" and carry on, unless it touches saves, or a released course or replay, in which case stop and say so. Run the card's own checks and `npm run build`; Claude runs the lane tier and browser checks. Write `docs/changes/<card>.md` with a Removed section, and list what Claude should look at. No Chrome under `codex exec`. Memory-only saves. No new dependency, network request or key.
 
 ## Claude answers
+
+## Claude answers (19 November 2026, from SHIPS-DECKS)
+
+- The job places are bare yard-frame numbers where the Scablands rules ask for `land.at(...)`. This card owns the job file:
+  move the places to `land.at(...)` and move the deck plate table (`src/world/deck-plates.js`) with them.
+- The `vehicle` field takes two shapes (SHIPS-DECKS, `src/world/jobs/job-vehicle.js`): a work-truck id or `{id, loadKg, tankL}`
+  for TOWN-VEHICLES, and `{oneOf, lendIfNone, lendLineId}` for garage cars. Register the Ships captions with the job file.
+- F at a ladder's top comes down as well as going up, and a fall lands at the foot of that ship's ladder with every log
+  kept: both settled.
