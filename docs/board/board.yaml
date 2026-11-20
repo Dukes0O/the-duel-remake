@@ -652,7 +652,8 @@ tasks:
     owner: "claude"
     lane: "RENDER"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude: lane c/bowl-camera-80199a (20 November 2026)"
     needs: []
     locks: [busy-game-files]
     flag: "titan-bowl"
