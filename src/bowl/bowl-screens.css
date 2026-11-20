@@ -1,37 +1,236 @@
-/* Show Night (BOWL-HOOKS): picker, cards between events, results and the HUD. */
-.bowl-panel{box-sizing:border-box;pointer-events:auto;width:min(560px,94vw);max-height:calc(100vh - 48px);overflow-y:auto;margin:24px auto;padding:24px;color:#f6ecd6;background:#1a1512ee;border:1px solid #a1773f;border-top:3px solid #f08a2c;box-shadow:0 12px 36px #0009;font-size:15px;line-height:1.5}
-.bowl-panel h2{font-size:clamp(26px,3.2vw,42px);line-height:1;margin:4px 0 12px}
-.bowl-panel p{margin:8px 0}
-.bowl-panel button{min-height:42px;padding:10px 14px;background:#2e241c;border:1px solid #a1773f;color:#f6ecd6;font:inherit;font-weight:700;letter-spacing:.04em;cursor:pointer}
-.bowl-panel button.primary-action{background:#b5571c;border-color:#f08a2c}
-.bowl-panel button:hover{background:#4a3828}.bowl-panel button.primary-action:hover{background:#cf6a26}
-.bowl-panel button:focus-visible{outline:3px solid #ffc75f;outline-offset:2px}
-.bowl-panel .segmented{display:flex;gap:6px;margin:12px 0}.bowl-panel .choice.on{background:#6d4524;border-color:#ffc75f}
-.bowl-panel footer{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.bowl-nights{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
-.bowl-night-row{display:grid;grid-template-columns:90px 1fr;gap:4px 12px;align-items:center;padding:8px 10px;background:#241c16;border:1px solid #4f3e2c}
-.bowl-night-row p{margin:0}.bowl-night-row button{grid-column:2;justify-self:start}
-.bowl-night-row[data-night-state="locked"],.bowl-night-row[data-night-state="later"]{opacity:.7}
-.bowl-mo{padding:10px 12px;background:#2c1f12;border-left:3px solid #f08a2c;font-style:italic}
-.bowl-message{color:#ffc06a}
-.bowl-scores{list-style:none;padding:0;margin:10px 0;display:grid;gap:4px}
-.bowl-scores li{display:flex;justify-content:space-between;border-bottom:1px solid #4f3e2c;padding:4px 0}
-/* The race HUD keeps its speed and gear; the lap clock and rival gap give way to the show's own numbers. */
-.bowl-night-active .race-progress,.bowl-night-active .race-heading,.bowl-night-active .race-clock,.bowl-night-active .race-position,
-.bowl-night-active #route-remaining,.bowl-night-active #arena-crush,.bowl-night-active #style-score-panel,
-.bowl-night-active .race-health,.bowl-night-active #race-callout{visibility:hidden}
-.bowl-hud{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:4;width:min(620px,92vw);padding:10px 16px;color:#fff3dc;background:#120d0acc;border:1px solid #a1773f;text-align:center;pointer-events:none;font-size:14px}
-.bowl-hud[hidden]{display:none}
-.bowl-hud p{margin:4px 0}.bowl-hud-event{font-weight:800;letter-spacing:.08em;color:#ffc06a}
-.bowl-hud-numbers{display:flex;justify-content:center;gap:24px;font-size:22px;font-weight:800}
-.bowl-hud-crowd{display:flex;justify-content:center;align-items:center;gap:8px;font-weight:700;letter-spacing:.08em}
-.bowl-hud-crowd meter{width:220px;height:14px}
-.bowl-hud-mo{min-height:1.4em;font-style:italic;color:#ffe2b0}
-/* The Turn Show (BOWL-TURNS): players, the pass-the-keyboard screen and the scoreboard. */
-.bowl-turns-players{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.bowl-turns-players .choice.on{background:#6d4524;border-color:#ffc75f}
-.bowl-handoff h2{font-size:clamp(28px,4vw,48px);color:#ffc06a}
-.bowl-turns-board{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
-.bowl-turns-board th,.bowl-turns-board td{padding:6px 8px;border-bottom:1px solid #4f3e2c;text-align:right}
-.bowl-turns-board th[scope="row"],.bowl-turns-board thead th:first-child{text-align:left}
-.bowl-turns-board td b{color:#ffc06a;font-size:11px;letter-spacing:.06em}
-.bowl-turns-board .bowl-turns-leader th{color:#ffc06a}
+/* Show Night picker, cards and turn scoreboard. */
+.bowl-panel {
+  box-sizing: border-box;
+  pointer-events: auto;
+  width: min(560px, 94vw);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  margin: 24px auto;
+  padding: 24px;
+  color: #f6ecd6;
+  background: #1a1512ee;
+  border: 1px solid #a1773f;
+  border-top: 3px solid #f08a2c;
+  box-shadow: 0 12px 36px #0009;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.bowl-panel h2 { font-size: clamp(26px, 3.2vw, 42px); line-height: 1; margin: 4px 0 12px; }
+.bowl-panel p { margin: 8px 0; }
+.bowl-panel button {
+  min-height: 42px;
+  padding: 10px 14px;
+  background: #2e241c;
+  border: 1px solid #a1773f;
+  color: #f6ecd6;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.bowl-panel button.primary-action { background: #b5571c; border-color: #f08a2c; }
+.bowl-panel button:hover { background: #4a3828; }
+.bowl-panel button.primary-action:hover { background: #cf6a26; }
+.bowl-panel button:focus-visible { outline: 3px solid #ffc75f; outline-offset: 2px; }
+.bowl-panel .segmented { display: flex; gap: 6px; margin: 12px 0; }
+.bowl-panel .choice.on { background: #6d4524; border-color: #ffc75f; }
+.bowl-panel footer { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.bowl-nights { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
+.bowl-night-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 8px 10px;
+  background: #241c16;
+  border: 1px solid #4f3e2c;
+}
+.bowl-night-row p { margin: 0; }
+.bowl-night-row button { grid-column: 2; justify-self: start; }
+.bowl-night-row[data-night-state="locked"], .bowl-night-row[data-night-state="later"] { opacity: .7; }
+.bowl-mo { padding: 10px 12px; background: #2c1f12; border-left: 3px solid #f08a2c; font-style: italic; }
+.bowl-message { color: #ffc06a; }
+.bowl-scores { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 4px; }
+.bowl-scores li { display: flex; justify-content: space-between; border-bottom: 1px solid #4f3e2c; padding: 4px 0; }
+.bowl-turns-players { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.bowl-turns-players .choice.on { background: #6d4524; border-color: #ffc75f; }
+.bowl-handoff h2 { font-size: clamp(28px, 4vw, 48px); color: #ffc06a; }
+.bowl-turns-board { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+.bowl-turns-board th, .bowl-turns-board td { padding: 6px 8px; border-bottom: 1px solid #4f3e2c; text-align: right; }
+.bowl-turns-board th[scope="row"], .bowl-turns-board thead th:first-child { text-align: left; }
+.bowl-turns-board td b { color: #ffc06a; font-size: 11px; letter-spacing: .06em; }
+.bowl-turns-board .bowl-turns-leader th { color: #ffc06a; }
+
+/* Keep the Bowl's centre clear. Race information comes from the show strip. */
+.bowl-night-active :is(.race-progress, .race-heading, .race-clock, .race-position, .route-hud,
+  .gear, .rear-view-frame, .race-health, #arena-board, #style-score-panel, #race-callout) {
+  display: none;
+}
+.bowl-event-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  color: #fff3dc;
+  font-size: 14px;
+}
+.bowl-event-overlay[hidden], .bowl-event-overlay [hidden], .bowl-health-segments[hidden] { display: none; }
+.bowl-hud {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) auto auto;
+  gap: 16px;
+  align-items: center;
+  width: min(840px, 73vw);
+  padding: 8px 12px;
+  background: #1a1512ed;
+  border: 1px solid #a1773f;
+  border-top: 2px solid #f08a2c;
+}
+.bowl-hud-title { display: grid; gap: 1px; }
+.bowl-hud-event { color: #ffc06a; letter-spacing: .035em; }
+.bowl-hud-numbers { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-weight: 800; }
+.bowl-hud-clock { min-width: 3ch; font-variant-numeric: tabular-nums; }
+.bowl-hud-chain, .bowl-hud-gap { color: #ffcd77; }
+.bowl-night-active .countdown { top: clamp(70px, 11vh, 100px); }
+.bowl-night-active .countdown > b { font-size: clamp(40px, 9vh, 76px); line-height: 1; }
+.bowl-hud-crowd { display: grid; gap: 2px; width: clamp(72px, 10vw, 144px); font-weight: 700; }
+.bowl-hud-crowd meter { width: 100%; height: 8px; accent-color: #ffb65f; }
+.bowl-hud-mo {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(68vw, 680px);
+  margin: 0;
+  padding: 8px 12px;
+  background: #1a1512ed;
+  border-inline-start: 3px solid #f08a2c;
+  line-height: 1.35;
+}
+.bowl-trick-popup {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  max-width: min(68vw, 340px);
+  width: max-content;
+  padding: 5px 8px;
+  background: #1a1512ed;
+  border-block-end: 2px solid #f08a2c;
+  text-align: center;
+}
+.bowl-trick-popup p { margin: 2px 0; }
+.bowl-trick-popup span { margin-inline: 3px; font-variant-numeric: tabular-nums; }
+.bowl-trick-popup em { color: #ffe190; font-style: normal; font-size: .8em; font-weight: 800; }
+.bowl-hud-corner { position: absolute; left: 16px; bottom: 16px; display: grid; justify-items: start; gap: 6px; }
+.bowl-plan { width: clamp(84px, 12vw, 166px); height: auto; background: #1a1512df; border: 1px solid #a1773f; }
+.bowl-health { width: clamp(84px, 11vw, 145px); padding: 7px; background: #1a1512ed; border: 1px solid #a1773f; }
+.bowl-health-truck {
+  position: relative;
+  display: grid;
+  grid-template: "front front" 15px "left right" 17px "rear rear" 15px / 1fr 1fr;
+  gap: 2px;
+  width: 37px;
+  margin: 0 auto 6px;
+}
+.bowl-health-truck i { border: 1px solid #412f22; border-radius: 3px; background-color: var(--bowl-health-color); }
+.bowl-health-truck [data-zone="front"] { grid-area: front; }
+.bowl-health-truck [data-zone="rear"] { grid-area: rear; }
+.bowl-health-truck [data-zone="left"] { grid-area: left; }
+.bowl-health-truck [data-zone="right"] { grid-area: right; }
+.bowl-health-hit { position: absolute; top: 18px; left: 50%; translate: -50% 0; color: #fff3dc; text-shadow: 0 1px 4px #000; }
+.bowl-health-hit[data-zone="front"] { top: 2px; }
+.bowl-health-hit[data-zone="rear"] { top: 34px; }
+.bowl-health-hit[data-zone="left"] { left: 1px; }
+.bowl-health-hit[data-zone="right"] { left: 36px; }
+.bowl-health-segments { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.bowl-health-segments i { display: block; height: 9px; background: #493d34; overflow: hidden; }
+.bowl-health-segments i::before { display: block; content: ""; width: calc(100% * var(--filled)); height: 100%; background: var(--bowl-health-color); }
+.bowl-health-alert { display: block; margin-top: 2px; color: #ffab92; font-size: 11px; text-align: center; }
+.bowl-health-truck i, .bowl-health-segments { --bowl-health-color: #9fd37d; }
+.bowl-health-truck [data-tone="yellow"], .bowl-health-segments[data-tone="yellow"] { --bowl-health-color: #e6cd6b; }
+.bowl-health-truck [data-tone="orange"], .bowl-health-segments[data-tone="orange"] { --bowl-health-color: #f2a066; }
+.bowl-health-truck [data-tone="red"], .bowl-health-segments[data-tone="red"] { --bowl-health-color: #fb7967; }
+.bowl-health-truck .bowl-zone-hit { outline: 2px solid #fff3dc; }
+.bowl-health-danger i:first-child, .bowl-health-alert:not([hidden]) { animation: bowl-danger .8s ease-in-out infinite alternate; }
+@keyframes bowl-danger { to { opacity: .46; } }
+.bowl-night-active .combat-opponent-marker .bowl-health-segments { width: 65px; }
+.bowl-night-active .combat-opponent-marker .bowl-health-segments i { height: 5px; }
+
+/* Chalkboard side views on the trick card and in Trick School. */
+.bowl-trick-card { width: min(750px, 94vw); }
+.bowl-trick-card ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 6px 18px;
+}
+.bowl-trick-card li {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) 1.2em;
+  align-items: center;
+  gap: 10px;
+  min-height: 73px;
+  padding: 8px 0;
+  border-block-end: 1px solid #4f3e2c;
+}
+.bowl-trick-card li p { margin: 3px 0; }
+.bowl-trick-card small { color: #e4d3b5; }
+.bowl-trick-card kbd { padding: 1px 4px; border: 1px solid #a1773f; font: inherit; font-size: 12px; }
+.bowl-trick-tick { color: #b9df8e; }
+.bowl-trick-picture {
+  position: relative;
+  width: 64px;
+  height: 43px;
+  border-block-end: 1px dashed #a1773f;
+  color: #ffd596;
+}
+.bowl-trick-picture i {
+  position: absolute;
+  left: 11px;
+  top: 16px;
+  width: 36px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-radius: 3px 8px 2px 2px;
+  transform: rotate(var(--pose, 0deg)) scaleX(var(--profile, 1));
+}
+.bowl-trick-picture i::before, .bowl-trick-picture i::after {
+  position: absolute;
+  top: 6px;
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: #251b14;
+  content: "";
+}
+.bowl-trick-picture i::before { left: -5px; }
+.bowl-trick-picture i::after { right: -5px; }
+.bowl-trick-picture[data-trick="wheelie"] { --pose: -27deg; }
+.bowl-trick-picture[data-trick="stoppie"] { --pose: 24deg; }
+.bowl-trick-picture[data-trick="frontFlip"] { --pose: 118deg; }
+.bowl-trick-picture[data-trick="backflip"] { --pose: -118deg; }
+.bowl-trick-picture[data-trick="barrelRoll"] { --profile: .55; --pose: -37deg; }
+.bowl-trick-picture[data-trick="sideFlip"] { --profile: .78; --pose: 68deg; }
+.bowl-trick-picture:is([data-trick="donut"], [data-trick="spin"])::before { position: absolute; right: 0; top: 0; content: "↻"; }
+
+@media (max-width: 850px) {
+  .bowl-hud { width: min(560px, 78vw); font-size: 12px; gap: 8px; }
+  .bowl-hud-mo { max-width: 60vw; bottom: 8px; }
+}
+@media (max-width: 570px) {
+  .bowl-hud { grid-template-columns: minmax(0, 1fr) auto; width: min(440px, 94vw); top: 42px; }
+  .bowl-hud-crowd { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; }
+  .bowl-trick-card ul { grid-template-columns: 1fr; }
+  .bowl-night-active .countdown { top: 115px; }
+  .bowl-hud-mo { max-width: 55vw; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bowl-health-danger i:first-child, .bowl-health-alert { animation: none; }
+}
