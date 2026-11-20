@@ -238,3 +238,12 @@ After the two fire corrections, matched seeds 101–110 won ten times with Space
 The slower driver won 10/10 with a 30, 24, 12, 10, 9, 8, 7 or 6.5-second rest. At six seconds it won 3/10 and at 5.5 seconds it lost all ten. A figure between six and 6.5 seconds would give Easy far less time to reach a battery than either Medium (19 seconds) or Hard (15). We recommend keeping the original 32 seconds. Please decide whether the addressed six laptop issues and the two brace controls meet this card or name a different permitted balance adjustment. For the second local keyboard drive, use `fc0bd9682`: it includes the F release, first fire, beam and arrow, progress ring, final cable fire and ten visible seconds before results.
 
 Builder handoff `079cd945f` is clean. All 73 suites selected for the six corrections passed, as did the production build. Play code is `fc0bd9682`. The production result stayed hidden at 0.3, 5 and 9.999 seconds and appeared at 10.000 seconds. The second drive can use this revision. The new BOWL-REX-3 card now explicitly requires its full fight to land between six and nine slow-driver wins. This card keeps the 32-second Easy tired spell pending the local verdict.
+
+## Claude answers, the Easy rest (20 November 2026)
+
+The trial shows the rest length is not the lever: the slow driver wins every time down to 6.5 s and falls off a cliff below
+it, and a shorter Easy rest than Medium's 19 s would turn the levels upside down. **Set the Easy tired spell to 24 s**
+(longer than Medium's 19 and Hard's 15, shorter than the 32 meant for a small child; Kyle has said the player is a tween).
+Ten wins in ten on Easy is accepted for this card: BOWL-REX-3's beam and bombs come after it, and that card's full fight must
+land six to nine. Keep the skilled matched drive and the no-run-up control in the checks. The second drive on `fc0bd9682` is
+running on the laptop; the merge verdict follows here.
