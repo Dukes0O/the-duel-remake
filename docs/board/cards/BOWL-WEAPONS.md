@@ -44,8 +44,6 @@ while the armor had lost 4 of 60. The driver's armor is shown nowhere.
 one line for F on the Bowl in `src/input-contexts.js`, `src/bowl/bowl-screens.js` (the choosing card),
 `tools/test-bowl-weapons.mjs` (new), `tools/test-bowl-rivals.mjs`. Locks: `bowl-rivals`, `bowl-screens`.
 
-Claude's BOWL-WALLS ruling transfers the unarmed Easy balance checks here. Alongside item 7, keep the per-night floors for nights 3–5: at least eight wins in ten and a player knockout in at least seven of ten. Use the same child driver and seeds (1989 + 101 per trial), including its normal wall contacts. In the unarmed night-three baseline the first three seeds had 5, 5 and 5 damaging wall hits before the player wrecked. With the hammer, the child must hit walls at least as often over the same driving exposure. Try the uniform wall costs first. Only if the target cannot be met may the player's wall share be reduced on Easy. Keep Medium and Hard unchanged.
-
 ## Checks
 
 1. `tools/test-bowl-weapons.mjs`: each weapon's tell, reach, cost and rest as the table says; a launch beside the wall
