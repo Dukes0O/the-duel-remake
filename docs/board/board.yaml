@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -647,12 +647,23 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-out-sim"
-    waiting_on: "claude"
     needs: [BOWL-WALLS]
     locks: [bowl-floor]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-OUT-SIM.md"
 
+
+  - id: BOWL-OUT-FIX
+    title: "Bowl: gate guides that turn a truck in, and a camera that keeps the truck in view at the gates"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: [BOWL-OUT-SIM]
+    locks: [bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-OUT-FIX.md"
   - id: BOWL-RIVALS-2
     title: "Bowl: rivals that compete (pace from lap time, Side by Side twice round, rivals' scores)"
     owner: "codex"
@@ -789,7 +800,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures]
     flag: "arena-tricks"

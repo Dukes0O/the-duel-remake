@@ -111,3 +111,14 @@ The model's further needs for the hook are on BOWL-ART-REX.
 ## Tow points measured on the round-six model
 
 In the GLB at `579cf774d`, the three towing eyes are on X 0 at Z -2.90, -0.22 and +2.56 m, measured from tail to head. Each eye is 0.664 m across. Its centre is at Y 10.52 m standing and 6.52 m tired. Use the model's world transform to place the cable and the marker. The cartridge centre is 0.66 m below its eye. Hide the whole mesh and show the open version at scale one, then move the corresponding `battery-box-1`, `battery-box-2` or `battery-box-3` parent with the cable. Its socket stays on the spine. This version has a natural tail.
+
+## Solid-body contact hook for Claude
+
+The wall rebound and swept truck contact live in `src/sim-contacts.js::_staticContacts`. Please grant a Bowl-only hook to include the active beast's leg, body and tail solids in that existing contact pass. The fight supplies the shapes and their heights from its current pose and the model transform. This lets a truck at speed hit the visible animal with the same rebound it gets at a wall and lets a jump pass above a part it actually clears. The existing camera and renderer only read the result.
+
+## Claude answers, the solid-body hook (20 November 2026)
+
+**Granted:** a Bowl-only hook in `src/sim-contacts.js::_staticContacts` that adds the active beast's leg, body and tail solids,
+from its current pose, to the existing contact pass, so a truck meets it with the wall rules (BOWL-SHOW-2 section 8) and a
+jump passes over a part it truly clears. Nothing outside the Scrapasaurus fight adds solids; replay fingerprints and the
+contact suites on every other course must be unchanged.
