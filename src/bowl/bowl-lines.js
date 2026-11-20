@@ -78,7 +78,7 @@ export const BIG_MO = Object.freeze({
   'rival.rust-rhino': 'In the other lane is Rust Rhino. Watch out for that horn, because Rust Rhino likes to charge.',
   'rival.big-kettle': 'In the other lane is Big Kettle. It takes a while to get the boiler going, and then it is hard to stop.',
   'rival.tin-lizard': 'In the other lane is Tin Lizard, the quickest and most slippery truck in the show.',
-  'rival.dragon-wagon': 'In the other lane is Dragon Wagon, the fastest truck in the show, and it breathes fire on the ramps.',
+  'rival.dragon-wagon': 'In the other lane is Dragon Wagon, the fastest truck in the show, and it loves to show off on the ramps.',
   'rivals.night.3': 'In the Bowl with our driver tonight are Big Kettle, Tin Lizard and Old Bess.',
   'rivals.night.4': 'In the Bowl with our driver tonight are Rust Rhino, Tin Lizard and Big Kettle.',
   'rivals.night.5': 'In the Bowl with our driver tonight are Dragon Wagon, Rust Rhino and Tin Lizard.',
@@ -113,7 +113,7 @@ export const BOWL_RESULTS = Object.freeze({
     : won ? 'Every other truck was knocked out, and yours was the last one still rolling.'
       : timeUp ? 'The clock ran out, and another truck still rolling had hit the others harder than yours.'
         : knockouts === 1 ? 'You knocked out one truck before your own truck was knocked out.'
-          : knockouts > 1 ? `You knocked out ${knockouts} trucks before your own truck was knocked out.`
+          : knockouts > 1 ? `You knocked out ${['two', 'three'][knockouts - 2] ?? knockouts} trucks before your own truck was knocked out.`
             : 'Your truck was knocked out before it could knock anyone else out.',
   eventNext: name => `Next up is ${name}.`,
   eventRetry: name => `Have another go at ${name}. Your score from that run does not count towards the night.`,

@@ -131,6 +131,8 @@ function race(duel, drive, aim, limitSec) {
       {won: false, knockouts: 1}, {won: false, knockouts: 2}].map(BOWL_RESULTS.eventKnockouts)];
   ok(lines.every(line => typeof line === 'string' && /^[A-Z]/.test(line) && /[.!?]$/.test(line) && !/[—–]/.test(line) &&
     !/undefined|NaN/.test(line)), 'every rival line starts with a capital, ends a sentence and has no dash');
+  ok(BOWL_RESULTS.eventKnockouts({won: false, knockouts: 2}) === 'You knocked out two trucks before your own truck was knocked out.',
+    'a count of trucks is said as a word');
   ok(BOWL_GOALS.lastTruckRolling(['Big Kettle', 'Tin Lizard', 'Old Bess']) ===
     'Knock out Big Kettle, Tin Lizard and Old Bess, and be the last truck still rolling.', 'the goal names the trucks still rolling');
   ok(BIG_MO['rivals.night.3'].includes('Big Kettle, Tin Lizard and Old Bess') &&
