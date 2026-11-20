@@ -86,3 +86,9 @@ first pass, as Kyle saw it, and the full bus and heap shells keep more than 3 m 
 The live wall response guides the straight-throttle truck around the floor. In a memory-only run on the current Bowl from the Car Crush start, the old line gave five pieces by 5 seconds and another five on the next circuit by 25 seconds, even with no steering. The same 60-second run gave exactly the original center five when the outer pieces were 17.25 m out instead of 18.2 m. The new distance also leaves more than 3 m from the face to the full bus and heap shells.
 
 May the Car Crush dressing shift the five outer pieces inward by 0.95 m, leaving the other ten and every other event exactly where they are? The first pass still hits the same five in the same order at the same positions. No wall or truck behavior changes.
+
+## Car Crush result cards, 20 November
+
+The solo result card and the shared-keyboard Turn Show both still say which row the driver reached. May I replace those two lines in `src/bowl/bowl-screens.js` and `src/bowl/bowl-turns-screens.js` with the number of pieces crushed and the Full House bonus? This also needs the one result-copy field in `src/bowl/bowl-turns.js` to pass the count and bonus to its screen. The Turn Show's scores and purse still use their existing rules.
+
+The older HUD, camera and Turn Show tests name the old count, early finish or straight-throttle win. I will keep their exact UI, two-second camera and progression checks with the new count and full clock, then submit the changed assertions for written review. The Easy preflight route has reached ten on the existing floor in 41.8 seconds by taking the same two lanes at 27 mph.
