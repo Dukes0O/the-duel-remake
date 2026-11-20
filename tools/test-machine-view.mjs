@@ -120,6 +120,57 @@ for (const [id, tool] of [['dozer', 'dozer:blade'], ['roller', 'roller:drum'], [
   assert.ok(seen, `${id} driver can see the ${tool}`);
   machine.dispose();
 }
+// MACHINE-YARD-NEXT: each machine's solid outline is the plan of the model as the yard poses it, machine facing +Z.
+{
+  const plan = (root, skip = []) => {
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    root.traverse(node => {
+      if (!node.isMesh || node.name.includes('auger')) return;
+      for (let parent = node; parent; parent = parent.parent) if (skip.some(name => parent.name.includes(name))) return;
+      box.expandByObject(node, true);
+    });
+    return box;
+  };
+  const posedModel = (id) => {
+    const name = {dumpTruck:'dump-truck', drill:'drill-rig', mixer:'mixer-truck'}[id] ?? id;
+    const source = (['roller', 'paver', 'drill', 'loader', 'mixer'].includes(id) ? secondFamily : family).getObjectByName(name);
+    const model = source.clone(true); model.position.set(0, 0, 0);
+    if (id === 'drill') return createDrillView(model).root;
+    if (['roller', 'paver', 'loader', 'mixer'].includes(id)) { model.rotation.y = Math.PI; const holder = new THREE.Group(); holder.add(model); return holder; }
+    return model;
+  };
+  for (const id of ['excavator', 'dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'loader', 'mixer']) {
+    // The excavator's boom, arm and bucket reach over other things; its outline is its tracks and house.
+    const box = plan(posedModel(id), id === 'excavator' ? ['boom', 'arm', 'bucket'] : []);
+    const outline = machineDefinition(id).footprint;
+    for (const [value, measured, label] of [[outline.minX, box.min.x, 'minX'], [outline.maxX, box.max.x, 'maxX'],
+      [outline.minZ, box.min.z, 'minZ'], [outline.maxZ, box.max.z, 'maxZ']])
+      assert.ok(Math.abs(value - measured) < 0.02, `The ${id} outline ${label} is ${value}; its model measures ${measured.toFixed(3)}.`);
+  }
+}
+// Dust is raised where the machine is, on its own ground, and stays there as the machine drives on.
+{
+  const world = new THREE.Scene(), roller = machineDefinition('roller');
+  const dusty = createMachineView({model:new THREE.Group(), definition:roller, parent:world});
+  const moving = {...createMachineState(roller, {x:46, z:10, heading:0.6}), speedMps:1, y:0.62};
+  let raised = null, place = null;
+  for (let i = 0; i < 60 && !raised; i++) {
+    moving.x += Math.sin(0.6) / 60; moving.z += Math.cos(0.6) / 60; moving.timeSeconds += 1 / 60;
+    dusty.update(moving, 1 / 60);
+    raised = world.getObjectByName('machine-dust').children.find(puff => puff.visible) ?? null;
+    if (raised) place = {x:moving.x, z:moving.z};
+  }
+  assert.ok(raised, 'A moving machine raises dust.');
+  const at = raised.getWorldPosition(new THREE.Vector3());
+  assert.ok(Math.hypot(at.x - place.x, at.z - place.z) < 0.05, `A dust puff sits at the machine, not ${Math.hypot(at.x - place.x, at.z - place.z).toFixed(1)} m away.`);
+  assert.ok(at.y > 0.62 && at.y < 0.62 + 0.5, 'A dust puff sits on the machine\'s own ground.');
+  for (let i = 0; i < 20; i++) { moving.z += 1 / 60; dusty.update(moving, 1 / 60); }
+  assert.ok(Math.hypot(raised.getWorldPosition(new THREE.Vector3()).x - place.x, raised.getWorldPosition(new THREE.Vector3()).z - place.z) < 0.05,
+    'A puff stays where it was raised while the machine drives on.');
+  dusty.dispose();
+  assert.equal(world.getObjectByName('machine-dust'), undefined, 'Leaving removes the dust.');
+}
 view.dispose();
 assert.equal(view.root.parent, null);
 console.log('Machine view passed: named joints, load, effects, sound cues, read-only state and cab/chase/work cameras.');

@@ -327,11 +327,12 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setYard(yardPlan().solids);
   }
-  // The neighbours' outposts are solid in a town drive only, from the layout the drive was started with (TOWN-OUTPOST-SCENE).
-  // After the yard's grid, which replaces any grid made before it.
-  if(definition.kind==='town-drive'&&definition.layout?.outposts?.solids?.length){
+  // The neighbours' outposts and Mrs Vane's things are solid in a town drive only, from the layout the drive was started with
+  // (TOWN-OUTPOST-SCENE, TOWN-VANE-SCENE). After the yard's grid, which replaces any grid made before it.
+  const townSolids=definition.kind==='town-drive'?[...definition.layout?.outposts?.solids??[],...definition.layout?.vane?.solids??[]]:[];
+  if(townSolids.length){
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
-    worldJob.solidGrid.setTown(definition.layout.outposts.solids);
+    worldJob.solidGrid.setTown(townSolids);
   }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
@@ -1617,7 +1618,7 @@ function enterNight2(duel, worldJob) {
   for (const actor of riders) updateJobActor(duel, worldJob, actor, 0);
   if (!riders.length) worldJob.actors = worldJob.actors.filter(actor => !actor.id.startsWith('wash-rider-'));
   syncJobCarSolids(worldJob);
-  if (!scout) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
+  if (!scout && !worldJob.night2?.scoutDowned) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
   if (step?.kind === 'talk' || step?.kind === 'rider-fight') {
     worldJob.marker = null;
     duel.state.arena.markers = [];

@@ -838,6 +838,8 @@ export function attachRenderer(host, app) {
     const deepPose=!menu?deepPresentation(app.duel):null;
     const heliNow=st.status==='heli'&&app.heliSession?app.heliView():null; // SKI-VIEW: one view a frame, for both
     const heliPose=heliNow?heliView.update(heliNow,{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    // HELI-RUSTWALL: over the Scablands its ground, roads and places are drawn round the helicopter, not round the parked car.
+    if(world?.userData&&course.def?.scablands)world.userData.followPoint=heliNow?.heli?{x:heliNow.heli.x,z:heliNow.heli.z}:null;
     // MAP-VIEW: the Table is not on the course last loaded, so that course steps aside while the helicopter is there.
     const mapDraw=heliNow?mapWorld.update(heliNow):(mapWorld.hide(),{hideCourse:false});
     if(world)world.visible=!mapDraw.hideCourse;

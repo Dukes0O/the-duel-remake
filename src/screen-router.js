@@ -383,7 +383,8 @@ root.addEventListener('click',e => {
     // TRY AGAIN on the results screen and START AGAIN on the pause screen: the app leaves the job if it is still in play, then starts it again.
     case 'world-job-retry': app.worldJobAgain?.();lastScreen=null;renderState(app.duel.state);return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
-    case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
+    case 'arena-yard': if(app.leaveTownDrive?.()){lastScreen=null;renderState(app.duel.state);return;}
+      if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
       app.leaveWorldJob?.();lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
     // Opening a presentation screen must not mark story notes read or save a profile.
@@ -535,7 +536,7 @@ function renderState(s) {
     const dawn = !night2Result?.night2Replay && !!night2Result?.night2Page;
     const night2Modal = night2Result?.night2Replay ? ledgerReplayMarkup(night2Result.night2Replay, escapeHTML)
       : dawn ? night2DawnMarkup({remembered: night2Result.night2Remembered, issue: night2Result.night2SaveIssue}, escapeHTML)
-      : journalOpen ? night2JournalMarkup(night2Page(night2Chapter.ledger), escapeHTML) : null;
+      : journalOpen ? night2JournalMarkup(night2Page(night2Chapter.ledger, {inNight: true}), escapeHTML) : null;
     ui.stage.classList.toggle('story-dawn-active', dawn);
     const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':night2Modal ?? modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);

@@ -228,7 +228,10 @@ test('protection set through the town\'s own commands raises the fence, and the 
   const duel = townDrive(layout, {yard: true});
   try {
     const grid = duel.state.arena.worldJob.solidGrid;
-    assert.equal(grid.town.length, layout.outposts.solids.length, 'every outpost solid is on the drive\'s grid');
+    // The drive's grid holds the outposts' solids and Mrs Vane's (TOWN-VANE-SCENE), and nothing else of the town.
+    const ids = new Set(grid.town.map(solid => solid.id));
+    assert.ok(layout.outposts.solids.every(solid => ids.has(solid.id)), 'every outpost solid is on the drive\'s grid');
+    assert.equal(grid.town.length, layout.outposts.solids.length + layout.vane.solids.length);
     assert.ok(grid.yard.length > 0, 'and the yard\'s solids too');
   } finally {
     cleanupWorldJobLoan(duel);

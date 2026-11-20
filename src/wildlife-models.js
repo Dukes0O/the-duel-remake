@@ -48,6 +48,15 @@ export const WILDLIFE_MODELS = Object.freeze({
   // little when running, as the beaver does. The wildcat has not passed.
   'wild-boar': model('wild-boar.glb', {speed: 5, rate: 4}),
   'golden-eagle': model('golden-eagle.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
+  // Desert and coast (WILD-ART-DESERT), for Red Mesa and Pacific Canyon; held off the courses below.
+  // The roadrunner is a ground bird: it runs (its Run clip) and has no Fly clip. The jackrabbit's
+  // Walk is a bound. The collared lizard is a large male, a little over life size.
+  'roadrunner': model('roadrunner.glb', {speed: 6, rate: 4}, {move: 'Run'}),
+  'jackrabbit': model('jackrabbit.glb', {speed: 8, rate: 3}),
+  'desert-bighorn': model('desert-bighorn.glb', {speed: 5.5, rate: 3.5}),
+  'collared-lizard': model('collared-lizard.glb', {speed: 3, rate: 5}),
+  'pelican': model('pelican.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'condor': model('condor.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
   // The Wasteland and the player's town (WILD-ART-WASTE). On no course yet: the town's
   // view takes the goat, the chicken and the camp dog by file name. The chicken walks
   // and pecks; it has no Fly clip. The scorpion is four times life size, to be seen from a car.
@@ -57,10 +66,29 @@ export const WILDLIFE_MODELS = Object.freeze({
   'turkey-vulture': model('turkey-vulture.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
   'desert-monitor': model('desert-monitor.glb', {speed: 3, rate: 2.8}),
   'scorpion': model('scorpion.glb', {speed: 1.2, rate: 2.5}),
+  // Harbour Lights and the city courses (WILD-ART-CITY); the town uses the pigeon and the cat.
+  // The ids are the ones src/wildlife.js already names on those courses: the egret is a little
+  // egret, the cat a thin street cat, the owl a barn owl. Held off the courses below.
+  'black-kite': model('black-kite.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
+  'egret': model('little-egret.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'black-faced-spoonbill': model('black-faced-spoonbill.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'pigeon': model('pigeon.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
+  'owl': model('owl.glb', {speed: 8, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'raccoon': model('raccoon.glb', {speed: 3, rate: 5}),
+  'cat': model('street-cat.glb', {speed: 4.5, rate: 6.4}),
 });
 
-// The ids in the table, for availableSpecies() and the count's course list.
-export const APPROVED_MODEL_IDS = Object.freeze(Object.keys(WILDLIFE_MODELS));
+// Models that have passed their art rounds but stand on no course yet. src/wildlife.js already
+// lists the desert and coast animals on Red Mesa and Pacific Canyon and the city animals on Harbour
+// Lights and the city courses, so a row above would put them there at once, on courses nobody has
+// driven with them (and Harbour Lights at night is the scene the frame check times). Their placement
+// cards take an id off this list when its course has been looked at and timed. The town draws
+// animals straight from WILDLIFE_MODELS, so it may use a held one.
+export const HELD_FROM_COURSES = Object.freeze(['roadrunner', 'jackrabbit', 'desert-bighorn', 'collared-lizard', 'pelican', 'condor',
+  'black-kite', 'egret', 'black-faced-spoonbill', 'pigeon', 'owl', 'raccoon', 'cat']);
+
+// The ids a course may use, for availableSpecies() and the count's course list.
+export const APPROVED_MODEL_IDS = Object.freeze(Object.keys(WILDLIFE_MODELS).filter(id => !HELD_FROM_COURSES.includes(id)));
 
 export const WILDLIFE_MODEL_DIR = '/assets/wildlife/';
 export const wildlifeModelUrl = species => WILDLIFE_MODEL_DIR + WILDLIFE_MODELS[species].file;

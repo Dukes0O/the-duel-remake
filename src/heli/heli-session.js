@@ -46,6 +46,9 @@ import {HELI_PAYS} from './heli-pay.js';
 // story's own save file (the one import of the story the helicopter rules make); heli-story.js imports nothing outside src/heli/.
 import {STORY_JOB_ID, STORY_NIGHT, STORY_NIGHT_NAME, storyOffered, finishStorySupplies} from './heli-story.js';
 import {koganeStep, markKoganeSupplies} from '../story/story-save.js';
+// HELI-RUSTWALL: the Scablands as a place, built from the land the app hands in (heli-scablands.js), and its Ridge fire.
+import {SCABLANDS_ID, SCABLANDS_HELI, SCABLANDS_LINES, createScablandsWorld, openLifts, createScout, scablandsShare, scablandsFlyable} from './heli-scablands.js';
+import {createScablandsFireRun} from './heli-scablands-fire.js';
 
 export const HELI_SESSION = Object.freeze({
   zoneRadius: CABLE.landingRadius,
@@ -232,17 +235,26 @@ export function insideArea(area, x, y, z, ground = null) {
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
   summitRunEnabled = false, koganePassEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, wildlifeApproved = null, surveyStand = null, labEnabled = false,
-  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false, koganeStoryEnabled = false} = {}) {
+  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false, koganeStoryEnabled = false,
+  scablands = null} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
+  // HELI-RUSTWALL (the wasteland-town switch, checked by the app): `scablands` is the land as plain inputs
+  // (src/town/town-heli.js scablandsHeliInputs). The visit is then in the Scablands, from the town's Helipad: the pad
+  // there sells fuel and fits the bucket, the Ridge fire is the fire run, and nothing from the other places' work
+  // (cruise legs, the pilot's map, rescues, ski drops, the day's jobs) is offered. Left out, every result is what it was.
+  const scInputs = scablands && typeof scablands === 'object' ? scablands : null;
+  if (scInputs && !scablandsFlyable(scInputs)) throw new Error('Build a Helipad in the town first.');
+  const scWorld = scInputs ? createScablandsWorld(scInputs) : null;
+  const scOn = scWorld !== null;
   const summitOn = summitRunEnabled === true;
   // Heli-skiing needs Summit Run (its pads and runs are there). With it off nothing below runs and every result is what it was.
-  const skiOn = heliSkiingEnabled === true && summitOn;
+  const skiOn = heliSkiingEnabled === true && summitOn && !scOn;
   const skiDifficulty = difficulty === 'casual' ? 'casual' : 'pro';
   // The pilot's map (docs/PILOT_MAP.md): every place a destination, the map's legs, dearer fuel pads, jobs between
   // owned destinations and scouting. With it off, left out, every answer is what it was.
-  const pilotOn = pilotMapEnabled === true;
+  const pilotOn = pilotMapEnabled === true && !scOn;
   // The Table joins the destinations once the pilot has seen it (a getter, since the save changes).
   // Kogane Pass (KOGANE-PASS-C5) is a map place, so it joins only with the pilot map and its own switch on.
   const koganeOn = pilotOn && koganePassEnabled === true;
@@ -252,7 +264,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   let logbookAirborne = false, rankCheckedSave = null;
   const rankNotices = [];
   const skinOn = skinsEnabled === true, sflag = {enabled: skinOn};
-  const wildOn = wildlifeEnabled === true, wildFlag = {enabled: wildOn, summitRun: summitOn, approved: wildlifeApproved};
+  const wildOn = wildlifeEnabled === true && !scOn, wildFlag = {enabled: wildOn, summitRun: summitOn, approved: wildlifeApproved};
   const placesNow = () => destinationsFor(dflag);
   let save = profile;
   // The pilot's map record, read again only when the save changes.
@@ -391,7 +403,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return fireWorlds.get(id);
   };
   // H4 Rescue: each course's site facts (no fire grid needed), worked out once.
-  const rescueOn = rescueEnabled === true && fireEnabled === true;
+  const rescueOn = rescueEnabled === true && fireEnabled === true && !scOn;
   const rflag = {rescue: rescueOn};
   // Summit Run's rescues (SUMMIT-HELI-RESCUES) need both switches: only then does its ceiling follow the ground.
   const siteFlag = pilotOn ? {summitRun: summitOn, summitRescue: summitOn && rescueOn, pilotMap: true, koganePass: koganeOn} : {summitRun: summitOn, summitRescue: summitOn && rescueOn};
@@ -430,7 +442,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       [kind, ids.filter(id => isDestination(id, dflag) && READY[kind](id))]));
     return rescueRows;
   };
-  const fire = fireEnabled === true ? createFireRun({getSave: () => save, commit, emit, world: fireWorldOf, playerName, today,
+  const fire = scOn ? (fireEnabled === true ? createScablandsFireRun({world: scWorld, inputs: scInputs, emit}) : null) : fireEnabled === true ? createFireRun({getSave: () => save, commit, emit, world: fireWorldOf, playerName, today,
     owns: id => isDestination(id, dflag) && isCourseUnlocked(save, id), rescue: rescueOn, rescueCourses}) : null;
   const fireFlag = {enabled: fireEnabled === true};
   const bucketLoad = () => loads.find(car => car.bucket) ?? null;
@@ -464,6 +476,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function loadWorld(courseId) {
     seaGround = null;
     if (courseId === TABLE_ID) return (tableWorld ??= createTableWorld());
+    if (scOn && courseId === SCABLANDS_ID) return scWorld;
     const loaded = loadCourse(courseId);
     if (!pilotOn || !loaded.course.sections?.some(section => section.theme === 'coast')) return loaded;
     seaGround = loaded.ground;
@@ -474,12 +487,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function enter(courseId, {arriveFrom = null} = {}) {
     dropWater = [];
     hookHeld = false; hookReeled = false;
-    if (!isDestination(courseId, dflag)) throw new Error(`Not a helicopter destination: ${courseId}`);
+    const inScablands = scOn && courseId === SCABLANDS_ID;
+    if (!inScablands && !isDestination(courseId, dflag)) throw new Error(`Not a helicopter destination: ${courseId}`);
     const carried = heldLoad();
     rememberLoads();
     world = loadWorld(courseId);
-    site = courseSite(world.course, world.ground, courseId, siteFlagOf(courseId));
-    const info = placesNow()[courseId];
+    site = inScablands ? scWorld.site : courseSite(world.course, world.ground, courseId, siteFlagOf(courseId));
+    const info = inScablands ? {id: SCABLANDS_ID, name: SCABLANDS_HELI.name, baseAltitude: SCABLANDS_HELI.baseAltitude} : placesNow()[courseId];
     rehydrateSkiGroup(courseId, !!arriveFrom);
     const fuel = heli ? heli.fuelKg : heliOf(save).fuelKg;
     if (arriveFrom) {
@@ -521,7 +535,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     offer = null;
     layCrates();
     if (lesson) endLesson();
-    layReturnCrate();
+    if (inScablands) layLifts(); else layReturnCrate();
     layStoryCrate();
     // Leaving the course ends a Lab challenge, except Air and altitude, which is the flight to Summit Run with its crate.
     if (challenge && !(challenge.id === 'altitude' && kept?.labLoad)) endChallenge('left');
@@ -530,7 +544,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (kept?.job && job?.id === kept.job && courseId === job.from) aim(job.to);
     surveyArrived();
     // HELI-JOB-CLARITY: a visit's start, or the return home after a crash, stands the helicopter on this pad.
-    if (!arriveFrom) notePad();
+    if (!arriveFrom && !inScablands) notePad();
     emit({type: 'entered', courseId, arrived: !!arriveFrom});
   }
   // HELI-JOB-CLARITY (continuity): the place the helicopter last stood, for the next visit (heli-save lastPad).
@@ -665,6 +679,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const hover = AUTOPILOT.hoverAbove + (bucket.lineLength ?? CABLE.length) + BUCKET.hang;
     if (bucket.water <= 1) {
       const lake = world.course.def?.basins?.[0];
+      // HELI-RUSTWALL: in the Scablands the water is the dip tank while the Ridge burns, else the nearest Reservoir.
+      if (!lake && scOn && site.courseId === SCABLANDS_ID) {
+        const scoop = scablandsScoop();
+        return scoop ? {x: scoop.x, z: scoop.z, groundY: scoop.surface + 25 - hover} : null;
+      }
       if (!lake) return null;
       const middle = world.course.worldAt(world.course.phase(lake.s), lake.lateral), surface = world.ground.water(middle.x, middle.z);
       return surface === null ? null : {x: middle.x, z: middle.z, groundY: surface + 25 - hover};
@@ -741,6 +760,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return site?.courseId === HOME_COURSE && heli?.onGround &&
       Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius;
   }
+  // HELI-RUSTWALL: the town's Helipad is the Scablands' pad. Its pump sells at the home pump's price, and the bucket is
+  // fitted, taken off and repaired there; everything else the home pad offers (lessons, the day's jobs) stays at home.
+  function onScablandsPad() {
+    return scOn && site?.courseId === SCABLANDS_ID && heli?.onGround &&
+      Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius;
+  }
+  const onBase = () => onHome() || onScablandsPad();
 
   // Summit Run's rescues: the lodge's fuel trucks stand inside the start area's landing circle and at the
   // pickup, for the supply run and the avalanche alike (a crew stages fuel near the scene). Each sells
@@ -758,9 +784,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     return standCache.get(site.courseId);
   }
+  // HELI-RUSTWALL: while the Ridge burns, a fuel truck stands with the dip tank (heli-scablands.js).
+  function scablandsStands() {
+    if (!scOn || site?.courseId !== SCABLANDS_ID || fire?.burning?.() !== true) return [];
+    return [{circle: scWorld.fuel}];
+  }
   function atTruck() {
     const ski = skiPump();
-    return !!heli?.onGround && [...summitStands(), ...(ski ? [ski] : [])].some(({circle}) => Math.hypot(heli.x - circle.x, heli.z - circle.z) <= circle.radius);
+    return !!heli?.onGround && [...summitStands(), ...scablandsStands(), ...(ski ? [ski] : [])].some(({circle}) => Math.hypot(heli.x - circle.x, heli.z - circle.z) <= circle.radius);
   }
   // The pilot's map's fuel pads (docs/PILOT_MAP.md section 4): a pump at Harbour Lights, Pacific
   // Canyon and Alpine Serpent, for a helicopter on the ground inside the landing circle like the
@@ -772,7 +803,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (!pad || pad.truck || Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) > site.zone.radius) return null;
     return pad.pricePerKg;
   }
-  const pumpHere = () => onHome() || atTruck() || padPrice() !== null;
+  const pumpHere = () => onBase() || atTruck() || padPrice() !== null;
 
   // The pilot's map secrets (docs/PILOT_MAP.md section 5; rules in map-secrets.js).
   // The signs that can be found here now: on this course, their switch on, not found yet.
@@ -890,6 +921,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const loadView = car => Object.freeze({id: car.id, x: car.x, y: car.y, z: car.z, heading: car.heading,
     ...(car.returnJob ? {returnJob: car.returnJob} : {}),
     ...(car.storyJob ? {storyJob: car.storyJob} : {}),
+    ...(car.lift ? {lift: car.lift.id, renderAs: car.renderAs} : {}),
     hooked: car.hooked, onGround: car.onGround, own: !!car.own, job: car.job ?? null});
 
   // A clean release of the job in hand's car inside the drop-off course's
@@ -973,6 +1005,74 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     crate.massKg = job.massKg;
     crate.returnJob = job;
     loads.push(crate);
+  }
+  // ---- HELI-RUSTWALL: the Scablands (heli-scablands.js) -------------------------------------------------------------------
+  // The loads waiting to go up to Old Tam's hut: the feed crate by the pad, the pickup at the foot of the Ridge. A load set
+  // down once stays where it was put for the rest of the visit; the town remembers it as done.
+  const liftsDone = new Set(scInputs?.liftsDone ?? []);
+  let scout = null, scoutSaid = false, scoutBatch = [];
+  const scSay = id => emit({type: 'scablandsSaid', id, who: SCABLANDS_LINES[id].who, text: SCABLANDS_LINES[id].text});
+  function layLifts() {
+    for (const lift of openLifts({...scInputs, liftsDone: [...liftsDone], ridgeFire: fire?.ended?.() ? {state: fire.ended()} : scInputs.ridgeFire})) {
+      if (loads.some(load => load.lift?.id === lift.id)) continue;
+      const spot = lift.from === 'pad' ? site.crate : scWorld.truck;
+      const load = createLoad({id: lift.kind === 'crate' ? CRATE.id : lift.id, massKg: lift.massKg, x: spot.x, z: spot.z, heading: spot.heading ?? 0, ground: world.ground});
+      // Not a car and not a job's: the hook takes it like the lesson's crate, within Kestrel One's hook limit.
+      load.own = false; load.job = null; load.crate = true; load.lift = lift;
+      // The drawing: the crate is the lesson's crate; the pickup has no model of its own yet and is drawn as the rally car.
+      load.renderAs = lift.kind === 'crate' ? CRATE.id : 'dusthawk_rally';
+      loads.push(load);
+    }
+  }
+  function deliverLift(held) {
+    const hut = scWorld.hut;
+    if (Math.hypot(held.x - hut.x, held.z - hut.z) > hut.radius || liftsDone.has(held.lift.id)) return;
+    const lift = held.lift;
+    liftsDone.add(lift.id);
+    held.lift = null;
+    emit({type: 'scablandsLift', liftId: lift.id});
+    scSay(lift.id === 'tam-feed' ? 'heli.scablands.tam.fed' : 'heli.scablands.tam.trucked');
+  }
+  // The water the autopilot takes an empty bucket to: the dip tank while the Ridge burns, else the nearest Reservoir.
+  function scablandsScoop() {
+    const bodies = scWorld.water;
+    const tank = bodies.find(body => body.kind === 'dipTank');
+    if (tank && fire?.burning?.()) return tank;
+    let best = null;
+    for (const body of bodies) if (body.kind === 'reservoir' && (!best || Math.hypot(body.x - heli.x, body.z - heli.z) < Math.hypot(best.x - heli.x, best.z - heli.z))) best = body;
+    return best;
+  }
+  // The visit's first words: Roger's surprise the first time over the wall, then the fire, else the first load waiting.
+  function scablandsStart() {
+    scout = createScout({explored: scInputs.explored ?? [], chunkMetres: scInputs.chunkMetres, land: scInputs.land});
+    scoutSaid = Number(scInputs.scouted) > 0;
+    if (scInputs.flown !== true) { scSay('heli.scablands.roger.first'); emit({type: 'scablandsFlown'}); }
+    if (fire?.burning?.()) scSay('heli.scablands.roger.fire');
+    else {
+      const waiting = loads.find(load => load.lift);
+      if (waiting) scSay(waiting.lift.id === 'tam-feed' ? 'heli.scablands.tam.feed' : 'heli.scablands.tam.truck');
+    }
+  }
+  // Scouting: the chunks seen go to the town in batches of a chunk's nine or more, and when the helicopter lands.
+  function scoutStep() {
+    if (site?.courseId !== SCABLANDS_ID || !scout) return;
+    const found = scout.step(heli, world.ground);
+    if (found.length) {
+      scoutBatch.push(...found);
+      if (!scoutSaid) { scoutSaid = true; scSay('heli.scablands.roger.scout'); }
+    }
+    if (scoutBatch.length >= 9 || (heli.onGround && scoutBatch.length)) flushScout();
+  }
+  function flushScout() {
+    if (!scoutBatch.length) return;
+    emit({type: 'scablandsScouted', chunks: Object.freeze(scoutBatch.splice(0))});
+  }
+  function scablandsView() {
+    const burning = fire?.burning?.() === true;
+    return Object.freeze({atPad: onScablandsPad(), atFuel: burning && atTruck(), fuel: burning ? scWorld.fuel : null, hut: scWorld.hut, truck: scWorld.truck, ridge: scWorld.ridge,
+      tank: burning ? scWorld.tank : null, water: Object.freeze(scWorld.water.filter(body => body.kind !== 'dipTank' || burning)),
+      lifts: Object.freeze(loads.filter(load => load.lift).map(load => Object.freeze({id: load.lift.id, title: load.lift.title, massKg: load.lift.massKg, hooked: load.hooked}))),
+      scouted: scout ? scablandsShare(scout) : 0, fire: fire?.ended?.() ?? (burning ? 'burning' : scInputs.ridgeFire?.state ?? null)});
   }
   // The crate goes with the lesson, even off the cable.
   function endLesson() {
@@ -1736,7 +1836,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (rescueOn && rescueOf(missionsOf(save), rflag)) { live = {...rescueOf(missionsOf(save), rflag)}; failRescueNow('left'); }
       fire?.start({newDay: noted?.newDay === true});
       destination = null;
-      enter(courseId ?? resumePad());
+      enter(scOn ? SCABLANDS_ID : courseId ?? resumePad());
+      if (scOn) scablandsStart();
       // A call is due on the next flight: work out where rescues can happen now, at the start of the visit, not in mid-air.
       if (rescueOn) { const m = missionsOf(save); if (m.seed !== 0 && m.need > 0 && m.count >= m.need && !m.call && !m.rescue) rescueCourses(); }
       // A new pilot hears the opening: welcome and the controls.
@@ -1772,7 +1873,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           heli = null;
           loads = [];
           destination = null;
-          enter(HOME_COURSE);
+          enter(scOn ? SCABLANDS_ID : HOME_COURSE);
           storeFuel();
           const job = jobInHand();
           if (job) aimAtJob(job);
@@ -1845,6 +1946,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (skinOn) skinStep(dt);
       if (surveyRun) surveyStepNow(dt, gear);
       fire?.step({dt, engine: heli.engine === true, aboveGround: heli.y - world.ground.height(heli.x, heli.z), lesson: !!lesson});
+      if (scOn) scoutStep();
       if (lesson) stepLessonNow(dt);
       if (challenge) stepChallengeNow(dt);
       ranksAtHome();
@@ -1928,6 +2030,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             layReturnCrate();
           }
         } else if (held.storyJob && inZone && site.courseId === held.storyJob.to && result.event.type === 'released' && storyInHand()) deliverStory(held);
+        else if (held.lift && scOn && result.event.type === 'released') deliverLift(held);
         return result.event;
       }
       // The car nearest the hook; H elsewhere stays quiet. The worn gear sets the
@@ -1997,7 +2100,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     },
     // Only while flying: a cruise leg in progress keeps its destination.
     setDestination(courseId) {
-      if (phase !== 'flying' || courseId !== null && !isDestination(courseId, dflag)) return false;
+      if (phase !== 'flying' || courseId !== null && (scOn || !isDestination(courseId, dflag))) return false;
       if (challenge?.id === 'headings') return false;
       aim(courseId);
       return true;
@@ -2048,6 +2151,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // The dispatch board (docs/HELICOPTER.md section 6): "Fly my car" and
     // today's three jobs, each marked taken or done from the save.
     boardJobs() {
+      if (scOn) return Object.freeze([]);
       const day = playDay(), jobs = heliOf(save).jobs, sameDay = jobs.day === day;
       const recovery = rescueOn ? recoveryJobOf(save, {enabled: true}) : null, count = wildOn ? surveyJobOf(save, wildFlag) : null, story = storyOffer();
       const taken = sameDay ? jobs.taken : null, done = sameDay ? jobs.done : [];
@@ -2379,7 +2483,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Fit the bucket on the home pad's ground: free, never with a car on the cable.
     fitBucket({wear = false} = {}) {
       if (!fire) return {ok: false, reason: 'Forest fires are not available yet.'};
-      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The bucket is at the home pad.'};
+      if (phase !== 'flying' || !onBase()) return {ok: false, reason: 'The bucket is at the home pad.'};
       if (bucketLoad()) return fitted(wear, 'fire', {ok: true, already: true});
       if (lineLoad()) return {ok: false, reason: 'Take off the rescue line first.'};
       if (loads.some(car => car.hooked)) return {ok: false, reason: 'Set the car down first.'};
@@ -2396,7 +2500,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     },
     takeOffBucket() {
       if (!bucketLoad()) return {ok: true, already: true};
-      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The bucket comes off at the home pad.'};
+      if (phase !== 'flying' || !onBase()) return {ok: false, reason: 'The bucket comes off at the home pad.'};
       loads = loads.filter(car => !car.bucket);
       emit({type: 'bucketRemoved'});
       return {ok: true};
@@ -2441,7 +2545,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Repair at the pad: takes what the player has and forgives the rest.
     repairBucket() {
       if (!fire) return {ok: false, reason: 'Forest fires are not available yet.'};
-      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'Repairs are at the home pad.'};
+      if (phase !== 'flying' || !onBase()) return {ok: false, reason: 'Repairs are at the home pad.'};
       const result = commit(repairBucketSave(save, fireFlag));
       if (result.ok && result.repaired) {
         const bucket = bucketLoad();
@@ -2530,6 +2634,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       hookHeld = false; hookReeled = false;
       if (dropWater.length && site) { waterOnFire(dropWater); dropWater = []; }
       fire?.flush();
+      // HELI-RUSTWALL: what the town keeps of this visit (the app reads these events after leave()).
+      if (scOn) { flushScout(); fire?.report?.(); }
       if (heli && phase !== 'idle') storeFuel();
       if (heli && phase !== 'idle') settleDirt();
       phase = 'idle';
@@ -2576,7 +2682,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ...(logbookOn ? {logbook: Object.freeze({...logbookView(save), paint: skinsOf(save).worn, notice: rankNotices[0] ?? null})} : {}),
         ...(wildOn ? {survey: surveyView()} : {}),
         job: jobInHand(),
-        ...(site?.courseId !== HOME_COURSE ? {returnLoad: returnBoardView()} : {}),
+        ...(site?.courseId !== HOME_COURSE && !scOn ? {returnLoad: returnBoardView()} : {}),
+        ...(scOn ? {scablands: scablandsView()} : {}),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target,
           guidance: carryGuidanceNow()}) : null,
         ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge), ...targetsNow()})} : {}),
@@ -2587,7 +2694,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         fallen: Object.freeze([...fallen]),
         ...(rescueOn ? {rescue: rescueView(fireInfo)} : {}),
         // The places the player can fly to; named only with Summit Run on, which adds the fourth.
-        ...(summitOn || pilotOn ? {destinations: Object.freeze(Object.keys(placesNow()))} : {}),
+        ...((summitOn || pilotOn) && !scOn ? {destinations: Object.freeze(Object.keys(placesNow()))} : {}),
         ...(pilotOn ? {scout: scoutView(), secrets: secretsView()} : {}),
         ...(skiOn ? {ski: skiView()} : {}),
       });

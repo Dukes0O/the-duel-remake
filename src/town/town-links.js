@@ -60,7 +60,9 @@ function lockedReason(requirement, state) {
     const n = Number(requirement.match(/\d+/)[0]);
     return state.emberJobs >= n ? null : `Finish Everburn job ${n}.`;
   }
-  if (/^(?:after the first fire|Ridge fire)$/i.test(requirement)) return state.emberJobs > 0 ? null : 'Finish the first fire story.';
+  // HELI-RUSTWALL: the Helipad opens with the fire on the Ridge, Old Tam's report in Act 2 (src/town/town-heli.js).
+  if (/^Ridge fire$/i.test(requirement)) return state.town?.heli?.ridgeFire ? null : 'Wait for the fire on the Ridge.';
+  if (/^after the first fire$/i.test(requirement)) return state.emberJobs > 0 ? null : 'Finish the first fire story.';
   if (/^(?:Miss Quill|Old Tam)$/i.test(requirement)) return state.chaptersDone >= 12 ? null : `Meet ${requirement}.`;
   if (/^Bowl played$/i.test(requirement)) return state.mayors.some(profile => profile.story?.bowl?.played === true) ? null : 'Play a Bowl show.';
   const named = WARLORDS.find(([, name]) => requirement.toLowerCase().includes(name.toLowerCase()));

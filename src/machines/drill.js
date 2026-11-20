@@ -30,6 +30,12 @@ export function drillMaterialAt(site, depth) {
   return depth < site.gravelEnd ? 'gravel' : 'rock';
 }
 
+/**
+ * Metres a second at a hard feed of 1; Space alone feeds at half that. A 13 m well takes about one minute at the
+ * steady feed: clay goes fastest, gravel slower, and rock slowest, where a hard feed jams the bit.
+ */
+export const DRILL_FEED_RATES_MPS = Object.freeze({clay:0.8, gravel:0.6, rock:0.28});
+
 /** Feed ranges from -1 (back out) to 1 (hard feed). Raising the mast stops work. */
 export function stepDrill(state, controls = {}, dtSeconds = 0) {
   if (!state?.site || !Number.isFinite(dtSeconds) || dtSeconds < 0)
@@ -47,7 +53,7 @@ export function stepDrill(state, controls = {}, dtSeconds = 0) {
       jammed = true;
       events.push({type:'drill-jammed', cue:'drill-jam'});
     } else {
-      const rate = {clay:0.35, gravel:0.25, rock:0.12}[material];
+      const rate = DRILL_FEED_RATES_MPS[material];
       depth = Math.min(state.site.depth, depth + rate * feed * dtSeconds);
       events.push({type:'drill-cuttings', material, cue:`drill-${material}`});
       if (depth >= state.site.depth) {

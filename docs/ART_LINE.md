@@ -72,6 +72,7 @@ the game.
 
 - **A family export can omit special-stage geometry.** When a recipe conditionally adds shared ground or drift meshes, include the family/export stage as well as the review stages; the GLB check caught missing standalone ship drifts in `scablands-ships.py`.
 - **A branch-level `continue` can omit every later building.** Keep it inside the matching building branch, then confirm each registered child is actually emitted; the helipad's top-level `continue` skipped the notice board in `town-services-2.py`.
+- **Something left on the ground, parented to a moving machine, is drawn twice as far out** (MACHINE-YARD-NEXT, 20 November). The yard's dust puffs were children of the machine's own moved and turned root but were given map places, so a puff stood as far from the machine as the machine stood from the map's centre: 47 m for the roller at its start. Put dust, marks and anything else a machine leaves behind in a world group, at the ground's own height, and check one puff's world place against the machine's.
 - **A named part can sit at the world origin.** Geometry helpers return independent objects; parent every piece that belongs to a place before family export. Otherwise local coordinates are read as map coordinates and can look like a stray prop on the horizon.
 
 ### Flat photographed shapes
@@ -151,6 +152,24 @@ the game.
   cab-only `keep` test, so the cab keeps the front photo and the tank keeps the rear one. (`big-bess-photo.py`,
   11 November.)
 
+- **An overhead photo that disagrees with the side photo along the vehicle** (the Bully, 19 November: its roof began
+  0.89 m behind the bumper from above and 1.08 m from the side). Read four or five landmarks on both photos and move
+  the overhead photo's rows between them in a working copy before the carve (`working_top` in `bully.py`). The same
+  copy is where its tyres are painted out, and where it is turned left to right.
+- **Wings the overhead photo does not show.** A carve keeps only what every photo shows, so a bonnet came out as
+  narrow as the overhead photo's with bare tyres beside it. Let `keep` allow a shell over each front tyre, and lay a
+  strip of the vehicle's own plate where the shell's top will be in the working overhead copy, or its top wears tread.
+- **A pale line under the body** is the studio floor seen beyond the vehicle between its wheels, walled in by the
+  tyres and their shadow. Cut that rectangle from the side mask, from the skirt's lower edge down.
+- **A pale streak down the bonnet's corner** is the headlamp's glass seen edge-on in the side photo. Lay the rust
+  beside it over it in a working copy; the lamp is its own piece.
+- **A curved plate (a plough blade) is a curve read from its side photo and swept across, wearing its front photo.**
+  Take the first subject pixel of each row; bolt heads notch the ends, so give each point the middle value of five.
+  Trace the arms a few pixels behind the blade's face so that no edge lies in the blade's surface. The back wears a
+  plate photo at its own size: a narrow strip stretched across it comes out as stripes.
+- **Lugs in one colour read as boxes stuck on a tyre.** Give each a piece of the tread from the end photo.
+- **Wheels and lamps can wear the carve's own copies of the photos** when they lie inside the subject. Opening fresh
+  copies embedded three photos twice, 1.2 MB of the file.
 - **Tyres** (Kyle, 6 November). Use `tyre` and `wheel_well`. Without them, the
   arch's wall wears a ghost of the photo's tyre, the tread shows the background,
   and the tread smears into stripes.
@@ -382,9 +401,32 @@ the game.
 - **A tail or crest made of one sheet reads as a paddle.** Fan it from separate feather blades (the chicken).
 - **A sprawled limb built from two straight tubes with a pad reads as a peg from above.** Run one bent tube from inside the body through the elbow to the wrist, and give the foot separate toes (the desert monitor).
 - **Paint a pattern no finer than the mesh.** Coats are painted on vertices and then baked, so spots and narrow bands need vertices at their size: the monitor's body went from 14 to 18 sides and 12 mm steps before its bands could break up.
+- **Markings finer than the mesh are drawn when the coat is baked** (WILD-ART-DESERT, 19 November 2026). Streaks, flecks and spots cannot be painted on vertices inside the triangle budget: the roadrunner's streaks came out as ribs, then as blotches. A recipe now says where the marks go and in what colour (`a.mark = function(point) -> (r, g, b, strength)` before a part; `P['marks']` in a bird's table), `MARKS` in `adapt.py` gives the pattern in the animal's own metres (a stretched noise for streaks and flecks, `spots` for round spots), and `common.finish_coat` draws it at the map's resolution.
+- **A mark that must have a clean edge on a wing is a sheet of its own.** A wing has four rows of vertices from front to back, so a patch painted on it blurs into a band. The condor's underwing triangles and wing bars are thin white sheets a centimetre clear of the wing, weighted to the same bones.
+- **The underside of a flying bird is lit only by the ground,** in the sheet and in the game, so white there shows as tan. Make an underwing mark larger and whiter than the photograph's, and judge it against the black beside it, not against white.
+- **Bands painted by a vertex's own x come out as a checker where the spine climbs,** because the rings of a loft lean with it. Band by where the vertex's ring crosses the spine (`along` in `collared-lizard.py`).
+- **Horns centred behind the head leave a ring of daylight.** A ram's curl is centred on the cheek, so the face fills it (the desert bighorn's first horns were a doughnut on the nape).
+- **Breathing on a bone that carries the legs lifts the feet.** Scaling a bone scales everything under it: the jackrabbit's feet rose and sank 4 mm. Breathe on a bone with no leg beneath it, or not at all.
+- **A bound made of joint angles needs the ground put back.** After posing, read the lowest foot bone, allow for the foot's thickness there, and move the root so that it touches (`bound` in `jackrabbit.py`).
+- **Two animal cards at once: add to shared files in different places.** Each card puts its rows in its own block, apart from the last card's (in `sources.json`, `adapt.py`, the model table, the test lists), so that the two branches merge without a conflict.
 - **Stilt legs, or a tail through the ground, on a standing bird:** in `bird.py` the tail's drop below the hip is about its reach behind the hip times the sine of `tilt`. Work it out before choosing `leg`.
 - **A smoothing pass rounds a faceted bird.** `refine` (one subdivision, then back to budget) now reaches birds through the table; the vulture's body and folded wings were flat plates without it.
 - **One Blender turn can carry a whole round.** With many sessions sharing two heavy places, build every animal and render every view in one batch, and judge the pictures while the next batch waits.
+
+### City animals (WILD-ART-CITY, 19 November 2026)
+
+- **A colour that changes part of the way down a bird's leg smears along half of it.** `bird.py`'s leg has three rings. Put a sleeve over the part with the other colour (`city_parts.stocking`): a raptor's feathered thigh, a heron's black shank above yellow feet, an owl's white legs.
+- **A bar on a folded wing is its own strip.** The folded wing has six rings, too few to carry a painted bar, and the cut back to budget moves what vertices there are. The pigeon's two bars are narrow blades lying just proud of the wing, on the fold bone, so they hide with it in flight (`city_parts.fold_bar`).
+- **A tail that forks, or ends in a dark band, is fanned from feathers** (`city_parts.fan`): a fork is the middle feathers shorter, a round tail the outer ones shorter. Give `bird.py`'s own tail a width of a few millimetres so that it hides underneath.
+- **The smoothing pass takes a face's rings with it.** `refine` subdivides and then cuts back to budget wherever it likes. The barn owl's face (white dish, tan rim, eyes) is lofted ring by ring so each colour has its own vertices, and the owl is built under 2,000 triangles with no `refine` at all.
+- **A heron's folded neck in flight, with one neck bone:** scale the neck bone down evenly and the head bone up by the inverse (`fly_pose` in `little-egret.py`). An even scale brings the head onto the shoulders without squashing it; an uneven one shears the head.
+- **A bird of prey on the thin-necked head reads as a dove.** The kite stood as a brown pigeon through five drafts. Use the `merged` head that the golden eagle uses (a big head sunk into the shoulders), add its brow ridges, and fade the head's pale colour into the body within one head radius, because the neck is painted by the head's function. A hooked bill drops further than it reaches forward, so tell the yellow cere from the dark tip by height, not by distance along the bill.
+- **One flat brown is not a brown bird.** The kite read as a kite only when its head and whole breast were tawny against dark wings: paint the breast by how far forward a point is as well as how low. Streaks narrower than the mesh average to nothing; `ROUGH_FUR` in `adapt.py` lays a coarse grain along the body that reads as streaking close up.
+- **The bake's grain darkens a coat by about a quarter.** White birds painted at 0.74 and then at 0.84 came out light grey beside their photographs; 0.97 reads as white under the review sun of 2.7 without burning out.
+- **A cat from the wolf donor:** a cat is deeper in the body and shorter in the leg. Bones cannot be shortened, so raise the back and let the belly down in the donor's frame and then scale the whole animal to a cat's height. Thin the legs only a little, enlarge the skull by a third, shorten the muzzle to a third, and set the ears forward on top of the skull.
+- **An original quadruped's legs read as flat boards when they taper fast and are paler than the body.** Keep them nearly even in width and darker than the coat above (the raccoon); leave the claws off a foot that is seen from 10 m.
+- **A photograph cropped close to the sheet cell's shape is cropped again to fit it.** Keep reference crops nearly square, so they are padded instead and nothing of the animal is cut off.
+- **A species that the course tables already name goes onto its courses the moment it has a model.** The city animals have rows on Harbour Lights and the city courses, so their models are listed in `HELD_FROM_COURSES` in `src/wildlife-models.js` until a placement card lets each one go.
 
 ### Sheets
 
@@ -402,6 +444,10 @@ the game.
 - **`tools/test-blender-output.mjs` starts Blender for every recipe.** It is a heavy job and takes a turn
   (`docs/FACTORY.md` section 8), and it is not a quick look at one file. To check one model file's own claims, read the
   file's node list, positions and bounds with a few lines of Node. (19 November 2026.)
+- A scale figure in rust and leather vanishes against a rusty vehicle. Stand it clear, against the grey ground.
+- Eleven pictures of one vehicle came back from one `codex exec` job in about twelve minutes, alike from every side,
+  because the brief gave the first picture to every later call as its reference and named what must not be on the
+  vehicle (plough, mirrors, stack) so that those could be photographed alone.
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,

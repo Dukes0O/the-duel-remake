@@ -83,21 +83,23 @@ export const SPECIES = Object.freeze({
   'alpine-marmot': { kind: 'ground' },
   'golden-eagle': { kind: 'bird' },
   'gull': { kind: 'bird' },
-  // Desert and coast
+  // Desert and coast. Their models have passed (WILD-ART-DESERT) but are held off the courses
+  // by HELD_FROM_COURSES in src/wildlife-models.js until Red Mesa and Pacific Canyon have been looked at.
   'roadrunner': { kind: 'ground' },
   'jackrabbit': { kind: 'ground' },
   'desert-bighorn': { kind: 'ground' },
   'collared-lizard': { kind: 'ground' },
   'pelican': { kind: 'bird' },
   'condor': { kind: 'bird' },
-  // Asia and cities
+  // Asia and cities. Their models have passed (WILD-ART-CITY) but are held off the courses
+  // by HELD_FROM_COURSES in src/wildlife-models.js until each course's placement is looked at.
   'black-kite': { kind: 'bird' },
-  'egret': { kind: 'bird' },
+  'egret': { kind: 'bird' },                  // a little egret
   'black-faced-spoonbill': { kind: 'bird' },
-  'pigeon': { kind: 'bird' },
+  'pigeon': { kind: 'bird' },                 // a feral rock dove; the town uses it too
   'raccoon': { kind: 'ground' },
-  'cat': { kind: 'ground' },
-  'owl': { kind: 'bird' },
+  'cat': { kind: 'ground' },                  // a thin street cat; the town uses it too
+  'owl': { kind: 'bird' },                    // a barn owl
   // The Wasteland and the player's town (on no course yet)
   'goat': { kind: 'ground' },
   'chicken': { kind: 'ground' },
