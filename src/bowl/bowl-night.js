@@ -196,6 +196,7 @@ export const bowlEventType = night => SHOW_NIGHTS[night.night - 1]?.events[night
 // a result) wait their turn and push out any remark still waiting; a remark on
 // a stunt or the crowd is made only when Big Mo is not already talking.
 const REMARK = /^(moment|crowd)\./;
+export function sayBowlLine(duel, id, options) { say(duel, id, options); }
 function say(duel, id, {once = false} = {}) {
   const night = duel.state.bowlNight;
   if (!night || !BIG_MO[id] || once && night.said.includes(id)) return;
@@ -348,6 +349,8 @@ function finishEvent(duel, outcome) {
       events: won.map(entry => ({event: entry.event, score: entry.score})), bests,
       purse: BOWL_PURSE[night.night - 1], lent: night.lent, playerId: night.playerId};
     duel.emit({bowlNightResult: night.result});
+    // BOWL-REX-FIGHT: on nights one to four Big Mo lets slip what waits for night five.
+    say(duel, `rex.seen.${night.night}`);
     say(duel, 'night.won');
   }
 }
