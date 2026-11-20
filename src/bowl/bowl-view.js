@@ -204,7 +204,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
       return;
     }
     if (next !== course) build(next, now);
-    stadium?.userData.update?.(now);
+    stadium?.userData.update?.(now, undefined, state);
     if (crushShells) crushShells.userData.updateSimulation(state || {}, 0);
     const crushed = state?.crushedProps || [];
     for (const [id, prop] of authored) {

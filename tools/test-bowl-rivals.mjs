@@ -1,19 +1,19 @@
 // BOWL-RIVALS: the five rivals, Side by Side and Last Truck Rolling, headless.
-// Kyle's rule: Easy must be winnable by a young driver. Every rival finishes
-// Side by Side on every level, every Last Truck Rolling ends with a result, and
-// the child driver wins at least 8 of 10 Easy Side by Side races. Unarmed fight
-// wins are reported; BOWL-WEAPONS measures armed balance. Memory-only storage.
+// Kyle's rule: Easy must be winnable by a young driver. Measure two laps per
+// rival, run a one-wall Easy driver, and check a clean versus wide Hard line.
+// Unarmed fight wins are reported; BOWL-WEAPONS measures armed balance.
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, bowlHudView, bowlNightPlayable} from '../src/bowl/bowl-night.js';
 import {BOWL_RIVALS, BOWL_RIVAL_IDS, BOWL_RIVAL_NIGHTS, BOWL_RIVAL_RULES, lastTruckRivals,
-  sideBySideLanes, sideBySideRival} from '../src/bowl/bowl-rivals.js';
+  bowlRivalGapScale, bowlRivalLapTarget, sideBySideLanes, sideBySideRival} from '../src/bowl/bowl-rivals.js';
 import {BIG_MO, BOWL_GOALS, BOWL_RESULTS, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
 import {beginGo, createTurnShow, currentTurn, passKeyboard, recordGo} from '../src/bowl/bowl-turns.js';
 import {createProfile} from '../src/progression.js';
 import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
 import {worldPose} from '../src/arena/arena-floor.js';
+import {bowlFightPilotGoal} from '../src/arena/arena-event.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -113,7 +113,7 @@ function race(duel, drive, aim, limitSec) {
   ok(BOWL_RIVAL_IDS.length === 5 && BOWL_RIVAL_IDS.every(id => BOWL_RIVALS[id].name && BOWL_RIVALS[id].way),
     'there are five rivals, each with a name and a way of driving');
   ok(BOWL_RIVAL_IDS.every(id => LEVELS.every((level, index) => index === 0 ||
-    BOWL_RIVALS[id].pace[level] > BOWL_RIVALS[id].pace[LEVELS[index - 1]])), 'each rival is faster on each harder level');
+    bowlRivalLapTarget(id, level) < bowlRivalLapTarget(id, LEVELS[index - 1]))), 'each rival aims for a shorter lap on each harder level');
   const used = new Set(BOWL_RIVAL_NIGHTS.flatMap(night => [night.sideBySide, ...(night.lastTruckRolling ?? [])].filter(Boolean)));
   ok(BOWL_RIVAL_IDS.every(id => used.has(id)), 'every rival drives on at least one night');
   ok(SHOW_NIGHTS.every((night, index) => night.events.includes('sideBySide') ? !!BOWL_RIVAL_NIGHTS[index].sideBySide
@@ -149,15 +149,47 @@ function race(duel, drive, aim, limitSec) {
   const named = course.features.bowl.lanes;
   ok(lanes.player.s === named[0].s && lanes.player.lateral === named[0].lateral &&
     lanes.rival.s === named[1].s && lanes.rival.lateral === named[1].lateral, 'the player and the rival take the course\'s two lanes');
-  ok(lanes.player.finishS === named[0].s + course.length && lanes.rival.finishS === named[1].s + course.length,
-    'each truck drives one full lap from its own start');
+  ok(lanes.player.finishS === named[0].s + 2 * course.length && lanes.rival.finishS === named[1].s + 2 * course.length,
+    'each truck drives two full laps from its own start');
+  ok(bowlRivalLapTarget('old-bess', 'easy') === 19.7 * 1.45, 'Old Bess gets the longer Easy lap allowance');
+  ok(bowlRivalLapTarget('dragon-wagon', 'hard') === 19.7 * .97, 'Dragon Wagon aims below the reference');
+  ok(bowlRivalGapScale(25, 'easy') === 1 && bowlRivalGapScale(90, 'easy') === .85 &&
+    bowlRivalGapScale(-90, 'medium') === 1.08 && bowlRivalGapScale(90, 'hard') === 1,
+    'catch-up starts beyond 25 metres and never runs on Hard');
   ok(duel.state.s === lanes.player.s && duel.state.lateral === lanes.player.lateral &&
     duel.state.opponents[0].s === lanes.rival.s && duel.state.opponents[0].lateral === lanes.rival.lateral,
   'the player and the rival start on their lanes');
   const floor = extra => ({length: 300, features: {crushables: [], ramps: [], ...extra}, def: {scrapdome: {floorHalfWidth: 12}}});
   const other = sideBySideLanes(floor({bowl: {lanes: [{s: 10, lateral: 4}, {s: 160, lateral: -4}]}}));
   ok(other.player.s === 10 && other.player.lateral === 4 && other.rival.s === 160 && other.rival.lateral === -4 &&
-    other.rival.finishS === 460, 'lanes another floor names are used as they are');
+    other.rival.finishS === 760, 'lanes another floor names are used as they are');
+}
+
+// With equivalent race progress, measure two actual laps without triggering catch-up.
+function neutralRace(id, level, skipFlip = false) {
+  const duel = showAt(1, 'sideBySide', {level, rivals: [id]});
+  const state = duel.state, rival = state.opponents[0], event = state.bowlNight.event;
+  const lanes = sideBySideLanes(duel.course);
+  if (skipFlip) event.dragonFlipped = true;
+  for (let step = 0; step < 80 / DT && event.rivalDoneAt == null; step++) {
+    state.s = state.prevS = lanes.player.s + rival.s - lanes.rival.s - 10;
+    state.lateral = state.prevLateral = -14;
+    state.speedMph = 0;
+    duel.step(DT);
+  }
+  return event;
+}
+
+for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
+  const event = neutralRace(id, level), target = bowlRivalLapTarget(id, level) * 2;
+  ok(event.rivalDoneAt != null && Math.abs(event.rivalDoneAt - target) / target <= .05,
+    `${id} on ${level} finishes within five percent of ${target.toFixed(2)} seconds (got ${event.rivalDoneAt?.toFixed(2)})`);
+  if (id === 'rust-rhino') ok(event.rhinoTouched, `Rust Rhino brushes the wall on ${level}`);
+  if (id === 'dragon-wagon') {
+    const skipped = neutralRace(id, level, true);
+    const lost = event.rivalDoneAt - skipped.rivalDoneAt;
+    ok(event.dragonFlipped && Math.abs(lost - .5) < .08, `Dragon Wagon's flip costs about half a second on ${level} (got ${lost.toFixed(3)})`);
+  }
 }
 
 // ---- Side by Side: every rival finishes on every level -------------------
@@ -181,10 +213,26 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
 
 // Pace is data: on each level the slowest rival takes longer than the fastest.
 {
-  const time = (id, level) => race(idleBesideLane(showAt(1, 'sideBySide', {level, rivals: [id]})), null, null, 62).rivalDoneAt;
+  const time = (id, level) => race(idleBesideLane(showAt(1, 'sideBySide', {level, rivals: [id]})),
+    null, null, BOWL_NIGHT_RULES.sideBySide.timeLimitSec + 5).rivalDoneAt;
   for (const level of LEVELS) ok(time('old-bess', level) > time('dragon-wagon', level), `Old Bess is slower than Dragon Wagon on ${level}`);
   ok(time('rust-rhino', 'easy') > time('rust-rhino', 'medium') && time('rust-rhino', 'medium') > time('rust-rhino', 'hard'),
     'a rival is quicker round on each harder level');
+}
+
+// Two trucks can cross in one fixed step. The earlier physical crossing wins.
+{
+  const duel = showAt(1, 'sideBySide', {level: 'hard', rivals: ['dragon-wagon']});
+  const state = duel.state, rival = state.opponents[0], event = state.bowlNight.event;
+  state.status = 'racing';
+  state.stageTimeSec = event.lastRaceTime = 35;
+  state.s = state.prevS = event.finishS.player - .106;
+  rival.s = rival.prevS = event.finishS.rival - .008;
+  state.speedMph = rival.speedMph = 40;
+  const result = race(duel, null, null, .025);
+  ok(result && !result.won && result.rivalDoneAt < result.playerDoneAt,
+    'the rival crosses first even when both trucks finish inside one physics step');
+  ok(event.finishWinner === 'rival', 'the finish gate marks the actual first truck');
 }
 
 // The HUD names the rival, and Big Mo says who is in the other lane.
@@ -193,13 +241,27 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   duel.onChange((_, ev) => ev.bowlCaption && captions.push(ev.bowlCaption.id));
   for (let i = 0; i < 120 * 4; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
   ok(duel.state.bowlNight.event.rival === 'rust-rhino' && bowlHudView(duel.state, duel.course).goal ===
-    'Race Rust Rhino once round the Bowl and cross the line first.', 'night two\'s Side by Side is against Rust Rhino, named in the goal');
+    'Beat Rust Rhino over two laps.', 'night two names Rust Rhino and the two laps in the goal');
   // Big Mo waits for his earlier lines; the results card stays up while he talks.
   for (let i = 0; i < 120 * 40; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
   ok([duel.state, ...duel.state.opponents].every(truck => Object.values(truck.damageZones).every(value => value === 0)),
     'the player and Rust Rhino finish Side by Side with every zone undamaged');
   const intro = captions.indexOf('event.sideBySide.intro');
   ok(captions.indexOf('rival.rust-rhino') > Math.max(-1, intro), 'Big Mo says who is in the other lane, after naming the event');
+}
+
+// A wounded rival can break away for a moment, then has to re-engage.
+{
+  const duel = showAt(3, 'lastTruckRolling'), state = duel.state, rival = state.opponents[0];
+  const participant = state.arena.participants[1];
+  participant.targetId = 'player';
+  const from = worldPose(duel, rival), target = worldPose(duel, state);
+  const away = {x: 2 * from.x - target.x, z: 2 * from.z - target.z, speedMph: 24, boost: false};
+  const first = bowlFightPilotGoal(duel, rival, participant, away, 1);
+  assert.deepEqual([first.x, first.z, first.speedMph], [away.x, away.z, 30]);
+  const afterTwo = bowlFightPilotGoal(duel, rival, participant, away, 1);
+  assert.deepEqual([afterTwo.x, afterTwo.z], [target.x, target.z]);
+  checks += 2;
 }
 
 // ---- Last Truck Rolling: four trucks on the arena's rules -----------------
@@ -250,7 +312,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const side = go(1, 2);
   ok(side.state.bowlNight.event.type === 'sideBySide' && side.state.opponents[0]?.bowlRival === 'old-bess',
     'a Turn Show go at Side by Side races Old Bess');
-  const sideResult = race(side, null, null, 70);
+  const sideResult = race(side, null, null, BOWL_NIGHT_RULES.sideBySide.timeLimitSec + 5);
   ok(side.state.bowlNight.phase === 'turn' && sideResult.rival === 'old-bess', 'the go ends as a turn and names the rival');
   const truck = go(3, 2);
   ok(truck.state.bowlNight.event.type === 'lastTruckRolling' && truck.state.arena?.mode === 'last-car-rolling' &&
@@ -310,8 +372,21 @@ function winRate(night, type, level) {
   for (let trial = 0; trial < TRIALS; trial++) {
     const seed = 1989 + trial * 101;
     const duel = showAt(night, type, {level, seed});
-    const result = race(duel, childDriver(seed), type === 'sideBySide' ? laneAim : chaseAim,
-      type === 'sideBySide' ? 62 : BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
+    const belowFive = new Map();
+    let longestStop = 0;
+    const drive = childDriver(seed);
+    const result = race(duel, (game, aim) => {
+      drive(game, aim);
+      if (type !== 'lastTruckRolling' || game.state.status !== 'racing') return;
+      for (const truck of game.state.opponents) {
+        const sound = !truck.combatWrecking && truck.armor >= truck.maxArmor * .4;
+        const seconds = sound && Math.abs(truck.speedMph) < 5 ? (belowFive.get(truck) ?? 0) + DT : 0;
+        belowFive.set(truck, seconds);
+        longestStop = Math.max(longestStop, seconds);
+      }
+    }, type === 'sideBySide' ? laneAim : chaseAim,
+    type === 'sideBySide' ? BOWL_NIGHT_RULES.sideBySide.timeLimitSec + 5 : BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
+    if (type === 'lastTruckRolling') ok(longestStop <= 1, `night ${night} ${level}: a sound rival stays moving (seed ${seed}, ${longestStop.toFixed(2)} s below 5 mph)`);
     if (result) ended++;
     if (result?.won) wins++;
     if (type === 'lastTruckRolling' && result) {
@@ -334,6 +409,44 @@ for (const [key, rows] of Object.entries(outcomes)) if (rows.length)
     `${row.won ? 'W' : 'L'} ${row.how} ${row.knockouts}(${row.byPlayer}) ${row.at}s`).join(', ')}`);
 const table = Object.entries(rates).map(([key, wins]) => `${key} ${wins}/${TRIALS}`).join(', ');
 console.log(`test-bowl-rivals: child-pace wins: ${table}`);
-for (const [key, wins] of Object.entries(rates)) if (key.endsWith(':sideBySide:easy'))
-  ok(wins >= 8, `a child-pace driver wins ${key.replace(':easy', '')} on Easy at least 8 in 10 (won ${wins})`);
+function runLaneTrial(night, seed, {level = 'easy', wide = false} = {}) {
+  const duel = showAt(night, 'sideBySide', {level, seed, rivals: level === 'hard' ? ['dragon-wagon'] : undefined});
+  const state = duel.state, rng = makeRng(seed ^ 0x8e7);
+  const easyPace = rng.range(26.55, 26.85), moveWideAt = rng.range(.93, 1.08), sway = rng.range(-.25, .25);
+  let walls = 0, markedWinner = null;
+  duel.onChange((_, ev) => {
+    if (ev.bowlWall && Math.abs(state.lateral) >= 13) walls++;
+    if (ev.bowlRaceCue === 'bowl.race.finish') markedWinner = ev.bowlRaceWinner;
+  });
+  const drive = game => {
+    const s = game.state, t = s.stageTimeSec;
+    const drift = level === 'easy' && t > moveWideAt && t < 11 && walls === 0;
+    const approachingBend = [3, 9, 16].some(lead => Math.abs(duel.course.at(s.s + lead).curvature) > .025);
+    const cap = level === 'easy' ? easyPace : approachingBend ? 36 : 49;
+    const line = drift ? 25 : wide && s.s > 42 && s.s < 133 ? 14 : level === 'easy' ? .4 * Math.sin(t * 1.3 + sway) : 0;
+    const steer = Math.max(-1, Math.min(1, (s.lateral - line) * .28 + (s.headingError || 0) * 1.8));
+    // Lifting the keys during a jump avoids accidentally attempting a flip.
+    duel.setInput(s.airborne ? {throttle: 0, brake: 0, steer: 0, boost: false}
+      : {throttle: +(s.speedMph < cap), brake: +(level === 'hard' && s.speedMph > cap + 2), steer, boost: false});
+  };
+  return {result: race(duel, drive, null, BOWL_NIGHT_RULES.sideBySide.timeLimitSec + 5),
+    get walls() { return walls; }, get markedWinner() { return markedWinner; }, event: state.bowlNight.event};
+}
+
+for (const night of [1, 2]) {
+  const headToHead = Array.from({length: TRIALS}, (_, index) => runLaneTrial(night, 1989 + index * 101));
+  const closeWins = headToHead.filter(({walls, result, markedWinner}) => walls === 1 &&
+    result?.won && markedWinner === 'player' && Number.isFinite(result.rivalDoneAt) &&
+    result.rivalDoneAt - result.playerDoneAt < 6);
+  ok(closeWins.length >= 9, `night ${night}: a child who clips one wall wins narrowly in ${closeWins.length} of 10 seeds`);
+  console.log(`test-bowl-rivals: night ${night} one-wall Easy close wins: ${closeWins.length}/${TRIALS}`);
+}
+{
+  const clean = runLaneTrial(1, 1989, {level: 'hard'});
+  const wide = runLaneTrial(1, 1989, {level: 'hard', wide: true});
+  ok(clean.walls === 0 && clean.result?.won, 'the clean line can beat Dragon Wagon');
+  ok(wide.walls === 0 && !wide.result?.won && wide.markedWinner === 'rival',
+    'taking a turn wide costs the clean driver the race against Dragon Wagon');
+  ok(wide.event.dragonFlipped, 'Dragon Wagon flips on the last kicker');
+}
 console.log(`test-bowl-rivals: ${checks} checks passed`);
