@@ -243,3 +243,9 @@ Build the three parts in order. A fresh press commits one complete turn using th
 - **Confirmed: seven secrets,** five codes in the air, Full Works entered on the ground before takeoff, and the uncoded
   Yo-Yo; prove each by its own inputs. The design's "six codes off the jump" counts Full Works with the airborne five; seven
   is right.
+
+## Part 1 laptop drive and rule 18 review
+
+The tap controls are playable on `codex/bowl-tricks-all` at `55d557129`. Please try ten Easy flips on Night 1 Freestyle and four jumps over the wall. The builder is checking the two real jumps and the seeded child inputs while work on secret tricks continues.
+
+Please review four replacements in the old trick suite. A fresh tap must finish the full turn after release, replacing a check of how many degrees a held key had rotated by release. A side flip begun during a spin finishes both turns and earns the clean combo. A late Hard press gives a genuine incomplete rotation and Slam. Successive opposite taps must finish and pay both turns; the old reversal check kept only an earlier completed flip. The run still checks exact turn counts, direction, points, real landings and damage, and adds the 55-degree Easy/Hard boundary. The builder will post the measured score on the Big Jump before any replay value is changed. The existing assertions await this written review.
