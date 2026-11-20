@@ -17,7 +17,9 @@
 //   roll or pitch);
 // - when a wall, the catch fence, the Spine or the stands come between it and the truck it rises over them, and it
 //   follows the truck into the stands and outside;
-// - when an event ends it swings a quarter of the way round the truck over two seconds.
+// - when an event ends it swings a quarter of the way round the truck over two seconds;
+// - a jump of the truck that no driving makes (a wall's push threw it 3.5 m in one step on 20 November) is taken up and
+//   eased out, so the camera does not jump with it.
 //
 // Settled by Claude while building (20 November 2026): the design page's "8.7 m behind" is the car chase distance. The
 // Titan's own chase camera stood 12 m behind and 5.8 m up, and Kyle's complaint was the jerks, not the distance, so the
@@ -46,6 +48,9 @@ export const BOWL_CAMERA = Object.freeze({
   lookDownLiftMetres: 4,
   // A move further than this in one frame is a new start (an event loaded), not driving.
   teleportMetres: 6,
+  // A jump of the truck under that, which no driving makes (a wall's push), is taken up and eased out over about half a
+  // second, so the camera never jumps with it: any step this much longer than the truck's way of travel gives.
+  jumpMetres: .5, jumpSec: .15,
   endSwingDeg: 90, endSwingSec: 2,
 });
 
@@ -64,7 +69,7 @@ export function easeTowards(value, rate, target, seconds, dt) {
 
 export function createBowlCamera() {
   return {key: null, time: 0, path: [], yaw: 0, turnRate: 0, turning: false, y: 0, yRate: 0, air: 0, airRate: 0,
-    lift: 0, liftRate: 0, end: null, holding: null, frame: null};
+    lift: 0, liftRate: 0, end: null, holding: null, frame: null, raw: null, shiftX: 0, shiftZ: 0, shiftRateX: 0, shiftRateZ: 0};
 }
 
 // How the truck is moving, from its path: {yaw, mph, hold}. `hold` names why the camera keeps its angle, or is null.
@@ -136,12 +141,23 @@ export function bowlSolidTop(course, x, z, referenceS) {
 // of the path is old. Returns {position, target, yaw, lift, hold}.
 export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, solidTop = null, frame = null} = {}) {
   dt = Number.isFinite(dt) && dt > 0 ? Math.min(dt, .1) : 0;
-  const last = cam.path.at(-1), skipped = frame != null && cam.frame != null && frame !== cam.frame + 1;
-  const fresh = skipped || cam.key !== truck.key || !last || Math.hypot(truck.x - last.x, truck.z - last.z) > C.teleportMetres;
+  const raw = cam.raw, skipped = frame != null && cam.frame != null && frame !== cam.frame + 1;
+  const fresh = skipped || cam.key !== truck.key || !raw || Math.hypot(truck.x - raw.x, truck.z - raw.z) > C.teleportMetres;
   if (fresh) Object.assign(cam, createBowlCamera(), {key: truck.key, yaw: truck.heading, y: truck.y, air: truck.air});
   cam.frame = frame;
+  if (!fresh && dt > 0 && cam.path.length > 1) {
+    const now = cam.path.at(-1), from = cam.path.find(point => point.t >= now.t - C.pathSec) ?? now, span = now.t - from.t;
+    const vx = span > 0 ? (now.x - from.x) / span : 0, vz = span > 0 ? (now.z - from.z) / span : 0;
+    const ex = truck.x - raw.x - vx * dt, ez = truck.z - raw.z - vz * dt;
+    if (Math.hypot(ex, ez) > C.jumpMetres) { cam.shiftX -= ex; cam.shiftZ -= ez; }
+  }
+  ({value: cam.shiftX, rate: cam.shiftRateX} = easeTowards(cam.shiftX, cam.shiftRateX, 0, C.jumpSec, dt));
+  ({value: cam.shiftZ, rate: cam.shiftRateZ} = easeTowards(cam.shiftZ, cam.shiftRateZ, 0, C.jumpSec, dt));
+  cam.raw = {x: truck.x, z: truck.z};
+  // Where the camera follows: the truck, less any jump still being eased out.
+  const spot = {x: truck.x + cam.shiftX, z: truck.z + cam.shiftZ};
   cam.time += dt;
-  if (fresh || dt > 0) cam.path.push({t: cam.time, x: truck.x, z: truck.z});
+  if (fresh || dt > 0) cam.path.push({t: cam.time, x: spot.x, z: spot.z});
   while (cam.path.length > 2 && cam.path[1].t <= cam.time - C.circleSec - C.pathSec) cam.path.shift();
 
   // The angle: turn towards the way of travel, never faster than the limit, easing every change of turn rate.
@@ -171,8 +187,8 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
     let side = 1;
     if (solidTop) {
       const at = turn => { const yaw = cam.yaw + turn * C.endSwingDeg * DEG;
-        return bowlLiftFor({x: truck.x - Math.sin(yaw) * back, y: cam.y + up, z: truck.z - Math.cos(yaw) * back},
-          {x: truck.x, y: truck.y + C.aimUpMetres, z: truck.z}, solidTop); };
+        return bowlLiftFor({x: spot.x - Math.sin(yaw) * back, y: cam.y + up, z: spot.z - Math.cos(yaw) * back},
+          {x: spot.x, y: truck.y + C.aimUpMetres, z: spot.z}, solidTop); };
       if (at(-1) < at(1) - .25) side = -1;
     }
     cam.end = {elapsed: 0, side};
@@ -182,8 +198,8 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   const yaw = cam.yaw + (cam.end ? cam.end.side * C.endSwingDeg * DEG * smooth(cam.end.elapsed / C.endSwingSec) : 0);
 
   const sin = Math.sin(yaw), cos = Math.cos(yaw);
-  const position = {x: truck.x - sin * back, y: cam.y + up, z: truck.z - cos * back};
-  const body = {x: truck.x, y: truck.y + C.aimUpMetres, z: truck.z};
+  const position = {x: spot.x - sin * back, y: cam.y + up, z: spot.z - cos * back};
+  const body = {x: spot.x, y: truck.y + C.aimUpMetres, z: spot.z};
   // A truck inside the stands (they have no height for a truck yet) cannot be seen: the camera rises to see the place
   // above it instead of climbing for a sightline that no height gives.
   const over = solidTop ? solidTop(truck.x, truck.z) : null;

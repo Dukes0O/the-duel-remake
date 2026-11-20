@@ -81,13 +81,18 @@ const viewYaw = pose => Math.atan2(pose.target.x - pose.position.x, pose.target.
 // The three rules of the card, on every frame of a drive.
 function steady(name, frames) {
   let fastest = 0, furthest = 0, widest = 0, blockedRun = 0, longestBlocked = 0, sharpest = 0, apart = 0;
+  const jumps = [];
   for (let index = 1; index < frames.length; index++) {
     const a = frames[index - 1].pose, b = frames[index].pose;
     fastest = Math.max(fastest, Math.abs(wrap(viewYaw(b) - viewYaw(a))) / FRAME / DEG);
     furthest = Math.max(furthest, Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y, b.position.z - a.position.z));
-    // Against the truck: how far the camera moved beyond the truck's own move (a snap sideways or up shows here).
+    // Against the truck: how far the camera moved beyond the truck's own move (a snap sideways or up shows here). A frame
+    // where the truck itself jumped further than its speed takes it (a wall's push) is left out: the camera is meant not
+    // to follow that jump, and the plain move above still holds it to 1.5 m.
     const ta = frames[index - 1].truck, tb = frames[index].truck;
-    apart = Math.max(apart, Math.hypot(b.position.x - a.position.x - (tb.x - ta.x), b.position.y - a.position.y - (tb.y - ta.y),
+    const step = Math.hypot(tb.x - ta.x, tb.z - ta.z), jumped = step > Math.max(Math.abs(ta.mph), Math.abs(tb.mph)) * .44704 * FRAME + .5;
+    if (jumped) jumps.push(step.toFixed(2));
+    else apart = Math.max(apart, Math.hypot(b.position.x - a.position.x - (tb.x - ta.x), b.position.y - a.position.y - (tb.y - ta.y),
       b.position.z - a.position.z - (tb.z - ta.z)));
     // The turn rate changes gradually while driving (the end swing has its own ease and is checked on its own).
     if (index > 1 && !frames[index].ended) {
@@ -109,7 +114,8 @@ function steady(name, frames) {
   ok(longestBlocked <= .5, `${name}: a wall, the fence or the stands never hide the truck for more than half a second (longest ${longestBlocked.toFixed(2)} s)`);
   console.log(`  ${name}: ${frames.length} frames, fastest turn ${fastest.toFixed(1)} deg/s, furthest move ${furthest.toFixed(2)} m ` +
     `(${apart.toFixed(2)} m against the truck), sharpest change of turn ${sharpest.toFixed(0)} deg/s each second, ` +
-    `truck at most ${widest.toFixed(2)} from the middle, longest hidden ${longestBlocked.toFixed(2)} s`);
+    `truck at most ${widest.toFixed(2)} from the middle, longest hidden ${longestBlocked.toFixed(2)} s` +
+    (jumps.length ? `; the truck itself jumped ${jumps.join(', ')} m in one frame` : ''));
 }
 
 // Steers towards a world bearing (the game turns the nose left, towards -x from +z, for a positive steer).
@@ -174,7 +180,9 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
 {
   const duel = showDuel(1);
   const frames = record('a double flip off the Big Jump', duel, 7, (d, t, truck) =>
-    ({throttle: d.state.airborne ? 0 : 1, brake: d.state.airborne ? 1 : 0, steer: keepLine(d, truck, -13), boost: !d.state.airborne}));
+    ({throttle: d.state.airborne ? 0 : 1, brake: d.state.airborne ? 1 : 0, boost: !d.state.airborne,
+      // A gentle line over to the jump: since BOWL-WALLS a hard swerve bounces off the Spine's wall and misses it.
+      steer: Math.max(-.3, Math.min(.3, keepLine(d, truck, -13)))}));
   const high = frames.filter(frame => frame.truck.air > 8);
   ok(high.length > 10, 'a double flip off the Big Jump: the truck flew more than 8 m up');
   const reach = Math.max(...high.map(frame => Math.hypot(frame.pose.position.x - frame.truck.x, frame.pose.position.z - frame.truck.z)));
