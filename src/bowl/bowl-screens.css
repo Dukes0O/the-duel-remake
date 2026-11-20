@@ -25,3 +25,11 @@
 .bowl-hud-crowd{display:flex;justify-content:center;align-items:center;gap:8px;font-weight:700;letter-spacing:.08em}
 .bowl-hud-crowd meter{width:220px;height:14px}
 .bowl-hud-mo{min-height:1.4em;font-style:italic;color:#ffe2b0}
+/* The Turn Show (BOWL-TURNS): players, the pass-the-keyboard screen and the scoreboard. */
+.bowl-turns-players{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.bowl-turns-players .choice.on{background:#6d4524;border-color:#ffc75f}
+.bowl-handoff h2{font-size:clamp(28px,4vw,48px);color:#ffc06a}
+.bowl-turns-board{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+.bowl-turns-board th,.bowl-turns-board td{padding:6px 8px;border-bottom:1px solid #4f3e2c;text-align:right}
+.bowl-turns-board th[scope="row"],.bowl-turns-board thead th:first-child{text-align:left}
+.bowl-turns-board td b{color:#ffc06a;font-size:11px;letter-spacing:.06em}
+.bowl-turns-board .bowl-turns-leader th{color:#ffc06a}
