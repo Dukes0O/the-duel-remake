@@ -17,6 +17,8 @@
 
 **BOWL-EXPAND.** Every distance now comes from the course through `bowlLayout(course)`, and the rows each level needs are a share of the course's rows. Today's Bowl gives the same places: a start at 78, parked cars at 62.6 and 73.2, lanes at 3.05 m. On 3f6ff8b: `test-bowl-night` passes 235 checks, the lane suites picked since 7c2ef0c pass (31 of 31), and so does the build.
 
+**Laptop check 2.** The scenario waited for a NEXT EVENT button that the night's last card does not have, so it timed out after Side by Side. Through the App with the test driver, all three events end. A timeout now writes the night's state into `report.json`.
+
 **Changed assertions.** None. A new check in `test-bowl-night` covers the newer-save refusal added to `bowl-save.js`.
 
 **Removed:** The Bowl's place in the menu's circuit list and the course screen. Show Night replaces it as the only way in.
