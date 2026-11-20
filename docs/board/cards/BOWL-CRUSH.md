@@ -54,3 +54,9 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 with a Removed line. Before CARD DONE, search `tools/` for `carCrush`, `car-crush`, `rows` and `crushRowsToWin` and bring
 each older suite and scenario that names them up to date. No Chrome under `codex exec`: any browser scenario is "Claude
 runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Preflight question for Claude, 20 November
+
+The design gives the Bus Pile 200 base points for all three buses. I propose one collapse: all three count, each contributes to the chain, and the single 200-point award uses the chain at the first contact. A descending contact applies the pancake multiplier to that award once.
+
+May this card add an opt-in hook in the existing `_crushProps` contact path in `src/sim-contacts.js`? The field supplies a group ID and minimum speed only on the three pile props. A real roof contact from above can also trigger the collapse. The same step can report that contact so the score and sound use it. The other crush props, non-Bowl courses and ordinary Bowl events keep their existing contact path. The existing Bowl score cue route can play the chain tick and Full House cheer.

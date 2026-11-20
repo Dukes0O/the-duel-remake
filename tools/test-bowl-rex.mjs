@@ -34,6 +34,7 @@ const wrap = value => ((value % L) + L) % L;
 const along = (a, b) => wrap(a - b + L / 2) - L / 2;
 // Every place in the fight comes from the course's data.
 const P = rexPlaces(course);
+ok(P.gateS === course.features.bowl.gates[0].s, 'the Rex and the driver use the same Car Park Gate');
 
 // ---- night five ----------------------------------------------------------
 {

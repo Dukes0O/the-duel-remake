@@ -17,6 +17,7 @@
 //   to BIG_MO in bowl-lines.js.
 import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle,
   scoreStuntEvent} from './bowl-show.js';
+import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
 import {BIG_MO, BOWL_CRUSH_ROW, BOWL_EVENT_NAMES, BOWL_GOALS} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
@@ -271,6 +272,7 @@ function loadBowlEvent(duel) {
     cpuDifficulty: night.cpuDifficulty, rival: null});
   const s = duel.state;
   s.bowlNight = night;
+  delete s.bowlOutside;
   night.phase = 'event';
   night.caption = null;
   night.captionQueue.length = 0;
@@ -298,7 +300,7 @@ export function retryBowlEvent(duel) {
   return true;
 }
 
-function addFact(duel, fact) {
+function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   const s = duel.state, night = s.bowlNight, event = night.event, at = s.stageTimeSec;
   const timed = {...fact, atSeconds: at};
   const crowd = crowdAfter(event.crowd, at - event.crowdAt);
@@ -312,7 +314,7 @@ function addFact(duel, fact) {
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
-  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: scored.points ? 'bowl.crowd.rise' : null}});
+  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: scored.points ? cue : null}});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
 }
@@ -408,6 +410,7 @@ export function stepBowlNight(duel, dt) {
     return true;
   }
   if (s.status !== 'racing') return false;
+  observeBowlOutside(duel, dt, addFact, say);
   observeTruck(duel, dt);
   const done = RUNNERS.get(night.event.type).step(duel, night, dt);
   if (!done) return false;

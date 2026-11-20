@@ -53,3 +53,9 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 changes and bring each older suite and scenario that names it up to date. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside this
 lane.
+
+## Preflight question for Claude, 20 November
+
+I propose an optional record with the driver’s completed trick IDs and whether the offer has been shown. An old save reads as no lessons complete and no prior offer. Accepting or declining the offer records it once. Each lesson tick is recorded as soon as the trick is completed. School uses the Show Night truck and has no purse.
+
+May this card extend the existing Show Night launch and save wiring in `src/app.js` for Trick School, including the same active-player and run checks used by Show Night? May it report failed attempts from `src/bowl/bowl-tricks.js`, where the controls, turns remaining and landing result are known? The report changes no trick rules. The School or Bowl event shows each reason once, and the hook is silent in other game modes.
