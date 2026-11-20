@@ -49,7 +49,7 @@ export function hoverInfo(view, x, y) {
   const k = G.k;
   for (const c of view.helis) {
     const [hx, hy] = bodyAt(c), [kx, ky] = bucketAt(c);
-    if (Math.abs(x - kx) < 14 * k && Math.abs(y - ky) < 14 * k && c.loads.length) return c.loads.includes('water') ? `The water bucket, ${c.h} m above the lake.` : 'A stone. It is heavy for its size, so the air hardly slows it.';
+    if (Math.abs(x - kx) < 14 * k && Math.abs(y - ky) < 14 * k && c.loads.length) return c.loads.includes('water') ? `The water bucket, ${c.h} m above the lake.` : 'A stone. The air does not slow it.';
     if (Math.abs(x - hx) < 66 * k && Math.abs(y - hy) < 26 * k) return c.speed ? `The helicopter at ${c.speed} m/s, which is ${c.speed} metres during every second.` : `The helicopter, hovering ${c.h} m above the lake with no forward speed.`;
   }
   if (view.flag != null && Math.abs(x - bx(view.flag)) < 16 * k && y > WATER_Y - 60 * k && y < WATER_Y + 10) return `Your flag, ${metres(view.flag)} from the post, marks your guess at where the water will land.`;
@@ -58,7 +58,7 @@ export function hoverInfo(view, x, y) {
   if (view.ruler && y > WATER_Y + 4 && y < WATER_Y + 40) return view.ruler === 'buoy' ? 'Metres before the buoy.' : 'Metres ahead of the release post.';
   for (const d of view.drops) {
     const p = dropPoint(d.kind, d.h, d.v, d.t), dx = bx(d.x0 + p.x), dy = by(p.y);
-    if (Math.hypot(x - dx, y - dy) < 14 * k) return d.kind === 'stone' ? 'The stone. The air hardly slows it.' : 'The water. The air slows these small droplets quickly.';
+    if (Math.hypot(x - dx, y - dy) < 14 * k) return d.kind === 'stone' ? 'The stone. The air does not slow it.' : 'The water. The air slows these small droplets quickly.';
   }
   return null;
 }

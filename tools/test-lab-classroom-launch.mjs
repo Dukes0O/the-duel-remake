@@ -84,7 +84,7 @@ test('every distance is the launch bench’s own run with the skier’s air, and
   assert.ok(skiZone('aerials'));
 });
 
-test('a child who does exactly what each prompt says passes every step, and the lesson’s launches pass the bench', () => {
+test('a child who does what each step asks passes every step, and the lesson’s launches pass the bench', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'recap');
   const v = session.view();
@@ -100,23 +100,23 @@ test('a child who does exactly what each prompt says passes every step, and the 
 test('words: the ramp tilts, the dial turns, and the tape reads the landing', () => {
   const session = createClassroomSession(lesson);
   until(session, x => x.ready);
-  assert.match(session.view().brian.text, /^At 60 degrees the skier went high but moved forward slowly, and landed 30\.5 m along the tape\. At 30 degrees the skier stayed low but moved forward quickly, and landed 31\.6 m\. Those are two very different jumps that land in nearly the same spot/);
+  assert.match(session.view().brian.text, /^At 60 degrees the skier went high but moved forward slowly, and landed 30\.5 m along the tape\. At 30 degrees the skier stayed low but moved forward quickly, and landed 31\.6 m\. Is there an angle that goes further than both\?$/);
   assert.deepEqual(session.view().rows.map(r => r.angle), [60, 30]);
   session.act('next');
   assert.equal(session.view().dial.kmh, 65, 'the dial starts away from its answer');
   assert.equal(session.view().ramp.locked, true);
   session.act('speed:up'); session.act('speed:up');
-  assert.match(session.view().brian.text, /^A dial reading of 72 km\/h is about the same as 20 m\/s, and that is how fast the skier leaves the end of the ramp\./);
+  assert.match(session.view().brian.text, /^A dial reading of 72 km\/h is 20 m\/s, and that is how fast the skier leaves the end of the ramp\. The formula divided 72 by 3\.6 to give 20\./);
   session.act('next');
   assert.equal(session.view().ramp.angle, 60, 'the ramp starts away from its answer');
   assert.equal(session.view().ready, false);
   session.act('angle:down'); session.act('angle:down');
   assert.equal(session.view().ready, false);
   session.act('angle:down');
-  assert.match(session.view().brian.text, /^A ramp at 45 degrees points halfway between level ground and straight up, and that angle is its launch angle\. The ramp divides the skier’s speed into two parts/);
+  assert.match(session.view().brian.text, /^The ramp splits the skier’s speed into a forward speed and an upward speed, and the two arrows at the end of the ramp show them\. At 45 degrees the two parts are equal, 14\.14 m\/s each, because each is the speed multiplied by 0\.707\./);
   session.act('next');
   session.act('go'); until(session, x => x.ready);
-  assert.match(session.view().brian.text, /^The tape reads 35\.6 m, which is further than both the 60 degree and the 30 degree jumps\. Leaving out the air, the formulas predict 40\.9 m\./);
+  assert.match(session.view().brian.text, /^The tape reads 35\.6 m, which is further than both the 60 degree and the 30 degree jumps\. The distance formula, which has no air in it, gives 40\.9 m\. The skier lands shorter than that, because the air slows the skier throughout the flight\./);
   session.act('next');
   until(session, x => x.ready);
   assert.deepEqual(session.view().rows.map(r => [r.angle, Math.round(r.distance * 10) / 10]), [[15, 19], [30, 31.6], [45, 35.6], [60, 30.5], [75, 17.7]], 'the watch fills the table');
@@ -132,9 +132,9 @@ test('the tries: a launch at 45, every miss, every guess and Space at the wrong 
   flag.act('go');
   assert.match(flag.view().brian.text, /^At 45 degrees the skier lands 35\.6 m, which is beyond the flag\. Tilt the ramp first/);
   setTo(flag, 50); fly(flag);
-  assert.match(flag.view().brian.text, /^The skier landed 34\.9 m along the tape, which is 4\.9 m beyond the 30 m flag\. Tilt the ramp steeper, further from 45 degrees, by pressing ↑, then press Space\./);
+  assert.match(flag.view().brian.text, /^The skier landed 34\.9 m along the tape, which is 4\.9 m beyond the 30 m flag\. Tilt the ramp steeper, further from 45 degrees, then launch again\./);
   setTo(flag, 75); fly(flag);
-  assert.match(flag.view().brian.text, /^The skier landed 17\.7 m along the tape, which is 12\.3 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, by pressing ↓/);
+  assert.match(flag.view().brian.text, /^The skier landed 17\.7 m along the tape, which is 12\.3 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, then launch again\./);
   setTo(flag, 60); fly(flag);
   assert.equal(flag.view().ready, true);
   assert.match(flag.view().brian.text, /^With the ramp at 60 degrees the skier landed 30\.5 m, on the flag\. A steeper ramp works, and so does tilting the other way\. A ramp at 30 degrees lands the skier 31\.6 m/);
@@ -149,9 +149,9 @@ test('the tries: a launch at 45, every miss, every guess and Space at the wrong 
   assert.equal(slow.view().dial.kmh, 72, 'it starts away from its answer');
   assert.equal(slow.view().ramp.locked, true);
   slow.act('go');
-  assert.match(slow.view().brian.text, /press ← until the dial reads 65 km\/h/);
+  assert.match(slow.view().brian.text, /turn the dial until it reads 65 km\/h/);
   setTo(slow, null, 18); slow.act('go');
-  assert.deepEqual(slow.view().cards.map(c => c.label), ['About 34 m', 'About 30 m', 'About 20 m']);
+  assert.deepEqual(slow.view().cards.map(c => c.label), ['34 m', '30 m', '20 m']);
   slow.act('answer:0'); until(slow, x => x.ready);
   assert.match(slow.view().brian.text, /^The jump shortened by more than that: the skier landed 29\.5 m/);
   const half = createClassroomSession(lesson);
@@ -167,23 +167,23 @@ test('Brian’s job: each mark starts on a miss, fixes one thing, and every miss
   assert.equal(v.job.mark, 1); assert.equal(v.flag, 42); assert.equal(v.ramp.locked, true); assert.equal(v.dial.locked, false);
   assert.notEqual(v.target, 'go', 'Brian does not point at the launcher before a choice is made');
   fly(session);
-  assert.match(session.view().brian.text, /^The skier landed 35\.6 m along the tape, which is 6\.4 m short of the 42 m flag\. Add speed by pressing →, then press Space\./);
+  assert.match(session.view().brian.text, /^The skier landed 35\.6 m along the tape, which is 6\.4 m short of the 42 m flag\. Add speed, then launch again\./);
   setTo(session, null, 23); fly(session);
-  assert.match(session.view().brian.text, /^The skier landed 45\.3 m along the tape, which is 3\.3 m beyond the 42 m flag\. Reduce the speed by pressing ←/);
+  assert.match(session.view().brian.text, /^The skier landed 45\.3 m along the tape, which is 3\.3 m beyond the 42 m flag\. Reduce the speed, then launch again\./);
   setTo(session, null, 22); fly(session);
   assert.match(session.view().brian.text, /^Correct: at 79 km\/h the skier landed 42\.0 m, on the 42 m flag, because more speed carries the skier further\. For the second mark/);
   v = session.view();
   assert.equal(v.job.mark, 2); assert.equal(v.dial.locked, true); assert.equal(v.ramp.locked, false); assert.equal(v.dial.kmh, 79);
   setTo(session, 15); fly(session);
-  assert.match(session.view().brian.text, /^The skier landed 22\.8 m along the tape, which is 4\.2 m short of the 27 m flag\. Tilt the ramp steeper, towards 45 degrees, by pressing ↑/);
+  assert.match(session.view().brian.text, /^The skier landed 22\.8 m along the tape, which is 4\.2 m short of the 27 m flag\. Tilt the ramp steeper, towards 45 degrees, then launch again\./);
   setTo(session, 20); fly(session);
-  assert.match(session.view().brian.text, /^Correct: with the ramp at 20 degrees the skier landed 28\.7 m, on the 27 m flag\. A ramp at 70 degrees would land close as well, at 26\.8 m\. For the third mark/);
+  assert.match(session.view().brian.text, /^Correct: with the ramp at 20 degrees the skier landed 28\.7 m, on the 27 m flag\. A ramp at 70 degrees would also reach the flag, landing 26\.8 m\. For the third mark/);
   v = session.view();
   assert.equal(v.job.mark, 3); assert.equal(v.ramp.angle, 75); assert.equal(v.dial.kmh, 58); assert.equal(v.flag, 30);
   fly(session);
-  assert.match(session.view().brian.text, /^The skier landed 11\.9 m along the tape, which is 18\.1 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, by pressing ↓, or add speed by pressing →/);
+  assert.match(session.view().brian.text, /^The skier landed 11\.9 m along the tape, which is 18\.1 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, or add speed, then launch again\./);
   setTo(session, 75, MAX_MS); fly(session);
-  assert.match(session.view().brian.text, /^The skier landed 24\.2 m along the tape, which is 5\.8 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, by pressing ↓, then press Space\./, 'no more speed at the top of the dial');
+  assert.match(session.view().brian.text, /^The skier landed 24\.2 m along the tape, which is 5\.8 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, then launch again\./, 'no more speed at the top of the dial');
   setTo(session, 45, 18); fly(session);
   assert.equal(session.view().ready, true);
   assert.match(session.view().brian.text, /^With the ramp at 45 degrees and the dial at 65 km\/h, the skier landed 29\.5 m, on my 30 m mark, which finishes the job/);
@@ -212,9 +212,9 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
 
 test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
-    'check-pair': [[1, /^The ramp at 55 degrees lands the skier 33\.2 m, which is 1\.7 m shorter\. The ramp at 40 degrees is the closer match, because it is as far below 45 degrees as the 50 degree ramp is above it, and it lands the skier 35\.2 m/], [2, /^The ramp at 70 degrees is much too steep and lands the skier only 22\.7 m/]],
+    'check-pair': [[0, /^The ramp at 55 degrees lands the skier 33\.2 m, which is 1\.7 m shorter\. The ramp at 40 degrees is the closer match, because it is as far below 45 degrees as the 50 degree ramp is above it, and it lands the skier 35\.2 m/], [1, /^The ramp at 70 degrees is much too steep and lands the skier only 22\.7 m/]],
     'check-lower': [[1, /^The ramp at 45 degrees sends the skier 42\.7 m, but the ramp at 40 degrees sends the skier 43\.6 m\. With a lower landing the skier has longer to fall/], [2, /^The ramp at 55 degrees sends the skier only 38\.4 m/]],
-    'check-game': [[1, /^The kicker is made of snow, so leaning back does not change its angle/], [2, /^A slower skier lands lower and shorter\. On the launcher at 50 degrees, the skier lands 28\.9 m at 65 km\/h and 41\.1 m at 79 km\/h/]],
+    'check-game': [[0, /^The kicker is made of snow, so leaning back does not change its angle/], [2, /^A slower skier lands lower and shorter\. On the launcher at 50 degrees, the skier lands 28\.9 m at 65 km\/h and 41\.1 m at 79 km\/h/]],
   };
   for (const [id, picks] of Object.entries(answers)) for (const [pick, why] of picks) {
     const session = createClassroomSession(lesson);
@@ -262,17 +262,17 @@ test('Show me on the free test reaches three different settings by itself', () =
   assert.ok(session.view().ready);
 });
 
-test('the free test and the formulas: every press of the ramp or the dial changes the sums at once', () => {
+test('the free test and the formulas: every press of the ramp or the dial changes the formulas at once', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-angle');
   assert.equal(session.view().ramp.angle, 60);
-  assert.equal(session.view().formulas.length, 3, 'only the sums that have been explained so far');
+  assert.equal(session.view().formulas.length, 3, 'only the formulas that have been explained so far');
   let worked = session.view().formulas.map(f => f.worked);
   assert.equal(worked[1], '20 × cos 60° = 10.00 m/s');
   assert.equal(worked[2], '20 × sin 60° = 17.32 m/s');
   session.act('angle:down');
   worked = session.view().formulas.map(f => f.worked);
-  assert.equal(worked[1], '20 × cos 55° = 11.47 m/s', 'the angle changes the sum');
+  assert.equal(worked[1], '20 × cos 55° = 11.47 m/s', 'the angle changes the formula');
   setToFree(session);
   assert.ok(session.view().ready, 'the word is done');
   session.act('angle:up');
@@ -283,9 +283,9 @@ test('the free test and the formulas: every press of the ramp or the dial change
   playThroughTo(free, 'try-free');
   assert.ok(!free.view().ready);
   free.act('speed:up');
-  assert.equal(free.view().formulas[0].worked, '21 m/s × 3.6 = 75.6 km/h', 'the dial changes the sum');
+  assert.equal(free.view().formulas[0].worked, '75.6 km/h ÷ 3.6 = 21 m/s', 'the dial changes the formula');
   fly(free);
-  assert.match(free.view().brian.text, /skier landed 38\.7 m along the tape\. Leaving out the air, the formulas predict 45\.0 m, so the friction of the air shortened the jump by 6\.3 m/);
+  assert.match(free.view().brian.text, /skier landed 38\.7 m along the tape, which is 6\.3 m less than the 45\.0 m that the distance formula gives\./);
   assert.match(free.view().formulas.at(-1).note, /The tape read 38\.7 m/);
   assert.ok(!free.view().ready);
   fly(free);
@@ -294,6 +294,39 @@ test('the free test and the formulas: every press of the ramp or the dial change
   assert.ok(free.view().ready, 'three tests open Continue');
   assert.equal(free.view().rows.length, 4, 'the table keeps the results');
   assert.equal(noAirDistance(45, 20), 40.9, 'what Brian says is what the panel’s numbers give');
+});
+
+test('review of 19 November: the right card moves from question to question, and each check’s panel matches its own question', () => {
+  const position = id => { const s = createClassroomSession(lesson); playThroughTo(s, id); s.act('answer:0'); return s.view().cards.findIndex(c => c.state === 'right'); };
+  assert.deepEqual(['check-pair', 'check-lower', 'check-game'].map(position), [2, 0, 1], 'the answer is not the first card every time');
+  const lower = createClassroomSession(lesson);
+  playThroughTo(lower, 'check-lower');
+  assert.equal(lower.view().formulas[0].worked, '(14.14 + √(14.14^2 + 2 × 9.8 × 10)) ÷ 9.8 = 3.47 s', 'a landing 10 m lower: the time in the air is longer than the 2.89 s on level ground');
+  assert.equal(lower.view().formulas[1].worked, '14.14 m/s × 3.47 s = 49.1 m');
+  const pair = createClassroomSession(lesson);
+  playThroughTo(pair, 'check-pair');
+  assert.match(pair.view().formulas.find(f => f.formula?.startsWith('forward')).worked, /^20 × cos 50° = 12\.86 m\/s$/, 'the question is about the 50 degree ramp');
+});
+
+test('review of 19 November: the wonder plays at life speed, so its two jumps take about 8 seconds, and R plays it again', () => {
+  const session = createClassroomSession(lesson);
+  let seconds = 0;
+  while (!session.view().ready && seconds < 30) { session.tick(.05); seconds += .05; }
+  assert.ok(seconds > 7 && seconds < 10, `the two jumps took ${seconds.toFixed(1)} s`);
+  session.act('replay');
+  assert.equal(session.view().rows.length, 0, 'R plays the wonder again');
+  run(session, 1.5);
+  assert.ok(session.view().rig.flight, 'a skier is in the air again');
+});
+
+test('review of 19 November: the words say what the numbers show', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-speed');
+  assert.match(session.view().brian.text, /^Speed is how fast the skier is moving at the moment of leaving the ramp\. The dial shows kilometres per hour, written km\/h, and the formulas use metres per second, written m\/s, which is the number of metres travelled during each second\. Turn the dial up to 72 km\/h/);
+  assert.match(session.view().formulas[0].formula, /m\/s = km\/h ÷ 3\.6/, 'the formula goes the way the dial turns');
+  const texts = [];
+  for (const id of ['word-speed', 'word-angle', 'watch', 'try-free']) { const s = createClassroomSession(lesson); playThroughTo(s, id); const v = s.view(); texts.push(v.say, v.prompt, ...v.formulas.flatMap(f => [f.title, f.note])); }
+  assert.ok(!texts.some(t => /divides the speed|\bsum\b|\babout\b|leaving out the air/i.test(t ?? '')), texts.filter(t => /divides the speed|\bsum\b|\babout\b|leaving out the air/i.test(t ?? '')).join(' | '));
 });
 
 test('the board draws every step and card', () => {
@@ -361,7 +394,7 @@ test('the wide board hands the tape and the table to the strip', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-free');
   assert.deepEqual(strip(session.view()).readouts, [{label: 'TAPE', value: '–', tone: 'faint'}]);
-  assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['Angle, speed', 'Distance'], ['There are no launches yet. Press Space to launch.', '']]);
+  assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['Angle, speed', 'Distance'], ['There are no launches yet.', '']]);
   fly(session);
   let s = strip(session.view());
   assert.equal(s.readouts[0].value, '35.6 m');

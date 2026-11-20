@@ -15,6 +15,9 @@ export const JOB = Object.freeze({speed: 10, buoyM: 30});
 export const FREE_SPEEDS = Object.freeze([5, 10, 15, 20]), FREE_HEIGHTS = Object.freeze([10, 20, 30, 40]), FREE_TRIES = 3;
 const WONDER = Object.freeze({speed: 15, buoyM: 15});
 const SETTLE_S = .9, LEAD_S = 1.3, METRES_SECONDS = 3;
+// Kyle's rule of 19 November: a watch with several things moving lasts about 10 seconds, and R plays it again. The model's own
+// clock runs slower in those steps, and so does the clock on the board (Brian says so in the prompt).
+const PACE = Object.freeze({wonder: .75, 'word-gravity': .4, 'word-forward-speed': .5, 'word-arc': .45, 'watch-water': .7, 'watch-speeds': .65, 'try-height': .75});
 const G_SHOWN = 9.8, DRAG_SHOWN = .12, KMH_PER_MS = 3.6;
 export const metres = value => `${Math.round(Math.abs(value))} m`;
 const tenth = value => (Math.round(value * 10) / 10).toFixed(1);
@@ -121,11 +124,13 @@ const HEIGHT_GUESSES = Object.freeze([
   {id: 'shorter', label: 'Not as far', picture: {kind: 'height', move: 'shorter'}},
 ]);
 const between = () => `between the ${metres(water(10))} it reached at 10 m/s and the ${metres(water(20))} it reached at 20 m/s`;
+const stoneAt15 = () => metres(landing('stone', HIGH_M, 15).distanceM);
 const lowHigh = () => `the water from ${LOW_M} m landed ${metres(water(10, LOW_M))} ahead and the water from ${HIGH_M} m landed ${metres(water(10))} ahead`;
-const HEIGHT_WHY = 'The higher water does fall for longer, but the friction of the air has already removed nearly all of its forward speed early in the fall, so the extra height adds very little distance.';
+const HEIGHT_WHY = () => `The higher water falls for longer, but the air slows it so much that the extra ${HIGH_M - LOW_M} m of height adds only ${Math.round(water(10)) - Math.round(water(10, LOW_M))} m.`;
 
 const SHOWING = `I will release the water ${metres(water(JOB.speed))} before the buoy.`;
 const DONE_HINTS = Object.freeze(['Press R to watch it again.', 'Press Enter to continue.', 'Press Enter to continue.']);
+const DONE_PROMPT = 'Continue when you are ready, or watch it again.';
 // The miss Brian says on the job, in whole metres: past is plus, short is minus.
 const missSaid = (d, end) => Math.round(end.distanceM) - Math.round(JOB.buoyM - d.x0);
 // Space sets the helicopter off (or releases the load); the button says which. Brian's pointer may aim at a better press than the key's.
@@ -138,9 +143,9 @@ const gainFormula = t => ({title: 'Downward speed gained', formula: 'downward sp
 const fallFormula = t => ({title: 'Distance fallen', formula: 'distance fallen = ½ × g × t^2', worked: `½ × ${G_SHOWN} m/s^2 × (${hundredth(t)} s)^2 = ${tenth(G_SHOWN * Number(hundredth(t)) ** 2 / 2)} m`});
 const timeFormula = h => ({title: 'Time taken to fall', formula: 't = √(2 × h ÷ g)', worked: `√(2 × ${h} m ÷ ${G_SHOWN} m/s^2) = ${hundredth(stoneDrop(h, 0).seconds)} s`, note: 'h is the height. Forward speed does not appear in this formula, so forward speed does not change the time.'});
 const forwardFormula = (v, t) => ({title: 'Distance travelled forward', formula: 'distance = forward speed × t', worked: `${v} m/s × ${hundredth(t)} s = ${tenth(v * Number(hundredth(t)))} m`});
-const dragFormula = v => ({title: 'How quickly air slows the droplets', formula: 'slowing = 0.12 × speed^2', worked: `${DRAG_SHOWN} × (${v} m/s)^2 = ${tenth(DRAG_SHOWN * v * v)} m/s^2`, note: '0.12 belongs to these small droplets. For a stone the number is so small that we leave it out, which is why the stone’s forward speed stays the same.'});
+const dragFormula = v => ({title: 'How quickly air slows the droplets', formula: 'slowing = 0.12 × speed^2', worked: `${DRAG_SHOWN} × (${v} m/s)^2 = ${tenth(DRAG_SHOWN * v * v)} m/s^2`, note: '0.12 belongs to these small droplets. A stone’s slowing number is 0, so its forward speed stays the same.'});
 const topFormula = () => ({title: 'Top falling speed of the droplets', formula: 'top speed = √(g ÷ 0.12)', worked: `√(${G_SHOWN} ÷ 0.12) = ${TOP_FALL_MS} m/s`, note: 'At this speed the air slows a droplet as strongly as gravity speeds it up, so the droplet falls no faster.'});
-const ruleFormula = () => ({title: 'For water, the stone’s sum is too big', formula: 'distance < forward speed × t', note: 'The water’s forward speed keeps shrinking, so the water travels less than forward speed × time.'});
+const ruleFormula = () => ({title: 'The air shortens the water’s journey', formula: 'water distance < forward speed × t', note: 'Multiply the release speed by the time in the air and you get the distance a stone would travel. The water’s forward speed keeps shrinking, so the water travels less.'});
 
 // ---- the checks ----
 const CHECKS = {
@@ -216,19 +221,19 @@ export function createModel() {
         const speed = stepThrough(FREE_SPEEDS, m.speed, value);
         if (speed === m.speed) return {kind: 'note', say: `${speed} m/s is ${value === 'up' ? 'the fastest' : 'the slowest'} setting for this test.`};
         enter(m.index, {speed});
-        return {kind: 'progress', sound: 'lab.tick', say: `The helicopter is now set to ${speed} m/s, which is the same as ${kmh(speed)} km/h. Press Space to watch it fly at that speed.`};
+        return {kind: 'progress', sound: 'lab.tick', say: `The helicopter is now set to ${speed} m/s, which is the same as ${kmh(speed)} km/h. Fly it at that speed and count the metres between the marks.`};
       }
       if (kind !== 'drop') return null;
       enter(m.index, {speed: m.speed});
       m.phase = 'running'; setOff();
-      return {kind: 'progress', say: 'Watch the marks along the top of the picture. A new mark appears at the end of each second.'};
+      return {kind: 'progress', say: 'A new mark appears along the top of the picture at the end of each second. Count the metres between two marks.'};
     }
     if (id.startsWith('word-')) {
       if (kind !== 'drop' || m.phase !== 'ready') return null;
       m.phase = 'running';
-      if (id === 'word-gravity') { letGo(m.helis[0]); return {kind: 'progress', say: 'Watch the stone and the marks beside it. Each mark shows where the stone was at the end of a second.'}; }
+      if (id === 'word-gravity') { letGo(m.helis[0]); return {kind: 'progress', say: 'Each mark beside the stone shows where it was at the end of a second.'}; }
       setOff();
-      return {kind: 'progress', say: 'Watch the stone. The helicopter will release it directly above the post.'};
+      return {kind: 'progress', say: 'The helicopter will release the stone directly above the post.'};
     }
     if (id === 'try-free') {
       if (m.phase !== 'set') return null;
@@ -237,7 +242,7 @@ export function createModel() {
         if (after === before) return {kind: 'note', say: kind === 'speed' ? `${after} m/s is ${value === 'up' ? 'the fastest' : 'the slowest'} setting for this test.` : `${after} m is ${value === 'up' ? 'the greatest' : 'the smallest'} height for this test.`};
         if (kind === 'speed') m.speed = after; else m.height = after;
         m.helis = [heli(m.speed, m.height, {loads: ['stone']})];
-        return {kind: 'progress', sound: 'lab.tick', say: `The helicopter is now set to ${m.height} m above the lake at ${m.speed} m/s. Use the formulas to work out where the stone should land, then press Space to test your answer.`};
+        return {kind: 'progress', sound: 'lab.tick', say: `The helicopter is set to ${m.height} m above the lake at ${m.speed} m/s. Work out where the stone should land, then test it.`};
       }
       if (kind !== 'drop') return null;
       // Show me moves on to a speed that has not been tested at this height yet.
@@ -246,7 +251,7 @@ export function createModel() {
         m.speed = fresh; m.helis = [heli(m.speed, m.height, {loads: ['stone']})];
       }
       m.phase = 'running'; setOff();
-      return {kind: 'progress', say: 'Watch the stone. The helicopter will release it directly above the post.'};
+      return {kind: 'progress', say: 'The helicopter will release the stone directly above the post.'};
     }
     if (id === 'try-flag') {
       if (m.phase !== 'flag') return null;
@@ -254,11 +259,11 @@ export function createModel() {
       if (kind === 'hold') { const at = Math.round(Number(value)); if (Number.isFinite(at)) m.flag = Math.max(0, Math.min(FLAG_MAX_M, at)); return null; }
       if (kind !== 'drop') return null;
       m.phase = 'running'; setOff();
-      return {kind: 'progress', say: `Your flag is ${metres(m.flag)} from the post. Watch where the water lands.`};
+      return {kind: 'progress', say: `Your flag is ${metres(m.flag)} from the post.`};
     }
     if (id === 'try-height') {
-      if (m.phase === 'guess' && kind === 'answer' && HEIGHT_GUESSES[Number(value)]) { m.guess = HEIGHT_GUESSES[Number(value)].id; m.phase = 'ready'; return {kind: 'progress', say: 'Now let both helicopters release their water, and compare the two splashes.'}; }
-      if (m.phase === 'ready' && kind === 'drop') { m.phase = 'running'; setOff(); return {kind: 'progress', say: 'Watch both splashes.'}; }
+      if (m.phase === 'guess' && kind === 'answer' && HEIGHT_GUESSES[Number(value)]) { m.guess = HEIGHT_GUESSES[Number(value)].id; m.phase = 'ready'; return {kind: 'progress', say: 'Now release the water from both helicopters, and compare the two splashes.'}; }
+      if (m.phase === 'ready' && kind === 'drop') { m.phase = 'running'; setOff(); return {kind: 'progress', say: 'Compare where the two splashes land.'}; }
       return null;
     }
     if (id === 'alone') return jobAct(kind, value);
@@ -287,12 +292,12 @@ export function createModel() {
     // Ready, going round again after a miss, or Show me too late in a run: from the start and away.
     home(); m.drops = [];
     m.phase = 'flying'; m.auto = best ? BEST_LET_GO_M : null; setOff();
-    return {kind: 'progress', say: best ? SHOWING : 'Press Space to release the water before the helicopter reaches the buoy.'};
+    return {kind: 'progress', say: best ? SHOWING : 'Release the water before the helicopter reaches the buoy.'};
   }
 
   function tick(dt) {
-    m.time += dt;
     const id = step().id;
+    m.time += dt * (PACE[id] ?? 1);
     if (m.autoStart != null && m.time >= m.autoStart) { m.autoStart = null; setOff(); }
     let out = null;
     for (const c of m.helis) {
@@ -309,11 +314,10 @@ export function createModel() {
     }
     if (id === 'alone' && m.phase === 'flying' && m.helis[0].x > END_M) {
       m.phase = 'missed'; home();
-      return {kind: 'fail', say: 'The helicopter flew past the buoy without releasing any water. Press Space to go round again, and release the water before the buoy.'};
+      return {kind: 'fail', say: 'The helicopter flew past the buoy without releasing any water. Go round again, and release the water before the buoy.'};
     }
     if (id === 'wonder') {
       if (m.lastLand != null && m.time - m.lastLand >= 1) seen.add(id);
-      if (m.lastLand != null && m.time - m.lastLand >= 2.8) enter(m.index);
       return out;
     }
     const settled = m.drops.length > 0 && m.drops.every(d => d.landed) && m.helis.every(c => c.released || c.release == null) && m.time - m.lastLand >= SETTLE_S;
@@ -336,13 +340,13 @@ export function createModel() {
     m.phase = 'result';
     if (id !== 'try-free') seen.add(id);
     const stone = landing('stone', HIGH_M, m.helis[0].speed);
-    if (id === 'word-metres') return {kind: 'right', say: `The helicopter travelled ${m.speed} metres during each second, so its speed was ${m.speed} m/s. Speeds on the road are usually given in kilometres per hour, which is written km/h.${MORE}An hour has 3,600 seconds and a kilometre has 1,000 metres, so you convert m/s to km/h by multiplying by 3,600 and dividing by 1,000, which is the same as multiplying by 3.6. That makes ${m.speed} m/s the same as ${kmh(m.speed)} km/h. You can try another speed, or press Enter to continue.`};
+    if (id === 'word-metres') return {kind: 'right', say: `The helicopter travelled ${m.speed} metres during each second, so its speed was ${m.speed} m/s. Speeds on the road are usually given in kilometres per hour, which is written km/h. To change m/s into km/h, multiply by 3.6, so ${m.speed} m/s is ${kmh(m.speed)} km/h.${MORE}An hour has 3,600 seconds and a kilometre has 1,000 metres, so you convert m/s to km/h by multiplying by 3,600 and dividing by 1,000, which is the same as multiplying by 3.6.`};
     if (id === 'word-gravity') {
       const one = stoneFallAfter(1), two = stoneFallAfter(2);
-      return {kind: 'right', say: `The stone fell ${tenth(one)} m during the first second and ${tenth(two - one)} m during the next second, because by then it was moving faster. It reached the water after ${tenth(stone.seconds)} s, moving at about ${Math.round(GRAVITY * stone.seconds)} m/s. This shows the difference between the two units: m/s tells you how fast an object is moving at one moment, and m/s² tells you how quickly that speed is changing.`};
+      return {kind: 'right', say: `The stone fell ${tenth(one)} m during the first second. In the next second it fell ${tenth(two - one)} m, which makes ${tenth(two)} m in all, because it was moving faster. It reached the water after ${tenth(stone.seconds)} s, moving downward at ${Math.round(GRAVITY * stone.seconds)} m/s.${MORE}This shows the difference between the two units: m/s tells you how fast an object is moving at one moment, and m/s² tells you how quickly that speed is changing.`};
     }
-    if (id === 'word-forward-speed') return {kind: 'right', say: `The forward arrow stayed the same length, because nothing pushes the stone forward and the air barely holds it back. The stone therefore travelled 10 metres forward during every second, while the downward arrow kept growing. The fall took ${tenth(stone.seconds)} s, so the stone landed ${metres(stone.distanceM)} ahead of the post, and it stayed directly below the helicopter all the way down.`};
-    if (id === 'word-arc') return {kind: 'right', say: `At 20 m/s the stone landed ${metres(stone.distanceM)} ahead of the post, about twice as far as the ${metres(landing('stone', HIGH_M, 10).distanceM)} it travelled at 10 m/s. The fall lasted the same ${tenth(stone.seconds)} s, because forward speed has no effect on how long a stone takes to fall. Twice the forward speed for the same time gives twice the distance.`};
+    if (id === 'word-forward-speed') return {kind: 'right', say: `The forward arrow stayed the same length, because the air does not slow the stone. The stone therefore travelled 10 metres forward during every second, while the downward arrow kept growing. The fall took ${tenth(stone.seconds)} s, so the stone landed ${metres(stone.distanceM)} ahead of the post, and it stayed directly below the helicopter all the way down.`};
+    if (id === 'word-arc') { const t = Number(hundredth(stone.seconds)); return {kind: 'right', say: `At 20 m/s the stone landed ${tenth(20 * t)} m ahead of the post, which is twice the ${tenth(10 * t)} m it travelled at 10 m/s. The fall lasted the same ${tenth(stone.seconds)} s, because forward speed has no effect on how long a stone takes to fall. Twice the forward speed for the same time gives twice the distance.`}; }
     if (id === 'try-free') {
       const end = landing('stone', m.height, m.speed);
       m.tested.add(`${m.height}/${m.speed}`); m.tries = m.tested.size;
@@ -350,21 +354,21 @@ export function createModel() {
       if (m.tries >= FREE_TRIES) seen.add(id);
       m.helis = [heli(m.speed, m.height, {loads: ['stone']})]; m.drops = []; m.marks = []; m.phase = 'set';
       const told = `From ${m.height} m at ${m.speed} m/s, the stone fell for ${tenth(end.seconds)} s and landed ${metres(end.distanceM)} ahead of the post.`;
-      return {kind: 'right', say: m.tries >= FREE_TRIES ? `${told} Your earlier arcs remain on the picture so that you can compare them. Press Enter when you have tested enough settings.` : `${told} Change the height or the speed and test a different setting. Your earlier arc stays on the picture.`};
+      return {kind: 'right', say: m.tries >= FREE_TRIES ? `${told} A greater height gives a longer fall, and a greater speed gives more distance during every second of that fall, so either change makes the stone land further.` : `${told} Test a different setting, and compare its arc with the earlier ones.`};
     }
     if (id === 'try-flag') {
       // Judged in the whole metres the board and Brian show: the flag is on a whole metre.
       const where = water(15), off = Math.round(where) - m.flag;
       m.result = {right: Math.abs(off) <= CLOSE_M};
       if (m.result.right) return {kind: 'right', say: `Well judged. The water landed ${metres(where)} ahead of the post, ${off === 0 ? 'right beside your flag' : `${metres(off)} from your flag`}.`};
-      return {kind: 'wrong', say: off > 0 ? `The water landed ${metres(where)} ahead of the post, which is ${metres(off)} beyond your flag. At 15 m/s the water travels further than your flag suggests, and it landed ${between()}.`
-        : `The water landed ${metres(where)} ahead of the post, which is ${metres(off)} short of your flag. The friction of the air slows the water, so it lands well short of where a stone would, ${between()}.`};
+      return {kind: 'wrong', say: off > 0 ? `The water landed ${metres(where)} ahead of the post, which is ${metres(off)} beyond your flag. Water at 15 m/s lands further than the ${metres(water(10))} it reached at 10 m/s, and not as far as the ${metres(water(20))} it reached at 20 m/s.`
+        : `The water landed ${metres(where)} ahead of the post, which is ${metres(off)} short of your flag. A stone released at 15 m/s lands ${stoneAt15()} ahead, but the air slows the water, so it lands ${between()}.`};
     }
     if (id === 'try-height') {
       m.result = {right: m.guess === 'same'};
-      if (m.result.right) return {kind: 'right', say: `Correct: ${lowHigh()}. ${HEIGHT_WHY}`};
-      return {kind: 'wrong', say: m.guess === 'further' ? `The higher water landed only a little further: ${lowHigh()}. ${HEIGHT_WHY}`
-        : `The higher water did not land any closer: ${lowHigh()}. ${HEIGHT_WHY}`};
+      if (m.result.right) return {kind: 'right', say: `Correct: ${lowHigh()}. ${HEIGHT_WHY()}`};
+      return {kind: 'wrong', say: m.guess === 'further' ? `The higher water landed only a little further: ${lowHigh()}. ${HEIGHT_WHY()}`
+        : `The higher water did not land any closer: ${lowHigh()}. ${HEIGHT_WHY()}`};
     }
     return null;
   }
@@ -384,9 +388,9 @@ export function createModel() {
     }
     // The helicopter comes round to the start, ready for another go.
     m.phase = 'missed'; home();
-    if (before <= 0) return {kind: 'fail', say: `You released the water ${before < 0 ? 'after passing the buoy' : 'directly above the buoy'}. The water keeps moving forward and travels ${ahead} after its release, so it landed ${metres(said)} beyond the buoy. Release it ${ahead} before the buoy. Press Space to go round again.`};
-    if (said > 0) return {kind: 'fail', say: `You released the water ${metres(before)} before the buoy, but water at this speed travels ${ahead} forward, so it landed ${metres(said)} beyond the buoy. Release it${little} sooner. Press Space to go round again.`};
-    return {kind: 'fail', say: `You released the water ${metres(before)} before the buoy, but water at this speed travels only ${ahead} forward, so it landed ${metres(said)} short of the buoy. Release it${little} later. Press Space to go round again.`};
+    if (before <= 0) return {kind: 'fail', say: `You released the water ${before < 0 ? 'after passing the buoy' : 'directly above the buoy'}. The water keeps moving forward and travels ${ahead} after its release, so it landed ${metres(said)} beyond the buoy. Release it ${ahead} before the buoy.`};
+    if (said > 0) return {kind: 'fail', say: `You released the water ${metres(before)} before the buoy, but water at this speed travels ${ahead} forward, so it landed ${metres(said)} beyond the buoy. Release it${little} sooner.`};
+    return {kind: 'fail', say: `You released the water ${metres(before)} before the buoy, but water at this speed travels only ${ahead} forward, so it landed ${metres(said)} short of the buoy. Release it${little} later.`};
   }
 
   function replay() {
@@ -418,12 +422,12 @@ export function createModel() {
     if (id === 'watch-water') {
       const stone = m.drops.find(d => d.kind === 'stone'), drop = m.drops.find(d => d.kind === 'water');
       const now = d => d ? dropSpeed(d.kind, d.h, d.v, d.t).forward : 10;
-      return [{title: 'Forward speed at this moment', worked: `Stone ${tenth(now(stone))} m/s, water ${tenth(now(drop))} m/s`}, dragFormula(Math.max(1, Math.round(now(drop)))), topFormula(), ruleFormula()];
+      return [{title: 'Forward speed at this moment', worked: `Stone ${tenth(now(stone))} m/s, water ${tenth(now(drop))} m/s`}, dragFormula(Math.max(1, Math.round(now(drop)))), topFormula(), ...(seen.has(id) ? [ruleFormula()] : [])];
     }
     if (id === 'watch-speeds') return [dragFormula(5), dragFormula(20), ruleFormula()];
     if (id === 'try-free') return [timeFormula(m.height), forwardFormula(m.speed, landing('stone', m.height, m.speed).seconds), kmhFormula(m.speed)];
     if (id === 'try-flag' && m.phase === 'running') return [ruleFormula()];
-    if (id === 'try-flag') return [{title: 'For a stone, with no air friction', formula: 'distance = forward speed × t', worked: `15 m/s × ${hundredth(landing('stone', HIGH_M, 15).seconds)} s = ${tenth(landing('stone', HIGH_M, 15).distanceM)} m`}, ruleFormula(), {title: 'What the water has done so far', worked: `10 m/s: ${metres(water(10))}, 20 m/s: ${metres(water(20))}`}];
+    if (id === 'try-flag') return [{title: 'For a stone, which the air does not slow', formula: 'distance = forward speed × t', worked: `15 m/s × ${hundredth(landing('stone', HIGH_M, 15).seconds)} s = ${tenth(landing('stone', HIGH_M, 15).distanceM)} m`}, ruleFormula(), {title: 'What the water has done so far', worked: `10 m/s: ${metres(water(10))}, 20 m/s: ${metres(water(20))}`}];
     // Nothing here settles the guess or the question that is open: the landings come only once it is answered.
     if (id === 'try-height' && m.phase !== 'result') return [dragFormula(10), ruleFormula()];
     if (CHECKS[id] && m.answered === null) return [ruleFormula()];
@@ -445,26 +449,26 @@ export function createModel() {
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), table: null, formulas: formulas(id)};
     if (id === 'wonder') return {...base, post: false, ruler: null, letGo: WONDER.buoyM, actions: ['replay'],
       say: `Our helicopter, Kestrel One, released its water directly above the buoy, but the water landed ${metres(water(WONDER.speed))} beyond the buoy. Why did the water miss, when the helicopter was right above the buoy at the moment of release?`,
-      prompt: seen.has(id) ? 'Press Enter when you are ready to find out why, or press R to watch again.' : 'Watch the water.',
+      prompt: seen.has(id) ? 'Continue when you are ready to find out why, or watch it again.' : 'Watch the water.',
       hints: ['Watch where the water goes after the helicopter releases it.', 'The water keeps moving forward while it falls.', 'Press Enter when you are ready to find out why.']};
     if (id === 'word-metres') {
       const running = m.phase === 'running';
       return {...base, keys: running ? {} : {...SPEED_KEYS, Space: 'drop'}, buttons: running ? [] : [...SPEED_BUTTONS, {action: 'drop', label: 'Fly', key: 'Space'}], waiting: m.phase === 'ready', target: running ? null : 'drop', glow: running ? null : 'drop',
-        say: m.phase === 'result' ? m.say : `Before we can explain the miss, we need a way to measure speed. In this lesson we measure speed in metres per second, which is written m/s. An object moving at 10 m/s travels 10 metres during every second.${MORE}Speed is the distance an object travels in a certain amount of time. Choose a speed for the helicopter with ← and →, then press Space and watch the marks appear along the top of the picture, one for each second.`,
-        prompt: running ? 'Watch the marks along the top of the picture.' : m.phase === 'result' ? 'Press Enter to continue, or choose another speed with ← and → and press Space.' : 'Choose a speed with ← and →, then press Space to fly.',
+        say: m.phase === 'result' ? m.say : `To explain the miss we need to measure speed. Speed is the distance an object travels in a certain amount of time, and we measure it in metres per second, written m/s. Fly the helicopter at a speed you choose, and count the metres between the marks that appear along the top of the picture.${MORE}An object moving at 10 m/s travels 10 metres during every second, so the marks are 10 metres apart.`,
+        prompt: running ? 'Count the metres between two marks.' : m.phase === 'result' ? 'Continue when you are ready, or fly at another speed.' : 'Choose a speed, then fly the helicopter.',
         hints: running ? ['Watch the marks appear.', 'Count the metres between two marks.', 'Wait a moment.'] : ['The helicopter waits on the left. Space sets it off.', 'Press Space, or click the helicopter.', 'Watch my pointer, which is on the helicopter.']};
     }
     if (id.startsWith('word-')) {
       const ready = m.phase === 'ready';
       const say = {
-        'word-gravity': `Gravity is the pull of the Earth that makes objects fall. The helicopter is now hovering ${HIGH_M} m above the lake with a stone hanging from its hook. Release the stone and watch how far it falls during each second.${MORE}Gravity does not give a falling object one steady speed. Instead, it adds 9.8 m/s to the object’s downward speed during every second of the fall. A steady gain in speed like this is called acceleration, and we write it as 9.8 m/s², which is read as “metres per second, per second”.`,
+        'word-gravity': `Gravity is the pull of the Earth that makes objects fall. A stone hangs from a helicopter that is hovering ${HIGH_M} m above the lake. Release the stone, and compare how far it falls in the first second with how far it falls in the next.${MORE}Gravity does not give a falling object one steady speed. Instead, it adds 9.8 m/s to the object’s downward speed during every second of the fall. A steady gain in speed like this is called acceleration, and we write it as 9.8 m/s², which is read as “metres per second, per second”.`,
         'word-forward-speed': `Forward speed is how fast an object is moving along, parallel to the ground, at the moment it is released. The helicopter will now fly at 10 m/s and release the stone directly above the post. Watch the two arrows on the stone as it falls: one shows its forward speed and the other shows its downward speed.${MORE}The stone is already moving forward with the helicopter, so it does not stop moving forward when it is released.`,
-        'word-arc': `The curved path of an object that falls while moving forward is called an arc. The path is curved because the forward speed stays the same while the downward speed keeps growing. The faint arc shows the path of the stone at 10 m/s.${MORE}Now the helicopter will fly twice as fast, at 20 m/s, from the same height.`,
+        'word-arc': `The curved path of an object that falls while moving forward is called an arc. The faint arc shows the stone at 10 m/s, and now the helicopter will fly twice as fast, at 20 m/s, from the same height. Watch where this stone lands compared with the faint arc.${MORE}The path is curved because the forward speed stays the same while the downward speed keeps growing.`,
       }[id];
       return {...base, post: id !== 'word-gravity', clock: id === 'word-gravity', fallMarks: id === 'word-gravity', arrows: true, underHelicopter: id === 'word-forward-speed', actions: m.phase === 'result' ? ['replay', 'slow'] : ['slow'],
         ...(ready ? space(id === 'word-gravity' ? 'Release' : 'Fly') : {}), say: m.phase === 'result' ? m.say : say,
-        prompt: ready ? (id === 'word-gravity' ? 'Release the stone: press Space, or click it.' : 'Press Space to set the helicopter off. It will release the stone above the post.')
-          : m.phase === 'running' ? 'Watch the stone.' : 'Press Enter to continue, or press R to watch again.',
+        prompt: ready ? (id === 'word-gravity' ? 'Release the stone.' : id === 'word-forward-speed' ? 'Set the helicopter off, and watch the two arrows on the stone.' : 'Set the helicopter off, and watch where the stone lands.')
+          : m.phase === 'running' ? 'Watch the stone. The picture runs slowly, and the clock runs slowly with it.' : DONE_PROMPT,
         hints: m.phase === 'running' ? ['Watch the stone.', 'Watch the marks beside the stone.', 'Wait a moment.'] : !ready ? DONE_HINTS : id === 'word-gravity' ? ['The stone hangs from the hook.', 'Press Space, or click the stone.', 'Watch my pointer, which is on the stone.']
           : ['The helicopter waits on the left. Space sets it off.', 'Press Space, or click the helicopter.', 'Watch my pointer, which is on the helicopter.']};
     }
@@ -477,41 +481,41 @@ export function createModel() {
         : [5, 10, 20].map((s, i) => ({label: `${s} m/s (${kmh(s)} km/h)`, value: marks.find(k => k.colour === i)?.label ?? null, colour: i}));
       return {...base, actions: ['replay', 'slow'], table, clock: id === 'watch-speeds', arrows: id === 'watch-water',
         say: id === 'watch-water'
-          ? (done ? `The stone landed ${metres(landing('stone', HIGH_M, 10).distanceM)} ahead of the post, but the water landed only ${metres(water(10))} ahead. The air causes the difference.${MORE}Water leaving the bucket breaks up into small droplets, and a small droplet is very light for the amount of air it has to push aside. The friction of the air against the droplets therefore slows them quickly, and in the first second they lose more than half of their forward speed. The same friction stops the droplets from ever falling faster than ${TOP_FALL_MS} m/s. A stone is heavy for its size, so the air hardly slows it. The water still lands ahead of the release point, because it keeps moving forward until the air has slowed it.`
-            : 'So far we have dropped a stone, and the air has barely affected it. Now the helicopter will fly at 10 m/s and release a stone and some water at the same moment. Watch the forward arrow on each one, and see which lands further ahead.')
-          : (done ? `Forward speed determines how far ahead the water lands. It landed ${metres(water(5))} ahead at 5 m/s, ${metres(water(10))} ahead at 10 m/s and ${metres(water(20))} ahead at 20 m/s. Doubling the speed from 10 to 20 m/s does not double the distance, because the friction of the air grows quickly with speed and slows the faster water harder. All three splashes arrived at nearly the same moment, because forward speed has little effect on how long the fall takes. Height and gravity determine that.`
+          ? (done ? `The stone landed ${metres(landing('stone', HIGH_M, 10).distanceM)} ahead of the post, but the water landed only ${metres(water(10))} ahead. The air does not slow the stone, and it slows the water.${MORE}Water leaving the bucket breaks into small droplets, and the air slows small droplets far more than a stone. In the first second the droplets lose more than half of their forward speed. The same air stops the droplets falling faster than ${TOP_FALL_MS} m/s, which is their top falling speed.`
+            : 'Until now the air has not slowed the stone. Now the helicopter will fly at 10 m/s and release a stone and some water at the same moment. Watch the forward arrow on each one, and see which lands further ahead.')
+          : (done ? `Forward speed sets how far ahead the water lands. It landed ${metres(water(5))} ahead at 5 m/s, ${metres(water(10))} ahead at 10 m/s and ${metres(water(20))} ahead at 20 m/s.${MORE}Doubling the speed from 10 to 20 m/s does not double the distance, because the air slows faster water harder. The splashes landed after ${tenth(landing('water', HIGH_M, 5).seconds)}, ${tenth(landing('water', HIGH_M, 10).seconds)} and ${tenth(landing('water', HIGH_M, 20).seconds)} s, while a stone falls from the same height in ${tenth(stoneDrop(HIGH_M, 0).seconds)} s, so the air slows the fall of the water too.`
             : 'Three helicopters will now release water at the same moment while flying at 5, 10 and 20 m/s. Watch where each splash lands, and when it lands.'),
-        prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the splashes.',
-        hints: id === 'watch-water' ? ['Watch the grey stone and the blue water.', 'The air slows the water, but hardly slows the stone.', 'Press R to watch again.']
+        prompt: done ? DONE_PROMPT : id === 'watch-water' ? 'Watch the stone and the water. The picture runs slowly, and the clock runs slowly with it.' : 'Watch the three splashes. The picture runs slowly, and the clock runs slowly with it.',
+        hints: id === 'watch-water' ? ['Watch the grey stone and the blue water.', 'The air slows the water, and does not slow the stone.', 'Press R to watch again.']
           : ['Watch the three splashes.', 'The fastest helicopter’s water lands furthest ahead.', 'Press R to watch again.']};
     }
     if (id === 'try-free') {
-      if (m.phase === 'running') return {...base, arrows: true, actions: ['slow'], say: 'Watch the stone. The helicopter will release it directly above the post.', prompt: 'Watch the stone.', hints: ['Watch the stone.', 'Compare this arc with the earlier ones.', 'Wait a moment.']};
+      if (m.phase === 'running') return {...base, arrows: true, actions: ['slow'], say: 'The helicopter will release the stone directly above the post.', prompt: 'Watch the stone.', hints: ['Watch the stone.', 'Compare this arc with the earlier ones.', 'Wait a moment.']};
       return {...base, keys: {...SPEED_KEYS, '↑': 'height:up', '↓': 'height:down', Space: 'drop'}, buttons: [...SPEED_BUTTONS, ...HEIGHT_BUTTONS, {action: 'drop', label: 'Fly and release', key: 'Space'}], waiting: !seen.has(id), target: 'drop:best', glow: 'drop',
-        say: m.say || `Now you can experiment with a stone. Press ← and → to change the forward speed, and ↑ and ↓ to change the height. The formulas beside the picture change as you change the settings, so you can work out where the stone should land before you release it.${MORE}Test at least ${FREE_TRIES} different settings and compare their arcs.`,
-        prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to test them. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
+        say: m.say || `Which makes a stone land further: more forward speed, or more height? Test ${FREE_TRIES} different settings of the helicopter, and compare their arcs.${MORE}The formulas beside the picture change with the settings, so you can work out where the stone should land before you release it.`,
+        prompt: seen.has(id) ? 'Continue when you are ready, or test another setting.' : `Test ${FREE_TRIES} different settings. Settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
         hints: ['Press Space to test the settings as they are.', 'A greater height means a longer fall, and so a longer distance. Which change makes the stone land furthest?', 'Watch my pointer. I will choose a speed you have not tested yet, and release the stone.']};
     }
     if (id === 'try-flag') {
       if (m.phase === 'flag') return {...base, keys: {...FLAG_KEYS, Space: 'drop'}, repeat: FLAG_REPEAT, buttons: [{action: 'drop', label: 'Release', key: 'Space'}], waiting: true, target: 'drop', glow: 'flag', dragFlag: true,
-        say: `It is your turn to predict. The helicopter will fly at 15 m/s, ${HIGH_M} m above the lake, and release water directly above the post. Where do you think the water will land?${MORE}Put the flag on that spot.`,
-        prompt: 'Move the flag with ← and → (or drag it along the water), then press Space to release the water.',
+        say: `Where will the water land? The helicopter will fly at 15 m/s, ${HIGH_M} m above the lake, and release the water directly above the post. Use the distances you saw at 5, 10 and 20 m/s to place the flag where you think the water will land.`,
+        prompt: 'Place the flag, then release the water.',
         hints: [`At 10 m/s the water landed ${metres(water(10))} ahead of the post, and at 20 m/s it landed ${metres(water(20))} ahead. This helicopter is flying at 15 m/s.`, 'The answer lies somewhere between those two distances. Move the flag, then press Space.', 'Any guess is fine. Watch my pointer, and I will release the water.']};
-      if (m.phase === 'running') return {...base, say: `Your flag is ${metres(m.flag)} from the post. Watch where the water lands.`, prompt: 'Watch the water.', hints: ['Watch the water.', 'Watch the flag.', 'Wait a moment.']};
+      if (m.phase === 'running') return {...base, say: `Your flag is ${metres(m.flag)} from the post.`, prompt: 'Watch where the water lands.', hints: ['Watch the water.', 'Watch the flag.', 'Wait a moment.']};
       return {...base, actions: ['replay'], mood: m.result.right ? 'cheer' : 'explain', say: m.say,
-        prompt: 'Press Enter to continue, or press R to watch again.', hints: DONE_HINTS};
+        prompt: DONE_PROMPT, hints: DONE_HINTS};
     }
     if (id === 'try-height') {
       const cards = HEIGHT_GUESSES.map((g, i) => ({id: `answer:${i}`, key: String(i + 1), label: g.label, picture: g.picture,
         state: m.phase !== 'result' ? null : g.id === 'same' ? 'right' : g.id === m.guess ? 'wrong' : null}));
       const question = `Two helicopters fly at 10 m/s and release water directly above the post. One is ${LOW_M} m above the lake and the other is ${HIGH_M} m above the lake. How far ahead will the water from the higher helicopter land, compared with the water from the lower one?`;
-      if (m.phase === 'guess') return {...base, keys: PICK_KEYS, waiting: true, cards, say: question, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
+      if (m.phase === 'guess') return {...base, keys: PICK_KEYS, waiting: true, cards, say: question, prompt: 'Pick the card with your answer.',
         hints: ['Remember the stone and the water: the air slows the water.', 'The higher water falls for longer. Is it still moving forward during all of that time?', 'Any guess is fine. Pick one, and then we will test it.']};
-      if (m.phase === 'ready') return {...base, ...space('Release'), cards: [], say: 'Now let both helicopters release their water, and compare the two splashes.', prompt: 'Press Space: both helicopters will release their water above the post.',
+      if (m.phase === 'ready') return {...base, ...space('Release'), cards: [], say: 'Now release the water from both helicopters, and compare the two splashes.', prompt: 'Release the water from both helicopters, then compare the splashes.',
         hints: ['Space sets both helicopters off.', 'Press Space, or click a helicopter.', 'Watch my pointer, which is on the helicopter.']};
-      if (m.phase === 'running') return {...base, say: 'Watch both splashes.', prompt: 'Watch the two splashes.', hints: ['Watch the two splashes.', 'Which one lands further ahead?', 'Wait a moment.']};
+      if (m.phase === 'running') return {...base, say: 'Compare where the two splashes land.', prompt: 'Watch the two splashes.', hints: ['Watch the two splashes.', 'Which one lands further ahead?', 'Wait a moment.']};
       return {...base, cards, actions: ['replay'], mood: m.result.right ? 'cheer' : 'explain', say: m.say,
-        prompt: 'Press Enter to continue, or press R to watch again.', hints: DONE_HINTS};
+        prompt: DONE_PROMPT, hints: DONE_HINTS};
     }
     if (id === 'alone') return jobView(base);
     if (CHECKS[id]) {
@@ -520,7 +524,7 @@ export function createModel() {
         letGo: answered && id !== 'check-over' ? m.helis[0].release : null, ghostLetGo: answered && id === 'check-faster' ? check.buoy - water(10) : null,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue, or press R to watch again.' : 'Pick a picture by clicking it, or press 1, 2 or 3.', hints: answered ? DONE_HINTS : check.hints};
+        say: check.question, prompt: answered ? DONE_PROMPT : 'Pick the card with your answer.', hints: answered ? DONE_HINTS : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS,
       say: `An object dropped from a moving helicopter keeps moving forward at the speed it had when it was released, so it lands ahead of the place where it was released. At the same time, gravity pulls the object downward, and its downward speed grows by 9.8 m/s during every second of the fall.${MORE}The air slows a spray of water far more than it slows a stone, so the water does not travel as far forward and lands closer to the point of release than the stone does.`,
@@ -532,15 +536,15 @@ export function createModel() {
     const hints = [`At 10 m/s the water travels ${metres(water(JOB.speed))} forward after its release.`, `So release the water when the bucket is ${metres(water(JOB.speed))} before the buoy, which is the ${Math.round(water(JOB.speed))} mark on the water.`,
       'Watch my pointer. I will fly the helicopter and release the water at the right place.'];
     if (m.phase === 'ready') return {...common, ...space('Fly', 'drop:best'),
-      say: `Here is a job for you: hit the buoy with the water. The helicopter flies at ${JOB.speed} m/s, ${HIGH_M} m above the lake, and you choose the moment to release the water. The water must land inside the ring around the buoy.${MORE}The numbers on the water show how many metres remain before the buoy.`,
-      prompt: 'Press Space to set off, then press Space again to release the water.', hints};
+      say: `Your job is to hit the buoy with the water. The helicopter flies at ${JOB.speed} m/s, ${HIGH_M} m above the lake, and you choose when to release the water. The numbers on the water show how many metres remain before the buoy.${MORE}The water must land inside the ring around the buoy.`,
+      prompt: 'Set the helicopter off, then release the water before it reaches the buoy.', hints};
     if (m.phase === 'flying' && m.auto != null) return {...common, say: SHOWING, prompt: 'Watch Brian release the water.', hints: ['Watch where I release the water.', `I will release it ${metres(water(JOB.speed))} before the buoy.`, 'Watch the water.']};
     if (m.phase === 'flying') return {...common, keys: {Space: 'drop'}, buttons: [{action: 'drop', label: 'Release', key: 'Space'}], waiting: true, target: 'drop:best',
-      say: 'Press Space to release the water before the helicopter reaches the buoy.', prompt: 'Press Space to release the water.', hints};
+      say: 'Release the water before the helicopter reaches the buoy.', prompt: 'Release the water.', hints};
     if (m.phase === 'falling') return {...common, say: 'Watch where the water lands.', prompt: 'Watch the water.', hints};
     if (m.phase === 'missed') return {...common, ...space('Go round again', 'drop:best'),
-      say: 'Have another go.', prompt: 'Press Space to go round again.', hints};
-    return {...common, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: ['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.']};
+      say: 'Have another go.', prompt: 'Go round again.', hints};
+    return {...common, ready: true, mood: 'cheer', say: m.say, prompt: 'Continue when you are ready.', hints: ['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.']};
   }
 
   return {enter, act, tick, view, state: () => m};

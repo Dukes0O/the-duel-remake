@@ -139,7 +139,7 @@ function post(ctx) {
 function drawTurn(ctx, view) {
   // The largest radius is 200 px, so the full circle stays inside x 100..500 and y 95..495,
   // clear of the heading, controls (x >= 560), and the lower inset (y >= 515).
-  const r = radiusPx(view.radiusM), a = view.time * (view.speedKmh / 3.6 / Math.max(1, view.radiusM)) * 1.1 - .6;
+  const r = radiusPx(view.radiusM), a = view.time * (view.speedKmh / 3.6 / Math.max(1, view.radiusM)) - .6;
   const x = CIRCLE.x + Math.cos(a) * r, y = CIRCLE.y + Math.sin(a) * r;
   yard(ctx, r);
   // The tyres' marks trail behind the car and darken with speed.
@@ -155,7 +155,7 @@ function drawTurn(ctx, view) {
   post(ctx);
   roadCarTop(ctx, x, y, {scale: .95, angle: a + Math.PI / 2, steer: .3});
   ctx.fillStyle = '#9aa4aa'; ctx.beginPath(); ctx.arc(x, y, 4.4, 0, Math.PI * 2); ctx.fill(); bolt(ctx, x, y, 3);
-  const tangent = a + Math.PI / 2, g = view.g ?? view.meterBaseline ?? 0, force = 52 + Math.min(1, Math.max(0, g) / 3) * 70;
+  const tangent = a + Math.PI / 2, g = view.g ?? view.meterBaseline ?? 0, force = 52 + Math.min(1, Math.max(0, g) / 3.5) * 70;
   arrow(ctx, x + Math.cos(tangent) * 50, y + Math.sin(tangent) * 50, x + Math.cos(tangent) * 108, y + Math.sin(tangent) * 108, '#79bce2', 4);
   arrow(ctx, x - Math.cos(a) * 19, y - Math.sin(a) * 19, x - Math.cos(a) * force, y - Math.sin(a) * force, '#ef7654', 5);
   // The key stays in the top-left corner, which the circle never reaches, so no label crosses the moving car.
@@ -171,7 +171,7 @@ function drawTurn(ctx, view) {
 function drawCordInset(ctx, view) {
   panel(ctx, 35, 515, 275, 140);
   text(ctx, 'THE CORD IN THE CAR', 52, 535, {size: 13, align: 'left', weight: 900, colour: '#d6bd79'});
-  const g = view.g ?? view.meterBaseline ?? 0, lean = 8 + Math.min(48, Math.max(0, g) * 17);
+  const g = view.g ?? view.meterBaseline ?? 0, tilt = Math.atan(Math.max(0, g)), CORD = 55;
   const anchor = [168, 558];
   // The cabin: glass with the dusk in it, a seat back on the left, red pillars and a dark sill.
   const glass = ctx.createLinearGradient(0, 559, 0, 623); glass.addColorStop(0, '#6a8a98'); glass.addColorStop(.55, '#2d4552'); glass.addColorStop(1, '#13202a');
@@ -188,8 +188,9 @@ function drawCordInset(ctx, view) {
   ctx.strokeStyle = 'rgba(0,0,0,.65)'; ctx.lineWidth = 1.2; ctx.strokeRect(90, 547, 156, 81);
   ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(92, 548, 152, 1);
   // The vertical reference, then the cord, its twist, and the brass weight.
-  ctx.strokeStyle = '#9aa2a6'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(anchor[0], anchor[1]); ctx.lineTo(anchor[0], anchor[1] + 55); ctx.stroke(); ctx.setLineDash([]);
-  const [bx, by] = [anchor[0] + lean, anchor[1] + 55];
+  ctx.strokeStyle = '#9aa2a6'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(anchor[0], anchor[1]); ctx.lineTo(anchor[0], anchor[1] + CORD); ctx.stroke(); ctx.setLineDash([]);
+  // The cord hangs at the real angle: tan(angle) = sideways acceleration in g, the same as the bench's lean.
+  const [bx, by] = [anchor[0] + Math.sin(tilt) * CORD, anchor[1] + Math.cos(tilt) * CORD];
   ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(anchor[0] + 1.5, anchor[1] + 1.5); ctx.lineTo(bx + 1.5, by + 1.5); ctx.stroke();
   ctx.strokeStyle = '#e3c97a'; ctx.lineWidth = 3.6; ctx.beginPath(); ctx.moveTo(...anchor); ctx.lineTo(bx, by); ctx.stroke();
   ctx.lineCap = 'butt'; ctx.setLineDash([1.5, 2.5]); ctx.strokeStyle = 'rgba(60,36,6,.6)'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(...anchor); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
@@ -200,7 +201,7 @@ function drawCordInset(ctx, view) {
   ctx.fillStyle = brass; ctx.beginPath(); ctx.arc(bx, by, 8.4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(40,24,4,.7)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.fillStyle = '#b88a30'; ctx.fillRect(bx - 2.4, by - 10, 4.8, 3);
   ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.ellipse(bx - 3, by - 3.4, 2.4, 1.4, -.7, 0, Math.PI * 2); ctx.fill();
-  text(ctx, `Cord leans out at ${Number(g).toFixed(2)} g`, 52, 635, {size: 12, align: 'left', colour: '#dfd8c6'});
+  text(ctx, `Cord leans out ${Math.round(tilt * 180 / Math.PI)}° at ${Number(g).toFixed(2)} g`, 52, 635, {size: 12, align: 'left', colour: '#dfd8c6'});
 }
 
 function drawControls(ctx, view) {
