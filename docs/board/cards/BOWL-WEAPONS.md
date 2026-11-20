@@ -83,3 +83,7 @@ against the side that was hit, once per hit, so the four-part display shows the 
 exception for a rival thrown by the event's launcher, which must clear the real wall height and is knocked out by the event as
 it crosses in the air. A rival on the ground still meets the wall and the gates as solid. Both are inert outside Last Truck
 Rolling with `titan-bowl` on; replay fingerprints and the contact suites on every other course must be unchanged.
+
+## Hearing one knockout
+
+The old player-credit sound is confirmed in `src/audio.js`: the event listener plays `arena.wreck-credit` for every `arenaWreck` credited to the player, including Last Truck Rolling. Its Bowl knockout event also names that sound. Please grant a condition around that one generic playback call for Last Truck Rolling with `titan-bowl` on, and a weapon-event dispatch alongside the existing Bowl race and Rex cue dispatch in `src/app.js`. The Bowl will play its named knockout once for each eliminated truck; normal arenas keep their current sound and player credit. These two hooks let the three show weapons play their own tells and hits on the ordinary game path.
