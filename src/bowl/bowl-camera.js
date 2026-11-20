@@ -68,7 +68,7 @@ export function easeTowards(value, rate, target, seconds, dt) {
 }
 
 export function createBowlCamera() {
-  return {key: null, time: 0, path: [], yaw: 0, turnRate: 0, turning: false, y: 0, yRate: 0, air: 0, airRate: 0,
+  return {key: null, time: 0, path: [], yaw: 0, turnRate: 0, turning: false, y: 0, yRate: 0, air: 0, airRate: 0, dropOffset: 0, dropRate: 0,
     lift: 0, liftRate: 0, end: null, holding: null, frame: null, raw: null, shiftX: 0, shiftZ: 0, shiftRateX: 0, shiftRateZ: 0};
 }
 
@@ -155,7 +155,15 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   }
   ({value: cam.shiftX, rate: cam.shiftRateX} = easeTowards(cam.shiftX, cam.shiftRateX, 0, C.jumpSec, dt));
   ({value: cam.shiftZ, rate: cam.shiftRateZ} = easeTowards(cam.shiftZ, cam.shiftRateZ, 0, C.jumpSec, dt));
-  cam.raw = {x: truck.x, z: truck.z};
+  // At the last terrace the ground falls away in one frame. The truck stays
+  // on a continuous arc, so ease that sudden extra clearance into the air view.
+  const air = Math.max(0, truck.air || 0), ground = truck.y - air;
+  if (!fresh && dt > 0 && air > 0 && raw.ground - ground > C.airFullMetres) cam.dropOffset = C.airFullMetres;
+  if (air <= 0) { cam.dropOffset = 0; cam.dropRate = 0; }
+  else if (cam.dropOffset > 0) {
+    ({value: cam.dropOffset, rate: cam.dropRate} = easeTowards(cam.dropOffset, cam.dropRate, 0, C.jumpSec, dt));
+  }
+  cam.raw = {x: truck.x, z: truck.z, ground};
   // Where the camera follows: the truck, less any jump still being eased out.
   const spot = {x: truck.x + cam.shiftX, z: truck.z + cam.shiftZ};
   cam.time += dt;
@@ -179,7 +187,8 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
 
   // Height and the draw back in the air.
   ({value: cam.y, rate: cam.yRate} = easeTowards(cam.y, cam.yRate, truck.y, C.heightSec, dt));
-  ({value: cam.air, rate: cam.airRate} = easeTowards(cam.air, cam.airRate, Math.max(0, truck.air || 0), C.airSec, dt));
+  const airTarget = cam.dropOffset > 0 ? Math.max(0, Math.min(air, C.airFullMetres) - cam.dropOffset) : air;
+  ({value: cam.air, rate: cam.airRate} = easeTowards(cam.air, cam.airRate, airTarget, C.airSec, dt));
   const share = clamp01(cam.air / C.airFullMetres), scale = wide ? C.wideScale : 1;
   const back = (C.backMetres + (C.airBackMetres - C.backMetres) * share) * scale;
   const up = (C.upMetres + (C.airUpMetres - C.upMetres) * share) * scale;

@@ -9,7 +9,7 @@ import {spawnSlots} from '../src/arena/venues.js';
 
 const out = process.argv[2] ?? '.evidence/bowl-plan.svg';
 const course = new Course(BOWL_COURSE, 1989), bowl = course.features.bowl, centre = bowlCentre(course);
-const SCALE = 6.2, LEFT = 90, TOP = 170, WIDTH = 1300, HEIGHT = 920;
+const SCALE = 6.2, LEFT = 90, TOP = 170, WIDTH = 1300, HEIGHT = 1430;
 // World z runs left to right on the page, world x runs down it.
 const px = p => [LEFT + (p.z - (centre.z - 82)) * SCALE, TOP + (p.x - (centre.x - 47)) * SCALE];
 const at = (s, off) => px(course.worldAt(s, off));
@@ -107,6 +107,11 @@ parts.push(dim(at(64, -20), at(64, 20), '', 0, '#f6f1e4'));
 parts.push(dim(at(0, 21.9 + 7.5), at(70, 21.9 + 7.5), '', 0));
 { const [x, y] = at(35, 21.9 + 9.5); parts.push(text(x, y + 6, 'each straight 70 m, the Spine 70 m', 14, '#1d3d5c', 'middle', 600)); }
 
+for (const gate of bowl.gates) {
+  const [x,y] = at(gate.s,gate.lateral);
+  parts.push(box({s:gate.s,off:gate.lateral,halfX:3,halfZ:gate.width/2},'#6ea889'));
+  parts.push(text(x, y-12, gate.name, 12, '#183c30', 'middle', 700));
+}
 const legend = [
   ['#4f2e16', 'jump (dark: full height)'], ['#8a5a33', 'banked end, rising to 3.2 m at the wall'], ['#61746a', 'crush line: junk cars'],
   ['#c9b37a', 'buses and RV'], ['#d4541c', 'burning stacks'], ['#2f6f9e', 'parked cars for the launch off cars'],
@@ -119,6 +124,37 @@ const legendParts = legend.map(([colour, words], i) => {
   return `<rect x="${cx}" y="${cy - 12}" width="16" height="14" fill="${colour}" stroke="#444" stroke-width=".8"/>` + text(cx + 24, cy, words, 14, '#2b2118', 'start');
 });
 
+// The floor plan above keeps its existing scale. Draw the whole outside below
+// at its own scale so both the outer bank and the two tunnel mouths fit.
+const outMap = (s,off) => {
+  const p = course.worldAt(s,off);
+  return [650 + (p.z-centre.z)*1.3,1175 + (p.x-centre.x)*1.3];
+};
+const exterior = bowl.outside;
+parts.push(text(650,950,'Terraces, car park and return gates',20,'#2b2118','middle',700));
+for (const [offset, fill] of [[exterior.bank,'#a58b70'],[exterior.bank-2,'#bfc1b9'],
+  [exterior.back,'#726a61'],[exterior.front,'#b98c5c']]) {
+  const points=[];
+  for(let s=0;s<course.length;s++) points.push(outMap(s,offset));
+  parts.push(`<path d="${path(points)}" fill="${fill}"/>`);
+}
+for (const car of exterior.parking) {
+  const [x,y]=outMap(car.s,car.off);
+  parts.push(`<rect x="${x-3}" y="${y-1.5}" width="6" height="3" fill="#485850"/>`);
+}
+for (const gate of bowl.gates) {
+  const [x,y]=outMap(gate.s,exterior.front), [bx,by]=outMap(gate.s,exterior.back);
+  parts.push(`<line x1="${x}" y1="${y}" x2="${bx}" y2="${by}" stroke="#c4ebd0" stroke-width="${gate.width*1.3}"/>`);
+  const throat = exterior.back - (gate.mouthWidth-gate.width)/2;
+  const reach = gate.guideLength/Math.sqrt(2);
+  const guides = [-1,1].map(side => [
+    outMap(gate.s+side*gate.width/2,throat),
+    outMap(gate.s+side*(gate.width/2+reach),throat+reach)
+  ]);
+  parts.push(`<polygon points="${[...guides[0],...guides[1].slice().reverse()].map(p=>p.join(',')).join(' ')}" fill="#c4ebd0"/>`);
+  for (const [a,b] of guides) parts.push(`<path d="M${a.join(',')} L${b.join(',')}" stroke="#183c30"/>`);
+  parts.push(text(bx,by + (by>1175?17:-7),gate.name,12,'#183c30','middle',700));
+}
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="Segoe UI, Arial, sans-serif">
 <defs><marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M5,0L5,10" stroke="#1d3d5c" stroke-width="2"/></marker>
 <marker id="head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10Z" fill="context-stroke"/></marker></defs>

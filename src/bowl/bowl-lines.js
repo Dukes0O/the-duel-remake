@@ -23,6 +23,11 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.fall': 'combat.explosion',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'world.furnace.horn',    // it walks out through the car park gate
   'bowl.rex.drop': 'vehicle.crash',         // it drops a junk car on its rails to launch off
+  'bowl.out.over': 'crowd.cheer',
+  'bowl.out.leap': 'interface.win',
+  'bowl.out.gate': 'world.furnace.horn',
+  'bowl.out.back': 'interface.bonus',
+  // bowl.out.stands is named by the event for BOWL-SOUND to supply.
   'bowl.trick.land': 'interface.bonus',
   'bowl.trick.new': 'interface.win',
   'bowl.trick.slam': 'vehicle.crash',
@@ -127,6 +132,7 @@ export const BIG_MO = Object.freeze({
   'rex.seen.1': 'Did anybody else hear a roar under the stands just now? No? Good, then it was probably my tummy.',
   'rex.seen.2': 'Something under the stands ate our spare tyres again. I am sure it is nothing to worry about.',
   'rex.seen.3': 'Did you see that big shape behind the wall tonight? Please do not tell anyone about it yet.',
+  'outside.gate': 'Drive off the back of the stands and follow the gate marker to get back in!',
   'rex.seen.4': 'Our driver has beaten every truck in the Bowl, so next time I will have to open the big gate under the stands. I am a little bit scared.',
   'event.scrapasaurus.intro': 'You beat every truck in the Bowl, so here is the Scrapasaurus! It is heading for the car park gate, and if it gets out it will eat every car in the car park.',
   'rex.tell': 'Look at its chest glowing. That means fire is coming, so get out of the orange on the floor.',
