@@ -11,10 +11,13 @@ export const page = {
   ready: `(() => !!window.__qaApp && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value && window.name.startsWith('__duel_qa_tab_v2:'))()`,
   enter: `(() => { const app = window.__qaApp; app.stop();
     if (!app.addPlayer('Scrapasaurus test').ok) throw Error('Could not create the memory-only player');
-    // This memory-only player has won nights one to four.
+    // This memory-only player has won nights one to four. The picker reloads the player from (memory-only)
+    // storage, so the wins are saved through the app's own save, not only set on the page's copy.
     const bowl = app.profile.bowl || {};
-    app.profile.bowl = {...bowl, version: 1, nightsWon: [1, 2, 3, 4], settledNights: ['night:1', 'night:2', 'night:3', 'night:4'],
-      trophies: ['show-night-1', 'show-night-2', 'show-night-3', 'show-night-4']};
+    app.profile = {...app.profile, bowl: {...bowl, version: 1, nightsWon: [1, 2, 3, 4], settledNights: ['night:1', 'night:2', 'night:3', 'night:4'],
+      trophies: ['show-night-1', 'show-night-2', 'show-night-3', 'show-night-4']}};
+    if (app._saveProfile() === false) throw Error('Could not save the wins of the memory-only player');
+    if (app.showNightChoices()?.nights[4]?.state !== 'open') throw Error('Night five is not open after nights one to four: ' + JSON.stringify(app.showNightChoices()?.nights));
     window.__rexCues = [];
     const play = app._showNightCue.bind(app);
     app._showNightCue = id => { window.__rexCues.push(id); return play(id); };
