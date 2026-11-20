@@ -620,6 +620,17 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SHOW-2.md"
 
+  - id: WILDLIFE-HITS-2
+    title: "Animal hits from Kyle's try: more animals, more kinds, a louder splat, and why the car cannot turn round"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wildlife-hits"
+    details: "docs/board/cards/WILDLIFE-HITS-2.md"
+
   - id: NIGHT-2-TRY-FIXES
     title: "Night 2 from Kyle's try: no countdown, clear arrows, riders that vanish, long pauses"
     owner: "codex"
