@@ -8,8 +8,9 @@
 - `test-bowl-night` 230, `test-bowl-air`, `test-arena-ui`, `test-titan-car-launch`, `test-feature-flags` passed.
 - Lane tier: 123 passed and 5 failed; replays held at 297 checks. Two of the failures also fail on `cloud/BOWL-HOOKS` (`test-race-field`, `test-salt-flats`). Two are laptop-only (`test-drive-through`, `test-full-check`). `test-deep-save` needs history this shallow clone lacks.
 - After the line fixes, on c9aa24c: the 27 suites picked since ddb92b1 passed, `test-bowl-rivals` at 82 checks.
+- Side by Side's lanes now come from the course (the Director, for BOWL-EXPAND). On c4a4dac the 27 suites picked since 5bb0b51 passed, `test-bowl-rivals` at 86 checks, and night two's Easy rate is now 9 in 10.
 - `npm run build` passed. Not run here: browser scenario `bowl-rivals`, the night's long suites `test-field-battle` and `test-opponents`, play by hand, the look.
 
 **Changed assertions.** `test-bowl-night`: "nights three to five wait for Last Truck Rolling" now reads that they can be played, because this card registers the event. The check that an unbuilt night does not start now uses night six.
 
-**Removed:** BOWL-HOOKS' single computer truck in Side by Side and its `paceMph` table, replaced by the named rivals.
+**Removed:** BOWL-HOOKS' single computer truck in Side by Side, its `paceMph` table and its fixed `lane: 3`, replaced by the named rivals and the course's lanes.
