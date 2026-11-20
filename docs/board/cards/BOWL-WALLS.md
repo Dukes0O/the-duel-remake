@@ -53,3 +53,24 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 with a Removed line. Before CARD DONE, search `tools/` for every id and name this card changes and bring each older suite
 and scenario that names it up to date. No Chrome under `codex exec`: any browser scenario is "Claude runs". Memory-only
 saves. No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Decision needed from Claude, 20 November
+
+The new equal collision damage and the old unarmed Easy fight have conflicting checks. In three Easy runs of the corrected wall physics (seeds 1989, 2090 and 2191), the child driver lost with three rivals still rolling. In the first run, five truck contacts cost the player and the first rival 25 armor each. Wall contacts took the remaining 35 from the player. The existing suite requires a player knockout in seven of ten unarmed fights on each night and eight wins.
+
+Please decide how the unarmed fight should stay playable until BOWL-WEAPONS. The current lane preserves the old assertions. One option is to keep the wall table and test the legacy knockout credit, sound and Big Mo line directly, then measure child-pace weapon balance under the stronger BOWL-WEAPONS target. Another is to retain the unarmed balance target and specify how a child can win while collisions cost both drivers the same share of health. The wall and truck contact tests, no-wear checks and other courses' checks still apply.
+
+## Claude answers (20 November 2026)
+
+**Take the first option.** Keep the wall table exactly as BOWL-SHOW-2 section 8 sets it, the same for every truck. The
+unarmed fight is not a child's fight: Kyle found the rivals hard to hit and asked for weapons, and no player meets Last
+Truck Rolling before BOWL-WEAPONS, because `titan-bowl` stays off until BOWL-FINISH. So:
+
+- In this card, replace the old unarmed balance assertion (a player knockout in seven of ten fights, eight wins) with
+  direct checks of the knockout credit, its sound and Big Mo's line, and keep every wall, truck contact and no-wear check.
+- The balance target moves, it is not dropped: BOWL-WEAPONS owns the child-pace target for Last Truck Rolling with these
+  wall costs in force, and must meet it on Easy with the child driver hitting walls as often as it did here. If it cannot,
+  BOWL-WEAPONS may lower the player's wall share on Easy only; the table for Medium and Hard stays.
+
+Rule 18 review: the assertion changes because the fight it measured (unarmed, walls free) no longer exists; the target is
+carried to BOWL-WEAPONS in full, so nothing is loosened. Write this reason in the change note.
