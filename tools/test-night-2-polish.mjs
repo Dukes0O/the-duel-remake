@@ -5,6 +5,7 @@ import {applyChoice, createLedger} from '../src/story/ledger.js';
 import {NIGHT_2_CHOICES} from '../src/story/scenes/night-2.js';
 import {night2Page} from '../src/world/jobs/night-2.js';
 import {ledgerPageMarkup} from '../src/story/ledger-ui.js';
+import {createNight2Look} from '../src/world/night-2-look.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -19,6 +20,15 @@ const escapeHTML = text => String(text).replace(/[&<>"']/g, ch => ({'&': '&amp;'
   const html = ledgerPageMarkup(live, escapeHTML);
   check(html.includes('class="ledger-tonight"'), 'the pause-card journal carries the tonight highlight');
   check(night2Page(ledger).tonight === null, 'the Story Wall page, asked without the live flag, is unchanged until the night is over');
+}
+
+// 2. The cold breath is out: it measured 1 to 8 levels of 255 at the gate camera, so nobody could see it.
+{
+  const look = createNight2Look({});
+  const names = [];
+  look.group.traverse(object => { if (/breath/i.test(object.name)) names.push(object.name); });
+  check(names.length === 0, 'the Night 2 look draws no breath sprites (found ' + names.length + ')');
+  look.dispose();
 }
 
 console.log(`PASS test-night-2-polish: ${checks} checks.`);
