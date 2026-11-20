@@ -425,6 +425,30 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
   the cable until the driver lets go.
 - **Angrier each time:** after the first box its fire sweeps from side to side; after the second it also throws cars (a
   ring on the floor first, as today).
+- **Lasers and bombs (Kyle, 20 November 2026).** "maybe scrapasuarus should be able to shoot lazers or bombs at you."
+  It gets both, one with each box that comes out, on a card of their own (BOWL-REX-3) so that BOWL-REX-2 is not held.
+  - **The eye beam, after the first box.** It drops its head and its eyes turn red. A thin red line on the floor follows
+    the truck (1.8 seconds on Easy), then stops, turns orange and widens (0.7 seconds), and the beam burns along it for
+    half a second, 60 m long. The way out is to drive across the line and not along it. Being far away does not help,
+    which is what sets it apart from the fire. A truck in the air goes clean over it, and Big Mo calls that.
+  - **Bombs, after the second box.** One is lobbed onto a ring on the floor, as a car is. It lies there ticking (10
+    seconds on Easy) inside a ring 7 m in radius, and bursts: keep out of the ring. **The rings are barely there.**
+    Kyle, 20 November 2026: "don't mark the bombs on the floor so obviously... the colour contrast should be close to
+    the colour of the ground. like really close." Each ring is the floor's own colour made 4 points of Lab lightness
+    darker (never less than 3 or more than 5), with no new hue, no glow, no outline and no flashing. The bomb's
+    whistle, its shadow growing on the floor and its quickening tick carry the timing. **The hook takes a bomb.** The F
+    marker shows over it, and a bomb dragged into the beast's legs bursts there: it staggers and sags at once, that
+    tired spell is not counted against the driver, and the box that opens is already a second pulled. So the beast's
+    own weapon is the quickest way to its last box, for a driver who dares to go and fetch it.
+  - **Orange for the fire and the beam, almost nothing for the bombs.** The floor shows orange where the fire and the
+    beam will burn, before they burn, and that is learned on the first two boxes. The bombs come last and ask the
+    driver to look harder. Nothing new has to be explained on the card before the fight, and a bomb that catches the
+    driver says why once ("watch for its shadow on the floor").
+  - **How much at once:** on Easy it makes one extra attack each time it gets up, never two. On Medium and Hard, with
+    two boxes out, it throws when it gets up and fires the beam between its two breaths of fire; on Hard the beam fires
+    twice running.
+  - Not picked: bombs that only burst where they land (those are thrown cars with another picture), and a beam that
+    sweeps (the fire already sweeps).
 - **How the driver learns it.** A card before the fight has three pictures and three short sentences: get out of the
   orange; when it sags, hook the glowing box with F; drive away and pull until the box comes out. During the fight the
   goal line is never longer than five words and changes with the beast: "GET OUT OF THE ORANGE", "HOOK THE GLOWING BOX",
@@ -484,7 +508,7 @@ tricks there; the night's card says so when the chosen vehicle is too light for 
 
 Each is a card on the board with its files, locks, checks and sound cues. Each Codex card names its model (Kyle, 20
 November 2026: graphics and physics for Astra, the rest for Sol): **Astra** builds BOWL-WALLS, BOWL-TRICKS,
-BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS and BOWL-REX-2; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
+BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2 and BOWL-REX-3; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
 BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS and BOWL-TOUR. Nights 1 to 5 are the first release; BOWL-TOUR
 follows it.
 
@@ -503,6 +527,7 @@ follows it.
 | BOWL-WEAPONS | Codex | hammer, saw and launcher as rules; health as the one measure | 7, 9 |
 | BOWL-WEAPONS-LOOK | Claude | the weapons, rivals' bolt-ons and damage drawn | 7, 9 |
 | BOWL-REX-2 | Codex | the Scrapasaurus fight remade | 10 |
+| BOWL-REX-3 | Codex | the eye beam, and bombs that the hook can send back (Kyle, 20 November) | 10 |
 | BOWL-REX-LOOK | Claude | the tired pose, the hook and cable, the beams and the fire drawn | 10 |
 | BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump, Home Run | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |

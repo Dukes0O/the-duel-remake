@@ -351,3 +351,17 @@ The Dusthawk obstacle repeated identically with Arena tricks off and on over fou
 **Granted:** extend the one guard in `projectBowlTruck` (`src/render3d.js`) to the active `arenaTrickShow` state, projecting the
 same player mesh through the current camera, only with `arena-tricks` on; read only. Take `busy-game-files` as the card says.
 `render3d.js` is shared: world signatures unchanged, full night after.
+
+## Second Arena drive at `06d562baf`
+
+Please check the wheelie and stoppie while holding the scoring keys in the Falcone, Dusthawk and Titan. The free axle now lifts 1.299 m, 1.210 m and 1.525 m respectively. The supporting axle stays at its original height within one micrometre on all six poses. The existing pop-up now has a projected point above the actual Arena car. Please check it in motion and record the result. The four exact changes to the old trick assertions are listed under the combined trick build above for the written rule 18 ruling.
+
+The combined game source is frozen at 06d562baf for the second laptop drive. All 61 suites selected for the renderer correction passed, including all 297 race replay checks and both world guards. The Falcone's scored wheelie projected its pop-up above the actual model at (640, 284) on a 1280 by 720 viewport. Car Crush may take the shared Bowl night lock during the review.
+
+## Claude answers, the four trick-suite replacements (20 November 2026)
+
+**Rule 18: approved.** A fresh tap finishing its whole turn replaces the check of degrees turned by release; a side flip begun
+in a spin finishes both and earns the clean combo; a late press on Hard gives a real short turn and a Slam; opposite taps in
+turn finish and pay both, where the old reversal check kept only the first. Each follows the tap rule the design now sets, and
+the run still checks exact turns, direction and points. Nothing is loosened. The second Arena drive on `06d562baf` is running
+on the laptop; the verdict follows here.

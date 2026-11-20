@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-3, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -620,7 +620,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-crush"
     needs: [BOWL-TRICKS, BOWL-WALLS]
     locks: [bowl-night, bowl-floor]
     flag: "titan-bowl"
@@ -681,10 +682,23 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-rex-2"
+    waiting_on: "claude"
     needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
     locks: [bowl-screens]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-REX-2.md"
+
+  - id: BOWL-REX-3
+    title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-REX-2]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-3.md"
 
   - id: BOWL-REX-LOOK
     title: "Bowl: the Scrapasaurus fight drawn so that it explains itself"
@@ -706,7 +720,7 @@ tasks:
     status: "building"
     claimed_by: "Codex, codex/bowl-weapons"
     needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
-    locks: [bowl-rivals, bowl-screens]
+    locks: [bowl-rivals]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-WEAPONS.md"
 
@@ -751,7 +765,7 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "ready"
-    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH]
+    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-REX-3, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH]
     locks: [sound-bank]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SOUND.md"
@@ -776,8 +790,9 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-tricks-all"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
-    locks: [bowl-night, replay-fixtures, save-shape]
+    locks: [bowl-night, replay-fixtures, save-shape, busy-game-files]
     flag: "arena-tricks"
     details: "docs/board/cards/BOWL-TRICKS-ALL.md"
 
