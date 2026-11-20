@@ -51,7 +51,9 @@ const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sa
   // DIG-YARD-TOY adds these machine tones behind the-dig.
   'drill-engine', 'drill-feed', 'drill-clay', 'drill-gravel', 'drill-rock', 'drill-jam',
   'drill-reverse', 'drill-water', 'dozer-blade', 'roller-ground', 'paver-surface',
-  'borer.stall', 'borer.call', 'borer.refuse', 'borer.breakthrough', 'borer.daylight'];
+  'borer.stall', 'borer.call', 'borer.refuse', 'borer.breakthrough', 'borer.daylight',
+  // MACHINE-YARD-NEXT adds the tone of one yard machine stopping against another, behind the-dig.
+  'machine-contact'];
 const added = new Set(CUES);
 // STORY-NIGHT-2 adds four chapter-only cues. The pre-P4 bank pin is unchanged.
 // STORY-NIGHT-2-FLOW adds three more: the Remembered notice, an Ash Man run down, and the camp taken.

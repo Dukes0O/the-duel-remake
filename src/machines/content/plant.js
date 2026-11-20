@@ -50,12 +50,14 @@ export const PLANT_MACHINES = Object.freeze({
   loader:Object.freeze({
     id:'loader', name:'Loader', driveKind:'wheels', massKg:11_000, maxSpeedMps:4,
     turnRateRadPerSecond:0.8, maxLoadKg:3_500, cabEye:Object.freeze([0,2.75,0.6]),
+    footprint:Object.freeze({minX:-1.45, maxX:1.45, minZ:-2.51, maxZ:3.94}),
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['scoop','tip'])}),
   }),
   mixer:Object.freeze({
     id:'mixer', name:'Mixer truck', driveKind:'wheels', massKg:12_000, maxSpeedMps:9,
     turnRateRadPerSecond:0.6, maxLoadKg:14_250, cabEye:Object.freeze([-0.6,2.9,3.2]),
+    footprint:Object.freeze({minX:-1.28, maxX:1.26, minZ:-4.93, maxZ:4.19}),
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['chute','pour'])}),
   }),

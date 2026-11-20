@@ -1,5 +1,6 @@
 import {TOWN_CELL_METRES, TOWN_REGIONS} from './town-world-data.js';
 import {townOutpostWorld} from './town-outpost-world.js';
+import {townVaneWorld} from './town-vane-world.js';
 
 function oldRoads(){
   return TOWN_REGIONS.get('scablands').reservedShapes.filter(shape=>shape.type==='strip')
@@ -49,7 +50,9 @@ export function createTownWorld(town) {
   }
   // The neighbours' outposts out in the land: drawn and solid in the drive, apart from the town's own solids (TOWN-OUTPOST-SCENE).
   const outposts=townOutpostWorld(town);
-  return Object.freeze({seed:town.seed??0,outposts,buildings:Object.freeze((town.buildings??[]).map(building=>Object.freeze({...building}))),roads:Object.freeze(roads),solids:Object.freeze(solids),walkers:Object.freeze(walkers),
+  // Mrs Vane's kiosks, her things at the territories' sites and Vane Reach, the same way (TOWN-VANE-SCENE).
+  const vane=townVaneWorld(town);
+  return Object.freeze({seed:town.seed??0,outposts,vane,buildings:Object.freeze((town.buildings??[]).map(building=>Object.freeze({...building}))),roads:Object.freeze(roads),solids:Object.freeze(solids),walkers:Object.freeze(walkers),
     start:Object.freeze({x:0,y:TOWN_REGIONS.get('scablands').groundHeightAt(0,-112),z:-112,heading:0}),
     dome:Object.freeze({x:0,z:0,halfWidth:112,halfDepth:80,height:8}),
     gate:Object.freeze({x:0,z:-92,halfWidth:24,halfDepth:12,height:8,

@@ -2,24 +2,11 @@
 // it once at its start (src/town/town-world.js), so that a replay is repeatable from seed, inputs and this layout, and the job makes each
 // outpost solid from it; the drawing (src/town/view/town-outposts-scene.js) is made from the same rows. It changes no job's rules.
 import {LAND} from '../world/scablands-names.js';
-import {ROAD_NET} from '../world/scablands-road.js';
 import {IRON_LINE, nearestIronLineDistance, sampleIronLine} from '../world/iron-line.js';
 import {scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
 import {makeRng} from '../rng.js';
 import {OUTPOSTS_WORLD, OUTPOST_FENCE} from './content/outposts-world.js';
-import {boxSolids, fenceRing, fenceSolid, headingToward, thingBase, thingPoint, thingSeed} from './town-world-things.js';
-
-// The nearest point of the road net to (x, z), searched over every road's centre line.
-function nearestRoadPoint(x, z, net = ROAD_NET) {
-  let best = null, gap = Infinity;
-  for (const road of net.roads) for (let i = 1; i < road.points.length; i++) {
-    const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
-    const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
-    const px = a.x + dx * t, pz = a.z + dz * t, d = Math.hypot(x - px, z - pz);
-    if (d < gap) { gap = d; best = {x: px, z: pz, distance: d, roadId: road.id}; }
-  }
-  return best;
-}
+import {boxSolids, fenceRing, fenceSolid, headingToward, nearestRoadPoint, thingBase, thingPoint, thingSeed} from './town-world-things.js';
 
 // The nearest point of the Iron Line's rail to (x, z).
 function nearestRailPoint(x, z) {

@@ -38,8 +38,8 @@ export async function run(context) {
   await key(context, 'Space', 'keydown');
   await context.waitFor('window.__theDig.simulation.drill.hole?.depth>0.1', 'drill feeding', 30000);
   await context.screenshot('machine-drill-feeding');
-  // Keep feeding at the normal rate until the bit reaches rock. This can take several minutes.
-  await context.waitFor('(()=>{const h=window.__theDig.simulation.drill.hole;return h&&h.depth>=h.site.gravelEnd;})()', 'rock layer', 600000);
+  // Keep feeding at the normal rate until the bit reaches rock, well under a minute in.
+  await context.waitFor('(()=>{const h=window.__theDig.simulation.drill.hole;return h&&h.depth>=h.site.gravelEnd;})()', 'rock layer', 120000);
   await key(context, 'KeyW', 'keydown');
   await context.waitFor('window.__theDig.simulation.drill.hole?.jammed', 'hard feed jams the bit', 30000);
   await key(context, 'KeyW', 'keyup'); await key(context, 'Space', 'keyup');
@@ -48,7 +48,8 @@ export async function run(context) {
   await key(context, 'KeyS', 'keydown');
   await context.waitFor('!window.__theDig.simulation.drill.hole?.jammed', 'bit freed', 10000);
   await key(context, 'KeyS', 'keyup'); await key(context, 'Space', 'keydown');
-  await context.waitFor('window.__theDig.simulation.drill.wellheads.length===1', 'water and wellhead', 600000);
+  // The rest of the well is rock, about half a minute at the steady feed.
+  await context.waitFor('window.__theDig.simulation.drill.wellheads.length===1', 'water and wellhead', 180000);
   await key(context, 'Space', 'keyup');
   await context.screenshot('machine-drill-water');
   assert.match(await context.evaluate('document.querySelector(".the-dig-load").textContent'), /wet/i);

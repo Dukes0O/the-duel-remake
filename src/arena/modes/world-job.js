@@ -297,11 +297,12 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setYard(yardPlan().solids);
   }
-  // The neighbours' outposts are solid in a town drive only, from the layout the drive was started with (TOWN-OUTPOST-SCENE).
-  // After the yard's grid, which replaces any grid made before it.
-  if(definition.kind==='town-drive'&&definition.layout?.outposts?.solids?.length){
+  // The neighbours' outposts and Mrs Vane's things are solid in a town drive only, from the layout the drive was started with
+  // (TOWN-OUTPOST-SCENE, TOWN-VANE-SCENE). After the yard's grid, which replaces any grid made before it.
+  const townSolids=definition.kind==='town-drive'?[...definition.layout?.outposts?.solids??[],...definition.layout?.vane?.solids??[]]:[];
+  if(townSolids.length){
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
-    worldJob.solidGrid.setTown(definition.layout.outposts.solids);
+    worldJob.solidGrid.setTown(townSolids);
   }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
