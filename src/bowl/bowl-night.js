@@ -42,7 +42,7 @@ export const BOWL_NIGHT_RULES = Object.freeze({
   // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
   freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 310, medium: 1810, hard: 4260})}),
   // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS); the lanes are bowlLayout's.
-  sideBySide: Object.freeze({timeLimitSec: 60}),
+  sideBySide: Object.freeze({timeLimitSec: 75}),
   minJumpSec: .5,
   bigJumpSec: 1.2,
   captionSec: 4,
@@ -198,7 +198,7 @@ registerBowlEventRunner('freestyle', {
     });
   },
   target: night => BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)],
-  goal: night => BOWL_GOALS.freestyle(BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)].toLocaleString()),
+  goal: night => BOWL_GOALS.freestyle(BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)].toLocaleString(), night.night),
   timeLimitSec: BOWL_NIGHT_RULES.freestyle.timeLimitSec,
   step(duel, night) {
     if (duel.state.stageTimeSec < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;

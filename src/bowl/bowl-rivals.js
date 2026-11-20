@@ -1,12 +1,9 @@
 // The Bowl's rival trucks (BOWL-RIVALS; docs/WASTELAND_WORLD.md section 7). Five
 // computer trucks, each the show's Titan driven by a named rival with a way of
-// driving of their own. Their pace is data, from Easy to Hard. This module
-// replaces Side by Side's one computer truck and adds Last Truck Rolling; both
-// run from seed and inputs alone, with no DOM, graphics or storage.
-//
-// Side by Side keeps the duel's own rival rules on the course's second lane: the
-// rival's pace for the night's level caps its speed, and its start delay is how
-// long it takes to get going when the lights go.
+// driving of their own. Side by Side and Last Truck Rolling run from seed and
+// inputs with no DOM, graphics or storage. Side by Side supplies a lane and
+// speed plan to the ordinary rival driver. Last Truck Rolling keeps the arena's
+// target selection and gives its pilot a Bowl pace.
 //
 // Last Truck Rolling is the arena's own fight on the Bowl (src/arena): its
 // teams (every truck for itself), its computer drivers (src/arena/arena-brains.js
@@ -17,8 +14,35 @@
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, bowlLayout, registerBowlEventRunner,
   sayBowlLine, startBowlEventAt} from './bowl-night.js';
 import {BOWL_GOALS} from './bowl-lines.js';
+import {DRIVE} from '../config.js';
 
 const LEVELS = ['easy', 'medium', 'hard'];
+
+export const BOWL_RACE_RULES = Object.freeze({
+  laps: 2,
+  cleanLapSec: 19.7,
+  gapMetres: 25,
+  gapRampMetres: 50,
+  aheadSlowdown: .15,
+  behindBoost: .08,
+  finishGraceSec: 6,
+  metresPerSecondToMph: 1 / DRIVE.mphToWorld,
+  landingCueRange: 35,
+});
+
+export function bowlRivalLapTarget(id, level) {
+  const ratio = level === 'easy' ? (id === 'old-bess' ? 1.45 : 1.35)
+    : level === 'medium' ? 1.12 : id === 'dragon-wagon' ? .97 : 1;
+  return BOWL_RACE_RULES.cleanLapSec * ratio;
+}
+
+// The two lanes start half a lap apart. This compares race distance, not map distance.
+export function bowlRivalGapScale(gap, level) {
+  const rules = BOWL_RACE_RULES;
+  if (level === 'hard' || Math.abs(gap) <= rules.gapMetres) return 1;
+  const share = Math.min(1, (Math.abs(gap) - rules.gapMetres) / rules.gapRampMetres);
+  return 1 + share * (gap > 0 ? -rules.aheadSlowdown : rules.behindBoost);
+}
 
 // How hard every rival hits in Last Truck Rolling, as a share of a full knock,
 // on each level: the arena's own per-truck ram strength (ramDamageScale). The
@@ -27,28 +51,19 @@ const LEVELS = ['easy', 'medium', 'hard'];
 export const BOWL_RIVAL_HITS = Object.freeze({easy: .2, medium: .6, hard: 1});
 const levelOf = night => LEVELS.includes(night?.cpuDifficulty) ? night.cpuDifficulty : 'medium';
 
-// Each rival: the name on screen, how they drive, and their top pace on each
-// level in miles an hour. `brain` is one of the arena's own driving styles: a
-// rammer lines up and charges; a brawler charges while its truck is sound and
-// keeps its distance once it is badly hurt. `startDelaySec` is how long the
-// rival takes to get going when the lights go. Design numbers for Claude's
-// review; BOWL-FINISH tunes them in play.
+// The arena brain owns targets and tactics. The race plan below owns the time
+// lost at the start and the distinct way each rival drives a lap.
 export const BOWL_RIVALS = Object.freeze({
   'old-bess': Object.freeze({name: 'Old Bess', brain: 'brawler', startDelaySec: 1,
-    way: 'Old Bess is Moss\'s cousin. She is slow off the line and never in a hurry, but she never gives up.',
-    pace: Object.freeze({easy: 13, medium: 24, hard: 28})}),
+    way: 'Old Bess is Moss\'s cousin. She is slow off the line and runs wide in the turns.'}),
   'big-kettle': Object.freeze({name: 'Big Kettle', brain: 'rammer', startDelaySec: 1.6,
-    way: 'Big Kettle takes a long time to get the boiler going, and then it pushes everything out of the way.',
-    pace: Object.freeze({easy: 14, medium: 24, hard: 29})}),
+    way: 'Big Kettle takes a while to get going, then flies down the straight.'}),
   'rust-rhino': Object.freeze({name: 'Rust Rhino', brain: 'rammer', startDelaySec: .3,
-    way: 'Rust Rhino puts its head down and charges at whatever is in front of it.',
-    pace: Object.freeze({easy: 14, medium: 24, hard: 30})}),
+    way: 'Rust Rhino charges into the turn and brakes late.'}),
   'tin-lizard': Object.freeze({name: 'Tin Lizard', brain: 'brawler', startDelaySec: .2,
-    way: 'Tin Lizard is quick and slippery, and it runs away when it gets hurt.',
-    pace: Object.freeze({easy: 15, medium: 25, hard: 31})}),
+    way: 'Tin Lizard is quick in the turns and takes its time on the straights.'}),
   'dragon-wagon': Object.freeze({name: 'Dragon Wagon', brain: 'rammer', startDelaySec: .2,
-    way: 'Dragon Wagon is the fastest truck in the show, and it loves a crowd.',
-    pace: Object.freeze({easy: 15, medium: 26, hard: 32})}),
+    way: 'Dragon Wagon loves the crowd and flips over the last kicker.'}),
 });
 export const BOWL_RIVAL_IDS = Object.freeze(Object.keys(BOWL_RIVALS));
 
@@ -89,14 +104,70 @@ export function lastTruckRivals(night) {
     BOWL_RIVAL_NIGHTS[2].lastTruckRolling)];
 }
 
-// The rival's own pace: no faster than their top for the level, and parked
-// until their start delay has run. A truck in the air or being knocked about
-// is left to the physics.
-function holdPace(duel, actor, rivalId, level) {
-  const rival = BOWL_RIVALS[rivalId];
-  if (!rival || actor.airborne || actor.knock || actor.combatWrecking) return;
-  if (duel.state.stageTimeSec < rival.startDelaySec) { actor.speedMph = Math.min(actor.speedMph, 0); return; }
-  actor.speedMph = Math.min(actor.speedMph, rival.pace[level]);
+
+
+// Pace shapes keep each rival recognizable while the lap time remains the unit
+// of difficulty. The plan drives the ordinary CPU car's pedals and steering.
+const RACE_STYLE = Object.freeze({
+  'old-bess': {straight: 1.13, bend: .86, brakeAhead: 12, wide: 7},
+  'big-kettle': {straight: 1.35, bend: .80, brakeAhead: 17, wide: 0},
+  'rust-rhino': {straight: 1.18, bend: .87, brakeAhead: 3, wide: 0},
+  'tin-lizard': {straight: 1.03, bend: .99, brakeAhead: 10, wide: 1},
+  'dragon-wagon': {straight: 1.14, bend: .9, brakeAhead: 10, wide: 2},
+});
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const bending = (course, s) => Math.abs(course.at(s).curvature) > .025;
+
+function raceJump(duel, actor, event, dt) {
+  const wasInAir = event.rivalInAir;
+  event.rivalInAir = !!actor.airborne;
+  if (actor.airborne) {
+    const remaining = event.finishS.rival - actor.s;
+    const index = Number(actor._jumpOrigin?.rampId?.match(/^ramp-(\d+)$/)?.[1]);
+    const kicker = duel.course.features.ramps[index]?.id?.includes('kicker');
+    if (!wasInAir && event.rival === 'dragon-wagon' && !event.dragonFlipped && kicker && remaining < duel.course.length / 2) {
+      event.dragonFlipped = true;
+      event.dragonFlipTime = 0;
+      event.paceMetres = Math.max(0, event.paceMetres - event.baseMps * .5);
+    }
+    if (event.dragonFlipTime != null) {
+      event.dragonFlipTime += dt;
+      actor.bowlPose = {yaw: 0, roll: 0, pitch: 2 * Math.PI * Math.min(1, event.dragonFlipTime / .65)};
+    }
+    return;
+  }
+  if (!wasInAir) return;
+  event.dragonFlipTime = null;
+  actor.bowlPose = null;
+  const player = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const rival = duel.course.worldAt(actor.s, actor.lateral);
+  if (Math.hypot(rival.x - player.x, rival.z - player.z) <= BOWL_RACE_RULES.landingCueRange) {
+    duel.emit({bowlRaceCue: 'bowl.rival.jump'});
+  }
+}
+
+function planRaceRival(duel, actor, night, dt) {
+  const {course, state} = duel, {event} = night, rival = BOWL_RIVALS[event.rival];
+  const style = RACE_STYLE[event.rival];
+  const relative = actor.s - event.startS.rival;
+  const gap = relative - (state.s - event.startS.player);
+  const paceShare = bowlRivalGapScale(gap, levelOf(night));
+  const ready = state.stageTimeSec >= rival.startDelaySec;
+  if (ready && event.rivalDoneAt == null) event.paceMetres += event.baseMps * paceShare * dt;
+  const nearBend = bending(course, actor.s + style.brakeAhead);
+  const inBend = bending(course, actor.s);
+  const nominal = event.baseMps * BOWL_RACE_RULES.metresPerSecondToMph * paceShare;
+  const correction = clamp((event.paceMetres - relative) * .3, -5, 7);
+  const pace = nominal * (nearBend ? style.bend : style.straight) + correction;
+  // Rust Rhino drifts out once from its late approach. The wall handles the contact.
+  if (event.rival === 'rust-rhino' && relative > 40 && inBend) event.rhinoBrushAt ??= relative;
+  const brushing = event.rhinoBrushAt != null && !event.rhinoTouched && relative < event.rhinoBrushAt + 60;
+  const lane = brushing ? 23 : inBend ? style.wide : 0;
+  actor.bowlRaceDrive = {
+    speedMph: ready ? (event.rivalDoneAt == null ? clamp(pace, 15, 54) : 12) : 0,
+    lane,
+  };
+  raceJump(duel, actor, event, dt);
 }
 
 // ---- Side by Side -------------------------------------------------------
@@ -104,11 +175,12 @@ function holdPace(duel, actor, rivalId, level) {
 // Where the player and the rival start and finish, from the course's own data:
 // Show Night's bowlLayout reads the two lanes from course.features.bowl.lanes
 // (BOWL-EXPAND: both on the centre line, half a lap apart), and each truck
-// finishes one full lap from where it started. Nothing here assumes the floor's size.
-export function sideBySideLanes(course) {
+// finishes two full laps from where it started. Nothing here assumes the floor's size.
+export function sideBySideLanes(course, laps = BOWL_RACE_RULES.laps) {
   const [player, rival] = bowlLayout(course).lanes;
-  return {player: {s: player.s, lateral: player.lateral, finishS: player.s + course.length},
-    rival: {s: rival.s, lateral: rival.lateral, finishS: rival.s + course.length}};
+  const distance = laps * course.length;
+  return {player: {s: player.s, lateral: player.lateral, finishS: player.s + distance},
+    rival: {s: rival.s, lateral: rival.lateral, finishS: rival.s + distance}};
 }
 
 registerBowlEventRunner('sideBySide', {
@@ -120,19 +192,39 @@ registerBowlEventRunner('sideBySide', {
     const truck = addComputerTruck(duel, {s: lanes.rival.s, lateral: lanes.rival.lateral});
     truck.bowlRival = rivalId;
     night.event.rival = rivalId;
+    night.event.startS = {player: lanes.player.s, rival: lanes.rival.s};
     night.event.finishS = {player: lanes.player.finishS, rival: lanes.rival.finishS};
+    night.event.finishWinner = null;
+    const target = bowlRivalLapTarget(rivalId, levelOf(night)) * BOWL_RACE_RULES.laps;
+    night.event.baseMps = (lanes.rival.finishS - lanes.rival.s) / (target - BOWL_RIVALS[rivalId].startDelaySec - .7);
+    night.event.paceMetres = 0;
+    duel.emit({bowlRaceCue: 'bowl.race.lights'});
   },
   goal: night => BOWL_GOALS.sideBySide(BOWL_RIVALS[night.event?.rival]?.name),
-  step(duel, night) {
+  observe(duel, night, ev) {
+    const event = night.event, rival = duel.state.opponents[0];
+    if (ev.bowlWall && event.rhinoBrushAt != null && rival?.lateral >= 19 && rival.pushVelocity < 0) {
+      event.rhinoTouched = true;
+    }
+  },
+  step(duel, night, dt) {
     const s = duel.state, rival = s.opponents[0], event = night.event;
     // Big Mo says who is in the other lane once he has named the event.
     if (!event.rivalSaid) { event.rivalSaid = true; sayBowlLine(duel, `rival.${event.rival}`); }
-    if (rival) holdPace(duel, rival, event.rival, levelOf(night));
+    if (rival) planRaceRival(duel, rival, night, dt);
     if (event.playerDoneAt == null && s.s >= event.finishS.player) event.playerDoneAt = s.stageTimeSec;
     if (event.rivalDoneAt == null && rival?.s >= event.finishS.rival) event.rivalDoneAt = s.stageTimeSec;
-    const facts = {rival: event.rival, rivalDoneAt: event.rivalDoneAt};
-    if (event.playerDoneAt != null) return {...facts, won: event.rivalDoneAt == null || event.playerDoneAt <= event.rivalDoneAt};
-    if (event.rivalDoneAt != null || s.stageTimeSec >= BOWL_NIGHT_RULES.sideBySide.timeLimitSec) return {...facts, won: false};
+    const first = Math.min(event.playerDoneAt ?? Infinity, event.rivalDoneAt ?? Infinity);
+    if (!event.finishWinner && Number.isFinite(first)) {
+      event.finishWinner = first === event.playerDoneAt ? 'player' : 'rival';
+      duel.emit({bowlRaceCue: 'bowl.race.finish', bowlRaceWinner: event.finishWinner});
+    }
+    const facts = {rival: event.rival, playerDoneAt: event.playerDoneAt, rivalDoneAt: event.rivalDoneAt};
+    const bothFinished = event.playerDoneAt != null && event.rivalDoneAt != null;
+    if (bothFinished || s.stageTimeSec - first >= BOWL_RACE_RULES.finishGraceSec ||
+        s.stageTimeSec >= BOWL_NIGHT_RULES.sideBySide.timeLimitSec) {
+      return {...facts, won: event.finishWinner === 'player'};
+    }
     return null;
   },
 });
@@ -163,7 +255,7 @@ registerBowlEventRunner('lastTruckRolling', {
     roster.forEach((id, index) => {
       const truck = s.opponents[index];
       Object.assign(truck, {bowlRival: id, weaponLoadout: [], weaponsDisabledUntil: Infinity,
-        ramDamageScale: BOWL_RIVAL_HITS[levelOf(night)]});
+        bowlFightDrive: {minimum: 30, maximum: 40}, ramDamageScale: BOWL_RIVAL_HITS[levelOf(night)]});
       arena.participants[index + 1].name = BOWL_RIVALS[id].name.toUpperCase();
     });
     for (const actor of [s, ...s.opponents]) actor.maxArmor = actor.armor = rules.showArmor;
@@ -190,7 +282,7 @@ registerBowlEventRunner('lastTruckRolling', {
     duel.emit({bowlKnockout: {rival: entry.id, by: wreck.creditedId, cue: wreck.creditedId === 'player' ? 'arena.wreck-credit' : 'bowl.mo'}});
   },
   step(duel, night) {
-    const s = duel.state, event = night.event, arena = s.arena, level = levelOf(night);
+    const s = duel.state, event = night.event, arena = s.arena;
     const rules = BOWL_RIVAL_RULES.lastTruckRolling;
     if (!arena) return {won: false};
     if (!event.rivalSaid) { event.rivalSaid = true; sayBowlLine(duel, `rivals.night.${night.night}`); }
@@ -198,7 +290,6 @@ registerBowlEventRunner('lastTruckRolling', {
       const truck = s.opponents[index];
       if (!truck) return;
       if (entry.out) holdWreck(truck);
-      else holdPace(duel, truck, entry.id, level);
     });
     const facts = () => ({knockouts: event.knockouts, rivalsOut: event.rivals.filter(entry => entry.out).map(entry => entry.id)});
     if (s.combatWrecking) return {...facts(), won: false, knockedOut: true};

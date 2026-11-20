@@ -163,7 +163,7 @@ const run = (() => {
   ok(['carCrush', 'freestyle', 'sideBySide'].every(type => log.captions.includes(`event.${type}.intro`) &&
     log.captions.includes(`event.won.${type}`)), 'Big Mo introduces and ends every event');
   ok(log.hud && log.hud.name === 'Freestyle' && log.hud.timeLeft > 0 && log.hud.timeLeft < 90 &&
-    Number.isFinite(log.hud.crowd) && log.hud.goal.startsWith('Do big jumps'), 'the HUD reads the event, clock, crowd and goal');
+    Number.isFinite(log.hud.crowd) && log.hud.goal === 'Beat Old Bess: 310.', 'the HUD reads the event, clock, crowd and goal');
   ok(['bowl.mo', 'bowl.crowd.rise', 'bowl.event.won'].every(cue => log.cues.has(cue)), 'each new event names its sound cue');
   const freestyle = log.events.find(result => result.event === 'freestyle');
   ok(freestyle.crowdPeak >= 25, `the crowd meter rises visibly even on a plain line over the kickers (peak ${freestyle.crowdPeak})`);

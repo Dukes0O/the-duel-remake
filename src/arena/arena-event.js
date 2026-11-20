@@ -376,7 +376,10 @@ export function stepArenaEvent(duel, dt) {
       continue;
     }
     const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor, dt) : null;
-    const pilotGoal = goal || thinkBrain(duel, participant, actor, dt);
+    const brainGoal = goal || thinkBrain(duel, participant, actor, dt);
+    const bowlDrive = actor.bowlFightDrive && duel.course.def.bowl &&
+      duel.featureFlags?.enabled('titan-bowl') === true ? actor.bowlFightDrive : null;
+    const pilotGoal = bowlDrive ? {...brainGoal, speedMph: Math.max(bowlDrive.minimum, Math.min(bowlDrive.maximum, brainGoal.speedMph))} : brainGoal;
     if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
       continue;
