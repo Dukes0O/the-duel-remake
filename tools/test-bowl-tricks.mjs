@@ -378,3 +378,39 @@ test('a slide halves speed during its first second, including the time spent lev
   for(let i=0;i<120;i++)stepBowlTricks(duel,s,DT);
   assert.ok(Math.abs(s.speedMph-36)<1e-8);
 });
+
+test('drawn ground tricks stand on the right axle of each actual Arena car',async()=>{
+  const {createVehicleAssets}=await import('../src/vehicle-assets.js');
+  const {placeGroundedVehicle,applyVehicleTerrainPose,prepareVehicleGrounding}=await import('../src/vehicle-grounding.js');
+  const {Vector3}=await import('three');
+  const assets=createVehicleAssets(), point=new Vector3();
+  for (const car of ['falcone_f42','dusthawk_rally','titan_monster']) {
+    for (const kind of ['wheelie','stoppie']) {
+      const {duel,s,events}=arenaRace(car,true);
+      const wheelie=kind==='wheelie', vehicle=assets.create(car);
+      Object.assign(s,{s:80,prevS:80,lateral:0,prevLateral:0,speedMph:wheelie?0:45,headingError:0});
+      for(let t=0;t<360&&!events.some(e=>e.kind===kind);t++){
+        duel.setInput({...neutral,throttle:+wheelie,brake:+!wheelie,boost:true});duel.step(DT);
+      }
+      assert.equal(s.bowlGroundTrick,kind,car+' scores the pose while it is drawn');
+      const ground=duel.course.groundAt(s.s,s.lateral);
+      function drawnAxles(actor){
+        placeGroundedVehicle(vehicle,ground,s.headingError);
+        applyVehicleTerrainPose(vehicle,duel.course,actor);
+        vehicle.updateMatrixWorld(true);
+        const heights=[Infinity,Infinity];
+        for(const wheel of prepareVehicleGrounding(vehicle).wheels){
+          const axle=+(wheel.z>0);
+          for(const tread of wheel.supportPoints){
+            point.fromArray(tread).applyMatrix4(vehicle.matrixWorld);
+            heights[axle]=Math.min(heights[axle],point.y);
+          }
+        }
+        return heights;
+      }
+      const flat=drawnAxles({...s,bowlGroundTrick:null,bowlPose:null}), raised=drawnAxles(s);
+      assert.ok(Math.abs(raised[+!wheelie]-flat[+!wheelie])<1e-6,car+' balances on its grounded axle');
+      assert.ok(raised[+wheelie]-flat[+wheelie]>.8,car+' visibly lifts its free axle in '+kind);
+    }
+  }
+});

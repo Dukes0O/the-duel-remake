@@ -129,6 +129,21 @@ function fullWorksEffects(vehicle, actor) {
   }
 }
 
+// Balance a wheelie on the rear tread and a stoppie on the front. Rotating about
+// the model origin would bury the balancing axle in the road.
+function axleHeight(vehicle, front) {
+  const wheels = prepareVehicleGrounding(vehicle).wheels;
+  const rotation = local.makeRotationFromEuler(vehicle.rotation).elements;
+  let low = Infinity;
+  for (const wheel of wheels) {
+    if ((wheel.z > 0) !== front) continue;
+    for (const [x,y,z] of wheel.supportPoints) {
+      low = Math.min(low,rotation[1]*x+rotation[5]*y+rotation[9]*z);
+    }
+  }
+  return low;
+}
+
 // Optional physics-owned wheel support and orientation. Ordinary road actors
 // omit these fields and keep the exact existing grounding path. Pitch in the
 // simulation is nose-up positive; Three's +X rotation points the nose down.
@@ -143,9 +158,13 @@ export function applyVehicleTerrainPose(vehicle,course,actor){
   }
   if (vehicle.userData?.fullWorksEffects || actor?.bowlPose?.flashUntil || actor?.bowlPose?.sparks) fullWorksEffects(vehicle,actor);
   if(course?.def?.tricks && actor?.bowlPose) {
+    const balancing = !actor.airborne && (actor.bowlGroundTrick === 'wheelie' || actor.bowlGroundTrick === 'stoppie');
+    const front = actor.bowlGroundTrick === 'stoppie';
+    const levelAxle = balancing ? axleHeight(vehicle,front) : 0;
     vehicle.rotation.x -= actor.bowlPose.pitch;
     vehicle.rotation.y += actor.bowlPose.yaw;
     vehicle.rotation.z += actor.bowlPose.roll;
+    if (Number.isFinite(levelAxle) && balancing) vehicle.position.y += levelAxle-axleHeight(vehicle,front);
   }
   if(!actor?.tumble&&!actor?.airborne&&(actor?.airHeight||0)<=.08&&
       actor?.car==='titan_monster'&&Number.isFinite(actor?.groundHeight)&&
