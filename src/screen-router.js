@@ -382,7 +382,8 @@ root.addEventListener('click',e => {
     // TRY AGAIN on the results screen and START AGAIN on the pause screen: the app leaves the job if it is still in play, then starts it again.
     case 'world-job-retry': app.worldJobAgain?.();lastScreen=null;renderState(app.duel.state);return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
-    case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
+    case 'arena-yard': if(app.leaveTownDrive?.()){lastScreen=null;renderState(app.duel.state);return;}
+      if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
       app.leaveWorldJob?.();lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
     // Opening a presentation screen must not mark story notes read or save a profile.

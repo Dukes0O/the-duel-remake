@@ -244,6 +244,7 @@ export class App {
       if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
+      if(this.cameraMode==='hood'&&state.arena?.worldJob?.vehicle)this.cameraMode='chase';
       if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
       if(event.townGate&&state.arena?.mode==='world-job'){
         // The event fires inside duel.step(), which still needs the arena: leave once the step has finished.
@@ -816,6 +817,12 @@ export class App {
   }
   // Leaving a world job that is still in play, from the pause screen's BACK TO THE YARD: the game's own resume clears the pause, then the job
   // ends as left (nothing is paid) and its results screen, with TRY AGAIN and BACK TO THE YARD, shows at once.
+  // One press of BACK TO THE YARD ends a town drive and reaches the yard (a town drive has no result page worth reading).
+  leaveTownDrive(){
+    const state=this.duel.state;
+    if(state.arena?.worldJob?.definition?.kind!=='town-drive'||state.status==='arena_result'||!this.leaveWorldJob())return false;
+    return this.returnToYard();
+  }
   leaveWorldJob(){
     const state=this.duel.state;
     if(state.arena?.mode!=='world-job'||state.status==='arena_result')return false;
@@ -2679,9 +2686,12 @@ export class App {
   cycleFootCamera() {
     return this.setFootCamera(this.footCameraMode === 'first-person' ? 'overhead' : 'first-person');
   }
+  // The hood camera sits a truck's cab over the town's near-black road as a flat slab; a work truck has no hood camera.
+  _inWorkTruck(){return !!this.duel.state.arena?.worldJob?.vehicle;}
   setCamera(mode) {
     this.cameraMode=normalizeCameraMode(this.cameraMode);
     if(['front','right','left'].includes(mode))mode='chase';
+    if(mode==='hood'&&this._inWorkTruck())mode='chase';
     if(!CAMERA_MODES.includes(mode))return this.cameraMode;
     this.cameraMode=mode;
     this.duel.emit({ camera: this.cameraMode });
@@ -2689,7 +2699,9 @@ export class App {
   }
   cycleCamera() {
     if(!CAMERA_MODES.includes(this.cameraMode))return this.setCamera('chase');
-    return this.setCamera(CAMERA_MODES[(CAMERA_MODES.indexOf(this.cameraMode)+1)%CAMERA_MODES.length]);
+    const at=CAMERA_MODES.indexOf(this.cameraMode);let next=CAMERA_MODES[(at+1)%CAMERA_MODES.length];
+    if(next==='hood'&&this._inWorkTruck())next=CAMERA_MODES[(at+2)%CAMERA_MODES.length];
+    return this.setCamera(next);
   }
 
   // Headless fixed-step advance (tests / scripted runs without rAF).
