@@ -225,7 +225,7 @@ tasks:
     owner: "codex"
     lane: "RENDER"
     size: "S"
-    status: "backlog"
+    status: "ready"
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"

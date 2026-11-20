@@ -9,3 +9,14 @@ No lane or code is claimed. Proposed source ownership, once admitted after curre
 ## Removed
 
 Nothing; no implementation or job started.
+
+## Seen again on 20 November 2026 (Claude, overnight)
+
+The same uncaught `TypeError: Cannot read properties of undefined (reading 'isReady')` inside Three's `compileAsync` poll
+(`three.module` 3824) failed the `bowl-rivals` scenario once and the `bowl-rex-fight` scenario twice in a row on the laptop's GPU
+(`warmupStatus: ready`, `KHR_parallel_shader_compile` on; a cloud container without that extension never reproduces it). In each case
+the scenario replaced a Show Night event's world while the first world's warm-up was still polling its materials, which is what a
+player does who leaves an event quickly. Likely cause: a material is disposed (its renderer properties removed) while `compileAsync`
+still holds it, so `currentProgram` is undefined at the next poll. Defer disposal of a world's materials until any pending warm-up for
+that world has settled (or stop the poll from seeing them), with a check that swaps worlds mid-compile and sees no page exception.
+Priority raised: it fails browser checks on the Bowl and can reach players.
