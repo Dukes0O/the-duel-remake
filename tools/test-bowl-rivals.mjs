@@ -202,8 +202,9 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
 
 // ---- Last Truck Rolling: four trucks on the arena's rules -----------------
 {
-  const duel = showAt(3, 'lastTruckRolling'), s = duel.state, captions = [], knockouts = [];
-  duel.onChange((_, ev) => { if (ev.bowlCaption) captions.push(ev.bowlCaption.id); if (ev.bowlKnockout) knockouts.push(ev.bowlKnockout); });
+  const duel = showAt(3, 'lastTruckRolling'), s = duel.state, captions = [], knockouts = [], shots = [];
+  duel.onChange((_, ev) => { if (ev.bowlCaption) captions.push(ev.bowlCaption.id); if (ev.bowlKnockout) knockouts.push(ev.bowlKnockout);
+    if (ev.weaponFired) shots.push(ev); });
   ok(s.arena?.mode === 'last-car-rolling' && s.bowlNight?.event.type === 'lastTruckRolling', 'Last Truck Rolling runs as the arena\'s fight');
   ok(s.opponents.length === 3 && s.opponents.every(truck => truck.car === SHOW_TRUCK), 'four trucks: the player and three rivals in the show truck');
   ok(new Set(s.arena.participants.map(participant => participant.team)).size === 4, 'every truck is its own team');
@@ -215,7 +216,11 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     'every truck takes the same knocks, the player\'s too');
   ok(s.weaponLoadout.length === 0 && s.opponents.every(truck => truck.weaponLoadout.length === 0), 'nobody has a weapon in the Bowl');
   ok(bowlHudView(s, duel.course).goal === 'Knock out Big Kettle, Tin Lizard and Old Bess, and be the last truck still rolling.', 'the goal names every rival');
+  for (let i = 0; i < 120 * 4; i++) duel.step(DT);
+  ok(s.status === 'racing' && ['ufo', 'bomb', 'crossbow', 'star', 'shield'].every(weapon => duel.fireWeapon(weapon) === false),
+    'the player cannot fire a weapon in the Bowl (the arena would otherwise give the default weapons)');
   const result = race(duel, null, null, BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
+  ok(shots.length === 0, 'nobody fires a weapon in the whole event');
   ok(result && result.event === 'lastTruckRolling' && typeof result.won === 'boolean', 'an event with a truck that never moves still ends');
   ok(!result.won && (result.knockedOut || result.timeUp), 'a truck that never moves does not win');
   ok(!s.combat.pickups?.length, 'no crates appear in the Bowl');

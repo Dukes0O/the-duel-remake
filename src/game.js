@@ -687,7 +687,8 @@ export class Duel {
   _spawnTraffic(...args) { return simRival._spawnTraffic.apply(this, args); }
 
   // ---- the core step ---------------------------------------------------
-  fireWeapon(weapon){return fireWeapon(this,weapon);}
+  // Show Night has no weapons in any event, Last Truck Rolling's arena fight too (BOWL-RIVALS).
+  fireWeapon(weapon){return this.state.bowlNight?false:fireWeapon(this,weapon);}
   selectFootGear(slot){return selectFootGear(this,slot);}
   deepEnvironment() { return deepEnvironment(this); }
   clearDeep() { clearDeepJourney(this); }
