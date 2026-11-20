@@ -8,7 +8,9 @@ export function pickTownItem(camera, objects, clientX, clientY, rect) {
   const hit = raycaster.intersectObjects(objects, true)[0];
   if (!hit) return null;
   const object = hit.object, rows = object.userData.townItems;
-  if (rows && Number.isInteger(hit.instanceId)) return {type:'building', building:rows[hit.instanceId], point:hit.point};
+  if (rows && Number.isInteger(hit.instanceId) && rows[hit.instanceId]) return {type:'building', building:rows[hit.instanceId], point:hit.point};
+  // A moving part drawn on its own (town-art.js) names what it belongs to.
+  for (let at = object; at; at = at.parent) if (at.userData?.townItem) return {type:'building', building:at.userData.townItem, point:hit.point};
   return {type:'ground', x:Math.floor(hit.point.x/TOWN_CELL_METRES), z:Math.floor(hit.point.z/TOWN_CELL_METRES), point:hit.point};
 }
 

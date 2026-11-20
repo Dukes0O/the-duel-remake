@@ -1,0 +1,11 @@
+# TOWN-VIEW-ART
+
+**What changed (behind `wasteland-town`):** the town view and the town drive draw every building, home, site, ruin, fence, utility and street thing from the art families (`src/town/view/town-art-table.js`, `town-art-plan.js`, `town-art.js`). Homes never repeat side by side or back to back; burnt buildings and plots are the stages family's burnt ruins, ruined ones rubble, sized to the plot; street things scatter along finished roads from each cell's own seeded stream, more as a street gets older; the Old Ground shows a grave for each of the dead; the Dome, the neighbours' outposts and Mrs Vane's yard stand in the town view. Each family loads once, each piece is merged per material at near, mid and far levels (far is one coloured, simplified draw), and the town is instanced per piece, material and level, cut to the camera's view. Choices for Claude: `docs/board/questions/TOWN-VIEW-ART.md`.
+
+**Checks (commit COMMIT):** `test-town-view-art` (new, 54 checks), `test-town-view`, `test-town-view-life`, `test-board`, `test-repo-hygiene`; lane tier LANE; `npm run build` passed. Not run here: `test-blender-output` (needs Blender), laptop-only suites, frame timing. Browser scenario `town-art` (new) ran headless here up to its night picture, which timed out under software rendering; `town-world` reached the yard only after adding `app.advance(8)`, then its DRIVE button did not start the drive in this container.
+
+**Cost (own count, real models):** town of 500, mayor camera: 512 draws, 698,062 triangles; high camera (762 m): 52 draws, 205,392 triangles. Town of 5,000: mayor 587 draws, 804,374 triangles; high 64 draws, 891,602 triangles. 15,000 more buildings out of view add nothing.
+
+**Changed assertions:** `test-town-view`: the burnt plot's charred remains are now found as the `burnt-1` placement in the art plan, not as a `burnt-home` box. `scenarios/town-world`: `app.advance(8)` after `visitWasteland()`, as `town-homes` does; nothing loosened.
+
+**Removed:** the coloured box drawing of buildings, sites, zones and above-ground pipes in `town-instances.js`, the code-drawn plot pegs per plot (now instanced), the home and scaffold clones in the scene; the TOWN-ART-BASE sample (`sample.glb`, `tools/blender/town-sample.py`, `town-sheet.py`, its look folder, credits and model-test rows).

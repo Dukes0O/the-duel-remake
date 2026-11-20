@@ -13,7 +13,9 @@ export async function run(context) {
     app.addPlayer('Town QA');
     app.profile={...app.profile,wasteland:{version:1,discoveredGate:true,scrap:0,rank:1}};
     app._saveProfile();
-    app.visitWasteland();
+    if(!app.visitWasteland())throw Error('Could not enter the Wasteland.');
+    // The yard opens after the arrival frames (as town-homes does).
+    app.advance(8);
     return true;
   })()`);
   await context.waitFor('window.__qaApp.isYardHomeActive() && !!document.querySelector(\'[data-action="yard-the-town"]\')','the yard and its THE TOWN button');
