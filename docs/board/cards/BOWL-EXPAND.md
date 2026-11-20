@@ -46,35 +46,40 @@ ring is now as wide as the floor:
 
 | Part | Size |
 | --- | --- |
-| Centre line of the ring | two 70 m straights and two half circles of 23.2 m radius: 285.8 m round |
+| Centre line of the ring | two 70 m straights and two half circles each 73 m round (23.24 m radius): 286 m round |
 | Floor | trucks drive anywhere 20 m either side of the centre line: 40 m across each straight |
-| Outer wall face | 21.9 m out from the centre line; wall to wall 160.2 m long and 90.2 m across |
-| The Spine | 2.6 m wide and 70 m long, between the two straights: a row of rusted shipping containers |
+| Outer wall face | 21.9 m out from the centre line; wall to wall 160.3 m long and 90.3 m across |
+| The Spine | 2.7 m wide and 70 m long, between the two straights: a row of rusted shipping containers |
 | Round the Spine's ends | a truck turns as tight as 3.2 m from its end, or as wide as 43 m against the end wall |
 
 The floor is about 12,500 square metres, five times today's. The lap goes Jump Straight, End 1, Crush Straight, End 2,
 starting at the beginning of the Jump Straight. Distances below are metres along the centre line from that start (`s`),
 and metres across from it (`off`: minus towards the Spine, plus towards the stands). The two halves of the stadium are
-each other's mirror: a place and the place half a lap (142.9 m) further on are the same spot on the other side.
+each other's mirror: a place and the place half a lap (143 m) further on are the same spot on the other side.
 
 **The Jump Straight** (s 0 to 70, in front of the main stand):
 
-- the lane kicker: a dirt jump in the middle of the floor (off minus 5 to plus 5), 2.4 m high and 12 m long, s 22 to 34;
+- the lane kicker: a dirt jump in the middle of the floor (off minus 5 to plus 5), 1.8 m high and 12 m long, s 22 to 34;
 - the Big Jump on the Spine side (off minus 20 to minus 6), 4.5 m high and 18 m long, s 43 to 61, with 43 m of straight
-  floor before it and the whole of End 1 to land in: at 40 mph a truck flies about 30 m for 1.7 s, time for a flip;
+  floor before it and the whole of End 1 to land in;
 - two parked cars on the stand side (off plus 14) at s 36 and 48, for the Titan's launch off cars.
 
-**The Crush Straight** (s 142.9 to 212.9, in front of the far stand):
+**The Crush Straight** (s 143 to 213, in front of the far stand):
 
-- the lane kicker, the mirror of the first, s 164.9 to 176.9;
+- the lane kicker, the mirror of the first, s 165 to 177;
 - the crush line on the stand side, three across (off plus 9.4, 13.8 and 18.2): three rows of junk cars at s 152, 159 and
   166, the buses and the RV at 177, the burning stacks at 190;
-- the Table on the Spine side (off minus 20 to minus 6): a flat-topped jump 3.2 m high and 15 m long, s 186 to 201.
+- the Table on the Spine side (off minus 20 to minus 6): a flat-topped jump 3.2 m high and 22 m long, s 186 to 208.
 
 **The two ends** are the bowl: from 10 m outside the centre line the floor curves up towards the end wall, 3.2 m high at
 the wall face (2.3 m where a truck's centre can reach), so a truck can ride round the wall at speed. The middle of each
 end is flat open ground about 46 m across for donuts, turning and fights. Each bank rises and falls away gently over its
 first and last 10 m, so both straights are flat between their jumps.
+
+**How high and how far** (measured in the simulation with a Titan from a standing start on the straight; a Titan
+settles near 50 mph at full throttle on this floor): the kickers throw it about 28 m with 1.2 s in the air and 4 m up,
+the Table about 40 m, 1.7 s and 7 m up, the Big Jump about 52 m, 2.2 s and 12 m up, landing in the open middle of End 1.
+A flip takes 1.1 s, so every jump allows one.
 
 Every jump is on a straight and no two jumps share a stretch of the lap, so the game's jump scoring (which names a jump
 by where it is along the lap) always names the right one. A flame jet stands either side of each jump's crest, one on
@@ -96,7 +101,7 @@ The old stadium model (`stadium.glb`, built for the small ring) is removed with 
   Playground. Today, outside an arena event, a truck on the Bowl cannot turn more than about 80 degrees from the line of
   the lap, so it could neither do a donut nor turn back to a jump.
 - **Side by Side**: two mirrored lanes on the centre line, one on each side of the Spine. The trucks start half a lap
-  apart (s 6 and s 148.9) and race once round: their kicker, a turn round the end at 23 m radius that needs the brakes,
+  apart (s 6 and s 149) and race once round: their kicker, a turn round the end at 23 m radius that needs the brakes,
   the other straight's kicker, the second turn, home. Both drive exactly the same ground, so no stagger is needed, and
   they see each other across the Spine all the way.
 - **Last Truck Rolling**: four trucks start spread round the floor (eight start slots, 6 m either side of the centre
