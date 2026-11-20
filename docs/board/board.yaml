@@ -692,7 +692,8 @@ tasks:
     model: "astra"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-out-sim"
     needs: [BOWL-WALLS]
     locks: [bowl-floor]
     flag: "titan-bowl"
