@@ -32,6 +32,26 @@ export const page = {
     night.show.eventIndex = 2; night.phase = 'result'; return duel.continueBowlNight(); })()`,
   hud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('THE SCRAPASAURUS'); })()`,
   phase: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase ?? null)()`,
+  // The HUD is drawn at once, the world later (the Titan is 14 MB, the Scrapasaurus 1.5 MB, on a real GPU):
+  // wait until the game is ready to show frames and the stadium, the Titan and the Scrapasaurus are in the picture.
+  drawn: `(() => { const app = window.__qaApp, view = window.__render, canvas = document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]');
+    if (!app.visualReady || canvas?.parentElement?.dataset?.vehicleAsset !== 'ready' || !view?.scene) return false;
+    let titan = false; view.scene.traverse(node => { if (node.userData?.vehicleKey === 'titan_monster' && node.visible) titan = true; });
+    const rex = view.scene.getObjectByName('Scrapasaurus model');
+    return titan && !!view.scene.getObjectByName('Bowl stadium, floodlights and crowd') && !!rex && rex.parent?.visible !== false; })()`,
+  // Where the fight stands, for a timeout's report.json: the Rex, its boxes and rests, the truck and the dropped car.
+  fightState: `(() => { const app = window.__qaApp, s = app.duel.state, night = s.bowlNight, rex = night?.event?.rex;
+    const car = (s.traffic || []).find(other => other.bowlRexCar);
+    return JSON.stringify({status: s.status, paused: !!s.paused, stageTimeSec: +(s.stageTimeSec || 0).toFixed(2),
+      night: night && {night: night.night, phase: night.phase, event: night.event?.type, attempt: night.event?.attempt, attempts: night.attempts.length},
+      rex: rex && {phase: rex.phase, t: +rex.t.toFixed(2), s: +rex.s.toFixed(1), boxes: rex.boxes, rests: rex.rests, hits: rex.hits,
+        hurt: rex.hurt, penCars: rex.penCars, done: rex.done},
+      truck: {s: +s.s.toFixed(1), lateral: +s.lateral.toFixed(2), mph: +s.speedMph.toFixed(1), airborne: !!s.airborne,
+        airHeight: +(s.airHeight || 0).toFixed(2), impactTimer: s.impactTimer, tumble: !!s.tumble},
+      droppedCar: car && {s: +car.s.toFixed(1), lateral: car.lateral, crushed: !!car.crushed},
+      autopilot: app.autopilot === true, visualReady: app.visualReady,
+      rexModel: !!window.__render?.scene?.getObjectByName('Scrapasaurus model'),
+      card: document.querySelector('.bowl-result')?.dataset.bowlResult ?? null}); })()`,
   tell: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'tell')()`,
   fire: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'fire')()`,
   rest: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'rest')()`,
@@ -67,6 +87,15 @@ export const page = {
 };
 
 const picture = async (context, name) => { await context.evaluate(page.frame); await context.screenshot(name); };
+// Wait for a step of the fight; on a timeout the error (and so report.json) carries the fight's state.
+async function waitInFight(context, expression, label, timeout) {
+  try { await context.waitFor(expression, label, timeout); }
+  catch (error) {
+    let state = 'unreadable';
+    try { state = await context.evaluate(page.fightState); } catch {}
+    throw Error(`${error.message} Fight state: ${state}`);
+  }
+}
 
 export async function run(context) {
   await context.navigate('/tools/menu-check.html?flags=titan-bowl');
@@ -82,26 +111,27 @@ export async function run(context) {
   await context.evaluate(page.start);
   await context.waitFor(page.onNightFive, 'night five starts', 60000);
   assert.ok(await context.evaluate(page.toFight), 'the night goes on to its third event');
-  await context.waitFor(page.hud, 'the HUD names the Scrapasaurus', 60000);
+  await waitInFight(context, page.hud, 'the HUD names the Scrapasaurus', 60000);
+  await waitInFight(context, page.drawn, 'the stadium, the Titan and the Scrapasaurus are drawn', 240000);
   await picture(context, 'bowl-rex-start');
   // The truck waits by the start line while the Scrapasaurus walks to where it rests.
-  await context.waitFor(page.tell, 'its tell where it rests', 60000);
+  await waitInFight(context, page.tell, 'its tell where it rests', 120000);
   await picture(context, 'bowl-rex-tell-cone-on-floor');
   assert.equal(await context.evaluate(page.coneDrawn), true, 'the cone is on the floor and its chest glows during the tell, before any fire');
-  await context.waitFor(page.fire, 'the fire', 10000);
+  await waitInFight(context, page.fire, 'the fire', 15000);
   await picture(context, 'bowl-rex-fire');
-  await context.waitFor(page.rest, 'its rest with a battery box open', 10000);
+  await waitInFight(context, page.rest, 'its rest with a battery box open', 15000);
   assert.ok(await context.evaluate(page.restGoal), 'the HUD says to drive up the junk car now');
   await picture(context, 'bowl-rex-rest-box-open');
 
   const scrapBefore = await context.evaluate(page.scrap);
   await context.evaluate(page.driver);
-  try { await context.waitFor(page.card, 'the fight ends', 300000); }
+  try { await waitInFight(context, page.card, 'the fight ends', 420000); }
   finally { await context.evaluate(page.manual); }
   await picture(context, 'bowl-rex-card');
   assert.ok(await context.evaluate(page.cardWon), 'the child-pace driver wins on Easy, all three boxes smashed');
   await context.evaluate(`(() => { document.querySelector('[data-action="show-night-next"]')?.click(); return true; })()`);
-  await context.waitFor(page.nightDone, 'night five reaches its results', 30000);
+  await waitInFight(context, page.nightDone, 'night five reaches its results', 30000);
   await picture(context, 'bowl-rex-night-results');
   assert.ok(await context.evaluate(page.nightYard), 'the results say the Scrapasaurus goes to the yard');
   assert.equal(await context.evaluate(page.scrap), scrapBefore + 600, 'night five\'s purse is paid once');

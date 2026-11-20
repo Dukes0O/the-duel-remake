@@ -115,6 +115,8 @@ import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
 import {rexInTheYard} from './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: the beaten Scrapasaurus in the yard
 import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
+import {beginGo, createTurnShow, currentTurn, noteSettled, passKeyboard, recordGo, settleTurnGo, turnScoreboard,
+  turnShowNights} from './bowl/bowl-turns.js'; // BOWL-TURNS
 import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {collectMuddyHollowHubcap, discoverMuddyHollow,
   muddyHollowSnapshot} from './wasteland-progress.js';
@@ -265,6 +267,7 @@ export class App {
       if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
       if(event.bowlEventResult)this._showNightCue(event.cue);
+      if(event.bowlEventResult&&state.bowlNight?.turn)this._recordTurnGo(event.bowlEventResult,state); // BOWL-TURNS
       if(event.bowlRex?.cue)this._showNightCue(event.bowlRex.cue); // BOWL-REX-FIGHT: each thing the Scrapasaurus does has its sound
       if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
@@ -2500,10 +2503,15 @@ export class App {
   clearShowNightMessage(){this._showNightMessage='';}
   showNightRun(){return this._bowlRun&&this._bowlRun.playerId===this.player.id?this._bowlRun:null;}
   startShowNight(night,{from='menu',cpuDifficulty}={}){
+    if(this._turnShow)return false; // BOWL-TURNS: one show at a time, one driver at a time
     const entry=this.showNightChoices()?.nights.find(item=>item.night===night);
     if(!entry||!['open','won'].includes(entry.state))return false;
     if(this.duel.state.status!=='menu'&&!this.isYardHomeActive())return false;
     if(this.duel.state.status!=='menu')this.returnToMenu();
+    return this._launchBowlNight(night,{from,cpuDifficulty});
+  }
+  // One Show Night run for the active player: a whole night, or one Turn Show go (eventIndex and turn).
+  _launchBowlNight(night,{from='menu',cpuDifficulty,eventIndex=0,turn=null}={}){
     this._refreshPlayer();
     this.helpVisible=false;
     const owned=isCarUnlocked(this.profile,SHOW_TRUCK);
@@ -2516,9 +2524,10 @@ export class App {
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
     const started=this.duel.startBowlNight({night,owned,upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
       playerId:this.player.id,driverId:getEquippedDriverId(this.profile),difficulty:this._raceSettings.difficulty,
-      cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989});
+      cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989,
+      eventIndex,turn});
     if(!started)return false;
-    this._bowlRun={runId:this.runId,playerId:this.player.id,night,from:from==='yard'?'yard':'menu',settled:null};
+    this._bowlRun={runId:this.runId,playerId:this.player.id,night,from:from==='yard'?'yard':'menu',settled:null,turn:!!turn};
     return true;
   }
   continueShowNight(){
@@ -2549,6 +2558,116 @@ export class App {
     const cue=BOWL_SOUND_CUES[id];
     if(!cue||this.audio?.muted||this.audio?.context?.state!=='running')return;
     try{this.audio._playCue(cue);}catch{/* a missing sound is not a fault */}
+  }
+  // ---- Turn Show (BOWL-TURNS; src/bowl/bowl-turns.js) ----
+  // Two to four named players share the keyboard. Each go makes its driver the
+  // active player, starts only after that player presses a key, and saves into
+  // that player's own profile. Only one player drives at a time.
+  turnShowChoices(pickedIds=[]){
+    if(!this.showNightAvailable())return null;
+    if(this.duel.state.status==='menu')this._refreshPlayers();
+    const players=this.players.players.map(player=>({id:player.id,name:player.name}));
+    const picked=(Array.isArray(pickedIds)?pickedIds:[]).filter(id=>players.some(player=>player.id===id));
+    const profiles=picked.map(id=>this.players.players.find(player=>player.id===id).profile);
+    return {players,picked,nights:turnShowNights(profiles),level:this.cpuDifficulty};
+  }
+  turnShowView(){
+    const show=this._turnShow;
+    if(!show)return null;
+    return {show,turn:currentTurn(show),board:turnScoreboard(show),lastGo:show.goes.at(-1)??null};
+  }
+  startTurnShow(night,playerIds,{cpuDifficulty}={}){
+    if(!this.showNightAvailable()||this._turnShow)return false;
+    if(this.duel.state.status!=='menu'&&!this.isYardHomeActive())return false;
+    if(this.duel.state.status!=='menu')this.returnToMenu();
+    this._refreshPlayers();
+    const ids=Array.isArray(playerIds)?playerIds:[];
+    const players=ids.map(id=>this.players.players.find(player=>player.id===id)).filter(Boolean)
+      .map(player=>({id:player.id,name:player.name,profile:player.profile}));
+    if(players.length!==ids.length)return false;
+    const created=createTurnShow({night,players,hostId:this.player.id,
+      cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty});
+    if(!created.ok)return false;
+    this._turnShow=created.show;
+    return this._handOver();
+  }
+  // The pass-the-keyboard screen: the duel waits at the menu and the next driver becomes the active player.
+  _handOver(){
+    const turn=currentTurn(this._turnShow);
+    if(!turn||this._turnShow.phase!=='handoff')return false;
+    if(this.duel.state.status!=='menu'){this._turnPassing=true;try{this.returnToMenu();}finally{this._turnPassing=false;}}
+    if(this.player.id!==turn.playerId&&!this.selectPlayer(turn.playerId)){this._endTurnShow();return false;}
+    this.keys={};this._resetKeyboardInput();
+    this._showNightCue('bowl.turn.up');
+    return true;
+  }
+  // The next driver's key press (or the READY button): the go starts with its countdown.
+  beginTurn(){
+    const show=this._turnShow,turn=currentTurn(show);
+    if(!turn||show.phase!=='handoff'||this.duel.state.status!=='menu')return false;
+    if(this.player.id!==turn.playerId&&!this.selectPlayer(turn.playerId))return false;
+    const started=beginGo(show);
+    if(!started.ok)return false;
+    if(!this._launchBowlNight(show.night,{cpuDifficulty:show.cpuDifficulty,eventIndex:turn.eventIndex,
+      turn:{driver:turn.name}}))return false;
+    this._turnShow=started.show;
+    return true;
+  }
+  // A finished go goes on the scoreboard and into its driver's save, and no one else's.
+  _recordTurnGo(result,state){
+    const show=this._turnShow,run=this._bowlRun,turn=currentTurn(show);
+    if(!show||show.phase!=='driving'||!run?.turn||run.runId!==this.runId||state!==this.duel.state||
+      !turn||state.playerId!==turn.playerId||this.player.id!==turn.playerId||run.playerId!==turn.playerId)return false;
+    const recorded=recordGo(show,{...result,lent:state.bowlNight.lent===true});
+    if(!recorded.ok)return false;
+    this._turnShow=recorded.show;
+    this._refreshPlayer();
+    const {profile,...outcome}=settleTurnGo(this.profile,recorded.show,recorded.go,this.player.id);
+    let saved=true;
+    if(outcome.changed){this.profile=profile;saved=this._saveProfile();}
+    this._turnShow=noteSettled(this._turnShow,recorded.go.index,{...outcome,saved});
+    if(outcome.purse>0)this._showNightCue('bowl.purse');
+    return true;
+  }
+  // The result card's button: the keyboard goes to the next player, or the show ends on its scoreboard.
+  passTurnKeyboard(){
+    const show=this._turnShow;
+    if(!show||show.phase!=='result'||this.duel.state.status!=='bowl_break')return false;
+    const passed=passKeyboard(show);
+    if(!passed.ok)return false;
+    this._turnShow=passed.show;
+    if(passed.show.phase==='handoff')return this._handOver();
+    this._turnPassing=true;try{this.returnToMenu();}finally{this._turnPassing=false;}
+    this._selectTurnHost();
+    this._showNightCue('bowl.turn.winner');
+    return true;
+  }
+  // Leave the show (any time) or close its scoreboard. Goes already played stay saved.
+  leaveTurnShow(){
+    if(!this._turnShow)return false;
+    if(this.duel.state.status!=='menu'){this.returnToMenu();return true;}
+    this._endTurnShow();
+    return true;
+  }
+  _selectTurnHost(){
+    const host=this._turnShow?.hostId;
+    if(host&&this.player.id!==host&&this.duel.state.status==='menu')this.selectPlayer(host);
+  }
+  _endTurnShow(){
+    if(!this._turnShow)return;
+    this._selectTurnHost();
+    this._turnShow=null;
+  }
+  // Keys on the pass-the-keyboard screen: a fresh press starts the go, and nothing is held for driving.
+  _turnHandoffKey(e){
+    if(this._turnShow?.phase!=='handoff'||this.duel.state.status!=='menu')return false;
+    // A key still held from the last screen repeats: it must not press READY for the next player either.
+    if(e.repeat){e.preventDefault();return true;}
+    if(['Tab','Escape','ShiftLeft','ShiftRight','ControlLeft','ControlRight','AltLeft','AltRight','MetaLeft','MetaRight'].includes(e.code))return true;
+    if(['Enter','NumpadEnter','Space'].includes(e.code)&&e.target?.closest?.('button'))return true; // the focused button acts
+    e.preventDefault();
+    this.beginTurn();
+    return true;
   }
   _clearHiddenRoadInput() {
     this.keys = {};
@@ -2789,6 +2908,7 @@ export class App {
     st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
     st.muddyHollowDeparture = null; st.arena = null;
     delete st.bowlNight; this._bowlRun = null; // BOWL-HOOKS: leaving ends the night and hands the show truck back
+    if (this._turnShow && !this._turnPassing) this._turnShowLeft = true; // BOWL-TURNS: leaving a go leaves the show
     if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
     this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.grandPrixLapRecorder=null;this.lapTelemetryRecorder=null;this.ghostStatus='none';
@@ -2801,6 +2921,7 @@ export class App {
     this._storyRace = null; this._storyPending = null; this._water?.clear(); this._waterStartLine = null; // the story's race ends with the race (quitting grants nothing)
     this.duel.emit({ menu: true });
     this.storyMenuOpened(); // Ana's message, the next time the menu opens after the win
+    if (this._turnShowLeft) { this._turnShowLeft = false; this._endTurnShow(); }
     if (townFlight) this.visitWasteland();
   }
   get footCameraMode() {
@@ -3113,6 +3234,7 @@ export class App {
       }
       if(e.code==='Escape'&&this.duel.drivingLesson){this.lessonEscape();e.preventDefault();return;}
       if(e.defaultPrevented)return;
+      if(this._turnHandoffKey(e))return; // BOWL-TURNS: the next driver's key press, never a held driving key
       if(e.code!=='Enter'&&this.duel.drivingLesson&&!e.repeat&&this.lessonRunKey(e.code)){e.preventDefault();return;}
       if(e.code==='Enter'&&this.duel.drivingLesson&&!e.repeat&&!(e.target instanceof Element&&e.target.closest('button'))){
         if(this.nextLessonAttempt())e.preventDefault();return;
