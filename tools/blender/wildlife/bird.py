@@ -101,7 +101,8 @@ def build(ID, P, paint, output, c):
         centre = bill_base.lerp(bill_tip, u) + Vector((0, 0, -hook * P['bill'][0] * .6 * u * u))
         bill.append((tuple(centre), max(.0015, width * (1 - u ** 1.4)), max(.0015, depth * (1 - u ** 1.25))))
     a.loft(bill, lambda p: paint['bill'](f, p), 'head', 8)
-    for s in (1, -1):
+    # An owl's eyes face forward; its recipe sets them on the face itself (P['eyes'] False).
+    for s in (1, -1) if P.get('eyes', True) else ():
         eye = head_c + Vector((hr * .42, s * hr * .80, hr * .22))
         if 'eyering' in paint:
             a.oval(tuple(eye + Vector((0, s * -.002, 0))), (hr * .20, hr * .07, hr * .20), paint['eyering'](f, eye), 'head', 3, 6)
@@ -197,6 +198,8 @@ def build(ID, P, paint, output, c):
         o.turn(obj, 'head', .10 * math.sin(3 * w))
         o.turn(obj, 'tail', .08 * max(0, math.sin(5 * w)) ** 4)
         o.stretch(obj, 'body', (1 + .02 * math.sin(4 * w), 1, 1 + .02 * math.sin(4 * w)))
+        if 'idle_pose' in P:
+            P['idle_pose'](obj, t)      # a species' own standing pose, added to the shared one
 
     def fly(obj, t):
         w = 2 * math.pi * t
@@ -218,6 +221,8 @@ def build(ID, P, paint, output, c):
             o.stretch(obj, 'fold.' + side, (.001, .001, .001))
         o.turn(obj, 'tail', .06 * math.sin(w - 1.2))
         o.turn(obj, 'head', -.05 * math.sin(w))
+        if 'fly_pose' in P:
+            P['fly_pose'](obj, t)       # e.g. a heron's neck drawn back in flight
 
     o.finish(a, c, output, [('Idle', 120, idle), ('Fly', P.get('beat', 16), fly)], budget=2000,
              roughness=P.get('roughness'), specular=P.get('specular'), refine=P.get('refine'))

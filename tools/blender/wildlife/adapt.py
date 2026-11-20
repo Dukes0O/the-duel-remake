@@ -16,6 +16,11 @@ MATTE = {'black-bear', 'goat'}
 SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra',
              'alpine-marmot', 'black-stork', 'golden-eagle', 'gull', 'chicken', 'turkey-vulture', 'scorpion'}
 
+# WILD-ART-CITY, added apart from the sets above so that two cards can add species at once.
+ROUGH_FUR |= {'black-kite'}      # coarse grain along the body: a kite is streaked all over
+MATTE |= {'street-cat', 'black-kite'}
+SMALL_MAP |= {'black-kite', 'little-egret', 'black-faced-spoonbill', 'pigeon', 'owl'}
+
 
 def build(species, output, c, cache):
     bpy, Vector = c.bpy, c.Vector

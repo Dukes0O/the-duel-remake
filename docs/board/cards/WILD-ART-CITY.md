@@ -8,3 +8,7 @@ Part of the animals line (`docs/board/cards/WILD-ART-SRC.md` has the full histor
 Black kite, little egret, black-faced spoonbill, pigeon, raccoon, street cat, owl. For Harbour Lights and the city courses. The town uses the pigeon and the cat too.
 
 ## Claude answers
+
+**19 November 2026, Claude (builder and judge on this card, Kyle's "Yes, start them").** All seven pass round 1; the sheet, the verdict on each animal and its weak points are in `docs/board/looks/wild-art-city/round-1-review.md`.
+
+Two things for the merge. First, `src/wildlife.js` already has these animals on Harbour Lights and the city courses, so the models are held off every course by `HELD_FROM_COURSES` in `src/wildlife-models.js`; a placement card lets each go after its course has been looked at and timed. Second, rule 18: `tools/test-wildlife-view.mjs` changes its assertions. The check that the table and the files on disk agree, and the checks of each model's file and clips, now run over every row of `WILDLIFE_MODELS`, because a held row is no longer in `APPROVED_MODEL_IDS`; new assertions pin the held list, that a course may use exactly the rows not held, and that the five city courses have no animals while the seven are held. Every earlier assertion still runs on at least the rows it ran on before. Nothing is loosened.

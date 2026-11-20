@@ -28,6 +28,9 @@ const westWildlife = [
   // The chicken walks, but it is a bird and keeps a bird's 2,000 triangles.
   ['goat', 'Walk', 'white-tailed-deer'], ['camp-dog', 'Walk', 'eastern-wolf'], ['chicken', 'Walk', undefined, 2000],
   ['turkey-vulture', 'Fly'], ['desert-monitor', 'Walk'], ['scorpion', 'Walk'],
+  // WILD-ART-CITY: five city birds, the raccoon (its own recipe) and the street cat (from the wolf).
+  ['black-kite', 'Fly'], ['little-egret', 'Fly'], ['black-faced-spoonbill', 'Fly'], ['pigeon', 'Fly'], ['owl', 'Fly'],
+  ['raccoon', 'Walk'], ['street-cat', 'Walk', 'eastern-wolf'],
 ].map(([id, motion, donor, budget]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
   glb: [`public/assets/wildlife/${id}.glb`], budget: budget ?? (motion === 'Fly' ? 2000 : 5000) }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).

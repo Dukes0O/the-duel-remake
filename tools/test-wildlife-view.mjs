@@ -9,7 +9,7 @@ import {existsSync, readFileSync, readdirSync, statSync} from 'node:fs';
 import * as THREE from 'three';
 import * as wildlife from '../src/wildlife.js';
 import {
-  WILDLIFE_MODELS, APPROVED_MODEL_IDS, WILDLIFE_MODEL_DIR, wildlifeModelUrl,
+  WILDLIFE_MODELS, APPROVED_MODEL_IDS, HELD_FROM_COURSES, WILDLIFE_MODEL_DIR, wildlifeModelUrl,
 } from '../src/wildlife-models.js';
 import {
   WILDLIFE_VIEW, IDLE, FLEE, FLY, GONE, startleReach, nextMood, fleeLength, fadeAlpha, pickNearest, turnToward, yawToward, birdFlight,
@@ -39,9 +39,18 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
 // ---- The approved table matches the files on disk ---------------------------
 {
   const files = readdirSync(new URL('../public/assets/wildlife/', import.meta.url)).filter(name => name.endsWith('.glb')).sort();
-  same(APPROVED_MODEL_IDS.map(id => WILDLIFE_MODELS[id].file).sort(), files, 'every model on disk is in the table, and every table row has its file');
-  ok(Object.isFrozen(WILDLIFE_MODELS) && APPROVED_MODEL_IDS.every(id => Object.isFrozen(WILDLIFE_MODELS[id]) && Object.isFrozen(WILDLIFE_MODELS[id].run)), 'the table is frozen');
-  for (const id of APPROVED_MODEL_IDS) {
+  // The table is every model with a file; a course may use those that are not held (WILD-ART-CITY).
+  const MODEL_IDS = Object.keys(WILDLIFE_MODELS);
+  same(MODEL_IDS.map(id => WILDLIFE_MODELS[id].file).sort(), files, 'every model on disk is in the table, and every table row has its file');
+  ok(Object.isFrozen(WILDLIFE_MODELS) && MODEL_IDS.every(id => Object.isFrozen(WILDLIFE_MODELS[id]) && Object.isFrozen(WILDLIFE_MODELS[id].run)), 'the table is frozen');
+  ok(Object.isFrozen(HELD_FROM_COURSES) && HELD_FROM_COURSES.every(id => WILDLIFE_MODELS[id]), 'every held id has a model');
+  same(APPROVED_MODEL_IDS, MODEL_IDS.filter(id => !HELD_FROM_COURSES.includes(id)), 'a course may use every model that is not held, and no held one');
+  same([...HELD_FROM_COURSES].sort(), ['black-faced-spoonbill', 'black-kite', 'cat', 'egret', 'owl', 'pigeon', 'raccoon'], 'held: the seven city animals');
+  for (const id of ['harbour-lights', 'harbor-highlands', 'neon-docks', 'midnight-chase', 'neon-drift-trial']) {
+    for (const night of [false, true]) equal(wildlife.availableSpecies(id, APPROVED_MODEL_IDS, {night}).any, false, `${id}: no animals stand there while the city models are held`);
+  }
+  ok(wildlife.availableSpecies('harbour-lights', MODEL_IDS, {night: true}).common.length === 4, 'and Harbour Lights has its four once they are let go');
+  for (const id of MODEL_IDS) {
     const entry = WILDLIFE_MODELS[id];
     ok(wildlife.SPECIES[id], `${id} is a species wildlife.js knows`);
     ok(wildlife.SPECIES[id].kind !== 'decal', `${id}: a decal has no model`);
