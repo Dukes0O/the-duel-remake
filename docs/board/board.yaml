@@ -663,11 +663,10 @@ tasks:
 
   - id: SKIN-WASTE
     title: "New paints for the Wasteland"
-    owner: "claude-cloud"
+    owner: "codex"
     lane: "UI"
     size: "S"
-    status: "building"
-    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/SKIN-WASTE, pull request into integration/wasteland"
+    status: "ready"
     needs: []
     locks: []
     details: "docs/board/cards/SKIN-WASTE.md"
@@ -792,6 +791,16 @@ tasks:
     locks: []
     flag: "wasteland-town"
     details: "docs/board/cards/TOWN-RESERVED-OUTPOSTS.md"
+
+  - id: QA-EVIDENCE-MIDNIGHT-AGAIN
+    title: "The evidence-folder test fails after midnight again when a previous day's folder exists"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT-AGAIN.md"
 
   - id: QA-RACE-FIELD
     title: "test-race-field fails on integration since a merge of 19 November"
