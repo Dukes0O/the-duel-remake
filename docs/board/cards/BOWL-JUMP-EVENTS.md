@@ -26,7 +26,9 @@ pieces on the floor only while it runs (the dressing hook BOWL-CRUSH adds).
 4. **Events:** `bowlGo {event, go, result}` after each go, and a goal line of eight words or fewer for each.
 
 Design numbers are for Claude's review; the builder measures each with a scripted driver and reports what a child-pace
-driver and a full-throttle driver with nitro reach.
+driver and a full-throttle driver with nitro reach. Kyle, 20 November 2026: the player is a pre-teen, and Easy is won
+often, not almost always. So each Easy number above is a starting number: raise it a step (a bus, a metre, a ring) while
+the child-pace driver still wins all ten seeds, and lower it a step if that driver wins fewer than six.
 
 ## Files and locks
 
@@ -37,7 +39,7 @@ driver and a full-throttle driver with nitro reach.
 
 ## Checks
 
-1. `tools/test-bowl-jump-events.mjs`: for each event, a scripted child-pace driver wins Easy at least 9 times in 10 and a
+1. `tools/test-bowl-jump-events.mjs`: for each event, a scripted child-pace driver wins Easy at least 6 times in 10 and a
    full-throttle driver without nitro does not win Hard; three goes are played and the best counts; the pieces stand on
    the floor in their own event only.
 2. `tools/test-bowl-turns.mjs`: each new event runs as one go in a Turn Show and ends in the turn phase with a score.

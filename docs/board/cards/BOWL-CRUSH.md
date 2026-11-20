@@ -19,8 +19,11 @@ pieces crushed and ten never touched.
    the open middle of End 2 (two buses with a third across their roofs; it gives way only at 30 mph or more, or to a truck
    coming down on it); five single cars in the open middle of End 1. No piece stands on a jump, within 8 m of a jump's
    foot on its run-up, or within 3 m of a wall. Every other event keeps today's line and nothing else.
-2. **The event:** 60 seconds (75 on Easy). It does not end when the truck stops or leaves the line. The goal is a count:
-   Easy 10 of the 31, Medium 18, Hard 26. All 31 is a Full House and each second left pays 20 points.
+2. **The event:** 60 seconds on every level. It does not end when the truck stops or leaves the line. The goal is a
+   count: Medium 18 of the 31, Hard 26. **Easy is set by measurement** (Kyle, 20 November 2026: the player is a pre-teen,
+   and Easy is won often, not almost always): the highest count that the scripted slow driver reaches on at least 6 of
+   ten seeds in the 60 seconds, and never more than 16. Report the ten counts in the change note. All 31 is a Full House
+   and each second left pays 20 points.
 3. **Chain:** each piece within 3 seconds of the last adds a link; each link adds a quarter to the points, up to two and a
    half times. **Pancake:** a piece crushed by a truck coming down out of the air pays three times.
 4. **Points:** a car 35, a bus or the RV 60, a burning stack 80, the Bus Pile 200.
@@ -37,7 +40,8 @@ picture shows the field). Locks: `bowl-night`, `bowl-floor`.
 ## Checks
 
 1. `tools/test-bowl-night.mjs`: a truck held on W with no steering crushes five pieces and the event runs its full
-   60 seconds; a scripted child-pace driver reaches 10 on Easy at least 9 times in 10; a chain of four pays as the rule
+   60 seconds; a scripted child-pace driver reaches the Easy count at least 6 times in 10 and
+   does not reach it on all ten; a chain of four pays as the rule
    says; a pancake pays three times; 31 crushed ends in a Full House.
 2. `tools/test-bowl-course.mjs`: the field's clearances; Freestyle, Side by Side and Last Truck Rolling are built without
    it; the Bowl's world signature re-recorded if it is pinned, with the reason in the change note.

@@ -42,7 +42,7 @@ course's own data.
    - **Hip:** it stays down while hooked. Pull needed: 2 seconds on Easy, 3 on Medium and Hard.
    - **Back:** after 1 second of pulling it braces and drags the truck towards it at 2 m a second while the truck is
      pulling without nitro; under nitro the truck holds its ground. Pull needed: 3 seconds on Easy, 4 on Medium, 5 on Hard.
-     On Easy the drag does not stop the pull counting.
+     The drag stops the pull counting on every level (Easy's exemption went on 20 November; "Changes for a tween" below).
    - **Behind the head:** when the cable goes tight it begins its tell and then breathes fire along the cable, into the
      cone fixed and drawn at the start of the tell, as its fire always is. Pull needed: 3 seconds on Easy, 4 on Medium, 5
      on Hard.
@@ -50,7 +50,8 @@ course's own data.
    the floor, until F. It does no harm to anything.
 8. **Angrier each time:** after the first box its fire sweeps 30 degrees to each side; after the second it also throws
    cars (the ring on the floor first, as today).
-9. **Easy:** the first time it tires it stays tired for up to 45 seconds or until the first box is out.
+9. (Removed on 20 November 2026: Easy's first tired spell of up to 45 seconds. Every tired spell has its level's own
+   length.)
 10. **Losing:** five scorches on Easy, four on Medium, three on Hard; or it has tired six times (five on Medium and Hard)
     and still has a box, and walks out through the Car Park Gate.
 11. **The goal line** is never longer than five words and follows the fight: "GET OUT OF THE ORANGE", "HOOK THE GLOWING
@@ -75,8 +76,9 @@ before the fight), one line for F on the Bowl in `src/input-contexts.js` if BOWL
    bites only an open box in reach and bounces off otherwise; each box comes out after the pull the table gives, with a
    jerk and nitro counted as the rules say; pull time survives letting go and the beast getting up; the three ways of
    losing; the goal line never over five words.
-2. A scripted child-pace driver who waits for it to sag, presses F when the marker says a shot would bite and then holds
-   the throttle away from it, with no nitro and no steering during the pull, wins on Easy at least 9 times in 10.
+2. A scripted child-pace driver who waits for it to sag, presses F when the marker says a shot would bite, holds the
+   throttle away from it and holds Space from the moment it braces, with no steering during the pull, wins on Easy at
+   least 6 times in 10. The same driver without Space and without a run-up wins on none of the ten seeds.
 3. The scripted drive (one way): `tools/scenarios/bowl-rex-fight.mjs` brought up to date to win with the hook. Claude runs
    it. Every changed assertion is listed in the change note for Claude's review (rule 18).
 
@@ -174,3 +176,26 @@ One further rule 18 line at `98f8f7fcc`: the Night 5 opening expectation in `too
 The complete playable candidate is `31ece8f9c` on `codex/bowl-rex-2`. The solo Next button, retry and each named Turn Show Ready button now show the same three pictures before the fight. The production modal checks passed. All ten Easy seeds won without nitro or steering during the pull at `7d2e92a08`, and the last cartridge moved through all ten seconds. Combat balance passed across 51 policy runs and 90 baselines. Please run the named laptop scenario, including the actual keyboard F press, for the merge verdict.
 
 Builder handoff `488be4d38` is clean. The original 84 selected suites are covered across the correction runs; the 121 follow-up suites, 297 race fingerprint checks, combat balance and final production build passed. The reviewed play code is `31ece8f9c`. The local laptop verdict is the remaining merge gate.
+
+## Changes for a tween (Claude, 20 November 2026)
+
+Kyle, 20 November 2026: "don't worry about children losing too much. assume a pre-teen / tween. this isn't for 5 year
+olds." At `7d2e92a08` the scripted driver won Easy on all ten seeds with F and the throttle alone, which is a fight
+that nobody can lose. One more small round on this card:
+
+1. **Rule 9 goes.** The first tired spell on Easy is as long as every other one. A driver who misses it meets the next
+   after the next fire, and pull time already earned is kept (rule 5).
+2. **The back box is a real step on Easy too.** The drag stops the pull counting on Easy as it does on Medium and Hard,
+   so the throttle alone no longer brings the box out. Space does, and so does a run-up (a jerk each time the cable goes
+   tight at 20 mph or more). The pull needed on Easy stays 3 seconds.
+3. **The reason is shown on Easy as well:** "It pulled you in, so press Space as you pull.", the first time the drag
+   has held the pull still for 2 seconds.
+4. **Kept as built:** it tires after every breath of fire on Easy, the shorter pulls, five scorches, six tired spells
+   and the longer tells. Easy is still the kindest level; it is no longer certain.
+5. **Checks:** check 2 above as rewritten. Report both drivers' wins on the ten seeds in the change note.
+6. **Rule 18, Claude's review, given here:** the Easy drive changes from nine wins in ten with the throttle alone to six
+   wins in ten for a driver who uses Space, and a new check proves that the throttle alone does not win. Kyle's decision
+   made the fight harder and the gate follows it. No check of the rules themselves is loosened.
+
+The session that reviews this card decides whether this round lands before the merge of the fight as built or straight
+after it.
