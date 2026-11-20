@@ -9,7 +9,9 @@ import {makeRng} from '../src/rng.js';
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, bowlHudView, bowlNightPlayable} from '../src/bowl/bowl-night.js';
 import {BOWL_RIVALS, BOWL_RIVAL_IDS, BOWL_RIVAL_NIGHTS, BOWL_RIVAL_RULES, lastTruckRivals,
   sideBySideLanes, sideBySideRival} from '../src/bowl/bowl-rivals.js';
-import {BIG_MO, BOWL_GOALS, BOWL_RESULTS} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_GOALS, BOWL_RESULTS, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
+import {beginGo, createTurnShow, currentTurn, passKeyboard, recordGo} from '../src/bowl/bowl-turns.js';
+import {createProfile} from '../src/progression.js';
 import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 
@@ -225,6 +227,43 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const night = s.bowlNight;
   ok(night.event.rivals.filter(entry => entry.out).every(entry => s.opponents[night.event.rivals.indexOf(entry)].combatWrecking),
     'a knocked-out truck stays a wreck where it stopped');
+}
+
+// A Turn Show go (BOWL-TURNS) is a one-event night: Side by Side races the
+// night's named rival and Last Truck Rolling is the arena's fight, and each
+// go's record keeps who was raced and how the fight ended.
+{
+  const go = (night, eventIndex) => {
+    const duel = new Duel({seed: 1989});
+    duel.featureFlags = {enabled: name => name === 'titan-bowl'};
+    ok(duel.startBowlNight({night, eventIndex, turn: {driver: 'Gratian'}, cpuDifficulty: 'easy', seed: 1989, playerId: 'p1'}),
+      `a Turn Show go at night ${night}'s last event starts`);
+    return duel;
+  };
+  const side = go(1, 2);
+  ok(side.state.bowlNight.event.type === 'sideBySide' && side.state.opponents[0]?.bowlRival === 'old-bess',
+    'a Turn Show go at Side by Side races Old Bess');
+  const sideResult = race(side, null, null, 70);
+  ok(side.state.bowlNight.phase === 'turn' && sideResult.rival === 'old-bess', 'the go ends as a turn and names the rival');
+  const truck = go(3, 2);
+  ok(truck.state.bowlNight.event.type === 'lastTruckRolling' && truck.state.arena?.mode === 'last-car-rolling' &&
+    truck.state.opponents.length === 3 && truck.state.bowlNight.turn?.driver === 'Gratian',
+  'a Turn Show go at Last Truck Rolling is the arena\'s fight with four trucks, and keeps its driver');
+  const truckResult = race(truck, null, null, BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
+  ok(truck.state.bowlNight.phase === 'turn' && Number.isSafeInteger(truckResult.knockouts), 'the fight ends as a turn with its knock-outs');
+  const players = [{id: 'p1', name: 'Gratian', profile: {...createProfile(), bowl: {nightsWon: [1, 2]}}},
+    {id: 'p2', name: 'Kyle', profile: {...createProfile(), bowl: {nightsWon: [1, 2]}}}];
+  let show = createTurnShow({night: 1, players}).show;
+  while (currentTurn(show) && currentTurn(show).event !== 'sideBySide') {
+    const turn = currentTurn(show);
+    show = passKeyboard(recordGo(beginGo(show).show, {playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex, score: 0}).show).show;
+  }
+  const turn = currentTurn(show);
+  const recorded = recordGo(beginGo(show).show, {...sideResult, playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex});
+  ok(recorded.ok && recorded.go.rival === 'old-bess' && BOWL_TURN_LINES.goRace('Gratian', recorded.go.won, BOWL_RIVALS[recorded.go.rival].name)
+    .includes('Old Bess'), 'the card between goes names the rival');
+  ok(BOWL_TURN_LINES.goKnockouts('Kyle', {won: false, knockouts: 2}) === 'Kyle knocked out two trucks before their own truck was knocked out.',
+    'the card between goes says how a go at Last Truck Rolling ended');
 }
 
 // Repeatable from seed and inputs: the same trial twice gives the same result.

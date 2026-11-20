@@ -10,7 +10,9 @@
 //   'lastTruckRolling' with registerBowlEventRunner; its rivals come in through
 //   runner.place().
 // - BOWL-TURNS runs one event per player from the same runners: every finished
-//   attempt is in night.attempts, and startBowlNight takes the playerId.
+//   attempt is in night.attempts, and startBowlNight takes the playerId. A turn
+//   (`turn: {driver}`, `eventIndex`) is one go at one event: it ends in the
+//   'turn' phase, pays nothing and cannot be retried (src/bowl/bowl-turns.js).
 // - BOWL-REX-FIGHT registers its own runner for night five and adds its lines
 //   to BIG_MO in bowl-lines.js.
 import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle,
@@ -236,15 +238,19 @@ function nextCaption(duel) {
 }
 
 // Starts a night. options: {night, playerId, driverId, difficulty, cpuDifficulty,
-// seed, owned, upgrades, rivals}. `rivals` (rival ids, for tests) chooses who
-// drives against the player instead of the night's own. Returns false when the
-// night cannot run.
+// seed, owned, upgrades, eventIndex, turn, rivals}. `rivals` (rival ids, for
+// tests) chooses who drives against the player instead of the night's own.
+// Returns false when the night cannot run.
 export function startBowlNight(duel, options = {}) {
   const number = options.night;
   if (!flagOn(duel) || !Number.isSafeInteger(number) || !bowlNightPlayable(number)) return false;
   const truck = showTruckFor(options);
+  const eventCount = SHOW_NIGHTS[number - 1].events.length, eventIndex = options.eventIndex ?? 0;
+  if (!Number.isSafeInteger(eventIndex) || eventIndex < 0 || eventIndex >= eventCount) return false;
+  // A Turn Show go (BOWL-TURNS): the driver's name is for the HUD only.
+  const turn = options.turn ? {driver: typeof options.turn.driver === 'string' ? options.turn.driver : ''} : null;
   duel.state.bowlNight = {
-    version: 1, night: number, show: createShowNight(number), phase: 'event',
+    version: 1, night: number, show: createShowNight(number, eventIndex), phase: 'event', turn,
     cpuDifficulty: DIFFICULTIES.includes(options.cpuDifficulty) ? options.cpuDifficulty : 'medium',
     lent: truck.lent, start: {car: truck.car, upgrades: truck.upgrades, playerId: options.playerId ?? null,
       driverId: options.driverId, difficulty: options.difficulty, seed: options.seed},
@@ -252,7 +258,7 @@ export function startBowlNight(duel, options = {}) {
     event: null, attempts: [], lastResult: null, result: null,
     rivals: Array.isArray(options.rivals) ? options.rivals.filter(id => typeof id === 'string').slice(0, 3) : null,
   };
-  say(duel, `night.${number}.open`);
+  say(duel, turn ? 'turn.open' : `night.${number}.open`);
   if (truck.lent) say(duel, 'lent.truck');
   loadBowlEvent(duel);
   return true;
@@ -283,9 +289,10 @@ export function continueBowlNight(duel) {
 }
 
 // Start the running event again (the pause screen's restart). Nothing is recorded.
+// A Turn Show go is one go only, so it has no restart.
 export function retryBowlEvent(duel) {
   const night = duel.state.bowlNight;
-  if (!night || night.phase !== 'event') return false;
+  if (!night || night.phase !== 'event' || night.turn) return false;
   loadBowlEvent(duel);
   return true;
 }
@@ -373,9 +380,11 @@ function finishEvent(duel, outcome) {
   night.attempts.push(result);
   night.lastResult = result;
   night.show = finishShowEvent(night.show, event.type, result.won).state;
-  night.phase = night.show.complete ? 'complete' : 'result';
+  night.phase = night.turn ? 'turn' : night.show.complete ? 'complete' : 'result';
   s.status = 'bowl_break'; s.boosting = false;
   duel.emit({bowlEventResult: result, cue: result.won ? 'bowl.event.won' : 'bowl.event.lost'});
+  // A Turn Show go ends here: the Turn Show keeps the scores and pays any purse.
+  if (night.turn) { say(duel, result.won ? 'turn.won' : 'turn.lost'); return; }
   say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
   if (night.phase === 'complete') {
     const won = night.attempts.filter(entry => entry.won);
@@ -421,7 +430,8 @@ export function bowlHudView(state, course) {
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),
     rows: event.rows, timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
-    eventCount: SHOW_NIGHTS[night.night - 1].events.length, caption: night.caption?.text ?? ''};
+    eventCount: SHOW_NIGHTS[night.night - 1].events.length, caption: night.caption?.text ?? '',
+    driver: night.turn?.driver || null};
 }
 
 // The purse and the records for a finished night, as one profile change.
