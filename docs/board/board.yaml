@@ -777,7 +777,8 @@ tasks:
     model: "astra"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-tricks-all"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures, save-shape]
     flag: "arena-tricks"
