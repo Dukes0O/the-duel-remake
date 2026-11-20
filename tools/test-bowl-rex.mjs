@@ -26,6 +26,13 @@ function start(seed=101,level='easy'){
   assert.ok(d.continueBowlNight());
   return d;
 }
+{
+  const wreck=start();
+  wreck.state.status='gameover';wreck.state.impactTimer=0;
+  wreck.step(dt);
+  assert.equal(wreck.state.bowlNight.lastResult.won,false);
+  assert.equal(wreck.state.bowlNight.lastResult.wrecked,true);
+}
 const d=start(),course=d.course;
 const make=(difficulty='easy')=>createRexFight({difficulty,course});
 const still={s:d.state.s,lateral:d.state.lateral,input:{},speedMph:0};

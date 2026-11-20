@@ -20,7 +20,7 @@ for (const [night, index, name, goal] of [
   [1, 1, 'Freestyle', 'Score 310 points before time runs out.'],
   [1, 2, 'Side by Side', 'Finish ahead of your rival.'],
   [3, 2, 'Last Truck Rolling', 'Be the last truck rolling.'],
-  [5, 3, 'The Scrapasaurus', 'Smash its battery boxes.'],
+  [5, 3, 'The Scrapasaurus', 'WATCH THE SCRAPASAURUS'],
 ]) {
   start(night, index);
   const strip = bowlStrip(duel.state, bowlHudView(duel.state, duel.course));

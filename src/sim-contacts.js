@@ -378,7 +378,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
   if (car.crushed || car.combatWrecking || car.tumble) return;
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
-  const fight=this.state.bowlNight?.event?.rex;
+  const fight=this.state?.bowlNight?.event?.rex;
   if(player && fight?.hook?.phase==='attached'){
     const held=constrainTow(fight,this.course,car,end);
     if(held!==end){
