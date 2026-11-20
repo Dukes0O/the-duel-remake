@@ -307,12 +307,15 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   Last Truck Rolling and replaces Side by Side's one computer truck, BOWL-TURNS runs the same runners one player
   at a time, BOWL-REX-FIGHT adds night five's fight. The Bowl is out of the circuit list: Show Night is the only
   way in, so every drive there is in a truck, the player's own Titan or the show's, lent and never saved.
-  Every word on screen is in `src/bowl/bowl-lines.js`.
+  Every word on screen is in `src/bowl/bowl-lines.js`. Every distance the events use comes from the course's data
+  through `bowlLayout(course)`: the crush line's rows and their names, the run-up, the parked cars in Freestyle (the
+  longest clear floor between ramps and crush line), the lanes (half the floor, or `features.bowlLanes.offset`) and
+  Side by Side's start stagger. A rebuilt Bowl (BOWL-EXPAND) moves the events with it.
 - **Rivals** (BOWL-RIVALS) are data in `src/bowl/bowl-rivals.js`: name, way of driving (one of the arena's brains
   and a start delay) and top pace in mph for Easy, Medium and Hard, and who drives on which night. Side by Side
-  keeps the duel's rival rules on the inside lane, its speed held to the rival's pace. Its two lanes come from the
-  course (`sideBySideLanes`: the course's named lanes, or the middle of each half of the floor), so a bigger floor
-  (BOWL-EXPAND) moves them; the arena fight reads its starting slots and walls from the course too. Last Truck Rolling loads the
+  keeps the duel's rival rules on the inside lane, its speed held to the rival's pace. Its two lanes are
+  `bowlLayout`'s, so a bigger floor (BOWL-EXPAND) moves them; the arena fight reads its starting slots and walls
+  from the course too. Last Truck Rolling loads the
   Bowl as the arena's own fight (`_loadArena`, mode `last-car-rolling`): its teams, computer drivers and wreck
   credit, with no weapons and no crates, the same show armor for every truck, and a wrecked truck knocked out for
   the rest of the event. The show's two-minute clock decides it: the last truck rolling wins, or at the clock the

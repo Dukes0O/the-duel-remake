@@ -14,7 +14,7 @@
 // in the arena's code: no weapons and no crates, the same show armor for every
 // truck, and a wrecked truck is knocked out and stays where it stopped instead
 // of coming back.
-import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, registerBowlEventRunner,
+import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, bowlLayout, registerBowlEventRunner,
   sayBowlLine, startBowlEventAt, outsideLaneStart} from './bowl-night.js';
 import {BOWL_GOALS} from './bowl-lines.js';
 
@@ -98,16 +98,13 @@ function holdPace(duel, actor, rivalId, level) {
 
 // ---- Side by Side -------------------------------------------------------
 
-// The two lanes, from the course's own data: the course's lanes when it names
-// them (each a lateral offset, or an object with `off`), otherwise the middle
-// of each half of the floor. The rival takes the inside lane (the nearer the
-// island), the player the outside one. Nothing here assumes the floor's size.
+// The two lanes, from the course's own data through BOWL-HOOKS' bowlLayout:
+// the course's `features.bowlLanes.offset`, or the middle of each half of the
+// floor. The rival takes the inside lane (the nearer the island), the player
+// the outside one. Nothing here assumes the floor's size.
 export function sideBySideLanes(course) {
-  const named = (course?.features?.lanes ?? course?.def?.lanes ?? [])
-    .map(lane => typeof lane === 'number' ? lane : lane?.off).filter(Number.isFinite);
-  if (named.length >= 2) return {inside: Math.min(...named), outside: Math.max(...named)};
-  const half = course?.def?.scrapdome?.floorHalfWidth ?? course?.roadHalfWidthAt?.(0) ?? 6;
-  return {inside: -half / 2, outside: half / 2};
+  const lane = bowlLayout(course).lane;
+  return {inside: -lane, outside: lane};
 }
 
 registerBowlEventRunner('sideBySide', {

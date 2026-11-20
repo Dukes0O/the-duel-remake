@@ -19,6 +19,11 @@ export const page = {
   start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="1"]').click(); return true; })()`,
   hud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('CAR CRUSH') && !!hud.querySelector('meter'); })()`,
   onShowTruck: `(() => { const s = window.__qaApp.duel.state; return s.car === 'titan_monster' && window.__qaApp.duel.course.def.bowl === true && s.bowlNight?.lent === true; })()`,
+  // The HUD is drawn at once, the world a little later: wait until the Bowl's stadium and the Titan are in the picture.
+  drawn: `(() => { const app = window.__qaApp, view = window.__render, canvas = document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]');
+    if (!app.visualReady || canvas?.parentElement?.dataset?.vehicleAsset !== 'ready' || !view?.scene) return false;
+    let titan = false; view.scene.traverse(node => { if (node.userData?.vehicleKey === 'titan_monster' && node.visible) titan = true; });
+    return titan && !!view.scene.getObjectByName('Bowl stadium, floodlights and crowd'); })()`,
   card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result [data-action="show-night-next"]'))()`,
   cardWon: `(() => document.querySelector('.bowl-result')?.dataset.bowlResult === 'won')()`,
   next: `(() => { document.querySelector('[data-action="show-night-next"]').click(); return true; })()`,
@@ -59,9 +64,10 @@ export async function run(context) {
   await context.evaluate(page.start);
   await context.waitFor(page.hud, 'the Car Crush HUD', 60000);
   assert.ok(await context.evaluate(page.onShowTruck), 'the night is on the Bowl in the lent show truck');
+  await context.waitFor(page.drawn, 'the Bowl stadium and the Titan are drawn', 120000);
   await picture(context, 'bowl-night-car-crush-start');
   await key(context, 'KeyW', 'keydown');
-  try { await context.waitFor(page.card, 'the Car Crush ends', 60000); }
+  try { await context.waitFor(page.card, 'the Car Crush ends', 180000); }
   finally { await key(context, 'KeyW', 'keyup'); }
   await picture(context, 'bowl-night-car-crush-card');
   // Every later event (and any retry) is driven by the test driver.
@@ -77,7 +83,7 @@ export async function run(context) {
     }
     await context.waitFor(page.card, `${type} ends`, 150000);
     await context.evaluate(page.manual);
-    await picture(context, `bowl-night-card-${round}-${type}`);
+    await picture(context, `bowl-night-card-${round}-${String(type).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`);
   }
   assert.ok(await context.evaluate(page.nightDone), 'the night reaches its results');
   await picture(context, 'bowl-night-results');

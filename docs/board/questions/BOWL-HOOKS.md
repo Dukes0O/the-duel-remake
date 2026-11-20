@@ -18,11 +18,11 @@ Options:
 The amounts are one table, `BOWL_PURSE` in `src/bowl/bowl-night.js`; the test reads the table, so a change is
 one line and moves no assertion.
 
-## 2. The crowd meter barely moves with BOWL-SHOW's numbers
+## 2. The crowd meter barely moved with BOWL-SHOW's numbers
 
-Not a question for this card, a finding for BOWL-FINISH: `scoreStuntEvent` adds about one point to the
-crowd meter for each stunt (0.0015 a point, at least 1) and the meter loses 12 percent a second, so in the
-scripted night the meter peaks at about 6 out of 100. The HUD shows the meter honestly, Big Mo's lines at 25,
-50, 75 and 100 are wired but are not reached, and the crowd's cheer plays on every scored stunt. A gain of
-about 0.05 a point (a 40-point jump adds 2, a launch adds 4 or 5) would let a good Freestyle reach 50 to 75.
-I left `bowl-show.js` as merged.
+Settled by Claude on the pull request (20 November 2026): change it in this card. The proposed 0.05 a point was
+not enough: on the scripted Freestyle it peaks at 17.5. With 0.15 a point and 6 percent a second off (was
+0.0015 and 12 percent) the same Freestyle peaks near 70, so Big Mo's crowd lines are reached. Scores rise by
+about a quarter, so the Freestyle targets went from 400, 650 and 900 to 500, 800 and 1,100.
+
+Question 1 was answered: the purse table is accepted.

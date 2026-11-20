@@ -146,10 +146,11 @@ function race(duel, drive, aim, limitSec) {
   const half = duel.course.def.scrapdome.floorHalfWidth;
   ok(lanes.inside === -half / 2 && lanes.outside === half / 2, 'with no lanes named, each lane is the middle of half the floor');
   ok(duel.state.lateral === lanes.outside && duel.state.opponents[0].lateral === lanes.inside, 'the player and the rival start on their lanes');
-  const wide = sideBySideLanes({def: {scrapdome: {floorHalfWidth: 12}}});
+  const floor = extra => ({length: 300, features: {crushables: [], ramps: [], ...extra}, def: {scrapdome: {floorHalfWidth: 12}}});
+  const wide = sideBySideLanes(floor());
   ok(wide.inside === -6 && wide.outside === 6, 'a wider floor gives wider lanes');
-  const named = sideBySideLanes({features: {lanes: [{off: 5}, {off: -4}]}, def: {}});
-  ok(named.inside === -4 && named.outside === 5, 'lanes the course names are used as they are');
+  const named = sideBySideLanes(floor({bowlLanes: {offset: 4.5}}));
+  ok(named.inside === -4.5 && named.outside === 4.5, 'lanes the course names are used as they are');
 }
 
 // ---- Side by Side: every rival finishes on every level -------------------
@@ -175,7 +176,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const duel = showAt(2, 'sideBySide'), captions = [];
   duel.onChange((_, ev) => ev.bowlCaption && captions.push(ev.bowlCaption.id));
   for (let i = 0; i < 120 * 4; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
-  ok(duel.state.bowlNight.event.rival === 'rust-rhino' && bowlHudView(duel.state).goal ===
+  ok(duel.state.bowlNight.event.rival === 'rust-rhino' && bowlHudView(duel.state, duel.course).goal ===
     'Race Rust Rhino once round the Bowl and cross the line first.', 'night two\'s Side by Side is against Rust Rhino, named in the goal');
   // Big Mo waits for his earlier lines; the results card stays up while he talks.
   for (let i = 0; i < 120 * 40; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
@@ -197,7 +198,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   ok([s, ...s.opponents].every(truck => truck.maxArmor === BOWL_RIVAL_RULES.lastTruckRolling.showArmor && truck.armor === truck.maxArmor),
     'every truck takes the same knocks, the player\'s too');
   ok(s.weaponLoadout.length === 0 && s.opponents.every(truck => truck.weaponLoadout.length === 0), 'nobody has a weapon in the Bowl');
-  ok(bowlHudView(s).goal === 'Knock out Big Kettle, Tin Lizard and Old Bess, and be the last truck still rolling.', 'the goal names every rival');
+  ok(bowlHudView(s, duel.course).goal === 'Knock out Big Kettle, Tin Lizard and Old Bess, and be the last truck still rolling.', 'the goal names every rival');
   const result = race(duel, null, null, BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
   ok(result && result.event === 'lastTruckRolling' && typeof result.won === 'boolean', 'an event with a truck that never moves still ends');
   ok(!result.won && (result.knockedOut || result.timeUp), 'a truck that never moves does not win');

@@ -37,11 +37,14 @@ export const BOWL_GOALS = Object.freeze({
     : 'Knock the other trucks out and be the last one still rolling.',
 });
 
-// The rows of the Car Crush line, by how far the truck got.
-export const BOWL_CRUSH_ROWS = Object.freeze([
-  'the first row of cars', 'the second row of cars', 'the third row of cars',
-  'the buses', 'the burning stack',
-]);
+// A row of the Car Crush line, named by what stands in it (the rows come from the course).
+const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+export const BOWL_CRUSH_ROW = Object.freeze({
+  cars: n => ORDINALS[n - 1] ? `the ${ORDINALS[n - 1]} row of cars` : `row ${n} of the cars`,
+  buses: 'the buses',
+  fire: 'the burning stack',
+  last: 'the end of the line',
+});
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
 export const BIG_MO = Object.freeze({
@@ -104,7 +107,7 @@ export const BOWL_RESULTS = Object.freeze({
   eventWonTitle: 'EVENT WON',
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
-  eventRows: rows => rows > 0 ? `You crushed your way into ${BOWL_CRUSH_ROWS[rows - 1]}.` : 'You did not reach the first row of cars.',
+  eventRows: row => row ? `You crushed your way into ${row}.` : 'You did not reach the first row of cars.',
   eventRace: (won, rival = 'the other truck') => won ? `You crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before you.`,
   // BOWL-RIVALS: how Last Truck Rolling ended.
