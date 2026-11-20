@@ -327,9 +327,10 @@ export function observeBowlNight(duel, ev) {
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
   // Count the Rex hold from the fall, including any time spent dragging the final box.
   if (ev.bowlRex?.type === 'fall') night.event.resultHoldSince ??= night.clock;
+  if (ev.bowlTrickLate) night.event.trickPopups = [{notice: 'NOT ENOUGH AIR', at: night.clock}];
   if (ev.bowlTrick) {
     const trick = ev.bowlTrick;
-    addFact(duel, {type: 'bowlTrick', ...trick});
+    if (trick.landing !== 'slam' || night.cpuDifficulty !== 'easy') addFact(duel, {type: 'bowlTrick', ...trick});
     if (trick.landing === 'slam') say(duel, 'moment.roof', {once: true});
     else if (trick.kind === 'donut') say(duel, 'moment.donut', {once: true});
     else if (['frontFlip', 'backflip', 'sideFlip'].includes(trick.kind)) say(duel, 'moment.flip', {once: true});

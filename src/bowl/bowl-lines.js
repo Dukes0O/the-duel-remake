@@ -28,6 +28,8 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.out.gate': 'world.furnace.horn',
   'bowl.out.back': 'interface.bonus',
   // bowl.out.stands is named by the event for BOWL-SOUND to supply.
+  'bowl.trick.late': 'interface.radar',
+  // bowl.trick.go is the turn-start rush, with no stand-in.
   'bowl.trick.land': 'interface.bonus',
   'bowl.trick.new': 'interface.win',
   'bowl.trick.slam': 'vehicle.crash',

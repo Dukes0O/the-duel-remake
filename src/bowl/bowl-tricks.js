@@ -63,49 +63,69 @@ function ground(duel, state, dt) {
   }
 }
 
-// Bank a completed turn before changing direction. Reversing a partial turn
-// unwinds the visual pose, but never completes a turn of either kind.
-function rotate(flight, axis, delta, kind) {
-  if (!delta) return;
-  const run = flight.runs[axis] ??= {direction: 0, angle: 0, kind};
-  if (run.direction !== Math.sign(delta) || run.kind !== kind) {
-    run.angle = 0;
-    run.direction = Math.sign(delta);
-    run.kind = kind;
-  }
-  run.angle += Math.abs(delta);
-  const turns = Math.floor(run.angle / TURN + 1e-8);
-  if (turns) {
-    flight.turns[kind] = (flight.turns[kind] || 0) + turns;
-    run.angle -= turns * TURN;
-  }
-  flight[axis] += delta;
+const moves = {
+  frontFlip: {axis: 'pitch', time: .8}, backflip: {axis: 'pitch', time: .8},
+  spin: {axis: 'yaw', time: .9}, barrelRoll: {axis: 'roll', time: 1}, sideFlip: {axis: 'roll', time: 1},
+};
+const difficulty = s => s.bowlNight?.cpuDifficulty ?? s.cpuDifficulty ?? 'medium';
+const directionKeys = input => ({
+  Up: input.throttle > 0, Down: input.brake > 0,
+  Left: input.steer < 0, Right: input.steer > 0, Space: !!input.boost,
+});
+function remainingAir(s) {
+  const velocity = s._verticalSpeed || 0;
+  return (velocity + Math.sqrt(velocity ** 2 + 36 * Math.max(0, s.airHeight || 0))) / 18;
 }
-
+function late(duel, flight, kind) {
+  if (flight.late) return;
+  flight.late = true;
+  duel.emit?.({bowlTrickLate: {kind, cue: 'bowl.trick.late'}});
+}
+function begin(duel, flight, axis, request, airLeft) {
+  const time = moves[request.kind].time;
+  const hard = difficulty(duel.state) === 'hard';
+  if (!hard && airLeft + 1e-8 < .75 * time) { late(duel, flight, request.kind); return; }
+  flight.active[axis] = {...request, duration: hard ? time : Math.min(airLeft, time), elapsed: 0};
+  duel.emit?.({bowlTrickGo: {kind: request.kind, cue: 'bowl.trick.go'}});
+}
+function bank(f, kind) { f.turns[kind] = (f.turns[kind] || 0) + 1; }
 function air(duel, state, dt) {
   const s = duel.state, input = s.input;
   if (!state.flight) {
     s.bowlLanding = null;
-    state.flight = {held: {...(state.groundKeys ?? input)}, pitch: 0, yaw: 0, roll: 0, turns: {}, runs: {}};
+    const held = {...(state.groundKeys ?? input)};
+    state.flight = {held, previous: directionKeys(held), active: {}, queue: {}, turns: {}, pitch: 0, yaw: 0, roll: 0};
     state.kind = s.bowlGroundTrick = null;
   }
-  const f = state.flight;
+  const f = state.flight, keys = directionKeys(input), fresh = [];
+  for (const key of Object.keys(keys)) if (keys[key] && !f.previous[key]) fresh.push(key);
+  f.previous = keys;
   for (const key of ['throttle', 'brake', 'steer', 'boost']) {
     if (!input[key] || Math.sign(input[key]) !== Math.sign(f.held[key])) f.held[key] = 0;
   }
-  const pitch = (f.held.brake ? 0 : input.brake || 0) - (f.held.throttle ? 0 : input.throttle || 0);
-  const steer = f.held.steer ? 0 : input.steer || 0;
-  const rolling = input.boost && !f.held.boost;
-  const roll = rolling ? steer * dt * TURN : 0;
-  const pitchKind = pitch < 0 ? 'frontFlip' : 'backflip';
-  const pitchSeconds = (f.turns.backflip || f.turns.frontFlip) ? .8 : 1;
-  rotate(f, 'pitch', pitch * TURN * dt / pitchSeconds, pitchKind);
-  rotate(f, 'roll', roll, Math.abs(wrap(f.yaw)) > Math.PI / 4 ? 'sideFlip' : 'barrelRoll');
-  if (!rolling) rotate(f, 'yaw', steer * TURN * dt / .9, 'spin');
-  if (!pitch && !steer && !input.boost && (s.bowlNight?.cpuDifficulty ?? s.difficulty) === 'easy') {
-    for (const axis of ['pitch', 'roll']) {
-      const offset = wrap(f[axis]);
-      if (Math.abs(offset) <= Math.PI / 6) f[axis] -= offset * Math.min(1, dt * 6);
+  const held = {};
+  for (const [key, blocked] of [['Up', f.held.throttle], ['Down', f.held.brake], ['Left', f.held.steer], ['Right', f.held.steer]]) {
+    if (!keys[key] || blocked) continue;
+    const roll = keys.Space && !f.held.boost;
+    const kind = key === 'Up' ? 'frontFlip' : key === 'Down' ? 'backflip' : !roll ? 'spin' :
+      Math.abs(wrap(f.yaw)) > Math.PI / 4 ? 'sideFlip' : 'barrelRoll';
+    const axis = moves[kind].axis, sign = key === 'Up' || key === 'Left' ? -1 : 1;
+    held[axis] = {kind, sign};
+    if (fresh.includes(key) || axis === 'roll' && fresh.includes('Space')) f.queue[axis] = held[axis];
+  }
+  const airLeft = remainingAir(s);
+  for (const axis of ['pitch', 'yaw', 'roll']) {
+    if (!f.active[axis] && f.queue[axis]) {
+      begin(duel, f, axis, f.queue[axis], airLeft);
+      delete f.queue[axis];
+    }
+    const turn = f.active[axis];
+    if (!turn) continue;
+    turn.elapsed += dt;
+    f[axis] = turn.sign * TURN * Math.min(1, turn.elapsed / turn.duration);
+    if (turn.elapsed + 1e-8 >= turn.duration) {
+      bank(f, turn.kind); f[axis] = 0; delete f.active[axis];
+      if (!f.queue[axis] && held[axis]) f.queue[axis] = held[axis];
     }
   }
   Object.assign(s.bowlPose, {pitch: wrap(f.pitch), yaw: wrap(f.yaw), roll: wrap(f.roll)});
@@ -114,27 +134,30 @@ function air(duel, state, dt) {
 export function landBowlTricks(duel, actor) {
   const state = states.get(actor);
   if (!state?.flight || !tricksEnabled(duel, actor)) return;
-  const f = state.flight, pose = duel.state.bowlPose;
+  const f = state.flight;
   state.flight = null;
-  const landing = Math.cos(f.pitch) * Math.cos(f.roll) < Math.SQRT1_2 - 1e-8 ? 'slam' :
-    Math.abs(wrap(f.yaw)) > Math.PI / 4 ? 'slide' : 'clean';
+  let landing = 'clean';
+  const level = difficulty(actor), window = level === 'hard' ? 45 : 60;
+  for (const [axis, turn] of Object.entries(f.active)) {
+    if ((1 - turn.elapsed / turn.duration) * 360 <= window + 1e-8) bank(f, turn.kind);
+    else if (axis !== 'yaw') landing = 'slam';
+    else if (landing === 'clean') landing = 'slide';
+  }
   actor.bowlLanding = landing;
   if (landing === 'slam') {
-    state.recovery = 1.5;
+    state.recovery = level === 'easy' ? 1 : 1.5;
     award(duel, state, 'slam', 0, 0, 0, landing);
-    return;
-  }
+    if (level !== 'easy') return;
+  } else state.levelTime = .2;
   if (landing === 'slide') state.slide = 1;
-  const tricks = ['frontFlip', 'backflip', 'spin', 'barrelRoll', 'sideFlip']
-    .filter(kind => f.turns[kind]).map(kind => [kind, f.turns[kind]]);
-  const combo = tricks.length;
-  for (const [index, [kind, turns]] of tricks.entries()) {
-    const points = landingPoints(kind, turns, combo, landing);
-    award(duel, state, kind, turns, points, combo, landing, index === 0);
+  const tricks = Object.keys(moves).filter(kind => f.turns[kind]);
+  const paidLanding = landing === 'slam' ? 'clean' : landing;
+  for (const [index, kind] of tricks.entries()) {
+    const turns = f.turns[kind];
+    award(duel, state, kind, turns, landingPoints(kind, turns, tricks.length, paidLanding),
+      tricks.length, paidLanding, index === 0 && landing === 'clean');
   }
-  pose.pitch = pose.yaw = pose.roll = 0;
 }
-
 export function stepBowlTricks(duel, actor, dt) {
   if (!tricksEnabled(duel, actor) || !(dt > 0)) return;
   let state = states.get(actor);
@@ -150,6 +173,10 @@ export function stepBowlTricks(duel, actor, dt) {
     for (const axis of ['pitch', 'yaw', 'roll']) actor.bowlPose[axis] *= share;
     actor.speedMph = 0;
     state.recovery = Math.max(0, state.recovery - dt);
+  } else if (state.levelTime > 0 && !actor.airborne) {
+    const share = Math.max(0, 1 - dt / state.levelTime);
+    for (const axis of ['pitch', 'yaw', 'roll']) actor.bowlPose[axis] *= share;
+    state.levelTime = Math.max(0, state.levelTime - dt);
   } else if (actor.airborne && !actor.tumble) air(duel, state, dt);
   else if (state.flight) landBowlTricks(duel, actor);
   else {

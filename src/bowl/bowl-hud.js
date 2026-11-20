@@ -11,11 +11,11 @@ export const BOWL_TRICK_GUIDE = Object.freeze([
   {kind: 'wheelie', name: 'Wheelie', keys: [['W', 'Space']], points: '8 per second. Add 25 at 3 seconds.'},
   {kind: 'stoppie', name: 'Stoppie', keys: [['S', 'Space']], points: '10 per second.'},
   {kind: 'donut', name: 'Donut', keys: [['W', 'Space', '← or →']], points: '15 to 40 per turn. Three turns earn a 30-point Cyclone.'},
-  {kind: 'spin', name: 'Spin', keys: [['← or →']], points: '30, 120 or 270 points.'},
-  {kind: 'frontFlip', name: 'Front flip', keys: [['W']], points: '50, 200 or 450 points.'},
-  {kind: 'backflip', name: 'Backflip', keys: [['S']], points: '50, 200 or 450 points.'},
-  {kind: 'barrelRoll', name: 'Barrel roll', keys: [['Space', '← or →']], points: '60, 240 or 540 points.'},
-  {kind: 'sideFlip', name: 'Side flip', keys: [['← or →'], ['Space', '← or →']], points: '80, 320 or 720 points.'},
+  {kind: 'spin', name: 'Spin', keys: [['← or →']], points: 'Tap Left or Right. Keep it held for another turn. 30, 120 or 270 points.'},
+  {kind: 'frontFlip', name: 'Front flip', keys: [['W']], points: 'Tap W. Keep it held for another turn. 50, 200 or 450 points.'},
+  {kind: 'backflip', name: 'Backflip', keys: [['S']], points: 'Tap S. Keep it held for another turn. 50, 200 or 450 points.'},
+  {kind: 'barrelRoll', name: 'Barrel roll', keys: [['Space', '← or →']], points: 'Tap Space and Left or Right. Keep it held for another turn. 60, 240 or 540 points.'},
+  {kind: 'sideFlip', name: 'Side flip', keys: [['← or →'], ['Space', '← or →']], points: 'Tap Space and Left or Right while sideways. Keep it held for another turn. 80, 320 or 720 points.'},
 ]);
 
 const REX_GOALS = {
@@ -70,7 +70,7 @@ export function bowlStrip(state, view, rivalName = () => null) {
   const night = state.bowlNight, event = night?.event;
   const crush = view.event === 'carCrush' && Number.isFinite(event?.count);
   const trick = event?.trickPopups?.[0];
-  const showingTrick = popupActive(trick, night?.clock);
+  const showingTrick = Number.isFinite(trick?.multiplier) && popupActive(trick, night?.clock);
   const crowd = showingTrick ? Math.round((trick.multiplier - 1) * 100) : view.crowd;
   const multiplier = showingTrick ? popupMultiplier(trick.multiplier) : (1 + crowd / 100).toFixed(1);
   return {
@@ -90,6 +90,7 @@ export function bowlOpeningLines(night, lent) {
 
 export function bowlTrickPopup(record, now) {
   if (!popupActive(record, now)) return null;
+  if (record.notice) return {name: record.notice, points: '', fresh: false};
   const trick = BOWL_TRICK_GUIDE.find(entry => entry.kind === record.kind);
   const name = trick?.name ?? (record.kind === 'cyclone' ? 'Cyclone' : '');
   if (!name) return null;
