@@ -53,15 +53,32 @@ const clock = value => {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
+const popupActive = (record, now) => !!record && now - record.at < 1.5;
+const popupMultiplier = factor => factor.toFixed(2).replace(/0$/, '');
+
+function sideBySideGap(state, event) {
+  const rival = state.opponents?.[0];
+  if (!rival || !event?.finishS) return '';
+  const playerLeft = event.finishS.player - state.s, rivalLeft = event.finishS.rival - rival.s;
+  const metres = Math.round(rivalLeft - playerLeft);
+  if (!Number.isFinite(metres)) return '';
+  return `${metres > 0 ? 'AHEAD' : metres < 0 ? 'BEHIND' : 'LEVEL'} ${whole(Math.abs(metres))} m`;
+}
+
 export function bowlStrip(state, view, rivalName = () => null) {
   if (!view) return null;
-  const event = state.bowlNight?.event;
+  const night = state.bowlNight, event = night?.event;
   const crush = view.event === 'carCrush' && Number.isFinite(event?.count);
+  const trick = event?.trickPopups?.[0];
+  const showingTrick = popupActive(trick, night?.clock);
+  const crowd = showingTrick ? Math.round((trick.multiplier - 1) * 100) : view.crowd;
+  const multiplier = showingTrick ? popupMultiplier(trick.multiplier) : (1 + crowd / 100).toFixed(1);
   return {
     name: view.name, goal: shortGoal(view, event, rivalName), driver: view.driver,
     points: `${whole(view.score)} points`,
     time: view.timeLeft == null && view.event !== 'scrapasaurus' ? '' : clock(view.timeLeft ?? state.stageTimeSec ?? 0),
-    crowd: view.crowd, crowdLabel: `CROWD x${(1 + view.crowd / 100).toFixed(1)}`, caption: view.caption,
+    crowd, crowdLabel: `CROWD x${multiplier}`, caption: view.caption,
+    gapLabel: view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
     crushLabel: crush ? `CRUSHED ${event.count} OF ${view.target}` : '',
     chainLabel: crush && event.chain > 1 ? `CHAIN x${event.chain}` : '',
   };
@@ -72,14 +89,14 @@ export function bowlOpeningLines(night, lent) {
 }
 
 export function bowlTrickPopup(record, now) {
-  if (!record || now - record.at >= 1.5) return null;
+  if (!popupActive(record, now)) return null;
   const trick = BOWL_TRICK_GUIDE.find(entry => entry.kind === record.kind);
   const name = trick?.name ?? (record.kind === 'cyclone' ? 'Cyclone' : '');
   if (!name) return null;
   const prefix = record.kind === 'cyclone' || record.turns < 2 ? '' :
     record.turns === 2 ? 'Double ' : record.turns === 3 ? 'Triple ' : `${record.turns}× `;
   const base = Number(record.base.toFixed(1));
-  const multiplier = record.multiplier.toFixed(2).replace(/0$/, '');
+  const multiplier = popupMultiplier(record.multiplier);
   const relation = Math.round(base * Number(multiplier)) === record.points ? '=' : '≈';
   return {name: (prefix + name).toUpperCase(),
     points: `${base.toLocaleString('en-US')} x${multiplier} ${relation} ${whole(record.points)}`, fresh: record.fresh};
@@ -208,7 +225,7 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
   host.innerHTML = `<section class="bowl-hud" aria-label="Show Night">
     <div class="bowl-hud-title"><b class="bowl-hud-event"></b><span class="bowl-hud-goal"></span></div>
     <div class="bowl-hud-numbers"><span class="bowl-hud-score"></span><span class="bowl-hud-clock"></span>
-      <span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span></div>
+      <span class="bowl-hud-gap" hidden></span><span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span></div>
     <label class="bowl-hud-crowd"><span></span><meter min="0" max="100" value="0"></meter></label>
   </section>
   <p class="bowl-hud-mo" role="status" hidden></p>
@@ -230,6 +247,7 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     ['.bowl-hud-goal', view => view.goal],
     ['.bowl-hud-score', view => view.points],
     ['.bowl-hud-clock', view => view.time],
+    ['.bowl-hud-gap', view => view.gapLabel],
     ['.bowl-hud-crush', view => view.crushLabel],
     ['.bowl-hud-chain', view => view.chainLabel],
     ['.bowl-hud-event', view => view.driver ? `${view.driver} IS DRIVING · ${view.name.toUpperCase()}` : view.name.toUpperCase()],

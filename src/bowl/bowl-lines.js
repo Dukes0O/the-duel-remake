@@ -149,7 +149,7 @@ export const BIG_MO = Object.freeze({
   'night.3.open': 'Tonight there are four trucks in the Bowl, and only one of them will still be rolling at the end.',
   'night.4.open': 'The crowd is bigger than ever tonight. Somebody told them our driver never gives up, and they want to see it for themselves.',
   'night.5.open': 'This is the last night of the season, and something very large is waiting under the stands. Drive carefully, everyone.',
-  'lent.truck': 'Our driver has no truck of their own, so tonight they are driving the show truck. Please bring it back in one piece.',
+  'lent.truck': 'Our driver has no truck yet, so tonight the show lends its own. Please bring it back in one piece.',
   'event.carCrush.intro': 'First up is the Car Crush. Drive down that line and see how far you can get before the junk stops you.',
   'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
   'event.sideBySide.intro': 'It is time for Side by Side. Two trucks go once round the Bowl, and the first one over the line goes on.',

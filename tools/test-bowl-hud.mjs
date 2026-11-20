@@ -80,10 +80,27 @@ for (const [night, index, name, goal] of [
   assert.equal(bowlTrickPopup({...record, multiplier: 1.44, points: 288}, 4).points, '200 x1.44 = 288');
   assert.equal(bowlTrickPopup({...record, multiplier: 1.436, points: 287}, 4).points, '200 x1.44 ≈ 287');
   assert.equal(bowlTrickPopup(record, 5.5), null);
+  const state = {bowlNight: {event: {trickPopups: [record]}, clock: 5.49}};
+  const view = {event: 'freestyle', target: 310, crowd: 83, score: 280};
+  assert.equal(bowlStrip(state, view).crowdLabel, 'CROWD x1.4');
+  assert.equal(bowlStrip(state, view).crowd, 40);
+  state.bowlNight.clock = 5.5;
+  assert.equal(bowlStrip(state, view).crowdLabel, 'CROWD x1.8');
   assert.equal(bowlResultReady({clock: 11.99, resultAt: 10, lastResult: {won: true, event: 'freestyle'}}), false);
   assert.equal(bowlResultReady({clock: 12, resultAt: 10, lastResult: {won: true, event: 'freestyle'}}), true);
   assert.equal(bowlResultReady({clock: 19.99, resultAt: 10, lastResult: {won: true, event: 'scrapasaurus'}}), false);
   assert.equal(bowlResultReady({clock: 20, resultAt: 10, lastResult: {won: true, event: 'scrapasaurus'}}), true);
+}
+
+{
+  start(1, 2);
+  const state = duel.state, rival = state.opponents[0];
+  const strip = () => bowlStrip(state, bowlHudView(state, duel.course));
+  assert.equal(strip().gapLabel, 'LEVEL 0 m');
+  state.s += 17;
+  assert.equal(strip().gapLabel, 'AHEAD 17 m');
+  rival.s += 23;
+  assert.equal(strip().gapLabel, 'BEHIND 6 m');
 }
 
 {

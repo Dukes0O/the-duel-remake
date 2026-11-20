@@ -94,7 +94,9 @@
 .bowl-hud-event { color: #ffc06a; letter-spacing: .035em; }
 .bowl-hud-numbers { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-weight: 800; }
 .bowl-hud-clock { min-width: 3ch; font-variant-numeric: tabular-nums; }
-.bowl-hud-chain { color: #ffcd77; }
+.bowl-hud-chain, .bowl-hud-gap { color: #ffcd77; }
+.bowl-night-active .countdown { top: clamp(70px, 11vh, 100px); }
+.bowl-night-active .countdown > b { font-size: clamp(40px, 9vh, 76px); line-height: 1; }
 .bowl-hud-crowd { display: grid; gap: 2px; width: clamp(72px, 10vw, 144px); font-weight: 700; }
 .bowl-hud-crowd meter { width: 100%; height: 8px; accent-color: #ffb65f; }
 .bowl-hud-mo {
@@ -226,6 +228,7 @@
   .bowl-hud { grid-template-columns: minmax(0, 1fr) auto; width: min(440px, 94vw); top: 42px; }
   .bowl-hud-crowd { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; }
   .bowl-trick-card ul { grid-template-columns: 1fr; }
+  .bowl-night-active .countdown { top: 115px; }
   .bowl-hud-mo { max-width: 55vw; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
