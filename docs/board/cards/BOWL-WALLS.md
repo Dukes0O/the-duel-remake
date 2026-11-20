@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Astra** (physics: how a truck meets a wall). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 Walls that bounce, and no wear outside a fight. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), sections 7 and 8. Kyle, 20 November
 2026: "low-speed hits on walls should be bounces, not damage".
 

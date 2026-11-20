@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Astra** (graphics: the model). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 The show's dinosaur, design sections 7 and 9.
 
 **Files you own:** `tools/blender/bowl-scrapasaurus.py`, `public/assets/models/wasteland/bowl/scrapasaurus.glb`, `docs/board/looks/bowl-art-rex/`, one entry in

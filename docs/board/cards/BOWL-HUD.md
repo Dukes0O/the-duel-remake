@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Sol** (the screen). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 The Bowl's own screen: room to see the truck, tricks named as they land, and damage that can be read. Design:
 [BOWL-SHOW-2](BOWL-SHOW-2.md), sections 2, 5 and 7. Kyle, 20 November 2026: "damage cannot be read until the truck
 smokes. Show it plainly."

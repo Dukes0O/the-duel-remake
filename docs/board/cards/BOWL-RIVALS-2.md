@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Sol** (the rivals' pace and habits). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 Rivals that compete. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), sections 2 and 6. Kyle, 20 November 2026: the rival in the
 side-by-side race "does almost nothing and crawls; rivals in general are weak".
 

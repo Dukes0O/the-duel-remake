@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Sol** (lessons and words). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 The game teaches the trick list. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 2, "How the game teaches it". Kyle, 20
 November 2026: "backflips and front flips exist but nothing tells the player. The trick list must be taught in the game."
 Read `memory/teach-dont-slide` and `memory/lessons-teach-in-prose` in spirit: every word is explained with a picture, the

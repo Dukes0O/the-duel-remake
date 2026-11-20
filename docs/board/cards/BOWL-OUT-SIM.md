@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Astra** (physics: ground beyond the wall, the drop, the gates). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 Over the wall, into the crowd, and a way back in: the rules. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 3. Kyle, 20
 November 2026: jumping out of the arena into the stands and beyond "is the best moment of the night. Keep it", with a way
 back in through an opening in the outer wall, reachable from behind the stands.

@@ -381,6 +381,7 @@ tasks:
   - id: BOWL-ART-REX
     title: "Art: the Scrapasaurus"
     owner: "codex"
+    model: "astra"
     lane: "ART"
     size: "M"
     status: "building"
@@ -625,6 +626,7 @@ tasks:
   - id: BOWL-WALLS
     title: "Bowl: walls that bounce, and no wear outside a fight"
     owner: "codex"
+    model: "astra"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -636,6 +638,7 @@ tasks:
   - id: BOWL-TRICKS
     title: "Bowl: the trick set as rules and scores (wheelie, stoppie, donut, spin, flips, barrel roll, side flip, doubles, combos)"
     owner: "codex"
+    model: "astra"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -669,6 +672,7 @@ tasks:
   - id: BOWL-HUD
     title: "Bowl: its own screen, trick pop-ups and card, health that can be read, Big Mo on time"
     owner: "codex"
+    model: "sol"
     lane: "UI"
     size: "M"
     status: "ready"
@@ -680,6 +684,7 @@ tasks:
   - id: BOWL-CRUSH
     title: "Bowl: Car Crush as a 60 second count on the whole floor, with chains and pancakes"
     owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -691,6 +696,7 @@ tasks:
   - id: BOWL-OUT-SIM
     title: "Bowl: over the wall, the stands as ground, the car park and two gates back in"
     owner: "codex"
+    model: "astra"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -702,6 +708,7 @@ tasks:
   - id: BOWL-RIVALS-2
     title: "Bowl: rivals that compete (pace from lap time, Side by Side twice round, rivals' scores)"
     owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -713,6 +720,7 @@ tasks:
   - id: BOWL-TRICK-SCHOOL
     title: "Bowl: Trick School, tonight's trick, and why a try failed"
     owner: "codex"
+    model: "sol"
     lane: "UI"
     size: "M"
     status: "ready"
@@ -735,6 +743,7 @@ tasks:
   - id: BOWL-REX-2
     title: "Bowl: the Scrapasaurus fight remade (solid, comes to the driver, up its tail, three boxes)"
     owner: "codex"
+    model: "astra"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -757,6 +766,7 @@ tasks:
   - id: BOWL-WEAPONS
     title: "Bowl: hammer, saw and launcher for Last Truck Rolling, and health as the one measure"
     owner: "codex"
+    model: "astra"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -779,6 +789,7 @@ tasks:
   - id: BOWL-JUMP-EVENTS
     title: "Bowl: three new events (Long Jump, High Jump, Home Run)"
     owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -790,6 +801,7 @@ tasks:
   - id: BOWL-NIGHTS
     title: "Bowl: the season of five different nights as data, the picker and the saved records"
     owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -812,14 +824,26 @@ tasks:
   - id: BOWL-TOUR
     title: "Bowl: nights 6 to 8, the tour (after the first release)"
     owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "L"
     status: "ready"
-    waiting_on: "kyle"
-    needs: [BOWL-NIGHTS]
+    needs: [BOWL-NIGHTS, BOWL-TRICKS-ALL]
     locks: [bowl-night, bowl-rivals, save-shape]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-TOUR.md"
+
+  - id: BOWL-TRICKS-ALL
+    title: "The trick set for every vehicle that can play in the Monster Arena, and on that course (Kyle, 20 November)"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-TRICKS, BOWL-HUD]
+    locks: [bowl-night, replay-fixtures]
+    flag: "arena-tricks"
+    details: "docs/board/cards/BOWL-TRICKS-ALL.md"
 
   - id: WILDLIFE-HITS-2
     title: "Animal hits from Kyle's try: more animals, more kinds, a louder splat, and why the car cannot turn round"

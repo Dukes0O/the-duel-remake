@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Astra** (physics: a solid beast whose tail and back are ground). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 The Scrapasaurus fight remade so that a child can see what to do and do it. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md),
 section 10. Kyle, 20 November 2026: "a good idea", but he could not tell how to beat it; the truck drives through it;
 "land on its back" and "smash its three battery boxes" could not be done or understood.

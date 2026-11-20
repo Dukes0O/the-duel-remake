@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Sol** (an event's rules and what stands on the floor). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 Car Crush becomes a 60 second event on the whole floor. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 1. Kyle, 20
 November 2026: the first event of every night "is over in about three seconds", with nothing to play.
 

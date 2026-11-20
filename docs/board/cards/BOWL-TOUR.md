@@ -2,31 +2,34 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Sol** (three more nights as data and rules). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 More nights: nights 6 to 8, the tour. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 11. Kyle, 20 November 2026: more
 nights, "using the larger Titan arena that already exists". This card follows the first release of nights 1 to 5 and is
 not needed for it.
 
-## Waiting for Kyle's word
+## Kyle's word (20 November 2026)
 
-"The larger Titan arena that already exists" is read as the **Titan Monster Arena** course (`titan-arena`: a lap of
-1,120 m, about four times the Bowl's). If Kyle meant the Bowl as enlarged on 19 November, nights 6 and 7 stay at the Bowl
-with other floor layouts (the lap run the other way, a jump across an end, a mud night), which BOWL-EXPAND's layout
-already allows. Claude's pick is the Titan Monster Arena, because a long lap gives events the Bowl cannot. Do not start
-until `waiting_on` is cleared.
+Yes: "the larger Titan arena that already exists" is the **Titan Monster Arena** course (`titan-arena`: a lap of
+1,120 m, about four times the Bowl's). And the freestyle mechanics are for every vehicle that can play there
+(BOWL-TRICKS-ALL, which this card needs).
 
-## What to build (on the pick above)
+## What to build
 
 1. **Night 6, Race Night, at Titan Stadium:** a **Stadium Race** of two laps against three named rivals at once, on the
-   game's own race rules with the show truck lent as in the Bowl; a **Stunt Trial** of the stadium's jumps and crushes
-   against the clock (the existing Titan Stunt Trial's rules, scored with the trick set); a Side by Side over half a lap.
+   game's own race rules; a **Stunt Trial** of the stadium's jumps and crushes against the clock (the existing Titan
+   Stunt Trial's rules, scored with the trick set); a Side by Side over half a lap.
 2. **Night 7, Stunt Night, at Titan Stadium:** a Long Jump at its largest ramp; Freestyle on the long lap, where every
    triple pays; a Stadium Race run the other way round.
 3. **Night 8, Champions' Night, at the Bowl:** Freestyle with the fallen Scrapasaurus lying on the floor as a ramp; Last
    Truck Rolling with five trucks; a Side by Side final with Dragon Wagon, best of three.
-4. The trick rules, the wall rules, the show camera and the Bowl's screen hold at Titan Stadium during a night, chosen by
-   the night and not by the course, so that the Titan Monster Arena and the Titan Stunt Trial are unchanged for anyone
-   who enters them from the menu (replay fingerprints unchanged).
-5. Nights 6 to 8 open after night 5 is won. Their purses are design numbers for Claude's review (450, 500 and 800 scrap),
+4. **The vehicle:** on nights 6 and 7 the driver takes the show truck or any unlocked vehicle of the driver's own. The
+   night's card says so, in one sentence, when the chosen vehicle is too light for an event that needs crushing, and
+   offers the show truck. Night 8, at the Bowl, is driven as the Bowl's other nights are.
+5. The tricks at Titan Stadium are BOWL-TRICKS-ALL's. The Bowl's wall rules, show camera and screen hold there during a
+   night, chosen by the night and not by the course, so that an ordinary race there from the menu keeps its own walls,
+   camera and screen.
+6. Nights 6 to 8 open after night 5 is won. Their purses are design numbers for Claude's review (450, 500 and 800 scrap),
    with one independent review, because they are pay (rule 17).
 
 ## Files and locks
@@ -39,7 +42,8 @@ until `waiting_on` is cleared.
 
 1. `tools/test-bowl-tour.mjs`: each of the three nights runs its events in order at its venue; a scripted child-pace
    driver wins the Stadium Race on Easy at least 9 times in 10.
-2. Replay fingerprints and world signatures of `titan-arena` and `titan-stunt-trial` unchanged; `tools/test-bowl-save.mjs`
+2. World signatures of `titan-arena` and `titan-stunt-trial` unchanged, and their replay fingerprints as BOWL-TRICKS-ALL
+   left them; a night started in a light road car plays every event that needs no crushing; `tools/test-bowl-save.mjs`
    with nights 6 to 8, reviewed by the save checker.
 3. Laptop only, Claude runs: each night by hand, then Kyle's try.
 

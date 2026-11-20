@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Astra** (physics: blows, the saw's drag, a truck thrown and landing). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 Weapons for Last Truck Rolling, and health as the one measure of damage. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), sections
 7 and 9 (the table there is the specification). Kyle, 20 November 2026: Last Truck Standing has no weapons; "robot-wars
 weapons: a saw, a hammer, a launcher".

@@ -137,6 +137,14 @@ Tricks are rules over the truck's ordinary driving, on the Bowl only. A trick se
   the kickers, wheelies and donuts and no flips; Medium needs single flips and one big jump; Hard needs doubles or combos.
   Starting numbers before measurement: 300, 800 and 1,500.
 
+**Every vehicle (Kyle, 20 November 2026).** "The freestyle mechanics should be enabled for all vehicles that can play in
+the Monster Arena." Any unlocked car can enter the Monster Arena today (the Titan is only recommended there, because
+lighter cars cannot crush wrecks), so the trick set belongs to every vehicle a driver can start that course in, and to
+each new vehicle as it is added. The keys, the turning speeds, the landings and the points are the same for all of them,
+so that a child learns them once. A vehicle's own weight and power still decide how much air it gets, and a car too
+light to crush still cannot crush. The tricks are on wherever the venue says so: the Bowl, and the Titan Monster Arena
+whenever it is played, from the menu as well as on a tour night. Card BOWL-TRICKS-ALL.
+
 **How the game teaches it.**
 
 - **Trick School** opens from the Show Night picker and is offered once before a driver's first night ("First time here?
@@ -328,13 +336,16 @@ Three new events, each three goes with the truck put back on its run-up after ea
 - **Night 8, Champions' Night,** is back at the Bowl: Freestyle with the fallen Scrapasaurus lying on the floor as a
   ramp, Last Truck Rolling with five trucks, and a Side by Side final with Dragon Wagon, best of three.
 
-**For Kyle's word:** "the larger Titan arena that already exists" is read here as the Titan Monster Arena course. If Kyle
-meant the Bowl as enlarged on 19 November, nights 6 and 7 move to the Bowl with other floor layouts. Card BOWL-TOUR waits
-for the answer; nothing else does.
+**Kyle, 20 November 2026:** yes, "the larger Titan arena that already exists" is the Titan Monster Arena course. On the
+tour nights the driver takes the show truck or any unlocked vehicle of the driver's own, since all of them have the
+tricks there; the night's card says so when the chosen vehicle is too light for an event that needs crushing.
 
 ### Slices
 
-Each is a card on the board with its files, locks, checks and sound cues. Nights 1 to 5 are the first release; BOWL-TOUR
+Each is a card on the board with its files, locks, checks and sound cues. Each Codex card names its model (Kyle, 20
+November 2026: graphics and physics for Astra, the rest for Sol): **Astra** builds BOWL-WALLS, BOWL-TRICKS,
+BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS and BOWL-REX-2; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
+BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS and BOWL-TOUR. Nights 1 to 5 are the first release; BOWL-TOUR
 follows it.
 
 | Card | Owner | What it builds | Section |
@@ -356,7 +367,8 @@ follows it.
 | BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump, Home Run | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |
 | BOWL-SOUND | Claude | every other new cue chosen and listened to | all |
-| BOWL-TOUR | Codex, after Kyle's word | nights 6 to 8 | 11 |
+| BOWL-TRICKS-ALL | Codex | the trick set for every vehicle, and on the Titan Monster Arena | 2 |
+| BOWL-TOUR | Codex | nights 6 to 8 | 11 |
 
 Words on screen and Big Mo's lines: the builder writes each new line as one full plain sentence
 (`memory/dialogue-plain-prose`), and Claude reads every line during the closing drive.

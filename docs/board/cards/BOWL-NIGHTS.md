@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Sol** (the season as data, the picker, saved records). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 The season of five nights, each different, as data. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 11. Kyle, 20 November
 2026: "the nights repeat each other"; more variety, new challenges, new moves.
 

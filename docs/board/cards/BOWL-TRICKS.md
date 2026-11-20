@@ -2,12 +2,19 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+**Codex model: Astra** (physics: the truck on two wheels and in the air). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+
 The monster-truck trick set as rules and scores. Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 2 (the table there is the
 specification: keys, when each trick counts, points). Kyle, 20 November 2026: wheelies, stoppies, donuts, 360s, side
 flips, barrel rolls, front and back flips; "a double flip scores far more than a single one".
 
 **Measured before (Claude's hand drive):** S held in the air took the truck from 50 mph to 2 mph in mid flight; each roof
 landing added 0.35 to 0.55 to a damage zone; a flip paid 30 beside a jump's 125.
+
+**Kyle, 20 November 2026:** the tricks are for every vehicle that can play in the Monster Arena, not for the Titan alone.
+Write the rules for whichever vehicle is driving: nothing in `src/bowl/bowl-tricks.js` may name the show truck or assume
+its size, and whether tricks are on comes from the venue's own data (`tricks: true` on the Bowl's course), not from a
+check that the course is the Bowl. BOWL-TRICKS-ALL then switches them on at the Titan Monster Arena.
 
 ## What to build
 
