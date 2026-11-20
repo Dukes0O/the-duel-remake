@@ -61,6 +61,10 @@ const world = createScablandsWorld(inputs);
   ok(dispatchBoardMarkup(s.view(), {fire: {repairCost: 0}}).includes('Take off the bucket'), 'the board offers the bucket at the Scablands pad');
   ok(dispatchBoardMarkup(s.view(), {fire: {repairCost: 0}}).includes('Fire at The Ridge'), 'the board\'s radio box names the Ridge fire');
   ok(controlsMarkup(s.view(), {credits: 5000, refuels: 3}).includes('data-heli-fuel="fill"'), 'the pump button shows on the Scablands pad');
+  const route = controlsMarkup(s.view(), {credits: 5000, refuels: 3});
+  ok(!/Tremblant|Panorama|data-heli-destination/.test(route), 'the panel offers no other course to fly to over the Scablands');
+  ok(/THE SCABLANDS/.test(route) && /The pad · here/.test(route) && /The dip tank · \d{3} · \d+\.\d km/.test(route) && /The fire on the Ridge/.test(route) && /Old Tam&#39;s hut|Old Tam's hut/.test(route),
+    'it lists this land\'s places with their heading and distance');
   ok(s.takeOffBucket().ok, 'and taken off there');
   const truck = s.view().loads.find(load => load.lift === 'tam-truck');
   ok(truck && truck.renderAs === 'dusthawk_rally' && Math.hypot(truck.x - world.truck.x, truck.z - world.truck.z) < 0.01, 'Old Tam\'s pickup waits at the foot of the Ridge');

@@ -833,6 +833,10 @@ export function createScablandsScene(course,options={}){
     tunnelLining.userData.look.update({car:tunnelCar,forward:tunnelForward,mouths,headlights:state.onFoot?0:1});
   }
   function locate(state){
+    // HELI-RUSTWALL: over the land in Kestrel One the drawing follows the helicopter (render3d.js sets the point each frame;
+    // the car stays parked at the gate). Drawing only.
+    const follow=group.userData.followPoint;
+    if(follow&&Number.isFinite(follow.x)&&Number.isFinite(follow.z)){here.x=follow.x;here.z=follow.z;return true;}
     if(state?.onFoot&&Number.isFinite(state.fighter?.x)&&Number.isFinite(state.fighter?.z)){here.x=state.fighter.x;here.z=state.fighter.z;return true;}
     if(!Number.isFinite(state?.s)||!Number.isFinite(state?.lateral))return false;
     const {samples,step,length}=course,p=((state.s%length)+length)%length,index=Math.min(samples.length-2,Math.floor(p/step));

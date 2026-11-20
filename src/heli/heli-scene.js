@@ -272,13 +272,21 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   const scMarks = new THREE.Group();
   scMarks.name = 'Scablands marks';
   group.add(scMarks);
-  const tankWall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40, 1, true),
-    new THREE.MeshStandardMaterial({color: 0xe86a1c, roughness: .8, side: THREE.DoubleSide}));
-  const tankWater = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshStandardMaterial({color: 0x3f7fa6, roughness: .2}));
+  // A real folding dip tank: an orange vinyl wall held up by a fat yellow collar round the top, water that shows the sky,
+  // and a ring of wet, dark ground where the bucket's spill lands. The collar and the wet ground make it read as a tank and
+  // show its size from 30 m up, where a plain disc read as a target (Director's check, 20 November 2026).
+  const tankWall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 48, 1, true),
+    new THREE.MeshStandardMaterial({color: 0xc8521a, roughness: .75, side: THREE.DoubleSide}));
+  const tankWater = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({color: 0x24526a, roughness: .08, metalness: .25}));
   tankWater.rotation.x = -Math.PI / 2;
+  const tankCollar = new THREE.Mesh(new THREE.TorusGeometry(1, .07, 10, 48), new THREE.MeshStandardMaterial({color: 0xf2b21c, roughness: .6}));
+  tankCollar.rotation.x = -Math.PI / 2;
+  const tankWet = new THREE.Mesh(new THREE.RingGeometry(1, 1.8, 48), new THREE.MeshStandardMaterial({color: 0x3b2a1c, roughness: .95, transparent: true, opacity: .7, depthWrite: false}));
+  tankWet.rotation.x = -Math.PI / 2;
   const tank = new THREE.Group();
   tank.name = 'Dip tank';
-  tank.add(tankWall, tankWater);
+  tank.add(tankWall, tankWater, tankCollar, tankWet);
+  tank.traverse(object => { if (object.isMesh) { object.castShadow = object !== tankWet && object !== tankWater; object.receiveShadow = true; } });
   const hutRing = ring(THREE, 12, 0xf2c14e), fuelRing = padRing(0xf2c14e);
   hutRing.name = 'Old Tam hut circle'; fuelRing.name = 'Ridge fuel truck pad';
   scMarks.add(tank, hutRing, fuelRing);
@@ -294,6 +302,9 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       tank.position.set(sc.tank.x, sc.tank.y, sc.tank.z);
       tankWall.scale.set(sc.tank.radius, depth + .2, sc.tank.radius); tankWall.position.y = (depth + .2) / 2;
       tankWater.scale.setScalar(sc.tank.radius - .05); tankWater.position.y = depth;
+      // The collar is about 45 cm thick on a 3.2 m tank; the wet ground reaches 2.6 m past the wall.
+      tankCollar.scale.setScalar(sc.tank.radius); tankCollar.position.y = depth + .2;
+      tankWet.scale.setScalar(sc.tank.radius + .05); tankWet.position.y = .06;
     }
     fuelRing.visible = !!sc.fuel;
     if (!sc.fuel) { if (fuelPump.model) fuelPump.model.visible = false; return; }

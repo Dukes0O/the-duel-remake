@@ -69,7 +69,8 @@ for (const [label, options, townOptions] of [['the town switch off', {town: fals
   const seen = (town.dispatch?.explored ?? []).filter(area => area.regionId === 'scablands').length;
   ok(seen > 0, `flying uncovered ${seen} chunks of the town's map`);
   app.returnToMenu();
-  ok(!app.heliSession && app.duel.state.status === 'menu', 'leaving ends the visit');
+  ok(!app.heliSession && app.duel.state.status !== 'heli', 'leaving ends the visit');
+  ok(app.duel.state.status === 'exploring' && app.duel.state.hiddenRoadJourney, 'and goes back to the yard, as a town drive does');
   ok(townHeliOf(town).ridgeFire.state === 'burning' && townHeliOf(town).ridgeFire.fire?.courseId === 'scablands', 'the town keeps the fire still burning for next time');
   await new Promise(done => setTimeout(done, 50));
   const stored = await pageTownStore().load(town.id);

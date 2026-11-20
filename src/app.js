@@ -2646,6 +2646,7 @@ export class App {
     cleanupWorldJobLoan(this.duel);
     this.duel.clearDeep();this.deepAudio.stop();
     const heliLanding = this._heliLandingChoice();
+    const townFlight = !!this._townHeli; // HELI-RUSTWALL: a flight from the town's Helipad ends in the yard, as a town drive does
     this._leaveHeli();
     if (st.heliVisit) st.heliVisit = null;
     st.paused = false; st.status = 'menu'; st.boosting = false;
@@ -2664,6 +2665,7 @@ export class App {
     this._storyRace = null; this._storyPending = null; this._water?.clear(); this._waterStartLine = null; // the story's race ends with the race (quitting grants nothing)
     this.duel.emit({ menu: true });
     this.storyMenuOpened(); // Ana's message, the next time the menu opens after the win
+    if (townFlight) this.visitWasteland();
   }
   get footCameraMode() {
     return wastelandRulesActive(this.duel.state) && this._footCameraMode === 'overhead'
