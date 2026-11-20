@@ -339,3 +339,7 @@ manage these.
 
 H pauses and resumes, the flips draw upside down in the air, and the finish shows the trick score. Offer the commit for a
 short second drive when these are in.
+
+## Arena pop-up projection
+
+The existing `projectBowlTruck` hook in `src/render3d.js` returns null for every ordinary Monster Arena race. The drawing code therefore has no point above the car for a pop-up. Please grant extending that one guard to the active `arenaTrickShow` state. It will project the same player mesh through the current camera, respecting the `arena-tricks` switch. The branch will take `busy-game-files` for the render hook as its card specifies. The builder is separately tracing the drawn wheel pose and repeating the Dusthawk wreck contact with the switch off.

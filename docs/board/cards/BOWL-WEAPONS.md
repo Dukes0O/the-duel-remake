@@ -194,3 +194,7 @@ full night after.
    tween) covers this, measured after the F fix.
 
 When these are in, offer the commit for one more drive.
+
+## Finishing the saw and launcher with the Rex screen in use
+
+The final keyboard round calls for fixes inside the weapon physics and its tests. The choosing screen passed. Please narrow the remaining weapons lock to `bowl-rivals` for these corrections, so Rex can finish its HUD and keyboard fixes under `bowl-screens` at the same time. The single shared F release fix belongs to Rex first and will be picked up unchanged here. The original weapons lane is running on frozen code, and its full rivals suite passed.
