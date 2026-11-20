@@ -49,7 +49,7 @@ export const DIG_MACHINE_TONES = Object.freeze({
   'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
   'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
   'dozer-blade':[110, 'sawtooth', 0.18], 'roller-ground':[75, 'triangle', 0.18],
-  'paver-surface':[165, 'square', 0.18],
+  'paver-surface':[165, 'square', 0.18], 'machine-contact':[58, 'square', 0.3],
   'borer.stall':[85, 'square', 0.4], 'borer.call':[260, 'triangle', 0.6],
   'borer.refuse':[180, 'triangle', 0.25], 'borer.breakthrough':[460, 'triangle', 0.45],
   'borer.daylight':[360, 'triangle', 0.8],

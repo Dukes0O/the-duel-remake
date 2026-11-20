@@ -1249,11 +1249,10 @@ tasks:
 
   - id: MACHINE-YARD-NEXT
     title: "The machine yard after its first hand plays: what the road machines and the drill still need"
-    owner: "claude-cloud"
+    owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "building"
-    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/MACHINE-YARD-NEXT, pull request into integration/wasteland"
+    status: "backlog"
     needs: []
     locks: []
     flag: "wasteland-town"
