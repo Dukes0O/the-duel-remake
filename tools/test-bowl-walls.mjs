@@ -72,6 +72,24 @@ for (const fight of [false, true]) {
   }
 }
 
+// The moving pair shares its across-road drift, so that drift cannot turn a
+// square closing impact into a scrape. Both bodies keep drifting the same way.
+for (const swapped of [false, true]) {
+  const duel = start(3,2);
+  const [a,b] = swapped ? [duel.state.opponents[1],duel.state.opponents[0]] : duel.state.opponents;
+  Object.assign(a, {s:34,prevS:25,lateral:0,prevLateral:0,speedMph:35,headingError:0,pushVelocity:50});
+  Object.assign(b, {s:35,prevS:35,lateral:0,prevLateral:0,speedMph:0,headingError:0,pushVelocity:50});
+  let hit;
+  duel.onChange((_,ev) => { if (ev.bowlWall) hit = ev.bowlWall; });
+  if (swapped) duel._vehicleContact(b,a,'rival');
+  else duel._vehicleContact(a,b,'rival');
+  assert.equal(hit?.kind, 'hard', 'shared sideways motion leaves the relative impact square');
+  for (const actor of [a,b]) {
+    const lateral = Math.sin(actor.headingError)*actor.speedMph*DRIVE.mphToWorld + actor.pushVelocity;
+    assert.ok(Math.abs(lateral - 45) < 1e-8, 'both trucks retain 90% of shared drift');
+  }
+}
+
 for (const [night, index] of [[1,0],[1,1],[1,2],[3,2],[5,3]]) {
   const duel = start(night, index);
   const s = duel.state, type = s.bowlNight.event.type;

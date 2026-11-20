@@ -717,11 +717,11 @@ export function _vehicleContact(a, b, reason) {
     if (impactMph > 0 && !a.combatWrecking && !b.combatWrecking) {
       const ax = vaX / DRIVE.mphToWorld, bx = vbX / DRIVE.mphToWorld;
       const tangentA = ax * nz - vaZ * nx, tangentB = bx * nz - vbZ * nx;
-      const kind = bowlImpact(bowlRules, impactMph, tangentA + tangentB);
+      const kind = bowlImpact(bowlRules, impactMph, tangentA - tangentB);
       const middle = ((ax + bx) * nx + (vaZ + vbZ) * nz) / 2;
       const away = bowlReturn(bowlRules, kind, impactMph) / 2;
       bowlRebound(this, a, nx, nz, tangentA, middle + away, kind, Math.hypot(ax, vaZ));
-      bowlRebound(this, b, -nx, -nz, tangentB, away - middle, kind, Math.hypot(bx, vbZ));
+      bowlRebound(this, b, -nx, -nz, -tangentB, away - middle, kind, Math.hypot(bx, vbZ));
       bowlWear(this, a, kind, combatOwnerId(this, b), zone);
       bowlWear(this, b, kind, combatOwnerId(this, a), zoneB);
       this.emit({bowlWall: {kind, mph: impactMph, cue: 'bowl.wall.' + kind}});
