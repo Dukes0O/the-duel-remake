@@ -62,3 +62,7 @@ Builder's checks, then the lane tier and `npm run build`, recorded in `docs/chan
 line. Before CARD DONE, search `tools/` for `titan-arena` and `SHOW_TRUCK` and bring each older suite and scenario that
 names them up to date. No Chrome under `codex exec`: any browser scenario is "Claude runs". Memory-only saves. No new
 dependency, network request or key. Clean up nothing outside this lane.
+
+## Result screen hook for Claude
+
+The Monster Arena race uses the ordinary result card in `src/screen-results.js`. Its result metrics are assembled there. Please grant a read-only hook in `createResultsScreen` to show the trick score alongside the time and finishing position when arena tricks are active. The ordinary race result still decides the winner and the payout. This card is queued behind BOWL-HUD.
