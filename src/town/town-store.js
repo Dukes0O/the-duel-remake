@@ -5,6 +5,13 @@ const COPIES = 'copies';
 const clone = value => typeof structuredClone === 'function'
   ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+// A town keeps whole numbers such as its tick and till as BigInt, which JSON cannot write. The backup
+// file writes each one as {"$townBigInt":"<digits>"}, the same tag as serializeTown and the career file.
+export const TOWN_FILE_FORMAT = 'the-duel-town';
+export const TOWN_FILE_VERSION = 2;
+const encodeTownFileValue = (_key, value) => typeof value === 'bigint' ? { $townBigInt: String(value) } : value;
+const decodeTownFileValue = (_key, value) => object(value) && Object.keys(value).length === 1 &&
+  typeof value.$townBigInt === 'string' && /^-?\d+$/.test(value.$townBigInt) ? BigInt(value.$townBigInt) : value;
 
 function requestResult(request) {
   return new Promise((resolve, reject) => {
@@ -171,11 +178,13 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
     async exportTown(id) {
       const loaded = await this.load(id);
       if (!loaded.town) throw new Error(loaded.message || 'Town was not found.');
-      return JSON.stringify({ format: 'the-duel-town', version: 1, town: loaded.town });
+      return JSON.stringify({ format: TOWN_FILE_FORMAT, version: TOWN_FILE_VERSION, town: loaded.town }, encodeTownFileValue);
     },
     async importTown(text) {
+      // Version 1 files are plain JSON with no BigInt tags, so only version 2 files are decoded.
       let file; try { file = JSON.parse(text); } catch { throw new Error('This is not a valid town file.'); }
-      if (file?.format !== 'the-duel-town' || file.version !== 1 || !object(file.town) || !valid({ town: file.town })) {
+      if (file?.version === TOWN_FILE_VERSION) file = JSON.parse(text, decodeTownFileValue);
+      if (file?.format !== TOWN_FILE_FORMAT || ![1, TOWN_FILE_VERSION].includes(file.version) || !object(file.town) || !valid({ town: file.town })) {
         throw new Error('This town file is invalid or from a newer game.');
       }
       return this.save(file.town, 'file restore');
