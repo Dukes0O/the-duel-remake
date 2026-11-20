@@ -69,6 +69,19 @@ const gateFound=document.createElement('button');gateFound.textContent='Create t
   app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};app._saveProfile();
   refreshRaceSetup();gateFound.disabled=true;panel.open=false;
 };panel.append(gateFound);
+// Every course open, the secret ones found from the air included (the reverse and night courses), for a try by hand.
+const {COURSE_PRICES}=await import('../src/course-access.js');
+const {SECRET_IDS}=await import('../src/heli/map-secrets.js');
+const {mapRecordOf,writeMapRecord}=await import('../src/heli/heli-save.js');
+const allCourses=document.createElement('button');allCourses.textContent='Create temporary player with every course open';allCourses.onclick=()=>{
+  if(app.duel.state.status!=='menu')return;
+  app.addPlayer('Every Course QA');
+  const map=mapRecordOf(app.profile);
+  const written=writeMapRecord({...app.profile,credits:50000,courses:{version:1,unlocked:Object.keys(COURSE_PRICES)}},
+    {...map,found:[...new Set([...map.found,...SECRET_IDS])]});
+  app.profile=written.profile;app._saveProfile();
+  refreshRaceSetup();allCourses.disabled=true;panel.open=false;
+};panel.append(allCourses);
 if (qaParams.has('road-riders-review')) {
   gateFound.dataset.washPlayer='';
   const {washRiderJob}=await import('../src/world/jobs/wash-riders.js');
