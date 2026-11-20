@@ -79,6 +79,32 @@ for (const fight of [false, true]) {
   }
 }
 
+// A faster closing rival gets the Easy ram share on either contact axis.
+for (const side of [false, true]) {
+  for (const level of ['easy', 'medium', 'hard']) {
+    for (const rivalStarts of [false, true]) {
+      const duel = start(3, 2, level), player = duel.state, rival = player.opponents[0];
+      for (const participant of player.arena.participants) participant.protectedSec = 0;
+      const heading = side ? Math.PI / 2 : 0;
+      Object.assign(player, {s:34, prevS:side ? 34 : 28, lateral:0, prevLateral:side ? -6 : 0,
+        speedMph:rivalStarts ? 8 : 27, headingError:heading});
+      Object.assign(rival, {s:side ? 34 : 35, prevS:side ? 34 : 41,
+        lateral:side ? 1 : 0, prevLateral:side ? 7 : 0,
+        speedMph:rivalStarts ? 27 : 8, headingError:heading + Math.PI});
+      if (side) {
+        player.pushVelocity = player.speedMph * DRIVE.mphToWorld;
+        player.headingError = 0;
+        player.speedMph = 0;
+      }
+      duel._vehicleContact(rival, player, 'rival');
+      const label = [level, side ? 'lateral' : 'head-on', rivalStarts ? 'rival' : 'player'].join(' ');
+      assert.equal(player.maxArmor - player.armor, level === 'easy' && rivalStarts ? 1 : 5, label);
+      assert.equal(rival.maxArmor - rival.armor, 5, label + ' rival armor');
+      if (side) assert.ok(player.damageZones.left > 0 || player.damageZones.right > 0, label + ' hit the flank');
+    }
+  }
+}
+
 // The moving pair shares its across-road drift, so that drift cannot turn a
 // square closing impact into a scrape. Both bodies keep drifting the same way.
 for (const swapped of [false, true]) {

@@ -68,14 +68,14 @@ function bowlReturn(rules, kind, mph) {
   return Math.max(rules.minimumMps / DRIVE.mphToWorld, mph * ratio);
 }
 
-function bowlWear(duel, actor, kind, owner, zone) {
+function bowlWear(duel, actor, kind, owner, zone, ramShare = 1) {
   const rules = duel.course.def.scrapdome.wallBounce, event = duel.state.bowlNight?.event;
   const fraction = kind === 'big' ? rules.bigDamage : kind === 'hard' ? rules.hardDamage : 0;
   if (!rules.fights.includes(event?.type)) return;
   if (event.type === 'lastTruckRolling' && actor.bowlWeapon && owner) actor.bowlLastHitBy = owner;
   if (!fraction) return;
   if (actor.bowlWeapon && event.type === 'lastTruckRolling') {
-    const wallShare = actor === duel.state && !owner ? actor.bowlWeapon.wallShare : 1;
+    const wallShare = actor === duel.state && !owner ? (actor.bowlWeapon.wallShare ?? 1) : ramShare;
     bowlHealthLoss(duel, actor, fraction * wallShare, owner, zone);
     return;
   }
@@ -764,7 +764,10 @@ export function _vehicleContact(a, b, reason) {
       const away = bowlReturn(bowlRules, kind, impactMph) / 2;
       bowlRebound(this, a, nx, nz, tangentA, middle + away, kind, Math.hypot(ax, vaZ));
       bowlRebound(this, b, -nx, -nz, -tangentB, away - middle, kind, Math.hypot(bx, vbZ));
-      bowlWear(this, a, kind, combatOwnerId(this, b), zone);
+      const closingA = -(ax * nx + vaZ * nz);
+      const closingB = bx * nx + vbZ * nz;
+      const easyRivalRam = a === this.state && a.bowlNight?.cpuDifficulty === 'easy' && closingB > Math.max(0, closingA);
+      bowlWear(this, a, kind, combatOwnerId(this, b), zone, easyRivalRam ? b.ramDamageScale ?? 1 : 1);
       bowlWear(this, b, kind, combatOwnerId(this, a), zoneB);
       this.emit({bowlWall: {kind, mph: impactMph, cue: 'bowl.wall.' + kind}});
     }
