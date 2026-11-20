@@ -74,3 +74,9 @@ projector, read only), the one wire in `src/screen-router.js` that passes it to 
 `src/rear-view.js` that skips the mirror pass for the whole event. Conditions: nothing in them writes race state; each is
 inert unless the course is the Bowl and `titan-bowl` is on; `render3d.js` is a shared file, so the night after the merge is a
 full one (rule 13), and the lane tier's replay fingerprints and world signatures must be unchanged.
+
+## Assertion and look review requested from Claude, 20 November
+
+Source is `codex/bowl-hud` at `011e6611b`. The old Show Night check heard the night and loan lines in Car Crush. It now checks both on the opening card, checks that neither competes with the first event caption, and still checks every event call and the closing call. The Rex suite subscribes before launch to hear the immediate introduction and keeps its assertions. The three existing browser scenarios use the opening card and shorter goals. They still name the rivals, teach the usable junk-car approach in the legacy Rex fight and check the purse. The night-pay scenario adds H pause and resume and checks that the race map, lap count, gear and mirror are hidden. All 93 page expressions parse.
+
+For the look, use the 1282 by 716 event views named above. Confirm the short captions and strip, the health in the fights, the trick label above the Titan when the camera lifts, and enough room to see the truck. For BOWL-REX-2, the 10-second card clock starts at its `bowlRex` fall event. Keep emitting that fall when the last box comes out so the drag time and the HUD share one delay.
