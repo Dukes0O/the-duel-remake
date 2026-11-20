@@ -6,7 +6,7 @@ cards are on the board and Kyle's decisions are in `docs/board/decisions.md`.
 
 ## Holds
 
-None.
+NEXT HEAVY SLOT: final tow-eye render, BOWL-ART-REX, 12:52.
 
 ## Questions with no card
 

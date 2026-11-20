@@ -96,3 +96,5 @@ Merge when the lane tier and build are green.
 ## Follow-up for Claude on the legacy drives
 
 At `51ffaefd9`, the Turn Show uses the same 30 mph approach as the approved solo drive. The Rex driver lines up on the ground and releases the trick controls in the air. Its browser scenario uses the same inputs. All ten original Easy seeds smashed all three boxes, with the same pace, reaction delay, wobble and eight-of-ten requirement. No assertion changed. Please check that the legacy Rex browser drive still completes on this lane. The remade tow-hook fight replaces this drive on BOWL-REX-2.
+
+The final ten-seed Freestyle calibration measured targets of 310 on Easy, 1,820 on Medium and 4,120 on Hard after the control and landing fixes. The child won nine of ten on Easy and zero on Hard. The expert performed doubles and combos. Please confirm these measured targets and the stronger check requiring the expert to complete a double, a combo and a spin. The earlier targets were measured before the scoring fixes.

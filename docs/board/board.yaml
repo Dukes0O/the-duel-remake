@@ -633,6 +633,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-tricks"
+    waiting_on: "claude"
     needs: []
     locks: [bowl-night]
     flag: "titan-bowl"
