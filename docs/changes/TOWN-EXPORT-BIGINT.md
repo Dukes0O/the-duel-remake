@@ -1,0 +1,9 @@
+# TOWN-EXPORT-BIGINT
+
+**What changed.** `exportTown` in `src/town/town-store.js` writes each BigInt as `{"$townBigInt":"<digits>"}`, the same tag `serializeTown` and the career file use, and `importTown` turns them back into BigInt. The file keeps `format: 'the-duel-town'` and its version moves from 1 to 2. Older code refuses a version 2 file as "from a newer game" and writes nothing, instead of restoring a town whose tick and till are objects. Version 1 files are still read as plain JSON. Every game town has `tick: 0n` from `createTown`, so the old export threw for every town the game made. The only possible version 1 file is a hand-made town with no BigInt, and the new test restores one. Browser database storage is unchanged.
+
+**Checks**, run on 4b07b60 with `origin/integration/wasteland` at its base: new `tools/test-town-backup-file.mjs` builds a town with `createTown` and a month of `stepTown`, plus a till above 2^53. It exports the town, restores it into a fresh store, and compares 72 BigInt fields field by field with their types, then with `deepStrictEqual`. It also covers BACK UP through the save picker, a version 1 file, and refused newer, foreign and damaged files. `test-town-store`, `test-town-hooks` and `test-town-visits` passed (the last two import the store; no other suite in `tools/` names `exportTown` or `importTown`). Lane tier: 41 passed, 0 failed. It left `test-convoy-tanker-art` and `test-first-person-polish` to the night. `npm run build` passed.
+
+**Review.** One independent review of the export and restore path found no real fault. It noted three things that were there before this card: `importTown` does not check `town.version` or migrate, it bypasses `saveTown`'s career pointer and lock, and nothing in `src/` calls it yet, so restore is not reachable by a player.
+
+**Changed assertions:** none. **Removed:** nothing. The version 1 export, which threw, is replaced in place.
