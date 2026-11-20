@@ -24,8 +24,11 @@ export function addFurniture(group,course,metal){
   if(wires.length){const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(wires,3));group.add(new THREE.LineSegments(wg,new THREE.LineBasicMaterial({color:0x353d3c,transparent:true,opacity:.55})));}
   const barriers=course.features.barriers.filter(p=>!rampOpening(course,p)), // DEEP-RAMP-2
     rails=new THREE.InstancedMesh(new THREE.BoxGeometry(.28,.38,8),metal,barriers.length),posts=new THREE.InstancedMesh(new THREE.BoxGeometry(.16,1.1,.17),metal,barriers.length*2);
-  barriers.forEach((p,i)=>{o.position.set(p.x,p.y+.82,p.z);o.rotation.set(0,p.heading,0);o.updateMatrix();rails.setMatrixAt(i,o.matrix);
-    for(let side=0;side<2;side++){const dz=side?3.6:-3.6;o.position.set(p.x+Math.sin(p.heading)*dz,p.y+.5,p.z+Math.cos(p.heading)*dz);o.updateMatrix();posts.setMatrixAt(i*2+side,o.matrix);}
+  barriers.forEach((p,i)=>{
+    // The Bowl's wall pieces shorten round its island ends; its rails shorten with them so none stands out of its wall.
+    const length=course.def.bowl?Math.min(1,p.halfZ/4):1;
+    o.position.set(p.x,p.y+.82,p.z);o.rotation.set(0,p.heading,0);o.scale.set(1,1,length);o.updateMatrix();rails.setMatrixAt(i,o.matrix);o.scale.set(1,1,1);
+    for(let side=0;side<2;side++){const dz=(side?3.6:-3.6)*length;o.position.set(p.x+Math.sin(p.heading)*dz,p.y+.5,p.z+Math.cos(p.heading)*dz);o.updateMatrix();posts.setMatrixAt(i*2+side,o.matrix);}
   });rails.castShadow=rails.receiveShadow=true;posts.castShadow=true;group.add(rails,posts);
 }
 

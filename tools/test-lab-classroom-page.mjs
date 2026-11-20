@@ -20,8 +20,8 @@ test('the page keeps every step, in order: a new word goes below the last one an
   const v = session.view();
   assert.deepEqual(v.page.map(row => row.title), ['Why did the water miss?', 'Metres per second', 'Gravity and acceleration']);
   assert.equal(v.page[0].setup, first, 'the first words are still there');
-  assert.match(v.page[1].setup, /measure speed in metres per second/, 'the word’s definition stays');
-  assert.match(v.page[1].result, /multiplying by 3\.6/, 'and so does what the test showed');
+  assert.match(v.page[1].setup, /we measure it in metres per second/, 'the word’s definition stays');
+  assert.match(v.page[1].result, /multiply by 3\.6/, 'and so does what the test showed');
   assert.match(v.page[2].setup, /Gravity is the pull of the Earth/);
 });
 
@@ -31,8 +31,8 @@ test('a hint or a "watch this" line is not kept on the page, and going back show
   session.act('help');
   session.act('drop');
   const row = session.view().page[1];
-  assert.match(session.view().brian.text, /Watch the marks/);
-  assert.ok(![row.setup, row.result].some(text => /Watch the marks/.test(text ?? '')));
+  assert.match(session.view().brian.text, /A new mark appears/);
+  assert.ok(![row.setup, row.result].some(text => /A new mark appears/.test(text ?? '')));
   assert.ok(![row.setup, row.result].includes(session.view().hints[0]));
   until(session, v => v.ready); session.act('next');
   session.act('back');
@@ -50,9 +50,9 @@ test('a result that arrives with no event stays on the page, and replaces a hint
   session.tick(.05); session.act('help');
   assert.equal(session.view().brian.text, session.view().hints[0]);
   until(session, v => v.ready);
-  assert.match(session.view().brian.text, /The friction of the air against the droplets/, 'the explanation, not the hint');
+  assert.match(session.view().brian.text, /the air slows small droplets far more than a stone/, 'the explanation, not the hint');
   session.act('next');
-  assert.match(session.view().page.at(-2).result, /The friction of the air against the droplets/, 'and it stays on the page');
+  assert.match(session.view().page.at(-2).result, /the air slows small droplets far more than a stone/, 'and it stays on the page');
 });
 
 test('a step done again shows its opening words before anything it found out the first time', () => {

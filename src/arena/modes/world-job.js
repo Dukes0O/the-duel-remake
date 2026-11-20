@@ -15,6 +15,7 @@ import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, 
 import {FURNACE_LEAVING, pathShare, stepSkylineSight, stepRidgeSight, hotDeliveryGlass, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
+import {groundBeside, DECK_CUES} from '../../world/deck-plates.js';
 import {captionRecord} from '../../story/story-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
 import {startKnock} from '../../vehicle-knock.js';
@@ -228,6 +229,8 @@ export function initializeWorldJob(duel, definition) {
   applyStepLoan(duel, worldJob);
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
   worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
+  // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
+  if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
   if(townWorldJob(definition))duel.course.townLayout=definition.layout??null;
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
@@ -1957,7 +1960,12 @@ export function stepWorldJob(duel, dt) {
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};
+      // SHIPS-DECKS: a ladder's top is a still plate; the fighter stands on it rather than landing on it.
+      if(event.ladderId)Object.assign(state.fighter,{airHeight:0,verticalSpeed:0});
     }
+    if(event.type==='deckGround'&&state.fighter)putFighterOnGround(duel,state.fighter,event.position);
+    if(currentStep?.climbs&&DECK_CUES[event.type])duel.emit({arenaTell:{id:'deck-climb', targetId:'player', seconds:0,
+      cue:DECK_CUES[event.type], position:state.fighter ? {x:state.fighter.x, y:state.fighter.y, z:state.fighter.z} : {...point}}});
     if (event.type === 'done') {
       if (currentStep?.arrivalHold) {
         worldJob.arrivalHold = {elapsed:0, ...currentStep.arrivalHold, gasLoad:currentStep.gasLoad === true,
@@ -1972,6 +1980,7 @@ export function stepWorldJob(duel, dt) {
   }
   applyRequests(duel, worldJob, next.requests);
   worldJob.controls=null;
+  standOnDeck(duel, next, previousStepState);
   const train=worldJob.actors.find(actor=>actor.train);
   if(train&&state.onFoot&&state.fighter&&next.stepState.stage==='roof') {
     if(worldJob.roofRide&&trainBefore) {
@@ -1999,6 +2008,26 @@ export function stepWorldJob(duel, dt) {
     state.headingError=0;state.speedMph=train.speed*2.236936;
   }
   return null;
+}
+
+// SHIPS-DECKS: put an on-foot fighter on the ground at (x, z), after a fall from a plate or a climb down to the ground.
+function putFighterOnGround(duel, fighter, at) {
+  const nearest = duel.course.nearest(at.x, at.z, fighter.s), ground = duel.course.groundAt(nearest.s, nearest.lateral);
+  Object.assign(fighter, {x:at.x, z:at.z, s:nearest.s, lateral:nearest.lateral, y:ground.y, groundY:ground.y, airHeight:0, verticalSpeed:0});
+}
+
+// The walk reads the plate the fighter stands on (src/onfoot.js) from `fighter.deckPlate`, the climbing step's own `plate`. A step
+// that ends with the fighter still up there (its last place on a deck) leaves them on the ground beside the ship for the next one.
+function standOnDeck(duel, next, previousStepState) {
+  const fighter = duel.state.onFoot ? duel.state.fighter : null;
+  if (!fighter) return;
+  const step = next.steps[next.stepIndex], plate = !next.done && step?.climbs ? next.stepState.plate ?? null : null;
+  if (plate) { fighter.deckPlate = plate; return; }
+  if (!fighter.deckPlate) return;
+  const left = previousStepState?.plate === fighter.deckPlate && next.stepState.plate !== fighter.deckPlate && !next.done &&
+    !next.events.some(event => event.type === 'deckGround') ? groundBeside(fighter.deckPlate) : null;
+  delete fighter.deckPlate;
+  if (left) putFighterOnGround(duel, fighter, left);
 }
 
 // Combat paths call this after a real projectile or flame contact. It only

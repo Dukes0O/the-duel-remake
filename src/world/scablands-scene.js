@@ -39,6 +39,8 @@ import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
 import {barricadeShape,barricadeSurface} from './ash-men-look.js';
 import {createNight2Look} from './night-2-look.js';
+import {createDustNightLook} from './dust-night-look.js';
+import {dustNightOf} from './dust-night.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
 import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
@@ -661,6 +663,9 @@ export function createScablandsScene(course,options={}){
   group.add(storyPeople.group);
   let night2;
   let peopleSeconds = 0;
+  // SHIPS-DECKS: the night storm, made the first time a step asks for it. Its beam and dust keep the view's own clock.
+  let dustNight = null, dustSeconds = 0;
+  const dustHere = {x: 0, y: 0, z: 0};
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
   const brandAshView=createBrandAshView();group.add(brandAshView.group);
@@ -926,6 +931,15 @@ export function createScablandsScene(course,options={}){
       }
       night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? [],
         {mouthOf: storyPeople.mouthOf, viewer: worldJob?.night2?.camera?.position ?? here});
+      const storm = featureFlags.enabled('wasteland-town') ? dustNightOf(state) : null;
+      if (storm && !dustNight) { dustNight = createDustNightLook(storm); group.add(dustNight.group); }
+      if (dustNight) {
+        if (storm) dustSeconds += Math.max(0, presentationDt);
+        const fighter = state?.onFoot ? state.fighter : null;
+        dustHere.x = fighter?.x ?? here.x; dustHere.z = fighter?.z ?? here.z;
+        dustHere.y = fighter?.y ?? scablandsSurfaceHeightAt(dustHere.x, dustHere.z);
+        dustNight.update(storm, dustSeconds, dustHere);
+      }
       brandAshView.update(worldJob,drawnShift);
       if (worldJob?.riderFight && !roadRidersView) {
         roadRidersView = createBrandAshView({road:true});
@@ -1126,7 +1140,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose();
+    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose();
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

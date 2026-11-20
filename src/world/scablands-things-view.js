@@ -138,7 +138,7 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null, g
         if (away > range || count >= mesh.instanceMatrix.count) continue;
         const grown = Math.min(1, (range - away) / (range * .1) + .35);
         object.position.set(part.center[0], part.center[1] + part.drawOffset - part.size[1] * (1 - grown) / 2, part.center[2]);
-        object.rotation.set(0, part.drawHeading ?? part.heading, 0);
+        object.rotation.set(0, part.heading, 0);
         if (part.kind === 'fence-post' && fallen.has(part.id)) {
           object.position.y = part.center[1] + part.drawOffset - part.size[1] / 2 + part.size[0] / 2;
           object.rotation.z = Math.PI / 2;
