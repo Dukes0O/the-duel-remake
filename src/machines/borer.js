@@ -236,41 +236,101 @@ export function borerSpoilSampledLength(oldLength, addedVolume) {
 }
 
 
-/** Size a deposit on the actual ground grid for any bank heading. */
-export function borerSpoilGridLength(origin, direction, oldLength, addedVolume) {
+// QA-BORER-SUITE-TIME: Mabel plans her heap every 1/120 s step, so the planner below visits the same
+// cells, in the same order, with the same arithmetic as borerSpoilGridChanges, but keeps them in
+// reused typed arrays instead of a fresh list of objects for every probe. The answers are the same
+// to the last bit; tools/test-machine-borer.mjs compares the two for every heading it tries.
+let scratchSize = 0, scratchX, scratchZ, scratchAlong, scratchAcross, scratchCeiling, scratchBefore;
+function spoilScratch(size) {
+  if (size <= scratchSize) return;
+  scratchSize = Math.max(size, 2 * scratchSize, 1024);
+  scratchX = new Float64Array(scratchSize); scratchZ = new Float64Array(scratchSize);
+  scratchAlong = new Float64Array(scratchSize); scratchAcross = new Float64Array(scratchSize);
+  scratchCeiling = new Float64Array(scratchSize); scratchBefore = new Float64Array(scratchSize);
+}
+
+function validSpoilGrid(origin, direction, oldLength, newLength) {
+  if (![origin?.x, origin?.z, direction?.x, direction?.z, oldLength, newLength].every(Number.isFinite) ||
+      oldLength < 0 || newLength < oldLength ||
+      Math.abs(Math.hypot(direction.x, direction.z) - 1) > 1e-8)
+    throw new TypeError('The spoil heap needs an origin, a unit direction and two lengths in order.');
+}
+
+// Keep the changed cells of one probe in the scratch arrays and return their summed height, added
+// in grid order from zero exactly as the list's reduce did. The caller has validated the grid and
+// newLength is greater than oldLength.
+function spoilGridProbe(origin, direction, oldLength, newLength) {
+  const first = Math.max(0, oldLength - 5 / SPOIL_END_GRADE);
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const along of [first, newLength]) for (const across of [-8, 8]) {
+    const x = origin.x + direction.x * along - direction.z * across;
+    const z = origin.z + direction.z * along + direction.x * across;
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x); minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+  }
+  minX = Math.ceil(minX); maxX = Math.floor(maxX); minZ = Math.ceil(minZ); maxZ = Math.floor(maxZ);
+  spoilScratch(Math.max(0, maxX - minX + 1) * Math.max(0, maxZ - minZ + 1));
+  let count = 0, total = 0;
+  for (let x = minX; x <= maxX; x++) for (let z = minZ; z <= maxZ; z++) {
+    const dx = x - origin.x, dz = z - origin.z;
+    const along = dx * direction.x + dz * direction.z;
+    const across = -dx * direction.z + dz * direction.x;
+    // borerSpoilProfile is the least of 5, both ends and the side, floored at zero. The least is
+    // exact in any grouping, so the ends and side shared by both lengths are worked out once.
+    const ceiling = Math.min(5, SPOIL_END_GRADE * along, 5 - SPOIL_SIDE_GRADE * Math.abs(across));
+    const before = Math.max(0, Math.min(ceiling, SPOIL_END_GRADE * (oldLength - along)));
+    const height = Math.max(0, Math.min(ceiling, SPOIL_END_GRADE * (newLength - along))) - before;
+    if (!(height > 1e-12)) continue;
+    scratchX[count] = x; scratchZ[count] = z; scratchAlong[count] = along; scratchAcross[count] = across;
+    scratchCeiling[count] = ceiling; scratchBefore[count] = before;
+    count++;
+    total += height;
+  }
+  return {count, total};
+}
+
+// Size a deposit and list its cells. A longer heap raises every cell at least as much as a shorter one, and the
+// last probe's box holds every cell a shorter length can change, so the final cells are those of the last probe
+// that the final length raises by more than the threshold, in the same order.
+function spoilGridSized(origin, direction, oldLength, addedVolume, withPosition) {
   if (![oldLength, addedVolume].every(Number.isFinite) || oldLength < 0 || addedVolume < 0)
     throw new TypeError('The spoil heap needs a non-negative length and volume.');
   // Validate the grid even for an empty deposit.
-  borerSpoilGridChanges(origin, direction, oldLength, oldLength);
-  if (addedVolume === 0) return oldLength;
-  const gridVolume = length => borerSpoilGridChanges(origin, direction, oldLength, length)
-    .reduce((sum, cell) => sum + cell.height, 0);
-  let low = oldLength, high = oldLength + 1;
-  while (gridVolume(high) < addedVolume) high = oldLength + 2 * (high - oldLength);
-  // The final bound contains every cell the probes can affect. Reuse their
-  // coordinates and original heights instead of rebuilding a grid per probe.
-  const candidates = borerSpoilGridChanges(origin, direction, oldLength, high)
-    .map(cell => ({along:cell.along,
-      ceiling:Math.min(5, SPOIL_END_GRADE * cell.along, 5 - SPOIL_SIDE_GRADE * Math.abs(cell.across)),
-      before:borerSpoilProfile(cell.along, cell.across, oldLength)}));
-  const addedAt = length => {
-    let total = 0;
-    for (const cell of candidates)
-      total += Math.max(0, Math.min(cell.ceiling, SPOIL_END_GRADE * (length - cell.along))) - cell.before;
-    return total;
-  };
+  validSpoilGrid(origin, direction, oldLength, oldLength);
+  if (addedVolume === 0) return {length:oldLength, cells:[]};
+  let low = oldLength, high = oldLength + 1, probe = spoilGridProbe(origin, direction, oldLength, high);
+  while (probe.total < addedVolume) {
+    high = oldLength + 2 * (high - oldLength);
+    probe = spoilGridProbe(origin, direction, oldLength, high);
+  }
+  const count = probe.count;
   for (let i = 0; i < 40; i++) {
     const middle = (low + high) / 2;
-    if (addedAt(middle) < addedVolume) low = middle;
+    let total = 0;
+    for (let cell = 0; cell < count; cell++)
+      total += Math.max(0, Math.min(scratchCeiling[cell], SPOIL_END_GRADE * (middle - scratchAlong[cell]))) - scratchBefore[cell];
+    if (total < addedVolume) low = middle;
     else high = middle;
   }
-  return (low + high) / 2;
+  const length = (low + high) / 2;
+  const cells = [];
+  if (length === oldLength) return {length, cells};
+  for (let cell = 0; cell < count; cell++) {
+    const height = Math.max(0, Math.min(scratchCeiling[cell], SPOIL_END_GRADE * (length - scratchAlong[cell]))) -
+      scratchBefore[cell];
+    if (!(height > 1e-12)) continue;
+    cells.push(withPosition ? {x:scratchX[cell], z:scratchZ[cell], along:scratchAlong[cell], across:scratchAcross[cell], height}
+      : {x:scratchX[cell], z:scratchZ[cell], height});
+  }
+  return {length, cells};
 }
 
-/** Describe a deposit and any protected cells before changing the ground. */
-export function borerSpoilGridPlan(ground, origin, direction, oldLength, addedVolume) {
-  const length = borerSpoilGridLength(origin, direction, oldLength, addedVolume);
-  const cells = borerSpoilGridChanges(origin, direction, oldLength, length);
+/** Size a deposit on the actual ground grid for any bank heading. */
+export function borerSpoilGridLength(origin, direction, oldLength, addedVolume) {
+  return spoilGridSized(origin, direction, oldLength, addedVolume, false).length;
+}
+
+function spoilGridPlan(ground, origin, direction, oldLength, addedVolume, withPosition) {
+  const {length, cells} = spoilGridSized(origin, direction, oldLength, addedVolume, withPosition);
   const refusal = ground.spoilRefusal || ground.refusal;
   const blocked = [];
   for (const cell of cells) {
@@ -280,35 +340,51 @@ export function borerSpoilGridPlan(ground, origin, direction, oldLength, addedVo
   return {length, cells, blocked};
 }
 
+/** Describe a deposit and any protected cells before changing the ground. */
+export function borerSpoilGridPlan(ground, origin, direction, oldLength, addedVolume) {
+  return spoilGridPlan(ground, origin, direction, oldLength, addedVolume, true);
+}
+
+// The cutter's own deposit: the planned cells are its allocations, each cell's height its volume.
+function spoilDepositCells(ground, origin, direction, oldLength, cutVolume) {
+  const plan = spoilGridPlan(ground, origin, direction, oldLength, cutVolume, false);
+  if (plan.blocked.length) return {reason:plan.blocked[0].reason};
+  return {far:plan.length, cells:plan.cells};
+}
+
 /** Prepare the cutter's allocations without altering the bank or the ground. */
 export function borerSpoilDeposit(ground, origin, direction, oldLength, cutVolume) {
-  const plan = borerSpoilGridPlan(ground, origin, direction, oldLength, cutVolume);
-  if (plan.blocked.length) return {reason:plan.blocked[0].reason};
+  const deposit = spoilDepositCells(ground, origin, direction, oldLength, cutVolume);
+  if (deposit.reason) return deposit;
   // Ground fill applies the 1.25 bulking factor to these allocations. Its
   // stored height is compacted again, so the profile is sized by cut volume.
-  return {far:plan.length, allocations:plan.cells.map(cell => ({
+  return {far:deposit.far, allocations:deposit.cells.map(cell => ({
     cell:{x:cell.x, z:cell.z}, volume:cell.height
   }))};
 }
 
-/** Find a clear starting position along the bank's existing line. */
-export function borerSpoilStart(ground, origin, direction, cutVolume) {
+function spoilStart(ground, origin, direction, cutVolume, deposit) {
   let reason = BORER_OBSTRUCTION;
   for (let offset = 0; offset < 128; offset++) {
     const candidate = {x:origin.x + direction.x * offset,
       z:origin.z + direction.z * offset};
-    const deposit = borerSpoilDeposit(ground, candidate, direction, 0, cutVolume);
-    if (!deposit.reason) return {origin:candidate, ...deposit};
-    reason = deposit.reason;
+    const found = deposit(ground, candidate, direction, 0, cutVolume);
+    if (!found.reason) return {origin:candidate, ...found};
+    reason = found.reason;
   }
   return {reason};
+}
+
+/** Find a clear starting position along the bank's existing line. */
+export function borerSpoilStart(ground, origin, direction, cutVolume) {
+  return spoilStart(ground, origin, direction, cutVolume, borerSpoilDeposit);
 }
 
 
 // Plan the heap before cutting, so a protected cell cannot swallow spoil.
 function planSpoil(ground, segments, bank, amount) {
   if (bank.origin) {
-    return {...borerSpoilDeposit(ground, bank.origin, bank.direction, bank.far, amount),
+    return {...spoilDepositCells(ground, bank.origin, bank.direction, bank.far, amount),
       origin:bank.origin, direction:bank.direction};
   }
   const {start, end} = segments[0];
@@ -316,7 +392,7 @@ function planSpoil(ground, segments, bank, amount) {
   const length = Math.hypot(dx, dz);
   const direction = {x:dz / length, z:-dx / length};
   const origin = {x:start.x + 12 * direction.x, z:start.z + 12 * direction.z};
-  return {...borerSpoilStart(ground, origin, direction, amount), direction};
+  return {...spoilStart(ground, origin, direction, amount, spoilDepositCells), direction};
 }
 
 // Follow the recorded centre line, including bends and slopes, without
@@ -543,11 +619,11 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       next.message = message;
       continue;
     }
-    for (const {cell, volume} of deposit.allocations) {
-      for (const [kind, cutVolume] of Object.entries(cut.volumes)) {
-        if (cutVolume > 0) ground.fill({x:cell.x, z:cell.z, radius:0.49}, kind,
-          volume * cutVolume / cut.volume * 1.25);
-      }
+    // The same fills in the same order: each planned cell, then each material the cut brought out.
+    const kinds = Object.entries(cut.volumes).filter(([, cutVolume]) => cutVolume > 0);
+    for (const {x:cellX, z:cellZ, height:volume} of deposit.cells) {
+      for (const [kind, cutVolume] of kinds)
+        ground.fill({x:cellX, z:cellZ, radius:0.49}, kind, volume * cutVolume / cut.volume * 1.25);
     }
     next.spoilBank = {origin:deposit.origin, direction:deposit.direction, far:deposit.far};
     if (next.message !== BORER_TRENCH) next.message = null;
