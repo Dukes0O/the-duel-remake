@@ -10,5 +10,9 @@
   the car's), 17.3 m and 8 m at 10 m up. The result card's 2 s wait and the Scrapasaurus wait are BOWL-HUD's.
 - **Checks:** `tools/test-bowl-camera.mjs` (new, 69 checks: seven drives in the real game, round the Spine's end, over the
   Spine, a turn round, a donut, a flip off the Big Jump, over the wall and back, the end of the Car Crush).
-- **Found, for BOWL-WALLS's area:** a truck meeting the stand wall from outside at 30 mph is thrown 3.5 m in one step.
+- **Found:** a truck meeting the stand wall from outside at 30 mph is thrown 3.5 m in one step (BOWL-WALLS's area); a
+  truck that crashes over the wall lands inside the stands, where no camera can show it (BOWL-OUT-SIM gives them height).
+- **Hand drive** (visible Chrome, ports 5193 and 5196, memory saves): turn round, over the Spine, into the wall, the end of
+  the Car Crush. Before, the view jumped across the Spine; after, it turns with the truck. The traced real camera never
+  passed 0.99 m a frame or 98 degrees a second, and the end swing took 2.0 s (under the result card until BOWL-HUD).
 - **Changed assertions:** none. **Removed:** nothing; the lap-line chase camera stays for every other course.

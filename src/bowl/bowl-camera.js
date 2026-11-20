@@ -115,6 +115,8 @@ const PODIUM = 6.2, MOAT = 1.2, FIRST = 1 + MOAT + 2;
 const STANDS_BACK = FIRST + BOWL_STADIUM.rows * BOWL_STADIUM.rowDepth;
 const STANDS_TOP = PODIUM + BOWL_STADIUM.rows * BOWL_STADIUM.rowRise + 1.1;
 const SPINE_EDGE = -(BOWL_FLOOR.wallOffset - .5);
+// The seated crowd stands this far above each row, and the camera must clear their heads too.
+const CROWD = 1.2;
 
 // The top of what stands at a point in the Bowl: the floor and its jumps and banks, the Spine, the stand wall with its
 // catch fence, the stands' rows, and the ground outside. `course` is the Bowl course (nearest, groundAt, phase).
@@ -127,7 +129,7 @@ export function bowlSolidTop(course, x, z, referenceS) {
       BOWL_STADIUM.fenceHeight - BOWL_STADIUM.wallHeight;
     if (d < 1 + MOAT) return 0;
     if (d < FIRST) return PODIUM;
-    if (d < STANDS_BACK) return PODIUM + (Math.floor((d - FIRST) / BOWL_STADIUM.rowDepth) + 1) * BOWL_STADIUM.rowRise;
+    if (d < STANDS_BACK) return PODIUM + (Math.floor((d - FIRST) / BOWL_STADIUM.rowDepth) + 1) * BOWL_STADIUM.rowRise + CROWD;
     if (d <= STANDS_BACK + .4) return STANDS_TOP;
   }
   return course.groundAt(near.s, lateral).y;
