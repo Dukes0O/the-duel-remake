@@ -588,10 +588,11 @@ tasks:
 
   - id: BOWL-RIVALS
     title: "Computer trucks: Side by Side and Last Truck Rolling"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/BOWL-RIVALS, cut from its parent card's cloud branch, pull request into integration/wasteland"
     needs: [BOWL-HOOKS, BOWL-ART-TRUCKS]
     locks: []
     flag: "titan-bowl"
@@ -599,10 +600,11 @@ tasks:
 
   - id: BOWL-TURNS
     title: "Turn Show: pass the keyboard"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/BOWL-TURNS, cut from its parent card's cloud branch, pull request into integration/wasteland"
     needs: [BOWL-HOOKS]
     locks: []
     flag: "titan-bowl"
@@ -855,10 +857,11 @@ tasks:
 
   - id: TOWN-FIRE-JOB
     title: "Town: the fire call"
-    owner: "claude"
+    owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 19 November 2026: branch cloud/TOWN-FIRE-JOB, cut from its parent card's cloud branch, pull request into integration/wasteland"
     needs: ["TOWN-FIRE","TOWN-HAUL-JOB"]
     locks: ["busy-game-files"]
     details: "docs/board/cards/TOWN-FIRE-JOB.md"
