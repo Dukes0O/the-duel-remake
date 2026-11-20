@@ -41,8 +41,8 @@ const P = rexPlaces(course);
   ok(P.rail === show.rails.lateral && P.car.s === show.launchCars[0].s && P.car.lateral === show.rails.lateral &&
     P.stageBoxS === wrap(P.car.s + REX_RULES.boxPastCar) && P.startS === wrap(show.crush.firstRowS - 2) && Math.abs(P.rail) < P.edge,
     'the rails, the rest, the dropped car and the start come from the course\'s features.bowl');
-  ok(SHOW_NIGHTS[4].events.at(-1) === BOWL_EVENTS.SCRAPASAURUS && SHOW_NIGHTS[4].events.length === 3,
-    'night five is three events and ends with the Scrapasaurus');
+  ok(SHOW_NIGHTS[4].events.at(-1) === BOWL_EVENTS.SCRAPASAURUS && SHOW_NIGHTS[4].events.length === 4 &&
+    SHOW_NIGHTS[4].events[2] === BOWL_EVENTS.LAST_TRUCK_ROLLING, 'night five is four events: Last Truck Rolling, then the Scrapasaurus');
   ok(SHOW_NIGHTS.slice(0, 4).every(night => !night.events.includes(REX_EVENT)), 'only night five has the Scrapasaurus');
   ok(bowlNightPlayable(5), 'night five has every event');
   ok(BOWL_EVENT_NAMES[REX_EVENT] === 'The Scrapasaurus', 'the event has its name');
@@ -254,7 +254,7 @@ function fightAt(level, seed) {
   const duel = showDuel(seed);
   assert.ok(duel.startBowlNight({night: 5, cpuDifficulty: level, seed}), 'night five starts');
   const night = duel.state.bowlNight;
-  night.show.eventIndex = 2; night.phase = 'result';
+  night.show.eventIndex = SHOW_NIGHTS[4].events.indexOf(REX_EVENT); night.phase = 'result';
   duel.continueBowlNight();
   assert.equal(night.event.type, REX_EVENT);
   const rng = makeRng(seed * 7919 + 13), seen = [], result = {won: false, events: [], hud: null, captions: []};

@@ -6,6 +6,7 @@ import {SHOW_NIGHTS} from './bowl-show.js';
 import {bowlHudView, crushRowName} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
+import {BOWL_RIVALS} from './bowl-rivals.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -46,7 +47,9 @@ export function createBowlScreens({app, ui, escapeHTML}) {
   function eventCard(state) {
     const show = state.bowlNight, result = show.lastResult, name = BOWL_EVENT_NAMES[result.event] ?? result.event;
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
-    const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won) : result.event === 'carCrush' ? WORDS.eventRows(result.rows > 0 ? crushRowName(app.duel.course, result.rows - 1) : null) : null,
+    const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won, BOWL_RIVALS[result.rival]?.name)
+      : result.event === 'lastTruckRolling' ? WORDS.eventKnockouts(result) // BOWL-RIVALS
+        : result.event === 'carCrush' ? WORDS.eventRows(result.rows > 0 ? crushRowName(app.duel.course, result.rows - 1) : null) : null,
       WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
@@ -54,8 +57,10 @@ export function createBowlScreens({app, ui, escapeHTML}) {
   }
 
   function nightCard(state) {
-    const result = state.bowlNight.result, settled = app.showNightRun?.()?.settled;
-    const lines = [WORDS.nightTotal(result.score)];
+    const result = state.bowlNight.result, settled = app.showNightRun?.()?.settled, last = state.bowlNight.lastResult;
+    // The night ends on its last event, so its results also say how that event ended (BOWL-RIVALS).
+    const lines = [...(last?.event === 'lastTruckRolling' ? [WORDS.eventKnockouts(last)]
+      : last?.event === 'sideBySide' ? [WORDS.eventRace(true, BOWL_RIVALS[last.rival]?.name)] : []), WORDS.nightTotal(result.score)];
     if (settled?.purse > 0) lines.push(WORDS.nightPurse(settled.purse));
     else if (settled?.alreadyPaid) lines.push(WORDS.nightPurseAlready);
     if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);

@@ -30,7 +30,14 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.purse': 'interface.bonus',         // the purse is paid into the scrap wallet
   'bowl.turn.up': 'interface.radar',       // BOWL-TURNS: the pass-the-keyboard screen opens for the next player
   'bowl.turn.winner': 'crowd.cheer',       // BOWL-TURNS: the Turn Show is over and the scoreboard names the winner
+  // BOWL-RIVALS: a rival knocked out in Last Truck Rolling plays the arena's wreck
+  // cue when the player did it ('arena.wreck-credit', already played by the game's
+  // audio for an arena wreck) and Big Mo's chime with his line otherwise.
 });
+
+// The rivals' names joined as a person would say them: "A", "A and B", "A, B and C".
+// Also used by the Turn Show's lines (BOWL-TURNS) below.
+const names = list => list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
 
 export const BOWL_EVENT_NAMES = Object.freeze({
   scrapasaurus: 'The Scrapasaurus', // BOWL-REX-FIGHT
@@ -52,8 +59,10 @@ export const BOWL_GOALS = Object.freeze({
             : `Smash ${REX_BOXES[left]}. It rests after it breathes fire on the Jump Straight, so meet it there.`,
   carCrush: target => `Drive straight down the line and crush everything you can. Reach ${target} to go on.`,
   freestyle: target => `Do big jumps, flips and crushes to score ${target} points before the clock runs out.`,
-  sideBySide: () => 'Race the other truck once round the Bowl and cross the line first.',
-  lastTruckRolling: () => 'Knock the other trucks out and be the last one still rolling.',
+  sideBySide: (rival = 'the other truck') => `Race ${rival} once round the Bowl and cross the line first.`,
+  lastTruckRolling: (left = []) => left.length
+    ? `Knock out ${names(left)}, and be the last truck still rolling.`
+    : 'Knock the other trucks out and be the last one still rolling.',
 });
 
 // The Scrapasaurus's battery boxes still to smash, as a person would say it (BOWL-REX-FIGHT).
@@ -114,11 +123,25 @@ export const BIG_MO = Object.freeze({
   'event.won.carCrush': 'That truck went a long way down the line. On to the next event!',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
   'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
-  'event.won.lastTruckRolling': 'Our driver is the last truck rolling, so the night is theirs!',
+  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night is theirs!',
   'event.lost.carCrush': 'The junk won that time, but you can have another run at it.',
   'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
-  'event.lost.lastTruckRolling': 'Our driver was knocked out, but the trucks are lining up again.',
+  'event.lost.lastTruckRolling': 'Another truck won that one, but the trucks are lining up again.',
+  // BOWL-RIVALS: who is in the other lane, who is in the Bowl tonight, and who is out.
+  'rival.old-bess': 'In the other lane is Old Bess, Moss\'s cousin. She has never once been in a hurry, but she never gives up.',
+  'rival.rust-rhino': 'In the other lane is Rust Rhino. Watch out for that horn, because Rust Rhino likes to charge.',
+  'rival.big-kettle': 'In the other lane is Big Kettle. It takes a while to get the boiler going, and then it is hard to stop.',
+  'rival.tin-lizard': 'In the other lane is Tin Lizard, the quickest and most slippery truck in the show.',
+  'rival.dragon-wagon': 'In the other lane is Dragon Wagon, the fastest truck in the show, and it loves to show off on the ramps.',
+  'rivals.night.3': 'In the Bowl with our driver tonight are Big Kettle, Tin Lizard and Old Bess.',
+  'rivals.night.4': 'In the Bowl with our driver tonight are Rust Rhino, Tin Lizard and Big Kettle.',
+  'rivals.night.5': 'In the Bowl with our driver tonight are Dragon Wagon, Rust Rhino and Tin Lizard.',
+  'out.old-bess': 'Old Bess is out! She is going to have a little rest now.',
+  'out.rust-rhino': 'Rust Rhino is out! That horn will not be charging at anybody else tonight.',
+  'out.big-kettle': 'Big Kettle is out, and all the steam has gone out of it.',
+  'out.tin-lizard': 'Tin Lizard is out! It was not quick enough to get away this time.',
+  'out.dragon-wagon': 'Dragon Wagon is out, and its fire has gone out too.',
   'night.won': 'That is the end of the show, and what a show it was. Thank you all for coming, and that includes the dogs.',
   // A Turn Show go (BOWL-TURNS): one go each, so nobody is told to try again.
   'turn.open': 'Here comes the next driver, so give them a big cheer!',
@@ -138,7 +161,7 @@ export const BOWL_RESULTS = Object.freeze({
   ].filter(Boolean),
   eventRexYard: 'The Scrapasaurus is going to stand in your yard from now on.',
   pickTitle: 'SHOW NIGHT',
-  pickIntro: 'Big Mo runs a show at the Bowl every night. Each night is three events, one after the other.',
+  pickIntro: 'Big Mo runs a show at the Bowl every night. Each night is three events, one after the other, and the last night has a fourth.',
   pickTruckOwned: 'You will drive your own Titan tonight.',
   pickTruckLent: 'You have no truck of your own, so the show will lend you its truck for the night. It goes back to the show when you leave.',
   pickNightOpen: night => `Night ${night} is ready to start.`,
@@ -150,7 +173,16 @@ export const BOWL_RESULTS = Object.freeze({
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
   eventRows: row => row ? `You crushed your way into ${row}.` : 'You did not reach the first row of cars.',
-  eventRace: won => won ? 'You crossed the line ahead of the other truck.' : 'The other truck crossed the line before you.',
+  eventRace: (won, rival = 'the other truck') => won ? `You crossed the line ahead of ${rival}.`
+    : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before you.`,
+  // BOWL-RIVALS: how Last Truck Rolling ended.
+  eventKnockouts: ({won, knockouts = 0, timeUp = false}) => won && timeUp
+    ? 'The clock ran out, and of the trucks still rolling, yours hit the others hardest, so the win is yours.'
+    : won ? 'Every other truck was knocked out, and yours was the last one still rolling.'
+      : timeUp ? 'The clock ran out, and another truck still rolling had hit the others harder than yours.'
+        : knockouts === 1 ? 'You knocked out one truck before your own truck was knocked out.'
+          : knockouts > 1 ? `You knocked out ${['two', 'three'][knockouts - 2] ?? knockouts} trucks before your own truck was knocked out.`
+            : 'Your truck was knocked out before it could knock anyone else out.',
   eventNext: name => `Next up is ${name}.`,
   eventRetry: name => `Have another go at ${name}. Your score from that run does not count towards the night.`,
   nextButton: 'NEXT EVENT',
@@ -172,7 +204,6 @@ export const BOWL_RESULTS = Object.freeze({
 
 const EVENTS_WON = ['no events', 'one event', 'two events', 'three events'];
 const eventsWon = count => EVENTS_WON[count] ?? `${count} events`;
-const names = list => list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
 
 // The Turn Show's screens (BOWL-TURNS). A name is a player's own, as typed.
 // Keys that end in Title, Button or Heading are labels; every other line is one sentence.
@@ -182,7 +213,7 @@ export const BOWL_TURN_LINES = Object.freeze({
   setupTitle: 'TURN SHOW',
   setupIntro: 'Each player has one go at every event, and only one player drives at a time.',
   setupRules: 'The player who wins the most events wins the night, and points settle a tie.',
-  setupPurse: 'A player who wins all three events also wins that night in their own save, with its purse in their own wallet.',
+  setupPurse: 'A player who wins every event also wins that night in their own save, with its purse in their own wallet.',
   setupPick: 'Pick the players in the order they will drive.',
   setupCount: count => `There are ${count} players in tonight's show.`,
   setupNeedTwo: 'Pick at least two players to start the show.',
@@ -203,9 +234,18 @@ export const BOWL_TURN_LINES = Object.freeze({
   goWon: 'That go won the event.',
   goLost: 'That go did not win the event, but the points still count.',
   goRows: (name, row) => row ? `${name} crushed their way into ${row}.` : `${name} did not reach the first row of cars.`,
-  goRace: (name, won) => won ? `${name} crossed the line ahead of the other truck.` : `The other truck crossed the line before ${name}.`,
+  goRace: (name, won, rival = 'the other truck') => won ? `${name} crossed the line ahead of ${rival}.`
+    : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before ${name}.`,
+  // BOWL-RIVALS: how one go at Last Truck Rolling ended.
+  goKnockouts: (name, {won, knockouts = 0, timeUp = false}) => won && timeUp
+    ? `The clock ran out, and of the trucks still rolling, ${name}'s hit the others hardest, so the win is ${name}'s.`
+    : won ? `Every other truck was knocked out, and ${name}'s was the last one still rolling.`
+      : timeUp ? `The clock ran out, and another truck still rolling had hit the others harder than ${name}'s.`
+        : knockouts === 1 ? `${name} knocked out one truck before their own truck was knocked out.`
+          : knockouts > 1 ? `${name} knocked out ${['two', 'three'][knockouts - 2] ?? knockouts} trucks before their own truck was knocked out.`
+            : `${name}'s truck was knocked out before it could knock anyone else out.`,
   goBest: (name, event) => `That is ${name}'s best ever score in ${event}.`,
-  goNightWon: (name, night) => `${name} won all three events, so night ${night} is won in ${name}'s own save.`,
+  goNightWon: (name, night) => `${name} won every event, so night ${night} is won in ${name}'s own save.`,
   goPurse: (name, scrap) => `Big Mo paid ${name} a purse of ${scrap.toLocaleString()} scrap, and it is in ${name}'s own wallet now.`,
   goPurseAlready: name => `${name} already won the purse for this night, so this time the points were for the scoreboard.`,
   goUnsaved: name => `${name}'s save could not be written, so this go lasts only until you close the game.`,

@@ -42,14 +42,17 @@ const won = (...nights) => ({...createProfile(), bowl: {version: 1, nightsWon: n
   equal(createTurnShow({night: 1, players: [...two, player('c', 'C'), player('d', 'D'), player('e', 'E')]}).reason,
     'tooMany', `a Turn Show has room for ${TURN_SHOW_RULES.maxPlayers} players`);
   equal(createTurnShow({night: 1, players: [two[0], two[0]]}).reason, 'players', 'a player is picked once');
-  equal(createTurnShow({night: 3, players: two}).reason, 'night', 'a night with an event still to build cannot be played');
+  // BOWL-RIVALS built Last Truck Rolling, so every night of the show can be played; a night it does not have cannot.
+  equal(createTurnShow({night: 6, players: two}).reason, 'night', 'a night the show does not have cannot be played');
+  ok(createTurnShow({night: 3, players: [player('a', 'Kyle', won(1, 2)), player('b', 'Gratian', won(1, 2))]}).ok,
+    'night three, with Last Truck Rolling, can be played by players who have won night two');
   equal(createTurnShow({night: 2, players: [player('a', 'Kyle', won(1)), two[1]]}).reason, 'locked',
     'night two needs every picked player to have won night one');
   ok(createTurnShow({night: 2, players: [player('a', 'Kyle', won(1)), player('b', 'Gratian', won(1, 2))]}).ok,
     'night two is open when every picked player has won night one');
   ok(nightOpenFor(createProfile(), 1) && !nightOpenFor(createProfile(), 2) && nightOpenFor(won(1), 2), 'night one is always open');
-  // BOWL-REX-FIGHT: night five ends with the Scrapasaurus, so it is playable and waits on night four; three and four wait for Last Truck Rolling.
-  equal(turnShowNights([createProfile(), won(1)]).map(entry => entry.state), ['open', 'locked', 'later', 'later', 'locked'],
+  // Nights three to five have every event since BOWL-RIVALS, so they are locked (not 'later') until night two is won.
+  equal(turnShowNights([createProfile(), won(1)]).map(entry => entry.state), ['open', 'locked', 'locked', 'locked', 'locked'],
     'the setup offers only the nights open for every picked player');
 
   const {show} = createTurnShow({night: 1, players: [player('b', 'Gratian'), player('a', 'Kyle')], hostId: 'a', cpuDifficulty: 'easy'});
@@ -265,7 +268,9 @@ ok(createPlayerRegistry().players.every(entry => !Object.hasOwn(entry.profile, '
   // Each line function with the facts it takes, both ways where it has two.
   const samples = {setupCount: [[2], [4]], setupNightOpen: [[1]], setupNightLocked: [[2]],
     handoffEvent: [['Gratian', 'Car Crush']], goScore: [['Gratian', 1200, 'Freestyle']],
-    goRows: [['Kyle', BOWL_CRUSH_ROW.cars(2)], ['Kyle', BOWL_CRUSH_ROW.buses], ['Kyle', BOWL_CRUSH_ROW.fire], ['Kyle', null]], goRace: [['Gratian', true], ['Gratian', false]],
+    goRows: [['Kyle', BOWL_CRUSH_ROW.cars(2)], ['Kyle', BOWL_CRUSH_ROW.buses], ['Kyle', BOWL_CRUSH_ROW.fire], ['Kyle', null]], goRace: [['Gratian', true], ['Gratian', false], ['Gratian', true, 'Old Bess'], ['Gratian', false, 'Old Bess']],
+    goKnockouts: [['Kyle', {won: true}], ['Kyle', {won: true, timeUp: true}], ['Kyle', {won: false, timeUp: true}],
+      ['Kyle', {won: false}], ['Kyle', {won: false, knockouts: 1}], ['Kyle', {won: false, knockouts: 2}]],
     goBest: [['Kyle', 'Side by Side']], goNightWon: [['Gratian', 1]], goPurse: [['Gratian', 250]],
     goPurseAlready: [['Gratian']], goUnsaved: [['Kyle']], goNext: [['Kyle', 'Car Crush']],
     boardWinner: [['Gratian', 3, 900], ['Kyle', 1, 10], ['Kyle', 0, 0]], boardLeading: [['Gratian', 2, 640]],

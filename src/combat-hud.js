@@ -477,6 +477,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     const ufo = combat.cooldowns.ufo <= 0 && state.status === 'racing' ? ufoDestination(app.duel) : null;
     const arsenal = arsenalEnabled(app.duel);
     const lockout = arsenal ? carEffect(state, 'disabled') : null;
+    // Show Night's Last Truck Rolling is an arena fight with no weapons (BOWL-RIVALS): no weapon bar.
+    slotBar.hidden = !!state.bowlNight;
     for (const button of buttons) {
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];

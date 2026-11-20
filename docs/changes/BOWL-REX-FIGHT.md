@@ -1,13 +1,18 @@
 # BOWL-REX-FIGHT: night five, the Scrapasaurus (titan-bowl, dev)
 
-**What changed.** Night five is Car Crush, Freestyle, then the Scrapasaurus (`src/bowl/bowl-rex.js`, a Show Night runner). It walks its rails at the truck and rears with its cone drawn on the floor before any fire. It rests on the Jump Straight, drops a junk car on its rails to launch off, and stands with a battery box open. At its pen it throws or eats junk cars. It falls after three landings; after its last rest it leaves by the car park gate. Every place comes from `features.bowl` on the 160 m by 90 m Bowl (`rexPlaces`). `bowl-rex-view.js` draws it, and it also stands behind the wall on nights three and four. The beaten Rex lies in the yard (`scrapdome-yard.js`). There are fifteen sound cues on stand-ins. Questions and picks are in `docs/board/questions/BOWL-REX-FIGHT.md`.
+**What changed.** Night five gets a fourth event after Last Truck Rolling: the Scrapasaurus (`src/bowl/bowl-rex.js`, a Show Night runner). It walks its rails at the truck and rears with its cone drawn on the floor before any fire. It rests on the Jump Straight, drops a junk car on its rails to launch off, and stands with a battery box open. At its pen it throws or eats junk cars. It falls after three landings; after its last rest it leaves by the car park gate. Every place comes from `features.bowl` (`rexPlaces`). `bowl-rex-view.js` draws it, and it also stands behind the wall on nights three and four. The beaten Rex lies in the yard (`scrapdome-yard.js`). There are fifteen sound cues on stand-ins. Questions and picks are in `docs/board/questions/BOWL-REX-FIGHT.md`.
 
-**Shared files touched.** `game.js` (one import), `app.js` (cue playback, `bowlRexInYard`), `render3d.js` (one line), `bowl-night.js` (`sayBowlLine`; the night-five hint), `bowl-show.js`, `bowl-lines.js`, `bowl-screens.js`, `bowl-view.js`, `scrapdome-yard.js`, `test-bowl-night.mjs`.
+**Shared files touched.** `game.js` (one import), `app.js` (cue playback, `bowlRexInYard`), `render3d.js` (one line), `bowl-night.js` (the night-five hint), `bowl-show.js`, `bowl-lines.js` (the fight's words; "three events" made "every event" in two Turn Show lines and the picker's intro), `bowl-screens.js`, `bowl-view.js`, `scrapdome-yard.js`.
 
-**Checks.** `tools/test-bowl-rex.mjs`: 57 checks on the new Bowl. Child-pace driver, 10 seeds each: Easy 10 of 10, Medium 6 of 10, Hard 2 of 10. `test-bowl-night` (259), `test-bowl-course` and `test-bowl-show` pass. Earlier, on the old Bowl, the lane tier ran on 106bcde: 87 passed, 3 failed, replays at 297 checks. `test-full-check` and `test-drive-through` are laptop-only, and `test-race-field` fails with the same hash on unchanged integration/wasteland at 5ade094. On the new Bowl, the lane suites since 6ba11d3 (which take in the integration merge) on 97b0924: 657 passed and 18 failed. Every failure also fails on unchanged integration/wasteland at 73d40fe, or is a laptop-only suite. After merging BOWL-TURNS (31e2481): `test-bowl-rex`, `test-bowl-night` (262), `test-bowl-turns` (297), `test-bowl-show`, `test-replays` (297) and `test-combat-replays` (12) pass. `npm run build` passed. One independent review: three faults fixed (the cone buried under a ramp, no chest glow at the tell, a scenario check that could pass with no scene).
+**Checks**, after merging BOWL-RIVALS (d23e32e):
+- `test-bowl-rex`: 57 checks. Child-pace driver, 10 seeds each: Easy 10 of 10, Medium 6 of 10, Hard 2 of 10.
+- `test-bowl-night` (276), `test-bowl-turns` (307), `test-bowl-rivals` (99) and `test-bowl-show` pass.
+- `test-replays` (297) and `test-combat-replays` (12) pass. `npm run build` passed.
+- Earlier, the lane suites on 97b0924: every failure also failed on unchanged integration/wasteland at 73d40fe, or was laptop-only.
+- One independent review: three faults fixed.
 
-**Changed assertions.** `test-bowl-night`: "nights three to five wait for Last Truck Rolling" becomes "nights three and four wait", with night five playable. `test-bowl-turns`: the Turn Show's night list for a player who has won only night one now ends `locked` instead of `later`, for the same reason. Both change because night five now ends with the fight instead of Last Truck Rolling. Nothing is loosened.
+**Changed assertions.** None. Only the label of one `test-bowl-night` check now names the Scrapasaurus as night five's other event.
 
 **Not run here:** browser scenario `bowl-rex-fight`, laptop-only suites, play by hand, frame check, the look of the Rex, its cone, the dropped car and the yard.
 
-**Removed:** Last Truck Rolling from night five (question 1 has the other choice).
+**Removed:** nothing. The fight is added after Last Truck Rolling on night five.

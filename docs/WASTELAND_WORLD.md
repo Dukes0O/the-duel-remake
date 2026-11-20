@@ -253,6 +253,10 @@ scores most.
 **Rival trucks**, each the Titan's body with its own paint and bolt-ons: **Rust
 Rhino** (horn), **Big Kettle** (boiler and steam), **Tin Lizard** (tail), **Old Bess**
 (Moss's cousin), and **Dragon Wagon** (breathes fire on the ramps).
+Each drives in a way of their own (BOWL-RIVALS): Old Bess is slow off the line and never gives up; Big Kettle
+takes a long time to get going and then pushes everything aside; Rust Rhino charges; Tin Lizard is quick and runs
+away when hurt; Dragon Wagon is the fastest. Old Bess races night one's Side by Side and Rust Rhino night two's;
+nights three to five put three of them in the Bowl with the player.
 
 **Night five: the Scrapasaurus.** A two-storey dinosaur made of crushed cars, walking
 on rails round the Bowl. It eats junk cars and breathes fire. Jump and land on the
@@ -260,7 +264,7 @@ battery boxes on its back three times to stop it, and it falls over. Then you st
 on it, and the crowd goes home happy.
 
 How the fight plays (BOWL-REX-FIGHT, `src/bowl/bowl-rex.js`). Night five is Car Crush, Freestyle,
-then the Scrapasaurus. It walks its rails (`features.bowl.rails`, all the way round) against the
+Last Truck Rolling, then the Scrapasaurus, its fourth event. It walks its rails (`features.bowl.rails`, all the way round) against the
 trucks' way round, so it meets the truck head on, heading for the car park gate. Its phases are fixed
 so a child can learn them: it **hunts** (a truck in front of its head draws its fire), it **rears and
 glows** (the tell, with the cone drawn on the floor where the fire will go), it **breathes fire** into
@@ -330,6 +334,18 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   through `bowlLayout(course)`: the crush line's rows and their names, the run-up, the parked cars in Freestyle (the
   longest clear floor between ramps and crush line), the lanes (half the floor, or `features.bowlLanes.offset`) and
   Side by Side's start stagger. A rebuilt Bowl (BOWL-EXPAND) moves the events with it.
+- **Rivals** (BOWL-RIVALS) are data in `src/bowl/bowl-rivals.js`: name, way of driving (one of the arena's brains
+  and a start delay) and top pace in mph for Easy, Medium and Hard, and who drives on which night. Side by Side
+  keeps the duel's rival rules, its speed held to the rival's pace, on the second of the course's two lanes
+  (`course.features.bowl.lanes` through `bowlLayout`: half a lap apart on the centre line); each truck finishes one
+  full lap from its own start. Last Truck Rolling reads its starting slots and walls from the course, and loads the
+  Bowl as the arena's own fight (`_loadArena`, mode `last-car-rolling`): its teams, computer drivers and wreck
+  credit, with no weapons and no crates, the same show armor for every truck, and a wrecked truck knocked out for
+  the rest of the event. The show's two-minute clock decides it: the last truck rolling wins, or at the clock the
+  hardest hitter still rolling. Rivals' rams are scaled by level (`BOWL_RIVAL_HITS`), and the player's nose does
+  not tip in the air there, because the arena turns a roof landing into a knock. Open points are in
+  `docs/board/questions/BOWL-RIVALS.md` until the card merges. `tools/test-bowl-rivals.mjs` holds Kyle's rule:
+  a child-pace driver wins every Easy event at least 8 times in 10.
 - **Turn Show** (BOWL-TURNS) runs in `src/bowl/bowl-turns.js`, pure rules with no race state: two to four named
   players take one go each at every event, event by event, in the order they were picked. Every go, the first
   too, opens on "NAME IS UP. PASS THE KEYBOARD." at the menu and starts only on a fresh key press (a held or

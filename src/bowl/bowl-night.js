@@ -6,8 +6,9 @@
 // results, and settles the purse with settleShowNight.
 //
 // Hooks for the cards that build on this one:
-// - BOWL-RIVALS registers 'lastTruckRolling' and replaces 'sideBySide' with
-//   registerBowlEventRunner; its rivals come in through runner.place().
+// - BOWL-RIVALS (src/bowl/bowl-rivals.js) registers 'sideBySide' and
+//   'lastTruckRolling' with registerBowlEventRunner; its rivals come in through
+//   runner.place().
 // - BOWL-TURNS runs one event per player from the same runners: every finished
 //   attempt is in night.attempts, and startBowlNight takes the playerId. A turn
 //   (`turn: {driver}`, `eventIndex`) is one go at one event: it ends in the
@@ -40,8 +41,8 @@ export const BOWL_NIGHT_RULES = Object.freeze({
   // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
   // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
   freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 150, medium: 350, hard: 600})}),
-  // The computer truck's top pace on each level, until BOWL-RIVALS gives each rival its own.
-  sideBySide: Object.freeze({timeLimitSec: 60, paceMph: Object.freeze({easy: 22, medium: 28, hard: 34})}),
+  // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS); the lanes are bowlLayout's.
+  sideBySide: Object.freeze({timeLimitSec: 60}),
   donutMaxMph: 15,
   minJumpSec: .5,
   bigJumpSec: 1.2,
@@ -82,14 +83,14 @@ export const bowlEventRunner = type => RUNNERS.get(type) ?? null;
 export const bowlNightPlayable = night => !!SHOW_NIGHTS[night - 1] &&
   SHOW_NIGHTS[night - 1].events.every(type => RUNNERS.has(type));
 
-function startAt(duel, s0, lateral) {
+export function startBowlEventAt(duel, s0, lateral) {
   const s = duel.state;
   s.s = s.prevS = s0; s.lateral = s.prevLateral = lateral;
   s.nextLapGate = duel._lapGates.filter(gate => gate <= s0).length;
 }
 
 // One computer truck on the other lane, on the existing rival rules at the
-// night's CPU level. BOWL-RIVALS replaces it with the named rivals.
+// night's CPU level. BOWL-RIVALS (src/bowl/bowl-rivals.js) names it and sets its pace.
 export function addComputerTruck(duel, {s: start = 0, lateral = 0, car = SHOW_TRUCK} = {}) {
   const upgrades = Object.fromEntries(Object.keys(duel.state.upgrades || {}).map(key =>
     [key, CARS[car].factoryMaxed ? 3 : 0]));
@@ -165,7 +166,7 @@ export function crushRowName(course, rowIndex) {
 }
 
 registerBowlEventRunner('carCrush', {
-  place(duel) { const line = bowlLayout(duel.course).crush; startAt(duel, line.startS, line.lateral); },
+  place(duel) { const line = bowlLayout(duel.course).crush; startBowlEventAt(duel, line.startS, line.lateral); },
   target: (night, course) => crushRowsToWin(course, night),
   goal: (night, course) => BOWL_GOALS.carCrush(crushRowName(course, crushRowsToWin(course, night) - 1)),
   observe(duel, night, ev) {
@@ -191,7 +192,7 @@ registerBowlEventRunner('carCrush', {
 registerBowlEventRunner('freestyle', {
   place(duel) {
     const layout = bowlLayout(duel.course);
-    startAt(duel, layout.start.s, layout.start.lateral);
+    startBowlEventAt(duel, layout.start.s, layout.start.lateral);
     duel.state.traffic = layout.parked.map(({s, dir, lateral}) => {
       return {s, prevS: s, lateral, prevLateral: lateral, dir, speedMph: 0, headingError: 0, pushVelocity: 0,
         car: 'falcone_f42', alive: true, damageZones: freshDamageZones(), damageCooldown: 0, bowlParked: true};
@@ -206,27 +207,7 @@ registerBowlEventRunner('freestyle', {
   },
 });
 
-// Side by Side: two mirrored lanes from the course, half a lap apart, so both
-// trucks drive the same ground. Each races one full lap from its own start (the
-// Duel's own lap count is left alone, as the two starts are on opposite sides).
-registerBowlEventRunner('sideBySide', {
-  place(duel) {
-    const [mine, theirs] = bowlLayout(duel.course).lanes;
-    startAt(duel, mine.s, mine.lateral);
-    addComputerTruck(duel, {s: theirs.s, lateral: theirs.lateral});
-  },
-  goal: () => BOWL_GOALS.sideBySide(),
-  step(duel, night) {
-    const s = duel.state, rival = s.opponents[0], event = night.event;
-    const [mine, theirs] = bowlLayout(duel.course).lanes, lap = duel.course.length;
-    if (rival) rival.speedMph = Math.min(rival.speedMph, BOWL_NIGHT_RULES.sideBySide.paceMph[difficultyOf(night)]);
-    if (event.playerDoneAt == null && s.s - mine.s >= lap) event.playerDoneAt = s.stageTimeSec;
-    if (event.rivalDoneAt == null && rival && rival.s - theirs.s >= lap) event.rivalDoneAt = s.stageTimeSec;
-    if (event.playerDoneAt != null) return {won: event.rivalDoneAt == null || event.playerDoneAt <= event.rivalDoneAt};
-    if (event.rivalDoneAt != null || s.stageTimeSec >= BOWL_NIGHT_RULES.sideBySide.timeLimitSec) return {won: false};
-    return null;
-  },
-});
+// Side by Side and Last Truck Rolling are registered by src/bowl/bowl-rivals.js.
 
 // ---- the night ----------------------------------------------------------
 
@@ -257,7 +238,9 @@ function nextCaption(duel) {
 }
 
 // Starts a night. options: {night, playerId, driverId, difficulty, cpuDifficulty,
-// seed, owned, upgrades, eventIndex, turn}. Returns false when the night cannot run.
+// seed, owned, upgrades, eventIndex, turn, rivals}. `rivals` (rival ids, for
+// tests) chooses who drives against the player instead of the night's own.
+// Returns false when the night cannot run.
 export function startBowlNight(duel, options = {}) {
   const number = options.night;
   if (!flagOn(duel) || !Number.isSafeInteger(number) || !bowlNightPlayable(number)) return false;
@@ -273,6 +256,7 @@ export function startBowlNight(duel, options = {}) {
       driverId: options.driverId, difficulty: options.difficulty, seed: options.seed},
     playerId: options.playerId ?? null, clock: 0, caption: null, captionQueue: [], said: [],
     event: null, attempts: [], lastResult: null, result: null,
+    rivals: Array.isArray(options.rivals) ? options.rivals.filter(id => typeof id === 'string').slice(0, 3) : null,
   };
   say(duel, turn ? 'turn.open' : `night.${number}.open`);
   if (truck.lent) say(duel, 'lent.truck');

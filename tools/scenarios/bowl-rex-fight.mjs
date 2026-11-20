@@ -30,9 +30,9 @@ export const page = {
   easy: `(() => { document.querySelector('[data-action="show-night-level"][data-level="easy"]').click(); return true; })()`,
   start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="5"]').click(); return true; })()`,
   onNightFive: `(() => window.__qaApp.duel.state.bowlNight?.night === 5 && window.__qaApp.duel.state.status !== 'menu')()`,
-  // Straight to the night's third event, the fight (the Car Crush and Freestyle are BOWL-HOOKS' own scenario).
+  // Straight to the night's fourth event, the fight (the events before it have their own scenarios).
   toFight: `(() => { const duel = window.__qaApp.duel, night = duel.state.bowlNight;
-    night.show.eventIndex = 2; night.phase = 'result'; return duel.continueBowlNight(); })()`,
+    night.show.eventIndex = 3; night.phase = 'result'; return duel.continueBowlNight(); })()`,
   hud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('THE SCRAPASAURUS'); })()`,
   phase: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase ?? null)()`,
   // The HUD is drawn at once, the world later (the Titan is 14 MB, the Scrapasaurus 1.5 MB, on a real GPU):
@@ -113,7 +113,7 @@ export async function run(context) {
 
   await context.evaluate(page.start);
   await context.waitFor(page.onNightFive, 'night five starts', 60000);
-  assert.ok(await context.evaluate(page.toFight), 'the night goes on to its third event');
+  assert.ok(await context.evaluate(page.toFight), 'the night goes on to its fourth event, the fight');
   await waitInFight(context, page.hud, 'the HUD names the Scrapasaurus', 60000);
   await waitInFight(context, page.drawn, 'the stadium, the Titan and the Scrapasaurus are drawn', 240000);
   await picture(context, 'bowl-rex-start');

@@ -38,9 +38,9 @@ const showDuel = (enabled = true) => {
   const off = showDuel(false);
   ok(!off.startBowlNight({night: 1}) && !off.state.bowlNight, 'with titan-bowl off there is no Show Night');
   ok(bowlNightPlayable(1) && bowlNightPlayable(2), 'nights one and two have every event');
-  // BOWL-REX-FIGHT: night five ends with the Scrapasaurus instead of Last Truck Rolling, so only nights three and four wait.
-  ok([3, 4].every(night => !bowlNightPlayable(night)) && bowlNightPlayable(5), 'nights three and four wait for Last Truck Rolling (BOWL-RIVALS)');
-  ok(!showDuel().startBowlNight({night: 3}), 'a night with an event still to build does not start');
+  // BOWL-RIVALS registered Last Truck Rolling and BOWL-REX-FIGHT the Scrapasaurus, so every night now has every event.
+  ok([3, 4, 5].every(night => bowlNightPlayable(night)), 'nights three to five have every event (Last Truck Rolling, and the Scrapasaurus on night five)');
+  ok(!showDuel().startBowlNight({night: 6}) && !bowlNightPlayable(6), 'a night the show does not have does not start');
 }
 
 // The truck: the player's own Titan, or the show's truck lent at factory settings.

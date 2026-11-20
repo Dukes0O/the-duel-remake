@@ -8,14 +8,13 @@ Each question has my pick, and the pick is built. Every number named here is in 
 The design page says a night is three events in a row, and Last Truck Rolling runs "from night 3".
 The card says to add the fight to night five.
 
-- **A. Car Crush, Freestyle, then the Scrapasaurus (my pick, built).** The season ends on the fight, and a
-  child does not have to win Last Truck Rolling again before reaching it. Every night stays three events, as
-  the picker, BOWL-TURNS ("a player who wins all three events") and the design page say. Night five is then
-  playable before BOWL-RIVALS lands. Cost: BOWL-RIVALS' line `rivals.night.5` is never said; it can go, or it
-  can move to the fight's intro if the rivals should watch.
-- **B. Car Crush, Freestyle, Last Truck Rolling, then the Scrapasaurus.** One line in `SHOW_NIGHTS`. The night
-  is about four minutes longer, a loss at Last Truck Rolling is retried before the fight, and the words
-  "three events" in BOWL-HOOKS and BOWL-TURNS would need a night-five case.
+- **A. Car Crush, Freestyle, then the Scrapasaurus.** The pick until BOWL-RIVALS merged. It fails now: BOWL-RIVALS
+  gives night five its own Last Truck Rolling line-up, and Dragon Wagon drives only there, so A would leave one of
+  the five rivals with no night (`test-bowl-rivals` checks that every rival drives).
+- **B. Car Crush, Freestyle, Last Truck Rolling, then the Scrapasaurus (my pick now, built).** It is one line in
+  `SHOW_NIGHTS`. The season's last night is the longest, and the fight follows the night's rivals, so Big Mo's
+  "You beat every truck in the Bowl" is said just after the player has. The words that said "three events" now say
+  "every event" (Turn Show) or "the last night has a fourth" (the picker). The code counts the events itself.
 
 ## 2. What does "eats a junk car to heal" do?
 

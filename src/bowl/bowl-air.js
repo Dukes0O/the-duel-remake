@@ -12,6 +12,10 @@ export function stepBowlAir(duel, actor, dt) {
   if (duel.course?.def?.bowl !== true ||
       duel.featureFlags?.enabled('titan-bowl') !== true || actor !== duel.state ||
       !Number.isFinite(dt) || dt <= 0) return;
+  // Last Truck Rolling is the arena's fight (BOWL-RIVALS): there the player's
+  // truck keeps its nose in the air as the rivals' trucks do, because the
+  // arena's armor rules turn a roof landing into a knock and a dead stop.
+  if (duel.state.arena) return;
 
   const s = actor;
   let air = AIR_STATES.get(s);
