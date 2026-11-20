@@ -32,7 +32,8 @@ export const BOWL_NIGHT_RULES = Object.freeze({
     stillMph: 1.5, stillSec: 1.5, rowsToWin: Object.freeze({easy: 3, medium: 4, hard: 5})}),
   freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 400, medium: 650, hard: 900})}),
   // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS).
-  sideBySide: Object.freeze({timeLimitSec: 60, lane: 3}),
+  // The two lanes come from the course (sideBySideLanes in bowl-rivals.js).
+  sideBySide: Object.freeze({timeLimitSec: 60}),
   donutMaxMph: 15,
   bigJumpSec: 1.2,
   captionSec: 4,
@@ -95,16 +96,19 @@ export function addComputerTruck(duel, {s: start = 0, lateral = 0, car = SHOW_TR
 }
 
 // Where a truck on the outside lane starts so that it drives as far to the line
-// as a truck on the inside lane does from the start. Measured on the course.
+// as a truck on the inside lane does from the start. Measured on the course;
+// lanes: {inside, outside} lateral offsets.
 const STAGGERS = new WeakMap();
-export function outsideLaneStart(course, lane) {
-  if (STAGGERS.has(course)) return STAGGERS.get(course);
+export function outsideLaneStart(course, {inside: insideOff, outside: outsideOff}) {
+  const key = `${insideOff}|${outsideOff}`, known = STAGGERS.get(course) ?? new Map();
+  STAGGERS.set(course, known);
+  if (known.has(key)) return known.get(key);
   const step = .25, path = off => {
     const points = [];
     for (let s = 0; s <= course.length + 1e-9; s += step) points.push(course.worldAt(s, off));
     return points;
   };
-  const inside = path(-lane), outside = path(lane);
+  const inside = path(insideOff), outside = path(outsideOff);
   const length = points => points.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - points[i].x, p.z - points[i].z), 0);
   let left = length(outside) - length(inside), index = 0;
   while (left > 0 && index < outside.length - 1) {
@@ -112,7 +116,7 @@ export function outsideLaneStart(course, lane) {
     index++;
   }
   const start = +(index * step).toFixed(2);
-  STAGGERS.set(course, start);
+  known.set(key, start);
   return start;
 }
 

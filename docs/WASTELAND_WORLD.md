@@ -310,7 +310,9 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   Every word on screen is in `src/bowl/bowl-lines.js`.
 - **Rivals** (BOWL-RIVALS) are data in `src/bowl/bowl-rivals.js`: name, way of driving (one of the arena's brains
   and a start delay) and top pace in mph for Easy, Medium and Hard, and who drives on which night. Side by Side
-  keeps the duel's rival rules on the inside lane, its speed held to the rival's pace. Last Truck Rolling loads the
+  keeps the duel's rival rules on the inside lane, its speed held to the rival's pace. Its two lanes come from the
+  course (`sideBySideLanes`: the course's named lanes, or the middle of each half of the floor), so a bigger floor
+  (BOWL-EXPAND) moves them; the arena fight reads its starting slots and walls from the course too. Last Truck Rolling loads the
   Bowl as the arena's own fight (`_loadArena`, mode `last-car-rolling`): its teams, computer drivers and wreck
   credit, with no weapons and no crates, the same show armor for every truck, and a wrecked truck knocked out for
   the rest of the event. The show's two-minute clock decides it: the last truck rolling wins, or at the clock the

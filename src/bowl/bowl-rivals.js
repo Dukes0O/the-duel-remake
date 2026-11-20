@@ -98,14 +98,26 @@ function holdPace(duel, actor, rivalId, level) {
 
 // ---- Side by Side -------------------------------------------------------
 
+// The two lanes, from the course's own data: the course's lanes when it names
+// them (each a lateral offset, or an object with `off`), otherwise the middle
+// of each half of the floor. The rival takes the inside lane (the nearer the
+// island), the player the outside one. Nothing here assumes the floor's size.
+export function sideBySideLanes(course) {
+  const named = (course?.features?.lanes ?? course?.def?.lanes ?? [])
+    .map(lane => typeof lane === 'number' ? lane : lane?.off).filter(Number.isFinite);
+  if (named.length >= 2) return {inside: Math.min(...named), outside: Math.max(...named)};
+  const half = course?.def?.scrapdome?.floorHalfWidth ?? course?.roadHalfWidthAt?.(0) ?? 6;
+  return {inside: -half / 2, outside: half / 2};
+}
+
 registerBowlEventRunner('sideBySide', {
   laps: 1,
   place(duel, night) {
-    const lane = BOWL_NIGHT_RULES.sideBySide.lane, rivalId = sideBySideRival(night);
+    const lanes = sideBySideLanes(duel.course), rivalId = sideBySideRival(night);
     // The rival keeps to the inside lane. The outside lane is longer, so the
     // player starts ahead by the difference, as on a running track.
-    startBowlEventAt(duel, outsideLaneStart(duel.course, lane), lane);
-    const truck = addComputerTruck(duel, {s: 0, lateral: -lane});
+    startBowlEventAt(duel, outsideLaneStart(duel.course, lanes), lanes.outside);
+    const truck = addComputerTruck(duel, {s: 0, lateral: lanes.inside});
     truck.bowlRival = rivalId;
     night.event.rival = rivalId;
   },

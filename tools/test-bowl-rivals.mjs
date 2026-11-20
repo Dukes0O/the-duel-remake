@@ -8,7 +8,7 @@ import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, bowlHudView, bowlNightPlayable} from '../src/bowl/bowl-night.js';
 import {BOWL_RIVALS, BOWL_RIVAL_IDS, BOWL_RIVAL_NIGHTS, BOWL_RIVAL_RULES, lastTruckRivals,
-  sideBySideRival} from '../src/bowl/bowl-rivals.js';
+  sideBySideLanes, sideBySideRival} from '../src/bowl/bowl-rivals.js';
 import {BIG_MO, BOWL_GOALS, BOWL_RESULTS} from '../src/bowl/bowl-lines.js';
 import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
 import {worldPose} from '../src/arena/arena-floor.js';
@@ -78,7 +78,7 @@ function childDriver(seed) {
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 // Side by Side: keep to the outside lane, roughly.
 const laneAim = (duel, offset) => {
-  const s = duel.state, line = BOWL_NIGHT_RULES.sideBySide.lane + offset * .5;
+  const s = duel.state, line = sideBySideLanes(duel.course).outside + offset * .5;
   return {steer: (s.lateral - line) * .2 + (s.headingError || 0) * 1};
 };
 // Last Truck Rolling: drive at the nearest truck still rolling and hit it.
@@ -138,6 +138,18 @@ function race(duel, drive, aim, limitSec) {
   ok(BIG_MO['rivals.night.3'].includes('Big Kettle, Tin Lizard and Old Bess') &&
     [4, 5].every(night => lastTruckRivals({night}).every(id => BIG_MO[`rivals.night.${night}`].includes(BOWL_RIVALS[id].name))),
   'Big Mo names the night\'s own rivals');
+}
+
+// The lanes come from the course, so a bigger floor (BOWL-EXPAND) moves them.
+{
+  const duel = showAt(1, 'sideBySide'), lanes = sideBySideLanes(duel.course);
+  const half = duel.course.def.scrapdome.floorHalfWidth;
+  ok(lanes.inside === -half / 2 && lanes.outside === half / 2, 'with no lanes named, each lane is the middle of half the floor');
+  ok(duel.state.lateral === lanes.outside && duel.state.opponents[0].lateral === lanes.inside, 'the player and the rival start on their lanes');
+  const wide = sideBySideLanes({def: {scrapdome: {floorHalfWidth: 12}}});
+  ok(wide.inside === -6 && wide.outside === 6, 'a wider floor gives wider lanes');
+  const named = sideBySideLanes({features: {lanes: [{off: 5}, {off: -4}]}, def: {}});
+  ok(named.inside === -4 && named.outside === 5, 'lanes the course names are used as they are');
 }
 
 // ---- Side by Side: every rival finishes on every level -------------------
