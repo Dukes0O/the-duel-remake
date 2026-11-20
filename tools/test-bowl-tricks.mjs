@@ -24,7 +24,7 @@ function pressInAir(duel, state, input) {
 
 test('W/S pitch only the Bowl truck and do not change flight velocity', () => {
   const state = actor({input: {throttle: 1, brake: 0}});
-  const bowl = {course: {def: {bowl: true, tricks: true}}, featureFlags: {enabled: name => name === 'titan-bowl'}, state};
+  const bowl = {emit() {}, course: {def: {bowl: true, tricks: true}}, featureFlags: {enabled: name => name === 'titan-bowl'}, state};
   pressInAir(bowl, state, {throttle: 1});
   stepBowlTricks(bowl, state, DT);
   assert.ok(state.bowlPose.pitch < 0, 'W pitches the nose down');
@@ -46,7 +46,7 @@ test('W/S pitch only the Bowl truck and do not change flight velocity', () => {
 
 test('a key held from before take-off tips nothing until it is pressed again', () => {
   const state = actor({airborne: false, input: {throttle: 1, brake: 0}});
-  const bowl = {course: {def: {bowl: true, tricks: true}}, featureFlags: {enabled: name => name === 'titan-bowl'}, state};
+  const bowl = {emit() {}, course: {def: {bowl: true, tricks: true}}, featureFlags: {enabled: name => name === 'titan-bowl'}, state};
   stepBowlTricks(bowl, state, DT);
   state.airborne = true;
   for (let i = 0; i < 60; i++) stepBowlTricks(bowl, state, DT);
@@ -54,14 +54,17 @@ test('a key held from before take-off tips nothing until it is pressed again', (
   state.input.throttle = 0; stepBowlTricks(bowl, state, DT);
   state.input.throttle = 1; stepBowlTricks(bowl, state, DT);
   assert.ok(state.bowlPose.pitch < 0, 'pressed again in the air, W tips the nose down');
+  state.input.throttle = 0;
+  for (let i=0;i<96;i++) stepBowlTricks(bowl,state,DT);
   state.airborne = false; stepBowlTricks(bowl, state, DT);
-  assert.ok(!state.tumble, 'a small tip lands on the wheels');
+  assert.equal(state.bowlLanding,'clean','the freshly tapped full turn finishes after release');
+  assert.ok(!state.tumble, 'the completed turn lands on the wheels');
 });
 
 function carLaunch(enabled, slam = false) {
   const practice = COURSE.findIndex(course => course.practice);
   const duel = new Duel({seed: 1989});
-  duel.startCampaign({car: 'titan_monster', startStage: practice, difficulty: 'casual', mode: 'timetrial'});
+  duel.startCampaign({car: 'titan_monster', startStage: practice, difficulty: 'casual', cpuDifficulty:'hard', mode: 'timetrial'});
   const point = (s, lateral = 0) => ({x: lateral, y: 0, z: s, heading: 0, curvature: 0});
   duel.course = {def: {id: 'bowl-air-launch', practice: true, bowl: true, tricks: true, kind: 'arena', theme: 'desert'},
     closed: false, length: 10000, raceLength: 20000,
@@ -84,7 +87,7 @@ function carLaunch(enabled, slam = false) {
   duel.onChange((_, ev) => { if (ev.bowlTrick || ev.jumpLanded) events.push(ev); });
   for (let i = 0; i < 360; i++) {
     if (duel.state.airborne) airTicks++;
-    duel.setInput({throttle: 0, brake: +(slam && duel.state.airborne && airTicks <= 60), steer: 0, boost: false});
+    duel.setInput({throttle: 0, brake: +(slam && duel.state.airborne && airTicks === 115), steer: 0, boost: false});
     duel.step(DT);
     const s = duel.state;
     samples.push([s.speedMph, s.airHeight, s.airborne, !!s.tumble]);
@@ -134,34 +137,39 @@ function bigJump(keys, setup = () => {}) {
 }
 
 test('the Big Jump pays full turns, combos, sideways landings and a damage-free Slam', () => {
-  const fly = (keys, expected) => {
-    const run = bigJump(t => t > 2 ? keys(t - 2) : {});
+  const fly = (keys, expected, level = 'medium') => {
+    const run = bigJump(t => t > 2 ? keys(t - 2) : {},duel=>{duel.state.bowlNight.cpuDifficulty=level;});
     assert.deepEqual(run.events.map(e => [e.kind, e.turns, e.points, e.landing]), expected);
     return run;
   };
-  const single = fly(t => ({brake: +(t <= 120)}), [['backflip', 1, 50, 'clean']]);
+  const single = fly(t => ({brake: +(t === 1)}), [['backflip', 1, 50, 'clean']]);
   assert.deepEqual(single.events[0].cues, ['bowl.trick.land', 'bowl.trick.new']);
   assert.deepEqual(single.speeds, bigJump(() => ({})).speeds, 'S leaves the whole flight speed trace unchanged');
   fly(t => ({brake: +(t <= 216)}), [['backflip', 2, 200, 'clean']]);
-  fly(t => ({throttle: +(t <= 120)}), [['frontFlip', 1, 50, 'clean']]);
-  fly(t => ({steer: +(t <= 108)}), [['spin', 1, 30, 'clean']]);
-  fly(t => ({brake: +(t <= 120), steer: +(t <= 108)}), [['backflip', 1, 75, 'clean'], ['spin', 1, 45, 'clean']]);
-  fly(t => ({boost: t <= 120, steer: +(t <= 120)}), [['barrelRoll', 1, 60, 'clean']]);
-  fly(t => ({boost: t > 27 && t <= 147, steer: +(t <= 147)}), [['sideFlip', 1, 40, 'slide']]);
-  const slam = fly(t => ({brake: +(t <= 60)}), [['slam', 0, 0, 'slam']]);
+  fly(t => ({throttle: +(t === 1)}), [['frontFlip', 1, 50, 'clean']]);
+  fly(t => ({steer: +(t === 1)}), [['spin', 1, 30, 'clean']]);
+  fly(t => ({brake: +(t === 1), steer: +(t === 1)}), [['backflip', 1, 75, 'clean'], ['spin', 1, 45, 'clean']]);
+  fly(t => ({boost: t === 1, steer: +(t === 1)}), [['barrelRoll', 1, 60, 'clean']]);
+  const sideways = fly(t => ({boost:t===29, steer:+(t===1||t===29)}),
+    [['spin',1,45,'clean'],['sideFlip',1,120,'clean']]);
+  assert.equal(sideways.duel.state.bowlNight.event.score,442);
+  fly(t=>({brake:+(t===1),steer:+(t===183)}),[['backflip',1,25,'slide']],'hard');
+  const slam = fly(t => ({brake: +(t === 183)}), [['slam', 0, 0, 'slam']],'hard');
   assert.ok(Object.values(slam.duel.state.damageZones).every(value => value === 0));
   assert.ok(slam.duel.state.speedMph > 1 && slam.duel.state.bowlPose.pitch === 0);
 });
 
 test('a first-frame press counts, and a completed flip survives a reversal', () => {
-  const run = bigJump(t => ({brake: +(t <= 120), throttle: +(t > 120 && t <= 216)}));
-  assert.deepEqual(run.events.map(e => [e.kind, e.points, e.combo]), [['frontFlip', 75, 2], ['backflip', 75, 2]]);
+  const run = bigJump(t => ({throttle:+(t===1),brake:+(t===115)}));
+  assert.deepEqual(run.events.map(e => [e.kind, e.points, e.combo]), [['frontFlip',75,2],['backflip',75,2],['yoYo',100,1]]);
+  assert.equal(run.duel.state.bowlNight.event.score,696);
 });
 
 test('a Slam takes one third of the actual crowd, pays zero and plays no crowd cheer', () => {
   const scores = [];
   let crowdBefore, timeBefore, landedAt;
-  const run = bigJump(t => ({brake: +(t <= 60)}), duel => {
+  const run = bigJump(t => ({brake: +(t === 185)}), duel => {
+    duel.state.bowlNight.cpuDifficulty = 'hard';
     const event = duel.state.bowlNight.event;
     event.crowd = 75;
     duel.onChange((_, ev) => {
