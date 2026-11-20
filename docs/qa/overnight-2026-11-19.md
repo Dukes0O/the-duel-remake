@@ -78,3 +78,45 @@ Gate camera: eye (5974.6, 1.6, 52.6), fov 48, facing the cast 14 to 20 m away (p
 - **Measured contrast, with and without the wisps** (the wisp layer switched off for one extra frame, same moment; noise is two frames with nothing changed): the wisps 4 to 6 (18 m, opacity 0.09 to 0.11): 0 to 2 of 89 pixels changed, the largest change 1 level of 255; wisps 7 to 9 (20.6 m, opacity 0.10 to 0.13): 3 to 14 pixels changed, the largest change 8 levels, mean 1 to 2.5. Three wisps at 16.2 m read 60 to 64 changed pixels with a largest change of 66, but the noise there was also 17 (a walker's arm moved between the two frames), so I do not count it.
 - What the numbers predict: against a dark background (luma 60 to 100) a wisp at its peak opacity gives at most 0.17 x (241 - 80), about 27 levels at its very centre and 1 to 3 levels over the whole sprite; against the pale mesa (luma about 150 to 200; RGB 156/144/141 was measured next to a wisp) at most 0.17 x (241 - 160), about 14 levels at the centre and 3 or fewer over most of it.
 - **Result: effectively invisible at normal size**, a rise of a few levels in a few pixels. The grey blob Kyle saw is gone, but what replaced it cannot be seen either. If it is to read as breath it needs a higher peak opacity or a larger, brighter sprite; that is the Director's and the builder's call.
+
+## Group 3: the town (`wasteland-town`)
+
+Commit `a9d18cabc`, Kyle's copy on 5192 with `?flags=wasteland-town`, the hand-drive Chrome (visible, 1282 by 716 CSS pixels, devicePixelRatio 1.5), memory-only saves. Pictures `.evidence/qa-night/g3-*`.
+
+**How the town was set up (a limit of this check).** A town that earns its own 330 people takes days of play, so after founding "Overnight QA" through the real screens (yard, THE TOWN, name, START THE TOWN) I placed 79 buildings with the town's own commands (roads, wells, soup kitchen, windmill, kiln, workshop, school, clinic, fire station, warehouse, forge, sawmill, water tower, salvage yard, goat pen, chicken run, town hall), forced the non-road ones to "finished", and added 320 people by copying the 12 founders (ids, names, ages and homes changed). **Roads stayed plans, and the buildings are drawn as plain boxes** (see below), so this is not a picture of a built-up town. The 320 copies made 23 to 27 people "sick" at once (a report in the right-hand panel says so), which is an effect of my copies, not of the game. The first attempt with hand-written person records stopped the town's clock after one day (the loop threw); the copies from real records ran fine.
+
+### The five work trucks, driven by real keys
+
+Each was started with the town's DRIVE button, with the job's `vehicle` field set to the truck id (the game has no button that does this yet: the five trucks reach the player only through a job that names one; that is TOWN-HAUL-JOB and TOWN-FIRE-JOB, not merged). I put the truck on the town road at (60, 103) heading east and held ArrowUp. Speed after 3 s of throttle, then after 7 s, in km/h; mass is what the job reports.
+
+| Truck | Mass | After 3 s | After 7 s | Reverse (ArrowDown 2.5 s) |
+| --- | --- | --- | --- | --- |
+| Fire truck | 12,000 kg (3,000 L tank full) | 15 | 30 | -33 |
+| Flatbed (empty) | 6,500 kg | 23 | 45 | -13 |
+| Supply truck (load 4,000 kg) | 10,500 kg | 14 | 28 | -21 |
+| Water tanker (5,600 L full) | 13,100 kg | 12 | 23 | -26 |
+| Tow rig | 9,500 kg | 17 | 37 | -20 |
+
+- Weight is felt: the full tanker and the loaded supply truck pull away at about half the flatbed's rate. Each truck has its own model (pumper with hose reels, flatbed with a sack load, supply truck, white tanker drum, tow rig): `g3-fire-truck-town-street.jpg`, `g3-flatbed.jpg`, `g3-supply-truck.jpg`, `g3-water-tanker-town.jpg`, `g3-tow-rig.jpg`.
+- **The fire truck's bell on B:** one press of KeyB while rolling at 29 km/h raised the job's `bell.rings` from 0 to 1. The other four trucks reported no bell counter, as the card says. I did not listen: the app's sound is muted in this Chrome and nobody has listened to `town.bell`.
+- **Looks wrong (HUD in a truck):** every truck shows the player's car buttons (UFO JUMP, BOMB STORM, CROSSBOW, STAR SHIELD, all "READY"), the NITRO bar with its SPACE tag, and "PLAYER ARMOR 121 / 121". The nitro and those four buttons belong to the garage car (the test says Space fires no nitro in a truck). A player in the fire truck sees buttons that do nothing or do car things.
+- **Looks wrong (hood camera):** C cycles the camera; the "HOOD CAM" from the fire truck shows a huge flat black slab filling the lower half of the picture (`g3-hood-camera-black-slab.jpg`). It looks like the truck's own body drawn black from inside, or the work-vehicle layer lit wrongly. The chase and wide cameras are fine.
+- **Looks wrong (end of drive):** leaving the town drive with BACK TO THE YARD shows a screen headed "THE EVERBURN / WORLD JOB / You left the job unfinished." with TRY AGAIN (`g3-result-says-everburn.jpg`). A town drive is not an Everburn job. Two clicks on BACK TO THE YARD are then needed to reach the yard (the pause card's button goes to this result screen first).
+- The town drive starts at the Yard (gate at z -92) and the town is 100 to 500 m away, so the player sees empty salt first (a caption says "Drive up to the Scrapdome gate to go inside." in the town drive).
+- Driving numbers with the fire truck on the town road: 0 to 30 km/h took about 7 s, stopping was not timed here (the card's test covers that).
+
+### The town from the driver's seat (chase camera)
+
+`g3-fire-truck-town-street.jpg` and `g3-water-tanker-town.jpg`: the truck on the town road, about 15 walkers on the road and beside the buildings, a group of 20 or more standing at the left edge, the kitchen on fire with a dark smoke column, buildings as dark boxes. It reads as a town with life, but the buildings are black featureless boxes from the street (a box of 8 m, no windows, no door, no roof line).
+- Walkers drawn by the view: 160 sampled of 332 (`life.stats`: sampled 160, drawn 160, 116 draw calls, refresh 0.4 ms, 0.6 ms a frame in the view's own count), animals 9 (goat, hens, dog).
+- **Frame pacing, not a frame check (the laptop was in use, the browser is visible, DPR 1.5):** town drive in the fire truck with all of that: 300 frames in 5 s, p50 16.7 ms, p95 16.9 ms, p99 16.9 ms, max 17.0 ms, 425 draw calls. Steady 60.
+- **The mayor's camera is much slower:** the town screen itself, street zoom with the kitchen fire burning: 74 frames in 4 s, p50 50.0 ms, p95 66.7 ms, p99 116.7 ms (the first run), the second run p95 66.8 and max 66.9 ms; with the camera zoomed far out (zoom 0.25) the same 75 frames in 4 s (p50 50.1, p95 66.7). That is 18 to 20 frames a second, in steps of exactly 3 display frames, whatever the zoom. 359 draw calls. I do not know whether the town screen limits its own frame rate or the page is slow here; the drive's 60 fps says the machine is able. A player watching the town sees a choppy picture. **This is the one real stutter found.** The Director may want it timed alone on the laptop before the switch goes on.
+
+### The mayor's camera, the walkers, carts, smoke and fire
+
+- `g3-mayor-camera-sites.jpg` (clear day, 1 day later), `g3-mayor-camera-dust.jpg` (dust), `g3-mayor-camera-kitchen-fire.jpg` (kitchen on fire).
+- **Haze:** the first day was a dust day (the town's weather flag, spring, 35 percent): the whole picture is a brown haze and the buildings and walkers are barely visible. I turned the flag off for the later pictures; the fx still reported `dust 0.999`, then 0.30 after a while, so a haze sits over the scene even on a clear day.
+- **Buildings in the town view are flat boxes and slabs** (tan blocks one storey high, the roads a dark strip). The pictures show no windows or doors. The buildings I forced to "finished" look the same as plan sites, apart from the colour. That is the TOWN-VIEW-ART card's job, but nobody should judge the town's looks from this build.
+- **Fire and smoke:** `g3-mayor-camera-kitchen-fire.jpg`: igniting the soup kitchen (command `igniteTownFire`, answer "The site is burning.") gave 10 flames and 79 smoke puffs at first: orange fire on the roof edge and thick black smoke all round it. This reads well. A few seconds later it was 3 flames and 25 puffs (the fire is dying out in the town's own rules).
+- **Walkers:** `g3-walkers-zoom.png` (5x): about 9 figures in a loose group, in mid-stride, small and dim through the haze, with carts nowhere in view. At the mayor's street zoom the figures are about 25 px tall; I could not find individual carts or haulers (the town had none: no goods were stored, `vehicles: 0`).
+- Not done: a click on a walker to open the person's card, and clicking buildings; no cart or hauler was in view; I did not check the windmill, the pump-house flywheel and the water tower gauge (they need those buildings built, not forced).
