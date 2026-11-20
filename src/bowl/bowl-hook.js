@@ -1,4 +1,6 @@
 // Fixed-step geometry shared by the tow fight, the wall pass and the read-only view.
+import {BOOST} from '../config.js';
+
 export const EYE_Z = Object.freeze([-2.90, -.22, 2.56]);
 export const TOW_LENGTH = 15;
 export const signedAngle = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -79,7 +81,7 @@ export function newHook() {
 }
 export function releaseHook(hook, events) {
   if(hook.phase!=='idle')events.push({type:'letgo'});
-  Object.assign(hook,{phase:'idle',box:-1,time:0,tight:false,pulling:false,arrivalSpeed:0,length:TOW_LENGTH,drag:null,tip:null});
+  Object.assign(hook,{phase:'idle',box:-1,time:0,tight:false,pulling:false,arrivalSpeed:0,stalled:0,length:TOW_LENGTH,drag:null,tip:null});
 }
 function linePoint(a,b,t) {
   return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t};
@@ -152,14 +154,25 @@ export function stepHook(fight, truck, dt, course, events) {
   }
   h.arrivalSpeed=0;h.tight=tight;h.pulling=!!pulling;
   if(!tight && truck.input?.throttle>0 && !fight.hints.slack)events.push({type:'slack'});
+  if(!pulling)h.stalled=0;
   if(pulling){
-    const nitro=!!truck.boosting;
+    // The cable can hold the truck below the road nitro speed. Spend the same
+    // tank charge on this loaded pull, without accelerating through the cable.
+    let nitro=truck.boosting ? 1 : 0;
+    if(!nitro && truck.input?.boost && truck.boost>0 && truck.speedMph<BOOST.minSpeedMph){
+      const charge=BOOST.drainPerSec*dt / ((1+.25*(truck.upgrades?.tank||0))*(1+.14*(truck.upgrades?.nitro||0)));
+      nitro=Math.min(1,truck.boost/charge);
+      truck.boost=Math.max(0,truck.boost-charge);
+    }
+    if(nitro)h.stalled=0;
     if(h.box===1 && h.pulls[1]>=1 && !nitro){
       if(!fight.braced){fight.braced=true;events.push({type:'brace'});}
       h.length=Math.max(8,h.length-2*dt);
-      if(fight.level!=='easy')return;
+      h.stalled=(h.stalled||0)+dt;
+      if(h.stalled+1e-8>=2 && !fight.hints.braceStall)events.push({type:'braceStall'});
+      return;
     }
-    h.pulls[h.box]+=dt*(nitro?2:1);
+    h.pulls[h.box]+=dt*(nitro && h.box===1 && h.pulls[1]>=1 ? 2*nitro : 1+nitro);
   }
 }
 

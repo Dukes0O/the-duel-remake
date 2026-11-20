@@ -1,6 +1,7 @@
 // BOWL-REX-2. The only complete drive uses normal controls in the real Duel.
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {App} from '../src/app.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
@@ -32,6 +33,21 @@ function start(seed=101,level='easy'){
   wreck.step(dt);
   assert.equal(wreck.state.bowlNight.lastResult.won,false);
   assert.equal(wreck.state.bowlNight.lastResult.wrecked,true);
+}
+{
+  const duel=start(), state=duel.state, keys={};
+  state.status='racing';
+  const steering={update:()=>0};
+  const controls={duel,keys,_readGamepad:()=>({}),activeInputContext:()=>'car',
+    _resetKeyboardInput(){},_keyboardSteering:steering,_arenaKeyboardSteering:steering,
+    _keyboardThrottle:{update:()=>0}};
+  const rex=state.bowlNight.event.rex;
+  for(const [down,phase] of [[true,'flying'],[false,'flying'],[true,'idle'],[false,'idle'],[true,'flying']]){
+    keys.KeyF=down;
+    App.prototype._applyInput.call(controls,dt);
+    assert.equal(state.input.interact,down);
+    stepHook(rex,state,dt,duel.course,[]);assert.equal(rex.hook.phase,phase);
+  }
 }
 const d=start(),course=d.course;
 const make=(difficulty='easy')=>createRexFight({difficulty,course});
@@ -65,9 +81,16 @@ for(const level of ['easy','medium','hard']){
   }
   const first=events.find(e=>e.type==='fire'),tell=events.find(e=>e.type==='tell');
   assert.ok(first.time<=8 && first.time-tell.time>=REX_RULES.level[level].tellSec-dt);
+  assert.ok(!events.some(e=>e.type==='scorch' && e.time<first.time+1.65),'the stationary starting truck is clear of the first fire');
   assert.equal(first.cone.heading,tell.cone.heading);
   assert.equal(first.cone.halfAngle,tell.cone.halfAngle);
   assert.equal(events.filter(e=>e.type==='fire').length,level==='easy'?1:2);
+  for(const count of [1,2]){
+    const resting=tired(0,level);resting.rests=count;
+    resting.t=REX_RULES.level[level].restSec-2*dt;
+    stepRexFight(resting,still,dt,course);assert.equal(resting.phase,'rest');
+    stepRexFight(resting,still,dt,course);assert.equal(resting.phase,'walk');
+  }
   const gate=tired(0,level);gate.rests=REX_RULES.level[level].rests;gate.t=100;
   for(let i=0;i<1000 && !gate.done;i++)stepRexFight(gate,still,dt,course);
   assert.equal(gate.done?.reason,'gate');
@@ -122,6 +145,12 @@ for(const level of ['easy','medium','hard']){
     for(let i=0;i<Math.round(times[box]/2/dt)-1;i++)events.push(...stepRexFight(f,truck,dt,course));
     assert.equal(f.boxes[box],false);
     events.push(...stepRexFight(f,truck,dt,course));
+    if(box===2){
+      const tell=events.findIndex(e=>e.type==='tell');
+      while(f.phase!=='fire' && !f.boxes[box]){assert.ok(!f.boxes[box]);events.push(...stepRexFight(f,truck,dt,course));}
+      assert.ok(tell>=0 && events.some(e=>e.type==='fire'));
+      for(let i=0;i<85 && !f.boxes[box];i++)events.push(...stepRexFight(f,truck,dt,course));
+    }
     assert.equal(f.boxes[box],true);
     assert.ok(events.some(e=>e.type==='boxOut'));
     assert.equal(f.hook.phase,'dragging');
@@ -133,6 +162,10 @@ for(const level of ['easy','medium','hard']){
   assert.ok(ev.some(e=>e.type==='brace'));const first=f.hook.pulls[1];
   assert.ok(f.hook.length<15);
   stepRexFight(f,truck,dt,course);assert.ok(f.hook.pulls[1]<first+.1);
+  for(let i=2;i<239;i++)assert.ok(!stepRexFight(f,truck,dt,course).some(e=>e.type==='braceStall'));
+  assert.ok(stepRexFight(f,truck,dt,course).some(e=>e.type==='braceStall'));
+  assert.equal(f.hook.pulls[1],first);
+  assert.equal(BIG_MO['rex.brace'],'It pulled you in, so press Space as you pull.');
   const kept=f.hook.pulls[1];releaseHook(f.hook,[]);f.t=100;stepRexFight(f,truck,dt,course);
   assert.equal(f.hook.pulls[1],kept);assert.ok(!f.low);
   const head=tired(2);Object.assign(head.hook,{phase:'attached',box:2});
@@ -220,6 +253,17 @@ function modelFixture(){
   const snap=JSON.stringify(f);first(10);assert.equal(JSON.stringify(f),snap);
   assert.ok(model.getObjectByName('battery-box-1-open').visible && model.getObjectByName('battery-box-1-open').scale.x===1);
   assert.ok(!model.getObjectByName('battery-box-1-whole').visible);
+  const beam=view.group.getObjectByName('Open battery beam'),arrow=view.group.getObjectByName('Offscreen battery arrow');
+  assert.ok(beam.visible && beam.geometry.parameters.height>=30);
+  const camera=new THREE.PerspectiveCamera(55,1.5,.1,500);
+  camera.position.copy(f.marker);camera.position.z+=30;camera.updateMatrixWorld();
+  arrow.onBeforeRender(null,null,camera);assert.equal(arrow.material.opacity,0);
+  camera.rotateY(Math.PI);camera.updateMatrixWorld();
+  arrow.onBeforeRender(null,null,camera);assert.equal(arrow.material.opacity,1);
+  const ndc=arrow.position.clone().project(camera);assert.ok(Math.abs(ndc.x)<=.9 && Math.abs(ndc.y)<=.8);
+  f.hook.phase='attached';f.hook.box=0;f.hook.pulls[0]=1;first(15);
+  const progress=view.group.getObjectByName('Battery pull progress');
+  assert.ok(progress.visible);assert.equal(progress.geometry.drawRange.count,32*6);
   const at=eyePoint(f,course,0);f.boxes[0]=true;f.hook.phase='dragging';f.hook.box=0;
   f.hook.drag={...at,x:at.x+6};f.hook.tip=f.hook.drag;f.hook.origin=at;
   first(20);assert.equal(view.group.getObjectByName('battery-box-1').position.x,at.x+6);
@@ -237,17 +281,19 @@ function modelFixture(){
   first(60);assert.equal(loads,1);
   view.dispose();
 }
-function drive(seed){
+function drive(seed,useSpace=true,slowTween=false){
   const duel=start(seed),s=duel.state,night=s.bowlNight,f=night.event.rex;
-  const rng=makeRng(seed),driver={reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
+  const rng=makeRng(seed),driver={useSpace,reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
+  if(slowTween)Object.assign(driver,{slowTween:true,reaction:rng.range(.75,1.25),pace:rng.range(22,30),wobble:rng.range(.13,.23),wobblePhase:rng.range(0,6.28)});
   const trace=[];let fall=null,ending=null,firstDrag=null,dragDistance=0;
   duel.onChange((_,ev)=>{
+    if(ev.bowlRex?.type==='jerk')assert.notEqual(ev.bowlRex.box,1,'the back box has no run-up in either drive');
     if(ev.bowlRex){trace.push(ev.bowlRex.type);if(ev.bowlRex.type==='fall')fall=night.clock;}
     if(ev.bowlEventResult)ending=night.clock;
   });
   for(let i=0;i<120*400 && s.status!=='bowl_break';i++){
     childDrive(duel,driver);
-    if(f.hook.phase==='attached'){assert.equal(s.input.steer,0);assert.ok(!s.input.boost);}
+    if(f.hook.phase==='attached'){assert.equal(s.input.steer,0);assert.ok(!s.input.boost || (useSpace && f.hook.box===1 && f.braced));}
     if(f.phase==='fallen'){
       assert.equal(f.hook.phase,'dragging');
       const drag=f.hook.drag;assert.ok(drag);
@@ -265,14 +311,20 @@ function drive(seed){
     assert.ok(dragDistance>1,'the final box moves behind the truck during the fall');
     assert.ok(bowlHudView(s,duel.course).goal.split(' ').length<=5);
   }
+  if(!useSpace){assert.ok(f.hints.braceStall);assert.equal(f.boxes[1],false);}
   return {won:night.lastResult.won,trace};
 }
 if(!process.argv.includes('--rules-only')){
   const runs=Array.from({length:10},(_,i)=>drive(101+i));
   assert.deepEqual(drive(101),runs[0]);
   const wins=runs.filter(run=>run.won).length;
-  console.log('Easy ordinary-input tow wins:',wins,'of 10');
-  assert.ok(wins>=9,'child-pace driver must win at least nine of ten');
+  console.log('Easy tow wins using Space on the brace:',wins,'of 10');
+  assert.ok(wins>=6,'driver using Space wins at least six of ten');
+  const plain=Array.from({length:10},(_,i)=>drive(101+i,false));
+  console.log('Throttle-only wins:',plain.filter(run=>run.won).length,'of 10');
+  assert.ok(plain.every(run=>!run.won));
+  const tween=Array.from({length:10},(_,i)=>drive(101+i,true,true));
+  console.log('Late-reaction 22-30 mph driver wins:',tween.filter(run=>run.won).length,'of 10');
 }
 console.log('Scrapasaurus tow rules, continuous wall contacts, yard and read-only view passed.');
 

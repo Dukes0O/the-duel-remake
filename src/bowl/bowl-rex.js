@@ -53,7 +53,8 @@ function phase(fight,name){
 }
 function tell(fight,course,target,alongCable,events){
   const head=alongCable ? eyePoint(fight,course,2) : modelPoint(rexAnchor(fight,course),0,0,fight.low ? 5.3 : 7.6);
-  const aim=Math.atan2(target.x-head.x,target.z-head.z);
+  // The first breath runs along the rail. The truck starts in the lane beside it.
+  const aim=fight.tells===0 && !alongCable ? rexFacing(fight,course) : Math.atan2(target.x-head.x,target.z-head.z);
   // Mark the full swept sector before any flame appears. The fire traverses
   // this fixed sector and cannot follow a truck that has left it.
   const sweep=fight.boxes[0] && !alongCable ? REX_RULES.fire.sweep : 0;
@@ -102,7 +103,10 @@ export function stepRexFight(fight,truck,dt,course){
   fight.tailYaw=fight.phase==='walk' ? .14*Math.sin(2.5*fight.t) : 0;
   fight.marker=hookMarker(fight,truck,course);
   stepHook(fight,truck,dt,course,events);
-  if(h.phase==='attached' && h.pulls[h.box]+1e-8>=level.pull[h.box]){
+  // The third latch releases after flame has reached the marked cable. A jerk or
+  // full tank can build tension early, but cannot skip the marked attack.
+  const headLatchReady=h.box!==2 || (fight.phase==='fire' && fight.cableBreath && fight.t>=.65);
+  if(h.phase==='attached' && headLatchReady && h.pulls[h.box]+1e-8>=level.pull[h.box]){
     extract(fight,h.box,events);
     return events;
   }
@@ -146,7 +150,7 @@ export function stepRexFight(fight,truck,dt,course){
     }
     case 'rest':
       if(h.phase==='attached' && h.box===2 && h.tight)tell(fight,course,at,true,events);
-      else if(fight.t+1e-8>=(fight.level==='easy'&&fight.rests===1 ? 45 : level.restSec)
+      else if(fight.t+1e-8>=level.restSec
         && !(h.phase==='attached' && h.box===0))stand(fight,events);
       break;
     case 'lift':
@@ -175,7 +179,7 @@ export function stepRexFight(fight,truck,dt,course){
   fight.marker=hookMarker(fight,truck,course);
   return events;
 }
-const hints={gone:'rex.gone',toasted:'rex.toasted',noBox:'rex.noBox',slack:'rex.slack',brace:'rex.brace',scorch:'rex.scorch',lift:'rex.lift',tell:'rex.tell'};
+const hints={gone:'rex.gone',toasted:'rex.toasted',noBox:'rex.noBox',slack:'rex.slack',braceStall:'rex.brace',scorch:'rex.scorch',lift:'rex.lift',tell:'rex.tell'};
 
 registerBowlEventRunner(REX_EVENT,{
   place(duel,night){
@@ -196,8 +200,13 @@ registerBowlEventRunner(REX_EVENT,{
       if(hints[event.type] && !fight.hints[event.type]){
         fight.hints[event.type]=true;sayBowlLine(duel,hints[event.type],{once:true});
       }
-      if(event.type==='slack'||event.type==='noBox')continue;
+      if(event.type==='slack'||event.type==='noBox'||event.type==='braceStall')continue;
       duel.emit({bowlRex:{...event,cue:REX_CUES[event.type]??null}});
+    }
+    if(fight.hook.tight || fight.hook.phase!=='attached'){
+      if(night.caption?.id==='rex.slack')night.caption=null;
+      if(night.captionQueue.some(line=>line.id==='rex.slack'))
+        night.captionQueue=night.captionQueue.filter(line=>line.id!=='rex.slack');
     }
     return fight.done ? {...fight.done,boxes:3-rexBoxesLeft(fight),hits:fight.hits} : null;
   },

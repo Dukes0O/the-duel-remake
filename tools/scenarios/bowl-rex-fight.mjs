@@ -12,9 +12,11 @@ export function childDrive(duel, driver) {
   const s=duel.state, f=s.bowlNight?.event?.rex;
   if(s.status!=='racing'||!f)return;
   const h=f.hook, mark=f.marker, dt=1/120;
+  driver.elapsed=(driver.elapsed||0)+dt;
   let throttle=0,brake=0,steer=0,interact=false;
   if(h.phase==='flying'||h.phase==='attached'){
-    throttle=1;
+    // Ease onto the back cable without a run-up. Once tight, keep the throttle down.
+    throttle=h.box===1 && !h.tight ? (s.speedMph<13 ? .2 : 0) : 1;
   }else if(h.phase==='dragging'){
     if(f.phase!=='fallen' && !s.input.interact)interact=true;
     if(f.phase==='fallen')throttle=s.speedMph<12 ? .6 : 0;
@@ -30,14 +32,15 @@ export function childDrive(duel, driver) {
     const ds=((f.s-s.s+1.5*L)%L)-L/2;
     const target=f.places.rail-f.places.side*(driver.lane||10);
     // Back up on the inside lane until the open ring is ahead of the nose.
-    if(ds<8 || s.speedMph>4)brake=1;
+    if(ds<8 || s.speedMph>(driver.slowTween ? driver.pace : 4))brake=1;
     else if(ds>19 && s.speedMph<(driver.pace||18))throttle=.85;
     // Brake and throttle held together slow the reverse before the next shot.
     if(ds>=13 && s.speedMph<-.6)throttle=1;
     const sign=s.speedMph<-.5 ? -1 : 1;
-    steer=Math.max(-1,Math.min(1,(s.lateral-target)*.18+sign*s.headingError*1.8));
+    const wobble=(driver.wobble||0)*Math.sin(driver.elapsed*1.8+(driver.wobblePhase||0));
+    steer=Math.max(-1,Math.min(1,(s.lateral-target)*.18+sign*s.headingError*1.8+wobble));
   }
-  duel.setInput({throttle,brake,steer,boost:false,interact});
+  duel.setInput({throttle,brake,steer,boost:driver.useSpace!==false && h.phase==='attached' && h.box===1 && f.braced,interact});
 }
 
 // Each page expression is self-contained and can be checked without a browser.
@@ -106,6 +109,9 @@ export const page = {
     app._driveAutopilot=function(){
       if(!driver.firstTap && this.duel.state.bowlNight?.event?.rex?.marker?.canBite){
         driver.firstTap=true;this.autopilot=false;return;
+      }
+      if(!driver.firstBrace && this.duel.state.bowlNight?.event?.rex?.braced){
+        driver.firstBrace=true;this.autopilot=false;return;
       }
       control(this.duel,driver);
     };app.autopilot=true;return true; })()`,
@@ -178,8 +184,30 @@ export async function run(context) {
     await context.command('Input.dispatchKeyEvent',{...hookKey,type:'keyUp'});
   }
   await context.evaluate('window.__qaApp.autopilot = true');
+  await waitInFight(context,'window.__qaApp.autopilot === false','back cartridge braces',180000);
+  const driveKeys=[{code:'KeyW',key:'w',windowsVirtualKeyCode:87},{code:'Space',key:' ',windowsVirtualKeyCode:32}];
+  try{
+    for(const key of driveKeys)await context.command('Input.dispatchKeyEvent',{...key,type:'keyDown'});
+    await waitInFight(context,'window.__qaApp.duel.state.bowlNight.event.rex.boxes[1]','W and Space pull the back cartridge free',15000);
+  }finally{
+    for(const key of driveKeys)await context.command('Input.dispatchKeyEvent',{...key,type:'keyUp'});
+  }
+  await context.evaluate('window.__qaApp.autopilot = true');
+  await waitInFight(context,"window.__qaApp.duel.state.bowlNight.event.rex.phase === 'fallen'",'the third cartridge falls',180000);
+  await context.evaluate(`(() => {
+    const start=performance.now(),samples=[];
+    window.__rexFallSamples=samples;
+    const sample=()=>{
+      const rex=window.__qaApp.duel.state.bowlNight.event.rex;
+      samples.push({ms:performance.now()-start,card:!!document.querySelector('.bowl-result'),drag:rex.hook.phase==='dragging'});
+      if(!samples.at(-1).card)requestAnimationFrame(sample);
+    };
+    sample();
+  })()`);
   try { await waitInFight(context, page.card, 'the fight ends', 420000); }
   finally { await context.evaluate(page.manual); }
+  const samples=await context.evaluate('window.__rexFallSamples');
+  assert.ok(samples.some(sample=>sample.ms>=9500 && sample.drag && !sample.card),'the final tow and fall stay on screen');
   await picture(context, 'bowl-rex-card');
   assert.ok(await context.evaluate(page.cardWon), 'the child-pace driver wins on Easy, all three cartridges extracted');
   // The fight is night five's last event, so its end is the night's results; any other card goes on to them.

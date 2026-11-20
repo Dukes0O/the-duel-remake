@@ -155,7 +155,7 @@ export const BIG_MO = Object.freeze({
   'rex.out.3': 'All three are out! Look at it fall!',
   'rex.noBox': 'The box was shut. Wait for the cage to open.',
   'rex.slack': 'The cable is slack. Drive away until it goes tight.',
-  'rex.brace': 'It is pulling you in! Hold the throttle. Nitro helps.',
+  'rex.brace': 'It pulled you in, so press Space as you pull.',
   'rex.scorch': 'Ouch, that truck got toasted. Keep out of the orange next time.',
   'rex.bump': 'Circle its legs and aim for the open eye.',
   'rex.lift': 'It has picked up a car to throw! Keep moving and stay away from the ring on the floor.',
