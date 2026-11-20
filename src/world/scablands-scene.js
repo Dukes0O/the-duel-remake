@@ -950,8 +950,7 @@ export function createScablandsScene(course,options={}){
         night2 = createNight2Look(course);
         group.add(night2.group);
       }
-      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? [],
-        {mouthOf: storyPeople.mouthOf, viewer: worldJob?.night2?.camera?.position ?? here});
+      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? []);
       const storm = featureFlags.enabled('wasteland-town') ? dustNightOf(state) : null;
       if (storm && !dustNight) { dustNight = createDustNightLook(storm); group.add(dustNight.group); }
       if (dustNight) {

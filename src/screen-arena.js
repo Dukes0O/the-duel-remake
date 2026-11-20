@@ -218,6 +218,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
+    if (definition?.kind === 'town-drive') return {eyebrow: 'THE TOWN',
+      title: 'THE DRIVE', description: 'You drove round the town. Nothing was lost.',
+      metrics: '', extra: '', actions: action('BACK TO THE YARD', 'arena-yard', true) + action('MAIN MENU', 'menu')};
     if (arena.worldJob?.night2) return {eyebrow: 'FIVE COLD NIGHTS',
       title: 'STRANGERS AT THE GATE', description: 'You left Night 2 unfinished.',
       metrics: '', extra: '', actions: action('BACK TO THE YARD', 'arena-yard', true) + action('MAIN MENU', 'menu')};

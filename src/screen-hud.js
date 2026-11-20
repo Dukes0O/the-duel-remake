@@ -303,6 +303,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
     // A world job moves the spoken-line subtitle below the story caption, off the rear-view mirror (src/combat-hud.css).
     ui.stage.classList.toggle('is-world-job',worldJob);
+    // A town work truck has no nitro, no armor line and none of the car's four weapon buttons (NIGHT-2-AND-TRUCK-POLISH).
+    ui.stage.classList.toggle('is-work-truck',worldJob&&!!s.arena.worldJob?.vehicle);
     ui['arena-crush'].hidden=!app.duel.stageDef.arena||!!s.arena;
     const crushed=Math.max(0,Math.floor(s.crushCount||0));
     text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);

@@ -793,6 +793,26 @@ tasks:
     flag: "wasteland-town"
     details: "docs/board/cards/TOWN-RESERVED-OUTPOSTS.md"
 
+  - id: QA-RACE-FIELD
+    title: "test-race-field fails on integration since a merge of 19 November"
+    owner: "claude"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-RACE-FIELD.md"
+
+  - id: COMBAT-ROOF-BOW-LOOK
+    title: "The car's roof crossbow reads as a floating cream wedge and black bar"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/COMBAT-ROOF-BOW-LOOK.md"
+
   - id: TOWN-HAUL-LOAD-LOOK
     title: "The haul's load drawn as real salvage, not grey boxes"
     owner: "codex"
