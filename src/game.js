@@ -61,6 +61,7 @@ import {warlordEnabled} from './warlords/index.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
+import './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: night five's Scrapasaurus registers its Show Night runner
 import {initializeWorldJob} from './arena/modes/world-job.js';
 import {startBowlNight, continueBowlNight, retryBowlEvent, stepBowlNight, observeBowlNight} from './bowl/bowl-night.js';
 import './bowl/bowl-rivals.js'; // BOWL-RIVALS: Side by Side and Last Truck Rolling against the named rivals

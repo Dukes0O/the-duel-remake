@@ -394,6 +394,8 @@ function finishEvent(duel, outcome) {
       events: won.map(entry => ({event: entry.event, score: entry.score})), bests,
       purse: BOWL_PURSE[night.night - 1], lent: night.lent, playerId: night.playerId};
     duel.emit({bowlNightResult: night.result});
+    // BOWL-REX-FIGHT: on nights one to four Big Mo lets slip what waits for night five.
+    say(duel, `rex.seen.${night.night}`);
     say(duel, 'night.won');
   }
 }

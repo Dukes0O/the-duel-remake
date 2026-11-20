@@ -856,6 +856,7 @@ export function attachRenderer(host, app) {
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     // WATER-SCREENS: the water works show the Water Road's progress (null while the story is off: nothing loads).
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
+    yardPresentation?.setRexOrnament?.(app.bowlRexInYard?.() === true); // BOWL-REX-FIGHT
     const chapter = !menu ? st.arena?.worldJob?.night2 : null;
     if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
     const dustNight = !menu && (app._switches?.() ?? app.duel.featureFlags).enabled('wasteland-town') ? dustNightOf(st) : null;

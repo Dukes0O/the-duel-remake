@@ -263,6 +263,22 @@ on rails round the Bowl. It eats junk cars and breathes fire. Jump and land on t
 battery boxes on its back three times to stop it, and it falls over. Then you stand
 on it, and the crowd goes home happy.
 
+How the fight plays (BOWL-REX-FIGHT, `src/bowl/bowl-rex.js`). Night five is Car Crush, Freestyle,
+Last Truck Rolling, then the Scrapasaurus, its fourth event. It walks its rails (`features.bowl.rails`, all the way round) against the
+trucks' way round, so it meets the truck head on, heading for the car park gate. Its phases are fixed
+so a child can learn them: it **hunts** (a truck in front of its head draws its fire), it **rears and
+glows** (the tell, with the cone drawn on the floor where the fire will go), it **breathes fire** into
+exactly that cone, and after the fire it breathes on the Jump Straight it **rests**: it drops a junk
+car on its rails in front of itself, at the show's launch-car place, and stands with one battery box
+open. A truck that drives up that car (the Titan's own launch off cars) comes down on its back. At its
+**pen** it throws a junk car at where the truck was (a ring on the floor first), or eats one to mend
+its limp if a box has been smashed. Three landings and it **falls**; after its last rest it walks out
+of the **gate**, and too many scorches stop the show. Easy is slower (its pace is a time to walk once
+round), with a longer tell and rest and more rests. Every place comes from `features.bowl` (rexPlaces),
+so a change of floor moves the fight with it. Nights one to four end with Big Mo letting slip what
+waits under the stands, and on nights three and four it stands behind the wall. Once night five is won
+it lies in the yard's car park.
+
 **Taking turns.** **Turn Show**: pick the players by name; the game runs one event for
 each in turn, showing "GRATIAN IS UP. PASS THE KEYBOARD." and keeping a scoreboard for
 the night. Nobody plays at the same time.

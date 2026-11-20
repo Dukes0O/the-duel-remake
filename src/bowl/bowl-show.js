@@ -6,6 +6,7 @@ export const BOWL_EVENTS = Object.freeze({
   FREESTYLE: 'freestyle',
   SIDE_BY_SIDE: 'sideBySide',
   LAST_TRUCK_ROLLING: 'lastTruckRolling',
+  SCRAPASAURUS: 'scrapasaurus',
 });
 
 export const SHOW_NIGHTS = Object.freeze(Array.from({length: 5}, (_, index) => Object.freeze({
@@ -14,6 +15,8 @@ export const SHOW_NIGHTS = Object.freeze(Array.from({length: 5}, (_, index) => O
     BOWL_EVENTS.CAR_CRUSH,
     BOWL_EVENTS.FREESTYLE,
     index < 2 ? BOWL_EVENTS.SIDE_BY_SIDE : BOWL_EVENTS.LAST_TRUCK_ROLLING,
+    // Night five, the season's last, has a fourth event: the Scrapasaurus (BOWL-REX-FIGHT).
+    ...(index === 4 ? [BOWL_EVENTS.SCRAPASAURUS] : []),
   ]),
 })));
 

@@ -3,6 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {flipbookFrameUVInto} from '../combat-vfx-atlas.js';
 import {addArenaCrushables} from '../arena-props.js';
 import {createBowlStadium} from './bowl-stadium.js';
+import {createRexView} from './bowl-rex-view.js';
 
 const CRUSH = '/assets/models/wasteland/bowl/crush.glb';
 const FIRE = '/assets/textures/fire-flipbook.png';
@@ -97,12 +98,16 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   const fires = [];
   // The model's bus, RV and stacks, by crush target: each settles lower once crushed.
   const authored = new Map();
+  // BOWL-REX-FIGHT: the Scrapasaurus keeps its own parts, so clearing the stadium leaves it alone.
+  const rexView = createRexView({loadModel});
+  group.add(rexView.group);
 
   // `keepStadium` keeps the drawn stadium (about a quarter of a second to build) when
   // only the crush props and fires are rebuilt for the same course.
   function clear(keepStadium = false) {
     token++;
     for (const child of [...group.children]) {
+      if (child === rexView.group) continue;
       if (keepStadium && child === stadium) continue;
       child.removeFromParent();
       disposeTree(child);
@@ -193,6 +198,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   return {group, update(next, state, now, show) {
     enabled = show === true && next?.def?.bowl === true && !disposed;
     group.visible = enabled;
+    rexView.update(next, state, now, enabled);
     if (!enabled) {
       if (course) clear();
       return;
@@ -227,7 +233,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     }
   }, dispose() {
     if (disposed) return;
-    disposed = true; clear(); fireTexture?.dispose?.();
+    disposed = true; clear(); fireTexture?.dispose?.(); rexView.dispose();
     group.removeFromParent();
   }};
 }

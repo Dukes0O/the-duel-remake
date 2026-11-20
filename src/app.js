@@ -113,6 +113,7 @@ import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDri
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
+import {rexInTheYard} from './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: the beaten Scrapasaurus in the yard
 import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
 import {beginGo, createTurnShow, currentTurn, noteSettled, passKeyboard, recordGo, settleTurnGo, turnScoreboard,
   turnShowNights} from './bowl/bowl-turns.js'; // BOWL-TURNS
@@ -267,6 +268,7 @@ export class App {
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
       if(event.bowlEventResult)this._showNightCue(event.cue);
       if(event.bowlEventResult&&state.bowlNight?.turn)this._recordTurnGo(event.bowlEventResult,state); // BOWL-TURNS
+      if(event.bowlRex?.cue)this._showNightCue(event.bowlRex.cue); // BOWL-REX-FIGHT: each thing the Scrapasaurus does has its sound
       if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
@@ -883,6 +885,8 @@ export class App {
   waterYardStage(){
     return this._waterRoad().stage();
   }
+  // BOWL-REX-FIGHT: the Scrapasaurus lies in the yard's car park once night five is won. Read only.
+  bowlRexInYard(){return this._switches().enabled('titan-bowl')===true&&rexInTheYard(this.profile);}
   _waterArenaSettled(state){
     const arena=state?.arena,result=arena?.result;
     // WATER-SCREENS: the results say which chapter is done; Vesper speaks after the Baron. Only the warlord's first defeat

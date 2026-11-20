@@ -38,8 +38,8 @@ const showDuel = (enabled = true) => {
   const off = showDuel(false);
   ok(!off.startBowlNight({night: 1}) && !off.state.bowlNight, 'with titan-bowl off there is no Show Night');
   ok(bowlNightPlayable(1) && bowlNightPlayable(2), 'nights one and two have every event');
-  // BOWL-RIVALS registered Last Truck Rolling, so every night now has every event.
-  ok([3, 4, 5].every(night => bowlNightPlayable(night)), 'nights three to five have Last Truck Rolling (BOWL-RIVALS)');
+  // BOWL-RIVALS registered Last Truck Rolling and BOWL-REX-FIGHT the Scrapasaurus, so every night now has every event.
+  ok([3, 4, 5].every(night => bowlNightPlayable(night)), 'nights three to five have every event (Last Truck Rolling, and the Scrapasaurus on night five)');
   ok(!showDuel().startBowlNight({night: 6}) && !bowlNightPlayable(6), 'a night the show does not have does not start');
 }
 
