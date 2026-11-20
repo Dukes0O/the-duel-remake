@@ -622,6 +622,7 @@ tasks:
     size: "M"
     status: "building"
     claimed_by: "Codex, codex/bowl-hud"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS]
     locks: [bowl-screens]
     flag: "titan-bowl"
@@ -647,6 +648,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-out-sim"
+    waiting_on: "claude"
     needs: [BOWL-WALLS]
     locks: [bowl-floor]
     flag: "titan-bowl"
@@ -658,7 +660,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-rivals-2"
     needs: [BOWL-WALLS, BOWL-TRICKS]
     locks: [bowl-rivals, bowl-night]
     flag: "titan-bowl"
@@ -694,6 +697,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
+    waiting_on: "claude"
     needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
     locks: [bowl-screens]
     flag: "titan-bowl"
@@ -717,6 +721,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
+    waiting_on: "claude"
     needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
     locks: [bowl-rivals, bowl-screens]
     flag: "titan-bowl"

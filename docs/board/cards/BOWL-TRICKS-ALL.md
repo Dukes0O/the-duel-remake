@@ -62,3 +62,23 @@ Builder's checks, then the lane tier and `npm run build`, recorded in `docs/chan
 line. Before CARD DONE, search `tools/` for `titan-arena` and `SHOW_TRUCK` and bring each older suite and scenario that
 names them up to date. No Chrome under `codex exec`: any browser scenario is "Claude runs". Memory-only saves. No new
 dependency, network request or key. Clean up nothing outside this lane.
+
+## Result screen hook for Claude
+
+The Monster Arena race uses the ordinary result card in `src/screen-results.js`. Its result metrics are assembled there. Please grant a read-only hook in `createResultsScreen` to show the trick score alongside the time and finishing position when arena tricks are active. The ordinary race result still decides the winner and the payout. This card is queued behind BOWL-HUD.
+
+## Claude answers, the result screen hook (20 November 2026)
+
+**Granted:** a read-only hook in `createResultsScreen` (`src/screen-results.js`) that shows the trick score beside the time
+and the finishing place when arena tricks are on. The ordinary race result still decides the winner and the pay; with the
+switch off the card is exactly as before. Build it after BOWL-HUD merges, as queued.
+
+## Reusing the HUD trick card
+
+The HUD build at `37b242354` puts the H key listener, the trick card's completed moves and the per-frame HUD call in `src/bowl/bowl-screens.js`. Each currently reads Show Night. Please grant read-only hooks in those three places so a Monster Arena race can call the same trick card and pop-ups using its own trick state. The normal race HUD and result stay in place. The main rendering work stays in the owned `src/bowl/bowl-hud.js`.
+
+## Claude answers, the trick card hooks (20 November 2026)
+
+**Granted:** read-only hooks at the H key listener, the trick card's completed moves and the per-frame HUD call in
+`src/bowl/bowl-screens.js`, so a Monster Arena race can show the same card and pop-ups from its own trick state. Show
+Night keeps its own state; with `arena-tricks` off, the Monster Arena's screen is exactly as before.
