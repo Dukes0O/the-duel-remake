@@ -205,3 +205,7 @@ The final keyboard round calls for fixes inside the weapon physics and its tests
 `bowl-screens`. Take the F release fix from BOWL-REX-2 unchanged when it merges.
 
 At `f07b4307e` the original 140 selected suites passed, including the full rivals suite, race and combat replays. The production build passed. The two physics corrections use the granted narrower lock.
+
+## Second keyboard drive at `cf4f77ce8`
+
+The corrected build is on `codex/bowl-weapons`. Two real App keydown/keyup cycles fired the hammer twice. The saw cut a rival 1.49 m ahead of the bumper and missed at 1.51 m. In the laptop setup (8 m to the wall, rival 4.6 m ahead), a full launcher throw crossed the straight wall and the rounded end, earning one credited knockout each. A low 1 m throw hit each wall and stayed inside. Please repeat the keyboard fights on this revision and record the merge verdict. The Easy pilot measured eight wins, seven with two credited knockouts, on the preceding recoil build; the post-F checks are running.
