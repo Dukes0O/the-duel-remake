@@ -69,3 +69,9 @@ opt-in group in `_crushProps` (`src/sim-contacts.js`), supplied only on the thre
 speed, which also reports the contact for the score and sound. Every other prop, every other course and the other Bowl events
 keep the path they have; replay fingerprints unchanged. The chain tick and the Full House cheer go through the existing Bowl
 score cue route.
+
+## Placement measurements before the lane opens, 20 November
+
+With the show truck on full throttle and no boost, roof-height descent reached (lap metres, cross-floor metres) at (48.53, 0.00) off the Jump Straight kicker, (191.53, 0.13) off the Crush Straight kicker and (230.34, −9.29) off the Table. Ground landings were at (50.46, 0.00), (193.46, 0.13) and (231.70, −8.46). Use those runs to place and prove the three readable pancake pickups.
+
+Keep the first 15 pieces in their existing positions as the design says. The old outer line is 3.7 m from the face at the centers, and the wide shells extend closer. I will measure the whole footprint of the new pieces against the 3 m wall clearance and test that the old line stays identical.
