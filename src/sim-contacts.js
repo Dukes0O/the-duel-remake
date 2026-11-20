@@ -11,7 +11,7 @@ import {combatContactCleared, combatCrashThresholdMph, combatFrontSpikes,
 import { breakableScenery, roadsideScenery, roadsideTrafficDecision, sceneryIdentity,
   trafficDestruction } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
-import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
+import {applyArmorDamage, applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {combatOwnerId} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
@@ -24,10 +24,60 @@ import {upgradedCar} from './progression.js';
 import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
 import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
-import {carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
+import {carAlongPush,dampCarAlongPush,addCarAlongPush,clearCarAlongPush} from './arsenal/car-effects.js';
 import {actorForTarget} from './arsenal/targeting.js';
 import {CONVOY_BODY, isConvoyRig} from './arena/modes/convoy-raid.js';
 import {scablandsContactObstacles} from './sim-scablands.js';
+
+// Velocity is measured against the contacted face, in the local road frame.
+function bowlImpact(rules, mph, tangentMph) {
+  if (mph < rules.scrapeSine * Math.hypot(mph, tangentMph)) return 'scrape';
+  if (mph < rules.softBelowMph) return 'bounce';
+  return mph > rules.bigAboveMph ? 'big' : 'hard';
+}
+
+function bowlRebound(duel, actor, nx, nz, tangent, outward, kind, speed) {
+  const rules = duel.course.def.scrapdome.wallBounce;
+  const direction = Math.abs(tangent) > .001 ? Math.sign(tangent) : nx > 0 ? -1 : 1;
+  // Tangent points along the wall. Body and impulse are independent: even a
+  // square impact turns the nose along the wall while the tyres rebound.
+  const tx = nz, tz = -nx;
+  const oldHeading = actor.headingError || 0;
+  const spin = (Math.cos(oldHeading) * tx - Math.sin(oldHeading) * tz) * direction >= 0 ? 1 : -1;
+  const nose = kind === 'big' ? oldHeading + spin * Math.PI / 2
+    : Math.atan2(tx * direction, tz * direction);
+  const along = kind === 'scrape'
+    ? direction * Math.sqrt(Math.max(0, (speed * rules.scrapeKeep) ** 2 - outward ** 2))
+    : tangent * rules.tangentKeep;
+  const vx = tx * along + nx * outward, vz = tz * along + nz * outward;
+  actor.speedMph = Math.hypot(vx, vz);
+  actor.headingError = Math.atan2(Math.sin(nose), Math.cos(nose));
+  actor.yawVelocity = 0;
+  actor.slipAngle = 0;
+  actor.pushVelocity = (vx - actor.speedMph * Math.sin(nose)) * DRIVE.mphToWorld;
+  clearCarAlongPush(actor);
+  addCarAlongPush(actor, (vz - actor.speedMph * Math.cos(nose)) * DRIVE.mphToWorld);
+}
+
+function bowlReturn(rules, kind, mph) {
+  if (kind === 'scrape') return Math.min(.05, mph * rules.scrapeKeep);
+  const ratio = kind === 'big' ? rules.bigReturn : kind === 'hard' ? rules.hardReturn : rules.bounceReturn;
+  return Math.max(rules.minimumMps / DRIVE.mphToWorld, mph * ratio);
+}
+
+function bowlWear(duel, actor, kind, owner, zone) {
+  const rules = duel.course.def.scrapdome.wallBounce, event = duel.state.bowlNight?.event;
+  const fraction = kind === 'big' ? rules.bigDamage : kind === 'hard' ? rules.hardDamage : 0;
+  if (!fraction || !rules.fights.includes(event?.type)) return;
+  if (event.rex) {
+    event.rex.hits += fraction * event.rex.maxHits;
+  } else {
+    const removed = applyArmorDamage(duel, actor, 'fixed', {amount: fraction * actor.maxArmor, owner, contactFace: zone});
+    if (!removed) return;
+  }
+  actor.damageZones ??= freshDamageZones();
+  actor.damageZones[zone] = Math.min(5, actor.damageZones[zone] + 5 * fraction);
+}
 
 function recordBoardingCrash(duel, a, b, crash) {
   const boarding = duel.state.boarding;
@@ -505,6 +555,21 @@ export function _staticContacts(car, player, journeyColliders = null) {
     start = stop;
     const road = this._roadPosition(end, car.s);
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
+    const bowlRules = this.course.def.scrapdome?.wallBounce;
+    if (bowlRules && obstacle.arenaWall) {
+      const mph = -(velocityX * nx + velocityZ * nz) / DRIVE.mphToWorld;
+      if (mph > 0) {
+        const frame = this.course.at(car.s).heading;
+        const lateralNormal = Math.cos(frame) * nx - Math.sin(frame) * nz;
+        const alongNormal = Math.sin(frame) * nx + Math.cos(frame) * nz;
+        const tangent = (velocityX * nz - velocityZ * nx) / DRIVE.mphToWorld;
+        const kind = bowlImpact(bowlRules, mph, tangent);
+        bowlRebound(this, car, lateralNormal, alongNormal, tangent, bowlReturn(bowlRules, kind, mph), kind, Math.hypot(mph, tangent));
+        bowlWear(this, car, kind, undefined, zone);
+        this.emit({bowlWall: {kind, mph, cue: 'bowl.wall.' + kind}});
+      }
+      return;
+    }
     car.pushVelocity = (car.pushVelocity || 0) * .25;
     dampCarAlongPush(car, .25);
     if (journeyColliders) {
@@ -601,7 +666,7 @@ export function _vehicleContact(a, b, reason) {
   const yieldNormal = !this.state.arena && !this.state.field && a === this.state && !this.state.onFoot && !descendingCrush &&
     !b.wrecked && !b.knock ?
     npcYieldContactNormal(a, b, hit, start.z) : null;
-  if (yieldNormal) {
+  if (yieldNormal && !(this.course.def.scrapdome?.wallBounce && this.state.opponents.includes(b))) {
     // A late cut-in or numerical overlap is not permission for an NPC to
     // damage/shove the player. Rewind only that NPC to the contact side.
     const { nx, nz } = yieldNormal;
@@ -644,6 +709,25 @@ export function _vehicleContact(a, b, reason) {
   const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
   const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
+  const bowlRules = this.course.def.scrapdome?.wallBounce;
+  if (bowlRules && this.state.opponents.includes(b)) {
+    const correction = Math.max(0, nx ? width + .04 - end.x * nx : length + .04 - end.z * nz) / 2;
+    a.s += nz * correction; a.lateral += nx * correction;
+    b.s -= nz * correction; b.lateral -= nx * correction;
+    if (impactMph > 0 && !a.combatWrecking && !b.combatWrecking) {
+      const ax = vaX / DRIVE.mphToWorld, bx = vbX / DRIVE.mphToWorld;
+      const tangentA = ax * nz - vaZ * nx, tangentB = bx * nz - vbZ * nx;
+      const kind = bowlImpact(bowlRules, impactMph, tangentA - tangentB);
+      const middle = ((ax + bx) * nx + (vaZ + vbZ) * nz) / 2;
+      const away = bowlReturn(bowlRules, kind, impactMph) / 2;
+      bowlRebound(this, a, nx, nz, tangentA, middle + away, kind, Math.hypot(ax, vaZ));
+      bowlRebound(this, b, -nx, -nz, -tangentB, away - middle, kind, Math.hypot(bx, vbZ));
+      bowlWear(this, a, kind, combatOwnerId(this, b), zone);
+      bowlWear(this, b, kind, combatOwnerId(this, a), zoneB);
+      this.emit({bowlWall: {kind, mph: impactMph, cue: 'bowl.wall.' + kind}});
+    }
+    return true;
+  }
   if (armoredPair) return armoredVehicleContact(this,{a,b,nx,nz,end,width,length,
     specA,specB,impactMph,zoneA:zone,zoneB,pairKey,worldFrame});
   // A solid hulk or shoved car touched below shove speed just stays in
@@ -790,6 +874,7 @@ export function _vehicleContact(a, b, reason) {
 
 export function _scrape(zone, impactMph) {
   const s = this.state;
+  if (this.course.def.scrapdome?.wallBounce && !this.course.def.scrapdome.wallBounce.fights.includes(s.bowlNight?.event?.type)) return;
   if (s.damageCooldown > 0 || s.impactTimer > 0 || s.combat?.shield>0) return;
   s.damageZones[zone] = Math.min(5, s.damageZones[zone] + clamp(impactMph / 100, .08, .3));
   s.damageCooldown = .65;
@@ -835,6 +920,7 @@ export function _titanCarRamp(wreck) {
 }
 
 export function _dentVehicle(actor, zone, impactMph) {
+  if (this.course.def.scrapdome?.wallBounce && !this.course.def.scrapdome.wallBounce.fights.includes(this.state.bowlNight?.event?.type)) return;
   if (impactMph <= 1 || actor.damageCooldown > 0 || combatShieldForActor(this, actor)>0) return;
   actor.damageZones ??= freshDamageZones();
   const combatImpact = this.state.mode === 'wasteland';

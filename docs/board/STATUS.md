@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-11-20T16:26:24.740Z
+Observed at: 2026-11-20T19:46:15.880Z
 
-Observation commit: 1d096b95336f798bae9b93a78f9812e18c1b9d55
+Observation commit: 1a0cfd8326552b5bb9b638afe0b1d168b3af29f4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1d096b95336f798bae9b93a78f9812e18c1b9d55
+Integration HEAD: 1a0cfd8326552b5bb9b638afe0b1d168b3af29f4
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -34,24 +34,27 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/batch-3 | 14 | unknown | true | false | unknown |
 | codex/board-lines | 14 | unknown | true | false | unknown |
 | codex/bowl-art-rex | 14 | unknown | false | false | unknown |
+| codex/bowl-art-rex-show-night | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-art-rex-show-night |
 | codex/bowl-course | 14 | unknown | true | false | unknown |
+| codex/bowl-tricks | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-tricks |
+| codex/bowl-walls | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-walls |
 | codex/car-art-bully | 14 | unknown | false | false | unknown |
 | codex/crew-story-join | 14 | unknown | true | false | unknown |
 | codex/mule-rails | 14 | unknown | true | false | unknown |
 | codex/perf-high-night | 36 | unknown | false | false | unknown |
-| codex/qa-arena-shove-baseline | 14 | unknown | true | false | unknown |
-| codex/qa-drive-lesson-run-board | 14 | unknown | true | false | unknown |
-| codex/qa-ski-finish-timeout | 14 | unknown | true | false | unknown |
+| codex/qa-arena-shove-baseline | 15 | unknown | true | false | unknown |
+| codex/qa-drive-lesson-run-board | 15 | unknown | true | false | unknown |
+| codex/qa-ski-finish-timeout | 15 | unknown | true | false | unknown |
 | codex/rail-lines | 14 | unknown | true | false | unknown |
 | codex/rail-region | 13 | unknown | true | false | unknown |
-| codex/rail-steps | 13 | unknown | true | false | unknown |
-| codex/skin-waste | 14 | unknown | true | false | unknown |
-| codex/town-art-works | 10 | unknown | true | false | unknown |
+| codex/rail-steps | 14 | unknown | true | false | unknown |
+| codex/skin-waste | 15 | unknown | true | false | unknown |
+| codex/town-art-works | 11 | unknown | true | false | unknown |
 | codex/tunnel-trial | 14 | unknown | false | false | unknown |
 | codex/wild-art-city | 14 | unknown | false | false | unknown |
 | codex/wild-art-desert | 14 | unknown | false | false | unknown |
 | codex/wild-art-waste | 14 | unknown | false | false | unknown |
-| codex/ww-art-crew | 13 | unknown | true | false | unknown |
+| codex/ww-art-crew | 14 | unknown | true | false | unknown |
 | codex/ww-art-dam | 14 | unknown | true | false | unknown |
 | codex/ww-art-mule | 15 | unknown | false | false | unknown |
 | codex/ww-art-rail | 13 | unknown | true | false | unknown |
@@ -65,6 +68,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 14 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
+| codex/bowl-art-rex-show-night | unknown | 2026-11-20T12:44:23-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/bowl-art-rex/round-5-review.md, docs/board/looks/bowl-art-rex/round-5.jpg, docs/changes/BOWL-ART-REX.md, public/assets/models/wasteland/bowl/scrapasaurus.glb, tools/blender/bowl-scrapasaurus.py |
+| codex/bowl-tricks | unknown | 2026-11-20T12:37:30-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/cards/BOWL-TRICKS.md, src/app.js, src/bowl/bowl-air.js, src/bowl/bowl-course.js, src/bowl/bowl-lines.js |
+| codex/bowl-walls | unknown | 2026-11-20T12:45:11-07:00 | 0 | last commit 2026-11-20T12:45:11-07:00 | docs/board/cards/BOWL-WALLS.md, docs/changes/BOWL-WALLS.md, src/app.js, src/arena/arena-floor.js, src/bowl/bowl-course.js |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 14 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 36 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 14 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
@@ -85,10 +91,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
 | Review `looks/` | 100,531,497 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 2,404,657 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 21,188 B | -2,383,469 B | 5,000,000 B |
 | All `public/` | 739,905,766 B | +0 B | unavailable |
-| Git objects | 1,521,441,792 B | +359,424 B | unavailable |
-| Lane folders | 0 | +0 | unavailable |
+| Git objects | 1,526,076,416 B | +4,634,624 B | unavailable |
+| Lane folders | 3 | +3 | unavailable |
 
 ## Backups
 
@@ -96,7 +102,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: f96d19903748c849883b3ca1e514276de6347432
 - Local main: missing
-- Local integration/wasteland: 1d096b95336f798bae9b93a78f9812e18c1b9d55
+- Local integration/wasteland: 1a0cfd8326552b5bb9b638afe0b1d168b3af29f4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -104,6 +110,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit f96d19903748c849883b3ca1e514276de6347432.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: behind local; cached commit bd62941c9536014eaed7e8ea3323202b18c65539.
+- Remote origin/integration/wasteland: behind local; cached commit 5f0753c50de6f69d645989c71a80f256169e1055.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.

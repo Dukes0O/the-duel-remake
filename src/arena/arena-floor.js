@@ -28,6 +28,8 @@ export function arenaWallNormal(duel, actor) {
 
 // Returns the speed into the wall in mph, or 0 when the car stayed on the floor.
 export function containInArena(duel, actor, dt) {
+  // The Bowl's trucks meet the physical walls in the subsequent contact sweep.
+  if (duel.course.def.scrapdome?.wallBounce && !actor.combatWrecking && actor.kind !== 'junkCar') return 0;
   actor._arenaWallCooldown = Math.max(0, (actor._arenaWallCooldown || 0) - (dt || 0));
   const limit = floorLimit(duel);
   if (!(Math.abs(actor.lateral) > limit)) return 0;
