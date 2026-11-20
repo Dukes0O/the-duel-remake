@@ -51,7 +51,10 @@ function checkAllWorked(v) { for (const f of v.formulas ?? []) { assert.ok(f.tit
 test('the lesson walks the seven parts in order, keeps the old notebook words, and is listed for the classroom', () => {
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
-  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['wax-wax', 'wax-glide', 'wax-snow-crystals'], 'the old lesson’s notebook ids');
+  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['wax-wax', 'wax-glide', 'wax-friction', 'wax-snow-crystals'], 'the old lesson’s notebook ids, and Friction now saved too');
+  assert.deepEqual(STEPS.find(s => s.id === 'word-glide').words, ['wax-acceleration']);
+  assert.deepEqual([STEPS.find(s => s.id === 'why-cold').words, STEPS.find(s => s.id === 'why-wet').words], [['wax-film'], ['wax-suction']], 'the reasons save the words they define');
+  assert.deepEqual(lesson.words.map(w => w.id), ['wax-wax', 'wax-glide', 'wax-snow-crystals', 'wax-friction', 'wax-acceleration', 'wax-film', 'wax-suction']);
   assert.equal(lesson.name, 'Ski wax');
   assert.equal(lesson.challengeCard.title, 'Cold snow needs a hard wax, and warm snow needs a soft wax.');
 });
@@ -72,11 +75,11 @@ test('every glide is the ski rules’ own friction on the bench’s slope, and t
   assert.ok([...shown.powder].every(c => c <= -10) && [...shown.cold].every(c => c >= -9 && c <= -2) && [...shown.wet].every(c => c >= -1 && c <= 0), JSON.stringify(Object.fromEntries(Object.entries(shown).map(([k, v]) => [k, [...v]]))));
   assert.equal(band('powder'), '-10 °C and colder'); assert.equal(band('cold'), '-9 °C to -2 °C'); assert.equal(band('wet'), '-1 °C to 0 °C');
   for (const d of DAYS) { const {low, high} = SNOW_DAYS[d.snow]; assert.ok(d.celsius >= low && d.celsius <= high, `${todayLine(d)} is inside its band`); }
-  for (const [i, day] of DAYS.entries()) assert.equal(todayLine(day), ['Today\'s snow: Dry powder, -13 °C', 'Today\'s snow: Cool snow, -3 °C', 'Today\'s snow: Wet snow, -1 °C'][i]);
+  for (const [i, day] of DAYS.entries()) assert.equal(todayLine(day), ['Today\'s snow: Dry powder, -13 °C', 'Today\'s snow: Cool snow, -3 °C', 'Today\'s snow: Wet snow, 0 °C'][i]);
   for (let day = 0; day < 20; day++) for (const pick of WAXES) assert.equal(waxRunResult({day, pick, time: 30}).pass, pick === snowOfDay(day).wax, 'the challenge passes on the wax the lesson teaches');
 });
 
-test('a child who does exactly what each prompt says passes every step', () => {
+test('a child who does what each step asks passes every step', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'recap');
   const v = session.view();
@@ -84,7 +87,7 @@ test('a child who does exactly what each prompt says passes every step', () => {
   assert.equal(v.step.voice, 'lab.brian.wax.explain');
 });
 
-test('the words: a tin turns the base its colour, the glide is timed at real speed, friction has its sum, and warming rounds the crystals', () => {
+test('the words: a tin turns the base its colour, the glide is timed at real speed, friction has its formulas, and warming rounds the crystals', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-wax');
   session.act('pick:medium');
@@ -111,7 +114,7 @@ test('the words: a tin turns the base its colour, the glide is timed at real spe
   assert.match(session.view().brian.text, /^At 0 °C the crystals are rounded and wet/);
 });
 
-test('the reasons: each starts on the wax that does not suit the snow, and the close-up and the sums follow the tin', () => {
+test('the reasons: each starts on the wax that does not suit the snow, and the close-up and the formulas follow the tin', () => {
   const cold = createClassroomSession(lesson);
   playThroughTo(cold, 'why-cold');
   assert.deepEqual(cold.view().closeup, {snow: 'powder', wax: 'soft'});
@@ -119,7 +122,7 @@ test('the reasons: each starts on the wax that does not suit the snow, and the c
   assert.equal(cold.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.124) = 9.43 s');
   cold.act('pick:medium');
   assert.equal(cold.view().ready, false, 'the wax that does not suit the snow does not close the step');
-  assert.match(cold.view().prompt, /^Press 1 to change to hard wax/, 'the prompt holds from any tin');
+  assert.equal(cold.view().prompt, 'Try each tin, and find the wax that suits this snow.', 'the prompt holds from any tin');
   cold.act('pick:hard');
   assert.equal(cold.view().formulas[0].formula, 'friction = 0.045');
   assert.equal(cold.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.269) = 8.88 s');
@@ -129,7 +132,7 @@ test('the reasons: each starts on the wax that does not suit the snow, and the c
   assert.deepEqual(wet.view().closeup, {snow: 'wet', wax: 'hard'});
   assert.match(wet.view().say, /suction/);
   wet.act('pick:soft');
-  assert.match(wet.view().brian.text, /^A softer wax repels water better/);
+  assert.match(wet.view().brian.text, /^With soft wax the water gathers into separate beads instead of spreading into one sheet/);
 });
 
 test('the tries: a wrong tin says why with the real times and the snow’s band, and loses to no wax', () => {
@@ -138,7 +141,7 @@ test('the tries: a wrong tin says why with the real times and the snow’s band,
   session.act('go');
   assert.match(session.view().brian.text, /Pick a tin first/);
   session.act('pick:hard'); session.act('go'); until(session, v => v.ready);
-  assert.match(session.view().brian.text, /^Hard wax suits snow at -10 °C and colder, and this snow is at -5 °C\. The ski with hard wax reached the finish in 9\.4 s, and the ski with no wax reached the finish in 9\.1 s, so this wax was slower than no wax at all\. Cool snow needs medium wax, so press 2 and then Space\.$/);
+  assert.match(session.view().brian.text, /^Hard wax suits snow at -10 °C and colder, and this snow is at -5 °C\. The ski with hard wax reached the finish in 9\.4 s, and the ski with no wax reached the finish in 9\.1 s, so this wax was slower than no wax at all\. Cool snow needs medium wax\.$/);
   const v = session.view(), [mine, plain] = v.strips[0].lanes;
   assert.ok(mine.seconds > plain.seconds, 'the wrong wax really lost');
   session.act('pick:medium'); session.act('go'); until(session, x => /^Correct\. Medium wax suits cool snow at -5 °C\. The ski with medium wax reached the finish in 8\.9 s, and the ski with no wax reached the finish in 9\.1 s\./.test(x.brian.text));
@@ -181,7 +184,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
 });
 
 test('every check says why a wrong answer is wrong, then shows it', () => {
-  const answers = {'check-cold': [2, /^Soft wax suits wet snow near 0 °C\. Very cold snow has hard, sharp crystals, which press into a softer wax, so this snow needs a hard wax/], 'check-rule': [1, /^It is the other way round/], 'check-game': [2, /^The shop sells the Wax kit, but the shop does not show today’s snow/]};
+  const answers = {'check-cold': [1, /^Soft wax suits wet snow near 0 °C\. Very cold snow has hard, sharp crystals, which press into a softer wax, so this snow needs a hard wax/], 'check-rule': [0, /^It is the other way round/], 'check-game': [2, /^The shop sells the Wax kit, but the shop does not show today’s snow/]};
   for (const [id, [pick, why]] of Object.entries(answers)) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, id);
@@ -192,7 +195,7 @@ test('every check says why a wrong answer is wrong, then shows it', () => {
   }
   const race = createClassroomSession(lesson);
   playThroughTo(race, 'check-cold');
-  race.act('answer:1'); until(race, v => v.strips[0].lanes.every(l => l.done), 15);
+  race.act('answer:0'); until(race, v => v.strips[0].lanes.every(l => l.done), 15);
   const [hard, soft] = race.view().strips[0].lanes;
   assert.ok(hard.seconds < soft.seconds, 'the demo race shows hard wax winning on powder');
 });
@@ -283,7 +286,7 @@ test('review fixes: Question 1 races the wax the child picked, Question 2 hides 
   const q1 = createClassroomSession(lesson);
   playThroughTo(q1, 'check-cold');
   assert.equal(hoverInfo(q1.view(), ...targetPoint({...q1.view(), best: 'hard'}, 'pick:best')), 'Hard wax.', 'no answer in the hover while asking');
-  q1.act('answer:1');
+  q1.act('answer:0');
   until(q1, v => v.strips[0].lanes.every(l => l.done), 15);
   assert.deepEqual(q1.view().strips[0].lanes.map(l => l.wax), ['hard', 'medium']);
   const q2 = createClassroomSession(lesson);
@@ -296,7 +299,7 @@ test('review fixes: Question 1 races the wax the child picked, Question 2 hides 
   assert.equal(reasons.size, 2);
 });
 
-test('the sums: each comes out on a calculator from the numbers it shows, and matches the stopwatch', () => {
+test('the formulas: each comes out on a calculator from the numbers it shows, and matches the stopwatch', () => {
   // Rounded to two decimals, the panel's time is the rule's own time.
   for (const f of [SKI.wax.right, SKI.snowFriction, SKI.wax.wrong]) assert.equal(sumOf(f).seconds.toFixed(2), glideSeconds(f, STRIP_M).toFixed(2), `friction ${f}`);
   assert.deepEqual([SKI.wax.right, SKI.snowFriction, SKI.wax.wrong].map(f => sumOf(f).acceleration), [1.269, 1.221, 1.124]);
@@ -360,7 +363,7 @@ test('the formulas follow every press of a control', () => {
   assert.equal(glide.view().formulas[2].worked, '0.5 × 1.269 × 3^2 = 5.7 m');
   until(glide, x => x.ready);
   assert.equal(glide.view().formulas[2].worked, '√(2 × 50 ÷ 1.269) = 8.88 s');
-  assert.match(glide.view().brian.text, /reached 11\.27 m\/s at the finish, which is 40\.6 km\/h/);
+  assert.match(glide.view().brian.text, /the speed grew by 1\.269 m\/s every second, so the ski reached 11\.27 m\/s, which is 40\.6 km\/h/);
 });
 
 test('the free test: any snow with any wax, only different settings count, three open Continue, and the table keeps the results', () => {
@@ -369,13 +372,13 @@ test('the free test: any snow with any wax, only different settings count, three
   assert.equal(session.view().ready, false);
   assert.equal(session.view().rows.length, 0);
   assert.match(session.view().prompt, /tested so far: 0 of 3/);
-  // The sums show first, so the player can work out the time.
+  // The formulas show first, so the player can work out the time.
   assert.equal(session.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.269) = 8.88 s');
   session.act('snow:warmer');
   assert.equal(session.view().closeup.snow, 'cold');
-  assert.equal(session.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.124) = 9.43 s', 'the snow changes the sum');
+  assert.equal(session.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.124) = 9.43 s', 'the snow changes the formula');
   session.act(key('medium'));
-  assert.equal(session.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.269) = 8.88 s', 'the wax changes the sum');
+  assert.equal(session.view().formulas.at(-1).worked, '√(2 × 50 ÷ 1.269) = 8.88 s', 'the wax changes the formula');
   raceFree(session);
   assert.match(session.view().brian.text, /^Medium wax on cool snow at -5 °C has a friction number of 0\.045, so the ski reached the finish in 8\.9 s, and the ski with no wax reached the finish in 9\.1 s\./);
   assert.equal(session.view().ready, false);
@@ -439,7 +442,7 @@ test('the panel never gives away an open guess or question', () => {
     const before = JSON.stringify(session.view().formulas);
     for (const wax of WAXES) { session.act(key(wax)); noAnswer(session.view(), `${id} with ${wax}`); assert.equal(JSON.stringify(session.view().formulas), before, 'a tin does not move the panel while the choice is open'); }
     session.act('go'); until(session, x => x.ready);
-    assert.ok(session.view().formulas.some(f => /\d s$/.test(f.worked ?? '')), 'the sums for the chosen wax show once the race has run');
+    assert.ok(session.view().formulas.some(f => /\d s$/.test(f.worked ?? '')), 'the formulas for the chosen wax show once the race has run');
   }
   const job = createClassroomSession(lesson);
   playThroughTo(job, 'alone');
@@ -466,7 +469,7 @@ test('word steps stay open, their closing words stay true, and an intro does not
   assert.match(crystals.view().prompt, /The tray is at -10 °C/);
   crystals.act('warm'); crystals.act('warm');
   const closing = crystals.view().brian.text;
-  assert.match(crystals.view().prompt, /or press ← to cool the tray\.$/, 'at the top of the dial the prompt offers only what can be done');
+  assert.match(crystals.view().prompt, /or cool the tray to watch the crystals change\.$/, 'at the top of the dial the prompt offers only what can be done');
   crystals.act('cool'); crystals.act('cool');
   assert.equal(crystals.view().celsius, -10, 'the dial stays free after the answer');
   assert.equal(crystals.view().brian.text, closing);
@@ -511,14 +514,14 @@ test('every word is defined before it is used, in whole sentences, with one meas
   assert.deepEqual(firstAt, {friction: 'word-friction', acceleration: 'word-glide', 'm/s': 'word-glide', 'km/h': 'word-glide', suction: 'why-wet', crystals: 'word-crystals', '°C': 'wonder'});
   // Each one's first step explains it.
   const opening = id => { const s = createClassroomSession(lesson); playThroughTo(s, id); return s.view().say; };
-  assert.match(opening('wonder'), /read as “minus 15 degrees Celsius”\. Water freezes at 0 °C/);
+  assert.match(opening('wonder'), /read as “minus 15 degrees Celsius”, and the minus sign means below the freezing point of water, 0 °C/);
   assert.match(opening('word-glide'), /metres per second, written m\/s/);
   assert.match(opening('word-glide'), /this kind of degree measures an angle, not a temperature\. Level ground is 0 degrees and straight up is 90 degrees/);
-  { const s = createClassroomSession(lesson); playThroughTo(s, 'word-friction'); const notes = s.view().formulas.map(f => f.note).join(' '); assert.match(notes, /sin, short for sine, turns an angle into a share/); assert.match(notes, /cos, short for cosine, also turns an angle into a share/); }
+  { const s = createClassroomSession(lesson); playThroughTo(s, 'word-friction'); const notes = s.view().formulas.map(f => f.note).join(' '); assert.match(notes, /type 10 and press sin to get 0\.17365, the share of g that pulls the ski along the slope/); assert.match(notes, /type 10 and press cos to get 0\.98481, the share of the ski’s weight that presses into the snow/); }
   // The slope's angle appears nowhere before Glide defines it.
   { const s = createClassroomSession(lesson); for (const id of ['wonder', 'word-wax']) { playThroughTo(s, id); assert.doesNotMatch(wordsOf(s.view()), /\d+ degrees(?! Celsius)|\d°/, id); assert.doesNotMatch(hoverInfo(s.view(), 400, 260) ?? '', /degrees/, id); } }
-  assert.match(opening('word-glide'), /kilometres per hour, written km\/h\. To change m\/s into km\/h you multiply by 3\.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres/);
-  assert.match(opening('word-glide'), /acceleration in metres per second, per second, written m\/s²/);
+  assert.match(opening('word-glide'), /To change m\/s into kilometres per hour, written km\/h, you multiply by 3\.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres/);
+  assert.match(opening('word-glide'), /acceleration, written in metres per second, per second, or m\/s²/);
   assert.match(opening('word-friction'), /^Friction is the force that resists when one surface slides over another/);
   assert.match(opening('why-wet'), /holds the ski to the snow by suction\. Suction is/);
   // The pieces the walk above does not reach.
@@ -549,7 +552,7 @@ test('a hint or a prompt holds from every setting of its control', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-crystals');
   for (let i = 0; i < 3; i++) {
-    assert.match(session.view().prompt, /Press → to warm the tray/);
+    assert.match(session.view().prompt, /Warm the tray to 0 °C\./);
     assert.equal(session.view().hints[1], 'Press → until the thermometer reads 0 °C.');
     session.act('warm');
   }
@@ -558,7 +561,7 @@ test('a hint or a prompt holds from every setting of its control', () => {
     const s = createClassroomSession(lesson);
     playThroughTo(s, 'try-cool');
     s.act(key(wax)); s.act('go'); until(s, x => x.ready);
-    assert.match(s.view().brian.text, /press 2 and then Space\.$/);
+    assert.match(s.view().brian.text, /Cool snow needs medium wax\.$/);
   }
 });
 
@@ -586,4 +589,29 @@ test('LAB-LOOK round 11: the wide board names its size and draws no text smaller
       run(session, .5);
     }
   }
+});
+
+test('review of 19 November: the right card moves, the rule is stated plainly, and every run can be played again', () => {
+  const place = id => { const q = createClassroomSession(lesson); playThroughTo(q, id); q.act('answer:0'); return q.view().cards.findIndex(c => c.state === 'right'); };
+  assert.deepEqual(['check-cold', 'check-rule', 'check-game'].map(place), [2, 1, 0], 'the answer is not the first card every time');
+  const texts = [];
+  const session = createClassroomSession(lesson);
+  for (const step of STEPS) {
+    const v = session.view();
+    texts.push(v.say, v.prompt, ...(v.hints ?? []), ...v.formulas.flatMap(f => [f.title, f.formula, f.note]), ...v.cards.map(c => c.label));
+    if (step.id === 'recap') break;
+    playStep(session, step.id);
+    const w = session.view();
+    texts.push(w.say, w.prompt, ...w.formulas.flatMap(f => [f.title, f.formula, f.note]));
+    session.act('next');
+  }
+  const faults = texts.filter(t => /\bin this game\b|\bsums?\b|\babout\b|simplif/i.test(t ?? ''));
+  assert.deepEqual(faults, [], 'no hedge and no “sum” for a multiplication or a subtraction');
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  raceFree(free);
+  assert.ok(free.view().actions.includes('replay'), 'the free test offers Watch again once it has run');
+  free.act('replay');
+  assert.ok(free.view().strips[0].lanes.every(l => !l.done) && free.view().keys.Space === undefined, 'R races the same setting again');
+  until(free, settled);
 });

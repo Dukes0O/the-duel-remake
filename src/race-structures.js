@@ -31,7 +31,9 @@ export function addRaceStructures(world, course) {
   for (const tunnel of course.features.tunnels || []) addTunnel(group, batch, course, tunnel, materials);
   if (course.def.arena) {
     const stadium = course.def.pit ? pitStadiumFrame(new Course(SCRAPDOME_VENUE, course.seed)) : course;
-    addStadium(batch, course, stadium);addStadiumCrowd(group,stadium);
+    // The Bowl has its own authored stadium and crowd (src/bowl/bowl-view.js): it keeps
+    // only the floor's walls and ramps from here.
+    addStadium(batch, course, stadium);if(!course.def.bowl)addStadiumCrowd(group,stadium);
   }
   batch.finish();
   group.userData.structures = { tunnels: course.features.tunnels?.length || 0, stadium: !!course.def.arena, ramps: course.features.ramps?.length || 0 };
@@ -171,7 +173,7 @@ function addStadium(batch, course, stadiumCourse = course) {
   // collision wall, keeping every seat, beam and floodlight out of the arena.
   const floorCourse = course;
   course = stadiumCourse;
-  const sections = STADIUM_SECTIONS, sectionLength = course.length / sections;
+  const sections = floorCourse.def.bowl ? 0 : STADIUM_SECTIONS, sectionLength = course.length / STADIUM_SECTIONS;
   for (let i = 0; i < sections; i++) {
     const s = (i + .5) * sectionLength, standWidth = sectionLength * .86;
     for (let row = 0; row < STADIUM_ROWS; row++) {
@@ -201,23 +203,28 @@ function addStadium(batch, course, stadiumCourse = course) {
     }
   }
   course = floorCourse;
+  // The Bowl's floor is narrower: its ramps meet the face of each wall, and their
+  // edge lines and arrows sit on its own floor (src/bowl/bowl-course.js).
+  const bowl = course.def.bowl ? course.def.scrapdome : null;
+  const rampSide = side => bowl ? (side > 0 ? bowl.outerWallOffset : bowl.wallOffset) - .5 : 15;
+  const lineInner = bowl ? bowl.floorHalfWidth - .7 : 12.3, lineOuter = bowl ? bowl.floorHalfWidth - .32 : 12.68;
   for (const ramp of course.features.ramps) {
     const wallRows = [[], []], segmentCount = 24;
     for (let j = 0; j <= segmentCount; j++) {
       const s = ramp.start + (ramp.end - ramp.start) * j / segmentCount, y = course.jumpAt(s);
-      for (const [index, side] of [-1, 1].entries()) wallRows[index].push([point(course, s, side * 15, -.06), point(course, s, side * 15, y)]);
+      for (const [index, side] of [-1, 1].entries()) wallRows[index].push([point(course, s, side * rampSide(side), -.06), point(course, s, side * rampSide(side), y)]);
     }
     wallRows.forEach(rows => batch.geometry('dirt', surface(rows)));
     for (const side of [-1, 1]) {
       const edge = [];
       for (let j = 0; j <= 32; j++) {
         const s = ramp.start + (ramp.end - ramp.start) * j / 32;
-        edge.push([point(course, s, side * 12.3, course.jumpAt(s) + .024), point(course, s, side * 12.68, course.jumpAt(s) + .024)]);
+        edge.push([point(course, s, side * lineInner, course.jumpAt(s) + .024), point(course, s, side * lineOuter, course.jumpAt(s) + .024)]);
       }
       batch.geometry('yellow', surface(edge));
     }
     for (let k = 0; k < 3; k++) {
-      const s = ramp.start + 8 + k * 3.5;
+      const s = bowl ? ramp.start + (ramp.end - ramp.start) * (.12 + k * .1) : ramp.start + 8 + k * 3.5;
       for (const side of [-1, 1]) {
         const rows = [];
         for (let j = 0; j <= 8; j++) {

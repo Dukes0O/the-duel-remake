@@ -102,7 +102,8 @@ export async function run(c) {
   await next('formula');
 
   await at('watch');
-  await wait(6500);
+  await wait(5000);
+  await shot('gforce-watch-midway');
   await at('watch', 'value.ready');
   await shot('gforce-watch');
   await next('watch');
@@ -118,8 +119,8 @@ export async function run(c) {
 
   await at('try-radius');
   await shot('gforce-radius-question');
-  await press('Digit2');
-  await press('ArrowUp');
+  await press('Digit3');
+  await press('ArrowDown');
   await press('Space');
   await at('try-radius', 'value.ready');
   await next('try-radius');

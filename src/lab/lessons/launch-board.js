@@ -178,7 +178,7 @@ function launcher(ctx, angle) {
 function inLauncherUnits(ctx, draw) {
   ctx.save(); ctx.translate(LIP.x, LIP.y); ctx.scale(K, K); ctx.translate(-OLD_LIP.x, -OLD_LIP.y); draw(); ctx.restore();
 }
-// The ramp divides the speed: the forward arrow and the upward arrow at the end of the ramp, to one scale.
+// The ramp splits the speed in two: the forward arrow and the upward arrow at the end of the ramp, to one scale.
 function splitArrows(ctx, angle, ms) {
   const a = angle * Math.PI / 180, forward = ms * Math.cos(a), upward = ms * Math.sin(a), scale = 13, x = LIP.x + 14, y = LIP.y - 20;
   forceArrowTo(ctx, x, y, x + forward * scale, y, TRAIL, 12);
@@ -246,7 +246,7 @@ function launchScene(ctx, view) {
   text(ctx, `${deg(f ? f.angle : r.angle)} · ${f ? kmh(f.ms) : r.kmh} km/h`, WIN.x + 22, WIN.y + 34, {size: 20, align: 'left', colour: theme.faint, weight: 800});
   if (view.keys.Space === 'go') {
     cap(ctx, WIN.x + 32, WIN.y + 74, 'Sp');
-    text(ctx, 'Press Space to launch', WIN.x + 52, WIN.y + 74, {size: 17, align: 'left'});
+    text(ctx, 'Launch', WIN.x + 52, WIN.y + 74, {size: 17, align: 'left'});
   }
   // The tape: along the deck, with the marks above. What it reads, and how far that is from the flag, is in the strip under the board.
   if (view.focus === 'tape') glowBox(ctx, view, LIP.x + 2, DECK_Y - 12, WIN.x + WIN.w - LIP.x - 12, 62);
@@ -400,7 +400,7 @@ export function strip(view) {
   out.hint = TAPE_HINT;
   if (view.low === 'job' && view.job) {
     const rows = view.rows.slice(-5).map(row => ({label: `${deg(row.angle)}, ${row.speed} km/h`, value: m1(row.distance), tone: null}));
-    out.tables.push({title: 'Your launches', rows: rows.length ? rows : [{label: 'There are no launches yet. Press Space to launch.', value: '', tone: 'faint'}]});
+    out.tables.push({title: 'Your launches', rows: rows.length ? rows : [{label: 'There are no launches yet.', value: '', tone: 'faint'}]});
     out.hint = `${TAPE_HINT} ${JOB_HINT}`;
   } else if (view.low === 'table') {
     const best = view.rows.length > 2 ? Math.max(...view.rows.map(r => r.distance)) : null;
@@ -409,7 +409,7 @@ export function strip(view) {
       const g = view.flag ? against(row.distance, view.flag) : null;
       return {label: `${deg(row.angle)}, ${row.speed} km/h`, value: g ? `${m1(row.distance)}, ${g.text}` : m1(row.distance), tone: g ? (g.on ? 'good' : 'bad') : row.distance === best ? 'accent' : null};
     });
-    out.tables.push({title: 'THE LAUNCHES', rows: [{label: 'Angle, speed', value: view.flag ? 'Distance, against the flag' : 'Distance', tone: 'faint'}, ...(rows.length ? rows : [{label: 'There are no launches yet. Press Space to launch.', value: '', tone: 'faint'}])]});
+    out.tables.push({title: 'THE LAUNCHES', rows: [{label: 'Angle, speed', value: view.flag ? 'Distance, against the flag' : 'Distance', tone: 'faint'}, ...(rows.length ? rows : [{label: 'There are no launches yet.', value: '', tone: 'faint'}])]});
     out.hint = `${TAPE_HINT} This table lists each launch with its angle, speed and distance.`;
   }
   return out;
@@ -443,7 +443,7 @@ function arcsPicture(ctx, view, lower) {
   });
   text(ctx, `${kmh(SHOW_MS)} km/h`, ox - 35, oy - 20, {size: 15, colour: theme.faint});
 }
-// The Aerials kicker side on: the inrun down to a flat, the kicker rising to a lip that throws at about 50 degrees, and
+// The Aerials kicker side on: the inrun down to a flat, the kicker rising to a lip that throws at 50 degrees, and
 // the landing hill falling away below it. (x, y) is the lip; pose is the skier's on the inrun: tuck, lean or stand.
 function kicker(ctx, x, y, s, {pose = 'stand', flight = false} = {}) {
   const base = y + 30 * s, top = [x - 250 * s, y - 150 * s], foot = [x - 64 * s, base];
@@ -476,7 +476,7 @@ function drawCheck(ctx, view) {
     panel(ctx, 60, 70, 880, 520);
     text(ctx, 'THE AERIALS RUN', 80, 96, {size: 15, align: 'left', colour: theme.faint, weight: 800});
     kicker(ctx, 420, 300, 1.2, {flight: true});
-    text(ctx, 'about 50°', 462, 305, {size: 18, colour: theme.accent, align: 'left'});
+    text(ctx, '50°', 462, 305, {size: 18, colour: theme.accent, align: 'left'});
     text(ctx, 'inrun', 260, 150, {size: 16, colour: theme.text});
     text(ctx, 'landing hill', 660, 440, {size: 16, colour: theme.text});
     view.kicker.arcs.forEach((arc, i) => text(ctx, `On the launcher at 50°, ${kmh(arc.ms)} km/h lands ${m1(arc.distance)}`, 920, 110 + i * 34, {size: 18, align: 'right', colour: i ? GREEN : theme.text}));

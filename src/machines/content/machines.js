@@ -1,5 +1,8 @@
 // Machine content is data. Model node names stay here so the sim never needs a renderer.
+import {PLANT_MACHINES} from './plant.js';
+
 export const MACHINE_CONTENT = Object.freeze({
+  ...PLANT_MACHINES,
   excavator: Object.freeze({
     id:'excavator', name:'Excavator', driveKind:'tracks', massKg:18_000, maxSpeedMps:2.2,
     turnRateRadPerSecond:0.9, trackWidthM:2.2, maxLoadKg:3_200, startAngles:Object.freeze({boom:0.42}),

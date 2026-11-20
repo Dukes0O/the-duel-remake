@@ -27,6 +27,8 @@ import {createRoadSounds, createRoadWorkView, createRoadMachinePose, roadMachine
 import {roadYardControls} from './roads.js';
 import {createBorerSounds} from './borer-sounds.js';
 import {createSparks} from '../world/scrap-look.js';
+import {createPlantYardView} from './plant-view.js';
+import {isPlantMachine, plantCameraOrbit, plantYardControls, plantYardWords} from './plant-yard.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 // The roller, the paver and the drill rig are in the second family of machines.
@@ -34,7 +36,7 @@ const MODEL_2='/assets/models/wasteland/town/machines-2.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
 const BORER_MODEL='/assets/models/wasteland/town/borer.glb';
 const MODES=['chase','cab','work'];
-const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
+const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver',loader:'Loader',mixer:'Mixer truck'};
 
 /** Reuse a parked machine's ground height until it or the ground changes. */
 export function createMachineHeightCache() {
@@ -401,6 +403,9 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),true), roadPose=createRoadMachinePose();
   let controlsMachine=null;
   const effects=createDigFx({group:world,seed:1});
+  // The machines-2 file is fetched once: the road machines, the drill and the plant's loader and mixer all come from it.
+  const machines2Load=new GLTFLoader().loadAsync(MODEL_2);machines2Load.catch(()=>{});
+  const plantView=sim.plant?createPlantYardView({parent:world,heightAt:(x,z)=>sim.ground.heightAt(x,z),audio:app?.audio,effects,machinesLoad:machines2Load}):null;
   const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null, borerDirt=null, beltTime=0;
   const borerSparks=createSparks(24);borerSparks.name='Borer face sparks';borerSparks.visible=false;world.add(borerSparks);
   let drawnTunnels=sim.tunnels, drawnTunnelRevision=sim.tunnels.revision, tunnelLining=null, tunnelUpdateAfter=0;
@@ -444,13 +449,13 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   host.querySelector('[data-dismiss]').addEventListener('click',()=>{controlsPanel.hidden=true;fillHint();});
   host.querySelector('.the-dig-close').addEventListener('click',stop);
   try{
-    const [machineAsset,domeAsset,borerAsset,machineAsset2]=await Promise.all([new GLTFLoader().loadAsync(MODEL),new GLTFLoader().loadAsync(DOME),new GLTFLoader().loadAsync(BORER_MODEL),new GLTFLoader().loadAsync(MODEL_2)]);
+    const [machineAsset,domeAsset,borerAsset,machineAsset2]=await Promise.all([new GLTFLoader().loadAsync(MODEL),new GLTFLoader().loadAsync(DOME),new GLTFLoader().loadAsync(BORER_MODEL),machines2Load]);
     if(stopped){renderer.dispose();return {stop(){}};}
     modelAsset=machineAsset;
     const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
     const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
     if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
-    for(const id of digMachineIds(sim.town)){
+    for(const id of digMachineIds(sim.town).filter(id=>!isPlantMachine(id))){
       let root;
       if(id==='borer'){
         const model=machineRoot(borerAsset,'borer');
@@ -487,7 +492,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);window.removeEventListener('storage',onStorage);unsubscribeMapping();observer.disconnect();for(const view of machineViews.values())view.dispose();
-    borerSounds.dispose();roadSounds.dispose();roadView.dispose();roadPose.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();hillField.texture.dispose();groundPhotos.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
+    plantView?.dispose();borerSounds.dispose();roadSounds.dispose();roadView.dispose();roadPose.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();hillField.texture.dispose();groundPhotos.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
@@ -509,6 +514,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       const roadMachine=!!sim.roadMachines[sim.activeMachine];
       let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping,sim.mode):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
       if(roadMachine)stepControls=roadYardControls(sim.activeMachine,stepControls,padKeys);
+      if(isPlantMachine(sim.activeMachine))stepControls=plantYardControls(sim.activeMachine,padKeys,sim.mode);
       const action=pending.consume('load')?'load':actionFor();
       sim=stepDigSandbox(sim,{controls:stepControls,action,borerSurvey:!surveyPanel.hidden ? surveyLine : null},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
@@ -578,6 +584,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
         forward:{x:Math.sin(actor.heading||0),z:Math.cos(actor.heading||0)},mouths,headlights:1});
     }
     roadView.update(sim.roadWork, sim.roadMachines.dozer.machine);
+    plantView?.update(sim,elapsed,frameEvents);
     wellheadView.update(sim.drill.wellheads,elapsed,sim.drill);
     cuttingsView.update(sim.drill.hole,elapsed,sim.drill.machine.heading);
     if(controlsMachine!==sim.activeMachine){
@@ -602,7 +609,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
       if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer',machineViews.get('borer')?.body);
       else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target,
-        chaseOrbit:wide?35*Math.PI/180:mastUp?48*Math.PI/180:0,body:mode==='cab'?machineViews.get(sim.activeMachine)?.body:null,
+        chaseOrbit:plantCameraOrbit(sim)??(wide?35*Math.PI/180:mastUp?48*Math.PI/180:0),body:mode==='cab'?machineViews.get(sim.activeMachine)?.body??plantView?.body(sim.activeMachine):null,
         seat:ROAD_MACHINE_SEATS[sim.activeMachine]??(sim.activeMachine==='drill'?drillView?.seat(sim.drill):null)});
       previousCameraMachine=sim.activeMachine;
       sun.position.set(active.x+SUN_OFFSET.x,y+SUN_OFFSET.y,active.z+SUN_OFFSET.z);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
@@ -626,9 +633,9 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       nearGround.refreshBounds(expanded); yardFloor.userData.refreshGround(expanded);
     }
     effects.update(elapsed);
-    const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?drillDepthWords(sim.drill.hole) : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
+    const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=plantYardWords(sim)?.load ?? (sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?drillDepthWords(sim.drill.hole) : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
-      `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`;
+      `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`);
     host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} · ${sim.mode.toUpperCase()} MODE`;
     host.querySelector('.the-dig-load').textContent=load;
     dial.hidden=sim.activeMachine!=='borer';
@@ -674,6 +681,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     const boreNotice=frameEvents.find(event=>event.type==='bore-call'||event.type==='bore-daylight');
     if(boreNotice){shownMessage=boreNotice.message;messageUntil=now+8000;}
     if(now<messageUntil)message.textContent=shownMessage;
+    else if(!failed&&plantYardWords(sim))message.textContent=plantYardWords(sim).hint;
     else if(!failed&&sim.activeMachine==='excavator'){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
       const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
