@@ -203,3 +203,5 @@ The final keyboard round calls for fixes inside the weapon physics and its tests
 
 **Granted:** narrow this card's lock to `bowl-rivals` for the saw and launcher corrections, so BOWL-REX-2 can finish under
 `bowl-screens`. Take the F release fix from BOWL-REX-2 unchanged when it merges.
+
+At `f07b4307e` the original 140 selected suites passed, including the full rivals suite, race and combat replays. The production build passed. The two physics corrections use the granted narrower lock.

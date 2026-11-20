@@ -706,7 +706,7 @@ tasks:
     status: "building"
     claimed_by: "Codex, codex/bowl-weapons"
     needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
-    locks: [bowl-rivals, bowl-screens]
+    locks: [bowl-rivals]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-WEAPONS.md"
 
@@ -777,7 +777,7 @@ tasks:
     status: "building"
     claimed_by: "Codex, codex/bowl-tricks-all"
     needs: [BOWL-TRICKS, BOWL-HUD]
-    locks: [bowl-night, replay-fixtures, save-shape]
+    locks: [bowl-night, replay-fixtures, save-shape, busy-game-files]
     flag: "arena-tricks"
     details: "docs/board/cards/BOWL-TRICKS-ALL.md"
 

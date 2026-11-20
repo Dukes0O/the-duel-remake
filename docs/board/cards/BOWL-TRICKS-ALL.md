@@ -351,3 +351,7 @@ The Dusthawk obstacle repeated identically with Arena tricks off and on over fou
 **Granted:** extend the one guard in `projectBowlTruck` (`src/render3d.js`) to the active `arenaTrickShow` state, projecting the
 same player mesh through the current camera, only with `arena-tricks` on; read only. Take `busy-game-files` as the card says.
 `render3d.js` is shared: world signatures unchanged, full night after.
+
+## Second Arena drive at `06d562baf`
+
+Please check the wheelie and stoppie while holding the scoring keys in the Falcone, Dusthawk and Titan. The free axle now lifts 1.299 m, 1.210 m and 1.525 m respectively. The supporting axle stays at its original height within one micrometre on all six poses. The existing pop-up now has a projected point above the actual Arena car. Please check it in motion and record the result. The four exact changes to the old trick assertions are listed under the combined trick build above for the written rule 18 ruling.
