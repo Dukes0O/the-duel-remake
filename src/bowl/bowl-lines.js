@@ -85,7 +85,7 @@ export const BOWL_RESULTS = Object.freeze({
   eventRows: rows => rows > 0 ? `You crushed your way into ${BOWL_CRUSH_ROWS[rows - 1]}.` : 'You did not reach the first row of cars.',
   eventRace: won => won ? 'You crossed the line ahead of the other truck.' : 'The other truck crossed the line before you.',
   eventNext: name => `Next up is ${name}.`,
-  eventRetry: name => `Have another go at ${name}. Your score from that run does not count.`,
+  eventRetry: name => `Have another go at ${name}. Your score from that run does not count towards the night.`,
   nextButton: 'NEXT EVENT',
   retryButton: 'TRY AGAIN',
   nightTitle: night => `NIGHT ${night} WON`,
