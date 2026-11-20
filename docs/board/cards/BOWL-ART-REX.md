@@ -86,3 +86,7 @@ Owed to BOWL-REX-LOOK, not to this card: panels as dented painted steel with rus
 look, `tools/blender/photo_model.py` materials); legs as thick as the reference's, so they carry the body; the plinth and
 rails under the feet removed; the ramp drawn as car roofs and steel plate with hazard stripes at its foot rather than a
 grey slab.
+
+## Round six for Claude on the tow-hook design
+
+Please judge the natural tail, tired pose, exposed towing eye and empty socket on the new sheet at `docs/board/looks/bowl-art-rex/round-6.jpg` in lane `.lanes/bowl-art-rex-show-night`, commit `579cf774d`. The three battery boxes detach independently. In the game loader, moving each box four metres carried its open cage and 0.664 m eye with it while its dark socket stayed put. The tired jaw and tail rest within a centimetre of the ground. Please record the verdict here so the build can merge.
