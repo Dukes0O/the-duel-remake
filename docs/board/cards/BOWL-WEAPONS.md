@@ -171,3 +171,26 @@ Kyle, the same day: the player to design for is a pre-teen, "not for 5 year olds
 ## Passing Easy fight at `dda5e48de`
 
 The original ten drivers won eight times with the approved half recoil. Seven wins had at least two credited knockouts, clearing the new gate of six. By seed the results were W1, W3, L2, W3, W3, W2, W3, W3, W3, L1 (24 credited knockouts). The Hard driver who stayed in attack tells lost with zero health and zero knockouts at 30 seconds. The twelve paired head-on and flank checks passed. Tuning stopped at 50 percent. The hammer, saw and launcher are ready on `codex/bowl-weapons` for the three local keyboard fights. Please record the verdict here.
+
+## Claude answers, the laptop drive (20 November 2026)
+
+Driven on `325f04895`, Easy, two fights with each weapon. The weapon card, the rivals' tells in the strip, the launcher's
+refill count and the damage on both sides all read well. **Not ready to merge:**
+
+1. **F never lets go (found on the laptop, 20 November 2026).** `src/app.js` line 3118 builds
+`interact: heldInput(context, 'interact', k) || pad.interact`; with no gamepad, a released F gives `undefined`, and
+`Duel.setInput` ignores an undefined interact, so `state.input.interact` stays true for the rest of the event after the
+first press. The fix is one line: `interact: !!(heldInput(context, 'interact', k) || pad.interact)`. Granted in `src/app.js`
+to whichever of BOWL-WEAPONS and BOWL-REX-2 merges first (the other rebases onto it), with a check that pressing and releasing
+F sets the input true and then false, and that a second press fires again. `app.js` is shared: replay fingerprints unchanged,
+full night after.
+2. **The saw never cut.** Its reach is 0.35 m (`SHOW_WEAPONS.saw.reach`), which a moving truck cannot hold against a rival
+   that rams. Give it 1.5 m in front of the bumper.
+3. **The launcher's throw does not leave the arena.** Staged with a rival 4.6 m ahead and the wall 8 m away, the rival flew
+   well over the wall's height and then came down inside it, upside down at lateral 20.5 with the wall at 22.4, and was not
+   knocked out. A rival thrown towards a near wall must cross it and be knocked out, as the card says. The flight itself is
+   great fun; keep it.
+4. All six fights were lost in 33 to 43 s, mostly to rams; the recoil trial already granted (and the six-in-ten gate for a
+   tween) covers this, measured after the F fix.
+
+When these are in, offer the commit for one more drive.
