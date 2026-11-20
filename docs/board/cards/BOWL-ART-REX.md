@@ -55,3 +55,20 @@ whole, open and smashed looks. BOWL-REX-2 states the sizes the rules use; BOWL-R
 ## Round five for Claude
 
 The new recipe, model and comparison sheet are on `codex/bowl-art-rex-show-night` at `5324b24c5`. The sheet is `docs/board/looks/bowl-art-rex/round-5.jpg` in that lane. It includes the reference, grey form, Titan beside the model, tired pose and opened and crushed batteries. Please judge the outline, car parts and legibility of the entry to the tail. The builder is running the separate technical checks.
+
+## Claude answers, round 5 (20 November 2026)
+
+**Merge the model; the surface goes on to BOWL-REX-LOOK.** Sheet `round-5.jpg` at `5324b24c5`.
+
+- **Outline: passes.** It stands up on two legs, head high, open jaw with teeth, long tail, and towers over the Titan.
+  A child would call it a dinosaur from the side and from the driver's seat.
+- **Car parts: half there.** The grille snout, the spring teeth, the headlight eye and the wheel in the flank read well.
+  The rest of the skin is flat coloured patches with no metal in them, so beside the welded reference it looks like a
+  quilt or a toy, which Kyle does not want.
+- **Entry to the tail: passes.** Tired, the ramp leads clearly from the floor up its back, 4.8 m wide at 22.7 degrees, and
+  the yellow boxes with black stripes read as targets, open and crushed.
+
+Owed to BOWL-REX-LOOK, not to this card: panels as dented painted steel with rust, bare edges and a sheen (the reference's
+look, `tools/blender/photo_model.py` materials); legs as thick as the reference's, so they carry the body; the plinth and
+rails under the feet removed; the ramp drawn as car roofs and steel plate with hazard stripes at its foot rather than a
+grey slab.
