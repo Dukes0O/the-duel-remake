@@ -55,8 +55,10 @@ export function createBowlScreens({app, ui, escapeHTML}) {
   }
 
   function nightCard(state) {
-    const result = state.bowlNight.result, settled = app.showNightRun?.()?.settled;
-    const lines = [WORDS.nightTotal(result.score)];
+    const result = state.bowlNight.result, settled = app.showNightRun?.()?.settled, last = state.bowlNight.lastResult;
+    // The night ends on its last event, so its results also say how that event ended (BOWL-RIVALS).
+    const lines = [...(last?.event === 'lastTruckRolling' ? [WORDS.eventKnockouts(last)]
+      : last?.event === 'sideBySide' ? [WORDS.eventRace(true, BOWL_RIVALS[last.rival]?.name)] : []), WORDS.nightTotal(result.score)];
     if (settled?.purse > 0) lines.push(WORDS.nightPurse(settled.purse));
     else if (settled?.alreadyPaid) lines.push(WORDS.nightPurseAlready);
     if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);

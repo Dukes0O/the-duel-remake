@@ -70,7 +70,10 @@ export const BOWL_RIVAL_RULES = Object.freeze({
     // Every truck, the player's too, takes the same knocks before it is out.
     // The arena's armor (about 194 for a Titan) would take eight or more
     // full-speed charges; a hard wall hit or a scrape on the scenery costs 20.
-    showArmor: 80,
+    // At 60 a child-pace driver knocks out one to three trucks on Easy and
+    // still wins 9 or 10 times in 10 (tools/test-bowl-rivals.mjs); at 80 it
+    // knocked out one or two and nearly every event ran to the clock.
+    showArmor: 60,
   }),
 });
 

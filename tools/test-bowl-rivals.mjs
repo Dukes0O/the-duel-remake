@@ -283,8 +283,10 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
 
 // ---- Kyle's rule: Easy is winnable by a young driver ---------------------
 const rates = {}, playerKnockouts = [];
+const outcomes = {};
 function winRate(night, type, level) {
   let wins = 0, ended = 0;
+  const rows = outcomes[`${night}:${level}`] = [];
   for (let trial = 0; trial < TRIALS; trial++) {
     const seed = 1989 + trial * 101;
     const duel = showAt(night, type, {level, seed});
@@ -296,6 +298,11 @@ function winRate(night, type, level) {
       type === 'sideBySide' ? 62 : BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
     if (result) ended++;
     if (result?.won) wins++;
+    if (type === 'lastTruckRolling' && result) {
+      const out = duel.state.bowlNight.event.rivals.filter(entry => entry.out);
+      rows.push({won: result.won, how: result.won && !result.timeUp ? 'all out' : result.timeUp ? 'clock' : 'player out',
+        knockouts: out.length, byPlayer: out.filter(entry => entry.by === 'player').length, at: Math.round(duel.state.stageTimeSec)});
+    }
   }
   ok(ended === TRIALS, `night ${night} ${type} on ${level} always ends`);
   return wins;
@@ -307,6 +314,12 @@ for (const [night, type] of [[1, 'sideBySide'], [2, 'sideBySide'], [3, 'lastTruc
 }
 ok(playerKnockouts.length > 0 && playerKnockouts.every(entry => entry.cue === 'arena.wreck-credit' && entry.said),
   'a truck the player knocks out is credited to the player, plays the arena\'s wreck cue and has Big Mo\'s line');
+// Last Truck Rolling, trial by trial: won or lost, how it ended, trucks knocked out (by the player) and when.
+for (const [key, rows] of Object.entries(outcomes)) if (rows.length)
+  console.log(`test-bowl-rivals: night ${key} Last Truck Rolling: ${rows.map(row =>
+    `${row.won ? 'W' : 'L'} ${row.how} ${row.knockouts}(${row.byPlayer}) ${row.at}s`).join(', ')}`);
+for (const night of [3, 4, 5]) ok(outcomes[`${night}:easy`].filter(row => row.byPlayer > 0).length >= 7,
+  `on Easy the child-pace driver knocks a truck out in most of night ${night}'s fights`);
 const table = Object.entries(rates).map(([key, wins]) => `${key} ${wins}/${TRIALS}`).join(', ');
 console.log(`test-bowl-rivals: child-pace wins: ${table}`);
 for (const [key, wins] of Object.entries(rates)) if (key.endsWith(':easy'))

@@ -74,11 +74,11 @@ export const BIG_MO = Object.freeze({
   'event.won.carCrush': 'That truck went a long way down the line. On to the next event!',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
   'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
-  'event.won.lastTruckRolling': 'Our driver is the last truck rolling, so the night is theirs!',
+  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night is theirs!',
   'event.lost.carCrush': 'The junk won that time, but you can have another run at it.',
   'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
-  'event.lost.lastTruckRolling': 'Our driver was knocked out, but the trucks are lining up again.',
+  'event.lost.lastTruckRolling': 'Another truck won that one, but the trucks are lining up again.',
   // BOWL-RIVALS: who is in the other lane, who is in the Bowl tonight, and who is out.
   'rival.old-bess': 'In the other lane is Old Bess, Moss\'s cousin. She has never once been in a hurry, but she never gives up.',
   'rival.rust-rhino': 'In the other lane is Rust Rhino. Watch out for that horn, because Rust Rhino likes to charge.',

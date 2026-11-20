@@ -56,7 +56,11 @@ export const page = {
   pause: `(() => { window.__qaApp.togglePause(); return window.__qaApp.duel.state.paused === true; })()`,
   pauseCard: `(() => { const layer = document.querySelector('#modal-layer'); return !!layer && !layer.hidden && !layer.textContent.includes('SCRAPDOME') && !layer.textContent.includes('REMATCH'); })()`,
   resume: `(() => { window.__qaApp.resume(); return window.__qaApp.duel.state.paused === false; })()`,
-  card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result [data-action="show-night-next"]'))()`,
+  // The card after the event: an event's card, or the night's results when the event was the night's last and was won.
+  card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result'))()`,
+  // How Last Truck Rolling ended, in one sentence on whichever card follows it.
+  truckOutcome: `(() => { const text = document.querySelector('.bowl-result')?.textContent ?? '';
+    return ['Every other truck was knocked out', 'The clock ran out', 'knocked out before', 'Your truck was knocked out'].some(line => text.includes(line)); })()`,
   cardLine: `(() => document.querySelector('.bowl-result')?.textContent ?? '')()`,
   leave: `(() => { document.querySelector('[data-action="show-night-leave"][data-to="menu"]').click(); return true; })()`,
   menu: `(() => window.__qaApp.duel.state.status === 'menu' && !window.__qaApp.duel.state.bowlNight && !window.__qaApp.duel.state.arena)()`,
@@ -130,6 +134,7 @@ export async function run(context) {
   await key(context, 'KeyW', 'keydown');
   try { await waitWithState(context, page.card, 'Last Truck Rolling ends', 180000); }
   finally { await key(context, 'KeyW', 'keyup'); }
+  assert.ok(await context.evaluate(page.truckOutcome), 'the card says how Last Truck Rolling ended');
   await picture(context, 'bowl-rivals-last-truck-card');
   await context.evaluate(page.leave);
   await context.waitFor(page.menu, 'back on the main menu with no arena left over', 10000);

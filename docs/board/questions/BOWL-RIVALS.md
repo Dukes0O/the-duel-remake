@@ -30,10 +30,12 @@ The event lasts two minutes. **A (built):** of the trucks still rolling, the one
 tie goes to the player, and a truck that hit nothing cannot win. B: the truck with the most armor left wins (a truck
 that hides wins; the test's truck that never moves won this way). C: the arena's sudden death.
 
-## 4. Most Easy wins come at the clock
+## 4. How many knock-outs on Easy
 
-On Easy the child-pace driver knocks out 0 to 2 trucks and usually wins at the two-minute mark. A show armor of 60
-gives more knock-outs but the Easy win rate fell to 4 in 10. My pick is 80; BOWL-FINISH can tune it in play.
+At a show armor of 80, on the 286 m Bowl, the child-pace driver knocked out one or two trucks on Easy and nearly every
+fight ran to the clock. **At 60 (built)** it knocks out one to three, three in a fifth of fights (the field emptied),
+and still wins Easy 9 or 10 times in 10; Medium is 1 to 3 in 10, Hard 0 to 1. At 50 Medium swung unevenly (9 in 10
+on night four). `tools/test-bowl-rivals.mjs` prints every trial. BOWL-FINISH can tune it in play.
 
 ## 5. The rivals' bolt-ons are not drawn yet
 
