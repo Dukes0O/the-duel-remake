@@ -44,7 +44,7 @@ async function play(c) {
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
   await wait(3200); await shot('wonder-falling'); await at('wonder', 's.ready'); await shot('wonder-missed');
   await next('wonder');
-  // Metres per second: the dial changes the sum at once, and the sum says so on the screen.
+  // Metres per second: the dial changes the formula at once, and the formula says so on the screen.
   await at('word-metres'); await shot('word-metres');
   await openFormulaPanel(c);
   await press('ArrowRight');
@@ -65,7 +65,7 @@ async function play(c) {
   await next('watch-water');
   await at('watch-speeds'); await wait(2400); await shot('watch-speeds-falling'); await at('watch-speeds', 's.ready'); await shot('watch-speeds');
   await next('watch-speeds');
-  // The free test: the controls move the sums, the arcs stay, and F hides and shows the physics.
+  // The free test: the controls move the formulas, the arcs stay, and F hides and shows the physics.
   await at('try-free'); await shot('try-free');
   await press('ArrowUp'); await press('ArrowRight'); await wait(200); await shot('try-free-set');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('15 m/s × 2.86 s = 42.9 m'))`))) throw Error('The formulas did not follow the settings.');

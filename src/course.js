@@ -28,7 +28,8 @@ import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './world/jobs/everburn.js';
 import {gasRunJob, GAS_RUN_ROADS, fieldBattleJob} from './world/jobs/gas-run.js';
 import {realismThingsData, thingSolids} from './world/scablands-things.js';
 import {SCABLANDS_SOLIDS, createSolidGrid} from './world/scablands-solids.js';
-const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+// The Bowl's ring bends round 10 m ends, so its centre line is sampled every 2 m, not 8.
+const STEP=8, BOWL_STEP=2, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const angleDiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
@@ -92,7 +93,7 @@ export class Course {
       this.solidGrid=createSolidGrid([...SCABLANDS_SOLIDS,...thingSolids(this.realismThings.fixed,this.realismThings.loneBoulders)],this.fallenFenceIds);
     }
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
-    this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
+    this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:def.bowl?BOWL_STEP:STEP;
     this._solveShortcuts=solveShortcuts===true;
     this.closed=def.closed!==false;this.raceLength=this.length*(this.script&&!this.closed?1:def.laps||2);
     this.rng=makeRng(this.seed^((def.stage+1)*0x9e37));
@@ -165,13 +166,13 @@ export class Course {
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
     const scale=this.length/raw.at(-1).s;raw.forEach(p=>{p.x*=scale;p.z*=scale;p.s*=scale;});
     const origin=this.def.saltFlats||this.def.scablands?{x:0,z:0}:raw[0];let cursor=1;this.samples=[];
-    for(let s=0;s<=this.length;s+=STEP){while(cursor<raw.length-1&&raw[cursor].s<s)cursor++;
+    for(let s=0;s<=this.length;s+=this.step){while(cursor<raw.length-1&&raw[cursor].s<s)cursor++;
       const a=raw[cursor-1],b=raw[cursor],t=(s-a.s)/(b.s-a.s);
       this.samples.push({s,x:lerp(a.x,b.x,t)-origin.x,z:lerp(a.z,b.z,t),y:this._height(s),heading:0,curvature:0});}
     const n=this.samples.length-1;
     for(let i=0;i<n;i++){const prev=this.samples[(i-1+n)%n],next=this.samples[(i+1)%n],p=this.samples[i];p.heading=Math.atan2(next.x-prev.x,next.z-prev.z);
       if(i)p.heading=this.samples[i-1].heading+angleDiff(p.heading,this.samples[i-1].heading);}
-    for(let i=0;i<n;i++)this.samples[i].curvature=angleDiff(this.samples[(i+1)%n].heading,this.samples[(i-1+n)%n].heading)/(2*STEP);
+    for(let i=0;i<n;i++)this.samples[i].curvature=angleDiff(this.samples[(i+1)%n].heading,this.samples[(i-1+n)%n].heading)/(2*this.step);
     this.samples[n]={...this.samples[0],s:this.length,heading:this.samples[n-1].heading+angleDiff(this.samples[0].heading,this.samples[n-1].heading)};
     this._nearestIndex=createPolylineIndex(this.samples);
     this.rivalStartS=this.def.hasRival?-20:null;
@@ -270,6 +271,8 @@ export class Course {
     if(this.def.scablands){const p=this.worldAt(s,off);return scablandsSurfaceHeightAt(p.x,p.z)-p.y;}
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
+    // The Bowl's ramps fill its floor from wall face to wall face; its walls stand within 15 m.
+    if(this.def.bowl&&this.def.scrapdome){const floor=this.def.scrapdome;return Math.abs(off)<=(off>0?floor.outerWallOffset:floor.wallOffset)-.5?this.jumpAt(s):0;}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
     // The section is found once (themeAt(p) is sectionAt(p).theme), and the wave terms, which do not depend on the
     // ground type, are worked out once for both types the blend below asks about.
@@ -450,11 +453,15 @@ export class Course {
         if(this.tunnelAt(s))continue;if(!vacant(s,off,4))off=(i%2?1:-1)*5;
         if(vacant(s,off,3.5))f.flocks.push({id:`flock-${i}`,s,off,radius:3.5,count:8,seed:rng.int(1,100000)});}
     }else if(!this.def.practice&&!this.def.scablands){
-      for(let s=0;s<this.length;s+=8)for(const side of[-1,1]){
+      // The Bowl's island ends bend round a 2 m radius: its pieces sit every 4 m and also
+      // shrink where the wall is shorter than the centre line, so none stands out into the floor.
+      const bowl=!!this.def.bowl,step=bowl?4:8;
+      for(let s=0;s<this.length;s+=step)for(const side of[-1,1]){
         // Pieces sit every 8 m along the centre line. Where the ring bends, the outer
         // side is longer, so each piece grows to meet its neighbours (no open gaps).
         const layout=this.def.scrapdome,off=side*((side>0?layout?.outerWallOffset:null)??layout?.wallOffset??22);
-        f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,4.2*Math.max(1,1-this.at(s).curvature*off),0,{barrier:true,arenaWall:true}));
+        const grow=1-this.at(s).curvature*off,length=bowl?Math.max(.15,grow)*step*.52:4.2*Math.max(1,grow);
+        f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,length,0,{barrier:true,arenaWall:true}));
       }
     }
     if(!this.def.practice&&!this.def.scablands)Object.assign(f,buildRoadFurniture(this));

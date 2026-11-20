@@ -206,6 +206,16 @@ the game.
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 - **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
 - **Separate generated views can have different image sizes, framing and details.** A front photo with a taller canvas than the side photo can give the same figure two different measured heights; separate generations can also produce different faces and plate layouts. Use the first photo as an image reference for later views, check image dimensions and landmarks, scale each view to a shared physical landmark, and inspect the masks before carving.
+- **An open frame photographed dead on still shows its far frame.** A generated end view of an open shed shows the far posts inset behind the near ones and the roof's underside, so a trace of the photo's mask takes them all in. Read each member of the near frame off the grid as a polygon and trace those (`polygon_mask` in `town-works.py`). Give the photo one scale for width and height: stretching it to reach a width made short stubs (the sawmill, rounds 2 and 3, 19 November).
+- **A roof over an open shed hides what the card asks to be seen.** The mayor's camera sees about as far in under an eave as the eave is high. Leave a bay or two unsheeted over the machine, with the purlins showing (the sawmill's saw).
+- **A small carved shed comes out as a cushion.** Smoothing rounds a carve by about two voxels. A 7 m shed at a 0.12 m grain had pillow corners; at 0.07 m they are rounded by a hand's width. Seat the body too: voxel centres leave its lower edge about 6 cm above the ground (the salvage yard's shed, 19 November).
+- **A heap that is one flat shape wearing a picture reads as paper.** A low spiky mound of clay and a "tumble" of bricks wearing a photo of a wall both looked like sheets laid on the ground. A heap is several rounded mounds run together; loose bricks are separate bricks (62 cost 620 triangles) on a bank of rubble (19 November).
+- **A heap wearing its overhead photo shows the studio at its foot.** The mound's outline wobbles beyond the photographed heap. Take the picture from the middle three-quarters of the photo's heap. The same holds for a side photo of a heap wrapped round a mound: take only the heap's middle (the sawdust's grey patch, 19 November).
+- **A function that places a picture on a mound is handed points already measured from the mound's centre.** Adding the centre again put a metre of studio floor across every grave (Old Ground, 19 November).
+- **Round boughs built along a photo's limbs smear it.** Wrapping the photo's width of a bough round a tube gave mirrored grain, then bands, and pale streaks of studio wherever a radius was guessed too wide; two rounds did not cure it. A bare tree is three cut-outs of the photo's own outline standing through the trunk a third of a turn apart, the middle one mirrored (`cutout` in `town-works.py`).
+- **Ground cannot be dug in a model:** the town's ground hides everything below it. A pit or a trench is the photo's dark floor laid just above the ground, between a raised lip and the spoil bank, so that its depth is read from the banks (the test pit and trench, 19 November).
+- **Generated views of one object disagree in proportion.** The flatbed's rear photo made its deck 2.7 m wide, its overhead photo 1.8 m and its front photo 2.0 m. Choose the width, give each end photo its `scale` from it, and set `ends_split` so the front photo shapes the cab and the rear photo the deck.
+- **A wheel arch cut as large as its tyre comes up through a flat deck** and shows from above as two dark notches. Give `wheels` a smaller radius for an axle under a deck; the tyre built separately keeps its true size.
 
 ### People
 
@@ -399,6 +409,8 @@ the game.
 - Photo beside model at the same camera, three-quarter views, the mayor's view
   and the view from the road. A close-up of wheels and lamps on any vehicle.
 - A sheet you can see is empty or cropped is not a round.
+- A recipe that holds a whole family builds one piece into a trial file for its sheet (`--only` in `town-works.py`), so that a trial never overwrites the file the game loads, and renders several sheets in one Blender job (`--render sawmill:3,heaps:1`), which takes one heavy-job turn and not five.
+- Review views of one part of a building (a shed inside its yard, a tree behind a wall) show only that part: name the parts to show, or the walls stand in the way.
 
 ### Keeping the work
 
@@ -410,6 +422,10 @@ the game.
   resume a stopped job with a "where you are" note at the top of its brief.
 - Never edit a script a running queue is reading.
 - Never stop processes by matching a folder name: name each job's own process.
+- **Photos embedded at full size break a family's size limit.** Twenty-one pieces with about fifty photos came to over 9 MB. Shrink each photo to what its surface needs just before export, after every mask is made (`PHOTO_LIMITS` in `town-works.py`): the family is 6 MB.
+- **A helper named like an older piece's variable is overwritten.** When a recipe grows from one building to a family, a new helper called `log` was replaced by the kiln's `log = ...` and failed as "object is not callable". Give helpers names no piece would use for a thing.
+- `node tools/test-blender-output.mjs` is a heavy job: it starts Blender builds of truck candidates and runs for more than ten minutes on a busy laptop. Take a turn for it. To check one family while working, run that family's check on its own.
+- When Codex's configured model is refused, `codex exec -m <another model>` still reaches its image tool; a brief of one object per numbered item, one view per picture, returned 32 usable photos in about ten minutes.
 
 - **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.
 
