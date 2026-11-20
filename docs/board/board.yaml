@@ -697,6 +697,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
+    waiting_on: "claude"
     needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
     locks: [bowl-screens]
     flag: "titan-bowl"
