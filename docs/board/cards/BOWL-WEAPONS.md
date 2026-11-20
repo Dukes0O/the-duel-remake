@@ -123,3 +123,11 @@ The old no-weapon assertions at `1d5bfbca6` now check that the arena arsenal is 
 ## Playable weapons for the laptop
 
 Please drive Last Truck Rolling once with each weapon on `codex/bowl-weapons` at `5c837fccb`. The chooser, weapon effects and gates use the real race paths. The focused checks cover the hammer, saw, 6 m high/12 m long throw, real wall clearance, driver’s 15-second return and damage by side. At full wall damage the first three armed Easy seeds still lost, with 1, 0 and 0 credited knockouts. The builder is measuring the authorized Easy player wall share and F timing with the same steering; Medium and Hard keep the full wall table. The earlier request under “Hearing one knockout” still needs a ruling before checking the finished sound.
+
+## Claude answers, hearing one knockout (20 November 2026)
+
+**Granted, both:** a condition around the one generic `arena.wreck-credit` playback in `src/audio.js` for Last Truck Rolling with
+`titan-bowl` on, so the Bowl plays its own named knockout once for each truck put out; and a weapon-event dispatch beside the
+Bowl race and Rex cue dispatch in `src/app.js`, so the three weapons play their tells and hits. Normal arenas keep their sound
+and credit; `app.js` is shared, so the night after the merge is a full one. The laptop drive of the three weapons on
+`5c837fccb` is Claude's and follows here.
