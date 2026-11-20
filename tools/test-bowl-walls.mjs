@@ -4,16 +4,16 @@ import {Duel} from '../src/game.js';
 import {DRIVE} from '../src/config.js';
 import {carAlongPush} from '../src/arsenal/car-effects.js';
 
-function start(night, eventIndex) {
+function start(night, eventIndex, cpuDifficulty='easy') {
   const duel = new Duel({seed: 1989});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
-  assert.ok(duel.startBowlNight({night, eventIndex, cpuDifficulty: 'easy', seed: 1989}));
+  assert.ok(duel.startBowlNight({night, eventIndex, cpuDifficulty, seed: 1989}));
   if (duel.state.status === 'bowl_weapon_pick') assert.ok(chooseShowWeapon(duel, 'hammer'));
   return duel;
 }
 
-function contact(surface, speed, angle, kind, fraction, fight = true, rival = false, rex = false) {
-  const duel = rex ? start(5, 3) : fight ? start(3, 2) : start(1, 1);
+function contact(surface, speed, angle, kind, fraction, fight = true, rival = false, rex = false, level = 'medium') {
+  const duel = rex ? start(5, 3) : fight ? start(3, 2, level) : start(1, 1);
   const actor = rival ? duel.state.opponents[0] : duel.state;
   const walls = duel.course.features.barriers.filter(wall => wall.arenaWall);
   const at = surface === 'end' ? 105 : 35;
@@ -52,6 +52,11 @@ for (const surface of ['stand','spine','end']) {
     contact(surface, speed, angle, kind, fraction);
   }
 }
+// The approved player's Easy wall share leaves rival walls and all other levels at full cost.
+contact('stand', 35, 90, 'hard', 1/60, true, false, false, 'easy');
+contact('stand', 55, 90, 'big', 1/30, true, false, false, 'easy');
+contact('stand', 35, 90, 'hard', 1/12, true, true, false, 'easy');
+contact('stand', 55, 90, 'big', 1/6, true, false, false, 'hard');
 contact('stand', 55, 90, 'big', 0, false);
 contact('stand', 35, 90, 'hard', 1/12, true, true);
 

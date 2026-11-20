@@ -75,7 +75,8 @@ function bowlWear(duel, actor, kind, owner, zone) {
   if (event.type === 'lastTruckRolling' && actor.bowlWeapon && owner) actor.bowlLastHitBy = owner;
   if (!fraction) return;
   if (actor.bowlWeapon && event.type === 'lastTruckRolling') {
-    bowlHealthLoss(duel, actor, fraction, owner, zone);
+    const wallShare = actor === duel.state && !owner ? actor.bowlWeapon.wallShare : 1;
+    bowlHealthLoss(duel, actor, fraction * wallShare, owner, zone);
     return;
   }
   if (event.rex) {

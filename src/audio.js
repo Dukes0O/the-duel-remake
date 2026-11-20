@@ -2124,7 +2124,8 @@ export class EngineAudio {
       if (ev.fuelDelivery?.participantId === 'player') this._playCue('interface.go');
     }
     if (ev.arenaRespawn) this._playCue('arena.respawn');
-    if (ev.arenaWreck?.creditedId === 'player')
+    if (ev.arenaWreck?.creditedId === 'player' &&
+        !(state?.bowlNight?.event?.type === 'lastTruckRolling' && this.flags.enabled('titan-bowl')))
       this._playCue('arena.wreck-credit');
     // SCABLANDS-LAND round 4, slice 2b: ground too steep to climb is a hit (the scab plates' impact cue) and a landing after a fall is the landing cue,
     // both from sounds the game has, scaled by the size of the hit.

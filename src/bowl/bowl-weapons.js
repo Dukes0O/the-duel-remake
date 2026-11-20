@@ -33,6 +33,7 @@ export function prepareShowWeapons(duel, night, choices) {
   night.event.returnSeconds = null;
   for(const rival of s.opponents) fit(rival,RIVALS[rival.bowlRival]);
   fit(s, null);
+  s.bowlWeapon.wallShare = night.cpuDifficulty === 'easy' ? .2 : 1;
   s.status='bowl_weapon_pick';
 }
 
@@ -55,7 +56,7 @@ export function bowlHealthLoss(duel,actor,fraction,owner,side='front',styleHit=t
 }
 
 // Measure from the nose to the nearest point on the target truck's oriented body.
-export function showTarget(duel,actor,reach) {
+export function showTarget(duel,actor,reach,allHits=null) {
   const origin=worldPose(duel,actor), own=duel._vehicleSpec(actor);
   const sx=Math.sin(origin.heading), cz=Math.cos(origin.heading);
   const noseX=origin.x+sx*own.halfLength, noseZ=origin.z+cz*own.halfLength;
@@ -67,10 +68,12 @@ export function showTarget(duel,actor,reach) {
     const sin=Math.sin(p.heading), cos=Math.cos(p.heading);
     const right=dx*cos-dz*sin, forward=dx*sin+dz*cos;
     const distance=Math.hypot(Math.max(0,Math.abs(right)-body.halfWidth),Math.max(0,Math.abs(forward)-body.halfLength));
-    if(distance>reach || distance>=closest) continue;
+    if(distance>reach) continue;
     const side=Math.abs(right)/body.halfWidth>Math.abs(forward)/body.halfLength
       ? (right>0?'right':'left') : (forward>0?'rear':'front');
-    best={actor:other,side}; closest=distance;
+    const hit={actor:other,side};
+    if(allHits) allHits.push(hit);
+    if(distance<closest) {best=hit; closest=distance;}
   }
   return best;
 }
@@ -94,8 +97,12 @@ function fire(duel,actor,weapon,target) {
   const kind=weapon.kind, rules=SHOW_WEAPONS[kind], owner=combatOwnerId(duel,actor);
   if(kind==='hammer') {
     if(target) {
-      bowlHealthLoss(duel,target.actor,.3,owner,target.side);
-      target.actor.bowlNoSteer=1;
+      const hits=[];
+      showTarget(duel,actor,rules.reach,hits);
+      for (const hit of hits) {
+        bowlHealthLoss(duel,hit.actor,.3,owner,hit.side);
+        hit.actor.bowlNoSteer=1;
+      }
     } else actor.bowlHeldStill=.5;
     cue(duel,target?'bowl.hammer.hit':'bowl.hammer.miss');
   } else if(kind==='launcher') {

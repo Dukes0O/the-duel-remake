@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {Duel} from '../src/game.js';
 import {bowlHealthLoss, chooseShowWeapon, showMotion, showTarget, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
@@ -149,5 +150,34 @@ for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   place(d,s,38.4,0);place(d,horn,33,0);horn.speedMph=40;
   s.opponents.slice(1).forEach((a,i)=>place(d,a,80+12*i,0));
   ticks(d,48);assert.equal(s.armor,48);sums(s);
+}
+// Run the actual App event dispatch with memory-only storage and silent audio output.
+{
+  const values=new Map();
+  globalThis.localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
+  globalThis.window=new EventTarget(); window.location={search:''};
+  globalThis.Element??=class {};
+  globalThis.requestAnimationFrame=()=>1; globalThis.cancelAnimationFrame=()=>{};
+  const {App}=await import('../src/app.js');
+  const app=new App(),d=app.duel;
+  d.featureFlags={enabled:name=>name==='titan-bowl'};
+  assert.ok(d.startBowlNight({night:3,eventIndex:2,cpuDifficulty:'easy',seed:1989}));
+  assert.ok(chooseShowWeapon(d,'hammer')); while(d.state.status==='countdown') d.step(dt);
+  const named=[],played=[],audio=app.audio;
+  const route=app._showNightCue.bind(app), receive=audio.event.bind(audio);
+  app._showNightCue=id=>{named.push(id);route(id);};
+  audio.flags=d.featureFlags; audio.context={state:'running',close:()=>Promise.resolve()};
+  audio.muted=false; audio.paused=false; audio._syncMixer=()=>{};
+  audio._playCue=id=>played.push(id);
+  audio.event=(ev,...args)=>{if(ev.arenaWreck) receive(ev,...args);};
+  bowlHealthLoss(d,d.state.opponents[0],1,'player','front');
+  d.step(dt);d.step(dt);
+  assert.equal(named.filter(id=>id==='bowl.knockout').length,1);
+  assert.equal(played.filter(id=>id===BOWL_SOUND_CUES['bowl.knockout']).length,1);
+  assert.ok(!played.includes('arena.wreck-credit'));
+  audio.event({arenaWreck:{victimId:'cpu-1',creditedId:'player'}},{arena:{mode:'last-car-rolling'}});
+  assert.equal(played.filter(id=>id==='arena.wreck-credit').length,1);
+  audio.context=null;
+  app.dispose();
 }
 console.log('Bowl show weapons, four-part armor, wall knockout and gate return passed.');
