@@ -170,3 +170,5 @@ One further rule 18 line at `98f8f7fcc`: the Night 5 opening expectation in `too
   SCRAPASAURUS", still checked in full on screen, matching the new opening walk before the fire tell. The tunnel fixture's
   restored call is a fix to the fixture, not to an assertion. Nothing is loosened. Offer the playable commit for Claude's
   drive when the ten Easy seeds are measured.
+
+The complete playable candidate is `31ece8f9c` on `codex/bowl-rex-2`. The solo Next button, retry and each named Turn Show Ready button now show the same three pictures before the fight. The production modal checks passed. All ten Easy seeds won without nitro or steering during the pull at `7d2e92a08`, and the last cartridge moved through all ten seconds. Combat balance passed across 51 policy runs and 90 baselines. Please run the named laptop scenario, including the actual keyboard F press, for the merge verdict.
