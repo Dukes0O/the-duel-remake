@@ -27,9 +27,11 @@ export const BOWL_ZONES = Object.freeze({
 // The same shape of floor layout as the Scrapdome's (src/arena/venues.js), so the
 // arena rules (walls, floor width, floor speed, start slots) read the Bowl's own.
 export const BOWL_FLOOR = Object.freeze({
-  // A Titan (half width 1.4 m) at the floor edge is 0.5 m from either wall's face:
-  // each wall piece is 1 m thick, centred 22.4 m out, so its face is 21.9 m out.
-  // On the straights the two Spine walls meet in the middle: the Spine is 2.6 m wide.
+  // A Titan (half width 1.4 m) at the floor edge is 0.5 m from the stand wall's face:
+  // each wall piece is 1 m thick, centred 22.4 m out, so its face is 21.9 m out. The
+  // Spine's pieces stand 0.1 m further, so that the pieces where a straight meets an
+  // end (which grow to close the bend) keep 0.4 m clear too. On the straights the two
+  // sides' Spine walls meet in the middle: the Spine is 2.5 m wide.
   floorHalfWidth: 20,
   // Read in every event on the Bowl (src/sim-driving.js _drivingSurface). A Titan at full
   // throttle settles near 50 mph on this floor (its limit is 35 mph and the pull back to it
@@ -37,7 +39,7 @@ export const BOWL_FLOOR = Object.freeze({
   floorSpeedMph: 42, floorSpeedReferenceMph: 200, floorSpeedExponent: .35,
   floorTraction: .95, floorScrub: .02, floorRoughness: .12,
   // The Spine's wall and the wall in front of the stands.
-  wallOffset: 22.4,
+  wallOffset: 22.5,
   outerWallOffset: 22.4,
   rampFractions: Object.freeze([]),
   rampLength: 0,
@@ -160,7 +162,7 @@ export function buildBowlFeatures(course) {
   // stand wall. They are data for the Bowl view; the simulation never advances or draws them.
   features.flameJets = RAMPS.flatMap((ramp, number) => [1, -1].map(side => ({
     id: `bowl-flame-jet-${number}-${side > 0 ? 'stand' : 'spine'}`, s: ramp.start + ramp.length / 2,
-    off: side * BOWL_FLOOR.outerWallOffset, wallTop: side > 0 ? BOWL_STADIUM.wallHeight : BOWL_STADIUM.spineHeight,
+    off: side * (side > 0 ? BOWL_FLOOR.outerWallOffset : BOWL_FLOOR.wallOffset), wallTop: side > 0 ? BOWL_STADIUM.wallHeight : BOWL_STADIUM.spineHeight,
   })));
   // The show's places, for the cards that run events on this floor.
   const firstRow = ROWS[0][0];
@@ -176,7 +178,7 @@ export function buildBowlFeatures(course) {
     lanes: Object.freeze([Object.freeze({s: 6, lateral: 0}), Object.freeze({s: 6 + BOWL_HALF_LAP, lateral: 0})]),
     // The Scrapasaurus walks all the way round, 16.5 m out (on the banks at the ends).
     rails: Object.freeze({lateral: 16.5, start: 0, end: BOWL_LENGTH}),
-    // The Spine's wall pieces are 1 m thick and centred 0.8 m from its middle line.
+    // The Spine's wall pieces are 1 m thick and centred 0.74 m from its middle line.
     spine: Object.freeze({halfWidth: RADIUS - BOWL_FLOOR.wallOffset + .5, length: STRAIGHT, height: BOWL_STADIUM.spineHeight}),
   });
 }

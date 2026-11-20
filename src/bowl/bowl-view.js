@@ -2,9 +2,8 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {flipbookFrameUVInto} from '../combat-vfx-atlas.js';
 import {addArenaCrushables} from '../arena-props.js';
-import {bowlCentre} from './bowl-course.js';
+import {createBowlStadium} from './bowl-stadium.js';
 
-const STADIUM = '/assets/models/wasteland/bowl/stadium.glb';
 const CRUSH = '/assets/models/wasteland/bowl/crush.glb';
 const FIRE = '/assets/textures/fire-flipbook.png';
 const PALETTE = [0x53645b, 0x935143, 0x557185, 0x806449, 0x596b70];
@@ -13,7 +12,12 @@ const loader = new GLTFLoader();
 function disposeTree(root) {
   root?.traverse?.(node => {
     node.geometry?.dispose?.();
-    for (const material of [node.material].flat().filter(Boolean)) material.dispose?.();
+    for (const material of [node.material].flat().filter(Boolean)) {
+      // Pictures drawn for this view go with it; shared photographs stay loaded.
+      for (const texture of [material.map, material.bumpMap, material.alphaMap, material.emissiveMap])
+        if (texture && !texture.userData?.sharedAsset) texture.dispose?.();
+      material.dispose?.();
+    }
   });
 }
 
@@ -39,56 +43,6 @@ function setFrame(mesh, frame) {
   corners.forEach(([x, y], index) => uv.setXY(index,
     values.offsetX + x * values.repeatX, values.offsetY + y * values.repeatY));
   uv.needsUpdate = true;
-}
-
-// The stadium model was drawn round its own middle with four ramps on its floor.
-// The ring's ramps are the course's, so the authored ramps go, and any low prop
-// (a wreck, a fallen panel) that would stand on the ring is cut out. The podium
-// on the island and the wrecks in the corners stay.
-const AUTHORED_FLOOR_PROPS = /^bowl-ramp-\d/;
-function clearRing(stadium, ring) {
-  const remove = [];
-  stadium.traverse(node => { if (node !== stadium && AUTHORED_FLOOR_PROPS.test(node.name)) remove.push(node); });
-  remove.forEach(node => { node.removeFromParent(); disposeTree(node); });
-  const inside = (x, z, a, b) => (x / a) ** 2 + (z / b) ** 2 < 1;
-  const onRing = (x, z) => inside(x, z, ring.a + ring.outer, ring.b + ring.outer) &&
-    !inside(x, z, Math.max(.1, ring.a - ring.inner), Math.max(.1, ring.b - ring.inner));
-  // The model's meshes merge many separate boxes. Triangles that share a corner
-  // position belong to one box; a low box with any corner on the ring goes whole,
-  // so nothing is left half cut where it crosses a wall.
-  let cut = 0;
-  stadium.updateMatrixWorld(true);
-  stadium.traverse(node => {
-    if (!node.isMesh || node.name === 'bowl-dirt-floor' || !node.geometry?.index) return;
-    const position = node.geometry.getAttribute('position'), index = node.geometry.index.array;
-    const local = new THREE.Matrix4().copy(stadium.matrixWorld).invert().multiply(node.matrixWorld), p = new THREE.Vector3();
-    const points = [], corner = new Map(), parent = [];
-    const find = i => { while (parent[i] !== i) i = parent[i] = parent[parent[i]]; return i; };
-    for (let v = 0; v < position.count; v++) {
-      points.push(p.fromBufferAttribute(position, v).applyMatrix4(local).clone());
-      const key = `${points[v].x.toFixed(3)},${points[v].y.toFixed(3)},${points[v].z.toFixed(3)}`;
-      parent[v] = v;
-      if (corner.has(key)) parent[find(v)] = find(corner.get(key)); else corner.set(key, v);
-    }
-    for (let i = 0; i < index.length; i += 3) {
-      parent[find(index[i + 1])] = find(index[i]);
-      parent[find(index[i + 2])] = find(index[i]);
-    }
-    const low = new Map(), touches = new Map();
-    for (let v = 0; v < points.length; v++) {
-      const box = find(v);
-      low.set(box, (low.get(box) ?? true) && points[v].y < 2.5);
-      if (onRing(points[v].x, points[v].z)) touches.set(box, true);
-    }
-    const kept = [];
-    for (let i = 0; i < index.length; i += 3) {
-      const box = find(index[i]);
-      if (low.get(box) && touches.get(box)) { cut++; continue; }
-      kept.push(index[i], index[i + 1], index[i + 2]);
-    }
-    if (kept.length < index.length) node.geometry.setIndex(kept);
-  });
-  return {removed: remove.length, cutTriangles: cut};
 }
 
 // A squat welded housing and nozzle under each flame jet, drawn here so it stands
@@ -140,7 +94,6 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   let fireTexture = null, firePromise = null, modelPromise = null, crushSource = null;
   let crushShells = null, stadium = null;
   const fires = [];
-  const lights = [];
   // The model's bus, RV and stacks, by crush target: each settles lower once crushed.
   const authored = new Map();
 
@@ -154,7 +107,6 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     crushSource = null;
     fires.length = 0;
     authored.clear();
-    lights.splice(0).forEach(light => light.dispose?.());
     course = null; crushShells = null; stadium = null;
     firePromise = null; modelPromise = null;
   }
@@ -173,19 +125,13 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     course = next;
     const current = token;
     group.visible = true;
-    modelPromise = Promise.all([loadModel(STADIUM), loadModel(CRUSH)]).then(([stadiumAsset, crushAsset]) => {
-      if (disposed || !enabled || current !== token) {
-        disposeTree(stadiumAsset.scene); disposeTree(crushAsset.scene); return;
-      }
-      stadium = stadiumAsset.scene;
+    // The stadium is drawn in code round the course's floor (src/bowl/bowl-stadium.js).
+    stadium = createBowlStadium(next);
+    group.add(stadium);
+    group.userData.stadiumReady = true;
+    modelPromise = loadModel(CRUSH).then(crushAsset => {
+      if (disposed || !enabled || current !== token) { disposeTree(crushAsset.scene); return; }
       crushSource = crushAsset.scene;
-      stadium.name = 'Bowl stadium, floodlights and crowd';
-      const centre = bowlCentre(next), floor = next.def.scrapdome;
-      stadium.position.set(centre.x, centre.y, centre.z);
-      const ring = {a: Math.abs(next.worldAt(0, 0).x - centre.x), b: Math.abs(next.worldAt(next.length / 4, 0).z - centre.z),
-        outer: floor.outerWallOffset + .5, inner: floor.wallOffset + .5};
-      group.userData.stadiumCleared = clearRing(stadium, ring);
-      group.add(stadium);
       const targets = next.features.crushables;
       const shells = targets.filter(feature => feature.sourceKind === 'junkCar');
       if (shells.length) {
@@ -226,14 +172,6 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
         installFire(fireTexture, new THREE.Vector3(p.x, top + 3.6, p.z),
           `Bowl flame jet ${jet.id}`, Math.floor(index / 2) * .41);
       });
-      // A pool of show light under each of the stadium's four floodlight banks.
-      for (const [x, z, color] of [[-42, -25, 0xffbd73], [42, -25, 0x78aaff],
-        [-42, 24, 0xff7744], [42, 24, 0xffd28a]]) {
-        const light = new THREE.PointLight(color, 850, 105, 2);
-        light.position.set(centre.x + x, 24, centre.z + z);
-        group.add(light); lights.push(light);
-      }
-      group.userData.stadiumReady = true;
       group.userData.crushModelsReady = true;
       group.userData.flameJetCount = jets.length;
       group.userData.heapFireCount = targets.filter(feature => feature.bowlFire).length;
@@ -251,6 +189,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
       return;
     }
     if (next !== course) build(next, now);
+    stadium?.userData.update?.(now);
     if (crushShells) crushShells.userData.updateSimulation(state || {}, 0);
     const crushed = state?.crushedProps || [];
     for (const [id, prop] of authored) {
