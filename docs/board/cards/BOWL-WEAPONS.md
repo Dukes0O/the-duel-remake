@@ -100,8 +100,44 @@ Please grant two narrow hooks in `src/arena/arena-event.js`, beside the player�
 
 The real choosing card holds the event until a selection. The outside, walls and rival suites and the `bowl-rivals` browser scenario enter the Night 3 fight directly. Their setup must choose the hammer through the normal action. Keep the existing physical and result assertions. Check that the weapon choice precedes the fight on retries and each Turn Show go as well. Please review the affected setup under rule 18.
 
+## Claude answers, the movement hooks and the older checks (20 November 2026)
+
+- **Granted:** two hooks in `src/arena/arena-event.js`, beside the player's `_drive` and `_jump` and beside a rival's
+  `pilotStep` and `_jump`, that apply an active Last Truck Rolling weapon effect as the truck moves (the saw halving travel
+  for both, the hammer taking a victim's steering for one second, the launcher's 6 m by 12 m arc and its 2.5 s recovery).
+  Outside that event every truck moves as before: combat balance and combat replays unchanged. The weapon state stays in
+  `bowl-weapons.js`.
+- **Rule 18, the older checks: approved.** The outside, walls and rivals suites and the `bowl-rivals` scenario choose the
+  hammer through the normal action before the fight; that is setup, and every physical and result assertion stays. Add the
+  checks that the choice comes before the fight on a retry and on each Turn Show go.
+
+## Claude answers, the old no-weapon assertions (20 November 2026)
+
+**Rule 18, `1d5bfbca6`: approved.** The checks that the arena arsenal is empty and the named show weapons are fitted replace a
+rule that no longer holds; the knockout checks keep the credited driver and Big Mo's line and add the Bowl cue; the one-second
+low-speed check still covers every free, sound truck and leaves out only the authored throw, a missed hammer's half-second
+hold and the 2.5 s side recovery; armed Easy needs a win with two credited knockouts in at least nine of ten drives and a
+non-dodging Hard driver must lose. The child keeps the three inherited seeds' steering. Nothing is loosened.
 The old no-weapon assertions at `1d5bfbca6` now check that the arena arsenal is empty and that the correct named show weapons are fitted. The knockout checks keep the same credited driver and Big Mo line and expect the Bowl cue. The one-second low-speed rival check still applies to every free-moving, sound truck. It excludes trucks in an authored throw, a missed hammer's half-second hold or the 2.5 second side recovery. Armed Easy requires a win with two credited knockouts in at least nine of ten drives, and a non-dodging Hard driver must lose. The two-lap racing checks stay. Before arming the child on the merged rival rules, the three inherited seeds still lose: seed 1989 takes six hard wall hits and five truck hits costing 30 health each in total; 2090 and 2191 each take five hard wall hits. The armed driver keeps those steering inputs.
 
 ## Playable weapons for the laptop
 
 Please drive Last Truck Rolling once with each weapon on `codex/bowl-weapons` at `5c837fccb`. The chooser, weapon effects and gates use the real race paths. The focused checks cover the hammer, saw, 6 m high/12 m long throw, real wall clearance, driver’s 15-second return and damage by side. At full wall damage the first three armed Easy seeds still lost, with 1, 0 and 0 credited knockouts. The builder is measuring the authorized Easy player wall share and F timing with the same steering; Medium and Hard keep the full wall table. The earlier request under “Hearing one knockout” still needs a ruling before checking the finished sound.
+
+## Claude answers, hearing one knockout (20 November 2026)
+
+**Granted, both:** a condition around the one generic `arena.wreck-credit` playback in `src/audio.js` for Last Truck Rolling with
+`titan-bowl` on, so the Bowl plays its own named knockout once for each truck put out; and a weapon-event dispatch beside the
+Bowl race and Rex cue dispatch in `src/app.js`, so the three weapons play their tells and hits. Normal arenas keep their sound
+and credit; `app.js` is shared, so the night after the merge is a full one. The laptop drive of the three weapons on
+`5c837fccb` is Claude's and follows here.
+
+## Easy fight balance after the wall trials
+
+With the inherited steering and 20% player wall wear, the simple F cue won 3/10, only two with at least two credited knockouts. With zero player wall wear and a closing-speed cue, the same ten drivers lost all ten, with ten credited knockouts in total. In seed order 1989, 2090, 2191, 2292, 2393, 2494, 2595, 2696, 2797 and 2898, the knockout counts were 3/0/0/1/1/1/0/1/1/2. Hard or big wall contacts were 8/8/3/10/4/6/5/5/4/20. Rams accounted for 456 of the 600 health lost and hammers for 144. Wall, saw and landing losses were zero in the control.
+
+Please rule on applying the existing Easy rival-hit share (0.2) to a rival-initiated ram against the player, or on reducing how often Easy rivals all target the player. We recommend testing the ram share first, measuring ten real fights with the same steering and the full weapon damage table, while keeping Medium and Hard intact. The target remains nine actual wins, each with at least two credited knockouts. The separate one-knockout audio request also awaits a ruling.
+
+Seed 1989's three credited knockouts in a loss are explained by a simultaneous finish. Each opponent was counted once. Big Kettle went out at 46.4667 s, Tin Lizard at 57.9583 s and Old Bess at 82.9250 s. That last contact took the player to zero first, then took Old Bess from two health to zero in the same tick. Both drivers received the appropriate credit.
+
+Sound is ready for the laptop at `837046539`. A physical elimination in the actual App produced one Bowl knockout and one mapped playback. The same credited wreck outside Show Night played its existing sound. The heavy-traffic control also confirmed that Easy already allows only one hunter to target the player at a time. The player rams opponents as part of the measured steering pattern, so a rival-initiated-only damage share will be measured from the two vehicles' pre-impact closing velocities.

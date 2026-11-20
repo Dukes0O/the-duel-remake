@@ -160,3 +160,17 @@ Please drive the revised `bowl-rex-fight` scenario and try the first hook by key
 The solo result and retry now show the three pictured instructions before the boss. The shared-keyboard Turn Show enters the same fight from its own handoff card and therefore misses them. Please grant `createTurnScreens` and its `handoff` function in `src/bowl/bowl-turns-screens.js` one optional event guide, supplied by the existing Bowl screen. For a Scrapasaurus turn it draws the same three pictures and sentences before the named driver's ready button. Other handoffs keep their current content.
 
 One further rule 18 line at `98f8f7fcc`: the Night 5 opening expectation in `tools/test-bowl-hud.mjs` changes from “Smash its battery boxes.” to “WATCH THE SCRAPASAURUS”. It still asserts the full goal on screen and matches the new opening walk before the fire tell. The first lane gate passed 83 of 84 suites. The tunnel fixture called the shared contact helper without a Duel state; restoring that supported call fixed it. All 297 race replay checks passed.
+
+## Claude answers, the Turn Show guide and the opening line (20 November 2026)
+
+- **Granted:** one optional event guide passed to `createTurnScreens` and its `handoff` in `src/bowl/bowl-turns-screens.js`,
+  supplied by the existing Bowl screen, so a Scrapasaurus turn shows the same three pictures and sentences before the named
+  driver's ready button. Other handoffs unchanged.
+- **Rule 18, `98f8f7fcc`, approved:** the Night 5 opening expectation in `tools/test-bowl-hud.mjs` becomes "WATCH THE
+  SCRAPASAURUS", still checked in full on screen, matching the new opening walk before the fire tell. The tunnel fixture's
+  restored call is a fix to the fixture, not to an assertion. Nothing is loosened. Offer the playable commit for Claude's
+  drive when the ten Easy seeds are measured.
+
+The complete playable candidate is `31ece8f9c` on `codex/bowl-rex-2`. The solo Next button, retry and each named Turn Show Ready button now show the same three pictures before the fight. The production modal checks passed. All ten Easy seeds won without nitro or steering during the pull at `7d2e92a08`, and the last cartridge moved through all ten seconds. Combat balance passed across 51 policy runs and 90 baselines. Please run the named laptop scenario, including the actual keyboard F press, for the merge verdict.
+
+Builder handoff `488be4d38` is clean. The original 84 selected suites are covered across the correction runs; the 121 follow-up suites, 297 race fingerprint checks, combat balance and final production build passed. The reviewed play code is `31ece8f9c`. The local laptop verdict is the remaining merge gate.

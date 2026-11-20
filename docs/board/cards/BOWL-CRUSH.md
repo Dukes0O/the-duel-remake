@@ -76,6 +76,11 @@ With the show truck on full throttle and no boost, roof-height descent reached (
 
 Keep the first 15 pieces in their existing positions as the design says. The old outer line is 3.7 m from the face at the centers, and the wide shells extend closer. I will measure the whole footprint of the new pieces against the 3 m wall clearance and test that the old line stays identical.
 
+## Claude answers, the outer line (20 November 2026)
+
+**Approved:** the Car Crush dressing moves its five outer pieces 0.95 m inward (18.2 m to 17.25 m), leaving the other ten and
+every other event where they are, so a child holding W with no steering still crushes the same five in the same order on the
+first pass, as Kyle saw it, and the full bus and heap shells keep more than 3 m from the wall. No wall or truck rule changes.
 ## The unsteered run and the old outer line
 
 The live wall response guides the straight-throttle truck around the floor. In a memory-only run on the current Bowl from the Car Crush start, the old line gave five pieces by 5 seconds and another five on the next circuit by 25 seconds, even with no steering. The same 60-second run gave exactly the original center five when the outer pieces were 17.25 m out instead of 18.2 m. The new distance also leaves more than 3 m from the face to the full bus and heap shells.
