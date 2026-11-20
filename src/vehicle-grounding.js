@@ -102,13 +102,16 @@ export function placeGroundedVehicle(vehicle,p,turn=0,travel=0){
 export function applyVehicleTerrainPose(vehicle,course,actor){
   if(Number.isFinite(actor?.groundHeight))vehicle.position.y+=actor.groundHeight-course.groundAt(actor.s,actor.lateral).y;
   if(Number.isFinite(actor?.terrainPitch))vehicle.rotation.x=-actor.terrainPitch;
-  if(course?.def?.bowl===true&&actor?.airborne&&Number.isFinite(actor.bowlAirPitch))
-    vehicle.rotation.x=-actor.bowlAirPitch;
   if(Number.isFinite(actor?.terrainRoll)){
     const pitch=Number.isFinite(actor.terrainPitch)?actor.terrainPitch:0,roll=actor.terrainRoll;
     // Ground grades are measured independently along/across the tire plane.
     // YXZ applies roll before pitch, so remove that pitch cross-coupling.
     vehicle.rotation.z=actor.tumble?roll:Math.atan2(Math.sin(roll)*Math.cos(pitch),Math.cos(roll));
+  }
+  if(course?.def?.tricks && actor?.bowlPose) {
+    vehicle.rotation.x -= actor.bowlPose.pitch;
+    vehicle.rotation.y += actor.bowlPose.yaw;
+    vehicle.rotation.z += actor.bowlPose.roll;
   }
   if(!actor?.tumble&&!actor?.airborne&&(actor?.airHeight||0)<=.08&&
       actor?.car==='titan_monster'&&Number.isFinite(actor?.groundHeight)&&

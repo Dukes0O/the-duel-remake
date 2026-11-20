@@ -25,7 +25,7 @@ import {DEFAULT_DRIVER} from '../drivers.js';
 import {freshDamageZones} from '../sim-common.js';
 
 export const SHOW_TRUCK = 'titan_monster';
-const TURN = Math.PI * 2;
+
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play.
@@ -40,10 +40,9 @@ export const BOWL_NIGHT_RULES = Object.freeze({
   // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
   // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
   // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 150, medium: 350, hard: 600})}),
+  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 310, medium: 1930, hard: 3460})}),
   // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS); the lanes are bowlLayout's.
   sideBySide: Object.freeze({timeLimitSec: 60}),
-  donutMaxMph: 15,
   minJumpSec: .5,
   bigJumpSec: 1.2,
   captionSec: 4,
@@ -274,7 +273,7 @@ function loadBowlEvent(duel) {
   s.bowlNight = night;
   night.phase = 'event';
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
-    crowdPeak: 0, crowdMark: 0, flips: 0, roof: null, donutTurn: 0, donutSec: 0, heading: null,
+    crowdPeak: 0, crowdMark: 0,
     flight: null, rows: 0, metres: 0, progressS: duel.state.s, progressAt: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   say(duel, `event.${type}.intro`);
@@ -315,6 +314,13 @@ function addFact(duel, fact) {
 export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
+  if (ev.bowlTrick) {
+    const trick = ev.bowlTrick;
+    addFact(duel, {type: 'bowlTrick', ...trick});
+    if (trick.landing === 'slam') say(duel, 'moment.roof', {once: true});
+    else if (trick.kind === 'donut') say(duel, 'moment.donut', {once: true});
+    else if (['frontFlip', 'backflip', 'sideFlip'].includes(trick.kind)) say(duel, 'moment.flip', {once: true});
+  }
   if (ev.jumpLanded?.rampId === 'car') {
     addFact(duel, {type: 'carLaunch', durationSeconds: +(s.airTime || 0).toFixed(3), distanceMeters: ev.jumpLanded.distance || 0,
       heightMeters: +(night.event.flight?.peak ?? 0).toFixed(2)});
@@ -327,7 +333,7 @@ export function observeBowlNight(duel, ev) {
   RUNNERS.get(night.event.type)?.observe?.(duel, night, ev);
 }
 
-// Facts the night reads from the truck: flips (BOWL-AIR), roof landings and donuts.
+// Measure ordinary jumps from the truck's flight.
 function observeTruck(duel, dt) {
   const s = duel.state, event = s.bowlNight.event;
   // Every landing on the wheels after a real flight scores as a jump; a launch
@@ -344,31 +350,7 @@ function observeTruck(duel, dt) {
       if (airTime >= BOWL_NIGHT_RULES.bigJumpSec) say(duel, 'moment.bigJump', {once: true});
     }
   }
-  const flips = s.bowlAirFlips || 0;
-  if (flips < event.flips) event.flips = flips;
-  if (flips > event.flips) {
-    addFact(duel, {type: 'flip', pitchTurns: flips - event.flips});
-    event.flips = flips;
-    say(duel, 'moment.flip', {once: true});
-  }
-  if (s.tumble?.reason === 'bowl_roof_landing' && event.roof !== s.tumble) {
-    event.roof = s.tumble;
-    say(duel, 'moment.roof', {once: true});
-  }
-  // A donut: the truck turns a full circle while slow and on the ground.
-  const heading = duel.course.at(s.s).heading + (s.headingError || 0);
-  if (s.airborne || s.tumble || Math.abs(s.speedMph) > BOWL_NIGHT_RULES.donutMaxMph || event.heading == null) {
-    event.donutTurn = 0; event.donutSec = 0;
-  } else {
-    event.donutTurn += Math.atan2(Math.sin(heading - event.heading), Math.cos(heading - event.heading));
-    event.donutSec += dt;
-    if (Math.abs(event.donutTurn) >= TURN) {
-      addFact(duel, {type: 'donut', seconds: +event.donutSec.toFixed(3)});
-      say(duel, 'moment.donut', {once: true});
-      event.donutTurn = 0; event.donutSec = 0;
-    }
-  }
-  event.heading = heading;
+
 }
 
 function finishEvent(duel, outcome) {

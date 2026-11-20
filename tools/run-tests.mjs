@@ -450,7 +450,7 @@ export const SHARED_FILES=Object.freeze({
   'src/circuits/index.js':owners('circuits','circuit-panorama-registry','circuit-variants'),
   'src/circuit-manifests.js':owners('circuits','circuit-panorama-registry','feature-flags','wasteland-beta','career-rebuild'),
   'src/freestyle-course.js':owners('freestyle-course','practice-map','playground-rivals','mountain-support'),
-  'src/bowl/bowl-course.js':owners('bowl-course','bowl-save','bowl-air'),
+  'src/bowl/bowl-course.js':owners('bowl-course','bowl-save','bowl-tricks'),
   'src/expansion-courses.js':owners('expansion-geometry','circuit-eifel','expansion-driving'),
   'src/summit-attack.js':owners('summit-attack','completion-screen','circuit-summit','course-access-ui'),
   'src/wasteland-access.js':owners('wasteland-easter-egg','arsenal-core','career-rebuild','deep-save','heli-hooks'),

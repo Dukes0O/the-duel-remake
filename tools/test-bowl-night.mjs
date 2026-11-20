@@ -150,8 +150,8 @@ const run = (() => {
   ok(freestyle.crowdPeak >= 25, `the crowd meter rises visibly even on a plain line over the kickers (peak ${freestyle.crowdPeak})`);
   // A good Freestyle: a big stunt every 7 seconds (big air, a launch off a car, the Table, a flip, a kicker, a donut).
   const stunts = [{type: 'landedJump', durationSeconds: 2.2, distanceMeters: 50}, {type: 'carLaunch', durationSeconds: 1.3, distanceMeters: 30},
-    {type: 'landedJump', durationSeconds: 1.9, distanceMeters: 45}, {type: 'flip', pitchTurns: 1},
-    {type: 'landedJump', durationSeconds: 1.2, distanceMeters: 28}, {type: 'donut', seconds: 3}];
+    {type: 'landedJump', durationSeconds: 1.9, distanceMeters: 45}, {type: 'bowlTrick', kind: 'backflip', points: 50},
+    {type: 'landedJump', durationSeconds: 1.2, distanceMeters: 28}, {type: 'bowlTrick', kind: 'donut', points: 15}];
   const good = scoreFreestyle(Array.from({length: 13}, (_, i) => ({...stunts[i % stunts.length], atSeconds: 4 + 7 * i})));
   const goodPeak = Math.max(...good.events.map(event => event.crowd));
   const jump = height => scoreStuntEvent({type: 'landedJump', durationSeconds: 1.5, distanceMeters: 30, heightMeters: height}, 0).points;
