@@ -35,6 +35,14 @@ export function haulPiecesToDraw(state) {
   return {good:step.good, load:job.stepState?.load ?? [], shed:job.stepState?.shed ?? []};
 }
 
+// TOWN-FIRE-JOB: while the fire truck sprays, the water's arc from the cannon on its roof to the flames it is aimed at. Reads only.
+export function douseJetToDraw(state) {
+  const job = state?.arena?.worldJob?.job, step = job?.steps?.[job.stepIndex];
+  if (step?.kind !== 'douse' || job.stepState?.spraying !== true) return null;
+  const building = (step.buildings ?? []).find(row => row.id === job.stepState.targetId);
+  return building ? {x:building.x, z:building.z, halfX:building.halfX, halfZ:building.halfZ} : null;
+}
+
 export function workVehicleToDraw(state, flags) {
   if (flags?.enabled?.('wasteland-town') !== true || state?.arena?.mode !== 'world-job') return null;
   return state.arena.worldJob?.vehicle ?? null;
@@ -148,10 +156,39 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     }
   }
 
+  // The jet: drops of water along a curve from the cannon to the nearest side of the flames, moving out along it.
+  const JET_DROPS = 36, CANNON = new THREE.Vector3(0, 3.1, 2.2);
+  let jet = null;
+  const dropAt = new THREE.Object3D(), from = new THREE.Vector3(), to = new THREE.Vector3();
+  function drawJet(scene, player, target, clock) {
+    if (!target) { if (jet) jet.visible = false; return; }
+    if (!jet) {
+      jet = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 6, 4),
+        new THREE.MeshBasicMaterial({color:0xd8ecff, transparent:true, opacity:.55, depthWrite:false}), JET_DROPS);
+      jet.name = 'fire-truck-jet'; jet.layers.set(WORK_VEHICLE_LAYER); jet.frustumCulled = false;
+    }
+    if (!jet.parent) scene.add(jet);
+    jet.visible = true;
+    from.copy(CANNON).applyQuaternion(player.quaternion).add(player.position);
+    to.set(Math.max(target.x - target.halfX, Math.min(target.x + target.halfX, from.x)), player.position.y + 2,
+      Math.max(target.z - target.halfZ, Math.min(target.z + target.halfZ, from.z)));
+    const length = from.distanceTo(to), rise = Math.min(6, length * .18);
+    for (let index = 0; index < JET_DROPS; index++) {
+      const share = ((index / JET_DROPS) + clock * 1.6) % 1;
+      dropAt.position.lerpVectors(from, to, share);
+      dropAt.position.y += rise * 4 * share * (1 - share);
+      dropAt.scale.setScalar(.6 + share * 1.6);
+      dropAt.updateMatrix();
+      jet.setMatrixAt(index, dropAt.matrix);
+    }
+    jet.instanceMatrix.needsUpdate = true;
+  }
+
   function remove() {
     shown?.group.removeFromParent();
     shown = null;
     clearFallen();
+    jet?.removeFromParent();
   }
 
   const turn = new THREE.Quaternion();
@@ -185,6 +222,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     if (shown.load) shown.load.visible = vehicle.loadKg > 0 && !pieces;
     drawStack(pieces);
     drawFallen(scene, pieces, player.position.y);
+    drawJet(scene, player, douseJetToDraw(state), Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0);
     // Wheels: the front ones turn with the steering, all of them roll with the distance driven.
     const clock = Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0;
     const seconds = shown.clock === null ? 0 : Math.max(0, Math.min(0.25, clock - shown.clock));

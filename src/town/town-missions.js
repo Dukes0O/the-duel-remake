@@ -15,6 +15,8 @@ export const TOWN_MISSION_HISTORY_LIMIT = 40;
 // a run is not held to one 9,000 kg bedful; this bound only refuses a result no run could have.
 export const TOWN_MISSION_MAX_KG = 100_000;
 const HAUL_CHAPTER = 'town.act1.salvage';
+const FIRE_CHAPTER = 'town.act1.fire';
+export const TOWN_MISSION_MAX_LITRES = 100_000;
 const DROP_CELL = Object.freeze({regionId:'scablands', x:4, z:-8});
 
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
@@ -47,6 +49,7 @@ export function townMissionSettled(town, runId) {
  */
 export function townMissionResult(town, result = {}) {
   if (!record(town)) return {ok:false, settled:false, message:'There is no town to take the result.'};
+  if (result?.kind === 'fire') return townFireResult(town, result);
   const {runId, jobId, kind, good, deliveredKg, lostKg, chapter = null} = result;
   if (typeof runId !== 'string' || !runId || runId.length > 128 || typeof jobId !== 'string' || !jobId || kind !== 'haul' ||
       !goodDefinition(good) || !wholeKg(deliveredKg) || !wholeKg(lostKg) ||
@@ -76,6 +79,52 @@ export function townMissionResult(town, result = {}) {
   const pile = stockpileAt(town, cell)[good] ?? 0;
   return {ok:true, settled:true, stockKg:pile,
     message:deliveredKg > 0 ? `${deliveredKg} kg of ${good} went on the town's pile.` : 'Nothing reached the town this time.'};
+}
+
+// TOWN-FIRE-JOB: a fire call's result: {runId, jobId, kind:'fire', savedIds, lostIds, waterL, chapter, ash}. Every building that
+// was put out stops burning in the town; every building that burnt down is left a black frame (`burnt-1`, as the town's own fire
+// leaves one), to be built again. Chapter 7 is finished by its fire being put out, whatever was lost, and the ash on the ground is
+// noted: `ash` is which version of the ash line was said, and only the first ('ash') opens the Everburn from it.
+const FIRE_JOBS = Object.freeze(['town-fire-first', 'town-fire-call']);
+const ASH_VERSIONS = Object.freeze(['ash', 'going', 'done']);
+const idList = value => Array.isArray(value) && value.length <= 64 && value.every(id => typeof id === 'string' && id && id.length <= 128) &&
+  new Set(value).size === value.length;
+function townFireResult(town, result) {
+  const {runId, jobId, savedIds, lostIds, waterL, chapter = null, ash = null} = result;
+  const buildings = Array.isArray(town.buildings) ? town.buildings : [];
+  const known = id => buildings.some(building => building?.id === id);
+  if (typeof runId !== 'string' || !runId || runId.length > 128 || !FIRE_JOBS.includes(jobId) || !idList(savedIds) || !idList(lostIds) ||
+      savedIds.some(id => lostIds.includes(id)) || ![...savedIds, ...lostIds].every(known) ||
+      !Number.isSafeInteger(waterL) || waterL < 0 || waterL > TOWN_MISSION_MAX_LITRES ||
+      (chapter !== null && chapter !== FIRE_CHAPTER) || (chapter === FIRE_CHAPTER) !== (jobId === 'town-fire-first') ||
+      (chapter === FIRE_CHAPTER ? !ASH_VERSIONS.includes(ash) : ash !== null))
+    return {ok:false, settled:false, message:'That fire call result is not clear.'};
+  if (townMissionSettled(town, runId)) return {ok:true, settled:false, message:'That fire call already has a result.'};
+  const state = missionsFor(town);
+  for (const building of buildings) {
+    if (!building || (!savedIds.includes(building.id) && !lostIds.includes(building.id))) continue;
+    const wasBurning = building.fireStage !== undefined;
+    for (const key of ['fireStage', 'fireStartedTick', 'fireWaterLitres', 'fireWaterThisHour', 'fireWaterTick']) delete building[key];
+    if (lostIds.includes(building.id)) building.state = 'burnt-1';
+    // As a hose does in the town (src/town/town-fire.js), a fire put out leaves the building marked as having had its fire.
+    else if (wasBurning) building.fireOut = true;
+  }
+  state.settled.push(runId);
+  if (state.settled.length > TOWN_MISSION_SETTLED_LIMIT) state.settled.splice(0, state.settled.length - TOWN_MISSION_SETTLED_LIMIT);
+  const totals = state.totals.fire ??= {saved:0, lost:0, waterL:0, runs:0};
+  totals.saved += savedIds.length; totals.lost += lostIds.length; totals.waterL += waterL; totals.runs += 1;
+  state.history.push({runId, jobId, kind:'fire', savedIds:[...savedIds], lostIds:[...lostIds], waterL, tick:String(town.tick ?? 0)});
+  if (state.history.length > TOWN_MISSION_HISTORY_LIMIT) state.history.splice(0, state.history.length - TOWN_MISSION_HISTORY_LIMIT);
+  if (chapter === FIRE_CHAPTER) {
+    if (!record(town.story)) town.story = {};
+    if (!record(town.story.facts)) town.story.facts = {};
+    if (!record(town.story.completed)) town.story.completed = {};
+    town.story.facts.firstFireOut = true;
+    town.story.facts.ashFound = true;
+    if (ash === 'ash') town.story.facts.everburnFromAsh = true;
+    town.story.completed[FIRE_CHAPTER] = true;
+  }
+  return {ok:true, settled:true, message:lostIds.length ? 'The fire is out, and the town has buildings to build again.' : 'The fire is out, and nothing burnt down.'};
 }
 
 /**

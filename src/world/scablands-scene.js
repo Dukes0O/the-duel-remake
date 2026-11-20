@@ -503,7 +503,7 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0;
+  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0,lifeTown=null,lifeFireKey='';
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
@@ -530,7 +530,7 @@ export function createScablandsScene(course,options={}){
     if(retired)return;
     // Each person lives at their own spot from the layout. The drive has no town clock, so its people keep a working day
     // at the town's own pace, a game hour every 1.875 s from 8:00 to 17:00, and then start the next day.
-    const lifeTown={seed:townLayout.seed,buildings:townLayout.buildings||[],homePlots:[],people:(townLayout.walkers||[]).map(walker=>({id:walker.id,spot:{x:walker.x,z:walker.z}}))};
+    lifeTown={seed:townLayout.seed,buildings:townLayout.buildings||[],homePlots:[],people:(townLayout.walkers||[]).map(walker=>({id:walker.id,spot:{x:walker.x,z:walker.z}}))};
     const lifeHour=()=>Math.floor(townLifeClock/1.875);
     townLife=createTownWalkers({town:lifeTown,hourAt:()=>8+lifeHour()%10,dayAt:()=>Math.floor(lifeHour()/10)});
     townFx=createTownFx({town:lifeTown,buildings:root,fog:false,light:false,hourAt:()=>8+lifeHour()%10});
@@ -552,6 +552,24 @@ export function createScablandsScene(course,options={}){
     }
   };
   void addTown();
+  // TOWN-FIRE-JOB: a fire call's flames are the town's own fire look (src/town/view/town-fx.js draws a building with a fire stage,
+  // its size from the stage). The call's fires are put on the drawn copy of the town's buildings as stages, so the town view draws
+  // them, steams them as they go out and smoulders them after. Drawing only: the job's state is read and never written.
+  const drawJobFires=state=>{
+    if(!lifeTown||!townLayout)return;
+    const job=state?.arena?.mode==='world-job'?state.arena.worldJob?.job:null,step=job?.steps?.[job.stepIndex];
+    const fires=step?.kind==='douse'?job.stepState?.fires:null;
+    const key=fires?Object.entries(fires).filter(([,fire])=>fire.state==='burning').map(([id,fire])=>`${id}:${Math.round(fire.heat*20)}`).join(','):'';
+    if(key===lifeFireKey)return;
+    lifeFireKey=key;
+    // The town view's heat is .35 + .2 x the stage: a stage is found for each fire's heat (a small fire draws as its smallest).
+    lifeTown.buildings=(townLayout.buildings||[]).map(building=>{
+      const fire=fires?.[building.id];
+      if(fire?.state==='burning')return {...building,fireStage:Math.max(.05,(fire.heat-.35)/.2)};
+      if(fire?.state==='lost')return {...building,fireStage:undefined,state:'burnt-1'};
+      return building.fireStage?{...building,fireStage:undefined}:building;
+    });
+  };
   const furnaceVents=[],furnacePlates=[];
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
   // The furnace's surfaces are photos, which carry their own rust and soot; the code adds only the road dust.
@@ -931,7 +949,7 @@ export function createScablandsScene(course,options={}){
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
         group.userData.drawnFeet?.refresh();
-        townLifeClock+=presentationDt;townLife?.update({dt:presentationDt,focus:here,distance:60,car:here});townFx?.update({dt:presentationDt,focus:here,distance:60});
+        townLifeClock+=presentationDt;townLife?.update({dt:presentationDt,focus:here,distance:60,car:here});drawJobFires(state);townFx?.update({dt:presentationDt,focus:here,distance:60});
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
