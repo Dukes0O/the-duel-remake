@@ -35,6 +35,7 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.race.lights': 'interface.countdown',
   'bowl.race.finish': 'interface.win',
   'bowl.rival.jump': 'heli.setdown.thud',
+  'bowl.rival.jump.fallback': 'vehicle.landing',
   'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
   'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
   'bowl.event.won': 'interface.win',       // an event is won

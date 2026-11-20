@@ -288,6 +288,21 @@ function stepWreckedActor(duel, actor, dt) {
 }
 
 // One fixed step of an arena event while status is 'racing'.
+export function bowlFightPilotGoal(duel, actor, participant, goal, dt) {
+  const drive = actor.bowlFightDrive;
+  const target = arenaActor(duel, participant.targetId);
+  let aim = goal;
+  if (target) {
+    const from = worldPose(duel, actor), at = worldPose(duel, target);
+    const dot = (goal.x - from.x) * (at.x - from.x) + (goal.z - from.z) * (at.z - from.z);
+    drive.retreatSec = dot < 0 ? (drive.retreatSec ?? 0) + dt : 0;
+    if (drive.retreatSec >= 2 - 1e-8) aim = at;
+  } else {
+    drive.retreatSec = 0;
+  }
+  return {...goal, x: aim.x, z: aim.z, speedMph: Math.max(drive.minimum, Math.min(drive.maximum, goal.speedMph))};
+}
+
 export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
   const ambush = arena.mode === 'ambush-alley';
@@ -379,7 +394,7 @@ export function stepArenaEvent(duel, dt) {
     const brainGoal = goal || thinkBrain(duel, participant, actor, dt);
     const bowlDrive = actor.bowlFightDrive && duel.course.def.bowl &&
       duel.featureFlags?.enabled('titan-bowl') === true ? actor.bowlFightDrive : null;
-    const pilotGoal = bowlDrive ? {...brainGoal, speedMph: Math.max(bowlDrive.minimum, Math.min(bowlDrive.maximum, brainGoal.speedMph))} : brainGoal;
+    const pilotGoal = bowlDrive ? bowlFightPilotGoal(duel, actor, participant, brainGoal, dt) : brainGoal;
     if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
       continue;

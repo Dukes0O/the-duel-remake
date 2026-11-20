@@ -28,6 +28,7 @@ export const BOWL_RACE_RULES = Object.freeze({
   finishGraceSec: 6,
   metresPerSecondToMph: 1 / DRIVE.mphToWorld,
   landingCueRange: 35,
+  flipPaceDebtSec: .68,
 });
 
 export function bowlRivalLapTarget(id, level) {
@@ -128,7 +129,7 @@ function raceJump(duel, actor, event, dt) {
     if (!wasInAir && event.rival === 'dragon-wagon' && !event.dragonFlipped && kicker && remaining < duel.course.length / 2) {
       event.dragonFlipped = true;
       event.dragonFlipTime = 0;
-      event.paceMetres = Math.max(0, event.paceMetres - event.baseMps * .5);
+      event.paceMetres = Math.max(0, event.paceMetres - event.baseMps * BOWL_RACE_RULES.flipPaceDebtSec);
     }
     if (event.dragonFlipTime != null) {
       event.dragonFlipTime += dt;
@@ -176,6 +177,13 @@ function planRaceRival(duel, actor, night, dt) {
 // Show Night's bowlLayout reads the two lanes from course.features.bowl.lanes
 // (BOWL-EXPAND: both on the centre line, half a lap apart), and each truck
 // finishes two full laps from where it started. Nothing here assumes the floor's size.
+function crossingTime(actor, finish, before, after) {
+  if (!actor || actor.s < finish) return null;
+  const distance = actor.s - actor.prevS;
+  const fraction = distance > 0 ? clamp((finish - actor.prevS) / distance, 0, 1) : 1;
+  return before + (after - before) * fraction;
+}
+
 export function sideBySideLanes(course, laps = BOWL_RACE_RULES.laps) {
   const [player, rival] = bowlLayout(course).lanes;
   const distance = laps * course.length;
@@ -195,6 +203,7 @@ registerBowlEventRunner('sideBySide', {
     night.event.startS = {player: lanes.player.s, rival: lanes.rival.s};
     night.event.finishS = {player: lanes.player.finishS, rival: lanes.rival.finishS};
     night.event.finishWinner = null;
+    night.event.lastRaceTime = 0;
     const target = bowlRivalLapTarget(rivalId, levelOf(night)) * BOWL_RACE_RULES.laps;
     night.event.baseMps = (lanes.rival.finishS - lanes.rival.s) / (target - BOWL_RIVALS[rivalId].startDelaySec - .7);
     night.event.paceMetres = 0;
@@ -212,8 +221,10 @@ registerBowlEventRunner('sideBySide', {
     // Big Mo says who is in the other lane once he has named the event.
     if (!event.rivalSaid) { event.rivalSaid = true; sayBowlLine(duel, `rival.${event.rival}`); }
     if (rival) planRaceRival(duel, rival, night, dt);
-    if (event.playerDoneAt == null && s.s >= event.finishS.player) event.playerDoneAt = s.stageTimeSec;
-    if (event.rivalDoneAt == null && rival?.s >= event.finishS.rival) event.rivalDoneAt = s.stageTimeSec;
+    const before = event.lastRaceTime, after = s.stageTimeSec;
+    event.playerDoneAt ??= crossingTime(s, event.finishS.player, before, after);
+    event.rivalDoneAt ??= crossingTime(rival, event.finishS.rival, before, after);
+    event.lastRaceTime = after;
     const first = Math.min(event.playerDoneAt ?? Infinity, event.rivalDoneAt ?? Infinity);
     if (!event.finishWinner && Number.isFinite(first)) {
       event.finishWinner = first === event.playerDoneAt ? 'player' : 'rival';

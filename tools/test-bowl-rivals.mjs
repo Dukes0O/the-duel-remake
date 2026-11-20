@@ -13,6 +13,7 @@ import {beginGo, createTurnShow, currentTurn, passKeyboard, recordGo} from '../s
 import {createProfile} from '../src/progression.js';
 import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
 import {worldPose} from '../src/arena/arena-floor.js';
+import {bowlFightPilotGoal} from '../src/arena/arena-event.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -165,20 +166,30 @@ function race(duel, drive, aim, limitSec) {
 }
 
 // With equivalent race progress, measure two actual laps without triggering catch-up.
-for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
+function neutralRace(id, level, skipFlip = false) {
   const duel = showAt(1, 'sideBySide', {level, rivals: [id]});
   const state = duel.state, rival = state.opponents[0], event = state.bowlNight.event;
   const lanes = sideBySideLanes(duel.course);
+  if (skipFlip) event.dragonFlipped = true;
   for (let step = 0; step < 80 / DT && event.rivalDoneAt == null; step++) {
     state.s = state.prevS = lanes.player.s + rival.s - lanes.rival.s - 10;
     state.lateral = state.prevLateral = -14;
     state.speedMph = 0;
     duel.step(DT);
   }
-  const target = bowlRivalLapTarget(id, level) * 2;
+  return event;
+}
+
+for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
+  const event = neutralRace(id, level), target = bowlRivalLapTarget(id, level) * 2;
   ok(event.rivalDoneAt != null && Math.abs(event.rivalDoneAt - target) / target <= .05,
     `${id} on ${level} finishes within five percent of ${target.toFixed(2)} seconds (got ${event.rivalDoneAt?.toFixed(2)})`);
   if (id === 'rust-rhino') ok(event.rhinoTouched, `Rust Rhino brushes the wall on ${level}`);
+  if (id === 'dragon-wagon') {
+    const skipped = neutralRace(id, level, true);
+    const lost = event.rivalDoneAt - skipped.rivalDoneAt;
+    ok(event.dragonFlipped && Math.abs(lost - .5) < .08, `Dragon Wagon's flip costs about half a second on ${level} (got ${lost.toFixed(3)})`);
+  }
 }
 
 // ---- Side by Side: every rival finishes on every level -------------------
@@ -209,6 +220,21 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     'a rival is quicker round on each harder level');
 }
 
+// Two trucks can cross in one fixed step. The earlier physical crossing wins.
+{
+  const duel = showAt(1, 'sideBySide', {level: 'hard', rivals: ['dragon-wagon']});
+  const state = duel.state, rival = state.opponents[0], event = state.bowlNight.event;
+  state.status = 'racing';
+  state.stageTimeSec = event.lastRaceTime = 35;
+  state.s = state.prevS = event.finishS.player - .106;
+  rival.s = rival.prevS = event.finishS.rival - .008;
+  state.speedMph = rival.speedMph = 40;
+  const result = race(duel, null, null, .025);
+  ok(result && !result.won && result.rivalDoneAt < result.playerDoneAt,
+    'the rival crosses first even when both trucks finish inside one physics step');
+  ok(event.finishWinner === 'rival', 'the finish gate marks the actual first truck');
+}
+
 // The HUD names the rival, and Big Mo says who is in the other lane.
 {
   const duel = showAt(2, 'sideBySide'), captions = [];
@@ -222,6 +248,20 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     'the player and Rust Rhino finish Side by Side with every zone undamaged');
   const intro = captions.indexOf('event.sideBySide.intro');
   ok(captions.indexOf('rival.rust-rhino') > Math.max(-1, intro), 'Big Mo says who is in the other lane, after naming the event');
+}
+
+// A wounded rival can break away for a moment, then has to re-engage.
+{
+  const duel = showAt(3, 'lastTruckRolling'), state = duel.state, rival = state.opponents[0];
+  const participant = state.arena.participants[1];
+  participant.targetId = 'player';
+  const from = worldPose(duel, rival), target = worldPose(duel, state);
+  const away = {x: 2 * from.x - target.x, z: 2 * from.z - target.z, speedMph: 24, boost: false};
+  const first = bowlFightPilotGoal(duel, rival, participant, away, 1);
+  assert.deepEqual([first.x, first.z, first.speedMph], [away.x, away.z, 30]);
+  const afterTwo = bowlFightPilotGoal(duel, rival, participant, away, 1);
+  assert.deepEqual([afterTwo.x, afterTwo.z], [target.x, target.z]);
+  checks += 2;
 }
 
 // ---- Last Truck Rolling: four trucks on the arena's rules -----------------
