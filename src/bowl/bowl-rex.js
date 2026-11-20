@@ -143,7 +143,7 @@ export function createRexFight({difficulty = 'medium', course} = {}) {
   const level = levelOf(difficulty), places = rexPlaces(course), length = places.length;
   return {
     version: 1, level, length, places, phase: 'walk', t: 0, s: places.startS,
-    boxes: [false, false, false], hurt: false, rests: 0, hits: 0, penCars: REX_RULES.penCars,
+    boxes: [false, false, false], hurt: false, rests: 0, hits: 0, maxHits: REX_RULES.level[level].hits, penCars: REX_RULES.penCars,
     huntCooldown: REX_RULES.level[level].huntCooldownSec / 2, bumpCooldown: 0,
     // tell and fire: what kind of breath, and where it will go (fixed at the tell's start).
     breath: null, cone: null, scorched: false,
