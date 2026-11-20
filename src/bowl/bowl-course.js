@@ -84,7 +84,8 @@ const RAMPS = [
   {id: 'jump-kicker', name: 'Jump Straight kicker', start: 22, length: 12, height: 1.8, off: 0, halfWidth: 3, flank: 2.2, profile: 'mound'},
   {id: 'big-jump', name: 'Big Jump', start: 43, length: 18, height: 4.5, off: -13, halfWidth: 3.5, flank: 3.5, profile: 'mound'},
   {id: 'crush-kicker', name: 'Crush Straight kicker', start: 22 + BOWL_HALF_LAP, length: 12, height: 1.8, off: 0, halfWidth: 3, flank: 2.2, profile: 'mound'},
-  {id: 'table', name: 'the Table', start: 186, length: 22, height: 3.2, off: -13, halfWidth: 3, flank: 3.5, profile: 'table'},
+  // The Table ends 8 m before End 2, so a hop off End 2's bank is never scored as the Table.
+  {id: 'table', name: 'the Table', start: 185.5, length: 19.5, height: 3.2, off: -13, halfWidth: 3, flank: 3.5, profile: 'table'},
 ];
 
 // The bowl at each end: from 10 m out the floor curves up to 3.2 m at the wall face,
@@ -161,10 +162,11 @@ export function buildBowlFeatures(course) {
       shape: 'box', color: colors[lane], bowlFire: kind === 'bowlBurningHeap'});
   }
   // A flame jet either side of each jump's crest: one on the Spine, one on top of the
-  // stand wall. They are data for the Bowl view; the simulation never advances or draws them.
+  // stand wall, behind its catch fence (the fence stands at the wall's front edge). They are
+  // data for the Bowl view; the simulation never advances or draws them.
   features.flameJets = RAMPS.flatMap((ramp, number) => [1, -1].map(side => ({
     id: `bowl-flame-jet-${number}-${side > 0 ? 'stand' : 'spine'}`, s: ramp.start + ramp.length / 2,
-    off: side * (side > 0 ? BOWL_FLOOR.outerWallOffset : BOWL_FLOOR.wallOffset), wallTop: side > 0 ? BOWL_STADIUM.wallHeight : BOWL_STADIUM.spineHeight,
+    off: side > 0 ? BOWL_FLOOR.outerWallOffset + .25 : -BOWL_FLOOR.wallOffset, wallTop: side > 0 ? BOWL_STADIUM.wallHeight : BOWL_STADIUM.spineHeight,
   })));
   // The show's places, for the cards that run events on this floor.
   const firstRow = ROWS[0][0];

@@ -11,7 +11,8 @@ const loader = new GLTFLoader();
 
 function disposeTree(root) {
   root?.traverse?.(node => {
-    node.geometry?.dispose?.();
+    // three.js shares one geometry between every sprite.
+    if (!node.isSprite) node.geometry?.dispose?.();
     for (const material of [node.material].flat().filter(Boolean)) {
       // Pictures drawn for this view go with it; shared photographs stay loaded.
       for (const texture of [material.map, material.bumpMap, material.alphaMap, material.emissiveMap])
@@ -97,9 +98,12 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   // The model's bus, RV and stacks, by crush target: each settles lower once crushed.
   const authored = new Map();
 
-  function clear() {
+  // `keepStadium` keeps the drawn stadium (about a quarter of a second to build) when
+  // only the crush props and fires are rebuilt for the same course.
+  function clear(keepStadium = false) {
     token++;
     for (const child of [...group.children]) {
+      if (keepStadium && child === stadium) continue;
       child.removeFromParent();
       disposeTree(child);
     }
@@ -107,7 +111,8 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     crushSource = null;
     fires.length = 0;
     authored.clear();
-    course = null; crushShells = null; stadium = null;
+    course = null; crushShells = null;
+    if (!keepStadium) stadium = null;
     firePromise = null; modelPromise = null;
   }
 
@@ -121,13 +126,17 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   }
 
   function build(next, now) {
-    clear();
+    const keep = !!stadium && stadium.userData.course === next;
+    clear(keep);
     course = next;
     const current = token;
     group.visible = true;
-    // The stadium is drawn in code round the course's floor (src/bowl/bowl-stadium.js).
-    stadium = createBowlStadium(next);
-    group.add(stadium);
+    // The stadium is drawn in code round the course's floor (src/bowl/bowl-stadium.js), once per course.
+    if (!keep) {
+      stadium = createBowlStadium(next);
+      stadium.userData.course = next;
+      group.add(stadium);
+    }
     group.userData.stadiumReady = true;
     modelPromise = loadModel(CRUSH).then(crushAsset => {
       if (disposed || !enabled || current !== token) { disposeTree(crushAsset.scene); return; }
@@ -200,6 +209,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     if (!fireTexture) {
       firePromise ??= loadFireTexture().then(texture => {
         if (disposed) { texture.dispose?.(); return; }
+        texture.userData.sharedAsset = true; // kept through rebuilds; disposed with the view
         fireTexture = texture;
         if (course) build(course, now);
       }).catch(error => { group.userData.fireError = error?.message || 'Bowl fire texture could not load'; });

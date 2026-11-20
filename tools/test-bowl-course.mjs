@@ -166,8 +166,11 @@ const fireTexture=new THREE.DataTexture(new Uint8Array([255,160,32,255]),1,1);
 const loaded=[];
 const view=createBowlView({loadModel:async path=>{loaded.push(path);return fakeCrush();},loadFireTexture:async()=>fireTexture});
 view.update(bowl,{},1000,true);
+const firstStadium=view.group.getObjectByName('Bowl stadium, floodlights and crowd');
 await new Promise(resolve=>setTimeout(resolve,0));
 await new Promise(resolve=>setTimeout(resolve,0));
+check(view.group.userData.flameJetCount&&view.group.getObjectByName('Bowl stadium, floodlights and crowd')===firstStadium,
+  'The stadium is drawn once: rebuilding the fires keeps it.');
 check(view.group.visible,'The Bowl presentation is visible when its switch and course definition are active.');
 check(loaded.length&&loaded.every(path=>path.endsWith('crush.glb')),'Only the crush models are loaded: the stadium model is gone.');
 const stadium=view.group.getObjectByName('Bowl stadium, floodlights and crowd');

@@ -100,7 +100,8 @@ function standProfile(course) {
     const aisle = (place % 1) < .06, concrete = aisle ? [.92, .9, .86] : [.7, .69, .66];
     // A tunnel mouth every third section: a dark opening over rows 9 to 13, where the crowd comes in.
     const mouth = Math.abs((place % 3) - 1.5) < .1;
-    const points = [{d: 1, y: 0, colour: [.4, .39, .37]}, {d: 1 + MOAT, y: 0, colour: [.55, .54, .51]},
+    // The service lane behind the wall stands 3 cm above the ground, so the two never flicker.
+    const points = [{d: 1, y: .03, colour: [.4, .39, .37]}, {d: 1 + MOAT, y: .03, colour: [.55, .54, .51]},
       {d: 1 + MOAT, y: PODIUM, colour: [.62, .61, .58]}, {d: FIRST, y: PODIUM, colour: concrete}];
     for (let row = 0; row < ROWS; row++) {
       const d = FIRST + row * DEPTH, y = PODIUM + (row + 1) * RISE, tint = .82 + .18 * hash(section, row);
@@ -391,14 +392,15 @@ export function createBowlStadium(course) {
   wall.name = 'Bowl stand wall';
   wall.receiveShadow = true;
   // The catch fence on top of the wall, and its posts.
-  const fence = new THREE.Mesh(sweep(course, s => [{d: .5, y: wallTop(s), v: 0}, {d: .5, y: wallTop(s) + FENCE - WALL, v: FENCE - WALL}], 1),
+  // The fence stands at the wall's front edge, in front of the flame jets on the wall top.
+  const fence = new THREE.Mesh(sweep(course, s => [{d: .08, y: wallTop(s), v: 0}, {d: .08, y: wallTop(s) + FENCE - WALL, v: FENCE - WALL}], 1),
     new THREE.MeshStandardMaterial({map: chainLink(), color: 0xb5b8b4, metalness: .7, roughness: .45, alphaTest: .35, side: THREE.DoubleSide}));
   if (fence.material.map) { fence.material.map.wrapS = fence.material.map.wrapT = THREE.RepeatWrapping; fence.material.map.repeat.set(1.2, 1.2); }
   fence.name = 'Bowl catch fence';
   const posts = [];
   let last = null, along = 0;
   for (let s = 0; s < course.length; s += .25) {
-    const p = course.worldAt(s, FACE + .5);
+    const p = course.worldAt(s, FACE + .08);
     if (last) along += Math.hypot(p.x - last.x, p.z - last.z);
     last = p;
     if (along < 3.2 && s) continue;
