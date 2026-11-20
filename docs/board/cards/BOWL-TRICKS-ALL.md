@@ -218,3 +218,9 @@ The HUD build at `37b242354` puts the H key listener, the trick card's completed
 **Granted:** read-only hooks at the H key listener, the trick card's completed moves and the per-frame HUD call in
 `src/bowl/bowl-screens.js`, so a Monster Arena race can show the same card and pop-ups from its own trick state. Show
 Night keeps its own state; with `arena-tricks` off, the Monster Arena's screen is exactly as before.
+
+## Saving a first find during play
+
+Please grant two narrow hooks for the new secret tricks. In the Bowl and Monster Arena start paths and event listener in `src/app.js`, pass the active driver's known trick IDs into the race and use the existing guarded profile-save path on a genuine first landing. This keeps a find if the driver quits before the result and keeps Turn Show drivers' finds separate. The simulation receives a copy and never touches storage. For Show Night, permit `startBowlNight` and `observeBowlNight` in `src/bowl/bowl-night.js` to carry that list, award the full crowd on a first find, keep the crowd on an Easy Slam and pass late/armed/found events to the existing display and announcer. The purse and the scoring module stay as they are. The Arena reads its own race state. We will test with memory-only profiles, including an older save and two drivers.
+
+The design table lists five airborne codes, the ground-entered Full Works and the uncoded Yo-Yo. The Part 2 check says six codes off the jump. We will prove all seven by their specified inputs, including the ground code before takeoff; please confirm.
