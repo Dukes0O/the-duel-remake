@@ -239,6 +239,26 @@ recharge 16 s · around
   ahead in its lane.
 - Sounds: `weapon.nitro.start`, `.loop`.
 
+### Town gear (WEAPON-WATER-CANNON)
+
+Gear for jobs that aren't fights (`docs/WASTELAND_TOWN.md` section 7) follows the rules above. It is the
+player's own, from the town: computer cars never carry it, so no existing loadout, rank or balance moves.
+
+**Water Cannon** · from a finished Fire Station in your own town, any rank · recharge 9 s · front
+- One stream wherever it is fitted, so a player learns one thing: H in the fire truck (from the
+  truck's one 3,000 L tank, the fire call's tank in a fire call; water flows only while flames or a
+  car are in front), and a car weapon slot (a 2 s burst). Rules in `src/arsenal/water-cannon.js`; the
+  look, the fire call's drop arc, in `src/arsenal/water-stream-view.js`.
+- A straight stream from the nose, 14 m long and about a car wide. It stops at the first car in it.
+  That car is shoved along the stream, 7 m/s more each second it stays in the water, at most 4 m/s
+  from one stream (a game number: a real 1,000 L a minute jet pushes about 500 N). No damage, ever.
+- It puts out fire by the ash rule: a burning car stops burning, and a car spraying a flamethrower has
+  its burst ended, with the flame's own end cue. A star shield stops the shove, not the water.
+- Counter: steer out of the line of water, or shield. Upgrades shorten the recharge only.
+- Switch `water-cannon` (dev) for the car weapon; the truck's cannon comes with `wasteland-town`.
+- Sounds: `weapon.water.spray` (the same pour as the truck's `town.spray`) and `weapon.water.douse`
+  (the same hiss as `town.fire.out`).
+
 ## 4. Tests every weapon card must pass
 
 - Each counter works in a headless test (for example: steering around oil
