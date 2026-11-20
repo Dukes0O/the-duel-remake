@@ -40,6 +40,9 @@ const heightBonus = event => Math.max(0, finite(event.heightMeters) - 1) * 8;
 export function scoreStuntEvent(event, crowd = 0) {
   if (!event || typeof event !== 'object') return {points: 0, crowd: clamp(finite(crowd), 0, 100)};
   const meter = clamp(finite(crowd), 0, 100);
+  const outsidePoints = event.type === 'bowlOverWall' ? (event.repeat ? 75 : 150)
+    : event.type === 'bowlBackIn' ? 40 : event.type === 'bowlInStands' ? event.points : null;
+  if (outsidePoints != null) return {points: outsidePoints, crowd: clamp(meter + outsidePoints * CROWD_GAIN_PER_POINT, 0, 100)};
   let base = 0;
   switch (event.type) {
     case 'landedJump':

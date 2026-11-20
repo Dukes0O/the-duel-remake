@@ -487,7 +487,10 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     // On the Scablands a car also leaves the ground, at any speed, over a lip: where the ground falls away more than 15 cm further in a step than the
     // car's own free fall from the speed it had (a ledge, the edge of a deck). It falls, it does not follow the edge down (the averaged speed above
     // follows any slope, however steep, so it never lets go of a lip).
-    const lipped = scablands && actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5 > ground + .15;
+    const outside = this.course.features?.bowl?.outside;
+    const overBack = outside && actor.prevLateral <= outside.back && actor.lateral > outside.back &&
+      previousGround - ground > outside.top / 2;
+    const lipped = overBack || scablands && actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5 > ground + .15;
     if (lipped || predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
       // On the Scablands a car leaves with the upward or downward speed it had on the ground before the step, not the average with the ground's own speed over the

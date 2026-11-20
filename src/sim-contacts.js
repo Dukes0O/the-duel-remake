@@ -1,3 +1,4 @@
+import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
@@ -333,6 +334,16 @@ export function _supportAt(distance, lateral, actor = this.state) {
   const height = this.course.def?.scablands || this.course.groundTunnels
     ? scablandsActorFeet(actor) : undefined;
   const ground = this.course.groundAt(distance, lateral, height);
+  const outside = this.course.features?.bowl?.outside;
+  if (outside && lateral > outside.wall && lateral <= outside.back) {
+    const deck = terraceHeight(outside, lateral);
+    const feet = actor._jumpY ?? actor.groundHeight ?? 0;
+    if (outsideGateAt(outside, this.course.phase(distance)) && feet >= deck - .6)
+      ground.y = deck;
+    // A car approaching the retaining wall from below remains at car-park
+    // level until its contact sweep, even when its nose overlaps the back row.
+    if (actor.prevLateral > outside.back && feet < outside.top - 2) ground.y = 0;
+  }
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   // FREESTYLE-MOUNTAINS (Kyle, 16 November 2026: Gratian's Koenigsegg crashed far from the Freestyle quarry's mountains
   // and in mid-air above them): in the playground every car drives on the mountains' real surface, as the off-road
@@ -414,6 +425,12 @@ export function _staticContacts(car, player, journeyColliders = null) {
     let first = null, verticalStart, verticalEnd;
     for (let index = 0; index < obstacles.length + (journeyColliders?.length || 0); index++) {
       const obstacle = index < obstacles.length ? obstacles[index] : journeyColliders[index - obstacles.length];
+      if (obstacle.bowlGateAI && player) continue;
+      if (obstacle.bowlBoundary) {
+        const exterior = this.course.features.bowl.outside;
+        if (obstacle.bowlBoundary === 'back' && car.lateral >= oldLateral && (oldLateral <= exterior.back || car.airborne)) continue;
+        if (obstacle.bowlBoundary === 'tunnel' && (car._jumpY ?? car.groundHeight ?? 0) >= terraceHeight(exterior, car.lateral) - .6 && car.lateral > exterior.wall + 1) continue;
+      }
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
       if(obstacle.snowmanId && (this._brokenSnowmanIds?.has(obstacle.snowmanId) ||
         Math.hypot(end.x-start.x,end.z-start.z)<.0001))continue;
@@ -439,6 +456,12 @@ export function _staticContacts(car, player, journeyColliders = null) {
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
         hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
+      } else if (!player && this.course.features.bowl?.outside && obstacle.arenaWall) {
+        hit = sweepObstacle({...start, y: undefined}, {...end, y: undefined}, collider, heading, contactDimensions);
+      } else if (this.course.features.bowl?.outside && obstacle.arenaWall && obstacle.off === this.course.features.bowl.outside.wall &&
+          oldLateral > obstacle.off && car.lateral <= oldLateral) {
+        const fenceTop = obstacle.y + this.course.features.bowl.outside.fenceTop;
+        hit = sweepObstacle(start, end, {...collider, maxY: fenceTop, modelMaxY: fenceTop}, heading, contactDimensions);
       } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
@@ -936,8 +959,11 @@ export function _crushProps(actor) {
   const end = this.course.groundAt(actor.s, actor.lateral);
   const heading = end.heading + (actor.headingError || 0) + (actor.slipAngle || 0);
   const previousBottom = start.y + (actor.prevAirHeight ?? actor.airHeight ?? 0), bottom = end.y + (actor.airHeight || 0);
-  for (const prop of this.course.features.crushables || []) {
-    const movable = !!state.arena && prop.kind === 'junkCar';
+  const exterior = this.course.features.bowl?.outside;
+  const inParking = exterior && actor.lateral > exterior.back;
+  const props = inParking ? exterior.parking : this.course.features.crushables;
+  for (const prop of props || []) {
+    const movable = !!state.arena && prop.kind === 'junkCar' && !inParking;
     if (state.crushedProps.includes(prop.id)) continue;
     const hit = sweepObstacle(start, end, prop, heading, spec);
     if (!hit) {

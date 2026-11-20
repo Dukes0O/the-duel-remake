@@ -14,6 +14,10 @@ check(BOWL_COURSE.bowl&&BOWL_COURSE.timeOfDay==='night','The Bowl is a distinct 
 
 // BOWL-EXPAND: a stadium floor in proportion to the trucks, at least a football field's size
 // (110 m by 49 m) with room round it, where the old Bowl was a 140 m ring 16.5 m wide.
+check(data.gates.length === 2 && data.gates.every(g=>g.width===8) && data.gates[1].s-data.gates[0].s===data.halfLap,
+  'two eight-metre gates mirror each other across the stadium');
+check(data.outside.parking.length>=16 && data.outside.parking.every(p=>p.off>data.outside.back),
+  'the car park has crushable cars behind the back row');
 const walls=bowl.features.barriers.filter(wall=>wall.arenaWall),outer=walls.filter(wall=>wall.off>0),spine=walls.filter(wall=>wall.off<0);
 const span=(list,axis)=>Math.max(...list.map(wall=>wall[axis]))-Math.min(...list.map(wall=>wall[axis]));
 const long=Math.max(span(outer,'x'),span(outer,'z')),wide=Math.min(span(outer,'x'),span(outer,'z'));

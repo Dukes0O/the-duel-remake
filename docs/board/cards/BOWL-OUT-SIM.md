@@ -42,6 +42,8 @@ wall pieces in `src/course.js` (the two gaps), `src/bowl/bowl-show.js`, `src/bow
 events), `src/bowl/bowl-lines.js`, `tools/test-bowl-out.mjs` (new), `tools/test-bowl-course.mjs`, `tools/bowl-plan.mjs`.
 Lock: `bowl-floor`.
 
+Granted Bowl-only hooks: sim-driving _jump for the drop; sim-contacts _supportAt, _staticContacts and _crushProps for tunnel height, rival gate closures and parked cars; the Show Night sound listener in app.js and the shared gate lookup in rexPlaces; sim-laps _advanceLaps skips off-floor crossings during Show Night.
+
 ## Checks
 
 1. `tools/test-bowl-out.mjs`: a truck thrown over the wall by the Big Jump with nitro lands on the terraces above floor

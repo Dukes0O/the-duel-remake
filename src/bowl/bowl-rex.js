@@ -134,7 +134,7 @@ export function rexPlaces(course) {
     length: L, rail, side, edge: half, car, ...size,
     startS: wrap(crushStart - 2, L), stageBoxS,
     penS: wrap(crushEnd + (L - crushEnd + startS) / 2, L), penLateral: side * Math.min(half, Math.abs(rail) + 3.5),
-    gateS: wrap(startS + ((ramps[0]?.start ?? 0) - startS) / 2, L),
+    gateS: show.gates?.[0]?.s ?? wrap(startS + ((ramps[0]?.start ?? 0) - startS) / 2, L),
     range, huntRange: range * REX_RULES.fire.huntShare,
   };
 }

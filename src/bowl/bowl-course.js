@@ -8,6 +8,8 @@
 // course frame alone, so placement is stable across runs and independent of
 // graphics.
 
+import {createBowlOutside, outsideGateAt, terraceHeight} from './bowl-outside.js';
+
 // The centre line: two straights and two half circles. Lap distance `s` starts at
 // the beginning of the Jump Straight; `off` is minus towards the Spine. Each half
 // circle is 73 m round (a radius of 23.24 m), so the lap is 286 m: a whole number of
@@ -151,6 +153,11 @@ export function bowlBankHeight(phase, off) {
 export function bowlReliefAt(course, s, off) {
   if (off < -BOWL_FLOOR.floorHalfWidth) return 0;
   const phase = course.phase(s);
+  const outside = course.features.bowl?.outside;
+  if (outside && off > outside.wall + .5) {
+    if (outsideGateAt(outside, phase)) return 0;
+    return terraceHeight(outside, off);
+  }
   let height = bowlBankHeight(phase, off);
   for (const ramp of course.features.ramps) height = Math.max(height, bowlRampHeight(ramp, phase, off));
   return height;
@@ -176,7 +183,9 @@ export function buildBowlFeatures(course) {
   })));
   // The show's places, for the cards that run events on this floor.
   const firstRow = ROWS[0][0];
+  const outside = createBowlOutside(course, BOWL_FLOOR, BOWL_STADIUM, (6 + RAMPS[0].start) / 2);
   features.bowl = Object.freeze({
+    outside, gates: outside.gates,
     ring: BOWL_RING, length: BOWL_LENGTH, halfLap: BOWL_HALF_LAP, zones: BOWL_ZONES, bank: BOWL_BANK,
     start: Object.freeze({s: 6, lateral: 0}),
     // Car Crush: start at the head of the Crush Straight on the stand side, 20 m from the

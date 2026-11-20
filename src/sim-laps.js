@@ -23,6 +23,8 @@ export function _flockBonuses() {
 
 export function _advanceLaps(actor, dt, noReset = false) {
   if (this.course.def.practice || actor.crushed) return;
+  const outside = this.course.features?.bowl?.outside;
+  if (outside && this.state.bowlNight && Math.max(actor.lateral, actor.prevLateral ?? actor.lateral) > outside.wall) return;
   const player = actor === this.state, laps = this.state.lapsTotal;
   if (actor.completedLaps >= laps) return;
   const previous = actor.prevS ?? actor.s, current = actor.s;

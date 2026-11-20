@@ -107,6 +107,11 @@ parts.push(dim(at(64, -20), at(64, 20), '', 0, '#f6f1e4'));
 parts.push(dim(at(0, 21.9 + 7.5), at(70, 21.9 + 7.5), '', 0));
 { const [x, y] = at(35, 21.9 + 9.5); parts.push(text(x, y + 6, 'each straight 70 m, the Spine 70 m', 14, '#1d3d5c', 'middle', 600)); }
 
+for (const gate of bowl.gates) {
+  const [x,y] = at(gate.s,gate.lateral);
+  parts.push(box({s:gate.s,off:gate.lateral,halfX:3,halfZ:gate.width/2},'#6ea889'));
+  parts.push(text(x, y-12, gate.name, 12, '#183c30', 'middle', 700));
+}
 const legend = [
   ['#4f2e16', 'jump (dark: full height)'], ['#8a5a33', 'banked end, rising to 3.2 m at the wall'], ['#61746a', 'crush line: junk cars'],
   ['#c9b37a', 'buses and RV'], ['#d4541c', 'burning stacks'], ['#2f6f9e', 'parked cars for the launch off cars'],
