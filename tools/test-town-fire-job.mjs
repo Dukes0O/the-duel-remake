@@ -247,6 +247,10 @@ test('a town saved before this card loads unchanged, and a save round trip keeps
     waterL:1800, tick:String(town.tick)});
   assert.equal(townMissionResult(loaded, townJobResult(worldJob, 'run-save')).settled, false, 'settled before the save, settled after it');
   assert.equal(townJobResult({...worldJob, fireResult:null}, 'run-x'), null, 'no fire result, nothing for the town');
+  // A very long call still hands the town its result: the water used is recorded up to the town's bound.
+  const long = townJobResult({...worldJob, fireResult:{...worldJob.fireResult, usedL:250_000}}, 'run-long');
+  assert.equal(long.waterL, 100_000);
+  assert.equal(townMissionResult(fireTown(), {...long, savedIds:[]}).settled, true);
 });
 
 test('the ash line has three versions, and the firetruck input context sprays with H', () => {

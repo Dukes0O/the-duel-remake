@@ -11,7 +11,7 @@ import {ROAD_NET} from '../scablands-road.js';
 import {sliceLine} from '../scablands-ways.js';
 import {createTownWorld} from '../../town/town-world.js';
 import {TOWN_CELL_METRES} from '../../town/town-world-data.js';
-import {createTownMissionClock, townMissionDropCell, townMissionResult} from '../../town/town-missions.js';
+import {createTownMissionClock, townMissionDropCell, townMissionResult, TOWN_MISSION_MAX_LITRES} from '../../town/town-missions.js';
 import {stepTown} from '../../town/index.js';
 import {townCaptionText, TOWN_CAPTIONS} from '../../town/content/lines.js';
 import {buildingById} from '../../town/content/registry.js';
@@ -130,7 +130,9 @@ export function townJobResult(worldJob, runId) {
   if (definition.townJob === 'fire') {
     const fire = worldJob.fireResult;
     if (!fire) return null;
-    return {runId, jobId:definition.id, kind:'fire', savedIds:[...fire.savedIds], lostIds:[...fire.lostIds], waterL:fire.usedL,
+    // The water used is a record, not a limit: a call long enough to pass the town's bound still gives the town its result.
+    return {runId, jobId:definition.id, kind:'fire', savedIds:[...fire.savedIds], lostIds:[...fire.lostIds],
+      waterL:Math.min(TOWN_MISSION_MAX_LITRES, Math.max(0, Math.round(fire.usedL))),
       chapter:definition.chapter ?? null, ash:definition.ash ?? null};
   }
   const state = worldJob.haulResult;
@@ -248,12 +250,11 @@ function townFireDefinition(town, open, {seed, ember}) {
   const lit = (town.buildings ?? []).filter(building => burning.has(building.id));
   if (!lit.length) return null;
   const main = kitchen ?? lit.reduce((best, building) => burning.get(building.id) > burning.get(best.id) ? building : best);
-  // Every building that can burn within 120 m of a fire can catch from it.
-  const near = (town.buildings ?? []).filter(building => (finished(building) || burning.has(building.id)) && fuelHours(building) > 0 &&
-    !String(building.buildingId).startsWith('road-') && lit.some(fire => {
-      const a = footprint(fire), b = footprint(building);
-      return Math.hypot(a.x - b.x, a.z - b.z) <= 120;
-    })).slice(0, 40);
+  // Every building that can burn within 120 m of a fire can catch from it: every burning one, then the nearest of the rest, 40 at most.
+  const apart = building => Math.min(...lit.map(fire => { const a = footprint(fire), b = footprint(building); return Math.hypot(a.x - b.x, a.z - b.z); }));
+  const others = (town.buildings ?? []).filter(building => !burning.has(building.id) && finished(building) && fuelHours(building) > 0 &&
+    !String(building.buildingId).startsWith('road-') && apart(building) <= 120).sort((a, b) => apart(a) - apart(b));
+  const near = [...lit, ...others.slice(0, Math.max(0, 40 - lit.length))];
   const buildings = near.map(building => {
     const at = footprint(building);
     return Object.freeze({id:building.id, buildingId:building.buildingId, name:nameOf(building), x:at.x, z:at.z, halfX:at.halfX,
