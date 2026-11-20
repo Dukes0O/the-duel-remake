@@ -69,3 +69,5 @@ recorded in `docs/changes/BOWL-TRICKS.md` with a Removed line. Before CARD DONE,
 `bowlAirFlips`, `flip` and `donut` and bring each older suite and scenario that names them up to date. No Chrome under
 `codex exec`: any browser scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean
 up nothing outside this lane.
+
+Builder drive observation: at 32 mph the centre kicker carries the driver past the first parked car on a separate line (about 11 m inside it). The clearance check keeps that approach. The full-night pilot approaches at 30 mph and releases its controls in flight; every original launch, score and completion assertion remains.

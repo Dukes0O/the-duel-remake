@@ -56,7 +56,7 @@ test('a key held from before take-off tips nothing until it is pressed again', (
   assert.ok(!state.tumble, 'a small tip lands on the wheels');
 });
 
-function carLaunch(enabled) {
+function carLaunch(enabled, slam = false) {
   const practice = COURSE.findIndex(course => course.practice);
   const duel = new Duel({seed: 1989});
   duel.startCampaign({car: 'titan_monster', startStage: practice, difficulty: 'casual', mode: 'timetrial'});
@@ -77,19 +77,27 @@ function carLaunch(enabled) {
     damageZones: {front: 0, rear: 0, left: 0, right: 0}};
   Object.assign(duel.state, {status: 'racing', s: 28, prevS: 28, lateral: 30,
     prevLateral: 30, speedMph: 30, traffic: [target]});
-  const samples = [];
+  const samples = [], events = [];
+  let airTicks = 0;
+  duel.onChange((_, ev) => { if (ev.bowlTrick || ev.jumpLanded) events.push(ev); });
   for (let i = 0; i < 360; i++) {
-    duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+    if (duel.state.airborne) airTicks++;
+    duel.setInput({throttle: 0, brake: +(slam && duel.state.airborne && airTicks <= 60), steer: 0, boost: false});
     duel.step(DT);
     const s = duel.state;
     samples.push([s.speedMph, s.airHeight, s.airborne, !!s.tumble]);
   }
   assert.equal(target.crushed, true, 'the Titan still launches from the parked car');
+  if (slam) {
+    assert.ok(events.some(e => e.bowlTrick?.landing === 'slam'));
+    assert.ok(!events.some(e => e.jumpLanded), 'a roof landing pays no launch off the parked car');
+  }
   return samples;
 }
 
 test('enabling Bowl air leaves the Titan launch off cars unchanged', () => {
   assert.deepEqual(carLaunch(true), carLaunch(false));
+  carLaunch(true, true);
 });
 
 function onFloor(speed, lateral = -13, start = 38) {
@@ -106,8 +114,9 @@ function onFloor(speed, lateral = -13, start = 38) {
 }
 
 const neutral = {throttle: 0, brake: 0, steer: 0, boost: false};
-function bigJump(keys) {
+function bigJump(keys, setup = () => {}) {
   const {duel, events} = onFloor(53), speeds = [];
+  setup(duel);
   let ticks = 0;
   for (let i = 0; i < 515; i++) {
     const input = {...neutral};
@@ -129,6 +138,7 @@ test('the Big Jump pays full turns, combos, sideways landings and a damage-free 
     return run;
   };
   const single = fly(t => ({brake: +(t <= 120)}), [['backflip', 1, 50, 'clean']]);
+  assert.deepEqual(single.events[0].cues, ['bowl.trick.land', 'bowl.trick.new']);
   assert.deepEqual(single.speeds, bigJump(() => ({})).speeds, 'S leaves the whole flight speed trace unchanged');
   fly(t => ({brake: +(t <= 216)}), [['backflip', 2, 200, 'clean']]);
   fly(t => ({throttle: +(t <= 120)}), [['frontFlip', 1, 50, 'clean']]);
@@ -139,6 +149,29 @@ test('the Big Jump pays full turns, combos, sideways landings and a damage-free 
   const slam = fly(t => ({brake: +(t <= 60)}), [['slam', 0, 0, 'slam']]);
   assert.ok(Object.values(slam.duel.state.damageZones).every(value => value === 0));
   assert.ok(slam.duel.state.speedMph > 1 && slam.duel.state.bowlPose.pitch === 0);
+});
+
+test('a first-frame press counts, and a completed flip survives a reversal', () => {
+  const run = bigJump(t => ({brake: +(t <= 120), throttle: +(t > 120 && t <= 216)}));
+  assert.deepEqual(run.events.map(e => [e.kind, e.points, e.combo]), [['frontFlip', 75, 2], ['backflip', 75, 2]]);
+});
+
+test('a Slam takes one third of the actual crowd, pays zero and plays no crowd cheer', () => {
+  const scores = [];
+  let crowdBefore, timeBefore, landedAt;
+  const run = bigJump(t => ({brake: +(t <= 60)}), duel => {
+    const event = duel.state.bowlNight.event;
+    event.crowd = 75;
+    duel.onChange((_, ev) => {
+      if (ev.bowlScore) scores.push(ev.bowlScore);
+      if (ev.bowlTrick?.landing === 'slam') landedAt = duel.state.stageTimeSec;
+    });
+    crowdBefore = event.crowd;
+    timeBefore = event.crowdAt;
+  });
+  assert.deepEqual(scores.map(e => [e.points, e.cue]), [[0, null]]);
+  assert.equal(run.duel.state.bowlNight.event.score, 0);
+  assert.ok(Math.abs(scores[0].crowd - crowdBefore * Math.exp(-.03 * (landedAt - timeBefore)) * 2 / 3) < 1e-9);
 });
 
 test('the real floor counts wheelies, stoppies and consecutive donuts', () => {

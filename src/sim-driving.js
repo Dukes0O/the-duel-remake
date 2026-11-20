@@ -17,7 +17,7 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongP
 import {FIELD, nitroLocked} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
-import {stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
+import {landBowlTricks, stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -550,6 +550,8 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
   if (scablands) actor.groundHeight = ground;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
+  landBowlTricks(this, actor);
+  if (actor.bowlLanding === 'slam' && tricksEnabled(this, actor)) return;
   if (seaFloor) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });
     return;

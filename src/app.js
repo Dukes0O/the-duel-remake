@@ -266,7 +266,7 @@ export class App {
       // BOWL-HOOKS: Show Night pays its purse once, and each new event has its sound.
       if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
-      if(event.bowlTrick?.cue)this._showNightCue(event.bowlTrick.cue);
+      if(event.bowlTrick)for(const cue of event.bowlTrick.cues)this._showNightCue(cue);
       if(event.bowlEventResult)this._showNightCue(event.cue);
       if(event.bowlEventResult&&state.bowlNight?.turn)this._recordTurnGo(event.bowlEventResult,state); // BOWL-TURNS
       if(event.bowlRex?.cue)this._showNightCue(event.bowlRex.cue); // BOWL-REX-FIGHT: each thing the Scrapasaurus does has its sound

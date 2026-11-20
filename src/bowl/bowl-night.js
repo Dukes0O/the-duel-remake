@@ -303,7 +303,7 @@ function addFact(duel, fact) {
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
-  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: 'bowl.crowd.rise'}});
+  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: scored.points ? 'bowl.crowd.rise' : null}});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
 }
@@ -344,7 +344,7 @@ function observeTruck(duel, dt) {
   else if (!s.airborne && event.flight) {
     const flight = event.flight, airTime = s.airTime || 0;
     event.flight = null;
-    if (!flight.carRamp && !s.tumble && airTime >= BOWL_NIGHT_RULES.minJumpSec) {
+    if (s.bowlLanding !== 'slam' && !flight.carRamp && !s.tumble && airTime >= BOWL_NIGHT_RULES.minJumpSec) {
       addFact(duel, {type: 'landedJump', durationSeconds: +airTime.toFixed(3), distanceMeters: +(s.airDistance || 0).toFixed(1),
         heightMeters: +flight.peak.toFixed(2)});
       if (airTime >= BOWL_NIGHT_RULES.bigJumpSec) say(duel, 'moment.bigJump', {once: true});
