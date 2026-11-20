@@ -166,7 +166,8 @@ function drive(idle) {
     const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : type === 'sideBySide' ? layout.lanes[0].lateral : 0;
     if (idle) duel.setInput({throttle: 0, brake: 0, steer: 0});
     else if (type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
-    else duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0,
+    else if (freestyle && s.airborne) duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+    else duel.setInput({throttle: s.speedMph < (freestyle ? 30 : 32) ? 1 : 0, brake: 0,
       steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
     assert.equal(s.playerId, app.player.id, 'the driver is the active player at every step');

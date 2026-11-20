@@ -63,7 +63,7 @@ export const BOWL_COURSE = Object.freeze({
   // A dirt floor, as the Freestyle Playground's is: `offroad` makes the game hold a truck to
   // the floor's top speed (src/sim-driving.js reads it only off the paved road).
   name: 'The Bowl', lengthU: BOWL_LENGTH, closed: true, laps: 2, kind: 'arena',
-  arena: true, offroad: true, bowl: true, bowlRing: BOWL_RING, timeOfDay: 'night', hasRadar: false,
+  arena: true, offroad: true, tricks: true, bowl: true, bowlRing: BOWL_RING, timeOfDay: 'night', hasRadar: false,
   hasRival: false, speedLimitMph: 100, scrapdome: BOWL_FLOOR,
   sections: [{theme: 'arena', name: 'The Bowl', share: 1}],
 });

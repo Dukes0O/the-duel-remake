@@ -65,3 +65,7 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 with a Removed line. Before CARD DONE, search `tools/` for every id and name this card changes and bring each older suite
 and scenario that names it up to date. No Chrome under `codex exec`: any browser scenario is "Claude runs". Memory-only
 saves. No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Hand drive for Claude
+
+The gates and terraces are ready in `.lanes/bowl-out-sim` at `e4921c524`. Please drive the Big Jump with nitro, land on the terraces, drive off the back, then come back through each gate in memory-only play. Eight simulated returns reached the floor in 9.04 to 28.92 seconds. The uninterrupted jump landed on the terrace at 4.72 m and the truck came down into the car park without wear. Please record how the drive and both entrances felt here.

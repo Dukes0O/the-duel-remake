@@ -107,3 +107,7 @@ Round five of BOWL-ART-REX uses metres, +Y up and +Z towards the head. The old p
 are the model's shape only and no rule reads them. What the rules do read: the battery centres and their tired height
 (where the hook bites and where the marker and beam stand), and the outline of legs, body and tail for the solid shape.
 The model's further needs for the hook are on BOWL-ART-REX.
+
+## Tow points measured on the round-six model
+
+In the GLB at `579cf774d`, the three towing eyes are on X 0 at Z -2.90, -0.22 and +2.56 m, measured from tail to head. Each eye is 0.664 m across. Its centre is at Y 10.52 m standing and 6.52 m tired. Use the model's world transform to place the cable and the marker. The cartridge centre is 0.66 m below its eye. Hide the whole mesh and show the open version at scale one, then move the corresponding `battery-box-1`, `battery-box-2` or `battery-box-3` parent with the cable. Its socket stays on the spine. This version has a natural tail.

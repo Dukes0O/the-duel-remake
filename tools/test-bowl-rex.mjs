@@ -290,12 +290,17 @@ function fightAt(level, seed) {
     target += Math.sin(wobble) * .25;
     if (s.speedMph < 3 && s.status === 'racing' && time > 3) stuck += DT; else stuck = 0;
     if (stuck > 1.2) { backing = 1; stuck = 0; }
-    if (backing > 0) {
+    if (s.airborne) {
+      duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+    } else if (backing > 0) {
       backing -= DT;
       duel.setInput({throttle: 0, brake: 1, steer: 0, boost: false});
     } else {
+      // Aim down the rail on the ground; in flight these keys would start a trick.
+      const aim = going ? (s.lateral - target) * .28 + (s.headingError || 0) * 3.2 :
+        (s.lateral - target) * .35 + (s.headingError || 0) * 1.6;
       duel.setInput({throttle: s.speedMph < (waiting ? 18 : pace) ? 1 : 0, brake: waiting && s.speedMph > 22 ? .4 : 0, boost: false,
-        steer: Math.max(-1, Math.min(1, (s.lateral - target) * .35 + (s.headingError || 0) * 1.6))});
+        steer: Math.max(-1, Math.min(1, aim))});
     }
     duel.step(DT);
     if (!result.hud && fight.phase === 'rest') result.hud = bowlHudView(duel.state, duel.course);
