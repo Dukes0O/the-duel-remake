@@ -34,6 +34,8 @@ The Bowl-only branches of `_crash` in `src/sim-crash.js` and `containInArena` in
 
 The Show Night listener in `src/app.js` may play this card's cue from the existing sound bank.
 
+The Rex fight exposes its existing full-health scorch count at creation for fractional wall wear. The Bowl event listener plays the four stand-ins.
+
 ## Checks
 
 1. `tools/test-bowl-walls.mjs`: from seed and inputs, a truck driven into the stand wall, the Spine and an end at 10, 35

@@ -196,6 +196,8 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     'Race Rust Rhino once round the Bowl and cross the line first.', 'night two\'s Side by Side is against Rust Rhino, named in the goal');
   // Big Mo waits for his earlier lines; the results card stays up while he talks.
   for (let i = 0; i < 120 * 40; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
+  ok([duel.state, ...duel.state.opponents].every(truck => Object.values(truck.damageZones).every(value => value === 0)),
+    'the player and Rust Rhino finish Side by Side with every zone undamaged');
   const intro = captions.indexOf('event.sideBySide.intro');
   ok(captions.indexOf('rival.rust-rhino') > Math.max(-1, intro), 'Big Mo says who is in the other lane, after naming the event');
 }
