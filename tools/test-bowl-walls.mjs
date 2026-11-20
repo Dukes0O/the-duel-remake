@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
 import {Duel} from '../src/game.js';
 import {DRIVE} from '../src/config.js';
 import {carAlongPush} from '../src/arsenal/car-effects.js';
@@ -7,6 +8,7 @@ function start(night, eventIndex) {
   const duel = new Duel({seed: 1989});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
   assert.ok(duel.startBowlNight({night, eventIndex, cpuDifficulty: 'easy', seed: 1989}));
+  if (duel.state.status === 'bowl_weapon_pick') assert.ok(chooseShowWeapon(duel, 'hammer'));
   return duel;
 }
 

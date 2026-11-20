@@ -1,3 +1,5 @@
+import {BOWL_STADIUM} from './bowl/bowl-course.js';
+import {bowlHealthLoss} from './bowl/bowl-weapons.js';
 import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
@@ -70,6 +72,10 @@ function bowlWear(duel, actor, kind, owner, zone) {
   const rules = duel.course.def.scrapdome.wallBounce, event = duel.state.bowlNight?.event;
   const fraction = kind === 'big' ? rules.bigDamage : kind === 'hard' ? rules.hardDamage : 0;
   if (!fraction || !rules.fights.includes(event?.type)) return;
+  if (actor.bowlWeapon && event.type === 'lastTruckRolling') {
+    bowlHealthLoss(duel, actor, fraction, owner, zone);
+    return;
+  }
   if (event.rex) {
     event.rex.hits += fraction * event.rex.maxHits;
   } else {
@@ -456,6 +462,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
         hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
+      } else if (!player && exterior && obstacle.arenaWall && car.bowlFlight?.owner && obstacle.off === exterior.wall) {
+        // A launched truck meets the real wall's top; grounded rivals still meet the closed gates.
+        const top = obstacle.y + BOWL_STADIUM.wallHeight;
+        hit = sweepObstacle(start, end, {...collider, minY:-1, maxY:top, modelMaxY:top}, heading, contactDimensions);
       } else if (!player && exterior && obstacle.arenaWall) {
         hit = sweepObstacle({...start, y: undefined}, {...end, y: undefined}, collider, heading, contactDimensions);
       } else if (exterior && obstacle.arenaWall && obstacle.off === exterior.wall &&
@@ -580,6 +590,12 @@ export function _staticContacts(car, player, journeyColliders = null) {
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
     const bowlRules = this.course.def.scrapdome?.wallBounce;
     if (bowlRules && obstacle.arenaWall) {
+      if (car.bowlFlight) {
+        // A low launch has struck the wall. Its arc continues vertically here.
+        car.bowlFlight.range=0;
+        const at=this.course.worldAt(car.s,car.lateral);
+        car.bowlFlight.x=at.x; car.bowlFlight.z=at.z;
+      }
       const mph = -(velocityX * nx + velocityZ * nz) / DRIVE.mphToWorld;
       if (mph > 0) {
         const frame = this.course.at(car.s).heading;

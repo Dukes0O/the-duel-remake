@@ -3,6 +3,7 @@
 // rival, run a one-wall Easy driver, and check a clean versus wide Hard line.
 // Unarmed fight wins are reported; BOWL-WEAPONS measures armed balance.
 import assert from 'node:assert/strict';
+import {chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, bowlHudView, bowlNightPlayable} from '../src/bowl/bowl-night.js';
@@ -31,6 +32,7 @@ function showAt(night, type, {level = 'easy', seed = 1989, rivals} = {}) {
   show.show = {...show.show, eventIndex: index};
   show.phase = 'result';
   duel.continueBowlNight();
+  if (type === 'lastTruckRolling') assert.ok(chooseShowWeapon(duel, 'hammer'));
   assert.equal(duel.state.bowlNight.event.type, type);
   return duel;
 }
@@ -96,6 +98,23 @@ const chaseAim = (duel, offset) => {
   const want = Math.atan2(target.x - me.x + offset, target.z - me.z + offset);
   return {steer: -wrap(want - me.heading) * 2, mph: 45};
 };
+
+function hammerDrive(seed) {
+  const drive=childDriver(seed);
+  return (duel,aim)=>{
+    drive(duel,aim);
+    const s=duel.state, me=worldPose(duel,s), weapon=s.bowlWeapon;
+    if (!weapon || weapon.kind!=='hammer') return;
+    const target=s.opponents.some(actor=>{
+      if(actor.combatWrecking) return false;
+      const at=worldPose(duel,actor), dx=at.x-me.x,dz=at.z-me.z;
+      const forward=dx*Math.sin(me.heading)+dz*Math.cos(me.heading);
+      const across=dx*Math.cos(me.heading)-dz*Math.sin(me.heading);
+      return forward>0 && forward<17 && Math.abs(across)<5;
+    });
+    duel.setInput({interact:!!target && weapon.phase==='ready' && !weapon.wasHeld});
+  };
+}
 
 function race(duel, drive, aim, limitSec) {
   const results = [];
@@ -278,18 +297,18 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     s.arena.participants[index + 1].brain === BOWL_RIVALS[truck.bowlRival].brain), 'each rival drives in their own way');
   ok([s, ...s.opponents].every(truck => truck.maxArmor === BOWL_RIVAL_RULES.lastTruckRolling.showArmor && truck.armor === truck.maxArmor),
     'every truck takes the same knocks, the player\'s too');
-  ok(s.weaponLoadout.length === 0 && s.opponents.every(truck => truck.weaponLoadout.length === 0), 'nobody has a weapon in the Bowl');
+  ok(s.weaponLoadout.length === 0 && s.opponents.every(truck => truck.weaponLoadout.length === 0), 'the normal arena weapon loadouts stay empty');
   ok(bowlHudView(s, duel.course).goal === 'Knock out Big Kettle, Tin Lizard and Old Bess, and be the last truck still rolling.', 'the goal names every rival');
   for (let i = 0; i < 120 * 4; i++) duel.step(DT);
   ok(s.status === 'racing' && ['ufo', 'bomb', 'crossbow', 'star', 'shield'].every(weapon => duel.fireWeapon(weapon) === false),
-    'the player cannot fire a weapon in the Bowl (the arena would otherwise give the default weapons)');
+    'the fight cannot fire the default arena weapons');
   const result = race(duel, null, null, BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
-  ok(shots.length === 0, 'nobody fires a weapon in the whole event');
+  ok(shots.length === 0, 'no ordinary arena projectile is fired in the whole event');
   ok(result && result.event === 'lastTruckRolling' && typeof result.won === 'boolean', 'an event with a truck that never moves still ends');
   ok(!result.won && (result.knockedOut || result.timeUp), 'a truck that never moves does not win');
   ok(!s.combat.pickups?.length, 'no crates appear in the Bowl');
   const out = knockouts.map(entry => entry.rival);
-  ok(out.every(id => captions.includes(`out.${id}`)) && knockouts.every(entry => entry.cue === 'bowl.mo'),
+  ok(out.every(id => captions.includes(`out.${id}`)) && knockouts.every(entry => entry.cue === 'bowl.knockout'),
     'each knock-out between rivals has Big Mo\'s line and chime');
   ok(captions.includes('rivals.night.3'), 'Big Mo says who is in the Bowl tonight');
   // A knocked-out rival stays out: no wreck comes back.
@@ -307,6 +326,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     duel.featureFlags = {enabled: name => name === 'titan-bowl'};
     ok(duel.startBowlNight({night, eventIndex, turn: {driver: 'Gratian'}, cpuDifficulty: 'easy', seed: 1989, playerId: 'p1'}),
       `a Turn Show go at night ${night}'s last event starts`);
+    if (duel.state.status === 'bowl_weapon_pick') assert.ok(chooseShowWeapon(duel, 'hammer'));
     return duel;
   };
   const side = go(1, 2);
@@ -358,7 +378,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   duel._vehicleContact(player, victim, 'rival');
   for (let tick = 0; tick < 120 && !events.length; tick++) duel.step(DT);
   const night = player.bowlNight, rival = victim.bowlRival;
-  assert.deepEqual(events, [{rival, by: 'player', cue: 'arena.wreck-credit'}]);
+  assert.deepEqual(events, [{rival, by: 'player', cue: 'bowl.knockout'}]);
   ok(night.event.knockouts === 1 && night.event.rivals[0].by === 'player' && night.event.rivals[0].out,
     'the scoring collision credits exactly one player knockout');
   ok(night.caption?.id === 'out.' + rival || night.captionQueue.some(line => line.id === 'out.' + rival),
@@ -374,7 +394,7 @@ function winRate(night, type, level) {
     const duel = showAt(night, type, {level, seed});
     const belowFive = new Map();
     let longestStop = 0;
-    const drive = childDriver(seed);
+    const drive = type === 'lastTruckRolling' ? hammerDrive(seed) : childDriver(seed);
     const result = race(duel, (game, aim) => {
       drive(game, aim);
       if (type !== 'lastTruckRolling' || game.state.status !== 'racing') return;
