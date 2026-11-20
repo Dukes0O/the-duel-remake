@@ -110,3 +110,11 @@ The real choosing card holds the event until a selection. The outside, walls and
 - **Rule 18, the older checks: approved.** The outside, walls and rivals suites and the `bowl-rivals` scenario choose the
   hammer through the normal action before the fight; that is setup, and every physical and result assertion stays. Add the
   checks that the choice comes before the fight on a retry and on each Turn Show go.
+
+## Claude answers, the old no-weapon assertions (20 November 2026)
+
+**Rule 18, `1d5bfbca6`: approved.** The checks that the arena arsenal is empty and the named show weapons are fitted replace a
+rule that no longer holds; the knockout checks keep the credited driver and Big Mo's line and add the Bowl cue; the one-second
+low-speed check still covers every free, sound truck and leaves out only the authored throw, a missed hammer's half-second
+hold and the 2.5 s side recovery; armed Easy needs a win with two credited knockouts in at least nine of ten drives and a
+non-dodging Hard driver must lose. The child keeps the three inherited seeds' steering. Nothing is loosened.
