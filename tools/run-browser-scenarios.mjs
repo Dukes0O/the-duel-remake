@@ -18,7 +18,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['deep-'], paths:['src/deep/']},
   {prefixes:['heli-'], paths:['src/heli/']},
   {prefixes:['ski-'], paths:['src/ski/']},
-  {prefixes:['everburn-','scablands-','run-'], paths:['src/world/','src/story/','src/world.js','src/world-job-camera.js','src/arena/modes/world-job.js','src/arena/arena-event.js']},
+  {prefixes:['everburn-','scablands-','run-','ships-'], paths:['src/world/','src/story/','src/world.js','src/world-job-camera.js','src/arena/modes/world-job.js','src/arena/arena-event.js']},
   {prefixes:['road-riders'], paths:['src/arena/modes/road-riders.js','src/arena/modes/world-job.js','src/arena/arena-brains.js',
     'src/arena/arena-pilot.js','src/arena/arena-tell-view.js','src/world/jobs/rider-rule.js','src/world/jobs/wash-riders.js',
     'src/world/jobs/job-engine.js','src/world/brand-ash-view.js','src/combat-ai.js','src/combat-hud.js','src/sim-contacts.js',
@@ -45,6 +45,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['skyline-audio'], paths:['src/skyline-vehicle.js','src/audio.js']},
   {prefixes:['earned-cars'], paths:['src/earned-cars-ui.js','src/unlock-vehicles.js']},
   {prefixes:['skin-waste'], paths:['src/paint-finish-look.js','src/vehicle-paint.js','src/paint-presets.js']},
+  {prefixes:['far-rain'], paths:['src/render/','src/scene-lighting.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||
