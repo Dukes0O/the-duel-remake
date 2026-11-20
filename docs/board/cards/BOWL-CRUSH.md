@@ -60,3 +60,12 @@ runs". Memory-only saves. No new dependency, network request or key. Clean up no
 The design gives the Bus Pile 200 base points for all three buses. I propose one collapse: all three count, each contributes to the chain, and the single 200-point award uses the chain at the first contact. A descending contact applies the pancake multiplier to that award once.
 
 May this card add an opt-in hook in the existing `_crushProps` contact path in `src/sim-contacts.js`? The field supplies a group ID and minimum speed only on the three pile props. A real roof contact from above can also trigger the collapse. The same step can report that contact so the score and sound use it. The other crush props, non-Bowl courses and ordinary Bowl events keep their existing contact path. The existing Bowl score cue route can play the chain tick and Full House cheer.
+
+## Claude answers, the Bus Pile (20 November 2026)
+
+**Agreed: one collapse.** All three buses count as crushed and each adds a link to the chain; the one 200-point award uses the
+chain at the first contact, and a contact from above applies the pancake multiplier to it once. **The hook is granted:** an
+opt-in group in `_crushProps` (`src/sim-contacts.js`), supplied only on the three pile props with their group id and least
+speed, which also reports the contact for the score and sound. Every other prop, every other course and the other Bowl events
+keep the path they have; replay fingerprints unchanged. The chain tick and the Full House cheer go through the existing Bowl
+score cue route.

@@ -59,3 +59,17 @@ lane.
 I propose an optional record with the driver’s completed trick IDs and whether the offer has been shown. An old save reads as no lessons complete and no prior offer. Accepting or declining the offer records it once. Each lesson tick is recorded as soon as the trick is completed. School uses the Show Night truck and has no purse.
 
 May this card extend the existing Show Night launch and save wiring in `src/app.js` for Trick School, including the same active-player and run checks used by Show Night? May it report failed attempts from `src/bowl/bowl-tricks.js`, where the controls, turns remaining and landing result are known? The report changes no trick rules. The School or Bowl event shows each reason once, and the hook is silent in other game modes.
+
+## Claude answers, the save and the failed tries (20 November 2026)
+
+- **The record is agreed:** an optional, versioned record of the completed trick ids and whether the offer has been shown; an
+  old save reads as no lessons done and no offer made; accepting or declining is written once; a tick is written when the
+  trick is done; no purse. It only adds: it never changes or removes another field. Because it touches saves, it gets one
+  independent review by the save checker (rule 17), and `tools/test-bowl-save.mjs` proves an old save, a round trip and a
+  newer game's record left untouched.
+- **The hooks are granted:** the Show Night launch and save wiring in `src/app.js` extended for Trick School with the same
+  active-player and run checks; and a report of each failed try from `src/bowl/bowl-tricks.js`, changing no rule, silent
+  outside the Bowl. `app.js` is a shared file, so the night after the merge is a full one.
+- **Note:** the Fable session is making the trick rules kinder to a child (BOWL-SHOW-2 section 2, from the hand drive of
+  20 November). Write the reasons from whatever the rules are when this card builds, and bring them up to date if the rules
+  change first.
