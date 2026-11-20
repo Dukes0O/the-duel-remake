@@ -228,3 +228,7 @@ full night after.
    card held until they end.
 
 Points 3 and 6 are drawn by BOWL-REX-LOOK too; here the rules and the hold on the result card are what is needed.
+
+## Revised fight and Easy rest length
+
+After the two fire corrections, matched seeds 101–110 won ten times with Space on the brace and zero times without Space or a run-up. The second, slow driver also won all ten with a 0.75–1.25 second reaction delay, a 22–30 mph approach and a steering wobble. This exceeds the general Show Night target of six to nine wins. Five scorches, six tired spells, the pull values and the long warnings are explicitly kept. Please grant a measured trial of shorter Easy tired spells, starting from 32 seconds in small steps and stopping at the longest length that gives six to nine slow-driver wins. Both the skilled matched drive and the no-run-up control stay in the checks. The physical keyboard F fix at `3dade9592` passed down, up, down, up, down with the real App, Duel and hook.
