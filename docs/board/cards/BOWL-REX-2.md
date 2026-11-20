@@ -199,3 +199,5 @@ that nobody can lose. One more small round on this card:
 
 The session that reviews this card decides whether this round lands before the merge of the fight as built or straight
 after it.
+
+The revised fight will land before this card merges. The passing weapons build is frozen for its lane checks and laptop drive. The Rex builder has the shared screen lock for the shorter Easy window, the brace hint and both ten-seed drives.
