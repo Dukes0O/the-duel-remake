@@ -158,3 +158,5 @@ Please drive the revised `bowl-rex-fight` scenario and try the first hook by key
 ## Showing the guide to the next driver
 
 The solo result and retry now show the three pictured instructions before the boss. The shared-keyboard Turn Show enters the same fight from its own handoff card and therefore misses them. Please grant `createTurnScreens` and its `handoff` function in `src/bowl/bowl-turns-screens.js` one optional event guide, supplied by the existing Bowl screen. For a Scrapasaurus turn it draws the same three pictures and sentences before the named driver's ready button. Other handoffs keep their current content.
+
+One further rule 18 line at `98f8f7fcc`: the Night 5 opening expectation in `tools/test-bowl-hud.mjs` changes from “Smash its battery boxes.” to “WATCH THE SCRAPASAURUS”. It still asserts the full goal on screen and matches the new opening walk before the fire tell. The first lane gate passed 83 of 84 suites. The tunnel fixture called the shared contact helper without a Duel state; restoring that supported call fixed it. All 297 race replay checks passed.
