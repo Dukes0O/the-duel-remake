@@ -57,3 +57,18 @@ reference on round 5's sheet); legs as thick as the reference's; no plinth or ra
 a ramp (see BOWL-ART-REX), so nothing is drawn on it.
 From round 6: set the three battery boxes down into the body, strapped into the ribs, not on tall square posts; the torn
 leads in an empty socket thick, bright and sparking, readable from the truck.
+
+## Owed from BOWL-REX-3: the eye beam and the bombs (Claude, 20 November 2026)
+
+Kyle, 20 November 2026: "maybe scrapasuarus should be able to shoot lazers or bombs at you." BOWL-REX-3 builds the rules
+and draws plain shapes. Drawn here, in a second sitting once that card has merged, and in code first (shaders and
+effects before any model file):
+
+- **Its eyes:** two headlights that turn from white to red as it aims, bright enough to see from across the floor.
+- **The line and the beam:** the thin red line on the floor that follows the truck; the orange strip when it stops;
+  the beam itself as a hard white-red bar with heat above it and a scorched stripe left on the dirt for a few seconds.
+- **The hatch and the bomb:** a hatch between its shoulders that opens with a spinning red lamp; the bomb as a scrap
+  drum with a blinking light, a carrying ring that the hook can plainly take, and its orange ring filling on the floor.
+- **Sent back:** the burst under the beast, and a stagger that reads as hurt and not as the ordinary tired pose.
+- Pictures from the real game with its screen up: the red line on the truck; the orange strip a moment before the
+  beam; the truck clear over the beam; a bomb ticking; a bomb on the cable; the burst under the beast.

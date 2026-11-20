@@ -49,3 +49,6 @@ checked in the hand drive.
   pre-teen needs as well.
 - The other changes of that day are on their own cards: BOWL-CRUSH (clock and count), BOWL-JUMP-EVENTS and BOWL-TOUR
   (gates), BOWL-REX-2 (the first tired spell and the back box), BOWL-WEAPONS (six wins in ten).
+- **BOWL-REX-3** (the eye beam and the bombs, Kyle's idea of 20 November) is in the first release and is on this
+  card's `needs`. In the hand drive: send a bomb back on Easy and on Hard, and say whether the beam can be read from
+  the driver's seat.
