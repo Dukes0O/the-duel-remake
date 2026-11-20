@@ -83,7 +83,8 @@ export const SPECIES = Object.freeze({
   'alpine-marmot': { kind: 'ground' },
   'golden-eagle': { kind: 'bird' },
   'gull': { kind: 'bird' },
-  // Desert and coast
+  // Desert and coast. Their models have passed (WILD-ART-DESERT) but are held off the courses
+  // by HELD_FROM_COURSES in src/wildlife-models.js until Red Mesa and Pacific Canyon have been looked at.
   'roadrunner': { kind: 'ground' },
   'jackrabbit': { kind: 'ground' },
   'desert-bighorn': { kind: 'ground' },

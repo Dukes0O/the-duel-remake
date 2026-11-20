@@ -24,13 +24,14 @@ SCALE = (.44, .425, .355)
 # authored in true proportion by stretching their heights back.
 TALL = SCALE[1] / SCALE[2]
 HEAD_DROP = .66
-MOTTLE = .22
+MOTTLE = .32
 GRIZZLE = .10
 
 SAND = (.300, .205, .118)
 BACK = (.215, .145, .085)
 WHITE = (.54, .50, .43)
-LEG = (.075, .052, .036)
+LEG = (.070, .046, .030)
+DARKER = (.135, .088, .052)
 BLACK = (.012, .010, .009)
 HORN = (.20, .135, .065)
 
@@ -61,6 +62,11 @@ def shape(p, bone, ctx):
     elif bone == 'Head':
         if p.y < -2.12:
             p.y = -2.12 + (p.y + 2.12) * .72
+        # A sheep's deep blunt muzzle, not a deer's fine one.
+        snout = d.smooth((-2.10 - p.y) / .25)
+        centre = ctx.head('Head')
+        p.x *= 1 + .22 * snout
+        p.z = centre.z + (p.z - centre.z) * (1 + .16 * snout) - .03 * snout
         p = head_move(p, ctx, 1)
     elif bone.startswith('Ear'):
         p = d.scale_about(p, ctx.head('Ear1.L' if bone.endswith('.L') else 'Ear1.R'), .58)
@@ -86,22 +92,25 @@ def paint(p, bone, material, ctx):
     if bone == 'Head' or bone.startswith('Ear'):
         if p.y < -2.46:
             return WHITE                                          # the white muzzle
-        return d.mix(SAND, BACK, .35)
+        return d.mix(SAND, BACK, .55)
     if bone.startswith('Neck'):
-        return d.mix(SAND, BACK, .45)
+        return d.mix(BACK, DARKER, .45)                           # the darker neck and chest
     rump = d.smooth((p.y - 1.06) / .16) * d.smooth((p.z - 1.70) / .12)
     if bone.startswith(('FF', 'IK')):
         return d.mix(LEG, SAND, .35)
     if 'Leg' in bone or 'Shoulder' in bone:
         # A dark stripe down the front of each leg, pale behind and inside.
-        centre = ctx.head(bone)
-        front = d.smooth((centre.y + .02 - p.y) / .10)
-        low = d.smooth((1.55 - p.z) / .5)
-        colour = d.mix(SAND, d.mix(WHITE, SAND, .35), low)
-        colour = d.mix(colour, LEG, .85 * front * low)
+        # The bone runs down the leg's middle; in front of it the leg is dark, behind it pale.
+        head, tail = ctx.head(bone), ctx.tail(bone)
+        t = max(0, min(1, (p.z - head.z) / (tail.z - head.z))) if abs(tail.z - head.z) > .05 else .5
+        ahead = head.y + (tail.y - head.y) * t - p.y
+        low = d.smooth((1.75 - p.z) / .5)
+        colour = d.mix(SAND, d.mix(WHITE, SAND, .45), low * d.smooth(-ahead / .05))
+        colour = d.mix(colour, LEG, .80 * low * d.smooth((ahead + .01) / .05))
         return d.mix(colour, WHITE, rump)
     colour = d.mix(SAND, BACK, d.smooth((p.z - 2.40) / .25))
-    colour = d.mix(colour, d.mix(WHITE, SAND, .25), d.smooth((1.90 - p.z) / .14))     # pale belly
+    colour = d.mix(colour, DARKER, .5 * d.smooth((-.75 - p.y) / .5))                  # darker over the shoulder and chest
+    colour = d.mix(colour, d.mix(WHITE, SAND, .15), d.smooth((1.96 - p.z) / .16))     # pale belly
     return d.mix(colour, WHITE, rump)
 
 

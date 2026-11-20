@@ -20,7 +20,7 @@ from common import cli
 ID = 'condor'
 BLACK = (.016, .015, .016)
 SOOT = (.040, .036, .034)
-WHITE = (.78, .77, .74)
+WHITE = (.92, .91, .88)
 SKIN = (.58, .25, .10)
 PINK = (.50, .17, .13)
 IVORY = (.56, .50, .40)
@@ -71,6 +71,8 @@ def ruff(a, f, head_c, hr):
                 lambda p: plumage(f, p), 'leg.' + side, 7)
 
 
+# Paler edges to the feathers of the back and the folded wings, as fine marks.
+P['marks'] = {'body': lambda f, p: (.085, .078, .072, .8), 'fold': lambda f, p: (.085, .078, .072, .8)}
 P['extra'] = ruff
 
 
@@ -94,10 +96,10 @@ def wing_marks(a, f):
         weight = o.near(a, ['wing1.' + side, 'wing2.' + side])
         under, over = [], []
         for k in range(7):
-            u = .015 + .585 * k / 6
+            u = .005 + .625 * k / 6
             y = s * (sy + reach * u)
             front = lead(u) - chord(u) * .09
-            under.append((tuple(f.w((front, y, sz - .020))), tuple(f.w((front - chord(u) * (.50 * (1 - u / .61) + .015), y, sz - .022))), .0012, up))
+            under.append((tuple(f.w((front, y, sz - .020))), tuple(f.w((front - chord(u) * (.58 * (1 - u / .64) + .015), y, sz - .022))), .0012, up))
             v = .05 + .40 * k / 6
             y = s * (sy + reach * v)
             over.append((tuple(f.w((lead(v) - chord(v) * .50, y, sz + .016))), tuple(f.w((lead(v) - chord(v) * .57, y, sz + .015))), .0012, up))

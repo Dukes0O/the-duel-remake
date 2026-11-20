@@ -50,7 +50,7 @@ def build(output, c, cache):
         hy, fy = s * .055, s * .034
         a.bone('thigh.' + side, (-.150, hy, .205), (-.062, hy, .118), 'hips')
         a.bone('shin.' + side, (-.062, hy, .118), (-.168, hy, .052), 'thigh.' + side)
-        a.bone('foot.' + side, (-.168, hy, .052), (-.050, hy, .010), 'shin.' + side)
+        a.bone('foot.' + side, (-.168, hy, .052), (-.038, hy, .007), 'shin.' + side)
         a.bone('upper.' + side, (.098, fy, .190), (.084, fy, .108), 'body')
         a.bone('lower.' + side, (.084, fy, .108), (.096, fy, .026), 'upper.' + side)
         a.bone('paw.' + side, (.096, fy, .026), (.128, fy, .008), 'lower.' + side)
@@ -90,9 +90,11 @@ def build(output, c, cache):
         hy, fy = s * .055, s * .034
         # The haunch: a big rounded thigh lying against the flank.
         a.mark = flecks
-        a.fur([((-.185, hy * .80, .222), .050, .062), ((-.150, hy * .98, .196), .058, .066), ((-.112, hy * 1.02, .160), .047, .052),
-               ((-.082, hy, .134), .033, .036), ((-.062, hy, .118), .024, .026)],
-              coat, o.near(a, ['thigh.' + side, 'hips', 'shin.' + side]), 12, .015)
+        # (Sunk well into the flank and coloured as the flank is, so no edge shows where they meet.)
+        haunch = lambda p: o.mix(coat(p), o.mix(BUFF, GREY, .25), o.smooth((.185 - p.z) / .05))
+        a.fur([((-.185, hy * .62, .224), .050, .062), ((-.150, hy * .80, .198), .058, .068), ((-.112, hy * .92, .160), .047, .052),
+               ((-.082, hy * .98, .134), .033, .036), ((-.062, hy, .118), .024, .026)],
+              haunch, o.near(a, ['thigh.' + side, 'hips', 'shin.' + side]), 12, .015)
         a.mark = None
         leg = lambda p: o.mix(BUFF, WHITE, .45 * o.smooth((.10 - p.z) / .08))
         a.tube3([(-.064, hy, .120), (-.112, hy, .090), (-.168, hy, .053)], [.024, .019, .0135], leg,
@@ -101,8 +103,12 @@ def build(output, c, cache):
         a.loft([((-.172, hy, .054), .0125, .0135), ((-.130, hy, .038), .0125, .0115), ((-.088, hy, .022), .0130, .0100),
                 ((-.056, hy, .012), .0125, .0090), ((-.040, hy, .008), .0060, .0050)],
                lambda p: o.mix(BUFF, WHITE, .35), o.near(a, ['foot.' + side, 'shin.' + side]), 8)
-        a.tube3([(.100, fy * .9, .200), (.090, fy, .150), (.084, fy, .108), (.090, fy, .066), (.096, fy, .028)],
-                [.026, .019, .0130, .0105, .0095], leg, o.near(a, ['upper.' + side, 'lower.' + side, 'body']), 8)
+        # The foreleg: a shoulder inside the chest, a lean forearm, a fine straight shank.
+        fore = lambda p: o.mix(leg(p), coat(p), o.smooth((p.z - .150) / .04))
+        a.mark = lambda p: DARK + (.5 * o.smooth((p.z - .150) / .04),)
+        a.tube3([(.098, fy * .75, .215), (.096, fy * .95, .180), (.089, fy, .145), (.084, fy, .108), (.090, fy, .066), (.096, fy, .028)],
+                [.036, .031, .0200, .0135, .0105, .0095], fore, o.near(a, ['upper.' + side, 'lower.' + side, 'body']), 8)
+        a.mark = None
         a.loft([((.090, fy, .020), .0095, .0100), ((.108, fy, .012), .0105, .0085), ((.126, fy, .008), .0060, .0050)],
                lambda p: o.mix(BUFF, WHITE, .35), o.near(a, ['paw.' + side, 'lower.' + side]), 8)
 
@@ -176,7 +182,6 @@ def idle(obj, t):
     o.turn(obj, 'ear.R', -.55 * max(0, math.sin(2 * w + 2.2)) ** 2, (0, 0, 1))
     o.turn(obj, 'ear.L', -.10 * math.sin(3 * w))
     o.turn(obj, 'ear.R', -.10 * math.sin(3 * w + 1))
-    o.stretch(obj, 'body', (1, 1 + .02 * math.sin(8 * w), 1 + .02 * math.sin(8 * w)))
     o.turn(obj, 'tail', .08 * math.sin(4 * w))
 
 
@@ -207,9 +212,10 @@ def bound(obj, t):
         o.turn(obj, 'ear.' + side, -1.15 + .12 * math.sin(2 * math.pi * t))   # laid back along the neck
     # Set the hare on the ground: its lowest foot touches, except in the air between the two strikes.
     bpy.context.view_layer.update()
-    low = min(min(obj.pose.bones[name].tail.z, obj.pose.bones[name].head.z) for name in TOES)
+    # (Each foot bone runs from the heel or wrist to the toe tips; the foot is 14 mm thick at the heel, 5 at the toes.)
+    low = min(min(obj.pose.bones[name].tail.z - .005, obj.pose.bones[name].head.z - .014) for name in TOES)
     air = .075 * math.sin(math.pi * (t - .26) / .26) if .26 < t < .52 else 0
-    o.shift(obj, 'root', (0, 0, .010 - low + air))
+    o.shift(obj, 'root', (0, 0, air - low))
 
 
 if __name__ == '__main__':

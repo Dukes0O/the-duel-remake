@@ -655,6 +655,104 @@
     "recipe": "tools/blender/wildlife/gull.py",
     "adaptation": "Shared original bird recipe (bird.py), yellow-legged gull colours."
   },
+  "roadrunner": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Run"
+    ],
+    "recipe": "tools/blender/wildlife/roadrunner.py",
+    "adaptation": "Greater roadrunner, 0.54 m: its own rig with a crest and two-joint legs, streaked plumage drawn as fine marks in the coat bake, a tented tail. It runs; it has no flight loop."
+  },
+  "jackrabbit": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "recipe": "tools/blender/wildlife/jackrabbit.py",
+    "adaptation": "Black-tailed jackrabbit: long folded hind legs, cupped black-tipped ears as long as the head and neck, grizzled coat. Walk is a bound in place."
+  },
+  "desert-bighorn": {
+    "page": "https://poly.pizza/m/T6Cs7tmMHJ",
+    "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb",
+    "creator": "Quaternius",
+    "licence": "CC0 1.0",
+    "sha256": "fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e",
+    "file": "quaternius-deer-original.glb",
+    "clips": [
+      "Attack_Headbutt",
+      "Attack_Kick",
+      "Death",
+      "Eating",
+      "Gallop",
+      "Gallop_Jump",
+      "Idle_HitReact_Left",
+      "Idle_HitReact_Right",
+      "Jump_toIdle",
+      "Walk",
+      "Idle_Headlow",
+      "Idle_2",
+      "Idle",
+      "AnimalArmature|Attack_Headbutt",
+      "AnimalArmature|Attack_Kick",
+      "AnimalArmature|Death",
+      "AnimalArmature|Eating",
+      "AnimalArmature|Gallop",
+      "AnimalArmature|Gallop_Jump",
+      "AnimalArmature|Idle",
+      "AnimalArmature|Idle_2",
+      "AnimalArmature|Idle_Headlow",
+      "AnimalArmature|Idle_HitReact_Left",
+      "AnimalArmature|Idle_HitReact_Right",
+      "AnimalArmature|Jump_toIdle",
+      "AnimalArmature|Walk"
+    ],
+    "triangles": 2096,
+    "adaptation": "Desert bighorn ram (Ovis canadensis nelsoni) reshaped from the Quaternius deer mesh and rig: leaner than the mountain ram, pale sandstone coat, white rump and muzzle, dark leg fronts, wide-flaring ridged horns that curl round the cheek. Donor clips retained."
+  },
+  "collared-lizard": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "recipe": "tools/blender/wildlife/collared-lizard.py",
+    "adaptation": "Collared lizard, a large male of 0.41 m: big head, two black collars, green body with yellow bands and pale spots, long hind legs and tail. Walk is a sprawled trot."
+  },
+  "pelican": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/pelican.py",
+    "adaptation": "Brown pelican on the shared bird rig (bird.py): long straight bill and pouch, upright curved neck, webbed feet. In Fly the neck draws back and the head rides on the shoulders."
+  },
+  "condor": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/condor.py",
+    "adaptation": "California condor on the shared bird rig (bird.py): 2.9 m span, bare orange head in a black ruff, white underwing triangles and wing bars as thin sheets of their own."
+  },
   "goat": {
     "page": "https://poly.pizza/m/T6Cs7tmMHJ",
     "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb",
@@ -776,103 +874,5 @@
     ],
     "recipe": "tools/blender/wildlife/scorpion.py",
     "adaptation": "Hadrurus arizonensis built at four times life size (0.55 m) so that it can be seen from a car at 10 m, as the card asks: plated body, eight legs, clawed arms, five-bead tail with bulb and sting, its own 39-bone rig."
-  },
-  "roadrunner": {
-    "creator": "Original Blender recipe for The Duel (no third-party source)",
-    "licence": "Project original",
-    "file": null,
-    "sha256": null,
-    "clips": [
-      "Idle",
-      "Run"
-    ],
-    "recipe": "tools/blender/wildlife/roadrunner.py",
-    "adaptation": "Greater roadrunner, 0.56 m: its own rig with a crest and two-joint legs, streaked plumage drawn as fine marks in the coat bake, a tented tail. It runs; it has no flight loop."
-  },
-  "jackrabbit": {
-    "creator": "Original Blender recipe for The Duel (no third-party source)",
-    "licence": "Project original",
-    "file": null,
-    "sha256": null,
-    "clips": [
-      "Idle",
-      "Walk"
-    ],
-    "recipe": "tools/blender/wildlife/jackrabbit.py",
-    "adaptation": "Black-tailed jackrabbit: long hind legs, cupped black-tipped ears as long as the head, grizzled coat. Walk is a bound in place."
-  },
-  "desert-bighorn": {
-    "page": "https://poly.pizza/m/T6Cs7tmMHJ",
-    "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb",
-    "creator": "Quaternius",
-    "licence": "CC0 1.0",
-    "sha256": "fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e",
-    "file": "quaternius-deer-original.glb",
-    "clips": [
-      "Attack_Headbutt",
-      "Attack_Kick",
-      "Death",
-      "Eating",
-      "Gallop",
-      "Gallop_Jump",
-      "Idle_HitReact_Left",
-      "Idle_HitReact_Right",
-      "Jump_toIdle",
-      "Walk",
-      "Idle_Headlow",
-      "Idle_2",
-      "Idle",
-      "AnimalArmature|Attack_Headbutt",
-      "AnimalArmature|Attack_Kick",
-      "AnimalArmature|Death",
-      "AnimalArmature|Eating",
-      "AnimalArmature|Gallop",
-      "AnimalArmature|Gallop_Jump",
-      "AnimalArmature|Idle",
-      "AnimalArmature|Idle_2",
-      "AnimalArmature|Idle_Headlow",
-      "AnimalArmature|Idle_HitReact_Left",
-      "AnimalArmature|Idle_HitReact_Right",
-      "AnimalArmature|Jump_toIdle",
-      "AnimalArmature|Walk"
-    ],
-    "triangles": 2096,
-    "adaptation": "Desert bighorn ram (Ovis canadensis nelsoni) reshaped from the Quaternius deer mesh and rig: leaner and longer-legged than the mountain ram, pale sandstone coat, white rump and muzzle, dark leg fronts, wide-flaring ridged horns. Donor clips retained."
-  },
-  "collared-lizard": {
-    "creator": "Original Blender recipe for The Duel (no third-party source)",
-    "licence": "Project original",
-    "file": null,
-    "sha256": null,
-    "clips": [
-      "Idle",
-      "Walk"
-    ],
-    "recipe": "tools/blender/wildlife/collared-lizard.py",
-    "adaptation": "Collared lizard, a large male of 0.4 m: big head, two black collars, green body with yellow bands and pale spots, long hind legs and tail. Walk is a sprawled trot."
-  },
-  "pelican": {
-    "creator": "Original Blender recipe for The Duel (no third-party source)",
-    "licence": "Project original",
-    "file": null,
-    "sha256": null,
-    "clips": [
-      "Fly",
-      "Idle"
-    ],
-    "recipe": "tools/blender/wildlife/pelican.py",
-    "adaptation": "Brown pelican on the shared bird rig (bird.py): long straight bill and pouch, upright curved neck, webbed feet. In Fly the neck draws back and the head rides on the shoulders."
-  },
-  "condor": {
-    "creator": "Original Blender recipe for The Duel (no third-party source)",
-    "licence": "Project original",
-    "file": null,
-    "sha256": null,
-    "clips": [
-      "Fly",
-      "Idle"
-    ],
-    "recipe": "tools/blender/wildlife/condor.py",
-    "adaptation": "California condor on the shared bird rig (bird.py): 2.9 m span, bare orange head in a black ruff, white underwing triangles and wing bars as thin sheets of their own."
   }
 }

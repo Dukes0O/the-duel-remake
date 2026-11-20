@@ -32,8 +32,10 @@ DARK = (.030, .028, .027)
 P = {'body': .46, 'width': .125, 'height': .14, 'neck': (-.012, .235), 'head': .052,
      'neck_path': [(.12, .012, 1.25), (.28, .026, .92), (.44, .030, .76), (.60, .024, .68), (.76, .010, .66), (.90, -.004, .70)], 'neck_sides': 12,
      'bill': (.190, .031, .019, 1.35), 'bill_curve': .03, 'bill_taper': (5, 2.4), 'tail': (.13, .095, 'round'), 'span': 1.06,
-     'primaries': (6, .30, .075, 44, True), 'body_sides': 14, 'fold_sides': 10, 'chord': (.40, .28), 'leg': .105, 'stance': .075,
-     'toe': .015, 'toes': [(0, .095), (30, .090), (-30, .090)], 'tilt': 22, 'beat': 42, 'flap': .40,
+     'primaries': (6, .30, .075, 44, True), 'body_sides': 14, 'fold_sides': 10, 'chord': (.40, .28), 'leg': .105, 'stance': .088,
+     'toe': .018, 'toes': [(0, .095), (30, .090), (-30, .090)], 'tilt': 22, 'beat': 42, 'flap': .40,
+     # A heavy body, deepest at the breast.
+     'profile': [(-.50, .35, .35), (-.38, .76, .72), (-.20, 1.0, .98), (.02, 1.04, 1.06), (.22, 1.0, 1.12), (.38, .88, 1.02), (.50, .62, .76)],
      'dihedral': .04, 'shag': .02, 'roughness': 1, 'specular': .2, 'refine': 1950}
 
 
@@ -121,7 +123,7 @@ def streaks(f, p):
 
 P['marks'] = {'body': streaks, 'fold': streaks}
 P['extra'] = webbed
-P['fly_extra'] = fly_posture
+P['fly_pose'] = fly_posture
 PAINT = {'body': body, 'head': head, 'wing': wing, 'tail': lambda f, p: DARK, 'bill': bill, 'leg': leg}
 
 

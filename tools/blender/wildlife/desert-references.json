@@ -1,6 +1,6 @@
 {
   "use": "reference only, never runtime: real photographs shown beside each model on the WILD-ART-DESERT sheets",
-  "source": "Wikimedia Commons, public domain or CC0 only, fetched without an account by waste_references.py --plan desert-references.json",
+  "source": "Wikimedia Commons, public domain or CC0 only, fetched without an account by waste_references.py desert-references.json",
   "directory": "C:/Users/kyleb/dev/art-library/wild-desert/reference",
   "width": 1280,
   "photos": {

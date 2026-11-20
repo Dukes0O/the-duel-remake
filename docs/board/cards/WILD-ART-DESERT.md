@@ -8,3 +8,14 @@ Part of the animals line (`docs/board/cards/WILD-ART-SRC.md` has the full histor
 Roadrunner, jackrabbit, desert bighorn, collared lizard, pelican, California condor. (The coyote is done.) For Pacific Canyon and Red Mesa, and the Scablands.
 
 ## Claude answers
+
+**19 November 2026, changed assertions in `tools/test-wildlife-view.mjs` (rule 18).** The six ids
+are already on Red Mesa's and Pacific Canyon's lists in `src/wildlife.js`, so a model row alone
+would put them on those courses, which this card forbids. `src/wildlife-models.js` therefore
+gains `HELD_FROM_COURSES` (the same list WILD-ART-CITY adds for its ids; whichever merges second
+joins the two), and `APPROVED_MODEL_IDS` leaves the held ids out. Three assertions that walked
+`APPROVED_MODEL_IDS` (the table matches the files on disk, the table is frozen, every row has
+its file, species and clips) now walk every key of `WILDLIFE_MODELS`. Nothing is loosened: they
+check more rows than before, and new assertions hold that every held id has a model, that the
+approved ids are exactly the rest, that Red Mesa stays empty and Pacific Canyon keeps only its
+coyotes while the six are held, and that Red Mesa has its four and the condor once they are let go.

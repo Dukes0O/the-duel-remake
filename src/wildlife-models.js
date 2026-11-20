@@ -48,6 +48,15 @@ export const WILDLIFE_MODELS = Object.freeze({
   // little when running, as the beaver does. The wildcat has not passed.
   'wild-boar': model('wild-boar.glb', {speed: 5, rate: 4}),
   'golden-eagle': model('golden-eagle.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
+  // Desert and coast (WILD-ART-DESERT), for Red Mesa and Pacific Canyon; held off the courses below.
+  // The roadrunner is a ground bird: it runs (its Run clip) and has no Fly clip. The jackrabbit's
+  // Walk is a bound. The collared lizard is a large male, a little over life size.
+  'roadrunner': model('roadrunner.glb', {speed: 6, rate: 4}, {move: 'Run'}),
+  'jackrabbit': model('jackrabbit.glb', {speed: 8, rate: 3}),
+  'desert-bighorn': model('desert-bighorn.glb', {speed: 5.5, rate: 3.5}),
+  'collared-lizard': model('collared-lizard.glb', {speed: 3, rate: 5}),
+  'pelican': model('pelican.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'condor': model('condor.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
   // The Wasteland and the player's town (WILD-ART-WASTE). On no course yet: the town's
   // view takes the goat, the chicken and the camp dog by file name. The chicken walks
   // and pecks; it has no Fly clip. The scorpion is four times life size, to be seen from a car.
@@ -59,8 +68,14 @@ export const WILDLIFE_MODELS = Object.freeze({
   'scorpion': model('scorpion.glb', {speed: 1.2, rate: 2.5}),
 });
 
-// The ids in the table, for availableSpecies() and the count's course list.
-export const APPROVED_MODEL_IDS = Object.freeze(Object.keys(WILDLIFE_MODELS));
+// Models that have passed their art rounds but stand on no course yet. src/wildlife.js already
+// lists the desert and coast animals on Red Mesa and Pacific Canyon, so a row above would put
+// them there at once, on courses nobody has driven with them. Their placement card takes an id
+// off this list when its course has been looked at.
+export const HELD_FROM_COURSES = Object.freeze(['roadrunner', 'jackrabbit', 'desert-bighorn', 'collared-lizard', 'pelican', 'condor']);
+
+// The ids a course may use, for availableSpecies() and the count's course list.
+export const APPROVED_MODEL_IDS = Object.freeze(Object.keys(WILDLIFE_MODELS).filter(id => !HELD_FROM_COURSES.includes(id)));
 
 export const WILDLIFE_MODEL_DIR = '/assets/wildlife/';
 export const wildlifeModelUrl = species => WILDLIFE_MODEL_DIR + WILDLIFE_MODELS[species].file;

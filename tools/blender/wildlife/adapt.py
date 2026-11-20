@@ -14,18 +14,7 @@ MATTE = {'black-bear', 'goat'}
 
 # Small animals and birds: a 512 coat map is plenty and saves runtime size.
 SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra',
-             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull', 'chicken', 'turkey-vulture', 'scorpion',
-             'roadrunner', 'jackrabbit', 'collared-lizard', 'pelican', 'condor'}
-
-
-# Markings finer than the mesh, drawn when the coat is baked (common.finish_coat). The recipe
-# says where and in what colour (original.Body.mark); this says what the pattern is, in metres.
-MARKS = {
-    'roadrunner': {'scale': (30, 340, 340), 'at': .50, 'soft': .035},          # streaks 3 mm wide, 3 cm long
-    'jackrabbit': {'scale': (150, 400, 400), 'at': .56, 'soft': .04},          # the dark flecks of an agouti coat
-    'pelican': {'scale': (22, 240, 240), 'at': .52, 'soft': .04},                # long dark shaft streaks on silver
-    'collared-lizard': {'scale': (115, 115, 115), 'at': .27, 'soft': .05, 'spots': True},   # round spots about 5 mm across
-}
+             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull', 'chicken', 'turkey-vulture', 'scorpion'}
 
 
 def build(species, output, c, cache):
@@ -51,6 +40,20 @@ def build(species, output, c, cache):
         animated_donor(species, mesh, rigs[0], output, c)
     else:
         static_donor(species, mesh, output, c)
+
+
+# WILD-ART-DESERT, added here, apart from the sets at the top, so that two cards can add species at once.
+SMALL_MAP |= {'roadrunner', 'jackrabbit', 'collared-lizard', 'pelican', 'condor'}
+
+# Markings finer than the mesh, drawn when the coat is baked (common.finish_coat). The recipe
+# says where and in what colour (original.Body.mark); this says what the pattern is, in metres.
+MARKS = {
+    'roadrunner': {'scale': (30, 340, 340), 'at': .50, 'soft': .035},          # streaks 3 mm wide, 3 cm long
+    'jackrabbit': {'scale': (150, 400, 400), 'at': .56, 'soft': .04},          # the dark flecks of an agouti coat
+    'pelican': {'scale': (22, 240, 240), 'at': .52, 'soft': .04},                # long dark shaft streaks on silver
+    'condor': {'scale': (55, 150, 150), 'at': .56, 'soft': .03},                 # the paler edges of big black feathers
+    'collared-lizard': {'scale': (115, 115, 115), 'at': .27, 'soft': .05, 'spots': True},   # round spots about 5 mm across
+}
 
 
 def animated_donor(species, mesh, rig, output, c):

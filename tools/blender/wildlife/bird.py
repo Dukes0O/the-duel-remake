@@ -66,8 +66,8 @@ def build(ID, P, paint, output, c):
         a.bone('foot.' + side, tuple(foot), tuple(foot + Vector((.03, 0, 0))), 'leg.' + side)
 
     body = o.near(a, ['body', 'neck', 'tail'])
-    prof = [(-.50, .35, .35), (-.38, .74, .72), (-.20, .98, .96), (.02, 1, 1), (.22, .92, .95),
-            (.38, .76, .80), (.50, .52, .62)]
+    prof = P.get('profile', [(-.50, .35, .35), (-.38, .74, .72), (-.20, .98, .96), (.02, 1, 1), (.22, .92, .95),
+                             (.38, .76, .80), (.50, .52, .62)])
     sections = [(tuple(f.w((x * bl, 0, -.04 * bh * (x > .1)))), w * bw, h * bh) for x, w, h in prof]
     # P['marks']: part name -> function(frame, point) -> (r, g, b, strength), the fine marks baked over the coat there.
     marks = P.get('marks', {})
@@ -110,7 +110,8 @@ def build(ID, P, paint, output, c):
         taper = P.get('bill_taper', (1.4, 1.25))       # a pelican's long bill keeps its width and depth to the tip
         bill.append((tuple(centre), max(.0015, width * (1 - u ** taper[0])), max(.0015, depth * (1 - u ** taper[1]))))
     a.loft(bill, lambda p: paint['bill'](f, p), 'head', 8)
-    for s in (1, -1):
+    # An owl's eyes face forward; its recipe sets them on the face itself (P['eyes'] False).
+    for s in (1, -1) if P.get('eyes', True) else ():
         eye = head_c + Vector((hr * .42, s * hr * .80, hr * .22))
         if 'eyering' in paint:
             a.oval(tuple(eye + Vector((0, s * -.002, 0))), (hr * .20, hr * .07, hr * .20), paint['eyering'](f, eye), 'head', 3, 6)
@@ -208,8 +209,8 @@ def build(ID, P, paint, output, c):
         o.turn(obj, 'head', .10 * math.sin(3 * w))
         o.turn(obj, 'tail', .08 * max(0, math.sin(5 * w)) ** 4)
         o.stretch(obj, 'body', (1 + .02 * math.sin(4 * w), 1, 1 + .02 * math.sin(4 * w)))
-        if 'idle_extra' in P:
-            P['idle_extra'](obj, t)
+        if 'idle_pose' in P:
+            P['idle_pose'](obj, t)      # a species' own standing pose, added to the shared one
 
     def fly(obj, t):
         w = 2 * math.pi * t
@@ -231,8 +232,8 @@ def build(ID, P, paint, output, c):
             o.stretch(obj, 'fold.' + side, (.001, .001, .001))
         o.turn(obj, 'tail', .06 * math.sin(w - 1.2))
         o.turn(obj, 'head', -.05 * math.sin(w))
-        if 'fly_extra' in P:
-            P['fly_extra'](obj, t)                       # a species' own flight posture (the pelican's drawn-back neck)
+        if 'fly_pose' in P:
+            P['fly_pose'](obj, t)       # e.g. a heron's neck drawn back in flight
 
     o.finish(a, c, output, [('Idle', 120, idle), ('Fly', P.get('beat', 16), fly)], budget=2000,
              roughness=P.get('roughness'), specular=P.get('specular'), refine=P.get('refine'))

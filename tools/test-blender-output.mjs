@@ -24,6 +24,9 @@ const westWildlife = [
   ['chamois', 'Walk', 'white-tailed-deer'], ['ibex', 'Walk', 'white-tailed-deer'], ['red-fox', 'Walk', 'eastern-wolf'],
   ['wildcat', 'Walk', 'eastern-wolf'], ['wild-boar', 'Walk'], ['alpine-marmot', 'Walk'],
   ['black-stork', 'Fly'], ['golden-eagle', 'Fly'], ['gull', 'Fly'],
+  // WILD-ART-DESERT: the roadrunner runs and keeps a bird's 2,000 triangles; the bighorn is from the deer.
+  ['roadrunner', 'Run', undefined, 2000], ['jackrabbit', 'Walk'], ['desert-bighorn', 'Walk', 'white-tailed-deer'],
+  ['collared-lizard', 'Walk'], ['pelican', 'Fly'], ['condor', 'Fly'],
   // WILD-ART-WASTE: the town's goat, chicken and camp dog, then three Wasteland animals.
   // The chicken walks, but it is a bird and keeps a bird's 2,000 triangles.
   ['goat', 'Walk', 'white-tailed-deer'], ['camp-dog', 'Walk', 'eastern-wolf'], ['chicken', 'Walk', undefined, 2000],

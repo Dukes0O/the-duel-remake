@@ -14,8 +14,8 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import waste_sheet as w
 
-w.CARD.update(title='WILD-ART-DESERT', slug='wild-art-desert', references='desert-references.json',
-              footer='Desert bighorn from the CC0 Quaternius deer; the other five are original recipes.')
+w.CARD, w.LOOKS, w.REFS = 'WILD-ART-DESERT', 'wild-art-desert', 'desert-references.json'
+w.FOOT = 'Desert bighorn from the CC0 Quaternius deer; the other five are original recipes.'
 
 
 def ground(motion, low=.10):
