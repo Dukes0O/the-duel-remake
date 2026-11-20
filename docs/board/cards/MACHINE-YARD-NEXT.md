@@ -33,3 +33,13 @@ photos meet and its outriggers are plain bars.
 
 Each item names its own check when it is taken up. The yard's suites are `tools/test-machine-roads.mjs`,
 `tools/test-machine-drill.mjs` and `tools/test-machine-view.mjs`; the scenarios are `machine-roads` and `machine-drill`.
+
+## Done (19 November 2026, pull request 56, merged)
+
+The five "Found in play" items are built: machines meet each other as solids (`src/machines/yard-solids.js`, each machine's
+`footprint` measured from its model, sound `machine-contact`); the paver says where the nearest fill is; the roller shows the
+fill's firmness as a percentage; a 13 m well takes about a minute at a steady feed; dust sits at the machine. Still open on
+this card: the model round on `town-machines-2.py`, sending yard work to a town, the cell-edge grade case, the roller and paver
+in the Dig, and one new finding: the roller compacts the cell at its middle while its drum is drawn about 2 m ahead, and the
+paver lays at its middle while its screed is drawn about 4 m behind (Claude: keep the rules where they are for now; decide
+with the next machine card).

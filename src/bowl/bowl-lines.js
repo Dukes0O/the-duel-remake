@@ -22,6 +22,7 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.eat': 'vehicle.crush',          // it eats a junk car to mend its limp
   'bowl.rex.fall': 'combat.explosion',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'world.furnace.horn',    // it walks out through the car park gate
+  'bowl.rex.drop': 'vehicle.crash',         // it drops a junk car on its rails to launch off
   'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
   'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
   'bowl.event.won': 'interface.win',       // an event is won
@@ -42,11 +43,11 @@ export const BOWL_GOALS = Object.freeze({
   // BOWL-REX-FIGHT: what to do now, by what the Scrapasaurus is doing.
   scrapasaurus: ({phase, left = 3, last = false} = {}) => phase === 'tell' || phase === 'fire'
     ? 'Fire is coming, so get out of the orange on the floor and stay out until it stops.'
-    : phase === 'rest' ? 'A battery box is open, so jump the big ramp now and land on its back.'
+    : phase === 'rest' ? 'A battery box is open, so drive fast up the junk car on its rails and land on its back.'
       : phase === 'lift' || phase === 'throw' ? 'It is going to throw a car, so keep moving and stay out of the ring on the floor.'
         : phase === 'fallen' ? 'It is falling over, so stay back and enjoy it.'
           : last ? `It is heading for the car park gate, and you still have ${REX_BOXES[left]} to smash.`
-            : `Smash ${REX_BOXES[left]}. It rests by the big ramp after it breathes fire there, so meet it then.`,
+            : `Smash ${REX_BOXES[left]}. It rests after it breathes fire on the Jump Straight, so meet it there.`,
   carCrush: target => `Drive straight down the line and crush everything you can. Reach ${target} to go on.`,
   freestyle: target => `Do big jumps, flips and crushes to score ${target} points before the clock runs out.`,
   sideBySide: () => 'Race the other truck once round the Bowl and cross the line first.',
@@ -74,8 +75,8 @@ export const BIG_MO = Object.freeze({
   'rex.seen.4': 'Our driver has beaten every truck in the Bowl, so next time I will have to open the big gate under the stands. I am a little bit scared.',
   'event.scrapasaurus.intro': 'You beat every truck in the Bowl, so here is the Scrapasaurus! It is heading for the car park gate, and if it gets out it will eat every car in the car park.',
   'rex.tell': 'Look at its chest glowing. That means fire is coming, so get out of the orange on the floor.',
-  'rex.rest': 'It has stopped to cool down, and a battery box is open. Jump the big ramp and land on its back!',
-  'rex.rest.last': 'This is its last rest before the car park gate, so jump the big ramp and land on that box!',
+  'rex.rest': 'It has stopped to cool down and dropped a junk car on its rails. Drive up that car and land on its back!',
+  'rex.rest.last': 'This is its last rest before the car park gate, so drive up that junk car and land on that box!',
   'rex.smash.1': 'One battery box is smashed! Now it is limping, and it will want a snack.',
   'rex.smash.2': 'Two battery boxes are gone! One more landing and it will fall over.',
   'rex.smash.3': 'That was the last battery box! Everybody stand back, because it is going to fall.',

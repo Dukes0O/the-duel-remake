@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, drillYardControls, stepDrill, stepDrillRig} from '../src/machines/drill.js';
+import {createDrillState, createDrillRigState, DRILL_FEED_RATES_MPS, drillMaterialAt, drillSite, drillYardControls, stepDrill, stepDrillRig} from '../src/machines/drill.js';
 import {createTown, deserializeTown, dispatchTownCommand, serializeTown, stepTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
 import * as THREE from 'three';
@@ -107,6 +107,36 @@ assert.equal(heap.material.color.getHex(),0x302c27, 'Wet cuttings are dark.');
 assert.ok(heap.material.roughness<1, 'Wet cuttings have a damp surface.');
 cuttingsView.dispose();
 assert.equal(scene.children.length,0, 'Leaving the yard removes its cuttings.');
+// MACHINE-YARD-NEXT: a 13 m well is about a minute at the steady feed (Space alone), not two and a half.
+{
+  const steady = drillYardControls({Space:true}, 'work');
+  const wells = [];
+  for (let x = -40; x <= 60; x += 3) for (let z = -20; z <= 40; z += 3) {
+    const site = drillSite(1, x, z);
+    if (Math.abs(site.depth - 13) < 0.6) wells.push(site);
+  }
+  assert.ok(wells.length >= 20, 'The yard ground has 13 m wells to time.');
+  for (const site of wells) {
+    let hole = {...createDrillState(1, site.x, site.z)}, seconds = 0;
+    const order = [], kinds = new Set();
+    while (!hole.struckWater && seconds < 600) {
+      const result = stepDrill(hole, steady, 1 / 60);
+      for (const event of result.events) kinds.add(event.type);
+      const material = drillMaterialAt(hole.site, hole.depth);
+      if (order.at(-1) !== material) order.push(material);
+      hole = result.state; seconds += 1 / 60;
+    }
+    assert.deepEqual(order, ['clay', 'gravel', 'rock'], 'The layers come in the same order.');
+    assert.ok(seconds >= 45 && seconds <= 75, `A ${site.depth} m well took ${seconds.toFixed(1)} s at the steady feed.`);
+    assert.ok(!kinds.has('drill-jammed') && kinds.has('water-struck'), 'The steady feed never jams and reaches water.');
+  }
+  // The rock is still the slow, tense part: a hard feed there jams the bit at once.
+  assert.ok(DRILL_FEED_RATES_MPS.clay > DRILL_FEED_RATES_MPS.gravel && DRILL_FEED_RATES_MPS.gravel > DRILL_FEED_RATES_MPS.rock);
+  const inRock = {...createDrillState(1, wells[0].x, wells[0].z), depth:wells[0].gravelEnd + 0.1};
+  assert.equal(stepDrill(inRock, drillYardControls({Space:true, KeyW:true}, 'work'), 1 / 60).events[0].type, 'drill-jammed');
+  assert.equal(stepDrill({...inRock, depth:0.1}, drillYardControls({Space:true, KeyW:true}, 'work'), 1 / 60).state.jammed, false,
+    'A hard feed is safe in clay.');
+}
 console.log('Drill: repeatable layers and water, jam recovery and town well save passed.');
 
 assert.deepEqual(drillYardControls({KeyW:true},'drive'),{forward:1,steer:0,mastDown:false,feed:0});

@@ -95,11 +95,11 @@ export function createRexView({loadModel}) {
       for (const clip of asset.animations || []) actions[/jaw/.test(clip.name) ? 'jaw' : /tail/.test(clip.name) ? 'tail' : clip.name] = mixer.clipAction(clip);
       group.userData.rexReady = true;
     }).catch(error => { if (!disposed) group.userData.rexError = error?.message || 'The Scrapasaurus could not load'; });
-    // The pen beside the rails, on the island side of the floor's edge.
+    // The pen beside the rails, between them and the wall (rexPlaces).
     const box = new THREE.BoxGeometry(1.9, 1.15, 4.1);
     for (let i = 0; i < REX_RULES.penCars; i++) {
       const car = new THREE.Mesh(box, rust);
-      const p = next.groundAt(places.penS + (i % 4) * 2.2 - 3.3, -places.edge - .9 - Math.floor(i / 4) * .2);
+      const p = next.groundAt(places.penS + (i % 4) * 2.2 - 3.3, places.penLateral - places.side * Math.floor(i / 4) * .2);
       car.position.set(p.x, p.y + .58 + Math.floor(i / 4) * 1.15, p.z);
       car.rotation.y = p.heading + (i % 2 ? .25 : -.2);
       pen.add(car);
@@ -127,7 +127,7 @@ export function createRexView({loadModel}) {
     chestLight.intensity = 0;
     if (teaser) {
       // Behind the wall in front of the stands, at the head of the crush line, looking in.
-      const at = next.groundAt(places.startS, places.edge + 4.5);
+      const at = next.groundAt(places.startS, places.side * (places.edge + 4.5));
       place(at, at.heading - Math.PI / 2);
       pose.position.y = 0; pose.rotation.set(0, 0, 0);
       boxes.forEach(({whole, smashed}) => { if (whole) whole.visible = true; if (smashed) smashed.visible = false; });

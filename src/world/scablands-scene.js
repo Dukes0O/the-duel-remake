@@ -503,19 +503,28 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townLife=null,townFx=null,townLifeClock=0,townOutposts=null,townSeconds=0;
+  let townDraw=null,townLife=null,townFx=null,townArt=null,townArtLibrary=null,townArtReplan=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0,lifeTown=null,lifeFireKey='';
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
   const addTown=async()=>{
     if(!townLayout)return;
-    const {buildTownChunkInstances}=await import('../town/view/town-instances.js');
+    const [{buildTownChunkInstances},{createTownArtLibrary,createTownArtDrawing},{townArtPlan}]=await Promise.all([
+      import('../town/view/town-instances.js'),import('../town/view/town-art.js'),import('../town/view/town-art-plan.js')]);
     if(retired)return;
-    const town={regions:{scablands:{}},buildings:townLayout.buildings||[],zones:[]};
+    const town={seed:townLayout.seed,regions:{scablands:{}},buildings:townLayout.buildings||[],zones:[]};
     const chunks=new Set();
     for(const building of town.buildings)if(building.regionId==='scablands')chunks.add(`${Math.floor(building.x/16)}:${Math.floor(building.z/16)}`);
     const root=new THREE.Group();root.name='Town roads, sites and buildings';
     for(const key of chunks){const [x,z]=key.split(':').map(Number);for(const mesh of buildTownChunkInstances(town,{x,z},'near'))root.add(mesh);}
+    // TOWN-VIEW-ART: the town's buildings, sites, ruins and street things from the art families, as in the town view.
+    // The layout is read once at the start of the drive; the art is drawing only and is never a solid.
+    townArtLibrary=createTownArtLibrary({loadModel:url=>loadAsset(url).then(result=>result?.scene??result),onLoad:()=>townArt?.markDirty()});
+    townArt=createTownArtDrawing({library:townArtLibrary,parent:root});
+    // A fire call changes the drawn copy of the buildings (drawJobFires): the art is planned again from that copy, so a building
+    // lost to the fire stands as its burnt ruin and one still burning keeps standing under its flames.
+    townArtReplan=buildings=>townArt.setPlan(townArtPlan({...town,buildings},{world:false}).placements);
+    townArtReplan(town.buildings);
     const roadMat=new THREE.MeshStandardMaterial({color:0x756b59,roughness:1});
     for(const road of townLayout.roads||[]){
       const dx=road.b.x-road.a.x,dz=road.b.z-road.a.z,length=Math.hypot(dx,dz);
@@ -530,7 +539,7 @@ export function createScablandsScene(course,options={}){
     if(retired)return;
     // Each person lives at their own spot from the layout. The drive has no town clock, so its people keep a working day
     // at the town's own pace, a game hour every 1.875 s from 8:00 to 17:00, and then start the next day.
-    const lifeTown={seed:townLayout.seed,buildings:townLayout.buildings||[],homePlots:[],people:(townLayout.walkers||[]).map(walker=>({id:walker.id,spot:{x:walker.x,z:walker.z}}))};
+    lifeTown={seed:townLayout.seed,buildings:townLayout.buildings||[],homePlots:[],people:(townLayout.walkers||[]).map(walker=>({id:walker.id,spot:{x:walker.x,z:walker.z}}))};
     const lifeHour=()=>Math.floor(townLifeClock/1.875);
     townLife=createTownWalkers({town:lifeTown,hourAt:()=>8+lifeHour()%10,dayAt:()=>Math.floor(lifeHour()/10)});
     townFx=createTownFx({town:lifeTown,buildings:root,fog:false,light:false,hourAt:()=>8+lifeHour()%10});
@@ -543,8 +552,34 @@ export function createScablandsScene(course,options={}){
         drawnHeightAt:(x,z)=>group.userData.drawnGroundHeightAt?.(x,z)});
       group.add(townOutposts.group);group.userData.townOutposts=townOutposts;
     }
+    // Mrs Vane's kiosks, her sites and Vane Reach, from the same layout that makes them solid (TOWN-VANE-SCENE).
+    if(townLayout.vane&&featureFlags.enabled('wasteland-town')){
+      const {createTownVaneScene}=await import('../town/view/town-vane-scene.js');
+      if(retired)return;
+      townVane=createTownVaneScene({vane:townLayout.vane,loadAsset,drawnHeightAt:(x,z)=>group.userData.drawnGroundHeightAt?.(x,z)});
+      group.add(townVane.group);group.userData.townVane=townVane;
+    }
   };
   void addTown();
+  // TOWN-FIRE-JOB: a fire call's flames are the town's own fire look (src/town/view/town-fx.js draws a building with a fire stage,
+  // its size from the stage). The call's fires are put on the drawn copy of the town's buildings as stages, so the town view draws
+  // them, steams them as they go out and smoulders them after. Drawing only: the job's state is read and never written.
+  const drawJobFires=state=>{
+    if(!lifeTown||!townLayout)return;
+    const job=state?.arena?.mode==='world-job'?state.arena.worldJob?.job:null,step=job?.steps?.[job.stepIndex];
+    const fires=step?.kind==='douse'?job.stepState?.fires:null;
+    const key=fires?Object.entries(fires).filter(([,fire])=>fire.state==='burning').map(([id,fire])=>`${id}:${Math.round(fire.heat*20)}`).join(','):'';
+    if(key===lifeFireKey)return;
+    lifeFireKey=key;
+    // The town view's heat is .35 + .2 x the stage: a stage is found for each fire's heat (a small fire draws as its smallest).
+    lifeTown.buildings=(townLayout.buildings||[]).map(building=>{
+      const fire=fires?.[building.id];
+      if(fire?.state==='burning')return {...building,fireStage:Math.max(.05,(fire.heat-.35)/.2)};
+      if(fire?.state==='lost')return {...building,fireStage:undefined,state:'burnt-1'};
+      return building.fireStage?{...building,fireStage:undefined}:building;
+    });
+    townArtReplan?.(lifeTown.buildings);
+  };
   const furnaceVents=[],furnacePlates=[];
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
   // The furnace's surfaces are photos, which carry their own rust and soot; the code adds only the road dust.
@@ -856,6 +891,10 @@ export function createScablandsScene(course,options={}){
     tunnelLining.userData.look.update({car:tunnelCar,forward:tunnelForward,mouths,headlights:state.onFoot?0:1});
   }
   function locate(state){
+    // HELI-RUSTWALL: over the land in Kestrel One the drawing follows the helicopter (render3d.js sets the point each frame;
+    // the car stays parked at the gate). Drawing only.
+    const follow=group.userData.followPoint;
+    if(follow&&Number.isFinite(follow.x)&&Number.isFinite(follow.z)){here.x=follow.x;here.z=follow.z;return true;}
     if(state?.onFoot&&Number.isFinite(state.fighter?.x)&&Number.isFinite(state.fighter?.z)){here.x=state.fighter.x;here.z=state.fighter.z;return true;}
     if(!Number.isFinite(state?.s)||!Number.isFinite(state?.lateral))return false;
     const {samples,step,length}=course,p=((state.s%length)+length)%length,index=Math.min(samples.length-2,Math.floor(p/step));
@@ -920,7 +959,9 @@ export function createScablandsScene(course,options={}){
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
         group.userData.drawnFeet?.refresh();
-        townLifeClock+=presentationDt;townLife?.update({dt:presentationDt,focus:here,distance:60,car:here});townFx?.update({dt:presentationDt,focus:here,distance:60});
+        townLifeClock+=presentationDt;townLife?.update({dt:presentationDt,focus:here,distance:60,car:here});drawJobFires(state);townFx?.update({dt:presentationDt,focus:here,distance:60});
+        // Pieces past 1.2 km from the car are not drawn: the town is a speck there and the Scablands' own scenery stands beyond.
+        townArt?.update({viewer:{x:here.x,y:scablandsSurfaceHeightAt(here.x,here.z)+2,z:here.z},fogFar:1200,hour:8+Math.floor(townLifeClock/1.875)%10,dt:presentationDt});
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
@@ -934,12 +975,12 @@ export function createScablandsScene(course,options={}){
       if (worldJob?.storyPeople) peopleSeconds += Math.max(0, presentationDt);
       storyPeople.update(worldJob, worldJob?.night2?.camera?.target ?? here, peopleSeconds, drawnShift);
       if(townOutposts){townSeconds+=Math.max(0,presentationDt);townOutposts.update(here,townSeconds,drawnShift);}
+      townVane?.update(here);
       if (worldJob?.night2 && !night2) {
         night2 = createNight2Look(course);
         group.add(night2.group);
       }
-      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? [],
-        {mouthOf: storyPeople.mouthOf, viewer: worldJob?.night2?.camera?.position ?? here});
+      night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? []);
       const storm = featureFlags.enabled('wasteland-town') ? dustNightOf(state) : null;
       if (storm && !dustNight) { dustNight = createDustNightLook(storm); group.add(dustNight.group); }
       if (dustNight) {
@@ -1149,7 +1190,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null;
+    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); townArt?.dispose(); townArtLibrary?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

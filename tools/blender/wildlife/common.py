@@ -62,8 +62,14 @@ def material():
     return mat
 
 
-def finish_coat(mesh, rough_fur=False, size=1024):
-    """Bake unlit coat colour and fine directional fur into one embedded map (1K unless smaller)."""
+def finish_coat(mesh, rough_fur=False, size=1024, marks=None):
+    """Bake unlit coat colour and fine directional fur into one embedded map (1K unless smaller).
+
+    marks (adapt.MARKS, WILD-ART-DESERT) draws markings finer than the mesh: where the mesh has a
+    'Marks' colour (its alpha is the strength), a pattern laid in the animal's own metres mixes
+    that colour over the coat. {'scale': (x, y, z), 'at': threshold, 'soft': edge} stretches a
+    noise into streaks or flecks; 'spots': True draws round spots of radius `at` cells instead.
+    """
     bpy.ops.object.select_all(action='DESELECT')
     mesh.select_set(True)
     bpy.context.view_layer.objects.active = mesh
@@ -95,7 +101,35 @@ def finish_coat(mesh, rough_fur=False, size=1024):
     mix = nodes.new('ShaderNodeMixRGB')
     mix.blend_type = 'MULTIPLY'
     mix.inputs[0].default_value = 1
-    links.new(next(n for n in nodes if n.type == 'VERTEX_COLOR').outputs['Color'], mix.inputs[1])
+    coat = next(n for n in nodes if n.type == 'VERTEX_COLOR').outputs['Color']
+    if marks and 'Marks' in mesh.data.color_attributes:
+        mark = nodes.new('ShaderNodeVertexColor')
+        mark.layer_name = 'Marks'
+        place = nodes.new('ShaderNodeVectorMath')
+        place.operation = 'MULTIPLY'
+        place.inputs[1].default_value = marks['scale']
+        links.new(coord.outputs['Object'], place.inputs[0])
+        pattern = nodes.new('ShaderNodeTexVoronoi' if marks.get('spots') else 'ShaderNodeTexNoise')
+        pattern.inputs['Scale'].default_value = 1
+        if not marks.get('spots'):
+            pattern.inputs['Detail'].default_value = marks.get('detail', 1.5)
+        links.new(place.outputs['Vector'], pattern.inputs['Vector'])
+        edge = nodes.new('ShaderNodeValToRGB')
+        at, soft = marks['at'], marks.get('soft', .03)
+        edge.color_ramp.elements[0].position, edge.color_ramp.elements[1].position = max(0, at - soft), min(1, at + soft)
+        if marks.get('spots'):
+            edge.color_ramp.elements[0].color, edge.color_ramp.elements[1].color = (1, 1, 1, 1), (0, 0, 0, 1)
+        links.new(pattern.outputs['Distance' if marks.get('spots') else 'Fac'], edge.inputs[0])
+        strength = nodes.new('ShaderNodeMath')
+        strength.operation = 'MULTIPLY'
+        links.new(edge.outputs['Color'], strength.inputs[0])
+        links.new(mark.outputs['Alpha'], strength.inputs[1])
+        marked = nodes.new('ShaderNodeMixRGB')
+        links.new(strength.outputs[0], marked.inputs[0])
+        links.new(coat, marked.inputs[1])
+        links.new(mark.outputs['Color'], marked.inputs[2])
+        coat = marked.outputs[0]
+    links.new(coat, mix.inputs[1])
     links.new(ramp.outputs['Color'], mix.inputs[2])
     shader = nodes.get('Principled BSDF')
     links.new(mix.outputs[0], shader.inputs['Base Color'])

@@ -2,82 +2,85 @@ import * as THREE from 'three';
 import {TOWN_CELL_METRES} from '../town-world-data.js';
 import {townChunkLod} from './town-chunks.js';
 
-const COLORS = Object.freeze({road:0x756b59, roadPlank:0x6b5945, roadPaved:0x595957, zone:0x89774e, plan:0x957d59, foundation:0x796954, frame:0x6d5140, finished:0x706b5d, ruined:0x443b33, ghostValid:0x56b56f, ghostInvalid:0xc94d42, pipe:0x377e9d, sewer:0x775343, wire:0xd5b754});
-const ROAD_CLASS = id => id?.includes('paved') ? 'paved' : id?.includes('plank') ? 'plank' : 'dirt';
+// TOWN-VIEW-ART: the town's buildings, homes, sites and ruins are drawn from the art families (town-art.js). This file
+// keeps what is drawn on the ground itself: road surfaces, painted zones, the pegs and string of a home plot not yet
+// started, and the placement ghost.
+const COLORS = Object.freeze({road:0x756b59, roadPlank:0x6b5945, roadPaved:0x595957, zone:0x89774e, ghostValid:0x56b56f, ghostInvalid:0xc94d42,
+  peg:0x786748, string:0xc7b78e});
 
-function boxFor(building, lod) {
-  if (lod === 'far') return new THREE.BoxGeometry(1, 1, 1);
-  const wide = Math.max(1, building.width || 1), deep = Math.max(1, building.depth || 1);
-  const proportion = building.buildingId?.includes('tower') || building.buildingId?.includes('mast') ? 1.75 : 1;
-  return new THREE.BoxGeometry(wide * TOWN_CELL_METRES * 0.72, proportion * (lod === 'near' ? 9 : 6), deep * TOWN_CELL_METRES * 0.72);
+function roadColour(id) {
+  return id?.startsWith('road-paved') ? COLORS.roadPaved : id?.startsWith('road-plank') ? COLORS.roadPlank : COLORS.road;
 }
 
-function makeInstances(rows, lod, color, yOffset = 0) {
+// A road is a slab 0.14 m thick lifted 0.08 m, so its top is 0.15 m above its ground (town-walkers.js keeps its
+// people on that top, and town-art-plan.js stands street things on it).
+function makeSlabs(rows, color, height = .14, lift = .08) {
   if (!rows.length) return null;
-  const isRoad=rows[0].buildingId?.startsWith('road-'), geometry=isRoad
-    ? new THREE.BoxGeometry((rows[0].width||1)*TOWN_CELL_METRES,.14,(rows[0].depth||1)*TOWN_CELL_METRES)
-    : boxFor(rows[0], lod);
-  const mesh = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({color, roughness:0.92, metalness:color === COLORS.wire ? 0.48 : 0.12}), rows.length);
-  mesh.name = `Town ${color.toString(16)} ${lod}`;
+  const geometry = new THREE.BoxGeometry(TOWN_CELL_METRES, height, TOWN_CELL_METRES);
+  const mesh = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({color, roughness:.95, metalness:.05}), rows.length);
+  mesh.name = `Town ground ${color.toString(16)}`;
+  mesh.receiveShadow = true;
   const pose = new THREE.Object3D();
   rows.forEach((row, index) => {
-    const centerX = (row.x + (row.width || 1) / 2) * TOWN_CELL_METRES;
-    const centerZ = (row.z + (row.depth || 1) / 2) * TOWN_CELL_METRES;
-    pose.position.set(centerX, (row.groundY ?? 0) + yOffset + (row.height || 0) / 2, centerZ);
-    pose.scale.set((row.width || 1) / Math.max(1, rows[0].width || 1), row.height ? row.height / (lod === 'far' ? 1 : 9) : 1, (row.depth || 1) / Math.max(1, rows[0].depth || 1));
-    pose.updateMatrix(); mesh.setMatrixAt(index, pose.matrix);
-    mesh.setColorAt(index, new THREE.Color(row.color ?? color));
+    pose.position.set((row.x + (row.width || 1) / 2) * TOWN_CELL_METRES, (row.groundY ?? 0) + lift, (row.z + (row.depth || 1) / 2) * TOWN_CELL_METRES);
+    pose.scale.set(row.width || 1, 1, row.depth || 1); pose.updateMatrix(); mesh.setMatrixAt(index, pose.matrix);
   });
   mesh.instanceMatrix.needsUpdate = true;
   mesh.userData.townItems = rows;
   return mesh;
 }
 
-export function buildTownChunkInstances(town, chunk, lod = townChunkLod({position:{x:chunk.x*128,z:chunk.z*128}}, chunk), homeAssets = {}) {
+function makePegs(plots) {
+  if (!plots.length) return [];
+  // Four pegs and four strings round each painted plot not yet started, 3.45 m from its middle.
+  const corner = 3.45, wood = new THREE.MeshStandardMaterial({color:COLORS.peg, roughness:1}), string = new THREE.MeshBasicMaterial({color:COLORS.string});
+  const pegs = new THREE.InstancedMesh(new THREE.CylinderGeometry(.06, .08, .38, 5), wood, plots.length * 4);
+  const lineGeometry = new THREE.CylinderGeometry(.018, .018, corner * 2, 5); lineGeometry.rotateZ(Math.PI / 2);
+  const lines = new THREE.InstancedMesh(lineGeometry, string, plots.length * 4);
+  pegs.name = 'Town plot pegs'; lines.name = 'Town plot string';
+  const pose = new THREE.Object3D();
+  plots.forEach((plot, index) => {
+    const y = plot.groundY ?? 0, x = (plot.x + .5) * TOWN_CELL_METRES, z = (plot.z + .5) * TOWN_CELL_METRES;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([dx, dz], k) => {
+      pose.position.set(x + dx * corner, y + .19, z + dz * corner); pose.rotation.set(0, 0, 0); pose.updateMatrix(); pegs.setMatrixAt(index * 4 + k, pose.matrix);
+    });
+    [[0, -1, 0], [0, 1, 0], [-1, 0, Math.PI / 2], [1, 0, Math.PI / 2]].forEach(([dx, dz, turn], k) => {
+      pose.position.set(x + dx * corner, y + .3, z + dz * corner); pose.rotation.set(0, turn, 0); pose.updateMatrix(); lines.setMatrixAt(index * 4 + k, pose.matrix);
+    });
+  });
+  pegs.instanceMatrix.needsUpdate = lines.instanceMatrix.needsUpdate = true;
+  pegs.userData.townItems = plots.flatMap(plot => [plot, plot, plot, plot]);
+  lines.userData.townItems = pegs.userData.townItems;
+  return [pegs, lines];
+}
+
+/** The ground-level drawing of one chunk: road surfaces by class, painted zones and the pegs of plots not yet started. */
+export function buildTownChunkInstances(town, chunk, lod = townChunkLod({position:{x:chunk.x * 128, z:chunk.z * 128}}, chunk)) {
+  void lod;
   const region = town.regions?.scablands;
   if (!region) return [];
-  const rows = [];
+  const inChunk = row => (row.regionId ?? 'scablands') === 'scablands' && Math.floor(row.x / 16) === chunk.x && Math.floor(row.z / 16) === chunk.z;
+  const roads = new Map();
   for (const building of town.buildings || []) {
-    if (building.regionId !== 'scablands' || Math.floor(building.x / 16) !== chunk.x || Math.floor(building.z / 16) !== chunk.z) continue;
-    const state = building.state || 'plan';
-    const color = building.buildingId?.startsWith('road-paved') ? COLORS.roadPaved : building.buildingId?.startsWith('road-plank') ? COLORS.roadPlank : building.buildingId?.startsWith('road-') ? COLORS.road : building.buildingId?.startsWith('pipe-') ? COLORS.pipe : building.buildingId?.startsWith('sewer-') ? COLORS.sewer : building.buildingId?.startsWith('wire-') ? COLORS.wire : COLORS[state] ?? COLORS.finished;
-    const isSite = ['plan','foundation','frame'].includes(state);
-    rows.push({...building, color, height:isSite ? (state === 'frame' ? 6 : 1.5) : undefined});
+    if (!building.buildingId?.startsWith('road-') || !inChunk(building)) continue;
+    const color = roadColour(building.buildingId);
+    if (!roads.has(color)) roads.set(color, []);
+    roads.get(color).push(building);
   }
-  const byColor = new Map();
-  for (const row of rows) {
-    const key = row.color; if (!byColor.has(key)) byColor.set(key, []); byColor.get(key).push(row);
+  const zones = new Map();
+  for (const zone of town.zones || []) if (inChunk(zone)) {
+    const color = zone.color ?? COLORS.zone;
+    if (!zones.has(color)) zones.set(color, []);
+    zones.get(color).push({...zone, width:1, depth:1, groundY:zone.groundY ?? 0});
   }
-  for(const zone of town.zones||[]) if(zone.regionId==='scablands'&&Math.floor(zone.x/16)===chunk.x&&Math.floor(zone.z/16)===chunk.z) {
-    const color=zone.color??COLORS.zone;if(!byColor.has(color))byColor.set(color,[]);byColor.get(color).push({...zone,width:1,depth:1,groundY:zone.groundY??0,color});
-  }
-  const meshes=[...byColor].map(([color, entries]) => makeInstances(entries, lod, color, entries[0].buildingId?.startsWith('road-') ? 0.08 : 0)).filter(Boolean);
-  for(const plot of town.homePlots||[]) {
-    if(plot.regionId!=='scablands'||Math.floor(plot.x/16)!==chunk.x||Math.floor(plot.z/16)!==chunk.z) continue;
-    const y=plot.groundY??0,x=(plot.x+.5)*TOWN_CELL_METRES,z=(plot.z+.5)*TOWN_CELL_METRES;
-    if(plot.burnt&&!plot.burning) meshes.push(makeInstances([{buildingId:'burnt-home',state:'ruined',x:plot.x,z:plot.z,groundY:y,width:1,depth:1,height:1.5}],lod,COLORS.ruined));
-    if(plot.tier>0&&!plot.burning) {
-      const names=[['tent-a','tent-b'],['shack-a','shack-b','shack-c'],['stack-a','stack-b'],['block-a','block-b'],['terrace-a']];
-      const options=names[Math.min(4,plot.tier-1)]||[];
-      const model=homeAssets.homes?.getObjectByName(options[Math.abs(plot.x*31+plot.z*17)%options.length]||'');
-      if(model){const clone=model.clone(true);clone.position.set(x,y,z);clone.userData.sharedTownAsset=true;meshes.push(clone);}
-    } else if(plot.household&&!plot.burning) {
-      const stage=Math.max(1,Math.min(4,Math.ceil(((plot.progressDays||0)+1)/Math.max(1,(plot.nextDays||2)/4))));
-      const model=homeAssets.stages?.getObjectByName(`scaffold-${stage}`);
-      if(model){const clone=model.clone(true);clone.position.set(x,y,z);clone.userData.sharedTownAsset=true;meshes.push(clone);}
-    } else if(!plot.burning&&!plot.burnt) {
-      const pegs=new THREE.Group();pegs.userData.sharedTownAsset=true;
-      const wood=new THREE.MeshStandardMaterial({color:0x786748,roughness:1}),string=new THREE.MeshBasicMaterial({color:0xc7b78e});
-      for(const [dx,dz] of [[-3.45,-3.45],[3.45,-3.45],[-3.45,3.45],[3.45,3.45]]){const peg=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,.38,5),wood);peg.position.set(x+dx,y+.19,z+dz);pegs.add(peg);}
-      const line=(a,b)=>{const delta=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),mesh=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,delta.length(),5),string);mesh.position.set((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());pegs.add(mesh);};
-      line([x-3.45,y+.3,z-3.45],[x+3.45,y+.3,z-3.45]);line([x-3.45,y+.3,z+3.45],[x+3.45,y+.3,z+3.45]);line([x-3.45,y+.3,z-3.45],[x-3.45,y+.3,z+3.45]);line([x+3.45,y+.3,z-3.45],[x+3.45,y+.3,z+3.45]);meshes.push(pegs);
-    }
-  }
-  return meshes;
+  const meshes = [...[...roads].map(([color, rows]) => makeSlabs(rows, color)), ...[...zones].map(([color, rows]) => makeSlabs(rows, color, .04, .03))].filter(Boolean);
+  const waiting = (town.homePlots || []).filter(plot => inChunk(plot) && !(plot.tier > 0) && !plot.household && !plot.burning && !plot.burnt);
+  return [...meshes, ...makePegs(waiting)];
 }
 
 export function createTownPlacementGhost({valid = true, width = 1, depth = 1} = {}) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width*TOWN_CELL_METRES*0.85, 1.2, depth*TOWN_CELL_METRES*0.85), new THREE.MeshBasicMaterial({color:valid?COLORS.ghostValid:COLORS.ghostInvalid, transparent:true, opacity:0.48}));
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width * TOWN_CELL_METRES * .85, 1.2, depth * TOWN_CELL_METRES * .85),
+    new THREE.MeshBasicMaterial({color:valid ? COLORS.ghostValid : COLORS.ghostInvalid, transparent:true, opacity:.48}));
   mesh.name = valid ? 'Valid town placement' : 'Invalid town placement';
   mesh.userData.placementValid = valid;
   return mesh;

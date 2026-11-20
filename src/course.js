@@ -20,7 +20,7 @@ import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 import {scablandsActorHeightAt,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
-import {buildBowlFeatures} from './bowl/bowl-course.js';
+import {buildBowlFeatures, bowlRingPoint, bowlReliefAt} from './bowl/bowl-course.js';
 import {createGroundTunnels} from './world/ground-tunnels.js';
 import {featureFlags} from './feature-flags.js';
 import {SCABLANDS_LAYOUT} from './world/scablands.js';
@@ -28,7 +28,7 @@ import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './world/jobs/everburn.js';
 import {gasRunJob, GAS_RUN_ROADS, fieldBattleJob} from './world/jobs/gas-run.js';
 import {realismThingsData, thingSolids} from './world/scablands-things.js';
 import {SCABLANDS_SOLIDS, createSolidGrid} from './world/scablands-solids.js';
-// The Bowl's ring bends round 10 m ends, so its centre line is sampled every 2 m, not 8.
+// The Bowl's ring bends round 23 m ends with a floor 20 m either side, so its centre line is sampled every 2 m, not 8.
 const STEP=8, BOWL_STEP=2, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -160,7 +160,7 @@ export class Course {
     // straights. Their tightest radius stays beyond the near-terrain ribbon.
     const shape=ROUTE_SHAPES[this.def.scablands?'scablands':this.def.layout]||[1.08,.93,0,.055,.018,0,0];
     for(let i=0;i<=count;i++){const a=i/count*TAU,r=arena?1:1+shape[2]*Math.cos(a*2+phase*.2)+shape[3]*Math.cos(a*3+phase)+shape[4]*Math.sin(a*5+phase)+shape[5]*Math.sin(a*4+phase*.5)+shape[6]*Math.cos(a*6-phase*.3);
-      const city=this.def.expansion?expansionPoint(this.def,i/count):cityLoop?.(i/count);
+      const city=this.def.expansion?expansionPoint(this.def,i/count):this.def.bowlRing?bowlRingPoint(this.def.bowlRing,i/count):cityLoop?.(i/count);
       const frameX=this.def.scablands?shape[0]:arena?1.3:shape[0],frameZ=this.def.scablands?shape[1]:arena?.8:shape[1];
       raw.push({x:city?city.x:Math.cos(a)*r*frameX,z:city?city.z:Math.sin(a)*r*frameZ,s:0});
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
@@ -271,8 +271,8 @@ export class Course {
     if(this.def.scablands){const p=this.worldAt(s,off);return scablandsSurfaceHeightAt(p.x,p.z)-p.y;}
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
-    // The Bowl's ramps fill its floor from wall face to wall face; its walls stand within 15 m.
-    if(this.def.bowl&&this.def.scrapdome){const floor=this.def.scrapdome;return Math.abs(off)<=(off>0?floor.outerWallOffset:floor.wallOffset)-.5?this.jumpAt(s):0;}
+    // The Bowl's jumps and banked ends are its own data (src/bowl/bowl-course.js).
+    if(this.def.bowl&&this.def.bowlRing)return bowlReliefAt(this,s,off);
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
     // The section is found once (themeAt(p) is sectionAt(p).theme), and the wave terms, which do not depend on the
     // ground type, are worked out once for both types the blend below asks about.
@@ -376,7 +376,7 @@ export class Course {
       for(const cut of f.shortcuts)if(n.s>=cut.start-12&&n.s<=cut.end+12&&Math.abs(n.lateral-this.shortcutOffset(cut,n.s))<radius+cut.halfWidth+margin)return false;
       return !this.tunnelAt(n.s)||Math.abs(n.lateral)>35+radius;};
     const vacant=(s,off,radius)=>{const p=this.groundAt(s,off);return f.obstacles.every(o=>Math.hypot(o.x-p.x,o.z-p.z)>Math.hypot(o.halfX,o.halfZ)+radius+(o.setPiece==='gantry'?18:0));};
-    if(!this.def.practice)for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
+    if(!this.def.practice&&!this.def.bowl)for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
     if(this.def.expansion){f.setPieces=buildCourseSetPieces(this);f.obstacles.push(...f.setPieces);}
     if(!this.def.arena){
       for(const [i,sec]of this.sections.entries()){
@@ -453,7 +453,7 @@ export class Course {
         if(this.tunnelAt(s))continue;if(!vacant(s,off,4))off=(i%2?1:-1)*5;
         if(vacant(s,off,3.5))f.flocks.push({id:`flock-${i}`,s,off,radius:3.5,count:8,seed:rng.int(1,100000)});}
     }else if(!this.def.practice&&!this.def.scablands){
-      // The Bowl's island ends bend round a 2 m radius: its pieces sit every 4 m and also
+      // The Spine's ends bend round less than a metre: its pieces sit every 4 m and also
       // shrink where the wall is shorter than the centre line, so none stands out into the floor.
       const bowl=!!this.def.bowl,step=bowl?4:8;
       for(let s=0;s<this.length;s+=step)for(const side of[-1,1]){
@@ -464,7 +464,8 @@ export class Course {
         f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,length,0,{barrier:true,arenaWall:true}));
       }
     }
-    if(!this.def.practice&&!this.def.scablands)Object.assign(f,buildRoadFurniture(this));
+    // The Bowl is a stadium floor: no road signs or chevrons stand in its stands.
+    if(!this.def.practice&&!this.def.scablands&&!this.def.bowl)Object.assign(f,buildRoadFurniture(this));
     for(const sign of f.signs)for(const post of sign.posts)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
     for(const post of f.chevrons)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
     if(this.def.checkpointRush){

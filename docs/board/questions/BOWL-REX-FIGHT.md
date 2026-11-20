@@ -39,10 +39,25 @@ with its boxes smashed (`REX_PLACE` in `src/scrapdome-yard.js`). It is a guess a
 model's bounds; please look at it in the yard and move it if it stands in something. TOWN-BOWL-LINK still owns
 the town-square version.
 
-## 5. Floor size (BOWL-EXPAND)
+## 5. How the truck gets onto its back on the new Bowl (BOWL-EXPAND)
 
-Built as asked: the rails, the resting place, the pen, the gate, the start and the fire's reach all come from the
-course in `rexPlaces` (the floor's half width, the highest ramp, the crush line, the first ramp). A course may name
-its rails as `features.rexRails: {off}`; without that the rails run halfway out on the island side. The open box
-sits 5 m past the big ramp's lip, which is where a truck from 28 to 38 mph comes down from its highest point; if
-BOWL-EXPAND changes the ramp's height, that distance is the one number to check (`restPastRamp`).
+On the 160 m by 90 m Bowl the rails (`features.bowl.rails`, 16.5 m out) do not pass any jump: the Big Jump and the
+Table are 13 m out on the Spine's side and the kickers are in the middle. So a jump cannot land on it.
+
+- **A. It drops a junk car on its rails in front of itself when it rests (my pick, built).** The car stands at the
+  show's first launch-car place along the lap (`features.bowl.launchCars[0]`, s 36) on the rails' line, and the open
+  box is 13 m past it (`boxPastCar`). The truck drives up the car (FUN-TITAN-LAUNCH, untouched) and comes down on its
+  back: from 30 to 45 mph it is 2.6 to 7.8 m up between 8 and 18 m past the car, which is the catch window. It fits
+  the Rex's junk-car habit, and it can rest anywhere on its rails. The car is ordinary parked traffic. The runner
+  keeps it on the lap the truck comes to next, and holds it where it was dropped.
+- **B. Rails that pass the Big Jump's landing.** This would need the rails moved in BOWL-EXPAND's data.
+
+Two findings for the Director:
+- Parked traffic eases towards the road lane (3.4 m out on the Spine's side) at 0.7 m/s (`sim-rival.js` `_traffic`).
+  So Freestyle's two launch cars at 14 m out drift away after the event starts. The fight holds its own car in place.
+- The race counts the truck's distance on from lap to lap, so a parked car at s 36 is met only on the first lap.
+  Freestyle's launch cars are therefore one-lap props. The fight's car moves to the next lap's place.
+
+Pace is now the time to walk once round (Easy 42 s, Medium 34 s, Hard 28 s), so the rhythm keeps on any floor.
+Rests are Easy 20 s, Medium 14 s and Hard 11 s, a lap of the new floor being about 17 s at a child's pace. Hard has
+five rests.

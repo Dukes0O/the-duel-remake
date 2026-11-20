@@ -1,7 +1,7 @@
 """Shared, hand-built Scablands town materials and construction helpers.
 
 Coordinates at this API are glTF metres: X right, Y up, front -Z.
-Run the proof with town-sample.py; Blender's Y-up export is explicit.
+The town families' recipes (tools/blender/town-*.py) build on it; Blender's Y-up export is explicit.
 """
 import math
 import random

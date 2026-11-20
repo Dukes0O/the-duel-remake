@@ -44,10 +44,25 @@ export const TOWN_CAPTIONS = Object.freeze({
   'town.6.short': caption('Odessa', 'Site short of tin', "We're out of tin. The Boneyard's got more, if somebody'd go and get it. I'm looking at you."),
   'town.6.made': caption('Hollis', 'All under tin by the frost', "That's all of them under a roof. They'll remember who did that."),
   'town.6.late': caption('Hollis', 'Not all under tin', "Some of them spent that winter in canvas. They got through it. They'll remember that too."),
-  'town.7.fire': caption('Odessa', 'The fire report', 'FIRE! The soup kitchen! There\'s an old engine in the truck bay. She started last Tuesday. GO!'),
+  // TOWN-FIRE-JOB: the fire report and the end line say the same as before in whole sentences.
+  'town.7.fire': caption('Odessa', 'The fire report', "The soup kitchen is on fire! There's an old fire engine in the truck bay, and she started last Tuesday, so take her and go!"),
   'town.7.spray': caption('Odessa', 'First in the truck', 'Drive right up to it. Hold H to spray. She holds three minutes of water. When the tank runs dry, stop at any tap to fill up.'),
-  'town.7.won': caption('Odessa', 'Fire out', 'Still standing. You smell terrible. Well done.'),
+  'town.7.won': caption('Odessa', 'Fire out', "It's still standing. You smell terrible, and you did well."),
+  'town.7.burnt': caption('Odessa', 'Fire out, the soup kitchen burnt down', "We've lost the kitchen, but everyone got out. We'll build it again, and next time we'll be quicker."),
   'town.7.ash': caption('Hollis', 'After the fire', "There's ash on the ground, and it isn't from the fire. Somebody started this. There's a woman named Cinder who knows about ash."),
+  // TOWN-FIRE-JOB: the ash line has three versions (Claude, on the card), picked when the job ends.
+  'town.7.ash.going': caption('Hollis', 'After the fire, the Everburn started and Old Smoke not beaten', "There's ash on the ground, and it isn't from the fire. That's Ash Men's work. Cinder said they'd come this way."),
+  'town.7.ash.done': caption('Cinder', 'After the fire, Old Smoke beaten', "That's Ash Men's work. They're what is left of Old Smoke's gang, with nobody in charge of them now. I'll go and have a word."),
+  // TOWN-FIRE-JOB: a fire call, after Chapter 7. One plain job each.
+  'town.fire.go': caption('Odessa', 'A fire call starts', "There's a fire at {building}. Take the fire truck and get there before the wind carries it to the next building."),
+  'town.fire.card': caption('Odessa', 'A fire call, on the mission card', "There's a fire at {building}. The fire truck is in the truck bay with a full tank."),
+  'town.fire.spread': caption('Odessa', 'The fire catches another building', "It's caught the next building. The wind is carrying it, so put out whatever is downwind first."),
+  'town.fire.lost': caption('Odessa', 'A building burns down', "We've lost that building. Save what you can of the rest."),
+  'town.fire.low': caption('Odessa', 'The tank is nearly empty', "You're nearly out of water. Fill up at the well or a tap before the tank runs dry."),
+  'town.fire.empty': caption('Odessa', 'The tank is empty', "The tank's empty. Drive into a blue ring at the well or a tap, and hold still while she fills."),
+  'town.fire.dry': caption('Odessa', 'A well runs dry', "That one's run dry, so you'll have to fill up somewhere else."),
+  'town.fire.won': caption('Odessa', 'A fire call, all out', "That's the last of it out. Thank you, driver."),
+  'town.fire.burnt': caption('Odessa', 'A fire call, the building on fire burnt down', "The fire's out, but we lost {building}. Nobody was hurt, and we can build it again."),
   'town.8.payday': caption('Hollis', 'Chapter 8', "Bills are in. The till is the town's money and your scrap is yours. Bills only ever come out of the till. Have a look at the Ledger."),
   'town.8.books': caption('Hollis', 'Ledger opened, Vultures not at peace', "Money in, money out. What's left is the profit. I have added it up twice and got two answers."),
   'town.8.vultures': caption('The Vultures', 'Ledger opened, at peace', 'Two columns. One of you. Do the math.'),
@@ -84,10 +99,12 @@ export const TOWN_CAPTIONS = Object.freeze({
   'pim.fix': caption('Pim', 'Job', 'My water crane\'s seized. Bring your wrench. Tuesday will show you where. Tuesday is the dog.'),
   'pim.night': caption('Pim', 'Night', 'Something goes by here most nights with no lights on, leaking water. I set my clock by it. That is rather the trouble.'),
   'pim.hook': caption('Hollis', 'After', 'A train nobody owns, carrying water nobody sold. Somebody\'s got a lot of nerve, or a lot of money.'),
-  'town.heli.tam': caption('Old Tam', 'The report', 'The Ridge is on fire. The goats have views on it. No truck\'s getting up here, driver.'),
-  'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot. That's you, isn't it? Build a pad. I'll make a call."),
-  'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, Tremblant. Say again your position? I didn't know that wall had another side."),
-  'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask."),
+  // HELI-RUSTWALL: written out as whole sentences (Kyle, 19 November 2026); Roger's line matches the helicopter's
+  // own copy of it (the Scablands place's lines), and tools/test-heli-scablands.mjs keeps the two the same.
+  'town.heli.tam': caption('Old Tam', 'The report', 'The scrub on the Ridge is on fire, and the goats have strong views about it. No truck can get up here, driver, so the help will have to come from the air.'),
+  'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot, and I think it's you. Build a Helipad by the town, and I'll make a call over the wall."),
+  'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, this is Tremblant. Please say your position again, because I didn't know that wall had another side."),
+  'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I can't fly, but I know a man who owes me a helicopter, so please don't ask me how."),
 });
 
 const RADIO_CAPTIONS = Object.fromEntries(Object.entries(TOWN_CAPTIONS).map(([id, value]) => [`story.town.${id.replace(/^town\./, '')}`, value]));

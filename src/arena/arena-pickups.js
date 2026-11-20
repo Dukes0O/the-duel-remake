@@ -18,7 +18,8 @@ const WEAPON_CRATES = Object.freeze(['bomb', 'crossbow', 'star', 'ufo']);
 
 export function arenaPickupSpots(course) {
   const spots = course.features.ramps.map((ramp, index) => ({
-    id: `ramp-${index}`, s: (ramp.start + ramp.end) / 2, lateral: 0, kind: 'weapon'}));
+    // The Bowl's jumps stand across part of its floor only (src/bowl/bowl-course.js).
+    id: `ramp-${index}`, s: (ramp.start + ramp.end) / 2, lateral: ramp.bowl ? ramp.off : 0, kind: 'weapon'}));
   ARENA_PICKUPS.heapFractions.forEach((fraction, index) => spots.push({
     id: `heap-${index}`, s: fraction * course.length, lateral: ARENA_PICKUPS.heapOffset, kind: 'armor'}));
   return spots;

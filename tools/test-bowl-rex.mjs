@@ -37,8 +37,10 @@ const P = rexPlaces(course);
 
 // ---- night five ----------------------------------------------------------
 {
-  ok(P.stageBoxS > P.rampEnd && P.stageBoxS - P.rampEnd < 8 && P.rail < 0 && P.rail > -P.edge,
-    'the rails, the rest and the reach come from the course: the open box just past the big ramp, the rails on the floor');
+  const show = course.features.bowl;
+  ok(P.rail === show.rails.lateral && P.car.s === show.launchCars[0].s && P.car.lateral === show.rails.lateral &&
+    P.stageBoxS === wrap(P.car.s + REX_RULES.boxPastCar) && P.startS === wrap(show.crush.firstRowS - 2) && Math.abs(P.rail) < P.edge,
+    'the rails, the rest, the dropped car and the start come from the course\'s features.bowl');
   ok(SHOW_NIGHTS[4].events.at(-1) === BOWL_EVENTS.SCRAPASAURUS && SHOW_NIGHTS[4].events.length === 3,
     'night five is three events and ends with the Scrapasaurus');
   ok(SHOW_NIGHTS.slice(0, 4).every(night => !night.events.includes(REX_EVENT)), 'only night five has the Scrapasaurus');
@@ -60,11 +62,12 @@ function runRules(level, truckAt, seconds = 400, dt = DT) {
 }
 // A truck that keeps behind its tail on the stands' side, out of every cone, and
 // steps away from the ring when a junk car is in the air.
-const parked = fight => ({s: wrap(fight.s + (fight.phase === 'throw' ? 40 : 25)), lateral: P.edge - 1,
+const parked = fight => ({s: wrap(fight.s + (fight.phase === 'throw' ? 40 : 25)), lateral: P.rail - P.side * 14,
   airborne: false, airHeight: 0, speedMph: 0});
 // A truck that is over the open box in the air whenever a box is open, and keeps away otherwise.
 const lander = fight => fight.phase === 'rest'
-  ? {s: rexBoxS(fight, fight.boxes.indexOf(false)), lateral: P.rail + .5, airborne: true, airHeight: 2.4, speedMph: 32}
+  ? {s: rexBoxS(fight, fight.boxes.indexOf(false)), lateral: P.car.lateral, airborne: true, airHeight: REX_RULES.boxTop.resting + .5,
+    verticalSpeed: -2, speedMph: 36}
   : parked(fight);
 
 {
@@ -74,7 +77,7 @@ const lander = fight => fight.phase === 'rest'
   ok(smashes.length === 3 && smashes.map(event => event.box).join() === '0,1,2', 'each landing smashes the next box, one to three');
   ok(log.filter(event => event.type === 'fall').length === 1 && log.at(-1).type !== 'smash', 'it falls once, after the third');
   ok(smashes.every(event => Math.abs(along(event.truck.s, P.stageBoxS)) < 1e-6),
-    'every open box is at the same resting place, just past the big ramp');
+    'every open box is at the same resting place, past the dropped junk car');
   // Two landings are not enough, and a landing with the box shut does nothing.
   const twice = runRules('easy', f => f.phase === 'rest' && f.boxes.filter(Boolean).length < 2 ? lander(f) : parked(f));
   const landed = twice.log.filter(event => event.type === 'smash').length;
@@ -96,7 +99,7 @@ const lander = fight => fight.phase === 'rest'
   // cone it fills is the one the tell drew. A truck parked in the stage's cone
   // is scorched by every stage breath and by nothing else.
   for (const level of ['easy', 'medium', 'hard']) {
-    for (const truckAt of [parked, lander, () => ({s: P.rampStart + 5, lateral: P.rail, airborne: false, airHeight: 0, speedMph: 0})]) {
+    for (const truckAt of [parked, lander, () => ({s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0})]) {
       const {log} = runRules(level, truckAt, 300);
       let tell = null, fires = 0;
       for (const event of log) {
@@ -113,18 +116,17 @@ const lander = fight => fight.phase === 'rest'
   }
   const tellSec = REX_RULES.level;
   ok(tellSec.easy.tellSec > tellSec.medium.tellSec && tellSec.medium.tellSec > tellSec.hard.tellSec &&
-    tellSec.easy.walkMps < tellSec.medium.walkMps && tellSec.medium.walkMps < tellSec.hard.walkMps,
+    tellSec.easy.lapSec > tellSec.medium.lapSec && tellSec.medium.lapSec > tellSec.hard.lapSec,
     'Easy is slower, with a longer tell');
-  ok(P.range > 9 && P.range >= P.rampEnd - P.rampStart && REX_RULES.fire.halfAngle > 15 * Math.PI / 180, 'its cone is larger than the flamethrower\'s');
-  const inRamp = runRules('easy', () => ({s: P.rampStart + 5, lateral: P.rail, airborne: false, airHeight: 0, speedMph: 0}), 200);
+  ok(P.range > 9 && REX_RULES.fire.halfAngle > 15 * Math.PI / 180, 'its cone is larger than the flamethrower\'s');
+  const inRamp = runRules('easy', () => ({s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0}), 200);
   const stageFires = inRamp.log.filter(event => event.type === 'fire' && event.kind === 'stage').length;
   ok(stageFires > 0 && inRamp.log.filter(event => event.type === 'scorch' && event.kind === 'stage').length === stageFires,
-    'a truck sitting on the big ramp is caught by each breath at the ramp, once per breath');
-  const outside = runRules('easy', () => ({s: P.rampStart + 5, lateral: P.edge - .6, airborne: false, airHeight: 0, speedMph: 0}), 200);
+    'a truck waiting on the run-up to the dropped car is caught by each breath there, once per breath');
+  const outside = runRules('easy', () => ({s: wrap(P.car.s - 4), lateral: P.rail - P.side * 12, airborne: false, airHeight: 0, speedMph: 0}), 200);
   ok(!outside.log.some(event => event.type === 'scorch' && event.kind === 'stage'),
-    'the stands\' edge of the floor beside the ramp is outside the ramp\'s cone');
-  const hits = REX_RULES.level.easy.hits, toasted = runRules('easy', () => ({s: P.rampStart + 5, lateral: P.rail, airborne: false,
-    airHeight: 0, speedMph: 0}), 600);
+    'the middle of the floor beside the dropped car is outside that cone');
+  const hits = REX_RULES.level.easy.hits, toasted = runRules('easy', () => ({s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0}), 600);
   ok(toasted.fight.done?.reason === 'toasted' && toasted.fight.hits === hits, `${hits} scorches on Easy stop the show`);
 }
 
@@ -210,7 +212,7 @@ const lander = fight => fight.phase === 'rest'
   const parts = name => view.group.getObjectByName(name);
   view.update(course, state, 0, true);
   await new Promise(resolve => setTimeout(resolve, 0));
-  const truck = {s: P.rampStart + 4, lateral: P.rail, airborne: false, airHeight: 0, speedMph: 0};
+  const truck = {s: wrap(P.car.s - 4), lateral: P.car.lateral, airborne: false, airHeight: 0, speedMph: 0};
   while (fight.phase !== 'tell') stepRexFight(fight, truck, DT, course);
   const before = JSON.stringify(state);
   view.update(course, state, 16, true);
@@ -244,10 +246,10 @@ const lander = fight => fight.phase === 'rest'
 }
 
 // ---- the child-pace driver on the real Duel ----------------------------------
-// It drives round at a child's pace on the stands' side of the floor, sees what
-// the Scrapasaurus does late (a child's reaction), keeps to the floor's edge
-// while fire is coming, and lines up on the rails for the big ramp only once a
-// box is open. Its speed, lane and reaction wander from its seed.
+// It drives round at a child's pace inside the Scrapasaurus's rails, sees what it
+// does late (a child's reaction), keeps out of the cone and waits back from the
+// run-up while fire is coming, and lines up on the rails for the dropped junk car
+// only once a box is open. Its speed, lane and reaction wander from its seed.
 function fightAt(level, seed) {
   const duel = showDuel(seed);
   assert.ok(duel.startBowlNight({night: 5, cpuDifficulty: level, seed}), 'night five starts');
@@ -262,18 +264,23 @@ function fightAt(level, seed) {
     if (ev.bowlEventResult) result.outcome = ev.bowlEventResult;
   });
   const reaction = rng.range(.6, 1.1);
-  let pace = rng.range(29, 34), lane = rng.range(1.8, 3), wobble = rng.range(0, Math.PI * 2), lastLap = 0;
+  const lanePick = () => P.rail - P.side * rng.range(9.5, 12.5);
+  let pace = rng.range(33, 40), lane = lanePick(), wobble = rng.range(0, Math.PI * 2), lastLap = 0;
   let going = false, stuck = 0, backing = 0;
   for (let i = 0; i < 120 * 600 && duel.state.status !== 'bowl_break'; i++) {
     const s = duel.state, fight = rexFightOf(night), time = s.stageTimeSec;
     seen.push({time, phase: fight.phase});
     while (seen.length > 1 && seen[1].time <= time - reaction) seen.shift();
     const phase = seen[0].phase, at = wrap(s.s);
-    if (s.completedLaps !== lastLap) { lastLap = s.completedLaps; pace = rng.range(29, 34); lane = rng.range(1.8, 3); }
-    if (phase === 'rest' && at > 4 && at < 28) going = true;
-    if (at > 70 || at < 2) going = false;
-    let target = going ? P.rail + .3 : lane;
-    if (!going && (phase === 'tell' || phase === 'fire') && at > 18 && at < 58) target = 5;
+    if (s.completedLaps !== lastLap) { lastLap = s.completedLaps; pace = rng.range(33, 40); lane = lanePick(); }
+    // How far it is past the dropped car's place (negative: still coming up to it).
+    const toCar = along(at, P.car.s);
+    if (phase === 'rest' && toCar > -34 && toCar < -12) going = true;
+    if (toCar > 25 || toCar < -45) going = false;
+    let target = going ? P.car.lateral : lane;
+    if (!going && (phase === 'tell' || phase === 'fire') && toCar > -30 && toCar < 20) target = P.rail - P.side * 12.5;
+    // While fire is coming at the rest, it waits back from the run-up, as the HUD says.
+    const waiting = (phase === 'tell' || phase === 'fire') && toCar > -90 && toCar < -35;
     wobble += DT * 1.3;
     target += Math.sin(wobble) * .25;
     if (s.speedMph < 3 && s.status === 'racing' && time > 3) stuck += DT; else stuck = 0;
@@ -282,11 +289,11 @@ function fightAt(level, seed) {
       backing -= DT;
       duel.setInput({throttle: 0, brake: 1, steer: 0, boost: false});
     } else {
-      duel.setInput({throttle: s.speedMph < pace ? 1 : 0, brake: 0, boost: false,
+      duel.setInput({throttle: s.speedMph < (waiting ? 18 : pace) ? 1 : 0, brake: waiting && s.speedMph > 22 ? .4 : 0, boost: false,
         steer: Math.max(-1, Math.min(1, (s.lateral - target) * .35 + (s.headingError || 0) * 1.6))});
     }
     duel.step(DT);
-    if (!result.hud && fight.phase === 'rest') result.hud = bowlHudView(duel.state);
+    if (!result.hud && fight.phase === 'rest') result.hud = bowlHudView(duel.state, duel.course);
   }
   // The card stays up while Big Mo finishes what he is saying.
   for (let wait = 0; wait < 120 * 10 && result.outcome; wait++) duel.step(DT);

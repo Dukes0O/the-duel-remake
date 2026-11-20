@@ -655,6 +655,104 @@
     "recipe": "tools/blender/wildlife/gull.py",
     "adaptation": "Shared original bird recipe (bird.py), yellow-legged gull colours."
   },
+  "roadrunner": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Run"
+    ],
+    "recipe": "tools/blender/wildlife/roadrunner.py",
+    "adaptation": "Greater roadrunner, 0.54 m: its own rig with a crest and two-joint legs, streaked plumage drawn as fine marks in the coat bake, a tented tail. It runs; it has no flight loop."
+  },
+  "jackrabbit": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "recipe": "tools/blender/wildlife/jackrabbit.py",
+    "adaptation": "Black-tailed jackrabbit: long folded hind legs, cupped black-tipped ears as long as the head and neck, grizzled coat. Walk is a bound in place."
+  },
+  "desert-bighorn": {
+    "page": "https://poly.pizza/m/T6Cs7tmMHJ",
+    "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb",
+    "creator": "Quaternius",
+    "licence": "CC0 1.0",
+    "sha256": "fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e",
+    "file": "quaternius-deer-original.glb",
+    "clips": [
+      "Attack_Headbutt",
+      "Attack_Kick",
+      "Death",
+      "Eating",
+      "Gallop",
+      "Gallop_Jump",
+      "Idle_HitReact_Left",
+      "Idle_HitReact_Right",
+      "Jump_toIdle",
+      "Walk",
+      "Idle_Headlow",
+      "Idle_2",
+      "Idle",
+      "AnimalArmature|Attack_Headbutt",
+      "AnimalArmature|Attack_Kick",
+      "AnimalArmature|Death",
+      "AnimalArmature|Eating",
+      "AnimalArmature|Gallop",
+      "AnimalArmature|Gallop_Jump",
+      "AnimalArmature|Idle",
+      "AnimalArmature|Idle_2",
+      "AnimalArmature|Idle_Headlow",
+      "AnimalArmature|Idle_HitReact_Left",
+      "AnimalArmature|Idle_HitReact_Right",
+      "AnimalArmature|Jump_toIdle",
+      "AnimalArmature|Walk"
+    ],
+    "triangles": 2096,
+    "adaptation": "Desert bighorn ram (Ovis canadensis nelsoni) reshaped from the Quaternius deer mesh and rig: leaner than the mountain ram, pale sandstone coat, white rump and muzzle, dark leg fronts, wide-flaring ridged horns that curl round the cheek. Donor clips retained."
+  },
+  "collared-lizard": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "recipe": "tools/blender/wildlife/collared-lizard.py",
+    "adaptation": "Collared lizard, a large male of 0.41 m: big head, two black collars, green body with yellow bands and pale spots, long hind legs and tail. Walk is a sprawled trot."
+  },
+  "pelican": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/pelican.py",
+    "adaptation": "Brown pelican on the shared bird rig (bird.py): long straight bill and pouch, upright curved neck, webbed feet. In Fly the neck draws back and the head rides on the shoulders."
+  },
+  "condor": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/condor.py",
+    "adaptation": "California condor on the shared bird rig (bird.py): 2.9 m span, bare orange head in a black ruff, white underwing triangles and wing bars as thin sheets of their own."
+  },
   "goat": {
     "page": "https://poly.pizza/m/T6Cs7tmMHJ",
     "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb",
@@ -776,5 +874,113 @@
     ],
     "recipe": "tools/blender/wildlife/scorpion.py",
     "adaptation": "Hadrurus arizonensis built at four times life size (0.55 m) so that it can be seen from a car at 10 m, as the card asks: plated body, eight legs, clawed arms, five-bead tail with bulb and sting, its own 39-bone rig."
+  },
+  "black-kite": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/black-kite.py",
+    "adaptation": "Shared original bird recipe (bird.py) with city_parts.py: a long tail forked from nine separate feathers, six-fingered angled wings with a pale patch below, a pale streaked head. Fly is a glide with slow, loose beats."
+  },
+  "little-egret": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/little-egret.py",
+    "adaptation": "Shared original bird recipe (bird.py): a white heron on long black legs with yellow feet, a thin neck and a black dagger bill, back plumes fanned from separate feathers. In Fly the neck is drawn back onto the shoulders and the legs trail."
+  },
+  "black-faced-spoonbill": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/black-faced-spoonbill.py",
+    "adaptation": "Shared original bird recipe (bird.py): a white wader with a bare black face and a flat black bill that widens to a spoon (its own piece on the head bone), carried pointing down in Idle and stretched ahead in Fly."
+  },
+  "pigeon": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/pigeon.py",
+    "adaptation": "Shared original bird recipe (bird.py) with city_parts.py: a blue-bar feral rock dove, with two black bars as strips on the folded wing, a tail of seven feathers with a dark end band, a green and purple neck, red feet."
+  },
+  "owl": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "recipe": "tools/blender/wildlife/owl.py",
+    "adaptation": "A barn owl on the shared original bird recipe (bird.py): big round head with the white heart-shaped face, tan rim and forward dark eyes as their own piece on the head bone; white below, buff and grey above; long white-feathered legs."
+  },
+  "raccoon": {
+    "creator": "Original Blender recipe for The Duel (no third-party source)",
+    "licence": "Project original",
+    "file": null,
+    "sha256": null,
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "recipe": "tools/blender/wildlife/raccoon.py",
+    "adaptation": "Built as a raccoon from lofted sections with its own rig (original.py): arched back highest over the hips, short legs with dark feet, pointed muzzle, black mask with white brows and muzzle, round pale-rimmed ears, bushy tail of five dark rings."
+  },
+  "street-cat": {
+    "page": "https://poly.pizza/m/P1gU3Qkr9r",
+    "download": "https://static.poly.pizza/f1d12388-e39b-4157-b32a-646a1d089fc4.glb",
+    "creator": "Quaternius",
+    "licence": "CC0 1.0",
+    "sha256": "16ac96339d06f7def9af20d5d9b27622d61e53580dab43970c9edb1bffbe8f84",
+    "file": "quaternius-wolf-original.glb",
+    "clips": [
+      "Attack",
+      "Death",
+      "Eating",
+      "Gallop",
+      "Gallop_Jump",
+      "Idle_HitReact_Left",
+      "Idle_HitReact_Right",
+      "Jump_ToIdle",
+      "Walk",
+      "Idle_2_HeadLow",
+      "Idle_2",
+      "Idle",
+      "AnimalArmature|Attack",
+      "AnimalArmature|Death",
+      "AnimalArmature|Eating",
+      "AnimalArmature|Gallop",
+      "AnimalArmature|Gallop_Jump",
+      "AnimalArmature|Idle",
+      "AnimalArmature|Idle_2",
+      "AnimalArmature|Idle_2_HeadLow",
+      "AnimalArmature|Idle_HitReact_Left",
+      "AnimalArmature|Idle_HitReact_Right",
+      "AnimalArmature|Jump_ToIdle",
+      "AnimalArmature|Walk"
+    ],
+    "triangles": 1962,
+    "adaptation": "Street cat reshaped from the Quaternius wolf mesh and rig: a thin, narrow, long-legged cat with a tucked belly, thin neck, short muzzle on a round skull, large upright ears, and a long thin tail carried up in a curve; black cap, back and tail, white face, chest, belly and legs. Donor clips retained."
   }
 }

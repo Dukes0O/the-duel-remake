@@ -220,12 +220,19 @@ are. **The Bowl** is new: a big concrete stadium with a dirt floor and a full cr
 at night, under floodlights, with flame jets by the ramps. Everyone gets to drive a
 truck there, whether or not you have bought the Titan; it is the show's truck.
 
-**The floor** (`src/bowl/bowl-course.js`) is the size of a real monster-truck floor and
-fits inside the stadium model: a 140 m ring round the podium, 16.5 m wide between an
-island wall and a wall in front of the stands. Two ramps on one long side (a kicker and a big
-jump, each with a flame jet on the wall either side) and the crush line on the other:
-junk cars, then the crushed buses and RV, then three burning stacks. Both ramps throw a
-truck into the air from 30 mph. Run as an arena event, the floor holds trucks to 42 mph.
+**The floor** (`src/bowl/bowl-course.js`, BOWL-EXPAND) is a real monster-truck stadium floor,
+160 m by 90 m between its walls, larger than a football field, with 40 m of floor across each
+straight. Down the middle runs the Spine, a row of rusted containers with Big Mo's booth on
+top; the ends are banked like a bowl, rising to 3.2 m at the wall. The Jump Straight has a
+1.8 m kicker in the middle and the 4.5 m Big Jump, which throws a Titan about 50 m into the
+open end; the Crush Straight has the mirror kicker, the 3.2 m Table and the crush line (junk
+cars, then the crushed buses and RV, then three burning stacks). A flame jet stands either
+side of each jump. In every event the floor holds a Titan near 50 mph, and a truck turns any
+way it likes. Side by Side runs two mirrored lanes half a lap apart, one each side of the
+Spine. The layout, its sizes and what each event uses are on the card (git history of
+`docs/board/cards/BOWL-EXPAND.md`) and in `docs/board/looks/bowl-expand/look-1.jpg`; the
+stadium (stands, wall and fence, about 24,000 people, four floodlight towers, two big screens)
+is drawn in code by `src/bowl/bowl-stadium.js`.
 
 **Show Night.** Five nights, with a little story, told by an announcer, **Big Mo**
 ("LADIES AND GENTLEMEN AND ALSO DOGS"), and the crowd's roar. A night is three events
@@ -253,18 +260,20 @@ battery boxes on its back three times to stop it, and it falls over. Then you st
 on it, and the crowd goes home happy.
 
 How the fight plays (BOWL-REX-FIGHT, `src/bowl/bowl-rex.js`). Night five is Car Crush, Freestyle,
-then the Scrapasaurus. It walks the rails against the trucks' way round, so it meets the truck head
-on, heading for the car park gate. Its phases are fixed so a child can learn them: it **hunts** (a
-truck in front of its head draws its fire), it **rears and glows** (the tell, with the cone drawn on
-the floor where the fire will go), it **breathes fire** into exactly that cone, and after the fire it
-breathes down the big ramp it **rests** with one battery box open, always just past the ramp's lip,
-so a jump off the big ramp on the rails' side comes down on it. At its **pen** it throws a junk car
-at where the truck was (a ring on the floor first), or eats one to mend its limp if a box has been
-smashed. Three landings and it **falls**; after its last rest it walks out of the **gate**, and too
-many scorches stop the show. Easy is slower, with a longer tell and rest and more rests. Every place
-(rails, rest, pen, gate, reach) comes from the course's data, so a bigger floor moves the fight with
-it. Nights one to four end with Big Mo letting slip what waits under the stands, and on nights three
-and four it stands behind the wall. Once night five is won it lies in the yard's car park.
+then the Scrapasaurus. It walks its rails (`features.bowl.rails`, all the way round) against the
+trucks' way round, so it meets the truck head on, heading for the car park gate. Its phases are fixed
+so a child can learn them: it **hunts** (a truck in front of its head draws its fire), it **rears and
+glows** (the tell, with the cone drawn on the floor where the fire will go), it **breathes fire** into
+exactly that cone, and after the fire it breathes on the Jump Straight it **rests**: it drops a junk
+car on its rails in front of itself, at the show's launch-car place, and stands with one battery box
+open. A truck that drives up that car (the Titan's own launch off cars) comes down on its back. At its
+**pen** it throws a junk car at where the truck was (a ring on the floor first), or eats one to mend
+its limp if a box has been smashed. Three landings and it **falls**; after its last rest it walks out
+of the **gate**, and too many scorches stop the show. Easy is slower (its pace is a time to walk once
+round), with a longer tell and rest and more rests. Every place comes from `features.bowl` (rexPlaces),
+so a change of floor moves the fight with it. Nights one to four end with Big Mo letting slip what
+waits under the stands, and on nights three and four it stands behind the wall. Once night five is won
+it lies in the yard's car park.
 
 **Taking turns.** **Turn Show**: pick the players by name; the game runs one event for
 each in turn, showing "GRATIAN IS UP. PASS THE KEYBOARD." and keeping a scoreboard for
@@ -350,7 +359,6 @@ Nothing times frames on art (rule 9).
 | Big Bess's gas truck, carved from four photos; her exhaust smoke, shade and road dust are drawn by the game | `big-bess-photo.py` | `.../scablands/big-bess.glb` | 12,000, 1.5 MB |
 | Old Smoke's furnace, carved from four photos; its fire, smoke and sparks are drawn by the game | `old-smoke-photo.py` | `.../scablands/old-smoke.glb` | 12,000, 1.5 MB |
 | Iron Mule train and wagons, rails, station | `scablands-mule.py` | `.../scablands/mule.glb` | 40,000, 2 MB |
-| Bowl stadium shell, ramps, flame jets, floodlights | `bowl-stadium.py` | `public/assets/models/wasteland/bowl/stadium.glb` | 80,000, 3 MB |
 | Crush stack: van, bus, RV, burning stack (junk cars reused) | `bowl-crush.py` | `.../bowl/crush.glb` | 20,000, 1 MB |
 | Rival truck bolt-ons on the Titan | `bowl-trucks.py` | `.../bowl/trucks.glb` | 8,000 each, 1 MB |
 | The Scrapasaurus, with moving jaw, tail and battery boxes | `bowl-scrapasaurus.py` | `.../bowl/scrapasaurus.glb` | 60,000, 2.5 MB |

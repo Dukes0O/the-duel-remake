@@ -260,6 +260,28 @@ Once the Helipad stands, the Scablands is a place Kestrel One can fly:
 
 The helicopter needs no new rules: the same bucket, hook and flight as at Tremblant.
 
+**Settled while building HELI-RUSTWALL (19 November 2026).** Behind `wasteland-town`; the rules are in
+`src/heli/heli-scablands.js`, `src/heli/heli-scablands-fire.js` and `src/town/town-heli.js`.
+
+- **The fire on the Ridge** comes in Old Tam's year (Year 6) as his report, which opens the Helipad. Its answers: fly it
+  yourself, send Dune, or leave it for now; it comes back on the first of each month while it burns. Dune puts it out in two
+  town days, whatever the dice say, and the Helipad waits for a pilot. Nothing grows while the helicopter is away.
+- **The pad** is a finished Helipad. A visit needs Brian's four lessons. The pad's pump sells at the home pad's price and the
+  bucket is fitted there. Nothing from the other places' work (cruise legs, the pilot's map, rescues, ski drops, the day's jobs)
+  is offered over the wall, and the flying area is the whole land, its ceiling 300 m over the pad and at least 100 m over the
+  highest ground (the rim, about 195 m; the Lookout, about 79 m, is the highest hill inside it).
+- **Water.** The Scablands has none, and the Reservoir comes in Act 3, so while the Ridge burns the town's fire truck sets up a
+  folding dip tank (about 45,000 litres, 6.4 m across, 1.37 m deep) beside the road at the Ridge's foot, with a fuel truck beside
+  it, as fire crews do. A finished Reservoir (about 2 m deep) can be scooped at any time.
+- **The fire** runs on the forest fire's rules unchanged, on a band of dry scrub two fire cells deep round the Ridge's shoulder,
+  245 to 280 m from its middle: that band meets HELI_FIRE section 4.5's targets (left alone, calm 12 steps and windy 10; answered
+  at once, 5 drops), where an open slope burns out in two steps. It is lost at 45 cells, as a forest fire is.
+- **Lifts.** Old Tam's pickup (about 1,200 kg) from the foot of the Ridge, and after the fire a crate of goat feed and water
+  (450 kg) from the pad, each set down in the 12 m circle at his hut. Each counts once and raises his standing by 10.
+- **Scouting.** At least 30 m up, the map chunk under the helicopter and the eight round it go on the town's map, the same
+  nine a crew member's scouting trip uncovers.
+- **Pay.** Nothing new pays or costs credits; that is for Claude or Kyle to decide later.
+
 ## 7. Stories 2 and 3 (changes to `docs/WASTELAND_WORLD.md`)
 
 **Story 2, The Iron Mule,** keeps the job list in `docs/WASTELAND_WORLD.md` section 6
@@ -330,12 +352,13 @@ Voice is a later card, and no release waits for it.
 | `town.6.short` | Odessa | Site short of tin | We're out of tin. The Boneyard's got more, if somebody'd go and get it. I'm looking at you. |
 | `town.6.made` | Hollis | All under tin by the frost | That's all of them under a roof. They'll remember who did that. |
 | `town.6.late` | Hollis | Not all under tin | Some of them spent that winter in canvas. They got through it. They'll remember that too. |
-| `town.7.fire` | Odessa | The fire report | FIRE! The soup kitchen! There's an old engine in the truck bay. She started last Tuesday. GO! |
+| `town.7.fire` | Odessa | The fire report | The soup kitchen is on fire! There's an old fire engine in the truck bay, and she started last Tuesday, so take her and go! |
 | `town.7.spray` | Odessa | First in the truck | Drive right up to it. Hold H to spray. She holds three minutes of water. When the tank runs dry, stop at any tap to fill up. |
-| `town.7.won` | Odessa | Fire out | Still standing. You smell terrible. Well done. |
+| `town.7.won` | Odessa | Fire out | It's still standing. You smell terrible, and you did well. |
+| `town.7.burnt` | Odessa | Fire out, the soup kitchen burnt down | We've lost the kitchen, but everyone got out. We'll build it again, and next time we'll be quicker. |
 | `town.7.ash` | Hollis | After the fire | There's ash on the ground, and it isn't from the fire. Somebody started this. There's a woman named Cinder who knows about ash. |
 | `town.7.ash.going` | Hollis | After the fire, Everburn started and Old Smoke not beaten | There's ash on the ground, and it isn't from the fire. That's Ash Men's work. Cinder said they'd come this way. |
-| `town.7.ash.done` | Cinder | After the fire, Old Smoke beaten | That's Ash Men's work. Leftovers, with no boss. I'll have a word. |
+| `town.7.ash.done` | Cinder | After the fire, Old Smoke beaten | That's Ash Men's work. They're what is left of Old Smoke's gang, with nobody in charge of them now. I'll go and have a word. |
 | `town.8.payday` | Hollis | Chapter 8 | Bills are in. The till is the town's money and your scrap is yours. Bills only ever come out of the till. Have a look at the Ledger. |
 | `town.8.books` | Hollis | Ledger opened, Vultures not at peace | Money in, money out. What's left is the profit. I have added it up twice and got two answers. |
 | `town.8.vultures` | The Vultures | Ledger opened, at peace | Two columns. One of you. Do the math. |
@@ -383,10 +406,24 @@ Voice is a later card, and no release waits for it.
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
-| `town.heli.tam` | Old Tam | The report | The Ridge is on fire. The goats have views on it. No truck's getting up here, driver. |
-| `town.heli.hollis` | Hollis | The report | I know a pilot. That's you, isn't it? Build a pad. I'll make a call. |
-| `town.heli.roger` | Roger | First flight over | Kestrel One, Tremblant. Say again your position? I didn't know that wall had another side. |
-| `town.heli.dune` | Dune | No pilot yet | I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask. |
+| `town.heli.tam` | Old Tam | The report | The scrub on the Ridge is on fire, and the goats have strong views about it. No truck can get up here, driver, so the help will have to come from the air. |
+| `town.heli.hollis` | Hollis | The report | I know a pilot, and I think it's you. Build a Helipad by the town, and I'll make a call over the wall. |
+| `town.heli.roger` | Roger | First flight over | Kestrel One, this is Tremblant. Please say your position again, because I didn't know that wall had another side. |
+| `town.heli.dune` | Dune | No pilot yet | I'll take the job. I can't fly, but I know a man who owes me a helicopter, so please don't ask me how. |
+
+The helicopter's own lines over the wall (`src/heli/heli-scablands.js`, on screen with the radio's click):
+
+| Id | Who | When | Line |
+| --- | --- | --- | --- |
+| `heli.scablands.roger.fire` | Roger | A visit with the Ridge on fire | There's a fire in the scrub on the Ridge, Kestrel One. Fit the bucket at the pad, then fill it at the dip tank the fire truck has set up at the foot of the Ridge. |
+| `heli.scablands.roger.tank` | Roger | The bucket fitted | The dip tank is the round orange pool beside the road below the Ridge. Lower the bucket into it slowly and let it fill. |
+| `heli.scablands.tam.out` | Old Tam | The fire put out | The fire's out, and the goats have decided to forgive you. Come up for tea some time, and mind the goats when you do. |
+| `heli.scablands.roger.lost` | Roger | The fire grew too big | The fire has burnt out the scrub on the Ridge, Kestrel One. Old Tam and his goats are safe, and the scrub will grow back. |
+| `heli.scablands.tam.feed` | Old Tam | The feed crate waits | The fire took the goats' grazing. If you could fly me up that crate of feed and water, they would be very grateful, and so would I. |
+| `heli.scablands.tam.fed` | Old Tam | The feed set down | That's the feed. The goats have already found it, so I would leave before they find you. |
+| `heli.scablands.tam.truck` | Old Tam | The pickup waits | My old pickup slid off the track at the bottom of the Ridge, and it won't drive back up. Could you lift it up to the hut for me? |
+| `heli.scablands.tam.trucked` | Old Tam | The pickup set down | That's my truck back where it belongs. Please don't tell anyone I tried to drive it down the Ridge. |
+| `heli.scablands.roger.scout` | Roger | The first land seen from the air | Everything you fly over goes on the town's map, Kestrel One. Stay at least thirty metres up and you'll see the ground clearly. |
 
 ### Act 3, opening lines (all the rest: `docs/story/the-polite-letter.md`)
 

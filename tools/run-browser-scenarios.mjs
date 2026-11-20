@@ -45,6 +45,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['mclaren-f1-look'], paths:['src/mclaren-f1-vehicle.js']},
   {prefixes:['skyline-audio'], paths:['src/skyline-vehicle.js','src/audio.js']},
   {prefixes:['earned-cars'], paths:['src/earned-cars-ui.js','src/unlock-vehicles.js']},
+  {prefixes:['skin-waste'], paths:['src/paint-finish-look.js','src/vehicle-paint.js','src/paint-presets.js']},
   {prefixes:['far-rain'], paths:['src/render/','src/scene-lighting.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.

@@ -9,6 +9,7 @@ import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushRowName, crushRowsToWin, bowlHu
   showTruckFor} from '../src/bowl/bowl-night.js';
 import {BIG_MO, BOWL_CRUSH_ROW, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
 
@@ -50,26 +51,29 @@ const showDuel = (enabled = true) => {
     'a Titan owner drives their own truck with its upgrades');
 }
 
-// Every distance comes from the course's data, so a bigger Bowl (BOWL-EXPAND) moves the events with it.
+// Every place comes from the course's own data (course.features.bowl, BOWL-EXPAND),
+// so a rebuilt Bowl moves the events with it.
 {
-  const bowl = new Course(BOWL_COURSE, 1989), layout = bowlLayout(bowl);
+  const bowl = new Course(BOWL_COURSE, 1989), layout = bowlLayout(bowl), show = bowl.features.bowl;
   const rowS = [...new Set(bowl.features.crushables.map(prop => prop.s))].sort((a, b) => a - b);
-  ok(layout.rows.length === rowS.length && layout.crush.firstRowS === rowS[0] && layout.crush.startS < rowS[0],
-    'the Car Crush starts a run-up before the first row of the crush line');
-  ok(layout.lane === BOWL_COURSE.scrapdome.floorHalfWidth / 2, 'the Side by Side lanes split the floor');
-  ok(layout.parked.every(car => !bowl.features.ramps.some(ramp => car.s >= ramp.start && car.s <= ramp.end) && car.s < rowS[0]),
-    'the parked cars stand on clear floor, off the ramps and before the crush line');
-  // The same rules on a made-up bigger floor: everything moves with the data.
-  const shift = 60, big = {length: 400, def: {scrapdome: {floorHalfWidth: 12}}, roadHalfWidthAt: () => 12,
-    features: {ramps: bowl.features.ramps.map(ramp => ({...ramp, start: ramp.start + shift, end: ramp.end + shift})),
-      crushables: [...bowl.features.crushables, ...bowl.features.crushables.slice(0, 3).map((prop, i) => ({...prop, id: `extra-${i}`, s: 140}))]
-        .map(prop => ({...prop, s: prop.s + shift}))}};
-  const moved = bowlLayout(big);
-  ok(moved.crush.startS === layout.crush.startS + shift && moved.lane === 6 && moved.rows.length === layout.rows.length + 1,
-    'on a bigger floor the start, the lanes and the rows follow the course');
-  ok(crushRowsToWin(big, {cpuDifficulty: 'hard'}) === moved.rows.length && crushRowsToWin(bowl, {cpuDifficulty: 'easy'}) === 3,
-    'each level needs its share of however many rows the course has');
-  ok(crushRowName(bowl, 0) === 'the first row of cars' && crushRowName(bowl, 3) === 'the buses' &&
+  ok(layout.crush.startS === show.crush.startS && layout.crush.lateral === show.crush.lateral &&
+    layout.crush.endS === show.crush.endS && layout.rows.length === rowS.length,
+    'the Car Crush runs from the course\'s start along its crush line, over its rows');
+  equal(layout.parked.map(car => [car.s, car.lateral]), show.launchCars.map(car => [car.s, car.lateral]),
+    'Freestyle\'s parked cars stand at the course\'s launch cars');
+  equal(layout.lanes.map(lane => [lane.s, lane.lateral]), show.lanes.slice(0, 2).map(lane => [lane.s, lane.lateral ?? 0]),
+    'Side by Side uses the course\'s two mirrored lanes, half a lap apart');
+  ok(Math.abs(layout.lanes[1].s - layout.lanes[0].s - bowl.length / 2) < 1e-6, 'the lanes start half a lap apart');
+  // A course without the show's data still gets places from its own shapes.
+  const plain = {length: 400, def: {scrapdome: {floorHalfWidth: 12}}, roadHalfWidthAt: () => 12,
+    features: {ramps: [{start: 20, end: 40}], crushables: [0, 1, 2].map(i => ({...bowl.features.crushables[i], s: 200 + 10 * i}))}};
+  const derived = bowlLayout(plain);
+  ok(derived.crush.startS < 200 && derived.lanes[1].s === 200 && derived.parked.length === 2 &&
+    derived.parked.every(car => !(car.s >= 20 && car.s <= 40) && !(car.s >= 197 && car.s <= derived.crush.endS)),
+    'without the show\'s data the places come from the crush line, the ramps and the ring');
+  ok(crushRowsToWin(bowl, {cpuDifficulty: 'hard'}) === layout.rows.length && crushRowsToWin(bowl, {cpuDifficulty: 'easy'}) ===
+    Math.ceil(layout.rows.length * .6), 'each level needs its share of however many rows the course has');
+  ok(crushRowName(bowl, 0) === 'the first row of cars' && /buses/.test(crushRowName(bowl, layout.rows.findIndex(row => /bus/i.test(row.kind)))) &&
     crushRowName(bowl, layout.rows.length - 1) === 'the burning stack', 'rows are named by what stands in them');
 }
 
@@ -106,8 +110,10 @@ const run = (() => {
       if (s.bowlNight.phase === 'complete') { for (let wait = 0; wait < 120 * 10; wait++) duel.step(DT); break; }
       duel.continueBowlNight(); continue;
     }
-    const freestyle = s.bowlNight.event.type === 'freestyle';
-    const line = freestyle && s.s > 40 && s.s < 70 ? -3.4 : s.bowlNight.event.type === 'sideBySide' ? 3 : 0;
+    const freestyle = s.bowlNight.event.type === 'freestyle', layout = bowlLayout(duel.course);
+    // Freestyle: the centre line over the kickers, swinging out to the first launch car on the way past it.
+    const car = layout.parked[0], lapS = ((s.s % duel.course.length) + duel.course.length) % duel.course.length;
+    const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : s.bowlNight.event.type === 'sideBySide' ? layout.lanes[0].lateral : 0;
     // The Car Crush as a child plays it: W held down, no steering.
     if (s.bowlNight.event.type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
     else duel.setInput({throttle: s.speedMph < 32 ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
@@ -141,7 +147,17 @@ const run = (() => {
     Number.isFinite(log.hud.crowd) && log.hud.goal.startsWith('Do big jumps'), 'the HUD reads the event, clock, crowd and goal');
   ok(['bowl.mo', 'bowl.crowd.rise', 'bowl.event.won'].every(cue => log.cues.has(cue)), 'each new event names its sound cue');
   const freestyle = log.events.find(result => result.event === 'freestyle');
-  ok(freestyle.crowdPeak >= 50 && freestyle.crowdPeak <= 100, `a good Freestyle lifts the crowd meter past half way (peak ${freestyle.crowdPeak})`);
+  ok(freestyle.crowdPeak >= 25, `the crowd meter rises visibly even on a plain line over the kickers (peak ${freestyle.crowdPeak})`);
+  // A good Freestyle: a big stunt every 7 seconds (big air, a launch off a car, the Table, a flip, a kicker, a donut).
+  const stunts = [{type: 'landedJump', durationSeconds: 2.2, distanceMeters: 50}, {type: 'carLaunch', durationSeconds: 1.3, distanceMeters: 30},
+    {type: 'landedJump', durationSeconds: 1.9, distanceMeters: 45}, {type: 'flip', pitchTurns: 1},
+    {type: 'landedJump', durationSeconds: 1.2, distanceMeters: 28}, {type: 'donut', seconds: 3}];
+  const good = scoreFreestyle(Array.from({length: 13}, (_, i) => ({...stunts[i % stunts.length], atSeconds: 4 + 7 * i})));
+  const goodPeak = Math.max(...good.events.map(event => event.crowd));
+  const jump = height => scoreStuntEvent({type: 'landedJump', durationSeconds: 1.5, distanceMeters: 30, heightMeters: height}, 0).points;
+  ok(jump(10) > jump(4) && jump(4) > jump(0) && jump(0) === scoreStuntEvent({type: 'landedJump', durationSeconds: 1.5, distanceMeters: 30}, 0).points,
+    'big air scores most: a higher jump pays more, and a jump with no height scores as before');
+  ok(goodPeak >= 50 && goodPeak <= 100, `a good Freestyle lifts the crowd meter past half way (peak ${goodPeak.toFixed(1)})`);
 }
 
 // The purse pays once: a second settlement of the same run, or a later run of

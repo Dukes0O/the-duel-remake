@@ -35,20 +35,22 @@ export const page = {
   tell: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'tell')()`,
   fire: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'fire')()`,
   rest: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'rest')()`,
-  restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent.includes('jump the big ramp'))()`,
+  restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent.includes('drive fast up the junk car'))()`,
   coneDrawn: `(() => { const scene = window.__render?.scene; return !!scene?.getObjectByName('Scrapasaurus fire cone')?.visible && !!scene.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
-  // A child-pace driver in the page: round on the stands' side, out to the floor's edge while fire is
-  // coming, and on to the rails for the big ramp once a box is open (tools/test-bowl-rex.mjs).
+  // A child-pace driver in the page: round inside the rails, out of the cone and waiting back while fire is
+  // coming, and on to the rails for the dropped junk car once a box is open (tools/test-bowl-rex.mjs).
   driver: `(() => { const app = window.__qaApp;
     app._driveAutopilot = function () {
       const duel = this.duel, s = duel.state, fight = s.bowlNight?.event?.rex;
       if (s.status !== 'racing' || !fight) return;
-      const at = ((s.s % 140) + 140) % 140, places = fight.places;
-      if (fight.phase === 'rest' && at > 4 && at < 28) this.__rexGoing = true;
-      if (at > 70 || at < 2) this.__rexGoing = false;
-      let target = this.__rexGoing ? places.rail + .3 : 2.4;
-      if (!this.__rexGoing && (fight.phase === 'tell' || fight.phase === 'fire') && at > 18 && at < 58) target = places.edge - 1;
-      duel.setInput({throttle: s.speedMph < 31 ? 1 : 0, brake: 0, boost: false,
+      const places = fight.places, L = places.length, wrap = v => ((v % L) + L) % L;
+      const toCar = wrap(s.s - places.car.s + L / 2) - L / 2, fire = fight.phase === 'tell' || fight.phase === 'fire';
+      if (fight.phase === 'rest' && toCar > -34 && toCar < -12) this.__rexGoing = true;
+      if (toCar > 25 || toCar < -45) this.__rexGoing = false;
+      let target = this.__rexGoing ? places.car.lateral : places.rail - places.side * 11;
+      if (!this.__rexGoing && fire && toCar > -30 && toCar < 20) target = places.rail - places.side * 12.5;
+      const waiting = fire && toCar > -90 && toCar < -35;
+      duel.setInput({throttle: s.speedMph < (waiting ? 18 : 37) ? 1 : 0, brake: waiting && s.speedMph > 22 ? .4 : 0, boost: false,
         steer: Math.max(-1, Math.min(1, (s.lateral - target) * .35 + (s.headingError || 0) * 1.6))});
     };
     app.autopilot = true; return true; })()`,
@@ -82,14 +84,14 @@ export async function run(context) {
   assert.ok(await context.evaluate(page.toFight), 'the night goes on to its third event');
   await context.waitFor(page.hud, 'the HUD names the Scrapasaurus', 60000);
   await picture(context, 'bowl-rex-start');
-  // The truck waits by the start line while the Scrapasaurus walks to the big ramp.
-  await context.waitFor(page.tell, 'its tell at the big ramp', 60000);
+  // The truck waits by the start line while the Scrapasaurus walks to where it rests.
+  await context.waitFor(page.tell, 'its tell where it rests', 60000);
   await picture(context, 'bowl-rex-tell-cone-on-floor');
   assert.equal(await context.evaluate(page.coneDrawn), true, 'the cone is on the floor and its chest glows during the tell, before any fire');
   await context.waitFor(page.fire, 'the fire', 10000);
   await picture(context, 'bowl-rex-fire');
   await context.waitFor(page.rest, 'its rest with a battery box open', 10000);
-  assert.ok(await context.evaluate(page.restGoal), 'the HUD says to jump the big ramp now');
+  assert.ok(await context.evaluate(page.restGoal), 'the HUD says to drive up the junk car now');
   await picture(context, 'bowl-rex-rest-box-open');
 
   const scrapBefore = await context.evaluate(page.scrap);

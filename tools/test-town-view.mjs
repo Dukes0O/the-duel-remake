@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import {createTownCamera,moveTownCamera,resizeTownCamera,TOWN_ZOOM} from '../src/town/view/town-camera.js';
 import {visibleTownChunks,townChunkLod} from '../src/town/view/town-chunks.js';
 import {buildTownChunkInstances,createTownPlacementGhost} from '../src/town/view/town-instances.js';
+import {townArtPlan} from '../src/town/view/town-art-plan.js';
 import {pickTownGround, pickTownItem} from '../src/town/view/town-pick.js';
 import {createTownScene} from '../src/town/view/town-scene.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
@@ -30,7 +31,8 @@ assert.equal(townChunkLod(camera,chunks[0]),'near');
 const meshes=buildTownChunkInstances(town,{x:0,z:0},'near');
 assert.ok(meshes.length>0 && meshes.every(mesh=>mesh.isInstancedMesh));
 assert.ok(meshes.reduce((sum,mesh)=>sum+mesh.count,0)>0);
-assert.ok(meshes.some(mesh=>mesh.userData.townItems?.some(item=>item.buildingId==='burnt-home'&&item.state==='ruined')),
+// TOWN-VIEW-ART: the charred remains are the stages family's burnt ruin, placed by the art plan, not a box.
+assert.ok(townArtPlan(town).placements.some(item=>item.node==='burnt-1'&&item.kind==='burnt'&&item.item?.id==='burnt-plot'),
   'an extinguished burned plot shows charred remains until rebuilding starts');
 assert.equal(JSON.stringify(town),snapshot,'building the view only reads town data');
 
