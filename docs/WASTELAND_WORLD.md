@@ -252,6 +252,20 @@ on rails round the Bowl. It eats junk cars and breathes fire. Jump and land on t
 battery boxes on its back three times to stop it, and it falls over. Then you stand
 on it, and the crowd goes home happy.
 
+How the fight plays (BOWL-REX-FIGHT, `src/bowl/bowl-rex.js`). Night five is Car Crush, Freestyle,
+then the Scrapasaurus. It walks the rails against the trucks' way round, so it meets the truck head
+on, heading for the car park gate. Its phases are fixed so a child can learn them: it **hunts** (a
+truck in front of its head draws its fire), it **rears and glows** (the tell, with the cone drawn on
+the floor where the fire will go), it **breathes fire** into exactly that cone, and after the fire it
+breathes down the big ramp it **rests** with one battery box open, always just past the ramp's lip,
+so a jump off the big ramp on the rails' side comes down on it. At its **pen** it throws a junk car
+at where the truck was (a ring on the floor first), or eats one to mend its limp if a box has been
+smashed. Three landings and it **falls**; after its last rest it walks out of the **gate**, and too
+many scorches stop the show. Easy is slower, with a longer tell and rest and more rests. Every place
+(rails, rest, pen, gate, reach) comes from the course's data, so a bigger floor moves the fight with
+it. Nights one to four end with Big Mo letting slip what waits under the stands, and on nights three
+and four it stands behind the wall. Once night five is won it lies in the yard's car park.
+
 **Taking turns.** **Turn Show**: pick the players by name; the game runs one event for
 each in turn, showing "GRATIAN IS UP. PASS THE KEYBOARD." and keeping a scoreboard for
 the night. Nobody plays at the same time.
