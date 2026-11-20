@@ -1488,7 +1488,7 @@ function enterNight2(duel, worldJob) {
   for (const actor of riders) updateJobActor(duel, worldJob, actor, 0);
   if (!riders.length) worldJob.actors = worldJob.actors.filter(actor => !actor.id.startsWith('wash-rider-'));
   syncJobCarSolids(worldJob);
-  if (!scout) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
+  if (!scout && !worldJob.night2?.scoutDowned) worldJob.actors = worldJob.actors.filter(actor => actor.id !== NIGHT_2_SCOUT.id);
   if (step?.kind === 'talk' || step?.kind === 'rider-fight') {
     worldJob.marker = null;
     duel.state.arena.markers = [];

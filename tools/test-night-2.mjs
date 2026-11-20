@@ -385,8 +385,14 @@ for (const stopped of [false, true]) {
   assert(scout.knockedDown && run.view.scoutDowned, 'A car hit stops the scout for good');
   assert(run.cues.includes('night.ash-man.down'));
   run.tick();
-  assert.equal(run.stage(), 'scout-stopped');
+  // Changed assertion (NIGHT-2-AND-TRUCK-POLISH, fix 4): a scout run down by the car has his own step, 'scout-downed', so Dace's
+  // line says what happened ('scout-stopped' stays for a scout turned back with fire).
+  assert.equal(run.stage(), 'scout-downed');
   assert.equal(run.view.ledger.feud, 'Watching');
+  assert(run.world.actors.some(actor => actor.id === 'night-2-scout' && actor.knockedDown), 'He stays down on the ground where he fell');
+  run.tick(30);
+  assert(run.world.actors.some(actor => actor.id === 'night-2-scout' && actor.knockedDown), 'and stays there while the scene is told');
+  assert(!/run/.test(NIGHT_2_SCENES['scout-downed'].lines[0].words), 'Dace does not say the man ran');
   console.log('PASS Night 2 scout run down by the car.');
 }
 
