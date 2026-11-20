@@ -31,8 +31,15 @@ export const page = {
   start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="5"]').click(); return true; })()`,
   onNightFive: `(() => window.__qaApp.duel.state.bowlNight?.night === 5 && window.__qaApp.duel.state.status !== 'menu')()`,
   // Straight to the night's fourth event, the fight (the events before it have their own scenarios).
-  toFight: `(() => { const duel = window.__qaApp.duel, night = duel.state.bowlNight;
-    night.show.eventIndex = 3; night.phase = 'result'; return duel.continueBowlNight(); })()`,
+  toFight: `(() => { const app = window.__qaApp, night = app.duel.state.bowlNight;
+    night.show = {...night.show, eventIndex: 3}; night.phase = 'result'; return app.continueShowNight(); })()`,
+  // Night five's first event is drawn (the game's readiness gate, the Titan, the stadium) before anything
+  // is replaced, as BOWL-RIVALS' scenario does: jumping on while the renderer still prepares the first
+  // event's world met a warm-up fault on the laptop (QA-SUMMIT-WARMUP-EXCEPTION).
+  firstDrawn: `(() => { const app = window.__qaApp, view = window.__render, canvas = document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]');
+    if (!app.visualReady || canvas?.parentElement?.dataset?.vehicleAsset !== 'ready' || !view?.scene) return false;
+    let titan = false; view.scene.traverse(node => { if (node.userData?.vehicleKey === 'titan_monster' && node.visible) titan = true; });
+    return titan && !!view.scene.getObjectByName('Bowl stadium, floodlights and crowd'); })()`,
   hud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('THE SCRAPASAURUS'); })()`,
   phase: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase ?? null)()`,
   // The HUD is drawn at once, the world later (the Titan is 14 MB, the Scrapasaurus 1.5 MB, on a real GPU):
@@ -53,6 +60,7 @@ export const page = {
         airHeight: +(s.airHeight || 0).toFixed(2), impactTimer: s.impactTimer, tumble: !!s.tumble},
       droppedCar: car && {s: +car.s.toFixed(1), lateral: car.lateral, crushed: !!car.crushed},
       autopilot: app.autopilot === true, visualReady: app.visualReady,
+      warmupStatus: document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]')?.parentElement?.dataset?.warmupStatus ?? null,
       rexModel: !!window.__render?.scene?.getObjectByName('Scrapasaurus model'),
       card: document.querySelector('.bowl-result')?.dataset.bowlResult ?? null}); })()`,
   tell: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'tell')()`,
@@ -125,6 +133,7 @@ export async function run(context) {
 
   await context.evaluate(page.start);
   await context.waitFor(page.onNightFive, 'night five starts', 60000);
+  await waitInFight(context, page.firstDrawn, 'night five\'s first event is drawn', 240000);
   assert.ok(await context.evaluate(page.toFight), 'the night goes on to its fourth event, the fight');
   await waitInFight(context, page.hud, 'the HUD names the Scrapasaurus', 60000);
   await waitInFight(context, page.drawn, 'the stadium, the Titan and the Scrapasaurus are drawn', 240000);
