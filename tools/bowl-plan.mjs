@@ -9,7 +9,7 @@ import {spawnSlots} from '../src/arena/venues.js';
 
 const out = process.argv[2] ?? '.evidence/bowl-plan.svg';
 const course = new Course(BOWL_COURSE, 1989), bowl = course.features.bowl, centre = bowlCentre(course);
-const SCALE = 6.2, LEFT = 90, TOP = 170, WIDTH = 1300, HEIGHT = 920;
+const SCALE = 6.2, LEFT = 90, TOP = 170, WIDTH = 1300, HEIGHT = 1430;
 // World z runs left to right on the page, world x runs down it.
 const px = p => [LEFT + (p.z - (centre.z - 82)) * SCALE, TOP + (p.x - (centre.x - 47)) * SCALE];
 const at = (s, off) => px(course.worldAt(s, off));
@@ -124,6 +124,29 @@ const legendParts = legend.map(([colour, words], i) => {
   return `<rect x="${cx}" y="${cy - 12}" width="16" height="14" fill="${colour}" stroke="#444" stroke-width=".8"/>` + text(cx + 24, cy, words, 14, '#2b2118', 'start');
 });
 
+// The floor plan above keeps its existing scale. Draw the whole outside below
+// at its own scale so both the outer bank and the two tunnel mouths fit.
+const outMap = (s,off) => {
+  const p = course.worldAt(s,off);
+  return [650 + (p.z-centre.z)*1.3,1175 + (p.x-centre.x)*1.3];
+};
+const exterior = bowl.outside;
+parts.push(text(650,950,'Terraces, car park and return gates',20,'#2b2118','middle',700));
+for (const [offset, fill] of [[exterior.bank,'#a58b70'],[exterior.bank-2,'#bfc1b9'],
+  [exterior.back,'#726a61'],[exterior.front,'#b98c5c']]) {
+  const points=[];
+  for(let s=0;s<course.length;s++) points.push(outMap(s,offset));
+  parts.push(`<path d="${path(points)}" fill="${fill}"/>`);
+}
+for (const car of exterior.parking) {
+  const [x,y]=outMap(car.s,car.off);
+  parts.push(`<rect x="${x-3}" y="${y-1.5}" width="6" height="3" fill="#485850"/>`);
+}
+for (const gate of bowl.gates) {
+  const [x,y]=outMap(gate.s,exterior.front), [bx,by]=outMap(gate.s,exterior.back);
+  parts.push(`<line x1="${x}" y1="${y}" x2="${bx}" y2="${by}" stroke="#c4ebd0" stroke-width="${gate.width*1.3}"/>`);
+  parts.push(text(bx,by + (by>1175?17:-7),gate.name,12,'#183c30','middle',700));
+}
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="Segoe UI, Arial, sans-serif">
 <defs><marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M5,0L5,10" stroke="#1d3d5c" stroke-width="2"/></marker>
 <marker id="head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10Z" fill="context-stroke"/></marker></defs>
