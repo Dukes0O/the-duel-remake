@@ -8,12 +8,13 @@ import argparse
 import json
 import math
 import random
+import struct
 import sys
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--round', type=int, default=5, choices=[5])
+parser.add_argument('--round', type=int, default=6, choices=[6])
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--skip-renders', action='store_true')
 parser.add_argument('--sheet-only', action='store_true')
@@ -22,7 +23,7 @@ args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv
 root = Path(args.root).resolve()
 blend = root / 'art-build/bowl-scrapasaurus/scrapasaurus.blend'
 output = root / 'public/assets/models/wasteland/bowl/scrapasaurus.glb'
-sheet = root / 'docs/board/looks/bowl-art-rex/round-5.jpg'
+sheet = root / 'docs/board/looks/bowl-art-rex/round-6.jpg'
 evidence = root / '.qa-dist/rex'
 if args.paths_only:
     print(json.dumps(dict(blend=[str(blend)], glb=[str(output)], evidence=[str(evidence/'clay.png')], summary=[str(sheet)])))
@@ -37,9 +38,12 @@ if args.sheet_only:
     if previous.returncode==0:
         reference=Image.open(BytesIO(previous.stdout)).crop((0,60,560,375))
     else:
-        reference=Image.open(sheet).crop((0,32,560,355))
+        reference=Image.open(sheet.with_name('round-5.jpg')).crop((0,32,560,355))
     panels=[('Welded sculpture reference',reference),('Clay silhouette',Image.open(evidence/'clay.png'))]
-    for title,name in [('Standing beside the Titan','side'),('Three-quarter view','quarter'),('From the driver seat','driver'),('Tired ramp - 4.8 m wide, 22.7 degrees','tired'),('Open hip battery','above'),('Salvaged grille and spring teeth','detail'),('Crushed hip battery','crushed')]:
+    for title,name in [('Three closed batteries','side'),('Sagging after the fire','tired'),
+                       ('Hip battery - hatch closed','closed'),('Hatch raised - hook the steel eye','open'),
+                       ('Open eye from the far side','far'),('Box pulled clear of its socket','detach'),
+                       ('Empty socket and torn leads','socket')]:
         panels.append((title,Image.open(evidence/(name+'.png'))))
     canvas=Image.new('RGB',(1680,1065),'#252927')
     draw=ImageDraw.Draw(canvas)
@@ -292,39 +296,70 @@ for s in (-1,1):
         tube('Bogie roller',(s*1.72,.38,z),(s*1.95,.38,z),.26,.26,rubber,asset)
 solid('Low rail bogie',(0,.39,-1.42),(3.7,.26,3.42),oxide,asset)
 
-# In the tired pose the folded tail plates open into a continuous drivable
-# surface. The shoulder and hip decks meet it at exactly the same height.
-bridge=group('folding-tail-deck',body,(0,9.44,-3.1))
-bridge.scale=(.001,.001,.001)
-def deck(name,z0,h0,z1,h1,width,parent):
-    pts=[(-width/2,h0,z0),(width/2,h0,z0),(width/2,h1,z1),(-width/2,h1,z1)]
-    return mesh(name,pts+[(x,y-.11,z) for x,y,z in pts],[(3,2,1,0),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)],iron,parent)
-deck('tired-tail-ramp',-13,-5.44,0,0,4.8,bridge)
-deck('tired-flat-back',0,0,6.15,0,4.8,bridge)
-for k in range(25):
-    z=-12.8+k*.51; y=z*5.44/13
-    solid('Ramp tread',(0,y+.012,z),(4.6,.032,.085),oxide,bridge)
+# The sockets belong to the spine. Each lift-out cartridge has a centre-local
+# origin and carries the cage, cell and tow eye as a unit.
+live_cell=mat('Charged amber enamel',(.96,.49,.035))
+live_shader=live_cell.node_tree.nodes.get('Principled BSDF')
+live_shader.inputs['Emission Color'].default_value=(1,.38,.015,1)
+live_shader.inputs['Emission Strength'].default_value=.65
+
+bare_steel=mat('Polished towing eye',(.46,.49,.46),.78,.33)
+
+def tow_eye(name,parent):
+    # A forged annulus with a through-hole across X is readable from both sides.
+    radius=.272
+    gauge=.060
+    verts=[]
+    faces=[]
+    for i in range(28):
+        a=2*pi*i/28
+        for j in range(8):
+            b=2*pi*j/8
+            verts.append((gauge*sin(b),(radius+gauge*cos(b))*cos(a),(radius+gauge*cos(b))*sin(a)))
+    for i in range(28):
+        for j in range(8):
+            k=i*8+j
+            faces.append((k,i*8+(j+1)%8,((i+1)%28)*8+(j+1)%8,((i+1)%28)*8+j))
+    eye=mesh(name,verts,faces,bare_steel,parent)
+    eye.location.y=.66
+    for face in eye.data.polygons: face.use_smooth=True
+    solid('Forged eye foot',(0,.395,0),(.23,.18,.30),iron,parent)
+    return eye
+
 boxes=[]
 for index,z in enumerate((-2.9,-.22,2.56),1):
-    whole=solid(f'battery-box-{index}-whole',(0,9.66,z),(1.48,.57,1.04),hazard,body)
-    smashed=solid(f'battery-box-{index}-smashed',(0,9.49,z),(1.52,.22,1.07),oxide,body)
-    # Buckled lid, torn edge and a sheared terminal remain after the strike.
-    for v in smashed.data.vertices:
-        if v.co.y>9.49: v.co.y+=.11*v.co.x-.065*(v.co.z-z)
-    mesh('Torn hazard lid',[(-.65,9.55,z-.37),(-.12,9.67,z-.42),(.24,9.60,z-.26),
-         (.05,9.59,z+.25),(-.49,9.62,z+.41)],[(0,1,2),(2,3,4),(4,0,2)],hazard,smashed)
-    tube('Sheared battery terminal',(.46,9.60,z+.19),(.60,9.72,z+.24),.06,.041,iron,smashed)
-    # Open parts nest inside the closed casing, so older game views that
-    # control only the intact and crushed parts can still display this model.
-    solid('Welded battery saddle',(0,8.95,z),(1.42,.91,.98),oxide,body)
-    opened=solid(f'battery-box-{index}-open',(0,9.48,z),(1.26,.16,.91),hazard,body)
-    for x in (-.52,0,.52):
-        solid('Cell rib',(x,9.58,z),(.22,.15,.67),iron,opened)
-        solid('Warning stripe',(x,9.951,z),(.14,.018,1.01),rubber,whole)
+    socket=group(f'battery-socket-{index}',body,(0,9.46,z))
+    solid('Saddle welded to spine',(0,-.58,0),(1.53,1.12,1.08),oxide,socket)
+    solid('Black socket floor',(0,0,0),(1.68,.07,1.18),rubber,socket)
     for side in (-1,1):
-        tube('Heavy cable',(side*.67,9.63,z),(side*.90,9.37,z+.23),.079,.079,rubber,whole)
-    opened.scale=(0,0,0)
-    boxes.append((whole,opened,smashed))
+        solid('Socket side lip',(side*.82,.094,0),(.08,.19,1.2),iron,socket)
+        solid('Socket end lip',(0,.094,side*.56),(1.6,.19,.08),iron,socket)
+        end=(side*.39,.22,side*.22)
+        tube('Torn lead insulation',(side*.76,.075,side*.33),end,.058,.055,rubber,socket)
+        for wire in (-1,0,1):
+            tube('Frayed copper strand',end,(side*.27,.27+wire*.045,side*.23+wire*.07),.019,.008,paint[2],socket,6)
+    box=group(f'battery-box-{index}',body,(0,9.86,z))
+    whole=solid(f'battery-box-{index}-whole',(0,0,0),(1.50,.65,1.04),hazard,box)
+    opened=solid(f'battery-box-{index}-open',(0,0,0),(1.50,.65,1.04),live_cell,box)
+    for state in (whole,opened):
+        for side in (-1,1):
+            # The stripes wrap the sides, so they are visible from the floor.
+            for k in (-1,0,1):
+                z0=k*.29
+                mesh('Black hazard slash',[(side*.756,-.25,z0-.11),(side*.756,-.25,z0+.015),
+                    (side*.756,.23,z0+.17),(side*.756,.23,z0+.045)],[(0,1,2,3)],rubber,state)
+            tube('Lift handle',(side*.6,-.06,-.53),(side*.6,.13,-.53),.043,.043,iron,state)
+        tow_eye(f'towing-eye-{index}-'+('open' if state==opened else 'closed'),state)
+    for side in (-1,1):
+        for state,tip in ((whole,(side*.19,.37)),(opened,(side*1.14,.72))):
+            heel=(side*.67,.35)
+            a=(heel[0],heel[1],-.43); b=(tip[0],tip[1],-.43)
+            c=(tip[0],tip[1],.43); d=(heel[0],heel[1],.43)
+            for start,end in ((a,b),(b,c),(c,d),(d,a)):
+                tube('Hinged battery cage',start,end,.038,.038,iron,state)
+            for pos in (-.28,0,.28):
+                tube('Cage crossbar',(heel[0],heel[1],pos),(tip[0],tip[1],pos),.028,.028,iron,state)
+    boxes.append((box,whole,opened,socket))
 
 def hinge(pivot,name):
     # Bind the rigidly welded parts to a single hinge bone. The parent
@@ -370,8 +405,7 @@ tail_rig,tail_joint=hinge(tail,'Tail linkage')
 clip(jaw_rig,'jaw-bite','rotation_euler',[(1,(0,0,0)),(9,(.18,0,0)),(16,(-.20,0,0)),(28,(0,0,0))],jaw_joint)
 clip(tail_rig,'tail-swing','rotation_euler',[(1,(0,0,0)),(13,(0,.18,0)),(37,(0,-.18,0)),(49,(0,0,0))],tail_joint)
 for obj,channel,start,end in ((legs,'scale',(1,1,1),(1,.49,1)),(body,'location',(0,0,0),(0,-4,0)),
-        (neck,'rotation_euler',(0,0,0),(.992,0,0)),(tail,'rotation_euler',(0,0,0),(-.14,0,0)),
-        (bridge,'scale',(.001,.001,.001),(1,1,1))):
+        (neck,'rotation_euler',(0,0,0),(.992,0,0)),(tail,'rotation_euler',(0,0,0),(-.125,0,0))):
     clip(obj,'tired',channel,[(1,start),(25,end),(49,end)])
 scene.frame_set(1)
 scene.frame_end=49
@@ -415,6 +449,23 @@ for obj in [asset,*asset.children_recursive]: obj.select_set(True)
 bpy.context.view_layer.objects.active=asset
 bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',use_selection=True,export_yup=False,
     export_animation_mode='NLA_TRACKS',export_extras=True)
+# Blender derives each child's local matrix from its parent's inverse.
+# Export at unit scale, then park only the three open nodes in the GLB.
+# The game can reveal a complete cage and eye with one scale change.
+raw=output.read_bytes()
+json_length=struct.unpack_from('<I',raw,12)[0]
+manifest=json.loads(raw[20:20+json_length])
+open_names={opened.name for _,_,opened,_ in boxes}
+for node in manifest['nodes']:
+    if node.get('name') in open_names:
+        node['scale']=[0,0,0]
+encoded=json.dumps(manifest,separators=(',',':')).encode('utf8')
+encoded+=b' '*((-len(encoded))%4)
+tail_chunks=raw[20+json_length:]
+output.write_bytes(struct.pack('<4sII',b'glTF',2,20+len(encoded)+len(tail_chunks))
+                   +struct.pack('<I4s',len(encoded),b'JSON')+encoded+tail_chunks)
+for _,_,opened,_ in boxes:
+    opened.scale=(0,0,0)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if args.skip_renders: raise SystemExit
 
@@ -447,34 +498,25 @@ scale=2.25/(max(p.y for p in points)-min(p.y for p in points))
 anchor.scale=(scale,)*3
 anchor.location=(4,-min(p.y for p in points)*scale,-5.3)
 solid('Studio floor',(0,-.14,0),(200,.22,200),mat('Concrete',(.38,.37,.33),0),None)
-for whole,opened,smashed in boxes:
-    smashed.hide_render=True
-    for child in smashed.children_recursive: child.hide_render=True
-    opened.hide_render=True
-for obj in (legs,body,neck,tail,bridge):
+for obj in (legs,body,neck,tail):
     for track in obj.animation_data.nla_tracks: track.mute=track.name=='tired'
 scene.frame_set(1)
 render('side',(30,7,-2),(0,5.4,-2.3),24)
-render('quarter',(21,10,15),(0,5.45,-2.1),25)
-cam.data.type='PERSP'; cam.data.lens=26
-render('driver',(15,2.25,15),(0,5.35,-1.5),28)
-cam.data.type='ORTHO'
-scene.frame_set(10)
-render('detail',(8,11,14),(0,9.7,5.7),6.9)
-for obj in (legs,body,neck,tail,bridge):
+for obj in (legs,body,neck,tail):
     for track in obj.animation_data.nla_tracks: track.mute=track.name!='tired'
-whole,opened,_=boxes[0]
+scene.frame_set(30)
+render('tired',(25,12,-14),(0,3,-3.4),25)
+box,whole,opened,socket=boxes[0]
+render('closed',(6,8,-6.4),(0,6.05,-2.9),3.4)
 whole.hide_render=True
 for child in whole.children_recursive: child.hide_render=True
 opened.scale=(1,1,1)
-opened.hide_render=False
-scene.frame_set(30)
-render('tired',(25,13,-18),(0,3,-4.6),28)
-render('above',(33,36,-7),(0,3,-4.6),28)
-
-
-opened.hide_render=True
-for child in opened.children_recursive: child.hide_render=True
-boxes[0][2].hide_render=False
-for child in boxes[0][2].children_recursive: child.hide_render=False
-render('crushed',(6,9,-9),(0,5.4,-2.6),6.7)
+render('open',(6,8,-6.4),(0,6.05,-2.9),3.4)
+render('far',(-8,6.8,-6.2),(0,5.85,-2.9),5.3)
+box.location.x=3.1
+box.location.y-=.35
+box.rotation_euler.z=-.22
+render('detach',(8,9,-8),(1.2,5.95,-2.9),6.2)
+box.hide_render=True
+for child in box.children_recursive: child.hide_render=True
+render('socket',(4.5,9.1,-5.7),(0,5.5,-2.9),2.9)
