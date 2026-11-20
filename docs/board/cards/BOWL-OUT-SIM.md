@@ -92,3 +92,7 @@ markers, and each gate on the lap map) from the moment the truck lands outside; 
 back; the 16 parked cars drawn; the drawn ground cleared from the tunnels. The camera on that drive was the old one: the
 merged BOWL-CAMERA follows the way of travel, and BOWL-OUT-LOOK checks it again outside, including that the stands never
 hide the truck in a tunnel.
+
+## Terrace landing hook for Claude
+
+The low-speed terrace landing also reaches `src/sim-driving.js::_offroadStep`. Its grounded climb-limit and tumble check can run while the wheels are still airborne, before the trick rules judge the landing. Please grant a Bowl-terrace-only guard at that check. A genuine roof or side landing still goes through the usual Slam and recovery.

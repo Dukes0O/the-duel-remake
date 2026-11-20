@@ -647,6 +647,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-out-sim"
+    waiting_on: "claude"
     needs: [BOWL-WALLS]
     locks: [bowl-floor]
     flag: "titan-bowl"
@@ -787,6 +788,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures]
     flag: "arena-tricks"
