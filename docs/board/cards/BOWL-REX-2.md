@@ -101,4 +101,9 @@ runs". Memory-only saves. No new dependency, network request or key. Clean up no
 
 ## Round-five model dimensions
 
-Round five of BOWL-ART-REX uses metres, +Y up and +Z towards the head. The old pose scale assumes a 5.8 m head. The new standing head reaches 11.58 m. In the tired pose the tail runs 13 m from Z -16.10 at the ground to Z -3.10 at Y 5.44. It is 4.8 m wide at 22.7 degrees. The level back ends at Z 3.05. Battery centres lie on X 0 at Z -2.90, -0.22 and +2.56. Their tired tops reach Y 5.95. Use the same transform for the collision surface, markers and visible model. The open variant starts at scale zero. Hold the tired animation on its final frame while the truck can drive on the beast.
+Round five of BOWL-ART-REX uses metres, +Y up and +Z towards the head. The old pose scale assumes a 5.8 m head. The new standing head reaches 11.58 m. In the tired pose the tail runs 13 m from Z -16.10 at the ground to Z -3.10 at Y 5.44. It is 4.8 m wide at 22.7 degrees. The level back ends at Z 3.05. Battery centres lie on X 0 at Z -2.90, -0.22 and +2.56. Their tired tops reach Y 5.95. Use the same transform for the collision surface, markers and visible model. The open variant starts at scale zero. Hold the tired animation on its final frame while it is tired.
+
+**Since Kyle turned the ramp down (20 November 2026):** nothing is driven on, so the tail's length, width and slope above
+are the model's shape only and no rule reads them. What the rules do read: the battery centres and their tired height
+(where the hook bites and where the marker and beam stand), and the outline of legs, body and tail for the solid shape.
+The model's further needs for the hook are on BOWL-ART-REX.
