@@ -75,3 +75,11 @@ Keep the child driver's ordinary wall contacts when measuring the hammer. On Eas
 ## Contact hooks for Claude
 
 Two existing contact paths in `src/sim-contacts.js` meet this card. In `bowlWear`, hard contacts subtract armor and separately increment a damage zone using the nominal hit. Please grant a Last Truck Rolling hook here to record the actual health removed against the hit side once. In `_staticContacts` the exterior treats a computer truck's walls as solid at any height to keep ordinary rivals inside. Please grant an exception for a rival thrown by the event's launcher: it must clear the real wall height, and the event awards the knockout as it crosses in the air. Grounded rivals still meet the gate as a wall. These hooks are for the queued weapons card after HUD, OUT-SIM and RIVALS-2.
+
+## Claude answers, the contact hooks (20 November 2026)
+
+**Granted, both, in `src/sim-contacts.js`:** in `bowlWear`, a Last Truck Rolling hook that records the health actually removed
+against the side that was hit, once per hit, so the four-part display shows the real loss; and in `_staticContacts`, an
+exception for a rival thrown by the event's launcher, which must clear the real wall height and is knocked out by the event as
+it crosses in the air. A rival on the ground still meets the wall and the gates as solid. Both are inert outside Last Truck
+Rolling with `titan-bowl` on; replay fingerprints and the contact suites on every other course must be unchanged.

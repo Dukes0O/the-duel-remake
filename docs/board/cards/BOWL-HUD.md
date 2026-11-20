@@ -102,3 +102,21 @@ Lane `codex/bowl-hud` at `3f226a89d`. The 80 selected suites are covered across 
 **Approved, `7a12651e4`:** `test-bowl-rivals.mjs` reads the caption id from the new timed queue entries; it still needs that
 exact caption and the same credited knockout. Nothing is loosened. The look is still Claude's to record from the laptop
 pictures, now being taken.
+
+## Claude answers, the look (20 November 2026)
+
+**Merge after four small fixes; no second look is needed for them.** Pictures at 1282 by 716 on `3f226a89d`, Night 1 by
+hand, Last Truck Rolling and the Scrapasaurus reached as the scenarios do. The strips are short and read well (CAR CRUSH,
+FREESTYLE, SIDE BY SIDE, LAST TRUCK ROLLING, THE SCRAPASAURUS, each with points, clock and crowd), Big Mo's caption sits low
+and plain, the race map, lap count, gear and mirror are gone, the health shows in both fights with each rival's five
+segments, the trick label stands above the truck after a clean landing, and nothing covers the truck in play.
+
+1. **The countdown** numeral and "HOLD W OR ↑ TO ACCELERATE" sit over the truck's roof: move them into the upper third.
+2. **The opening cards** say "Our driver has no truck of their own, so tonight they are driving the show truck", which uses
+   "they" for one person. Write instead: "Our driver has no truck yet, so tonight the show lends its own."
+3. **The trick label** said x1.0 while the strip had just gone to x1.5: the label shows the multiplier its points used, and
+   the strip changes only after the label has shown.
+4. **Side by Side** shows nothing of the rival: add AHEAD or BEHIND and the gap in metres to the strip.
+
+Owed elsewhere, not here: the Scrapasaurus's three battery pictures at the top of the screen (BOWL-REX-2 and BOWL-REX-LOOK);
+Car Crush's count and chain (BOWL-CRUSH).

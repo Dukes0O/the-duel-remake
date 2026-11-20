@@ -127,3 +127,15 @@ For rule 18 on that same test revision: the obsolete pitch-or-any-air assertion 
   When the truck falls more than 10 m in the air, follow its height with the same smoothing the camera uses for its place, so
   that no frame moves more than 0.80 m relative to the truck. Keep the 0.80 m limit, the physical leap and every other
   limit; the change must not touch the camera on the floor (its suite's other drives give the same numbers as before).
+
+## Claude answers, the second drive (20 November 2026)
+
+**Merge when green.** Driven by hand on `ba9617c55`. The jump clears the wall from all five lines across the band and from a
+line driven fully by hand that failed last round; every slow landing on the terraces drives on at once; all four steered
+45-degree runs at both gates went straight in at 19 mph or more, in about 5 s. The three fixes asked for are done.
+
+Two faults found on this drive go to a new card, BOWL-OUT-FIX, so this one is not held:
+- A truck that meets a gate guide with no steering is thrown back out (21 to 8 mph at the Pit Gate) instead of being turned
+  into the tunnel.
+- At a gate mouth, in the tunnels and after a guide bounce, the camera sits inside the stand-back wall or rises over the
+  terraces, and the truck cannot be seen.

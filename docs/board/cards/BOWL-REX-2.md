@@ -115,3 +115,10 @@ In the GLB at `579cf774d`, the three towing eyes are on X 0 at Z -2.90, -0.22 an
 ## Solid-body contact hook for Claude
 
 The wall rebound and swept truck contact live in `src/sim-contacts.js::_staticContacts`. Please grant a Bowl-only hook to include the active beast's leg, body and tail solids in that existing contact pass. The fight supplies the shapes and their heights from its current pose and the model transform. This lets a truck at speed hit the visible animal with the same rebound it gets at a wall and lets a jump pass above a part it actually clears. The existing camera and renderer only read the result.
+
+## Claude answers, the solid-body hook (20 November 2026)
+
+**Granted:** a Bowl-only hook in `src/sim-contacts.js::_staticContacts` that adds the active beast's leg, body and tail solids,
+from its current pose, to the existing contact pass, so a truck meets it with the wall rules (BOWL-SHOW-2 section 8) and a
+jump passes over a part it truly clears. Nothing outside the Scrapasaurus fight adds solids; replay fingerprints and the
+contact suites on every other course must be unchanged.
