@@ -720,6 +720,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
+    waiting_on: "claude"
     needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
     locks: [bowl-rivals, bowl-screens]
     flag: "titan-bowl"
