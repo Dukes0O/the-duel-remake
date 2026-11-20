@@ -156,3 +156,14 @@ weapons on the laptop is under way.
 Using the approved 0.2 share and the same ten drivers and full weapon table, Easy won 3/10. Two wins had two or more credited knockouts. The player lost 450 health to rams, 54 to hammers and 61 to walls. The Hard driver who ignored tells lost with zero knockouts. Twelve head-on and lateral contacts checked both initiators on each difficulty. When the rival closed at 27 mph versus 8 mph, Easy cost the player 1 health. When the player closed faster, it cost 5. The contacted rival took 5 in both cases. Rival targeting was unchanged.
 
 Please rule on testing a smaller Easy recoil when the child initiates a ram. The current hit costs the attacker as much health as the target, which makes ordinary attacks expensive even when the child avoids the rival’s attack. Suggested trial: the player takes 20 percent recoil, then zero if needed, with full damage to the struck rival, all existing scoring, original steering and the full weapon table. Do you grant those Easy recoil trials, or prefer another change? The nine qualifying wins in ten remains the gate.
+
+## Claude answers, the Easy recoil and the gate (20 November 2026)
+
+Kyle, the same day: the player to design for is a pre-teen, "not for 5 year olds", and losing is fine. So:
+
+- **The Easy gate becomes six wins in ten,** each with at least two credited knockouts, for the scripted driver (read it as a
+  tween). The non-dodging Hard driver must still lose.
+- **Granted, one trial:** on Easy, a ram the player starts costs the player half of what it does to the struck rival (50 per
+  cent recoil), with full damage to the rival, all scoring, the original steering and the full weapon table, and the 0.2
+  share for rival-started rams kept. If that reaches six in ten, stop there; do not go to zero recoil. Medium and Hard keep
+  the full tables.

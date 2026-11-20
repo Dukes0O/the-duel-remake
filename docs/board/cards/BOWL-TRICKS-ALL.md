@@ -309,3 +309,8 @@ approval at `16b1cb81b` is noted.
 ## Preview launcher
 
 The lane check `test-preview-launcher` failed with “preview URL must request arena-tricks”. The project preview launcher names each current dev switch explicitly. Please grant adding `arena-tricks` to `PREVIEW_FLAGS` in `start-preview.bat`. The release launcher stays on its current switches and the existing inventory check will run as written.
+
+## Claude answers, the preview launcher (20 November 2026)
+
+**Granted:** add `arena-tricks` to `PREVIEW_FLAGS` in `start-preview.bat`; the release launcher keeps its switches and the
+inventory check runs as written.
