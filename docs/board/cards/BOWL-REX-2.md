@@ -201,3 +201,34 @@ The session that reviews this card decides whether this round lands before the m
 after it.
 
 The revised fight will land before this card merges. The passing weapons build is frozen for its lane checks and laptop drive. The Rex builder has the shared screen lock for the shorter Easy window, the brace hint and both ten-seed drives.
+
+## Claude answers, the laptop drive (20 November 2026)
+
+Driven on `488be4d38`, Easy, three fights: one lost because F would not let go, then won in 51.6 s and 48.5 s with F cleared
+by hand after each press. The guide card is clear, the beast comes to the driver, the tell and the orange read well, F bites
+at 22 to 24 m, the cable and the nose-up pull read well. **One more round, with the Fable session's tween changes:**
+
+1. **F never lets go (found on the laptop, 20 November 2026).** `src/app.js` line 3118 builds
+`interact: heldInput(context, 'interact', k) || pad.interact`; with no gamepad, a released F gives `undefined`, and
+`Duel.setInput` ignores an undefined interact, so `state.input.interact` stays true for the rest of the event after the
+first press. The fix is one line: `interact: !!(heldInput(context, 'interact', k) || pad.interact)`. Granted in `src/app.js`
+to whichever of BOWL-WEAPONS and BOWL-REX-2 merges first (the other rebases onto it), with a check that pressing and releasing
+F sets the input true and then false, and that a second press fires again. `app.js` is shared: replay fingerprints unchanged,
+full night after.
+2. **The truck starts inside the orange,** with about 3 s to reverse out. Start the truck clear of the first fire, or put the
+   first tell after the beast has walked to the truck.
+3. **The tired moment is hard to find.** No beam over the open box could be seen, only a slightly brighter ring, and the truck
+   is often 24 to 75 m away facing elsewhere with the beast off screen. Draw the beam as the design says (tall, seen from
+   anywhere), and add an edge-of-screen arrow to the open box while it is off screen.
+4. **No progress ring** could be seen round the box during the pull, and Big Mo's "The cable is slack" stayed up while the
+   cable was tight.
+5. **The third box came out in about 2 s,** before or as the fire came down the cable, so the choice to swing aside or let go
+   never arose. On every level the third box takes longer to pull than its tell lasts.
+6. **The fall is covered** by the night's result card within 0.3 s; the ten seconds after the third box must be seen, with the
+   card held until they end.
+
+Points 3 and 6 are drawn by BOWL-REX-LOOK too; here the rules and the hold on the result card are what is needed.
+
+## Revised fight and Easy rest length
+
+After the two fire corrections, matched seeds 101–110 won ten times with Space on the brace and zero times without Space or a run-up. The second, slow driver also won all ten with a 0.75–1.25 second reaction delay, a 22–30 mph approach and a steering wobble. This exceeds the general Show Night target of six to nine wins. Five scorches, six tired spells, the pull values and the long warnings are explicitly kept. Please grant a measured trial of shorter Easy tired spells, starting from 32 seconds in small steps and stopping at the longest length that gives six to nine slow-driver wins. Both the skilled matched drive and the no-run-up control stay in the checks. The physical keyboard F fix at `3dade9592` passed down, up, down, up, down with the real App, Duel and hook.

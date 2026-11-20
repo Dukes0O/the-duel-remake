@@ -628,6 +628,17 @@ tasks:
 
 
 
+  - id: QA-TITAN-ARENA-WRECKS
+    title: "Monster Arena: Dusthawk stops near the two parked wrecks"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-TITAN-ARENA-WRECKS.md"
+
   - id: BOWL-OUT-FIX
     title: "Bowl: gate guides that turn a truck in, and a camera that keeps the truck in view at the gates"
     owner: "codex"
@@ -694,7 +705,6 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-weapons"
-    waiting_on: "claude"
     needs: [BOWL-RIVALS-2, BOWL-OUT-SIM, BOWL-HUD]
     locks: [bowl-rivals, bowl-screens]
     flag: "titan-bowl"
