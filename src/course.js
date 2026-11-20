@@ -376,7 +376,7 @@ export class Course {
       for(const cut of f.shortcuts)if(n.s>=cut.start-12&&n.s<=cut.end+12&&Math.abs(n.lateral-this.shortcutOffset(cut,n.s))<radius+cut.halfWidth+margin)return false;
       return !this.tunnelAt(n.s)||Math.abs(n.lateral)>35+radius;};
     const vacant=(s,off,radius)=>{const p=this.groundAt(s,off);return f.obstacles.every(o=>Math.hypot(o.x-p.x,o.z-p.z)>Math.hypot(o.halfX,o.halfZ)+radius+(o.setPiece==='gantry'?18:0));};
-    if(!this.def.practice)for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
+    if(!this.def.practice&&!this.def.bowl)for(const side of[-1,1])add(`finish-post-${side}`,'prop',0,side*(this.roadHalfWidthAt(0)+1.5),.25,.25);
     if(this.def.expansion){f.setPieces=buildCourseSetPieces(this);f.obstacles.push(...f.setPieces);}
     if(!this.def.arena){
       for(const [i,sec]of this.sections.entries()){

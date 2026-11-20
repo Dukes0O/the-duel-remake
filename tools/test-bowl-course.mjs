@@ -71,6 +71,8 @@ const meets=lane=>ramps.filter(ramp=>Math.abs(lane.lateral-ramp.off)<ramp.halfWi
 check(meets(data.lanes[0])===meets(data.lanes[1])&&meets(data.lanes[0]).length,'The two lanes meet the same jumps at the same distances: mirrors.');
 check(data.crush.startS<data.crush.firstRowS&&Math.min(...bowl.features.crushables.map(prop=>prop.s))===data.crush.firstRowS,
   'Car Crush starts before the first row of the line.');
+check(onStraight(data.crush.startS,data.zones.crushStraight)&&bowl.features.crushables.every(prop=>onStraight(prop.s,data.zones.crushStraight)),
+  'Car Crush starts on the straight that holds the whole line, so a truck driven straight ahead meets it.');
 check(data.rails.lateral>12&&data.rails.lateral<floor.floorHalfWidth,'The Scrapasaurus\'s rails run round the edge of the floor.');
 check(data.launchCars.every(car=>Math.abs(car.lateral)<floor.floorHalfWidth&&bowl.groundAt(car.s,car.lateral).y===0),
   'The launch cars stand on flat floor.');

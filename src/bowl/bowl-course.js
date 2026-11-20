@@ -95,12 +95,14 @@ export const BOWL_BANK = Object.freeze({from: 10, to: 21.9, height: 3.2, ease: 1
 // of junk cars, then the crushed buses and RV, then the burning stacks. Each vehicle
 // has its own faded colour (BOWL-ART-CRUSH round 3).
 const ACROSS = [9.4, 13.8, 18.2];
+// The line starts 22 m into the straight, so Car Crush starts on the straight itself and a
+// truck driven straight ahead meets the line (from a start in the turn it met the wall).
 const ROWS = [
-  [152, 'junkCar', [0x53645b, 0x935143, 0x557185]],
-  [159, 'junkCar', [0x79644b, 0x6b594e, 0x486b60]],
-  [166, 'junkCar', [0x8a6248, 0x66717a, 0x716749]],
-  [177, ['bowlBus', 'bowlBus', 'bowlRv'], [0x806449, 0x5d6b52, 0x596b70]],
-  [190, 'bowlBurningHeap', [0x49362b, 0x49362b, 0x49362b]],
+  [165, 'junkCar', [0x53645b, 0x935143, 0x557185]],
+  [172, 'junkCar', [0x79644b, 0x6b594e, 0x486b60]],
+  [179, 'junkCar', [0x8a6248, 0x66717a, 0x716749]],
+  [190, ['bowlBus', 'bowlBus', 'bowlRv'], [0x806449, 0x5d6b52, 0x596b70]],
+  [203, 'bowlBurningHeap', [0x49362b, 0x49362b, 0x49362b]],
 ];
 
 const clamp01 = value => Math.max(0, Math.min(1, value));
@@ -169,9 +171,10 @@ export function buildBowlFeatures(course) {
   features.bowl = Object.freeze({
     ring: BOWL_RING, length: BOWL_LENGTH, halfLap: BOWL_HALF_LAP, zones: BOWL_ZONES, bank: BOWL_BANK,
     start: Object.freeze({s: 6, lateral: 0}),
-    // Car Crush: start in End 1 on the stand side and run straight down the line.
-    crush: Object.freeze({startS: firstRow - 30, lateral: ACROSS[1], firstRowS: firstRow,
-      lastRowS: ROWS.at(-1)[0], endS: ROWS.at(-1)[0] + 15, leftS: firstRow - 50}),
+    // Car Crush: start at the head of the Crush Straight on the stand side, 20 m from the
+    // first row, and run straight down the line.
+    crush: Object.freeze({startS: firstRow - 20, lateral: ACROSS[1], firstRowS: firstRow,
+      lastRowS: ROWS.at(-1)[0], endS: ROWS.at(-1)[0] + 15, leftS: firstRow - 40}),
     // Freestyle: two parked cars on the Jump Straight's stand side, for the launch off cars.
     launchCars: Object.freeze([Object.freeze({s: 36, lateral: 14, dir: 1}), Object.freeze({s: 48, lateral: 14, dir: 1})]),
     // Side by Side: two mirrored lanes on the centre line, half a lap apart; one lap each.

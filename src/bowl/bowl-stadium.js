@@ -96,14 +96,17 @@ const SEATS = [[.46, .17, .14], [.2, .27, .35], [.52, .42, .2], [.3, .33, .3]];
 function standProfile(course) {
   const sections = Math.round(course.length / 18);
   return s => {
-    const section = Math.floor(s / course.length * sections), seat = SEATS[section % SEATS.length];
-    const aisle = ((s / course.length * sections) % 1) < .06, concrete = aisle ? [.92, .9, .86] : [.7, .69, .66];
+    const place = s / course.length * sections, section = Math.floor(place), seat = SEATS[section % SEATS.length];
+    const aisle = (place % 1) < .06, concrete = aisle ? [.92, .9, .86] : [.7, .69, .66];
+    // A tunnel mouth every third section: a dark opening over rows 9 to 13, where the crowd comes in.
+    const mouth = Math.abs((place % 3) - 1.5) < .1;
     const points = [{d: 1, y: 0, colour: [.4, .39, .37]}, {d: 1 + MOAT, y: 0, colour: [.55, .54, .51]},
       {d: 1 + MOAT, y: PODIUM, colour: [.62, .61, .58]}, {d: FIRST, y: PODIUM, colour: concrete}];
     for (let row = 0; row < ROWS; row++) {
       const d = FIRST + row * DEPTH, y = PODIUM + (row + 1) * RISE, tint = .82 + .18 * hash(section, row);
-      points.at(-1).colour = aisle ? concrete : seat.map(value => value * tint);
-      points.push({d, y, colour: concrete}, {d: d + DEPTH, y, colour: concrete});
+      const dark = mouth && row >= 9 && row <= 13, tread = dark ? [.03, .03, .03] : concrete;
+      points.at(-1).colour = dark ? tread : aisle ? concrete : seat.map(value => value * tint);
+      points.push({d, y, colour: tread}, {d: d + DEPTH, y, colour: tread});
     }
     points.at(-1).colour = [.62, .61, .58];
     points.push({d: BACK, y: TOP + 1.1, colour: [.5, .49, .47]}, {d: BACK + .4, y: TOP + 1.1, colour: [.45, .44, .42]}, {d: BACK + .4, y: 0});
@@ -202,11 +205,11 @@ function flashes(heads, uniforms) {
     vertexShader: `attribute float phase; uniform float uCrowdTime; varying float vGlow;
       void main(){ vec4 view = modelViewMatrix * vec4(position, 1.0);
         float beat = sin(uCrowdTime * (0.7 + fract(phase * 3.1) * 1.9) + phase * 5.0);
-        vGlow = pow(max(beat, 0.0), 14.0);
-        gl_PointSize = (2.0 + 5.0 * vGlow) * 260.0 / max(30.0, -view.z);
+        vGlow = pow(max(beat, 0.0), 40.0);
+        gl_PointSize = (1.0 + 3.0 * vGlow) * 140.0 / max(30.0, -view.z);
         gl_Position = projectionMatrix * view; }`,
     fragmentShader: `varying float vGlow; void main(){ vec2 c = gl_PointCoord - 0.5; float a = smoothstep(0.5, 0.0, length(c));
-        gl_FragColor = vec4(vec3(0.9, 0.95, 1.0) * (0.35 + vGlow), a * (0.25 + vGlow)); }`});
+        gl_FragColor = vec4(vec3(0.9, 0.95, 1.0) * vGlow, a * vGlow); }`});
   const points = new THREE.Points(geometry, material);
   points.name = 'Bowl phone lights';
   points.frustumCulled = false;
@@ -379,18 +382,8 @@ export function createBowlStadium(course) {
   }
   const postMesh = new THREE.Mesh(mergeGeometries(posts), new THREE.MeshStandardMaterial({color: 0x5b6063, metalness: .8, roughness: .45}));
   postMesh.name = 'Bowl fence posts';
-  // Tunnel mouths in the stands, every few sections, where the crowd comes in.
-  const mouths = [], sections = Math.round(course.length / 18);
-  for (let k = 0; k < sections; k += 3) {
-    const s = (k + 1.5) / sections * course.length, d = FIRST + 10.5 * DEPTH, p = course.worldAt(s, FACE + d);
-    const box = new THREE.BoxGeometry(2.2, 2.4, 2.6).translate(0, PODIUM + 10.5 * RISE + 1.0, 0);
-    box.applyMatrix4(new THREE.Matrix4().makeRotationY(p.heading)).translate(p.x, 0, p.z);
-    mouths.push(box);
-  }
-  const mouthMesh = new THREE.Mesh(mergeGeometries(mouths), new THREE.MeshStandardMaterial({color: 0x080706, roughness: 1}));
-  mouthMesh.name = 'Bowl tunnel mouths';
   const people = crowd(course, uniforms);
-  group.add(stands, wall, fence, postMesh, mouthMesh, people.mesh, flashes(people.heads, uniforms));
+  group.add(stands, wall, fence, postMesh, people.mesh, flashes(people.heads, uniforms));
   group.add(spine(course, centre, wear));
   // Four floodlight towers behind the ends' stands, each aimed across the floor.
   const glow = glowTexture(), lights = [];
