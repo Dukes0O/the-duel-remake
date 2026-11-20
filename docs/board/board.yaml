@@ -746,7 +746,7 @@ tasks:
     details: "docs/board/cards/BOWL-OUT-LOOK.md"
 
   - id: BOWL-REX-2
-    title: "Bowl: the Scrapasaurus fight remade (solid, comes to the driver, up its tail, three boxes)"
+    title: "Bowl: the Scrapasaurus fight remade (solid, comes to the driver, a tow hook tears out its three boxes)"
     owner: "codex"
     model: "astra"
     lane: "SIM"

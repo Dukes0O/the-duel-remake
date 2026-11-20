@@ -21,8 +21,9 @@ Each building card names its cues and points each at a stand-in already in the s
 - **BOWL-WEAPONS:** `bowl.hammer.rise`, `bowl.hammer.hit`, `bowl.hammer.miss`, `bowl.saw.spin`, `bowl.saw.cut`,
   `bowl.saw.hot`, `bowl.launcher.fire`, `bowl.launcher.fill`, `bowl.rhino.horn`, `bowl.dragon.fire`,
   `bowl.out.of.the.bowl`, `bowl.knockout`, `bowl.weapon.pick`.
-- **BOWL-REX-2:** the twelve kept `bowl.rex.*` cues and `bowl.rex.burst`, `bowl.rex.sag`, `bowl.rex.tail`,
-  `bowl.rex.rise`, `bowl.rex.sweep`, `bowl.rex.sky`, `bowl.rex.stand`.
+- **BOWL-REX-2:** the eleven kept `bowl.rex.*` cues and `bowl.rex.burst`, `bowl.rex.sag`, `bowl.rex.rise`,
+  `bowl.rex.sweep`, `bowl.rex.brace`, `bowl.rex.box.out`, `bowl.rex.box.drag`, `bowl.hook.fire`, `bowl.hook.bite`,
+  `bowl.hook.clang`, `bowl.hook.tight`, `bowl.hook.jerk`, `bowl.hook.letgo`.
 - **BOWL-JUMP-EVENTS:** `bowl.go.ready`, `bowl.long.clear`, `bowl.high.clear`, `bowl.high.fail`, `bowl.home.ring`.
 - **BOWL-NIGHTS:** `bowl.night.open`, `bowl.night.new`.
 - **Already in the game on stand-ins:** `bowl.mo`, `bowl.crowd.rise`, `bowl.event.won`, `bowl.event.lost`, `bowl.purse`,
