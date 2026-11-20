@@ -53,6 +53,17 @@ for(const night of [3,4,5]) {
   sums(target);
 }
 {
+  const d=fight(),s=d.state,[a,b]=s.opponents;
+  line(d);place(d,a,38.5,-2.4);place(d,b,38.5,2.4);
+  s.input.interact=true;ticks(d,48);
+  assert.deepEqual([a.armor,b.armor],[42,42],'the hammer swing reaches both bodies beside its nose');
+  const v=s.opponents[2];
+  for(const side of ['front','rear','left','right']) {
+    assert.equal(bowlHealthLoss(d,v,1/12,'player',side),5);sums(v);
+  }
+  assert.equal(bowlHealthLoss(d,v,1,'player','rear'),40);sums(v);
+}
+{
   const d=fight(),s=d.state;line(d,4.1);
   s.input.interact=true; ticks(d,48);
   assert.equal(s.bowlHeldStill,.5);assert.equal(s.bowlWeapon.phase,'rest');
@@ -144,6 +155,14 @@ for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   ticks(d,1); assert.ok(s.armor<60);
   ticks(d,119); assert.ok(Math.abs(s.armor-54)<1e-7);
   sums(s);
+}
+{
+  const d=fight('hammer','easy',3),s=d.state,launcher=s.opponents[2];
+  line(d);place(d,launcher,27,0);place(d,s,33,0);const cues=[];
+  d.onChange((_,ev)=>{if(ev.bowlWeaponCue) cues.push(ev.bowlWeaponCue);});
+  ticks(d,1);assert.equal(launcher.bowlWeapon.phase,'tell');
+  place(d,s,70,10);ticks(d,96);
+  assert.ok(!launcher.bowlFlight && !cues.includes('bowl.launcher.fire'),'a rival does not fire into empty space');
 }
 {
   const d=fight('hammer','hard',4),s=d.state,horn=s.opponents[0];
