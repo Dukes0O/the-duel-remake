@@ -297,6 +297,8 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
     s.arena.participants[index + 1].brain === BOWL_RIVALS[truck.bowlRival].brain), 'each rival drives in their own way');
   ok([s, ...s.opponents].every(truck => truck.maxArmor === BOWL_RIVAL_RULES.lastTruckRolling.showArmor && truck.armor === truck.maxArmor),
     'every truck takes the same knocks, the player\'s too');
+  assert.equal(s.bowlWeapon.kind,'hammer');
+  assert.deepEqual(s.opponents.map(truck=>truck.bowlWeapon.kind),['hammer','saw','launcher']);
   ok(s.weaponLoadout.length === 0 && s.opponents.every(truck => truck.weaponLoadout.length === 0), 'the normal arena weapon loadouts stay empty');
   ok(bowlHudView(s, duel.course).goal === 'Knock out Big Kettle, Tin Lizard and Old Bess, and be the last truck still rolling.', 'the goal names every rival');
   for (let i = 0; i < 120 * 4; i++) duel.step(DT);
@@ -309,7 +311,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   ok(!s.combat.pickups?.length, 'no crates appear in the Bowl');
   const out = knockouts.map(entry => entry.rival);
   ok(out.every(id => captions.includes(`out.${id}`)) && knockouts.every(entry => entry.cue === 'bowl.knockout'),
-    'each knock-out between rivals has Big Mo\'s line and chime');
+    'each knock-out between rivals has Big Mo\'s line and the Bowl knockout cue');
   ok(captions.includes('rivals.night.3'), 'Big Mo says who is in the Bowl tonight');
   // A knocked-out rival stays out: no wreck comes back.
   const night = s.bowlNight;
@@ -399,7 +401,8 @@ function winRate(night, type, level) {
       drive(game, aim);
       if (type !== 'lastTruckRolling' || game.state.status !== 'racing') return;
       for (const truck of game.state.opponents) {
-        const sound = !truck.combatWrecking && truck.armor >= truck.maxArmor * .4;
+        const sound = !truck.combatWrecking && truck.armor >= truck.maxArmor * .4 &&
+          !truck.bowlFlight && !truck.bowlRighting && !(truck.bowlHeldStill > 0);
         const seconds = sound && Math.abs(truck.speedMph) < 5 ? (belowFive.get(truck) ?? 0) + DT : 0;
         belowFive.set(truck, seconds);
         longestStop = Math.max(longestStop, seconds);
@@ -427,6 +430,10 @@ for (const [night, type] of [[1, 'sideBySide'], [2, 'sideBySide'], [3, 'lastTruc
 for (const [key, rows] of Object.entries(outcomes)) if (rows.length)
   console.log(`test-bowl-rivals: night ${key} Last Truck Rolling: ${rows.map(row =>
     `${row.won ? 'W' : 'L'} ${row.how} ${row.knockouts}(${row.byPlayer}) ${row.at}s`).join(', ')}`);
+const easyFights=outcomes['3:easy'];
+ok(easyFights.filter(row=>row.won && row.byPlayer>=2).length>=9,
+  'the Easy hammer driver wins with at least two credited knockouts in nine of ten trials');
+ok(outcomes['3:hard'].every(row=>!row.won),'the Hard driver who never dodges a tell loses');
 const table = Object.entries(rates).map(([key, wins]) => `${key} ${wins}/${TRIALS}`).join(', ');
 console.log(`test-bowl-rivals: child-pace wins: ${table}`);
 function runLaneTrial(night, seed, {level = 'easy', wide = false} = {}) {

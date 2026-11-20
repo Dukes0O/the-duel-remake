@@ -71,7 +71,9 @@ function bowlReturn(rules, kind, mph) {
 function bowlWear(duel, actor, kind, owner, zone) {
   const rules = duel.course.def.scrapdome.wallBounce, event = duel.state.bowlNight?.event;
   const fraction = kind === 'big' ? rules.bigDamage : kind === 'hard' ? rules.hardDamage : 0;
-  if (!fraction || !rules.fights.includes(event?.type)) return;
+  if (!rules.fights.includes(event?.type)) return;
+  if (event.type === 'lastTruckRolling' && actor.bowlWeapon && owner) actor.bowlLastHitBy = owner;
+  if (!fraction) return;
   if (actor.bowlWeapon && event.type === 'lastTruckRolling') {
     bowlHealthLoss(duel, actor, fraction, owner, zone);
     return;

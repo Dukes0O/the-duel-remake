@@ -1,4 +1,5 @@
 // Close-range show weapons for the Bowl. Distances are metres and timers are seconds.
+import {pilotStep} from '../arena/arena-pilot.js';
 import {worldPose} from '../arena/arena-floor.js';
 import {applyArmorDamage} from '../combat-armor.js';
 import {combatOwnerId} from '../combat-teams.js';
@@ -44,8 +45,8 @@ export function chooseShowWeapon(duel, kind) {
   return true;
 }
 
-export function bowlHealthLoss(duel,actor,fraction,owner,side='front') {
-  const removed=applyArmorDamage(duel,actor,'fixed',{amount:fraction*actor.maxArmor,owner,contactFace:side});
+export function bowlHealthLoss(duel,actor,fraction,owner,side='front',styleHit=true) {
+  const removed=applyArmorDamage(duel,actor,'fixed',{amount:fraction*actor.maxArmor,owner,contactFace:side,styleHit});
   if(removed>0) {
     actor.damageZones[side]=Math.min(5,actor.damageZones[side]+5*removed/actor.maxArmor);
     if(owner) actor.bowlLastHitBy=owner;
@@ -81,7 +82,7 @@ function launch(duel,attacker,victim,side) {
   victim.bowlFlight={x:at.x,z:at.z,y:feet,heading,height,range:self?0:12,
     elapsed:0, duration:Math.sqrt(8*height/18), owner:self?null:combatOwnerId(duel,attacker),side};
   if(!self) victim.bowlLastHitBy=victim.bowlFlight.owner;
-  victim.knock=null;
+  victim.knock=null; victim._jumpOrigin=null; victim.airTime=0; victim.airDistance=0;
   victim.airborne=true;
 }
 
@@ -124,7 +125,7 @@ function tickWeapon(duel,actor,night,dt) {
   if(weapon.phase==='ready') {
     if(!held || actor.airborne || player && kind!=='saw' && !pressed) return;
     weapon.phase='tell'; weapon.time=player?(kind==='hammer'?.4:0):TELLS[night.cpuDifficulty];
-    cue(duel,rules.cue==='bowl.launcher.fire'?'bowl.launcher.tell':rules.cue);
+    if (!player || kind !== 'launcher') cue(duel,kind==='launcher'?'bowl.launcher.tell':rules.cue);
     actor.arenaTellSec=weapon.time;
   }
   if(weapon.phase==='tell') {
@@ -142,10 +143,10 @@ function tickWeapon(duel,actor,night,dt) {
     weapon.cutting=true;
     actor.bowlCut=target.actor.bowlCut=true;
     const cut=Math.min(dt,4-weapon.cutSeconds);
-    bowlHealthLoss(duel,target.actor,cut/8,owner,target.side);
+    bowlHealthLoss(duel,target.actor,cut/8,owner,target.side,false);
     weapon.cutSeconds+=cut;
     if(weapon.cutSeconds>=4-1e-8) {rest(weapon,3);weapon.cutting=false;cue(duel,'bowl.saw.hot');}
-  } else bowlHealthLoss(duel,target.actor,dt/10,owner,target.side);
+  } else bowlHealthLoss(duel,target.actor,dt/10,owner,target.side,false);
 }
 
 export function stepShowWeapons(duel,night,dt) {
@@ -226,4 +227,20 @@ export function showMotion(duel,actor,dt,drive) {
   if(cutting) {actor.speedMph*=.5; actor.bowlWasCut=true;}
   if(locked && input) input.steer=steering;
   return true;
+}
+
+// The arena asks only for active show effects. A later normal arena can reuse
+// the same player state, so the mounted weapon alone does not enable this path.
+export function stepShowWeaponMotion(duel,actor,dt,pilotGoal=null) {
+  if (!actor.bowlWeapon || duel.state.bowlNight?.event?.type !== 'lastTruckRolling' ||
+      duel.featureFlags?.enabled('titan-bowl') !== true) return false;
+  return showMotion(duel,actor,dt,(moveDt,locked)=>{
+    if(actor===duel.state) {
+      duel._drive(moveDt);
+      duel._jump(actor,dt);
+    } else {
+      pilotStep(duel,actor,locked?{...pilotGoal,steeringScale:0}:pilotGoal,moveDt);
+      if(!duel._ramFlight(actor,dt)) duel._jump(actor,dt);
+    }
+  });
 }
