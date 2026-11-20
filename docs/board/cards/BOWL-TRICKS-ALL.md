@@ -243,3 +243,19 @@ Build the three parts in order. A fresh press commits one complete turn using th
 - **Confirmed: seven secrets,** five codes in the air, Full Works entered on the ground before takeoff, and the uncoded
   Yo-Yo; prove each by its own inputs. The design's "six codes off the jump" counts Full Works with the airborne five; seven
   is right.
+
+## Part 1 laptop drive and rule 18 review
+
+The tap controls are playable on `codex/bowl-tricks-all` at `55d557129`. Please try ten Easy flips on Night 1 Freestyle and four jumps over the wall. The builder is checking the two real jumps and the seeded child inputs while work on secret tricks continues.
+
+Please review four replacements in the old trick suite. A fresh tap must finish the full turn after release, replacing a check of how many degrees a held key had rotated by release. A side flip begun during a spin finishes both turns and earns the clean combo. A late Hard press gives a genuine incomplete rotation and Slam. Successive opposite taps must finish and pay both turns; the old reversal check kept only an earlier completed flip. The run still checks exact turn counts, direction, points, real landings and damage, and adds the 55-degree Easy/Hard boundary. The builder will post the measured score on the Big Jump before any replay value is changed. The existing assertions await this written review.
+
+## Matching the Full Works takeoff
+
+Please review the trajectory control in the new seven-secret suite. The original comparison gave ground inputs to the armed driver alone. That driver was already 0.013 m sideways before takeoff. Both drivers will now get the same eight ground presses twice at under 5 mph, each separated by a neutral step, the same seed and run-up, and neutral controls in flight. Only recognition of the ground code is disabled in the control while entering it. Both have normal trick controls before the run-up. Require identical takeoff conditions, identical position along and across the course, height and speed at every airborne step, and the same landing place. Keep the independent proof that the code arms only once.
+
+For the seven first finds, Big Mo says “You found the Yo-Yo!”, “You found the Corkscrew!”, “You found the Tornado!”, “You found the Rocking Horse!”, “You found the Gyro!”, “You found the Tumble Dryer!” and “You found the Full Works!” The armed line is “Something has got into that engine!” The seventh find adds “You have found every secret trick in the show!” The result reads “You found all seven secret tricks.” Please confirm the lines along with the control.
+
+The seven tricks are playable on `codex/bowl-tricks-all` at `492201763`. Please drive Night 1 Freestyle in the memory-only laptop game and capture the seven pictures for the trick card. The five airborne key codes, ground-armed Full Works and uncoded Yo-Yo all land in the builder's real-floor checks. The matched trajectory control and the final discovery wording above are still under review.
+
+Please include the exact feature-switch inventory in the rule 18 review. Its list gains the card's `arena-tricks: dev` entry. Keep the existing release and QA switch checks, and explicitly check that this switch is off in release and on in QA.

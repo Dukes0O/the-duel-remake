@@ -83,3 +83,19 @@ against the side that was hit, once per hit, so the four-part display shows the 
 exception for a rival thrown by the event's launcher, which must clear the real wall height and is knocked out by the event as
 it crosses in the air. A rival on the ground still meets the wall and the gates as solid. Both are inert outside Last Truck
 Rolling with `titan-bowl` on; replay fingerprints and the contact suites on every other course must be unchanged.
+
+## Hearing one knockout
+
+The old player-credit sound is confirmed in `src/audio.js`: the event listener plays `arena.wreck-credit` for every `arenaWreck` credited to the player, including Last Truck Rolling. Its Bowl knockout event also names that sound. Please grant a condition around that one generic playback call for Last Truck Rolling with `titan-bowl` on, and a weapon-event dispatch alongside the existing Bowl race and Rex cue dispatch in `src/app.js`. The Bowl will play its named knockout once for each eliminated truck; normal arenas keep their current sound and player credit. These two hooks let the three show weapons play their own tells and hits on the ordinary game path.
+
+## Build decision
+
+Use armor as the sole health total and attribute actual loss to its contact side. Run the hammer balance proof through real driving and keep the measured Easy wall-contact pattern. The three toy weapons share the existing F input.
+
+## Applying a show weapon during real movement
+
+Please grant two narrow hooks in `src/arena/arena-event.js`, beside the player’s `_drive` and `_jump` calls and beside a rival’s `pilotStep` and `_jump` calls. They apply an active Last Truck Rolling weapon effect as the vehicle moves. The saw must halve travel for both trucks, the hammer must prevent the victim from steering for one second, and the launcher must move a truck through the 6 m high, 12 m long arc and the 2.5 second recovery. Outside the enabled event the existing movement runs as before. The weapon state and effects stay in `bowl-weapons.js`.
+
+## Starting a fight in the older checks
+
+The real choosing card holds the event until a selection. The outside, walls and rival suites and the `bowl-rivals` browser scenario enter the Night 3 fight directly. Their setup must choose the hammer through the normal action. Keep the existing physical and result assertions. Check that the weapon choice precedes the fight on retries and each Turn Show go as well. Please review the affected setup under rule 18.

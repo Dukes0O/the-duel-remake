@@ -17,8 +17,8 @@ function start(night, eventIndex, options = {}) {
 
 for (const [night, index, name, goal] of [
   [1, 0, 'Car Crush', 'Crush through 3 rows.'],
-  [1, 1, 'Freestyle', 'Score 310 points before time runs out.'],
-  [1, 2, 'Side by Side', 'Finish ahead of your rival.'],
+  [1, 1, 'Freestyle', 'Beat Old Bess: 310.'],
+  [1, 2, 'Side by Side', 'Beat Old Bess over two laps.'],
   [3, 2, 'Last Truck Rolling', 'Be the last truck rolling.'],
   [5, 3, 'The Scrapasaurus', 'WATCH THE SCRAPASAURUS'],
 ]) {

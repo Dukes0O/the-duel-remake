@@ -45,8 +45,13 @@ export const page = {
         playerDoneAt: night.event?.playerDoneAt ?? null, rivalDoneAt: night.event?.rivalDoneAt ?? null, knockouts: night.event?.knockouts ?? null},
       truck: truck(s), opponents: s.opponents.map(truck), card: document.querySelector('.bowl-result')?.dataset.bowlResult ?? null}); })()`,
   racing: `(() => window.__qaApp.duel.state.status === 'racing')()`,
-  sideHud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('SIDE BY SIDE') && hud.textContent.includes('Beat Rust Rhino to the line.'); })()`,
+  sideHud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('SIDE BY SIDE') && hud.textContent.includes('Beat Rust Rhino over two laps.'); })()`,
   rival: `(() => window.__qaApp.duel.state.opponents.map(truck => truck.bowlRival).join())()`,
+  twoLaps: `(() => { const app = window.__qaApp, event = app.duel.state.bowlNight?.event;
+    return ['player','rival'].every(id => event.finishS[id] - event.startS[id] === 2 * app.duel.course.length); })()`,
+  raceAssist: `(() => { window.__qaApp.autopilot = true; return true; })()`,
+  manual: `(() => { window.__qaApp.autopilot = false; return true; })()`,
+  finishSignal: `(() => ['player','rival'].includes(window.__qaApp.duel.state.bowlNight?.event?.finishWinner))()`,
   truckHud: `(() => { const hud = document.querySelector('.bowl-hud'); return !!hud && !hud.hidden && hud.textContent.includes('LAST TRUCK ROLLING') && hud.textContent.includes('Outlast Big Kettle, Tin Lizard, Old Bess.'); })()`,
   // The scoreboard's markup is always in the page, hidden; what must not show is the board or the word on screen.
   arenaHidden: `(() => { const board = document.querySelector('#arena-board'); return (!board || board.hidden) && !document.body.innerText.includes('SCRAPDOME'); })()`,
@@ -110,9 +115,13 @@ export async function run(context) {
   await waitWithState(context, page.sideHud, 'the Side by Side HUD names Rust Rhino', 30000);
   await waitWithState(context, page.racing, 'the race starts', 60000);
   await picture(context, 'bowl-rivals-side-by-side');
-  await key(context, 'KeyW', 'keydown');
-  try { await waitWithState(context, page.card, 'Side by Side ends', 90000); }
-  finally { await key(context, 'KeyW', 'keyup'); }
+  assert.ok(await context.evaluate(page.twoLaps), 'both trucks start two laps from their own finish lines');
+  await context.evaluate(page.raceAssist);
+  try {
+    await waitWithState(context, page.finishSignal, 'the first finisher sets the gate signal', 100000);
+    await picture(context, 'bowl-rivals-side-by-side-gate');
+    await waitWithState(context, page.card, 'the two-lap Side by Side ends', 12000);
+  } finally { await context.evaluate(page.manual); }
   assert.ok((await context.evaluate(page.cardLine)).includes('Rust Rhino'), 'the card names the rival');
   await picture(context, 'bowl-rivals-side-by-side-card');
   await context.evaluate(page.leave);
