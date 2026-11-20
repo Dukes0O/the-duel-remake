@@ -8,7 +8,8 @@ let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 
 const town = createTown(481, 'Report Test');
-check(TOWN_EVENTS.length === 11, 'the event data includes the eleven town report kinds');
+// HELI-RUSTWALL added the twelfth kind, Old Tam's report of the fire on the Ridge.
+check(TOWN_EVENTS.length === 12, 'the event data includes the twelve town report kinds');
 for (const event of TOWN_EVENTS) {
   check(event.answers.length <= 3 && event.answers.length > 0, `${event.id} has up to three answers`);
   check(event.answers.every(answer => /^[A-Z].*[.!?]$/.test(answer.label)

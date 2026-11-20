@@ -35,6 +35,17 @@ export const REPORT_TEXT = Object.freeze({
       {id: 'leave', label: 'The trader leaves without a deal.', outcome: 'The trader leaves without a deal.'},
     ],
   },
+  // HELI-RUSTWALL: the fire on the Ridge (docs/story/the-long-dry.md sections 4 and 6). Not marked bad, so it never
+  // crowds out the town's own urgent reports; it comes back each month while it burns.
+  'ridge-fire': {
+    who: 'Old Tam', what: 'The scrub on the Ridge is on fire.', priority: 90, bad: false,
+    requires: {ridgeFire: true},
+    answers: [
+      {id: 'fly', label: 'Build a Helipad and fly Kestrel One to the Ridge yourself.', outcome: 'The fire burns on until Kestrel One comes over the wall.'},
+      {id: 'send-dune', label: 'Send Dune, who knows a man with a helicopter.', outcome: 'Dune goes to the Ridge, and the fire will be out in two days.'},
+      {id: 'leave', label: 'Leave the fire on the Ridge for now.', outcome: 'The fire burns on the Ridge, and Old Tam waits for help.'},
+    ],
+  },
   'dust-storm': {
     who: 'Dune', what: 'A dust storm is moving across town.', priority: 75, bad: true,
     requires: {dustStorm: true},

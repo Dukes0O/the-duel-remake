@@ -11,3 +11,4 @@ import '../town-outposts.js';
 import '../town-deeds.js';
 import '../town-vane.js';
 import '../town-dispatch.js';
+import '../town-heli.js';

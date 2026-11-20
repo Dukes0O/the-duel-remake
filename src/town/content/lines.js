@@ -84,10 +84,12 @@ export const TOWN_CAPTIONS = Object.freeze({
   'pim.fix': caption('Pim', 'Job', 'My water crane\'s seized. Bring your wrench. Tuesday will show you where. Tuesday is the dog.'),
   'pim.night': caption('Pim', 'Night', 'Something goes by here most nights with no lights on, leaking water. I set my clock by it. That is rather the trouble.'),
   'pim.hook': caption('Hollis', 'After', 'A train nobody owns, carrying water nobody sold. Somebody\'s got a lot of nerve, or a lot of money.'),
-  'town.heli.tam': caption('Old Tam', 'The report', 'The Ridge is on fire. The goats have views on it. No truck\'s getting up here, driver.'),
-  'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot. That's you, isn't it? Build a pad. I'll make a call."),
-  'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, Tremblant. Say again your position? I didn't know that wall had another side."),
-  'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask."),
+  // HELI-RUSTWALL: written out as whole sentences (Kyle, 19 November 2026); Roger's line matches the helicopter's
+  // own copy of it (the Scablands place's lines), and tools/test-heli-scablands.mjs keeps the two the same.
+  'town.heli.tam': caption('Old Tam', 'The report', 'The scrub on the Ridge is on fire, and the goats have strong views about it. No truck can get up here, driver, so the help will have to come from the air.'),
+  'town.heli.hollis': caption('Hollis', 'The report', "I know a pilot, and I think it's you. Build a Helipad by the town, and I'll make a call over the wall."),
+  'town.heli.roger': caption('Roger', 'First flight over', "Kestrel One, this is Tremblant. Please say your position again, because I didn't know that wall had another side."),
+  'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I can't fly, but I know a man who owes me a helicopter, so please don't ask me how."),
 });
 
 const RADIO_CAPTIONS = Object.fromEntries(Object.entries(TOWN_CAPTIONS).map(([id, value]) => [`story.town.${id.replace(/^town\./, '')}`, value]));

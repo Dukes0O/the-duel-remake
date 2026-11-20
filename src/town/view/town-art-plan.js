@@ -6,6 +6,8 @@
 import {makeRng} from '../../rng.js';
 import {OUTPOSTS_WORLD} from '../content/outposts-world.js';
 import {placeOutpost} from '../town-outpost-world.js';
+import {VANE_PIECES} from '../content/vane-world.js';
+import {townVaneWorld} from '../town-vane-world.js';
 import {TOWN_CELL_METRES} from '../town-world-data.js';
 import {TOWN_BUILDING_ART, TOWN_HOME_ART, TOWN_LINE_ART, TOWN_LINE_RUIN, TOWN_RUIN_ART, TOWN_SITE_ART, TOWN_SITE_MACHINES,
   TOWN_STREET_RULE, TOWN_STREET_THINGS, TOWN_UTILITY_ART, TOWN_WORLD_ART} from './town-art-table.js';
@@ -317,32 +319,15 @@ function worldPieces(town, index, list, groundAt) {
     const outpost = placeOutpost(row, {heightAt:groundAt});
     place(list, 'outposts', row.node, outpost.x, outpost.base, outpost.z, {turn:outpost.heading, kind:'outpost', item:{neighbour:row.neighbourId}});
   }
-  const vane = town?.vane;
-  if (vane?.started) {
-    const yard = TOWN_WORLD_ART.vaneYard;
-    for (const entry of yard.pieces) {
-      const x = yard.x + entry.x, z = yard.z + entry.z;
-      place(list, entry.family, entry.node, x, groundAt(x, z), z, {turn:entry.turn, kind:'vane'});
-    }
-    const {node, half, step} = yard.fence;
-    for (const [edge, turn] of [['N', 0], ['S', Math.PI], ['E', -Math.PI / 2], ['W', Math.PI / 2]]) {
-      for (let along = -half + step / 2, slot = 0; along < half; along += step, slot++) {
-        if (edge === 'W' && Math.abs(along) < step) continue;
-        const x = yard.x + (edge === 'E' ? half : edge === 'W' ? -half : along), z = yard.z + (edge === 'S' ? half : edge === 'N' ? -half : along);
-        place(list, 'vane', node, x, groundAt(x, z), z, {turn, kind:'vane'});
-      }
-    }
-  }
-  // Her kiosks stand on open ground beside the street they are on.
-  for (const kiosk of vane?.kiosks ?? []) {
-    if (kiosk?.open === false) continue;
-    const road = index.roads.find(item => item.id === kiosk.streetId);
-    if (!road) continue;
-    const side = ['S', 'E', 'N', 'W'].find(edge => !index.cells.has(cellKey(road.x + DIRS[edge][0], road.z + DIRS[edge][1])));
-    if (!side) continue;
-    const x = (road.x + DIRS[side][0] + .5) * CELL, z = (road.z + DIRS[side][1] + .5) * CELL;
-    place(list, 'vane', 'vane-kiosk', x, road.groundY ?? groundAt(x, z), z, {turn:FACE_ROAD[side], kind:'vane', item:kiosk});
-  }
+  // Mrs Vane's kiosks, her deed sites and Vane Reach, placed as the drive places them (TOWN-VANE-SCENE).
+  const vane = townVaneWorld(town, {heightAt:groundAt});
+  const vanePiece = (placed, kind) => {
+    const piece = VANE_PIECES[placed.piece];
+    place(list, 'vane', piece.node, placed.x, placed.base + (piece.lift ?? 0), placed.z, {turn:placed.heading, kind, item:placed});
+  };
+  for (const kiosk of vane.kiosks) vanePiece(kiosk, 'vane');
+  for (const site of vane.sites) for (const piece of site.pieces) vanePiece(piece, 'vane');
+  if (vane.reach) vanePiece(vane.reach, 'vane');
 }
 
 /**
@@ -384,6 +369,8 @@ export function townArtSignature(town) {
   if (water) text += `${Object.keys(water.pits ?? {}).length},${Object.keys(water.wellJobs ?? {}).length},${Object.keys(water.wells ?? {}).length}`;
   const vane = town?.vane;
   if (vane) text += `|v${vane.started ? 1 : 0}${(vane.kiosks ?? []).map(kiosk => `${kiosk.id}${kiosk.open === false ? 0 : 1}`).join(',')}`;
+  // Her sites follow the deeds she holds.
+  text += `|o${Object.entries(town?.deeds?.items ?? {}).filter(([, item]) => item?.ownerId === 'vane').map(([id]) => id).join(',')}`;
   text += `|d${(town?.book ?? []).length}`;
   return text;
 }

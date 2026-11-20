@@ -6,6 +6,7 @@
 // no turn). Each `box` is [west, north, east, south, height], cut from the model at a cell of 1 m (as src/world/scablands-solids.js
 // cuts Tin Town), and tools/test-town-outposts-scene.mjs reads the model again to check that every part taller than a wheel is inside one.
 import {scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
+import {ROAD_NET} from '../world/scablands-road.js';
 
 // Anything this tall or less is driven over (src/world/scablands-solids.js says the same).
 export const TOWN_THING_WHEEL = .9;
@@ -115,4 +116,16 @@ export function thingSeed(seed, name) {
   let hash = (seed >>> 0) ^ 0x9e3779b9;
   for (const char of String(name)) hash = Math.imul(hash ^ char.charCodeAt(0), 0x01000193) >>> 0;
   return hash >>> 0;
+}
+
+// The nearest point of the road net to (x, z), searched over every road's centre line: {x, z, distance, roadId}.
+export function nearestRoadPoint(x, z, net = ROAD_NET) {
+  let best = null, gap = Infinity;
+  for (const road of net.roads) for (let i = 1; i < road.points.length; i++) {
+    const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+    const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
+    const px = a.x + dx * t, pz = a.z + dz * t, d = Math.hypot(x - px, z - pz);
+    if (d < gap) { gap = d; best = {x: px, z: pz, distance: d, roadId: road.id}; }
+  }
+  return best;
 }

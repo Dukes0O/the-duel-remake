@@ -151,9 +151,5 @@ export const TOWN_WORLD_ART = Object.freeze({
   dome:Object.freeze([Object.freeze({family:'dome', node:'dome-outer', x:0, z:-168.5, turn:Math.PI, size:[28, 20]}),
     Object.freeze({family:'dome', node:'dome-gate', x:0, z:-168.5, turn:Math.PI, size:[6, 3], authoredAt:[0, -92]})]),
   // The neighbours' outposts stand where the drive puts them (src/town/content/outposts-world.js, TOWN-OUTPOST-SCENE).
-  // Mrs Vane's yard, outside the ring road to the east, once she has come (town.vane.started). Her kiosks stand by
-  // the streets the town says they are on.
-  vaneYard:Object.freeze({x:700, z:140, pieces:Object.freeze([at('vane', 'vane-tower', 0, 0), at('vane', 'vane-depot', -36, -6),
-    at('vane', 'vane-tank', 30, -12), at('vane', 'vane-billboard', -8, -34), at('trucks-2', 'vane-truck', -36, -18),
-    at('trucks-2', 'vane-escort', -28, -18)]), fence:Object.freeze({node:'vane-fence', half:44, step:8.6})}),
+  // Mrs Vane's kiosks, deed sites and Vane Reach stand where the drive puts them (src/town/content/vane-world.js, TOWN-VANE-SCENE).
 });

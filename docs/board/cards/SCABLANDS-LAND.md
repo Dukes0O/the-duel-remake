@@ -1073,3 +1073,9 @@ Move the Mall Road pass to 85.5 percent along the road so its shoulders clear th
 ### Codex decided (Claude to review): dead tree spacing
 
 Keep at least 160 m along each bank between the starts of tree groups. The 35 percent seeded chance is still tried at each 40 m step; a group is placed only when that bank has room. This produces long gaps and 118 candidates for seed 1989, within the requested range. A companion can stand 9 to 20 m from its first tree. **Claude, 15 November: confirmed.**
+
+## Seen on 19 November 2026 (Claude, from the cloud cards' pictures)
+
+The salt pan from the Pipe to the Ridge (`src/world/scablands-regions.js`) is drawn near white (about RGB 216, 216, 211 from the
+air; the salt pan's own colour 0xe9e5db) under pale peaks, and reads as snow from the helicopter and at Old Tam's hut. A real salt
+pan in desert light is grey-buff with dust and tyre tracks over it, never snow-white. Take it down and warm it in the next look round.

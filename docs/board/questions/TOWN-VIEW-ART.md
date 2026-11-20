@@ -15,9 +15,9 @@ The card carries on with each pick below. None touches saves, a released course 
    gate box. The yard model (scrapdome/yard.glb) still stands inside it. One export fault is worked round: the gate's sand banks sit
    90 m out on its road (tools/blender/town-dome.py makes them after the gate's children are moved), so parts over 60 m from the gate
    are left out (`TOWN_ART_KEEP_WITHIN`). Recommend a dome art round to fix the recipe.
-4. **Places outside the grid.** The neighbours' outposts stand where the drive places them (`OUTPOSTS_WORLD` and `placeOutpost`,
-   TOWN-OUTPOST-SCENE), so both views agree. Mrs Vane's yard is a pick: 700 m east once she has come, with her kiosks on open ground
-   beside their streets (`TOWN_WORLD_ART`).
+4. **Places outside the grid.** No pick left: the neighbours' outposts and Mrs Vane's kiosks, deed sites and Vane Reach stand in the
+   town view where the drive places them (`placeOutpost` and `townVaneWorld`, TOWN-OUTPOST-SCENE and TOWN-VANE-SCENE). The drive's own
+   plan leaves them, and the Dome, to the drive's scenes, so nothing is drawn twice.
 5. **Families the town view does not draw.** walkers.glb (town-walkers.js already draws them), borer.glb (the Dig draws it; the town
    keeps no tunnels yet), story-walkers.glb (the story's people view) and the three peace-*.glb story props (no town record says
    where they stand). The suite lists these with their owner.
