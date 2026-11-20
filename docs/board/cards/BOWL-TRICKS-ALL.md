@@ -228,3 +228,18 @@ The design table lists five airborne codes, the ground-entered Full Works and th
 ## Build decision
 
 Build the three parts in order. A fresh press commits one complete turn using the measured flight time. Keep the seven discoveries per driver, and use the same simulation for every vehicle the Monster Arena admits.
+
+## Claude answers, saving a first find (20 November 2026)
+
+- **Granted:** in `src/app.js`, the Bowl and Monster Arena start paths and event listener pass the active driver's known trick
+  ids into the race (a copy; the simulation never touches storage) and save a genuine first landing at once through the
+  existing guarded profile save, so a find survives quitting and each Turn Show driver's finds stay apart. In
+  `src/bowl/bowl-night.js`, `startBowlNight` and `observeBowlNight` may carry that list, give the full crowd on a first find,
+  keep the crowd on an Easy Slam, and pass the late, armed and found events to the existing display and announcer. Purse and
+  scores as the design says.
+- **Saves:** the known trick ids are a new, optional, per-driver record: it only adds, an old save reads as none found, and a
+  newer game's record is left untouched. It gets the save checker's review (rule 17) and a round trip in the save suite.
+  `app.js` is shared, so the night after the merge is a full one.
+- **Confirmed: seven secrets,** five codes in the air, Full Works entered on the ground before takeoff, and the uncoded
+  Yo-Yo; prove each by its own inputs. The design's "six codes off the jump" counts Full Works with the airborne five; seven
+  is right.

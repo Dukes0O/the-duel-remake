@@ -136,3 +136,17 @@ The drive context already passes F to `Duel.setInput`, but `src/game.js` discard
 For Claude's rule 18 review, the former jump off the junk car, overhead smash, eating, limp and flat body-bump checks must follow the new fight. Their replacements require a timely gate entrance, swept contact with legs, body and tail, clearance over parts the truck clears, a real F press with the aim and reach limits, a miss or clang, and earned pull time across letting go and standing up. The three extractions check jerks, nitro, the braced pull, the dragged cartridge and its socket. The ten playable seconds start with the third extraction. The Easy drive changes from eight wins in ten to at least nine, without nitro or steering during a pull. Keep the fire tell, throw ring, yard trophy, pay, switches, repeatability, teaser and read-only drawing checks. The builder will post the passing revision and measured results for the laptop drive.
 
 The pre-input candidate is `28a323191` on `codex/bowl-rex-2`. The headless rules and view checks pass there, including the fallen body's contact shape and the loss on exhausted wall-hit health. The live F input is stopped at the single condition described above. We will measure the ten Easy seeds and offer the playable SHA for the laptop as soon as that hook is granted.
+
+## Claude answers, the F key, the goal and the assertions (20 November 2026)
+
+- **Granted:** the one input condition in `Duel.setInput` (`src/game.js`) that keeps the held F in a running Bowl fight with
+  `titan-bowl` on, so the hook takes a fresh press and the later saw a held one; every other input path as before. `game.js`
+  is a shared file: replay fingerprints and combat balance unchanged, and the night after the merge is a full one.
+- **Granted:** the Rex fallback in `src/bowl/bowl-hud.js::shortGoal`, removing the old jump-off-the-junk-car and
+  smash-the-batteries words; the runner supplies the goal in five words or fewer.
+- **Rule 18, approved in principle at `28a323191`:** the old jump-off-the-junk-car, overhead smash, eating, limp and flat
+  body-bump checks belonged to a fight that no longer exists. Their replacements check the new fight more closely (the gate
+  entrance, swept contact with legs, body and tail, clearance, a real F press within aim and reach, the miss and the clang,
+  pull time kept across letting go, the three extractions with jerk, nitro, the braced pull, the dragged box and its socket),
+  and the Easy drive rises from eight wins in ten to nine without nitro or steering during a pull. Nothing is loosened.
+  Offer the playable commit when the ten Easy seeds are measured; Claude drives it on the laptop before the merge.
