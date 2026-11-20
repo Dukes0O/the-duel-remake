@@ -40,13 +40,15 @@ export async function run(context) {
   await context.waitFor(`window.__render.scene.getObjectByName('Vane things').userData.things.every(thing=>thing.holder.children.length===1)`, 'every part of hers loaded', 90_000);
   const layout = await context.evaluate(`(()=>{
     const job=window.__qaApp.duel.state.arena.worldJob,vane=job.definition.layout?.vane,group=window.__render.scene.getObjectByName('Vane things');
+    const ids=new Set((job.solidGrid?.town??[]).map(solid=>solid.id));
     return {kiosks:vane?.kiosks?.length,sites:vane?.sites?.map(site=>site.territoryId),pieces:vane?.sites?.reduce((sum,site)=>sum+site.pieces.length,0),
-      solid:job.solidGrid?.town?.length??0,errors:group.userData.loadErrors};
+      solid:(vane?.solids??[]).filter(solid=>ids.has(solid.id)).length,vaneSolids:vane?.solids?.length??0,errors:group.userData.loadErrors};
   })()`);
+  report.read = {layout};
   fact(layout.kiosks === 2, 'two kiosks stand at the town\'s edge');
   fact(JSON.stringify(layout.sites) === JSON.stringify(['tollkeeper', 'blackiron']), 'her two territories show their sites');
   fact(layout.pieces === 12, 'each site has its billboard, depot, tank and white fences');
-  fact(layout.solid > 40, 'her things are solid in the drive');
+  fact(layout.vaneSolids > 0 && layout.solid === layout.vaneSolids, `every one of her solids is on the drive's grid (${layout.solid} of ${layout.vaneSolids})`);
   fact(!layout.errors?.length, 'her things drew without a load error');
   // Where to stand: [what, x, z, and what to face].
   const stands = await context.evaluate(`(()=>{

@@ -31,7 +31,10 @@ export function changeTownNeighbourStanding(town, neighbourId, change) {
   if(!state || !Number.isFinite(change)) return {ok:false,message:'Choose a known neighbour and a real standing change.'};
   const before=state.standing;
   state.standing=clampStanding(before+change);
-  return {ok:true,standing:state.standing,change:state.standing-before};
+  const definition=byId.get(neighbourId);
+  // The town's command dispatcher accepts only an answer with a sentence (src/town/town-commands.js).
+  const message=state.standing>before?`${definition.name} thinks better of the town now.`:state.standing<before?`${definition.name} thinks worse of the town now.`:`${definition.name} feels the same about the town.`;
+  return {ok:true,standing:state.standing,change:state.standing-before,message};
 }
 
 export function completeTownNeighbourTrade(town, neighbourId, {good, amount, stockpile, delivered=true}={}) {
@@ -61,7 +64,8 @@ export function setTownOutpostProtection(town, neighbourId, protectedPlace=true)
   if(typeof protectedPlace!=='boolean') return {ok:false,message:'Choose whether the outpost is protected.'};
   if(protectedPlace&&!state.protected) changeTownNeighbourStanding(town,neighbourId,20);
   state.protected=protectedPlace;
-  return {ok:true,standing:state.standing,monthlyProtection:protectedPlace?definition.monthlyProtection:0};
+  return {ok:true,standing:state.standing,monthlyProtection:protectedPlace?definition.monthlyProtection:0,
+    message:protectedPlace?`The town looks after ${definition.name} now, and a fence goes up round the place.`:`The town no longer looks after ${definition.name}.`};
 }
 
 export function townOutpostProtectionIncome(town) {

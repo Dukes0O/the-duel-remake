@@ -25,6 +25,7 @@ import {townOutpostWorld, placeOutpost} from '../src/town/town-outpost-world.js'
 import {thingLocal, thingPoint, footprintSamples, TOWN_THING_SINK} from '../src/town/town-world-things.js';
 import {createTown} from '../src/town/town-state.js';
 import {setTownOutpostProtection} from '../src/town/town-outposts.js';
+import {stepTown} from '../src/town/index.js';
 import {createTownWorld} from '../src/town/town-world.js';
 import {createTownOutpostsScene, outpostAnimalSpecies, OUTPOST_STEP_ASIDE} from '../src/town/view/town-outposts-scene.js';
 import {setScablandsTownLayout, clearScablandsTownLayout} from '../src/world/scablands-ground.js';
@@ -204,13 +205,39 @@ test('the fence comes with protection, and goes when protection ends', () => {
 });
 
 const MPH = 1.609344, DT = 1 / 60;
-function townDrive(layout) {
+// The drive as the game starts it: the job record App.startTownDrive (src/app.js) builds from the town, plus any `extra` fields.
+function townDrive(layout, extra = {}) {
   const duel = new Duel({seed: 1989, featureFlags: {'wasteland-town': true}});
   duel.state.wastelandGateDiscovered = true;
   setScablandsTownLayout(layout);
-  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', job: {id: 'town-drive', kind: 'town-drive', steps: [], seed: 1989, layout}}), true);
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', job: {id: 'town-drive', kind: 'town-drive', seed: layout.seed, steps: [], layout, ...extra}}), true);
   return duel;
 }
+
+test('protection set through the town\'s own commands raises the fence, and the drive keeps the outposts solid with a yard grid', () => {
+  // The town screen sends commands through stepTown, which accepts only an answer with a sentence.
+  const town = createTown(1405, 'Command town');
+  const [answer] = stepTown(town, [{type: 'neighbourProtection', neighbourId: 'dot', protected: true}]);
+  assert.equal(answer.ok, true, answer.message);
+  assert.ok(answer.message.length > 0 && !answer.message.includes('—'), 'the answer is a plain sentence');
+  assert.equal(town.outposts.dot.protected, true);
+  for (const type of ['neighbourRaid', 'neighbourHelpEnemy']) assert.equal(stepTown(town, [{type, neighbourId: 'tam'}])[0].ok, true, `${type} is accepted`);
+  const layout = createTownWorld(town);
+  assert.ok(layout.outposts.outposts.find(outpost => outpost.id === 'dot-diner').fence.length > 0, 'the fence is in the drive\'s layout');
+  // A drive whose job also makes the yard's grid (as Hot Delivery's does) keeps every outpost solid: the yard's grid is made first.
+  const duel = townDrive(layout, {yard: true});
+  try {
+    const grid = duel.state.arena.worldJob.solidGrid;
+    // The drive's grid holds the outposts' solids and Mrs Vane's (TOWN-VANE-SCENE), and nothing else of the town.
+    const ids = new Set(grid.town.map(solid => solid.id));
+    assert.ok(layout.outposts.solids.every(solid => ids.has(solid.id)), 'every outpost solid is on the drive\'s grid');
+    assert.equal(grid.town.length, layout.outposts.solids.length + layout.vane.solids.length);
+    assert.ok(grid.yard.length > 0, 'and the yard\'s solids too');
+  } finally {
+    cleanupWorldJobLoan(duel);
+    clearScablandsTownLayout();
+  }
+});
 
 test('a town drive is solid at the outposts, and no other drive is', () => {
   const town = createTown(1405, 'Solid town');

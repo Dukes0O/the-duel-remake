@@ -8,6 +8,8 @@
 
 **After TOWN-OUTPOST-SCENE's review.** Merged that branch with integration 3be1f37 (no conflict); `test-town-vane-scene`, `test-town-outposts-scene`, `test-town-world`, `test-scablands-solid`, `test-night-2` and `test-night-2-scenario` passed, and the build.
 
-**Changed assertions.** None in this card (TOWN-OUTPOST-SCENE's own note gives its test 7 change).
+**After TOWN-OUTPOST-SCENE's laptop run.** Merged its fixes (protection reaches the town; town solids after the yard's grid). The combined outposts-and-Vane block sits after the yard's grid. Lane tier since 6cf9e87: 66 passed; build passed.
+
+**Changed assertions.** Scenario `town-vane`: "her things are solid in the drive" (more than 40) became "every one of her solids is on the drive's grid" (equal to the layout's count; stricter). On this branch, outposts test 6 checks that every outpost solid is on the grid and that the grid holds the outposts' and Vane's solids together, because the grid carries both here.
 
 **Removed.** Nothing; this is new.

@@ -198,16 +198,16 @@ export function initializeWorldJob(duel, definition) {
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
   worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
+  if (definition.yard) {
+    worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setYard(yardPlan().solids);
+  }
   // The neighbours' outposts and Mrs Vane's things are solid in a town drive only, from the layout the drive was started with
-  // (TOWN-OUTPOST-SCENE, TOWN-VANE-SCENE).
+  // (TOWN-OUTPOST-SCENE, TOWN-VANE-SCENE). After the yard's grid, which replaces any grid made before it.
   const townSolids=definition.kind==='town-drive'?[...definition.layout?.outposts?.solids??[],...definition.layout?.vane?.solids??[]]:[];
   if(townSolids.length){
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setTown(townSolids);
-  }
-  if (definition.yard) {
-    worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
-    worldJob.solidGrid.setYard(yardPlan().solids);
   }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
