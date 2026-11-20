@@ -19,6 +19,15 @@
 
 **Laptop check 2.** The scenario waited for a NEXT EVENT button that the night's last card does not have, so it timed out after Side by Side. Through the App with the test driver, all three events end. A timeout now writes the night's state into `report.json`.
 
+**On the new Bowl (BOWL-EXPAND round 1, merged).** Every place now comes from `course.features.bowl`:
+- the Car Crush start and its line;
+- Freestyle's launch cars;
+- Side by Side's two mirrored lanes, half a lap apart. Each truck races one full lap from its own start, with no stagger.
+
+Freestyle counts every landing after a flight of at least 0.5 s. The crowd gains 0.2 a point and fades 3 percent a second, and the Freestyle targets are 450, 750 and 1,050. Through the App with the test driver, all three events end, and Side by Side finishes at 16.7 s.
+
+Checks on cfd838b: `test-bowl-night` passes 237 checks. The lane tier ran 77 passed and 3 failed: the same two laptop-only suites, plus `test-race-field` with its integration hash. Replays passed 297 checks, and the build passed.
+
 **Changed assertions.** None. A new check in `test-bowl-night` covers the newer-save refusal added to `bowl-save.js`.
 
 **Removed:** The Bowl's place in the menu's circuit list and the course screen. Show Night replaces it as the only way in.

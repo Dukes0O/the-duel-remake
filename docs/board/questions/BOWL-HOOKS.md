@@ -25,4 +25,10 @@ not enough: on the scripted Freestyle it peaks at 17.5. With 0.15 a point and 6 
 0.0015 and 12 percent) the same Freestyle peaks near 70, so Big Mo's crowd lines are reached. Scores rise by
 about a quarter, so the Freestyle targets went from 400, 650 and 900 to 500, 800 and 1,100.
 
+On the 286 m Bowl (BOWL-EXPAND) the stunts come further apart. The crowd meter now gains 0.2 a point and fades 3 percent a second:
+- a Freestyle of kickers alone peaks near 40;
+- a good one, with a big stunt every 7 seconds, peaks near 62.
+
+The Freestyle targets are 450, 750 and 1,050.
+
 Question 1 was answered: the purse table is accepted.
