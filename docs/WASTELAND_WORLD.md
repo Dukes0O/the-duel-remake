@@ -314,6 +314,14 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   through `bowlLayout(course)`: the crush line's rows and their names, the run-up, the parked cars in Freestyle (the
   longest clear floor between ramps and crush line), the lanes (half the floor, or `features.bowlLanes.offset`) and
   Side by Side's start stagger. A rebuilt Bowl (BOWL-EXPAND) moves the events with it.
+- **Turn Show** (BOWL-TURNS) runs in `src/bowl/bowl-turns.js`, pure rules with no race state: two to four named
+  players take one go each at every event, event by event, in the order they were picked. Every go, the first
+  too, opens on "NAME IS UP. PASS THE KEYBOARD." at the menu and starts only on a fresh key press (a held or
+  repeating key does nothing). The driver becomes the active player, so their own truck, settings and save are
+  used, and the go runs as a one-event night (`startBowlNight` with `eventIndex` and `turn`), which has no
+  restart and pays nothing itself. Each go's score goes into its driver's own best scores at once; a player who
+  wins all three events wins that night in their own save, with its purse paid once by `settleShowNight`. The
+  scoreboard ranks events won, then points. The host is the active player again when the show ends.
 - **Air control** only when `def.bowl`, and the launch off cars (FUN-TITAN-LAUNCH) is
   unchanged and tested.
 - **Switches** (`src/feature-flags.js`): `gear-find` (on at its release), `scablands`,

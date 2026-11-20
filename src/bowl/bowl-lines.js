@@ -12,6 +12,8 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.event.won': 'interface.win',       // an event is won
   'bowl.event.lost': 'interface.lose',     // an event is lost and can be tried again
   'bowl.purse': 'interface.bonus',         // the purse is paid into the scrap wallet
+  'bowl.turn.up': 'interface.radar',       // BOWL-TURNS: the pass-the-keyboard screen opens for the next player
+  'bowl.turn.winner': 'crowd.cheer',       // BOWL-TURNS: the Turn Show is over and the scoreboard names the winner
 });
 
 export const BOWL_EVENT_NAMES = Object.freeze({
@@ -69,6 +71,10 @@ export const BIG_MO = Object.freeze({
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
   'event.lost.lastTruckRolling': 'Our driver was knocked out, but the trucks are lining up again.',
   'night.won': 'That is the end of the show, and what a show it was. Thank you all for coming, and that includes the dogs.',
+  // A Turn Show go (BOWL-TURNS): one go each, so nobody is told to try again.
+  'turn.open': 'Here comes the next driver, so give them a big cheer!',
+  'turn.won': 'That go won the event, and it goes straight up on the scoreboard.',
+  'turn.lost': 'That go did not win the event, but every point still goes on the scoreboard.',
 });
 
 // The results screens. Functions take the facts they need and return one sentence.
@@ -104,4 +110,60 @@ export const BOWL_RESULTS = Object.freeze({
   leaveButton: 'LEAVE THE SHOW',
   closeButton: 'CLOSE',
   leaveNote: 'If you leave in the middle of a night, the purse is not paid.',
+});
+
+const EVENTS_WON = ['no events', 'one event', 'two events', 'three events'];
+const eventsWon = count => EVENTS_WON[count] ?? `${count} events`;
+const names = list => list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
+
+// The Turn Show's screens (BOWL-TURNS). A name is a player's own, as typed.
+// Keys that end in Title, Button or Heading are labels; every other line is one sentence.
+export const BOWL_TURN_LINES = Object.freeze({
+  pickerNote: 'Two or more players can share the keyboard and take turns in a Turn Show.',
+  pickerButton: 'TAKE TURNS',
+  setupTitle: 'TURN SHOW',
+  setupIntro: 'Each player has one go at every event, and only one player drives at a time.',
+  setupRules: 'The player who wins the most events wins the night, and points settle a tie.',
+  setupPurse: 'A player who wins all three events also wins that night in their own save, with its purse in their own wallet.',
+  setupPick: 'Pick the players in the order they will drive.',
+  setupCount: count => `There are ${count} players in tonight's show.`,
+  setupNeedTwo: 'Pick at least two players to start the show.',
+  setupFull: 'A Turn Show has room for four players.',
+  setupTooFew: 'A Turn Show needs at least two players, so add a player with NEW on the main menu first.',
+  setupNightOpen: night => `Night ${night} is open for every player you picked.`,
+  setupNightLocked: night => `Night ${night} opens when every player you picked has won night ${night - 1}.`,
+  setupStartButton: night => `START NIGHT ${night}`,
+  backButton: 'BACK',
+  handoffTitle: name => `${name.toUpperCase()} IS UP. PASS THE KEYBOARD.`,
+  handoffEvent: (name, event) => `${name}, it is your go at ${event}.`,
+  handoffKey: 'Press any key when you are ready, and the countdown will start.',
+  readyButton: 'I AM READY',
+  hudDriver: name => `${name.toUpperCase()} IS DRIVING`,
+  goWonTitle: 'EVENT WON',
+  goLostTitle: 'GO OVER',
+  goScore: (name, score, event) => `${name} scored ${score.toLocaleString()} points in ${event}.`,
+  goWon: 'That go won the event.',
+  goLost: 'That go did not win the event, but the points still count.',
+  goRows: (name, row) => row ? `${name} crushed their way into ${row}.` : `${name} did not reach the first row of cars.`,
+  goRace: (name, won) => won ? `${name} crossed the line ahead of the other truck.` : `The other truck crossed the line before ${name}.`,
+  goBest: (name, event) => `That is ${name}'s best ever score in ${event}.`,
+  goNightWon: (name, night) => `${name} won all three events, so night ${night} is won in ${name}'s own save.`,
+  goPurse: (name, scrap) => `Big Mo paid ${name} a purse of ${scrap.toLocaleString()} scrap, and it is in ${name}'s own wallet now.`,
+  goPurseAlready: name => `${name} already won the purse for this night, so this time the points were for the scoreboard.`,
+  goUnsaved: name => `${name}'s save could not be written, so this go lasts only until you close the game.`,
+  goNext: (name, event) => `${name} is up next in ${event}.`,
+  goLastNext: 'That was the last go of the night, so it is time for the scoreboard.',
+  passButton: 'PASS THE KEYBOARD',
+  scoreboardButton: 'SEE THE SCOREBOARD',
+  leaveButton: 'LEAVE THE SHOW',
+  leaveNote: 'If you leave in the middle of the show, the goes already played stay saved and the rest are not played.',
+  boardTitle: 'THE SCOREBOARD',
+  boardPlayerHeading: 'PLAYER',
+  boardTotalHeading: 'TOTAL',
+  boardWonHeading: 'WON',
+  boardWinner: (name, wins, points) => `${name} wins the night with ${eventsWon(wins)} won and ${points.toLocaleString()} points.`,
+  boardTie: list => `${names(list)} tie for the night, with the same events won and the same points.`,
+  boardLeading: (name, wins, points) => `${name} is ahead so far, with ${eventsWon(wins)} won and ${points.toLocaleString()} points.`,
+  boardLevel: list => `${names(list)} are level so far.`,
+  closeButton: 'CLOSE',
 });
