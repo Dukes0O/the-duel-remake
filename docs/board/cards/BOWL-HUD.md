@@ -33,7 +33,7 @@ The screen reads state and never changes it.
    the last segment pulses with DANGER. Over each rival the same five segments replace "60/60". It shows the one measure
    that knocks a truck out (BOWL-WEAPONS makes health that measure; until then it reads armor).
 7. **The result card waits two seconds** after an event ends, so that the last moment is seen (BOWL-CAMERA swings the
-   camera in that time). After the Scrapasaurus falls it waits until the truck stands on it, or 12 seconds.
+   camera in that time). After the Scrapasaurus falls it waits 10 seconds, while the truck drags the last box.
 8. **A small plan of the arena** bottom left above the health picture, in the fights and whenever the truck is outside:
    the floor, the Spine, the two gates, each truck, the Scrapasaurus.
 

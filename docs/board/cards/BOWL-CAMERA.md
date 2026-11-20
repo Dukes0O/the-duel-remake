@@ -18,7 +18,7 @@ wall or outside the arena the truck leaves the picture.
    Every change is eased over at least 0.4 seconds. It rises over a wall, the fence or the stands when one is between it
    and the truck (as `src/world-job-camera.js` does over machines). It follows the truck into the stands and outside.
 2. **The end of every event:** the truck rolls to a stop, the camera swings a quarter of the way round it over two seconds,
-   and only then does the result card come up. The Scrapasaurus's fall waits for the truck to stand on it, or 12 seconds.
+   and only then does the result card come up. After the Scrapasaurus falls the card waits 10 seconds, while the truck drags the last box.
 3. One hook in `src/render3d.js` for a Bowl event, in the place where a world job's camera is chosen.
 
 ## Files and locks

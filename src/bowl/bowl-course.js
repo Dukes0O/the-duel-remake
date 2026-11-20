@@ -33,6 +33,12 @@ export const BOWL_FLOOR = Object.freeze({
   // end (which grow to close the bend) keep 0.4 m clear too. On the straights the two
   // sides' Spine walls meet in the middle: the Spine is 2.5 m wide.
   floorHalfWidth: 20,
+  wallBounce: Object.freeze({
+    softBelowMph: 25, bigAboveMph: 45, scrapeSine: .5, scrapeKeep: .95, tangentKeep: .9,
+    bounceReturn: .4, hardReturn: .3, bigReturn: .25, minimumMps: 2,
+    hardDamage: 1 / 12, bigDamage: 1 / 6,
+    fights: Object.freeze(['lastTruckRolling', 'scrapasaurus']),
+  }),
   // Read in every event on the Bowl (src/sim-driving.js _drivingSurface). A Titan at full
   // throttle settles near 50 mph on this floor (its limit is 35 mph and the pull back to it
   // is gentle): the Big Jump then throws it about 45 m for 2 s, into the open end.

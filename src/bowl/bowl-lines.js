@@ -28,6 +28,10 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.trick.slam': 'vehicle.crash',
   'bowl.trick.cyclone': 'crowd.cheer',
   // bowl.trick.wheelie is the engine note; it has no stand-in.
+  'bowl.wall.bounce': 'heli.setdown.thud',
+  'bowl.wall.hard': 'vehicle.crash',
+  'bowl.wall.big': 'vehicle.crash-impact',
+  'bowl.wall.scrape': 'vehicle.tires',
   'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
   'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
   'bowl.event.won': 'interface.win',       // an event is won

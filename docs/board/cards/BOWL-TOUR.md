@@ -21,7 +21,7 @@ Yes: "the larger Titan arena that already exists" is the **Titan Monster Arena**
    Stunt Trial's rules, scored with the trick set); a Side by Side over half a lap.
 2. **Night 7, Stunt Night, at Titan Stadium:** a Long Jump at its largest ramp; Freestyle on the long lap, where every
    triple pays; a Stadium Race run the other way round.
-3. **Night 8, Champions' Night, at the Bowl:** Freestyle with the fallen Scrapasaurus lying on the floor as a ramp; Last
+3. **Night 8, Champions' Night, at the Bowl:** Freestyle with the fallen Scrapasaurus lying on the floor to jump over; Last
    Truck Rolling with five trucks; a Side by Side final with Dragon Wagon, best of three.
 4. **The vehicle:** on nights 6 and 7 the driver takes the show truck or any unlocked vehicle of the driver's own. The
    night's card says so, in one sentence, when the chosen vehicle is too light for an event that needs crushing, and

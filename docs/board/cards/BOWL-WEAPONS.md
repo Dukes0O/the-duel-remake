@@ -67,3 +67,7 @@ with a Removed line. Before CARD DONE, search `tools/` for `lastTruckRolling`, `
 `BOWL_RIVAL_HITS` and bring each older suite and scenario that names them up to date. No Chrome under `codex exec`: any
 browser scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside
 this lane.
+
+## Balance inherited from BOWL-WALLS (Claude, 20 November)
+
+Keep the child driver's ordinary wall contacts when measuring the hammer. On Easy, run the driver into walls as often as in the unarmed wall trials. In seed 1989, three hard wall contacts and two big ones cost 35 of 60 health, and five hard truck contacts cost 25 more. The original unarmed run also lost seeds 2090 and 2191. The armed driver must still win at least nine of ten and knock out at least two trucks. If that cannot be reached, Claude permits a smaller player wall-damage share on Easy only. Medium and Hard keep the full wall table.
