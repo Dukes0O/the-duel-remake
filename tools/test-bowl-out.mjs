@@ -75,6 +75,25 @@ for (let line=0; line<7; line++) {
 }
 console.log('Seven terrace heights (m)',touchdowns.join(', '),'and first 1/6 second uphill (m)',uphill.join(', '));
 
+// Descend wheels down at walking pace. The vertical solver makes contact;
+// throttle stays held from the final half metre in the air until after touchdown.
+{
+  const duel=freestanding(), s=duel.state;
+  place(duel,36,32,Math.PI/2,9);
+  Object.assign(s,{airborne:true,airHeight:.45,_jumpY:s.groundHeight+.45,_verticalSpeed:-1,airTime:.3});
+  duel.setInput({steer:0,brake:0,throttle:1,boost:false});
+  for(let k=0;k<60 && s.airborne;k++) duel.step(dt);
+  assert.ok(!s.airborne && s.bowlLanding==='clean' && s.speedMph>=8 && s.speedMph<=12);
+  const speeds=[s.speedMph.toFixed(2)];
+  for(let k=0;k<6;k++) {
+    const priorSpeed=s.speedMph, priorPosition=s.lateral;
+    duel.step(dt);
+    assert.ok(s.speedMph>priorSpeed && s.lateral>priorPosition && !s.tumble && !s.airborne);
+    speeds.push(s.speedMph.toFixed(2));
+  }
+  console.log('Slow terrace touchdown and six following ticks (mph)',speeds.join(', '));
+}
+
 // Compare the ordinary straight jump with the outward launch disabled.
 function straightJump(enableExit) {
   const duel=freestanding(), s=duel.state;
