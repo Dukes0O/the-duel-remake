@@ -75,8 +75,36 @@ export function createRexView({loadModel}) {
   tip.name='Truck tow hook';
   const mark=new THREE.Mesh(new THREE.RingGeometry(.59,.68,24),glowMaterial(RING));
   mark.name='Open battery marker';mark.rotation.y=Math.PI/2;
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.22,.38,35,12),glowMaterial(0xffd44d));
+  beam.name='Open battery beam';beam.material.opacity=.76;
+  const progress=new THREE.Mesh(new THREE.RingGeometry(.83,1.06,64),glowMaterial(0x9aff83));
+  progress.name='Battery pull progress';progress.material.opacity=1;progress.renderOrder=9;
+  const pointerShape=new THREE.Shape();
+  pointerShape.moveTo(1,0);pointerShape.lineTo(-.6,.62);pointerShape.lineTo(-.32,0);pointerShape.lineTo(-.6,-.62);pointerShape.closePath();
+  const pointer=new THREE.Mesh(new THREE.ShapeGeometry(pointerShape),glowMaterial(RING));
+  pointer.name='Offscreen battery arrow';pointer.frustumCulled=false;pointer.renderOrder=10;
+  const projected=new THREE.Vector3(), cameraPoint=new THREE.Vector3(), edge=new THREE.Vector3();
+  pointer.onBeforeRender=(_renderer,_scene,camera)=>{
+    projected.copy(mark.position).project(camera);
+    cameraPoint.copy(mark.position).applyMatrix4(camera.matrixWorldInverse);
+    const behind=cameraPoint.z>=0;
+    if(!behind && Math.abs(projected.x)<=.96 && Math.abs(projected.y)<=.95){
+      pointer.material.opacity=0;return;
+    }
+    let x=projected.x*(behind?-1:1), y=projected.y*(behind?-1:1);
+    if(behind && Math.abs(x)+Math.abs(y)<.01)y=-1;
+    const fit=Math.max(Math.abs(x)/.88,Math.abs(y)/.76,.001);
+    x/=fit;y/=fit;
+    edge.set(x,y,0).unproject(camera);pointer.position.copy(edge);
+    pointer.scale.setScalar(edge.distanceTo(projected.set(x,y+.045,0).unproject(camera)));
+    pointer.quaternion.copy(camera.quaternion);pointer.rotateZ(Math.atan2(y,x*(camera.aspect||1)));
+    pointer.material.opacity=1;pointer.updateMatrixWorld(true);
+  };
+  for(const circle of [mark,progress])circle.onBeforeRender=(_renderer,_scene,camera)=>{
+    circle.quaternion.copy(camera.quaternion);circle.updateMatrixWorld(true);
+  };
   const pen = new THREE.Group(); pen.name = 'Scrapasaurus pen of junk cars';
-  group.add(holder, cone, fire, ring, thrown, pen, cable, tip, mark);
+  group.add(holder, cone, fire, ring, thrown, pen, cable, tip, mark, beam, progress, pointer);
 
   // The model loads once for the view; each event on a new course only moves it and rebuilds the pen.
   function clear() {
@@ -137,7 +165,7 @@ export function createRexView({loadModel}) {
     pen.visible = !!fight;
     cone.visible = fire.visible = ring.visible = thrown.visible = chest.visible = false;
     chestLight.intensity = 0;
-    cable.visible=tip.visible=mark.visible=false;
+    cable.visible=tip.visible=mark.visible=beam.visible=progress.visible=pointer.visible=false;
     if (teaser) {
       // Behind the wall in front of the stands, at the head of the crush line, looking in.
       const at = next.groundAt(places.startS, places.side * (places.edge + 4.5));
@@ -188,7 +216,14 @@ export function createRexView({loadModel}) {
     }
     if(fight.marker){
       mark.visible=true;mark.position.copy(fight.marker);
-      mark.rotation.y=holder.rotation.y+Math.PI/2;
+      beam.visible=pointer.visible=true;
+      beam.position.copy(mark.position);beam.position.y+=17.5;
+      progress.visible=hook.phase==='attached';
+      if(progress.visible){
+        const required=REX_RULES.level[fight.level].pull[hook.box];
+        const steps=Math.floor(64*Math.min(1,hook.pulls[hook.box]/required));
+        progress.position.copy(mark.position);progress.geometry.setDrawRange(0,steps*6);
+      }
       mark.material.color.setHex(fight.marker.canBite ? 0x99ff77:RING);
     }
     if (fight.cone && (fight.phase === 'tell' || fight.phase === 'fire')) {

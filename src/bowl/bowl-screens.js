@@ -21,6 +21,15 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   // A card shows Big Mo's line for what just happened, whatever he is still saying aloud.
   const moLine = id => BIG_MO[id] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[id])}</p>` : '';
   const night = () => app.duel.state.bowlNight ?? null;
+  let fallenEvent=null, firstFallFrame=0;
+  function resultReady(show){
+    const event=show?.event;
+    if(event?.rex?.phase==='fallen'){
+      if(fallenEvent!==event){fallenEvent=event;firstFallFrame=performance.now();}
+      if(performance.now()-firstFallFrame<10000)return false;
+    }else fallenEvent=null;
+    return bowlResultReady(show);
+  }
 
   const eventIsRunning = state => !!state.bowlNight?.event && ['countdown', 'racing'].includes(state.status);
   function closeHelp() {
@@ -88,7 +97,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     const pictures=[
       [truck+'<path d="M101 40L57 28l3 21z" fill="#ff832d"/>','Get out of the orange before it breathes fire.'],
       [truck+box+'<path d="M52 32L86 17" stroke="#e8d181" stroke-dasharray="3 2"/>','When it sags, face the glowing box and press F to hook it.'],
-      ['<g transform="translate(66 0) scale(-1 1)">'+truck+'</g>'+box+'<path d="M56 35l30-18" stroke="#e8d181" stroke-width="2"/>','Drive away and keep pulling until the box comes out.'],
+      ['<g transform="translate(66 0) scale(-1 1)">'+truck+'</g>'+box+'<path d="M56 35l30-18" stroke="#e8d181" stroke-width="2"/>','Drive away and pull, holding Space when it pulls you back.'],
     ];
     return '<div class="bowl-rex-guide">'+pictures.map(([picture,line])=>
       '<p><svg width="108" height="52" viewBox="0 0 108 52" aria-hidden="true">'+picture+'</svg> '+escapeHTML(line)+'</p>').join('')+'</div>';
@@ -125,11 +134,11 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     // The parts of the screen that change what the modal layer shows.
     key(state) {
       const show = night();
-      return `${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${bowlResultReady(show)}:${help?.state === state}:${turns.key(state)}`;
+      return `${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${resultReady(show)}:${help?.state === state}:${turns.key(state)}`;
     },
     modal(state, {yardActive = false} = {}) {
       if (eventIsRunning(state) && state.paused && help?.state === state) return trickCard(state);
-      if (state.bowlNight && state.status === 'bowl_break' && !bowlResultReady(state.bowlNight)) return '';
+      if (state.bowlNight && state.status === 'bowl_break' && !resultReady(state.bowlNight)) return '';
       // BOWL-TURNS: a Turn Show, or its setup, has its own screens.
       const turn = turns.modal(state, {yardActive});
       if (turn) { pickerFrom = null; return turn; }
@@ -146,7 +155,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       if (help && (help.state !== state || !state.paused)) help = null;
       const active = !!show && state.status !== 'menu';
       ui.stage.classList.toggle('bowl-night-active', active);
-      const watchingFinish = state.status === 'bowl_break' && !bowlResultReady(show);
+      const watchingFinish = state.status === 'bowl_break' && !resultReady(show);
       const course = app.duel.course;
       const view = !state.paused && (eventIsRunning(state) || watchingFinish) ? bowlHudView(state, course) : null;
       renderHud(state, course, bowlStrip(state, view, id => BOWL_RIVALS[id]?.name));
