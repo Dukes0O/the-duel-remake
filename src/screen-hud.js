@@ -313,7 +313,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['police-legend'].hidden=!s.police?.pursuit?.active;
     ui['shortcut-legend'].hidden=!app.duel.course?.features.shortcuts.length;
     ui['shortcut-b-legend'].hidden=(app.duel.course?.features.shortcuts.length||0)<2;
-    routeMap.update(app.duel.course,s);
+    if (!s.bowlNight) routeMap.update(app.duel.course,s);
     const practice=!!app.duel.stageDef.practice;
     ui.stage.classList.toggle('is-practice',practice);
     // A driving lesson is a private Time Trial: its ghost banner, lap and style readouts do not apply.

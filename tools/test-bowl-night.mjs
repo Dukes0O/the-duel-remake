@@ -10,6 +10,7 @@ import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushRowName, crushRowsToWin, bowlHu
 import {BIG_MO, BOWL_CRUSH_ROW, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
+import {bowlOpeningLines} from '../src/bowl/bowl-hud.js';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
 
@@ -158,8 +159,11 @@ const run = (() => {
   ok(launch, 'the Titan launches off a parked car in Freestyle');
   ok(log.scores.filter(score => score.type === 'landedJump').every(jump => jump.points < launch.points),
     'the launch off a car scores more than any ramp jump');
-  ok(log.captions[0] === 'night.1.open' && log.captions.includes('lent.truck') && log.captions.at(-1) === 'night.won',
-    'Big Mo opens the night, mentions the lent truck and closes the show');
+  equal(bowlOpeningLines(1, true), [BIG_MO['night.1.open'], BIG_MO['lent.truck']],
+    'the opening card carries Big Mo’s welcome and the line about the lent truck');
+  ok(log.captions[0] === 'event.carCrush.intro' && !log.captions.includes('night.1.open') &&
+    !log.captions.includes('lent.truck') && log.captions.at(-1) === 'night.won',
+    'the first event starts with its own line, and Big Mo closes the show');
   ok(['carCrush', 'freestyle', 'sideBySide'].every(type => log.captions.includes(`event.${type}.intro`) &&
     log.captions.includes(`event.won.${type}`)), 'Big Mo introduces and ends every event');
   ok(log.hud && log.hud.name === 'Freestyle' && log.hud.timeLeft > 0 && log.hud.timeLeft < 90 &&

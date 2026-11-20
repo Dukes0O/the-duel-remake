@@ -223,15 +223,17 @@ function say(duel, id, {once = false} = {}) {
   if (REMARK.test(id)) {
     if (night.caption || night.captionQueue.length) return;
   } else {
-    night.captionQueue = night.captionQueue.filter(waiting => !REMARK.test(waiting));
+    night.captionQueue = night.captionQueue.filter(waiting => !REMARK.test(waiting.id));
     if (night.caption && REMARK.test(night.caption.id)) night.caption = null;
   }
   if (once) night.said.push(id);
-  night.captionQueue.push(id);
+  night.captionQueue.push({id, queuedAt: night.clock});
   if (!night.caption) nextCaption(duel);
 }
 function nextCaption(duel) {
-  const night = duel.state.bowlNight, id = night.captionQueue.shift();
+  const night = duel.state.bowlNight;
+  while (night.captionQueue[0] && night.clock - night.captionQueue[0].queuedAt >= 6) night.captionQueue.shift();
+  const id = night.captionQueue.shift()?.id;
   night.caption = id ? {id, text: BIG_MO[id], until: night.clock + BOWL_NIGHT_RULES.captionSec} : null;
   if (id) duel.emit({bowlCaption: {id, text: BIG_MO[id], cue: 'bowl.mo'}});
 }
@@ -254,11 +256,9 @@ export function startBowlNight(duel, options = {}) {
     lent: truck.lent, start: {car: truck.car, upgrades: truck.upgrades, playerId: options.playerId ?? null,
       driverId: options.driverId, difficulty: options.difficulty, seed: options.seed},
     playerId: options.playerId ?? null, clock: 0, caption: null, captionQueue: [], said: [],
-    event: null, attempts: [], lastResult: null, result: null,
+    event: null, attempts: [], lastResult: null, resultAt: null, result: null, trickKinds: [],
     rivals: Array.isArray(options.rivals) ? options.rivals.filter(id => typeof id === 'string').slice(0, 3) : null,
   };
-  say(duel, turn ? 'turn.open' : `night.${number}.open`);
-  if (truck.lent) say(duel, 'lent.truck');
   loadBowlEvent(duel);
   return true;
 }
@@ -272,11 +272,13 @@ function loadBowlEvent(duel) {
   const s = duel.state;
   s.bowlNight = night;
   night.phase = 'event';
+  night.caption = null;
+  night.captionQueue.length = 0;
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
     crowdPeak: 0, crowdMark: 0,
     flight: null, rows: 0, metres: 0, progressS: duel.state.s, progressAt: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
-  say(duel, `event.${type}.intro`);
+  say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
 }
 
 // The next event after a result, or the same event again after a loss.
@@ -297,9 +299,16 @@ export function retryBowlEvent(duel) {
 }
 
 function addFact(duel, fact) {
-  const s = duel.state, event = duel.state.bowlNight.event, at = s.stageTimeSec;
+  const s = duel.state, night = s.bowlNight, event = night.event, at = s.stageTimeSec;
   const timed = {...fact, atSeconds: at};
-  const scored = scoreStuntEvent(timed, crowdAfter(event.crowd, at - event.crowdAt));
+  const crowd = crowdAfter(event.crowd, at - event.crowdAt);
+  const scored = scoreStuntEvent(timed, crowd);
+  if (fact.type === 'bowlTrick' && scored.points > 0) {
+    if (!night.trickKinds.includes(fact.kind)) night.trickKinds.push(fact.kind);
+    const earlier = event.trickPopups?.[0]?.at === night.clock ? event.trickPopups : [];
+    event.trickPopups = [...earlier, {kind: fact.kind, turns: fact.turns, fresh: fact.fresh, at: night.clock,
+      base: fact.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points: scored.points}];
+  }
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
@@ -361,6 +370,9 @@ function finishEvent(duel, outcome) {
     crowdPeak: +event.crowdPeak.toFixed(1), playerId: night.playerId};
   night.attempts.push(result);
   night.lastResult = result;
+  night.resultAt = night.clock;
+  night.caption = null;
+  night.captionQueue.length = 0;
   night.show = finishShowEvent(night.show, event.type, result.won).state;
   night.phase = night.turn ? 'turn' : night.show.complete ? 'complete' : 'result';
   s.status = 'bowl_break'; s.boosting = false;
@@ -376,8 +388,6 @@ function finishEvent(duel, outcome) {
       events: won.map(entry => ({event: entry.event, score: entry.score})), bests,
       purse: BOWL_PURSE[night.night - 1], lent: night.lent, playerId: night.playerId};
     duel.emit({bowlNightResult: night.result});
-    // BOWL-REX-FIGHT: on nights one to four Big Mo lets slip what waits for night five.
-    say(duel, `rex.seen.${night.night}`);
     say(duel, 'night.won');
   }
 }
@@ -408,7 +418,7 @@ export function bowlHudView(state, course) {
   const night = state?.bowlNight, event = night?.event;
   if (!night || !event) return null;
   const runner = RUNNERS.get(event.type);
-  const limit = runner?.timeLimitSec;
+  const limit = runner?.timeLimitSec ?? BOWL_NIGHT_RULES[event.type]?.timeLimitSec;
   return {night: night.night, event: event.type, name: BOWL_EVENT_NAMES[event.type] ?? event.type,
     goal: runner?.goal(night, course) ?? '', score: event.score, target: runner?.target(night, course) ?? null,
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),

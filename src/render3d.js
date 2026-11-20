@@ -96,7 +96,7 @@ function setCarShadows(mesh,on){
   mesh.userData.shadowsOn=on;
   mesh.traverse(object=>{if(object.isMesh){object.userData.castsShadow??=object.castShadow;object.castShadow=on&&object.userData.castsShadow;}});
 }
-export function projectVehicleMarkers(camera, vehicles) {
+export function projectVehicleMarkers(camera, vehicles, height = 2) {
   camera.updateWorldMatrix(true, false);
   const markers = [];
   for (let index = 0; index < vehicles.length; index++) {
@@ -107,7 +107,7 @@ export function projectVehicleMarkers(camera, vehicles) {
     }
     vehicle.updateWorldMatrix(true, false);
     vehicle.getWorldPosition(markerWorld);
-    markerWorld.y += 2;
+    markerWorld.y += height;
     markerView.copy(markerWorld).applyMatrix4(camera.matrixWorldInverse);
     markerWorld.project(camera);
     const x = (markerWorld.x + 1) * 0.5;
@@ -1454,6 +1454,12 @@ export function attachRenderer(host, app) {
     projectFootAim() {
       const state=app.duel.state;
       return !disposed&&state.onFoot&&state.status!=='menu'?projectOnFootAim(camera,state.fighter):null;
+    },
+    projectBowlTruck() {
+      const {state, course, featureFlags} = app.duel;
+      if (disposed || !state.bowlNight || !course?.def.bowl ||
+          (app._switches?.() ?? featureFlags)?.enabled('titan-bowl') !== true) return null;
+      return projectVehicleMarkers(camera, [player], (player.userData.size?.height ?? 2) + .35)[0];
     },
     projectOpponents() {
       if (disposed || app.duel.state.status === 'menu') return [];
