@@ -1,6 +1,6 @@
 import {digMachineIds} from './controls-view.js';
 import {createMachineHaul, operateMachineHaul, stepMachineHaul} from './haul.js';
-import {machineToolPosition} from './machine.js';
+import {machineToolPosition, stepMachine} from './machine.js';
 import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
@@ -19,12 +19,15 @@ import {createDrillRigState, stepDrillRig} from './drill.js';
 import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
 import {machineControlInput} from '../input-contexts.js';
 import {createYardPlant, fillYardRockHeap, isPlantMachine, stepYardPlant, tipTruckIntoHopper} from './plant-yard.js';
+import {machineFootprint, machineMoveContact, stoppedControls} from './yard-solids.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
 export const DIG_REACH_M = 8.6;
 const YARD = Object.freeze({excavator:{x:0,z:18}, dumpTruck:{x:DIG_REACH_M,z:18.7}, trencher:{x:24,z:10}});
 export const DIG_HEAP = Object.freeze({x:-DIG_REACH_M,z:18});
+// An old dozer stands by the Dome for good. It is drawn by the yard view and is as solid as the working machines.
+export const PARKED_DOZER = Object.freeze({x:-24,z:12,heading:0.5});
 const RESERVATIONS = Object.freeze([
   {x:0,z:120,radius:78,sentence:'The Dome is built here. Dig around it.'},
   {x:-90,z:120,radius:62,sentence:'The Dome is built here. Dig around it.'},
@@ -433,6 +436,32 @@ function advanceDigBore(sim, input) {
   return {sim:next, events:result.events};
 }
 
+const MACHINE_NAMES = Object.freeze({excavator:'excavator', dumpTruck:'dump truck', trencher:'trencher', drill:'drill rig',
+  dozer:'dozer', roller:'road roller', paver:'paver', loader:'loader', mixer:'mixer truck', parked:'old dozer'});
+
+/** Every machine standing in the yard except the one being driven, as solid footprints. Mabel works in her own bore. */
+export function yardSolids(sim, exceptId = sim.activeMachine) {
+  const solids = [{...machineFootprint('dozer', PARKED_DOZER), id:'parked'}];
+  for (const id of digMachineIds(sim.town)) {
+    if (id === exceptId || id === 'borer' || (isPlantMachine(id) && !sim.plant)) continue;
+    solids.push(machineFootprint(id, digSandboxMachineState(sim, id)));
+  }
+  return solids;
+}
+
+/**
+ * Try the driven machine's move before any work is done with it. A move into another machine is not made: the
+ * machine stands still for this step with its work controls kept, and the first stop at speed is announced once.
+ */
+function holdAgainstSolids(sim, id, machine, controls, definition = machineDefinition(id)) {
+  const after = stepMachine(definition, machine, controls, STEP);
+  const solid = machineMoveContact(id, machine, after, yardSolids(sim, id));
+  if (!solid) return {machine, controls, events:[]};
+  const events = Math.abs(machine.speedMps) > 0.05 ? [{type:'machine-contact', cue:'machine-contact', machine:id, with:solid.id,
+    message:`The ${MACHINE_NAMES[id]} has stopped against the ${MACHINE_NAMES[solid.id]}.`}] : [];
+  return {machine:{...machine, speedMps:0}, controls:stoppedControls(controls), events};
+}
+
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const boreWasActive = sim.boreOrders.some(order => order.status !== 'finished');
@@ -535,20 +564,33 @@ function fixedStep(sim,input) {
     }
     } catch (error) { next=stopBorer(error); }
   } else if(sim.roadMachines[sim.activeMachine]){
-    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
+    const road=sim.roadMachines[sim.activeMachine];
+    const held=holdAgainstSolids(sim,sim.activeMachine,road.machine,input.controls ?? {});
+    events.push(...held.events);
+    const result=stepRoadMachine({...road,machine:held.machine},sim.roadWork,held.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
     events.push(...result.events);
   } else if(isPlantMachine(sim.activeMachine)){
     // The plant step below moves the loader and the mixer truck.
   } else if(sim.activeMachine==='drill'){
-    const result=stepDrillRig(sim.drill,input.controls,STEP);
+    const controls=input.controls ?? {};
+    const held=holdAgainstSolids(sim,'drill',sim.drill.machine,controls.mastDown===true ? {forward:0,steer:0} : controls);
+    events.push(...held.events);
+    const result=stepDrillRig({...sim.drill,machine:held.machine},held.machine===sim.drill.machine ? controls : {...controls,forward:0,steer:0},STEP);
     next={...next,drill:result.state}; events.push(...result.events);
   } else if(sim.activeMachine==='trencher'){
-    const result=stepTrencher(sim.trencher,{...input.controls,chainDown:input.action==='trench'},STEP,sim.ground);
+    const trencher=sim.trencher,definition=machineDefinition('trencher');
+    const held=holdAgainstSolids(sim,'trencher',trencher.machine,input.controls ?? {},
+      trencher.speedFactor===1 ? definition : {...definition,maxSpeedMps:definition.maxSpeedMps*trencher.speedFactor});
+    events.push(...held.events);
+    const result=stepTrencher({...trencher,machine:held.machine},{...held.controls,chainDown:input.action==='trench'},STEP,sim.ground);
     next={...next,trencher:result.state}; events.push(...result.events);
   } else {
-    const haul={...sim.haul,activeMachine:sim.activeMachine};
-    let advanced=stepMachineHaul(haul,input.controls,STEP);
+    let haul={...sim.haul,activeMachine:sim.activeMachine};
+    const held=holdAgainstSolids(sim,sim.activeMachine,haul.machines[sim.activeMachine],input.controls ?? {});
+    events.push(...held.events);
+    haul={...haul,machines:{...haul.machines,[sim.activeMachine]:held.machine}};
+    let advanced=stepMachineHaul(haul,held.controls,STEP);
     // The bed lifts while Space is held and settles back after; the load slides once it is high enough.
     const truck=advanced.machines.dumpTruck,tipping=input.action==='tip';
     const bedAngle=Math.max(0,Math.min(.85,(truck.bedAngle??0)+(tipping?.6:-.5)*STEP));
@@ -600,9 +642,24 @@ function fixedStep(sim,input) {
   }
   if(sim.activeMachine==='borer' && sim.mode==='drive' &&
       (next.borer.x!==sim.borer.x || next.borer.z!==sim.borer.z)) next.daylightMessage='';
+  const contact=events.find(event=>event.type==='machine-contact');
+  if(contact)next={...next,lastMessage:contact.message};
   if(events.some(event=>event.type==='cut-refused'))next={...next,lastMessage:events.find(event=>event.type==='cut-refused').reason};
   if(events.some(event=>event.type==='dirt-plume'||event.type==='tip'||event.type==='spill'))next={...next,dirty:true};
   return {...next,events};
+}
+
+/** The loader and the mixer truck move inside the plant's own step, so their move is tried here first. */
+function holdPlantMachine(sim,input) {
+  const id=sim.activeMachine;
+  if(!isPlantMachine(id))return {sim,input,events:[],message:''};
+  const controls=input.controls ?? {},machine=sim.plant[id].machine;
+  const drive=id==='mixer'&&sim.mode==='work' ? {forward:0,steer:0} : {forward:controls.forward ?? 0,steer:controls.steer ?? 0};
+  const held=holdAgainstSolids(sim,id,machine,drive);
+  if(held.machine===machine)return {sim,input,events:[],message:''};
+  const plant={...sim.plant,[id]:{...sim.plant[id],machine:held.machine}};
+  return {sim:{...sim,plant},input:{...input,controls:{...controls,forward:0,steer:0}},events:held.events,
+    message:held.events[0]?.message ?? ''};
 }
 
 export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
@@ -612,7 +669,11 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
     const previousMessage=next.lastMessage;
     next=fixedStep({...next,lastMessage:''},input);
     // The plant runs every step, whichever machine is in use.
-    if(next.plant){const works=stepYardPlant(next,input,STEP);next={...next,plant:works.plant,lastMessage:works.message||next.lastMessage,events:[...next.events,...works.events]};}
+    if(next.plant){
+      const held=holdPlantMachine(next,input);
+      const works=stepYardPlant(held.sim,held.input,STEP);
+      next={...next,plant:works.plant,lastMessage:held.message||works.message||next.lastMessage,events:[...next.events,...held.events,...works.events]};
+    }
     if(next.lastMessage) next.events.push({type:'machine-message',message:next.lastMessage});
     else next.lastMessage=previousMessage;
     carry-=STEP;
