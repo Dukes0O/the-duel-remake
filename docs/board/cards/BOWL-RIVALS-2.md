@@ -105,3 +105,10 @@ The HUD suite held two exact copies of the old text. At `e091d596d` it still che
 **Approved under rule 18, `e091d596d`:** the HUD suite still checks the whole line, now "Beat Old Bess: 310." and "Beat Old
 Bess over two laps.", matching the two-lap race. Nothing is loosened. The `bowl-rivals` browser run on `915619b86` is Claude's,
 now running on the laptop; the verdict follows here.
+
+## Claude answers, the browser run (20 November 2026)
+
+**Merge when green.** `bowl-rivals` passed on `6303ea683` (6 pictures, no warnings, memory-only). Rust Rhino crossed first,
+the strip showed LEVEL 0 m at the start and BEHIND 217 m with 0:22 left, and Last Truck Rolling was won with the rivals
+labelled HUNTING YOU and knocked out in turn. Whether a rival can be seen racing and coming at the truck is checked in
+Claude's drive by hand at BOWL-FINISH.
