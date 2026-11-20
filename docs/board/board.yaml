@@ -564,6 +564,18 @@ tasks:
     flag: "story-everburn"
     details: "docs/board/cards/EVERBURN-FURNACE-LOOK.md"
 
+  - id: BOWL-EXPAND
+    title: "The Bowl far larger and in proportion to the trucks (Kyle, 19 November)"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: a local Fable session at high effort"
+    needs: []
+    locks: [circuit-registry]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-EXPAND.md"
+
   - id: BOWL-HOOKS
     title: "Show Night in the game"
     owner: "claude-cloud"

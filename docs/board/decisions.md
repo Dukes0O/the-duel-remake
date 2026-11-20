@@ -64,6 +64,13 @@ engaging."
 
 Where each is built: card SCABLANDS-LAND, round 4.
 
+## Kyle, 19 November 2026: the Bowl must be far larger
+
+On the Bowl as rebuilt that day (a 140 m ring with 16.5 m between the wall faces): "it's absolutely tiny... this would
+even be too small for bmx riders. A larger bowl would allow much more diversity of play and options. The current bowl must
+be substantially expanded and be proportional to the bodacious and fun gameplay that we can introduce." Card BOWL-EXPAND,
+built by a Fable session at high effort.
+
 ## Kyle, 19 November 2026: three Blender art cards go ahead
 
 Asked whether to start the held Blender model cards on Fable overnight: "Yes, start them." The 11 November hold on new
