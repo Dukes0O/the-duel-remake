@@ -2744,7 +2744,35 @@ export class App {
   _arsenalOptions(){
     return {wastelandEnabled:this.wastelandUnlocked(),
       arsenalEnabled:this._switches().enabled('arsenal')===true,
-      arsenalWave3Enabled:this._switches().enabled('arsenal-wave3')===true};
+      arsenalWave3Enabled:this._switches().enabled('arsenal-wave3')===true,...this._townGearOptions()};
+  }
+  // WEAPON-WATER-CANNON: town gear in the Armory needs the player's own town to have finished its building (the water cannon,
+  // a Fire Station). The town lives in its own store, so the first ask reads it once (memory only in QA) and the town screen
+  // tells the app again each time it loads or saves the town (noteOwnTown). Held in memory only; nothing is saved.
+  _townGearOptions(){
+    const waterCannonEnabled=this._switches().enabled('water-cannon')===true,playerId=this.player?.id;
+    const known=this._townGear?.playerId===playerId?this._townGear:null;
+    if(waterCannonEnabled&&!known&&playerId)this._readTownGear(playerId);
+    return {waterCannonEnabled,townBuildings:known?.buildings??[]};
+  }
+  noteOwnTown(town){
+    if(!this.player?.id||!town?.mayors?.includes(this.player.id))return;
+    void import('./town/town-gear.js').then(({finishedTownBuildings})=>{
+      const buildings=finishedTownBuildings(town),before=this._townGear?.playerId===this.player?.id?this._townGear.buildings:[];
+      this._townGear={playerId:this.player.id,buildings};
+      if(buildings.join()!==before.join())this.duel.emit({garage:true});
+    });
+  }
+  _readTownGear(playerId){
+    if(this._townGearReading===playerId)return;
+    this._townGearReading=playerId;
+    const qa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__===true;
+    void import('./town/town-gear.js').then(({readOwnTownBuildings})=>readOwnTownBuildings({playerId,memoryOnly:qa})).then(buildings=>{
+      this._townGearReading=null;
+      if(this.player?.id!==playerId||this._townGear?.playerId===playerId)return;
+      this._townGear={playerId,buildings};
+      if(buildings.length)this.duel.emit({garage:true});
+    });
   }
   purchaseArsenalWeapon(id){
     if(!this._wastelandShopAccess())return {ok:false,reason:'Return to the Armory to buy weapons.'};

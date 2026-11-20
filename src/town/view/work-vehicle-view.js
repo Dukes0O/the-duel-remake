@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {workVehicleDefinition} from '../work-vehicles.js';
+import {createWaterStreamView} from '../../arsenal/water-stream-view.js';
 
 const MODEL_FOLDER = '/assets/models/wasteland/town/';
 // Wheel centres stand 0.52 to 0.57 m up on the models, which is their radius.
@@ -42,6 +43,9 @@ export function douseJetToDraw(state) {
   const building = (step.buildings ?? []).find(row => row.id === job.stepState.targetId);
   return building ? {x:building.x, z:building.z, halfX:building.halfX, halfZ:building.halfZ} : null;
 }
+
+// WEAPON-WATER-CANNON: where the fire truck's stream lands on a car ({x, z}), when it is on one (src/arena/modes/world-job.js).
+export const truckStreamToDraw = state => state?.arena?.mode === 'world-job' && state.arena.worldJob?.truckStream?.to || null;
 
 export function workVehicleToDraw(state, flags) {
   if (flags?.enabled?.('wasteland-town') !== true || state?.arena?.mode !== 'world-job') return null;
@@ -156,39 +160,26 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     }
   }
 
-  // The jet: drops of water along a curve from the cannon to the nearest side of the flames, moving out along it.
-  const JET_DROPS = 36, CANNON = new THREE.Vector3(0, 3.1, 2.2);
-  let jet = null;
-  const dropAt = new THREE.Object3D(), from = new THREE.Vector3(), to = new THREE.Vector3();
-  function drawJet(scene, player, target, clock) {
-    if (!target) { if (jet) jet.visible = false; return; }
-    if (!jet) {
-      jet = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 6, 4),
-        new THREE.MeshBasicMaterial({color:0xd8ecff, transparent:true, opacity:.55, depthWrite:false}), JET_DROPS);
-      jet.name = 'fire-truck-jet'; jet.layers.set(WORK_VEHICLE_LAYER); jet.frustumCulled = false;
-    }
-    if (!jet.parent) scene.add(jet);
-    jet.visible = true;
+  // The jet: drops of water along a curve from the cannon to the nearest side of the flames, moving out along it. The look is
+  // the one every water cannon shares (src/arsenal/water-stream-view.js, WEAPON-WATER-CANNON). With no flames in front, the
+  // stream may be on a car (truckStreamToDraw): then it lands on that car.
+  const CANNON = new THREE.Vector3(0, 3.1, 2.2);
+  const jet = createWaterStreamView({name:'fire-truck-jet', layer:WORK_VEHICLE_LAYER});
+  const from = new THREE.Vector3(), to = new THREE.Vector3();
+  function drawJet(scene, player, target, onCar, clock) {
+    if (!target && !onCar) { jet.hide(); return; }
     from.copy(CANNON).applyQuaternion(player.quaternion).add(player.position);
-    to.set(Math.max(target.x - target.halfX, Math.min(target.x + target.halfX, from.x)), player.position.y + 2,
+    if (target) to.set(Math.max(target.x - target.halfX, Math.min(target.x + target.halfX, from.x)), player.position.y + 2,
       Math.max(target.z - target.halfZ, Math.min(target.z + target.halfZ, from.z)));
-    const length = from.distanceTo(to), rise = Math.min(6, length * .18);
-    for (let index = 0; index < JET_DROPS; index++) {
-      const share = ((index / JET_DROPS) + clock * 1.6) % 1;
-      dropAt.position.lerpVectors(from, to, share);
-      dropAt.position.y += rise * 4 * share * (1 - share);
-      dropAt.scale.setScalar(.6 + share * 1.6);
-      dropAt.updateMatrix();
-      jet.setMatrixAt(index, dropAt.matrix);
-    }
-    jet.instanceMatrix.needsUpdate = true;
+    else to.set(onCar.x, player.position.y + 1, onCar.z);
+    jet.draw(scene, from, to, clock);
   }
 
   function remove() {
     shown?.group.removeFromParent();
     shown = null;
     clearFallen();
-    jet?.removeFromParent();
+    jet.remove();
   }
 
   const turn = new THREE.Quaternion();
@@ -222,7 +213,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     if (shown.load) shown.load.visible = vehicle.loadKg > 0 && !pieces;
     drawStack(pieces);
     drawFallen(scene, pieces, player.position.y);
-    drawJet(scene, player, douseJetToDraw(state), Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0);
+    drawJet(scene, player, douseJetToDraw(state), truckStreamToDraw(state), Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0);
     // Wheels: the front ones turn with the steering, all of them roll with the distance driven.
     const clock = Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0;
     const seconds = shown.clock === null ? 0 : Math.max(0, Math.min(0.25, clock - shown.clock));

@@ -14,6 +14,8 @@ export const WEAPONS = Object.freeze({
   tesla: {name: 'TESLA COIL', cooldown: 18},
   decoy: {name: 'DECOY DRONE', cooldown: 16},
   nitro: {name: 'NITRO RAM', cooldown: 20},
+  // WEAPON-WATER-CANNON: town gear from the Fire Station, behind the water-cannon switch (src/arsenal/water-cannon.js).
+  water: {name: 'WATER CANNON', cooldown: 9},
 });
 export const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},

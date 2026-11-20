@@ -31,7 +31,8 @@ export function resetBlackiron(duel, actor) {
   actor.blackiron = {index: old?.index ?? 0, move: null, started: false,
     nextSec: Math.max(duel.state.stageTimeSec + cooldown(duel), old?.nextSec ?? 0),
     pairSecond: false};
-  actor.weaponLoadout = [...WEAPON_IDS, ...Object.keys(ARSENAL_WEAPONS)];
+  // Town gear (the water cannon) is the player's own, from the town; the Baron never carries it.
+  actor.weaponLoadout = [...WEAPON_IDS, ...Object.keys(ARSENAL_WEAPONS).filter(id => !ARSENAL_WEAPONS[id].town)];
   actor.combatRoofLook = 'chrome-crown';
   actor.maxArmor = BLACKIRON_RULES.armor; actor.armor = actor.maxArmor;
   actor.arenaTellSec = 0;
