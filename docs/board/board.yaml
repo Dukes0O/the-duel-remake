@@ -651,30 +651,33 @@ tasks:
 
   - id: WILD-ART-DESERT
     title: "Animals: desert and coast"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: a local Fable session from 22:00 (Kyle lifted the 11 November hold for this card)"
     needs: []
     locks: []
     details: "docs/board/cards/WILD-ART-DESERT.md"
 
   - id: WILD-ART-CITY
     title: "Animals: Asia and cities"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: a local Fable session from 22:00 (Kyle lifted the 11 November hold for this card)"
     needs: []
     locks: []
     details: "docs/board/cards/WILD-ART-CITY.md"
 
   - id: CAR-ART-BULLY
     title: "Art car: the Bully"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, since 19 November 2026: a local Fable session from 22:00 (Kyle lifted the 11 November hold for this card)"
     needs: []
     locks: []
     details: "docs/board/cards/CAR-ART-BULLY.md"
