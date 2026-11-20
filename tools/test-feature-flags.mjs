@@ -133,3 +133,7 @@ check(arsenalDev({qa:true, search:'?flags=arsenal'}).enabled('arsenal'), 'explic
 check(createFeatureFlags({storage:null, qa:false, search:''}).enabled('arsenal'), 'the released catalog has Arsenal on');
 
 console.log(`Feature switches: ${checks} state, QA, persistence and override checks passed.`);
+
+assert.equal(FEATURE_STATES['arena-tricks'], 'dev');
+assert.equal(createFeatureFlags({storage:null,qa:false,search:'?flags=arena-tricks'}).enabled('arena-tricks'), false);
+assert.equal(createFeatureFlags({storage:null,qa:true,overrides:{'arena-tricks':true}}).enabled('arena-tricks'), true);

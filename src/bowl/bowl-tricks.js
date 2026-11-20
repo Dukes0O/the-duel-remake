@@ -1,5 +1,5 @@
 import {readCode, secretOf} from './bowl-secrets.js';
-import {landingPoints, trickVariety} from './bowl-show.js';
+import {crowdAfter, landingPoints, scoreStuntEvent, trickVariety} from './bowl-show.js';
 
 const TURN = Math.PI * 2;
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -7,7 +7,30 @@ const states = new WeakMap();
 
 export function tricksEnabled(duel, actor) {
   return actor === duel.state && duel.course?.def.tricks === true &&
-    duel.featureFlags?.enabled('titan-bowl') === true && actor.bowlNight?.event?.type !== 'lastTruckRolling';
+    duel.featureFlags?.enabled(duel.course.def.bowl ? 'titan-bowl' : 'arena-tricks') === true && actor.bowlNight?.event?.type !== 'lastTruckRolling';
+}
+
+export function startArenaTrickShow(duel, foundTricks = []) {
+  const s = duel.state;
+  delete s.arenaTrickShow;
+  if (!duel.course?.def.tricks || duel.course.def.bowl || !tricksEnabled(duel, s)) return;
+  s.arenaTrickShow = {clock: 0, trickKinds: [], foundTricks: [...foundTricks],
+    event: {score: 0, crowd: 0, crowdAt: 0, trickPopups: []}};
+  return s.arenaTrickShow;
+}
+function arenaAward(actor, trick) {
+  const show = actor.arenaTrickShow;
+  if (!show || actor.bowlNight) return;
+  const event = show.event, now = actor.stageTimeSec ?? 0;
+  const crowd = crowdAfter(event.crowd, now-event.crowdAt);
+  if (trick.landing === 'slam' && difficulty(actor) === 'easy') return;
+  const scored = scoreStuntEvent({type:'bowlTrick', ...trick}, crowd);
+  event.crowd = scored.crowd; event.crowdAt = now; event.score += scored.points;
+  if (!scored.points) return;
+  if (!show.trickKinds.includes(trick.kind)) show.trickKinds.push(trick.kind);
+  if (event.trickPopups[0]?.at !== now) event.trickPopups = [];
+  event.trickPopups.push({kind:trick.kind, turns:trick.turns, fresh:trick.fresh, at:now,
+    points:scored.points, base:trick.points * (trick.fresh ? 1.5 : trick.repeat), multiplier:1+crowd/100});
 }
 
 // A steering direction already down at the lip keeps its driving function.
@@ -26,18 +49,25 @@ function award(duel, state, kind, turns, points, combo = 1, landing = 'clean', f
   if (firstOnLanding && landing === 'clean') cues.push('bowl.trick.land');
   if (kind === 'wheelie' || kind === 'cyclone') cues.push('bowl.trick.' + kind);
   if (fresh) cues.push('bowl.trick.new');
-  duel.emit({bowlTrick: {kind, turns, points, combo, fresh, landing, repeat, cues}});
+  const trick = {kind, turns, points, combo, fresh, landing, repeat, cues};
+  arenaAward(duel.state, trick);
+  duel.emit({bowlTrick: trick});
 }
 
 export function genuineSecretFind(duel, event) {
   return !!event && states.get(duel.state)?.finding === event;
 }
 function findSecret(duel, state, kind) {
-  const owner = duel.state.bowlNight ?? duel.state;
+  const owner = duel.state.bowlNight ?? duel.state.arenaTrickShow;
+  if (!owner) return;
   owner.foundTricks ??= [];
   if (owner.foundTricks.includes(kind)) return;
   owner.foundTricks.push(kind);
   const event = {kind, cue: 'bowl.secret.found'};
+  if (owner === duel.state.arenaTrickShow) {
+    owner.event.crowd = 100; owner.event.crowdAt = owner.clock;
+    owner.event.trickPopups = [{notice:'SECRET TRICK FOUND', detail:secretOf(kind).name, at:owner.clock}];
+  }
   state.finding = event;
   try { duel.emit({bowlSecretFound: event}); } finally { state.finding = null; }
 }
@@ -104,6 +134,8 @@ function remainingAir(s) {
 function late(duel, flight, kind) {
   if (flight.late) return;
   flight.late = true;
+  const show = duel.state.arenaTrickShow;
+  if (show && !duel.state.bowlNight) show.event.trickPopups = [{notice:'NOT ENOUGH AIR', at:show.clock}];
   duel.emit?.({bowlTrickLate: {kind, cue: 'bowl.trick.late'}});
 }
 function begin(duel, flight, axis, request, airLeft) {
@@ -220,9 +252,14 @@ export function landBowlTricks(duel, actor) {
 }
 export function stepBowlTricks(duel, actor, dt) {
   if (!tricksEnabled(duel, actor) || !(dt > 0)) return;
+  if (!duel.course.def.bowl) {
+    const show = actor.arenaTrickShow ?? startArenaTrickShow(duel);
+    show.clock = actor.stageTimeSec ?? 0;
+  }
+  const event = actor.bowlNight?.event ?? actor.arenaTrickShow?.event;
   let state = states.get(actor);
-  if (!state || state.event !== actor.bowlNight?.event || actor.stageTimeSec < state.clock) {
-    state = {event: actor.bowlNight?.event, seen: new Set(), code: [], elapsed: 0, repeat: 1, recovery: 0, slide: 0};
+  if (!state || state.event !== event || actor.stageTimeSec < state.clock) {
+    state = {event, seen: new Set(), code: [], elapsed: 0, repeat: 1, recovery: 0, slide: 0};
     states.set(actor, state);
     actor.bowlPose = {pitch: 0, roll: 0, yaw: 0};
     actor.bowlLanding = null;

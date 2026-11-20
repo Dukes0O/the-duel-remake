@@ -7,7 +7,7 @@ import {bowlHudView, crushRowName} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {BOWL_RIVALS} from './bowl-rivals.js';
-import {secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
+import {arenaTrickStrip, secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -22,7 +22,9 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   const moLine = id => BIG_MO[id] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[id])}</p>` : '';
   const night = () => app.duel.state.bowlNight ?? null;
 
-  const eventIsRunning = state => !!state.bowlNight?.event && ['countdown', 'racing'].includes(state.status);
+  const arenaShow = state => app.duel.course?.def?.tricks && !app.duel.course.def.bowl &&
+    app.duel.featureFlags?.enabled('arena-tricks') ? state.arenaTrickShow : null;
+  const eventIsRunning = state => !!(state.bowlNight?.event || arenaShow(state)) && ['countdown', 'racing'].includes(state.status);
   function closeHelp() {
     const opened = help;
     help = null;
@@ -42,11 +44,12 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   }, {capture: true, signal: app._inputEvents?.signal});
 
   function trickCard(state) {
-    const landed = state.bowlNight.trickKinds;
+    const show = state.bowlNight ?? arenaShow(state);
+    const landed = show.trickKinds;
     return `<section class="bowl-panel bowl-trick-card" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
       <h2 id="bowl-title">Trick card</h2>
       <ul>${BOWL_TRICK_GUIDE.map(entry => `<li>${bowlTrickEntryMarkup(entry, landed.includes(entry.kind))}</li>`).join('')}</ul>
-      ${secretCardMarkup(state.bowlNight.foundTricks)}
+      ${secretCardMarkup(show.foundTricks)}
       <footer>${button(help.resume ? 'Keep driving' : 'Back to pause', 'show-night-tricks-close', '', true)}</footer>
     </section>`;
   }
@@ -138,7 +141,8 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       const watchingFinish = state.status === 'bowl_break' && !bowlResultReady(show);
       const course = app.duel.course;
       const view = !state.paused && (eventIsRunning(state) || watchingFinish) ? bowlHudView(state, course) : null;
-      renderHud(state, course, bowlStrip(state, view, id => BOWL_RIVALS[id]?.name));
+      const arenaHud = !state.paused && arenaShow(state) && eventIsRunning(state);
+      renderHud(state, course, arenaHud ? arenaTrickStrip(state) : bowlStrip(state, view, id => BOWL_RIVALS[id]?.name));
     },
     // A Show Night button. Returns true when it was one.
     handle(target) {

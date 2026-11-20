@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {COURSE} from '../src/config.js';
+import {makeRng} from '../src/rng.js';
 import {Duel} from '../src/game.js';
 import {stepBowlTricks} from '../src/bowl/bowl-tricks.js';
 
@@ -187,4 +188,122 @@ test('the real floor counts wheelies, stoppies and consecutive donuts', () => {
     }
     assert.deepEqual(events.map(e => [e.kind, e.points]), expected);
   }
+});
+
+test('the next roll uses the heading at its own start', () => {
+  const s = actor({airHeight:35, _verticalSpeed:9, cpuDifficulty:'hard'});
+  const starts = [];
+  const duel = {state:s, course:{def:{bowl:true,tricks:true}}, featureFlags:{enabled:()=>true},
+    emit:ev=>{if(ev.bowlTrickGo) starts.push(ev.bowlTrickGo.kind);}};
+  stepBowlTricks(duel,s,DT);
+  for (let i=0; i<160; i++) {
+    s.input = {throttle:0,brake:0,steer:[0,8,45].includes(i)?-1:0,boost:[8,45].includes(i)};
+    stepBowlTricks(duel,s,DT);
+  }
+  assert.deepEqual(starts,['spin','barrelRoll','barrelRoll']);
+});
+
+function seededFlight(id, level, seed, habit, wall = false) {
+  const {duel, events} = onFloor(50);
+  const s = duel.state, ramp = duel.course.features.ramps.find(r=>r.id===id), rng = makeRng(seed*7919);
+  s.bowlNight.cpuDifficulty = level;
+  const start = wall ? 46 : ramp.start-2;
+  const line = wall ? -14 : ramp.off;
+  const y = duel.course.groundAt(start,line).y;
+  Object.assign(s,{s:start,prevS:start,lateral:line,prevLateral:line,groundHeight:y,prevGroundHeight:y,
+    airborne:false,_jumpY:y,_verticalSpeed:0,boost:1,headingError:wall?.35:0,speedMph:wall?50:60});
+  let air = 0, outside = false;
+  const release = rng.range(0,.3), tap = rng.range(habit ? .1 : .2,habit ? .8 : .7), hold = rng.range(.05,1.5);
+  for (let i=0; i<850; i++) {
+    const t = air*DT;
+    const input = !s.airborne ? {throttle:1,boost:wall} : habit === 'carry' ? {throttle:1} :
+      habit ? {throttle:+(t>=tap)} : {throttle:+(t<release),brake:+(t>=tap && t<tap+hold)};
+    duel.setInput({...neutral,...input});
+    if(s.airborne) air++;
+    duel.step(DT);
+    outside ||= !!s.bowlOutside?.inStands || !!s.bowlOutside?.outside;
+    if(air && !s.airborne) break;
+  }
+  assert.ok(air>0);
+  duel.setInput(neutral); duel.step(DT); // Show Night observes the landing at the next fixed step.
+  return {events,landing:s.bowlLanding,score:s.bowlNight.event.score,outside};
+}
+test('seeded children can tap a backflip and hold the throttle again on real jumps', () => {
+  for(const ramp of ['jump-kicker','table','big-jump']) {
+    const runs = Array.from({length:10}, (_,i)=>seededFlight(ramp,'easy',i+1,false));
+    const clean = runs.filter(r=>r.events.some(e=>e.kind==='backflip' && e.landing==='clean')).length;
+    console.log(ramp + ': ' + clean + '/10 clean child backflips');
+    if(ramp!=='jump-kicker') assert.ok(clean>=8);
+    assert.ok(runs.every(r=>r.landing!=='slam'));
+  }
+  for(const level of ['easy','medium']) for(const wall of [false,true]) {
+    const runs = Array.from({length:10},(_,i)=>seededFlight('big-jump',level,i+1,true,wall));
+    assert.ok(runs.every(r=>r.landing==='clean' && r.events.every(e=>e.kind==='frontFlip')));
+    const carried = seededFlight('big-jump',level,7,'carry',wall);
+    assert.ok(carried.score>0 && carried.events.length===0);
+  }
+});
+test('the landing window and Easy recovery depend on the requested turn, not the current angle alone', () => {
+  const trial = (level,ticks,second=false) => {
+    const s=actor({airHeight:30,_verticalSpeed:6,cpuDifficulty:level});
+    const events=[];
+    const duel={state:s,course:{def:{bowl:true,tricks:true}},featureFlags:{enabled:()=>true},
+      emit:ev=>{if(ev.bowlTrick)events.push(ev.bowlTrick);}};
+    stepBowlTricks(duel,s,DT);
+    for(let t=0;t<ticks;t++) { s.input={brake:+(t===0 || second && t===98)};stepBowlTricks(duel,s,DT); }
+    s.airborne=false;stepBowlTricks(duel,s,DT);
+    return {s,events,duel};
+  };
+  assert.equal(trial('easy',82).s.bowlLanding,'clean');
+  assert.equal(trial('hard',82).s.bowlLanding,'slam');
+  const easy=trial('easy',112,true);
+  assert.ok(easy.events.some(e=>e.kind==='backflip' && e.points===50));
+  assert.equal(easy.s.bowlLanding,'slam');
+  for(let i=0;i<121;i++)stepBowlTricks(easy.duel,easy.s,DT);
+  assert.equal(Math.abs(easy.s.bowlPose.pitch),0);
+});
+
+function arenaRace(car, enabled) {
+  const duel = new Duel({seed:1989});
+  duel.featureFlags = {enabled:name=>enabled && name==='arena-tricks'};
+  duel.startCampaign({car,startStage:COURSE.findIndex(c=>c.id==='titan-arena'),cpuDifficulty:'easy',mode:'duel',playerId:'arena-driver'});
+  const s=duel.state;s.status='racing';
+  const events=[];duel.onChange((_,ev)=>{if(ev.bowlTrick)events.push(ev.bowlTrick);});
+  return {duel,s,events};
+}
+function arenaJump(car,keys,enabled=true) {
+  const {duel,s,events}=arenaRace(car,enabled), ramp=duel.course.features.ramps[0];
+  const start=ramp.start-3, y=duel.course.groundAt(start,0).y;
+  Object.assign(s,{s:start,prevS:start,lateral:0,prevLateral:0,groundHeight:y,prevGroundHeight:y,headingError:0,
+    _jumpY:y,_verticalSpeed:0,airborne:false,speedMph:Math.min(110,duel.car.topSpeed*.92),gear:duel.car.gears.length-1});
+  let air=0;
+  const trace=[];
+  for(let i=0;i<850;i++){
+    const pressed=s.airborne && ++air===2;
+    duel.setInput({...neutral,...(pressed ? keys : {})});duel.step(DT);
+    trace.push([s.s,s.lateral,s.airHeight,s.speedMph]);
+    if(air&&!s.airborne)break;
+  }
+  assert.ok(air>0,car+' takes the authored Arena ramp');
+  return {duel,s,trace,events};
+}
+test('the normal Monster Arena race accepts road, rally and monster vehicles and keeps trick score separate',()=>{
+  for(const car of ['falcone_f42','dusthawk_rally','titan_monster']){
+    for(const [keys,expected,points] of [[{brake:1},'backflip',50],[{steer:1},'spin',30]]){
+      const run=arenaJump(car,keys),clean=arenaJump(car,{});
+      assert.ok(run.events.some(e=>e.kind===expected && e.points===points),car+' '+expected);
+      assert.deepEqual(run.trace,clean.trace,'trick leaves actual race position and time unchanged');
+      assert.equal(run.s.score,clean.s.score);
+      assert.ok(run.s.arenaTrickShow.event.score>0);
+      assert.deepEqual([run.s.position,run.s.stageTimeSec],[clean.s.position,clean.s.stageTimeSec]);
+    }
+    for(const [steer,kind,points] of [[0,'wheelie',8],[1,'donut',15]]){
+      const {duel,s,events}=arenaRace(car,true);
+      Object.assign(s,{s:80,prevS:80,lateral:0,prevLateral:0,speedMph:0,headingError:0});
+      for(let i=0;i<290;i++){duel.setInput({...neutral,throttle:1,steer,boost:true});duel.step(DT);}
+      assert.ok(events.some(e=>e.kind===kind && e.points===points),car+' '+kind);
+    }
+  }
+  const off=arenaJump('falcone_f42',{brake:1},false);
+  assert.ok(!off.s.arenaTrickShow && !off.s.bowlPose && !off.events.length);
 });

@@ -115,7 +115,7 @@ import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
 import {rexInTheYard} from './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: the beaten Scrapasaurus in the yard
 import {foundBowlTricks, recordBowlSecret} from './bowl/bowl-save.js';
-import {genuineSecretFind} from './bowl/bowl-tricks.js';
+import {genuineSecretFind, startArenaTrickShow} from './bowl/bowl-tricks.js';
 import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
 import {beginGo, createTurnShow, currentTurn, noteSettled, passKeyboard, recordGo, settleTurnGo, turnScoreboard,
   turnShowNights} from './bowl/bowl-turns.js'; // BOWL-TURNS
@@ -270,11 +270,11 @@ export class App {
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
       const secret = event.bowlSecretFound;
       if (secret && state === this.duel.state && state.playerId === this.player?.id && genuineSecretFind(this.duel, secret)) {
-        this._refreshPlayer();
-        if (state.playerId === this.player.id) {
-          const found = recordBowlSecret(this.profile, secret.kind);
-          if (found.changed) { this.profile = found.profile; this._saveProfile(); }
-        }
+        this._pendingSecrets ??= new Map();
+        const ids = this._pendingSecrets.get(state.playerId) ?? new Set();
+        ids.add(secret.kind);
+        this._pendingSecrets.set(state.playerId, ids);
+        state.bowlSecretSavePending = !this._flushBowlSecrets(state.playerId);
         this._showNightCue('bowl.secret.cheer');
       }
       for (const message of [secret, event.bowlSecretStart, event.bowlSecretArmed, event.bowlTrickLate, event.bowlSecretHint])
@@ -990,6 +990,8 @@ export class App {
       deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),deepSave:this.profile.deep??null,
       tune:this._labTuneOf(car), // LAB-TUNE
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    startArenaTrickShow(this.duel, this.duel.course.def.tricks && !this.duel.course.def.bowl &&
+      this.duel.featureFlags.enabled('arena-tricks') ? this._bowlFoundForDriver() : []);
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
     this._storyRace=storyRun?{runId:this.runId,level:storyRun.level}:null;
@@ -1263,6 +1265,38 @@ export class App {
       if(saved.saved){this._saveGhostStore();result.ghostRecorded=true;}
     }
     this.ghostRecorder=null;this.ghostPose=null;this.ghostStatus='none';
+  }
+  _bowlFoundForDriver() {
+    const id = this.player.id;
+    this._flushBowlSecrets(id);
+    return [...new Set([...foundBowlTricks(this.profile), ...(this._pendingSecrets?.get(id) ?? [])])];
+  }
+  _flushBowlSecrets(id) {
+    const pending = this._pendingSecrets?.get(id);
+    if (!pending?.size) return true;
+    const durable = readWarlordRegistry();
+    if (durable.status !== 'ready' || durable.registry.activePlayerId !== id || this.player.id !== id) return false;
+    const owner = durable.registry.players.find(player => player.id === id);
+    if (!owner) return false;
+    let updated = owner.profile;
+    for (const kind of pending) {
+      const edit = recordBowlSecret(updated, kind);
+      if (!edit.ok) return false;
+      updated = edit.profile;
+    }
+    const next = replacePlayerProfile(durable.registry, id, updated);
+    if (updated !== owner.profile && !savePlayers(next)) return false;
+    if (this.profileSaved === false) {
+      // A different unsaved edit remains in memory. Absorb only the discoveries.
+      for (const kind of foundBowlTricks(updated)) this.profile = recordBowlSecret(this.profile, kind).profile;
+    } else {
+      this.players = next;
+      this.player = activePlayer(next);
+      this.profile = this.player.profile;
+      this._rememberWarlordOwner();
+    }
+    this._pendingSecrets.delete(id);
+    return true;
   }
   _saveProfile(){
     // Preserve other local players if another tab added or updated one.
@@ -2538,7 +2572,7 @@ export class App {
     this._racePaintCar=SHOW_TRUCK;this._raceRoof=getRoadRoofLook(this.profile,SHOW_TRUCK,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock();this.audio.setPaused(false);
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
-    const started=this.duel.startBowlNight({night,owned,foundTricks:foundBowlTricks(this.profile),upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
+    const started=this.duel.startBowlNight({night,owned,foundTricks:this._bowlFoundForDriver(),upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
       playerId:this.player.id,driverId:getEquippedDriverId(this.profile),difficulty:this._raceSettings.difficulty,
       cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989,
       eventIndex,turn});

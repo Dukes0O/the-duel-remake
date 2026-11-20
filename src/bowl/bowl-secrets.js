@@ -29,7 +29,7 @@ export function readCode(buffer, key, time, ground) {
 }
 export function secretHint(seed, known) {
   const choices = SECRETS.filter(t => t.code.length && !known.includes(t.id));
-  if (!choices.length) return '';
+  if (!choices.length) return known.includes('yoYo') ? '' : 'Front flip then ?';
   const rng = makeRng(seed ?? 1989);
   const trick = choices[Math.floor(rng.float() * choices.length)];
   const hide = Math.floor(rng.float() * trick.code.length);

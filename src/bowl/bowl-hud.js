@@ -1,4 +1,5 @@
 // Read-only presentation for the Bowl. These views can also be checked without a DOM.
+import {crowdAfter} from './bowl-show.js';
 import {SECRETS, secretOf} from './bowl-secrets.js';
 import {BOWL_FLOOR} from './bowl-course.js';
 import {BIG_MO} from './bowl-lines.js';
@@ -66,6 +67,12 @@ function sideBySideGap(state, event) {
   return `${metres > 0 ? 'AHEAD' : metres < 0 ? 'BEHIND' : 'LEVEL'} ${whole(Math.abs(metres))} m`;
 }
 
+export function arenaTrickStrip(state) {
+  const show = state.arenaTrickShow;
+  if (!show) return null;
+  const event = show.event, crowd = Math.round(crowdAfter(event.crowd, show.clock-event.crowdAt));
+  return {name:'Tricks', points:whole(event.score)+' points', crowd, crowdLabel:'CROWD x'+(1+crowd/100).toFixed(1)};
+}
 export function bowlStrip(state, view, rivalName = () => null) {
   if (!view) return null;
   const night = state.bowlNight, event = night?.event;
@@ -143,6 +150,23 @@ export function bowlHealthOf(state) {
   return rex ? bowlHealth(state, {value: Math.max(0, rex.maxHits - rex.hits), max: rex.maxHits}) : bowlHealth(state);
 }
 
+// Three views of the same truck, projected from the actual trick pose.
+function secretPicture(trick) {
+  const samples = [.11, .39, .72].map((time,index) => {
+    const {pitch,yaw,roll} = trick.pose(time);
+    const point = ([x,y,z]) => {
+      const xr = x*Math.cos(roll)-y*Math.sin(roll), yr = x*Math.sin(roll)+y*Math.cos(roll);
+      const yp = yr*Math.cos(pitch)-z*Math.sin(pitch), zp = yr*Math.sin(pitch)+z*Math.cos(pitch);
+      const xw = xr*Math.cos(yaw)+zp*Math.sin(yaw), zw = zp*Math.cos(yaw)-xr*Math.sin(yaw);
+      return [(16+33*index+zw+.32*xw).toFixed(1), (19-yp+.22*xw).toFixed(1)];
+    };
+    const body = [[-3,0,-10],[-3,4,-10],[-3,4,-5],[-3,7,-3],[-3,7,3],[-3,4,6],[-3,3,10],[-3,0,10]];
+    const wheels = [-6,6].map(z => { const [x,y] = point([-3,-1,z]);
+      return '<circle cx="'+x+'" cy="'+y+'" r="2.7" fill="#232024" stroke="#ffd596"/>'; }).join('');
+    return '<polygon points="'+body.map(p=>point(p).join(',')).join(' ')+'" fill="#e29b4c"/>'+wheels;
+  }).join('');
+  return '<svg class="bowl-trick-picture" viewBox="0 0 98 35" role="img" aria-label="'+trick.name+' in three poses">'+samples+'</svg>';
+}
 export function secretCardMarkup(found = []) {
   const rows = SECRETS.map(trick => {
     if (!found.includes(trick.id)) return '<li aria-label="Undiscovered secret trick">? ? ?</li>';
@@ -154,7 +178,7 @@ export function secretCardMarkup(found = []) {
 }
 export function bowlTrickEntryMarkup(entry, done = false) {
   const keys = entry.keys.map(group => group.map(key => `<kbd>${key}</kbd>`).join(' ')).join(' then ');
-  return `<div class="bowl-trick-picture" data-trick="${entry.kind}" aria-hidden="true"><i></i></div>
+  return `${secretOf(entry.kind) ? secretPicture(secretOf(entry.kind)) : `<div class="bowl-trick-picture" data-trick="${entry.kind}" aria-hidden="true"><i></i></div>`}
     <div><b>${entry.name}</b><p>${keys}</p><small>${entry.points}</small></div>
     ${done ? '<span class="bowl-trick-tick" aria-label="Landed tonight">✓</span>' : ''}`;
 }
@@ -271,7 +295,7 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
   return (state, course, view) => {
     hide(host, !view);
     if (!view) return;
-    const night = state.bowlNight;
+    const night = state.bowlNight ?? state.arenaTrickShow;
     if (lastEvent !== night.event) {
       lastEvent = night.event;
       previousHealth = lastHit = lastPopups = null;
@@ -287,6 +311,8 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
 
     const tricks = lastEvent.trickPopups ?? [];
     const popups = tricks.map(trick => bowlTrickPopup(trick, night.clock)).filter(Boolean);
+    if (state.bowlSecretSavePending && popups.some(t => t.name === 'SECRET TRICK FOUND'))
+      popups.push({name: 'SAVED FOR THIS SESSION', points: 'Local save unavailable.'});
     const marker = popups.length ? projectPlayer() : null;
     hide(popup, !marker?.visible);
     if (!popup.hidden) {
