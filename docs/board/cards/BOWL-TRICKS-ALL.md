@@ -305,3 +305,7 @@ Save checker approved `16b1cb81b` using the real App and memory-only players. Af
 Faster flights use the same allowed turn time, so a kicker taken at 60 mph can give two turns and at the Titan's top speed
 three; that is a reward for speed, as it should be. The flight and landing thresholds stay as they are. The save checker's
 approval at `16b1cb81b` is noted.
+
+## Preview launcher
+
+The lane check `test-preview-launcher` failed with “preview URL must request arena-tricks”. The project preview launcher names each current dev switch explicitly. Please grant adding `arena-tricks` to `PREVIEW_FLAGS` in `start-preview.bat`. The release launcher stays on its current switches and the existing inventory check will run as written.
