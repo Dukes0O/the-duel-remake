@@ -878,6 +878,10 @@ SOUND_BANK['town.fire'] = cue('ambience', {flag: 'wasteland-town', files: ['heli
 SOUND_BANK['town.spray'] = cue('vehicle', {flag: 'wasteland-town', files: ['heli/bucket-pour.ogg'], volume: .6, priority: 55, limit: 1});
 SOUND_BANK['town.fire.out'] = cue('ambience', {flag: 'wasteland-town', files: ['heli/fire-hiss.ogg'], volume: .7, priority: 55, limit: 2});
 SOUND_BANK['town.fill'] = cue('vehicle', {flag: 'wasteland-town', files: ['heli/bucket-scoop.ogg'], volume: .6, priority: 50, limit: 1});
+// WEAPON-WATER-CANNON: the car's water cannon is the fire truck's stream, so it sounds the same: the stream opening is the same
+// pour as town.spray, and a fire it puts out is the same hiss as town.fire.out (src/arsenal/water-cannon.js).
+SOUND_BANK['weapon.water.spray'] = cue('weapons', {flag: 'water-cannon', files: ['heli/bucket-pour.ogg'], volume: .7, priority: 60, limit: 4});
+SOUND_BANK['weapon.water.douse'] = cue('weapons', {flag: 'water-cannon', files: ['heli/fire-hiss.ogg'], volume: .8, priority: 60, limit: 4});
 SOUND_BANK['arena.blackiron-barrage'] = cue('impacts', {
   flag: 'blackiron', priority: 70, limit: 1,
   layers: SOUND_BANK['arena.gunn-barrage'].layers,

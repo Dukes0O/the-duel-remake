@@ -31,7 +31,8 @@ import {throwRiderAsh, updateRoadFight} from '../src/arena/modes/road-riders.js'
 import {readySource, prepareSource, visitReadySource, visitSource, yardSource, loadedSource, fightSource, stateSource} from './scenarios/road-riders.mjs';
 
 const DT = 1 / 60;
-const FLAGS = {'hidden-road':true, 'road-riders':true, 'scablands-realism':true, arsenal:true, 'arsenal-wave3':true};
+// WEAPON-WATER-CANNON: the water cannon is a native weapon too, behind its own switch.
+const FLAGS = {'hidden-road':true, 'road-riders':true, 'scablands-realism':true, arsenal:true, 'arsenal-wave3':true, 'water-cannon':true};
 const nativeWeapons = [...WEAPON_IDS, ...Object.keys(ARSENAL_WEAPONS)];
 const distance = (a,b) => Math.hypot(a.x-b.x, a.z-b.z);
 const selected = process.argv[2];
@@ -511,6 +512,11 @@ function weaponParity() {
       assert.deepEqual(close,native,weapon+' in range');
       if(weapon==='tesla') assert.ok(close.disabled);
       if(weapon==='flamethrower') assert.ok(close.burn&&close.armor>0);
+    }
+    if (weapon==='water') {
+      const native=sampleWeapon(weapon,false,7), close=sampleWeapon(weapon,true,7);
+      assert.deepEqual(close,native,weapon+' in range');
+      assert.equal(close.armor,0,'the water cannon never damages a rider');
     }
     console.log(weapon+' arena parity, 30 m target armour loss '+rider.armor);
   }

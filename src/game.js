@@ -18,7 +18,7 @@ import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
 import {tunedCar, raceTune, tuneKey, fuelPlan} from './lab/lab-tune.js'; // LAB-TUNE
 import {normalizeCarLoadout} from './car-loadout.js';
 import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat,clearArsenalState,initializeArsenalCombat} from './combat.js';
-import {arsenalEnabled, arsenalWaveThreeEnabled} from './combat-weapons.js';
+import {arsenalEnabled, arsenalWaveThreeEnabled, waterCannonEnabled} from './combat-weapons.js';
 import {clearSmokeHistory} from './arsenal/smoke.js';
 import {implementedArsenalWeapons} from './weapon-upgrades.js';
 import {initializeCombatArmor} from './combat-armor.js';
@@ -271,7 +271,8 @@ export class Duel {
     this.state.weaponLoadout=this.state.mode==='wasteland'&&
       wastelandRulesActive(this.state)?
       normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,
-        ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS):null;
+        ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this),
+          waterCannonEnabled: waterCannonEnabled(this)})] : WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if((COURSE[this.state.stageIndex]?.id==='summit-run'||isSummitAttack(COURSE[this.state.stageIndex]))&&this.featureFlags.enabled('summit-run')&&this.featureFlags.enabled('yeti')&&validYetiSeed(yetiSeed))this.state.yetiSeed=yetiSeed;
     else delete this.state.yetiSeed;
@@ -595,7 +596,8 @@ export class Duel {
     else delete s.arsenalRank;
     s.weaponLoadout = normalizeCarLoadout(weaponLoadout,
       arsenalEnabled(this) ? [...WEAPON_IDS,
-        ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS);
+        ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this),
+          waterCannonEnabled: waterCannonEnabled(this)})] : WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
     if (armorKitBonus(s.combatArmorKit) > 0 && combatCarbonPlates === true) s.combatCarbonPlates = true;
     else delete s.combatCarbonPlates;

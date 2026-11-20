@@ -80,6 +80,9 @@ export const FEATURE_STATES = Object.freeze({
   'far-rain': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
+  // WEAPON-WATER-CANNON: the water cannon as a car weapon, offered in the Armory once your town has a Fire Station
+  // (docs/ARSENAL.md, src/arsenal/water-cannon.js). The fire truck's own cannon comes with wasteland-town. Off in the game.
+  'water-cannon': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.
   'titan-bowl': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).

@@ -49,7 +49,8 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
   const host=document.createElement('div');host.className='town-entry';host.innerHTML=`<style>${css}</style><div class="town-entry-interface"></div>`;document.body.append(host);
   let ui=host.querySelector('.town-entry-interface');const qa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__===true,store=createTownStore({memoryOnly:qa,memory:qa?QA_TOWN_MEMORY:undefined});let town=null,sceneView=null,renderer=null,input=null,canvas=null,markerLayer=null,markerNodes=new Map(),flight=null,selectedReportId=null,raf=0,closed=false,speed=1,selectedBuildTab='roads',accumulator=0,last=performance.now(),saveDay=null,message='',saveBusy=false,leavePromise=null,mapOverlay=null,mapDispose=null,mapOpen=false,ledgerOpen=false,mapShortfall=0,missionCard='auto',key=()=>{},keyUp=()=>{},resize=()=>{},blur=()=>{};const heldKeys=new Set();
   const dispose=(notify=true)=>{if(closed)return;closed=true;cancelAnimationFrame(raf);input?.dispose();document.removeEventListener('keydown',key,true);document.removeEventListener('keyup',keyUp,true);window.removeEventListener('resize',resize);window.removeEventListener('blur',blur);sceneView?.dispose();renderer?.dispose();renderer?.forceContextLoss?.();host.remove();if(notify)onExit();};
-  const save=async reason=>{if(saveBusy)return false;saveBusy=true;try{await saveTown(town,{store,reason});message='';saveBusy=false;return true;}catch(error){message=error?.message||'The town could not be saved.';saveBusy=false;paint();return false;}};
+  // WEAPON-WATER-CANNON: the Armory's town gear follows what this town has finished (src/town/town-gear.js); told on each save.
+  const save=async reason=>{if(saveBusy)return false;saveBusy=true;try{await saveTown(town,{store,reason});if(!visiting)app?.noteOwnTown?.(town);message='';saveBusy=false;return true;}catch(error){message=error?.message||'The town could not be saved.';saveBusy=false;paint();return false;}};
   // Scrap moved between two saves: say so if either did not take, and try the town again if a save was under way.
   const saveWalletChange=async()=>{
     const walletSaved=app?._saveProfile?.()!==false;
@@ -85,6 +86,7 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
     if(!tookOver)try{await saveTown(town,{store,reason:'first visit'});}catch(error){message=error?.message||'The town could not be saved.';}
   }
   host.__town=town;
+  if(!visiting)app?.noteOwnTown?.(town); // WEAPON-WATER-CANNON: and on opening the town
   canvas=document.createElement('canvas');canvas.setAttribute('aria-label','The town map');host.append(canvas);
   renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(host.clientWidth,host.clientHeight,false);renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   sceneView=createTownScene({town,width:host.clientWidth,height:host.clientHeight});const view=sceneView.camera.userData.townView;view.zoom=62/(TOWN_ZOOM.scablands-TOWN_ZOOM.street);view.target.set(0,view.target.y,0);sceneView.step(0);
