@@ -114,7 +114,8 @@ export function updateArenaTells(entries, seconds, shimmerSec) {
 // Floor markers an arena move announces (arena.markers): a red ring where a
 // warlord will land. Drawn only; the simulation owns the list.
 // 'magnet': the blue reach of a pulling magnet.
-const MARKER_COLORS = Object.freeze({danger: 0xff3b21, magnet: 0x2f9bff});
+// TOWN-HAUL-JOB: `warn` is amber, for a hazard ahead that the player may cross with care (the haul's washout).
+const MARKER_COLORS = Object.freeze({danger: 0xff3b21, magnet: 0x2f9bff, warn: 0xffa21f});
 export function updateArenaMarkers(group, markers, seconds) {
   if (!group) return;
   const list = Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'ring') : [];

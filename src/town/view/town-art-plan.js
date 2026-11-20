@@ -4,7 +4,8 @@
 // tiers, the book's dead, how many roads came after each road); the only chance is the street things' scatter, and
 // that comes from each road cell's own seeded stream (src/rng.js), seeded from the town's seed and the cell.
 import {makeRng} from '../../rng.js';
-import {SCABLANDS_PLACES} from '../../world/scablands.js';
+import {OUTPOSTS_WORLD} from '../content/outposts-world.js';
+import {placeOutpost} from '../town-outpost-world.js';
 import {TOWN_CELL_METRES} from '../town-world-data.js';
 import {TOWN_BUILDING_ART, TOWN_HOME_ART, TOWN_LINE_ART, TOWN_LINE_RUIN, TOWN_RUIN_ART, TOWN_SITE_ART, TOWN_SITE_MACHINES,
   TOWN_STREET_RULE, TOWN_STREET_THINGS, TOWN_UTILITY_ART, TOWN_WORLD_ART} from './town-art-table.js';
@@ -305,24 +306,16 @@ function streetPieces(town, index, list, seed) {
   });
 }
 
-function facing(fromX, fromZ, toX, toZ) { return Math.atan2(-(toX - fromX), -(toZ - fromZ)); }
-
 function worldPieces(town, index, list, groundAt) {
   for (const entry of TOWN_WORLD_ART.dome) {
     const [ax, az] = entry.authoredAt ?? [0, 0], c = Math.cos(entry.turn), s = Math.sin(entry.turn);
     const x = entry.x + ax * c + az * s, z = entry.z - ax * s + az * c;
     place(list, entry.family, entry.node, x, groundAt(entry.x, entry.z), z, {turn:entry.turn, kind:'world'});
   }
-  for (const entry of TOWN_WORLD_ART.outposts) {
-    const near = SCABLANDS_PLACES.find(item => item.id === entry.near);
-    if (!near) continue;
-    let x, z, turn;
-    if (entry.share) {
-      const length = Math.hypot(near.x, near.z) || 1, ux = near.x / length, uz = near.z / length;
-      const rx = near.x * entry.share, rz = near.z * entry.share;
-      x = rx + uz * entry.side; z = rz - ux * entry.side; turn = facing(x, z, rx, rz);
-    } else { x = near.x + entry.offset[0]; z = near.z + entry.offset[1]; turn = facing(x, z, near.x, near.z); }
-    place(list, entry.family, entry.node, x, groundAt(x, z), z, {turn, kind:'outpost', item:{neighbour:entry.neighbour}});
+  // The neighbours' outposts, placed as the drive places them, so the two views agree.
+  for (const row of OUTPOSTS_WORLD) {
+    const outpost = placeOutpost(row, {heightAt:groundAt});
+    place(list, 'outposts', row.node, outpost.x, outpost.base, outpost.z, {turn:outpost.heading, kind:'outpost', item:{neighbour:row.neighbourId}});
   }
   const vane = town?.vane;
   if (vane?.started) {

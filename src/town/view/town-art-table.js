@@ -150,14 +150,7 @@ export const TOWN_STREET_RULE = Object.freeze({
 export const TOWN_WORLD_ART = Object.freeze({
   dome:Object.freeze([Object.freeze({family:'dome', node:'dome-outer', x:0, z:-168.5, turn:Math.PI, size:[28, 20]}),
     Object.freeze({family:'dome', node:'dome-gate', x:0, z:-168.5, turn:Math.PI, size:[6, 3], authoredAt:[0, -92]})]),
-  // The neighbours' places (TOWN-ART-OUTPOSTS), each by its Scablands place, clear of the place's own art.
-  outposts:Object.freeze([
-    Object.freeze({family:'outposts', node:'dot-diner', near:'boneyard', share:.45, side:30, neighbour:'dot'}),
-    Object.freeze({family:'outposts', node:'plane-school', near:'boneyard', offset:[-140, -60], neighbour:'quill'}),
-    Object.freeze({family:'outposts', node:'hermit-camp', near:'ridge', offset:[-110, 40], neighbour:'tam'}),
-    Object.freeze({family:'outposts', node:'deck-town', near:'ships-in-sand', offset:[120, 40], neighbour:'imre'}),
-    Object.freeze({family:'outposts', node:'rail-halt', near:'iron-line', offset:[100, -60], neighbour:'pim'}),
-  ]),
+  // The neighbours' outposts stand where the drive puts them (src/town/content/outposts-world.js, TOWN-OUTPOST-SCENE).
   // Mrs Vane's yard, outside the ring road to the east, once she has come (town.vane.started). Her kiosks stand by
   // the streets the town says they are on.
   vaneYard:Object.freeze({x:700, z:140, pieces:Object.freeze([at('vane', 'vane-tower', 0, 0), at('vane', 'vane-depot', -36, -6),

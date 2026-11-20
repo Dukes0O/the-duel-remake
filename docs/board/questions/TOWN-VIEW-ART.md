@@ -15,9 +15,9 @@ The card carries on with each pick below. None touches saves, a released course 
    gate box. The yard model (scrapdome/yard.glb) still stands inside it. One export fault is worked round: the gate's sand banks sit
    90 m out on its road (tools/blender/town-dome.py makes them after the gate's children are moved), so parts over 60 m from the gate
    are left out (`TOWN_ART_KEEP_WITHIN`). Recommend a dome art round to fix the recipe.
-4. **Places outside the grid.** Dot's diner 45% of the way along the Boneyard road, 30 m off it; the school airliner in the
-   Boneyard; Old Tam's camp on the Ridge; Deck Town at the Ships in the Sand; the Rail Halt on the Iron Line; Mrs Vane's yard 700 m
-   east once she has come, and her kiosks on open ground beside their streets. All are rows in `TOWN_WORLD_ART`.
+4. **Places outside the grid.** The neighbours' outposts stand where the drive places them (`OUTPOSTS_WORLD` and `placeOutpost`,
+   TOWN-OUTPOST-SCENE), so both views agree. Mrs Vane's yard is a pick: 700 m east once she has come, with her kiosks on open ground
+   beside their streets (`TOWN_WORLD_ART`).
 5. **Families the town view does not draw.** walkers.glb (town-walkers.js already draws them), borer.glb (the Dig draws it; the town
    keeps no tunnels yet), story-walkers.glb (the story's people view) and the three peace-*.glb story props (no town record says
    where they stand). The suite lists these with their owner.

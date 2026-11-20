@@ -9,6 +9,8 @@ import {fileURLToPath} from 'node:url';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {BUILDINGS} from '../src/town/content/registry.js';
+import {OUTPOSTS_WORLD} from '../src/town/content/outposts-world.js';
+import {placeOutpost} from '../src/town/town-outpost-world.js';
 import {createTown, dispatchTownCommand, serializeTown, stepTown} from '../src/town/index.js';
 import {createTownCamera, TOWN_ZOOM} from '../src/town/view/town-camera.js';
 import {createTownArtDrawing, createTownArtLibrary, TOWN_ART_BANDS, clusterGeometry} from '../src/town/view/town-art.js';
@@ -40,7 +42,8 @@ for (const node of [...Object.values(TOWN_SITE_ART), ...TOWN_RUIN_ART.burnt, ...
 for (const machine of [...TOWN_SITE_MACHINES.foundation, ...TOWN_SITE_MACHINES.frame, ...Object.values(TOWN_SITE_MACHINES.road), TOWN_SITE_MACHINES.pipe])
   named.push([machine.family, machine.node]);
 for (const tier of TOWN_HOME_ART.filter(Boolean)) for (const node of tier) named.push(['homes', node]);
-for (const entry of [...TOWN_WORLD_ART.dome, ...TOWN_WORLD_ART.outposts, ...TOWN_WORLD_ART.vaneYard.pieces]) named.push([entry.family, entry.node]);
+for (const entry of [...TOWN_WORLD_ART.dome, ...TOWN_WORLD_ART.vaneYard.pieces]) named.push([entry.family, entry.node]);
+for (const row of OUTPOSTS_WORLD) named.push(['outposts', row.node]);
 named.push(['vane', TOWN_WORLD_ART.vaneYard.fence.node], ['vane', 'vane-kiosk'], ['plants', 'wellhead'], ['water', 'hand-well'], ['works', 'test-pit']);
 const absent = named.filter(([family, node]) => !names.get(family)?.has(node)).map(pair => pair.join('/'));
 check(absent.length === 0, `every piece the view names is in its family file (missing: ${absent.join(', ')})`);
@@ -101,6 +104,8 @@ function sampleTown() {
   check(townArtPlan(mourning).placements.filter(item => item.kind === 'marker').length === 3 && plan.placements.filter(item => item.kind === 'marker').length === 0,
     'the Old Ground shows one marker for each of the dead');
   check(townArtSignature(mourning) !== townArtSignature(town), 'a death changes what the view must draw');
+  const dot = plan.placements.find(item => item.node === 'dot-diner'), placed = placeOutpost(OUTPOSTS_WORLD.find(row => row.node === 'dot-diner'), {heightAt:() => 0});
+  check(dot && dot.x === placed.x && dot.z === placed.z && dot.turn === placed.heading, 'the town view puts each outpost where the drive does');
 }
 
 // ---- The same shack never twice in a row -------------------------------------------------------------------------

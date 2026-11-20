@@ -39,7 +39,8 @@ import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
-import {BELL_CUE, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls} from '../../town/work-vehicles.js';
+import {BELL_CUE, loadWorkVehicle, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
+import {groupKg} from '../../world/jobs/steps/haul.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -179,6 +180,45 @@ function sayLine(duel, worldJob, lineId, marked) {
 const WELL_WEAR_RANGE = 10;
 const WELL_WEAR_PER_SECOND = 1;
 
+// A drive through the player's own town: the free drive (town-drive) and the town's jobs (TOWN-HAUL-JOB, town-job) both stand
+// the town's layout in the Scablands and start at its truck bay.
+const townWorldJob = definition => definition?.kind === 'town-drive' || definition?.kind === 'town-job';
+
+// TOWN-HAUL-JOB: the haul step's events, heard and read (src/world/jobs/steps/haul.js). A piece lifted on or off is the bellows'
+// load thump (world.bellows.load), a piece thrown off is metal crushing (vehicle.crush) where it fell, and a delivered haul is the
+// finished-step chime (interface.bonus). The weight on the bed is put on the truck, so it drives as heavy as it is.
+const HAUL_CUES = Object.freeze({haulLift:'world.bellows.load', haulUnload:'world.bellows.load', haulShed:'vehicle.crush',
+  haulDelivered:'interface.bonus'});
+function haulShedSentence(event) {
+  const count = ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'][event.pieces.length - 2];
+  const what = event.pieces.length === 1 ? `A ${event.pieces[0]}` : `${count ?? 'Many'} pieces`;
+  const how = event.cause === 'rough' ? 'rattled loose and fell off' : event.cause === 'fall' ? 'flew off in the fall' : 'fell off the back';
+  return `${what} ${how}. That is ${groupKg(event.kg)} kg lost.`;
+}
+function syncHaulVehicle(worldJob) {
+  const vehicle = worldJob.vehicle, loadKg = worldJob.job.stepState?.loadKg;
+  if (!vehicle || !Number.isFinite(loadKg) || loadKg === vehicle.loadKg) return;
+  worldJob.vehicle = loadKg > vehicle.loadKg ? loadWorkVehicle(vehicle, loadKg - vehicle.loadKg).vehicle
+    : unloadWorkVehicle(vehicle, vehicle.loadKg - loadKg).vehicle;
+}
+// TOWN-HAUL-JOB: a washout is marked where the player sees it coming: an amber ring across the road at each end, beside the job's
+// own ring. View-only: nothing reads these back.
+function markHaulWashouts(duel, step) {
+  const markers = duel.state.arena.markers ?? [];
+  const ends = (step.washouts ?? []).flatMap(washout => [washout.line[0], washout.line.at(-1)].map((end, index) => ({kind:'ring',
+    id:`haul-washout-${washout.id}-${index}`, color:'warn', radius:washout.halfWidth ?? 16, x:end.x, z:end.z,
+    y:scablandsSurfaceHeightAt(end.x, end.z)})));
+  duel.state.arena.markers = [...markers.filter(marker => !String(marker.id).startsWith('haul-washout-')), ...ends];
+}
+function playHaulEvent(duel, worldJob, event, point) {
+  const cue = HAUL_CUES[event.type];
+  if (!cue) return;
+  if (event.type === 'haulShed') duel._storyCallout(haulShedSentence(event), 2.6, true);
+  if (event.type === 'haulDelivered') worldJob.haulResult = {good:event.good, deliveredKg:event.deliveredKg, lostKg:event.lostKg,
+    pieces:event.pieces, lostPieces:event.lostPieces, sentence:event.sentence};
+  duel.emit({arenaTell:{id:'town-haul', targetId:'player', seconds:0, cue, position:{...(event.position ?? point)}}});
+}
+
 export function createWorldJob(definition) {
   if (!definition) throw new TypeError('World Job mode needs a job definition');
   return {job: createJob(definition, definition.seed ?? 0), definition,
@@ -200,10 +240,16 @@ export function initializeWorldJob(duel, definition) {
   worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
   // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
   if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
-  if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
+  if(townWorldJob(definition))duel.course.townLayout=definition.layout??null;
   if (definition.yard) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setYard(yardPlan().solids);
+  }
+  // The neighbours' outposts are solid in a town drive only, from the layout the drive was started with (TOWN-OUTPOST-SCENE).
+  // After the yard's grid, which replaces any grid made before it.
+  if(definition.kind==='town-drive'&&definition.layout?.outposts?.solids?.length){
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setTown(definition.layout.outposts.solids);
   }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
@@ -240,7 +286,7 @@ export function initializeWorldJob(duel, definition) {
     state.speedMph = 0; state.yawVelocity = 0; state.pushVelocity = 0;
     state.headingError = wrapHeading(carStart.heading - duel.course.at(pose.s).heading);
   }
-  if(definition.kind==='town-drive'&&definition.layout?.start){
+  if(townWorldJob(definition)&&definition.layout?.start){
     const start=definition.layout.start,pose=duel.course.nearest(start.x,start.z);
     state.s=pose.s;state.lateral=pose.lateral;state.prevS=pose.s;state.prevLateral=pose.lateral;
     state.speedMph=0;state.headingError=0;state.townGatePrompt='';
@@ -286,7 +332,7 @@ export function cleanupWorldJobLoan(duel) {
   if (worldJob.originalFootWeaponSelected && duel.state.footWeapons)
     duel.state.footWeapons.selected = worldJob.originalFootWeaponSelected;
   initializeCrewGear(duel);
-  if(worldJob.definition.kind==='town-drive'){
+  if(townWorldJob(worldJob.definition)){
     clearScablandsTownLayout();
     duel.course.townLayout=null;
     duel._obstacleQueryCache?.clear();
@@ -1796,7 +1842,7 @@ export function stepWorldJob(duel, dt) {
     ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
     ashMen: currentStep?.brand ? actors.filter(actor =>
       worldJob.actors.some(source => source.brandAsh && source.id === actor.id)) : [],
-    speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id,
+    speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id, roughness: ground.roughness,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: carriedCar, carGroundRegion:state.onFoot ? scablandsDriveAt(carriedCar.x, carriedCar.z).id : ground.id,
     actors, crashSize: state.lastCrashSize || 0,
@@ -1813,6 +1859,10 @@ export function stepWorldJob(duel, dt) {
   worldJob.gasCarContacts = [];
   routeWorldNight2(duel, worldJob, previousStep, next);
   worldJob.job = next;
+  if (currentStep?.kind === 'haul') {
+    syncHaulVehicle(worldJob);
+    for (const event of next.events) playHaulEvent(duel, worldJob, event, point);
+  }
   if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
     worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));
@@ -1944,6 +1994,7 @@ export function stepWorldJob(duel, dt) {
     }
   }
   applyRequests(duel, worldJob, next.requests);
+  if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
   worldJob.controls=null;
   standOnDeck(duel, next, previousStepState);
   const train=worldJob.actors.find(actor=>actor.train);
