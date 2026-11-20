@@ -766,8 +766,12 @@ export function _vehicleContact(a, b, reason) {
       bowlRebound(this, b, -nx, -nz, -tangentB, away - middle, kind, Math.hypot(bx, vbZ));
       const closingA = -(ax * nx + vaZ * nz);
       const closingB = bx * nx + vbZ * nz;
-      const easyRivalRam = a === this.state && a.bowlNight?.cpuDifficulty === 'easy' && closingB > Math.max(0, closingA);
-      bowlWear(this, a, kind, combatOwnerId(this, b), zone, easyRivalRam ? b.ramDamageScale ?? 1 : 1);
+      let recoil = 1;
+      if (a === this.state && a.bowlNight?.cpuDifficulty === 'easy') {
+        if (closingB > Math.max(0, closingA)) recoil = b.ramDamageScale ?? 1;
+        else if (closingA > Math.max(0, closingB)) recoil = .5;
+      }
+      bowlWear(this, a, kind, combatOwnerId(this, b), zone, recoil);
       bowlWear(this, b, kind, combatOwnerId(this, a), zoneB);
       this.emit({bowlWall: {kind, mph: impactMph, cue: 'bowl.wall.' + kind}});
     }

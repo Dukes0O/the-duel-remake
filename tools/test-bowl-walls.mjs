@@ -74,7 +74,7 @@ for (const fight of [false, true]) {
   const along = actor => Math.cos(actor.headingError)*actor.speedMph + carAlongPush(actor)/DRIVE.mphToWorld;
   assert.ok(along(b) > along(a), 'the two trucks separate');
   for (const truck of [a,b]) {
-    if (fight) assert.equal(truck.armor,truck.maxArmor*(1-1/12), 'each loses a twelfth');
+    if (fight) assert.equal(truck.armor,truck.maxArmor * (1 - (truck === a ? .5 : 1) / 12), 'Easy player ram recoil and full rival loss');
     else assert.ok(Object.values(truck.damageZones).every(value => value === 0), 'neither truck wears');
   }
 }
@@ -98,7 +98,7 @@ for (const side of [false, true]) {
       }
       duel._vehicleContact(rival, player, 'rival');
       const label = [level, side ? 'lateral' : 'head-on', rivalStarts ? 'rival' : 'player'].join(' ');
-      assert.equal(player.maxArmor - player.armor, level === 'easy' && rivalStarts ? 1 : 5, label);
+      assert.equal(player.maxArmor - player.armor, level === 'easy' ? (rivalStarts ? 1 : 2.5) : 5, label);
       assert.equal(rival.maxArmor - rival.armor, 5, label + ' rival armor');
       if (side) assert.ok(player.damageZones.left > 0 || player.damageZones.right > 0, label + ' hit the flank');
     }
