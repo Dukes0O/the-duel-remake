@@ -25,6 +25,7 @@
 // Titan's own chase camera stood 12 m behind and 5.8 m up, and Kyle's complaint was the jerks, not the distance, so the
 // show camera keeps the Titan's 12 m and adds the design's 5.3 m in the air (17.3 m at 10 m up).
 import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight} from './bowl-course.js';
+import {rexAnchor, rexSolids} from './bowl-hook.js';
 
 export const BOWL_CAMERA = Object.freeze({
   // On the ground, and at the full height in the air (airFullMetres up and above).
@@ -69,7 +70,8 @@ export function easeTowards(value, rate, target, seconds, dt) {
 
 export function createBowlCamera() {
   return {key: null, time: 0, path: [], yaw: 0, turnRate: 0, turning: false, y: 0, yRate: 0, air: 0, airRate: 0, dropOffset: 0, dropRate: 0,
-    lift: 0, liftRate: 0, end: null, holding: null, frame: null, raw: null, shiftX: 0, shiftZ: 0, shiftRateX: 0, shiftRateZ: 0};
+    lift: 0, liftRate: 0, end: null, rexFallYaw: null, holding: null, frame: null, raw: null,
+    shiftX: 0, shiftZ: 0, shiftRateX: 0, shiftRateZ: 0};
 }
 
 // How the truck is moving, from its path: {yaw, mph, hold}. `hold` names why the camera keeps its angle, or is null.
@@ -135,13 +137,57 @@ export function bowlSolidTop(course, x, z, referenceS) {
   return course.groundAt(near.s, lateral).y;
 }
 
+// The camera frames the actual falling body, including the tail and head.
+export function bowlRexFallFrame(course, fight) {
+  if (fight?.phase !== 'fallen') return null;
+  const bounds = {left: Infinity, right: -Infinity, bottom: Infinity, top: -Infinity, near: Infinity, far: -Infinity};
+  for (const part of rexSolids(fight, course)) {
+    const sin = Math.abs(Math.sin(part.heading)), cos = Math.abs(Math.cos(part.heading));
+    const dx = part.halfX * cos + part.halfZ * sin, dz = part.halfX * sin + part.halfZ * cos;
+    bounds.left = Math.min(bounds.left, part.x - dx);
+    bounds.right = Math.max(bounds.right, part.x + dx);
+    bounds.bottom = Math.min(bounds.bottom, part.minY);
+    bounds.top = Math.max(bounds.top, part.maxY);
+    bounds.near = Math.min(bounds.near, part.z - dz);
+    bounds.far = Math.max(bounds.far, part.z + dz);
+  }
+  return {x: (bounds.left + bounds.right) / 2, y: (bounds.bottom + bounds.top) / 2,
+    z: (bounds.near + bounds.far) / 2,
+    radius: .5 * Math.hypot(bounds.right - bounds.left, bounds.top - bounds.bottom, bounds.far - bounds.near),
+    broadside: rexAnchor(fight, course).heading + Math.PI / 2};
+}
+
+function frameRexFall(cam, body, rex, solidTop, aspect, verticalFov) {
+  if (cam.rexFallYaw == null) {
+    const side = (rex.x - body.x) * Math.sin(rex.broadside) + (rex.z - body.z) * Math.cos(rex.broadside);
+    // Frame the truck in front of the falling body. Use the existing chase
+    // angle only when the truck is nearly in line with the beast's rails.
+    const reverse = Math.abs(side) < .5 ? Math.abs(wrap(rex.broadside - cam.yaw)) > Math.PI / 2 : side < 0;
+    cam.rexFallYaw = wrap(rex.broadside + (reverse ? Math.PI : 0));
+  }
+  // A sphere enclosing the two subjects fits at any aspect ratio, even as
+  // the driver moves away from the beast during its fall.
+  const target = {x: (body.x + rex.x) / 2, y: (body.y + rex.y) / 2, z: (body.z + rex.z) / 2};
+  const halfWidth = Math.atan(Math.tan(verticalFov * DEG / 2) * aspect);
+  const halfHeight = verticalFov * DEG / 2;
+  const radius = Math.hypot(target.x - rex.x, target.y - rex.y, target.z - rex.z) + Math.max(3.8, rex.radius);
+  const distance = Math.max(22, radius / Math.sin(.87 * Math.min(halfWidth, halfHeight)));
+  const yaw = cam.rexFallYaw;
+  const position = {x: target.x - Math.sin(yaw) * distance, y: target.y + .32 * distance,
+    z: target.z - Math.cos(yaw) * distance};
+  const lift = solidTop ? Math.max(bowlLiftFor(position, body, solidTop), bowlLiftFor(position, rex, solidTop)) : 0;
+  position.y += lift;
+  return {position, target, yaw, lift, hold: 'rexFall'};
+}
+
 // One frame of the show camera. `truck` is {key, x, y, z, air, heading}: `key` names the go (bowlCameraKey; a new key
 // starts the camera afresh), y is the truck's height with its height in the air, air that height in the air alone, and
 // heading the way its nose points (used only to tell when it backs up). Options: `ended` once the event is over, `wide`
 // for the wide camera mode, `solidTop(x, z)` for the walls (bowlSolidTop), and `frame`, the renderer's count of frames:
 // when a frame was drawn by another camera (the hood or back view, a menu) the camera starts afresh, since its memory
 // of the path is old. Returns {position, target, yaw, lift, hold}.
-export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, solidTop = null, frame = null} = {}) {
+export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, solidTop = null, frame = null,
+  rexFall = null, aspect = 16 / 9, verticalFov = 55} = {}) {
   dt = Number.isFinite(dt) && dt > 0 ? Math.min(dt, .1) : 0;
   const raw = cam.raw, skipped = frame != null && cam.frame != null && frame !== cam.frame + 1;
   const fresh = skipped || cam.key !== truck.key || !raw || Math.hypot(truck.x - raw.x, truck.z - raw.z) > C.teleportMetres;
@@ -231,6 +277,9 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   position.y += cam.lift;
   const ahead = C.aheadMetres * (1 - clamp01(cam.lift / C.lookDownLiftMetres));
   const target = {x: body.x + sin * ahead, y: body.y, z: body.z + cos * ahead};
+  if (rexFall) return frameRexFall(cam, {x: truck.x, y: truck.y + C.aimUpMetres, z: truck.z},
+    rexFall, solidTop, aspect, verticalFov);
+  cam.rexFallYaw = null;
   return {position, target, yaw, lift: cam.lift, hold: cam.holding};
 }
 

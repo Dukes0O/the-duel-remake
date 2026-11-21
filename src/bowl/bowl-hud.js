@@ -2,6 +2,7 @@
 import {crowdAfter} from './bowl-show.js';
 import {SECRETS, secretOf} from './bowl-secrets.js';
 import {BOWL_FLOOR} from './bowl-course.js';
+import {rexPullProgress} from './bowl-rex.js';
 import {BIG_MO, BOWL_GOALS} from './bowl-lines.js';
 export const BOWL_HUD_SOUNDS = Object.freeze({
   'bowl.health.hit': 'vehicle.crash',
@@ -80,6 +81,7 @@ export function bowlStrip(state, view, rivalName = () => null) {
     points: `${whole(view.score)} points`,
     time: view.timeLeft == null && view.event !== 'scrapasaurus' ? '' : clock(view.timeLeft ?? state.stageTimeSec ?? 0),
     crowd, crowdLabel: `CROWD x${multiplier}`, caption: view.caption,
+    rexPull: rexPullProgress(event?.rex), rexPullPoint: event?.rex?.hook.tip ?? null,
     gapLabel: rivalTrick ? `ROUND ${event.go.number} OF 3` : view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
     crushLabel: rivalTrick ? `BIG KETTLE: ${rivalTrick.trick.toUpperCase()} ${whole(rivalTrick.points)}`
       : crush ? `CRUSHED ${event.count} OF ${view.target}` : '',
@@ -249,12 +251,24 @@ function drawPlan(canvas, state, course) {
 }
 
 
+export function offscreenRexPull(view, projectPoint) {
+  if (view.rexPull == null || !view.rexPullPoint || projectPoint(view.rexPullPoint)?.visible) return null;
+  return Math.round(view.rexPull * 100);
+}
+
 export function createBowlHud({stage, app, projectPlayer = () => null}) {
   const host = document.createElement('div');
   host.className = 'bowl-event-overlay';
   host.hidden = true;
   host.innerHTML = `<section class="bowl-hud" aria-label="Show Night">
-    <div class="bowl-hud-title"><b class="bowl-hud-event"></b><span class="bowl-hud-goal"></span></div>
+    <div class="bowl-hud-title"><b class="bowl-hud-event"></b>
+      <div style="display:flex;align-items:center;gap:8px"><span class="bowl-hud-goal"></span>
+      <span class="bowl-hud-pull" hidden><svg width="25" height="25" viewBox="0 0 24 24" fill="none" role="progressbar"
+        aria-label="Battery pull" aria-valuemin="0" aria-valuemax="100">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".3" stroke-width="3"></circle>
+        <circle cx="12" cy="12" r="9" pathLength="100" transform="rotate(-90 12 12)" stroke="#ffe19b"
+          stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"></circle>
+      </svg></span></div></div>
     <div class="bowl-hud-numbers"><span class="bowl-hud-score"></span><span class="bowl-hud-clock"></span>
       <span class="bowl-hud-gap" hidden></span><span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span></div>
     <label class="bowl-hud-crowd"><span></span><meter min="0" max="100" value="0"></meter></label>
@@ -284,7 +298,8 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     ['.bowl-hud-event', view => view.driver ? `${view.driver} IS DRIVING · ${view.name.toUpperCase()}` : view.name.toUpperCase()],
     ['.bowl-hud-crowd span', view => view.crowdLabel],
   ].map(([selector, value]) => [find(selector), value]);
-  const meter = find('meter');
+  const meter = find('meter'), pullRing = find('.bowl-hud-pull'), pullGraphic = pullRing.firstElementChild;
+  const pullArc = pullGraphic.lastElementChild;
   let lastEvent, previousHealth, lastHit, lastPopups, popupSize;
   const text = (node, content) => { if (node.textContent !== content) node.textContent = content; };
   const hide = (node, hidden) => { if (node.hidden !== hidden) node.hidden = hidden; };
@@ -302,6 +317,12 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
       hide(node, !label);
     }
     if (meter.value !== view.crowd) meter.value = view.crowd;
+    const pull = offscreenRexPull(view, projectPlayer);
+    hide(pullRing, pull == null);
+    if (pull != null && pullGraphic.getAttribute('aria-valuenow') !== String(pull)) {
+      pullGraphic.setAttribute('aria-valuenow', String(pull));
+      pullArc.setAttribute('stroke-dasharray', `${pull} 100`);
+    }
     hide(caption, !view.caption);
     text(caption, view.caption ? `BIG MO: ${view.caption}` : '');
 

@@ -5,7 +5,8 @@
 // Run: node tools/test-bowl-camera.mjs
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
-import {BOWL_CAMERA, bowlCameraKey, bowlSolidTop, createBowlCamera, stepBowlCamera} from '../src/bowl/bowl-camera.js';
+import {BOWL_CAMERA, bowlCameraKey, bowlRexFallFrame, bowlSolidTop, createBowlCamera, stepBowlCamera} from '../src/bowl/bowl-camera.js';
+import {rexSolids} from '../src/bowl/bowl-hook.js';
 
 const SIM_DT = 1 / 120, FRAME = 1 / 60, DEG = Math.PI / 180;
 // The narrowest picture the renderer draws in the Bowl (a 55 degree view, as wide as a 16:9 screen).
@@ -251,6 +252,52 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
     stepBowlCamera(camera, truckOf(a), SIM_DT, {solidTop: (x, z) => bowlSolidTop(a.course, x, z, a.state.s)});
   }
   ok(JSON.stringify(a.state) === JSON.stringify(b.state), 'stepping the camera changes nothing in the race');
+}
+
+// The fall shot holds both the truck and the whole falling beast for ten seconds.
+{
+  const duel = new Duel({seed: 1989});
+  duel.featureFlags = {enabled: name => name === 'titan-bowl'};
+  ok(duel.startBowlNight({night: 5, eventIndex: 2, cpuDifficulty: 'easy'}), 'the fight loads');
+  const state = duel.state, fight = state.bowlNight.event.rex;
+  ok(!bowlRexFallFrame(duel.course, fight), 'driving toward a standing Rex keeps the chase camera');
+  Object.assign(fight, {phase: 'fallen', t: 0, low: true, boxes: [true, true, true]});
+  const camera = createBowlCamera();
+  for (let frame = 0; frame < 600; frame++) {
+    const seconds = frame * FRAME;
+    fight.t = seconds;
+    const p = duel.course.worldAt(fight.s - 12 - 6 * seconds, fight.places.rail - 9);
+    const truck = {key: bowlCameraKey(state), x: p.x, y: p.y, z: p.z, air: 0, heading: p.heading};
+    const shot = stepBowlCamera(camera, truck, FRAME, {
+      rexFall: bowlRexFallFrame(duel.course, fight),
+      solidTop: (x, z) => bowlSolidTop(duel.course, x, z, fight.s),
+    });
+    const corners = [{x: p.x, y: p.y + 1.65, z: p.z}];
+    for (const part of rexSolids(fight, duel.course)) {
+      for (const x of [-part.halfX, part.halfX]) for (const z of [-part.halfZ, part.halfZ]) {
+        const point = {x: part.x + Math.cos(part.heading) * x + Math.sin(part.heading) * z,
+          z: part.z - Math.sin(part.heading) * x + Math.cos(part.heading) * z};
+        corners.push({...point, y: part.minY}, {...point, y: part.maxY});
+      }
+    }
+    ok(shot.hold === 'rexFall' && corners.every(point => {
+      const {x, y, depth} = project(shot.position, shot.target, point);
+      return depth > 0 && Math.abs(x) < 1 && Math.abs(y) < 1;
+    }), 'the full Rex and the truck stay inside the frame during the fall');
+  }
+}
+
+{
+  const duel = new Duel({seed: 1989});
+  duel.featureFlags = {enabled: name => name === 'titan-bowl'};
+  ok(duel.startBowlNight({night: 5, eventIndex: 2, cpuDifficulty: 'easy'}), 'the fight loads');
+  const state = duel.state, fight = state.bowlNight.event.rex;
+  Object.assign(fight, {phase: 'fallen', direction: -1, s: 258, t: 0, low: true, boxes: [true, true, true]});
+  const p = duel.course.worldAt(256.62415, 10.57768), rex = bowlRexFallFrame(duel.course, fight);
+  const shot = stepBowlCamera(createBowlCamera(),
+    {key: bowlCameraKey(state), x: p.x, y: p.y, z: p.z, air: 0, heading: -.3658}, FRAME, {rexFall: rex});
+  ok((shot.position.x - rex.x) * (p.x - rex.x) + (shot.position.z - rex.z) * (p.z - rex.z) > 0,
+    'the fall camera shoots from the truck side when the Rex would hide it from the chase side');
 }
 
 // A new go, or a frame drawn by another camera, starts the camera afresh even when the truck has not moved: the old path

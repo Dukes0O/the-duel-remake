@@ -70,7 +70,7 @@ import {createFuelRunView} from './arena/modes/fuel-run-view.js';
 import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
 import {createAmbushAlleyView} from './arena/modes/ambush-alley-view.js';
 import {createBowlView} from './bowl/bowl-view.js';
-import {bowlCameraKey,bowlSolidTop,createBowlCamera,stepBowlCamera} from './bowl/bowl-camera.js';
+import {bowlCameraKey,bowlRexFallFrame,bowlSolidTop,createBowlCamera,stepBowlCamera} from './bowl/bowl-camera.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -96,6 +96,15 @@ function setCarShadows(mesh,on){
   mesh.userData.shadowsOn=on;
   mesh.traverse(object=>{if(object.isMesh){object.userData.castsShadow??=object.castShadow;object.castShadow=on&&object.userData.castsShadow;}});
 }
+function projectWorldMarker(camera, point, index = 0) {
+  markerView.copy(point).applyMatrix4(camera.matrixWorldInverse);
+  const ndc = point.project(camera);
+  const x = (ndc.x + 1) * .5, y = (1 - ndc.y) * .5;
+  return {index, x: Number.isFinite(x) ? THREE.MathUtils.clamp(x, 0, 1) : .5,
+    y: Number.isFinite(y) ? THREE.MathUtils.clamp(y, 0, 1) : .5,
+    visible: markerView.z < 0 && ndc.z >= -1 && ndc.z <= 1 && x >= 0 && x <= 1 && y >= 0 && y <= 1};
+}
+
 export function projectVehicleMarkers(camera, vehicles, height = 2) {
   camera.updateWorldMatrix(true, false);
   const markers = [];
@@ -108,15 +117,7 @@ export function projectVehicleMarkers(camera, vehicles, height = 2) {
     vehicle.updateWorldMatrix(true, false);
     vehicle.getWorldPosition(markerWorld);
     markerWorld.y += height;
-    markerView.copy(markerWorld).applyMatrix4(camera.matrixWorldInverse);
-    markerWorld.project(camera);
-    const x = (markerWorld.x + 1) * 0.5;
-    const y = (1 - markerWorld.y) * 0.5;
-    const visible = markerView.z < 0 && markerWorld.z >= -1 &&
-      markerWorld.z <= 1 && x >= 0 && x <= 1 && y >= 0 && y <= 1;
-    markers.push({index, x: Number.isFinite(x) ? THREE.MathUtils.clamp(x, 0, 1) : 0.5,
-      y: Number.isFinite(y) ? THREE.MathUtils.clamp(y, 0, 1) : 0.5,
-      visible});
+    markers.push(projectWorldMarker(camera, markerWorld, index));
   }
   return markers;
 }
@@ -970,12 +971,17 @@ export function attachRenderer(host, app) {
       }
       // BOWL-CAMERA: in a Show Night event the camera stands behind the way the truck is travelling, not the lap, and
       // rises over the walls and stands (src/bowl/bowl-camera.js). Drawing only: it reads the state and changes nothing.
-      bowlShot=st.bowlNight&&course.def?.bowl&&(mode==='chase'||mode==='wide')&&
-        (app._switches?.()??app.duel.featureFlags)?.enabled('titan-bowl')===true?stepBowlCamera(bowlCamera,
-          {key:bowlCameraKey(st),x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z,air:st.airHeight||0,heading:pp.heading+(st.headingError||0)},
-          st.paused?0:dt,{ended:st.status==='bowl_break',wide:mode==='wide',frame:bowlFrame,solidTop:(x,z)=>bowlSolidTop(course,x,z,distance)}):null;
+      const showCamera = st.bowlNight && course.def?.bowl &&
+        (app._switches?.() ?? app.duel.featureFlags)?.enabled('titan-bowl') === true;
+      const rexFall = showCamera ? bowlRexFallFrame(course, st.bowlNight.event?.rex) : null;
+      bowlShot = showCamera && (rexFall || mode === 'chase' || mode === 'wide') ? stepBowlCamera(bowlCamera,
+        {key:bowlCameraKey(st),x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z,air:st.airHeight||0,heading:pp.heading+(st.headingError||0)},
+        st.paused ? 0 : dt, {ended:st.status==='bowl_break',wide:mode==='wide',frame:bowlFrame,
+          solidTop:(x,z)=>bowlSolidTop(course,x,z,distance), rexFall, aspect:camera.aspect, verticalFov:camera.fov}) : null;
       if(bowlShot){camTarget.set(bowlShot.position.x,bowlShot.position.y,bowlShot.position.z);lookTarget.set(bowlShot.target.x,bowlShot.target.y,bowlShot.target.z);}
-      const view=directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
+      if (rexFall) player.visible = true;
+      const view = rexFall ? null : directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},
+        pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
       if(view){
         camTarget.set(view.position.x,view.position.y,view.position.z);lookTarget.set(view.target.x,view.target.y,view.target.z);
         const near=course.nearest(camTarget.x,camTarget.z,distance),tunnel=course.tunnelAt(near.s,near.lateral);
@@ -1026,7 +1032,8 @@ export function attachRenderer(host, app) {
     const cameraFeet=scablandsActorFeet(st,pp.y)+carShift(pp.x,pp.z,st,player), drawnGround=world?.userData?.drawnFeet?.groundAt??world?.userData?.drawnGroundHeightAt;
     if(groundChase)raiseScablandsCamera(course,camTarget,player.position,cameraFeet,drawnGround);
     camera.position.y-=machineLiftApplied;machineLiftApplied=0; // the height a big machine gave the camera last frame is not part of where it stands
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera ||
+        bowlShot?.hold === 'rexFall') camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
@@ -1456,12 +1463,16 @@ export function attachRenderer(host, app) {
       const state=app.duel.state;
       return !disposed&&state.onFoot&&state.status!=='menu'?projectOnFootAim(camera,state.fighter):null;
     },
-    projectBowlTruck() {
+    projectBowlTruck(point) {
       const {state, course, featureFlags} = app.duel;
       const flags = app._switches?.() ?? featureFlags;
       const showingTricks = course?.def.bowl ? state.bowlNight && flags?.enabled('titan-bowl') :
         course?.def.tricks && state.arenaTrickShow && flags?.enabled('arena-tricks');
       if (disposed || !showingTricks) return null;
+      if (point && state.bowlNight?.event?.rex) {
+        camera.updateWorldMatrix(true, false);
+        return projectWorldMarker(camera, markerWorld.set(point.x, point.y, point.z));
+      }
       return projectVehicleMarkers(camera, [player], (player.userData.size?.height ?? 2) + .35)[0];
     },
     projectOpponents() {
