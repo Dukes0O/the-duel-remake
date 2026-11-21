@@ -168,9 +168,11 @@ export function stepHook(fight, truck, dt, course, events) {
     if(h.box===1 && h.pulls[1]>=1 && !nitro){
       if(!fight.braced){fight.braced=true;events.push({type:'brace'});}
       h.length=Math.max(8,h.length-2*dt);
-      h.stalled=(h.stalled||0)+dt;
-      if(h.stalled+1e-8>=2 && !fight.hints.braceStall)events.push({type:'braceStall'});
-      return;
+      if (fight.level !== 'easy') {
+        h.stalled = (h.stalled || 0) + dt;
+        if (h.stalled + 1e-8 >= 2 && !fight.hints.braceStall) events.push({type:'braceStall'});
+        return;
+      }
     }
     h.pulls[h.box]+=dt*(nitro && h.box===1 && h.pulls[1]>=1 ? 2*nitro : 1+nitro);
   }
@@ -186,4 +188,47 @@ export function constrainTow(fight,course,truck,end){
   const allowed=Math.sqrt(Math.max(0,h.length*h.length-(from.y-eye.y)**2));
   if(r<=allowed || r<.001)return end;
   return {...end,x:eye.x+dx*allowed/r,z:eye.z+dz*allowed/r};
+}
+
+
+// A wall may push the truck outside the first cable constraint. Search
+// inward in world space and keep only a pose with a measured in-bounds hitch.
+// Support is resampled on every candidate: a kicker flank changes the height.
+export function finishTowContact(duel, fight, truck) {
+  const hook = fight.hook;
+  if (hook.phase !== 'attached') return;
+  const {course} = duel, eye = eyePoint(fight, course, hook.box);
+  const at = truckPoint(course, truck);
+  const dx = at.x - eye.x, dz = at.z - eye.z;
+  const span = Math.hypot(dx, at.y - eye.y, dz);
+  hook.tip = eye;
+  hook.origin = at;
+  if (span <= hook.length + 1e-8) return;
+
+  const limit = hook.length - .0001;
+  const feet = Math.min(at.y - 1.15, eye.y + limit - 1.15);
+  const sample = share => {
+    const road = duel._roadPosition({x: eye.x + dx * share, z: eye.z + dz * share}, truck.s);
+    const ground = duel._supportAt(road.s, road.lateral, truck);
+    const y = truck.airborne ? Math.max(ground.y, feet) : ground.y;
+    const hitch = {...ground, y: y + 1.15, heading: at.heading};
+    const span = Math.hypot(hitch.x - eye.x, hitch.y - eye.y, hitch.z - eye.z);
+    return {road, ground: ground.y, feet: y, hitch, span};
+  };
+  // The point under the low battery is in reach even with the cable reeled in.
+  let inner = 0, outer = 1, best = sample(0);
+  for (let step = 0; step < 15; step++) {
+    const share = (inner + outer) / 2;
+    const next = sample(share);
+    if (next.span <= limit) { inner = share; best = next; }
+    else outer = share;
+  }
+  truck.s = best.road.s;
+  truck.lateral = best.road.lateral;
+  truck.headingError = signedAngle(at.heading - course.at(truck.s).heading);
+  truck.groundHeight = best.ground;
+  truck._jumpY = best.feet;
+  truck.airHeight = best.feet - best.ground;
+  if (truck.airborne && best.feet < at.y - 1.15) truck._verticalSpeed = Math.min(0, truck._verticalSpeed || 0);
+  hook.origin = best.hitch;
 }

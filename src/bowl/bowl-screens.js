@@ -150,7 +150,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     const truck='<path fill="#e2d2aa" d="M8 35h14l4-9h16l8 9h5v8H8z"/><g fill="#252522" stroke="#e2d2aa"><circle cx="18" cy="43" r="5"/><circle cx="44" cy="43" r="5"/></g>';
     const box='<rect x="77" y="21" width="21" height="15" fill="#e8ab38"/><circle cx="88" cy="17" r="5" fill="none" stroke="#ddd5bb" stroke-width="3"/>';
     const pictures=[
-      [truck+'<path d="M101 40L57 28l3 21z" fill="#ff832d"/>','Get out of the orange before it breathes fire.'],
+      [truck+'<path d="M101 40L57 28l3 21z" fill="#ff832d"/>','Get away from its head when its chest glows.'],
       [truck+box+'<path d="M52 32L86 17" stroke="#e8d181" stroke-dasharray="3 2"/>','When it sags, face the glowing box and press F to hook it.'],
       ['<g transform="translate(66 0) scale(-1 1)">'+truck+'</g>'+box+'<path d="M56 35l30-18" stroke="#e8d181" stroke-width="2"/>','Drive away and pull, holding Space when it pulls you back.'],
     ];

@@ -286,12 +286,15 @@ Old Bess starts slowly and keeps coming. Big Kettle builds up steam and shoves.
 Rust Rhino charges. Tin Lizard is quick and runs when hurt. Dragon Wagon is fast
 and breathes fire. The season table sets each matchup and the available weapons.
 
-**The Scrapasaurus** walks its rails towards the car park gate. Its head rises and
-the floor lights before it breathes fire, and a ring marks where a thrown car will
-land. While it rests, get in line with the loose battery box, press F and pull away.
-Space helps the truck keep pulling. Tow out all three boxes before it reaches the
-gate. Easy gives 24 seconds to work in a normal rest. The Scrapasaurus falls when
-the third box comes out. Its fallen body appears in the yard after a win.
+**The Scrapasaurus** walks its rails towards the car park gate. Its chest glows and
+it turns its head before it breathes fire. A ring marks where a thrown car will land.
+While it rests, line up with the loose battery box, press F and pull away. The tow
+cable reaches no more than 15 m. On Easy, steady throttle frees the back box after
+four seconds of tight cable. On Medium and Hard, use Space or a jerk when it braces.
+A ring beside the driving goal shows pull progress when the box is off screen.
+Tow out all three boxes before it reaches the gate. Easy gives 24 seconds in a normal
+rest. The camera holds the truck and the Scrapasaurus together during its fall.
+Its fallen body appears in the yard after a win.
 
 **Taking turns and records.** Turn Show passes the keyboard for each event,
 keeps the scores by driver and pays that driver if they win the night. The first

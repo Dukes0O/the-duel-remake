@@ -180,7 +180,7 @@ const modalScreen = createResultsScreen({app, profile, credits, escapeHTML, time
 const updateHud = createHudScreen({app, ui, text, time, clamp, credits, routeMap});
 const readiness = createRendererReadiness({app, ui, choices, profile, isDisposed:()=>uiDisposed});
 const bowlScreens = createBowlScreens({app, ui, escapeHTML,
-  projectPlayer: () => readiness.handle?.projectBowlTruck?.() ?? null});
+  projectPlayer: point => readiness.handle?.projectBowlTruck?.(point) ?? null});
 const combatHud = createCombatHud({root, app,
   projectFootAim:()=>readiness.handle?.projectFootAim?.() || null,
   projectOpponents:()=>readiness.handle?.projectOpponents?.() || []});

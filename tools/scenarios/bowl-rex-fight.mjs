@@ -1,6 +1,6 @@
 // BOWL-REX-FIGHT: night five's Scrapasaurus in the production UI, memory-only saves. A memory-only
 // player who has won nights one to four opens night five on Easy, goes straight to the fight, and
-// the pictures show the tell (the cone on the floor before any fire), the fire filling that cone,
+// the pictures show the chest glow, followed by the fire with no floor marking,
 // and the rest with a battery box open. Then a child-pace driver in the page plays the fight to the
 // end; the results name the yard, the purse is paid once, and the yard has its Scrapasaurus.
 // Claude runs it on the laptop; pictures go to the evidence folder for the look.
@@ -105,7 +105,10 @@ export const page = {
   fire: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'fire')()`,
   rest: `(() => window.__qaApp.duel.state.bowlNight?.event?.rex?.phase === 'rest')()`,
   restGoal: `(() => document.querySelector('.bowl-hud-goal')?.textContent === 'HOOK THE GLOWING BOX')()`,
-  coneDrawn: `(() => { const scene = window.__render?.scene; return !!scene?.getObjectByName('Scrapasaurus fire cone')?.visible && !!scene.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
+  tellDrawn: `(() => { const scene = window.__render?.scene; return !scene?.getObjectByName('Scrapasaurus fire cone') &&
+    !!scene?.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
+  fireDrawn: `(() => { const scene = window.__render?.scene; return !scene?.getObjectByName('Scrapasaurus fire cone') &&
+    !!scene?.getObjectByName('Scrapasaurus fire')?.visible; })()`,
   driver: `(() => { const app=window.__qaApp, control=${childDrive.toString()}, driver={};
     app._driveAutopilot=function(){
       if(!driver.firstTap && this.duel.state.bowlNight?.event?.rex?.marker?.canBite){
@@ -165,10 +168,11 @@ export async function run(context) {
   // The truck waits at the Car Park Gate for the first breath.
   await waitInFight(context, page.tell, 'its tell where it rests', 120000);
 
-  await picture(context, 'bowl-rex-tell-cone-on-floor');
-  assert.equal(await context.evaluate(page.coneDrawn), true, 'the cone is on the floor and its chest glows during the tell, before any fire');
+  await picture(context, 'bowl-rex-chest-tell');
+  assert.equal(await context.evaluate(page.tellDrawn), true, 'the chest glows before fire without a mark on the floor');
   await waitInFight(context, page.fire, 'the fire', 15000);
   await picture(context, 'bowl-rex-fire');
+  assert.equal(await context.evaluate(page.fireDrawn), true, 'the flames burn with no floor marking');
   await waitInFight(context, page.rest, 'its rest with a battery box open', 15000);
   assert.ok(await context.evaluate(page.restGoal), 'the HUD says to hook the open box');
 

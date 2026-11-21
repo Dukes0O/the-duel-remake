@@ -13,8 +13,9 @@ import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {createScrapdomeYard} from '../src/scrapdome-yard.js';
 import {createRexView} from '../src/bowl/bowl-rex-view.js';
+import {bowlStrip, offscreenRexPull} from '../src/bowl/bowl-hud.js';
 import {createRexFight,stepRexFight,REX_RULES,REX_CUES,REX_EVENT,REX_TROPHY,rexInTheYard} from '../src/bowl/bowl-rex.js';
-import {eyePoint,hookMarker,modelPoint,rexAnchor,signedAngle,truckPoint,stepHook,releaseHook,wrap} from '../src/bowl/bowl-hook.js';
+import {eyePoint,hookMarker,modelPoint,rexAnchor,signedAngle,truckPoint,stepHook,releaseHook,TOW_LENGTH,wrap} from '../src/bowl/bowl-hook.js';
 import {childDrive} from './scenarios/bowl-rex-fight.mjs';
 
 const dt=1/120;
@@ -133,7 +134,7 @@ for(const level of ['easy','medium','hard']){
   assert.ok(!ev2.some(e=>e.type==='bite'));assert.equal(clean.hook.phase,'idle');
 }
 {
-  const tables={easy:[2,3,3],medium:[3,4,4],hard:[3,5,5]};
+  const tables={easy:[2,4,3],medium:[3,4,4],hard:[3,5,5]};
   for(const [level,times] of Object.entries(tables))for(let box=0;box<3;box++){
     const f=tired(box,level);
     const truck=approach(f,14.8,0,true);
@@ -154,7 +155,7 @@ for(const level of ['easy','medium','hard']){
     assert.equal(f.hook.phase,'dragging');
     if(box===2)assert.ok(events.some(e=>e.type==='tell'));
   }
-  const f=tired(1),truck=approach(f,14.6,0,true);truck.speedMph=23;truck.input.throttle=1;
+  const f=tired(1,'hard'),truck=approach(f,14.6,0,true);truck.speedMph=23;truck.input.throttle=1;
   Object.assign(f.hook,{phase:'attached',box:1});
   const ev=stepRexFight(f,truck,dt,course);assert.ok(ev.some(e=>e.type==='jerk'));
   assert.ok(ev.some(e=>e.type==='brace'));const first=f.hook.pulls[1];
@@ -180,14 +181,111 @@ for(const level of ['easy','medium','hard']){
   const land=trip.find(e=>e.type==='thrownLand');
   assert.ok(land && !land.hit);assert.deepEqual(land.at,ring.at);
 }
+{
+  const duel = start(), state = duel.state, fight = state.bowlNight.event.rex;
+  const tip = eyePoint(fight, duel.course, 1);
+  const project = visible => point => {
+    assert.deepEqual(point, tip);
+    return {visible};
+  };
+  Object.assign(fight.hook, {phase: 'attached', box: 1, tight: true, pulls: [2, 2, 0], tip});
+  const strip = () => bowlStrip(state, bowlHudView(state, duel.course));
+  assert.equal(strip().goal, 'KEEP PULLING');
+  assert.equal(offscreenRexPull(strip(), project(false)), 50, 'the strip mirrors the progress when the box is off screen');
+  assert.equal(offscreenRexPull(strip(), project(true)), null, 'the ring on the box suffices when it is visible');
+  releaseHook(fight.hook, []);
+  assert.equal(offscreenRexPull(strip(), project(false)), null, 'letting go clears the pull ring');
+}
 for(const cue of Object.values(REX_CUES)){
   if(['bowl.hook.tight','bowl.rex.box.drag'].includes(cue))continue;
   assert.ok(SOUND_BANK[BOWL_SOUND_CUES[cue]],cue);
 }
 for(const name of ['noBox','slack','brace','scorch','tell','rest','out.1','out.2','out.3'])assert.ok(BIG_MO['rex.'+name]);
-for(const phase of ['walk','rest','tell','fire','lift','throw','fallen','exit']){
-  for(const h of ['idle','attached','dragging'])assert.ok(BOWL_GOALS.scrapasaurus({phase,hook:{phase:h},boxes:[false,false,false]}).split(' ').length<=5);
+for (const phase of ['walk','rest','tell','fire','lift','throw','fallen','exit']) {
+  for (const h of ['idle','attached','dragging']) {
+    const goal = BOWL_GOALS.scrapasaurus({phase, hook: {phase: h}, boxes: [false, false, false]});
+    if (phase === 'tell' || phase === 'fire') assert.equal(goal, 'ITS CHEST IS GLOWING, SO GET CLEAR');
+    else assert.ok(goal.split(' ').length <= 5);
+  }
 }
+function placeShowTruck(duel, point, heading, speedMph = 0) {
+  const state = duel.state, {s, lateral} = duel._roadPosition(point, state.s);
+  const ground = duel.course.groundAt(s, lateral).y;
+  Object.assign(state, {s, prevS: s, lateral, prevLateral: lateral, speedMph, boost: 1,
+    groundHeight: ground, prevGroundHeight: ground, _jumpY: ground, airHeight: 0,
+    prevAirHeight: 0, _verticalSpeed: 0, airborne: false, pushVelocity: 0,
+    headingError: signedAngle(heading - duel.course.at(s).heading)});
+}
+
+for (const level of ['easy', 'hard']) {
+  const duel = start(101, level), {state, course} = duel, f = state.bowlNight.event.rex;
+  while (state.status === 'countdown') duel.step(dt);
+  Object.assign(f, {phase: 'rest', low: true, rests: 1, first: false, s: 45, direction: 1, boxes: [true, false, false]});
+  const eye = eyePoint(f, course, 1), {heading} = rexAnchor(f, course);
+  placeShowTruck(duel, modelPoint({...eye, heading}, -14.25, 0, 0), heading - Math.PI / 2);
+  Object.assign(f.hook, {phase: 'attached', box: 1, length: TOW_LENGTH, pulls: [2, 0, 0]});
+  let tight = 0;
+  for (let tick = 0; tick < 625 && !f.boxes[1]; tick++) {
+    duel.setInput({throttle: 1, boost: false, steer: 0});
+    if (f.hook.tight) tight += dt;
+    duel.step(dt);
+  }
+  assert.ok(f.braced && tight + 1e-8 >= 4 - dt, level + ' held through a real brace');
+  if (level === 'easy') assert.ok(f.boxes[1] && tight <= 5, 'throttle alone frees the Easy back box within one tired spell');
+  else assert.ok(!f.boxes[1] && f.hints.braceStall, 'the same throttle alone stalls against Hard');
+}
+
+for (const move of [false, true]) {
+  const duel = start(), {state, course} = duel, f = state.bowlNight.event.rex;
+  while (state.status === 'countdown') duel.step(dt);
+  Object.assign(f, {phase: 'walk', s: 35, t: 2.4, direction: 1, tells: 1, first: false});
+  const frame = rexAnchor(f, course);
+  placeShowTruck(duel, modelPoint(frame, -6, 0, 18), frame.heading - Math.PI / 2);
+  duel.step(dt);
+  assert.equal(f.phase, 'tell');
+  for (let tick = 0; tick < 540 && f.phase !== 'rest'; tick++) {
+    duel.setInput({throttle: move ? 1 : 0, steer: 0});
+    duel.step(dt);
+  }
+  assert.equal(f.phase, 'rest');
+  assert.equal(f.scorched, !move, 'moving away on the chest tell avoids the fire that burns a truck left in place');
+}
+
+// Full throttle, boost and steering at the same wall contacts that used to
+// pull the final truck pose more than 20 metres from the attached battery.
+let tautFrames = 0;
+for (const [station, degrees] of [[25, 10], [135, 10], [218, 90], [280, 170]]) {
+  const duel = start(), {state, course} = duel, f = state.bowlNight.event.rex;
+  while (state.status === 'countdown') duel.step(dt);
+  Object.assign(f, {phase: 'rest', low: true, rests: 1, first: false, s: station, direction: 1});
+  const eye = eyePoint(f, course, 0), heading = rexAnchor(f, course).heading + degrees * Math.PI / 180;
+  placeShowTruck(duel, modelPoint({...eye, heading}, 0, 0, 14), heading, 52);
+  Object.assign(f.hook, {phase: 'attached', box: 0, length: TOW_LENGTH, pulls: [0, 0, 0]});
+  for (let tick = 0; tick < 100 && f.hook.phase === 'attached'; tick++) {
+    duel.setInput({throttle: 1, steer: Math.sin(tick * .07), boost: true});
+    duel.step(dt);
+    if (f.hook.phase !== 'attached') break;
+    const at = truckPoint(course, state);
+    const span = Math.hypot(at.x - eye.x, at.y - eye.y, at.z - eye.z);
+    assert.ok(span <= TOW_LENGTH + 1e-6, `cable at ${station} m, step ${tick}: ${span} m`);
+    if (span > TOW_LENGTH - .12) tautFrames++;
+  }
+}
+assert.ok(tautFrames > 0, 'the wall-contact drives include a taut cable under power');
+{
+  const duel = start(), {state, course} = duel, f = state.bowlNight.event.rex;
+  while (state.status === 'countdown') duel.step(dt);
+  Object.assign(f, {phase: 'rest', low: true, rests: 1, first: false, s: 166, direction: 1});
+  const s = 170.43096129493892, lateral = 4.299231530927322, heading = 121 * Math.PI / 180;
+  placeShowTruck(duel, course.worldAt(s, lateral), heading, 75);
+  Object.assign(f.hook, {phase: 'attached', box: 0, length: TOW_LENGTH, pulls: [0, 0, 0]});
+  duel.setInput({throttle: 1, boost: true, steer: -.8});
+  duel.step(dt);
+  const eye = eyePoint(f, course, 0), at = truckPoint(course, state);
+  const span = Math.hypot(at.x - eye.x, at.y - eye.y, at.z - eye.z);
+  assert.ok(span <= TOW_LENGTH && span > TOW_LENGTH - .12, 'the cable stays taut and under 15 m on the kicker flank');
+}
+
 // Each trajectory starts outside and finishes beyond the part in one step.
 function crossing({low=false,fallen=false,localZ,y}){
   const duel=start(),s=duel.state,f=s.bowlNight.event.rex;
@@ -268,10 +366,12 @@ function modelFixture(){
   assert.ok(model.getObjectByName('battery-socket-1').visible);
   assert.ok(view.group.getObjectByName('Scrapasaurus tow cable').visible);
   f.phase='tell';f.cone={x:0,z:0,heading:.4,flameHeading:.2,sweep:0,range:29,halfAngle:.32};
-  first(30);const cone=view.group.getObjectByName('Scrapasaurus fire cone');
-  assert.ok(cone.visible&&!cone.material.depthTest);assert.equal(cone.rotation.y,.4);
+  first(30);
+  assert.equal(view.group.getObjectByName('Scrapasaurus fire cone'), undefined, 'the chest alone marks the tell');
   assert.ok(!view.group.getObjectByName('Scrapasaurus fire').visible && view.group.getObjectByName('Scrapasaurus chest glow').visible);
-  f.phase='fire';first(40);assert.ok(view.group.getObjectByName('Scrapasaurus fire').visible);
+  f.phase='fire';first(40);
+  assert.ok(view.group.getObjectByName('Scrapasaurus fire').visible);
+  assert.equal(view.group.getObjectByName('Scrapasaurus fire cone'), undefined, 'there is no floor fan during fire either');
   for(const night of [1,3,4]){
     view.update(course,{bowlNight:{night,event:{type:'carCrush'}}},50,true);
     assert.equal(view.group.visible,night>=3);
@@ -309,8 +409,7 @@ function drive(seed,useSpace=true,slowTween=false){
     assert.ok(dragDistance>1,'the final box moves behind the truck during the fall');
     assert.ok(bowlHudView(s,duel.course).goal.split(' ').length<=5);
   }
-  if(!useSpace){assert.ok(f.hints.braceStall);assert.equal(f.boxes[1],false);}
-  return {won:night.lastResult.won,trace};
+  return {won:night.lastResult.won,backBox:f.boxes[1],trace};
 }
 if(!process.argv.includes('--rules-only')){
   const runs=Array.from({length:10},(_,i)=>drive(101+i));
@@ -319,8 +418,9 @@ if(!process.argv.includes('--rules-only')){
   console.log('Easy tow wins using Space on the brace:',wins,'of 10');
   assert.ok(wins>=6,'driver using Space wins at least six of ten');
   const plain=Array.from({length:10},(_,i)=>drive(101+i,false));
-  console.log('Throttle-only wins:',plain.filter(run=>run.won).length,'of 10');
-  assert.ok(plain.every(run=>!run.won));
+  const backBoxes = plain.filter(run => run.backBox).length;
+  console.log('Throttle-only back boxes:', backBoxes, 'of 10; fights won:', plain.filter(run => run.won).length);
+  assert.ok(backBoxes >= 6, 'the same Easy driver can pull the braced back box with throttle alone');
   const tween=Array.from({length:10},(_,i)=>drive(101+i,true,true));
   console.log('Late-reaction 22-30 mph driver wins:',tween.filter(run=>run.won).length,'of 10');
 }
