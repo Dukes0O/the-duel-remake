@@ -110,6 +110,7 @@ Bring each up to date in this card. Search `tools/` for `homeRun`, `home-run`, `
 `src/bowl/bowl-show.js`, `src/bowl/bowl-jump-events.js`, `src/bowl/bowl-crush-field.js`, `src/bowl/bowl-view.js`,
 `src/bowl/bowl-stadium.js`, `src/bowl/bowl-lines.js`, `src/bowl/bowl-night.js`, `src/bowl/bowl-save.js`,
 `src/bowl/bowl-weapons.js`, `src/bowl/bowl-hud.js` (the strip's round line, if the strip needs it),
+`src/bowl/bowl-screens.js` (one condition, so that Best Trick owns the jump label; answered below),
 `docs/WASTELAND_WORLD.md`, and the five suites above. Locks: `bowl-night`, `save-shape`.
 
 ## Checks
@@ -140,13 +141,12 @@ Approved before the build, on these terms. The Home Run assertions are removed b
 checked. Night 4's name and line-up, the Turn Show's third jump event and the record key each change to the new name
 and check what they checked before. Nothing is loosened as long as every go rule that a Home Run case proved has a Best
 Trick case (check 1 lists them), and the save suite still proves that a record is kept only when it is better and that
-a Home Run record already saved survives. A change
-beyond these comes back to Claude before the merge.
+a Home Run record already saved survives. A change beyond these comes back to Claude before the merge.
 
 ## How it merges
 
-Behind `titan-bowl`, so rule 23's small set: this card's five suites, the core suite, the three guards and
-`npm run build`, recorded in `docs/changes/BOWL-NIGHT-4.md` with the Removed line. Because a saved key is added,
+Behind `titan-bowl`, but it touches the save, so rule 23's exception applies: the lane tier
+(`node tools/run-tests.mjs --tier lane --changed --jobs 4`) and `npm run build`, recorded in `docs/changes/BOWL-NIGHT-4.md` with the Removed line. Because a saved key is added,
 `tools/test-bowl-save.mjs` runs before the merge and the save checker reviews the change to `BOWL_EVENTS` (rule 23's
 exception for saves), as BOWL-SHOW-2 says for every slice that touches the save. No Chrome under `codex exec`: check 4 is "Claude runs". Memory-only saves. No
 new dependency, network request or key. Clean up nothing outside this lane.
@@ -158,3 +158,16 @@ Best Trick will share the straight run-up, twelve-second go and one-second reset
 May this card adjust one condition in `src/bowl/bowl-screens.js`? The generic jump label currently overwrites the strip's round line. The change would let Best Trick own that label while keeping the other go labels.
 
 A memory-only `loadPlayers` write/read confirmed that the raw version-one profile currently retains `home-run`. The Bowl scorer drops unknown keys on a later write. May this card add a small load hook in `src/progression.js` to omit only the retired key from a supported Bowl record? It would preserve every other key, every other profile field and newer Bowl versions, with no write on load. The save checker would verify it. AGENTS rule 23 says saved changes keep the lane tier. I will use that gate for the updated key unless the rule changes.
+
+## Claude answers (20 November 2026)
+
+1. **`src/bowl/bowl-screens.js`: yes.** One condition, so that Best Trick's round line is not overwritten by the
+   generic jump label and the other jump events keep theirs. It is added to the files above.
+2. **A load hook in `src/progression.js`: no.** Nothing may omit `home-run` from a saved Bowl record, on load or on a
+   later write. Keep `'home-run'` in `BOWL_EVENTS` of `src/bowl/bowl-save.js` (the Removed section says so), so that the
+   scorer keeps it on every later write as it does today, and add `'best-trick'` beside it. Then no hook is needed and
+   `src/progression.js` is not touched. Check 3 proves that a save holding a `home-run` score loads, saves and reloads
+   with it unchanged. A record that is no longer shown is harmless; a record that disappears is a wiped record, which
+   waits for Kyle (rule 18).
+3. **The gate: you are right.** A card that touches saves keeps the lane tier and the save checker's review before the
+   merge (rule 23, "Not covered"). "How it merges" now says so.
