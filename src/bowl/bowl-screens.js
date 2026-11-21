@@ -3,7 +3,8 @@
 // They read the app and state.bowlNight and never change race state; buttons
 // call the app's Show Night methods.
 import {SHOW_NIGHTS} from './bowl-show.js';
-import {bowlHudView, crushRowName} from './bowl-night.js';
+import {bowlHudView, crushRowName, featuredBowlTricks} from './bowl-night.js';
+import {BOWL_SCHOOL_LESSONS} from './bowl-school.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {BOWL_RIVALS} from './bowl-rivals.js';
@@ -14,7 +15,7 @@ const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
 const button = (label, action, extra = '', primary = false) =>
   `<button type="button" class="${primary ? 'primary-action' : 'secondary-action'}" data-action="${action}"${extra}>${label}</button>`;
 export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
-  let pickerFrom = null, level = null, openingNight = null, help = null;
+  let pickerFrom = null, level = null, openingNight = null, help = null, schoolPanel = null, renderedLesson = null;
   const renderHud = createBowlHud({stage: ui.stage, app, projectPlayer});
   const turns = createTurnScreens({app, escapeHTML, eventGuide});
   const say = text => `<p>${escapeHTML(text)}</p>`;
@@ -64,11 +65,20 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   }
 
   function openingCard() {
-    const choices = app.showNightChoices?.();
+    const choices = app.showNightChoices?.(), offer = choices?.offerSchool && openingNight === 1;
+    const featured = featuredBowlTricks(openingNight);
+    const illustrations = featured.flatMap(kind => BOWL_TRICK_GUIDE.filter(entry => entry.kind === kind))
+      .map(entry => `<li>${bowlTrickEntryMarkup({...entry, points: ''})}</li>`).join('');
     return `<section class="bowl-panel bowl-opening" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
       <h2 id="bowl-title">Night ${openingNight}</h2>
       ${bowlOpeningLines(openingNight, choices?.lent).map(line => `<p class="bowl-mo">${escapeHTML(line)}</p>`).join('')}
-      <footer>${button('Start the night', 'show-night-confirm', '', true)}${button('Back to nights', 'show-night-back')}</footer>
+      ${featured.length ? say('These tricks pay double tonight.') : ''}
+      ${illustrations ? `<ul>${illustrations}</ul>` : ''}
+      ${featured.includes('doubles') ? say('Hold the trick key through the second turn to earn double points.') : ''}
+      ${offer ? say('First time here? Come to Trick School first.') : ''}
+      <footer>${offer ? button('Trick School', 'show-night-school', '', true) : ''}
+        ${button(offer ? 'Not now' : 'Start the night', 'show-night-confirm', '', !offer)}
+        ${button('Back to nights', 'show-night-back')}</footer>
     </section>`;
   }
 
@@ -85,7 +95,41 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     }).join('');
     const levels = LEVELS.map(([id, label]) =>
       `<button type="button" class="choice${id === level ? ' on' : ''}" data-action="show-night-level" data-level="${id}" aria-pressed="${id === level}">${label}</button>`).join('');
-    return `<section class="bowl-panel" role="dialog" aria-modal="true" aria-labelledby="bowl-title"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.pickTitle}</h2></header>${say(WORDS.pickIntro)}${say(choices.lent ? WORDS.pickTruckLent : WORDS.pickTruckOwned)}<div class="segmented" role="group" aria-label="How hard the show is">${levels}</div><ol class="bowl-nights">${rows}</ol>${choices.message ? `<p class="bowl-message" role="status">${escapeHTML(choices.message)}</p>` : ''}${say(BOWL_TURN_LINES.pickerNote)}<footer>${button(BOWL_TURN_LINES.pickerButton, 'show-turns-open')}${button(WORDS.closeButton, 'show-night-close')}</footer></section>`;
+    return `<section class="bowl-panel" role="dialog" aria-modal="true" aria-labelledby="bowl-title"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.pickTitle}</h2></header>${say(WORDS.pickIntro)}${say(choices.lent ? WORDS.pickTruckLent : WORDS.pickTruckOwned)}<div class="segmented" role="group" aria-label="How hard the show is">${levels}</div><ol class="bowl-nights">${rows}</ol>${choices.message ? `<p class="bowl-message" role="status">${escapeHTML(choices.message)}</p>` : ''}${say(BOWL_TURN_LINES.pickerNote)}<footer>${button('Trick School', 'show-night-school')}${button(BOWL_TURN_LINES.pickerButton, 'show-turns-open')}${button(WORDS.closeButton, 'show-night-close')}</footer></section>`;
+  }
+
+  function lessonPanel(state, visible) {
+    if (!visible) {
+      if (schoolPanel) { schoolPanel.hidden = true; schoolPanel.style.display = 'none'; }
+      return;
+    }
+    if (!schoolPanel) {
+      schoolPanel = ui.stage.ownerDocument.createElement('section');
+      schoolPanel.className = 'bowl-hud bowl-panel bowl-school-lesson';
+      schoolPanel.setAttribute('aria-label', 'Trick School');
+      Object.assign(schoolPanel.style, {left: '14px', transform: 'none',
+        width: 'min(340px, 47vw)', minWidth: '0', padding: '10px 14px', zIndex: '5'});
+      ui.stage.append(schoolPanel);
+    }
+    schoolPanel.hidden = false;
+    schoolPanel.style.display = 'block';
+    const show = state.bowlNight, {lesson: kind, schoolReason} = show.event;
+    const lesson = BOWL_SCHOOL_LESSONS.find(item => item.kind === kind);
+    const guide = BOWL_TRICK_GUIDE.find(entry => entry.kind === kind);
+    const done = BOWL_SCHOOL_LESSONS.filter(item => show.school.completed.includes(item.kind))
+      .map(item => BOWL_TRICK_GUIDE.find(entry => entry.kind === item.kind).name);
+    const why = schoolReason?.until > show.clock ? schoolReason.text : '';
+    const key = [kind, done.length, why, state.bowlSchoolSavePending].join('|');
+    if (renderedLesson === key) return;
+    renderedLesson = key;
+    const content = lesson && guide
+      ? `<div class="bowl-school-move">${bowlTrickEntryMarkup({...guide, points: ''})}</div>${say(lesson.meaning)}${say(lesson.how)}`
+      : moLine('school.done');
+    schoolPanel.innerHTML = `<b class="bowl-hud-event">TRICK SCHOOL</b>${content}
+      ${done.length ? `<small aria-label="Completed lessons">${done.map(name => '✓ ' + escapeHTML(name)).join(' · ')}</small>` : ''}
+      ${why ? `<p role="status">${escapeHTML(why)}</p>` : ''}
+      ${state.bowlSchoolSavePending ? say('Your lesson progress is waiting to be saved.') : ''}
+      <footer>${button('Back to nights', 'show-night-pick')}</footer>`;
   }
 
   function leaveButtons() {
@@ -165,7 +209,8 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       const course = app.duel.course;
       const view = !state.paused && (eventIsRunning(state) || watchingFinish) ? bowlHudView(state, course) : null;
       const arenaHud = !state.paused && arenaShow(state) && eventIsRunning(state);
-      renderHud(state, course, arenaHud ? arenaTrickStrip(state) : bowlStrip(state, view, id => BOWL_RIVALS[id]?.name));
+      lessonPanel(state, !!show?.school && !!view);
+      renderHud(state, course, arenaHud ? arenaTrickStrip(state) : bowlStrip(state, show?.school ? null : view, id => BOWL_RIVALS[id]?.name));
     },
     // A Show Night button. Returns true when it was one.
     handle(target) {
@@ -181,7 +226,13 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       else if (action === 'show-night-level') level = target.dataset.level;
       else if (action === 'show-night-start') openingNight = Number(target.dataset.night);
       else if (action === 'show-night-back') openingNight = null;
-      else if (action === 'show-night-confirm' && openingNight) {
+      else if (action === 'show-night-school') {
+        if (app.startBowlSchool?.({from: pickerFrom ?? 'menu'})) {
+          pickerFrom = null;
+          openingNight = null;
+        }
+      } else if (action === 'show-night-confirm' && openingNight) {
+        if (openingNight === 1 && app.showNightChoices?.()?.offerSchool) app.skipBowlSchoolOffer?.();
         if (app.startShowNight?.(openingNight, {from: pickerFrom ?? 'menu', cpuDifficulty: level})) {
           pickerFrom = null;
           openingNight = null;

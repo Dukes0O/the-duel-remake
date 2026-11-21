@@ -62,6 +62,10 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.event.won': 'interface.win',       // an event is won
   'bowl.event.lost': 'interface.lose',     // an event is lost and can be tried again
   'bowl.purse': 'interface.bonus',         // the purse is paid into the scrap wallet
+  'bowl.school.tick': 'interface.bonus',
+  'bowl.school.next': 'interface.radar',
+  'bowl.school.why': 'interface.countdown',
+  'bowl.school.done': 'crowd.cheer',
   'bowl.turn.up': 'interface.radar',       // BOWL-TURNS: the pass-the-keyboard screen opens for the next player
   'bowl.turn.winner': 'crowd.cheer',       // BOWL-TURNS: the Turn Show is over and the scoreboard names the winner
   // BOWL-RIVALS: a rival knocked out in Last Truck Rolling plays the arena's wreck
@@ -109,6 +113,7 @@ export function bowlCrushCues({kind, pancake = false, flat = false} = {}) {
 const names = list => list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
 
 export const BOWL_EVENT_NAMES = Object.freeze({
+  trickSchool: 'Trick School',
   scrapasaurus: 'The Scrapasaurus', // BOWL-REX-FIGHT
   carCrush: 'Car Crush',
   freestyle: 'Freestyle',
@@ -150,6 +155,7 @@ export const BOWL_CRUSH_ROW = Object.freeze({
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
 export const BIG_MO = Object.freeze({
+  'school.done': 'The floor is yours to practise on, and you can find the secrets for yourself if you tap the keys quickly.',
   ...Object.fromEntries(SECRETS.map(trick => ['secret.' + trick.id, 'You found the ' + trick.name.slice(4) + '!'])),
   'secret.all': 'You have found every secret trick in the show!',
   'secret.armed': 'Something has got into that engine!',
