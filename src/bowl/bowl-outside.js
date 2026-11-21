@@ -31,6 +31,16 @@ export function terraceHeight(outside, off) {
   return outside.firstHeight + rise * (outside.top - outside.firstHeight);
 }
 
+// The near guide aims the truck into the throat before it can meet the other jamb.
+export function inboundGateHeading(course, obstacle, s, lateral) {
+  const outside = course.features.bowl.outside;
+  const gate = outside.gates.find(entry => Math.abs(entry.s - obstacle.s) < entry.mouthWidth);
+  if (!gate) return null;
+  const here = course.worldAt(s, lateral);
+  const aim = course.worldAt(gate.s, Math.max(outside.wall - 6, lateral - 8));
+  return Math.atan2(aim.x - here.x, aim.z - here.z);
+}
+
 // Cut each wall piece at the actual jamb, including the partial pieces.
 export function openGateSegments(gates, s, half, mouth = false) {
   let low = s - half, high = s + half;

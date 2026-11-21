@@ -5,7 +5,8 @@
 // Run: node tools/test-bowl-camera.mjs
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
-import {BOWL_CAMERA, bowlCameraKey, bowlRexFallFrame, bowlSolidTop, createBowlCamera, stepBowlCamera} from '../src/bowl/bowl-camera.js';
+import {BOWL_CAMERA, bowlCameraKey, bowlCameraObstructed, bowlRexFallFrame, bowlSolidTop, createBowlCamera,
+  stepBowlCamera} from '../src/bowl/bowl-camera.js';
 import {rexSolids} from '../src/bowl/bowl-hook.js';
 
 const SIM_DT = 1 / 120, FRAME = 1 / 60, DEG = Math.PI / 180;
@@ -57,14 +58,15 @@ function project(position, target, point) {
 function blocked(duel, pose, body) {
   for (let step = 1; step <= 11; step++) {
     const share = step / 13, x = pose.position.x + (body.x - pose.position.x) * share, z = pose.position.z + (body.z - pose.position.z) * share;
-    if (bowlSolidTop(duel.course, x, z, duel.state.s) > pose.position.y + (body.y - pose.position.y) * share) return true;
+    const y = pose.position.y + (body.y - pose.position.y) * share;
+    if (bowlCameraObstructed(duel.course, {x, y, z}, duel.state.s)) return true;
   }
   return false;
 }
 
 // Drives a script: `input(duel, time, truck)` gives the controls for each step after the countdown, until `seconds` have
 // passed or the event ends and `afterEnd` seconds more have been drawn. Returns the frames the camera drew.
-function record(name, duel, seconds, input, {afterEnd = 0} = {}) {
+function record(name, duel, seconds, input, {afterEnd = 0, wide = false} = {}) {
   const camera = createBowlCamera(), frames = [];
   let time = 0, endedFor = 0;
   while (duel.state.status === 'countdown') duel.step(SIM_DT);
@@ -74,10 +76,12 @@ function record(name, duel, seconds, input, {afterEnd = 0} = {}) {
       duel.step(SIM_DT); time += SIM_DT;
     }
     const truck = truckOf(duel), ended = duel.state.status === 'bowl_break';
-    const pose = stepBowlCamera(camera, truck, FRAME, {ended, solidTop: (x, z) => bowlSolidTop(duel.course, x, z, duel.state.s)});
+    const pose = stepBowlCamera(camera, truck, FRAME, {ended, wide, gateCourse: duel.course, referenceS: truck.s,
+      solidTop: (x, z) => bowlSolidTop(duel.course, x, z, truck.s)});
     const body = {x: truck.x, y: truck.y + BOWL_CAMERA.aimUpMetres, z: truck.z};
     frames.push({time, truck, ended, pose: structuredClone(pose), seen: project(pose.position, pose.target, body),
-      blocked: blocked(duel, pose, body), inside: bowlSolidTop(duel.course, truck.x, truck.z, duel.state.s) > truck.y + .5});
+      blocked: blocked(duel, pose, body), inside: bowlCameraObstructed(duel.course, body, truck.s),
+      cameraInside: bowlCameraObstructed(duel.course, pose.position, truck.s)});
     if (ended && (endedFor += FRAME) >= afterEnd) break;
   }
   ok(frames.length > 30, `${name}: the drive was recorded`);
@@ -202,6 +206,41 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
   steady('a double flip off the Big Jump', frames);
 }
 
+
+// Each real gate has an open corridor below the drawn lintel. Keep the
+// rolling truck in view at both mouths, even when an inbound guide turns it.
+for (const gateIndex of [0, 1]) {
+  for (const direction of ['out', 'left', 'right', 'wide out', 'wide in']) {
+    const duel = showDuel(1), course = duel.course, outside = course.features.bowl.outside;
+    const gate = outside.gates[gateIndex], outward = direction.endsWith('out'), wide = direction.startsWith('wide');
+    const side = direction === 'left' ? -1 : 1;
+    if (direction === 'out') {
+      const underRoof = course.worldAt(gate.s, outside.back - 8);
+      ok(!bowlCameraObstructed(course, {...underRoof, y: 3.6}, gate.s), gate.name + ' has open air under its lintel');
+      ok(bowlCameraObstructed(course, {...underRoof, y: 5}, gate.s), gate.name + ' roof is solid above the lintel');
+      const throughJamb = course.worldAt(gate.s + gate.width / 2 + .25, outside.back - 8);
+      ok(bowlCameraObstructed(course, {...throughJamb, y: 3.6}, gate.s), gate.name + ' jamb is solid');
+    }
+    const offset = outward ? 0 : wide ? 4 : side * 8;
+    const heading = outward ? Math.PI / 2 : -Math.PI / 2 - (wide ? 0 : side * Math.PI / 4);
+    approach(duel, gate.s + offset, outward ? 6 : outside.back + 9, heading, 20);
+    const name = gate.name + ' ' + direction;
+    const frames = record(name, duel, outward ? 7 : 6.5, (_, __, truck) => ({
+      throttle: +(truck.mph < 20), steer: 0, brake: 0, boost: false,
+    }), {wide});
+    steady(name, frames);
+    const crossed = frames.some(frame => outward ? frame.truck.lateral > outside.back + 2 : frame.truck.lateral < outside.wall - 2);
+    ok(crossed, name + ' covers both mouths and the tunnel');
+    ok(frames.every(frame => !frame.cameraInside), name + ' never puts the camera inside a solid');
+    let hidden = 0, longestHidden = 0;
+    for (const frame of frames) {
+      hidden = frame.blocked ? hidden + FRAME : 0;
+      longestHidden = Math.max(hidden, longestHidden);
+    }
+    ok(longestHidden <= .2 + 1e-8, name + ' never hides the truck for more than 0.2 seconds');
+  }
+}
+
 // 6. Launch onto the terraces, climb to the last row, leap into the car park,
 // and follow the nearest gate through its tunnel back onto the floor.
 {
@@ -221,10 +260,21 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
   });
   ok(terrace && park && back, 'landed on the terrace, dropped into the park, and returned through a real gate');
   ok(frames.some(frame => frame.truck.lateral > 30), 'over the wall and back: the truck went out past the stand wall');
-  ok(frames.some(frame => frame.pose.lift > 2), 'over the wall and back: the camera rose over what stood between it and the truck');
+
   const out = frames.findIndex(frame => frame.truck.lateral > 45);
   ok(out > 0 && frames.slice(out).some(frame => frame.truck.lateral < 28), 'over the wall and back: the truck came back to the stand wall');
   steady('over the wall and back', frames);
+}
+
+// A solid section of the stands still needs lift when it stands between the
+// chase point and the truck. The open-gate return above needs no such lift.
+{
+  const duel = showDuel(1), course = duel.course, outside = course.features.bowl.outside;
+  approach(duel, 37, outside.wall - 2, -Math.PI / 2, 0);
+  const truck = truckOf(duel);
+  const camera = stepBowlCamera(createBowlCamera(), truck, FRAME, {gateCourse: course, referenceS: truck.s,
+    solidTop: (x, z) => bowlSolidTop(course, x, z, truck.s)});
+  ok(camera.lift > 2, 'away from a gate the camera rises over what stands between it and the truck');
 }
 
 // 7. The end of an event: the Car Crush ends on the clock. The camera swings a quarter of the way round it over

@@ -977,7 +977,8 @@ export function attachRenderer(host, app) {
       bowlShot = showCamera && (rexFall || mode === 'chase' || mode === 'wide') ? stepBowlCamera(bowlCamera,
         {key:bowlCameraKey(st),x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z,air:st.airHeight||0,heading:pp.heading+(st.headingError||0)},
         st.paused ? 0 : dt, {ended:st.status==='bowl_break',wide:mode==='wide',frame:bowlFrame,
-          solidTop:(x,z)=>bowlSolidTop(course,x,z,distance), rexFall, aspect:camera.aspect, verticalFov:camera.fov}) : null;
+          solidTop:(x,z)=>bowlSolidTop(course,x,z,distance), gateCourse:course, referenceS:distance,
+          rexFall, aspect:camera.aspect, verticalFov:camera.fov}) : null;
       if(bowlShot){camTarget.set(bowlShot.position.x,bowlShot.position.y,bowlShot.position.z);lookTarget.set(bowlShot.target.x,bowlShot.target.y,bowlShot.target.z);}
       if (rexFall) player.visible = true;
       const view = rexFall ? null : directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},

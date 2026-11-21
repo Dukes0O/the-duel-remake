@@ -271,6 +271,10 @@ Turn Show only the driver's go is played.
 The drivable stands and the route back through the gates are a surprise for the
 driver to discover. Big Mo reacts after a truck gets out, and the arrow then helps
 the driver find a gate back into the Bowl.
+At either gate, a truck can slide along the guide and into the tunnel while
+keeping most of its speed. A truck on the ground can cross the rim only at a
+gate. The chase camera lowers and comes closer to follow the truck under the
+lintel, then returns to the regular chase view.
 
 **Trick School** opens from the picker and is offered before the driver's first night.
 It teaches wheelie, stoppie, donut, spin, backflip, front flip, barrel roll and side
