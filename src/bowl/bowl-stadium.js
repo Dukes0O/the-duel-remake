@@ -25,7 +25,9 @@ const LOW = BOWL_STADIUM.firstRowHeight, rowY = row => LOW + (row + .5) * RISE, 
 // the stand above it is high enough for a truck; the back wall is open up to the tunnel's lintel across its mouth.
 const CUT_ROWS = 4, LINTEL = 4.8;
 // The crowd's cleared ring round a truck in the stands, and the band beyond it where people run (BOWL-SHOW-2 section 3).
-const CLEAR = 6, RUN = 4;
+// BOWL-LOOK-FIX: the band is wide enough to see people running in it, and the ring leads the truck by up to LEAD
+// metres, so people ahead scatter before it arrives.
+const CLEAR = 6, RUN = 9, LEAD = 6;
 export const BOWL_STAND = Object.freeze({face: FACE, walk: WALK, first: FIRST, back: BACK, outer: OUTER, low: LOW, top: TOP,
   depth: DEPTH, rows: ROWS, cutRows: CUT_ROWS, lintel: LINTEL, rowY});
 
@@ -227,7 +229,8 @@ function crowd(course, uniforms) {
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute float crowdPhase; attribute vec4 crowdSeat;
-        uniform float uCrowdTime; uniform float uCrowdCheer; uniform vec3 uCrowdTruck; uniform float uCrowdScatter;`)
+        uniform float uCrowdTime; uniform float uCrowdCheer; uniform vec3 uCrowdTruck; uniform float uCrowdScatter;
+        uniform vec2 uCrowdCentre;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         float crowdBeat = sin(uCrowdTime * (2.1 + fract(crowdPhase * 7.3) * 1.6) + crowdPhase);
         transformed.y += max(crowdBeat, 0.0) * max(crowdBeat, 0.0) * (0.08 + 0.32 * uCrowdCheer);
@@ -239,8 +242,18 @@ function crowd(course, uniforms) {
         float crowdGone = (1.0 - smoothstep(${(CLEAR - .4).toFixed(1)}, ${CLEAR.toFixed(1)}, crowdDistance)) * uCrowdScatter;
         float crowdRun = (1.0 - smoothstep(${CLEAR.toFixed(1)}, ${(CLEAR + RUN).toFixed(1)}, crowdDistance)) * uCrowdScatter * (1.0 - crowdGone);
         vec2 crowdAlong = crowdSeat.zw * (dot(crowdAway, crowdSeat.zw) < 0.0 ? -1.0 : 1.0);
-        transformed.xz += crowdAlong * (crowdRun * 2.2 + uv.y * crowdRun * .35);
-        transformed.y += abs(sin(uCrowdTime * 13.0 + crowdPhase * 3.0)) * .2 * crowdRun;
+        // BOWL-LOOK-FIX: people run, not slide. Each runner gets well along the row, the nearest furthest; strides with a
+        // hard bounce, leans into the run, and about a third scramble up over the seat backs into the row behind.
+        float crowdKeen = fract(crowdPhase * 5.13);
+        float crowdStride = abs(sin(uCrowdTime * (10.0 + crowdKeen * 3.0) + crowdPhase * 3.0));
+        float crowdFlee = crowdRun * (2.6 + 2.2 * crowdKeen) * (0.55 + 0.45 * smoothstep(0.0, 1.0, crowdRun));
+        transformed.xz += crowdAlong * (crowdFlee + uv.y * crowdRun * .7);
+        transformed.y += crowdStride * .38 * crowdRun;
+        vec2 crowdBack = vec2(crowdSeat.w, -crowdSeat.z);
+        crowdBack *= dot(crowdBack, crowdSeat.xy - uCrowdCentre) < 0.0 ? -1.0 : 1.0;
+        float crowdClimb = step(crowdKeen, .34) * smoothstep(.15, .7, crowdRun);
+        transformed.xz += crowdBack * crowdClimb * ${DEPTH.toFixed(2)};
+        transformed.y += crowdClimb * ${RISE.toFixed(2)} * (0.8 + .2 * crowdStride);
         // Those who have gone drop out of sight behind the row in front, whole and upright, never lying down.
         transformed.xz = mix(transformed.xz, crowdSeat.xy, crowdGone * .6);
         transformed.y -= 2.6 * crowdGone;`);
@@ -611,7 +624,7 @@ export function createBowlStadium(course) {
   const group = new THREE.Group();
   group.name = 'Bowl stadium, floodlights and crowd';
   const centre = bowlCentre(course), uniforms = {uCrowdTime: {value: 0}, uCrowdCheer: {value: .35},
-    uCrowdTruck: {value: new THREE.Vector3(0, -999, 0)}, uCrowdScatter: {value: 0}};
+    uCrowdTruck: {value: new THREE.Vector3(0, -999, 0)}, uCrowdScatter: {value: 0}, uCrowdCentre: {value: new THREE.Vector2(centre.x, centre.z)}};
   const wear = createScrapWear({dust: 0x5f4b36, dustTop: 1.2});
   // The stands.
   const concrete = new THREE.MeshStandardMaterial({map: photo('/assets/textures/tunnel-concrete.png'), vertexColors: true, roughness: .96, side: THREE.DoubleSide});
@@ -674,7 +687,8 @@ export function createBowlStadium(course) {
   // BOWL-OUT-LOOK: the tunnels, the arches, the car park and the marker back to a gate (src/bowl/bowl-outside-view.js).
   const outside = createBowlOutsideView(course, {photo, drawn, hash, glow, stand: BOWL_STAND});
   group.add(outside.group);
-  let raceGates, lastNow = null;
+  let raceGates, lastNow = null, lastTruck = null;
+  const lead = new THREE.Vector2();
   group.userData.update = (now, cheer = .35, state) => {
     const dt = lastNow == null ? 0 : Math.min(.1, Math.max(0, (now - lastNow) * .001));
     lastNow = now;
@@ -685,8 +699,14 @@ export function createBowlStadium(course) {
     const inStands = state?.bowlOutside?.where === 'stands' && (state.airHeight || 0) < 3;
     if (inStands) {
       const p = course.worldAt(state.s, state.lateral);
-      uniforms.uCrowdTruck.value.set(p.x, (state.groundHeight || 0) + (state.airHeight || 0), p.z);
-    }
+      // The ring leads the truck along its way by half a second of travel, at most LEAD metres.
+      if (lastTruck && dt > 0) {
+        lead.set((p.x - lastTruck.x) / dt * .5, (p.z - lastTruck.z) / dt * .5);
+        if (lead.length() > LEAD) lead.setLength(LEAD);
+      } else lead.set(0, 0);
+      lastTruck = {x: p.x, z: p.z};
+      uniforms.uCrowdTruck.value.set(p.x + lead.x, (state.groundHeight || 0) + (state.airHeight || 0), p.z + lead.y);
+    } else lastTruck = null;
     const scatter = uniforms.uCrowdScatter;
     scatter.value = inStands ? Math.min(1, scatter.value + dt * 4) : Math.max(0, scatter.value - dt * .5);
     outside.update(now, state, dt);

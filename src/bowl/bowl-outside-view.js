@@ -8,12 +8,17 @@ import {addArenaCrushables} from '../arena-props.js';
 //   arch in the stand back, the wing walls that guide a truck in, and lamps over both mouths that flash while the
 //   truck is outside;
 // - the car park: cracked asphalt all round the stadium, lamps on the stand back with their pools of light, the 16
-//   parked cars a truck can crush (the game's junk cars), and the dirt bank at its edge;
+//   parked cars a truck can crush (the game's junk cars), and the dirt bank at its edge; BOWL-LOOK-FIX adds floodlight
+//   masts down the aisle between the parked rows and at both arches, so the cars and arches show from the stands;
 // - the marker back to a gate: an arrow with a shaft and a head over the truck, with the gate's name and distance,
 //   and a column of light over that gate's mouth that shows above the stands.
 // The stadium (src/bowl/bowl-stadium.js) builds this once per course and passes its drawing helpers and stand sizes.
 
 const AMBER = 0xffb02e, AMBER_DIM = 0x3a2a14;
+// The car park's floodlight masts (BOWL-LOOK-FIX): their height, how far apart down the aisle, the pool's size, and
+// how much of their own colour the parked cars show under them.
+const FLOOD = Object.freeze({height: 15, every: 34, pool: 30, lift: .32});
+const FLOOD_WARM = new THREE.Color(0xffd9a0);
 
 // A frame at a gate, which stands on a straight: x is the lateral offset (as the course measures it), z metres along
 // the lap from the gate's middle. `sign` keeps the frame right-handed, so faces keep their winding.
@@ -374,6 +379,92 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
     washMesh.renderOrder = 2;
     group.add(washMesh);
   }
+  // BOWL-LOOK-FIX: floodlight masts. The car park was dark beyond about 20 m, so masts stand down the aisle between the
+  // two rows of parked cars and a pair flanks each arch in the stand back: a tapered steel pole on a concrete footing,
+  // a crossarm with four lamps tilted down, their glare, a faint cone of light in the night air and a wide pool on the
+  // asphalt. The parked cars and the arches' concrete take a warm lift in their own colour: drawn, not lit, because
+  // real lights out here would cost every frame inside the arena as well.
+  const masts = [], mastGeometries = {steel: [], footing: [], lamps: [], cones: [], pools: []};
+  {
+    const aisle = outside.back + 37, every = FLOOD.every;
+    let last = null, along = 0;
+    for (let s = 0; s < course.length; s += .5) {
+      const p = at(s, aisle);
+      if (last) along += p.distanceTo(last);
+      last = p;
+      if (along < every && s) continue;
+      if (outside.gates.some(gate => Math.abs(((s - gate.s) % course.length + 1.5 * course.length) % course.length - course.length / 2) < 10)) continue;
+      along = 0;
+      masts.push({s, off: aisle, facing: 0});
+    }
+    // Two at each arch, on the asphalt either side of its mouth, their lamps turned to the arch.
+    for (const gate of outside.gates) for (const side of [-1, 1]) masts.push({s: gate.s + side * (gate.mouthWidth / 2 + 4), off: outside.back + 9, facing: -1});
+  }
+  for (const {s, off, facing} of masts) {
+    const p = course.worldAt(s, off), turn = new THREE.Matrix4().makeRotationY(p.heading);
+    const place = (geometry, x, y, z) => {
+      const local = new THREE.Vector3(x, 0, z).applyMatrix4(turn);
+      return geometry.applyMatrix4(turn).translate(p.x + local.x, y, p.z + local.z);
+    };
+    const H = FLOOD.height;
+    mastGeometries.footing.push(place(new THREE.CylinderGeometry(.55, .65, .6, 10), 0, .3, 0));
+    mastGeometries.steel.push(place(new THREE.CylinderGeometry(.14, .26, H, 10), 0, H / 2, 0));
+    mastGeometries.steel.push(place(new THREE.BoxGeometry(.18, .18, 3.4), 0, H - .3, 0));
+    // A ladder's rungs up one side, and a junction box at head height for a walker.
+    mastGeometries.steel.push(place(new THREE.BoxGeometry(.32, .45, .22), .28, 1.6, 0));
+    for (let i = 0; i < 4; i++) {
+      const z = -1.35 + i * .9, head = new THREE.BoxGeometry(.75, .42, .55);
+      mastGeometries.steel.push(place(head.clone().rotateX(facing ? .5 : 0).rotateZ(facing ? 0 : (i % 2 ? .45 : -.45)), 0, H, z));
+      mastGeometries.lamps.push(place(new THREE.PlaneGeometry(.62, .42).rotateX(Math.PI / 2).rotateZ(facing ? 0 : (i % 2 ? .45 : -.45)), 0, H - .22, z));
+    }
+    // The light falling from the head: a soft cone, bright at the lamps and gone at the ground, and a pool beneath.
+    const cone = new THREE.CylinderGeometry(1.2, FLOOD.pool * .32, H - .4, 18, 6, true);
+    const position = cone.getAttribute('position'), shade = [];
+    for (let i = 0; i < position.count; i++) { const share = (position.getY(i) + (H - .4) / 2) / (H - .4); shade.push(share * share, share * share, share * share); }
+    cone.setAttribute('color', new THREE.Float32BufferAttribute(shade, 3));
+    mastGeometries.cones.push(place(cone, 0, (H - .4) / 2, 0));
+    mastGeometries.pools.push(place(new THREE.PlaneGeometry(FLOOD.pool, FLOOD.pool).rotateX(-Math.PI / 2), facing ? -3 : 0, .09, 0));
+  }
+  {
+    const footing = mesh(mastGeometries.footing, concrete, 'Bowl car park mast footings');
+    const steelMast = mesh(mastGeometries.steel, new THREE.MeshStandardMaterial({color: 0x5b5752, roughness: .62, metalness: .7}), 'Bowl car park floodlight masts');
+    const lampFaces = mesh(mastGeometries.lamps, new THREE.MeshBasicMaterial({color: 0xfff1d0, toneMapped: false, side: THREE.DoubleSide}), 'Bowl car park floodlight lamps');
+    for (const part of [footing, steelMast, lampFaces]) if (part) group.add(part);
+    const cones = mesh(mastGeometries.cones, new THREE.MeshBasicMaterial({color: 0x9a8360, vertexColors: true, transparent: true, opacity: .09,
+      depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false}), 'Bowl car park floodlight cones');
+    if (cones) { cones.renderOrder = 2; group.add(cones); }
+    if (glow) {
+      const pools = mesh(mastGeometries.pools, new THREE.MeshBasicMaterial({map: glow, color: 0xb08a58, transparent: true, depthWrite: false,
+        blending: THREE.AdditiveBlending, opacity: .95, toneMapped: false}), 'Bowl car park floodlight pools');
+      if (pools) { pools.renderOrder = 2; group.add(pools); }
+      // The lamps' glare, seen from anywhere in the car park and over the stands.
+      const glare = new THREE.SpriteMaterial({map: glow, color: 0xffe3b0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false});
+      for (const {s, off} of masts) {
+        const p = course.worldAt(s, off), sprite = new THREE.Sprite(glare);
+        sprite.position.set(p.x, FLOOD.height - .1, p.z); sprite.scale.set(7, 4, 1); sprite.name = 'Bowl car park floodlight glare';
+        group.add(sprite);
+      }
+    }
+  }
+  group.userData.floodlights = masts.length;
+  // The parked cars and the arches' concrete under the floods: a warm lift in their own colour.
+  if (cars) {
+    const lifted = new Map();
+    cars.traverse(node => {
+      if (!node.isMesh || !node.material) return;
+      node.material = [node.material].flat().map(material => {
+        if (!material.emissive) return material;
+        if (!lifted.has(material)) {
+          const copy = material.clone();
+          copy.emissive.copy(copy.color).lerp(FLOOD_WARM, .35).multiplyScalar(FLOOD.lift);
+          lifted.set(material, copy);
+        }
+        return lifted.get(material);
+      });
+      if (node.material.length === 1) node.material = node.material[0];
+    });
+  }
+  concrete.emissive.setHex(0x564630); concrete.emissiveMap = concretePhoto; concrete.emissiveIntensity = .38;
   {
     const rows = [];
     const dirt = new THREE.MeshStandardMaterial({color: 0x5c4733, map: photo('/assets/textures/scrapyard-dirt.png'), roughness: 1});
