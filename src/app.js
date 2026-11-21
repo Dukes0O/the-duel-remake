@@ -114,6 +114,8 @@ import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
 import {rexInTheYard} from './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: the beaten Scrapasaurus in the yard
+import {foundBowlTricks, recordBowlSecret} from './bowl/bowl-save.js';
+import {genuineSecretFind, startArenaTrickShow} from './bowl/bowl-tricks.js';
 import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
 import {beginGo, createTurnShow, currentTurn, noteSettled, passKeyboard, recordGo, settleTurnGo, turnScoreboard,
   turnShowNights} from './bowl/bowl-turns.js'; // BOWL-TURNS
@@ -266,6 +268,17 @@ export class App {
       // BOWL-HOOKS: Show Night pays its purse once, and each new event has its sound.
       if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
+      const secret = event.bowlSecretFound;
+      if (secret && state === this.duel.state && state.playerId === this.player?.id && genuineSecretFind(this.duel, secret)) {
+        this._pendingSecrets ??= new Map();
+        const ids = this._pendingSecrets.get(state.playerId) ?? new Set();
+        ids.add(secret.kind);
+        this._pendingSecrets.set(state.playerId, ids);
+        state.bowlSecretSavePending = !this._flushBowlSecrets(state.playerId);
+        this._showNightCue('bowl.secret.cheer');
+      }
+      for (const message of [secret, event.bowlSecretStart, event.bowlSecretArmed, event.bowlTrickLate, event.bowlSecretHint])
+        if (message?.cue) this._showNightCue(message.cue);
       if(event.bowlTrick)for(const cue of event.bowlTrick.cues)this._showNightCue(cue);
       if(event.bowlEventResult)this._showNightCue(event.cue);
       if (event.bowlRaceCue) {
@@ -278,7 +291,10 @@ export class App {
       if(event.bowlOutsideCue)this._showNightCue(event.bowlOutsideCue);
       if(event.bowlWall?.cue)this._showNightCue(event.bowlWall.cue);
       if(event.bowlRex?.cue)this._showNightCue(event.bowlRex.cue); // BOWL-REX-FIGHT: each thing the Scrapasaurus does has its sound
-      if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
+      if(event.stageLoaded!=null){
+        startArenaTrickShow(this.duel, this.duel.course.def.tricks && !this.duel.course.def.bowl &&
+      this.duel.featureFlags.enabled('arena-tricks') ? this._bowlFoundForDriver() : []);
+        this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;if(!state.bowlNight){this._startGhostStage(state);this._startLapTelemetry(state);}}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
@@ -1256,6 +1272,38 @@ export class App {
       if(saved.saved){this._saveGhostStore();result.ghostRecorded=true;}
     }
     this.ghostRecorder=null;this.ghostPose=null;this.ghostStatus='none';
+  }
+  _bowlFoundForDriver() {
+    const id = this.player.id;
+    this._flushBowlSecrets(id);
+    return [...new Set([...foundBowlTricks(this.profile), ...(this._pendingSecrets?.get(id) ?? [])])];
+  }
+  _flushBowlSecrets(id) {
+    const pending = this._pendingSecrets?.get(id);
+    if (!pending?.size) return true;
+    const durable = readWarlordRegistry();
+    if (durable.status !== 'ready' || durable.registry.activePlayerId !== id || this.player.id !== id) return false;
+    const owner = durable.registry.players.find(player => player.id === id);
+    if (!owner) return false;
+    let updated = owner.profile;
+    for (const kind of pending) {
+      const edit = recordBowlSecret(updated, kind);
+      if (!edit.ok) return false;
+      updated = edit.profile;
+    }
+    const next = replacePlayerProfile(durable.registry, id, updated);
+    if (updated !== owner.profile && !savePlayers(next)) return false;
+    if (this.profileSaved === false) {
+      // A different unsaved edit remains in memory. Absorb only the discoveries.
+      for (const kind of foundBowlTricks(updated)) this.profile = recordBowlSecret(this.profile, kind).profile;
+    } else {
+      this.players = next;
+      this.player = activePlayer(next);
+      this.profile = this.player.profile;
+      this._rememberWarlordOwner();
+    }
+    this._pendingSecrets.delete(id);
+    return true;
   }
   _saveProfile(){
     // Preserve other local players if another tab added or updated one.
@@ -2531,7 +2579,7 @@ export class App {
     this._racePaintCar=SHOW_TRUCK;this._raceRoof=getRoadRoofLook(this.profile,SHOW_TRUCK,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock();this.audio.setPaused(false);
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
-    const started=this.duel.startBowlNight({night,owned,upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
+    const started=this.duel.startBowlNight({night,owned,foundTricks:this._bowlFoundForDriver(),upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
       playerId:this.player.id,driverId:getEquippedDriverId(this.profile),difficulty:this._raceSettings.difficulty,
       cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989,
       eventIndex,turn});

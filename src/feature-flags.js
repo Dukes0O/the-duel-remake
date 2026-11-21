@@ -85,6 +85,7 @@ export const FEATURE_STATES = Object.freeze({
   'water-cannon': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.
   'titan-bowl': 'dev',
+  'arena-tricks': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).
   'warlord-nine': 'on',
 });

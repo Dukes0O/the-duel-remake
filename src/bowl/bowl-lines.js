@@ -6,6 +6,8 @@
 
 // The sound each new Show Night event makes. Until the Bowl's own sounds are
 // picked (BOWL-FINISH), each plays the stand-in named beside it.
+import {SECRETS} from './bowl-secrets.js';
+
 export const BOWL_SOUND_CUES = Object.freeze({
   // BOWL-REX-FIGHT: the Scrapasaurus (src/bowl/bowl-rex.js REX_CUES), each on a stand-in.
   'bowl.rex.roar': 'yeti.roar',             // it rears up and its chest glows: fire is coming (the tell)
@@ -28,6 +30,13 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.out.gate': 'world.furnace.horn',
   'bowl.out.back': 'interface.bonus',
   // bowl.out.stands is named by the event for BOWL-SOUND to supply.
+  'bowl.secret.start': 'weapon.tesla.pulse',
+  'bowl.secret.found': 'interface.win',
+  'bowl.secret.cheer': 'crowd.cheer',
+  'bowl.secret.armed': 'world.furnace.horn',
+  'bowl.secret.hint': 'interface.radar',
+  'bowl.trick.late': 'interface.radar',
+  // bowl.trick.go is the turn-start rush, with no stand-in.
   'bowl.trick.land': 'interface.bonus',
   'bowl.trick.new': 'interface.win',
   'bowl.trick.slam': 'vehicle.crash',
@@ -133,6 +142,9 @@ export const BOWL_CRUSH_ROW = Object.freeze({
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
 export const BIG_MO = Object.freeze({
+  ...Object.fromEntries(SECRETS.map(trick => ['secret.' + trick.id, 'You found the ' + trick.name.slice(4) + '!'])),
+  'secret.all': 'You have found every secret trick in the show!',
+  'secret.armed': 'Something has got into that engine!',
   // BOWL-REX-FIGHT: the Scrapasaurus. Nights one to four end with a hint of what waits for night five.
   'rex.seen.1': 'Did anybody else hear a roar under the stands just now? No? Good, then it was probably my tummy.',
   'rex.seen.2': 'Something under the stands ate our spare tyres again. I am sure it is nothing to worry about.',
