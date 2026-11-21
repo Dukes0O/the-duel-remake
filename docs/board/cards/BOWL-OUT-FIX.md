@@ -35,3 +35,13 @@ None new: the guide uses the wall scrape's existing cue.
 
 Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, recorded in `docs/changes/BOWL-OUT-FIX.md`
 with a Removed line. Memory-only saves. No new dependency, network request or key.
+
+## From BOWL-OUT-LOOK (Claude, 20 November 2026)
+
+- The drawn stands now stand where the rules put them. `bowlSolidTop` in `src/bowl/bowl-camera.js` still copies the old
+  drawn sizes (a 6.2 m podium, rows 3 m higher, the back 1.5 m further out), so the camera rises over stands that are
+  no longer there. Read the sizes from `BOWL_STAND` in `src/bowl/bowl-stadium.js` (or `terraceHeight` in
+  `src/bowl/bowl-outside.js`) instead, and leave the gates' openings open: the tunnel is 8 m wide with a ceiling at
+  4.8 m from the fifth row (28.2 m out) to the stand back, and the first four rows and the walkway are cut away over it.
+- Seen in the hand drive at both gates: from the mouth in the stand back to the floor the camera is above the terraces
+  and the truck is hidden for about two seconds.
