@@ -1400,7 +1400,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "backlog"
-    waiting_on: "claude"
     needs: [OPEN-ROAM, OPEN-FIGURES]
     locks: []
     flag: "story-choices"
@@ -1425,7 +1424,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "backlog"
-    waiting_on: "claude"
     needs: [OPEN-STATE]
     locks: []
     flag: "story-choices"
@@ -1450,7 +1448,6 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "backlog"
-    waiting_on: "claude"
     needs: [OPEN-STATE, OPEN-FIGURES-2]
     locks: []
     flag: "story-choices"

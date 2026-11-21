@@ -2,7 +2,9 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (Kyle, 20 November 2026: Astra builds graphics).
+**Codex model: Astra** (Kyle, 20 November 2026: Astra builds graphics. Reviewed on 21 November 2026 when the Bowl
+fix cards moved to Sol: this card stays with Astra, because all of it is new figures modelled by a Blender recipe,
+their poses and a look sheet).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
 ## What to build
