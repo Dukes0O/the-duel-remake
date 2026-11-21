@@ -470,7 +470,8 @@ export function observeBowlNight(duel, ev) {
     say(duel, 'moment.carLaunch', {once: true});
   }
   if (ev.propCrushed?.byPlayer) {
-    if (night.event.type !== 'carCrush') addFact(duel, {type: 'crush'});
+    const runner = RUNNERS.get(night.event.type);
+    if (night.event.type !== 'carCrush' && runner.scoreCrush !== false) addFact(duel, {type: 'crush'});
     say(duel, 'moment.crush', {once: true});
   }
   RUNNERS.get(night.event.type)?.observe?.(duel, night, ev);

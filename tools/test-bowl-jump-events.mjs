@@ -40,19 +40,21 @@ function driveBack(duel) {
 }
 
 function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[eventType], single = false,
-  returnToGate = true} = {}) {
+  returnToGate = true, followGateAt = null, lateBackflip = false} = {}) {
   const duel = new Duel({seed});
   duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
   assert.ok(duel.startBowlNight({night: 1, eventType, cpuDifficulty, seed, playerId: 'driver',
     ...(single ? {turn: {driver: 'Driver'}} : {})}));
   const {state, course} = duel, night = state.bowlNight, {event} = night;
   const notes = [], flights = new Map();
+  let secondGoSpeed = null;
   duel.onChange((_, ev) => {
     if (ev.bowlGo) notes.push({go: ev.bowlGo, at: night.clock, crushed: [...state.crushedProps]});
     if (ev.bowlScore?.cue) notes.push({sound: ev.bowlScore.cue, points: ev.bowlScore.points, at: night.clock,
       position: [state.speedMph, state.s, state.lateral], crushed: [...state.crushedProps]});
     if (ev.bowlOverWall) notes.push({over: true, at: night.clock});
     if (ev.bowlBackIn) notes.push({gate: ev.bowlBackIn.gate, at: night.clock});
+    if (ev.bowlTrick?.landing === 'slam') notes.push({slam: event.go.number});
     assert.equal(ev.bowlNightResult, undefined, 'a standalone jump never creates a night payout');
   });
   const initial = [state.s, state.lateral];
@@ -61,12 +63,19 @@ function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[ev
     const [throttle, boostAt] = go(event.go.number);
     const returning = eventType === 'homeRun' && event.go.landed && state.bowlOutside;
     const input = returning
-      ? returnToGate ? driveBack(duel) : {throttle: 0, brake: 1, steer: 0, boost: false}
+      ? followGateAt != null ? aim(duel, state.bowlOutside.gate.aim, followGateAt)
+        : returnToGate ? driveBack(duel) : {throttle: 0, brake: 1, steer: 0, boost: false}
       : {throttle, steer: 0, brake: 0, boost: state.s >= boostAt};
+    if (lateBackflip && event.go.number === 1 && state.airborne && state._verticalSpeed < 0 && state.airHeight < 4) {
+      Object.assign(input, {throttle: 0, boost: false, brake: 1});
+    }
     duel.setInput(input);
     const fading = event.goFadeUntil, stageTime = state.stageTimeSec;
     duel.step(DT);
     if (fading != null && night.clock < fading - 1e-8) assert.equal(state.stageTimeSec, stageTime);
+    if (event.go.number === 2 && event.go.startedAt != null && night.clock - event.go.startedAt >= 1) {
+      secondGoSpeed ??= state.speedMph;
+    }
     if (state.airborne && event.go.launched && !event.go.landed) {
       const flight = flights.get(event.go.number) ?? {height: 0, distance: 0};
       flight.height = Math.max(flight.height, state._jumpY);
@@ -89,7 +98,7 @@ function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[ev
     assert.ok(!note.crushed.some(id => id.startsWith('bowl-long-bus-')), 'the buses are stood up for the next go');
   });
   assert.ok(bowlHudView(state, course).goal.split(/\s+/).length <= 8);
-  return {result, notes, line: course.features.bowlJump, course, flights};
+  return {result, notes, facts: event.facts, line: course.features.bowlJump, course, flights, secondGoSpeed};
 }
 
 for (const event of eventTypes) {
@@ -110,6 +119,8 @@ for (const event of eventTypes) {
   const first = long.notes.find(note => note.go?.go === 1);
   assert.ok(first.crushed.some(id => id.startsWith('bowl-long-bus-')), 'an ordinary landing actually crushes a jump bus');
   assert.ok(first.go.result < long.line.buses.length, 'a crushed bus is not counted as clear');
+  assert.ok(!long.facts.some(fact => fact.type === 'crush'), 'flattening the row earns no Long Jump points');
+  assert.ok(long.result.score > long.result.goes[0].score, 'clearing the buses scores higher than crushing them');
   const buses = long.line.buses;
   assert.equal(buses[0].distance, 20);
   buses.slice(1).forEach((bus, index) => assert.equal(bus.distance - buses[index].distance, 3));
@@ -122,6 +133,13 @@ for (const event of eventTypes) {
   const heights = high.result.goes.map(go => go.result);
   assert.deepEqual(heights, [heights[0], heights[0] + 1, heights[0] + 2]);
   assert.deepEqual(high.notes.filter(note => note.sound === 'bowl.high.clear').map(note => note.points), [100, 60, 60]);
+  assert.equal(high.result.score, high.result.bestGo.score + 160, 'earlier clears add only their bar bonus');
+  const mixed = run('highJump', {cpuDifficulty: 'hard', go: go => go === 1 ? full.highJump : [1, Infinity]});
+  assert.deepEqual(mixed.result.goes.map(go => go.result), [12, 0, 0]);
+  assert.equal(mixed.result.score, mixed.result.bestGo.score, 'missed bars do not add ordinary jump points');
+  const roofLanding = run('highJump', {cpuDifficulty: 'hard', lateBackflip: true});
+  assert.ok(roofLanding.notes.some(note => note.slam === 1), 'a real late backflip lands on the roof');
+  assert.ok(roofLanding.secondGoSpeed > 30, 'the next go pulls away without the previous landing recovery');
   assert.ok(high.line.bar && !high.line.target && !high.line.buses);
   assert.ok(!high.course.features.crushables.some(prop => prop.id.startsWith('bowl-long-bus-')));
 }
@@ -137,14 +155,18 @@ for (const event of eventTypes) {
   assert.equal(returns.length, 3);
   assert.equal(walls.length, 3);
   assert.ok(returns.every((note, i) => note.at - walls[i].at < 30));
-  assert.deepEqual(home.notes.filter(note => note.sound === 'bowl.home.ring').map(note => note.points), [600, 600, 600]);
+  assert.deepEqual(home.notes.filter(note => note.sound === 'bowl.home.ring.high').map(note => note.points), [600, 600, 600]);
   const middle = run('homeRun', {single: true, cpuDifficulty: 'hard', go: () => [.66, 36]});
   assert.equal(middle.result.bestGo.result, 3, 'the real landing hit the middle ring');
   assert.equal(middle.result.won, true, 'the middle ring meets the Hard goal');
-  assert.equal(middle.notes.find(note => note.sound === 'bowl.home.ring').points, 300);
+  assert.equal(middle.notes.find(note => note.sound === 'bowl.home.ring.high').points, 300);
+  const onTime = run('homeRun', {single: true, followGateAt: 24.26});
+  const ranOut = run('homeRun', {single: true, followGateAt: 24.25});
+  assert.ok(onTime.result.won, 'a return at the deadline still counts');
+  assert.equal(ranOut.result.won, false, 'the same real route a fixed step too late loses');
   const timeout = run('homeRun', {single: true, returnToGate: false});
   assert.equal(timeout.result.won, false, 'a target landing alone does not win');
-  assert.ok(timeout.notes.some(note => note.sound === 'bowl.home.ring'));
+  assert.ok(timeout.notes.some(note => note.sound === 'bowl.home.ring.high'));
   assert.ok(!timeout.notes.some(note => note.gate));
   assert.ok(Math.abs(timeout.notes.find(note => note.go).at - timeout.notes.find(note => note.over).at - 30) < .01);
 }
@@ -157,5 +179,5 @@ for (const event of eventTypes) {
   assert.ok(duel.startBowlNight({night: 1, eventIndex: 1}));
   assert.equal(duel.course.features.bowlJump, undefined, 'other events do not get the jumping pieces');
 }
-for (const name of ['bowl.go.ready', 'bowl.long.clear', 'bowl.high.clear', 'bowl.high.fail', 'bowl.home.ring']) assert.ok(SOUND_BANK[BOWL_SOUND_CUES[name]], name);
-console.log('Three-go resets, best results, the one-second fade, event-specific pieces, five sounds and Home Run timeout passed.');
+for (const name of ['bowl.go.ready', 'bowl.long.clear', 'bowl.high.clear', 'bowl.high.fail', 'bowl.home.ring', 'bowl.home.ring.high']) assert.ok(SOUND_BANK[BOWL_SOUND_CUES[name]], name);
+console.log('Three-go resets, best results, the one-second fade, event-specific pieces, sound cues and Home Run timeout passed.');

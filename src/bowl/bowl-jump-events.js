@@ -97,7 +97,8 @@ function flightLanded(duel, event, line) {
     const cleared = go.touchedBar && go.lastAlong > line.bar.distance + go.lastNose && go.barLow >= event.barHeight;
     go.result = cleared ? event.barHeight : 0;
     if (cleared) {
-      cue(duel, event, 'highClear', 'bowl.high.clear', event.goes.some(attempt => attempt.result) ? 60 : 100);
+      go.barPoints = event.goes.some(attempt => attempt.result) ? 60 : 100;
+      cue(duel, event, 'highClear', 'bowl.high.clear', go.barPoints);
       event.barHeight++;
     } else {
       cue(duel, event, 'highFail', 'bowl.high.fail');
@@ -109,20 +110,27 @@ function flightLanded(duel, event, line) {
     const distance = Math.hypot(p.x - target.x, p.z - target.z);
     const ring = target.radii.findIndex(radius => distance <= radius);
     go.ring = ring < 0 ? 0 : 3 - ring;
-    if (go.ring) cue(duel, event, 'homeRing', 'bowl.home.ring', ringPoints[go.ring]);
+    if (go.ring) {
+      const sound = go.ring === 1 ? 'bowl.home.ring' : 'bowl.home.ring.high';
+      cue(duel, event, 'homeRing', sound, ringPoints[go.ring]);
+    }
   }
 }
 
 function closeGo(duel, night, result) {
   const {event} = night, go = event.go;
   const played = {go: go.number, result, score: event.score - go.scoreAt};
+  if (go.barPoints) played.barPoints = go.barPoints;
   event.goes.push(played);
   if (!event.bestGo || result > event.bestGo.result || result === event.bestGo.result && played.score > event.bestGo.score) {
     event.bestGo = played;
   }
   duel.emit({bowlGo: {event: event.type, go: go.number, result}});
   if (night.turn || event.goes.length === GO_COUNT) {
-    if (event.type !== HIGH_JUMP) event.score = event.bestGo.score;
+    // Only the best drive's ordinary points count. The bar bonus remains
+    // cumulative because each successive clear is worth another metre.
+    const barPoints = event.goes.reduce((total, attempt) => total + (attempt.barPoints ?? 0), 0);
+    event.score = event.bestGo.score - (event.bestGo.barPoints ?? 0) + barPoints;
     return {won: event.bestGo.result >= targetFor(night)};
   }
   event.goResetAt = night.clock + RESET_SECONDS / 2;
@@ -140,8 +148,9 @@ function stepGo(duel, night) {
     go.launched = true;
     if (line.type !== HOME_RUN) {
       const truck = sampleFlight(duel, line);
-      if (line.type === LONG_JUMP) sampleBuses(duel, event, line, truck);
-      else {
+      if (line.type === LONG_JUMP) {
+        if (!go.hitBus) sampleBuses(duel, event, line, truck);
+      } else {
         sampleBar(event, line, truck);
         go.lastAlong = truck.along;
         go.lastNose = truck.nose;
@@ -152,9 +161,11 @@ function stepGo(duel, night) {
     go.landed = true;
     if (line.type !== HOME_RUN || !go.overWall) return closeGo(duel, night, go.result ?? 0);
   }
-  if (go.returned && go.landed) return closeGo(duel, night, go.ring + 1);
-  const elapsed = go.outAt == null ? night.clock - go.startedAt : night.clock - go.outAt;
-  if (elapsed >= (go.outAt == null ? GO_SECONDS : GATE_SECONDS)) return closeGo(duel, night, 0);
+  if (go.outAt != null) {
+    const elapsed = night.clock - go.outAt;
+    if (go.returned && go.landed && elapsed <= GATE_SECONDS + 1e-8) return closeGo(duel, night, go.ring + 1);
+    if (elapsed + 1e-8 >= GATE_SECONDS) return closeGo(duel, night, 0);
+  } else if (night.clock - go.startedAt >= GO_SECONDS) return closeGo(duel, night, 0);
   return null;
 }
 
@@ -162,6 +173,7 @@ export function installBowlJumpEvents(register, placeAt) {
   for (const type of [LONG_JUMP, HIGH_JUMP, HOME_RUN]) register(type, {
     dressing: type,
     singleEvent: true,
+    scoreCrush: type !== LONG_JUMP,
     target: targetFor,
     goal: night => type === HOME_RUN && night.event.go.outAt != null ? 'Follow the arrow through a gate.'
       : BOWL_GOALS[type](type === HIGH_JUMP ? night.event.barHeight : targetFor(night)),
@@ -175,9 +187,11 @@ export function installBowlJumpEvents(register, placeAt) {
     wreck(duel, night) { return closeGo(duel, night, 0); },
     reset(duel, night) { ready(duel, night, placeAt); },
     observe(duel, night, ev) {
+      const go = night.event.go, line = duel.course.features.bowlJump;
+      if (type === LONG_JUMP && go.launched && ev.propCrushed?.byPlayer &&
+          line.buses.some(bus => bus.id === ev.propCrushed.id)) go.hitBus = true;
       if (type !== HOME_RUN) return;
-      const go = night.event.go;
-      if (ev.bowlOverWall && duel.state._jumpOrigin?.rampId === duel.course.features.bowlJump.rampId) {
+      if (ev.bowlOverWall && duel.state._jumpOrigin?.rampId === line.rampId) {
         go.overWall = true;
         go.outAt ??= night.clock;
       }

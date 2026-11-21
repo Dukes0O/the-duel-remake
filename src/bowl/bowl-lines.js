@@ -102,6 +102,7 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.high.clear': 'weapon.flame.start',
   'bowl.high.fail': 'interface.lose',
   'bowl.home.ring': 'interface.bonus',
+  'bowl.home.ring.high': 'interface.near-miss',
 });
 
 // What a crushed piece is, for its sound: the course's pieces name their kind (junkCar, bowlBus, bowlRv,

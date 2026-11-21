@@ -180,9 +180,10 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       result.fullHouse ? WORDS.eventFullHouse(result.fullHouseBonus) : null, WORDS.eventScore(result.score),
       result.won ? standalone ? null : WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
     const advance = standalone && result.won ? '' : button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true);
+    const leaveNote = standalone ? '' : say(WORDS.leaveNote);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${advance}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${advance}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${leaveNote}</section>`;
   }
 
   function nightCard(state) {
