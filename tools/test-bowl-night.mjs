@@ -186,6 +186,20 @@ for (const rampId of ['jump-kicker', 'crush-kicker', 'table']) {
   'a real roof crossing below 30 mph collapses the pile and triples its one award');
 }
 
+{
+  const duel = racingCrush(), {state, course} = duel;
+  const prop = course.features.crushables.find(item => item.id === 'bowl-bus-pile-0');
+  const roof = prop.y + prop.height;
+  placeCrushTruck(duel, 242.809, prop.off, 17);
+  state.prevS = 242.746;
+  Object.assign(state, {airborne: true, _verticalSpeed: -6,
+    prevAirHeight: roof + .02 - course.groundAt(state.prevS, prop.off).y,
+    airHeight: roof - .18 - course.groundAt(state.s, prop.off).y});
+  duel._crushProps(state);
+  ok(state.speedMph < 17 && state.crushedProps.length === 0,
+    'descending past roof height before reaching the pile is still a slow side impact');
+}
+
 for (const [speed, count] of [[29, 0], [30, 3]]) {
   const duel = racingCrush(), hits = [];
   const first = duel.course.features.crushables.find(item => item.id === 'bowl-bus-pile-0');

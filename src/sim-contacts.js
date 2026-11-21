@@ -972,9 +972,6 @@ export function _crushProps(actor) {
       continue;
     }
     const top = prop.y + prop.height;
-    // A pancake is a crossing of this roof from above. A hit below the roof
-    // after the tyres are down is an ordinary side impact.
-    const pancake = carCrush && (actor.prevAirHeight || 0) > .1 && previousBottom > top && bottom <= top;
     let contactTime = hit.t;
     if (previousBottom + (bottom - previousBottom) * contactTime > top) {
       // An overflight counts only if descent reaches the roof while the
@@ -984,6 +981,10 @@ export function _crushProps(actor) {
       const landing = { x: start.x + (end.x - start.x) * contactTime, z: start.z + (end.z - start.z) * contactTime };
       if (!sweepObstacle(landing, landing, prop, heading, spec)) continue;
     }
+    // The truck must still overlap the footprint when its underside crosses
+    // the roof. Entering the footprint later is a side impact.
+    const pancake = carCrush && (actor.prevAirHeight || 0) > .1 && previousBottom > top && bottom <= top &&
+      Math.abs(contactTime - (previousBottom - top) / (previousBottom - bottom)) <= 1e-8;
     if (movable) {
       contactArenaJunk(this, actor, prop, {...hit, t: contactTime}, start, end);
       if (spec.mass < (prop.crushMass || 3500)) continue;
