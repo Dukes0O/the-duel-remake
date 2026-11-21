@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
+import {scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {BIG_MO, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {bowlStrip} from '../src/bowl/bowl-hud.js';
@@ -26,6 +27,12 @@ const childTrickTaps = [
 function tapTrick(input, trick, airTick, tapAt) {
   input.throttle = 0;
   input.boost = false;
+  if (trick === 'tripleCombo') {
+    input.steer = +(airTick >= tapAt && airTick < tapAt + 250);
+    input.boost = input.steer > 0;
+    input.brake = +(airTick >= tapAt && airTick < tapAt + 220);
+    return;
+  }
   const duration = trick === 'doubleBackflip' ? 112 : 1;
   if (airTick < tapAt || airTick >= tapAt + duration) return;
   if (trick === 'barrelRoll') Object.assign(input, {steer: 1, boost: true});
@@ -167,14 +174,20 @@ for (const event of eventTypes) {
   assert.ok(boostedRunUp.rounds[0].won && boostedRunUp.rounds[0].points > 0, 'the air trick beats the rival');
   const repeat = run('bestTrick', {cpuDifficulty: 'medium', tricks: Array(3).fill('backflip')});
   assert.equal(repeat.result.won, false);
-  assert.deepEqual(repeat.rounds.map(round => round.won), [true, false, false]);
+  assert.deepEqual(repeat.rounds.map(round => round.won), [false, false, false]);
   assert.ok(repeat.notes.some(note => note.caption === 'best.repeat'));
   assert.equal(repeat.finishCaption, BIG_MO['best.repeat'], 'the third loss reason survives the finish');
   const varied = run('bestTrick', {cpuDifficulty: 'medium', tricks: singles});
-  assert.equal(varied.result.won, true);
+  assert.equal(varied.result.won, false, 'singles alone lose on Medium');
   assert.deepEqual(varied.result.goes.map(go => go.tricks), singles.map(trick => [trick]));
-  assert.deepEqual(varied.rounds.map(round => [round.round, round.rival.trick, round.rival.points]),
-    [[1, 'backflip', 50], [2, 'barrel roll', 60], [3, 'backflip with a spin', 120]]);
+  assert.ok(varied.rounds.every(round => !round.won && round.rival.points > round.points));
+  const rivalsScored = [...easy[0].rounds.slice(1), ...varied.rounds].map(round => round.rival);
+  assert.ok(rivalsScored.some(rival => rival.featured && rival.fresh && rival.crowd > 0));
+  for (const rival of rivalsScored) {
+    const points = rival.basePoints * (rival.featured ? 2 : 1);
+    assert.equal(rival.points, scoreStuntEvent({type: 'bowlTrick', points, fresh: rival.fresh, repeat: rival.repeat}, rival.crowd).points,
+      'the rival gets the same featured, variety and round-start crowd points as the driver');
+  }
   for (const round of varied.rounds) {
     const scored = varied.notes.filter(note => note.attempt === round.round);
     assert.equal(round.points, scored.reduce((sum, note) => sum + note.trickPoints, 0), 'only the awarded trick points decide the round');
@@ -185,8 +198,8 @@ for (const event of eventTypes) {
 
   const hardSingles = run('bestTrick', {cpuDifficulty: 'hard', tricks: singles});
   assert.equal(hardSingles.result.won, false);
-  const hardDouble = run('bestTrick', {cpuDifficulty: 'hard', go: () => [1, 31],
-    tricks: ['barrelRoll', 'doubleBackflip']});
+  const hardDouble = run('bestTrick', {cpuDifficulty: 'hard', go: () => [1, 26],
+    tricks: ['tripleCombo', 'tripleCombo'], taps: [4, 4, 4]});
   assert.equal(hardDouble.result.won, true);
   assert.equal(hardDouble.result.roundsWon, 2);
   assert.equal(BOWL_RESULTS.eventJump(hardDouble.result), 'You won 2 of the 3 rounds against Big Kettle.');
@@ -215,7 +228,7 @@ for (const event of eventTypes) {
   assert.ok(duel.startBowlNight({night: 4, eventIndex: 1, cpuDifficulty: 'medium'}));
   const strip = bowlStrip(duel.state, bowlHudView(duel.state, duel.course));
   assert.equal(strip.gapLabel, 'ROUND 1 OF 3');
-  assert.equal(strip.crushLabel, 'BIG KETTLE: BACKFLIP 50');
+  assert.equal(strip.crushLabel, 'BIG KETTLE: DOUBLE BACKFLIP 450');
   assert.equal(strip.chainLabel, 'YOU 0, BIG KETTLE 0');
 }
 for (const name of ['bowl.go.ready', 'bowl.long.clear', 'bowl.high.clear', 'bowl.high.fail',

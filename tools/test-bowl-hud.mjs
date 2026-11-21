@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {bowlHudView, sayBowlLine} from '../src/bowl/bowl-night.js';
-import {bowlHealth, bowlHealthHit, bowlResultReady, bowlStrip, bowlTrickPopup, bowlTrickPopups, bowlWaypoint, playBowlHudCue} from '../src/bowl/bowl-hud.js';
+import {bowlHealth, bowlHealthHit, bowlResultReady, bowlStrip, bowlTrickPopup, bowlTrickPopups, bowlWaypoint,
+  freestyleBestLabel, playBowlHudCue} from '../src/bowl/bowl-hud.js';
+import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
+import {BIG_MO, freestyleLines} from '../src/bowl/bowl-lines.js';
 import {rearViewActive} from '../src/rear-view.js';
-import {BIG_MO} from '../src/bowl/bowl-lines.js';
 import {combatXpCue} from '../src/combat-hud.js';
 import {presentJumpHeight} from '../src/screen-hud.js';
 import {stepBowlTricks} from '../src/bowl/bowl-tricks.js';
@@ -21,7 +23,7 @@ function start(night, eventIndex, options = {}) {
 
 for (const [night, index, name, goal] of [
   [1, 0, 'Car Crush', 'Crush 13 pieces.'],
-  [1, 1, 'Freestyle', "Beat Old Bess's 310 points."],
+  [1, 1, 'Freestyle', `Beat Old Bess's ${SHOW_NIGHTS[0].freestyle.target.easy.toLocaleString('en-US')} points.`],
   [1, 2, 'Side by Side', 'Beat Old Bess over two laps.'],
   [3, 2, 'Last Truck Rolling', 'Be the last truck rolling.'],
   [5, 2, 'The Scrapasaurus', 'WATCH THE SCRAPASAURUS'],
@@ -31,7 +33,7 @@ for (const [night, index, name, goal] of [
   assert.equal(strip.name, name);
   assert.equal(strip.goal, goal);
   assert.ok(strip.goal.split(/\s+/).length <= (name === 'The Scrapasaurus' ? 5 : 8));
-  assert.equal(strip.points, '0 points');
+  assert.equal(strip.points, name === 'Freestyle' ? '' : '0 points');
   assert.equal(strip.crowdLabel, 'CROWD x1.0');
   assert.match(strip.time, /^\d+:\d{2}$/, 'every current Bowl event has a visible clock');
   assert.equal(captions.length, 1, 'one caption starts an event');
@@ -89,7 +91,7 @@ for (const [night, index, name, goal] of [
   assert.equal(bowlTrickPopup({...record, multiplier: 1.436, points: 287}, 4).points, '200 x1.44 ≈ 287');
   assert.equal(bowlTrickPopup(record, 5.5), null);
   const state = {bowlNight: {event: {trickPopups: [record]}, clock: 5.49}};
-  const view = {event: 'freestyle', target: 310, crowd: 83, score: 280};
+  const view = {event: 'freestyle', target: SHOW_NIGHTS[0].freestyle.target.easy, crowd: 83, score: 280};
   assert.equal(bowlStrip(state, view).crowdLabel, 'CROWD x1.4');
   assert.equal(bowlStrip(state, view).crowd, 40);
   state.bowlNight.clock = 5.5;
@@ -98,6 +100,27 @@ for (const [night, index, name, goal] of [
   assert.equal(bowlResultReady({clock: 12, resultAt: 10, lastResult: {won: true, event: 'freestyle'}}), true);
   assert.equal(bowlResultReady({clock: 19.99, resultAt: 10, lastResult: {won: true, event: 'scrapasaurus'}}), false);
   assert.equal(bowlResultReady({clock: 20, resultAt: 10, lastResult: {won: true, event: 'scrapasaurus'}}), true);
+}
+
+{
+  const night = start(1, 1), {event} = night;
+  const view = () => bowlStrip(duel.state, bowlHudView(duel.state, duel.course));
+  assert.equal(view().gapLabel, 'YOU 0, OLD BESS 0, TIED');
+  Object.assign(event, {score: 640, rivalScore: 520, rivalPopup: {trick: 'Donut', points: 40, at: 8}});
+  night.clock = 8;
+  assert.equal(view().gapLabel, 'YOU 640, OLD BESS 520, AHEAD BY 120');
+  assert.match(view().chainLabel, /BACKFLIP x2/);
+  assert.equal(view().freestylePopup, 'OLD BESS: DONUT 40');
+  event.score = 440;
+  night.clock = 9.5;
+  assert.equal(view().gapLabel, 'YOU 440, OLD BESS 520, BEHIND BY 80');
+  assert.equal(view().freestylePopup, '');
+  assert.equal(freestyleBestLabel(view(), 2140), '');
+  event.rivalBeaten = true;
+  assert.equal(freestyleBestLabel(view(), 2140), 'OLD BESS BEATEN · YOUR BEST 2,140');
+  for (const {freestyle} of SHOW_NIGHTS.filter(night => night.freestyle)) {
+    assert.ok(Object.values(freestyleLines(freestyle.name)).every(line => !/\b(?:wall|stands|car park)\b/i.test(line)));
+  }
 }
 
 {

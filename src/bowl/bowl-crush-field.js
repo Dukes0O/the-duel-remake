@@ -38,8 +38,12 @@ function dressCarCrush(course) {
     addPiece(course, `bowl-pancake-${index}`, s, off, CAR, COLOURS[index], {bowlPancakeRamp: ramp}));
   END_ONE.forEach(([s, off], index) => addPiece(course, `bowl-end-one-${index}`, s, off, CAR, COLOURS[index]));
 
+  addBusPiles(course, course.def.bowlFloor?.busPiles ?? 1);
+}
+
+function addBusPiles(course, count) {
   addBusPile(course, 251, 'bowl-bus-pile');
-  if (course.def.bowlFloor?.busPiles === 2) addBusPile(course, 269, 'bowl-second-bus-pile');
+  if (count === 2) addBusPile(course, 269, 'bowl-second-bus-pile');
 }
 
 function addBusPile(course, s, id) {
@@ -100,6 +104,7 @@ function dressHighJump(course) {
 
 const DRESSINGS = new Map([
   [CAR_CRUSH_DRESSING, dressCarCrush],
+  ['freestyleBusPiles', course => addBusPiles(course, 2)],
   ['longJump', dressLongJump],
   ['highJump', dressHighJump],
   ['bestTrick', course => jumpLine(course, 'bestTrick', () => ({}))],
