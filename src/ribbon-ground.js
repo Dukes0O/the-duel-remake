@@ -25,6 +25,10 @@ const BURIED_GAP = 5, RISE = 10, BURIED_DEPTH = .4, OWN_FROM = 12, OWN_OVER = 8;
 
 export function ribbonGroundAt(course, s, off) {
   const point = course.groundAt(s, off);
+  // A course may draw its ribbon at its own height in places (`course.ribbonGroundY(s, off)`, a number, or null for the
+  // usual ground): the Bowl lays it under its drawn stands (src/bowl/bowl-course.js). Never lifted above the ground.
+  const drawnY = course.ribbonGroundY?.(s, off);
+  if (drawnY != null) { point.y = Math.min(point.y, drawnY); return point; }
   if (!course.script) return point;
   const own = Math.abs(off);
   if (own <= course.roadHalfWidthAt(s) + 2) return point;
