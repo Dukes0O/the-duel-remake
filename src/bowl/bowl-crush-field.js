@@ -46,7 +46,65 @@ function dressCarCrush(course) {
   });
 }
 
-const DRESSINGS = new Map([[CAR_CRUSH_DRESSING, dressCarCrush]]);
+// These pieces exist only while their jump runs. The ramp gives each line
+// its direction in the world, even after the course bends around End 1.
+function jumpLine(course, type, dressing) {
+  const index = course.features.ramps.findIndex(ramp => ramp.id === 'big-jump');
+  const ramp = course.features.ramps[index];
+  const crest = course.groundAt((ramp.start + ramp.end) / 2, ramp.off);
+  const forward = {x: Math.sin(crest.heading), z: Math.cos(crest.heading)};
+  const across = {x: forward.z, z: -forward.x};
+  const line = {type, rampId: `ramp-${index}`, ramp, crest, forward, across};
+  course.features.bowlJump = {...line, ...dressing(line)};
+}
+
+const beyond = ({crest, forward, across}, distance, offset = 0) => ({
+  x: crest.x + forward.x * distance + across.x * offset,
+  z: crest.z + forward.z * distance + across.z * offset,
+});
+
+export function bowlJumpGround(course, {x, z}) {
+  const {s, lateral} = course.nearest(x, z);
+  return {...course.groundAt(s, lateral), x, z, lateral};
+}
+
+function dressLongJump(course) {
+  jumpLine(course, 'longJump', line => {
+    const buses = Array.from({length: 10}, (_, index) => {
+      const distance = 20 + 3 * index, point = beyond(line, distance);
+      const {s, lateral} = course.nearest(point.x, point.z);
+      const id = `bowl-long-bus-${index + 1}`;
+      addPiece(course, id, s, lateral, BUS, COLOURS[index % COLOURS.length], {
+        ...point, heading: line.crest.heading + Math.PI / 2,
+      });
+      return {id, distance, halfDepth: BUS.halfX, halfWidth: BUS.halfZ,
+        top: course.features.crushables.at(-1).y + BUS.height};
+    });
+    return {buses};
+  });
+}
+
+function dressHighJump(course) {
+  jumpLine(course, 'highJump', line => {
+    // The plane is in the apex band of the slower and faster jump lines.
+    const distance = 18.5, halfWidth = 5.5;
+    return {bar: {distance, halfWidth, posts: [-halfWidth, halfWidth].map(side =>
+      bowlJumpGround(course, beyond(line, distance, side)))}};
+  });
+}
+
+function dressHomeRun(course) {
+  jumpLine(course, 'homeRun', line => ({
+    target: {...beyond(line, 63, 29), radii: [4, 8, 12]},
+  }));
+}
+
+const DRESSINGS = new Map([
+  [CAR_CRUSH_DRESSING, dressCarCrush],
+  ['longJump', dressLongJump],
+  ['highJump', dressHighJump],
+  ['homeRun', dressHomeRun],
+]);
 
 export function dressBowlEvent(course) {
   DRESSINGS.get(course.def.bowlDressing)?.(course);

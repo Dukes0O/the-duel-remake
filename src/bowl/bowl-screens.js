@@ -17,7 +17,8 @@ const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
 const button = (label, action, extra = '', primary = false) =>
   `<button type="button" class="${primary ? 'primary-action' : 'secondary-action'}" data-action="${action}"${extra}>${label}</button>`;
 export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
-  let pickerFrom = null, level = null, openingNight = null, help = null, schoolPanel = null, renderedLesson = null;
+  let pickerFrom = null, level = null, openingNight = null, help = null;
+  let jumpFade = null, schoolPanel = null, renderedLesson = null;
   const renderHud = createBowlHud({stage: ui.stage, app, projectPlayer});
   const turns = createTurnScreens({app, escapeHTML, eventGuide});
   const say = text => `<p>${escapeHTML(text)}</p>`;
@@ -153,16 +154,36 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       '<p><svg width="108" height="52" viewBox="0 0 108 52" aria-hidden="true">'+picture+'</svg> '+escapeHTML(line)+'</p>').join('')+'</div>';
   }
 
+  function paintJumpFade(resetIn) {
+    if (resetIn == null) {
+      if (jumpFade) jumpFade.hidden = true;
+      return;
+    }
+    if (!jumpFade) {
+      jumpFade = ui.stage.ownerDocument.createElement('div');
+      jumpFade.setAttribute('aria-hidden', 'true');
+      Object.assign(jumpFade.style, {position: 'absolute', inset: '0', background: '#150e0b',
+        pointerEvents: 'none', zIndex: '8'});
+      ui.stage.append(jumpFade);
+    }
+    jumpFade.hidden = false;
+    jumpFade.style.opacity = String(Math.max(0, Math.min(1, 4 * Math.min(resetIn, 1 - resetIn))));
+  }
+
   function eventCard(state) {
     const show = state.bowlNight, result = show.lastResult, name = BOWL_EVENT_NAMES[result.event] ?? result.event;
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
+    const standalone = !!show.singleEvent;
     const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won, BOWL_RIVALS[result.rival]?.name)
       : result.event === 'lastTruckRolling' ? WORDS.eventKnockouts(result) // BOWL-RIVALS
-        : result.event === 'carCrush' ? WORDS.eventCrush(result) : null,
-      result.fullHouse ? WORDS.eventFullHouse(result.fullHouseBonus) : null, WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
+        : result.event === 'carCrush' ? WORDS.eventCrush(result) : result.bestGo ? WORDS.eventJump(result) : null,
+      result.fullHouse ? WORDS.eventFullHouse(result.fullHouseBonus) : null, WORDS.eventScore(result.score),
+      result.won ? standalone ? null : WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
+    const advance = standalone && result.won ? '' : button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true);
+    const leaveNote = standalone ? '' : say(WORDS.leaveNote);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${advance}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${leaveNote}</section>`;
   }
 
   function nightCard(state) {
@@ -211,6 +232,8 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     // The race HUD's Show Night part, drawn every frame from the state.
     hud(state) {
       const show = state.bowlNight;
+      const fadeUntil = show?.event?.goFadeUntil;
+      paintJumpFade(state.paused || fadeUntil == null ? null : fadeUntil - show.clock);
       if (help && (help.state !== state || !state.paused)) help = null;
       const active = !!show && state.status !== 'menu';
       ui.stage.classList.toggle('bowl-night-active', active);
@@ -220,6 +243,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       const arenaHud = !state.paused && arenaShow(state) && eventIsRunning(state);
       lessonPanel(state, !!show?.school && !!view);
       const strip = arenaHud ? arenaTrickStrip(state) : bowlStrip(state, show?.school ? null : view, id => BOWL_RIVALS[id]?.name);
+      if (strip && show?.event?.go && !show.turn) strip.gapLabel = `Go ${show.event.go.number} of 3`;
       if (strip && view?.event === 'lastTruckRolling' && state.bowlWeapon?.kind) {
         const weapon = state.bowlWeapon, warning = state.opponents.find(rival => rival.bowlWeapon?.phase === 'tell');
         const ready = weapon.phase === 'rest' ? ` · ${Math.max(0,weapon.time).toFixed(1)} s` : '';
@@ -255,7 +279,10 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
           openingNight = null;
         }
       } else if (action === 'show-night-tricks-close') closeHelp();
-      else if (action === 'show-night-next') app.continueShowNight?.();
+      else if (action === 'show-night-next') {
+        if (night()?.singleEvent) app.duel.continueBowlNight();
+        else app.continueShowNight?.();
+      }
       else if (action === 'show-night-leave') { pickerFrom = null; app.leaveShowNight?.(target.dataset.to); }
       else if (action === 'show-night-pick') {
         const from = app.showNightRun?.()?.from ?? 'menu';
