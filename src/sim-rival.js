@@ -5,6 +5,7 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPus
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
+import {titanWreckDetourLane} from './demo-unstuck.js';
 import {observeSummitRoute,avalancheEnabled} from './summit-avalanche.js';
 import {RACERS,FIELD_TUNING} from './race-field.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
@@ -284,10 +285,12 @@ export function _rival(dt, opponent = this.state.rival) {
     const limit=(rivalSurface.roadHalfWidth||DRIVE.roadHalfWidth)-halfWidth;
     lane=clamp(pool.lateral+side*clearance,-limit,limit);
   }
+  const wreckLane = titanWreckDetourLane(this, r);
+  if (wreckLane != null) { lane = wreckLane; target = Math.min(target, 28); }
   const grip=arsenalEnabled(this) ? carGrip(r) : 1;
   const deliberateAttack = ramAttack || fighterIntent?.attack || boarded;
-  const plannedHeading = (deliberateAttack || oil) ? clamp((lane - r.lateral) * .095, -.55, .55)
-    : route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
+  const laneHeading = clamp((lane - r.lateral) * (wreckLane == null ? .095 : .22), -.55, .55);
+  const plannedHeading = deliberateAttack || oil || wreckLane != null ? laneHeading : route?.headingTarget ?? laneHeading;
   const yieldPlan = (deliberateAttack || bowlDrive)
     ? {yielding:false,targetMph:Math.max(0,target),braking:DRIVE.brakeAccel}
     : this._npcYield(r, Math.max(0, target), plannedHeading);
@@ -318,7 +321,7 @@ export function _rival(dt, opponent = this.state.rival) {
   if (r.ramRecoverySec > 0) {
     // Let the ram carry the car before the route planner tries to recenter it.
     r.headingError *= Math.exp(-.35 * dt);
-  } else if (route && !ramAttack) {
+  } else if (route && !ramAttack && wreckLane == null) {
     // Follow the physical tangent with the same tire-limited yaw authority
     // as the player. Subtract road-frame rotation to retain relative heading.
     const speed = r.speedMph * DRIVE.mphToWorld, frame = this.course.at(r.s);
@@ -329,7 +332,7 @@ export function _rival(dt, opponent = this.state.rival) {
     const progress = Math.cos(r.headingError) * speed / Math.max(.25, 1 - frame.curvature * r.lateral);
     r.headingError += (yaw - frame.curvature * progress) * dt;
   } else {
-    const desiredHeading = clamp((lane - r.lateral) * .095, -.55, .55);
+    const desiredHeading = laneHeading;
     // Recovery is a steering manoeuvre with limited grip, never a lane snap.
     const rivalTurnRate = (rivalSurface.preparedGravel ? .95 * rivalSurface.traction : r.offRoad ? .48 : .95) * grip;
     if (arsenalEnabled(this)) setCarSteering(r, rivalTurnRate > 0

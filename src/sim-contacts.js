@@ -1152,7 +1152,9 @@ export function _crushProps(actor) {
   for (const prop of props || []) {
     const movable = !!state.arena && prop.kind === 'junkCar' && !inParking;
     if (state.crushedProps.includes(prop.id)) continue;
-    const hit = sweepObstacle(start, end, prop, heading, spec);
+    const titanWreck = this.course.def.id === 'titan-arena' && prop.kind === 'junkCar';
+    const collider = titanWreck ? {...prop, exactCarCorners: true} : prop;
+    const hit = sweepObstacle(start, end, collider, heading, spec);
     if (!hit) {
       if (movable) contactArenaJunk(this, actor, prop, null);
       continue;
@@ -1165,7 +1167,7 @@ export function _crushProps(actor) {
       if (bottom > top || previousBottom <= bottom) continue;
       contactTime = (previousBottom - top) / (previousBottom - bottom);
       const landing = { x: start.x + (end.x - start.x) * contactTime, z: start.z + (end.z - start.z) * contactTime };
-      if (!sweepObstacle(landing, landing, prop, heading, spec)) continue;
+      if (!sweepObstacle(landing, landing, collider, heading, spec)) continue;
     }
     // The truck must still overlap the footprint when its underside crosses
     // the roof. Entering the footprint later is a side impact.
@@ -1178,6 +1180,7 @@ export function _crushProps(actor) {
     const group = carCrush ? prop.bowlCrushGroup : null;
     const blockedPile = group && !pancake && Math.abs(actor.speedMph) < prop.bowlCrushMinMph;
     if (blockedPile || spec.mass < (prop.crushMass || 3500)) {
+      if (titanWreck) actor._titanWreckContact = {id: prop.id, at: state.stageTimeSec};
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),
         z: start.z + (end.z - start.z) * hit.t + hit.nz * (hit.penetration + .04) };
       const road = this._roadPosition(stop, actor.s); actor.s = road.s; actor.lateral = road.lateral;
