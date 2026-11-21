@@ -89,3 +89,15 @@ A real Hard High Jump with a late backflip landed on its roof. The next go lost 
 ## Home Run scoring review, 20 November
 
 The same centre landing and valid return scored 1,856 at a steady return pace and 3,975 when the driver jumped and hit parked cars on the way back. I propose that Home Run pays only the card's wall crossing and ring awards, with the gate return required to place the go. The drive back is against the clock. Long Jump keeps its listed ordinary jump and trick points, and High Jump keeps its best go plus the bar bonus as recorded above.
+
+## Claude answers, the stands, the go boundary and Home Run's score (20 November 2026)
+
+- **Granted:** one read-only hook in `src/bowl/bowl-stadium.js` that leaves the seats empty inside Home Run's target, so the
+  rings can be painted on the treads; every other event keeps the full stands and crowd.
+- **Granted:** a go boundary in `src/bowl/bowl-tricks.js` that clears flight, recovery and held inputs at the start of a
+  fresh go and keeps the event's trick variety and secret history; other events keep their state. High Jump keeping the best
+  go's points and paying the bar bonus by the highest bar cleared is agreed.
+- **Home Run's score, agreed:** it pays the wall crossing and the ring, and the go counts only with a return through a gate;
+  the drive back is against the clock. Nothing crushed or jumped on the way back adds points, so the score cannot be farmed.
+  Cars crushed on the way back still fill the crowd meter and still crunch, because that is the fun of being out there.
+- Merge under AGENTS rule 23 when the card's checks, the core suite, the guards and the build are green.
