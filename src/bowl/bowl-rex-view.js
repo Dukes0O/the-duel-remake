@@ -100,9 +100,11 @@ export function createRexView({loadModel}) {
   // The shared flame drawing at a lower gain, so that many tongues overlapping stay orange instead of burning white.
   const flameMaterial = createFlameMaterial(), flameCard = new THREE.PlaneGeometry(1, 1);
   flameMaterial.uniforms.uGain = {value: .55};
-  flameMaterial.fragmentShader = flameMaterial.fragmentShader
+  const gained = flameMaterial.fragmentShader
     .replace('uniform float uSeed;', 'uniform float uSeed;uniform float uGain;')
     .replace('gl_FragColor=vec4(colour*body*1.05,body);', 'gl_FragColor=vec4(colour*body*uGain,body*uGain);');
+  // Only when both lines were found: otherwise the shared drawing is kept as it is, brighter but whole.
+  if (/uniform float uGain;[\s\S]*body\*uGain\)/.test(gained)) flameMaterial.fragmentShader = gained;
   const TONGUES = 26, tongues = [];
   for (let index = 0; index < TONGUES; index++) {
     const tongue = new THREE.Mesh(flameCard, flameMaterial);
@@ -268,6 +270,7 @@ export function createRexView({loadModel}) {
       for(const {leads} of boxes)leads?.scale.setScalar(0);
       for(const points of [...leadSparks.flat(),...tearSparks])points.visible=false;
       steam.visible=dust.visible=false;group.userData.allJetsFire=false;
+      for(const lamp of lamps)lamp.material.emissiveIntensity=lamp.glow;
       actions.tired?.stop();
       actions.tail?.play();
       return;

@@ -687,6 +687,17 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-REX-LOOK.md"
 
+  - id: BOWL-REX-3-LOOK
+    title: "Bowl: the Scrapasaurus's eye beam and bombs drawn (after BOWL-REX-3)"
+    owner: "claude"
+    lane: "ART"
+    size: "S"
+    status: "backlog"
+    needs: [BOWL-REX-3]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-3-LOOK.md"
+
   - id: BOWL-REX-SOLIDS
     title: "Bowl: no invisible box under the Scrapasaurus's feet, its fall flat on the floor, and its torn leads in the yard"
     owner: "codex"
