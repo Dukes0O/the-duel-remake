@@ -55,6 +55,24 @@ for(const night of [3,4,5]) {
   assert.equal(bowlHealthLoss(d,target,1,'player','left'),42);
   sums(target);
 }
+for (const [level, hammer, launcher] of [['easy', 8, 8], ['medium', 18, 10], ['hard', 18, 10]]) {
+  for (const [kind, expected] of [['hammer', hammer], ['launcher', launcher]]) {
+    const duel = fight('hammer', level), state = duel.state;
+    const rival = line(duel);
+    place(duel, rival, 27.8, 0);
+    rival.bowlWeapon.kind = kind;
+    ticks(duel, Math.round(({easy: .8, medium: .6, hard: .4})[level] / dt));
+    if (kind === 'launcher') {
+      assert.ok(state.bowlFlight?.owner && state.bowlFlight.owner !== 'player');
+      for (let tick = 0; tick < 240 && state.bowlFlight; tick++) showMotion(duel, state, dt, () => {});
+      assert.equal(state.bowlFlight, undefined, 'the rival throw landed');
+    }
+    assert.ok(Math.abs(state.maxArmor - state.armor - expected) < 1e-8,
+      level + ' rival ' + kind + ' takes the expected health from the player');
+    sums(state);
+  }
+}
+
 {
   const d=fight(),s=d.state,[a,b]=s.opponents;
   line(d);place(d,a,38.5,-2.4);place(d,b,38.5,2.4);

@@ -16,6 +16,7 @@ export const SHOW_WEAPONS = Object.freeze({
 const RIVALS = {'rust-rhino':'horn','big-kettle':'hammer','tin-lizard':'saw','old-bess':'launcher','dragon-wagon':'fire'};
 const TELLS = {easy:.8,medium:.6,hard:.4};
 const HAMMER_LEAN = Math.PI / 6;
+const EASY_RIVAL_IMPACT_LIMIT = 8;
 const cue = (duel,id) => duel.emit({bowlWeaponCue:id});
 
 function fit(actor, kind) {
@@ -55,6 +56,14 @@ export function bowlHealthLoss(duel,actor,fraction,owner,side='front',styleHit=t
     if(owner) actor.bowlLastHitBy=owner;
   }
   return removed;
+}
+
+function weaponImpact(duel, actor, fraction, owner, side) {
+  const state = duel.state;
+  if (actor === state && owner && owner !== 'player' && state.bowlNight.cpuDifficulty === 'easy') {
+    fraction = Math.min(fraction, EASY_RIVAL_IMPACT_LIMIT / actor.maxArmor);
+  }
+  return bowlHealthLoss(duel, actor, fraction, owner, side);
 }
 
 // Measure from the nose to the nearest point on the target truck's oriented body.
@@ -108,7 +117,7 @@ function fire(duel,actor,weapon,target) {
       const hits=[];
       showTarget(duel,actor,rules.reach,hits);
       for (const hit of hits) {
-        bowlHealthLoss(duel,hit.actor,.3,owner,hit.side);
+        weaponImpact(duel,hit.actor,.3,owner,hit.side);
         hit.actor.bowlNoSteer=1;
       }
     } else actor.bowlHeldStill=.5;
@@ -117,7 +126,7 @@ function fire(duel,actor,weapon,target) {
     launch(duel,actor,target?.actor??actor,target?.side);
     cue(duel,'bowl.launcher.fire');
   } else if(kind==='horn' && target) {
-    bowlHealthLoss(duel,target.actor,Math.max(0,Math.abs(actor.speedMph)-20)/100,owner,target.side);
+    weaponImpact(duel,target.actor,Math.max(0,Math.abs(actor.speedMph)-20)/100,owner,target.side);
   }
   rest(weapon,rules.rest);
 }
@@ -230,7 +239,7 @@ export function showMotion(duel,actor,dt,drive) {
       if(flight.owner) {
         actor.bowlHeldStill=2.5; actor.bowlRighting=true;
         actor.bowlPose={roll:Math.PI/2,pitch:0,yaw:0};
-        bowlHealthLoss(duel,actor,1/6,flight.owner,flight.side);
+        weaponImpact(duel,actor,1/6,flight.owner,flight.side);
       }
     }
     return true;
