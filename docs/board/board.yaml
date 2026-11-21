@@ -693,7 +693,8 @@ tasks:
     owner: "claude"
     lane: "AUDIO"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude: every merged card's cues from CC0 recordings, 21 November 2026; Freestyle's five after it merges"
     needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS]
     locks: [sound-bank]
     flag: "titan-bowl"
