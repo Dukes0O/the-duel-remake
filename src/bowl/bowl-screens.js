@@ -6,6 +6,7 @@ import {SHOW_NIGHTS} from './bowl-show.js';
 import {bowlHudView, crushRowName} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
+import {chooseShowWeapon, SHOW_WEAPONS} from './bowl-weapons.js';
 import {BOWL_RIVALS} from './bowl-rivals.js';
 import {arenaTrickStrip, secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
@@ -140,9 +141,16 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     // The parts of the screen that change what the modal layer shows.
     key(state) {
       const show = night();
-      return `${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${resultReady(show)}:${help?.state === state}:${turns.key(state)}`;
+      return `${state.status}:${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${resultReady(show)}:${help?.state === state}:${turns.key(state)}`;
     },
     modal(state, {yardActive = false} = {}) {
+      if (state.status === 'bowl_weapon_pick') {
+        const picks = state.bowlNight.event.weaponChoices.map(id => {
+          const weapon = SHOW_WEAPONS[id];
+          return `<li><span aria-hidden="true">${weapon.picture}</span> ${button(weapon.name, 'show-night-weapon', ` data-weapon="${id}"`)}${say(weapon.line)}</li>`;
+        });
+        return `<section class="bowl-panel" role="dialog" aria-modal="true" aria-labelledby="bowl-title"><h2 id="bowl-title">Choose your show weapon</h2><p>Use F in Last Truck Rolling.</p><ul>${picks.join('')}</ul></section>`;
+      }
       if (eventIsRunning(state) && state.paused && help?.state === state) return trickCard(state);
       if (state.bowlNight && state.status === 'bowl_break' && !resultReady(state.bowlNight)) return '';
       // BOWL-TURNS: a Turn Show, or its setup, has its own screens.
@@ -165,11 +173,19 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       const course = app.duel.course;
       const view = !state.paused && (eventIsRunning(state) || watchingFinish) ? bowlHudView(state, course) : null;
       const arenaHud = !state.paused && arenaShow(state) && eventIsRunning(state);
-      renderHud(state, course, arenaHud ? arenaTrickStrip(state) : bowlStrip(state, view, id => BOWL_RIVALS[id]?.name));
+      const strip = arenaHud ? arenaTrickStrip(state) : bowlStrip(state, view, id => BOWL_RIVALS[id]?.name);
+      if (strip && view?.event === 'lastTruckRolling' && state.bowlWeapon?.kind) {
+        const weapon = state.bowlWeapon, warning = state.opponents.find(rival => rival.bowlWeapon?.phase === 'tell');
+        const ready = weapon.phase === 'rest' ? ` · ${Math.max(0,weapon.time).toFixed(1)} s` : '';
+        strip.gapLabel = warning ? `${BOWL_RIVALS[warning.bowlRival].name}: ${warning.bowlWeapon.kind}!`
+          : `F · ${SHOW_WEAPONS[weapon.kind].name}${ready}`;
+      }
+      renderHud(state, course, strip);
     },
     // A Show Night button. Returns true when it was one.
     handle(target) {
       const action = target.dataset.action;
+      if (action === 'show-night-weapon') return chooseShowWeapon(app.duel, target.dataset.weapon);
       if (action === 'show-turns-open') { pickerFrom = null; openingNight = null; turns.open(); return true; }
       if (turns.handle(target)) return true;
       if (!action?.startsWith('show-night-')) return false;
