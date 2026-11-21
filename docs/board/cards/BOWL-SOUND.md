@@ -52,3 +52,18 @@ the Bowl's branch in `src/audio.js`. Lock: `sound-bank`.
 1. The audio budget check and `tools/test-repo-hygiene.mjs` (file homes and sizes).
 2. A check that every cue named in `BOWL_SOUND_CUES` is in the bank and that none points at another event's sound.
 3. Laptop only: Claude listens, as above.
+
+## Kyle's try in the Preview (20 November 2026, integration at `bfec511bb`)
+
+Kyle: "night for last truck rolling saw was really janky, especially the sound. a funny buzz instead of a saw cutting
+metal", "Buzzes for sounds are terrible and need proper weaponry sounds." This card now goes first among the Bowl's
+sound work, and the weapons first within it:
+
+- **The saw:** a cutting disc on steel, a rising whine as it spins up, a hard metal scream while it touches a truck, with
+  the sparks, and a ticking cool-down. Never a buzz.
+- **The hammer:** a heavy hydraulic rise, then a deep clang on a truck and a thud in the dirt on a miss.
+- **The launcher:** a hiss as it fills and a hard air bang when it fires.
+- **The rivals' weapons and the Scrapasaurus's** (the horn's charge, Big Kettle's hammer, Tin Lizard's saw, Dragon
+  Wagon's fire, the beast's roar and breath) by the same standard.
+- Start from recorded library sounds (`tools/audio/catalog.json`, `memory/reuse-before-building`), not tones made in
+  code. Each one is listened to in a fight before it is kept.

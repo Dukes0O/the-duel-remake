@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-FEEL-FIX, BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -668,7 +668,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
-    needs: []
+    needs: [BOWL-FEEL-FIX]
     locks: [bowl-rivals]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-LTR-EASY.md"
@@ -803,6 +803,18 @@ tasks:
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SHOW-3-LOOK.md"
+
+  - id: BOWL-FEEL-FIX
+    title: "Bowl: from Kyle's try, the snap to the side after a hit, the Spine reset under the ground, the hammer while driving, the saw's jerk, the launcher's reach"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [bowl-rivals, bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-FEEL-FIX.md"
 
   - id: BOWL-TOUR
     title: "Bowl: nights 6 to 8, the tour (after the first release)"

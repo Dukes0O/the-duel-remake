@@ -40,3 +40,16 @@ None new.
    cable is 15 m long: a hooked truck can never be further than 15 m from the box. When the cable is tight the truck's
    travel away is stopped (it strains, nose up), and the beast's pull drags it back as designed. Check: no hooked truck is
    ever more than 15 m from its box, whatever the throttle and nitro.
+
+## Kyle's try in the Preview (20 November 2026, integration at `bfec511bb`)
+
+5. **No light on the floor before the fire.** Kyle: "scraposaurus probably doesn't need the ground to light up before
+   breathing fire. no need at all." The orange that marks the fire's reach on the floor goes, on every level. The tell is
+   on the beast: the chest glows, it roars, and its head turns to aim, for the tell's whole time as now. The fire itself
+   is unchanged. Words: the goal line during the tell and the fire becomes "ITS CHEST IS GLOWING, SO GET CLEAR";
+   `rex.tell` becomes "Look at its chest glowing. That means fire is coming, so get away from its head."; `rex.scorch`
+   becomes "Ouch, that truck got toasted. Watch its chest, and move when it glows." Check: no floor marking is drawn in
+   the tell or fire phases; a scripted driver who drives away from the head when the chest glows is not burned on Easy.
+   The bomb rings (BOWL-REX-3) were already made almost invisible, and the eye beam's red line stays, because it is the
+   beam's own aim and not a mark on the floor.
+6. **The jerk to the side after a bump** in the fight is BOWL-FEEL-FIX item 1.

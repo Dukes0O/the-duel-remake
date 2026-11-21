@@ -58,6 +58,23 @@ BOWL-NIGHT-4 has merged, so start from its Barrel Roll Night (it changed `src/bo
 6. **In a Turn Show** Freestyle is one 90 second go with the night's floor; the rival takes no part and its pop-ups and
    score are not shown.
 
+## Kyle's try in the Preview (20 November 2026, integration at `bfec511bb`)
+
+Kyle: "Easy mode is super easy. I'm beating opponents like 12000 to 400. I scored 22,000 in the night 5 freestyle.
+granted, I was going a bit crazy". He also scored 1,815 in Best Trick against Big Kettle's tricks of 0, 50 and 60. So:
+
+7. **Medium and Hard are set from play, not only from scripts.** The scripted expert scores far below a person who plays
+   well. Starting numbers, raised: Medium 6,000 / 7,000 / 8,000 / 10,000 and Hard 12,000 / 14,000 / 16,000 / 20,000 on
+   Nights 1, 2, 3 and 5. Claude's hand drive on Medium and Hard (check 4) moves them; Kyle's 22,000 "going a bit crazy" on
+   Night 5 should beat Hard, and a merely good run should not. Easy stays set by the slow scripted driver (six in ten),
+   because the player is a tween; how much harder Easy can be is Kyle's to judge after Gratian has played it.
+8. **Best Trick's Big Kettle numbers** (`src/bowl/bowl-jump-events.js`, from BOWL-NIGHT-4) were the trick table's plain
+   points, while the driver's tricks score with NEW, the crowd and tonight's doubled barrel roll. Big Kettle's tricks now
+   score by the same rules as the driver's, with the crowd at the driver's crowd meter when the round starts. Starting
+   points before those rules: Easy 0 / 150 / 300, Medium 300 / 600 / 900, Hard 900 / 1,500 / 2,400. Set by the same
+   checks as BOWL-NIGHT-4 (the child-pace driver wins Easy at least 6 in 10 and not all ten), plus: a driver who lands
+   only single tricks loses Medium.
+
 ## Files and locks
 
 `src/bowl/bowl-show.js`, `src/bowl/bowl-night.js` (the Freestyle runner), `src/bowl/bowl-crush-field.js`,

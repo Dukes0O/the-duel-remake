@@ -45,3 +45,10 @@ Memory-only saves. No new dependency, network request or key.
    health left; on Medium and Hard the rule stays.
 5. Nights 3 and 5 could not be passed after three tries each, so this card now stops the season for a tween. It goes first
    among the Bowl's fix cards.
+
+## Kyle's try in the Preview (20 November 2026, integration at `bfec511bb`)
+
+6. **Kyle won Hammer Night's Last Truck Rolling on Easy at the first try** (707 points), and called it "pretty good". So
+   Easy may not need to be easier with the hammer: measure the chaser first, and do not move a number that already gives
+   about six wins in ten. What spoiled his fights was the feel (the truck snapping sideways after a hit, the hammer while
+   driving, the saw's jerk, the launcher's narrow reach), which is BOWL-FEEL-FIX. Tune after that card has merged.
