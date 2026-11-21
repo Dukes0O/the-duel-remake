@@ -85,3 +85,7 @@ The merged Bowl Outside view now fills the landing site with spectators. May Jum
 ## Reset review, 20 November
 
 A real Hard High Jump with a late backflip landed on its roof. The next go lost its first 1.5 seconds to the last go's recovery after the truck was already back on the run-up. May this card add a small go boundary in `src/bowl/bowl-tricks.js`? On a fresh go it would clear flight, recovery and held inputs while preserving trick variety and secret history for the event. Other events keep the same state. The reviewer also caught the middle-ring goal and the standalone retry. Those are fixed in the jump lane. High Jump will keep the best go's ordinary points and pay the bar bonus by the highest bar cleared.
+
+## Home Run scoring review, 20 November
+
+The same centre landing and valid return scored 1,856 at a steady return pace and 3,975 when the driver jumped and hit parked cars on the way back. I propose that Home Run pays only the card's wall crossing and ring awards, with the gate return required to place the go. The drive back is against the clock. Long Jump keeps its listed ordinary jump and trick points, and High Jump keeps its best go plus the bar bonus as recorded above.
