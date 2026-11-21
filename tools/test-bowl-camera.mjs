@@ -332,7 +332,7 @@ for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
   ok(JSON.stringify(a.state) === JSON.stringify(b.state), 'stepping the camera changes nothing in the race');
 }
 
-// The fall shot holds both the truck and the whole falling beast for ten seconds.
+// The fall shot stays with the whole beast even when the truck drives away.
 {
   const duel = new Duel({seed: 1989});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
@@ -350,7 +350,7 @@ for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
       rexFall: bowlRexFallFrame(duel.course, fight),
       solidTop: (x, z) => bowlSolidTop(duel.course, x, z, fight.s),
     });
-    const corners = [{x: p.x, y: p.y + 1.65, z: p.z}];
+    const corners = [];
     for (const part of rexSolids(fight, duel.course)) {
       for (const x of [-part.halfX, part.halfX]) for (const z of [-part.halfZ, part.halfZ]) {
         const point = {x: part.x + Math.cos(part.heading) * x + Math.sin(part.heading) * z,
@@ -358,10 +358,15 @@ for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
         corners.push({...point, y: part.minY}, {...point, y: part.maxY});
       }
     }
-    ok(shot.hold === 'rexFall' && corners.every(point => {
-      const {x, y, depth} = project(shot.position, shot.target, point);
-      return depth > 0 && Math.abs(x) < 1 && Math.abs(y) < 1;
-    }), 'the full Rex and the truck stay inside the frame during the fall');
+    const projected = corners.map(point => project(shot.position, shot.target, point));
+    const heights = projected.map(point => point.y);
+    ok(shot.hold === 'rexFall' && projected.every(({x, y, depth}) => depth > 0 && Math.abs(x) < 1 && Math.abs(y) < 1),
+      'the full Rex stays inside the frame during the fall');
+    ok(Math.max(...heights) - Math.min(...heights) >= 2 / 3, 'the Rex fills at least a third of the picture height');
+    const rex = bowlRexFallFrame(duel.course, fight);
+    const distance = Math.hypot(shot.position.x - rex.x, shot.position.y - rex.y, shot.position.z - rex.z);
+    ok(distance <= 45 && duel.course.nearest(shot.position.x, shot.position.z, fight.s).lateral <= fight.places.edge,
+      'the fall camera stays close and inside the stadium');
   }
 }
 
@@ -376,6 +381,9 @@ for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
     {key: bowlCameraKey(state), x: p.x, y: p.y, z: p.z, air: 0, heading: -.3658}, FRAME, {rexFall: rex});
   ok((shot.position.x - rex.x) * (p.x - rex.x) + (shot.position.z - rex.z) * (p.z - rex.z) > 0,
     'the fall camera shoots from the truck side when the Rex would hide it from the chase side');
+  const truck = project(shot.position, shot.target, {x: p.x, y: p.y + 1.65, z: p.z});
+  ok(truck.depth > 0 && Math.abs(truck.x) < .9 && Math.abs(truck.y) < .9,
+    'the nearby truck shares the close fall shot');
 }
 
 // A new go, or a frame drawn by another camera, starts the camera afresh even when the truck has not moved: the old path

@@ -26,7 +26,7 @@
 // show camera keeps the Titan's 12 m and adds the design's 5.3 m in the air (17.3 m at 10 m up).
 import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight} from './bowl-course.js';
 import {BOWL_STAND} from './bowl-stadium.js';
-import {rexAnchor, rexSolids} from './bowl-hook.js';
+import {rexSolids} from './bowl-hook.js';
 
 export const BOWL_CAMERA = Object.freeze({
   // On the ground, and at the full height in the air (airFullMetres up and above).
@@ -209,47 +209,90 @@ function clearGateChase(course, position, body, referenceS) {
   return position;
 }
 
-// The camera frames the actual falling body, including the tail and head.
+// The camera frames the falling body's actual bounds, including head and tail.
 export function bowlRexFallFrame(course, fight) {
   if (fight?.phase !== 'fallen') return null;
-  const bounds = {left: Infinity, right: -Infinity, bottom: Infinity, top: -Infinity, near: Infinity, far: -Infinity};
+  const corners = [];
   for (const part of rexSolids(fight, course)) {
-    const sin = Math.abs(Math.sin(part.heading)), cos = Math.abs(Math.cos(part.heading));
-    const dx = part.halfX * cos + part.halfZ * sin, dz = part.halfX * sin + part.halfZ * cos;
-    bounds.left = Math.min(bounds.left, part.x - dx);
-    bounds.right = Math.max(bounds.right, part.x + dx);
-    bounds.bottom = Math.min(bounds.bottom, part.minY);
-    bounds.top = Math.max(bounds.top, part.maxY);
-    bounds.near = Math.min(bounds.near, part.z - dz);
-    bounds.far = Math.max(bounds.far, part.z + dz);
+    const sin = Math.sin(part.heading), cos = Math.cos(part.heading);
+    for (const across of [-part.halfX, part.halfX]) for (const along of [-part.halfZ, part.halfZ]) {
+      const x = part.x + across * cos + along * sin;
+      const z = part.z - across * sin + along * cos;
+      corners.push({x, y: part.minY, z}, {x, y: part.maxY, z});
+    }
   }
-  return {x: (bounds.left + bounds.right) / 2, y: (bounds.bottom + bounds.top) / 2,
-    z: (bounds.near + bounds.far) / 2,
-    radius: .5 * Math.hypot(bounds.right - bounds.left, bounds.top - bounds.bottom, bounds.far - bounds.near),
-    broadside: rexAnchor(fight, course).heading + Math.PI / 2};
+  const midpoint = axis => {
+    const coordinates = corners.map(point => point[axis]);
+    return (Math.min(...coordinates) + Math.max(...coordinates)) / 2;
+  };
+  const rail = course.worldAt(fight.s, fight.places.rail), inside = course.worldAt(fight.s, 0);
+  const inwardView = Math.atan2(rail.x - inside.x, rail.z - inside.z);
+  const wall = course.features.bowl.outside.wall;
+  const inStadium = point => course.nearest(point.x, point.z, fight.s).lateral <= wall;
+  return {x: midpoint('x'), y: midpoint('y'), z: midpoint('z'), corners, inwardView, inStadium};
+}
+
+function rexShot(body, rex, yaw, solidTop, aspect, fov) {
+  const pitch = .10, sin = Math.sin(yaw), cos = Math.cos(yaw);
+  const tanY = Math.tan(fov * DEG / 2), tanX = tanY * aspect;
+  const target = {x: rex.x, y: rex.y, z: rex.z};
+  const points = body ? rex.corners.concat([
+    {x: body.x - cos * 2.4, y: body.y - 1.4, z: body.z + sin * 2.4},
+    {x: body.x + cos * 2.4, y: body.y - 1.4, z: body.z - sin * 2.4},
+    {x: body.x - cos * 2.4, y: body.y + 1.5, z: body.z + sin * 2.4},
+    {x: body.x + cos * 2.4, y: body.y + 1.5, z: body.z - sin * 2.4},
+  ]) : rex.corners;
+  const across = points.map(point => (point.x - target.x) * cos - (point.z - target.z) * sin);
+  const centre = (Math.min(...across) + Math.max(...across)) / 2;
+  target.x += centre * cos;
+  target.z -= centre * sin;
+  // Solve for the closest distance that fits the projected corners with a margin.
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  let distance = 7;
+  for (const point of points) {
+    const x = point.x - target.x, y = point.y - target.y, z = point.z - target.z;
+    const along = x * sin + z * cos, depth = along * cp - y * sp;
+    const required = Math.max(.2, Math.abs(x * cos - z * sin) / (.93 * tanX),
+      Math.abs(y * cp + along * sp) / (.90 * tanY));
+    distance = Math.max(distance, required - depth);
+  }
+  const position = {x: target.x - sin * cp * distance, y: target.y + sp * distance,
+    z: target.z - cos * cp * distance};
+  const lift = solidTop ? Math.max(bowlLiftFor(position, rex, solidTop), body ? bowlLiftFor(position, body, solidTop) : 0) : 0;
+  position.y += lift;
+  // Check the actual projected bounds after clearance changes the pitch.
+  const run = Math.hypot(target.x - position.x, target.z - position.z);
+  const angle = Math.atan2(position.y - target.y, run);
+  const viewCos = Math.cos(angle), viewSin = Math.sin(angle);
+  let minY = Infinity, maxY = -Infinity, fits = true;
+  for (const [index, point] of points.entries()) {
+    const x = point.x - position.x, y = point.y - position.y, z = point.z - position.z;
+    const along = x * sin + z * cos, depth = along * viewCos - y * viewSin;
+    const px = (x * cos - z * sin) / (depth * tanX);
+    const py = (y * viewCos + along * viewSin) / (depth * tanY);
+    fits &&= depth > 0 && Math.abs(px) < .99 && Math.abs(py) < .99;
+    if (index < rex.corners.length) {
+      minY = Math.min(minY, py);
+      maxY = Math.max(maxY, py);
+    }
+  }
+  const heightShare = (maxY - minY) / 2;
+  const distanceFromRex = Math.hypot(position.x - rex.x, position.y - rex.y, position.z - rex.z);
+  return {position, target, yaw, lift, hold: 'rexFall', fits: fits && rex.inStadium(position), heightShare, distanceFromRex};
 }
 
 function frameRexFall(cam, body, rex, solidTop, aspect, verticalFov) {
+  const canUse = shot => shot.fits && shot.heightShare >= 1 / 3 && shot.distanceFromRex <= 45;
+  const turns = [0, .35, -.35, .7, -.7].map(turn => wrap(rex.inwardView + turn));
   if (cam.rexFallYaw == null) {
-    const side = (rex.x - body.x) * Math.sin(rex.broadside) + (rex.z - body.z) * Math.cos(rex.broadside);
-    // Frame the truck in front of the falling body. Use the existing chase
-    // angle only when the truck is nearly in line with the beast's rails.
-    const reverse = Math.abs(side) < .5 ? Math.abs(wrap(rex.broadside - cam.yaw)) > Math.PI / 2 : side < 0;
-    cam.rexFallYaw = wrap(rex.broadside + (reverse ? Math.PI : 0));
+    const both = turns.map(yaw => rexShot(body, rex, yaw, solidTop, aspect, verticalFov)).filter(canUse);
+    cam.rexFallYaw = both.sort((a, b) => a.distanceFromRex - b.distanceFromRex)[0]?.yaw ?? rex.inwardView;
   }
-  // A sphere enclosing the two subjects fits at any aspect ratio, even as
-  // the driver moves away from the beast during its fall.
-  const target = {x: (body.x + rex.x) / 2, y: (body.y + rex.y) / 2, z: (body.z + rex.z) / 2};
-  const halfWidth = Math.atan(Math.tan(verticalFov * DEG / 2) * aspect);
-  const halfHeight = verticalFov * DEG / 2;
-  const radius = Math.hypot(target.x - rex.x, target.y - rex.y, target.z - rex.z) + Math.max(3.8, rex.radius);
-  const distance = Math.max(22, radius / Math.sin(.87 * Math.min(halfWidth, halfHeight)));
-  const yaw = cam.rexFallYaw;
-  const position = {x: target.x - Math.sin(yaw) * distance, y: target.y + .32 * distance,
-    z: target.z - Math.cos(yaw) * distance};
-  const lift = solidTop ? Math.max(bowlLiftFor(position, body, solidTop), bowlLiftFor(position, rex, solidTop)) : 0;
-  position.y += lift;
-  return {position, target, yaw, lift, hold: 'rexFall'};
+  const paired = rexShot(body, rex, cam.rexFallYaw, solidTop, aspect, verticalFov);
+  if (canUse(paired)) return paired;
+  const close = rexShot(null, rex, cam.rexFallYaw, solidTop, aspect, verticalFov);
+  if (canUse(close)) return close;
+  return turns.map(yaw => rexShot(null, rex, yaw, solidTop, aspect, verticalFov)).find(canUse) ?? close;
 }
 
 // One frame of the show camera. `truck` is {key, x, y, z, air, heading}: `key` names the go (bowlCameraKey; a new key
