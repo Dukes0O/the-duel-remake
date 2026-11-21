@@ -74,6 +74,22 @@ for (const [level, hammer, launcher] of [['easy', 8, 8], ['medium', 18, 10], ['h
   }
 }
 
+for (const [level, expected] of [['easy', 4], ['medium', 13.5], ['hard', 13.5]]) {
+  const duel = fight('hammer', level), state = duel.state;
+  const [saw, fire] = state.opponents;
+  line(duel);
+  place(duel, saw, 29.5, 0);
+  place(duel, fire, 36.5, 0, Math.PI);
+  Object.assign(saw.bowlWeapon, {kind: 'saw', phase: 'active'});
+  Object.assign(fire.bowlWeapon, {kind: 'fire', phase: 'active'});
+  assert.equal(showTarget(duel, saw, 1.5).actor, state);
+  assert.equal(showTarget(duel, fire, 6).actor, state);
+  ticks(duel, 120);
+  assert.ok(Math.abs(state.maxArmor - state.armor - expected) < 1e-8,
+    level + ' simultaneous saw and fire draw from the expected damage budget');
+  sums(state);
+}
+
 {
   const d=fight(),s=d.state,[a,b]=s.opponents;
   line(d);place(d,a,38.5,-2.4);place(d,b,38.5,2.4);
@@ -195,7 +211,8 @@ for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   assert.equal(s.armor,60); assert.equal(enemy.bowlWeapon.phase,'tell');
   assert.equal(enemy.bowlWeapon.kind,'fire');
   ticks(d,1); assert.ok(s.armor<60);
-  ticks(d,119); assert.ok(Math.abs(s.armor-54)<1e-7);
+  const expected = level === 'easy' ? 56 : 54;
+  ticks(d,119); assert.ok(Math.abs(s.armor-expected)<1e-7);
   sums(s);
 }
 {
