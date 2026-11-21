@@ -668,7 +668,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, c/bowl-out-look-66a0f4 (gate marker, arches, parked cars, tunnels, crowd scatter)"
     needs: [BOWL-OUT-SIM]
     locks: []
     flag: "titan-bowl"
@@ -682,7 +683,6 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-rex-2"
-    waiting_on: "claude"
     needs: [BOWL-WALLS, BOWL-HUD, BOWL-OUT-SIM]
     locks: [bowl-screens]
     flag: "titan-bowl"
@@ -705,7 +705,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, c/bowl-rex-look-8806cf (model surface first, then the view on BOWL-REX-2's hooks)"
     needs: [BOWL-REX-2]
     locks: []
     flag: "titan-bowl"
@@ -729,7 +730,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, c/bowl-weapons-look-5f2526 (drawn in code first; hooked to BOWL-WEAPONS state after its merge)"
     needs: [BOWL-WEAPONS]
     locks: []
     flag: "titan-bowl"
@@ -790,7 +792,6 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Codex, codex/bowl-tricks-all"
-    waiting_on: "claude"
     needs: [BOWL-TRICKS, BOWL-HUD]
     locks: [bowl-night, replay-fixtures, save-shape, busy-game-files]
     flag: "arena-tricks"

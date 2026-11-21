@@ -537,3 +537,9 @@ follows it.
 
 Words on screen and Big Mo's lines: the builder writes each new line as one full plain sentence
 (`memory/dialogue-plain-prose`), and Claude reads every line during the closing drive.
+
+## How these slices are tested from 20 November 2026 (AGENTS rule 23)
+
+Every slice is behind `titan-bowl` or `arena-tricks`, so each runs rule 23's small set and merges first; the wide suites run on
+the merged batch at night, and Claude drives the merged game in batches. The slices that change the save (BOWL-TRICK-SCHOOL,
+BOWL-NIGHTS, BOWL-TOUR, and the secret-trick record of BOWL-TRICKS-ALL) keep the save checker's review before they merge.

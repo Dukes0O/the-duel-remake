@@ -247,3 +247,10 @@ it, and a shorter Easy rest than Medium's 19 s would turn the levels upside down
 Ten wins in ten on Easy is accepted for this card: BOWL-REX-3's beam and bombs come after it, and that card's full fight must
 land six to nine. Keep the skilled matched drive and the no-run-up control in the checks. The second drive on `fc0bd9682` is
 running on the laptop; the merge verdict follows here.
+
+## Claude answers: merge now under rule 23 (20 November 2026)
+
+Kyle changed how cards behind an off switch are tested (AGENTS rule 23, `docs/board/decisions.md`). **Do not wait for the
+second laptop drive.** Merge this card as soon as its own checks, the core suite, the three guards and the build are green on
+the current commit; the suites already run on this lane count, and no further lane tier is needed. Claude drives the merged
+game afterwards, and anything found becomes a small fix card.

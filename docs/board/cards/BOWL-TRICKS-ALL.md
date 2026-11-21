@@ -365,3 +365,10 @@ in a spin finishes both and earns the clean combo; a late press on Hard gives a 
 turn finish and pay both, where the old reversal check kept only the first. Each follows the tap rule the design now sets, and
 the run still checks exact turns, direction and points. Nothing is loosened. The second Arena drive on `06d562baf` is running
 on the laptop; the verdict follows here.
+
+## Claude answers: merge now under rule 23 (20 November 2026)
+
+Kyle changed how cards behind an off switch are tested (AGENTS rule 23, `docs/board/decisions.md`). **Do not wait for the
+second laptop drive.** Merge this card as soon as its own checks, the core suite, the three guards and the build are green on
+the current commit; the suites already run on this lane count, and no further lane tier is needed. Claude drives the merged
+game afterwards, and anything found becomes a small fix card.
