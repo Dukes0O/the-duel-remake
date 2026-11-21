@@ -291,6 +291,13 @@ function stepWreckedActor(duel, actor, dt) {
 // One fixed step of an arena event while status is 'racing'.
 export function bowlFightPilotGoal(duel, actor, participant, goal, dt) {
   const drive = actor.bowlFightDrive;
+  const opening = drive.opening;
+  if (opening && duel.state.stageTimeSec < opening.joinsAt) {
+    const waypoint = duel.course.worldAt(actor.s + opening.lookAhead, opening.lane);
+    // A circling truck must not take up an arena pursuit slot or show a charge tell.
+    return {x: waypoint.x, z: waypoint.z, speedMph: opening.speedMph, boost: false};
+  }
+  goal ??= thinkBrain(duel, participant, actor, dt);
   const target = arenaActor(duel, participant.targetId);
   let aim = goal;
   if (target) {
@@ -394,10 +401,10 @@ export function stepArenaEvent(duel, dt) {
       continue;
     }
     const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor, dt) : null;
-    const brainGoal = goal || thinkBrain(duel, participant, actor, dt);
     const bowlDrive = actor.bowlFightDrive && duel.course.def.bowl &&
-      duel.featureFlags?.enabled('titan-bowl') === true ? actor.bowlFightDrive : null;
-    const pilotGoal = bowlDrive ? bowlFightPilotGoal(duel, actor, participant, brainGoal, dt) : brainGoal;
+      duel.featureFlags?.enabled('titan-bowl') === true;
+    const pilotGoal = bowlDrive ? bowlFightPilotGoal(duel, actor, participant, goal, dt)
+      : goal || thinkBrain(duel, participant, actor, dt);
     if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
       continue;
