@@ -25,6 +25,7 @@
 // Titan's own chase camera stood 12 m behind and 5.8 m up, and Kyle's complaint was the jerks, not the distance, so the
 // show camera keeps the Titan's 12 m and adds the design's 5.3 m in the air (17.3 m at 10 m up).
 import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight} from './bowl-course.js';
+import {BOWL_STAND} from './bowl-stadium.js';
 import {rexAnchor, rexSolids} from './bowl-hook.js';
 
 export const BOWL_CAMERA = Object.freeze({
@@ -111,30 +112,101 @@ export function bowlLiftFor(camera, body, solidTop) {
   return Math.min(C.maxLiftMetres, lift);
 }
 
-// The steps of the stands, from bowl-stadium.js's own sizes (the wall's face, its walkway and its rows).
-const FACE = BOWL_FLOOR.outerWallOffset - .5;
-const PODIUM = 6.2, MOAT = 1.2, FIRST = 1 + MOAT + 2;
-const STANDS_BACK = FIRST + BOWL_STADIUM.rows * BOWL_STADIUM.rowDepth;
-const STANDS_TOP = PODIUM + BOWL_STADIUM.rows * BOWL_STADIUM.rowRise + 1.1;
-const SPINE_EDGE = -(BOWL_FLOOR.wallOffset - .5);
-// The seated crowd stands this far above each row, and the camera must clear their heads too.
+const STAND = BOWL_STAND, SPINE_EDGE = -(BOWL_FLOOR.wallOffset - .5);
+const TUNNEL_FRONT = STAND.face + STAND.first + STAND.cutRows * STAND.depth;
+const TUNNEL_BACK = STAND.face + STAND.outer;
 const CROWD = 1.2;
 
-// The top of what stands at a point in the Bowl: the floor and its jumps and banks, the Spine, the stand wall with its
-// catch fence, the stands' rows, and the ground outside. `course` is the Bowl course (nearest, groundAt, phase).
-export function bowlSolidTop(course, x, z, referenceS) {
-  const near = course.nearest(x, z, referenceS), lateral = near.lateral;
+function nearGate(course, near, pad = 0) {
+  const outside = course.features.bowl.outside, phase = course.phase(near.s);
+  return outside.gates.find(gate => Math.abs(phase - gate.s) <= gate.mouthWidth / 2 + pad);
+}
+
+function guideHalfWidth(outside, gate, lateral) {
+  const throatEnd = outside.back - (gate.mouthWidth - gate.width) / 2;
+  const reach = gate.guideLength / Math.SQRT2;
+  return gate.width / 2 + Math.max(0, Math.min(reach, lateral - throatEnd));
+}
+
+function solidTopAt(course, near, gate) {
+  const {lateral} = near;
   if (lateral <= SPINE_EDGE && lateral > SPINE_EDGE - 2.5) return BOWL_STADIUM.spineHeight;
-  if (lateral >= FACE) {
-    const d = lateral - FACE;
-    if (d <= 1) return BOWL_STADIUM.wallHeight + bowlBankHeight(course.phase(near.s), FACE) +
-      BOWL_STADIUM.fenceHeight - BOWL_STADIUM.wallHeight;
-    if (d < 1 + MOAT) return 0;
-    if (d < FIRST) return PODIUM;
-    if (d < STANDS_BACK) return PODIUM + (Math.floor((d - FIRST) / BOWL_STADIUM.rowDepth) + 1) * BOWL_STADIUM.rowRise + CROWD;
-    if (d <= STANDS_BACK + .4) return STANDS_TOP;
+  const d = lateral - STAND.face;
+  if (d >= 0 && d <= STAND.outer) {
+    const throughFront = gate && lateral < TUNNEL_FRONT && Math.abs(course.phase(near.s) - gate.s) < gate.width / 2;
+    if (throughFront) return course.groundAt(near.s, lateral).y;
+    if (d <= 1) return BOWL_STADIUM.fenceHeight + bowlBankHeight(course.phase(near.s), STAND.face);
+    if (d < STAND.first) return STAND.low;
+    if (d < STAND.back) return STAND.rowY(Math.floor((d - STAND.first) / STAND.depth)) + CROWD;
+    return STAND.top;
   }
   return course.groundAt(near.s, lateral).y;
+}
+
+// Highest surface for the regular chase lift. The gate chase instead tests
+// the actual air under the lintel, where the surface above the camera is a roof.
+export function bowlSolidTop(course, x, z, referenceS) {
+  const near = course.nearest(x, z, referenceS);
+  return solidTopAt(course, near, nearGate(course, near));
+}
+
+export function bowlCameraObstructed(course, point, referenceS) {
+  const near = course.nearest(point.x, point.z, referenceS), {lateral} = near;
+  const outside = course.features.bowl.outside;
+  const gate = nearGate(course, near, 5);
+  if (!gate || lateral < STAND.face - .1 || lateral > outside.back + gate.guideLength)
+    return point.y < solidTopAt(course, near, gate);
+  const across = Math.abs(course.phase(near.s) - gate.s), half = guideHalfWidth(outside, gate, lateral);
+  const throat = gate.width / 2, mouth = gate.mouthWidth / 2;
+  const floorArch = Math.abs(lateral - STAND.face - .5) <= .3;
+  const parkArch = lateral >= TUNNEL_BACK && lateral <= TUNNEL_BACK + .7;
+  if (floorArch && point.y <= 7.4 &&
+      (Math.abs(across - throat - .3) <= .25 || point.y >= 6.7 && across <= throat + .9)) return true;
+  if (parkArch && point.y <= STAND.lintel + 1.3 &&
+      (Math.abs(across - mouth - .4) <= .4 || point.y >= STAND.lintel && across <= mouth + .8)) return true;
+  if (lateral <= TUNNEL_BACK + .7) {
+    if (across < (parkArch ? mouth : half)) {
+      if (point.y < .04) return true;
+      if (lateral >= TUNNEL_FRONT - .5 && point.y < STAND.lintel - .35) return false;
+      if (lateral < TUNNEL_FRONT - .5 && point.y < 6.7) return false;
+      if (lateral > TUNNEL_BACK) return point.y < STAND.lintel + 1.3;
+    }
+  } else if (lateral <= outside.back - (gate.mouthWidth - gate.width) / 2 + gate.guideLength / Math.SQRT2 &&
+      point.y < 2.2 && Math.abs(across - half - .2) < .3) {
+    return true;
+  }
+  return point.y < solidTopAt(course, near, gate);
+}
+
+function gateChaseShare(course, truck, referenceS) {
+  if (!course || truck.y > 2.5) return 0;
+  const near = course.nearest(truck.x, truck.z, referenceS);
+  const gate = nearGate(course, near, 8);
+  if (!gate) return 0;
+  const outside = course.features.bowl.outside;
+  const across = Math.abs(course.phase(near.s) - gate.s);
+  const width = smooth((gate.mouthWidth / 2 + 8 - across) / 5);
+  // Hold the low view far enough onto the floor for the Wide camera behind
+  // the truck to clear the arch before it climbs away from the gate.
+  const floor = smooth((near.lateral - outside.wall + 26) / 15);
+  const park = smooth((outside.back + 23 - near.lateral) / 14);
+  const inPassage = near.lateral >= STAND.face - .1 && near.lateral <= TUNNEL_BACK + .7 &&
+    across < guideHalfWidth(outside, gate, near.lateral) + .25;
+  const crossing = Math.abs(Math.sin(truck.heading - course.at(near.s).heading));
+  const approach = inPassage ? 1 : smooth((crossing - .25) / .4);
+  return width * floor * park * approach * (1 - smooth((truck.y - .5) / 2));
+}
+
+// Bring the chase point toward the truck if a jamb or the lintel crosses the
+// ray. Moving along that ray keeps the existing eased camera angle.
+function clearGateChase(course, position, body, referenceS) {
+  const span = {x: position.x - body.x, y: position.y - body.y, z: position.z - body.z};
+  const steps = Math.max(1, Math.ceil(Math.hypot(span.x, span.y, span.z) / .23));
+  const at = share => ({x: body.x + share * span.x, y: body.y + share * span.y, z: body.z + share * span.z});
+  for (let step = 1; step <= steps; step++) {
+    if (bowlCameraObstructed(course, at(step / steps), referenceS)) return at((step - 1) / steps);
+  }
+  return position;
 }
 
 // The camera frames the actual falling body, including the tail and head.
@@ -187,7 +259,7 @@ function frameRexFall(cam, body, rex, solidTop, aspect, verticalFov) {
 // when a frame was drawn by another camera (the hood or back view, a menu) the camera starts afresh, since its memory
 // of the path is old. Returns {position, target, yaw, lift, hold}.
 export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, solidTop = null, frame = null,
-  rexFall = null, aspect = 16 / 9, verticalFov = 55} = {}) {
+  gateCourse = null, referenceS = null, rexFall = null, aspect = 16 / 9, verticalFov = 55} = {}) {
   dt = Number.isFinite(dt) && dt > 0 ? Math.min(dt, .1) : 0;
   const raw = cam.raw, skipped = frame != null && cam.frame != null && frame !== cam.frame + 1;
   const fresh = skipped || cam.key !== truck.key || !raw || Math.hypot(truck.x - raw.x, truck.z - raw.z) > C.teleportMetres;
@@ -255,13 +327,16 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   const yaw = cam.yaw + (cam.end ? cam.end.side * C.endSwingDeg * DEG * smooth(cam.end.elapsed / C.endSwingSec) : 0);
 
   const sin = Math.sin(yaw), cos = Math.cos(yaw);
-  const position = {x: spot.x - sin * back, y: cam.y + up, z: spot.z - cos * back};
+  const gateShare = gateChaseShare(gateCourse, truck, referenceS);
+  const distance = back * (1 - .49 * gateShare);
+  let position = {x: spot.x - sin * distance, y: cam.y + up + (3.2 - up) * gateShare,
+    z: spot.z - cos * distance};
   const body = {x: spot.x, y: truck.y + C.aimUpMetres, z: spot.z};
   // A truck inside the stands (they have no height for a truck yet) cannot be seen: the camera rises to see the place
   // above it instead of climbing for a sightline that no height gives.
   const over = solidTop ? solidTop(truck.x, truck.z) : null;
   const sight = Number.isFinite(over) && over > truck.y + .5 ? {...body, y: over + C.aimUpMetres} : body;
-  const required = solidTop ? bowlLiftFor(position, sight, solidTop) : 0;
+  const required = solidTop && gateShare < 1 ? (1 - gateShare) * bowlLiftFor(position, sight, solidTop) : 0;
   if (fresh) { cam.lift = required; cam.liftRate = 0; }
   else {
     const before = cam.lift;
@@ -274,8 +349,9 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
     }
   }
   if (cam.lift < 1e-3 && required === 0) { cam.lift = 0; cam.liftRate = 0; }
-  position.y += cam.lift;
-  const ahead = C.aheadMetres * (1 - clamp01(cam.lift / C.lookDownLiftMetres));
+  position.y += cam.lift * (1 - gateShare);
+  if (gateShare > 0) position = clearGateChase(gateCourse, position, body, referenceS);
+  const ahead = C.aheadMetres * (1 - clamp01(cam.lift / C.lookDownLiftMetres)) * (1 - .75 * gateShare);
   const target = {x: body.x + sin * ahead, y: body.y, z: body.z + cos * ahead};
   if (rexFall) return frameRexFall(cam, {x: truck.x, y: truck.y + C.aimUpMetres, z: truck.z},
     rexFall, solidTop, aspect, verticalFov);

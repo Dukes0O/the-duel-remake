@@ -1,7 +1,7 @@
 import {BOWL_STADIUM, bowlSpineTopAt} from './bowl/bowl-course.js';
 import {bowlHealthLoss} from './bowl/bowl-weapons.js';
 import {constrainTow, finishTowContact, rexSolids} from './bowl/bowl-hook.js';
-import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
+import {inboundGateHeading, outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
@@ -106,7 +106,7 @@ function bowlImpact(rules, mph, tangentMph) {
   return mph > rules.bigAboveMph ? 'big' : 'hard';
 }
 
-function bowlRebound(duel, actor, nx, nz, tangent, outward, kind, speed) {
+function bowlRebound(duel, actor, nx, nz, tangent, outward, kind, speed, continuedScrape = false) {
   const rules = duel.course.def.scrapdome.wallBounce;
   const direction = Math.abs(tangent) > .001 ? Math.sign(tangent) : nx > 0 ? -1 : 1;
   // Tangent points along the wall. Body and impulse are independent: even a
@@ -116,8 +116,9 @@ function bowlRebound(duel, actor, nx, nz, tangent, outward, kind, speed) {
   const spin = (Math.cos(oldHeading) * tx - Math.sin(oldHeading) * tz) * direction >= 0 ? 1 : -1;
   const nose = kind === 'big' ? oldHeading + spin * Math.PI / 2
     : Math.atan2(tx * direction, tz * direction);
+  const scrapeSpeed = continuedScrape ? speed : speed * rules.scrapeKeep;
   const along = kind === 'scrape'
-    ? direction * Math.sqrt(Math.max(0, (speed * rules.scrapeKeep) ** 2 - outward ** 2))
+    ? direction * Math.sqrt(Math.max(0, scrapeSpeed ** 2 - outward ** 2))
     : tangent * rules.tangentKeep;
   const vx = tx * along + nx * outward, vz = tz * along + nz * outward;
   actor.speedMph = Math.hypot(vx, vz);
@@ -565,6 +566,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
       // Authored overhead roofs need height even when a grounded car has none.
       // Local copies leave every unflagged obstacle's historical sweep exact.
       let hit;
+      const rim = exterior && obstacle.arenaWall && obstacle.off === exterior.wall;
       // Scablands bridge and pipe solids use the same 2.5 m actor height
       // as job movers. Other solids keep their established contact envelope.
       const contactDimensions = this.course.def.scablands && obstacle.verticalClearance
@@ -575,18 +577,35 @@ export function _staticContacts(car, player, journeyColliders = null) {
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
         hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
-      } else if (!player && exterior && obstacle.arenaWall && car.bowlFlight?.owner && obstacle.off === exterior.wall) {
-        // A launched truck meets the real wall's top; grounded rivals still meet the closed gates.
+      } else if (rim && (player ? car.airborne && oldLateral <= exterior.wall && car.lateral >= oldLateral : car.bowlFlight?.owner)) {
+        // An outbound jump must clear the real wall top. Grounded rivals still meet the closed gates.
         const top = obstacle.y + BOWL_STADIUM.wallHeight;
         hit = sweepObstacle(start, end, {...collider, minY:-1, maxY:top, modelMaxY:top}, heading, contactDimensions);
       } else if (!player && exterior && obstacle.arenaWall) {
         hit = sweepObstacle({...start, y: undefined}, {...end, y: undefined}, collider, heading, contactDimensions);
-      } else if (exterior && obstacle.arenaWall && obstacle.off === exterior.wall &&
-          oldLateral > obstacle.off && car.lateral <= oldLateral) {
+
+      } else if (rim && oldLateral > obstacle.off && car.lateral <= oldLateral) {
         const fenceTop = obstacle.y + exterior.fenceTop;
         hit = sweepObstacle(start, end, {...collider, maxY: fenceTop, modelMaxY: fenceTop}, heading, contactDimensions);
       } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
+    }
+    // A bank seam can report the outside face after the truck's nose has
+    // passed it. Keep the inside face until a jump clears the wall's height.
+    if (player && exterior && oldLateral <= exterior.wall && car.lateral > exterior.wall) {
+      const share = (exterior.wall - oldLateral) / (car.lateral - oldLateral);
+      const rimS = oldS + (car.s - oldS) * share;
+      const top = this.course.groundAt(rimS, exterior.wall - .5).y + BOWL_STADIUM.wallHeight;
+      const feet = start.y + (end.y - start.y) * share;
+      const clearsWall = (car.airborne || car.prevAirHeight > 0) && feet >= top;
+      if (!clearsWall && !outsideGateAt(exterior, this.course.phase(rimS))) {
+        const yaw = this.course.at(rimS).heading, nx = -Math.cos(yaw), nz = Math.sin(yaw);
+        const wrongFace = first?.obstacle.arenaWall && first.obstacle.off === exterior.wall &&
+          first.nx * nx + first.nz * nz < .5;
+        if (!first || first.t > share || wrongFace) {
+          first = {t: share, nx, nz, penetration: .5, obstacle: {arenaWall: true, off: exterior.wall, bowlBoundary: 'rim'}};
+        }
+      }
     }
     if (!first) break;
     if(!journeyColliders && hitSnowman(this,first.obstacle,player,start,end,first.t)){
@@ -702,6 +721,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
     start = stop;
     const road = this._roadPosition(end, car.s);
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
+    if (obstacle.bowlBoundary === 'rim') car.lateral = Math.min(car.lateral, exterior.wall - .5);
     const bowlRules = this.course.def.scrapdome?.wallBounce;
     if (bowlRules && obstacle.arenaWall) {
       const frame = this.course.at(car.s).heading;
@@ -718,6 +738,21 @@ export function _staticContacts(car, player, journeyColliders = null) {
         flight.z = at.z - Math.cos(flight.heading) * distance;
       }
       const mph = -(velocityX * nx + velocityZ * nz) / DRIVE.mphToWorld;
+      const lining = obstacle.bowlBoundary === 'guide' || obstacle.bowlBoundary === 'tunnel';
+      if (player && lining && !car.airborne && !car.bowlFlight && velocityX * Math.cos(frame) - velocityZ * Math.sin(frame) < 0) {
+        const heading = inboundGateHeading(this.course, obstacle, car.s, car.lateral);
+        if (heading != null) {
+          const toward = heading - frame;
+          const speed = Math.hypot(velocityX, velocityZ) / DRIVE.mphToWorld;
+          const now = this.state.bowlNight?.clock ?? this.state.stageTimeSec;
+          const recent = car.bowlGateScrape;
+          const continued = recent?.guide === obstacle.id && now >= recent.at && now - recent.at <= .12;
+          car.bowlGateScrape = {guide: obstacle.id, at: now};
+          bowlRebound(this, car, -Math.cos(toward), Math.sin(toward), speed, 0, 'scrape', speed, continued);
+          if (!continued && mph > 0) this.emit({bowlWall: {kind: 'scrape', mph, cue: 'bowl.wall.scrape'}});
+          return;
+        }
+      }
       if (mph > 0) {
         const lateralNormal = Math.cos(frame) * nx - Math.sin(frame) * nz;
         const alongNormal = Math.sin(frame) * nx + Math.cos(frame) * nz;
