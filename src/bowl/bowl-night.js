@@ -19,8 +19,9 @@ import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyl
   scoreStuntEvent} from './bowl-show.js';
 import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
-import {BIG_MO, BOWL_CRUSH_ROW, BOWL_EVENT_NAMES, BOWL_GOALS} from './bowl-lines.js';
+import {BIG_MO, BOWL_CRUSH_ROW, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushKind} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
+import {CAR_CRUSH_DRESSING} from './bowl-crush-field.js';
 import {CARS, COURSE} from '../config.js';
 import {DEFAULT_DRIVER} from '../drivers.js';
 import {freshDamageZones} from '../sim-common.js';
@@ -31,13 +32,10 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play.
 export const BOWL_NIGHT_RULES = Object.freeze({
-  // Every distance comes from the course (bowlLayout below), so a rebuilt Bowl (BOWL-EXPAND) moves
-  // the events with it. The run starts runUpMetres before the first row: on today's Bowl that is past
-  // the ring's tight end, and a truck held at full throttle with no steering reaches the buses.
-  // A level must reach this share of the rows (3, 4 and 5 of today's five).
-  carCrush: Object.freeze({runUpMetres: 8, timeLimitSec: 20,
-    // The run is over when the truck has gained less than 3 m in two seconds (stopped, or grinding along a wall).
-    stallMetres: 3, stallSec: 2, rowsShareToWin: Object.freeze({easy: .6, medium: .8, hard: 1})}),
+  carCrush: Object.freeze({runUpMetres: 8, timeLimitSec: 60,
+    target: Object.freeze({easy: 13, medium: 18, hard: 26}),
+    chainSec: 3, chainStep: .25, maxChainMultiplier: 2.5,
+    pancakeMultiplier: 3, fullHousePointsPerSecond: 20}),
   // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
   // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
   // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
@@ -153,9 +151,7 @@ export function bowlLayout(course) {
   return layout;
 }
 
-// How many rows each level must reach, from the course's own row count.
-export const crushRowsToWin = (course, night) =>
-  Math.max(1, Math.ceil(bowlLayout(course).rows.length * BOWL_NIGHT_RULES.carCrush.rowsShareToWin[difficultyOf(night)]));
+export const crushTarget = night => BOWL_NIGHT_RULES.carCrush.target[difficultyOf(night)];
 // A row named by what stands in it: the second row of cars, the buses, the burning stack.
 export function crushRowName(course, rowIndex) {
   const rows = bowlLayout(course).rows, row = rows[rowIndex];
@@ -165,24 +161,66 @@ export function crushRowName(course, rowIndex) {
   return BOWL_CRUSH_ROW.cars(rows.slice(0, rowIndex + 1).filter(other => !/bus|rv|heap|fire|stack/i.test(other.kind)).length);
 }
 
+const CRUSH_POINTS = Object.freeze({car: 35, bus: 60, stack: 80, pile: 200});
+
 registerBowlEventRunner('carCrush', {
-  place(duel) { const line = bowlLayout(duel.course).crush; startBowlEventAt(duel, line.startS, line.lateral); },
-  target: (night, course) => crushRowsToWin(course, night),
-  goal: (night, course) => BOWL_GOALS.carCrush(crushRowName(course, crushRowsToWin(course, night) - 1)),
-  observe(duel, night, ev) {
-    if (!ev.propCrushed?.byPlayer) return;
-    const s = duel.course.features.crushables.find(prop => prop.id === ev.propCrushed.id)?.s;
-    const row = bowlLayout(duel.course).rows.findIndex(entry => entry.s === s);
-    if (row >= 0) night.event.rows = Math.max(night.event.rows, row + 1);
+  dressing: CAR_CRUSH_DRESSING,
+  timeLimitSec: BOWL_NIGHT_RULES.carCrush.timeLimitSec,
+  target: crushTarget,
+  goal: night => BOWL_GOALS.carCrush(crushTarget(night)),
+  place(duel, night) {
+    const line = bowlLayout(duel.course).crush;
+    startBowlEventAt(duel, line.startS, line.lateral);
+    Object.assign(night.event, {count: 0, chain: 0, lastCrushAt: -Infinity,
+      crushIds: new Set(), total: duel.course.features.crushables.length, fullHouseBonus: 0});
+  },
+  observe(duel, {event}, ev) {
+    const hit = ev.propCrushed;
+    if (!hit?.byPlayer || !duel.course.features.crushables.some(prop => prop.id === hit.id)) return;
+    const at = duel.state.stageTimeSec, rules = BOWL_NIGHT_RULES.carCrush;
+    const kind = bowlCrushKind(hit.kind);
+    const ids = (hit.groupIds ?? [hit.id]).filter(id => !event.crushIds.has(id));
+    if (!ids.length) return;
+    if (at - event.lastCrushAt > rules.chainSec) event.chain = 0;
+    event.lastCrushAt = at;
+    const cues = bowlCrushCues({kind: hit.kind, pancake: hit.pancake}).map(item => item.cue);
+    let awardedPoints = 0;
+    for (const [index, id] of ids.entries()) {
+      event.crushIds.add(id);
+      event.count++;
+      event.chain++;
+      const multiplier = Math.min(rules.maxChainMultiplier, 1 + (event.chain - 1) * rules.chainStep);
+      const points = index === 0
+        ? Math.round(CRUSH_POINTS[kind] * multiplier * (hit.pancake ? rules.pancakeMultiplier : 1)) : 0;
+      awardedPoints += points;
+      event.score += points;
+      duel.state.crushCount = event.count;
+      duel.state.crushScore += points;
+      duel.emit({bowlCrush: {id, kind, chain: event.chain, pancake: !!hit.pancake, count: event.count, points,
+        cues: index === 0 ? cues : []}});
+    }
+    const crowd = scoreStuntEvent({type: 'crush'}, crowdAfter(event.crowd, at - event.crowdAt)).crowd;
+    event.crowd = crowd;
+    event.crowdAt = at;
+    event.crowdPeak = Math.max(event.crowdPeak, crowd);
+    duel.emit({bowlScore: {type: 'crush', points: awardedPoints, score: event.score, crowd,
+      cue: event.chain > 1 ? 'bowl.crush.chain' : null}});
+    if (hit.pancake) say(duel, 'crush.pancake');
   },
   step(duel, night) {
-    const s = duel.state, rules = BOWL_NIGHT_RULES.carCrush, event = night.event, line = bowlLayout(duel.course).crush;
-    if (s.s > event.progressS + rules.stallMetres || s.airborne || s.impactTimer > 0) { event.progressS = Math.max(event.progressS, s.s); event.progressAt = s.stageTimeSec; }
-    const stalled = s.stageTimeSec > 3 && s.stageTimeSec - event.progressAt >= rules.stallSec;
-    event.metres = Math.max(event.metres, Math.min(line.endS, s.s) - line.firstRowS);
-    if (s.s < line.endS && s.s > line.leftS && !stalled && s.stageTimeSec < rules.timeLimitSec) return null;
-    return {won: event.rows >= crushRowsToWin(duel.course, night), rows: event.rows};
+    const at = duel.state.stageTimeSec, {event} = night, rules = BOWL_NIGHT_RULES.carCrush;
+    if (at - event.lastCrushAt > rules.chainSec) event.chain = 0;
+    const fullHouse = event.count === event.total;
+    if (!fullHouse && at + 1e-8 < rules.timeLimitSec) return null;
+    if (fullHouse) {
+      event.fullHouseBonus = Math.floor(Math.max(0, rules.timeLimitSec - at + 1e-8)) * rules.fullHousePointsPerSecond;
+      event.score += event.fullHouseBonus;
+      duel.emit({bowlFullHouse: {count: event.count, bonus: event.fullHouseBonus, score: event.score},
+        bowlScore: {type: 'fullHouse', points: event.fullHouseBonus, score: event.score, cue: 'bowl.crush.fullhouse'}});
+    }
+    return {won: event.count >= crushTarget(night), fullHouse};
   },
+  result: event => ({score: event.score, count: event.count, total: event.total, fullHouseBonus: event.fullHouseBonus}),
 });
 
 // Two parked cars on the ring in Freestyle, so the Titan's launch off cars
@@ -267,7 +305,7 @@ export function startBowlNight(duel, options = {}) {
 function loadBowlEvent(duel) {
   const night = duel.state.bowlNight, type = bowlEventType(night), runner = RUNNERS.get(type);
   const attempt = 1 + night.attempts.filter(entry => entry.event === type && entry.eventIndex === night.show.eventIndex).length;
-  duel._bowlEventCourse = {...BOWL_COURSE, laps: runner.laps};
+  duel._bowlEventCourse = {...BOWL_COURSE, laps: runner.laps, ...(runner.dressing ? {bowlDressing: runner.dressing} : {})};
   duel.startCampaign({...night.start, startStage: standInStage(), mode: 'duel', opponentCount: 0,
     cpuDifficulty: night.cpuDifficulty, rival: null});
   const s = duel.state;
@@ -278,7 +316,7 @@ function loadBowlEvent(duel) {
   night.captionQueue.length = 0;
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
     crowdPeak: 0, crowdMark: 0,
-    flight: null, rows: 0, metres: 0, progressS: duel.state.s, progressAt: 0, playerDoneAt: null, rivalDoneAt: null};
+    flight: null, rows: 0, metres: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
 }
@@ -340,7 +378,7 @@ export function observeBowlNight(duel, ev) {
     say(duel, 'moment.carLaunch', {once: true});
   }
   if (ev.propCrushed?.byPlayer) {
-    addFact(duel, {type: 'crush'});
+    if (night.event.type !== 'carCrush') addFact(duel, {type: 'crush'});
     say(duel, 'moment.crush', {once: true});
   }
   RUNNERS.get(night.event.type)?.observe?.(duel, night, ev);
@@ -368,9 +406,10 @@ function observeTruck(duel, dt) {
 
 function finishEvent(duel, outcome) {
   const s = duel.state, night = s.bowlNight, event = night.event;
-  const score = scoreFreestyle(event.facts).score;
+  const measured = RUNNERS.get(event.type)?.result?.(event);
   const result = {...outcome, event: event.type, eventIndex: event.eventIndex, attempt: event.attempt,
-    won: outcome.won === true, score, rows: event.rows, metres: +event.metres.toFixed(1),
+    won: outcome.won === true, score: scoreFreestyle(event.facts).score, ...measured,
+    rows: event.rows, metres: +event.metres.toFixed(1),
     crowdPeak: +event.crowdPeak.toFixed(1), playerId: night.playerId};
   night.attempts.push(result);
   night.lastResult = result;
@@ -382,8 +421,10 @@ function finishEvent(duel, outcome) {
   s.status = 'bowl_break'; s.boosting = false;
   duel.emit({bowlEventResult: result, cue: result.won ? 'bowl.event.won' : 'bowl.event.lost'});
   // A Turn Show go ends here: the Turn Show keeps the scores and pays any purse.
-  if (night.turn) { say(duel, result.won ? 'turn.won' : 'turn.lost'); return; }
-  say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
+  if (result.fullHouse) say(duel, 'moment.fullHouse');
+  else if (night.turn) say(duel, result.won ? 'turn.won' : 'turn.lost');
+  else say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
+  if (night.turn) return;
   if (night.phase === 'complete') {
     const won = night.attempts.filter(entry => entry.won);
     const bests = {};

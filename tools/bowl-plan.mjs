@@ -5,10 +5,12 @@
 import {writeFileSync} from 'node:fs';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE, BOWL_FLOOR, BOWL_BANK, BOWL_RING, bowlCentre} from '../src/bowl/bowl-course.js';
+import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
 import {spawnSlots} from '../src/arena/venues.js';
 
 const out = process.argv[2] ?? '.evidence/bowl-plan.svg';
-const course = new Course(BOWL_COURSE, 1989), bowl = course.features.bowl, centre = bowlCentre(course);
+const course = new Course({...BOWL_COURSE, bowlDressing: CAR_CRUSH_DRESSING}, 1989);
+const bowl = course.features.bowl, centre = bowlCentre(course);
 const SCALE = 6.2, LEFT = 90, TOP = 170, WIDTH = 1300, HEIGHT = 1430;
 // World z runs left to right on the page, world x runs down it.
 const px = p => [LEFT + (p.z - (centre.z - 82)) * SCALE, TOP + (p.x - (centre.x - 47)) * SCALE];
@@ -63,12 +65,20 @@ for (const ramp of course.features.ramps) {
 }
 // The crush line and the launch cars.
 const box = (feature, colour) => {
-  const c = course.worldAt(feature.s, feature.off), h = c.heading, sn = Math.sin(h), cs = Math.cos(h);
+  const c = Number.isFinite(feature.x) ? feature : course.worldAt(feature.s, feature.off);
+  const sn = Math.sin(c.heading), cs = Math.cos(c.heading);
   const corner = (u, v) => px({x: c.x + cs * u + sn * v, z: c.z - sn * u + cs * v});
   return `<path d="${path([corner(-feature.halfX, -feature.halfZ), corner(feature.halfX, -feature.halfZ), corner(feature.halfX, feature.halfZ), corner(-feature.halfX, feature.halfZ)])}" fill="${colour}" stroke="#1a1410" stroke-width=".8"/>`;
 };
-for (const prop of course.features.crushables)
-  parts.push(box(prop, prop.sourceKind === 'bowlBurningHeap' ? '#d4541c' : prop.sourceKind === 'junkCar' ? '#61746a' : '#c9b37a'));
+for (const prop of course.features.crushables) {
+  const colour = prop.bowlPancakeRamp ? '#413777' : prop.bowlCrushGroup ? '#68282a'
+    : prop.sourceKind === 'bowlBurningHeap' ? '#d4541c' : prop.sourceKind === 'junkCar' ? '#61746a' : '#c9b37a';
+  parts.push(box(prop, colour));
+}
+for (const [s, off, name] of [[55, 11, 'The Row'], [251, 0, 'Bus Pile']]) {
+  const [x, y] = at(s, off);
+  parts.push(text(x, y - 35, name, 13, '#311b15', 'middle', 700));
+}
 for (const car of bowl.launchCars) parts.push(box({...car, off: car.lateral, halfX: .95, halfZ: 2.3}, '#2f6f9e'));
 // The Scrapasaurus's rails, and the lanes.
 const rails = ring(bowl.rails.lateral, .5);
@@ -114,7 +124,8 @@ for (const gate of bowl.gates) {
 }
 const legend = [
   ['#4f2e16', 'jump (dark: full height)'], ['#8a5a33', 'banked end, rising to 3.2 m at the wall'], ['#61746a', 'crush line: junk cars'],
-  ['#c9b37a', 'buses and RV'], ['#d4541c', 'burning stacks'], ['#2f6f9e', 'parked cars for the launch off cars'],
+  ['#c9b37a', 'buses and RV'], ['#d4541c', 'burning stacks'], ['#413777', 'pancake cars'],
+  ['#68282a', 'Bus Pile'], ['#2f6f9e', 'parked launch cars (Freestyle)'],
   ['#ff8a1e', 'flame jet'], ['#8c1d18', 'Scrapasaurus rails, 16.5 m out'], ['#f6f1e4', 'centre line: the Side by Side lanes'],
   ['#ffffff', 'Last Truck Rolling start slots'], ['#f2e3b3', 'the old Bowl floor, to scale'], ['#ffffff', 'a football field, 110 m by 49 m (dashed)'],
 ];
@@ -159,7 +170,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${
 <defs><marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M5,0L5,10" stroke="#1d3d5c" stroke-width="2"/></marker>
 <marker id="head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10Z" fill="context-stroke"/></marker></defs>
 <rect width="100%" height="100%" fill="#efe9dc"/>
-${text(WIDTH / 2, 40, 'The Bowl, made far larger (BOWL-EXPAND): the floor from above, to scale', 24, '#2b2118', 'middle', 700)}
+${text(WIDTH / 2, 40, 'The Bowl: the 31-piece Car Crush field', 24, '#2b2118', 'middle', 700)}
 ${text(WIDTH / 2, 66, 'Drawn from the course data in src/bowl/bowl-course.js. The lap starts at the left end of the Jump Straight (bottom) and runs to the right.', 15, '#4a3c2c')}
 ${parts.join('\n')}
 ${legendParts.join('\n')}

@@ -226,14 +226,15 @@ const keepLine = (duel, truck, line) => Math.max(-1, Math.min(1, (truck.lateral 
   steady('over the wall and back', frames);
 }
 
-// 7. The end of an event: the Car Crush ends when the truck stops. The camera swings a quarter of the way round it over
+// 7. The end of an event: the Car Crush ends on the clock. The camera swings a quarter of the way round it over
 //    two seconds, and holds there.
 {
   const duel = showDuel(0);
-  const frames = record('the end of the Car Crush', duel, 30, (d, t, truck) =>
+  const frames = record('the end of the Car Crush', duel, 66, (d, t, truck) =>
     t < 3 ? {...pace(truck, 20), steer: 0, boost: false} : {throttle: 0, brake: 1, steer: 0, boost: false}, {afterEnd: 3});
   const end = frames.findIndex(frame => frame.ended);
-  ok(end > 0, 'the end of the Car Crush: the event ended');
+  ok(end > 0 && Math.abs(duel.state.stageTimeSec - 60) < SIM_DT,
+    'the stopped truck stays in Car Crush until the end of the full minute');
   const before = viewYaw(frames[end - 1].pose), at = seconds => viewYaw(frames[Math.min(frames.length - 1, end + Math.round(seconds / FRAME))].pose);
   const swing = Math.abs(wrap(at(2.1) - before)) / DEG;
   ok(Math.abs(swing - BOWL_CAMERA.endSwingDeg) < 3, `the end of the Car Crush: the camera swings a quarter of the way round (${swing.toFixed(1)} degrees)`);

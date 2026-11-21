@@ -2,6 +2,7 @@
 // save rule: two players take turns in the real App, and each save gets only its
 // own scores and purse. Memory-only saves; no browser.
 import assert from 'node:assert/strict';
+import {createCarCrushDriver} from './scenarios/bowl-night-pay.mjs';
 import {readFileSync, readdirSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
@@ -155,9 +156,9 @@ app.duel.onChange((state, ev) => { if (ev.bowlEventResult) events.push({player: 
 const key = (code, repeat = false) => app._turnHandoffKey({code, repeat, target: null, preventDefault() {}});
 // The scripted driver from test-bowl-night; Kyle waits in the Car Crush and so loses it.
 // Every place comes from the course's own data (bowlLayout reads course.features.bowl), whatever size the Bowl is.
-// In the Car Crush W is held down with no steering; in Freestyle the driver swings out to the first launch car.
+// In Car Crush the driver takes two passes; in Freestyle the driver swings out to the first launch car.
 function drive(idle) {
-  const duel = app.duel;
+  const duel = app.duel, driveCrush = createCarCrushDriver();
   for (let i = 0; i < 120 * 150; i++) {
     const s = duel.state;
     if (s.status === 'bowl_break') return;
@@ -165,7 +166,7 @@ function drive(idle) {
     const car = layout.parked[0], lapS = ((s.s % duel.course.length) + duel.course.length) % duel.course.length;
     const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : type === 'sideBySide' ? layout.lanes[0].lateral : 0;
     if (idle) duel.setInput({throttle: 0, brake: 0, steer: 0});
-    else if (type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+    else if (type === 'carCrush') duel.setInput(driveCrush(duel));
     else if (freestyle && s.airborne) duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
     else duel.setInput({throttle: s.speedMph < (freestyle ? 30 : 32) ? 1 : 0, brake: 0,
       steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});

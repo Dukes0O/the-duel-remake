@@ -4,6 +4,7 @@ import {Course} from '../src/course.js';
 import {COURSE, DRIVE} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {BOWL_COURSE, bowlCentre} from '../src/bowl/bowl-course.js';
+import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
 import {createBowlView} from '../src/bowl/bowl-view.js';
 import {addArenaCrushables} from '../src/arena-props.js';
 
@@ -80,6 +81,50 @@ check(onStraight(data.crush.startS,data.zones.crushStraight)&&bowl.features.crus
 check(data.rails.lateral>12&&data.rails.lateral<floor.floorHalfWidth,'The Scrapasaurus\'s rails run round the edge of the floor.');
 check(data.launchCars.every(car=>Math.abs(car.lateral)<floor.floorHalfWidth&&bowl.groundAt(car.s,car.lateral).y===0),
   'The launch cars stand on flat floor.');
+
+// Only Car Crush builds the full field. Check the whole footprint of each piece
+// against the wall faces, the ramps and the eight metres of run-up.
+{
+  const dressed = new Course({...BOWL_COURSE, bowlDressing: CAR_CRUSH_DRESSING}, 1989);
+  const field = dressed.features.crushables;
+  check(field.length === 31 && new Set(field.map(piece => piece.id)).size === 31, 'Car Crush has 31 separate pieces');
+  check(field.filter(piece => piece.bowlCrushGroup).length === 3 &&
+    field.filter(piece => piece.bowlPancakeRamp).length === 3 &&
+    field.filter(piece => piece.id.startsWith('bowl-row-')).length === 5 &&
+    field.filter(piece => piece.id.startsWith('bowl-end-one-')).length === 5, 'the field has all four added groups');
+  for (const [index, old] of bowl.features.crushables.entries()) {
+    const piece = field[index];
+    check(piece.id === old.id && piece.s === old.s && piece.off === (old.off === 18.2 ? 17.25 : old.off),
+      `${old.id} keeps its position except for the approved outer-line clearance`);
+  }
+  for (const piece of field) {
+    const c = Math.cos(piece.heading), sin = Math.sin(piece.heading);
+    const corners = [[1,1],[-1,1],[1,-1],[-1,-1]].map(([side, end]) =>
+      dressed.nearest(piece.x + c * side * piece.halfX + sin * end * piece.halfZ,
+        piece.z - sin * side * piece.halfX + c * end * piece.halfZ, piece.s));
+    check(corners.every(corner => corner.lateral <= floor.outerWallOffset - .5 - 3 &&
+      corner.lateral >= -(floor.wallOffset - .5 - 3)), `${piece.id} clears the wall by at least three metres`);
+    const [along, across] = ['s','lateral'].map(key => corners.map(corner => corner[key]));
+    check(ramps.every(ramp => {
+      const width = ramp.halfWidth + ramp.flank;
+      return Math.max(...along) <= ramp.start - 8 || Math.min(...along) >= ramp.end ||
+        Math.max(...across) <= ramp.off - width || Math.min(...across) >= ramp.off + width;
+    }), `${piece.id} stays off the jumps and their run-ups`);
+  }
+  for (const [night, eventIndex, type] of [[1,1,'freestyle'], [1,2,'sideBySide'], [3,2,'lastTruckRolling']]) {
+    const duel = new Duel({seed:1989});
+    duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
+    check(duel.startBowlNight({night,eventIndex,cpuDifficulty:'easy'}) && duel.state.bowlNight.event.type === type &&
+      duel.course.def.bowlDressing == null, `${type} starts without Car Crush dressing`);
+    const original = bowl.features.crushables;
+    check(duel.course.features.crushables.length === original.length, `${type} keeps all 15 original props`);
+    for (const [index, piece] of duel.course.features.crushables.entries()) {
+      const base = original[index];
+      assert.deepEqual(Object.fromEntries(Object.keys(base).map(key => [key, piece[key]])), base,
+        `${type} keeps the same layout and materials for ${base.id}`);
+    }
+  }
+}
 
 // Real drives on the floor, outside an arena event, as Car Crush, Freestyle and Side by Side run.
 function bowlDuel(){

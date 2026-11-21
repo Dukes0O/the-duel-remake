@@ -962,6 +962,7 @@ export function _crushProps(actor) {
   const exterior = this.course.features.bowl?.outside;
   const inParking = exterior && actor.lateral > exterior.back;
   const props = inParking ? exterior.parking : this.course.features.crushables;
+  const carCrush = !inParking && state.bowlNight?.event?.type === 'carCrush' && this.course.def.bowlDressing === 'carCrush';
   for (const prop of props || []) {
     const movable = !!state.arena && prop.kind === 'junkCar' && !inParking;
     if (state.crushedProps.includes(prop.id)) continue;
@@ -971,6 +972,9 @@ export function _crushProps(actor) {
       continue;
     }
     const top = prop.y + prop.height;
+    // A pancake is a crossing of this roof from above. A hit below the roof
+    // after the tyres are down is an ordinary side impact.
+    const pancake = carCrush && (actor.prevAirHeight || 0) > .1 && previousBottom > top && bottom <= top;
     let contactTime = hit.t;
     if (previousBottom + (bottom - previousBottom) * contactTime > top) {
       // An overflight counts only if descent reaches the roof while the
@@ -984,7 +988,9 @@ export function _crushProps(actor) {
       contactArenaJunk(this, actor, prop, {...hit, t: contactTime}, start, end);
       if (spec.mass < (prop.crushMass || 3500)) continue;
     }
-    if (spec.mass < (prop.crushMass || 3500)) {
+    const group = carCrush ? prop.bowlCrushGroup : null;
+    const blockedPile = group && !pancake && Math.abs(actor.speedMph) < prop.bowlCrushMinMph;
+    if (blockedPile || spec.mass < (prop.crushMass || 3500)) {
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),
         z: start.z + (end.z - start.z) * hit.t + hit.nz * (hit.penetration + .04) };
       const road = this._roadPosition(stop, actor.s); actor.s = road.s; actor.lateral = road.lateral;
@@ -992,6 +998,12 @@ export function _crushProps(actor) {
       break;
     }
     state.crushedProps.push(prop.id);
+    const groupIds = group ? [prop.id] : null;
+    if (groupIds) for (const member of props) {
+      if (member.bowlCrushGroup !== group || state.crushedProps.includes(member.id)) continue;
+      state.crushedProps.push(member.id);
+      groupIds.push(member.id);
+    }
     const byPlayer = actor === state, strength = clamp(.35 + actor.speedMph * .006 + Math.max(0, -(actor._verticalSpeed || 0)) * .04, .35, 1);
     actor.speedMph *= 1 - clamp(650 / spec.mass, .06, .18);
     if (!(actor.impactTimer > 0)) {
@@ -1001,8 +1013,13 @@ export function _crushProps(actor) {
     }
     const burst = { id: prop.id, byPlayer, x: prop.x, y: prop.y, z: prop.z, s: prop.s, off: prop.off, strength,
       serial: (state.crushBurst?.serial || 0) + 1 };
+    if (carCrush) {
+      burst.pancake = pancake;
+      burst.kind = groupIds ? 'bowlBusPile' : (prop.sourceKind ?? prop.kind);
+      if (groupIds) burst.groupIds = groupIds;
+    }
     state.crushBurst = burst;
-    if (byPlayer) {
+    if (byPlayer && !carCrush) {
       const points = this.course.def.practice ? 0 : 150 * this.scoreMultiplier;
       state.crushCount++; state.crushScore += points; state.stageStyleScore += points; state.score += points;
       this._callout(`CAR CRUSH  /  +${points}`, 1.8);

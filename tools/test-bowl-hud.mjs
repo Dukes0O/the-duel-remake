@@ -16,7 +16,7 @@ function start(night, eventIndex, options = {}) {
 }
 
 for (const [night, index, name, goal] of [
-  [1, 0, 'Car Crush', 'Crush through 3 rows.'],
+  [1, 0, 'Car Crush', 'Crush 13 pieces.'],
   [1, 1, 'Freestyle', 'Beat Old Bess: 310.'],
   [1, 2, 'Side by Side', 'Beat Old Bess over two laps.'],
   [3, 2, 'Last Truck Rolling', 'Be the last truck rolling.'],
@@ -40,7 +40,7 @@ for (const [night, index, name, goal] of [
   sayBowlLine(duel, 'rex.tell');
   sayBowlLine(duel, 'rex.rest');
   sayBowlLine(duel, 'rex.scorch');
-  while (night.clock < 13) duel.step(1 / 60);
+  while (night.clock < 66) duel.step(1 / 60);
   assert.deepEqual(captions, ['event.carCrush.intro', 'rex.tell', 'event.lost.carCrush'],
     'stale queued lines never play, and the fresh idle-run result still plays');
 }
@@ -50,9 +50,9 @@ for (const [night, index, name, goal] of [
   assert.deepEqual(captions, ['turn.open'], 'the next driver hears one welcome');
   const night = duel.state.bowlNight;
   Object.assign(night.event, {count: 7, chain: 3});
-  const view = {...bowlHudView(duel.state, duel.course), target: 10, crowd: 40};
+  const view = {...bowlHudView(duel.state, duel.course), crowd: 40};
   const strip = bowlStrip(duel.state, view);
-  assert.equal(strip.crushLabel, 'CRUSHED 7 OF 10');
+  assert.equal(strip.crushLabel, 'CRUSHED 7 OF 13');
   assert.equal(strip.chainLabel, 'CHAIN x3');
   assert.equal(strip.crowdLabel, 'CROWD x1.4');
 }
