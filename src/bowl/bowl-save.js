@@ -2,6 +2,7 @@
 // the race, storage, or another part of the player's career.
 
 import {secretOf} from './bowl-secrets.js';
+import {isSchoolTrick} from './bowl-school.js';
 
 export const BOWL_EVENTS = Object.freeze([
   'car-crush', 'freestyle', 'side-by-side', 'last-truck-rolling',
@@ -48,6 +49,28 @@ export function recordBowlSecret(profile, kind) {
   const found = foundBowlTricks(profile);
   if (found.includes(kind)) return result(profile);
   return result({...profile, bowl: {...profile.bowl, foundTricks: [...(Array.isArray(profile.bowl?.foundTricks) ? profile.bowl.foundTricks : []), kind]}}, true);
+}
+
+export function bowlSchoolRecord(profile) {
+  const record = profile?.bowl?.school;
+  if (!object(record) || record.version !== 1) return {offered: false, completed: []};
+  return {offered: record.offered === true, completed: uniqueIds(record.completed).filter(isSchoolTrick)};
+}
+
+export function recordBowlSchool(profile, {offered = false, completed = []} = {}) {
+  const bowl = profile?.bowl, school = bowl?.school;
+  if (!object(profile) || (bowl != null && !object(bowl)) || ownsNewerBowl(profile) ||
+      (school != null && (!object(school) || school.version !== 1 ||
+        (school.completed != null && !Array.isArray(school.completed)))) ||
+      !Array.isArray(completed) || completed.some(kind => !isSchoolTrick(kind))) {
+    return result(profile, false, 'Unknown Trick School record.');
+  }
+  const current = bowlSchoolRecord(profile);
+  const nextOffered = current.offered || offered === true || completed.length > 0;
+  const added = [...new Set(completed)].filter(kind => !current.completed.includes(kind));
+  if (nextOffered === current.offered && !added.length) return result(profile);
+  return result({...profile, bowl: {...bowl, school: {...school, version: 1, offered: nextOffered,
+    completed: [...(school?.completed ?? []), ...added]}}}, true);
 }
 
 export function recordBowlScore(profile, event, score) {

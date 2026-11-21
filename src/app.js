@@ -114,7 +114,7 @@ import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {SHOW_TRUCK, bowlNightPlayable, settleShowNight} from './bowl/bowl-night.js'; // BOWL-HOOKS
 import {rexInTheYard} from './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: the beaten Scrapasaurus in the yard
-import {foundBowlTricks, recordBowlSecret} from './bowl/bowl-save.js';
+import {bowlSchoolRecord, foundBowlTricks, recordBowlSchool, recordBowlSecret} from './bowl/bowl-save.js';
 import {genuineSecretFind, startArenaTrickShow} from './bowl/bowl-tricks.js';
 import {BOWL_SOUND_CUES} from './bowl/bowl-lines.js';
 import {beginGo, createTurnShow, currentTurn, noteSettled, passKeyboard, recordGo, settleTurnGo, turnScoreboard,
@@ -268,6 +268,10 @@ export class App {
       // BOWL-HOOKS: Show Night pays its purse once, and each new event has its sound.
       if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
       if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
+      if (event.bowlSchool) {
+        if (event.bowlSchool.type === 'tick') this._recordBowlSchoolTick(state, event.bowlSchool);
+        this._showNightCue(event.bowlSchool.cue);
+      }
       const secret = event.bowlSecretFound;
       if (secret && state === this.duel.state && state.playerId === this.player?.id && genuineSecretFind(this.duel, secret)) {
         this._pendingSecrets ??= new Map();
@@ -1305,6 +1309,48 @@ export class App {
     }
     this._pendingSecrets.delete(id);
     return true;
+  }
+  _bowlSchoolForDriver() {
+    const id = this.player.id;
+    this._flushBowlSchool(id);
+    const record = bowlSchoolRecord(this.profile), pending = this._pendingBowlSchool?.get(id);
+    return pending ? {offered: true, completed: [...new Set([...record.completed, ...pending.completed])]} : record;
+  }
+  _rememberBowlSchool(completed = []) {
+    const id = this.player.id;
+    this._pendingBowlSchool ??= new Map();
+    const pending = this._pendingBowlSchool.get(id);
+    this._pendingBowlSchool.set(id, {offered: true, completed: [...new Set([...(pending?.completed ?? []), ...completed])]});
+    return this._flushBowlSchool(id);
+  }
+  _flushBowlSchool(id) {
+    const pending = this._pendingBowlSchool?.get(id);
+    if (!pending) return true;
+    const durable = readWarlordRegistry();
+    if (durable.status !== 'ready' || durable.registry.activePlayerId !== id || this.player.id !== id) return false;
+    const owner = durable.registry.players.find(player => player.id === id);
+    if (!owner) return false;
+    const edit = recordBowlSchool(owner.profile, pending);
+    if (!edit.ok) return false;
+    const updated = edit.changed ? replacePlayerProfile(durable.registry, id, edit.profile) : durable.registry;
+    if (edit.changed && !savePlayers(updated)) return false;
+    if (this.profileSaved === false) this.profile = recordBowlSchool(this.profile, bowlSchoolRecord(edit.profile)).profile;
+    else {
+      this.players = updated;
+      this.player = activePlayer(updated);
+      this.profile = this.player.profile;
+      this._rememberWarlordOwner();
+    }
+    this._pendingBowlSchool.delete(id);
+    return true;
+  }
+  _recordBowlSchoolTick(state, message) {
+    const run = this.showNightRun(), night = state.bowlNight;
+    if (!night?.school || !run?.school || run.runId !== this.runId || state !== this.duel.state ||
+        state.playerId !== run.playerId || message.playerId !== run.playerId ||
+        message.lesson !== night.event?.lesson || !night.school.completed.includes(message.lesson)) return false;
+    state.bowlSchoolSavePending = !this._rememberBowlSchool(night.school.completed);
+    return !state.bowlSchoolSavePending;
   }
   _saveProfile(){
     // Preserve other local players if another tab added or updated one.
@@ -2556,9 +2602,24 @@ export class App {
     this._refreshPlayer();
     const won=new Set((Array.isArray(this.profile.bowl?.nightsWon)?this.profile.bowl.nightsWon:[]).filter(Number.isSafeInteger));
     const nights=[1,2,3,4,5].map(night=>({night,state:!bowlNightPlayable(night)?'later':won.has(night)?'won':night===1||won.has(night-1)?'open':'locked'}));
-    return {nights,lent:!isCarUnlocked(this.profile,SHOW_TRUCK),level:this.cpuDifficulty,message:this._showNightMessage||''};
+    const school = this._bowlSchoolForDriver();
+    return {nights,lent:!isCarUnlocked(this.profile,SHOW_TRUCK),level:this.cpuDifficulty,message:this._showNightMessage||'',
+      offerSchool: !won.size && !school.offered};
   }
   clearShowNightMessage(){this._showNightMessage='';}
+  skipBowlSchoolOffer() {
+    if (!this.showNightAvailable() || this._turnShow || this.duel.state.bowlNight ||
+        (this.duel.state.status !== 'menu' && !this.isYardHomeActive())) return false;
+    return this._rememberBowlSchool();
+  }
+  startBowlSchool({from = 'menu'} = {}) {
+    if (!this.showNightAvailable() || this._turnShow) return false;
+    if (this.duel.state.status !== 'menu' && !this.isYardHomeActive()) return false;
+    if (this.duel.state.status !== 'menu') this.returnToMenu();
+    if (!this._launchBowlNight(1, {from, school: true})) return false;
+    this.duel.state.bowlSchoolSavePending = !this._rememberBowlSchool();
+    return true;
+  }
   showNightRun(){return this._bowlRun&&this._bowlRun.playerId===this.player.id?this._bowlRun:null;}
   startShowNight(night,{from='menu',cpuDifficulty}={}){
     if(this._turnShow)return false; // BOWL-TURNS: one show at a time, one driver at a time
@@ -2569,7 +2630,7 @@ export class App {
     return this._launchBowlNight(night,{from,cpuDifficulty});
   }
   // One Show Night run for the active player: a whole night, or one Turn Show go (eventIndex and turn).
-  _launchBowlNight(night,{from='menu',cpuDifficulty,eventIndex=0,turn=null}={}){
+  _launchBowlNight(night,{from='menu',cpuDifficulty,eventIndex=0,turn=null,school=false}={}){
     this._refreshPlayer();
     this.helpVisible=false;
     const owned=isCarUnlocked(this.profile,SHOW_TRUCK);
@@ -2583,9 +2644,10 @@ export class App {
     const started=this.duel.startBowlNight({night,owned,foundTricks:this._bowlFoundForDriver(),upgrades:getUpgradeLevels(this.profile,SHOW_TRUCK),
       playerId:this.player.id,driverId:getEquippedDriverId(this.profile),difficulty:this._raceSettings.difficulty,
       cpuDifficulty:['easy','medium','hard'].includes(cpuDifficulty)?cpuDifficulty:this.cpuDifficulty,seed:1989,
-      eventIndex,turn});
+      eventIndex,turn,school:school?this._bowlSchoolForDriver():null});
     if(!started)return false;
-    this._bowlRun={runId:this.runId,playerId:this.player.id,night,from:from==='yard'?'yard':'menu',settled:null,turn:!!turn};
+    this._bowlRun={runId:this.runId,playerId:this.player.id,night,from:from==='yard'?'yard':'menu',settled:null,turn:!!turn,school};
+    if (!school) this.duel.state.bowlSchoolSavePending = !this._flushBowlSchool(this.player.id);
     return true;
   }
   continueShowNight(){
@@ -2982,6 +3044,11 @@ export class App {
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
+    const bowlRun = this.showNightRun();
+    if (st.bowlNight && bowlRun && bowlRun.runId === this.runId && st.playerId === bowlRun.playerId) {
+      this._flushBowlSchool(bowlRun.playerId);
+    }
+    delete st.bowlSchoolSavePending;
     if(st.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(st.arena.worldJob); // TOWN-HAUL-JOB: every way out saves the town
     cleanupWorldJobLoan(this.duel);
     this.duel.clearDeep();this.deepAudio.stop();
