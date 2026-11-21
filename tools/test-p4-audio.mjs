@@ -67,8 +67,9 @@ const TOWN_VEHICLE_CUES = new Set(['town.bell']);
 const TOWN_FIRE_CUES = new Set(['town.fire', 'town.spray', 'town.fire.out', 'town.fill']);
 // WEAPON-WATER-CANNON: the car cannon's two cues, the same recordings as the fire call's spray and hiss.
 const WATER_CANNON_CUES = new Set(['weapon.water.spray', 'weapon.water.douse']);
-// BOWL-SOUND-CRUSH: the Bowl's nine crush cues (bowl.crush.*), behind titan-bowl. The historical projection keeps all earlier cues.
-const BOWL_CRUSH_CUE = id => id.startsWith('bowl.crush.');
+// BOWL-SOUND-CRUSH and BOWL-SOUND: the Bowl's own cues (bowl.*), all made after P4, behind titan-bowl. The historical
+// projection keeps all earlier cues.
+const BOWL_CRUSH_CUE = id => id.startsWith('bowl.');
 const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));

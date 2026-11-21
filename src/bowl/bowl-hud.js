@@ -5,9 +5,9 @@ import {BOWL_FLOOR} from './bowl-course.js';
 import {rexPullProgress} from './bowl-rex.js';
 import {BIG_MO, BOWL_GOALS} from './bowl-lines.js';
 export const BOWL_HUD_SOUNDS = Object.freeze({
-  'bowl.health.hit': 'vehicle.crash',
-  'bowl.health.danger': 'raider.warning',
-  'bowl.card.open': 'interface.radar',
+  'bowl.health.hit': 'bowl.health.hit',
+  'bowl.health.danger': 'bowl.health.danger',
+  'bowl.card.open': 'bowl.card.open',
 });
 
 export const BOWL_TRICK_GUIDE = Object.freeze([

@@ -165,7 +165,7 @@ for (const [night, index, name, goal] of [
   const calls = [], output = {};
   const audio = {paused: true, muted: false, output, context: {state: 'running'}, _playCue: (...args) => calls.push(args)};
   playBowlHudCue({audio}, 'bowl.card.open');
-  assert.deepEqual(calls, [['interface.radar', {destination: output, scale: .42}]]);
+  assert.deepEqual(calls, [['bowl.card.open', {destination: output, scale: .42}]]);
   audio.muted = true;
   playBowlHudCue({audio}, 'bowl.card.open');
   assert.equal(calls.length, 1, 'the paused cue still respects mute');
