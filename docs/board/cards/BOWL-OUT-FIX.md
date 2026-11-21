@@ -71,3 +71,5 @@ The renderer currently hands the camera a height-only query. That cannot disting
 - **Use rule 23's smaller set.** The card is behind `titan-bowl` and changes no save, pay or released behaviour, so the card's
   checks, the core suite, the three guards (which prove the shared contact code moved nothing elsewhere) and the build. No lane
   tier. Merge when green.
+
+The old exterior drive expected a lift greater than 2 m on its way back into the Bowl. On the corrected geometry that drive follows the open tunnel and clears the sightline without lifting through the stands. The same greater-than-2 m requirement now sits on a solid stretch away from a gate, where the stand actually blocks the normal chase view. The exterior drive still has all the original framing and motion limits, and both gates have their new 0.2-second visibility check. Please review that fixture change under rule 23.
