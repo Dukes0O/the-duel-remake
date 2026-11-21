@@ -46,10 +46,10 @@ export const RIVAL_LOOKS = Object.freeze({
 function materials(wear, paint = 0x6b4a33) {
   const standard = (color, roughness, metalness, extra = {}) => wear.apply(new THREE.MeshStandardMaterial({color, roughness, metalness, ...extra}));
   return {
-    steel: standard(0x5b6064, .55, .7),
+    steel: standard(0x575c5f, .68, .45),
     dark: standard(0x26221f, .85, .35),
     rust: standard(0x6b4129, .92, .25),
-    worn: standard(0x8a8f90, .4, .85),
+    worn: standard(0x878b8b, .48, .6),
     rod: new THREE.MeshStandardMaterial({color: 0xc9ced2, roughness: .22, metalness: 1}),
     rubber: new THREE.MeshStandardMaterial({color: 0x1b1a19, roughness: .95, metalness: 0}),
     hose: new THREE.MeshStandardMaterial({color: 0x161514, roughness: .8, metalness: .05}),
@@ -231,7 +231,8 @@ function buildHammer(root, m) {
     // Two cheek plates carry the pin; gussets run back to the cab's front corners.
     const cheek = new THREE.Shape();
     cheek.moveTo(-.42, 0); cheek.lineTo(.36, 0); cheek.lineTo(.16, 1.02); cheek.lineTo(-.12, 1.1); cheek.closePath();
-    fixed.add(m.steel, plateGeometry(cheek, .06), [side * .3, 2.36, pz]);
+    fixed.add(m.dark, plateGeometry(cheek, .06), [side * .3, 2.36, pz]);
+    fixed.box(m.rust, [.07, .5, .42], [side * .33, 2.62, pz - .05], [0, 0, 0], .015);
     fixed.tube(m.dark, [[side * .3, 3.1, pz - .1], [side * .55, 2.75, 1.15], [side * .72, 2.45, .95]], .045, 6, 6);
     fixed.bolts(m.worn, [[side * .34, 2.55, pz - .25], [side * .34, 2.55, pz + .2], [side * .34, 2.9, pz]], [0, 0, side * Math.PI / 2], .03);
   }
@@ -253,15 +254,18 @@ function buildHammer(root, m) {
   arm.cyl(m.dark, .2, .2, .5, [0, 0, 0], [0, 0, Math.PI / 2], 16);
   arm.add(m.dark, plateGeometry(toothedShape(.3, 18, .06), .04), [.42, 0, 0]);
   for (let i = 1; i < 5; i++) arm.box(m.dark, [.04, .3, .04], [0, 0, i * .7 + .3]);
-  // The head: a core of stacked plate, a thick face on the side it strikes with, and studs on the face.
-  const head = [0, -.15, L];
-  arm.box(m.dark, [.84, .95, .72], head, [0, 0, 0], .06);
-  arm.box(m.rust, [.94, .2, .78], [0, -.3, L], [0, 0, 0], .03);
-  arm.box(m.rust, [.94, .2, .78], [0, .12, L], [0, 0, 0], .03);
-  arm.box(m.worn, [.98, .14, .84], [0, -.68, L], [0, 0, 0], .025);
-  for (const x of [-.3, 0, .3]) for (const z of [-.26, 0, .26]) arm.cyl(m.worn, .07, .09, .12, [x, -.8, L + z], [0, 0, 0], 8);
-  arm.bolts(m.worn, [[.46, -.3, L - .25], [.46, -.3, L + .25], [.46, .12, L - .25], [.46, .12, L + .25]], [0, 0, Math.PI / 2], .04);
-  arm.bolts(m.worn, [[-.46, -.3, L - .25], [-.46, -.3, L + .25], [-.46, .12, L - .25], [-.46, .12, L + .25]], [0, 0, Math.PI / 2], .04);
+  // The head: a war hammer's block, a broad striking face on the side it swings towards (-Y here), a spike on the
+  // back, rusted cheek plates bolted on each side, and a collar where the arm goes in.
+  arm.box(m.dark, [.7, 1.15, .7], [0, -.1, L], [0, 0, 0], .06);
+  arm.box(m.worn, [.88, .16, .88], [0, -.74, L], [0, 0, 0], .04);
+  arm.box(m.dark, [.78, .1, .78], [0, -.63, L], [0, 0, 0], .02);
+  for (const x of [-.28, 0, .28]) for (const z of [-.28, 0, .28]) arm.cyl(m.worn, .06, .085, .11, [x, -.86, L + z], [0, 0, 0], 8);
+  arm.cyl(m.worn, .02, .2, .62, [0, .78, L], [0, 0, 0], 10);
+  arm.box(m.dark, [.46, .5, .26], [0, 0, L - .48], [0, 0, 0], .03);
+  for (const side of [-1, 1]) {
+    arm.box(m.rust, [.06, .86, .6], [side * .37, -.12, L], [0, 0, 0], .02);
+    arm.bolts(m.worn, [[side * .41, -.42, L - .2], [side * .41, -.42, L + .2], [side * .41, .18, L - .2], [side * .41, .18, L + .2]], [0, 0, Math.PI / 2], .04);
+  }
   arm.finish(pivot, 'Hammer arm');
   return {pivot};
 }
@@ -285,7 +289,8 @@ export function hammerAngle(weapon, memory, heldStill = 0) {
 
 // The saw: a toothed disc on an axle ahead of the bumper, carried by two cheeks, with a guard over its top and back
 // and a motor beside the hub. It spins while F is held, throws sparks where it cuts, and glows when it must cool.
-const SAW_CENTRE = [0, 1.3, 2.85], SAW_RADIUS = .62;
+// The disc stands high enough that its top half shows over the bonnet from the driver's camera.
+const SAW_CENTRE = [0, 1.78, 2.95], SAW_RADIUS = .62;
 function buildSaw(root, m) {
   const fixed = batch(), [, cy, cz] = SAW_CENTRE;
   for (const side of [-1, 1]) {
@@ -294,7 +299,8 @@ function buildSaw(root, m) {
     fixed.add(m.steel, plateGeometry(cheek, .05), [side * .1, cy, cz]);
     fixed.bolts(m.worn, [[side * .13, cy, cz - .7], [side * .13, cy + .05, cz - .45]], [0, 0, Math.PI / 2], .028);
   }
-  fixed.box(m.dark, [.5, .28, .5], [0, cy + .08, 1.95], [0, 0, 0], .04);
+  fixed.box(m.dark, [.5, .28, .55], [0, cy - .02, 2.05], [0, 0, 0], .04);
+  for (const side of [-1, 1]) fixed.tube(m.dark, [[side * .45, 1.25, 1.8], [side * .2, cy - .25, 2.25], [side * .1, cy - .1, 2.6]], .05, 6, 6);
   fixed.cyl(m.worn, .05, .05, .32, [0, cy, cz], [0, 0, Math.PI / 2], 10);
   // The guard: a curved plate over the disc's top and back, open at the front and below where it cuts.
   const guard = new THREE.Shape();
@@ -303,7 +309,7 @@ function buildSaw(root, m) {
   fixed.add(m.rust, plateGeometry(guard, .16), [0, cy, cz]);
   fixed.cyl(m.dark, .16, .16, .34, [.3, cy, cz], [0, 0, Math.PI / 2], 14);
   fixed.box(m.dark, [.12, .36, .36], [.47, cy, cz], [0, 0, 0], .03);
-  fixed.tube(m.hose, [[.47, cy + .18, cz], [.55, cy + .55, cz - .4], [.6, 1.9, 1.9]], .028, 8, 6);
+  fixed.tube(m.hose, [[.47, cy + .18, cz], [.55, cy + .4, cz - .4], [.6, 2.3, 1.9]], .028, 8, 6);
   fixed.finish(root, 'Saw mount');
 
   const spinner = new THREE.Group(); spinner.name = 'Saw disc'; spinner.position.set(...SAW_CENTRE); root.add(spinner);
@@ -321,8 +327,8 @@ function buildSaw(root, m) {
         float teeth=smoothstep(.84,.88,r)*(1.0-smoothstep(.97,1.0,r));
         float face=(1.0-smoothstep(.86,.9,r))*smoothstep(.22,.26,r)*(.35+.25*sin(r*40.0));
         float a=uSpin*(teeth*.75+face*.35);
-        vec3 c=mix(vec3(.62,.64,.66),vec3(1.0,.38,.08),uHeat*smoothstep(.5,1.0,r));
-        gl_FragColor=vec4(c*(1.0+uHeat*1.5),a);
+        vec3 c=mix(vec3(.55,.57,.59),vec3(1.0,.24,.03),uHeat*smoothstep(.35,1.0,r));
+        gl_FragColor=vec4(c*(1.0+uHeat*1.8),a);
         #include <colorspace_fragment>
       }`,
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
@@ -349,12 +355,12 @@ function buildLauncher(root, m) {
     fixed.add(m.dark, new THREE.TorusGeometry(.315, .025, 6, 24), [side * .38, 2.78, -1.55], [0, Math.PI / 2, 0]);
     fixed.box(m.dark, [.12, .2, .4], [side * .38, 2.5, -1.55], [0, 0, 0], .02);
   }
-  fixed.cyl(m.dark, .03, .03, .35, [.42, 3.2, -1.72], [0, 0, 0], 6);
+  fixed.cyl(m.dark, .035, .035, .5, [.42, 3.2, -1.72], [0, 0, 0], 6);
   fixed.cyl(m.brass, .07, .07, .1, [-.35, 3.12, -1.55], [0, 0, 0], 8);
   fixed.tube(m.hose, [[-.55, 2.6, -1.4], [-.98, 2.3, -.4], [-.98, 2.05, 1.2], [-.55, 1.45, 1.9]], .035, 20, 6);
   fixed.finish(root, 'Launcher frame and tank');
 
-  const gauge = new THREE.Group(); gauge.name = 'Launcher air gauge'; gauge.position.set(.42, 3.42, -1.75); gauge.rotation.y = Math.PI;
+  const gauge = new THREE.Group(); gauge.name = 'Launcher air gauge'; gauge.position.set(.42, 3.5, -1.75); gauge.rotation.y = Math.PI; gauge.scale.setScalar(1.4);
   const face = new THREE.Mesh(new THREE.CircleGeometry(.17, 32), new THREE.MeshBasicMaterial({map: gaugeFace(), color: 0xd8d2c0}));
   const bezel = new THREE.Mesh(new THREE.TorusGeometry(.175, .025, 8, 32), m.brass);
   const needle = new THREE.Mesh(new THREE.BoxGeometry(.018, .14, .012).translate(0, .06, .012), new THREE.MeshBasicMaterial({color: 0x1a1410}));
@@ -367,7 +373,7 @@ function buildLauncher(root, m) {
   const top = new THREE.Shape();
   top.moveTo(-1.15, 0); top.lineTo(1.15, 0); top.lineTo(1.2, Lp - .1); top.lineTo(1.05, Lp); top.lineTo(-1.05, Lp); top.lineTo(-1.2, Lp - .1); top.closePath();
   const deck = new THREE.ExtrudeGeometry(top, {depth: .06, bevelEnabled: false}).rotateX(Math.PI / 2).translate(0, .06, 0);
-  plate.add(m.rust, deck);
+  plate.add(m.steel, deck);
   for (const x of [-.8, 0, .8]) {
     const rib = new THREE.Shape(); rib.moveTo(0, 0); rib.lineTo(Lp - .15, 0); rib.lineTo(0, -.2); rib.closePath();
     const g = new THREE.ExtrudeGeometry(rib, {depth: .05, bevelEnabled: false}).rotateY(-Math.PI / 2).translate(x + .025, 0, 0);
@@ -568,7 +574,7 @@ function buildRig(look, mesh) {
   if (look.weapon === 'launcher') rig.built.launcher = buildLauncher(root, m);
   // Fire: tongues for the dragon's breath and for a burning truck, sharing one flame picture.
   rig.flame = createFlameMaterial();
-  rig.breath = look.weapon === 'fire' ? [0, 1, 2, 3, 4, 5].map(i => {
+  rig.breath = look.weapon === 'fire' ? [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => {
     const tongue = flameTongue(rig.flame, `Dragon breath ${i + 1}`); root.add(tongue); return tongue; }) : [];
   rig.burning = [[.45, 2.2, 1.2], [-.5, 2.3, .1], [.2, 2.4, -1.4]].map((place, i) => {
     const tongue = flameTongue(rig.flame, `Burning truck ${i + 1}`); tongue.position.set(...place); root.add(tongue); return tongue; });
@@ -686,7 +692,7 @@ export function createBowlWeaponsView() {
       : weapon?.phase === 'active' ? clamp01((weapon.cutSeconds || 0) / 4) : 0;
     memory.heat = target > memory.heat ? target : Math.max(target, memory.heat - dt / 3);
     const heat = memory.heat;
-    rig.materials.blade.emissive.setRGB(1, .3, .05).multiplyScalar(heat * heat * 1.6);
+    rig.materials.blade.emissive.setRGB(1, .2, .02).multiplyScalar(heat * heat * 2.4);
     built.blurMaterial.uniforms.uSpin.value = smooth(memory.spin);
     built.blurMaterial.uniforms.uHeat.value = heat;
     const sparks = sparksFor(rig);
@@ -733,7 +739,7 @@ export function createBowlWeaponsView() {
       dip = easeOut(1 - weapon.time / memory.tellTotal) * WEAPON_LOOK.horn.dip;
       // Snorts from the nose as it lowers its horn to charge.
       if (rig.root.visible && Math.random() < dt * 14) for (const side of [-1, 1])
-        puffs.emit(toWorld(rig, side * .45, 1.7, 2.4), {velocity: [side * 1.2, .2, 2], life: .5, from: .2, to: .9, alpha: .4, color: 0xb9b2a6});
+        puffs.emit(toWorld(rig, side * .45, 1.7, 2.4), {velocity: [side * 1.2, .2, 2], life: .5, from: .3, to: 1.2, alpha: .22, color: 0x9d968a});
     } else memory.tellTotal = 0;
     built.pivot.rotation.x = dip;
   }
@@ -746,10 +752,16 @@ export function createBowlWeaponsView() {
       if (!tongue.visible) return;
       // The breath: tongues laid along the nozzle's line out to six metres, larger as they go.
       const reach = pilot ? .1 : i / (rig.breath.length - 1);
-      const size = pilot ? .45 + .1 * Math.sin(seconds * 30) : .9 + reach * 2.4;
-      tongue.position.set(Math.sin(seconds * 9 + i) * .15 * reach, 1.9 + reach * .6 - size * .35, 2.85 + reach * 5.4);
-      tongue.scale.set(size, size * (1.3 + .2 * Math.sin(seconds * 17 + i * 2)), 1);
+      const size = pilot ? .45 + .1 * Math.sin(seconds * 30) : 1.1 + reach * 2.9;
+      tongue.position.set(Math.sin(seconds * 9 + i) * .2 * reach, 1.9 + reach * .5 - size * .4, 2.85 + reach * 5.6);
+      tongue.scale.set(size, size * (1.25 + .25 * Math.sin(seconds * 17 + i * 2)), 1);
     });
+    // Soot rolls off the breath, so that the fire stands out against the pale floor.
+    if (burning && rig.root.visible && Math.random() < dt * 30) {
+      const reach = .3 + Math.random() * .7;
+      puffs.emit(toWorld(rig, (Math.random() - .5) * 1.2, 2.4 + reach * 1.2, 2.85 + reach * 5.6), {velocity: [0, 1.8, 0], life: 1.1,
+        from: .8, to: 2.6, alpha: .5, color: 0x1a1512, rise: .8});
+    }
     rig.built.snout.eyes.color.setHex(pilot || burning ? 0xfff0a0 : 0xff9a30);
     // The stacks breathe black smoke, more as it readies its fire.
     if (rig.root.visible && Math.random() < dt * (pilot || burning ? 22 : 4)) {
@@ -787,6 +799,7 @@ export function createBowlWeaponsView() {
       rig.hole.position.set(side * .985, 1.98, .05); rig.hole.rotation.set(0, side * Math.PI / 2, 0);
     }
     const smoking = share != null && share <= WEAPON_LOOK.damage.smoke + 1e-9;
+    memory.smoking = smoking; memory.burning = wrecked && share != null;
     if (smoking && rig.root.visible && Math.random() < dt * (wrecked ? 26 : 12)) {
       const at = toWorld(rig, (Math.random() - .5) * .8, 2.45, 1.4);
       puffs.emit(at, {velocity: [(Math.random() - .5) * .6, 1.4, (Math.random() - .5) * .6], life: wrecked ? 2.6 : 1.8,

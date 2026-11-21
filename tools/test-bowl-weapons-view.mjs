@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {Duel} from '../src/game.js';
-import {bowlHealthLoss, chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
+import {bowlHealthLoss, chooseShowWeapon, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
 import {createBowlWeaponsView, hammerAngle, launcherPose, RIVAL_LOOKS, truckLook, WEAPON_LOOK, WEAPON_PICTURES} from '../src/bowl/bowl-weapons-view.js';
 
 const dt = 1 / 60;
@@ -80,13 +80,17 @@ for (const kind of ['hammer', 'saw', 'launcher']) {
   const before = moving.rotation.x;
   let moved = false, spun = 0, glowed = 0, sparks = false;
   s.input.interact = true;
+  // The weapon alone, with the trucks where they were put, as tools/test-bowl-weapons.mjs drives it.
   for (let i = 0; i < 60 * 6; i++) {
-    duel.step(dt); draw();
+    stepShowWeapons(duel, s.bowlNight, dt); draw();
     if (Math.abs(moving.rotation.x - before) > .1) moved = true;
     if (kind === 'saw') { spun = Math.max(spun, rig.memory.spin); glowed = Math.max(glowed, rig.memory.heat);
       sparks ||= view.group.children.some(node => node.name === 'Saw sparks' && node.visible); }
   }
   assert.ok(moved, `the ${kind} moves with the rule's state`);
+  // Then the whole fight for eight seconds, the rivals driving and using their own weapons.
+  s.input.interact = false;
+  for (let i = 0; i < 60 * 8; i++) { s.input.interact = i % 90 < 40; duel.step(dt); draw(); }
   if (kind === 'saw') { assert.ok(spun > .9, 'the disc spins while F is held'); assert.ok(glowed > .9, 'the disc glows when it must cool'); assert.ok(sparks, 'the disc throws sparks where it cuts'); }
   assert.equal(view.group.userData.builds, 4, 'each truck is built once for the fight');
   for (const actor of s.opponents) {
@@ -98,11 +102,10 @@ for (const kind of ['hammer', 'saw', 'launcher']) {
   const victim = s.opponents[2], victimRig = view.rigs.get(meshes[3]);
   bowlHealthLoss(duel, victim, 1 - .6 - (1 - victim.armor / victim.maxArmor), 'player', 'left');
   draw(); assert.ok(victimRig.panel.visible, 'a panel hangs loose at three fifths');
-  const smoke = () => view.group.children[0].children.filter(node => node.visible).length;
-  const quiet = smoke();
+  const puffs = () => view.group.children[0].children.filter(node => node.visible).length;
   bowlHealthLoss(duel, victim, .45, 'player', 'left');
   for (let i = 0; i < 60; i++) draw();
-  assert.ok(smoke() > quiet, 'the truck smokes at one fifth');
+  assert.ok(victimRig.memory.smoking && puffs() > 0, 'the truck smokes at one fifth');
   bowlHealthLoss(duel, victim, 1, 'player', 'left');
   draw(); assert.ok(victimRig.burning.every(tongue => tongue.visible), 'the truck burns at nothing');
   assert.equal(view.group.userData.builds, 4, 'damage builds nothing new');
