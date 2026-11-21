@@ -1,5 +1,6 @@
 // Jump events run on the same fixed step and scoring stream as the show.
-import {BOWL_EVENTS} from './bowl-show.js';
+import {BOWL_EVENTS, crowdAfter, scoreStuntEvent, trickVariety} from './bowl-show.js';
+import {featuredSchoolTrick} from './bowl-school.js';
 import {BOWL_GOALS} from './bowl-lines.js';
 import {resetBowlTrickGo} from './bowl-tricks.js';
 
@@ -14,12 +15,22 @@ const TARGETS = {
 };
 const targetFor = night => TARGETS[night.event.type][night.cpuDifficulty];
 
-const RIVAL_TRICKS = Object.freeze([
-  ['a roof landing', 0], ['spin', 30], ['backflip', 50], ['barrel roll', 60],
-  ['backflip with a spin', 120], ['double backflip', 200], ['double barrel roll', 240],
-  ['double backflip with a spin', 345], ['triple backflip', 450],
-].map(([trick, points]) => Object.freeze({trick, points})));
-const RIVAL_ROUNDS = {easy: [0, 2, 3], medium: [2, 3, 4], hard: [4, 5, 6]};
+const RIVAL_ROUNDS = {
+  easy: [[null, 'a roof landing', 0], ['backflip', 'backflip', 45], ['barrelRoll', 'barrel roll', 54]],
+  medium: [['backflip', 'double backflip', 300], ['spin', 'spin combo', 600], ['frontFlip', 'triple front flip combo', 900]],
+  hard: [['backflip', 'double backflip combo', 900], ['backflip', 'triple backflip combo', 1500], ['barrelRoll', 'triple barrel roll combo', 2400]],
+};
+
+function bestTrickRival(night, state, number) {
+  const {event} = night;
+  const [kind, trick, basePoints] = RIVAL_ROUNDS[night.cpuDifficulty][number - 1];
+  const crowd = crowdAfter(event.crowd, state.stageTimeSec - event.crowdAt);
+  if (!kind) return {trick, kind, basePoints, crowd, points: 0};
+  const {fresh, repeat} = trickVariety(event.rivalVariety, kind);
+  const featured = featuredSchoolTrick({kind}, night.featuredTricks);
+  const points = scoreStuntEvent({type: 'bowlTrick', points: basePoints * (featured ? 2 : 1), fresh, repeat}, crowd).points;
+  return {trick, kind, basePoints, crowd, fresh, repeat, featured, points};
+}
 
 function ready(duel, night, placeAt, first = false) {
   const {event} = night, {course, state} = duel;
@@ -40,7 +51,8 @@ function ready(duel, night, placeAt, first = false) {
   const go = {startedAt: null, number, scoreAt: event.score, launched: false,
     cleared: [], barLow: Infinity, touchedBar: false};
   if (event.type === BEST_TRICK) {
-    const rival = night.turn ? null : RIVAL_TRICKS[RIVAL_ROUNDS[night.cpuDifficulty][number - 1]];
+    if (first) event.rivalVariety = {seen: new Set(), last: null, repeat: 1};
+    const rival = night.turn ? null : bestTrickRival(night, state, number);
     Object.assign(go, {rival, trickPoints: 0, tricks: [], tried: false});
     Object.assign(event, {schoolFailures: [], schoolReason: null});
   }
@@ -66,8 +78,7 @@ function sampleFlight(duel, line) {
     side: Math.abs(Math.sin(heading)) * halfLength + Math.abs(Math.cos(heading)) * halfWidth};
 }
 
-function sampleBuses(duel, event, line, truck) {
-  const go = event.go;
+function sampleBuses(go, line, truck, onClear) {
   for (const bus of line.buses) {
     if (truck.along + truck.nose < bus.distance - bus.halfDepth || go.cleared.includes(bus.id)) continue;
     if (truck.along - truck.nose <= bus.distance + bus.halfDepth &&
@@ -78,30 +89,56 @@ function sampleBuses(duel, event, line, truck) {
     if (truck.along - truck.nose > bus.distance + bus.halfDepth && !go.missedBuses?.has(bus.id) &&
         (go.lastAlong ?? truck.along) - truck.nose <= bus.distance + bus.halfDepth) {
       go.cleared.push(bus.id);
-      cue(duel, event, 'longClear', 'bowl.long.clear');
+      onClear?.();
     }
   }
   go.lastAlong = truck.along;
 }
 
-function sampleBar(event, {bar}, truck) {
-  if (truck.along + truck.nose < bar.distance || truck.along - truck.nose > bar.distance) return;
-  event.go.touchedBar = true;
-  const height = Math.abs(truck.across) + truck.side <= bar.halfWidth ? truck.y : 0;
-  event.go.barLow = Math.min(event.go.barLow, height);
+function sampleBar(go, {bar}, truck) {
+  if (truck.along + truck.nose >= bar.distance && truck.along - truck.nose <= bar.distance) {
+    go.touchedBar = true;
+    const height = Math.abs(truck.across) + truck.side <= bar.halfWidth ? truck.y : 0;
+    go.barLow = Math.min(go.barLow, height);
+  }
+  go.lastAlong = truck.along;
+  go.lastNose = truck.nose;
+}
+
+const clearedBar = (go, bar, height) => go.touchedBar &&
+  go.lastAlong > bar.distance + go.lastNose && go.barLow >= height;
+const clearedBuses = (go, state) => go.cleared.filter(id => !state.crushedProps.includes(id));
+
+export function stepFreestyleJump(duel, event, award) {
+  const {state, course} = duel;
+  const line = course.features.bowlJump;
+  if (!line) return;
+  if (state.airborne && state._jumpOrigin?.rampId === line.rampId) {
+    const go = event.freestyleJump ??= {cleared: [], barLow: Infinity, touchedBar: false};
+    const truck = sampleFlight(duel, line);
+    if (line.buses) sampleBuses(go, line, truck);
+    else sampleBar(go, line, truck);
+  } else if (event.freestyleJump && !state.airborne) {
+    const go = event.freestyleJump;
+    event.freestyleJump = null;
+    if (line.buses) {
+      for (const id of clearedBuses(go, state)) award({type: 'busClear', points: 40, id}, 'bowl.long.clear');
+    } else if (clearedBar(go, line.bar, event.barHeight)) {
+      award({type: 'barClear', points: event.barClears++ ? 60 : 100}, 'bowl.free.bar');
+    }
+  }
 }
 
 function flightLanded(duel, event) {
   const {state, course} = duel, {go} = event;
   if (event.type === BEST_TRICK) return go.trickPoints;
   if (event.type === LONG_JUMP) {
-    const count = go.cleared.filter(id => !state.crushedProps.includes(id)).length;
+    const count = clearedBuses(go, state).length;
     cue(duel, event, 'longPoints', null, 40 * count);
     return count;
   }
   const {bar} = course.features.bowlJump;
-  const cleared = go.touchedBar && go.lastAlong > bar.distance + go.lastNose && go.barLow >= event.barHeight;
-  if (!cleared) {
+  if (!clearedBar(go, bar, event.barHeight)) {
     cue(duel, event, 'highFail', 'bowl.high.fail');
     return 0;
   }
@@ -164,13 +201,9 @@ function stepGo(duel, night, say) {
   }
   if (state.airborne && state._jumpOrigin?.rampId === line.rampId) {
     go.launched = true;
-    if (line.type === LONG_JUMP && !go.hitBus) sampleBuses(duel, event, line, sampleFlight(duel, line));
-    if (line.type === HIGH_JUMP) {
-      const truck = sampleFlight(duel, line);
-      sampleBar(event, line, truck);
-      go.lastAlong = truck.along;
-      go.lastNose = truck.nose;
-    }
+    if (line.type === LONG_JUMP && !go.hitBus) sampleBuses(go, line, sampleFlight(duel, line),
+      () => cue(duel, event, 'longClear', 'bowl.long.clear'));
+    if (line.type === HIGH_JUMP) sampleBar(go, line, sampleFlight(duel, line));
   } else if (!state.airborne && go.launched) {
     return closeGo(duel, night, flightLanded(duel, event), say);
   }

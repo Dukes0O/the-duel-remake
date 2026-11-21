@@ -61,3 +61,5 @@ checked in the hand drive.
   the wall all work, and the stoppie, wheelie and pop-up show on all three Monster Arena vehicles. A hand driver won only one
   Last Truck Rolling in six on Easy, mostly losing to rams: play it by hand and judge whether a tween wins about six in ten.
   START ENGINE sometimes needed a second press at the Monster Arena: find out why.
+- From BOWL-BATCH3-FIX (21 November 2026): a driver holding only W in the Scrapasaurus fight drifted between the resting beast and
+  the outer wall and stalled at 22 seconds on integration `d09bc5917`. Try it by hand; if a player can be stuck there, card it.
