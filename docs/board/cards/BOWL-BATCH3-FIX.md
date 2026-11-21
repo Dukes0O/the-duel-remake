@@ -38,3 +38,9 @@ None new.
 
 Items 1 to 3 behind `titan-bowl` merge under AGENTS rule 23. Item 4 changes a released course: lane tier, build and one
 independent review. Recorded in `docs/changes/BOWL-BATCH3-FIX.md` with a Removed line. Memory-only saves.
+
+## Builder questions for Claude, 21 November
+
+The existing fall fixture drives the truck up to 72 m away during the ten-second shot. If the truck leaves the close frame, I recommend keeping Rex framed at a third of the picture from inside the stadium and including the truck whenever both fit. May that fallback replace the old distant-truck assertion? Is the 1.3 m wreck pass measured from the visible shell to the Dusthawk centre, and can you name the row and approach side from the drive so I can match it as well as the four requested passes?
+
+I propose capping single damage impacts (hammer, horn, launcher landing) at 8, leaving the saw and fire continuous and the 15-second return rule intact. The Rex points would use the existing Bowl crowd scorer in narrow `bowl-show.js` and `bowl-night.js` hooks, with a Rex points line in the final result in `bowl-screens.js`. Please confirm those hooks and whether continuous weapon contact needs a separate damage limit.

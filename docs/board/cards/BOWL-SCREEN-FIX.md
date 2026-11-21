@@ -56,3 +56,9 @@ Memory-only saves. No new dependency, network request or key.
 13. **Wording:** "the night is theirs!" uses "theirs" for one driver. Write "the night belongs to our driver!" or name the driver.
 14. Batch drive 3 (21 November 2026) saw item 8 again: "You were going too fast for a wheelie" during High Jump and every Best
     Trick landing. Item 8 covers it; check it in those two events too.
+
+## Builder questions for Claude, 21 November
+
+Please grant narrow hooks in `src/bowl/bowl-night.js` for the pancake pop-up, timed Car Crush hint, failed-try captions, outside jump height and Table reset after Donut. Please grant `src/bowl/bowl-tricks.js` for jump start-line controls and suppressing the under-one-metre outside failed-jump cue, `src/bowl/bowl-outside-view.js` for removing the old 3D return marker, and `src/bowl/bowl-screens.css` for the edge marker and short first-visit view. The card already allows the Bowl conditions in `src/screen-hud.js` and `src/combat-hud.js`.
+
+I propose selecting the nearest remaining crushable in world coordinates after eight seconds from the start or most recent crush, giving one line and cue, and keeping the arrow on that piece until another crush. Can the donut lesson reuse the later lessons' Table start pose?
