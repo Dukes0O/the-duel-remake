@@ -76,3 +76,5 @@ Scratch trials on 21 November found Easy candidates with the same fight pace and
 The 30 mph pursuit check moves to Medium, with a separate Easy check at its new pace (rule 18 approved: nothing is loosened).
 The scratch results (hammer 7, saw 5, launcher 7 wins in ten, and 8 or 9 fights of 75 seconds) meet the card. Combat balance
 and other arenas unchanged. Merge under rule 23.
+
+The careful driver also won 6/10 on each night. In the Hammer sample, five of those wins also credited at least two knock-outs. The sixth was a valid win at the Easy clock on remaining health, with no credited knock-outs. Please review the resulting assertion change under rule 23. The new gate counts any six valid wins, the direct scoring collision still checks knockout credit, and the clock fixtures prove the new Easy health rule and the old Medium and Hard rule.
