@@ -27,6 +27,7 @@
 import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight} from './bowl-course.js';
 import {BOWL_STAND} from './bowl-stadium.js';
 import {rexSolids} from './bowl-hook.js';
+import {sweepObstacle} from '../collision.js';
 
 export const BOWL_CAMERA = Object.freeze({
   // On the ground, and at the full height in the air (airFullMetres up and above).
@@ -212,8 +213,8 @@ function clearGateChase(course, position, body, referenceS) {
 // The camera frames the falling body's actual bounds, including head and tail.
 export function bowlRexFallFrame(course, fight) {
   if (fight?.phase !== 'fallen') return null;
-  const corners = [];
-  for (const part of rexSolids(fight, course)) {
+  const parts = rexSolids(fight, course), corners = [];
+  for (const part of parts) {
     const sin = Math.sin(part.heading), cos = Math.cos(part.heading);
     for (const across of [-part.halfX, part.halfX]) for (const along of [-part.halfZ, part.halfZ]) {
       const x = part.x + across * cos + along * sin;
@@ -229,8 +230,10 @@ export function bowlRexFallFrame(course, fight) {
   const inwardView = Math.atan2(rail.x - inside.x, rail.z - inside.z);
   const wall = course.features.bowl.outside.wall;
   const inStadium = point => course.nearest(point.x, point.z, fight.s).lateral <= wall;
-  return {x: midpoint('x'), y: midpoint('y'), z: midpoint('z'), corners, inwardView, inStadium};
+  return {x: midpoint('x'), y: midpoint('y'), z: midpoint('z'), parts, corners, inwardView, inStadium};
 }
+
+const REX_CAMERA_RAY = Object.freeze({halfWidth: 0, halfLength: 0, height: 0});
 
 function rexShot(body, rex, yaw, solidTop, aspect, fov) {
   const pitch = .10, sin = Math.sin(yaw), cos = Math.cos(yaw);
@@ -278,21 +281,39 @@ function rexShot(body, rex, yaw, solidTop, aspect, fov) {
   }
   const heightShare = (maxY - minY) / 2;
   const distanceFromRex = Math.hypot(position.x - rex.x, position.y - rex.y, position.z - rex.z);
+  if (fits && body && rex.parts.some(part => sweepObstacle(position, body, part, 0, REX_CAMERA_RAY))) fits = false;
   return {position, target, yaw, lift, hold: 'rexFall', fits: fits && rex.inStadium(position), heightShare, distanceFromRex};
 }
 
 function frameRexFall(cam, body, rex, solidTop, aspect, verticalFov) {
   const canUse = shot => shot.fits && shot.heightShare >= 1 / 3 && shot.distanceFromRex <= 45;
-  const turns = [0, .35, -.35, .7, -.7].map(turn => wrap(rex.inwardView + turn));
-  if (cam.rexFallYaw == null) {
-    const both = turns.map(yaw => rexShot(body, rex, yaw, solidTop, aspect, verticalFov)).filter(canUse);
-    cam.rexFallYaw = both.sort((a, b) => a.distanceFromRex - b.distanceFromRex)[0]?.yaw ?? rex.inwardView;
+  const yaw = cam.rexFallYaw ?? rex.inwardView;
+  const paired = rexShot(body, rex, yaw, solidTop, aspect, verticalFov);
+  if (canUse(paired)) {
+    cam.rexFallYaw = yaw;
+    return paired;
   }
-  const paired = rexShot(body, rex, cam.rexFallYaw, solidTop, aspect, verticalFov);
-  if (canUse(paired)) return paired;
-  const close = rexShot(null, rex, cam.rexFallYaw, solidTop, aspect, verticalFov);
+  const offsets = [0, .35, -.35, .7, -.7];
+  // A narrow viewport needs a more oblique view to fit the head and tail up close.
+  if (aspect < 1.2) offsets.push(.95, -.95, 1.15, -1.15, 1.32, -1.32, 1.48, -1.48);
+  const alternatives = offsets.map(offset => wrap(rex.inwardView + offset))
+    .filter(angle => Math.abs(wrap(angle - yaw)) > 1e-6)
+    .sort((a, b) => Math.abs(wrap(a - yaw)) - Math.abs(wrap(b - yaw)));
+  for (const angle of alternatives) {
+    const both = rexShot(body, rex, angle, solidTop, aspect, verticalFov);
+    if (canUse(both)) {
+      cam.rexFallYaw = angle;
+      return both;
+    }
+  }
+  // A driver who leaves the shot should never pull the view outside the stadium.
+  const close = rexShot(null, rex, yaw, solidTop, aspect, verticalFov);
   if (canUse(close)) return close;
-  return turns.map(yaw => rexShot(null, rex, yaw, solidTop, aspect, verticalFov)).find(canUse) ?? close;
+  for (const angle of alternatives) {
+    const alternate = rexShot(null, rex, angle, solidTop, aspect, verticalFov);
+    if (canUse(alternate)) return alternate;
+  }
+  return close;
 }
 
 // One frame of the show camera. `truck` is {key, x, y, z, air, heading}: `key` names the go (bowlCameraKey; a new key

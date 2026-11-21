@@ -5,6 +5,7 @@
 // Run: node tools/test-bowl-camera.mjs
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
+import {sweepObstacle} from '../src/collision.js';
 import {BOWL_CAMERA, bowlCameraKey, bowlCameraObstructed, bowlRexFallFrame, bowlSolidTop, createBowlCamera,
   stepBowlCamera} from '../src/bowl/bowl-camera.js';
 import {rexSolids} from '../src/bowl/bowl-hook.js';
@@ -44,7 +45,7 @@ const truckOf = duel => {
 };
 
 // Where a point falls in the picture of a camera at `position` looking at `target`, as -1..1 across and up.
-function project(position, target, point) {
+function project(position, target, point, aspect = ASPECT) {
   const f = {x: target.x - position.x, y: target.y - position.y, z: target.z - position.z};
   const fl = Math.hypot(f.x, f.y, f.z); f.x /= fl; f.y /= fl; f.z /= fl;
   // Right is forward x up, up is right x forward (world up is +y).
@@ -52,7 +53,7 @@ function project(position, target, point) {
   const u = {x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x};
   const d = {x: point.x - position.x, y: point.y - position.y, z: point.z - position.z};
   const depth = d.x * f.x + d.y * f.y + d.z * f.z, tan = Math.tan(FOV / 2);
-  return {x: (d.x * r.x + d.y * r.y + d.z * r.z) / depth / (tan * ASPECT), y: (d.x * u.x + d.y * u.y + d.z * u.z) / depth / tan, depth};
+  return {x: (d.x * r.x + d.y * r.y + d.z * r.z) / depth / (tan * aspect), y: (d.x * u.x + d.y * u.y + d.z * u.z) / depth / tan, depth};
 }
 
 // A sightline from the camera to the truck's middle is blocked when a solid stands above it, short of the truck itself.
@@ -384,6 +385,51 @@ for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
   const truck = project(shot.position, shot.target, {x: p.x, y: p.y + 1.65, z: p.z});
   ok(truck.depth > 0 && Math.abs(truck.x) < .9 && Math.abs(truck.y) < .9,
     'the nearby truck shares the close fall shot');
+}
+
+{
+  const duel = new Duel({seed: 1989});
+  duel.featureFlags = {enabled: name => name === 'titan-bowl'};
+  ok(duel.startBowlNight({night: 5, eventIndex: 2, cpuDifficulty: 'easy'}), 'the fight loads');
+  const {state, course} = duel, fight = state.bowlNight.event.rex, camera = createBowlCamera();
+  Object.assign(fight, {phase: 'fallen', s: 14, t: 0, low: true, boxes: [true, true, true]});
+  // The truck cuts across the inside. Its original camera angle eventually
+  // fails the size requirement, but another angle can still see both subjects.
+  let view, p;
+  for (let frame = 0; frame <= 55; frame++) {
+    fight.t = frame * FRAME;
+    p = course.groundAt(4 + 4 * fight.t, 10 - 10 * fight.t);
+    view = stepBowlCamera(camera, {key: bowlCameraKey(state), ...p, air: 0}, FRAME, {
+      rexFall: bowlRexFallFrame(course, fight),
+      solidTop: (x, z) => bowlSolidTop(course, x, z, 4 + 4 * fight.t),
+    });
+  }
+  const nearTruck = project(view.position, view.target, {...p, y: p.y + 1.65});
+  ok(nearTruck.depth > 0 && Math.abs(nearTruck.x) < 1 && Math.abs(nearTruck.y) < 1,
+    'a new fall angle keeps the truck in view when the held angle cannot frame both');
+
+  fight.t = 0;
+  const behindRex = course.groundAt(4, 18.5), nearRex = bowlRexFallFrame(course, fight);
+  const clearView = stepBowlCamera(createBowlCamera(), {key: bowlCameraKey(state), ...behindRex, air: 0}, FRAME, {
+    rexFall: nearRex, solidTop: (x, z) => bowlSolidTop(course, x, z, 4),
+  });
+  const roof = {...behindRex, y: behindRex.y + 1.65};
+  const roofPoint = project(clearView.position, clearView.target, roof);
+  ok(roofPoint.depth > 0 && Math.abs(roofPoint.x) < 1 && Math.abs(roofPoint.y) < 1 &&
+    !nearRex.parts.some(part => sweepObstacle(clearView.position, roof, part, 0, {halfWidth: 0, halfLength: 0, height: 0})),
+  'Rex does not hide the truck when another paired fall view is open');
+
+  fight.t = 7.5;
+  const rex = bowlRexFallFrame(course, fight), farTruck = course.groundAt(fight.s - 65, 7.5);
+  const portrait = stepBowlCamera(createBowlCamera(), {key: bowlCameraKey(state), ...farTruck, air: 0}, FRAME, {
+    rexFall: rex, aspect: .8,
+    solidTop: (x, z) => bowlSolidTop(course, x, z, fight.s),
+  });
+  const inView = rex.corners.map(point => project(portrait.position, portrait.target, point, .8));
+  const heights = inView.map(point => point.y);
+  ok(inView.every(({x, y, depth}) => Math.abs(x) < 1 && Math.abs(y) < 1 && depth > 0) &&
+    Math.max(...heights) - Math.min(...heights) >= 2 / 3,
+  'a narrow fall view fits the full beast at a third of the picture height');
 }
 
 // A new go, or a frame drawn by another camera, starts the camera afresh even when the truck has not moved: the old path
