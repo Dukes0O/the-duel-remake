@@ -90,7 +90,7 @@ export const BOWL_RIVAL_RULES = Object.freeze({
 const EASY_FIGHT_OPENINGS = Object.freeze({
   3: {ownRamRecoil: .42, joinsAt: [0, 55, 82], lanes: [0, 6, 10], speedMph: 38, lookAhead: 11},
   4: {ownRamRecoil: .22, joinsAt: [54, 0, 100], lanes: [6, 0, 10], speedMph: 37, lookAhead: 13, pace: {minimum: 28, maximum: 35}},
-  5: {ownRamRecoil: .42, joinsAt: [0, 52, 92], lanes: [0, -5, 5], speedMph: 36, lookAhead: 14},
+  5: {ownRamRecoil: .53, joinsAt: [0, 52, 92], lanes: [0, -5, 5], speedMph: 36, lookAhead: 14},
 });
 
 // The rival for a night's Side by Side, and the rivals for its Last Truck

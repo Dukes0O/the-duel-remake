@@ -80,7 +80,7 @@ for (const fight of [false, true]) {
   const along = actor => Math.cos(actor.headingError)*actor.speedMph + carAlongPush(actor)/DRIVE.mphToWorld;
   assert.ok(along(b) > along(a), 'the two trucks separate');
   for (const truck of [a,b]) {
-    if (fight) assert.equal(truck.armor,truck.maxArmor * (1 - (truck === a ? .5 : 1) / 12), 'Easy player ram recoil and full rival loss');
+    if (fight) assert.equal(truck.armor, truck.maxArmor - (truck === a ? 2.1 : 5), 'Night 3 Easy player ram recoil and full rival loss');
     else assert.ok(Object.values(truck.damageZones).every(value => value === 0), 'neither truck wears');
   }
 }
@@ -104,7 +104,8 @@ for (const side of [false, true]) {
       }
       duel._vehicleContact(rival, player, 'rival');
       const label = [level, side ? 'lateral' : 'head-on', rivalStarts ? 'rival' : 'player'].join(' ');
-      assert.equal(player.maxArmor - player.armor, level === 'easy' ? (rivalStarts ? 1 : 2.5) : 5, label);
+      const playerLoss = level === 'easy' ? (rivalStarts ? 1 : 2.1) : 5;
+      assert.equal(player.armor, player.maxArmor - playerLoss, label);
       assert.equal(rival.maxArmor - rival.armor, 5, label + ' rival armor');
       if (side) assert.ok(player.damageZones.left > 0 || player.damageZones.right > 0, label + ' hit the flank');
     }
@@ -133,8 +134,13 @@ for (const [night, index] of [[1,0],[1,1],[1,2],[3,2],[5,2]]) {
   const duel = start(night, index);
   const s = duel.state, type = s.bowlNight.event.type;
   let slow = 0, elapsed = 0;
+  const rexLane = s.bowlNight.event.rex ? s.bowlNight.event.rex.places.rail - 10 : null;
   for (let tick = 0; tick < 120*36 && elapsed < 30; tick++) {
-    duel.setInput({throttle: 1, steer: 0, brake: 0});
+    // The solid resting Rex can block the outer shoulder. Drive the usable
+    // inside shoulder in this event while keeping the same stall limit.
+    const steer = rexLane == null ? 0 : Math.max(-1, Math.min(1, (s.lateral - rexLane) * .18 + s.headingError * 1.2));
+    const throttle = rexLane == null || s.speedMph < 30 ? 1 : 0;
+    duel.setInput({throttle, steer, brake: 0});
     duel.step(1/120);
     if (s.bowlNight.phase !== 'event') break;
     if (s.status !== 'racing') continue;

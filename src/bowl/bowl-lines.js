@@ -4,86 +4,89 @@
 // Data only: no DOM, no game state. Cards that add events or nights add their
 // lines here under the same keys (BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT).
 
-// The sound each new Show Night event makes. Until the Bowl's own sounds are
-// picked (BOWL-FINISH), each plays the stand-in named beside it.
+// The sound each new Show Night event makes. Since BOWL-SOUND every cue plays a
+// recording of its own, under its own name in src/sound-bank.js, built by
+// tools/audio/build-bowl-sound.mjs (the crush set by build-bowl-crush.mjs).
 import {SECRETS} from './bowl-secrets.js';
 
 export const BOWL_SOUND_CUES = Object.freeze({
-  // BOWL-REX-FIGHT: the Scrapasaurus (src/bowl/bowl-rex.js REX_CUES), each on a stand-in.
-  'bowl.rex.roar': 'yeti.roar',             // it rears up and its chest glows: fire is coming (the tell)
-  'bowl.rex.fire': 'weapon.flame.start',    // the fire comes out, into the cone drawn on the floor
-  'bowl.rex.fire.end': 'weapon.flame.end',  // the fire stops
-  'bowl.rex.scorch': 'vehicle.crash-impact', // the fire or a thrown car catches the player's truck
-  'bowl.rex.box.open': 'weapon.tesla.charge', // it crouches to rest and a battery box opens, sparking
-  'bowl.rex.bump': 'vehicle.crash',         // the truck runs into its legs and is pushed away
-  'bowl.rex.lift': 'world.salt.horn',       // it picks up a junk car to throw, and the ring shows on the floor
-  'bowl.rex.throw': 'heli.setdown.thud',    // the junk car leaves its jaws
-  'bowl.rex.throw.land': 'vehicle.crush',   // the junk car comes down in the ring
-  'bowl.rex.burst': 'world.furnace.horn',
-  'bowl.rex.sag': 'weapon.flame.end',
-  'bowl.rex.rise': 'raider.warning',
-  'bowl.rex.sweep': 'weapon.flame.start',
-  'bowl.rex.brace': 'yeti.roar',
-  'bowl.hook.fire': 'weapon.harpoon.fire',
-  'bowl.hook.bite': 'heli.setdown.thud',
-  'bowl.hook.clang': 'vehicle.crash',
-  'bowl.hook.jerk': 'vehicle.crash-impact',
-  'bowl.hook.letgo': 'interface.radar',
-  'bowl.rex.box.out': 'weapon.tesla.pulse',
-  'bowl.rex.fall': 'combat.explosion',      // the third box is smashed and it falls over
-  'bowl.rex.gate': 'world.furnace.horn',    // it walks out through the car park gate
-  'bowl.out.over': 'crowd.cheer',
-  'bowl.out.leap': 'interface.win',
-  'bowl.out.gate': 'world.furnace.horn',
-  'bowl.out.back': 'interface.bonus',
-  // bowl.out.stands is named by the event for BOWL-SOUND to supply.
-  'bowl.secret.start': 'weapon.tesla.pulse',
-  'bowl.secret.found': 'interface.win',
-  'bowl.secret.cheer': 'crowd.cheer',
-  'bowl.secret.armed': 'world.furnace.horn',
-  'bowl.secret.hint': 'interface.radar',
-  'bowl.trick.late': 'interface.radar',
-  // bowl.trick.go is the turn-start rush, with no stand-in.
-  'bowl.trick.land': 'interface.bonus',
-  'bowl.trick.new': 'interface.win',
-  'bowl.trick.slam': 'vehicle.crash',
-  'bowl.trick.cyclone': 'crowd.cheer',
-  // bowl.trick.wheelie is the engine note; it has no stand-in.
-  'bowl.hammer.rise': 'raider.warning',
-  'bowl.hammer.hit': 'combat.explosion',
-  'bowl.hammer.miss': 'heli.setdown.thud',
-  'bowl.saw.spin': 'weapon.tesla.charge',
-  'bowl.saw.cut': 'vehicle.crash',
-  'bowl.saw.hot': 'weapon.flame.end',
-  'bowl.launcher.tell': 'raider.warning',
-  'bowl.launcher.fire': 'weapon.tesla.pulse',
-  'bowl.launcher.fill': 'interface.radar',
-  'bowl.rhino.horn': 'raider.warning',
-  'bowl.dragon.fire': 'weapon.flame.start',
-  'bowl.out.of.the.bowl': 'crowd.cheer',
-  'bowl.knockout': 'combat.explosion',
-  'bowl.weapon.pick': 'interface.bonus',
-  'bowl.wall.bounce': 'heli.setdown.thud',
-  'bowl.wall.hard': 'vehicle.crash',
-  'bowl.wall.big': 'vehicle.crash-impact',
-  'bowl.wall.scrape': 'vehicle.tires',
-  'bowl.race.lights': 'interface.countdown',
-  'bowl.race.finish': 'interface.win',
-  'bowl.rival.jump': 'heli.setdown.thud',
-  'bowl.rival.jump.fallback': 'vehicle.landing',
-  'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
-  'bowl.night.open': 'interface.win',
-  'bowl.night.new': 'interface.bonus',
-  'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
-  'bowl.event.won': 'interface.win',       // an event is won
-  'bowl.event.lost': 'interface.lose',     // an event is lost and can be tried again
-  'bowl.purse': 'interface.bonus',         // the purse is paid into the scrap wallet
-  'bowl.school.tick': 'interface.bonus',
-  'bowl.school.next': 'interface.radar',
-  'bowl.school.why': 'interface.countdown',
-  'bowl.school.done': 'crowd.cheer',
-  'bowl.turn.up': 'interface.radar',       // BOWL-TURNS: the pass-the-keyboard screen opens for the next player
-  'bowl.turn.winner': 'crowd.cheer',       // BOWL-TURNS: the Turn Show is over and the scoreboard names the winner
+  // BOWL-REX-FIGHT and BOWL-REX-2: the Scrapasaurus (src/bowl/bowl-rex.js REX_CUES).
+  'bowl.rex.roar': 'bowl.rex.roar',             // it rears up and its chest glows: fire is coming (the tell)
+  'bowl.rex.fire': 'bowl.rex.fire',    // the fire comes out, into the cone drawn on the floor
+  'bowl.rex.fire.end': 'bowl.rex.fire.end',  // the fire stops
+  'bowl.rex.scorch': 'bowl.rex.scorch', // the fire or a thrown car catches the player's truck
+  'bowl.rex.box.open': 'bowl.rex.box.open', // it crouches to rest and a battery box opens, sparking
+  'bowl.rex.bump': 'bowl.rex.bump',         // the truck runs into its legs and is pushed away
+  'bowl.rex.lift': 'bowl.rex.lift',       // it picks up a junk car to throw, and the ring shows on the floor
+  'bowl.rex.throw': 'bowl.rex.throw',    // the junk car leaves its jaws
+  'bowl.rex.throw.land': 'bowl.rex.throw.land',   // the junk car comes down in the ring
+  'bowl.rex.burst': 'bowl.rex.burst',
+  'bowl.rex.sag': 'bowl.rex.sag',
+  'bowl.rex.rise': 'bowl.rex.rise',
+  'bowl.rex.sweep': 'bowl.rex.sweep',
+  'bowl.rex.brace': 'bowl.rex.brace',
+  'bowl.hook.fire': 'bowl.hook.fire',
+  'bowl.hook.bite': 'bowl.hook.bite',
+  'bowl.hook.clang': 'bowl.hook.clang',
+  'bowl.hook.tight': 'bowl.hook.tight',
+  'bowl.hook.jerk': 'bowl.hook.jerk',
+  'bowl.hook.letgo': 'bowl.hook.letgo',
+  'bowl.rex.box.out': 'bowl.rex.box.out',
+  'bowl.rex.box.drag': 'bowl.rex.box.drag',
+  'bowl.rex.fall': 'bowl.rex.fall',      // the third box is smashed and it falls over
+  'bowl.rex.gate': 'bowl.rex.gate',    // it walks out through the car park gate
+  'bowl.out.over': 'bowl.out.over',
+  'bowl.out.leap': 'bowl.out.leap',
+  'bowl.out.gate': 'bowl.out.gate',
+  'bowl.out.back': 'bowl.out.back',
+  'bowl.out.stands': 'bowl.out.stands',
+  'bowl.secret.start': 'bowl.secret.start',
+  'bowl.secret.found': 'bowl.secret.found',
+  'bowl.secret.cheer': 'bowl.secret.cheer',
+  'bowl.secret.armed': 'bowl.secret.armed',
+  'bowl.secret.hint': 'bowl.secret.hint',
+  'bowl.trick.late': 'bowl.trick.late',
+  'bowl.trick.go': 'bowl.trick.go',         // the turn-start rush (app.js does not play bowlTrickGo yet)
+  'bowl.trick.land': 'bowl.trick.land',
+  'bowl.trick.new': 'bowl.trick.new',
+  'bowl.trick.slam': 'bowl.trick.slam',
+  'bowl.trick.cyclone': 'bowl.trick.cyclone',
+  'bowl.trick.wheelie': 'bowl.trick.wheelie',
+  'bowl.hammer.rise': 'bowl.hammer.rise',
+  'bowl.hammer.hit': 'bowl.hammer.hit',
+  'bowl.hammer.miss': 'bowl.hammer.miss',
+  'bowl.saw.spin': 'bowl.saw.spin',
+  'bowl.saw.cut': 'bowl.saw.cut',
+  'bowl.saw.hot': 'bowl.saw.hot',
+  'bowl.launcher.tell': 'bowl.launcher.tell',
+  'bowl.launcher.fire': 'bowl.launcher.fire',
+  'bowl.launcher.fill': 'bowl.launcher.fill',
+  'bowl.rhino.horn': 'bowl.rhino.horn',
+  'bowl.dragon.fire': 'bowl.dragon.fire',
+  'bowl.out.of.the.bowl': 'bowl.out.of.the.bowl',
+  'bowl.knockout': 'bowl.knockout',
+  'bowl.weapon.pick': 'bowl.weapon.pick',
+  'bowl.wall.bounce': 'bowl.wall.bounce',
+  'bowl.wall.hard': 'bowl.wall.hard',
+  'bowl.wall.big': 'bowl.wall.big',
+  'bowl.wall.scrape': 'bowl.wall.scrape',
+  'bowl.race.lights': 'bowl.race.lights',
+  'bowl.race.finish': 'bowl.race.finish',
+  'bowl.rival.jump': 'bowl.rival.jump',
+  'bowl.rival.jump.fallback': 'bowl.rival.jump.fallback',
+  'bowl.mo': 'bowl.mo',        // Big Mo starts a caption: a short PA chime
+  'bowl.night.open': 'bowl.night.open',
+  'bowl.night.new': 'bowl.night.new',
+  'bowl.crowd.rise': 'bowl.crowd.rise',        // the crowd meter passes a quarter mark
+  'bowl.event.won': 'bowl.event.won',       // an event is won
+  'bowl.event.lost': 'bowl.event.lost',     // an event is lost and can be tried again
+  'bowl.purse': 'bowl.purse',         // the purse is paid into the scrap wallet
+  'bowl.school.tick': 'bowl.school.tick',
+  'bowl.school.next': 'bowl.school.next',
+  'bowl.school.why': 'bowl.school.why',
+  'bowl.school.done': 'bowl.school.done',
+  'bowl.turn.up': 'bowl.turn.up',       // BOWL-TURNS: the pass-the-keyboard screen opens for the next player
+  'bowl.turn.winner': 'bowl.turn.winner',       // BOWL-TURNS: the Turn Show is over and the scoreboard names the winner
   // BOWL-RIVALS: a rival knocked out in Last Truck Rolling plays the arena's wreck
   // cue when the player did it ('arena.wreck-credit', already played by the game's
   // audio for an arena wreck) and Big Mo's chime with his line otherwise.
@@ -97,16 +100,22 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.crush.flat': 'bowl.crush.flat',       // a wreck run over again: a dull flat crunch, half as loud
   'bowl.crush.pancake': 'bowl.crush.pancake', // a piece crushed by a truck coming down out of the air
   'bowl.crush.ooh': 'bowl.crush.ooh',         // a bus, the RV, a stack or the Bus Pile: the crowd's "ooh"
-  'bowl.crush.chain': 'interface.countdown', // another piece in the chain
-  'bowl.crush.fullhouse': 'crowd.cheer',     // all the pieces are crushed
-  'bowl.go.ready': 'interface.radar',
-  'bowl.long.clear': 'interface.countdown',
-  'bowl.high.clear': 'weapon.flame.start',
-  'bowl.high.fail': 'interface.lose',
-  'bowl.best.rival': 'world.furnace.horn',
-  'bowl.best.rival.slam': 'vehicle.crash',
-  'bowl.best.round.won': 'interface.bonus',
-  'bowl.best.round.lost': 'interface.lose',
+  'bowl.crush.chain': 'bowl.crush.chain', // another piece in the chain
+  'bowl.crush.hint': 'bowl.crush.hint',
+  'bowl.crush.fullhouse': 'bowl.crush.fullhouse',     // all the pieces are crushed
+  'bowl.go.ready': 'bowl.go.ready',
+  'bowl.long.clear': 'bowl.long.clear',
+  'bowl.high.clear': 'bowl.high.clear',
+  'bowl.free.rival': 'bowl.free.rival',     // BOWL-FREESTYLE-NIGHTS: the rival's score climbs
+  'bowl.free.lead': 'bowl.free.lead',       // the player goes ahead
+  'bowl.free.behind': 'bowl.free.behind',   // the rival goes back ahead
+  'bowl.free.beaten': 'bowl.free.beaten',   // the player passes the rival's final score
+  'bowl.free.bar': 'bowl.free.bar',         // a bar cleared in Freestyle
+  'bowl.high.fail': 'bowl.high.fail',
+  'bowl.best.rival': 'bowl.best.rival',
+  'bowl.best.rival.slam': 'bowl.best.rival.slam',
+  'bowl.best.round.won': 'bowl.best.round.won',
+  'bowl.best.round.lost': 'bowl.best.round.lost',
 });
 
 // What a crushed piece is, for its sound: the course's pieces name their kind (junkCar, bowlBus, bowlRv,
@@ -117,6 +126,18 @@ export function bowlCrushKind(kind) {
   if (/heap|stack/i.test(name)) return 'stack';
   if (/bus|rv/i.test(name)) return 'bus';
   return 'car';
+}
+
+export function bowlCrushHintLine(piece) {
+  const kind = piece.sourceKind ?? piece.kind;
+  const target = piece.bowlCrushGroup === 'bowl-second-bus-pile' ? 'the second Bus Pile'
+    : piece.bowlCrushGroup ? 'the Bus Pile'
+    : piece.id.startsWith('bowl-row-') ? 'the Row'
+    : kind === 'bowlBus' ? 'the bus'
+    : kind === 'bowlRv' ? 'the RV'
+    : bowlCrushKind(kind) === 'stack' ? 'the burning stack'
+    : 'the junk car';
+  return `Steer for ${target}!`;
 }
 
 // The sounds of one crush, in order: {cue, at (seconds after the bite), scale}. A pancake on a car replaces the
@@ -179,6 +200,17 @@ export const BOWL_GOALS = Object.freeze({
 
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
+export function freestyleLines(rival) {
+  const pronoun = rival === 'Old Bess' ? 'her' : 'their';
+  return {
+    intro: `Now it is Freestyle, and you have ninety seconds. ${rival} has already been round, and you can watch ${pronoun} score climb on the board.`,
+    lead: `Our driver has gone ahead of ${rival}, so keep it going!`,
+    behind: `${rival} is back in front, so it is time for a trick you have not done yet.`,
+    beaten: `${rival} is beaten, so every point from now on is for the record.`,
+    lost: `${rival} finished ahead this time, so try mixing in a trick you have not done yet.`,
+  };
+}
+
 export const BIG_MO = Object.freeze({
   'school.done': 'The floor is yours to practise on, and you can find the secrets for yourself if you tap the keys quickly.',
   ...Object.fromEntries(SECRETS.map(trick => ['secret.' + trick.id, 'You found the ' + trick.name.slice(4) + '!'])),
@@ -219,7 +251,9 @@ export const BIG_MO = Object.freeze({
   'best.repeat': 'The same trick again pays less, so try a different one.',
   'best.noTrick': 'You landed no trick, so tap a key as soon as the truck leaves the ramp.',
   'event.carCrush.intro': 'Drive down the line, then keep going. You have a minute to crush as many pieces as you can.',
-  'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
+  'night.2.freestyleFloor': 'Tonight the buses from Long Jump stay out for Freestyle.',
+  'night.3.freestyleFloor': 'Tonight the two Bus Piles are back for Freestyle.',
+  'night.5.freestyleFloor': 'Tonight the flame bar stays over the Big Jump for Freestyle.',
   'event.sideBySide.intro': 'It is time for Side by Side. Two trucks race two laps, and the first one across the line wins.',
   'event.lastTruckRolling.intro': 'Here comes Last Truck Rolling. Four trucks go in, and the last one still moving wins.',
   'moment.fullHouse': 'That is a Full House! Every piece on the floor is crushed.',
@@ -242,10 +276,10 @@ export const BIG_MO = Object.freeze({
   'event.lost.bestTrick': 'Big Kettle landed the bigger tricks this time, so try a trick you have not done yet.',
   'event.won.carCrush': 'Our driver crushed enough pieces to go through to the next event.',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
-  'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
-  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night is theirs!',
+  'event.won.sideBySide': 'Our driver crossed the line first, so the night belongs to our driver!',
+  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night belongs to our driver!',
   'event.lost.carCrush': 'Time ran out before you crushed enough pieces, so let us try that again.',
-  'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
+
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
   'event.lost.lastTruckRolling': 'Another truck won that one, but the trucks are lining up again.',
   // BOWL-RIVALS: who is in the other lane, who is in the Bowl tonight, and who is out.
@@ -279,6 +313,7 @@ export const BOWL_RESULTS = Object.freeze({
     reason === 'gate' ? 'It reached the car park gate before you could stop it.'
       : reason === 'toasted' ? 'Its fire and its junk caught your truck too many times.' : null,
   ].filter(Boolean),
+  eventRexPoints: ({boxes, fall}) => `The battery boxes earned ${boxes.toLocaleString()} points, and the fall earned ${fall.toLocaleString()}.`,
   eventRexYard: 'The Scrapasaurus is going to stand in your yard from now on.',
   pickTitle: 'SHOW NIGHT',
   pickIntro: 'Big Mo runs three events every night. Choose a night to see what is on.',

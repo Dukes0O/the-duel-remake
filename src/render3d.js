@@ -96,13 +96,19 @@ function setCarShadows(mesh,on){
   mesh.userData.shadowsOn=on;
   mesh.traverse(object=>{if(object.isMesh){object.userData.castsShadow??=object.castShadow;object.castShadow=on&&object.userData.castsShadow;}});
 }
-function projectWorldMarker(camera, point, index = 0) {
+function projectWorldMarker(camera, point, index = 0, forGuide = false) {
   markerView.copy(point).applyMatrix4(camera.matrixWorldInverse);
   const ndc = point.project(camera);
   const x = (ndc.x + 1) * .5, y = (1 - ndc.y) * .5;
-  return {index, x: Number.isFinite(x) ? THREE.MathUtils.clamp(x, 0, 1) : .5,
+  const projected = {index, x: Number.isFinite(x) ? THREE.MathUtils.clamp(x, 0, 1) : .5,
     y: Number.isFinite(y) ? THREE.MathUtils.clamp(y, 0, 1) : .5,
     visible: markerView.z < 0 && ndc.z >= -1 && ndc.z <= 1 && x >= 0 && x <= 1 && y >= 0 && y <= 1};
+  if (!forGuide) return projected;
+  const behind = markerView.z >= 0;
+  // Behind the camera, use its local left/right and keep the cue level.
+  const guideX = behind ? .5 + Math.sign(markerView.x) * .5 : x;
+  return {...projected, behind, guideX: Number.isFinite(guideX) ? guideX : projected.x,
+    guideY: !behind && Number.isFinite(y) ? y : .5};
 }
 
 export function projectVehicleMarkers(camera, vehicles, height = 2) {
@@ -1470,9 +1476,9 @@ export function attachRenderer(host, app) {
       const showingTricks = course?.def.bowl ? state.bowlNight && flags?.enabled('titan-bowl') :
         course?.def.tricks && state.arenaTrickShow && flags?.enabled('arena-tricks');
       if (disposed || !showingTricks) return null;
-      if (point && state.bowlNight?.event?.rex) {
+      if (point && state.bowlNight) {
         camera.updateWorldMatrix(true, false);
-        return projectWorldMarker(camera, markerWorld.set(point.x, point.y, point.z));
+        return projectWorldMarker(camera, markerWorld.set(point.x, point.y, point.z), 0, true);
       }
       return projectVehicleMarkers(camera, [player], (player.userData.size?.height ?? 2) + .35)[0];
     },

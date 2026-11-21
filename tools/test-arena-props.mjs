@@ -134,4 +134,38 @@ for (const [row, side] of [[330, 1], [680, -1], [960, 1]]) {
   console.log('Outside approach at ' + row + ' m: past the row in ' + elapsed.toFixed(2) + ' s.');
 }
 
+// Hand-driver clearance: approach each wreck at 25 mph with a shallow
+// correction toward the row. Check 1.3 m to the car's side and the closer
+// 1.3 m to its centre that reproduced the remaining catch.
+let slowestManualPass = Infinity;
+for (const start of [330, 335.5, 680, 685.5, 960, 965.5]) for (const side of [-1, 1]) for (const nearSide of [false, true]) {
+  const duel = titanRace('dusthawk_rally', false), {course, state} = duel;
+  const wreck = course.features.crushables.find(prop => prop.s === start);
+  const carEdge = nearSide ? duel._vehicleSpec(state).halfWidth : 0;
+  const lane = wreck.off + side * (wreck.halfX + 1.3 + carEdge);
+  placeAtWrecks(duel, state, start - 7, lane);
+  state.speedMph = 25;
+  state.headingError = -side * .07;
+  let low = Infinity;
+  const elapsed = pastWrecks(duel, state, () => {
+    low = Math.min(low, state.speedMph);
+    return {throttle: state.speedMph < 25 ? 1 : 0, brake: 0,
+      steer: limited((state.lateral - lane) * .22 + state.headingError * 1.4), boost: false};
+  }, start + 9);
+  check(elapsed != null && low > 20 && state.crushedProps.length === 0,
+    'the Dusthawk passes ' + wreck.id + ' on side ' + side + ' and leaves the wreck intact');
+  slowestManualPass = Math.min(slowestManualPass, low);
+}
+console.log('Manual 25 mph approaches: lowest speed ' + slowestManualPass.toFixed(2) + ' mph.');
+
+{
+  const duel = titanRace('dusthawk_rally', false), {state} = duel;
+  placeAtWrecks(duel, state, 323, 5.2);
+  state.speedMph = 25;
+  const stop = pastWrecks(duel, state, () => ({throttle: state.speedMph < 25 ? 1 : 0, brake: 0,
+    steer: limited((state.lateral - 5.2) * .22 + state.headingError * 1.4), boost: false}), 339);
+  check(stop == null && state._titanWreckContact?.id === 'junk-0-0' && state.crushedProps.length === 0,
+    'the Dusthawk still cannot drive through the middle of an intact wreck');
+}
+
 console.log(`Arena salvage models and drives: ${checks} checks passed.`);

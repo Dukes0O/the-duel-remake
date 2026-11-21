@@ -10,8 +10,7 @@ import {addArenaCrushables} from '../arena-props.js';
 // - the car park: cracked asphalt all round the stadium, lamps on the stand back with their pools of light, the 16
 //   parked cars a truck can crush (the game's junk cars), and the dirt bank at its edge; BOWL-LOOK-FIX adds floodlight
 //   masts down the aisle between the parked rows and at both arches, so the cars and arches show from the stands;
-// - the marker back to a gate: an arrow with a shaft and a head over the truck, with the gate's name and distance,
-//   and a column of light over that gate's mouth that shows above the stands.
+// - a column of light over the selected gate's mouth that shows above the stands. The HUD draws the return arrow.
 // The stadium (src/bowl/bowl-stadium.js) builds this once per course and passes its drawing helpers and stand sizes.
 
 const AMBER = 0xffb02e, AMBER_DIM = 0x3a2a14;
@@ -128,7 +127,7 @@ function asphaltShade(hash, s, off) {
 
 export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand}) {
   const group = new THREE.Group();
-  group.name = 'Bowl outside: gates, car park and marker';
+  group.name = 'Bowl outside: gates and car park';
   const outside = course.features.bowl.outside, face = stand.face;
   const at = (s, off, y = 0) => { const p = course.worldAt(s, off); return new THREE.Vector3(p.x, y, p.z); };
 
@@ -244,7 +243,7 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
       }
     }
 
-    // A column of light over the mouth in the stand back, taller than the stands, for the gate the marker points to.
+    // A column of light over the selected mouth in the stand back, taller than the stands.
     const columnHeight = 70, column = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 3.4, columnHeight, 20, 1, true).translate(0, columnHeight / 2, 0),
       new THREE.ShaderMaterial({transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         uniforms: {uStrength: {value: 0}, uHeight: {value: columnHeight}},
@@ -479,67 +478,8 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
     group.add(bank);
   }
 
-  // ---- The marker back to a gate: an arrow with a shaft and a head, outlined, over the truck, and the gate's name and
-  // distance above it. Drawn on top of everything, so the stands never hide it.
-  const marker = new THREE.Group();
-  marker.name = 'Bowl gate marker';
-  marker.visible = false;
-  const arrowShape = (grow) => {
-    const shape = new THREE.Shape(), w = .55 + grow, head = 1.45 + grow * 1.6, tail = -2.1 - grow, tip = 2.2 + grow * 1.6, neck = .55;
-    shape.moveTo(-w, tail); shape.lineTo(w, tail); shape.lineTo(w, neck); shape.lineTo(head, neck);
-    shape.lineTo(0, tip); shape.lineTo(-head, neck); shape.lineTo(-w, neck); shape.closePath();
-    return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2).rotateY(Math.PI);
-  };
-  const onTop = colour => new THREE.MeshBasicMaterial({color: colour, depthTest: false, depthWrite: false, transparent: true, side: THREE.DoubleSide, toneMapped: false});
-  const arrow = new THREE.Group();
-  const outline = new THREE.Mesh(arrowShape(.28), onTop(0x140f0a)); outline.renderOrder = 40;
-  const fill = new THREE.Mesh(arrowShape(0), onTop(AMBER)); fill.renderOrder = 41; fill.position.y = .01;
-  arrow.add(outline, fill);
-  arrow.scale.setScalar(.85);
-  // The arrow points level, and turns about its own length to show its face to the camera, so it reads as an arrow
-  // and never as a line, whichever way it points.
-  const facing = {level: new THREE.Vector3(0, 0, 1), along: new THREE.Vector3(0, 0, 1), side: new THREE.Vector3(), normal: new THREE.Vector3(), toCamera: new THREE.Vector3(), basis: new THREE.Matrix4()};
-  outline.onBeforeRender = (_renderer, _scene, camera) => {
-    const {level, along, side, normal, toCamera, basis} = facing;
-    toCamera.setFromMatrixPosition(camera.matrixWorld).sub(marker.position);
-    // Pointing away from the camera, an arrow lying level is seen edge on: its tip rises, up to 40 degrees.
-    const away = Math.max(0, -(level.x * toCamera.x + level.z * toCamera.z) / Math.max(1e-6, Math.hypot(toCamera.x, toCamera.z)));
-    const rise = .7 * away;
-    along.set(level.x * Math.cos(rise), Math.sin(rise), level.z * Math.cos(rise));
-    normal.copy(toCamera).addScaledVector(along, -toCamera.dot(along));
-    if (normal.lengthSq() < 1e-6) normal.set(0, 1, 0);
-    normal.normalize();
-    side.crossVectors(normal, along);
-    arrow.quaternion.setFromRotationMatrix(basis.makeBasis(side, normal, along));
-    arrow.updateMatrixWorld(true);
-  };
-  marker.add(arrow);
-  let labelCanvas = null, labelContext = null, labelText = '';
-  const labelTexture = drawn(512, 160, (g, w, h) => { labelCanvas = g.canvas; labelContext = g; g.clearRect(0, 0, w, h); });
-  const label = new THREE.Sprite(new THREE.SpriteMaterial({map: labelTexture, depthTest: false, depthWrite: false, transparent: true,
-    toneMapped: false, color: labelTexture ? 0xffffff : AMBER}));
-  label.renderOrder = 42;
-  label.scale.set(5.6, 1.75, 1);
-  marker.add(label);
-  group.add(marker);
-  const drawLabel = (name, metres) => {
-    const text = `${name}|${metres}`;
-    if (!labelContext || text === labelText) return;
-    labelText = text;
-    const g = labelContext, w = labelCanvas.width, h = labelCanvas.height;
-    g.clearRect(0, 0, w, h);
-    g.fillStyle = 'rgba(20,16,11,.82)'; g.beginPath(); g.roundRect(6, 6, w - 12, h - 12, 14); g.fill();
-    g.strokeStyle = '#e69a38'; g.lineWidth = 4; g.stroke();
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = '#f3e6c8'; g.font = 'bold 44px Arial, sans-serif'; g.fillText(name.toUpperCase(), w / 2, h * .32);
-    g.fillStyle = '#ffc26a'; g.font = 'bold 64px Impact, Arial Black, sans-serif'; g.fillText(`${metres} m`, w / 2, h * .7);
-    labelTexture.needsUpdate = true;
-  };
-  let yaw = null;
-
   group.userData.gateCount = gates.length;
   group.userData.parkedCars = cars?.userData.crushableCount ?? 0;
-  group.userData.marker = marker;
 
   return {group, update(now, state, dt = 0) {
     const out = state?.bowlOutside, target = out?.gate;
@@ -557,22 +497,5 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
       entry.column.material.uniforms.uStrength.value = aimed ? (.75 + .25 * Math.sin(now * .004)) * Math.min(1, Math.max(0, (near - 10) / 25)) : 0;
     }
     if (cars) cars.userData.updateSimulation(state || {}, dt);
-    marker.visible = !!target;
-    if (!target) { yaw = null; return; }
-    const here = course.worldAt(state.s, state.lateral), y = (state.groundHeight || 0) + (state.airHeight || 0);
-    const want = Math.atan2(target.aim.x - here.x, target.aim.z - here.z);
-    if (yaw == null) yaw = want;
-    else {
-      const turn = Math.atan2(Math.sin(want - yaw), Math.cos(want - yaw));
-      yaw += turn * Math.min(1, dt * 8);
-    }
-    marker.position.set(here.x, y + 4.6, here.z);
-    // Close to the gate the arrow thins, so the arch it points at shows through it.
-    const fade = Math.min(1, .4 + Math.max(0, target.metres - 8) / 30);
-    fill.material.opacity = .95 * fade; outline.material.opacity = .9 * fade;
-    facing.level.set(Math.sin(yaw), 0, Math.cos(yaw));
-    arrow.scale.setScalar(.85 + .04 * Math.sin(now * .006));
-    label.position.set(0, 2, 0);
-    drawLabel(target.name, Math.max(0, Math.round(target.metres)));
   }};
 }

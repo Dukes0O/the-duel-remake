@@ -12,6 +12,16 @@ export function tricksEnabled(duel, actor) {
     duel.featureFlags?.enabled(duel.course.def.bowl ? 'titan-bowl' : 'arena-tricks') === true && actor.bowlNight?.event?.type !== 'lastTruckRolling';
 }
 
+export function bowlGroundTricksAllowed(actor) {
+  const go = actor.bowlNight?.event?.go;
+  return !go || go.launched === true;
+}
+
+export function bowlJumpMessagesAllowed(duel, actor, peak = 0) {
+  const outside = duel.course?.features?.bowl?.outside;
+  return !actor.bowlNight || !outside || actor.lateral <= outside.wall || Math.max(peak, actor.airHeight || 0) >= 1;
+}
+
 export function startArenaTrickShow(duel, foundTricks = []) {
   const s = duel.state;
   if (s.arenaTrickShow || s.bowlPose && !duel.course?.def.bowl) {
@@ -101,12 +111,13 @@ function ground(duel, state, dt) {
   }
   state.groundPrevious = keys;
   let kind = null;
-  if (input.boost) {
+  const showGround = input.boost && bowlGroundTricksAllowed(s);
+  if (showGround) {
     if (input.throttle && Math.abs(input.steer) > .5 && speed < 15) kind = 'donut';
     else if (input.throttle && Math.abs(input.steer) <= .5 && speed < (state.kind === 'wheelie' ? 30 : 10)) kind = 'wheelie';
     else if (input.brake && speed > (state.kind === 'stoppie' ? 8 : 25)) kind = 'stoppie';
   }
-  if (!kind && keys.Space) {
+  if (!kind && showGround) {
     if (keys.Up && !keys.Left && !keys.Right && (!previous?.Up || !previous.Space || previous.Left || previous.Right)) {
       reportBowlTry(duel, 'wheelieSpeed');
     } else if (keys.Down && (!previous?.Down || !previous.Space)) {
@@ -182,8 +193,10 @@ function remainingAir(duel, s, dt) {
 function late(duel, flight, kind) {
   if (flight.late) return;
   flight.late = true;
-  const show = duel.state.arenaTrickShow;
-  if (show && !duel.state.bowlNight) show.event.trickPopups = [{notice:'NOT ENOUGH AIR', at:show.clock}];
+  const s = duel.state;
+  if (!bowlJumpMessagesAllowed(duel, s, s.bowlNight?.event?.flight?.peak)) return;
+  const show = s.arenaTrickShow;
+  if (show && !s.bowlNight) show.event.trickPopups = [{notice:'NOT ENOUGH AIR', at:show.clock}];
   const turnsCompleted = flight.turns[kind] || 0;
   duel.emit?.({bowlTrickLate: {kind, turnsCompleted, cue: 'bowl.trick.late'}});
 }

@@ -1138,6 +1138,24 @@ export function _dentVehicle(actor, zone, impactMph) {
   actor.damageCooldown = .65;
 }
 
+// A light car catching the outer corner of a fixed Titan wreck can slide
+// across its side. A nose-first hit inside the wreck's width still stops it.
+function slidePastTitanWreck(duel, actor, end, heading, spec, prop) {
+  const relative = heading - prop.heading, acrossMotion = Math.abs(Math.sin(relative));
+  if (acrossMotion > .25 || actor.airborne) return false;
+  const cos = Math.cos(prop.heading), sin = Math.sin(prop.heading);
+  const across = (end.x - prop.x) * cos - (end.z - prop.z) * sin;
+  if (Math.abs(across) < prop.halfX + spec.halfWidth - .10) return false;
+  const projectedWidth = spec.halfWidth * Math.abs(Math.cos(relative)) + spec.halfLength * acrossMotion;
+  const shift = Math.sign(across) * (prop.halfX + projectedWidth + .04) - across;
+  const stop = { x: end.x + shift * cos, z: end.z - shift * sin };
+  const road = duel._roadPosition(stop, actor.s);
+  actor.s = road.s;
+  actor.lateral = road.lateral;
+  actor.speedMph *= Math.abs(Math.cos(relative));
+  return true;
+}
+
 export function _crushProps(actor) {
   if (actor.tumble || this.course.def.kind !== 'arena') return;
   const state = this.state, spec = this._vehicleSpec(actor);
@@ -1180,6 +1198,7 @@ export function _crushProps(actor) {
     const group = carCrush ? prop.bowlCrushGroup : null;
     const blockedPile = group && !pancake && Math.abs(actor.speedMph) < prop.bowlCrushMinMph;
     if (blockedPile || spec.mass < (prop.crushMass || 3500)) {
+      if (titanWreck && !movable && slidePastTitanWreck(this, actor, end, heading, spec, prop)) break;
       if (titanWreck) actor._titanWreckContact = {id: prop.id, at: state.stageTimeSec};
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),
         z: start.z + (end.z - start.z) * hit.t + hit.nz * (hit.penetration + .04) };

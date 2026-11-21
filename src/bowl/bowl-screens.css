@@ -50,6 +50,15 @@
 .bowl-night-row[data-night-state="locked"], .bowl-night-row[data-night-state="later"] { opacity: .7; }
 .bowl-mo { padding: 10px 12px; background: #2c1f12; border-left: 3px solid #f08a2c; font-style: italic; }
 .bowl-message { color: #ffc06a; }
+.bowl-school-offer ul { list-style: none; display: grid; gap: 6px; margin: 8px 0; padding: 0; }
+.bowl-school-offer li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.bowl-school-offer li p { margin: 2px 0; }
 .bowl-scores { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 4px; }
 .bowl-scores li { display: flex; justify-content: space-between; border-bottom: 1px solid #4f3e2c; padding: 4px 0; }
 .bowl-turns-players { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
@@ -94,7 +103,14 @@
 .bowl-hud-event { color: #ffc06a; letter-spacing: .035em; }
 .bowl-hud-numbers { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-weight: 800; }
 .bowl-hud-clock { min-width: 3ch; font-variant-numeric: tabular-nums; }
-.bowl-hud-chain, .bowl-hud-gap { color: #ffcd77; }
+.bowl-hud-chain, .bowl-hud-gap, .bowl-hud-gate, .bowl-hud-best-go { color: #ffcd77; }
+.bowl-waypoint {
+  position: absolute;
+  color: #ffd07d;
+  font-size: 19px;
+  line-height: 1;
+  text-shadow: 0 0 3px #130e09, 0 1px 2px #130e09;
+}
 .bowl-night-active .countdown { top: clamp(70px, 11vh, 100px); }
 .bowl-night-active .countdown > b { font-size: clamp(40px, 9vh, 76px); line-height: 1; }
 .bowl-hud-crowd { display: grid; gap: 2px; width: clamp(72px, 10vw, 144px); font-weight: 700; }

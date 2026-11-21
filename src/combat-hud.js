@@ -208,8 +208,8 @@ export function footAmmoPresentation(state) {
   return {name: gear.name, ammo: `AMMO ${ammo}`};
 }
 
-export function combatXpCue(event) {
-  return event?.combatWreck && event.victim === 'rival' &&
+export function combatXpCue(event, state, course) {
+  return !state?.bowlNight && !course?.def?.bowl && event?.combatWreck && event.victim === 'rival' &&
     event.owner === 'player'
     ? `+${NOTORIETY_XP.wreck} NOTORIETY · FINISH TO KEEP` : null;
 }
@@ -370,7 +370,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       return;
     }
     if (!combatHudEnabled(app.duel, state)) return;
-    const xpCue = combatXpCue(event);
+    const xpCue = combatXpCue(event, state, app.duel.course);
     if (xpCue) {
       setText(xpToast, xpCue);
       xpUntil = state.stageTimeSec + 2.2;
@@ -608,7 +608,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     }
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);
-    xpToast.classList.toggle('is-visible', xpUntil > state.stageTimeSec && !state.paused);
+    xpToast.classList.toggle('is-visible', !state.bowlNight && !app.duel.course?.def?.bowl && xpUntil > state.stageTimeSec && !state.paused);
     // A warlord move may light a screen edge for the side something comes from.
     for (const cue of edgeCues) cue.classList.toggle('is-visible', !state.paused &&
       !!state.arena?.edgeCues?.some(item => item.side === cue.dataset.side && item.untilSec > state.stageTimeSec));

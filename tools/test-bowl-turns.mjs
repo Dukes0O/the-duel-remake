@@ -154,10 +154,17 @@ for (const {night, events} of SHOW_NIGHTS) {
   const night = duel.state.bowlNight;
   ok(night.turn && night.event.type === 'freestyle' && duel.state.status === 'countdown', 'the go is Freestyle, from a countdown');
   ok(seen[0] === 'turn.open' && !seen.includes('night.1.open'), 'Big Mo welcomes the next driver, not a new night');
-  equal(bowlHudView(duel.state, duel.course).driver, 'Kyle', "the HUD names who is driving");
+  const strip = bowlHudView(duel.state, duel.course);
+  equal(strip.driver, 'Kyle', 'the HUD names who is driving');
+  equal(strip.target, null, 'Freestyle gives one turn with no rival target');
+  equal(night.event.rivalScore, undefined, 'the solo rival does not take part in a Turn Show');
   ok(!duel.retryBowlEvent(), 'a go has no restart: it is one go');
+  night.event.score = 100;
   for (let i = 0; i < 120 * 100 && duel.state.status !== 'bowl_break'; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
   ok(night.phase === 'turn' && duel.state.status === 'bowl_break', 'the go ends in the turn phase');
+  ok(Math.abs(duel.state.stageTimeSec - 90) <= DT, 'the go lasts ninety seconds');
+  equal(night.event.rivalPopup, undefined, 'no rival trick appears during a turn');
+  equal([night.lastResult.score, night.lastResult.won], [100, false], 'a positive score below the old mark still loses');
   ok(seen.includes('result') && !seen.includes('night') && seen.includes('turn.lost'), 'a go pays nothing itself and is not called a retry');
   ok(!duel.continueBowlNight(), 'a go does not run on into the next event');
 }

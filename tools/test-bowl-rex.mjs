@@ -4,9 +4,9 @@ import * as THREE from 'three';
 import {App} from '../src/app.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
-import {SHOW_NIGHTS} from '../src/bowl/bowl-show.js';
+import {crowdAfter, SHOW_NIGHTS, scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {bowlNightPlayable,settleShowNight,bowlHudView} from '../src/bowl/bowl-night.js';
-import {BOWL_GOALS,BOWL_SOUND_CUES,BIG_MO} from '../src/bowl/bowl-lines.js';
+import {BOWL_GOALS,BOWL_RESULTS,BOWL_SOUND_CUES,BIG_MO} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {createProfile} from '../src/progression.js';
 import {Course} from '../src/course.js';
@@ -20,6 +20,10 @@ import {eyePoint,hookMarker,modelPoint,rexAnchor,rexSolids,signedAngle,truckPoin
 import {childDrive} from './scenarios/bowl-rex-fight.mjs';
 
 const dt=1/120;
+assert.equal(scoreStuntEvent({type:'rexBox'}, 0).points, 300);
+assert.equal(scoreStuntEvent({type:'rexFall'}, 0).points, 500);
+assert.equal(scoreStuntEvent({type:'rexBox'}, 50).points, 450);
+assert.equal(scoreStuntEvent({type:'rexFall'}, 50).points, 750);
 function start(seed=101,level='easy'){
   const d=new Duel({seed});
   d.featureFlags={enabled:n=>n==='titan-bowl'};
@@ -408,8 +412,20 @@ function drive(seed,useSpace=true,slowTween=false){
   const duel=start(seed),s=duel.state,night=s.bowlNight,f=night.event.rex;
   const rng=makeRng(seed),driver={useSpace,reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
   if(slowTween)Object.assign(driver,{slowTween:true,reaction:rng.range(.75,1.25),pace:rng.range(22,30),wobble:rng.range(.13,.23),wobblePhase:rng.range(0,6.28)});
-  const trace=[];let fall=null,ending=null,firstDrag=null,dragDistance=0;
+  const trace=[], awards=[];
+  let fall=null,ending=null,firstDrag=null,dragDistance=0, crowd=0, scoredAt=0, combined=0;
   duel.onChange((_,ev)=>{
+    if (ev.bowlScore && ev.bowlScore.type !== 'crushChain') {
+      const {type, points, crowd: nextCrowd} = ev.bowlScore;
+      if (type === 'rexBox' || type === 'rexFall') {
+        const base = type === 'rexBox' ? 300 : 500;
+        assert.equal(points, Math.round(base * (1 + crowdAfter(crowd, s.stageTimeSec - scoredAt) / 100)));
+        awards.push({type, points});
+      }
+      combined += points;
+      crowd = nextCrowd;
+      scoredAt = s.stageTimeSec;
+    }
     if(ev.bowlRex?.type==='jerk')assert.notEqual(ev.bowlRex.box,1,'the back box has no run-up in either drive');
     if(ev.bowlRex){trace.push(ev.bowlRex.type);if(ev.bowlRex.type==='fall')fall=night.clock;}
     if(ev.bowlEventResult)ending=night.clock;
@@ -426,7 +442,19 @@ function drive(seed,useSpace=true,slowTween=false){
     duel.step(dt);
   }
   assert.ok(night.lastResult,'fight ended, seed '+seed);
+  assert.equal(night.lastResult.score, combined, 'the result reports the points awarded during the fight');
+  if (awards.length) {
+    const boxes = awards.filter(row => row.type === 'rexBox').reduce((sum, row) => sum + row.points, 0);
+    const fallPoints = awards.find(row => row.type === 'rexFall')?.points ?? 0;
+    assert.deepEqual(night.lastResult.rexPoints, {boxes, fall:fallPoints});
+    if (fallPoints) {
+      const line = BOWL_RESULTS.eventRexPoints(night.lastResult.rexPoints);
+      assert.ok(line.includes(boxes.toLocaleString()) && line.includes(fallPoints.toLocaleString()));
+    }
+  }
   if(night.lastResult.won){
+    assert.equal(awards.filter(row => row.type === 'rexBox').length, 3);
+    assert.equal(awards.filter(row => row.type === 'rexFall').length, 1);
     assert.equal(trace.filter(x=>x==='boxOut').length,3);
     assert.equal(trace.filter(x=>x==='fall').length,1);
     assert.ok(Math.abs(ending-fall-10)<dt*.01,'result exactly ten seconds after the third extraction');
