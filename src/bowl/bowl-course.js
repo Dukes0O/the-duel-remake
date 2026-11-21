@@ -9,6 +9,7 @@
 // graphics.
 
 import {createBowlOutside, outsideGateAt, terraceHeight} from './bowl-outside.js';
+import {dressBowlEvent} from './bowl-crush-field.js';
 
 // The centre line: two straights and two half circles. Lap distance `s` starts at
 // the beginning of the Jump Straight; `off` is minus towards the Spine. Each half
@@ -174,6 +175,7 @@ export function buildBowlFeatures(course) {
       halfZ: car ? 2.25 : 4.2, height: car ? 1.3 : 1.65,
       shape: 'box', color: colors[lane], bowlFire: kind === 'bowlBurningHeap'});
   }
+  dressBowlEvent(course);
   // A flame jet either side of each jump's crest: one on the Spine, one on top of the
   // stand wall, behind its catch fence (the fence stands at the wall's front edge). They are
   // data for the Bowl view; the simulation never advances or draws them.
@@ -201,6 +203,11 @@ export function buildBowlFeatures(course) {
     // The Spine's wall pieces are 1 m thick and centred 0.74 m from its middle line.
     spine: Object.freeze({halfWidth: RADIUS - BOWL_FLOOR.wallOffset + .5, length: STRAIGHT, height: BOWL_STADIUM.spineHeight}),
   });
+  // BOWL-OUT-LOOK, drawing only: the drawn stands and car park (bowl-stadium.js, bowl-outside-view.js) are the ground that
+  // shows behind the stand wall, so the drawn ground mesh lies flat under them instead of on the terraces trucks drive.
+  // Near ground: the floor edge's height less 15 cm, below the walkway; far ground: below the car park's asphalt.
+  course.ribbonGroundY = (s, off) => off > outside.wall + .5 ? course.groundAt(s, outside.wall - .5).y - .15 : null;
+  course.farGroundY = (x, z, s, off) => Math.abs(off) > RADIUS + .5 ? -.3 : course.groundAt(s, off).y;
 }
 
 // The stadium's sizes, shared by the course (flame jet heights) and its view.

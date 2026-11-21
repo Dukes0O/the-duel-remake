@@ -1,17 +1,19 @@
 import assert from 'node:assert/strict';
+import {chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
 import {Duel} from '../src/game.js';
 import {DRIVE} from '../src/config.js';
 import {carAlongPush} from '../src/arsenal/car-effects.js';
 
-function start(night, eventIndex) {
+function start(night, eventIndex, cpuDifficulty='easy') {
   const duel = new Duel({seed: 1989});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
-  assert.ok(duel.startBowlNight({night, eventIndex, cpuDifficulty: 'easy', seed: 1989}));
+  assert.ok(duel.startBowlNight({night, eventIndex, cpuDifficulty, seed: 1989}));
+  if (duel.state.status === 'bowl_weapon_pick') assert.ok(chooseShowWeapon(duel, 'hammer'));
   return duel;
 }
 
-function contact(surface, speed, angle, kind, fraction, fight = true, rival = false, rex = false) {
-  const duel = rex ? start(5, 3) : fight ? start(3, 2) : start(1, 1);
+function contact(surface, speed, angle, kind, fraction, fight = true, rival = false, rex = false, level = 'medium') {
+  const duel = rex ? start(5, 3) : fight ? start(3, 2, level) : start(1, 1);
   const actor = rival ? duel.state.opponents[0] : duel.state;
   const walls = duel.course.features.barriers.filter(wall => wall.arenaWall);
   const at = surface === 'end' ? 105 : 35;
@@ -50,6 +52,11 @@ for (const surface of ['stand','spine','end']) {
     contact(surface, speed, angle, kind, fraction);
   }
 }
+// The approved player's Easy wall share leaves rival walls and all other levels at full cost.
+contact('stand', 35, 90, 'hard', 1/60, true, false, false, 'easy');
+contact('stand', 55, 90, 'big', 1/30, true, false, false, 'easy');
+contact('stand', 35, 90, 'hard', 1/12, true, true, false, 'easy');
+contact('stand', 55, 90, 'big', 1/6, true, false, false, 'hard');
 contact('stand', 55, 90, 'big', 0, false);
 contact('stand', 35, 90, 'hard', 1/12, true, true);
 
@@ -67,8 +74,34 @@ for (const fight of [false, true]) {
   const along = actor => Math.cos(actor.headingError)*actor.speedMph + carAlongPush(actor)/DRIVE.mphToWorld;
   assert.ok(along(b) > along(a), 'the two trucks separate');
   for (const truck of [a,b]) {
-    if (fight) assert.equal(truck.armor,truck.maxArmor*(1-1/12), 'each loses a twelfth');
+    if (fight) assert.equal(truck.armor,truck.maxArmor * (1 - (truck === a ? .5 : 1) / 12), 'Easy player ram recoil and full rival loss');
     else assert.ok(Object.values(truck.damageZones).every(value => value === 0), 'neither truck wears');
+  }
+}
+
+// A faster closing rival gets the Easy ram share on either contact axis.
+for (const side of [false, true]) {
+  for (const level of ['easy', 'medium', 'hard']) {
+    for (const rivalStarts of [false, true]) {
+      const duel = start(3, 2, level), player = duel.state, rival = player.opponents[0];
+      for (const participant of player.arena.participants) participant.protectedSec = 0;
+      const heading = side ? Math.PI / 2 : 0;
+      Object.assign(player, {s:34, prevS:side ? 34 : 28, lateral:0, prevLateral:side ? -6 : 0,
+        speedMph:rivalStarts ? 8 : 27, headingError:heading});
+      Object.assign(rival, {s:side ? 34 : 35, prevS:side ? 34 : 41,
+        lateral:side ? 1 : 0, prevLateral:side ? 7 : 0,
+        speedMph:rivalStarts ? 27 : 8, headingError:heading + Math.PI});
+      if (side) {
+        player.pushVelocity = player.speedMph * DRIVE.mphToWorld;
+        player.headingError = 0;
+        player.speedMph = 0;
+      }
+      duel._vehicleContact(rival, player, 'rival');
+      const label = [level, side ? 'lateral' : 'head-on', rivalStarts ? 'rival' : 'player'].join(' ');
+      assert.equal(player.maxArmor - player.armor, level === 'easy' ? (rivalStarts ? 1 : 2.5) : 5, label);
+      assert.equal(rival.maxArmor - rival.armor, 5, label + ' rival armor');
+      if (side) assert.ok(player.damageZones.left > 0 || player.damageZones.right > 0, label + ' hit the flank');
+    }
   }
 }
 

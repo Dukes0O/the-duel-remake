@@ -56,7 +56,7 @@ export const page = {
   // The scoreboard's markup is always in the page, hidden; what must not show is the board or the word on screen.
   arenaHidden: `(() => { const board = document.querySelector('#arena-board'); return (!board || board.hidden) && !document.body.innerText.includes('SCRAPDOME'); })()`,
   fourTrucks: `(() => { const s = window.__qaApp.duel.state; return s.arena?.mode === 'last-car-rolling' && s.opponents.length === 3 && s.opponents.every(truck => truck.car === 'titan_monster'); })()`,
-  // Nobody has a weapon in the Bowl: the arena fight's weapon bar is not shown.
+  // The Bowl's show weapon replaces the arena's ordinary weapon bar.
   noWeaponBar: `(() => { const bar = document.querySelector('.combat-slot-bar'); return !bar || bar.hidden || !bar.offsetParent; })()`,
   pause: `(() => { window.__qaApp.togglePause(); return window.__qaApp.duel.state.paused === true; })()`,
   pauseCard: `(() => { const layer = document.querySelector('#modal-layer'); return !!layer && !layer.hidden && !layer.textContent.includes('SCRAPDOME') && !layer.textContent.includes('REMATCH'); })()`,
@@ -99,6 +99,11 @@ async function startNight(context, night) {
   await context.waitFor(page.event, `night ${night} starts`, 60000);
   await waitWithState(context, page.drawn, `night ${night}'s first event is drawn`, 180000);
   assert.ok(await context.evaluate(page.skipTo), 'the night goes on to its last event');
+  if (night === 3) {
+    const hammer = `document.querySelector('[data-action="show-night-weapon"][data-weapon="hammer"]')`;
+    await context.waitFor(hammer, 'Night three offers the hammer before the fight', 10000);
+    await context.evaluate(hammer + '.click()');
+  }
   await waitWithState(context, page.drawn, `night ${night}'s last event is drawn with every rival's truck`, 180000);
 }
 

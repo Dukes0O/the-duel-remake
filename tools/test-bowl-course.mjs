@@ -4,8 +4,13 @@ import {Course} from '../src/course.js';
 import {COURSE, DRIVE} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {BOWL_COURSE, bowlCentre} from '../src/bowl/bowl-course.js';
+import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
 import {createBowlView} from '../src/bowl/bowl-view.js';
 import {addArenaCrushables} from '../src/arena-props.js';
+import {BOWL_STAND} from '../src/bowl/bowl-stadium.js';
+import {terraceHeight} from '../src/bowl/bowl-outside.js';
+import {ribbonGroundAt} from '../src/ribbon-ground.js';
+import {farTerrainCornerHeight} from '../src/far-terrain-surface.js';
 
 const check=(condition,message)=>assert.ok(condition,message);
 const DT=1/120;
@@ -80,6 +85,50 @@ check(onStraight(data.crush.startS,data.zones.crushStraight)&&bowl.features.crus
 check(data.rails.lateral>12&&data.rails.lateral<floor.floorHalfWidth,'The Scrapasaurus\'s rails run round the edge of the floor.');
 check(data.launchCars.every(car=>Math.abs(car.lateral)<floor.floorHalfWidth&&bowl.groundAt(car.s,car.lateral).y===0),
   'The launch cars stand on flat floor.');
+
+// Only Car Crush builds the full field. Check the whole footprint of each piece
+// against the wall faces, the ramps and the eight metres of run-up.
+{
+  const dressed = new Course({...BOWL_COURSE, bowlDressing: CAR_CRUSH_DRESSING}, 1989);
+  const field = dressed.features.crushables;
+  check(field.length === 31 && new Set(field.map(piece => piece.id)).size === 31, 'Car Crush has 31 separate pieces');
+  check(field.filter(piece => piece.bowlCrushGroup).length === 3 &&
+    field.filter(piece => piece.bowlPancakeRamp).length === 3 &&
+    field.filter(piece => piece.id.startsWith('bowl-row-')).length === 5 &&
+    field.filter(piece => piece.id.startsWith('bowl-end-one-')).length === 5, 'the field has all four added groups');
+  for (const [index, old] of bowl.features.crushables.entries()) {
+    const piece = field[index];
+    check(piece.id === old.id && piece.s === old.s && piece.off === (old.off === 18.2 ? 17.25 : old.off),
+      `${old.id} keeps its position except for the approved outer-line clearance`);
+  }
+  for (const piece of field) {
+    const c = Math.cos(piece.heading), sin = Math.sin(piece.heading);
+    const corners = [[1,1],[-1,1],[1,-1],[-1,-1]].map(([side, end]) =>
+      dressed.nearest(piece.x + c * side * piece.halfX + sin * end * piece.halfZ,
+        piece.z - sin * side * piece.halfX + c * end * piece.halfZ, piece.s));
+    check(corners.every(corner => corner.lateral <= floor.outerWallOffset - .5 - 3 &&
+      corner.lateral >= -(floor.wallOffset - .5 - 3)), `${piece.id} clears the wall by at least three metres`);
+    const [along, across] = ['s','lateral'].map(key => corners.map(corner => corner[key]));
+    check(ramps.every(ramp => {
+      const width = ramp.halfWidth + ramp.flank;
+      return Math.max(...along) <= ramp.start - 8 || Math.min(...along) >= ramp.end ||
+        Math.max(...across) <= ramp.off - width || Math.min(...across) >= ramp.off + width;
+    }), `${piece.id} stays off the jumps and their run-ups`);
+  }
+  for (const [night, eventIndex, type] of [[1,1,'freestyle'], [1,2,'sideBySide'], [3,2,'lastTruckRolling']]) {
+    const duel = new Duel({seed:1989});
+    duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
+    check(duel.startBowlNight({night,eventIndex,cpuDifficulty:'easy'}) && duel.state.bowlNight.event.type === type &&
+      duel.course.def.bowlDressing == null, `${type} starts without Car Crush dressing`);
+    const original = bowl.features.crushables;
+    check(duel.course.features.crushables.length === original.length, `${type} keeps all 15 original props`);
+    for (const [index, piece] of duel.course.features.crushables.entries()) {
+      const base = original[index];
+      assert.deepEqual(Object.fromEntries(Object.keys(base).map(key => [key, piece[key]])), base,
+        `${type} keeps the same layout and materials for ${base.id}`);
+    }
+  }
+}
 
 // Real drives on the floor, outside an arena event, as Car Crush, Freestyle and Side by Side run.
 function bowlDuel(){
@@ -184,6 +233,38 @@ const floorBox=new THREE.Box3();for(const wall of outer)floorBox.expandByPoint(n
 check(terraces.min.x<floorBox.min.x-30&&terraces.max.x>floorBox.max.x+30&&terraces.min.z<floorBox.min.z-30&&terraces.max.z>floorBox.max.z+30&&terraces.max.y>20,
   'The terraces stand all round the floor, behind its wall, rising above 20 m.');
 check(stadium.userData.crowdCards>10000,`The stands hold a crowd of more than ten thousand (${stadium.userData.crowdCards}).`);
+// BOWL-OUT-LOOK: the drawn stands are the rules' stands, both gates are drawn where the rules open them, the car park
+// holds the rules' parked cars, the ground mesh lies under the drawn stands, and the marker follows the truck outside.
+const outsideRules=data.outside;
+for(let row=0;row<BOWL_STAND.rows;row+=3){
+  const off=BOWL_STAND.face+BOWL_STAND.first+(row+.5)*BOWL_STAND.depth;
+  check(Math.abs(BOWL_STAND.rowY(row)-terraceHeight(outsideRules,off))<.05,`Row ${row} is drawn at the rules' height.`);
+}
+check(Math.abs(BOWL_STAND.face+BOWL_STAND.first+BOWL_STAND.rows*BOWL_STAND.depth-outsideRules.back)<1e-6,'The drawn top row ends at the stand back the rules use.');
+const outsideView=stadium.getObjectByName('Bowl outside: gates, car park and marker');
+check(outsideView?.userData.gateCount===2,'Both gates are drawn.');
+for(const gate of data.gates){
+  const parts=outsideView.getObjectByName(`Bowl ${gate.name}`),floorBox=new THREE.Box3().setFromObject(parts.getObjectByName(`Bowl ${gate.name} tunnel floor`));
+  const middle=bowl.worldAt(gate.s,(outsideRules.wall+outsideRules.back)/2);
+  check(floorBox.containsPoint(new THREE.Vector3(middle.x,(floorBox.min.y+floorBox.max.y)/2,middle.z)),`The ${gate.name} tunnel floor lies where the rules open the gate.`);
+  check(parts.getObjectByName(`Bowl ${gate.name} light column`),`The ${gate.name} has its light column.`);
+}
+const parkedCars=outsideView.getObjectByName('Bowl car park cars');
+check(outsideView.userData.parkedCars===outsideRules.parking.length&&outsideRules.parking.length===16&&outsideRules.parking.every(car=>{
+  const shell=parkedCars.getObjectByName(`Crushable ${car.id}`);return shell&&Math.hypot(shell.position.x-car.x,shell.position.z-car.z)<.01;}),
+  'The 16 parked cars are drawn where the rules park them.');
+const endS=data.zones.end1[0]+data.ring.radius*Math.PI/2;
+check([[100,30],[100,40],[endS,30],[endS,40]].every(([s,off])=>ribbonGroundAt(bowl,s,off).y<Math.min(BOWL_STAND.low,terraceHeight(outsideRules,off))-.1)&&
+  [[100,70],[100,95],[endS,70],[endS,120]].every(([s,off])=>farTerrainCornerHeight(bowl,0,0,s,off,16)<0),
+  'The ground mesh lies below the drawn stands and the car park asphalt, not on the terraces.');
+const marker=outsideView.userData.marker,gateAim=bowl.worldAt(data.gates[1].s,outsideRules.back+8);
+stadium.userData.update(2000,.35,{s:100,lateral:outsideRules.back+20,groundHeight:0,airHeight:0,
+  bowlOutside:{where:'carpark',gate:{...data.gates[1],metres:64,aim:gateAim}}});
+check(marker.visible,'The gate marker shows while the truck is outside.');
+stadium.userData.update(2100,.35,{s:100,lateral:0,groundHeight:0,airHeight:0});
+check(!marker.visible,'The gate marker goes once the truck is back in.');
+check(stadium.getObjectByName('Bowl crowd').geometry.getAttribute('crowdSeat')?.itemSize===4,'Each crowd card knows its seat, to clear from round a truck.');
+check(stadium.getObjectByName('Bowl tyre walls')?.userData.count>200,'Tyre walls stand along the stand wall and the Spine.');
 const lights=stadium.userData.lights;
 check(lights.length===4&&lights.every(light=>floorBox.containsPoint(new THREE.Vector3(light.target.position.x,0,light.target.position.z))),
   'Four floodlights are aimed at the floor.');

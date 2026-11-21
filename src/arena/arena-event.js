@@ -7,6 +7,7 @@ import {stepCombat} from '../combat.js';
 import {arenaActor, arenaParticipant} from '../combat-teams.js';
 import {containInArena, floorLimit, worldPose} from './arena-floor.js';
 import {pilotStep} from './arena-pilot.js';
+import {stepShowWeaponMotion} from '../bowl/bowl-weapons.js';
 import {stepKnock, stepWreckSlide} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
@@ -363,10 +364,12 @@ export function stepArenaEvent(duel, dt) {
     }
     if (!onFoot || state.airborne || state.knock || state.tumble ||
         Math.abs(state.speedMph) > .1 || Math.abs(state.pushVelocity || 0) > .001) {
-      duel._drive(dt);
-      if (scablands) scablandsGround(duel, state, dt);
-      duel._jump(state, dt);
-      if (scablands) scablandsLanded(duel, state);
+      if (!state.bowlWeapon || !stepShowWeaponMotion(duel, state, dt)) {
+        duel._drive(dt);
+        if (scablands) scablandsGround(duel, state, dt);
+        duel._jump(state, dt);
+        if (scablands) scablandsLanded(duel, state);
+      }
     } else { state.prevS = state.s; state.prevLateral = state.lateral; }
     containInArena(duel, state, dt);
   }
@@ -399,10 +402,12 @@ export function stepArenaEvent(duel, dt) {
       containInArena(duel, actor, dt);
       continue;
     }
-    pilotStep(duel, actor, pilotGoal, dt);
-    if (scablands) scablandsGround(duel, actor, dt);
-    if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
-    if (scablands) scablandsLanded(duel, actor);
+    if (!actor.bowlWeapon || !stepShowWeaponMotion(duel, actor, dt, pilotGoal)) {
+      pilotStep(duel, actor, pilotGoal, dt);
+      if (scablands) scablandsGround(duel, actor, dt);
+      if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
+      if (scablands) scablandsLanded(duel, actor);
+    }
     containInArena(duel, actor, dt);
   }
   duel._collisions();

@@ -4,6 +4,45 @@
 // Claude runs it on the laptop; pictures go to the evidence folder for the look.
 import assert from 'node:assert/strict';
 
+// The same two passes drive the browser and headless Show Night checks. A
+// seeded slow driver can vary its pace, lane and short lifts without changing
+// the truck or the event.
+export function createCarCrushDriver({pace = 27, laneBias = 0, random = null} = {}) {
+  let progress = 0, previousPhase = null, wobble = 0, lift = 0, step = 0;
+  return duel => {
+    const {state, course} = duel, phase = course.phase(state.s);
+    const delta = phase - (previousPhase ?? phase);
+    progress += delta > course.length / 2 ? delta - course.length
+      : delta < -course.length / 2 ? delta + course.length : delta;
+    previousPhase = phase;
+    const line = course.features.bowl.crush.lateral;
+    const lane = progress < 66 ? line : line - 4.4 + laneBias;
+    if (random && step++ % 60 === 0) {
+      wobble = random.range(-.08, .08);
+      if (random.chance(.12)) lift = 72;
+    }
+    lift = Math.max(0, lift - 1);
+    const steer = (state.lateral - lane) * .3 + state.headingError * 1.55 + wobble;
+    return {throttle: +(!lift && state.speedMph < pace), brake: 0,
+      steer: state.airborne ? 0 : Math.max(-1, Math.min(1, steer)), boost: false};
+  };
+}
+
+const startCrush = `(() => {
+  const app = window.__qaApp, drive = (${createCarCrushDriver.toString()})();
+  app._driveAutopilot = function () {
+    if (this.duel.state.status === 'racing') this.duel.setInput(drive(this.duel));
+  };
+  app.autopilot = true;
+  return true;
+})()`;
+const stopCrush = `(() => {
+  const app = window.__qaApp;
+  app.autopilot = false;
+  delete app._driveAutopilot;
+  return true;
+})()`;
+
 // Each page expression is self-contained and can be checked without a browser.
 export const page = {
   ready: `(() => !!window.__qaApp && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value && window.name.startsWith('__duel_qa_tab_v2:'))()`,
@@ -45,6 +84,14 @@ export const page = {
       rival: truck(rival), autopilot: app.autopilot === true, visualReady: app.visualReady,
       card: document.querySelector('.bowl-result')?.dataset.bowlResult ?? null}); })()`,
   cardWon: `(() => document.querySelector('.bowl-result')?.dataset.bowlResult === 'won')()`,
+  crushCountMet: `(() => {
+    const app = window.__qaApp, result = app.duel.state.bowlNight?.lastResult;
+    const card = document.querySelector('.bowl-result');
+    return result?.event === 'carCrush' && result.count >= 13 && app.duel.state.stageTimeSec >= 59.99 &&
+      card?.textContent.includes('You crushed ' + result.count + ' of ' + result.total + ' pieces.');
+  })()`,
+  startCrush,
+  stopCrush,
   next: `(() => { document.querySelector('[data-action="show-night-next"]').click(); return true; })()`,
   freestyleCrowd: `(() => { const hud = document.querySelector('.bowl-hud'); return !hud.hidden && hud.textContent.includes('FREESTYLE') && window.__qaApp.duel.state.stageTimeSec > 15; })()`,
   autopilot: `(() => { window.__qaApp.autopilot = true; return true; })()`,
@@ -104,28 +151,27 @@ export async function run(context) {
   await key(context, 'KeyH', 'keydown');
   await key(context, 'KeyH', 'keyup');
   await context.waitFor(page.resumed, 'H closes the trick card and continues the event', 10000);
-  await key(context, 'KeyW', 'keydown');
-  try { await waitForCard(context, 'the Car Crush ends', 180000); }
-  finally { await key(context, 'KeyW', 'keyup'); }
+  await context.evaluate(page.startCrush);
+  try { await waitForCard(context, 'the Car Crush runs its full minute', 180000); }
+  finally { await context.evaluate(page.stopCrush); }
+  assert.ok(await context.evaluate(page.cardWon), 'the first Car Crush run is won');
+  assert.ok(await context.evaluate(page.crushCountMet), 'the driver wins by count after the full minute');
   await picture(context, 'bowl-night-car-crush-card');
   // Every later event (and any retry) is driven by the test driver.
   let freestyleSeen = false;
   for (let round = 1; round <= 8 && !await context.evaluate(page.nightDone); round++) {
     await context.evaluate(page.next);
     const type = await context.evaluate(page.event);
-    // The Car Crush (and any retry of it) is driven as a child drives it, W held down: the
-    // test driver keeps to its lane and misses the crush line on the stand side.
-    const crush = type === 'carCrush';
-    if (crush) await key(context, 'KeyW', 'keydown'); else await context.evaluate(page.autopilot);
+    await context.evaluate(page.autopilot);
     try {
       if (type === 'freestyle' && !freestyleSeen) {
         await context.waitFor(page.freestyleCrowd, 'Freestyle under way', 60000);
         await picture(context, 'bowl-night-freestyle-hud');
         freestyleSeen = true;
       }
-      await waitForCard(context, `${type} ends`, crush ? 180000 : 150000);
+      await waitForCard(context, `${type} ends`, 150000);
     } finally {
-      if (crush) await key(context, 'KeyW', 'keyup'); else await context.evaluate(page.manual);
+      await context.evaluate(page.manual);
     }
     await picture(context, `bowl-night-card-${round}-${String(type).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`);
   }

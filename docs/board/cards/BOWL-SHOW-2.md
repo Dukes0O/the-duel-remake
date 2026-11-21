@@ -434,8 +434,9 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
   - **Bombs, after the second box.** One is lobbed onto a ring on the floor, as a car is. It lies there ticking (10
     seconds on Easy) inside a ring 7 m in radius, and bursts: keep out of the ring. **The rings are barely there.**
     Kyle, 20 November 2026: "don't mark the bombs on the floor so obviously... the colour contrast should be close to
-    the colour of the ground. like really close." Each ring is the floor's own colour made 4 points of Lab lightness
-    darker (never less than 3 or more than 5), with no new hue, no glow, no outline and no flashing. The bomb's
+    the colour of the ground. like really close." Kyle again, on seeing 4 points of Lab lightness tried: "way too great... just a few
+    hex or rgb movements, would be enough." Each ring is the floor's own colour moved 3 steps of 255 on red, green and
+    blue (never more than 4), darker or as a tiny tint, with no glow, no outline and no flashing. The bomb's
     whistle, its shadow growing on the floor and its quickening tick carry the timing. **The hook takes a bomb.** The F
     marker shows over it, and a bomb dragged into the beast's legs bursts there: it staggers and sags at once, that
     tired spell is not counted against the driver, and the box that opens is already a second pulled. So the beast's

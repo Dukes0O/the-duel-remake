@@ -2124,7 +2124,8 @@ export class EngineAudio {
       if (ev.fuelDelivery?.participantId === 'player') this._playCue('interface.go');
     }
     if (ev.arenaRespawn) this._playCue('arena.respawn');
-    if (ev.arenaWreck?.creditedId === 'player')
+    if (ev.arenaWreck?.creditedId === 'player' &&
+        !(state?.bowlNight?.event?.type === 'lastTruckRolling' && this.flags.enabled('titan-bowl')))
       this._playCue('arena.wreck-credit');
     // SCABLANDS-LAND round 4, slice 2b: ground too steep to climb is a hit (the scab plates' impact cue) and a landing after a fall is the landing cue,
     // both from sounds the game has, scaled by the size of the hit.
@@ -2276,7 +2277,8 @@ export class EngineAudio {
     // A pancake: the truck was still coming down from a height in the frame before (the record clears the
     // moment it is back on the ground, so a landing followed by a crush is an ordinary bite).
     const pancake = burst.pancake ?? (this._bowlFallingAt != null && now - this._bowlFallingAt < .2);
-    (this._bowlJustCrushed ??= new Map()).set(burst.id, now);
+    const fresh = this._bowlJustCrushed ??= new Map();
+    for (const id of burst.groupIds ?? [burst.id]) fresh.set(id, now);
     const force = .7 + clamp(Number(burst.strength) || 0, 0, 1) * .3;
     // Each piece of the line has its own pitch as well as its own take, so fifteen pieces are fifteen sounds.
     const rate = BOWL_CRUSH_RATES[(Number(String(burst.id).match(/(\d+)$/)?.[1]) || 0) % BOWL_CRUSH_RATES.length];

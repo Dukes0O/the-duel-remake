@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
 import {Duel} from '../src/game.js';
 import {scoreFreestyle} from '../src/bowl/bowl-show.js';
 
@@ -7,6 +8,7 @@ function freestanding(night = 1, eventIndex = 1) {
   const duel = new Duel({seed:1989});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
   assert.ok(duel.startBowlNight({night,eventIndex,cpuDifficulty:'easy',seed:1989}));
+  if (duel.state.status === 'bowl_weapon_pick') assert.ok(chooseShowWeapon(duel, 'hammer'));
   while (duel.state.status === 'countdown') duel.step(dt);
   return duel;
 }

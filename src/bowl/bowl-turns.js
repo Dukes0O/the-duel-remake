@@ -81,7 +81,10 @@ export function recordGo(show, result) {
       result.eventIndex !== turn.eventIndex || !Number.isSafeInteger(result.score) || result.score < 0)
     return {ok: false, show};
   const go = Object.freeze({index: turn.index, playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex,
-    won: result.won === true, score: result.score, rows: result.rows ?? 0, lent: result.lent === true,
+    won: result.won === true, score: result.score, lent: result.lent === true,
+    ...(turn.event === 'carCrush' && Number.isSafeInteger(result.count) ? {crush: Object.freeze({
+      count: result.count, total: result.total, fullHouse: result.fullHouse === true, fullHouseBonus: result.fullHouseBonus,
+    })} : {}),
     // BOWL-RIVALS: who the go raced in Side by Side, and how Last Truck Rolling ended.
     rival: result.rival ?? null, knockouts: result.knockouts ?? 0, timeUp: result.timeUp === true, settled: null});
   return {ok: true, go, show: Object.freeze({...show, phase: 'result', goes: Object.freeze([...show.goes, go])})};
