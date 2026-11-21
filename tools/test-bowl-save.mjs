@@ -127,11 +127,20 @@ const memory = (initial = {}) => {
   ok(lower.profile === stored && !lower.changed, 'a lesser ring leaves the Home Run record alone');
   equal(stored.bowl.settledNights, ['night:1'], 'settlement receipt survives save and load');
   equal(stored.wasteland.scrap, 50, 'purse survives save and load');
+  const better = recordBowlScore(stored, 'best-trick', 525);
+  ok(better.ok && better.changed, 'Best Trick creates its own record when the driver beats the default');
+  const lesser = recordBowlScore(better.profile, 'best-trick', 300);
+  ok(lesser.profile === better.profile && !lesser.changed, 'a lower Best Trick keeps the existing score');
+  const reopened = loadPlayers(storage);
+  const onDisk = {...reopened, players: [{...reopened.players[0], profile: better.profile}]};
+  ok(savePlayers(onDisk, storage), 'an existing driver can save the new record');
+  equal(loadPlayers(storage).players[0].profile.bowl.bestScores, {...stored.bowl.bestScores, 'best-trick': 525},
+    'the legacy Home Run score survives load, a later score write, save and reload');
   const records = new Map();
   const backupStore = {save: async record => records.set(record.id, record), load: async id => records.get(id)};
   const backup = await backupCareer(storage, backupStore, 'bowl-save-test', () => new Date('2026-11-04T00:00:00Z'));
   const restored = memory(backup.entries);
-  equal(loadPlayers(restored).players[0].profile, stored, 'career backup restores Bowl state exactly');
+  equal(loadPlayers(restored).players[0].profile, better.profile, 'career backup restores Bowl state exactly');
 }
 
 {

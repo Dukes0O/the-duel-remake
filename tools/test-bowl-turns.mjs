@@ -128,7 +128,7 @@ for (const {night, events} of SHOW_NIGHTS) {
     }
     show = passKeyboard(played.show).show;
   }
-  const keys = {longJump: 'long-jump', highJump: 'high-jump', homeRun: 'home-run'};
+  const keys = {longJump: 'long-jump', highJump: 'high-jump', bestTrick: 'best-trick'};
   events.forEach((event, index) => {
     if (keys[event]) equal(profile.bowl.bestScores[keys[event]], (index + 1) * 250, 'a turn records its jump score');
   });
@@ -327,24 +327,31 @@ ok(createPlayerRegistry().players.every(entry => !Object.hasOwn(entry.profile, '
 }
 
 // The jump runners are reached through the real season and Turn Show entry.
-for (const [eventType, boostAt, nightNumber] of [['longJump', 28, 2], ['highJump', 28, 4], ['homeRun', 33, 4]]) {
+for (const [eventType, boostAt, nightNumber] of [['longJump', 28, 2], ['highJump', 28, 4], ['bestTrick', Infinity, 4]]) {
   const duel = new Duel({seed: 1989});
   duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
   const eventIndex = SHOW_NIGHTS[nightNumber - 1].events.indexOf(eventType);
   ok(duel.startBowlNight({night: nightNumber, eventIndex, cpuDifficulty: 'easy', turn: {driver: 'Jump driver'}}), eventType + ' starts');
   const {state} = duel, night = state.bowlNight;
+  let airTicks = 0, rounds = 0, rivalCues = 0;
+  duel.onChange((_, event) => {
+    if (event.bowlRound) rounds++;
+    if (event.bowlScore?.cue?.startsWith('bowl.best.rival')) rivalCues++;
+  });
   while (state.status === 'countdown') duel.step(DT);
   for (let tick = 0; tick < 40 / DT && night.phase === 'event'; tick++) {
-    const gate = eventType === 'homeRun' && night.event.go.landed && state.bowlOutside?.gate;
-    if (gate) {
-      const point = duel.course.worldAt(state.s, state.lateral);
-      const delta = Math.atan2(gate.aim.x - point.x, gate.aim.z - point.z) - point.heading - state.headingError;
-      const steer = Math.min(1, Math.max(-1, -2 * Math.atan2(Math.sin(delta), Math.cos(delta))));
-      duel.setInput({steer, throttle: state.speedMph < 27 ? 1 : 0, brake: state.speedMph > 30 ? .5 : 0, boost: false});
+    if (eventType === 'bestTrick' && state.airborne) {
+      duel.setInput({throttle: 0, boost: false, brake: ++airTicks === 30 ? 1 : 0, steer: 0});
     } else {
       duel.setInput({throttle: 1, boost: state.s >= boostAt, brake: 0, steer: 0});
     }
     duel.step(DT);
+  }
+  if (eventType === 'bestTrick') {
+    equal(night.event.go.rival, null, 'Best Trick Turn Show has no rival');
+    equal(rounds + rivalCues, 0, 'no rival rounds or announcements play in a Turn Show');
+    ok(night.lastResult?.bestGo.result > 0 && night.lastResult.score > night.lastResult.bestGo.result,
+      'Best Trick keeps landing points along with real trick points on the board');
   }
   equal(night.phase, 'turn', eventType + ' ends in the turn phase');
   equal(night.lastResult?.goes.length, 1, eventType + ' plays one go');

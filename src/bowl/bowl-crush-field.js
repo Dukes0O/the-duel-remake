@@ -68,9 +68,9 @@ const beyond = ({crest, forward, across}, distance, offset = 0) => ({
   z: crest.z + forward.z * distance + across.z * offset,
 });
 
-export function bowlJumpGround(course, {x, z}) {
+function bowlJumpGround(course, {x, z}) {
   const {s, lateral} = course.nearest(x, z);
-  return {...course.groundAt(s, lateral), x, z, lateral};
+  return {...course.groundAt(s, lateral), x, z};
 }
 
 function dressLongJump(course) {
@@ -98,17 +98,11 @@ function dressHighJump(course) {
   });
 }
 
-function dressHomeRun(course) {
-  jumpLine(course, 'homeRun', line => ({
-    target: {...beyond(line, 63, 29), radii: [4, 8, 12]},
-  }));
-}
-
 const DRESSINGS = new Map([
   [CAR_CRUSH_DRESSING, dressCarCrush],
   ['longJump', dressLongJump],
   ['highJump', dressHighJump],
-  ['homeRun', dressHomeRun],
+  ['bestTrick', course => jumpLine(course, 'bestTrick', () => ({}))],
 ]);
 
 export function dressBowlEvent(course) {

@@ -1,72 +1,71 @@
-// Actual pedals, steering, flights, landings and gate crossings with seeded courses.
+// Actual pedals, steering, stunt inputs and landings with seeded courses.
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
-import {BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
-import {createBowlStadium} from '../src/bowl/bowl-stadium.js';
+import {bowlStrip} from '../src/bowl/bowl-hud.js';
 
 const DT = 1 / 120;
-const eventTypes = ['longJump', 'highJump', 'homeRun'];
-const full = {longJump: [1, 28], highJump: [1, 28], homeRun: [1, 33]};
+const eventTypes = ['longJump', 'highJump'];
+const full = {longJump: [1, 28], highJump: [1, 28], bestTrick: [1, Infinity]};
 // Grip and take-off stay untouched. Pedal pressure and the timing of the
 // nitro press vary across ten reproducible attempts at a young driver's pace.
 const child = {
   longJump: [[.7, 45], [.72, 43], [.74, 42], [.76, 47], [.78, 38],
     [.8, 45], [.82, 50], [.84, 40], [.86, 41], [.88, 44]],
   highJump: [.61, .62, .64, .68, .72, .76, .8, .84, .88, .92].map(throttle => [throttle, Infinity]),
-  homeRun: [[.66, 36], [.7, 34], [.74, 37], [.77, 35], [.8, 34],
-    [.83, 31], [.87, 32], [.91, 34], [.95, 27], [.99, 49]],
 };
 
-function aim(duel, target, pace) {
-  const s = duel.state, p = duel.course.worldAt(s.s, s.lateral);
-  const delta = Math.atan2(target.x - p.x, target.z - p.z) - p.heading - s.headingError;
-  return {steer: Math.min(1, Math.max(-1, -2 * Math.atan2(Math.sin(delta), Math.cos(delta)))),
-    throttle: s.speedMph < pace ? 1 : 0, brake: s.speedMph > pace + 3 ? .5 : 0, boost: false};
-}
+// Later taps and gentler starts sometimes leave too little time to turn.
+const childTrickTaps = [
+  [.87, 36, 42, 51], [.82, 54, 68, 64], [.78, 70, 82, 90], [.90, 87, 95, 131], [.74, 105, 115, 149],
+  [.83, 126, 135, 156], [.71, 137, 146, 174], [.72, 153, 162, 191], [.68, 165, 177, 200], [.88, 184, 194, 211],
+];
 
-function driveBack(duel) {
-  const {course, state} = duel;
-  const {gate} = state.bowlOutside, {outside} = course.features.bowl;
-  const phase = course.phase(state.s), distance = gate.s - phase, depth = state.lateral - outside.back;
-  // Follow the top of the terraces to the car park, then take the bend at
-  // speed. Brake before the Pit Gate and steer down its throat.
-  if (depth < 1 && phase < gate.s - 22) return aim(duel, course.worldAt(phase + 2, outside.back + 20), 36);
-  if (distance > 6) {
-    const lane = outside.back + Math.max(9, 17 - distance / 2);
-    return aim(duel, course.worldAt(phase + 5, lane), distance > 18 ? 36 : 23);
-  }
-  return aim(duel, course.worldAt(gate.s, outside.wall - 6), 18);
+function tapTrick(input, trick, airTick, tapAt) {
+  input.throttle = 0;
+  input.boost = false;
+  const duration = trick === 'doubleBackflip' ? 112 : 1;
+  if (airTick < tapAt || airTick >= tapAt + duration) return;
+  if (trick === 'barrelRoll') Object.assign(input, {steer: 1, boost: true});
+  if (trick === 'backflip' || trick === 'doubleBackflip') input.brake = 1;
+  if (trick === 'frontFlip') input.throttle = 1;
 }
 
 function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[eventType], single = false,
-  returnToGate = true, followGateAt = null, lateBackflip = false} = {}) {
+  tricks = [], taps = [30, 30, 30], lateBackflip = false, wheelie = false} = {}) {
   const duel = new Duel({seed});
   duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
-  assert.ok(duel.startBowlNight({night: 1, eventType, cpuDifficulty, seed, playerId: 'driver',
+  const entry = eventType === 'bestTrick' ? {night: 4, eventIndex: 1} : {night: 1, eventType};
+  assert.ok(duel.startBowlNight({...entry, cpuDifficulty, seed, playerId: 'driver',
     ...(single ? {turn: {driver: 'Driver'}} : {})}));
   const {state, course} = duel, night = state.bowlNight, {event} = night;
   const notes = [], flights = new Map();
-  let secondGoSpeed = null;
+  let secondGoSpeed = null, airTick = 0, activeGo = null;
   duel.onChange((_, ev) => {
     if (ev.bowlGo) notes.push({go: ev.bowlGo, at: night.clock, crushed: [...state.crushedProps]});
     if (ev.bowlScore?.cue) notes.push({sound: ev.bowlScore.cue, points: ev.bowlScore.points, at: night.clock,
       position: [state.speedMph, state.s, state.lateral], crushed: [...state.crushedProps]});
-    if (ev.bowlOverWall) notes.push({over: true, at: night.clock});
-    if (ev.bowlBackIn) notes.push({gate: ev.bowlBackIn.gate, at: night.clock});
+    if (ev.bowlRound) notes.push({round: ev.bowlRound, at: night.clock});
+    if (ev.bowlScore?.type === 'bowlTrick') notes.push({trickPoints: ev.bowlScore.points, attempt: event.go.number});
+    if (ev.bowlCaption) notes.push({caption: ev.bowlCaption.id});
     if (ev.bowlTrick?.landing === 'slam') notes.push({slam: event.go.number});
     assert.equal(ev.bowlNightResult, undefined, 'a standalone jump never creates a night payout');
   });
   const initial = [state.s, state.lateral];
   while (state.status === 'countdown') duel.step(DT);
   for (let tick = 0; tick < 120 * 135 && night.phase === 'event'; tick++) {
-    const [throttle, boostAt] = go(event.go.number);
-    const returning = eventType === 'homeRun' && event.go.landed && state.bowlOutside;
-    const input = returning
-      ? followGateAt != null ? aim(duel, state.bowlOutside.gate.aim, followGateAt)
-        : returnToGate ? driveBack(duel) : {throttle: 0, brake: 1, steer: 0, boost: false}
-      : {throttle, steer: 0, brake: 0, boost: state.s >= boostAt};
+    if (activeGo !== event.go.number) {
+      activeGo = event.go.number;
+      airTick = 0;
+    }
+    const [throttle, boostAt] = go(activeGo);
+    const input = {throttle, steer: 0, brake: 0, boost: state.s >= boostAt};
+    if (wheelie && activeGo === 1 && !state.airborne && !notes.some(note => note.attempt === 1)) input.boost = true;
+    if (eventType === 'bestTrick' && state.airborne) {
+      tapTrick(input, tricks[activeGo - 1], ++airTick, taps[activeGo - 1]);
+    }
     if (lateBackflip && event.go.number === 1 && state.airborne && state._verticalSpeed < 0 && state.airHeight < 4) {
       Object.assign(input, {throttle: 0, boost: false, brake: 1});
     }
@@ -99,7 +98,8 @@ function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[ev
     assert.ok(!note.crushed.some(id => id.startsWith('bowl-long-bus-')), 'the buses are stood up for the next go');
   });
   assert.ok(bowlHudView(state, course).goal.split(/\s+/).length <= 8);
-  return {result, notes, facts: event.facts, line: course.features.bowlJump, course, flights, secondGoSpeed};
+  return {result, notes, facts: event.facts, line: course.features.bowlJump, course, flights, secondGoSpeed,
+    rounds: notes.filter(note => note.round).map(note => note.round), finishCaption: bowlHudView(state, course).caption};
 }
 
 for (const event of eventTypes) {
@@ -146,41 +146,61 @@ for (const event of eventTypes) {
 }
 
 {
-  const home = run('homeRun');
-  assert.deepEqual(home.line.target.radii, [4, 8, 12]);
-  const target = home.line.target;
-  const stadium = createBowlStadium(home.course);
-  const seats = stadium.getObjectByName('Bowl crowd').geometry.getAttribute('crowdSeat');
-  assert.ok(seats.count > 0, 'the rest of the stands still have a crowd');
-  for (let index = 0; index < seats.count; index += 4) {
-    assert.ok(Math.hypot(seats.getX(index) - target.x, seats.getY(index) - target.z) > target.radii.at(-1));
+  const singles = ['backflip', 'frontFlip', 'barrelRoll'];
+  const easy = childTrickTaps.map(([throttle, ...taps], index) => run('bestTrick', {
+    seed: 1989 + index, go: () => [throttle, Infinity], tricks: singles, taps,
+  }));
+  const wins = easy.filter(run => run.result.won).length;
+  assert.ok(wins >= 6 && wins <= 9, `Best Trick Easy wins ${wins}/10`);
+  console.log(`bestTrick: Easy ${wins}/10 (${easy.map(run => run.rounds.map(round => round.points).join('/')).join(', ')}).`);
+
+  for (const cpuDifficulty of ['easy', 'medium', 'hard']) {
+    const straight = run('bestTrick', {cpuDifficulty});
+    assert.equal(straight.result.won, false);
+    assert.ok(straight.rounds.every(round => round.points === 0 && !round.won));
+    assert.ok(straight.result.score > 0, 'ordinary landings score without counting as tricks');
   }
-  assert.ok(!home.line.bar && !home.line.buses);
-  assert.ok(!home.course.features.crushables.some(prop => prop.id.startsWith('bowl-long-bus-')));
-  assert.ok(home.result.goes.every(go => go.result === 4 && go.score === 750));
-  assert.ok(home.facts.some(fact => fact.type === 'bowlInStands'), 'the return still records crowd activity');
-  const returns = home.notes.filter(note => note.gate);
-  const walls = home.notes.filter(note => note.over);
-  assert.equal(returns.length, 3);
-  assert.equal(walls.length, 3);
-  assert.ok(returns.every((note, i) => note.at - walls[i].at < 30));
-  assert.deepEqual(home.notes.filter(note => note.sound === 'bowl.home.ring.high').map(note => note.points), [600, 600, 600]);
-  const middle = run('homeRun', {single: true, cpuDifficulty: 'hard', go: () => [.66, 36]});
-  assert.equal(middle.result.bestGo.result, 3, 'the real landing hit the middle ring');
-  assert.equal(middle.result.won, true, 'the middle ring meets the Hard goal');
-  assert.equal(middle.result.score, 450, 'the middle ring adds 300 points to the one wall award');
-  assert.equal(middle.notes.find(note => note.sound === 'bowl.home.ring.high').points, 300);
-  const onTime = run('homeRun', {single: true, followGateAt: 24.26});
-  const ranOut = run('homeRun', {single: true, followGateAt: 24.25});
-  assert.ok(onTime.result.won, 'a return at the deadline still counts');
-  assert.equal(onTime.result.score, home.result.score, 'a different return pace adds no points');
-  assert.equal(ranOut.result.won, false, 'the same real route a fixed step too late loses');
-  const timeout = run('homeRun', {single: true, returnToGate: false});
-  assert.equal(timeout.result.won, false, 'a target landing alone does not win');
-  assert.equal(timeout.result.score, 0, 'the ring counts only if the driver returns through a gate');
-  assert.ok(timeout.notes.some(note => note.sound === 'bowl.home.ring.high'));
-  assert.ok(!timeout.notes.some(note => note.gate));
-  assert.ok(Math.abs(timeout.notes.find(note => note.go).at - timeout.notes.find(note => note.over).at - 30) < .01);
+  const wheelie = run('bestTrick', {wheelie: true});
+  assert.deepEqual(wheelie.result.goes[0].tricks, ['wheelie'], 'the run-up scored a real trick before the jump');
+  assert.ok(wheelie.rounds[0].won && wheelie.rounds[0].points > 0, 'the whole go contributes scored trick facts');
+  const repeat = run('bestTrick', {cpuDifficulty: 'medium', tricks: Array(3).fill('backflip')});
+  assert.equal(repeat.result.won, false);
+  assert.deepEqual(repeat.rounds.map(round => round.won), [true, false, false]);
+  assert.ok(repeat.notes.some(note => note.caption === 'best.repeat'));
+  assert.equal(repeat.finishCaption, BIG_MO['best.repeat'], 'the third loss reason survives the finish');
+  const varied = run('bestTrick', {cpuDifficulty: 'medium', tricks: singles});
+  assert.equal(varied.result.won, true);
+  assert.deepEqual(varied.result.goes.map(go => go.tricks), singles.map(trick => [trick]));
+  assert.deepEqual(varied.rounds.map(round => [round.round, round.rival.trick, round.rival.points]),
+    [[1, 'backflip', 50], [2, 'barrel roll', 60], [3, 'backflip with a spin', 120]]);
+  for (const round of varied.rounds) {
+    const scored = varied.notes.filter(note => note.attempt === round.round);
+    assert.equal(round.points, scored.reduce((sum, note) => sum + note.trickPoints, 0), 'only the awarded trick points decide the round');
+  }
+  assert.equal(varied.result.score, varied.result.bestGo.score, 'the best go keeps its whole score');
+  assert.ok(!varied.line.bar && !varied.line.buses && !varied.line.target);
+  assert.ok(!varied.course.features.crushables.some(prop => prop.id.startsWith('bowl-long-bus-')));
+
+  const hardSingles = run('bestTrick', {cpuDifficulty: 'hard', tricks: singles});
+  assert.equal(hardSingles.result.won, false);
+  const hardDouble = run('bestTrick', {cpuDifficulty: 'hard', go: () => [1, 31],
+    tricks: ['barrelRoll', 'doubleBackflip']});
+  assert.equal(hardDouble.result.won, true);
+  assert.equal(hardDouble.result.roundsWon, 2);
+  assert.equal(BOWL_RESULTS.eventJump(hardDouble.result), 'You won 2 of the 3 rounds against Big Kettle.');
+  assert.deepEqual(hardDouble.rounds.map(round => round.won), [true, true, false], 'the third go is played even with two wins');
+  assert.deepEqual(hardDouble.notes.filter(note => note.sound?.startsWith('bowl.best.round.')).map(note => note.sound),
+    ['bowl.best.round.won', 'bowl.best.round.won', 'bowl.best.round.lost']);
+
+  const timeout = run('bestTrick', {go: () => [0, Infinity]});
+  const closes = timeout.notes.filter(note => note.go);
+  const starts = timeout.notes.filter(note => ['bowl.best.rival', 'bowl.best.rival.slam'].includes(note.sound));
+  assert.deepEqual(starts.map(note => note.sound), ['bowl.best.rival.slam', 'bowl.best.rival', 'bowl.best.rival']);
+  assert.equal(timeout.notes.filter(note => note.caption === 'best.noTrick').length, 3);
+  assert.equal(timeout.finishCaption, BIG_MO['best.noTrick']);
+  assert.ok(closes.every((note, index) => Math.abs(note.at - starts[index].at - 12) < 1e-6));
+  assert.ok(starts.slice(1).every((note, index) => Math.abs(note.at - closes[index].at - 1) <= DT + 1e-6));
+  assert.equal(timeout.result.score, 0);
 }
 
 {
@@ -190,6 +210,14 @@ for (const event of eventTypes) {
   assert.equal(duel.startBowlNight({night: 1, eventType: 'carCrush'}), false, 'standalone entry is only for jumps');
   assert.ok(duel.startBowlNight({night: 1, eventIndex: 1}));
   assert.equal(duel.course.features.bowlJump, undefined, 'other events do not get the jumping pieces');
+  assert.ok(duel.startBowlNight({night: 4, eventIndex: 1, cpuDifficulty: 'medium'}));
+  const strip = bowlStrip(duel.state, bowlHudView(duel.state, duel.course));
+  assert.equal(strip.gapLabel, 'ROUND 1 OF 3');
+  assert.equal(strip.crushLabel, 'BIG KETTLE: BACKFLIP 50');
+  assert.equal(strip.chainLabel, 'YOU 0, BIG KETTLE 0');
 }
-for (const name of ['bowl.go.ready', 'bowl.long.clear', 'bowl.high.clear', 'bowl.high.fail', 'bowl.home.ring', 'bowl.home.ring.high']) assert.ok(SOUND_BANK[BOWL_SOUND_CUES[name]], name);
-console.log('Three-go resets, best results, the one-second fade, event-specific pieces, sound cues and Home Run timeout passed.');
+for (const name of ['bowl.go.ready', 'bowl.long.clear', 'bowl.high.clear', 'bowl.high.fail',
+  'bowl.best.rival', 'bowl.best.rival.slam', 'bowl.best.round.won', 'bowl.best.round.lost']) {
+  assert.ok(SOUND_BANK[BOWL_SOUND_CUES[name]], name);
+}
+console.log('Three-go resets, best results, the one-second fade, event-specific pieces, sound cues and Best Trick timeout passed.');

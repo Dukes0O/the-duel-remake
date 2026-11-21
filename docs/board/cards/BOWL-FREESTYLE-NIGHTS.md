@@ -10,7 +10,7 @@ of `fb02d3233` found Freestyle the same on Nights 1, 2, 3 and 5, and won on Easy
 backflip (600 against 310). Kyle finds Freestyle "pretty awesome" to play: keep the event, the keys and the scoring, and
 give the 90 seconds a purpose.
 
-Starts after BOWL-NIGHT-4 has merged (both cards change `src/bowl/bowl-show.js`, `src/bowl/bowl-night.js` and
+BOWL-NIGHT-4 has merged, so start from its Barrel Roll Night (it changed `src/bowl/bowl-show.js`, `src/bowl/bowl-night.js` and
 `src/bowl/bowl-lines.js`).
 
 ## What to build

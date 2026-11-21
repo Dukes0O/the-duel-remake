@@ -243,7 +243,7 @@ can be tried again after a loss. Win all three to open the next night.
 | **Rookie Night** | Wheelie, donut, backflip | Car Crush · Freestyle against Old Bess · Side by Side with Old Bess |
 | **Flip Night** | Front flip, stoppie | Long Jump · Freestyle against Rust Rhino · Side by Side with Rust Rhino |
 | **Hammer Night** | Spin, hammer | Car Crush with two Bus Piles · Freestyle against Tin Lizard · Last Truck Rolling with Big Kettle, Tin Lizard and Old Bess |
-| **Over the Wall Night** | Barrel roll, hammer or saw | High Jump · Home Run · Last Truck Rolling with Rust Rhino, Tin Lizard and Big Kettle |
+| **Barrel Roll Night** | Barrel roll, hammer or saw | High Jump · Best Trick · Last Truck Rolling with Rust Rhino, Tin Lizard and Big Kettle |
 | **Scrapasaurus Night** | Side flip and doubles, hammer, saw or launcher | Freestyle against Dragon Wagon · Last Truck Rolling with Dragon Wagon, Rust Rhino and Tin Lizard · the Scrapasaurus |
 
 **Car Crush** gives the driver 60 seconds to flatten pieces, with points for chains,
@@ -253,17 +253,19 @@ beat the named rival's score. Jumps, tricks, crushes and launching off the parke
 cars build the score. The crowd cheers and raises the value of every new stunt.
 **Side by Side** is two laps against one rival from mirrored starts. **Last Truck
 Rolling** gives the driver three opponents. The hammer has reach, the saw cuts
-nearby and overheats, and the launcher can throw a truck out of the Bowl.
+nearby and overheats, and the launcher throws a truck high into the air.
 
-**Long Jump, High Jump and Home Run** give the driver three goes from the same
+**Long Jump, High Jump and Best Trick** give the driver three goes from the same
 run-up, with a one-second fade between them. Turn Show gives each driver one go.
 Long Jump counts each whole bus cleared in flight. A bus hit by the landing stays
-out of that count. High Jump raises the flame bar a metre after every clear. Home Run
-asks for a nitro jump over the wall. The three rings in the empty stands beyond
-End 1 pay 150, 300 or 600 points on top of 150 for the wall. The go counts only if
-the driver returns through a gate within 30 seconds. The Car Park and Pit gates
-both open the way back. Other events can also go over the wall, drive the terraces,
-drop into the car park and follow the gate arrow back.
+out of that count. High Jump raises the flame bar a metre after every clear. Best
+Trick names the trick Big Kettle landed in each round. Beat its trick score in two
+of the three rounds to win. The jump's own points count in the event score. In
+Turn Show only the driver's go is played.
+
+The drivable stands and the route back through the gates are a surprise for the
+driver to discover. Big Mo reacts after a truck gets out, and the arrow then helps
+the driver find a gate back into the Bowl.
 
 **Trick School** opens from the picker and is offered before the driver's first night.
 It teaches wheelie, stoppie, donut, spin, backflip, front flip, barrel roll and side

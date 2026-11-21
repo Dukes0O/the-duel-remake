@@ -249,7 +249,9 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       const arenaHud = !state.paused && arenaShow(state) && eventIsRunning(state);
       lessonPanel(state, !!show?.school && !!view);
       const strip = arenaHud ? arenaTrickStrip(state) : bowlStrip(state, show?.school ? null : view, id => BOWL_RIVALS[id]?.name);
-      if (strip && show?.event?.go && !show.turn) strip.gapLabel = `Go ${show.event.go.number} of 3`;
+      if (strip && show?.event?.go && !show.turn && view.event !== 'bestTrick') {
+        strip.gapLabel = `Go ${show.event.go.number} of 3`;
+      }
       if (strip && view?.event === 'lastTruckRolling' && state.bowlWeapon?.kind) {
         const weapon = state.bowlWeapon, warning = state.opponents.find(rival => rival.bowlWeapon?.phase === 'tell');
         const ready = weapon.phase === 'rest' ? ` · ${Math.max(0,weapon.time).toFixed(1)} s` : '';
