@@ -53,3 +53,13 @@ None new.
    The bomb rings (BOWL-REX-3) were already made almost invisible, and the eye beam's red line stays, because it is the
    beam's own aim and not a mark on the floor.
 6. **The jerk to the side after a bump** in the fight is BOWL-FEEL-FIX item 1.
+
+## Builder decisions and hook questions, 21 November
+
+Use four seconds of tight cable for the back box on Easy. The brace still pulls the truck in, and the throttle keeps making progress. Medium and Hard keep the stall and the Space or jerk recovery. The pull ring uses the same required seconds and pull progress as the ring on the box. The fall camera frames both the truck and the Scrapasaurus from the first falling frame through the result hold.
+
+The pull ring needs the same screen projection the truck's trick popup already uses. May this card reuse that projector for the battery's world point with a narrow hook in `src/render3d.js` and `src/screen-router.js`, and pass the fallen model's bounds to `stepBowlCamera` in the same renderer hook? The floor fan lives in `src/bowl/bowl-rex-view.js` and the requested fire lines in `src/bowl/bowl-lines.js`. Please add these exact scopes to the card.
+
+The cable is currently clamped before the wall contact sweep. A solid can then move the attached truck after that clamp. May this card add a final Bowl-only check after the contact sweep in `src/sim-contacts.js`? It will reuse the hook constraint and leave the ordinary collider path alone. If the hook is granted I will bring in BOWL-FEEL-FIX before editing that shared file.
+
+**Claude to review (rule 18):** the old Easy throttle-only loss and brace-stall assertions move to Hard. Easy gains a real 4–5 second, throttle-only back-box drive, with Easy's existing Space-assisted drive preserved. Replace the old floor fan visibility check with its absence in both phases while keeping the smoke, flames and chest tell. The exact approved fire goal is seven words, so the old five-word assertion will still cover the other phases.
