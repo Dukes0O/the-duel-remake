@@ -135,12 +135,14 @@ for (const [row, side] of [[330, 1], [680, -1], [960, 1]]) {
 }
 
 // Hand-driver clearance: approach each wreck at 25 mph with a shallow
-// correction toward the row, with the centre 1.3 m from its visible edge.
+// correction toward the row. Check 1.3 m to the car's side and the closer
+// 1.3 m to its centre that reproduced the remaining catch.
 let slowestManualPass = Infinity;
-for (const start of [330, 335.5, 680, 685.5, 960, 965.5]) for (const side of [-1, 1]) {
+for (const start of [330, 335.5, 680, 685.5, 960, 965.5]) for (const side of [-1, 1]) for (const nearSide of [false, true]) {
   const duel = titanRace('dusthawk_rally', false), {course, state} = duel;
   const wreck = course.features.crushables.find(prop => prop.s === start);
-  const lane = wreck.off + side * (wreck.halfX + 1.3);
+  const carEdge = nearSide ? duel._vehicleSpec(state).halfWidth : 0;
+  const lane = wreck.off + side * (wreck.halfX + 1.3 + carEdge);
   placeAtWrecks(duel, state, start - 7, lane);
   state.speedMph = 25;
   state.headingError = -side * .07;
