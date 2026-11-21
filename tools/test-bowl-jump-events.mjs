@@ -34,7 +34,7 @@ function tapTrick(input, trick, airTick, tapAt) {
 }
 
 function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[eventType], single = false,
-  tricks = [], taps = [30, 30, 30], lateBackflip = false, wheelie = false} = {}) {
+  tricks = [], taps = [30, 30, 30], lateBackflip = false, boostFromStart = false} = {}) {
   const duel = new Duel({seed});
   duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
   const entry = eventType === 'bestTrick' ? {night: 4, eventIndex: 1} : {night: 1, eventType};
@@ -44,6 +44,7 @@ function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[ev
   const notes = [], flights = new Map();
   let secondGoSpeed = null, airTick = 0, activeGo = null;
   duel.onChange((_, ev) => {
+    if (ev.boostStarted) notes.push({boost: event.go.number});
     if (ev.bowlGo) notes.push({go: ev.bowlGo, at: night.clock, crushed: [...state.crushedProps]});
     if (ev.bowlScore?.cue) notes.push({sound: ev.bowlScore.cue, points: ev.bowlScore.points, at: night.clock,
       position: [state.speedMph, state.s, state.lateral], crushed: [...state.crushedProps]});
@@ -62,7 +63,7 @@ function run(eventType, {seed = 1989, cpuDifficulty = 'easy', go = () => full[ev
     }
     const [throttle, boostAt] = go(activeGo);
     const input = {throttle, steer: 0, brake: 0, boost: state.s >= boostAt};
-    if (wheelie && activeGo === 1 && !state.airborne && !notes.some(note => note.attempt === 1)) input.boost = true;
+    if (boostFromStart && activeGo === 1 && !state.airborne) input.boost = true;
     if (eventType === 'bestTrick' && state.airborne) {
       tapTrick(input, tricks[activeGo - 1], ++airTick, taps[activeGo - 1]);
     }
@@ -160,9 +161,10 @@ for (const event of eventTypes) {
     assert.ok(straight.rounds.every(round => round.points === 0 && !round.won));
     assert.ok(straight.result.score > 0, 'ordinary landings score without counting as tricks');
   }
-  const wheelie = run('bestTrick', {wheelie: true});
-  assert.deepEqual(wheelie.result.goes[0].tricks, ['wheelie'], 'the run-up scored a real trick before the jump');
-  assert.ok(wheelie.rounds[0].won && wheelie.rounds[0].points > 0, 'the whole go contributes scored trick facts');
+  const boostedRunUp = run('bestTrick', {boostFromStart: true, tricks: ['backflip']});
+  assert.ok(boostedRunUp.notes.some(note => note.boost === 1), 'Space on the run-up starts nitro');
+  assert.deepEqual(boostedRunUp.result.goes[0].tricks, ['backflip'], 'only the legal air trick scores');
+  assert.ok(boostedRunUp.rounds[0].won && boostedRunUp.rounds[0].points > 0, 'the air trick beats the rival');
   const repeat = run('bestTrick', {cpuDifficulty: 'medium', tricks: Array(3).fill('backflip')});
   assert.equal(repeat.result.won, false);
   assert.deepEqual(repeat.rounds.map(round => round.won), [true, false, false]);
