@@ -99,6 +99,12 @@ export function scoreStuntEvent(event, crowd = 0) {
   if (outsidePoints != null) return {points: outsidePoints, crowd: clamp(meter + outsidePoints * CROWD_GAIN_PER_POINT, 0, 100)};
   let base = 0;
   switch (event.type) {
+    case 'rexBox':
+      base = 300;
+      break;
+    case 'rexFall':
+      base = 500;
+      break;
     case 'landedJump':
       base = 20 + Math.max(0, finite(event.durationSeconds)) * 8 + Math.max(0, finite(event.distanceMeters)) * 0.35 + heightBonus(event);
       break;
