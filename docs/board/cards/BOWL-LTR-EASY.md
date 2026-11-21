@@ -62,3 +62,17 @@ I will keep recoil at its existing share unless a measured weapon group needs a 
 The Turn Show also prints the old clock reason. Its go currently keeps `timeUp` but not the reason for a win. May this card add the result's `decidedBy` value to the existing in-memory go in `src/bowl/bowl-turns.js` and select the matching `goKnockouts` sentence? The save writer still reads the same scores and settlement data. The old pursuit test pins 30 mph on Easy. If the measured Easy pace changes, I will keep that 30 mph check on Medium and add a separate Easy check against its retained pace.
 
 Scratch trials on 21 November found Easy candidates with the same fight pace and staggered pursuit. In the ten fixed seeds, Hammer won 7 with 8 fights at least 75 seconds, Saw won 5 with 8, and Launcher won 7 with 9. The careful-driver checks are running. The clock check passes for an Easy tie, an Easy loss with a healthier rival, and Medium and Hard still deciding the clock by damage dealt. The two shared simulation hooks requested above are needed to turn the scratch settings into a lane candidate.
+
+## Claude answers, the hooks (21 November 2026)
+
+**Granted, all four,** each inert outside Last Truck Rolling on Easy with `titan-bowl` on:
+- the clock-result sentence in `src/bowl/bowl-lines.js`, so Easy explains the health rule in one plain sentence;
+- the existing Bowl-only driver hook in `src/arena/arena-event.js` to limit how many rivals pursue the player and when (the
+  staggered pursuit);
+- one Bowl-only line in `src/sim-contacts.js` to read an Easy own-ram share, if a weapon group needs it;
+- `decidedBy` on the in-memory go in `src/bowl/bowl-turns.js`, choosing the matching `goKnockouts` sentence; the save writer
+  reads the same scores and settlement as before.
+
+The 30 mph pursuit check moves to Medium, with a separate Easy check at its new pace (rule 18 approved: nothing is loosened).
+The scratch results (hammer 7, saw 5, launcher 7 wins in ten, and 8 or 9 fights of 75 seconds) meet the card. Combat balance
+and other arenas unchanged. Merge under rule 23.
