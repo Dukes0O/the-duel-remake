@@ -5,6 +5,7 @@ import {addArenaCrushables} from '../arena-props.js';
 import {createBowlStadium} from './bowl-stadium.js';
 import {createRexView} from './bowl-rex-view.js';
 import {createBowlWeaponsView} from './bowl-weapons-view.js';
+import {createFlameBar} from './bowl-fx.js';
 
 const CRUSH = '/assets/models/wasteland/bowl/crush.glb';
 const FIRE = '/assets/textures/fire-flipbook.png';
@@ -88,30 +89,8 @@ function authoredParts(scene, prefixes, feature, name) {
   return prop;
 }
 
-function jumpBar(line) {
-  const group = new THREE.Group(), {posts, halfWidth} = line.bar;
-  group.name = 'High Jump flame bar';
-  const steel = new THREE.MeshStandardMaterial({color: 0x494442, roughness: .73, metalness: .5});
-  for (const point of posts) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(.27, 15, .34), steel);
-    post.position.set(point.x, point.y + 7.5, point.z);
-    group.add(post);
-  }
-  const flame = new THREE.Group();
-  const ember = new THREE.MeshBasicMaterial({color: 0xf35a12, toneMapped: false});
-  const core = new THREE.MeshBasicMaterial({color: 0xffb33b, toneMapped: false});
-  const rail = new THREE.Mesh(new THREE.BoxGeometry(halfWidth * 2, .18, .18), ember);
-  flame.add(rail);
-  for (let i = 0; i < 18; i++) {
-    const tongue = new THREE.Mesh(new THREE.ConeGeometry(.23, .62, 4), i % 3 ? core : ember);
-    tongue.position.set(-halfWidth + (i + .5) * halfWidth / 9, -.35, 0);
-    flame.add(tongue);
-  }
-  flame.position.set((posts[0].x + posts[1].x) / 2, 0, (posts[0].z + posts[1].z) / 2);
-  flame.rotation.y = line.crest.heading;
-  group.add(flame);
-  return {group, flame, tongues: flame.children.slice(1)};
-}
+// BOWL-LOOK-FIX: High Jump's bar is a gas pipe with real flames (src/bowl/bowl-fx.js), not a bar of bunting.
+const jumpBar = createFlameBar;
 
 export function createBowlView({loadModel = url => loader.loadAsync(url),
   loadFireTexture = () => new THREE.TextureLoader().loadAsync(FIRE)} = {}) {
@@ -248,9 +227,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     stadium?.userData.update?.(now, undefined, state);
     if (highBar) {
       highBar.flame.position.y = state?.bowlNight?.event?.barHeight ?? 6;
-      for (const [index, tongue] of highBar.tongues.entries()) {
-        tongue.scale.y = .7 + .3 * Math.sin(now * .016 + index * 1.29);
-      }
+      highBar.update(now);
     }
     if (crushShells) crushShells.userData.updateSimulation(state || {}, 0);
     const crushed = state?.crushedProps || [];

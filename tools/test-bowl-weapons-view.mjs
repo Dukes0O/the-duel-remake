@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {Duel} from '../src/game.js';
-import {bowlHealthLoss, chooseShowWeapon, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
+import {SHOW_WEAPONS, bowlHealthLoss, chooseShowWeapon, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
 import {createBowlWeaponsView, hammerAngle, launcherPose, RIVAL_LOOKS, truckLook, WEAPON_LOOK, WEAPON_PICTURES} from '../src/bowl/bowl-weapons-view.js';
 
 const dt = 1 / 60;
@@ -135,4 +135,22 @@ for (const kind of ['hammer', 'saw', 'launcher']) {
   assert.ok(meshes.slice(1).every(mesh => mesh.userData.paint.color.getHex() === 0x9bb9ba), "the rivals' paint is given back");
   view.dispose();
 }
+// BOWL-LOOK-FIX: a launcher wrecked in mid throw lets its plate fall back over the lowering time, not in one frame.
+{
+  const duel = fight('launcher'), s = duel.state, view = createBowlWeaponsView(), meshes = [s, ...s.opponents].map(truckModel);
+  let now = 0;
+  const draw = () => { now += dt * 1000; view.update(readOnly(s), meshes, now, true); };
+  const look = WEAPON_LOOK.launcher;
+  Object.assign(s.bowlWeapon, {phase: 'rest', time: SHOW_WEAPONS.launcher.rest - look.snap - look.hold / 2});
+  draw();
+  const plate = named(view.rigs.get(meshes[0]).root, 'Launcher plate'), up = -plate.rotation.x;
+  assert.ok(Math.abs(up - look.up) < 1e-6, 'the plate is up in mid throw');
+  s.combatWrecking = true;
+  draw();
+  assert.ok(-plate.rotation.x > up - (look.up - look.down) / 4, 'one frame after the wreck the plate has only begun to fall');
+  for (let i = 0; i < Math.ceil(look.lower / dt) + 2; i++) draw();
+  assert.ok(Math.abs(-plate.rotation.x - look.down) < 1e-6, 'the plate is down within the lowering time');
+  view.dispose();
+}
+
 console.log('Bowl weapons view: the hammer, saw and launcher, five rivals and the damage read the rules without writing them.');

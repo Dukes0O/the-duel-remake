@@ -3,6 +3,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {SHOW_WEAPONS} from './bowl-weapons.js';
 import {createFlameMaterial, createScrapWear, createSmokeMaterial, createSparks, scrapNoise} from '../world/scrap-look.js';
+import {createSpray} from './bowl-fx.js';
 
 // BOWL-WEAPONS-LOOK: the show weapons bolted on the trucks in Last Truck Rolling (the hammer, the saw and the
 // launcher), each rival's own bolt-ons, and the damage a truck shows. Drawing only: it reads each truck's
@@ -28,8 +29,10 @@ export const WEAPON_LOOK = Object.freeze({
   launcher: Object.freeze({down: D(-21), up: D(62), snap: .08, hold: .18, lower: .6, empty: .15}),
   saw: Object.freeze({spinUp: .45, spinDown: 1.4, turnsPerSecond: 7}),
   horn: Object.freeze({dip: .3}),
-  // Health at which a truck shows its damage: a loose panel, smoke, and fire.
-  damage: Object.freeze({panel: 3 / 5, smoke: 1 / 5}),
+  // Health at which a truck shows its damage: a loose panel, smoke, and fire. BOWL-LOOK-FIX: the smoke is thick and
+  // dark (puffs a second, how big they grow, how dark), and a wreck burns with tongues taller than the cab.
+  damage: Object.freeze({panel: 3 / 5, smoke: 1 / 5, smokeRate: 11, wreckSmokeRate: 15, smokeTo: 4.6, wreckSmokeTo: 6.4,
+    smokeColour: 0x1d1a17, wreckSmokeColour: 0x0d0b0a, flame: 2.4}),
 });
 
 // What each rival carries and how it is painted, so that each is known at a glance (BOWL-SHOW-2 section 9).
@@ -290,27 +293,35 @@ export function hammerAngle(weapon, memory, heldStill = 0) {
 
 // The saw: a toothed disc on an axle ahead of the bumper, carried by two cheeks, with a guard over its top and back
 // and a motor beside the hub. It spins while F is held, throws sparks where it cuts, and glows when it must cool.
-// The disc stands high enough that its top half shows over the bonnet from the driver's camera.
-const SAW_CENTRE = [0, 1.78, 2.95], SAW_RADIUS = .62;
+// BOWL-LOOK-FIX: from the chase camera the cab hid the disc, so it rides on a raised arm: two box beams from a pivot
+// block on the bonnet, lifted by a ram, carry the hub high enough that the guard and the disc's top stand over the cab.
+const SAW_CENTRE = [0, 3.0, 2.75], SAW_RADIUS = .62, SAW_PIVOT = [0, 2.5, 1.15];
 function buildSaw(root, m) {
-  const fixed = batch(), [, cy, cz] = SAW_CENTRE;
+  const fixed = batch(), [, cy, cz] = SAW_CENTRE, [, py, pz] = SAW_PIVOT;
+  const rise = Math.atan2(cy - py, cz - pz), length = Math.hypot(cy - py, cz - pz) + .3;
+  // The pivot block bolted through the bonnet, and the pin across it.
+  fixed.box(m.dark, [.62, .2, .56], [0, 2.38, pz], [0, 0, 0], .04);
+  fixed.bolts(m.worn, [[-.22, 2.49, pz - .18], [.22, 2.49, pz - .18], [-.22, 2.49, pz + .18], [.22, 2.49, pz + .18]], [0, 0, 0], .03);
+  fixed.cyl(m.worn, .07, .07, .5, [0, py, pz], [0, 0, Math.PI / 2], 12);
+  // The two beams, with a cross tube between them half way up.
   for (const side of [-1, 1]) {
-    const cheek = new THREE.Shape();
-    cheek.moveTo(-.95, -.12); cheek.lineTo(.08, -.14); cheek.lineTo(.12, .12); cheek.lineTo(-.95, .2); cheek.closePath();
-    fixed.add(m.steel, plateGeometry(cheek, .05), [side * .1, cy, cz]);
-    fixed.bolts(m.worn, [[side * .13, cy, cz - .7], [side * .13, cy + .05, cz - .45]], [0, 0, Math.PI / 2], .028);
+    fixed.box(m.steel, [.09, .18, length], [side * .15, (py + cy) / 2, (pz + cz) / 2], [-rise, 0, 0], .025);
+    fixed.bolts(m.worn, [[side * .2, cy - .04, cz - .05], [side * .2, cy + .07, cz - .22]], [0, 0, Math.PI / 2], .028);
   }
-  fixed.box(m.dark, [.5, .28, .55], [0, cy - .02, 2.05], [0, 0, 0], .04);
-  for (const side of [-1, 1]) fixed.tube(m.dark, [[side * .45, 1.25, 1.8], [side * .2, cy - .25, 2.25], [side * .1, cy - .1, 2.6]], .05, 6, 6);
+  fixed.cyl(m.dark, .045, .045, .34, [0, (py + cy) / 2 + .02, (pz + cz) / 2], [0, 0, Math.PI / 2], 8);
+  // The ram that holds the arm up, from the bonnet to under the beams.
+  fixed.tube(m.dark, [[0, 2.36, 1.78], [0, 2.56, 2.0], [0, 2.74, 2.26]], .06, 6, 8);
+  fixed.tube(m.rod, [[0, 2.72, 2.24], [0, 2.8, 2.36]], .032, 2, 6);
   fixed.cyl(m.worn, .05, .05, .32, [0, cy, cz], [0, 0, Math.PI / 2], 10);
-  // The guard: a curved plate over the disc's top and back, open at the front and below where it cuts.
+  // The guard: a curved plate over the disc's top and back, open at the front and below where it cuts. Wide, so that
+  // its arc reads from behind the truck.
   const guard = new THREE.Shape();
-  guard.absarc(0, 0, SAW_RADIUS + .12, D(60), D(215), false);
-  guard.absarc(0, 0, SAW_RADIUS + .05, D(215), D(60), true);
-  fixed.add(m.rust, plateGeometry(guard, .16), [0, cy, cz]);
+  guard.absarc(0, 0, SAW_RADIUS + .13, D(55), D(215), false);
+  guard.absarc(0, 0, SAW_RADIUS + .05, D(215), D(55), true);
+  fixed.add(m.rust, plateGeometry(guard, .24), [0, cy, cz]);
   fixed.cyl(m.dark, .16, .16, .34, [.3, cy, cz], [0, 0, Math.PI / 2], 14);
   fixed.box(m.dark, [.12, .36, .36], [.47, cy, cz], [0, 0, 0], .03);
-  fixed.tube(m.hose, [[.47, cy + .18, cz], [.55, cy + .4, cz - .4], [.6, 2.3, 1.9]], .028, 8, 6);
+  fixed.tube(m.hose, [[.47, cy + .18, cz], [.52, cy + .05, cz - .7], [.42, 2.45, 1.5]], .028, 8, 6);
   fixed.finish(root, 'Saw mount');
 
   const spinner = new THREE.Group(); spinner.name = 'Saw disc'; spinner.position.set(...SAW_CENTRE); root.add(spinner);
@@ -599,14 +610,14 @@ function buildRig(look, mesh) {
   if (look.weapon === 'saw') {
     rig.built.saw = buildSaw(root, m);
     // The sparks fly in the world's own metres, so they live beside the rig (in the view's group), not on the truck.
-    rig.sparks = createSparks(90); rig.sparks.name = 'Saw sparks'; rig.sparks.visible = false;
+    rig.sparks = createSpray(120, 'Saw sparks'); rig.sparks.visible = false;
   }
   if (look.weapon === 'launcher') rig.built.launcher = buildLauncher(root, m);
   // Fire: the dragon's breath, and tongues of flame for a burning truck.
   rig.flame = createFlameMaterial();
   rig.breath = look.weapon === 'fire' ? [false, true].map(hot => {
     const jet = createJet(hot ? 1 : 0); jet.position.set(0, 1.98, 2.8); jet.rotation.x = D(-4); root.add(jet); return jet; }) : [];
-  rig.burning = [[.45, 2.2, 1.2], [-.5, 2.3, .1], [.2, 2.4, -1.4]].map((place, i) => {
+  rig.burning = [[.45, 2.2, 1.3], [-.4, 2.25, 1.75], [-.5, 2.6, .1], [.55, 2.7, -.5], [.2, 2.4, -1.4]].map((place, i) => {
     const tongue = flameTongue(rig.flame, `Burning truck ${i + 1}`); tongue.position.set(...place); root.add(tongue);
     tongue.onBeforeRender = () => { rig.flame.uniforms.uSeed.value = i * .29; rig.flame.uniformsNeedUpdate = true; };
     return tongue; });
@@ -685,7 +696,7 @@ function createFlash() {
 
 export function createBowlWeaponsView() {
   const group = new THREE.Group(); group.name = 'Bowl weapons and damage';
-  const puffs = createPuffs(160), rings = createRings();
+  const puffs = createPuffs(240), rings = createRings();
   const hitSparks = createSparks(64); hitSparks.name = 'Hammer hit sparks'; hitSparks.visible = false;
   const flash = createFlash();
   group.add(puffs.group, rings.group, hitSparks, flash);
@@ -756,13 +767,17 @@ export function createBowlWeaponsView() {
     built.blurMaterial.uniforms.uSpin.value = smooth(memory.spin);
     for (const blur of built.blurs) blur.visible = memory.spin > .01;
     built.blurMaterial.uniforms.uHeat.value = heat;
-    const sparks = rig.sparks;
-    sparks.visible = !!weapon?.cutting && weapon.phase === 'active' && rig.root.visible;
+    const sparks = rig.sparks, cutting = !!weapon?.cutting && weapon.phase === 'active';
+    // BOWL-LOOK-FIX: seen from behind, the disc is edge on, so its spin is carried by sparks thrown out to both sides
+    // over the cab while it turns; where it cuts they become a rooster tail thrown up and back over the bonnet.
+    sparks.visible = held && memory.spin > .3 && rig.root.visible;
     if (sparks.visible) {
       const [, cy, cz] = SAW_CENTRE;
-      // A rooster tail of sparks thrown up and back over the bonnet, where the driver sees it.
       forward.set(0, 0, -1).transformDirection(rig.root.matrix);
-      sparks.userData.place(seconds, toWorld(rig, 0, cy + .45, cz + SAW_RADIUS * .55), forward, 0);
+      w.set(1, 0, 0).transformDirection(rig.root.matrix);
+      const from = toWorld(rig, 0, cy + SAW_RADIUS * .7, cz + SAW_RADIUS * .55);
+      if (cutting) sparks.userData.place(seconds, from, forward, w, {reach: 3.4, rise: 3, spread: .7, share: 1});
+      else sparks.userData.place(seconds, from, forward, w, {reach: 2.3, rise: 2.4, both: true, share: .35 + .35 * memory.spin, life: 1.7});
     }
     // A cooling disc smokes.
     if (weapon?.phase === 'rest' && rig.root.visible && Math.random() < dt * 9) {
@@ -773,8 +788,14 @@ export function createBowlWeaponsView() {
 
   function stepLauncher(rig, actor, dt, seconds) {
     const built = rig.built.launcher, memory = rig.memory, weapon = rig.weapon;
-    const pose = launcherPose(weapon, seconds);
-    built.pivot.rotation.x = -pose.angle;
+    const pose = launcherPose(weapon, seconds), look = WEAPON_LOOK.launcher;
+    // A wreck (or the event's end) in mid throw stops the rule's clock: the plate then falls back under its weight
+    // over the rule's lowering time, not in one frame (BOWL-LOOK-FIX, left from BOWL-WEAPONS-LOOK).
+    let angle = pose.angle;
+    if (!weapon && memory.plate != null && memory.plate > angle)
+      angle = Math.max(angle, memory.plate - (look.up - look.down) / look.lower * dt);
+    memory.plate = angle;
+    built.pivot.rotation.x = -angle;
     built.needle.rotation.z = D(135) - pose.fill * D(270);
     // The rams follow the plate.
     built.pivot.updateMatrix();
@@ -862,17 +883,23 @@ export function createBowlWeaponsView() {
       rig.panel.rotation.set(D(-28) + swing * .6, 0, side * (D(24) + swing), 'ZXY');
       rig.hole.position.set(side * .985, 1.98, .05); rig.hole.rotation.set(0, side * Math.PI / 2, 0);
     }
-    const smoking = share != null && share <= WEAPON_LOOK.damage.smoke + 1e-9;
+    const smoking = share != null && share <= WEAPON_LOOK.damage.smoke + 1e-9, look = WEAPON_LOOK.damage;
     memory.smoking = smoking; memory.burning = wrecked && share != null;
-    if (smoking && rig.root.visible && Math.random() < dt * 12) {
-      const at = toWorld(rig, (Math.random() - .5) * .8, 2.45, 1.4);
-      puffs.emit(at, {velocity: [(Math.random() - .5) * .6, 1.4, (Math.random() - .5) * .6], life: wrecked ? 2.2 : 1.8,
-        from: .5, to: wrecked ? 3.6 : 2.4, alpha: wrecked ? .7 : .5, color: wrecked ? 0x141210 : 0x2c2926, rise: .5});
-    }
+    // Thick dark smoke rolling out of the bonnet's seams and up past the cab, and a black column off a wreck.
+    if (smoking && rig.root.visible) {
+      memory.smokeDue = (memory.smokeDue || 0) + dt * (wrecked ? look.wreckSmokeRate : look.smokeRate);
+      for (; memory.smokeDue >= 1; memory.smokeDue--) {
+        const vent = Math.random(), x = vent < .6 ? (Math.random() - .5) * .9 : (vent < .8 ? -1 : 1) * .85;
+        const at = toWorld(rig, x, 2.4 + Math.random() * .2, wrecked ? .2 + Math.random() * 1.6 : 1.1 + Math.random() * .7);
+        puffs.emit(at, {velocity: [(Math.random() - .5) * .8, wrecked ? 2.8 : 2.1, (Math.random() - .5) * .8], life: wrecked ? 3 : 2.4,
+          from: wrecked ? 1.4 : 1, to: wrecked ? look.wreckSmokeTo : look.smokeTo, alpha: wrecked ? .88 : .74,
+          color: wrecked ? look.wreckSmokeColour : look.smokeColour, rise: .6});
+      }
+    } else memory.smokeDue = 0;
     rig.flame.uniforms.uTime.value = seconds;
     rig.burning.forEach((tongue, i) => {
       tongue.visible = wrecked && share != null && rig.root.visible;
-      if (tongue.visible) { const size = 1.5 + .5 * i + .25 * Math.sin(seconds * 6 + i); tongue.scale.set(size, size * 1.5, 1); }
+      if (tongue.visible) { const size = look.flame * (.8 + .14 * i) + .3 * Math.sin(seconds * 6 + i * 1.7); tongue.scale.set(size, size * 1.55, 1); }
     });
     // A thrown truck raises the dust where it lands.
     const flying = !!actor.bowlFlight;
