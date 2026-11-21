@@ -298,7 +298,8 @@ four seconds of tight cable. On Medium and Hard, use Space or a jerk when it bra
 A ring beside the driving goal shows pull progress when the box is off screen.
 Tow out all three boxes before it reaches the gate. Easy gives 24 seconds in a normal
 rest. The camera holds the truck and the Scrapasaurus together during its fall.
-Its fallen body appears in the yard after a win.
+It settles on its flank. After a win, its fallen body appears in the yard
+with the three torn leads showing.
 
 **Taking turns and records.** Turn Show passes the keyboard for each event,
 keeps the scores by driver and pays that driver if they win the night. The first

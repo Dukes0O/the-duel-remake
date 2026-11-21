@@ -85,3 +85,7 @@ The careful driver also won 6/10 on each night. In the Hammer sample, five of th
 the Easy clock (the rule this card adds), while the direct collision check still proves knockout credit and the clock fixtures
 prove the Easy health rule and the old Medium and Hard rule. The careful driver's old "two knockouts in each win" no longer
 describes every way to win on Easy; nothing about knockout scoring is loosened.
+
+## After the pursuit review
+
+A circling rival could reserve Easy's only pursuit slot and play a charge warning before its opening. The lane now starts its arena brain at the opening and releases a knocked-out rival's slot. An independent check replayed the original Saw case past 23 seconds and rechecked both fixes. After the Bowl gate merge, Launcher meets the target at six chaser wins, eight fights of 75 seconds, and nine careful wins. Hammer retains its earlier scripted Hammer driver and is being retuned. On Saw, a five-win chaser candidate gives all ten fights at least 75 seconds, but the first careful Saw attempt used the old hammer-style chase and won one in ten. I am checking a measured, weapon-aware careful approach that matches speed near a rival to hold Saw contact. The named driver thresholds and the existing Hammer and Hard drivers stay in the suite.
