@@ -1,5 +1,6 @@
 # BOWL-REX-SOLIDS
 
-Remove the hidden bogie shape and keep the visible parts solid. Bring the final roll 0.06 rad farther onto its side and lower the lift coefficient from 2.90 m to 2.61 m so the ribcage reaches within 0.2 m of the track. Keep the landing at 1.5 seconds so its dust and fire stay timed. A settled solid ends at the floor where the lower edge of a part would otherwise sit underground.
-The yard uses its existing unlock and displays the three torn battery leads. Final guards, drive results and independent review are pending.
-**Removed** — the invisible box between the Scrapasaurus's feet.
+The invisible bogie is gone. The same legs, body, tail and boxes remain solid above the floor. The fall rolls 0.06 rad farther and uses a 2.61 m lift coefficient, bringing the drawn ribcage to 0.19 m above the ground. The 1.5 s landing still matches the dust and fire.
+The beaten yard ornament shows all three torn lead groups using the existing trophy unlock.
+At 77d4f48e7, six suites passed with 799 core, 820 camera, 297 race, 12 combat and 63 world guard checks. Space, throttle-only and late-reaction Easy drivers each won 10/10. The build and independent check of the actual shipped model passed.
+**Removed** — the hidden support box between the Scrapasaurus's feet.
