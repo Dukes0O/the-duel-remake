@@ -43,3 +43,6 @@ Memory-only saves. No new dependency, network request or key.
 9. **High Jump's flame bar** reads as bunting (an orange bar with small triangles): draw it as a gas pipe with real flames
    (`n4-high-04-go2-nitro-at-the-bar.jpg`).
 10. The fall needs the camera fix in BOWL-REX-FIX to be seen at all; judge it after that merges.
+11. From batch drive 3 (21 November 2026): the Scrapasaurus's fire now reads as fire but floods the whole screen orange when
+    the truck is near (`rex-a-31-fire.jpg` in `.evidence/2026-11-21/batch-3/`). Keep the flame; cap how much of the picture
+    it may cover and how bright it gets close up.

@@ -54,3 +54,5 @@ Memory-only saves. No new dependency, network request or key.
     lessons do.
 12. **The best go so far** in a jump event shows in the strip during play, not only on the result card.
 13. **Wording:** "the night is theirs!" uses "theirs" for one driver. Write "the night belongs to our driver!" or name the driver.
+14. Batch drive 3 (21 November 2026) saw item 8 again: "You were going too fast for a wheelie" during High Jump and every Best
+    Trick landing. Item 8 covers it; check it in those two events too.
