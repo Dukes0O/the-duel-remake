@@ -631,7 +631,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/qa-titan-arena-wrecks"
     needs: []
     locks: []
     details: "docs/board/cards/QA-TITAN-ARENA-WRECKS.md"
