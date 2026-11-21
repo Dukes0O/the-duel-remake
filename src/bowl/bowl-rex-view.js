@@ -4,8 +4,8 @@ import {REX_RULES, rexFacing, rexFightOf, rexPlaces} from './bowl-rex.js';
 import {createFlameMaterial, createSmokeMaterial, createSparks} from '../world/scrap-look.js';
 
 // The Scrapasaurus in the Bowl (BOWL-REX-FIGHT): its model on the rails, its
-// poses, its battery boxes, the cone its fire will fill (drawn on the floor from
-// the start of its tell), the ring where a thrown car will land, and its pen of
+// poses, its battery boxes, the chest tell and fire, the ring where a thrown car
+// will land, and its pen of
 // junk cars. On nights three and four it stands behind the stands' wall, seen
 // before it is fought. It reads state.bowlNight and never writes it.
 // BOWL-REX-LOOK draws the fight's moments: steam off the tired sag, the tall
@@ -55,22 +55,7 @@ function disposeTree(root) {
   });
 }
 
-// A flat fan on the floor, its point at the origin, opening along +Z, one metre long.
-function fanGeometry(halfAngle, segments = 24) {
-  const points = [0, 0, 0];
-  for (let i = 0; i <= segments; i++) {
-    const a = -halfAngle + 2 * halfAngle * i / segments;
-    points.push(Math.sin(a), 0, Math.cos(a));
-  }
-  const index = [];
-  for (let i = 1; i <= segments; i++) index.push(0, i, i + 1);
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-  geometry.setIndex(index);
-  return geometry;
-}
-
-// Drawn over the floor and the ramps, so the cone and the ring are seen even where a ramp rises through them.
+// The throw ring is visible even where a ramp rises through it.
 const glowMaterial = (color, depthTest = false) => new THREE.MeshBasicMaterial({color, transparent: true, opacity: .5,
   depthWrite: false, depthTest, side: THREE.DoubleSide, toneMapped: false, blending: THREE.AdditiveBlending});
 
@@ -91,9 +76,7 @@ export function createRexView({loadModel}) {
   chestLight.position.copy(chest.position);
   pose.add(chest, chestLight);
   let asset = null;
-  // The cone on the floor (the tell), and the fire filling it.
-  const cone = new THREE.Mesh(fanGeometry(REX_RULES.fire.halfAngle), glowMaterial(ORANGE));
-  cone.name = 'Scrapasaurus fire cone'; cone.renderOrder = 4; cone.visible = false;
+  // Only the beast's chest warns the driver before the fire.
   // Its fire as fire (owed from BOWL-FINISH): a rolling stream of fireballs pours from its mouth down onto the floor,
   // and tongues of flame burn along the orange out to the end of the rules' reach, with a light on the floor.
   const fire = new THREE.Group(); fire.name = 'Scrapasaurus fire'; fire.visible = false;
@@ -181,7 +164,7 @@ export function createRexView({loadModel}) {
   const STEAM_VENTS = [[-1.4, 5.2, -1.6], [1.4, 5.2, -1.6], [-1.2, 5.5, 1.2], [1.2, 5.5, 1.2], [0, 5.0, -4.2], [0, 5.3, 3.4]];
   // Dust thrown up along its length where it lands, in the rails' metres (not rolled with the body).
   const dust = puffs('Scrapasaurus fall dust', 18, 0x8a7458); holder.add(dust);
-  group.add(holder, cone, fire, ring, thrown, pen, cable, tip, mark, beam, boxLight, progress, pointer);
+  group.add(holder, fire, ring, thrown, pen, cable, tip, mark, beam, boxLight, progress, pointer);
   const moments = {tornAt: [null, null, null], tiredAt: null, fight: null};
   let lamps = [];
   const scratch = new THREE.Vector3(), outward = new THREE.Vector3(), centre = new THREE.Vector3();
@@ -253,7 +236,7 @@ export function createRexView({loadModel}) {
     mixer?.update(dt);
     const seconds = now / 1000;
     pen.visible = !!fight;
-    cone.visible = fire.visible = ring.visible = thrown.visible = chest.visible = false;
+    fire.visible = ring.visible = thrown.visible = chest.visible = false;
     chestLight.intensity = 0;
     cable.visible=tip.visible=mark.visible=beam.visible=progress.visible=pointer.visible=false;
     boxLight.intensity=0;fireLight.intensity=0;
@@ -403,29 +386,20 @@ export function createRexView({loadModel}) {
       mark.material.color.setHex(fight.marker.canBite ? 0x99ff77:RING);
     }
     if (fight.cone && (fight.phase === 'tell' || fight.phase === 'fire')) {
-      if(cone.userData.halfAngle!==fight.cone.halfAngle){
-        cone.geometry.dispose();cone.geometry=fanGeometry(fight.cone.halfAngle);
-        cone.userData.halfAngle=fight.cone.halfAngle;
-      }
       const y = next.groundAt(fight.s, places.rail).y + .06;
-      for (const item of [cone, fire]) {
-        item.position.set(fight.cone.x, y, fight.cone.z);
-        item.rotation.y = item===fire ? fight.cone.flameHeading : fight.cone.heading;
-      }
-      cone.scale.set(fight.cone.range, 1, fight.cone.range);
-      cone.visible = true;
-      // The tell: the cone pulses faster as the fire gets close, and its chest glows brighter. The fire: the cone burns.
+      fire.position.set(fight.cone.x, y, fight.cone.z);
+      fire.rotation.y = fight.cone.flameHeading;
+      // The chest grows brighter until the fire starts.
       const level = REX_RULES.level[fight.level];
       const share = fight.phase === 'tell' ? Math.min(1, fight.t / level.tellSec) : 1;
       chest.visible = true;
       chest.material.opacity = .35 + .55 * share;
       chest.scale.setScalar(.8 + .5 * share + .08 * Math.sin(seconds * 14));
       chestLight.intensity = 40 + 260 * share;
-      cone.material.opacity = fight.phase === 'tell' ? .22 + .3 * share * (.5 + .5 * Math.sin(seconds * (6 + share * 10))) : .6;
       fire.visible = fight.phase === 'fire';
       if (fire.visible) {
         // The stream leaves the mouth and comes down onto the floor a third of the way out; the tongues burn along the
-        // floor from there to the end of the orange. The jet grows out of the mouth over its first moment, and never
+        // floor from there to the end of the fire's reach. The jet grows out of the mouth over its first moment, and never
         // reaches past the rules' range.
         const mouth = places.headTop * places.scale - 2.6, reach = fight.cone.range, land = reach * .32;
         const grown = Math.min(1, fight.t / REX_MOMENTS.fireGrow), spread = REX_RULES.fire.halfAngle * .9;

@@ -52,3 +52,27 @@ Memory-only saves. No new dependency, network request or key.
    Easy may not need to be easier with the hammer: measure the chaser first, and do not move a number that already gives
    about six wins in ten. What spoiled his fights was the feel (the truck snapping sideways after a hit, the hammer while
    driving, the saw's jerk, the launcher's narrow reach), which is BOWL-FEEL-FIX. Tune after that card has merged.
+
+## Builder baseline and narrow questions, 21 November
+
+The chaser steers toward the nearest truck still rolling, uses F in the current weapon's real reach, and does not dodge. At `eda61d4c7`, ten starts with each weapon won 8 hammer, 8 saw and 7 launcher. Only 0, 6 and 5 respectively lasted 75 seconds. The average health loss to own rams was 20.0, 17.8 and 22.4. Rival rams averaged 0.8, 0.8 and 1.2. The hammer's group also lost 15.1 to hammer swings, the saw's group 12.9, and the launcher's group 7.2 to fire. The chaser needs more driving time, and a blanket armor bonus would make the two higher win rates worse.
+
+I will keep recoil at its existing share unless a measured weapon group needs a change. I will first measure a lower Easy closing speed together with the card's remaining-health rule at the clock. May this card update that clock-result sentence in `src/bowl/bowl-lines.js` so Easy can explain the health rule? If pace alone cannot meet the gate, may it use the existing Bowl-only driver hook in `src/arena/arena-event.js` to limit how many rivals pursue the player and when, and one Bowl-only line in `src/sim-contacts.js` to read an Easy own-ram share if it needs tuning? All three hooks would use the Bowl event's rules and leave Medium, Hard and other arenas unchanged.
+
+The Turn Show also prints the old clock reason. Its go currently keeps `timeUp` but not the reason for a win. May this card add the result's `decidedBy` value to the existing in-memory go in `src/bowl/bowl-turns.js` and select the matching `goKnockouts` sentence? The save writer still reads the same scores and settlement data. The old pursuit test pins 30 mph on Easy. If the measured Easy pace changes, I will keep that 30 mph check on Medium and add a separate Easy check against its retained pace.
+
+Scratch trials on 21 November found Easy candidates with the same fight pace and staggered pursuit. In the ten fixed seeds, Hammer won 7 with 8 fights at least 75 seconds, Saw won 5 with 8, and Launcher won 7 with 9. The careful-driver checks are running. The clock check passes for an Easy tie, an Easy loss with a healthier rival, and Medium and Hard still deciding the clock by damage dealt. The two shared simulation hooks requested above are needed to turn the scratch settings into a lane candidate.
+
+## Claude answers, the hooks (21 November 2026)
+
+**Granted, all four,** each inert outside Last Truck Rolling on Easy with `titan-bowl` on:
+- the clock-result sentence in `src/bowl/bowl-lines.js`, so Easy explains the health rule in one plain sentence;
+- the existing Bowl-only driver hook in `src/arena/arena-event.js` to limit how many rivals pursue the player and when (the
+  staggered pursuit);
+- one Bowl-only line in `src/sim-contacts.js` to read an Easy own-ram share, if a weapon group needs it;
+- `decidedBy` on the in-memory go in `src/bowl/bowl-turns.js`, choosing the matching `goKnockouts` sentence; the save writer
+  reads the same scores and settlement as before.
+
+The 30 mph pursuit check moves to Medium, with a separate Easy check at its new pace (rule 18 approved: nothing is loosened).
+The scratch results (hammer 7, saw 5, launcher 7 wins in ten, and 8 or 9 fights of 75 seconds) meet the card. Combat balance
+and other arenas unchanged. Merge under rule 23.

@@ -155,8 +155,8 @@ export const BOWL_GOALS = Object.freeze({
   // BOWL-REX-FIGHT: what to do now, by what the Scrapasaurus is doing.
   scrapasaurus: ({phase, hook, boxes = []} = {}) => {
     if (phase === 'fallen') return 'THE SCRAPASAURUS IS DOWN';
+    if (phase === 'tell' || phase === 'fire') return 'ITS CHEST IS GLOWING, SO GET CLEAR';
     if (hook?.phase === 'attached') return hook.tight ? 'KEEP PULLING' : 'DRIVE AWAY AND PULL';
-    if (phase === 'tell' || phase === 'fire') return 'GET OUT OF THE ORANGE';
     if (phase === 'lift' || phase === 'throw') return 'Dodge the thrown car.';
     if (hook?.phase === 'dragging') return 'PRESS F TO RELEASE';
     if (phase === 'rest') return 'HOOK THE GLOWING BOX';
@@ -191,7 +191,7 @@ export const BIG_MO = Object.freeze({
   'outside.gate': 'How did that truck get up there? Follow the gate marker to get back in!',
   'rex.seen.4': 'Our driver has beaten every truck in the Bowl, so next time I will have to open the big gate under the stands. I am a little bit scared.',
   'event.scrapasaurus.intro': 'You beat every truck in the Bowl, so here is the Scrapasaurus! It is heading for the car park gate, and if it gets out it will eat every car in the car park.',
-  'rex.tell': 'Look at its chest glowing. That means fire is coming, so get out of the orange on the floor.',
+  'rex.tell': 'Look at its chest glowing. That means fire is coming, so get away from its head.',
   'rex.rest': 'The cage is up. Face the glowing box and fire your hook with F!',
   'rex.out.1': 'One box is out! Press F to drop it. Two to go.',
   'rex.out.2': 'Two out! Let that one go. The last eye is behind its head.',
@@ -199,7 +199,7 @@ export const BIG_MO = Object.freeze({
   'rex.noBox': 'The box was shut. Wait for the cage to open.',
   'rex.slack': 'The cable is slack. Drive away until it goes tight.',
   'rex.brace': 'It pulled you in, so press Space as you pull.',
-  'rex.scorch': 'Ouch, that truck got toasted. Keep out of the orange next time.',
+  'rex.scorch': 'Ouch, that truck got toasted. Watch its chest, and move when it glows.',
   'rex.bump': 'Circle its legs and aim for the open eye.',
   'rex.lift': 'It has picked up a car to throw! Keep moving and stay away from the ring on the floor.',
   'rex.gone': 'It walked straight out of the gate and into the car park. The crowd is not happy about their cars.',

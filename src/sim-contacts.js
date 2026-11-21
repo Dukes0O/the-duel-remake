@@ -1,6 +1,6 @@
 import {BOWL_STADIUM, bowlSpineTopAt} from './bowl/bowl-course.js';
 import {bowlHealthLoss} from './bowl/bowl-weapons.js';
-import {constrainTow, rexSolids} from './bowl/bowl-hook.js';
+import {constrainTow, finishTowContact, rexSolids} from './bowl/bowl-hook.js';
 import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
@@ -373,6 +373,8 @@ export function _collisions() {
   // again, including when damage is temporarily disabled after a crash.
   this._staticContacts(s, true);
   for (const opponent of s.opponents) this._staticContacts(opponent, false);
+  const rex = s.bowlNight?.event?.rex;
+  if (this.course.def.bowl && rex?.hook.phase === 'attached') finishTowContact(this, rex, s);
 }
 
 export function _obstacles(fromS, toS) {
