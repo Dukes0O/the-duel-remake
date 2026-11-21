@@ -12,7 +12,7 @@ const ringPoints = [0, 150, 300, 600];
 const TARGETS = {
   [LONG_JUMP]: {easy: 4, medium: 7, hard: 9},
   [HIGH_JUMP]: {easy: 8, medium: 9, hard: 12},
-  [HOME_RUN]: {easy: 1, medium: 2, hard: 4},
+  [HOME_RUN]: {easy: 1, medium: 2, hard: 3},
 };
 
 const targetFor = night => TARGETS[night.event.type][night.cpuDifficulty];

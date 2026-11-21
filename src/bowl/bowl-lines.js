@@ -157,7 +157,7 @@ export const BOWL_GOALS = Object.freeze({
   longJump: target => `Clear ${target} buses.`,
   highJump: height => `Clear the ${height} m flame bar.`,
   homeRun: target => ['Jump the wall. Return through a gate.', 'Land on the target. Return through a gate.',
-    'Hit the middle ring. Return through a gate.', 'Hit the centre. Return through a gate.'][target - 1],
+    'Hit the middle ring. Return through a gate.'][target - 1],
   freestyle: (target, night = 1) => `Beat ${FREESTYLE_SCORE_NAMES[night - 1] ?? FREESTYLE_SCORE_NAMES[0]}: ${target}.`,
   sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
   lastTruckRolling: (left = []) => left.length

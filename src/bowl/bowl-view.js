@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {flipbookFrameUVInto} from '../combat-vfx-atlas.js';
 import {addArenaCrushables} from '../arena-props.js';
-import {createBowlStadium} from './bowl-stadium.js';
+import {BOWL_STAND, createBowlStadium} from './bowl-stadium.js';
 import {createRexView} from './bowl-rex-view.js';
 import {bowlJumpGround} from './bowl-crush-field.js';
 import {createBowlWeaponsView} from './bowl-weapons-view.js';
@@ -119,7 +119,7 @@ function homeRings(course, target) {
   group.name = 'Home Run target rings';
   const colours = [0xffaf37, 0xffe1a0, 0xf58648];
   for (const [index, radius] of target.radii.entries()) {
-    const vertices = [], triangles = [], segments = 96;
+    const vertices = [], triangles = [], segments = 192;
     for (let i = 0; i <= segments; i++) {
       const angle = i * Math.PI * 2 / segments;
       for (const edge of [radius - .42, radius]) {
@@ -127,7 +127,10 @@ function homeRings(course, target) {
           x: target.x + Math.sin(angle) * edge,
           z: target.z + Math.cos(angle) * edge,
         });
-        vertices.push(p.x, p.y + .10, p.z);
+        const depth = p.lateral - BOWL_STAND.face - BOWL_STAND.first;
+        const row = Math.min(BOWL_STAND.rows - 1, Math.floor(depth / BOWL_STAND.depth));
+        const top = row < 0 ? BOWL_STAND.low : BOWL_STAND.rowY(row);
+        vertices.push(p.x, top + .04, p.z);
       }
       const n = i * 2;
       if (i < segments) triangles.push(n, n + 1, n + 3, n, n + 3, n + 2);

@@ -138,6 +138,10 @@ for (const event of eventTypes) {
   assert.equal(walls.length, 3);
   assert.ok(returns.every((note, i) => note.at - walls[i].at < 30));
   assert.deepEqual(home.notes.filter(note => note.sound === 'bowl.home.ring').map(note => note.points), [600, 600, 600]);
+  const middle = run('homeRun', {single: true, cpuDifficulty: 'hard', go: () => [.66, 36]});
+  assert.equal(middle.result.bestGo.result, 3, 'the real landing hit the middle ring');
+  assert.equal(middle.result.won, true, 'the middle ring meets the Hard goal');
+  assert.equal(middle.notes.find(note => note.sound === 'bowl.home.ring').points, 300);
   const timeout = run('homeRun', {single: true, returnToGate: false});
   assert.equal(timeout.result.won, false, 'a target landing alone does not win');
   assert.ok(timeout.notes.some(note => note.sound === 'bowl.home.ring'));

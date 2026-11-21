@@ -65,7 +65,7 @@ const beyond = ({crest, forward, across}, distance, offset = 0) => ({
 
 export function bowlJumpGround(course, {x, z}) {
   const {s, lateral} = course.nearest(x, z);
-  return {...course.groundAt(s, lateral), x, z};
+  return {...course.groundAt(s, lateral), x, z, lateral};
 }
 
 function dressLongJump(course) {

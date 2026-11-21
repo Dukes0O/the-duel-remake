@@ -226,7 +226,10 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
           openingNight = null;
         }
       } else if (action === 'show-night-tricks-close') closeHelp();
-      else if (action === 'show-night-next') app.continueShowNight?.();
+      else if (action === 'show-night-next') {
+        if (night()?.singleEvent) app.duel.continueBowlNight();
+        else app.continueShowNight?.();
+      }
       else if (action === 'show-night-leave') { pickerFrom = null; app.leaveShowNight?.(target.dataset.to); }
       else if (action === 'show-night-pick') {
         const from = app.showNightRun?.()?.from ?? 'menu';
