@@ -24,7 +24,10 @@ export function _flockBonuses() {
 export function _advanceLaps(actor, dt, noReset = false) {
   if (this.course.def.practice || actor.crushed) return;
   const outside = this.course.features?.bowl?.outside;
-  if (outside && this.state.bowlNight && Math.max(actor.lateral, actor.prevLateral ?? actor.lateral) > outside.wall) return;
+  const bowlEvent = outside && this.state.bowlNight?.event?.type;
+  // Only Side by Side races laps. A legal jump across the Spine in a score
+  // event can change the nearest straight by half a lap in one world step.
+  if (bowlEvent && (bowlEvent !== 'sideBySide' || Math.max(actor.lateral, actor.prevLateral ?? actor.lateral) > outside.wall)) return;
   const player = actor === this.state, laps = this.state.lapsTotal;
   if (actor.completedLaps >= laps) return;
   const previous = actor.prevS ?? actor.s, current = actor.s;
@@ -50,6 +53,7 @@ export function _advanceLaps(actor, dt, noReset = false) {
   };
   // A discontinuous position change cannot substitute for driving a circuit.
   const plausibleTravel = current - previous < Math.max(20, actor.speedMph * DRIVE.mphToWorld * dt * 4 + 12);
+  if (bowlEvent && actor.airborne && !plausibleTravel) return;
   if (gate != null && crossed(lapBase + gate) && plausibleTravel) {
     if (legalAt(lapBase + gate)) {
       actor.nextLapGate++;

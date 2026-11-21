@@ -1,4 +1,4 @@
-import {BOWL_STADIUM} from './bowl/bowl-course.js';
+import {BOWL_STADIUM, bowlSpineTopAt} from './bowl/bowl-course.js';
 import {bowlHealthLoss} from './bowl/bowl-weapons.js';
 import {constrainTow, rexSolids} from './bowl/bowl-hook.js';
 import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
@@ -33,6 +33,72 @@ import {actorForTarget} from './arsenal/targeting.js';
 import {CONVOY_BODY, isConvoyRig} from './arena/modes/convoy-raid.js';
 import {scablandsContactObstacles} from './sim-scablands.js';
 
+const BOWL_CONTACT_TURN_SECONDS = .25;
+const BOWL_MAX_TURN_STEP = Math.PI / 12;
+const wrapBowlHeading = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
+
+// The rebound decides velocity immediately. It takes a quarter-second for the
+// truck's body to turn, and the driver's own steering is still applied.
+function stepBowlContactTurn(duel, actor) {
+  const turn = actor.bowlContactTurn;
+  if (!turn) return;
+  const clock = duel.state.bowlNight?.clock ?? duel.state.stageTimeSec;
+  const dt = clock - turn.clock;
+  if (dt < 0 || dt > BOWL_CONTACT_TURN_SECONDS || actor.bowlFlight || actor.combatWrecking) {
+    delete actor.bowlContactTurn;
+    return;
+  }
+  if (dt === 0) return;
+  const fraction = Math.min(1, dt / Math.max(dt, turn.left));
+  const steering = clamp((actor.yawVelocity || 0) * dt, -BOWL_MAX_TURN_STEP, BOWL_MAX_TURN_STEP);
+  const delta = clamp(turn.angle * fraction, -BOWL_MAX_TURN_STEP - Math.min(0, steering),
+    BOWL_MAX_TURN_STEP - Math.max(0, steering));
+  const before = actor.headingError || 0, after = wrapBowlHeading(before + delta);
+  const speed = actor.speedMph * (actor.dir || 1) * DRIVE.mphToWorld;
+  actor.headingError = after;
+  actor.pushVelocity = (actor.pushVelocity || 0) + speed * (Math.sin(before) - Math.sin(after));
+  addCarAlongPush(actor, speed * (Math.cos(before) - Math.cos(after)));
+  turn.left = Math.max(0, turn.left - dt);
+  turn.angle -= delta;
+  turn.clock = clock;
+  if (Math.abs(turn.angle) < 1e-8) delete actor.bowlContactTurn;
+}
+
+function stepBowlSpineSlide(duel, actor) {
+  const bowl = duel.course.features.bowl;
+  if (!bowl) return;
+  if (actor.bowlSpineExit) {
+    const {halfWidth, halfLength} = duel._vehicleSpec(actor);
+    const clear = duel.course.def.scrapdome.wallOffset - .5 - Math.hypot(halfWidth, halfLength);
+    if (actor.lateral > -clear || actor.bowlFlight || actor.combatWrecking) delete actor.bowlSpineExit;
+  }
+  if (actor.airborne || actor.combatWrecking || actor.bowlFlight || !Number.isFinite(actor._jumpY)) return;
+  const top = bowlSpineTopAt(duel.course, actor.s, actor.lateral);
+  if (top == null || actor._jumpY < top - .01) return;
+  const side = Math.sign(actor.lateral + bowl.ring.radius) || 1;
+  // The narrow roof sheds a landed truck onto the nearer straight.
+  actor.bowlSpineExit = true;
+  const push = actor.pushVelocity || 0;
+  if (side * push < 2) actor.pushVelocity = side * 2;
+}
+
+// A saw holds the contacted face. Stop inward travel without knocking the pair apart.
+function holdBowlSawContact(duel, a, b, nx, nz, start, end, width, length) {
+  const paired = a.bowlSawTargetId && a.bowlSawTargetId === combatOwnerId(duel, b) ||
+    b.bowlSawTargetId && b.bowlSawTargetId === combatOwnerId(duel, a);
+  if (!paired) return false;
+  const axis = nx ? 'x' : 'z', normal = nx || nz, clearance = nx ? width : length;
+  const position = nx ? 'lateral' : 's', previous = nx ? 'prevLateral' : 'prevS';
+  const needed = Math.min(clearance, start[axis] * normal) - end[axis] * normal;
+  if (needed <= 0) return true;
+  const travelA = Math.max(0, ((a[previous] ?? a[position]) - a[position]) * normal);
+  const travelB = Math.max(0, (b[position] - (b[previous] ?? b[position])) * normal);
+  const trim = Math.min(1, needed / Math.max(1e-8, travelA + travelB));
+  a[position] += travelA * trim * normal;
+  b[position] -= travelB * trim * normal;
+  return true;
+}
+
 // Velocity is measured against the contacted face, in the local road frame.
 function bowlImpact(rules, mph, tangentMph) {
   if (mph < rules.scrapeSine * Math.hypot(mph, tangentMph)) return 'scrape';
@@ -55,12 +121,17 @@ function bowlRebound(duel, actor, nx, nz, tangent, outward, kind, speed) {
     : tangent * rules.tangentKeep;
   const vx = tx * along + nx * outward, vz = tz * along + nz * outward;
   actor.speedMph = Math.hypot(vx, vz);
-  actor.headingError = Math.atan2(Math.sin(nose), Math.cos(nose));
-  actor.yawVelocity = 0;
+  if (!actor.bowlFlight) {
+    const angle = wrapBowlHeading(nose - oldHeading), pending = actor.bowlContactTurn;
+    const changedDirection = pending && Math.abs(wrapBowlHeading(angle - pending.angle)) > Math.PI / 6;
+    const left = changedDirection ? BOWL_CONTACT_TURN_SECONDS : pending?.left || BOWL_CONTACT_TURN_SECONDS;
+    actor.bowlContactTurn = {angle, left, clock: duel.state.bowlNight?.clock ?? duel.state.stageTimeSec};
+  }
   actor.slipAngle = 0;
-  actor.pushVelocity = (vx - actor.speedMph * Math.sin(nose)) * DRIVE.mphToWorld;
+  const driveSpeed = actor.speedMph * (actor.dir || 1);
+  actor.pushVelocity = (vx - driveSpeed * Math.sin(oldHeading)) * DRIVE.mphToWorld;
   clearCarAlongPush(actor);
-  addCarAlongPush(actor, (vz - actor.speedMph * Math.cos(nose)) * DRIVE.mphToWorld);
+  addCarAlongPush(actor, (vz - driveSpeed * Math.cos(oldHeading)) * DRIVE.mphToWorld);
 }
 
 function bowlReturn(rules, kind, mph) {
@@ -259,6 +330,12 @@ export function _vehicleSpec(actor) {
 
 export function _collisions() {
   const s = this.state;
+  if (this.course.def.bowl) {
+    for (const actor of [s, ...s.opponents]) {
+      stepBowlContactTurn(this, actor);
+      stepBowlSpineSlide(this, actor);
+    }
+  }
   this._staticContacts(s, true);
   for (const opponent of s.opponents) this._vehicleContact(s, opponent, 'rival');
   for (let i = 0; i < s.opponents.length; i++) {
@@ -345,6 +422,11 @@ export function _supportAt(distance, lateral, actor = this.state) {
     ? scablandsActorFeet(actor) : undefined;
   const ground = this.course.groundAt(distance, lateral, height);
   const outside = this.course.features?.bowl?.outside;
+  const spine = outside ? bowlSpineTopAt(this.course, distance, lateral) : null;
+  if (spine != null && (actor._jumpY ?? ground.y) >= spine - .01) {
+    ground.y = spine;
+    ground.bowlSpine = true;
+  }
   if (outside && lateral > outside.wall && lateral <= outside.back) {
     const deck = terraceHeight(outside, lateral);
     const feet = actor._jumpY ?? actor.groundHeight ?? 0;
@@ -455,6 +537,13 @@ export function _staticContacts(car, player, journeyColliders = null) {
     for (let index = 0; index < nearby.length + (journeyColliders?.length || 0); index++) {
       const obstacle = index < nearby.length ? nearby[index] : journeyColliders[index - nearby.length];
       if (obstacle.bowlGateAI && player) continue;
+      if (exterior && obstacle.arenaWall && obstacle.off < 0) {
+        const aboveSpine = Math.min(start.y ?? 0, end.y ?? 0) >= this.course.features.bowl.spine.height - .01;
+        // While shedding from the roof the rear may still overlap its side.
+        // Keep it clear while moving out, up to the first fully clear pose.
+        const leavingSpine = car.bowlSpineExit && car.lateral >= oldLateral - 1e-8;
+        if (aboveSpine || leavingSpine) continue;
+      }
       if (obstacle.bowlBoundary) {
         if (obstacle.bowlBoundary === 'back' && car.lateral >= oldLateral && (oldLateral <= exterior.back || car.airborne)) continue;
         if ((obstacle.bowlBoundary === 'tunnel' || obstacle.bowlBoundary === 'guide') && car.lateral <= exterior.back && (car._jumpY ?? car.groundHeight ?? 0) >= terraceHeight(exterior, car.lateral) - .6 && car.lateral > exterior.wall + 1) continue;
@@ -613,6 +702,8 @@ export function _staticContacts(car, player, journeyColliders = null) {
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
     const bowlRules = this.course.def.scrapdome?.wallBounce;
     if (bowlRules && obstacle.arenaWall) {
+      const frame = this.course.at(car.s).heading;
+      car.headingError = wrapBowlHeading(travelHeading - frame - (car.dir < 0 ? Math.PI : 0));
       if (car.bowlFlight) {
         const flight = car.bowlFlight;
         const at = this.course.worldAt(car.s, car.lateral);
@@ -626,7 +717,6 @@ export function _staticContacts(car, player, journeyColliders = null) {
       }
       const mph = -(velocityX * nx + velocityZ * nz) / DRIVE.mphToWorld;
       if (mph > 0) {
-        const frame = this.course.at(car.s).heading;
         const lateralNormal = Math.cos(frame) * nx - Math.sin(frame) * nz;
         const alongNormal = Math.sin(frame) * nx + Math.cos(frame) * nz;
         const tangent = (velocityX * nz - velocityZ * nx) / DRIVE.mphToWorld;
@@ -781,9 +871,14 @@ export function _vehicleContact(a, b, reason) {
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
   const bowlRules = this.course.def.scrapdome?.wallBounce;
   if (bowlRules && this.state.opponents.includes(b)) {
+    if (holdBowlSawContact(this, a, b, nx, nz, start, end, width, length)) return true;
     const correction = Math.max(0, nx ? width + .04 - end.x * nx : length + .04 - end.z * nz) / 2;
+    const headingA = this.course.at(a.s).heading + (a.headingError || 0);
+    const headingB = this.course.at(b.s).heading + (b.headingError || 0);
     a.s += nz * correction; a.lateral += nx * correction;
     b.s -= nz * correction; b.lateral -= nx * correction;
+    a.headingError = wrapBowlHeading(headingA - this.course.at(a.s).heading);
+    b.headingError = wrapBowlHeading(headingB - this.course.at(b.s).heading);
     if (impactMph > 0 && !a.combatWrecking && !b.combatWrecking) {
       const ax = vaX / DRIVE.mphToWorld, bx = vbX / DRIVE.mphToWorld;
       const tangentA = ax * nz - vaZ * nx, tangentB = bx * nz - vbZ * nx;

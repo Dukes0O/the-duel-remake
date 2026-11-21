@@ -149,6 +149,15 @@ export function bowlBankHeight(phase, off) {
   return 0;
 }
 
+// The Spine's roof is support for a truck above it. The dirt mesh stays flat below.
+export function bowlSpineTopAt(course, s, lateral) {
+  const bowl = course.features.bowl;
+  if (!bowl || Math.abs(lateral + bowl.ring.radius) > bowl.spine.halfWidth) return null;
+  const phase = course.phase(s);
+  const straight = phase >= bowl.halfLap ? phase - bowl.halfLap : phase;
+  return straight <= bowl.spine.length ? bowl.spine.height : null;
+}
+
 // The floor's relief: the higher of a jump and a bank. Nothing rises on the Spine's side
 // beyond the floor, where offsets past the Spine fold back over the other straight.
 export function bowlReliefAt(course, s, off) {

@@ -266,6 +266,7 @@ function buildHammer(root, m) {
     arm.box(m.rust, [.06, .86, .6], [side * .37, -.12, L], [0, 0, 0], .02);
     arm.bolts(m.worn, [[side * .41, -.42, L - .2], [side * .41, -.42, L + .2], [side * .41, .18, L - .2], [side * .41, .18, L + .2]], [0, 0, Math.PI / 2], .04);
   }
+  pivot.rotation.order = 'YXZ';
   arm.finish(pivot, 'Hammer arm');
   return {pivot};
 }
@@ -703,6 +704,8 @@ export function createBowlWeaponsView() {
     memory.drawn = angle;
     // A slight tremble while it is raised, so that the tell reads even when the arm is seen end on.
     built.pivot.rotation.x = -angle + (weapon?.phase === 'tell' ? D(1.2) * Math.sin(seconds * 55) : 0);
+    const lean = weapon?.lean || 0;
+    built.pivot.rotation.y = lean;
     if (weapon?.phase === 'rest') {
       const elapsed = SHOW_WEAPONS.hammer.rest - weapon.time;
       if (!memory.landed && elapsed >= WEAPON_LOOK.hammer.slam) {
@@ -711,8 +714,9 @@ export function createBowlWeaponsView() {
         const end = memory.missed ? WEAPON_LOOK.hammer.miss : WEAPON_LOOK.hammer.hit;
         const [, py, pz] = HAMMER_PIVOT, r = HAMMER_REACH;
         const fy = py + r * Math.sin(end) - .8 * Math.cos(end), fz = pz + r * Math.cos(end) + .8 * Math.sin(end);
-        toWorld(rig, 0, fy, fz, hitAt);
-        forward.set(0, 0, 1).transformDirection(rig.root.matrix);
+        const x = Math.sin(lean) * (fz - pz), z = pz + Math.cos(lean) * (fz - pz);
+        toWorld(rig, x, fy, z, hitAt);
+        forward.set(Math.sin(lean), 0, Math.cos(lean)).transformDirection(rig.root.matrix);
         if (memory.missed) {
           const ground = toWorld(rig, 0, .05, fz, w);
           rings.emit(ground, {life: .7, from: .6, to: 4.6, alpha: .7});
@@ -722,7 +726,7 @@ export function createBowlWeaponsView() {
           }
         } else {
           hitStart = seconds; hitUntil = seconds + .55; hitOut.copy(forward);
-          rings.emit(toWorld(rig, 0, .05, fz, w), {life: .45, from: .5, to: 3, alpha: .35});
+          rings.emit(toWorld(rig, x, .05, z, w), {life: .45, from: .5, to: 3, alpha: .35});
           // Paint, rust and grit thrown up over the struck truck, high enough to be seen over the cab.
           for (let i = 0; i < 8; i++) {
             const a = i / 8 * Math.PI * 2;

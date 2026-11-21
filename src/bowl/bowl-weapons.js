@@ -4,17 +4,18 @@ import {worldPose} from '../arena/arena-floor.js';
 import {applyArmorDamage} from '../combat-armor.js';
 import {combatOwnerId} from '../combat-teams.js';
 import {outsideGateAt} from './bowl-outside.js';
-import {freshDamageZones} from '../sim-common.js';
+import {clamp, freshDamageZones} from '../sim-common.js';
 
 export const SHOW_WEAPONS = Object.freeze({
   hammer: {name:'Hammer', reach:4, rest:2.5, cue:'bowl.hammer.rise', picture:'🔨', line:'Swing at a truck in front. A miss holds you still.'},
   saw: {name:'Saw', reach:1.5, rest:3, cue:'bowl.saw.spin', picture:'⚙', line:'Hold F against a truck to cut. Four seconds of cutting heats the saw.'},
-  launcher: {name:'Launcher', reach:2.5, rest:4, cue:'bowl.launcher.fire', picture:'↗', line:'Throws a truck high into the air. An empty shot hops your own truck.'},
+  launcher: {name:'Launcher', reach:4, hardReach:3, arc:40 * Math.PI / 180, rest:4, cue:'bowl.launcher.fire', picture:'↗', line:'Throws a truck high into the air. An empty shot hops your own truck.'},
   horn: {reach:.6, rest:2.5, cue:'bowl.rhino.horn'},
   fire: {reach:6, rest:1, cue:'bowl.dragon.fire'},
 });
 const RIVALS = {'rust-rhino':'horn','big-kettle':'hammer','tin-lizard':'saw','old-bess':'launcher','dragon-wagon':'fire'};
 const TELLS = {easy:.8,medium:.6,hard:.4};
+const HAMMER_LEAN = Math.PI / 6;
 const cue = (duel,id) => duel.emit({bowlWeaponCue:id});
 
 function fit(actor, kind) {
@@ -24,6 +25,7 @@ function fit(actor, kind) {
   delete actor.bowlLastHitBy;
   actor.bowlNoSteer=actor.bowlHeldStill=0;
   actor.bowlCut=actor.bowlWasCut=actor.bowlRighting=false;
+  delete actor.bowlSawTargetId;
   actor.bowlPose=null;
 }
 
@@ -56,7 +58,7 @@ export function bowlHealthLoss(duel,actor,fraction,owner,side='front',styleHit=t
 }
 
 // Measure from the nose to the nearest point on the target truck's oriented body.
-export function showTarget(duel,actor,reach,allHits=null) {
+export function showTarget(duel, actor, reach, allHits = null, arc = Math.PI) {
   const origin=worldPose(duel,actor), own=duel._vehicleSpec(actor);
   const sx=Math.sin(origin.heading), cz=Math.cos(origin.heading);
   const noseX=origin.x+sx*own.halfLength, noseZ=origin.z+cz*own.halfLength;
@@ -67,11 +69,17 @@ export function showTarget(duel,actor,reach,allHits=null) {
     if((p.x-origin.x)*sx+(p.z-origin.z)*cz<=0) continue;
     const sin=Math.sin(p.heading), cos=Math.cos(p.heading);
     const right=dx*cos-dz*sin, forward=dx*sin+dz*cos;
-    const distance=Math.hypot(Math.max(0,Math.abs(right)-body.halfWidth),Math.max(0,Math.abs(forward)-body.halfLength));
-    if(distance>reach) continue;
+    const rightGap = Math.sign(right) * Math.max(0, Math.abs(right) - body.halfWidth);
+    const forwardGap = Math.sign(forward) * Math.max(0, Math.abs(forward) - body.halfLength);
+    const distance = Math.hypot(rightGap, forwardGap);
+    if (distance > reach) continue;
+    const x = rightGap * cos + forwardGap * sin, z = forwardGap * cos - rightGap * sin;
+    const angle = distance > 1e-8 ? Math.atan2(x * cz - z * sx, x * sx + z * cz)
+      : Math.atan2((p.x - origin.x) * cz - (p.z - origin.z) * sx, (p.x - origin.x) * sx + (p.z - origin.z) * cz);
+    if (Math.abs(angle) > arc) continue;
     const side=Math.abs(right)/body.halfWidth>Math.abs(forward)/body.halfLength
       ? (right>0?'right':'left') : (forward>0?'rear':'front');
-    const hit={actor:other,side};
+    const hit={actor:other,side,angle};
     if(allHits) allHits.push(hit);
     if(distance<closest) {best=hit; closest=distance;}
   }
@@ -125,9 +133,12 @@ function tickWeapon(duel,actor,night,dt) {
     if(weapon.time>1e-8) return;
     weapon.phase='ready';
     if(kind==='launcher') cue(duel,'bowl.launcher.fill');
+    if(kind==='hammer') weapon.lean=0;
   }
   if(actor.bowlFlight || actor.bowlHeldStill>0) return;
-  const target=showTarget(duel,actor,rules.reach);
+  const hard = night.cpuDifficulty === 'hard';
+  const reach = hard ? rules.hardReach ?? rules.reach : rules.reach;
+  const target = showTarget(duel, actor, reach, null, rules.arc);
   const held=player ? actor.input.interact : !!target;
   if(weapon.phase==='ready') {
     if(!held || actor.airborne || player && kind!=='saw' && !pressed) return;
@@ -136,6 +147,7 @@ function tickWeapon(duel,actor,night,dt) {
     actor.arenaTellSec=weapon.time;
   }
   if(weapon.phase==='tell') {
+    if (kind === 'hammer') weapon.lean = !hard && target ? clamp(target.angle, -HAMMER_LEAN, HAMMER_LEAN) : 0;
     weapon.time-=dt;
     if(weapon.time>1e-8) return;
     if(!player && !target) { weapon.phase='ready'; return; }
@@ -149,6 +161,7 @@ function tickWeapon(duel,actor,night,dt) {
     if(!weapon.cutting) cue(duel,'bowl.saw.cut');
     weapon.cutting=true;
     actor.bowlCut=target.actor.bowlCut=true;
+    actor.bowlSawTargetId = combatOwnerId(duel, target.actor);
     const cut=Math.min(dt,4-weapon.cutSeconds);
     bowlHealthLoss(duel,target.actor,cut/8,owner,target.side,false);
     weapon.cutSeconds+=cut;
@@ -158,7 +171,10 @@ function tickWeapon(duel,actor,night,dt) {
 
 export function stepShowWeapons(duel,night,dt) {
   const actors=[duel.state,...duel.state.opponents], e=night.event;
-  for(const actor of actors) actor.bowlCut=false;
+  for (const actor of actors) {
+    actor.bowlCut = false;
+    delete actor.bowlSawTargetId;
+  }
   for(const actor of actors) tickWeapon(duel,actor,night,dt);
   for(const actor of actors) if(!actor.bowlCut) actor.bowlWasCut=false;
   const outside=duel.course.features.bowl.outside, wall=outside.wall;

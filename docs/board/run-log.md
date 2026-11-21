@@ -1732,3 +1732,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 2026-11-20 | BOWL-JUMP-EVENTS | Merged Long Jump, High Jump and Home Run. Easy 8/10, 7/10 and 8/10. Fifteen checks, production build and independent review passed. Batch drive with Claude.
 2026-11-20 | BOWL-NIGHTS | Merged the five named nights, three new score records and the Turn Show finale settlement. Lane 74 plus two targeted passes, production build and independent save review green. Claude drives the merged batch.
 2026-11-20 | BOWL-NIGHT-4 | Merged Best Trick and Barrel Roll Night. Easy 8/10, all three goes, legacy Home Run scores retained. Lane 83, build and independent save review green at 679ea18f1. Claude drives the merged batch.
+2026-11-21 | BOWL-FEEL-FIX | Merged eased wall and ram turns, Spine recovery and weapon feel. Lane 40, unchanged 297 race, 12 combat and 63 world guards, build and independent review green at 295fd1ab7. Claude drives the batch.
