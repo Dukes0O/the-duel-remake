@@ -296,11 +296,13 @@ registerBowlEventRunner('lastTruckRolling', {
     if (!wreck) return;
     duel.emit({bowlWeaponCue: 'bowl.knockout'});
     if (wreck.victimId === 'player') return;
-    const index = duel.state.arena.participants.findIndex(participant => participant.id === wreck.victimId) - 1;
+    const {participants} = duel.state.arena;
+    const index = participants.findIndex(participant => participant.id === wreck.victimId) - 1;
     const entry = event.rivals[index], truck = duel.state.opponents[index];
     if (!entry || entry.out || !truck) return;
     Object.assign(entry, {out: true, by: wreck.creditedId, at: +duel.state.stageTimeSec.toFixed(3)});
     holdWreck(truck);
+    if (levelOf(night) === 'easy') participants[index + 1].targetId = null;
     if (wreck.creditedId === 'player') event.knockouts++;
     sayBowlLine(duel, `out.${entry.id}`);
     duel.emit({bowlKnockout: {rival: entry.id, by: wreck.creditedId, cue: 'bowl.knockout'}});

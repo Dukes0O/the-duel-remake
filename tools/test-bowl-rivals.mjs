@@ -368,6 +368,10 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const duel = showAt(3, 'lastTruckRolling');
   const state = duel.state;
   const [lead, firstJoin, lastJoin] = state.opponents;
+  for (let tick = 0; tick < 10 / DT; tick++) duel.step(DT);
+  ok(state.status === 'racing', 'the Easy fight starts before the circling trucks join');
+  ok(state.arena.participants.slice(2).every(participant => participant.targetId === null),
+    'circling rivals do not reserve a target or use the Easy pursuit slot');
   ok(!lead.bowlFightDrive.opening, 'one Easy rival takes up pursuit as soon as the fight starts');
   const normalGoal = {...worldPose(duel, state), speedMph: 24, boost: false};
   const leadPilot = bowlFightPilotGoal(duel, lead, state.arena.participants[1], normalGoal, DT);
@@ -532,8 +536,10 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   Object.assign(victim, {s: 35, prevS: 35, lateral: 0, prevLateral: 0, speedMph: 0, headingError: 0, pushVelocity: 0, armor: 1});
   const events = [];
   duel.onChange((_, ev) => { if (ev.bowlKnockout) events.push(ev.bowlKnockout); });
+  player.arena.participants[1].targetId = 'player';
   duel._vehicleContact(player, victim, 'rival');
   for (let tick = 0; tick < 120 && !events.length; tick++) duel.step(DT);
+  ok(player.arena.participants[1].targetId === null, 'an Easy wreck gives up its pursuit slot');
   const night = player.bowlNight, rival = victim.bowlRival;
   assert.deepEqual(events, [{rival, by: 'player', cue: 'bowl.knockout'}]);
   ok(night.event.knockouts === 1 && night.event.rivals[0].by === 'player' && night.event.rivals[0].out,
