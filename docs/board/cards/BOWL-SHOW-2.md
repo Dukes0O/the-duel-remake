@@ -601,7 +601,7 @@ Words on screen and Big Mo's lines: the builder writes each new line as one full
 
 Every slice is behind `titan-bowl` or `arena-tricks`, so each runs rule 23's small set and merges first; the wide suites run on
 the merged batch at night, and Claude drives the merged game in batches. The slices that change the save (BOWL-TRICK-SCHOOL,
-BOWL-NIGHTS, BOWL-TOUR, the secret-trick record of BOWL-TRICKS-ALL, and the one record key that BOWL-NIGHT-4 renames) keep
+BOWL-NIGHTS, BOWL-TOUR, the secret-trick record of BOWL-TRICKS-ALL, and the record key that BOWL-NIGHT-4 adds, leaving the saved Home Run record in place) keep
 the save checker's review before they merge.
 
 ## Claude answers, BOWL-NIGHTS's changed assertions (20 November 2026)
