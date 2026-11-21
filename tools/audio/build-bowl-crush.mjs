@@ -69,19 +69,19 @@ export const BOWL_CRUSH_FILES = Object.freeze(Object.fromEntries(Object.entries(
 const pcmFloats = buffer => Float32Array.from({length: buffer.length / 4}, (_, i) => buffer.readFloatLE(i * 4));
 const floatsPcm = floats => { const out = Buffer.alloc(floats.length * 4); floats.forEach((v, i) => out.writeFloatLE(v, i * 4)); return out; };
 
-function renderLayer(layer, row, library) {
+export function renderLayer(layer, row, library) {
   const path = join(library, row.file);
   if (sha256(readFileSync(path)) !== row.sha256) throw Error(`${layer.source}: source hash changed`);
   const pcm = ffmpeg(['-threads', '1', '-filter_threads', '1', '-i', path, '-ac', '1', '-af',
     `aresample=${RATE},atrim=start=${layer.start}:duration=${layer.duration},asetpts=PTS-STARTPTS,` +
     `highpass=f=${layer.highpass},lowpass=f=${layer.lowpass},asetrate=${RATE * layer.rate},aresample=${RATE},` +
-    `afade=t=in:d=0.004,afade=t=out:st=${Math.max(0, layer.duration / layer.rate - .12)}:d=0.12`,
+    `afade=t=in:d=${layer.fadein ?? 0.004},afade=t=out:st=${Math.max(0, layer.duration / layer.rate - (layer.fadeout ?? .12))}:d=${layer.fadeout ?? 0.12}`,
     '-ar', String(RATE), '-f', 'f32le', 'pipe:1']);
   if (pcm.length / 4 < RATE * (layer.duration / layer.rate - .06)) throw Error(`${layer.source}: incomplete source cut`);
   return pcmFloats(pcm);
 }
 
-function renderTake(spec, sources, library) {
+export function renderTake(spec, sources, library) {
   const parts = spec.layers.map(layer => ({layer, floats: renderLayer(layer, sources.get(layer.source), library)}));
   const length = Math.max(...parts.map(({layer, floats}) => Math.round(layer.at * RATE) + floats.length));
   const mix = new Float32Array(length);
@@ -139,7 +139,7 @@ export function buildBowlCrush({root = ROOT, library = libraryRoot()} = {}) {
     });
   }
   // Replace this card's rows and the fetch-time candidate rows; every other row keeps its place.
-  const ours = row => row.cue === 'bowl.crush.candidate' || String(row.cue || '').startsWith('bowl.crush.');
+  const ours = row => row.cue === 'bowl.crush.candidate' || Boolean(BOWL_CRUSH_RECIPES[row.cue]);
   catalog.sounds = [...catalog.sounds.filter(row => !ours(row)), ...rows.values()];
   writeFileSync(catalogPath, JSON.stringify(catalog, null, 2) + '\n');
   return results;

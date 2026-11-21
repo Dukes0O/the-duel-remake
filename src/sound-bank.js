@@ -832,6 +832,27 @@ export const SOUND_BANK = {
     ['off', 2, 58, 2], ['flat', 2, 56, 2], ['pancake', 2, 78, 2], ['ooh', 2, 62, 1],
   ].map(([name, takes, priority, limit]) => [`bowl.crush.${name}`, cue('impacts', {flag: 'titan-bowl', priority, limit, volume: 4.2,
     files: takes === 1 ? [`bowl/crush-${name}.ogg`] : Array.from({length: takes}, (_, i) => `bowl/crush-${name}-${'abcd'[i]}.ogg`)})])),
+  // BOWL-SOUND: every other Show Night cue, one recorded take each, built by tools/audio/build-bowl-sound.mjs from
+  // CC0 recordings (bowl.saw.spin plays bowl/saw-spin.ogg). Like the crush set, each plays at the car-to-car crash's
+  // gain (4.2) and its file's loudness sets the balance (the recipe file lists them). Only with titan-bowl.
+  ...Object.fromEntries(Object.entries({
+    weapons: ['hammer.rise', 'hammer.hit', 'hammer.miss', 'saw.spin', 'saw.cut', 'saw.hot', 'launcher.tell', 'launcher.fire',
+      'launcher.fill', 'rhino.horn', 'dragon.fire', 'weapon.pick', 'hook.fire', 'hook.bite', 'hook.clang', 'hook.tight',
+      'hook.jerk', 'hook.letgo'],
+    impacts: ['knockout', 'wall.bounce', 'wall.hard', 'wall.big', 'wall.scrape', 'trick.land', 'trick.slam', 'rival.jump',
+      'rival.jump.fallback', 'best.rival.slam', 'health.hit', 'rex.scorch', 'rex.bump', 'rex.throw.land', 'rex.fall',
+      'rex.box.out', 'rex.box.drag', 'out.stands'],
+    vehicle: ['trick.wheelie', 'trick.go', 'best.rival', 'rex.throw'],
+    // The beast's own voice and fire: the tells a driver must hear over the engine.
+    weapons_: ['rex.roar', 'rex.fire', 'rex.fire.end', 'rex.box.open', 'rex.lift', 'rex.burst', 'rex.sag', 'rex.rise',
+      'rex.sweep', 'rex.brace', 'rex.gate'],
+    interface: ['out.of.the.bowl', 'trick.new', 'trick.cyclone', 'trick.late', 'secret.start', 'secret.found', 'secret.cheer',
+      'secret.armed', 'secret.hint', 'health.danger', 'card.open', 'school.tick', 'school.next', 'school.why', 'school.done',
+      'crush.chain', 'crush.fullhouse', 'out.over', 'out.leap', 'out.gate', 'out.back', 'race.lights', 'race.finish',
+      'go.ready', 'long.clear', 'high.clear', 'high.fail', 'best.round.won', 'best.round.lost', 'night.open', 'night.new',
+      'mo', 'crowd.rise', 'event.won', 'event.lost', 'purse', 'turn.up', 'turn.winner'],
+  }).flatMap(([bus, names]) => names.map(name => [`bowl.${name}`, cue(bus.replace('_', ''), {flag: 'titan-bowl', volume: 4.2,
+    priority: bus === 'interface' ? 62 : 74, limit: 2, files: [`bowl/${name.replaceAll('.', '-')}.ogg`]})]))),
   'combat.explosion-fallback': cue('impacts', {
     layers: [
       tone(44, 2, 0.6, 'sine', 0, 20),
