@@ -6,6 +6,9 @@
 import assert from 'node:assert/strict';
 import {existsSync, readFileSync, statSync} from 'node:fs';
 import {EngineAudio} from '../src/audio.js';
+import {Course} from '../src/course.js';
+import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
+import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {BOWL_SOUND_CUES, bowlCrushCues, bowlCrushKind} from '../src/bowl/bowl-lines.js';
 import {BOWL_CRUSH_FILES} from './audio/build-bowl-crush.mjs';
@@ -126,6 +129,26 @@ const crush = (audio, st, id, strength = .8) => {
   check(names(played.slice(-2)) === 'flat,groan' && played.at(-1).volume < SOUND_BANK['bowl.crush.groan'].volume,
     'running over the wreck again is the flat crunch and a lighter groan');
   check(!played.some(item => item.cue === 'bowl.crush.flat' && played.indexOf(item) < played.length - 2), 'the first run is not a flat crunch');
+}
+{
+  const {audio, played} = makeAudio();
+  const dressed = new Course({...BOWL_COURSE, bowlDressing: CAR_CRUSH_DRESSING}, 1989);
+  const pile = dressed.features.crushables.filter(prop => prop.bowlCrushGroup);
+  const groupIds = pile.map(prop => prop.id), under = pile[0];
+  const st = truck({s: under.s, lateral: under.off, crushedProps: groupIds});
+  audio.event({propCrushed: {id: pile[2].id, kind: 'bowlBusPile', byPlayer: true, strength: .8, groupIds}}, st, dressed);
+  audio._updateBowlCrush(st, dressed);
+  check(names(played) === 'bus,groan' && played[1].volume === SOUND_BANK['bowl.crush.groan'].volume,
+    'the collapse has one bite and every bus is fresh on the first pass');
+  st.s = under.s - 20;
+  audio._updateBowlCrush(st, dressed);
+  audio.context.currentTime += .2;
+  audio._updateBowlCrush(st, dressed);
+  audio.context.currentTime += 4;
+  st.s = under.s;
+  audio._updateBowlCrush(st, dressed);
+  check(names(played.slice(-2)) === 'flat,groan' && played.at(-1).volume < SOUND_BANK['bowl.crush.groan'].volume,
+    'a later pass over a bus from the pile sounds like an old wreck');
 }
 {
   // A pause on the wreck: the groan stops with no clank, and driving on from the same wreck makes no sound.

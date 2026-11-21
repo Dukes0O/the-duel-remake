@@ -169,7 +169,10 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
             feature.off === 0 ? 'Bowl burning bus stack' : `Bowl burning bus stack ${feature.id}`);
           if (prop) { paintCrushProp(prop, {burnt: .65}); if (feature.off) prop.rotation.y += Math.PI; }
         }
-        if (prop) { group.add(prop); authored.set(feature.id, prop); }
+        if (prop) {
+          group.add(prop);
+          authored.set(feature.id, {mesh: prop, raisedY: feature.y, floorY: feature.bowlStackBase});
+        }
         if (feature.bowlFire) {
           // The fire burns out of the top of its stack, its foot a little below the top.
           const top = prop ? new THREE.Box3().setFromObject(prop).max.y - feature.y : 0;
@@ -213,10 +216,16 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     stadium?.userData.update?.(now, undefined, state);
     if (crushShells) crushShells.userData.updateSimulation(state || {}, 0);
     const crushed = state?.crushedProps || [];
-    for (const [id, prop] of authored) {
-      const target = crushed.includes(id) ? .5 : 1;
-      prop.scale.y += (target - prop.scale.y) * .2;
-      if (Math.abs(target - prop.scale.y) < .002) prop.scale.y = target;
+    for (const [id, {mesh, raisedY, floorY}] of authored) {
+      const flat = crushed.includes(id);
+      const scale = flat ? .5 : 1;
+      mesh.scale.y += (scale - mesh.scale.y) * .2;
+      if (Math.abs(scale - mesh.scale.y) < .002) mesh.scale.y = scale;
+      if (floorY != null) {
+        const y = flat ? floorY + .25 : raisedY;
+        mesh.position.y += (y - mesh.position.y) * .2;
+        if (Math.abs(y - mesh.position.y) < .002) mesh.position.y = y;
+      }
     }
     if (!fireTexture) {
       firePromise ??= loadFireTexture().then(texture => {

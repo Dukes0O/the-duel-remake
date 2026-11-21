@@ -3,7 +3,7 @@
 // They read the app and state.bowlNight and never change race state; buttons
 // call the app's Show Night methods.
 import {SHOW_NIGHTS} from './bowl-show.js';
-import {bowlHudView, crushRowName} from './bowl-night.js';
+import {bowlHudView} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {chooseShowWeapon, SHOW_WEAPONS} from './bowl-weapons.js';
@@ -114,8 +114,8 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
     const lines = [result.event === 'sideBySide' ? WORDS.eventRace(result.won, BOWL_RIVALS[result.rival]?.name)
       : result.event === 'lastTruckRolling' ? WORDS.eventKnockouts(result) // BOWL-RIVALS
-        : result.event === 'carCrush' ? WORDS.eventRows(result.rows > 0 ? crushRowName(app.duel.course, result.rows - 1) : null) : null,
-      WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
+        : result.event === 'carCrush' ? WORDS.eventCrush(result) : null,
+      result.fullHouse ? WORDS.eventFullHouse(result.fullHouseBonus) : null, WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
     return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
