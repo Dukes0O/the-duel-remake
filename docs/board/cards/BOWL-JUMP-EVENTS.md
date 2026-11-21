@@ -77,3 +77,11 @@ shows the best of the three goes. The build decisions are agreed: buses counted 
 when its whole width is cleared in the air, the flame plane checked at the truck's front and rear, Home Run's rings round a
 real boosted landing and closed by the real gate return. Trick School holds `bowl-night` until its save review is done; take
 it after. Merge under AGENTS rule 23; Claude drives the three events on the merged game with the next batch.
+
+## Home Run stands, 20 November
+
+The merged Bowl Outside view now fills the landing site with spectators. May Jump Events add one read-only hook in `src/bowl/bowl-stadium.js`, to leave seats vacant within Home Run's target? The paint in the already owned Bowl view can then follow the stadium's tread heights. The same stands and crowd remain in the other events.
+
+## Reset review, 20 November
+
+A real Hard High Jump with a late backflip landed on its roof. The next go lost its first 1.5 seconds to the last go's recovery after the truck was already back on the run-up. May this card add a small go boundary in `src/bowl/bowl-tricks.js`? On a fresh go it would clear flight, recovery and held inputs while preserving trick variety and secret history for the event. Other events keep the same state. The reviewer also caught the middle-ring goal and the standalone retry. Those are fixed in the jump lane. High Jump will keep the best go's ordinary points and pay the bar bonus by the highest bar cleared.

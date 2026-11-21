@@ -698,7 +698,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const actor = index ? index === 1 ? s.opponents?.[0] ?? s.rival : s.opponents?.[index-1] : s;
       const vehicle = index ? index === 1 ? vehicles.rival : vehicles.extraOpponents?.[index-2]?.mesh : vehicles.player;
       bindVehicle(index, vehicle);
-      const visible = active && !!actor && !actor.crushed && !!vehicle;
+      // Show Night trucks carry the Bowl's own weapons instead (src/bowl/bowl-weapons-view.js).
+      const visible = active && !!actor && !actor.crushed && !!vehicle && !s.bowlNight;
       rig.bumper.visible = visible;
       // An explicit disabled bumper removes the spike advantage and its teeth
       // in the flagged combat rules. Existing Wasteland rigs remain unchanged.

@@ -80,9 +80,14 @@ function findSecret(duel, state, kind) {
   try { duel.emit({bowlSecretFound: event}); } finally { state.finding = null; }
 }
 
+function reportBowlTry(duel, reason) {
+  const event = duel.state.bowlNight?.event;
+  if (event && !event.schoolFailures?.includes(reason)) duel.emit?.({bowlTrickTry: {reason}});
+}
+
 function ground(duel, state, dt) {
   const s = duel.state, input = s.input, speed = Math.abs(s.speedMph);
-  const keys = directionKeys(input);
+  const keys = directionKeys(input), previous = state.groundPrevious;
   if (speed >= 5) state.code.length = 0;
   else if (!state.usedFull) {
     for (const key of ['Up','Down','Left','Right']) {
@@ -100,6 +105,13 @@ function ground(duel, state, dt) {
     if (input.throttle && Math.abs(input.steer) > .5 && speed < 15) kind = 'donut';
     else if (input.throttle && Math.abs(input.steer) <= .5 && speed < (state.kind === 'wheelie' ? 30 : 10)) kind = 'wheelie';
     else if (input.brake && speed > (state.kind === 'stoppie' ? 8 : 25)) kind = 'stoppie';
+  }
+  if (!kind && keys.Space) {
+    if (keys.Up && !keys.Left && !keys.Right && (!previous?.Up || !previous.Space || previous.Left || previous.Right)) {
+      reportBowlTry(duel, 'wheelieSpeed');
+    } else if (keys.Down && (!previous?.Down || !previous.Space)) {
+      reportBowlTry(duel, 'stoppieSpeed');
+    }
   }
   if (kind !== state.kind) { state.time = 0; state.circle = 0; state.count = 0; }
   state.kind = s.bowlGroundTrick = kind;
@@ -172,10 +184,16 @@ function late(duel, flight, kind) {
   flight.late = true;
   const show = duel.state.arenaTrickShow;
   if (show && !duel.state.bowlNight) show.event.trickPopups = [{notice:'NOT ENOUGH AIR', at:show.clock}];
-  duel.emit?.({bowlTrickLate: {kind, cue: 'bowl.trick.late'}});
+  const turnsCompleted = flight.turns[kind] || 0;
+  duel.emit?.({bowlTrickLate: {kind, turnsCompleted, cue: 'bowl.trick.late'}});
 }
 function begin(duel, flight, axis, request, airLeft) {
-  if (axis === 'roll') request = {...request, kind: Math.abs(wrap(flight.yaw)) > Math.PI / 4 ? 'sideFlip' : 'barrelRoll'};
+  if (axis === 'roll') {
+    request = {...request, kind: Math.abs(wrap(flight.yaw)) > Math.PI / 4 ? 'sideFlip' : 'barrelRoll'};
+    if (request.kind === 'barrelRoll' && duel.state.bowlNight?.featuredTricks?.includes('sideFlip')) {
+      reportBowlTry(duel, 'rollDirection');
+    }
+  }
   const time = moves[request.kind].time;
   const hard = difficulty(duel.state) === 'hard';
   if (!hard && airLeft + 1e-8 < .75 * time) { late(duel, flight, request.kind); return; }
@@ -207,6 +225,11 @@ function air(duel, state, dt) {
   f.previous = keys;
   for (const key of ['throttle', 'brake', 'steer', 'boost']) {
     if (!input[key] || Math.sign(input[key]) !== Math.sign(f.held[key])) f.held[key] = 0;
+  }
+  const night = s.bowlNight;
+  if (f.held.throttle && s.airTime >= .25 &&
+      (night?.event?.lesson === 'frontFlip' || night?.featuredTricks?.includes('frontFlip'))) {
+    reportBowlTry(duel, 'heldThrottle');
   }
   let airLeft;
   const airTime = () => airLeft ??= remainingAir(duel,s,dt);
