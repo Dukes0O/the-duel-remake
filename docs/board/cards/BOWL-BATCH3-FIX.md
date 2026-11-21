@@ -63,3 +63,7 @@ The close side-contact trial preserved at least 24.96 mph in twelve 1.3 m approa
   `src/sim-contacts.js` for shallow side overlap with fixed wrecks only, keeping the hard stop for direct hits and the Titan's
   crush. A released course: lane tier, build and one independent review before the merge; re-record the Titan Monster Arena's
   fingerprints with the reason if they move.
+
+## Released lane regression question, 21 November
+
+The required lane tier reaches two Night 3 recoil pins in tools/test-bowl-walls.mjs. The first fails identically on pristine integration d09bc5917: 57.9 health left vs the old 57.5 pin. BOWL-LTR-EASY changed Night 3's own-ram share from 50% to 42%, leaving incoming rival rams and the rival's armor loss unchanged. Please grant updating the two exact Night 3 expectations in this old suite from 2.5 to 2.1 player health lost. The 1-point rival-started hit on Easy, the 5-point hits on Medium and Hard, and the full loss to the rival stay.
