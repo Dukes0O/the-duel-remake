@@ -186,7 +186,9 @@ function gateChaseShare(course, truck, referenceS) {
   const outside = course.features.bowl.outside;
   const across = Math.abs(course.phase(near.s) - gate.s);
   const width = smooth((gate.mouthWidth / 2 + 8 - across) / 5);
-  const floor = smooth((near.lateral - outside.wall + 17) / 14);
+  // Hold the low view far enough onto the floor for the Wide camera behind
+  // the truck to clear the arch before it climbs away from the gate.
+  const floor = smooth((near.lateral - outside.wall + 26) / 15);
   const park = smooth((outside.back + 23 - near.lateral) / 14);
   const inPassage = near.lateral >= STAND.face - .1 && near.lateral <= TUNNEL_BACK + .7 &&
     across < guideHalfWidth(outside, gate, near.lateral) + .25;
@@ -354,7 +356,7 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   if (rexFall) return frameRexFall(cam, {x: truck.x, y: truck.y + C.aimUpMetres, z: truck.z},
     rexFall, solidTop, aspect, verticalFov);
   cam.rexFallYaw = null;
-  return {position, target, yaw, lift: cam.lift, hold: cam.holding, ...(gateShare > 0 ? {gateChase: true} : {})};
+  return {position, target, yaw, lift: cam.lift, hold: cam.holding};
 }
 
 // Which go the truck is in, so that a new go starts the camera afresh: the night makes a new event object every time an

@@ -79,7 +79,7 @@ function record(name, duel, seconds, input, {afterEnd = 0, wide = false, deliver
     const truck = truckOf(duel), ended = duel.state.status === 'bowl_break';
     const pose = stepBowlCamera(camera, truck, FRAME, {ended, wide, gateCourse: duel.course, referenceS: truck.s,
       solidTop: (x, z) => bowlSolidTop(duel.course, x, z, truck.s)});
-    if (delivered && previousHeight != null && !pose.gateChase)
+    if (delivered && previousHeight != null)
       pose.position.y = previousHeight + (pose.position.y - previousHeight) * (1 - Math.exp(-14 * FRAME));
     previousHeight = pose.position.y;
     const body = {x: truck.x, y: truck.y + BOWL_CAMERA.aimUpMetres, z: truck.z};
@@ -235,7 +235,7 @@ for (const gateIndex of [0, 1]) {
     const name = gate.name + ' ' + direction;
     const frames = record(name, duel, outward ? 7 : 6.5, (_, __, truck) => ({
       throttle: +(truck.mph < 20), steer: 0, brake: 0, boost: false,
-    }), {wide});
+    }), {wide, delivered: true});
     steady(name, frames);
     const crossed = frames.some(frame => outward ? frame.truck.lateral > outside.back + 2 : frame.truck.lateral < outside.wall - 2);
     ok(crossed, name + ' covers both mouths and the tunnel');
@@ -250,23 +250,23 @@ for (const gateIndex of [0, 1]) {
 }
 
 
-// The renderer used to keep the new X/Z but ease the old Y into the steel
-// at the floor mouth. Check the final camera, not only the camera target.
+// The renderer keeps the new X/Z but eases its Y. Include the full rise
+// after the floor mouth when checking the actual Wide camera position.
 for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
   const duel = showDuel(1), course = duel.course, outside = course.features.bowl.outside;
-  const gate = outside.gates[gateIndex], centre = course.worldAt(gate.s, outside.wall - 5);
+  const gate = outside.gates[gateIndex];
   approach(duel, gate.s + 3, outside.back + 9, -Math.PI / 2 + .2, speed);
   const name = gate.name + ' steered Wide return at ' + speed + ' mph';
-  const frames = record(name, duel, 7.5, (_, __, truck) => ({
-    ...pace(truck, speed), boost: false,
-    steer: steerTo(truck, Math.atan2(centre.x - truck.x, centre.z - truck.z), 1.4),
-  }), {wide: true, delivered: true});
-  const through = frames.findIndex(({truck, pose}) => truck.lateral < outside.wall - 2 &&
-    course.nearest(pose.position.x, pose.position.z, truck.s).lateral < outside.wall - .5);
-  ok(through >= 0, name + ' brings the truck and camera back to the floor');
-  const gateFrames = frames.slice(0, through + 1);
-  steady(name, gateFrames);
-  ok(gateFrames.every(frame => !frame.cameraInside), name + ' keeps the displayed camera out of the arch');
+  const frames = record(name, duel, speed === 25 ? 7 : 4.5, (_, __, truck) => {
+    const centre = course.worldAt(gate.s, Math.min(outside.wall - 6, truck.lateral - 5));
+    return {throttle: +(truck.mph < speed), brake: 0, boost: false,
+      steer: steerTo(truck, Math.atan2(centre.x - truck.x, centre.z - truck.z), 1.4)};
+  }, {wide: true, delivered: true});
+  const {truck, pose} = frames.at(-1);
+  ok(truck.lateral < outside.wall - 2 && course.nearest(pose.position.x, pose.position.z, truck.s).lateral < outside.wall - .5,
+    name + ' brings the truck and camera back to the floor');
+  ok(frames.every(frame => !frame.cameraInside), name + ' keeps the displayed camera out of the arch');
+  steady(name, frames);
 }
 
 // 6. Launch onto the terraces, climb to the last row, leap into the car park,
