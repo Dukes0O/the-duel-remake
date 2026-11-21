@@ -632,7 +632,8 @@ tasks:
     model: "sol"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-screen-fix"
     needs: []
     locks: [bowl-screens]
     flag: "titan-bowl"
@@ -644,7 +645,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-batch3-fix"
     needs: []
     locks: [bowl-rivals]
     flag: "titan-bowl"
@@ -701,7 +703,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-freestyle-nights"
     needs: []
     locks: [bowl-night, bowl-floor]
     flag: "titan-bowl"
