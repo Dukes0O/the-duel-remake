@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {SHOW_WEAPONS} from './bowl-weapons.js';
-import {createFlameMaterial, createScrapWear, createSmokeMaterial, createSparks} from '../world/scrap-look.js';
+import {createFlameMaterial, createScrapWear, createSmokeMaterial, createSparks, scrapNoise} from '../world/scrap-look.js';
 
 // BOWL-WEAPONS-LOOK: the show weapons bolted on the trucks in Last Truck Rolling (the hammer, the saw and the
 // launcher), each rival's own bolt-ons, and the damage a truck shows. Drawing only: it reads each truck's
@@ -548,6 +548,30 @@ function buildStacks(root, m) {
 
 // ---- A truck's rig: its weapon, its bolt-ons, its damage -----------------------------------------------------
 
+// Dragon Wagon's breath: a cone of fire laid along the nozzle's line, flickering as it streams out. `uHot` makes the
+// inner cone whiter. The cone's narrow end is at the nozzle.
+const JET_LENGTH = 5.8;
+function createJet(hot) {
+  const material = new THREE.ShaderMaterial({
+    uniforms: {uNoise: {value: scrapNoise()}, uTime: {value: 0}, uFade: {value: 1}, uHot: {value: hot}},
+    vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader: `uniform sampler2D uNoise;uniform float uTime;uniform float uFade;uniform float uHot;varying vec2 vUv;
+      void main(){float along=vUv.y;
+        float n=texture2D(uNoise,vec2(vUv.x*2.0,along*1.2-uTime*2.4)).r*.65+texture2D(uNoise,vec2(vUv.x*5.0+.3,along*2.6-uTime*4.1)).b*.5;
+        float body=smoothstep(.45,.8,n+.4-along*(.8-uHot*.2))*(1.0-smoothstep(.82,1.0,along))*smoothstep(0.0,.05,along);
+        vec3 c=mix(vec3(.9,.16,.02),vec3(1.0,.55,.1),smoothstep(.2,.7,body));
+        c=mix(c,vec3(1.0,.85,.45),uHot*smoothstep(.6,.95,body)*(1.0-along));
+        gl_FragColor=vec4(c*body*(.45+.2*uHot)*uFade,body*uFade);
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false, side: THREE.FrontSide, blending: THREE.AdditiveBlending,
+  });
+  const geometry = new THREE.CylinderGeometry(hot ? .75 : 1.35, hot ? .1 : .18, JET_LENGTH, 20, 1, true).rotateX(Math.PI / 2).translate(0, 0, JET_LENGTH / 2);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = hot ? 'Dragon breath core' : 'Dragon breath'; mesh.visible = false; mesh.frustumCulled = false; mesh.renderOrder = 7;
+  return mesh;
+}
+
 function flameTongue(material, name) {
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).translate(0, .5, 0), material);
   mesh.name = name; mesh.frustumCulled = false; mesh.renderOrder = 7; mesh.visible = false;
@@ -572,10 +596,10 @@ function buildRig(look, mesh) {
   if (look.weapon === 'hammer') rig.built.hammer = buildHammer(root, m);
   if (look.weapon === 'saw') rig.built.saw = buildSaw(root, m);
   if (look.weapon === 'launcher') rig.built.launcher = buildLauncher(root, m);
-  // Fire: tongues for the dragon's breath and for a burning truck, sharing one flame picture.
+  // Fire: the dragon's breath, and tongues of flame for a burning truck.
   rig.flame = createFlameMaterial();
-  rig.breath = look.weapon === 'fire' ? [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => {
-    const tongue = flameTongue(rig.flame, `Dragon breath ${i + 1}`); root.add(tongue); return tongue; }) : [];
+  rig.breath = look.weapon === 'fire' ? [false, true].map(hot => {
+    const jet = createJet(hot ? 1 : 0); jet.position.set(0, 1.98, 2.8); jet.rotation.x = D(-4); root.add(jet); return jet; }) : [];
   rig.burning = [[.45, 2.2, 1.2], [-.5, 2.3, .1], [.2, 2.4, -1.4]].map((place, i) => {
     const tongue = flameTongue(rig.flame, `Burning truck ${i + 1}`); tongue.position.set(...place); root.add(tongue); return tongue; });
   // The loose panel, hinged at its top front corner, and the dark hole it leaves.
@@ -630,20 +654,41 @@ export function healthShare(actor) {
   return clamp01(actor.armor / actor.maxArmor);
 }
 
+// A flash where a blow lands, facing the viewer, so that a hit reads even when the arm is seen end on.
+function createFlash() {
+  const material = new THREE.ShaderMaterial({
+    uniforms: {uFade: {value: 0}},
+    vertexShader: `varying vec2 vUv;void main(){vUv=uv;vec4 mv=modelViewMatrix*vec4(0.0,0.0,0.0,1.0);
+      mv.xy+=position.xy*vec2(length(modelMatrix[0].xyz),length(modelMatrix[1].xyz));gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `uniform float uFade;varying vec2 vUv;
+      void main(){vec2 p=(vUv-.5)*2.0;float d=length(p);float a=atan(p.y,p.x);
+        float rays=pow(max(0.0,cos(a*4.0)),18.0)*(1.0-smoothstep(.1,1.0,d));
+        float core=pow(max(0.0,1.0-d),2.5);float glow=(core+rays*.8)*uFade;
+        gl_FragColor=vec4(mix(vec3(1.0,.45,.1),vec3(1.0,.95,.8),core)*glow*2.2,glow);
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+  mesh.name = 'Hammer hit flash'; mesh.visible = false; mesh.frustumCulled = false; mesh.renderOrder = 8;
+  return mesh;
+}
+
 export function createBowlWeaponsView() {
   const group = new THREE.Group(); group.name = 'Bowl weapons and damage';
   const puffs = createPuffs(), rings = createRings(), cutSparks = new Map();
-  const hitSparks = createSparks(36); hitSparks.name = 'Hammer hit sparks'; hitSparks.visible = false;
-  group.add(puffs.group, rings.group, hitSparks);
+  const hitSparks = createSparks(64); hitSparks.name = 'Hammer hit sparks'; hitSparks.visible = false;
+  const flash = createFlash();
+  group.add(puffs.group, rings.group, hitSparks, flash);
   const rigs = new Map();
-  let lastNow = null, hitUntil = 0, hitAt = new THREE.Vector3(), hitOut = new THREE.Vector3();
+  let lastNow = null, hitUntil = 0, hitStart = 0, hitAt = new THREE.Vector3(), hitOut = new THREE.Vector3();
   group.userData.builds = 0;
   const v = new THREE.Vector3(), w = new THREE.Vector3(), forward = new THREE.Vector3(), worldMatrix = new THREE.Matrix4();
   const toWorld = (rig, x, y, z, target = v) => target.set(x, y, z).applyMatrix4(rig.root.matrix);
 
   function sparksFor(rig) {
     let sparks = cutSparks.get(rig);
-    if (!sparks) { sparks = createSparks(54); sparks.name = 'Saw sparks'; sparks.visible = false; group.add(sparks); cutSparks.set(rig, sparks); }
+    if (!sparks) { sparks = createSparks(90); sparks.name = 'Saw sparks'; sparks.visible = false; group.add(sparks); cutSparks.set(rig, sparks); }
     return sparks;
   }
 
@@ -670,9 +715,14 @@ export function createBowlWeaponsView() {
             puffs.emit(ground, {velocity: [Math.cos(a) * 4.5, 1.2 + (i % 3) * .5, Math.sin(a) * 4.5], life: 1.3, from: .8, to: 3.2, alpha: .55, color: 0x8c7556});
           }
         } else {
-          hitUntil = seconds + .3; hitOut.copy(forward);
+          hitStart = seconds; hitUntil = seconds + .55; hitOut.copy(forward);
           rings.emit(toWorld(rig, 0, .05, fz, w), {life: .45, from: .5, to: 3, alpha: .35});
-          for (let i = 0; i < 4; i++) puffs.emit(hitAt, {velocity: [(i - 1.5) * 1.5, 1.5, 0], life: .8, from: .5, to: 1.6, alpha: .4, color: 0x5e5248});
+          // Paint, rust and grit thrown up over the struck truck, high enough to be seen over the cab.
+          for (let i = 0; i < 8; i++) {
+            const a = i / 8 * Math.PI * 2;
+            puffs.emit(hitAt, {velocity: [Math.cos(a) * 2.2, 3 + (i % 3), Math.sin(a) * 2.2], life: 1, from: .5, to: 2.2, alpha: .55,
+              color: i % 2 ? 0x3a3029 : 0x6e5a44, rise: -1.5});
+          }
         }
       }
     } else memory.landed = false;
@@ -699,8 +749,9 @@ export function createBowlWeaponsView() {
     sparks.visible = !!weapon?.cutting && weapon.phase === 'active' && rig.root.visible;
     if (sparks.visible) {
       const [, cy, cz] = SAW_CENTRE;
-      forward.set(0, 0, 1).transformDirection(rig.root.matrix);
-      sparks.userData.place(seconds, toWorld(rig, 0, cy - .2, cz + SAW_RADIUS * .9), forward, 0);
+      // A rooster tail of sparks thrown up and back over the bonnet, where the driver sees it.
+      forward.set(0, 0, -1).transformDirection(rig.root.matrix);
+      sparks.userData.place(seconds, toWorld(rig, 0, cy + .45, cz + SAW_RADIUS * .55), forward, 0);
     }
     // A cooling disc smokes.
     if (weapon?.phase === 'rest' && rig.root.visible && Math.random() < dt * 9) {
@@ -746,15 +797,13 @@ export function createBowlWeaponsView() {
 
   function stepFire(rig, actor, dt, seconds) {
     const weapon = actor.bowlWeapon, burning = weapon?.phase === 'active', pilot = weapon?.phase === 'tell';
-    rig.flame.uniforms.uTime.value = seconds;
-    rig.breath.forEach((tongue, i) => {
-      tongue.visible = (burning || pilot && i === 0) && rig.root.visible;
-      if (!tongue.visible) return;
-      // The breath: tongues laid along the nozzle's line out to six metres, larger as they go.
-      const reach = pilot ? .1 : i / (rig.breath.length - 1);
-      const size = pilot ? .45 + .1 * Math.sin(seconds * 30) : 1.1 + reach * 2.9;
-      tongue.position.set(Math.sin(seconds * 9 + i) * .2 * reach, 1.9 + reach * .5 - size * .4, 2.85 + reach * 5.6);
-      tongue.scale.set(size, size * (1.25 + .25 * Math.sin(seconds * 17 + i * 2)), 1);
+    rig.breath.forEach(jet => {
+      jet.visible = (burning || pilot) && rig.root.visible;
+      if (!jet.visible) return;
+      // The breath reaches six metres; the tell is a pilot flame licking out of the nozzle.
+      jet.material.uniforms.uTime.value = seconds;
+      const reach = pilot ? .09 + .03 * Math.sin(seconds * 30) : 1;
+      jet.scale.set(pilot ? .35 : 1 + .06 * Math.sin(seconds * 13), pilot ? .35 : 1 + .06 * Math.sin(seconds * 11), reach);
     });
     // Soot rolls off the breath, so that the fire stands out against the pale floor.
     if (burning && rig.root.visible && Math.random() < dt * 30) {
@@ -861,8 +910,14 @@ export function createBowlWeaponsView() {
         disposeRig(rig, mesh); rigs.delete(mesh);
         cutSparks.get(rig)?.removeFromParent(); cutSparks.delete(rig);
       }
-      hitSparks.visible = fightOn && seconds < hitUntil;
-      if (hitSparks.visible) hitSparks.userData.place(seconds * 2.2, hitAt, hitOut, 0);
+      hitSparks.visible = flash.visible = fightOn && seconds < hitUntil;
+      if (hitSparks.visible) {
+        hitSparks.userData.place(seconds * 2.2, hitAt, hitOut, 0);
+        const t = (seconds - hitStart) / (hitUntil - hitStart);
+        flash.position.copy(hitAt); flash.position.y += .4;
+        flash.scale.setScalar(3 + 3.5 * easeOut(t));
+        flash.material.uniforms.uFade.value = (1 - t) ** 1.2;
+      }
       if (!fightOn) { puffs.clear(); rings.clear(); }
       puffs.step(dt); rings.step(dt);
     },
@@ -871,26 +926,46 @@ export function createBowlWeaponsView() {
       rigs.clear();
       group.removeFromParent();
       group.traverse(node => { if (node.isPoints) { node.geometry.dispose(); node.material.dispose(); } });
-      puffs.material.dispose(); puffs.card.dispose(); rings.geometry.dispose();
+      puffs.material.dispose(); puffs.card.dispose(); rings.geometry.dispose(); flash.geometry.dispose(); flash.material.dispose();
       rings.rings.forEach(ring => ring.mesh.material.dispose());
     },
   };
 }
 
-// The choosing card's three pictures, drawn from the weapons as they are built above: side views on scorched steel.
-const frame = body => `<svg viewBox="0 0 120 80" width="120" height="80" role="img" aria-hidden="true" class="bowl-weapon-picture">
-<defs><linearGradient id="bw-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2622"/><stop offset="1" stop-color="#141210"/></linearGradient></defs>
-<rect width="120" height="80" rx="6" fill="url(#bw-sky)"/><rect y="64" width="120" height="16" fill="#4a3d2e"/><path d="M0 64h120" stroke="#6b5a44" stroke-width="1.5"/>${body}</svg>`;
-const truck = `<g><circle cx="26" cy="58" r="9" fill="#1b1a19" stroke="#3a3836" stroke-width="2"/><circle cx="58" cy="58" r="9" fill="#1b1a19" stroke="#3a3836" stroke-width="2"/>
-<path d="M14 47h56l4 -6h-14l-4 -9h-20l-4 9h-18z" fill="#5a4a6e" stroke="#2a2420" stroke-width="1.5"/><rect x="34" y="34" width="14" height="7" fill="#9fb3b8" opacity=".55"/></g>`;
+// The choosing card's three pictures, drawn from the weapons as they are built above: side views on scorched dirt,
+// the weapon filling the right of the frame.
+const frame = (id, body) => `<svg viewBox="0 0 120 80" width="132" height="88" role="img" aria-hidden="true" class="bowl-weapon-picture">
+<defs><linearGradient id="bw-sky-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2723"/><stop offset="1" stop-color="#16130f"/></linearGradient></defs>
+<rect width="120" height="80" rx="6" fill="url(#bw-sky-${id})"/><rect y="66" width="120" height="14" fill="#5a4833"/><path d="M0 66h120" stroke="#7a6548" stroke-width="1.5"/>${body}</svg>`;
+// The show truck from the side, facing right, its nose at x = 64.
+const truck = `<g stroke="#15120f" stroke-width="1.4"><circle cx="18" cy="55" r="11" fill="#1d1b1a"/><circle cx="50" cy="55" r="11" fill="#1d1b1a"/>
+<circle cx="18" cy="55" r="4.5" fill="#9bd12c" stroke-width="1"/><circle cx="50" cy="55" r="4.5" fill="#9bd12c" stroke-width="1"/>
+<path d="M4 46v-9h16l5 -12h20l6 12h13v9z" fill="#5d3d8e"/><path d="M27 27h16l4 9h-24z" fill="#a8bcc0" opacity=".6"/>
+<path d="M6 41h56" stroke="#9bd12c" stroke-width="2"/></g>`;
+const sawTeeth = (() => {
+  const points = [];
+  for (let i = 0; i < 20; i++) {
+    const a = i / 20 * Math.PI * 2, b = (i + .55) / 20 * Math.PI * 2;
+    points.push(`${(Math.cos(a) * 13).toFixed(1)},${(Math.sin(a) * 13).toFixed(1)}`, `${(Math.cos(b) * 17).toFixed(1)},${(Math.sin(b) * 17).toFixed(1)}`);
+  }
+  return points.join(' ');
+})();
 export const WEAPON_PICTURES = Object.freeze({
-  hammer: frame(`${truck}<path d="M66 40l3 -10h5l2 10z" fill="#5b6064"/><path d="M71 30l26 22" stroke="#5b6064" stroke-width="5" stroke-linecap="round"/>
-<path d="M71 30l26 22" stroke="#6b4129" stroke-width="2"/><g transform="rotate(40 99 55)"><rect x="90" y="47" width="18" height="14" rx="2" fill="#26221f" stroke="#8a8f90" stroke-width="1.5"/><rect x="88" y="58" width="22" height="4" fill="#8a8f90"/></g>
-<path d="M86 66c6 -5 18 -5 24 0" stroke="#b49a72" stroke-width="2" fill="none" opacity=".8"/><path d="M82 70c9 -7 27 -7 36 0" stroke="#b49a72" stroke-width="1.5" fill="none" opacity=".5"/>`),
-  saw: frame(`${truck}<path d="M70 46l12 2v6l-12 2z" fill="#5b6064"/><g transform="translate(90 52)"><circle r="13" fill="#9aa0a3" stroke="#d9dcdc" stroke-width="2" stroke-dasharray="3 2"/>
-<circle r="3" fill="#26221f"/><circle cx="6" cy="-4" r="2" fill="#26221f"/><circle cx="-6" cy="3" r="2" fill="#26221f"/><path d="M-12 -8a15 15 0 0 1 20 -7" stroke="#6b4129" stroke-width="4" fill="none"/></g>
-<g stroke="#ffb347" stroke-width="1.5" stroke-linecap="round"><path d="M104 56l10 -6"/><path d="M103 60l12 0"/><path d="M104 52l8 -10"/><path d="M101 63l9 6"/></g>`),
-  launcher: frame(`<g transform="rotate(-24 92 46)"><circle cx="82" cy="44" r="6" fill="#1b1a19"/><circle cx="104" cy="44" r="6" fill="#1b1a19"/><path d="M74 36h38l2 -5h-9l-3 -6h-14l-3 6h-11z" fill="#7b3b22" stroke="#2a2420" stroke-width="1.2"/></g>
-${truck}<path d="M70 60l18 -16" stroke="#6b4129" stroke-width="5" stroke-linecap="round"/><path d="M72 58l-4 -10" stroke="#c9ced2" stroke-width="2.5"/>
-<g fill="#c4c6c4" opacity=".7"><circle cx="72" cy="64" r="4"/><circle cx="66" cy="62" r="3"/><circle cx="79" cy="63" r="3"/></g><circle cx="16" cy="33" r="5" fill="#e4ddc8" stroke="#8c7038" stroke-width="1.5"/><path d="M16 33l3 -3" stroke="#1a1410" stroke-width="1.2"/>`),
+  hammer: frame('hammer', `${truck}<path d="M58 37l2 -9h6l2 9z" fill="#26221f" stroke="#15120f"/>
+<path d="M44 10a40 40 0 0 1 58 30" stroke="#d8c7a4" stroke-width="1.2" fill="none" stroke-dasharray="3 3" opacity=".7"/>
+<path d="M63 28l30 26" stroke="#15120f" stroke-width="8" stroke-linecap="round"/><path d="M63 28l30 26" stroke="#7a4a2c" stroke-width="5" stroke-linecap="round"/>
+<g transform="rotate(41 96 57)"><rect x="85" y="47" width="22" height="18" rx="2" fill="#2b2622" stroke="#15120f" stroke-width="1.4"/>
+<rect x="83" y="62" width="26" height="5" fill="#a6a9a8" stroke="#15120f"/><path d="M92 47l4 -9l4 9z" fill="#a6a9a8" stroke="#15120f"/><rect x="85" y="51" width="22" height="3" fill="#7a4a2c"/></g>
+<path d="M78 72c8 -6 26 -6 34 0" stroke="#c9ae7d" stroke-width="2.2" fill="none"/><path d="M73 77c11 -8 35 -8 46 0" stroke="#c9ae7d" stroke-width="1.6" fill="none" opacity=".6"/>`),
+  saw: frame('saw', `${truck}<path d="M62 40l16 4v8l-16 2z" fill="#3a3632" stroke="#15120f"/>
+<g transform="translate(88 46)"><circle r="20" fill="#ff6a1a" opacity=".25"/><polygon points="${sawTeeth}" fill="#b4b9bb" stroke="#15120f" stroke-width="1"/>
+<circle r="12" fill="none" stroke="#e48a3a" stroke-width="2" opacity=".8"/><circle r="4" fill="#26221f"/><circle cx="7" cy="-3" r="2.2" fill="#26221f"/><circle cx="-6" cy="5" r="2.2" fill="#26221f"/>
+<path d="M-17 -6a19 19 0 0 1 22 -13" stroke="#7a4a2c" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+<g stroke="#ffc35a" stroke-width="2" stroke-linecap="round"><path d="M106 52l11 -7"/><path d="M106 56l13 0"/><path d="M104 47l9 -12"/><path d="M103 60l10 8"/><path d="M108 50l7 -2"/></g>`),
+  launcher: frame('launcher', `<g transform="rotate(-28 96 26)"><circle cx="86" cy="32" r="7" fill="#1d1b1a" stroke="#15120f"/><circle cx="108" cy="32" r="7" fill="#1d1b1a" stroke="#15120f"/>
+<path d="M76 26v-6h9l4 -8h13l4 8h6v6z" fill="#7b3b22" stroke="#15120f" stroke-width="1.3"/></g>
+<path d="M92 46l3 -6M100 50l6 -3M86 42l-1 -6" stroke="#d8c7a4" stroke-width="1.4" stroke-linecap="round"/>
+${truck}<path d="M64 62l20 -22" stroke="#15120f" stroke-width="8" stroke-linecap="round"/><path d="M64 62l20 -22" stroke="#8f9496" stroke-width="5" stroke-linecap="round"/>
+<path d="M62 50l8 6" stroke="#d2d6d8" stroke-width="3"/><g fill="#d4d6d4" opacity=".75"><circle cx="70" cy="66" r="5"/><circle cx="61" cy="64" r="4"/><circle cx="78" cy="64" r="3.5"/></g>
+<circle cx="12" cy="31" r="6" fill="#e4ddc8" stroke="#8c7038" stroke-width="2"/><path d="M12 31l3.5 -3" stroke="#1a1410" stroke-width="1.4"/>`),
 });
