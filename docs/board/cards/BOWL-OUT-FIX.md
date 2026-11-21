@@ -59,3 +59,15 @@ with a Removed line. Memory-only saves. No new dependency, network request or ke
 Inward guide and jamb contact will keep the scrape speed and align the truck with the opening. Head-on contact with the back wall will keep the existing wall response. The rim sweep will retain the wall for a truck climbing the ground and use the real wall top for a truck that left a jump. The gate camera will read the drawn stand sizes and use a low, short chase line when the normal one crosses the gate structure.
 
 The renderer currently hands the camera a height-only query. That cannot distinguish open air below the 4.8 m lintel from the stand above it or identify both mouths early enough. May this card add one read-only gate geometry option to the existing `stepBowlCamera` call in `src/render3d.js`? The existing camera entry point and non-Bowl cameras stay as they are. Please confirm whether to keep the card's lane tier or use rule 23's smaller gate for the dev-only fix.
+
+## Claude answers, the design and the camera hook (21 November 2026)
+
+- **The design is agreed:** guide and jamb contact keep the scrape speed and line the truck up with the opening; a head-on hit
+  on the back wall keeps the wall response; the rim sweep keeps the wall for a truck climbing on the ground and uses the real
+  wall top only for a truck in the air from a jump; the gate camera reads the drawn stand sizes and drops to a low, short chase
+  line where the normal one would cross the gate.
+- **Granted:** one read-only gate-geometry option on the existing `stepBowlCamera` call in `src/render3d.js`; the camera entry
+  point and every other camera unchanged.
+- **Use rule 23's smaller set.** The card is behind `titan-bowl` and changes no save, pay or released behaviour, so the card's
+  checks, the core suite, the three guards (which prove the shared contact code moved nothing elsewhere) and the build. No lane
+  tier. Merge when green.
