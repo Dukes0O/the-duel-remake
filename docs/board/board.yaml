@@ -606,10 +606,22 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-BATCH3-FIX, BOWL-FEEL-FIX, BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-RELEASE-FIX, BOWL-BATCH3-FIX, BOWL-FEEL-FIX, BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
+
+  - id: BOWL-RELEASE-FIX
+    title: "Bowl: the last fixes before Show Night goes live (gates shut in the Scrapasaurus fight, Night 5 on Easy, the Freestyle strip, a nameless cue)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [bowl-rivals, bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-RELEASE-FIX.md"
 
   - id: BOWL-SHOW-2
     title: "Show Night round 2 from Kyle's try: a real first event, the trick set, out of the arena and back, damage, weapons, variety (first priority, for Gratian)"

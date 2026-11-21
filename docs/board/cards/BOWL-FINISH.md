@@ -63,3 +63,8 @@ checked in the hand drive.
   START ENGINE sometimes needed a second press at the Monster Arena: find out why.
 - From BOWL-BATCH3-FIX (21 November 2026): a driver holding only W in the Scrapasaurus fight drifted between the resting beast and
   the outer wall and stalled at 22 seconds on integration `d09bc5917`. Try it by hand; if a player can be stuck there, card it.
+- From the final drive (21 November 2026), able to follow the release: the fall's frame cuts the beast off when the truck is far
+  away or up in the stands (`n5-rex-25-fall-2.5s.jpg`); the camera can sit inside the beast's body during the fire
+  (`n5-rex-21-fire.jpg`); one health drop of 9 in a 110 ms sample on Night 3 (two hits together, or one over the cap: check);
+  Freestyle's last 30 seconds are only for a personal best. Nobody has listened to the 95 new cues; Kyle does not listen before
+  a release (memory: voice-ships-without-listening), so it does not hold the release.
