@@ -658,7 +658,8 @@ tasks:
     model: "sol"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-trick-school"
     needs: [BOWL-TRICKS, BOWL-HUD, BOWL-TRICKS-ALL]
     locks: [bowl-night, bowl-screens, save-shape]
     flag: "titan-bowl"
