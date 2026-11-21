@@ -291,6 +291,11 @@ function stepWreckedActor(duel, actor, dt) {
 // One fixed step of an arena event while status is 'racing'.
 export function bowlFightPilotGoal(duel, actor, participant, goal, dt) {
   const drive = actor.bowlFightDrive;
+  const opening = drive.opening;
+  if (opening && duel.state.stageTimeSec < opening.joinsAt) {
+    const waypoint = duel.course.worldAt(actor.s + opening.lookAhead, opening.lane);
+    return {...goal, x: waypoint.x, z: waypoint.z, speedMph: opening.speedMph};
+  }
   const target = arenaActor(duel, participant.targetId);
   let aim = goal;
   if (target) {

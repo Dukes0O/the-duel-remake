@@ -86,7 +86,9 @@ export function recordGo(show, result) {
       count: result.count, total: result.total, fullHouse: result.fullHouse === true, fullHouseBonus: result.fullHouseBonus,
     })} : {}),
     // BOWL-RIVALS: who the go raced in Side by Side, and how Last Truck Rolling ended.
-    rival: result.rival ?? null, knockouts: result.knockouts ?? 0, timeUp: result.timeUp === true, settled: null});
+    rival: result.rival ?? null, knockouts: result.knockouts ?? 0, timeUp: result.timeUp === true,
+    ...(result.decidedBy === 'health' ? {decidedBy: result.decidedBy} : {}),
+    settled: null});
   return {ok: true, go, show: Object.freeze({...show, phase: 'result', goes: Object.freeze([...show.goes, go])})};
 }
 

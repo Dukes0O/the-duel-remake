@@ -892,7 +892,7 @@ export function _vehicleContact(a, b, reason) {
       let recoil = 1;
       if (a === this.state && a.bowlNight?.cpuDifficulty === 'easy') {
         if (closingB > Math.max(0, closingA)) recoil = b.ramDamageScale ?? 1;
-        else if (closingA > Math.max(0, closingB)) recoil = .5;
+        else if (closingA > Math.max(0, closingB)) recoil = a.bowlNight.event?.ownRamRecoil ?? .5;
       }
       bowlWear(this, a, kind, combatOwnerId(this, b), zone, recoil);
       bowlWear(this, b, kind, combatOwnerId(this, a), zoneB);

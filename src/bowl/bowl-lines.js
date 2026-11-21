@@ -304,7 +304,10 @@ export const BOWL_RESULTS = Object.freeze({
   eventRace: (won, rival = 'the other truck') => won ? `You crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before you.`,
   // BOWL-RIVALS: how Last Truck Rolling ended.
-  eventKnockouts: ({won, knockouts = 0, timeUp = false}) => won && timeUp
+  eventKnockouts: ({won, knockouts = 0, timeUp = false, decidedBy}) => timeUp && decidedBy === 'health'
+    ? (won ? 'When time ran out, no truck still rolling had more health than yours.'
+      : 'When time ran out, another truck still rolling had more health than yours.')
+    : won && timeUp
     ? 'The clock ran out, and of the trucks still rolling, yours hit the others hardest, so the win is yours.'
     : won ? 'Every other truck was knocked out, and yours was the last one still rolling.'
       : timeUp ? 'The clock ran out, and another truck still rolling had hit the others harder than yours.'
@@ -366,7 +369,10 @@ export const BOWL_TURN_LINES = Object.freeze({
   goRace: (name, won, rival = 'the other truck') => won ? `${name} crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before ${name}.`,
   // BOWL-RIVALS: how one go at Last Truck Rolling ended.
-  goKnockouts: (name, {won, knockouts = 0, timeUp = false}) => won && timeUp
+  goKnockouts: (name, {won, knockouts = 0, timeUp = false, decidedBy}) => timeUp && decidedBy === 'health'
+    ? (won ? `When time ran out, no truck still rolling had more health than ${name}'s.`
+      : `When time ran out, another truck still rolling had more health than ${name}'s.`)
+    : won && timeUp
     ? `The clock ran out, and of the trucks still rolling, ${name}'s hit the others hardest, so the win is ${name}'s.`
     : won ? `Every other truck was knocked out, and ${name}'s was the last one still rolling.`
       : timeUp ? `The clock ran out, and another truck still rolling had hit the others harder than ${name}'s.`

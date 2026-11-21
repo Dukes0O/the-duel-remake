@@ -3,7 +3,7 @@
 // rival, run a one-wall Easy driver, and check a clean versus wide Hard line.
 // Unarmed fight wins are reported; BOWL-WEAPONS measures armed balance.
 import assert from 'node:assert/strict';
-import {chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
+import {chooseShowWeapon, showTarget, SHOW_WEAPONS} from '../src/bowl/bowl-weapons.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, bowlHudView, bowlNightPlayable} from '../src/bowl/bowl-night.js';
@@ -22,7 +22,7 @@ const DT = 1 / 120, LEVELS = ['easy', 'medium', 'hard'], TRIALS = 10;
 
 // A Show Night at one event: the night is started and the earlier events are
 // skipped by winning them on paper, so each trial starts at the event itself.
-function showAt(night, type, {level = 'easy', seed = 1989, rivals} = {}) {
+function showAt(night, type, {level = 'easy', seed = 1989, rivals, weapon = 'hammer'} = {}) {
   const duel = new Duel({seed});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
   assert.ok(duel.startBowlNight({night, cpuDifficulty: level, seed, owned: false, playerId: 'rivals-test', rivals}),
@@ -32,7 +32,7 @@ function showAt(night, type, {level = 'easy', seed = 1989, rivals} = {}) {
   show.show = {...show.show, eventIndex: index};
   show.phase = 'result';
   duel.continueBowlNight();
-  if (type === 'lastTruckRolling') assert.ok(chooseShowWeapon(duel, 'hammer'));
+  if (type === 'lastTruckRolling') assert.ok(chooseShowWeapon(duel, weapon));
   assert.equal(duel.state.bowlNight.event.type, type);
   return duel;
 }
@@ -125,6 +125,86 @@ function race(duel, drive, aim, limitSec) {
   }
   stop?.();
   return results[0] ?? null;
+}
+
+function chaser(seed) {
+  const rng = makeRng(seed ^ 0x4146);
+  const pace = rng.range(36, 44), response = rng.range(.18, .32);
+  let decision = 0, yaw = 0, stuck = 0, reverse = 0, last;
+  return duel => {
+    if (duel.state.status !== 'racing') return;
+    const s = duel.state, me = worldPose(duel, s), weapon = s.bowlWeapon;
+    decision -= DT;
+    if (decision <= 0) {
+      decision = response;
+      let nearest = null, minimum = Infinity;
+      for (const actor of s.opponents) {
+        if (actor.combatWrecking) continue;
+        const at = worldPose(duel, actor), metres = Math.hypot(at.x - me.x, at.z - me.z);
+        if (metres < minimum) { nearest = at; minimum = metres; }
+      }
+      yaw = nearest ? Math.atan2(nearest.x - me.x, nearest.z - me.z) : me.heading;
+    }
+    if (!last || Math.hypot(me.x - last.x, me.z - last.z) > .75 || s.airborne || s.bowlHeldStill > 0) {
+      last = me; stuck = 0;
+    } else stuck += DT;
+    if (reverse <= 0 && stuck > 1.3) { reverse = .75; stuck = 0; }
+    const toRival = wrap(yaw - me.heading), steer = Math.max(-1, Math.min(1, -2 * toRival));
+    if (reverse > 0) {
+      reverse -= DT;
+      duel.setInput({throttle: 0, brake: 1, steer: -Math.sign(steer || 1), interact: false, boost: false});
+      return;
+    }
+    const definition = SHOW_WEAPONS[weapon.kind], level = s.bowlNight.cpuDifficulty;
+    const reach = level === 'hard' ? definition.hardReach ?? definition.reach : definition.reach;
+    const willing = weapon.kind === 'saw' || weapon.phase === 'ready' && !weapon.wasHeld;
+    const interact = willing && !!showTarget(duel, s, reach, null, definition.arc);
+    duel.setInput({throttle: s.speedMph < pace ? 1 : 0, brake: 0, steer, interact, boost: false});
+  };
+}
+
+function carefulWeaponDrive(weapon, seed) {
+  if (weapon === 'hammer') return hammerDrive(seed);
+  const drive = childDriver(seed);
+  return (duel, aim) => {
+    if (duel.state.status !== 'racing') return;
+    drive(duel, aim);
+    const s = duel.state, armed = s.bowlWeapon, definition = SHOW_WEAPONS[weapon];
+    const willing = weapon === 'saw' || armed.phase === 'ready' && !armed.wasHeld;
+    const target = willing && showTarget(duel, s, definition.reach, null, definition.arc);
+    duel.setInput({interact: !!target});
+  };
+}
+
+function checkEasyChasers() {
+  const outcomes = [];
+  for (const [weapon, night] of [['hammer', 3], ['saw', 4], ['launcher', 5]]) {
+    const trials = driver => Array.from({length: TRIALS}, (_, index) => {
+      const seed = 1989 + index * 101;
+      const duel = showAt(night, 'lastTruckRolling', {seed, weapon});
+      const result = race(duel, driver(seed), chaseAim, 130);
+      ok(result, weapon + ' fight ends in every seed');
+      return {won: result.won, seconds: duel.state.stageTimeSec};
+    });
+    const chased = trials(chaser);
+    const careful = trials(seed => carefulWeaponDrive(weapon, seed));
+    const wins = chased.filter(row => row.won).length;
+    const longEnough = chased.filter(row => row.seconds + 1e-8 >= 75).length;
+    const carefulWins = careful.filter(row => row.won).length;
+    console.log(`${weapon} Easy: chaser ${wins}/10 wins, ${longEnough}/10 at or above 75 seconds, careful ${carefulWins}/10 wins.`);
+    console.log('Fight times:', chased.map(row => (row.won ? 'W ' : 'L ') + row.seconds.toFixed(1)).join(', '));
+    outcomes.push({weapon, wins, longEnough, carefulWins});
+  }
+  for (const {weapon, wins, longEnough, carefulWins} of outcomes) {
+    ok(wins >= 5 && wins <= 7, weapon + ' chaser wins five to seven of ten on Easy');
+    ok(longEnough >= 8, weapon + ' gives the chaser at least 75 seconds in eight of ten fights');
+    ok(carefulWins >= 6, weapon + ' is still winnable by the careful driver');
+  }
+}
+
+if (process.argv.includes('--chaser-only')) {
+  checkEasyChasers();
+  process.exit(0);
 }
 
 // ---- the rivals are data ------------------------------------------------
@@ -271,7 +351,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
 
 // A wounded rival can break away for a moment, then has to re-engage.
 {
-  const duel = showAt(3, 'lastTruckRolling'), state = duel.state, rival = state.opponents[0];
+  const duel = showAt(3, 'lastTruckRolling', {level: 'medium'}), state = duel.state, rival = state.opponents[0];
   const participant = state.arena.participants[1];
   participant.targetId = 'player';
   const from = worldPose(duel, rival), target = worldPose(duel, state);
@@ -281,6 +361,67 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const afterTwo = bowlFightPilotGoal(duel, rival, participant, away, 1);
   assert.deepEqual([afterTwo.x, afterTwo.z], [target.x, target.z]);
   checks += 2;
+}
+
+
+{
+  const duel = showAt(3, 'lastTruckRolling');
+  const state = duel.state;
+  const [lead, firstJoin, lastJoin] = state.opponents;
+  ok(!lead.bowlFightDrive.opening, 'one Easy rival takes up pursuit as soon as the fight starts');
+  const normalGoal = {...worldPose(duel, state), speedMph: 24, boost: false};
+  const leadPilot = bowlFightPilotGoal(duel, lead, state.arena.participants[1], normalGoal, DT);
+  ok(leadPilot.speedMph === BOWL_RIVAL_RULES.lastTruckRolling.pace.minimum, 'the Easy lead rival keeps its ordinary fight pace');
+  ok(firstJoin.bowlFightDrive.opening.joinsAt < lastJoin.bowlFightDrive.opening.joinsAt,
+    'the other two Easy rivals join the fight at different times');
+  for (const [index, rival] of state.opponents.entries()) {
+    const {opening} = rival.bowlFightDrive;
+    if (!opening) continue;
+    const participant = state.arena.participants[index + 1];
+    participant.targetId = 'player';
+    const goal = {...worldPose(duel, state), speedMph: 40, boost: false};
+    state.stageTimeSec = opening.joinsAt - DT;
+    const followingLane = bowlFightPilotGoal(duel, rival, participant, goal, DT);
+    ok(followingLane.x !== goal.x || followingLane.z !== goal.z, 'an Easy rival circles before it starts pursuit');
+    ok(followingLane.speedMph === opening.speedMph, 'a waiting rival keeps moving at its Easy opening pace');
+    state.stageTimeSec = opening.joinsAt;
+    const joining = bowlFightPilotGoal(duel, rival, participant, goal, DT);
+    assert.deepEqual(joining, goal, 'at its opening time the rival follows the normal fight goal');
+    checks++;
+  }
+}
+
+{
+  const clockResult = (level, playerHealth, rivalHealth, playerDamage, rivalDamage) => {
+    const duel = showAt(3, 'lastTruckRolling', {level}), state = duel.state;
+    for (let tick = 0; state.status !== 'racing' && tick < 6 / DT; tick++) duel.step(DT);
+    ok(state.status === 'racing', 'the show clock test starts the fight');
+    state.stageTimeSec = BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec;
+    state.armor = playerHealth;
+    state.arena.participants[0].damageDealt = playerDamage;
+    for (const [index, truck] of state.opponents.entries()) {
+      truck.armor = index === 2 ? 60 : rivalHealth;
+      state.arena.participants[index + 1].damageDealt = rivalDamage;
+    }
+    // A wreck stops competing, even if its old armor entry is higher.
+    state.opponents[2].combatWrecking = true;
+    state.bowlNight.event.rivals[2].out = true;
+    const result = race(duel, null, null, DT);
+    ok(result?.timeUp === true, level + ' ends at the show clock');
+    return result;
+  };
+  const tie = clockResult('easy', 30, 30, 0, 100);
+  ok(tie.won && tie.decidedBy === 'health', 'on Easy, a tie on remaining health goes to the player');
+  const loss = clockResult('easy', 29, 30, 100, 1);
+  ok(!loss.won, 'on Easy, a sound rival with more health wins even if the player hit harder');
+  ok(BOWL_RESULTS.eventKnockouts(tie).includes('no truck still rolling had more health'),
+    'the Solo Show explains the Easy clock win');
+  ok(BOWL_RESULTS.eventKnockouts(loss).includes('another truck still rolling had more health'),
+    'the Solo Show explains the Easy clock loss');
+  for (const level of ['medium', 'hard']) {
+    const result = clockResult(level, 29, 30, 100, 1);
+    ok(result.won && result.decidedBy !== 'health', level + ' still awards the clock to the truck that did more damage');
+  }
 }
 
 // ---- Last Truck Rolling: four trucks on the arena's rules -----------------
@@ -344,15 +485,24 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   ok(truck.state.bowlNight.phase === 'turn' && Number.isSafeInteger(truckResult.knockouts), 'the fight ends as a turn with its knock-outs');
   const players = [{id: 'p1', name: 'Gratian', profile: {...createProfile(), bowl: {nightsWon: [1, 2]}}},
     {id: 'p2', name: 'Kyle', profile: {...createProfile(), bowl: {nightsWon: [1, 2]}}}];
-  let show = createTurnShow({night: 1, players}).show;
-  while (currentTurn(show) && currentTurn(show).event !== 'sideBySide') {
+  const recordEventGo = (night, event, result) => {
+    let show = createTurnShow({night, players}).show;
+    while (currentTurn(show) && currentTurn(show).event !== event) {
+      const turn = currentTurn(show);
+      const blank = {playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex, score: 0};
+      show = passKeyboard(recordGo(beginGo(show).show, blank).show).show;
+    }
     const turn = currentTurn(show);
-    show = passKeyboard(recordGo(beginGo(show).show, {playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex, score: 0}).show).show;
-  }
-  const turn = currentTurn(show);
-  const recorded = recordGo(beginGo(show).show, {...sideResult, playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex});
+    ok(turn?.event === event, 'the Turn Show reaches ' + event);
+    return recordGo(beginGo(show).show, {...result, playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex});
+  };
+  const recorded = recordEventGo(1, 'sideBySide', sideResult);
   ok(recorded.ok && recorded.go.rival === 'old-bess' && BOWL_TURN_LINES.goRace('Gratian', recorded.go.won, BOWL_RIVALS[recorded.go.rival].name)
     .includes('Old Bess'), 'the card between goes names the rival');
+  const clockGo = recordEventGo(3, 'lastTruckRolling', {won: true, score: 0, timeUp: true, decidedBy: 'health'});
+  ok(clockGo.ok && clockGo.go.decidedBy === 'health' &&
+    BOWL_TURN_LINES.goKnockouts('Gratian', clockGo.go).includes("no truck still rolling had more health than Gratian's"),
+    'the Turn Show carries the Easy clock reason to the card between goes');
   ok(BOWL_TURN_LINES.goKnockouts('Kyle', {won: false, knockouts: 2}) === 'Kyle knocked out two trucks before their own truck was knocked out.',
     'the card between goes says how a go at Last Truck Rolling ended');
 }
@@ -476,4 +626,5 @@ for (const night of [1, 2]) {
     'taking a turn wide costs the clean driver the race against Dragon Wagon');
   ok(wide.event.dragonFlipped, 'Dragon Wagon flips on the last kicker');
 }
+checkEasyChasers();
 console.log(`test-bowl-rivals: ${checks} checks passed`);
