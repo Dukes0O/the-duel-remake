@@ -162,7 +162,7 @@ test('the Big Jump pays full turns, combos, sideways landings and a damage-free 
 test('a first-frame press counts, and a completed flip survives a reversal', () => {
   const run = bigJump(t => ({throttle:+(t===1),brake:+(t===115)}));
   assert.deepEqual(run.events.map(e => [e.kind, e.points, e.combo]), [['frontFlip',75,2],['backflip',75,2],['yoYo',100,1]]);
-  assert.equal(run.duel.state.bowlNight.event.score,696);
+  assert.equal(run.duel.state.bowlNight.event.score, 876, 'Rookie Night doubles the backflip before crowd scoring');
 });
 
 test('a Slam takes one third of the actual crowd, pays zero and plays no crowd cheer', () => {
