@@ -16,6 +16,7 @@ The cues named so far, by card:
 | OPEN-CHECKPOINTS | `open.encounter.near`, `open.encounter.leave`, `open.flag.hail` |
 | OPEN-SITES | `open.site.found`, `open.need.mended`, `open.rumour`, `open.radio.voice` |
 | OPEN-THREADS | `open.smoke.seen`, `open.clue.found` |
+| OPEN-APPRENTICE-RUN | `open.routine.learnt`, `open.routine.home` |
 | OPEN-BURNED-SCOUT | `open.scout.seen`, `open.lookout.flare` |
 | OPEN-BURNED-PEN | `open.taken`, `open.ransom.paid`, `open.pen.chain`, `open.guard.shout` |
 | OPEN-BURNED-RESCUE | `open.party.ride`, `open.rescue.home` |
