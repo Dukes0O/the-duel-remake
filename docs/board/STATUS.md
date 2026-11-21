@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-21T00:24:37.522Z
+Observed at: 2026-11-21T00:53:43.566Z
 
-Observation commit: ac94ef971fd8048bffe64fcedde81ed30b540e6c
+Observation commit: efcb20be7ca0f0578b5ac6ef9eee88dba25bac26
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ac94ef971fd8048bffe64fcedde81ed30b540e6c
+Integration HEAD: efcb20be7ca0f0578b5ac6ef9eee88dba25bac26
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -35,11 +35,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/board-lines | 14 | unknown | true | false | unknown |
 | codex/bowl-art-rex | 15 | unknown | false | false | unknown |
 | codex/bowl-course | 15 | unknown | true | false | unknown |
-| codex/bowl-crush | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-crush |
+| codex/bowl-crush | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-crush |
 | codex/bowl-hud | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-hud |
 | codex/bowl-rivals-2 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-rivals-2 |
-| codex/bowl-trick-school | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-trick-school |
-| codex/bowl-weapons | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-weapons |
+| codex/bowl-trick-school | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-trick-school |
 | codex/car-art-bully | 14 | unknown | false | false | unknown |
 | codex/crew-story-join | 15 | unknown | true | false | unknown |
 | codex/mule-rails | 14 | unknown | true | false | unknown |
@@ -70,8 +69,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 15 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
-| codex/bowl-crush | unknown | 2026-11-20T17:21:39-07:00 | 0 | last commit 2026-11-20T17:21:39-07:00 | src/bowl/bowl-course.js, src/bowl/bowl-crush-field.js, src/bowl/bowl-lines.js, src/bowl/bowl-night.js, src/bowl/bowl-view.js |
-| codex/bowl-weapons | unknown | 2026-11-20T17:12:25-07:00 | 0 | last commit 2026-11-20T17:12:25-07:00 | docs/changes/BOWL-WEAPONS.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/bowl/bowl-lines.js |
+| codex/bowl-crush | unknown | 2026-11-20T17:53:15-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/changes/BOWL-CRUSH.md, src/audio.js, src/bowl/bowl-course.js, src/bowl/bowl-crush-field.js, src/bowl/bowl-lines.js |
+| codex/bowl-trick-school | unknown | 2026-11-20T17:34:49-07:00 | 0 | last commit 2026-11-20T17:34:49-07:00 | src/app.js, src/bowl/bowl-lines.js, src/bowl/bowl-night.js, src/bowl/bowl-save.js, src/bowl/bowl-school.js |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 14 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 36 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 15 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
@@ -86,16 +85,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 749,817,918 B | +6,623 B | 250,000,000 B |
+| Build `dist/` | 749,826,971 B | +9,053 B | 250,000,000 B |
 | Wasteland models | 445,886,767 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
 | Review `looks/` | 101,023,194 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,431,409 B | -637,959 B | 5,000,000 B |
+| Added bytes in last merge | 104,233 B | -1,327,176 B | 5,000,000 B |
 | All `public/` | 740,514,001 B | +0 B | unavailable |
-| Git objects | 1,538,941,952 B | +1,955,840 B | unavailable |
-| Lane folders | 5 | -1 | unavailable |
+| Git objects | 1,540,424,704 B | +1,482,752 B | unavailable |
+| Lane folders | 4 | -1 | unavailable |
 
 ## Backups
 
@@ -103,7 +102,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: f96d19903748c849883b3ca1e514276de6347432
 - Local main: missing
-- Local integration/wasteland: ac94ef971fd8048bffe64fcedde81ed30b540e6c
+- Local integration/wasteland: efcb20be7ca0f0578b5ac6ef9eee88dba25bac26
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -111,6 +110,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit f96d19903748c849883b3ca1e514276de6347432.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: behind local; cached commit 6c320374a745681158d00ced92f6fae90bfe5d7a.
+- Remote origin/integration/wasteland: matches local; cached commit efcb20be7ca0f0578b5ac6ef9eee88dba25bac26.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.

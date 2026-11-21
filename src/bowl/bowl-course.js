@@ -9,6 +9,7 @@
 // graphics.
 
 import {createBowlOutside, outsideGateAt, terraceHeight} from './bowl-outside.js';
+import {dressBowlEvent} from './bowl-crush-field.js';
 
 // The centre line: two straights and two half circles. Lap distance `s` starts at
 // the beginning of the Jump Straight; `off` is minus towards the Spine. Each half
@@ -174,6 +175,7 @@ export function buildBowlFeatures(course) {
       halfZ: car ? 2.25 : 4.2, height: car ? 1.3 : 1.65,
       shape: 'box', color: colors[lane], bowlFire: kind === 'bowlBurningHeap'});
   }
+  dressBowlEvent(course);
   // A flame jet either side of each jump's crest: one on the Spine, one on top of the
   // stand wall, behind its catch fence (the fence stands at the wall's front edge). They are
   // data for the Bowl view; the simulation never advances or draws them.

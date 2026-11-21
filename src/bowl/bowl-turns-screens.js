@@ -3,7 +3,7 @@
 // They read the app's turnShowView() and state.bowlNight and never change race
 // state; buttons call the app's Turn Show methods. Every word is in bowl-lines.js.
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS, BOWL_TURN_LINES as WORDS} from './bowl-lines.js';
-import {crushRowName} from './bowl-night.js';
+
 import {TURN_SHOW_RULES} from './bowl-turns.js';
 import {BOWL_RIVALS} from './bowl-rivals.js'; // BOWL-RIVALS: the rivals' names on the card between goes
 
@@ -71,7 +71,10 @@ export function createTurnScreens({app, escapeHTML, eventGuide}) {
     const settled = go.settled ?? {};
     const lines = [WORDS.goScore(name, go.score, event), go.won ? WORDS.goWon : WORDS.goLost];
     // The row's name comes from the course's own crush line (bowlLayout), whatever size the Bowl is.
-    if (go.event === 'carCrush') lines.push(WORDS.goRows(name, go.rows > 0 ? crushRowName(app.duel.course, go.rows - 1) : null));
+    if (go.crush) {
+      lines.push(WORDS.goCrush(name, go.crush));
+      if (go.crush.fullHouse) lines.push(BOWL_RESULTS.eventFullHouse(go.crush.fullHouseBonus));
+    }
     if (go.event === 'sideBySide') lines.push(WORDS.goRace(name, go.won, BOWL_RIVALS[go.rival]?.name)); // BOWL-RIVALS: the rival by name
     if (go.event === 'lastTruckRolling') lines.push(WORDS.goKnockouts(name, go));
     for (const best of settled.bests || []) lines.push(WORDS.goBest(name, eventName(best)));
