@@ -34,6 +34,21 @@ Written by Claude on 20 November 2026, after playing Night 1, a Side by Side, a 
 by hand on Easy in a visible window (a test copy on a private port, memory-only saves). The slices are listed at the end.
 The round closes with Claude's drive by hand of every night and then Kyle's (`memory/play-by-hand-before-showing`).
 
+**Who it is built for (Kyle, 20 November 2026).** "don't worry about children losing too much. assume a pre-teen /
+tween. this isn't for 5 year olds." So:
+
+- Where this card says "a child", read a pre-teen. The scripted slow driver that the checks call child-pace (a late
+  reaction, 22 to 30 mph, a wobble in the steering) stands for that player on a first evening.
+- **Easy is won often, not almost always.** The gate for an Easy event is that the scripted slow driver wins at least 6
+  times in 10. Where that driver wins all ten, the Easy number is too low and goes up a step at a time until it does
+  not.
+- **Losing is allowed on every level.** No rule is kept only to stop a loss.
+- **The teaching is kept:** every move has a name and a picture of its keys, and a try that fails says why.
+- **Changed that day:** Car Crush's clock and count (section 1), Freestyle's Easy mark (section 2), the rivals' pace on
+  Easy (section 6), the Scrapasaurus's first tired spell and its second box (section 10), and the gates of the jump
+  events and the tour (section 11). The flips that finish themselves stay as written. They are how the keys work, and a
+  pre-teen is served by a tap that is a whole flip as much as a small child is.
+
 ### What the hand drive measured
 
 Each number is the one a slice has to beat.
@@ -73,7 +88,7 @@ Each number is the one a slice has to beat.
 2. **The truck never sticks and never wears out outside a fight.** Damage exists only in Last Truck Rolling and against the
    Scrapasaurus, where it is the point of the event.
 3. **Every move has a name, a picture of its keys and a pop-up when it is done.** A try that fails says why in one sentence.
-4. **One new thing each night**, named on the night's row in the picker, so a child sees what tonight adds.
+4. **One new thing each night**, named on the night's row in the picker, so the driver sees what tonight adds.
 5. **One keyboard, players in turn.** Driving keys are unchanged. **Space is the show key:** with another key it turns
    driving into a trick. Every new event must also work as one go in a Turn Show.
 
@@ -81,14 +96,16 @@ Each number is the one a slice has to beat.
 
 The first three seconds stay exactly as Kyle saw them, because the first crunch is good. The event then goes on.
 
-- **The clock:** 60 seconds (75 on Easy). The event no longer ends when the truck stops or leaves the line.
+- **The clock:** 60 seconds on every level (Easy had 75 until 20 November). The event no longer ends when the truck stops or leaves the line.
 - **What stands on the floor** in this event only (31 pieces; the other events keep today's line and nothing else):
   the line as today (15 pieces: three rows of cars, the buses and RV, the burning stacks); **the Row**, five junk cars
   side by side on the Jump Straight's stand side, which one pass across the floor takes all at once; three **pancake
   cars**, one where a full speed truck comes down off each kicker and one off the Table; **the Bus Pile** in the open
   middle of End 2, two buses with a third across their roofs, which gives way only to a truck at 30 mph or more or one
   coming down on it; and five single cars scattered in the open middle of End 1.
-- **The goal is a count:** "CRUSHED 7 OF 10". Easy needs 10 of the 31, Medium 18, Hard 26. Crushing all 31 is a **Full
+- **The goal is a count:** "CRUSHED 7 OF 14". Medium needs 18 of the 31 and Hard 26. Easy is set by measurement: the
+  highest count that the scripted slow driver reaches at least 6 times in 10, and never more than 16 (it was 10, which
+  that driver was to reach 9 times in 10). Crushing all 31 is a **Full
   House**: Big Mo calls it and every second left on the clock pays 20 points.
 - **Chain:** each piece crushed within 3 seconds of the last raises the chain by one, and each link adds a quarter to the
   points, up to two and a half times. The chain shows as "CHAIN x3" and falls back to nothing after 3 seconds.
@@ -170,13 +187,15 @@ truck that rights itself at the end of the fall. Each helps, but the key would s
 moment, and that is the thing a child cannot do. Card BOWL-TRICKS-ALL, part 1.
 - **The crowd is the multiplier**, as today (points times one to two), now written on the meter: "CROWD x1.4". The first
   time each kind of trick is done in an event it pays one and a half times and the pop-up says NEW. The same kind done
-  again and again pays four fifths of the last time, down to two fifths; another kind in between sets it back. A child
-  who has found the backflip is pushed, gently, to find the next thing.
+  again and again pays four fifths of the last time, down to two fifths; another kind in between sets it back. A driver
+  who has found the backflip has a reason to find the next thing.
 - **Freestyle's target becomes a rival's score.** Each night one rival has "already been round" and that rival's score is
   on the board: "BEAT OLD BESS: 300". The three levels' scores are set by measurement with
-  `tools/bowl-freestyle-balance.mjs` and three scripted drivers: Easy is won 9 times in 10 by a child-pace driver who uses
-  the kickers, wheelies and donuts and no flips; Medium needs single flips and one big jump; Hard needs doubles or combos.
-  Starting numbers before measurement: 300, 800 and 1,500.
+  `tools/bowl-freestyle-balance.mjs` and three scripted drivers. Easy is won at least 6 times in 10 by a slow driver who
+  lands single flips off the Table and the Big Jump, with wheelies and donuts between them, and a driver who uses no
+  flips falls short at least 8 times in 10. Medium needs a double or two kinds of flip and the Big Jump. Hard needs
+  doubles and combos. The marks as built are 310, 1,810 and 4,260. The Easy mark of 310 was measured for a driver with no
+  flips, before a tap was a flip, so one clean flip beats it; it goes up on BOWL-FINISH's list (starting number 800).
 
 **Secret tricks (Kyle, 20 November 2026).** "We could honestly build in some super crazy spin flips with key combos...
 a couple of things like up up up down up, or up up down down left right left right... just a bunch of mystery combos to
@@ -290,12 +309,13 @@ off; a duller flat crunch for a wreck run over again; a heavier hit with a low t
 ### 6. Rivals that compete
 
 - **Pace is set against the driver's own lap,** not as a top speed. A clean lap of a lane is measured for the show truck
-  (about 17 seconds). On Easy a rival takes 1.35 times that (Old Bess 1.45), so a child who meets a wall once still
-  wins; on Medium 1.12 times; on Hard the same as a clean lap, and Dragon Wagon a little under.
+  (about 17 seconds). On Easy a rival takes about 1.2 times that (Old Bess 1.3), so a driver who meets a wall once can
+  still win and one who meets it twice does not. Both numbers are set by measurement on BOWL-FINISH's list; as built
+  they are 1.35 and 1.45, written for a small child. On Medium 1.12 times; on Hard the same as a clean lap, and Dragon Wagon a little under.
 - **Close at the line:** on Easy and Medium a rival more than 25 m ahead eases off by up to 15 percent and one more than
   25 m behind pushes by up to 8 percent. Never on Hard.
 - **Side by Side is twice round**, about 35 to 40 seconds. The rivals take their jumps, brake for the turn, and each makes
-  a mistake of its own that a child can watch for: Old Bess runs wide in the turn, Rust Rhino brakes late and brushes the
+  a mistake of its own that the driver can watch for: Old Bess runs wide in the turn, Rust Rhino brakes late and brushes the
   wall, Tin Lizard is quick in the turn and slow on the straight, Big Kettle takes 1.6 seconds to get going and is then
   the fastest in a straight line, Dragon Wagon flips over the last kicker for the crowd and loses half a second doing it.
   The finish gate's lamps show who won before the card comes up.
@@ -334,7 +354,7 @@ Speeds are the truck's speed straight into the wall, not along it.
 ### 9. Weapons for Last Truck Rolling (Kyle's "Last Truck Standing")
 
 Three bolt-on show weapons in the manner of robot fights: close range, one key (F), each with a tell before it lands and
-a rest after it, so that a child can see a hit coming and get out of its way.
+a rest after it, so that the driver can see a hit coming and get out of its way.
 
 | Weapon | What it does | Tell and rest | Good for |
 | --- | --- | --- | --- |
@@ -361,7 +381,7 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
 - **Option A, Claude's pick: tear the boxes out with a tow hook.** When it tires, a box opens. The driver fires a hook
   at the glowing box (F), drives away until the cable is tight, and pulls until the box comes out. The verb is the
   truck's own strength, and a pull is a real monster truck show event that nothing else in the night uses. There is no
-  line to find and no landing to hit: the hook finds the open box by itself, so a child needs only F and the throttle.
+  line to find and no landing to hit: the hook finds the open box by itself, so the first box needs only F and the throttle.
   A tight, glowing cable between truck and beast says what is happening from anywhere on the floor. On the later boxes
   it gives the driver a real choice, to hold on or to let go. It reuses the harpoon the game already has.
 - **Option B: knock it over.** When it tires it sways; a ram into a hind leg at 25 mph or more topples it onto its side,
@@ -378,7 +398,7 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
 - **It is solid.** Its legs, body and tail bounce a truck off by the wall rules. A truck never passes through it.
 - **It comes to the driver.** It bursts out of the Car Park Gate beside the truck to begin, walks its rails by the shorter
   way round towards the truck, and breathes its first fire within 8 seconds. No more waiting for it to come round.
-- **The loop, in three beats a child can say back:** it rears and its chest glows, so get out of the orange on the floor;
+- **The loop, in three beats that a driver can say back:** it rears and its chest glows, so get out of the orange on the floor;
   it breathes fire into exactly that orange; then it is **tired**: it sags with its head low and steam coming off it,
   one battery box opens, and a beam of light stands up from that box, tall enough to see from anywhere on the floor.
   Hook the box and pull it out.
@@ -387,7 +407,7 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
 - **The tow hook** is bolted on for this event in place of the night's weapon, and Big Mo says so. F fires it. When an
   open box is within 25 m and within 60 degrees of the truck's nose, the hook flies to the steel ring on that box by
   itself, and the marker over the box shows the F key whenever a shot would bite. Fired at any other time it flies 15 m,
-  falls and winds back in; a hook that strikes the beast anywhere but an open box clangs off, which tells a child "not
+  falls and winds back in; a hook that strikes the beast anywhere but an open box clangs off, and the clang means "not
   yet". The cable is 15 m long. F again lets go.
 - **The pull.** Drive away. When the cable is tight and the throttle is held, the truck strains with its nose up and its
   wheels throwing dirt, and a ring round the box fills. Nitro (Space) pulls twice as hard. A truck that reaches the end of
@@ -396,19 +416,46 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
 - **Three boxes, each a little more of a fight:**
   1. **The hip.** It stays down. A pull of 2 seconds on Easy (3 on Medium and Hard) brings the box out.
   2. **The back.** After a second of pulling it braces its legs and pulls back, dragging the truck towards it. Nitro or a
-     jerk wins; on Easy the throttle alone still wins, in 4 seconds.
+     jerk wins, and the throttle alone does not, on every level. Easy asks for the shortest pull (3 seconds; 4 on
+     Medium, 5 on Hard). Until 20 November the throttle alone won on Easy, and the scripted driver then won all ten
+     tries without touching Space.
   3. **Behind the head.** As the cable goes tight it lifts its head and its chest glows: the fire will come down the
      cable. The driver swings to one side at the cable's end and keeps pulling, or lets go with F and comes back.
 - **A box that comes out** flies out in a shower of sparks, the truck leaps forward, and the box bounces along behind on
   the cable until the driver lets go.
 - **Angrier each time:** after the first box its fire sweeps from side to side; after the second it also throws cars (a
   ring on the floor first, as today).
+- **Lasers and bombs (Kyle, 20 November 2026).** "maybe scrapasuarus should be able to shoot lazers or bombs at you."
+  It gets both, one with each box that comes out, on a card of their own (BOWL-REX-3) so that BOWL-REX-2 is not held.
+  - **The eye beam, after the first box.** It drops its head and its eyes turn red. A thin red line on the floor follows
+    the truck (1.8 seconds on Easy), then stops, turns orange and widens (0.7 seconds), and the beam burns along it for
+    half a second, 60 m long. The way out is to drive across the line and not along it. Being far away does not help,
+    which is what sets it apart from the fire. A truck in the air goes clean over it, and Big Mo calls that.
+  - **Bombs, after the second box.** One is lobbed onto a ring on the floor, as a car is. It lies there ticking (10
+    seconds on Easy) inside a ring 7 m in radius, and bursts: keep out of the ring. **The rings are barely there.**
+    Kyle, 20 November 2026: "don't mark the bombs on the floor so obviously... the colour contrast should be close to
+    the colour of the ground. like really close." Each ring is the floor's own colour made 4 points of Lab lightness
+    darker (never less than 3 or more than 5), with no new hue, no glow, no outline and no flashing. The bomb's
+    whistle, its shadow growing on the floor and its quickening tick carry the timing. **The hook takes a bomb.** The F
+    marker shows over it, and a bomb dragged into the beast's legs bursts there: it staggers and sags at once, that
+    tired spell is not counted against the driver, and the box that opens is already a second pulled. So the beast's
+    own weapon is the quickest way to its last box, for a driver who dares to go and fetch it.
+  - **Orange for the fire and the beam, almost nothing for the bombs.** The floor shows orange where the fire and the
+    beam will burn, before they burn, and that is learned on the first two boxes. The bombs come last and ask the
+    driver to look harder. Nothing new has to be explained on the card before the fight, and a bomb that catches the
+    driver says why once ("watch for its shadow on the floor").
+  - **How much at once:** on Easy it makes one extra attack each time it gets up, never two. On Medium and Hard, with
+    two boxes out, it throws when it gets up and fires the beam between its two breaths of fire; on Hard the beam fires
+    twice running.
+  - Not picked: bombs that only burst where they land (those are thrown cars with another picture), and a beam that
+    sweeps (the fire already sweeps).
 - **How the driver learns it.** A card before the fight has three pictures and three short sentences: get out of the
   orange; when it sags, hook the glowing box with F; drive away and pull until the box comes out. During the fight the
   goal line is never longer than five words and changes with the beast: "GET OUT OF THE ORANGE", "HOOK THE GLOWING BOX",
   "DRIVE AWAY AND PULL", "KEEP PULLING", "TWO BOXES LEFT". Its three boxes are three battery pictures at the top of the
-  screen; the driver's scorches are the health bar. On Easy it stays tired the first time for up to 45 seconds or until
-  the first box is out, so the first lesson cannot be missed. A try that fails says why: "The hook only bites a glowing
+  screen; the driver's scorches are the health bar. Its first tired spell is as long as any other
+  (Easy's first spell of up to 45 seconds went on 20 November: a driver who misses the first one meets the next after
+  the next fire, and what has been pulled is kept). A try that fails says why: "The hook only bites a glowing
   box, so wait until it sags." "The cable was slack, so drive away until it is tight." "It pulled you in, so press Space
   as you pull."
 - **Losing:** too many scorches (five on Easy, four on Medium, three on Hard), or it has tired six times (five on Medium
@@ -441,6 +488,9 @@ Three new events, each three goes with the truck put back on its run-up after ea
   through a gate inside 30 seconds for the next go. Easy needs one go over the wall, Medium one landing on the target,
   Hard one in its middle ring.
 
+The Easy numbers of these three are starting numbers. The gate is that the scripted slow driver wins Easy at least 6
+times in 10 (it was 9), and an Easy number goes up a step (a bus, a metre, a ring) while that driver still wins all ten.
+
 **More nights, at Titan Stadium.** Nights 6 to 8 are a tour, after the first release:
 
 - **Night 6, Race Night** and **night 7, Stunt Night** are held at Titan Stadium, the Titan Monster Arena course that is
@@ -458,7 +508,7 @@ tricks there; the night's card says so when the chosen vehicle is too light for 
 
 Each is a card on the board with its files, locks, checks and sound cues. Each Codex card names its model (Kyle, 20
 November 2026: graphics and physics for Astra, the rest for Sol): **Astra** builds BOWL-WALLS, BOWL-TRICKS,
-BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS and BOWL-REX-2; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
+BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2 and BOWL-REX-3; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
 BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS and BOWL-TOUR. Nights 1 to 5 are the first release; BOWL-TOUR
 follows it.
 
@@ -477,6 +527,7 @@ follows it.
 | BOWL-WEAPONS | Codex | hammer, saw and launcher as rules; health as the one measure | 7, 9 |
 | BOWL-WEAPONS-LOOK | Claude | the weapons, rivals' bolt-ons and damage drawn | 7, 9 |
 | BOWL-REX-2 | Codex | the Scrapasaurus fight remade | 10 |
+| BOWL-REX-3 | Codex | the eye beam, and bombs that the hook can send back (Kyle, 20 November) | 10 |
 | BOWL-REX-LOOK | Claude | the tired pose, the hook and cable, the beams and the fire drawn | 10 |
 | BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump, Home Run | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |
@@ -486,3 +537,9 @@ follows it.
 
 Words on screen and Big Mo's lines: the builder writes each new line as one full plain sentence
 (`memory/dialogue-plain-prose`), and Claude reads every line during the closing drive.
+
+## How these slices are tested from 20 November 2026 (AGENTS rule 23)
+
+Every slice is behind `titan-bowl` or `arena-tricks`, so each runs rule 23's small set and merges first; the wide suites run on
+the merged batch at night, and Claude drives the merged game in batches. The slices that change the save (BOWL-TRICK-SCHOOL,
+BOWL-NIGHTS, BOWL-TOUR, and the secret-trick record of BOWL-TRICKS-ALL) keep the save checker's review before they merge.

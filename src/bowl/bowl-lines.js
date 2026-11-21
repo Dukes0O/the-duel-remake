@@ -6,6 +6,8 @@
 
 // The sound each new Show Night event makes. Until the Bowl's own sounds are
 // picked (BOWL-FINISH), each plays the stand-in named beside it.
+import {SECRETS} from './bowl-secrets.js';
+
 export const BOWL_SOUND_CUES = Object.freeze({
   // BOWL-REX-FIGHT: the Scrapasaurus (src/bowl/bowl-rex.js REX_CUES), each on a stand-in.
   'bowl.rex.roar': 'yeti.roar',             // it rears up and its chest glows: fire is coming (the tell)
@@ -13,21 +15,35 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.fire.end': 'weapon.flame.end',  // the fire stops
   'bowl.rex.scorch': 'vehicle.crash-impact', // the fire or a thrown car catches the player's truck
   'bowl.rex.box.open': 'weapon.tesla.charge', // it crouches to rest and a battery box opens, sparking
-  'bowl.rex.box.close': 'raider.warning',   // the rest is over and the box closes
-  'bowl.rex.box.smash': 'weapon.tesla.pulse', // the truck lands on the open box and smashes it
   'bowl.rex.bump': 'vehicle.crash',         // the truck runs into its legs and is pushed away
   'bowl.rex.lift': 'world.salt.horn',       // it picks up a junk car to throw, and the ring shows on the floor
   'bowl.rex.throw': 'heli.setdown.thud',    // the junk car leaves its jaws
   'bowl.rex.throw.land': 'vehicle.crush',   // the junk car comes down in the ring
-  'bowl.rex.eat': 'vehicle.crush',          // it eats a junk car to mend its limp
+  'bowl.rex.burst': 'world.furnace.horn',
+  'bowl.rex.sag': 'weapon.flame.end',
+  'bowl.rex.rise': 'raider.warning',
+  'bowl.rex.sweep': 'weapon.flame.start',
+  'bowl.rex.brace': 'yeti.roar',
+  'bowl.hook.fire': 'weapon.harpoon.fire',
+  'bowl.hook.bite': 'heli.setdown.thud',
+  'bowl.hook.clang': 'vehicle.crash',
+  'bowl.hook.jerk': 'vehicle.crash-impact',
+  'bowl.hook.letgo': 'interface.radar',
+  'bowl.rex.box.out': 'weapon.tesla.pulse',
   'bowl.rex.fall': 'combat.explosion',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'world.furnace.horn',    // it walks out through the car park gate
-  'bowl.rex.drop': 'vehicle.crash',         // it drops a junk car on its rails to launch off
   'bowl.out.over': 'crowd.cheer',
   'bowl.out.leap': 'interface.win',
   'bowl.out.gate': 'world.furnace.horn',
   'bowl.out.back': 'interface.bonus',
   // bowl.out.stands is named by the event for BOWL-SOUND to supply.
+  'bowl.secret.start': 'weapon.tesla.pulse',
+  'bowl.secret.found': 'interface.win',
+  'bowl.secret.cheer': 'crowd.cheer',
+  'bowl.secret.armed': 'world.furnace.horn',
+  'bowl.secret.hint': 'interface.radar',
+  'bowl.trick.late': 'interface.radar',
+  // bowl.trick.go is the turn-start rush, with no stand-in.
   'bowl.trick.land': 'interface.bonus',
   'bowl.trick.new': 'interface.win',
   'bowl.trick.slam': 'vehicle.crash',
@@ -118,13 +134,15 @@ export const BOWL_EVENT_NAMES = Object.freeze({
 const FREESTYLE_SCORE_NAMES = ['Old Bess', 'Rust Rhino', 'Tin Lizard', 'Big Kettle', 'Dragon Wagon'];
 export const BOWL_GOALS = Object.freeze({
   // BOWL-REX-FIGHT: what to do now, by what the Scrapasaurus is doing.
-  scrapasaurus: ({phase, left = 3, last = false} = {}) => phase === 'tell' || phase === 'fire'
-    ? 'Fire is coming, so get out of the orange on the floor and stay out until it stops.'
-    : phase === 'rest' ? 'A battery box is open, so drive fast up the junk car on its rails and land on its back.'
-      : phase === 'lift' || phase === 'throw' ? 'It is going to throw a car, so keep moving and stay out of the ring on the floor.'
-        : phase === 'fallen' ? 'It is falling over, so stay back and enjoy it.'
-          : last ? `It is heading for the car park gate, and you still have ${REX_BOXES[left]} to smash.`
-            : `Smash ${REX_BOXES[left]}. It rests after it breathes fire on the Jump Straight, so meet it there.`,
+  scrapasaurus: ({phase, hook, boxes = []} = {}) => {
+    if (phase === 'fallen') return 'THE SCRAPASAURUS IS DOWN';
+    if (hook?.phase === 'attached') return hook.tight ? 'KEEP PULLING' : 'DRIVE AWAY AND PULL';
+    if (phase === 'tell' || phase === 'fire') return 'GET OUT OF THE ORANGE';
+    if (phase === 'lift' || phase === 'throw') return 'Dodge the thrown car.';
+    if (hook?.phase === 'dragging') return 'PRESS F TO RELEASE';
+    if (phase === 'rest') return 'HOOK THE GLOWING BOX';
+    return ['WATCH THE SCRAPASAURUS','TWO BOXES LEFT','ONE BOX LEFT'][boxes.filter(Boolean).length];
+  },
   carCrush: target => `Drive straight down the line and crush everything you can. Reach ${target} to go on.`,
   freestyle: (target, night = 1) => `Beat ${FREESTYLE_SCORE_NAMES[night - 1] ?? FREESTYLE_SCORE_NAMES[0]}: ${target}.`,
   sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
@@ -134,7 +152,6 @@ export const BOWL_GOALS = Object.freeze({
 });
 
 // The Scrapasaurus's battery boxes still to smash, as a person would say it (BOWL-REX-FIGHT).
-const REX_BOXES = ['no battery boxes', 'its last battery box', 'two more battery boxes', 'its three battery boxes'];
 
 // A row of the Car Crush line, named by what stands in it (the rows come from the course).
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
@@ -147,6 +164,9 @@ export const BOWL_CRUSH_ROW = Object.freeze({
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
 export const BIG_MO = Object.freeze({
+  ...Object.fromEntries(SECRETS.map(trick => ['secret.' + trick.id, 'You found the ' + trick.name.slice(4) + '!'])),
+  'secret.all': 'You have found every secret trick in the show!',
+  'secret.armed': 'Something has got into that engine!',
   // BOWL-REX-FIGHT: the Scrapasaurus. Nights one to four end with a hint of what waits for night five.
   'rex.seen.1': 'Did anybody else hear a roar under the stands just now? No? Good, then it was probably my tummy.',
   'rex.seen.2': 'Something under the stands ate our spare tyres again. I am sure it is nothing to worry about.',
@@ -155,16 +175,16 @@ export const BIG_MO = Object.freeze({
   'rex.seen.4': 'Our driver has beaten every truck in the Bowl, so next time I will have to open the big gate under the stands. I am a little bit scared.',
   'event.scrapasaurus.intro': 'You beat every truck in the Bowl, so here is the Scrapasaurus! It is heading for the car park gate, and if it gets out it will eat every car in the car park.',
   'rex.tell': 'Look at its chest glowing. That means fire is coming, so get out of the orange on the floor.',
-  'rex.rest': 'It has stopped to cool down and dropped a junk car on its rails. Drive up that car and land on its back!',
-  'rex.rest.last': 'This is its last rest before the car park gate, so drive up that junk car and land on that box!',
-  'rex.smash.1': 'One battery box is smashed! Now it is limping, and it will want a snack.',
-  'rex.smash.2': 'Two battery boxes are gone! One more landing and it will fall over.',
-  'rex.smash.3': 'That was the last battery box! Everybody stand back, because it is going to fall.',
+  'rex.rest': 'The cage is up. Face the glowing box and fire your hook with F!',
+  'rex.out.1': 'One box is out! Press F to drop it. Two to go.',
+  'rex.out.2': 'Two out! Let that one go. The last eye is behind its head.',
+  'rex.out.3': 'All three are out! Look at it fall!',
+  'rex.noBox': 'The box was shut. Wait for the cage to open.',
+  'rex.slack': 'The cable is slack. Drive away until it goes tight.',
+  'rex.brace': 'It pulled you in, so press Space as you pull.',
   'rex.scorch': 'Ouch, that truck got toasted. Keep out of the orange next time.',
-  'rex.bump': 'You cannot push it over from the ground. You have to land on its back.',
+  'rex.bump': 'Circle its legs and aim for the open eye.',
   'rex.lift': 'It has picked up a car to throw! Keep moving and stay away from the ring on the floor.',
-  'rex.eat': 'It is eating a junk car to get its strength back. That is disgusting, and the crowd loves it.',
-  'rex.ate': 'It has finished its snack, so it is not limping any more.',
   'rex.gone': 'It walked straight out of the gate and into the car park. The crowd is not happy about their cars.',
   'rex.toasted': 'That truck has been toasted too many times, so we have to stop the show and cool it down.',
   'event.won.scrapasaurus': 'The Scrapasaurus is down, and the crowd is going wild! It will make a lovely ornament for your yard.',
@@ -222,9 +242,9 @@ export const BIG_MO = Object.freeze({
 export const BOWL_RESULTS = Object.freeze({
   // BOWL-REX-FIGHT: how the fight with the Scrapasaurus ended.
   eventRex: ({boxes = 0, reason} = {}) => [
-    boxes === 3 ? 'You smashed all three of its battery boxes, and it fell over.'
-      : boxes === 0 ? 'You did not smash any of its battery boxes.'
-        : `You smashed ${boxes === 1 ? 'one' : 'two'} of its three battery boxes.`,
+    boxes === 3 ? 'You pulled out all three battery boxes, and it fell over.'
+      : boxes === 0 ? 'Its three battery boxes are still in place.'
+        : `You pulled out ${boxes === 1 ? 'one' : 'two'} of its three battery boxes.`,
     reason === 'gate' ? 'It reached the car park gate before you could stop it.'
       : reason === 'toasted' ? 'Its fire and its junk caught your truck too many times.' : null,
   ].filter(Boolean),

@@ -19,8 +19,11 @@ pieces crushed and ten never touched.
    the open middle of End 2 (two buses with a third across their roofs; it gives way only at 30 mph or more, or to a truck
    coming down on it); five single cars in the open middle of End 1. No piece stands on a jump, within 8 m of a jump's
    foot on its run-up, or within 3 m of a wall. Every other event keeps today's line and nothing else.
-2. **The event:** 60 seconds (75 on Easy). It does not end when the truck stops or leaves the line. The goal is a count:
-   Easy 10 of the 31, Medium 18, Hard 26. All 31 is a Full House and each second left pays 20 points.
+2. **The event:** 60 seconds on every level. It does not end when the truck stops or leaves the line. The goal is a
+   count: Medium 18 of the 31, Hard 26. **Easy is set by measurement** (Kyle, 20 November 2026: the player is a pre-teen,
+   and Easy is won often, not almost always): the highest count that the scripted slow driver reaches on at least 6 of
+   ten seeds in the 60 seconds, and never more than 16. Report the ten counts in the change note. All 31 is a Full House
+   and each second left pays 20 points.
 3. **Chain:** each piece within 3 seconds of the last adds a link; each link adds a quarter to the points, up to two and a
    half times. **Pancake:** a piece crushed by a truck coming down out of the air pays three times.
 4. **Points:** a car 35, a bus or the RV 60, a burning stack 80, the Bus Pile 200.
@@ -37,7 +40,8 @@ picture shows the field). Locks: `bowl-night`, `bowl-floor`.
 ## Checks
 
 1. `tools/test-bowl-night.mjs`: a truck held on W with no steering crushes five pieces and the event runs its full
-   60 seconds; a scripted child-pace driver reaches 10 on Easy at least 9 times in 10; a chain of four pays as the rule
+   60 seconds; a scripted child-pace driver reaches the Easy count at least 6 times in 10 and
+   does not reach it on all ten; a chain of four pays as the rule
    says; a pancake pays three times; 31 crushed ends in a Full House.
 2. `tools/test-bowl-course.mjs`: the field's clearances; Freestyle, Side by Side and Last Truck Rolling are built without
    it; the Bowl's world signature re-recorded if it is pinned, with the reason in the change note.
@@ -92,3 +96,17 @@ May the Car Crush dressing shift the five outer pieces inward by 0.95 m, leaving
 The solo result card and the shared-keyboard Turn Show both still say which row the driver reached. May I replace those two lines in `src/bowl/bowl-screens.js` and `src/bowl/bowl-turns-screens.js` with the number of pieces crushed and the Full House bonus? This also needs the one result-copy field in `src/bowl/bowl-turns.js` to pass the count and bonus to its screen. The Turn Show's scores and purse still use their existing rules.
 
 The older HUD, camera and Turn Show tests name the old count, early finish or straight-throttle win. I will keep their exact UI, two-second camera and progression checks with the new count and full clock, then submit the changed assertions for written review. The Easy preflight route has reached ten on the existing floor in 41.8 seconds by taking the same two lanes at 27 mph.
+
+## Builder measurements and assertion review, 20 November
+
+The playable field and rules are in `codex/bowl-crush` at `add973184`. The ten Easy counts are 14, 13, 12, 12, 12, 13, 14, 13, 12, 14. Easy needs 13, the highest count reached by six of ten. Medium and Hard need 18 and 26. With W held and no steer the same original five props crush in order and the full minute runs. Both kickers and the Table produce a real triple-point Pancake. One crosswise pass crushes all five of the Row. The pile stays up at 29 mph, comes down at 30, and also comes down from a roof crossing at 17 mph. A Full House at 12 seconds pays 960.
+
+For rule 18: the exact HUD label is now “Crush 13 pieces.” and the counter reads “CRUSHED 7 OF 13.” The idle HUD test still checks the precise fresh loss and the absent stale captions at the end of the full minute. The old row-share and short-run wins become exact Medium and Hard counts, a six-of-ten measured Easy count and a separate exact five-hit unsteered loss. The two-pass driver still wins the Show Night and Turn Show drives, and they still check wear, the event order, purse and saved scores. The camera still checks the 90-degree swing in two seconds and the final hold, timed after the full race. The App renderer fixture now requires all 31 Car Crush pieces and the same flame jets. Freestyle, Side by Side and Last Truck Rolling are separately checked for the original 15 props.
+
+The focused runs passed: Show Night 305, camera 70, Turn Show 307, plus the HUD and course checks. The playable browser route is in `bowl-night-pay`; it wins by count before it advances. The result screen still needs the two lines and the result-copy field requested above. Please grant those so the browser pictures will show the new result, then run the scenario on the final build.
+
+## Grouped crush sound and the roof check, 20 November
+
+The independent review reproduced a slow side hit being called a Pancake if the truck passed roof height before it actually reached the Bus Pile. The fix at `4b21844a6` requires overlap at the roof crossing. The reviewer confirmed the exact regression, and all 306 Show Night checks pass. The actual browser input adapter also reached 13 pieces in one minute with a memory-only App, then restored the original driver.
+
+One sound hook remains. When all three buses collapse at once, `src/audio.js` only marks the first bus as freshly crushed. The reviewer heard a “flat” crunch on a second bus on the first pass, before the truck touched any old wreck. Please grant one small change in `_bowlCrush` to mark every ID in the grouped burst fresh, with one audible pile impact. Later passes still use the flat sound. Separate chain links will each get a short tick, using the existing Bowl score cue route.

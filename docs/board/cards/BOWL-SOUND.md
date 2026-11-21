@@ -25,6 +25,9 @@ Each building card names its cues and points each at a stand-in already in the s
 - **BOWL-REX-2:** the eleven kept `bowl.rex.*` cues and `bowl.rex.burst`, `bowl.rex.sag`, `bowl.rex.rise`,
   `bowl.rex.sweep`, `bowl.rex.brace`, `bowl.rex.box.out`, `bowl.rex.box.drag`, `bowl.hook.fire`, `bowl.hook.bite`,
   `bowl.hook.clang`, `bowl.hook.tight`, `bowl.hook.jerk`, `bowl.hook.letgo`.
+- **BOWL-REX-3:** `bowl.rex.eyes.aim`, `bowl.rex.eyes.lock`, `bowl.rex.beam`, `bowl.rex.beam.over`,
+  `bowl.rex.bomb.hatch`, `bowl.rex.bomb.launch`, `bowl.rex.bomb.whistle`, `bowl.rex.bomb.land`, `bowl.rex.bomb.tick`,
+  `bowl.rex.bomb.burst`, `bowl.rex.stagger`.
 - **BOWL-JUMP-EVENTS:** `bowl.go.ready`, `bowl.long.clear`, `bowl.high.clear`, `bowl.high.fail`, `bowl.home.ring`.
 - **BOWL-NIGHTS:** `bowl.night.open`, `bowl.night.new`.
 - **Already in the game on stand-ins:** `bowl.mo`, `bowl.crowd.rise`, `bowl.event.won`, `bowl.event.lost`, `bowl.purse`,

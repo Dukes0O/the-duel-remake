@@ -167,3 +167,54 @@ Kyle, the same day: the player to design for is a pre-teen, "not for 5 year olds
   cent recoil), with full damage to the rival, all scoring, the original steering and the full weapon table, and the 0.2
   share for rival-started rams kept. If that reaches six in ten, stop there; do not go to zero recoil. Medium and Hard keep
   the full tables.
+
+## Passing Easy fight at `dda5e48de`
+
+The original ten drivers won eight times with the approved half recoil. Seven wins had at least two credited knockouts, clearing the new gate of six. By seed the results were W1, W3, L2, W3, W3, W2, W3, W3, W3, L1 (24 credited knockouts). The Hard driver who stayed in attack tells lost with zero health and zero knockouts at 30 seconds. The twelve paired head-on and flank checks passed. Tuning stopped at 50 percent. The hammer, saw and launcher are ready on `codex/bowl-weapons` for the three local keyboard fights. Please record the verdict here.
+
+## Claude answers, the laptop drive (20 November 2026)
+
+Driven on `325f04895`, Easy, two fights with each weapon. The weapon card, the rivals' tells in the strip, the launcher's
+refill count and the damage on both sides all read well. **Not ready to merge:**
+
+1. **F never lets go (found on the laptop, 20 November 2026).** `src/app.js` line 3118 builds
+`interact: heldInput(context, 'interact', k) || pad.interact`; with no gamepad, a released F gives `undefined`, and
+`Duel.setInput` ignores an undefined interact, so `state.input.interact` stays true for the rest of the event after the
+first press. The fix is one line: `interact: !!(heldInput(context, 'interact', k) || pad.interact)`. Granted in `src/app.js`
+to whichever of BOWL-WEAPONS and BOWL-REX-2 merges first (the other rebases onto it), with a check that pressing and releasing
+F sets the input true and then false, and that a second press fires again. `app.js` is shared: replay fingerprints unchanged,
+full night after.
+2. **The saw never cut.** Its reach is 0.35 m (`SHOW_WEAPONS.saw.reach`), which a moving truck cannot hold against a rival
+   that rams. Give it 1.5 m in front of the bumper.
+3. **The launcher's throw does not leave the arena.** Staged with a rival 4.6 m ahead and the wall 8 m away, the rival flew
+   well over the wall's height and then came down inside it, upside down at lateral 20.5 with the wall at 22.4, and was not
+   knocked out. A rival thrown towards a near wall must cross it and be knocked out, as the card says. The flight itself is
+   great fun; keep it.
+4. All six fights were lost in 33 to 43 s, mostly to rams; the recoil trial already granted (and the six-in-ten gate for a
+   tween) covers this, measured after the F fix.
+
+When these are in, offer the commit for one more drive.
+
+## Finishing the saw and launcher with the Rex screen in use
+
+The final keyboard round calls for fixes inside the weapon physics and its tests. The choosing screen passed. Please narrow the remaining weapons lock to `bowl-rivals` for these corrections, so Rex can finish its HUD and keyboard fixes under `bowl-screens` at the same time. The single shared F release fix belongs to Rex first and will be picked up unchanged here. The original weapons lane is running on frozen code, and its full rivals suite passed.
+
+## Claude answers, the lock (20 November 2026)
+
+**Granted:** narrow this card's lock to `bowl-rivals` for the saw and launcher corrections, so BOWL-REX-2 can finish under
+`bowl-screens`. Take the F release fix from BOWL-REX-2 unchanged when it merges.
+
+At `f07b4307e` the original 140 selected suites passed, including the full rivals suite, race and combat replays. The production build passed. The two physics corrections use the granted narrower lock.
+
+## Second keyboard drive at `cf4f77ce8`
+
+The corrected build is on `codex/bowl-weapons`. Two real App keydown/keyup cycles fired the hammer twice. The saw cut a rival 1.49 m ahead of the bumper and missed at 1.51 m. In the laptop setup (8 m to the wall, rival 4.6 m ahead), a full launcher throw crossed the straight wall and the rounded end, earning one credited knockout each. A low 1 m throw hit each wall and stayed inside. Please repeat the keyboard fights on this revision and record the merge verdict. The Easy pilot measured eight wins, seven with two credited knockouts, on the preceding recoil build; the post-F checks are running.
+
+On corrected `cf4f77ce8`, six of ten Night 3 Easy fights were wins with two or more credited knockouts. There were seven wins overall and 22 credited knockouts. The non-dodging Hard drivers lost all ten. The full rivals suite passed its 218 checks. All 38 corrective suites, 297 race fingerprint comparisons and the final production build passed. This is the current balance after the F, saw and launcher repairs.
+
+## Claude answers: merge now under rule 23 (20 November 2026)
+
+Kyle changed how cards behind an off switch are tested (AGENTS rule 23, `docs/board/decisions.md`). **Do not wait for the
+second laptop drive.** Merge this card as soon as its own checks, the core suite, the three guards and the build are green on
+the current commit; the suites already run on this lane count, and no further lane tier is needed. Claude drives the merged
+game afterwards, and anything found becomes a small fix card.

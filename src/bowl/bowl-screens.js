@@ -8,7 +8,7 @@ import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from '
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {chooseShowWeapon, SHOW_WEAPONS} from './bowl-weapons.js';
 import {BOWL_RIVALS} from './bowl-rivals.js';
-import {BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
+import {arenaTrickStrip, secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -17,13 +17,24 @@ const button = (label, action, extra = '', primary = false) =>
 export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   let pickerFrom = null, level = null, openingNight = null, help = null;
   const renderHud = createBowlHud({stage: ui.stage, app, projectPlayer});
-  const turns = createTurnScreens({app, escapeHTML});
+  const turns = createTurnScreens({app, escapeHTML, eventGuide});
   const say = text => `<p>${escapeHTML(text)}</p>`;
   // A card shows Big Mo's line for what just happened, whatever he is still saying aloud.
   const moLine = id => BIG_MO[id] ? `<p class="bowl-mo">${escapeHTML(BIG_MO[id])}</p>` : '';
   const night = () => app.duel.state.bowlNight ?? null;
+  let fallenEvent=null, firstFallFrame=0;
+  function resultReady(show){
+    const event=show?.event;
+    if(event?.rex?.phase==='fallen'){
+      if(fallenEvent!==event){fallenEvent=event;firstFallFrame=performance.now();}
+      if(performance.now()-firstFallFrame<10000)return false;
+    }else fallenEvent=null;
+    return bowlResultReady(show);
+  }
 
-  const eventIsRunning = state => !!state.bowlNight?.event && ['countdown', 'racing'].includes(state.status);
+  const arenaShow = state => app.duel.course?.def?.tricks && !app.duel.course.def.bowl &&
+    app.duel.featureFlags?.enabled('arena-tricks') ? state.arenaTrickShow : null;
+  const eventIsRunning = state => !!(state.bowlNight?.event || arenaShow(state)) && ['countdown', 'racing'].includes(state.status);
   function closeHelp() {
     const opened = help;
     help = null;
@@ -43,10 +54,12 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   }, {capture: true, signal: app._inputEvents?.signal});
 
   function trickCard(state) {
-    const landed = state.bowlNight.trickKinds;
+    const show = state.bowlNight ?? arenaShow(state);
+    const landed = show.trickKinds;
     return `<section class="bowl-panel bowl-trick-card" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
       <h2 id="bowl-title">Trick card</h2>
       <ul>${BOWL_TRICK_GUIDE.map(entry => `<li>${bowlTrickEntryMarkup(entry, landed.includes(entry.kind))}</li>`).join('')}</ul>
+      ${secretCardMarkup(show.foundTricks)}
       <footer>${button(help.resume ? 'Keep driving' : 'Back to pause', 'show-night-tricks-close', '', true)}</footer>
     </section>`;
   }
@@ -82,6 +95,19 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       button(WORDS.menuButton, 'show-night-leave', ' data-to="menu"');
   }
 
+  function eventGuide(event) {
+    if(event!=='scrapasaurus')return '';
+    const truck='<path fill="#e2d2aa" d="M8 35h14l4-9h16l8 9h5v8H8z"/><g fill="#252522" stroke="#e2d2aa"><circle cx="18" cy="43" r="5"/><circle cx="44" cy="43" r="5"/></g>';
+    const box='<rect x="77" y="21" width="21" height="15" fill="#e8ab38"/><circle cx="88" cy="17" r="5" fill="none" stroke="#ddd5bb" stroke-width="3"/>';
+    const pictures=[
+      [truck+'<path d="M101 40L57 28l3 21z" fill="#ff832d"/>','Get out of the orange before it breathes fire.'],
+      [truck+box+'<path d="M52 32L86 17" stroke="#e8d181" stroke-dasharray="3 2"/>','When it sags, face the glowing box and press F to hook it.'],
+      ['<g transform="translate(66 0) scale(-1 1)">'+truck+'</g>'+box+'<path d="M56 35l30-18" stroke="#e8d181" stroke-width="2"/>','Drive away and pull, holding Space when it pulls you back.'],
+    ];
+    return '<div class="bowl-rex-guide">'+pictures.map(([picture,line])=>
+      '<p><svg width="108" height="52" viewBox="0 0 108 52" aria-hidden="true">'+picture+'</svg> '+escapeHTML(line)+'</p>').join('')+'</div>';
+  }
+
   function eventCard(state) {
     const show = state.bowlNight, result = show.lastResult, name = BOWL_EVENT_NAMES[result.event] ?? result.event;
     const next = BOWL_EVENT_NAMES[SHOW_NIGHTS[show.night - 1].events[show.show.eventIndex]];
@@ -91,7 +117,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       WORDS.eventScore(result.score), result.won ? WORDS.eventNext(next) : WORDS.eventRetry(name)].filter(Boolean);
 
     if (result.event === 'scrapasaurus') lines.unshift(...WORDS.eventRex(result)); // BOWL-REX-FIGHT
-    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
+    return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="${result.won ? 'won' : 'lost'}"><header><p class="eyebrow">NIGHT ${show.night} · ${escapeHTML(name.toUpperCase())}</p><h2 id="bowl-title">${result.won ? WORDS.eventWonTitle : WORDS.eventLostTitle}</h2></header>${moLine(`event.${result.won ? 'won' : 'lost'}.${result.event}`)}${lines.map(say).join('')}${eventGuide(result.won ? SHOW_NIGHTS[show.night-1].events[show.show.eventIndex] : result.event)}<footer>${button(result.won ? WORDS.nextButton : WORDS.retryButton, 'show-night-next', '', true)}${button(WORDS.leaveButton, 'show-night-leave', ` data-to="${app.showNightRun?.()?.from === 'yard' ? 'yard' : 'menu'}"`)}</footer>${say(WORDS.leaveNote)}</section>`;
   }
 
   function nightCard(state) {
@@ -103,6 +129,8 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     else if (settled?.alreadyPaid) lines.push(WORDS.nightPurseAlready);
     if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);
     for (const event of settled?.bests || []) lines.push(WORDS.nightBest(BOWL_EVENT_NAMES[event] ?? event));
+    if (state.bowlNight.secretHint) lines.push('Secret trick hint: ' + state.bowlNight.secretHint);
+    if (state.bowlNight.foundTricks?.length === 7) lines.push('You found all seven secret tricks.');
     if (result.lent) lines.push(WORDS.nightTruckBack);
 
     if (result.events.some(entry => entry.event === 'scrapasaurus')) lines.push(WORDS.eventRexYard); // BOWL-REX-FIGHT
@@ -113,7 +141,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     // The parts of the screen that change what the modal layer shows.
     key(state) {
       const show = night();
-      return `${state.status}:${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${bowlResultReady(show)}:${help?.state === state}:${turns.key(state)}`;
+      return `${state.status}:${pickerFrom ?? ''}:${openingNight ?? ''}:${level ?? ''}:${show?.phase ?? ''}:${show?.attempts.length ?? ''}:${app.showNightRun?.()?.settled ? 'paid' : ''}:${resultReady(show)}:${help?.state === state}:${turns.key(state)}`;
     },
     modal(state, {yardActive = false} = {}) {
       if (state.status === 'bowl_weapon_pick') {
@@ -124,7 +152,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
         return `<section class="bowl-panel" role="dialog" aria-modal="true" aria-labelledby="bowl-title"><h2 id="bowl-title">Choose your show weapon</h2><p>Use F in Last Truck Rolling.</p><ul>${picks.join('')}</ul></section>`;
       }
       if (eventIsRunning(state) && state.paused && help?.state === state) return trickCard(state);
-      if (state.bowlNight && state.status === 'bowl_break' && !bowlResultReady(state.bowlNight)) return '';
+      if (state.bowlNight && state.status === 'bowl_break' && !resultReady(state.bowlNight)) return '';
       // BOWL-TURNS: a Turn Show, or its setup, has its own screens.
       const turn = turns.modal(state, {yardActive});
       if (turn) { pickerFrom = null; return turn; }
@@ -141,11 +169,12 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       if (help && (help.state !== state || !state.paused)) help = null;
       const active = !!show && state.status !== 'menu';
       ui.stage.classList.toggle('bowl-night-active', active);
-      const watchingFinish = state.status === 'bowl_break' && !bowlResultReady(show);
+      const watchingFinish = state.status === 'bowl_break' && !resultReady(show);
       const course = app.duel.course;
       const view = !state.paused && (eventIsRunning(state) || watchingFinish) ? bowlHudView(state, course) : null;
-      const strip = bowlStrip(state, view, id => BOWL_RIVALS[id]?.name);
-      if (strip && view.event === 'lastTruckRolling' && state.bowlWeapon?.kind) {
+      const arenaHud = !state.paused && arenaShow(state) && eventIsRunning(state);
+      const strip = arenaHud ? arenaTrickStrip(state) : bowlStrip(state, view, id => BOWL_RIVALS[id]?.name);
+      if (strip && view?.event === 'lastTruckRolling' && state.bowlWeapon?.kind) {
         const weapon = state.bowlWeapon, warning = state.opponents.find(rival => rival.bowlWeapon?.phase === 'tell');
         const ready = weapon.phase === 'rest' ? ` · ${Math.max(0,weapon.time).toFixed(1)} s` : '';
         strip.gapLabel = warning ? `${BOWL_RIVALS[warning.bowlRival].name}: ${warning.bowlWeapon.kind}!`
