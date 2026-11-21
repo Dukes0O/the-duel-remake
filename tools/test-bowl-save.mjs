@@ -111,14 +111,20 @@ const memory = (initial = {}) => {
 // A new Bowl save survives the normal player save and verified career backup round trip.
 {
   const storage = memory();
-  const profile = settleBowlNight(recordBowlScore(createProfile(), 'freestyle', 1234).profile,
+  const before = settleBowlNight(recordBowlScore(createProfile(), 'freestyle', 1234).profile,
     {night: 1, won: true, scrap: 50, trophy: 'opening-night'}).profile;
+  const newRecords = {'long-jump': 375, 'high-jump': 525, 'home-run': 750};
+  const profile = Object.entries(newRecords).reduce((next, [event, score]) => recordBowlScore(next, event, score).profile, before);
+  equal(before.bowl.bestScores, {freestyle: 1234}, 'adding jump records leaves the old driver object alone');
+  equal(profile.bowl.nightsWon, before.bowl.nightsWon, 'jump records preserve earlier night wins');
   const registry = {version: 2, activePlayerId: 'bowl-test', players: [
     {id: 'bowl-test', name: 'Bowl Test', profile},
   ]};
   ok(savePlayers(registry, storage), 'Bowl career saves through the player store');
   const stored = loadPlayers(storage).players[0].profile;
-  equal(stored.bowl.bestScores.freestyle, 1234, 'best score survives save and load');
+  equal(stored.bowl.bestScores, {freestyle: 1234, ...newRecords}, 'old and new scores survive save and load');
+  const lower = recordBowlScore(stored, 'home-run', 450);
+  ok(lower.profile === stored && !lower.changed, 'a lesser ring leaves the Home Run record alone');
   equal(stored.bowl.settledNights, ['night:1'], 'settlement receipt survives save and load');
   equal(stored.wasteland.scrap, 50, 'purse survives save and load');
   const records = new Map();

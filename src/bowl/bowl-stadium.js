@@ -396,6 +396,31 @@ function tyreWalls(course) {
 // BOWL-OUT-LOOK (from BOWL-TRICKS-ALL): tonight's secret-trick hint on a hand-painted bedsheet hung on the catch fence
 // at End 1, the same arrows as the result card with the hidden key as a painted question mark. The hint is worked out
 // from the night as the result card works it out (src/bowl/bowl-night.js); the banner reads the night and writes nothing.
+function seasonBanner(course) {
+  const colour = course.def.bowlColours?.banner, title = course.def.bowlNightName;
+  if (colour == null || !title) return null;
+  const cloth = new THREE.Color(colour);
+  const map = drawn(768, 192, (g, w, h) => {
+    g.fillStyle = '#' + cloth.getHexString();
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = '#281e16';
+    g.fillRect(0, 0, w, 12);
+    g.fillRect(0, h - 12, w, 12);
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = 'bold 72px Impact, Arial Black, sans-serif';
+    g.fillText(title.toUpperCase(), w / 2, h / 2, w - 52);
+  });
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.25),
+    new THREE.MeshStandardMaterial({map, color: map ? 0xffffff : colour, roughness: .94, side: THREE.DoubleSide}));
+  flag.name = 'Bowl night banner';
+  const s = course.features.bowl.zones.end2[0] + course.features.bowl.ring.radius * Math.PI * .58;
+  const p = course.worldAt(s, FACE - .14), inward = course.worldAt(s, FACE - 1.14);
+  flag.position.set(p.x, wallTop(s) + 1.9, p.z);
+  flag.rotation.y = Math.atan2(inward.x - p.x, inward.z - p.z);
+  return flag;
+}
+
 function hintBanner(course) {
   const s = course.features.bowl.zones.end1[0] + course.features.bowl.ring.radius * Math.PI * .68;
   const width = 9, height = 3.4;
@@ -625,6 +650,8 @@ export function createBowlStadium(course) {
   group.add(stands, wall, fence, postMesh, people.mesh, flashes(people.heads, uniforms));
   const banner = hintBanner(course);
   group.add(spine(course, centre, wear), tyreWalls(course), banner.sheet);
+  const tonight = seasonBanner(course);
+  if (tonight) group.add(tonight);
   // Four floodlight towers behind the ends' stands, each aimed across the floor.
   const glow = glowTexture(), lights = [];
   const ring = course.features.bowl.ring, zones = course.features.bowl.zones;

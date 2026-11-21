@@ -15,6 +15,7 @@ import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, bowlLayout, registerBowl
   sayBowlLine, startBowlEventAt} from './bowl-night.js';
 import {prepareShowWeapons, stepShowWeapons} from './bowl-weapons.js';
 import {BOWL_GOALS} from './bowl-lines.js';
+import {SHOW_NIGHTS} from './bowl-show.js';
 import {DRIVE} from '../config.js';
 
 const LEVELS = ['easy', 'medium', 'hard'];
@@ -69,16 +70,9 @@ export const BOWL_RIVALS = Object.freeze({
 });
 export const BOWL_RIVAL_IDS = Object.freeze(Object.keys(BOWL_RIVALS));
 
-// Who is in the Bowl on each night: one rival in Side by Side on nights one and
-// two, three rivals (four trucks with the player's) in Last Truck Rolling from
-// night three. Every rival drives at least once.
-export const BOWL_RIVAL_NIGHTS = Object.freeze([
-  Object.freeze({sideBySide: 'old-bess'}),
-  Object.freeze({sideBySide: 'rust-rhino'}),
-  Object.freeze({lastTruckRolling: Object.freeze(['big-kettle', 'tin-lizard', 'old-bess']), showWeapons: Object.freeze(['hammer'])}),
-  Object.freeze({lastTruckRolling: Object.freeze(['rust-rhino', 'tin-lizard', 'big-kettle']), showWeapons: Object.freeze(['hammer', 'saw'])}),
-  Object.freeze({lastTruckRolling: Object.freeze(['dragon-wagon', 'rust-rhino', 'tin-lizard']), showWeapons: Object.freeze(['hammer', 'saw', 'launcher'])}),
-]);
+// A view of the season data for the rival runners and their checks.
+export const BOWL_RIVAL_NIGHTS = Object.freeze(SHOW_NIGHTS.map(({rivals, weapons}) =>
+  Object.freeze({...rivals, showWeapons: weapons})));
 
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play.
 export const BOWL_RIVAL_RULES = Object.freeze({

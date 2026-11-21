@@ -252,8 +252,10 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
         housing.rotation.y = p.heading;
         group.add(housing);
         // Paired jets fire together, each pair a beat after the last.
-        installFire(fireTexture, new THREE.Vector3(p.x, top + 3.6, p.z),
+        const fire = installFire(fireTexture, new THREE.Vector3(p.x, top + 3.6, p.z),
           `Bowl flame jet ${jet.id}`, Math.floor(index / 2) * .41);
+        const colour = next.def.bowlColours?.jets;
+        if (colour != null) fire.mesh.material.color.setHex(colour);
       });
       group.userData.crushModelsReady = true;
       group.userData.flameJetCount = jets.length;

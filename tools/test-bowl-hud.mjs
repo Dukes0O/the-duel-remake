@@ -17,10 +17,10 @@ function start(night, eventIndex, options = {}) {
 
 for (const [night, index, name, goal] of [
   [1, 0, 'Car Crush', 'Crush 13 pieces.'],
-  [1, 1, 'Freestyle', 'Beat Old Bess: 310.'],
+  [1, 1, 'Freestyle', "Beat Old Bess's 310 points."],
   [1, 2, 'Side by Side', 'Beat Old Bess over two laps.'],
   [3, 2, 'Last Truck Rolling', 'Be the last truck rolling.'],
-  [5, 3, 'The Scrapasaurus', 'WATCH THE SCRAPASAURUS'],
+  [5, 2, 'The Scrapasaurus', 'WATCH THE SCRAPASAURUS'],
 ]) {
   start(night, index);
   const strip = bowlStrip(duel.state, bowlHudView(duel.state, duel.course));
@@ -115,7 +115,7 @@ for (const [night, index, name, goal] of [
 }
 
 {
-  const night = start(5, 3);
+  const night = start(5, 2);
   duel.state.status = 'racing';
   for (const phase of ['lift', 'throw']) {
     night.event.rex.phase = phase;

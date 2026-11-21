@@ -12,16 +12,54 @@ export const BOWL_EVENTS = Object.freeze({
   HOME_RUN: 'homeRun',
 });
 
-export const SHOW_NIGHTS = Object.freeze(Array.from({length: 5}, (_, index) => Object.freeze({
-  night: index + 1,
-  events: Object.freeze([
-    BOWL_EVENTS.CAR_CRUSH,
-    BOWL_EVENTS.FREESTYLE,
-    index < 2 ? BOWL_EVENTS.SIDE_BY_SIDE : BOWL_EVENTS.LAST_TRUCK_ROLLING,
-    // Night five, the season's last, has a fourth event: the Scrapasaurus (BOWL-REX-FIGHT).
-    ...(index === 4 ? [BOWL_EVENTS.SCRAPASAURUS] : []),
-  ]),
-})));
+const {CAR_CRUSH, FREESTYLE, SIDE_BY_SIDE, LAST_TRUCK_ROLLING, SCRAPASAURUS, LONG_JUMP, HIGH_JUMP, HOME_RUN} = BOWL_EVENTS;
+
+function showNight({events, tricks, weapons = [], rivals = {}, freestyle = null, dressing = {}, colours, ...night}) {
+  const {lastTruckRolling, ...matchups} = rivals;
+  return Object.freeze({...night,
+    events: Object.freeze(events), tricks: Object.freeze(tricks), weapons: Object.freeze(weapons),
+    rivals: Object.freeze({...matchups, ...(lastTruckRolling ? {lastTruckRolling: Object.freeze(lastTruckRolling)} : {})}),
+    freestyle: freestyle && Object.freeze(freestyle),
+    dressing: Object.freeze(Object.fromEntries(Object.entries(dressing).map(([event, floor]) => [event, Object.freeze(floor)]))),
+    colours: Object.freeze(colours),
+  });
+}
+
+export const SHOW_NIGHTS = Object.freeze([
+  showNight({
+    night: 1, name: 'Rookie Night', newTonight: 'Try wheelies, donuts and backflips.',
+    events: [CAR_CRUSH, FREESTYLE, SIDE_BY_SIDE], tricks: ['wheelie', 'donut', 'backflip'],
+    rivals: {sideBySide: 'old-bess'}, freestyle: {rival: 'old-bess', name: 'Old Bess'},
+    dressing: {carCrush: {kind: CAR_CRUSH, busPiles: 1}}, colours: {jets: 0xffcf8b, banner: 0xc78b42},
+  }),
+  showNight({
+    night: 2, name: 'Flip Night', newTonight: 'Clear a row of buses in Long Jump.',
+    events: [LONG_JUMP, FREESTYLE, SIDE_BY_SIDE], tricks: ['frontFlip', 'stoppie'],
+    rivals: {sideBySide: 'rust-rhino'}, freestyle: {rival: 'rust-rhino', name: 'Rust Rhino'},
+    dressing: {longJump: {kind: LONG_JUMP}}, colours: {jets: 0xb7deff, banner: 0x5b96bb},
+  }),
+  showNight({
+    night: 3, name: 'Hammer Night', newTonight: 'Swing a hammer and crush two Bus Piles.',
+    events: [CAR_CRUSH, FREESTYLE, LAST_TRUCK_ROLLING], tricks: ['spin'], weapons: ['hammer'],
+    rivals: {lastTruckRolling: ['big-kettle', 'tin-lizard', 'old-bess']},
+    freestyle: {rival: 'tin-lizard', name: 'Tin Lizard'},
+    dressing: {carCrush: {kind: CAR_CRUSH, busPiles: 2}}, colours: {jets: 0xffad72, banner: 0xb9704d},
+  }),
+  showNight({
+    night: 4, name: 'Over the Wall Night', newTonight: 'Jump the wall or fight with a saw.',
+    events: [HIGH_JUMP, HOME_RUN, LAST_TRUCK_ROLLING], tricks: ['barrelRoll'], weapons: ['hammer', 'saw'],
+    rivals: {lastTruckRolling: ['rust-rhino', 'tin-lizard', 'big-kettle']},
+    dressing: {highJump: {kind: HIGH_JUMP}, homeRun: {kind: HOME_RUN}}, colours: {jets: 0xc9f9a3, banner: 0x7aa75a},
+  }),
+  showNight({
+    night: 5, name: 'Scrapasaurus Night', newTonight: 'Face the Scrapasaurus and try the launcher.',
+    events: [FREESTYLE, LAST_TRUCK_ROLLING, SCRAPASAURUS], tricks: ['sideFlip', 'doubles'],
+    weapons: ['hammer', 'saw', 'launcher'],
+    rivals: {lastTruckRolling: ['dragon-wagon', 'rust-rhino', 'tin-lizard']},
+    freestyle: {rival: 'dragon-wagon', name: 'Dragon Wagon'},
+    colours: {jets: 0xff937c, banner: 0xa94c43},
+  }),
+]);
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;

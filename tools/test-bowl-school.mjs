@@ -114,25 +114,24 @@ function schoolDriver() {
   assert.deepEqual(reasons, ['wheelieSpeed', 'stoppieSpeed'], 'the real ground inputs report both wrong-speed reasons');
 }
 
-function freestyle() {
+function freestyle(night, eventIndex) {
   const duel = fresh();
   enable(duel);
-  duel.startBowlNight({night: 1, eventIndex: 1, seed: 1989});
+  assert.ok(duel.startBowlNight({night, eventIndex, seed: 1989}));
+  assert.equal(duel.state.bowlNight.event.type, 'freestyle');
   while (duel.state.status === 'countdown') duel.step(DT);
   return duel;
 }
 
 {
-  const plain = freestyle(), featured = freestyle();
-  featured.state.bowlNight.featuredTricks = ['backflip', 'doubles'];
+  const plain = freestyle(2, 1), featured = freestyle(1, 1);
   const report = (duel, kind, turns, points) =>
     duel.emit({bowlTrick: {kind, turns, points, landing: 'clean', fresh: false, repeat: 1, cues: []}});
   report(plain, 'backflip', 1, 50);
   report(featured, 'backflip', 1, 50);
   assert.deepEqual([plain.state.bowlNight.event.score, featured.state.bowlNight.event.score], [50, 100]);
   assert.equal(featured.state.bowlNight.event.trickPopups[0].base, 100, 'the label uses the same doubled base');
-  const double = freestyle();
-  double.state.bowlNight.featuredTricks = ['doubles'];
+  const double = freestyle(5, 0);
   report(double, 'frontFlip', 2, 200);
   assert.equal(double.state.bowlNight.event.score, 400, 'the featured double earns the bonus');
   const reasons = [];

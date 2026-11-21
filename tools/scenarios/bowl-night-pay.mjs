@@ -57,7 +57,9 @@ export const page = {
   easy: `(() => { document.querySelector('[data-action="show-night-level"][data-level="easy"]').click(); return true; })()`,
   chooseNight: `(() => { document.querySelector('[data-action="show-night-start"][data-night="1"]').click(); return true; })()`,
   opening: `(() => { const panel = document.querySelector('.bowl-opening'); return window.__qaApp.duel.state.status === 'menu' &&
-    panel?.textContent.includes('welcome to the Bowl') && !!panel.querySelector('[data-action="show-night-confirm"]'); })()`,
+    panel?.textContent.includes('welcome to the Bowl') && panel.textContent.includes('Rookie Night') &&
+    panel.textContent.includes('Car Crush · Freestyle · Side by Side') && panel.querySelectorAll('kbd').length >= 3 &&
+    !!panel.querySelector('[data-action="show-night-confirm"]'); })()`,
   start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-confirm"]').click(); return true; })()`,
   spaceForTruck: `(() => ['.route-hud', '.lap-readout', '.gear', '.rear-view-frame'].every(selector => {
     const node = document.querySelector(selector); return !!node && !node.getClientRects().length; }))()`,
