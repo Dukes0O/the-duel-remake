@@ -736,7 +736,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-night-4"
     needs: []
     locks: [bowl-night, save-shape]
     flag: "titan-bowl"
