@@ -502,7 +502,8 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     const outside = this.course.features?.bowl?.outside;
     const overBack = outside && actor.prevLateral <= outside.back && actor.lateral > outside.back &&
       previousGround - ground > outside.top / 2;
-    const lipped = overBack || scablands && actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5 > ground + .15;
+    const offSpine = previousPoint.bowlSpine && !groundPoint.bowlSpine && previousGround - ground > 1;
+    const lipped = overBack || offSpine || scablands && actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5 > ground + .15;
     if (lipped || predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
       // On the Scablands a car leaves with the upward or downward speed it had on the ground before the step, not the average with the ground's own speed over the

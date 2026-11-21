@@ -192,7 +192,15 @@ export function _safeReset(car, crashSite = null) {
   car.groundHeight = null; car.prevGroundHeight = null; car.terrainPitch = null; car.terrainRoll = null; car.tumble = null;
   car._climbGain = 0; car._climbRest = 0; car._offroadSafe = null;
   if (car === this.state) { car.gear = 0; car.revs = car.speedMph / this.car.gears[0]; car.overrevSec = 0; car.reverseHoldSec = 0; }
-  if (local) {car.offRoad=!this._surface(car.s,car.lateral).road;this._terrainPose(car);}
+  if (local) car.offRoad = !this._surface(car.s, car.lateral).road;
+  if (this.course.def.bowl) {
+    car.headingError = 0;
+    delete car.bowlContactTurn;
+    delete car.bowlSpineExit;
+    const ground = this._supportAt(car.s, car.lateral, car).y;
+    car._jumpY = car.groundHeight = car.prevGroundHeight = ground;
+    this._terrainPose(car);
+  } else if (local) this._terrainPose(car);
 }
 
 export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMph), zone = 'front') {
