@@ -31,6 +31,7 @@ Each building card names its cues and points each at a stand-in already in the s
 - **BOWL-JUMP-EVENTS:** `bowl.go.ready`, `bowl.long.clear`, `bowl.high.clear`, `bowl.high.fail`. (`bowl.home.ring` and
   `bowl.home.ring.high` go with Home Run, BOWL-NIGHT-4.)
 - **BOWL-NIGHT-4:** `bowl.best.rival`, `bowl.best.rival.slam`, `bowl.best.round.won`, `bowl.best.round.lost`.
+- **BOWL-FREESTYLE-NIGHTS:** `bowl.free.rival`, `bowl.free.lead`, `bowl.free.behind`, `bowl.free.beaten`, `bowl.free.bar`.
 - **BOWL-NIGHTS:** `bowl.night.open`, `bowl.night.new`.
 - **Already in the game on stand-ins:** `bowl.mo`, `bowl.crowd.rise`, `bowl.event.won`, `bowl.event.lost`, `bowl.purse`,
   `bowl.turn.up`, `bowl.turn.winner`.

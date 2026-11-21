@@ -197,7 +197,8 @@ moment, and that is the thing a child cannot do. Card BOWL-TRICKS-ALL, part 1.
   lands single flips off the Table and the Big Jump, with wheelies and donuts between them, and a driver who uses no
   flips falls short at least 8 times in 10. Medium needs a double or two kinds of flip and the Big Jump. Hard needs
   doubles and combos. The marks as built are 310, 1,810 and 4,260. The Easy mark of 310 was measured for a driver with no
-  flips, before a tap was a flip, so one clean flip beats it; it goes up on BOWL-FINISH's list (starting number 800).
+  flips, before a tap was a flip, so one clean flip beats it. "Freestyle, night by night" in section 11 replaces these
+  marks with one for each night, and gives each night's Freestyle its own floor (card BOWL-FREESTYLE-NIGHTS).
 
 **Secret tricks (Kyle, 20 November 2026).** "We could honestly build in some super crazy spin flips with key combos...
 a couple of things like up up up down up, or up up down down left right left right... just a bunch of mystery combos to
@@ -549,6 +550,65 @@ while that driver still wins all ten. Best Trick's list, from least to most: a l
 backflip (50), a barrel roll (60), a backflip with a spin (120), a double backflip (200), a double barrel roll (240), a
 double backflip with a spin (345), a triple backflip (450).
 
+**Freestyle, night by night (Claude, 20 November 2026).** The batch drive of the merged five nights (`fb02d3233`) found
+Freestyle the same on Nights 1, 2, 3 and 5: the same floor and the same Easy mark of 310, whoever the rival was. One
+double backflip on Night 1 (tonight's trick, so 200 x 2 x 1.5 = 600) passes it about six seconds in, and the other 84
+seconds then count for nothing. Kyle finds Freestyle "pretty awesome" to play, so the event stays as it is: 90 seconds,
+the same keys, the same scoring, the crowd as the multiplier. Three things change.
+
+1. **The rival's score climbs while the driver plays.** The rival has still "already been round", but the board now
+   counts that round up beside the driver's score, as if the two were on the floor together. Every 9 to 12 seconds a
+   pop-up at the side of the strip names a trick of the rival's and its points ("OLD BESS: DONUT 40"), and the rival's
+   score goes up by that much. Its last trick comes at about 85 seconds, so the rival's score at the bell is the target.
+   The strip shows both scores and the gap: "YOU 640, OLD BESS 520, AHEAD BY 120". The goal line stays "Beat Old Bess's
+   1,000 points." The win is decided at the bell, as now. Big Mo speaks when the lead changes hands, once each way.
+   Each rival's tricks are in its own manner: Old Bess wheelies and donuts, Rust Rhino front flips and crushes, Tin Lizard
+   spins and quick combos, Dragon Wagon doubles and big air. The list is data, scaled so that it adds up to the night's
+   target. The rival does not drive and does not appear on the floor.
+2. **A target that rises through the season and does not fall to one trick.** Each night has its own three marks.
+   Starting numbers, all set by measurement:
+
+   | Night and rival | Easy | Medium | Hard |
+   | --- | --- | --- | --- |
+   | 1. Old Bess | 800 | 1,800 | 4,300 |
+   | 2. Rust Rhino | 1,000 | 2,100 | 4,800 |
+   | 3. Tin Lizard | 1,200 | 2,400 | 5,300 |
+   | 5. Dragon Wagon | 1,500 | 2,800 | 6,000 |
+
+   The rules for setting them, in this order:
+   - **No one trick wins.** A driver who lands tonight's trick as a double off the Big Jump once, early, and then drives
+     the lap with no more tricks, falls short on every level, on all ten seeds. On Medium and Hard the same holds for a
+     triple with nitro.
+   - **Easy is reachable,** for a tween. The scripted slow driver who lands single flips off the Table and the Big Jump,
+     with wheelies and donuts between, and uses the night's floor (item 3), wins Easy at least 6 times in 10 and not on
+     all ten.
+   - **Each night asks a little more** than the night before on the same level, by at least a tenth.
+   - If the first two rules cannot both hold on a night, the builder stops and writes the measured numbers in the card's
+     questions file, and Claude chooses.
+   Secret tricks and trips out of the arena are left out of every measurement, so each is a bonus and never a need.
+3. **A floor of its own each night,** made from pieces the night's other events already use, so the driver has met them:
+
+   | Night | On the floor in Freestyle | What it pays |
+   | --- | --- | --- |
+   | 1. Rookie Night | today's floor and the two parked cars to launch off | as today |
+   | 2. Flip Night | Long Jump's row of buses beyond the Big Jump | 40 a bus cleared in flight, as in Long Jump |
+   | 3. Hammer Night | the two Bus Piles from Car Crush, new for Freestyle, and nothing else from Car Crush | a crush as the show pays it, a pancake three times |
+   | 5. Scrapasaurus Night | High Jump's flame bar over the Big Jump, at 8 m on Easy, 10 m on Medium and 12 m on Hard | 100 the first pass over it, 60 each pass after |
+
+   Each piece's points go through the crowd multiplier like any other stunt. The night's card names the pieces in one
+   sentence ("Tonight the buses from Long Jump stay out for Freestyle.").
+4. **Tonight's tricks are named on the strip** during Freestyle ("TONIGHT: BACKFLIP x2"), and they pay double, as they
+   already do. The card before the event says the same, as it does now.
+
+**The event runs its full 90 seconds,** as it already does: nothing ends it when the target is passed. What changes is
+that the time after the target has a purpose. When the driver's score passes the rival's score at the bell, the strip
+says "OLD BESS BEATEN" and shows the driver's best Freestyle ("YOUR BEST 2,140", read from the saved records, which
+the event already keeps). Big Mo says once that from now on every point is for the record. The record is kept as
+today.
+
+**In a Turn Show,** Freestyle is one go of 90 seconds with the night's floor. The rival takes no part, and the
+scoreboard ranks the drivers.
+
 **More nights, at Titan Stadium.** Nights 6 to 8 are a tour, after the first release:
 
 - **Night 6, Race Night** and **night 7, Stunt Night** are held at Titan Stadium, the Titan Monster Arena course that is
@@ -567,7 +627,7 @@ tricks there; the night's card says so when the chosen vehicle is too light for 
 Each is a card on the board with its files, locks, checks and sound cues. Each Codex card names its model (Kyle, 20
 November 2026: graphics and physics for Astra, the rest for Sol): **Astra** builds BOWL-WALLS, BOWL-TRICKS,
 BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2 and BOWL-REX-3; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
-BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4 and BOWL-TOUR. Nights 1 to 5 are the first release;
+BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS and BOWL-TOUR. Nights 1 to 5 are the first release;
 BOWL-TOUR follows it.
 
 | Card | Owner | What it builds | Section |
@@ -590,6 +650,7 @@ BOWL-TOUR follows it.
 | BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump (and Home Run, which BOWL-NIGHT-4 removes) | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |
 | BOWL-NIGHT-4 | Codex | Barrel Roll Night: Best Trick in place of Home Run, and no line that points over the wall (Kyle, 20 November) | 3, 9, 11 |
+| BOWL-FREESTYLE-NIGHTS | Codex | Freestyle night by night: a climbing rival, rising marks, a floor of its own | 2, 11 |
 | BOWL-SOUND | Claude | every other new cue chosen and listened to | all |
 | BOWL-TRICKS-ALL | Codex | flips that finish themselves, seven secret tricks, and the trick set for every vehicle and on the Titan Monster Arena (first release: Kyle put the first two on this card) | 2 |
 | BOWL-TOUR | Codex | nights 6 to 8 | 11 |

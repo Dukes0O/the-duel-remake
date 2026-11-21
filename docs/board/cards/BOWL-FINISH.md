@@ -32,11 +32,9 @@ is on BOWL-SHOW-2 under "Who it is built for": the scripted slow driver wins an 
 not all ten. The numbers below are already merged or pinned, so they are moved here, each by measurement and then
 checked in the hand drive.
 
-- **Freestyle's Easy mark** (310 as built, measured for a driver with no flips, so one clean flip beats it). Raise it
-  until a scripted slow driver who lands single flips off the Table and the Big Jump clears it at least 6 times in 10 and
-  the driver with no flips falls short at least 8 times in 10. Starting number 800. Medium (1,810) and Hard (4,260) stay
-  unless the hand drive says otherwise. Rule 18, reviewed here: the suite's "the child clears Easy on at least nine seeds
-  in ten" becomes those two checks, and the marks stay proven reachable at every level.
+- **Freestyle's marks** moved to card BOWL-FREESTYLE-NIGHTS (one set of marks for each night, a rival's score that climbs,
+  a floor of its own each night), which is on this card's `needs`. In the hand drive: play Freestyle on Nights 1 and 5 on
+  Easy, and say whether the last 30 seconds still matter after the rival is beaten.
 - **The rivals' pace on Easy** (`src/bowl/bowl-rivals.js`: 1.35 times the clean lap, Old Bess 1.45). Starting numbers 1.2
   and 1.3, set so that the scripted slow driver wins Side by Side at least 6 times in 10 and not all ten. The catch-up
   at the line stays. Rule 18, reviewed here: "a child who clips one wall wins narrowly" on at least 9 of 10 seeds in

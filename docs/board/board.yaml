@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-SOUND]
+    needs: [BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -606,7 +606,7 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Claude: the design is written and cut into slices (20 November 2026); the card closes with Claude's drive by hand of every night once the slices are merged, then Kyle's try"
-    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-SOUND]
+    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SHOW-2.md"
@@ -725,7 +725,7 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "ready"
-    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH, BOWL-NIGHT-4]
+    needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS]
     locks: [sound-bank]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-SOUND.md"
@@ -742,6 +742,18 @@ tasks:
     locks: [bowl-night, save-shape]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-NIGHT-4.md"
+
+  - id: BOWL-FREESTYLE-NIGHTS
+    title: "Bowl: Freestyle night by night, with a rival's score that climbs, marks that rise and a floor of its own"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-NIGHT-4]
+    locks: [bowl-night, bowl-floor]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-FREESTYLE-NIGHTS.md"
 
   - id: BOWL-TOUR
     title: "Bowl: nights 6 to 8, the tour (after the first release)"
