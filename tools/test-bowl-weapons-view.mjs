@@ -109,9 +109,28 @@ for (const kind of ['hammer', 'saw', 'launcher']) {
   bowlHealthLoss(duel, victim, 1, 'player', 'left');
   draw(); assert.ok(victimRig.burning.every(tongue => tongue.visible), 'the truck burns at nothing');
   assert.equal(view.group.userData.builds, 4, 'damage builds nothing new');
-  // Leaving the Bowl hides everything; the view's dispose leaves nothing behind.
+  // A wrecked truck's weapon stops: the rules leave its state wherever it was, so the view must not keep drawing it.
+  const lizard = s.opponents.find(actor => actor.bowlRival === 'tin-lizard'), dragon = s.opponents.find(actor => actor.bowlRival === 'dragon-wagon');
+  Object.assign(lizard.bowlWeapon, {phase: 'active', cutting: true, cutSeconds: 1});
+  Object.assign(dragon.bowlWeapon, {phase: 'active'});
+  for (const actor of [lizard, dragon]) actor.combatWrecking = true;
+  for (let i = 0; i < 10; i++) draw();
+  const lizardRig = view.rigs.get(meshes[s.opponents.indexOf(lizard) + 1]), dragonRig = view.rigs.get(meshes[s.opponents.indexOf(dragon) + 1]);
+  assert.ok(!lizardRig.sparks.visible && lizardRig.memory.spin < 1, 'a wrecked saw stops cutting');
+  assert.ok(dragonRig.breath.every(jet => !jet.visible), 'a wrecked dragon breathes no fire');
+  for (const actor of [lizard, dragon]) actor.combatWrecking = false;
+  // Another event with the view still on: the weapons are taken off and nothing is left behind.
+  const points = () => view.group.children.filter(node => node.isPoints).length, sawRigs = () => [...view.rigs.values()].filter(rig => rig.sparks).length;
+  assert.equal(points(), 1 + sawRigs(), "one set of sparks for each saw, and the hammer's");
+  s.bowlNight.event.type = 'sideBySide'; draw();
+  assert.equal(points(), 1, 'no saw sparks are left behind when the saws come off');
+  assert.ok(!view.rigs.has(meshes[0]), 'the show truck carries no weapon outside the fight');
+  s.bowlNight.event.type = 'lastTruckRolling'; draw();
+  assert.equal(points(), 1 + sawRigs());
+  // Leaving the Bowl hides everything and gives the rivals back their own paint.
   view.update(readOnly(s), meshes, now + 16, false);
   assert.equal(view.group.visible, false);
+  assert.ok(meshes.slice(1).every(mesh => mesh.userData.paint.color.getHex() === 0x9bb9ba), "the rivals' paint is given back");
   view.dispose();
 }
 console.log('Bowl weapons view: the hammer, saw and launcher, five rivals and the damage read the rules without writing them.');

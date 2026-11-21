@@ -334,11 +334,12 @@ function buildSaw(root, m) {
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
   });
   const blurGeometry = new THREE.CircleGeometry(SAW_RADIUS, 40).rotateY(Math.PI / 2);
-  for (const x of [-.03, .03]) {
+  const blurs = [-.03, .03].map(x => {
     const blur = new THREE.Mesh(blurGeometry, blurMaterial);
-    blur.name = 'Saw blur'; blur.position.set(x, cy, cz); blur.renderOrder = 4; root.add(blur);
-  }
-  return {spinner, blurMaterial, blurGeometry};
+    blur.name = 'Saw blur'; blur.position.set(x, cy, cz); blur.renderOrder = 4; blur.visible = false; root.add(blur);
+    return blur;
+  });
+  return {spinner, blurMaterial, blurGeometry, blurs};
 }
 
 // The launcher: a wide steel wedge hinged ahead of the front tyres, thrown up by two air rams, with an air tank on the
@@ -594,14 +595,20 @@ function buildRig(look, mesh) {
     if (part === 'snout') rig.built.snout = buildSnout(root, m);
   }
   if (look.weapon === 'hammer') rig.built.hammer = buildHammer(root, m);
-  if (look.weapon === 'saw') rig.built.saw = buildSaw(root, m);
+  if (look.weapon === 'saw') {
+    rig.built.saw = buildSaw(root, m);
+    // The sparks fly in the world's own metres, so they live beside the rig (in the view's group), not on the truck.
+    rig.sparks = createSparks(90); rig.sparks.name = 'Saw sparks'; rig.sparks.visible = false;
+  }
   if (look.weapon === 'launcher') rig.built.launcher = buildLauncher(root, m);
   // Fire: the dragon's breath, and tongues of flame for a burning truck.
   rig.flame = createFlameMaterial();
   rig.breath = look.weapon === 'fire' ? [false, true].map(hot => {
     const jet = createJet(hot ? 1 : 0); jet.position.set(0, 1.98, 2.8); jet.rotation.x = D(-4); root.add(jet); return jet; }) : [];
   rig.burning = [[.45, 2.2, 1.2], [-.5, 2.3, .1], [.2, 2.4, -1.4]].map((place, i) => {
-    const tongue = flameTongue(rig.flame, `Burning truck ${i + 1}`); tongue.position.set(...place); root.add(tongue); return tongue; });
+    const tongue = flameTongue(rig.flame, `Burning truck ${i + 1}`); tongue.position.set(...place); root.add(tongue);
+    tongue.onBeforeRender = () => { rig.flame.uniforms.uSeed.value = i * .29; rig.flame.uniformsNeedUpdate = true; };
+    return tongue; });
   // The loose panel, hinged at its top front corner, and the dark hole it leaves.
   const panel = new THREE.Group(); panel.name = 'Loose panel'; panel.visible = false;
   rig.panelMaterial = wear.apply(new THREE.MeshStandardMaterial({color: 0x6b4a33, roughness: .8, metalness: .3}));
@@ -630,6 +637,7 @@ function disposeRig(rig, mesh) {
   rig.flame.dispose();
   rig.built.saw?.blurMaterial.dispose();
   rig.built.snout?.eyes.dispose();
+  if (rig.sparks) { rig.sparks.removeFromParent(); rig.sparks.geometry.dispose(); rig.sparks.material.dispose(); }
   if (rig.paintBefore && mesh?.userData.paint) {
     mesh.userData.originalColor.copy(rig.paintBefore); mesh.userData.paint.color.copy(rig.paintBefore); mesh.userData.damageKey = null;
   }
@@ -676,7 +684,7 @@ function createFlash() {
 
 export function createBowlWeaponsView() {
   const group = new THREE.Group(); group.name = 'Bowl weapons and damage';
-  const puffs = createPuffs(), rings = createRings(), cutSparks = new Map();
+  const puffs = createPuffs(160), rings = createRings();
   const hitSparks = createSparks(64); hitSparks.name = 'Hammer hit sparks'; hitSparks.visible = false;
   const flash = createFlash();
   group.add(puffs.group, rings.group, hitSparks, flash);
@@ -686,15 +694,13 @@ export function createBowlWeaponsView() {
   const v = new THREE.Vector3(), w = new THREE.Vector3(), forward = new THREE.Vector3(), worldMatrix = new THREE.Matrix4();
   const toWorld = (rig, x, y, z, target = v) => target.set(x, y, z).applyMatrix4(rig.root.matrix);
 
-  function sparksFor(rig) {
-    let sparks = cutSparks.get(rig);
-    if (!sparks) { sparks = createSparks(90); sparks.name = 'Saw sparks'; sparks.visible = false; group.add(sparks); cutSparks.set(rig, sparks); }
-    return sparks;
-  }
-
-  function stepHammer(rig, actor, seconds) {
-    const built = rig.built.hammer, memory = rig.memory, weapon = actor.bowlWeapon;
-    const angle = hammerAngle(weapon, memory, actor.bowlHeldStill || 0);
+  function stepHammer(rig, actor, dt, seconds) {
+    const built = rig.built.hammer, memory = rig.memory, weapon = rig.weapon;
+    const target = hammerAngle(weapon, memory, actor.bowlHeldStill || 0);
+    // A tell called off (the target got away) or a wreck lowers the arm over a third of a second, not in one frame.
+    const angle = memory.drawn == null || weapon?.phase === 'tell' || weapon?.phase === 'rest' ? target
+      : memory.drawn + (target - memory.drawn) * Math.min(1, dt / .1);
+    memory.drawn = angle;
     // A slight tremble while it is raised, so that the tell reads even when the arm is seen end on.
     built.pivot.rotation.x = -angle + (weapon?.phase === 'tell' ? D(1.2) * Math.sin(seconds * 55) : 0);
     if (weapon?.phase === 'rest') {
@@ -731,7 +737,7 @@ export function createBowlWeaponsView() {
   }
 
   function stepSaw(rig, actor, dt, seconds) {
-    const built = rig.built.saw, memory = rig.memory, weapon = actor.bowlWeapon, look = WEAPON_LOOK.saw;
+    const built = rig.built.saw, memory = rig.memory, weapon = rig.weapon, look = WEAPON_LOOK.saw;
     const held = weapon?.phase === 'tell' || weapon?.phase === 'active';
     memory.spin ??= 0; memory.turn ??= 0; memory.heat ??= 0;
     memory.spin = held ? Math.min(1, memory.spin + dt / look.spinUp) : Math.max(0, memory.spin - dt / look.spinDown);
@@ -744,8 +750,9 @@ export function createBowlWeaponsView() {
     const heat = memory.heat;
     rig.materials.blade.emissive.setRGB(1, .2, .02).multiplyScalar(heat * heat * 2.4);
     built.blurMaterial.uniforms.uSpin.value = smooth(memory.spin);
+    for (const blur of built.blurs) blur.visible = memory.spin > .01;
     built.blurMaterial.uniforms.uHeat.value = heat;
-    const sparks = sparksFor(rig);
+    const sparks = rig.sparks;
     sparks.visible = !!weapon?.cutting && weapon.phase === 'active' && rig.root.visible;
     if (sparks.visible) {
       const [, cy, cz] = SAW_CENTRE;
@@ -761,7 +768,7 @@ export function createBowlWeaponsView() {
   }
 
   function stepLauncher(rig, actor, dt, seconds) {
-    const built = rig.built.launcher, memory = rig.memory, weapon = actor.bowlWeapon;
+    const built = rig.built.launcher, memory = rig.memory, weapon = rig.weapon;
     const pose = launcherPose(weapon, seconds);
     built.pivot.rotation.x = -pose.angle;
     built.needle.rotation.z = D(135) - pose.fill * D(270);
@@ -783,7 +790,7 @@ export function createBowlWeaponsView() {
   }
 
   function stepHorn(rig, actor, dt) {
-    const built = rig.built.horn, weapon = actor.bowlWeapon, memory = rig.memory;
+    const built = rig.built.horn, weapon = rig.weapon, memory = rig.memory;
     let dip = 0;
     if (weapon?.phase === 'tell') {
       memory.tellTotal = Math.max(memory.tellTotal || 0, weapon.time, 1e-3);
@@ -791,12 +798,16 @@ export function createBowlWeaponsView() {
       // Snorts from the nose as it lowers its horn to charge.
       if (rig.root.visible && Math.random() < dt * 14) for (const side of [-1, 1])
         puffs.emit(toWorld(rig, side * .45, 1.7, 2.4), {velocity: [side * 1.2, .2, 2], life: .5, from: .3, to: 1.2, alpha: .22, color: 0x9d968a});
-    } else memory.tellTotal = 0;
+    } else {
+      memory.tellTotal = 0;
+      dip = (memory.dip || 0) * Math.max(0, 1 - dt / .1);
+    }
+    memory.dip = dip;
     built.pivot.rotation.x = dip;
   }
 
   function stepFire(rig, actor, dt, seconds) {
-    const weapon = actor.bowlWeapon, burning = weapon?.phase === 'active', pilot = weapon?.phase === 'tell';
+    const weapon = rig.weapon, burning = weapon?.phase === 'active', pilot = weapon?.phase === 'tell';
     rig.breath.forEach(jet => {
       jet.visible = (burning || pilot) && rig.root.visible;
       if (!jet.visible) return;
@@ -849,9 +860,9 @@ export function createBowlWeaponsView() {
     }
     const smoking = share != null && share <= WEAPON_LOOK.damage.smoke + 1e-9;
     memory.smoking = smoking; memory.burning = wrecked && share != null;
-    if (smoking && rig.root.visible && Math.random() < dt * (wrecked ? 26 : 12)) {
+    if (smoking && rig.root.visible && Math.random() < dt * 12) {
       const at = toWorld(rig, (Math.random() - .5) * .8, 2.45, 1.4);
-      puffs.emit(at, {velocity: [(Math.random() - .5) * .6, 1.4, (Math.random() - .5) * .6], life: wrecked ? 2.6 : 1.8,
+      puffs.emit(at, {velocity: [(Math.random() - .5) * .6, 1.4, (Math.random() - .5) * .6], life: wrecked ? 2.2 : 1.8,
         from: .5, to: wrecked ? 3.6 : 2.4, alpha: wrecked ? .7 : .5, color: wrecked ? 0x141210 : 0x2c2926, rise: .5});
     }
     rig.flame.uniforms.uTime.value = seconds;
@@ -876,7 +887,7 @@ export function createBowlWeaponsView() {
       const fightOn = enabled && !!state?.bowlNight && !!trucks;
       const dt = lastNow == null || state?.paused ? 0 : Math.min(.1, Math.max(0, (now - lastNow) * .001));
       lastNow = now;
-      const seconds = now * .001, fight = state?.bowlNight?.event?.type === 'lastTruckRolling';
+      const seconds = now * .001, fight = state?.bowlNight?.event?.type === 'lastTruckRolling', running = state?.status === 'racing';
       const actors = fightOn ? [state, ...(state.opponents || [])] : [], live = new Set();
       group.visible = fightOn;
       actors.forEach((actor, index) => {
@@ -886,7 +897,10 @@ export function createBowlWeaponsView() {
         if (!look) return;
         let rig = rigs.get(mesh);
         if (rig && rig.look.key !== look.key) { disposeRig(rig, mesh); rig = null; }
-        if (!rig) { rig = buildRig(look, mesh); group.add(rig.root); rigs.set(mesh, rig); group.userData.builds++; }
+        if (!rig) {
+          rig = buildRig(look, mesh); group.add(rig.root); if (rig.sparks) group.add(rig.sparks);
+          rigs.set(mesh, rig); group.userData.builds++;
+        }
         live.add(mesh);
         rig.root.visible = !!mesh.visible;
         mesh.updateMatrix();
@@ -894,21 +908,22 @@ export function createBowlWeaponsView() {
         if (mesh.parent && !mesh.parent.isScene) { mesh.parent.updateWorldMatrix(true, false); worldMatrix.premultiply(mesh.parent.matrixWorld); }
         rig.root.matrix.copy(worldMatrix); rig.root.matrixWorldNeedsUpdate = true;
         rig.wear.follow(rig.root);
-        if (rig.built.hammer) stepHammer(rig, actor, seconds);
+        // A wrecked truck, or any truck once the event is over, uses no weapon: the rules stop its clock wherever it was.
+        rig.weapon = running && !actor.combatWrecking ? actor.bowlWeapon : null;
+        if (rig.built.hammer) stepHammer(rig, actor, dt, seconds);
         if (rig.built.saw) stepSaw(rig, actor, dt, seconds);
         if (rig.built.launcher) stepLauncher(rig, actor, dt, seconds);
         if (rig.built.horn) stepHorn(rig, actor, dt);
         if (rig.breath.length) stepFire(rig, actor, dt, seconds);
         if (rig.built.tail) stepTail(rig, actor, seconds);
         // Big Kettle's chimney: steam and soot, thicker while its hammer rises.
-        if (rig.built.kettle && rig.root.visible && Math.random() < dt * (actor.bowlWeapon?.phase === 'tell' ? 24 : 6))
+        if (rig.built.kettle && rig.root.visible && Math.random() < dt * (rig.weapon?.phase === 'tell' ? 24 : 6))
           puffs.emit(toWorld(rig, -.74, 4.85, -1.95), {velocity: [0, 1.5, 0], life: 1.6, from: .35, to: 1.8, alpha: .4,
             color: Math.random() < .5 ? 0xb8b6b0 : 0x2a2724, rise: .5});
         stepDamage(rig, actor, mesh, dt, seconds);
       });
       for (const [mesh, rig] of rigs) if (!live.has(mesh)) {
         disposeRig(rig, mesh); rigs.delete(mesh);
-        cutSparks.get(rig)?.removeFromParent(); cutSparks.delete(rig);
       }
       hitSparks.visible = flash.visible = fightOn && seconds < hitUntil;
       if (hitSparks.visible) {
