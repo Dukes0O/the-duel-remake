@@ -230,7 +230,7 @@ function crowd(course, uniforms) {
       .replace('#include <common>', `#include <common>
         attribute float crowdPhase; attribute vec4 crowdSeat;
         uniform float uCrowdTime; uniform float uCrowdCheer; uniform vec3 uCrowdTruck; uniform float uCrowdScatter;
-        uniform vec2 uCrowdCentre;`)
+        uniform vec2 uCrowdCentre; varying float vCrowdRun; varying float vCrowdV;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         float crowdBeat = sin(uCrowdTime * (2.1 + fract(crowdPhase * 7.3) * 1.6) + crowdPhase);
         transformed.y += max(crowdBeat, 0.0) * max(crowdBeat, 0.0) * (0.08 + 0.32 * uCrowdCheer);
@@ -254,9 +254,18 @@ function crowd(course, uniforms) {
         float crowdClimb = step(crowdKeen, .34) * smoothstep(.15, .7, crowdRun);
         transformed.xz += crowdBack * crowdClimb * ${DEPTH.toFixed(2)};
         transformed.y += crowdClimb * ${RISE.toFixed(2)} * (0.8 + .2 * crowdStride);
+        // A runner is on their feet: the card rises by the height of a seated person's thighs, and its seated legs
+        // are not drawn (the fragment step below), so only the body shows over the seat backs, as a standing crowd's does.
+        transformed.y += .55 * smoothstep(.05, .35, crowdRun);
+        vCrowdRun = crowdRun; vCrowdV = uv.y;
         // Those who have gone drop out of sight behind the row in front, whole and upright, never lying down.
         transformed.xz = mix(transformed.xz, crowdSeat.xy, crowdGone * .6);
         transformed.y -= 2.6 * crowdGone;`);
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying float vCrowdRun; varying float vCrowdV;`)
+      .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+        if (vCrowdV < .42 * smoothstep(.05, .35, vCrowdRun)) discard;`);
   };
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'Bowl crowd';

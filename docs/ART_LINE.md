@@ -396,6 +396,10 @@ the game.
   hit from the driver's seat; where the part is end on, the hit is carried by something facing the viewer (a flash,
   sparks, grit thrown up over the struck truck). The same check moved the saw up and threw its sparks back over the
   bonnet, where the driver sees them.
+- **Under or behind the chase camera.** A box dragged 5 m behind the truck sits under the chase camera, so sparks
+  thrown back off it never entered the picture (BOWL-LOOK-FIX, 21 November 2026). Put a moment's effect where the
+  camera looks: at the hitch, over the cab, or thrown high enough to rise into view. Close up, cap how much of the
+  picture an additive card may cover (`nearCap` in `src/bowl/bowl-fx.js`), or a fire floods the screen.
 - **A frozen rule is still drawn.** The weapon rules stop a wrecked truck's clock wherever it was, so a drawing that
   reads the weapon's phase kept a wreck breathing fire. A drawing gates on the wreck and on the event still running.
 - **Another mode's fittings on a new mode's vehicles.** The arena draws its armour kits, spiked bumper and roof

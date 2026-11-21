@@ -20,7 +20,7 @@ const MODEL = '/assets/models/wasteland/bowl/scrapasaurus.glb';
 const ORANGE = 0xff7a1a, RING = 0xffe27a;
 // The moments, in seconds after the event that starts each one (docs/ART_LINE.md, "A moment keeps one clock").
 export const REX_MOMENTS = Object.freeze({fireGrow: .35, tearSparks: 1, fallLand: 1.5, jetsFrom: 1.3, dustSeconds: 2.6,
-  lightsOut: .5, steamBurst: 1.5});
+  lightsOut: .5, steamBurst: 1.5, dragBurst: 1.4});
 const unit = (index, k) => { const v = Math.sin(index * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
 // How bright the fire may be: the tongues' gain, the stream's strength, and the share left when the camera is in it.
 export const REX_FIRE_CAP = Object.freeze({gain: .55, stream: .8, close: .35});
@@ -174,7 +174,10 @@ export function createRexView({loadModel}) {
   const leadSparks = [0, 1, 2].map(() => [createSpray(18, 'Scrapasaurus lead sparks'), createSpray(18, 'Scrapasaurus lead sparks')]);
   const tearSparks = [0, 1, 2].map(() => createSpray(110, 'Scrapasaurus tear sparks'));
   const dragSparks = createSpray(70, 'Scrapasaurus dragged box sparks');
-  for (const points of [...leadSparks.flat(), ...tearSparks, dragSparks]) { points.visible = false; group.add(points); }
+  // The box lands behind the truck, under the chase camera, so the tear is also seen at the cable's truck end: the
+  // hitch crackles with a burst thrown up over the tailgate.
+  const hitchSparks = createSpray(150, 'Scrapasaurus hitch sparks');
+  for (const points of [...leadSparks.flat(), ...tearSparks, dragSparks, hitchSparks]) { points.visible = false; group.add(points); }
   const across = new THREE.Vector3(), backward = new THREE.Vector3();
   // Steam off its back and shoulders while it sags, in the pose's own metres so it sags with it.
   const steam = puffs('Scrapasaurus steam', 16, 0xd9d4c8); pose.add(steam);
@@ -255,6 +258,7 @@ export function createRexView({loadModel}) {
     mixer?.update(dt);
     const seconds = now / 1000;
     clockNow = seconds;
+    const truckMph = state?.speedMph || 0;
     pen.visible = !!fight;
     fire.visible = ring.visible = thrown.visible = chest.visible = false;
     chestLight.intensity = 0;
@@ -271,7 +275,7 @@ export function createRexView({loadModel}) {
         if(open)open.scale.setScalar(0);
       }
       for(const {leads} of boxes)leads?.scale.setScalar(0);
-      for(const points of [...leadSparks.flat(),...tearSparks,dragSparks])points.visible=false;
+      for(const points of [...leadSparks.flat(),...tearSparks,dragSparks,hitchSparks])points.visible=false;
       steam.visible=dust.visible=false;group.userData.allJetsFire=false;
       for(const lamp of lamps)lamp.material.emissiveIntensity=lamp.glow;
       actions.tired?.stop();
@@ -323,7 +327,7 @@ export function createRexView({loadModel}) {
     actions.tail?.stop();
     if(tailPivot)tailPivot.rotation.y=fight.tailYaw || 0;
     const hook=fight.hook;
-    dragSparks.visible=false;
+    dragSparks.visible=hitchSparks.visible=false;
     holder.updateMatrixWorld(true);
     boxes.forEach(({part,whole,open,leads,sparks,socket,parent,origin},index)=>{
       if(!part)return;
@@ -334,14 +338,15 @@ export function createRexView({loadModel}) {
         if(part.parent!==group)group.add(part);part.position.copy(position);part.rotation.set(0,hook.origin?.heading||0,0);
         // A dragged box bounces along behind the truck.
         if(dragged){part.position.y+=.35*Math.abs(Math.sin(seconds*8.3));part.rotation.x=.12*Math.sin(seconds*6.1);
-          // Steel on the floor: sparks thrown back off the box, most just after it is torn out.
-          if(hook.origin){
+          // Steel scraping the floor while the truck moves, thrown high and out to both sides so it rises into view.
+          const scrape=Math.min(1,Math.abs(truckMph)/15);
+          if(hook.origin && scrape>.1){
             backward.set(position.x-hook.origin.x,0,position.z-hook.origin.z);
             if(backward.lengthSq()<1e-6)backward.set(0,0,-1);
             backward.normalize();across.set(-backward.z,0,backward.x);
-            scratch.set(position.x,position.y+.15,position.z);
+            scratch.set(position.x,position.y+.2,position.z);
             dragSparks.visible=true;
-            dragSparks.userData.place(seconds,scratch,backward,across,{reach:2.6,rise:1.6,spread:.7,share:.55+.45*Math.max(0,1-sinceTearOf(index)/2)});
+            dragSparks.userData.place(seconds,scratch,backward,across,{reach:2.4,rise:6,both:true,share:.3+.5*scrape,life:1.5});
           }
         }
       }else{
@@ -380,6 +385,14 @@ export function createRexView({loadModel}) {
         shower.userData.place(sinceTear,scratch,outward,across,{reach:5,rise:4,spread:1,share:1-sinceTear/REX_MOMENTS.tearSparks,life:1.6});
       }
     });
+    // The moment a box tears free the hitch crackles, whether the driver keeps the box on the cable or drops it.
+    const newest=Math.min(sinceTearOf(0),sinceTearOf(1),sinceTearOf(2)), burst=Math.max(0,1-newest/REX_MOMENTS.dragBurst);
+    if(burst>0 && hook.origin && !falling){
+      backward.set(-Math.sin(hook.origin.heading||0),0,-Math.cos(hook.origin.heading||0));across.set(-backward.z,0,backward.x);
+      scratch.set(hook.origin.x,hook.origin.y+.3,hook.origin.z);
+      hitchSparks.visible=true;
+      hitchSparks.userData.place(seconds,scratch,backward,across,{reach:2.2,rise:7,both:true,share:burst,life:1.8});
+    }
     if(hook.origin && hook.tip && hook.phase!=='idle'){
       // Slack, it hangs as a rope of its length would (a parabola's sag), never below the floor under the truck;
       // tight, it is straight and brighter, and trembles while the truck pulls.

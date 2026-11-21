@@ -434,8 +434,8 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
       depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false}), 'Bowl car park floodlight cones');
     if (cones) { cones.renderOrder = 2; group.add(cones); }
     if (glow) {
-      const pools = mesh(mastGeometries.pools, new THREE.MeshBasicMaterial({map: glow, color: 0xb08a58, transparent: true, depthWrite: false,
-        blending: THREE.AdditiveBlending, opacity: .95, toneMapped: false}), 'Bowl car park floodlight pools');
+      const pools = mesh(mastGeometries.pools, new THREE.MeshBasicMaterial({map: glow, color: 0xd6a768, transparent: true, depthWrite: false,
+        blending: THREE.AdditiveBlending, opacity: 1, toneMapped: false}), 'Bowl car park floodlight pools');
       if (pools) { pools.renderOrder = 2; group.add(pools); }
       // The lamps' glare, seen from anywhere in the car park and over the stands.
       const glare = new THREE.SpriteMaterial({map: glow, color: 0xffe3b0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false});

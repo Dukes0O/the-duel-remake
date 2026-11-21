@@ -40,9 +40,9 @@ export function createSpray(count = 96, name = 'Bowl sparks') {
   const material = new THREE.ShaderMaterial({
     vertexShader: `attribute float aHeat;varying float vHeat;
       void main(){vHeat=aHeat;vec4 mv=modelViewMatrix*vec4(position,1.0);
-        gl_PointSize=aHeat<=0.0 ? 0.0 : clamp((150.0+190.0*aHeat)/max(1.0,-mv.z),3.0,15.0);gl_Position=projectionMatrix*mv;}`,
+        gl_PointSize=aHeat<=0.0 ? 0.0 : clamp((210.0+280.0*aHeat)/max(1.0,-mv.z),3.5,22.0);gl_Position=projectionMatrix*mv;}`,
     fragmentShader: `varying float vHeat;
-      void main(){float d=length(gl_PointCoord-.5)*2.0;float a=(1.0-smoothstep(.1,1.0,d))*vHeat;
+      void main(){float d=length(gl_PointCoord-.5)*2.0;float a=(1.0-smoothstep(.25,1.0,d))*vHeat;
         vec3 colour=mix(vec3(1.0,.42,.08),vec3(1.0,.93,.7),smoothstep(.45,1.0,vHeat)*(1.0-d));
         gl_FragColor=vec4(colour*a*2.0,a);
         #include <tonemapping_fragment>
@@ -112,7 +112,7 @@ export function createSteelCable(steps = 18, name = 'Steel cable') {
       if (length > 1e-6) piece.quaternion.setFromUnitVectors(up, span.divideScalar(length));
     });
     // Pulled straight it shines along its length; slack it is duller and greasy.
-    material.color.setHex(tight ? 0xb2ada3 : 0x7d786f);
+    material.color.setHex(tight ? 0x8f8a81 : 0x67635c);
     material.roughness = tight ? .3 : .5;
   }};
 }
@@ -120,7 +120,7 @@ export function createSteelCable(steps = 18, name = 'Steel cable') {
 // High Jump's bar: a sooty gas pipe on two sliding collars, with a row of burner nozzles along its top and a wall of
 // flames that rise from blue roots at the nozzles to ragged orange tips. One flame sheet across the pipe and a second
 // just behind it, so the fire has depth; each is a single drawing (two draws for the whole bar).
-export const FLAME_BAR = Object.freeze({height: 1.9, pipe: .12});
+export const FLAME_BAR = Object.freeze({height: 2.6, pipe: .12});
 export function createFlameBar(line) {
   const group = new THREE.Group(), {posts, halfWidth} = line.bar;
   group.name = 'High Jump flame bar';
@@ -155,20 +155,24 @@ export function createFlameBar(line) {
     fragmentShader: `uniform sampler2D uNoise;uniform float uTime;uniform float uSeed;uniform float uLength;uniform float uGain;varying vec2 vUv;
       void main(){
         float y=vUv.y, x=vUv.x*uLength;
-        float a=texture2D(uNoise,vec2(x*.16+uSeed,y*.55-uTime*.9)).r;
-        float b=texture2D(uNoise,vec2(x*.42-uSeed*1.3,y*1.1-uTime*1.9)).b;
-        float lick=a*.7+b*.5;
-        // A tongue over every nozzle that sways and breaks up as it rises.
-        float cell=fract(x/.45+(a-.5)*.9*y+.5)-.5;
-        float tongue=1.0-smoothstep(.12,.5,abs(cell)*(1.0+y*1.6));
-        float top=.25+.75*mix(tongue,lick,.45)*(.65+.55*lick);
-        float body=clamp((top-y)/.28,0.0,1.0)*smoothstep(0.0,.04,y);
+        float a=texture2D(uNoise,vec2(x*.16+uSeed,y*.5-uTime*.8)).r;
+        float b=texture2D(uNoise,vec2(x*.45-uSeed*1.3,y*1.2-uTime*2.1)).b;
+        float lick=a*.65+b*.55;
+        // A tongue over every nozzle, each its own height from moment to moment, swaying more as it rises and
+        // breaking into ragged pieces near its tip.
+        float c=x/.5+(a-.5)*1.7*y;
+        float cell=fract(c)-.5;
+        float tall=texture2D(uNoise,vec2(floor(c)*.137+uSeed,uTime*.3)).r;
+        float tongue=1.0-smoothstep(.15,.65,abs(cell)*(.8+y*1.2));
+        float top=(.3+.8*tall)*(.55+.6*lick)*mix(.6,1.0,tongue);
+        float body=clamp((top-y)/.3,0.0,1.0)*smoothstep(0.0,.04,y);
+        body*=smoothstep(.2,.55,lick+(1.0-y)*.5);
         body*=smoothstep(0.0,.25,vUv.x*uLength)*smoothstep(0.0,.25,(1.0-vUv.x)*uLength);
-        vec3 colour=mix(vec3(.75,.1,.01),vec3(1.0,.45,.06),smoothstep(.1,.5,body));
-        colour=mix(colour,vec3(1.0,.86,.5),smoothstep(.55,.95,body)*(1.0-y));
+        vec3 colour=mix(vec3(.55,.06,.01),vec3(1.0,.38,.04),smoothstep(.1,.55,body));
+        colour=mix(colour,vec3(1.0,.78,.36),smoothstep(.7,1.0,body)*(1.0-smoothstep(.1,.5,y)));
         // The roots at the nozzles burn blue.
-        float root=1.0-smoothstep(.0,.09,y);
-        colour=mix(colour,vec3(.25,.4,1.0),root*.75);
+        float root=1.0-smoothstep(.0,.07,y);
+        colour=mix(colour,vec3(.25,.4,1.0),root*.7);
         gl_FragColor=vec4(colour*body*uGain,body*uGain);
         #include <colorspace_fragment>
       }`,
@@ -178,7 +182,7 @@ export function createFlameBar(line) {
   const sheets = [0, 1].map(k => {
     const mesh = new THREE.Mesh(sheet, material);
     mesh.name = 'High Jump flames'; mesh.position.z = k ? -.16 : .02; mesh.renderOrder = 6; mesh.frustumCulled = false;
-    mesh.onBeforeRender = () => { material.uniforms.uSeed.value = k * .37; material.uniforms.uGain.value = k ? .55 : .85; material.uniformsNeedUpdate = true; };
+    mesh.onBeforeRender = () => { material.uniforms.uSeed.value = k * .37; material.uniforms.uGain.value = k ? .4 : .62; material.uniformsNeedUpdate = true; };
     flame.add(mesh);
     return mesh;
   });
