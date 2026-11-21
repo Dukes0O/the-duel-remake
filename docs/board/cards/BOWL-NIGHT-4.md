@@ -41,7 +41,8 @@ without being told, the game may react.
      These are starting numbers. The list of steps, from least to most, is on BOWL-SHOW-2 section 11. Raise all three of
      Easy's rounds one step while the scripted child-pace driver of check 1 wins all ten seeds, and lower them one step
      if that driver wins fewer than six. Report the ten results.
-   - **The event's score** is the best go's whole score, as Long Jump's is. The record is kept under `best-trick`.
+   - **The event's score** is the best go's whole score, as Long Jump's is. The record is kept under a new key,
+     `best-trick`, added beside the others.
    - **In a Turn Show** the event is one go, the go's whole score goes on the board, and Big Kettle takes no part.
    - **A go that lands in the stands** is closed like any other and the truck is put back on its run-up.
 3. **Words on screen,** each one full plain sentence (`memory/dialogue-plain-prose`), in `src/bowl/bowl-lines.js`:
@@ -82,9 +83,10 @@ Name each of these on the change note's **Removed** line.
 - **Its words:** `homeRun` in `BOWL_EVENT_NAMES` and `BOWL_GOALS`, `event.homeRun.intro`, `event.won.homeRun`,
   `event.lost.homeRun` and the ring sentences in `eventJump`, all in `src/bowl/bowl-lines.js`.
 - **Its cues:** `bowl.home.ring` and `bowl.home.ring.high` in `BOWL_SOUND_CUES`.
-- **Its saved key:** `home-run` in `BOWL_EVENTS` of `src/bowl/bowl-save.js` and in `SAVE_EVENT_IDS` of
-  `src/bowl/bowl-night.js` becomes `best-trick`. No released save holds a `home-run` score (the switch has never been
-  on), and the loader already drops a key it does not know, so nothing is moved across.
+- **Not removed: the saved Home Run record.** BOWL-NIGHTS keeps each driver's Home Run best under `home-run`. It stays
+  in `BOWL_EVENTS` of `src/bowl/bowl-save.js`, so that a save holding it loads and saves with it unchanged: nothing is
+  wiped, renamed or moved across. `best-trick` is added to that list beside it. Only `SAVE_EVENT_IDS` in
+  `src/bowl/bowl-night.js` loses `homeRun`, since no event sends it now. A record that is no longer shown is harmless.
 - **The name "Over the Wall Night"** and the line "Jump the wall or fight with a saw."
 
 ## Older suites that name what changes
@@ -97,7 +99,8 @@ Bring each up to date in this card. Search `tools/` for `homeRun`, `home-run`, `
   is proved for Best Trick in their place.
 - `tools/test-bowl-show.mjs` (line 58): Night 4's name and line-up.
 - `tools/test-bowl-turns.mjs` (lines 131, 330 and 338): Best Trick as one go in a Turn Show, with no gate to follow.
-- `tools/test-bowl-save.mjs` (lines 116 to 127) and `tools/test-bowl-night.mjs` (line 86): the record key.
+- `tools/test-bowl-save.mjs` (lines 116 to 127) and `tools/test-bowl-night.mjs` (line 86): the Home Run record cases
+  stay and still pass (the key is kept); a `best-trick` case is added beside them.
 - `tools/test-bowl-camera.mjs` ("over the wall and back") stays as it is. It proves that the camera follows a truck
   that leaves, which a truck still may.
 - No file under `tools/scenarios/` names Home Run or Night 4's name.
@@ -120,7 +123,7 @@ Bring each up to date in this card. Search `tools/` for `homeRun`, `home-run`, `
    or weapon line contains "wall" or "stands".
 3. `tools/test-bowl-turns.mjs` (one go, a score, the turn phase), `tools/test-bowl-save.mjs` and
    `tools/test-bowl-night.mjs` (the `best-trick` record is kept when better and left alone when not; a save that
-   holds a `home-run` score loads without it and without an error).
+   holds a `home-run` score loads, saves and reloads with that score unchanged).
 4. Laptop only, Claude runs: Best Trick by hand once on Easy and once on Medium; one trip over the wall in Freestyle to
    hear Big Mo's new line and follow the arrow home.
 
@@ -136,13 +139,14 @@ it; stand-in `interface.lose`). `bowl.go.ready` is kept for the truck going back
 Approved before the build, on these terms. The Home Run assertions are removed because Kyle removed the event they
 checked. Night 4's name and line-up, the Turn Show's third jump event and the record key each change to the new name
 and check what they checked before. Nothing is loosened as long as every go rule that a Home Run case proved has a Best
-Trick case (check 1 lists them), and the save suite still proves that a record is kept only when it is better. A change
+Trick case (check 1 lists them), and the save suite still proves that a record is kept only when it is better and that
+a Home Run record already saved survives. A change
 beyond these comes back to Claude before the merge.
 
 ## How it merges
 
 Behind `titan-bowl`, so rule 23's small set: this card's five suites, the core suite, the three guards and
-`npm run build`, recorded in `docs/changes/BOWL-NIGHT-4.md` with the Removed line. Because one saved key changes,
-`tools/test-bowl-save.mjs` runs before the merge and the save checker reads the change to `BOWL_EVENTS`, as BOWL-SHOW-2
-says for every slice that touches the save. No Chrome under `codex exec`: check 4 is "Claude runs". Memory-only saves. No
+`npm run build`, recorded in `docs/changes/BOWL-NIGHT-4.md` with the Removed line. Because a saved key is added,
+`tools/test-bowl-save.mjs` runs before the merge and the save checker reviews the change to `BOWL_EVENTS` (rule 23's
+exception for saves), as BOWL-SHOW-2 says for every slice that touches the save. No Chrome under `codex exec`: check 4 is "Claude runs". Memory-only saves. No
 new dependency, network request or key. Clean up nothing outside this lane.
