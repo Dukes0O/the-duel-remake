@@ -146,3 +146,11 @@ Behind `titan-bowl`, so rule 23's small set: this card's five suites, the core s
 `tools/test-bowl-save.mjs` runs before the merge and the save checker reads the change to `BOWL_EVENTS`, as BOWL-SHOW-2
 says for every slice that touches the save. No Chrome under `codex exec`: check 4 is "Claude runs". Memory-only saves. No
 new dependency, network request or key. Clean up nothing outside this lane.
+
+## Build decisions and narrow questions, 20 November
+
+Best Trick will share the straight run-up, twelve-second go and one-second reset with the other jumps. The round reads the actual trick points reported by the existing scorer, including tonight's barrel-roll bonus. It compares those points with Big Kettle's table. Turn Show ranks the whole go score with no Big Kettle round. Start from the stated Easy numbers and tune with real taps.
+
+May this card adjust one condition in `src/bowl/bowl-screens.js`? The generic jump label currently overwrites the strip's round line. The change would let Best Trick own that label while keeping the other go labels.
+
+A memory-only `loadPlayers` write/read confirmed that the raw version-one profile currently retains `home-run`. The Bowl scorer drops unknown keys on a later write. May this card add a small load hook in `src/progression.js` to omit only the retired key from a supported Bowl record? It would preserve every other key, every other profile field and newer Bowl versions, with no write on load. The save checker would verify it. AGENTS rule 23 says saved changes keep the lane tier. I will use that gate for the updated key unless the rule changes.
