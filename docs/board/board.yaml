@@ -690,7 +690,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-rex-solids"
     needs: [BOWL-REX-LOOK]
     locks: []
     flag: "titan-bowl"
