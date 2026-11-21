@@ -446,9 +446,13 @@ function hintBanner(course) {
     for (let i = 0; i < 26; i++) { g.fillStyle = 'rgba(29,26,23,.35)'; g.fillRect(hash(i, 68) * w, 90 + hash(i, 69) * 40, 3, 10 + hash(i, 70) * 34); }
     picture.needsUpdate = true;
   };
+  // Worked out again only when the night or its found tricks change. Finding a secret trick can bring a new hint, as
+  // the result card works it out from the tricks found by the end of the night.
+  let key = null, hint = '';
   return {sheet, update(state) {
-    const night = state?.bowlNight;
-    const hint = night && !night.turn ? secretHint((night.start?.seed ?? 1989) + night.night, night.foundTricks ?? []) : '';
+    const night = state?.bowlNight, found = night?.foundTricks ?? [];
+    const next = night && !night.turn ? `${night.start?.seed ?? 1989}|${night.night}|${found.join(',')}` : '';
+    if (next !== key) { key = next; hint = next ? secretHint((night.start?.seed ?? 1989) + night.night, found) : ''; }
     sheet.visible = !!hint;
     if (hint && hint !== shown) { shown = hint; paint(hint); }
   }};
