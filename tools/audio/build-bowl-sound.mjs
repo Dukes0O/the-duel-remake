@@ -72,6 +72,7 @@ export const BOWL_SOUND_RECIPES = Object.freeze(Object.fromEntries([
   one('bowl.school.done', -19, [cut(875590, 1, 3, {fadein: .1})]),
   // BOWL-CRUSH
   one('bowl.crush.chain', -22, [cut(333694, 0, 1.6)]),
+  one('bowl.crush.hint', -24, [cut(611111, 0, 1, {rate: 1.3, lowpass: 6000})]),             // BOWL-SCREEN-FIX
   one('bowl.crush.fullhouse', -17, [cut(267246, 2.5, 3.5, {fadein: .1}), cut(131930, .3, 1.5, {gain: .6})]),
   // BOWL-OUT-SIM
   one('bowl.out.over', -19, [cut(764204, .9, 1.8, {fadein: .05})]),
@@ -119,6 +120,12 @@ export const BOWL_SOUND_RECIPES = Object.freeze(Object.fromEntries([
   one('bowl.best.rival.slam', -16, [cut(675910, 4, 1.6, {rate: .85})]),
   one('bowl.best.round.won', -19, [cut(875589, 0, 2.1)]),
   one('bowl.best.round.lost', -20, [cut(764253, 0, 3)]),
+  // BOWL-FREESTYLE-NIGHTS: the rival's score ticks in from a distant crowd, so it never covers the player's own.
+  one('bowl.free.rival', -24, [cut(728774, 2, .8, {fadein: .05})]),
+  one('bowl.free.lead', -19, [cut(267248, 1, 2.2, {fadein: .1})]),
+  one('bowl.free.behind', -21, [cut(764216, 7.7, 1.1, {fadein: .05})]),
+  one('bowl.free.beaten', -17, [cut(267249, 1.5, 1.8, {fadein: .1}), cut(131930, .3, 1.2, {gain: .6})]),
+  one('bowl.free.bar', -19, [cut(611113, 0, 1.2), cut(728773, 2, 1.5, {gain: .6, at: .1, fadein: .1})]),
   // BOWL-NIGHTS and the cues already in the game
   one('bowl.night.open', -18, [cut(728774, 0, 3.5), cut(131930, .3, 1.8, {gain: .7, at: .3})]),
   one('bowl.night.new', -20, [cut(611111, 0, 2.5), cut(764165, .5, 1.8, {gain: .5, at: .3, fadein: .1})]),

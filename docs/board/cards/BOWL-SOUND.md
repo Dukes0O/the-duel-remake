@@ -76,10 +76,8 @@ stand-in or shares a file. Measured against the car-to-car crash (the change not
 grinder starting, cutting steel and winding down with a hiss; the hammer is hydraulic rams, an anvil clang and a heavy
 dirt thud; the launcher is a valve hiss and a large air blast; the trick that comes too late is a short crowd groan, not a
 buzzer. The takes were chosen by measurement (onset, envelope, a check that the saw and hammer are not tonal buzzes),
-not yet by ear. Still owed on this card:
+not yet by ear. Freestyle's five and BOWL-SCREEN-FIX's `bowl.crush.hint` were added after those cards merged. Still owed on this card:
 
-- **BOWL-FREESTYLE-NIGHTS' five** (`bowl.free.rival`, `bowl.free.lead`, `bowl.free.behind`, `bowl.free.beaten`,
-  `bowl.free.bar`): add a recipe line each once that card merges; the check will fail until each has its own take.
 - **BOWL-REX-3's eleven**, when that card merges, the same way.
 - **`bowl.trick.go`** is built and in the bank, but `src/app.js` does not play the `bowlTrickGo` event: one line in the
   Bowl's cue block, on a card that owns that hook.

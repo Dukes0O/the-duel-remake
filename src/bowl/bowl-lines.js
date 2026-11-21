@@ -101,10 +101,16 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.crush.pancake': 'bowl.crush.pancake', // a piece crushed by a truck coming down out of the air
   'bowl.crush.ooh': 'bowl.crush.ooh',         // a bus, the RV, a stack or the Bus Pile: the crowd's "ooh"
   'bowl.crush.chain': 'bowl.crush.chain', // another piece in the chain
+  'bowl.crush.hint': 'bowl.crush.hint',
   'bowl.crush.fullhouse': 'bowl.crush.fullhouse',     // all the pieces are crushed
   'bowl.go.ready': 'bowl.go.ready',
   'bowl.long.clear': 'bowl.long.clear',
   'bowl.high.clear': 'bowl.high.clear',
+  'bowl.free.rival': 'bowl.free.rival',     // BOWL-FREESTYLE-NIGHTS: the rival's score climbs
+  'bowl.free.lead': 'bowl.free.lead',       // the player goes ahead
+  'bowl.free.behind': 'bowl.free.behind',   // the rival goes back ahead
+  'bowl.free.beaten': 'bowl.free.beaten',   // the player passes the rival's final score
+  'bowl.free.bar': 'bowl.free.bar',         // a bar cleared in Freestyle
   'bowl.high.fail': 'bowl.high.fail',
   'bowl.best.rival': 'bowl.best.rival',
   'bowl.best.rival.slam': 'bowl.best.rival.slam',
@@ -120,6 +126,18 @@ export function bowlCrushKind(kind) {
   if (/heap|stack/i.test(name)) return 'stack';
   if (/bus|rv/i.test(name)) return 'bus';
   return 'car';
+}
+
+export function bowlCrushHintLine(piece) {
+  const kind = piece.sourceKind ?? piece.kind;
+  const target = piece.bowlCrushGroup === 'bowl-second-bus-pile' ? 'the second Bus Pile'
+    : piece.bowlCrushGroup ? 'the Bus Pile'
+    : piece.id.startsWith('bowl-row-') ? 'the Row'
+    : kind === 'bowlBus' ? 'the bus'
+    : kind === 'bowlRv' ? 'the RV'
+    : bowlCrushKind(kind) === 'stack' ? 'the burning stack'
+    : 'the junk car';
+  return `Steer for ${target}!`;
 }
 
 // The sounds of one crush, in order: {cue, at (seconds after the bite), scale}. A pancake on a car replaces the
@@ -182,6 +200,17 @@ export const BOWL_GOALS = Object.freeze({
 
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
+export function freestyleLines(rival) {
+  const pronoun = rival === 'Old Bess' ? 'her' : 'their';
+  return {
+    intro: `Now it is Freestyle, and you have ninety seconds. ${rival} has already been round, and you can watch ${pronoun} score climb on the board.`,
+    lead: `Our driver has gone ahead of ${rival}, so keep it going!`,
+    behind: `${rival} is back in front, so it is time for a trick you have not done yet.`,
+    beaten: `${rival} is beaten, so every point from now on is for the record.`,
+    lost: `${rival} finished ahead this time, so try mixing in a trick you have not done yet.`,
+  };
+}
+
 export const BIG_MO = Object.freeze({
   'school.done': 'The floor is yours to practise on, and you can find the secrets for yourself if you tap the keys quickly.',
   ...Object.fromEntries(SECRETS.map(trick => ['secret.' + trick.id, 'You found the ' + trick.name.slice(4) + '!'])),
@@ -222,7 +251,9 @@ export const BIG_MO = Object.freeze({
   'best.repeat': 'The same trick again pays less, so try a different one.',
   'best.noTrick': 'You landed no trick, so tap a key as soon as the truck leaves the ramp.',
   'event.carCrush.intro': 'Drive down the line, then keep going. You have a minute to crush as many pieces as you can.',
-  'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
+  'night.2.freestyleFloor': 'Tonight the buses from Long Jump stay out for Freestyle.',
+  'night.3.freestyleFloor': 'Tonight the two Bus Piles are back for Freestyle.',
+  'night.5.freestyleFloor': 'Tonight the flame bar stays over the Big Jump for Freestyle.',
   'event.sideBySide.intro': 'It is time for Side by Side. Two trucks race two laps, and the first one across the line wins.',
   'event.lastTruckRolling.intro': 'Here comes Last Truck Rolling. Four trucks go in, and the last one still moving wins.',
   'moment.fullHouse': 'That is a Full House! Every piece on the floor is crushed.',
@@ -245,10 +276,10 @@ export const BIG_MO = Object.freeze({
   'event.lost.bestTrick': 'Big Kettle landed the bigger tricks this time, so try a trick you have not done yet.',
   'event.won.carCrush': 'Our driver crushed enough pieces to go through to the next event.',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
-  'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
-  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night is theirs!',
+  'event.won.sideBySide': 'Our driver crossed the line first, so the night belongs to our driver!',
+  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night belongs to our driver!',
   'event.lost.carCrush': 'Time ran out before you crushed enough pieces, so let us try that again.',
-  'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
+
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
   'event.lost.lastTruckRolling': 'Another truck won that one, but the trucks are lining up again.',
   // BOWL-RIVALS: who is in the other lane, who is in the Bowl tonight, and who is out.

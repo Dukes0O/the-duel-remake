@@ -7,7 +7,7 @@ import {readFileSync, readdirSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createProfile, isCarUnlocked, loadPlayers, savePlayers} from '../src/progression.js';
 import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushTarget, bowlHudView, bowlNightPlayable, settleShowNight,
-  showTruckFor} from '../src/bowl/bowl-night.js';
+  showTruckFor, stepBowlNight} from '../src/bowl/bowl-night.js';
 import {BIG_MO, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {SHOW_NIGHTS, scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
@@ -18,6 +18,7 @@ import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
 import {createBowlView} from '../src/bowl/bowl-view.js';
 import {makeRng} from '../src/rng.js';
 import {createCarCrushDriver} from './scenarios/bowl-night-pay.mjs';
+import {createFreestyleDriver} from './bowl-freestyle-balance.mjs';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -72,7 +73,15 @@ const showDuel = (enabled = true) => {
         equal(duel.state.bowlNight.event.total, night === 3 ? 34 : 31, 'only Hammer Night adds the second pile');
       }
       if (freestyle && type === 'freestyle') {
+        const {event} = duel.state.bowlNight;
         ok(bowlHudView(duel.state, duel.course).goal.includes(freestyle.name), 'Freestyle names the right score rival');
+        equal(event.rivalScore, 0, 'the rival starts at zero');
+        equal(duel.state.traffic.filter(car => car.bowlParked).length, 2, 'the two parked cars remain on every Freestyle floor');
+        const pieces = duel.course.features.crushables;
+        equal(pieces.filter(piece => piece.id.startsWith('bowl-long-bus-')).length, night === 2 ? 10 : 0, 'only Flip Night has Freestyle buses');
+        equal(pieces.filter(piece => piece.bowlCrushGroup).length, night === 3 ? 6 : 0, 'only Hammer Night has two Freestyle Bus Piles');
+        ok(!pieces.some(piece => piece.id.startsWith('bowl-row-')), 'Car Crush rows stay out of Freestyle');
+        equal(event.barHeight, night === 5 ? 8 : undefined, 'only Scrapasaurus Night has an Easy Freestyle bar');
       }
     }
     const result = {night, won: true, bests: Object.fromEntries(events.map(event => [event, night * 100]))};
@@ -85,6 +94,62 @@ const showDuel = (enabled = true) => {
   equal(profile.bowl.nightsWon, [1, 2, 3, 4, 5], 'all five wins stay with the driver');
   equal(['long-jump', 'high-jump', 'best-trick'].map(event => profile.bowl.bestScores[event]), [200, 400, 400],
     'solos record each jump result with its own key');
+}
+
+// Follow the event clock across every rival trick and through the full ninety seconds.
+for (const {night: number, events, freestyle} of SHOW_NIGHTS.filter(night => night.freestyle)) {
+  const duel = showDuel();
+  ok(duel.startBowlNight({night: number, eventIndex: events.indexOf('freestyle'), cpuDifficulty: 'hard'}));
+  const {state} = duel, night = state.bowlNight, {event} = night;
+  state.status = 'racing';
+  for (const [index, tick] of event.rivalRun.entries()) {
+    state.stageTimeSec = tick.at - .01;
+    stepBowlNight(duel, DT);
+    equal(event.rivalTick, index, 'the rival waits for the listed time');
+    state.stageTimeSec = tick.at;
+    stepBowlNight(duel, DT);
+    equal(event.rivalTick, index + 1, 'the rival scores at the listed time');
+    equal(event.rivalPopup.trick, tick.trick, 'the popup names the trick just scored');
+    equal(event.rivalScore, event.rivalRun.slice(0, index + 1).reduce((sum, trick) => sum + trick.points, 0),
+      'the rival score counts up through the run');
+  }
+  equal(event.rivalScore, freestyle.target.hard, 'the eight tricks total the target exactly');
+  event.score = event.rivalScore + 1;
+  state.stageTimeSec = 89.99;
+  ok(!stepBowlNight(duel, DT) && event.rivalBeaten, 'beating the rival still leaves time to play');
+  state.stageTimeSec = 90;
+  ok(stepBowlNight(duel, DT) && night.lastResult.won, 'the result arrives at the bell');
+}
+
+// Drive the shared geometry sampler with a straight flight over the pieces.
+for (const [night, eventIndex, expected] of [[2, 1, 'busClear'], [5, 0, 'barClear']]) {
+  const duel = showDuel();
+  ok(duel.startBowlNight({night, eventIndex, cpuDifficulty: 'easy'}));
+  const {state, course} = duel, {event} = state.bowlNight, line = course.features.bowlJump;
+  const scored = [];
+  duel.onChange((_, ev) => { if (ev.bowlScore?.type === expected) scored.push(ev.bowlScore.points); });
+  Object.assign(state, {status: 'racing', airborne: true, _jumpY: 20, _jumpOrigin: {rampId: line.rampId}});
+  const station = distance => {
+    const at = course.nearest(line.crest.x + line.forward.x * distance, line.crest.z + line.forward.z * distance);
+    Object.assign(state, {s: at.s, lateral: at.lateral, headingError: line.crest.heading - course.worldAt(at.s, at.lateral).heading});
+    stepBowlNight(duel, DT);
+  };
+  const cross = () => {
+    state.airborne = true;
+    for (let distance = 7; distance <= 56; distance += .5) station(distance);
+    state.airborne = false;
+    stepBowlNight(duel, DT);
+  };
+  event.crowd = 50;
+  if (night === 2) state.crushedProps.push(line.buses[1].id);
+  cross();
+  equal(scored[0], night === 2 ? 60 : 150, 'the first clear pays through the crowd');
+  if (night === 2) equal(scored.length, 9, 'a bus crushed on landing does not also pay as cleared');
+  else {
+    event.crowd = 50;
+    cross();
+    equal(scored, [150, 90], 'a later bar clear pays 60 before the crowd');
+  }
 }
 
 // The same palette is read by both the stadium banner and its flame jets.
@@ -324,11 +389,27 @@ for (const [speed, count] of [[29, 0], [30, 3]]) {
     'at 32 mph the truck passes the parked car on a separate line without crushing it');
 }
 
-// One scripted night, the way in to the results: night one on Easy in the lent truck.
-// The driver keeps to the middle of the floor, and in Freestyle swings over to the
-// first parked car to launch off it.
+// The first parked car is still a launch ramp in Freestyle.
+{
+  const duel = showDuel(), scores = [];
+  duel.startBowlNight({night: 1, eventIndex: 1, cpuDifficulty: 'easy'});
+  duel.onChange((_, ev) => { if (ev.bowlScore) scores.push(ev.bowlScore); });
+  for (let i = 0; i < 120 * 25; i++) {
+    const s = duel.state, course = duel.course, car = bowlLayout(course).parked[0];
+    const lapS = course.phase(s.s), line = lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : 0;
+    duel.setInput({throttle: +(s.speedMph < 30 && !s.airborne),
+      steer: s.airborne ? 0 : Math.max(-1, Math.min(1, (s.lateral - line) * .3 + s.headingError * 1.5))});
+    duel.step(DT);
+  }
+  const launch = scores.find(score => score.type === 'carLaunch');
+  ok(launch, 'the Titan launches off a parked car in Freestyle');
+  ok(scores.filter(score => score.type === 'landedJump').every(jump => jump.points < launch.points),
+    'the launch off a car scores more than the kicker jumps');
+}
+
+// One scripted night, from the first event to the results, on Easy in the lent truck.
 const run = (() => {
-  const driveCrush = createCarCrushDriver();
+  const driveCrush = createCarCrushDriver(), driveFreestyle = createFreestyleDriver('show');
   const duel = showDuel(), log = {captions: [], scores: [], events: [], night: null, cues: new Set(), hud: null};
   duel.onChange((_, ev) => {
     if (ev.bowlCaption) { log.captions.push(ev.bowlCaption.id); log.cues.add(ev.bowlCaption.cue); }
@@ -348,12 +429,10 @@ const run = (() => {
       duel.continueBowlNight(); continue;
     }
     const freestyle = s.bowlNight.event.type === 'freestyle', layout = bowlLayout(duel.course);
-    // Freestyle: the centre line over the kickers, swinging out to the first launch car on the way past it.
-    const car = layout.parked[0], lapS = ((s.s % duel.course.length) + duel.course.length) % duel.course.length;
-    const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : s.bowlNight.event.type === 'sideBySide' ? layout.lanes[0].lateral : 0;
     if (s.bowlNight.event.type === 'carCrush') duel.setInput(driveCrush(duel));
-    else if (freestyle && s.airborne) duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
-    else duel.setInput({throttle: s.speedMph < (freestyle ? 30 : 32) ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
+    else if (freestyle) duel.setInput(driveFreestyle(duel, DT));
+    else duel.setInput({throttle: +(s.speedMph < 32), brake: 0,
+      steer: Math.max(-1, Math.min(1, (s.lateral - layout.lanes[0].lateral) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
     if (freestyle && s.stageTimeSec > 20 && !log.hud) log.hud = bowlHudView(s, duel.course);
   }
@@ -372,10 +451,6 @@ const run = (() => {
   }
   ok(log.events[0].count >= crushTarget({cpuDifficulty: 'easy'}), 'two passes through the field reach the Easy count');
   ok(night.attempts[0].event === 'carCrush' && night.attempts[0].won, 'the first Car Crush run is won, with no wall in the way');
-  const launch = log.scores.find(score => score.type === 'carLaunch' && score.event === 'freestyle');
-  ok(launch, 'the Titan launches off a parked car in Freestyle');
-  ok(log.scores.filter(score => score.type === 'landedJump').every(jump => jump.points < launch.points),
-    'the launch off a car scores more than any ramp jump');
   equal(bowlOpeningLines(1, true), [BIG_MO['night.1.open'], BIG_MO['lent.truck']],
     'the opening card carries Big Mo’s welcome and the line about the lent truck');
   ok(log.captions[0] === 'event.carCrush.intro' && !log.captions.includes('night.1.open') &&
@@ -384,7 +459,7 @@ const run = (() => {
   ok(['carCrush', 'freestyle', 'sideBySide'].every(type => log.captions.includes(`event.${type}.intro`) &&
     log.captions.includes(`event.won.${type}`)), 'Big Mo introduces and ends every event');
   ok(log.hud && log.hud.name === 'Freestyle' && log.hud.timeLeft > 0 && log.hud.timeLeft < 90 &&
-    Number.isFinite(log.hud.crowd) && log.hud.goal === "Beat Old Bess's 310 points.", 'the HUD reads the event, clock, crowd and goal');
+    Number.isFinite(log.hud.crowd) && log.hud.goal === BOWL_GOALS.freestyle(SHOW_NIGHTS[0].freestyle.target.easy.toLocaleString('en-US')), 'the HUD reads the event, clock, crowd and goal');
   ok(['bowl.mo', 'bowl.crowd.rise', 'bowl.event.won'].every(cue => log.cues.has(cue)), 'each new event names its sound cue');
   const freestyle = log.events.find(result => result.event === 'freestyle');
   ok(freestyle.crowdPeak >= 25, `the crowd meter rises visibly even on a plain line over the kickers (peak ${freestyle.crowdPeak})`);

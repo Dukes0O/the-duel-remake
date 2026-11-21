@@ -1,6 +1,6 @@
 # BOWL-SOUND
 
-- **What changed:** 89 Show Night cues now play a recording of their own instead of a stand-in: the weapons (Kyle's
+- **What changed:** 95 Show Night cues now play a recording of their own instead of a stand-in: the weapons (Kyle's
   try: a grinding disc on steel for the saw, hydraulic rams and an anvil clang for the hammer, an air hiss and bang for
   the launcher), walls, tricks, secrets, HUD, school, crush chain, the trip outside, rivals, jump events, Night 4, the
   nights, Big Mo's PA chime and the Scrapasaurus with its hook. 93 CC0 Freesound recordings, cut by
@@ -13,10 +13,10 @@
   -23.9). Each take's measured loudness and peak are in its catalog row; the listening sheet renders all of them.
 - **Checks** on `bfd840ed1` plus this change: `tools/test-bowl-sound.mjs` (new: every cue named in `src/bowl/`, `app.js`
   and `sim-contacts.js` is its own recorded cue, built by its recipe, no file shared); rule 23's set with
-  `--filter audio` and the Bowl suites that read the cue table: 35 passed; hygiene; `npm run build`. One review: its
+  `--filter audio` and the Bowl suites that read the cue table, rerun after merging Freestyle; hygiene; `npm run build`. One review: its
   two faults fixed (the P4 bank pin, the crush script dropping this card's rows) and the check widened.
 - **Changed assertions** (reviewed on the card): `test-bowl-hud` expects `bowl.card.open` instead of the stand-in;
   `test-p4-audio` leaves every `bowl.*` cue out of its pre-P4 hash, not only `bowl.crush.*`; the hash is unchanged.
-- **Not done:** the five `bowl.free.*` cues (BOWL-FREESTYLE-NIGHTS unmerged), BOWL-REX-3's eleven, `bowl.trick.go`
+- **Not done:** BOWL-REX-3's eleven (card unmerged), `bowl.trick.go`
   (built, but `app.js` does not play `bowlTrickGo`), and the by-ear listening in play.
 - **Removed:** every stand-in in `BOWL_SOUND_CUES` and `BOWL_HUD_SOUNDS`.

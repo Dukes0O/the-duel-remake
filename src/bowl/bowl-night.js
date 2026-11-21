@@ -20,11 +20,12 @@ import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent,
   scoreStuntEvent} from './bowl-show.js';
 import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
-import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushKind} from './bowl-lines.js';
+import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushHintLine, bowlCrushKind, freestyleLines} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
 import {BOWL_SCHOOL_REASONS, featuredSchoolTrick, isSchoolTrick, nextSchoolLesson} from './bowl-school.js';
 import {CAR_CRUSH_DRESSING} from './bowl-crush-field.js';
-import {installBowlJumpEvents} from './bowl-jump-events.js';
+import {installBowlJumpEvents, stepFreestyleJump} from './bowl-jump-events.js';
+import {bowlJumpMessagesAllowed, resetBowlTrickGo} from './bowl-tricks.js';
 import {CARS, COURSE} from '../config.js';
 import {DEFAULT_DRIVER} from '../drivers.js';
 import {freshDamageZones} from '../sim-common.js';
@@ -38,11 +39,8 @@ export const BOWL_NIGHT_RULES = Object.freeze({
   carCrush: Object.freeze({runUpMetres: 8, timeLimitSec: 60,
     target: Object.freeze({easy: 13, medium: 18, hard: 26}),
     chainSec: 3, chainStep: .25, maxChainMultiplier: 2.5,
-    pancakeMultiplier: 3, fullHousePointsPerSecond: 20}),
-  // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
-  // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
-  // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 310, medium: 1810, hard: 4260})}),
+    pancakeMultiplier: 3, stallHintSec: 8, fullHousePointsPerSecond: 20}),
+  freestyle: Object.freeze({timeLimitSec: 90}),
   // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS); the lanes are bowlLayout's.
   sideBySide: Object.freeze({timeLimitSec: 75}),
   minJumpSec: .5,
@@ -158,6 +156,7 @@ export function bowlLayout(course) {
 export const crushTarget = night => BOWL_NIGHT_RULES.carCrush.target[difficultyOf(night)];
 const CRUSH_POINTS = Object.freeze({car: 35, bus: 60, stack: 80, pile: 200});
 const CHAIN_TICK_INTERVAL = .12;
+const GROUND_TRICKS = new Set(['wheelie', 'stoppie', 'donut', 'cyclone']);
 
 function playCrushChainTick(duel, night) {
   const event = night.event;
@@ -165,6 +164,19 @@ function playCrushChainTick(duel, night) {
   event.chainTicks--;
   event.nextChainTick = night.clock + CHAIN_TICK_INTERVAL;
   duel.emit({bowlScore: {type: 'crushChain', points: 0, score: event.score, cue: 'bowl.crush.chain'}});
+}
+
+function hintNearestCrush(duel, event) {
+  const {course, state} = duel, here = course.worldAt(state.s, state.lateral);
+  let nearest, distance = Infinity;
+  for (const prop of course.features.crushables) {
+    if (event.crushIds.has(prop.id) || state.crushedProps.includes(prop.id)) continue;
+    const distanceSquared = (prop.x - here.x) ** 2 + (prop.z - here.z) ** 2;
+    if (distanceSquared < distance) { nearest = prop; distance = distanceSquared; }
+  }
+  if (!nearest) return;
+  event.crushHint = {id: nearest.id, x: nearest.x, y: nearest.y + nearest.height, z: nearest.z};
+  say(duel, 'crush.hint', {text: bowlCrushHintLine(nearest), cue: 'bowl.crush.hint'});
 }
 
 registerBowlEventRunner('carCrush', {
@@ -178,8 +190,8 @@ registerBowlEventRunner('carCrush', {
     Object.assign(night.event, {count: 0, chain: 0, lastCrushAt: -Infinity, chainTicks: 0, nextChainTick: 0,
       crushIds: new Set(), total: duel.course.features.crushables.length, fullHouseBonus: 0});
   },
-  observe(duel, {event}, ev) {
-    const hit = ev.propCrushed;
+  observe(duel, night, ev) {
+    const {event} = night, hit = ev.propCrushed;
     if (!hit?.byPlayer || !duel.course.features.crushables.some(prop => prop.id === hit.id)) return;
     const at = duel.state.stageTimeSec, rules = BOWL_NIGHT_RULES.carCrush;
     const kind = bowlCrushKind(hit.kind);
@@ -187,6 +199,10 @@ registerBowlEventRunner('carCrush', {
     if (!ids.length) return;
     if (at - event.lastCrushAt > rules.chainSec) event.chain = 0;
     event.lastCrushAt = at;
+    if (event.crushHint) {
+      delete event.crushHint;
+      night.captionQueue = night.captionQueue.filter(line => line.id !== 'crush.hint');
+    }
     const before = event.chain;
     const cues = bowlCrushCues({kind: hit.kind, pancake: hit.pancake}).map(item => item.cue);
     let awardedPoints = 0;
@@ -211,13 +227,19 @@ registerBowlEventRunner('carCrush', {
     // A pile can form three links at once. Give each bonus link its own tick.
     event.chainTicks += event.chain - Math.max(1, before);
     duel.emit({bowlScore: {type: 'crush', points: awardedPoints, score: event.score, crowd, cue: null}});
-    if (hit.pancake) say(duel, 'crush.pancake');
+    if (hit.pancake) {
+      event.crushPopup = {notice: `PANCAKE x${rules.pancakeMultiplier}`, at: night.clock};
+      say(duel, 'crush.pancake');
+    }
   },
   step(duel, night) {
     const at = duel.state.stageTimeSec, {event} = night, rules = BOWL_NIGHT_RULES.carCrush;
     if (at - event.lastCrushAt > rules.chainSec) event.chain = 0;
     const fullHouse = event.count === event.total;
-    if (!fullHouse && at + 1e-8 < rules.timeLimitSec) return null;
+    if (!fullHouse && at + 1e-8 < rules.timeLimitSec) {
+      if (!event.crushHint && at + 1e-8 >= Math.max(0, event.lastCrushAt) + rules.stallHintSec) hintNearestCrush(duel, event);
+      return null;
+    }
     if (fullHouse) {
       event.fullHouseBonus = Math.floor(Math.max(0, rules.timeLimitSec - at + 1e-8)) * rules.fullHousePointsPerSecond;
       event.score += event.fullHouseBonus;
@@ -229,12 +251,52 @@ registerBowlEventRunner('carCrush', {
   result: event => ({count: event.count, total: event.total, fullHouseBonus: event.fullHouseBonus}),
 });
 
+// Turn Show keeps its existing result and purse threshold without showing a rival.
+const TURN_FREESTYLE_MARK = Object.freeze({easy: 310, medium: 1810, hard: 4260});
+const freestyleFor = night => SHOW_NIGHTS[night.night - 1].freestyle;
+const freestyleTarget = night => freestyleFor(night).target[difficultyOf(night)];
+
+function freestyleRivalRun(night) {
+  const {run} = freestyleFor(night), target = freestyleTarget(night);
+  const total = run.reduce((sum, tick) => sum + tick.weight, 0);
+  let weight = 0, score = 0;
+  return run.map(tick => {
+    weight += tick.weight;
+    const next = Math.round(target * weight / total), points = next - score;
+    score = next;
+    return {...tick, points};
+  });
+}
+
+function advanceFreestyleRival(duel, night) {
+  const {event} = night, time = duel.state.stageTimeSec;
+  while (event.rivalRun[event.rivalTick]?.at <= time + 1e-8) {
+    const tick = event.rivalRun[event.rivalTick++];
+    event.rivalScore += tick.points;
+    event.rivalPopup = {...tick, at: night.clock};
+    duel.emit({bowlScore: {type: 'freestyleRival', points: 0, score: event.score, cue: 'bowl.free.rival'}});
+  }
+  const lead = Math.sign(event.score - event.rivalScore);
+  const talk = (key) => {
+    say(duel, `freestyle.${key}`, {text: event.freestyleLines[key]});
+    duel.emit({bowlScore: {type: `freestyle.${key}`, points: 0, score: event.score, cue: `bowl.free.${key}`}});
+  };
+  if (lead > 0 && !event.hasLed) { event.hasLed = true; talk('lead'); }
+  if (lead < 0 && event.hasLed && !event.hasTrailed) { event.hasTrailed = true; talk('behind'); }
+  if (event.score > freestyleTarget(night) && !event.rivalBeaten) { event.rivalBeaten = true; talk('beaten'); }
+}
+
 // Two parked cars on the ring in Freestyle, so the Titan's launch off cars
 // (FUN-TITAN-LAUNCH, docs/board/decisions.md "Keep these") can be done in the
 // show. They are ordinary parked traffic: the launch rules are not touched.
 // Where they stand comes from bowlLayout(course).parked.
 registerBowlEventRunner('freestyle', {
-  place(duel) {
+  place(duel, night) {
+    const {event} = night;
+    const floor = SHOW_NIGHTS[night.night - 1].dressing.freestyle;
+    if (floor?.barHeight) Object.assign(event, {barHeight: floor.barHeight[difficultyOf(night)], barClears: 0});
+    if (!night.turn) Object.assign(event, {rivalName: freestyleFor(night).name, rivalScore: 0,
+      rivalRun: freestyleRivalRun(night), rivalTick: 0, freestyleLines: freestyleLines(freestyleFor(night).name)});
     const layout = bowlLayout(duel.course);
     startBowlEventAt(duel, layout.start.s, layout.start.lateral);
     duel.state.traffic = layout.parked.map(({s, dir, lateral}) => {
@@ -242,13 +304,16 @@ registerBowlEventRunner('freestyle', {
         car: 'falcone_f42', alive: true, damageZones: freshDamageZones(), damageCooldown: 0, bowlParked: true};
     });
   },
-  target: night => BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)],
-  goal: night => BOWL_GOALS.freestyle(BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)].toLocaleString(),
-    SHOW_NIGHTS[night.night - 1].freestyle?.name),
+  target: night => night.turn ? null : freestyleTarget(night),
+  goal: night => night.turn ? 'Score as many points as you can in ninety seconds.'
+    : BOWL_GOALS.freestyle(freestyleTarget(night).toLocaleString(), freestyleFor(night).name),
   timeLimitSec: BOWL_NIGHT_RULES.freestyle.timeLimitSec,
   step(duel, night) {
-    if (duel.state.stageTimeSec < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;
-    return {won: night.event.score >= BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)]};
+    stepFreestyleJump(duel, night.event, (fact, cue) => addFact(duel, fact, cue));
+    if (!night.turn) advanceFreestyleRival(duel, night);
+    if (duel.state.stageTimeSec + 1e-8 < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;
+    const mark = night.turn ? TURN_FREESTYLE_MARK[difficultyOf(night)] : freestyleTarget(night);
+    return {won: night.event.score >= mark};
   },
 });
 
@@ -265,20 +330,25 @@ export function featuredBowlTricks(number) {
 
 function placeSchoolLesson(duel, night, fromPicker = false) {
   const lesson = nextSchoolLesson(night.school.completed), event = night.event;
+  const afterDonut = event.lesson === 'donut';
   event.lesson = lesson?.kind ?? null;
   event.schoolFailures = [];
   event.schoolReason = null;
-  if (!lesson && !fromPicker) return;
+  if (!lesson && !fromPicker && !afterDonut) return;
 
   const {course, state} = duel;
   const table = course.features.ramps.find(ramp => ramp.id === 'table');
-  const start = lesson?.air ? {s: table.start - 27, lateral: table.off} : {s: 5, lateral: 9};
+  const start = lesson?.air || afterDonut ? {s: table.start - 27, lateral: table.off} : {s: 5, lateral: 9};
   startBowlEventAt(duel, start.s, start.lateral);
   const y = course.groundAt(start.s, start.lateral).y;
   Object.assign(state, {speedMph: 0, headingError: 0, yawVelocity: 0, pushVelocity: 0, slipAngle: 0,
     groundHeight: y, prevGroundHeight: y, airborne: false, airHeight: 0, prevAirHeight: 0,
     _jumpY: y, _verticalSpeed: 0, _jumpOrigin: null, _airOrigin: null, airDistance: 0, airTime: 0});
   event.flight = null;
+  if (afterDonut) {
+    resetBowlTrickGo(state);
+    event.schoolDonutRelease = true;
+  }
 }
 
 registerBowlEventRunner('trickSchool', {
@@ -293,6 +363,9 @@ registerBowlEventRunner('trickSchool', {
       duel.emit({bowlSchool: {type: finished ? 'done' : 'next', lesson: event.lesson,
         cue: finished ? 'bowl.school.done' : 'bowl.school.next'}});
     }
+    // Held keys from the completed donut must not turn the truck away from the Table.
+    const {boost, steer} = duel.state.input;
+    if (event.schoolDonutRelease && !boost && Math.abs(steer) <= .5) event.schoolDonutRelease = false;
     return null;
   },
   observe(duel, night, ev) {
@@ -325,9 +398,9 @@ export const bowlEventType = night => night.school ? 'trickSchool'
 // a stunt or the crowd is made only when Big Mo is not already talking.
 const REMARK = /^(moment|crowd)\./;
 export function sayBowlLine(duel, id, options) { say(duel, id, options); }
-function say(duel, id, {once = false} = {}) {
+function say(duel, id, {once = false, text = BIG_MO[id], cue = 'bowl.mo'} = {}) {
   const night = duel.state.bowlNight;
-  if (!night || !BIG_MO[id] || once && night.said.includes(id)) return;
+  if (!night || !text || once && night.said.includes(id)) return;
   if (REMARK.test(id)) {
     if (night.caption || night.captionQueue.length) return;
   } else {
@@ -335,15 +408,15 @@ function say(duel, id, {once = false} = {}) {
     if (night.caption && REMARK.test(night.caption.id)) night.caption = null;
   }
   if (once) night.said.push(id);
-  night.captionQueue.push({id, queuedAt: night.clock});
+  night.captionQueue.push({id, text, cue, queuedAt: night.clock});
   if (!night.caption) nextCaption(duel);
 }
 function nextCaption(duel) {
   const night = duel.state.bowlNight;
   while (night.captionQueue[0] && night.clock - night.captionQueue[0].queuedAt >= 6) night.captionQueue.shift();
-  const id = night.captionQueue.shift()?.id;
-  night.caption = id ? {id, text: BIG_MO[id], until: night.clock + BOWL_NIGHT_RULES.captionSec} : null;
-  if (id) duel.emit({bowlCaption: {id, text: BIG_MO[id], cue: 'bowl.mo'}});
+  const line = night.captionQueue.shift();
+  night.caption = line ? {id: line.id, text: line.text, until: night.clock + BOWL_NIGHT_RULES.captionSec} : null;
+  if (line) duel.emit({bowlCaption: {id: line.id, text: line.text, cue: line.cue}});
 }
 
 // Starts a night. options: {night, playerId, driverId, difficulty, cpuDifficulty,
@@ -401,7 +474,7 @@ function loadBowlEvent(duel) {
     flight: null, metres: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   if (night.school) { s.status = 'racing'; s.countdown = 0; }
-  else say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
+  else say(duel, night.turn ? 'turn.open' : `event.${type}.intro`, {text: night.event.freestyleLines?.intro});
 }
 
 // The next event after a result, or the same event again after a loss.
@@ -430,9 +503,11 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   const points = scored.points;
   if (fact.type === 'bowlTrick' && points > 0) {
     if (!night.trickKinds.includes(fact.kind)) night.trickKinds.push(fact.kind);
-    const earlier = event.trickPopups?.[0]?.at === night.clock ? event.trickPopups : [];
-    event.trickPopups = [...earlier, {kind: fact.kind, turns: fact.turns, fresh: fact.fresh, at: night.clock,
-      base: timed.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points}];
+    if (GROUND_TRICKS.has(fact.kind) || bowlJumpMessagesAllowed(duel, s, event.flight?.peak)) {
+      const earlier = event.trickPopups?.[0]?.at === night.clock ? event.trickPopups : [];
+      event.trickPopups = [...earlier, {kind: fact.kind, turns: fact.turns, fresh: fact.fresh, at: night.clock,
+        base: timed.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points}];
+    }
   }
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += points;
@@ -448,7 +523,7 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
 export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
-  explainBowlTry(duel, night, ev);
+  if (night.school) explainBowlTry(duel, night, ev);
   // Count the Rex hold from the fall, including any time spent dragging the final box.
   if (ev.bowlRex?.type === 'fall') night.event.resultHoldSince ??= night.clock;
   if (ev.bowlSecretFound) {
@@ -465,18 +540,19 @@ export function observeBowlNight(duel, ev) {
     night.event.trickPopups = [{notice: 'FULL WORKS ARMED', at: night.clock}];
     say(duel, 'secret.armed');
   }
-  if (ev.bowlTrickLate) night.event.trickPopups = [{notice: 'NOT ENOUGH AIR', at: night.clock}];
+  const jumpMessage = bowlJumpMessagesAllowed(duel, s, night.event.flight?.peak);
+  if (ev.bowlTrickLate && jumpMessage) night.event.trickPopups = [{notice: 'NOT ENOUGH AIR', at: night.clock}];
   if (ev.bowlTrick) {
     const trick = ev.bowlTrick;
     if (trick.landing !== 'slam' || night.cpuDifficulty !== 'easy') addFact(duel, {type: 'bowlTrick', ...trick});
-    if (trick.landing === 'slam') say(duel, 'moment.roof', {once: true});
+    if (trick.landing === 'slam' && jumpMessage) say(duel, 'moment.roof', {once: true});
     else if (trick.kind === 'donut') say(duel, 'moment.donut', {once: true});
-    else if (['frontFlip', 'backflip', 'sideFlip'].includes(trick.kind)) say(duel, 'moment.flip', {once: true});
+    else if (jumpMessage && ['frontFlip', 'backflip', 'sideFlip'].includes(trick.kind)) say(duel, 'moment.flip', {once: true});
   }
   if (ev.jumpLanded?.rampId === 'car') {
     addFact(duel, {type: 'carLaunch', durationSeconds: +(s.airTime || 0).toFixed(3), distanceMeters: ev.jumpLanded.distance || 0,
       heightMeters: +(night.event.flight?.peak ?? 0).toFixed(2)});
-    say(duel, 'moment.carLaunch', {once: true});
+    if (jumpMessage) say(duel, 'moment.carLaunch', {once: true});
   }
   if (ev.propCrushed?.byPlayer) {
     const runner = RUNNERS.get(night.event.type);
@@ -500,7 +576,8 @@ function observeTruck(duel, dt) {
     if (s.bowlLanding !== 'slam' && !flight.carRamp && !s.tumble && airTime >= BOWL_NIGHT_RULES.minJumpSec) {
       addFact(duel, {type: 'landedJump', durationSeconds: +airTime.toFixed(3), distanceMeters: +(s.airDistance || 0).toFixed(1),
         heightMeters: +flight.peak.toFixed(2)});
-      if (airTime >= BOWL_NIGHT_RULES.bigJumpSec) say(duel, 'moment.bigJump', {once: true});
+      if (airTime >= BOWL_NIGHT_RULES.bigJumpSec && bowlJumpMessagesAllowed(duel, s, flight.peak))
+        say(duel, 'moment.bigJump', {once: true});
     }
   }
 
@@ -527,7 +604,7 @@ function finishEvent(duel, outcome) {
   else if (night.turn) say(duel, result.won ? 'turn.won' : 'turn.lost');
   else {
     if (event.finishLine) say(duel, event.finishLine);
-    say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
+    say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`, {text: result.won ? undefined : event.freestyleLines?.lost});
   }
   if (night.turn) return;
   if (night.phase === 'complete') {
@@ -570,7 +647,7 @@ export function stepBowlNight(duel, dt) {
   observeBowlOutside(duel, dt, addFact, say);
   observeTruck(duel, dt);
   const done = runner.step(duel, night, dt);
-  if (!done) return event.goFadeUntil != null;
+  if (!done) return event.goFadeUntil != null || event.schoolDonutRelease === true;
   finishEvent(duel, done);
   return true;
 }
@@ -587,7 +664,7 @@ export function bowlHudView(state, course) {
     timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
     eventCount: night.school || night.singleEvent ? 1 : SHOW_NIGHTS[night.night - 1].events.length,
-    caption: event.schoolReason?.until > night.clock ? event.schoolReason.text
+    caption: night.school && event.schoolReason?.until > night.clock ? event.schoolReason.text
       : night.caption?.text ?? (state.bowlSchoolSavePending ? 'Your Trick School choice is waiting to be saved.' : ''),
     driver: night.turn?.driver || null};
 }

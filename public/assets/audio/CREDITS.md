@@ -255,7 +255,7 @@ and runtime hashes are in the audio catalog. No author endorsement is implied.
 - [Air release](https://freesound.org/people/davidlay1/sounds/416080/), by **davidlay1**: launcher.fill.
 - [air_blast_Large_1_4s.wav](https://freesound.org/people/typeoo/sounds/521493/), by **typeoo**: launcher.fire.
 - [Cannon Fires, Take 1, Half Speed](https://freesound.org/people/CHallSmith/sounds/870741/), by **CHallSmith**: launcher.fire.
-- [Industrial Air Horn](https://freesound.org/people/mcpable/sounds/131930/), by **mcpable**: rhino.horn, secret.armed, crush.fullhouse, race.finish, best.rival, night.open, event.won.
+- [Industrial Air Horn](https://freesound.org/people/mcpable/sounds/131930/), by **mcpable**: rhino.horn, secret.armed, crush.fullhouse, race.finish, best.rival, free.beaten, night.open, event.won.
 - [Big Block V8 Rev 2.mp3](https://freesound.org/people/Henaway/sounds/127981/), by **Henaway**: rhino.horn, trick.wheelie, best.rival.
 - [Fireblast full.wav](https://freesound.org/people/cribbler/sounds/381856/), by **cribbler**: dragon.fire.
 - [Box with Metal Latches Hit 2.wav](https://freesound.org/people/suspensiondigital/sounds/389705/), by **suspensiondigital**: weapon.pick.
@@ -271,12 +271,12 @@ and runtime hashes are in the audio catalog. No author endorsement is implied.
 - [CRWDCheer_Short Affirmative Cheer_ShaneVincent_GSC24_MSDEC-MKH435-Spirit.wav](https://freesound.org/people/ShangusBurger/sounds/764165/), by **ShangusBurger**: trick.new, night.new.
 - [Thin bell ding 4](https://freesound.org/people/Khrinx/sounds/333693/), by **Khrinx**: trick.new.
 - [car crash long 1](https://freesound.org/people/Logicogonist/sounds/807437/), by **Logicogonist**: trick.slam.
-- [BerlinGameScene.com Crowd Cheer 1](https://freesound.org/people/BerlinGameScene/sounds/267249/), by **BerlinGameScene**: trick.cyclone, long.clear.
+- [BerlinGameScene.com Crowd Cheer 1](https://freesound.org/people/BerlinGameScene/sounds/267249/), by **BerlinGameScene**: trick.cyclone, long.clear, free.beaten.
 - [Boomy Whoosh 1_1](https://freesound.org/people/Joao_Janz/sounds/485242/), by **Joao_Janz**: trick.go.
 - [awwwww.mp3](https://freesound.org/people/WhisperPotato/sounds/547589/), by **WhisperPotato**: trick.late.
 - [Jacobs Ladder Climbing Arc](https://freesound.org/people/Qvantor/sounds/881280/), by **Qvantor**: secret.start.
 - [bell ding 2.wav](https://freesound.org/people/5ro4/sounds/611112/), by **5ro4**: secret.found, high.clear.
-- [rodeo audio cheer distant](https://freesound.org/people/jayfrosting/sounds/728774/), by **jayfrosting**: secret.cheer, go.ready, night.open.
+- [rodeo audio cheer distant](https://freesound.org/people/jayfrosting/sounds/728774/), by **jayfrosting**: secret.cheer, go.ready, free.rival, night.open.
 - [Thin bell ding 2](https://freesound.org/people/Khrinx/sounds/333695/), by **Khrinx**: secret.hint.
 - [Klaxon on axis short.wav](https://freesound.org/people/jameswrowles/sounds/514980/), by **jameswrowles**: health.danger.
 - [Paper Page Flip](https://freesound.org/people/OnlyOz/sounds/828802/), by **OnlyOz**: card.open.
@@ -285,6 +285,7 @@ and runtime hashes are in the audio catalog. No author endorsement is implied.
 - [Referee whistle sound.wav](https://freesound.org/people/Rosa-Orenes256/sounds/538422/), by **Rosa-Orenes256**: school.next.
 - [Soft-Notifications - Bell - LowDing.mp3](https://freesound.org/people/LegitCheese/sounds/571511/), by **LegitCheese**: school.why.
 - [CROWDS-APPLAUSE_CheeringApplause_Zoway_DamAct](https://freesound.org/people/zoway.sound/sounds/875590/), by **zoway.sound**: school.done.
+- [bell ding 3.wav](https://freesound.org/people/5ro4/sounds/611111/), by **5ro4**: crush.hint, night.new.
 - [BerlinGameScene.com Crowd Cheer 4](https://freesound.org/people/BerlinGameScene/sounds/267246/), by **BerlinGameScene**: crush.fullhouse, event.won.
 - [CRWDReac_Crowd Gasping In Surprise, Quick 03_ShaneVincent_GSC24_MSDEC-MKH435-Spirit.wav](https://freesound.org/people/ShangusBurger/sounds/764204/), by **ShangusBurger**: out.over.
 - [Crowd Scream sound effect](https://freesound.org/people/Mastersoundboy2005/sounds/730129/), by **Mastersoundboy2005**: out.stands.
@@ -292,9 +293,9 @@ and runtime hashes are in the audio catalog. No author endorsement is implied.
 - [Boomy Whoosh 1_3](https://freesound.org/people/Joao_Janz/sounds/485240/), by **Joao_Janz**: out.leap, rex.throw.
 - [CRWDReac_Crowd Gasping In Surprise, Voiced 01_ShaneVincent_GSC24_FUMA-AmbeoVR.wav](https://freesound.org/people/ShangusBurger/sounds/764101/), by **ShangusBurger**: out.leap.
 - [Metal gate closing.WAV](https://freesound.org/people/thomasanthony321/sounds/682775/), by **thomasanthony321**: out.gate, rex.burst.
-- [rodeo audio cheer close](https://freesound.org/people/jayfrosting/sounds/728773/), by **jayfrosting**: out.back, high.clear.
+- [rodeo audio cheer close](https://freesound.org/people/jayfrosting/sounds/728773/), by **jayfrosting**: out.back, high.clear, free.bar.
 - [Countdown for race, game start](https://freesound.org/people/Pastew/sounds/813525/), by **Pastew**: race.lights.
-- [BerlinGameScene.com Crowd Cheer 2](https://freesound.org/people/BerlinGameScene/sounds/267248/), by **BerlinGameScene**: race.finish.
+- [BerlinGameScene.com Crowd Cheer 2](https://freesound.org/people/BerlinGameScene/sounds/267248/), by **BerlinGameScene**: race.finish, free.lead.
 - [Big robot footstep 003](https://freesound.org/people/AudioPapkin/sounds/813054/), by **AudioPapkin**: rival.jump, rex.rise, hook.jerk.
 - [Big robot footstep 004](https://freesound.org/people/AudioPapkin/sounds/813055/), by **AudioPapkin**: rival.jump.fallback, rex.brace.
 - [cloverfield roar.wav](https://freesound.org/people/icyjim/sounds/476083/), by **icyjim**: rex.roar, rex.fall.
@@ -323,12 +324,11 @@ and runtime hashes are in the audio catalog. No author endorsement is implied.
 - [aww.wav](https://freesound.org/people/phmiller42/sounds/124996/), by **phmiller42**: high.fail.
 - [CROWDS-APPLAUSE_CheeringApplauseShort _Zoway_DamAct](https://freesound.org/people/zoway.sound/sounds/875589/), by **zoway.sound**: best.round.won.
 - [CRWDAngr_Crowd Groans At Bad Joke 01_ShaneVincent_GSC24_SpacedOmni-MK012.wav](https://freesound.org/people/ShangusBurger/sounds/764253/), by **ShangusBurger**: best.round.lost.
-- [bell ding 3.wav](https://freesound.org/people/5ro4/sounds/611111/), by **5ro4**: night.new.
+- [CRWDReac_Excitement Build Up, Let Down_ShaneVincent_GSC24_MSDEC-MKH435-Spirit.wav](https://freesound.org/people/ShangusBurger/sounds/764216/), by **ShangusBurger**: free.behind, crowd.rise.
+- [bell ding 1.wav](https://freesound.org/people/5ro4/sounds/611113/), by **5ro4**: free.bar, turn.winner.
 - [ding-dong-beep-sound-small-speaker](https://freesound.org/people/ShJafari/sounds/747200/), by **ShJafari**: mo.
-- [CRWDReac_Excitement Build Up, Let Down_ShaneVincent_GSC24_MSDEC-MKH435-Spirit.wav](https://freesound.org/people/ShangusBurger/sounds/764216/), by **ShangusBurger**: crowd.rise.
 - [crowd `oh - - disappointed.mp3](https://freesound.org/people/mrrap4food/sounds/619007/), by **mrrap4food**: event.lost.
 - [Coin Drop - 2](https://freesound.org/people/SpaceJoe/sounds/485718/), by **SpaceJoe**: purse.
 - [cash drawer and receipt.wav](https://freesound.org/people/kalisemorrison/sounds/202531/), by **kalisemorrison**: purse.
 - [A320 Double Chime.wav](https://freesound.org/people/JOHNNYFIVE/sounds/457922/), by **JOHNNYFIVE**: turn.up.
 - [Small Auditorium Crowd Applause and Cheering](https://freesound.org/people/ElevatorFan2020/sounds/859009/), by **ElevatorFan2020**: turn.winner.
-- [bell ding 1.wav](https://freesound.org/people/5ro4/sounds/611113/), by **5ro4**: turn.winner.

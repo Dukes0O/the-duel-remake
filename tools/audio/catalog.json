@@ -12580,6 +12580,54 @@
     },
     {
       "source": "freesound",
+      "key": "611111",
+      "title": "bell ding 3.wav",
+      "author": "5ro4",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/5ro4/sounds/611111/",
+      "download": "https://cdn.freesound.org/previews/611/611111_1629501-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.52943,
+      "file": "freesound/611111-bell-ding-3-wav.ogg",
+      "sha256": "f2cdf6788b530b202150f40be343d6aa9fb37942f785b038eb87288884fc1fb3",
+      "bytes": 70398,
+      "fetched": "2026-11-21",
+      "cue": "bowl.crush.hint",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/crush-hint.ogg",
+            "source": "611111",
+            "start": 0,
+            "duration": 1,
+            "rate": 1.3,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 6000,
+            "loudness": -24
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/crush-hint.ogg",
+          "sha256": "66b23e7b5bbbe88e8a0150db9669fd326bdef55de8dad9a20c9e06948850fb28",
+          "bytes": 9459,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 0.769,
+          "integratedLufs": -23.92,
+          "truePeakDbtp": -9.6
+        }
+      ]
+    },
+    {
+      "source": "freesound",
       "key": "267246",
       "title": "BerlinGameScene.com Crowd Cheer 4",
       "author": "BerlinGameScene",
@@ -15478,6 +15526,325 @@
           "truePeakDbtp": -6.1
         }
       ]
+    },
+    {
+      "source": "freesound",
+      "key": "728774",
+      "title": "rodeo audio cheer distant",
+      "author": "jayfrosting",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/jayfrosting/sounds/728774/",
+      "download": "https://cdn.freesound.org/previews/728/728774_5884138-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 7.09042,
+      "file": "freesound/728774-rodeo-audio-cheer-distant.ogg",
+      "sha256": "ba075105d062c626660e062d05f61469e0585bf9b150a60bdbb3e836e3f75f62",
+      "bytes": 146803,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.rival",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-rival.ogg",
+            "source": "728774",
+            "start": 2,
+            "duration": 0.8,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "fadein": 0.05,
+            "loudness": -24
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/free-rival.ogg",
+          "sha256": "ec692803cf3abd3549591b97f7668253ebef6b2fbfb447e7ad772958c9afa791",
+          "bytes": 10631,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 0.8,
+          "integratedLufs": -24.04,
+          "truePeakDbtp": -12.66
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "267248",
+      "title": "BerlinGameScene.com Crowd Cheer 2",
+      "author": "BerlinGameScene",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/BerlinGameScene/sounds/267248/",
+      "download": "https://cdn.freesound.org/previews/267/267248_5052946-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.48129,
+      "file": "freesound/267248-berlingamescene-com-crowd-cheer-2.ogg",
+      "sha256": "4eaabd1fbc9185e6fe77dd3a86e324415ce858782f5f685880156d0549feb90c",
+      "bytes": 118642,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.lead",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-lead.ogg",
+            "source": "267248",
+            "start": 1,
+            "duration": 2.2,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "fadein": 0.1,
+            "loudness": -19
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/free-lead.ogg",
+          "sha256": "adc56ce51310ee265e47fc9e1b62e29a9d1a4d5b99405e9797fbb4e3f455d86f",
+          "bytes": 26546,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 2.2,
+          "integratedLufs": -18.98,
+          "truePeakDbtp": -5.13
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "764216",
+      "title": "CRWDReac_Excitement Build Up, Let Down_ShaneVincent_GSC24_MSDEC-MKH435-Spirit.wav",
+      "author": "ShangusBurger",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/ShangusBurger/sounds/764216/",
+      "download": "https://cdn.freesound.org/previews/764/764216_11744683-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 8.79465,
+      "file": "freesound/764216-crwdreac-excitement-build-up-let-down-shanevincent-gsc24-msd.ogg",
+      "sha256": "c32e12096b8e49ab0185d6102b41d2f16de6afb6c4fae8110c10f04fa63f53b2",
+      "bytes": 195116,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.behind",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-behind.ogg",
+            "source": "764216",
+            "start": 7.7,
+            "duration": 1.1,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "fadein": 0.05,
+            "loudness": -21
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/free-behind.ogg",
+          "sha256": "00ca13b75b50ccac9aa80aca9ebecfbf8e1fb6f37f2b2260f3a3d6b47465db71",
+          "bytes": 13537,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.095,
+          "integratedLufs": -21.05,
+          "truePeakDbtp": -7.28
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "267249",
+      "title": "BerlinGameScene.com Crowd Cheer 1",
+      "author": "BerlinGameScene",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/BerlinGameScene/sounds/267249/",
+      "download": "https://cdn.freesound.org/previews/267/267249_5052946-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.37771,
+      "file": "freesound/267249-berlingamescene-com-crowd-cheer-1.ogg",
+      "sha256": "7d3fe53c0249e428aca5471579a96f0f42058252e9c97bcb70092f327cd511bc",
+      "bytes": 86773,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.beaten",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-beaten.ogg",
+            "source": "267249",
+            "start": 1.5,
+            "duration": 1.8,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "fadein": 0.1,
+            "loudness": -17
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/free-beaten.ogg",
+          "sha256": "5c386c04bcab681cf8f270af53b68a97c0b89254722c66d0f318f6f7ee701984",
+          "bytes": 22760,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.8,
+          "integratedLufs": -16.96,
+          "truePeakDbtp": -2.72
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "131930",
+      "title": "Industrial Air Horn",
+      "author": "mcpable",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/mcpable/sounds/131930/",
+      "download": "https://cdn.freesound.org/previews/131/131930_1542102-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.57143,
+      "file": "freesound/131930-industrial-air-horn.ogg",
+      "sha256": "0d4e23f1b5370d9342b91e9856acc5c4078952d0b657ae1da6c7c03c05e1dcfb",
+      "bytes": 68068,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.beaten",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-beaten.ogg",
+            "source": "131930",
+            "start": 0.3,
+            "duration": 1.2,
+            "rate": 1,
+            "gain": 0.6,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -17
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "611113",
+      "title": "bell ding 1.wav",
+      "author": "5ro4",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/5ro4/sounds/611113/",
+      "download": "https://cdn.freesound.org/previews/611/611113_1629501-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.51937,
+      "file": "freesound/611113-bell-ding-1-wav.ogg",
+      "sha256": "64a786d2977965cfc41f2f4f43053684d6c9904f97d874082f67ec573c3e6958",
+      "bytes": 54058,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.bar",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-bar.ogg",
+            "source": "611113",
+            "start": 0,
+            "duration": 1.2,
+            "rate": 1,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -19
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/free-bar.ogg",
+          "sha256": "5a343ae567d67fec1170b27ca2abbde963e94f84f7cf45629e7989ccc5d80561",
+          "bytes": 18466,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 1.6,
+          "integratedLufs": -18.75,
+          "truePeakDbtp": -1.91
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "728773",
+      "title": "rodeo audio cheer close",
+      "author": "jayfrosting",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/jayfrosting/sounds/728773/",
+      "download": "https://cdn.freesound.org/previews/728/728773_5884138-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 5.25525,
+      "file": "freesound/728773-rodeo-audio-cheer-close.ogg",
+      "sha256": "dc52f73f3eab370d31e22db62c6a56d65452d4074dfd961783042bcc2a874405",
+      "bytes": 128090,
+      "fetched": "2026-11-21",
+      "cue": "bowl.free.bar",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/free-bar.ogg",
+            "source": "728773",
+            "start": 2,
+            "duration": 1.5,
+            "rate": 1,
+            "gain": 0.6,
+            "at": 0.1,
+            "highpass": 40,
+            "lowpass": 12000,
+            "fadein": 0.1,
+            "loudness": -19
+          }
+        ]
+      },
+      "runtime": []
     },
     {
       "source": "freesound",
