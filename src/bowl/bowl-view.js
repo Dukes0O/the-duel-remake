@@ -306,7 +306,8 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     for (const [index, fire] of fires.entries()) {
       if (fire.stack) fire.mesh.position.y = fire.base + Math.max(1.8, fire.top * fire.stack.scale.y + .8);
       const cycle = ((now * .001 + fire.phase) % 3.2 + 3.2) % 3.2;
-      const active = fire.mesh.name.startsWith('Bowl heap fire') || cycle < 1.55;
+      // BOWL-REX-LOOK: every jet fires at once while the fallen Scrapasaurus lies on the floor.
+      const active = fire.mesh.name.startsWith('Bowl heap fire') || cycle < 1.55 || rexView.group.userData.allJetsFire === true;
       fire.mesh.visible = !!fireTexture && active;
       if (!fire.mesh.visible) continue;
       const frame = 8 + Math.floor(((now * .0015 + fire.phase) % 1) * 16);

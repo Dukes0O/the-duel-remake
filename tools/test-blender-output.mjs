@@ -158,7 +158,7 @@ const generators = [
   { id: 'bowl-trucks', script: 'tools/blender/bowl-trucks.py', args: [], glb: ['public/assets/models/wasteland/bowl/trucks.glb'], budget: 8000 },
   // Candidate art is generated and read back in its lane, then waits for Claude's look verdict.
   // The public candidate is installed only when a later scene card wires it into gameplay.
-  { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '6'], candidate: true,
+  { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '7'], candidate: true,
     budget: 60000, glb: ['public/assets/models/wasteland/bowl/scrapasaurus.glb'] },
   // CAR-ART-SCARAB: round-3 candidate waits for Claude's look verdict and a later install card.
   { script: 'tools/blender/scarab.py', args: [], candidate: true,

@@ -99,7 +99,7 @@ course's own data.
    it is, the share of its time left, whether a shot would bite, whether it is on the cable) for the view and the arena
    plan.
 10. **Drawn plainly here:** the red line and the orange strip on the floor, the bomb as a ball with a lamp, its shadow,
-    the beam as a bright bar, and the two rings exactly as item 4 says. The rest of the look is BOWL-REX-LOOK's, and
+    the beam as a bright bar, and the two rings exactly as item 4 says. The rest of the look is BOWL-REX-3-LOOK's, and
     item 4 binds that card too.
 
 Not in this card: a beam that solid things stop (a truck sheltering behind a wreck), a beam that sweeps, more than one
