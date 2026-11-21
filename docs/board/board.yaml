@@ -742,6 +742,68 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FREESTYLE-NIGHTS.md"
 
+  - id: BOWL-SHOW-3
+    title: "Show Night round 3 from Kyle's word of 20 November: tow anything into the crowd, a missile aimed through a sight, the replay of a hit"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    waiting_on: "kyle"
+    needs: [BOWL-FINISH, BOWL-TOW, BOWL-MISSILE, BOWL-REPLAY, BOWL-SHOW-3-LOOK]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SHOW-3.md"
+
+  - id: BOWL-TOW
+    title: "Bowl: the tow hook for every truck, the crowd ramp, delivery to the crowd and its bonus, rivals on the terraces"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    waiting_on: "kyle"
+    needs: [BOWL-FINISH]
+    locks: [bowl-night, bowl-rivals, bowl-floor, save-shape]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-TOW.md"
+
+  - id: BOWL-MISSILE
+    title: "Bowl: a missile aimed through a sight with the mouse, a lock, a flight across the arena and a hit"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    waiting_on: "kyle"
+    needs: [BOWL-FINISH]
+    locks: [bowl-night, bowl-rivals]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-MISSILE.md"
+
+  - id: BOWL-REPLAY
+    title: "Bowl: the replay of a missile hit, the camera following the missile half way and then watching from there"
+    owner: "claude"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    waiting_on: "kyle"
+    needs: [BOWL-MISSILE]
+    locks: [bowl-night]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REPLAY.md"
+
+  - id: BOWL-SHOW-3-LOOK
+    title: "Bowl: the crowd ramp, towed things in the crowd, the missile and its sight drawn, and every round 3 cue listened to"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    waiting_on: "kyle"
+    needs: [BOWL-TOW, BOWL-MISSILE]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SHOW-3-LOOK.md"
+
   - id: BOWL-TOUR
     title: "Bowl: nights 6 to 8, the tour (after the first release)"
     owner: "codex"
