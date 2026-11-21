@@ -11,7 +11,7 @@ const ringPoints = [0, 150, 300, 600];
 
 const TARGETS = {
   [LONG_JUMP]: {easy: 4, medium: 7, hard: 9},
-  [HIGH_JUMP]: {easy: 6, medium: 9, hard: 12},
+  [HIGH_JUMP]: {easy: 8, medium: 9, hard: 12},
   [HOME_RUN]: {easy: 1, medium: 2, hard: 4},
 };
 
@@ -34,7 +34,9 @@ function ready(duel, night, placeAt, first = false) {
   Object.assign(state, {speedMph: 0, headingError: heading, yawVelocity: 0, pushVelocity: 0, slipAngle: 0,
     groundHeight: ground, prevGroundHeight: ground, airborne: false, airHeight: 0, prevAirHeight: 0,
     _jumpY: ground, _verticalSpeed: 0, _jumpOrigin: null, _airOrigin: null, airDistance: 0, airTime: 0,
-    bowlLanding: null, boosting: false, boost: 1, collectedJumps: []});
+    gear: 0, revs: 0, reverseHoldSec: 0, terrainPitch: 0, terrainRoll: 0, tumble: null,
+    impactTimer: 0, crashFlash: 0, bowlLanding: null, boosting: false, boost: 1, collectedJumps: []});
+  if (state.bowlPose) Object.assign(state.bowlPose, {pitch: 0, roll: 0, yaw: 0});
   delete state.bowlOutside;
   // Restore the buses the driver may have landed on in the previous go.
   const buses = course.features.bowlJump.buses;
@@ -123,7 +125,10 @@ function closeGo(duel, night, result) {
     if (event.type !== HIGH_JUMP) event.score = event.bestGo.score;
     return {won: event.bestGo.result >= targetFor(night)};
   }
-  event.goResetAt = night.clock + RESET_SECONDS;
+  event.goResetAt = night.clock + RESET_SECONDS / 2;
+  event.goFadeUntil = night.clock + RESET_SECONDS;
+  duel.state.status = 'racing';
+  duel.state.boosting = false;
   return null;
 }
 
@@ -158,12 +163,16 @@ export function installBowlJumpEvents(register, placeAt) {
     dressing: type,
     singleEvent: true,
     target: targetFor,
-    goal: night => BOWL_GOALS[type](type === HIGH_JUMP ? night.event.barHeight : targetFor(night)),
+    goal: night => type === HOME_RUN && night.event.go.outAt != null ? 'Follow the arrow through a gate.'
+      : BOWL_GOALS[type](type === HIGH_JUMP ? night.event.barHeight : targetFor(night)),
+    timeLeft: night => type === HOME_RUN && night.event.go.outAt != null
+      ? Math.max(0, GATE_SECONDS - (night.clock - night.event.go.outAt)) : null,
     place(duel, night) {
       Object.assign(night.event, {goes: [], bestGo: null, barHeight: type === HIGH_JUMP ? targetFor(night) : null});
       ready(duel, night, placeAt, true);
     },
     step: stepGo,
+    wreck(duel, night) { return closeGo(duel, night, 0); },
     reset(duel, night) { ready(duel, night, placeAt); },
     observe(duel, night, ev) {
       if (type !== HOME_RUN) return;

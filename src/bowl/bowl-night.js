@@ -23,6 +23,7 @@ import {recordBowlScore, settleBowlNight} from './bowl-save.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushKind} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
 import {CAR_CRUSH_DRESSING} from './bowl-crush-field.js';
+import {installBowlJumpEvents} from './bowl-jump-events.js';
 import {CARS, COURSE} from '../config.js';
 import {DEFAULT_DRIVER} from '../drivers.js';
 import {freshDamageZones} from '../sim-common.js';
@@ -252,7 +253,9 @@ registerBowlEventRunner('freestyle', {
 
 // ---- the night ----------------------------------------------------------
 
-export const bowlEventType = night => SHOW_NIGHTS[night.night - 1]?.events[night.show.eventIndex] ?? null;
+installBowlJumpEvents(registerBowlEventRunner, startBowlEventAt);
+
+export const bowlEventType = night => night.singleEvent ?? SHOW_NIGHTS[night.night - 1]?.events[night.show.eventIndex] ?? null;
 
 // Big Mo speaks one caption at a time. The show's own lines (a night, an event,
 // a result) wait their turn and push out any remark still waiting; a remark on
@@ -283,17 +286,21 @@ function nextCaption(duel) {
 // Starts a night. options: {night, playerId, driverId, difficulty, cpuDifficulty,
 // seed, owned, upgrades, eventIndex, turn, rivals}. `rivals` (rival ids, for
 // tests) chooses who drives against the player instead of the night's own.
+// `eventType` can start a standalone jump for a drive with no night result or purse.
 // Returns false when the night cannot run.
 export function startBowlNight(duel, options = {}) {
   const number = options.night;
   if (!flagOn(duel) || !Number.isSafeInteger(number) || !bowlNightPlayable(number)) return false;
+  const singleEvent = options.eventType ?? null;
+  if (singleEvent !== null && RUNNERS.get(singleEvent)?.singleEvent !== true) return false;
   const truck = showTruckFor(options);
-  const eventCount = SHOW_NIGHTS[number - 1].events.length, eventIndex = options.eventIndex ?? 0;
+  const eventCount = singleEvent ? 1 : SHOW_NIGHTS[number - 1].events.length, eventIndex = options.eventIndex ?? 0;
   if (!Number.isSafeInteger(eventIndex) || eventIndex < 0 || eventIndex >= eventCount) return false;
   // A Turn Show go (BOWL-TURNS): the driver's name is for the HUD only.
   const turn = options.turn ? {driver: typeof options.turn.driver === 'string' ? options.turn.driver : ''} : null;
   duel.state.bowlNight = {
     version: 1, night: number, show: createShowNight(number, eventIndex), phase: 'event', turn,
+    ...(singleEvent ? {singleEvent} : {}),
     cpuDifficulty: DIFFICULTIES.includes(options.cpuDifficulty) ? options.cpuDifficulty : 'medium',
     lent: truck.lent, start: {car: truck.car, upgrades: truck.upgrades, playerId: options.playerId ?? null,
       driverId: options.driverId, difficulty: options.difficulty, seed: options.seed},
@@ -327,7 +334,7 @@ function loadBowlEvent(duel) {
 // The next event after a result, or the same event again after a loss.
 export function continueBowlNight(duel) {
   const night = duel.state.bowlNight;
-  if (!night || night.phase !== 'result') return false;
+  if (!night || night.phase !== 'result' || night.singleEvent && night.lastResult?.won) return false;
   loadBowlEvent(duel);
   return true;
 }
@@ -434,7 +441,7 @@ function finishEvent(duel, outcome) {
   night.resultAt = night.clock;
   night.caption = null;
   night.captionQueue.length = 0;
-  night.show = finishShowEvent(night.show, event.type, result.won).state;
+  if (!night.singleEvent) night.show = finishShowEvent(night.show, event.type, result.won).state;
   night.phase = night.turn ? 'turn' : night.show.complete ? 'complete' : 'result';
   s.status = 'bowl_break'; s.boosting = false;
   duel.emit({bowlEventResult: result, cue: result.won ? 'bowl.event.won' : 'bowl.event.lost'});
@@ -466,16 +473,23 @@ export function stepBowlNight(duel, dt) {
   if (night.caption && night.clock >= night.caption.until) nextCaption(duel);
   playCrushChainTick(duel, night);
   if (night.phase !== 'event') return true;
+  const {event} = night, runner = RUNNERS.get(event.type);
+  if (event.goFadeUntil != null) {
+    if (event.goResetAt != null && night.clock + 1e-8 >= event.goResetAt) runner.reset(duel, night);
+    if (night.clock + 1e-8 < event.goFadeUntil) return true;
+    event.goFadeUntil = null;
+  }
   if (s.status === 'gameover') {
     if (s.impactTimer > 0) return false;
-    finishEvent(duel, {won: false, wrecked: true});
+    const done = runner.wreck ? runner.wreck(duel, night) : {won: false, wrecked: true};
+    if (done) finishEvent(duel, done);
     return true;
   }
   if (s.status !== 'racing') return false;
   observeBowlOutside(duel, dt, addFact, say);
   observeTruck(duel, dt);
-  const done = RUNNERS.get(night.event.type).step(duel, night, dt);
-  if (!done) return false;
+  const done = runner.step(duel, night, dt);
+  if (!done) return event.goFadeUntil != null;
   finishEvent(duel, done);
   return true;
 }
@@ -489,9 +503,9 @@ export function bowlHudView(state, course) {
   return {night: night.night, event: event.type, name: BOWL_EVENT_NAMES[event.type] ?? event.type,
     goal: runner?.goal(night, course) ?? '', score: event.score, target: runner?.target(night, course) ?? null,
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),
-    timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
+    timeLeft: runner?.timeLeft?.(night) ?? (limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null),
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
-    eventCount: SHOW_NIGHTS[night.night - 1].events.length, caption: night.caption?.text ?? '',
+    eventCount: night.singleEvent ? 1 : SHOW_NIGHTS[night.night - 1].events.length, caption: night.caption?.text ?? '',
     driver: night.turn?.driver || null};
 }
 
