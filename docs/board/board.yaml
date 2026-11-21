@@ -524,8 +524,7 @@ tasks:
     lane: "DESIGN"
     size: "L"
     status: "building"
-    waiting_on: "kyle"
-    claimed_by: "Claude, since 21 November 2026: the design and the burned camp are written and eleven build cards cut; owed: Kyle's answers to five questions, then the other threads and the town bridge"
+    claimed_by: "Claude, since 21 November 2026: design, the burned camp, twelve build cards and Kyle's five rulings are in; owed: the drive of the first slice when OPEN-DOORS merges, then the other threads written in full"
     needs: []
     locks: []
     flag: "story-choices"
@@ -1481,6 +1480,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-SCOUT.md"
 
+  - id: OPEN-APPRENTICE-RUN
+    title: "Open Scablands: teach somebody the gas run, and have it driven for you from then on (Kyle, 21 November)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    needs: [OPEN-STATE]
+    locks: [busy-game-files]
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-APPRENTICE-RUN.md"
+
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
     owner: "codex"
@@ -1488,7 +1499,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "backlog"
-    needs: [OPEN-BURNED-SCOUT]
+    needs: [OPEN-BURNED-SCOUT, OPEN-APPRENTICE-RUN]
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-PEN.md"

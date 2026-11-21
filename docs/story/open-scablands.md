@@ -2,8 +2,8 @@
 
 Kyle's ideas of 21 November 2026 for the choose-your-own-adventure story, logged to build on. They sit beside
 `five-cold-nights.md` (the first act) and apply to every night of it and to the stories after it. Sections 1 to 9 are
-Kyle's ideas in his own words. Sections 10 to 22 are Claude's design for them (card STORY-OPEN-WORLD), written the same
-day. Nothing here is built yet; section 22 lists the build cards.
+Kyle's ideas in his own words. Sections 10 to 23 are Claude's design for them (card STORY-OPEN-WORLD), written the same
+day, with Kyle's five rulings on it. Nothing here is built yet; section 22 lists the build cards.
 
 Kyle's aim, in his words: "we need to make the code and storylines very flexible to adaptation, extension, enhancement,
 variability, choice and randomness."
@@ -380,6 +380,9 @@ found camp whose people are Friendly. On Easy a fight with one or two cars is wo
 Losing wrecks the car (section 14) and costs a share of the scrap carried. Against five or more cars the surround of
 `five-cold-nights.md` section 5 applies.
 
+**No switch for the player's hand. Ruled by Kyle, 21 November 2026:** skirmishes are "random and only when the player
+chooses to deviate from the script and explore." A mission switches them off; nothing in a menu does.
+
 **The switch is a hold** (`src/world/open/holds.js`). Kyle: "The checkpoints must be able to be turned on and off so
 that during an actual mission that we're following, we don't cause a checkpoint to trigger and have multiple
 interactions."
@@ -404,9 +407,13 @@ Answers Kyle's section 5.
 **Sites.** A site is anything a player has to find: a camp, a well site, a ruin with salvage, a lookout, an enemy's
 den. The eight places of `SCABLANDS_PLACES` are always on the map. A site is on the map only when found.
 
-**Where a site stands is drawn from the seed.** Each site lists two or three places it could stand, each checked by
-Claude for flat ground and a way in. The save's seed picks one. So a camp that Gratian found north of the Ridge is not
-where Kyle will find it, and finding it is the player's own doing.
+**Where a site stands is drawn from the land's seed.** Each site lists two or three places it could stand, each checked
+by Claude for flat ground and a way in. A seed picks one. So a camp that Gratian found north of the Ridge is not where
+Kyle will find it, and finding it is the player's own doing. Kyle, 21 November 2026: "whatever is easier. I wonder if
+making it differ would cause tracking issues down the road if we ever build a multi-player option? We could always
+refactor it then." So the seed that places the sites is kept as its own number, the **land's seed**, in the open
+record. Today it is the save's own seed. If two players ever share one land, they share that one number and nothing
+else has to change. Giving a site a single position is also only a change to its row.
 
 **Each site has a tell,** something true that a careful player can read from a distance: thin smoke at dusk, a lamp
 at night, cart tracks leaving a road, vultures, a green patch on grey ground, a mast on a hill.
@@ -428,8 +435,8 @@ Friends give rumours, so friends open the land, as in `five-cold-nights.md` sect
 camp stays on the map as "The Glasshouse (burned)". Nothing found is ever taken off the map.
 
 **Driven ground.** The big map draws ground the player has driven over in full, and ground never driven paler, with
-its hills still showing. The land is kept as squares 500 metres across, 560 of them, one bit each in the save. This is
-a question for Kyle (the questions file), because he approved the map as it is.
+its hills still showing. The land is kept as squares 500 metres across, 560 of them, one bit each in the save. **Ruled
+by Kyle, 21 November 2026: yes.**
 
 **A camp that needs help.** On each visit after a banked night a camp may have one need, drawn from its list.
 
@@ -673,9 +680,11 @@ story and the town's sim touch.
   story can be played before the town is released, and the town before the story.
 - A town saved today loads unchanged. The bridge adds no field to the town's save.
 
-**The order.** The open land is built first (section 22) because it is small and playable by itself. The bridge and
-the threads "Water under the grey", "A place to stand" and "The watch line" come after Kyle has tried the first slices
-and answered the questions, because they join two large things and should be right on paper first.
+**The order. Ruled by Kyle, 21 November 2026: the open land first.** "The join with town building is a pretty complex
+dynamic on its own that requires separate development because we can bring it in wasteland tycoon style / clash of
+clans style." So this section is a sketch of where the two meet and no more. The join gets its own design and its own
+cards later, as base building with defences and raids in the manner of the town's own design. The threads "Water under
+the grey", "A place to stand" and "The watch line" wait for it.
 
 ## 21. One thread in full: Smoke over a friend
 
@@ -707,7 +716,8 @@ and treats everything as a deal.
 
 **Where things stand, in this example.** It is the third day of Five Cold Nights. The player found the Glasshouse on
 the second day and mended its wind pump, so the growers are Friendly and owe one favour. The Walkers are Friendly and
-owe two nights' watch. The Road Rats are Watching. There are three embers in the store and 140 scrap in the car.
+owe two nights' watch. The Road Rats are Watching. The Word on the road is 1. There are three embers in the store and
+140 scrap in the car.
 
 ### Scene 1. The sign
 
@@ -859,8 +869,8 @@ dusk.
 Sump calls Tin Town on the player's own radio, standing where the player can hear.
 
 > **Sump:** *(on the radio, to Tin Town)* Good evening, Tin Town. I have your driver here, and I have your driver's
-> car as well. I'd like a hundred and fifty scrap for the pair of them, or two of those embers that I keep hearing
-> about. You can have until morning to think about it.
+> car as well. I'd like a hundred and fifty scrap for the pair of them. I'd also like one of those embers that I keep
+> hearing about, because I've never seen one. You can have until morning to think about it.
 >
 > **Auntie Solder:** *(on the radio)* You'll have your answer in the morning. If that child has so much as a scratch
 > by then, you'll have me as well, and I'm a great deal worse than a scratch.
@@ -875,14 +885,14 @@ Sump calls Tin Town on the player's own radio, standing where the player can hea
 
 **The decision in the pen.**
 
-> *Auntie will pay to get me back. She'll pay with scrap if we have enough, and with embers if we don't.*
+> *Auntie will pay to get me back. It will cost her all our scrap, and it will cost the town a night of fire as well.*
 >
 > *Finch says there's only one guard, and that he stops at the fire every time he comes round.*
 
 | | You say or do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | Wait for morning | The price was said aloud: 150 scrap or two embers | *It's a lot. I wonder what Auntie will have to go without to pay it.* | The ransom is paid. The growers stay in the pen |
-| 2 | Break out tonight, with Finch | One guard, one lamp, one drain | *If we're caught, the price won't stay at a hundred and fifty.* | A creep on foot. Luck plays no part: it is the player's own feet. Caught, and the price rises to 220 scrap or three embers |
+| 1 | Wait for morning | The price was said aloud: 150 scrap and one ember | *It's a lot. I wonder what Auntie will have to go without to pay it.* | The ransom is paid. The growers stay in the pen |
+| 2 | Break out tonight, with Finch | One guard, one lamp, one drain | *If we're caught, the price won't stay at a hundred and fifty.* | A creep on foot. Luck plays no part: it is the player's own feet. Caught, and the price rises to 220 scrap and two embers |
 | 3 | "Sump, I'd like to make you an offer myself." | Sump likes a deal | *He treats everything as a deal. Maybe I have something he wants more than scrap.* | A promise in place of the price (below) |
 
 **1. Waiting for morning.** The night passes in the pen. At Tin Town the hearth is banked without the player, and one
@@ -894,14 +904,21 @@ ember burns. At first light Moss drives Big Bess up to the cutting.
 > **Sump:** It's a pleasure, Tin Town. Your driver was no trouble at all, and neither was the car, once we had the
 > wheels off it.
 
-The ransom is paid from the scrap the player was carrying first, then from the town's till, and in embers only if
-both are short. Here the player had 140 scrap, so the till pays the last ten. The player's car is given back with its
-wheels on and no armour mended. The growers stay.
+**What a ransom takes. Ruled by Kyle, 21 November 2026:** "scrap and maybe even something valuable, like some embers,
+even if it causes us to run out." The scrap is paid from what the player was carrying first, then from the town's till,
+and an ember stands in for each hundred scrap that both are short. Embers are asked for as well once the enemy has
+heard of them: one when the Word on the road is 1 or 2, and two when it is 3 or more. Here the player had 140 scrap,
+so the till pays the last ten, and one ember leaves the store in a pot. The player's car is given back with its wheels
+on and no armour mended. The growers stay.
+
+**If that leaves the store short,** the town needs gas fetched for the kiln sooner than it planned. Section 23 says
+what happens then: an apprentice who has been taught the run takes Bess out, or somebody offers to learn it.
 
 > **Marigold:** Off you go, then. Don't you look back at us like that. You came all this way, and that's more than
 > anybody else has done.
 
-**The ledger.** Scrap: 0. Mark: "Tin Town paid the Road Rats to get you back." The Road Rats: Watching still.
+**The ledger.** Scrap: 0. Embers: 1 (three at dusk, one burned in the night, one paid). Mark: "Tin Town paid the Road
+Rats to get you back, in scrap and in fire." The Road Rats: Watching still.
 
 **Tied back,** the next time the Road Rats are met at a checkpoint.
 
@@ -922,7 +939,7 @@ hiding place the player passes on the way can be waved along: three at most, the
 - *Caught:* the guard's lamp finds them.
 
   > **Sump:** Now that was rude of you, and I'd been so pleasant about everything. The price has gone up to two
-  > hundred and twenty, and I'm putting two men on the lamp tonight.
+  > hundred and twenty and a second ember, and I'm putting two men on the lamp tonight.
 
 **3. Making Sump an offer.** A short talk. Sump names what he wants more than scrap: a road.
 
@@ -1085,7 +1102,8 @@ At Tin Town's gate, at dawn, whenever the growers have come home by any road.
 
 ### How you can lose
 
-- **You are taken.** A ransom is paid, in scrap or in embers, and a night passes without you at the fence.
+- **You are taken.** A ransom is paid, in scrap and in embers, and a night passes without you at the fence. The store
+  may be left with too little fire, and then gas has to be fetched (section 23).
 - **You are caught breaking out.** The price rises, and the guard is doubled.
 - **The rescue fails.** Friends think less of you, and the growers are harder to reach.
 - **Bess is holed.** There is less gas tomorrow.
@@ -1164,8 +1182,8 @@ falling. `open.taken`: the pen's gate shutting. `open.ransom.paid`: scrap poured
 Every card is behind the switch `story-choices`, which is off for players. Codex builds each on its own branch; the
 card names its model. Under AGENTS rule 23 a card that a player cannot reach runs the small set and merges, and Claude
 drives the merged game a batch at a time. Three cards are not covered by rule 23, because they touch what is saved or
-what the player owns: OPEN-STATE, OPEN-BURNED-PEN and OPEN-BURNED-RESCUE keep the lane tier and one independent review
-before they merge.
+what the player owns: OPEN-STATE, OPEN-APPRENTICE-RUN, OPEN-BURNED-PEN and OPEN-BURNED-RESCUE keep the lane tier and one
+independent review before they merge.
 
 | | Card | What a player can do when it is merged | Needs |
 | --- | --- | --- | --- |
@@ -1178,7 +1196,8 @@ before they merge.
 | 7 | **OPEN-SITES** | Find the Glasshouse and Radio Hill, see them join the map, mend something for them and earn their word | 4 and 6 |
 | 8 | **OPEN-THREADS** | See smoke over a camp that was helped, drive to it, read what is left and choose where to go | 5 and 7 |
 | 9 | **OPEN-BURNED-SCOUT** | Follow the tracks to the Rats' Nest, get past the lookouts and look down into it | 8 |
-| 10 | **OPEN-BURNED-PEN** | Drive in alone or creep in by the drain; be taken, ransomed, break out or make Sump an offer | 9 |
+| | **OPEN-APPRENTICE-RUN** | Teach somebody the gas run by taking them along, and have it driven for you from then on | 4 |
+| 10 | **OPEN-BURNED-PEN** | Drive in alone or creep in by the drain; be taken, ransomed, break out or make Sump an offer | 9, and OPEN-APPRENTICE-RUN |
 | 11 | **OPEN-BURNED-RESCUE** | Go home, choose a party, ride out, bring the growers home and decide where they live | 10 |
 | | **OPEN-SOUND** (Claude) | Hear every new cue, chosen and listened to | The cards above, as each merges |
 
@@ -1191,8 +1210,8 @@ card, registers and chooses them, as BOWL-SOUND does for the Bowl.
 
 **Not cut yet, and why.**
 
-- **The town bridge, and the threads "Water under the grey", "A place to stand" and "The watch line"** (section 20).
-  They wait for Kyle's answers in the questions file and for his try of the first slice.
+- **The join with the town building, and the threads "Water under the grey", "A place to stand" and "The watch
+  line"** (section 20). Kyle ruled on 21 November 2026 that the join is developed separately, after the open land.
 - **The other threads of section 19.** Each is written in full by Claude, as section 21 is, before its card is cut.
 - **The Ash Men's turn of the burned camp and the Grey Camp.** After the Road Rats' turn has been played by hand.
 - **The remaining sites of section 16.** Rows in a table, added as their threads need them.
@@ -1200,3 +1219,91 @@ card, registers and chooses them, as BOWL-SOUND does for the Bowl.
 **Removed by this work.** Nothing is replaced: no released screen, job or rule changes with the switch off. When
 OPEN-ROAM merges, people who stand still in Tin Town during a night's story stop being the only kind there is, and the
 suites that name Night 2's placements are brought up to date by the card that moves them.
+
+## 23. A routine that an apprentice can run
+
+Kyle, 21 November 2026, on the ransom: it may cost embers "even if it causes us to run out and need another Cinder run,
+which of course, we will by then have trained the apprentice to do the runs, but if not, then it would need to be
+presented as an option. The apprentice is basically someone who when we set a loop, runs it. So the cinder run is a
+loop, executed by code (the apprentice), if not set up, then the loop must be presented, but we won't necessarily use
+developer language to set it up, we could say, SpikeyFerns (player name) - this is a routine that you could teach an
+apprentice to do, I'm sure we'd have some willing people who'd love to learn from you how to run it."
+
+This is the first built piece of an idea Kyle kept for later on 16 November 2026 (decisions, "By hand, or set running";
+card RUN-FIRE-LINE). It keeps that decision's two rules: doing a run by hand is never taken away and always brings home
+more, and the game says the sum in plain words. It follows `docs/MACHINES.md` section 2: do it, teach it, hand it over.
+
+**What a routine is.** A run that comes round again, which somebody else can drive once the player has shown how. The
+first is the gas run for Cinder's kiln, which Kyle calls the Cinder run: Big Bess goes to the Everburn well with a car
+riding ahead, and twenty of gas bakes one ember. Later routines are rows in the same table: a supply run to a camp, a
+water run.
+
+```js
+{id: 'gas-run', run: 'gas-run',                        // the job it stands in for
+  offeredBy: 'cinder',                                 // the person whose work it feeds
+  handRunsFirst: 1,                                    // the player must have driven it this many times
+  learner: {from: 'people', where: {any: [{fact: 'favour', atLeast: 1}, {fact: 'word', atLeast: 'Friendly'}]},
+            otherwise: 'townsperson'},                 // somebody is always willing
+  share: [.6, .85],                                    // what the learner brings home, of the lesson's own load
+  every: 'banked night'}
+```
+
+**No developer's words reach the player.** Nobody in the game says loop, automate, schedule or set up. A person says
+it, to the player by name, as something one neighbour would say to another.
+
+**When it is offered.** The player has driven the run by hand at least once, and either the store has fallen to one
+ember or none after a loss (a ransom, a theft, a raid), or the player has driven the run three times. Cinder says it
+at the hearth. `{player}` is the player's own name.
+
+> **Cinder:** {player}, there's hardly any fire left in the store, so somebody has to take Bess out for gas tomorrow.
+> You've driven that road already, and you know where the trouble is.
+>
+> **Cinder:** It's a routine by now, and a routine is something you can teach. I'm sure there are willing people in
+> this town who would love to learn it from you. Then it needn't be you on that road every single time.
+
+**You may ask before you answer. Asking costs nothing.**
+
+| You ask | The answer | What it shows you |
+| --- | --- | --- |
+| "Who would want to learn it?" | Each person the ledger offers says so. **Dace:** I would. I've been watching how you take the corners. **Rell:** One of mine will ride with you, if you promise to bring her back. **A townsperson:** I'll learn it. I'm tired of waiting at the gate to see whether Bess comes home. | Who is willing. A friend learns as well as anybody, and costs a favour if one is owed |
+| "How do I teach somebody?" | **Cinder:** You take them with you on the next run and drive it the way you always do. They sit beside you and watch. Whatever you do out there is what they'll learn, so try not to hit anything. | One run by hand, with a passenger |
+| "Will they bring home as much as I do?" | **Cinder:** No, not at first, and maybe not ever. You'll get fewer embers from their run than from yours. What you get in return is the whole day to yourself. | The sum, in plain words |
+
+| | You say | Plain to see | Kept out of sight |
+| --- | --- | --- | --- |
+| 1 | "Yes. {learner}, you're coming with me tomorrow." | The next gas run has a passenger | How well the learner does depends on that one run |
+| 2 | "Not yet. I'll keep driving it myself for now." | Nothing changes | Cinder asks again after three more nights, and never more often |
+
+**Teaching.** The next gas run is driven by hand with the learner in the car. A bar fills as the run goes: "Dace is
+watching. He has most of it." The gas that reaches home on that run is the lesson's load. The learner's share of it is
+drawn once between six tenths and eighty-five hundredths, higher for a clean run with no holes in Bess. The player can
+teach again at any time by taking the learner along, and the better lesson replaces the worse.
+
+**Running.** From then on, each time the player banks a hearth with the routine set going, the learner has taken Bess
+out that day. No clock runs and nothing happens while the game is closed. The gas comes home, the kiln bakes, and
+Cinder says the sum the next morning.
+
+> **Cinder:** Dace brought home forty of gas yesterday, where you would have brought sixty. That's two embers baked in
+> place of three, and you had the whole day to yourself.
+
+- **It frees the day.** In an act with a clock a day has room for one large outing (section 14). With the gas run in
+  a learner's hands, the player's outing is free for a scouting trip or a rescue. That is the return on teaching.
+- **By hand is always better and always there.** The player can take any day's run back by saying so to Moss, and
+  brings home the full load.
+- **It can be stopped and started** by speaking to the learner, who says what it has brought home so far.
+- **A learner can get into trouble** (`five-cold-nights.md` section 8). It comes as a call on the radio, is cast as a
+  thread of the kind "trouble", and going to help is that day's outing.
+
+**With a ransom.** When a ransom leaves the store short and the routine is running, Cinder says so and nothing more is
+asked of the player.
+
+> **Cinder:** Don't count the store just yet. Dace took Bess out at first light, and there'll be new embers in it by
+> dusk.
+
+When it is not running, the offer above is made that evening, however many times the player has driven the run.
+
+**Where it is kept.** In the open record: for each routine, whether it has been offered, who learnt it, the share, the
+lesson's load, whether it is running and the tally of what it has brought home.
+
+**Not in this piece.** The forty minutes of play between fire runs, the tunnel that makes a run safe and the cost in
+scrap of setting one up are RUN-FIRE-LINE's, and stay a future idea until Kyle asks for them.

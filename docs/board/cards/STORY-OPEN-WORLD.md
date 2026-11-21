@@ -20,7 +20,10 @@ land and story.
 3. **Eleven build cards for Codex and one sound card for Claude,** section 22: OPEN-ROAM, OPEN-FIGURES, OPEN-DOORS,
    OPEN-STATE, OPEN-CHECKPOINTS, OPEN-FIGURES-2, OPEN-SITES, OPEN-THREADS, OPEN-BURNED-SCOUT, OPEN-BURNED-PEN,
    OPEN-BURNED-RESCUE, OPEN-SOUND. The first slice is OPEN-ROAM, OPEN-FIGURES and OPEN-DOORS.
-4. **Five questions for Kyle,** in [docs/board/questions/STORY-OPEN-WORLD.md](../questions/STORY-OPEN-WORLD.md).
+4. **Five questions for Kyle, all ruled on 21 November 2026** (decisions, "Five rulings on the open Scablands"):
+   ground never driven is drawn paler; no hand switch for skirmishes; a ransom takes scrap and embers, and a short
+   store leads to an apprentice's routine (section 23, card OPEN-APPRENTICE-RUN); hidden places are drawn from the
+   land's seed, kept as its own number; the open land comes first and the join with the town is developed separately.
 
 ## Still owed, in this order
 
@@ -28,8 +31,8 @@ land and story.
    (26 checkpoints, the groups' weights and the encounter lines) and OPEN-SITES (the sites' positions, and the talk
    tables and needs of the Glasshouse and Radio Hill). None of the three waits on Claude now.
 2. Claude's drive of the first slice by hand when OPEN-DOORS has merged; then Kyle's try.
-3. After Kyle's answers: the town bridge (section 20) as cards, and the threads "Water under the grey", "A place to
-   stand" and "The watch line" written in full.
+3. The join with the town building is its own development, later (Kyle, 21 November 2026). The threads "Water under
+   the grey", "A place to stand" and "The watch line" wait for it.
 4. The other threads of section 19, each written in full before its card is cut.
 
 ## Two departures from the brief, for the record

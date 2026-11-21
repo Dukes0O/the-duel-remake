@@ -29,6 +29,15 @@ are getting low." So: the forge's clock counts minutes of play and is kept from 
 while the game is closed and does not start again each sitting. When it reaches forty minutes, wherever that falls, the
 player is told the embers are getting low.
 
+Kyle, 21 November 2026, on a ransom that may empty the ember store (card STORY-OPEN-WORLD): "The apprentice is basically
+someone who when we set a loop, runs it. So the cinder run is a loop, executed by code (the apprentice), if not set up,
+then the loop must be presented, but we won't necessarily use developer language to set it up, we could say, SpikeyFerns
+(player name) - this is a routine that you could teach an apprentice to do, I'm sure we'd have some willing people who'd
+love to learn from you how to run it." So one piece of this card is now to be built: the gas run taught to an apprentice
+and offered in a person's plain words. It is designed in `docs/story/open-scablands.md` section 23 and is card
+OPEN-APPRENTICE-RUN. The rest of this card (the forge's clock, the tunnel, the cost of setting a run going) is still a
+future idea.
+
 ## The idea in one line
 
 **Tin Town's forge needs fire again and again. You can carry it every time, for good pay and some danger. Or you can spend

@@ -17,8 +17,11 @@ Section 21, Scene 4.
 3. **The pen:** the talk with Marigold and Finch, Sump's call to Tin Town on the player's radio, Auntie Solder's
    answer, the three questions, the two thoughts and the three choices.
 4. **Waiting:** the night passes, the hearth is banked without the player, Moss comes with Bess, and the ransom is
-   paid through `spendScrap`: the player's scrap first, then the town's till (a `town` posting), then embers. The car
-   comes back with its wheels on and no armour mended.
+   paid as section 21 says under "What a ransom takes" (Kyle, 21 November 2026): scrap through `spendScrap`, the
+   player's first and then the town's till (a `town` posting), an ember for each hundred scrap both are short, and
+   embers asked for as well by the Word on the road (one at 1 or 2, two at 3 or more). The car comes back with its
+   wheels on and no armour mended. If the store is left with one ember or none, the evening at the hearth goes to
+   section 23: Cinder's line when the routine is running, or the offer when it is not (OPEN-APPRENTICE-RUN owns both).
 5. **Breaking out:** the creep with Finch, up to three growers waved along, the two endings.
 6. **Sump's offer:** the talk, the promise on the page, or the refusal.
 7. Every ledger line and both lines that tie it back later, placed in the Road Rats' checkpoint talk.
@@ -32,8 +35,9 @@ in the mission's definition; the guard's routine in the people table. No lock.
 ## Checks
 
 1. `tools/test-burned-camp-pen.mjs`: each way into the pen and each way out writes the ledger lines of section 21;
-   the ransom takes the player's scrap first, then the till, then embers, and never takes scrap below nothing; a
-   caught break-out raises the price to 220; the promise to Sump is on the page with its words.
+   the ransom takes the player's scrap first, then the till, then an ember for each hundred still short, and never
+   takes scrap below nothing; an ember is asked for at Word 1 and two at Word 3; a caught break-out raises the price to
+   220 scrap and a second ember; a store left at one ember or none leads to the offer of section 23; the promise to Sump is on the page with its words.
 2. `tools/test-road-riders.mjs`, unchanged.
 3. Laptop only: the browser scenario `open-burned-pen` (taken at the gate, wait for morning, driven home).
 

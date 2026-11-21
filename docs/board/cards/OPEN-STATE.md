@@ -10,8 +10,10 @@ The short board entry controls current state, ownership, dependencies and locks.
 Sections 12, 16 and 17.
 
 1. **The open record,** saved beside the ledger in the story's save (`registerStory`, `src/story/story-save.js`),
-   version 1: the car's dirt and armour, scrap spent and earned in the open, sites' stages, favours owed, how many
-   times each checkpoint has been crossed and which are resting, each thread's record, and rumours heard. Found sites
+   version 1: the land's seed (today the save's own seed, kept as its own number so that two players could one day
+   share a land), the car's dirt and armour, scrap spent and earned in the open, sites' stages, favours owed, how many
+   times each checkpoint has been crossed and which are resting, each thread's record, rumours heard, the squares of
+   ground driven (560 bits) and each routine's record (section 23). Found sites
    go through `rememberWorldFound`, which never shrinks.
 2. **Six new effects** in the ledger's journal, each recorded with the choice that caused it: `find`, `site`,
    `favour` (two owed at most for one people), `scrap`, `thread` and `town` (a posting only; the bridge is a later
