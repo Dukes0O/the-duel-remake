@@ -312,6 +312,17 @@ export function landBowlTricks(duel, actor) {
     findSecret(duel, state, kind);
   }
 }
+// A new jump go gets a fresh truck. Variety and one-shot secrets belong to the event.
+export function resetBowlTrickGo(actor) {
+  const state = states.get(actor);
+  if (!state || state.event !== actor.bowlNight?.event) return;
+  const {event, seen, last, repeat, usedFull} = state;
+  states.set(actor, {event, seen, last, repeat, usedFull, code: [], elapsed: 0, recovery: 0, slide: 0});
+  actor.bowlPose = {pitch: 0, roll: 0, yaw: 0};
+  actor.bowlLanding = null;
+  actor.bowlGroundTrick = null;
+}
+
 export function stepBowlTricks(duel, actor, dt) {
   if (!tricksEnabled(duel, actor) || !(dt > 0)) {
     if (actor === duel.state && actor.arenaTrickShow && arenaCourses.get(actor) !== duel.course)

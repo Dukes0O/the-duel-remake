@@ -4,6 +4,7 @@ import {Duel} from '../src/game.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
 import {BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {createBowlStadium} from '../src/bowl/bowl-stadium.js';
 
 const DT = 1 / 120;
 const eventTypes = ['longJump', 'highJump', 'homeRun'];
@@ -147,9 +148,17 @@ for (const event of eventTypes) {
 {
   const home = run('homeRun');
   assert.deepEqual(home.line.target.radii, [4, 8, 12]);
+  const target = home.line.target;
+  const stadium = createBowlStadium(home.course);
+  const seats = stadium.getObjectByName('Bowl crowd').geometry.getAttribute('crowdSeat');
+  assert.ok(seats.count > 0, 'the rest of the stands still have a crowd');
+  for (let index = 0; index < seats.count; index += 4) {
+    assert.ok(Math.hypot(seats.getX(index) - target.x, seats.getY(index) - target.z) > target.radii.at(-1));
+  }
   assert.ok(!home.line.bar && !home.line.buses);
   assert.ok(!home.course.features.crushables.some(prop => prop.id.startsWith('bowl-long-bus-')));
-  assert.ok(home.result.goes.every(go => go.result === 4));
+  assert.ok(home.result.goes.every(go => go.result === 4 && go.score === 750));
+  assert.ok(home.facts.some(fact => fact.type === 'bowlInStands'), 'the return still records crowd activity');
   const returns = home.notes.filter(note => note.gate);
   const walls = home.notes.filter(note => note.over);
   assert.equal(returns.length, 3);
@@ -159,13 +168,16 @@ for (const event of eventTypes) {
   const middle = run('homeRun', {single: true, cpuDifficulty: 'hard', go: () => [.66, 36]});
   assert.equal(middle.result.bestGo.result, 3, 'the real landing hit the middle ring');
   assert.equal(middle.result.won, true, 'the middle ring meets the Hard goal');
+  assert.equal(middle.result.score, 450, 'the middle ring adds 300 points to the one wall award');
   assert.equal(middle.notes.find(note => note.sound === 'bowl.home.ring.high').points, 300);
   const onTime = run('homeRun', {single: true, followGateAt: 24.26});
   const ranOut = run('homeRun', {single: true, followGateAt: 24.25});
   assert.ok(onTime.result.won, 'a return at the deadline still counts');
+  assert.equal(onTime.result.score, home.result.score, 'a different return pace adds no points');
   assert.equal(ranOut.result.won, false, 'the same real route a fixed step too late loses');
   const timeout = run('homeRun', {single: true, returnToGate: false});
   assert.equal(timeout.result.won, false, 'a target landing alone does not win');
+  assert.equal(timeout.result.score, 0, 'the ring counts only if the driver returns through a gate');
   assert.ok(timeout.notes.some(note => note.sound === 'bowl.home.ring.high'));
   assert.ok(!timeout.notes.some(note => note.gate));
   assert.ok(Math.abs(timeout.notes.find(note => note.go).at - timeout.notes.find(note => note.over).at - 30) < .01);

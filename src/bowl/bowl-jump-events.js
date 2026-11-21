@@ -1,6 +1,7 @@
 // Jump events run on the same fixed step and scoring stream as the show.
 import {BOWL_EVENTS} from './bowl-show.js';
 import {BOWL_GOALS} from './bowl-lines.js';
+import {resetBowlTrickGo} from './bowl-tricks.js';
 
 const {LONG_JUMP, HIGH_JUMP, HOME_RUN} = BOWL_EVENTS;
 const GO_COUNT = 3;
@@ -36,7 +37,7 @@ function ready(duel, night, placeAt, first = false) {
     _jumpY: ground, _verticalSpeed: 0, _jumpOrigin: null, _airOrigin: null, airDistance: 0, airTime: 0,
     gear: 0, revs: 0, reverseHoldSec: 0, terrainPitch: 0, terrainRoll: 0, tumble: null,
     impactTimer: 0, crashFlash: 0, bowlLanding: null, boosting: false, boost: 1, collectedJumps: []});
-  if (state.bowlPose) Object.assign(state.bowlPose, {pitch: 0, roll: 0, yaw: 0});
+  if (!first) resetBowlTrickGo(state);
   delete state.bowlOutside;
   // Restore the buses the driver may have landed on in the previous go.
   const buses = course.features.bowlJump.buses;
@@ -119,6 +120,7 @@ function flightLanded(duel, event, line) {
 
 function closeGo(duel, night, result) {
   const {event} = night, go = event.go;
+  if (event.type === HOME_RUN && !result) event.score = go.scoreAt;
   const played = {go: go.number, result, score: event.score - go.scoreAt};
   if (go.barPoints) played.barPoints = go.barPoints;
   event.goes.push(played);
@@ -174,6 +176,8 @@ export function installBowlJumpEvents(register, placeAt) {
     dressing: type,
     singleEvent: true,
     scoreCrush: type !== LONG_JUMP,
+    ...(type === HOME_RUN ? {scoresFact: (fact, event) => fact.type === 'bowlOverWall' &&
+      event.go.overWall && !fact.repeat} : {}),
     target: targetFor,
     goal: night => type === HOME_RUN && night.event.go.outAt != null ? 'Follow the arrow through a gate.'
       : BOWL_GOALS[type](type === HIGH_JUMP ? night.event.barHeight : targetFor(night)),

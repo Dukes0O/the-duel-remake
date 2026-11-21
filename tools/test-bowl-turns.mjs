@@ -298,7 +298,15 @@ for (const [eventType, boostAt] of [['longJump', 28], ['highJump', 28], ['homeRu
   const {state} = duel, night = state.bowlNight;
   while (state.status === 'countdown') duel.step(DT);
   for (let tick = 0; tick < 40 / DT && night.phase === 'event'; tick++) {
-    duel.setInput({throttle: 1, boost: state.s >= boostAt, brake: 0, steer: 0});
+    const gate = eventType === 'homeRun' && night.event.go.landed && state.bowlOutside?.gate;
+    if (gate) {
+      const point = duel.course.worldAt(state.s, state.lateral);
+      const delta = Math.atan2(gate.aim.x - point.x, gate.aim.z - point.z) - point.heading - state.headingError;
+      const steer = Math.min(1, Math.max(-1, -2 * Math.atan2(Math.sin(delta), Math.cos(delta))));
+      duel.setInput({steer, throttle: state.speedMph < 27 ? 1 : 0, brake: state.speedMph > 30 ? .5 : 0, boost: false});
+    } else {
+      duel.setInput({throttle: 1, boost: state.s >= boostAt, brake: 0, steer: 0});
+    }
     duel.step(DT);
   }
   equal(night.phase, 'turn', eventType + ' ends in the turn phase');

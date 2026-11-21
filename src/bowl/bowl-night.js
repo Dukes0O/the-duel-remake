@@ -419,16 +419,17 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   if (fact.type === 'bowlTrick' && featuredSchoolTrick(fact, night.featuredTricks)) timed.points *= 2;
   const crowd = crowdAfter(event.crowd, at - event.crowdAt);
   const scored = scoreStuntEvent(timed, crowd);
-  if (fact.type === 'bowlTrick' && scored.points > 0) {
+  const points = RUNNERS.get(event.type)?.scoresFact?.(fact, event) === false ? 0 : scored.points;
+  if (fact.type === 'bowlTrick' && points > 0) {
     if (!night.trickKinds.includes(fact.kind)) night.trickKinds.push(fact.kind);
     const earlier = event.trickPopups?.[0]?.at === night.clock ? event.trickPopups : [];
     event.trickPopups = [...earlier, {kind: fact.kind, turns: fact.turns, fresh: fact.fresh, at: night.clock,
-      base: timed.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points: scored.points}];
+      base: timed.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points}];
   }
   event.facts.push(timed);
-  event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
+  event.crowd = scored.crowd; event.crowdAt = at; event.score += points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
-  duel.emit({bowlScore: {type: fact.type, points: scored.points, score: event.score, crowd: scored.crowd, cue: scored.points ? cue : null}});
+  duel.emit({bowlScore: {type: fact.type, points, score: event.score, crowd: scored.crowd, cue: points ? cue : null}});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
 }
