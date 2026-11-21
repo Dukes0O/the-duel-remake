@@ -4,6 +4,7 @@ import {flipbookFrameUVInto} from '../combat-vfx-atlas.js';
 import {addArenaCrushables} from '../arena-props.js';
 import {createBowlStadium} from './bowl-stadium.js';
 import {createRexView} from './bowl-rex-view.js';
+import {createBowlWeaponsView} from './bowl-weapons-view.js';
 
 const CRUSH = '/assets/models/wasteland/bowl/crush.glb';
 const FIRE = '/assets/textures/fire-flipbook.png';
@@ -101,13 +102,16 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   // BOWL-REX-FIGHT: the Scrapasaurus keeps its own parts, so clearing the stadium leaves it alone.
   const rexView = createRexView({loadModel});
   group.add(rexView.group);
+  // BOWL-WEAPONS-LOOK: the weapons, the rivals' bolt-ons and the damage ride on the drawn trucks.
+  const weaponsView = createBowlWeaponsView();
+  group.add(weaponsView.group);
 
   // `keepStadium` keeps the drawn stadium (about a quarter of a second to build) when
   // only the crush props and fires are rebuilt for the same course.
   function clear(keepStadium = false) {
     token++;
     for (const child of [...group.children]) {
-      if (child === rexView.group) continue;
+      if (child === rexView.group || child === weaponsView.group) continue;
       if (keepStadium && child === stadium) continue;
       child.removeFromParent();
       disposeTree(child);
@@ -195,10 +199,12 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     });
   }
 
-  return {group, update(next, state, now, show) {
+  // `trucks` are the drawn trucks in the order of [state, ...state.opponents].
+  return {group, update(next, state, now, show, trucks = null) {
     enabled = show === true && next?.def?.bowl === true && !disposed;
     group.visible = enabled;
     rexView.update(next, state, now, enabled);
+    weaponsView.update(state, trucks, now, enabled);
     if (!enabled) {
       if (course) clear();
       return;
@@ -233,7 +239,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     }
   }, dispose() {
     if (disposed) return;
-    disposed = true; clear(); fireTexture?.dispose?.(); rexView.dispose();
+    disposed = true; clear(); fireTexture?.dispose?.(); rexView.dispose(); weaponsView.dispose();
     group.removeFromParent();
   }};
 }

@@ -529,7 +529,7 @@ export function attachRenderer(host, app) {
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
   const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
   // The Bowl view owns only course art; its switch never participates in race rules.
-  const bowlView=createBowlView();scene.add(bowlView.group);
+  const bowlView=createBowlView();scene.add(bowlView.group);const bowlTrucks=[];
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
@@ -1270,8 +1270,9 @@ export function attachRenderer(host, app) {
     }else bountyView.group.visible=false;
     ambushView.update(st);
     const flags=app._switches?.()??app.duel.featureFlags;
+    bowlTrucks.length=0;if(!menu){bowlTrucks.push(player,rival);for(const entry of extraOpponents)bowlTrucks.push(entry.mesh);}
     bowlView.update(course,menu?{crushedProps:[]}:st,ambientNow,
-      flags?.enabled('titan-bowl')===true);
+      flags?.enabled('titan-bowl')===true,menu?null:bowlTrucks); // BOWL-WEAPONS-LOOK: the drawn trucks carry the weapons
     firstPersonEntry.fighter=st.fighter;
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
