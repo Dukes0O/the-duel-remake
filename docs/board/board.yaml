@@ -523,7 +523,9 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "L"
-    status: "backlog"
+    status: "building"
+    waiting_on: "kyle"
+    claimed_by: "Claude, since 21 November 2026: the design and the burned camp are written and eleven build cards cut; owed: Kyle's answers to five questions, then the other threads and the town bridge"
     needs: []
     locks: []
     flag: "story-choices"
@@ -1390,3 +1392,150 @@ tasks:
     needs: ["TOWN-REPORTS","TOWN-PIPES","TOWN-WORLD","TOWN-JOBS-2"]
     locks: []
     details: "docs/board/cards/TOWN-DEFEND.md"
+
+  # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
+  - id: OPEN-ROAM
+    title: "Open Scablands: be out with no mission, and people who go about their day"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [busy-game-files]
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-ROAM.md"
+
+  - id: OPEN-FIGURES
+    title: "Open Scablands: figures for Odessa, Moss and three of Tin Town's people"
+    owner: "codex"
+    model: "astra"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-FIGURES.md"
+
+  - id: OPEN-DOORS
+    title: "Open Scablands: walk into the forge shed; Odessa mends the car and Moss washes it"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    waiting_on: "claude"
+    needs: [OPEN-ROAM, OPEN-FIGURES]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-DOORS.md"
+
+  - id: OPEN-STATE
+    title: "Open Scablands: what the open land saves, and the new ledger effects"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    needs: [OPEN-ROAM]
+    locks: [save-shape]
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-STATE.md"
+
+  - id: OPEN-CHECKPOINTS
+    title: "Open Scablands: skirmishes on the open road, and the hold that switches them off"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    waiting_on: "claude"
+    needs: [OPEN-STATE]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-CHECKPOINTS.md"
+
+  - id: OPEN-FIGURES-2
+    title: "Open Scablands: figures for the Glasshouse, Radio Hill and the Road Rats"
+    owner: "codex"
+    model: "astra"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [OPEN-FIGURES]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-FIGURES-2.md"
+
+  - id: OPEN-SITES
+    title: "Open Scablands: find the Glasshouse and Radio Hill, see them join the map, and earn their word"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    waiting_on: "claude"
+    needs: [OPEN-STATE, OPEN-FIGURES-2]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-SITES.md"
+
+  - id: OPEN-THREADS
+    title: "Open Scablands: storylines as data, and the burned camp as far as the choice at the camp"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    needs: [OPEN-CHECKPOINTS, OPEN-SITES]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-THREADS.md"
+
+  - id: OPEN-BURNED-SCOUT
+    title: "Open Scablands: the burned camp, the scouting of the Rats' Nest"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    needs: [OPEN-THREADS]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-BURNED-SCOUT.md"
+
+  - id: OPEN-BURNED-PEN
+    title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    needs: [OPEN-BURNED-SCOUT]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-BURNED-PEN.md"
+
+  - id: OPEN-BURNED-RESCUE
+    title: "Open Scablands: the burned camp, the choice at home, the rescue party and where the growers live"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    needs: [OPEN-BURNED-PEN]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-BURNED-RESCUE.md"
+
+  - id: OPEN-SOUND
+    title: "Open Scablands: every new cue chosen, registered and listened to"
+    owner: "claude"
+    lane: "AUDIO"
+    size: "M"
+    status: "backlog"
+    needs: [OPEN-ROAM, OPEN-DOORS]
+    locks: [sound-bank]
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-SOUND.md"

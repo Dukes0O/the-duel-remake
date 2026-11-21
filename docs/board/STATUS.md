@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-21T18:24:21.763Z
+Observed at: 2026-11-21T18:45:43.115Z
 
-Observation commit: 26d494c107df92c476e0b5b9b2a93b33af7530ea
+Observation commit: 51d60cdf3753216be99faeeaff0fbaf1bc17ed38
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 26d494c107df92c476e0b5b9b2a93b33af7530ea
+Integration HEAD: 51d60cdf3753216be99faeeaff0fbaf1bc17ed38
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -37,16 +37,15 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bowl-course | 15 | unknown | true | false | unknown |
 | codex/bowl-hud | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-hud |
 | codex/bowl-ltr-easy | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-ltr-easy |
-| codex/bowl-rex-solids | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-rex-solids |
 | codex/bowl-rivals-2 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-rivals-2 |
 | codex/car-art-bully | 15 | unknown | false | false | unknown |
 | codex/crew-story-join | 15 | unknown | true | false | unknown |
 | codex/mule-rails | 15 | unknown | true | false | unknown |
 | codex/perf-high-night | 37 | unknown | false | false | unknown |
-| codex/qa-arena-shove-baseline | 15 | unknown | true | false | unknown |
-| codex/qa-drive-lesson-run-board | 15 | unknown | true | false | unknown |
-| codex/qa-ski-finish-timeout | 15 | unknown | true | false | unknown |
-| codex/qa-titan-arena-wrecks | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/qa-titan-arena-wrecks |
+| codex/qa-arena-shove-baseline | 16 | unknown | true | false | unknown |
+| codex/qa-drive-lesson-run-board | 16 | unknown | true | false | unknown |
+| codex/qa-ski-finish-timeout | 16 | unknown | true | false | unknown |
+| codex/qa-titan-arena-wrecks | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/qa-titan-arena-wrecks |
 | codex/rail-lines | 15 | unknown | true | false | unknown |
 | codex/rail-region | 14 | unknown | true | false | unknown |
 | codex/rail-steps | 15 | unknown | true | false | unknown |
@@ -70,10 +69,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 15 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
-| codex/bowl-ltr-easy | unknown | 2026-11-21T11:12:28-07:00 | 0 | last commit 2026-11-21T11:12:28-07:00 | docs/WASTELAND_WORLD.md, docs/changes/BOWL-LTR-EASY.md, src/arena/arena-event.js, src/bowl/bowl-lines.js, src/bowl/bowl-rivals.js |
-| codex/bowl-rex-solids | unknown | 2026-11-21T11:24:01-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/WASTELAND_WORLD.md, docs/changes/BOWL-REX-SOLIDS.md, src/bowl/bowl-hook.js, src/scrapdome-yard.js, tools/test-bowl-rex.mjs |
+| codex/bowl-ltr-easy | unknown | 2026-11-21T11:42:51-07:00 | 0 | last commit 2026-11-21T11:42:51-07:00 | docs/WASTELAND_WORLD.md, docs/changes/BOWL-LTR-EASY.md, src/arena/arena-event.js, src/bowl/bowl-lines.js, src/bowl/bowl-rivals.js |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 15 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 37 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/qa-titan-arena-wrecks | unknown | 2026-11-21T11:37:21-07:00 | 0 | last commit 2026-11-21T11:37:21-07:00 | docs/changes/QA-TITAN-ARENA-WRECKS.md, src/demo-unstuck.js, src/sim-contacts.js, src/sim-rival.js, tools/test-arena-props.mjs |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 15 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
 | codex/wild-art-city | unknown | 2026-11-05T21:24:09-07:00 | 15 | last commit 2026-11-05T21:24:09-07:00 | docs/board/looks/wild-art-city/round-1-review.md, docs/board/looks/wild-art-city/round-1.jpg, docs/board/looks/wild-art-city/round-2-review.md, docs/board/looks/wild-art-city/round-2.jpg, docs/changes/WILD-ART-CITY.md |
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 15 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
@@ -86,16 +85,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 750,510,620 B | +3,059 B | 250,000,000 B |
+| Build `dist/` | 750,510,692 B | +72 B | 250,000,000 B |
 | Wasteland models | 446,473,171 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 499,162 B | +0 B | 500,000 B |
 | Review `looks/` | 102,330,380 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 845,927 B | +830,769 B | 5,000,000 B |
+| Added bytes in last merge | 415,414 B | -430,513 B | 5,000,000 B |
 | All `public/` | 741,100,405 B | +0 B | unavailable |
-| Git objects | 1,548,520,448 B | +385,024 B | unavailable |
-| Lane folders | 5 | +1 | unavailable |
+| Git objects | 1,549,491,200 B | +970,752 B | unavailable |
+| Lane folders | 4 | -1 | unavailable |
 
 ## Backups
 
@@ -103,7 +102,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: f96d19903748c849883b3ca1e514276de6347432
 - Local main: missing
-- Local integration/wasteland: 26d494c107df92c476e0b5b9b2a93b33af7530ea
+- Local integration/wasteland: 51d60cdf3753216be99faeeaff0fbaf1bc17ed38
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -111,6 +110,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit f96d19903748c849883b3ca1e514276de6347432.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: behind local; cached commit 536fa68cc857850253358d96ae82b14670af36d9.
+- Remote origin/integration/wasteland: behind local; cached commit ac708ec081f32ce51836a275dc3e96758cec804b.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
