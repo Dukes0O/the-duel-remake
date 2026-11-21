@@ -700,6 +700,18 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-REX-LOOK.md"
 
+  - id: BOWL-REX-SOLIDS
+    title: "Bowl: no invisible box under the Scrapasaurus's feet, its fall flat on the floor, and its torn leads in the yard"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: [BOWL-REX-LOOK]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-SOLIDS.md"
+
   - id: BOWL-WEAPONS
     title: "Bowl: hammer, saw and launcher for Last Truck Rolling, and health as the one measure"
     owner: "codex"

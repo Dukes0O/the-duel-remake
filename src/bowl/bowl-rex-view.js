@@ -1,14 +1,52 @@
 import * as THREE from 'three';
 import {fallPose} from './bowl-hook.js';
 import {REX_RULES, rexFacing, rexFightOf, rexPlaces} from './bowl-rex.js';
+import {createFlameMaterial, createSmokeMaterial, createSparks} from '../world/scrap-look.js';
 
 // The Scrapasaurus in the Bowl (BOWL-REX-FIGHT): its model on the rails, its
 // poses, its battery boxes, the cone its fire will fill (drawn on the floor from
 // the start of its tell), the ring where a thrown car will land, and its pen of
 // junk cars. On nights three and four it stands behind the stands' wall, seen
 // before it is fought. It reads state.bowlNight and never writes it.
+// BOWL-REX-LOOK draws the fight's moments: steam off the tired sag, the tall
+// beam over the open box, its fire as tongues of flame, the torn leads and the
+// sparks of a box tearing out, a cable that hangs slack and then pulls straight,
+// and the fall, with its lights dying, dust, and the arena's flame jets firing
+// together (`group.userData.allJetsFire`, read by bowl-view.js).
 const MODEL = '/assets/models/wasteland/bowl/scrapasaurus.glb';
-const ORANGE = 0xff7a1a, FLAME = 0xffc24a, RING = 0xffe27a;
+const ORANGE = 0xff7a1a, RING = 0xffe27a;
+// The moments, in seconds after the event that starts each one (docs/ART_LINE.md, "A moment keeps one clock").
+export const REX_MOMENTS = Object.freeze({fireGrow: .35, tearSparks: 1, fallLand: 1.5, jetsFrom: 1.3, dustSeconds: 2.6,
+  lightsOut: .5, steamBurst: 1.5});
+const unit = (index, k) => { const v = Math.sin(index * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+
+// A soft vertical fade for a beam: bright at its foot, gone at its top. Additive, so dark is see-through.
+function fadeUp(geometry, foot = 1, top = 0) {
+  const position = geometry.getAttribute('position'), colours = [];
+  geometry.computeBoundingBox();
+  const {min, max} = geometry.boundingBox;
+  for (let i = 0; i < position.count; i++) {
+    const share = (position.getY(i) - min.y) / (max.y - min.y || 1);
+    const level = foot + (top - foot) * Math.pow(share, .7);
+    colours.push(level, level, level);
+  }
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
+  return geometry;
+}
+
+// Soft puffs that face the viewer, each with its own fade and seed on one shared material (as createDustTrail).
+function puffs(name, count, colour) {
+  const holder = new THREE.Group(); holder.name = name;
+  const material = createSmokeMaterial(colour), card = new THREE.PlaneGeometry(1, 1);
+  for (let index = 0; index < count; index++) {
+    const puff = new THREE.Mesh(card, material);
+    puff.name = name + ' puff'; puff.userData.fade = 0; puff.renderOrder = 3; puff.visible = false; puff.frustumCulled = false;
+    puff.onBeforeRender = () => { material.uniforms.uFade.value = puff.userData.fade; material.uniforms.uSeed.value = index * .37;
+      material.uniformsNeedUpdate = true; };
+    holder.add(puff);
+  }
+  return holder;
+}
 
 function disposeTree(root) {
   root?.traverse?.(node => {
@@ -47,7 +85,8 @@ export function createRexView({loadModel}) {
   holder.add(pose);
   // The tell's chest glow: a furnace light in its chest, under the neck, that brightens until the fire comes.
   const chest = new THREE.Mesh(new THREE.SphereGeometry(.9, 16, 10), glowMaterial(ORANGE, true));
-  chest.name = 'Scrapasaurus chest glow'; chest.position.set(0, 3.4, 2.6); chest.visible = false;
+  // Under the front of its chest, where the neck meets the ribs (BOWL-REX-LOOK: at 3.4 m it hung between the legs).
+  chest.name = 'Scrapasaurus chest glow'; chest.position.set(0, 6.7, 3.1); chest.visible = false;
   const chestLight = new THREE.PointLight(ORANGE, 0, 14, 2);
   chestLight.position.copy(chest.position);
   pose.add(chest, chestLight);
@@ -55,28 +94,55 @@ export function createRexView({loadModel}) {
   // The cone on the floor (the tell), and the fire filling it.
   const cone = new THREE.Mesh(fanGeometry(REX_RULES.fire.halfAngle), glowMaterial(ORANGE));
   cone.name = 'Scrapasaurus fire cone'; cone.renderOrder = 4; cone.visible = false;
+  // Its fire as fire (owed from BOWL-FINISH): a rolling stream of fireballs pours from its mouth down onto the floor,
+  // and tongues of flame burn along the orange out to the end of the rules' reach, with a light on the floor.
   const fire = new THREE.Group(); fire.name = 'Scrapasaurus fire'; fire.visible = false;
-  for (let layer = 0; layer < 3; layer++) {
-    const sheet = new THREE.Mesh(fanGeometry(REX_RULES.fire.halfAngle * (1 - layer * .25)), glowMaterial(layer ? FLAME : ORANGE));
-    sheet.position.y = .6 + layer * .9; sheet.renderOrder = 6;
-    fire.add(sheet);
+  // The shared flame drawing at a lower gain, so that many tongues overlapping stay orange instead of burning white.
+  const flameMaterial = createFlameMaterial(), flameCard = new THREE.PlaneGeometry(1, 1);
+  flameMaterial.uniforms.uGain = {value: .55};
+  flameMaterial.fragmentShader = flameMaterial.fragmentShader
+    .replace('uniform float uSeed;', 'uniform float uSeed;uniform float uGain;')
+    .replace('gl_FragColor=vec4(colour*body*1.05,body);', 'gl_FragColor=vec4(colour*body*uGain,body*uGain);');
+  const TONGUES = 26, tongues = [];
+  for (let index = 0; index < TONGUES; index++) {
+    const tongue = new THREE.Mesh(flameCard, flameMaterial);
+    tongue.name = 'Scrapasaurus flame tongue'; tongue.renderOrder = 6; tongue.frustumCulled = false;
+    tongue.onBeforeRender = () => { flameMaterial.uniforms.uSeed.value = index * .173; flameMaterial.uniformsNeedUpdate = true; };
+    fire.add(tongue); tongues.push(tongue);
   }
+  const stream = puffs('Scrapasaurus fire stream', 24, 0xff6a12);
+  stream.children[0].material.blending = THREE.AdditiveBlending;
+  fire.add(stream);
+  const fireLight = new THREE.PointLight(0xff8a2a, 0, 40, 1.6); fire.add(fireLight);
   // The ring where a thrown car will land, and the car.
   const ring = new THREE.Mesh(new THREE.RingGeometry(REX_RULES.thrown.hitRadius - .35, REX_RULES.thrown.hitRadius, 40), glowMaterial(RING));
   ring.rotation.x = -Math.PI / 2; ring.name = 'Scrapasaurus throw ring'; ring.visible = false; ring.renderOrder = 4;
   const rust = new THREE.MeshStandardMaterial({color: 0x6b4a33, roughness: .9, metalness: .2});
   const thrown = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.2, 4.2), rust);
   thrown.name = 'Scrapasaurus thrown junk car'; thrown.visible = false;
-  const cableGeo = new THREE.BufferGeometry();
-  cableGeo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(6),3));
-  const cable = new THREE.Line(cableGeo,new THREE.LineBasicMaterial({color:0xffe29b}));
-  cable.frustumCulled=false;cable.name='Scrapasaurus tow cable';
+  // The cable: a bright steel rope that hangs to the floor while it is slack and pulls straight when it is tight,
+  // thick enough to follow from across the arena.
+  const cable = new THREE.Group(); cable.name = 'Scrapasaurus tow cable';
+  const CABLE_STEPS = 18, ropeCard = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true);
+  const ropeMaterial = new THREE.MeshBasicMaterial({color: 0xffe29b, toneMapped: false});
+  const rope = Array.from({length: CABLE_STEPS}, () => {
+    const piece = new THREE.Mesh(ropeCard, ropeMaterial); piece.frustumCulled = false; cable.add(piece); return piece;
+  });
+  const ropePoints = Array.from({length: CABLE_STEPS + 1}, () => new THREE.Vector3());
+  const ropeUp = new THREE.Vector3(0, 1, 0), ropeSpan = new THREE.Vector3();
   const tip=new THREE.Mesh(new THREE.TorusGeometry(.16,.045,6,14),rust);
   tip.name='Truck tow hook';
   const mark=new THREE.Mesh(new THREE.RingGeometry(.59,.68,24),glowMaterial(RING));
   mark.name='Open battery marker';mark.rotation.y=Math.PI/2;
-  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.22,.38,35,12),glowMaterial(0xffd44d));
-  beam.name='Open battery beam';beam.material.opacity=.76;
+  // The beam: a hard core and a wide soft halo, 60 m tall, standing up from the open box and fading into the dark,
+  // with a warm light on the box itself.
+  const BEAM_HEIGHT = 60;
+  const beam=new THREE.Mesh(fadeUp(new THREE.CylinderGeometry(.3,.45,BEAM_HEIGHT,14,8,true)),glowMaterial(0xffd44d));
+  beam.name='Open battery beam';beam.material.opacity=.9;beam.material.vertexColors=true;beam.frustumCulled=false;
+  const halo=new THREE.Mesh(fadeUp(new THREE.CylinderGeometry(1.5,2.1,BEAM_HEIGHT,20,8,true),.9,0),glowMaterial(0xffb030));
+  halo.name='Open battery beam halo';halo.material.opacity=.2;halo.material.vertexColors=true;halo.frustumCulled=false;
+  beam.add(halo);
+  const boxLight=new THREE.PointLight(0xffb84a,0,14,1.8);boxLight.name='Open battery light';
   const progress=new THREE.Mesh(new THREE.RingGeometry(.83,1.06,64),glowMaterial(0x9aff83));
   progress.name='Battery pull progress';progress.material.opacity=1;progress.renderOrder=9;
   const pointerShape=new THREE.Shape();
@@ -104,7 +170,19 @@ export function createRexView({loadModel}) {
     circle.quaternion.copy(camera.quaternion);circle.updateMatrixWorld(true);
   };
   const pen = new THREE.Group(); pen.name = 'Scrapasaurus pen of junk cars';
-  group.add(holder, cone, fire, ring, thrown, pen, cable, tip, mark, beam, progress, pointer);
+  // Sparks: two from each socket's torn leads while its box is out, and a shower where a box tears free.
+  const leadSparks = [0, 1, 2].map(() => [createSparks(14), createSparks(14)]);
+  const tearSparks = [0, 1, 2].map(() => createSparks(70));
+  for (const points of [...leadSparks.flat(), ...tearSparks]) { points.visible = false; group.add(points); }
+  // Steam off its back and shoulders while it sags, in the pose's own metres so it sags with it.
+  const steam = puffs('Scrapasaurus steam', 16, 0xd9d4c8); pose.add(steam);
+  const STEAM_VENTS = [[-1.4, 5.2, -1.6], [1.4, 5.2, -1.6], [-1.2, 5.5, 1.2], [1.2, 5.5, 1.2], [0, 5.0, -4.2], [0, 5.3, 3.4]];
+  // Dust thrown up along its length where it lands, in the rails' metres (not rolled with the body).
+  const dust = puffs('Scrapasaurus fall dust', 18, 0x8a7458); holder.add(dust);
+  group.add(holder, cone, fire, ring, thrown, pen, cable, tip, mark, beam, boxLight, progress, pointer);
+  const moments = {tornAt: [null, null, null], tiredAt: null, fight: null};
+  let lamps = [];
+  const scratch = new THREE.Vector3(), outward = new THREE.Vector3(), centre = new THREE.Vector3();
 
   // The model loads once for the view; each event on a new course only moves it and rebuilds the pen.
   function clear() {
@@ -126,7 +204,17 @@ export function createRexView({loadModel}) {
         const part=model.getObjectByName(`battery-box-${index}`);
         const whole=model.getObjectByName(`battery-box-${index}-whole`);
         const open=model.getObjectByName(`battery-box-${index}-open`);
-        return {part,whole,open,parent:part?.parent,origin:part?.position.clone()};
+        const leads=model.getObjectByName(`battery-leads-${index}`);
+        const sparks=['a','b'].map(end=>model.getObjectByName(`battery-spark-${index}-${end}`)).filter(Boolean);
+        const socket=model.getObjectByName(`battery-socket-${index}`);
+        return {part,whole,open,leads,sparks,socket,parent:part?.parent,origin:part?.position.clone()};
+      });
+      // Its lamps get their own material copies so the fall can put them out without touching anything else.
+      lamps = [];
+      model.traverse(node => {
+        if (!node.isMesh || !/headlamp|copper/i.test(node.material?.name || '')) return;
+        node.material = node.material.clone();
+        lamps.push({material: node.material, glow: node.material.emissiveIntensity ?? 1});
       });
       mixer = new THREE.AnimationMixer(model);
       for (const clip of asset.animations || []) actions[/jaw/.test(clip.name) ? 'jaw' : /tail/.test(clip.name) ? 'tail' : clip.name] = mixer.clipAction(clip);
@@ -156,7 +244,7 @@ export function createRexView({loadModel}) {
     const teaser = !fight && (night?.night === 3 || night?.night === 4);
     const enabled = show === true && next?.def?.bowl === true && !disposed && (!!fight || teaser);
     group.visible = enabled;
-    if (!enabled) { lastNow = now; chestLight.intensity = 0; return; }
+    if (!enabled) { lastNow = now; chestLight.intensity = 0; group.userData.allJetsFire = false; return; }
     if (next !== course) build(next);
     const dt = lastNow == null ? 0 : Math.max(0, Math.min(.1, (now - lastNow) / 1000));
     lastNow = now;
@@ -166,6 +254,7 @@ export function createRexView({loadModel}) {
     cone.visible = fire.visible = ring.visible = thrown.visible = chest.visible = false;
     chestLight.intensity = 0;
     cable.visible=tip.visible=mark.visible=beam.visible=progress.visible=pointer.visible=false;
+    boxLight.intensity=0;fireLight.intensity=0;
     if (teaser) {
       // Behind the wall in front of the stands, at the head of the crush line, looking in.
       const at = next.groundAt(places.startS, places.side * (places.edge + 4.5));
@@ -176,15 +265,49 @@ export function createRexView({loadModel}) {
         if(whole)whole.visible=true;
         if(open)open.scale.setScalar(0);
       }
+      for(const {leads} of boxes)leads?.scale.setScalar(0);
+      for(const points of [...leadSparks.flat(),...tearSparks])points.visible=false;
+      steam.visible=dust.visible=false;group.userData.allJetsFire=false;
       actions.tired?.stop();
       actions.tail?.play();
       return;
     }
     pen.children.forEach((car, index) => { car.visible = index < fight.penCars; });
     place(next.groundAt(fight.s, places.rail), rexFacing(fight, next));
-    const fallen=fallPose(fight);
-    pose.position.set(0,fallen.lift,0);
-    pose.rotation.set(0,0,fallen.roll);
+    if (moments.fight !== fight) { moments.fight = fight; moments.tornAt = [null, null, null]; moments.tiredAt = null; }
+    const fallen=fallPose(fight), falling=fight.phase==='fallen';
+    // It sways once before it goes over, and its weight rocks it from foot to foot as it walks.
+    const sway=falling ? .1*Math.sin(fight.t*11)*Math.max(0,1-fight.t/.9) : 0;
+    const stride=fight.phase==='walk' ? Math.abs(Math.sin(seconds*3.1)) : 0;
+    pose.position.set(0,fallen.lift+.22*stride,0);
+    pose.rotation.set(0,0,fallen.roll+sway+(fight.phase==='walk' ? .025*Math.sin(seconds*3.1) : 0));
+    // Its lights die as it falls.
+    const lit=falling ? Math.max(0,1-fight.t/REX_MOMENTS.lightsOut) : 1;
+    for(const lamp of lamps)lamp.material.emissiveIntensity=lamp.glow*lit;
+    // The arena's flame jets fire together once it is down (bowl-view.js reads this).
+    group.userData.allJetsFire=falling && fight.t>=REX_MOMENTS.jetsFrom;
+    // Dust along its length where it lands, on the side it falls to (+x of its rails).
+    const sinceLand=falling ? fight.t-REX_MOMENTS.fallLand : -1;
+    dust.visible=sinceLand>=0 && sinceLand<REX_MOMENTS.dustSeconds;
+    if(dust.visible)dust.children.forEach((puff,index)=>{
+      const age=Math.min(1,sinceLand/REX_MOMENTS.dustSeconds), along=-10+19*index/(dust.children.length-1);
+      const grow=1-Math.pow(1-age,2.2);
+      puff.position.set(3+6*unit(index,1)+2.5*grow*unit(index,2),.6+3.2*grow,along+1.4*(unit(index,3)-.5));
+      puff.scale.set(2.5+7*grow,1.6+4.5*grow,1);
+      puff.userData.fade=Math.min(1,age/.06)*Math.pow(1-age,1.4)*.55;puff.visible=puff.userData.fade>.004;
+    });
+    // Steam while it sags: a burst as it drops, then a steady seep from its back and shoulders.
+    if(fight.low && !falling){ if(moments.tiredAt==null)moments.tiredAt=seconds; } else moments.tiredAt=null;
+    steam.visible=moments.tiredAt!=null;
+    if(steam.visible){
+      const since=seconds-moments.tiredAt, burst=Math.max(0,1-since/REX_MOMENTS.steamBurst);
+      steam.children.forEach((puff,index)=>{
+        const vent=STEAM_VENTS[index%STEAM_VENTS.length], age=(seconds/2.2+index/steam.children.length)%1;
+        puff.position.set(vent[0]+Math.sin(index*2.1+age*3)*.5*age,vent[1]+3.4*age,vent[2]+.6*age*Math.cos(index));
+        puff.scale.setScalar(1+2.6*age+1.5*burst);
+        puff.userData.fade=Math.min(1,age/.12)*Math.pow(1-age,1.2)*(.32+.4*burst);puff.visible=true;
+      });
+    }
     const tired=actions.tired;
     if(tired){
       if(fight.low){tired.play();tired.paused=true;tired.time=tired.getClip().duration*.8;mixer.update(0);}
@@ -194,12 +317,16 @@ export function createRexView({loadModel}) {
     actions.tail?.stop();
     if(tailPivot)tailPivot.rotation.y=fight.tailYaw || 0;
     const hook=fight.hook;
-    boxes.forEach(({part,whole,open,parent,origin},index)=>{
+    holder.updateMatrixWorld(true);
+    boxes.forEach(({part,whole,open,leads,sparks,socket,parent,origin},index)=>{
       if(!part)return;
       const detached=fight.boxes[index];
-      const position=hook.phase==='dragging' && hook.box===index ? hook.drag : fight.dropped[index];
+      const dragged=hook.phase==='dragging' && hook.box===index;
+      const position=dragged ? hook.drag : fight.dropped[index];
       if(detached && position){
         if(part.parent!==group)group.add(part);part.position.copy(position);part.rotation.set(0,hook.origin?.heading||0,0);
+        // A dragged box bounces along behind the truck.
+        if(dragged){part.position.y+=.35*Math.abs(Math.sin(seconds*8.3));part.rotation.x=.12*Math.sin(seconds*6.1);}
       }else{
         if(part.parent!==parent)parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);
       }
@@ -207,17 +334,63 @@ export function createRexView({loadModel}) {
       const lit=detached || fight.marker?.box===index;
       if(whole)whole.visible=!lit;
       if(open){open.scale.setScalar(lit?1:0);open.visible=lit;}
+      // A box that is out leaves its torn leads, which spit sparks in bursts; it tears free in a shower of them.
+      leads?.scale.setScalar(detached?1:0);
+      if(detached && moments.tornAt[index]==null)moments.tornAt[index]=seconds;
+      if(!detached)moments.tornAt[index]=null;
+      const sinceTear=moments.tornAt[index]==null ? Infinity : seconds-moments.tornAt[index];
+      holder.getWorldPosition(centre);group.worldToLocal(centre);
+      leadSparks[index].forEach((points,end)=>{
+        const anchor=sparks[end];
+        points.visible=detached && !!anchor && !falling && ((seconds*1.25+index*.37+end*.5)%1)<.5;
+        if(!points.visible)return;
+        anchor.getWorldPosition(scratch);group.worldToLocal(scratch);
+        outward.set(scratch.x-centre.x,0,scratch.z-centre.z);
+        if(outward.lengthSq()<1e-6)outward.set(1,0,0);
+        outward.normalize();
+        points.userData.place(seconds*1.6+end,scratch,outward,0);
+      });
+      const shower=tearSparks[index];
+      shower.visible=detached && !!socket && sinceTear<REX_MOMENTS.tearSparks;
+      if(shower.visible){
+        socket.getWorldPosition(scratch);group.worldToLocal(scratch);
+        outward.set(scratch.x-centre.x,0,scratch.z-centre.z);
+        if(outward.lengthSq()<1e-6)outward.set(1,0,0);
+        outward.normalize();
+        shower.userData.place(sinceTear*1.8,scratch,outward,0);
+      }
     });
     if(hook.origin && hook.tip && hook.phase!=='idle'){
-      const points=cableGeo.getAttribute('position');
-      points.setXYZ(0,hook.origin.x,hook.origin.y,hook.origin.z);
-      points.setXYZ(1,hook.tip.x,hook.tip.y,hook.tip.z);
-      points.needsUpdate=true;cable.visible=tip.visible=true;tip.position.copy(hook.tip);
+      // Slack, it hangs as a rope of its length would (a parabola's sag), never below the floor under the truck;
+      // tight, it is straight and brighter, and trembles while the truck pulls.
+      const from=hook.origin,to=hook.tip;
+      const span=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
+      const length=hook.phase==='attached' ? hook.length : span;
+      const sag=hook.tight || hook.phase!=='attached' ? 0 : Math.sqrt(Math.max(0,3*span*(length-span)/8));
+      const floor=Math.min(from.y,to.y)-1.1, tremble=hook.pulling ? .05 : 0;
+      ropePoints.forEach((point,k)=>{
+        const u=k/CABLE_STEPS;
+        point.set(from.x+(to.x-from.x)*u,from.y+(to.y-from.y)*u-4*sag*u*(1-u),from.z+(to.z-from.z)*u);
+        point.y=Math.max(point.y,floor)+tremble*Math.sin(seconds*60+k*1.7)*Math.sin(Math.PI*u);
+      });
+      const thick=hook.tight ? .075 : .06;
+      rope.forEach((piece,k)=>{
+        const a=ropePoints[k],b=ropePoints[k+1];
+        ropeSpan.subVectors(b,a);
+        const step=ropeSpan.length();
+        piece.position.addVectors(a,b).multiplyScalar(.5);
+        piece.scale.set(thick,Math.max(step,.001),thick);
+        if(step>1e-6)piece.quaternion.setFromUnitVectors(ropeUp,ropeSpan.divideScalar(step));
+      });
+      ropeMaterial.color.setHex(hook.tight ? 0xfff2c4 : 0xffd98a);
+      cable.visible=tip.visible=true;tip.position.copy(hook.tip);
     }
     if(fight.marker){
       mark.visible=true;mark.position.copy(fight.marker);
       beam.visible=pointer.visible=true;
-      beam.position.copy(mark.position);beam.position.y+=17.5;
+      beam.position.copy(mark.position);beam.position.y+=BEAM_HEIGHT/2-.4;
+      beam.material.opacity=.78+.14*Math.sin(seconds*5.2);
+      boxLight.position.copy(mark.position);boxLight.position.y-=.2;boxLight.intensity=90+30*Math.sin(seconds*5.2);
       progress.visible=hook.phase==='attached';
       if(progress.visible){
         const required=REX_RULES.level[fight.level].pull[hook.box];
@@ -235,8 +408,8 @@ export function createRexView({loadModel}) {
       for (const item of [cone, fire]) {
         item.position.set(fight.cone.x, y, fight.cone.z);
         item.rotation.y = item===fire ? fight.cone.flameHeading : fight.cone.heading;
-        item.scale.set(fight.cone.range, 1, fight.cone.range);
       }
+      cone.scale.set(fight.cone.range, 1, fight.cone.range);
       cone.visible = true;
       // The tell: the cone pulses faster as the fire gets close, and its chest glows brighter. The fire: the cone burns.
       const level = REX_RULES.level[fight.level];
@@ -247,10 +420,32 @@ export function createRexView({loadModel}) {
       chestLight.intensity = 40 + 260 * share;
       cone.material.opacity = fight.phase === 'tell' ? .22 + .3 * share * (.5 + .5 * Math.sin(seconds * (6 + share * 10))) : .6;
       fire.visible = fight.phase === 'fire';
-      if (fire.visible) fire.children.forEach((sheet, layer) => {
-        sheet.material.opacity = .45 + .25 * Math.sin(seconds * 23 + layer * 2.1);
-        sheet.scale.setScalar(.92 + .08 * Math.sin(seconds * 17 + layer));
-      });
+      if (fire.visible) {
+        // The stream leaves the mouth and comes down onto the floor a third of the way out; the tongues burn along the
+        // floor from there to the end of the orange. The jet grows out of the mouth over its first moment, and never
+        // reaches past the rules' range.
+        const mouth = places.headTop * places.scale - 2.6, reach = fight.cone.range, land = reach * .32;
+        const grown = Math.min(1, fight.t / REX_MOMENTS.fireGrow), spread = REX_RULES.fire.halfAngle * .9;
+        flameMaterial.uniforms.uTime.value = seconds;
+        stream.children.forEach((ball, index) => {
+          const u = (seconds * 2.4 + index / stream.children.length) % 1;
+          const angle = (unit(index, 3) * 2 - 1) * spread * u, distance = u * land * grown + .6;
+          ball.position.set(Math.sin(angle) * distance, Math.max(.8, mouth * Math.pow(1 - u, 1.25)) + .4, Math.cos(angle) * distance);
+          ball.scale.setScalar((1.3 + 3.6 * u) * (.85 + .3 * unit(index, 5)));
+          ball.userData.fade = Math.min(1, u / .08) * (.75 - .25 * u); ball.visible = true;
+        });
+        tongues.forEach((tongue, index) => {
+          const u = (seconds * 1.3 + index / TONGUES) % 1, cycle = Math.floor(seconds * 1.3 + index / TONGUES);
+          const angle = (unit(index, cycle % 97) * 2 - 1) * spread;
+          const distance = (land + u * (reach - land - 1.5)) * grown, size = 2.4 + 4.2 * u;
+          tongue.position.set(Math.sin(angle) * distance, size * .45, Math.cos(angle) * distance);
+          const fade = Math.min(1, u / .1) * (u > .8 ? 1 - (u - .8) / .2 : 1);
+          tongue.scale.set(size * fade, size * 1.25 * fade, 1);
+          tongue.visible = fade > .02 && grown > .6;
+        });
+        fireLight.position.set(0, 3, reach * .45 * grown);
+        fireLight.intensity = 520 + 160 * Math.sin(seconds * 19);
+      }
     }
     if (fight.throwAt && (fight.phase === 'lift' || fight.phase === 'throw')) {
       const target = next.groundAt(fight.throwAt.s, fight.throwAt.lateral);

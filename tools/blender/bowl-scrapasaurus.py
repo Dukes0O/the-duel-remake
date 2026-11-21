@@ -52,10 +52,10 @@ if args.sheet_only:
                        ('Box in its tub, strapped to the ribs','closed'),('Box out: torn leads','socket')]:
         panels.append((title,Image.open(evidence/(name+'.png'))))
     # The fight's moments, taken in the game from the driver's seat (BOWL-REX-LOOK).
-    for title,name in [('Game: it bursts from the gate','game-gate'),('Game: the tell, orange on the floor','game-tell'),
-                       ('Game: its fire','game-fire'),('Game: tired, the beam over the box','game-tired'),
-                       ('Game: cable tight, pulling','game-pull'),('Game: a box tears out','game-tear'),
-                       ('Game: the fall, the last box dragged','game-fall')]:
+    for title,name in [('Game: out of the gate beside the truck','game-gate'),('Game: the tell, chest glowing','game-tell'),
+                       ('Game: its fire on the orange','game-fire'),('Game: tired, steam and the beam','game-tired-near'),
+                       ('Game: cable tight on the last box','game-pull-3'),
+                       ('Game, looking back: down, the last box dragged','game-look-2.2')]:
         path=evidence/(name+'.png')
         if path.exists(): panels.append((title,Image.open(path)))
     columns=3; rows=(len(panels)+columns-1)//columns
@@ -159,8 +159,8 @@ def paint_tile(colour, kind, wear=.5, edge=True):
         yy,xx=np.mgrid[0:tile_px,0:tile_px]
         border=np.minimum(np.minimum(xx,yy),np.minimum(tile_px-1-xx,tile_px-1-yy)).astype(np.float32)
         ragged=crop(grain[...,None])[...,0]
-        width=6+11*np.clip((ragged-ragged.min())/max(np.ptp(ragged),1),0,1)
-        steel=crop(milled)*1.32+12
+        width=5+8*np.clip((ragged-ragged.min())/max(np.ptp(ragged),1),0,1)
+        steel=crop(milled)*1.12+6
         halo=np.clip(1-(border-width)/7,0,1)*(border>=width)
         rgb=rgb*(1-.55*halo[...,None])+rust*.7*.55*halo[...,None]
         bare=(border<width)[...,None]
@@ -603,6 +603,22 @@ for obj in asset.children_recursive:
         for li in face.loop_indices:
             co=obj.data.vertices[obj.data.loops[li].vertex_index].co
             uv.data[li].uv=(co[u]*.67,co[v]*.67)
+for obj in skinned: obj.data.uv_layers[0].name='Pressed sheet UV'
+
+# Round 7: weld the fixed small parts under each parent into one object, so the game draws one mesh per parent and
+# material instead of one per tube and plate (528 nodes before). Every part the fight or the view finds by name, every
+# part with children, and every part bent by a rig keeps its own object.
+def kept(obj):
+    return (obj.name.startswith(('battery-','towing-eye-','scrapasaurus-')) or obj.name in ('thorax','folding-neck','crouching-haunches')
+            or obj.modifiers or obj.children or obj.animation_data)
+welds={}
+for obj in asset.children_recursive:
+    if obj.type=='MESH' and not kept(obj): welds.setdefault(obj.parent,[]).append(obj)
+for parent,parts in welds.items():
+    if len(parts)<2: continue
+    with bpy.context.temp_override(active_object=parts[0],selected_editable_objects=parts,selected_objects=parts):
+        bpy.ops.object.join()
+    parts[0].name=f'{parent.name} welded parts'
 
 bpy.ops.object.select_all(action='DESELECT')
 for obj in [asset,*asset.children_recursive]: obj.select_set(True)
