@@ -21,14 +21,16 @@ export function eyePoint(fight, course, index) {
 
 // The visible model has two separated feet, two haunches, a ribcage, a neck,
 // a deep skull and a tapered tail. Heights are metres above its rail.
-export function fallPose(fight){
-  const roll=fight.phase==='fallen' ? -Math.min(1.42,fight.t*.95) : 0;
-  return {roll,lift:-2.9*Math.sin(roll)};
+export function fallPose(fight) {
+  const finalRoll = 1.48, settleSeconds = 1.5;
+  const roll = fight.phase === 'fallen' ? -finalRoll * Math.min(1, fight.t / settleSeconds) : 0;
+  return {roll, lift: -2.61 * Math.sin(roll)};
 }
 export function rexSolids(fight, course) {
   const frame = rexAnchor(fight, course), low = fight.low;
   const parts = [];
   const {roll,lift}=fallPose(fight);
+  const floor = fight.phase === 'fallen' ? frame.y : -Infinity;
   function part(id, x, z, width, length, bottom, top) {
     if(roll){
       const c=Math.cos(roll),s=Math.sin(roll), cy=(bottom+top)/2, height=top-bottom;
@@ -37,14 +39,15 @@ export function rexSolids(fight, course) {
       width=c*width+Math.abs(s)*height;x=cx;bottom=y-extent;top=y+extent;
     }
     const p = modelPoint(frame, x, 0, z);
+    // Rotated toes and armour can settle below the surface. Only the
+    // part above the floor can be contacted once the beast is falling.
     parts.push({...p, id: 'rex-' + id, heading: frame.heading, halfX: width / 2, halfZ: length / 2,
-      minY: p.y + bottom, maxY: p.y + top, verticalClearance: true, arenaWall: true, rexPart: true});
+      minY: Math.max(floor, p.y + bottom), maxY: p.y + top, verticalClearance: true, arenaWall: true, rexPart: true});
   }
   for (const side of [-1, 1]) {
     part('shin'+side, side*1.94, -1.5+side*.65, 1.48, 3, 0, low ? 2.25 : 4.45);
     part('thigh'+side, side*1.85, -1.15+side*.25, 2.55, 3.55, low ? 1.7 : 3.7, low ? 4.3 : 8.6);
   }
-  part('bogie',0,-1.4,3.9,4.2,0,.56);
   part('ribs',0,-.1,5.4,7.0,low ? .77 : 4.77,low ? 5.5 : 9.5);
   part('neck',0,low ? 4.4 : 3.7,2.8,3.0,low ? 2.3 : 6.4,low ? 5.4 : 10.3);
   part('skull',0,low ? 6.25 : 6.32,2.8,3.55,low ? 0 : 7.7,low ? 3.65 : 11.58);
