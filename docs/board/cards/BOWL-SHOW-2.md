@@ -14,8 +14,10 @@ writing (below, "Design"), then cuts it into slices for building. Every item her
   wheelies and stoppies (driving along on the rear or front wheels), donuts, 360s, side flips and barrel rolls. A double
   flip scores far more than a single one. The trick list must be taught in the game.
 - **Jumping out of the arena into the stands and beyond is the best moment of the night. Keep it** (with
-  `memory/keep-fun-bugs`) and make it a feature: the truck may land in the crowd, which scatters. Outside the arena there
-  must be a way back in: an opening in the outer wall, reachable from behind the stands.
+  `memory/keep-fun-bugs`): the truck may land in the crowd, which scatters. Outside the arena there must be a way back
+  in: an opening in the outer wall, reachable from behind the stands. Kyle, 20 November 2026, on seeing it made into an
+  event: it is "a funny glitch that the player would uncover, it's not supposed to be the objective of a round! that
+  makes it way less funny." Section 3 has the rule.
 - **Sound:** more sounds of cars being crushed.
 - **The camera** changes angle in jerks during events.
 - **The rival** in the side-by-side race does almost nothing and crawls; rivals in general are weak.
@@ -261,9 +263,28 @@ whenever it is played, from the menu as well as on a tour night. Card BOWL-TRICK
 - **Tonight's trick:** each night names one or two tricks (section 11). Its picture and keys are on the card before the
   event, and it pays double that night.
 
-### 3. Over the wall, into the crowd, and back in
+### 3. Over the wall, into the crowd, and back in: a secret the driver finds
 
 The jump out stays as the physics makes it today and joins "Keep these" in `docs/board/decisions.md`.
+
+**It is a secret, never an objective (Kyle, 20 November 2026).** "Being able to fly into the stands was supposed to be
+something that was a funny glitch that the player would uncover, it's not supposed to be the objective of a round! that
+makes it way less funny." So:
+
+- **Nothing points the driver at leaving the arena:** no event, night name, goal line, picker line, weapon line, hint,
+  lesson or "why a try failed" sentence. Trick School and the trick card do not mention it. Home Run and the name "Over
+  the Wall Night" are removed (section 11, card BOWL-NIGHT-4).
+- **Everything below stays as built:** the stands are ground, the crowd scatters, the car park and the two gates are
+  there, and the points are paid. A driver who has got out without being told gets the game's reaction: Big Mo's
+  surprise, the crowd's scream and cheer, the pop-up with the points, and the gate arrow home.
+- **Big Mo is surprised, and then helps.** The first time a truck goes over the wall Big Mo says: "How did that truck
+  get up there? Follow the gate marker to get back in!" The line as built ("Drive off the back of the stands and follow
+  the gate marker to get back in!") told the driver about the leap off the back, which is a second thing to find, so
+  it goes.
+- **No target needs it.** Every event's marks are measured with scripted drivers who stay on the floor, as the secret
+  tricks' are, so the trip out is a bonus and never a need.
+- **In a jump event** (Long Jump, High Jump, Best Trick) a go that lands in the stands is a go like any other: its
+  points count, the reaction plays, and the truck is put back on its run-up for the next go.
 
 - **The stands become ground.** Behind the wall and its fence the terraces rise from 3.2 m to 24 m over 36 m (the stadium's
   own sizes), about 30 degrees, which a Titan climbs. A truck lands on them, drives along them and up them.
@@ -360,10 +381,12 @@ a rest after it, so that the driver can see a hit coming and get out of its way.
 | --- | --- | --- | --- |
 | **The Hammer** | An arm swings over the cab and comes down on whatever is within 4 m of the nose: three tenths of full health, and the truck it hits cannot steer for a second. A miss hits the dirt and holds the swinger still for half a second | The arm rises for 0.4 seconds; 2.5 seconds before the next swing | one heavy blow |
 | **The Saw** | Hold F to spin a disc on the nose. While it touches a truck it takes an eighth of full health a second, throws sparks and slows both trucks | It screams as it spins up; after 4 seconds of cutting it glows and must cool for 3 | pinning a truck on a wall |
-| **The Launcher** | A plate under the nose, driven by air, throws a truck within 2.5 m up 6 m and 12 m away. It lands on its side, loses a sixth of full health and takes 2.5 seconds to right itself. **A truck thrown over the wall is out of the Bowl at once.** Fired with nothing in front, it hops the driver's own truck 1.5 m | A hiss and a gauge; 4 seconds to fill again | knock-outs beside the wall |
+| **The Launcher** | A plate under the nose, driven by air, throws a truck within 2.5 m up 6 m and 12 m away. It lands on its side, loses a sixth of full health and takes 2.5 seconds to right itself. A truck thrown over the wall is out of the Bowl at once, which the game never says beforehand (section 3): the driver finds it. Fired with nothing in front, it hops the driver's own truck 1.5 m | A hiss and a gauge; 4 seconds to fill again | a truck that is hard to wear down |
 
 - **Choosing:** a card before the event shows the weapons open that night with a picture and one line each. Night 3 has
-  the hammer only, so that it is learned alone; night 4 offers the hammer or the saw; night 5 all three.
+  the hammer only, so that it is learned alone; night 4 offers the hammer or the saw; night 5 all three. The launcher's
+  line is "Throws a truck high into the air. An empty shot hops your own truck." (it was "Throw a truck over the wall",
+  which section 3 forbids).
 - **The rivals' weapons** are fixed, so each is known by what it carries: Rust Rhino its horn (a charge that hits harder
   the faster it is going), Big Kettle a hammer, Tin Lizard a saw, Old Bess a launcher, Dragon Wagon a short breath of
   fire. Their tells last 0.8 seconds on Easy, 0.6 on Medium and 0.4 on Hard.
@@ -475,7 +498,7 @@ Every night has a name, one new thing, a headline event that the other nights do
 | **1. Rookie Night** | wheelie, donut, backflip | Car Crush (60 seconds) · Freestyle against Old Bess's score · Side by Side with Old Bess |
 | **2. Flip Night** | front flip, stoppie | **Long Jump** · Freestyle against Rust Rhino's score · Side by Side with Rust Rhino |
 | **3. Hammer Night** | the spin; the hammer | Car Crush with the Bus Pile doubled · Freestyle against Tin Lizard's score · Last Truck Rolling with hammers |
-| **4. Over the Wall Night** | barrel roll; the saw | **High Jump** · **Home Run** · Last Truck Rolling with a hammer or a saw |
+| **4. Barrel Roll Night** | barrel roll; the saw | **High Jump** · **Best Trick** against Big Kettle · Last Truck Rolling with a hammer or a saw |
 | **5. Scrapasaurus Night** | side flip, doubles; the launcher | Freestyle against Dragon Wagon's score · Last Truck Rolling with any weapon · the Scrapasaurus |
 
 Three new events, each three goes with the truck put back on its run-up after each:
@@ -485,12 +508,46 @@ Three new events, each three goes with the truck put back on its run-up after ea
 - **High Jump:** a bar of flame between two posts over the Big Jump, at 6 m on Easy, 9 m on Medium and 12 m on Hard (the
   truck reaches 10 m at full speed and 15 m with nitro). Pass over it. The bar goes up a metre after each clear go for
   extra points.
-- **Home Run:** jump out of the arena and land on a target painted on an empty section of the stands, then come back in
-  through a gate inside 30 seconds for the next go. Easy needs one go over the wall, Medium one landing on the target,
-  Hard one in its middle ring.
+- **Best Trick** (in place of Home Run; Kyle, 20 November 2026, section 3): three rounds against Big Kettle off the Big
+  Jump. Long Jump asks how far and High Jump how high. Best Trick asks what the driver dares to try on one jump, against
+  a number that goes up each round.
+  - **A round.** Big Kettle has jumped first: the board names the trick Big Kettle landed and its points ("BIG KETTLE:
+    BACKFLIP 50"). The driver then has one jump from the run-up, and takes the round by scoring more trick points in
+    that jump than Big Kettle did. Two rounds of the three win the event.
+  - **Only tricks count in a round:** the points of the tricks landed in that jump, as the game already scores them. The
+    jump's own points go on the event's score and not on the round, so a plain jump beats nothing.
+  - **Big Kettle's tricks, by level** (starting numbers; the points are the trick table's plain points, with no crowd,
+    no NEW and nothing doubled):
+
+    | | Round 1 | Round 2 | Round 3 |
+    | --- | --- | --- | --- |
+    | Easy | lands on its roof: 0 | backflip: 50 | barrel roll: 60 |
+    | Medium | backflip: 50 | barrel roll: 60 | backflip with a spin: 120 |
+    | Hard | backflip with a spin: 120 | double backflip: 200 | double barrel roll: 240 |
+
+    When Big Kettle has landed on its roof the driver wins the round with any landed trick, and Big Mo says so.
+  - **Why this is a decision and not a repeat of Freestyle.** Three rules already in the game do the work. A kind of
+    trick pays one and a half times the first time it is done in the event, so a driver who lands Big Kettle's own
+    trick for the first time beats it. The same kind again pays four fifths, so a driver who does one backflip three
+    times wins round 1 and loses the other two. Tonight's trick, the barrel roll, pays double: one clean barrel roll
+    (60 x 2 x 1.5 = 180) beats every single trick and Medium's round 3, so the driver chooses when to spend it. A
+    slammed go scores nothing on Medium and Hard, so a double is a gamble on the round.
+  - **A lost round says why,** in one sentence, from what the truck did: "The same trick again pays less, so try a
+    different one." "You landed no trick, so tap a key as soon as the truck leaves the ramp." The trick rules' own
+    reasons (not enough air, a Slam) are used as they are.
+  - **Told, not shown.** Big Kettle's jump is not driven. Freestyle's rival has "already been round" in the same way.
+    Whether a tween needs to see Big Kettle jump is a question for the closing drive (BOWL-FINISH).
+  - **In a Turn Show** the event is one jump, the whole score of that jump goes on the board, and Big Kettle takes no
+    part.
+  - **Levels:** on Easy two landed tricks of different kinds win. On Medium two different single tricks win, and a
+    driver who repeats one does not. On Hard a driver who lands only single tricks does not win; a barrel roll and one
+    double do.
 
 The Easy numbers of these three are starting numbers. The gate is that the scripted slow driver wins Easy at least 6
-times in 10 (it was 9), and an Easy number goes up a step (a bus, a metre, a ring) while that driver still wins all ten.
+times in 10 (it was 9), and an Easy number goes up a step (a bus, a metre, one place up Best Trick's list of tricks)
+while that driver still wins all ten. Best Trick's list, from least to most: a landing on the roof (0), a spin (30), a
+backflip (50), a barrel roll (60), a backflip with a spin (120), a double backflip (200), a double barrel roll (240), a
+double backflip with a spin (345), a triple backflip (450).
 
 **More nights, at Titan Stadium.** Nights 6 to 8 are a tour, after the first release:
 
@@ -510,8 +567,8 @@ tricks there; the night's card says so when the chosen vehicle is too light for 
 Each is a card on the board with its files, locks, checks and sound cues. Each Codex card names its model (Kyle, 20
 November 2026: graphics and physics for Astra, the rest for Sol): **Astra** builds BOWL-WALLS, BOWL-TRICKS,
 BOWL-TRICKS-ALL, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2 and BOWL-REX-3; **Sol** builds BOWL-HUD, BOWL-TRICK-SCHOOL, BOWL-CRUSH,
-BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS and BOWL-TOUR. Nights 1 to 5 are the first release; BOWL-TOUR
-follows it.
+BOWL-RIVALS-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-NIGHT-4 and BOWL-TOUR. Nights 1 to 5 are the first release;
+BOWL-TOUR follows it.
 
 | Card | Owner | What it builds | Section |
 | --- | --- | --- | --- |
@@ -530,8 +587,9 @@ follows it.
 | BOWL-REX-2 | Codex | the Scrapasaurus fight remade | 10 |
 | BOWL-REX-3 | Codex | the eye beam, and bombs that the hook can send back (Kyle, 20 November) | 10 |
 | BOWL-REX-LOOK | Claude | the tired pose, the hook and cable, the beams and the fire drawn | 10 |
-| BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump, Home Run | 11 |
+| BOWL-JUMP-EVENTS | Codex | Long Jump, High Jump (and Home Run, which BOWL-NIGHT-4 removes) | 11 |
 | BOWL-NIGHTS | Codex | the season of five nights as data, the picker, saved records | 11 |
+| BOWL-NIGHT-4 | Codex | Barrel Roll Night: Best Trick in place of Home Run, and no line that points over the wall (Kyle, 20 November) | 3, 9, 11 |
 | BOWL-SOUND | Claude | every other new cue chosen and listened to | all |
 | BOWL-TRICKS-ALL | Codex | flips that finish themselves, seven secret tricks, and the trick set for every vehicle and on the Titan Monster Arena (first release: Kyle put the first two on this card) | 2 |
 | BOWL-TOUR | Codex | nights 6 to 8 | 11 |
@@ -543,7 +601,8 @@ Words on screen and Big Mo's lines: the builder writes each new line as one full
 
 Every slice is behind `titan-bowl` or `arena-tricks`, so each runs rule 23's small set and merges first; the wide suites run on
 the merged batch at night, and Claude drives the merged game in batches. The slices that change the save (BOWL-TRICK-SCHOOL,
-BOWL-NIGHTS, BOWL-TOUR, and the secret-trick record of BOWL-TRICKS-ALL) keep the save checker's review before they merge.
+BOWL-NIGHTS, BOWL-TOUR, the secret-trick record of BOWL-TRICKS-ALL, and the one record key that BOWL-NIGHT-4 renames) keep
+the save checker's review before they merge.
 
 ## Claude answers, BOWL-NIGHTS's changed assertions (20 November 2026)
 

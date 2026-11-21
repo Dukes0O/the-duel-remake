@@ -49,6 +49,13 @@ checked in the hand drive.
   pre-teen needs as well.
 - The other changes of that day are on their own cards: BOWL-CRUSH (clock and count), BOWL-JUMP-EVENTS and BOWL-TOUR
   (gates), BOWL-REX-2 (the first tired spell and the back box), BOWL-WEAPONS (six wins in ten).
+- **Best Trick** (BOWL-NIGHT-4, in place of Home Run) is in the first release and is on this card's `needs`. Big
+  Kettle's three tricks on each level are starting numbers, moved here by measurement. In the hand drive: win it once on
+  Easy and once on Medium, and say whether a tween needs to see Big Kettle jump or whether the board is enough.
+- **The way out stays a secret** (Kyle, 20 November 2026; BOWL-SHOW-2 section 3). In the closing drive read every night
+  card, goal line, weapon line, lesson and Big Mo line of nights 1 to 5: none may point the driver at the wall, the
+  stands or the car park before the driver has been there. Then go over the wall once and check that Big Mo is surprised
+  and the gate arrow leads home.
 - **BOWL-REX-3** (the eye beam and the bombs, Kyle's idea of 20 November) is in the first release and is on this
   card's `needs`. In the hand drive: send a bomb back on Easy and on Hard, and say whether the beam can be read from
   the driver's seat.
