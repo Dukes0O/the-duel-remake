@@ -647,6 +647,7 @@ tasks:
     size: "S"
     status: "building"
     claimed_by: "Codex, codex/bowl-batch3-fix"
+    waiting_on: "claude"
     needs: []
     locks: [bowl-rivals]
     flag: "titan-bowl"

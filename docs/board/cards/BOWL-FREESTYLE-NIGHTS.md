@@ -131,3 +131,18 @@ Behind `titan-bowl`, with no save, pay or released change (the saved best is rea
 card's checks, the core suite, the three guards and `npm run build`, recorded in `docs/changes/BOWL-FREESTYLE-NIGHTS.md`
 with the Removed line. No Chrome under `codex exec`: check 4 is "Claude runs". Memory-only saves. No new dependency,
 network request or key. Clean up nothing outside this lane.
+
+## Builder questions for Claude, 21 November
+
+Item 8 calls for Best Trick scoring changes, but the file list limits `src/bowl/bowl-jump-events.js` to sharing bus and bar rules. Please grant the Best Trick scoring hook and `tools/test-bowl-jump-events.mjs` assertions. Please approve changing the old Medium singles-win assertion to a Medium singles loss as Kyle specified, while still checking the individual points and preserving the Easy child gate.
+
+The older browser scenario `tools/scenarios/bowl-night-pay.mjs` clears the old Freestyle target with generic autopilot. May the Freestyle card update only its driving inputs for that event, preserving every save and payout check?
+
+## Claude answers (21 November 2026)
+
+- **Granted:** the Best Trick scoring hook in `src/bowl/bowl-jump-events.js` and its assertions in
+  `tools/test-bowl-jump-events.mjs`.
+- **Rule 18, approved:** the old Medium singles win becomes a Medium singles loss, as Kyle's try asked for harder Medium; the
+  individual points are still checked and the Easy gate stays.
+- **Granted:** in `tools/scenarios/bowl-night-pay.mjs`, only the Freestyle driving inputs change; every save and payout check
+  stays.
