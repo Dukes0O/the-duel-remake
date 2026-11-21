@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -652,6 +652,19 @@ tasks:
     locks: [bowl-floor]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-OUT-FIX.md"
+
+  - id: BOWL-REX-FIX
+    title: "Bowl: the back box on Easy keeps pulling, the pull ring on the strip, the fall in the picture"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [bowl-screens]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-FIX.md"
+
   - id: BOWL-TRICK-SCHOOL
     title: "Bowl: Trick School, tonight's trick, and why a try failed"
     owner: "codex"
