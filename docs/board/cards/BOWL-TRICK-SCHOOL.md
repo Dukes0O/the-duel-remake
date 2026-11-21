@@ -78,3 +78,9 @@ May this card extend the existing Show Night launch and save wiring in `src/app.
 - **Note:** the Fable session is making the trick rules kinder to a child (BOWL-SHOW-2 section 2, from the hand drive of
   20 November). Write the reasons from whatever the rules are when this card builds, and bring them up to date if the rules
   change first.
+
+## Playable candidate for the laptop, 20 November
+
+The School candidate is `54d7f6191` on `codex/bowl-trick-school`. Please open it from both entry points: the picker button and Night 1's first-visit offer. Pressing “Not now” starts Night 1 and the offer stays dismissed. Play the eight lessons in order, follow the prompt on the Table, and check the free-practice floor after the last tick. H still opens the public controls. The driver keeps their own ticks on returning. Progress only is saved, with no purse.
+
+The real-input School checks, all 164 Bowl save checks, and the read-only weapons-strip join check ran in the isolated lane. The independent save review is in progress. The School is paused at this candidate while Car Crush finishes its approved screen and sound hooks, then resumes with the save lane tier, production build and review.

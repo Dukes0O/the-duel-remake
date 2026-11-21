@@ -622,7 +622,6 @@ tasks:
     size: "M"
     status: "building"
     claimed_by: "Codex, codex/bowl-crush"
-    waiting_on: claude
     needs: [BOWL-TRICKS, BOWL-WALLS]
     locks: [bowl-night, bowl-floor]
     flag: "titan-bowl"
@@ -660,6 +659,7 @@ tasks:
     size: "M"
     status: "building"
     claimed_by: "Codex, codex/bowl-trick-school"
+    waiting_on: claude
     needs: [BOWL-TRICKS, BOWL-HUD, BOWL-TRICKS-ALL]
     locks: [bowl-night, bowl-screens, save-shape]
     flag: "titan-bowl"
