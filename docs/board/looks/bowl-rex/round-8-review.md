@@ -1,6 +1,6 @@
-# BOWL-LOOK-FIX: the Scrapasaurus's fire, cable and sparks, Claude's review (21 November 2026)
+# BOWL-LOOK-FIX round 8: the Scrapasaurus's fire, cable and sparks, Claude's review (21 November 2026)
 
-Sheet: `look-fix.jpg`, before (integration at `98a0de01b`) and after, from the QA game, driver's seat, a scripted
+Sheet: `round-8.jpg`, before (integration at `98a0de01b`) and after, from the QA game, driver's seat, a scripted
 child-pace drive of the fight.
 
 **Verdict: passes.**

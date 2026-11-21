@@ -1,6 +1,6 @@
-# BOWL-LOOK-FIX: the saw and the damage, Claude's review (21 November 2026)
+# BOWL-LOOK-FIX round 2: the saw and the damage, Claude's review (21 November 2026)
 
-Sheet: `look-fix.jpg`, before (integration at `98a0de01b`) and after, from the QA game, driver's seat.
+Sheet: `round-2.jpg`, before (integration at `98a0de01b`) and after, from the QA game, driver's seat.
 
 **Verdict: passes.**
 

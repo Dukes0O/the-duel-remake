@@ -1,6 +1,6 @@
-# BOWL-LOOK-FIX: the car park and the crowd, Claude's review (21 November 2026)
+# BOWL-LOOK-FIX round 2: the car park and the crowd, Claude's review (21 November 2026)
 
-Sheet: `look-fix.jpg`, before (integration at `98a0de01b`) and after, from the QA game at night, driver's seat.
+Sheet: `round-2.jpg`, before (integration at `98a0de01b`) and after, from the QA game at night, driver's seat.
 
 **Verdict: passes for the car park; the crowd is better but still owes a look in motion.**
 
