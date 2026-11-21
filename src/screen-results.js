@@ -162,6 +162,9 @@ function modalScreen(s) {
   const bonus=r.creditBreakdown?Object.entries(r.creditBreakdown).filter(([key,value])=>key!=='base'&&key!=='milestones'&&key!=='medal'&&value>0).map(([key,value])=>`${{clean:'CLEAN RACE',personalBest:'CAR BEST',streak:'WIN STREAK',jumps:'ARENA JUMPS',crush:'CRUSH BONUS',drift:'DRIFT BONUS',police:'POLICE ESCAPE',combat:'COMBAT BONUS',snowmen:'SNOWMEN',manual:'PRO / MANUAL BONUS'}[key]} +${credits(value)}`).join(' · '):'';
   const repairs=r.won&&(r.crashesRepaired>0||r.livesRestored>0)?`<p class="result-bonuses">STAGE WIN REPAIRS · ${r.crashesRepaired||0} MAJOR CRASH${r.crashesRepaired===1?'':'ES'} REPAIRED · ${r.livesRestored||0} CRASH SLOT${r.livesRestored===1?'':'S'} REFILLED</p>`:'';
   // LAB-TUNE-VIEW: the stock lap, or how a tuned Time Trial lap did against it (docs/LAB.md 5.3).
+  if (['stage_result','complete','gameover'].includes(s.status) && app.duel?.course?.def?.tricks &&
+      !app.duel.course.def.bowl && app._switches?.().enabled('arena-tricks') && s.arenaTrickShow)
+    metrics += metric('TRICK SCORE', credits(s.arenaTrickShow.event.score));
   const tunedLapHtml = s.status==='stage_result' ? tunedLapLines({profile:profile(),flags:app._switches?.(),state:s,result:r,courseId:COURSE[s.stageIndex]?.id,time})
     .map(line=>`<p class="result-bonuses tuned-lap" role="status">${escapeHTML(line)}</p>`).join('') : '';
   let grandPrixGhostNotice = '';

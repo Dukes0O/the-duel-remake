@@ -1,6 +1,8 @@
 // Read-only presentation for the Bowl. These views can also be checked without a DOM.
+import {crowdAfter} from './bowl-show.js';
+import {SECRETS, secretOf} from './bowl-secrets.js';
 import {BOWL_FLOOR} from './bowl-course.js';
-import {BIG_MO} from './bowl-lines.js';
+import {BIG_MO, BOWL_GOALS} from './bowl-lines.js';
 export const BOWL_HUD_SOUNDS = Object.freeze({
   'bowl.health.hit': 'vehicle.crash',
   'bowl.health.danger': 'raider.warning',
@@ -11,21 +13,12 @@ export const BOWL_TRICK_GUIDE = Object.freeze([
   {kind: 'wheelie', name: 'Wheelie', keys: [['W', 'Space']], points: '8 per second. Add 25 at 3 seconds.'},
   {kind: 'stoppie', name: 'Stoppie', keys: [['S', 'Space']], points: '10 per second.'},
   {kind: 'donut', name: 'Donut', keys: [['W', 'Space', '← or →']], points: '15 to 40 per turn. Three turns earn a 30-point Cyclone.'},
-  {kind: 'spin', name: 'Spin', keys: [['← or →']], points: '30, 120 or 270 points.'},
-  {kind: 'frontFlip', name: 'Front flip', keys: [['W']], points: '50, 200 or 450 points.'},
-  {kind: 'backflip', name: 'Backflip', keys: [['S']], points: '50, 200 or 450 points.'},
-  {kind: 'barrelRoll', name: 'Barrel roll', keys: [['Space', '← or →']], points: '60, 240 or 540 points.'},
-  {kind: 'sideFlip', name: 'Side flip', keys: [['← or →'], ['Space', '← or →']], points: '80, 320 or 720 points.'},
+  {kind: 'spin', name: 'Spin', keys: [['← or →']], points: 'Tap Left or Right. Keep it held for another turn. 30, 120 or 270 points.'},
+  {kind: 'frontFlip', name: 'Front flip', keys: [['W']], points: 'Tap W. Keep it held for another turn. 50, 200 or 450 points.'},
+  {kind: 'backflip', name: 'Backflip', keys: [['S']], points: 'Tap S. Keep it held for another turn. 50, 200 or 450 points.'},
+  {kind: 'barrelRoll', name: 'Barrel roll', keys: [['Space', '← or →']], points: 'Tap Space and Left or Right. Keep it held for another turn. 60, 240 or 540 points.'},
+  {kind: 'sideFlip', name: 'Side flip', keys: [['← or →'], ['Space', '← or →']], points: 'Tap Space and Left or Right while sideways. Keep it held for another turn. 80, 320 or 720 points.'},
 ]);
-
-const REX_GOALS = {
-  tell: 'Stay out of the fire.',
-  fire: 'Stay out of the fire.',
-  lift: 'Dodge the thrown car.',
-  throw: 'Dodge the thrown car.',
-  rest: 'Jump off the junk car.',
-  fallen: 'Stay clear of the Scrapasaurus.',
-};
 
 function shortGoal(view, event, rivalName) {
   const text = view.goal?.trim();
@@ -42,7 +35,7 @@ function shortGoal(view, event, rivalName) {
       const goal = `Outlast ${names.join(', ')}.`;
       return names.length && goal.split(/\s+/).length <= 8 ? goal : 'Be the last truck rolling.';
     }
-    case 'scrapasaurus': return REX_GOALS[event?.rex?.phase] ?? 'Smash its battery boxes.';
+    case 'scrapasaurus': return BOWL_GOALS.scrapasaurus(event?.rex);
     default: return 'Finish the event.';
   }
 }
@@ -65,12 +58,18 @@ function sideBySideGap(state, event) {
   return `${metres > 0 ? 'AHEAD' : metres < 0 ? 'BEHIND' : 'LEVEL'} ${whole(Math.abs(metres))} m`;
 }
 
+export function arenaTrickStrip(state) {
+  const show = state.arenaTrickShow;
+  if (!show) return null;
+  const event = show.event, crowd = Math.round(crowdAfter(event.crowd, show.clock-event.crowdAt));
+  return {name:'Tricks', points:whole(event.score)+' points', crowd, crowdLabel:'CROWD x'+(1+crowd/100).toFixed(1)};
+}
 export function bowlStrip(state, view, rivalName = () => null) {
   if (!view) return null;
   const night = state.bowlNight, event = night?.event;
   const crush = view.event === 'carCrush' && Number.isFinite(event?.count);
   const trick = event?.trickPopups?.[0];
-  const showingTrick = popupActive(trick, night?.clock);
+  const showingTrick = Number.isFinite(trick?.multiplier) && popupActive(trick, night?.clock);
   const crowd = showingTrick ? Math.round((trick.multiplier - 1) * 100) : view.crowd;
   const multiplier = showingTrick ? popupMultiplier(trick.multiplier) : (1 + crowd / 100).toFixed(1);
   return {
@@ -90,8 +89,9 @@ export function bowlOpeningLines(night, lent) {
 
 export function bowlTrickPopup(record, now) {
   if (!popupActive(record, now)) return null;
+  if (record.notice) return {name: record.notice, points: record.detail ?? '', fresh: false};
   const trick = BOWL_TRICK_GUIDE.find(entry => entry.kind === record.kind);
-  const name = trick?.name ?? (record.kind === 'cyclone' ? 'Cyclone' : '');
+  const name = trick?.name ?? secretOf(record.kind)?.name ?? (record.kind === 'cyclone' ? 'Cyclone' : '');
   if (!name) return null;
   const prefix = record.kind === 'cyclone' || record.turns < 2 ? '' :
     record.turns === 2 ? 'Double ' : record.turns === 3 ? 'Triple ' : `${record.turns}× `;
@@ -141,9 +141,35 @@ export function bowlHealthOf(state) {
   return rex ? bowlHealth(state, {value: Math.max(0, rex.maxHits - rex.hits), max: rex.maxHits}) : bowlHealth(state);
 }
 
+// Three views of the same truck, projected from the actual trick pose.
+function secretPicture(trick) {
+  const samples = [.11, .39, .72].map((time,index) => {
+    const {pitch,yaw,roll} = trick.pose(time);
+    const point = ([x,y,z]) => {
+      const xr = x*Math.cos(roll)-y*Math.sin(roll), yr = x*Math.sin(roll)+y*Math.cos(roll);
+      const yp = yr*Math.cos(pitch)-z*Math.sin(pitch), zp = yr*Math.sin(pitch)+z*Math.cos(pitch);
+      const xw = xr*Math.cos(yaw)+zp*Math.sin(yaw), zw = zp*Math.cos(yaw)-xr*Math.sin(yaw);
+      return [(16+33*index+zw+.32*xw).toFixed(1), (19-yp+.22*xw).toFixed(1)];
+    };
+    const body = [[-3,0,-10],[-3,4,-10],[-3,4,-5],[-3,7,-3],[-3,7,3],[-3,4,6],[-3,3,10],[-3,0,10]];
+    const wheels = [-6,6].map(z => { const [x,y] = point([-3,-1,z]);
+      return '<circle cx="'+x+'" cy="'+y+'" r="2.7" fill="#232024" stroke="#ffd596"/>'; }).join('');
+    return '<polygon points="'+body.map(p=>point(p).join(',')).join(' ')+'" fill="#e29b4c"/>'+wheels;
+  }).join('');
+  return '<svg class="bowl-trick-picture" viewBox="0 0 98 35" role="img" aria-label="'+trick.name+' in three poses">'+samples+'</svg>';
+}
+export function secretCardMarkup(found = []) {
+  const rows = SECRETS.map(trick => {
+    if (!found.includes(trick.id)) return '<li aria-label="Undiscovered secret trick">? ? ?</li>';
+    const entry = {kind: trick.id, name: trick.name, points: trick.points + ' points.',
+      keys: (trick.code.length ? trick.code : ['Front flip', 'Backflip']).map(key => [key])};
+    return '<li>' + bowlTrickEntryMarkup(entry, true) + '</li>';
+  });
+  return '<h3>SECRET TRICKS: ' + SECRETS.filter(t => found.includes(t.id)).length + ' of 7</h3><ul>' + rows.join('') + '</ul>';
+}
 export function bowlTrickEntryMarkup(entry, done = false) {
   const keys = entry.keys.map(group => group.map(key => `<kbd>${key}</kbd>`).join(' ')).join(' then ');
-  return `<div class="bowl-trick-picture" data-trick="${entry.kind}" aria-hidden="true"><i></i></div>
+  return `${secretOf(entry.kind) ? secretPicture(secretOf(entry.kind)) : `<div class="bowl-trick-picture" data-trick="${entry.kind}" aria-hidden="true"><i></i></div>`}
     <div><b>${entry.name}</b><p>${keys}</p><small>${entry.points}</small></div>
     ${done ? '<span class="bowl-trick-tick" aria-label="Landed tonight">✓</span>' : ''}`;
 }
@@ -260,13 +286,13 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
   return (state, course, view) => {
     hide(host, !view);
     if (!view) return;
-    const night = state.bowlNight;
+    const night = state.bowlNight ?? state.arenaTrickShow;
     if (lastEvent !== night.event) {
       lastEvent = night.event;
       previousHealth = lastHit = lastPopups = null;
     }
     for (const [node, value] of fields) {
-      const label = value(view);
+      const label = value(view) ?? '';
       text(node, label);
       hide(node, !label);
     }
@@ -276,6 +302,8 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
 
     const tricks = lastEvent.trickPopups ?? [];
     const popups = tricks.map(trick => bowlTrickPopup(trick, night.clock)).filter(Boolean);
+    if (state.bowlSecretSavePending && popups.some(t => t.name === 'SECRET TRICK FOUND'))
+      popups.push({name: 'SAVED FOR THIS SESSION', points: 'Local save unavailable.'});
     const marker = popups.length ? projectPlayer() : null;
     hide(popup, !marker?.visible);
     if (!popup.hidden) {
