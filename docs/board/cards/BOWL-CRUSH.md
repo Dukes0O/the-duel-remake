@@ -110,3 +110,7 @@ The focused runs passed: Show Night 305, camera 70, Turn Show 307, plus the HUD 
 The independent review reproduced a slow side hit being called a Pancake if the truck passed roof height before it actually reached the Bus Pile. The fix at `4b21844a6` requires overlap at the roof crossing. The reviewer confirmed the exact regression, and all 306 Show Night checks pass. The actual browser input adapter also reached 13 pieces in one minute with a memory-only App, then restored the original driver.
 
 One sound hook remains. When all three buses collapse at once, `src/audio.js` only marks the first bus as freshly crushed. The reviewer heard a “flat” crunch on a second bus on the first pass, before the truck touched any old wreck. Please grant one small change in `_bowlCrush` to mark every ID in the grouped burst fresh, with one audible pile impact. Later passes still use the flat sound. Separate chain links will each get a short tick, using the existing Bowl score cue route.
+
+## Awaiting the result and audio hooks
+
+The Car Crush lane is paused while those small shared-file hooks are reviewed. After incorporating TRICKS-ALL and REX-2, the 316 Show Night checks and the HUD check passed. The final ten Easy counts at the joined code are 14, 14, 13, 12, 12, 13, 14, 13, 12, 14, so 13 remains the highest goal that at least six drivers meet (seven wins). The chain now gives both bonus links a distinct tick. The new audio check at `454b12dd6` reproduces the false flat sound on the actual dressed field and awaits the audio hook.
