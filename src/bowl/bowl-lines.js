@@ -103,8 +103,10 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.long.clear': 'interface.countdown',
   'bowl.high.clear': 'weapon.flame.start',
   'bowl.high.fail': 'interface.lose',
-  'bowl.home.ring': 'interface.bonus',
-  'bowl.home.ring.high': 'interface.near-miss',
+  'bowl.best.rival': 'world.furnace.horn',
+  'bowl.best.rival.slam': 'vehicle.crash',
+  'bowl.best.round.won': 'interface.bonus',
+  'bowl.best.round.lost': 'interface.lose',
 });
 
 // What a crushed piece is, for its sound: the course's pieces name their kind (junkCar, bowlBus, bowlRv,
@@ -142,7 +144,7 @@ export const BOWL_EVENT_NAMES = Object.freeze({
   carCrush: 'Car Crush',
   longJump: 'Long Jump',
   highJump: 'High Jump',
-  homeRun: 'Home Run',
+  bestTrick: 'Best Trick',
   freestyle: 'Freestyle',
   sideBySide: 'Side by Side',
   lastTruckRolling: 'Last Truck Rolling',
@@ -163,8 +165,8 @@ export const BOWL_GOALS = Object.freeze({
   carCrush: target => `Crush ${target} pieces.`,
   longJump: target => `Clear ${target} buses.`,
   highJump: height => `Clear the ${height} m flame bar.`,
-  homeRun: target => ['Jump the wall. Return through a gate.', 'Land on the target. Return through a gate.',
-    'Hit the middle ring. Return through a gate.'][target - 1],
+  bestTrick: rival => !rival ? 'Land your best trick.'
+    : rival.points ? `Beat Big Kettle's ${rival.trick}.` : 'Land any trick to win this round.',
   freestyle: (target, rival = 'Old Bess') => `Beat ${rival}'s ${target} points.`,
   sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
   lastTruckRolling: (left = []) => left.length
@@ -186,7 +188,7 @@ export const BIG_MO = Object.freeze({
   'rex.seen.1': 'Did anybody else hear a roar under the stands just now? No? Good, then it was probably my tummy.',
   'rex.seen.2': 'Something under the stands ate our spare tyres again. I am sure it is nothing to worry about.',
   'rex.seen.3': 'Did you see that big shape behind the wall tonight? Please do not tell anyone about it yet.',
-  'outside.gate': 'Drive off the back of the stands and follow the gate marker to get back in!',
+  'outside.gate': 'How did that truck get up there? Follow the gate marker to get back in!',
   'rex.seen.4': 'Our driver has beaten every truck in the Bowl, so next time I will have to open the big gate under the stands. I am a little bit scared.',
   'event.scrapasaurus.intro': 'You beat every truck in the Bowl, so here is the Scrapasaurus! It is heading for the car park gate, and if it gets out it will eat every car in the car park.',
   'rex.tell': 'Look at its chest glowing. That means fire is coming, so get out of the orange on the floor.',
@@ -212,7 +214,10 @@ export const BIG_MO = Object.freeze({
   'lent.truck': 'Our driver has no truck yet, so tonight the show lends its own. Please bring it back in one piece.',
   'event.longJump.intro': 'Jump right over the buses. Use nitro near the ramp if you need more distance.',
   'event.highJump.intro': 'Drive straight over the flame bar. It gets one metre higher every time you clear it.',
-  'event.homeRun.intro': 'Use nitro on the Big Jump and aim for the rings. Follow the gate arrow to come back.',
+  'event.bestTrick.intro': 'This is Best Trick. Big Kettle jumps first in every round, and you take the round by landing a bigger trick off the Big Jump.',
+  'best.roof': 'Big Kettle landed on its roof, so any trick you land wins this round.',
+  'best.repeat': 'The same trick again pays less, so try a different one.',
+  'best.noTrick': 'You landed no trick, so tap a key as soon as the truck leaves the ramp.',
   'event.carCrush.intro': 'Drive down the line, then keep going. You have a minute to crush as many pieces as you can.',
   'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
   'event.sideBySide.intro': 'It is time for Side by Side. Two trucks race two laps, and the first one across the line wins.',
@@ -233,8 +238,8 @@ export const BIG_MO = Object.freeze({
   'event.lost.longJump': 'Get a fast run at the ramp and keep the truck straight over the buses.',
   'event.won.highJump': 'The truck cleared the flames!',
   'event.lost.highJump': 'Keep the truck straight and build speed before you reach the ramp.',
-  'event.won.homeRun': 'Over the wall and back through the gate!',
-  'event.lost.homeRun': 'Use nitro on the ramp, then get back through a gate in time.',
+  'event.won.bestTrick': 'Our driver landed the bigger tricks, so Best Trick goes to our driver!',
+  'event.lost.bestTrick': 'Big Kettle landed the bigger tricks this time, so try a trick you have not done yet.',
   'event.won.carCrush': 'Our driver crushed enough pieces to go through to the next event.',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
   'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
@@ -287,12 +292,11 @@ export const BOWL_RESULTS = Object.freeze({
   eventWonTitle: 'EVENT WON',
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
-  eventJump: ({event, bestGo}) => {
+  eventJump: ({event, bestGo, roundsWon = 0}) => {
     const best = bestGo?.result ?? 0;
     if (event === 'longJump') return `Best go: ${best} ${best === 1 ? 'bus' : 'buses'} cleared.`;
     if (event === 'highJump') return best ? `Highest bar cleared: ${best} m.` : 'The bar stayed above the truck.';
-    return ['No return through a gate.', 'Over the wall and back.', 'Outer ring and back.',
-      'Middle ring and back.', 'Centre ring and back.'][best];
+    return `You won ${roundsWon} of the 3 rounds against Big Kettle.`;
   },
   eventCrush: ({count, total}) => `You crushed ${count} of ${total} pieces.`,
   eventFullHouse: bonus => bonus > 0 ? `A Full House added ${bonus.toLocaleString()} points.`

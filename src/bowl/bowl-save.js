@@ -5,7 +5,7 @@ import {secretOf} from './bowl-secrets.js';
 import {isSchoolTrick} from './bowl-school.js';
 
 export const BOWL_EVENTS = Object.freeze([
-  'car-crush', 'freestyle', 'side-by-side', 'last-truck-rolling', 'long-jump', 'high-jump', 'home-run',
+  'car-crush', 'freestyle', 'side-by-side', 'last-truck-rolling', 'long-jump', 'high-jump', 'home-run', 'best-trick',
 ]);
 
 const MAX_SCRAP = 1_000_000_000;
