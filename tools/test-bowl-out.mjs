@@ -243,7 +243,7 @@ for (const phase of [31,105,187,251]) for (const inward of [false,true]) {
 
 // A steep side contact at a seam used to report the outward face and let a
 // grounded truck roll through even though its centre started inside the rim.
-{
+for (const [label, airborne, previousAir] of [['grounded', false, 0], ['just landed', false, .005], ['low hop', true, .005]]) {
   const duel = freestanding(), s = duel.state, course = duel.course, outside = course.features.bowl.outside;
   const phase = 130, heading = 150 * Math.PI / 180, speedMph = 38;
   place(duel, phase, outside.wall - .05, heading, speedMph);
@@ -251,9 +251,10 @@ for (const phase of [31,105,187,251]) for (const inward of [false,true]) {
   const worldHeading = from.heading + heading;
   const end = course.nearest(from.x + metres * Math.sin(worldHeading), from.z + metres * Math.cos(worldHeading), phase);
   assert.ok(end.lateral > outside.wall, 'the uncorrected sweep crosses the seam');
-  Object.assign(s, {s: end.s, lateral: end.lateral, groundHeight: course.groundAt(end.s, end.lateral).y});
+  Object.assign(s, {s: end.s, lateral: end.lateral, groundHeight: course.groundAt(end.s, end.lateral).y,
+    airborne, prevAirHeight: previousAir, airHeight: airborne ? previousAir : 0});
   duel._staticContacts(s, true);
-  assert.ok(s.lateral < outside.wall && !s.airborne, 'a grounded truck at the seam stays inside the rim');
+  assert.ok(s.lateral < outside.wall, label + ' truck that has not cleared the wall top stays inside the rim');
 }
 
 const rimCourse = freestanding().course, rimOutside = rimCourse.features.bowl.outside;

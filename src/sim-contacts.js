@@ -590,14 +590,15 @@ export function _staticContacts(car, player, journeyColliders = null) {
       } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
-    // Overlapping pieces at a bank seam can report the outside face after
-    // the truck's nose has passed it. The grounded centre must stay on the
-    // floor unless its sweep actually reaches an open gate.
-    if (player && exterior && !car.airborne && !(car.prevAirHeight > 0) &&
-        oldLateral <= exterior.wall && car.lateral > exterior.wall) {
+    // A bank seam can report the outside face after the truck's nose has
+    // passed it. Keep the inside face until a jump clears the wall's height.
+    if (player && exterior && oldLateral <= exterior.wall && car.lateral > exterior.wall) {
       const share = (exterior.wall - oldLateral) / (car.lateral - oldLateral);
       const rimS = oldS + (car.s - oldS) * share;
-      if (!outsideGateAt(exterior, this.course.phase(rimS))) {
+      const top = this.course.groundAt(rimS, exterior.wall - .5).y + BOWL_STADIUM.wallHeight;
+      const feet = start.y + (end.y - start.y) * share;
+      const clearsWall = (car.airborne || car.prevAirHeight > 0) && feet >= top;
+      if (!clearsWall && !outsideGateAt(exterior, this.course.phase(rimS))) {
         const yaw = this.course.at(rimS).heading, nx = -Math.cos(yaw), nz = Math.sin(yaw);
         const wrongFace = first?.obstacle.arenaWall && first.obstacle.off === exterior.wall &&
           first.nx * nx + first.nz * nz < .5;
