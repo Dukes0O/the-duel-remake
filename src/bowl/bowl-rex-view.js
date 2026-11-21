@@ -435,6 +435,9 @@ export function createRexView({loadModel}) {
       chest.material.opacity = .35 + .55 * share;
       chest.scale.setScalar(.8 + .5 * share + .08 * Math.sin(seconds * 14));
       chestLight.intensity = 40 + 260 * share;
+      // Each fire starts from full strength; tongue 0 measures the camera once tongues show.
+      if (fight.phase === 'fire' && !fire.userData.burning) fireNear = 1;
+      fire.userData.burning = fight.phase === 'fire';
       fire.visible = fight.phase === 'fire';
       if (fire.visible) {
         // The stream leaves the mouth and comes down onto the floor a third of the way out; the tongues burn along the

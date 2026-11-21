@@ -31,7 +31,7 @@ export const WEAPON_LOOK = Object.freeze({
   horn: Object.freeze({dip: .3}),
   // Health at which a truck shows its damage: a loose panel, smoke, and fire. BOWL-LOOK-FIX: the smoke is thick and
   // dark (puffs a second, how big they grow, how dark), and a wreck burns with tongues taller than the cab.
-  damage: Object.freeze({panel: 3 / 5, smoke: 1 / 5, smokeRate: 26, wreckSmokeRate: 36, smokeTo: 3.6, wreckSmokeTo: 5.2,
+  damage: Object.freeze({panel: 3 / 5, smoke: 1 / 5, smokeRate: 11, wreckSmokeRate: 15, smokeTo: 4.6, wreckSmokeTo: 6.4,
     smokeColour: 0x1d1a17, wreckSmokeColour: 0x0d0b0a, flame: 2.4}),
 });
 
@@ -891,8 +891,8 @@ export function createBowlWeaponsView() {
       for (; memory.smokeDue >= 1; memory.smokeDue--) {
         const vent = Math.random(), x = vent < .6 ? (Math.random() - .5) * .9 : (vent < .8 ? -1 : 1) * .85;
         const at = toWorld(rig, x, 2.4 + Math.random() * .2, wrecked ? .2 + Math.random() * 1.6 : 1.1 + Math.random() * .7);
-        puffs.emit(at, {velocity: [(Math.random() - .5) * .8, wrecked ? 2.8 : 2.1, (Math.random() - .5) * .8], life: wrecked ? 3.2 : 2.5,
-          from: wrecked ? 1 : .7, to: wrecked ? look.wreckSmokeTo : look.smokeTo, alpha: wrecked ? .88 : .74,
+        puffs.emit(at, {velocity: [(Math.random() - .5) * .8, wrecked ? 2.8 : 2.1, (Math.random() - .5) * .8], life: wrecked ? 3 : 2.4,
+          from: wrecked ? 1.4 : 1, to: wrecked ? look.wreckSmokeTo : look.smokeTo, alpha: wrecked ? .88 : .74,
           color: wrecked ? look.wreckSmokeColour : look.smokeColour, rise: .6});
       }
     } else memory.smokeDue = 0;

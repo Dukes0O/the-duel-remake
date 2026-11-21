@@ -11,5 +11,7 @@ Checks on `8cd93955f` (integration `e27c0c2c0` merged in): rule 23 set (`core`, 
 `test-bowl-rex`, `test-bowl-course`, `test-bowl-out`, `test-bowl-camera`; `npm run build`, repo hygiene and board passed.
 `test-bowl-night` fails at `bowl-lines.js` `eventRexPoints` with no boxes or fall given, the same on integration
 `e27c0c2c0` without this card. Looks: `docs/board/looks/bowl-out/round-2`, `bowl-weapons/round-2`, `bowl-rex/round-8`,
-`bowl-jump/round-1`. No assertion changed; no sound cue added.
+`bowl-jump/round-1`. No assertion changed; no sound cue added. Independent review: no blocker; its three
+faults fixed (fewer, larger smoke puffs; the crowd ring's lead from speed and heading, eased; each fire's dimming
+starts fresh), suites for those files rerun and passed.
 **Removed:** High Jump's bunting bar (`jumpBar` body in `bowl-view.js`), the flat MeshBasic rope, and the saw's low mount.

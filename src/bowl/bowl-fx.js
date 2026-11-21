@@ -86,7 +86,8 @@ function cableLay() {
   layTexture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
   layTexture.wrapS = layTexture.wrapT = THREE.RepeatWrapping;
   layTexture.repeat.set(2, 5);
-  layTexture.magFilter = THREE.LinearFilter; layTexture.needsUpdate = true;
+  layTexture.magFilter = THREE.LinearFilter; layTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  layTexture.generateMipmaps = true; layTexture.needsUpdate = true;
   layTexture.userData.sharedAsset = true;
   return layTexture;
 }
@@ -99,7 +100,7 @@ export function createSteelCable(steps = 18, name = 'Steel cable') {
     emissive: 0x15130f});
   const up = new THREE.Vector3(0, 1, 0), span = new THREE.Vector3();
   const pieces = Array.from({length: steps}, () => {
-    const piece = new THREE.Mesh(card, material); piece.frustumCulled = false; piece.castShadow = true; group.add(piece); return piece;
+    const piece = new THREE.Mesh(card, material); piece.frustumCulled = false; group.add(piece); return piece;
   });
   return {group, material, card, steps, lay(points, radius, tight) {
     pieces.forEach((piece, k) => {

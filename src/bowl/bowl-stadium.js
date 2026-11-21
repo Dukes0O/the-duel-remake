@@ -696,8 +696,8 @@ export function createBowlStadium(course) {
   // BOWL-OUT-LOOK: the tunnels, the arches, the car park and the marker back to a gate (src/bowl/bowl-outside-view.js).
   const outside = createBowlOutsideView(course, {photo, drawn, hash, glow, stand: BOWL_STAND});
   group.add(outside.group);
-  let raceGates, lastNow = null, lastTruck = null;
-  const lead = new THREE.Vector2();
+  let raceGates, lastNow = null;
+  const lead = new THREE.Vector2(), leadGoal = new THREE.Vector2();
   group.userData.update = (now, cheer = .35, state) => {
     const dt = lastNow == null ? 0 : Math.min(.1, Math.max(0, (now - lastNow) * .001));
     lastNow = now;
@@ -708,14 +708,14 @@ export function createBowlStadium(course) {
     const inStands = state?.bowlOutside?.where === 'stands' && (state.airHeight || 0) < 3;
     if (inStands) {
       const p = course.worldAt(state.s, state.lateral);
-      // The ring leads the truck along its way by half a second of travel, at most LEAD metres.
-      if (lastTruck && dt > 0) {
-        lead.set((p.x - lastTruck.x) / dt * .5, (p.z - lastTruck.z) / dt * .5);
-        if (lead.length() > LEAD) lead.setLength(LEAD);
-      } else lead.set(0, 0);
-      lastTruck = {x: p.x, z: p.z};
+      // The ring leads the truck along its way by half a second of travel, at most LEAD metres, from the race's own
+      // speed and heading (steady, unlike positions measured between frames), eased so it never jumps.
+      const heading = p.heading + (state.headingError || 0), metres = Math.min(LEAD, Math.abs(state.speedMph || 0) * .447 * .5);
+      const sign = (state.speedMph || 0) < 0 ? -1 : 1;
+      leadGoal.set(Math.sin(heading) * metres * sign, Math.cos(heading) * metres * sign);
+      if (dt > 0) lead.lerp(leadGoal, 1 - Math.exp(-dt * 6));
       uniforms.uCrowdTruck.value.set(p.x + lead.x, (state.groundHeight || 0) + (state.airHeight || 0), p.z + lead.y);
-    } else lastTruck = null;
+    } else lead.set(0, 0);
     const scatter = uniforms.uCrowdScatter;
     scatter.value = inStands ? Math.min(1, scatter.value + dt * 4) : Math.max(0, scatter.value - dt * .5);
     outside.update(now, state, dt);
