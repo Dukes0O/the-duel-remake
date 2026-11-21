@@ -69,3 +69,13 @@ Behind `titan-bowl`. If `src/sim-contacts.js` or another shared file changes, th
 before the merge (rule 23 does not cover released behaviour); otherwise rule 23's small set. Recorded in
 `docs/changes/BOWL-FEEL-FIX.md`. No Chrome under `codex exec`. Memory-only saves. No new dependency, network request or
 key. Clean up nothing outside this lane.
+
+## Builder measurements and assertion review, 21 November
+
+In the fixed-step traces, a straight wall and a truck ram each changed the truck's world heading by 90 degrees in one step at `d1cdc985d`. The rebound applied the new nose angle at impact. It now keeps the rebound velocity and eases the nose over a quarter-second, with driver steering still active.
+
+An airborne Spine crossing on Night 3 changed the closest point on the ring from the Crush Straight to the Jump Straight. Ordinary lap validation read it as a missed checkpoint and moved the truck about 68 m during Car Crush. Car Crush and Freestyle do not need lap validation. The roof used to have no landing support. The fix uses the height of the drawn roof, lets the truck slide off, and places any genuine recovery at ground height facing along the lap.
+
+The hammer already checked the moving poses at impact. This lane keeps that timing and shows its assisted aim. The saw contact trace found the ordinary sideways ram response still running during the cut. This lane limits inward motion with no ram shove while the disc has contact. The launcher measures distance and angle from the nose to the truck's body.
+
+**Claude to review (rule 18):** `test-bowl-walls` replaces immediate wall alignment with the same target angle and an actual quarter-second drive to it. It keeps the existing rebound and armor assertions. `test-bowl-weapons` moves the empty launcher shot from 4 m to 4.1 m because 4 m is now in reach. It keeps the empty-hop and wall-knockout checks and adds hit and miss cases for the new range and angle.
