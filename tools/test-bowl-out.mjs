@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {chooseShowWeapon} from '../src/bowl/bowl-weapons.js';
 import {Duel} from '../src/game.js';
+import {DRIVE} from '../src/config.js';
 import {scoreFreestyle} from '../src/bowl/bowl-show.js';
 
 const dt = 1/120;
@@ -134,6 +135,30 @@ for (const gateIndex of [0,1]) for (const side of [-1,1]) for (const miss of [-1
 }
 console.log('Eight 45-degree gate entries, minimum mph',arrivals.join(', '));
 
+const unsteered = [];
+for (const gateIndex of [0, 1]) for (const side of [-1, 1]) {
+  for (const [offset, diagonal] of [[8, true], [10, true], [4, false]]) {
+    const duel = freestanding(), s = duel.state, course = duel.course, outside = course.features.bowl.outside;
+    const gate = outside.gates[gateIndex], heading = -Math.PI / 2 - (diagonal ? side * Math.PI / 4 : 0);
+    place(duel, gate.s + side * offset, outside.back + 9, heading, 20);
+    const contacts = [];
+    duel.onChange((_, ev) => { if (ev.bowlWall) contacts.push(ev.bowlWall); });
+    let minimum = 20;
+    for (let tick = 0; tick < 10 / dt && s.lateral > outside.wall - 2; tick++) {
+      duel.setInput({throttle: +(s.speedMph < 20), steer: 0, brake: 0, boost: false});
+      duel.step(dt);
+      minimum = Math.min(minimum, s.speedMph);
+      assert.ok(!s.airborne && s.groundHeight < .05, gate.name + ' keeps the unsteered truck on the floor');
+    }
+    const label = gate.name + ' at ' + (side * offset) + ' m';
+    assert.ok(s.lateral <= outside.wall - 2 && minimum >= 15, label + ' rolls into the Bowl at ' + minimum.toFixed(2) + ' mph');
+    assert.ok(contacts.length > 0 && contacts.every(contact => contact.cue === 'bowl.wall.scrape'), label + ' scrapes through the guides');
+    unsteered.push(minimum.toFixed(2));
+  }
+}
+console.log('Twelve unsteered gate approaches, minimum mph:', unsteered.join(', '));
+
+
 {
   const duel=freestanding(), cheers=[];
   place(duel,7,1,0);
@@ -214,6 +239,49 @@ for (const phase of [31,105,187,251]) for (const inward of [false,true]) {
   for(let k=0;k<180 && !bounced;k++)duel.step(dt);
   assert.ok(bounced && (inward ? s.lateral>o.wall : s.lateral<o.wall), 'wall must separate both sides at '+phase);
 }
+
+
+// A steep side contact at a seam used to report the outward face and let a
+// grounded truck roll through even though its centre started inside the rim.
+for (const [label, airborne, previousAir] of [['grounded', false, 0], ['just landed', false, .005], ['low hop', true, .005]]) {
+  const duel = freestanding(), s = duel.state, course = duel.course, outside = course.features.bowl.outside;
+  const phase = 130, heading = 150 * Math.PI / 180, speedMph = 38;
+  place(duel, phase, outside.wall - .05, heading, speedMph);
+  const from = course.groundAt(s.s, s.lateral), metres = speedMph * DRIVE.mphToWorld * dt;
+  const worldHeading = from.heading + heading;
+  const end = course.nearest(from.x + metres * Math.sin(worldHeading), from.z + metres * Math.cos(worldHeading), phase);
+  assert.ok(end.lateral > outside.wall, 'the uncorrected sweep crosses the seam');
+  Object.assign(s, {s: end.s, lateral: end.lateral, groundHeight: course.groundAt(end.s, end.lateral).y,
+    airborne, prevAirHeight: previousAir, airHeight: airborne ? previousAir : 0});
+  duel._staticContacts(s, true);
+  assert.ok(s.lateral < outside.wall, label + ' truck that has not cleared the wall top stays inside the rim');
+}
+
+const rimCourse = freestanding().course, rimOutside = rimCourse.features.bowl.outside;
+let rimApproaches = 0;
+for (let phase = 0; phase < rimCourse.length; phase += 5) {
+  if (rimOutside.gates.some(gate => Math.abs(phase - gate.s) < gate.width / 2 + 3)) continue;
+  for (const angle of [30, 60, 90, 120, 150]) for (const speedMph of [20, 40, 60]) {
+    const duel = freestanding(), s = duel.state, course = duel.course, outside = course.features.bowl.outside;
+    const rim = course.worldAt(phase, outside.wall);
+    const heading = rim.heading + angle * Math.PI / 180;
+    const start = course.nearest(rim.x - 5 * Math.sin(heading), rim.z - 5 * Math.cos(heading), phase);
+    const trackHeading = course.at(start.s).heading;
+    place(duel, start.s, start.lateral, Math.atan2(Math.sin(heading - trackHeading), Math.cos(heading - trackHeading)), speedMph);
+    duel.setInput({throttle: 1, steer: 0, brake: 0, boost: false});
+    let touched = false;
+    duel.onChange((_, ev) => { if (ev.bowlWall) touched = true; });
+    for (let tick = 0; tick < 150; tick++) {
+      duel.step(dt);
+      const crossed = s.lateral > outside.wall + .5 && !s.airborne;
+      const gate = outside.gates.find(gate => Math.abs(course.phase(s.s) - gate.s) <= gate.width / 2);
+      assert.ok(!crossed || gate, 'ground rim at ' + phase + ' m, ' + angle + ' degrees, ' + speedMph + ' mph');
+    }
+    assert.ok(touched || s.lateral < outside.wall, 'the approach stayed inside the wall');
+    rimApproaches++;
+  }
+}
+console.log(rimApproaches + ' grounded rim approaches stayed inside or used a gate.');
 
 // Count time on the terrace; cap at 60 points; repeated over-wall visits cost half.
 {
