@@ -88,27 +88,45 @@ export function bowlStrip(state, view, rivalName = () => null) {
   const wonRounds = rounds.filter(go => go.won).length;
   const trick = event?.trickPopups?.[0];
   const showingTrick = Number.isFinite(trick?.multiplier) && popupActive(trick, night?.clock);
+  const freestyle = view.event === 'freestyle' ? event : null;
+  const challenger = freestyle?.rivalName?.toUpperCase();
+  const margin = challenger ? view.score - freestyle.rivalScore : 0;
+  const gap = margin === 0 ? 'TIED' : `${margin > 0 ? 'AHEAD' : 'BEHIND'} BY ${whole(Math.abs(margin))}`;
+  const featured = freestyle ? (night.featuredTricks ?? []).map(kind => kind === 'doubles' ? 'Doubles'
+    : BOWL_TRICK_GUIDE.find(trick => trick.kind === kind)?.name).filter(Boolean) : [];
   const crowd = showingTrick ? Math.round((trick.multiplier - 1) * 100) : view.crowd;
   const multiplier = showingTrick ? popupMultiplier(trick.multiplier) : (1 + crowd / 100).toFixed(1);
   return {
     name: view.name, goal: shortGoal(view, event, rivalName), driver: view.driver,
-    points: `${whole(view.score)} points`,
+    points: challenger ? '' : `${whole(view.score)} points`,
     time: view.timeLeft == null && view.event !== 'scrapasaurus' ? '' : clock(view.timeLeft ?? state.stageTimeSec ?? 0),
     crowd, crowdLabel: `CROWD x${multiplier}`, caption: view.caption,
     rexPull: rexPullProgress(event?.rex), rexPullPoint: event?.rex?.hook.tip ?? null,
-    gapLabel: rivalTrick ? `ROUND ${event.go.number} OF 3` : view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
+    gapLabel: challenger ? `YOU ${whole(view.score)}, ${challenger} ${whole(freestyle.rivalScore)}, ${gap}`
+      : rivalTrick ? `ROUND ${event.go.number} OF 3` : view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
+    freestyleBeaten: freestyle?.rivalBeaten ? `${challenger} BEATEN` : '',
+    freestylePopup: challenger && popupActive(freestyle.rivalPopup, night.clock)
+      ? `${challenger}: ${freestyle.rivalPopup.trick.toUpperCase()} ${whole(freestyle.rivalPopup.points)}` : '',
     crushLabel: rivalTrick ? `BIG KETTLE: ${rivalTrick.trick.toUpperCase()} ${whole(rivalTrick.points)}`
       : !crush ? '' : event.count >= view.target ? `CRUSHED ${event.count} OF ${event.total} · GOAL MET`
       : `CRUSHED ${event.count} OF ${view.target}`,
     bestGoLabel: bestGoLabel(view.event, event?.bestGo),
     gateLabel: bowlGateLabel(state),
     chainLabel: rivalTrick ? `YOU ${wonRounds}, BIG KETTLE ${rounds.length - wonRounds}`
-      : crush && event.chain > 1 ? `CHAIN x${event.chain}` : '',
+      : crush && event.chain > 1 ? `CHAIN x${event.chain}`
+      : featured.length ? `TONIGHT: ${featured.map(name => name.toUpperCase() + ' x2').join(', ')}` : '',
   };
 }
 
+export function freestyleBestLabel(view, score) {
+  if (!view.freestyleBeaten) return '';
+  return Number.isSafeInteger(score) && score >= 0
+    ? `${view.freestyleBeaten} · YOUR BEST ${whole(score)}` : view.freestyleBeaten;
+}
+
 export function bowlOpeningLines(night, lent) {
-  return [BIG_MO[`night.${night}.open`], lent ? BIG_MO['lent.truck'] : null].filter(Boolean);
+  return [BIG_MO[`night.${night}.open`], BIG_MO[`night.${night}.freestyleFloor`],
+    lent ? BIG_MO['lent.truck'] : null].filter(Boolean);
 }
 
 export function bowlTrickPopup(record, now) {
@@ -315,7 +333,9 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
           stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"></circle>
       </svg></span></div></div>
     <div class="bowl-hud-numbers"><span class="bowl-hud-score"></span><span class="bowl-hud-clock"></span>
-      <span class="bowl-hud-gap" hidden></span><span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span><span class="bowl-hud-best-go" hidden></span></div>
+      <span class="bowl-hud-gap" hidden></span><span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span>
+      <span class="bowl-hud-best-go" hidden></span><span class="bowl-hud-rival-trick" role="status" hidden></span>
+      <span class="bowl-hud-freestyle-best" hidden></span></div>
     <label class="bowl-hud-crowd"><span></span><meter min="0" max="100" value="0"></meter></label>
   </section>
   <p class="bowl-hud-mo" role="status" hidden></p>
@@ -344,6 +364,8 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     ['.bowl-hud-crush', view => view.crushLabel],
     ['.bowl-hud-chain', view => view.chainLabel],
     ['.bowl-hud-best-go', view => view.bestGoLabel],
+    ['.bowl-hud-rival-trick', view => view.freestylePopup],
+    ['.bowl-hud-freestyle-best', view => freestyleBestLabel(view, app.profile?.bowl?.bestScores?.freestyle)],
     ['.bowl-hud-event', view => view.driver ? `${view.driver} IS DRIVING · ${view.name.toUpperCase()}` : view.name.toUpperCase()],
     ['.bowl-hud-crowd span', view => view.crowdLabel],
   ].map(([selector, value]) => [find(selector), value]);

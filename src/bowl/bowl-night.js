@@ -20,11 +20,11 @@ import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent,
   scoreStuntEvent} from './bowl-show.js';
 import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
-import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushHintLine, bowlCrushKind} from './bowl-lines.js';
+import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushHintLine, bowlCrushKind, freestyleLines} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
 import {BOWL_SCHOOL_REASONS, featuredSchoolTrick, isSchoolTrick, nextSchoolLesson} from './bowl-school.js';
 import {CAR_CRUSH_DRESSING} from './bowl-crush-field.js';
-import {installBowlJumpEvents} from './bowl-jump-events.js';
+import {installBowlJumpEvents, stepFreestyleJump} from './bowl-jump-events.js';
 import {bowlJumpMessagesAllowed, resetBowlTrickGo} from './bowl-tricks.js';
 import {CARS, COURSE} from '../config.js';
 import {DEFAULT_DRIVER} from '../drivers.js';
@@ -40,10 +40,7 @@ export const BOWL_NIGHT_RULES = Object.freeze({
     target: Object.freeze({easy: 13, medium: 18, hard: 26}),
     chainSec: 3, chainStep: .25, maxChainMultiplier: 2.5,
     pancakeMultiplier: 3, stallHintSec: 8, fullHousePointsPerSecond: 20}),
-  // On the 286 m Bowl a child-pace lap takes over 20 seconds, so about four laps fit in 90 seconds.
-  // Measured with tools/bowl-freestyle-balance.mjs: Easy is a few jumps (a child-pace driver wins
-  // 9 of 10); Medium and Hard need the Big Jump and the Table at speed, launches and flips.
-  freestyle: Object.freeze({timeLimitSec: 90, target: Object.freeze({easy: 310, medium: 1810, hard: 4260})}),
+  freestyle: Object.freeze({timeLimitSec: 90}),
   // Each rival's own pace is in src/bowl/bowl-rivals.js (BOWL-RIVALS); the lanes are bowlLayout's.
   sideBySide: Object.freeze({timeLimitSec: 75}),
   minJumpSec: .5,
@@ -254,12 +251,52 @@ registerBowlEventRunner('carCrush', {
   result: event => ({count: event.count, total: event.total, fullHouseBonus: event.fullHouseBonus}),
 });
 
+// Turn Show keeps its existing result and purse threshold without showing a rival.
+const TURN_FREESTYLE_MARK = Object.freeze({easy: 310, medium: 1810, hard: 4260});
+const freestyleFor = night => SHOW_NIGHTS[night.night - 1].freestyle;
+const freestyleTarget = night => freestyleFor(night).target[difficultyOf(night)];
+
+function freestyleRivalRun(night) {
+  const {run} = freestyleFor(night), target = freestyleTarget(night);
+  const total = run.reduce((sum, tick) => sum + tick.weight, 0);
+  let weight = 0, score = 0;
+  return run.map(tick => {
+    weight += tick.weight;
+    const next = Math.round(target * weight / total), points = next - score;
+    score = next;
+    return {...tick, points};
+  });
+}
+
+function advanceFreestyleRival(duel, night) {
+  const {event} = night, time = duel.state.stageTimeSec;
+  while (event.rivalRun[event.rivalTick]?.at <= time + 1e-8) {
+    const tick = event.rivalRun[event.rivalTick++];
+    event.rivalScore += tick.points;
+    event.rivalPopup = {...tick, at: night.clock};
+    duel.emit({bowlScore: {type: 'freestyleRival', points: 0, score: event.score, cue: 'bowl.free.rival'}});
+  }
+  const lead = Math.sign(event.score - event.rivalScore);
+  const talk = (key) => {
+    say(duel, `freestyle.${key}`, {text: event.freestyleLines[key]});
+    duel.emit({bowlScore: {type: `freestyle.${key}`, points: 0, score: event.score, cue: `bowl.free.${key}`}});
+  };
+  if (lead > 0 && !event.hasLed) { event.hasLed = true; talk('lead'); }
+  if (lead < 0 && event.hasLed && !event.hasTrailed) { event.hasTrailed = true; talk('behind'); }
+  if (event.score > freestyleTarget(night) && !event.rivalBeaten) { event.rivalBeaten = true; talk('beaten'); }
+}
+
 // Two parked cars on the ring in Freestyle, so the Titan's launch off cars
 // (FUN-TITAN-LAUNCH, docs/board/decisions.md "Keep these") can be done in the
 // show. They are ordinary parked traffic: the launch rules are not touched.
 // Where they stand comes from bowlLayout(course).parked.
 registerBowlEventRunner('freestyle', {
-  place(duel) {
+  place(duel, night) {
+    const {event} = night;
+    const floor = SHOW_NIGHTS[night.night - 1].dressing.freestyle;
+    if (floor?.barHeight) Object.assign(event, {barHeight: floor.barHeight[difficultyOf(night)], barClears: 0});
+    if (!night.turn) Object.assign(event, {rivalName: freestyleFor(night).name, rivalScore: 0,
+      rivalRun: freestyleRivalRun(night), rivalTick: 0, freestyleLines: freestyleLines(freestyleFor(night).name)});
     const layout = bowlLayout(duel.course);
     startBowlEventAt(duel, layout.start.s, layout.start.lateral);
     duel.state.traffic = layout.parked.map(({s, dir, lateral}) => {
@@ -267,13 +304,16 @@ registerBowlEventRunner('freestyle', {
         car: 'falcone_f42', alive: true, damageZones: freshDamageZones(), damageCooldown: 0, bowlParked: true};
     });
   },
-  target: night => BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)],
-  goal: night => BOWL_GOALS.freestyle(BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)].toLocaleString(),
-    SHOW_NIGHTS[night.night - 1].freestyle?.name),
+  target: night => night.turn ? null : freestyleTarget(night),
+  goal: night => night.turn ? 'Score as many points as you can in ninety seconds.'
+    : BOWL_GOALS.freestyle(freestyleTarget(night).toLocaleString(), freestyleFor(night).name),
   timeLimitSec: BOWL_NIGHT_RULES.freestyle.timeLimitSec,
   step(duel, night) {
-    if (duel.state.stageTimeSec < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;
-    return {won: night.event.score >= BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)]};
+    stepFreestyleJump(duel, night.event, (fact, cue) => addFact(duel, fact, cue));
+    if (!night.turn) advanceFreestyleRival(duel, night);
+    if (duel.state.stageTimeSec + 1e-8 < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;
+    const mark = night.turn ? TURN_FREESTYLE_MARK[difficultyOf(night)] : freestyleTarget(night);
+    return {won: night.event.score >= mark};
   },
 });
 
@@ -434,7 +474,7 @@ function loadBowlEvent(duel) {
     flight: null, metres: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   if (night.school) { s.status = 'racing'; s.countdown = 0; }
-  else say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
+  else say(duel, night.turn ? 'turn.open' : `event.${type}.intro`, {text: night.event.freestyleLines?.intro});
 }
 
 // The next event after a result, or the same event again after a loss.
@@ -564,7 +604,7 @@ function finishEvent(duel, outcome) {
   else if (night.turn) say(duel, result.won ? 'turn.won' : 'turn.lost');
   else {
     if (event.finishLine) say(duel, event.finishLine);
-    say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
+    say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`, {text: result.won ? undefined : event.freestyleLines?.lost});
   }
   if (night.turn) return;
   if (night.phase === 'complete') {

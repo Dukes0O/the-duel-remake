@@ -3,6 +3,7 @@
 // the card between events, the night's results with the purse, and the way out.
 // Claude runs it on the laptop; pictures go to the evidence folder for the look.
 import assert from 'node:assert/strict';
+import {createFreestyleDriver} from '../bowl-freestyle-balance.mjs';
 
 // The same two passes drive the browser and headless Show Night checks. A
 // seeded slow driver can vary its pace, lane and short lifts without changing
@@ -32,6 +33,14 @@ const startCrush = `(() => {
   const app = window.__qaApp, drive = (${createCarCrushDriver.toString()})();
   app._driveAutopilot = function () {
     if (this.duel.state.status === 'racing') this.duel.setInput(drive(this.duel));
+  };
+  app.autopilot = true;
+  return true;
+})()`;
+const startFreestyle = `(() => {
+  const app = window.__qaApp, drive = (${createFreestyleDriver.toString()})('show');
+  app._driveAutopilot = function (dt) {
+    if (this.duel.state.status === 'racing') this.duel.setInput(drive(this.duel, dt));
   };
   app.autopilot = true;
   return true;
@@ -164,7 +173,7 @@ export async function run(context) {
   for (let round = 1; round <= 8 && !await context.evaluate(page.nightDone); round++) {
     await context.evaluate(page.next);
     const type = await context.evaluate(page.event);
-    await context.evaluate(page.autopilot);
+    await context.evaluate(type === 'freestyle' ? startFreestyle : page.autopilot);
     try {
       if (type === 'freestyle' && !freestyleSeen) {
         await context.waitFor(page.freestyleCrowd, 'Freestyle under way', 60000);
@@ -173,7 +182,7 @@ export async function run(context) {
       }
       await waitForCard(context, `${type} ends`, 150000);
     } finally {
-      await context.evaluate(page.manual);
+      await context.evaluate(type === 'freestyle' ? page.stopCrush : page.manual);
     }
     await picture(context, `bowl-night-card-${round}-${String(type).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`);
   }
