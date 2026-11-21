@@ -98,6 +98,7 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.crush.pancake': 'bowl.crush.pancake', // a piece crushed by a truck coming down out of the air
   'bowl.crush.ooh': 'bowl.crush.ooh',         // a bus, the RV, a stack or the Bus Pile: the crowd's "ooh"
   'bowl.crush.chain': 'interface.countdown', // another piece in the chain
+  'bowl.crush.hint': 'interface.radar',
   'bowl.crush.fullhouse': 'crowd.cheer',     // all the pieces are crushed
   'bowl.go.ready': 'interface.radar',
   'bowl.long.clear': 'interface.countdown',
@@ -117,6 +118,18 @@ export function bowlCrushKind(kind) {
   if (/heap|stack/i.test(name)) return 'stack';
   if (/bus|rv/i.test(name)) return 'bus';
   return 'car';
+}
+
+export function bowlCrushHintLine(piece) {
+  const kind = piece.sourceKind ?? piece.kind;
+  const target = piece.bowlCrushGroup === 'bowl-second-bus-pile' ? 'the second Bus Pile'
+    : piece.bowlCrushGroup ? 'the Bus Pile'
+    : piece.id.startsWith('bowl-row-') ? 'the Row'
+    : kind === 'bowlBus' ? 'the bus'
+    : kind === 'bowlRv' ? 'the RV'
+    : bowlCrushKind(kind) === 'stack' ? 'the burning stack'
+    : 'the junk car';
+  return `Steer for ${target}!`;
 }
 
 // The sounds of one crush, in order: {cue, at (seconds after the bite), scale}. A pancake on a car replaces the
@@ -242,8 +255,8 @@ export const BIG_MO = Object.freeze({
   'event.lost.bestTrick': 'Big Kettle landed the bigger tricks this time, so try a trick you have not done yet.',
   'event.won.carCrush': 'Our driver crushed enough pieces to go through to the next event.',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
-  'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
-  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night is theirs!',
+  'event.won.sideBySide': 'Our driver crossed the line first, so the night belongs to our driver!',
+  'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night belongs to our driver!',
   'event.lost.carCrush': 'Time ran out before you crushed enough pieces, so let us try that again.',
   'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',

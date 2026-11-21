@@ -1740,3 +1740,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-21 QA-TITAN-ARENA-WRECKS: Dusthawk and rivals clear the parked wrecks; 29 then 25 selected suites and the build passed.
 - 2026-11-21 BOWL-LTR-EASY: chaser 6/5/6 and careful 6/6/9 wins; 8/10/8 at 75 seconds. Final rivals and replay/world guards and build passed under rule 23.
 - 21 November, STORY-OPEN-WORLD: Claude's answers on OPEN-DOORS, OPEN-CHECKPOINTS and OPEN-SITES merged at b81f2c1c3; then Kyle's five rulings, the apprentice's routine (section 23) and card OPEN-APPRENTICE-RUN. Docs and board only; board and hygiene checks passed.
+- 2026-11-21 BOWL-SCREEN-FIX: corrected the Bowl HUD, jump start line, School card and Table reset. Eight Rule 23 suites and production build passed on d7b244868. Claude checks the live marker and first-visit fit.

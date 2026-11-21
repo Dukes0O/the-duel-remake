@@ -10,7 +10,7 @@ import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Tu
 import {chooseShowWeapon, SHOW_WEAPONS} from './bowl-weapons.js';
 import {WEAPON_PICTURES} from './bowl-weapons-view.js'; // BOWL-WEAPONS-LOOK: the weapons as drawn
 import {BOWL_RIVALS} from './bowl-rivals.js';
-import {arenaTrickStrip, secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
+import {arenaTrickStrip, secretCardMarkup, BOWL_TRICK_GUIDE, bowlGateLabel, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
 
 const LEVELS = [['easy', 'EASY'], ['medium', 'MEDIUM'], ['hard', 'HARD']];
@@ -73,7 +73,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     const featured = featuredBowlTricks(openingNight);
     const illustrations = featured.flatMap(kind => BOWL_TRICK_GUIDE.filter(entry => entry.kind === kind))
       .map(entry => `<li>${bowlTrickEntryMarkup({...entry, points: ''})}</li>`).join('');
-    return `<section class="bowl-panel bowl-opening" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
+    return `<section class="bowl-panel bowl-opening${offer ? ' bowl-school-offer' : ''}" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
       <h2 id="bowl-title">${escapeHTML(definition.name)}</h2>
       ${bowlOpeningLines(openingNight, choices?.lent).map(line => `<p class="bowl-mo">${escapeHTML(line)}</p>`).join('')}
       ${say(definition.events.map(event => BOWL_EVENT_NAMES[event]).join(' · '))}
@@ -127,16 +127,20 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       .map(item => BOWL_TRICK_GUIDE.find(entry => entry.kind === item.kind).name);
     const why = schoolReason?.until > show.clock ? schoolReason.text : '';
     const key = [kind, done.join(','), why, state.bowlSchoolSavePending].join('|');
-    if (renderedLesson === key) return;
-    renderedLesson = key;
-    const content = lesson && guide
-      ? `<div class="bowl-school-move">${bowlTrickEntryMarkup({...guide, points: ''})}</div>${say(lesson.meaning)}${say(lesson.how)}`
-      : moLine('school.done');
-    schoolPanel.innerHTML = `<b class="bowl-hud-event">TRICK SCHOOL</b>${content}
-      ${done.length ? `<small aria-label="Completed lessons">${done.map(name => '✓ ' + escapeHTML(name)).join(' · ')}</small>` : ''}
-      ${why ? `<p role="status">${escapeHTML(why)}</p>` : ''}
-      ${state.bowlSchoolSavePending ? say('Your lesson progress is waiting to be saved.') : ''}
-      <footer>${button('Back to nights', 'show-night-pick')}</footer>`;
+    if (renderedLesson !== key) {
+      renderedLesson = key;
+      const content = lesson && guide
+        ? `<div class="bowl-school-move">${bowlTrickEntryMarkup({...guide, points: ''})}</div>${say(lesson.meaning)}${say(lesson.how)}`
+        : moLine('school.done');
+      schoolPanel.innerHTML = `<b class="bowl-hud-event">TRICK SCHOOL</b><p class="bowl-hud-gate" hidden></p>${content}
+        ${done.length ? `<small aria-label="Completed lessons">${done.map(name => '✓ ' + escapeHTML(name)).join(' · ')}</small>` : ''}
+        ${why ? `<p role="status">${escapeHTML(why)}</p>` : ''}
+        ${state.bowlSchoolSavePending ? say('Your lesson progress is waiting to be saved.') : ''}
+        <footer>${button('Back to nights', 'show-night-pick')}</footer>`;
+    }
+    const gate = schoolPanel.querySelector('.bowl-hud-gate'), label = bowlGateLabel(state);
+    if (gate.textContent !== label) gate.textContent = label;
+    gate.hidden = !label;
   }
 
   function leaveButtons() {
@@ -259,7 +263,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
         strip.gapLabel = warning ? `${BOWL_RIVALS[warning.bowlRival].name}: ${warning.bowlWeapon.kind}!`
           : `F · ${SHOW_WEAPONS[weapon.kind].name}${ready}`;
       }
-      renderHud(state, course, strip);
+      renderHud(state, course, strip, !!(show?.school && view && state.bowlOutside?.gate));
     },
     // A Show Night button. Returns true when it was one.
     handle(target) {

@@ -114,7 +114,7 @@ export function speedGearPresentation(s) {
 }
 export function presentJumpHeight(readout, s, app, ui, text) {
   const jumpHeight=readout.update(s,app.duel.course);
-  ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden'||s.arena?.mode==='world-job';
+  ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden'||!!s.bowlNight||app.duel.course?.def?.bowl===true||s.arena?.mode==='world-job';
   ui['jump-height-panel'].dataset.phase=jumpHeight.phase;
   text('jump-height-label',jumpHeight.phase==='landed'?'JUMP PEAK':'HEIGHT ABOVE GROUND');
   text('jump-height-value',(jumpHeight.phase==='landed'?jumpHeight.peakMeters:jumpHeight.heightMeters).toFixed(1));

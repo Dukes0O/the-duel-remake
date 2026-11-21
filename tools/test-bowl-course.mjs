@@ -241,7 +241,7 @@ for(let row=0;row<BOWL_STAND.rows;row+=3){
   check(Math.abs(BOWL_STAND.rowY(row)-terraceHeight(outsideRules,off))<.05,`Row ${row} is drawn at the rules' height.`);
 }
 check(Math.abs(BOWL_STAND.face+BOWL_STAND.first+BOWL_STAND.rows*BOWL_STAND.depth-outsideRules.back)<1e-6,'The drawn top row ends at the stand back the rules use.');
-const outsideView=stadium.getObjectByName('Bowl outside: gates, car park and marker');
+const outsideView=stadium.getObjectByName('Bowl outside: gates and car park');
 check(outsideView?.userData.gateCount===2,'Both gates are drawn.');
 for(const gate of data.gates){
   const parts=outsideView.getObjectByName(`Bowl ${gate.name}`),floorBox=new THREE.Box3().setFromObject(parts.getObjectByName(`Bowl ${gate.name} tunnel floor`));
@@ -257,12 +257,13 @@ const endS=data.zones.end1[0]+data.ring.radius*Math.PI/2;
 check([[100,30],[100,40],[endS,30],[endS,40]].every(([s,off])=>ribbonGroundAt(bowl,s,off).y<Math.min(BOWL_STAND.low,terraceHeight(outsideRules,off))-.1)&&
   [[100,70],[100,95],[endS,70],[endS,120]].every(([s,off])=>farTerrainCornerHeight(bowl,0,0,s,off,16)<0),
   'The ground mesh lies below the drawn stands and the car park asphalt, not on the terraces.');
-const marker=outsideView.userData.marker,gateAim=bowl.worldAt(data.gates[1].s,outsideRules.back+8);
+const gateLights = data.gates.map(gate => outsideView.getObjectByName(`Bowl ${gate.name} light column`));
+check(!outsideView.getObjectByName('Bowl gate marker'),'The old truck-mounted gate marker is gone.');
 stadium.userData.update(2000,.35,{s:100,lateral:outsideRules.back+20,groundHeight:0,airHeight:0,
-  bowlOutside:{where:'carpark',gate:{...data.gates[1],metres:64,aim:gateAim}}});
-check(marker.visible,'The gate marker shows while the truck is outside.');
+  bowlOutside:{where:'carpark',gate:data.gates[1]}});
+check(gateLights[1].visible && !gateLights[0].visible,'Only the selected gate lights up outside.');
 stadium.userData.update(2100,.35,{s:100,lateral:0,groundHeight:0,airHeight:0});
-check(!marker.visible,'The gate marker goes once the truck is back in.');
+check(gateLights.every(light=>!light.visible),'The gate lights go once the truck is back in.');
 check(stadium.getObjectByName('Bowl crowd').geometry.getAttribute('crowdSeat')?.itemSize===4,'Each crowd card knows its seat, to clear from round a truck.');
 check(stadium.getObjectByName('Bowl tyre walls')?.userData.count>200,'Tyre walls stand along the stand wall and the Spine.');
 const lights=stadium.userData.lights;
