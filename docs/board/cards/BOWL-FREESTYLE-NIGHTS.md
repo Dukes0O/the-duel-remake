@@ -146,3 +146,7 @@ The older browser scenario `tools/scenarios/bowl-night-pay.mjs` clears the old F
   individual points are still checked and the Easy gate stays.
 - **Granted:** in `tools/scenarios/bowl-night-pay.mjs`, only the Freestyle driving inputs change; every save and payout check
   stays.
+
+## Result card question, 21 November
+
+The dynamic Freestyle loss line runs during the two-second HUD hold. The retry card still looks up the removed static line, so the rival's sentence disappears when the retry button appears. May this card add the narrow read-only bowl-screens.js hook so the retry card prints the same dynamic Freestyle line? The independent review also found that a Turn Freestyle win can affect night progress and purses. The builder is preserving the old 310/1,810/4,260 qualification marks on Turn goes, with a neutral goal and no rival name, score, pop-ups or cues. Solo targets remain the new measured marks.
