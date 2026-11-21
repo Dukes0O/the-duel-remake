@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {backupCareer} from '../src/career-backup.js';
-import {createProfile, loadPlayers, savePlayers} from '../src/progression.js';
-import {recordBowlScore, settleBowlNight} from '../src/bowl/bowl-save.js';
+import {createProfile, loadPlayers, PLAYERS_KEY, savePlayers} from '../src/progression.js';
+import {foundBowlTricks, recordBowlSecret, recordBowlScore, settleBowlNight} from '../src/bowl/bowl-save.js';
 
 let checks = 0;
 const equal = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
@@ -90,4 +90,86 @@ const memory = (initial = {}) => {
   equal(loadPlayers(restored).players[0].profile, stored, 'career backup restores Bowl state exactly');
 }
 
+{
+  const old = createProfile();
+  equal(foundBowlTricks(old), [], 'old profiles have no found secrets');
+  for (const invalid of [null, undefined, {bowl:4},{bowl:{version:1,foundTricks:'damaged'}}]) {
+    const edit = recordBowlSecret(invalid,'gyro');
+    ok(!edit.ok && edit.profile === invalid,'refuse a malformed discovery record in place');
+  }
+  const futureIds = {bowl:{version:1,foundTricks:['future-kind','gyro']}};
+  equal(recordBowlSecret(futureIds,'corkscrew').profile.bowl.foundTricks,['future-kind','gyro','corkscrew'],'unrecognized stored IDs survive');
+  const found = recordBowlSecret(old, 'gyro').profile;
+  equal(foundBowlTricks(found), ['gyro'], 'a genuine kind can be recorded');
+  ok(recordBowlSecret(found, 'gyro').profile === found && recordBowlSecret(found, 'unknown').profile === found, 'duplicate or invalid finds do not write');
+  const newer = {...found, bowl: {...found.bowl, version: 8}};
+  ok(recordBowlSecret(newer, 'yoYo').profile === newer, 'newer records remain untouched');
+  const storage = memory();
+  const registry = {version:2,activePlayerId:'one',players:[{id:'one',name:'One',profile:found},{id:'two',name:'Two',profile:old}]};
+  ok(savePlayers(registry,storage),'two independent drivers saved in memory');
+  equal(loadPlayers(storage).players.map(p => foundBowlTricks(p.profile)), [['gyro'],[]], 'finds survive loading and stay with the finder');
+}
+// Discoveries are written from a real landing against the current driver's durable record.
+{
+  globalThis.window = new EventTarget();
+  window.location = {search: ''};
+  globalThis.Element ??= class {};
+  globalThis.requestAnimationFrame = () => 1;
+  globalThis.cancelAnimationFrame = () => {};
+  const {App} = await import('../src/app.js');
+  const {stepBowlTricks, landBowlTricks} = await import('../src/bowl/bowl-tricks.js');
+  for (const situation of ['same version', 'newer version', 'missing', 'damaged', 'switched driver']) {
+    const store = globalThis.localStorage = memory();
+    const app = new App();
+    app.audio.unlock = app.audio.setPaused = () => {};
+    const base = app.duel.featureFlags.base || app.duel.featureFlags;
+    const flags = {...base, enabled: name => name === 'titan-bowl' || base.enabled(name)};
+    flags.base = flags;
+    app.duel.featureFlags = flags;
+    app.addPlayer('Other');
+    const other = app.player.id;
+    app.addPlayer('Finder');
+    app.startShowNight(1, {cpuDifficulty:'easy'});
+    app.advance(5);
+    const duel = app.duel, state = duel.state;
+    function landCode(keys) {
+      function run(input, ticks) {
+        state.input = input;
+        for (let i = 0; i < ticks; i++) {
+          state.stageTimeSec += 1/120;
+          stepBowlTricks(duel, state, 1/120);
+        }
+      }
+      Object.assign(state,{airborne:false, speedMph:0});
+      run({},48);
+      Object.assign(state,{airborne:true, airHeight:38, _verticalSpeed:5});
+      run({},6);
+      for (const key of keys) { run(key,6); run({},7); }
+      run({},150);
+      state.airborne = false;
+      landBowlTricks(duel,state);
+    }
+    const set = store.setItem;
+    store.setItem = (key,value) => { if(key === PLAYERS_KEY) throw new Error('quota'); set(key,value); };
+    landCode([{throttle:1},{throttle:1},{brake:1},{brake:1}]);
+    ok(state.bowlSecretSavePending && state.bowlNight.foundTricks.includes('corkscrew'),'failed first landing stays in the session');
+    store.setItem = set;
+    const registry = JSON.parse(store.getItem(PLAYERS_KEY));
+    const owner = registry.players.find(player => player.id === state.playerId);
+    owner.profile.credits += 717;
+    owner.profile.bowl = situation === 'newer version' ? {version:2,fromFuture:'keep me'} : {version:1,foundTricks:['gyro']};
+    if (situation === 'switched driver') registry.activePlayerId = other;
+    if (situation === 'missing') store.removeItem(PLAYERS_KEY);
+    else set(PLAYERS_KEY,situation === 'damaged' ? '{' : JSON.stringify(registry));
+    const before = store.getItem(PLAYERS_KEY);
+    landCode([{steer:-1},{steer:-1},{steer:1},{steer:1}]);
+    if (situation === 'same version') {
+      owner.profile.bowl.foundTricks.push('corkscrew','tornado');
+      equal(JSON.parse(store.getItem(PLAYERS_KEY)),registry,'both discoveries append while the outside edits survive');
+    } else {
+      equal(store.getItem(PLAYERS_KEY),before,situation+' registry stays exact');
+      ok(state.bowlSecretSavePending,situation+' keeps the session save warning');
+    }
+  }
+}
 console.log(`test-bowl-save: ${checks} checks passed`);
