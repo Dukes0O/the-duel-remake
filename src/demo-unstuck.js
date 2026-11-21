@@ -40,10 +40,54 @@ function reset(memory, time) {
   memory.coolUntil = time + 2;
 }
 
+// Only scripted drivers use this route. The ordinary wreck contact tells
+// them when a light car has been held at a body for a full second.
+export function titanWreckDetourLane(duel, actor) {
+  const {course, state} = duel;
+  if (course?.def?.id !== 'titan-arena') return null;
+  const old = actor._titanWreckDetour, time = state.stageTimeSec;
+  if (old?.lane != null && time >= old.since && actor.s <= old.clearS) return old.lane;
+
+  const touch = actor._titanWreckContact;
+  if (!touch || time < touch.at || time - touch.at > .2 || Math.abs(actor.speedMph) > 4 || state.crushedProps.includes(touch.id)) {
+    if (old) delete actor._titanWreckDetour;
+    return null;
+  }
+  const watch = old?.id === touch.id && old.lane == null ? old : {id: touch.id, since: time};
+  actor._titanWreckDetour = watch;
+  if (time - watch.since < 1 - 1e-8) return null;
+
+  const props = course.features.crushables.filter(prop => !state.crushedProps.includes(prop.id));
+  const wreck = props.find(prop => prop.id === touch.id);
+  if (!wreck) return null;
+  const spec = duel._vehicleSpec(actor), half = course.roadHalfWidthAt(actor.s) - spec.halfWidth;
+  const clearance = wreck.halfX + spec.halfWidth + .9;
+  const origin = duel.relativeS(wreck.s, actor.s);
+  const nearby = props.map(prop => ({prop, s: duel.relativeS(prop.s, actor.s)}))
+    .filter(row => row.s >= origin - 6 && row.s <= origin + 14);
+  const lanes = [wreck.off - clearance, wreck.off + clearance].filter(lane => Math.abs(lane) < half)
+    .sort((left, right) => Math.abs(left - actor.lateral) - Math.abs(right - actor.lateral) ||
+      Math.abs(left) - Math.abs(right));
+  const lane = lanes.find(line => nearby.every(({prop}) => Math.abs(prop.off - line) >= prop.halfX + spec.halfWidth + .4));
+  if (lane == null) return null;
+  watch.lane = lane;
+  watch.clearS = Math.max(...nearby.map(({prop, s}) => s + prop.halfZ + spec.halfLength + 1));
+  return lane;
+}
+
 // Returns {throttle, brake, steer} while rescuing, otherwise null.
 export function unstuckInput(driver, duel) {
   const st = duel.state;
   if (st.status !== 'racing' || st.onFoot || st.airborne || st.knock) return null;
+  const detour = titanWreckDetourLane(duel, st);
+  if (detour != null) {
+    const {course} = duel, here = course.worldAt(st.s, st.lateral);
+    const aim = course.worldAt(st.s + 4, detour);
+    const heading = here.heading + (st.headingError || 0);
+    const steer = steerForYaw(wrapHeading(Math.atan2(aim.x - here.x, aim.z - here.z) - heading) * 6,
+      {speedMph: st.speedMph, grip: duel.car.grip, traction: duel._drivingSurface(st.s, st.lateral).traction, car: duel.car, brake: 0});
+    return {throttle: +(st.speedMph < 23), brake: 0, steer};
+  }
   const memory = driver._unstuck ??= { active: false, since: null, tries: 0, picks: 0, goal: null, avoid: null, leg: null, legStart: 0, replanAt: 0, coolUntil: 0 };
   const time = st.stageTimeSec;
   const stuck = st.offRoad && Math.abs(st.speedMph) < UNSTUCK.stuckMph;
