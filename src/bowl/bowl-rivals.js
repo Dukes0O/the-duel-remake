@@ -8,11 +8,12 @@
 // Last Truck Rolling is the arena's own fight on the Bowl (src/arena): its
 // teams (every truck for itself), its computer drivers (src/arena/arena-brains.js
 // and arena-pilot.js) and its wrecks. The show changes three things and nothing
-// in the arena's code: no weapons and no crates, the same show armor for every
+// in its opponent selection: show weapons and no crates, the same show armor for every
 // truck, and a wrecked truck is knocked out and stays where it stopped instead
 // of coming back.
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, bowlLayout, registerBowlEventRunner,
   sayBowlLine, startBowlEventAt} from './bowl-night.js';
+import {prepareShowWeapons, stepShowWeapons} from './bowl-weapons.js';
 import {BOWL_GOALS} from './bowl-lines.js';
 import {DRIVE} from '../config.js';
 
@@ -74,9 +75,9 @@ export const BOWL_RIVAL_IDS = Object.freeze(Object.keys(BOWL_RIVALS));
 export const BOWL_RIVAL_NIGHTS = Object.freeze([
   Object.freeze({sideBySide: 'old-bess'}),
   Object.freeze({sideBySide: 'rust-rhino'}),
-  Object.freeze({lastTruckRolling: Object.freeze(['big-kettle', 'tin-lizard', 'old-bess'])}),
-  Object.freeze({lastTruckRolling: Object.freeze(['rust-rhino', 'tin-lizard', 'big-kettle'])}),
-  Object.freeze({lastTruckRolling: Object.freeze(['dragon-wagon', 'rust-rhino', 'tin-lizard'])}),
+  Object.freeze({lastTruckRolling: Object.freeze(['big-kettle', 'tin-lizard', 'old-bess']), showWeapons: Object.freeze(['hammer'])}),
+  Object.freeze({lastTruckRolling: Object.freeze(['rust-rhino', 'tin-lizard', 'big-kettle']), showWeapons: Object.freeze(['hammer', 'saw'])}),
+  Object.freeze({lastTruckRolling: Object.freeze(['dragon-wagon', 'rust-rhino', 'tin-lizard']), showWeapons: Object.freeze(['hammer', 'saw', 'launcher'])}),
 ]);
 
 // Design numbers for Claude's review; BOWL-FINISH tunes them in play.
@@ -254,7 +255,7 @@ registerBowlEventRunner('lastTruckRolling', {
   place(duel, night) {
     const s = duel.state, roster = lastTruckRivals(night), rules = BOWL_RIVAL_RULES.lastTruckRolling;
     // The arena's fight, on the Bowl: armor and wrecks are the Wasteland's
-    // combat rules, so the event runs under them with no weapons at all.
+    // combat rules. Show weapons replace the ordinary arena loadouts.
     s.mode = 'wasteland'; s.wastelandGateDiscovered = true; s.weaponLoadout = [];
     duel._loadArena(duel.course.def, 'last-car-rolling', roster.map(id => ({car: SHOW_TRUCK, brain: BOWL_RIVALS[id].brain})));
     s.bowlNight = night; // the arena's load ends any night; this one goes on
@@ -273,16 +274,21 @@ registerBowlEventRunner('lastTruckRolling', {
     night.event.rival = null;
     night.event.rivals = roster.map(id => ({id, out: false, by: null, at: null}));
     night.event.knockouts = 0;
+    prepareShowWeapons(duel, night, BOWL_RIVAL_NIGHTS[night.night-1].showWeapons);
   },
   goal(night) {
     const left = (night.event?.rivals ?? []).filter(entry => !entry.out).map(entry => BOWL_RIVALS[entry.id].name);
+    if (night.event?.returnSeconds != null) return `Return through a gate: ${Math.ceil(night.event.returnSeconds)} s.`;
     return BOWL_GOALS.lastTruckRolling(left);
   },
   // A wrecked truck is knocked out, credited as the arena credits a wreck (to
   // the last truck that hit it within a few seconds), and stays where it stopped.
   observe(duel, night, ev) {
     const wreck = ev.arenaWreck, event = night.event;
-    if (!wreck || wreck.victimId === 'player') return;
+    if (ev.bowlBackIn) event.returnSeconds = null;
+    if (!wreck) return;
+    duel.emit({bowlWeaponCue: 'bowl.knockout'});
+    if (wreck.victimId === 'player') return;
     const index = duel.state.arena.participants.findIndex(participant => participant.id === wreck.victimId) - 1;
     const entry = event.rivals[index], truck = duel.state.opponents[index];
     if (!entry || entry.out || !truck) return;
@@ -290,12 +296,13 @@ registerBowlEventRunner('lastTruckRolling', {
     holdWreck(truck);
     if (wreck.creditedId === 'player') event.knockouts++;
     sayBowlLine(duel, `out.${entry.id}`);
-    duel.emit({bowlKnockout: {rival: entry.id, by: wreck.creditedId, cue: wreck.creditedId === 'player' ? 'arena.wreck-credit' : 'bowl.mo'}});
+    duel.emit({bowlKnockout: {rival: entry.id, by: wreck.creditedId, cue: 'bowl.knockout'}});
   },
-  step(duel, night) {
+  step(duel, night, dt) {
     const s = duel.state, event = night.event, arena = s.arena;
     const rules = BOWL_RIVAL_RULES.lastTruckRolling;
     if (!arena) return {won: false};
+    stepShowWeapons(duel, night, dt);
     if (!event.rivalSaid) { event.rivalSaid = true; sayBowlLine(duel, `rivals.night.${night.night}`); }
     event.rivals.forEach((entry, index) => {
       const truck = s.opponents[index];
@@ -303,7 +310,11 @@ registerBowlEventRunner('lastTruckRolling', {
       if (entry.out) holdWreck(truck);
     });
     const facts = () => ({knockouts: event.knockouts, rivalsOut: event.rivals.filter(entry => entry.out).map(entry => entry.id)});
-    if (s.combatWrecking) return {...facts(), won: false, knockedOut: true};
+    if (s.combatWrecking) {
+      // A weapon acts before the arena step. Let the arena announce and credit
+      // the wreck once before finishing the night on the following tick.
+      return arena.participants[0].wreckCounted ? {...facts(), won: false, knockedOut: true} : null;
+    }
     if (event.rivals.every(entry => entry.out)) return {...facts(), won: true};
     if (s.stageTimeSec >= rules.timeLimitSec) {
       // Time is up: of the trucks still rolling, the one that has hit the
