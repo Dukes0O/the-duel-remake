@@ -155,14 +155,7 @@ export const BOWL_GOALS = Object.freeze({
 
 // The Scrapasaurus's battery boxes still to smash, as a person would say it (BOWL-REX-FIGHT).
 
-// A row of the Car Crush line, named by what stands in it (the rows come from the course).
-const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
-export const BOWL_CRUSH_ROW = Object.freeze({
-  cars: n => ORDINALS[n - 1] ? `the ${ORDINALS[n - 1]} row of cars` : `row ${n} of the cars`,
-  buses: 'the buses',
-  fire: 'the burning stack',
-  last: 'the end of the line',
-});
+
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
 export const BIG_MO = Object.freeze({
@@ -265,7 +258,9 @@ export const BOWL_RESULTS = Object.freeze({
   eventWonTitle: 'EVENT WON',
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
-  eventRows: row => row ? `You crushed your way into ${row}.` : 'You did not reach the first row of cars.',
+  eventCrush: ({count, total}) => `You crushed ${count} of ${total} pieces.`,
+  eventFullHouse: bonus => bonus > 0 ? `A Full House added ${bonus.toLocaleString()} points.`
+    : 'Crushing every piece earned a Full House.',
   eventRace: (won, rival = 'the other truck') => won ? `You crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before you.`,
   // BOWL-RIVALS: how Last Truck Rolling ended.
@@ -326,7 +321,7 @@ export const BOWL_TURN_LINES = Object.freeze({
   goScore: (name, score, event) => `${name} scored ${score.toLocaleString()} points in ${event}.`,
   goWon: 'That go won the event.',
   goLost: 'That go did not win the event, but the points still count.',
-  goRows: (name, row) => row ? `${name} crushed their way into ${row}.` : `${name} did not reach the first row of cars.`,
+  goCrush: (name, {count, total}) => `${name} crushed ${count} of ${total} pieces.`,
   goRace: (name, won, rival = 'the other truck') => won ? `${name} crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before ${name}.`,
   // BOWL-RIVALS: how one go at Last Truck Rolling ended.

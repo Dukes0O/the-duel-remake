@@ -20,7 +20,7 @@ import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent,
   scoreStuntEvent} from './bowl-show.js';
 import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
-import {BIG_MO, BOWL_CRUSH_ROW, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushKind} from './bowl-lines.js';
+import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushKind} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
 import {CAR_CRUSH_DRESSING} from './bowl-crush-field.js';
 import {CARS, COURSE} from '../config.js';
@@ -153,15 +153,6 @@ export function bowlLayout(course) {
 }
 
 export const crushTarget = night => BOWL_NIGHT_RULES.carCrush.target[difficultyOf(night)];
-// A row named by what stands in it: the second row of cars, the buses, the burning stack.
-export function crushRowName(course, rowIndex) {
-  const rows = bowlLayout(course).rows, row = rows[rowIndex];
-  if (!row) return BOWL_CRUSH_ROW.last;
-  if (/bus|rv/i.test(row.kind)) return BOWL_CRUSH_ROW.buses;
-  if (/heap|fire|stack/i.test(row.kind)) return BOWL_CRUSH_ROW.fire;
-  return BOWL_CRUSH_ROW.cars(rows.slice(0, rowIndex + 1).filter(other => !/bus|rv|heap|fire|stack/i.test(other.kind)).length);
-}
-
 const CRUSH_POINTS = Object.freeze({car: 35, bus: 60, stack: 80, pile: 200});
 const CHAIN_TICK_INTERVAL = .12;
 
@@ -328,7 +319,7 @@ function loadBowlEvent(duel) {
   night.captionQueue.length = 0;
   night.event = {type, eventIndex: night.show.eventIndex, attempt, facts: [], score: 0, crowd: 0, crowdAt: 0,
     crowdPeak: 0, crowdMark: 0,
-    flight: null, rows: 0, metres: 0, playerDoneAt: null, rivalDoneAt: null};
+    flight: null, metres: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
   say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
 }
@@ -436,7 +427,7 @@ function finishEvent(duel, outcome) {
   const measured = RUNNERS.get(event.type)?.result?.(event);
   const result = {...outcome, event: event.type, eventIndex: event.eventIndex, attempt: event.attempt,
     won: outcome.won === true, score: event.score, ...measured,
-    rows: event.rows, metres: +event.metres.toFixed(1),
+    metres: +event.metres.toFixed(1),
     crowdPeak: +event.crowdPeak.toFixed(1), playerId: night.playerId};
   night.attempts.push(result);
   night.lastResult = result;
@@ -498,7 +489,7 @@ export function bowlHudView(state, course) {
   return {night: night.night, event: event.type, name: BOWL_EVENT_NAMES[event.type] ?? event.type,
     goal: runner?.goal(night, course) ?? '', score: event.score, target: runner?.target(night, course) ?? null,
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),
-    rows: event.rows, timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
+    timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
     eventCount: SHOW_NIGHTS[night.night - 1].events.length, caption: night.caption?.text ?? '',
     driver: night.turn?.driver || null};

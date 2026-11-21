@@ -5,9 +5,9 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createProfile, isCarUnlocked, loadPlayers, savePlayers} from '../src/progression.js';
-import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushRowName, crushTarget, bowlHudView, bowlNightPlayable, settleShowNight,
+import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushTarget, bowlHudView, bowlNightPlayable, settleShowNight,
   showTruckFor} from '../src/bowl/bowl-night.js';
-import {BIG_MO, BOWL_CRUSH_ROW, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {bowlOpeningLines} from '../src/bowl/bowl-hud.js';
@@ -77,8 +77,8 @@ const showDuel = (enabled = true) => {
     'without the show\'s data the places come from the crush line, the ramps and the ring');
   equal(['medium', 'hard'].map(cpuDifficulty => crushTarget({cpuDifficulty})), [18, 26],
     'Medium and Hard use their count targets');
-  ok(crushRowName(bowl, 0) === 'the first row of cars' && /buses/.test(crushRowName(bowl, layout.rows.findIndex(row => /bus/i.test(row.kind)))) &&
-    crushRowName(bowl, layout.rows.length - 1) === 'the burning stack', 'rows are named by what stands in them');
+  equal([BOWL_RESULTS.eventCrush({count: 5, total: 31}), BOWL_RESULTS.eventFullHouse(960)],
+    ['You crushed 5 of 31 pieces.', 'A Full House added 960 points.'], 'the results show the count and Full House bonus');
 }
 
 // A lost event is tried again; nothing moves the night on.
@@ -396,7 +396,7 @@ for (const name of readdirSync(new URL('./fixtures/saves/', import.meta.url)).fi
 
 // Every word: plain, whole sentences with no dashes; every sound has a stand-in.
 {
-  const sentences = [...Object.values(BIG_MO), BOWL_GOALS.carCrush(BOWL_CRUSH_ROW.cars(3)), BOWL_GOALS.carCrush(BOWL_CRUSH_ROW.buses), BOWL_RESULTS.eventRows(BOWL_CRUSH_ROW.fire), BOWL_GOALS.freestyle('400'),
+  const sentences = [...Object.values(BIG_MO), BOWL_GOALS.carCrush(13), BOWL_GOALS.carCrush(18), BOWL_RESULTS.eventCrush({count: 31, total: 31}), BOWL_RESULTS.eventFullHouse(960), BOWL_GOALS.freestyle('400'),
     BOWL_GOALS.sideBySide(), BOWL_GOALS.lastTruckRolling(),
     ...Object.entries(BOWL_RESULTS).filter(([key]) => !/Title$|Button$|^pickStart$/.test(key)).flatMap(([, value]) =>
       typeof value === 'function' ? [value(2), value(0), value(true), value(false), value('Freestyle')].filter(line => typeof line === 'string') : [value])];

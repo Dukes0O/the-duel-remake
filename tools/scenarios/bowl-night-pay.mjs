@@ -85,9 +85,10 @@ export const page = {
       card: document.querySelector('.bowl-result')?.dataset.bowlResult ?? null}); })()`,
   cardWon: `(() => document.querySelector('.bowl-result')?.dataset.bowlResult === 'won')()`,
   crushCountMet: `(() => {
-    const app = window.__qaApp, night = app.duel.state.bowlNight;
-    return night?.lastResult?.event === 'carCrush' && night.lastResult.count >= 13 &&
-      app.duel.state.stageTimeSec >= 59.99;
+    const app = window.__qaApp, result = app.duel.state.bowlNight?.lastResult;
+    const card = document.querySelector('.bowl-result');
+    return result?.event === 'carCrush' && result.count >= 13 && app.duel.state.stageTimeSec >= 59.99 &&
+      card?.textContent.includes('You crushed ' + result.count + ' of ' + result.total + ' pieces.');
   })()`,
   startCrush,
   stopCrush,

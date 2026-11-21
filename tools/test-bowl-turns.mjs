@@ -11,7 +11,7 @@ import {PLAYERS_KEY, createPlayerRegistry, createProfile, loadPlayers, savePlaye
 import {BOWL_PURSE, bowlHudView, bowlLayout} from '../src/bowl/bowl-night.js';
 import {TURN_SHOW_RULES, beginGo, createTurnShow, currentTurn, nightOpenFor, passKeyboard, playerNightResult,
   recordGo, settleTurnGo, turnOrder, turnScoreboard, turnShowNights} from '../src/bowl/bowl-turns.js';
-import {BIG_MO, BOWL_CRUSH_ROW, BOWL_SOUND_CUES, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_SOUND_CUES, BOWL_TURN_LINES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 
 let checks = 0;
@@ -270,7 +270,7 @@ ok(createPlayerRegistry().players.every(entry => !Object.hasOwn(entry.profile, '
   // Each line function with the facts it takes, both ways where it has two.
   const samples = {setupCount: [[2], [4]], setupNightOpen: [[1]], setupNightLocked: [[2]],
     handoffEvent: [['Gratian', 'Car Crush']], goScore: [['Gratian', 1200, 'Freestyle']],
-    goRows: [['Kyle', BOWL_CRUSH_ROW.cars(2)], ['Kyle', BOWL_CRUSH_ROW.buses], ['Kyle', BOWL_CRUSH_ROW.fire], ['Kyle', null]], goRace: [['Gratian', true], ['Gratian', false], ['Gratian', true, 'Old Bess'], ['Gratian', false, 'Old Bess']],
+    goCrush: [['Kyle', {count: 5, total: 31}], ['Gratian', {count: 31, total: 31}]], goRace: [['Gratian', true], ['Gratian', false], ['Gratian', true, 'Old Bess'], ['Gratian', false, 'Old Bess']],
     goKnockouts: [['Kyle', {won: true}], ['Kyle', {won: true, timeUp: true}], ['Kyle', {won: false, timeUp: true}],
       ['Kyle', {won: false}], ['Kyle', {won: false, knockouts: 1}], ['Kyle', {won: false, knockouts: 2}]],
     goBest: [['Kyle', 'Side by Side']], goNightWon: [['Gratian', 1]], goPurse: [['Gratian', 250]],
