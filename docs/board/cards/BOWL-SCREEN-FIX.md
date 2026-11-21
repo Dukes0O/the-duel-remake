@@ -66,3 +66,5 @@ I propose selecting the nearest remaining crushable in world coordinates after e
 The existing router's point projection is limited to Rex. Please allow a narrow `src/render3d.js` hook to project a world point during any Show Night event and tell the HUD when it is behind the camera. The old `tools/test-bowl-course.mjs` requires the 3D marker being removed. Please grant the narrow assertion update to require its absence, with the live marker and all other gate behavior checked separately.
 
 The ground-trick Space interception also runs in `src/sim-driving.js`. Please grant its one Show Night run-up condition, reusing the same Bowl predicate as trick selection, so Space still reaches existing nitro.
+
+Two older checks describe the replaced behavior. Please approve changing the Freestyle failure-caption assertion in `tools/test-bowl-school.mjs` to require no caption outside the School, and replacing the Best Trick run-up wheelie assertion in `tools/test-bowl-jump-events.mjs` with a nitro run-up check and a legal scoring trick. Freestyle owns the separate Best Trick point changes.
