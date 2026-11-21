@@ -475,9 +475,19 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   }
 }
 
+{
+  const duel = showAt(3, 'lastTruckRolling'), s = duel.state;
+  const result = race(duel, null, null, BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
+  ok(result?.timeUp && result.decidedBy === 'health', 'the seeded idle Easy fight reaches the health decision');
+  ok(result.won === s.opponents.every(truck => truck.combatWrecking || s.armor >= truck.armor),
+    'Easy applies remaining health even when the player gives no input');
+  ok(result.score === 0 && result.knockouts === 0, 'the idle Easy result earns no score or knockout credit');
+}
+
 // ---- Last Truck Rolling: four trucks on the arena's rules -----------------
 {
-  const duel = showAt(3, 'lastTruckRolling'), s = duel.state, captions = [], knockouts = [], shots = [];
+  const duel = showAt(3, 'lastTruckRolling', {level: 'medium'});
+  const s = duel.state, captions = [], knockouts = [], shots = [];
   duel.onChange((_, ev) => { if (ev.bowlCaption) captions.push(ev.bowlCaption.id); if (ev.bowlKnockout) knockouts.push(ev.bowlKnockout);
     if (ev.weaponFired) shots.push(ev); });
   ok(s.arena?.mode === 'last-car-rolling' && s.bowlNight?.event.type === 'lastTruckRolling', 'Last Truck Rolling runs as the arena\'s fight');
@@ -499,7 +509,7 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const result = race(duel, null, null, BOWL_RIVAL_RULES.lastTruckRolling.timeLimitSec + 5);
   ok(shots.length === 0, 'no ordinary arena projectile is fired in the whole event');
   ok(result && result.event === 'lastTruckRolling' && typeof result.won === 'boolean', 'an event with a truck that never moves still ends');
-  ok(!result.won && (result.knockedOut || result.timeUp), 'a truck that never moves does not win');
+  ok(!result.won && (result.knockedOut || result.timeUp), 'an idle truck still loses on Medium');
   ok(!s.combat.pickups?.length, 'no crates appear in the Bowl');
   const out = knockouts.map(entry => entry.rival);
   ok(out.every(id => captions.includes(`out.${id}`)) && knockouts.every(entry => entry.cue === 'bowl.knockout'),
