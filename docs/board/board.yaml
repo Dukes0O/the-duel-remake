@@ -719,7 +719,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-jump-events"
     needs: [BOWL-TRICKS, BOWL-OUT-SIM, BOWL-CRUSH]
     locks: [bowl-night, bowl-floor]
     flag: "titan-bowl"
