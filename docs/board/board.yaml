@@ -725,7 +725,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-nights"
     needs: [BOWL-CRUSH, BOWL-TRICK-SCHOOL, BOWL-JUMP-EVENTS, BOWL-WEAPONS, BOWL-REX-2, BOWL-RIVALS-2]
     locks: [bowl-night, bowl-screens, bowl-rivals, save-shape]
     flag: "titan-bowl"
