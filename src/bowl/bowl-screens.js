@@ -197,7 +197,9 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       : last?.event === 'sideBySide' ? [WORDS.eventRace(true, BOWL_RIVALS[last.rival]?.name)] : []), WORDS.nightTotal(result.score)];
     if (settled?.purse > 0) lines.push(WORDS.nightPurse(settled.purse));
     else if (settled?.alreadyPaid) lines.push(WORDS.nightPurseAlready);
-    if (settled?.purse > 0 && settled.saved === false) lines.push(WORDS.nightPurseUnsaved);
+    if (settled?.saved === false || settled?.ok === false) {
+      lines.push(settled.purse > 0 ? WORDS.nightPurseUnsaved : WORDS.nightResultsUnsaved);
+    }
     for (const event of settled?.bests || []) lines.push(WORDS.nightBest(BOWL_EVENT_NAMES[event] ?? event));
     if (state.bowlNight.secretHint) lines.push('Secret trick hint: ' + state.bowlNight.secretHint);
     if (state.bowlNight.foundTricks?.length === 7) lines.push('You found all seven secret tricks.');

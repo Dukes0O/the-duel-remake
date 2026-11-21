@@ -108,8 +108,34 @@ for (const {night, events} of SHOW_NIGHTS) {
   const roster = [player('one', 'One', won(night - 1)), player('two', 'Two', won(night - 1))];
   const opened = createTurnShow({night, players: roster, cpuDifficulty: 'easy'});
   ok(opened.ok, `night ${night} opens for both drivers`);
-  equal(turnOrder(opened.show).map(turn => [turn.event, turn.playerId]),
+  const order = turnOrder(opened.show);
+  equal(order.map(turn => [turn.event, turn.playerId]),
     events.flatMap(event => [[event, 'one'], [event, 'two']]), 'Turn Show gives each driver one go at each event');
+  let show = opened.show, profile = roster[0].profile;
+  for (const turn of order) {
+    const played = recordGo(beginGo(show).show, {...turn, score: (turn.eventIndex + 1) * 250, won: true});
+    ok(played.ok, 'the active driver can finish the event from the season table');
+    if (turn.playerId === 'one') {
+      const paid = settleTurnGo(profile, played.show, played.go, 'one');
+      ok(paid.ok, turn.event + ' settles for its own driver');
+      const finale = turn.eventIndex === events.length - 1;
+      equal(paid.purse, finale ? BOWL_PURSE[night - 1] : 0, 'only the last winning go pays the existing purse');
+      if (finale) {
+        ok(paid.wonNight && paid.profile.bowl.nightsWon.includes(night), 'a final win records the night');
+        equal(settleTurnGo(paid.profile, played.show, played.go, 'one').purse, 0, 'replaying a settlement pays nothing');
+      }
+      profile = paid.profile;
+    }
+    show = passKeyboard(played.show).show;
+  }
+  const keys = {longJump: 'long-jump', highJump: 'high-jump', homeRun: 'home-run'};
+  events.forEach((event, index) => {
+    if (keys[event]) equal(profile.bowl.bestScores[keys[event]], (index + 1) * 250, 'a turn records its jump score');
+  });
+  if (events.includes('scrapasaurus')) {
+    ok(profile.bowl.trophies.includes('show-night-5') && !Object.hasOwn(profile.bowl.bestScores, 'scrapasaurus'),
+      'the finale pays and gives its trophy without a best-score key');
+  }
 }
 
 // ---- one go in the Duel ---------------------------------------------------

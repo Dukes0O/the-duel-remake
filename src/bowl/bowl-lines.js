@@ -316,6 +316,7 @@ export const BOWL_RESULTS = Object.freeze({
   nightPurse: scrap => `Big Mo paid you a purse of ${scrap.toLocaleString()} scrap, and it is in your wallet now.`,
   nightPurseAlready: 'You already won the purse for this night, so this time you played for the crowd.',
   nightPurseUnsaved: 'The purse could not be saved, so it lasts only until you close the game.',
+  nightResultsUnsaved: 'The new results could not be saved.',
   nightBest: name => `That is your best ever score in ${name}.`,
   nightTruckBack: 'The show truck goes back to the show until your next night.',
   yardButton: 'BACK TO THE YARD',

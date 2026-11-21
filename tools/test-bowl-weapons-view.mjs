@@ -29,7 +29,9 @@ function truckModel() {
 function fight(kind, night = 5) {
   const duel = new Duel({seed: 1989});
   duel.featureFlags = {enabled: name => name === 'titan-bowl'};
-  assert.ok(duel.startBowlNight({night, eventIndex: 2, cpuDifficulty: 'easy', seed: 1989}));
+  const eventIndex = night === 5 ? 1 : 2;
+  assert.ok(duel.startBowlNight({night, eventIndex, cpuDifficulty: 'easy', seed: 1989}));
+  assert.equal(duel.state.bowlNight.event.type, 'lastTruckRolling');
   assert.ok(chooseShowWeapon(duel, kind));
   while (duel.state.status === 'countdown') duel.step(dt);
   duel.state.invulnerableSec = 0;

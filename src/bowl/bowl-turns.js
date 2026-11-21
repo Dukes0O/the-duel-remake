@@ -7,7 +7,7 @@
 // Pure data and rules: no DOM, no storage, no race state. The app keeps the
 // show between goes, runs each go as a one-event Show Night (bowl-night.js,
 // `turn: true`), and settles each go into the driver's own profile only.
-import {SHOW_NIGHTS} from './bowl-show.js';
+import {BOWL_EVENTS, SHOW_NIGHTS} from './bowl-show.js';
 import {BOWL_PURSE, SAVE_EVENT_IDS, bowlNightPlayable, settleShowNight} from './bowl-night.js';
 import {recordBowlScore} from './bowl-save.js';
 
@@ -144,10 +144,14 @@ export function settleTurnGo(profile, show, go, profileId) {
   if (!go || !show?.goes.includes(go) || profileId !== go.playerId) return none('notTheirs');
   let next = profile;
   const bests = [];
-  const recorded = recordBowlScore(next, SAVE_EVENT_IDS[go.event], go.score);
-  if (!recorded.ok) return none(recorded.reason);
-  if (recorded.changed) bests.push(go.event);
-  next = recorded.profile;
+  const fightFinale = go.event === BOWL_EVENTS.SCRAPASAURUS && events(show)[go.eventIndex] === go.event;
+  // The finale counts towards the night. Its trophy serves as the record.
+  if (!fightFinale) {
+    const recorded = recordBowlScore(next, SAVE_EVENT_IDS[go.event], go.score);
+    if (!recorded.ok) return none(recorded.reason);
+    if (recorded.changed) bests.push(go.event);
+    next = recorded.profile;
+  }
   const night = go.eventIndex === events(show).length - 1 ? playerNightResult(show, go.playerId) : null;
   let purse = 0, alreadyPaid = false;
   if (night) {

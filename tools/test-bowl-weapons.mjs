@@ -8,7 +8,9 @@ const dt=1/120;
 function fight(kind='hammer',level='medium',night=5) {
   const duel=new Duel({seed:1989});
   duel.featureFlags={enabled:name=>name==='titan-bowl'};
-  assert.ok(duel.startBowlNight({night,eventIndex:2,cpuDifficulty:level,seed:1989}));
+  const eventIndex=night===5?1:2;
+  assert.ok(duel.startBowlNight({night,eventIndex,cpuDifficulty:level,seed:1989}));
+  assert.equal(duel.state.bowlNight.event.type,'lastTruckRolling');
   assert.equal(duel.state.status,'bowl_weapon_pick');
   assert.ok(chooseShowWeapon(duel,kind));
   while(duel.state.status==='countdown') duel.step(dt);

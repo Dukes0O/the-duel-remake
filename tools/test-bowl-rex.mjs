@@ -21,10 +21,8 @@ const dt=1/120;
 function start(seed=101,level='easy'){
   const d=new Duel({seed});
   d.featureFlags={enabled:n=>n==='titan-bowl'};
-  assert.ok(d.startBowlNight({night:5,cpuDifficulty:level,seed}));
-  const night=d.state.bowlNight;
-  night.show.eventIndex=3;night.phase='result';
-  assert.ok(d.continueBowlNight());
+  assert.ok(d.startBowlNight({night:5,eventIndex:2,cpuDifficulty:level,seed}));
+  assert.equal(d.state.bowlNight.event.type,REX_EVENT);
   return d;
 }
 {

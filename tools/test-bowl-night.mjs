@@ -2,6 +2,7 @@
 // start to the results; the rules, the purse and the saves are checked without
 // driving. Memory-only saves.
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {readFileSync, readdirSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createProfile, isCarUnlocked, loadPlayers, savePlayers} from '../src/progression.js';
@@ -14,6 +15,7 @@ import {bowlOpeningLines} from '../src/bowl/bowl-hud.js';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
 import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
+import {createBowlView} from '../src/bowl/bowl-view.js';
 import {makeRng} from '../src/rng.js';
 import {createCarCrushDriver} from './scenarios/bowl-night-pay.mjs';
 
@@ -60,6 +62,15 @@ const showDuel = (enabled = true) => {
       equal(duel.course.def.bowlColours, colours, 'the Bowl reads the palette for this night');
       equal(duel.course.def.bowlFloor, dressing[type], 'the Bowl reads the dressing for this event');
       if (dressing[type]) equal(duel.course.def.bowlDressing, dressing[type].kind, 'the table selects the event dressing');
+      if (type === 'carCrush') {
+        const groups = new Map();
+        for (const part of duel.course.features.crushables) {
+          if (!part.bowlCrushGroup) continue;
+          groups.set(part.bowlCrushGroup, (groups.get(part.bowlCrushGroup) ?? 0) + 1);
+        }
+        equal([...groups.values()], Array(dressing[type].busPiles).fill(3), 'each Bus Pile has its own three-part group');
+        equal(duel.state.bowlNight.event.total, night === 3 ? 34 : 31, 'only Hammer Night adds the second pile');
+      }
       if (freestyle && type === 'freestyle') {
         ok(bowlHudView(duel.state, duel.course).goal.includes(freestyle.name), 'Freestyle names the right score rival');
       }
@@ -74,6 +85,26 @@ const showDuel = (enabled = true) => {
   equal(profile.bowl.nightsWon, [1, 2, 3, 4, 5], 'all five wins stay with the driver');
   equal(['long-jump', 'high-jump', 'home-run'].map(event => profile.bowl.bestScores[event]), [200, 400, 400],
     'solos record each new jump with its own key');
+}
+
+// The same palette is read by both the stadium banner and its flame jets.
+{
+  const view = createBowlView({
+    loadModel: async () => ({scene: new THREE.Group()}),
+    loadFireTexture: async () => new THREE.Texture(),
+  });
+  for (const {night, name, colours} of SHOW_NIGHTS) {
+    const duel = showDuel();
+    ok(duel.startBowlNight({night}), name + ' can be drawn');
+    view.update(duel.course, duel.state, 1000, true);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const banner = view.group.getObjectByName('Bowl night banner');
+    equal(banner?.material.color.getHex(), colours.banner, name + ' paints its own banner');
+    const jets = view.group.children.filter(node => node.name.startsWith('Bowl flame jet bowl-flame-jet'));
+    ok(jets.length === duel.course.features.flameJets.length &&
+      jets.every(jet => jet.material.color.getHex() === colours.jets), name + ' colours every flame jet');
+  }
+  view.dispose();
 }
 
 // The truck: the player's own Titan, or the show's truck lent at factory settings.

@@ -66,10 +66,11 @@ export const page = {
   noRexYet: `(() => window.__qaApp.bowlRexInYard() === false)()`,
   easy: `(() => { document.querySelector('[data-action="show-night-level"][data-level="easy"]').click(); return true; })()`,
   start: `(() => { window.__qaApp.start(); document.querySelector('[data-action="show-night-start"][data-night="5"]').click(); document.querySelector('[data-action="show-night-confirm"]').click(); return true; })()`,
-  onNightFive: `(() => window.__qaApp.duel.state.bowlNight?.night === 5 && window.__qaApp.duel.state.status !== 'menu')()`,
-  // Straight to the night's fourth event, the fight (the events before it have their own scenarios).
+  onNightFive: `(() => { const state = window.__qaApp.duel.state, night = state.bowlNight;
+    return state.status !== 'menu' && night?.night === 5 && night.event.type === 'freestyle'; })()`,
+  // Straight to the night's third event. The earlier two have their own scenarios.
   toFight: `(() => { const app = window.__qaApp, night = app.duel.state.bowlNight;
-    night.show = {...night.show, eventIndex: 3}; night.phase = 'result';
+    night.show = {...night.show, eventIndex: 2}; night.phase = 'result';
     night.lastResult={event:'lastTruckRolling',won:true,score:0,knockouts:0};
     night.resultAt=night.clock-3;app.duel.state.status='bowl_break';
     app.onFrame?.(app.duel.state);return true; })()`,
@@ -153,7 +154,7 @@ export async function run(context) {
   await context.evaluate(page.start);
   await context.waitFor(page.onNightFive, 'night five starts', 60000);
   await waitInFight(context, page.firstDrawn, 'night five\'s first event is drawn', 240000);
-  assert.ok(await context.evaluate(page.toFight), 'the night goes on to its fourth event, the fight');
+  assert.ok(await context.evaluate(page.toFight), 'the night goes on to its third event, the fight');
   await context.waitFor(page.guide,'three pictured tow instructions before the fight',10000);
   await picture(context,'bowl-rex-tow-instructions');
   await context.evaluate(page.next);

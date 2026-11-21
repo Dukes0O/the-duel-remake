@@ -13,7 +13,7 @@ function start(night, eventIndex, cpuDifficulty='easy') {
 }
 
 function contact(surface, speed, angle, kind, fraction, fight = true, rival = false, rex = false, level = 'medium') {
-  const duel = rex ? start(5, 3) : fight ? start(3, 2, level) : start(1, 1);
+  const duel = rex ? start(5, 2) : fight ? start(3, 2, level) : start(1, 1);
   const actor = rival ? duel.state.opponents[0] : duel.state;
   const walls = duel.course.features.barriers.filter(wall => wall.arenaWall);
   const at = surface === 'end' ? 105 : 35;
@@ -123,7 +123,7 @@ for (const swapped of [false, true]) {
   }
 }
 
-for (const [night, index] of [[1,0],[1,1],[1,2],[3,2],[5,3]]) {
+for (const [night, index] of [[1,0],[1,1],[1,2],[3,2],[5,2]]) {
   const duel = start(night, index);
   const s = duel.state, type = s.bowlNight.event.type;
   let slow = 0, elapsed = 0;

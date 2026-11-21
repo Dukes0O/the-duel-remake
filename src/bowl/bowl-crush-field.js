@@ -38,10 +38,15 @@ function dressCarCrush(course) {
     addPiece(course, `bowl-pancake-${index}`, s, off, CAR, COLOURS[index], {bowlPancakeRamp: ramp}));
   END_ONE.forEach(([s, off], index) => addPiece(course, `bowl-end-one-${index}`, s, off, CAR, COLOURS[index]));
 
-  const pile = {bowlCrushGroup: 'bowl-bus-pile', bowlCrushMinMph: 30};
-  addPiece(course, 'bowl-bus-pile-0', 251, -2.6, BUS, 0x806449, pile);
-  addPiece(course, 'bowl-bus-pile-1', 251, 2.6, BUS, 0x5d6b52, pile);
-  addPiece(course, 'bowl-bus-pile-2', 251, 0, BUS, 0x596b70, {
+  addBusPile(course, 251, 'bowl-bus-pile');
+  if (course.def.bowlFloor?.busPiles === 2) addBusPile(course, 269, 'bowl-second-bus-pile');
+}
+
+function addBusPile(course, s, id) {
+  const pile = {bowlCrushGroup: id, bowlCrushMinMph: 30};
+  addPiece(course, `${id}-0`, s, -2.6, BUS, 0x806449, pile);
+  addPiece(course, `${id}-1`, s, 2.6, BUS, 0x5d6b52, pile);
+  addPiece(course, `${id}-2`, s, 0, BUS, 0x596b70, {
     ...pile, angle: Math.PI / 2, stackHeight: BUS.height,
   });
 }
