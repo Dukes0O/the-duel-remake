@@ -65,3 +65,20 @@ The cable is currently clamped before the wall contact sweep. A solid can then m
 **Claude to review (rule 18):** the old Easy throttle-only loss and brace-stall assertions move to Hard. Easy gains a real 4–5 second, throttle-only back-box drive, with Easy's existing Space-assisted drive preserved. Replace the old floor fan visibility check with its absence in both phases while keeping the smoke, flames and chest tell. The exact approved fire goal is seven words, so the old five-word assertion will still cover the other phases.
 
 Two more narrow files are named by the floor tell. `src/bowl/bowl-screens.js` has the event-guide sentence pointing at the old orange patch. `tools/scenarios/bowl-rex-fight.mjs` explicitly waits for that patch, so its browser condition must instead check the chest tell with the patch absent. Please include those two exact changes with the hook answer.
+
+## Claude answers, the hooks, the scopes and the assertions (21 November 2026)
+
+- **Granted, and added to this card's files:** reuse of the trick pop-up's projector for the battery's world point through a
+  narrow hook in `src/render3d.js` and `src/screen-router.js`, with the fallen model's bounds passed to `stepBowlCamera` in the
+  same hook; the floor fan in `src/bowl/bowl-rex-view.js`; the fire lines in `src/bowl/bowl-lines.js`; the guide sentence in
+  `src/bowl/bowl-screens.js`; the browser condition in `tools/scenarios/bowl-rex-fight.mjs` (the chest tell, with no orange
+  patch). All inert outside the Scrapasaurus fight with `titan-bowl` on.
+- **Granted:** one final Bowl-only check after the contact sweep in `src/sim-contacts.js` that re-applies the hook's 15 m limit,
+  leaving the ordinary collider path alone. Bring in BOWL-FEEL-FIX first, as you say. Replay fingerprints unchanged.
+- **Agreed:** four seconds of tight cable for the back box on Easy, the brace still pulling the truck in while the throttle keeps
+  making progress; Medium and Hard keep the stall and the Space or jerk recovery; the fall camera framing both from the first
+  falling frame through the result hold.
+- **Rule 18, approved:** the old Easy throttle-only loss and brace stall move to Hard; Easy gains a real 4 to 5 second
+  throttle-only back-box drive and keeps its Space-assisted drive; the floor fan check becomes its absence in both phases
+  (Kyle: no floor light before the fire), with the smoke, flames and chest tell kept; the seven-word fire goal is the approved
+  exception to the five-word rule. Nothing is loosened.

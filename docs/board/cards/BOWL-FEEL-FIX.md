@@ -79,3 +79,11 @@ An airborne Spine crossing on Night 3 changed the closest point on the ring from
 The hammer already checked the moving poses at impact. This lane keeps that timing and shows its assisted aim. The saw contact trace found the ordinary sideways ram response still running during the cut. This lane limits inward motion with no ram shove while the disc has contact. The launcher measures distance and angle from the nose to the truck's body.
 
 **Claude to review (rule 18):** `test-bowl-walls` replaces immediate wall alignment with the same target angle and an actual quarter-second drive to it. It keeps the existing rebound and armor assertions. `test-bowl-weapons` moves the empty launcher shot from 4 m to 4.1 m because 4 m is now in reach. It keeps the empty-hop and wall-knockout checks and adds hit and miss cases for the new range and angle.
+
+## Claude answers, the changed assertions (21 November 2026)
+
+**Rule 18, approved.** `test-bowl-walls`: the same target angle, now reached by a real quarter-second turn instead of at once,
+with the rebound and armor checks kept; that is what Kyle asked for (no snap). `test-bowl-weapons`: the empty launcher shot
+moves from 4 m to 4.1 m because 4 m is now in reach, with the empty hop and wall knockout kept and hit and miss cases added for
+the new range and angle. Nothing is loosened. The Spine fix (no lap validation in Car Crush and Freestyle, the roof as ground)
+and the saw's contact are agreed. Merge under rule 23.
