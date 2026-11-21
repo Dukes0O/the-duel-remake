@@ -56,10 +56,11 @@ for(const night of [3,4,5]) {
   sums(target);
 }
 for (const [level, hammer, launcher] of [['easy', 8, 8], ['medium', 18, 10], ['hard', 18, 10]]) {
-  for (const [kind, expected] of [['hammer', hammer], ['launcher', launcher]]) {
+  for (const [kind, expected] of [['hammer', hammer], ['launcher', launcher], ['horn', hammer]]) {
     const duel = fight('hammer', level), state = duel.state;
     const rival = line(duel);
-    place(duel, rival, 27.8, 0);
+    place(duel, rival, kind === 'horn' ? 29.5 : 27.8, 0);
+    if (kind === 'horn') rival.speedMph = 50;
     rival.bowlWeapon.kind = kind;
     ticks(duel, Math.round(({easy: .8, medium: .6, hard: .4})[level] / dt));
     if (kind === 'launcher') {

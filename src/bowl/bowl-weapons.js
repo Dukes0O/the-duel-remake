@@ -60,7 +60,7 @@ export function bowlHealthLoss(duel,actor,fraction,owner,side='front',styleHit=t
 
 function weaponImpact(duel, actor, fraction, owner, side) {
   const state = duel.state;
-  if (actor === state && owner && owner !== 'player' && state.bowlNight.cpuDifficulty === 'easy') {
+  if (actor === state && owner && owner !== 'player' && state.bowlNight?.cpuDifficulty === 'easy') {
     fraction = Math.min(fraction, EASY_RIVAL_IMPACT_LIMIT / actor.maxArmor);
   }
   return bowlHealthLoss(duel, actor, fraction, owner, side);
