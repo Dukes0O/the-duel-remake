@@ -52,3 +52,7 @@ checked in the hand drive.
 - **BOWL-REX-3** (the eye beam and the bombs, Kyle's idea of 20 November) is in the first release and is on this
   card's `needs`. In the hand drive: send a bomb back on Easy and on Hard, and say whether the beam can be read from
   the driver's seat.
+- From the keyboard drives of 20 November 2026 on the merged game: the hammer, the saw (1.5 m) and the launcher's throw over
+  the wall all work, and the stoppie, wheelie and pop-up show on all three Monster Arena vehicles. A hand driver won only one
+  Last Truck Rolling in six on Easy, mostly losing to rams: play it by hand and judge whether a tween wins about six in ten.
+  START ENGINE sometimes needed a second press at the Monster Arena: find out why.

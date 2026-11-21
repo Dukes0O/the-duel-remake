@@ -5,14 +5,17 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createProfile, isCarUnlocked, loadPlayers, savePlayers} from '../src/progression.js';
-import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushRowName, crushRowsToWin, bowlHudView, bowlNightPlayable, settleShowNight,
+import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushTarget, bowlHudView, bowlNightPlayable, settleShowNight,
   showTruckFor} from '../src/bowl/bowl-night.js';
-import {BIG_MO, BOWL_CRUSH_ROW, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
+import {BIG_MO, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {bowlOpeningLines} from '../src/bowl/bowl-hud.js';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
+import {CAR_CRUSH_DRESSING} from '../src/bowl/bowl-crush-field.js';
+import {makeRng} from '../src/rng.js';
+import {createCarCrushDriver} from './scenarios/bowl-night-pay.mjs';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -72,10 +75,10 @@ const showDuel = (enabled = true) => {
   ok(derived.crush.startS < 200 && derived.lanes[1].s === 200 && derived.parked.length === 2 &&
     derived.parked.every(car => !(car.s >= 20 && car.s <= 40) && !(car.s >= 197 && car.s <= derived.crush.endS)),
     'without the show\'s data the places come from the crush line, the ramps and the ring');
-  ok(crushRowsToWin(bowl, {cpuDifficulty: 'hard'}) === layout.rows.length && crushRowsToWin(bowl, {cpuDifficulty: 'easy'}) ===
-    Math.ceil(layout.rows.length * .6), 'each level needs its share of however many rows the course has');
-  ok(crushRowName(bowl, 0) === 'the first row of cars' && /buses/.test(crushRowName(bowl, layout.rows.findIndex(row => /bus/i.test(row.kind)))) &&
-    crushRowName(bowl, layout.rows.length - 1) === 'the burning stack', 'rows are named by what stands in them');
+  equal(['medium', 'hard'].map(cpuDifficulty => crushTarget({cpuDifficulty})), [18, 26],
+    'Medium and Hard use their count targets');
+  equal([BOWL_RESULTS.eventCrush({count: 5, total: 31}), BOWL_RESULTS.eventFullHouse(960)],
+    ['You crushed 5 of 31 pieces.', 'A Full House added 960 points.'], 'the results show the count and Full House bonus');
 }
 
 // A lost event is tried again; nothing moves the night on.
@@ -83,12 +86,166 @@ const showDuel = (enabled = true) => {
   const duel = showDuel(), results = [];
   duel.onChange((_, ev) => ev.bowlEventResult && results.push(ev.bowlEventResult));
   ok(duel.startBowlNight({night: 1, cpuDifficulty: 'easy'}), 'night one starts');
-  for (let i = 0; i < 120 * 8 && !results.length; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
+  for (let i = 0; i < 120 * 65 && !results.length; i++) { duel.setInput({throttle: 0, brake: 0, steer: 0}); duel.step(DT); }
   const night = duel.state.bowlNight;
   ok(results.length === 1 && !results[0].won && results[0].event === 'carCrush', 'a truck that never moves loses the Car Crush');
   ok(duel.state.status === 'bowl_break' && night.phase === 'result' && night.show.eventIndex === 0, 'the night waits at the same event');
   ok(duel.continueBowlNight() && night.event.type === 'carCrush' && night.event.attempt === 2, 'the next start is the same event, attempt two');
   ok(duel.state.s === bowlLayout(duel.course).crush.startS && duel.state.status === 'countdown', 'the retry starts at the head of the crush line');
+}
+
+// Car Crush itself ends only at the clock or a Full House. Exercise the
+// ordinary simulation path for the unsteered run, the slow drivers and a
+// jump onto each pancake car.
+function openCrush(level = 'easy', seed = 1989) {
+  const duel = showDuel();
+  duel.startBowlNight({night: 1, cpuDifficulty: level, seed});
+  return duel;
+}
+
+function driveCrush(duel, drive) {
+  for (let i = 0; i < 120 * 65 && duel.state.status !== 'bowl_break'; i++) {
+    duel.setInput(drive(duel));
+    duel.step(DT);
+  }
+  return duel.state.bowlNight.lastResult;
+}
+
+{
+  const duel = openCrush('medium');
+  const result = driveCrush(duel, () => ({throttle: 1, steer: 0, brake: 0, boost: false}));
+  equal(duel.state.crushedProps, [1, 4, 7, 10, 13].map(index => `bowl-crush-${index}`),
+    'holding W reaches the same five pieces of the original middle lane in order');
+  ok(!result.won && result.count === 5 && Math.abs(duel.state.stageTimeSec - 60) < DT / 2,
+    'holding W with no steering crushes five pieces and takes the full minute');
+}
+
+{
+  const counts = Array.from({length: 10}, (_, index) => {
+    const seed = 1989 + index, random = makeRng(seed ^ 0x43525553);
+    const driver = createCarCrushDriver({pace: random.range(22, 30), laneBias: random.range(-1.9, 1.9), random});
+    return driveCrush(openCrush('easy', seed), driver).count;
+  });
+  const target = crushTarget({cpuDifficulty: 'easy'});
+  equal(target, Math.min(16, [...counts].sort((a, b) => b - a)[5]),
+    'Easy uses the highest count reached by six slow seeded drives, capped at 16');
+  const wins = counts.filter(count => count >= target).length;
+  ok(wins >= 6 && wins < counts.length, 'a slow player can win Easy and can also fall short');
+  console.log(`Car Crush Easy target ${target}, ${wins}/10 wins. Counts: ${counts.join(', ')}.`);
+}
+
+function racingCrush() {
+  const duel = openCrush();
+  while (duel.state.status === 'countdown') duel.step(DT);
+  return duel;
+}
+
+function placeCrushTruck(duel, s, lateral, speedMph) {
+  const y = duel.course.groundAt(s, lateral).y;
+  Object.assign(duel.state, {s, prevS: s, lateral, prevLateral: lateral, headingError: 0,
+    speedMph, groundHeight: y, prevGroundHeight: y, airborne: false, _jumpY: y, _verticalSpeed: 0});
+}
+
+for (const rampId of ['jump-kicker', 'crush-kicker', 'table']) {
+  const duel = racingCrush(), pieces = [];
+  const ramp = duel.course.features.ramps.find(item => item.id === rampId);
+  const car = duel.course.features.crushables.find(item => item.bowlPancakeRamp === rampId);
+  duel.onChange((_, ev) => { if (ev.bowlCrush) pieces.push(ev.bowlCrush); });
+  placeCrushTruck(duel, ramp.start - 20, ramp.off, 48);
+  duel.setInput({throttle: 1, steer: 0, brake: 0, boost: false});
+  for (let i = 0; i < 720 && !pieces.some(hit => hit.id === car.id); i++) duel.step(DT);
+  const hit = pieces.find(piece => piece.id === car.id);
+  ok(hit?.pancake && hit.points === 105 && hit.cues.includes('bowl.crush.pancake'),
+    `${rampId} sends the show truck down on its car for triple points and the pancake cue`);
+}
+
+{
+  const duel = racingCrush(), hits = [];
+  duel.onChange((_, ev) => { if (ev.bowlCrush?.id.startsWith('bowl-row-')) hits.push(ev.bowlCrush.id); });
+  placeCrushTruck(duel, 55, 2, 18);
+  duel.state.headingError = Math.PI / 2;
+  duel.setInput({throttle: 1, steer: 0, brake: 0, boost: false});
+  for (let i = 0; i < 120 * 3 && hits.length < 5; i++) duel.step(DT);
+  equal(hits, [0, 1, 2, 3, 4].map(index => `bowl-row-${index}`),
+    'one pass across the stand-side row sweeps up all five cars');
+}
+
+{
+  const duel = racingCrush(), hits = [];
+  const first = duel.course.features.crushables.find(item => item.id === 'bowl-bus-pile-0');
+  duel.onChange((_, ev) => { if (ev.bowlCrush) hits.push(ev.bowlCrush); });
+  placeCrushTruck(duel, first.s, first.off, 17);
+  Object.assign(duel.state, {airborne: true, prevAirHeight: first.height + .2, airHeight: first.height + .1});
+  duel._crushProps(duel.state);
+  equal(hits.length, 0, 'overflight alone does not touch the Bus Pile');
+  duel.state.airHeight = first.height - .1;
+  duel.state._verticalSpeed = -6;
+  duel._crushProps(duel.state);
+  ok(hits.length === 3 && hits[0].pancake && hits[0].points === 600 &&
+    hits.every((hit, index) => index === 0 || hit.points === 0),
+  'a real roof crossing below 30 mph collapses the pile and triples its one award');
+}
+
+{
+  const duel = racingCrush(), {state, course} = duel;
+  const prop = course.features.crushables.find(item => item.id === 'bowl-bus-pile-0');
+  const roof = prop.y + prop.height;
+  placeCrushTruck(duel, 242.809, prop.off, 17);
+  state.prevS = 242.746;
+  Object.assign(state, {airborne: true, _verticalSpeed: -6,
+    prevAirHeight: roof + .02 - course.groundAt(state.prevS, prop.off).y,
+    airHeight: roof - .18 - course.groundAt(state.s, prop.off).y});
+  duel._crushProps(state);
+  ok(state.speedMph < 17 && state.crushedProps.length === 0,
+    'descending past roof height before reaching the pile is still a slow side impact');
+}
+
+for (const [speed, count] of [[29, 0], [30, 3]]) {
+  const duel = racingCrush(), hits = [], ticks = [];
+  const first = duel.course.features.crushables.find(item => item.id === 'bowl-bus-pile-0');
+  duel.onChange((state, ev) => {
+    if (ev.bowlCrush) hits.push(ev.bowlCrush);
+    if (ev.bowlScore?.cue === 'bowl.crush.chain') ticks.push(state.bowlNight.clock);
+  });
+  placeCrushTruck(duel, first.s, first.off, speed);
+  duel._crushProps(duel.state);
+  equal(hits.length, count, `the Bus Pile at ${speed} mph`);
+  if (count) {
+    equal(hits.map(hit => hit.chain), [1, 2, 3], 'all three buses add to the chain');
+    equal(hits.reduce((total, hit) => total + hit.points, 0), 200, 'one Bus Pile award pays 200 points');
+    for (let i = 0; i < 36; i++) duel.step(DT);
+    ok(ticks.length === 2 && ticks[1] - ticks[0] >= .1, 'both bonus links of a fresh pile sound separately');
+  }
+}
+
+{
+  const duel = racingCrush(), hits = [];
+  let fullHouse, houseCaption;
+  duel.onChange((_, ev) => {
+    if (ev.bowlCrush) hits.push(ev.bowlCrush);
+    if (ev.bowlFullHouse) fullHouse = ev.bowlFullHouse;
+    if (ev.bowlCaption?.id === 'moment.fullHouse') houseCaption = ev.bowlCaption.text;
+  });
+  const field = duel.course.features.crushables, cars = field.filter(prop => prop.sourceKind === 'junkCar');
+  const hit = prop => duel.emit({propCrushed: {id: prop.id, kind: prop.sourceKind, byPlayer: true}});
+  for (const car of cars.slice(0, 4)) hit(car);
+  equal(hits.map(item => item.points), [35, 44, 53, 61], 'a four-piece chain pays x1, x1.25, x1.5 and x1.75');
+  duel.state.stageTimeSec = 3.01;
+  duel.step(DT);
+  equal(duel.state.bowlNight.event.chain, 0, 'the chain disappears when three seconds pass without another hit');
+  hit(cars[4]);
+  equal(hits.at(-1).points, 35, 'the next piece starts a new chain');
+  duel.state.stageTimeSec = 12;
+  for (const item of field.filter(prop => !prop.bowlCrushGroup)) hit(item);
+  const buses = field.filter(prop => prop.bowlCrushGroup).map(prop => prop.id);
+  duel.emit({propCrushed: {id: buses[0], kind: 'bowlBusPile', groupIds: buses, byPlayer: true}});
+  duel.step(DT);
+  const result = duel.state.bowlNight.lastResult;
+  ok(result?.won && result.fullHouse && result.count === 31, 'a Full House ends the event with all 31 pieces');
+  equal(fullHouse?.bonus, 48 * 20, 'a Full House at twelve seconds pays for 48 whole seconds remaining');
+  ok(houseCaption?.includes('Full House'), 'Big Mo calls the Full House at the end');
+  equal(result.score, hits.reduce((total, item) => total + item.points, fullHouse.bonus),
+    'the published result contains the chain points and the Full House bonus once each');
 }
 
 // Keep the original 32 mph approach as a clearance check. At that pace the
@@ -111,6 +268,7 @@ const showDuel = (enabled = true) => {
 // The driver keeps to the middle of the floor, and in Freestyle swings over to the
 // first parked car to launch off it.
 const run = (() => {
+  const driveCrush = createCarCrushDriver();
   const duel = showDuel(), log = {captions: [], scores: [], events: [], night: null, cues: new Set(), hud: null};
   duel.onChange((_, ev) => {
     if (ev.bowlCaption) { log.captions.push(ev.bowlCaption.id); log.cues.add(ev.bowlCaption.cue); }
@@ -133,8 +291,7 @@ const run = (() => {
     // Freestyle: the centre line over the kickers, swinging out to the first launch car on the way past it.
     const car = layout.parked[0], lapS = ((s.s % duel.course.length) + duel.course.length) % duel.course.length;
     const line = freestyle && lapS > car.s - 14 && lapS < car.s + 4 ? car.lateral : s.bowlNight.event.type === 'sideBySide' ? layout.lanes[0].lateral : 0;
-    // The Car Crush as a child plays it: W held down, no steering.
-    if (s.bowlNight.event.type === 'carCrush') duel.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+    if (s.bowlNight.event.type === 'carCrush') duel.setInput(driveCrush(duel));
     else if (freestyle && s.airborne) duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
     else duel.setInput({throttle: s.speedMph < (freestyle ? 30 : 32) ? 1 : 0, brake: 0, steer: Math.max(-1, Math.min(1, (s.lateral - line) * .3 + (s.headingError || 0) * 1.5)), boost: false});
     duel.step(DT);
@@ -153,7 +310,7 @@ const run = (() => {
     const points = log.scores.filter(score => score.event === result.event).reduce((sum, score) => sum + score.points, 0);
     ok(Number.isSafeInteger(result.score) && points === result.score, `${result.event}: the score is the sum of its scored stunts`);
   }
-  ok(log.events[0].rows >= 3, 'holding W with no steering, the Car Crush reaches the row Easy needs');
+  ok(log.events[0].count >= crushTarget({cpuDifficulty: 'easy'}), 'two passes through the field reach the Easy count');
   ok(night.attempts[0].event === 'carCrush' && night.attempts[0].won, 'the first Car Crush run is won, with no wall in the way');
   const launch = log.scores.find(score => score.type === 'carLaunch' && score.event === 'freestyle');
   ok(launch, 'the Titan launches off a parked car in Freestyle');
@@ -239,7 +396,7 @@ for (const name of readdirSync(new URL('./fixtures/saves/', import.meta.url)).fi
 
 // Every word: plain, whole sentences with no dashes; every sound has a stand-in.
 {
-  const sentences = [...Object.values(BIG_MO), BOWL_GOALS.carCrush(BOWL_CRUSH_ROW.cars(3)), BOWL_GOALS.carCrush(BOWL_CRUSH_ROW.buses), BOWL_RESULTS.eventRows(BOWL_CRUSH_ROW.fire), BOWL_GOALS.freestyle('400'),
+  const sentences = [...Object.values(BIG_MO), BOWL_GOALS.carCrush(13), BOWL_GOALS.carCrush(18), BOWL_RESULTS.eventCrush({count: 31, total: 31}), BOWL_RESULTS.eventFullHouse(960), BOWL_GOALS.freestyle('400'),
     BOWL_GOALS.sideBySide(), BOWL_GOALS.lastTruckRolling(),
     ...Object.entries(BOWL_RESULTS).filter(([key]) => !/Title$|Button$|^pickStart$/.test(key)).flatMap(([, value]) =>
       typeof value === 'function' ? [value(2), value(0), value(true), value(false), value('Freestyle')].filter(line => typeof line === 'string') : [value])];
@@ -269,10 +426,10 @@ for (const name of readdirSync(new URL('./fixtures/saves/', import.meta.url)).fi
   const s = app.duel.state;
   ok(app.duel.course.def.id === 'titan-bowl' && app.duel.course.def.bowl === true && app.duel.stageDef.bowl === true,
     'the App\'s race is on the Bowl');
-  const bowl = new Course(BOWL_COURSE, 1989);
+  const bowl = new Course({...BOWL_COURSE, bowlDressing: CAR_CRUSH_DRESSING}, 1989);
   ok(app.duel.course.features.flameJets.length === bowl.features.flameJets.length && app.duel.course.features.flameJets.length > 0 &&
-    app.duel.course.features.crushables.length === bowl.features.crushables.length,
-    'the course the renderer draws carries the Bowl\'s flame jets and crush line');
+    app.duel.course.features.crushables.length === 31 && app.duel.course.features.crushables.length === bowl.features.crushables.length,
+    'the course the renderer draws carries the flame jets and the full Car Crush field');
   ok(s.car === SHOW_TRUCK && app._racePaintCar === SHOW_TRUCK && s.bowlNight.lent, 'the App\'s car is the lent show truck');
   app.advance(5);
   ok(s.status === 'racing' && s.car === SHOW_TRUCK && app.duel.course.def.bowl, 'after the countdown the truck is still on the Bowl');

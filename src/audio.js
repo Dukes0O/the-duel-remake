@@ -2277,7 +2277,8 @@ export class EngineAudio {
     // A pancake: the truck was still coming down from a height in the frame before (the record clears the
     // moment it is back on the ground, so a landing followed by a crush is an ordinary bite).
     const pancake = burst.pancake ?? (this._bowlFallingAt != null && now - this._bowlFallingAt < .2);
-    (this._bowlJustCrushed ??= new Map()).set(burst.id, now);
+    const fresh = this._bowlJustCrushed ??= new Map();
+    for (const id of burst.groupIds ?? [burst.id]) fresh.set(id, now);
     const force = .7 + clamp(Number(burst.strength) || 0, 0, 1) * .3;
     // Each piece of the line has its own pitch as well as its own take, so fifteen pieces are fifteen sounds.
     const rate = BOWL_CRUSH_RATES[(Number(String(burst.id).match(/(\d+)$/)?.[1]) || 0) % BOWL_CRUSH_RATES.length];

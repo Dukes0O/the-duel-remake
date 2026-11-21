@@ -95,6 +95,8 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.crush.flat': 'bowl.crush.flat',       // a wreck run over again: a dull flat crunch, half as loud
   'bowl.crush.pancake': 'bowl.crush.pancake', // a piece crushed by a truck coming down out of the air
   'bowl.crush.ooh': 'bowl.crush.ooh',         // a bus, the RV, a stack or the Bus Pile: the crowd's "ooh"
+  'bowl.crush.chain': 'interface.countdown', // another piece in the chain
+  'bowl.crush.fullhouse': 'crowd.cheer',     // all the pieces are crushed
 });
 
 // What a crushed piece is, for its sound: the course's pieces name their kind (junkCar, bowlBus, bowlRv,
@@ -148,7 +150,7 @@ export const BOWL_GOALS = Object.freeze({
     if (phase === 'rest') return 'HOOK THE GLOWING BOX';
     return ['WATCH THE SCRAPASAURUS','TWO BOXES LEFT','ONE BOX LEFT'][boxes.filter(Boolean).length];
   },
-  carCrush: target => `Drive straight down the line and crush everything you can. Reach ${target} to go on.`,
+  carCrush: target => `Crush ${target} pieces.`,
   freestyle: (target, night = 1) => `Beat ${FREESTYLE_SCORE_NAMES[night - 1] ?? FREESTYLE_SCORE_NAMES[0]}: ${target}.`,
   sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
   lastTruckRolling: (left = []) => left.length
@@ -158,14 +160,7 @@ export const BOWL_GOALS = Object.freeze({
 
 // The Scrapasaurus's battery boxes still to smash, as a person would say it (BOWL-REX-FIGHT).
 
-// A row of the Car Crush line, named by what stands in it (the rows come from the course).
-const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
-export const BOWL_CRUSH_ROW = Object.freeze({
-  cars: n => ORDINALS[n - 1] ? `the ${ORDINALS[n - 1]} row of cars` : `row ${n} of the cars`,
-  buses: 'the buses',
-  fire: 'the burning stack',
-  last: 'the end of the line',
-});
+
 
 // Big Mo, the announcer (docs/WASTELAND_WORLD.md section 7).
 export const BIG_MO = Object.freeze({
@@ -201,10 +196,12 @@ export const BIG_MO = Object.freeze({
   'night.4.open': 'The crowd is bigger than ever tonight. Somebody told them our driver never gives up, and they want to see it for themselves.',
   'night.5.open': 'This is the last night of the season, and something very large is waiting under the stands. Drive carefully, everyone.',
   'lent.truck': 'Our driver has no truck yet, so tonight the show lends its own. Please bring it back in one piece.',
-  'event.carCrush.intro': 'First up is the Car Crush. Drive down that line and see how far you can get before the junk stops you.',
+  'event.carCrush.intro': 'Drive down the line, then keep going. You have a minute to crush as many pieces as you can.',
   'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
   'event.sideBySide.intro': 'It is time for Side by Side. Two trucks race two laps, and the first one across the line wins.',
   'event.lastTruckRolling.intro': 'Here comes Last Truck Rolling. Four trucks go in, and the last one still moving wins.',
+  'moment.fullHouse': 'That is a Full House! Every piece on the floor is crushed.',
+  'crush.pancake': 'That was a pancake, with three times the points.',
   'moment.crush': 'That car is now a pancake, and the crowd loves pancakes.',
   'moment.carLaunch': 'Did you see that? The truck drove up a car and took off like a rocket.',
   'moment.bigJump': 'What a jump! That truck was in the air longer than my last holiday.',
@@ -215,11 +212,11 @@ export const BIG_MO = Object.freeze({
   'crowd.50': 'Listen to that! The crowd is on its feet now.',
   'crowd.75': 'The crowd is going wild, so every trick is worth more right now.',
   'crowd.100': 'I have never heard the Bowl this loud. Keep it going!',
-  'event.won.carCrush': 'That truck went a long way down the line. On to the next event!',
+  'event.won.carCrush': 'Our driver crushed enough pieces to go through to the next event.',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
   'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
   'event.won.lastTruckRolling': 'Our driver is still rolling at the end, so the night is theirs!',
-  'event.lost.carCrush': 'The junk won that time, but you can have another run at it.',
+  'event.lost.carCrush': 'Time ran out before you crushed enough pieces, so let us try that again.',
   'event.lost.freestyle': 'The clock ran out before the score got high enough, so let us try that again.',
   'event.lost.sideBySide': 'The other truck got there first, but you can race it again.',
   'event.lost.lastTruckRolling': 'Another truck won that one, but the trucks are lining up again.',
@@ -267,7 +264,9 @@ export const BOWL_RESULTS = Object.freeze({
   eventWonTitle: 'EVENT WON',
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
-  eventRows: row => row ? `You crushed your way into ${row}.` : 'You did not reach the first row of cars.',
+  eventCrush: ({count, total}) => `You crushed ${count} of ${total} pieces.`,
+  eventFullHouse: bonus => bonus > 0 ? `A Full House added ${bonus.toLocaleString()} points.`
+    : 'Crushing every piece earned a Full House.',
   eventRace: (won, rival = 'the other truck') => won ? `You crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before you.`,
   // BOWL-RIVALS: how Last Truck Rolling ended.
@@ -328,7 +327,7 @@ export const BOWL_TURN_LINES = Object.freeze({
   goScore: (name, score, event) => `${name} scored ${score.toLocaleString()} points in ${event}.`,
   goWon: 'That go won the event.',
   goLost: 'That go did not win the event, but the points still count.',
-  goRows: (name, row) => row ? `${name} crushed their way into ${row}.` : `${name} did not reach the first row of cars.`,
+  goCrush: (name, {count, total}) => `${name} crushed ${count} of ${total} pieces.`,
   goRace: (name, won, rival = 'the other truck') => won ? `${name} crossed the line ahead of ${rival}.`
     : `${rival[0].toUpperCase()}${rival.slice(1)} crossed the line before ${name}.`,
   // BOWL-RIVALS: how one go at Last Truck Rolling ended.
