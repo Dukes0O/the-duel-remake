@@ -201,6 +201,11 @@ export function buildBowlFeatures(course) {
     // The Spine's wall pieces are 1 m thick and centred 0.74 m from its middle line.
     spine: Object.freeze({halfWidth: RADIUS - BOWL_FLOOR.wallOffset + .5, length: STRAIGHT, height: BOWL_STADIUM.spineHeight}),
   });
+  // BOWL-OUT-LOOK, drawing only: the drawn stands and car park (bowl-stadium.js, bowl-outside-view.js) are the ground that
+  // shows behind the stand wall, so the drawn ground mesh lies flat under them instead of on the terraces trucks drive.
+  // Near ground: the floor edge's height less 15 cm, below the walkway; far ground: below the car park's asphalt.
+  course.ribbonGroundY = (s, off) => off > outside.wall + .5 ? course.groundAt(s, outside.wall - .5).y - .15 : null;
+  course.farGroundY = (x, z, s, off) => Math.abs(off) > RADIUS + .5 ? -.3 : course.groundAt(s, off).y;
 }
 
 // The stadium's sizes, shared by the course (flame jet heights) and its view.

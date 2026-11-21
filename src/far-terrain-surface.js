@@ -18,9 +18,6 @@ const roadCaps = new WeakMap();
 // The continuous backing must stay below every road crossing its coarse cells.
 // Scatter the unchanged road samples onto neighbouring grid corners once.
 export function farTerrainCornerHeight(course,x,z,s,off,grid) {
-  // BOWL-OUT-LOOK: round the Bowl the far ground lies flat under the drawn stands and car park (see ribbon-ground.js).
-  const bowl=course.features?.bowl;
-  if(bowl?.outside&&Math.abs(off)>bowl.ring.radius+.5)return -.45;
   let height=(course.farGroundY?course.farGroundY(x,z,s,off):course.groundAt(s,off).y)-.15;
   if(!course.def.scenery?.continuousGround)return summitFinishGround(course,x,z,height);
   let caps=roadCaps.get(course.samples);
