@@ -1,3 +1,5 @@
+import {BOWL_STADIUM} from './bowl/bowl-course.js';
+import {bowlHealthLoss} from './bowl/bowl-weapons.js';
 import {constrainTow, rexSolids} from './bowl/bowl-hook.js';
 import {outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
@@ -67,10 +69,17 @@ function bowlReturn(rules, kind, mph) {
   return Math.max(rules.minimumMps / DRIVE.mphToWorld, mph * ratio);
 }
 
-function bowlWear(duel, actor, kind, owner, zone) {
+function bowlWear(duel, actor, kind, owner, zone, ramShare = 1) {
   const rules = duel.course.def.scrapdome.wallBounce, event = duel.state.bowlNight?.event;
   const fraction = kind === 'big' ? rules.bigDamage : kind === 'hard' ? rules.hardDamage : 0;
-  if (!fraction || !rules.fights.includes(event?.type)) return;
+  if (!rules.fights.includes(event?.type)) return;
+  if (event.type === 'lastTruckRolling' && actor.bowlWeapon && owner) actor.bowlLastHitBy = owner;
+  if (!fraction) return;
+  if (actor.bowlWeapon && event.type === 'lastTruckRolling') {
+    const wallShare = actor === duel.state && !owner ? (actor.bowlWeapon.wallShare ?? 1) : ramShare;
+    bowlHealthLoss(duel, actor, fraction * wallShare, owner, zone);
+    return;
+  }
   if (event.rex) {
     event.rex.hits += fraction * event.rex.maxHits;
   } else {
@@ -475,6 +484,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
         hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
+      } else if (!player && exterior && obstacle.arenaWall && car.bowlFlight?.owner && obstacle.off === exterior.wall) {
+        // A launched truck meets the real wall's top; grounded rivals still meet the closed gates.
+        const top = obstacle.y + BOWL_STADIUM.wallHeight;
+        hit = sweepObstacle(start, end, {...collider, minY:-1, maxY:top, modelMaxY:top}, heading, contactDimensions);
       } else if (!player && exterior && obstacle.arenaWall) {
         hit = sweepObstacle({...start, y: undefined}, {...end, y: undefined}, collider, heading, contactDimensions);
       } else if (exterior && obstacle.arenaWall && obstacle.off === exterior.wall &&
@@ -600,6 +613,17 @@ export function _staticContacts(car, player, journeyColliders = null) {
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
     const bowlRules = this.course.def.scrapdome?.wallBounce;
     if (bowlRules && obstacle.arenaWall) {
+      if (car.bowlFlight) {
+        const flight = car.bowlFlight;
+        const at = this.course.worldAt(car.s, car.lateral);
+        // A rising truck slides up the wall. Discard only the distance blocked
+        // this tick so it can continue forward once its tires clear the top.
+        const risingAtRim = flight.owner && obstacle.off === exterior?.wall && car._verticalSpeed > 0;
+        if (!risingAtRim) flight.range = 0;
+        const distance = flight.range * flight.elapsed / flight.duration;
+        flight.x = at.x - Math.sin(flight.heading) * distance;
+        flight.z = at.z - Math.cos(flight.heading) * distance;
+      }
       const mph = -(velocityX * nx + velocityZ * nz) / DRIVE.mphToWorld;
       if (mph > 0) {
         const frame = this.course.at(car.s).heading;
@@ -768,7 +792,14 @@ export function _vehicleContact(a, b, reason) {
       const away = bowlReturn(bowlRules, kind, impactMph) / 2;
       bowlRebound(this, a, nx, nz, tangentA, middle + away, kind, Math.hypot(ax, vaZ));
       bowlRebound(this, b, -nx, -nz, -tangentB, away - middle, kind, Math.hypot(bx, vbZ));
-      bowlWear(this, a, kind, combatOwnerId(this, b), zone);
+      const closingA = -(ax * nx + vaZ * nz);
+      const closingB = bx * nx + vbZ * nz;
+      let recoil = 1;
+      if (a === this.state && a.bowlNight?.cpuDifficulty === 'easy') {
+        if (closingB > Math.max(0, closingA)) recoil = b.ramDamageScale ?? 1;
+        else if (closingA > Math.max(0, closingB)) recoil = .5;
+      }
+      bowlWear(this, a, kind, combatOwnerId(this, b), zone, recoil);
       bowlWear(this, b, kind, combatOwnerId(this, a), zoneB);
       this.emit({bowlWall: {kind, mph: impactMph, cue: 'bowl.wall.' + kind}});
     }

@@ -20,7 +20,7 @@ const carHeld = Object.freeze({
   steerLeft: Object.freeze(['ArrowLeft']),
   steerRight: Object.freeze(['ArrowRight']),
   boost: Object.freeze(['Space']),
-  interact: Object.freeze(['KeyF']),
+  interact: Object.freeze(['KeyF']), // Hold the saw or press the hammer, launcher or Rex hook in the Bowl.
 });
 
 // Foot and photo controls are reserved here before those modes are built.
