@@ -485,8 +485,8 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   ok(truck.state.bowlNight.phase === 'turn' && Number.isSafeInteger(truckResult.knockouts), 'the fight ends as a turn with its knock-outs');
   const players = [{id: 'p1', name: 'Gratian', profile: {...createProfile(), bowl: {nightsWon: [1, 2]}}},
     {id: 'p2', name: 'Kyle', profile: {...createProfile(), bowl: {nightsWon: [1, 2]}}}];
-  const recordEventGo = (night, event, result) => {
-    let show = createTurnShow({night, players}).show;
+  const recordEventGo = (night, event, result, cpuDifficulty = 'medium') => {
+    let show = createTurnShow({night, players, cpuDifficulty}).show;
     while (currentTurn(show) && currentTurn(show).event !== event) {
       const turn = currentTurn(show);
       const blank = {playerId: turn.playerId, event: turn.event, eventIndex: turn.eventIndex, score: 0};
@@ -499,7 +499,12 @@ for (const id of BOWL_RIVAL_IDS) for (const level of LEVELS) {
   const recorded = recordEventGo(1, 'sideBySide', sideResult);
   ok(recorded.ok && recorded.go.rival === 'old-bess' && BOWL_TURN_LINES.goRace('Gratian', recorded.go.won, BOWL_RIVALS[recorded.go.rival].name)
     .includes('Old Bess'), 'the card between goes names the rival');
-  const clockGo = recordEventGo(3, 'lastTruckRolling', {won: true, score: 0, timeUp: true, decidedBy: 'health'});
+  const clockWin = {won: true, score: 0, timeUp: true, decidedBy: 'health'};
+  const clockGo = recordEventGo(3, 'lastTruckRolling', clockWin, 'easy');
+  ok(recordEventGo(3, 'lastTruckRolling', clockWin, 'medium').go.decidedBy === undefined,
+    'a Medium Turn Show does not record the Easy clock reason');
+  ok(recordEventGo(1, 'sideBySide', clockWin, 'easy').go.decidedBy === undefined,
+    'another Easy event does not record the Last Truck Rolling clock reason');
   ok(clockGo.ok && clockGo.go.decidedBy === 'health' &&
     BOWL_TURN_LINES.goKnockouts('Gratian', clockGo.go).includes("no truck still rolling had more health than Gratian's"),
     'the Turn Show carries the Easy clock reason to the card between goes');
