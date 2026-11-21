@@ -58,7 +58,7 @@ export const BOWL_PURSE = Object.freeze([250, 300, 350, 400, 600]);
 // bowl-show.js names events in camelCase, bowl-save.js in kebab case.
 export const SAVE_EVENT_IDS = Object.freeze({carCrush: 'car-crush', freestyle: 'freestyle',
   sideBySide: 'side-by-side', lastTruckRolling: 'last-truck-rolling',
-  longJump: 'long-jump', highJump: 'high-jump', homeRun: 'home-run'});
+  longJump: 'long-jump', highJump: 'high-jump', bestTrick: 'best-trick'});
 
 // The truck for the night: the player's own Titan, or the show's truck lent at
 // factory settings. A lent truck is only this race's car; nothing adds it to a save.
@@ -256,7 +256,7 @@ registerBowlEventRunner('freestyle', {
 
 // ---- the night ----------------------------------------------------------
 
-installBowlJumpEvents(registerBowlEventRunner, startBowlEventAt);
+installBowlJumpEvents(registerBowlEventRunner, startBowlEventAt, sayBowlLine);
 
 export function featuredBowlTricks(number) {
   const tricks = SHOW_NIGHTS[number - 1]?.tricks;
@@ -427,7 +427,7 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   if (fact.type === 'bowlTrick' && featuredSchoolTrick(fact, night.featuredTricks)) timed.points *= 2;
   const crowd = crowdAfter(event.crowd, at - event.crowdAt);
   const scored = scoreStuntEvent(timed, crowd);
-  const points = RUNNERS.get(event.type)?.scoresFact?.(fact, event) === false ? 0 : scored.points;
+  const points = scored.points;
   if (fact.type === 'bowlTrick' && points > 0) {
     if (!night.trickKinds.includes(fact.kind)) night.trickKinds.push(fact.kind);
     const earlier = event.trickPopups?.[0]?.at === night.clock ? event.trickPopups : [];
@@ -525,7 +525,10 @@ function finishEvent(duel, outcome) {
   // A Turn Show go ends here: the Turn Show keeps the scores and pays any purse.
   if (result.fullHouse) say(duel, 'moment.fullHouse');
   else if (night.turn) say(duel, result.won ? 'turn.won' : 'turn.lost');
-  else say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
+  else {
+    if (event.finishLine) say(duel, event.finishLine);
+    say(duel, `event.${result.won ? 'won' : 'lost'}.${event.type}`);
+  }
   if (night.turn) return;
   if (night.phase === 'complete') {
     const won = night.attempts.filter(entry => entry.won);
@@ -581,7 +584,7 @@ export function bowlHudView(state, course) {
   return {night: night.night, event: event.type, name: BOWL_EVENT_NAMES[event.type] ?? event.type,
     goal: runner?.goal(night, course) ?? '', score: event.score, target: runner?.target(night, course) ?? null,
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),
-    timeLeft: runner?.timeLeft?.(night) ?? (limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null),
+    timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
     eventCount: night.school || night.singleEvent ? 1 : SHOW_NIGHTS[night.night - 1].events.length,
     caption: event.schoolReason?.until > night.clock ? event.schoolReason.text

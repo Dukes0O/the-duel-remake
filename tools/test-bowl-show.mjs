@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {BOWL_EVENT_NAMES, BOWL_GOALS} from '../src/bowl/bowl-lines.js';
+import {SHOW_WEAPONS} from '../src/bowl/bowl-weapons.js';
 import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle, scoreStuntEvent, landingPoints, trickVariety} from '../src/bowl/bowl-show.js';
 
 let checks = 0;
@@ -55,10 +57,23 @@ const expected = [
   ['Rookie Night', ['carCrush', 'freestyle', 'sideBySide']],
   ['Flip Night', ['longJump', 'freestyle', 'sideBySide']],
   ['Hammer Night', ['carCrush', 'freestyle', 'lastTruckRolling']],
-  ['Over the Wall Night', ['highJump', 'homeRun', 'lastTruckRolling']],
+  ['Barrel Roll Night', ['highJump', 'bestTrick', 'lastTruckRolling']],
   ['Scrapasaurus Night', ['freestyle', 'lastTruckRolling', 'scrapasaurus']],
 ];
 assert.deepEqual(SHOW_NIGHTS.map(({name, events}) => [name, events]), expected);
+assert.equal(SHOW_NIGHTS[3].newTonight, 'Land a barrel roll and fight with a saw.');
+const goalLines = [
+  ...['carCrush', 'longJump', 'highJump', 'freestyle'].map(id => BOWL_GOALS[id](8)),
+  ...[null, {points: 0}, {points: 60, trick: 'barrel roll'}].map(rival => BOWL_GOALS.bestTrick(rival)),
+  BOWL_GOALS.sideBySide('Big Kettle'), BOWL_GOALS.lastTruckRolling(), BOWL_GOALS.lastTruckRolling(['Big Kettle']),
+  ...['fallen', 'tell', 'fire', 'lift', 'throw', 'rest', 'move'].map(phase => BOWL_GOALS.scrapasaurus({phase})),
+  ...[{phase: 'attached', tight: true}, {phase: 'attached', tight: false}, {phase: 'dragging'}]
+    .map(hook => BOWL_GOALS.scrapasaurus({hook})),
+];
+for (const line of [...SHOW_NIGHTS.flatMap(({name, newTonight}) => [name, newTonight]),
+  ...Object.values(BOWL_EVENT_NAMES), ...goalLines, ...Object.values(SHOW_WEAPONS).flatMap(weapon => weapon.line ?? [])]) {
+  check(!/\b(wall|stands)\b/i.test(line), 'event copy keeps leaving the arena a surprise: ' + line);
+}
 check(new Set(SHOW_NIGHTS.map(night => night.events.join('|'))).size === 5, 'each night has a different line-up');
 check(new Set(SHOW_NIGHTS.map(night => night.colours.jets)).size === 5, 'the five nights have different flame colours');
 check(new Set(SHOW_NIGHTS.map(night => night.colours.banner)).size === 5, 'the five nights have different banner colours');

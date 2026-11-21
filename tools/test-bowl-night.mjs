@@ -83,8 +83,8 @@ const showDuel = (enabled = true) => {
     profile = paid.profile;
   }
   equal(profile.bowl.nightsWon, [1, 2, 3, 4, 5], 'all five wins stay with the driver');
-  equal(['long-jump', 'high-jump', 'home-run'].map(event => profile.bowl.bestScores[event]), [200, 400, 400],
-    'solos record each new jump with its own key');
+  equal(['long-jump', 'high-jump', 'best-trick'].map(event => profile.bowl.bestScores[event]), [200, 400, 400],
+    'solos record each jump result with its own key');
 }
 
 // The same palette is read by both the stadium banner and its flame jets.

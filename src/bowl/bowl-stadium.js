@@ -183,8 +183,6 @@ function glowTexture() {
 function crowd(course, uniforms) {
   const positions = [], uvs = [], colours = [], phases = [], seats = [], indices = [];
   const throat = s => gateDistance(course, s) < throatHalf(course) + .4;
-  const target = course.features.bowlJump?.target;
-  const clearRadius = (target?.radii.at(-1) ?? 0) + .5;
   const heads = [];
   for (let row = 0; row < ROWS; row++) {
     const d = FIRST + row * DEPTH + DEPTH * .55, y = rowY(row);
@@ -198,7 +196,6 @@ function crowd(course, uniforms) {
       if (place % 1 < .07) continue; // the aisles
       if (row >= 9 && row <= 13 && Math.abs((place % 3) - 1.5) < .1) continue; // the tunnel mouths
       if (row < CUT_ROWS && throat(s)) continue; // the open cut over a gate's tunnel
-      if (target && Math.hypot(p.x - target.x, p.z - target.z) <= clearRadius) continue;
       // Full near the floor, thinning towards the back, with empty patches.
       const fill = .93 - row * .006 - (hash(Math.floor(place * 3), Math.floor(row / 4)) < .12 ? .5 : 0);
       if (hash(row, Math.round(along * 10)) > fill) continue;

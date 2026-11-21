@@ -9,10 +9,10 @@ export const BOWL_EVENTS = Object.freeze({
   SCRAPASAURUS: 'scrapasaurus',
   LONG_JUMP: 'longJump',
   HIGH_JUMP: 'highJump',
-  HOME_RUN: 'homeRun',
+  BEST_TRICK: 'bestTrick',
 });
 
-const {CAR_CRUSH, FREESTYLE, SIDE_BY_SIDE, LAST_TRUCK_ROLLING, SCRAPASAURUS, LONG_JUMP, HIGH_JUMP, HOME_RUN} = BOWL_EVENTS;
+const {CAR_CRUSH, FREESTYLE, SIDE_BY_SIDE, LAST_TRUCK_ROLLING, SCRAPASAURUS, LONG_JUMP, HIGH_JUMP, BEST_TRICK} = BOWL_EVENTS;
 
 function showNight({events, tricks, weapons = [], rivals = {}, freestyle = null, dressing = {}, colours, ...night}) {
   const {lastTruckRolling, ...matchups} = rivals;
@@ -46,10 +46,10 @@ export const SHOW_NIGHTS = Object.freeze([
     dressing: {carCrush: {kind: CAR_CRUSH, busPiles: 2}}, colours: {jets: 0xffad72, banner: 0xb9704d},
   }),
   showNight({
-    night: 4, name: 'Over the Wall Night', newTonight: 'Jump the wall or fight with a saw.',
-    events: [HIGH_JUMP, HOME_RUN, LAST_TRUCK_ROLLING], tricks: ['barrelRoll'], weapons: ['hammer', 'saw'],
+    night: 4, name: 'Barrel Roll Night', newTonight: 'Land a barrel roll and fight with a saw.',
+    events: [HIGH_JUMP, BEST_TRICK, LAST_TRUCK_ROLLING], tricks: ['barrelRoll'], weapons: ['hammer', 'saw'],
     rivals: {lastTruckRolling: ['rust-rhino', 'tin-lizard', 'big-kettle']},
-    dressing: {highJump: {kind: HIGH_JUMP}, homeRun: {kind: HOME_RUN}}, colours: {jets: 0xc9f9a3, banner: 0x7aa75a},
+    dressing: {highJump: {kind: HIGH_JUMP}}, colours: {jets: 0xc9f9a3, banner: 0x7aa75a},
   }),
   showNight({
     night: 5, name: 'Scrapasaurus Night', newTonight: 'Face the Scrapasaurus and try the launcher.',

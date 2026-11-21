@@ -68,6 +68,9 @@ export function bowlStrip(state, view, rivalName = () => null) {
   if (!view) return null;
   const night = state.bowlNight, event = night?.event;
   const crush = view.event === 'carCrush' && Number.isFinite(event?.count);
+  const rivalTrick = view.event === 'bestTrick' ? event?.go?.rival : null;
+  const rounds = rivalTrick ? event.goes : [];
+  const wonRounds = rounds.filter(go => go.won).length;
   const trick = event?.trickPopups?.[0];
   const showingTrick = Number.isFinite(trick?.multiplier) && popupActive(trick, night?.clock);
   const crowd = showingTrick ? Math.round((trick.multiplier - 1) * 100) : view.crowd;
@@ -77,9 +80,11 @@ export function bowlStrip(state, view, rivalName = () => null) {
     points: `${whole(view.score)} points`,
     time: view.timeLeft == null && view.event !== 'scrapasaurus' ? '' : clock(view.timeLeft ?? state.stageTimeSec ?? 0),
     crowd, crowdLabel: `CROWD x${multiplier}`, caption: view.caption,
-    gapLabel: view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
-    crushLabel: crush ? `CRUSHED ${event.count} OF ${view.target}` : '',
-    chainLabel: crush && event.chain > 1 ? `CHAIN x${event.chain}` : '',
+    gapLabel: rivalTrick ? `ROUND ${event.go.number} OF 3` : view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
+    crushLabel: rivalTrick ? `BIG KETTLE: ${rivalTrick.trick.toUpperCase()} ${whole(rivalTrick.points)}`
+      : crush ? `CRUSHED ${event.count} OF ${view.target}` : '',
+    chainLabel: rivalTrick ? `YOU ${wonRounds}, BIG KETTLE ${rounds.length - wonRounds}`
+      : crush && event.chain > 1 ? `CHAIN x${event.chain}` : '',
   };
 }
 
