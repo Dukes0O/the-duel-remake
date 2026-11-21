@@ -356,12 +356,14 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
   (`course.features.bowl.lanes` through `bowlLayout`: half a lap apart on the centre line); each truck finishes one
   full lap from its own start. Last Truck Rolling reads its starting slots and walls from the course, and loads the
   Bowl as the arena's own fight (`_loadArena`, mode `last-car-rolling`): its teams, computer drivers and wreck
-  credit, with no weapons and no crates, the same show armor for every truck, and a wrecked truck knocked out for
-  the rest of the event. The show's two-minute clock decides it: the last truck rolling wins, or at the clock the
-  hardest hitter still rolling. Rivals' rams are scaled by level (`BOWL_RIVAL_HITS`), and the player's nose does
-  not tip in the air there, because the arena turns a roof landing into a knock. Open points are in
-  `docs/board/questions/BOWL-RIVALS.md` until the card merges. `tools/test-bowl-rivals.mjs` holds Kyle's rule:
-  a child-pace driver wins every Easy event at least 8 times in 10.
+  credit. It uses Show weapons, gives each truck the same starting health and keeps wrecks out for the rest
+  of the fight. When the two-minute clock runs out on Easy, the player wins if their truck is still rolling
+  and no other rolling truck has more health. Medium and Hard compare damage dealt at the clock.
+  On Easy, two rivals circle first and join pursuit at different times. Only active rivals can claim a
+  pursuit slot, and a knocked-out rival releases its slot. The player's recoil from a ram they start is
+  set by the night on Easy. `tools/test-bowl-rivals.mjs` checks each of the three Easy weapons over ten
+  starts with each driver. The chaser wins five to seven and gets at least 75 seconds in eight of ten.
+  The careful driver wins at least six of ten.
 - **Turn Show** (BOWL-TURNS) runs in `src/bowl/bowl-turns.js`, pure rules with no race state: two to four named
   players take one go each at every event, event by event, in the order they were picked. Every go, the first
   too, opens on "NAME IS UP. PASS THE KEYBOARD." at the menu and starts only on a fresh key press (a held or
