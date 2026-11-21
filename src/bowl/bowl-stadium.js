@@ -4,6 +4,7 @@ import {crowdTexture} from '../stadium-crowd.js';
 import {createScrapWear} from '../world/scrap-look.js';
 import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight, bowlCentre} from './bowl-course.js';
 import {createBowlOutsideView} from './bowl-outside-view.js';
+import {secretHint} from './bowl-secrets.js';
 
 // The Bowl's stadium, drawn in code round the course's own floor (BOWL-EXPAND,
 // Kyle 11 November: stands, crowd and lights in code; photographed surfaces on
@@ -233,7 +234,8 @@ function crowd(course, uniforms) {
         // Round a truck in the stands: inside CLEAR metres everyone has gone from their places, and out to CLEAR + RUN
         // people run along their rows away from it, the nearest fastest, and lean into the run. Nobody is hit.
         vec2 crowdAway = crowdSeat.xy - uCrowdTruck.xz;
-        float crowdDistance = length(vec3(crowdAway.x, (position.y - uCrowdTruck.y) * .7, crowdAway.y));
+        // Measured across the ground from the seat, so all four corners of a card move together.
+        float crowdDistance = length(crowdAway);
         float crowdGone = (1.0 - smoothstep(${(CLEAR - .4).toFixed(1)}, ${CLEAR.toFixed(1)}, crowdDistance)) * uCrowdScatter;
         float crowdRun = (1.0 - smoothstep(${CLEAR.toFixed(1)}, ${(CLEAR + RUN).toFixed(1)}, crowdDistance)) * uCrowdScatter * (1.0 - crowdGone);
         vec2 crowdAlong = crowdSeat.zw * (dot(crowdAway, crowdSeat.zw) < 0.0 ? -1.0 : 1.0);
@@ -380,10 +382,76 @@ function tyreWalls(course) {
     matrix.compose(new THREE.Vector3(p.x, p.y + .5 - hash(k, 55) * .12, p.z), turn, size);
     tyres.setMatrixAt(k, matrix);
   }
+  // The view frees each geometry when it is cleared; the tyres' instance buffer goes with theirs.
+  geometry.addEventListener('dispose', () => tyres.dispose());
   tyres.name = 'Bowl tyre walls';
   tyres.castShadow = tyres.receiveShadow = true;
   tyres.userData.count = places.length;
   return tyres;
+}
+
+// BOWL-OUT-LOOK (from BOWL-TRICKS-ALL): tonight's secret-trick hint on a hand-painted bedsheet hung on the catch fence
+// at End 1, the same arrows as the result card with the hidden key as a painted question mark. The hint is worked out
+// from the night as the result card works it out (src/bowl/bowl-night.js); the banner reads the night and writes nothing.
+function hintBanner(course) {
+  const s = course.features.bowl.zones.end1[0] + course.features.bowl.ring.radius * Math.PI * .68;
+  const width = 9, height = 3.4;
+  const geometry = new THREE.PlaneGeometry(width, height, 18, 6), position = geometry.getAttribute('position');
+  // The sheet sags between its four ties and bellies a little in the air.
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i) / width + .5, y = position.getY(i) / height + .5;
+    position.setY(i, position.getY(i) - Math.sin(Math.PI * x) * .32 * (1 - y * .6));
+    position.setZ(i, Math.sin(Math.PI * x) * Math.sin(Math.PI * y) * .18 + Math.sin(x * 9) * .03);
+  }
+  geometry.computeVertexNormals();
+  let canvas = null, context = null;
+  const picture = drawn(1024, 388, g => { canvas = g.canvas; context = g; });
+  const material = new THREE.MeshStandardMaterial({map: picture, color: picture ? 0xffffff : 0xd8cfb8, roughness: .95, side: THREE.DoubleSide});
+  const sheet = new THREE.Mesh(geometry, material);
+  sheet.name = 'Bowl secret hint banner';
+  const p = course.worldAt(s, FACE - .12), inward = course.worldAt(s, FACE - 1.12);
+  sheet.position.set(p.x, wallTop(s) + .45 + height / 2, p.z);
+  sheet.rotation.y = Math.atan2(inward.x - p.x, inward.z - p.z);
+  sheet.visible = false;
+  let shown = null;
+  const arrow = (g, x, y, size, key) => {
+    const turn = {Up: 0, Right: Math.PI / 2, Down: Math.PI, Left: -Math.PI / 2}[key];
+    g.save(); g.translate(x, y); g.rotate(turn);
+    g.beginPath(); g.moveTo(0, -size * .5); g.lineTo(size * .42, -size * .02); g.lineTo(size * .16, -size * .02);
+    g.lineTo(size * .16, size * .48); g.lineTo(-size * .16, size * .48); g.lineTo(-size * .16, -size * .02); g.lineTo(-size * .42, -size * .02);
+    g.closePath(); g.fill(); g.restore();
+  };
+  const paint = hint => {
+    if (!context) return;
+    const g = context, w = canvas.width, h = canvas.height;
+    g.fillStyle = '#d9d0bb'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 140; i++) {
+      g.fillStyle = `rgba(${90 + hash(i, 61) * 50},${70 + hash(i, 62) * 40},${40 + hash(i, 63) * 30},${.05 + hash(i, 64) * .12})`;
+      g.beginPath(); g.arc(hash(i, 65) * w, hash(i, 66) * h, 8 + hash(i, 67) * 60, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = '#1d1a17'; g.font = 'bold 62px Impact, Arial Black, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText("TONIGHT'S SECRET", w / 2, 62);
+    const keys = hint.split(' ');
+    if (!keys.every(key => ['Up', 'Down', 'Left', 'Right', '?'].includes(key))) {
+      g.fillStyle = '#9b2318'; g.font = 'bold 110px Impact, Arial Black, sans-serif'; g.fillText(hint.toUpperCase(), w / 2, h * .62);
+    } else {
+      const step = Math.min(170, (w - 80) / keys.length), first = w / 2 - step * (keys.length - 1) / 2;
+      keys.forEach((key, i) => {
+        const x = first + i * step, y = h * .62;
+        if (key === '?') { g.fillStyle = '#b3261a'; g.font = 'bold 190px Impact, Arial Black, sans-serif'; g.fillText('?', x, y + 6); }
+        else { g.fillStyle = '#1d1a17'; arrow(g, x, y, step * .82, key); }
+      });
+    }
+    // Paint runs under the letters, as a sheet painted in a hurry.
+    for (let i = 0; i < 26; i++) { g.fillStyle = 'rgba(29,26,23,.35)'; g.fillRect(hash(i, 68) * w, 90 + hash(i, 69) * 40, 3, 10 + hash(i, 70) * 34); }
+    picture.needsUpdate = true;
+  };
+  return {sheet, update(state) {
+    const night = state?.bowlNight;
+    const hint = night && !night.turn ? secretHint((night.start?.seed ?? 1989) + night.night, night.foundTricks ?? []) : '';
+    sheet.visible = !!hint;
+    if (hint && hint !== shown) { shown = hint; paint(hint); }
+  }};
 }
 
 // A floodlight tower: four legs braced into a mast, a lamp bank turned to the floor,
@@ -548,7 +616,8 @@ export function createBowlStadium(course) {
   postMesh.name = 'Bowl fence posts';
   const people = crowd(course, uniforms);
   group.add(stands, wall, fence, postMesh, people.mesh, flashes(people.heads, uniforms));
-  group.add(spine(course, centre, wear), tyreWalls(course));
+  const banner = hintBanner(course);
+  group.add(spine(course, centre, wear), tyreWalls(course), banner.sheet);
   // Four floodlight towers behind the ends' stands, each aimed across the floor.
   const glow = glowTexture(), lights = [];
   const ring = course.features.bowl.ring, zones = course.features.bowl.zones;
@@ -590,6 +659,7 @@ export function createBowlStadium(course) {
     const scatter = uniforms.uCrowdScatter;
     scatter.value = inStands ? Math.min(1, scatter.value + dt * 4) : Math.max(0, scatter.value - dt * .5);
     outside.update(now, state, dt);
+    banner.update(state);
     const event = state?.bowlNight?.event;
     const sideBySide = event?.type === 'sideBySide';
     if (sideBySide && !raceGates) {

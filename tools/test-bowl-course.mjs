@@ -208,8 +208,10 @@ const parkedCars=outsideView.getObjectByName('Bowl car park cars');
 check(outsideView.userData.parkedCars===outsideRules.parking.length&&outsideRules.parking.length===16&&outsideRules.parking.every(car=>{
   const shell=parkedCars.getObjectByName(`Crushable ${car.id}`);return shell&&Math.hypot(shell.position.x-car.x,shell.position.z-car.z)<.01;}),
   'The 16 parked cars are drawn where the rules park them.');
-check([30,40,55].every(off=>ribbonGroundAt(bowl,100,off).y<=bowl.groundAt(100,outsideRules.wall-.5).y+1e-6)&&
-  farTerrainCornerHeight(bowl,0,0,100,outsideRules.wall+20,16)<0,'The ground mesh lies under the drawn stands and car park, not on the terraces.');
+const endS=data.zones.end1[0]+data.ring.radius*Math.PI/2;
+check([[100,30],[100,40],[endS,30],[endS,40]].every(([s,off])=>ribbonGroundAt(bowl,s,off).y<Math.min(BOWL_STAND.low,terraceHeight(outsideRules,off))-.1)&&
+  [[100,70],[100,95],[endS,70],[endS,120]].every(([s,off])=>farTerrainCornerHeight(bowl,0,0,s,off,16)<0),
+  'The ground mesh lies below the drawn stands and the car park asphalt, not on the terraces.');
 const marker=outsideView.userData.marker,gateAim=bowl.worldAt(data.gates[1].s,outsideRules.back+8);
 stadium.userData.update(2000,.35,{s:100,lateral:outsideRules.back+20,groundHeight:0,airHeight:0,
   bowlOutside:{where:'carpark',gate:{...data.gates[1],metres:64,aim:gateAim}}});
