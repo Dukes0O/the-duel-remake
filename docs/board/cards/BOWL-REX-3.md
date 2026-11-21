@@ -157,3 +157,9 @@ with a Removed line (nothing is removed). Before CARD DONE, search `tools/` for 
 `throwDue` and bring each older suite and scenario that names them up to date. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside this
 lane.
+
+## Kyle, 20 November 2026: after the first release
+
+Kyle chose to ship Show Night's first release (nights 1 to 5) without the eye beam and the bombs, so Gratian plays sooner.
+This card no longer holds BOWL-FINISH or BOWL-SOUND; it is built after the release, on the fight as BOWL-REX-2 leaves it, and
+goes live in a later release once Claude has driven it.
