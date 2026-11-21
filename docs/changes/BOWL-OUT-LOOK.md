@@ -1,0 +1,9 @@
+# BOWL-OUT-LOOK: over the wall, the stands, the car park and the two gates drawn
+
+**Changed (behind `titan-bowl`, drawing only).** Two faults found: the drawn stands stood 2 to 3 m above the rules' terraces, so a truck on them was buried to its roll cage; and the ground mesh followed the terraces as dirt slabs through the stands, tunnels and car park. The stands are redrawn on the rules' slope (`bowl-stadium.js`), and the Bowl course gives the ground mesh flat heights through `course.farGroundY` and a new `course.ribbonGroundY` hook (`bowl-course.js`, `ribbon-ground.js`; a course without the hook draws as before). New `bowl-outside-view.js`: tunnels, arches in the stand wall and stand back, lamps that flash while the truck is outside, the car park with its 16 parked cars, lamps, ribbed stand back and dirt bank, and an arrow with the gate's name and distance plus a light column over that gate. The crowd clears 6 m round a truck in the stands. Tyre walls line the stand wall and the Spine. Tonight's secret-trick hint hangs on a bedsheet at End 1.
+
+**Checks (rule 23).** `test-bowl-course` (new assertions: rows at the rules' heights, gates and parked cars where the rules put them, ground under the stands and car park, marker shows outside). On `11c82db1e`: core, `test-replays`, `test-combat-replays`, `test-world-composition` and `test-bowl-course` all passed (5 of 5; replay fingerprints and world signatures unchanged, so nothing re-recorded); `npm run build` passed. One independent review; its faults fixed and confirmed.
+
+**Looks.** Hand drive of the lane in real time: over the fence (16.8 m), along and up the stands, off the back (29 m), in through both gates from 25 m out. Sheet `docs/board/looks/bowl-out/round-1.jpg`; the camera in a tunnel is BOWL-OUT-FIX's (notes added to that card).
+
+**Removed.** The blank stand back, the 6.2 m podium and moat of the old stand profile, and the dirt slabs.
