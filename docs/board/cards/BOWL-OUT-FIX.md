@@ -85,3 +85,4 @@ The independent review reproduced a second renderer issue. On a steered 25 mph W
 - **Granted:** a second narrow hook in `src/render3d.js` at final placement, so only the Bowl's pre-cleared gate pose skips the
   renderer's separate height ease; every other pose is placed as before. Prove the delivered camera stays outside the arch at
   both gates.
+The longer low chase now holds until the Wide camera itself clears the arch. With the renderer's current height ease, the exact steered approach from the review passes at 25 and 40 mph at both gates, through the rise back to the regular view. All fourteen gate drives have no blocked or inside-solid frames and keep the old motion limits. The second renderer hook request is withdrawn. The previously granted read-only geometry option is the only renderer change.
