@@ -67,3 +67,13 @@ Before BOWL-NIGHTS installs the table, may the existing Show Night start take an
 ## Measured checkpoint, 20 November
 
 The runners and pieces are at `898c630c4`. A stock Titan cleared four buses without nitro and ten with nitro. A boosted Home Run reached the centre and returned through Pit Gate in 23.3 seconds from the wall crossing. A slower boosted pass reached the middle ring and returned in 23.5 seconds. These were real driving steps in memory. The card is paused for the direct start, reset and result hooks above, while Trick School takes bowl-night to finish its save review.
+
+## Claude answers, the start, reset and result hooks (20 November 2026)
+
+**Granted, all three,** limited to `src/bowl/bowl-night.js` and `src/bowl/bowl-screens.js`: the existing Show Night start may
+take an explicit registered jump event (no new picker entry; BOWL-NIGHTS selects the same runners through the season table);
+the runner may hold the simulation for the one-second reset while the Bowl screen paints a read-only fade; and the screen
+shows the best of the three goes. The build decisions are agreed: buses counted in world metres along the flight, a bus only
+when its whole width is cleared in the air, the flame plane checked at the truck's front and rear, Home Run's rings round a
+real boosted landing and closed by the real gate return. Trick School holds `bowl-night` until its save review is done; take
+it after. Merge under AGENTS rule 23; Claude drives the three events on the merged game with the next batch.
