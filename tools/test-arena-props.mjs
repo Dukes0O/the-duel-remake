@@ -42,9 +42,9 @@ function titanRace(car, tricks) {
   return duel;
 }
 
-function placeAtWrecks(duel, actor) {
-  const y = duel.course.groundAt(660, -5.2).y;
-  Object.assign(actor, {s: 660, prevS: 660, lateral: -5.2, prevLateral: -5.2, speedMph: 30, headingError: 0,
+function placeAtWrecks(duel, actor, start = 660, lateral = -5.2) {
+  const y = duel.course.groundAt(start, lateral).y;
+  Object.assign(actor, {s: start, prevS: start, lateral, prevLateral: lateral, speedMph: 30, headingError: 0,
     groundHeight: y, prevGroundHeight: y, _jumpY: y, airborne: false, impactTimer: 0});
 }
 
@@ -52,12 +52,12 @@ const laneInput = state => ({
   throttle: 1, brake: 0, steer: limited((state.lateral + 5.2) * .22 + (state.headingError || 0) * 1.4), boost: false,
 });
 
-function pastWrecks(duel, actor, chooseInput) {
+function pastWrecks(duel, actor, chooseInput, finish = 691) {
   for (let tick = 0; tick < 10 / dt; tick++) {
     const input = chooseInput();
     if (input) duel.setInput(input);
     duel.step(dt);
-    if (actor.s >= 691) return (tick + 1) * dt;
+    if (actor.s >= finish) return (tick + 1) * dt;
   }
   return null;
 }
@@ -117,6 +117,21 @@ for (const tricks of [false, true]) {
     speedMph: 30, groundHeight: y, prevGroundHeight: y});
   duel._crushProps(state);
   check(state.speedMph === 30, 'a clear rotated Dusthawk corner does not hit the visible wreck');
+}
+
+
+for (const [row, side] of [[330, 1], [680, -1], [960, 1]]) {
+  const duel = titanRace('dusthawk_rally', false), state = duel.state, driver = {};
+  const lane = side * 6.55, start = row - 20;
+  placeAtWrecks(duel, state, start, lane);
+  let chosenLane = null;
+  const elapsed = pastWrecks(duel, state, () => {
+    const input = unstuckInput(driver, duel);
+    chosenLane ??= state._titanWreckDetour?.lane ?? null;
+    return input ?? {...laneInput(state), steer: limited((state.lateral - lane) * .22 + (state.headingError || 0) * 1.4)};
+  }, row + 11);
+  check(elapsed != null && side * chosenLane > 6.55, 'the Dusthawk passes on the clear outside of the ' + row + ' m row');
+  console.log('Outside approach at ' + row + ' m: past the row in ' + elapsed.toFixed(2) + ' s.');
 }
 
 console.log(`Arena salvage models and drives: ${checks} checks passed.`);

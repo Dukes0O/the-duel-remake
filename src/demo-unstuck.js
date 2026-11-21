@@ -66,7 +66,8 @@ export function titanWreckDetourLane(duel, actor) {
   const nearby = props.map(prop => ({prop, s: duel.relativeS(prop.s, actor.s)}))
     .filter(row => row.s >= origin - 6 && row.s <= origin + 14);
   const lanes = [wreck.off - clearance, wreck.off + clearance].filter(lane => Math.abs(lane) < half)
-    .sort((left, right) => Math.abs(left) - Math.abs(right));
+    .sort((left, right) => Math.abs(left - actor.lateral) - Math.abs(right - actor.lateral) ||
+      Math.abs(left) - Math.abs(right));
   const lane = lanes.find(line => nearby.every(({prop}) => Math.abs(prop.off - line) >= prop.halfX + spec.halfWidth + .4));
   if (lane == null) return null;
   watch.lane = lane;
