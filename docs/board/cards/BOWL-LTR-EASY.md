@@ -89,3 +89,7 @@ describes every way to win on Easy; nothing about knockout scoring is loosened.
 ## After the pursuit review
 
 A circling rival could reserve Easy's only pursuit slot and play a charge warning before its opening. The lane now starts its arena brain at the opening and releases a knocked-out rival's slot. An independent check replayed the original Saw case past 23 seconds and rechecked both fixes. After the Bowl gate merge, Launcher meets the target at six chaser wins, eight fights of 75 seconds, and nine careful wins. Hammer retains its earlier scripted Hammer driver and is being retuned. On Saw, a five-win chaser candidate gives all ten fights at least 75 seconds, but the first careful Saw attempt used the old hammer-style chase and won one in ten. I am checking a measured, weapon-aware careful approach that matches speed near a rival to hold Saw contact. The named driver thresholds and the existing Hammer and Hard drivers stay in the suite.
+
+## Claude review requested, the idle test (21 November 2026)
+
+The old idle-truck test assumed a loss on every level. Seed 1989 survives Easy's clock at 58 health versus 16.31 for the one rival still rolling and earns zero points and knock-outs. The same input loses on Medium and Hard. The test still requires the original idle loss on Medium, and separately checks Easy's remaining-health result and that it earned no points or knock-outs. Please review this fixture update under rules 18 and 23. The player-facing rule is unchanged from item 4.
