@@ -11,11 +11,12 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {createProfile} from '../src/progression.js';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
+import {sweepObstacle} from '../src/collision.js';
 import {createScrapdomeYard} from '../src/scrapdome-yard.js';
 import {createRexView} from '../src/bowl/bowl-rex-view.js';
 import {bowlStrip, offscreenRexPull} from '../src/bowl/bowl-hud.js';
 import {createRexFight,stepRexFight,REX_RULES,REX_CUES,REX_EVENT,REX_TROPHY,rexInTheYard} from '../src/bowl/bowl-rex.js';
-import {eyePoint,hookMarker,modelPoint,rexAnchor,signedAngle,truckPoint,stepHook,releaseHook,TOW_LENGTH,wrap} from '../src/bowl/bowl-hook.js';
+import {eyePoint,hookMarker,modelPoint,rexAnchor,rexSolids,signedAngle,truckPoint,stepHook,releaseHook,TOW_LENGTH,wrap} from '../src/bowl/bowl-hook.js';
 import {childDrive} from './scenarios/bowl-rex-fight.mjs';
 
 const dt=1/120;
@@ -308,6 +309,21 @@ for(const probe of [{localZ:-1.55,y:0},{localZ:0,y:6},{localZ:6.6,y:8.8},{localZ
 assert.ok(!crossing({localZ:-10,y:10}));
 assert.ok(!crossing({low:true,fallen:true,localZ:0,y:9}),'air above the fallen body is clear');
 
+// The space between the feet is open down low, and the same body solids
+// rest against the floor by the time the fall's dust begins.
+{
+  const duel = start(), course = duel.course, fight = duel.state.bowlNight.event.rex;
+  const anchor = rexAnchor(fight, course), underBelly = modelPoint(anchor, 0, .25, -1.4);
+  assert.ok(rexSolids(fight, course).every(part =>
+    !sweepObstacle(underBelly, underBelly, part, anchor.heading, {halfWidth: .1, halfLength: .1, height: .2})),
+  'the visible gap between the feet has no solid below the belly');
+  Object.assign(fight, {phase: 'fallen', low: true, t: 1.5, boxes: [true, true, true]});
+  const down = rexSolids(fight, course);
+  assert.ok(Math.abs(Math.min(...down.map(part => part.minY)) - anchor.y) <= .2, 'the lowest fallen solid reaches the floor');
+  assert.ok(Math.abs(down.find(part => part.id === 'rex-ribs').minY - anchor.y) <= .2,
+    'the fallen ribcage lies against the floor at the landing');
+}
+
 // The yard trophy and its original save condition survive the change of fight.
 const profile=createProfile();
 assert.ok(!rexInTheYard(profile));
@@ -321,6 +337,10 @@ function modelFixture(){
     const box=new THREE.Group(),socket=new THREE.Mesh(new THREE.BoxGeometry(1,.1,1));
     box.name='battery-box-'+i;box.position.set(0,9.86,i-2);scene.add(box,socket);
     socket.name='battery-socket-'+i;
+    const leads = new THREE.Group();
+    leads.name = 'battery-leads-' + i;
+    leads.scale.setScalar(0);
+    socket.add(leads);
     for(const state of ['whole','open']){
       const cell=new THREE.Mesh(new THREE.BoxGeometry(1,.5,1),new THREE.MeshStandardMaterial());
       cell.name=box.name+'-'+state;cell.scale.setScalar(state==='open'?0:1);box.add(cell);
@@ -336,7 +356,12 @@ function modelFixture(){
   await yard.ready;yard.setRexOrnament(false);await Promise.resolve();assert.equal(loads,0);
   yard.setRexOrnament(true);await new Promise(r=>setTimeout(r,0));
   assert.equal(loads,1);const body=yard.group.getObjectByName('Beaten Scrapasaurus');assert.ok(body.visible);
-  for(let i=1;i<=3;i++)assert.ok(!model.getObjectByName('battery-box-'+i+'-whole').visible && model.getObjectByName('battery-socket-'+i).visible);
+  for (let i = 1; i <= 3; i++) {
+    assert.ok(!model.getObjectByName('battery-box-' + i + '-whole').visible && model.getObjectByName('battery-socket-' + i).visible);
+    const leads = model.getObjectByName('battery-leads-' + i);
+    assert.ok(leads.visible, 'the torn lead group is visible');
+    assert.deepEqual(leads.scale.toArray(), [1, 1, 1], 'the yard shows torn leads in socket ' + i);
+  }
   yard.group.updateMatrixWorld(true);assert.ok(Math.abs(new THREE.Box3().setFromObject(body).min.y-body.parent.getWorldPosition(new THREE.Vector3()).y)<1e-6);
   yard.setRexOrnament(false);assert.ok(!body.visible);yard.dispose();
 }
