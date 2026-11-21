@@ -668,7 +668,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, codex/bowl-ltr-easy"
     needs: [BOWL-FEEL-FIX]
     locks: [bowl-rivals]
     flag: "titan-bowl"
