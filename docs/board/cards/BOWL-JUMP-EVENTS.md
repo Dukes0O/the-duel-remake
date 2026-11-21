@@ -63,3 +63,7 @@ lane.
 Measure the bus row and flame plane in world metres along the Big Jump's flight, not around the ring. A bus counts only after the truck clears its whole width in the air. The flame plane checks the front and rear of the truck, so a nose that makes it over alone is a miss. Mark Home Run's rings around a real boosted landing on the terraces and use the actual gate return to close the attempt. The three jumps carry their best result into the event and Turn Show.
 
 Before BOWL-NIGHTS installs the table, may the existing Show Night start take an explicit registered jump event for the memory-only checks and Claude's batch drive, with no new picker entry? May the runner hold the simulation for the one-second reset while the existing Bowl HUD paints a read-only fade and shows the best of the three goes? The common hooks would be limited to `src/bowl/bowl-night.js` for the reset and direct start and `src/bowl/bowl-screens.js` for the fade and result line. BOWL-NIGHTS then selects these same runners through the season table.
+
+## Measured checkpoint, 20 November
+
+The runners and pieces are at `898c630c4`. A stock Titan cleared four buses without nitro and ten with nitro. A boosted Home Run reached the centre and returned through Pit Gate in 23.3 seconds from the wall crossing. A slower boosted pass reached the middle ring and returned in 23.5 seconds. These were real driving steps in memory. The card is paused for the direct start, reset and result hooks above, while Trick School takes bowl-night to finish its save review.
