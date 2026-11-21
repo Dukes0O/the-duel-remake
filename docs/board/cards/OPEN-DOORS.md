@@ -55,7 +55,60 @@ into a tin. Repair uses `repair.start` and `repair.complete`, in hand.
 
 ## Claude answers
 
-Owed before the build starts: Odessa's and Moss's lines for each service and each word.
+Written 21 November 2026. Every line is spoken in a talk bubble. `{price}` is the number the service rule works out.
+
+**Hours.** Odessa and Moss serve by day and at dusk. After dark each is asleep at the cot or the bench, and the talk
+table gives the "after dark" line.
+
+**Odessa, the forge shed: repair.** She is brisk and fond of machines, and she talks to the car as much as to the
+driver.
+
+| When | The line |
+| --- | --- |
+| The car is in the bay with armour missing, Sworn | **Odessa:** Bring that poor car in here. For you it's {price} scrap, and I'll straighten the bumper as well, because I can't stand looking at it. |
+| The same, Friendly | **Odessa:** Somebody has been hitting your car with other cars. I can have it right again for {price} scrap, if you can spare it. |
+| The same, Strangers | **Odessa:** I can mend that. It will cost you {price} scrap, and I'd like to see the scrap before I pick up a hammer. |
+| The same, Wary | **Odessa:** I'll mend it for {price} scrap. That's more than I'd charge a friend, and I think you know why. |
+| Cold | **Odessa:** I'm busy today, and I expect I'll be busy tomorrow as well. |
+| You say yes | **You:** Yes, please mend it. |
+| You say no | **You:** Not today, thank you. |
+| She answers no | **Odessa:** Suit yourself. The car knows where to find me, even if you don't. |
+| The work is done | **Odessa:** There, that's every panel back where it belongs. Try to bring it home in one piece this time, because I get attached. |
+| There is too little scrap | **Odessa:** You're {short} scrap short, and I don't mend half a car. Come back when you have it, and I'll keep the bay free. |
+| The car has nothing to mend | **Odessa:** There isn't a mark on it. Either you've been driving very carefully, or you haven't been anywhere interesting. |
+| The car is not in the bay | **Odessa:** I can't mend a car from across the yard. Park it on the marked patch outside my door, and then we'll talk. |
+| The car was patched in the field with the wrench | **Odessa:** I can see you've been at this with a wrench. It's a fair patch, and it will hold for a while, but a wrench out on the road only ever does about half the job. |
+| No service wanted, by day | **Odessa:** Mind the sparks. If you're only here to watch me work, then stand over by the door. |
+| After dark | **Odessa:** *(from the cot)* The forge is cold and so am I. Whatever it is, bring it to me in the morning. |
+
+**Moss, Big Bess's shed: the wash.** He is gloomy and kind, and everything he says comes round to Bess.
+
+| When | The line |
+| --- | --- |
+| The car is dirty, Sworn | **Moss:** I'll wash it for {price} scrap, and I'll do it properly, the way I do Bess. I don't say that to everybody. |
+| The same, Friendly | **Moss:** That car could do with a wash. It's {price} scrap for the brush and the bucket, and I'll throw in the wheels for nothing. |
+| The same, Strangers | **Moss:** I wash Bess every evening, so one more won't hurt me. It will be {price} scrap, and the water is grey before I even start. |
+| The same, Wary | **Moss:** I'll wash it for {price} scrap. Bess has first go at the clean water, though, and you'll have what's left. |
+| Cold | **Moss:** I've only enough water for Bess today. I'm sorry, but that's how it is. |
+| You say yes | **You:** Yes, please give it a wash. |
+| You say no | **You:** No, thank you, I'll leave it as it is. |
+| He answers no | **Moss:** Then leave it dirty. Bess won't mind being the best-looking thing in the yard. |
+| The work is done | **Moss:** There you are. I'd forgotten what colour it was under all that, and I think the car had forgotten as well. |
+| There is too little scrap | **Moss:** You haven't got {price} scrap, and water doesn't come free out here. I'd let you off if it were up to me, but it's Auntie who counts the tin. |
+| The car is clean already | **Moss:** There's nothing on it for me to wash. Come back when you've been somewhere dusty, which won't take you long round here. |
+| The car is grey with ash | **Moss:** That's ash on your car, and plenty of it. I'd know that grey anywhere. It comes from the burn, where Old Smoke's people drive. Shall I take it off for you? |
+| No service wanted, by day | **Moss:** Bess is resting. She likes company, as long as nobody mentions hills in front of her. |
+| After dark | **Moss:** *(low)* Bess is asleep, and I ought to be. Could it wait until the morning? |
+
+Moss's line about the ash is the only tell the game gives for the hidden rule in section 13. He says where the ash
+comes from and nothing about what it does.
+
+**Wim, wherever she is, the first time she sees the car clean.**
+
+> **Wim:** Your car is clean today. I liked it better when it was dirty, because then I could draw on it.
+
+**Prices to start from.** Repair: 2 scrap for every ten armour mended, 4 at least. Wash: 6 scrap. A quarter off for
+Friendly and half off for Sworn, a quarter more for Wary, rounded up to a whole scrap.
 
 ## Rules for every open Scablands card
 

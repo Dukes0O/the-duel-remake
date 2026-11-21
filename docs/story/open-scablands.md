@@ -242,8 +242,8 @@ part of the day. A routine is one of three kinds.
 *Checkpoints* (`src/world/open/content/checkpoints.js`).
 
 ```js
-{id: 'mall-road-2', at: {between: ['tin-town', 'dead-mall', .45]}, radius: 180,
-  chance: .35, cars: [1, 4],
+{id: 'mall-road-2', at: {road: 'mall-road', share: .7}, radius: 180,
+  chance: .45, cars: [1, 4],
   who: [{group: 'road-rats', weight: 3}, {group: 'traders', weight: 2}, {group: 'ash-men', weight: 1,
          needs: {fact: 'feud', of: 'ash-men', atLeast: 'Raiding'}}]}
 ```
@@ -252,7 +252,7 @@ part of the day. A routine is one of three kinds.
 
 ```js
 {id: 'glasshouse', name: 'The Glasshouse', kind: 'camp', people: 'glasshouse',
-  where: [{between: ['ridge', 'tin-town', .4, 300, -650]}, {at: ['ridge', -900, 700]}, {at: ['ships-in-sand', 1500, 900]}],
+  where: [{at: ['ships-in-sand', 2000, 700]}, {at: ['dead-mall', -1500, -2150]}, {at: ['tin-town', -200, 1900]}],
   foundWithin: 160, tell: 'thin-smoke-at-dusk',
   residents: ['marigold', 'finch', 'grower-1', 'grower-2', 'grower-3'],
   needs: ['glasshouse/pump', 'glasshouse/cart-axle', 'glasshouse/seed'], hostileTo: []}

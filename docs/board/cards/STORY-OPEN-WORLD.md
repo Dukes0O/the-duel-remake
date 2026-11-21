@@ -24,9 +24,9 @@ land and story.
 
 ## Still owed, in this order
 
-1. Claude's answers on OPEN-DOORS (Odessa's and Moss's lines), OPEN-CHECKPOINTS (where the checkpoints stand, the
-   groups' weights) and OPEN-SITES (the sites' possible positions, the camps' talk tables and needs). Each card waits
-   on Claude until its answers are written into it.
+1. Done, 21 November 2026: Claude's answers are written into OPEN-DOORS (Odessa's and Moss's lines), OPEN-CHECKPOINTS
+   (26 checkpoints, the groups' weights and the encounter lines) and OPEN-SITES (the sites' positions, and the talk
+   tables and needs of the Glasshouse and Radio Hill). None of the three waits on Claude now.
 2. Claude's drive of the first slice by hand when OPEN-DOORS has merged; then Kyle's try.
 3. After Kyle's answers: the town bridge (section 20) as cards, and the threads "Water under the grey", "A place to
    stand" and "The watch line" written in full.
@@ -36,4 +36,6 @@ land and story.
 
 - Three cards do not merge under rule 23: OPEN-STATE adds to what is saved, and OPEN-BURNED-PEN and OPEN-BURNED-RESCUE
   spend the player's scrap and embers. Rule 23 does not cover saves or pay, and AGENTS wins over a card.
-- The two figure cards name Astra, not Sol, because Kyle asked for Astra on graphics (decisions, 20 November 2026).
+- The two figure cards name Astra, not Sol. Kyle asked for Astra on graphics (decisions, 20 November 2026), and these
+  two are graphics from end to end: new figures modelled by a Blender recipe, their poses, and a look sheet for
+  Claude to judge. The Bowl fix cards went to Sol because they were rules and numbers, which these are not.
