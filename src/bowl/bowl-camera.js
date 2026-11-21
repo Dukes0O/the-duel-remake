@@ -354,7 +354,7 @@ export function stepBowlCamera(cam, truck, dt, {ended = false, wide = false, sol
   if (rexFall) return frameRexFall(cam, {x: truck.x, y: truck.y + C.aimUpMetres, z: truck.z},
     rexFall, solidTop, aspect, verticalFov);
   cam.rexFallYaw = null;
-  return {position, target, yaw, lift: cam.lift, hold: cam.holding};
+  return {position, target, yaw, lift: cam.lift, hold: cam.holding, ...(gateShare > 0 ? {gateChase: true} : {})};
 }
 
 // Which go the truck is in, so that a new go starts the camera afresh: the night makes a new event object every time an

@@ -67,9 +67,9 @@ function blocked(duel, pose, body) {
 
 // Drives a script: `input(duel, time, truck)` gives the controls for each step after the countdown, until `seconds` have
 // passed or the event ends and `afterEnd` seconds more have been drawn. Returns the frames the camera drew.
-function record(name, duel, seconds, input, {afterEnd = 0, wide = false} = {}) {
+function record(name, duel, seconds, input, {afterEnd = 0, wide = false, delivered = false} = {}) {
   const camera = createBowlCamera(), frames = [];
-  let time = 0, endedFor = 0;
+  let time = 0, endedFor = 0, previousHeight = null;
   while (duel.state.status === 'countdown') duel.step(SIM_DT);
   for (let frame = 0; frame < seconds / FRAME; frame++) {
     for (let sub = 0; sub < 2; sub++) {
@@ -79,6 +79,9 @@ function record(name, duel, seconds, input, {afterEnd = 0, wide = false} = {}) {
     const truck = truckOf(duel), ended = duel.state.status === 'bowl_break';
     const pose = stepBowlCamera(camera, truck, FRAME, {ended, wide, gateCourse: duel.course, referenceS: truck.s,
       solidTop: (x, z) => bowlSolidTop(duel.course, x, z, truck.s)});
+    if (delivered && previousHeight != null && !pose.gateChase)
+      pose.position.y = previousHeight + (pose.position.y - previousHeight) * (1 - Math.exp(-14 * FRAME));
+    previousHeight = pose.position.y;
     const body = {x: truck.x, y: truck.y + BOWL_CAMERA.aimUpMetres, z: truck.z};
     frames.push({time, truck, ended, pose: structuredClone(pose), seen: project(pose.position, pose.target, body),
       blocked: blocked(duel, pose, body), inside: bowlCameraObstructed(duel.course, body, truck.s),
@@ -244,6 +247,26 @@ for (const gateIndex of [0, 1]) {
     }
     ok(longestHidden <= .2 + 1e-8, name + ' never hides the truck for more than 0.2 seconds');
   }
+}
+
+
+// The renderer used to keep the new X/Z but ease the old Y into the steel
+// at the floor mouth. Check the final camera, not only the camera target.
+for (const gateIndex of [0, 1]) for (const speed of [25, 40]) {
+  const duel = showDuel(1), course = duel.course, outside = course.features.bowl.outside;
+  const gate = outside.gates[gateIndex], centre = course.worldAt(gate.s, outside.wall - 5);
+  approach(duel, gate.s + 3, outside.back + 9, -Math.PI / 2 + .2, speed);
+  const name = gate.name + ' steered Wide return at ' + speed + ' mph';
+  const frames = record(name, duel, 7.5, (_, __, truck) => ({
+    ...pace(truck, speed), boost: false,
+    steer: steerTo(truck, Math.atan2(centre.x - truck.x, centre.z - truck.z), 1.4),
+  }), {wide: true, delivered: true});
+  const through = frames.findIndex(({truck, pose}) => truck.lateral < outside.wall - 2 &&
+    course.nearest(pose.position.x, pose.position.z, truck.s).lateral < outside.wall - .5);
+  ok(through >= 0, name + ' brings the truck and camera back to the floor');
+  const gateFrames = frames.slice(0, through + 1);
+  steady(name, gateFrames);
+  ok(gateFrames.every(frame => !frame.cameraInside), name + ' keeps the displayed camera out of the arch');
 }
 
 // 6. Launch onto the terraces, climb to the last row, leap into the car park,
