@@ -137,7 +137,7 @@ function freestyle(night, eventIndex) {
   const reasons = [];
   plain.onChange((_, ev) => { if (ev.bowlSchool?.type === 'why') reasons.push(ev.bowlSchool.reason); });
   for (let attempt = 0; attempt < 2; attempt++) plain.emit({bowlTrickTry: {reason: 'wheelieSpeed'}});
-  assert.deepEqual(reasons, ['wheelieSpeed'], 'a normal Bowl event also explains each cause once');
+  assert.deepEqual(reasons, [], 'Freestyle never gives Trick School reasons');
 }
 
 {

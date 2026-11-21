@@ -50,6 +50,15 @@ const clock = value => {
 const popupActive = (record, now) => !!record && now - record.at < 1.5;
 const popupMultiplier = factor => factor.toFixed(2).replace(/0$/, '');
 
+function bestGoLabel(type, bestGo) {
+  if (!bestGo) return '';
+  const result = whole(bestGo.result);
+  if (type === 'longJump') return `BEST GO: ${result} ${bestGo.result === 1 ? 'BUS' : 'BUSES'}`;
+  if (type === 'highJump') return `BEST GO: ${result} m`;
+  if (type === 'bestTrick') return `BEST GO: ${result} POINTS`;
+  return '';
+}
+
 function sideBySideGap(state, event) {
   const rival = state.opponents?.[0];
   if (!rival || !event?.finishS) return '';
@@ -65,6 +74,11 @@ export function arenaTrickStrip(state) {
   const event = show.event, crowd = Math.round(crowdAfter(event.crowd, show.clock-event.crowdAt));
   return {name:'Tricks', points:whole(event.score)+' points', crowd, crowdLabel:'CROWD x'+(1+crowd/100).toFixed(1)};
 }
+export function bowlGateLabel(state) {
+  const gate = state.bowlOutside?.gate;
+  return gate ? `${gate.name.toUpperCase()} · ${whole(Math.max(0, gate.metres))} m` : '';
+}
+
 export function bowlStrip(state, view, rivalName = () => null) {
   if (!view) return null;
   const night = state.bowlNight, event = night?.event;
@@ -84,7 +98,10 @@ export function bowlStrip(state, view, rivalName = () => null) {
     rexPull: rexPullProgress(event?.rex), rexPullPoint: event?.rex?.hook.tip ?? null,
     gapLabel: rivalTrick ? `ROUND ${event.go.number} OF 3` : view.event === 'sideBySide' ? sideBySideGap(state, event) : '',
     crushLabel: rivalTrick ? `BIG KETTLE: ${rivalTrick.trick.toUpperCase()} ${whole(rivalTrick.points)}`
-      : crush ? `CRUSHED ${event.count} OF ${view.target}` : '',
+      : !crush ? '' : event.count >= view.target ? `CRUSHED ${event.count} OF ${event.total} · GOAL MET`
+      : `CRUSHED ${event.count} OF ${view.target}`,
+    bestGoLabel: bestGoLabel(view.event, event?.bestGo),
+    gateLabel: bowlGateLabel(state),
     chainLabel: rivalTrick ? `YOU ${wonRounds}, BIG KETTLE ${rounds.length - wonRounds}`
       : crush && event.chain > 1 ? `CHAIN x${event.chain}` : '',
   };
@@ -107,6 +124,11 @@ export function bowlTrickPopup(record, now) {
   const relation = Math.round(base * Number(multiplier)) === record.points ? '=' : '≈';
   return {name: (prefix + name).toUpperCase(),
     points: `${base.toLocaleString('en-US')} x${multiplier} ${relation} ${whole(record.points)}`, fresh: record.fresh};
+}
+
+export function bowlTrickPopups(event, now) {
+  const records = event.crushPopup ? [...(event.trickPopups ?? []), event.crushPopup] : event.trickPopups ?? [];
+  return records.map(trick => bowlTrickPopup(trick, now)).filter(Boolean);
 }
 
 export function bowlResultReady(night) {
@@ -256,13 +278,36 @@ export function offscreenRexPull(view, projectPoint) {
   return Math.round(view.rexPull * 100);
 }
 
+export function bowlWaypoint(state, course, projectPoint, aspect = 1) {
+  const outside = state.bowlOutside, gate = outside?.gate;
+  const crush = state.bowlNight?.event?.crushHint;
+  if (!gate && !crush) return null;
+  if (gate) {
+    const inside = outside.where === 'stands';
+    const boundary = course.features.bowl.outside;
+    const point = course.worldAt(gate.s, inside ? boundary.wall : boundary.back);
+    const arch = projectPoint({...point, y: inside ? 8 : 5.8});
+    if (arch?.visible && arch.y > .13) {
+      return {x: Math.max(.02, Math.min(.98, arch.x)), y: Math.min(.98, arch.y), angle: 180, edge: false};
+    }
+  }
+  const target = gate ? {...gate.aim, y: 2.5} : crush;
+  const marker = projectPoint(target);
+  if (!marker) return null;
+  const dx = (marker.guideX ?? marker.x) - .5;
+  const dy = (marker.guideY ?? marker.y) - .5;
+  const scale = Math.max(Math.abs(dx) / .46, Math.abs(dy) / (dy > 0 ? .40 : .32));
+  if (scale) return {x: .5 + dx / scale, y: .5 + dy / scale, angle: Math.atan2(dx * aspect, -dy) * 180 / Math.PI, edge: true};
+  return marker.behind ? {x: .96, y: .5, angle: 90, edge: true} : {x: .5, y: .18, angle: 0, edge: true};
+}
+
 export function createBowlHud({stage, app, projectPlayer = () => null}) {
   const host = document.createElement('div');
   host.className = 'bowl-event-overlay';
   host.hidden = true;
-  host.innerHTML = `<section class="bowl-hud" aria-label="Show Night">
+  host.innerHTML = `<div class="bowl-event-panels"><section class="bowl-hud" aria-label="Show Night">
     <div class="bowl-hud-title"><b class="bowl-hud-event"></b>
-      <div style="display:flex;align-items:center;gap:8px"><span class="bowl-hud-goal"></span>
+      <div style="display:flex;align-items:center;gap:8px"><span class="bowl-hud-goal"></span><span class="bowl-hud-gate" hidden></span>
       <span class="bowl-hud-pull" hidden><svg width="25" height="25" viewBox="0 0 24 24" fill="none" role="progressbar"
         aria-label="Battery pull" aria-valuemin="0" aria-valuemax="100">
         <circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".3" stroke-width="3"></circle>
@@ -270,7 +315,7 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
           stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"></circle>
       </svg></span></div></div>
     <div class="bowl-hud-numbers"><span class="bowl-hud-score"></span><span class="bowl-hud-clock"></span>
-      <span class="bowl-hud-gap" hidden></span><span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span></div>
+      <span class="bowl-hud-gap" hidden></span><span class="bowl-hud-crush" hidden></span><span class="bowl-hud-chain" hidden></span><span class="bowl-hud-best-go" hidden></span></div>
     <label class="bowl-hud-crowd"><span></span><meter min="0" max="100" value="0"></meter></label>
   </section>
   <p class="bowl-hud-mo" role="status" hidden></p>
@@ -282,19 +327,23 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
       ${bowlSegmentsMarkup}
       <b class="bowl-health-alert" hidden>DANGER</b>
     </section>
-  </div>`;
+  </div></div>
+  <span class="bowl-waypoint" aria-hidden="true" hidden>▲</span>`;
   stage.append(host);
   const find = selector => host.querySelector(selector);
   const caption = find('.bowl-hud-mo'), plan = find('.bowl-plan'), popup = find('.bowl-trick-popup');
+  const panels = find('.bowl-event-panels'), waypoint = find('.bowl-waypoint');
   const healthNode = find('.bowl-health'), hitLabel = find('.bowl-health-hit'), danger = find('.bowl-health-alert');
   const segments = find('.bowl-health-segments'), zoneNodes = [...healthNode.querySelectorAll('[data-zone]')];
   const fields = [
-    ['.bowl-hud-goal', view => view.goal],
+    ['.bowl-hud-goal', view => view.gateLabel ? '' : view.goal],
+    ['.bowl-hud-gate', view => view.gateLabel],
     ['.bowl-hud-score', view => view.points],
     ['.bowl-hud-clock', view => view.time],
     ['.bowl-hud-gap', view => view.gapLabel],
     ['.bowl-hud-crush', view => view.crushLabel],
     ['.bowl-hud-chain', view => view.chainLabel],
+    ['.bowl-hud-best-go', view => view.bestGoLabel],
     ['.bowl-hud-event', view => view.driver ? `${view.driver} IS DRIVING · ${view.name.toUpperCase()}` : view.name.toUpperCase()],
     ['.bowl-hud-crowd span', view => view.crowdLabel],
   ].map(([selector, value]) => [find(selector), value]);
@@ -303,8 +352,18 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
   let lastEvent, previousHealth, lastHit, lastPopups, popupSize;
   const text = (node, content) => { if (node.textContent !== content) node.textContent = content; };
   const hide = (node, hidden) => { if (node.hidden !== hidden) node.hidden = hidden; };
-  return (state, course, view) => {
-    hide(host, !view);
+  return (state, course, view, schoolOutside = false) => {
+    hide(host, !view && !schoolOutside);
+    if (host.hidden) return;
+    hide(panels, !view);
+    const guiding = state.bowlOutside?.gate || state.bowlNight?.event?.crushHint;
+    const direction = guiding ? bowlWaypoint(state, course, projectPlayer, stage.clientWidth / Math.max(1, stage.clientHeight)) : null;
+    hide(waypoint, !direction);
+    if (direction) {
+      waypoint.style.left = `${direction.x * 100}%`;
+      waypoint.style.top = `${direction.y * 100}%`;
+      waypoint.style.transform = `translate(-50%, -50%) rotate(${direction.angle}deg)`;
+    }
     if (!view) return;
     const night = state.bowlNight ?? state.arenaTrickShow;
     if (lastEvent !== night.event) {
@@ -326,16 +385,16 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     hide(caption, !view.caption);
     text(caption, view.caption ? `BIG MO: ${view.caption}` : '');
 
-    const tricks = lastEvent.trickPopups ?? [];
-    const popups = tricks.map(trick => bowlTrickPopup(trick, night.clock)).filter(Boolean);
+    const popups = bowlTrickPopups(lastEvent, night.clock);
     if (state.bowlSecretSavePending && popups.some(t => t.name === 'SECRET TRICK FOUND'))
       popups.push({name: 'SAVED FOR THIS SESSION', points: 'Local save unavailable.'});
     const marker = popups.length ? projectPlayer() : null;
     hide(popup, !marker?.visible);
     if (!popup.hidden) {
-      if (lastPopups !== tricks) {
-        popup.innerHTML = popups.map(trick => `<p><b>${trick.name}</b> <span>${trick.points}</span>${trick.fresh ? ' <em>NEW</em>' : ''}</p>`).join('');
-        lastPopups = tricks;
+      const markup = popups.map(trick => `<p><b>${trick.name}</b> <span>${trick.points}</span>${trick.fresh ? ' <em>NEW</em>' : ''}</p>`).join('');
+      if (lastPopups !== markup) {
+        popup.innerHTML = markup;
+        lastPopups = markup;
         popupSize = null;
       }
       const width = stage.clientWidth, height = stage.clientHeight;

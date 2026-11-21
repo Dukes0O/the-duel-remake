@@ -17,7 +17,7 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongP
 import {FIELD, nitroLocked} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
-import {carriedSteer, landBowlTricks, stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
+import {bowlGroundTricksAllowed, carriedSteer, landBowlTricks, stepBowlTricks, tricksEnabled} from './bowl/bowl-tricks.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -131,7 +131,7 @@ export function _drive(dt) {
   const tricks = tricksEnabled(this, s);
   const showFlight = tricks && s.airborne;
   const exitFlightSpeed = showFlight && s._jumpOrigin?.exitNitro ? s.speedMph : null;
-  const showGround = tricks && s.input.boost && (s.input.brake || s.input.throttle && (s.bowlGroundTrick || s.speedMph < 15));
+  const showGround = tricks && bowlGroundTricksAllowed(s) && s.input.boost && (s.input.brake || s.input.throttle && (s.bowlGroundTrick || s.speedMph < 15));
   // Balancing on one axle uses a gentle pull so there is time to hold the pose.
   const balancing = showGround && Math.abs(s.input.steer) <= .5 && (s.speedMph < 10 || s.bowlGroundTrick === 'wheelie');
   const throttle = showFlight ? 0 : balancing ? s.input.throttle * .12 : s.input.throttle;
