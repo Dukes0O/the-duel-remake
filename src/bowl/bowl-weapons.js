@@ -16,6 +16,8 @@ export const SHOW_WEAPONS = Object.freeze({
 const RIVALS = {'rust-rhino':'horn','big-kettle':'hammer','tin-lizard':'saw','old-bess':'launcher','dragon-wagon':'fire'};
 const TELLS = {easy:.8,medium:.6,hard:.4};
 const HAMMER_LEAN = Math.PI / 6;
+const EASY_RIVAL_IMPACT_LIMIT = 8;
+const EASY_RIVAL_CONTACT_PER_SECOND = 4;
 const cue = (duel,id) => duel.emit({bowlWeaponCue:id});
 
 function fit(actor, kind) {
@@ -55,6 +57,23 @@ export function bowlHealthLoss(duel,actor,fraction,owner,side='front',styleHit=t
     if(owner) actor.bowlLastHitBy=owner;
   }
   return removed;
+}
+
+function weaponImpact(duel, actor, fraction, owner, side) {
+  const state = duel.state;
+  if (actor === state && owner && owner !== 'player' && state.bowlNight?.cpuDifficulty === 'easy') {
+    fraction = Math.min(fraction, EASY_RIVAL_IMPACT_LIMIT / actor.maxArmor);
+  }
+  return bowlHealthLoss(duel, actor, fraction, owner, side);
+}
+
+function weaponContact(duel, actor, fraction, owner, side, contactBudget) {
+  if (!contactBudget || actor !== duel.state) {
+    bowlHealthLoss(duel, actor, fraction, owner, side, false);
+    return;
+  }
+  const underLimit = Math.min(fraction, contactBudget.remaining / actor.maxArmor);
+  contactBudget.remaining -= bowlHealthLoss(duel, actor, underLimit, owner, side, false);
 }
 
 // Measure from the nose to the nearest point on the target truck's oriented body.
@@ -108,7 +127,7 @@ function fire(duel,actor,weapon,target) {
       const hits=[];
       showTarget(duel,actor,rules.reach,hits);
       for (const hit of hits) {
-        bowlHealthLoss(duel,hit.actor,.3,owner,hit.side);
+        weaponImpact(duel,hit.actor,.3,owner,hit.side);
         hit.actor.bowlNoSteer=1;
       }
     } else actor.bowlHeldStill=.5;
@@ -117,12 +136,12 @@ function fire(duel,actor,weapon,target) {
     launch(duel,actor,target?.actor??actor,target?.side);
     cue(duel,'bowl.launcher.fire');
   } else if(kind==='horn' && target) {
-    bowlHealthLoss(duel,target.actor,Math.max(0,Math.abs(actor.speedMph)-20)/100,owner,target.side);
+    weaponImpact(duel,target.actor,Math.max(0,Math.abs(actor.speedMph)-20)/100,owner,target.side);
   }
   rest(weapon,rules.rest);
 }
 
-function tickWeapon(duel,actor,night,dt) {
+function tickWeapon(duel,actor,night,dt,contactBudget) {
   const weapon=actor.bowlWeapon;
   if(!weapon?.kind || actor.combatWrecking) return;
   const kind=weapon.kind, rules=SHOW_WEAPONS[kind], player=actor===duel.state;
@@ -163,19 +182,20 @@ function tickWeapon(duel,actor,night,dt) {
     actor.bowlCut=target.actor.bowlCut=true;
     actor.bowlSawTargetId = combatOwnerId(duel, target.actor);
     const cut=Math.min(dt,4-weapon.cutSeconds);
-    bowlHealthLoss(duel,target.actor,cut/8,owner,target.side,false);
+    weaponContact(duel,target.actor,cut/8,owner,target.side,contactBudget);
     weapon.cutSeconds+=cut;
     if(weapon.cutSeconds>=4-1e-8) {rest(weapon,3);weapon.cutting=false;cue(duel,'bowl.saw.hot');}
-  } else bowlHealthLoss(duel,target.actor,dt/10,owner,target.side,false);
+  } else weaponContact(duel,target.actor,dt/10,owner,target.side,contactBudget);
 }
 
 export function stepShowWeapons(duel,night,dt) {
   const actors=[duel.state,...duel.state.opponents], e=night.event;
+  const contactBudget = night.cpuDifficulty === 'easy' ? {remaining: EASY_RIVAL_CONTACT_PER_SECOND * dt} : null;
   for (const actor of actors) {
     actor.bowlCut = false;
     delete actor.bowlSawTargetId;
   }
-  for(const actor of actors) tickWeapon(duel,actor,night,dt);
+  for(const actor of actors) tickWeapon(duel,actor,night,dt,contactBudget);
   for(const actor of actors) if(!actor.bowlCut) actor.bowlWasCut=false;
   const outside=duel.course.features.bowl.outside, wall=outside.wall;
   for(const actor of actors) {
@@ -230,7 +250,7 @@ export function showMotion(duel,actor,dt,drive) {
       if(flight.owner) {
         actor.bowlHeldStill=2.5; actor.bowlRighting=true;
         actor.bowlPose={roll:Math.PI/2,pitch:0,yaw:0};
-        bowlHealthLoss(duel,actor,1/6,flight.owner,flight.side);
+        weaponImpact(duel,actor,1/6,flight.owner,flight.side);
       }
     }
     return true;

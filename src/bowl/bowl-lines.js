@@ -313,6 +313,7 @@ export const BOWL_RESULTS = Object.freeze({
     reason === 'gate' ? 'It reached the car park gate before you could stop it.'
       : reason === 'toasted' ? 'Its fire and its junk caught your truck too many times.' : null,
   ].filter(Boolean),
+  eventRexPoints: ({boxes, fall}) => `The battery boxes earned ${boxes.toLocaleString()} points, and the fall earned ${fall.toLocaleString()}.`,
   eventRexYard: 'The Scrapasaurus is going to stand in your yard from now on.',
   pickTitle: 'SHOW NIGHT',
   pickIntro: 'Big Mo runs three events every night. Choose a night to see what is on.',

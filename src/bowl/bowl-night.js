@@ -515,6 +515,7 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   duel.emit({bowlScore: {type: fact.type, points, score: event.score, crowd: scored.crowd, cue: points ? cue : null}});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
+  return points;
 }
 
 // Facts that the Duel announces: launches off cars and crushes. Other jumps are
@@ -524,8 +525,18 @@ export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
   if (night.school) explainBowlTry(duel, night, ev);
-  // Count the Rex hold from the fall, including any time spent dragging the final box.
-  if (ev.bowlRex?.type === 'fall') night.event.resultHoldSince ??= night.clock;
+  if (night.event.type === 'scrapasaurus') {
+    const action = ev.bowlRex?.type;
+    if (action === 'boxOut' || action === 'fall') {
+      const points = night.event.rexPoints ??= {boxes: 0, fall: 0};
+      if (action === 'boxOut') points.boxes += addFact(duel, {type: 'rexBox'}, null);
+      else {
+        // Count the hold from the fall, including time spent dragging the final box.
+        night.event.resultHoldSince ??= night.clock;
+        points.fall += addFact(duel, {type: 'rexFall'}, null);
+      }
+    }
+  }
   if (ev.bowlSecretFound) {
     const secret = secretOf(ev.bowlSecretFound.kind);
     if (secret) {
@@ -588,6 +599,7 @@ function finishEvent(duel, outcome) {
   const measured = RUNNERS.get(event.type)?.result?.(event);
   const result = {...outcome, event: event.type, eventIndex: event.eventIndex, attempt: event.attempt,
     won: outcome.won === true, score: event.score, ...measured,
+    ...(event.rexPoints ? {rexPoints: {...event.rexPoints}} : {}),
     metres: +event.metres.toFixed(1),
     crowdPeak: +event.crowdPeak.toFixed(1), playerId: night.playerId};
   night.attempts.push(result);

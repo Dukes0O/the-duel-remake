@@ -1743,3 +1743,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-21 BOWL-SCREEN-FIX: corrected the Bowl HUD, jump start line, School card and Table reset. Eight Rule 23 suites and production build passed on d7b244868. Claude checks the live marker and first-visit fit.
 - 2026-11-21 BOWL-FREESTYLE-NIGHTS: four distinct floors and rivals; Easy wins 6/7/7/9 of ten, no one-trick wins, all 12 Rule 23 suites and the build passed. Claude drives the merged batch.
 - 2026-11-21 BOWL-SOUND: 95 Show Night cues on their own CC0 takes, levelled against the car crash; rule 23 set (35 suites), the ten suites after merging Freestyle and the build passed. Owed: BOWL-REX-3's eleven, the trick.go hook, Claude's listening in the final drive.
+- 2026-11-21 BOWL-BATCH3-FIX: Easy chasers 6/7/7 of ten, close Rex fall and scored boxes, and 24 wreck approaches above 24.96 mph. Nine Rule 23 suites, the 30-suite released lane, reviews and builds passed.

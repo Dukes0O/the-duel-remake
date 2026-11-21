@@ -211,6 +211,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     if (state.bowlNight.foundTricks?.length === 7) lines.push('You found all seven secret tricks.');
     if (result.lent) lines.push(WORDS.nightTruckBack);
 
+    if (last?.rexPoints) lines.push(WORDS.eventRexPoints(last.rexPoints));
     if (result.events.some(entry => entry.event === 'scrapasaurus')) lines.push(WORDS.eventRexYard); // BOWL-REX-FIGHT
     return `<section class="bowl-panel bowl-result" role="dialog" aria-modal="true" aria-labelledby="bowl-title" data-bowl-result="night"><header><p class="eyebrow">THE BOWL</p><h2 id="bowl-title">${WORDS.nightTitle(result.night)}</h2></header>${moLine('night.won')}${moLine(`rex.seen.${result.night}`)}<ul class="bowl-scores">${result.events.map(entry => `<li><span>${escapeHTML(BOWL_EVENT_NAMES[entry.event] ?? entry.event)}</span><b>${entry.score.toLocaleString()}</b></li>`).join('')}</ul>${lines.map(say).join('')}<footer>${button(WORDS.pickButton, 'show-night-pick', '', true)}${leaveButtons()}</footer></section>`;
   }
