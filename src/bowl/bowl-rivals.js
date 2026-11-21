@@ -88,8 +88,8 @@ export const BOWL_RIVAL_RULES = Object.freeze({
 // rival starts hunting immediately. The others take separate lanes before
 // joining, giving the driver time to chase and use their weapon.
 const EASY_FIGHT_OPENINGS = Object.freeze({
-  3: {ownRamRecoil: .53, joinsAt: [0, 62, 97], lanes: [0, 6, 10], speedMph: 38, lookAhead: 11},
-  4: {ownRamRecoil: .39, joinsAt: [0, 55, 90], lanes: [0, -5, 5], speedMph: 36, lookAhead: 14},
+  3: {ownRamRecoil: .42, joinsAt: [0, 55, 82], lanes: [0, 6, 10], speedMph: 38, lookAhead: 11},
+  4: {ownRamRecoil: .22, joinsAt: [54, 0, 100], lanes: [6, 0, 10], speedMph: 37, lookAhead: 13, pace: {minimum: 28, maximum: 35}},
   5: {ownRamRecoil: .42, joinsAt: [0, 52, 92], lanes: [0, -5, 5], speedMph: 36, lookAhead: 14},
 });
 
@@ -268,7 +268,7 @@ registerBowlEventRunner('lastTruckRolling', {
     if (opening) night.event.ownRamRecoil = opening.ownRamRecoil;
     roster.forEach((id, index) => {
       const truck = s.opponents[index];
-      const drive = {...rules.pace};
+      const drive = {...rules.pace, ...opening?.pace};
       const joinsAt = opening?.joinsAt[index] ?? 0;
       if (joinsAt > 0) {
         drive.opening = {joinsAt, lane: opening.lanes[index], speedMph: opening.speedMph, lookAhead: opening.lookAhead};

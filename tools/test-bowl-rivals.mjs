@@ -163,8 +163,55 @@ function chaser(seed) {
   };
 }
 
+// A careful Saw drive closes the gap, then matches the rival's pace to keep
+// the spinning blade in reach. The driver still has to steer and use F.
+function sawCareful(seed) {
+  const rng = makeRng(seed ^ 0x25b0);
+  const cruise = rng.range(34, 38), response = rng.range(.13, .19);
+  const definition = SHOW_WEAPONS.saw;
+  let wait = 0, turn = 0, pace = cruise;
+  let stuck = 0, back = 0, previous;
+  return duel => {
+    const s = duel.state;
+    if (s.status !== 'racing') return;
+    const me = worldPose(duel, s);
+    wait -= DT;
+    if (wait <= 0) {
+      wait = response;
+      let target = null, distance = Infinity;
+      for (const rival of s.opponents) {
+        if (rival.combatWrecking) continue;
+        const pose = worldPose(duel, rival), gap = Math.hypot(pose.x-me.x, pose.z-me.z);
+        if (gap < distance) { target = {pose, rival}; distance = gap; }
+      }
+      if (!target) return;
+      const {pose, rival} = target;
+      const lead = Math.max(0, Math.min(4, (distance - 9) * .22));
+      const yaw = Math.atan2(pose.x + Math.sin(pose.heading) * lead - me.x, pose.z + Math.cos(pose.heading) * lead - me.z);
+      const error = wrap(yaw - me.heading);
+      turn = Math.max(-1, Math.min(1, -2.4 * error));
+      pace = distance > 11 ? cruise : Math.max(12, Math.min(26, Math.abs(rival.speedMph) + 4));
+      if (Math.abs(error) > 1.1) pace = Math.min(pace, 18);
+    }
+    if (!previous || Math.hypot(me.x-previous.x, me.z-previous.z) > .8 || s.airborne || s.bowlHeldStill > 0) {
+      previous = me;
+      stuck = 0;
+    } else stuck += DT;
+    if (back <= 0 && stuck > 1.4) { back = .75; stuck = 0; }
+    if (back > 0) {
+      back -= DT;
+      duel.setInput({throttle: 0, brake: 1, steer: -Math.sign(turn || 1), interact: false, boost: false});
+      return;
+    }
+    const target = showTarget(duel, s, definition.reach, null, definition.arc);
+    const brake = s.speedMph > pace + 6 ? .4 : 0;
+    duel.setInput({throttle: +(s.speedMph < pace), brake, steer: turn, interact: !!target, boost: false});
+  };
+}
+
 function carefulWeaponDrive(weapon, seed) {
   if (weapon === 'hammer') return hammerDrive(seed);
+  if (weapon === 'saw') return sawCareful(seed);
   const drive = childDriver(seed);
   return (duel, aim) => {
     if (duel.state.status !== 'racing') return;

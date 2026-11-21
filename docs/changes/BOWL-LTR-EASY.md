@@ -1,13 +1,14 @@
 # BOWL-LTR-EASY
 
-Easy rivals join pursuit at different times. The player's own-ram recoil is set by the night. A truck that survives the Easy clock wins on remaining health, and a tie goes to the player. Medium and Hard use damage dealt.
-Ten fixed starts per weapon, seeds 1989 plus 101 per trial. Scratch measurements, with the proposed shared hooks loaded in memory.
+Easy rivals join pursuit in stages. Circling and knocked-out rivals leave the live pursuit slot available. A truck that survives wins at the clock when no rolling rival has more health. Ties go to the player. Medium and Hard still count damage dealt.
+Ten fixed seeds per weapon, starting at 1989 in steps of 101, measured after the Bowl gate fix and the pursuit review.
 
-| Night | Chaser wins | Fights at least 75 seconds | Careful wins | Average player health lost by source |
+| Night | Chaser wins | Fights at least 75 s | Careful wins | Mean player health lost by source |
 | --- | ---: | ---: | ---: | --- |
-| Hammer | 7 | 8 | 6 | walls 13.8, own ram 20.3, rival ram 2.4, hammer 12.6 |
-| Saw | 5 | 8 | 6 | walls 7.8, own ram 16.7, rival ram 1.8, saw 12.3, hammer 7.2 |
-| Launcher | 7 | 9 | 6 | walls 11.2, own ram 17.6, rival ram 2.6, fire 2.5, out of bounds 3.7 |
+| Hammer | 6 | 8 | 6 | wall 16.4, own ram 19.5, rival ram 3.0, hammer 10.8 |
+| Saw | 5 | 10 | 6 | wall 10.2, own ram 9.0, rival ram 2.3, hammer 17.8, saw 3.7 |
+| Launcher | 6 | 8 | 9 | wall 10.4, own ram 18.9, rival ram 1.8, fire 11.1 |
 
-The 30 mph pursuit check moved to Medium. Easy checks cover the separate opening, remaining-health ties and losses, and six valid wins per weapon. Knockout credit is still tested directly. Final checks and build are pending. Claude drives the merged batch under rule 23.
+The 30 mph pursuit assertion moved to Medium, with separate Easy checks. The approved careful gate counts valid clock wins. Knockout credit still has its own collision proof. The Saw driver matches speed near the opponent to hold contact. The original Hammer and Hard drives stay in the suite.
+Final lane checks and build pending. Claude drives the merged batch under rule 23.
 **Removed** — the damage-dealt result at time-up on Easy.
