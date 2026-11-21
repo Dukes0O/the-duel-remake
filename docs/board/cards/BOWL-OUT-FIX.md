@@ -45,3 +45,11 @@ with a Removed line. Memory-only saves. No new dependency, network request or ke
   4.8 m from the fifth row (28.2 m out) to the stand back, and the first four rows and the walkway are cut away over it.
 - Seen in the hand drive at both gates: from the mouth in the stand back to the floor the camera is above the terraces
   and the truck is hidden for about two seconds.
+
+## Added from Batch drive 2 of the merged game at `fb02d3233` (20 November 2026; pictures in `.evidence/2026-11-20/batch-2/` of the integration folder)
+
+3. **The arena wall can be driven over on the ground.** At about 40 mph and a steep angle (lap 133 to 143 m) the truck rode
+   up the wall onto the stands with no ramp, in Freestyle and in the Scrapasaurus fight (`n5-free-wall-control.jpg`).
+   BOWL-OUT-SIM's own check says a truck on the floor cannot cross the wall on the ground anywhere but the gates. The way out
+   is a jump, and only a jump: that is what makes it a find (decisions, 20 November). Check: from every 5 m of the wall's
+   length, a truck driven at 20 to 60 mph at 30 to 90 degrees to the wall, wheels on the floor, stays inside.

@@ -33,3 +33,13 @@ None new.
 
 Behind `titan-bowl`. Tested and merged under AGENTS rule 23, recorded in `docs/changes/BOWL-LOOK-FIX.md` with a Removed line.
 Memory-only saves. No new dependency, network request or key.
+
+## Added from Batch drive 2 of the merged game at `fb02d3233` (20 November 2026; pictures in `.evidence/2026-11-20/batch-2/` of the integration folder)
+
+6. **The Scrapasaurus's fire cannot be seen:** in three pictures in the fire phase only the chest glow grows
+   (`n5-rex-c-02-fire-1.0s.jpg`). Fire that reads as fire from the driver's seat, on the orange the rules mark.
+7. **The cable is a flat pale ribbon.** Draw a steel cable with thickness and sag, taut when the pull is on.
+8. **No sparks** were seen when a box tears out.
+9. **High Jump's flame bar** reads as bunting (an orange bar with small triangles): draw it as a gas pipe with real flames
+   (`n4-high-04-go2-nitro-at-the-bar.jpg`).
+10. The fall needs the camera fix in BOWL-REX-FIX to be seen at all; judge it after that merges.

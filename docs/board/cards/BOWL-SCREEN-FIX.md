@@ -41,3 +41,16 @@ Locks: `bowl-screens`.
 
 Behind `titan-bowl`. Tested and merged under AGENTS rule 23, recorded in `docs/changes/BOWL-SCREEN-FIX.md` with a Removed line.
 Memory-only saves. No new dependency, network request or key.
+
+## Added from Batch drive 2 of the merged game at `fb02d3233` (20 November 2026; pictures in `.evidence/2026-11-20/batch-2/` of the integration folder)
+
+8. **Trick School's reasons leak into real events as Big Mo's lines:** "You kept W held from the run-up" in Long Jump, where
+   holding W is right, and "You were going too fast for a wheelie" in Freestyle and the jumps
+   (`n2-long-02-go1-no-nitro-air.jpg`). A failed-try reason shows in Trick School only.
+9. **W and Space on a jump event's start line give a wheelie,** and the truck crawls; it spoiled three goes. On the run-up of
+   Long Jump, High Jump and Best Trick, ground tricks do not start; Space is nitro there.
+10. **Trick School's first-visit card** puts its three buttons below a 716-high view. Fit it in the view.
+11. **After the donut lesson** the truck is left facing away from the Table. Put it back at the Table's run-up, as the later
+    lessons do.
+12. **The best go so far** in a jump event shows in the strip during play, not only on the result card.
+13. **Wording:** "the night is theirs!" uses "theirs" for one driver. Write "the night belongs to our driver!" or name the driver.

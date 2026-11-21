@@ -32,3 +32,11 @@ Tested and merged under AGENTS rule 23.
 ## Sound cues
 
 None new.
+
+## Added from Batch drive 2 of the merged game at `fb02d3233` (20 November 2026; pictures in `.evidence/2026-11-20/batch-2/` of the integration folder)
+
+4. **The cable does not hold the truck.** With the cable tight and "KEEP PULLING" up, the truck drove through the wall, the
+   stands and the bank to 317 m and then 475 m out, and won the fight from the car park (`n5-rex-a-20-pulling.jpg`). The
+   cable is 15 m long: a hooked truck can never be further than 15 m from the box. When the cable is tight the truck's
+   travel away is stopped (it strains, nose up), and the beast's pull drags it back as designed. Check: no hooked truck is
+   ever more than 15 m from its box, whatever the throttle and nitro.

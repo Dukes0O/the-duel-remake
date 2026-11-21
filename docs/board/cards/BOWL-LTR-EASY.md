@@ -37,3 +37,11 @@ None new.
 
 Behind `titan-bowl`. Tested and merged under AGENTS rule 23, recorded in `docs/changes/BOWL-LTR-EASY.md` with a Removed line.
 Memory-only saves. No new dependency, network request or key.
+
+## Added from Batch drive 2 of the merged game at `fb02d3233` (20 November 2026; pictures in `.evidence/2026-11-20/batch-2/` of the integration folder)
+
+4. **Keeping away loses too.** On Night 3, a driver who kept away for the full two minutes with 44 health left still lost
+   ("another truck had hit the others harder"). On Easy, a driver still rolling when the clock ends wins if no rival has more
+   health left; on Medium and Hard the rule stays.
+5. Nights 3 and 5 could not be passed after three tries each, so this card now stops the season for a tween. It goes first
+   among the Bowl's fix cards.
