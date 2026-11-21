@@ -559,7 +559,8 @@ export function bowlHudView(state, course) {
     timeLeft: limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null,
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
     eventCount: night.school ? 1 : SHOW_NIGHTS[night.night - 1].events.length,
-    caption: event.schoolReason?.until > night.clock ? event.schoolReason.text : night.caption?.text ?? '',
+    caption: event.schoolReason?.until > night.clock ? event.schoolReason.text
+      : night.caption?.text ?? (state.bowlSchoolSavePending ? 'Your Trick School choice is waiting to be saved.' : ''),
     driver: night.turn?.driver || null};
 }
 

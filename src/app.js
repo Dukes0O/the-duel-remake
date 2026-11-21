@@ -2647,6 +2647,7 @@ export class App {
       eventIndex,turn,school:school?this._bowlSchoolForDriver():null});
     if(!started)return false;
     this._bowlRun={runId:this.runId,playerId:this.player.id,night,from:from==='yard'?'yard':'menu',settled:null,turn:!!turn,school};
+    if (!school) this.duel.state.bowlSchoolSavePending = !this._flushBowlSchool(this.player.id);
     return true;
   }
   continueShowNight(){
@@ -2656,7 +2657,6 @@ export class App {
   }
   leaveShowNight(to='menu'){
     if(!this.duel.state.bowlNight)return false;
-    if (this.showNightRun()?.school) this._flushBowlSchool(this.player.id);
     this.returnToMenu();
     if(to==='yard'&&this.wastelandUnlocked())this.visitWasteland({arrived:true});
     return true;
@@ -3044,6 +3044,11 @@ export class App {
     this.keys = {};
     this._resetKeyboardInput();
     const st = this.duel.state;
+    const bowlRun = this.showNightRun();
+    if (st.bowlNight && bowlRun && bowlRun.runId === this.runId && st.playerId === bowlRun.playerId) {
+      this._flushBowlSchool(bowlRun.playerId);
+    }
+    delete st.bowlSchoolSavePending;
     if(st.arena?.worldJob?.definition?.kind==='town-job')void this._townJob?.settle(st.arena.worldJob); // TOWN-HAUL-JOB: every way out saves the town
     cleanupWorldJobLoan(this.duel);
     this.duel.clearDeep();this.deepAudio.stop();

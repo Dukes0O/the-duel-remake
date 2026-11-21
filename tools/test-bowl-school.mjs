@@ -4,7 +4,7 @@ import {Duel} from '../src/game.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
 import {bowlSchoolRecord} from '../src/bowl/bowl-save.js';
 import {BOWL_SCHOOL_LESSONS, BOWL_SCHOOL_REASONS} from '../src/bowl/bowl-school.js';
-import {loadPlayers} from '../src/progression.js';
+import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 
 const DT = 1 / 120;
 const fresh = () => new Duel({seed: 1989});
@@ -143,8 +143,13 @@ function freestyle() {
 
 {
   const memory = new Map();
+  let blockPlayerWrites = false;
   globalThis.localStorage = {get length() { return memory.size; }, key: index => [...memory.keys()][index] ?? null,
-    getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
+    getItem: key => memory.get(key) ?? null,
+    setItem(key, value) {
+      if (blockPlayerWrites && key === PLAYERS_KEY) throw new Error('The driver record is temporarily unavailable.');
+      memory.set(key, String(value));
+    },
     removeItem: key => memory.delete(key)};
   globalThis.window = new EventTarget();
   window.location = {search: ''};
@@ -178,6 +183,34 @@ function freestyle() {
   assert.equal(app.showNightChoices().offerSchool, true, 'the next driver gets their own offer');
   assert.ok(app.startBowlSchool());
   assert.equal(app.duel.state.bowlNight.event.lesson, 'wheelie', 'the next driver starts at the first lesson');
+  const second = app.player.id, secondDriver = schoolDriver();
+  const savedSchool = id => bowlSchoolRecord(loadPlayers().players.find(player => player.id === id).profile);
+  blockPlayerWrites = true;
+  for (let i = 0; i < 300 && !app.duel.state.bowlNight.school.completed.length; i++) {
+    app.duel.setInput(secondDriver(app.duel.state)); app.duel.step(DT);
+  }
+  assert.equal(app.duel.state.bowlSchoolSavePending, true);
+  assert.deepEqual(savedSchool(second).completed, [], 'a failed write does not report a durable tick');
+  blockPlayerWrites = false;
+  app.togglePause();
+  assert.ok(app.requestNavigation('menu'), 'the pause screen uses ordinary menu navigation');
+  assert.deepEqual(savedSchool(second).completed, ['wheelie'], 'leaving through Pause retries the lesson write');
+
+  assert.ok(app.addPlayer('Night driver').ok);
+  const third = app.player.id;
+  blockPlayerWrites = true;
+  assert.equal(app.skipBowlSchoolOffer(), false, 'the first-visit choice could not be saved');
+  assert.ok(app.startShowNight(1, {cpuDifficulty: 'easy'}));
+  assert.equal(app.duel.state.bowlSchoolSavePending, true, 'the ordinary night keeps the pending dismissal visible');
+  while (app.duel.state.bowlNight.caption) app.duel.step(DT);
+  assert.match(bowlHudView(app.duel.state, app.duel.course).caption, /waiting to be saved/);
+  assert.equal(savedSchool(third).offered, false);
+  blockPlayerWrites = false;
+  app.togglePause();
+  assert.ok(app.requestNavigation('menu'));
+  assert.deepEqual(savedSchool(third), {offered: true, completed: []}, 'ordinary Night 1 retries a pending dismissal');
+  assert.equal(app.showNightChoices().offerSchool, false);
+  assert.deepEqual(savedSchool(first).completed, ['wheelie'], 'a retry keeps other drivers\' records');
   app.dispose();
 }
 

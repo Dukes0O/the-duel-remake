@@ -120,7 +120,7 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     const done = BOWL_SCHOOL_LESSONS.filter(item => show.school.completed.includes(item.kind))
       .map(item => BOWL_TRICK_GUIDE.find(entry => entry.kind === item.kind).name);
     const why = schoolReason?.until > show.clock ? schoolReason.text : '';
-    const key = [kind, done.length, why, state.bowlSchoolSavePending].join('|');
+    const key = [kind, done.join(','), why, state.bowlSchoolSavePending].join('|');
     if (renderedLesson === key) return;
     renderedLesson = key;
     const content = lesson && guide
