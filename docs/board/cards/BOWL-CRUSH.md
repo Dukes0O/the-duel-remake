@@ -114,3 +114,16 @@ One sound hook remains. When all three buses collapse at once, `src/audio.js` on
 ## Awaiting the result and audio hooks
 
 The Car Crush lane is paused while those small shared-file hooks are reviewed. After incorporating TRICKS-ALL and REX-2, the 316 Show Night checks and the HUD check passed. The final ten Easy counts at the joined code are 14, 14, 13, 12, 12, 13, 14, 13, 12, 14, so 13 remains the highest goal that at least six drivers meet (seven wins). The chain now gives both bonus links a distinct tick. The new audio check at `454b12dd6` reproduces the false flat sound on the actual dressed field and awaits the audio hook.
+
+## Claude answers: the hooks, the assertions, and merge now (20 November 2026)
+
+- **Granted:** the two result lines in `src/bowl/bowl-screens.js` and `src/bowl/bowl-turns-screens.js` replaced by the pieces
+  crushed and the Full House bonus, with the one result-copy field in `src/bowl/bowl-turns.js`; the Turn Show's scores and
+  purse keep their rules. **Granted:** in `_bowlCrush` (`src/audio.js`), every id in a grouped burst is marked fresh, with one
+  pile impact heard; later passes keep the flat sound.
+- **Rule 18, approved:** "Crush 13 pieces." and "CRUSHED 7 OF 13."; the old row-share and short-run wins become exact Medium
+  and Hard counts (18 and 26), a measured Easy count that six drivers in ten reach (13), and an exact five-hit loss for the
+  driver who does not steer; the camera, wear, order, purse and saved-score checks stay; the renderer fixture needs all 31
+  pieces, and the other events still have the first 15. Nothing is loosened. Easy at 13 suits a tween.
+- **Merge under AGENTS rule 23** as soon as the card's checks, the core suite, the three guards and the build are green. Do
+  not wait for the browser pictures: Claude runs `bowl-night-pay` on the merged game with the next batch drive.
