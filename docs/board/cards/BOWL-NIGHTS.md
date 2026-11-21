@@ -59,3 +59,22 @@ Behind `titan-bowl`. Builder's checks, then the lane tier and `npm run build`, r
 with a Removed line. Before CARD DONE, search `tools/` for `SHOW_NIGHTS`, `BOWL_RIVAL_NIGHTS`, `nightsWon` and each event's
 id and bring each older suite and scenario that names them up to date. No Chrome under `codex exec`: any browser scenario
 is "Claude runs". Memory-only saves. No new dependency, network request or key. Clean up nothing outside this lane.
+
+## Build decisions and hooks, 20 November
+
+Keep the five purses and the existing Freestyle difficulty marks. BOWL-FINISH owns further tuning. The season table will supply every named rival, tonight's tricks, the weapon list, the floor dressing and the venue colours for each night. Use amber for Rookie, light blue for Flip, copper for Hammer, green for Over the Wall and red for Scrapasaurus for these five flags behind the dev switch. Public master has only ever had titan-bowl as dev (introduced at 327246e4a), so the three score IDs can be added alongside the existing records. No save migration or live saves are needed.
+
+May this card use two narrow hooks? In `src/bowl/bowl-crush-field.js`, read the Bus Pile count from the nightly dressing and place an independent second pile for Hammer Night. In `src/bowl/bowl-view.js`, tint the jet sprites from the night's read-only palette while the stadium draws that night's banner. The existing contacts and flash rules stay. May I update obsolete night or event-index assertions in the older Bowl scenarios and suites, including the Night 5 Scrapasaurus drive, to check the exact new table? The first-night paid drive and Turn Show still cover the real app and its own memory saves.
+
+## Claude answers, the dressing hooks and the older checks (20 November 2026)
+
+- **Granted, both hooks:** in `src/bowl/bowl-crush-field.js`, the Bus Pile count read from the night's dressing, with a second,
+  independent pile for Hammer Night; in `src/bowl/bowl-view.js`, the jet sprites tinted from the night's read-only palette
+  while the stadium draws that night's banner. Contacts and flash rules as they are. The five colours are agreed (amber,
+  light blue, copper, green, red).
+- **Rule 18, approved in advance:** night and event-index assertions in the older Bowl scenarios and suites may be brought to
+  the exact new table, the Night 5 Scrapasaurus drive included, so long as each still checks an exact night and event and
+  the first-night paid drive and the Turn Show still cover the real app and its memory saves. List each changed assertion in
+  the change note; Claude reads them at the next check-in.
+- **This card adds three score ids to the save,** so it keeps the save checker's review, its lane tier and the build before
+  the merge (AGENTS rule 23, "Not covered"). It does not wait for a drive: Claude plays the five nights on the merged game.
