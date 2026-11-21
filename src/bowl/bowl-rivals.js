@@ -3,14 +3,12 @@
 // driving of their own. Side by Side and Last Truck Rolling run from seed and
 // inputs with no DOM, graphics or storage. Side by Side supplies a lane and
 // speed plan to the ordinary rival driver. Last Truck Rolling keeps the arena's
-// target selection and gives its pilot a Bowl pace.
+// target selection and gives its pilot a Bowl pace. On Easy, two rivals
+// circle at the start and join the fight at different times.
 //
-// Last Truck Rolling is the arena's own fight on the Bowl (src/arena): its
-// teams (every truck for itself), its computer drivers (src/arena/arena-brains.js
-// and arena-pilot.js) and its wrecks. The show changes three things and nothing
-// in its opponent selection: show weapons and no crates, the same show armor for every
-// truck, and a wrecked truck is knocked out and stays where it stopped instead
-// of coming back.
+// The fight uses the arena's teams, computer drivers and wreck rules. The
+// show supplies its own weapons and armor, removes crates and keeps knocked
+// out trucks where they stopped until the end of the fight.
 import {BOWL_NIGHT_RULES, SHOW_TRUCK, addComputerTruck, bowlLayout, registerBowlEventRunner,
   sayBowlLine, startBowlEventAt} from './bowl-night.js';
 import {prepareShowWeapons, stepShowWeapons} from './bowl-weapons.js';
@@ -81,11 +79,18 @@ export const BOWL_RIVAL_RULES = Object.freeze({
     // Every truck, the player's too, takes the same knocks before it is out.
     // The arena's armor (about 194 for a Titan) would take eight or more
     // full-speed charges; a hard wall hit or a scrape on the scenery costs 20.
-    // At 60 a child-pace driver knocks out one to three trucks on Easy and
-    // still wins 9 or 10 times in 10 (tools/test-bowl-rivals.mjs); at 80 it
-    // knocked out one or two and nearly every event ran to the clock.
     showArmor: 60,
+    pace: Object.freeze({minimum: 30, maximum: 40}),
   }),
+});
+
+// Easy openings for Hammer, Barrel Roll and Scrapasaurus Night. The lead
+// rival starts hunting immediately. The others take separate lanes before
+// joining, giving the driver time to chase and use their weapon.
+const EASY_FIGHT_OPENINGS = Object.freeze({
+  3: {ownRamRecoil: .42, joinsAt: [0, 55, 82], lanes: [0, 6, 10], speedMph: 38, lookAhead: 11},
+  4: {ownRamRecoil: .22, joinsAt: [54, 0, 100], lanes: [6, 0, 10], speedMph: 37, lookAhead: 13, pace: {minimum: 28, maximum: 35}},
+  5: {ownRamRecoil: .42, joinsAt: [0, 52, 92], lanes: [0, -5, 5], speedMph: 36, lookAhead: 14},
 });
 
 // The rival for a night's Side by Side, and the rivals for its Last Truck
@@ -258,10 +263,18 @@ registerBowlEventRunner('lastTruckRolling', {
     arena.timeLimitSec = Infinity; arena.suddenDeathLimitSec = Infinity;
     s.combat.arenaSpots = []; s.combat.pickups = [];
     s.weaponLoadout = [];
+    const level = levelOf(night);
+    const opening = level === 'easy' ? EASY_FIGHT_OPENINGS[night.night] : null;
+    if (opening) night.event.ownRamRecoil = opening.ownRamRecoil;
     roster.forEach((id, index) => {
       const truck = s.opponents[index];
+      const drive = {...rules.pace, ...opening?.pace};
+      const joinsAt = opening?.joinsAt[index] ?? 0;
+      if (joinsAt > 0) {
+        drive.opening = {joinsAt, lane: opening.lanes[index], speedMph: opening.speedMph, lookAhead: opening.lookAhead};
+      }
       Object.assign(truck, {bowlRival: id, weaponLoadout: [], weaponsDisabledUntil: Infinity,
-        bowlFightDrive: {minimum: 30, maximum: 40}, ramDamageScale: BOWL_RIVAL_HITS[levelOf(night)]});
+        bowlFightDrive: drive, ramDamageScale: BOWL_RIVAL_HITS[level]});
       arena.participants[index + 1].name = BOWL_RIVALS[id].name.toUpperCase();
     });
     for (const actor of [s, ...s.opponents]) actor.maxArmor = actor.armor = rules.showArmor;
@@ -283,11 +296,13 @@ registerBowlEventRunner('lastTruckRolling', {
     if (!wreck) return;
     duel.emit({bowlWeaponCue: 'bowl.knockout'});
     if (wreck.victimId === 'player') return;
-    const index = duel.state.arena.participants.findIndex(participant => participant.id === wreck.victimId) - 1;
+    const {participants} = duel.state.arena;
+    const index = participants.findIndex(participant => participant.id === wreck.victimId) - 1;
     const entry = event.rivals[index], truck = duel.state.opponents[index];
     if (!entry || entry.out || !truck) return;
     Object.assign(entry, {out: true, by: wreck.creditedId, at: +duel.state.stageTimeSec.toFixed(3)});
     holdWreck(truck);
+    if (levelOf(night) === 'easy') participants[index + 1].targetId = null;
     if (wreck.creditedId === 'player') event.knockouts++;
     sayBowlLine(duel, `out.${entry.id}`);
     duel.emit({bowlKnockout: {rival: entry.id, by: wreck.creditedId, cue: 'bowl.knockout'}});
@@ -311,6 +326,10 @@ registerBowlEventRunner('lastTruckRolling', {
     }
     if (event.rivals.every(entry => entry.out)) return {...facts(), won: true};
     if (s.stageTimeSec >= rules.timeLimitSec) {
+      if (levelOf(night) === 'easy') {
+        const won = event.rivals.every((entry, index) => entry.out || s.armor >= s.opponents[index].armor);
+        return {...facts(), won, timeUp: true, decidedBy: 'health'};
+      }
       // Time is up: of the trucks still rolling, the one that has hit the
       // others hardest wins, and a tie goes to the player. Keeping out of the
       // way wins nothing.

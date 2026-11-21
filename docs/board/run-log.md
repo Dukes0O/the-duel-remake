@@ -1738,3 +1738,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 21 November, BOWL-REX-SOLIDS merged from bee8caaaa. Removed the invisible bogie, lowered the fallen ribcage, and showed all three torn leads in the yard. All three Easy drivers with Space, throttle only, and late reaction won 10/10. Six suites, independent review and build passed.
 - 21 November, STORY-OPEN-WORLD design merged: the open Scablands (docs/story/open-scablands.md sections 9 to 22), the burned camp in full, eleven Codex cards and OPEN-SOUND, five questions for Kyle. Docs and board only; board and hygiene checks passed.
 - 2026-11-21 QA-TITAN-ARENA-WRECKS: Dusthawk and rivals clear the parked wrecks; 29 then 25 selected suites and the build passed.
+- 2026-11-21 BOWL-LTR-EASY: chaser 6/5/6 and careful 6/6/9 wins; 8/10/8 at 75 seconds. Final rivals and replay/world guards and build passed under rule 23.
