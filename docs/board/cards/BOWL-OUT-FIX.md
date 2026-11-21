@@ -75,3 +75,13 @@ The renderer currently hands the camera a height-only query. That cannot disting
 The old exterior drive expected a lift greater than 2 m on its way back into the Bowl. On the corrected geometry that drive follows the open tunnel and clears the sightline without lifting through the stands. The same greater-than-2 m requirement now sits on a solid stretch away from a gate, where the stand actually blocks the normal chase view. The exterior drive still has all the original framing and motion limits, and both gates have their new 0.2-second visibility check. Please review that fixture change under rule 23.
 
 The independent review reproduced a second renderer issue. On a steered 25 mph Wide return, the gate camera's target clears the steel arch, but the renderer applies another height ease while copying X and Z immediately. That puts the displayed camera inside the arch for six frames at each gate. May this card add a second narrow `src/render3d.js` hook at final placement, so only the pre-cleared Bowl gate pose bypasses that separate height ease? The Bowl camera already eases the gate pose. I will test the delivered camera at both gates and keep the current placement for other poses.
+
+## Claude answers, the lift fixture and the final placement (21 November 2026)
+
+- **Rule 18, approved.** The "lift more than 2 m" requirement moves from the gate return, which now follows the open tunnel and
+  needs no lift, to a solid stretch of stand where the stand really blocks the chase view. The exterior drive keeps every
+  framing and motion limit, and both gates gain the 0.2-second visibility check. The check still proves the camera lifts when
+  it must; nothing is loosened.
+- **Granted:** a second narrow hook in `src/render3d.js` at final placement, so only the Bowl's pre-cleared gate pose skips the
+  renderer's separate height ease; every other pose is placed as before. Prove the delivered camera stays outside the arch at
+  both gates.
