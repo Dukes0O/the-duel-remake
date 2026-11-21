@@ -3163,7 +3163,7 @@ export class App {
       brake: heldInput(context, 'brake', k) ? 1 : pad.brake,
       steer: keyboardSteer || pad.steer,
       boost: heldInput(context, 'boost', k) || pad.boost,
-      interact: heldInput(context, 'interact', k) || pad.interact,
+      interact: !!(heldInput(context, 'interact', k) || pad.interact),
     });
     if (context === 'firetruck') setJobVehicleSpray(this.duel, heldInput(context, 'spray', k)); // TOWN-FIRE-JOB: hold H to spray
   }
