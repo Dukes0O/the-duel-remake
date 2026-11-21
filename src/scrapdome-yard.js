@@ -87,6 +87,7 @@ export function createScrapdomeYard(course, {
       const model = asset.scene;
       model.traverse(node => {
         if (/^battery-box-\d-whole$/.test(node.name)) node.visible = false;
+        if (/^battery-leads-[1-3]$/.test(node.name)) node.scale.setScalar(1);
         if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; }
       });
       // On its side: rolled about its length, then stood on the ground where it lies.
