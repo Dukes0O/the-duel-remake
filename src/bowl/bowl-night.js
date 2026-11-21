@@ -57,7 +57,8 @@ export const BOWL_PURSE = Object.freeze([250, 300, 350, 400, 600]);
 
 // bowl-show.js names events in camelCase, bowl-save.js in kebab case.
 export const SAVE_EVENT_IDS = Object.freeze({carCrush: 'car-crush', freestyle: 'freestyle',
-  sideBySide: 'side-by-side', lastTruckRolling: 'last-truck-rolling'});
+  sideBySide: 'side-by-side', lastTruckRolling: 'last-truck-rolling',
+  longJump: 'long-jump', highJump: 'high-jump', homeRun: 'home-run'});
 
 // The truck for the night: the player's own Titan, or the show's truck lent at
 // factory settings. A lent truck is only this race's car; nothing adds it to a save.
@@ -242,7 +243,8 @@ registerBowlEventRunner('freestyle', {
     });
   },
   target: night => BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)],
-  goal: night => BOWL_GOALS.freestyle(BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)].toLocaleString(), night.night),
+  goal: night => BOWL_GOALS.freestyle(BOWL_NIGHT_RULES.freestyle.target[difficultyOf(night)].toLocaleString(),
+    SHOW_NIGHTS[night.night - 1].freestyle?.name),
   timeLimitSec: BOWL_NIGHT_RULES.freestyle.timeLimitSec,
   step(duel, night) {
     if (duel.state.stageTimeSec < BOWL_NIGHT_RULES.freestyle.timeLimitSec) return null;
@@ -379,7 +381,13 @@ export function startBowlNight(duel, options = {}) {
 function loadBowlEvent(duel) {
   const night = duel.state.bowlNight, type = bowlEventType(night), runner = RUNNERS.get(type);
   const attempt = 1 + night.attempts.filter(entry => entry.event === type && entry.eventIndex === night.show.eventIndex).length;
-  duel._bowlEventCourse = {...BOWL_COURSE, laps: runner.laps, ...(runner.dressing ? {bowlDressing: runner.dressing} : {})};
+  const definition = SHOW_NIGHTS[night.night - 1], floor = definition.dressing[type];
+  const dressing = floor?.kind ?? runner.dressing;
+  duel._bowlEventCourse = {...BOWL_COURSE, laps: runner.laps,
+    ...(dressing ? {bowlDressing: dressing} : {}),
+    ...(floor ? {bowlFloor: floor} : {}),
+    ...(!night.school ? {bowlColours: definition.colours, bowlNightName: definition.name} : {}),
+  };
   duel.startCampaign({...night.start, startStage: standInStage(), mode: 'duel', opponentCount: 0,
     cpuDifficulty: night.cpuDifficulty, rival: null});
   const s = duel.state;

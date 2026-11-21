@@ -18,7 +18,7 @@ const button = (label, action, extra = '', primary = false) =>
   `<button type="button" class="${primary ? 'primary-action' : 'secondary-action'}" data-action="${action}"${extra}>${label}</button>`;
 export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
   let pickerFrom = null, level = null, openingNight = null, help = null;
-  let jumpFade = null, schoolPanel = null, renderedLesson = null;
+  let jumpFade = null, schoolPanel = null, renderedLesson = null, openingSound = null;
   const renderHud = createBowlHud({stage: ui.stage, app, projectPlayer});
   const turns = createTurnScreens({app, escapeHTML, eventGuide});
   const say = text => `<p>${escapeHTML(text)}</p>`;
@@ -69,12 +69,14 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
 
   function openingCard() {
     const choices = app.showNightChoices?.(), offer = choices?.offerSchool && openingNight === 1;
+    const definition = SHOW_NIGHTS[openingNight - 1];
     const featured = featuredBowlTricks(openingNight);
     const illustrations = featured.flatMap(kind => BOWL_TRICK_GUIDE.filter(entry => entry.kind === kind))
       .map(entry => `<li>${bowlTrickEntryMarkup({...entry, points: ''})}</li>`).join('');
     return `<section class="bowl-panel bowl-opening" role="dialog" aria-modal="true" aria-labelledby="bowl-title">
-      <h2 id="bowl-title">Night ${openingNight}</h2>
+      <h2 id="bowl-title">${escapeHTML(definition.name)}</h2>
       ${bowlOpeningLines(openingNight, choices?.lent).map(line => `<p class="bowl-mo">${escapeHTML(line)}</p>`).join('')}
+      ${say(definition.events.map(event => BOWL_EVENT_NAMES[event]).join(' · '))}
       ${featured.length ? say('These tricks pay double tonight.') : ''}
       ${illustrations ? `<ul>${illustrations}</ul>` : ''}
       ${featured.includes('doubles') ? say('Hold the trick key through the second turn to earn double points.') : ''}
@@ -90,11 +92,13 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
     if (!choices) return '';
     level ??= choices.level;
     const rows = choices.nights.map(entry => {
+      const definition = SHOW_NIGHTS[entry.night - 1];
       const line = entry.state === 'won' ? WORDS.pickNightWon(entry.night) : entry.state === 'open' ? WORDS.pickNightOpen(entry.night)
         : entry.state === 'locked' ? WORDS.pickNightLocked(entry.night) : WORDS.pickNightLater;
       const start = ['open', 'won'].includes(entry.state)
         ? button(WORDS.pickStart(entry.night), 'show-night-start', ` data-night="${entry.night}"`, entry.state === 'open') : '';
-      return `<li class="bowl-night-row" data-night-state="${entry.state}"><b>NIGHT ${entry.night}</b>${say(line)}${start}</li>`;
+      return `<li class="bowl-night-row" data-night-state="${entry.state}">
+        <b>${escapeHTML(definition.name)}</b><div>${say(definition.newTonight)}${say(line)}</div>${start}</li>`;
     }).join('');
     const levels = LEVELS.map(([id, label]) =>
       `<button type="button" class="choice${id === level ? ' on' : ''}" data-action="show-night-level" data-level="${id}" aria-pressed="${id === level}">${label}</button>`).join('');
@@ -265,8 +269,17 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
         app.clearShowNightMessage?.();
       } else if (action === 'show-night-close') { pickerFrom = null; openingNight = null; }
       else if (action === 'show-night-level') level = target.dataset.level;
-      else if (action === 'show-night-start') openingNight = Number(target.dataset.night);
-      else if (action === 'show-night-back') openingNight = null;
+      else if (action === 'show-night-start') {
+        const selected = Number(target.dataset.night);
+        if (!SHOW_NIGHTS[selected - 1]) return false;
+        openingNight = selected;
+        app.audio?.unlock?.();
+        app._showNightCue?.('bowl.night.open');
+        clearTimeout(openingSound);
+        openingSound = setTimeout(() => {
+          if (openingNight === selected) app._showNightCue?.('bowl.night.new');
+        }, 650);
+      } else if (action === 'show-night-back') openingNight = null;
       else if (action === 'show-night-school') {
         if (app.startBowlSchool?.({from: pickerFrom ?? 'menu'})) {
           pickerFrom = null;

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {BOWL_EVENTS, SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle, scoreStuntEvent, landingPoints, trickVariety} from '../src/bowl/bowl-show.js';
+import {SHOW_NIGHTS, createShowNight, crowdAfter, finishShowEvent, scoreFreestyle, scoreStuntEvent, landingPoints, trickVariety} from '../src/bowl/bowl-show.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -51,17 +51,31 @@ check(highCrowd.points > scoreStuntEvent({type: 'crush'}, 0).points, 'a higher c
 check(crowdAfter(highCrowd.crowd, 10) < highCrowd.crowd, 'crowd meter falls during a quiet interval');
 
 check(SHOW_NIGHTS.length === 5, 'the show has five nights');
-check(SHOW_NIGHTS[0].events[2] === BOWL_EVENTS.SIDE_BY_SIDE && SHOW_NIGHTS[2].events[2] === BOWL_EVENTS.LAST_TRUCK_ROLLING, 'Last Truck Rolling starts on night three');
-let state = createShowNight(1);
-let result = finishShowEvent(state, BOWL_EVENTS.FREESTYLE, true);
-check(!result.accepted && result.state.eventIndex === 0, 'a night rejects events out of order');
-result = finishShowEvent(state, BOWL_EVENTS.CAR_CRUSH, false);
-check(result.accepted && result.retry && result.state.eventIndex === 0 && !result.state.complete, 'losing lets the player retry the same event');
-state = finishShowEvent(state, BOWL_EVENTS.CAR_CRUSH, true).state;
-state = finishShowEvent(state, BOWL_EVENTS.FREESTYLE, true).state;
-state = finishShowEvent(state, BOWL_EVENTS.SIDE_BY_SIDE, true).state;
-check(state.complete && state.eventIndex === 2, 'winning each ordered event completes the night');
-check(!finishShowEvent(state, BOWL_EVENTS.SIDE_BY_SIDE, true).accepted, 'a completed night cannot score another event');
+const expected = [
+  ['Rookie Night', ['carCrush', 'freestyle', 'sideBySide']],
+  ['Flip Night', ['longJump', 'freestyle', 'sideBySide']],
+  ['Hammer Night', ['carCrush', 'freestyle', 'lastTruckRolling']],
+  ['Over the Wall Night', ['highJump', 'homeRun', 'lastTruckRolling']],
+  ['Scrapasaurus Night', ['freestyle', 'lastTruckRolling', 'scrapasaurus']],
+];
+assert.deepEqual(SHOW_NIGHTS.map(({name, events}) => [name, events]), expected);
+check(new Set(SHOW_NIGHTS.map(night => night.events.join('|'))).size === 5, 'each night has a different line-up');
+check(new Set(SHOW_NIGHTS.map(night => night.colours.jets)).size === 5, 'the five nights have different flame colours');
+check(new Set(SHOW_NIGHTS.map(night => night.colours.banner)).size === 5, 'the five nights have different banner colours');
+for (const [index, [name, events]] of expected.entries()) {
+  let state = createShowNight(index + 1);
+  let result = finishShowEvent(state, events[1], true);
+  check(!result.accepted && result.state.eventIndex === 0, name + ' rejects an event out of order');
+  result = finishShowEvent(state, events[0], false);
+  check(result.accepted && result.retry && result.state.eventIndex === 0 && !result.state.complete, name + ' retries a loss');
+  for (const event of events) {
+    result = finishShowEvent(state, event, true);
+    check(result.accepted, name + ' accepts ' + event + ' in order');
+    state = result.state;
+  }
+  check(state.complete && state.eventIndex === 2, name + ' ends after all three events');
+  check(!finishShowEvent(state, events[2], true).accepted, name + ' cannot score after it ends');
+}
 
 console.log(`Bowl Show: ${checks} event scoring, crowd, frame-rate and night progression checks passed.`);
 console.log(JSON.stringify({score: runs[0].score, crowd: runs[0].crowd, fps: [30, 60, 144]}));

@@ -72,6 +72,8 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rival.jump': 'heli.setdown.thud',
   'bowl.rival.jump.fallback': 'vehicle.landing',
   'bowl.mo': 'interface.countdown',        // Big Mo starts a caption: a short PA chime
+  'bowl.night.open': 'interface.win',
+  'bowl.night.new': 'interface.bonus',
   'bowl.crowd.rise': 'crowd.cheer',        // the crowd meter passes a quarter mark
   'bowl.event.won': 'interface.win',       // an event is won
   'bowl.event.lost': 'interface.lose',     // an event is lost and can be tried again
@@ -147,7 +149,6 @@ export const BOWL_EVENT_NAMES = Object.freeze({
 });
 
 // What the player must do now: the HUD's one line for each event.
-const FREESTYLE_SCORE_NAMES = ['Old Bess', 'Rust Rhino', 'Tin Lizard', 'Big Kettle', 'Dragon Wagon'];
 export const BOWL_GOALS = Object.freeze({
   // BOWL-REX-FIGHT: what to do now, by what the Scrapasaurus is doing.
   scrapasaurus: ({phase, hook, boxes = []} = {}) => {
@@ -164,7 +165,7 @@ export const BOWL_GOALS = Object.freeze({
   highJump: height => `Clear the ${height} m flame bar.`,
   homeRun: target => ['Jump the wall. Return through a gate.', 'Land on the target. Return through a gate.',
     'Hit the middle ring. Return through a gate.'][target - 1],
-  freestyle: (target, night = 1) => `Beat ${FREESTYLE_SCORE_NAMES[night - 1] ?? FREESTYLE_SCORE_NAMES[0]}: ${target}.`,
+  freestyle: (target, rival = 'Old Bess') => `Beat ${rival}'s ${target} points.`,
   sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
   lastTruckRolling: (left = []) => left.length
     ? `Knock out ${names(left)}, and be the last truck still rolling.`
@@ -275,7 +276,7 @@ export const BOWL_RESULTS = Object.freeze({
   ].filter(Boolean),
   eventRexYard: 'The Scrapasaurus is going to stand in your yard from now on.',
   pickTitle: 'SHOW NIGHT',
-  pickIntro: 'Big Mo runs a show at the Bowl every night. Each night is three events, one after the other, and the last night has a fourth.',
+  pickIntro: 'Big Mo runs three events every night. Choose a night to see what is on.',
   pickTruckOwned: 'You will drive your own Titan tonight.',
   pickTruckLent: 'You have no truck of your own, so the show will lend you its truck for the night. It goes back to the show when you leave.',
   pickNightOpen: night => `Night ${night} is ready to start.`,

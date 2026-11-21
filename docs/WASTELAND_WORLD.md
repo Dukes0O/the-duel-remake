@@ -215,10 +215,9 @@ already carries cars).
 
 ## 7. The Bowl: monster trucks, done up
 
-Titan Monster Arena, Titan Stunt Trial and the Freestyle Playground all stay as they
-are. **The Bowl** is new: a big concrete stadium with a dirt floor and a full crowd,
-at night, under floodlights, with flame jets by the ramps. Everyone gets to drive a
-truck there, whether or not you have bought the Titan; it is the show's truck.
+**The Bowl** is a concrete stadium with a dirt floor and a full crowd. At night
+the floodlights come on and flame jets light the ramps. Bring your own Titan or
+borrow the show's truck.
 
 **The floor** (`src/bowl/bowl-course.js`, BOWL-EXPAND) is a real monster-truck stadium floor,
 160 m by 90 m between its walls, larger than a football field, with 40 m of floor across each
@@ -234,58 +233,65 @@ Spine. The layout, its sizes and what each event uses are on the card (git histo
 stadium (stands, wall and fence, about 24,000 people, four floodlight towers, two big screens)
 is drawn in code by `src/bowl/bowl-stadium.js`.
 
-**Show Night.** Five nights, with a little story, told by an announcer, **Big Mo**
-("LADIES AND GENTLEMEN AND ALSO DOGS"), and the crowd's roar. A night is three events
-in a row:
+**Show Night.** Big Mo opens a card with the night's events and the picture and keys for
+its featured tricks. Those tricks score double that night. The picker says what is new,
+and the banners and flame jets change colour. Each night has three events. An event
+can be tried again after a loss. Win all three to open the next night.
 
-| Event | What it is |
-| --- | --- |
-| **Car Crush** | One run down a line that gets bigger: cars, then vans, then buses, then a stack of buses on fire. How far do you get? |
-| **Freestyle** | 90 seconds, do what you like. Air time, distance, crushing, launching off a car (big air scores most), donuts, flips. A crowd meter climbs and sets the score going faster |
-| **Side by Side** | Race a computer truck on two mirrored lanes, over a ramp and round a turn. Beat them to go on |
-| **Last Truck Rolling** | From night 3: four trucks in the Bowl, knock the others out. Big and slow and silly |
+| Night | Featured tricks and weapons | Events in order |
+| --- | --- | --- |
+| **Rookie Night** | Wheelie, donut, backflip | Car Crush · Freestyle against Old Bess · Side by Side with Old Bess |
+| **Flip Night** | Front flip, stoppie | Long Jump · Freestyle against Rust Rhino · Side by Side with Rust Rhino |
+| **Hammer Night** | Spin, hammer | Car Crush with two Bus Piles · Freestyle against Tin Lizard · Last Truck Rolling with Big Kettle, Tin Lizard and Old Bess |
+| **Over the Wall Night** | Barrel roll, hammer or saw | High Jump · Home Run · Last Truck Rolling with Rust Rhino, Tin Lizard and Big Kettle |
+| **Scrapasaurus Night** | Side flip and doubles, hammer, saw or launcher | Freestyle against Dragon Wagon · Last Truck Rolling with Dragon Wagon, Rust Rhino and Tin Lizard · the Scrapasaurus |
 
-**Flips.** In the air, W and S tip the truck's nose (Bowl only: no other game changes).
-Land it on its wheels and the crowd goes wild; land it on its roof and you roll, and
-the crowd still likes it. The Titan's launch off cars stays exactly as it is, and
-scores most.
+**Car Crush** gives the driver 60 seconds to flatten pieces, with points for chains,
+landing squarely on the junk and clearing the whole floor. A Bus Pile takes a hit
+at 30 mph or a real landing from above. **Freestyle** gives the driver 90 seconds to
+beat the named rival's score. Jumps, tricks, crushes and launching off the parked
+cars build the score. The crowd cheers and raises the value of every new stunt.
+**Side by Side** is two laps against one rival from mirrored starts. **Last Truck
+Rolling** gives the driver three opponents. The hammer has reach, the saw cuts
+nearby and overheats, and the launcher can throw a truck out of the Bowl.
 
-**Rival trucks**, each the Titan's body with its own paint and bolt-ons: **Rust
-Rhino** (horn), **Big Kettle** (boiler and steam), **Tin Lizard** (tail), **Old Bess**
-(Moss's cousin), and **Dragon Wagon** (breathes fire on the ramps).
-Each drives in a way of their own (BOWL-RIVALS): Old Bess is slow off the line and never gives up; Big Kettle
-takes a long time to get going and then pushes everything aside; Rust Rhino charges; Tin Lizard is quick and runs
-away when hurt; Dragon Wagon is the fastest. Old Bess races night one's Side by Side and Rust Rhino night two's;
-nights three to five put three of them in the Bowl with the player.
+**Long Jump, High Jump and Home Run** give the driver three goes from the same
+run-up, with a one-second fade between them. Turn Show gives each driver one go.
+Long Jump counts each whole bus cleared in flight. A bus hit by the landing stays
+out of that count. High Jump raises the flame bar a metre after every clear. Home Run
+asks for a nitro jump over the wall. The three rings in the empty stands beyond
+End 1 pay 150, 300 or 600 points on top of 150 for the wall. The go counts only if
+the driver returns through a gate within 30 seconds. The Car Park and Pit gates
+both open the way back. Other events can also go over the wall, drive the terraces,
+drop into the car park and follow the gate arrow back.
 
-**Night five: the Scrapasaurus.** A two-storey dinosaur made of crushed cars, walking
-on rails round the Bowl. It eats junk cars and breathes fire. Jump and land on the
-battery boxes on its back three times to stop it, and it falls over. Then you stand
-on it, and the crowd goes home happy.
+**Trick School** opens from the picker and is offered before the driver's first night.
+It teaches wheelie, stoppie, donut, spin, backflip, front flip, barrel roll and side
+flip. Tap the key to begin one turn. Keep it held for the next turn. For a front flip,
+let go of W as the truck takes off, then tap it. The School explains why an attempt
+failed and saves each tick for the driver. After the lessons it leaves the floor
+open for practice. Seven other moves can be found by short key sequences. The
+Bowl and the Titan Monster Arena support the trick set, with the Titan's launch off
+cars available as before.
 
-How the fight plays (BOWL-REX-FIGHT, `src/bowl/bowl-rex.js`). Night five is Car Crush, Freestyle,
-Last Truck Rolling, then the Scrapasaurus, its fourth event. It walks its rails (`features.bowl.rails`, all the way round) against the
-trucks' way round, so it meets the truck head on, heading for the car park gate. Its phases are fixed
-so a child can learn them: it **hunts** (a truck in front of its head draws its fire), it **rears and
-glows** (the tell, with the cone drawn on the floor where the fire will go), it **breathes fire** into
-exactly that cone, and after the fire it breathes on the Jump Straight it **rests**: it drops a junk
-car on its rails in front of itself, at the show's launch-car place, and stands with one battery box
-open. A truck that drives up that car (the Titan's own launch off cars) comes down on its back. At its
-**pen** it throws a junk car at where the truck was (a ring on the floor first), or eats one to mend
-its limp if a box has been smashed. Three landings and it **falls**; after its last rest it walks out
-of the **gate**, and too many scorches stop the show. Easy is slower (its pace is a time to walk once
-round), with a longer tell and rest and more rests. Every place comes from `features.bowl` (rexPlaces),
-so a change of floor moves the fight with it. Nights one to four end with Big Mo letting slip what
-waits under the stands, and on nights three and four it stands behind the wall. Once night five is won
-it lies in the yard's car park.
+**Rival trucks** use the Titan with their own paint, fittings and driving style.
+Old Bess starts slowly and keeps coming. Big Kettle builds up steam and shoves.
+Rust Rhino charges. Tin Lizard is quick and runs when hurt. Dragon Wagon is fast
+and breathes fire. The season table sets each matchup and the available weapons.
 
-**Taking turns.** **Turn Show**: pick the players by name; the game runs one event for
-each in turn, showing "GRATIAN IS UP. PASS THE KEYBOARD." and keeping a scoreboard for
-the night. Nobody plays at the same time.
+**The Scrapasaurus** walks its rails towards the car park gate. Its head rises and
+the floor lights before it breathes fire, and a ring marks where a thrown car will
+land. While it rests, get in line with the loose battery box, press F and pull away.
+Space helps the truck keep pulling. Tow out all three boxes before it reaches the
+gate. Easy gives 24 seconds to work in a normal rest. The Scrapasaurus falls when
+the third box comes out. Its fallen body appears in the yard after a win.
 
-**What you win.** Paint and bolt-ons for your own Titan (flame stacks, Rhino horn), a
-trophy shelf on the yard's Career page, a scrap purse. Beating the Scrapasaurus makes
-him a car park ornament in the yard.
+**Taking turns and records.** Turn Show passes the keyboard for each event,
+keeps the scores by driver and pays that driver if they win the night. The first
+win pays the same purse as a solo show. The five purses are 250, 300, 350, 400 and
+600 scrap. Winning again can improve the driver's bests. All seven timed and
+scored event types before the Scrapasaurus have record keys. The School keeps its
+own ticks and has no purse.
 
 ## 8. Builders: how it works
 

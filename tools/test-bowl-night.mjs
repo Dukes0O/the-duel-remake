@@ -9,7 +9,7 @@ import {BOWL_PURSE, SHOW_TRUCK, bowlLayout, crushTarget, bowlHudView, bowlNightP
   showTruckFor} from '../src/bowl/bowl-night.js';
 import {BIG_MO, BOWL_GOALS, BOWL_RESULTS, BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
-import {scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
+import {SHOW_NIGHTS, scoreFreestyle, scoreStuntEvent} from '../src/bowl/bowl-show.js';
 import {bowlOpeningLines} from '../src/bowl/bowl-hud.js';
 import {Course} from '../src/course.js';
 import {BOWL_COURSE} from '../src/bowl/bowl-course.js';
@@ -45,6 +45,35 @@ const showDuel = (enabled = true) => {
   // BOWL-RIVALS registered Last Truck Rolling and BOWL-REX-FIGHT the Scrapasaurus, so every night now has every event.
   ok([3, 4, 5].every(night => bowlNightPlayable(night)), 'nights three to five have every event (Last Truck Rolling, and the Scrapasaurus on night five)');
   ok(!showDuel().startBowlNight({night: 6}) && !bowlNightPlayable(6), 'a night the show does not have does not start');
+}
+
+// Each table row runs through the actual event loader and settles the existing purse.
+{
+  let profile = createProfile();
+  for (const definition of SHOW_NIGHTS) {
+    const {night, events, tricks, colours, freestyle, dressing} = definition;
+    for (const [eventIndex, type] of events.entries()) {
+      const duel = showDuel();
+      ok(duel.startBowlNight({night, eventIndex, cpuDifficulty: 'easy'}), definition.name + ' loads ' + type);
+      equal(duel.state.bowlNight.event.type, type, 'the runner comes from the event order');
+      equal(duel.state.bowlNight.featuredTricks, tricks, 'featured tricks come from the nightly data');
+      equal(duel.course.def.bowlColours, colours, 'the Bowl reads the palette for this night');
+      equal(duel.course.def.bowlFloor, dressing[type], 'the Bowl reads the dressing for this event');
+      if (dressing[type]) equal(duel.course.def.bowlDressing, dressing[type].kind, 'the table selects the event dressing');
+      if (freestyle && type === 'freestyle') {
+        ok(bowlHudView(duel.state, duel.course).goal.includes(freestyle.name), 'Freestyle names the right score rival');
+      }
+    }
+    const result = {night, won: true, bests: Object.fromEntries(events.map(event => [event, night * 100]))};
+    const paid = settleShowNight(profile, result);
+    equal(paid.purse, BOWL_PURSE[night - 1], definition.name + ' pays its existing purse');
+    const repeat = settleShowNight(paid.profile, result);
+    ok(repeat.alreadyPaid && !repeat.purse && repeat.profile === paid.profile, definition.name + ' pays only once');
+    profile = paid.profile;
+  }
+  equal(profile.bowl.nightsWon, [1, 2, 3, 4, 5], 'all five wins stay with the driver');
+  equal(['long-jump', 'high-jump', 'home-run'].map(event => profile.bowl.bestScores[event]), [200, 400, 400],
+    'solos record each new jump with its own key');
 }
 
 // The truck: the player's own Titan, or the show's truck lent at factory settings.
@@ -324,7 +353,7 @@ const run = (() => {
   ok(['carCrush', 'freestyle', 'sideBySide'].every(type => log.captions.includes(`event.${type}.intro`) &&
     log.captions.includes(`event.won.${type}`)), 'Big Mo introduces and ends every event');
   ok(log.hud && log.hud.name === 'Freestyle' && log.hud.timeLeft > 0 && log.hud.timeLeft < 90 &&
-    Number.isFinite(log.hud.crowd) && log.hud.goal === 'Beat Old Bess: 310.', 'the HUD reads the event, clock, crowd and goal');
+    Number.isFinite(log.hud.crowd) && log.hud.goal === "Beat Old Bess's 310 points.", 'the HUD reads the event, clock, crowd and goal');
   ok(['bowl.mo', 'bowl.crowd.rise', 'bowl.event.won'].every(cue => log.cues.has(cue)), 'each new event names its sound cue');
   const freestyle = log.events.find(result => result.event === 'freestyle');
   ok(freestyle.crowdPeak >= 25, `the crowd meter rises visibly even on a plain line over the kickers (peak ${freestyle.crowdPeak})`);
