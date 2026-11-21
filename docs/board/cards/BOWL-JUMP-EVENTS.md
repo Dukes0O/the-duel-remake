@@ -77,3 +77,7 @@ shows the best of the three goes. The build decisions are agreed: buses counted 
 when its whole width is cleared in the air, the flame plane checked at the truck's front and rear, Home Run's rings round a
 real boosted landing and closed by the real gate return. Trick School holds `bowl-night` until its save review is done; take
 it after. Merge under AGENTS rule 23; Claude drives the three events on the merged game with the next batch.
+
+## Home Run stands, 20 November
+
+The merged Bowl Outside view now fills the landing site with spectators. May Jump Events add one read-only hook in `src/bowl/bowl-stadium.js`, to leave seats vacant within Home Run's target? The paint in the already owned Bowl view can then follow the stadium's tread heights. The same stands and crowd remain in the other events.

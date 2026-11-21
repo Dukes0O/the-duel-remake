@@ -381,7 +381,8 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       const crownLook = actor?.combatRoofLook === 'chrome-crown' && !sideSaws && !turretLook;
       const gunn = actor?.warlordId === 'gunn' && !!actor.gunnBarrage;
       const hasTurret = turretLook || gunn;
-      const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
+      // A Show Night truck carries the Bowl's own weapons and bolt-ons instead (src/bowl/bowl-weapons-view.js).
+      const visible = enabled && !!actor && !actor.crushed && !!vehicle && !state.bowlNight &&
         Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws || turretLook || crownLook);
       if (visible && hasTurret) requestTurret(rig, vehicle);
       const magnus = actor?.warlordId === 'magnus' && !!actor.magnusPull;
