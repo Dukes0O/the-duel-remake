@@ -3,6 +3,7 @@ import {BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {Duel} from '../src/game.js';
 import {bowlHealthLoss, chooseShowWeapon, showMotion, showTarget, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
+import {worldPose} from '../src/arena/arena-floor.js';
 
 const dt=1/120;
 function fight(kind='hammer',level='medium',night=5) {
@@ -108,7 +109,7 @@ for(const night of [3,4,5]) {
   assert.ok(!v.bowlRighting);
 }
 {
-  const d=fight('launcher'),s=d.state;line(d,4);
+  const d=fight('launcher'),s=d.state;line(d,4.1);
   s.input.interact=true; let peak=0;
   for(let k=0;k<150;k++){d.step(dt);peak=Math.max(peak,s.airHeight);}
   assert.ok(Math.abs(peak-1.5)<.1 && !s.bowlRighting);
@@ -165,7 +166,7 @@ for(const night of [3,4,5]) {
   assert.equal(night.lastResult.knockedOut,true);
   assert.equal(s.armor,0);sums(s);
 }
-// The three difficulty levels change the rivals' warning time, never their reach.
+// The three difficulty levels change the rivals' warning time for the fire weapon.
 for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   const d=fight('hammer',level),s=d.state, enemy=s.opponents[0];
   place(d,s,39,0); place(d,enemy,33,0);
@@ -192,6 +193,67 @@ for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   s.opponents.slice(1).forEach((a,i)=>place(d,a,80+12*i,0));
   ticks(d,48);assert.equal(s.armor,48);sums(s);
 }
+// Keep the target's ordinary pilot and mute its weapon for these contact drives.
+function isolate(duel) {
+  const [target, ...others] = duel.state.opponents;
+  target.bowlWeapon.kind = null;
+  others.forEach((actor, index) => {
+    actor.bowlWeapon.kind = null;
+    place(duel, actor, 172 + index * 12, 8);
+  });
+  return target;
+}
+for (const level of ['easy', 'medium', 'hard']) {
+  const d = fight('hammer', level), s = d.state, target = isolate(d);
+  place(d, s, 8, 6);
+  place(d, target, 17.5, 8.7);
+  s.speedMph = target.speedMph = 25;
+  assert.equal(showTarget(d, s, 4), null, 'the truck is out of reach at the press');
+  d.setInput({throttle: .5, steer: 0, interact: true});
+  for (let tick = 0; tick < 47; tick++) d.step(dt);
+  assert.ok(s.s > 12 && target.s > 20, 'both trucks are moving during the tell');
+  assert.equal(showTarget(d, s, 4)?.actor, target, 'the landing position is now in reach');
+  assert.equal(target.armor, 60, 'the hammer is still raised');
+  d.step(dt);
+  assert.equal(target.armor, 42, 'the hammer hits the moving truck on the 48th step');
+  assert.ok(level === 'hard' ? s.bowlWeapon.lean === 0 : s.bowlWeapon.lean > 0 && s.bowlWeapon.lean <= Math.PI / 6,
+    'only Easy and Medium lean toward the truck');
+}
+{
+  const d = fight('saw', 'medium', 4), s = d.state, target = isolate(d);
+  place(d, s, 34, 0);
+  place(d, target, 39, 1.9);
+  s.speedMph = 25;
+  target.speedMph = 17;
+  d.setInput({throttle: 1, steer: 0, interact: true});
+  const first = worldPose(d, s);
+  let ram = false;
+  d.onChange((_, event) => { ram ||= !!event.bowlWall; });
+  for (let tick = 0; tick < 30; tick++) d.step(dt);
+  assert.ok(s.bowlCut && target.bowlCut && target.armor < 60, 'both trucks slow during a real cut');
+  assert.ok(!ram && Math.abs(worldPose(d, s).x - first.x) < .01, 'the saw contact does not shove the truck sideways');
+  d.setInput({throttle: .5, steer: .5, interact: true});
+  for (let tick = 0; tick < 10; tick++) d.step(dt);
+  assert.ok(s.bowlCut && Math.abs(s.headingError) > .001, 'steering still works during contact');
+  d.setInput({throttle: 1, steer: 0, interact: false});
+  d.step(dt);
+  assert.ok(!s.bowlCut && !target.bowlCut, 'letting go releases both trucks');
+}
+for (const [level, distance, degrees, hits] of [
+  ['easy', 3.8, 35, true], ['medium', 3.8, -35, true], ['hard', 3.8, 35, false],
+  ['hard', 2.9, 35, true], ['easy', 3.5, 45, false],
+]) {
+  const d = fight('launcher', level), s = d.state, target = isolate(d), spec = d._vehicleSpec(s);
+  place(d, s, 34, 0);
+  const angle = degrees * Math.PI / 180;
+  const off = Math.sign(angle) * spec.halfWidth + distance * Math.sin(angle);
+  place(d, target, 34 + 2 * spec.halfLength + distance * Math.cos(angle), off);
+  d.setInput({interact: true});
+  d.step(dt);
+  assert.equal(!!target.bowlFlight, hits, `${level}: ${distance} m at ${degrees} degrees`);
+  assert.equal(!!s.bowlFlight, !hits, 'an empty shot still hops the launcher truck');
+}
+
 // Run the actual App event dispatch with memory-only storage and silent audio output.
 {
   const values=new Map();
