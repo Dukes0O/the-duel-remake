@@ -8,6 +8,7 @@ import {Duel} from '../src/game.js';
 import {BOWL_CAMERA, bowlCameraKey, bowlCameraObstructed, bowlRexFallFrame, bowlSolidTop, createBowlCamera,
   stepBowlCamera} from '../src/bowl/bowl-camera.js';
 import {rexSolids} from '../src/bowl/bowl-hook.js';
+import {BOWL_STAND} from '../src/bowl/bowl-stadium.js';
 
 const SIM_DT = 1 / 120, FRAME = 1 / 60, DEG = Math.PI / 180;
 // The narrowest picture the renderer draws in the Bowl (a 55 degree view, as wide as a 16:9 screen).
@@ -220,6 +221,10 @@ for (const gateIndex of [0, 1]) {
       ok(bowlCameraObstructed(course, {...underRoof, y: 5}, gate.s), gate.name + ' roof is solid above the lintel');
       const throughJamb = course.worldAt(gate.s + gate.width / 2 + .25, outside.back - 8);
       ok(bowlCameraObstructed(course, {...throughJamb, y: 3.6}, gate.s), gate.name + ' jamb is solid');
+      const floorHeader = course.worldAt(gate.s, BOWL_STAND.face + .5);
+      ok(bowlCameraObstructed(course, {...floorHeader, y: 7}, gate.s), gate.name + ' floor-side arch is solid above its opening');
+      const parkPost = course.worldAt(gate.s + gate.mouthWidth / 2 + .4, BOWL_STAND.face + BOWL_STAND.outer + .35);
+      ok(bowlCameraObstructed(course, {...parkPost, y: 3}, gate.s), gate.name + ' car-park arch post is solid');
     }
     const offset = outward ? 0 : wide ? 4 : side * 8;
     const heading = outward ? Math.PI / 2 : -Math.PI / 2 - (wide ? 0 : side * Math.PI / 4);

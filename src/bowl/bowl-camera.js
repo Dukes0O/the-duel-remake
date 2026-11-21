@@ -157,8 +157,15 @@ export function bowlCameraObstructed(course, point, referenceS) {
   if (!gate || lateral < STAND.face - .1 || lateral > outside.back + gate.guideLength)
     return point.y < solidTopAt(course, near, gate);
   const across = Math.abs(course.phase(near.s) - gate.s), half = guideHalfWidth(outside, gate, lateral);
+  const throat = gate.width / 2, mouth = gate.mouthWidth / 2;
+  const floorArch = Math.abs(lateral - STAND.face - .5) <= .3;
+  const parkArch = lateral >= TUNNEL_BACK && lateral <= TUNNEL_BACK + .7;
+  if (floorArch && point.y <= 7.4 &&
+      (Math.abs(across - throat - .3) <= .25 || point.y >= 6.7 && across <= throat + .9)) return true;
+  if (parkArch && point.y <= STAND.lintel + 1.3 &&
+      (Math.abs(across - mouth - .4) <= .4 || point.y >= STAND.lintel && across <= mouth + .8)) return true;
   if (lateral <= TUNNEL_BACK + .7) {
-    if (across < Math.min(half, lateral > TUNNEL_BACK ? gate.mouthWidth / 2 : Infinity)) {
+    if (across < (parkArch ? mouth : half)) {
       if (point.y < .04) return true;
       if (lateral >= TUNNEL_FRONT - .5 && point.y < STAND.lintel - .35) return false;
       if (lateral < TUNNEL_FRONT - .5 && point.y < 6.7) return false;
