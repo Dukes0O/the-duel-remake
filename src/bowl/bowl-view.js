@@ -4,6 +4,7 @@ import {flipbookFrameUVInto} from '../combat-vfx-atlas.js';
 import {addArenaCrushables} from '../arena-props.js';
 import {createBowlStadium} from './bowl-stadium.js';
 import {createRexView} from './bowl-rex-view.js';
+import {bowlJumpGround} from './bowl-crush-field.js';
 
 const CRUSH = '/assets/models/wasteland/bowl/crush.glb';
 const FIRE = '/assets/textures/fire-flipbook.png';
@@ -87,6 +88,58 @@ function authoredParts(scene, prefixes, feature, name) {
   return prop;
 }
 
+function jumpBar(line) {
+  const group = new THREE.Group(), {posts, halfWidth} = line.bar;
+  group.name = 'High Jump flame bar';
+  const steel = new THREE.MeshStandardMaterial({color: 0x494442, roughness: .73, metalness: .5});
+  for (const point of posts) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(.27, 15, .34), steel);
+    post.position.set(point.x, point.y + 7.5, point.z);
+    group.add(post);
+  }
+  const flame = new THREE.Group();
+  const ember = new THREE.MeshBasicMaterial({color: 0xf35a12, toneMapped: false});
+  const core = new THREE.MeshBasicMaterial({color: 0xffb33b, toneMapped: false});
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(halfWidth * 2, .18, .18), ember);
+  flame.add(rail);
+  for (let i = 0; i < 18; i++) {
+    const tongue = new THREE.Mesh(new THREE.ConeGeometry(.23, .62, 4), i % 3 ? core : ember);
+    tongue.position.set(-halfWidth + (i + .5) * halfWidth / 9, -.35, 0);
+    flame.add(tongue);
+  }
+  flame.position.set((posts[0].x + posts[1].x) / 2, 0, (posts[0].z + posts[1].z) / 2);
+  flame.rotation.y = line.crest.heading;
+  group.add(flame);
+  return {group, flame, tongues: flame.children.slice(1)};
+}
+
+function homeRings(course, target) {
+  const group = new THREE.Group();
+  group.name = 'Home Run target rings';
+  const colours = [0xffaf37, 0xffe1a0, 0xf58648];
+  for (const [index, radius] of target.radii.entries()) {
+    const vertices = [], triangles = [], segments = 96;
+    for (let i = 0; i <= segments; i++) {
+      const angle = i * Math.PI * 2 / segments;
+      for (const edge of [radius - .42, radius]) {
+        const p = bowlJumpGround(course, {
+          x: target.x + Math.sin(angle) * edge,
+          z: target.z + Math.cos(angle) * edge,
+        });
+        vertices.push(p.x, p.y + .10, p.z);
+      }
+      const n = i * 2;
+      if (i < segments) triangles.push(n, n + 1, n + 3, n, n + 3, n + 2);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(triangles);
+    const material = new THREE.MeshBasicMaterial({color: colours[index], side: THREE.DoubleSide});
+    group.add(new THREE.Mesh(geometry, material));
+  }
+  return group;
+}
+
 export function createBowlView({loadModel = url => loader.loadAsync(url),
   loadFireTexture = () => new THREE.TextureLoader().loadAsync(FIRE)} = {}) {
   const group = new THREE.Group();
@@ -94,7 +147,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   group.visible = false;
   let course = null, enabled = false, disposed = false, token = 0;
   let fireTexture = null, firePromise = null, modelPromise = null, crushSource = null;
-  let crushShells = null, stadium = null;
+  let crushShells = null, stadium = null, highBar = null;
   const fires = [];
   // The model's bus, RV and stacks, by crush target: each settles lower once crushed.
   const authored = new Map();
@@ -116,7 +169,7 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     crushSource = null;
     fires.length = 0;
     authored.clear();
-    course = null; crushShells = null;
+    course = null; crushShells = null; highBar = null;
     if (!keepStadium) stadium = null;
     firePromise = null; modelPromise = null;
   }
@@ -142,6 +195,12 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
       stadium.userData.course = next;
       group.add(stadium);
     }
+    const jump = next.features.bowlJump;
+    if (jump?.bar) {
+      highBar = jumpBar(jump);
+      group.add(highBar.group);
+    }
+    if (jump?.target) group.add(homeRings(next, jump.target));
     group.userData.stadiumReady = true;
     modelPromise = loadModel(CRUSH).then(crushAsset => {
       if (disposed || !enabled || current !== token) { disposeTree(crushAsset.scene); return; }
@@ -208,6 +267,12 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
     }
     if (next !== course) build(next, now);
     stadium?.userData.update?.(now, undefined, state);
+    if (highBar) {
+      highBar.flame.position.y = state?.bowlNight?.event?.barHeight ?? 6;
+      for (const [index, tongue] of highBar.tongues.entries()) {
+        tongue.scale.y = .7 + .3 * Math.sin(now * .016 + index * 1.29);
+      }
+    }
     if (crushShells) crushShells.userData.updateSimulation(state || {}, 0);
     const crushed = state?.crushedProps || [];
     for (const [id, {mesh, raisedY, floorY}] of authored) {

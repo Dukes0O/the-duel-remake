@@ -93,6 +93,11 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.crush.ooh': 'bowl.crush.ooh',         // a bus, the RV, a stack or the Bus Pile: the crowd's "ooh"
   'bowl.crush.chain': 'interface.countdown', // another piece in the chain
   'bowl.crush.fullhouse': 'crowd.cheer',     // all the pieces are crushed
+  'bowl.go.ready': 'interface.radar',
+  'bowl.long.clear': 'interface.countdown',
+  'bowl.high.clear': 'weapon.flame.start',
+  'bowl.high.fail': 'interface.lose',
+  'bowl.home.ring': 'interface.bonus',
 });
 
 // What a crushed piece is, for its sound: the course's pieces name their kind (junkCar, bowlBus, bowlRv,
@@ -127,6 +132,9 @@ const names = list => list.length < 2 ? list.join('') : `${list.slice(0, -1).joi
 export const BOWL_EVENT_NAMES = Object.freeze({
   scrapasaurus: 'The Scrapasaurus', // BOWL-REX-FIGHT
   carCrush: 'Car Crush',
+  longJump: 'Long Jump',
+  highJump: 'High Jump',
+  homeRun: 'Home Run',
   freestyle: 'Freestyle',
   sideBySide: 'Side by Side',
   lastTruckRolling: 'Last Truck Rolling',
@@ -146,6 +154,10 @@ export const BOWL_GOALS = Object.freeze({
     return ['WATCH THE SCRAPASAURUS','TWO BOXES LEFT','ONE BOX LEFT'][boxes.filter(Boolean).length];
   },
   carCrush: target => `Crush ${target} pieces.`,
+  longJump: target => `Clear ${target} buses.`,
+  highJump: height => `Clear the ${height} m flame bar.`,
+  homeRun: target => ['Jump the wall. Return through a gate.', 'Land on the target. Return through a gate.',
+    'Hit the middle ring. Return through a gate.', 'Hit the centre. Return through a gate.'][target - 1],
   freestyle: (target, night = 1) => `Beat ${FREESTYLE_SCORE_NAMES[night - 1] ?? FREESTYLE_SCORE_NAMES[0]}: ${target}.`,
   sideBySide: (rival = 'the other truck') => `Beat ${rival} over two laps.`,
   lastTruckRolling: (left = []) => left.length
@@ -190,6 +202,9 @@ export const BIG_MO = Object.freeze({
   'night.4.open': 'The crowd is bigger than ever tonight. Somebody told them our driver never gives up, and they want to see it for themselves.',
   'night.5.open': 'This is the last night of the season, and something very large is waiting under the stands. Drive carefully, everyone.',
   'lent.truck': 'Our driver has no truck yet, so tonight the show lends its own. Please bring it back in one piece.',
+  'event.longJump.intro': 'Jump right over the buses. Use nitro near the ramp if you need more distance.',
+  'event.highJump.intro': 'Drive straight over the flame bar. It gets one metre higher every time you clear it.',
+  'event.homeRun.intro': 'Use nitro on the Big Jump and aim for the rings. Follow the gate arrow to come back.',
   'event.carCrush.intro': 'Drive down the line, then keep going. You have a minute to crush as many pieces as you can.',
   'event.freestyle.intro': 'Now it is Freestyle, and you have ninety seconds to do whatever you like. The louder the crowd gets, the faster the points come in.',
   'event.sideBySide.intro': 'It is time for Side by Side. Two trucks race two laps, and the first one across the line wins.',
@@ -206,6 +221,12 @@ export const BIG_MO = Object.freeze({
   'crowd.50': 'Listen to that! The crowd is on its feet now.',
   'crowd.75': 'The crowd is going wild, so every trick is worth more right now.',
   'crowd.100': 'I have never heard the Bowl this loud. Keep it going!',
+  'event.won.longJump': 'That was enough buses to go through!',
+  'event.lost.longJump': 'Get a fast run at the ramp and keep the truck straight over the buses.',
+  'event.won.highJump': 'The truck cleared the flames!',
+  'event.lost.highJump': 'Keep the truck straight and build speed before you reach the ramp.',
+  'event.won.homeRun': 'Over the wall and back through the gate!',
+  'event.lost.homeRun': 'Use nitro on the ramp, then get back through a gate in time.',
   'event.won.carCrush': 'Our driver crushed enough pieces to go through to the next event.',
   'event.won.freestyle': 'That was a Freestyle to remember, and the score is good enough to go on.',
   'event.won.sideBySide': 'Our driver crossed the line first, so the night is theirs!',
@@ -258,6 +279,13 @@ export const BOWL_RESULTS = Object.freeze({
   eventWonTitle: 'EVENT WON',
   eventLostTitle: 'TRY AGAIN',
   eventScore: score => `You scored ${score.toLocaleString()} points in this event.`,
+  eventJump: ({event, bestGo}) => {
+    const best = bestGo?.result ?? 0;
+    if (event === 'longJump') return `Best go: ${best} ${best === 1 ? 'bus' : 'buses'} cleared.`;
+    if (event === 'highJump') return best ? `Highest bar cleared: ${best} m.` : 'The bar stayed above the truck.';
+    return ['No return through a gate.', 'Over the wall and back.', 'Outer ring and back.',
+      'Middle ring and back.', 'Centre ring and back.'][best];
+  },
   eventCrush: ({count, total}) => `You crushed ${count} of ${total} pieces.`,
   eventFullHouse: bonus => bonus > 0 ? `A Full House added ${bonus.toLocaleString()} points.`
     : 'Crushing every piece earned a Full House.',
