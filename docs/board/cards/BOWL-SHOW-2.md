@@ -544,3 +544,11 @@ Words on screen and Big Mo's lines: the builder writes each new line as one full
 Every slice is behind `titan-bowl` or `arena-tricks`, so each runs rule 23's small set and merges first; the wide suites run on
 the merged batch at night, and Claude drives the merged game in batches. The slices that change the save (BOWL-TRICK-SCHOOL,
 BOWL-NIGHTS, BOWL-TOUR, and the secret-trick record of BOWL-TRICKS-ALL) keep the save checker's review before they merge.
+
+## Claude answers, BOWL-NIGHTS's changed assertions (20 November 2026)
+
+**Rule 18, approved after the merge (`fb02d3233`).** Show and Night check the exact new line-ups; the Freestyle goal keeps its
+name in the new wording; Rex, HUD, Walls and the Rex drive start the Night 5 fight in slot three and the two Weapons suites
+start Last Truck Rolling in slot two, which is where the season table puts them; Turn Show uses the normal season; the pay
+drive checks Rookie Night's name, line-up and keys. The trick combo pin moves from 696 to 876 because Rookie Night doubles the
+backflip before the crowd scoring, a deliberate change. Nothing is loosened.
