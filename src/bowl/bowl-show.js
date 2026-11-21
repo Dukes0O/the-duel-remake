@@ -7,6 +7,9 @@ export const BOWL_EVENTS = Object.freeze({
   SIDE_BY_SIDE: 'sideBySide',
   LAST_TRUCK_ROLLING: 'lastTruckRolling',
   SCRAPASAURUS: 'scrapasaurus',
+  LONG_JUMP: 'longJump',
+  HIGH_JUMP: 'highJump',
+  HOME_RUN: 'homeRun',
 });
 
 export const SHOW_NIGHTS = Object.freeze(Array.from({length: 5}, (_, index) => Object.freeze({

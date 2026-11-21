@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-21T01:21:44.812Z
+Observed at: 2026-11-21T01:39:18.682Z
 
-Observation commit: 57e4783404c01db628c1343804ce68bc2df81922
+Observation commit: 73b1d78b80b86c1b434f86603a776769b43bb1a0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 57e4783404c01db628c1343804ce68bc2df81922
+Integration HEAD: 73b1d78b80b86c1b434f86603a776769b43bb1a0
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -36,9 +36,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bowl-art-rex | 15 | unknown | false | false | unknown |
 | codex/bowl-course | 15 | unknown | true | false | unknown |
 | codex/bowl-hud | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-hud |
-| codex/bowl-jump-events | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-jump-events |
+| codex/bowl-jump-events | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-jump-events |
 | codex/bowl-rivals-2 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-rivals-2 |
-| codex/bowl-trick-school | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-trick-school |
 | codex/car-art-bully | 14 | unknown | false | false | unknown |
 | codex/crew-story-join | 15 | unknown | true | false | unknown |
 | codex/mule-rails | 14 | unknown | true | false | unknown |
@@ -69,8 +68,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 15 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
-| codex/bowl-jump-events | unknown | 2026-11-20T18:20:05-07:00 | 0 | uncommitted changes; exact activity time unknown | src/bowl/bowl-crush-field.js, src/bowl/bowl-jump-events.js, src/bowl/bowl-lines.js, src/bowl/bowl-night.js, src/bowl/bowl-screens.js |
-| codex/bowl-trick-school | unknown | 2026-11-20T18:21:23-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/changes/BOWL-TRICK-SCHOOL.md, src/app.js, src/bowl/bowl-lines.js, src/bowl/bowl-night.js, src/bowl/bowl-save.js |
+| codex/bowl-jump-events | unknown | 2026-11-20T18:39:13-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/changes/BOWL-JUMP-EVENTS.md, src/bowl/bowl-crush-field.js, src/bowl/bowl-jump-events.js, src/bowl/bowl-lines.js, src/bowl/bowl-night.js |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 14 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 36 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 15 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
@@ -85,16 +83,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 749,884,145 B | +57,174 B | 250,000,000 B |
-| Wasteland models | 445,886,767 B | +0 B | 60,000,000 B |
+| Build `dist/` | 750,486,748 B | +602,603 B | 250,000,000 B |
+| Wasteland models | 446,473,171 B | +586,404 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
-| Largest review sheet | 499,162 B | +256 B | 500,000 B |
-| Review `looks/` | 101,860,284 B | +837,090 B | 20,000,000 B |
-| Added bytes in last merge | 1,446,086 B | +1,341,853 B | 5,000,000 B |
-| All `public/` | 740,514,001 B | +0 B | unavailable |
-| Git objects | 1,543,868,416 B | +3,443,712 B | unavailable |
-| Lane folders | 4 | +0 | unavailable |
+| Largest review sheet | 499,162 B | +0 B | 500,000 B |
+| Review `looks/` | 102,330,380 B | +470,096 B | 20,000,000 B |
+| Added bytes in last merge | 6,417,969 B | +4,971,883 B | 5,000,000 B |
+| All `public/` | 741,100,405 B | +586,404 B | unavailable |
+| Git objects | 1,544,667,136 B | +798,720 B | unavailable |
+| Lane folders | 3 | -1 | unavailable |
 
 ## Backups
 
@@ -102,7 +100,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: f96d19903748c849883b3ca1e514276de6347432
 - Local main: missing
-- Local integration/wasteland: 57e4783404c01db628c1343804ce68bc2df81922
+- Local integration/wasteland: 73b1d78b80b86c1b434f86603a776769b43bb1a0
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -110,6 +108,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit f96d19903748c849883b3ca1e514276de6347432.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 57e4783404c01db628c1343804ce68bc2df81922.
+- Remote origin/integration/wasteland: matches local; cached commit 73b1d78b80b86c1b434f86603a776769b43bb1a0.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.

@@ -290,4 +290,29 @@ ok(createPlayerRegistry().players.every(entry => !Object.hasOwn(entry.profile, '
     'the Turn Show names a sound for each new event');
 }
 
+// The season picks these same runners when BOWL-NIGHTS adds them to the table.
+for (const [eventType, boostAt] of [['longJump', 28], ['highJump', 28], ['homeRun', 33]]) {
+  const duel = new Duel({seed: 1989});
+  duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
+  ok(duel.startBowlNight({night: 1, eventType, cpuDifficulty: 'easy', turn: {driver: 'Jump driver'}}), eventType + ' starts');
+  const {state} = duel, night = state.bowlNight;
+  while (state.status === 'countdown') duel.step(DT);
+  for (let tick = 0; tick < 40 / DT && night.phase === 'event'; tick++) {
+    const gate = eventType === 'homeRun' && night.event.go.landed && state.bowlOutside?.gate;
+    if (gate) {
+      const point = duel.course.worldAt(state.s, state.lateral);
+      const delta = Math.atan2(gate.aim.x - point.x, gate.aim.z - point.z) - point.heading - state.headingError;
+      const steer = Math.min(1, Math.max(-1, -2 * Math.atan2(Math.sin(delta), Math.cos(delta))));
+      duel.setInput({steer, throttle: state.speedMph < 27 ? 1 : 0, brake: state.speedMph > 30 ? .5 : 0, boost: false});
+    } else {
+      duel.setInput({throttle: 1, boost: state.s >= boostAt, brake: 0, steer: 0});
+    }
+    duel.step(DT);
+  }
+  equal(night.phase, 'turn', eventType + ' ends in the turn phase');
+  equal(night.lastResult?.goes.length, 1, eventType + ' plays one go');
+  ok(night.lastResult?.score > 0, eventType + ' keeps the points');
+  equal(night.result, null, eventType + ' creates no night result or purse');
+}
+
 console.log(`test-bowl-turns: ${checks} checks passed`);
