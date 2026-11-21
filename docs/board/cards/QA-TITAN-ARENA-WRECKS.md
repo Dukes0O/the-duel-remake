@@ -25,3 +25,9 @@ it; nothing stops a car where it can see clear ground.
    re-record them with that reason in the change note (Gates).
 
 Moved to ready.
+
+## Builder reproduction and proposed hooks, 21 November
+
+The Dusthawk again stalls at 675.52 m with tricks on and off and never reaches either wreck. The drawn shell extends 1.033 m side to side from its centre and about 2.24 m forward and back. The contact half sizes are 1.06 and 2.25 m, within 3 cm of the mesh. The measured centre-to-centre distance at the stall is 4.38 m. The two bodies occupy about 4.35 m of it, so the long-looking gap in the drive does not warrant shrinking the wreck.
+
+Use the exact oriented car corners in the Titan Monster Arena's `_crushProps` sweep so a glancing corner can pass clear ground. Record a recent block there only for a car too light to crush the wreck. May this lane share a single one-second detour rule in `src/demo-unstuck.js` between the existing test-driver call and a narrow lane hook in `src/sim-rival.js`? Pick a clear lateral line, hold it past both wrecks and return to the normal driver once the car has passed them. Manual controls still choose their own line. The checks will go in `tools/test-arena-props.mjs` and will pin tricks off, tricks on, the rival route, the real drawn bounds and continued Titan crushing. I will use the released-behaviour lane tier.
