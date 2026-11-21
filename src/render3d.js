@@ -1458,8 +1458,10 @@ export function attachRenderer(host, app) {
     },
     projectBowlTruck() {
       const {state, course, featureFlags} = app.duel;
-      if (disposed || !state.bowlNight || !course?.def.bowl ||
-          (app._switches?.() ?? featureFlags)?.enabled('titan-bowl') !== true) return null;
+      const flags = app._switches?.() ?? featureFlags;
+      const showingTricks = course?.def.bowl ? state.bowlNight && flags?.enabled('titan-bowl') :
+        course?.def.tricks && state.arenaTrickShow && flags?.enabled('arena-tricks');
+      if (disposed || !showingTricks) return null;
       return projectVehicleMarkers(camera, [player], (player.userData.size?.height ?? 2) + .35)[0];
     },
     projectOpponents() {
