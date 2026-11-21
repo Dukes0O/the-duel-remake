@@ -252,8 +252,13 @@ at 30 mph or a real landing from above. **Freestyle** gives the driver 90 second
 beat the named rival's score. Jumps, tricks, crushes and launching off the parked
 cars build the score. The crowd cheers and raises the value of every new stunt.
 **Side by Side** is two laps against one rival from mirrored starts. **Last Truck
-Rolling** gives the driver three opponents. The hammer has reach, the saw cuts
-nearby and overheats, and the launcher throws a truck high into the air.
+Rolling** gives the driver three opponents. The hammer checks for a hit when it
+lands, with aim assist on Easy and Medium. Hold F to cut with the saw. The trucks
+slow during the cut, and you can still steer. The launcher throws a truck within
+40 degrees of its nose, up to 4 m away on Easy and Medium or 3 m on Hard.
+After a hit, the truck turns over a quarter-second while steering stays active.
+A truck that clears the Spine can land and drive on. If it lands on the Spine,
+it slides off.
 
 **Long Jump, High Jump and Best Trick** give the driver three goes from the same
 run-up, with a one-second fade between them. Turn Show gives each driver one go.
