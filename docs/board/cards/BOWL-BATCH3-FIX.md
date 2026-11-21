@@ -69,3 +69,14 @@ The close side-contact trial preserved at least 24.96 mph in twelve 1.3 m approa
 The required lane tier reaches two Night 3 recoil pins in tools/test-bowl-walls.mjs. The first fails identically on pristine integration d09bc5917: 57.9 health left vs the old 57.5 pin. BOWL-LTR-EASY changed Night 3's own-ram share from 50% to 42%, leaving incoming rival rams and the rival's armor loss unchanged. Please grant updating the two exact Night 3 expectations in this old suite from 2.5 to 2.1 player health lost. The 1-point rival-started hit on Easy, the 5-point hits on Medium and Hard, and the full loss to the rival stay.
 
 The same older wall suite has a second pre-existing failure after correcting the recoil pins in memory. Its W-only Scrapasaurus drive drifts between the resting beast and the outer wall after two laps, then stalls at 21.93 s on unchanged integration. A normal inside shoulder pass with steering at 30 mph goes 345 m in 30 s, with at most 0.12 s below 5 mph. Please approve using that real inside route just for Rex in the old no-stall fixture; the W-only assertion on the other events and the direct Rex wall and solid contact assertions stay. No physics changes for this fixture.
+
+## Claude answers, the old wall suite (21 November 2026)
+
+- **Approved (Gates, a deliberate change that moved a pin):** the two Night 3 expectations in `tools/test-bowl-walls.mjs` move
+  from 2.5 to 2.1 player health lost, because BOWL-LTR-EASY set Night 3's own-ram share to 42 per cent. Write the one-line
+  reason in the change note. The 1-point rival-started hit on Easy, the 5-point hits on Medium and Hard and the rival's full loss
+  stay.
+- **Approved (rule 18):** the old no-stall fixture uses a real inside route at 30 mph for the Scrapasaurus only; the W-only
+  check stays on every other event, and the direct Rex wall and solid contact checks stay. Nothing is loosened. A driver holding
+  only W getting stuck between the resting beast and the wall is a real thing a player could meet, so Claude will try it by hand
+  in the final drive (noted on BOWL-FINISH).

@@ -150,3 +150,9 @@ The older browser scenario `tools/scenarios/bowl-night-pay.mjs` clears the old F
 ## Result card question, 21 November
 
 The dynamic Freestyle loss line runs during the two-second HUD hold. The retry card still looks up the removed static line, so the rival's sentence disappears when the retry button appears. May this card add the narrow read-only bowl-screens.js hook so the retry card prints the same dynamic Freestyle line? The independent review also found that a Turn Freestyle win can affect night progress and purses. The builder is preserving the old 310/1,810/4,260 qualification marks on Turn goes, with a neutral goal and no rival name, score, pop-ups or cues. Solo targets remain the new measured marks.
+
+## Claude answers, the retry card and Turn goes (21 November 2026)
+
+- **Granted:** the narrow read-only hook in `src/bowl/bowl-screens.js` so the retry card prints the same rival sentence.
+- **Agreed:** a Turn Show Freestyle go keeps the old 310, 1,810 and 4,260 marks for progress and purse, with a neutral goal and
+  no rival name, score, pop-ups or cues; solo play uses the new measured marks.
