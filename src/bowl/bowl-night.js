@@ -162,6 +162,15 @@ export function crushRowName(course, rowIndex) {
 }
 
 const CRUSH_POINTS = Object.freeze({car: 35, bus: 60, stack: 80, pile: 200});
+const CHAIN_TICK_INTERVAL = .12;
+
+function playCrushChainTick(duel, night) {
+  const event = night.event;
+  if (!event?.chainTicks || night.clock < event.nextChainTick) return;
+  event.chainTicks--;
+  event.nextChainTick = night.clock + CHAIN_TICK_INTERVAL;
+  duel.emit({bowlScore: {type: 'crushChain', points: 0, score: event.score, cue: 'bowl.crush.chain'}});
+}
 
 registerBowlEventRunner('carCrush', {
   dressing: CAR_CRUSH_DRESSING,
@@ -171,7 +180,7 @@ registerBowlEventRunner('carCrush', {
   place(duel, night) {
     const line = bowlLayout(duel.course).crush;
     startBowlEventAt(duel, line.startS, line.lateral);
-    Object.assign(night.event, {count: 0, chain: 0, lastCrushAt: -Infinity,
+    Object.assign(night.event, {count: 0, chain: 0, lastCrushAt: -Infinity, chainTicks: 0, nextChainTick: 0,
       crushIds: new Set(), total: duel.course.features.crushables.length, fullHouseBonus: 0});
   },
   observe(duel, {event}, ev) {
@@ -183,6 +192,7 @@ registerBowlEventRunner('carCrush', {
     if (!ids.length) return;
     if (at - event.lastCrushAt > rules.chainSec) event.chain = 0;
     event.lastCrushAt = at;
+    const before = event.chain;
     const cues = bowlCrushCues({kind: hit.kind, pancake: hit.pancake}).map(item => item.cue);
     let awardedPoints = 0;
     for (const [index, id] of ids.entries()) {
@@ -203,8 +213,9 @@ registerBowlEventRunner('carCrush', {
     event.crowd = crowd;
     event.crowdAt = at;
     event.crowdPeak = Math.max(event.crowdPeak, crowd);
-    duel.emit({bowlScore: {type: 'crush', points: awardedPoints, score: event.score, crowd,
-      cue: event.chain > 1 ? 'bowl.crush.chain' : null}});
+    // A pile can form three links at once. Give each bonus link its own tick.
+    event.chainTicks += event.chain - Math.max(1, before);
+    duel.emit({bowlScore: {type: 'crush', points: awardedPoints, score: event.score, crowd, cue: null}});
     if (hit.pancake) say(duel, 'crush.pancake');
   },
   step(duel, night) {
@@ -444,6 +455,7 @@ export function stepBowlNight(duel, dt) {
   if (!night) return false;
   night.clock += dt;
   if (night.caption && night.clock >= night.caption.until) nextCaption(duel);
+  playCrushChainTick(duel, night);
   if (night.phase !== 'event') return true;
   if (s.status === 'gameover') {
     if (s.impactTimer > 0) return false;

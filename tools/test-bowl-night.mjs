@@ -201,15 +201,20 @@ for (const rampId of ['jump-kicker', 'crush-kicker', 'table']) {
 }
 
 for (const [speed, count] of [[29, 0], [30, 3]]) {
-  const duel = racingCrush(), hits = [];
+  const duel = racingCrush(), hits = [], ticks = [];
   const first = duel.course.features.crushables.find(item => item.id === 'bowl-bus-pile-0');
-  duel.onChange((_, ev) => { if (ev.bowlCrush) hits.push(ev.bowlCrush); });
+  duel.onChange((state, ev) => {
+    if (ev.bowlCrush) hits.push(ev.bowlCrush);
+    if (ev.bowlScore?.cue === 'bowl.crush.chain') ticks.push(state.bowlNight.clock);
+  });
   placeCrushTruck(duel, first.s, first.off, speed);
   duel._crushProps(duel.state);
   equal(hits.length, count, `the Bus Pile at ${speed} mph`);
   if (count) {
     equal(hits.map(hit => hit.chain), [1, 2, 3], 'all three buses add to the chain');
     equal(hits.reduce((total, hit) => total + hit.points, 0), 200, 'one Bus Pile award pays 200 points');
+    for (let i = 0; i < 36; i++) duel.step(DT);
+    ok(ticks.length === 2 && ticks[1] - ticks[0] >= .1, 'both bonus links of a fresh pile sound separately');
   }
 }
 
