@@ -680,7 +680,7 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "building"
-    claimed_by: "Claude: every merged card's cues from CC0 recordings, 21 November 2026; Freestyle's five after it merges"
+    claimed_by: "Claude: 95 cues merged 21 November 2026; owed: BOWL-REX-3's eleven when it merges, the bowl.trick.go hook, and the by-ear lines during the final drive"
     needs: [BOWL-WALLS, BOWL-TRICKS, BOWL-OUT-SIM, BOWL-WEAPONS, BOWL-REX-2, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND-CRUSH, BOWL-NIGHT-4, BOWL-FREESTYLE-NIGHTS]
     locks: [sound-bank]
     flag: "titan-bowl"
