@@ -3,6 +3,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {crowdTexture} from '../stadium-crowd.js';
 import {createScrapWear} from '../world/scrap-look.js';
 import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight, bowlCentre} from './bowl-course.js';
+import {createBowlOutsideView} from './bowl-outside-view.js';
 
 // The Bowl's stadium, drawn in code round the course's own floor (BOWL-EXPAND,
 // Kyle 11 November: stands, crowd and lights in code; photographed surfaces on
@@ -13,9 +14,19 @@ import {BOWL_FLOOR, BOWL_STADIUM, bowlBankHeight, bowlCentre} from './bowl-cours
 const browser = typeof document !== 'undefined';
 const FACE = BOWL_FLOOR.outerWallOffset - .5;
 const {wallHeight: WALL, fenceHeight: FENCE, rows: ROWS, rowDepth: DEPTH, rowRise: RISE, towerHeight: TOWER} = BOWL_STADIUM;
-// The front walkway and the first row stand above the highest bank against the wall.
-const PODIUM = 6.2, MOAT = 1.2, WALKWAY = 2, FIRST = 1 + MOAT + WALKWAY;
-const BACK = FIRST + ROWS * DEPTH, TOP = PODIUM + ROWS * RISE;
+// BOWL-OUT-LOOK: the stands are drawn where the rules put them (src/bowl/bowl-outside.js), so a truck driving on the
+// terraces stands on the drawn rows. Distances `d` are metres out from the wall's face. The walkway behind the wall is
+// at the first row's height; each row's tread is at the rules' slope halfway across the row, so a wheel sinks a
+// quarter of a riser at the back of a tread and stands as far above it at the front.
+const WALK = 1, FIRST = .5 + BOWL_STADIUM.standGap, BACK = FIRST + ROWS * DEPTH, OUTER = BACK + .4;
+const LOW = BOWL_STADIUM.firstRowHeight, rowY = row => LOW + (row + .5) * RISE, TOP = rowY(ROWS - 1) + .3;
+// Where a gate opens: the first four rows and the walkway are cut away over its throat, so the tunnel starts where
+// the stand above it is high enough for a truck; the back wall is open up to the tunnel's lintel across its mouth.
+const CUT_ROWS = 4, LINTEL = 4.8;
+// The crowd's cleared ring round a truck in the stands, and the band beyond it where people run (BOWL-SHOW-2 section 3).
+const CLEAR = 6, RUN = 4;
+export const BOWL_STAND = Object.freeze({face: FACE, walk: WALK, first: FIRST, back: BACK, outer: OUTER, low: LOW, top: TOP,
+  depth: DEPTH, rows: ROWS, cutRows: CUT_ROWS, lintel: LINTEL, rowY});
 
 const textures = new Map();
 // One shared texture per photo; the geometry's own coordinates set its scale.
@@ -53,7 +64,8 @@ const hash = (...values) => {
 
 // Sweep a cross-section round the stadium, outward from the floor's wall face.
 // `profile(s)` returns points {d, y, colour}; each pair is its own flat strip.
-function sweep(course, profile, step = 1) {
+// `gapAt(s, i)` leaves out the strip from point i to point i + 1 at lap distance s (a gate's opening).
+function sweep(course, profile, step = 1, gapAt = null) {
   const positions = [], uvs = [], colours = [], indices = [];
   const samples = [];
   for (let s = 0; s <= course.length + 1e-6; s += step) samples.push(Math.min(s, course.length));
@@ -66,7 +78,9 @@ function sweep(course, profile, step = 1) {
     });
     if (previous) for (let i = 0; i < world.length; i++) run[i] += world[i].distanceTo(previous[i]); else world.forEach((_, i) => { run[i] = 0; });
     if (index) {
+      const middle = (samples[index - 1] + s) / 2;
       for (let i = 0; i < world.length - 1; i++) {
+        if (gapAt?.(middle, i)) continue;
         const a = previous[i], b = previous[i + 1], c = world[i], d = world[i + 1];
         const v0 = points[i].v ?? 0, v1 = points[i + 1].v ?? Math.hypot(points[i + 1].d - points[i].d, points[i + 1].y - points[i].y);
         const colour = points[i].colour ?? [1, 1, 1];
@@ -91,6 +105,18 @@ function sweep(course, profile, step = 1) {
 
 const wallTop = s => WALL + bowlBankHeight(s, FACE);
 
+// How far lap distance s lies from the nearest gate's middle, in metres along the lap.
+export function gateDistance(course, s) {
+  let best = Infinity;
+  for (const gate of course.features.bowl.gates) {
+    const d = Math.abs(((s - gate.s) % course.length + 1.5 * course.length) % course.length - course.length / 2);
+    best = Math.min(best, d);
+  }
+  return best;
+}
+const throatHalf = course => course.features.bowl.gates[0].width / 2;
+const mouthHalf = course => course.features.bowl.gates[0].mouthWidth / 2;
+
 // Faded seat colours by section, the way a stadium's blocks were painted long ago.
 const SEATS = [[.46, .17, .14], [.2, .27, .35], [.52, .42, .2], [.3, .33, .3]];
 function standProfile(course) {
@@ -100,18 +126,28 @@ function standProfile(course) {
     const aisle = (place % 1) < .06, concrete = aisle ? [.92, .9, .86] : [.7, .69, .66];
     // A tunnel mouth every third section: a dark opening over rows 9 to 13, where the crowd comes in.
     const mouth = Math.abs((place % 3) - 1.5) < .1;
-    // The service lane behind the wall stands 3 cm above the ground, so the two never flicker.
-    const points = [{d: 1, y: .03, colour: [.4, .39, .37]}, {d: 1 + MOAT, y: .03, colour: [.55, .54, .51]},
-      {d: 1 + MOAT, y: PODIUM, colour: [.62, .61, .58]}, {d: FIRST, y: PODIUM, colour: concrete}];
+    const points = [{d: WALK, y: LOW, colour: concrete}, {d: FIRST, y: LOW, colour: concrete}];
     for (let row = 0; row < ROWS; row++) {
-      const d = FIRST + row * DEPTH, y = PODIUM + (row + 1) * RISE, tint = .82 + .18 * hash(section, row);
+      const d = FIRST + row * DEPTH, y = rowY(row), tint = .82 + .18 * hash(section, row);
       const dark = mouth && row >= 9 && row <= 13, tread = dark ? [.03, .03, .03] : concrete;
       points.at(-1).colour = dark ? tread : aisle ? concrete : seat.map(value => value * tint);
       points.push({d, y, colour: tread}, {d: d + DEPTH, y, colour: tread});
     }
-    points.at(-1).colour = [.62, .61, .58];
-    points.push({d: BACK, y: TOP + 1.1, colour: [.5, .49, .47]}, {d: BACK + .4, y: TOP + 1.1, colour: [.45, .44, .42]}, {d: BACK + .4, y: 0});
+    // A low kerb along the back of the top row, then the back wall down to the car park.
+    points.at(-1).colour = [.5, .49, .47];
+    points.push({d: BACK, y: TOP, colour: [.45, .44, .42]}, {d: OUTER, y: TOP, colour: [.42, .41, .39]},
+      {d: OUTER, y: LINTEL, colour: [.42, .41, .39]}, {d: OUTER, y: 0});
     return points;
+  };
+}
+
+// The strips a gate leaves out: the walkway and the first rows over its throat, and the back wall below the lintel
+// across its mouth (the last strip of the profile).
+function standGap(course) {
+  const last = 2 * ROWS + 4;
+  return (s, i) => {
+    const d = gateDistance(course, s);
+    return (i <= 2 * CUT_ROWS && d < throatHalf(course)) || (i === last && d < mouthHalf(course));
   };
 }
 
@@ -141,12 +177,14 @@ function glowTexture() {
 }
 
 // The crowd: one cut-out card per occupied seat, facing the floor, standing up and
-// sitting down on its own beat (the vertex shader moves each card).
+// sitting down on its own beat (the vertex shader moves each card). BOWL-OUT-LOOK: each card also knows its seat
+// and the way along its row, so the shader can clear the people from round a truck in the stands.
 function crowd(course, uniforms) {
-  const positions = [], uvs = [], colours = [], phases = [], indices = [];
+  const positions = [], uvs = [], colours = [], phases = [], seats = [], indices = [];
+  const throat = s => gateDistance(course, s) < throatHalf(course) + .4;
   const heads = [];
   for (let row = 0; row < ROWS; row++) {
-    const d = FIRST + row * DEPTH + DEPTH * .55, y = PODIUM + (row + 1) * RISE;
+    const d = FIRST + row * DEPTH + DEPTH * .55, y = rowY(row);
     let last = course.worldAt(0, FACE + d), along = 0, next = .3;
     for (let s = 0; s < course.length; s += .08) {
       const p = course.worldAt(s, FACE + d);
@@ -156,6 +194,7 @@ function crowd(course, uniforms) {
       const sections = Math.round(course.length / 18), place = s / course.length * sections;
       if (place % 1 < .07) continue; // the aisles
       if (row >= 9 && row <= 13 && Math.abs((place % 3) - 1.5) < .1) continue; // the tunnel mouths
+      if (row < CUT_ROWS && throat(s)) continue; // the open cut over a gate's tunnel
       // Full near the floor, thinning towards the back, with empty patches.
       const fill = .93 - row * .006 - (hash(Math.floor(place * 3), Math.floor(row / 4)) < .12 ? .5 : 0);
       if (hash(row, Math.round(along * 10)) > fill) continue;
@@ -166,7 +205,7 @@ function crowd(course, uniforms) {
       const first = positions.length / 3;
       for (const [across, up, u, v] of [[-.5, 0, u0, 0], [.5, 0, u1, 0], [-.5, 1, u0, 1], [.5, 1, u1, 1]]) {
         positions.push(p.x - sn * across * width, bottom + height * up, p.z - cs * across * width);
-        uvs.push(u, v); colours.push(tint, tint, tint); phases.push(phase);
+        uvs.push(u, v); colours.push(tint, tint, tint); phases.push(phase); seats.push(p.x, p.z, sn, cs);
       }
       indices.push(first, first + 1, first + 2, first + 2, first + 1, first + 3);
       if (hash(along, row, 17) < .022) heads.push(p.x, bottom + height * .92, p.z, phase);
@@ -177,6 +216,7 @@ function crowd(course, uniforms) {
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
   geometry.setAttribute('crowdPhase', new THREE.Float32BufferAttribute(phases, 1));
+  geometry.setAttribute('crowdSeat', new THREE.Float32BufferAttribute(seats, 4));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   const material = new THREE.MeshStandardMaterial({map: browser ? crowdTexture() : null, alphaTest: .55, roughness: 1,
@@ -184,10 +224,24 @@ function crowd(course, uniforms) {
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float crowdPhase;\nuniform float uCrowdTime;\nuniform float uCrowdCheer;')
+      .replace('#include <common>', `#include <common>
+        attribute float crowdPhase; attribute vec4 crowdSeat;
+        uniform float uCrowdTime; uniform float uCrowdCheer; uniform vec3 uCrowdTruck; uniform float uCrowdScatter;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         float crowdBeat = sin(uCrowdTime * (2.1 + fract(crowdPhase * 7.3) * 1.6) + crowdPhase);
-        transformed.y += max(crowdBeat, 0.0) * max(crowdBeat, 0.0) * (0.08 + 0.32 * uCrowdCheer);`);
+        transformed.y += max(crowdBeat, 0.0) * max(crowdBeat, 0.0) * (0.08 + 0.32 * uCrowdCheer);
+        // Round a truck in the stands: inside CLEAR metres everyone has gone from their places, and out to CLEAR + RUN
+        // people run along their rows away from it, the nearest fastest, and lean into the run. Nobody is hit.
+        vec2 crowdAway = crowdSeat.xy - uCrowdTruck.xz;
+        float crowdDistance = length(vec3(crowdAway.x, (position.y - uCrowdTruck.y) * .7, crowdAway.y));
+        float crowdGone = (1.0 - smoothstep(${(CLEAR - .4).toFixed(1)}, ${CLEAR.toFixed(1)}, crowdDistance)) * uCrowdScatter;
+        float crowdRun = (1.0 - smoothstep(${CLEAR.toFixed(1)}, ${(CLEAR + RUN).toFixed(1)}, crowdDistance)) * uCrowdScatter * (1.0 - crowdGone);
+        vec2 crowdAlong = crowdSeat.zw * (dot(crowdAway, crowdSeat.zw) < 0.0 ? -1.0 : 1.0);
+        transformed.xz += crowdAlong * (crowdRun * 2.2 + uv.y * crowdRun * .35);
+        transformed.y += abs(sin(uCrowdTime * 13.0 + crowdPhase * 3.0)) * .2 * crowdRun;
+        // Those who have gone drop out of sight behind the row in front, whole and upright, never lying down.
+        transformed.xz = mix(transformed.xz, crowdSeat.xy, crowdGone * .6);
+        transformed.y -= 2.6 * crowdGone;`);
   };
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'Bowl crowd';
@@ -292,6 +346,44 @@ function spine(course, centre, wear) {
   booth.rotation.y = heading;
   group.add(booth);
   return group;
+}
+
+// BOWL-OUT-LOOK: big tyres stood on end along the foot of the stand wall and both sides of the Spine, half sunk in the
+// dirt, so a truck that hits a wall is seen to hit rubber. Their backs are flush with the walls' faces, where the
+// rules turn a truck back (src/bowl/bowl-course.js, BOWL_FLOOR).
+function tyreWalls(course) {
+  const places = [];
+  const row = (from, to, off, side) => {
+    let last = null, along = 0;
+    for (let s = from; s <= to; s += .1) {
+      const p = course.groundAt(s, off);
+      if (last) along += Math.hypot(p.x - last.x, p.z - last.z);
+      last = p;
+      if (along < 1.72 && s > from) continue;
+      along = 0;
+      if (side > 0 && gateDistance(course, s) < throatHalf(course) + 1) continue;
+      places.push({p, side, k: places.length});
+    }
+  };
+  row(0, course.length - 1, FACE - .27, 1);
+  const straight = course.features.bowl.ring.straight, spineFace = -(BOWL_FLOOR.wallOffset - .5) + .27;
+  for (const start of [0, course.features.bowl.halfLap]) row(start + 1.5, start + straight - 1.5, spineFace, -1);
+  const geometry = new THREE.TorusGeometry(.6, .27, 8, 18);
+  const tyres = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({color: 0x1e1c1a, roughness: .96, metalness: .02}), places.length);
+  const matrix = new THREE.Matrix4(), turn = new THREE.Quaternion(), euler = new THREE.Euler(0, 0, 0, 'YXZ'), size = new THREE.Vector3();
+  for (const {p, k} of places) {
+    // Turned so each tyre's face looks out over the floor, a little out of line, some sunk deeper than others.
+    euler.set((hash(k, 51) - .5) * .12, p.heading + Math.PI / 2 + (hash(k, 52) - .5) * .16, (hash(k, 53) - .5) * .3);
+    turn.setFromEuler(euler);
+    const scale = .94 + hash(k, 54) * .12;
+    size.set(scale, scale, scale);
+    matrix.compose(new THREE.Vector3(p.x, p.y + .5 - hash(k, 55) * .12, p.z), turn, size);
+    tyres.setMatrixAt(k, matrix);
+  }
+  tyres.name = 'Bowl tyre walls';
+  tyres.castShadow = tyres.receiveShadow = true;
+  tyres.userData.count = places.length;
+  return tyres;
 }
 
 // A floodlight tower: four legs braced into a mast, a lamp bank turned to the floor,
@@ -421,21 +513,23 @@ function updateRaceGates(gates, state, event) {
 export function createBowlStadium(course) {
   const group = new THREE.Group();
   group.name = 'Bowl stadium, floodlights and crowd';
-  const centre = bowlCentre(course), uniforms = {uCrowdTime: {value: 0}, uCrowdCheer: {value: .35}};
+  const centre = bowlCentre(course), uniforms = {uCrowdTime: {value: 0}, uCrowdCheer: {value: .35},
+    uCrowdTruck: {value: new THREE.Vector3(0, -999, 0)}, uCrowdScatter: {value: 0}};
   const wear = createScrapWear({dust: 0x5f4b36, dustTop: 1.2});
   // The stands.
   const concrete = new THREE.MeshStandardMaterial({map: photo('/assets/textures/tunnel-concrete.png'), vertexColors: true, roughness: .96, side: THREE.DoubleSide});
-  const stands = new THREE.Mesh(sweep(course, standProfile(course), 1), concrete);
+  const stands = new THREE.Mesh(sweep(course, standProfile(course), 1, standGap(course)), concrete);
   stands.name = 'Bowl terraces';
   stands.receiveShadow = true;
   // The wall in front of them: welded steel plates over concrete.
   const plates = wear.apply(new THREE.MeshStandardMaterial({color: 0x8a7a68, map: photo('/assets/textures/scrap-plating.png'), roughness: .78, metalness: .45, side: THREE.DoubleSide}));
-  const wall = new THREE.Mesh(sweep(course, wallProfile(), 1), plates);
+  const throat = s => gateDistance(course, s) < throatHalf(course);
+  const wall = new THREE.Mesh(sweep(course, wallProfile(), 1, throat), plates);
   wall.name = 'Bowl stand wall';
   wall.receiveShadow = true;
   // The catch fence on top of the wall, and its posts.
   // The fence stands at the wall's front edge, in front of the flame jets on the wall top.
-  const fence = new THREE.Mesh(sweep(course, s => [{d: .08, y: wallTop(s), v: 0}, {d: .08, y: wallTop(s) + FENCE - WALL, v: FENCE - WALL}], 1),
+  const fence = new THREE.Mesh(sweep(course, s => [{d: .08, y: wallTop(s), v: 0}, {d: .08, y: wallTop(s) + FENCE - WALL, v: FENCE - WALL}], 1, throat),
     new THREE.MeshStandardMaterial({map: chainLink(), color: 0xb5b8b4, metalness: .7, roughness: .45, alphaTest: .35, side: THREE.DoubleSide}));
   if (fence.material.map) { fence.material.map.wrapS = fence.material.map.wrapT = THREE.RepeatWrapping; fence.material.map.repeat.set(1.2, 1.2); }
   fence.name = 'Bowl catch fence';
@@ -447,19 +541,20 @@ export function createBowlStadium(course) {
     last = p;
     if (along < 3.2 && s) continue;
     along = 0;
+    if (throat(s - .3) || throat(s + .3)) continue;
     posts.push(new THREE.CylinderGeometry(.06, .07, FENCE - WALL + .2, 6).translate(p.x, wallTop(s) + (FENCE - WALL) / 2, p.z));
   }
   const postMesh = new THREE.Mesh(mergeGeometries(posts), new THREE.MeshStandardMaterial({color: 0x5b6063, metalness: .8, roughness: .45}));
   postMesh.name = 'Bowl fence posts';
   const people = crowd(course, uniforms);
   group.add(stands, wall, fence, postMesh, people.mesh, flashes(people.heads, uniforms));
-  group.add(spine(course, centre, wear));
+  group.add(spine(course, centre, wear), tyreWalls(course));
   // Four floodlight towers behind the ends' stands, each aimed across the floor.
   const glow = glowTexture(), lights = [];
   const ring = course.features.bowl.ring, zones = course.features.bowl.zones;
   [[zones.end1[0] + ring.radius * Math.PI * .22, zones.end2[0] + ring.radius * Math.PI * .78],
     [zones.end1[0] + ring.radius * Math.PI * .78, zones.end2[0] + ring.radius * Math.PI * .22]].flat().forEach((s, index) => {
-    const foot = course.worldAt(s, FACE + BACK + 4), aim = course.worldAt(s, -4);
+    const foot = course.worldAt(s, FACE + OUTER + 4), aim = course.worldAt(s, -4);
     const position = new THREE.Vector3(foot.x, 0, foot.z), target = new THREE.Vector3(aim.x * .55 + centre.x * .45, 0, aim.z * .55 + centre.z * .45);
     group.add(tower(position, target, glow, index));
     const light = new THREE.SpotLight(0xfff1dc, 52000, 0, .62, .55, 2);
@@ -476,10 +571,25 @@ export function createBowlStadium(course) {
     board.rotation.y = p.heading - Math.PI / 2;
     group.add(board);
   }
-  let raceGates;
+  // BOWL-OUT-LOOK: the tunnels, the arches, the car park and the marker back to a gate (src/bowl/bowl-outside-view.js).
+  const outside = createBowlOutsideView(course, {photo, drawn, hash, glow, stand: BOWL_STAND});
+  group.add(outside.group);
+  let raceGates, lastNow = null;
   group.userData.update = (now, cheer = .35, state) => {
+    const dt = lastNow == null ? 0 : Math.min(.1, Math.max(0, (now - lastNow) * .001));
+    lastNow = now;
     uniforms.uCrowdTime.value = now * .001;
     uniforms.uCrowdCheer.value = cheer;
+    // The crowd clears from round the truck while it is in the stands, and comes back over two seconds once it has
+    // gone. The ring stays where the truck left it while the people walk back.
+    const inStands = state?.bowlOutside?.where === 'stands' && (state.airHeight || 0) < 3;
+    if (inStands) {
+      const p = course.worldAt(state.s, state.lateral);
+      uniforms.uCrowdTruck.value.set(p.x, (state.groundHeight || 0) + (state.airHeight || 0), p.z);
+    }
+    const scatter = uniforms.uCrowdScatter;
+    scatter.value = inStands ? Math.min(1, scatter.value + dt * 4) : Math.max(0, scatter.value - dt * .5);
+    outside.update(now, state, dt);
     const event = state?.bowlNight?.event;
     const sideBySide = event?.type === 'sideBySide';
     if (sideBySide && !raceGates) {

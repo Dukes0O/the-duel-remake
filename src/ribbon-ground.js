@@ -25,6 +25,11 @@ const BURIED_GAP = 5, RISE = 10, BURIED_DEPTH = .4, OWN_FROM = 12, OWN_OVER = 8;
 
 export function ribbonGroundAt(course, s, off) {
   const point = course.groundAt(s, off);
+  // BOWL-OUT-LOOK: behind the Bowl's stand wall the drawn stands and car park are the ground that shows
+  // (src/bowl/bowl-stadium.js, src/bowl/bowl-outside-view.js). The ribbon lies under them at the height of the floor's
+  // edge, not on the terraces the rules drive on (src/bowl/bowl-outside.js), so no slab of dirt rises through them.
+  const bowl = course.features?.bowl?.outside;
+  if (bowl && off > bowl.wall + .5) { point.y = Math.min(point.y, course.groundAt(s, bowl.wall - .5).y); return point; }
   if (!course.script) return point;
   const own = Math.abs(off);
   if (own <= course.roadHalfWidthAt(s) + 2) return point;

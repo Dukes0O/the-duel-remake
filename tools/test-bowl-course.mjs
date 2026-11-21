@@ -6,6 +6,10 @@ import {Duel} from '../src/game.js';
 import {BOWL_COURSE, bowlCentre} from '../src/bowl/bowl-course.js';
 import {createBowlView} from '../src/bowl/bowl-view.js';
 import {addArenaCrushables} from '../src/arena-props.js';
+import {BOWL_STAND} from '../src/bowl/bowl-stadium.js';
+import {terraceHeight} from '../src/bowl/bowl-outside.js';
+import {ribbonGroundAt} from '../src/ribbon-ground.js';
+import {farTerrainCornerHeight} from '../src/far-terrain-surface.js';
 
 const check=(condition,message)=>assert.ok(condition,message);
 const DT=1/120;
@@ -184,6 +188,36 @@ const floorBox=new THREE.Box3();for(const wall of outer)floorBox.expandByPoint(n
 check(terraces.min.x<floorBox.min.x-30&&terraces.max.x>floorBox.max.x+30&&terraces.min.z<floorBox.min.z-30&&terraces.max.z>floorBox.max.z+30&&terraces.max.y>20,
   'The terraces stand all round the floor, behind its wall, rising above 20 m.');
 check(stadium.userData.crowdCards>10000,`The stands hold a crowd of more than ten thousand (${stadium.userData.crowdCards}).`);
+// BOWL-OUT-LOOK: the drawn stands are the rules' stands, both gates are drawn where the rules open them, the car park
+// holds the rules' parked cars, the ground mesh lies under the drawn stands, and the marker follows the truck outside.
+const outsideRules=data.outside;
+for(let row=0;row<BOWL_STAND.rows;row+=3){
+  const off=BOWL_STAND.face+BOWL_STAND.first+(row+.5)*BOWL_STAND.depth;
+  check(Math.abs(BOWL_STAND.rowY(row)-terraceHeight(outsideRules,off))<.05,`Row ${row} is drawn at the rules' height.`);
+}
+check(Math.abs(BOWL_STAND.face+BOWL_STAND.first+BOWL_STAND.rows*BOWL_STAND.depth-outsideRules.back)<1e-6,'The drawn top row ends at the stand back the rules use.');
+const outsideView=stadium.getObjectByName('Bowl outside: gates, car park and marker');
+check(outsideView?.userData.gateCount===2,'Both gates are drawn.');
+for(const gate of data.gates){
+  const parts=outsideView.getObjectByName(`Bowl ${gate.name}`),floorBox=new THREE.Box3().setFromObject(parts.getObjectByName(`Bowl ${gate.name} tunnel floor`));
+  const middle=bowl.worldAt(gate.s,(outsideRules.wall+outsideRules.back)/2);
+  check(floorBox.containsPoint(new THREE.Vector3(middle.x,(floorBox.min.y+floorBox.max.y)/2,middle.z)),`The ${gate.name} tunnel floor lies where the rules open the gate.`);
+  check(parts.getObjectByName(`Bowl ${gate.name} light column`),`The ${gate.name} has its light column.`);
+}
+const parkedCars=outsideView.getObjectByName('Bowl car park cars');
+check(outsideView.userData.parkedCars===outsideRules.parking.length&&outsideRules.parking.length===16&&outsideRules.parking.every(car=>{
+  const shell=parkedCars.getObjectByName(`Crushable ${car.id}`);return shell&&Math.hypot(shell.position.x-car.x,shell.position.z-car.z)<.01;}),
+  'The 16 parked cars are drawn where the rules park them.');
+check([30,40,55].every(off=>ribbonGroundAt(bowl,100,off).y<=bowl.groundAt(100,outsideRules.wall-.5).y+1e-6)&&
+  farTerrainCornerHeight(bowl,0,0,100,outsideRules.wall+20,16)<0,'The ground mesh lies under the drawn stands and car park, not on the terraces.');
+const marker=outsideView.userData.marker,gateAim=bowl.worldAt(data.gates[1].s,outsideRules.back+8);
+stadium.userData.update(2000,.35,{s:100,lateral:outsideRules.back+20,groundHeight:0,airHeight:0,
+  bowlOutside:{where:'carpark',gate:{...data.gates[1],metres:64,aim:gateAim}}});
+check(marker.visible,'The gate marker shows while the truck is outside.');
+stadium.userData.update(2100,.35,{s:100,lateral:0,groundHeight:0,airHeight:0});
+check(!marker.visible,'The gate marker goes once the truck is back in.');
+check(stadium.getObjectByName('Bowl crowd').geometry.getAttribute('crowdSeat')?.itemSize===4,'Each crowd card knows its seat, to clear from round a truck.');
+check(stadium.getObjectByName('Bowl tyre walls')?.userData.count>200,'Tyre walls stand along the stand wall and the Spine.');
 const lights=stadium.userData.lights;
 check(lights.length===4&&lights.every(light=>floorBox.containsPoint(new THREE.Vector3(light.target.position.x,0,light.target.position.z))),
   'Four floodlights are aimed at the floor.');
