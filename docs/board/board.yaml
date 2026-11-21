@@ -594,7 +594,7 @@ tasks:
     lane: "FINISH"
     size: "M"
     status: "backlog"
-    needs: [BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
+    needs: [BOWL-SCREEN-FIX, BOWL-LTR-EASY, BOWL-LOOK-FIX, BOWL-REX-FIX, BOWL-OUT-FIX, BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT, BOWL-SHOW-2, BOWL-WALLS, BOWL-TRICKS, BOWL-TRICKS-ALL, BOWL-HUD, BOWL-CAMERA, BOWL-TRICK-SCHOOL, BOWL-CRUSH, BOWL-SOUND-CRUSH, BOWL-OUT-SIM, BOWL-OUT-LOOK, BOWL-RIVALS-2, BOWL-WEAPONS, BOWL-WEAPONS-LOOK, BOWL-REX-2, BOWL-REX-LOOK, BOWL-JUMP-EVENTS, BOWL-NIGHTS, BOWL-SOUND]
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-FINISH.md"
@@ -648,6 +648,41 @@ tasks:
     locks: [bowl-screens]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-REX-FIX.md"
+
+  - id: BOWL-SCREEN-FIX
+    title: "Bowl: screen faults from the first batch drive (pancake label, Car Crush totals and hint, stray panels and lines, the gate arrow)"
+    owner: "codex"
+    model: "sol"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [bowl-screens]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SCREEN-FIX.md"
+
+  - id: BOWL-LTR-EASY
+    title: "Bowl: Last Truck Rolling on Easy winnable by a driver who chases and rams"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [bowl-rivals]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-LTR-EASY.md"
+
+  - id: BOWL-LOOK-FIX
+    title: "Bowl: looks owed from the first batch drive (a lit car park, a crowd that runs, damage on the truck, the saw seen from behind)"
+    owner: "claude"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-LOOK-FIX.md"
 
   - id: BOWL-REX-3
     title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
