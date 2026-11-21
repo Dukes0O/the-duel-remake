@@ -193,6 +193,27 @@ notes and history are evidence, not instructions.
     inbox. `master` is never rewritten. History was rewritten on 24 September 2026: never merge
     a branch that still holds commits from before it; rebase it first with
     `docs/history/history-rewrite-2026-09-24-map.txt`.
+23. **Behind an off switch: merge first, test the batch** (Kyle, 20 November 2026). On 20 November
+    each Show Night card ran 84 to 140 suites, then 38 to 121 more after each fix, and three cards
+    waited for hand drives while the cards behind them stood still. A card qualifies when a player
+    cannot reach what it adds (its switch is `dev` or off) and it changes no save, no pay and
+    nothing the released game does with the switch off.
+    - **The builder runs a small set, once:** the card's own checks, the core suite, the three
+      guards that prove the released game has not moved, and the build:
+      `node tools/run-tests.mjs --jobs 4 --filter core --filter test-replays --filter test-combat-replays --filter test-world-composition --filter <each suite the card names>`
+      and `npm run build`. No lane tier. A fix runs only the checks it touched and the guards.
+    - **It merges when that is green.** Nothing waits for a hand drive, a look, a browser scenario
+      or a second drive. Claude's written review of a changed assertion (rule 18) is still owed,
+      at the next check-in, and no longer holds the merge; a change Claude rejects is fixed
+      forward.
+    - **The wide suites run once on the merged batch,** in the night check, which already sizes
+      itself by what was merged (rule 13). A night failure in a batch is found within rule 4's
+      30 minutes and fixed first.
+    - **Claude drives the merged game,** a batch of cards at a time, from the integration folder.
+      A fault found there becomes a small fix card.
+    - **Not covered:** a card that touches saves or pay, or changes released behaviour, keeps the
+      lane tier and its reviews before the merge. The release gate is unchanged: the full tier,
+      Claude's drive of the whole feature and the frame check, before the switch goes on.
 
 ## Gates
 
@@ -204,7 +225,8 @@ notes and history are evidence, not instructions.
   drive and then Kyle's.
 - **The builder runs them once**, on a branch with current `integration/wasteland` merged in:
   the card's checks, the lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`)
-  and `npm run build`, recorded in the change note with the commit the tier ran on.
+  and `npm run build`, recorded in the change note with the commit the tier ran on. A card
+  behind an off switch runs rule 23's small set instead and merges first.
 - **The merge does not repeat them.** With no conflict in code, the laptop runs only what the
   builder could not: the laptop-only suites (`test-course-kit`, `test-earned-cars-ui`,
   `test-medals`, `test-drive-through`, `test-full-check`, `test-salt-flats`,

@@ -937,7 +937,10 @@ export class Duel {
       if (Number.isFinite(partial[key])) input[key] = Math.max(key === 'steer' ? -1 : 0, Math.min(1, partial[key]));
     }
     for (const key of ['boost', 'shiftUp', 'shiftDown']) if (partial[key] != null) input[key] = !!partial[key];
-    if (partial.interact != null && this.state.footTransition)
+    const night = this.state.bowlNight;
+    const bowlFight = night?.phase === 'event' && this.state.status === 'racing' &&
+      (night.event?.type === 'scrapasaurus' || night.event?.type === 'lastTruckRolling') && this.featureFlags.enabled('titan-bowl');
+    if (partial.interact != null && (this.state.footTransition || bowlFight))
       input.interact = !!partial.interact;
     if (partial.interact != null) this._deepLift = !!partial.interact && this.state.deepJourney?.phase === 'underwater'; // DEEP-SIRENA-VIEW: F lifts
   }

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {fallPose} from './bowl-hook.js';
 import {REX_RULES, rexFacing, rexFightOf, rexPlaces} from './bowl-rex.js';
 
 // The Scrapasaurus in the Bowl (BOWL-REX-FIGHT): its model on the rails, its
@@ -40,7 +41,7 @@ export function createRexView({loadModel}) {
   group.name = 'Bowl Scrapasaurus';
   group.visible = false;
   let course = null, places = null, model = null, mixer = null, actions = {}, loading = null, disposed = false;
-  let lastNow = null, boxes = [], fallRoll = 0;
+  let lastNow = null, boxes = [], tailPivot = null;
   const holder = new THREE.Group(); holder.name = 'Scrapasaurus on its rails';
   const pose = new THREE.Group(); pose.name = 'Scrapasaurus pose';
   holder.add(pose);
@@ -66,8 +67,44 @@ export function createRexView({loadModel}) {
   const rust = new THREE.MeshStandardMaterial({color: 0x6b4a33, roughness: .9, metalness: .2});
   const thrown = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.2, 4.2), rust);
   thrown.name = 'Scrapasaurus thrown junk car'; thrown.visible = false;
+  const cableGeo = new THREE.BufferGeometry();
+  cableGeo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(6),3));
+  const cable = new THREE.Line(cableGeo,new THREE.LineBasicMaterial({color:0xffe29b}));
+  cable.frustumCulled=false;cable.name='Scrapasaurus tow cable';
+  const tip=new THREE.Mesh(new THREE.TorusGeometry(.16,.045,6,14),rust);
+  tip.name='Truck tow hook';
+  const mark=new THREE.Mesh(new THREE.RingGeometry(.59,.68,24),glowMaterial(RING));
+  mark.name='Open battery marker';mark.rotation.y=Math.PI/2;
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.22,.38,35,12),glowMaterial(0xffd44d));
+  beam.name='Open battery beam';beam.material.opacity=.76;
+  const progress=new THREE.Mesh(new THREE.RingGeometry(.83,1.06,64),glowMaterial(0x9aff83));
+  progress.name='Battery pull progress';progress.material.opacity=1;progress.renderOrder=9;
+  const pointerShape=new THREE.Shape();
+  pointerShape.moveTo(1,0);pointerShape.lineTo(-.6,.62);pointerShape.lineTo(-.32,0);pointerShape.lineTo(-.6,-.62);pointerShape.closePath();
+  const pointer=new THREE.Mesh(new THREE.ShapeGeometry(pointerShape),glowMaterial(RING));
+  pointer.name='Offscreen battery arrow';pointer.frustumCulled=false;pointer.renderOrder=10;
+  const projected=new THREE.Vector3(), cameraPoint=new THREE.Vector3(), edge=new THREE.Vector3();
+  pointer.onBeforeRender=(_renderer,_scene,camera)=>{
+    projected.copy(mark.position).project(camera);
+    cameraPoint.copy(mark.position).applyMatrix4(camera.matrixWorldInverse);
+    const behind=cameraPoint.z>=0;
+    if(!behind && Math.abs(projected.x)<=.96 && Math.abs(projected.y)<=.95){
+      pointer.material.opacity=0;return;
+    }
+    let x=projected.x*(behind?-1:1), y=projected.y*(behind?-1:1);
+    if(behind && Math.abs(x)+Math.abs(y)<.01)y=-1;
+    const fit=Math.max(Math.abs(x)/.88,Math.abs(y)/.76,.001);
+    x/=fit;y/=fit;
+    edge.set(x,y,0).unproject(camera);pointer.position.copy(edge);
+    pointer.scale.setScalar(edge.distanceTo(projected.set(x,y+.045,0).unproject(camera)));
+    pointer.quaternion.copy(camera.quaternion);pointer.rotateZ(Math.atan2(y,x*(camera.aspect||1)));
+    pointer.material.opacity=1;pointer.updateMatrixWorld(true);
+  };
+  for(const circle of [mark,progress])circle.onBeforeRender=(_renderer,_scene,camera)=>{
+    circle.quaternion.copy(camera.quaternion);circle.updateMatrixWorld(true);
+  };
   const pen = new THREE.Group(); pen.name = 'Scrapasaurus pen of junk cars';
-  group.add(holder, cone, fire, ring, thrown, pen);
+  group.add(holder, cone, fire, ring, thrown, pen, cable, tip, mark, beam, progress, pointer);
 
   // The model loads once for the view; each event on a new course only moves it and rebuilds the pen.
   function clear() {
@@ -86,13 +123,14 @@ export function createRexView({loadModel}) {
       model.traverse(node => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
       pose.add(model);
       boxes = [1, 2, 3].map(index => {
-        const whole = model.getObjectByName(`battery-box-${index}-whole`), smashed = model.getObjectByName(`battery-box-${index}-smashed`);
-        // Each box gets its own material so only the open one glows.
-        if (whole?.material) whole.material = whole.material.clone();
-        return {whole, smashed};
+        const part=model.getObjectByName(`battery-box-${index}`);
+        const whole=model.getObjectByName(`battery-box-${index}-whole`);
+        const open=model.getObjectByName(`battery-box-${index}-open`);
+        return {part,whole,open,parent:part?.parent,origin:part?.position.clone()};
       });
       mixer = new THREE.AnimationMixer(model);
       for (const clip of asset.animations || []) actions[/jaw/.test(clip.name) ? 'jaw' : /tail/.test(clip.name) ? 'tail' : clip.name] = mixer.clipAction(clip);
+      tailPivot=model.getObjectByName('scrapasaurus-tail');
       group.userData.rexReady = true;
     }).catch(error => { if (!disposed) group.userData.rexError = error?.message || 'The Scrapasaurus could not load'; });
     // The pen beside the rails, between them and the wall (rexPlaces).
@@ -127,50 +165,76 @@ export function createRexView({loadModel}) {
     pen.visible = !!fight;
     cone.visible = fire.visible = ring.visible = thrown.visible = chest.visible = false;
     chestLight.intensity = 0;
+    cable.visible=tip.visible=mark.visible=beam.visible=progress.visible=pointer.visible=false;
     if (teaser) {
       // Behind the wall in front of the stands, at the head of the crush line, looking in.
       const at = next.groundAt(places.startS, places.side * (places.edge + 4.5));
       place(at, at.heading - Math.PI / 2);
       pose.position.y = 0; pose.rotation.set(0, 0, 0);
-      boxes.forEach(({whole, smashed}) => { if (whole) whole.visible = true; if (smashed) smashed.visible = false; });
+      for(const {part,whole,open,parent,origin} of boxes){
+        if(part){if(part.parent!==parent)parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);part.visible=true;}
+        if(whole)whole.visible=true;
+        if(open)open.scale.setScalar(0);
+      }
+      actions.tired?.stop();
       actions.tail?.play();
       return;
     }
     pen.children.forEach((car, index) => { car.visible = index < fight.penCars; });
     place(next.groundAt(fight.s, places.rail), rexFacing(fight, next));
-    // Poses: it rears for its tell, crouches to rest with its back low, and rolls over when it falls.
-    const crouch = places.boxTopStanding - REX_RULES.boxTop.resting;
-    const low = fight.phase === 'rest' || fight.phase === 'stagger' ? 1 : 0;
-    // pose is in the model's own metres (holder carries the scale).
-    pose.position.y += (-crouch / places.scale * low - pose.position.y) * Math.min(1, dt * 4);
-    const pitch = fight.phase === 'tell' ? -.14 : fight.phase === 'rest' ? .1 : fight.phase === 'eat' ? .18 : 0;
-    pose.rotation.x += (pitch - pose.rotation.x) * Math.min(1, dt * 3);
-    // While it rests it turns its head away from its rails, towards the wall, so a truck
-    // launched off the dropped car flies past its head and onto its back.
-    const turn = low ? -places.side * .35 : 0;
-    pose.rotation.y += (turn - pose.rotation.y) * Math.min(1, dt * 3);
-    fallRoll = fight.phase === 'fallen' ? Math.min(1.45, 1.45 * fight.t / REX_RULES.fallSec) : 0;
-    pose.rotation.z = -fallRoll;
-    if (fight.phase === 'fallen') pose.position.y = -crouch / places.scale * .5 * fallRoll / 1.45;
-    // Its jaw works when it breathes, eats or lifts a car; its tail swings while it walks.
-    const jaw = ['tell', 'fire', 'eat', 'lift'].includes(fight.phase), tail = fight.phase === 'walk';
-    if (actions.jaw) { if (jaw) actions.jaw.play(); else actions.jaw.stop(); }
-    if (actions.tail) { if (tail) actions.tail.play(); else actions.tail.stop(); }
-    const open = fight.phase === 'rest' ? fight.boxes.indexOf(false) : -1;
-    boxes.forEach(({whole, smashed}, index) => {
-      if (whole) {
-        whole.visible = !fight.boxes[index];
-        // The open box flashes hazard yellow; the shut ones do not.
-        whole.material.emissive?.setHex(index === open ? 0xffd23a : 0x000000);
-        if (index === open) whole.material.emissiveIntensity = 1.2 + Math.sin(seconds * 9) * .8;
+    const fallen=fallPose(fight);
+    pose.position.set(0,fallen.lift,0);
+    pose.rotation.set(0,0,fallen.roll);
+    const tired=actions.tired;
+    if(tired){
+      if(fight.low){tired.play();tired.paused=true;tired.time=tired.getClip().duration*.8;mixer.update(0);}
+      else if(tired.isScheduled()){tired.stop();mixer.update(0);}
+    }
+    if(actions.jaw){if(['tell','fire','lift'].includes(fight.phase))actions.jaw.play();else actions.jaw.stop();}
+    actions.tail?.stop();
+    if(tailPivot)tailPivot.rotation.y=fight.tailYaw || 0;
+    const hook=fight.hook;
+    boxes.forEach(({part,whole,open,parent,origin},index)=>{
+      if(!part)return;
+      const detached=fight.boxes[index];
+      const position=hook.phase==='dragging' && hook.box===index ? hook.drag : fight.dropped[index];
+      if(detached && position){
+        if(part.parent!==group)group.add(part);part.position.copy(position);part.rotation.set(0,hook.origin?.heading||0,0);
+      }else{
+        if(part.parent!==parent)parent.add(part);part.position.copy(origin);part.rotation.set(0,0,0);
       }
-      if (smashed) smashed.visible = !!fight.boxes[index];
+      part.visible=!detached || !!position;
+      const lit=detached || fight.marker?.box===index;
+      if(whole)whole.visible=!lit;
+      if(open){open.scale.setScalar(lit?1:0);open.visible=lit;}
     });
+    if(hook.origin && hook.tip && hook.phase!=='idle'){
+      const points=cableGeo.getAttribute('position');
+      points.setXYZ(0,hook.origin.x,hook.origin.y,hook.origin.z);
+      points.setXYZ(1,hook.tip.x,hook.tip.y,hook.tip.z);
+      points.needsUpdate=true;cable.visible=tip.visible=true;tip.position.copy(hook.tip);
+    }
+    if(fight.marker){
+      mark.visible=true;mark.position.copy(fight.marker);
+      beam.visible=pointer.visible=true;
+      beam.position.copy(mark.position);beam.position.y+=17.5;
+      progress.visible=hook.phase==='attached';
+      if(progress.visible){
+        const required=REX_RULES.level[fight.level].pull[hook.box];
+        const steps=Math.floor(64*Math.min(1,hook.pulls[hook.box]/required));
+        progress.position.copy(mark.position);progress.geometry.setDrawRange(0,steps*6);
+      }
+      mark.material.color.setHex(fight.marker.canBite ? 0x99ff77:RING);
+    }
     if (fight.cone && (fight.phase === 'tell' || fight.phase === 'fire')) {
+      if(cone.userData.halfAngle!==fight.cone.halfAngle){
+        cone.geometry.dispose();cone.geometry=fanGeometry(fight.cone.halfAngle);
+        cone.userData.halfAngle=fight.cone.halfAngle;
+      }
       const y = next.groundAt(fight.s, places.rail).y + .06;
       for (const item of [cone, fire]) {
         item.position.set(fight.cone.x, y, fight.cone.z);
-        item.rotation.y = fight.cone.heading;
+        item.rotation.y = item===fire ? fight.cone.flameHeading : fight.cone.heading;
         item.scale.set(fight.cone.range, 1, fight.cone.range);
       }
       cone.visible = true;
@@ -193,7 +257,7 @@ export function createRexView({loadModel}) {
       ring.position.set(target.x, target.y + .07, target.z);
       ring.visible = true;
       ring.material.opacity = .4 + .3 * Math.sin(seconds * 10);
-      const head = next.groundAt(fight.s - places.headAhead, places.rail);
+      const head = next.groundAt(fight.s + fight.direction * places.headAhead, places.rail);
       const from = new THREE.Vector3(head.x, head.y + places.headTop, head.z);
       thrown.visible = true;
       if (fight.phase === 'lift') thrown.position.copy(from);

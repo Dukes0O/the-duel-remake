@@ -68,7 +68,11 @@ effects before any model file):
 - **The line and the beam:** the thin red line on the floor that follows the truck; the orange strip when it stops;
   the beam itself as a hard white-red bar with heat above it and a scorched stripe left on the dirt for a few seconds.
 - **The hatch and the bomb:** a hatch between its shoulders that opens with a spinning red lamp; the bomb as a scrap
-  drum with a blinking light, a carrying ring that the hook can plainly take, and its orange ring filling on the floor.
+  drum with a blinking light, a carrying ring that the hook can plainly take, a lamp that blinks faster as its time runs out, and its shadow
+  growing on the floor as it falls. **Its two rings on the floor are barely there** (Kyle, 20 November 2026: "the
+  colour contrast should be close to the colour of the ground. like really close"): the floor's own colour 4 points of
+  Lab lightness darker, never less than 3 or more than 5, no new hue, no glow, no outline, no flashing. BOWL-REX-3,
+  item 4, has the whole rule, and nothing drawn here may make the rings plainer.
 - **Sent back:** the burst under the beast, and a stagger that reads as hurt and not as the ordinary tired pose.
 - Pictures from the real game with its screen up: the red line on the truck; the orange strip a moment before the
-  beam; the truck clear over the beam; a bomb ticking; a bomb on the cable; the burst under the beast.
+  beam; the truck clear over the beam; a bomb ticking, with its ring measured against the floor beside it; a bomb on the cable; the burst under the beast.

@@ -432,12 +432,18 @@ ramp up the back of the scraposaurus is a bit too on the nose. there must be a b
     half a second, 60 m long. The way out is to drive across the line and not along it. Being far away does not help,
     which is what sets it apart from the fire. A truck in the air goes clean over it, and Big Mo calls that.
   - **Bombs, after the second box.** One is lobbed onto a ring on the floor, as a car is. It lies there ticking (10
-    seconds on Easy) with an orange ring that fills, and bursts: keep out of the ring. **The hook takes a bomb.** The F
+    seconds on Easy) inside a ring 7 m in radius, and bursts: keep out of the ring. **The rings are barely there.**
+    Kyle, 20 November 2026: "don't mark the bombs on the floor so obviously... the colour contrast should be close to
+    the colour of the ground. like really close." Each ring is the floor's own colour made 4 points of Lab lightness
+    darker (never less than 3 or more than 5), with no new hue, no glow, no outline and no flashing. The bomb's
+    whistle, its shadow growing on the floor and its quickening tick carry the timing. **The hook takes a bomb.** The F
     marker shows over it, and a bomb dragged into the beast's legs bursts there: it staggers and sags at once, that
     tired spell is not counted against the driver, and the box that opens is already a second pulled. So the beast's
     own weapon is the quickest way to its last box, for a driver who dares to go and fetch it.
-  - **One rule for all of it:** the floor shows orange where harm will come before it comes. Nothing new has to be
-    explained on the card before the fight.
+  - **Orange for the fire and the beam, almost nothing for the bombs.** The floor shows orange where the fire and the
+    beam will burn, before they burn, and that is learned on the first two boxes. The bombs come last and ask the
+    driver to look harder. Nothing new has to be explained on the card before the fight, and a bomb that catches the
+    driver says why once ("watch for its shadow on the floor").
   - **How much at once:** on Easy it makes one extra attack each time it gets up, never two. On Medium and Hard, with
     two boxes out, it throws when it gets up and fires the beam between its two breaths of fire; on Hard the beam fires
     twice running.
@@ -531,3 +537,9 @@ follows it.
 
 Words on screen and Big Mo's lines: the builder writes each new line as one full plain sentence
 (`memory/dialogue-plain-prose`), and Claude reads every line during the closing drive.
+
+## How these slices are tested from 20 November 2026 (AGENTS rule 23)
+
+Every slice is behind `titan-bowl` or `arena-tricks`, so each runs rule 23's small set and merges first; the wide suites run on
+the merged batch at night, and Claude drives the merged game in batches. The slices that change the save (BOWL-TRICK-SCHOOL,
+BOWL-NIGHTS, BOWL-TOUR, and the secret-trick record of BOWL-TRICKS-ALL) keep the save checker's review before they merge.
