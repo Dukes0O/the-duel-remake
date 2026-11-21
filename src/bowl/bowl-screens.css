@@ -234,3 +234,7 @@
 @media (prefers-reduced-motion: reduce) {
   .bowl-health-danger i:first-child, .bowl-health-alert { animation: none; }
 }
+/* BOWL-WEAPONS-LOOK: the weapon card shows each weapon as it is drawn on the truck. */
+.bowl-weapon-picks { list-style: none; padding: 0; margin: 12px 0 0; }
+.bowl-weapon-picks li { display: grid; grid-template-columns: 132px auto; column-gap: 14px; align-items: center; margin: 0 0 12px; }
+.bowl-weapon-picks li > span { grid-row: span 2; display: block; line-height: 0; }

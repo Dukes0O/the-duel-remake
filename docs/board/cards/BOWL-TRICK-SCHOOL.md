@@ -91,3 +91,7 @@ This card changes the save, so it keeps the save checker's review, its lane tier
 23, "Not covered"). It does **not** wait for Claude's drive: merge when those three are green. Claude then opens the School
 from both entry points on the merged game with the next batch drive, plays the eight lessons and the free floor, and puts any
 fault on a small fix card.
+
+## Save review complete, 20 November
+
+The approved save fixes and production build are at `a7a89bac3`. The first lane run passed all 73 suites. The rule 19 check for the exit fixes is running with the source frozen. Jump Events now has bowl-night per Claude's handoff. Trick School will merge as soon as its checks pass.

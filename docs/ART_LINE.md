@@ -391,6 +391,16 @@ the game.
   the event that starts it (`FORGE.times` in `src/world/forge-look.js`), never
   by how far something has to travel, so that the job's rule and its sound can
   be timed to the same numbers and a test can hold the two equal.
+- **A blow seen end on from the driver's seat.** The Bowl hammer's arm points straight away from the chase camera when
+  it lands, so its hit vanished in the game's own pictures (BOWL-WEAPONS-LOOK, 20 November 2026). Check each weapon's
+  hit from the driver's seat; where the part is end on, the hit is carried by something facing the viewer (a flash,
+  sparks, grit thrown up over the struck truck). The same check moved the saw up and threw its sparks back over the
+  bonnet, where the driver sees them.
+- **A frozen rule is still drawn.** The weapon rules stop a wrecked truck's clock wherever it was, so a drawing that
+  reads the weapon's phase kept a wreck breathing fire. A drawing gates on the wreck and on the event still running.
+- **Another mode's fittings on a new mode's vehicles.** The arena draws its armour kits, spiked bumper and roof
+  crossbow on every fighting truck, and they buried the Bowl rivals' own bolt-ons. Before judging a vehicle's look,
+  take a picture of it with the new drawing off and name every part that is still there.
 
 ### Animals (WILD-ART-WASTE, 19 November 2026)
 

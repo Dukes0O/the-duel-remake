@@ -7,6 +7,7 @@ import {bowlHudView} from './bowl-night.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_RESULTS as WORDS, BOWL_TURN_LINES} from './bowl-lines.js';
 import {createTurnScreens} from './bowl-turns-screens.js'; // BOWL-TURNS: the Turn Show
 import {chooseShowWeapon, SHOW_WEAPONS} from './bowl-weapons.js';
+import {WEAPON_PICTURES} from './bowl-weapons-view.js'; // BOWL-WEAPONS-LOOK: the weapons as drawn
 import {BOWL_RIVALS} from './bowl-rivals.js';
 import {arenaTrickStrip, secretCardMarkup, BOWL_TRICK_GUIDE, bowlOpeningLines, bowlResultReady, bowlStrip, bowlTrickEntryMarkup, createBowlHud, playBowlHudCue} from './bowl-hud.js';
 import './bowl-screens.css';
@@ -166,9 +167,9 @@ export function createBowlScreens({app, ui, escapeHTML, projectPlayer}) {
       if (state.status === 'bowl_weapon_pick') {
         const picks = state.bowlNight.event.weaponChoices.map(id => {
           const weapon = SHOW_WEAPONS[id];
-          return `<li><span aria-hidden="true">${weapon.picture}</span> ${button(weapon.name, 'show-night-weapon', ` data-weapon="${id}"`)}${say(weapon.line)}</li>`;
+          return `<li><span aria-hidden="true">${WEAPON_PICTURES[id] ?? weapon.picture}</span> ${button(weapon.name, 'show-night-weapon', ` data-weapon="${id}"`)}${say(weapon.line)}</li>`;
         });
-        return `<section class="bowl-panel" role="dialog" aria-modal="true" aria-labelledby="bowl-title"><h2 id="bowl-title">Choose your show weapon</h2><p>Use F in Last Truck Rolling.</p><ul>${picks.join('')}</ul></section>`;
+        return `<section class="bowl-panel" role="dialog" aria-modal="true" aria-labelledby="bowl-title"><h2 id="bowl-title">Choose your show weapon</h2><p>Use F in Last Truck Rolling.</p><ul class="bowl-weapon-picks">${picks.join('')}</ul></section>`;
       }
       if (eventIsRunning(state) && state.paused && help?.state === state) return trickCard(state);
       if (state.bowlNight && state.status === 'bowl_break' && !resultReady(state.bowlNight)) return '';
