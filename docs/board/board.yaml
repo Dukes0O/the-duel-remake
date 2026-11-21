@@ -998,6 +998,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["TOWN-FIRE-JOB","TOWN-OUTPOSTS"]
     locks: []
     details: "docs/board/cards/TOWN-JOBS-2.md"
@@ -1009,6 +1010,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["TOWN-FIRE-JOB"]
     locks: []
     details: "docs/board/cards/TOWN-SUPPORT.md"
@@ -1019,6 +1021,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["TOWN-VANE","TOWN-HAUL-JOB"]
     locks: []
     details: "docs/board/cards/TOWN-VANE-JOBS.md"
@@ -1282,6 +1285,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
+    waiting_on: "kyle"
     needs: ["TOWN-WORLD","TOWN-HOOKS","BOWL-HOOKS","BOWL-REX-FIGHT"]
     locks: [busy-game-files]
     details: "docs/board/cards/TOWN-BOWL-LINK.md"
