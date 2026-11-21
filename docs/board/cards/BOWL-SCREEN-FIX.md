@@ -64,3 +64,5 @@ Please grant narrow hooks in `src/bowl/bowl-night.js` for the pancake pop-up, ti
 I propose selecting the nearest remaining crushable in world coordinates after eight seconds from the start or most recent crush, giving one line and cue, and keeping the arrow on that piece until another crush. Can the donut lesson reuse the later lessons' Table start pose?
 
 The existing router's point projection is limited to Rex. Please allow a narrow `src/render3d.js` hook to project a world point during any Show Night event and tell the HUD when it is behind the camera. The old `tools/test-bowl-course.mjs` requires the 3D marker being removed. Please grant the narrow assertion update to require its absence, with the live marker and all other gate behavior checked separately.
+
+The ground-trick Space interception also runs in `src/sim-driving.js`. Please grant its one Show Night run-up condition, reusing the same Bowl predicate as trick selection, so Space still reaches existing nitro.
