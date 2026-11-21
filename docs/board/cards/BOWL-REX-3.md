@@ -72,8 +72,11 @@ course's own data.
 4. **A bomb's two rings are barely there** (the landing ring and the 7 m ring). The number the builder checks:
    - The ring is the floor's own colour made a little darker, not a colour of its own: it is drawn as a darkening of
      whatever floor is under it, so the difference is the same under the flame jets' light as in the dark.
-   - In CIE Lab, the ring's lightness (L*) is 4 points below the floor's under it, and never less than 3 or more than 5.
-     Its a* and b* are within 1 point of the floor's: no new hue.
+   - **Kyle, later the same day,** on seeing a ring tried at 4 points of Lab lightness: "the contrast is way too great. it
+     should basically be the same colour as the ground, but maybe if the area was shifted just a bit, or just a tiny tint.
+     like just a few hex or rgb movements, would be enough." So: each of the ring's red, green and blue values (0 to 255)
+     is 3 steps from the floor's under it, and never more than 4 on any one. Either all three a little darker, or a
+     tiny tint (one value moved 3 or 4 steps and the others 1 or 2). That is about 1 point of Lab lightness, not 4.
    - It gives off no light, has no outline and no brighter or darker rim, and its tone never changes: no filling, no
      pulsing, no flashing, no fading in. It is there or it is not.
    - Its size and shape are the rules' own: 3.5 m in radius where the bomb will land, 7 m round a bomb that lies.
@@ -122,7 +125,7 @@ the card before the fight keeps its three pictures, because the new attacks are 
      unchanged and the box that opens has 1 second of pull;
    - the goal line is never over five words;
    - **the rings' tone:** for the floor colours of the Bowl's dirt and of its darkest and lightest floor pieces, the
-     ring's drawn colour is between 3 and 5 points of L* below the floor's, with a* and b* within 1 point; the ring's
+     ring's drawn colour differs from the floor's by 2 to 4 steps of 255 on each of red, green and blue, never more; the ring's
      material gives off no light and has no outline; its tone is the same at every moment from the tell to the burst.
 2. The scripted drive stays the one BOWL-REX-2 names. Its child-pace driver now also turns across the line while the
    line follows, moves 8 m or more from a bomb within 3 seconds of its landing, and never hooks a bomb. As everywhere,
@@ -134,8 +137,8 @@ the card before the fight keeps its three pictures, because the new attacks are 
    replay fingerprint is re-recorded with the reason; every other course's fingerprint is unchanged.
 
 Laptop only, Claude runs: the fight by hand on Easy and on Hard, and a bomb sent back ten times on Easy. One picture
-from the driver's seat of each ring in the real game, measured: the mean L* of the ring against the floor beside it is
-between 3 and 5 points apart. Claude says on this card whether the ring can be found by a driver who is looking for it
+from the driver's seat of each ring in the real game, measured: the mean red, green and blue of the ring against the floor
+beside it are each 2 to 4 steps of 255 apart. Claude says on this card whether the ring can be found by a driver who is looking for it
 and missed by one who is not, which is what Kyle asked for. If Claude
 cannot send one back in five of those ten, the time on the bomb or the 6 m is changed before the look is drawn.
 
