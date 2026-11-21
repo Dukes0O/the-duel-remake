@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (collisions, put-backs and weapon contact). Kyle, 20 November 2026: graphics and physics go to
+**Codex model: Sol** (Kyle, 21 November 2026: Sol builds all the Bowl fix cards; none needs heavy physics).
 Astra, the rest to Sol.
 
 From Kyle's try of the five nights in the Preview (20 November 2026, integration at `bfec511bb`). Kyle: "otherwise this

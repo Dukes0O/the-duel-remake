@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (fight balance). Last Truck Rolling on Easy is still lost by a driver who plays it the obvious way.
+**Codex model: Sol** (Kyle, 21 November 2026: Sol builds all the Bowl fix cards; none needs heavy physics).
 In Claude's keyboard drives of 20 November 2026 a driver who steers at the nearest rival and presses F in reach won one
 fight in nine (lost in 48 to 58 seconds on the merged game at `57e478340`), mostly to rams, while the card's scripted
 driver wins eight in ten. Kyle, on his own play: "I might not win this"; and the same day: the player is a pre-teen, and

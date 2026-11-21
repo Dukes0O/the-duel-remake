@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (physics: a beam along the floor, and a bomb dragged on the cable). Kyle, 20 November 2026: graphics and physics go to Astra, the rest to Sol.
+**Codex model: Sol** (Kyle, 21 November 2026: Sol builds all the Bowl fix cards; none needs heavy physics).
 
 Two new attacks for the Scrapasaurus: a beam from its eyes and bombs that the driver can send back. Design:
 [BOWL-SHOW-2](BOWL-SHOW-2.md), section 10, "Lasers and bombs". Kyle, 20 November 2026: "maybe scrapasuarus should be able

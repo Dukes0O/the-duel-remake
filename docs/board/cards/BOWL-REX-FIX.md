@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (physics and camera). Three faults from Claude's keyboard drive of the merged tow fight
+**Codex model: Sol** (Kyle, 21 November 2026: Sol builds all the Bowl fix cards; none needs heavy physics).
 (`6c320374a`, Easy, two wins in 82 s and 140 s, 20 November 2026). Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), section 10.
 Tested and merged under AGENTS rule 23.
 

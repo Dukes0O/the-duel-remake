@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (contacts). Three loose ends from BOWL-REX-LOOK (Claude, 20 November 2026). Design:
+**Codex model: Sol** (Kyle, 21 November 2026: Sol builds all the Bowl fix cards; none needs heavy physics).
 [BOWL-SHOW-2](BOWL-SHOW-2.md), section 10.
 
 ## What to build

@@ -617,7 +617,7 @@ tasks:
   - id: QA-TITAN-ARENA-WRECKS
     title: "Monster Arena: Dusthawk stops near the two parked wrecks"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -628,7 +628,7 @@ tasks:
   - id: BOWL-OUT-FIX
     title: "Bowl: gate guides that turn a truck in, and a camera that keeps the truck in view at the gates"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -640,7 +640,7 @@ tasks:
   - id: BOWL-REX-FIX
     title: "Bowl: the back box on Easy keeps pulling, the pull ring on the strip, the fall in the picture"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -664,7 +664,7 @@ tasks:
   - id: BOWL-LTR-EASY
     title: "Bowl: Last Truck Rolling on Easy winnable by a driver who chases and rams"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -687,7 +687,7 @@ tasks:
   - id: BOWL-REX-3
     title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -710,7 +710,7 @@ tasks:
   - id: BOWL-REX-SOLIDS
     title: "Bowl: no invisible box under the Scrapasaurus's feet, its fall flat on the floor, and its torn leads in the yard"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -807,7 +807,7 @@ tasks:
   - id: BOWL-FEEL-FIX
     title: "Bowl: from Kyle's try, the snap to the side after a hit, the Spine reset under the ground, the hammer while driving, the saw's jerk, the launcher's reach"
     owner: "codex"
-    model: "astra"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"

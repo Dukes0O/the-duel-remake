@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-**Codex model: Astra** (physics and camera). Two faults from Claude's second hand drive of BOWL-OUT-SIM (20 November 2026,
+**Codex model: Sol** (Kyle, 21 November 2026: Sol builds all the Bowl fix cards; none needs heavy physics).
 lane `ba9617c55`). Design: [BOWL-SHOW-2](BOWL-SHOW-2.md), sections 3, 5 and 8.
 
 ## What to build
