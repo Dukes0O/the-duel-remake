@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {backupCareer} from '../src/career-backup.js';
 import {createProfile, loadPlayers, PLAYERS_KEY, savePlayers} from '../src/progression.js';
-import {foundBowlTricks, recordBowlSecret, recordBowlScore, settleBowlNight} from '../src/bowl/bowl-save.js';
+import {bowlSchoolRecord, foundBowlTricks, recordBowlSchool, recordBowlSecret, recordBowlScore, settleBowlNight} from '../src/bowl/bowl-save.js';
 
 let checks = 0;
 const equal = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
@@ -31,6 +31,44 @@ const memory = (initial = {}) => {
   const newer = {...higher.profile, bowl: {version: 2, savedForLater: true}};
   ok(!recordBowlScore(newer, 'freestyle', 10).ok, 'a newer Bowl save is read-only');
   equal(recordBowlScore(newer, 'freestyle', 10).profile, newer, 'newer Bowl data stays exact');
+}
+
+// A School record adds only an offer and completed public lessons. It can
+// round trip through the existing player store without changing older data.
+{
+  const older = {...createProfile(), credits: 123, bowl: {version: 1, nightsWon: [1],
+    bestScores: {'car-crush': 410}, foundTricks: ['yoYo'], keepField: {tag: 15}}};
+  const before = structuredClone(older);
+  equal(bowlSchoolRecord(older), {offered: false, completed: []}, 'an older driver has no offer or lessons yet');
+  equal(older, before, 'reading a legacy profile leaves every field alone');
+  const offered = recordBowlSchool(older, {offered: true});
+  ok(offered.ok && offered.changed, 'the offer is recorded');
+  ok(!recordBowlSchool(offered.profile, {offered: true}).changed, 'deciding about the offer twice does nothing');
+  const first = recordBowlSchool(offered.profile, {completed: ['wheelie', 'wheelie']});
+  const next = recordBowlSchool(first.profile, {completed: ['stoppie', 'wheelie']});
+  equal(bowlSchoolRecord(next.profile), {offered: true, completed: ['wheelie', 'stoppie']}, 'ticks add once in the same record');
+  equal(recordBowlSchool(next.profile, {completed: ['yoYo']}).profile, next.profile, 'a hidden move cannot become a School lesson');
+
+  const store = memory();
+  const st = loadPlayers(store);
+  st.players[0].profile = next.profile;
+  ok(savePlayers(st, store), 'the existing player store accepts the optional field');
+  const saved = loadPlayers(store).players[0].profile;
+  equal(bowlSchoolRecord(saved), {offered: true, completed: ['wheelie', 'stoppie']}, 'offer and both ticks survive a reload');
+  equal(saved.bowl, {...before.bowl, school: {version: 1, offered: true, completed: ['wheelie', 'stoppie']}},
+    'all neighboring Bowl fields survive the school write');
+  equal(older, before, 'the legacy input object is left unchanged');
+
+  for (const bowl of [
+    {version: 5, school: {version: 1, completed: ['wheelie']}},
+    {version: 1, school: {version: 2, completed: ['future'], unknown: 30}},
+    {version: 1, school: {version: 1, completed: {unexpected: true}}},
+  ]) {
+    const future = {...before, bowl}, exact = JSON.stringify(future);
+    const rejected = recordBowlSchool(future, {offered: true, completed: ['donut']});
+    ok(!rejected.ok && rejected.profile === future && JSON.stringify(future) === exact,
+      'newer or unknown School data is left byte-for-byte intact');
+  }
 }
 
 // Winning pays once to the established scrap wallet and only raises Bowl ownership.

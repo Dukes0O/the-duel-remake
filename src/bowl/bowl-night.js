@@ -22,6 +22,7 @@ import {observeBowlOutside} from './bowl-outside.js';
 import {recordBowlScore, settleBowlNight} from './bowl-save.js';
 import {BIG_MO, BOWL_EVENT_NAMES, BOWL_GOALS, bowlCrushCues, bowlCrushKind} from './bowl-lines.js';
 import {BOWL_COURSE} from './bowl-course.js';
+import {BOWL_SCHOOL_REASONS, featuredSchoolTrick, isSchoolTrick, nextSchoolLesson} from './bowl-school.js';
 import {CAR_CRUSH_DRESSING} from './bowl-crush-field.js';
 import {installBowlJumpEvents} from './bowl-jump-events.js';
 import {CARS, COURSE} from '../config.js';
@@ -255,7 +256,67 @@ registerBowlEventRunner('freestyle', {
 
 installBowlJumpEvents(registerBowlEventRunner, startBowlEventAt);
 
-export const bowlEventType = night => night.singleEvent ?? SHOW_NIGHTS[night.night - 1]?.events[night.show.eventIndex] ?? null;
+export function featuredBowlTricks(number) {
+  const tricks = SHOW_NIGHTS[number - 1]?.tricks;
+  return Array.isArray(tricks) ? tricks.filter(kind => isSchoolTrick(kind) || kind === 'doubles') : [];
+}
+
+function placeSchoolLesson(duel, night, fromPicker = false) {
+  const lesson = nextSchoolLesson(night.school.completed), event = night.event;
+  event.lesson = lesson?.kind ?? null;
+  event.schoolFailures = [];
+  event.schoolReason = null;
+  if (!lesson && !fromPicker) return;
+
+  const {course, state} = duel;
+  const table = course.features.ramps.find(ramp => ramp.id === 'table');
+  const start = lesson?.air ? {s: table.start - 27, lateral: table.off} : {s: 5, lateral: 9};
+  startBowlEventAt(duel, start.s, start.lateral);
+  const y = course.groundAt(start.s, start.lateral).y;
+  Object.assign(state, {speedMph: 0, headingError: 0, yawVelocity: 0, pushVelocity: 0, slipAngle: 0,
+    groundHeight: y, prevGroundHeight: y, airborne: false, airHeight: 0, prevAirHeight: 0,
+    _jumpY: y, _verticalSpeed: 0, _jumpOrigin: null, _airOrigin: null, airDistance: 0, airTime: 0});
+  event.flight = null;
+}
+
+registerBowlEventRunner('trickSchool', {
+  place(duel, night) { placeSchoolLesson(duel, night, true); },
+  step(duel, night) {
+    const event = night.event;
+    if (event.schoolNext && !duel.state.airborne) {
+      event.schoolNext = false;
+      placeSchoolLesson(duel, night);
+      const finished = event.lesson == null;
+      if (finished) say(duel, 'school.done');
+      duel.emit({bowlSchool: {type: finished ? 'done' : 'next', lesson: event.lesson,
+        cue: finished ? 'bowl.school.done' : 'bowl.school.next'}});
+    }
+    return null;
+  },
+  observe(duel, night, ev) {
+    const {event, school} = night, move = ev.bowlTrick;
+    if (!move || event.schoolNext || event.lesson !== move.kind || move.landing === 'slam' || move.points <= 0) return;
+    school.completed.push(move.kind);
+    event.schoolNext = true;
+    duel.emit({bowlSchool: {type: 'tick', lesson: move.kind, playerId: night.playerId,
+      completed: [...school.completed], cue: 'bowl.school.tick'}});
+  },
+});
+
+function explainBowlTry(duel, night, ev) {
+  const event = night.event, late = ev.bowlTrickLate, trick = ev.bowlTrick;
+  let reason = ev.bowlTrickTry?.reason;
+  if (late) reason = late.turnsCompleted ? 'shortDouble' : 'keyLate';
+  else if (trick?.landing === 'slam') reason = 'roof';
+  else if (trick?.kind === 'barrelRoll' && event.lesson === 'sideFlip') reason = 'rollDirection';
+  if (!BOWL_SCHOOL_REASONS[reason] || event.schoolFailures?.includes(reason)) return;
+  (event.schoolFailures ??= []).push(reason);
+  event.schoolReason = {text: BOWL_SCHOOL_REASONS[reason], until: night.clock + 5};
+  duel.emit({bowlSchool: {type: 'why', reason, cue: 'bowl.school.why'}});
+}
+
+export const bowlEventType = night => night.school ? 'trickSchool'
+  : night.singleEvent ?? SHOW_NIGHTS[night.night - 1]?.events[night.show.eventIndex] ?? null;
 
 // Big Mo speaks one caption at a time. The show's own lines (a night, an event,
 // a result) wait their turn and push out any remark still waiting; a remark on
@@ -289,9 +350,10 @@ function nextCaption(duel) {
 // `eventType` can start a standalone jump for a drive with no night result or purse.
 // Returns false when the night cannot run.
 export function startBowlNight(duel, options = {}) {
-  const number = options.night;
-  if (!flagOn(duel) || !Number.isSafeInteger(number) || !bowlNightPlayable(number)) return false;
-  const singleEvent = options.eventType ?? null;
+  const school = options.school, singleEvent = options.eventType ?? null;
+  const number = school ? 1 : options.night;
+  if (!flagOn(duel) || !Number.isSafeInteger(number) || !bowlNightPlayable(number) ||
+      (school && (options.turn || singleEvent !== null))) return false;
   if (singleEvent !== null && RUNNERS.get(singleEvent)?.singleEvent !== true) return false;
   const truck = showTruckFor(options);
   const eventCount = singleEvent ? 1 : SHOW_NIGHTS[number - 1].events.length, eventIndex = options.eventIndex ?? 0;
@@ -301,7 +363,9 @@ export function startBowlNight(duel, options = {}) {
   duel.state.bowlNight = {
     version: 1, night: number, show: createShowNight(number, eventIndex), phase: 'event', turn,
     ...(singleEvent ? {singleEvent} : {}),
-    cpuDifficulty: DIFFICULTIES.includes(options.cpuDifficulty) ? options.cpuDifficulty : 'medium',
+    school: school ? {completed: [...new Set((Array.isArray(school.completed) ? school.completed : []).filter(isSchoolTrick))]} : null,
+    featuredTricks: school ? [] : featuredBowlTricks(number),
+    cpuDifficulty: school ? 'easy' : DIFFICULTIES.includes(options.cpuDifficulty) ? options.cpuDifficulty : 'medium',
     lent: truck.lent, start: {car: truck.car, upgrades: truck.upgrades, playerId: options.playerId ?? null,
       driverId: options.driverId, difficulty: options.difficulty, seed: options.seed},
     playerId: options.playerId ?? null, clock: 0, caption: null, captionQueue: [], said: [],
@@ -328,7 +392,8 @@ function loadBowlEvent(duel) {
     crowdPeak: 0, crowdMark: 0,
     flight: null, metres: 0, playerDoneAt: null, rivalDoneAt: null};
   runner.place(duel, night);
-  say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
+  if (night.school) { s.status = 'racing'; s.countdown = 0; }
+  else say(duel, night.turn ? 'turn.open' : `event.${type}.intro`);
 }
 
 // The next event after a result, or the same event again after a loss.
@@ -351,13 +416,14 @@ export function retryBowlEvent(duel) {
 function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   const s = duel.state, night = s.bowlNight, event = night.event, at = s.stageTimeSec;
   const timed = {...fact, atSeconds: at};
+  if (fact.type === 'bowlTrick' && featuredSchoolTrick(fact, night.featuredTricks)) timed.points *= 2;
   const crowd = crowdAfter(event.crowd, at - event.crowdAt);
   const scored = scoreStuntEvent(timed, crowd);
   if (fact.type === 'bowlTrick' && scored.points > 0) {
     if (!night.trickKinds.includes(fact.kind)) night.trickKinds.push(fact.kind);
     const earlier = event.trickPopups?.[0]?.at === night.clock ? event.trickPopups : [];
     event.trickPopups = [...earlier, {kind: fact.kind, turns: fact.turns, fresh: fact.fresh, at: night.clock,
-      base: fact.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points: scored.points}];
+      base: timed.points * (fact.fresh ? 1.5 : fact.repeat ?? 1), multiplier: 1 + crowd / 100, points: scored.points}];
   }
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += scored.points;
@@ -373,6 +439,7 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
 export function observeBowlNight(duel, ev) {
   const s = duel.state, night = s.bowlNight;
   if (!night || night.phase !== 'event' || s.status !== 'racing' || !night.event) return;
+  explainBowlTry(duel, night, ev);
   // Count the Rex hold from the fall, including any time spent dragging the final box.
   if (ev.bowlRex?.type === 'fall') night.event.resultHoldSince ??= night.clock;
   if (ev.bowlSecretFound) {
@@ -481,6 +548,7 @@ export function stepBowlNight(duel, dt) {
   }
   if (s.status === 'gameover') {
     if (s.impactTimer > 0) return false;
+    if (night.school) { loadBowlEvent(duel); return true; }
     const done = runner.wreck ? runner.wreck(duel, night) : {won: false, wrecked: true};
     if (done) finishEvent(duel, done);
     return true;
@@ -505,7 +573,9 @@ export function bowlHudView(state, course) {
     crowd: Math.round(crowdAfter(event.crowd, Math.max(0, (state.stageTimeSec || 0) - event.crowdAt))),
     timeLeft: runner?.timeLeft?.(night) ?? (limit ? Math.max(0, limit - (state.stageTimeSec || 0)) : null),
     attempt: event.attempt, eventNumber: event.eventIndex + 1,
-    eventCount: night.singleEvent ? 1 : SHOW_NIGHTS[night.night - 1].events.length, caption: night.caption?.text ?? '',
+    eventCount: night.school || night.singleEvent ? 1 : SHOW_NIGHTS[night.night - 1].events.length,
+    caption: event.schoolReason?.until > night.clock ? event.schoolReason.text
+      : night.caption?.text ?? (state.bowlSchoolSavePending ? 'Your Trick School choice is waiting to be saved.' : ''),
     driver: night.turn?.driver || null};
 }
 
