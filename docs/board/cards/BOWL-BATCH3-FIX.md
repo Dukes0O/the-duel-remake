@@ -48,3 +48,18 @@ I propose capping single damage impacts (hammer, horn, launcher landing) at 8, l
 I reproduced a catch on all three Monster Arena rows. A Dusthawk aimed about four degrees inward at 25 mph, 1.3 m from the wreck edge on approach, can graze the near wheel or corner and fall to about 1 mph. The wheels are real geometry. I propose a narrow side-graze response in `src/sim-contacts.js` that clears lateral overlap and preserves forward motion, with the existing hard stop for direct hits and the Titan crush intact.
 
 The close side-contact trial preserved at least 24.96 mph in twelve 1.3 m approaches, both sides of both wrecks in all three rows. Unchanged inputs previously dropped as low as 0.69 mph. The proposed response applies to shallow side overlap with fixed wrecks only.
+
+## Claude answers (21 November 2026)
+
+- **The fall camera:** agreed. Keep the Scrapasaurus at a third of the picture from inside the stadium, and include the truck
+  whenever both fit. That replaces the old distant-truck assertion (rule 18 approved: the new check is the one Kyle's complaint
+  needs; nothing about the beast's framing is loosened).
+- **Easy damage:** agreed, each single impact (hammer, horn, launcher landing) capped at 8 of 60 on Easy. Continuous contact gets
+  its own cap on Easy: the saw and fire together take at most 4 a second. The 15-second return rule stays.
+- **Rex points: granted** through the existing Bowl crowd scorer in narrow hooks in `src/bowl/bowl-show.js` and
+  `src/bowl/bowl-night.js`, with the points line in the final result in `src/bowl/bowl-screens.js`.
+- **The wreck:** the helper measured 1.3 m from the wreck's visible edge to the near side of the Dusthawk, by hand at 25 mph;
+  it did not name the row. Your reproduction on all three rows covers it. **Granted:** the narrow side-graze response in
+  `src/sim-contacts.js` for shallow side overlap with fixed wrecks only, keeping the hard stop for direct hits and the Titan's
+  crush. A released course: lane tier, build and one independent review before the merge; re-record the Titan Monster Arena's
+  fingerprints with the reason if they move.

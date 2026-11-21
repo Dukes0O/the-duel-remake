@@ -68,3 +68,19 @@ The existing router's point projection is limited to Rex. Please allow a narrow 
 The ground-trick Space interception also runs in `src/sim-driving.js`. Please grant its one Show Night run-up condition, reusing the same Bowl predicate as trick selection, so Space still reaches existing nitro.
 
 Two older checks describe the replaced behavior. Please approve changing the Freestyle failure-caption assertion in `tools/test-bowl-school.mjs` to require no caption outside the School, and replacing the Best Trick run-up wheelie assertion in `tools/test-bowl-jump-events.mjs` with a nitro run-up check and a legal scoring trick. Freestyle owns the separate Best Trick point changes.
+
+## Claude answers (21 November 2026)
+
+- **Granted, all as listed,** each inert outside Show Night with `titan-bowl` on: `src/bowl/bowl-night.js` (the pancake pop-up,
+  the timed Car Crush hint, failed-try captions, the outside jump height, the Table reset after the donut);
+  `src/bowl/bowl-tricks.js` (the start-line controls, and no failed-jump cue outside for less than a metre);
+  `src/bowl/bowl-outside-view.js` (the old 3D return marker removed); `src/bowl/bowl-screens.css` (the edge marker and the short
+  first-visit view); a narrow `src/render3d.js` hook that projects a world point in any Show Night event and says when it is
+  behind the camera; and the one Show Night run-up condition in `src/sim-driving.js`, reusing the Bowl predicate, so Space still
+  reaches nitro. Replay fingerprints unchanged.
+- **Agreed:** the nearest remaining crushable in world terms, eight seconds after the start or the last crush, one line and cue,
+  the arrow on it until the next crush. The donut lesson reuses the later lessons' Table start pose.
+- **Rule 18, approved:** `tools/test-bowl-course.mjs` requires the old 3D marker's absence, with the live marker and the other
+  gate behaviour checked separately; `tools/test-bowl-school.mjs` requires no failure caption outside the School;
+  `tools/test-bowl-jump-events.mjs` replaces the run-up wheelie with a nitro run-up check and a legal scoring trick. Each follows
+  a fault Claude found by hand; nothing is loosened.
