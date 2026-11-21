@@ -9,5 +9,5 @@ Ten fixed starts per weapon, seeds 1989 plus 101 per trial. Scratch measurements
 | Saw | 5 | 8 | 6 | walls 7.8, own ram 16.7, rival ram 1.8, saw 12.3, hammer 7.2 |
 | Launcher | 7 | 9 | 6 | walls 11.2, own ram 17.6, rival ram 2.6, fire 2.5, out of bounds 3.7 |
 
-A timing fixture passes for the Easy health tie and loss, and keeps the Medium and Hard damage result. Final lane checks and build are pending. Claude drives the merged batch under rule 23.
+The 30 mph pursuit check moved to Medium. Easy checks cover the separate opening, remaining-health ties and losses, and six valid wins per weapon. Knockout credit is still tested directly. Final checks and build are pending. Claude drives the merged batch under rule 23.
 **Removed** — the damage-dealt result at time-up on Easy.
