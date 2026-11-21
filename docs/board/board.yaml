@@ -750,7 +750,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: [BOWL-NIGHTS, BOWL-TRICKS-ALL]
+    needs: [BOWL-NIGHTS, BOWL-TRICKS-ALL, BOWL-FINISH]
     locks: [bowl-night, bowl-rivals, save-shape]
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-TOUR.md"
