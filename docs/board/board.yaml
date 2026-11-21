@@ -518,6 +518,17 @@ tasks:
     needs: []
     details: "docs/board/cards/STORY-CHOICES.md"
 
+  - id: STORY-OPEN-WORLD
+    title: "The open Scablands: people who move, buildings to enter, services, switchable skirmishes, hidden camps, side stories (Kyle, 21 November)"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "L"
+    status: "backlog"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/STORY-OPEN-WORLD.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
