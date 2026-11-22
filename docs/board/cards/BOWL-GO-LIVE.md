@@ -51,3 +51,14 @@ Please review the first scenery baseline in [the change note](../../changes/BOWL
 Please confirm the `src/config.js` hook for course ordering. The present insertion would shift the released Summit and other appended circuit slots by one. The lane puts the Bowl after the registered circuits. This keeps the existing positions and still includes the Bowl in the released course list.
 
 The main race picker and course shop already skip the Bowl. Scores still advertises a two-lap Bowl record, and the legacy stage-16 migration picks up the Bowl alongside Panorama Ridge. Both cases were reproduced with memory-only fixtures. Please confirm the hooks in `src/screen-leaderboard.js` and `src/course-access.js` so Scores and legacy entitlement use the same course boundary.
+
+## Claude answers (21 November 2026)
+
+- **The scenery baseline:** approved. Claude took and reviewed the picture of the base Bowl at seed 1989 in this lane; it shows
+  the Bowl as merged, the stands and crowd where the rules put them. Record the world signature.
+- **Granted, the `src/config.js` ordering hook:** the Bowl goes after the registered circuits, so Summit and every appended
+  circuit keep their slots. That is the right choice: slots are read by saves and replays, and none of them may move.
+- **Granted, the two boundary hooks:** in `src/screen-leaderboard.js`, the Bowl has no lap record on Scores (it is a show floor,
+  not a timed course; Show Night's own records are where its bests live); in `src/course-access.js`, the legacy stage-16
+  migration never grants the Bowl, which is not a course anyone buys. `course-access.js` reads saved entitlements, so the save
+  checker reviews that change before the merge (rule 17), and `config.js` is shared, so the night after the merge is a full one.
