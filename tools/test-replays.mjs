@@ -7,7 +7,7 @@ import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 
 const expectedPath = fileURLToPath(new URL('./replays/expected-fingerprints.json', import.meta.url));
 const catalog = loadReplayCatalog(), fixture = catalog.fixture;
-const expectedCategories = ['duel', 'time trial', 'Mad Max', 'chase', 'drift', 'checkpoint rush', 'stunt', 'practice', 'solo time trial'];
+const expectedCategories = ['duel', 'time trial', 'Mad Max', 'chase', 'drift', 'checkpoint rush', 'stunt', 'practice', 'solo time trial', 'show night'];
 const number = value => Number.isFinite(value) ? +value.toFixed(5) : value ?? null;
 const pick = (object, keys) => object ? Object.fromEntries(keys.map(key => [key, number(object[key])])) : null;
 
@@ -57,6 +57,7 @@ function sample(state, tick) {
     combat: state.combat ? { hits: state.combat.hits, shield: number(state.combat.shield),
       projectiles: state.combat.projectiles.length, bursts: state.combat.bursts.length } : null,
     result: state.results ? pick(state.results, ['completed', 'won', 'timeSec', 'score', 'laps']) : null,
+    ...(state.bowlNight ? {show: pick(state.bowlNight.event, ['type', 'score', 'count', 'chain', 'crowd'])} : {}),
   };
 }
 
@@ -65,12 +66,18 @@ function replay(race, fps) {
   // Preserve the recorded pre-CMB-08 baseline. New default-on roadside
   // contacts have their own 30/60/144 FPS acceptance tests.
   const duel = new LegacyRoadsideDuel({ seed: fixture.seed });
-  duel.startCampaign({
-    startStage: index, seed: fixture.seed, mode: race.mode, car: race.car,
-    difficulty: 'casual', cpuDifficulty: 'easy',
-    ...(Object.hasOwn(race,'yetiSeed')?{yetiSeed:race.yetiSeed}:{}),
-  });
-  assert.equal(duel.state.stageIndex, index, `${race.id}: wrong event`);
+  if (race.category === 'show night') {
+    assert.ok(duel.startBowlNight({night: 1, seed: fixture.seed, difficulty: 'casual', cpuDifficulty: 'easy'}));
+    assert.equal(duel.course.def.id, race.eventId, `${race.id}: wrong floor`);
+    assert.equal(duel.state.bowlNight.event.type, 'carCrush');
+  } else {
+    duel.startCampaign({
+      startStage: index, seed: fixture.seed, mode: race.mode, car: race.car,
+      difficulty: 'casual', cpuDifficulty: 'easy',
+      ...(Object.hasOwn(race,'yetiSeed')?{yetiSeed:race.yetiSeed}:{}),
+    });
+    assert.equal(duel.state.stageIndex, index, `${race.id}: wrong event`);
+  }
   assert.equal(duel.state.car, race.car, `${race.id}: wrong car`);
   assert.equal(duel.state.mode, race.mode, `${race.id}: wrong mode`);
   assert.equal(duel.state.practice, race.category === 'practice', `${race.id}: practice mismatch`);
@@ -107,6 +114,8 @@ function replay(race, fps) {
   assert.equal(tick, fixture.durationTicks, `${race.id}: frame schedule lost simulation ticks`);
   assert.ok(duel.state.stageTimeSec > 0, `${race.id}: replay never started driving`);
   assert.ok(samples.some(row => row.position.s > 20), `${race.id}: recorded inputs did not drive the event`);
+  if (race.category === 'show night')
+    assert.ok(samples.some(row => row.show.count > 0 && row.show.score > 0), `${race.id}: recorded inputs did not score a crush`);
   return createHash('sha256').update(JSON.stringify({ id: race.id, eventId: race.eventId, fpsIndependentSamples: samples })).digest('hex');
 }
 

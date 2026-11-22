@@ -621,6 +621,7 @@ tasks:
     status: "building"
     claimed_by: "Codex, codex/bowl-go-live"
     waiting_on: "claude"
+    claude_verdict: "PASSED 21 Nov 2026, 19:53 (Claude). The scenery baseline at seed 1989 is right: stadium, crowd, floor, crush cars, flame bar, floodlights and car park as merged. Record the world signature. Keeping the Bowl after the race circuits (COURSE.push) is approved: appended circuits keep their saved slots. Picture taken by Claude at .evidence/2026-11-21/bowl-go-live/bowl-scenery-baseline.jpg. Finish the lane tier, build, review and merge."
     needs: []
     locks: [replay-fixtures]
     flag: "titan-bowl"

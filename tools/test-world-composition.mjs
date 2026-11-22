@@ -114,4 +114,4 @@ try{
     }finally{trackKits?.dispose();}
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across twenty events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across ${COURSE.length+captureNew.length} events.`);

@@ -23,7 +23,8 @@ export const REFERENCE_POLICY = Object.freeze({
 
 export function referenceTargets(definitions = [...new Map([...COURSE, ...ALL_CIRCUITS]
   .map(definition => [definition.id, definition])).values()]) {
-  return definitions.filter(definition => definition.closed !== false).flatMap(definition => {
+  // Show Night uses the Bowl as an event floor with its own scoring, without a timed reference lap.
+  return definitions.filter(definition => definition.closed !== false && !definition.bowl).flatMap(definition => {
     const routes = supportsRouteVariants(definition) ? getRouteVariants(definition)
       : [{id: 'fixed', seed: definition.layoutSeed ?? 1989}];
     return routes.map(route => ({key: `${definition.id}|${route.id}`,

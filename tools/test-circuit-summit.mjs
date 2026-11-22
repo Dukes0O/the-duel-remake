@@ -31,7 +31,7 @@ const registered=CIRCUIT_ENTRIES.find(entry=>entry.manifest.id==='summit-run');
 assert.equal(registered.definition,SUMMIT_RUN,'registry keeps the exact authored definition');
 assert.equal(registered.generationStage,20);assert.equal(SUMMIT_RUN.stage,20);
 const actualCatalog=await runReferenceWorker({catalogOnly:true});
-assert.equal(actualCatalog.events.indexOf('summit-run'),BASE_COURSE_COUNT+manifest.releaseOrder,'actual QA COURSE appends Summit after the four authored events');
+assert.equal(actualCatalog.events.indexOf('summit-run'),BASE_COURSE_COUNT+manifest.releaseOrder,'enabling the Bowl preserves the released Summit slot');
 assert.equal(actualCatalog.events.filter(id=>id==='summit-run').length,1,'stable id appears once');
 assert.equal(actualCatalog.storageLength,0,'catalogue fixture has only empty memory storage');
 assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.state,'on');

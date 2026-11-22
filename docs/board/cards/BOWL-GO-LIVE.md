@@ -51,3 +51,5 @@ Please review the first scenery baseline in [the change note](../../changes/BOWL
 Please confirm the `src/config.js` hook for course ordering. The present insertion would shift the released Summit and other appended circuit slots by one. The lane puts the Bowl after the registered circuits. This keeps the existing positions and still includes the Bowl in the released course list.
 
 The main race picker and course shop already skip the Bowl. Scores still advertises a two-lap Bowl record, and the legacy stage-16 migration picks up the Bowl alongside Panorama Ridge. Both cases were reproduced with memory-only fixtures. Please confirm the hooks in `src/screen-leaderboard.js` and `src/course-access.js` so Scores and legacy entitlement use the same course boundary.
+
+Claude approved the scenery and the order in the lane board. The two release hooks above are still open.

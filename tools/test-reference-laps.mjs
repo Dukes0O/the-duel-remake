@@ -22,9 +22,11 @@ const definitionsBefore = JSON.stringify(COURSE);
 // A dev replacement gets its own new reference in C3, before it is released.
 const definitions = [...new Map([...ALL_CIRCUITS, ...COURSE].map(row => [row.id, row])).values()];
 const targets = referenceTargets();
-const expectedKeys = definitions.filter(definition => definition.closed !== false).flatMap(definition =>
+const expectedKeys = definitions.filter(definition => definition.closed !== false && !definition.bowl).flatMap(definition =>
   (supportsRouteVariants(definition) ? getRouteVariants(definition).map(route => route.id) : ['fixed']).map(route => definition.id + '|' + route));
-equal(targets.map(target => target.key).sort(), expectedKeys.sort(), 'Every closed event and actual route has exactly one reference target');
+equal(targets.map(target => target.key).sort(), expectedKeys.sort(), 'Every timed closed event and actual route has exactly one reference target');
+check(COURSE.some(definition => definition.bowl) && !targets.some(target => target.eventId === 'titan-bowl'),
+  'The released Show Night floor has no timed reference lap');
 check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => targets.some(target => target.eventId === definition.id &&
   target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),

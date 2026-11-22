@@ -220,8 +220,11 @@ for (const event of eventTypes) {
 
 {
   const duel = new Duel({seed: 1989});
-  assert.equal(duel.startBowlNight({night: 1, eventType: 'longJump'}), false);
-  duel.featureFlags = {enabled: flag => flag === 'titan-bowl'};
+  const switches = duel.featureFlags;
+  assert.ok(duel.startBowlNight({night: 1, eventType: 'longJump'}), 'the released switch opens a standalone jump');
+  duel.featureFlags = {enabled: () => false};
+  assert.equal(duel.startBowlNight({night: 1, eventType: 'longJump'}), false, 'standalone jumps still respect the switch');
+  duel.featureFlags = switches;
   assert.equal(duel.startBowlNight({night: 1, eventType: 'carCrush'}), false, 'standalone entry is only for jumps');
   assert.ok(duel.startBowlNight({night: 1, eventIndex: 1}));
   assert.equal(duel.course.features.bowlJump, undefined, 'other events do not get the jumping pieces');

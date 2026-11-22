@@ -1,0 +1,19 @@
+{
+  "eventId": "titan-bowl",
+  "cases": [
+    {
+      "id": "titan-bowl-car-crush",
+      "eventId": "titan-bowl",
+      "category": "show night",
+      "mode": "duel",
+      "car": "titan_monster"
+    }
+  ],
+  "fingerprints": {
+    "titan-bowl-car-crush": {
+      "30": "4918ffd1d0f7584d86859670edbab1521a50af3362b868ae4d9d2d4b51bc01af",
+      "60": "4918ffd1d0f7584d86859670edbab1521a50af3362b868ae4d9d2d4b51bc01af",
+      "144": "4918ffd1d0f7584d86859670edbab1521a50af3362b868ae4d9d2d4b51bc01af"
+    }
+  }
+}
