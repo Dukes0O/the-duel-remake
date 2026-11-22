@@ -131,9 +131,14 @@ export function observeBowlOutside(duel, dt, addFact, say) {
   }
   if (s.lateral <= outside.wall) {
     if (rex && event.rexReturnGate) {
+      const gateName = event.rexReturnGate;
+      const shutter = rexGateShutters(course).find(gate => gate.gateName === gateName);
+      const centre = course.worldAt(s.s, s.lateral);
+      const heading = centre.heading + s.headingError + (s.slipAngle || 0) - shutter.heading;
       const {halfLength, halfWidth} = duel._vehicleSpec(s);
-      if (s.lateral <= outside.wall - .38 - Math.hypot(halfLength, halfWidth)) {
-        const gateName = event.rexReturnGate;
+      const reach = Math.abs(Math.sin(heading)) * halfLength + Math.abs(Math.cos(heading)) * halfWidth;
+      const offset = (centre.x - shutter.x) * Math.cos(shutter.heading) - (centre.z - shutter.z) * Math.sin(shutter.heading);
+      if (offset + reach <= -shutter.halfX) {
         delete event.rexReturnGate;
         duel.emit({bowlGate: {gate: gateName}, bowlOutsideCue: 'bowl.gate.shut'});
       }

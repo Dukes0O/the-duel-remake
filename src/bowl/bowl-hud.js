@@ -391,7 +391,9 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     const night = state.bowlNight ?? state.arenaTrickShow;
     if (lastEvent !== night.event) {
       lastEvent = night.event;
-      strip.dataset.event = night.event.type ?? '';
+      const eventType = state.bowlNight?.event?.type;
+      if (eventType) strip.dataset.event = eventType;
+      else delete strip.dataset.event;
       previousHealth = lastHit = lastPopups = null;
     }
     for (const [node, value] of fields) {

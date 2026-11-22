@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import {COURSE} from '../../src/config.js';
 import {page} from './bowl-night-pay.mjs';
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1282, height: 716, deviceScaleFactor: 1, mobile: false});
-  await context.navigate('/tools/menu-check.html?flags=titan-bowl');
+  await context.navigate('/tools/menu-check.html?flags=titan-bowl,arena-tricks');
   await context.waitFor(page.ready, 'isolated memory-only Show Night', 60000);
+  const arenaStage = COURSE.findIndex(course => course.id === 'titan-arena');
   const rows = await context.evaluate(`(() => {
     const app = window.__qaApp, results = [];
     if (innerWidth !== 1282 || innerHeight !== 716) throw Error('Unexpected HUD viewport');
@@ -24,6 +26,13 @@ export async function run(context) {
       if (!hud || !hud.getClientRects().length) throw Error('Freestyle HUD hidden in Night ' + night);
       results.push({night, hud:hud.getBoundingClientRect().toJSON(),
         goal:textBoxes(hud.querySelector('.bowl-hud-goal')), scores:textBoxes(hud.querySelector('.bowl-hud-gap'))});
+    }
+    app.duel.startCampaign({car:'titan_monster', startStage:${arenaStage}, mode:'duel', cpuDifficulty:'easy'});
+    app.onFrame?.(app.duel.state, 0);
+    const arena = document.querySelector('.bowl-hud');
+    if (!arena?.getClientRects().length || arena.hasAttribute('data-event') ||
+        !arena.querySelector('.bowl-hud-event').textContent.includes('TRICKS')) {
+      throw Error('The Titan Arena trick strip must render after Show Night without the Freestyle layout');
     }
     return results;
   })()`);

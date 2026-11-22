@@ -257,7 +257,7 @@ for (const gateIndex of [0, 1]) {
   assert.ok(hit && !truck.bowlOutside && !truck.bowlNight.event.rexReturnGate);
 }
 
-{
+for (const angled of [false, true]) {
   const duel = freestanding(5, 2), {state: truck, course} = duel;
   const outside = course.features.bowl.outside, event = truck.bowlNight.event, cues = [];
   duel.onChange((_, ev) => { if (ev.bowlOutsideCue) cues.push(ev.bowlOutsideCue); });
@@ -274,17 +274,27 @@ for (const gateIndex of [0, 1]) {
     'an actual Big Jump opens one return shutter and still scores the find');
   assert.equal(truck.bowlOutside.gate.name, event.rexReturnGate, 'the waypoint points to the open return shutter');
 
-  let returned = false;
-  for (let tick = 0; tick < 40 / dt && event.rexReturnGate; tick++) {
-    const aim = truck.bowlOutside?.gate.aim ?? course.worldAt(truck.s, outside.wall - 8);
-    steerToward(duel, aim, 20);
+  const stopLine = outside.wall - 2.9;
+  for (let tick = 0; tick < 40 / dt; tick++) {
+    if (angled ? truck.lateral <= stopLine : !event.rexReturnGate) break;
+    const aim = truck.bowlOutside?.gate.aim ?? course.worldAt(truck.s, outside.wall - 5);
+    const pace = angled && truck.lateral < outside.wall + 1.6 ? 7 : 20;
+    steerToward(duel, aim, pace);
     duel.step(dt);
-    returned ||= !truck.bowlOutside && truck.lateral <= outside.wall;
   }
-  assert.ok(returned && !event.rexReturnGate && truck.lateral < outside.wall - 3,
-    'the return shutter closes only after the truck is inside');
+  assert.ok(!truck.bowlOutside && truck.lateral <= outside.wall, 'the returning truck is inside');
+  if (angled) {
+    assert.ok(truck.lateral <= stopLine, 'the driver brakes as soon as the angled truck has cleared the door');
+    duel.setInput({throttle: 0, brake: 1, steer: 0, boost: false});
+    for (let tick = 0; tick < 4 / dt; tick++) {
+      duel.step(dt);
+      assert.ok(truck.lateral <= outside.wall, 'the closed shutter keeps a reversing truck inside');
+    }
+  }
+  assert.equal(event.rexReturnGate, undefined, 'the return shutter closes after the full truck is inside');
   assert.deepEqual(cues.filter(cue => cue.startsWith('bowl.gate.')), ['bowl.gate.shut', 'bowl.gate.open', 'bowl.gate.shut']);
 }
+console.log('Rex shutters stop throttle-only and 40 mph exits, reopen for jumps and close behind square and angled returns.');
 
 // Floor and stands remain separated at the straights and both ends.
 for (const phase of [31,105,187,251]) for (const inward of [false,true]) {
