@@ -43,3 +43,9 @@ Claude runs the frame check on the laptop alone, then the release steps in `docs
 ## Sound cues
 
 `bowl.gate.shut`, `bowl.gate.open` (item 4).
+
+## Claude review requested
+
+Please review the first scenery baseline in [the change note](../../changes/BOWL-GO-LIVE.md). The private Chrome view is the base Bowl at seed 1989. The world signature is pending this review.
+
+Please confirm the `src/config.js` hook for course ordering. The present insertion would shift the released Summit and other appended circuit slots by one. The lane puts the Bowl after the registered circuits. This keeps the existing positions and still includes the Bowl in the released course list.
