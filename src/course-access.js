@@ -34,8 +34,8 @@ export function normalizeCourseAccess(value,legacyProfile){
     // A saved menu selection alone is not evidence of earned access.
     const cars=Array.isArray(legacyProfile.unlockedCars)?legacyProfile.unlockedCars:[],history=Array.isArray(legacyProfile.history)?legacyProfile.history:[],wins=Array.isArray(legacyProfile.circuitWins)?legacyProfile.circuitWins:[];
     for(const course of COURSE){
-      if(course.practice||requirementOf(course.id))continue;
       const id=course.id;
+      if(course.practice||!Object.hasOwn(COURSE_PRICES,id)||requirementOf(id))continue;
       const previousCarEntitlement=course.stage>=3&&course.stage<=8&&course.requiredCar&&cars.includes(course.requiredCar);
       const completed=history.some(row=>row?.eventId===id&&row.completed===true&&typeof row.key==='string'&&typeof row.won==='boolean'&&Number.isFinite(row.reward));
       const best=Object.entries(legacyProfile.personalBests||{}).some(([key,time])=>key.startsWith(`${id}|layout:`)&&Number.isFinite(time)&&time>0);

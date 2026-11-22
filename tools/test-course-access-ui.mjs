@@ -30,9 +30,10 @@ try{
   // Course cards carry a small outline map; a secret course not yet found from the helicopter keeps its hint and has none.
   {
     const cards=purchased.split('<article ').slice(1),secretOf=(profile,course)=>courseUnlockRequirement(course)?.kind==='spotted-from-air'&&!isCourseUnlocked(profile,course);
-    same(cards.length,COURSE.length,'every course has one card');
-    const hidden=COURSE.filter(course=>secretOf(app.profile,course));check(hidden.length>0,'the catalog has secret courses to check');
-    for(const [index,course] of COURSE.entries()){
+    const courses=COURSE.filter(course=>!course.bowl);
+    same(cards.length,courses.length,'every purchasable or unlockable course has one card');
+    const hidden=courses.filter(course=>secretOf(app.profile,course));check(hidden.length>0,'the catalog has secret courses to check');
+    for(const [index,course] of courses.entries()){
       const card=cards[index],has=card.includes(`data-course-map="${course.id}"`);
       check(has!==secretOf(app.profile,course),`${course.id} map is shown unless it is a secret not yet found`);
       check(has===card.includes('course-card-map')&&has===card.includes(' has-map'),`${course.id} map canvas and card class agree`);
@@ -59,6 +60,13 @@ try{
   const boardFilter={stage:practice.stage,car:'',driverId:'club'};
   const board=createLeaderboardScreen({app,boardFilter,escapeHTML:String,credits,time});
   const boardMarkup=board();same(boardFilter.stage,0,'opening Scores from practice shows the included competitive circuit');check(!boardMarkup.includes(practice.name),'practice never appears as a ranked course choice');
+  const bowlIndex=COURSE.findIndex(course=>course.bowl);
+  check(bowlIndex>=0,'the Bowl is enabled for the release');
+  boardFilter.stage=bowlIndex;
+  const bowlScores=board();
+  same(boardFilter.stage,0,'opening Scores from a Show Night stage selects the included circuit');
+  check(!bowlScores.includes('<option value="'+bowlIndex+'"')&&!bowlScores.includes(COURSE[bowlIndex].name),
+    'the untimed Show Night floor does not appear in race scores');
   for(let frame=0;frame<240;frame++)app.advance(1/60);
   const state=app.duel.state,snapshot=JSON.stringify(state);update(state);
   same(JSON.stringify(state),snapshot,'practice HUD never writes to simulation');same(ui['race-time'].textContent,'FREE PRACTICE','the timer explicitly identifies untimed practice');same(ui['race-time-label'].textContent,'NO TIMER · NO REWARDS','practice states there is no clock or earning');
