@@ -15,6 +15,7 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<'
 const credits=value=>Math.floor(value||0).toLocaleString();
 function legacyPanel(profile,selectedStage=0,message='',{teamRoomEnabled=false}={}){
   const cards=COURSE.map((course,index)=>{
+    if (course.bowl) return '';
     const owned=isCourseUnlocked(profile,course),selected=index===selectedStage,price=COURSE_PRICES[course.id];
     const attack=course.id==='summit-time-attack',requirement=courseUnlockRequirement(course);
     // Any course opened by an unlock rule (the solo challenge, the five secret courses) shows its condition and a locked button.
@@ -71,13 +72,14 @@ test('flag off preserves complete original markup and ordinary actions',()=>with
 
 test('enabled grouping uses actual App availability once, order, prices and base Team Room',()=>withApp(app=>{
   const options={teamRoomEnabled:true,grandPrixCareerEnabled:true,grandPrixAvailable:course=>app.grandPrixAvailable(course),selectedMode:'duel'};
-  const html=courseAccessPanel(app.profile,0,'<safe>',options),gp=COURSE.filter(course=>app.grandPrixAvailable(course)),classic=COURSE.filter(course=>!app.grandPrixAvailable(course));
+  const raceCourses=COURSE.filter(course=>!course.bowl);
+  const html=courseAccessPanel(app.profile,0,'<safe>',options),gp=raceCourses.filter(course=>app.grandPrixAvailable(course)),classic=raceCourses.filter(course=>!app.grandPrixAvailable(course));
   assert.ok(html.includes('GRAND PRIX')&&html.includes('CLASSIC COURSES'));
-  assert.equal(articles(html).length,COURSE.length);
+  assert.equal(articles(html).length,raceCourses.length);
   // A course opened only by an unlock rule (the solo challenge, the five secret courses) has no select or buy button while locked, so it is found by its name.
   const gated=course=>courseUnlockRequirement(course)&&!isCourseUnlocked(app.profile,course);
-  assert.deepEqual(articles(html).map(card=>COURSE.find(course=>gated(course)&&card.includes('<h3>'+escape(course.name)+'</h3>'))?.id??card.match(/data-course-(?:select|unlock)="([^"]+)"/)[1]),[...gp,...classic].map(course=>course.id));
-  for(const course of COURSE){
+  assert.deepEqual(articles(html).map(card=>raceCourses.find(course=>gated(course)&&card.includes('<h3>'+escape(course.name)+'</h3>'))?.id??card.match(/data-course-(?:select|unlock)="([^"]+)"/)[1]),[...gp,...classic].map(course=>course.id));
+  for(const course of raceCourses){
     const matches=card=>gated(course)?card.includes('<h3>'+escape(course.name)+'</h3>'):card.includes('="'+course.id+'"');
     const card=articles(html).find(matches);
     assert.ok(card);assert.equal(articles(html).filter(matches).length,1);
@@ -99,9 +101,9 @@ test('enabled grouping uses actual App availability once, order, prices and base
   assert.ok(html.includes('&lt;safe&gt;')&&html.includes('role="dialog"')&&html.includes('role="status"'));
   assert.ok(!html.includes('GP COMPARISON')&&!html.includes('variant'));
   const absent=courseAccessPanel(app.profile,0,'',{...options,grandPrixAvailable:()=>false});
-  assert.ok(!absent.includes('GRAND PRIX'));assert.equal(articles(absent).length,COURSE.length);
+  assert.ok(!absent.includes('GRAND PRIX'));assert.equal(articles(absent).length,raceCourses.length);
   const all=courseAccessPanel(app.profile,0,'',{...options,grandPrixAvailable:()=>true});
-  assert.ok(all.includes('GRAND PRIX')&&!all.includes('CLASSIC COURSES'));assert.equal(articles(all).length,COURSE.length);
+  assert.ok(all.includes('GRAND PRIX')&&!all.includes('CLASSIC COURSES'));assert.equal(articles(all).length,raceCourses.length);
 }));
 
 test('same course Duel to GP uses real settings; a selected GP button then matches both',()=>withApp(app=>{

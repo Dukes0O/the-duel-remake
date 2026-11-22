@@ -13,7 +13,7 @@ const render=createResultsScreen({app,profile:()=>wallet,metric:(label,value)=>`
 const expected={chase:'CITY<br>ESCAPED.',rally:'TRAIL<br>CONQUERED.',drift:'DRIFT<br>MASTERED.',checkpoint:'GATES<br>CLEARED.',circuit:'CIRCUIT<br>CONQUERED.'};
 
 for(const [stageIndex,stage]of COURSE.entries()){
-  if(!stage.kind||stage.practice)continue;
+  if(!stage.kind||stage.practice||stage.bowl)continue;
   if(isSummitAttack(stage)){
     const duel=new Duel({seed:1989});duel.startCampaign({startStage:stageIndex,car:stage.requiredCar});
     const s=duel.state;s.status='stage_result';s.completedLaps=s.lapsTotal;s.stageTimeSec=99.68;s.totalTimeSec=99.68;
@@ -77,4 +77,4 @@ for(const [stageIndex,stage]of COURSE.entries()){
   check(html.includes('TOTAL TIME')&&html.includes('LIVES LEFT')&&html.includes('STYLE POINTS'),'campaign retains its meaningful run metrics');
   check(html.includes('CHASE IT AGAIN')&&html.includes('MAIN MENU'),'campaign actions remain unchanged');
 }
-console.log(`Completion screen: ${checks} checks passed across all ${COURSE.filter(stage=>stage.kind&&!stage.practice).length} standalone races and the three-circuit campaign, including real final-state replacement, circuit duel/TimeTrial copy, losses and stale result isolation.`);
+console.log(`Completion screen: ${checks} checks passed across all ${COURSE.filter(stage=>stage.kind&&!stage.practice&&!stage.bowl).length} standalone races and the three-circuit campaign, including real final-state replacement, circuit duel/TimeTrial copy, losses and stale result isolation.`);

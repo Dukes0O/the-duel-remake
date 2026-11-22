@@ -20,14 +20,18 @@ const check=(value,label)=>{assert.ok(value,label);checks++;};
 const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
 const originalStorage=globalThis.localStorage,memory=new Map();
 globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value))};
+const raceEntries=[...COURSE.entries()].filter(([,course])=>!course.bowl);
 try{
   const app=new App();
   // Vehicle eligibility is independent of the course-purchase regression suite.
-  const allCourses={version:1,unlocked:COURSE.map(course=>course.id)};
+  const allCourses={version:1,unlocked:raceEntries.map(([,course])=>course.id)};
   // The five secret courses open only once found from the air, so this profile has found them too.
   const foundAll={heli:{...heliOf(createProfile()),map:{version:1,seen:[],found:[...SECRET_IDS],table:false}}};
   app.profile.courses=allCourses;app.profile.heli=foundAll.heli;app._saveProfile();
-  for(const [startStage,event]of COURSE.entries()){
+  const bowlIndex=COURSE.findIndex(course=>course.bowl);
+  check(bowlIndex>=0 && !app.startCampaign({startStage:bowlIndex}), 'the Bowl opens through Show Night instead of the ordinary race picker');
+  check(app.courseAccessMessage.includes('SHOW NIGHT'), 'ordinary Bowl entry points to the show');
+  for(const [startStage,event]of raceEntries){
     app.setRaceSettings({startStage,car:'stuttgart_959s'});same(app.getRaceChoices().startStage,startStage,'every course is visible before buying the recommended vehicle');same(app.getRaceChoices().car,'stuttgart_959s','course selection keeps the chosen starter');
     check(app.startCampaign(),'every course accepts an owned starter');same(app.duel.state.car,'stuttgart_959s','physics does not replace the starter');same(app.duel.state.stageIndex,startStage,'entry does not redirect to an easier course');app.returnToMenu();
     const normalized=normalizeRaceSettings({eventId:event.id,car:'titan_monster'},{...createProfile(),courses:allCourses,...foundAll});same(normalized.eventId,event.id,'locked-car settings do not lock their owned course');same(normalized.car,'falcone_f42','locked-car settings cannot grant the recommended car');
@@ -48,7 +52,7 @@ try{
   check(!isCarUnlocked(app.profile,'nissan_skyline_gtr_r34'),'maxing the fleet does not earn the Skyline: only the Kogane story wins it');
   check(OWNABLE_CARS.every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
   const bank=app.profile.credits;
-  for(const car of OWNABLE_CARS)for(const [startStage,event]of COURSE.entries()){
+  for(const car of OWNABLE_CARS)for(const [startStage,event]of raceEntries){
     app.setRaceSettings({car,startStage,mode:'timetrial'});same(app.getRaceChoices().car,car,'all course changes preserve every owned car');same(app.getRaceChoices().startStage,startStage,'all vehicle changes preserve the course');
     same(new App().getRaceChoices(),app.getRaceChoices(),'per-player setup persists any owned vehicle/course pairing');
     same(app._airOnlyRefused(car,event.id),false,`${car} at ${event.id}: owned cars in this fleet can race anywhere`);
@@ -59,7 +63,7 @@ try{
   // The McMurtry still needs to be flown to every course away from its saved position.
   app.profile.unlockedCars=[...app.profile.unlockedCars,'mcmurtry_speirling'];
   app.profile.heli={...app.profile.heli,carsAt:{mcmurtry_speirling:'tremblant-woods'}};app._saveProfile();
-  for(const [startStage,event]of COURSE.entries()){
+  for(const [startStage,event]of raceEntries){
     const refused=event.id!=='tremblant-woods';
     same(app._airOnlyRefused('mcmurtry_speirling',event.id),refused,`McMurtry at ${event.id}: only its saved course permits entry`);
     if(refused){
@@ -74,7 +78,7 @@ try{
   // An old helicopter position must not restrict any Jesko mode on any course.
   app.profile={...app.profile,heli:{...foundAll.heli,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
   check(app._switches().enabled('helicopter'),'the helicopter is on for the Jesko regression');
-  for(const [startStage,event]of COURSE.entries())for(const mode of ['duel','timetrial','grandprix','wasteland']){
+  for(const [startStage,event]of raceEntries)for(const mode of ['duel','timetrial','grandprix','wasteland']){
     check(app.startCampaign({car:'koenigsegg_jesko',startStage,mode}),`Jesko starts ${mode} at ${event.id} without transport`);
     same(app.duel.state.car,'koenigsegg_jesko','no mode substitutes another car');
     same(app.duel.state.stageIndex,startStage,'no mode redirects to its helicopter position');
@@ -82,7 +86,7 @@ try{
   }
   same(app.profile.heli.carsAt,{koenigsegg_jesko:'panorama-ridge'},'racing preserves the old saved position');
   same(app.profile.credits,bank,'course/vehicle selection and restart cannot spend or gift credits');same(app.profile.history.length,0,'countdown-only eligibility checks create no race settlements');
-  for(const [stageIndex,event]of COURSE.entries())for(const car of OWNABLE_CARS){
+  for(const [stageIndex,event]of raceEntries)for(const car of OWNABLE_CARS){
     const cpuDifficulty='medium',required=event.checkpointRush?.gatesPerLap*(event.laps||2),result={runId:'eligibility',stageIndex,car,driverId:'club',completed:true,won:true,targetsMet:true,laps:event.laps||2,timeSec:10,cpuDifficulty,
       jumps:event.stuntTrial?.jumps,crushCount:event.stuntTrial?.crushes,driftScore:event.driftTrial?.targets[cpuDifficulty],checkpointsPassed:required,checkpointsRequired:required,checkpointMisses:0};
     same(isValidFinish(result),!event.practice,'every competitive car with complete objective evidence is eligible, while practice has no records');check(!isValidFinish({...result,completed:false}),'open eligibility still rejects incomplete races');
@@ -94,11 +98,11 @@ try{
   const source=readFileSync(new URL('../src/screen-menu.js',import.meta.url),'utf8');
   const values={},choices={...app.getRaceChoices()},node=()=>({hidden:false,disabled:false,value:'',checked:false,title:'',innerHTML:'',classList:{toggle(){}},setAttribute(){}});
   const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','tyre-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle','rival-customization','rival-car','rival-driver','rival-upgrades','car-speed','car-gears','car-character','garage-count','menu-credits','car-select','driver-select','driver-skill-note','cpu-target-label','scene-name','scene-length','menu-route-label','menu-shortcuts','menu-relief','menu-location','route-choice-label','ghost-record-label'].map(id=>[id,node()]));
-  ui['scene-select'].options=COURSE.map((event,index)=>({value:String(index),disabled:true,textContent:event.name}));
+  ui['scene-select'].options=raceEntries.map(([index,event])=>({value:String(index),disabled:true,textContent:event.name}));
   ui['car-select'].options=Object.keys(CARS).map(value=>({value,textContent:''}));
   const menu=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:selector=>selector==='#qualifying-choice'?null:{textContent:'',insertAdjacentHTML(){}},addEventListener(){}},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}});
   check(typeof menu.updateMenuScene==='function'&&typeof menu.updateMenuCar==='function','production menu exports the actual scene and car presenters');
-  for(const car of ['falcone_f42','titan_monster'])for(const [startStage,event]of COURSE.entries()){
+  for(const car of ['falcone_f42','titan_monster'])for(const [startStage,event]of raceEntries){
     Object.assign(choices,{car,startStage});menu.updateMenuScene();same(choices.car,car,'production course menu never forces a different car');same(choices.startStage,startStage,'production vehicle menu never redirects the course');check(ui['scene-select'].options.every(option=>!option.disabled),'every course option remains available');
     if(event.requiredCar){check(!ui['event-brief'].hidden,'recommendation and objective are visible before Start');check(values['event-brief'].includes('recommended'),'old restriction is described only as a recommendation');}
     if(event.arena&&car!=='titan_monster')check(values['event-brief'].includes('Titan recommended: lighter cars cannot crush wrecks.'),'light-car arena limitation is explicit before Start');
@@ -107,4 +111,4 @@ try{
   check(!/choices\.car\s*=\s*(?:stage|COURSE\[[^\]]+\])\.requiredCar/.test(source),'no production menu route still forces the recommended car');
   app.returnToMenu();
 }finally{if(originalStorage===undefined)delete globalThis.localStorage;else globalThis.localStorage=originalStorage;}
-console.log(`Course eligibility: ${checks} App, ownership, persistence, restart, strict objective and production-menu checks passed across ${Object.keys(CARS).length} cars and ${COURSE.length} courses.`);
+console.log(`Course eligibility: ${checks} App, ownership, persistence, restart, strict objective and production-menu checks passed across ${Object.keys(CARS).length} cars and ${raceEntries.length} race courses.`);

@@ -10,8 +10,8 @@ let checks=0;const check=(v,label)=>{assert.ok(v,label);checks++;},equal=(a,b,la
 // Exact coordinate pin after the approved shared map handedness correction;
 // every Float32 path and marker on the original fifteen courses stays checked.
 const legacy=createHash('sha256');
-// Authored Grand Prix circuits (def.script) came later; the digest covers the original fifteen.
-for(const def of COURSE.filter(def=>!def.practice&&!def.script)){const c=new Course(def,1989);legacy.update(JSON.stringify([buildRouteMapGeometry(c),buildCoursePreview(c)]));}
+// The digest covers the original fifteen race maps. Grand Prix circuits and the Show Night floor came later.
+for(const def of COURSE.filter(def=>!def.practice&&!def.script&&!def.bowl)){const c=new Course(def,1989);legacy.update(JSON.stringify([buildRouteMapGeometry(c),buildCoursePreview(c)]));}
 equal(legacy.digest('hex'),'fc5bf66989f7831b1d8a237715e5e6ac50f740b407292f27745c5a18228f91e4','all fifteen race maps and previews match the approved shared handedness correction');
 const course=new Course(COURSE.find(def=>def.practice),1989),before=JSON.stringify(course.features),layout=freestyleLayout(course),preview=buildCoursePreview(course),map=preview.map;
 equal(preview.biomes.map(b=>b.label),['Quarry'],'practice is Quarry, not Stadium');equal(preview.laps,0,'practice has no lap objective');equal(preview.distanceKm,0,'practice does not claim a race distance');
