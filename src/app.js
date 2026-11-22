@@ -267,7 +267,8 @@ export class App {
       else if(event.gameover&&!state.bowlNight)this._settleResult(state.results||{},state);
       // BOWL-HOOKS: Show Night pays its purse once, and each new event has its sound.
       if(event.bowlNightResult)this._settleShowNight(event.bowlNightResult,state);
-      if(event.bowlCaption||event.bowlScore)this._showNightCue((event.bowlCaption||event.bowlScore).cue);
+      const bowlCue = event.bowlCaption?.cue ?? event.bowlScore?.cue;
+      if (bowlCue) this._showNightCue(bowlCue);
       if (event.bowlSchool) {
         if (event.bowlSchool.type === 'tick') this._recordBowlSchoolTick(state, event.bowlSchool);
         this._showNightCue(event.bowlSchool.cue);

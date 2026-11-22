@@ -103,6 +103,12 @@
 .bowl-hud-event { color: #ffc06a; letter-spacing: .035em; }
 .bowl-hud-numbers { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-weight: 800; }
 .bowl-hud-clock { min-width: 3ch; font-variant-numeric: tabular-nums; }
+@media (min-width: 760px) {
+  .bowl-hud[data-event="freestyle"] { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+  .bowl-hud[data-event="freestyle"] .bowl-hud-numbers { grid-column: 1 / -1; grid-row: 2; }
+  .bowl-hud[data-event="freestyle"] .bowl-hud-goal,
+  .bowl-hud[data-event="freestyle"] .bowl-hud-gap { white-space: nowrap; }
+}
 .bowl-hud-chain, .bowl-hud-gap, .bowl-hud-gate, .bowl-hud-best-go { color: #ffcd77; }
 .bowl-waypoint {
   position: absolute;

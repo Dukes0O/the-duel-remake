@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {addArenaCrushables} from '../arena-props.js';
+import {rexGateIsShut, rexGateShutters} from './bowl-outside.js';
 
 // BOWL-OUT-LOOK: the outside of the Bowl drawn in code (docs/board/cards/BOWL-SHOW-2.md, section 3). The rules of the
 // way out and back in are src/bowl/bowl-outside.js; this file draws them and reads the race state, writing nothing:
@@ -148,8 +149,21 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
   const dark = new THREE.MeshStandardMaterial({color: 0x1d1a17, roughness: .8, metalness: .4});
 
   // ---- The gates.
-  const gates = outside.gates.map(gate => {
+  const shutters = rexGateShutters(course);
+  const gates = outside.gates.map((gate, index) => {
     const {box, point} = gateFrame(course, gate);
+    const panel = shutters[index];
+    const sheets = [], seams = [];
+    for (let row = 0; row < 8; row++) {
+      const height = panel.height / 8;
+      const centre = [panel.off, panel.y + (row + .5) * height, 0];
+      sheets.push(box([panel.halfX * 2, height, panel.halfZ * 2], centre));
+      if (row > 0) seams.push(box([panel.halfX * 2 + .04, .045, panel.halfZ * 2], [panel.off, centre[1] - height / 2, 0]));
+    }
+    const shutter = new THREE.Group();
+    shutter.name = `Bowl ${gate.name} steel shutter`;
+    shutter.visible = false;
+    shutter.add(mesh(sheets, steel, 'Shutter steel'), mesh(seams, dark, 'Shutter seams'));
     const half = gate.width / 2, jamb = half + .2, back = outside.back, throatEnd = back - (gate.mouthWidth - gate.width) / 2;
     const reach = gate.guideLength / Math.SQRT2, outer = face + stand.outer, cut = face + stand.first + stand.cutRows * stand.depth;
     const lintel = stand.lintel, mouth = gate.mouthWidth / 2;
@@ -265,9 +279,9 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
       const part = mesh(geometries, material, `Bowl ${gate.name} ${name}`);
       if (part) parts.add(part);
     }
-    parts.add(floorMesh, signs, column, ...halos.map(({halo}) => halo));
+    parts.add(floorMesh, signs, shutter, column, ...halos.map(({halo}) => halo));
     group.add(parts);
-    return {gate, parts, lampMaterial, halos, column};
+    return {gate, parts, lampMaterial, halos, column, shutter};
   });
 
   // ---- The car park.
@@ -488,6 +502,7 @@ export function createBowlOutsideView(course, {photo, drawn, hash, glow, stand})
     const flash = out ? (Math.sin(now * .011) > 0 ? 1 : 0) : 0;
     for (const entry of gates) {
       const aimed = !!target && target.name === entry.gate.name;
+      entry.shutter.visible = rexGateIsShut(state, entry.gate.name);
       entry.lampMaterial.emissive.setHex(out ? AMBER : AMBER_DIM);
       entry.lampMaterial.emissiveIntensity = out ? .6 + 2.6 * flash : 1;
       for (const {halo, phase} of entry.halos) halo.material.opacity = out ? Math.max(0, Math.sin(now * .011 + phase)) * (aimed ? 1 : .55) : 0;

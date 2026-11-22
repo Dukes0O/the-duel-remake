@@ -64,7 +64,9 @@ function ready(duel, night, placeAt, first = false) {
 
 function cue(duel, event, type, sound, points = 0) {
   event.score += points;
-  duel.emit({bowlScore: {type, points, score: event.score, cue: sound}});
+  const score = {type, points, score: event.score};
+  if (sound) score.cue = sound;
+  duel.emit({bowlScore: score});
 }
 
 function sampleFlight(duel, line) {

@@ -295,6 +295,8 @@ assert.ok(tautFrames > 0, 'the wall-contact drives include a taut cable under po
 function crossing({low=false,fallen=false,localZ,y}){
   const duel=start(),s=duel.state,f=s.bowlNight.event.rex;
   f.low=low;f.phase=fallen?'fallen':low?'rest':'walk';f.t=fallen?3:0;
+  // The sweep tests the beast's solids. Keep both endpoints inside the shutters.
+  f.places.rail=0;
   const frame=rexAnchor(f,duel.course);
   const a=duel._roadPosition(modelPoint(frame,-13,0,localZ),f.s);
   const b=duel._roadPosition(modelPoint(frame,13,0,localZ),f.s);

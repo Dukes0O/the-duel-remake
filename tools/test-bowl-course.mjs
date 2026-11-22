@@ -264,6 +264,17 @@ stadium.userData.update(2000,.35,{s:100,lateral:outsideRules.back+20,groundHeigh
 check(gateLights[1].visible && !gateLights[0].visible,'Only the selected gate lights up outside.');
 stadium.userData.update(2100,.35,{s:100,lateral:0,groundHeight:0,airHeight:0});
 check(gateLights.every(light=>!light.visible),'The gate lights go once the truck is back in.');
+const shutters = data.gates.map(gate => outsideView.getObjectByName(`Bowl ${gate.name} steel shutter`));
+const rexNight = {phase: 'event', event: {type: 'scrapasaurus', rex: {}}};
+check(shutters.every(shutter => shutter && !shutter.visible), 'Ordinary Bowl events keep both shutters up.');
+stadium.userData.update(2200,.35,{s:100,lateral:0,groundHeight:0,airHeight:0,bowlNight: rexNight});
+check(shutters.every(shutter => shutter.visible), 'Both steel shutters come down during the fight.');
+rexNight.event.rexReturnGate = data.gates[1].name;
+stadium.userData.update(2300,.35,{s:100,lateral:outsideRules.back+20,groundHeight:0,airHeight:0,bowlNight: rexNight});
+check(shutters[0].visible && !shutters[1].visible, 'Only the shutter for the returning truck goes up.');
+rexNight.event.rex.done = {won: true};
+stadium.userData.update(2400,.35,{s:100,lateral:0,groundHeight:0,airHeight:0,bowlNight: rexNight});
+check(shutters.every(shutter => !shutter.visible), 'Both shutters go up when the fight ends.');
 check(stadium.getObjectByName('Bowl crowd').geometry.getAttribute('crowdSeat')?.itemSize===4,'Each crowd card knows its seat, to clear from round a truck.');
 check(stadium.getObjectByName('Bowl tyre walls')?.userData.count>200,'Tyre walls stand along the stand wall and the Spine.');
 const lights=stadium.userData.lights;

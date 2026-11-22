@@ -351,6 +351,7 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
   <span class="bowl-waypoint" aria-hidden="true" hidden>▲</span>`;
   stage.append(host);
   const find = selector => host.querySelector(selector);
+  const strip = find('.bowl-hud');
   const caption = find('.bowl-hud-mo'), plan = find('.bowl-plan'), popup = find('.bowl-trick-popup');
   const panels = find('.bowl-event-panels'), waypoint = find('.bowl-waypoint');
   const healthNode = find('.bowl-health'), hitLabel = find('.bowl-health-hit'), danger = find('.bowl-health-alert');
@@ -390,6 +391,9 @@ export function createBowlHud({stage, app, projectPlayer = () => null}) {
     const night = state.bowlNight ?? state.arenaTrickShow;
     if (lastEvent !== night.event) {
       lastEvent = night.event;
+      const eventType = state.bowlNight?.event?.type;
+      if (eventType) strip.dataset.event = eventType;
+      else delete strip.dataset.event;
       previousHealth = lastHit = lastPopups = null;
     }
     for (const [node, value] of fields) {

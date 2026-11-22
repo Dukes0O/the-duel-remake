@@ -1,7 +1,7 @@
 import {BOWL_STADIUM, bowlSpineTopAt} from './bowl/bowl-course.js';
 import {bowlHealthLoss} from './bowl/bowl-weapons.js';
 import {constrainTow, finishTowContact, rexSolids} from './bowl/bowl-hook.js';
-import {inboundGateHeading, outsideGateAt, terraceHeight} from './bowl/bowl-outside.js';
+import {inboundGateHeading, outsideGateAt, rexGateIsShut, rexGateShutters, terraceHeight} from './bowl/bowl-outside.js';
 import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
@@ -529,8 +529,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const heading = travelHeading + (car.slipAngle || 0);
   // The Scablands' solids are found by a grid by world position (src/world/scablands-solids.js), not by the car's place along the oval frame.
   const obstacles = this.course.def.scablands ? scablandsContactObstacles(this, car, start, end, this._obstacles(oldS, car.s)) : this._obstacles(oldS, car.s);
-  const beastParts=fight && !fight.done && fight.phase!=='gone' ? rexSolids(fight,this.course) : null;
-  const nearby=beastParts ? obstacles.concat(beastParts) : obstacles;
+  const beastParts = fight && !fight.done && fight.phase !== 'gone' ? rexSolids(fight, this.course) : null;
+  const shutters = beastParts && player && this.featureFlags?.enabled('titan-bowl') === true
+    ? rexGateShutters(this.course).filter(shutter => rexGateIsShut(this.state, shutter.gateName)) : null;
+  const nearby = beastParts ? obstacles.concat(beastParts, shutters ?? []) : obstacles;
   const dimensions = {...this._vehicleSpec(car),
     useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;
@@ -598,7 +600,9 @@ export function _staticContacts(car, player, journeyColliders = null) {
       const top = this.course.groundAt(rimS, exterior.wall - .5).y + BOWL_STADIUM.wallHeight;
       const feet = start.y + (end.y - start.y) * share;
       const clearsWall = (car.airborne || car.prevAirHeight > 0) && feet >= top;
-      if (!clearsWall && !outsideGateAt(exterior, this.course.phase(rimS))) {
+      const gate = outsideGateAt(exterior, this.course.phase(rimS));
+      const shut = shutters?.some(shutter => shutter.gateName === gate?.name);
+      if (!clearsWall && (!gate || shut)) {
         const yaw = this.course.at(rimS).heading, nx = -Math.cos(yaw), nz = Math.sin(yaw);
         const wrongFace = first?.obstacle.arenaWall && first.obstacle.off === exterior.wall &&
           first.nx * nx + first.nz * nz < .5;
