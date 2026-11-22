@@ -68,12 +68,14 @@ function weaponImpact(duel, actor, fraction, owner, side) {
 }
 
 function weaponContact(duel, actor, fraction, owner, side, contactBudget) {
-  if (!contactBudget || actor !== duel.state) {
+  const remaining = owner === 'player' ? undefined : contactBudget?.get(actor);
+  if (remaining === undefined) {
     bowlHealthLoss(duel, actor, fraction, owner, side, false);
     return;
   }
-  const underLimit = Math.min(fraction, contactBudget.remaining / actor.maxArmor);
-  contactBudget.remaining -= bowlHealthLoss(duel, actor, underLimit, owner, side, false);
+  const underLimit = Math.min(fraction, remaining / actor.maxArmor);
+  const lost = bowlHealthLoss(duel, actor, underLimit, owner, side, false);
+  contactBudget.set(actor, Math.max(0, remaining - lost));
 }
 
 // Measure from the nose to the nearest point on the target truck's oriented body.
@@ -190,7 +192,9 @@ function tickWeapon(duel,actor,night,dt,contactBudget) {
 
 export function stepShowWeapons(duel,night,dt) {
   const actors=[duel.state,...duel.state.opponents], e=night.event;
-  const contactBudget = night.cpuDifficulty === 'easy' ? {remaining: EASY_RIVAL_CONTACT_PER_SECOND * dt} : null;
+  const contactBudget = night.cpuDifficulty === 'easy'
+    ? new Map((night.night === 5 ? actors : [duel.state]).map(actor => [actor, EASY_RIVAL_CONTACT_PER_SECOND * dt]))
+    : null;
   for (const actor of actors) {
     actor.bowlCut = false;
     delete actor.bowlSawTargetId;

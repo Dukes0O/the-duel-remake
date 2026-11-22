@@ -90,8 +90,30 @@ export const BOWL_RIVAL_RULES = Object.freeze({
 const EASY_FIGHT_OPENINGS = Object.freeze({
   3: {ownRamRecoil: .42, joinsAt: [0, 55, 82], lanes: [0, 6, 10], speedMph: 38, lookAhead: 11},
   4: {ownRamRecoil: .22, joinsAt: [54, 0, 100], lanes: [6, 0, 10], speedMph: 37, lookAhead: 13, pace: {minimum: 28, maximum: 35}},
-  5: {ownRamRecoil: .53, joinsAt: [0, 52, 92], lanes: [0, -5, 5], speedMph: 36, lookAhead: 14},
+  // Rust Rhino hunts first. Tin Lizard gives chase next, then Dragon Wagon.
+  5: {ownRamRecoil: .62, joinsAt: [92, 0, 52], lanes: [5, 0, -5], speedMph: 39, lookAhead: 12,
+    roster: BOWL_RIVAL_NIGHTS[4].lastTruckRolling},
 });
+
+// The Hammer can land a heavy hit without a ram. A faster opening and more
+// recoil on player-initiated rams make timing the swing matter on Night 5.
+const NIGHT_FIVE_HAMMER_OPENING = Object.freeze({
+  ...EASY_FIGHT_OPENINGS[5],
+  ownRamRecoil: .9,
+  joinsAt: [84, 0, 50],
+  speedMph: 36,
+  lookAhead: 14,
+});
+
+function fightDriveFor(rivalId, index, opening) {
+  const drive = {...BOWL_RIVAL_RULES.lastTruckRolling.pace, ...opening?.pace};
+  const slot = opening?.roster?.indexOf(rivalId) ?? index;
+  const joinsAt = opening?.joinsAt[slot] ?? 0;
+  if (joinsAt > 0) {
+    drive.opening = {joinsAt, lane: opening.lanes[slot], speedMph: opening.speedMph, lookAhead: opening.lookAhead};
+  }
+  return drive;
+}
 
 // The rival for a night's Side by Side, and the rivals for its Last Truck
 // Rolling. A test may pass `rivals` in the night's options to choose them.
@@ -268,13 +290,8 @@ registerBowlEventRunner('lastTruckRolling', {
     if (opening) night.event.ownRamRecoil = opening.ownRamRecoil;
     roster.forEach((id, index) => {
       const truck = s.opponents[index];
-      const drive = {...rules.pace, ...opening?.pace};
-      const joinsAt = opening?.joinsAt[index] ?? 0;
-      if (joinsAt > 0) {
-        drive.opening = {joinsAt, lane: opening.lanes[index], speedMph: opening.speedMph, lookAhead: opening.lookAhead};
-      }
       Object.assign(truck, {bowlRival: id, weaponLoadout: [], weaponsDisabledUntil: Infinity,
-        bowlFightDrive: drive, ramDamageScale: BOWL_RIVAL_HITS[level]});
+        bowlFightDrive: fightDriveFor(id, index, opening), ramDamageScale: BOWL_RIVAL_HITS[level]});
       arena.participants[index + 1].name = BOWL_RIVALS[id].name.toUpperCase();
     });
     for (const actor of [s, ...s.opponents]) actor.maxArmor = actor.armor = rules.showArmor;
@@ -311,6 +328,11 @@ registerBowlEventRunner('lastTruckRolling', {
     const s = duel.state, event = night.event, arena = s.arena;
     const rules = BOWL_RIVAL_RULES.lastTruckRolling;
     if (!arena) return {won: false};
+    if (!event.rivalSaid && night.night === 5 && levelOf(night) === 'easy' && s.bowlWeapon?.kind === 'hammer') {
+      const opening = NIGHT_FIVE_HAMMER_OPENING;
+      event.ownRamRecoil = opening.ownRamRecoil;
+      s.opponents.forEach((truck, index) => { truck.bowlFightDrive = fightDriveFor(truck.bowlRival, index, opening); });
+    }
     stepShowWeapons(duel, night, dt);
     if (!event.rivalSaid) { event.rivalSaid = true; sayBowlLine(duel, `rivals.night.${night.night}`); }
     event.rivals.forEach((entry, index) => {

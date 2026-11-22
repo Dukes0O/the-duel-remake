@@ -225,12 +225,14 @@ function carefulWeaponDrive(weapon, seed) {
 
 function checkEasyChasers() {
   const outcomes = [];
-  for (const [weapon, night] of [['hammer', 3], ['saw', 4], ['launcher', 5]]) {
+  const events = [['hammer', 3], ['saw', 4], ['hammer', 5], ['saw', 5], ['launcher', 5]];
+  for (const [weapon, night] of events) {
+    const label = `Night ${night} ${weapon}`;
     const trials = driver => Array.from({length: TRIALS}, (_, index) => {
       const seed = 1989 + index * 101;
       const duel = showAt(night, 'lastTruckRolling', {seed, weapon});
       const result = race(duel, driver(seed), chaseAim, 130);
-      ok(result, weapon + ' fight ends in every seed');
+      ok(result, label + ' fight ends in every seed');
       return {won: result.won, seconds: duel.state.stageTimeSec};
     });
     const chased = trials(chaser);
@@ -238,14 +240,14 @@ function checkEasyChasers() {
     const wins = chased.filter(row => row.won).length;
     const longEnough = chased.filter(row => row.seconds + 1e-8 >= 75).length;
     const carefulWins = careful.filter(row => row.won).length;
-    console.log(`${weapon} Easy: chaser ${wins}/10 wins, ${longEnough}/10 at or above 75 seconds, careful ${carefulWins}/10 wins.`);
+    console.log(`${label} Easy: chaser ${wins}/10 wins, ${longEnough}/10 at or above 75 seconds, careful ${carefulWins}/10 wins.`);
     console.log('Fight times:', chased.map(row => (row.won ? 'W ' : 'L ') + row.seconds.toFixed(1)).join(', '));
-    outcomes.push({weapon, wins, longEnough, carefulWins});
+    outcomes.push({label, wins, longEnough, carefulWins});
   }
-  for (const {weapon, wins, longEnough, carefulWins} of outcomes) {
-    ok(wins >= 5 && wins <= 7, weapon + ' chaser wins five to seven of ten on Easy');
-    ok(longEnough >= 8, weapon + ' gives the chaser at least 75 seconds in eight of ten fights');
-    ok(carefulWins >= 6, weapon + ' is still winnable by the careful driver');
+  for (const {label, wins, longEnough, carefulWins} of outcomes) {
+    ok(wins >= 5 && wins <= 7, label + ' chaser wins five to seven of ten on Easy');
+    ok(longEnough >= 8, label + ' gives the chaser at least 75 seconds in eight of ten fights');
+    ok(carefulWins >= 6, label + ' is still winnable by the careful driver');
   }
 }
 

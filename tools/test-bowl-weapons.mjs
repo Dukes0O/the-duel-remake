@@ -229,11 +229,32 @@ for (const [level,seconds] of [['easy',.8],['medium',.6],['hard',.4]]) {
   s.opponents.slice(1).forEach((a,i)=>place(d,a,80+12*i,0));
   ticks(d,48);assert.equal(s.armor,48);sums(s);
 }
-// Keep the target's ordinary pilot and mute its weapon for these contact drives.
+{
+  const d = fight('hammer', 'easy', 5), s = d.state;
+  const [dragon, victim, saw] = s.opponents;
+  const joins = rival => rival.bowlFightDrive.opening?.joinsAt ?? 0;
+  assert.equal(dragon.bowlRival, 'dragon-wagon');
+  assert.ok(joins(dragon) > joins(victim) && joins(dragon) > joins(saw), 'Easy Dragon Wagon joins the hunt last');
+  assert.deepEqual(s.opponents.map(rival => [rival.maxArmor, rival.armor]), [[60, 60], [60, 60], [60, 60]]);
+  place(d, s, 172, 0);
+  place(d, dragon, 29.5, 0);
+  place(d, victim, 33, 0);
+  place(d, saw, 36.5, 0, Math.PI);
+  victim.bowlWeapon.kind = null;
+  dragon.bowlWeapon.phase = saw.bowlWeapon.phase = 'active';
+  assert.equal(showTarget(d, dragon, 6).actor, victim);
+  assert.equal(showTarget(d, saw, 1.5).actor, victim);
+  ticks(d, 120);
+  assert.ok(Math.abs(victim.armor - 56) < 1e-8, 'an Easy rival also loses at most four health to fire and saw in one second');
+  sums(victim);
+}
+
+// Keep the active target's ordinary pilot and mute its weapon for these contact drives.
 function isolate(duel) {
-  const [target, ...others] = duel.state.opponents;
+  const rivals = duel.state.opponents;
+  const target = rivals.find(actor => !actor.bowlFightDrive.opening) ?? rivals[0];
   target.bowlWeapon.kind = null;
-  others.forEach((actor, index) => {
+  rivals.filter(actor => actor !== target).forEach((actor, index) => {
     actor.bowlWeapon.kind = null;
     place(duel, actor, 172 + index * 12, 8);
   });
@@ -329,6 +350,21 @@ for (const [level, distance, degrees, hits] of [
   assert.ok(!played.includes('arena.wreck-credit'));
   audio.event({arenaWreck:{victimId:'cpu-1',creditedId:'player'}},{arena:{mode:'last-car-rolling'}});
   assert.equal(played.filter(id=>id==='arena.wreck-credit').length,1);
+  named.length = 0;
+  assert.ok(d.startBowlNight({night: 1, eventIndex: 0, cpuDifficulty: 'easy', seed: 1989}));
+  assert.equal(d.state.bowlNight.event.type, 'carCrush');
+  while (d.state.status === 'countdown') d.step(dt);
+  const car = d.course.features.crushables.find(prop => prop.sourceKind === 'junkCar');
+  let crush = null, score = null;
+  d.onChange((_, event) => {
+    if (event.bowlCrush) crush = event.bowlCrush;
+    if (event.bowlScore?.type === 'crush') score = event.bowlScore;
+  });
+  d.emit({propCrushed: {id: car.id, kind: car.sourceKind, byPlayer: true}});
+  assert.ok(score?.points > 0 && !Object.hasOwn(score, 'cue'), 'Car Crush scores without a second cue');
+  assert.ok(crush.cues.includes('bowl.crush.car'), 'the original named car crush cue stays on the hit');
+  assert.ok(named.every(id => typeof id === 'string' && id.length > 0), 'the App routes only named Bowl cues');
+
   audio.context=null;
   app.dispose();
 }
