@@ -179,7 +179,7 @@ test('a Slam takes one third of the actual crowd, pays zero and plays no crowd c
     crowdBefore = event.crowd;
     timeBefore = event.crowdAt;
   });
-  assert.deepEqual(scores.map(e => [e.points, e.cue]), [[0, null]]);
+  assert.deepEqual(scores.map(e => [e.points, Object.hasOwn(e, 'cue')]), [[0, false]]);
   assert.equal(run.duel.state.bowlNight.event.score, 0);
   assert.ok(Math.abs(scores[0].crowd - crowdBefore * Math.exp(-.03 * (landedAt - timeBefore)) * 2 / 3) < 1e-9);
 });

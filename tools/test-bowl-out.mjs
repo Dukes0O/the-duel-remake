@@ -180,7 +180,7 @@ console.log('Twelve unsteered gate approaches, minimum mph:', unsteered.join(', 
       flights.push(ev.bowlScore);
     }
     if (['bowlInStands','bowlOverWall','bowlBackIn'].includes(ev.bowlScore?.type))
-      assert.equal(ev.bowlScore.cue,null,'only the exterior event plays its own cue');
+      assert.equal(Object.hasOwn(ev.bowlScore, 'cue'), false, 'only the exterior event plays its own cue');
   });
   place(duel,46,-14,.35,50);
   s.boost = 1;

@@ -207,7 +207,8 @@ registerBowlEventRunner(REX_EVENT,{
         fight.hints[event.type]=true;sayBowlLine(duel,hints[event.type],{once:true});
       }
       if(event.type==='slack'||event.type==='noBox'||event.type==='braceStall')continue;
-      duel.emit({bowlRex:{...event,cue:REX_CUES[event.type]??null}});
+      const cue = REX_CUES[event.type];
+      duel.emit({bowlRex: cue ? {...event, cue} : event});
     }
     if(fight.hook.tight || fight.hook.phase!=='attached'){
       if(night.caption?.id==='rex.slack')night.caption=null;

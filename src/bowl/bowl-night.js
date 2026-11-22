@@ -226,7 +226,7 @@ registerBowlEventRunner('carCrush', {
     event.crowdPeak = Math.max(event.crowdPeak, crowd);
     // A pile can form three links at once. Give each bonus link its own tick.
     event.chainTicks += event.chain - Math.max(1, before);
-    duel.emit({bowlScore: {type: 'crush', points: awardedPoints, score: event.score, crowd, cue: null}});
+    duel.emit({bowlScore: {type: 'crush', points: awardedPoints, score: event.score, crowd}});
     if (hit.pancake) {
       event.crushPopup = {notice: `PANCAKE x${rules.pancakeMultiplier}`, at: night.clock};
       say(duel, 'crush.pancake');
@@ -512,7 +512,9 @@ function addFact(duel, fact, cue = 'bowl.crowd.rise') {
   event.facts.push(timed);
   event.crowd = scored.crowd; event.crowdAt = at; event.score += points;
   event.crowdPeak = Math.max(event.crowdPeak, scored.crowd);
-  duel.emit({bowlScore: {type: fact.type, points, score: event.score, crowd: scored.crowd, cue: points ? cue : null}});
+  const score = {type: fact.type, points, score: event.score, crowd: scored.crowd};
+  if (points && cue) score.cue = cue;
+  duel.emit({bowlScore: score});
   const mark = BOWL_NIGHT_RULES.crowdMarks.filter(value => scored.crowd >= value).at(-1);
   if (mark > event.crowdMark) { event.crowdMark = mark; say(duel, `crowd.${mark}`); }
   return points;
