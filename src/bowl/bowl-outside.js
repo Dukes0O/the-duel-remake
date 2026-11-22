@@ -18,6 +18,32 @@ export function createBowlOutside(course, floor, stadium, gateS) {
   return {wall, front, back, top, fenceTop: stadium.wallHeight + stadium.fenceHeight, firstHeight: stadium.firstRowHeight, bank: back + 80, gates, parking};
 }
 
+const rexShutters = new WeakMap();
+
+function rexShuttersActive(state) {
+  const night = state?.bowlNight;
+  return night?.phase === 'event' && night.event?.type === 'scrapasaurus' && night.event.rex && !night.event.rex.done;
+}
+
+export function rexGateIsShut(state, gateName) {
+  return !!rexShuttersActive(state) && state.bowlNight.event.rexReturnGate !== gateName;
+}
+
+export function rexGateShutters(course) {
+  const outside = course.features.bowl.outside;
+  if (!rexShutters.has(outside)) {
+    const off = outside.wall - .20, halfX = .18;
+    rexShutters.set(outside, outside.gates.map(gate => {
+      const {x, y, z, heading} = course.groundAt(gate.s, off);
+      return {id: 'rex-shutter-' + gate.name, gateName: gate.name, kind: 'prop', shape: 'box',
+        s: gate.s, off, x, y, z, heading, halfX, halfZ: gate.width / 2 + .08,
+        height: outside.fenceTop, minY: y - 1, maxY: y + outside.fenceTop,
+        arenaWall: true, bowlBoundary: 'shutter', verticalClearance: true, exactCarCorners: true};
+    }));
+  }
+  return rexShutters.get(outside);
+}
+
 export function outsideGateAt(outside, phase, lateral = outside.wall) {
   return outside.gates.find(g => {
     const flare = Math.max(0, (g.mouthWidth - g.width) / 2 + Math.min(0, lateral - outside.back));
@@ -56,10 +82,11 @@ export function openGateSegments(gates, s, half, mouth = false) {
 
 // A gate marker leads round the back wall before it leads into the tunnel.
 // Its destination stays fixed while the next point to steer at moves along the ring.
-function nearestGate(course, outside, actor) {
+function nearestGate(course, outside, actor, returnGate) {
   const phase = course.phase(actor.s), here = course.worldAt(actor.s, actor.lateral);
   const delta = gate => ((gate.s - phase + 1.5 * course.length) % course.length) - course.length / 2;
-  const gate = Math.abs(delta(outside.gates[0])) <= Math.abs(delta(outside.gates[1])) ? outside.gates[0] : outside.gates[1];
+  const nearest = Math.abs(delta(outside.gates[0])) <= Math.abs(delta(outside.gates[1])) ? outside.gates[0] : outside.gates[1];
+  const gate = returnGate ? outside.gates.find(gate => gate.name === returnGate) ?? nearest : nearest;
   const ds = delta(gate), mouth = course.worldAt(gate.s, outside.back + 8);
   const previous = actor.bowlOutside?.gate?.name === gate.name ? actor.bowlOutside.gate : null;
   const side = previous?.side ?? (ds > 0 ? -1 : 1);
@@ -97,7 +124,20 @@ export function observeBowlOutside(duel, dt, addFact, say) {
   const s = duel.state, event = s.bowlNight.event, course = duel.course, outside = course.features.bowl.outside;
   const gate = outsideGateAt(outside, course.phase(s.s), s.lateral);
   const previous = s.bowlOutside;
+  const rex = rexShuttersActive(s);
+  if (rex && !event.rexShuttersStarted) {
+    event.rexShuttersStarted = true;
+    duel.emit({bowlOutsideCue: 'bowl.gate.shut'});
+  }
   if (s.lateral <= outside.wall) {
+    if (rex && event.rexReturnGate) {
+      const {halfLength, halfWidth} = duel._vehicleSpec(s);
+      if (s.lateral <= outside.wall - .38 - Math.hypot(halfLength, halfWidth)) {
+        const gateName = event.rexReturnGate;
+        delete event.rexReturnGate;
+        duel.emit({bowlGate: {gate: gateName}, bowlOutsideCue: 'bowl.gate.shut'});
+      }
+    }
     if (previous && event.visitedOutside && gate && !s.airborne) {
       duel.emit({bowlBackIn: {gate: gate.name}, bowlOutsideCue: 'bowl.out.back'});
       addFact(duel, {type: 'bowlBackIn'}, null);
@@ -109,9 +149,15 @@ export function observeBowlOutside(duel, dt, addFact, say) {
   }
   const tunnel = gate && s.lateral <= outside.back && !s.airborne && (s.groundHeight || 0) < outside.firstHeight - .5;
   const where = s.lateral > outside.back || tunnel ? 'carpark' : 'stands';
-  s.bowlOutside = {where, gate: nearestGate(course, outside, s)};
+  const guide = nearestGate(course, outside, s, event.rexReturnGate);
+  s.bowlOutside = {where, gate: guide};
   if (!tunnel) event.visitedOutside = true;
-  if (!previous && s.airborne && !gate) {
+  const overWall = !previous && (rex ? s.airborne || s.prevAirHeight > 0 : s.airborne && !gate);
+  if (overWall) {
+    if (rex && !event.rexReturnGate) {
+      event.rexReturnGate = guide.name;
+      duel.emit({bowlGate: {gate: guide.name}, bowlOutsideCue: 'bowl.gate.open'});
+    }
     const repeat = !!event.overWall;
     event.overWall = true;
     duel.emit({bowlOverWall: {repeat}, bowlOutsideCue: 'bowl.out.over'});
