@@ -80,6 +80,8 @@ export const BOWL_SOUND_RECIPES = Object.freeze(Object.fromEntries([
   one('bowl.out.leap', -19, [cut(485240, 0, .9), cut(764101, .4, 2, {gain: .8, at: .2})]),
   one('bowl.out.gate', -19, [cut(682775, .2, 2.6)]),
   one('bowl.out.back', -19, [cut(728773, .3, 3, {fadein: .1})]),
+  one('bowl.gate.shut', -17, [cut(682775, .2, 2.0, {rate: .78, lowpass: 6500}), cut(406557, 0, 1.2, {rate: .8, at: 1.7, gain: .75})]), // heavy steel rolls down and strikes the floor
+  one('bowl.gate.open', -19, [cut(83887, .27, 2.3, {rate: .87, lowpass: 6500}), cut(453961, .48, 1.5, {at: .19, gain: .38})]), // the lift motor winds up and pulls the shutter clear
   // BOWL-RIVALS-2
   one('bowl.race.lights', -19, [cut(813525, 0, 4)]),
   one('bowl.race.finish', -17, [cut(131930, .3, 1.8), cut(267248, .4, 2.6, {gain: .7, at: .2, fadein: .1})]),
