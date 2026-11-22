@@ -313,3 +313,8 @@ for (const eventType of ['freestyle', 'longJump', 'highJump', 'bestTrick']) {
 }
 
 console.log('Bowl HUD goals, caption timing, trick results, damage and result timing passed.');
+
+if (process.argv.includes('--layout')) {
+  const {main} = await import('./browser-harness.mjs');
+  await main(['scenario', 'bowl-hud-layout']);
+}
