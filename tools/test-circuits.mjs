@@ -35,7 +35,7 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
    check(Math.max(...before.map(p=>p.y))>valley+1&&Math.max(...after.map(p=>p.y))>valley+1,`${tag}: two mountain crests frame a real saddle`);
   }
  }
- if(def.offroad&&!def.practice){check(course.roadHalfWidthAt(0)===5.5&&!course.features.passingLanes.length,`${tag}: narrow unpainted rally trail`);}
+ if(def.offroad&&!def.practice&&!def.bowl){check(course.roadHalfWidthAt(0)===5.5&&!course.features.passingLanes.length,`${tag}: narrow unpainted rally trail`);}
  if(def.practice)check(course.roadHalfWidthAt(0)===24&&!course.features.lapGates.length,`${tag}: broad untimed practice loop`);
  if(course.closed){
  for(const s of[-25,0,80,course.length*.53,course.length-1]){

@@ -29,6 +29,28 @@ export function createCarCrushDriver({pace = 27, laneBias = 0, random = null} = 
   };
 }
 
+// Side by Side: keep to the player's own lane at a steady pace (BOWL-GO-LIVE, 22 November 2026). Since BOWL-RIVALS-2 the
+// rival races a real two-lap pace, and the game's general test driver no longer wins it; a driver who holds the lane and
+// lifts only above 44 mph wins, as a tween driving straight did by hand.
+export function createSideBySideDriver({pace = 44} = {}) {
+  return duel => {
+    const {state, course} = duel, lanes = course.features.bowl?.lanes;
+    const line = lanes?.length >= 2 ? lanes[0].lateral : 0;
+    const steer = (state.lateral - line) * .2 + (state.headingError || 0) * 1.1;
+    return {throttle: +(state.speedMph < pace), brake: 0,
+      steer: state.airborne ? 0 : Math.max(-1, Math.min(1, steer)), boost: false};
+  };
+}
+
+const startSideBySide = `(() => {
+  const app = window.__qaApp, drive = (${createSideBySideDriver.toString()})();
+  app._driveAutopilot = function () {
+    if (this.duel.state.status === 'racing') this.duel.setInput(drive(this.duel));
+  };
+  app.autopilot = true;
+  return true;
+})()`;
+
 const startCrush = `(() => {
   const app = window.__qaApp, drive = (${createCarCrushDriver.toString()})();
   app._driveAutopilot = function () {
@@ -173,7 +195,7 @@ export async function run(context) {
   for (let round = 1; round <= 8 && !await context.evaluate(page.nightDone); round++) {
     await context.evaluate(page.next);
     const type = await context.evaluate(page.event);
-    await context.evaluate(type === 'freestyle' ? startFreestyle : page.autopilot);
+    await context.evaluate(type === 'freestyle' ? startFreestyle : type === 'sideBySide' ? startSideBySide : page.autopilot);
     try {
       if (type === 'freestyle' && !freestyleSeen) {
         await context.waitFor(page.freestyleCrowd, 'Freestyle under way', 60000);
@@ -182,7 +204,7 @@ export async function run(context) {
       }
       await waitForCard(context, `${type} ends`, 150000);
     } finally {
-      await context.evaluate(type === 'freestyle' ? page.stopCrush : page.manual);
+      await context.evaluate(type === 'freestyle' || type === 'sideBySide' ? page.stopCrush : page.manual);
     }
     await picture(context, `bowl-night-card-${round}-${String(type).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`);
   }

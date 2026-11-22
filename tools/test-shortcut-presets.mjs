@@ -13,7 +13,8 @@ let checks=0,layouts=0,solved=0;const check=(value,label)=>{assert.ok(value,labe
 equal(SHORTCUT_PRESET_DATA.version,SHORTCUT_GENERATION_VERSION,'saved paths use the current solver version');
 equal(await shortcutSourceFingerprint(),SHORTCUT_PRESET_DATA.sourceFingerprint,'generation code changed: rerun tools/generate-shortcut-presets.mjs and --verify-solvers');
 const saved=JSON.stringify(SHORTCUT_PRESET_DATA),reports=[];
-for(const definition of COURSE)for(const seed of supportsRouteVariants(definition)?ROUTE_VARIANTS.map(route=>route.seed):[1989]){
+// The Bowl is a show floor, not a selectable race layout (BOWL-GO-LIVE, 21 November 2026).
+for(const definition of COURSE.filter(def=>!def.bowl))for(const seed of supportsRouteVariants(definition)?ROUTE_VARIANTS.map(route=>route.seed):[1989]){
   const before=performance.now(),course=new Course(definition,seed),presetMs=performance.now()-before;
   if(definition.expansion||definition.script){
     equal(course.features.shortcuts,(definition.roadBranches??[]).map(branch=>({...branch,offset:branch.offset*branch.side,transition:.15})),'authored circuits preserve exactly their declared branches without generating shortcuts');

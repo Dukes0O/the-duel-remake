@@ -65,7 +65,7 @@ export const page = {
   card: `(() => window.__qaApp.duel.state.status === 'bowl_break' && !!document.querySelector('.bowl-result'))()`,
   // How Last Truck Rolling ended, in one sentence on whichever card follows it.
   truckOutcome: `(() => { const text = document.querySelector('.bowl-result')?.textContent ?? '';
-    return ['Every other truck was knocked out', 'The clock ran out', 'knocked out before', 'Your truck was knocked out'].some(line => text.includes(line)); })()`,
+    return ['Every other truck was knocked out', 'The clock ran out', 'When time ran out', 'knocked out before', 'Your truck was knocked out'].some(line => text.includes(line)); })()`,
   cardLine: `(() => document.querySelector('.bowl-result')?.textContent ?? '')()`,
   leave: `(() => { document.querySelector('[data-action="show-night-leave"][data-to="menu"]').click(); return true; })()`,
   menu: `(() => window.__qaApp.duel.state.status === 'menu' && !window.__qaApp.duel.state.bowlNight && !window.__qaApp.duel.state.arena)()`,

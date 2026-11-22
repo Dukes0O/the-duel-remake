@@ -323,7 +323,8 @@ test('the same script builds the same road every time, and the seed never moves 
 test('the road of every existing course is unchanged', () => {
   // Pin the road the released courses draw: this hash was taken before the
   // track script work and must not change (replays pin the physics on top).
-  const text = COURSE.filter(def => !def.script).map(def => {
+  // The Bowl (a show floor, switched on 21 November 2026) is not one of the roads this hash pinned.
+  const text = COURSE.filter(def => !def.script && !def.bowl).map(def => {
     const course = new Course(def, 1989);
     return `${def.id}:${course.length}:${course.samples.length}:${hash(course.samples)}:${course.features.obstacles.length}`;
   });
