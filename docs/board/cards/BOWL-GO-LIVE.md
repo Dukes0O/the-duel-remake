@@ -49,3 +49,5 @@ Claude runs the frame check on the laptop alone, then the release steps in `docs
 Please review the first scenery baseline in [the change note](../../changes/BOWL-GO-LIVE.md). The private Chrome view is the base Bowl at seed 1989. The world signature is pending this review.
 
 Please confirm the `src/config.js` hook for course ordering. The present insertion would shift the released Summit and other appended circuit slots by one. The lane puts the Bowl after the registered circuits. This keeps the existing positions and still includes the Bowl in the released course list.
+
+Before the switch can ship, the existing course shop and timed leaderboard need to skip the Show Night floor. With the switch on, the shop offers an impossible zero-credit purchase and Scores advertises a two-lap record. The legacy stage-16 migration also picks up the Show Night floor alongside Panorama Ridge. Please confirm the hooks in `src/course-access-ui.js`, `src/screen-leaderboard.js`, and `src/course-access.js`. The lane will keep the normal race lists and legacy entitlement intact.
