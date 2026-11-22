@@ -71,9 +71,10 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.deepEqual(orders, [...orders].sort((a, b) => a - b), 'manifests are listed in release order');
   assert.equal(new Set(orders).size, orders.length, 'each course has its own release order');
   assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
-  assert.equal(COURSE.length, BASE_COURSE_COUNT + appended.length);
+  assert.equal(COURSE.length, BASE_COURSE_COUNT + appended.length + 1);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id && CIRCUIT_MANIFESTS.find(row => row.id === id).slot === undefined)), [], 'the sixteen earlier events are unchanged and in place');
-  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), appended, 'enabled courses append in declared order');
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), [...appended, 'titan-bowl'],
+    'enabled race circuits keep their declared order ahead of the Show Night floor');
   const originalDefinitions = ALL_CIRCUITS.filter(circuit => circuit.id !== 'summit-time-attack' &&
     CIRCUIT_MANIFESTS.find(row=>row.id===circuit.id).unlock?.kind !== 'spotted-from-air');
   assert.equal(new Set(originalDefinitions.map(circuit => circuit.stage)).size, originalDefinitions.length,

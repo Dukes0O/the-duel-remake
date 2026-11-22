@@ -35,7 +35,8 @@ function crossCircuit(duel, actor) {
     `${course.def.id}: scripted racer crosses each real lap gate`);
 }
 
-for (const [stageIndex, stage] of COURSE.entries()) {
+const raceEntries = [...COURSE.entries()].filter(([,stage]) => !stage.bowl);
+for (const [stageIndex, stage] of raceEntries) {
   const duel = new Duel({seed: 9203 + stageIndex});
   duel.startCampaign({startStage: stageIndex, cpuDifficulty: 'hard', opponentCount: 3});
   const state = duel.state;
@@ -166,7 +167,7 @@ for(let index=0;index<3;index++){
     `opponent ${index+1} impact leaves finite poses and speeds`);
 }
 
-for(const [stageIndex,stage] of COURSE.entries()){
+for(const [stageIndex,stage] of raceEntries){
   if(stage.practice)continue;
   if(stage.stuntTrial){
     // The free-form stunt arena needs a line through its crushables. Drive it
@@ -231,4 +232,4 @@ for(const [stageIndex,stage] of COURSE.entries()){
   } finally { app.dispose(); }
 }
 
-console.log(`Opponents: ${checks} scripted multi-car checks passed across ${COURSE.length} courses.`);
+console.log(`Opponents: ${checks} scripted multi-car checks passed across ${raceEntries.length} race courses.`);

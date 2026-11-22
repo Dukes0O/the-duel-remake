@@ -13031,6 +13031,176 @@
     },
     {
       "source": "freesound",
+      "key": "682775",
+      "title": "Metal gate closing.WAV",
+      "author": "thomasanthony321",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/thomasanthony321/sounds/682775/",
+      "download": "https://cdn.freesound.org/previews/682/682775_14662423-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.73344,
+      "file": "freesound/682775-metal-gate-closing-wav.ogg",
+      "sha256": "d9cd318faa7edb8f0486572f4bd1842aafed59b57ea5d1d0253048f88ef3ce51",
+      "bytes": 45836,
+      "fetched": "2026-11-21",
+      "cue": "bowl.gate.shut",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/gate-shut.ogg",
+            "source": "682775",
+            "start": 0.2,
+            "duration": 2,
+            "rate": 0.78,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 6500,
+            "loudness": -17
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/gate-shut.ogg",
+          "sha256": "27d8eda7aa40fd7d9f20943c81306f310aff5349c42e9e4eb995b17ce9ea5493",
+          "bytes": 31334,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 3.2,
+          "integratedLufs": -16.95,
+          "truePeakDbtp": -2.96
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "406557",
+      "title": "hit - metallic - metal gate.wav",
+      "author": "Anthousai",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Anthousai/sounds/406557/",
+      "download": "https://cdn.freesound.org/previews/406/406557_5923045-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.66201,
+      "file": "freesound/406557-hit-metallic-metal-gate-wav.ogg",
+      "sha256": "2e4e8f828354c46f6426436a6dad9e0c1ebb2ee3e8b7a21fcb6a3e919a46e3be",
+      "bytes": 92306,
+      "fetched": "2026-11-21",
+      "cue": "bowl.gate.shut",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/gate-shut.ogg",
+            "source": "406557",
+            "start": 0,
+            "duration": 1.2,
+            "rate": 0.8,
+            "gain": 0.75,
+            "at": 1.7,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -17
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
+      "key": "83887",
+      "title": "hydraulicdoorsnd.wav",
+      "author": "Jedimichael",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Jedimichael/sounds/83887/",
+      "download": "https://cdn.freesound.org/previews/83/83887_1281618-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.08671,
+      "file": "freesound/83887-hydraulicdoorsnd-wav.ogg",
+      "sha256": "60cad0d235fee8d4d6a5a29bd71c4fed34159c54691766eb65c43a6d5b9323b2",
+      "bytes": 51596,
+      "fetched": "2026-11-21",
+      "cue": "bowl.gate.open",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/gate-open.ogg",
+            "source": "83887",
+            "start": 0.27,
+            "duration": 2.3,
+            "rate": 0.87,
+            "gain": 1,
+            "at": 0,
+            "highpass": 40,
+            "lowpass": 6500,
+            "loudness": -19
+          }
+        ]
+      },
+      "runtime": [
+        {
+          "file": "public/assets/audio/bowl/gate-open.ogg",
+          "sha256": "c488150c4351f1e89dee7faf38db38303607a887b896c3bfdf16a349803eb6ae",
+          "bytes": 31463,
+          "sampleRate": 48000,
+          "channels": 1,
+          "duration": 2.637,
+          "integratedLufs": -19.24,
+          "truePeakDbtp": -1.19
+        }
+      ]
+    },
+    {
+      "source": "freesound",
+      "key": "453961",
+      "title": "door lock slide chain rattle.flac",
+      "author": "kyles",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/kyles/sounds/453961/",
+      "download": "https://cdn.freesound.org/previews/453/453961_612689-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.66667,
+      "file": "freesound/453961-door-lock-slide-chain-rattle-flac.ogg",
+      "sha256": "acf6879d1116ed062439c091e159974c5c89b1a5a03f01c422e0248d3139f51c",
+      "bytes": 119439,
+      "fetched": "2026-11-21",
+      "cue": "bowl.gate.open",
+      "processing": {
+        "script": "tools/audio/build-bowl-sound.mjs",
+        "normalization": "mix, 150 ms fade out, gain to the loudness in two passes, limiter .79 (1 ms attack, 60 ms release)",
+        "codec": "Vorbis q5",
+        "uses": [
+          {
+            "take": "bowl/gate-open.ogg",
+            "source": "453961",
+            "start": 0.48,
+            "duration": 1.5,
+            "rate": 1,
+            "gain": 0.38,
+            "at": 0.19,
+            "highpass": 40,
+            "lowpass": 12000,
+            "loudness": -19
+          }
+        ]
+      },
+      "runtime": []
+    },
+    {
+      "source": "freesound",
       "key": "813525",
       "title": "Countdown for race, game start",
       "author": "Pastew",

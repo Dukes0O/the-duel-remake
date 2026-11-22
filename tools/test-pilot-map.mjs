@@ -60,7 +60,9 @@ same(new Set(PLACE_IDS).size, PLACE_IDS.length, 'place ids are unique');
 // Kogane Pass was released on 30 October 2026 but joins the map through the DEV_PLACES list (the way Summit Run once did),
 // so each course is counted over both lists: exactly one place holds it.
 const ALL_PLACES = [...PLACES, ...DEV_PLACES];
-for (const course of COURSE) {
+const bowl = COURSE.find(course => course.bowl);
+ok(bowl && !placeOfCourse(bowl.id), 'the Show Night floor is reached from Show Night rather than the pilot map');
+for (const course of COURSE.filter(course => !course.bowl)) {
   const holders = ALL_PLACES.filter(place => place.courses.includes(course.id));
   same(holders.length, 1, `${course.id} is on the map once`);
   same(placeOfCourse(course.id), holders[0], `${course.id}: its place is found by course`);

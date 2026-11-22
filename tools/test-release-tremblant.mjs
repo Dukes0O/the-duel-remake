@@ -29,7 +29,8 @@ const ok = (value, label) => { assert.ok(value, label); checks++; };
 // 1. The earlier sixteen events keep their positions and ids; Tremblant Woods, then Tremblant Snow, are appended.
 equal(COURSE.slice(0, EARLIER_EVENTS.length).map(event => event.id), EARLIER_EVENTS, 'earlier events keep their order and ids');
 const released = CIRCUIT_MANIFESTS.filter(manifest => manifest.state === 'on').map(manifest => manifest.id);
-equal(COURSE.slice(EARLIER_EVENTS.length).map(event => event.id), released, 'enabled circuits append in declared release order');
+equal(COURSE.slice(EARLIER_EVENTS.length).map(event => event.id), [...released, 'titan-bowl'],
+  'enabled circuits retain their declared release order ahead of the Show Night floor');
 equal(ALL_CIRCUITS.map(circuit => circuit.id), CIRCUIT_MANIFESTS.map(manifest => manifest.id), 'registered circuits retain release order');
 for (const manifest of CIRCUIT_MANIFESTS) {
   equal(featureFlags.enabled(manifest.flag), manifest.state === 'on', 'production follows the declared course state');

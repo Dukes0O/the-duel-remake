@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-22T02:16:19.962Z
+Observed at: 2026-11-22T03:38:36.980Z
 
-Observation commit: e9682473e4cbd02b6720c35cc8f05cd2447e4c41
+Observation commit: 68c6626292cd86915875c4da50befc528a416d6b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e9682473e4cbd02b6720c35cc8f05cd2447e4c41
+Integration HEAD: 68c6626292cd86915875c4da50befc528a416d6b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -37,8 +37,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bowl-batch3-fix | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix |
 | codex/bowl-course | 16 | unknown | true | false | unknown |
 | codex/bowl-freestyle-nights | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-freestyle-nights |
+| codex/bowl-go-live | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-go-live |
 | codex/bowl-hud | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-hud |
-| codex/bowl-release-fix | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-release-fix |
 | codex/bowl-rivals-2 | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-rivals-2 |
 | codex/car-art-bully | 15 | unknown | false | false | unknown |
 | codex/crew-story-join | 16 | unknown | true | false | unknown |
@@ -70,7 +70,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 16 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
-| codex/bowl-release-fix | unknown | 2026-11-21T19:08:29-07:00 | 0 | inspection skipped by request; uncommitted state unknown | src/app.js, src/bowl/bowl-hud.js, src/bowl/bowl-jump-events.js, src/bowl/bowl-lines.js, src/bowl/bowl-night.js |
+| codex/bowl-go-live | unknown | 2026-11-21T20:29:19-07:00 | 0 | inspection skipped by request; uncommitted state unknown | public/assets/audio/bowl/gate-open.ogg, public/assets/audio/bowl/gate-shut.ogg, src/bowl/bowl-lines.js, src/config.js, src/course-access.js |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 15 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 37 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 16 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
@@ -85,16 +85,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 752,721,502 B | +2,201,019 B | 250,000,000 B |
+| Build `dist/` | 752,724,448 B | +2,946 B | 250,000,000 B |
 | Wasteland models | 446,473,171 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 499,162 B | +0 B | 500,000 B |
-| Review `looks/` | 103,823,586 B | +1,493,206 B | 20,000,000 B |
-| Added bytes in last merge | 2,909,794 B | -798,647 B | 5,000,000 B |
-| All `public/` | 743,285,267 B | +0 B | unavailable |
-| Git objects | 1,472,756,736 B | +3,058,688 B | unavailable |
-| Lane folders | 5 | +1 | unavailable |
+| Review `looks/` | 103,823,586 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 1,089,900 B | -1,819,894 B | 5,000,000 B |
+| All `public/` | 743,348,064 B | +62,797 B | unavailable |
+| Git objects | 1,473,674,240 B | +917,504 B | unavailable |
+| Lane folders | 5 | +0 | unavailable |
 
 ## Backups
 
@@ -102,7 +102,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: f96d19903748c849883b3ca1e514276de6347432
 - Local main: missing
-- Local integration/wasteland: e9682473e4cbd02b6720c35cc8f05cd2447e4c41
+- Local integration/wasteland: 68c6626292cd86915875c4da50befc528a416d6b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -110,6 +110,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit f96d19903748c849883b3ca1e514276de6347432.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: behind local; cached commit 4f2342259cd63973367dccde30798590d0f3d765.
+- Remote origin/integration/wasteland: matches local; cached commit 68c6626292cd86915875c4da50befc528a416d6b.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.

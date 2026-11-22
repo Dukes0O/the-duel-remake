@@ -76,8 +76,10 @@ for (const name of ['Dukes00', 'Spikey Ferns']) {
   test(name + ': all drivers, all released courses, paints, the dive kit and the open Wasteland', () => {
     const profile = byName(name);
     for (const id of Object.keys(DRIVERS)) assert.ok(isDriverUnlocked(profile, id), id);
-    const released = COURSE.filter(course => !course.practice &&
+    const released = COURSE.filter(course => !course.practice && !course.bowl &&
       (!CIRCUIT_MANIFESTS.some(item => item.id === course.id) || FEATURE_STATES[CIRCUIT_MANIFESTS.find(item => item.id === course.id).flag] === 'on'));
+    const bowl = COURSE.find(course => course.bowl);
+    assert.ok(bowl && !profile.courses.unlocked.includes(bowl.id), 'the restored course entitlements exclude the Show Night floor');
     // The seven secret courses (the five of 28 October and the two Kogane Pass versions) open only when found from the helicopter, so a restored career does not hold them yet.
     const secret = released.filter(course => CIRCUIT_MANIFESTS.find(item => item.id === course.id)?.unlock?.kind === 'spotted-from-air');
     // A course released after the restore was written (Kogane Pass) is bought like any other, so the restore does not hold it.

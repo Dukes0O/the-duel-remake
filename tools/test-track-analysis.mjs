@@ -357,7 +357,7 @@ assert.throws(() => buildTrackDossier(course, {route: 'route_b', reference}), /r
 // every corner flag has a written line and note, and the words follow the house voice.
 {
   // A dev slotted replacement shares the old id, not its released definition.
-  const olderCourses = COURSE.filter(entry => entry.closed !== false && !ALL_CIRCUITS.includes(entry));
+  const olderCourses = COURSE.filter(entry => entry.closed !== false && !entry.bowl && !ALL_CIRCUITS.includes(entry));
   check(olderCourses.length >= 16, 'The older closed courses are all found');
   const texts = [];
   let written = 0;
@@ -485,7 +485,7 @@ assert.throws(() => buildTrackDossier(course, {route: 'route_b', reference}), /r
   // No flag pin sits over a numbered circle on any course, so every circle can still be pressed at its centre.
   let pins = 0;
   // Published-reference map checks follow the installed road for a shared id.
-  for (const definition of [...new Map([...ALL_CIRCUITS, ...COURSE].map(entry => [entry.id, entry])).values()].filter(entry => entry.closed !== false)) {
+  for (const definition of [...new Map([...ALL_CIRCUITS, ...COURSE].map(entry => [entry.id, entry])).values()].filter(entry => entry.closed !== false && !entry.bowl)) {
     const routes = getRouteVariants(definition);
     for (const route of routes) {
       const routeKey = routes.length > 1 ? route.id : 'fixed', lap = referenceLap(definition.id, routeKey);

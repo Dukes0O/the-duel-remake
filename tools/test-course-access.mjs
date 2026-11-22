@@ -14,8 +14,12 @@ let checks=0;
 const check=(ok,label)=>{assert.ok(ok,label);checks++;};
 const same=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
 const fresh=createProfile(),free=COURSE[0],paid=COURSE[1];
+const purchasable=COURSE.filter(course=>!course.bowl);
+const bowl=COURSE.find(course=>course.bowl);
+check(bowl && !Object.hasOwn(COURSE_PRICES,bowl.id),'the released Bowl belongs to Show Night instead of the course shop');
+check(!purchaseCourse(fresh,bowl).ok,'the Show Night floor cannot be purchased');
 same(fresh.courses,{version:1,unlocked:[free.id]},'only Pacific is included in new careers');
-for(const course of COURSE){
+for(const course of purchasable){
   check(Number.isSafeInteger(COURSE_PRICES[course.id])&&COURSE_PRICES[course.id]>=0,'every course has a nonnegative integer price');
   same(isCourseUnlocked(fresh,course),course===free,'new career cannot bypass a priced course');
   same(isCourseUnlocked(fresh,course.stage),isCourseUnlocked(fresh,course.id),'stable IDs and indices resolve the same ownership');
@@ -32,6 +36,9 @@ for(const course of COURSE)same(isCourseUnlocked(migrated,course),course.stage<9
 same(migrated.raceSettings.eventId,free.id,'an unearned saved selection safely returns to the included circuit');
 const proof=normalizeProfile({...legacy,unlockedCars:fresh.unlockedCars,history:[],personalBests:{'eifel-crown|layout:2|seed:1989|laps:2|falcone_f42|duel|casual|easy':130},activeRace:{runId:'old-active',stageIndex:1,car:'falcone_f42'}});
 same(proof.courses.unlocked,[free.id,paid.id,'eifel-crown'],'a valid prior best and interrupted active course preserve only their specific access');
+const legacyStage16=normalizeProfile({...legacy,unlockedCars:[],history:[],personalBests:{},
+  activeRace:{runId:'old-panorama-run',stageIndex:16,car:'titan_monster'}});
+same(legacyStage16.courses.unlocked,[free.id,'panorama-ridge'],'the legacy Panorama race does not grant the Bowl');
 same(normalizeProfile({...legacy,courses:fresh.courses}).courses,fresh.courses,'after migration, owning a recommended car does not silently grant courses');
 same(normalizeProfile({...legacy,unlockedCars:[],history:[],personalBests:{'eifel-crown|layout:2':NaN,'unknown|layout:2':22}}).courses,fresh.courses,'unknown and invalid bests cannot grant courses');
 check(!purchaseCourse(fresh,paid.id).ok,'insufficient funds cannot buy a course');check(!purchaseCourse(fresh,'missing').ok,'unknown courses cannot be bought');
@@ -89,7 +96,8 @@ try{
 
 const router=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8'),css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8')+readFileSync(new URL('../src/screen-courses.css',import.meta.url),'utf8');
 const zero=courseAccessPanel(fresh,0,'<safe>');
-same((zero.match(/<article\b/g)||[]).length,COURSE.length,'course shop lists every course');
+same((zero.match(/<article\b/g)||[]).length,purchasable.length,'course shop lists every priced or unlockable course');
+check(!zero.includes('data-course-map="titan-bowl"'),'the Show Night floor has no course shop card');
 check(zero.includes('role="dialog"')&&zero.includes('aria-labelledby="courses-title"')&&zero.includes('aria-label="Close course garage"'),'course dialog has accessible title and close action');
 check(zero.includes('&lt;safe&gt;')&&!zero.includes('<safe>'),'course messages are escaped');check(zero.includes('Unlocking a course does not select it'),'purchase-selection distinction is visible');
 for(const tag of zero.match(/<button\b[^>]*data-course-(?:select|unlock)[^>]*>/g)||[])check(tag.includes('disabled')&&tag.includes('aria-label='),'zero wallet actions are disabled and labelled');

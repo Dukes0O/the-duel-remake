@@ -129,7 +129,7 @@ if(!process.argv.includes('--drive')) {
   test('direct Game resolves fractional and clamped stages before Attack-only solo admission',()=>withCatalog(()=>{
     // Later releases (the five secret variants) are appended after Attack with higher release orders. This check
     // keeps its original catalogue, which ends at Attack, so the clamp below still lands on it.
-    for(const def of COURSE.slice(attackIndex()+1))
+    for(const def of COURSE.slice(attackIndex()+1).filter(def=>!def.bowl))
       assert.ok(CIRCUIT_ENTRIES.find(row=>row.manifest.id===def.id).manifest.releaseOrder>manifest.releaseOrder,def.id+' is released after Attack');
     COURSE.splice(attackIndex()+1);
     assert.equal(attackIndex(),COURSE.length-1,'the new Attack event is the appended event in this catalogue');

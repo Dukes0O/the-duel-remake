@@ -841,7 +841,7 @@ export const SOUND_BANK = {
       'hook.jerk', 'hook.letgo'],
     impacts: ['knockout', 'wall.bounce', 'wall.hard', 'wall.big', 'wall.scrape', 'trick.land', 'trick.slam', 'rival.jump',
       'rival.jump.fallback', 'best.rival.slam', 'health.hit', 'rex.scorch', 'rex.bump', 'rex.throw.land', 'rex.fall',
-      'rex.box.out', 'rex.box.drag', 'out.stands'],
+      'rex.box.out', 'rex.box.drag', 'out.stands', 'gate.shut', 'gate.open'],
     vehicle: ['trick.wheelie', 'trick.go', 'best.rival', 'rex.throw'],
     // The beast's own voice and fire: the tells a driver must hear over the engine.
     weapons_: ['rex.roar', 'rex.fire', 'rex.fire.end', 'rex.box.open', 'rex.lift', 'rex.burst', 'rex.sag', 'rex.rise',

@@ -27,7 +27,8 @@ test('panorama-ridge retains its accepted registry identity and access', () => {
   const publicIndex = COURSE.findIndex(row => row.id === id);
   assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
   assert.equal(publicIndex, 19, 'Panorama retains its original public index as later courses join');
-  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), enabled.map(row => row.id), 'the current public catalog follows exact manifest order');
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), [...enabled.map(row => row.id), 'titan-bowl'],
+    'the public catalog keeps its exact race manifest order with the Show Night floor at the end');
   const historicalIds = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', id];
   const historical = circuitsEnabled({enabled: flag => historicalIds.includes(flag)});
   assert.deepEqual(historical.map(row => row.id), historicalIds, 'the four-course release catalog is unchanged');
