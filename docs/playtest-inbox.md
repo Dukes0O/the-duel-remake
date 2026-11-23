@@ -14,5 +14,5 @@ None.
 
 ## Latest release
 
-19 November 2026, build 26.11.19 22:00 UTC (master `f96d19903`): the Lab reads more plainly. Next: the Flying, Wind
-tunnel and Motion lessons, after the night check of 20 November passes on the cured commit.
+22 November 2026, build 26.11.23 05:10 UTC (master `0d3ddc8e5`): Show Night is live, with a tap of F now cutting with
+the saw. Next: the launcher's reach (BOWL-LAUNCHER-REACH), then the Scrapasaurus's lasers and bombs (BOWL-REX-3).

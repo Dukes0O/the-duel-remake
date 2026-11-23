@@ -649,6 +649,17 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-LAUNCHER-REACH.md"
 
+  - id: BOWL-MENU-FRAME
+    title: "Bowl: opening Show Night logs one error from the menu camera (the showcase car has no place for a frame)"
+    owner: "codex"
+    model: "sol"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/BOWL-MENU-FRAME.md"
+
   - id: BOWL-REX-3
     title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
     owner: "codex"
