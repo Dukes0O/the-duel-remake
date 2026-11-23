@@ -2115,3 +2115,22 @@ browser stage sorted on QA-NIGHT-19-NOV). Since then: the Lab, src/story/scenes/
 (both behind switches that are off), tools and docs; no shared core, physics or save shape change, so that pass
 covers this release under rule 19. Everything else merged since 17 November (Night 2, the ledger, people and
 talk, the riders, the Dig's machines, the Scablands looks) stays behind switches that are off for players.
+
+
+## Release, 22 November 2026 (Claude, Release Manager)
+
+Show Night goes live: `titan-bowl` is on (BOWL-GO-LIVE, 98de6eb58), with the five Bowl nights, their events,
+tricks, weapons, rivals, the Scrapasaurus and night pay built in the BOWL cards since 17 November. Release fixes:
+717662ac7 (three road suites leave the Bowl out; bowl-rivals and bowl-night-pay match the released rules) and
+b5df22696 (a tap of F spins the player's saw for one second; Kyle, 22 November). The launcher's reach is
+BOWL-LAUNCHER-REACH. Claude's rule 18 reviews of the changed assertions are in both commit messages.
+
+Checks: night full check on 98de6eb58: full tier failed only test-circuits, test-shortcut-presets and
+test-track-script, all passing on 717662ac7; combat balance passed. Browser scenarios: bowl-night-pay and bowl-rivals
+pass on 717662ac7 and b5df22696; arsenal-wave1-audio, menu-front-door and rescue-finish pass on b5df22696;
+p4-audio failed once with two other scenarios running and passed alone (rule 3). everburn-job2, ships-decks, far-rain
+and machine-borer fail behind dev switches no player reaches (QA-NIGHT-22-NOV). The saw fix: lane tier 32 of 32
+(test-bowl-rivals included, Easy saw 6 of 10 on Nights 4 and 5), the guards and the build. Frame check on b5df22696,
+HDMI screen alone: Performance p95 18.1 ms, world build 325 ms; High 34.6 ms is not gated, because its scene and
+code are unchanged since its pass. No save shape change; the Bowl save fields came with BOWL-GO-LIVE under its save
+review. Everything else merged since 19 November stays behind switches that are off or dev for players.

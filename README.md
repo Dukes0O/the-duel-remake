@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Show Night in the Bowl.** SHOW NIGHT on the main menu opens five monster-truck
+  nights in a floodlit bowl with a crowd: Rookie Night, Flip Night, Hammer Night,
+  Barrel Roll Night and Scrapasaurus Night. Each night is a few events (Side by
+  Side, Long Jump, Car Crush, Freestyle, High Jump, Best Trick and Last Truck
+  Rolling), and each night teaches one new trick or weapon: wheelies, donuts,
+  backflips, spins and barrel rolls; a hammer, a saw and a launcher. Five rival
+  trucks drive their own ways, and Night 5 ends against the Scrapasaurus. Every
+  night pays credits by its result, and Easy is won about six times in ten. A tap
+  of F now cuts with the saw for a second, as the hammer and launcher take a tap.
 - **The Lab's lessons read more plainly.** Kyle played Rust on 19 November and set
   new rules for every lesson. Rust, Fire, Strength and Fuel are rewritten to them:
   each rule is stated without caveats, a multiplication is never called a sum, every

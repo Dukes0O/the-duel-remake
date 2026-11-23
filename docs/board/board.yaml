@@ -47,6 +47,16 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
 
+  - id: QA-NIGHT-22-NOV
+    title: "Four browser scenarios behind dev switches fail since the night of 22 November (on-foot exit, far rain, borer)"
+    owner: "codex"
+    model: "sol"
+    lane: "TOOL"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-NIGHT-22-NOV.md"
+
   - id: QA-AUDIO-BASELINE-CONTROL
     title: "Legacy native audio repeat control is unreliable"
     owner: "codex"
