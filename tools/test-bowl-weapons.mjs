@@ -115,6 +115,15 @@ for (const [level, expected] of [['easy', 4], ['medium', 13.5], ['hard', 13.5]])
   line(d,1.51);ticks(d,120);assert.equal(v.armor,30,'a bumper gap over 1.5 m is out of reach');
 }
 {
+  // A tap of F, as the hammer and launcher take, spins the saw for a second (Kyle, 22 November 2026).
+  const d=fight('saw'),s=d.state,v=line(d,1);
+  s.input.interact=true; ticks(d,1); s.input.interact=false; ticks(d,119);
+  assert.ok(v.armor>52 && v.armor<53, `a tap cuts for one second, as holding F does (${v.armor})`);
+  ticks(d,1); const cut=v.armor; ticks(d,120);
+  assert.equal(v.armor,cut,'the saw stops a second after the tap');
+  assert.equal(s.bowlWeapon.cutting,false);
+}
+{
   const d=fight(),s=d.state;
   place(d,s,36,0);
   s.speedMph=24; s.bowlCut=true;
@@ -292,9 +301,10 @@ for (const level of ['easy', 'medium', 'hard']) {
   d.setInput({throttle: .5, steer: .5, interact: true});
   for (let tick = 0; tick < 10; tick++) d.step(dt);
   assert.ok(s.bowlCut && Math.abs(s.headingError) > .001, 'steering still works during contact');
+  // Since 22 November 2026 the saw spins on for a second after F is let go, so a tap cuts.
   d.setInput({throttle: 1, steer: 0, interact: false});
-  d.step(dt);
-  assert.ok(!s.bowlCut && !target.bowlCut, 'letting go releases both trucks');
+  for (let tick = 0; tick < 122; tick++) d.step(dt);
+  assert.ok(!s.bowlCut && !target.bowlCut, 'letting go releases both trucks once the saw stops');
 }
 for (const [level, distance, degrees, hits] of [
   ['easy', 3.8, 35, true], ['medium', 3.8, -35, true], ['hard', 3.8, 35, false],

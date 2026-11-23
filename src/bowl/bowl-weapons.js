@@ -8,7 +8,9 @@ import {clamp, freshDamageZones} from '../sim-common.js';
 
 export const SHOW_WEAPONS = Object.freeze({
   hammer: {name:'Hammer', reach:4, rest:2.5, cue:'bowl.hammer.rise', picture:'🔨', line:'Swing at a truck in front. A miss holds you still.'},
-  saw: {name:'Saw', reach:1.5, rest:3, cue:'bowl.saw.spin', picture:'⚙', line:'Hold F against a truck to cut. Four seconds of cutting heats the saw.'},
+  // A tap of F spins the player's saw for spinSec, as the hammer and launcher answer a tap (Kyle, 22 November 2026:
+  // the saw seemed to do no damage, because a tap cut for one frame).
+  saw: {name:'Saw', reach:1.5, spinSec:1, rest:3, cue:'bowl.saw.spin', picture:'⚙', line:'Hold F against a truck to cut. Four seconds of cutting heats the saw.'},
   launcher: {name:'Launcher', reach:4, hardReach:3, arc:40 * Math.PI / 180, rest:4, cue:'bowl.launcher.fire', picture:'↗', line:'Throws a truck high into the air. An empty shot hops your own truck.'},
   horn: {reach:.6, rest:2.5, cue:'bowl.rhino.horn'},
   fire: {reach:6, rest:1, cue:'bowl.dragon.fire'},
@@ -149,6 +151,7 @@ function tickWeapon(duel,actor,night,dt,contactBudget) {
   const kind=weapon.kind, rules=SHOW_WEAPONS[kind], player=actor===duel.state;
   const pressed=player && actor.input.interact && !weapon.wasHeld;
   if(player) weapon.wasHeld=!!actor.input.interact;
+  if(player && kind==='saw') weapon.spinSec=weapon.phase==='rest' ? 0 : actor.input.interact ? rules.spinSec : Math.max(0,(weapon.spinSec||0)-dt);
   if(weapon.phase==='rest') {
     weapon.time-=dt;
     if(weapon.time>1e-8) return;
@@ -160,7 +163,7 @@ function tickWeapon(duel,actor,night,dt,contactBudget) {
   const hard = night.cpuDifficulty === 'hard';
   const reach = hard ? rules.hardReach ?? rules.reach : rules.reach;
   const target = showTarget(duel, actor, reach, null, rules.arc);
-  const held=player ? actor.input.interact : !!target;
+  const held=player ? actor.input.interact || weapon.spinSec>0 : !!target;
   if(weapon.phase==='ready') {
     if(!held || actor.airborne || player && kind!=='saw' && !pressed) return;
     weapon.phase='tell'; weapon.time=player?(kind==='hammer'?.4:0):TELLS[night.cpuDifficulty];

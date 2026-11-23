@@ -627,6 +627,18 @@ tasks:
   # Show Night round 2, the slices of BOWL-SHOW-2 (its "Design" section). Nights 1 to 5 are the first release; BOWL-TOUR follows it.
 
 
+  - id: BOWL-LAUNCHER-REACH
+    title: "Bowl: the player's launcher reaches further, and Easy stays six wins in ten (Kyle, 22 November)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-LAUNCHER-REACH.md"
+
   - id: BOWL-REX-3
     title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
     owner: "codex"
