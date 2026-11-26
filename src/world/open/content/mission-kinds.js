@@ -95,6 +95,61 @@ const reach = {
   },
 };
 
+// Two real cars on opposite sides can pin a slow car. A broken side or a vertical gap breaks the hold.
+export function fightBoxed(car, cars, heading = 0) {
+  if (!car || Math.abs(car.speedMph ?? 0) >= 6) return false;
+  const sides = new Set();
+  for (const other of cars) {
+    if (other.wrecked || distance(car, other) > 7.5 || Math.abs((car.y ?? 0) - (other.y ?? 0)) > 3) continue;
+    const dx = other.x - car.x, dz = other.z - car.z;
+    const side = dx * Math.cos(heading) - dz * Math.sin(heading);
+    const ahead = dx * Math.sin(heading) + dz * Math.cos(heading);
+    if (Math.abs(side) > 1 && Math.abs(ahead) < 4.5) sides.add(Math.sign(side));
+  }
+  return sides.has(-1) && sides.has(1);
+}
+
+const fight = {
+  prepare(mission, place) {
+    const at = place(mission.rule?.at);
+    const starts = (mission.rule?.riderStarts ?? []).map(place);
+    return mission.by === 'car' && at && mission.cars > 0 && starts.length === mission.cars && starts.every(Boolean)
+      ? {at, starts, posts: []} : null;
+  },
+  begin(mission, route) {
+    return {state: {route, sent: false, boxed: 0}};
+  },
+  step(mission, state, view, dt) {
+    const {rule} = mission, next = {...state};
+    const requests = [];
+    if (!next.sent && !view.road) {
+      next.sent = true;
+      requests.push({type: 'riders', id: mission.id, group: mission.enemy, missionRule: rule,
+        vehicles: state.route.starts.map(start => ({start: {...atGround(view, start),
+          heading: Math.atan2(view.carPosition.x - start.x, view.carPosition.z - start.z)}, home: state.route.at}))});
+    }
+    const cars = view.road?.id === mission.id ? view.road.cars : [];
+    const result = view.jobEvents?.find(event => event.type === 'riderFight' && event.id === mission.id);
+    next.boxed = !view.onFoot && fightBoxed({...view.carPosition, speedMph: view.carSpeedMph}, cars, view.checkpointHeading)
+      ? next.boxed + dt : 0;
+    const wrecks = cars.filter(car => car.wrecked).length;
+    const lost = view.combatWrecking || result && ['lost', 'surrounded'].includes(result.outcome) || next.boxed + 1e-9 >= rule.boxedInSeconds;
+    const won = wrecks >= (rule.winWrecks ?? mission.cars) || result?.outcome === 'won';
+    const outcome = lost ? 'lost' : won ? 'won' : null;
+    next.outcome = outcome;
+    return {state: next, outcome, requests,
+      events: outcome === 'lost' && rule.recoveryShare ? [{type: 'threadMissionRecoveryPaid', id: mission.id}] : [],
+      choices: outcome === 'lost' && rule.recoveryShare ? [{
+      id: mission.id + '/recovery', effects: [{type: 'scrap', by: -Math.floor(view.missionScrap * rule.recoveryShare)}],
+    }] : []};
+  },
+  end(mission, state, view) {
+    return [{type: 'marker', place: null},
+      ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : []),
+      ...(state.outcome === 'lost' ? [{type: ROAD_REQUEST, action: 'mission-loss', id: mission.id}] : [])];
+  },
+};
+
 // `partOf` scenes inherit the parent's lamps and timing. Each scene supplies its own targets
 // and outcome names, so the rule can serve another heist without knowing its storyline.
 export function heistLampPose(lamp, seconds) {
@@ -181,4 +236,4 @@ const heist = {
   },
 };
 
-export const MISSION_KINDS = Object.freeze({reach: Object.freeze(reach), heist: Object.freeze(heist)});
+export const MISSION_KINDS = Object.freeze({reach: Object.freeze(reach), fight: Object.freeze(fight), heist: Object.freeze(heist)});

@@ -9,6 +9,7 @@ import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
 import {scoutPeople} from '../content/burned-scout.js';
+import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -70,11 +71,12 @@ export const peoplePart = {
         active = null;
       }
     }
-    const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
+    const staged = view.checkpointsEnabled ? flagPeople(world) : [];
+    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []), ...staged] : [];
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
       row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras, ...mallPeople];
+    const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras, ...mallPeople];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.
