@@ -111,3 +111,7 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/integration/wasteland: behind local; cached commit 6027808694b7c5a0ad4e4e8237f123f7030484f7.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
+
+## OPEN-FIGURES-2 cloud handoff
+
+Codex tested `fe44f13ec` on `codex/open-figures-2`. Claude has the figures for laptop review. [Checks and look sheet](../changes/OPEN-FIGURES-2.md)
