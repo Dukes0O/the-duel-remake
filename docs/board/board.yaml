@@ -1565,15 +1565,3 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-WRITE-4.md"
 
-  - id: OPEN-MAP
-    title: "Open Scablands: the big map shows driven ground in full, a rumour as a circle and a found site by name"
-    owner: "codex"
-    model: "astra"
-    lane: "UI"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-MAP.md"
-
