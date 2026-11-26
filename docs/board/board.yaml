@@ -1591,7 +1591,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "building"
-    claimed_by: "Claude (cloud), since 26 November 2026: round 1 on branch cloud/OPEN-LOOK-RATS-NEST"
+    claimed_by: "Claude (cloud), since 26 November 2026: round 1 built on branch cloud/OPEN-LOOK-RATS-NEST and open as a pull request; owed: Claude's pictures on the laptop and the verdict in docs/board/looks/open-sites/"
     needs: []
     locks: []
     flag: "story-choices"
