@@ -158,12 +158,12 @@ for (const bay of L.bays) for (const [dx, dz] of [[0, 0], [-.9, -2], [.9, -2], [
   assert.ok(!solids.some(solid => inside(solid, bay.x + dx, bay.z + dz)), 'something stands in a bay or in front of it');
 for (let x = L.spots['drain-guard'].x; x <= L.drain.from; x += .5) assert.ok(!solids.some(solid => inside(solid, x, L.drain.z, .3)), 'something blocks the drain');
 
-// The laptop scenario: its pictures are the seven the card names, each has a camera, and every string it sends to the page parses.
-assert.deepEqual(PICTURES.map(picture => picture.name), ['rim-north', 'rim-middle', 'rim-south', 'drain', 'far', 'road-down', 'yard']);
+// The laptop scenario: its pictures are the named rim, approach and close views, each has a camera, and every string it sends to the page parses.
+assert.deepEqual(PICTURES.map(picture => picture.name), ['rim-north', 'rim-middle', 'rim-south', 'drain', 'gate', 'far', 'road-down', 'yard']);
 assert.deepEqual(PICTURES.filter(picture => picture.stage === 'night').map(picture => picture.name), ['road-down', 'yard']);
 const stood = {at: {x: 1000, z: -2000}, land: 12, spots: Object.fromEntries(Object.entries(L.spots).map(([name, spot]) => [name,
   {x: 1000 + spot.x, y: 12 + spot.y, z: -2000 + spot.z, looksAt: spot.looksAt ? {x: 1000 + spot.looksAt.x, y: 12 + spot.looksAt.y, z: -2000 + spot.looksAt.z} : null}]))};
-const sources = [pageSource.memoryMenu(), pageSource.prepare(), pageSource.click('#wasteland-visit'), pageSource.quality('performance'), pageSource.yard(), pageSource.wall(),
+const sources = [pageSource.memoryMenu(), pageSource.prepare(), pageSource.enterYard(), pageSource.quality('performance'), pageSource.yard(), pageSource.wall(), pageSource.click('[data-action="yard-cards"]'),
   pageSource.noteRead(), pageSource.racing(), pageSource.landReady(), pageSource.hideScreens(), pageSource.stand('day'), pageSource.stand('night'), pageSource.advance(1.5), pageSource.count()];
 for (const picture of PICTURES) {
   const view = cameraFor(picture, stood);
@@ -177,7 +177,7 @@ for (const picture of PICTURES) {
   const reach = Math.hypot(drain.position[0] - (1000 + L.drain.from), drain.position[2] - (-2000 + L.drain.z));
   assert.ok(reach > 9 && reach < 11, `the drain's picture is taken from ${reach} m`);
 }
-assert.equal(Object.keys(pageSource).length, 14, 'every page string is checked here');
+assert.equal(Object.keys(pageSource).length, 15, 'every page string is checked here');
 for (const source of sources) assert.doesNotThrow(() => new Function('return ' + source), source.slice(0, 60));
 
 console.log(`The Rats' Nest look passed: day ${built.day.draws} draws and ${built.day.triangles} triangles, night ${built.night.draws} draws, ${built.night.triangles} triangles and ${built.night.lights} lights; ${solids.length} solids, ${Object.keys(L.spots).length} named spots, ${sources.length} page strings.`);

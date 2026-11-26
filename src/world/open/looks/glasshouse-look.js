@@ -24,7 +24,7 @@
 //   glasshouseGlint(sun, eye, seconds)      how brightly each glinting screen flashes for a viewer, without graphics
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {createScrapWear} from '../../scrap-look.js';
+import {createScrapWear, scrapNoise} from '../../scrap-look.js';
 import {createSmokeColumn} from '../../smoke-column.js';
 
 export const GLASSHOUSE_STAGES = Object.freeze(['camp', 'burned']);
@@ -261,7 +261,7 @@ const makePalette = () => {
     vinyl: [tone(.16, .05, .04), tone(.26, .19, .115), tone(.12, .155, .13)], wool: tone(.15, .15, .16), straw: tone(.3, .26, .14),
     cloth: [tone(.27, .235, .175), tone(.24, .1, .075), tone(.12, .15, .18), tone(.25, .24, .215), tone(.18, .2, .13), tone(.3, .26, .165)],
     drum: tone(.15, .2, .225), chrome: tone(.36, .36, .345), tin,
-    leaf: [tone(.03, .085, .022), tone(.042, .105, .027), tone(.055, .11, .03), tone(.035, .095, .035)], leafOld: tone(.13, .125, .04), leafDead: tone(.085, .065, .03), pod: tone(.1, .24, .05),
+    leaf: [tone(.03, .085, .022), tone(.042, .105, .027), tone(.055, .11, .03), tone(.035, .095, .035)], leafOld: tone(.13, .125, .04), leafDead: tone(.085, .065, .03), pod: tone(.12, .55, .018),
     soil: tone(.058, .041, .027), soilDry: tone(.105, .08, .055), ash: tone(.135, .13, .125), ashDark: tone(.02, .019, .018),
   };
 };
@@ -775,11 +775,19 @@ function drawTent(kit, stage) {
       for (const [x, turn] of [[-1.82, .0], [-1.7, .5]]) kit.within(x, 0, 1.1, [.2, turn, .08], () => drawHoe(kit));
     } else {
       // Burned: the two tall poles stand, black, one snapped off; the ridge has come down at one end; the corner poles lie.
-      kit.tube('hard', [-halfX, -.2, 0], [-halfX - .12, ridge - .05, .05], .032, PALETTE.char, 6, .02);
-      kit.tube('hard', [halfX, -.2, 0], [halfX + .1, 1.25, -.06], .032, PALETTE.char, 6, .024);
+      kit.tube('plain', [-halfX, -.2, 0], [-halfX - .12, ridge - .05, .05], .1, paint(PALETTE.char, .32), 7, .067);
+      kit.tube('plain', [halfX, -.2, 0], [halfX + .1, 1.25, -.06], .093, paint(PALETTE.char, .34), 7, .065);
       kit.tube('hard', [-halfX - .2, ridge - .1, .04], [halfX - .5, .16, .55], .024, paint(PALETTE.tube, .35), 6);
       for (const [x, z, turn] of [[-1.5, 1.3, .4], [1.7, -1.1, 2.2], [.9, 1.6, 1.3]]) kit.tube('hard', [x, .12, z], [x + Math.cos(turn) * 1.1, .15, z + Math.sin(turn) * 1.1], .024, PALETTE.char, 6, .012);
       kit.tube('hard', [-halfX + .04, -.2, -halfZ + .05], [-halfX - .1, .8, -halfZ - .1], .026, PALETTE.char, 6, .012);
+      // Splintered ends and pale cracks down the black wood catch the light at the edge of camp.
+      for (const [x, height, lean] of [[-halfX, ridge-.05, -.12],[halfX, 1.25, .1]]) {
+        for (let split = 0; split < 5; split++) {
+          const angle = split * 2.4, dx = .054 * Math.cos(angle), dz = .054 * Math.sin(angle);
+          kit.tube('plain',[x+lean+dx,height-.07,dz],[x+lean+dx*1.18,height+.04+random()*.19,dz*1.2],
+            .023, paint(PALETTE.ashDark,.8+random()),4,.003);
+        }
+      }
       // Two scorched rags of the tarpaulin still hang from the ridge.
       for (const [x, wide, long] of [[-1.55, .5, .7], [-.6, .35, .45]]) kit.keep('plain', kit.sheet('plain', span(3), span(3), (u, v) => {
         const along = (x + u * wide + halfX + .2) / (2 * halfX - .3), y = ridge - .1 - along * (ridge - .26);
@@ -1094,11 +1102,25 @@ function drawGround(kit, stage, fresh) {
     {x: ROWS.x0 - 2 + side * .3, z: -7.4 + side}, {x: ROWS.x0 - 2.2 + side, z: 6.2}], .9), .09, MARK.tyre, patchy(.08, .34));
   if (camp) { marks.keep(); return; }
   // The tent's floor is scorched black beyond its ash.
-  blot(things.tent.x, things.tent.z, 4.3, MARK.scorch, .72);
-  blot(things.tent.x - .8, things.tent.z + .5, 2.6, MARK.scorch, .5);
+  const coal = [.004, .003, .003], ash = [.18, .17, .16];
+  blot(things.tent.x, things.tent.z, 6.4, coal, .99);
+  blot(things.pump.x, things.pump.z, 3.2, MARK.scorch, .93);
+  for (const row of rows) {
+    for (let x = row.x0; x < row.x1 + 1; x += 1.7 + random()) {
+      blot(x, row.z + (random() - .5) * .9, 1.6 + random() * 1.5, coal, .83 + random() * .16);
+    }
+  }
+  // Lighter ash catches on the lee side of burned patches and tails away over the salt.
+  for (let streak = 0; streak < 34; streak++) {
+    const tent = streak < 14, x = tent ? things.tent.x - 2 + random() * 4 : -13 + random() * 12;
+    const z = tent ? things.tent.z - 2 + random() * 4 : rows[streak % rows.length].z;
+    const length = 3 + random() * 7;
+    const trail = straight({x, z}, {x: x + WIND.x * length, z: z + WIND.z * length});
+    groundStrip(kit, marks, trail, .13 + random() * .43, ash, patchy(.28, .74), .057);
+  }
   // Tyre marks straight down every row. These are pressed into dug earth and last; the ones across the hard ground beyond
   // the rows are gone when the wind has had two nights at them.
-  tracks.forEach(line => {
+  tracks.forEach((line, row) => {
     const inRows = line.filter(point => point.x <= ROWS.x1 + 1.2 && point.x >= ROWS.x0 - 1.2), beyond = line.filter(point => point.x > ROWS.x1 + .4);
     for (const side of [-.5, .5]) {
       const shifted = lineOffset(inRows, side);
@@ -1106,33 +1128,65 @@ function drawGround(kit, stage, fresh) {
       if (fresh) {
         groundStrip(kit, marks, lineOffset(line.filter(point => point.x < ROWS.x0 - .4), side), .08, MARK.tyre, patchy(.0, .6));
         const fade = index => { const point = beyond[Math.min(index, beyond.length - 1)]; return 1 - smooth(54, 66, Math.hypot(point.x, point.z)); };
-        const beat = patchy(.0, .8);
-        groundStrip(kit, marks, lineOffset(beyond, side), .08, MARK.tyre, index => beat(index) * fade(index));
+        // Draw the driver's corrections in the mark, preserving the story's route.
+        const wandering = beyond.map(point => {
+          const far = Math.hypot(point.x, point.z);
+          const weave = smooth(12, 25, far) * (1.28 * Math.sin(far * .19 + row * 1.7) + .56 * Math.sin(far * .34 - row));
+          return {x: point.x - weave * AWAY.z, z: point.z + weave * AWAY.x};
+        });
+        const wheel = lineOffset(wandering, side), beat = patchy(.02, .68);
+        groundStrip(kit, marks, wheel, .115, MARK.tyre, index => beat(index) * fade(index));
+        // Staggered shoulders of the tread bite holes in the crust. Keep stretches of bare salt.
+        for (let i = 0; i + 1 < wheel.length; i++) {
+          const strength = beat(i) * fade(i);
+          if (strength < .16) continue;
+          const a = wheel[i], b = wheel[i + 1], dx = b.x - a.x, dz = b.z - a.z;
+          const length = Math.hypot(dx, dz) || 1;
+          const lug = (t, side) => {
+            const x = a.x + t * dx - side * dz / length, z = a.z + t * dz + side * dx / length;
+            return [x, kit.ground(x, z) + .056, z];
+          };
+          for (const t of [.16, .54]) for (const shoulder of [-1, 1]) {
+            const start = t + shoulder * .04;
+            marks.quad(lug(start, 0), lug(start + .08, shoulder * .098), lug(start + .14, shoulder * .098),
+              lug(start + .057, 0), [...MARK.rut, Math.min(.92, strength * 1.5)]);
+          }
+        }
       }
     }
   });
   if (!fresh) { marks.keep(); return; }
   // The water cart's two ruts, deeper and wider than the buggies' marks, each in a soft shoulder of thrown earth, and the
   // footprints of the people who were walked off between them: a child's and a grown woman's.
-  for (const side of [-.45, .45]) {
-    const line = lineOffset(ruts, side), fade = index => 1 - smooth(54, 66, Math.hypot(line[Math.min(index, line.length - 1)].x, line[Math.min(index, line.length - 1)].z));
+  const drawnRuts = ruts.map(point => {
+    const distance = Math.hypot(point.x, point.z);
+    const drift = smooth(12, 24, distance) * .43 * Math.sin((distance-25)*.2);
+    return {x: point.x-drift*AWAY.z, z: point.z+drift*AWAY.x};
+  });
+  for (const side of [-.89, .89]) {
+    const line = lineOffset(drawnRuts, side), fade = index => 1 - smooth(54, 66, Math.hypot(line[Math.min(index, line.length - 1)].x, line[Math.min(index, line.length - 1)].z));
     const thrown = patchy(.1, .42), depth = patchy(.45, .92);
-    groundStrip(kit, marks, line, .3, MARK.damp, index => thrown(index) * fade(index), .052);
-    groundStrip(kit, marks, line, .11, MARK.rut, index => (.3 + depth(index) * .7) * fade(index), .058);
+    groundStrip(kit, marks, line, .38, MARK.damp, index => thrown(index) * fade(index), .052);
+    groundStrip(kit, marks, line, .15, MARK.rut, index => depth(index) * fade(index), .058);
+    groundStrip(kit, marks, lineOffset(line, .145), .045, [.42,.38,.31], index => thrown(index) * fade(index), .063);
   }
   const print = (x, z, heading, long, wide) => {
-    const y = kit.ground(x, z) + .064, ax = Math.sin(heading), az = Math.cos(heading), strength = .3 + random() * .3;
-    // The sole and, behind it, the heel.
+    const y = kit.ground(x, z) + .064, ax = Math.sin(heading), az = Math.cos(heading), strength = .72 + random() * .23;
+    // A broader toe pad and a heel with a pale salt margin.
     for (const [along, length, breadth] of [[long * .16, long * .62, wide], [-long * .36, long * .26, wide * .72]]) {
       const cx = x + ax * along, cz = z + az * along, centre = [cx, y, cz];
       const rim = angle => [cx + ax * Math.cos(angle) * length / 2 + az * Math.sin(angle) * breadth / 2, y, cz + az * Math.cos(angle) * length / 2 - ax * Math.sin(angle) * breadth / 2];
-      for (let piece = 0; piece < 8; piece++) marks.triangle(centre, rim(piece / 8 * Math.PI * 2), rim((piece + 1) / 8 * Math.PI * 2), [...MARK.print, strength]);
+      for (let piece = 0; piece < 10; piece++) {
+        const a = piece / 10 * Math.PI * 2, b = (piece + 1) / 10 * Math.PI * 2;
+        const lip = angle => [...MARK.print, strength * (.54 + .19 * Math.cos(angle))];
+        marks.triangle(centre, rim(a), rim(b), [...MARK.print, strength], lip(a), lip(b));
+      }
     }
   };
-  for (const [stride, long, wide, shift, start] of [[.44, .17, .07, -.12, 3], [.6, .24, .09, .14, 5]]) {
+  for (const [stride, long, wide, shift, start] of [[.49, .21, .095, -.28, 3], [.67, .29, .12, .24, 5]]) {
     let travelled = 0, next = start, foot = 1;
-    for (let index = 0; index < ruts.length - 1; index++) {
-      const a = ruts[index], b = ruts[index + 1], far = Math.hypot(b.x - a.x, b.z - a.z);
+    for (let index = 0; index < drawnRuts.length - 1; index++) {
+      const a = drawnRuts[index], b = drawnRuts[index + 1], far = Math.hypot(b.x - a.x, b.z - a.z);
       while (next <= travelled + far) {
         const t = (next - travelled) / far, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t, heading = Math.atan2(b.x - a.x, b.z - a.z), nx = -(b.z - a.z) / far, nz = (b.x - a.x) / far;
         if (Math.hypot(x, z) < 56) print(x + nx * (shift + foot * .08), z + nz * (shift + foot * .08), heading + foot * .12, long, wide);
@@ -1143,9 +1197,16 @@ function drawGround(kit, stage, fresh) {
   }
   marks.keep();
   // The bean pods, dropped one at a time between the ruts: fresh and green, each a hand long and curved.
-  for (const pod of pods) kit.stand(pod.x, pod.z, pod.turn, () => {
-    kit.rope('plain', [[-.07, .075, 0], [-.03, .08, .012], [.03, .08, .012], [.075, .072, -.004]], .011, PALETTE.pod, 5, 6);
-    kit.tube('plain', [.075, .072, -.004], [.1, .078, -.012], .004, PALETTE.leafOld, 3);
+  for (const pod of pods) kit.stand(pod.x, pod.z, -.68 + .15 * pod.turn, () => {
+    // Bowed shell, individual beans swelling under its skin, and a taper at either end.
+    const skin = kit.sheet('plain', span(10), span(6), (u, v) => {
+      const swell = Math.sin(Math.PI * u) ** .65 * (.83 + .17 * Math.cos(u * Math.PI * 8));
+      const angle = v * Math.PI * 2;
+      return [(u - .5) * .36, .074 + .028 * Math.sin(angle) * swell,
+        .047 * Math.sin(u * Math.PI) + .035 * Math.cos(angle) * swell];
+    });
+    kit.keep('plain', skin, PALETTE.pod);
+    kit.tube('plain', [.18, .074, 0], [.21, .087, -.01], .008, PALETTE.leafOld, 4, .003);
   });
 }
 
@@ -1178,7 +1239,7 @@ function glassMaterial() {
 function createGlint(heightAt) {
   const glints = GLASSHOUSE_LAYOUT.glints, corners = [], centres = [], normals = [], beats = [], indices = [];
   glints.forEach((glint, index) => {
-    const y = heightAt(glint.x, glint.z) + glint.y;
+    const y = heightAt(glint.x, glint.z) + glint.y + .22;
     for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
       corners.push(x, z, 0); centres.push(glint.x, y, glint.z); normals.push(glint.normal.x, glint.normal.y, glint.normal.z); beats.push(glint.period, glint.phase);
     }
@@ -1213,7 +1274,7 @@ function createGlint(heightAt) {
         float flash = smoothstep(0.0, ${number(G.rise)}, beat) * (1.0 - smoothstep(${number(G.hold)}, ${number(G.gone)}, beat));
         vGlow = smoothstep(${number(G.sunFrom)}, ${number(G.sunTo)}, sun.y) * lobe * flash;
         vAt = position.xy;
-        float size = (.5 + reach * .015) * (.35 + .65 * vGlow);
+        float size = (.12 + reach * .026) * (.35 + .65 * vGlow);
         vec4 view = viewMatrix * vec4(centre, 1.0);
         view.xy += position.xy * size;
         gl_Position = vGlow > .002 ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
@@ -1224,7 +1285,7 @@ function createGlint(heightAt) {
         float d = length(vAt);
         float core = exp(-d * d * 22.0);
         float rays = exp(-abs(vAt.x) * 26.0) * exp(-abs(vAt.y) * 3.2) + exp(-abs(vAt.y) * 26.0) * exp(-abs(vAt.x) * 3.2);
-        float glow = (core * 1.7 + rays * .8) * vGlow * (1.0 - smoothstep(.75, 1.0, d));
+        float glow = (core * 3.5 + rays * 1.4) * vGlow * (1.0 - smoothstep(.75, 1.0, d));
         gl_FragColor = vec4(vec3(1.0, .96, .86) * glow, glow);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -1271,8 +1332,9 @@ export function buildGlasshouse({stage = 'camp', fresh = true, heightAt = () => 
   }
 
   // One material for each kind, with wear over everything that is tube, tin or cloth.
+  const soot = camp ? [] : [[things.pump.x, heightAt(things.pump.x, things.pump.z) - heightAt(0, 0) + .55, things.pump.z, 2.3]];
   const wear = {
-    hard: createScrapWear({paint: 1, dust: 0x6a5a44}), cloth: createScrapWear({paint: .6, dust: 0x6a5a44}),
+    hard: createScrapWear({soot, paint: 1, dust: 0x6a5a44}), cloth: createScrapWear({paint: .6, dust: 0x6a5a44}),
     wheel: createScrapWear({paint: 1, dust: 0x6a5a44}), cart: createScrapWear({paint: 1, dust: 0x6a5a44, dustTop: .75}),
   };
   const materials = {
@@ -1287,6 +1349,25 @@ export function buildGlasshouse({stage = 'camp', fresh = true, heightAt = () => 
     cart: wear.cart.apply(new THREE.MeshStandardMaterial({name: KINDS.cart.name, vertexColors: true, roughness: .86, metalness: .12, side: THREE.DoubleSide})),
     ember: new THREE.MeshStandardMaterial({name: KINDS.ember.name, color: 0x2a1206, roughness: .6, emissive: 0xff6a1c, emissiveIntensity: .6}),
   };
+  if (!camp) {
+    // Salt crust pokes through carbon and compressed tread. The same grain catches light
+    // in the heaps of ash; both textures stay anchored in the site's own metres.
+    for (const kind of ['ground', 'plain']) {
+      const material = materials[kind];
+      material.onBeforeCompile = shader => {
+        shader.uniforms.grainMap = {value: scrapNoise()};
+        shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 saltXZ;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nsaltXZ = position.xz;');
+        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D grainMap; varying vec2 saltXZ;')
+          .replace('#include <color_fragment>', `#include <color_fragment>
+            float drift = texture2D(grainMap, saltXZ * vec2(.18,.41)).r;
+            float grit = texture2D(grainMap, saltXZ * .74).g;
+            diffuseColor.rgb *= .59 + .45*drift + .68*grit;
+            ${kind === 'ground' ? 'diffuseColor.a *= .26 + .74*smoothstep(.24,.65,drift*.56+grit*.44);' : ''}`);
+      };
+      material.customProgramCacheKey = () => 'burned-salt-' + kind;
+    }
+  }
   const parts = {};
   for (const [kind, list] of Object.entries(kit.lists)) {
     if (!list.length) { materials[kind].dispose(); continue; }
@@ -1313,7 +1394,7 @@ export function buildGlasshouse({stage = 'camp', fresh = true, heightAt = () => 
   let smoke = null, glint = null;
   if (camp) {
     // Bean stalks hardly smoke: a thin pale thread that stands a long way up in still air. This is the camp's tell at dusk.
-    smoke = createSmokeColumn({height: 50, foot: .12, top: 4, wind: WIND, lean: .4, colour: 0x7d7870, pale: 0xbdb8b0, strength: .44});
+    smoke = createSmokeColumn({height: 88, foot: .19, top: 7.8, wind: WIND, lean: .16, colour: 0xbcb1a1, pale: 0xfff5de, strength: .85});
     smoke.name = 'The Glasshouse, stove smoke';
     smoke.position.set(stove.pipe[0], heightAt(things.stove.x, things.stove.z) + stove.pipe[1], stove.pipe[2]);
     group.add(smoke);
