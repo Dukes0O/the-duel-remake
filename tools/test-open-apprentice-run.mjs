@@ -441,30 +441,37 @@ test('unmeasured, invalid and stale gas arrivals still keep scrap and feud exact
   assert(warnings.mock.calls.every(call => /gas/.test(call.arguments[0])));
 });
 
-test('a failed write keeps the run’s earnings when returning to the yard', () => {
-  const app = appAtYard({feud: 2});
-  assert(app.gasRun('long'));
-  app.advance(4);
-  const store = localStorage, before = disk(), pay = gasRunPay('long', app.cpuDifficulty);
-  globalThis.localStorage = {...store, setItem() { throw Error('QA write denied'); }};
-  try {
-    const result = finishGasRun(app);
-    assert(!result.settlementSaved);
-    assert.deepEqual(disk(), before);
-    assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
-    assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
-    assert(app.returnToYard());
-    app.advance(8);
-    assert(app.isYardHomeActive());
-    assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
-    assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
-    assert.equal(emberRuns(app.profile), emberRuns(before) + 1);
-    assert.deepEqual(disk(), before);
-  } finally { globalThis.localStorage = store; }
-  assert(app._saveProfile());
-  assert.equal(disk().wasteland.scrap, before.wasteland.scrap + pay);
-  assert.equal(emberRuns(disk()), emberRuns(before) + 1);
-});
+for (const night of [2, 3]) {
+  test(`a failed write on night ${night} keeps the run’s earnings when returning to the yard`, () => {
+    const app = appAtYard({feud: 2, night});
+    assert(app.gasRun('long'));
+    assert.equal(Boolean(jobOf(app).definition.routineRun), night === 3);
+    app.advance(4);
+    const store = localStorage, before = disk(), pay = gasRunPay('long', app.cpuDifficulty);
+    globalThis.localStorage = {...store, setItem() { throw Error('QA write denied'); }};
+    try {
+      const result = finishGasRun(app);
+      assert(!result.settlementSaved);
+      assert.deepEqual(disk(), before);
+      assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+      assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
+      assert(app.returnToYard());
+      app.advance(8);
+      assert(app.isYardHomeActive());
+      assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+      assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
+      assert.equal(emberRuns(app.profile), emberRuns(before) + 1);
+      assert.deepEqual(disk(), before);
+    } finally { globalThis.localStorage = store; }
+    assert(app._saveProfile());
+    assert.equal(disk().wasteland.scrap, before.wasteland.scrap + pay);
+    assert.equal(emberRuns(disk()), emberRuns(before) + 1);
+    if (night === 2) {
+      assert.deepEqual(savedLedger(disk()), savedLedger(before));
+      assert.deepEqual(disk().story.open, before.story.open);
+    }
+  });
+}
 
 test('the open clock cannot cross into dusk while paused', () => {
   const app = appAtYard();

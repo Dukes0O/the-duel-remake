@@ -1769,31 +1769,35 @@ export class App {
       }
       return result.settlementSaved;
     }
-    const trip = job?.definition?.routineRun && this._switches().enabled('story-choices') === true ?
-      job.definition.routineRun : null;
-    const routineRegistry = trip ? readWarlordRegistry().registry : null;
-    const owner = routineRegistry && activePlayer(routineRegistry);
-    if (trip && (owner?.id !== this._runPlayerId ||
+    const runDefinition = state.arena.mode === 'world-job' ? job?.definition : null;
+    const gasRun = isGasRun(runDefinition);
+    const keepGasResult = gasRun && runDefinition.battle !== true && this._switches().enabled('story-choices') === true;
+    const trip = keepGasResult ? runDefinition.routineRun : null;
+    const gasRegistry = keepGasResult ? readWarlordRegistry().registry : null;
+    const owner = gasRegistry && activePlayer(gasRegistry);
+    if (keepGasResult && (owner?.id !== this._runPlayerId ||
         (this.profileSaved === false && (this._warlordVerifiedOwner?.ownerId !== owner.id ||
           this._warlordVerifiedOwner.snapshot !== JSON.stringify(owner.profile))))) {
-      result.routineSaveIssue = 'Your saved progress has changed. The gas delivery was not kept.';
+      result.routineSaveIssue = 'Your saved progress changed during the run. Return to the yard.';
       return false;
     }
     const previous = owner && this.profileSaved !== false ? owner.profile : this.profile;
-    const saveRoutineResult = trip && (profile => {
-      const candidate = replacePlayerProfile(routineRegistry, owner.id, profile);
+    const saveGasResult = keepGasResult && (profile => {
+      const candidate = replacePlayerProfile(gasRegistry, owner.id, profile);
       const saved = savePlayers(candidate);
       if (!saved && this.profileSaved !== false)
         this._warlordVerifiedOwner = {ownerId: owner.id, snapshot: JSON.stringify(owner.profile)};
       // Carry the complete earned result into the yard even if storage
       // refuses it. A retry writes the same result without awarding again.
       this._adoptWarlordRegistry(candidate, saved);
-      job.routineSettlementPending = !saved;
-      result.routineSaveIssue = saved ? '' : 'Your earnings are kept for this session. Try saving again.';
+      job.gasSettlementPending = !saved;
+      const pendingMessage = trip ? 'Your earnings are kept for this session. Try saving again.' :
+        'Your earnings are kept for this session.';
+      result.routineSaveIssue = saved ? '' : pendingMessage;
       result.settlementSaved = saved;
       return saved;
     });
-    if (trip && job.routineSettlementPending) return saveRoutineResult(previous);
+    if (keepGasResult && job.gasSettlementPending) return saveGasResult(previous);
     const settled=settleArenaResult(previous,{runId:this.runId,
       ownerPlayerId:this._runPlayerId,activePlayerId:this.player.id,
       cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,arena:state.arena});
@@ -1804,8 +1808,7 @@ export class App {
     const water=this._water?.settle(settled.profile,{runId:this.runId,won:result.winnerId==='player'}); // WATER-HOOKS
     let awardedProfile=water?.profile??settled.profile;
     if(water)result.waterJob=water.mark;
-    const runDefinition=state.arena.mode==='world-job'?state.arena.worldJob?.definition:null;
-    if(state.arena.mode==='world-job'&&result.winnerId==='player'&&isGasRun(runDefinition)){
+    if (gasRun && result.winnerId === 'player') {
       // RUN-GAS: an arrived run moves the feud one step and counts one run. A run that is left or not finished writes nothing.
       // FIELD-BATTLE-ASH: the battle on the Boneyard road writes by how it ended: 'won' (the furnace is dead) or 'arrived' (Big
       // Bess is home with the furnace still rolling).
@@ -1836,11 +1839,11 @@ export class App {
       const id=EMBER_JOBS[state.arena.worldJob.definition.number-1],marked=markEmberJob(awardedProfile,id);
       if(marked.ok){awardedProfile=marked.profile;result.emberJob=id;result.won=true;}
     }
-    if (!trip) {
+    if (!keepGasResult) {
       this.profile=awardedProfile;
       if(!this._saveShopProfile(previous))return false;
     }
-    const saved = trip ? saveRoutineResult(awardedProfile) : true;
+    const saved = keepGasResult ? saveGasResult(awardedProfile) : true;
     Object.assign(result,{scrapEarned:settled.scrapEarned,
       scrapBalance:this.profile.wasteland.scrap,holdAdded:settled.holdAdded,
       hold:settled.hold,settlementSaved:saved});
