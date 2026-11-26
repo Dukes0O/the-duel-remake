@@ -37,8 +37,10 @@ function withPlaces(context) {
   };
 }
 
-export function threadsAtBankedHearth(context) {
-  return applyThreadDirector(OPEN_THREADS, withPlaces(context), 'hearth');
+// `threads` narrows the director to some storylines, so that one storyline's checks are not changed by which others
+// happen to be loaded; the game always passes none and directs every loaded storyline.
+export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
+  return applyThreadDirector(threads, withPlaces(context), 'hearth');
 }
 
 export function openThreadSigns(context) {

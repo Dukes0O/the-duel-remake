@@ -7,7 +7,7 @@ import {threadRule} from '../src/story/threads/thread-rule.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, holdOpenLand, releaseOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
 import {stageOf} from '../src/world/open/open-record.js';
-import {openThreadSigns, threadsPart} from '../src/world/open/parts/threads.js';
+import {openThreadSigns, threadsAtBankedHearth, threadsPart} from '../src/world/open/parts/threads.js';
 import {sampleWorld} from '../src/world/open/samples.js';
 import {openThreadTalkScene} from '../src/world/open/content/talk-threads.js';
 import {createSignView} from '../src/world/open/sign-view.js';
@@ -23,7 +23,8 @@ const clueIds = ['frames', 'lamp', 'tracks', 'ruts', 'pods', 'pump'];
 const seedOf = (world, seed) => ({...world, seed, ledger: {...world.ledger, seed}});
 const apply = (world, id, effects) => applyEffects(world, {id, effects}).world;
 const bank = world => ({...world, ledger: bankHearth(world.ledger).ledger});
-const direct = (world, view) => directBankedOpenWorld(world, {storyChoices: true, view});
+// The director is given only this storyline, so that other loaded storylines cannot be drawn in its place.
+const direct = (world, view) => threadsAtBankedHearth({world, view}, [burned]);
 const enabled = seedOf(sampleWorld('helped-camp'), 1250);
 const openFor = world => beginOpenLand({id: 'open-roam', steps: [{kind: 'roam'}], open: {world}});
 const walk = (open, point, extra = {}, dt = 1) => stepOpenLand(open, {player: {position: point}, onFoot: true,

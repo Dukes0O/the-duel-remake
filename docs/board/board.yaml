@@ -1422,20 +1422,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-MARKET.md"
 
-  - id: OPEN-T-PUMP
-    title: "Open Scablands: The Dry Pump comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "review"
-    waiting_on: "claude"
-    claimed_by: "Codex (cloud), since 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-PUMP.md"
-
   - id: OPEN-T-TOLL
     title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1455,7 +1441,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-HAULER, OPEN-T-PUMP]
+    needs: [OPEN-T-HAULER]
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RADIO.md"
