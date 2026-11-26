@@ -369,7 +369,8 @@ function poseTinTask(figure, person, clock) {
 
 function addRoutineProp(figure, id) {
   const prop = new THREE.Group();
-  const sack = id === 'cinder';
+  // Cinder and the porter haul sacks; the child carries a bucket.
+  const sack = id === 'cinder' || id === 'tin-porter';
   const material = new THREE.MeshStandardMaterial({color: sack ? 0x796346 : 0x666761, roughness: .91, side: THREE.DoubleSide});
   const mesh = geometry => {
     const part = new THREE.Mesh(geometry, material);
@@ -425,7 +426,7 @@ export function createStoryPeopleView(loadAsset) {
       const asset = await assets.get(sourceFor(person.id));
       if (disposed || cast !== people) return;
       const figure = makeFigure(person.id, asset);
-      if (open && (person.id === 'cinder' || person.id === 'tin-child')) addRoutineProp(figure, person.id);
+      if (open && ['cinder', 'tin-porter', 'tin-child'].includes(person.id)) addRoutineProp(figure, person.id);
       // The dialogue camera may look up this head before the next update places it in the world.
       figure.root.visible = false;
       figures.set(person.id, figure);
