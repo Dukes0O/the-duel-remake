@@ -42,6 +42,10 @@ import {resetFootWeaponUser} from '../../onfoot-weapons.js';
 import {BELL_CUE, fillWorkVehicleTank, loadWorkVehicle, pumpWorkVehicleTank, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
 import {groupKg} from '../../world/jobs/steps/haul.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
+import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
+import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
+import {WAITING_LINE, WALK_AWAY} from '../../world/open/content/talk-town.js';
+import {startTalk, talkScreen} from '../../story/talk.js';
 import {sprayWater, waterStreamStart} from '../../arsenal/water-cannon.js';
 import {point as combatPoint} from '../../combat-actors.js';
 import {targetIdentity} from '../../arsenal/targeting.js';
@@ -388,6 +392,12 @@ export function initializeWorldJob(duel, definition) {
   }
   // OPEN-SHARED: a job that begins in the open land carries the open state (src/world/open/open-land.js).
   if (definition.open) worldJob.open = beginOpenLand(definition);
+  // OPEN-ROAM: the same open gate is used for drawing and collisions.
+  if (worldJob.open && definition.steps[0]?.kind === 'roam') {
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.tinTownGateProgress = 1;
+    worldJob.solidGrid.setTownGate(NIGHT_2_SITES.gate, 1);
+  }
   return true;
 }
 
@@ -1645,6 +1655,48 @@ function finishWorldJob(duel, worldJob) {
   return {reason: 'job-complete', winnerId: 'player'};
 }
 
+// OPEN-ROAM: keep the cast array stable while figures move. The renderer
+// uses its identity to decide when a different group needs to be loaded.
+function syncOpenPeople(worldJob) {
+  const cast = worldJob.open.parts.people?.cast ?? [];
+  let people = worldJob.storyPeople;
+  const changed = !people || cast.length !== people.length || cast.some((person, i) => person.id !== people[i].id);
+  if (changed) worldJob.storyPeople = people = createStoryPeople(cast);
+  let moved = changed;
+  cast.forEach((person, i) => {
+    if (people[i].position !== person.position &&
+        (people[i].position.x !== person.position.x || people[i].position.y !== person.position.y ||
+         people[i].position.z !== person.position.z)) moved = true;
+    Object.assign(people[i], {position: person.position, action: person.task, yaw: person.yaw, distance: person.distance});
+  });
+  if (moved) worldJob.solidGrid.setStoryPeople(people);
+}
+
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked}) {
+  const {job} = worldJob;
+  const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
+  const steps = job.steps.slice();
+  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person});
+  worldJob.openRoamStepState = job.stepState;
+  worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
+  worldJob.storySpeaker = person;
+  duel.emit({talkOpened: true});
+  duel.emit({arenaTell: {id: 'open-talk', targetId: 'player', seconds: 0, cue: OPEN_TALK_HAIL,
+    position: worldJob.storyPeople.find(item => item.id === person).position}});
+}
+
+function closeOpenTalk(duel, worldJob, step, waiting, finished = false) {
+  const steps = worldJob.job.steps.slice();
+  const stepIndex = steps.indexOf(step);
+  steps.splice(stepIndex, 1);
+  worldJob.job = {...worldJob.job, steps, stepIndex, stepState: worldJob.openRoamStepState, events: [], requests: [],
+    talkResult: undefined};
+  worldJob.openRoamStepState = null;
+  worldJob.storySpeaker = null;
+  worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), {type: 'openTalkClosed', scene: step.id, finished}];
+  if (waiting) duel._storyCallout(WAITING_LINE);
+}
+
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
@@ -1653,6 +1705,16 @@ export function stepWorldJob(duel, dt) {
   if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt,
     state.onFoot && state.fighter ? state.fighter : position(duel, state))) syncJobCarSolids(worldJob);
   if (talkStep?.kind === 'talk') {
+    // OPEN-ROAM: external movement or leaving the driver's seat of the talk
+    // closes this temporary step without routing a story choice.
+    if (talkStep.openPerson) {
+      const person = worldJob.storyPeople.find(item => item.id === talkStep.openPerson);
+      if (!state.onFoot || distanceToPerson(person, state.fighter) > TALK_RANGE) {
+        worldJob.talkAction = null;
+        closeOpenTalk(duel, worldJob, talkStep, true);
+        return null;
+      }
+    }
     if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
     const previousStep = worldJob.job.stepIndex;
     const before = worldJob.job.stepState.talk;
@@ -1664,7 +1726,19 @@ export function stepWorldJob(duel, dt) {
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
     // OPEN-SHARED: the open land stands still during a talk, and hears what was chosen when it moves again.
-    if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];
+    if (talkStep.openPerson) {
+      const asked = next.stepState.talk?.asked ?? [];
+      const questions = asked.filter(id => !before.asked.includes(id)).map(id => ({
+        type: 'openTalkQuestion', scene: talkStep.id, id,
+        effects: talkStep.scene.questions.find(question => question.id === id).effects,
+      }));
+      const result = chosen && chosen.id !== WALK_AWAY ? [{...chosen, scene: talkStep.id}] : [];
+      worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...questions, ...result];
+      if (next.stepIndex !== previousStep) {
+        closeOpenTalk(duel, worldJob, talkStep, chosen?.id === WALK_AWAY, true);
+        return null;
+      }
+    } else if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
     if (chosen) duel.emit({storyChoice: chosen});
     if (next.stepIndex !== previousStep) {
@@ -1747,7 +1821,7 @@ export function stepWorldJob(duel, dt) {
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
-  if (worldJob.storyPeople && currentStep?.kind !== 'talk' &&
+  if (worldJob.storyPeople && currentStep?.kind !== 'roam' && currentStep?.kind !== 'talk' &&
       advanceStoryPeople(worldJob.storyPeople, dt, scablandsActorHeightAt)) {
     worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
     // Carts that move take their solids with them (STORY-NIGHT-2-FLOW: the Walkers leaving a taken camp).
@@ -1952,7 +2026,10 @@ export function stepWorldJob(duel, dt) {
   // OPEN-SHARED: the open land's parts run beside the job's own step, and the step may read what they left.
   let openStep = null;
   if (worldJob.open) {
-    openStep = stepOpenLand(worldJob.open, {...view, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
+    // OPEN-ROAM: expose the clock phase and the job's collision grid to the people part.
+    const openRoam = currentStep?.kind === 'roam';
+    openStep = stepOpenLand(worldJob.open, {...view, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? [],
+      openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined, partOfDay: worldJob.definition.open.partOfDay}, dt);
     worldJob.open = openStep.open;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
   }
@@ -2104,7 +2181,13 @@ export function stepWorldJob(duel, dt) {
     // A part's line brings its own caption.
     for (const request of openStep.requests) if (request.type === 'say' && request.lineId && typeof request.text === 'string')
       worldJob.definition.captions = {...worldJob.definition.captions, [request.lineId]: request.text};
-    applyRequests(duel, worldJob, openStep.requests);
+    // OPEN-ROAM: a proximity talk inserts one temporary step before roam.
+    if (currentStep?.kind === 'roam') {
+      syncOpenPeople(worldJob);
+      const talk = openStep.requests.find(request => request.type === 'openTalk');
+      if (talk) beginOpenTalk(duel, worldJob, talk);
+    }
+    applyRequests(duel, worldJob, openStep.requests.filter(request => request.type !== 'openTalk'));
   }
   if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
   if (next.steps[next.stepIndex]?.kind === 'douse') markDouseWater(duel, next.steps[next.stepIndex], next.stepState);
