@@ -66,6 +66,13 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
     'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
     'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
+  {prefixes:['open-runaway'], paths:['src/story/threads/content/runaway.js','src/story/threads/signs.js',
+    'src/world/open/content/runaway-places.js','src/world/open/content/mission-kinds.js',
+    'src/world/open/content/sites.js','src/world/open/content/talk-threads.js','src/world/open/parts/threads.js',
+    'src/world/open/parts/missions.js','src/world/open/parts/people.js','src/world/open/sign-view.js',
+    'src/arena/modes/world-job.js','src/arena/modes/road-riders.js','src/world/jobs/brand-rule.js',
+    'src/world/open/content/talk-tables.js','src/world/scablands-map.js','src/world/scablands-picture.js',
+    'src/world/brand-carried.js','src/world/brand-ash-view.js','src/world/open/parts/checkpoints.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||

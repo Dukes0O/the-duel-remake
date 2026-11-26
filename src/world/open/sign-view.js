@@ -11,6 +11,8 @@ import {SERVICE_LANDMARKS} from './building-rule.js';
 import {scoutTrail} from './content/burned-scout.js';
 import {buildGlasshouseTrail} from './looks/glasshouse-look.js';
 import {isFresh} from '../../story/threads/signs.js';
+import {RUNAWAY_PLACES} from './content/runaway-places.js';
+import {sitePosition} from './site-rule.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 
 function paintedSign({label}) {
@@ -146,10 +148,47 @@ const disposeMeshes = root => {
   root.removeFromParent();
 };
 
+function runawayClues() {
+  const material = new THREE.MeshStandardMaterial({color: 0x797271, roughness: 1});
+  const clue = (name, geometry) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = 'Runaway ' + name;
+    mesh.visible = false;
+    return mesh;
+  };
+  const prints = new THREE.Group();
+  prints.name = 'Runaway footprints';
+  const print = new THREE.CircleGeometry(.12, 12);
+  for (let i = 0; i < 10; i++) {
+    const foot = new THREE.Mesh(print, material);
+    foot.position.set(-i * .29, .035, (i % 2) * .22);
+    foot.rotation.x = -Math.PI / 2;
+    foot.scale.y = .48;
+    prints.add(foot);
+  }
+  prints.visible = false;
+  const wire = clue('wire', new THREE.TorusGeometry(.45, .023, 5, 16, Math.PI));
+  const bowl = clue('bowl', new THREE.SphereGeometry(.19, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2));
+  const hand = clue('handprint', new THREE.CircleGeometry(.15, 7));
+  return [
+    {key: 'footprints', mesh: prints, lift: 0}, {key: 'wire', mesh: wire, lift: .32},
+    {key: 'bowl', mesh: bowl, lift: .06}, {key: 'handprint', mesh: hand, lift: 1.45},
+  ];
+}
+
 export function createSignView() {
   const group = new THREE.Group();
   group.name = 'Open land signs';
   const smoke = new Map();
+  const clues = runawayClues();
+  for (const {mesh} of clues) group.add(mesh);
+  const lamps = new THREE.Group();
+  lamps.name = 'Runaway search lamps';
+  group.add(lamps);
+  const campHeap = lookoutHeap(RUNAWAY_PLACES.nobody);
+  campHeap.name = 'Grey Camp ash and wrecks';
+  campHeap.visible = false;
+  group.add(campHeap);
   const heaps = new Map();
   const flare = lookoutFlare();
   group.add(flare);
@@ -210,6 +249,35 @@ export function createSignView() {
       if (flare.visible) flare.userData.animate(flareAge);
       const view = open?.parts.threads?.places ?? {};
       const signs = open ? openThreadSigns({...open, view}) : [];
+      const stranger = signs.find(entry => entry.id === 'runaway');
+      for (const {key, mesh, lift} of clues) {
+        const at = RUNAWAY_PLACES[key];
+        mesh.visible = !!stranger && distanceBetween(here, at) <= stranger.sign.seenWithin;
+        if (mesh.visible) { positionAt(mesh, at, drawnShift); mesh.position.y += lift; }
+      }
+      const lights = worldJob?.threadSearchCast?.lamps ?? [];
+      while (lamps.children.length < lights.length) {
+        const lamp = new THREE.Mesh(new THREE.ConeGeometry(3.2, 9, 16, 1, true),
+          new THREE.MeshBasicMaterial({color: 0xffd48b, transparent: true, opacity: .19, depthWrite: false, side: THREE.DoubleSide}));
+        lamp.rotation.x = -Math.PI / 2;
+        const shutter = new THREE.Group();
+        shutter.add(lamp);
+        lamp.position.set(0, -.35, 4.5);
+        lamps.add(shutter);
+      }
+      lamps.children.forEach((lamp, index) => {
+        const light = lights[index];
+        lamp.visible = !!light && distanceBetween(here, light) < 150;
+        if (lamp.visible) {
+          positionAt(lamp, light, drawnShift);
+          lamp.position.y += 1.5;
+          lamp.rotation.y = light.heading;
+        }
+      });
+      const grey = open?.world.ledger.marks.includes('rumour/grey-camp') ?
+        sitePosition('grey-camp', open.world.open.landSeed) : null;
+      campHeap.visible = !!grey && distanceBetween(here, grey) < 240;
+      if (campHeap.visible) positionAt(campHeap, grey, drawnShift);
       const columns = signs.filter(({sign, at}) => sign.kind === 'smoke' && at);
       const kept = new Set(columns.map(({id}) => id));
       for (const [id, mesh] of smoke) if (!kept.has(id)) disposeSmoke(id, mesh);
@@ -249,6 +317,9 @@ export function createSignView() {
       heaps.clear();
       trail?.userData.dispose();
       disposeMeshes(flare);
+      for (const {mesh} of clues) disposeMeshes(mesh);
+      disposeMeshes(lamps);
+      disposeMeshes(campHeap);
       for (const {sign} of sheds) {
         sign.geometry.dispose();
         sign.material.map.dispose();
