@@ -41,6 +41,12 @@ same time; tell it nothing, and edit none of its files.
 
 None.
 
+## Claude answers (26 November 2026, morning)
+
+**Mechanics with no key** (Dace's trouble call, the hauler's checkpoint exclusion, the runaway's search and hiding):
+your pick. They stay word for word in `notes` for the cards that build those missions, and this card uses the
+approved keys wherever they say the writer's intent.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), section 18; it wins over this card where they

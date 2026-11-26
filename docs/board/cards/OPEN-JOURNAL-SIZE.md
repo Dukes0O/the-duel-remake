@@ -33,6 +33,20 @@ storage stops every save, not only the open land's.
 every mark, word, stage and favour unchanged; a save from before this card loads unchanged. Not rule 23, because it
 changes what is saved: the lane tier, `npm run build`, and one independent review before the merge.
 
+## Claude answers (26 November 2026, morning)
+
+1. **Where to fold:** your pick. The hook is the bank-success path of `settleNight2` in `src/story/night-2-save.js`
+   (named for this card; nothing else in that file changes), calling a pure helper from `open-save.js` on a readable
+   open record before the App commits the profile. The ceiling is also enforced in `settleOpenWorld`. The replay
+   replacement and the legacy ledger-only writer are left alone.
+2. **What may be folded:** your pick. Every rule input stays exact (the thread rule's arrivals, the director's starts,
+   the site view's burns, and the current night's choice ids). Only audit rows older than the last bank are folded,
+   into summaries by choice prefix and night range, oldest first. The summary-aware choice lookup is approved for
+   `parts/sites.js`, `parts/buildings.js` and `parts/checkpoints.js`, which this card may now edit for it.
+3. **When it cannot fit:** never drop a rule input or anything that changes play after reload. If the rule inputs
+   alone exceed the ceiling, the save is written whole anyway and the overflow is reported in the console. The ceiling
+   is a target, not a reason to lose progress. Cover both cases in the fixture, as you propose.
+
 ## Rules
 
 Behind `story-choices`. Never wipe or hide a player's progress. Questions go to
