@@ -6,7 +6,7 @@
 // scene to draw it again. Nothing is saved: the QA page keeps its saves in memory.
 //
 // `window.__openLookStand.stand(name, {stage, seconds})` returns where the site stands and every named spot in the land's metres.
-// After positioning the car at the Nest, stand('rats-nest', {stage: 'day', view: 'ground-edge'}) looks down the rim at 35 cm.
+// In the memory fixture, stand('rats-nest', {stage: 'day', view: 'ground-edge'}) looks down the rim at 35 cm.
 // At the stage `night` it also turns the land's own light down while the picture is drawn. That is a stand-in for the night that
 // the card which places the site will bring; it is here only so that the site's fires and lamps can be judged in the dark.
 import {CHUNK_METRES} from '../src/world/ground-edit.js';
@@ -68,6 +68,7 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
   }
   function clear() {
     if (!stood) return false;
+    stood.restoreCamera?.();
     stood.group.parent?.remove(stood.group);
     stood.group.userData.dispose?.();
     stood.restoreGround();
@@ -85,12 +86,19 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     // the look scenario, can borrow it here without starting an open job.
     let restoreGround = stood?.restoreGround;
     if (stood?.name === name && stood.land === land) {
+      stood.restoreCamera?.();
       stood.group.removeFromParent();
       stood.group.userData.dispose?.();
     } else {
       clear();
-      restoreGround = installSiteGround(0, [name]);
-      land.userData.updateGroundView?.();
+      // An open outing already owns the real Nest at this spot. Borrow it so
+      // clearing a QA view cannot remove or resurrect the arena's cut.
+      if (scablandsGroundEdit.siteGround?.hasChunkAt(at.x, at.z)) {
+        restoreGround = () => {};
+      } else {
+        restoreGround = installSiteGround(0, [name]);
+        land.userData.updateGroundView?.();
+      }
     }
     const group = look.build({stage, heightAt: (x, z) => scablandsSurfaceHeightAt(at.x + x, at.z + z)});
     group.position.set(at.x, 0, at.z);
@@ -115,10 +123,24 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
       spots['ground-edge'] = edge;
       if (requestedView === 'ground-edge') {
         const camera = view().camera, target = edge.looksAt;
-        app.inspectionCamera = {position: [edge.x, edge.y + .35, edge.z], target: [target.x, target.y, target.z]};
-        camera.position.fromArray(app.inspectionCamera.position);
+        // Like the scenario's other pictures, park in the hollow so the near window follows.
+        const state = app.duel.state, hollow = spots['car-hollow'];
+        const pose = app.duel.course.nearest(hollow.x, hollow.z);
+        state.s = state.prevS = pose.s;
+        state.lateral = state.prevLateral = pose.lateral;
+        state.speedMph = state.yawVelocity = state.pushVelocity = state.headingError = 0;
+        const previous = app.inspectionCamera, zoom = camera.zoom;
+        const inspection = {position: [edge.x, edge.y + .35, edge.z], target: [target.x, target.y, target.z]};
+        app.inspectionCamera = inspection;
+        camera.position.fromArray(inspection.position);
         camera.zoom = 1;
         camera.updateProjectionMatrix();
+        stood.restoreCamera = () => {
+          if (app.inspectionCamera !== inspection) return;
+          app.inspectionCamera = previous;
+          camera.zoom = zoom;
+          camera.updateProjectionMatrix();
+        };
       }
     }
     return {name, stage, at: {x: at.x, z: at.z}, land: scablandsNaturalHeightAt(at.x, at.z), landFall: high - low, spots,

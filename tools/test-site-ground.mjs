@@ -149,12 +149,29 @@ land.name = 'The Scablands'; scene.add(land);
 const camera = new THREE.PerspectiveCamera(), fixture = {duel: overlap};
 const stand = createOpenLookStand(fixture, () => ({scene,camera}));
 const stood = await stand.stand('rats-nest', {stage:'day', view:'ground-edge'}), edge = stood.spots['ground-edge'];
+const parked = overlap.course.worldAt(overlap.state.s,overlap.state.lateral), hollow = stood.spots['car-hollow'];
+assert.ok(Math.hypot(parked.x-hollow.x,parked.z-hollow.z) < .2);
 assert.deepEqual(camera.position.toArray(), [edge.x,edge.y+.35,edge.z]);
 assert.deepEqual(fixture.inspectionCamera.target, [edge.looksAt.x,edge.looksAt.y,edge.looksAt.z]);
 assert.ok(edge.looksAt && !scablandsGroundEdit.siteGround.hasChunkAt(edge.x, edge.z));
 assert.ok(scablandsGroundEdit.siteGround.hasChunkAt(edge.looksAt.x + .01, edge.looksAt.z));
 stand.clear();
+assert.equal(fixture.inspectionCamera, undefined);
 assert.equal(scablandsGroundEdit.siteGround, null);
+
+// The fixture can inspect a running open job. Clearing either owner first must never resurrect its cut.
+for (const clearFirst of [true,false]) {
+  start(true,true,app.duel);
+  const owned = scablandsGroundEdit.siteGround;
+  await stand.stand('rats-nest', {stage:'day'});
+  assert.equal(scablandsGroundEdit.siteGround, owned);
+  app.leaveWorldJob();
+  if (clearFirst) stand.clear();
+  assert.equal(scablandsGroundEdit.siteGround, owned);
+  app.returnToMenu();
+  if (!clearFirst) stand.clear();
+  assert.equal(scablandsGroundEdit.siteGround, null);
+}
 
 // Observe the keys during the physics query, including cross-chunk interpolation, misses and negative coordinates.
 const flat = () => createGroundEdit({region:{editable:true}, naturalHeight: () => 0});
