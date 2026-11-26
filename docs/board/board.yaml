@@ -1384,18 +1384,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-ROAM.md"
 
-  - id: OPEN-FIGURES
-    title: "Open Scablands: figures for Odessa, Moss and three of Tin Town's people"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-FIGURES.md"
-
   - id: OPEN-DOORS
     title: "Open Scablands: walk into the forge shed; Odessa mends the car and Moss washes it"
     owner: "codex"
