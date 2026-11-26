@@ -214,6 +214,21 @@ export function roadRiderGoal(duel,car,dt) {
     } else return reachableGoal(duel,car,{...rider.home,speedMph:R.retreatMph,boost:false});
   }
   if (rider.phase !== 'fighting') return {...me,speedMph:0,boost:false};
+  // Open escort riders want the load. The native car still takes rams and shots from the player.
+  const escort = rider.escort && duel.state.arena.worldJob.open?.parts.missions?.active;
+  if (escort && escort.id === rider.escort) {
+    const {truck, speed} = escort.state, side = rider.escortSide;
+    const sin = Math.sin(truck.heading), cos = Math.cos(truck.heading);
+    const goal = {x: truck.x - sin * 8 + cos * side, z: truck.z - cos * 8 - sin * side};
+    const forward = (goal.x - me.x) * sin + (goal.z - me.z) * cos;
+    const sideways = (goal.x - me.x) * cos - (goal.z - me.z) * sin;
+    const aim = dist(me, goal) > 35 ? goal : {x: me.x + sin * 30 + cos * sideways, z: me.z + cos * 30 - sin * sideways};
+    return reachableGoal(duel, car, {...aim, speedMph: Math.max(0, Math.min(42, speed * 2.236936 + forward * .8)), boost: false});
+  }
+  if (rider.standingArmor !== undefined) {
+    if (car.armor >= rider.standingArmor) return {...me, speedMph: 0, boost: false};
+    delete rider.standingArmor;
+  }
   // STORY-NIGHT-2-FLOW: a rider laying siege drives its circle round the camp until the others are beaten.
   if (rider.circle) {
     const c=rider.circle, angle=Math.atan2(me.z-c.z,me.x-c.x)+R.circleLeadRadians;
@@ -473,6 +488,15 @@ function startCheckpointFight(duel, world, request) {
     car.armor = Math.min(car.armor, car.maxArmor);
     car.weaponLoadout = [tune.weapon];
     Object.assign(rider, {phase:'fighting', approach:true, targetId:'player', weapon:tune.weapon});
+    rider.fightToEnd = request.fightToEnd === true;
+    if (request.escort) {
+      Object.assign(rider, {escort: request.escort, escortSide: ids.indexOf(id) % 2 ? -3.5 : 3.5, approach: false});
+      car.weaponLoadout = [];
+    }
+    if (request.firstCarStanding && id === ids[0]) {
+      car.armor = 1;
+      rider.standingArmor = car.armor;
+    }
     if (request.missionRule) {
       const rule = request.missionRule;
       rider.mass = rule.mass;
@@ -590,7 +614,8 @@ export function checkpointRoadView(duel, world) {
     const car = arenaActor(duel,id), at = worldPose(duel,car), rider = car.roadRider;
     const inDrawRange = Math.abs(duel.relativeS(car.s) - state.s) < RIVAL_DRAW_RANGE + REMOVAL_MARGIN;
     rider.flagVisible = dist(at,player) <= 60 && !car.combatWrecking;
-    return {...at, y: car.groundHeight, wrecked: !!car.combatWrecking, hitByPlayer:arenaParticipant(duel,car)?.lastHitBy === 'player',
+    return {...at, id, y: car.groundHeight, wrecked: car.combatWrecking === true, fighting: rider.phase === 'fighting',
+      speed: Math.abs(car.speedMph) * DRIVE.mphToWorld, hitByPlayer:arenaParticipant(duel,car)?.lastHitBy === 'player',
       routeDone:rider.route && rider.routeIndex === rider.route.length,
       visible:dist(at,player) < RIVAL_DRAW_RANGE || inDrawRange && dist(at,player) < 2600};
   });

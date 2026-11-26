@@ -4,6 +4,7 @@ import {ROAD_REQUEST} from '../encounter-rule.js';
 import {distance} from '../site-rule.js';
 import {sees} from '../../scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
+import {nameOf} from '../register.js';
 
 const height = (view, point) => (view.missionHeightAt ?? scablandsSurfaceHeightAt)(point.x, point.z);
 const atGround = (view, point) => ({...point, y: height(view, point)});
@@ -92,6 +93,130 @@ const reach = {
       ...(state.route.posts.length ? [lookoutsRequest(mission, [])] : []),
       ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : []),
     ];
+  },
+};
+
+const riderResult = (mission, view) => (view.jobEvents ?? []).find(event => event.type === 'riderFight' && event.id === mission.id)?.outcome;
+const roadFree = (mission, view) => !view.road || view.road.id === mission.id;
+const missionEnd = (mission, state, view) => [
+  {type: 'marker', place: null},
+  ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : []),
+];
+function prepareRiders(mission, place) {
+  const starts = (mission.rule?.riderStarts ?? []).map(place);
+  return starts.length === mission.cars && starts.every(Boolean) ? {starts} : null;
+}
+function sendRiders(mission, state, view, extra = {}) {
+  if (state.sentRiders || !roadFree(mission, view)) return [];
+  state.sentRiders = true;
+  return [{type: 'riders', id: mission.id, group: mission.enemy, fightToEnd: true,
+    firstCarStanding: mission.rule?.firstCarStanding === true, ...extra,
+    vehicles: state.route.starts.map(start => ({start: atGround(view, start), home: start}))}];
+}
+
+const riderFight = {
+  prepare: prepareRiders,
+  begin(mission, route) { return {state: {route, sentRiders: false}, requests: []}; },
+  step(mission, state, view) {
+    const next = {...state}, requests = sendRiders(mission, next, view);
+    const result = riderResult(mission, view);
+    return {state: next, requests, outcome: view.combatWrecking || result === 'lost' || result === 'surrounded'
+      ? 'lost' : result === 'won' ? 'won' : null};
+  },
+  end: missionEnd,
+};
+
+const outrun = {
+  prepare: prepareRiders,
+  begin(mission, route, view) {
+    return {state: {route, start: {...view.carPosition}, elapsed: 0, sentRiders: false}, requests: []};
+  },
+  step(mission, state, view, dt) {
+    const next = {...state, elapsed: state.elapsed + dt}, requests = sendRiders(mission, next, view);
+    const result = riderResult(mission, view);
+    return {state: next, requests, outcome: view.combatWrecking || result === 'lost' || result === 'surrounded'
+      ? 'caught' : result === 'won' || !view.onFoot && next.elapsed >= mission.minutes * 60 &&
+        distance(next.start, view.carPosition) >= (mission.rule?.awayMetres ?? 1000) ? 'away' : null};
+  },
+  end: missionEnd,
+};
+
+export function escortPoint(path, metres) {
+  let left = metres;
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1], b = path[i], span = distance(a, b);
+    if (left <= span || i === path.length - 1) {
+      const share = span ? Math.min(1, left / span) : 1;
+      return {x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share,
+        heading: Math.atan2(b.x - a.x, b.z - a.z)};
+    }
+    left -= span;
+  }
+  return {...path[0], heading: 0};
+}
+const truckRequest = (mission, state, view) => ({type: 'solids', id: mission.id + '/truck', solids: [
+  {id: mission.id + '/truck', kind: 'wreck', shape: 'box', x: state.truck.x, z: state.truck.z,
+    halfX: 1.5, halfZ: 4, height: 3.4, base: height(view, state.truck), heading: state.truck.heading},
+]});
+const escort = {
+  prepare(mission, place) {
+    const riders = prepareRiders(mission, place), path = place(mission.rule?.path);
+    if (!riders || !Array.isArray(path) || path.length < 2 || path.some(point => !point) ||
+        !(mission.rule?.load?.count > 0)) return null;
+    return {...riders, path, length: path.slice(1).reduce((sum, point, i) => sum + distance(path[i], point), 0)};
+  },
+  begin(mission, route, view) {
+    const state = {route, elapsed: 0, metres: 0, truck: escortPoint(route.path, 0), speed: 0,
+      tyres: mission.rule.load.count, hooks: {}, wrecked: [], moments: [], sentRiders: false};
+    return {state, requests: [truckRequest(mission, state, view)]};
+  },
+  step(mission, state, view, dt) {
+    const next = {...state, hooks: {...state.hooks}, wrecked: [...state.wrecked], moments: [...state.moments],
+      elapsed: state.elapsed + dt};
+    const requests = [], events = [];
+    const moment = (name, repeat = false) => {
+      if (!repeat && next.moments.includes(name)) return;
+      if (!repeat) next.moments.push(name);
+      for (const [index, row] of (mission.lines ?? []).entries()) if (row.moment === name) {
+        requests.push({type: 'say', lineId: mission.id + '/' + name + '/' + index,
+          text: (nameOf(row.speaker) ?? row.speaker) + ': ' + row.words});
+        events.push({type: 'threadMissionMoment', id: mission.id, moment: name, cue: row.cue});
+      }
+    };
+    next.speed = 3 + 9 * Math.min(1, next.metres / 1000);
+    next.metres = Math.min(next.route.length, next.metres + next.speed * dt);
+    next.truck = escortPoint(next.route.path, next.metres);
+    if (next.elapsed >= 30) {
+      const sent = sendRiders(mission, next, view, {escort: mission.id});
+      requests.push(...sent);
+      if (sent.length) moment('buggies-seen');
+    }
+    const cart = {x: next.truck.x - Math.sin(next.truck.heading) * 8,
+      z: next.truck.z - Math.cos(next.truck.heading) * 8};
+    for (const car of view.road?.id === mission.id ? view.road.cars : []) {
+      if (car.wrecked && !next.wrecked.includes(car.id)) { next.wrecked.push(car.id); moment('buggy-wrecked'); }
+      const beside = !car.wrecked && car.fighting !== false && distance(car, cart) <= 8 &&
+        Math.abs((car.speed ?? next.speed) - next.speed) < 6;
+      next.hooks[car.id] = beside ? (next.hooks[car.id] ?? 0) + dt : 0;
+      while (next.hooks[car.id] >= 4 && next.tyres > 0) {
+        next.hooks[car.id] -= 4;
+        next.tyres = Math.max(0, next.tyres - mission.rule.load.lostAtATime);
+        moment('tyres-lost', true);
+      }
+    }
+    if (next.route.length - next.metres <= 150) moment('crossing-seen');
+    if (next.tyres !== state.tyres || !state.elapsed)
+      requests.push({type: 'say', lineId: mission.id + '/load/' + next.tyres,
+        text: 'There are ' + next.tyres + ' ' + (mission.rule.load.what ?? 'items') + ' on the cart.'});
+    requests.push(truckRequest(mission, next, view));
+    const outcome = view.combatWrecking ? 'car-wrecked' : next.metres >= next.route.length
+      ? next.tyres === mission.rule.load.count ? 'all-kept' : next.tyres > 0 ? 'some-kept' : 'none-kept' : null;
+    return {state: next, requests, events, outcome};
+  },
+  end(mission, state, view) {
+    return [...missionEnd(mission, state, view), {type: 'solids', id: mission.id + '/truck', solids: []},
+      ...(view.combatWrecking && (view.missionHome ?? mission.rule.home)
+        ? [{type: ROAD_REQUEST, action: 'recover-car', at: view.missionHome ?? mission.rule.home}] : [])];
   },
 };
 
@@ -236,4 +361,6 @@ const heist = {
   },
 };
 
-export const MISSION_KINDS = Object.freeze({reach: Object.freeze(reach), fight: Object.freeze(fight), heist: Object.freeze(heist)});
+export const MISSION_KINDS = Object.freeze({reach: Object.freeze(reach),
+  'rider-fight': Object.freeze(riderFight), outrun: Object.freeze(outrun), escort: Object.freeze(escort),
+  fight: Object.freeze(fight), heist: Object.freeze(heist)});
