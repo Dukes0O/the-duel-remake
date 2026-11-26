@@ -387,6 +387,22 @@ the game.
 - **A wreck on its side, seen from its roof, is a box.** A shell built from stations along its length reads as a car from the side (arches, window openings, pillars). Stack wrecks upright where they face the viewer.
 - **The rear view is drawn into the game's own canvas,** so hiding the page's other elements leaves it in every picture. Give `.rear-view-frame` no size (`display:none`) and send a `resize`: the rear view is not drawn while its frame measures nothing.
 
+### Bolt-ons and laid strips (COMBAT-ROOF-BOW-LOOK, 26 November 2026)
+
+- **A long straight piece set at its middle's height floats over rolling land and sinks into it.** Each town road was one flat
+  box: the road from the Dome's gate stood 1.9 m over the land, and from a truck's hood its unlit underside filled the top of
+  the view as a near-black slab. Lay a road or strip as a ribbon on the drawn ground (`createStripRoadsDraw` in
+  `src/world/scablands-draw.js`), and check the middles of its triangles against `nearGroundHeightAt`, not only its corners.
+- **Ribbons that meet end to end show a hard edge** where one's square end crosses the other. Run each ribbon on past its ends
+  and fade it there (a `color` of four numbers); whole at the meeting point, so a crossing is never bare.
+- **One bolt-on for every car is seated from the car's own skin,** not from its socket: the socket stands at the model's
+  bounding height, which on a car with a tall wing is 0.3 m over the roof. Read the roof from the model's triangles
+  (`roofSkin` in `src/combat-roof-bow.js`) and keep only faces that face up: a steep panel seen from above is a sliver whose
+  heights run its full height, and a one-sided lining turned down is not drawn from above. Both held a foot 0.26 m in the air.
+  Check each foot with a ray that ignores the bolt-on itself (`tools/test-vehicle-sockets.mjs`).
+- **The point of a roof weapon decides where it can stand.** A bolt reaching 0.36 m past the prod pushed the whole bow back off
+  a short roof onto the engine cover. Keep what sticks forward short, and let the butt overhang the back instead.
+
 ### Moments (a thing that happens, not a thing that stands)
 
 - **A drawn moment that no player sees.** Hot Delivery's hand-over and the

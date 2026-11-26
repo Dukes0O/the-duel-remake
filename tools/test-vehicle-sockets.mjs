@@ -5,6 +5,7 @@ import { createClassicVehicle } from '../src/classic-vehicles.js';
 import { createCombatScene } from '../src/combat-scene.js';
 import { ensureVehicleSockets, VEHICLE_SOCKET_KEYS, vehicleSocketLayout } from '../src/vehicle-sockets.js';
 import { createVehicleAttachmentRegistry } from '../src/vehicle-attachments.js';
+import { createRoofBow, seatRoofBow, ROOF_BOW } from '../src/combat-roof-bow.js';
 import { detachRetiredVehicleVisuals } from '../src/render3d.js';
 import { models } from './audit-vehicle-grounding.mjs';
 
@@ -192,4 +193,36 @@ assert.equal(retirementRegistry.size, 4, 'no retired-car binding remains');
 checks += 6;
 retirementScene.dispose();
 retirementRegistry.clear();
-console.log(`Vehicle sockets: ${checks} per-car, role, maneuver, visibility and replacement checks passed.`);
+
+// COMBAT-ROOF-BOW-LOOK: on every car the roof crossbow stands on the roof's own skin (each foot's pad, measured by a ray that
+// ignores the bow), its point stays behind the windscreen's top edge, and it is sized to the car.
+const down = new THREE.Vector3(0, -1, 0), probe = new THREE.Raycaster();
+for (const key of expectedKeys) {
+  const vehicle = vehicleFor(key), socket = ensureVehicleSockets(vehicle).roof, bow = createRoofBow(`roof-bow-check-${key}`);
+  // The pose checks above leave each car tilted; measure it standing level so a box in the world's axes is one in the car's.
+  vehicle.position.set(0, 0, 0); vehicle.rotation.set(0, 0, 0);
+  socket.add(bow.group);
+  const seat = seatRoofBow(bow, vehicle, socket);
+  vehicle.updateMatrixWorld(true);
+  const own = new Set();
+  bow.group.traverse(node => own.add(node));
+  const skin = [];
+  vehicle.traverse(node => { if (node.isMesh && !own.has(node)) skin.push(node); });
+  assert.ok(seat.found, `${key}: the bow finds the roof under its turntable`);
+  seat.bars.forEach((z, bar) => [-1, 1].forEach((side, foot) => {
+    const pad = bow.body.localToWorld(new THREE.Vector3(side * seat.rack[bar], ROOF_BOW.rackY - seat.legs[bar * 2 + foot] - .008, z));
+    probe.set(pad.clone().addScaledVector(down, -1), down);
+    const hit = probe.intersectObjects(skin, false)[0];
+    assert.ok(hit && Math.abs(pad.y - hit.point.y) < .025,
+      `${key}: rack foot ${bar * 2 + foot} stands on the roof (${hit ? (pad.y - hit.point.y).toFixed(3) : 'no skin'} m)`);
+  }));
+  const bounds = new THREE.Box3().setFromObject(bow.mesh), front = vehicle.worldToLocal(bounds.max.clone()).z;
+  assert.ok(front <= socket.position.z + seat.front - ROOF_BOW.screenGap + 1e-6,
+    `${key}: the bolt's point (${front.toFixed(2)}) stays behind the windscreen's top edge (${(socket.position.z + seat.front).toFixed(2)})`);
+  const span = (bounds.max.x - bounds.min.x) / vehicle.userData.size.width;
+  assert.ok(span > .5 && span < .75, `${key}: the prod spans ${span.toFixed(2)} of the car's width`);
+  socket.remove(bow.group);
+  bow.mesh.geometry.dispose(); bow.material.dispose();
+  checks += 7;
+}
+console.log(`Vehicle sockets: ${checks} per-car, role, maneuver, visibility, replacement and roof-bow checks passed.`);
