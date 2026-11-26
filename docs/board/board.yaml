@@ -1523,7 +1523,8 @@ tasks:
     model: "astra"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex (cloud), 2026-11-25"
     needs: []
     locks: []
     flag: "story-choices"
