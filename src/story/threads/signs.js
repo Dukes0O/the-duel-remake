@@ -4,7 +4,7 @@ import {distanceBetween} from './cast.js';
 import {firstBeat} from './thread-rule.js';
 
 export const SMOKE_HEIGHT = 95;
-export const isFresh = (thread, record, night) => night - record.began < (thread.sign.lastsNights ?? 1);
+export const isFresh = (thread, record, night) => night - record.began < (thread.sign.lastsNights ?? (thread.sign.kind === 'thing' ? Infinity : 1));
 export function isSignAlive(thread, record, night) {
   if (!isFresh(thread, record, night)) return false;
   if (thread.sign.kind === 'smoke') return true;
@@ -29,8 +29,17 @@ export function witnessSign(entry, view, elapsed, dt) {
     event.type === 'talkChoice' && event.id === `${id}/heard-sign`)};
   const inRange = !at || distanceBetween(player, at) <= (sign.seenWithin ?? Infinity);
   if (sign.kind === 'call') return {seconds: 0, witnessed: inRange};
+  if (sign.kind === 'thing') return witnessThing(entry, view, elapsed, dt);
   if (sign.kind !== 'smoke' || !at || !player || !inRange) return {seconds: 0, witnessed: false};
   const visible = sees(player, at, {eye: view.onFoot ? 1.6 : 2.5, target: SMOKE_HEIGHT * .7});
+  const seconds = visible ? elapsed + dt : 0;
+  return {seconds, witnessed: seconds >= 3 - 1e-9};
+}
+
+export function witnessThing({sign, at}, view, elapsed, dt) {
+  const player = view.player?.position ?? view.player;
+  const visible = player && at && distanceBetween(player, at) <= (sign.seenWithin ?? Infinity) &&
+    sees(player, at, {eye: view.onFoot ? 1.6 : 2.5, target: 24, ...(view.signHeightAt ? {heightAt: view.signHeightAt} : {})});
   const seconds = visible ? elapsed + dt : 0;
   return {seconds, witnessed: seconds >= 3 - 1e-9};
 }

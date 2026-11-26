@@ -74,6 +74,9 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
     'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
     'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
+  {prefixes:['open-somebody-elses-flag'], paths:['src/story/threads/content/somebody-elses-flag.js',
+    'src/world/open/', 'src/story/threads/signs.js', 'src/story/scenes/burned-camp.js',
+    'src/arena/modes/road-riders.js', 'src/arena/modes/world-job.js', 'src/sim-contacts.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2','open-apprentice-run'].includes(name) ||
@@ -123,7 +126,7 @@ export const QUIET_SCENARIOS = Object.freeze([
   'arena-ambush-alley', 'arena-fuel-run', 'arena-pit', 'arena-shove',
   'armor-kit-visuals', 'arsenal-core', 'blackiron', 'combat-armor-frame-pacing',
   'combat-ramming', 'convoy-frames', 'convoy-raid', 'convoy-tanker-art',
-  'crew-fighters', 'deep-frames', 'everburn-frames', 'first-person-gear', 'first-person-polish', 'frame-pacing',
+  'crew-fighters', 'deep-frames', 'everburn-frames', 'fire-view', 'first-person-gear', 'first-person-polish', 'frame-pacing',
   'grand-prix', 'gunn', 'harbour-night', 'hidden-road-discovery',
   'onfoot-camera-choice', 'p4-daynight', 'p4-snow', 'polish-arena', 'polish-flame',
   'rustwall', 'rustwall-frame', 'sal-art', 'salt-flats', 'scrapdome',
