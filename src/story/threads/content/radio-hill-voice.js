@@ -12,7 +12,8 @@
 //   explore    things to find by going up to them: {id, what, thought, tells}
 //   choices    {id, words (said) or does (done), plain, thought, hidden, effects, next}; `hidden` is the writer's
 //              note of what is kept out of sight, and no player reads it
-//   mission    a job with its holds, the numbers a builder starts from, and its outcomes
+//   mission    the id of a job, with its `holds` and its `outcomes` on the beat, as section 18 has them; `job` holds
+//              the step kind and the numbers a builder starts from
 const ID = 'radio-hill-voice';
 const line = (speaker, words, delivery) => ({speaker, words, ...delivery});
 const onRadio = {radio: true};
@@ -26,6 +27,7 @@ const secondVoice = words => line('parrot', words, {radio: true, as: 'A second v
 const you = words => line('you', words);
 const mark = (what, text) => ({type: 'mark', id: `${ID}/${what}`, text});
 const to = beat => ({type: 'thread', id: ID, to: beat});
+const end = name => ({type: 'thread', id: ID, end: name});
 const ratsFeud = by => ({type: 'feud', of: 'road-rats', by});
 const sisters = change => ({type: 'word', person: 'radio-hill', ...change});
 const tested = mark('tested', 'You tested the two voices before you believed either of them.');
@@ -39,8 +41,8 @@ export default {
   id: ID,
   title: 'The voice on Radio Hill',
   kind: 'find',
-  reads: ['found', 'word', 'feud', 'made', 'stock', 'night', 'mark', 'draw'],
-  writes: ['find', 'word', 'feud', 'made', 'mark', 'scrap', 'promise', 'roadWord', 'thread'],
+  reads: ['found', 'word', 'feud', 'made', 'scrap', 'night', 'mark'],
+  writes: ['find', 'word', 'feud', 'made', 'mark', 'scrap', 'promise', 'settle', 'roadWord'],
 
   cast: {
     // The storyline is tied to Radio Hill. The Pocket stands at whichever of its positions is most nearly opposite
@@ -52,7 +54,8 @@ export default {
   starts: {all: [{fact: 'night', atLeast: 2}, {not: {fact: 'thread', id: ID, at: 'any'}},
     {fact: 'draw', name: 'start', chance: .5}]},
 
-  sign: {kind: 'call', from: 'hill', part: 'dark', onRoadWithin: 4000, lastsNights: 3, cue: 'open.radio.voice'},
+  // The call comes only where the hill can see the car, so that what Hetty says she sees is true.
+  sign: {kind: 'call', at: '@hill', part: 'dark', onRoadWithin: 4000, hillSeesCar: true, lastsNights: 3, cue: 'open.radio.voice'},
 
   beats: {
     'first-call': {
@@ -73,13 +76,13 @@ export default {
           hidden: 'She answers at once, and she watches for this car from now on.',
           lines: [
             firstVoice('You\'ve stopped! Bern, come and look, the car has stopped.'),
-            hetty('My name is Hetty, and my sister and I keep the mast up here. We have the news of every road, and the kettle is on. Turn to the {hill.bearing} and look for a red lamp that blinks.'),
+            hetty('My name is Hetty, and my sister and I keep the mast up here. We have the news of every road, and the kettle is on. Look for a red lamp that blinks, high up, and turn your car toward it.'),
           ],
           effects: [mark('stopped-for-hetty', 'You stopped your car on a dark road because a voice asked you to.'), to('second-voice')]},
         {id: 'drive-on', does: 'Keep driving', plain: 'The road ahead',
           thought: 'I\'m not stopping on a dark road because a stranger tells me to.',
           hidden: 'She gives her name all the same. Nothing is lost.',
-          lines: [hetty('You didn\'t stop. Well, I wouldn\'t stop for a stranger either. I\'m Hetty, and the red lamp to the {hill.bearing} is ours. I\'ll be on the air again tomorrow night, in case you change your mind.')],
+          lines: [hetty('You didn\'t stop. Well, I wouldn\'t stop for a stranger either. I\'m Hetty, and the red lamp that blinks, high up, is ours. I\'ll be on the air again tomorrow night, in case you change your mind.')],
           effects: [to('second-voice')]},
       ],
     },
@@ -89,7 +92,7 @@ export default {
       cue: 'open.radio.second-voice',
       lines: [
         secondVoice('This is Radio Hill, calling the car on the road. Take no notice of that other station, driver. There are people about tonight who copy our voice to lead cars off the road.'),
-        secondVoice('The real hill is to the {pocket.bearing}, where you\'ll see a white lamp held steady. Come quickly, and tell me where you are now, so that I can guide you in.'),
+        secondVoice('The real hill is the other way, where you\'ll see a white lamp held steady. Come quickly, and tell me where you are now, so that I can guide you in.'),
         hetty('Who is that on my set? I have said those words every night for eleven years, and that is not me saying them.'),
         secondVoice('Do you hear how well she does it, driver? She even sounds cross. Please be careful which of us you believe.'),
         line('keeper', 'I can see both of those lamps from up here. The red one is on a mast, on top of a mesa. The white one is on a pole, and the pole keeps moving about.',
@@ -103,10 +106,10 @@ export default {
       questions: [
         {id: 'what-can-you-see', words: 'What can you see from where you are?',
           lines: [
-            hetty('I can see the road with you on it, and the glow of your town\'s hearth. I can also see three sets of lamps standing still among the wrecks to the {pocket.bearing}, and they haven\'t moved all evening.'),
+            hetty('I can see the road with you on it, and the glow of your town\'s hearth. I can also see three sets of lamps standing still among the wrecks near that white lamp, and they haven\'t moved all evening.'),
             secondVoice('I can see the whole land from up here, driver. What I can see most clearly is that you\'re wasting time.'),
           ],
-          shows: 'The first voice names things that are really there. Three cars are waiting to the {pocket.bearing}',
+          shows: 'The first voice names things that are really there. Three cars are waiting near the white lamp',
           effects: [tested]},
         {id: 'what-colour', words: 'What colour is my car?',
           lines: [
@@ -145,7 +148,7 @@ export default {
         {id: 'ask-cinder', words: 'Cinder, would the Ash Men use a radio?',
           lines: [line('cinder', 'Old Smoke says that a radio is a small fire that talks, so he won\'t have one near him. The Road Rats would use one, though. They\'ll use anything that they can unbolt from a truck.', onRadio)],
           shows: 'Who the liar probably is'},
-        {id: 'ask-moss', words: 'Moss, what\'s out to the {pocket.bearing}?',
+        {id: 'ask-moss', words: 'Moss, what\'s out there, where that white lamp is?',
           lines: [line('moss', 'There\'s nothing out that way but wrecks stacked in rows, with one way in and no way out. I wouldn\'t take Bess in among them, and I wouldn\'t take your car in either.', onRadio)],
           shows: 'The ground the second bearing leads to'},
         {id: 'ask-rell', words: 'Rell, have your people seen a red lamp at night?',
@@ -155,10 +158,10 @@ export default {
       ],
       // The decision is made by going somewhere.
       choices: [
-        {id: 'to-the-red-lamp', does: 'Drive to the {hill.bearing}, toward the red lamp', plain: 'A red lamp, high up, that blinks',
+        {id: 'to-the-red-lamp', does: 'Drive toward the red lamp', plain: 'A red lamp, high up, that blinks',
           thought: 'A lamp on top of a hill is where a mast ought to be.', hidden: 'The foot of the ramp.',
           effects: [to('ramp')]},
-        {id: 'to-the-white-lamp', does: 'Drive to the {pocket.bearing}, toward the white lamp', plain: 'A white lamp, low down, held steady',
+        {id: 'to-the-white-lamp', does: 'Drive toward the white lamp', plain: 'A white lamp, low down, held steady',
           thought: 'She did tell me to come quickly.', hidden: 'The Pocket.',
           effects: [to('pocket')]},
         {id: 'home', does: 'Drive home and bank the hearth', plain: 'The road home',
@@ -178,15 +181,15 @@ export default {
           thought: 'If she\'s the liar, this is exactly where she would want me.',
           hidden: 'The climb. A driver who comes up in the dark on Hetty\'s word is Friendly from the first cup.',
           effects: [to('climb')]},
-        {id: 'by-day', words: 'Not tonight. I\'ll come back when I can see the edge.', plain: 'The road home',
+        {id: 'by-day', words: 'I won\'t climb it tonight. I\'ll come back when I can see the edge.', plain: 'The road home',
           hidden: 'By day the ramp is plain and safe, and climbing it is no mission. The sisters are Strangers, as they are for anybody who finds them.',
           effects: []},
       ],
     },
 
     climb: {
-      mission: {
-        id: `${ID}/climb`, kind: 'reach', by: 'car', minutes: 3, holds: ['checkpoints', 'signs'],
+      mission: `${ID}/climb`, holds: ['checkpoints', 'signs'],
+      job: {kind: 'reach', by: 'car', minutes: 3,
         // Starting numbers. Every radio line on the climb is shown under the one label, so that the words tell the voices apart.
         rule: {lampsShowMetres: 12, callSecondsBeforeTurn: 4, easyBrakeSeconds: 2, label: 'The radio', cutInCue: 'open.radio.cut-in'},
         calls: [
@@ -198,28 +201,28 @@ export default {
           {at: 'broken-ledge', ...hetty('Now stop where you are. The ledge in front of you is broken, and your lamps won\'t show you the hole until you\'re in it.')},
           {at: 'broken-ledge', ...hetty('Turn hard to your left and come up the inside. Bern cut that way with a pick, and she\'s very proud of it.')},
           {at: 'last-rise', false: true, when: parrotCutsIn, ...parrot('You\'re nearly at the top. Put your foot down for the last rise, or you\'ll roll all the way back.')},
-          {at: 'last-rise', ...hetty('Slowly, please, slowly. The top is flat for two car lengths, and after that there isn\'t any more top.')},
+          {at: 'last-rise', ...hetty('Please go slowly now. The top is flat for two car lengths, and after that there isn\'t any more top.')},
           {at: 'top', ...hetty('That\'s it, you\'re up. Turn your lamps off before you blind my sister. Welcome to Radio Hill.')},
         ],
-        outcomes: {
-          up: {
-            cue: 'open.site.found',
-            lines: [
-              hettyHere('You trusted a voice you couldn\'t see, all the way up a cliff in the dark. I\'d like to say that I\'d have done the same, but I don\'t think I would have.'),
-              bern('She talked you up, and I cut the road. I\'d like that remembered as well.'),
-            ],
-            effects: [{type: 'find', site: 'radio-hill'}, sisters({set: 'Friendly'}),
-              mark('talked-up', 'Hetty talked you up the ramp in the dark, and you did everything she said.'), to('other-voice')],
-          },
-          'over-the-edge': {
-            cue: 'open.ramp.edge', armour: 0,
-            lines: [
-              bern('That\'s the third car that the other voice has put off our ramp this year. You\'re the first driver who was coming to see us, so I\'ll winch you up for nothing.'),
-              hettyHere('I\'m so sorry, driver. I said right, and she said left, and you had no way of knowing which of us was which.'),
-            ],
-            effects: [{type: 'find', site: 'radio-hill'},
-              mark('off-the-ramp', 'The other voice put your car off the ramp at Radio Hill.'), to('other-voice')],
-          },
+      },
+      outcomes: {
+        up: {
+          cue: 'open.site.found',
+          lines: [
+            hettyHere('You trusted a voice you couldn\'t see, all the way up a cliff in the dark. I\'d like to say that I\'d have done the same, but I don\'t think I would have.'),
+            bern('She talked you up, and I cut the road. I\'d like that remembered as well.'),
+          ],
+          effects: [{type: 'find', site: 'radio-hill'}, sisters({set: 'Friendly'}),
+            mark('talked-up', 'Hetty talked you up the ramp in the dark, and you did everything she said.'), to('other-voice')],
+        },
+        'over-the-edge': {
+          cue: 'open.ramp.edge', armour: 0,
+          lines: [
+            bern('That\'s the third car that the other voice has put off our ramp this year. You\'re the first driver who was coming to see us, so I\'ll winch you up for nothing.'),
+            hettyHere('I\'m so sorry, driver. I said right, and she said left, and you had no way of knowing which of us was which.'),
+          ],
+          effects: [{type: 'find', site: 'radio-hill'},
+            mark('off-the-ramp', 'The other voice put your car off the ramp at Radio Hill.'), to('other-voice')],
         },
       },
     },
@@ -252,7 +255,7 @@ export default {
         {id: 'drive-in', does: 'Drive in to the lamp', plain: 'A white lamp and a narrow mouth',
           thought: 'It could still be a camp. Camps do hide themselves.', hidden: 'The trap is sprung.',
           effects: [{type: 'find', site: 'the-pocket'}, to('trap')]},
-        {id: 'back-out', does: 'Back out and drive for the red lamp', plain: 'The red lamp still blinks to the {hill.bearing}',
+        {id: 'back-out', does: 'Back out and drive for the red lamp', plain: 'The red lamp still blinks, far off',
           thought: 'One of those voices could see my lamps. It wasn\'t this one.',
           hidden: 'Parrot knows that her trick has failed, and says so.',
           lines: [secondVoice('Off you go, then. It was worth a try. Give my love to the old girl on the hill, and tell her that she drops her voice at the end of "anybody".')],
@@ -261,7 +264,7 @@ export default {
           plain: 'Darkness, and the engine off',
           thought: 'She can\'t see me. I\'d like to know what she does when the car doesn\'t come.',
           hidden: 'After twenty seconds she walks out to look, and the player sees who she is.',
-          lines: [secondVoice('Driver? Driver, are you there? Please answer me. We\'re all so worried about you up here on the hill.')],
+          lines: [secondVoice('Driver, are you there? Please answer me. We\'re all so worried about you up here on the hill.')],
           after: {thought: 'That\'s a Road Rat with a radio on a strap, and she\'s doing the voice. There are three buggies behind her with their engines running.'},
           effects: [{type: 'find', site: 'the-pocket'}, mark('saw-parrot', 'You saw who the second voice is.'), to('ramp')]},
       ],
@@ -290,19 +293,19 @@ export default {
     },
 
     'pocket-fight': {
-      mission: {
-        id: `${ID}/pocket-fight`, kind: 'rider-fight', by: 'car', minutes: 2, holds: ['checkpoints', 'signs'],
+      mission: `${ID}/pocket-fight`, holds: ['checkpoints', 'signs'],
+      job: {kind: 'rider-fight', by: 'car', minutes: 2,
         rule: {buggies: 3, buggiesAtWar: 5, atWar: ratsAtWar, boxedSeconds: 6, easyWinsInTen: 5, markedGapHalvesKnocks: true},
         lines: [{when: {fact: 'mark', id: `${ID}/stopped-for-hetty`},
           ...hetty('Driver, I can see lamps bunched together among the wrecks, and I think one pair is yours. The buggy on your left has its lamps pointed at the wall. The gap is on that side.')}],
-        outcomes: {
-          out: {
-            lines: [parrot('All right, all right, mind my paint! Go on, then. I\'ll say this for you, driver: nobody has ever driven out of the Pocket before.')],
-            effects: [ratsFeud(1), {type: 'scrap', by: 12}, mark('drove-out', 'You drove out of the Pocket with all four wheels.'),
-              to('after-pocket')],
-          },
-          'boxed-in': {scrapShareLost: 1 / 3, effects: [to('wheels-off')]},
+      },
+      outcomes: {
+        out: {
+          lines: [parrot('All right, all right, mind my paint! Go on, then. I\'ll say this for you, driver: nobody has ever driven out of the Pocket before.')],
+          effects: [ratsFeud(1), {type: 'scrap', by: 12}, mark('drove-out', 'You drove out of the Pocket with all four wheels.'),
+            to('after-pocket')],
         },
+        'boxed-in': {scrapShareLost: 1 / 3, effects: [to('wheels-off')]},
       },
     },
 
@@ -330,7 +333,7 @@ export default {
       ],
       questions: [
         {id: 'how-long', words: 'How long has she been doing it?',
-          lines: [hettyHere('Since the spring. At first she only repeated my weather, and I was almost pleased, because it meant that somebody was listening.')],
+          lines: [hettyHere('She has been doing it since the spring. At first she only repeated my weather, and I was almost pleased, because it meant that somebody was listening.')],
           shows: 'She began as a listener'},
         {id: 'talk-over', words: 'Can\'t you talk over her?',
           lines: [bern('We can, if Hetty sits at the set from dusk until dawn and never stops. She\'d be no use for anything else, and the generator would drink fuel all night long.')],
@@ -339,7 +342,7 @@ export default {
           lines: [hettyHere('She calls from a buggy, so it moves about. But the engine behind her voice is always the same one, and after dark it always stands in the Pocket.')],
           shows: 'Where to find her', effects: [{type: 'mark', id: 'rumour/the-pocket'}]},
         {id: 'what-she-wants', words: 'What does she want?',
-          lines: [hettyHere('Wheels, I suppose. Though last week she read out all of my news after I\'d gone to bed, and nobody was robbed that night. I\'ve wondered about that ever since.')],
+          lines: [hettyHere('She wants wheels, I suppose. But last week she read out all of my news after I\'d gone to bed, and nobody was robbed that night. I\'ve wondered about that ever since.')],
           shows: 'She may like the radio for its own sake'},
       ],
       thoughts: [
@@ -352,7 +355,7 @@ export default {
           hidden: 'A mission. The Road Rats\' feud rises. The hill gains a second set.',
           effects: [to('set-asked')]},
         {id: 'talk-over-her', words: 'Talk over her every night. I\'ll keep you in fuel for as long as it takes.',
-          needs: [{fact: 'stock', of: 'scrap', atLeast: 25}], plain: 'Bern says what it will cost',
+          needs: [{fact: 'scrap', atLeast: 25}], plain: 'Bern says what it will cost',
           thought: 'That keeps everybody safe, and it means Hetty never sleeps.',
           hidden: 'A promise of fuel. Hetty has no news to give while it lasts. Nothing is settled.',
           lines: [
@@ -384,33 +387,33 @@ export default {
       choices: [
         {id: 'go-tonight', words: 'I\'ll go tonight.', hidden: 'The mission begins at dusk. It is the day\'s outing in an act with a clock.',
           effects: [to('take-set')]},
-        {id: 'not-yet', words: 'Not yet.', hidden: 'Nothing changes. Bern asks again on the next visit.', effects: [to('other-voice')]},
+        {id: 'not-yet', words: 'I can\'t go tonight.', hidden: 'Nothing changes. Bern asks again on the next visit.', effects: [to('other-voice')]},
       ],
     },
 
     'take-set': {
-      mission: {
-        id: `${ID}/take-set`, kind: 'heist', by: 'foot', minutes: 4, holds: ['checkpoints', 'signs'], outing: true,
+      mission: `${ID}/take-set`, holds: ['checkpoints', 'signs'],
+      job: {kind: 'heist', by: 'foot', minutes: 4, outing: true,
         rule: {carLeftMetres: 200, seenAfterSecondsInLamp: 2, wrenchSeconds: 6, boxedSeconds: 6, cue: 'open.set.taken'},
         lines: [parrotHere('This is Radio Hill, calling anybody who can hear us. There\'s a fire here, and hot food, and room for your car.')],
-        outcomes: {
-          'out-with-the-set': {
-            lines: [
-              bern('That\'s a better set than ours, and I shan\'t be telling Hetty so. Now she can listen on one and talk on the other, and heaven help the rest of us.'),
-              hettyHere('I\'ve two sets now, so I can listen to the Mall Road and scold my sister at the same time. And nobody on this land will hear a lie in my voice again.'),
-            ],
-            effects: [sisters({by: 1}), ratsFeud(1), {type: 'made', id: 'radio-hill/second-set'}, {type: 'settle', id: `${ID}/fuel`},
-              mark('took-the-set', 'You took Parrot\'s radio out of the Pocket and gave it to Radio Hill.'), to('second-set')],
-          },
-          seen: {
-            // Not a failure: the buggies start, and they can be outrun on the road or fought.
-            lines: [line('road-rat', 'There\'s somebody in the Pocket! Parrot, there\'s somebody at your set!', {as: 'A Road Rat'})],
-          },
-          caught: {
-            lines: [parrotHere('You walked all this way to steal a radio from a thief. I admire that, driver, I really do. I\'m still having your wheels.')],
-            pocketWatch: 2,
-            effects: [{type: 'scrap', by: -30}, mark('wheels-taken', 'The Road Rats took your wheels in the Pocket.'), to('other-voice')],
-          },
+      },
+      outcomes: {
+        'out-with-the-set': {
+          lines: [
+            bern('That\'s a better set than ours, and I shan\'t be telling Hetty so. Now she can listen on one and talk on the other, and heaven help the rest of us.'),
+            hettyHere('I\'ve two sets now, so I can listen to the Mall Road and scold my sister at the same time. And nobody on this land will hear a lie in my voice again.'),
+          ],
+          effects: [sisters({by: 1}), ratsFeud(1), {type: 'made', id: 'radio-hill/second-set'}, {type: 'settle', id: `${ID}/fuel`},
+            mark('took-the-set', 'You took Parrot\'s radio out of the Pocket and gave it to Radio Hill.'), end('second-set')],
+        },
+        seen: {
+          // Not a failure: the buggies start, and they can be outrun on the road or fought.
+          lines: [line('road-rat', 'There\'s somebody in the Pocket! Parrot, there\'s somebody at your set!', {as: 'A Road Rat'})],
+        },
+        caught: {
+          lines: [parrotHere('You walked all this way to steal a radio from a thief. I admire that, driver, I really do. I\'m still having your wheels.')],
+          pocketWatch: 2,
+          effects: [{type: 'scrap', by: -30}, mark('wheels-taken', 'The Road Rats took your wheels in the Pocket.'), to('other-voice')],
         },
       },
     },
@@ -450,7 +453,7 @@ export default {
           ],
           cue: 'open.news.evening',
           effects: [sisters({by: 1}), {type: 'roadWord', by: 1}, {type: 'settle', id: `${ID}/fuel`},
-            mark('two-voices', 'Parrot reads the evening news with Hetty, because you asked her to.'), to('two-voices')]},
+            mark('two-voices', 'Parrot reads the evening news with Hetty, because you asked her to.'), end('two-voices')]},
         {id: 'threaten', words: 'Stop it, or I\'ll come and take your set.',
           thought: 'She knows that I found the hill. She may believe that I can find her.',
           hidden: 'She does not stop. The other two choices stay open, and the Pocket has twice the watch.',
@@ -472,7 +475,7 @@ export default {
   // What happens when the sign is never followed: the voices call for three nights, and then the radio is quiet.
   ignored: {
     after: {nights: 3},
-    effects: [to('unanswered')],
+    effects: [end('unanswered')],
     later: [
       {by: 'dot', where: 'at the diner or at the gate, some nights later',
         lines: [line('dot', 'A hauler from the Mall Road followed a voice on his radio in among the wrecks last week. He walked into my diner two days later carrying his own steering wheel, because it was all that they\'d left him.')]},

@@ -16,7 +16,7 @@ otherwise. The mast is his, and nobody climbs it here. Nothing is said of the li
 | The Deck Folk's word for the player | The Deck Folk's word, and a favour owed |
 | Embers in the store, for the fire basket | Embers |
 | The Walkers' word, and the sisters' word at Radio Hill, for an answer each on the radio | The Bell Buoy found |
-| Whether the Bell Buoy is found | A way aboard the Patience (a thing made) |
+| Whether the fire basket was lit, and whether the ladder is down (this storyline's own) | A way aboard the Patience (a thing made) |
 | The night, for when it can begin | A watch kept from the masthead (a thing made) |
 | | Marks that later scenes read |
 
@@ -39,7 +39,8 @@ another night. If they were seen and not followed, it has been ignored (section 
 This storyline is tied to one place, so it names it: the salt pan north of the Salt Road, which Tin Town calls the
 Whites, and the three ships at its western edge. *The buoy* is a new site, the Bell Buoy, at whichever of its three
 positions the land's seed picks. *The boat's crew* are found six tenths of the way from the ships to the buoy. A line
-may hold `{buoy.bearing}`, one of the eight compass words.
+cannot hold a compass word (a role has four words: its name, its people, its leader and its thing), so nobody here
+gives a bearing: a rumour's circle on the map does that work.
 
 **People in it.** Captain Imre of the Deck Folk, as he is: a lamp on a ship's rail and a voice, who reports. Auntie
 Solder, Cinder and Moss, as they are. Rell and Hetty, if their peoples are Friendly. New, all Deck Folk:
@@ -85,7 +86,7 @@ view for three seconds, two thought bubbles come.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "Auntie, who would carry lamps on the Whites at night?" | **Auntie Solder:** *(on the radio)* On the Whites, at this hour? The salt rakers only ever worked by day. Whoever is out there, they don't come from any town that I know. | Nobody from Tin Town's side |
+| "Auntie, who would carry lamps on the Whites at night?" | **Auntie Solder:** *(on the radio)* Somebody is carrying lamps on the Whites at this hour? The salt rakers only ever worked by day. Whoever is out there, they don't come from any town that I know. | Nobody from Tin Town's side |
 | "Cinder, could it be the Ash Men?" | **Cinder:** *(on the radio)* It isn't the Ash Men. They put lamps out wherever they find them, and they would never carry four of their own in a row. | Not an enemy |
 | "Moss, have you ever driven on the pan?" | **Moss:** *(on the radio)* I took Bess across it once, and it took me half a day to find the road again. It's the same in every direction out there, flat and white. Don't follow anything on to it unless you know your way back. | The danger is the way back |
 | "Rell, do your people rake salt by night?" *(only if the Walkers are Friendly)* | **Rell:** *(on the radio)* My people raked that salt for twenty years, and we never once worked it after dark. At night the cold makes the pan smoke, and you can't see your own cart. Lamps in a line like that belong to the ship people. | The haze is coming. Who they are |
@@ -103,13 +104,13 @@ view for three seconds, two thought bubbles come.
 
 The player stops below the Patience. A lamp blinks from a rail high above the road.
 
-> **Captain Imre:** Ahoy there, the car. This is the Deck Folk, evening watch. The sounding boat is away on the salt,
-> and she is one watch overdue. Nothing to report.
+> **Captain Imre:** Ahoy there, the car. This is the Deck Folk, and it is the evening watch. The sounding boat is away
+> on the salt, and she is one watch overdue. We have nothing to report.
 
 **If the Deck Folk are Cold,** because a promise to them was broken, he says this in place of it.
 
-> **Captain Imre:** Deck Folk, evening watch. We have a note in the log about you, and it is underlined. The sounding
-> boat is overdue. That is all that I have to say to you.
+> **Captain Imre:** This is the Deck Folk, and it is the evening watch. We have a note in the log about you, and it is
+> underlined. The sounding boat is overdue. That is all that I have to say to you.
 
 **You may ask before you choose. Asking costs nothing.**
 
@@ -119,7 +120,7 @@ The player stops below the Patience. A lamp blinks from a rail high above the ro
 | "What is a sounding boat?" | **Captain Imre:** Once a year we send a boat's crew down the old channel to take the depth of the sea at the last buoy. The depth has been nil every year since we touched bottom. It still has to be written down. | Why they went |
 | "Why don't you go and look for them?" | **Captain Imre:** We have only the one boat, and she is the one that is missing. I have four hands left aboard, and one of them is the cook. | Nobody else is coming |
 | "Why can't they see your lamp?" | **Captain Imre:** Our riding light is an oil lamp, and the haze swallows it. In fog this ship used to burn a fire basket at her masthead, and a boat could steer home by it from the far buoy. We have had nothing to put in the basket since the spring. | Why they are lost. An ember would bring them home |
-| "Which way did they go?" | **Captain Imre:** They went down the channel, to the {buoy.bearing} of our bow. The last buoy has a bell on it, and the bell still rings whenever the wind gets up. | A rumour: the circle for the Bell Buoy |
+| "Which way did they go?" | **Captain Imre:** They went down the old channel, straight out from our bow. The last buoy has a bell on it, and the bell still rings whenever the wind gets up. | A rumour: the circle for the Bell Buoy |
 
 **The decision.**
 
@@ -136,8 +137,8 @@ The player stops below the Patience. A lamp blinks from a rail high above the ro
 **1. The fire basket.** The bucket goes up, and a minute later an orange light stands at the Patience's masthead,
 with the cue `open.basket.lit`.
 
-> **Captain Imre:** Fire basket lit at the masthead, with fire from Tin Town. I have written that down, and I have
-> written down who brought it. Nothing to report.
+> **Captain Imre:** The fire basket is lit at the masthead, with fire from Tin Town. I have written that down, and I
+> have written down who brought it. We have nothing to report.
 
 The player may still follow the lamps, and Scene 3 plays with the basket burning. A player who drives home now has
 done enough: the crew walk in by the basket before midnight (Scene 7, "Home by the basket").
@@ -199,9 +200,9 @@ these.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "What mark are you waiting for?" | **Fathom:** The riding light at the Patience's masthead. A boat steers home by it. It was there at sunset, and then the haze came up, and it has not been there since. | They cannot find the ship without a light to walk toward |
+| "What mark are you waiting for?" | **Fathom:** We are waiting for the riding light at the Patience's masthead. A boat steers home by it. It was there at sunset, and then the haze came up, and it has not been there since. | They cannot find the ship without a light to walk toward |
 | "What did you come out here for?" | **Fathom:** We came to take the depth of the sea at the bell buoy, as we do every year. There is a sounding in the log for every year since we touched bottom. Tonight's is the only one that has not been taken. | The sounding matters to them. It opens the fourth choice |
-| "How far is the buoy?" *(only after the question above)* | **Wick:** The buoy is a kilometre farther out, to the {buoy.bearing}. We turned back when Kedge went through the crust, and that was when we lost the light. | Where the buoy is, and that it lies away from home |
+| "How far is the buoy?" *(only after the question above)* | **Wick:** The buoy is a kilometre farther out, on the side away from the ship. We turned back when Kedge went through the crust, and that was when we lost the light. | Where the buoy is, and that it lies away from home |
 | "Sprat, do you know the way back?" | **Sprat:** The wind was on my left cheek all the way out, so it ought to be on my right cheek going home. I said so an hour ago. I'm not rated to navigate, so nobody wrote it down. | The child knows the way. It opens the second choice |
 | "Kedge, can you walk at all?" | **Kedge:** I can hop, driver, and I weigh as much as the cart does. I wouldn't want to be the hand who had to hold me up for the length of the channel. | Kedge has to ride |
 
@@ -235,15 +236,15 @@ these.
 >
 > **You:** She noticed which way the wind was blowing, Mr Fathom, and nobody else did.
 >
-> **Fathom:** That is true, and I don't enjoy it. Very well. Sprat, take the head of the line, and call out your
+> **Fathom:** That is true, and I don't enjoy it. Sprat, take the head of the line, and call out your
 > bearing as you go.
 >
 > **Sprat:** The wind is on my right cheek, and the bearing is home. Follow me, Mr Fathom, and please keep up.
 
 **3.**
 
-> **Fathom:** All hands together, then, astern of the car. Driver, go slowly, because a boat's crew on foot makes
-> about two knots, and a knot is not very much.
+> **Fathom:** Then all hands will walk together, astern of the car. Driver, go slowly, because a boat's crew on foot
+> makes about two knots, and a knot is not very much.
 >
 > **Kedge:** So I'm cargo tonight. I've been called worse things. Mind the bumps, driver, because every one of them
 > goes straight up my leg.
@@ -263,7 +264,7 @@ crew."
 
 ### Scene 5. The Bell Buoy
 
-**The drive, by car, about two minutes there and back.** A kilometre to the {buoy.bearing}, away from the ships, with
+**The drive, by car, about two minutes there and back.** A kilometre farther out, away from the ships, with
 Fathom in the car. There is no marker. The buoy is found by its bell, the cue `open.buoy.bell`, which is heard from
 400 metres and grows louder, and then as a dark shape in the haze. If Captain Imre was asked which way they went, the
 rumour's circle is on the map.
@@ -273,8 +274,8 @@ when the wind moves it. It is found, and it is on the map for good as the Bell B
 Fathom gets out, lowers the iron weight on its line until it lies on the salt, and reads the mark on the line by the
 car's lamps. The player waits beside him for twenty seconds.
 
-> **Fathom:** By the mark, nought. The depth of the sea at the bell buoy is no fathoms and no feet. Thank you, driver.
-> That is one sounding for every year since we touched bottom, and every one of them agrees.
+> **Fathom:** By the mark, it is nought. The depth of the sea at the bell buoy is no fathoms and no feet. Thank you,
+> driver. That is one sounding for every year since we touched bottom, and every one of them agrees.
 
 > *He walked out here in the cold to measure a sea that isn't there, and he's pleased with the answer.*
 
@@ -286,7 +287,7 @@ Then back to the cart. The lamp there has been burning all this time. If it has 
 passing within seventy metres, or by the true line if Sprat was asked: she has turned the cart to point home, and she
 shouts when she hears the engine.
 
-> **Sprat:** Over here, driver! The lamp went out, so I've been shouting every time I counted to twenty.
+> **Sprat:** We're over here, driver! The lamp went out, so I've been shouting every time I counted to twenty.
 
 **The ledger at the buoy.** The Bell Buoy: found. Mark: "You drove the ships' leadsman out to the bell buoy, so that
 the year's sounding was taken."
@@ -338,18 +339,18 @@ Below the Patience, however they came in. A ladder is down, and lamps are moving
 
 **All four came in by the player's doing.**
 
-> **Captain Imre:** Sounding boat returned, all hands aboard. I shall write that she was brought in by a car, because
-> it is true, and this log has seen stranger things.
+> **Captain Imre:** The sounding boat has returned with all hands aboard. I shall write that she was brought in by a
+> car, because it is true, and this log has seen stranger things.
 >
 > **Captain Imre:** The Deck Folk do not bring strangers aboard. You are not a stranger now. There is a ladder on the
-> Patience's quarter, and it will be down whenever you come. Nothing to report.
+> Patience's quarter, and it will be down whenever you come. We have nothing to report.
 >
 > **Kedge:** Thank you for the ride, driver. Next year somebody else can be the one who goes through the crust.
 
 If the sounding was taken:
 
-> **Fathom:** Depth at the bell buoy, nil. The log is complete, Captain, and it was this driver who took me there to
-> complete it.
+> **Fathom:** The depth at the bell buoy is nil. The log is complete, Captain, and it was this driver who took me
+> there to complete it.
 
 If it was not:
 
@@ -363,7 +364,7 @@ If Sprat led the line home:
 >
 > **Sprat:** Does a navigator's mate still have to scrub the galley?
 >
-> **Captain Imre:** Yes.
+> **Captain Imre:** Yes, she does.
 
 If Sprat walked in last, and was not taken into the car:
 
@@ -377,8 +378,9 @@ led: "You told the ships' crew to follow a child who knew the way, and she broug
 **Home by the basket.** The player lit the basket and did not go out, or went out and lost them. The four walk in by
 the orange light before midnight. This is said on the radio, to a player who is anywhere.
 
-> **Captain Imre:** *(on the radio)* Deck Folk to the car from Tin Town. Sounding boat returned at six bells, all
-> hands aboard, steering by your fire. The ladder on the Patience's quarter is down for you. Nothing to report.
+> **Captain Imre:** *(on the radio)* This is the Deck Folk, calling the car from Tin Town. The sounding boat returned
+> at six bells with all hands aboard, steering by your fire. The ladder on the Patience's quarter is down for you. We
+> have nothing to report.
 
 **The ledger.** The Deck Folk: up one word. A favour is owed for the ember. The way aboard the Patience. No sounding
 was taken.
@@ -396,8 +398,9 @@ in, and the other two walked in at dawn."
 **In at dawn.** The player followed the lamps and lost them, with no basket burning. Said the next time the player
 passes under the ships.
 
-> **Captain Imre:** Deck Folk, forenoon watch. The sounding boat came in at first light under her own power. Her crew
-> are cold, and the ship's boy has been put to bed with her feet in a bucket. Nothing to report.
+> **Captain Imre:** This is the Deck Folk, and it is the forenoon watch. The sounding boat came in at first light
+> under her own power. Her crew are cold, and the ship's boy has been put to bed with her feet in a bucket. We have
+> nothing to report.
 
 **The ledger.** Nothing moves. Mark: "You followed the lamps on to the salt and lost them in the haze."
 
@@ -437,14 +440,14 @@ A find: the Bell Buoy is on the map, if it was not found on the night.
 | b | "Watch the road to the Ridge for me." | The road across the pan to the Ridge | The same, on that road |
 | c | "Watch the salt itself, in case anybody else is lost on it." | The whole white pan | No road is watched. Any sign that rises on the pan is called to the player at once, and nobody is ever lost on the Whites for a whole night again |
 
-> **Captain Imre:** *(a)* The Salt Road, then. The masthead lookout will call you when there are riders on it. I shall
-> go on having nothing to report.
+> **Captain Imre:** *(a)* Then it shall be the Salt Road. The masthead lookout will call you when there are riders on
+> it. I shall go on having nothing to report.
 >
-> **Captain Imre:** *(b)* The Ridge road, then. The masthead lookout will call you when there are riders on it. I
-> shall go on having nothing to report.
+> **Captain Imre:** *(b)* Then it shall be the road to the Ridge. The masthead lookout will call you when there are
+> riders on it. I shall go on having nothing to report.
 >
-> **Captain Imre:** *(c)* The salt, then. I had hoped that you would say so. The masthead lookout will call you if a
-> lamp or a smoke shows on it. I shall go on having nothing to report.
+> **Captain Imre:** *(c)* Then it shall be the salt. I had hoped that you would say so. The masthead lookout will call
+> you if a lamp or a smoke shows on it. I shall go on having nothing to report.
 
 **The ledger.** The favour is spent. A thing made: the masthead watch, on the way that was chosen.
 
@@ -471,8 +474,8 @@ gate or on the road.
 **If the player heard it from Captain Imre and drove home,** he says this the next time the car stops below the
 ships.
 
-> **Captain Imre:** Deck Folk, evening watch. A car stopped under our bow last week, asked its questions and went home
-> to bed. I have logged it without comment. Nothing to report.
+> **Captain Imre:** This is the Deck Folk, and it is the evening watch. A car stopped under our bow last week, asked
+> its questions and went home to bed. I have logged it without comment. We have nothing to report.
 
 The ladder is not put down by this road. The Deck Folk can still be made friends in other ways, as they always could.
 
@@ -494,7 +497,7 @@ The ladder is not put down by this road. The Deck Folk can still be made friends
 | Embers in the store | With none, or outside an act that counts embers, the fire basket is not offered. Captain Imre still says why the crew cannot see his lamp |
 | The Walkers' word | Rell is not there to ask. Nobody warns of the haze before it comes |
 | The sisters' word at Radio Hill | Hetty is not there to ask |
-| The Bell Buoy is found | It is not, and this storyline may find it: by the sounding, or from Fathom's chart |
+| The ladder is down | It is not, until this storyline puts it down. Nobody else writes it today |
 
 ## 8. Crossings
 
@@ -517,9 +520,9 @@ On Day 3 of Five Cold Nights, by the long road, if the fire basket was lit:
 
 When a sign rises on the pan and the masthead watches the salt:
 
-> **The masthead lookout:** *(on the radio)* Masthead to the car from Tin Town. There is something showing on the
-> salt to the {sign.bearing} of the ships. The Captain says that it is nothing to report. I thought that you would
-> want to know.
+> **The masthead lookout:** *(on the radio)* This is the masthead, calling the car from Tin Town. There is something
+> showing out on the salt tonight. The Captain says that it is nothing to report. I thought that you would want to
+> know.
 
 ## 9. What it takes to play, what it needs made, and its sounds
 

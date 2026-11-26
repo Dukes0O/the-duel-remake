@@ -17,7 +17,7 @@ different and younger child, and this storyline leaves him as he is.
 | --- | --- |
 | The Ash Men's feud | The Ash Men's feud |
 | Embers in the store, for a price | Embers |
-| Who is Friendly or better, for where a boy can be sent: the Walkers, Dot, the Deck Folk, a found camp | That people's word for the player, if Clinker is told where the boy went |
+| Who is Friendly or better, for where a boy can be sent: the Walkers, the Deck Folk, a found camp | That people's word for the player, if Clinker is told where the boy went |
 | Whether the Walkers live inside the fence | A way into the Grey Camp by its back (a thing made), and a rumour of where the Grey Camp is |
 | The night, for when it can begin | Marks that later scenes read, the fifth night's parley above all |
 
@@ -39,10 +39,11 @@ noticed. The sign lasts one day. At dark he goes back under the wire by himself,
 
 This storyline is tied to one place, Tin Town, so it names it. *The boy* is always the same boy. *The haven* is
 whichever people the player drives him to, out of those who are Friendly or better; a line may hold `{haven.name}` or
-`{haven.leader}`.
+`{haven.leader}`. The haven is cast when the player arrives there, and not when the storyline starts, so a player with
+no friend at all can still meet the boy.
 
-**People in it.** Auntie Solder, Cinder, Moss and Odessa, as they are. Clinker, as he is. Rell and Wim, Dot, and
-Captain Imre, if the ledger holds them. New: **Slack**, about twelve, grey with ash to the eyebrows, a stoker's boy
+**People in it.** Auntie Solder, Cinder, Moss and Odessa, as they are. Clinker, as he is. Rell and Wim, and Captain
+Imre, if the ledger holds them. New: **Slack**, about twelve, grey with ash to the eyebrows, a stoker's boy
 from the Grey Camp. He carried coal to Old Smoke's furnace and ash away from it for three years. Two nights ago he
 carried one hot coal to an old woman who was cold, was seen, and ran. He is frightened and proud, he asks for very
 little, and he washes what he uses. Slack is not his name. It is the dust at the bottom of a coal heap, and it is what
@@ -54,8 +55,7 @@ the Ash Men call a boy who is small. His name is **Nat**, and he says so to a pl
 
 It is the third day of Five Cold Nights, at first light, before Bess goes for gas. The example continues from the
 watch trade of the second night: two embers in the store, the Walkers Friendly and camped at the Wash, the Ash Men
-Watching, the Word on the road 1, and 90 scrap in the car. Dot and the Deck Folk have not been met. No camp has been
-found. The player is in Tin Town with no mission running.
+Watching, the Word on the road 1, and 90 scrap in the car. The Deck Folk have not been met. No camp has been found. The player is in Tin Town with no mission running.
 
 ## 5. Scenes
 
@@ -225,7 +225,7 @@ Town." If Wim spoke: "Clinker heard the truth from Wim after he had heard a lie 
 
 **2. "He's here, and he's staying."**
 
-> **Clinker:** So Tin Town keeps what belongs to Old Smoke, and says so at its own gate. Very well. We will remember
+> **Clinker:** So Tin Town keeps what belongs to Old Smoke, and says so at its own gate. We will remember
 > who it was that kept what we had counted.
 >
 > **Auntie Solder:** *(on the radio)* Well, that's said now, and it can't be unsaid. Bring the boy to the hearth. If
@@ -241,8 +241,8 @@ until they are dark, with the cue `story.pot.lump-grey`, twice.
 > **Clinker:** There, they've both gone grey. The boy is paid for, and I'll take him off my count. You see how simple
 > it is, when a town knows how to pay?
 >
-> **Auntie Solder:** *(on the radio)* Two embers for a boy who washes bowls. I've made worse bargains than that, and
-> so have you. Don't tell Cinder what it cost until I've given her some soup.
+> **Auntie Solder:** *(on the radio)* That's two embers for a boy who washes bowls. I've made worse bargains than
+> that, and so have you. Don't tell Cinder what it cost until I've given her some soup.
 
 **The ledger.** Embers: 2 to 0, before the hearth is banked. Mark: "You paid Clinker two embers for the runaway." The
 Ash Men: Watching still.
@@ -276,12 +276,16 @@ written, and the questions stand. The player cannot say that there was no boy, b
 | --- | --- | --- | --- | --- |
 | a | "He was here this morning. I drove him to {haven.name}." | Clinker looks along the road | *It's the truth. I wonder what the truth is going to cost {haven.leader}.* | Clinker goes there. That people are visited by three cars of Ash Men, and they think one word less of the player |
 | b | "He was here, and he's gone. I'm not telling you where." | The riders start their engines | *He can't search the whole of the Scablands. I hope that he can't.* | The Ash Men's feud rises one step. Nobody is visited |
+| c | "He was here this morning. I left him on the Boneyard road." *(only if nobody would take him, in place of a)* | Clinker looks along the road | *It's the truth, and it tells Clinker exactly where to look.* | The riders go down the Boneyard road. The draw for how the road treated him is made at three chances in four of the worse |
 
 > **Clinker:** *(a)* Thank you. That is the first useful thing that anybody has said to me today. I shall go and ask
 > them for him, as politely as I have asked you.
 >
 > **Clinker:** *(b)* Then I shall look everywhere, and I shall begin with the people that you are fond of. We will
 > remember who it was that sent us looking.
+>
+> **Clinker:** *(c)* Thank you. A boy on foot on the Boneyard road will not have gone far. That is the first useful
+> thing that anybody has said to me today.
 
 **The ledger.** If Clinker was told: that people's word falls one step, and a mark, "You told Clinker where the runaway
 had gone." If he was not: the Ash Men's feud rises one step.
@@ -361,9 +365,8 @@ with a clock it is the day's outing, so Bess does not go for gas.
 
 | The haven, and on what condition | What is said when he arrives |
 | --- | --- |
-| **The Walkers' camp,** if they are Friendly and camped outside the fence | **Rell:** A stoker's boy? We've no fire for him to stoke, so he'll have to learn to rake salt. But he walks quietly and he washes bowls. I've taken on worse. |
-| **Dot's Diner,** if Dot is Friendly | **Dot:** Can he wash dishes? Then he's hired. I'm not doing it to be kind. I'm doing it because I hate washing dishes, and so has everybody that I've ever paid to do it. |
-| **The ships,** if the Deck Folk are Friendly | **Captain Imre:** The Deck Folk can always use another hand, and he need never go ashore again. He will be entered in the log under whatever name he chooses. Nothing to report. |
+| **The Walkers' camp,** if they are Friendly and camped outside the fence | **Rell:** You've brought me a stoker's boy? We've no fire for him to stoke, so he'll have to learn to rake salt. But he walks quietly and he washes bowls. I've taken on worse. |
+| **The ships,** if the Deck Folk are Friendly | **Captain Imre:** The Deck Folk can always use another hand, and he need never go ashore again. He will be entered in the log under whatever name he chooses. We have nothing to report. |
 | **A found camp** whose people are Friendly | **{haven.leader}:** He can stay, if he works. We've nothing here that the grey men want, and we'd like to keep it that way. He's to keep his head down whenever there's dust on the road. |
 | **Nobody,** if the ledger holds no friend | The Boneyard road, with a blanket and a loaf. **Slack:** I'll follow the road until it stops. Roads always go somewhere, don't they? That's what they're for. |
 
@@ -400,7 +403,8 @@ If the player asked his name, he says this as well.
 > **Slack:** And thank you for asking what my name was. I'd nearly forgotten that I had one.
 
 **The ledger.** Mark: "You drove the runaway out of Tin Town to {haven.name}." No gas today. Clinker comes to the gate
-at dusk all the same (Scene 5, the second table).
+at dusk all the same (Scene 5, the second table). With nobody to take him, the mark is: "You drove the runaway to the
+Boneyard road and left him there with a blanket."
 
 **If nobody would take him,** how the road treats him is a named draw, and nobody says which way it went until later.
 An even chance, weighted toward the worse by the Ash Men's feud.
@@ -490,7 +494,7 @@ Mark: "A boy hid in Tin Town for a day, and left again before anybody spoke to h
 | The Ash Men's feud | Watching. Clinker comes with three cars |
 | Embers in the store | With fewer than two, or outside an act that counts embers, Clinker still names his price, and the third choice is not offered |
 | The Walkers' word, and whether they live inside the fence | Nobody whistles on the night of the search, the fourth hiding place is not there, and their camp is not a haven |
-| Dot's word, the Deck Folk's word, a found camp | Those havens are not on the map. With no friend at all, the only road out is the Boneyard road with a blanket |
+| The Deck Folk's word, a found camp | Those havens are not on the map. With no friend at all, the only road out is the Boneyard road with a blanket |
 | Whether Old Smoke has made peace | After the act, with peace made, the grey riders are Clinker's own and not Old Smoke's. Every line stands, because Clinker counts for whoever he serves |
 
 ## 8. Crossings
@@ -579,4 +583,4 @@ in all.
 | **The ash tip** | A place at the Grey Camp: the bank at its back where the furnace's ash is thrown, which nobody watches |
 | **The Grey Camp's back way** | A thing made (`way/grey-camp-back-way`): the ash tip, known to the player |
 | **A haven** | A role: whichever Friendly people take the boy in |
-| `runaway/found-him`, `/asked-his-name`, `/wire-mended`, `/hidden`, `/lied-to-clinker`, `/wim-told`, `/kept`, `/paid`, `/handed-back`, `/kept-ahead`, `/found-in-search`, `/fought-for-him`, `/sent-on`, `/told-where`, `/taken-on-the-road`, `/drew-the-camp`, `/left` | Marks, each with the sentence given in its scene |
+| `runaway/found-him`, `/asked-his-name`, `/wire-mended`, `/hidden`, `/lied-to-clinker`, `/wim-told`, `/kept`, `/paid`, `/handed-back`, `/kept-ahead`, `/found-in-search`, `/fought-for-him`, `/sent-on`, `/sent-alone`, `/told-where`, `/taken-on-the-road`, `/drew-the-camp`, `/left` | Marks, each with the sentence given in its scene |

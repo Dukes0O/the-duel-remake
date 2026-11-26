@@ -34,8 +34,10 @@ radio is quiet, and the storyline has been ignored (section 6).
 This storyline is tied to one place, so it names it. *The hill* is Radio Hill, wherever the land's seed has put it
 (card OPEN-SITES gives its three possible positions). *The Pocket* is a new site, a horseshoe of stacked wrecks with
 one way in. It stands at whichever of its three positions is most nearly opposite the hill as seen from Tin Town's
-gate, so that the two voices never send a driver the same way. A line may hold `{hill.bearing}` or `{pocket.bearing}`,
-which is one of the eight compass words worked out from the car to the site.
+gate, so that the two voices never send a driver the same way. A line cannot hold a compass word (a role has four
+words: its name, its people, its leader and its thing), so each voice gives its bearing by a lamp: Hetty's red lamp on
+the mast, and the white lamp in the Pocket. Both are drawn where they truly are, and the call comes only where the
+hill can see the car, so that what Hetty says she sees is true.
 
 **People in it.** Hetty and Bern of Radio Hill, as OPEN-SITES has them: Hetty listens to everything and repeats most
 of it, and Bern mends everything and says little. Auntie Solder, Cinder and Moss, as they are. Rell, if the Walkers
@@ -79,12 +81,12 @@ The answer is made by doing something. A car that stands still for three seconds
 > **A voice:** *(on the radio)* You've stopped! Bern, come and look, the car has stopped.
 >
 > **Hetty:** *(on the radio)* My name is Hetty, and my sister and I keep the mast up here. We have the news of every
-> road, and the kettle is on. Turn to the {hill.bearing} and look for a red lamp that blinks.
+> road, and the kettle is on. Look for a red lamp that blinks, high up, and turn your car toward it.
 
 **If the car keeps going.**
 
 > **Hetty:** *(on the radio)* You didn't stop. Well, I wouldn't stop for a stranger either. I'm Hetty, and the red
-> lamp to the {hill.bearing} is ours. I'll be on the air again tomorrow night, in case you change your mind.
+> lamp that blinks, high up, is ours. I'll be on the air again tomorrow night, in case you change your mind.
 
 **The ledger.** If the car stopped, a mark: "You stopped your car on a dark road because a voice asked you to."
 
@@ -96,7 +98,7 @@ own. Under them, an engine is ticking over.
 > **A second voice:** *(on the radio, through static)* This is Radio Hill, calling the car on the road. Take no notice
 > of that other station, driver. There are people about tonight who copy our voice to lead cars off the road.
 >
-> **A second voice:** *(on the radio)* The real hill is to the {pocket.bearing}, where you'll see a white lamp held
+> **A second voice:** *(on the radio)* The real hill is the other way, where you'll see a white lamp held
 > steady. Come quickly, and tell me where you are now, so that I can guide you in.
 >
 > **Hetty:** *(on the radio)* Who is that on my set? I have said those words every night for eleven years, and that is
@@ -124,9 +126,9 @@ it, and the rest follows as written.
 
 | You ask | The first voice | The second voice | What it shows you |
 | --- | --- | --- | --- |
-| "What can you see from where you are?" | **Hetty:** *(on the radio)* I can see the road with you on it, and the glow of your town's hearth. I can also see three sets of lamps standing still among the wrecks to the {pocket.bearing}, and they haven't moved all evening. | **A second voice:** *(on the radio)* I can see the whole land from up here, driver. What I can see most clearly is that you're wasting time. | The first voice names things that are really there. Three cars are waiting to the {pocket.bearing} |
+| "What can you see from where you are?" | **Hetty:** *(on the radio)* I can see the road with you on it, and the glow of your town's hearth. I can also see three sets of lamps standing still among the wrecks near that white lamp, and they haven't moved all evening. | **A second voice:** *(on the radio)* I can see the whole land from up here, driver. What I can see most clearly is that you're wasting time. | The first voice names things that are really there. Three cars are waiting near the white lamp |
 | "What colour is my car?" | **Hetty:** *(on the radio)* I can't tell you that, because it's dark and you're a long way off. I can tell you that your left lamp is dimmer than your right one. | **A second voice:** *(on the radio)* It's a very fine car, driver, and that's all I need to know. There's no time for games tonight. | One of them can see the lamps, and says plainly what she cannot see |
-| "Blink your lamp three times for me." | **Hetty:** *(on the radio)* There you are, that was three. Bern says that if I do it again the bulb will go, and it's the only one we have. | **A second voice:** *(on the radio)* Ours isn't the blinking kind of lamp, driver. A steady light is an honest light. | Far to the {hill.bearing} the red lamp goes dark and then blinks three times, with the cue `open.lamp.blink`. The white lamp does not change. This is seen only from ground where both lamps are in view |
+| "Blink your lamp three times for me." | **Hetty:** *(on the radio)* There you are, that was three. Bern says that if I do it again the bulb will go, and it's the only one we have. | **A second voice:** *(on the radio)* Ours isn't the blinking kind of lamp, driver. A steady light is an honest light. | Far off, the red lamp goes dark and then blinks three times, with the cue `open.lamp.blink`. The white lamp does not change. This is seen only from ground where both lamps are in view |
 | "What's that noise behind you?" | **Hetty:** *(on the radio)* That's our generator. It has coughed like that ever since the dust storm, and Bern says it wants a new filter. | **A second voice:** *(on the radio)* That's only the wind in the mast, driver. | A thought follows: *That didn't sound like wind. It sounded like an engine ticking over.* |
 | "Who else is up there with you?" | **Hetty:** *(on the radio)* There's only my sister Bern, who mends things. She's holding a coil of wire and shaking her head at me. | **A second voice:** *(on the radio)* There's a whole friendly camp of us here, with a fire, hot food and room for your car. | The second voice offers more than a hilltop could hold |
 
@@ -136,15 +138,15 @@ it, and the rest follows as written.
 | --- | --- | --- |
 | "Auntie, is there a place called Radio Hill?" | **Auntie Solder:** *(on the radio)* There was a mast on one of the mesas when I was a girl, and it played dance music on Saturdays. I'd no idea that anybody was still up there. I do know that nobody ever built a mast in a scrap heap. | A mast stands on high ground |
 | "Cinder, would the Ash Men use a radio?" | **Cinder:** *(on the radio)* Old Smoke says that a radio is a small fire that talks, so he won't have one near him. The Road Rats would use one, though. They'll use anything that they can unbolt from a truck. | Who the liar probably is |
-| "Moss, what's out to the {pocket.bearing}?" | **Moss:** *(on the radio)* There's nothing out that way but wrecks stacked in rows, with one way in and no way out. I wouldn't take Bess in among them, and I wouldn't take your car in either. | The ground the second bearing leads to |
+| "Moss, what's out there, where that white lamp is?" | **Moss:** *(on the radio)* There's nothing out that way but wrecks stacked in rows, with one way in and no way out. I wouldn't take Bess in among them, and I wouldn't take your car in either. | The ground the second bearing leads to |
 | "Rell, have your people seen a red lamp at night?" *(only if the Walkers are Friendly)* | **Rell:** *(on the radio)* We carry no radio, but we've walked under that red lamp. Two women live up there, and one of them waved to us for an hour. Nobody waves for an hour if she means you harm. | The red lamp, vouched for by somebody who has seen it |
 
 **The decision** is made by going somewhere.
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | Drive to the {hill.bearing}, toward the red lamp | A red lamp, high up, that blinks | *A lamp on top of a hill is where a mast ought to be.* | The foot of the ramp (Scene 3) |
-| 2 | Drive to the {pocket.bearing}, toward the white lamp | A white lamp, low down, held steady | *She did tell me to come quickly.* | The Pocket (Scene 4) |
+| 1 | Drive toward the red lamp | A red lamp, high up, that blinks | *A lamp on top of a hill is where a mast ought to be.* | The foot of the ramp (Scene 3) |
+| 2 | Drive toward the white lamp | A white lamp, low down, held steady | *She did tell me to come quickly.* | The Pocket (Scene 4) |
 | 3 | Drive home and bank the hearth | The road home | *Neither of them is going anywhere tonight, and I can think better by the hearth.* | Both call again tomorrow night. Nothing is lost by sleeping on it, until the fourth night |
 
 **The ledger when the player leaves.** Marks: "You heard two voices on the radio, and each of them said it was Radio
@@ -163,7 +165,7 @@ on it. The player stops at its foot.
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | a | "Talk me up. I'm coming." | A dark ramp and a long drop | *If she's the liar, this is exactly where she would want me.* | The climb, below. A driver who comes up in the dark on Hetty's word is Friendly from the first cup |
-| b | "Not tonight. I'll come back when I can see the edge." | The road home | None | By day the ramp is plain and safe, and climbing it is no mission. The sisters are Strangers, as they are for anybody who finds them |
+| b | "I won't climb it tonight. I'll come back when I can see the edge." | The road home | None | By day the ramp is plain and safe, and climbing it is no mission. The sisters are Strangers, as they are for anybody who finds them |
 
 **The climb, by car, about three minutes.** A mission. It holds the checkpoints and the signs. The lamps show twelve
 metres of ramp and nothing of the drop. Hetty watches the car's lamps from above and calls each turn four seconds
@@ -191,7 +193,7 @@ two voices from one set and has only the words to tell them apart. The voice tha
 > **Parrot:** *(on the radio)* You're nearly at the top. Put your foot down for the last rise, or you'll roll all the
 > way back.
 >
-> **Hetty:** *(on the radio)* Slowly, please, slowly. The top is flat for two car lengths, and after that there isn't
+> **Hetty:** *(on the radio)* Please go slowly now. The top is flat for two car lengths, and after that there isn't
 > any more top.
 >
 > **Hetty:** *(on the radio)* That's it, you're up. Turn your lamps off before you blind my sister. Welcome to Radio
@@ -259,7 +261,7 @@ While the player waits, the second voice goes on.
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | a | Drive in to the lamp | A white lamp and a narrow mouth | *It could still be a camp. Camps do hide themselves.* | The trap is sprung, below |
-| b | Back out and drive for the red lamp | The red lamp still blinks to the {hill.bearing} | *One of those voices could see my lamps. It wasn't this one.* | Scene 3. Parrot knows that her trick has failed, and says so |
+| b | Back out and drive for the red lamp | The red lamp still blinks, far off | *One of those voices could see my lamps. It wasn't this one.* | Scene 3. Parrot knows that her trick has failed, and says so |
 | c | Turn off your lamps and wait at the mouth *(only if the wheels or the tracks were found)* | Darkness, and the engine off | *She can't see me. I'd like to know what she does when the car doesn't come.* | She walks out to look, and the player sees who she is |
 
 **b. Backing out.**
@@ -270,7 +272,7 @@ While the player waits, the second voice goes on.
 **c. Waiting in the dark.** After twenty seconds a woman in a coat of seat covers walks out along the row of wrecks
 with a radio set on a strap, talking into it in Hetty's voice. Behind her, three buggies start their engines.
 
-> **A second voice:** *(on the radio)* Driver? Driver, are you there? Please answer me. We're all so worried about you
+> **A second voice:** *(on the radio)* Driver, are you there? Please answer me. We're all so worried about you
 > up here on the hill.
 
 > *That's a Road Rat with a radio on a strap, and she's doing the voice. There are three buggies behind her with their
@@ -345,10 +347,10 @@ at the set. She is standing at the edge, looking south.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "How long has she been doing it?" | **Hetty:** Since the spring. At first she only repeated my weather, and I was almost pleased, because it meant that somebody was listening. | She began as a listener |
+| "How long has she been doing it?" | **Hetty:** She has been doing it since the spring. At first she only repeated my weather, and I was almost pleased, because it meant that somebody was listening. | She began as a listener |
 | "Can't you talk over her?" | **Bern:** We can, if Hetty sits at the set from dusk until dawn and never stops. She'd be no use for anything else, and the generator would drink fuel all night long. | Talking over her costs the sisters their nights, and fuel |
 | "Where does she call from?" | **Hetty:** She calls from a buggy, so it moves about. But the engine behind her voice is always the same one, and after dark it always stands in the Pocket. | Where to find her. A rumour: the circle for the Pocket, if it is not found yet |
-| "What does she want?" | **Hetty:** Wheels, I suppose. Though last week she read out all of my news after I'd gone to bed, and nobody was robbed that night. I've wondered about that ever since. | She may like the radio for its own sake |
+| "What does she want?" | **Hetty:** She wants wheels, I suppose. But last week she read out all of my news after I'd gone to bed, and nobody was robbed that night. I've wondered about that ever since. | She may like the radio for its own sake |
 
 **The decision.**
 
@@ -391,7 +393,7 @@ rises one step when the first drum is brought.
 | | You say | What happens |
 | --- | --- | --- |
 | a | "I'll go tonight." | The mission begins at dusk. It is the day's outing in an act with a clock |
-| b | "Not yet." | Nothing changes. Bern asks again on the next visit |
+| b | "I can't go tonight." | Nothing changes. Bern asks again on the next visit |
 
 **The Pocket, on foot, about four minutes.** A mission. It holds the checkpoints and the signs. The car is left two
 hundred metres from the mouth. One Road Rat stands inside with the white lamp on its pole and turns slowly, and a
@@ -532,7 +534,7 @@ And when Radio Hill is found by any other way, Hetty's first greeting has one mo
 | The Road Rats' feud | Watching. Three buggies wait in the Pocket, and Parrot will deal |
 | The Walkers' word | Rell is not there to ask. The other three answers on the radio stand |
 | A tower on the Crow's Step | No keeper speaks. The player tests the voices unaided |
-| Scrap in the car | With less than 30, Odessa fits the wheels on credit and says so. With less than 25, Moss will not sell a drum, and the promise of fuel is not offered |
+| Scrap in the car | With less than 30, Odessa fits the wheels for whatever is there. With less than 25, Moss will not sell a drum, and the promise of fuel is not offered |
 
 ## 8. Crossings
 

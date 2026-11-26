@@ -15,7 +15,8 @@
 //   explore    things to find by going up to them: {id, what, thought, tells}
 //   choices    {id, words (said) or does (done), plain, thought, hidden, effects, next}; `hidden` is the writer's
 //              note of what is kept out of sight, and no player reads it
-//   mission    a job with its holds, the numbers a builder starts from, and its outcomes
+//   mission    the id of a job, with its `holds` and its `outcomes` on the beat, as section 18 has them; `job` holds
+//              the step kind and the numbers a builder starts from
 const ID = 'runaway';
 const line = (speaker, words, delivery) => ({speaker, words, ...delivery});
 const onRadio = {radio: true};
@@ -33,6 +34,7 @@ const trader = words => line('trader', words, {as: 'The trader'});
 const mark = (what, text) => ({type: 'mark', id: `${ID}/${what}`, text});
 const has = what => ({fact: 'mark', id: `${ID}/${what}`});
 const to = beat => ({type: 'thread', id: ID, to: beat});
+const end = name => ({type: 'thread', id: ID, end: name});
 const ashFeud = by => ({type: 'feud', of: 'ash-men', by});
 const embers = by => ({type: 'stock', stock: 'embers', by});
 const walkersInside = {fact: 'mark', id: 'walkers-inside'};
@@ -52,21 +54,22 @@ export default {
   id: ID,
   title: 'The runaway',
   kind: 'stranger',
-  reads: ['feud', 'stock', 'word', 'found', 'stage', 'mark', 'night', 'draw'],
-  writes: ['feud', 'stock', 'word', 'made', 'mark', 'scrap', 'thread'],
+  reads: ['feud', 'stock', 'word', 'made', 'mark', 'night'],
+  writes: ['feud', 'stock', 'word', 'made', 'mark', 'scrap'],
 
   cast: {
-    // Tied to Tin Town. The boy is always the same boy. The haven is whichever Friendly people the player drives him to.
-    town: {from: 'places', only: 'tin-town'},
-    boy: {from: 'people', only: 'slack'},
-    haven: {from: 'peoples', where: {fact: 'word', atLeast: 'Friendly'}, chosenBy: 'player', otherwise: 'nobody'},
+    // Tied to Tin Town, and the boy is always the same boy, so both are named as they are. The haven is whichever
+    // Friendly people the player drives him to. It is cast when the player arrives there and not when the storyline
+    // starts, and a storyline with no haven to cast still begins: the boy can be hidden, kept, paid for or handed back.
+    haven: {from: 'peoples', where: {fact: 'word', atLeast: 'Friendly'}, among: ['walkers', 'deck-folk', 'glasshouse', 'radio-hill', 'bus-ring'],
+      castWhen: 'the player arrives', optional: true},
   },
 
   starts: {all: [{fact: 'night', atLeast: 2}, {not: {fact: 'thread', id: ID, at: 'any'}},
     {fact: 'draw', name: 'start', chance: .35}]},
 
   // A stranger who does not come to the gate: he is already inside, and the sign is what he has left out of place.
-  sign: {kind: 'stranger', at: 'town', part: 'day', lastsDays: 1,
+  sign: {kind: 'stranger', at: 'tin-town', part: 'day', lastsDays: 1,
     lines: [
       {at: 'bess-shed', ...moss('Somebody slept in Bess\'s shed last night. Whoever it was folded the sacks up afterwards, which is more than I ever do.')},
       {at: 'hearth', ...auntie('Somebody had a bowl of my soup in the night, and then washed the bowl. Nobody in this town has ever washed a bowl without being told to.')},
@@ -93,7 +96,7 @@ export default {
     },
 
     shed: {
-      when: {reach: 'town', at: 'bess-shed'},
+      when: {reach: 'tin-town', at: 'bess-shed'},
       cue: 'open.runaway.found',
       lines: [
         boy('Don\'t shout. Please don\'t shout. If you shout, the cook will ring the bell, and then everybody will know where I am.', {as: 'The boy'}),
@@ -151,7 +154,7 @@ export default {
     },
 
     hearth: {
-      when: {reach: 'town', at: 'hearth', after: 'shed'},
+      when: {reach: 'tin-town', at: 'hearth', after: 'shed'},
       lines: [
         auntie('So this is who washed my bowl. Sit down, child, and stop standing as if somebody were about to hit you. Nobody hits anybody at my hearth.'),
         cinder('I\'ve known Clinker for thirty years, and he has never once let go of anything that he had counted. He\'ll be at our gate by dusk.'),
@@ -196,7 +199,7 @@ export default {
     },
 
     gate: {
-      when: {reach: 'town', at: 'gate', part: 'dusk', after: 'shed'},
+      when: {reach: 'tin-town', at: 'gate', part: 'dusk', after: 'shed'},
       cue: 'story.gate.bell',
       rule: {riderCars: 3, riderCarsWhenRaiding: 5},
       lines: [
@@ -243,10 +246,10 @@ export default {
           thought: 'Now they know, and nobody has had to lie. They\'ll also be back.',
           hidden: 'The feud rises one step. The boy is safe inside. Nobody searches. In an act with a clock the Ash Men come over the wall a night sooner; out of one, their cars come to fight more often at checkpoints for three banked nights.',
           lines: [
-            clinker('So Tin Town keeps what belongs to Old Smoke, and says so at its own gate. Very well. We will remember who it was that kept what we had counted.'),
+            clinker('So Tin Town keeps what belongs to Old Smoke, and says so at its own gate. We will remember who it was that kept what we had counted.'),
             auntie('Well, that\'s said now, and it can\'t be unsaid. Bring the boy to the hearth. If we\'re to be raided for him, he can at least eat properly first.', onRadio),
           ],
-          effects: [ashFeud(1), mark('kept', 'You kept the Ash Men\'s runaway, and you said so to Clinker\'s face.'), to('kept')]},
+          effects: [ashFeud(1), mark('kept', 'You kept the Ash Men\'s runaway, and you said so to Clinker\'s face.'), end('kept')]},
         {id: 'pay', words: 'Here are two embers. Count them, and then count him as gone.',
           needs: ['his-worth', {fact: 'stock', of: 'embers', atLeast: 2}], plain: 'The count falls by two',
           thought: 'That\'s two nights of the whole town\'s fire, for one boy who doesn\'t eat much.',
@@ -254,9 +257,9 @@ export default {
           cue: 'story.pot.lump-grey',
           lines: [
             clinker('There, they\'ve both gone grey. The boy is paid for, and I\'ll take him off my count. You see how simple it is, when a town knows how to pay?'),
-            auntie('Two embers for a boy who washes bowls. I\'ve made worse bargains than that, and so have you. Don\'t tell Cinder what it cost until I\'ve given her some soup.', onRadio),
+            auntie('That\'s two embers for a boy who washes bowls. I\'ve made worse bargains than that, and so have you. Don\'t tell Cinder what it cost until I\'ve given her some soup.', onRadio),
           ],
-          effects: [embers(-2), mark('paid', 'You paid Clinker two embers for the runaway.'), to('paid')]},
+          effects: [embers(-2), mark('paid', 'You paid Clinker two embers for the runaway.'), end('paid')]},
         {id: 'hand-back', words: 'Take him. He\'s yours.', plain: 'The boy walks out through the gate',
           hidden: 'The feud cools one step, and never below Watching. What the boy knows goes back with him.',
           lines: [
@@ -264,20 +267,27 @@ export default {
             clinker('You see? You do understand us. What has been counted goes back to where it was counted. Good night, fire-keepers.'),
             cinder('He\'ll stand by a cold grate tonight, and he\'ll carry coal again tomorrow. I\'m not saying that you were wrong. I\'m only saying what happens next.', low),
           ],
-          effects: [ashFeud(-1), mark('handed-back', 'You handed the runaway back to Clinker at your own gate.'), to('handed-back')]},
+          effects: [ashFeud(-1), mark('handed-back', 'You handed the runaway back to Clinker at your own gate.'), end('handed-back')]},
       ],
       // When the boy was driven out by day. The player cannot say that there was no boy, because the prints are there.
       choicesWhenSentOn: [
-        {id: 'tell-where', words: 'He was here this morning. I drove him to {haven.name}.', plain: 'Clinker looks along the road',
+        {id: 'tell-where', words: 'He was here this morning. I drove him to {haven.name}.', needs: [has('sent-on')], plain: 'Clinker looks along the road',
           thought: 'It\'s the truth. I wonder what the truth is going to cost {haven.leader}.',
           hidden: 'Clinker goes there. That people are visited by three cars of Ash Men, and they think one word less of the player.',
           lines: [clinker('Thank you. That is the first useful thing that anybody has said to me today. I shall go and ask them for him, as politely as I have asked you.')],
-          effects: [{type: 'word', person: '{haven}', by: -1}, mark('told-where', 'You told Clinker where the runaway had gone.'), to('sent-on')]},
+          effects: [{type: 'word', person: '@haven', by: -1}, mark('told-where', 'You told Clinker where the runaway had gone.'), end('sent-on')]},
+        // When nobody would take him.
+        {id: 'tell-the-road', words: 'He was here this morning. I left him on the Boneyard road.', needs: [has('sent-alone')], plain: 'Clinker looks along the road',
+          thought: 'It\'s the truth, and it tells Clinker exactly where to look.',
+          hidden: 'The riders go down the Boneyard road. The draw for how the road treated him is made at three chances in four of the worse.',
+          lines: [clinker('Thank you. A boy on foot on the Boneyard road will not have gone far. That is the first useful thing that anybody has said to me today.')],
+          drawWorse: {name: 'road-alone', chance: .25},
+          effects: [mark('told-where', 'You told Clinker where the runaway had gone.'), end('sent-on')]},
         {id: 'not-telling', words: 'He was here, and he\'s gone. I\'m not telling you where.', plain: 'The riders start their engines',
           thought: 'He can\'t search the whole of the Scablands. I hope that he can\'t.',
           hidden: 'The feud rises one step. Nobody is visited.',
           lines: [clinker('Then I shall look everywhere, and I shall begin with the people that you are fond of. We will remember who it was that sent us looking.')],
-          effects: [ashFeud(1), to('sent-on')]},
+          effects: [ashFeud(1), end('sent-on')]},
       ],
     },
 
@@ -295,19 +305,19 @@ export default {
     },
 
     search: {
-      mission: {
-        id: `${ID}/the-search`, kind: 'onfoot', by: 'foot', minutes: 4, holds: ['checkpoints', 'signs'],
+      mission: `${ID}/the-search`, holds: ['checkpoints', 'signs'],
+      job: {kind: 'onfoot', by: 'foot', minutes: 4,
         rule: {searchers: 2, order: ['in-the-shed', 'in-the-loft', 'in-the-woodpile'], secondsEachPlace: 60, foundAfterSecondsInLamp: 2,
           wireMendedDelaySeconds: 60, whistleSecondsBefore: 20, whistleWhen: walkersFriendly, notSearched: 'among-the-walkers',
           lampCue: 'open.search.lamp', whistleCue: 'night.whistle'},
         lines: [boy('The one with the quick lamp found a cat in a coal sack once, from right across the yard. Don\'t look at where I am, because he watches where people look.', low)],
-        outcomes: {
-          'not-found': {
-            lines: [clinker('My two found nothing, and they are good at finding. So either there\'s no boy, or you hide things better than you fence them. I shall write him down as lost on the road.')],
-            effects: [mark('kept-ahead', 'You kept the runaway ahead of Clinker\'s lamps for a whole night.'), to('hidden')],
-          },
-          found: {effects: [to('found')]},
+      },
+      outcomes: {
+        'not-found': {
+          lines: [clinker('My two found nothing, and they are good at finding. So either there\'s no boy, or you hide things better than you fence them. I shall write him down as lost on the road.')],
+          effects: [mark('kept-ahead', 'You kept the runaway ahead of Clinker\'s lamps for a whole night.'), end('hidden')],
         },
+        found: {effects: [to('found')]},
       },
     },
 
@@ -319,8 +329,8 @@ export default {
         {...auntie('They found him in the night, and he went back over the wall between the two of them. Clinker called down that this town tells lies. I couldn\'t think of anything to shout back.'), when: has('found-in-search')},
       ],
       outcomes: {
-        'not-found': {effects: [to('hidden')]},
-        found: {effects: [ashFeud(1), mark('found-in-search', 'Clinker\'s searchers found the boy that you said was not there.'), to('taken')]},
+        'not-found': {effects: [end('hidden')]},
+        found: {effects: [ashFeud(1), mark('found-in-search', 'Clinker\'s searchers found the boy that you said was not there.'), end('taken')]},
       },
     },
 
@@ -333,7 +343,7 @@ export default {
         {id: 'stand-aside', does: 'Stand aside', plain: 'The boy climbs the wall between the two of them',
           hidden: 'The feud rises one step, for the lie.',
           lines: [boy('Don\'t fight them for me. They\'d only come back with more, and then it would be your lamps.')],
-          effects: [ashFeud(1), mark('found-in-search', 'Clinker\'s searchers found the boy that you said was not there.'), to('taken')]},
+          effects: [ashFeud(1), mark('found-in-search', 'Clinker\'s searchers found the boy that you said was not there.'), end('taken')]},
         {id: 'stand-in-front', does: 'Stand in front of him', plain: 'Two searchers, and two more coming over the wall',
           hidden: 'A fight on foot with the brand and the Hand Flamer, as in the raid. Fire turns them, and when two are driven out the rest go. The feud rises two steps.',
           lines: [clinker('You would burn my people over one coal boy? Then you\'re keeping a fire for him after all. That is exactly how it begins.')],
@@ -343,11 +353,11 @@ export default {
     },
 
     'wall-fight': {
-      mission: {
-        id: `${ID}/the-wall-fight`, kind: 'defend', by: 'foot', minutes: 2, holds: ['checkpoints', 'signs'],
+      mission: `${ID}/the-wall-fight`, holds: ['checkpoints', 'signs'],
+      job: {kind: 'defend', by: 'foot', minutes: 2,
         rule: {searchers: 4, searchersWhenRaiding: 6, drivenOutEndsIt: 2, weapons: ['brand', 'hand-flamer']},
-        outcomes: {won: {effects: [to('kept')]}, lost: {effects: [to('taken')]}},
       },
+      outcomes: {won: {effects: [end('kept')]}, lost: {effects: [end('taken')]}},
     },
 
     'road-out': {
@@ -357,51 +367,54 @@ export default {
         // A reason before a fight: he says who is on the road, and why, before the gate opens.
         boy('Clinker\'s riders will be sitting where the roads leave your town. They look into every car when somebody has run. If they see me, they\'ll want me back, and they won\'t ask you twice.'),
       ],
-      mission: {
-        id: `${ID}/the-road-out`, kind: 'reach', by: 'car', minutes: 3, holds: ['checkpoints', 'signs'], outing: true,
+      mission: `${ID}/the-road-out`, holds: ['checkpoints', 'signs'],
+      job: {kind: 'reach', by: 'car', minutes: 3, outing: true,
         rule: {riderCarsAtFirstFork: 2, lookedIntoWithinMetres: 60, lookedIntoAfterSeconds: 8, ashGreyCarSeconds: 16,
           boxedSeconds: 6, seenCue: 'open.riders.seen'},
-        // Where he can go. The player chooses by driving there, and each is on the map only if the ledger holds it.
-        havens: [
-          {id: 'walkers', name: 'The Walkers\' camp', when: {all: [walkersFriendly, {not: walkersInside}]},
-            lines: [rell('A stoker\'s boy? We\'ve no fire for him to stoke, so he\'ll have to learn to rake salt. But he walks quietly and he washes bowls. I\'ve taken on worse.')]},
-          {id: 'dot', name: 'Dot\'s Diner', when: {fact: 'word', of: 'dot', atLeast: 'Friendly'},
-            lines: [line('dot', 'Can he wash dishes? Then he\'s hired. I\'m not doing it to be kind. I\'m doing it because I hate washing dishes, and so has everybody that I\'ve ever paid to do it.')]},
-          {id: 'deck-folk', name: 'The ships', when: {fact: 'word', of: 'deck-folk', atLeast: 'Friendly'},
-            lines: [line('captain-imre', 'The Deck Folk can always use another hand, and he need never go ashore again. He will be entered in the log under whatever name he chooses. Nothing to report.')]},
-          {id: 'camp', name: 'A found camp', when: {all: [{fact: 'stage', is: 'camp'}, {fact: 'word', atLeast: 'Friendly'}]},
+        // Where he can go. The player chooses by driving there, and a people is on the map as a haven only while its
+        // word is Friendly or better. The Walkers are a haven only while they are camped outside the fence.
+        havens: {
+          walkers: {unless: walkersInside,
+            lines: [rell('You\'ve brought me a stoker\'s boy? We\'ve no fire for him to stoke, so he\'ll have to learn to rake salt. But he walks quietly and he washes bowls. I\'ve taken on worse.')]},
+          'deck-folk': {
+            lines: [line('captain-imre', 'The Deck Folk can always use another hand, and he need never go ashore again. He will be entered in the log under whatever name he chooses. We have nothing to report.')]},
+          // Any found camp whose people are Friendly.
+          otherwise: {
             lines: [line('{haven.leader}', 'He can stay, if he works. We\'ve nothing here that the grey men want, and we\'d like to keep it that way. He\'s to keep his head down whenever there\'s dust on the road.')]},
-          // The Boneyard road, with a blanket and a loaf. How the road treats him is a named draw, said later.
-          {id: 'nobody', name: 'The Boneyard road', otherwise: true,
+          // No people is Friendly: the Boneyard road, with a blanket and a loaf. How the road treats him is a named
+          // draw, said later by a trader.
+          nobody: {
             lines: [boy('I\'ll follow the road until it stops. Roads always go somewhere, don\'t they? That\'s what they\'re for.')],
-            draw: {name: 'road-alone', chance: .5, worseBy: {feud: 'ash-men'}}},
+            draw: {name: 'road-alone', chance: .5, worseBy: 'the Ash Men\'s feud'},
+            // These stand in for the effects of `arrived` below. Clinker still comes to the gate at dusk.
+            effects: [mark('sent-alone', 'You drove the runaway to the Boneyard road and left him there with a blanket.'), to('gate')]},
+      },
+      surround: {
+        lines: [clinker('Hand the boy down to me. Then you can drive home with all four of your wheels.')],
+        choices: [
+          {id: 'open-the-door', does: 'Open the door',
+            effects: [mark('taken-on-the-road', 'Clinker\'s riders took the runaway out of your car.'), end('taken')]},
+          {id: 'break-out', does: 'Try to break out',
+            hidden: 'A second minute against four riders. Win, and the drive goes on with the feud one step higher. Lose, and the car is wrecked, the boy is taken, and the player is towed home.',
+            won: [ashFeud(1)],
+            lost: [mark('taken-on-the-road', 'Clinker\'s riders took the runaway out of your car.'), end('taken')]},
         ],
-        surround: {
-          lines: [clinker('Hand the boy down to me. Then you can drive home with all four of your wheels.')],
-          choices: [
-            {id: 'open-the-door', does: 'Open the door',
-              effects: [mark('taken-on-the-road', 'Clinker\'s riders took the runaway out of your car.'), to('taken')]},
-            {id: 'break-out', does: 'Try to break out',
-              hidden: 'A second minute against four riders. Win, and the drive goes on with the feud one step higher. Lose, and the car is wrecked, the boy is taken, and the player is towed home.',
-              won: [ashFeud(1)],
-              lost: [mark('taken-on-the-road', 'Clinker\'s riders took the runaway out of your car.'), to('taken')]},
+      },
+      },
+      outcomes: {
+        arrived: {
+          lines: [
+            boy('Nobody ever drove me anywhere before. I always walked, with a sack on my back. Thank you for the lift, and for the soup.'),
+            {...boy('And thank you for asking what my name was. I\'d nearly forgotten that I had one.'), when: has('asked-his-name')},
           ],
-        },
-        outcomes: {
-          arrived: {
-            lines: [
-              boy('Nobody ever drove me anywhere before. I always walked, with a sack on my back. Thank you for the lift, and for the soup.'),
-              {...boy('And thank you for asking what my name was. I\'d nearly forgotten that I had one.'), when: has('asked-his-name')},
-            ],
-            effects: [mark('sent-on', 'You drove the runaway out of Tin Town to {haven.name}.'), to('gate')],
-          },
+          effects: [mark('sent-on', 'You drove the runaway out of Tin Town to {haven.name}.'), to('gate')],
         },
       },
     },
 
     // The first morning after he is safe at Tin Town: kept in the open, paid for, or hidden through the search.
     'what-he-leaves': {
-      when: {reach: 'town', at: 'hearth', part: 'day', afterBankedNight: true, any: [has('kept'), has('paid'), has('kept-ahead')]},
+      when: {reach: 'tin-town', at: 'hearth', part: 'day', afterBankedNight: true, any: [has('kept'), has('paid'), has('kept-ahead')]},
       lines: [
         {...auntie('I\'m not shouting "Slack" across my own hearth. It sounds like something that has gone wrong with a rope. What did your mother call you?'), when: {not: has('asked-his-name')}},
         {...boy('She called me Nat. Nobody has asked me that since I went grey.'), when: {not: has('asked-his-name')}},
@@ -415,7 +428,7 @@ export default {
 
     // A boy who was driven to a haven makes the same drawing there, in the dirt, on the player's next visit.
     'drawn-at-the-haven': {
-      when: {reach: 'haven', afterBankedNight: true, all: [has('sent-on'), {not: has('taken-on-the-road')}, {not: {fact: 'made', id: BACK_WAY}}]},
+      when: {reach: '@haven', afterBankedNight: true, all: [has('sent-on'), {not: has('taken-on-the-road')}, {not: {fact: 'made', id: BACK_WAY}}]},
       lines: THE_DRAWING,
       cue: 'open.ash.drawn',
       effects: DRAWN,
@@ -428,9 +441,9 @@ export default {
       lines: [clinker('You paid two embers for a coal boy without even arguing. So I\'ve put my prices up for Tin Town. It seemed only fair to the furnace.')]},
     {when: has('told-where'), where: 'the next visit to the people who took him in',
       lines: [line('{haven.leader}', 'Three cars of grey men came here asking for the boy, and they knew exactly whose door to knock on. He hid, and they left. I\'d like to know who told them.')]},
-    {when: {all: [has('sent-on'), {fact: 'draw', name: 'road-alone', chance: .5}]}, where: 'a trader, some nights later, when nobody would take him and the road was kind',
+    {when: {all: [has('sent-alone'), {fact: 'draw', name: 'road-alone', chance: .5}]}, where: 'a trader, some nights later, when nobody would take him and the road was kind',
       lines: [trader('I gave a grey boy a ride as far as the Rail Halt last week. He washed my windscreen without being asked. He said that somebody in Tin Town had given him a blanket.')]},
-    {when: {all: [has('sent-on'), {not: {fact: 'draw', name: 'road-alone', chance: .5}}]}, where: 'a trader, some nights later, when nobody would take him and the road was not kind',
+    {when: {all: [has('sent-alone'), {not: {fact: 'draw', name: 'road-alone', chance: .5}}]}, where: 'a trader, some nights later, when nobody would take him and the road was not kind',
       lines: [trader('I saw the Ash Men stop a boy on the Boneyard road last week. He had a Tin Town blanket round his shoulders. They let him keep the blanket.')]},
     // What Old Smoke says of it when he says the player's own story back, one line by the ending.
     {when: has('kept'), where: 'when Old Smoke says the player\'s story back',
@@ -443,7 +456,7 @@ export default {
       lines: [oldSmoke('You paid two embers for a boy who was worth less than one. I let both of them go grey, and I still think that I had the better of the bargain.')]},
     {when: has('handed-back'), where: 'when Old Smoke says the player\'s story back',
       lines: [oldSmoke('You gave my boy back when you were asked for him. That was correct. What is mine comes back to me, and you knew it without being told.')]},
-    {when: has('sent-on'), where: 'when Old Smoke says the player\'s story back',
+    {when: {any: [has('sent-on'), has('sent-alone')]}, where: 'when Old Smoke says the player\'s story back',
       lines: [oldSmoke('You sent my boy down the road to somebody else\'s fire, so that the trouble would be theirs and not yours. I\'ve done the same with trouble all my life.')]},
     // While the boy is in Tin Town.
     {when: {any: [has('hidden'), has('town-knows')]}, where: 'when Clinker is met on the Girder Bridge before he has come to the gate',
@@ -459,7 +472,7 @@ export default {
   // What happens when the prints are never followed: at dark he goes back under the wire by himself.
   ignored: {
     after: {days: 1},
-    effects: [mark('left', 'A boy hid in Tin Town for a day, and left again before anybody spoke to him.'), to('gone')],
+    effects: [mark('left', 'A boy hid in Tin Town for a day, and left again before anybody spoke to him.'), end('gone')],
     later: [
       {by: 'clinker', where: 'at the gate, at dusk the same day',
         lines: [clinker('His prints go under your wire, and then they come out again. So he took your soup and went on. You were lucky, fire-keepers. Good night.')]},
