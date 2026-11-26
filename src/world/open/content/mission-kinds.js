@@ -49,7 +49,7 @@ const reach = {
       if (rule.viaLine) requests.push({type: 'say', lineId: mission.id + '/via', text: rule.viaLine});
     }
     if (!next.seen) {
-      next.sight = posts.map((post, index) => driving && sees(post, car, {
+      next.sight = posts.map((post, index) => car && sees(post, car, {
         heightAt: view.missionHeightAt ?? scablandsSurfaceHeightAt, eye: post.eye ?? 1.8,
         range: post.range ?? Infinity, step: 4,
       }) ? next.sight[index] + dt : 0);

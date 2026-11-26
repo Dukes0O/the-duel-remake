@@ -74,6 +74,8 @@ assert.ok(!marks(rim.open).includes('burned-camp/seen'));
 
 const almost = frame(approached.open, visible, 7.99);
 assert.equal(almost.events.length, 0);
+assert.equal(frame(almost.open, visible, .01, {onFoot: true}).events[0].type, 'threadMissionSpotted',
+  'getting out does not hide an exposed car');
 const brokenSight = frame(almost.open, hidden);
 assert.equal(frame(brokenSight.open, visible, 7.99).events.length, 0, 'a break in sight resets the clock');
 const seen = frame(almost.open, visible, .01, {road: {id: 'passing-convoy'}});
