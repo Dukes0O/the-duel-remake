@@ -2,10 +2,10 @@
 // (section 18). Each check takes one row and returns sentences that name what is wrong; an empty list means the row
 // is sound. Content is rows in tables, so these checks are what stands between a writer's slip and the game.
 import {CAST_SOURCES, HOLD_SYSTEMS, PARTS_OF_DAY, ROUTINE_KINDS, SIGN_KINDS, SITE_KINDS, THREAD_KINDS,
-  isGroup, isPlace, isSite, nameRow, siteRow} from './register.js';
+  isGroup, isPeople, isPerson, isPlace, isSite, nameRow, siteRow} from './register.js';
 import {FACTS, checkFact} from './facts.js';
 import {LEDGER_EFFECTS, OPEN_EFFECTS, checkEffect} from './open-effects.js';
-import {ROLE_WORDS} from './roles.js';
+import {ROLE_WORDS, checkRole, isRole} from './roles.js';
 
 const storyId = value => typeof value === 'string' && /^[a-z0-9][a-z0-9/-]*$/.test(value);
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -135,6 +135,33 @@ export function checkTalkRow(row) {
   return wrong;
 }
 
+// ---- The one shape of a storyline's file (docs/story/open-scablands.md, section 18, "The one shape of a storyline's
+// file"). `checkThread` refuses a key that is not here, and says which key and where. A key is added to the shape in
+// section 18 first, and then here, and then used.
+export const THREAD_SHAPE = Object.freeze({
+  storyline: ['id', 'title', 'kind', 'reads', 'writes', 'cast', 'starts', 'sign', 'beats', 'ends', 'ignored', 'later', 'notes'],
+  role: ['from', 'where', 'weightBy', 'apartFrom', 'except', 'among', 'nearest', 'optional', 'late', 'draw', 'chance', 'otherwise'],
+  sign: ['kind', 'at', 'by', 'seenWithin', 'part', 'lastsNights', 'nightsNeeded', 'again', 'cue'],
+  again: ['afterNights'],
+  beat: ['when', 'cue', 'lines', 'thoughts', 'explore', 'mend', 'mends', 'questions', 'choices', 'mission', 'effects', 'next', 'notes'],
+  line: ['speaker', 'words', 'when', 'radio', 'low', 'shouted', 'as'],
+  thought: ['thought', 'when'],
+  question: ['id', 'to', 'words', 'lines', 'when', 'shows'],
+  thing: ['id', 'what', 'thought', 'tells', 'when', 'effects', 'cue'],
+  mend: ['id', 'what', 'wrenchSeconds', 'scrap', 'lines', 'effects'],
+  choice: ['id', 'by', 'words', 'plain', 'thought', 'when', 'hidden', 'lines', 'effects', 'cast', 'again', 'next'],
+  choiceAgain: ['afterNights', 'times'],
+  mission: ['id', 'kind', 'by', 'minutes', 'outing', 'holds', 'enemy', 'cars', 'rule', 'lines', 'thoughts', 'outcomes'],
+  outcome: ['lines', 'effects', 'next', 'cast'],
+  nextRow: ['when', 'to'],
+  later: ['id', 'by', 'when', 'at', 'lines', 'effects'],
+  ignored: ['afterNights', 'says', 'line', 'effects', 'next'],
+});
+// What a condition of the storyline has beside the facts: its key, and the keys that may stand beside it.
+const CONDITIONS = Object.freeze({reach: ['within'], after: [], nights: ['since'], seconds: ['since'], part: [],
+  cast: ['is'], asked: [], found: [], chose: [], due: []});
+const CHOICE_WAYS = ['say', 'do', 'go'], MISSION_WAYS = ['car', 'foot'];
+
 // Every object inside a storyline, with the keys that lead to it.
 function* everyObject(value, path = []) {
   if (Array.isArray(value)) { for (const item of value) yield* everyObject(item, path); return; }
@@ -150,15 +177,239 @@ function* everyString(value) {
 const EFFECT_LISTS = ['effects', 'gives'];
 const ALL_EFFECTS = [...LEDGER_EFFECTS, ...OPEN_EFFECTS];
 // Effects that move nothing another storyline could read, so `writes` need not list them.
-const UNLISTED_EFFECTS = ['thread', 'read', 'met', 'tell', 'ground', 'crossing', 'rest', 'dirt'];
+const UNLISTED_EFFECTS = ['read', 'met', 'tell', 'ground', 'crossing', 'rest', 'dirt'];
 const THREAD_WORDS = ['any', 'over'];
+const SOURCE_IS = {sites: isSite, groups: isGroup, peoples: isPeople, persons: isPerson};
 
-// A storyline (section 18): {id, title, kind, reads, writes, cast, starts, sign, beats, ends, ignored}.
+// The part of checkThread that holds a file to the shape: every key, every place, every `next` and every condition
+// of the storyline's own. It says what is wrong through `say`. The facts inside a condition are checked by checkFact.
+function checkShape(thread, say) {
+  const castFrom = Object.fromEntries(Object.entries(isObject(thread.cast) ? thread.cast : {}).map(([role, how]) => [role, how?.from]));
+  const roles = Object.keys(castFrom);
+  const beats = isObject(thread.beats) ? thread.beats : {};
+  const beatNames = Object.keys(beats), firstBeat = beatNames[0];
+  const ends = Array.isArray(thread.ends) ? thread.ends : [];
+  // What a condition may name: the questions, things to find, choices and promises of this file.
+  const names = {questions: new Set(), things: new Set(), choices: new Set(), promises: new Set()};
+  for (const body of Object.values(beats)) {
+    for (const question of body?.questions ?? []) names.questions.add(question?.id);
+    for (const thing of body?.explore ?? []) names.things.add(thing?.id);
+    for (const choice of body?.choices ?? []) names.choices.add(choice?.id);
+  }
+  for (const [node] of everyObject(thread)) if (node.type === 'promise' && typeof node.id === 'string') names.promises.add(node.id);
+
+  const keys = (node, kind, where, what) => {
+    if (!isObject(node)) { say(where + ' must be an object.'); return false; }
+    for (const key of Object.keys(node)) if (!THREAD_SHAPE[kind].includes(key))
+      say(where + ' has the key "' + key + '", which the shape of a storyline does not have on ' + what + '.');
+    return true;
+  };
+  const list = (value, where, each) => {
+    if (value === undefined) return;
+    if (!Array.isArray(value)) { say(where + ' must be a list.'); return; }
+    value.forEach((item, index) => each(item, where + '[' + index + ']'));
+  };
+  // A place: a role '@camp', a site or place by its id, or [place, spot].
+  const place = (value, where) => {
+    if (Array.isArray(value)) {
+      if (value.length !== 2 || typeof value[1] !== 'string') say(where + ' writes a spot as [place, spot].');
+      else place(value[0], where);
+    } else if (typeof value !== 'string') say(where + ' needs a place: a role like "@camp", a site or a place by its id, or [place, spot].');
+    else if (isRole(value)) for (const text of checkRole(value, castFrom, 'site')) say(where + ': ' + text);
+    else if (roles.includes(value)) say(where + ' names the role "' + value + '" bare. Write "@' + value + '".');
+    else if (!somewhere(value)) say(where + ' names "' + value + '", which is not a role of the cast, a site or a place.');
+  };
+  const beat = (value, where, extra = []) => {
+    if (typeof value !== 'string' || (!beatNames.includes(value) && !extra.includes(value))) say(where + ' names "' + value + '", which is not a beat of this file.');
+  };
+  const known = (value, set, what, where) => {
+    if (typeof value !== 'string' || !set.has(value)) say(where + ' names "' + value + '", which is not ' + what + ' of this file.');
+  };
+
+  function condition(cond, where, first = false) {
+    if (cond === 'sign-seen') { if (!first) say(where + ': "sign-seen" is the "when" of the first beat only.'); return; }
+    if (!isObject(cond)) { say(where + ': a condition is an object. Several are joined with "all".'); return; }
+    for (const joiner of ['all', 'any']) if (cond[joiner] !== undefined) {
+      if (!Array.isArray(cond[joiner])) say(where + ': "' + joiner + '" needs a list of conditions.');
+      else for (const part of cond[joiner]) condition(part, where);
+      return;
+    }
+    if (cond.not !== undefined) { condition(cond.not, where); return; }
+    if (cond.fact !== undefined) return;
+    const found = Object.keys(cond).filter(key => Object.hasOwn(CONDITIONS, key));
+    if (found.length !== 1) {
+      say(where + ': a condition is a fact, "all", "any", "not" or one of ' + Object.keys(CONDITIONS).join(', ') + '. This one has: ' + Object.keys(cond).join(', ') + '.');
+      return;
+    }
+    const key = found[0], value = cond[key];
+    for (const other of Object.keys(cond)) if (other !== key && !CONDITIONS[key].includes(other))
+      say(where + ': the condition "' + key + '" has the key "' + other + '", which it does not have.');
+    const here = where + ' (' + key + ')';
+    switch (key) {
+      case 'reach':
+        place(value, here);
+        if (cond.within !== undefined && !(cond.within > 0)) say(here + ': "within" is a number of metres.');
+        break;
+      case 'after':
+        if (Array.isArray(value)) value.forEach(item => beat(item, here)); else beat(value, here);
+        break;
+      case 'nights': case 'seconds':
+        if (!(value > 0)) say(here + ' needs a number.');
+        if (cond.since !== undefined) beat(cond.since, here);
+        break;
+      case 'part':
+        if (!PARTS_OF_DAY.includes(value)) say(here + ' names "' + value + '", which is not a part of the day: ' + PARTS_OF_DAY.join(', ') + '.');
+        break;
+      case 'cast':
+        if (!roles.includes(value)) say(here + ' names "' + value + '", which is not a role of the cast.');
+        else if (cond.is !== undefined && !SOURCE_IS[castFrom[value]]?.(cond.is))
+          say(here + ': "' + cond.is + '" is not something the role "' + value + '" (cast from ' + castFrom[value] + ') could be.');
+        break;
+      case 'asked': known(value, names.questions, 'a question', here); break;
+      case 'found': known(value, names.things, 'a thing to find', here); break;
+      case 'chose': known(value, names.choices, 'a choice', here); break;
+      case 'due': known(value, names.promises, 'a promise made by an effect', here); break;
+    }
+  }
+  const when = (node, where, first = false) => { if (node.when !== undefined) condition(node.when, where + '.when', first); };
+  const lines = (value, where) => list(value, where, (line, at) => {
+    if (!keys(line, 'line', at, 'a line')) return;
+    if (typeof line.words !== 'string' || !line.words) say(at + ' needs "words".');
+    if (typeof line.speaker !== 'string') say(at + ' needs "speaker".');
+    when(line, at);
+  });
+  const thoughts = (value, where) => list(value, where, (thought, at) => {
+    if (typeof thought === 'string') return;
+    if (!keys(thought, 'thought', at, 'a thought')) return;
+    if (typeof thought.thought !== 'string') say(at + ' needs "thought".');
+    when(thought, at);
+  });
+  const effects = (value, where) => list(value, where, (effect, at) => {
+    if (!isObject(effect)) return;
+    when(effect, at);
+    if (effect.type === 'thread') say(at + ' is a "thread" effect written by hand. Where a storyline leads is "next".');
+    if (['mark', 'made'].includes(effect.type) && effect.text !== undefined) for (const text of checkSentence(effect.text)) say(at + ': ' + text);
+  });
+  const next = (value, where) => {
+    if (value === undefined) return;
+    if (Array.isArray(value)) {
+      value.forEach((row, index) => {
+        const at = where + '[' + index + ']';
+        if (!keys(row, 'nextRow', at, 'a row of "next"')) return;
+        beat(row.to, at, ends);
+        when(row, at);
+        if (row.when === undefined && index < value.length - 1) say(at + ' has no "when" and is not the last, so the rows after it are never tried.');
+      });
+    } else beat(value, where, ends);
+  };
+  const cast = (value, where) => {
+    if (value === undefined) return;
+    if (!isObject(value)) { say(where + ' must be {role: id}.'); return; }
+    for (const [role, id] of Object.entries(value)) {
+      if (!roles.includes(role)) say(where + ' fills the role "' + role + '", which the cast does not have.');
+      else if (!SOURCE_IS[castFrom[role]]?.(id)) say(where + ': "' + id + '" is not something the role "' + role + '" (cast from ' + castFrom[role] + ') could be.');
+      else if (thread.cast[role].late !== true) say(where + ' fills the role "' + role + '", which is not "late: true".');
+      filled.add(role);
+    }
+  };
+  const filled = new Set();
+  const things = (value, where) => list(value, where, (thing, at) => {
+    if (!keys(thing, 'thing', at, 'a thing to find')) return;
+    when(thing, at); effects(thing.effects, at + '.effects');
+  });
+  const mend = (value, at) => {
+    if (!keys(value, 'mend', at, 'a mend')) return;
+    lines(value.lines, at + '.lines'); effects(value.effects, at + '.effects');
+  };
+  const questions = (value, where) => list(value, where, (question, at) => {
+    if (!keys(question, 'question', at, 'a question')) return;
+    when(question, at); lines(question.lines, at + '.lines');
+  });
+  const choices = (value, where) => list(value, where, (choice, at) => {
+    if (!keys(choice, 'choice', at, 'a choice')) return;
+    if (choice.by !== undefined && !CHOICE_WAYS.includes(choice.by)) say(at + ' is made by "' + choice.by + '", which is not one of: ' + CHOICE_WAYS.join(', ') + '.');
+    if (choice.again !== undefined) keys(choice.again, 'choiceAgain', at + '.again', 'a choice\'s "again"');
+    when(choice, at); lines(choice.lines, at + '.lines'); effects(choice.effects, at + '.effects');
+    cast(choice.cast, at + '.cast'); next(choice.next, at + '.next');
+  });
+  const mission = (value, at) => {
+    if (!keys(value, 'mission', at, 'a mission')) return;
+    if (value.by !== undefined && !MISSION_WAYS.includes(value.by)) say(at + ' is driven "' + value.by + '", which is not one of: ' + MISSION_WAYS.join(', ') + '.');
+    for (const system of value.holds ?? []) if (!HOLD_SYSTEMS.includes(system)) say(at + ' holds "' + system + '", which is not a system.');
+    if (typeof value.enemy === 'string') {
+      if (isRole(value.enemy)) for (const text of checkRole(value.enemy, castFrom, 'name')) say(at + ': ' + text);
+      else if (!isGroup(value.enemy)) say(at + ' has the enemy "' + value.enemy + '", which is not a group in the register.');
+    }
+    if (value.rule !== undefined && !isObject(value.rule)) say(at + '.rule must be an object of numbers by plain names.');
+    lines(value.lines, at + '.lines'); thoughts(value.thoughts, at + '.thoughts');
+    if (value.outcomes !== undefined) {
+      if (!isObject(value.outcomes)) say(at + '.outcomes must be an object.');
+      else for (const [name, outcome] of Object.entries(value.outcomes)) {
+        const here = at + '.outcomes.' + name;
+        if (!keys(outcome, 'outcome', here, 'an outcome')) continue;
+        lines(outcome.lines, here + '.lines'); effects(outcome.effects, here + '.effects');
+        cast(outcome.cast, here + '.cast'); next(outcome.next, here + '.next');
+      }
+    }
+  };
+
+  keys(thread, 'storyline', 'The storyline', 'a storyline');
+  for (const [role, how] of Object.entries(isObject(thread.cast) ? thread.cast : {})) {
+    const at = 'cast.' + role;
+    if (!keys(how, 'role', at, 'a role')) continue;
+    if (how.where !== undefined) condition(how.where, at + '.where');
+    if (how.weightBy !== undefined && !FACTS.includes(how.weightBy)) say(at + ' is weighted by "' + how.weightBy + '", which is not a fact.');
+    for (const other of how.apartFrom ?? []) if (!roles.includes(other)) say(at + ' keeps apart from "' + other + '", which is not a role.');
+    for (const key of ['except', 'among']) for (const id of how[key] ?? [])
+      if (!SOURCE_IS[how.from]?.(id)) say(at + '.' + key + ' names "' + id + '", which the role (cast from ' + how.from + ') could not be.');
+    if (how.nearest !== undefined && !somewhere(how.nearest)) say(at + '.nearest names "' + how.nearest + '", which is not a site or a place.');
+    for (const key of ['optional', 'late']) if (how[key] !== undefined && typeof how[key] !== 'boolean') say(at + '.' + key + ' is true or false.');
+  }
+  if (thread.starts !== undefined) condition(thread.starts, 'starts');
+  if (isObject(thread.sign)) {
+    const sign = thread.sign;
+    keys(sign, 'sign', 'sign', 'the sign');
+    if (isObject(sign.at)) {
+      const at = sign.at, who = at.checkpoint?.who;
+      for (const key of Object.keys(at)) if (key !== 'checkpoint') say('sign.at has the key "' + key + '". A sign stands at a place, or at {checkpoint: {who: group}}.');
+      if (!isObject(at.checkpoint) || Object.keys(at.checkpoint).some(key => key !== 'who') || !isGroup(who))
+        say('sign.at is {checkpoint: {who: group}}, where the group is one in the register.');
+    } else if (sign.at !== undefined) place(sign.at, 'The sign');
+    if (sign.part !== undefined && !PARTS_OF_DAY.includes(sign.part)) say('The sign is seen in "' + sign.part + '", which is not a part of the day.');
+    if (sign.again !== undefined) keys(sign.again, 'again', 'sign.again', 'the sign\'s "again"');
+  }
+  for (const [name, body] of Object.entries(beats)) {
+    const at = 'beats.' + name;
+    if (!keys(body, 'beat', at, 'a beat')) continue;
+    when(body, at, name === firstBeat);
+    lines(body.lines, at + '.lines'); thoughts(body.thoughts, at + '.thoughts'); things(body.explore, at + '.explore');
+    if (body.mend !== undefined) mend(body.mend, at + '.mend');
+    list(body.mends, at + '.mends', mend);
+    questions(body.questions, at + '.questions'); choices(body.choices, at + '.choices');
+    if (body.mission !== undefined) mission(body.mission, at + '.mission');
+    effects(body.effects, at + '.effects'); next(body.next, at + '.next');
+  }
+  list(thread.later, 'later', (row, at) => {
+    if (!keys(row, 'later', at, 'a "later" row')) return;
+    if (typeof row.by !== 'string') say(at + ' needs "by": who says it.');
+    if (row.at !== undefined) place(row.at, at);
+    when(row, at); lines(row.lines, at + '.lines'); effects(row.effects, at + '.effects');
+  });
+  if (isObject(thread.ignored)) {
+    keys(thread.ignored, 'ignored', 'ignored', '"ignored"');
+    effects(thread.ignored.effects, 'ignored.effects'); next(thread.ignored.next, 'ignored.next');
+  }
+  for (const [role, how] of Object.entries(isObject(thread.cast) ? thread.cast : {}))
+    if (how?.late === true && !filled.has(role)) say('The role "' + role + '" is "late: true", and no choice or outcome fills it with "cast".');
+}
+
+// A storyline (section 18): {id, title, kind, reads, writes, cast, starts, sign, beats, ends, ignored, later, notes}.
 // - A name in a condition or an effect may be a role of the cast: '@camp', '@camp.people' (roles.js).
 // - A condition inside `cast.<role>.where` is asked of each candidate, so it may leave out whose word or which site.
 //   Every other condition says whose, by name or by role.
 // - An effect is any object with a `type` the ledger or the open land knows, wherever it sits, and any object with
 //   a `type` under `effects`, `gives` or `outcomes`, so that a misspelt effect there is named.
+// - Every key is one the shape has (THREAD_SHAPE), and every `next`, place and condition names what the file has.
 export function checkThread(thread) {
   if (!isObject(thread) || !storyId(thread.id)) return ['A storyline needs an id.'];
   const wrong = [], say = text => { wrong.push(text); };
@@ -184,19 +435,9 @@ export function checkThread(thread) {
   const ends = Array.isArray(thread.ends) ? thread.ends : [];
   if (!ends.length || !ends.every(storyId)) say('It needs "ends": its named outcomes.');
   if (thread.ignored === undefined) say('It needs "ignored": what happens when the sign is never followed.');
-  // A place named in a sign or a beat is a role, a site or one of the eight places.
-  const placed = (value, where) => {
-    if (typeof value === 'string' && !roles.includes(value.replace(/^@/, '')) && !somewhere(value))
-      say(where + ' names "' + value + '", which is not a role of the cast, a site or a place.');
-  };
-  placed(thread.sign?.at, 'The sign');
-  for (const [beat, body] of Object.entries(isObject(thread.beats) ? thread.beats : {})) {
-    if (!isObject(body)) { say('The beat "' + beat + '" is empty.'); continue; }
-    if (typeof body.next === 'string' && !beats.includes(body.next) && !ends.includes(body.next))
-      say('The beat "' + beat + '" leads to "' + body.next + '", which is neither a beat nor an end.');
-    for (const system of body.holds ?? []) if (!HOLD_SYSTEMS.includes(system)) say('The beat "' + beat + '" holds "' + system + '", which is not a system.');
-    if (isObject(body.when)) placed(body.when.reach, 'The beat "' + beat + '"');
-  }
+  for (const [beat, body] of Object.entries(isObject(thread.beats) ? thread.beats : {}))
+    if (!isObject(body)) say('The beat "' + beat + '" is empty.');
+  checkShape(thread, say);
   // Every condition and every effect, wherever it sits.
   const used = {facts: new Set(), effects: new Set()};
   for (const [node, path] of everyObject(thread)) {
@@ -206,11 +447,6 @@ export function checkThread(thread) {
     if (isEffect) {
       used.effects.add(node.type);
       for (const text of checkEffect(node, {roles: castFrom})) say(text);
-      if (node.type === 'thread') {
-        if (node.id !== thread.id) say('It moves the storyline "' + node.id + '". A storyline moves only itself.');
-        if (node.to !== undefined && !beats.includes(node.to)) say('A thread effect moves to "' + node.to + '", which is not a beat.');
-        if (node.end !== undefined && !ends.includes(node.end)) say('A thread effect ends at "' + node.end + '", which is not one of the ends.');
-      }
       if (node.type === 'mark' && storyId(node.id) && !node.id.startsWith(thread.id + '/') && !node.id.startsWith('rumour/'))
         say('The mark "' + node.id + '" should begin with "' + thread.id + '/", so that a reader knows who wrote it.');
       continue;
