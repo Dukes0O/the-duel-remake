@@ -9,7 +9,7 @@ import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
-import {createNearGround,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
+import {createNearGround,createSiteUnderlay,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
 import {createGroundLook,createHillField,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
 import {HILLS,scablandsTerrainHeightAt} from './scablands-height.js';
 const NO_HILLS=Object.freeze([]);
@@ -92,12 +92,12 @@ const DRAW_RANGE=1800;
 
 // The coarse ground: 200 by 160 cells over the whole land. `hole` is a vec4 uniform (middle x, middle z, half width, half depth)
 // of the area not drawn, where the detailed ground is; the material is the ground's own with that hole cut out of it.
-export function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
+export function makeCoarseGround(material,groundEdit=scablandsGroundEdit,siteUnderlay=createSiteUnderlay(groundEdit)){
   const width=SCABLANDS_LAYOUT.halfWidth*2,depth=SCABLANDS_LAYOUT.halfDepth*2,cellsX=COARSE_CELLS.x,cellsZ=COARSE_CELLS.z;
   const positions=[],indices=[], cellWidth=width/cellsX,cellDepth=depth/cellsZ;
   for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
     const x=-width/2+cellWidth*ix,z=-depth/2+cellDepth*iz;
-    positions.push(x,plainHeightAt(x,z,groundEdit)-COARSE_LOWER,z);
+    positions.push(x,underlayHeightAt(x,z,groundEdit)-COARSE_LOWER,z);
   }
   // Only cells touching a scarp face need smaller triangles. Their borders stay on the original
   // straight edges, so they join neighbouring cells without cracks or overlapping ground.
@@ -113,7 +113,9 @@ export function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
     const a=iz*(cellsX+1)+ix,b=a+1,c=a+cellsX+1,d=c+1;
     const x=-width/2+ix*cellWidth,z=-depth/2+iz*cellDepth;
     if(!faces.some(f=>x<=f.x1&&x+cellWidth>=f.x0&&z<=f.z1&&z+cellDepth>=f.z0)){
-      indices.push(a,c,b,b,c,d);continue;
+      if (!siteUnderlay?.splitCell(x,z,cellWidth,cellDepth,positions[a*3+1],positions[b*3+1],positions[c*3+1],positions[d*3+1],positions,indices))
+        indices.push(a,c,b,b,c,d);
+      continue;
     }
     const grid=[];
     for(let j=0;j<=subdivisions;j++)for(let i=0;i<=subdivisions;i++){
@@ -123,12 +125,14 @@ export function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
       else if(j===subdivisions)y=positions[c*3+1]*(1-u)+positions[d*3+1]*u;
       else if(i===0)y=positions[a*3+1]*(1-v)+positions[c*3+1]*v;
       else if(i===subdivisions)y=positions[b*3+1]*(1-v)+positions[d*3+1]*v;
-      else y=plainHeightAt(px,pz,groundEdit)-COARSE_LOWER;
+      else y=underlayHeightAt(px,pz,groundEdit)-COARSE_LOWER;
       grid.push(positions.length/3);positions.push(px,y,pz);
     }
     for(let j=0;j<subdivisions;j++)for(let i=0;i<subdivisions;i++){
       const q=j*(subdivisions+1)+i,aa=grid[q],bb=grid[q+1],cc=grid[q+subdivisions+1],dd=grid[q+subdivisions+2];
-      indices.push(aa,cc,bb,bb,cc,dd);
+      if (!siteUnderlay?.splitCell(x+i*cellWidth/subdivisions,z+j*cellDepth/subdivisions,cellWidth/subdivisions,cellDepth/subdivisions,
+        positions[aa*3+1],positions[bb*3+1],positions[cc*3+1],positions[dd*3+1],positions,indices))
+        indices.push(aa,cc,bb,bb,cc,dd);
     }
   }
   const geometry=new THREE.BufferGeometry();
@@ -156,6 +160,10 @@ function withHole(material,hole){
 // ribbons (src/world/scablands-draw.js) and the ground is not drawn where the river is, so the ground's meshes stay smooth and the gorge
 // keeps its steep banks at any distance.
 const plainHeightAt=(x,z,groundEdit=scablandsGroundEdit)=>scablandsSurfaceHeightAt(x,z,groundEdit)+riverDepthAt(x,z);
+
+// Sample the backing meshes before the site cut. Only the chunk pieces underneath it sink.
+const underlayHeightAt=(x,z,groundEdit=scablandsGroundEdit)=>groundEdit.siteGround ?
+  groundEdit.baseHeightAt(x,z)+riverDepthAt(x,z) : plainHeightAt(x,z,groundEdit);
 
 // The mast stands at the Iron Line, 1 m west of its place. Its parts are placed from the mast's own origin, so the mast is moved as one.
 function radioMast(group){
@@ -648,15 +656,19 @@ export function createScablandsScene(course,options={}){
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
   const nearHole={value:new THREE.Vector4(0,0,0,0)};
   const coarseMaterial=withHole(groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1})),nearHole);
-  const near=createNearGround({material:groundMaterial,heightAt:(x,z)=>plainHeightAt(x,z)});
+  let drawnSite = scablandsGroundEdit.siteGround;
+  let siteUnderlay = createSiteUnderlay(scablandsGroundEdit);
+  const near=createNearGround({material:groundMaterial,heightAt:(x,z)=>underlayHeightAt(x,z),siteUnderlay});
   // The hole is a metre smaller each way than the window, so that the coarse ground (which stands a little lower) is never seen through a gap.
   const placeNearGround=(x,z)=>{
     if(!near.follow(x,z))return;
     nearHole.value.set(near.centreX,near.centreZ,NEAR_GROUND.cellsX*NEAR_GROUND.cellX/2-1,NEAR_GROUND.cellsZ*NEAR_GROUND.cellZ/2-1);
   };
   placeNearGround(0,0);ground.add(near.mesh);
-  const far=makeCoarseGround(coarseMaterial);ground.add(far);
+  const far=makeCoarseGround(coarseMaterial,scablandsGroundEdit,siteUnderlay);ground.add(far);
+  let drawnEdit=scablandsGroundEdit;
   let editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
+  if (drawnSite) editedGround.update();
   const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
   if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
   const digFx=createDigFx({group,atlasTexture:digTexture,seed:course.seed});
@@ -987,6 +999,7 @@ export function createScablandsScene(course,options={}){
         group.add(night2.group);
       }
       night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? []);
+      if (drawnSite !== scablandsGroundEdit.siteGround) group.userData.updateGroundView();
       if (worldJob?.open && !openLand) {
         openLand = createOpenView({course, loadAsset});
         group.add(openLand.group);
@@ -1216,7 +1229,8 @@ export function createScablandsScene(course,options={}){
   // The road net, the gorge and the crossings are drawn in pieces built as the player nears them; a check or a picture can build them all.
   group.userData.roads=roads;group.userData.gorge=gorge;group.userData.crossings=crossings;group.userData.stepsWay=stepsWay;
   group.userData.drawnFeet=createScablandsDrawnFeet({near,gorge,riverField,course});
-  group.userData.drawnGroundHeightAt=(x,z)=>
+  group.userData.drawnGroundHeightAt=(x,z)=>scablandsGroundEdit.siteGround?.hasChunkAt(x,z) ?
+    scablandsGroundEdit.heightAt(x,z) + .035 :
     (riverField.distanceAt(x,z)<80?gorge.heightAtDrawn(x,z):null) ?? nearGroundHeightAt(x,z,plainHeightAt);
   // Where the furnace and Big Bess stand as drawn this frame, for the camera: [{id, x, y, z, heading, halfX, minZ, maxZ, height}].
   group.userData.bigMachineBoxes=()=>{
@@ -1227,9 +1241,21 @@ export function createScablandsScene(course,options={}){
   };
   // Call after a work order commits its edits. The same height layer drives
   // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
+  const refreshSiteUnderlay=()=>{
+    drawnSite=scablandsGroundEdit.siteGround;
+    siteUnderlay=createSiteUnderlay(scablandsGroundEdit);
+    near.setSiteUnderlay(siteUnderlay);
+  };
   group.userData.updateGroundView=()=>{
+    if (drawnEdit !== scablandsGroundEdit) {
+      editedGround.dispose();
+      drawnEdit=scablandsGroundEdit;
+      editedGround=createGroundView({group:ground,groundEdit:drawnEdit,material:editedMaterial});
+    }
     const changed=editedGround.update();
-    if(changed){const geometry=makeCoarseGround(coarseMaterial,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
+    if(changed || drawnSite !== scablandsGroundEdit.siteGround){
+      if (drawnSite || scablandsGroundEdit.siteGround) refreshSiteUnderlay();
+      const geometry=makeCoarseGround(coarseMaterial,scablandsGroundEdit,siteUnderlay).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
       roads.refresh();gorge.refresh();}
     return changed;
   };
@@ -1237,10 +1263,11 @@ export function createScablandsScene(course,options={}){
     if(retired||!followsOpenMarks)return;
     openMarks=marks;
     // The detailed window and the coarse ground are worked out again; the road and the edited chunks follow.
-    near.refresh();
-    const coarse=makeCoarseGround(coarseMaterial,scablandsGroundEdit).geometry,coarseBefore=far.geometry;far.geometry=coarse;coarseBefore.dispose();
+    refreshSiteUnderlay();
+    const coarse=makeCoarseGround(coarseMaterial,scablandsGroundEdit,siteUnderlay).geometry,coarseBefore=far.geometry;far.geometry=coarse;coarseBefore.dispose();
     editedGround.dispose();
-    editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
+    drawnEdit=scablandsGroundEdit;
+    editedGround=createGroundView({group:ground,groundEdit:drawnEdit,material:editedMaterial});
     editedGround.update();
     roads.refresh();gorge.refresh();
     whites?.dispose();

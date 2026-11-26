@@ -5,31 +5,25 @@
 // of its own it cuts that ground into the land's edit layer, the layer the game's own ground drawing and physics read, and asks the
 // scene to draw it again. Nothing is saved: the QA page keeps its saves in memory.
 //
-// The land's own near ground is drawn in cells of about 23 by 17 m, which stand far above a cut 9 m deep with steep sides. So, for
-// the pictures only, the stand has the edit layer draw every 32 m square round the site at its own 1 m grain and sinks the near
-// ground's corners there out of sight. The card that places the site for play has to join the two grounds properly.
-//
 // `window.__openLookStand.stand(name, {stage, seconds})` returns where the site stands and every named spot in the land's metres.
 // At the stage `night` it also turns the land's own light down while the picture is drawn. That is a stand-in for the night that
 // the card which places the site will bring; it is here only so that the site's fires and lamps can be judged in the dark.
-import {LAND} from '../src/world/scablands-names.js';
-import {scablandsGroundEdit, scablandsNaturalHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {installSiteGround} from '../src/world/open/site-ground.js';
+import {sitePosition} from '../src/world/open/site-rule.js';
+import {scablandsNaturalHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // One row a site: where it stands and what its look file gives. A later look card adds its row here.
 const LOOKS = Object.freeze({
   'rats-nest': async () => {
     const look = await import('../src/world/open/looks/rats-nest-look.js');
-    // The Rats' Nest's one position in "Claude answers" of docs/board/cards/OPEN-SITES.md.
-    return {at: LAND.at('boneyard', -150, -900), layout: look.RATS_NEST_LAYOUT, ground: look.ratsNestGround,
+    return {at: sitePosition('rats-nest', 0), layout: look.RATS_NEST_LAYOUT,
       build: look.buildRatsNest, update: look.updateRatsNest};
   },
 });
 
 const NIGHT = Object.freeze({hemisphere: .22, sun: .09, environment: .14, fog: .07, sky: .06});
-const SINK = Object.freeze({margin: 26, drawn: 50, drop: 14, deepest: 10.5});
 
 export function createOpenLookStand(app, view = () => globalThis.__render) {
-  const dug = new Set();
   let stood = null, hooked = false, dimmed = null;
 
   function scablands() {
@@ -50,20 +44,6 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     scene.fog?.color.multiplyScalar(NIGHT.fog);
     for (const colour of colours) colour.multiplyScalar(NIGHT.sky);
   }
-  // Keep the near ground's corners round the site below anything that can be seen (see the top of this file).
-  function sink(land) {
-    const near = land.getObjectByName('Scablands near ground'), points = near?.geometry.attributes.position;
-    if (!points) return;
-    const reach = stood.reach + SINK.margin;
-    let moved = false;
-    for (let index = 0; index < points.count; index++) {
-      const x = points.getX(index) + near.position.x, z = points.getZ(index) + near.position.z;
-      if (Math.abs(x - stood.at.x) > reach || Math.abs(z - stood.at.z) > reach) continue;
-      if (points.getY(index) + near.position.y < scablandsNaturalHeightAt(x, z) - SINK.deepest) continue;
-      points.setY(index, points.getY(index) - SINK.drop); moved = true;
-    }
-    if (moved) points.needsUpdate = true;
-  }
   function undim(scene) {
     if (!dimmed) return;
     for (const [light, intensity] of dimmed.lights) light.intensity = intensity;
@@ -80,7 +60,6 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
       before.apply(this, args);
       if (!stood) return;
       stood.update?.(stood.group, stood.seconds);
-      if (stood.dug) sink(stood.land);
       if (stood.night && !dimmed) dim(scene);
     };
     scene.onAfterRender = function (...args) { undim(scene); after.apply(this, args); };
@@ -89,6 +68,8 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     if (!stood) return false;
     stood.group.parent?.remove(stood.group);
     stood.group.userData.dispose?.();
+    stood.restoreGround();
+    stood.land.userData.updateGroundView?.();
     stood = null;
     return true;
   }
@@ -98,24 +79,22 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     if (switches.enabled('story-choices') !== true) throw Error('The open Scablands looks need the switch story-choices.');
     if (!Object.hasOwn(LOOKS, name)) throw Error('No look called ' + name);
     const look = await LOOKS[name](), {at, layout} = look, scene = view().scene, land = scablands();
-    clear();
-    if (look.ground && !dug.has(name)) {
-      const reach = Math.ceil(layout.radius), x0 = Math.round(at.x), z0 = Math.round(at.z);
-      for (let z = z0 - reach; z <= z0 + reach; z++) for (let x = x0 - reach; x <= x0 + reach; x++) {
-        const depth = look.ground(x - at.x, z - at.z);
-        if (depth > .02) scablandsGroundEdit.cut({x, z, radius: .4}, scablandsNaturalHeightAt(x, z) - depth);
-      }
-      // A cut that asks for no change still gives its 32 m square to the edit layer, which then draws that square at its 1 m grain.
-      for (let z = z0 - reach - SINK.drawn; z <= z0 + reach + SINK.drawn; z += 16) for (let x = x0 - reach - SINK.drawn; x <= x0 + reach + SINK.drawn; x += 16)
-        scablandsGroundEdit.cut({x, z, radius: .4}, scablandsNaturalHeightAt(x, z));
-      dug.add(name);
+    // Day and night share the same installed ground. Hot Delivery, used by
+    // the look scenario, can borrow it here without starting an open job.
+    let restoreGround = stood?.restoreGround;
+    if (stood?.name === name && stood.land === land) {
+      stood.group.removeFromParent();
+      stood.group.userData.dispose?.();
+    } else {
+      clear();
+      restoreGround = installSiteGround(0, [name]);
       land.userData.updateGroundView?.();
     }
     const group = look.build({stage, heightAt: (x, z) => scablandsSurfaceHeightAt(at.x + x, at.z + z)});
     group.position.set(at.x, 0, at.z);
     scene.add(group);
     hook(scene);
-    stood = {name, group, update: look.update, seconds, night: stage === 'night', dug: !!look.ground, land, at, reach: layout.radius};
+    stood = {name, group, update: look.update, seconds, night: stage === 'night', restoreGround, land};
     let low = Infinity, high = -Infinity;
     for (let z = -layout.radius; z <= layout.radius; z += 8) for (let x = -layout.radius; x <= layout.radius; x += 8) {
       const height = scablandsNaturalHeightAt(at.x + x, at.z + z); low = Math.min(low, height); high = Math.max(high, height);

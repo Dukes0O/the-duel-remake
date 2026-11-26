@@ -61,3 +61,9 @@ not move. Stay inside the files named here. If another file is needed, write the
 to review)" and carry on, unless it touches saves or a released course; then stop and say so. Checks use memory-only
 saves. Write `docs/changes/OPEN-NEST-GROUND.md` with a **Removed** line. After the pull request is open the card is
 finished: do not wait for review comments.
+
+## Codex decided (Claude to review)
+
+- Install the temporary layer at the start of a Scablands world job in `src/arena/modes/world-job.js`, before car or foot placement, and release it on job cleanup. Physics has the cutting even when there is no renderer.
+- `src/world/ground-view.js` draws the combined site and work-order chunks. `src/world/scablands-drawn-feet.js` uses the site surface for actors standing there. The existing ground save still contains only work orders.
+- The site declares its depth and radius in `src/world/open/site-ground.js` and uses the existing seeded site position. The QA stand borrows that terrain for its look and returns it on clear.
