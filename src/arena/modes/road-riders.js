@@ -11,6 +11,7 @@ import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {ROAD_GROUPS} from '../../world/open/content/checkpoints.js';
 import {ROAD_REQUEST, nearestRoadPoint} from '../../world/open/encounter-rule.js';
 import {nameOf} from '../../world/open/register.js';
+import {SOUND_BANK} from '../../sound-bank.js';
 import {point, predictedPoint} from '../../combat-actors.js';
 import {thinkBrain} from '../arena-brains.js';
 import {addHazard} from '../../arsenal/hazards.js';
@@ -596,6 +597,8 @@ export function applyCheckpointRoadRequest(duel, world, request) {
   }
   if (request.type !== ROAD_REQUEST) return false;
   if (action === 'cue') {
+    // A cue that OPEN-SOUND has not registered yet is not played: the sound system refuses an unknown cue by throwing.
+    if (!Object.hasOwn(SOUND_BANK, request.cue)) return true;
     const at = request.position;
     duel.emit({arenaTell:{id:request.cue, cue:request.cue, position:{...at, y:scablandsActorHeightAt(at.x,at.z)}}});
   } else if (action === 'walk') walkFromWreck(duel,world);
