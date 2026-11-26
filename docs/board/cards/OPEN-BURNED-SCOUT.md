@@ -102,6 +102,15 @@ waits on another card's owner: this card writes every placement it needs as rows
    buggies (solids at the bays). Merge current `origin/integration/wasteland` first.
 5. **Crossings:** keep the check strict, and name the owning card from a stub's notes in its message, as you did.
 
+## Codex decided (Claude to review), laptop continuation, 26 November 2026
+
+The placement rows live in `src/world/open/content/burned-scout.js`. The host adds their named spots beside the
+unchanged Nest layout. `parts/people.js` runs their background routines; `jobs/story-people.js` and
+`story-people-view.js` let distinct background IDs reuse the existing rider figures. `sign-view.js` draws the heaps
+and the event's flare, and reuses the trail drawing helpers exported by `looks/glasshouse-look.js`. These additions
+are behind `story-choices` and touch no saves or released course. The gully and plain approach are checked against
+the real terrain in `test-open-missions.mjs`, along with crowd positions, heap solids, trail and flare lifetime.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a
