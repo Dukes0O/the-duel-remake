@@ -25,7 +25,7 @@ function recoveryNumber(world, previous = 0) {
 export const checkpointsPart = {
   id: 'checkpoints',
   step(state, context, dt) {
-    const {world, holds, view} = context;
+    const {world, holds, view, events = []} = context;
     if (view.checkpointsEnabled !== true) return;
     const point = view.carPosition;
     const inside = !view.onFoot && point ? OPEN_CHECKPOINTS.find(row => gap(row.position, point) <= row.radius) : null;
@@ -33,10 +33,10 @@ export const checkpointsPart = {
     const held = isHeld(holds, 'checkpoints');
     const banked = hearthBanked(world, view.jobEvents);
     const current = {...context, view: {...view, player: view.player?.position ?? view.player,
-      recoveryPaid: view.recoveryPaid || (context.events ?? []).some(event => event.type === 'threadMissionRecoveryPaid'),
+      recoveryPaid: view.recoveryPaid || events.some(event => event.type === 'threadMissionRecoveryPaid'),
       interactWasHeld: state.interact, hearthBanked:banked}};
     const choices = [], requests = [];
-    const missionLoss = context.events.find(event => event.type === 'threadMissionOutcome' &&
+    const missionLoss = events.find(event => event.type === 'threadMissionOutcome' &&
       event.id.startsWith(hauler.id + '/') && ['lost', 'caught', 'car-wrecked'].includes(event.outcome));
     if (missionLoss) next.missionLossPaid = true;
     if (banked)
