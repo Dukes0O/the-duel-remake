@@ -53,6 +53,7 @@ check(absent.length === 0, `every piece the view names is in its family file (mi
 check(townArtMissing(BUILDINGS).length === 0, `every building in the content table has its art (missing: ${townArtMissing(BUILDINGS).join(', ')})`);
 // Every town family file is drawn by the town's view, or by the view that owns it.
 const elsewhere = {'walkers.glb':'town-walkers.js', 'borer.glb':'the Dig (src/machines/dig-game.js)', 'story-walkers.glb':'src/world/story-people-view.js',
+  'open-figures.glb':'src/world/story-people-view.js',
   'peace-camp.glb':'the peace endings', 'peace-crane.glb':'the peace endings', 'peace-props.glb':'the peace endings'};
 const files = readdirSync(folder).filter(file => file.endsWith('.glb'));
 const unread = files.filter(file => !Object.values(TOWN_ART_FAMILIES).includes(file) && !elsewhere[file]);
