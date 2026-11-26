@@ -764,18 +764,6 @@ tasks:
     details: "docs/board/cards/BOWL-TOUR.md"
 
 
-  - id: NIGHT-2-TRY-FIXES
-    title: "Night 2 from Kyle's try: no countdown, clear arrows, riders that vanish, long pauses"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/NIGHT-2-TRY-FIXES.md"
-
 
 
 

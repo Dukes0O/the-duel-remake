@@ -682,6 +682,13 @@ export class Duel {
         weaponsDisabledUntil: Infinity, weaponLoadout: []});
       initializeAmbushAlley(this);
     }
+    // NIGHT-2-TRY-FIXES: a story drive is not a race. A job that says so begins at once, with no countdown and no GO.
+    if (mode === 'world-job' && job?.startsAtOnce === true) {
+      s.countdown = 0;
+      s.status = 'racing';
+      this.emit({ arenaLoaded: venue.id });
+      return;
+    }
     s.countdown = 3;
     s.status = 'countdown';
     this.emit({ arenaLoaded: venue.id, countdown: 3 });

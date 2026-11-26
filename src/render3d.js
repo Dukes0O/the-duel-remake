@@ -809,7 +809,10 @@ export function attachRenderer(host, app) {
     }
     // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
     // the wreck-effect pool counts real cars only and is not rebuilt for them.
-    const wreckCars=opponents.filter(actor=>!actor.decoy).length;
+    // NIGHT-2-TRY-FIXES item 4: a world job's riders held in reserve join mid-job (the Wash fight). Counting them from the start
+    // builds and compiles their wreck effects with the job, so their arrival does not stop the picture for a rebuild.
+    const reservedCars=st.arena?.mode==='world-job'?st.arena.worldJob?.riderReserve?.length??0:0;
+    const wreckCars=opponents.filter(actor=>!actor.decoy).length+reservedCars;
     const armoredField=!menu && st.mode==='wasteland' && Number.isFinite(st.maxArmor);
     const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
