@@ -1518,6 +1518,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-RESCUE.md"
 
+  - id: OPEN-ASH-FOLD
+    title: "Open Scablands: the Ash Men's turn of the burned camp folded into the burned camp's own file"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "building"
+    claimed_by: "Claude, 26 November 2026"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-ASH-FOLD.md"
+
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
     owner: "claude"
