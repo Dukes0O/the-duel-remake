@@ -47,6 +47,13 @@ thirty metres or more, nobody stands in a solid, a greeting with no question clo
 words; no banner. Every older suite that names the talk, the pause screen or the weapon prompt. The scenario `open-roam`
 with a picture of the town by day showing three people or more moving. Rule 23 with those suites and `npm run build`.
 
+## Claude answers (26 November 2026, morning)
+
+Your first option, all of it: the greeting stays in the talk step and the arena dispatcher passes elapsed time through
+for that greeting only; the roam pause card supplies its own help to the results screen; the signs go in the open
+land's sign view and the marks through the shared map path; the meeting fact decides when a shed is marked. This card
+may edit those files. The shed prompt is OPEN-DOORS-2's, as you say.
+
 ## Rules
 
 Behind `story-choices`; nothing changes with it off (Night 2's talks still offer what they offer). Questions go to
