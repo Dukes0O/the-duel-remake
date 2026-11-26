@@ -74,7 +74,7 @@ Wim, having come up from the Wash to see what her nephew is about.
 > paying.
 >
 > **Dace:** *(only if he was taken to Rell)* I've carried your town's water every day since that night, and I'll carry
-> it for the rest of the month. It still won't feel paid.
+> it for the rest of the month, but it still won't feel as if I've paid.
 >
 > **Dace:** *(only if his secret was kept)* You kept quiet about those embers when you didn't have to. I think about
 > that every time Rell looks at me.
@@ -85,8 +85,8 @@ Wim, having come up from the Wash to see what her nephew is about.
 > **Dace:** Lend me this pickup for two days. I'll go and find out what it is, and whatever I find is yours. Then
 > we're square, and I'll have done it by myself.
 >
-> **Dace:** Moss says I can have the pickup if you say so. Rell says I can go if you say so. Auntie Solder says it's
-> nothing to do with her. So it's you.
+> **Dace:** Moss says I can have the pickup if you say so, and Rell says I can go if you say so. Auntie Solder says it's
+> nothing to do with her, so it's up to you.
 
 **You may ask before you answer. Asking costs nothing.** Each person answers where they stand, and Auntie Solder
 answers on the radio from the hearth.
@@ -95,8 +95,8 @@ answers on the radio from the hearth.
 | --- | --- | --- |
 | "Dace, what did you see?" | **Dace:** I don't know what it was, and that's why I want to go. If I tell you any more, you'll drive out and find it yourself in that car, and then I'll still owe you. | He will not say, because he wants it to be his |
 | "Dace, can you drive?" | **Dace:** Moss let me drive Bess round the yard twice. I only hit the water barrel once, and it was empty. A pickup is smaller than Bess, so it must be easier. | He has hardly driven at all |
-| "Moss, what's wrong with the pickup?" | **Moss:** There are three things, and I'll tell you all of them. Her radiator weeps, so she boils on a long hill. Her spare wheel is flat and bald. Her radio hisses and does nothing else. I never mended her, because I had Bess. | The three things that can be mended |
-| "Moss, what would it cost to mend her?" *(only after the question above)* | **Moss:** It's eight scrap for the radiator, six for the spare and ten for the radio, and your own hands on the wrench. Mend what you can afford. I'd start with whatever frightens you most. | The prices, and that there may not be scrap for all three |
+| "Moss, what's wrong with the pickup?" | **Moss:** There are three things wrong with her, and I'll tell you all of them. Her radiator leaks, so she boils over on a long hill, her spare wheel is flat and worn bald, and her radio hisses and does nothing else. I never mended her, because I had Bess. | The three things that can be mended |
+| "Moss, what would it cost to mend her?" *(only after the question above)* | **Moss:** It's eight scrap for the radiator, six for the spare and ten for the radio, and you'll have to do the work yourself with the wrench. Mend what you can afford, and I'd start with whatever frightens you most. | The prices, and that there may not be scrap for all three |
 | "Rell, do you want him to go?" | **Rell:** He walked nine days across the salt, and he kept Wim's feet moving the whole way. I was raking salt on my own at twelve. I don't like it and I won't stop it, and that's all the blessing he'll get from me. | Rell will not decide it for the player |
 | "Rell, how do I find a Walker who is on foot?" | **Rell:** He'll leave our mark: three stones in a row, with the smallest one pointing the way he went. Every Walker does it without thinking. Look for the stones before you look for the boy. | How to follow Dace if he has left the truck |
 | "Auntie, what do you think?" | **Auntie Solder:** *(on the radio)* I'm not saying a word. I said a word about the Walkers at the gate, and look how wrong I was. But if that boy isn't back by dusk on the second day, I shall have several words, and you'll hear all of them. | What waits at home if it goes wrong |
@@ -112,19 +112,20 @@ and takes from him the thing he asked for. No keeps him at home only if he stays
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "All right. You can have two days. Let's get this truck fit to go first." | The pickup leaves the yard with Dace in it | *Whatever happens to him out there, I'm the one who said yes.* | The getting ready (Scene 3). Then a named draw for each trouble on his road |
+| 1 | "All right, you can have two days, but let's get this truck fit to go first." | The pickup leaves the yard with Dace in it | *Whatever happens to him out there, I'm the one who said yes.* | The getting ready (Scene 3). Then a named draw for each trouble on his road |
 | 2 | "You can go, but I'm coming with you. We'll take my car." | The day's outing, spent on Dace's errand | *He'd be safe with me. I'm not sure that safe is what he asked for.* | A day's drive together. The place is found. He still thinks that he owes |
 | 3 | "No. You're not going on your own, and you're not going in that truck." | The pickup stays under its cover | *I wonder whether he heard no, or only heard not yet.* | A named draw: he may take it in the night, with nothing mended and nothing said |
 
-> **Dace:** *(1)* You said yes. I had a whole other speech ready for when you said no. I'll save it for something
+> **Dace:** *(1)* You said yes! I had a whole other speech ready in case you said no, so I'll save it for something
 > else.
 >
 > **Dace:** *(2)* Then it's you who'll have found it, and I'll have sat beside you and watched. I'll come, because I
 > want to see it. But I'll still owe you afterwards, and we'll both know it.
 >
-> **Dace:** *(3)* All right. You're the one I owe, so you're the one who says.
+> **Dace:** *(3)* All right. You're the one I owe, so you're the one who gets to decide.
 >
-> **Rell:** *(3, low)* He took that too quietly. When that boy goes quiet, I count the carts.
+> **Rell:** *(3, low)* He took that far too calmly. When that boy goes quiet, I go and count the carts to make sure
+> they're all still there.
 
 **The ledger.** 1: mark "You let Dace take the old pickup out alone for two days." 2: mark "You and Dace went looking
 together, in your car." 3: mark "Dace asked you for the old pickup, and you said no."
@@ -139,22 +140,21 @@ seconds, as any mend is (section 16). With 18 scrap the player can mend two of t
 
 | The thing | The price | What mending it does, out of sight | What is said when it is done |
 | --- | --- | --- | --- |
-| The radiator weeps | 8 scrap, ten seconds | The engine cannot boil on the long hill | **Dace:** Is that all it was? It's a hole the size of a pea, and she's sat in this yard for years because of it. |
-| The spare wheel is flat and bald | 6 scrap, eight seconds | A tyre that goes on the stones can be changed | **Moss:** That's a tyre with air in it. She hasn't had one of those to spare for longer than I've had Bess. |
+| The radiator leaks | 8 scrap, ten seconds | The engine cannot boil on the long hill | **Dace:** Is that all it was? It's a hole the size of a pea, and she's sat in this yard for years because of it. |
+| The spare wheel is flat and bald | 6 scrap, eight seconds | A tyre that goes on the stones can be changed | **Moss:** That's a spare tyre with air in it at last. She hasn't had one of those for longer than I've had Bess. |
 | The radio hisses and does nothing else | 10 scrap, twelve seconds | He can call, and be called. The cue is `open.pickup.radio` | **Auntie Solder:** *(on the radio)* Who is that on the old pickup's set? I haven't heard that set since before the fire went out. Tell the boy that it works both ways, and that I'm listening. |
 
 **Whether he will call,** only with the radio mended.
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | "Call me at noon and at dusk, both days." | He calls four times. A call can come in the middle of anything | *If he calls and he's in trouble, I'll have to choose what to drop.* | When trouble comes the player knows at once, and knows where |
+| a | "Call me at noon and at dusk on both days." | He calls four times. A call can come in the middle of anything | *If he calls and he's in trouble, I'll have to choose what to drop.* | When trouble comes the player knows at once, and knows where |
 | b | "The radio is there if you need it." | He calls only if he has to | None | He calls at dusk, when he has already tried everything else |
 
-> **Dace:** *(a)* You want me to call at noon and at dusk? That isn't going on my own. That's going on a string. All
-> right, I'll call. But I'm
-> going to say that there's nothing to report, in a very bored voice.
+> **Dace:** *(a)* You want me to call at noon and at dusk? Then it isn't really going on my own, is it? All right, I'll
+> call, but I'm going to tell you that there's nothing to report, in a very bored voice.
 >
-> **Dace:** *(b)* I won't need it. But I'll know where it is.
+> **Dace:** *(b)* I won't need it, but I'll know where it is.
 
 **What he is told.** Dace sets the rule himself.
 
@@ -166,15 +166,16 @@ seconds, as any mend is (section 16). With 18 scrap the player can mend two of t
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | a | "If you see a flag you don't know, get off the road and wait until it's gone." | He will hide from strangers | *Hiding takes time, and he only has two days.* | Riders never find him. One time in two he runs out of time in sight of the place |
-| b | "If the truck stops, stay with the truck." | He will not walk off | *A truck is easy to find. A boy on foot isn't.* | If he has to be fetched, he is where the truck is |
-| c | "You walked nine days to get here. You'll know what to do." | Nothing to keep, except that somebody trusted him | *It isn't advice at all. I'm not sure why it feels like the most important one.* | He goes all the way to the place, whatever happens to the truck. He is not careful |
+| b | "If the truck stops, stay with the truck." | He will not walk off | *A truck is easy to find, and a boy on foot isn't.* | If he has to be fetched, he is where the truck is |
+| c | "You walked nine days to get here. You'll know what to do." | Nothing to keep, except that somebody trusted him | *That isn't really advice at all, and I'm not sure why it feels like the most important thing I could tell him.* | He goes all the way to the place, whatever happens to the truck. He is not careful |
 
-> **Dace:** *(a)* Get off the road and wait. I can do that. I'm good at not being seen. You'd know.
+> **Dace:** *(a)* Get off the road and wait until it's gone. I can do that, because I'm good at not being seen. You'd
+> know that better than anybody.
 >
-> **Dace:** *(b)* Stay with the truck. Do I stay even if it's on fire? All right, I won't if it's on fire. Otherwise I
-> stay.
+> **Dace:** *(b)* Stay with the truck, even if it's on fire? All right, I won't stay if it's on fire, but otherwise I'll
+> stay with it.
 >
-> **Dace:** *(c)* That isn't a thing to remember. No, wait, it is. I'll keep it.
+> **Dace:** *(c)* That isn't a thing to remember. No, wait, it is, and I'll keep it.
 
 **The ledger for what he was told.** a: "You told Dace to get off the road when he saw a flag he didn't know." b: "You
 told Dace to stay with the truck." c: "You told Dace that he would know what to do."
@@ -221,11 +222,11 @@ do is not stopped: he limps on to the place on a boiling engine or a flat tyre, 
 **If he was asked to call,** and nothing has gone wrong, his calls come wherever the player is, with the cue
 `open.pickup.call`.
 
-> **Dace:** *(on the radio, noon on the first day)* It's noon, and this is Dace. There's nothing to report. That was
+> **Dace:** *(on the radio, noon on the first day)* It's noon, and this is Dace, and there's nothing to report. That was
 > my bored voice. Did it sound bored?
 >
-> **Dace:** *(on the radio, dusk on the first day)* It's dusk, and I've stopped for the night. I can see more stars
-> from here than I can from Tin Town. There's nothing to report. Tell Rell that I ate.
+> **Dace:** *(on the radio, dusk on the first day)* It's dusk, and I've stopped for the night. I can see more stars from
+> here than I can from Tin Town. There's nothing to report, and you can tell Rell that I ate.
 >
 > **Dace:** *(on the radio, noon on the second day, if he stood on it)* It's noon, and I've found it. I'm not telling
 > you what it is on the radio, because anybody could be listening. I'm coming home.
@@ -233,17 +234,17 @@ do is not stopped: he limps on to the place on a boiling engine or a flat tyre, 
 **When trouble comes and the pickup has a radio,** he calls: at once if a call was agreed, and at dusk if the radio
 was only there to be used. One of these, and then where he is.
 
-> **Dace:** *(on the radio; the hill)* It's Dace. I'm all right, so don't start by asking me that. The truck has
-> boiled over on the long hill, and I've given it all of my drinking water. It's still dry, and now so am I.
+> **Dace:** *(on the radio; the hill)* It's Dace, and I'm all right, so don't start by asking me that. The truck boiled
+> over on the long hill, and I've given it all of my drinking water. The engine is still dry, and now so am I.
 >
-> **Dace:** *(on the radio; the stones)* It's Dace. A tyre has gone on the stones, and the spare is as flat as the one
-> that went. I'm sitting on the bonnet. I'm not in a hurry. The sun is, though.
+> **Dace:** *(on the radio; the stones)* It's Dace. A tyre burst on the stones, and the spare is as flat as the one that
+> burst. I'm sitting on the bonnet and I'm not in a hurry, but the sun is going down.
 >
-> **Dace:** *(on the radio, low; the riders)* It's Dace, and I have to be quick. There are buggies behind me with a
-> flag I don't know. I'm going to leave the truck and get into the rocks. Look for the stones.
+> **Dace:** *(on the radio, low; the riders)* It's Dace, and I have to be quick. There are buggies behind me with a flag
+> I don't know. I'm going to leave the truck and get into the rocks. Look for my three stones when you come.
 >
-> **Dace:** *(on the radio; stranded at the place)* It's Dace. I found it, and I'm standing on it. The truck got me
-> here and it won't get me back, so I'm not going to be home by dusk. Don't tell Rell the last part first.
+> **Dace:** *(on the radio; stranded at the place)* It's Dace, and I found it. I'm standing on it right now. The truck
+> got me here and it won't get me back, so I'm not going to be home by dusk. Don't tell Rell the last part first.
 >
 > **Dace:** *(on the radio)* I'm on the road that we walked in by, about a morning's drive from the gate. I've tied my
 > blanket to the aerial, so look for something red.
@@ -260,18 +261,20 @@ half way home.
 | | You say or do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | a | Leave what you are doing and drive to him | Whatever today's outing was, it goes on without the player. On a gas run, Moss takes Bess on alone | *Whatever I was doing can wait. He can't wait for very long.* | The fetch, today. Bess comes home with more holes |
-| b | "Sit tight, Dace. I'll come at first light." | He spends the night out, with the truck | *He has a blanket and a cab. He walked here with less than that.* | The fetch is tomorrow's outing. If nobody told him to stay with the truck, he may start walking |
+| b | "Sit tight, Dace, and I'll come for you at first light." | He spends the night out, with the truck | *He has a blanket and a cab. He walked here with less than that.* | The fetch is tomorrow's outing. If nobody told him to stay with the truck, he may start walking |
 
-> **Dace:** *(on the radio; b)* I'll wait for first light, then. I'll be here. I mean, I'll be somewhere, and it will
-> be here.
+> **Dace:** *(on the radio; b)* I'll wait for first light, then, and I'll be here. I mean, I'll be somewhere, and it
+> will be here.
 
 In this example the player says b, and Dace, who was told to stay with the truck, stays.
 
 **With no radio, nothing is heard.** If he is not home, the player learns it at the hearth at dusk on the second day.
 
-> **Rell:** He said dusk on the second day. It's dusk on the second day, and that gate hasn't moved.
+> **Rell:** He said he'd be back by dusk on the second day. It's dusk on the second day now, and nobody has come through
+> that gate.
 >
-> **Auntie Solder:** I said I'd have several words if this happened. I find that I've only the one, and it's go.
+> **Auntie Solder:** I said I'd have several words if this happened. Now that it has, I've only got one word, and that
+> word is go.
 
 > *Nobody knows where he is. All I know is which road he took, and that the pickup pulls to the left.*
 >
@@ -283,7 +286,7 @@ In this example the player says b, and Dace, who was told to stay with the truck
 | b | "I'll go at first light." | Rell picks up her stick | *I'll find him faster by daylight. I hope he knows that somebody is coming.* | Rell walks out tonight, and is not on the fence. He spends a third night out, and may have walked |
 
 > **Rell:** *(b)* Then I'll start walking now, and you can pick me up on the road in the morning. I'm not angry with
-> you. I just can't sit.
+> you. I just can't sit here and wait.
 
 Mark, with b: "Rell walked out in the dark to look for Dace."
 
@@ -312,10 +315,10 @@ Crow's Step, its keeper can be asked too.
 
 | What stopped him | What is found | What he says | Getting home |
 | --- | --- | --- | --- |
-| The long hill | The pickup at the top of the hill with its bonnet up, and Dace in its shade | **Dace:** I gave her all my water, and she drank the lot and wanted more. I've been sitting under her since noon. I'd like it known that I didn't cry. I thought about it. | The radiator is mended where it stands, for its seconds and its scrap, and filled from the car's can. He drives home behind the car |
+| The long hill | The pickup at the top of the hill with its bonnet up, and Dace in its shade | **Dace:** I gave her all my water, and she drank the lot and wanted more. I've been sitting in her shade since noon. I'd like it known that I didn't cry, although I thought about it. | The radiator is mended where it stands, for its seconds and its scrap, and filled from the car's can. He drives home behind the car |
 | The stones | The pickup on three good wheels | **Dace:** I got the wheel off by myself. Then I found out that the spare was flat as well, so I put the first one back on. It took me all afternoon, and it didn't help at all. | He rides home in the car. The pickup is left, and Moss fetches it with Bess the next morning |
-| The riders | No pickup. Three stones, and then Dace in the rocks | **Dace:** They took the truck and left me my boots, because my boots were too small for any of them. I didn't tell them anything. They didn't ask me anything, but I wouldn't have. | He rides home in the car. The pickup stands at the Rats' Nest |
-| His own legs: he limped on to the place | The pickup at the place itself | **Dace:** I got here. I couldn't get back again, but I got here. Look at it. I found that. | By which fault it was: the radiator is mended there, or the pickup is left for Moss |
+| The riders | No pickup. Three stones, and then Dace in the rocks | **Dace:** They took the truck and left me my boots, because my boots were too small for any of them. I didn't tell them anything. They didn't ask me anything, but I wouldn't have told them if they had. | He rides home in the car. The pickup stands at the Rats' Nest |
+| His own legs: he limped on to the place | The pickup at the place itself | **Dace:** I got here. I couldn't get back again, but I did get here. Look at it. I found that all by myself. | By which fault it was: the radiator is mended there, or the pickup is left for Moss |
 | He walked *(left a night with nobody telling him to stay; one time in two)* | An empty pickup, and stones leading away from it | **Dace:** I thought nobody knew where I was, so I started walking home. I put the stones down every time I turned. I didn't think anybody would know to look for them. | He rides home in the car from wherever the stones end |
 
 **The road home.** He talks.
@@ -334,8 +337,8 @@ found.
 
 **Tied back,** in the yard the next morning, when the pickup was left out.
 
-> **Moss:** I'm taking Bess out to bring the old pickup home before somebody strips her. That makes Bess late for gas
-> today. I'm not complaining. I'm only telling you where the morning went.
+> **Moss:** I'm taking Bess out to bring the old pickup home before somebody strips her. That means Bess will be late
+> for gas today. I'm not complaining, but I want you to know where the morning went.
 
 **Tied back,** the next time the Road Rats are met at a checkpoint, when they took the pickup. The mark is "The Road
 Rats have Moss's old pickup."
@@ -348,8 +351,8 @@ Rats have Moss's old pickup."
 At the hearth, at dusk, on the day he is home by any road. The cue `open.pickup.home` is a gate opening and an old
 engine stopping. Dace stands up to say it, the way he has seen Rell stand to give the count of the carts.
 
-> **Dace:** Walkers keep a road in their heads. You say one thing for each part of the day, and you say it over until
-> it stays. This is mine.
+> **Dace:** Walkers keep every road they travel in their heads. You say one thing for each part of the day, and you say
+> it over and over until you remember it. This is mine.
 
 **The log is said in his own words, in this order.** Each entry is said when its condition is true.
 
@@ -357,16 +360,16 @@ engine stopping. Dace stands up to say it, the way he has seen Rell stand to giv
 | --- | --- |
 | If he took the pickup without leave | *Before the first morning, I took the truck without asking. I'm putting that first, so that nobody can say I left it out.* |
 | Always | *On the first morning, I found out that the pickup pulls to the left. I've decided that she's meant to.* |
-| The radiator was mended | *At noon on the first day, the long hill made the engine tick like a beetle, and nothing came out of it. You mended the right thing.* |
-| It was not mended, and the hill was kind | *At noon on the first day, the long hill made the engine steam like a kettle, and then it stopped steaming. I don't know why. I said thank you to it.* |
+| The radiator was mended | *At noon on the first day, the engine ticked like a beetle on the long hill, but no steam came out of it. You mended the right thing.* |
+| It was not mended, and the hill was kind | *At noon on the first day, the engine steamed like a kettle on the long hill, and then it stopped steaming. I don't know why it stopped, but I said thank you to it.* |
 | He was stopped on the hill | *At noon on the first day, the engine boiled over on the long hill and drank all my water. That's where you found me, so you know the rest of that day.* |
-| It boiled, and he had been told he would know what to do | *At noon on the first day, the engine boiled over on the long hill. I let it cool down, and then I went on in little runs, a hundred breaths at a time. It took until dark.* |
+| It boiled, and he had been told he would know what to do | *At noon on the first day, the engine boiled over on the long hill. I let it cool down, and then I went on in short stretches, a hundred breaths at a time, and it took me until dark.* |
 | A tyre went, and the spare was mended | *That afternoon, a tyre went bang on the stones. I changed the wheel by myself, and it only took me three tries.* |
 | No tyre went | *That afternoon, the stones were as sharp as rakes, and I drove over them as if they were eggs. Nothing went bang.* |
 | He was stopped on the stones, and had been told to stay | *That afternoon, a tyre went bang on the stones, and the spare was flat too. I sat on the bonnet and I stayed with the truck, like you said.* |
 | He was stopped on the stones, and had not | *That afternoon, a tyre went bang on the stones, and the spare was flat too. That's where the truck stopped, and I've told you what I did after that.* |
 | A tyre went with no spare, and he had been told he would know what to do | *That afternoon, a tyre went bang on the stones. I drove on with it flat, very slowly, and it made a noise like Auntie's ladle in a pot.* |
-| He slept out | *On the first night, I slept in the cab. The windows froze on the inside, and I drew Wim on one of them with my finger. She was gone by morning.* |
+| He slept out | *On the first night, I slept in the cab. The windows froze on the inside, and I drew Wim on one of them with my finger. The drawing had melted away by morning.* |
 | He stood on the place | *On the second morning, I found it. I'm not going to tell you what it is, because you'll have to come and see. I stood in the middle of it for a while, because I was the first.* |
 | He only saw it | *On the second morning, I saw it from a ridge, a long way off. I'd spent too long hiding from flags to go down to it, and I'd promised dusk. I can show you where to stand.* |
 | Riders came, and he had been told to hide | *At noon on the second day, I saw a flag I didn't know, so I got off the road and sat behind a wreck, the way you told me. Six buggies went past. I counted them twice.* |
@@ -386,9 +389,8 @@ stones where he stayed with the truck, the night in the cab, and the last part.
   >
   > **You:** We're square, Dace.
   >
-  > **Dace:** That's good. I'm going to go and tell Wim that I'm square. She won't know what it means, and I'm going
-  > to tell
-  > her anyway.
+  > **Dace:** That's good. I'm going to go and tell Wim that I'm square. She won't know what it means, but I'm going to
+  > tell her anyway.
   >
   > **Rell:** You trusted my boy with a truck and two days. I don't know yet whether that was wise. I do know that it
   > was trust, and Walkers don't forget that.
@@ -435,10 +437,10 @@ Friendly, because somebody spoke for the player (section 17). For a player whose
 A mission of about six minutes, in the player's car, with Dace beside the driver. It holds the checkpoints and the
 signs. It is the day's outing. The map shows a rumour's circle, and Dace gives the turns.
 
-> **Dace:** *(at the first fork)* Go left where the wires come down. I saw it from the other side, so everything is
-> backwards. Give me a minute.
+> **Dace:** *(at the first fork)* Go left where the wires come down. I saw it from the other side, so everything looks
+> backwards to me, and I need a minute to work it out.
 >
-> **Dace:** *(at the place)* There it is. I knew it was something. You found it, though. I only pointed.
+> **Dace:** *(at the place)* There it is! I knew it was something. You found it, though, because all I did was point.
 >
 > **Rell:** *(at the gate, at dusk)* You kept him safe, and I'm grateful for it. He'll ask you again, you know. They
 > always ask again.
@@ -481,8 +483,8 @@ The next morning, after the hearth is banked, it is one of three.
   > **Moss:** The old pickup is gone, and so is the key, and so is the boy. I'd be angry, but I showed him where the
   > choke was, so I've only myself to blame.
   >
-  > **Rell:** He'll have gone back the way we came. He has a night's start, in a truck that boils, with nothing mended
-  > and nobody told. I'm not asking you to go. I'm telling you that I'm going.
+  > **Rell:** He'll have gone back the way we came. He has a night's start on us, in a truck that boils over, with
+  > nothing mended and nobody told where he's going. I'm not asking you to go. I'm telling you that I'm going.
 
   > *I said no so that he'd be safe. He's out there now with nothing mended, and nobody has told him anything.*
 

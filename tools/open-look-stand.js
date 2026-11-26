@@ -28,6 +28,13 @@ const LOOKS = Object.freeze({
     return {at: sitePosition('bus-ring', 0) ?? LAND.at('ridge', -665, -345), layout: look.BUS_RING_LAYOUT,
       build: ({heightAt}) => look.buildBusRing({stage: 'camp', heightAt}), update: look.updateBusRing};
   },
+  // OPEN-LOOK-RADIO-HILL. Its stages are 'camp' and 'second-set'; the stand's 'dusk' and 'night' are the camp with its lamps lit.
+  'radio-hill': async () => {
+    const look = await import('../src/world/open/looks/radio-hill-look.js');
+    return {at: sitePosition('radio-hill', 0), layout: look.RADIO_HILL_LAYOUT,
+      build: ({stage, heightAt}) => look.buildRadioHill({stage: look.RADIO_HILL_STAGES.includes(stage) ? stage : 'camp', night: stage === 'dusk' || stage === 'night', heightAt}),
+      update: look.updateRadioHill};
+  },
 });
 
 const NIGHT = Object.freeze({hemisphere: .22, sun: .09, environment: .14, fog: .07, sky: .06});

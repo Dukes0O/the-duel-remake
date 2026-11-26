@@ -76,9 +76,9 @@ thought.
 | What is there | The thought | What it tells |
 | --- | --- | --- |
 | Small grey footprints lead from the west fence to Bess's shed, close together | *These are prints of ash, and they're no bigger than mine. Whoever made them was walking on tiptoe.* | A child, from the Ash Men |
-| The bottom wire of the west fence has been lifted and hooked up on a nail | *Somebody small came in under here, and then hooked the wire up neatly behind them.* | The way in. Careful, and not a raider |
-| The washed bowl is upside down on Bess's step, drying | *A thief would have kept the bowl. This one cleaned it and left it where we would find it.* | Not a thief |
-| A grey handprint is on the shed door, at the height of the player's own shoulder | *The ash in that print is still loose. Whoever made it hasn't left.* | He is inside |
+| The bottom wire of the west fence has been lifted and hooked up on a nail | *Somebody small came in under here, and then hooked the wire up neatly again afterwards.* | The way in. Careful, and not a raider |
+| The washed bowl is upside down on Bess's step, drying | *A thief would have kept the bowl, but this one cleaned it and left it where we would find it.* | Not a thief |
+| A grey handprint is on the shed door, at the height of the player's own shoulder | *The ash in that print is still loose, so whoever made it hasn't left yet.* | He is inside |
 
 ### Scene 2. The shed
 
@@ -87,10 +87,11 @@ Behind Bess's spare tyres there is a boy, grey from his hair to his boots, holdi
 > **The boy:** Don't shout. Please don't shout. If you shout, the cook will ring the bell, and then everybody will know
 > where I am.
 >
-> **The boy:** They call me Slack. I'm a stoker's boy from the Grey Camp. I mean that I was one, until two nights ago.
+> **The boy:** They call me Slack, and I'm a stoker's boy from the Grey Camp. I mean that I was one, until I ran away
+> two nights ago.
 >
-> **Slack:** I only took one bowl of soup, and I washed it. I'll go as soon as it's dark again. I only needed to be
-> somewhere that wasn't outside.
+> **Slack:** I only took one bowl of soup, and I washed it afterwards. I'll go as soon as it's dark again, because I
+> only needed somewhere to be that wasn't outside.
 
 > *He's holding that tyre lever like a club, and his hands are shaking so much that he can hardly keep hold of it.*
 >
@@ -100,12 +101,12 @@ Behind Bess's spare tyres there is a boy, grey from his hair to his boots, holdi
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "Why did you run away?" | **Slack:** An old woman on the coal gang was coughing all night at the cold end of the camp, so I carried her one hot coal in a tin. Clinker saw the glow. Fire that leaves the furnace is stolen, even one coal. | What he did: he shared fire |
-| "What happens to somebody who does that?" *(only after the question above)* | **Slack:** Clinker makes you watch your coal go out. Then you stand by a cold grate all night while everybody else is warm, so that you learn. I've seen it done. I didn't wait to have it done to me. | What he ran from. Nobody is hurt at the Grey Camp, and somebody is always cold |
+| "Why did you run away?" | **Slack:** An old woman on the coal gang was coughing all night at the cold end of the camp, so I carried her one hot coal in a tin. Clinker saw the glow of it. In the Grey Camp, any fire that leaves the furnace counts as stolen, even if it's only one coal. | What he did: he shared fire |
+| "What happens to somebody who does that?" *(only after the question above)* | **Slack:** Clinker makes you watch your coal go out, and then you stand by a cold grate all night while everybody else is warm, so that you learn. I've seen it done to other people, and I didn't wait for it to be done to me. | What he ran from. Nobody is hurt at the Grey Camp, and somebody is always cold |
 | "What does a stoker's boy do?" | **Slack:** I carry coal to the furnace and ash away from it, all day and half the night. I know every door in the Grey Camp, because I've carried a sack through each one of them. | What he knows |
-| "Will they come looking for you?" | **Slack:** Clinker will. He's the stoker, and I'm his to count. He counts everything that he has, every evening, and he has never once let the number go down. | Clinker will come, and soon |
-| "How did you get in here?" | **Slack:** I came under your west fence, where the bottom wire is loose. I hooked it up again behind me. You ought to mend it properly, because I wasn't the first one to find it. | A tell: he gives away a weakness for nothing. A thing to mend: the wire, six seconds with the wrench and 2 scrap |
-| "Is Slack your real name?" | **Slack:** Slack is the dust at the bottom of the coal heap, the part that's no use to anybody. It's what they call you when you're small. My name was Nat, before I went grey. Nobody has asked me for it in three years. | His name. From this answer on, his bubble reads Nat |
+| "Will they come looking for you?" | **Slack:** Clinker will, because he's the stoker and I'm one of the things that he counts. He counts everything that he has, every evening, and he has never once let the number go down. | Clinker will come, and soon |
+| "How did you get in here?" | **Slack:** I came under your west fence, where the bottom wire is loose, and I hooked it up again behind me. You ought to mend it properly, because I wasn't the first one to find it. | A tell: he gives away a weakness for nothing. A thing to mend: the wire, six seconds with the wrench and 2 scrap |
+| "Is Slack your real name?" | **Slack:** Slack is the dust at the bottom of the coal heap, the part that's no use to anybody. It's what they call you when you're small. My name was Nat before I went grey, and nobody has asked me for it in three years. | His name. From this answer on, his bubble reads Nat |
 
 **The decision.**
 
@@ -115,8 +116,8 @@ Behind Bess's spare tyres there is a boy, grey from his hair to his boots, holdi
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "Stay out of sight. I'll find you a better place than this to hide." | Nobody else knows yet | *If nobody knows, then nobody has to lie about him. Nobody except me.* | Hiding him (Scene 4). Clinker comes at dusk (Scene 5) |
-| 2 | "Come with me. Auntie Solder ought to hear this from you." | The whole town will know by noon | *She'll feed him first and shout afterwards. At least, I think that's the order.* | The hearth (Scene 3), and then hiding him or not, as the player chooses |
+| 1 | "Stay out of sight. I'll find you a better place than this to hide." | Nobody else knows yet | *If nobody knows he's here, then nobody has to lie about him, except me.* | Hiding him (Scene 4). Clinker comes at dusk (Scene 5) |
+| 2 | "Come with me. Auntie Solder ought to hear this from you." | The whole town will know by noon | *She'll feed him first and shout afterwards, or at least I think that's the order she'll do it in.* | The hearth (Scene 3), and then hiding him or not, as the player chooses |
 | 3 | "You can't stay here. Get in the car, and I'll take you to somebody who can keep you." | The gate, and the road | *Wherever I take him, Clinker's trouble goes there with him.* | The road out (Scene 7), by day. It is the day's outing |
 
 **The ledger when the player leaves.** Mark: "You found a boy from the Ash Men hiding in Bess's shed." If his name was
@@ -134,16 +135,16 @@ Auntie Solder, Cinder and Moss, in person. The boy stands as near to the hearth 
 > be at our gate by dusk.
 >
 > **Auntie Solder:** We have two embers, a fence with a hole in it, and now a boy that the Ash Men want back. I'm not
-> complaining. I'm only counting.
+> complaining about any of it, but I am counting.
 >
-> **Moss:** He folded the sacks. I'd keep him for that alone.
+> **Moss:** He folded all the sacks, and I'd keep him for that alone.
 
 **You may ask what they think. Asking costs nothing.**
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "Cinder, could he be a spy?" | **Cinder:** He could be. Old Smoke has sent people to count our lamps before now. But a spy doesn't wash the bowl, and he doesn't tell you where your fence is weak. | Probably not a trick |
-| "Auntie, what would you do?" | **Auntie Solder:** I'd feed him, and I have. After that it isn't a cook's question. You carried the fire in, so whoever comes to the gate about him is yours to answer. | The answer at the gate is the player's |
+| "Cinder, could he be a spy?" | **Cinder:** He could be, because Old Smoke has sent people to count our lamps before now. But a spy doesn't wash the bowl, and he doesn't tell you where your fence is weak. | Probably not a trick |
+| "Auntie, what would you do?" | **Auntie Solder:** I'd feed him, and I already have. What happens after that isn't a cook's question. You found him, so whoever comes to the gate about him is yours to answer. | The answer at the gate is the player's |
 | "What do you want to happen to you?" | **Slack:** I want to be somewhere that Clinker can't count me. I don't mind where it is. I can carry coal and keep a fire in, and I don't eat much. | He asks for very little |
 
 > **Auntie Solder:** Whatever you say at that gate tonight, the rest of us will say it too. So think about it before
@@ -156,12 +157,12 @@ plain sight, or drive him out (Scene 7).
 
 The choice is made by walking him somewhere. Each place has somebody who finds out, and says so in passing.
 
-| The place | Who finds out, and what is said | Kept out of sight |
+| You do | Who finds out, and what is said | Kept out of sight |
 | --- | --- | --- |
-| Bess's shed, where he is | **Moss:** I'm not hiding anybody. I'm only washing a truck, very slowly, in front of this door. | Bess is out all day. The searchers look here first (Scene 6) |
-| The loft over the forge | **Odessa:** There's a boy in my loft, and he has sorted my bolts by size. I haven't seen him, and I haven't seen the bolts either. | The searchers look here second |
-| The woodpile by the kiln | **Cinder:** That woodpile has started breathing. I shan't be burning anything from the left-hand end of it for a day or two. | The searchers look here last. The ash on him does not show against the charcoal |
-| Among the Walkers *(only if they live inside the fence)* | **Rell:** Ash washes off. Put a salt coat on him and he's one of mine, and I'll count twelve where I used to count eleven. | The searchers do not count the Walkers. Wim says whatever she sees |
+| Leave him in Bess's shed, where he is | **Moss:** I'm not hiding anybody. I'm only washing a truck, very slowly, in front of this door. | Bess is out all day. The searchers look here first (Scene 6) |
+| Hide him in the loft over the forge | **Odessa:** There's a boy in my loft, and he has sorted my bolts by size. I haven't seen him, and I haven't seen the bolts either. | The searchers look here second |
+| Hide him in the woodpile by the kiln | **Cinder:** That woodpile has started breathing. I shan't be burning anything from the left-hand end of it for a day or two. | The searchers look here last. The ash on him does not show against the charcoal |
+| Hide him among the Walkers *(only if they live inside the fence)* | **Rell:** Ash washes off, so put a salt coat on him and he's one of mine. I'll count twelve where I used to count eleven. | The searchers do not count the Walkers. Wim says whatever she sees |
 
 **If he is among the Walkers,** one question is worth asking.
 
@@ -174,8 +175,8 @@ The choice is made by walking him somewhere. Each place has somebody who finds o
 Three rider cars stop in the road with their lamps on. Clinker gets down and walks to the gate, alone. He does not
 raise his voice. The cue is `story.gate.bell`, which the player has heard before.
 
-> **Clinker:** Good evening, fire-keepers. My count is one short tonight. He's a boy, grey, about so high, and he
-> answers to Slack.
+> **Clinker:** Good evening, fire-keepers. My count is one short tonight, and the one I'm missing is a grey boy about so
+> high, who answers to Slack.
 >
 > **Clinker:** His prints go under your west wire, and they don't come out again. I'm not here to raid you. I'm here
 > to fetch what belongs to Old Smoke, and then I shall go home to my supper.
@@ -189,20 +190,19 @@ raise his voice. The cue is `story.gate.bell`, which the player has heard before
 | --- | --- | --- |
 | "What will happen to him if he goes back?" | **Clinker:** He'll carry coal, the same as before. He'll also stand by a cold grate for one night, to learn what he took from the rest of us. Nobody is ever hurt at the Grey Camp. We are only ever cold. | What handing him back means |
 | "Why do you want one small boy so badly?" | **Clinker:** Because if one walks out and is kept, then ten walk out. Old Smoke's fire needs forty pairs of hands, and I have counted every pair. | Why Clinker cannot let it go. Keeping the boy will be answered |
-| "What did he do that was so wrong?" | **Clinker:** He carried fire out of the furnace and gave it away. It was one coal. It's always one coal to begin with, and after that it's a town like yours. | How Clinker sees Tin Town |
+| "What did he do that was so wrong?" | **Clinker:** He carried fire out of the furnace and gave it away. It was only one coal, but it's always one coal to begin with, and after that it's a whole town like yours. | How Clinker sees Tin Town |
 | "What is he worth to you?" | **Clinker:** Old Smoke doesn't sell people. But the furnace is owed four winters of that boy's work, and two embers would warm it as well as he would. Put them down here, where I can watch them go out. | The price: two embers. It opens the third choice |
 
 **The decision,** when the boy is in Tin Town.
 
 > *If I say that he isn't here and Clinker finds him, Clinker will never believe another word that Tin Town says.*
 >
-> *If I hand him back, Clinker goes home content. I wonder what the boy will be thinking about tomorrow night, beside
-> a cold grate.*
+> *If I hand him back, Clinker will go home content, and the boy will spend the night standing by a cold grate.*
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | 1 | "There's no boy here. Those prints must be somebody else's." *(only if he is hidden)* | Clinker looks at the fence for a long time | *I've never told a lie to anybody's face at this gate before.* | He does not believe it. The search (Scene 6), tonight |
-| 2 | "He's here, and he's staying. He came to our fire by himself." | The riders start their engines | *Now they know, and nobody has had to lie. They'll also be back.* | The Ash Men's feud rises one step. The boy is safe inside. Nobody searches |
+| 2 | "He's here, and he's staying. He came to our fire by himself." | The riders start their engines | *Now the Ash Men know, and nobody has had to lie, but they'll be back.* | The Ash Men's feud rises one step. The boy is safe inside. Nobody searches |
 | 3 | "Here are two embers. Count them, and then count him as gone." *(only if the price was asked, and with two embers in the store)* | The count falls by two | *That's two nights of the whole town's fire, for one boy who doesn't eat much.* | The boy is free and clear, and the feud does not move. Tin Town has shown that it pays |
 | 4 | "Take him. He's yours." | The boy walks out through the gate | None | The Ash Men's feud cools one step. What the boy knows goes back with him |
 
@@ -249,8 +249,8 @@ Ash Men: Watching still.
 
 **Tied back,** the next time Clinker names a price for anything.
 
-> **Clinker:** You paid two embers for a coal boy without even arguing. So I've put my prices up for Tin Town. It
-> seemed only fair to the furnace.
+> **Clinker:** You paid two embers for a coal boy without even arguing, so I've put my prices up for Tin Town. It seemed
+> only fair to the furnace.
 
 **4. "Take him."** The boy has heard it. He comes out from wherever he was, by himself, and walks through the gate.
 
@@ -274,8 +274,8 @@ written, and the questions stand. The player cannot say that there was no boy, b
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | "He was here this morning. I drove him to {haven.name}." | Clinker looks along the road | *It's the truth. I wonder what the truth is going to cost {haven.leader}.* | Clinker goes there. That people are visited by three cars of Ash Men, and they think one word less of the player |
-| b | "He was here, and he's gone. I'm not telling you where." | The riders start their engines | *He can't search the whole of the Scablands. I hope that he can't.* | The Ash Men's feud rises one step. Nobody is visited |
+| a | "He was here this morning. I drove him to {haven.name}." | Clinker looks along the road | *It's the truth, but I wonder what the truth is going to cost {haven.leader}.* | Clinker goes there. That people are visited by three cars of Ash Men, and they think one word less of the player |
+| b | "He was here, and he's gone. I'm not telling you where." | The riders start their engines | *He can't search the whole of the Scablands, or at least I hope that he can't.* | The Ash Men's feud rises one step. Nobody is visited |
 | c | "He was here this morning. I left him on the Boneyard road." *(only if nobody would take him, in place of a)* | Clinker looks along the road | *It's the truth, and it tells Clinker exactly where to look.* | The riders go down the Boneyard road. The draw for how the road treated him is made at three chances in four of the worse |
 
 > **Clinker:** *(a)* Thank you. That is the first useful thing that anybody has said to me today. I shall go and ask
@@ -358,8 +358,9 @@ runaway."
 For a player who drives him out of Tin Town by day. A mission. It holds the checkpoints and the signs, and in an act
 with a clock it is the day's outing, so Bess does not go for gas.
 
-> **Auntie Solder:** *(on the radio, as the gate opens)* That's a kind thing to do, and it's the gas run that pays
-> for it. Bess stays in her shed today, and tonight burns an ember that nobody has baked.
+> **Auntie Solder:** *(on the radio, as the gate opens)* That's a kind thing to do, but it's the gas run that pays for
+> it. Bess stays in her shed today, so tonight we'll burn an ember, and there won't be a new one baked to take its
+> place.
 
 **Where he can go.** The player chooses by driving there. Each of these is on the map only if the ledger holds it.
 
@@ -386,7 +387,7 @@ rider to look the other way.
   Win, or lose them, and the drive goes on.
 - *The surround.* If the car is wrecked, or boxed in for six seconds, Clinker walks up to the window.
 
-  > **Clinker:** Hand the boy down to me. Then you can drive home with all four of your wheels.
+  > **Clinker:** Hand the boy down to me, and then you can drive home with all four of your wheels.
 
   | | You do | What happens |
   | --- | --- | --- |
@@ -395,8 +396,8 @@ rider to look the other way.
 
 **At the haven.** After the line above, the boy says goodbye.
 
-> **Slack:** Nobody ever drove me anywhere before. I always walked, with a sack on my back. Thank you for the lift, and
-> for the soup.
+> **Slack:** Nobody has ever driven me anywhere before, because I always walked, with a sack on my back. Thank you for
+> the lift, and for the soup.
 
 If the player asked his name, he says this as well.
 
@@ -466,7 +467,7 @@ Nobody dies, nothing saved is wiped, and no screen says the game is over.
 **If the player never follows the prints.** At dark the boy goes back under the wire by himself. Clinker still comes
 at dusk, and says only this.
 
-> **Clinker:** His prints go under your wire, and then they come out again. So he took your soup and went on. You were
+> **Clinker:** His prints go under your wire, and then they come out again, so he took your soup and went on. You were
 > lucky, fire-keepers. Good night.
 
 Some nights later Auntie Solder says the rest.
@@ -518,7 +519,7 @@ its ending.
 | --- | --- |
 | Kept in the open | **Old Smoke:** You kept my coal boy, and you told Clinker so to his face. Nobody has said no to Clinker's face in years. He hasn't stopped talking about it since. |
 | Hidden, and not found | **Old Smoke:** My stoker lost a boy under your wire, and you told him that there was no boy. I keep fire, and you keep secrets. I couldn't tell you which of us is the warmer for it. |
-| Hidden, and found | **Old Smoke:** You lied to my stoker's face, and then my people found the boy behind your lie. So your town tells lies. Tell me why I should believe one word that you say to me tonight. |
+| Hidden, and found | **Old Smoke:** You lied to my stoker's face, and then my people found the boy behind your lie, so your town tells lies. Tell me why I should believe one word that you say to me tonight. |
 | Paid for | **Old Smoke:** You paid two embers for a boy who was worth less than one. I let both of them go grey, and I still think that I had the better of the bargain. |
 | Handed back | **Old Smoke:** You gave my boy back when you were asked for him. That was correct. What is mine comes back to me, and you knew it without being told. |
 | Driven out to a haven | **Old Smoke:** You sent my boy down the road to somebody else's fire, so that the trouble would be theirs and not yours. I've done the same with trouble all my life. |

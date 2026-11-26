@@ -14,7 +14,7 @@ import {createGroundLook,createHillField,createRoadLook,loadGroundPhotos,createT
 import {HILLS,scablandsTerrainHeightAt} from './scablands-height.js';
 const NO_HILLS=Object.freeze([]);
 import {featureFlags} from '../feature-flags.js';
-import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
+import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay,createStripRoadsDraw} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
@@ -513,7 +513,7 @@ export function createScablandsScene(course,options={}){
   const ashFloors = [];
   let yard=null;
   let retired=false;
-  let townDraw=null,townLife=null,townFx=null,townArt=null,townArtLibrary=null,townArtReplan=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0,lifeTown=null,lifeFireKey='';
+  let townDraw=null,townRoads=null,townRoadMaterial=null,townLife=null,townFx=null,townArt=null,townArtLibrary=null,townArtReplan=null,townLifeClock=0,townOutposts=null,townVane=null,townSeconds=0,lifeTown=null,lifeFireKey='';
   let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
@@ -535,14 +535,13 @@ export function createScablandsScene(course,options={}){
     // lost to the fire stands as its burnt ruin and one still burning keeps standing under its flames.
     townArtReplan=buildings=>townArt.setPlan(townArtPlan({...town,buildings},{world:false}).placements);
     townArtReplan(town.buildings);
-    const roadMat=new THREE.MeshStandardMaterial({color:0x756b59,roughness:1});
-    for(const road of townLayout.roads||[]){
-      const dx=road.b.x-road.a.x,dz=road.b.z-road.a.z,length=Math.hypot(dx,dz);
-      if(!length)continue;
-      const mesh=new THREE.Mesh(new THREE.BoxGeometry(length,.16,road.halfWidth*2),roadMat);
-      const x=(road.a.x+road.b.x)/2,z=(road.a.z+road.b.z)/2;
-      mesh.position.set(x,scablandsSurfaceHeightAt(x,z)+.12,z);mesh.rotation.y=-Math.atan2(dz,dx);mesh.name=`Town road ${road.id}`;root.add(mesh);
-    }
+    // COMBAT-ROOF-BOW-LOOK: the town's roads lie on the drawn ground and wear the land roads' look (src/world/scablands-draw.js).
+    // Their own copy of the road's material draws the vertex alpha with which each ribbon fades out past its ends.
+    townRoadMaterial=roadLook.apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,vertexColors:true,
+      polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+    townRoads=createStripRoadsDraw({strips:(townLayout.roads||[]).filter(road=>road.b.x!==road.a.x||road.b.z!==road.a.z),
+      plainAt:plainHeightAt,material:townRoadMaterial});
+    root.add(townRoads.group);
     group.add(root);townDraw=root;
     // TOWN-VIEW-LIFE: the town's people, carts and smoke near the car, drawn from the saved layout (drawing only).
     const [{createTownWalkers},{createTownFx}]=await Promise.all([import('../town/view/town-walkers.js'),import('../town/view/town-fx.js')]);
@@ -1214,7 +1213,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); openLand?.dispose(); townLife?.dispose(); townFx?.dispose(); townArt?.dispose(); townArtLibrary?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
+    storyPeople.dispose(); night2?.dispose(); openLand?.dispose(); townLife?.dispose(); townRoads?.dispose(); townRoadMaterial?.dispose(); townFx?.dispose(); townArt?.dispose(); townArtLibrary?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
@@ -1222,7 +1221,7 @@ export function createScablandsScene(course,options={}){
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
     for(const material of materials)material.dispose();
-    group.clear();group.userData.assetStatus='retired';townDraw=null;
+    group.clear();group.userData.assetStatus='retired';townDraw=null;townRoads=null;
   }
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
@@ -1256,7 +1255,7 @@ export function createScablandsScene(course,options={}){
     if(changed || drawnSite !== scablandsGroundEdit.siteGround){
       if (drawnSite || scablandsGroundEdit.siteGround) refreshSiteUnderlay();
       const geometry=makeCoarseGround(coarseMaterial,scablandsGroundEdit,siteUnderlay).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
-      roads.refresh();gorge.refresh();}
+      roads.refresh();gorge.refresh();townRoads?.refresh();}
     return changed;
   };
   const refreshOpenMarks=marks=>{
@@ -1269,7 +1268,7 @@ export function createScablandsScene(course,options={}){
     drawnEdit=scablandsGroundEdit;
     editedGround=createGroundView({group:ground,groundEdit:drawnEdit,material:editedMaterial});
     editedGround.update();
-    roads.refresh();gorge.refresh();
+    roads.refresh();gorge.refresh();townRoads?.refresh();
     whites?.dispose();
     if(whites?.group.parent)whites.group.parent.remove(whites.group);
     whites=createTheWhitesScene({openMarks,loadAsset});

@@ -42,6 +42,13 @@ export const NIGHT_2_QUESTIONS = [
 
 export const NIGHT_2_WASH_CHOICE = choice('drive-riders-off', 'Drive out and run the riders off');
 
+// NIGHT-2-TRY-FIXES item 3: a rider who breaks off is seen driving away, and the player is told. The first line shows when a
+// rider breaks off while the fight goes on; the last when the riders are driven off, naming how many got away.
+export const NIGHT_2_RIDER_LINES = Object.freeze({
+  breaksOff: 'An Ash rider breaks off and drives away into the dark.',
+  gotAway: count => count === 1 ? 'One rider got away.' : `${['Two', 'Three', 'Four', 'Five', 'Six'][count - 2] ?? count} riders got away.`,
+});
+
 export const NIGHT_2_CHOICES = [
   priced('gift', "Take one. You don't owe us anything for it.", -1,
     [walkers('Friendly'), road(1), mark('gave-rell-an-ember')],
