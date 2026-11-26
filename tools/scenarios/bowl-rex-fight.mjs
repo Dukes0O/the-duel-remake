@@ -3,18 +3,51 @@
 // the pictures show the chest glow, followed by the fire with no floor marking,
 // and the rest with a battery box open. Then a child-pace driver in the page plays the fight to the
 // end; the results name the yard, the purse is paid once, and the yard has its Scrapasaurus.
+// BOWL-REX-3: on the way the driver meets the eye beam after the first box and a bomb after the second,
+// turning across the red line and keeping 8 m from the bomb, and still wins.
 // Claude runs it on the laptop; pictures go to the evidence folder for the look.
 import assert from 'node:assert/strict';
 
 // Shared with the ten-seed headless drive. Controls are the same ones a
 // child has: wait for the eye, tap F, then drive straight past the tired beast.
+// BOWL-REX-3: it also turns across the red line while the line follows, drives 8 m or more
+// from a bomb once it has landed, and never hooks a bomb. It sees each tell 0.3 seconds late.
+// Self-contained: the browser scenario sends this function's text into the page.
 export function childDrive(duel, driver) {
   const s=duel.state, f=s.bowlNight?.event?.rex;
   if(s.status!=='racing'||!f)return;
-  const h=f.hook, mark=f.marker, dt=1/120;
+  const h=f.hook, mark=f.marker, dt=1/120, late=.3;
   driver.elapsed=(driver.elapsed||0)+dt;
   let throttle=0,brake=0,steer=0,interact=false;
-  if(h.phase==='flying'||h.phase==='attached'){
+  const clamp=v=>Math.max(-1,Math.min(1,v)), turn=a=>Math.atan2(Math.sin(a),Math.cos(a));
+  const heading=duel.course.at(s.s).heading+(s.headingError||0), here=duel.course.groundAt(s.s,s.lateral);
+  // Drive towards a world heading: forward when it is ahead, backing up when it is behind.
+  // At its own pace, as a child drives (16 to 19 mph), not flat out.
+  const pace=driver.pace||18;
+  const head=desired=>{
+    const ahead=turn(heading-desired);
+    if(Math.abs(ahead)<=Math.PI/2)return {throttle:s.speedMph<pace ? 1 : 0,brake:s.speedMph<-.5 ? 1 : 0,steer:clamp(ahead*1.8)};
+    return {throttle:s.speedMph>.5 ? 1 : 0,brake:s.speedMph>-pace ? 1 : 0,steer:clamp(-turn(heading-desired-Math.PI)*1.8)};
+  };
+  const line=f.beam, bomb=f.bomb?.phase==='lying' && !f.bomb.onCable ? f.bomb : null;
+  driver.lineSeen=line ? driver.lineSeen??driver.elapsed : null;
+  driver.bombSeen=bomb ? driver.bombSeen??driver.elapsed : null;
+  const across=line && driver.elapsed-driver.lineSeen>=late;
+  const fromBomb=bomb ? Math.hypot(here.x-bomb.x,here.z-bomb.z) : Infinity;
+  const flee=bomb && fromBomb<9 && driver.elapsed-driver.bombSeen>=late && h.phase!=='attached';
+  if(!line)driver.acrossSide=null;
+  if(across){
+    // Across the line, not along it, towards the side of the floor with more room, and back the
+    // other way before a wall: the floor is 20 m either side of its middle.
+    const side=duel.course.groundAt(s.s,s.lateral+1), outward=Math.atan2(side.x-here.x,side.z-here.z);
+    const square=sign=>line.heading+sign*Math.PI/2;
+    const gain=sign=>Math.cos(turn(square(sign)-outward)), edge=duel.course.def.scrapdome?.floorHalfWidth??20;
+    driver.acrossSide??=gain(1)*(s.lateral<0 ? 1 : -1)>0 ? 1 : -1;
+    if(gain(driver.acrossSide)*s.lateral>0 && Math.abs(s.lateral)>edge-5)driver.acrossSide*=-1;
+    ({throttle,brake,steer}=head(square(driver.acrossSide)));
+  }else if(flee){
+    ({throttle,brake,steer}=head(Math.atan2(here.x-bomb.x,here.z-bomb.z)));
+  }else if(h.phase==='flying'||h.phase==='attached'){
     // Ease onto the back cable without a run-up. Once tight, keep the throttle down.
     throttle=h.box===1 && !h.tight ? (s.speedMph<13 ? .2 : 0) : 1;
   }else if(h.phase==='dragging'){
@@ -224,7 +257,8 @@ export async function run(context) {
   assert.equal(await context.evaluate(page.scrap), scrapBefore + 600, 'night five\'s purse is paid once');
   assert.ok(await context.evaluate(page.rexInYard), 'the yard now has its Scrapasaurus');
   const cues = JSON.parse(await context.evaluate(page.cues));
-  for (const cue of ['bowl.rex.roar', 'bowl.rex.fire', 'bowl.rex.box.open', 'bowl.hook.fire', 'bowl.hook.bite', 'bowl.rex.box.out', 'bowl.rex.fall'])
+  for (const cue of ['bowl.rex.roar', 'bowl.rex.fire', 'bowl.rex.box.open', 'bowl.hook.fire', 'bowl.hook.bite', 'bowl.rex.box.out', 'bowl.rex.fall',
+    'bowl.rex.eyes.aim', 'bowl.rex.eyes.lock', 'bowl.rex.beam', 'bowl.rex.bomb.hatch', 'bowl.rex.bomb.launch'])
     assert.ok(cues.includes(cue), `the ${cue} cue played`);
   await context.evaluate(page.leave);
   await context.waitFor(page.menu, 'back on the main menu', 10000);

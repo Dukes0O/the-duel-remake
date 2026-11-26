@@ -35,6 +35,19 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.box.drag': 'bowl.rex.box.drag',
   'bowl.rex.fall': 'bowl.rex.fall',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'bowl.rex.gate',    // it walks out through the car park gate
+  // BOWL-REX-3: the eye beam and the bombs, on stand-ins until BOWL-SOUND records each its own. The card named
+  // no stand-in for the whine, the whistle and the tick; these three are the bank's nearest.
+  'bowl.rex.eyes.aim': 'weapon.tesla.charge',      // a rising whine while the red line follows the truck
+  'bowl.rex.eyes.lock': 'interface.countdown',     // two sharp beeps as the line stops
+  'bowl.rex.beam': 'weapon.tesla.pulse',           // the beam burns along the orange
+  'bowl.rex.beam.over': 'crowd.cheer',             // the crowd as the truck clears the beam in the air
+  'bowl.rex.bomb.hatch': 'raider.warning',         // the hatch clanks open and a klaxon sounds (the bomb's tell)
+  'bowl.rex.bomb.launch': 'weapon.harpoon.fire',   // a thump from the tube
+  'bowl.rex.bomb.whistle': 'weapon.mortar.whistle', // a falling whistle for the second the bomb is in the air
+  'bowl.rex.bomb.land': 'heli.setdown.thud',       // a heavy clank where it lands
+  'bowl.rex.bomb.tick': 'heli.clock.tick',         // a tick that quickens while the bomb lies or is dragged
+  'bowl.rex.bomb.burst': 'vehicle.crash-impact',   // the bomb bursts
+  'bowl.rex.stagger': 'yeti.roar',                 // it is caught by its own bomb and staggers
   'bowl.out.over': 'bowl.out.over',
   'bowl.out.leap': 'bowl.out.leap',
   'bowl.out.gate': 'bowl.out.gate',
@@ -176,13 +189,17 @@ export const BOWL_EVENT_NAMES = Object.freeze({
 // What the player must do now: the HUD's one line for each event.
 export const BOWL_GOALS = Object.freeze({
   // BOWL-REX-FIGHT: what to do now, by what the Scrapasaurus is doing.
-  scrapasaurus: ({phase, hook, boxes = []} = {}) => {
+  scrapasaurus: ({phase, hook, boxes = [], beam = null, bomb = null} = {}) => {
     if (phase === 'fallen') return 'THE SCRAPASAURUS IS DOWN';
     if (phase === 'tell' || phase === 'fire') return 'ITS CHEST IS GLOWING, SO GET CLEAR';
     if (hook?.phase === 'attached') return hook.tight ? 'KEEP PULLING' : 'DRIVE AWAY AND PULL';
+    // BOWL-REX-3. An open box's lines come first; no line points at a bomb's ring.
+    if (phase === 'beam' && beam?.phase === 'aim') return 'TURN ACROSS THE RED LINE';
     if (phase === 'lift' || phase === 'throw') return 'Dodge the thrown car.';
-    if (hook?.phase === 'dragging') return 'PRESS F TO RELEASE';
+    if (hook?.phase === 'dragging' && !hook.bomb) return 'PRESS F TO RELEASE';
     if (phase === 'rest') return 'HOOK THE GLOWING BOX';
+    if (bomb?.onCable) return 'DRAG IT INTO ITS LEGS';
+    if (bomb?.canBite) return 'HOOK THE BOMB';
     return ['WATCH THE SCRAPASAURUS','TWO BOXES LEFT','ONE BOX LEFT'][boxes.filter(Boolean).length];
   },
   carCrush: target => `Crush ${target} pieces.`,
@@ -236,6 +253,16 @@ export const BIG_MO = Object.freeze({
   'rex.scorch': 'Ouch, that truck got toasted. Watch its chest, and move when it glows.',
   'rex.bump': 'Circle its legs and aim for the open eye.',
   'rex.lift': 'It has picked up a car to throw! Keep moving and stay away from the ring on the floor.',
+  // BOWL-REX-3: the eye beam and the bombs. Big Mo's calls, then why a try failed, once each in a fight.
+  'rex.eyes': 'Its eyes are lighting up, so do not stand still!',
+  'rex.bombs': 'Now it is lobbing bombs across the floor!',
+  'rex.bombHooked': 'The bomb is on the hook, so take it back where it came from!',
+  'rex.stagger': 'That bomb went off right under the Scrapasaurus!',
+  'rex.beamOver': 'The truck went clean over the beam!',
+  'rex.why.beam': 'The beam burns along the red line, so turn across the line and not along it.',
+  'rex.why.bombLand': 'The bomb came down on you, so watch for its shadow on the floor.',
+  'rex.why.bombNear': 'The bomb went off beside you, so move away when its tick gets fast.',
+  'rex.why.bombLate': 'The bomb went off before it reached the Scrapasaurus, so hook it sooner.',
   'rex.gone': 'It walked straight out of the gate and into the car park. The crowd is not happy about their cars.',
   'rex.toasted': 'That truck has been toasted too many times, so we have to stop the show and cool it down.',
   'event.won.scrapasaurus': 'The Scrapasaurus is down, and the crowd is going wild! It will make a lovely ornament for your yard.',
