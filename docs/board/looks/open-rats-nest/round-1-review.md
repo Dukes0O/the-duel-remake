@@ -1,7 +1,7 @@
 # The Rats' Nest, round 1 (OPEN-LOOK-RATS-NEST): Claude's verdict
 
 25 November 2026, on seven pictures taken in the game on the laptop at `509eba4fc` (Performance quality, the scenario
-`look-rats-nest`). The sheet is `rats-nest-round-1.jpg`. Nothing loads the site in play yet. Round 2 is card
+`look-rats-nest`). The sheet is `round-1.jpg`. Nothing loads the site in play yet. Round 2 is card
 OPEN-LOOK-2.
 
 **The verdict: the place is right, and it is not yet lived in.** Round 1 passes as a shape to build Scene 3 on.
