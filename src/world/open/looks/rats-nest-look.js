@@ -219,6 +219,10 @@ function makeLayout(){
   spot('road-top',ROAD.top-2,ROAD.z,{heading:Math.PI/2,looksAt:look(ROAD.foot+10,ROAD.z-3,1)});
   spot('road-foot',ROAD.foot+4,ROAD.z,{heading:Math.PI/2});
 
+  // Parked cars occupy the existing six mission anchors. Keep the approaches and all older solids.
+  for (const [i, bay] of bays.entries())
+    solid(`buggy-${i+1}`, 'buggy', 'box', bay.x, bay.z, 1.03, 1.63, bay.heading, 1.60);
+
   return Object.freeze({
     radius:95,depth:CUT.depth,
     cutting:Object.freeze({halfX:CUT.halfX,halfZ:CUT.halfZ,depth:CUT.depth,wallRun:CUT.run}),
@@ -259,7 +263,7 @@ const makePalette=()=>({
 
 // Collects pieces by material, each with its colour in its vertices, under a stack of placements, and merges them: one mesh a material.
 const WITH_UV=new Set(['earth','marks','pools','wreck']);
-function assembly(){
+function assembly(inspectParts){
   const lists={wreck:[],sheet:[],frame:[],earth:[],glass:[],glow:[],marks:[],pools:[]},stack=[new THREE.Matrix4()];
   let triangles=0;
   const here=()=>stack[stack.length-1];
@@ -267,6 +271,39 @@ function assembly(){
   const within=(matrix,work)=>{stack.push(here().clone().multiply(matrix));try{work();}finally{stack.pop();}};
   // keep() has already applied every nested placement when a piece enters this list.
   // Seat a rigid object as a whole, including its rebar, axle or upper tyres.
+  let observed = null;
+  function capture(draw) {
+    const pieces = [];
+    observed = pieces;
+    try { draw(); } finally { observed = null; }
+    return pieces;
+  }
+  function observe(label, draw) {
+    if (!inspectParts) return draw();
+    inspectParts(label, capture(draw));
+  }
+  // The six wreck stacks have different crushed rooflines. Lower each upper
+  // shell until its underside first touches metal within the shared footprint.
+  function stackWrecks(id, lower, upper) {
+    const base = capture(lower), shell = capture(upper);
+    const material = new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+    const supports = base.map(piece => new THREE.Mesh(piece,material));
+    const ray = new THREE.Raycaster(undefined,new THREE.Vector3(0,-1,0));
+    let gap = Infinity;
+    for (const piece of shell) {
+      const points = piece.attributes.position;
+      for (let i=0;i<points.count;i++) {
+        ray.ray.origin.set(points.getX(i),points.getY(i)+6,points.getZ(i));
+        const hit = ray.intersectObjects(supports,false)[0];
+        if (hit) gap = Math.min(gap,points.getY(i)-hit.point.y);
+      }
+    }
+    material.dispose();
+    if (!Number.isFinite(gap)) throw Error(id + ' has no supporting wreck');
+    for (const piece of shell) piece.translate(0,-gap,0);
+    inspectParts?.(id+'/support',base);
+    inspectParts?.(id+'/upper',shell);
+  }
   let resting = null;
   function settle(label, ground, draw, inspect) {
     const pieces = [];
@@ -301,6 +338,7 @@ function assembly(){
     geometry.applyMatrix4(here());geometry.computeVertexNormals();
     triangles+=geometry.index.count/3;lists[kind].push(geometry);
     resting?.push(geometry);
+    observed?.push(geometry);
   };
   // Loose triangles, three corners each, with one colour a corner or one for all.
   const faces=(kind,positions,colour,uvs=null)=>{
@@ -360,7 +398,7 @@ function assembly(){
   };
   const DRUM=[[0,0],[.28,0],[.29,.03],[.29,.28],[.305,.3],[.29,.32],[.29,.57],[.305,.59],[.29,.61],[.29,.86],[.27,.88],[.2,.87],[0,.87]].map(([r,h])=>new THREE.Vector2(r,h));
   const drum=(x,y,z,colour,turn=[0,0,0])=>keep('frame',turned(new THREE.LatheGeometry(DRUM,9),x,y,z,turn),colour);
-  return {lists,settle,placed,within,keep,faces,box,bar,tube,surface,ribbed,tyre,drum,get triangles(){return triangles;}};
+  return {lists,settle,observe,stackWrecks,placed,within,keep,faces,box,bar,tube,surface,ribbed,tyre,drum,get triangles(){return triangles;}};
 }
 
 // ---- Drawing: a wrecked car ----------------------------------------------------------------------------------------------
@@ -556,12 +594,12 @@ function tyreSmoke(index, wind, night) {
 
 // ---- Drawing: the site --------------------------------------------------------------------------------------------------------
 /** The Rats' Nest as a `THREE.Group` in the site's metres. `heightAt(x, z)` gives the ground under each thing (the land less `ratsNestGround`). */
-export function buildRatsNest({stage='day',heightAt=null,wind=WIND, inspectPlacement}={}){
+export function buildRatsNest({stage='day',heightAt=null,wind=WIND, inspectPlacement, inspectParts}={}){
   if(!RATS_NEST_STAGES.includes(stage))throw new RangeError(`The Rats' Nest has no stage called ${JSON.stringify(stage)}.`);
   PALETTE??=makePalette();
   const L=RATS_NEST_LAYOUT,night=stage==='night',ground=heightAt??((x,z)=>-ratsNestGround(x,z));
   const group=new THREE.Group();group.name='The Rats\' Nest';
-  const kit=assembly(),{within,placed,box,bar,tube,surface,ribbed,tyre,drum,faces,keep}=kit;
+  const kit=assembly(inspectParts),{observe,within,placed,box,bar,tube,surface,ribbed,tyre,drum,faces,keep}=kit;
   const P=PALETTE,floorY=ground(L.cart.x,L.cart.z);
   const on=(x,z,yaw,work,lift=0)=>within(placed(x,ground(x,z)+lift,z,yaw),work);
   const settle = (label, draw) => kit.settle(label, ground, draw, inspectPlacement);
@@ -683,13 +721,17 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND, inspectPlace
           for (const x of [-.62,.62]) for (const z of [-1.1,1.1])
             box('frame', .38, .26, .55, P.timber[1], x, .13, z);
         }
-        crushedCar(row, paint, row.pose === 'blocks' ? .26 : 0);
-        if (row.pose === 'stack') crushedCar(row, paint === 'red' ? 'brown' : 'red', .85, -.065);
+        if (row.pose === 'stack') {
+          kit.stackWrecks(row.id, () => crushedCar(row, paint, 0),
+            () => crushedCar(row, paint === 'red' ? 'brown' : 'red', .85, -.065));
+        } else crushedCar(row, paint, row.pose === 'blocks' ? .26 : 0);
       });
       return;
     }
     if(row.pose==='side')onSide();
-    else if(row.pose==='stack'){upright({wheels:false});second();}
+    else if (row.pose === 'stack') {
+      kit.stackWrecks(row.id, () => upright({wheels:false}), second);
+    }
     else if(row.pose==='wire'){
       upright();
       // Bars driven down through the roof, with three strands of wire along them.
@@ -823,14 +865,16 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND, inspectPlace
     bar('frame',[-w-.2,row.low+.02,d],[w+.2,corners[3][2]+.02,d],.07,P.timber[1]);bar('frame',[-w-.2,row.high+.02,-d],[w+.2,corners[1][2]+.02,-d],.07,P.timber[0]);
     // Three or four sheets side by side, each its own length and colour, one of them slipped.
     const sheets=Math.round(row.wide/1.25);
-    for(let sheet=0;sheet<sheets;sheet++){
-      const x0=-w-.25+sheet*(row.wide+.5)/sheets,x1=x0+(row.wide+.5)/sheets+.08,slip=sheet===1?.28:0,over=between(.25,.6);
-      const yAt=(x,z)=>{const u=(x+w)/row.wide,back=row.high+(corners[1][2]-row.high)*u,front=row.low+(corners[3][2]-row.low)*u;return back+(front-back)*(z+d)/row.deep+.07;};
-      ribbed('sheet',[x1,yAt(x1,d+over)-slip*.2,d+over+slip],[x0,yAt(x0,d+over)-slip*.2,d+over+slip],[x1,yAt(x1,-d-.2),-d-.2+slip],[x0,yAt(x0,-d-.2),-d-.2+slip],P.tin[(sheet+row.seed)%P.tin.length],{ragged:.12,sag:between(.02,.07),random});
-    }
+    observe(row.id + '/support', () => {
+      for(let sheet=0;sheet<sheets;sheet++){
+        const x0=-w-.25+sheet*(row.wide+.5)/sheets,x1=x0+(row.wide+.5)/sheets+.08,slip=sheet===1?.28:0,over=between(.25,.6);
+        const yAt=(x,z)=>{const u=(x+w)/row.wide,back=row.high+(corners[1][2]-row.high)*u,front=row.low+(corners[3][2]-row.low)*u;return back+(front-back)*(z+d)/row.deep+.07;};
+        ribbed('sheet',[x1,yAt(x1,d+over)-slip*.2,d+over+slip],[x0,yAt(x0,d+over)-slip*.2,d+over+slip],[x1,yAt(x1,-d-.2),-d-.2+slip],[x0,yAt(x0,-d-.2),-d-.2+slip],P.tin[(sheet+row.seed)%P.tin.length],{ragged:.12,sag:between(.02,.07),random});
+      }
+    });
     // Stones and a tyre hold the roof down.
-    tyre(between(-w*.5,w*.5),(row.high+row.low)/2+.2,between(-.4,.4),[(row.low-row.high)/row.deep*-.9,0,0]);
-    stone(.2,placed(between(-w,w)*.7,(row.high+row.low)/2+.16,between(-.3,.6),between(0,3),.2,.1),P.rock.clone().multiplyScalar(.75));
+    observe(row.id + '/tyre', () => tyre(between(-w*.5,w*.5),(row.high+row.low)/2+.2,between(-.4,.4),[(row.low-row.high)/row.deep*-.9,0,0]));
+    observe(row.id + '/stone', () => stone(.2,placed(between(-w,w)*.7,(row.high+row.low)/2+.16,between(-.3,.6),between(0,3),.2,.1),P.rock.clone().multiplyScalar(.75)));
     // The side the wind comes from is closed with a tarpaulin that sags between its ties.
     surface('sheet',1,4,(u,v)=>[w+.04+.1*Math.sin(v*Math.PI*3),row.low*(1-u)*.98+(u?.12:0)+(row.high-row.low)*(1-v)*(1-u)*.9,-d+v*row.deep],P.cloth[row.seed%P.cloth.length].clone().multiplyScalar(.85));
     if(row.workshop){
@@ -872,12 +916,15 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND, inspectPlace
     box('sheet',.04,.9,1.3,P.paint[0].clone().multiplyScalar(.8),w+.05,1.3,-.5,[0,0,.03]);
     ribbed('sheet',[-w-.05,.9,.2],[-w-.05,.85,1.3],[-w-.05,1.9,.2],[-w-.05,1.95,1.3],P.tin[5],{random});
     // The roof: four sheets with their ribs running down the fall, the front edge over the porch beam.
-    for(let sheet=0;sheet<4;sheet++){
-      const x0=-w-.3+sheet*(L.shack.wide+.6)/4,x1=x0+(L.shack.wide+.6)/4+.08,lift=sheet%2*.035;
-      ribbed('sheet',[x0,front+.14+lift,d+.55],[x1,front+.14+lift,d+.55],[x0,back+.04+lift,-d-.35],[x1,back+.04+lift,-d-.35],P.tin[(sheet*3+1)%P.tin.length],{ragged:.14,sag:between(.03,.08),random});
-    }
-    for(const [x,z] of [[-1.6,.4],[1.2,-.9],[.3,1.2]])tyre(x,top(z)+.3,z,[-.14,0,0]);
-    stone(.24,placed(-.6,top(-1)+.24,-1,.6,.1,-.1),P.rock.clone().multiplyScalar(.75));
+    observe('shack/support', () => {
+      for(let sheet=0;sheet<4;sheet++){
+        const x0=-w-.3+sheet*(L.shack.wide+.6)/4,x1=x0+(L.shack.wide+.6)/4+.08,lift=sheet%2*.035;
+        ribbed('sheet',[x0,front+.14+lift,d+.55],[x1,front+.14+lift,d+.55],[x0,back+.04+lift,-d-.35],[x1,back+.04+lift,-d-.35],P.tin[(sheet*3+1)%P.tin.length],{ragged:.14,sag:between(.03,.08),random});
+      }
+    });
+    for(const [id,[x,z]] of [[-1.6,.4],[1.2,-.9],[.3,1.2]].entries())
+      observe('shack/tyre-'+id, () => tyre(x,top(z)+.19,z,[-.14,0,0]));
+    observe('shack/stone', () => stone(.24,placed(-.6,top(-1)+.24,-1,.6,.1,-.1),P.rock.clone().multiplyScalar(.75)));
     bar('frame',[-w-.3,front+.08,d+.05],[w+.3,front+.06,d+.05],.09,P.timber[0]);bar('frame',[-w-.3,back+.02,-d-.05],[w+.3,back,-d-.05],.09,P.timber[1]);
     // The stovepipe, up through the back of the roof with a bend and a cowl.
     tube('frame',[1.5,1.2,-d+.6],[1.5,top(-d+.6)+.9,-d+.6],.085,P.iron,7);tube('frame',[1.5,top(-d+.6)+.9,-d+.6],[1.62,top(-d+.6)+1.35,-d+.5],.085,P.iron,7);

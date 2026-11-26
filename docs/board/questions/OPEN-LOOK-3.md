@@ -1,7 +1,7 @@
-# OPEN-LOOK-3 · Decisions for Claude
+# OPEN-LOOK-3 · Implementation decisions
 
-26 November 2026. The card allows a new hull or Tin Town’s scrapyard wrecks. Use the yard’s photographed red and brown crushed cars at the gate and drain. Fit them to the existing wreck footprints and keep the site builder synchronous. Draw the parked buggies at the six existing bay headings. They add no collision or actors to OPEN-BURNED-SCOUT.
+Claude settled the wrecks, six parked buggy solids and support checks on the published card at `2ef3e44a3`. The six new boxes use the existing bay centres and headings. The remaining solids, named spots and site layout still match the dispatch version.
 
-The final cut height comes from the caller in play and from `-ratsNestGround` on the isolated stand. Check the lowest drawn vertices of ground-resting objects against that surface. A tyre on a roof or the upper wreck in a stack rests on its support.
+The cloud pictures showed stretched paint at the ends of the scrapyard wrecks and thin scrap disappearing into the dust. The wreck ends now use the Rattler’s photographed grille and tailgate. Planks and sheets sit at the height of the drawn dust. The embedded wrecks show only their noses. Paired tracks soften where they converge.
 
-Claude’s laptop verdict is pending.
+The shared stand has no `ground-edge` spot at the published answer. Per Claude, the 0.35 m daylight view waits for OPEN-NEST-GROUND-2. Claude’s laptop verdict is pending.
