@@ -35,6 +35,11 @@ both turns, and delete the separate file and page in the same change.
 - **Shared beats** (`home`, `rescue`, `gate`) hold the Ash Men's rows now. `home` keeps its note that OPEN-BURNED-RESCUE
   builds the Road Rats' Scene 5 on it; `rescue` keeps the Ash Men's mission, which OPEN-BURNED-RESCUE makes the
   Road Rats' too.
+- **The `later` rows** become rows of people's talk tables (`src/world/open/content/talk-threads.js`), which ask only
+  facts of the land. Seven Ash Men rows ask who was cast or a promise falling due. As `dace-goes-looking.js` does,
+  each such row's `when` asks the land's nearest fact (the mark `ash-raid`, nothing writes it yet; the promise; the
+  mark `went-to-grey-camp` for the false trail) and `notes.laterWhen` keeps the storyline's own condition. Two rows
+  said by "any trader" name the register's `traders`, as the other storylines do.
 - **Mission kinds not built yet:** `fight` (`grey-alone`), `creep` (`grey-creep`, `grey-break-out`) and `rescue`
   (`rescue`). OPEN-BURNED-PEN builds `fight` and `creep` for the Road Rats; OPEN-BURNED-RESCUE builds `rescue`. Each
   such beat's `notes.builtBy` names the card. A mission whose kind is not built prepares no route, so its beat waits.
@@ -43,7 +48,8 @@ both turns, and delete the separate file and page in the same change.
 
 `src/story/threads/content/burned-camp.js`; deleted `src/story/threads/content/burned-camp-ash-men.js`;
 `docs/story/threads/burned-camp.md` (new, from the Ash Men's page); deleted `docs/story/threads/burned-camp-ash-men.md`;
-`tools/test-thread-shape.mjs`, and any other suite in `tools/` that names either file. No lock.
+`tools/test-thread-shape.mjs`, `tools/test-open-missions.mjs` (its list of stub beats), and any other suite in `tools/`
+that names either file. No lock.
 
 ## Checks
 
