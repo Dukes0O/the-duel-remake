@@ -1402,7 +1402,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex (cloud), 25 November 2026"
     needs: []
     locks: [save-shape, busy-game-files]
     flag: "story-choices"
