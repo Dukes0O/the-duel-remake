@@ -27,8 +27,12 @@ export const pageFunctions = {
     app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true}};
     if (!app._saveProfile()) throw Error('Could not prepare the memory-only profile.');
     if (!app.visitWasteland()) throw Error('Could not enter the Wasteland.');
-    app.advance(8);
-    if (!app.startOpenRoam()) throw Error('Could not start the open land.');
+  },
+  // The yard is reached by the page's own clock; the roam starts once it is.
+  inYard: () => window.__qaApp.isYardHomeActive?.() === true,
+  startRoam: world => {
+    const app = window.__qaApp;
+    if (!app.startOpenRoam()) throw Error('Could not start the open land: ' + JSON.stringify({yard: app.isYardHomeActive(), flag: app._switches().enabled('story-choices'), status: app.duel.state.status}));
     app.duel.state.arena.worldJob.open.world = world;
   },
   placeCar: (point, toward) => {
@@ -95,6 +99,8 @@ export async function run(context) {
   await context.navigate('/tools/menu-check.html?flags=hidden-road,story-choices,crew-gear,warlord-cards&harness=open-burned-camp');
   await wait('ready', 'the memory-only review page');
   await evaluate('begin', scenarioWorld());
+  await wait('inYard', 'the Wasteland yard');
+  await evaluate('startRoam', scenarioWorld());
   await evaluate('placeCar', floor(approach), site);
   await evaluate('advance', 6.5);
   await wait('smoke', 'the smoke over the Glasshouse');
