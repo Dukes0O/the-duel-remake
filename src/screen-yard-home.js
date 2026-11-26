@@ -76,7 +76,8 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   else if (panel === 'cards' && (storyWall || ledgerAvailable)) {
     content = (ledgerAvailable ? '<article class="yard-home-intro"><h3>Five Cold Nights</h3>' +
       '<p>Night 1 is still to come. Night 2 begins with four embers.</p>' +
-      button('Night 2 · Strangers at the gate', 'story-night-2') + button('What people remember', 'yard-ledger') + '</article>' : '') +
+      button('Night 2 · Strangers at the gate', 'story-night-2') + button('Go out into the Scablands', 'story-open-roam') +
+      button('What people remember', 'yard-ledger') + '</article>' : '') +
       emberWallMarkup(ember) + waterWallMarkup(water) + (storyWall ? cardWallScreen(profile,escapeHTML) : '');
   } else if (panel === 'ledger' && ledgerAvailable) {
     content = ledgerPageMarkup(night2Page(savedLedger(profile)), escapeHTML) + button('Back to Story Wall', 'yard-cards');

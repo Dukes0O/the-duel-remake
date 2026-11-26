@@ -82,6 +82,7 @@ import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isG
 import {NIGHT_2_ID, night2Job, night2Page, night2Remembered} from './world/jobs/night-2.js';
 import {arriveHiddenRoadVisitAtOnce} from './hidden-road-journey.js';
 import {keepNight2Replay, settleNight2} from './story/night-2-save.js';
+import {OPEN_ROAM_ID, openRoamJob} from './world/open/roam-job.js';
 import {playJournalNote, playLedgerChoice, playLedgerPageTurn} from './story/ledger-ui.js';
 import {savedLedger} from './story/ledger-save.js';
 import {emberStoryProps} from './story/ember-road.js';
@@ -882,6 +883,11 @@ export class App {
 
   // A job still in play is left first.
   // A gas run starts again on its road (the battle is chosen by the save, as on the wall), a notice-board job by its board name, a story job by its number.
+  // OPEN-SHARED: out in the open with no mission (docs/story/open-scablands.md, section 14).
+  startOpenRoam() {
+    if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
+    return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0, job: openRoamJob(this.profile, this.seed)});
+  }
   worldJobAgain(){
     this.leaveWorldJob();
     const definition=this.duel.state.arena?.worldJob?.definition;
@@ -2214,7 +2220,7 @@ export class App {
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
     const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
-      (job.id === NIGHT_2_ID ? this._switches().enabled('story-choices') === true :
+      (job.id === NIGHT_2_ID || job.id === OPEN_ROAM_ID ? this._switches().enabled('story-choices') === true :
         ['town-drive','town-job'].includes(job.kind)?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :

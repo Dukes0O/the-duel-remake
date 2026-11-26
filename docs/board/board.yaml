@@ -1372,27 +1372,15 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-SHARED
-    title: "Open Scablands: the shared rules every other card is built on (asking, the open record, holds, names, sample states)"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude, on the laptop, since 25 November 2026"
-    needs: []
-    locks: [busy-game-files]
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-SHARED.md"
-
   - id: OPEN-ROAM
     title: "Open Scablands: be out with no mission, and people who go about their day"
     owner: "codex"
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "backlog"
-    needs: [OPEN-SHARED]
-    locks: [busy-game-files]
+    status: "ready"
+    needs: []
+    locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-ROAM.md"
 
@@ -1411,11 +1399,11 @@ tasks:
   - id: OPEN-DOORS
     title: "Open Scablands: walk into the forge shed; Odessa mends the car and Moss washes it"
     owner: "codex"
-    model: "sol"
+    model: "astra"
     lane: "SIM"
     size: "M"
-    status: "backlog"
-    needs: [OPEN-ROAM, OPEN-FIGURES]
+    status: "ready"
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-DOORS.md"
@@ -1426,9 +1414,9 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "backlog"
-    needs: [OPEN-ROAM]
-    locks: [save-shape]
+    status: "ready"
+    needs: []
+    locks: [save-shape, busy-game-files]
     flag: "story-choices"
     details: "docs/board/cards/OPEN-STATE.md"
 
@@ -1438,8 +1426,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "backlog"
-    needs: [OPEN-STATE]
+    status: "ready"
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-CHECKPOINTS.md"
@@ -1462,8 +1450,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "L"
-    status: "backlog"
-    needs: [OPEN-STATE, OPEN-FIGURES-2]
+    status: "ready"
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-SITES.md"
@@ -1474,8 +1462,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "L"
-    status: "backlog"
-    needs: [OPEN-CHECKPOINTS, OPEN-SITES]
+    status: "ready"
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-THREADS.md"
@@ -1596,3 +1584,27 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-LOOK-RATS-NEST.md"
+
+
+  - id: OPEN-MAP
+    title: "Open Scablands: the big map shows driven ground in full, a rumour as a circle and a found site by name"
+    owner: "codex"
+    model: "astra"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-MAP.md"
+
+  - id: OPEN-CROSSINGS
+    title: "Open Scablands: a tool that prints and draws where the storylines cross, and walks every branch"
+    owner: "claude-cloud"
+    lane: "TOOLS"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-CROSSINGS.md"
