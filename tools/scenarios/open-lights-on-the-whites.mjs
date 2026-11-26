@@ -27,6 +27,8 @@ export const pageFunctions = {
     const {worldJob} = window.__qaApp.duel.state.arena;
     worldJob.open.world = world;
     worldJob.definition.open = {...worldJob.definition.open, partOfDay: 'dark'};
+    // Once the shared day clock is present, start at its published dark threshold in this isolated outing.
+    if (worldJob.open.daySeconds !== undefined) worldJob.open.daySeconds = 20 * 60;
   },
   placeCar: scout.placeCar,
   advance: scout.advance,

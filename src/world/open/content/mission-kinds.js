@@ -45,7 +45,8 @@ function stepTimedReach(mission, state, view, dt) {
     events.push({type: 'threadMissionMoment', id: mission.id, moment: 'near', cue: rule.nearCue.cue, position: destination});
   }
   const driving = !view.onFoot && view.carPosition;
-  const reached = driving && isNear(view.carPosition, destination, rule.within);
+  const late = rule.arrivalAfter && next.elapsed >= rule.arrivalAfter.seconds;
+  const reached = driving && isNear(view.carPosition, destination, late ? rule.arrivalAfter.within ?? rule.within : rule.within);
   const stopped = reached && Math.abs(view.carSpeedMph ?? 0) <= 2;
   next.stoppedFor = stopped ? state.stoppedFor + dt : 0;
   if (reached && (!rule.holdSeconds || next.stoppedFor + 1e-9 >= rule.holdSeconds)) {
@@ -54,7 +55,7 @@ function stepTimedReach(mission, state, view, dt) {
   }
   const returned = next.followed && (!via || driving && isNear(view.carPosition, via, rule.viaWithin));
   const timedOut = rule.failure && next.elapsed + 1e-9 >= rule.limitSeconds;
-  return {state: next, requests, events, outcome: returned ? rule.success : timedOut ? rule.failure : null};
+  return {state: next, requests, events, outcome: returned ? (late ? rule.arrivalAfter.outcome : rule.success) : timedOut ? rule.failure : null};
 }
 
 const reach = {

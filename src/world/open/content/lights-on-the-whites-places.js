@@ -99,12 +99,13 @@ export const lightsStory = {
     'back-to-cart': {mission: {id: LIGHTS_ID + '/back-to-cart', kind: 'reach', by: 'car',
       rule: {destination: 'whites-crew', within: 70, marker: false, success: 'back',
         limitSeconds: 270, failure: 'lost'},
-      outcomes: {back: {lines: sounding.backAtTheCart, next: 'crew-after-sounding'}, lost: salt.outcomes.lost}}},
+      outcomes: {back: {next: 'crew-after-sounding'},
+        'followed-sprat': {lines: sounding.backAtTheCart, next: 'crew-after-sounding'}, lost: salt.outcomes.lost}}},
     'crew-after-sounding': {...B.crew, lines: undefined},
     'two-trips': {mission: {...rescue, rule: {...rescue.rule, home: 'whites-ship-side', pickup: 'whites-crew',
       people: 4, startLoaded: true, success: 'found', failure: 'not-found', lampSeconds: lamp.secondsEach,
       lampOutCue: lamp.outCue}}},
-    'walk-in': {mission: {...walk, rule: {...walk.rule, pickup: 'whites-crew', home: 'whites-ship-side',
+    'walk-in': {mission: {...walk, outing: true, rule: {...walk.rule, pickup: 'whites-crew', home: 'whites-ship-side',
       success: 'all-in', walkedIn: 'sprat-walked', moments: [...walk.rule.moments, 'between-stretches']},
     thoughts: [{thought: B['walk-in'].notes.between.text, moment: 'between-stretches'}]}},
     'all-hands-home': firstReturn,
@@ -128,6 +129,10 @@ export function lightsMission(mission, world, state, seconds) {
     const lampAge = Math.max(0, seconds - (state.beatSeconds.crew ?? seconds));
     return {...mission, rule: {...mission.rule, meeting, lampAge,
       lampSeconds: guided ? lamp.secondsEachWithoutWick : mission.rule.lampSeconds}};
+  }
+  if (mission.id.endsWith('/back-to-cart') && lightsMark(world, 'asked/sprat-knows')) {
+    const remaining = Math.max(0, lamp.secondsEach - (seconds - (state.beatSeconds.crew ?? seconds)));
+    return {...mission, rule: {...mission.rule, arrivalAfter: {seconds: remaining, within: 120, outcome: 'followed-sprat'}}};
   }
   if (mission.kind === 'escort') return {...mission, rule: {...mission.rule,
     guide: lightsMark(world, 'asked/sprat-knows')}};

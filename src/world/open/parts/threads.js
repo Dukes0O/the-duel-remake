@@ -42,7 +42,7 @@ function withPlaces(context) {
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsStart: thread => thread.id !== LIGHTS_ID || (view.checkpointsEnabled && view.openRoam && view.outingAvailable !== false &&
+    allowsStart: thread => thread.id !== LIGHTS_ID || (view.checkpointsEnabled && view.openRoam && !view.missionActive && view.outingAvailable !== false &&
       view.partOfDay === 'dark' && !view.onFoot && lightsRoad(playerPoint(view)) && !context.holds?.some(hold => hold.holder.startsWith('thread:'))),
     dormant: (thread, record) => thread.id === LIGHTS_ID && record?.beat === 'shelved',
     allowsCast: (thread, role, id) => role === 'camp' && thread === dryPump ?

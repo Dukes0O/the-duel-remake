@@ -181,12 +181,22 @@ taken = ask(taken, buoy, 'why-measure');
 const back = frame(frame(frame(taken, crew), crew), crew);
 const again = frame(frame(back, crew), crew);
 assert.equal(beat(again), 'crew-after-sounding');
+assert.equal(again.requests.some(row => row.text?.includes("I've been shouting")), false);
+const lateReturn = MISSION_KINDS.reach;
+const lampsOut = {...lightsStory.beats['back-to-cart'].mission, rule: {...lightsStory.beats['back-to-cart'].mission.rule,
+  arrivalAfter: {seconds: 40, within: 120, outcome: 'followed-sprat'}}};
+const cartRoute = lateReturn.prepare(lampsOut, key => key === 'whites-crew' ? crew : null);
+const approach = {x: crew.x - 90, z: crew.z};
+const beforeCall = lateReturn.begin(lampsOut, cartRoute, {carPosition: approach}).state;
+assert.equal(lateReturn.step(lampsOut, beforeCall, {carPosition: approach}, 39).outcome, null);
+assert.equal(lateReturn.step(lampsOut, beforeCall, {carPosition: approach}, 40).outcome, 'followed-sprat');
 const sworn = rescueHome(loadTwo(again, 'two-trips'), 'found');
 assert.ok(marked(sworn, 'sounding-taken'));
 assert.equal(sworn.open.world.ledger.words['deck-folk'], 'Sworn');
 
 for (const pickedUp of [true, false]) {
   const starts = frame(talkChoice(found, crew, 'walk-in'), crew);
+  assert.ok(starts.events.some(event => event.type === 'threadMission' && event.mission.outing));
   const lostLamps = frame(starts, offshore, 1);
   assert.match(lostLamps.requests.find(row => row.type === 'say').text, /Driver, slow down/);
   assert.equal(lostLamps.open.parts.missions.active.state.walked, 0);
