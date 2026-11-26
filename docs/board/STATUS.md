@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-26T18:58:10.766Z
+Observed at: 2026-11-26T19:00:23.717Z
 
-Observation commit: 734de18bfb58b7bc3eb859e2cbfd2cd3c7b25cc3
+Observation commit: 0d72e942cc0b8da52d676d580ea79a38c2fd4972
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 734de18bfb58b7bc3eb859e2cbfd2cd3c7b25cc3
+Integration HEAD: 0d72e942cc0b8da52d676d580ea79a38c2fd4972
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -92,9 +92,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 499,162 B | +0 B | 500,000 B |
 | Review `looks/` | 105,667,161 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 3,782,701 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 571,187 B | -3,211,514 B | 5,000,000 B |
 | All `public/` | 747,552,080 B | +0 B | unavailable |
-| Git objects | 1,504,258,048 B | +0 B | unavailable |
+| Git objects | 1,505,000,448 B | +742,400 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
