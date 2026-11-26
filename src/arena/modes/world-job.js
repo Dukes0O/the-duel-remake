@@ -1689,7 +1689,11 @@ export function stepWorldJob(duel, dt) {
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
     // OPEN-SHARED: the open land stands still during a talk, and hears what was chosen when it moves again.
-    if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];
+    if (worldJob.open && next.events.length) {
+      // Finishing the temporary talk ends that conversation only. The interrupted job is still running.
+      const heard = worldJob.beforeShedTalk ? next.events.filter(event => event.type === 'talkChoice') : next.events;
+      worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...heard];
+    }
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
     if (worldJob.beforeShedTalk && next.done) {
       worldJob.job = worldJob.beforeShedTalk;

@@ -1,6 +1,6 @@
 import {BUILDINGS} from '../content/buildings.js';
 import {forgeLine, WIM_CLEAN} from '../content/talk-forge.js';
-import {inBay, roomAt} from '../building-rule.js';
+import {inBay, pointInBuilding, roomAt} from '../building-rule.js';
 import {dirtAfter} from '../dirt-rule.js';
 import {doService, servicePrice} from '../service-rule.js';
 import {isHeld} from '../holds.js';
@@ -124,10 +124,17 @@ export const buildingsPart = {
     state.held = !!view.interact;
     if (state.payment) deliver(state, changes, choices, requests);
     else if (state.offer) answer(state, world, view, holds, choices, requests);
-    else if (pressed && row && !isHeld(holds, 'services')) {
+    else if (pressed && row) {
+      const find = row.finds?.find(item => (!item.needs || isTrue(item.needs, world)) &&
+        !isTrue({fact: 'mark', id: 'found/' + item.id}, world) &&
+        (!item.spot || distance(feet, pointInBuilding(row, row.room.spots[item.spot])) <= 1.5));
+      if (find) {
+        choices.push({id: find.id, effects: [...(find.gives ?? []), {type: 'mark', id: 'found/' + find.id}]});
+        return {state, choices, requests};
+      }
       const service = row.services.find(service => distance(feet,
         view.people?.find(p => p.id === service.by)?.position) <= 2.5);
-      if (service) speakTo(state, row, service, world, view, requests);
+      if (service && !isHeld(holds, 'services')) speakTo(state, row, service, world, view, requests);
     } else if (feet && view.people && !world.open.car.dirt && !state.looseDust) {
       const wim = view.people.find(person => person.id === 'wim');
       if (distance(wim?.position, feet) <= 2.5 && distance(wim?.position, view.carPosition) <= 12 &&

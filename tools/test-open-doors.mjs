@@ -12,6 +12,8 @@ import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {stepMover} from '../src/world/scablands-movers.js';
 import {createBuildingView} from '../src/world/open/building-view.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {createJob} from '../src/world/jobs/job-engine.js';
+import {night2Job, createNight2, enterNight2Step} from '../src/world/jobs/night-2.js';
 import {App} from '../src/app.js';
 import {pageFunctions, pageSource} from './scenarios/open-forge-shed.mjs';
 
@@ -99,6 +101,14 @@ assert.equal(wash.world.scrap,world.scrap-6);
 assert.equal(wrenchLimit({open:{world},definition:{steps:[{kind:'roam'}]}},100),60);
 assert.equal(wrenchLimit({night2:{},definition:{steps:[{kind:'talk'}]}},100),100);
 
+for (const [amount, words] of [[0,/clean today/],[.4,/very dirty/]]) {
+  const nw = applyEffects(sampleWorld('first-night'),{id:'test/night-dirt',effects:[{type:'dirt',to:amount}]}).world;
+  const definition = {...night2Job(nw.seed), open:{world:nw}};
+  const job = createJob(definition,nw.seed);
+  job.stepIndex = job.steps.findIndex(step=>step.id==='gate');
+  enterNight2Step({job,night2:createNight2(definition),solidGrid:createJobSolidGrid(),open:beginOpenLand(definition)});
+  assert.match(job.steps[job.stepIndex].scene.lines.find(line=>line.speaker==='wim').words,words);
+}
 for (const name of Object.keys(pageFunctions)) new Function('return ' + pageSource(name));
 const drawing = createBuildingView();
 drawing.update({open:offered.open},pointInBuilding(forge));

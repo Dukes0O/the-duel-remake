@@ -102,6 +102,8 @@ export function createNight2(definition, grid) {
   paths.setBrandLamps([...sites.lamps, ...sites.chaseLamps]);
   return {opening, ledger: createLedger(opening), journal: [], set: null, evening: .65, night: false,
     ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius ?? (place === sites.hearth ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius), strict: true}),
+    // The standalone chapter follows the dusty first-night drive. An open outing carries its own coat.
+    carDirt: definition.open?.world?.open.car.dirt ?? .35,
     lamps: {}, scrap: 0, props: {}, routes: [], washCarUnavailable: false};
 }
 

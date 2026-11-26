@@ -176,8 +176,6 @@ export function packPaintFinish(id){
 
 const GLSL_PARS=`
 uniform float uFinishMode;
-uniform float uRoadDirt;
-uniform vec3 uRoadDust;
 uniform vec3 uFinishBoxMin;
 uniform vec3 uFinishBoxSize;
 uniform vec4 uFinishAxles;
@@ -368,6 +366,9 @@ if(uFinishMode>.5){
   }
   diffuseColor.rgb=col;finishSurfOut=surf;
 }
+`;
+
+const ROAD_DIRT_COLOR = `
 if(uRoadDirt>0.){
   vec3 n=normalize(vFinishNormal);
   vec3 weights=pow(abs(n),vec3(4.));
@@ -379,7 +380,7 @@ if(uRoadDirt>0.){
 }
 `;
 
-const finishUniforms=new WeakMap(),vehicleSpaces=new WeakMap();
+const finishUniforms=new WeakMap(),vehicleSpaces=new WeakMap(),dustMaterials=new WeakSet();
 const NOT_INSTALLED=Symbol('none');
 
 function makeUniforms(){
@@ -408,15 +409,17 @@ function install(material){
     Object.assign(shader.uniforms,finishUniforms.get(this)??uniforms);
     shader.vertexShader='varying vec3 vFinishPos;\nvarying vec3 vFinishNormal;\n'+shader.vertexShader
       .replace('#include <begin_vertex>','#include <begin_vertex>\nvFinishPos=position;vFinishNormal=normal;');
+    const roadDirt = dustMaterials.has(this);
+    const pars = roadDirt ? 'uniform float uRoadDirt;\nuniform vec3 uRoadDust;\n' + GLSL_PARS : GLSL_PARS;
     shader.fragmentShader=shader.fragmentShader
-      .replace('#include <common>','#include <common>\n'+GLSL_PARS)
-      .replace('#include <color_fragment>','#include <color_fragment>\n'+GLSL_COLOR)
+      .replace('#include <common>','#include <common>\n'+pars)
+      .replace('#include <color_fragment>','#include <color_fragment>\n'+GLSL_COLOR+(roadDirt ? ROAD_DIRT_COLOR : ''))
       .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nif(uFinishMode>.5)roughnessFactor=finishSurfOut.x;')
       .replace('#include <metalnessmap_fragment>','#include <metalnessmap_fragment>\nif(uFinishMode>.5)metalnessFactor=finishSurfOut.y;')
       .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\nif(uFinishMode>.5)normal=finishBump(-vViewPosition,normal,finishHeight,faceDirection);')
       .replace('#include <lights_physical_fragment>','#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\nif(uFinishMode>.5)material.clearcoat*=finishSurfOut.z;\n#endif');
   };
-  material.customProgramCacheKey=()=>`${previousKey}:paint-finish-v1`;
+  material.customProgramCacheKey=()=>`${previousKey}:paint-finish-v1${dustMaterials.has(material) ? ':road-dirt' : ''}`;
   material.needsUpdate=true;
   return uniforms;
 }
@@ -482,6 +485,10 @@ export function drawRoadDirt(vehicle, amount, color) {
   const uniforms = amount > 0 ? install(paint) : finishUniforms.get(paint);
   if (!uniforms) return;
   if (amount > 0) {
+    if (!dustMaterials.has(paint)) {
+      dustMaterials.add(paint);
+      paint.needsUpdate = true;
+    }
     const space = vehicleSpace(vehicle, paint);
     uniforms.uFinishBoxMin.value.copy(space.min);
     uniforms.uFinishBoxSize.value.copy(space.size);

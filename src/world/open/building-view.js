@@ -7,7 +7,7 @@ import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 const palette = {iron: 0x42403c, wood: 0x715944, sheet: 0x89604c, roof: 0x696b60,
   rust: 0x9c5836, brass: 0xb79a57, canvas: 0x747761, water: 0x677979, straw: 0x977345};
 
-function furnish(kind, group, box, cylinder) {
+function furnish(kind, group, box, cylinder, iron) {
   if (kind === 'anvil') {
     box(group, [0,.25,0], [.55,.5,.55], 'wood');
     box(group, [0,.56,0], [.45,.14,.3], 'iron');
@@ -35,7 +35,7 @@ function furnish(kind, group, box, cylinder) {
   } else if (kind === 'bucket') {
     cylinder(group,[0,.18,0],[.25,.18,.35],'iron');
     cylinder(group,[0,.36,0],[.22,.22,.01],'water');
-    const handle = new THREE.Mesh(new THREE.TorusGeometry(.24,.014,5,14,Math.PI),group.userData.iron);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(.24,.014,5,14,Math.PI),iron);
     handle.position.y = .3;
     group.add(handle);
   } else if (kind === 'brush') {
@@ -94,8 +94,7 @@ export function createBuildingView() {
       const prop = new THREE.Group(), [x,z] = row.room.spots[thing];
       prop.name = thing;
       prop.position.set(x,0,z);
-      prop.userData.iron = materials.iron;
-      furnish(thing,prop,box,cylinder);
+      furnish(thing,prop,box,cylinder,materials.iron);
       root.add(prop);
     }
     if (row.carBay) {

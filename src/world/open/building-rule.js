@@ -10,12 +10,13 @@ export function roomAt(point, rows = BUILDINGS) {
   if (!point) return null;
   return rows.find(row => {
     const centre = pointInBuilding(row);
+    if (Math.abs(point.x - centre.x) >= row.size[0] / 2 - .08 ||
+        Math.abs(point.z - centre.z) >= row.size[1] / 2 - .08) return false;
     if (Number.isFinite(point.y)) {
       const floor = scablandsSurfaceHeightAt(centre.x, centre.z);
       if (point.y < floor - .6 || point.y >= floor + row.size[2]) return false;
     }
-    return Math.abs(point.x - centre.x) < row.size[0] / 2 - .08 &&
-      Math.abs(point.z - centre.z) < row.size[1] / 2 - .08;
+    return true;
   }) ?? null;
 }
 
