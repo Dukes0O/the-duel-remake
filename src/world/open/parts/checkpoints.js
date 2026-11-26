@@ -14,7 +14,7 @@ function hearthBanked(world, events) {
 function recoveryNumber(world, previous = 0) {
   const prefix = 'checkpoint/night-' + world.ledger.night + '/recovery-';
   return 1 + world.open.journal.reduce((latest, change) => {
-    if (!change.choiceId.startsWith(prefix)) return latest;
+    if (change.type === 'summary' || !change.choiceId.startsWith(prefix)) return latest;
     const number = Number(change.choiceId.slice(prefix.length).split('/')[0]);
     return Math.max(latest, number);
   }, previous);
