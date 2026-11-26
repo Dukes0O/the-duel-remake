@@ -12,19 +12,22 @@ export function directThreads(threads, context, occasion) {
   const {world, holds = NO_HOLDS, view = {}, placeAt, allowsCast, startsEffects} = context;
   const {night, marks, stocks} = world.ledger;
   const {lastNight, outingAvailable = true} = view;
-  if (isHeld(holds, 'signs') || night >= lastNight || marks.includes(occasionId(night, occasion))) return [];
+  if (isHeld(holds, 'signs') || (Number.isFinite(lastNight) && night >= lastNight) || marks.includes(occasionId(night, occasion))) return [];
 
   const records = threads.map(thread => ({thread, record: world.open.threads[thread.id]}));
   const started = records.filter(({record}) => record);
-  const latest = started.reduce((last, entry) => !last || entry.record.began >= last.record.began ? entry : last, null);
+  const start = world.open.journal.findLast(row => row.type === 'thread' && row.before === null &&
+    started.some(({thread}) => thread.id === row.key));
+  const latest = start ? started.find(({thread}) => thread.id === start.key)
+    : started.reduce((last, entry) => !last || entry.record.began >= last.record.began ? entry : last, null);
   const full = started.filter(({thread, record}) => isSignAlive(thread, record, night)).length >= 2;
   const inMission = started.some(({thread, record}) => !record.end && thread.beats[record.beat]?.mission);
   const ready = [];
   const effects = [];
   for (const {thread, record} of records) {
-    if (record || (lastNight !== undefined && night + (thread.sign.nightsNeeded ?? 1) > lastNight)) continue;
+    if (record || (Number.isFinite(lastNight) && night + (thread.sign.nightsNeeded ?? 1) > lastNight)) continue;
     const outing = Object.values(thread.beats).some(beat => beat.mission?.outing);
-    if (lastNight !== undefined && outing && (stocks.embers <= 1 || !outingAvailable)) continue;
+    if (Number.isFinite(lastNight) && outing && (stocks.embers <= 1 || !outingAvailable)) continue;
     const rule = threadRule(thread, context);
     const cast = castThread(thread, world, {ask: rule.ask, placeAt, allows: allowsCast});
     if (!cast || !rule.ask(thread.starts.when, cast)) continue;

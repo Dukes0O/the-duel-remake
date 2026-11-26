@@ -6,16 +6,16 @@ import {subjectFor} from '../../world/open/roles.js';
 const sources = {sites: SITES.map(site => site.id), groups: GROUPS, peoples: PEOPLES, persons: PERSONS};
 export const distanceBetween = (a, b) => a && b ? Math.hypot(a.x - b.x, a.z - b.z) : Infinity;
 
-// Reservoir selection gives each row its share of the total weight, with a named draw for each row.
+// The same named throw tests each cumulative threshold, so the draw has one result across the whole list.
 export function weightedPick(seed, name, rows, weight) {
-  let total = 0, selected = null;
-  for (const row of rows) {
-    const share = weight(row);
-    if (share <= 0) continue;
-    total += share;
-    if (namedThrow({seed}, `${name}/${row.id}`, share / total)) selected = row;
-  }
-  return selected;
+  const weights = rows.map(row => Math.max(0, weight(row)));
+  const total = weights.reduce((sum, share) => sum + share, 0);
+  if (!total) return null;
+  let threshold = 0;
+  return rows.find((row, index) => {
+    threshold += weights[index];
+    return weights[index] > 0 && namedThrow({seed}, name, threshold / total);
+  }) ?? null;
 }
 
 export function castThread(thread, world, {ask, placeAt, allows = () => true}) {

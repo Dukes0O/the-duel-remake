@@ -9,6 +9,7 @@ import {beginOpenLand, holdOpenLand, releaseOpenLand, stepOpenLand} from '../src
 import {stageOf} from '../src/world/open/open-record.js';
 import {openThreadSigns, threadsPart} from '../src/world/open/parts/threads.js';
 import {sampleWorld} from '../src/world/open/samples.js';
+import {openThreadTalkScene} from '../src/world/open/content/talk-threads.js';
 import {createSignView} from '../src/world/open/sign-view.js';
 import {pageFunctions, pageSource} from './scenarios/open-burned-camp.mjs';
 
@@ -116,6 +117,7 @@ assert.equal(record(drive(open, at('tracks-away')).open).beat, 'clues');
 const ignored = drive(openFor(bank(bank(bank(bank(started))))), nowhere).open;
 assert.equal(record(ignored).end, 'taken');
 assert.ok(marks(ignored).includes('burned-camp/never-went'));
+assert.match(openThreadTalkScene('burned-camp/remembered', ignored).lines[0].words, /a camp out past the Ridge/);
 
 const falseTrail = direct(seedOf(sampleWorld('helped-camp'), 2));
 assert.equal(falseTrail.open.threads[id].cast.blamed, 'ash-men');

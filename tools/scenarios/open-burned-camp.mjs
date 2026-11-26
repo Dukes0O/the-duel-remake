@@ -52,7 +52,7 @@ export const pageFunctions = {
       const angle = Math.atan2(dx, dz) - duel.course.at(state.s).heading - state.headingError;
       const error = Math.atan2(Math.sin(angle), Math.cos(angle));
       const speed = Math.abs(state.speedMph);
-      duel.setInput({throttle: speed < 22 ? .55 : 0, brake: 0, steer: Math.max(-1, Math.min(1, error * 2))});
+      duel.setInput({throttle: speed < 22 ? .55 : 0, brake: 0, steer: Math.max(-1, Math.min(1, -error * 2))});
       duel.step(1 / 60);
     }
     throw Error('The car did not reach the review waypoint.');
@@ -96,7 +96,7 @@ export async function run(context) {
   await wait('ready', 'the memory-only review page');
   await evaluate('begin', scenarioWorld());
   await evaluate('placeCar', floor(approach), site);
-  await evaluate('advance', 3.5);
+  await evaluate('advance', 6.5);
   await wait('smoke', 'the smoke over the Glasshouse');
   await context.screenshot('burned-camp-smoke');
   await evaluate('drive', parking, 6, 28);
