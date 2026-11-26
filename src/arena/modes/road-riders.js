@@ -323,6 +323,7 @@ function stepAsh(duel,world,step,dt) {
     const smothered=[];
     for (const car of [duel.state,...duel.state.opponents]) {
       if (dist(worldPose(duel,car),at)>R.ashRadius) continue;
+      if (car === duel.state && (world.open || world.night2)) world.ashHit = true;
       const id=car===duel.state?'player':car.arenaId;
       if(duel.state.combat.flameBurns?.[id]) {
         delete duel.state.combat.flameBurns[id]; setCarEffect(car,'burning',{duration:0}); smothered.push(id);

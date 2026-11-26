@@ -26,6 +26,10 @@ import {createCombatEffects} from './combat-effects.js';
 import {createFirstPersonGear} from './first-person-gear.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
+import {drawRoadDirt} from './paint-finish-look.js';
+import {BUILDINGS} from './world/open/content/buildings.js';
+import {roomCamera} from './world/open/building-view.js';
+import {DRIVE as DUST_GROUNDS} from './world/scablands-regions.js';
 import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
@@ -1121,6 +1125,20 @@ export function attachRenderer(host, app) {
       firstPersonView = false;
       player.visible = false;
     }
+    const openLand = !menu && st.arena?.worldJob?.open;
+    const buildings = openLand?.parts?.buildings;
+    if (buildings?.inside && st.onFoot) {
+      const room = BUILDINGS.find(row => row.id === buildings.inside);
+      const pose = roomCamera(room, st.fighter.groundY ?? st.fighter.y);
+      camera.position.copy(pose.position);
+      lookTarget.copy(pose.target);
+      camera.fov = 52;
+      firstPersonView = false;
+    }
+    const nightCar = menu ? null : st.arena?.worldJob?.night2;
+    const dustGround = buildings?.dustGround ?? nightCar?.dustGround;
+    const dust = dustGround === 'burn' ? 0x898681 : (DUST_GROUNDS[dustGround] ?? DUST_GROUNDS.flats).dust;
+    drawRoadDirt(player, openLand?.world?.open.car.dirt ?? nightCar?.carDirt ?? 0, dust);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&!landingBlend&&!forgeHold&&!talk&&['chase','wide'].includes(app.cameraMode||'chase')){

@@ -1,3 +1,4 @@
+import {WIM_CLEAN} from '../open/content/talk-forge.js';
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow, plainStockChange} from '../../story/ledger.js';
 import {LEDGER_MARK_LINES} from '../../story/ledger-ui.js';
 import {NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
@@ -265,6 +266,9 @@ export function enterNight2Step(worldJob) {
   }
   chapter.holstered = step.id !== 'scout';
   if (step.kind === 'talk') step.scene = sceneFor(step, chapter);
+  if (step.id === 'gate' && (worldJob.open?.world.open.car.dirt ?? chapter.carDirt) === 0)
+    step.scene = {...step.scene, lines: step.scene.lines.map(line =>
+      line.speaker === 'wim' ? {...line, words: WIM_CLEAN} : line)};
   const set = step.set ?? {chase: 'chase', 'walk-to-gate': 'gate', 'walk-watch-post': 'scout', 'light-pump': 'pump'}[step.id];
   if (set && set !== chapter.set) {
     const dace = worldJob.storyPeople?.find(person => person.id === 'dace');

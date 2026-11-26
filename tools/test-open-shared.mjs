@@ -423,10 +423,13 @@ assert.equal(stepOpenLand(releaseOpenLand(open, 'thread:burned-camp'), view(0), 
   assert.equal(loud.events.length, 32);
   assert.deepEqual([loud.events[0].seq, loud.events[31].seq], [9, 40]);
 }
-// The parts as shipped by this card are empty, and stepping them changes nothing.
+// The host keeps its six slots. The forge now contributes two registered people and their service talks.
 assert.deepEqual(OPEN_PARTS.map(part => part.id), ['people', 'buildings', 'sites', 'checkpoints', 'threads', 'ground']);
-assert.deepEqual(PEOPLE, []);
-assert.deepEqual(TALK_TABLES, {});
+assert.deepEqual(PEOPLE.map(person => person.id), ['odessa', 'moss']);
+assert.deepEqual(TALK_TABLES, {
+  odessa: [{id: 'odessa/service', scene: 'odessa/service'}],
+  moss: [{id: 'moss/service', scene: 'moss/service'}],
+});
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);

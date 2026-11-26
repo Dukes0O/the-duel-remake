@@ -176,6 +176,8 @@ export function packPaintFinish(id){
 
 const GLSL_PARS=`
 uniform float uFinishMode;
+uniform float uRoadDirt;
+uniform vec3 uRoadDust;
 uniform vec3 uFinishBoxMin;
 uniform vec3 uFinishBoxSize;
 uniform vec4 uFinishAxles;
@@ -366,6 +368,15 @@ if(uFinishMode>.5){
   }
   diffuseColor.rgb=col;finishSurfOut=surf;
 }
+if(uRoadDirt>0.){
+  vec3 n=normalize(vFinishNormal);
+  vec3 weights=pow(abs(n),vec3(4.));
+  weights/=max(dot(weights,vec3(1.)),1e-5);
+  float grain=finishTri(vFinishPos,weights,2.4).g;
+  float low=1.-clamp((vFinishPos.y-uFinishBoxMin.y)/uFinishBoxSize.y,0.,1.);
+  float coat=clamp(uRoadDirt*(.2+.35*max(n.y,0.)+.4*low+.45*grain),0.,.96);
+  diffuseColor.rgb=mix(diffuseColor.rgb,uRoadDust*(.75+.45*grain),coat);
+}
 `;
 
 const finishUniforms=new WeakMap(),vehicleSpaces=new WeakMap();
@@ -373,6 +384,7 @@ const NOT_INSTALLED=Symbol('none');
 
 function makeUniforms(){
   return {
+    uRoadDirt:{value:0},uRoadDust:{value:new THREE.Color()},
     uFinishMode:{value:0},uFinishBoxMin:{value:new THREE.Vector3()},uFinishBoxSize:{value:new THREE.Vector3(1,1,1)},
     uFinishAxles:{value:new THREE.Vector4(1,-1,.35,.35)},uFinishBaseLum:{value:1},
     uFinishColor:{value:Array.from({length:COLOR_SLOTS},()=>new THREE.Color())},
@@ -462,3 +474,18 @@ export function applyPaintFinish(vehicle,paint,pattern,baseColor){
 
 /** The finish's shader numbers on a paint material, or null if it never wore a drawn finish (tests read this). */
 export function paintFinishUniforms(paint){return finishUniforms.get(paint)??null;}
+
+// Dust lies over the chosen garage finish. Washing only clears this layer.
+export function drawRoadDirt(vehicle, amount, color) {
+  const paint = vehicle?.userData.paint;
+  if (!paint) return;
+  const uniforms = amount > 0 ? install(paint) : finishUniforms.get(paint);
+  if (!uniforms) return;
+  if (amount > 0) {
+    const space = vehicleSpace(vehicle, paint);
+    uniforms.uFinishBoxMin.value.copy(space.min);
+    uniforms.uFinishBoxSize.value.copy(space.size);
+    uniforms.uRoadDust.value.setHex(color);
+  }
+  uniforms.uRoadDirt.value = amount;
+}

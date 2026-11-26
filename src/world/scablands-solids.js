@@ -205,6 +205,7 @@ export function brazierSolid(spot, index) {
 // Each job owns its temporary solids and its query result. The fixed grid never changes.
 export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
+  let roomShells, roomGrid;
   const grid = {
     people: [],
     storyPeople: [],
@@ -219,7 +220,10 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     town: [],
     near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
-      for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
+      for (const solid of baseGrid.near(ax, az, bx, bz, pad)) {
+        if (!roomShells?.has(solid.id)) found.push(solid);
+      }
+      if (roomGrid) found.push(...roomGrid.near(ax, az, bx, bz, pad));
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.shelter) found.push(solid);
@@ -233,6 +237,10 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
       return found;
+    },
+    openBuildingShells(rows, walls) {
+      roomShells = new Set(rows.map(row => row.shell));
+      roomGrid = createSolidGrid(walls.map(make));
     },
     setPeople(people) {
       this.people = people.map(({id, position, floorHeight}) => make({id, kind:'person', shape:'ellipse',

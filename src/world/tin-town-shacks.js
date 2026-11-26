@@ -199,7 +199,7 @@ const makePalette=()=>({
   tank:color(.26,.1,.05),cloth:[color(.46,.36,.22),color(.5,.14,.07),color(.16,.2,.22),color(.36,.31,.22),color(.34,.4,.28)],
 });
 
-function stripOfSheet(width,high){
+export function stripOfSheet(width,high){
   // A zig-zag strip standing up: a rib every 0.2 m, 3.5 cm out and in. Faces +Z.
   const ribs=Math.max(2,Math.round(width/.2)),positions=[],indices=[];
   for(let rib=0;rib<=ribs;rib++){const x=-width/2+width*rib/ribs,z=rib%2?.035:-.035;positions.push(x,0,z,x,high,z);}
@@ -233,7 +233,7 @@ function assembly(){
 }
 
 export const TOWN_WINDOWS=Object.freeze({clusterGapSeconds:.55,riseSeconds:.5,glowWidth:1.9,glowHeight:1.5});
-export function createTinTownShacks(){
+export function createTinTownShacks(serviceShells = []){
   PALETTE??=makePalette();
   const plan=tinTownLayout(),group=new THREE.Group();group.name='Tin Town shacks';
   const out=assembly(),{put,box,strut}=out,random=mulberry(0x7157a9);
@@ -401,9 +401,17 @@ export function createTinTownShacks(){
     }
   };
 
+  // The two occupied shells can be hidden independently. Keep building them in the usual order
+  // so every other shack gets exactly the same draws for its roof, patches and shutters.
+  const occupied = new THREE.Group(), pieces = {sheet: [], frame: [], cloth: [], lamp: []};
   for(const cluster of plan.clusters){
     for(const slot of cluster.slots){
-      if(slot.kind==='shack'&&slot.levels>0)buildSlot(cluster,slot);
+      if (serviceShells.includes(`tin-town-cluster-${cluster.index+1}-slot-${slot.slot+1}`)) {
+        const starts = Object.fromEntries(Object.entries(out.lists).map(([kind, list]) => [kind, list.length]));
+        buildSlot(cluster,slot);
+        for (const [kind, list] of Object.entries(out.lists)) pieces[kind].push(...list.splice(starts[kind]));
+      }
+      else if(slot.kind==='shack'&&slot.levels>0)buildSlot(cluster,slot);
       else if(slot.kind==='T')tower(slot);
       else if(slot.kind==='P')pole(slot);
       else if(slot.kind==='W')watchtower(slot);
@@ -438,6 +446,16 @@ export function createTinTownShacks(){
     if(kind==='lamp')merged.deleteAttribute('color');
     const mesh=new THREE.Mesh(merged,materials[kind]);mesh.name=`Tin Town shacks, ${materials[kind].name}`;mesh.castShadow=kind!=='cloth';mesh.receiveShadow=true;group.add(mesh);
   }
+  for (const [kind, list] of Object.entries(pieces)) {
+    if (!list.length) continue;
+    const geometry = mergeGeometries(list);
+    for (const piece of list) piece.dispose();
+    if (kind === 'lamp') geometry.deleteAttribute('color');
+    const mesh = new THREE.Mesh(geometry, materials[kind]);
+    mesh.castShadow = mesh.receiveShadow = true;
+    occupied.add(mesh);
+  }
+  if (occupied.children.length) group.add(occupied);
   // The windows of the town, dark until it wakes. `lightWindows(seconds)` is given the seconds since the third lamp was lit
   // (null before): the clusters light one after another, 0.55 s apart, each coming up in half a second.
   // Each window's light is one soft patch on the wall: the pane bright in its middle (the size of the window), fading to
@@ -465,7 +483,7 @@ export function createTinTownShacks(){
     const t=seconds==null?0:Math.max(0,Math.min(1,(seconds-index*TOWN_WINDOWS.clusterGapSeconds)/TOWN_WINDOWS.riseSeconds)),amount=t*t*(3-2*t);
     mesh.visible=amount>0;mesh.material.opacity=amount;
   });
-  group.userData={lightWindows,windowGlow,dispose:()=>glowMap.dispose(),shacks,feet,fence,clusters:plan.clusters.map(cluster=>({index:cluster.index,rect:cluster.rect,shacks:cluster.shacks})),tower:specials.tower,pole:specials.pole,watchtower:specials.watchtower,chimneys,triangles:out.triangles};
+  group.userData={occupied,lightWindows,windowGlow,dispose:()=>glowMap.dispose(),shacks,feet,fence,clusters:plan.clusters.map(cluster=>({index:cluster.index,rect:cluster.rect,shacks:cluster.shacks})),tower:specials.tower,pole:specials.pole,watchtower:specials.watchtower,chimneys,triangles:out.triangles};
   return group;
 }
 

@@ -39,6 +39,7 @@ import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
 import {barricadeShape,barricadeSurface} from './ash-men-look.js';
 import {createNight2Look} from './night-2-look.js';
+import {BUILDINGS} from './open/content/buildings.js';
 import {createOpenView} from './open/open-view.js';
 import {createDustNightLook} from './dust-night-look.js';
 import {dustNightOf} from './dust-night.js';
@@ -678,7 +679,7 @@ export function createScablandsScene(course,options={}){
   townDoor.name='Hot Delivery town gate door';
   townDoor.position.y=1.5;tinTownGate.add(townDoor);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
-  const tinTownShacks=createTinTownShacks();group.add(tinTownShacks);
+  const tinTownShacks=createTinTownShacks(featureFlags.enabled('story-choices') ? BUILDINGS.map(row => row.shell) : []);group.add(tinTownShacks);
   // Smoke from three of the shacks' stovepipes, placed from the clock in animate.
   const chimneySmoke=createTinTownChimneySmoke(tinTownShacks.userData.chimneys);group.add(chimneySmoke.group);chimneySmoke.animate(0);
   // The fire stands on the gate's beam, with its three tongues along the beam.
@@ -967,6 +968,7 @@ export function createScablandsScene(course,options={}){
         townArt?.update({viewer:{x:here.x,y:scablandsSurfaceHeightAt(here.x,here.z)+2,z:here.z},fogFar:1200,hour:8+Math.floor(townLifeClock/1.875)%10,dt:presentationDt});
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      tinTownShacks.userData.occupied.visible = !worldJob?.open;
       brandLamps.update(worldJob);
       brandAuntie.update(worldJob);
       // The town's windows light when the third lamp is lit (Light the Town's ending), and are dark in every other job.

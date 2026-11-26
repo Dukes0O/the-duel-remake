@@ -4,6 +4,7 @@ import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {brandSwingReady} from './world/jobs/brand-rule.js';
+import {wrenchLimit} from './world/open/service-rule.js';
 import {AMBUSH_RULES, ambushRepairTarget} from './arena/modes/ambush-alley.js';
 import {initializeCrewGear, crewGearEnabled, crewRpgTiming, selectSignatureGear,
   showSignatureGear, resetCrewGearUser, stepSignatureGear, restoreRpgTiming,
@@ -195,7 +196,7 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
   const state = duel.state;
   const fort = ambushRepairTarget(duel, fighter);
   const target = fort || state, healthKey = fort ? 'health' : 'armor';
-  const maximum = fort ? fort.maxHealth : state.maxArmor;
+  const maximum = fort ? fort.maxHealth : wrenchLimit(state.arena?.worldJob, state.maxArmor);
   const repairAmount = fort ? AMBUSH_RULES.repairAmount : T.wrenchRepairAmount;
   const repairSeconds = fort ? AMBUSH_RULES.repairSeconds : T.wrenchRepairSeconds /
     (crewPerks(fighter.crewId).repairRateMultiplier || 1);
@@ -231,6 +232,10 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
     maximum - target[healthKey]);
   if (restored > 0) {
     target[healthKey] += restored;
+    if (!fort && maximum < state.maxArmor) {
+      state.arena.worldJob.fieldPatched = true;
+      if (maximum - state.armor < EPSILON) state.armor = maximum;
+    }
     weapons.repairAmount += restored;
   }
   weapons.repairSeconds += dt;
