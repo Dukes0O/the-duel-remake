@@ -4,13 +4,14 @@
 form of `open-scablands.md` section 21, and a data file of the same name under `src/story/threads/content/`. Nothing
 loads the files yet; OPEN-THREADS will.
 
-**Checks, on commit 87eda7c72.** Each file loads by the card's `node -e` line. `tools/test-board.mjs`: 727 passed.
-`tools/test-repo-hygiene.mjs`: passed. `npm run build`: built. Every line was read against the rules for the writing,
-and fifteen were mended. A scratch script found every line of each page in its file word for word, none over 260
-characters, no file naming another storyline, and every mark beginning with its own id.
+**Checks, on commit 5253d5a5f** (with `integration/wasteland` 0557e0b33 merged in). Each file loads by the card's
+`node -e` line. `checkThread`: nothing for `market-day` and `somebody-elses-flag`; for `mall-road-toll` only the new
+site `sumps-gate`, named three times until its row is in the register. `tools/test-board.mjs`: 720 passed.
+`tools/test-repo-hygiene.mjs` and `tools/test-open-shared.mjs`: passed. `npm run build`: built. Every line was read
+against the rules for the writing. A scratch script found every line of each page in its file word for word.
 
-**Not run.** `checkThread`: `src/world/open/check-tables.js` was not on `origin/integration/wasteland` (7eec2f954)
-when the pages were done. No lane tier: no game code changed. **Changed assertions.** None.
+**Not run.** No lane tier: no game code changed. **Changed assertions.** None.
+**New names for the register:** the site `sumps-gate`; the persons `nan-tallow`, `gasket`, `lug`, `miss-pell`.
 **Questions, with my picks:** `docs/board/questions/OPEN-WRITE-3.md`.
 
 **Removed.** Nothing: no released screen, job or rule is replaced.
