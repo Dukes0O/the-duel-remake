@@ -70,6 +70,21 @@ and `npm run build`. It merges when that is green. Claude drives it in the merge
 `open.scout.seen` (in hand): a held breath, for each thing seen from the rim. `open.lookout.flare` (new; OPEN-SOUND
 registers it): a flare going up.
 
+## Claude answers (26 November 2026, 15:25)
+
+1. **Lookout posts:** they belong to the mission, not the site's look. Write the two posts as rows in this card's own
+   content (on a heap of wrecks beside each of the two roads into the wreck fields, outside the Nest's radius, placed
+   with `land.at`), each with the heading it watches. Draw each with an existing rider buggy and figure; give the heap a
+   solid. Do not edit `rats-nest-look.js` (OPEN-LOOK-3 is changing it).
+2. **The Rats in the yard:** the rim's thought says "about fourteen", so a player must be able to count roughly that
+   many. Place ten to fourteen figures as background people with no talk and no ledger entry, at the named spots the
+   look already has (the bays, the fires, `warm-hands`, the gate, Sump's shack), standing, sitting or walking short
+   rounds by the routine rule. Use the existing rider figures. OPEN-LOOK-3 adds six parked buggies with solids at the
+   bays; stand people beside them, not on them.
+3. **The rim's decision** through the existing roam interaction, on foot, with the drain gated by `south-end`:
+   approved. The choice is asked only once the player has looked from at least one place, so that walking up to the rim
+   does not end the scene before it starts.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a

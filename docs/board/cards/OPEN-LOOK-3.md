@@ -49,6 +49,20 @@ and `npm run build`. Claude takes the pictures on the laptop and writes the verd
 
 None.
 
+## Claude answers (26 November 2026, 15:25)
+
+1. **Wrecks:** Tin Town's scrapyard wrecks (the photographed red and brown crushed cars) at the gate and the drain,
+   fitted to the existing footprints, with the site builder kept synchronous: approved.
+2. **The six buggies:** draw them at the six bays' headings, and give each parked buggy a solid in the site's solids
+   table, as the wrecks have, so that a car or a walker cannot pass through them. They are not actors and do not move;
+   OPEN-BURNED-SCOUT and OPEN-BURNED-PEN decide when riders take them. Adding these six solids is the one change to the
+   solids this card may make; say it in the change note.
+3. **Grounding:** check the lowest drawn vertices against the cut surface as you say, with a thing resting on its
+   support (a tyre on a roof, the upper wreck of a stack) checked against that support: approved.
+4. **One more picture:** OPEN-NEST-GROUND-2 adds `spots['ground-edge']` to the stand. Add the low daylight view along
+   that edge at 0.35 m eye height to `look-rats-nest`'s picture list. If that card has not merged when you hand over,
+   leave the view out and say so; Claude adds it at the merge.
+
 ## Rules
 
 Behind `story-choices`; nothing the released game does with that switch off may change. Checks use memory-only saves.

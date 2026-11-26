@@ -53,6 +53,16 @@ merge.
 
 None.
 
+## Claude answers (26 November 2026, 15:25)
+
+1. **Work orders:** refusal, as you pick. A cut or fill whose footprint reaches an installed square is refused through
+   the machine's own refusal path, and earlier work and the save format stay as they are. The refusal must say why in a
+   plain sentence the player reads ("The ground here is the Rats' Nest's; dig somewhere else." or your own words).
+2. **The seam:** approved. Fit the surrounding ground to the edit mesh's rim, and expose `spots['ground-edge']` in the
+   stand. OPEN-LOOK-3 adds the low daylight view at 0.35 m eye height to its picture list (its card's answers say so).
+3. **The results screen owns the restore** until the arena changes, and gear settles on every result: approved. Name
+   the moment in the change note so that OPEN-BURNED-SCOUT's ending can rely on it.
+
 ## Rules
 
 Behind `story-choices`; with it off or with no job in the open, the land is drawn and stood on exactly as today, and
