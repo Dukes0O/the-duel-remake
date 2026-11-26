@@ -122,7 +122,7 @@ function outputFor(thread, context, record, state, observed, decision) {
   for (const question of radio?.questions ?? []) if (asked.has(question.id)) once('asked', question.id);
   if (!asked.size && radio && rule.ask(beat.when) && view.onFoot && decision.interact) {
     decision.interact = false;
-    if (view.openRoam) out.requests.push({type: 'openRadio', id: radio.id, scene: radio, asked: []});
+    if (view.openRoam) out.requests.push({type: 'talk', scene: radio, speaker: radio.questions[0].lines[0]?.speaker});
     else {
       // OPEN-SHARED can carry the words to the caption queue before the roam talk adapter lands.
       const [question] = radio.questions;
