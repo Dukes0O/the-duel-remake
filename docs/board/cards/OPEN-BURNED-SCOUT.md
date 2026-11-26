@@ -5,6 +5,10 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+**Before this card:** OPEN-NEST-GROUND cuts the Rats' Nest's ground into the land for play, and OPEN-LOOK-RATS-NEST's
+look is in `src/world/open/looks/rats-nest-look.js` with its named spots. Place the Nest from those; do not edit
+`src/world/ground-edit.js` for its ground.
+
 ## What to build
 
 Section 21, Scene 3.

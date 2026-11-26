@@ -109,6 +109,29 @@ The lines of item 6 (21 November 2026). The word read is the person's own (`aunt
 | Cinder | Cold | I've nothing to say to you today. The kiln and I are both busy. |
 | Cinder | The mark for refusing the Walkers | The Walkers' camp is dark tonight. I can see it from the kiln roof, and I wish that I couldn't. |
 
+## Claude answers (25 November 2026, evening)
+
+These add to the answers given on GitHub on commit 0143ce3fb (leaving a talk, the missing lines, part of the day, the
+changed assertions in the shared test).
+
+1. **Refusal read from the Night 2 ledger's history entry for the refusal choice:** accepted.
+2. **The other eight Walker figures** with background routines tied to Rell's admission, no lines and no new names:
+   accepted.
+3. **Scenes and room spots named in the joined tables by other cards:** yes, the laptop joins those resolvers at the
+   merge. Resolve your own.
+
+**The four requests the parts share.** Four cards asked for the same missing pieces of the host. Each is now a
+named request in the contract at the top of `src/world/open/open-land.js`, and one card builds its handler in
+`src/arena/modes/world-job.js`. Every other card sends the request by that name and tests its part against it with
+a stand-in in its own files; the laptop joins them at the merge. Do not build a second handler.
+
+| Request | What it does | Built by |
+| --- | --- | --- |
+| `{type: 'talk', scene, speaker}` | Opens a talk inside the roam job; the roam step waits, and the choice comes back as a `talkChoice` in `jobEvents` | OPEN-ROAM |
+| `{type: 'repair', armour, scrap}` and `{type: 'wash'}` | Mend the car by so much armour, or wash it; the view carries `car: {armour, maxArmour, dirt}` | OPEN-DOORS |
+| `{type: 'solids', id, solids}` | Stand a site's or a building's solids in the job's solid grid, or take them away with `solids: []` | OPEN-SITES |
+| `{type: 'riders', ...}` | Start a rider fight inside the roam job | OPEN-CHECKPOINTS |
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
