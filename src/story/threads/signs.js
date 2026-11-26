@@ -17,11 +17,11 @@ export function isSignAlive(thread, record, night) {
 }
 
 export function liveSigns(threads, {world, holds = NO_HOLDS, view = {}, placeAt,
-  phase = () => view.partOfDay ?? 'day', contextCall = () => undefined}) {
+  contextCall = () => undefined}) {
   if (isHeld(holds, 'signs')) return [];
   return threads.flatMap(thread => {
     const record = world.open.threads[thread.id], {sign} = thread;
-    if (!record || !isSignAlive(thread, signRecord(thread, record, world), world.ledger.night) || (sign.part && sign.part !== phase(thread))) return [];
+    if (!record || !isSignAlive(thread, signRecord(thread, record, world), world.ledger.night) || (sign.part && sign.part !== (view.partOfDay ?? 'day'))) return [];
     const at = placeAt(sign.at, record.cast);
     const call = contextCall(thread, world);
     return [{id: thread.id, sign, at, ...(call ? {call} : {})}];

@@ -1,4 +1,3 @@
-import {bankHearth} from '../../story/ledger.js';
 import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal,
   checkpointRoadView, applyCheckpointRoadRequest} from './road-riders.js';
 import {barricadeEnds} from '../../world/jobs/barricade.js';
@@ -2116,8 +2115,6 @@ export function stepWorldJob(duel, dt) {
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
       people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
-      freeRoamDaylight: openRoam && worldJob.definition.open.partOfDay === undefined,
-      nightStartedAt: worldJob.openNightAt,
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
@@ -2291,15 +2288,7 @@ export function stepWorldJob(duel, dt) {
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
-      if (checkpointsEnabled && request.type === 'threadBankHearth') {
-        const {world} = worldJob.open;
-        const {ledger} = bankHearth(world.ledger);
-        const id = 'checkpoint/bank/' + ledger.night;
-        worldJob.open = {...worldJob.open, world: applyEffects({...world, ledger},
-          {id, effects: [{type: 'rest', clear: true}]}).world};
-        worldJob.openNightAt = worldJob.open.seconds;
-        worldJob.openJobEvents = [...worldJob.openJobEvents, {type: 'hearthBanked'}];
-      } else if (checkpointsEnabled && request.type === 'threadCarPosition' && !state.onFoot) {
+      if (checkpointsEnabled && request.type === 'threadCarPosition' && !state.onFoot) {
         const at = duel.course.nearest(request.place.x, request.place.z, state.s);
         const ground = duel.course.groundAt(at.s, at.lateral);
         Object.assign(state, {s: at.s, prevS: at.s, lateral: at.lateral, prevLateral: at.lateral,

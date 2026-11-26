@@ -25,7 +25,7 @@ import {campPeople} from '../content/people-sites.js';
 import radioHillVoice from '../../../story/threads/content/radio-hill-voice.js';
 import {NIGHT_2_SITES} from '../../jobs/night-2-sites.js';
 import {ROAD_REQUEST} from '../encounter-rule.js';
-import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPhase, radioPlace, radioBeat,
+import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPlace, radioBeat,
   radioMission, radioDestination, pocketWrecks, radioFuel} from '../content/radio-hill-voice-places.js';
 
 export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, radioHillVoice], checkThread, 'Open Scablands storylines');
@@ -34,10 +34,9 @@ const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 
 function withPlaces(context) {
-  const {world, view = {}, seconds = 0} = context;
+  const {world, view = {}} = context;
   const position = id => view.sitePositions?.[id]?.position ?? view.sitePositions?.[id] ?? sitePosition(id, world.open.landSeed);
-  const phase = thread => thread.id === RADIO_ID ? radioPhase(world, view, seconds) ?? 'day' : view.partOfDay ?? 'day';
-  return {...context, phase, contextCall: thread => thread.id === RADIO_ID ? {
+  return {...context, contextCall: thread => thread.id === RADIO_ID ? {
     range: thread.notes.sign.onRoadWithin,
     anywhere: world.open.found.includes('radio-hill') && ['Friendly', 'Sworn'].includes(world.ledger.words['radio-hill']),
   } : undefined, placeAt: (place, cast) => {
@@ -52,7 +51,7 @@ function withPlaces(context) {
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsStart: thread => thread.id !== RADIO_ID || view.checkpointsEnabled && view.openRoam && phase(thread) === 'dark' &&
+    allowsStart: thread => thread.id !== RADIO_ID || view.checkpointsEnabled && view.openRoam && view.partOfDay === 'dark' &&
       !view.onFoot && view.onRoad && witnessSign({sign: thread.sign, at: position('radio-hill'), call: {range: thread.notes.sign.onRoadWithin}}, view, 0, 0).witnessed,
     allowsCast: (thread, role, id) => role === 'camp' && thread === dryPump ?
       dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
@@ -463,11 +462,7 @@ export function createThreadsPart(threads) {
           sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
       const enabled = view.checkpointsEnabled === true;
       const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID && thread.id !== HAULER_ID && thread.id !== RADIO_ID);
-      if (enabled) {
-        state.places.dryPumpEnabled = true;
-        state.places.freeRoamDaylight = view.freeRoamDaylight;
-        state.places.nightStartedAt = view.nightStartedAt;
-      }
+      if (enabled) state.places.dryPumpEnabled = true;
       const region = regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
@@ -500,19 +495,6 @@ export function createThreadsPart(threads) {
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
       state.mission = settled ? null : previous.mission;
       let hold, release;
-      const radioRecord = enabled && availableThreads.includes(radioHillVoice) && world.open.threads[RADIO_ID];
-      if (radioRecord && view.openRoam && view.onFoot && !decision.activeMission &&
-        distanceBetween(playerPoint(view), NIGHT_2_SITES.hearthFront.position) <= 3) {
-        const id = RADIO_ID + '/bank-hearth';
-        const option = radioHillVoice.beats['second-voice'].choices.find(row => row.id === 'home');
-        if (view.jobEvents?.some(event => event.type === 'talkChoice' && event.scene === id && event.id === id))
-          requests.push({type: 'threadBankHearth'});
-        else if (decision.interact) {
-          decision.interact = false;
-          requests.push({type: 'talk', threadPriority: true, id, speaker: 'you', position: playerPoint(view),
-            scene: {id, choices: [{id, words: option.words, thought: option.thought}]}});
-        }
-      }
       for (const source of availableThreads) {
         const thread = source.id === FLAG_ID ? stagedFlag(world) : source;
         const record = world.open.threads[thread.id];
@@ -534,10 +516,9 @@ export function createThreadsPart(threads) {
         if (waterStruck)
           choices.push({id: `${thread.id}/water-struck`, effects: struck.effects});
         // A choice on the first tick of the new morning must already see the new price.
-        let threadContext = waterStruck ? {...context, world: {...world, ledger: {...world.ledger,
+        const threadContext = waterStruck ? {...context, world: {...world, ledger: {...world.ledger,
           marks: [...world.ledger.marks, ...struck.effects.filter(row => row.type === 'mark').map(row => row.id)]}}} : context;
         if (thread.id === RADIO_ID) {
-          threadContext = {...threadContext, view: {...view, partOfDay: context.phase(thread)}};
           const fuel = radioFuel(world, view, at => context.placeAt(at, record.cast));
           if (fuel?.choice) choices.push(fuel.choice);
           if (fuel?.id) {
@@ -599,7 +580,7 @@ export function createThreadsPart(threads) {
         const out = outputFor(thread, threadContext, record, details, sight?.witnessed ?? false, decision, dt);
         (state.progress ??= {})[thread.id] = details;
         if (thread.id === RADIO_ID) {
-          state.radioDark = threadContext.view.partOfDay === 'dark';
+          state.radioDark = view.partOfDay === 'dark' || view.partOfDay === 'dusk';
           if (events.some(event => event.cue === 'open.lamp.blink') || out.events.some(event => event.cue === 'open.lamp.blink'))
             details.blinkedAt = context.seconds;
         }

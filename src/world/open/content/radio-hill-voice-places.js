@@ -25,13 +25,6 @@ export const RADIO_MARK = {
   peace: RADIO_ID + '/two-voices',
 };
 export const radioMarked = (world, id) => world.ledger.marks.includes(id);
-export function radioPhase(world, view, seconds) {
-  if (!view.freeRoamDaylight) return view.partOfDay;
-  const waiting = world.open.threads[RADIO_ID]?.beat === 'by-day' &&
-    world.open.journal.findLast(row => row.type === 'thread' && row.key === RADIO_ID && row.after?.beat === 'by-day');
-  if (waiting && world.ledger.night > waiting.night) return 'day';
-  return seconds - (view.nightStartedAt ?? 0) >= 45 ? 'dark' : 'day';
-}
 const offset = (origin, x, z) => LAND.at('tin-town', origin.x - LAND.place('tin-town').x + x, origin.z + z);
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
