@@ -53,7 +53,8 @@ tasks:
     model: "sol"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/QA-NIGHT-TIMING-ALONE.md"
@@ -64,7 +65,8 @@ tasks:
     model: "sol"
     lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     details: "docs/board/cards/QA-NIGHT-22-NOV.md"
 
@@ -247,7 +249,8 @@ tasks:
     owner: "codex"
     lane: "RENDER"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
@@ -654,7 +657,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -666,7 +670,8 @@ tasks:
     model: "sol"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/BOWL-MENU-FRAME.md"
@@ -827,7 +832,8 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/SKIN-WASTE.md"
@@ -955,7 +961,8 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT-AGAIN.md"
