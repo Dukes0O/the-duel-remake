@@ -1,8 +1,8 @@
 """Dress the Walkers' photographic skins and export the Glasshouse, Radio Hill and Rats.
 
 blender -b -t 4 --python-exit-code 1 --python tools/blender/open-figures-2.py -- --root .
-node tools/art/story-people-poses.mjs .evidence/open-figures-2 --open-figures-3
-Repeat the Blender command with --sheet .evidence/open-figures-2 for the comparison.
+node tools/art/story-people-poses.mjs .evidence/open-figures-4 --open-figures-4
+Repeat the Blender command with --sheet .evidence/open-figures-4 for the comparison.
 """
 import argparse
 import io
@@ -20,7 +20,7 @@ args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv
 root = args.root.resolve()
 models = root / 'public/assets/models/wasteland'
 output = models / 'scablands/open-figures-2.glb'
-sheet = root / 'docs/board/looks/open-people/round-3.jpg'
+sheet = root / 'docs/board/looks/open-people/round-4.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [], 'glb': [] if args.sheet else [str(output)],
                       **({'summary': [str(sheet)]} if args.sheet else {})}))
@@ -234,12 +234,32 @@ def kit_for(name):
             k.oval((0,0,1.77),[(0,.124,.131),(.032,.12,.128),(.067,.08,.09)],'canvas','head')
             k.tube([(.095,.053,1.79),(.16,.07,1.67),(.17,.08,1.53)],.024,'canvas','head')
     elif name == 'hetty':
-        k.tube([(-.145,-.121,1.489),(-.15,.025,1.534),(-.089,.102,1.56),
-                (.082,.106,1.56),(.15,.019,1.53),(.145,-.121,1.489)],.024,'steel')
+        # A padded spring band behind the neck, dropping onto the collarbones.
+        k.tube([(-.153,-.120,1.45),(-.150,-.067,1.515),(-.128,.005,1.55),
+                (-.084,.069,1.564),(0,.089,1.566),(.084,.069,1.564),
+                (.128,.005,1.55),(.150,-.067,1.515),(.153,-.120,1.45)],.022,'seat-vinyl')
         for sign in (-1,1):
-            k.box((sign*.145,-.129,1.477),(.104,.129,.151),'boot')
-            k.box((sign*.196,-.129,1.477),(.029,.108,.126),'tin')
-        k.tube([(-.14,-.08,1.45),(-.17,-.14,1.30),(-.145,-.16,1.21),(-.098,-.12,1.25)],.006,'boot')
+            # Turn each drum outwards a little. An oval cushion, pale enamel shell
+            # and inset grille are visible together from the front and the side.
+            centre = Vector((sign*.133,-.133,1.406))
+            normal = Vector((sign*.48,-.86,.13)).normalized()
+            across = Vector((.86,sign*.48,0)).normalized()
+            vertical = normal.cross(across).normalized()
+            def rim(radius, tall, depth):
+                return [centre + normal*depth + across*(radius*math.cos(TAU*j/28))
+                        + vertical*(tall*math.sin(TAU*j/28)) for j in range(28)]
+            k.loft([rim(.072,.086,-.028),rim(.092,.108,-.012),
+                    rim(.091,.105,.014)],'boot')
+            k.loft([rim(.086,.100,.013),rim(.088,.098,.024),
+                    rim(.076,.087,.051),rim(.064,.075,.062)],'pages')
+            k.loft([rim(.065,.077,.060),rim(.061,.070,.068),
+                    rim(.034,.040,.078)],'steel')
+            k.tube([(sign*.155,-.086,1.503),(sign*.214,-.107,1.473),
+                    (sign*.226,-.121,1.409)],.011,'steel')
+            k.tube([centre + normal*.035 + across*(sign*w) + vertical*h for w,h in
+                    [(.082,.003),(.078,-.042),(.051,-.081),(.018,-.096)]],.007,'steel')
+        k.tube([(-.143,-.159,1.318),(-.148,-.162,1.263),(-.105,-.15,1.207),
+                (-.057,-.132,1.216),(-.034,-.131,1.25)],.008,'boot')
     elif name == 'bern':
         scarf(k,'oxblood')
         for i in range(7):
@@ -454,7 +474,9 @@ def render_sheet(folder):
 
     gutter, margin, header, caption = 18, 26, 82, 68
     panel_h = height + caption
-    page = Image.new('RGB', (2*width+gutter+2*margin, header+3*panel_h+2*gutter+margin+252), '#e9e5d9')
+    rows = (len(panels)+1)//2
+    distance_y = header + rows*panel_h + (rows-1)*gutter
+    page = Image.new('RGB', (2*width+gutter+2*margin, distance_y+margin+252), '#e9e5d9')
     draw = ImageDraw.Draw(page)
     def font(size, bold=False):
         try:
@@ -462,9 +484,14 @@ def render_sheet(folder):
         except OSError:
             return ImageFont.load_default(size=size)
     draw.text((margin,16), 'Open Scablands', font=font(38,True), fill='#263027')
-    draw.text((page.width-margin,33), 'FIGURES   /   ROUND 3     •     RELL   1.78 M', font=font(19,True),
+    draw.text((page.width-margin,33), 'FIGURES   /   ROUND 4     •     RELL   1.78 M', font=font(19,True),
               fill='#44513f', anchor='ra')
     for i, panel in enumerate(panels):
+        if 'camera' in panel:
+            view = panel['camera']
+            camera.data.ortho_scale = view['width']
+            camera.location = (0,-20,view['target']+20*math.tan(math.radians(view['elevation'])))
+            camera.rotation_euler = (Vector((0,0,view['target']))-camera.location).to_track_quat('-Z','Y').to_euler()
         objects = []
         for item in json.loads((folder/(panel['name']+'.json')).read_text()):
             data = bpy.data.meshes.new(item['name'])
@@ -505,7 +532,7 @@ def render_sheet(folder):
             distant = folder/(panel['name']+'-20m.png')
             scene.render.filepath = str(distant)
             bpy.ops.render.render(write_still=True)
-            bottom = header+3*panel_h+2*gutter+(i//2)*126
+            bottom = distance_y+(i//2)*126
             crop = Image.open(distant).convert('RGB').crop((128,325,1152,422))
             page.paste(crop,(x,bottom+29))
             draw.text((x,bottom+3), '20 m   /   '+panel['title'].split('  /  ')[0]+

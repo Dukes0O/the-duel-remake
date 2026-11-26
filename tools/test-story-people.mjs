@@ -260,6 +260,51 @@ for (const person of residents) {
   assert.equal(rotations.size, tinTasks[person.id].length+1, person.id+' has distinct working poses');
 }
 townView.dispose();
+// The shared Walker rig (Wim), the shed workers, and the separately drawn site
+// casts all sleep in the open land. Check both legs; one grounded toe can hide a raised boot.
+const {TOWN_PEOPLE} = await import('../src/world/open/content/people-town.js');
+const {FORGE_PEOPLE} = await import('../src/world/open/content/people-forge.js');
+const {SITES_PEOPLE} = await import('../src/world/open/content/people-sites.js');
+const darkPosts = [...TOWN_PEOPLE, ...FORGE_PEOPLE, ...SITES_PEOPLE]
+  .filter(({routine:{dark}}) => (dark.task ?? dark.action) === 'sleep');
+const sleeperIds = [...darkPosts.map(p => p.figure), 'tin-cook','tin-porter','tin-child'];
+const sleepers = createStoryPeople(sleeperIds.map((id,i) => ({
+  id, action:'sleep', yaw:i*.37, position:{x:i*1.7,y:2,z:0},
+})));
+const restView = createStoryPeopleView(loadRealAsset);
+const night = {open:{}, storyPeople:sleepers};
+restView.update(night, observer, 0);
+await restView.group.userData.ready;
+assert.ifError(restView.group.userData.loadError);
+for (let i=1;i<=90;i++) restView.update(night,observer,i/60);
+for (const person of sleepers) {
+  const actor = restView.group.getObjectByName('story-person-'+person.id);
+  const skin = actor.getObjectByProperty('isSkinnedMesh',true);
+  actor.updateMatrixWorld(true);
+  const joint = name => skin.skeleton.bones.find(b => b.name === name).getWorldPosition(new THREE.Vector3());
+  const lowest = new THREE.Box3().setFromObject(skin,true).min.y;
+  assert.ok(Math.abs(lowest-person.position.y) < .035, person.id+' rests at the assigned ground height');
+  for (const side of ['L','R']) {
+    const hip = joint('thigh'+side), knee = joint('shin'+side), ankle = joint('foot'+side);
+    assert.ok(hip.clone().sub(knee).angleTo(ankle.clone().sub(knee)) < Math.PI/2,
+      person.id+' folds knee '+side);
+    assert.ok(knee.clone().sub(hip).angleTo(joint('chest').sub(hip)) < Math.PI*.56,
+      person.id+' draws thigh '+side+' up toward the torso');
+    assert.ok(ankle.y-lowest < person.height*.22 && joint('hand'+side).y-lowest < person.height*.25,
+      person.id+' keeps wrist and ankle '+side+' below the upper shoulder');
+  }
+  setStoryPersonAction(person,'stand');
+}
+for (let i=91;i<=180;i++) restView.update(night,observer,i/60);
+for (const person of sleepers) {
+  const head = restView.group.getObjectByName('story-bubble-'+person.id).getWorldPosition(new THREE.Vector3());
+  assert.ok(head.y-person.position.y > .9*person.height &&
+    Math.hypot(head.x-person.position.x,head.z-person.position.z) < person.radius,
+    person.id+' stands back up on the same spot');
+}
+restView.dispose();
+console.log('Story people: both knees tuck, extremities stay low and every open sleeper wakes at its post.');
+
 // OPEN-FIGURES-2. Load through the same shared view and exercise the actual skinned hands.
 const {createFeatureFlags} = await import('../src/feature-flags.js');
 assert.equal(createFeatureFlags({qa:false, storage:null, search:'?flags=story-choices'}).enabled('story-choices'), false);

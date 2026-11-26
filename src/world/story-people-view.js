@@ -213,9 +213,15 @@ function fitCart(figure, person) {
   return {spread:centre.x, height:centre.y, back:centre.z-HANDCART.axleAhead+.055};
 }
 
-function poseFigure(figure, person, target, speaking, clock, dt, shift) {
+function poseFigure(figure, person, target, speaking, clock, dt, shift, openJob = false) {
   const {root, joints, facing, model} = figure, profile = STORY_FIGURES[person.id];
+  // Wim also appears in the older fence scene. Only the open land changes her rest.
+  const openResident = openJob || tinCast.has(person.id) || !!figure.work;
   if (figure.first) {
+    if (openResident && person.action === 'sleep') {
+      figure.seated = 1;
+      figure.asleep = 1;
+    }
     facing.yaw = person.yaw;
     if (person.action === 'sit' && person.seat === 'handcart') figure.seated = 1;
     figure.first = false;
@@ -229,11 +235,8 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   figure.asleep += ((person.action === 'sleep' ? 1 : 0) - figure.asleep) * blend;
   figure.armReach += ((person.action === 'push-cart' ? 1 : 0) - figure.armReach) * blend;
   const sit = figure.seated, sleep = figure.asleep, push = figure.armReach;
-  // The open town has no fence behind its sleepers. Roll onto the left
-  // shoulder with the knees loosely bent; legacy camp seats use their own pose.
-  const sideRest = tinCast.has(person.id) ? sleep : 0;
-  const seatedBend = sit - sideRest * .75;
-  const campSleep = sleep - sideRest;
+  const sideRest = openResident ? sleep : 0;
+  const campSleep = openResident ? 0 : sleep;
   const moving = person.action === 'walk' || person.action === 'run' || person.action === 'push-cart' ||
     person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp';
   const running = person.action === 'run';
@@ -252,9 +255,9 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     const swing = sign * stride;
     const lift = moving ? Math.max(0, sign * Math.cos(phase)) : 0;
     const longLeg = sign < 0 ? campSleep : 0;
-    poseBone(joints['thigh' + side], -1.43 * seatedBend - .71 * campSleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
-    poseBone(joints['shin' + side], 1.65 * seatedBend + 1.20 * campSleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
-    poseBone(joints['foot' + side], -.26 * seatedBend - .44 * campSleep + 1.29 * longLeg - lift * .19);
+    poseBone(joints['thigh' + side], -1.43 * sit - .71 * campSleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
+    poseBone(joints['shin' + side], 1.65 * sit + 1.20 * campSleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
+    poseBone(joints['foot' + side], -.26 * sit - .44 * campSleep + 1.29 * longLeg - lift * .19);
     const gestureSide = sign > 0 ? gesture : .15 * gesture;
     poseBone(joints['upper_arm' + side], swing * (running ? .5 : .31) * (1 - push) -
       .68 * push - .43 * sit - .23 * gestureSide, 0, -sign * (.055 + .10 * gestureSide + (sign < 0 ? .49 : .39) * sleep));
@@ -265,7 +268,11 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   if (figure.work) poseWork(figure, person, clock, stride);
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.
-  if (tinCast.has(person.id)) model.rotation.z = sideRest * Math.PI / 2;
+  if (sideRest > .0001) poseSideRest(figure, sideRest, profile.height);
+  else if (openResident) {
+    model.rotation.set(0, 0, 0);
+    model.position.x = 0;
+  }
   model.position.y = figure.baseY;
   root.updateWorldMatrix(true, false);
   root.updateMatrixWorld(true);
@@ -295,6 +302,36 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   model.position.y += root.position.y - lowest;
   if (figure.work) fitHandTool(figure, person.action);
 }
+
+// Fold both legs forward and stack them. The lower arm rests beneath the cheek.
+function poseSideRest({model, joints}, amount, height) {
+  model.rotation.set(0.25 * amount, 0, 1.58 * amount);
+  // Roll around the hips so the sleeper stays on the assigned bed.
+  model.position.x = .52 * height * Math.sin(model.rotation.z);
+  for (const [name, pitch, yaw, roll] of SIDE_REST_JOINTS) {
+    const joint = joints[name];
+    previousPose.copy(joint.bone.quaternion);
+    poseBone(joint, pitch, yaw, roll);
+    joint.bone.quaternion.slerp(previousPose, 1 - amount);
+  }
+}
+
+const previousPose = new THREE.Quaternion();
+const SIDE_REST_JOINTS = [
+  ['chest', 0.18, 0.12, 0.06],
+  ['neck', 0.46, 0.16, 0.1],
+  ['head', 0.48, 0.35, 0.17],
+  ['upper_armL', -1.33, -.08, .31],
+  ['upper_armR', -.44, -.12, -.28],
+  ['forearmL', -1.53, .19, .34],
+  ['forearmR', -1.52, -.68, -.79],
+  ['thighL', -1.6, -0.14, 0.08],
+  ['thighR', -1.46, -0.13, -0.31],
+  ['shinL', 2.06, 0.02, 0.1],
+  ['shinR', 2.39, 0.38, -0.34],
+  ['footL', -0.22, 0, 0],
+  ['footR', -0.22, 0, 0],
+];
 
 // Shoulder and elbow pitches for the two hands, then chest and gaze pitches.
 const tinPoses = {
@@ -396,7 +433,7 @@ export function createStoryPeopleView(loadAsset) {
         }
         if (figure.stool) figure.stool.root.visible = person.action === 'sit' && !person.seat;
         const speaking = person.id === speaker;
-        poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift);
+        poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift, !!worldJob.open);
       }
       // Both skeletons must have reached this frame before fitting a shared pane.
       for (const person of people) {
