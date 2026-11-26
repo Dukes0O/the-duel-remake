@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {MARKET_PLACES} from './content/market-day-places.js';
+import {marketStalls} from './market-day-rule.js';
 import {isHeld} from './holds.js';
 import {openThreadSigns} from './parts/threads.js';
 import {placeForThread} from '../../story/scenes/burned-camp.js';
@@ -146,11 +148,34 @@ const disposeMeshes = root => {
   root.removeFromParent();
 };
 
+function marketStall(pitch, index, stake) {
+  const group = new THREE.Group();
+  group.name = (stake ? 'Market stake ' : 'Market stall ') + pitch;
+  const wood = new THREE.MeshStandardMaterial({color: 0x785b42, roughness: .94});
+  const cloth = new THREE.MeshStandardMaterial({color: [0x9c4840, 0xaa8a57, 0x5c7d84, 0x6d7e52][index % 4], roughness: 1});
+  const box = (material, x, y, z, width, height, depth) => {
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+    piece.position.set(x, y, z);
+    group.add(piece);
+  };
+  if (stake) {
+    box(wood, 0, .35, 0, .1, .7, .1);
+    box(cloth, 0, .62, 0, .18, .14, .18);
+  } else {
+    box(wood, 0, .91, 0, 2.1, .12, .78);
+    box(cloth, 0, 2.1, 0, 2.45, .09, 1.45);
+    for (const x of [-.96, .96]) for (const z of [-.32, .32])
+      box(wood, x, 1.05, z, .075, 2.1, .075);
+  }
+  return group;
+}
+
 export function createSignView() {
   const group = new THREE.Group();
   group.name = 'Open land signs';
   const smoke = new Map();
   const heaps = new Map();
+  const stalls = new Map();
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -183,6 +208,26 @@ export function createSignView() {
         }
       }
       const open = worldJob?.open;
+      const market = open?.world.open.threads['market-day'];
+      const active = market && open.parts.missions?.active?.thread === 'market-day';
+      const placing = market?.beat === 'stakes' && !market.end && !!open.parts.threads?.market;
+      const marketRows = active ? [{people: 'dot', pitch: 'gate'}, ...marketStalls(open.world, market)] :
+        placing ? ['beside-the-gate', 'the-pump', 'the-sunny-wall', 'the-forge-wall', 'bess-shed']
+          .map(pitch => ({people: pitch, pitch})) : [];
+      const keys = new Set(marketRows.map(({people, pitch}) => (placing ? 'stake/' : 'stall/') + people + '/' + pitch));
+      for (const [key, stall] of stalls) if (!keys.has(key)) { disposeMeshes(stall); stalls.delete(key); }
+      marketRows.forEach(({people, pitch}, index) => {
+        const key = (placing ? 'stake/' : 'stall/') + people + '/' + pitch;
+        let stall = stalls.get(key);
+        if (!stall) { stall = marketStall(pitch, index, placing); stalls.set(key, stall); group.add(stall); }
+        const point = MARKET_PLACES[pitch];
+        stall.visible = distanceBetween(here, point) < 180;
+        if (stall.visible) {
+          positionAt(stall, point, drawnShift);
+          if (!placing) stall.position.z -= 1.7;
+        }
+      });
+
       if (lastJob !== worldJob) {
         flareSeq = 0;
         flare.visible = false;
@@ -247,6 +292,8 @@ export function createSignView() {
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();
+      for (const stall of stalls.values()) disposeMeshes(stall);
+      stalls.clear();
       trail?.userData.dispose();
       disposeMeshes(flare);
       for (const {sign} of sheds) {

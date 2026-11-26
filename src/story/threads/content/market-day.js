@@ -5,7 +5,7 @@
 // guest with no lines of its own answers with the line whose speaker is that role's leader: {first.leader},
 // {second.leader} or {third.leader}. In a condition or an effect the odd one's people are '@odd.people'
 // (src/world/open/roles.js).
-// Nothing loads this file yet. It names no other storyline: it meets the others only through facts.
+// It names no other storyline: it meets the others only through facts.
 
 const ID = 'market-day';
 // A mark with a sentence is one the player can read on the page What people remember. A mark without one is kept out of sight.
@@ -23,11 +23,12 @@ const comes = role => marked(`comes-${role}`);
 const TWO_COME = {any: [['first', 'second'], ['first', 'third'], ['second', 'third']].map(([a, b]) => ({all: [comes(a), comes(b)]}))};
 const RATS_RAIDING = {fact: 'feud', of: 'road-rats', atLeast: 'Raiding'};
 // Both of the peoples who are at odds are in the yard, and where their stakes went.
-const BOTH_HERE = {all: [marked('odd-asked'), {cast: 'odd'}]};
+const growersCome = {any: GUESTS.map(role => ({all: [{cast: role, is: 'glasshouse'}, comes(role)]}))};
+const BOTH_HERE = {all: [marked('odd-asked'), {cast: 'odd', is: 'bus-ring'}, growersCome]};
 const BESIDE = marked('stood-beside');
 const PROMISE_BROKEN = {all: [marked('told-no-tinkers'), marked('odd-asked')]};
 // The quarrel is written for the growers and the tinkers.
-const QUARREL = {all: [BOTH_HERE, guestIs('glasshouse'), {cast: 'odd', is: 'bus-ring'}]};
+const QUARREL = BOTH_HERE;
 const SOMEBODY_WENT_HOME = {any: [marked('promise-broken'), marked('odd-sent-home'), marked('guest-sent-home'), marked('glass-broken')]};
 
 const ASK = 'Will you come to a market at Tin Town?';
@@ -127,7 +128,7 @@ export default {
     {not: {fact: 'thread', id: ID, at: 'any'}},
   ]},
 
-  sign: {kind: 'words', by: 'dot'},
+  sign: {kind: 'words', by: 'dot', lastsNights: 6},
 
   beats: {
     sign: {

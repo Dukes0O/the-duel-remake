@@ -3,6 +3,7 @@ import {LAND} from '../scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {sees} from '../scablands-ways.js';
 import {isTrue} from './facts.js';
+import {BUS_RING} from './content/market-day-places.js';
 import {landSite, RADIO_HILL} from './content/sites.js';
 import {siteNeed, mendedMark, deliveredMark, brokenMark} from './content/needs.js';
 
@@ -67,7 +68,7 @@ const GLASSHOUSE_SPOTS = {
   'tent-west': {x: 11.5, z: 3.8}, 'frames-west': {x: -.7, z: 1.1}, 'row-end': {x: 1, z: -2.2},
   'car-stop': {x: -9, z: 19},
 };
-const SPOTS = {glasshouse: GLASSHOUSE_SPOTS, 'radio-hill': RADIO_HILL.spots};
+const SPOTS = {glasshouse: GLASSHOUSE_SPOTS, 'radio-hill': RADIO_HILL.spots, 'bus-ring': BUS_RING.spots};
 
 export function siteSpot(siteId, landSeed, spot) {
   const offset = SPOTS[siteId]?.[spot];

@@ -8,6 +8,7 @@ import {PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
+import {marketPeople} from '../market-day-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
 
 export const TALK_RANGE = 2.5;
@@ -58,6 +59,8 @@ export const peoplePart = {
     let {active, asked, heard} = state;
     const choices = [];
     for (const event of jobEvents) {
+      if (active && event.type === 'openTalkClosed' && typeof event.scene === 'string' &&
+          event.scene.startsWith('market-day/')) active = null;
       if (!active || event.scene !== active.scene) continue;
       if (event.type === 'openTalkQuestion') {
         asked = {...asked, [active.scene]: [...(asked[active.scene] ?? []), event.id]};
@@ -71,7 +74,10 @@ export const peoplePart = {
       }
     }
     const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
+    const market = view.checkpointsEnabled ? marketPeople(world, view) : [];
+    const staged = Object.fromEntries(market.map(row => [row.id, (row.routine.day.at ?? row.routine.day.around).join('/')]));
+    const stageAt = row => Object.hasOwn(staged, row.id) ? staged[row.id] : null;
+    const rows = [...residents.filter(row => !stageAt(row) && standsHere(row, world)), ...extras, ...market];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.
@@ -81,11 +87,11 @@ export const peoplePart = {
       if (hasNamedSpot(plan)) return [];
       const target = targetFor(row, context, partOfDay);
       const person = state.cast.find(item => item.id === row.id);
-      if (!person) return [firstPose(row, target, peopleGrid)];
+      if (!person || stageAt(row) && stageAt(row) !== state.staged?.[row.id]) return [firstPose(row, target, peopleGrid)];
       if (active?.person === row.id) return [faceDriver(person, driver, dt)];
       return [followRoutine(person, target, dt, {
         pace: STORY_FIGURES[row.figure].pace * 1.15, radius: person.radius, car: carPosition, grid: peopleGrid,
-        returnBounds: plan.kind === 'post' ? townEdges : null,
+        returnBounds: plan.kind === 'post' && !stageAt(row) ? townEdges : null,
       })];
     });
     const requests = [];
@@ -101,6 +107,6 @@ export const peoplePart = {
         break;
       }
     }
-    return {state: {cast, active, asked, heard, useHeld: !!interact}, choices, requests};
+    return {state: {cast, active, asked, heard, useHeld: !!interact, ...(market.length ? {staged} : {})}, choices, requests};
   },
 };
