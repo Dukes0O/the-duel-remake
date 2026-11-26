@@ -1,7 +1,7 @@
 # OPEN-T-TOLL
 
 - The Mall Road Toll adds Sump's Gate, a wreckage sign, the Breaks lookout and the cart squeeze behind dev-only `story-choices`. The gate and slope fights share the existing fight kind.
-- Merge `733b82591` joins the existing card head `eedd1374e` with integration `b0894b1e8`. Seven conflicts were resolved across the mission, talk, cast, sign, thread and arena adapters. The Toll and Runaway signs coexist, and a shared Rell uses the Runaway location. Both story files and pages match the OPEN-DIALOGUE-REVIEW versions on integration.
+- Merge `733b82591` joins the existing card head `eedd1374e` with integration `b0894b1e8`. Seven conflicts were resolved across the mission, talk, cast, sign, thread and arena adapters. The Toll and Runaway signs coexist, and a shared Rell uses the Runaway location. Both story files and pages match the OPEN-DIALOGUE-REVIEW versions on integration. The later base `1b7cf3ebf` adds a board claim only.
 - Node 22.23.5, memory-only QA on `733b82591`. 23/23 suites passed in 194.42 s. Core passed 804 checks, race replay 306, combat replay 12 and composition 65. The 19 affected suites passed, including the browser runner (18 checks). Both scenarios registered once and all 32 page expressions parsed.
 - `npm run build` passed in 14.17 s on `733b82591`. Vite reported dynamic-import, chunk-size and plugin-timing warnings. Board passed 651 checks and repository placement passed. The Windows line-stamp fixtures require the laptop.
 - `node tools/thread-crossings.mjs --check` exited 1. Toll and Runaway were sound. The report matched integration `b0894b1e8` byte for byte, including the two known OPEN-BURNED-PEN faults in `alone` and `drain`.
