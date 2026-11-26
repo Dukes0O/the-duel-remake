@@ -53,7 +53,8 @@ tasks:
     model: "sol"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/QA-NIGHT-TIMING-ALONE.md"
@@ -64,7 +65,8 @@ tasks:
     model: "sol"
     lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     details: "docs/board/cards/QA-NIGHT-22-NOV.md"
 
@@ -247,7 +249,8 @@ tasks:
     owner: "codex"
     lane: "RENDER"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
@@ -654,7 +657,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -666,7 +670,8 @@ tasks:
     model: "sol"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/BOWL-MENU-FRAME.md"
@@ -827,7 +832,8 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/SKIN-WASTE.md"
@@ -955,7 +961,8 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT-AGAIN.md"
@@ -1040,17 +1047,6 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-VANE-JOBS.md"
 
-  - id: SEA-LINES
-    title: "Act 5: every line"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/SEA-LINES.md"
-
   - id: SEA-WORKS
     title: "Act 5: the Sea Works as town work, years of it"
     owner: "codex"
@@ -1067,7 +1063,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["SEA-WORKS","SEA-LINES","MULE-JOBS","TOWN-PEACE","WW-ART-SEA"]
+    needs: ["SEA-WORKS", "MULE-JOBS", "TOWN-PEACE", "WW-ART-SEA"]
     locks: []
     details: "docs/board/cards/SEA-JOBS-1.md"
 
@@ -1077,7 +1073,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
-    needs: ["SEA-WORKS","SEA-LINES","HELI-RUSTWALL","WW-ART-SEA"]
+    needs: ["SEA-WORKS", "HELI-RUSTWALL", "WW-ART-SEA"]
     locks: []
     details: "docs/board/cards/SEA-LIFT.md"
 
@@ -1121,17 +1117,6 @@ tasks:
     locks: []
     details: "docs/board/cards/SEA-FINISH.md"
 
-  - id: FAR-LINES
-    title: "The Far Side: every line"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: ["TUNNEL-TRIAL"]
-    locks: []
-    details: "docs/board/cards/FAR-LINES.md"
-
   - id: WW-ART-FAR
     title: "Art: Highwater, the mill, PRUDENCE and the green"
     owner: "codex"
@@ -1171,7 +1156,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["FAR-LINES","TOWN-SCRAPYARD","TOWN-OUTPOSTS","TOWN-HAUL-JOB","HELI-RUSTWALL"]
+    needs: ["TOWN-SCRAPYARD","TOWN-OUTPOSTS","TOWN-HAUL-JOB","HELI-RUSTWALL"]
     locks: []
     details: "docs/board/cards/FAR-JOBS-1.md"
 
@@ -1401,18 +1386,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RUNAWAY.md"
 
-  - id: OPEN-T-MARKET
-    title: "Open Scablands: Market Day comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-MARKET.md"
-
   - id: OPEN-T-TOLL
     title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1436,6 +1409,18 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RADIO.md"
+
+  - id: OPEN-APPRENTICE-RUN-2
+    title: "Open Scablands: the kiln and the apprentice start after Night 2, and a gas run's pay is never lost (from the review)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [busy-game-files, save-shape]
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-APPRENTICE-RUN-2.md"
 
   - id: OPEN-T-LIGHTS
     title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
@@ -1472,28 +1457,17 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-LOOK-RADIO-HILL.md"
 
-  - id: OPEN-LOOK-BUS-RING
-    title: "Open Scablands: the Bus Ring, round 1, drawn in code (Claude cloud)"
-    owner: "claude-cloud"
+  - id: OPEN-LOOK-BUS-RING-2
+    title: "Open Scablands: the Bus Ring, round 2 from Claude's verdict (buses that are buses, the far tell, the near view)"
+    owner: "codex"
+    model: "astra"
     lane: "ART"
-    size: "M"
+    size: "S"
     status: "ready"
     needs: []
     locks: []
     flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-BUS-RING.md"
-
-  - id: OPEN-APPRENTICE-RUN
-    title: "Open Scablands: teach somebody the gas run, and have it driven for you from then on (Kyle, 21 November)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: [busy-game-files, save-shape]
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-APPRENTICE-RUN.md"
+    details: "docs/board/cards/OPEN-LOOK-BUS-RING-2.md"
 
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
@@ -1502,7 +1476,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "backlog"
-    needs: [OPEN-APPRENTICE-RUN]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-PEN.md"

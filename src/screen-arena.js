@@ -219,6 +219,15 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
+    const openExit = result.openExit?.to;
+    if (openExit === 'hearth-bank' || openExit === 'gas-run') {
+      const banked = openExit === 'hearth-bank';
+      const issue = result.openSaveIssue;
+      return {eyebrow: 'TIN TOWN', title: banked ? 'THE HEARTH' : 'BIG BESS',
+        description: issue ? escapeHTML(issue) : banked ? 'The hearth is banked. Morning is on its way.' : 'Moss has Bess ready to go.',
+        metrics: '', extra: '', actions: action(issue ? 'TRY SAVING AGAIN' : banked ? 'CONTINUE AT DAWN' : 'TAKE BESS OUT',
+          'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard')};
+    }
     if (definition?.kind === 'town-drive') return {eyebrow: 'THE TOWN',
       title: 'THE DRIVE', description: 'You drove round the town. Nothing was lost.',
       metrics: '', extra: '', actions: action('BACK TO THE YARD', 'arena-yard', true) + action('MAIN MENU', 'menu')};
@@ -247,7 +256,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     // EVERBURN-REMAKE: Hot Delivery says in one plain sentence how the ember arrived.
     const emberSentence = won ? arena.worldJob?.emberResult?.sentence : null;
     const bellowsSentence = won ? arena.worldJob?.bellowsResult?.sentence : null;
-    const gasSentence = won ? arena.worldJob?.gasResult?.sentence : null;
+    const delivery = result.settlementSaved && result.routineGas;
+    const gasSentence = delivery ? `Bess brought home ${delivery.gas} of gas. The kiln baked ${delivery.embers} ${delivery.embers === 1 ? 'ember' : 'embers'}.` :
+      won ? result.routineSaveIssue || arena.worldJob?.gasResult?.sentence : null;
     const brandSentence = won ? arena.worldJob?.brandResult?.sentence : null;
     // TOWN-HAUL-JOB: a haul says in one sentence what reached the town and what fell off on the way.
     const haulSentence = won ? arena.worldJob?.haulResult?.sentence : null;
@@ -261,7 +272,8 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
     return {eyebrow: job?.eyebrow ?? 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description: `${description}${haulSentence ? ` ${haulSentence}` : ''}${fireSentence ? ` ${fireSentence}` : ''}${emberSentence ? ` ${emberSentence}` : ''}${brandSentence ? ` ${brandSentence}` : ''}${bellowsSentence ? ` ${bellowsSentence}` : ''}${gasSentence ? ` ${gasSentence}` : ''}${awaitingRemake ? ' The next job is being made.' : ''}`, closing,
       metrics: rewards + (run ? metric('THE ASH MEN', escapeHTML(String(run.word).toUpperCase())) + metric('GAS RUNS', String(run.runs)) : '') + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
-      extra: '', actions: won ? (job?.run === true ? action('DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : '') +
+      extra: '', actions: won ? (job?.run === true ? action(job.routineRun ? (result.routineSaveIssue ? 'TRY SAVING AGAIN' : 'BACK TO THE HEARTH') :
+          'DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : '') +
         action('BACK TO THE YARD', 'arena-yard', !next && job?.run !== true) + (awaitingRemake ? '' : action('MAIN MENU', 'menu')) :
         action('TRY AGAIN', 'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
   }

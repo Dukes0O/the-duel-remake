@@ -463,7 +463,7 @@ assert.equal(stepOpenLand(releaseOpenLand(open, 'thread:burned-camp'), view(0), 
 }
 // The shared tables include the content of each populated town row.
 // Thread missions take their hold before the checkpoint part can arm a crossing on the launch tick.
-assert.deepEqual(OPEN_PARTS.map(part => part.id), ['people', 'buildings', 'sites', 'threads', 'missions', 'checkpoints', 'ground']);
+assert.deepEqual(OPEN_PARTS.map(part => part.id), ['routines', 'people', 'buildings', 'sites', 'threads', 'missions', 'checkpoints', 'ground']);
 for (const id of ['auntie-solder', 'cinder', 'rell', 'dace', 'wim']) {
   assert.equal(PEOPLE.filter(row => row.id === id).length, 1, id + ' is in the joined people table once');
   assert.equal(TALK_TABLES[id].filter(row => row.scene.startsWith('open/town/')).length, 6,
