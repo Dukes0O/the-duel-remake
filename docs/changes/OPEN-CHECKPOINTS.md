@@ -6,5 +6,5 @@
 - Changed assertions. None in existing suites. The replay and world guards keep their original fingerprints.
 - Codex decided. See the [card questions](../board/questions/OPEN-CHECKPOINTS.md) for the cross-card inputs, provisional reward amounts and caption fallback.
 - For Claude to run. Run `open-checkpoint` on the laptop, review the road-riders and story-night-2 scenarios in the merged batch, and drive, look at and listen to the encounter. The cloud did not perform those checks.
-- At integration, supply OPEN-SITES' positions and connect the actual hearth-bank event and dawn recovery to the save and story work. OPEN-SOUND owns cue registration.
+- At integration, supply OPEN-SITES' positions and connect the roam hearth-bank event and dawn recovery to the save and story work. OPEN-SOUND owns cue registration.
 - Removed. None.

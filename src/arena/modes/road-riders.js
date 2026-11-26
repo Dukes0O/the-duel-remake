@@ -3,7 +3,7 @@ import {ARSENAL_WEAPONS, WEAPON_IDS} from '../../weapon-upgrades.js';
 import {arenaActor, arenaParticipant, outOfPlay} from '../../combat-teams.js';
 import {wrapHeading} from '../../offroad-physics.js';
 import {worldPose} from '../arena-floor.js';
-import {ARENA_RULES} from '../arena-event.js';
+import {armorKitBonus} from '../../armor-kits.js';
 import {completeCombatRecovery, maxArmorForMass} from '../../combat-armor.js';
 import {createFighter} from '../../onfoot.js';
 import {freshDamageZones} from '../../sim-common.js';
@@ -422,9 +422,12 @@ const REMOVAL_MARGIN = 40;
 
 function addCheckpointCars(duel, world, vehicles, group, phase) {
   const state = duel.state, encounter = world.checkpointRoad, tune = ROAD_GROUPS[group];
+  // The arena has already scaled the player's native armor, including their fitted kit.
+  const playerBase = maxArmorForMass(CARS[state.car].mass) +
+    armorKitBonus(state.combatArmorKit, {carbonPlates:state.combatCarbonPlates === true});
+  const maxArmor = maxArmorForMass(CARS[tune.car].mass) * (state.maxArmor / playerBase);
   return vehicles.map(({start, home, route}, index) => {
     const id = encounter.id + '/car-' + (encounter.cars.length + index + 1);
-    const maxArmor = maxArmorForMass(CARS[tune.car].mass) * ARENA_RULES.armorScale;
     const car = {arenaId:id, jobId:id, car:tune.car, maxArmor, armor:maxArmor, damageZones:freshDamageZones(),
       boost:1, damageCooldown:0, contactCooldown:0, yawVelocity:0, pushVelocity:0, airHeight:0, prevAirHeight:0,
       paint:{color:tune.color, accent:tune.accent}, weaponLoadout:[],
