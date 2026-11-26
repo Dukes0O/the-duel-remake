@@ -48,6 +48,7 @@ export const STORY_PEOPLE = Object.freeze({
   seaview: 'The Seaview Centre',   // what Mr Penny calls the Dead Mall; a people of one
   'mr-penny': 'Mr Penny',
   slack: 'Slack',   // his own name is Nat, which he gives if he is asked (docs/story/threads/runaway.md)
+  'sumps-rider': "Sump's rider",
 });
 
 export const FEUD_WORDS = Object.freeze(['Watching', 'Raiding', 'Hunting', 'War party']);

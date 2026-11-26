@@ -242,12 +242,16 @@ const fight = {
       ? {at, starts, posts: []} : null;
   },
   begin(mission, route) {
-    return {state: {route, sent: false, boxed: 0}};
+    return {state: {route, sent: false, boxed: 0},
+      requests: mission.rule.poleFallsAtKmh ? [marker({}, route.at, mission.rule.startWithin)] : []};
   },
   step(mission, state, view, dt) {
     const {rule} = mission, next = {...state};
     const requests = [];
-    if (!next.sent && !view.road) {
+    const strike = rule.poleFallsAtKmh && !state.poleDown && !view.onFoot && isNear(view.carPosition, state.route.at, rule.startWithin) &&
+      (view.speedKmh ?? Math.abs(view.carSpeedMph ?? 0) * 1.609344) >= rule.poleFallsAtKmh;
+    if (strike) next.poleDown = true;
+    if (!next.sent && (!rule.poleFallsAtKmh || next.poleDown) && !view.road && view.carPosition) {
       next.sent = true;
       requests.push({type: 'riders', id: mission.id, group: mission.enemy, missionRule: rule,
         vehicles: state.route.starts.map(start => ({start: {...atGround(view, start),
@@ -262,11 +266,17 @@ const fight = {
     const won = wrecks >= (rule.winWrecks ?? mission.cars) || result?.outcome === 'won';
     const outcome = lost ? 'lost' : won ? 'won' : null;
     next.outcome = outcome;
+    const paid = outcome === 'lost' && rule.recoveryShare;
+    const bounty = outcome === 'won' && rule.bountyPerWreck * Math.max(wrecks, result?.wrecks ?? 0);
     return {state: next, outcome, requests,
-      events: outcome === 'lost' && rule.recoveryShare ? [{type: 'threadMissionRecoveryPaid', id: mission.id}] : [],
-      choices: outcome === 'lost' && rule.recoveryShare ? [{
-      id: mission.id + '/recovery', effects: [{type: 'scrap', by: -Math.floor(view.missionScrap * rule.recoveryShare)}],
-    }] : []};
+      events: [
+        ...(paid ? [{type: 'threadMissionRecoveryPaid', id: mission.id}] : []),
+        ...(strike ? [{type: 'threadMissionPoleDown', id: mission.id,
+          position: atGround(view, state.route.at), cue: rule.poleCue}] : []),
+      ],
+      choices: paid ? [{
+        id: mission.id + '/recovery', effects: [{type: 'scrap', by: -Math.floor(view.missionScrap * rule.recoveryShare)}],
+      }] : bounty ? [{id: mission.id + '/wrecks', effects: [{type: 'scrap', by: bounty}]}] : []};
   },
   end(mission, state, view) {
     return [{type: 'marker', place: null},
@@ -361,6 +371,154 @@ const heist = {
   },
 };
 
+export const lookoutHeading = (post, turnsIn, seconds) => (post.heading ?? 0) + seconds / turnsIn * Math.PI * 2;
+
+// A circling lamp watches a continuous stretch of a drive. A gap in the beam resets the clock.
+const lookout = {
+  prepare({rule, by}, place) {
+    const via = place(rule.via), destination = place(rule.destination);
+    const posts = rule.lookoutSpots.map(place), starts = rule.riderStarts.map(place);
+    return by === 'car' && via && destination && posts.every(Boolean) && starts.every(Boolean) &&
+      rule.within > 0 && rule.viaWithin > 0 && rule.seenAfterSeconds > 0 && rule.turnsIn > 0
+      ? {via, destination, posts, starts} : null;
+  },
+  begin(mission, route, view) {
+    return {state: {route, elapsed: 0, sight: 0, followed: false, sent: false, seen: false},
+      requests: [marker(view, route.via, mission.rule.viaWithin),
+        lookoutsRequest(mission, route.posts.map(post => atGround(view, post)))]};
+  },
+  step(mission, state, view, dt) {
+    const {rule} = mission, {via, destination, posts, starts} = state.route;
+    const next = {...state, elapsed: state.elapsed + dt};
+    const car = !view.onFoot && view.carPosition;
+    const requests = [], events = [];
+    if (!state.followed && car && isNear(car, via, rule.viaWithin)) {
+      next.followed = true;
+      requests.push(marker(view, destination, rule.within));
+    }
+    if (rule.pursuit && view.combatWrecking) return {state: next, outcome: rule.wrecked};
+    if (rule.pursuit && !state.sent && !view.road && car) {
+      next.sent = true;
+      requests.push({type: 'riders', id: mission.id, group: mission.enemy,
+        vehicles: starts.map(start => ({start: atGround(view, start), home: start}))});
+    }
+    if (!state.seen && posts.length) {
+      // Sample the sweep at short intervals even when a headless tick spans many seconds.
+      const samples = Math.max(1, Math.ceil(dt / .125)), span = dt / samples;
+      for (let i = 0; i < samples; i++) {
+        const time = state.elapsed + (i + .5) * span;
+        const watching = posts.find(post => lookoutSees({...post, heading: lookoutHeading(post, rule.turnsIn, time),
+          halfAngle: rule.coneDegrees * Math.PI / 360}, car, view.missionHeightAt));
+        next.sight = watching ? next.sight + span : 0;
+        if (next.sight + 1e-9 >= rule.seenAfterSeconds && watching) {
+          next.seen = true;
+          events.push({type: 'threadCue', id: mission.id, position: atGround(view, watching), cue: mission.cue});
+          return {state: next, requests, events, outcome: 'seen'};
+        }
+      }
+    }
+    const reached = next.followed && car && isNear(car, destination, rule.within);
+    return {state: next, requests, events, outcome: reached ? 'not-seen' : null};
+  },
+  end(mission, _state, view) {
+    return [{type: 'marker', place: null}, lookoutsRequest(mission, []),
+      ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : [])];
+  },
+};
+
+const SQUEEZE_RATE = 3;
+const SQUEEZE_LINE_WIDTH = 5;
+const SQUEEZE_BLOCK_RADIUS = 4;
+const approach = (distance, speed, dt) => Math.max(0, distance - speed * dt);
+const lateralPoint = (at, side) => ({...at,
+  x: at.x + Math.cos(at.heading) * side, z: at.z - Math.sin(at.heading) * side});
+
+function squeezeActors(mission, state, view) {
+  const carts = state.carts.map(cart => ({...atGround(view, lateralPoint(cart.at, cart.offset)), car: cart.car}));
+  const riders = state.riders.map(rider => {
+    const cart = state.carts[rider.target];
+    const point = lateralPoint(cart.at, cart.offset + rider.side * rider.gap);
+    return {...atGround(view, point), heading: cart.at.heading + rider.side * Math.PI / 2};
+  });
+  const solids = [...carts, ...riders].map((row, i) => ({id: mission.id + '/' + i,
+    kind: 'prop', shape: 'box', x: row.x, z: row.z, base: row.y, heading: row.heading,
+    halfX: 1.05, halfZ: 2.35, height: 1.65}));
+  return [lookoutsRequest(mission, [...carts, ...riders]), {type: 'solids', id: mission.id, solids}];
+}
+
+const squeeze = {
+  prepare({by, rule}, place) {
+    const at = place(rule.at), passage = place(rule.passage);
+    const carts = rule.carts.map(cart => ({...cart, at: typeof cart.at?.x === 'number' ? cart.at : place(cart.at)}));
+    return by === 'car' && at && passage && carts.length >= 2 && carts.every(cart => cart.at) &&
+      rule.standing >= 3 && rule.outOfLineSeconds > 0 && rule.promiseMetres > 0 ? {at, passage, carts, posts: []} : null;
+  },
+  begin(mission, route, view) {
+    const {rule} = mission;
+    const carts = [...route.carts].sort((a, b) => Number(b.promise) - Number(a.promise) || Number(b.priority) - Number(a.priority))
+      .map(cart => ({...cart, offset: 0, outside: 0, kept: cart.promise}));
+    const riders = Array.from({length: 2 + (rule.warned ? rule.extraCarsIfWarned : 0)}, (_, index) => ({
+      target: Math.min(carts.length - 1, Math.floor(index / 2)), side: index % 2 ? 1 : -1, gap: 26 + 6 * (index % 2),
+    }));
+    const state = {route, carts, riders, elapsed: 0, offered: false, stayed: false, weapons: {...view.missionWeapons}};
+    return {state, requests: squeezeActors(mission, state, view)};
+  },
+  step(mission, state, view, dt) {
+    const {rule} = mission;
+    const weapons = {...view.missionWeapons};
+    const finish = (outcome, next, requests = [], events = []) => ({state: {...next, weapons}, outcome,
+      requests, events, result: {kept: next.carts.filter(cart => cart.kept).map(cart => cart.id),
+        broken: next.carts.filter(cart => cart.promise && !cart.kept).map(cart => cart.id)}});
+    if (view.missionShot || Object.entries(weapons).some(([id, time]) => time > (state.weapons[id] ?? 0) + 1e-6))
+      return finish('shooting-first', state);
+    if (view.combatWrecking) return finish('broke', {...state,
+      carts: state.carts.map(cart => ({...cart, kept: false}))});
+    const choice = view.jobEvents?.find(event => event.type === 'talkChoice' && event.scene === mission.id + '/offer');
+    const accepted = choice?.id === mission.id + '/drive-through';
+    if (accepted || state.accepted) {
+      const crossed = !view.onFoot && isNear(view.carPosition, state.route.passage, rule.offerWithin / 3);
+      return finish(crossed ? 'sold' : null, {...state, accepted: true},
+        accepted ? [marker(view, state.route.passage, rule.offerWithin / 3)] : []);
+    }
+    const stayed = state.stayed || choice?.id === mission.id + '/stay';
+    if (state.offered && !stayed) return finish(null, state);
+    const elapsed = state.elapsed + dt;
+    const car = !view.onFoot && view.carPosition;
+    const riders = state.riders.map(rider => {
+      const cart = state.carts[rider.target];
+      const mid = lateralPoint(cart.at, cart.offset + rider.side * Math.max(3, rider.gap / 2));
+      const blocked = distance(mid, car) <= SQUEEZE_BLOCK_RADIUS;
+      return {...rider, gap: blocked ? 10 : Math.max(4, approach(rider.gap, 7, dt)), blocked};
+    });
+    const carts = state.carts.map((cart, index) => {
+      const pressure = riders.filter(rider => rider.target === index && !rider.blocked && rider.gap < 9);
+      // The buggies steer the threatened cart toward the bucket from either side.
+      const defended = riders.some(rider => rider.target === index && rider.blocked);
+      const offset = pressure.length && !defended ? Math.min(12, cart.offset + SQUEEZE_RATE * dt) : approach(cart.offset, 5, dt);
+      const outside = offset <= SQUEEZE_LINE_WIDTH ? 0 : cart.outside + Math.min(dt,
+        cart.offset > SQUEEZE_LINE_WIDTH ? dt : (offset - SQUEEZE_LINE_WIDTH) / SQUEEZE_RATE);
+      const kept = cart.kept && (!pressure.length || distance(car, lateralPoint(cart.at, offset)) <= rule.promiseMetres);
+      return {...cart, offset, outside, kept};
+    });
+    const displaced = carts.find(cart => cart.outside + 1e-9 >= rule.outOfLineSeconds);
+    const next = {...state, carts, riders, elapsed, stayed};
+    const requests = squeezeActors(mission, next, view);
+    if (displaced) return finish('broke', {...next,
+      carts: carts.map(cart => ({...cart, kept: cart.id === displaced.id ? false : cart.kept}))}, requests);
+    if (!state.offered && elapsed >= rule.offerAfter) {
+      next.offered = true;
+      return finish(null, next, requests, [{type: 'threadMissionOffer', id: mission.id}]);
+    }
+    const hold = rule.holdSeconds - (rule.standing - 3) * rule.lessForEachBeyondThree;
+    return finish(elapsed >= hold ? 'held' : null, next, requests);
+  },
+  end(mission) {
+    return [lookoutsRequest(mission, []), {type: 'solids', id: mission.id, solids: []}, {type: 'marker', place: null}];
+  },
+};
+
 export const MISSION_KINDS = Object.freeze({reach: Object.freeze(reach),
   'rider-fight': Object.freeze(riderFight), outrun: Object.freeze(outrun), escort: Object.freeze(escort),
-  fight: Object.freeze(fight), heist: Object.freeze(heist)});
+  fight: Object.freeze(fight), heist: Object.freeze(heist),
+  lookout: Object.freeze(lookout), squeeze: Object.freeze(squeeze),
+});

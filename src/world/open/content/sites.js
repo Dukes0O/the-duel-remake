@@ -1,6 +1,7 @@
 import {checkSite, requireSound} from '../check-tables.js';
 import {siteRow} from '../register.js';
 import {DRY_PUMP_CAMP} from './dry-pump-places.js';
+import {TOLL_SITE} from './mall-road-toll-places.js';
 import {SITE_NEEDS} from './needs.js';
 
 const site = (id, positions, rules) => ({
@@ -20,6 +21,7 @@ export const LAND_SITES = Object.freeze(requireSound([
   site('sweet-seep', [['dead-mall', -1050, 300]], {foundWithin: 160, tell: 'green-patch', tellWithin: 700}),
   site(DRY_PUMP_CAMP.id, [DRY_PUMP_CAMP.at], {foundWithin: 120, tell: 'lamp', tellWithin: 500,
     leader: 'gasket', meeting: 'door', storyChoices: true}),
+  TOLL_SITE,
 ], checkSite, 'Open Scablands sites'));
 
 export const CAMP_SITES = Object.freeze(LAND_SITES.filter(site => site.kind === 'camp'));

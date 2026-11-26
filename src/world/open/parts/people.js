@@ -1,10 +1,11 @@
+import {TOLL_ID, tollGateStanding} from '../content/mall-road-toll-places.js';
 import {attendTo, STORY_FIGURES} from '../../jobs/story-people.js';
 import {NIGHT_2_SITES} from '../../jobs/night-2-sites.js';
 import {scablandsActorHeightAt} from '../../scablands-ground.js';
 import {stepMover, FOOT_GRADE} from '../../scablands-movers.js';
 import {isTrue} from '../facts.js';
 import {followRoutine, routinePose} from '../routine-rule.js';
-import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
+import {DRY_PUMP_CAST, PEOPLE, TOLL_CAST} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
@@ -75,12 +76,14 @@ export const peoplePart = {
         active = null;
       }
     }
-    const staged = view.checkpointsEnabled ? flagPeople(world) : [];
+    const toll = view.checkpointsEnabled && tollGateStanding(world) ? TOLL_CAST.filter(row =>
+      row.id !== 'sumps-rider' || ['caught', 'slope-run', 'slope-fight'].includes(world.open.threads[TOLL_ID].beat)) : [];
+    const staged = view.checkpointsEnabled ? [...flagPeople(world), ...toll] : [];
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
       ...haulerPeople(world, {...view, seconds: context.seconds}), ...staged] : [];
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
-      row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
+      (row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') && !toll.some(person => person.id === row.id)) : [];
     const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras, ...mallPeople];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];

@@ -1,3 +1,4 @@
+import {TOLL_TALK_ROWS} from './mall-road-toll-places.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {validateTalkScene} from '../../../story/talk.js';
 import {firstBeat, threadRule} from '../../../story/threads/thread-rule.js';
@@ -18,6 +19,8 @@ export function threadTalkRows(threads) {
 }
 
 export const THREADS_TALK = threadTalkRows([burnedCamp]);
+export const MALL_ROAD_TALK = Object.freeze(requireSound(TOLL_TALK_ROWS.map(row => ({...row, scene: row.id})),
+  checkTalkRow, 'Mall Road Toll talk rows'));
 
 // The host's scene resolver can call this for an offered row after checking its speaker and location.
 export function openThreadTalkScene(id, context, threads = [burnedCamp]) {

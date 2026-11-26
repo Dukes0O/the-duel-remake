@@ -34,6 +34,7 @@ export function witnessSign(entry, view, elapsed, dt) {
     event.type === 'talkChoice' && event.id === `${id}/heard-sign`)};
   const inRange = !at || distanceBetween(player, at) <= (sign.seenWithin ?? Infinity);
   if (sign.kind === 'call') return {seconds: 0, witnessed: inRange};
+  if (sign.kind === 'wreckage') return witnessWreckage(entry, view, elapsed, dt);
   if (sign.kind === 'thing') return witnessThing(entry, view, elapsed, dt);
   if (sign.kind !== 'smoke' || !at || !player || !inRange) return {seconds: 0, witnessed: false};
   const visible = sees(player, at, {heightAt: view.missionHeightAt, eye: view.onFoot ? 1.6 : 2.5, target: SMOKE_HEIGHT * .7});
@@ -45,6 +46,14 @@ export function witnessThing({sign, at}, view, elapsed, dt) {
   const player = view.player?.position ?? view.player;
   const visible = player && at && distanceBetween(player, at) <= (sign.seenWithin ?? Infinity) &&
     sees(player, at, {eye: view.onFoot ? 1.6 : 2.5, target: sign.at?.checkpoint ? 2.8 : 24, heightAt: view.signHeightAt ?? view.missionHeightAt});
+  const seconds = visible ? elapsed + dt : 0;
+  return {seconds, witnessed: seconds >= 3 - 1e-9};
+}
+
+export function witnessWreckage({sign, at}, view, elapsed, dt) {
+  const car = view.carPosition ?? view.player?.position ?? view.player;
+  const visible = !view.onFoot && at && car && distanceBetween(car, at) <= sign.seenWithin &&
+    sees(car, at, {heightAt: view.signHeightAt ?? view.missionHeightAt, eye: 2.5, target: 6.6, step: 8});
   const seconds = visible ? elapsed + dt : 0;
   return {seconds, witnessed: seconds >= 3 - 1e-9};
 }
