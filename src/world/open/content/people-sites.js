@@ -18,6 +18,7 @@ export const SITES_PEOPLE = Object.freeze(requireSound([
   person('grower-3', glasshouse, track(glasshouse, [['tent-west', 6, 'carry-frame'], ['frames-west', 5], ['hoe-3', 12, 'walk', 'hoe']]), stove, sleep),
   person('hetty', radio, track(radio, [['door', 115], ['lookout', 12]]), post(radio, 'door', 'sit'), post(radio, 'door', 'sit')),
   person('bern', radio, track(radio, [['generator', 8], ['mast', 10], ['door', 7]]), post(radio, 'bench', 'sit'), post(radio, 'bed', 'sleep')),
+  person('gasket', 'bus-ring', post('bus-ring', 'door'), post('bus-ring', 'door'), post('bus-ring', 'door'), {figure: 'moss'}),
 ], checkPerson, 'Camp people'));
 
 export const campPeople = site => SITES_PEOPLE.filter(person => person.home === site);

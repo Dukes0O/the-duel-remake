@@ -9,7 +9,7 @@ export const mark = id => ({type: 'mark', id});
 export function threadRule(thread, context, record = {}, state = {}) {
   const {world, view = {}, seconds = 0, placeAt} = context;
   const night = world.ledger.night;
-  const has = (kind, key) => world.ledger.marks.includes(threadMark(thread.id, kind, key));
+  const has = (kind, key) => world.ledger.marks.includes(threadMark(thread.id, kind, key + (state.visit ?? '')));
   const reached = beat => world.open.journal.findLast(row => row.type === 'thread' && row.key === thread.id && row.after.beat === beat);
   const player = view.player?.position ?? view.player;
   const ask = (when, cast = record.cast ?? {}, subject = {}) => {
@@ -34,6 +34,7 @@ export function threadRule(thread, context, record = {}, state = {}) {
     if (when.asked !== undefined) return has('asked', when.asked);
     if (when.found !== undefined && !when.site) return has('found', when.found);
     if (when.chose !== undefined) return has('chose', when.chose);
+    if (when.ended !== undefined) return record.end === when.ended;
     if (when.due !== undefined) return world.ledger.obligations.some(item => item.type === 'promise' && item.id === when.due && item.due === night);
     return isTrue(resolveRoles(when, cast), world, {...subject, draw: `${thread.id}/night-${night}`});
   };

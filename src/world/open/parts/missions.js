@@ -7,9 +7,15 @@ const kindOf = mission => Object.hasOwn(MISSION_KINDS, mission.kind) ? MISSION_K
 // only on a named outcome, never by this cleanup.
 export function abandonOpenMission(open) {
   const active = open?.parts.missions?.active;
-  if (!active) return open;
-  return {...open, holds: dropHold(open.holds, active.holder),
-    parts: {...open.parts, threads: {...open.parts.threads, mission: null}, missions: {}}};
+  const journey = open?.parts.threads?.journey;
+  if (!active && !journey) return open;
+  const holds = dropHold(open.holds, active?.holder ?? journey.holder);
+  const threads = {...open.parts.threads, mission: null};
+  if (journey) {
+    delete threads.dryPump;
+    delete threads.journey;
+  }
+  return {...open, holds, parts: {...open.parts, threads, missions: {}}};
 }
 
 export const missionsPart = {
@@ -19,28 +25,39 @@ export const missionsPart = {
     if (!active) {
       const start = events.find(event => event.type === 'threadMission');
       if (!start) return;
-      const {id, holder, mission, route, thread, beat} = start;
+      const {id, holder, mission, route, thread, beat, keepHold, runAfterEnd} = start;
       if (leave) return {release: holder, events: [{type: 'threadMissionCancelled', id}]};
       const kind = kindOf(mission);
       const started = kind.begin(mission, route, view);
-      active = {id, holder, mission, thread, beat, state: started.state};
+      active = {id, holder, mission, thread, beat, keepHold, runAfterEnd, state: started.state};
       return {state: {active}, requests: started.requests};
     }
     const {id, holder, mission} = active;
     const kind = kindOf(mission);
     const record = world.open.threads[active.thread];
-    const interrupted = record?.end || record?.beat !== active.beat || leave || !view.openRoam || view.missionLeaving || view.combatWrecking;
-    const next = interrupted ? {state: active.state} : kind.step(mission, active.state, view, dt);
+    const interrupted = (record?.end && !active.runAfterEnd) || record?.beat !== active.beat || leave || !view.openRoam || view.missionLeaving ||
+      (view.combatWrecking && !['fight', 'rider-fight', 'outrun', 'escort'].includes(mission.kind) && !mission.rule?.wrecked);
+    const next = interrupted ? {state: active.state} : kind.step(mission, active.state, {...view, missionScrap: world.scrap}, dt);
     if (next.events) next.events = next.events.map(event => ({...event, seconds}));
     if (!interrupted && !next.outcome) return {...next, state: {active: {...active, state: next.state}}};
     return {
-      state: {}, release: holder,
+      state: {}, ...(!active.keepHold ? {release: holder} : {}),
+      choices: next.choices,
       events: [...(next.events ?? []), interrupted ?
-        {type: 'threadMissionCancelled', id} : {type: 'threadMissionOutcome', id, outcome: next.outcome}],
+        {type: 'threadMissionCancelled', id} : {type: 'threadMissionOutcome', id, outcome: next.outcome,
+          ...(mission.kind === 'heist' && next.state.seen && mission.cue ? {alarmPlayed: true} : {})}],
       requests: [...(next.requests ?? []), ...kind.end(mission, next.state, view)],
     };
   },
 };
+
+export function inheritThreadMission(mission, parent) {
+  if (!mission.partOf) return mission;
+  if (mission.partOf !== parent?.id || parent.partOf) return null;
+  const {kind, by, rule, enemy} = parent;
+  return {...mission, kind: mission.kind ?? kind, by: mission.by ?? by,
+    rule: {...rule, ...mission.rule}, enemy: mission.enemy ?? enemy};
+}
 
 export function prepareThreadMission(mission, place) {
   return kindOf(mission)?.prepare(mission, place) ?? null;

@@ -7,7 +7,7 @@ import {FEUD_GROUPS, nameOf} from '../register.js';
 import {isTrue} from '../facts.js';
 import {isHeld} from '../holds.js';
 import {isFound, stageOf} from '../open-record.js';
-import {CAMP_SITES} from '../content/sites.js';
+import {CAMP_SITES, LAND_SITES} from '../content/sites.js';
 import {brokenMark} from '../content/needs.js';
 import {meetingMark, siteGreeting, siteScene} from '../content/talk-sites.js';
 import {goodwillEffects} from '../goodwill-rule.js';
@@ -66,7 +66,7 @@ function discover(site, world, onFoot, point, position, choices, events, request
   const night = namedNight(world.ledger.night);
   choices.push({id: 'open/site-found/' + site.id, effects: [
     {type: 'find', site: site.id},
-    {type: 'met', person: site.people, text: 'You found ' + name + ' on ' + night + '.'},
+    ...(site.people ? [{type: 'met', person: site.people, text: 'You found ' + name + ' on ' + night + '.'}] : []),
     ...(ash ? [{type: 'word', person: site.people, set: 'Wary'}, mark('open/ash/' + site.id)] : []),
   ]});
   // Give the discovery the screen even if a radio line is already queued.
@@ -272,9 +272,12 @@ export const sitesPart = {
     }
 
     let near = null;
+    if (view.checkpointsEnabled) for (const site of LAND_SITES.filter(row => row.kind === 'well'))
+      discover(site, world, view.onFoot, point, sitePosition(site.id, world.open.landSeed), choices, events, requests);
     const layout = CAMP_SITES.map(site => stageOf(world, site.id));
     const lastLayout = previous.landSeed === world.open.landSeed ? previous.layout : null;
     for (const [index, site] of CAMP_SITES.entries()) {
+      if (site.storyChoices && !view.checkpointsEnabled) continue;
       const position = sitePosition(site.id, world.open.landSeed);
       if (lastLayout?.[index] !== layout[index])
         requests.push({type: 'solids', id: site.id, solids: siteSolidRows(site.id, position, layout[index])});
