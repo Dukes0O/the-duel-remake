@@ -62,3 +62,27 @@ export const wordOf = (world, id) => world.ledger.words[id] ?? 'Strangers';
 export const threadOf = (world, id) => world.open.threads[id] ?? null;
 export const isFound = (world, siteId) => world.open.found.includes(siteId);
 export const isDriven = (world, square) => world.open.driven.includes(square);
+
+// Old open saves can omit the routine, the clock and the outing stamp.
+export function readableRoutine(record, learnerIds) {
+  const count = value => Number.isSafeInteger(value) && value >= 0;
+  const stamp = value => value === null || (count(value) && value > 0);
+  const load = value => count(value) && value <= 60;
+  if (record && typeof record === 'object' && !Array.isArray(record) && !Object.hasOwn(record, 'handRuns'))
+    return typeof record.offered === 'boolean' && learnerIds.includes(record.learner) &&
+      Number.isFinite(record.share) && record.share >= .6 && record.share <= .85 && load(record.lessonLoad) &&
+      typeof record.running === 'boolean' && count(record.tally);
+  const tally = record?.tally;
+  const delivery = record?.lastDelivery;
+  return record !== null && typeof record === 'object' && !Array.isArray(record) &&
+    count(record.handRuns) && typeof record.offered === 'boolean' && stamp(record.offeredNight) &&
+    stamp(record.refusedNight) && (record.learner === null || learnerIds.includes(record.learner)) &&
+    typeof record.lessonPending === 'boolean' && (!record.lessonPending || record.learner !== null) &&
+    (record.share === null ? record.lessonLoad === null && !record.running :
+      Number.isFinite(record.share) && record.share >= .6 && record.share <= .85 &&
+      load(record.lessonLoad) && record.learner !== null) &&
+    typeof record.running === 'boolean' && stamp(record.handNight) && stamp(record.deliveredNight) &&
+    count(tally?.runs) && count(tally?.gas) && count(tally?.embers) &&
+    (delivery === null || (stamp(delivery?.night) && delivery.night !== null &&
+      load(delivery.gas) && count(delivery.embers) && load(delivery.byHand) && count(delivery.handEmbers)));
+}

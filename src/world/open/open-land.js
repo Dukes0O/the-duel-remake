@@ -17,8 +17,8 @@
 //    begin(world, view)          -> the part's first state (optional; {} without it)
 //    step(state, context, dt)    -> {state, choices, events, requests, leave} (all optional)}
 //   context   {world, holds, view, seconds, seed, changes, events, previousEvents, leave}
-//     view      the job step's view (player, onFoot, fighter, carPosition, interact, actors, ...) with two things
-//               added: `clockSec`, and `jobEvents`, the events the job's own step raised since the open land was last
+//     view      the job step's view (player, onFoot, fighter, carPosition, interact, actors, ...) with
+//               the open clock's `partOfDay`, `outingAvailable`, `clockSec`, and `jobEvents`, the events the job's own step raised since the open land was last
 //               stepped. A talk's result is there as {type: 'talkChoice', id, effects, questionEffects}, and a
 //               fight's as {type: 'riderFight', ...}.
 //     changes   what this part's own choices changed on the tick before (see open-effects.js). A price that could
@@ -52,6 +52,7 @@
 import {applyEffects} from './open-effects.js';
 import {NO_HOLDS, dropHold, holdsOfJob, takeHold} from './holds.js';
 import {OPEN_PARTS} from './parts.js';
+import {advanceDay, daySecondsOf, outingAvailable, partOfDay, reserveOuting} from './day-rule.js';
 
 const KEPT_EVENTS = 32;
 const holderOf = definition => 'job:' + (definition?.id ?? 'unnamed');
@@ -62,13 +63,18 @@ export function beginOpenLand(definition) {
   const world = definition?.open?.world;
   if (!world?.ledger || !world?.open) throw new TypeError('A job in the open land needs definition.open.world.');
   return {world: structuredClone(world), holds: takeHold(NO_HOLDS, holderOf(definition), holdsOfJob(definition)),
-    parts: {}, seconds: 0, events: [], eventCount: 0, changes: {}, previousEvents: []};
+    parts: {}, seconds: 0, ...(definition.open.dayClock ? {daySeconds: daySecondsOf(world), partOfDay: partOfDay(daySecondsOf(world))} : {}),
+    events: [], eventCount: 0, changes: {}, previousEvents: []};
 }
 
 export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
   let {world, holds} = open, leave = null;
   const parts = {...open.parts}, raised = [], requests = [], changes = [], byPart = {};
   const seconds = open.seconds + dt;
+  const dayClock = open.daySeconds !== undefined;
+  const daySeconds = dayClock ? advanceDay(open.daySeconds, dt) : undefined;
+  if (dayClock) view = {...view, dayClock, partOfDay: partOfDay(daySeconds),
+    missionActive: !!open.parts.missions?.active, outingAvailable: outingAvailable(world)};
   for (const part of partList) {
     const state = parts[part.id] ?? part.begin?.(world, view) ?? {};
     parts[part.id] = state;
@@ -86,14 +92,20 @@ export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
       throw new TypeError('The part "' + part.id + '" may not take or drop the job\'s own hold.');
     if (out.hold) holds = takeHold(holds, out.hold.holder, out.hold.systems);
     if (out.release) holds = dropHold(holds, out.release);
-    for (const event of out.events ?? []) raised.push({...event, part: part.id});
+    for (const event of out.events ?? []) {
+      raised.push({...event, part: part.id});
+      if (dayClock && event.type === 'threadMission' && event.mission?.outing && !leave)
+        world = reserveOuting(world);
+    }
+    if (dayClock) view = {...view, outingAvailable: outingAvailable(world)};
     requests.push(...(out.requests ?? []));
     leave ??= out.leave ?? null;
   }
   let {eventCount} = open;
   const events = raised.length
     ? [...open.events, ...raised.map(event => ({...event, seq: ++eventCount}))].slice(-KEPT_EVENTS) : open.events;
-  return {open: {...open, world, holds, parts, seconds, events, eventCount, changes: byPart, previousEvents: raised}, events: raised, requests, changes, leave};
+  return {open: {...open, world, holds, parts, seconds, ...(dayClock ? {daySeconds, partOfDay: view.partOfDay} : {}),
+    events, eventCount, changes: byPart, previousEvents: raised}, events: raised, requests, changes, leave};
 }
 
 // A mission that begins inside the open land takes a hold, and lets go when it ends, fails or is left.

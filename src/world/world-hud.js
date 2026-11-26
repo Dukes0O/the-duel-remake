@@ -11,7 +11,9 @@ import {douseLine, groupLitres} from './jobs/steps/douse.js';
 import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
 import {BELLOWS_RULE, bellowsSentence} from './jobs/bellows-rule.js';
 import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
-import {FURNACE_PATIENCE_SECONDS} from './jobs/furnace-sightings.js';
+import {passengerLine} from '../story/scenes/routine-offer.js';
+import {NIGHT_2_SITES} from './jobs/night-2-sites.js';
+import {FURNACE_PATIENCE_SECONDS, pathShare} from './jobs/furnace-sightings.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -213,6 +215,14 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   }
   const gate=worldJob?.definition?.kind==='town-drive'?worldJob.definition.layout?.gate:null;
   const at=pointOf(player);
+  const phase = worldJob?.open?.partOfDay;
+  const hearth = NIGHT_2_SITES.hearthFront.position;
+  const hearthPrompt = phase && step?.kind === 'roam' && onFoot && at &&
+    Math.hypot(at.x - hearth.x, at.z - hearth.z) <= 2.5 ?
+    (phase === 'dusk' || phase === 'dark' ? 'F TO TALK AT THE HEARTH' : '') : '';
+  const learner = worldJob?.definition?.routineRun?.passenger;
+  const bess = learner && worldJob.actors?.find(actor => actor.id === step?.actorId);
+  const progress = bess?.position && step?.path ? pathShare(bess.position, bess.pathIndex, step.path).share : null;
   const townGatePrompt=gate&&finitePoint(player)&&Math.hypot(at.x-gate.x,at.z-gate.z)<=gate.halfWidth+8
     ?gate.prompt:'';
   const dx = target && position ? target.x - position.x : 0;
@@ -222,11 +232,12 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   return {
     line: worldJob?.arrivalHold ? 'Delivered. The forge takes the fire.' : next.line, kind: next.kind, target, bearing,
     // While the town's ending is watched there is nothing to do, so nothing is asked.
-    prompt: townGatePrompt || (step?.kind==='onfoot' && !job?.stepState?.townEnding ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
+    prompt: hearthPrompt || townGatePrompt || (step?.kind==='onfoot' && !job?.stepState?.townEnding ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
     truck: step?.kind==='escort'&&!step.gasLoad&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
+    lesson: progress === null ? null : {progress, line: passengerLine(learner, progress)},
     gas: step?.gasLoad ? {value: job.stepState.gas ?? GAS_LOAD_RULE.start, max: GAS_LOAD_RULE.start,
       holes: job.stepState.holes ?? GAS_LOAD_RULE.startHoles} : null,
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
@@ -591,10 +602,19 @@ export function createWorldHud({host, app = null, picture = null}) {
         seenMeter.max = model.seen.max;
         seenMeter.value = model.seen.value;
       }
-      emberGauge.hidden = !model.ember && !model.brand && !model.bellows && !model.gas && !model.load && !model.water;
+      emberGauge.hidden = !model.ember && !model.brand && !model.bellows && !model.gas && !model.load && !model.water && !model.lesson;
       if (model.load) drawLoadGauge(model.load, emberGauge, emberBar, emberLabel, emberNote);
       if (model.water) drawWaterGauge(model.water, emberGauge, emberBar, emberLabel, emberNote);
       if (model.gas) drawGasGauge(model.gas, emberGauge, emberBar, emberLabel, emberNote);
+      if (model.lesson) {
+        const progress = model.lesson.progress;
+        emberBar.style.width = `${(progress * 100).toFixed(1)}%`;
+        emberGauge.style.setProperty('--ember-glow', progress.toFixed(2));
+        emberGauge.classList.remove('is-out', 'is-losing', 'is-flashing');
+        emberLabel.textContent = 'THE LESSON';
+        emberNote.textContent = model.lesson.line;
+        emberGauge.setAttribute('aria-label', model.lesson.line);
+      }
       if (model.bellows) drawBellowsGauge(model.bellows, emberGauge, emberBar, emberLabel, emberNote);
       if (model.brand) drawBrandGauge(model.brand, emberGauge, emberBar, emberLabel, emberNote);
       if (model.ember) {

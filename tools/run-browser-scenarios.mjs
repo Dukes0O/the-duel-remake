@@ -63,12 +63,16 @@ export const SCENARIO_AREAS = [
     'src/arena/modes/road-riders.js','src/world/open/looks/rats-nest-look.js','src/world/open/content/burned-scout.js',
     'src/world/open/parts/people.js','src/world/open/sign-view.js','src/world/open/looks/glasshouse-look.js',
     'src/world/jobs/story-people.js','src/world/story-people-view.js']},
+  {prefixes:['open-apprentice-run'], paths:['src/app.js','src/arena/modes/world-job.js','src/story/ledger-save.js',
+    'src/story/scenes/routine-offer.js','src/world/jobs/gas-run.js','src/world/jobs/steps/escort.js','src/world/open/day-rule.js',
+    'src/world/open/open-land.js','src/world/open/open-save.js','src/world/open/open-record.js','src/world/open/content/routines.js',
+    'src/world/open/routine-run-rule.js','src/world/open/parts/routines.js','src/world/world-hud.js','src/screen-arena.js']},
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
     'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
     'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
-export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||
+export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2','open-apprentice-run'].includes(name) ||
   /save|storage|backup|restore|archive|migrat|pay|reward/.test(name);
 const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
 const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;

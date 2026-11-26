@@ -109,10 +109,12 @@ export function stepEscort(step, state, view, dt = 0) {
   }
   const actors = view.actors ?? [];
   const truck = actors.find(actor => actor.id === step.actorId);
+  const lessonHurt = step.measureGas && (state.lessonHurt === true || (truck && truck.health < step.health));
+  const lesson = lessonHurt ? {lessonHurt: true} : {};
   if (!step.gasLoad && truck && (truck.health ?? 1) <= 0) {
     // Rests are counted for the stretch she is on (the place she is heading for), so a run can never loop for ever (RUN-GAS).
     const stretch = String(truck.pathIndex ?? 1);
-    if (!state.rested) return { state: { rested: true, restLeft: step.restSeconds ?? 0, stretchRests: {...(state.stretchRests ?? {}), [stretch]: (state.stretchRests?.[stretch] ?? 0) + 1} }, events: [{ type: 'rest', actorId: step.actorId }], requests: [{ type: 'say', lineId: step.restLineId }, { type: 'follow', path: step.path, speed: 0 }] };
+    if (!state.rested) return { state: { ...lesson, rested: true, restLeft: step.restSeconds ?? 0, stretchRests: {...(state.stretchRests ?? {}), [stretch]: (state.stretchRests?.[stretch] ?? 0) + 1} }, events: [{ type: 'rest', actorId: step.actorId }], requests: [{ type: 'say', lineId: step.restLineId }, { type: 'follow', path: step.path, speed: 0 }] };
     const restLeft = state.restLeft ?? 0;
     if (restLeft > 0) return { state: { restLeft: Math.max(0, restLeft - dt) }, complete: false, events: [], requests: [{ type: 'follow', path: step.path, speed: 0 }] };
     // The stretch starts again from the last place she reached; its ambush, and every ambush ahead of it, is back in place.
@@ -135,7 +137,7 @@ export function stepEscort(step, state, view, dt = 0) {
       else if (wasSpawned) requests.push({type: 'clearWave', key: `ambush:${ambush.id}`});
     }
     if (gaveUpNow && step.giveUpLineId && !gaveUp.includes(stretch)) { gaveUp.push(stretch); requests.push({type: 'say', lineId: step.giveUpLineId}); }
-    return { state: { rested: false, restLeft: 0, spawned, gone, gaveUp }, restart: true, events: [{ type: 'restarted', actorId: step.actorId }, ...(gaveUpNow ? [{type: 'ambushGaveUp', actorId: step.actorId}] : [])], requests };
+    return { state: { ...lesson, rested: false, restLeft: 0, spawned, gone, gaveUp }, restart: true, events: [{ type: 'restarted', actorId: step.actorId }, ...(gaveUpNow ? [{type: 'ambushGaveUp', actorId: step.actorId}] : [])], requests };
   }
   // A missing truck is still being spawned. Never let an absent objective
   // count as a successful escort.
@@ -182,5 +184,13 @@ export function stepEscort(step, state, view, dt = 0) {
   }
   const closingLines = arrival?.battle ? [...(ending === 'won' ? arrival.battle.wonLineIds : arrival.battle.arrivedLineIds)] :
     arrival ? [(truck.health ?? 0) >= arrival.hurtBelow ? arrival.wholeLineId : arrival.hurtLineId, ...(arrival.thenLineIds ?? [])] : null;
-  return { state: {...state, ...ambushState, ...(ending ? {ending} : {})}, complete, requests, events: blockEvents, ...(closingLines ? {closingLines} : {}) };
+  let gasMeasured = state.gasMeasured;
+  if (complete && step.measureGas && !gasMeasured) {
+    const health = Math.max(0, Math.min(step.health, truck.health));
+    if (Number.isFinite(health)) {
+      gasMeasured = true;
+      blockEvents.push({type: 'routineGasArrived', load: Math.floor(step.measureGas * health / step.health), clean: !lessonHurt});
+    }
+  }
+  return { state: {...state, ...ambushState, ...lesson, ...(gasMeasured ? {gasMeasured} : {}), ...(ending ? {ending} : {})}, complete, requests, events: blockEvents, ...(closingLines ? {closingLines} : {}) };
 }

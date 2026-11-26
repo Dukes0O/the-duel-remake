@@ -8,6 +8,7 @@ import {PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
+import {routineFor} from '../routine-run-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
 
 export const TALK_RANGE = 2.5;
@@ -71,7 +72,8 @@ export const peoplePart = {
       }
     }
     const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
+    const learner = view.dayClock ? routineFor(world).learner : null;
+    const rows = [...residents.filter(row => standsHere(row, world) || row.id === learner), ...extras];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.
@@ -89,7 +91,8 @@ export const peoplePart = {
       })];
     });
     const requests = [];
-    if (!active && onFoot && interact && !state.useHeld) {
+    if (!active && onFoot && interact && !state.useHeld &&
+        !context.events?.some(event => event.type === 'routineInteraction')) {
       const nearest = cast.filter(person => distanceToPerson(person, driver) <= TALK_RANGE)
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {

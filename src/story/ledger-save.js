@@ -3,6 +3,9 @@ import {applyChoice, bankHearth, createLedger} from './ledger.js';
 import {replayTelling} from './ledger-replay.js';
 import {registerStory, writeStory} from './story-save.js';
 import {threadsAtBankedHearth} from '../world/open/parts/threads.js';
+import {runBankedRoutines} from '../world/open/routine-run-rule.js';
+import {daySecondsOf, partOfDay} from '../world/open/day-rule.js';
+import {isHeld} from '../world/open/holds.js';
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = n => Number.isSafeInteger(n) && n >= 0;
@@ -71,4 +74,17 @@ export function savedLedger(profile) {
 // OPEN-STATE supplies the world to its bank transaction and persists the result. The legacy ledger writer has no open world.
 export function directBankedOpenWorld(world, {storyChoices, holds, view} = {}) {
   return storyChoices === true ? threadsAtBankedHearth({world, holds, view}) : world;
+}
+
+
+// Night 2 has its own authored bank and replay. Later banks are part of the
+// open-world settlement, so the ledger and routine record move together.
+export function bankOpenHearth(world, night, {storyChoices, holds = [], view} = {}) {
+  if (storyChoices !== true || world.ledger.night !== night || night <= 2) return null;
+  if (!['dusk', 'dark'].includes(partOfDay(daySecondsOf(world)))) return null;
+  const delivered = runBankedRoutines(world, {held: isHeld(holds, 'routines')});
+  const {ledger} = bankHearth(delivered.ledger);
+  const open = {...delivered.open, resting: [], day: {night: ledger.night, seconds: 0}};
+  return directBankedOpenWorld({...delivered, ledger, open}, {storyChoices, holds,
+    view: {...view, partOfDay: 'dawn', outingAvailable: true}});
 }
