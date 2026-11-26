@@ -401,6 +401,12 @@ const WORK_STANCES = {
   'road-rat-lamp': {stand:'carry-lamp', walk:'carry-lamp'},
   'road-rat-lookout': {stand:'lookout'},
 };
+// The long overalls and narrow shirts place the palms at different distances from the rig's wrists.
+const BOUND_GRIP = {
+  'grower-1': [-.05, -1.15, -.95],
+  'grower-2': [.02, -1.03, -.71],
+  'grower-3': [.04, -.84, -.67],
+};
 const WORK_POSES = {
   hoe(arm, joints, clock) {
     const stroke = Math.sin(clock * 2.1);
@@ -408,8 +414,9 @@ const WORK_POSES = {
     arm('L', -.73 + .31*stroke, .06, -.23, .43);
     arm('R', -.78 + .22*stroke, -.12, -1.25, -.55);
   },
-  'walk-tied'(arm, joints, clock, stride) {
-    for (const [side, sign] of SIDES) arm(side, -.18 + .035*stride, sign*.02, -1.03, -sign*.71);
+  'walk-tied'(arm, joints, clock, stride, id) {
+    const [spread, elbow, inward] = BOUND_GRIP[id];
+    for (const [side, sign] of SIDES) arm(side, -.18 + .035*stride, sign*spread, elbow, sign*inward);
   },
   'carry-frame'(arm) {
     for (const [side, sign] of SIDES) arm(side, -.19, sign*.06, -.94, -sign*.28);
@@ -436,7 +443,7 @@ function poseWork({joints}, {id, action}, clock, stride) {
     poseBone(joints['upper_arm' + side], shoulder, 0, spread);
     poseBone(joints['forearm' + side], elbow, 0, inward);
   };
-  pose(arm, joints, clock, stride);
+  pose(arm, joints, clock, stride, id);
 }
 
 function palmIn(root, socket, out) {
