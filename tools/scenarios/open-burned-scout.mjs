@@ -90,7 +90,11 @@ export async function run(context) {
   await evaluate('placeCar', start, bridge);
   await evaluate('advance', .15);
   await evaluate('scoutStarted');
-  await evaluate('placeCar', bridge, gully[1]);
+  // Start 25 m off the bridge toward the gully, still inside the mission's 40 m of the bridge: placed on the bridge's own
+  // point, the car stands on the ground under the deck (about -1 m) and cannot drive out (Claude, 26 November 2026).
+  const off = Math.hypot(gully[1].x - bridge.x, gully[1].z - bridge.z), step = 25 / off;
+  const clear = {x: bridge.x + (gully[1].x - bridge.x) * step, z: bridge.z + (gully[1].z - bridge.z) * step};
+  await evaluate('placeCar', clear, gully[1]);
   await evaluate('advance', .15);
   for (const point of gully.slice(1)) await evaluate('drive', point, 4, 60);
   await evaluate('drive', hollow, rule.within - 2, 60);
