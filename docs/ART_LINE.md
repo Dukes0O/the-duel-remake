@@ -377,6 +377,16 @@ the game.
   road cells. Drawn as "cut" they came out as one flat pale slab, the paper fault again. Only what a tool did is drawn as
   work; a heap or a hole is the ground's own shape and the ground draws it. (19 November 2026.)
 
+### A site drawn in code, stood in the open land (OPEN-LOOK-RATS-NEST, 26 November 2026)
+
+- **A cloud session can take the pictures itself.** The browser harness ran in the cloud container: `DUEL_CHROME_PATH` set to a two-line script that starts the container's Chromium with `--no-sandbox` (it runs as root there), and the harness's own `--enable-unsafe-swiftshader` draws without a graphics card. A look scenario of seven pictures took about four minutes, the QA build included. They are pictures on Performance from a software renderer: good for shape, colour against the land, and what hides what, and never the laptop's verdict.
+- **Colours chosen without seeing the land are wrong.** The cutting's walls were drawn in pale tan and stood in red earth: the wreck fields north of the Boneyard are red. Take one picture in the land before choosing the colour of anything that is cut from it or lies on it.
+- **The land's near ground stands inside a deep cut.** The near ground is drawn in cells of about 23 by 17 m (`src/world/near-ground.js`) and the coarse ground in larger ones, so a cut 9 m deep with steep sides showed red dunes across its floor: the three-grounds fault of the Dig at a larger size. `tools/open-look-stand.js` cures it for pictures only (it has the edit layer draw every 32 m square round the site and sinks the near ground's corners there). A site with ground of its own needs a real join in the card that places it.
+- **A mark's strength multiplied into a dark colour makes it darker.** Worn ground at "a third of the strength" came out as black blots like the shadows of clouds. Strength belongs in the alpha (a `color` attribute of four numbers) for a mark on the ground, and in the colour only for a pool of light that is added.
+- **A fire's smoke column between a viewpoint and what it looks at hides it.** `createSmokeColumn` is one upright sheet and it is wide a few metres up. Keep every fire a few metres off the line from each place to look from to its target, and keep `foot` under a metre.
+- **A wreck on its side, seen from its roof, is a box.** A shell built from stations along its length reads as a car from the side (arches, window openings, pillars). Stack wrecks upright where they face the viewer.
+- **The rear view is drawn into the game's own canvas,** so hiding the page's other elements leaves it in every picture. Give `.rear-view-frame` no size (`display:none`) and send a `resize`: the rear view is not drawn while its frame measures nothing.
+
 ### Moments (a thing that happens, not a thing that stands)
 
 - **A drawn moment that no player sees.** Hot Delivery's hand-over and the

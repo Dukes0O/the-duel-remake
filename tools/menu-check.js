@@ -32,6 +32,11 @@ if(qaParams.get('p4-kits-native')==='1'){
 }
 const {app,refreshRaceSetup}=await import('../src/main.js');
 window.__qaApp=app;
+if (qaParams.has('open-look-stand')) {
+  // OPEN-LOOK-RATS-NEST: stands one drawn site of the open Scablands in the running land for a look scenario's pictures.
+  const {createOpenLookStand} = await import('./open-look-stand.js');
+  window.__openLookStand = createOpenLookStand(app);
+}
 if (qaParams.has('night-2-surround-review')) {
   const {startWashSurroundReview, placeWashSurroundReview} = await import('./night-2-wash-review.js');
   window.__qaNight2Surround = Object.freeze({
