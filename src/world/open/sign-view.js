@@ -163,7 +163,7 @@ function radioBearings(group, positionAt) {
     return glow;
   };
   const red = lamp('Radio Hill red lamp', 0xff3526), white = lamp('The Pocket white lamp', 0xfff4d2);
-  let placedSeed = null;
+  let placedSeed = null, beam = null;
   const placeProps = pocket => {
     for (const mesh of [...props.children]) disposeMeshes(mesh);
     if (!pocket) return;
@@ -184,6 +184,7 @@ function radioBearings(group, positionAt) {
       if (seed !== placedSeed) { placeProps(pocket); placedSeed = seed; }
       props.visible = !!pocket && distanceBetween(here, pocket) < 700;
       red.visible = white.visible = false;
+      if (beam) beam.visible = false;
       if (!record || !state.radioDark) return;
       const time = open.seconds;
       const age = time - (state.progress?.[RADIO_ID]?.blinkedAt ?? -Infinity);
@@ -194,6 +195,7 @@ function radioBearings(group, positionAt) {
       if (red.visible) {
         positionAt(red, hill, drawnShift);
         red.position.y += 25;
+        red.scale.setScalar(Math.max(1, distanceBetween(here, hill) / 260));
       }
       const silenced = record.end === 'second-set' || radioMarked(open.world, RADIO_MARK.peace);
       white.visible = !silenced && distanceBetween(here, pocket) < 4000;
@@ -201,15 +203,32 @@ function radioBearings(group, positionAt) {
         const at = radioPlace([POCKET_ID, 'lamp'], hill, pocket);
         positionAt(white, at, drawnShift);
         white.position.y += 2.5;
+        const distance = distanceBetween(here, pocket);
+        white.scale.setScalar(Math.max(1, distance / 260));
         const mission = open.parts.missions?.active;
-        if (mission?.id === RADIO_ID + '/take-set' && mission.state.route.lamps.length) {
+        if (distance < 75 && mission?.id === RADIO_ID + '/take-set' && mission.state.route.lamps.length && !mission.state.delivering) {
+          const {rule} = mission.mission;
           const lamp = heistLampPose(mission.state.route.lamps[0], mission.state.elapsed);
-          white.position.x += Math.sin(lamp.heading) * .4;
-          white.position.z += Math.cos(lamp.heading) * .4;
+          if (!beam) {
+            beam = new THREE.SpotLight(0xfff4d2, 210, rule.range, rule.coneDegrees * Math.PI / 360, .3, 1.35);
+            beam.name = 'The Pocket lamp beam';
+            group.add(beam, beam.target);
+          }
+          beam.visible = true;
+          beam.distance = rule.range;
+          beam.position.copy(white.position);
+          const x = at.x + Math.sin(lamp.heading) * rule.range, z = at.z + Math.cos(lamp.heading) * rule.range;
+          beam.target.position.set(x, scablandsSurfaceHeightAt(x, z) + (drawnShift?.(x, z) ?? 0), z);
         }
       }
     },
-    dispose() { placeProps(null); disposeMeshes(red); disposeMeshes(white); props.removeFromParent(); },
+    dispose() {
+      placeProps(null);
+      disposeMeshes(red);
+      disposeMeshes(white);
+      props.removeFromParent();
+      if (beam) { beam.removeFromParent(); beam.target.removeFromParent(); beam.dispose(); }
+    },
   };
 }
 
