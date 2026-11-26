@@ -1466,7 +1466,10 @@ export function attachRenderer(host, app) {
     }
   }
   const tick = t => { if (disposed) return; frame(t,true); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
-  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics();adaptiveResolution.reset(); };
+  // A hidden or minimised window measures 0 by 0. The camera's aspect would be 0 / 0, the menu camera's place on the
+  // course would not be a number, and the throw would stop the drawing loop (BOWL-MENU-FRAME, 26 November 2026).
+  // Keep the last real size until the window has one again; it sends another resize then.
+  const resize = () => { if (!(host.clientWidth > 0 && host.clientHeight > 0)) return; renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics();adaptiveResolution.reset(); };
   const visibility = () => {resetFrameMetrics();adaptiveResolution.reset();};
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange',visibility);
