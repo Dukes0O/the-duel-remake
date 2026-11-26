@@ -6,9 +6,9 @@ import {worldForProfile} from './open-world.js';
 
 export const OPEN_ROAM_ID = 'open-roam';
 
-export function openRoamJob(profile, seed = 0) {
-  const world = worldForProfile(profile, seed);
-  return {id: OPEN_ROAM_ID, name: 'Out in the open', title: 'Out in the open', seed: world.seed, open: {world},
+export function openRoamJob(profile, seed = 0, {playerName, ...routine} = {}) {
+  const world = {...worldForProfile(profile, seed), ...routine};
+  return {id: OPEN_ROAM_ID, name: 'Out in the open', title: 'Out in the open', seed: world.seed, open: {world, dayClock: true, playerName},
     steps: [{kind: 'roam', carStart: NIGHT_2_SITES.car,
       footStart: {...NIGHT_2_SITES.hearthFront.position, heading: Math.PI}}]};
 }
