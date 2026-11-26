@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GUNN_TURRET_LAYOUT, gunnTurretMount} from '../warlords/gunn-turret.js';
+import {ensureVehicleSockets} from '../vehicle-sockets.js';
 
 // ARENA-FEEL presentation: headlight flares on a computer car telling a
 // charge, and a halo on a car that has just respawned. It reads the
@@ -84,12 +85,50 @@ function updateAimingLine(mesh, actor, parts) {
   parts.aimingLine.geometry.computeBoundingSphere();
 }
 
+// OPEN-CHECKPOINTS: read the encounter's presentation on the native vehicle mesh.
+function updateCheckpointDress(mesh, actor, seconds) {
+  const rider = actor.roadRider;
+  let dress = mesh.userData.checkpointDress;
+  if (!rider?.checkpoint && !dress) return false;
+  const added = !dress;
+  if (added) {
+    const {roof, hood} = ensureVehicleSockets(mesh);
+    const flag = new THREE.Group();
+    flag.name = 'Open road faction flag';
+    flag.position.set(.61, -.14, -.59);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .92, 6),
+      new THREE.MeshStandardMaterial({color:0x524f45, roughness:1}));
+    pole.position.y = .46;
+    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(.72, .35, 4),
+      new THREE.MeshStandardMaterial({side:THREE.DoubleSide, roughness:1}));
+    cloth.position.set(.36, .69, 0);
+    flag.add(pole, cloth);
+    roof.add(flag);
+    const bonnet = new THREE.Mesh(new THREE.BoxGeometry(1.33, .045, 1.05),
+      new THREE.MeshStandardMaterial({roughness:.75}));
+    bonnet.name = 'Open road raised bonnet';
+    bonnet.position.set(0, .42, .25);
+    bonnet.rotation.x = -.96;
+    hood.add(bonnet);
+    dress = mesh.userData.checkpointDress = {flag, cloth, bonnet};
+  }
+  dress.flag.visible = rider?.flagVisible === true;
+  dress.bonnet.visible = rider?.phase === 'stopped' && rider.checkpoint && !actor.combatWrecking;
+  if (dress.flag.visible) {
+    dress.cloth.material.color.setHex(actor.paint.accent);
+    dress.cloth.rotation.y = .25 * Math.sin(seconds * 12);
+  }
+  if (dress.bonnet.visible) dress.bonnet.material.color.setHex(actor.paint.color);
+  return added;
+}
+
 // Returns true when it added sprites, so the caller refreshes passes that
 // keep a list of scene objects (ambient shading).
 export function updateArenaTells(entries, seconds, shimmerSec) {
   let added = false;
   for (const {mesh, actor} of entries) {
     if (!mesh || !actor) continue;
+    if (updateCheckpointDress(mesh, actor, seconds)) added = true;
     const tell = actor.arenaTellSec || 0, shimmer = actor.arenaShimmerSec || 0;
     if (!(tell > 0 || shimmer > 0) && !mesh.userData.arenaTell) continue;
     added ||= !mesh.userData.arenaTell;

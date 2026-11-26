@@ -1,4 +1,5 @@
-import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal} from './road-riders.js';
+import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal,
+  checkpointRoadView, applyCheckpointRoadRequest} from './road-riders.js';
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
@@ -1921,7 +1922,7 @@ export function stepWorldJob(duel, dt) {
     }
     chapter.scoutReach = scout ? scoutReach(state, scout, chapter) : null;
   }
-  if (worldJob.riderFight) updateRoadFight(duel,worldJob,dt);
+  const roadResult = worldJob.riderFight && updateRoadFight(duel,worldJob,dt);
   if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
   const truckWater = sprayFromFireTruck(duel, worldJob, currentStep, dt);
   const view = {player: playerView, onFoot: !!state.onFoot, ...(truckWater?.hit ? {waterOnCar: true} : {}),
@@ -1950,14 +1951,17 @@ export function stepWorldJob(duel, dt) {
   const previousStep = worldJob.job.stepIndex;
   const previousStepState = worldJob.job.stepState;
   // OPEN-SHARED: the open land's parts run beside the job's own step, and the step may read what they left.
+  // OPEN-CHECKPOINTS: pass the road state to the part and deliver the fight's result on the next tick.
   let openStep = null;
+  const checkpointsEnabled = worldJob.open && duel.featureFlags?.enabled('story-choices') === true;
   if (worldJob.open) {
-    openStep = stepOpenLand(worldJob.open, {...view, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
+    const road = checkpointsEnabled ? checkpointRoadView(duel, worldJob) : {};
+    openStep = stepOpenLand(worldJob.open, {...view, ...road, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.open = openStep.open;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
   }
   const next = stepJob(worldJob.job, view, dt);
-  if (worldJob.open) worldJob.openJobEvents = next.events;
+  if (worldJob.open) worldJob.openJobEvents = roadResult ? [...next.events, roadResult] : next.events;
   worldJob.gasCarContacts = [];
   routeWorldNight2(duel, worldJob, previousStep, next);
   worldJob.job = next;
@@ -2104,7 +2108,10 @@ export function stepWorldJob(duel, dt) {
     // A part's line brings its own caption.
     for (const request of openStep.requests) if (request.type === 'say' && request.lineId && typeof request.text === 'string')
       worldJob.definition.captions = {...worldJob.definition.captions, [request.lineId]: request.text};
-    applyRequests(duel, worldJob, openStep.requests);
+    // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
+    for (const request of openStep.requests) {
+      if (!checkpointsEnabled || !applyCheckpointRoadRequest(duel, worldJob, request)) applyRequests(duel, worldJob, [request]);
+    }
   }
   if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
   if (next.steps[next.stepIndex]?.kind === 'douse') markDouseWater(duel, next.steps[next.stepIndex], next.stepState);

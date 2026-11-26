@@ -3,6 +3,14 @@ import {ARSENAL_WEAPONS, WEAPON_IDS} from '../../weapon-upgrades.js';
 import {arenaActor, arenaParticipant, outOfPlay} from '../../combat-teams.js';
 import {wrapHeading} from '../../offroad-physics.js';
 import {worldPose} from '../arena-floor.js';
+import {ARENA_RULES} from '../arena-event.js';
+import {completeCombatRecovery, maxArmorForMass} from '../../combat-armor.js';
+import {createFighter} from '../../onfoot.js';
+import {freshDamageZones} from '../../sim-common.js';
+import {COMBAT_TUNING} from '../../wasteland-tuning.js';
+import {ROAD_GROUPS} from '../../world/open/content/checkpoints.js';
+import {ROAD_REQUEST, nearestRoadPoint} from '../../world/open/encounter-rule.js';
+import {nameOf} from '../../world/open/register.js';
 import {point, predictedPoint} from '../../combat-actors.js';
 import {thinkBrain} from '../arena-brains.js';
 import {addHazard} from '../../arsenal/hazards.js';
@@ -75,19 +83,14 @@ export function reserveRoadRiders(duel, world) {
   startRoadFight(duel, world);
 }
 
-export function startRoadFight(duel, world) {
+export function startRoadFight(duel, world, checkpoint = null) {
+  // OPEN-CHECKPOINTS: a fight can start within the current step at the encounter's own car poses.
+  if (checkpoint) return startCheckpointFight(duel, world, checkpoint);
   const index = world.job.stepIndex, step = world.job.steps[index];
   if (step?.kind !== 'rider-fight' || world.riderFight?.index === index) return;
   const state = duel.state;
   if (world.riderFight) {
-    const previous = new Set(world.riderFight.riders);
-    const former = state.opponents;
-    state.opponents = former.filter(car => !previous.has(car.arenaId));
-    // Native contact latches use field indices. An arriving car cannot inherit a departed car's ram.
-    for (const key of duel._combatRamIncidents ?? []) {
-      if (key.split(':').some(slot => slot >= 0 && former[slot] !== state.opponents[slot])) duel._combatRamIncidents.delete(key);
-    }
-    state.arena.participants = state.arena.participants.filter(entry => !previous.has(entry.id));
+    removeRoadCars(duel, world.riderFight.riders);
     world.actors = world.actors.filter(actor => !actor.riderCrew);
   }
   state.opponentCount = state.opponents.length;
@@ -200,8 +203,11 @@ function openingGoal(duel, car, target, me, participant) {
 
 export function roadRiderGoal(duel,car,dt) {
   const rider=car.roadRider, me=worldPose(duel,car);
+  // OPEN-CHECKPOINTS: neutral cars have a road goal and never get an attack turn.
+  if (rider.checkpoint && rider.phase === 'passing') return checkpointRouteGoal(duel, car, me);
   if (rider.phase === 'withdrawing') {
     if (dist(me,rider.home) <= R.homeRadius) {
+      if (rider.checkpoint) return {...me, speedMph:0, boost:false};
       rider.phase='home'; car.finished=true; car.contactExempt=true; car.speedMph=0;
     } else return reachableGoal(duel,car,{...rider.home,speedMph:R.retreatMph,boost:false});
   }
@@ -357,7 +363,7 @@ export function updateRoadFight(duel, world, dt) {
   const fight=world.riderFight;
   if (!fight) return;
   fight.elapsed+=dt;
-  const step=world.job.steps[fight.index];
+  const step=fight.checkpointStep ?? world.job.steps[fight.index];
   stepAsh(duel,world,step,dt);
   const cars=fight.riders.map(id=>arenaActor(duel,id)).filter(Boolean);
   stepRiderCrew(duel,world,step,dt);
@@ -397,7 +403,7 @@ export function updateRoadFight(duel, world, dt) {
     cars.every(car=>car.roadRider.phase!=='fighting') && !crewLoose(world,step) ? 'won' : null;
   if (!outcome) return;
   fight.outcome=outcome; fight.endedAt=fight.elapsed;
-  (world.completedRiderFights ??= {})[fight.index]=fight;
+  if (!fight.checkpointStep) (world.completedRiderFights ??= {})[fight.index]=fight;
   for (const car of cars) if (car.roadRider.phase==='fighting') {
     car.roadRider.phase='holding';
     car.arenaTellSec=0;
@@ -405,4 +411,201 @@ export function updateRoadFight(duel, world, dt) {
   duel.emit({riderFight:{id:step.id,outcome,smothered:[...fight.smothered]}});
   const cue=outcome==='won' ? 'rider.won' : outcome==='surrounded' ? 'rider.surrounded' : null;
   if (cue) duel.emit({arenaTell:{id:step.id,cue,position:point(duel,duel.state)}});
+  if (fight.checkpointStep) return {type:'riderFight', id:step.id, outcome,
+    wrecks:cars.filter(car => car.combatWrecking && arenaParticipant(duel,car)?.lastHitBy === 'player').length};
+}
+
+// OPEN-CHECKPOINTS: the adapter between the open land's requests and the existing arena cars.
+const TRACK_PREFIX = 'open-checkpoint-track/';
+const RIVAL_DRAW_RANGE = 650;
+const REMOVAL_MARGIN = 40;
+
+function addCheckpointCars(duel, world, vehicles, group, phase) {
+  const state = duel.state, encounter = world.checkpointRoad, tune = ROAD_GROUPS[group];
+  return vehicles.map(({start, home, route}, index) => {
+    const id = encounter.id + '/car-' + (encounter.cars.length + index + 1);
+    const maxArmor = maxArmorForMass(CARS[tune.car].mass) * ARENA_RULES.armorScale;
+    const car = {arenaId:id, jobId:id, car:tune.car, maxArmor, armor:maxArmor, damageZones:freshDamageZones(),
+      boost:1, damageCooldown:0, contactCooldown:0, yawVelocity:0, pushVelocity:0, airHeight:0, prevAirHeight:0,
+      paint:{color:tune.color, accent:tune.accent}, weaponLoadout:[],
+      roadRider:{id, checkpoint:true, phase, home, route, routeIndex:0, pace:tune.pace,
+        scout:encounter.scout, ashWait:0, slot:null}};
+    placeJobCar(duel, car, start, start.heading);
+    state.opponents.push(car);
+    state.arena.participants.push({id, name:nameOf(group), team:encounter.id, kind:'cpu', brain:'rammer',
+      wrecks:0, wrecked:0, damageDealt:0, lastHitBy:null, lastHitAt:-Infinity, protectedSec:0, targetId:null,
+      targetHeldSec:0, reactionSec:0, goal:null, wreckCounted:false});
+    if (phase === 'stopped') {
+      const {x, z, heading} = start;
+      const at = {x:x - Math.cos(heading) * 2.8, z:z + Math.sin(heading) * 2.8};
+      encounter.driver = id + '/driver';
+      world.actors.push({...at, y:scablandsActorHeightAt(at.x, at.z), id:encounter.driver, riderCrew:true,
+        steps:0, yaw:heading, health:1});
+    }
+    return id;
+  });
+}
+
+function startCheckpointFight(duel, world, request) {
+  const active = world.checkpointRoad;
+  const added = addCheckpointCars(duel, world, request.vehicles, request.group, 'fighting');
+  const ids = added.length ? added : active.cars;
+  active.cars.push(...added);
+  const target = worldPose(duel, duel.state), tune = ROAD_GROUPS[request.group];
+  world.riderFight = {index:world.job.stepIndex, checkpointStep:{id:request.id}, targetId:'player',
+    riders:[...ids], ash:[], smothered:[], heldSec:0, elapsed:0, outcome:null};
+  for (const id of ids) {
+    const car = arenaActor(duel,id), rider = car.roadRider, at = worldPose(duel,car);
+    car.maxArmor *= diff(duel).armor;
+    car.armor = Math.min(car.armor, car.maxArmor);
+    car.weaponLoadout = [tune.weapon];
+    Object.assign(rider, {phase:'fighting', approach:true, targetId:'player', weapon:tune.weapon});
+    if (!rider.home) {
+      // A provoked passer retreats in the direction it was already driving.
+      const distance = Math.max(1300, dist(at,target) + 900);
+      rider.home = {x:at.x + Math.sin(at.heading) * distance, z:at.z + Math.cos(at.heading) * distance};
+    }
+    arenaParticipant(duel,car).targetId = 'player';
+  }
+  duel.state.opponentCount = duel.state.opponents.length;
+}
+
+function checkpointRouteGoal(duel, car, at) {
+  const rider = car.roadRider, route = rider.route;
+  let next = route[rider.routeIndex];
+  while (next && dist(at, next) < 14) next = route[++rider.routeIndex];
+  if (!next) return {...at, speedMph:0, boost:false};
+  const nearPlayer = rider.scout && dist(at, worldPose(duel,duel.state)) < 60;
+  return reachableGoal(duel, car, {...next, speedMph:nearPlayer ? 14 : rider.pace, boost:false});
+}
+
+function leaveCheckpointRoad(duel, world) {
+  const encounter = world.checkpointRoad, fight = world.riderFight;
+  if (fight?.checkpointStep && !fight.outcome) fight.outcome = 'left';
+  for (const id of encounter.cars) {
+    const car = arenaActor(duel,id);
+    if (car.combatWrecking) continue;
+    const rider = car.roadRider;
+    if (rider.phase === 'passing') continue;
+    rider.phase = rider.route && rider.phase === 'stopped' ? 'passing' : 'withdrawing';
+    car.arenaTellSec = 0;
+    arenaParticipant(duel,car).targetId = null;
+  }
+  if (encounter.driver) {
+    const driver = world.actors.find(actor => actor.id === encounter.driver);
+    const car = arenaActor(duel,encounter.cars[0]), home = car?.roadRider.route?.at(-1) ?? car?.roadRider.home;
+    if (driver && home) Object.assign(driver, {approachTarget:home, approachSpeed:R.crewMps});
+  }
+}
+
+function removeRoadCars(duel, ids) {
+  const state = duel.state, removed = new Set(ids), former = state.opponents;
+  state.opponents = former.filter(car => !removed.has(car.arenaId));
+  // Native contact latches use field indices. An arriving car cannot inherit a departed car's ram.
+  for (const key of duel._combatRamIncidents ?? []) {
+    if (key.split(':').some(slot => slot >= 0 && former[slot] !== state.opponents[slot])) duel._combatRamIncidents.delete(key);
+  }
+  state.opponentCount = state.opponents.length;
+  state.arena.participants = state.arena.participants.filter(participant => !removed.has(participant.id));
+}
+
+function clearCheckpointRoad(duel, world) {
+  const state = duel.state, encounter = world.checkpointRoad;
+  removeRoadCars(duel, encounter.cars);
+  world.actors = world.actors.filter(actor => !encounter.cars.some(id => actor.id?.startsWith(id + '/')));
+  state.arena.markers = (state.arena.markers ?? []).filter(marker => !marker.id?.startsWith(TRACK_PREFIX));
+  if (world.riderFight?.checkpointStep) delete world.riderFight;
+  delete world.checkpointRoad;
+}
+
+function placeCheckpointFighter(duel, at) {
+  const state = duel.state, fighter = state.fighter;
+  const {s, lateral} = duel.course.nearest(at.x, at.z, fighter.s);
+  const y = scablandsActorHeightAt(at.x, at.z);
+  Object.assign(fighter, {x:at.x, y, z:at.z, groundY:y, s, lateral, airHeight:0, verticalSpeed:0, speed:0});
+}
+
+function walkFromWreck(duel, world) {
+  const state = duel.state;
+  world.checkpointRecovery = true;
+  state.combatWreckTimer = state.impactTimer = 1;
+  if (state.onFoot) return;
+  let fighter;
+  try {
+    fighter = createFighter(duel.course, state);
+  } catch {
+    // Try a dry roadside shoulder if the wreck lies in water or against a solid.
+    const at = worldPose(duel,state);
+    const road = nearestRoadPoint(at).position;
+    const candidates = [at, road].flatMap(point => [8, -8, 18, -18, 32, -32].flatMap(offset =>
+      [{x:point.x + offset, z:point.z}, {x:point.x, z:point.z + offset}]));
+    for (const point of candidates) {
+      const near = duel.course.nearest(point.x, point.z, state.s);
+      try { fighter = createFighter(duel.course, state, near); break; } catch { /* Try the next shoulder. */ }
+    }
+    if (!fighter) {
+      // The route can still continue if no local ground supports a fighter.
+      const near = duel.course.nearest(road.x, road.z, state.s);
+      completeCombatRecovery(duel,state,{alreadyReset:true});
+      placeJobCar(duel,state,road,duel.course.at(near.s).heading);
+      delete world.checkpointRecovery;
+      return;
+    }
+  }
+  Object.assign(fighter, {crewId:state.crewId});
+  Object.assign(state, {onFoot:true, fighter, fighterInput:{}, boarding:null, footPresentation:null});
+  state.footTransition.needsRelease = true;
+  state.footTransition.heldSeconds = 0;
+}
+
+export function checkpointRoadView(duel, world) {
+  const state = duel.state, road = world.checkpointRoad;
+  if (world.checkpointRecovery) state.combatWreckTimer = state.impactTimer = 1;
+  const wrench = state.footWeapons?.selected === 'wrench' && state.fighterInput?.fire === true && !state.fighter?.knockedDown;
+  const player = state.onFoot ? state.fighter : worldPose(duel,state);
+  const driver = road?.driver && world.actors.find(actor => actor.id === road.driver);
+  if (driver && !driver.approachTarget) driver.yaw = Math.atan2(player.x - driver.x, player.z - driver.z);
+  const cars = road?.cars.map(id => {
+    const car = arenaActor(duel,id), at = worldPose(duel,car), rider = car.roadRider;
+    const inDrawRange = Math.abs(duel.relativeS(car.s) - state.s) < RIVAL_DRAW_RANGE + REMOVAL_MARGIN;
+    rider.flagVisible = dist(at,player) <= 60 && !car.combatWrecking;
+    return {...at, hitByPlayer:arenaParticipant(duel,car)?.lastHitBy === 'player',
+      routeDone:rider.route && rider.routeIndex === rider.route.length,
+      visible:dist(at,player) < RIVAL_DRAW_RANGE || inDrawRange && dist(at,player) < 2600};
+  });
+  return {checkpointsEnabled:true, wrench, checkpointHeading:worldPose(duel,state).heading, road:road && {id:road.id, cars}};
+}
+
+export function applyCheckpointRoadRequest(duel, world, request) {
+  if (request.type !== ROAD_REQUEST) return false;
+  const state = duel.state, {action, id} = request, active = world.checkpointRoad;
+  if (action === 'cue') {
+    const at = request.position;
+    duel.emit({arenaTell:{id:request.cue, cue:request.cue, position:{...at, y:scablandsActorHeightAt(at.x,at.z)}}});
+  } else if (action === 'walk') walkFromWreck(duel,world);
+  else if (action === 'lift') placeCheckpointFighter(duel,request.at);
+  else if (action === 'recover-car') {
+    completeCombatRecovery(duel,state,{alreadyReset:true});
+    placeJobCar(duel,state,request.at,0);
+    if (state.onFoot && !world.checkpointRecovery) placeCheckpointFighter(duel,request.at);
+    delete world.checkpointRecovery;
+  } else if (action === 'start' && !active) {
+    const encounter = world.checkpointRoad = {id, cars:[], scout:request.scout};
+    if (request.phase === 'fight') startRoadFight(duel,world,request);
+    else {
+      const phase = request.phase === 'trouble' ? 'stopped' : 'passing';
+      encounter.cars.push(...addCheckpointCars(duel,world,request.vehicles,request.displayGroup,phase));
+      state.opponentCount = state.opponents.length;
+    }
+    if (request.tracks.length) {
+      const tracks = request.tracks.map((at,index) => ({...at, kind:'tyre', id:TRACK_PREFIX + index,
+        y:scablandsActorHeightAt(at.x,at.z)}));
+      state.arena.markers = [...(state.arena.markers ?? []), ...tracks];
+    }
+  } else if (active?.id === id) {
+    if (action === 'fight') startRoadFight(duel,world,request);
+    else if (action === 'leave') leaveCheckpointRoad(duel,world);
+    else if (action === 'clear') clearCheckpointRoad(duel,world);
+  }
+  return true;
 }
