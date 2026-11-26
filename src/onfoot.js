@@ -227,7 +227,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   const move = footMoveDirection(fighter.yaw, input);
   if (move.x || move.z) {
     const distance = (input.sprint ? T.sprintMetersPerSecond *
-      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond) *
+      (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond * (input.walkScale ?? 1)) *
       (car.arena?.mode === 'fuel-run' && car.arena.participants.find(p => p.id === 'player')?.fuelCanisterId ? .7 : 1) * dt;
     const dx = move.x * distance, dz = move.z * distance;
     const result = attemptMovement(course, car, fighter, dx, dz, feetY, airborne);

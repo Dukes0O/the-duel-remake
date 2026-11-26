@@ -8,10 +8,13 @@ import {distanceBetween} from '../../../story/threads/cast.js';
 import {applyThreadDirector, directThreads, visitId} from '../../../story/threads/director.js';
 import {isFresh, liveSigns, witnessSign} from '../../../story/threads/signs.js';
 import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/thread-rule.js';
+import dryPump from '../../../story/threads/content/dry-pump.js';
+import {mallPlace} from '../content/dry-pump-places.js';
+import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {placeForThread, radioScene} from '../../../story/scenes/burned-camp.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, dryPump], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -19,13 +22,14 @@ const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 function withPlaces(context) {
   const {world, view = {}} = context;
   return {...context, placeAt: (place, cast) => {
-      const point = placeForThread(place, cast, view);
+      const point = mallPlace(place) ?? placeForThread(place, cast, view);
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsCast: (thread, role, id) => thread !== burnedCamp || role !== 'camp' ||
+    allowsCast: (thread, role, id) => role === 'camp' && thread === dryPump ?
+      dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&
         distanceBetween(playerPoint(view), placeForThread(id, {}, view)) > 40),
     startsEffects: (thread, cast) => thread === burnedCamp ?
@@ -102,7 +106,7 @@ function outputFor(thread, context, record, state, observed, decision) {
   const approachedCold = opening && beat.when === 'sign-seen' && !isFresh(thread, record, world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
   const entered = rule.has('entered', beatId);
-  const startingMission = mission && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
+  const startingMission = mission && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
     (mission.by !== 'car' || !view.onFoot) && !view.combatWrecking && !view.missionLeaving && !(mission.outing && view.outingAvailable === false);
   if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
     if (mission) {
@@ -210,23 +214,39 @@ export function createThreadsPart(threads) {
       const {world, view, holds} = context, night = world.ledger.night;
       const state = {interact: !!view.interact, regions: previous.night === night ? [...(previous.regions ?? [])] : [],
         night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay, sitePositions: view.sitePositions}};
+      const enabled = view.checkpointsEnabled === true;
+      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump);
+      if (enabled) state.places.dryPumpEnabled = true;
       const region = regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
       if (!isHeld(holds, 'signs') && region && !state.regions.includes(region)) {
-        choices.push(...directThreads(threads, context, `region-${region}`));
+        choices.push(...directThreads(availableThreads, context, `region-${region}`));
         state.regions.push(region);
       }
       const events = [], requests = [];
-      const signs = liveSigns(threads, context);
-      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission};
+      const signs = liveSigns(availableThreads, context);
+      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission, journey: enabled && previous.journey};
       const settled = input.previousEvents.some(event => event.id === previous.mission &&
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
       state.mission = settled ? null : previous.mission;
       let hold, release;
-      for (const thread of threads) {
+      for (const thread of availableThreads) {
         const record = world.open.threads[thread.id];
-        if (!record || record.end) continue;
+        if (!record) continue;
+        if (thread === dryPump) {
+          const out = dryPumpStep(context, record, previous.dryPump ?? {}, dt, decision);
+          state.dryPump = out.state;
+          if (out.state.mall) state.journey = {holder: DRY_PUMP_HOLD};
+          choices.push(...out.choices);
+          events.push(...out.events);
+          requests.push(...out.requests);
+          if (out.mission !== undefined) state.mission = out.mission;
+          hold ??= out.hold;
+          release ??= out.release;
+          continue;
+        }
+        if (record.end) continue;
         const first = record.beat === firstBeat(thread);
         const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), view, previous.seen?.[thread.id] ?? 0, dt) : null;
         if (sight?.seconds) state.seen[thread.id] = sight.seconds;
