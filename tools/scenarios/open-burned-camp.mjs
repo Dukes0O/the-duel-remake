@@ -15,7 +15,9 @@ const home = LAND.at('tin-town');
 const clues = ['frames', 'lamp', 'tracks', 'ruts', 'pods', 'pump'];
 const scenarioWorld = () => {
   const world = sampleWorld('helped-camp');
-  return {...world, seed: 1250, ledger: {...world.ledger, seed: 1250}};
+  // Land seed 2 puts the Glasshouse at its first position, where this scenario's drive and clue spots are laid out
+  // (the site's place now comes from the land's seed in every part, since the join of 25 November).
+  return {...world, seed: 1250, ledger: {...world.ledger, seed: 1250}, open: {...world.open, landSeed: 2}};
 };
 
 export const pageFunctions = {
