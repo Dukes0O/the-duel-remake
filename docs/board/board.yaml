@@ -1377,6 +1377,16 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-LOOK-RADIO-HILL-2.md"
 
+  - id: AGENTS-REWRITE
+    title: "AGENTS.md rewritten around three lines: works and better merges, broken waits, the rest is the next card (Kyle, 26 November)"
+    owner: "claude"
+    lane: "DOCS"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/AGENTS-REWRITE.md"
+
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
     owner: "codex"
