@@ -146,7 +146,7 @@ export default {
           lines: [say('miss-pell', "It's forty cans a week for each camp that signs, which is one cartload. Anybody who isn't on the schedule pays at the board.")]},
       ],
       choices: [
-        {id: 'sign', by: 'do', words: 'Sign the schedule, for Tin Town',
+        {cue: 'open.flag.stamp', id: 'sign', by: 'do', words: 'Sign the schedule, for Tin Town',
           thought: "It's only a signature. It may also be the one thing here that's still true next year.",
           effects: [mark('signed', 'Tin Town signed that the Sweet Seep is the water company\'s, and {camp.name} draws from it free.'),
             {type: 'favour', person: CAMP_PEOPLE, by: 1}],
@@ -156,14 +156,11 @@ export default {
             say('{camp.leader}', "Forty cans a week will keep us. I'd sooner have had the seep the way it was, but I'll take the water.", {when: OTHER_CAMP}),
           ],
           next: 'shared'},
-        {id: 'pen-down', by: 'do', words: 'Put the pen down', thought: 'Then Marigold pays four scrap a can, or goes without.', next: 'site'},
+        {id: 'pen-down', by: 'do', words: 'Put the pen down', thought: {thought: 'Then Marigold pays four scrap a can, or goes without.', when: GLASSHOUSE}, next: 'site'},
       ],
       notes: {
         // The lines of the camp's leader are said when the camp is asked to sign.
         lineMoments: {asked: 'last'},
-        choiceCues: {sign: 'open.flag.stamp'},
-        // The thought of "pen-down" is thought only for the Glasshouse.
-        choiceThoughtWhen: {'pen-down': GLASSHOUSE},
       },
     },
 
@@ -188,7 +185,7 @@ export default {
     },
 
     hearth: {
-      when: {all: [{chose: 'buy'}, {reach: ['tin-town', 'the hearth']}]},
+      when: {all: [{chose: 'buy'}, {reach: ['tin-town', 'hearth']}]},
       lines: [
         say('auntie-solder', "You want to buy a well that isn't ours, from people who didn't dig it, with scrap that we haven't got. I'll lend you sixty from the town's tin, and I shall want to know who is paying it back."),
         say('cinder', "Don't offer them an ember until you've counted the store. That's a night of fire going out through the gate in a pot, and it won't come back as water.", {when: HAS_EMBER}),
@@ -203,33 +200,30 @@ export default {
       next: 'carry',
       notes: {
         // The last two lines and the last two effects are the camp's offer, made when its leader is asked.
-        lineMoments: {offer: 'asked'},
+        spotLabel: 'the hearth', lineMoments: {offer: 'asked'},
       },
     },
 
     // Carrying the price back to the site. It holds nothing, so the road's own danger is its point (section 15).
     carry: {
-      mission: {id: `${ID}/carry-the-price`, by: 'car', holds: []},
+      mission: {kind: 'reach', id: `${ID}/carry-the-price`, by: 'car', holds: []},
       next: 'table',
     },
 
     table: {
       when: {reach: WELL},
       choices: [
-        {id: 'pay-scrap', by: 'do', when: PRICE_IN_SCRAP, words: 'Pay it all in scrap',
+        {cue: 'open.flag.stamp', id: 'pay-scrap', by: 'do', when: PRICE_IN_SCRAP, words: 'Pay it all in scrap',
           thought: "That's everything I have, and sixty of it is the town's.",
           effects: [{type: 'scrap', by: -160, when: {not: WATER_STRUCK}}, {type: 'scrap', by: -240, when: WATER_STRUCK}, ...bought(true)],
           next: 'sold'},
-        {id: 'pay-ember', by: 'do', when: {all: [HAS_EMBER, PRICE_WITH_EMBER]}, words: 'Pay sixty scrap and one ember',
+        {cue: 'open.flag.stamp', id: 'pay-ember', by: 'do', when: {all: [HAS_EMBER, PRICE_WITH_EMBER]}, words: 'Pay sixty scrap and one ember',
           thought: "That's a night of fire, and Cinder told me to count first.",
           effects: [{type: 'scrap', by: -60, when: {not: WATER_STRUCK}}, {type: 'scrap', by: -140, when: WATER_STRUCK},
             {type: 'stock', stock: 'embers', by: -1}, mark('ember-paid'), {type: 'roadWord', by: 1}, ...bought(false)],
           next: 'sold'},
         {id: 'cannot-pay-it', by: 'do', words: 'Tell her that you cannot pay it', next: 'site'},
       ],
-      notes: {
-        choiceCues: {'pay-scrap': 'open.flag.stamp', 'pay-ember': 'open.flag.stamp'},
-      },
     },
 
     sold: {
@@ -253,7 +247,7 @@ export default {
         lines: [say('miss-pell', "I'm required to read you this card before anything happens. \"The company regrets any damage that may shortly occur to your vehicle.\" I am sorry about this. It isn't personal.")],
         outcomes: {
           won: {
-            lines: [
+            cue: 'open.flag.down', lines: [
               say('miss-pell', 'That will do. Stop the drill, please, and bring down the flag. I shall have to write this up as an incident, and the Office reads every incident twice.'),
               say('marigold', "They've gone, and they've taken their price board with them. The Seep is still here. The reeds will take a year to grow back, but beans are patient, and so am I.", {when: GLASSHOUSE}),
               say('{camp.leader}', "They've gone, and the water is still here. I hope that it was worth making an enemy for.", {when: OTHER_CAMP}),
@@ -269,18 +263,16 @@ export default {
             next: 'beaten'},
         },
       },
-      notes: {outcomeCues: {won: 'open.flag.down'}},
     },
   },
 
   ends: ['shared', 'bought', 'driven-off', 'beaten', 'stays'],
 
   // What happens when the sign is never followed, or the player drives away: the water men keep the well.
-  ignored: {
-    afterNights: 3,
-    effects: [mark('company-keeps-it', 'The water company keeps the Sweet Seep.')],
-    next: 'stays',
-  },
+  ignored: [
+    {afterChoice: {id: 'drive-away', times: 1}, effects: [mark('company-keeps-it')], next: 'stays'},
+    {afterNights: 3, effects: [mark('company-keeps-it', 'The water company keeps the Sweet Seep.')], next: 'stays'},
+  ],
 
   // What somebody says afterwards.
   later: [
@@ -309,13 +301,6 @@ export default {
       lamps: 2,
       mapName: 'The Sweet Seep (somebody is drilling here)',
       struck: {afterNights: 2, effects: [mark('water-struck')]},
-    },
-    // The sign is also left alone after the player drives away from the site.
-    ignoredOrAfter: {choice: 'drive-away'},
-    // A mark's sentence is written once. These are the sentences that the file wrote again on a later effect of the same mark.
-    markSentenceRepeats: {
-      [`${ID}/hand-pump`]: ['A hand pump stands on the Sweet Seep.'],
-      [`${ID}/bought-out`]: ['You bought the Sweet Seep back from the water company.'],
     },
   },
 };

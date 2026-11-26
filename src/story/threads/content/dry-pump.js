@@ -49,6 +49,8 @@ const FITTING_END = [
   {when: did('friends-fetched-it'), to: 'friends-fetched'},
   {to: 'water-back'},
 ];
+const FITTING_ENDS = FITTING_END.map(row => row.to);
+const KEEP_FITTING_END = FITTING_ENDS.map(to => ({when: {ended: to}, to}));
 
 export default {
   id: ID,
@@ -286,17 +288,13 @@ export default {
     // The fountain hall. Two lamps turn, each with a cone of light. A lamp on the player for two seconds is a shout.
     hall: {
       when: {reach: ['dead-mall', 'hall']},
-      notes: {
-        partOfMission: `${ID}/mall`,
-        outcomeCues: {seen: 'open.mall.alarm', 'ran-out': 'open.mall.alarm'},
-      },
       thoughts: [{when: {chose: 'front-doors'},
         thought: 'The fountain is in the middle of the hall, and the only door near it says STAFF ONLY. The pump room must be through there, on the far side of both lamps.'}],
-      mission: {id: `${ID}/mall/hall`,
+      mission: {id: `${ID}/mall/hall`, partOf: `${ID}/mall`,
         outcomes: {
           'not-seen': {next: 'penny'},
           seen: {
-            lines: [SEEN_SHOUT, BOLTED_DOOR],
+            cue: 'open.mall.alarm', lines: [SEEN_SHOUT, BOLTED_DOOR],
             effects: [mark('seen-in-the-mall', 'The Ash Men saw you in the Dead Mall.'),
               mark('door-found', 'The Ash Men know that there is a door behind the fountain.'),
               {type: 'feud', of: 'ash-men', by: 1}],
@@ -304,7 +302,7 @@ export default {
             // shop is closed to the player for today.
             next: 'penny'},
           'ran-out': {
-            lines: [SEEN_SHOUT],
+            cue: 'open.mall.alarm', lines: [SEEN_SHOUT],
             effects: [mark('seen-in-the-mall'), {type: 'feud', of: 'ash-men', by: 1}],
             next: 'road-out'},
         }},
@@ -372,12 +370,9 @@ export default {
 
     'his-pipe': {
       when: {after: 'penny'},
-      notes: {
-        mend: {cue: 'open.valve.taken',
-          after: [penny('There it is. Wrap it in this cloth, and don\'t knock the seat. I shall have one last cup of tea out of the kettle, and then I shall start counting steps.')]},
-      },
       // Hold the wrench on the pipe's collar for ten seconds while he lifts.
-      mend: {id: `${ID}/penny-pipe`, wrenchSeconds: 10, scrap: 0,
+      mend: {id: `${ID}/penny-pipe`, wrenchSeconds: 10, scrap: 0, cue: 'open.valve.taken',
+        after: [penny('There it is. Wrap it in this cloth, and don\'t knock the seat. I shall have one last cup of tea out of the kettle, and then I shall start counting steps.')],
         effects: [mark('took-penny-valve')]},
       choices: [
         {id: 'promise-the-spare', words: "I'll come back for the other one, and bring it down to you.",
@@ -395,10 +390,6 @@ export default {
     // Across the back of the hall to the third shop, and back with something heavy.
     'shoe-shop': {
       when: {reach: ['dead-mall', 'shoe-shop']},
-      notes: {
-        partOfMission: `${ID}/mall`,
-        outcomeCues: {seen: 'open.mall.alarm', caught: 'open.mall.alarm'},
-      },
       explore: [
         {id: 'ash-store', cue: 'open.clue.found',
           what: 'Sacks of ash to the ceiling, and rolls of wet blanket.',
@@ -410,19 +401,19 @@ export default {
           thought: "It's heavier than it looks. I can't run with this, so I'll have to stop behind the fountain and let a lamp go by.",
           tells: 'The way back is slower than the way there'},
       ],
-      mission: {id: `${ID}/mall/shoe-shop`,
+      mission: {id: `${ID}/mall/shoe-shop`, partOf: `${ID}/mall`,
         outcomes: {
           'not-seen': {
             lines: [penny("That was fourteen. I counted. You'd have made a very good night watchman, and I don't say that to contractors.")],
             effects: [mark('took-the-spare', "You took a brass valve back from the Ash Men's store in the Dead Mall.")],
             next: 'tunnel'},
           seen: {
-            lines: [SEEN_SHOUT, BOLTED_DOOR],
+            cue: 'open.mall.alarm', lines: [SEEN_SHOUT, BOLTED_DOOR],
             effects: [mark('took-the-spare'), mark('seen-in-the-mall'), mark('door-found'),
               {type: 'feud', of: 'ash-men', by: 1}],
             next: 'tunnel'},
           caught: {
-            lines: [SEEN_SHOUT, ...CAUGHT],
+            cue: 'open.mall.alarm', lines: [SEEN_SHOUT, ...CAUGHT],
             effects: [mark('seen-in-the-mall'),
               mark('caught-in-the-mall', 'The Ash Men caught you in their store and put you out of the Dead Mall.'),
               {type: 'feud', of: 'ash-men', by: 1}],
@@ -447,14 +438,11 @@ export default {
     'road-out': {
       when: {reach: ['dead-mall', 'car-park']},
       notes: {
-        partOfMission: `${ID}/mall`,
-        // `clear` is the way out when the alarm was never raised.
-        outcomeWhen: {clear: {not: did('seen-in-the-mall')}},
         outcomeThen: {wrecked: 'towed-home'},
       },
-      mission: {id: `${ID}/mall/road-out`,
+      mission: {id: `${ID}/mall/road-out`, partOf: `${ID}/mall`,
         outcomes: {
-          clear: {next: [{when: HAS_A_VALVE, to: 'fitting'}, {to: 'came-home-empty'}]},
+          clear: {when: {not: did('seen-in-the-mall')}, next: [{when: HAS_A_VALVE, to: 'fitting'}, {to: 'came-home-empty'}]},
           outrun: {next: [{when: HAS_A_VALVE, to: 'fitting'}, {to: 'came-home-empty'}]},
           wrecked: {
             lines: [ashMan("That brass is going back on Old Smoke's counter. You can keep the car, or what's left of it.")],
@@ -475,20 +463,15 @@ export default {
 
     fitting: {
       when: {reach: '@camp'},
-      notes: {
-        mend: {cue: 'open.pump.water',
-          after: [
-            leader("Listen to that. That's the sound of nobody having to pack the cart."),
-            say('marigold', "Finch, stop grinning at the trough and go and water the beans. They've listened to that pump for two days, and they deserve some of what it brings up.",
-              {when: AT_THE_GLASSHOUSE}),
-            leader("You spent a whole day on water that you'll never drink. People here will be telling that to their children. The first cup is yours."),
-            leader("Where did you find it? We'd heard that the grey men had cleared that place out."),
-          ]},
-        // If Mr Penny was promised the other valve, its record stays open for that: the beat `penny-owed` is still
-        // live after the thread's end (it follows this beat, and leads to the same end).
-      },
       // Hold the wrench on the foot of the pipe for twelve seconds. Then the pump is worked, and water comes.
-      mend: {id: `${ID}/fit-the-valve`, wrenchSeconds: 12, scrap: 0,
+      mend: {id: `${ID}/fit-the-valve`, wrenchSeconds: 12, scrap: 0, cue: 'open.pump.water',
+        after: [
+          leader("Listen to that. That's the sound of nobody having to pack the cart."),
+          say('marigold', "Finch, stop grinning at the trough and go and water the beans. They've listened to that pump for two days, and they deserve some of what it brings up.",
+            {when: AT_THE_GLASSHOUSE}),
+          leader("You spent a whole day on water that you'll never drink. People here will be telling that to their children. The first cup is yours."),
+          leader("Where did you find it? We'd heard that the grey men had cleared that place out."),
+        ],
         effects: [mark('water-back', 'You fetched a valve from the Dead Mall, and {camp.name} has water again.'),
           {type: 'settle', id: `${ID}/valve`}]},
       // The camp's word rises to Friendly when the promise was broken, and to Sworn otherwise.
@@ -519,13 +502,7 @@ export default {
 
     // Only for a player who took Mr Penny's own valve and promised him the other. A second trip, by the tunnel.
     'penny-owed': {
-      when: {all: [{after: 'fitting'}, did('promised-penny'), {reach: ['dead-mall', 'tunnel-door']}]},
-      notes: {
-        // The thread has ended at the camp. This second trip is still open after that, and whichever way it goes the
-        // thread's end stays what the fitting made it.
-        outcomeCues: {'seen-and-brought-down': 'open.mall.alarm', caught: 'open.mall.alarm'},
-        outcomeWhen: {broken: {due: `${ID}/penny-valve`}},
-      },
+      when: {all: [{after: 'fitting'}, {after: FITTING_ENDS}, did('promised-penny'), {reach: ['dead-mall', 'tunnel-door']}]},
       mission: {id: `${ID}/second-trip`, kind: 'heist', holds: ['checkpoints', 'signs'], minutes: 6,
         lines: [penny("That was two knocks, so it's a contractor. I've kept your page of the book open, and the kettle has been very patient.")],
         outcomes: {
@@ -534,28 +511,28 @@ export default {
             effects: [mark('took-the-spare'),
               mark('penny-valve-returned', 'You brought Mr Penny the other valve, and his tap runs again.'),
               {type: 'settle', id: `${ID}/penny-valve`}],
-            next: FITTING_END},
+            next: KEEP_FITTING_END},
           'seen-and-brought-down': {
-            lines: [SEEN_SHOUT, BOLTED_DOOR,
+            cue: 'open.mall.alarm', lines: [SEEN_SHOUT, BOLTED_DOOR,
               penny("You came back with it. I'll strike that out of the book, then. I've never struck anything out of the book before, and I find that I rather like it.")],
             effects: [mark('took-the-spare'), mark('penny-valve-returned'), mark('seen-in-the-mall'), mark('door-found'),
               {type: 'feud', of: 'ash-men', by: 1}, {type: 'settle', id: `${ID}/penny-valve`}],
-            next: FITTING_END},
+            next: KEEP_FITTING_END},
           caught: {
-            lines: [SEEN_SHOUT, ...CAUGHT],
+            cue: 'open.mall.alarm', lines: [SEEN_SHOUT, ...CAUGHT],
             effects: [mark('seen-in-the-mall'), mark('caught-in-the-mall'), {type: 'feud', of: 'ash-men', by: 1}],
-            next: FITTING_END},
+            next: KEEP_FITTING_END},
           broken: {
-            lines: [penny("I've left it in the book as work outstanding. Most things in the book are. Please don't look so troubled. I'm very used to waiting.")],
+            when: {due: `${ID}/penny-valve`}, lines: [penny("I've left it in the book as work outstanding. Most things in the book are. Please don't look so troubled. I'm very used to waiting.")],
             effects: [mark('penny-promise-broken', 'You promised Mr Penny a valve, and did not bring it.'),
               {type: 'word', person: 'mr-penny', by: -1}, {type: 'settle', id: `${ID}/penny-valve`}],
-            next: FITTING_END},
+            next: KEEP_FITTING_END},
         }},
     },
 
     // Nobody brought a valve. On the fifth day the camp loads its cart.
     'left-dry': {
-      when: {nights: 4},
+      when: {nights: 4, since: 'asking'},
       effects: [mark('left-dry', '{camp.name} packed its cart and left, because its pump was dry.'),
         {type: 'site', id: '@camp', stage: 'empty'}],
       next: 'gone',

@@ -61,7 +61,7 @@ export default {
       lines: [
         // By a named draw the second voice opens the night, and Hetty's call cuts across it.
         {...secondVoice('This is Radio Hill, calling anybody who can hear us. If you can hear me, tell me where you are, and I\'ll guide you in to a fire and a hot meal.'),
-          when: {fact: 'draw', name: 'who-calls-first', chance: .5}},
+          when: {fact: 'draw', name: 'who-calls-first', chance: .5}, cue: 'open.radio.second-voice'},
         firstVoice('This is Radio Hill, calling the car with two lamps on the road below us. I can see your lamps from where I\'m sitting. If you can hear me, stop your car where it is, and then I\'ll know.'),
       ],
       thoughts: [
@@ -85,8 +85,6 @@ export default {
           next: 'second-voice'},
       ],
       notes: {
-        // The line the second voice opens the night with carries this cue.
-        lineCue: {secondVoiceOpensTheNight: 'open.radio.second-voice'},
         choices: {stop: {stoppedSeconds: 3}},
       },
     },
@@ -109,31 +107,31 @@ export default {
       ],
       // Each test is put to both voices, and both answer.
       questions: [
-        {id: 'what-can-you-see', words: 'What can you see from where you are?',
+        {effects: [tested], id: 'what-can-you-see', words: 'What can you see from where you are?',
           lines: [
             hetty('I can see the road with you on it, and the glow of your town\'s hearth. I can also see three sets of lamps standing still among the wrecks near that white lamp, and they haven\'t moved all evening.'),
             secondVoice('I can see the whole land from up here, driver. What I can see most clearly is that you\'re wasting time.'),
           ],
           shows: 'The first voice names things that are really there. Three cars are waiting near the white lamp'},
-        {id: 'what-colour', words: 'What colour is my car?',
+        {effects: [mark('tested')], id: 'what-colour', words: 'What colour is my car?',
           lines: [
             hetty('I can\'t tell you that, because it\'s dark and you\'re a long way off. I can tell you that your left lamp is dimmer than your right one.'),
             secondVoice('It\'s a very fine car, driver, and that\'s all I need to know. There\'s no time for games tonight.'),
           ],
           shows: 'One of them can see the lamps, and says plainly what she cannot see'},
-        {id: 'blink', words: 'Blink your lamp three times for me.',
+        {cue: 'open.lamp.blink', effects: [mark('tested')], id: 'blink', words: 'Blink your lamp three times for me.',
           lines: [
             hetty('There you are, that was three. Bern says that if I do it again the bulb will go, and it\'s the only one we have.'),
             secondVoice('Ours isn\'t the blinking kind of lamp, driver. A steady light is an honest light.'),
           ],
           shows: 'The red lamp goes dark and then blinks three times. The white lamp does not change. Seen only from ground where both lamps are in view'},
-        {id: 'what-noise', words: 'What\'s that noise behind you?',
+        {effects: [mark('tested')], id: 'what-noise', words: 'What\'s that noise behind you?',
           lines: [
             hetty('That\'s our generator. It has coughed like that ever since the dust storm, and Bern says it wants a new filter.'),
             secondVoice('That\'s only the wind in the mast, driver.'),
           ],
           shows: 'A hill does not have an engine'},
-        {id: 'who-else', words: 'Who else is up there with you?',
+        {effects: [mark('tested')], id: 'who-else', words: 'Who else is up there with you?',
           lines: [
             hetty('There\'s only my sister Bern, who mends things. She\'s holding a coil of wire and shaking her head at me.'),
             secondVoice('There\'s a whole friendly camp of us here, with a fire, hot food and room for your car.'),
@@ -167,16 +165,6 @@ export default {
           hidden: 'Both call again tomorrow night. Nothing is lost by sleeping on it, until the fourth night.'},
       ],
       effects: [mark('heard-two-voices', 'You heard two voices on the radio, and each of them said it was Radio Hill.')],
-      notes: {
-        // What asking a question makes or says beyond its words: the shape's question has no effects or cue.
-        questions: {
-          'what-can-you-see': {effects: [tested]},
-          'what-colour': {effects: [tested]},
-          blink: {cue: 'open.lamp.blink', effects: [tested]},
-          'what-noise': {effects: [tested]},
-          'who-else': {effects: [tested]},
-        },
-      },
     },
 
     ramp: {
@@ -196,22 +184,22 @@ export default {
     climb: {
       mission: {id: `${ID}/climb`, kind: 'reach', by: 'car', minutes: 3, holds: ['checkpoints', 'signs'],
         // Starting numbers. Every radio line on the climb is shown under the one label, so that the words tell the voices apart.
-        rule: {lampsShowMetres: 12, callSecondsBeforeTurn: 4, easyBrakeSeconds: 2, label: 'The radio', cutInCue: 'open.radio.cut-in'},
+        rule: {moments: ['ramp-foot', 'bend-1', 'bend-2', 'broken-ledge', 'last-rise', 'top'], lampsShowMetres: 12, callSecondsBeforeTurn: 4, easyBrakeSeconds: 2, label: 'The radio', cutInCue: 'open.radio.cut-in'},
         lines: [
-          hetty('Driver, the way up starts at the white rock on your left. Take it slowly. I can see your lamps all the way, so I\'ll tell you what\'s coming before you reach it.'),
-          hetty('There\'s a bend to your right in a moment, with no wall on the outside of it. Keep close in to the rock.'),
-          {...parrot('Keep left here, driver, well out to the left. The rock on your right has fallen away.'), when: parrotCutsIn},
-          {...hetty('That wasn\'t me! Keep right, close to the rock. Your left lamp is shining out over nothing at all.'), when: parrotCutsIn},
-          {...hetty('Keep to the right here, close to the rock. There\'s nothing on your left but air.'), when: {not: parrotCutsIn}},
-          hetty('Now stop where you are. The ledge in front of you is broken, and your lamps won\'t show you the hole until you\'re in it.'),
-          hetty('Turn hard to your left and come up the inside. Bern cut that way with a pick, and she\'s very proud of it.'),
-          {...parrot('You\'re nearly at the top. Put your foot down for the last rise, or you\'ll roll all the way back.'), when: parrotCutsIn},
-          hetty('Please go slowly now. The top is flat for two car lengths, and after that there isn\'t any more top.'),
-          hetty('That\'s it, you\'re up. Turn your lamps off before you blind my sister. Welcome to Radio Hill.'),
+          {...hetty('Driver, the way up starts at the white rock on your left. Take it slowly. I can see your lamps all the way, so I\'ll tell you what\'s coming before you reach it.'), moment: 'ramp-foot'},
+          {...hetty('There\'s a bend to your right in a moment, with no wall on the outside of it. Keep close in to the rock.'), moment: 'bend-1'},
+          {...parrot('Keep left here, driver, well out to the left. The rock on your right has fallen away.'), when: parrotCutsIn, moment: 'bend-2'},
+          {...hetty('That wasn\'t me! Keep right, close to the rock. Your left lamp is shining out over nothing at all.'), when: parrotCutsIn, moment: 'bend-2'},
+          {...hetty('Keep to the right here, close to the rock. There\'s nothing on your left but air.'), when: {not: parrotCutsIn}, moment: 'bend-2'},
+          {...hetty('Now stop where you are. The ledge in front of you is broken, and your lamps won\'t show you the hole until you\'re in it.'), moment: 'broken-ledge'},
+          {...hetty('Turn hard to your left and come up the inside. Bern cut that way with a pick, and she\'s very proud of it.'), moment: 'broken-ledge'},
+          {...parrot('You\'re nearly at the top. Put your foot down for the last rise, or you\'ll roll all the way back.'), when: parrotCutsIn, moment: 'last-rise'},
+          {...hetty('Please go slowly now. The top is flat for two car lengths, and after that there isn\'t any more top.'), moment: 'last-rise'},
+          {...hetty('That\'s it, you\'re up. Turn your lamps off before you blind my sister. Welcome to Radio Hill.'), moment: 'top'},
         ],
         outcomes: {
           up: {
-            lines: [
+            cue: 'open.site.found', lines: [
               hettyHere('You trusted a voice you couldn\'t see, all the way up a cliff in the dark. I\'d like to say that I\'d have done the same, but I don\'t think I would have.'),
               bern('She talked you up, and I cut the road. I\'d like that remembered as well.'),
             ],
@@ -220,7 +208,7 @@ export default {
             next: 'other-voice',
           },
           'over-the-edge': {
-            lines: [
+            cue: 'open.ramp.edge', lines: [
               bern('That\'s the third car that the other voice has put off our ramp this year. You\'re the first driver who was coming to see us, so I\'ll winch you up for nothing.'),
               hettyHere('I\'m so sorry, driver. I said right, and she said left, and you had no way of knowing which of us was which.'),
             ],
@@ -231,23 +219,8 @@ export default {
         },
       },
       notes: {
-        // The place on the climb where each line of the mission is said, in the order of its `lines`. `false` marks the
-        // lines that Parrot says to put the car off the ramp.
-        lineMoments: [
-          {at: 'ramp-foot'},
-          {at: 'bend-1'},
-          {at: 'bend-2', false: true},
-          {at: 'bend-2'},
-          {at: 'bend-2'},
-          {at: 'broken-ledge'},
-          {at: 'broken-ledge'},
-          {at: 'last-rise', false: true},
-          {at: 'last-rise'},
-          {at: 'top'},
-        ],
         outcomes: {
-          up: {cue: 'open.site.found'},
-          'over-the-edge': {cue: 'open.ramp.edge', armour: 0},
+          'over-the-edge': {armour: 0},
         },
       },
     },
@@ -276,6 +249,7 @@ export default {
       thoughts: [
         'She promised a fire and hot food. I can\'t see a fire, and I can\'t smell any smoke.',
         'If I drive in there, the only way out is the way I came in.',
+        {thought: 'That\'s a Road Rat with a radio on a strap, and she\'s doing the voice. There are three buggies behind her with their engines running.', slot: 'after', when: {chose: 'wait-dark'}},
       ],
       choices: [
         {id: 'drive-in', by: 'go', words: 'Drive in to the lamp', plain: 'A white lamp and a narrow mouth',
@@ -296,10 +270,6 @@ export default {
           effects: [{type: 'find', site: 'the-pocket'}, mark('saw-parrot', 'You saw who the second voice is.')],
           next: 'ramp'},
       ],
-      notes: {
-        // The player's thought that comes after the lines of the choice "wait-dark".
-        choices: {'wait-dark': {after: {thought: 'That\'s a Road Rat with a radio on a strap, and she\'s doing the voice. There are three buggies behind her with their engines running.'}}},
-      },
     },
 
     trap: {
@@ -373,7 +343,7 @@ export default {
         {id: 'talk-over', words: 'Can\'t you talk over her?',
           lines: [bern('We can, if Hetty sits at the set from dusk until dawn and never stops. She\'d be no use for anything else, and the generator would drink fuel all night long.')],
           shows: 'Talking over her costs the sisters their nights, and fuel'},
-        {id: 'where-from', words: 'Where does she call from?',
+        {effects: [{type: 'rumour', site: 'the-pocket'}], id: 'where-from', words: 'Where does she call from?',
           lines: [hettyHere('She calls from a buggy, so it moves about. But the engine behind her voice is always the same one, and after dark it always stands in the Pocket.')],
           shows: 'Where to find her'},
         {id: 'what-she-wants', words: 'What does she want?',
@@ -405,10 +375,6 @@ export default {
           hidden: 'A talk on the air.',
           next: 'on-the-air'},
       ],
-      notes: {
-        // Asking "where-from" makes this rumour of the Pocket.
-        questions: {'where-from': {effects: [{type: 'rumour', site: 'the-pocket'}]}},
-      },
     },
 
     // While Hetty talks over the second voice, this stands in for the news she gives on a visit. A drum from Moss is
@@ -461,8 +427,6 @@ export default {
       },
       notes: {
         outcomes: {caught: {pocketWatch: 2}},
-        // The sentence of the mark "wheels-taken", which the beat "wheels-off" makes first and shows.
-        marks: {'wheels-taken': 'The Road Rats took your wheels in the Pocket.'},
       },
     },
 
@@ -489,7 +453,7 @@ export default {
       choices: [
         // While the Road Rats are Raiding or worse she cannot be seen making friends, and she says why: then her
         // refusal is all that is said, and nothing else happens.
-        {id: 'read-the-news', words: 'Read the news with Hetty every evening, and leave the white lamp at home.',
+        {cue: 'open.news.evening', id: 'read-the-news', words: 'Read the news with Hetty every evening, and leave the white lamp at home.',
           plain: 'Hetty and Bern look at each other',
           thought: 'Then the Road Rats will know the news of every road as soon as the hill does.',
           hidden: 'Two voices on one station. Nobody is robbed by a voice again. The Word on the road rises by one. The hill never warns of the Road Rats\' own riders.',
@@ -510,7 +474,6 @@ export default {
       ],
       notes: {
         choices: {
-          'read-the-news': {cue: 'open.news.evening'},
           threaten: {pocketWatch: 2},
         },
       },
@@ -529,9 +492,9 @@ export default {
   later: [
     {id: 'took-the-set', by: 'road-rats', when: {fact: 'mark', id: `${ID}/took-the-set`},
       lines: [line('road-rat', 'That\'s the car that took Parrot\'s voice box. She hasn\'t said a word to anybody for a week, and Sump says that the quiet is costing him wheels.', {as: 'A Road Rat'})]},
-    {id: 'hauler-in-the-wrecks', by: 'dot', when: {fact: 'thread', id: ID, at: 'over'}, at: 'tin-town',
+    {id: 'hauler-in-the-wrecks', by: 'dot', when: {ended: 'unanswered'}, at: 'tin-town',
       lines: [line('dot', 'A hauler from the Mall Road followed a voice on his radio in among the wrecks last week. He walked into my diner two days later carrying his own steering wheel, because it was all that they\'d left him.')]},
-    {id: 'called-three-nights', by: 'hetty', when: {all: [{fact: 'thread', id: ID, at: 'over'}, {fact: 'found', site: 'radio-hill'}]}, at: 'radio-hill',
+    {id: 'called-three-nights', by: 'hetty', when: {all: [{ended: 'unanswered'}, {fact: 'found', site: 'radio-hill'}]}, at: 'radio-hill',
       lines: [hettyHere('I called you for three nights, driver, and you never once stopped. I don\'t blame you for it. I only wish that the other voice hadn\'t been the one that people remembered.')]},
   ],
 

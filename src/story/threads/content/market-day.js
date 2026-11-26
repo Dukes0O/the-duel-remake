@@ -92,14 +92,15 @@ const guestTalks = role => {
       effects: [comes_, mark('bern-came', 'Bern will come to the market.')],
       lines: [say('bern', "I'll bring the small soldering iron. Hetty, stop looking at me like that. You can go to the next one.")]},
   ];
-  // What asking makes. The shape has no effects on a question, so these are made when the question is asked.
+  // What asking makes, without repeating the mark's sentence.
   const questionEffects = {
     [`what-tinkers-did-${role}`]: [mark('heard-marigold')],
-    [`ask-walkers-${role}`]: [{...comes_, text}],
-    [`ask-deck-folk-${role}`]: [{...comes_, text}],
-    [`ask-guest-${role}`]: [{...comes_, text}],
+    [`ask-walkers-${role}`]: [comes_],
+    [`ask-deck-folk-${role}`]: [comes_],
+    [`ask-guest-${role}`]: [comes_],
   };
-  return {questions, thoughts, choices, questionEffects};
+  return {questions: questions.map(question => questionEffects[question.id]
+    ? {...question, effects: questionEffects[question.id]} : question), thoughts, choices};
 };
 
 const talks = GUESTS.map(guestTalks);
@@ -159,7 +160,8 @@ export default {
 
     // Auntie Solder gives the yard and its rules, at the hearth, the same day or any day after.
     hearth: {
-      when: {all: [{after: 'sign'}, marked('asked'), {reach: ['tin-town', 'the hearth']}]},
+      when: {all: [{after: 'sign'}, marked('asked'), {reach: ['tin-town', 'hearth']}]},
+      notes: {spotLabel: 'the hearth'},
       lines: [
         say('auntie-solder', 'You want to hold a market inside my fence? I suppose the pie woman put you up to it. I have two rules. Everybody leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.'),
         say('auntie-solder', "There's room for five pitches round the yard, besides Dot's van at the gate. Who stands next to whom is your business, and I'd thank you to get it right."),
@@ -183,9 +185,9 @@ export default {
       ],
       questions: [
         ...talks.flatMap(talk => talk.questions),
-        {id: 'ask-bus-ring', to: 'gasket', words: ASK, when: {cast: 'odd', is: 'bus-ring'},
+        {effects: [mark('odd-asked', 'The tinkers of the Bus Ring were asked to the market.')], id: 'ask-bus-ring', to: 'gasket', words: ASK, when: {cast: 'odd', is: 'bus-ring'},
           lines: [say('gasket', "Nobody has ever asked us to a market. People bring us their broken things after dark, and then they pretend that they've never met us. Yes, we'll come, and we'll mend whatever is put in front of us.")]},
-        {id: 'why-mend-for-rats', to: 'gasket', words: "Why do you mend the Road Rats' buggies?", when: {asked: 'ask-bus-ring'},
+        {effects: [mark('heard-gasket')], id: 'why-mend-for-rats', to: 'gasket', words: "Why do you mend the Road Rats' buggies?", when: {asked: 'ask-bus-ring'},
           lines: [say('gasket', "Because a tinker in the hill country who turns work away doesn't eat that week. I mended the buggy that went through the bean woman's glass. I've been sorry about that job ever since, and I've never found a way to say so.")]},
         {id: 'what-tinkers-need', to: 'gasket', words: 'What do you need at a market?', when: {asked: 'ask-bus-ring'},
           lines: [say('gasket', 'We need an anvil and a fire, or all we can do is sell parts out of a box. Put us by your forge, if your smith will have us.')]},
@@ -197,20 +199,12 @@ export default {
           lines: [say('dot', "Then it's tomorrow. I'll light the oven tonight and I shan't sleep, and you'll owe me for that as well.")],
           next: 'stakes'},
       ],
-      notes: {
-        holds: [],
-        // What asking makes, by the question that was asked (the shape has no effects on a question).
-        questionEffects: {
-          ...Object.assign({}, ...talks.map(talk => talk.questionEffects)),
-          'ask-bus-ring': [mark('odd-asked', 'The tinkers of the Bus Ring were asked to the market.')],
-          'why-mend-for-rats': [mark('heard-gasket')],
-        },
-      },
+      notes: {holds: []},
     },
 
     // The stakes, at dusk, in Tin Town's yard. The choice is made by carrying a stake to a pitch.
     stakes: {
-      when: {reach: ['tin-town', 'the yard']},
+      when: {reach: ['tin-town', 'yard']},
       cue: 'open.market.stake',
       lines: [say('auntie-solder', "Here are your stakes. Knock one in at each pitch, and that's where those people stand tomorrow. The sunny wall is right next to the forge wall, and I can't move either of them for you.")],
       thoughts: [
@@ -230,15 +224,16 @@ export default {
       ],
       notes: {
         // The five pitches round the yard, and the stakes that go to them.
-        pitches: ['beside-the-gate', 'the-pump', 'the-sunny-wall', 'the-forge-wall', 'bess-shed'],
+        spotLabel: 'the yard', pitches: ['beside-the-gate', 'the-pump', 'the-sunny-wall', 'the-forge-wall', 'bess-shed'],
       },
     },
 
     // Market day: one mission, walked, inside Tin Town's fence. Its parts follow in order.
     day: {
-      cue: 'open.market.open',
+      when: {part: 'dawn'},
+      cues: ['open.market.open', 'open.market.crowd'],
       mission: {
-        id: `${ID}/day`, by: 'foot', minutes: 8, holds: ['checkpoints', 'signs'],
+        kind: 'market', id: `${ID}/day`, by: 'foot', minutes: 8, holds: ['checkpoints', 'signs'],
         lines: [
           say('dot', "Everything in this yard is a quarter cheaper today, and that includes my pies. Those are market prices, and there won't be any haggling, because I've no patience for it."),
           // Heard as the player walks the yard.
@@ -251,8 +246,6 @@ export default {
       },
       next: 'rider',
       notes: {
-        at: 'first-light',
-        secondCue: 'open.market.crowd',
         // Market prices: everything in the yard costs this much less.
         prices: {off: .25},
         // The lines after the first are heard as the player walks the yard.
@@ -261,6 +254,7 @@ export default {
     },
 
     rider: {
+      when: {part: 'noon'},
       cue: 'open.market.hush',
       lines: [
         say('moss', "There's a Road Rat at the gate, and he's on his own. He handed me his gun before I'd asked for it, and he says he only wants to buy a fan belt.", {when: {not: RATS_RAIDING}}),
@@ -302,7 +296,6 @@ export default {
           lines: [say('lug', "So my scrap can come in, and I can't. That's how people feed a dog that they're afraid of.")],
           next: [{when: QUARREL, to: 'yard-quarrel'}, {to: 'dusk'}]},
       ],
-      notes: {at: 'noon'},
     },
 
     // The quarrel, written for the growers and the tinkers. With no odd one in the yard, the day goes straight to dusk.
@@ -402,11 +395,10 @@ export default {
   ends: ['mended', 'peaceful', 'quarrel', 'called-off', 'dots-own-market'],
 
   // What happens when the sign is never followed: Dot holds a small market at the diner, and Tin Town is not in it.
-  ignored: {
-    afterNights: 6,
-    effects: [mark('dots-own-market')],
-    next: 'dots-own-market',
-  },
+  ignored: [
+    {afterChoice: {id: 'not-now', times: 2}, effects: [mark('dots-own-market')], next: 'dots-own-market'},
+    {afterNights: 6, effects: [mark('dots-own-market')], next: 'dots-own-market'},
+  ],
 
   // What somebody says afterwards.
   later: [
@@ -419,9 +411,5 @@ export default {
   notes: {
     // The odd one is cast from the camps that are at odds with one of the three guests.
     castHostileWith: {odd: ['first', 'second', 'third']},
-    // The asking may also be left alone by choosing "not-now" this many times.
-    ignoredOrAfter: {choice: 'not-now', times: 2},
-    // A mark's sentence is written once. These are the sentences that the file wrote again on a later effect of the same mark.
-    markSentenceRepeats: Object.fromEntries(GUESTS.map(role => [`${ID}/comes-${role}`, Array(4).fill(`{${role}.name} will come to the market.`)])),
   },
 };

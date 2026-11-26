@@ -28,8 +28,9 @@ function tally(thread) {
     } else if (value && typeof value === 'object') {
       for (const [name, item] of Object.entries(value)) {
         if (name === 'notes') continue;
-        if (name === 'thought' && typeof item === 'string' && ('words' in value || 'what' in value)) count.thoughts += 1;
-        walk(item, name);
+        if (name === 'thought' && ('words' in value || 'what' in value)) count.thoughts += 1;
+        const mendLines = 'wrenchSeconds' in value && ['during', 'after'].includes(name);
+        walk(item, mendLines ? 'lines' : name);
       }
     }
   };
@@ -54,9 +55,20 @@ const COUNTS = {
   'stranded-hauler': {lines: 67, thoughts: 38, questions: 20, choices: 15},
 };
 
+// These rows moved out of writer notes. The original counts above still account for all other rows.
+const LIFTED = {
+  'dace-goes-looking': {lines: 3},
+  'dry-pump': {lines: 5},
+  'radio-hill-voice': {thoughts: 1},
+  'runaway': {lines: 1, thoughts: 3},
+  'stranded-hauler': {lines: 2},
+};
+
 for (const [name, thread] of Object.entries(threads)) {
   assert.deepEqual(checkThread(thread), [], name + ' is not in the shape');
-  assert.deepEqual(tally(thread), COUNTS[name], name + ': its count of lines, thoughts, questions and choices changed');
+  const count = {...COUNTS[name]};
+  for (const [key, lifted] of Object.entries(LIFTED[name] ?? {})) count[key] += lifted;
+  assert.deepEqual(tally(thread), count, name + ': its count of lines, thoughts, questions and choices changed');
 }
 assert.equal(Object.keys(threads).length, 11, 'nine storylines are written, the burned camp, and one turn of it');
 assert.deepEqual(Object.keys(COUNTS).sort(), Object.keys(threads).sort(), 'every storyline has its counts');
@@ -97,5 +109,6 @@ refused('somebody-elses-flag', copy => { Object.values(copy.cast)[0].not = ['x']
 refused('market-day', copy => { firstBeat(copy).choices[0].effects = [{type: 'thread', id: copy.id, to: 'x'}]; }, 'thread', 'effect written by hand');
 refused('runaway', copy => { firstBeat(copy).choices[0].next = 'nowhere-at-all'; }, 'nowhere-at-all', 'not a beat');
 refused('dry-pump', copy => { firstBeat(copy).when = {after: 'nowhere-at-all'}; }, 'nowhere-at-all', '(after)');
+refused('stranded-hauler', copy => { copy.sign.again.aftrNights = 2; }, 'aftrNights', 'sign.again');
 
 console.log('test-thread-shape: ok');
