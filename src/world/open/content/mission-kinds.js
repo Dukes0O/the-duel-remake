@@ -1,5 +1,6 @@
 // The rules for missions in the open land. Each kind sets up its route and returns the events,
 // requests, and outcome of a tick. The runner owns the lifetime and the hold.
+import {market} from './market-mission.js';
 import {ROAD_REQUEST} from '../encounter-rule.js';
 import {distance} from '../site-rule.js';
 import {sees} from '../../scablands-ways.js';
@@ -520,5 +521,5 @@ const squeeze = {
 export const MISSION_KINDS = Object.freeze({reach: Object.freeze(reach),
   'rider-fight': Object.freeze(riderFight), outrun: Object.freeze(outrun), escort: Object.freeze(escort),
   fight: Object.freeze(fight), heist: Object.freeze(heist),
-  lookout: Object.freeze(lookout), squeeze: Object.freeze(squeeze),
+  lookout: Object.freeze(lookout), squeeze: Object.freeze(squeeze), market: Object.freeze(market),
 });

@@ -25,7 +25,7 @@ export function castThread(thread, world, {ask, placeAt, allows = () => true}) {
     if (row.late) continue;
     const candidates = sources[row.from].filter(id =>
       (!row.among || row.among.includes(id)) && !row.except?.includes(id) &&
-      !row.apartFrom?.some(other => cast[other] === id) && allows(thread, role, id) &&
+      !row.apartFrom?.some(other => cast[other] === id) && allows(thread, role, id, cast) &&
       ask(row.where, cast, subjectFor(row.from, id))).map(id => ({id}));
     const near = row.nearest && placeAt(row.nearest, cast);
     if (near) candidates.sort((a, b) => distanceBetween(near, placeAt(a.id, cast)) - distanceBetween(near, placeAt(b.id, cast)));

@@ -8,6 +8,8 @@ import {distanceBetween} from '../../../story/threads/cast.js';
 import {applyThreadDirector, directThreads, visitId} from '../../../story/threads/director.js';
 import {isFresh, liveSigns, witnessSign, signRecord} from '../../../story/threads/signs.js';
 import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/thread-rule.js';
+import {allowsMarketCast, marketDayStep, marketSignReady} from '../market-day-rule.js';
+import marketDay from '../../../story/threads/content/market-day.js';
 import dryPump from '../../../story/threads/content/dry-pump.js';
 import {mallPlace} from '../content/dry-pump-places.js';
 import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
@@ -28,7 +30,7 @@ import {TOLL_GATE, TOLL_ID, TOLL_SITE, stagedToll, tollPlace, tollTalk, tollOffe
   tollGateStanding, tollGateSolids, tollIgnored, tollPoleUp, atTollPerson,
   tollAfterEnd, tollParkedCars, unusedTollPass, pastTollPole} from '../content/mall-road-toll-places.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, mallRoadToll], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, mallRoadToll], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -47,7 +49,8 @@ function withPlaces(context) {
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsCast: (thread, role, id) => role === 'camp' && thread === dryPump ?
+    allowsCast: (thread, role, id, cast) => thread === marketDay ? allowsMarketCast(role, id, cast, world) :
+      role === 'camp' && thread === dryPump ?
       dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&
         distanceBetween(playerPoint(view), placeForThread(id, {}, view)) > 40),
@@ -63,8 +66,11 @@ export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
 }
 
 export function openThreadSigns(context) {
-  return liveSigns(OPEN_THREADS.filter(thread => (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
-    (thread.id !== TOLL_ID || context.view?.checkpointsEnabled === true)), withPlaces(context));
+  const threads = OPEN_THREADS.filter(thread => (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
+    (thread.id !== TOLL_ID || context.view?.checkpointsEnabled === true) &&
+    (thread !== marketDay ||
+      (context.world.open.threads[marketDay.id] && marketSignReady(context.world, context.world.open.threads[marketDay.id]))));
+  return liveSigns(threads, withPlaces(context));
 }
 
 function localCampVisit({world, view, placeAt}) {
@@ -381,7 +387,8 @@ export function createThreadsPart(threads) {
         night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay,
           sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
       const enabled = view.checkpointsEnabled === true;
-      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID && thread.id !== HAULER_ID && thread.id !== TOLL_ID);
+      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID &&
+        thread.id !== HAULER_ID && thread.id !== TOLL_ID && thread !== marketDay);
       if (enabled) state.places.dryPumpEnabled = true;
       const region = regionId(view);
       const visit = localCampVisit(context);
@@ -430,6 +437,18 @@ export function createThreadsPart(threads) {
         const record = world.open.threads[source.id];
         if (!record) continue;
         const thread = source.id === FLAG_ID ? stagedFlag(world) : source.id === TOLL_ID ? stagedToll(world) : source;
+        if (thread === marketDay) {
+          if (!view.openRoam) continue;
+          const out = marketDayStep(context, record, previous.market, decision.interact, state.mission);
+          state.market = out.state;
+          choices.push(...out.choices);
+          events.push(...out.events);
+          requests.push(...out.requests);
+          if (out.requests.some(request => request.type === 'talk')) decision.interact = false;
+          if (out.mission !== undefined) state.mission = decision.activeMission = out.mission;
+          hold ??= out.hold;
+          continue;
+        }
         if (thread === dryPump) {
           const out = dryPumpStep(context, record, previous.dryPump ?? {}, dt, decision);
           state.dryPump = out.state;

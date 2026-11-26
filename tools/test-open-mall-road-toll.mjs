@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import story from '../src/story/threads/content/mall-road-toll.js';
+import {applyThreadDirector} from '../src/story/threads/director.js';
 import {placeForThread} from '../src/story/scenes/burned-camp.js';
 import {witnessSign} from '../src/story/threads/signs.js';
 import {scablandsFloorsAt} from '../src/world/scablands-ground.js';
@@ -42,18 +43,22 @@ const action = (beat, id, type = 'talkChoice') => ({type, scene: sceneId(beat),
 const interact = (open, beat, id, point = spot('sump'), type) =>
   step(open, point, .1, {onFoot: true, jobEvents: [action(beat, id, type)]});
 const advanceNight = (open, night) => ({...open, world: {...open.world, ledger: {...open.world.ledger, night}}});
+// Hearth checks direct only this storyline, independent of the other loaded storylines.
+const direct = (world, view) => threadsAtBankedHearth({world, view}, [story]);
 
 assert.deepEqual(checkThread(story), []);
 assert.deepEqual(walkThread(story).faults, []);
 assert.equal(createFeatureFlags().enabled('story-choices'), false);
 const early = apply(newWorld({seed: 1234, night: 2}), [{type: 'mark', id: 'burned-camp/toll-promised'}]);
-assert.equal(threadsAtBankedHearth({world: early}, [story]).open.threads[TOLL_ID], undefined);
+assert.equal(direct(early).open.threads[TOLL_ID], undefined);
 const startWorld = withBeat('sign');
 const promised = apply(base(), [{type: 'mark', id: 'burned-camp/toll-promised'}]);
-assert.equal(threadsAtBankedHearth({world: promised}, [story]).open.threads[TOLL_ID].beat, 'sign');
+assert.equal(direct(promised).open.threads[TOLL_ID].beat, 'sign');
 const withFeud = apply(promised, [{type: 'thread', id: 'another-feud', to: 'sign', cast: {}}], 'fixture/another');
 const anotherFeud = {...story, id: 'another-feud'};
-assert.equal(threadsAtBankedHearth({world: withFeud}, [anotherFeud, story]).open.threads[TOLL_ID], undefined);
+// Two fixture storylines still prove feud exclusion on a region occasion.
+assert.equal(applyThreadDirector([anotherFeud, story], {world: withFeud,
+  placeAt: (place, cast) => tollPlace(place) ?? placeForThread(place, cast)}, 'region-west').open.threads[TOLL_ID], undefined);
 assert.equal(openThreadSigns({world: startWorld, view: {checkpointsEnabled: false}}).length, 0);
 const [sign] = openThreadSigns({world: startWorld, view: {checkpointsEnabled: true}});
 assert.deepEqual(sign.at, gate);

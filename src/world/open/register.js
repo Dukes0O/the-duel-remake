@@ -84,7 +84,7 @@ export const THREAD_KINDS = Object.freeze(['trouble', 'find', 'need', 'feud', 's
 export const SIGN_KINDS = Object.freeze(['smoke', 'flare', 'glow', 'lights', 'tracks', 'wreckage', 'thing', 'call',
   'words', 'find', 'stranger', 'notice']);
 export const CAST_SOURCES = Object.freeze(['sites', 'groups', 'peoples', 'persons']);
-export const PARTS_OF_DAY = Object.freeze(['day', 'dusk', 'dark']);
+export const PARTS_OF_DAY = Object.freeze(['dawn', 'day', 'dusk', 'dark']);
 export const ROUTINE_KINDS = Object.freeze(['track', 'wander', 'post']);
 
 export const nameRow = id => byId.get(id) ?? null;

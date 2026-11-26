@@ -69,3 +69,10 @@ Every word a player reads is a whole plain sentence with no em dash. Stay inside
 is needed, write the choice under "Codex decided (Claude to review)" and carry on, unless it touches saves or a
 released course; then stop and say so. Checks use memory-only saves. Write `docs/changes/OPEN-T-TOLL.md` with a **Removed**
 line. After the pull request is open the card is finished: do not wait for review comments.
+
+## Merge follow-up for Claude's assertion review
+
+The merged sites suite now checks that Sump's Gate stands within 1 m of the authored Mall Road. Its road blockade cannot
+meet the camps' 600 m road clearance. That clearance still applies to every other site, and all terrain, approach and
+spacing checks remain. Toll hearth checks now direct only Toll; the existing two-fixture feud exclusion is checked on
+a region occasion with the same expected result. No dialogue, replay fingerprint or world signature changed.

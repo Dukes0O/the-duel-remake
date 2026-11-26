@@ -63,6 +63,15 @@ export const SCENARIO_AREAS = [
     'src/arena/modes/road-riders.js','src/world/open/looks/rats-nest-look.js','src/world/open/content/burned-scout.js',
     'src/world/open/parts/people.js','src/world/open/sign-view.js','src/world/open/looks/glasshouse-look.js',
     'src/world/jobs/story-people.js','src/world/story-people-view.js']},
+  {prefixes:['open-apprentice-run'], paths:['src/app.js','src/arena/modes/world-job.js','src/story/ledger-save.js',
+    'src/story/scenes/routine-offer.js','src/world/jobs/gas-run.js','src/world/jobs/steps/escort.js','src/world/open/day-rule.js',
+    'src/world/open/open-land.js','src/world/open/open-save.js','src/world/open/open-record.js','src/world/open/content/routines.js',
+    'src/world/open/routine-run-rule.js','src/world/open/parts/routines.js','src/world/world-hud.js','src/screen-arena.js']},
+  {prefixes:['open-market-day'], paths:['src/story/threads/content/market-day.js','src/world/open/market-day-rule.js',
+    'src/world/open/content/market-day-places.js','src/world/open/content/market-mission.js','src/world/open/content/mission-kinds.js',
+    'src/world/open/parts/threads.js','src/world/open/parts/missions.js','src/world/open/parts/people.js',
+    'src/world/open/content/sites.js','src/world/open/content/people-sites.js','src/world/open/content/talk-tables.js',
+    'src/world/open/site-view.js','src/world/open/sign-view.js','src/arena/modes/world-job.js']},
   {prefixes:['open-dry-pump'], paths:['src/story/threads/content/dry-pump.js','src/world/open/parts/dry-pump.js',
     'src/world/open/content/dry-pump-places.js','src/world/open/content/mission-kinds.js','src/world/open/parts/missions.js',
     'src/world/open/parts/threads.js','src/world/open/looks/dry-pump-look.js','src/world/open/sign-view.js',
@@ -85,7 +94,7 @@ export const SCENARIO_AREAS = [
     'src/world/open/sign-view.js', 'src/arena/modes/world-job.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
-export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||
+export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2','open-apprentice-run'].includes(name) ||
   /save|storage|backup|restore|archive|migrat|pay|reward/.test(name);
 const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
 const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
