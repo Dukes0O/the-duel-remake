@@ -197,6 +197,11 @@ const talkTick = (interact, jobEvents = []) => {
 };
 const first = talkTick(true);
 assert.equal(first.person, 'cinder');
+talkTick(false, [{type: 'openTalkSkipped', scene: first.id, finished: true}]);
+assert.equal(land.parts.people.active, null, 'a town talk skipped for a storyline releases its speaker');
+assert.deepEqual(land.parts.people.heard, [], 'a skipped talk was never heard, even if marked finished');
+assert.deepEqual(land.world, sample);
+assert.equal(talkTick(true).id, first.id, 'the skipped town talk can be requested again');
 talkTick(false, [
   {type: 'openTalkQuestion', scene: first.id, id: 'pump', effects: [{type: 'mark', id: 'test/pump-asked'}]},
   {type: 'openTalkClosed', scene: first.id},

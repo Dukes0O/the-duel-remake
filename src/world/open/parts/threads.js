@@ -10,6 +10,10 @@ import {isFresh, liveSigns, witnessSign, signRecord} from '../../../story/thread
 import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/thread-rule.js';
 import {allowsMarketCast, marketDayStep, marketSignReady} from '../market-day-rule.js';
 import marketDay from '../../../story/threads/content/market-day.js';
+import runaway from '../../../story/threads/content/runaway.js';
+import {RUNAWAY_GATE_RIDERS, RUNAWAY_SIGN, runawayBeat, runawayCanStart, runawayPlace} from '../content/runaway-places.js';
+import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
+import {distance, residentPose, sitePosition} from '../site-rule.js';
 import dryPump from '../../../story/threads/content/dry-pump.js';
 import {mallPlace} from '../content/dry-pump-places.js';
 import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
@@ -21,11 +25,9 @@ import {HAULER_ID, haulerPlaces, haulerStop, haulerMission, haulerReading, haule
 import {haulerTalkScene, haulerGateNews} from '../content/talk-hauler.js';
 import {haulerVisitor} from '../content/stranded-hauler-places.js';
 import {flagStory, FLAG_ID, FLAG_SCENES, FLAG_LATER_PLACES, FLAG_TALK_ROWS, stagedFlag, flagSolids} from '../content/somebody-elses-flag-places.js';
-import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
-import {residentPose} from '../site-rule.js';
 import {campPeople} from '../content/people-sites.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -36,12 +38,13 @@ function withPlaces(context) {
       const hauler = haulerPlaces(world);
       if (place?.checkpoint?.who === 'traders') return hauler.sign ?? null;
       if (typeof place === 'string' && Object.hasOwn(hauler, place)) return hauler[place];
-      const point = mallPlace(place) ?? placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
+      const point = runawayPlace(place, cast) ?? mallPlace(place) ?? placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
+    signFor: thread => thread === runaway ? RUNAWAY_SIGN : thread.sign,
     allowsCast: (thread, role, id, cast) => thread === marketDay ? allowsMarketCast(role, id, cast, world) :
       role === 'camp' && thread === dryPump ?
       dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
@@ -55,11 +58,14 @@ function withPlaces(context) {
 // `threads` narrows the director to some storylines, so that one storyline's checks are not changed by which others
 // happen to be loaded; the game always passes none and directs every loaded storyline.
 export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
-  return applyThreadDirector(threads, withPlaces(context), 'hearth');
+  const available = threads.filter(thread => thread !== runaway ||
+    runawayCanStart({...context, view: {...context.view, checkpointsEnabled: true}}));
+  return applyThreadDirector(available, withPlaces(context), 'hearth');
 }
 
 export function openThreadSigns(context) {
-  const threads = OPEN_THREADS.filter(thread => (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
+  const threads = OPEN_THREADS.filter(thread => (thread !== runaway || context.view?.runawayVisible) &&
+    (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
     (thread !== marketDay ||
       (context.world.open.threads[marketDay.id] && marketSignReady(context.world, context.world.open.threads[marketDay.id]))));
   return liveSigns(threads, withPlaces(context));
@@ -71,9 +77,10 @@ function localCampVisit({world, view, placeAt}) {
 }
 
 function outputFor(thread, context, record, state, observed, decision, dt) {
+  const isRunaway = thread === runaway;
   const {world, view, seconds, previousEvents} = context;
-  const {beat: beatId} = record;
-  const beat = thread.beats[beatId];
+  const beat = isRunaway ? runawayBeat(record, context) : thread.beats[record.beat];
+  const beatId = beat?.id ?? record.beat;
   const hauling = thread.id === HAULER_ID;
   const visit = hauling && haulerMarked(world, 'second-truck') ? '/again' : '';
   if (state.visit !== visit) { state.reading = {}; state.mending = 0; state.lifting = false; }
@@ -86,7 +93,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const remember = (kind, id) => mark(threadMark(thread.id, kind, id + state.visit));
   const once = (kind, id, effects = []) => choose(`${kind}/${id}`, [remember(kind, id), ...effects]);
   const text = (id, words) => out.requests.push({type: 'say', lineId: `open/${thread.id}/${id}`, text: rule.line(words)});
-  const line = (id, row) => text(id, `${row.as ?? nameOf(row.speaker) ?? rule.line(row.speaker)}: ${row.words}`);
+  const speaker = row => row.as ?? (isRunaway && row.speaker === 'slack' && rule.ask({asked: 'his-name'}) ? 'Nat' :
+    nameOf(row.speaker) ?? rule.line(row.speaker));
+  const line = (id, row) => text(id, `${speaker(row)}: ${row.words}`);
   const cue = (id, sound) => { if (sound) out.events.push({type: 'threadCue', id, cue: sound}); };
   const move = (id, row, effects = []) => {
     const cast = row.cast ? {...record.cast, ...row.cast} : undefined;
@@ -130,9 +139,12 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     }
   }
 
-  const followed = Object.keys(thread.beats).some(id => id !== firstBeat(thread) && rule.has('entered', id));
+  const followed = isRunaway ? rule.ask({fact: 'mark', id: 'runaway/found-him'}) :
+    Object.keys(thread.beats).some(id => id !== firstBeat(thread) && rule.has('entered', id));
   const unhelped = hauling && !haulerMarked(world, 'helped') && beatId !== 'between';
-  const ignored = [thread.ignored].flat().find(row => rule.ask(row.when) && (
+  const ignored = isRunaway ? (!record.end && !followed && ['prints', 'shed'].includes(record.beat) &&
+    (world.ledger.night > record.began || rule.ask(thread.ignored.when)) ? thread.ignored : null) :
+    [thread.ignored].flat().find(row => rule.ask(row.when) && (
     ((!followed || unhelped) && world.ledger.night - signRecord(thread, record, world).began >=
       (row.afterNights ?? thread.sign.lastsNights ?? Infinity)) ||
     (row.afterChoice && rule.has('chose', row.afterChoice.id))));
@@ -143,6 +155,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   }
 
   const ownedHold = context.holds.some(hold => hold.holder === holder);
+  if (isRunaway && !view.checkpointsEnabled) return out;
   const entered = rule.has('entered', beatId);
   const staging = thread.id === FLAG_ID && FLAG_SCENES[beatId];
   const atTalk = !staging || view.onFoot === staging.foot && rule.ask({reach: staging.at, within: staging.within});
@@ -156,12 +169,14 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const exploring = entered && view.onFoot && beat.explore?.length && rule.ask({reach: thread.sign.at, within: 45});
   if (staging && !atTalk && !exploring) return out;
   if (opening && isHeld(context.holds, 'signs') && !ownedHold) return out;
-  const approachedCold = opening && beat.when === 'sign-seen' && !isFresh(thread, signRecord(thread, record, world), world.ledger.night) &&
+  const approachedCold = !isRunaway && opening && beat.when === 'sign-seen' && !isFresh(thread, signRecord(thread, record, world), world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
   if (hauling && beatId === 'gate' && !entered &&
       (!haulerAtGate(world) || distanceBetween(playerPoint(view), haulerGate) > 40)) return out;
   const startingMission = mission && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
-    (mission.by !== 'car' || !view.onFoot) && !view.combatWrecking && !view.missionLeaving && !(mission.outing && view.outingAvailable === false);
+    (mission.by !== 'car' || !view.onFoot) && (!isRunaway || mission.by !== 'foot' || view.onFoot) &&
+    (!view.combatWrecking || (isRunaway && beatId === 'breakout')) && !view.missionLeaving &&
+    !(mission.outing && view.outingAvailable === false);
   if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
     if (mission) {
       if (!startingMission) return out;
@@ -183,9 +198,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
         posts: (beatId === 'ridge' || haulerIsTrap(world)) ? stop.starts : []});
     }
     const entry = [remember('entered', beatId), ...rule.effects(beat.effects)];
-    (beat.lines ?? []).filter(row => rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
+    (beat.lines ?? []).filter(row => (!isRunaway || !(beat.walked || beat.choices?.some(choice => choice.by !== 'go'))) && rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
     if (!approachedCold) cue(beatId, beat.cue ?? (opening ? thread.sign.cue : undefined));
-    if (beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
+    if (!beat.walked && beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
       entry.push(...rule.move(beat.next));
     choose(`entered/${beatId}`, entry);
     if (opening && !approachedCold) (beat.thoughts ?? []).forEach((row, index) => {
@@ -196,10 +211,97 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   }
   if (!rule.has('entered', beatId)) return out;
   state.beatSeconds[beatId] ??= seconds;
+  if (isRunaway) {
+    if (record.end) return out;
+    const sceneId = `${thread.id}/${beatId}/decision`;
+    const talkEvents = (view.jobEvents ?? []).filter(event => event.scene === sceneId);
+    for (const event of talkEvents) if (event.type === 'openTalkQuestion' && !rule.has('asked', event.id)) {
+      const question = beat.questions?.find(row => row.id === event.id);
+      if (question) once('asked', question.id, rule.effects(question.effects));
+    }
+    const chosen = talkEvents.find(event => event.type === 'talkChoice');
+    const justAsked = new Set(chosen?.asked ?? talkEvents.filter(event => event.type === 'openTalkQuestion').map(event => event.id));
+    const ask = when => askWithQuestions(when, rule, justAsked);
+    const available = (beat.choices ?? beat.walked ?? []).filter(row =>
+      !rule.has('chose', row.id) && ask(row.when) &&
+      !(beatId === 'gate' && rule.ask({fact: 'mark', id: 'runaway/wim-told'}) &&
+        !['keep', 'hand-back'].includes(row.id)));
+    const option = available.find(row => row.by === 'go' ? view.onFoot && decision.interact :
+      chosen?.id === sceneId + '/' + row.id);
+    if (option) {
+      decision.interact = false;
+      const wim = thread.beats.gate.notes.choices['no-boy'].wimSpeaks;
+      const discovered = option.id === 'no-boy' && !ask({asked: wim.when.notAsked}) &&
+        rule.ask({fact: 'mark', id: 'runaway/among-the-walkers'});
+      const extra = discovered ? wim.effects : [];
+      (option.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`choice/${option.id}/${index}`, row));
+      if (discovered) wim.lines.forEach((row, index) => line(`choice/wim/${index}`, row));
+      cue(option.id, option.cue);
+      (beat.thoughts ?? []).filter(row => row.slot === 'after' && row.when?.chose === option.id)
+        .forEach((row, index) => text(`choice/${option.id}/after/${index}`, row.thought));
+      if (option.thought) text(`choice/${option.id}/thought`, option.thought);
+      move(`choice/${option.id}`, discovered ? {...option, next: 'gate'} : option, [remember('chose', option.id), ...extra]);
+      return out;
+    }
+    if (chosen?.id === sceneId + '/leave-hearth' && !rule.has('heard', 'hearth-after')) {
+      once('heard', 'hearth-after');
+      beat.lines.filter(row => row.slot === 'after').forEach((row, i) => line('hearth/after/' + i, row));
+    }
+    const here = playerPoint(view);
+    if (beatId === 'gate' && view.onFoot && decision.interact &&
+        rule.ask({fact: 'mark', id: 'runaway/among-the-walkers'}) && !rule.has('asked', 'wim-secret')) {
+      const question = thread.beats.hiding.notes.choices['among-the-walkers'].questions[0];
+      if (distance(here, runawayPlace('runaway:among-the-walkers', {})) <= 5) {
+        decision.interact = false;
+        once('asked', question.id);
+        question.lines.forEach((row, index) => line(`ask/${question.id}/${index}`, row));
+      }
+    }
+    const mendBeat = thread.beats.shed;
+    const mend = ['shed', 'hiding', 'hearth', 'gate'].includes(beatId) ? mendBeat.mend : null;
+    if (mend && rule.has('asked', mendBeat.notes.mendOfferedWith.question) && world.scrap >= mend.scrap &&
+        !rule.ask({fact: 'mark', id: 'runaway/wire-mended'}) && view.onFoot && view.wrench &&
+        distance(here, runawayPlace('runaway:wire', {})) <= 3) {
+      if (seconds - (state.mendingSince ?? seconds) >= mend.wrenchSeconds)
+        choose('mended-wire', rule.effects(mend.effects));
+      state.mendingSince ??= seconds;
+    } else state.mendingSince = undefined;
+
+    const spoken = (beat.choices ?? (beat.walked ? [{id: 'leave-hearth', words: 'I hear you.'}] : [])).filter(row => row.by !== 'go' && !rule.has('chose', row.id) &&
+      !(beatId === 'gate' && rule.ask({fact: 'mark', id: 'runaway/wim-told'}) && !['keep', 'hand-back'].includes(row.id)));
+    if (spoken.length && decision.interact && view.openRoam && (view.onFoot || beatId === 'surrounded') &&
+        rule.ask(beat.when)) {
+      const talkLine = row => ({...row, speaker: speaker(row), words: rule.line(row.words)});
+      const questions = (beat.questions ?? []).filter(row => !rule.has('asked', row.id) && askWithQuestions(row.when, rule, null))
+        .map(row => ({id: row.id, words: rule.line(row.words), needs: pendingQuestions(row.when, rule),
+          lines: row.lines.map(talkLine)}));
+      const choices = spoken.filter(row => askWithQuestions(row.when, rule, null)).map(row => ({
+        id: sceneId + '/' + row.id, words: rule.line(row.words),
+        thought: typeof row.thought === 'string' ? rule.line(row.thought) : undefined,
+        needs: pendingQuestions(row.when, rule), detail: row.plain && rule.line(row.plain),
+      }));
+      if (choices.length) {
+        decision.interact = false;
+        const scene = {id: sceneId, lines: beat.lines?.filter(row => row.slot !== 'after' && rule.ask(row.when)).map(talkLine), questions, choices,
+          thoughts: (beat.thoughts ?? []).filter(row => typeof row === 'string' || row.slot !== 'after' && rule.ask(row.when))
+            .map(row => rule.line(typeof row === 'string' ? row : row.thought))};
+        const person = beatId === 'shed' ? 'slack' : beatId === 'gate' ? 'clinker' : beatId === 'hearth' ? 'auntie-solder' : 'you';
+        out.requests.push({type: 'talk', id: sceneId, scene, speaker: person, radio: true});
+        return out;
+      }
+    }
+    if (beatId === 'prints') for (const row of thread.notes.sign.lines) {
+      const spot = row.at === 'hearth' ? 'hearth' : 'in-the-shed';
+      if (view.onFoot && !rule.has('heard', row.at) && distance(here, runawayPlace('runaway:' + spot, {})) <= 5) {
+        once('heard', row.at);
+        line('heard/' + row.at, row);
+      }
+    }
+  }
 
   const roadThoughtsReady = !hauling || !beatId.endsWith('-road') || state.reading?.verge?.seconds >= 2 ||
     seconds - state.beatSeconds[beatId] >= 30;
-  if (!opening && roadThoughtsReady) (beat.thoughts ?? []).forEach((row, index) => {
+  if (!opening && !isRunaway && roadThoughtsReady) (beat.thoughts ?? []).forEach((row, index) => {
     const thought = typeof row === 'string' ? {thought: row} : row, id = `${beatId}-${index}`;
     if (rule.has('thought', id) || !rule.ask(thought.when)) return;
     once('thought', id);
@@ -219,7 +321,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   }
 
   const completed = (view.jobEvents ?? []).filter(event => event.type === 'talkChoice');
-  const radio = radioScene(thread, beat, rule);
+  const radio = isRunaway ? null : radioScene(thread, beat, rule);
   const asked = new Set([
     ...(completed.find(event => event.id === `${thread.id}/radio-done`)?.asked ?? []),
     ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === radio?.id).map(event => event.id),
@@ -249,6 +351,11 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       const thought = typeof row === 'string' ? {thought: row} : row, id = `${beatId}-mission-${index}`;
       if (rule.ask(thought.when) && !rule.has('thought', id)) { once('thought', id); text(id, thought.thought); }
     });
+    return out;
+  }
+
+  if (isRunaway) {
+    if (beatId === 'prints' && rule.has('found', 'handprint')) choose('next/prints', rule.move(beat.next));
     return out;
   }
 
@@ -297,6 +404,17 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   return out;
 }
 
+function askWithQuestions(when, rule, answers) {
+  if (when?.all) return when.all.every(row => askWithQuestions(row, rule, answers));
+  if (when?.asked) return answers === null || answers.has(when.asked) || rule.ask(when);
+  return rule.ask(when);
+}
+
+function pendingQuestions(when, rule) {
+  if (when?.all) return when.all.flatMap(row => pendingQuestions(row, rule));
+  return when?.asked && !rule.ask(when) ? [when.asked] : [];
+}
+
 export function createThreadsPart(threads) {
   return {
     id: 'threads',
@@ -309,20 +427,40 @@ export function createThreadsPart(threads) {
       const enabled = view.checkpointsEnabled === true;
       const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID && thread.id !== HAULER_ID && thread !== marketDay);
       if (enabled) state.places.dryPumpEnabled = true;
-      const region = regionId(view);
+      const canStartRunaway = runawayCanStart(context);
+      const region = canStartRunaway ? 'runaway-tin-town' : regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
       if (!isHeld(holds, 'signs') && region && !state.regions.includes(region)) {
-        choices.push(...directThreads(availableThreads, context, `region-${region}`));
+        choices.push(...directThreads(availableThreads.filter(thread => thread !== runaway || canStartRunaway), context, `region-${region}`));
         state.regions.push(region);
       }
       const events = [], requests = [];
+      if (view.checkpointsEnabled && view.onFoot && world.ledger.marks.includes('rumour/grey-camp') &&
+          !isFound(world, 'grey-camp') && distance(playerPoint(view), sitePosition('grey-camp', world.open.landSeed)) <= 30) {
+        choices.push({id: 'runaway/discovered-grey-camp', effects: [{type: 'find', site: 'grey-camp'}]});
+        events.push({type: 'threadCue', id: 'runaway/grey-camp', cue: 'open.clue.found'});
+      }
+      const gateRecord = world.open.threads.runaway;
+      const gateCars = !!view.checkpointsEnabled && gateRecord?.beat === 'gate' && !gateRecord.end && view.partOfDay === 'dusk';
+      if (gateCars !== !!previous.runawayGateCars) {
+        const count = runaway.beats.gate.notes.rule;
+        const raiding = threadRule(runaway, context, gateRecord ?? {}).ask({fact: 'feud', of: 'ash-men', atLeast: 'Raiding'});
+        requests.push({type: 'missionLookouts', group: 'ash-men', id: 'runaway/gate-party',
+          posts: gateCars ? RUNAWAY_GATE_RIDERS.slice(0, raiding ? count.riderCarsWhenRaiding : count.riderCars)
+            .map(at => ({...at, y: scablandsSurfaceHeightAt(at.x, at.z)})) : []});
+      }
+      state.runawayGateCars = gateCars;
+      const runawayVisible = !!view.checkpointsEnabled && ['day', 'dawn'].includes(view.partOfDay ?? 'day');
+      state.places.runawayVisible = runawayVisible;
+      if (view.partOfDay === 'dawn' && runawayVisible) state.places.partOfDay = 'day';
       const flagKey = view.checkpointsEnabled && world.open.threads[FLAG_ID] ?
         world.open.threads[FLAG_ID].end ?? 'company' : '';
       state.flagSite = flagKey;
       if (flagKey !== (previous.flagSite ?? '')) requests.push({type: 'solids', id: FLAG_ID,
         solids: flagKey ? flagSolids(world, scablandsSurfaceHeightAt) : []});
-      const signs = liveSigns(availableThreads, context);
+      const signs = liveSigns(availableThreads.filter(thread => thread !== runaway || runawayVisible),
+        {...context, view: {...view, partOfDay: view.partOfDay === 'dawn' ? 'day' : view.partOfDay}});
       const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission, journey: enabled && previous.journey};
       const settled = input.previousEvents.some(event => event.id === previous.mission &&
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
@@ -356,6 +494,7 @@ export function createThreadsPart(threads) {
           release ??= out.release;
           continue;
         }
+        if (thread === runaway && !view.checkpointsEnabled) continue;
         const struck = thread.notes?.sign?.struck;
         const waterStruck = !record.end && struck && night - record.began >= struck.afterNights;
         if (waterStruck)
@@ -364,7 +503,7 @@ export function createThreadsPart(threads) {
         const threadContext = waterStruck ? {...context, world: {...world, ledger: {...world.ledger,
           marks: [...world.ledger.marks, ...struck.effects.filter(row => row.type === 'mark').map(row => row.id)]}}} : context;
         const laterRule = threadRule(thread, threadContext, record);
-        const laterRows = thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.later ?? [];
+        const laterRows = thread === runaway ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.later ?? [];
         const later = laterRows.find(row => {
           if (!view.onFoot || !laterRule.ask(row.when) || laterRule.has('later', row.id)) return false;
           if (thread.id === FLAG_ID && (!record.end || night - (world.open.journal.findLast(change =>
@@ -387,14 +526,16 @@ export function createThreadsPart(threads) {
         }
         for (const row of laterRows) if (view.jobEvents?.some(event => event.type === 'talkChoice' && event.id === `${thread.id}/later/${row.id}`) && later?.id === row.id)
           choices.push({id: `${thread.id}/later/${row.id}`, effects: [mark(threadMark(thread.id, 'later', row.id)), ...laterRule.effects(row.effects)]});
-        if (record.end) continue;
+        if (record.end && thread !== runaway) continue;
         const first = record.beat === firstBeat(thread);
         const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), view, previous.seen?.[thread.id] ?? 0, dt) : null;
         if (sight?.seconds) state.seen[thread.id] = sight.seconds;
         const details = {...previous.progress?.[thread.id], beatSeconds: {...state.beatSeconds[thread.id]},
-          reading: {...previous.progress?.[thread.id]?.reading}};
+          reading: {...previous.progress?.[thread.id]?.reading},
+          ...(thread === runaway ? {mendingSince: previous.mendingSince} : {})};
         details.beatSeconds[record.beat] ??= context.seconds;
         const out = outputFor(thread, threadContext, record, details, sight?.witnessed ?? false, decision, dt);
+        if (details.mendingSince !== undefined) state.mendingSince = details.mendingSince;
         (state.progress ??= {})[thread.id] = details;
         if (Object.keys(details.beatSeconds).length) state.beatSeconds[thread.id] = details.beatSeconds;
         choices.push(...out.choices);

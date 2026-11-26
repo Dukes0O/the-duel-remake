@@ -36,7 +36,7 @@ export function createBrandAshView({road = false} = {}) {
       // OPEN-CHECKPOINTS: use the standing figure rig for the driver even before the road fight view exists.
       const driver = worldJob?.checkpointRoad?.driver;
       group.visible = road ? Boolean(fight) :
-        Boolean(driver) || step?.brand === true || worldJob?.night2 != null && (step?.id === 'scout' || worldJob.night2.scoutDowned === true);
+        Boolean(driver || worldJob?.threadDefence || worldJob?.actors?.some(actor => actor.missionRetreat)) || step?.brand === true || worldJob?.night2 != null && (step?.id === 'scout' || worldJob.night2.scoutDowned === true);
       const actors = group.visible ? (worldJob.actors ?? []).filter(actor => road
         ? actor.riderCrew && actor.id !== driver : actor.brandAsh || actor.id === driver) : [];
       figures.update(actors, {active: group.visible, drawnShift});

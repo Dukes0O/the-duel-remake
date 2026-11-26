@@ -1269,18 +1269,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-RUNAWAY
-    title: "Open Scablands: The Runaway comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-RUNAWAY.md"
-
   - id: OPEN-T-TOLL
     title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1352,6 +1340,16 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-LOOK-RADIO-HILL-2.md"
+
+  - id: AGENTS-REWRITE
+    title: "AGENTS.md rewritten around three lines: works and better merges, broken waits, the rest is the next card (Kyle, 26 November)"
+    owner: "claude"
+    lane: "DOCS"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/AGENTS-REWRITE.md"
 
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"

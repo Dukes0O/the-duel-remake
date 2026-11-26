@@ -16,14 +16,21 @@ export function isSignAlive(thread, record, night) {
   return !record.end && record.beat === firstBeat(thread);
 }
 
-export function liveSigns(threads, {world, holds = NO_HOLDS, view = {}, placeAt}) {
+export function liveSigns(threads, {world, holds = NO_HOLDS, view = {}, placeAt, signFor = thread => thread.sign}) {
   if (isHeld(holds, 'signs')) return [];
   return threads.flatMap(thread => {
-    const record = world.open.threads[thread.id], {sign} = thread;
+    const record = world.open.threads[thread.id], sign = signFor(thread);
     if (!record || !isSignAlive(thread, signRecord(thread, record, world), world.ledger.night) || (sign.part && sign.part !== (view.partOfDay ?? 'day'))) return [];
     const at = placeAt(sign.at, record.cast);
-    return [{id: thread.id, sign, at}];
+    return [{id: thread.id, sign, at,
+      ...(sign.points ? {points: sign.points.map(key => placeAt(thread.id + ':' + key, record.cast)).filter(Boolean)} : {})}];
   });
+}
+
+function witnessStranger(entry, view) {
+  const player = view.player?.position ?? view.player;
+  return !!view.onFoot && (entry.points ?? [entry.at]).some(point =>
+    distanceBetween(player, point) <= (entry.sign.seenWithin ?? 2.5));
 }
 
 export function witnessSign(entry, view, elapsed, dt) {
@@ -32,6 +39,7 @@ export function witnessSign(entry, view, elapsed, dt) {
   const player = view.player?.position ?? view.player;
   if (sign.kind === 'words') return {seconds: 0, witnessed: (view.jobEvents ?? []).some(event =>
     event.type === 'talkChoice' && event.id === `${id}/heard-sign`)};
+  if (sign.kind === 'stranger') return {seconds: 0, witnessed: witnessStranger(entry, view)};
   const inRange = !at || distanceBetween(player, at) <= (sign.seenWithin ?? Infinity);
   if (sign.kind === 'call') return {seconds: 0, witnessed: inRange};
   if (sign.kind === 'thing') return witnessThing(entry, view, elapsed, dt);
