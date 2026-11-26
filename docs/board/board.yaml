@@ -1450,7 +1450,8 @@ tasks:
     model: "astra"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex (cloud), 25 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
