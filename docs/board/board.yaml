@@ -1464,7 +1464,8 @@ tasks:
     model: "sol"
     lane: "TOOLS"
     size: "M"
-    status: "ready"
+    status: "review"
+    waiting_on: "claude"
     needs: []
     locks: []
     flag: "story-choices"
