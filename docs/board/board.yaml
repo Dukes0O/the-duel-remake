@@ -1551,17 +1551,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-WRITE-2.md"
 
-  - id: OPEN-WRITE-3
-    title: "Open Scablands, written in full: A toll on the Mall Road, Market day, Somebody else's flag"
-    owner: "claude-cloud"
-    lane: "DESIGN"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-WRITE-3.md"
-
   - id: OPEN-LOOK-GLASSHOUSE
     title: "Open Scablands: the Glasshouse drawn in code, whole and burned (round 1)"
     owner: "claude-cloud"

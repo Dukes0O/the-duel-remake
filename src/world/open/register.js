@@ -22,16 +22,18 @@ export const NAMES = Object.freeze([
   person('marigold', 'glasshouse'), person('finch', 'glasshouse'),
   people('radio-hill', {leader: 'hetty', thing: 'the set'}),
   person('hetty', 'radio-hill'), person('bern', 'radio-hill'),
-  people('bus-ring', {thing: 'their tools'}),   // no leader yet: a line that asks for one gets the people's name
+  people('bus-ring', {leader: 'gasket', thing: 'their tools'}),
+  person('gasket', 'bus-ring'),
   people('deck-folk', {leader: 'captain-imre'}),
   person('captain-imre', 'deck-folk'),
   people('ash-men', {group: true, feud: true, leader: 'old-smoke'}),
   person('old-smoke', 'ash-men'), person('clinker', 'ash-men'),
   people('road-rats', {group: true, feud: true, leader: 'sump'}),
-  person('sump', 'road-rats'),
+  person('sump', 'road-rats'), person('lug', 'road-rats'),
   people('water-men', {group: true, feud: true, leader: 'mrs-vane'}),
-  person('mrs-vane', 'water-men'),
+  person('mrs-vane', 'water-men'), person('miss-pell', 'water-men'),
   people('traders', {group: true}),
+  person('nan-tallow', 'traders'),
   people('travellers', {group: true}),
 ]);
 const byId = new Map(NAMES.map(row => [row.id, row]));
@@ -61,6 +63,8 @@ export const SITES = Object.freeze([
   site('crows-step', "The Crow's Step", 'lookout'),
   site('rats-nest', "The Rats' Nest", 'den', 'road-rats'),
   site('grey-camp', 'The Grey Camp', 'den', 'ash-men'),
+  // Sites that the storylines written in full bring in.
+  site('sumps-gate', "Sump's Gate", 'den', 'road-rats'),
 ]);
 const siteById = new Map(SITES.map(row => [row.id, row]));
 

@@ -28,9 +28,14 @@ export const STORY_PEOPLE = Object.freeze({
   'old-smoke': 'Old Smoke',
   traders: 'The traders',
   travellers: 'Travellers on foot',
-  'water-men': "Mrs Vane's water men",
+  'water-men': 'The water men',   // her name is kept back (docs/story/the-polite-letter.md, chapters 17 and 18)
   'mrs-vane': 'Mrs Vane',
   'captain-imre': 'Captain Imre',
+  // The storylines written in full (docs/story/threads/).
+  'nan-tallow': 'Nan Tallow',
+  gasket: 'Gasket',
+  lug: 'Lug',
+  'miss-pell': 'Miss Pell',
 });
 
 export const FEUD_WORDS = Object.freeze(['Watching', 'Raiding', 'Hunting', 'War party']);
