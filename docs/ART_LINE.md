@@ -386,6 +386,10 @@ the game.
 - **A fire's smoke column between a viewpoint and what it looks at hides it.** `createSmokeColumn` is one upright sheet and it is wide a few metres up. Keep every fire a few metres off the line from each place to look from to its target, and keep `foot` under a metre.
 - **A wreck on its side, seen from its roof, is a box.** A shell built from stations along its length reads as a car from the side (arches, window openings, pillars). Stack wrecks upright where they face the viewer.
 - **The rear view is drawn into the game's own canvas,** so hiding the page's other elements leaves it in every picture. Give `.rear-view-frame` no size (`display:none`) and send a `resize`: the rear view is not drawn while its frame measures nothing.
+- **The nearest road may not see the site** (OPEN-LOOK-BUS-RING). The Ridge Road passes the Bus Ring 740 m off but 40 m up, behind the ridge's edge, and the first far picture was of a bank. Pick the far view by sight line (`sees` along each road, sampled every few metres), and face the gate and the tell towards that road.
+- **A light-card for a far tell needs a least size.** A welding flash sized for the yard was a second sun close up and nothing at 700 m. Give the card a least angle (its size grows with distance only beyond it), so that it is small near and a few pixels far.
+- **A point light beside thin tube makes it neon.** The arc's light a few centimetres from the buggy frame lit its tubes white. Stand the light off the work, a metre up and out towards the viewer, and keep it near the lamps' strength.
+- **Vertex rust in whole-number cells reads as planks.** Weathering picked per cell of `floor(z), floor(y)` came out as boards on a bus side; interpolate the noise smoothly, and keep `createScrapWear`'s `paint` near 0.45 on long metal sides.
 
 ### Moments (a thing that happens, not a thing that stands)
 
