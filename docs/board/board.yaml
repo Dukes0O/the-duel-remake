@@ -47,6 +47,17 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
 
+  - id: QA-NIGHT-26-NOV
+    title: "Cure or card each failure of the night check of 26 November"
+    owner: "claude"
+    lane: "TOOLS"
+    size: "S"
+    status: "building"
+    claimed_by: "Claude, 26 November 2026: reruns of the 18 browser failures and the cause of the changed copy"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-NIGHT-26-NOV.md"
+
   - id: QA-NIGHT-22-NOV
     title: "Four browser scenarios behind dev switches fail since the night of 22 November (on-foot exit, far rain, borer)"
     owner: "codex"
