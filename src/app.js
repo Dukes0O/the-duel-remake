@@ -1688,16 +1688,31 @@ export class App {
       const completed = result.winnerId === 'player' && ['complete', 'job-complete'].includes(result.reason) && job.job.done;
       if (!completed && !(roam && result.reason === 'job-quit')) return false;
 
-      const previous = this.profile, world = job.open.world;
+      // Read the active registry again on every attempt. A save denied by
+      // storage must not make a later attempt overwrite a different player.
+      const registry = loadPlayers(), owner = activePlayer(registry);
+      if (owner.id !== this._runPlayerId || !wastelandUnlocked(owner.profile)) {
+        result.openSaveIssue = 'The active player changed before the open land was saved.';
+        return false;
+      }
+      const verified = this._warlordVerifiedOwner;
+      if (this.profileSaved === false &&
+          (verified?.ownerId !== owner.id || verified.snapshot !== JSON.stringify(owner.profile))) {
+        result.openSaveIssue = 'Your saved progress has changed. The open land is still in this run.';
+        return false;
+      }
+      const previous = this.profileSaved === false ? this.profile : owner.profile;
+      const world = job.open.world;
       const open = {...world.open, car: {...world.open.car, armour: state.armor}};
       const updated = settleOpenWorld(previous, {...world, open}, {
         atStart: job.definition.open.world, savedAtStart: job.savedOpenAtStart,
       });
-      if (updated.ok && updated.changed) this.profile = updated.profile;
-      result.settlementSaved = updated.ok && (!updated.changed || this._saveShopProfile(previous));
+      const candidate = updated.changed ? replacePlayerProfile(registry, owner.id, updated.profile) : null;
+      result.settlementSaved = updated.ok && (!candidate || savePlayers(candidate));
       result.openSaveIssue = updated.reason || (result.settlementSaved ? '' : 'Your open land could not be saved. Try again.');
       if (result.settlementSaved) {
-        result.scrapBalance = this.profile.wasteland.scrap;
+        if (candidate) this._adoptWarlordRegistry(candidate, true);
+        result.scrapBalance = updated.profile.wasteland.scrap;
         result.scrapEarned = Math.max(0, result.scrapBalance - previous.wasteland.scrap);
       }
       return result.settlementSaved;

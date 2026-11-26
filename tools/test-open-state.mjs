@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {App} from '../src/app.js';
-import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
+import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers, selectPlayer} from '../src/progression.js';
 import {applyChoice, createLedger, namedThrow} from '../src/story/ledger.js';
 import {savedLedger} from '../src/story/ledger-save.js';
 import {NIGHT_2_CHOICES, NIGHT_2_QUESTIONS} from '../src/story/scenes/night-2.js';
@@ -279,6 +279,20 @@ for (const complete of [false, true]) {
   app.duel.featureFlags = off;
   assert(app.leaveWorldJob());
   assert.equal(store.getItem(PLAYERS_KEY), kept, 'switch-off settlement writes nothing');
+}
+
+// Another session can switch the active player while a job is open. A
+// finishing job may never switch that player back or write either profile.
+{
+  const app = appAtYard(oldFixture);
+  assert(app.startOpenRoam());
+  chooseInOpen(app, 'test/changed-active-player', [{type: 'scrap', by: -5}]);
+  assert(savePlayers(selectPlayer(loadPlayers(localStorage), 'water-old'), localStorage));
+  const before = localStorage.getItem(PLAYERS_KEY);
+  assert(app.leaveWorldJob());
+  assert.equal(app.duel.state.arena.result.settlementSaved, false);
+  assert.equal(app.worldJobAgain(), false);
+  assert.equal(localStorage.getItem(PLAYERS_KEY), before);
 }
 
 console.log('Open state: fixture compatibility, settlements, restart, spending and shared Night 2 replay passed.');
