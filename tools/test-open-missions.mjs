@@ -255,10 +255,10 @@ for (const branch of ['alone', 'drain', 'home']) {
   assert.equal(chosen.open.world.scrap, world.scrap);
 }
 
+// `home` has had ways out since OPEN-ASH-FOLD put the Ash Men's choices there; OPEN-BURNED-RESCUE builds the Road Rats'.
 assert.deepEqual(walkThread(burned).faults, [
   'The beat "alone" has no way out and is not an end. OPEN-BURNED-PEN builds the fight alone in Scene 4.',
   'The beat "drain" has no way out and is not an end. OPEN-BURNED-PEN builds the drain in Scene 4.',
-  'The beat "home" has no way out and is not an end. OPEN-BURNED-RESCUE builds Scene 5 on this beat.',
 ]);
 
 for (const name of Object.keys(pageFunctions)) new Function('return ' + pageSource(name, {}, [], 'test'));
