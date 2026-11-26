@@ -38,7 +38,7 @@ export default {
     blamed: {from: 'groups', among: ['ash-men'], apartFrom: ['enemy'], optional: true,
       where: {all: [{cast: 'enemy', is: 'road-rats'}, {fact: 'draw', name: 'false-trail', chance: .3}]}},
   },
-  starts: {when: {all: [{fact: 'night', atLeast: 2}, {fact: 'draw', name: 'start', chance: .5}]}},
+  starts: {all: [{fact: 'night', atLeast: 2}, {fact: 'draw', name: 'start', chance: .5}]},
   sign: {kind: 'smoke', at: '@camp', seenWithin: 3500, lastsNights: 2, nightsNeeded: 2, cue: 'open.smoke.seen'},
   beats: {
     sign: {

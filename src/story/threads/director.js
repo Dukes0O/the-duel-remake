@@ -30,7 +30,7 @@ export function directThreads(threads, context, occasion) {
     if (Number.isFinite(lastNight) && outing && (stocks.embers <= 1 || !outingAvailable)) continue;
     const rule = threadRule(thread, context);
     const cast = castThread(thread, world, {ask: rule.ask, placeAt, allows: allowsCast});
-    if (!cast || !rule.ask(thread.starts.when, cast)) continue;
+    if (!cast || !rule.ask(thread.starts, cast)) continue;
     effects.push(mark(eligibleId(thread.id, night)));
     if (full || (inMission && thread.beats[firstBeat(thread)].mission) || thread.kind === latest?.thread.kind ||
       started.some(entry => !entry.record.end && entry.thread.kind === thread.kind)) continue;

@@ -68,7 +68,7 @@ function outputFor(thread, context, record, state, observed, decision) {
   }
 
   const followed = Object.keys(thread.beats).some(id => id !== firstBeat(thread) && rule.has('entered', id));
-  if (!followed && world.ledger.night - record.began >= thread.ignored.afterNights && rule.ask(thread.ignored.when)) {
+  if (!followed && world.ledger.night - record.began >= thread.ignored.afterNights) {
     move('ignored', thread.ignored);
     return out;
   }

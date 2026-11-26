@@ -15,7 +15,7 @@ import {placeForThread} from '../src/story/scenes/burned-camp.js';
 const storyline = (id, kind = 'trouble', options = {}) => ({
   id, kind, title: 'A sample storyline', reads: ['found', 'word', 'night'], writes: ['mark'],
   cast: {camp: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'word', atLeast: 'Friendly'}]}}},
-  starts: {when: {fact: 'night', atLeast: 2}},
+  starts: {fact: 'night', atLeast: 2},
   sign: {kind: 'smoke', at: '@camp', lastsNights: 2},
   beats: {sign: {when: 'sign-seen', thoughts: ['That is {camp.leader} out there.'], next: 'finish'},
     finish: {effects: [{type: 'mark', id: `${id}/completed`}], next: 'done'}},
