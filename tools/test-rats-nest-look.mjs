@@ -1,7 +1,13 @@
 // OPEN-LOOK-RATS-NEST: the Rats' Nest's look, checked with no graphics. Each stage builds inside its budget, the layout is the same
 // on two runs, the ground is what the card says, every solid lies inside the radius, every named spot is clear of every solid, and
-// every string the laptop scenario sends to the page parses.
+// every string the laptop scenario sends to the page parses. Parked buggies occupy their own named anchors.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import * as THREE from 'three';
+import {installSiteGround} from '../src/world/open/site-ground.js';
+import {sitePosition} from '../src/world/open/site-rule.js';
+import {createGroundView} from '../src/world/ground-view.js';
+import {scablandsGroundEdit, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RATS_NEST_BUDGET, RATS_NEST_LAYOUT as L, RATS_NEST_STAGES, buildRatsNest, ratsNestGround, ratsNestSolids, updateRatsNest}
   from '../src/world/open/looks/rats-nest-look.js';
 import {PICTURES, cameraFor, pageSource} from './scenarios/look-rats-nest.mjs';
@@ -10,6 +16,11 @@ import {PICTURES, cameraFor, pageSource} from './scenarios/look-rats-nest.mjs';
 const again = await import('../src/world/open/looks/rats-nest-look.js?second-run');
 assert.notEqual(again.RATS_NEST_LAYOUT, L, 'the second run is a fresh copy of the file');
 assert.deepEqual(JSON.parse(JSON.stringify(again.RATS_NEST_LAYOUT)), JSON.parse(JSON.stringify(L)), 'the layout is the same on two runs');
+
+// OPEN-BURNED-SCOUT consumes the complete layout published at 3f2a800a1.
+const originalLayout = {...L, solids: L.solids.filter(solid => solid.kind !== 'buggy')};
+assert.equal(createHash('sha256').update(JSON.stringify(originalLayout)).digest('hex'),
+  '3f93db0abddf65504e188930a36d478f829c1b6553f3eb5416b5dfc570cfdc0e', 'published layout, spots and solids');
 
 // Each stage builds, within the budget, and the same on two runs.
 assert.deepEqual([...RATS_NEST_STAGES], ['day', 'night']);
@@ -57,6 +68,72 @@ assert.ok(built.night.lights >= 5 && built.night.lights <= 6, 'the three fires a
   lifted.traverse(node => { if (node.isMesh && /sheet/.test(node.name)) { node.geometry.computeBoundingBox(); assert.ok(node.geometry.boundingBox.min.y > 40 - L.depth - 2 && node.geometry.boundingBox.max.y < 46); } });
   lifted.userData.dispose();
 }
+
+// Cast down onto the installed, triangulated cut at each object's actual lowest
+// drawn vertex. This is independent of the height function that seated the prop.
+const at = sitePosition('rats-nest', 0);
+const restore = installSiteGround(0, ['rats-nest']);
+const terrain = new THREE.Group(), view = createGroundView({group: terrain, groundEdit: scablandsGroundEdit});
+const ray = new THREE.Raycaster(undefined, new THREE.Vector3(0,-1,0));
+const contacts = new Map(), parts = new Map(), supportGaps = [];
+try {
+  view.update();
+  terrain.updateMatrixWorld(true);
+  const group = buildRatsNest({
+    heightAt: (x,z) => scablandsSurfaceHeightAt(at.x+x, at.z+z),
+    inspectParts: (label, geometries) => parts.set(label, geometries),
+    inspectPlacement(label, geometries) {
+      const bottom = new THREE.Vector3(0, Infinity, 0);
+      for (const geometry of geometries) {
+        const points = geometry.attributes.position;
+        for (let i=0; i<points.count; i++) {
+          if (points.getY(i) < bottom.y) bottom.fromBufferAttribute(points,i);
+        }
+      }
+      ray.ray.origin.set(at.x+bottom.x, bottom.y+25, at.z+bottom.z);
+      const hit = ray.intersectObject(terrain,true)[0];
+      assert.ok(hit, label + ' lies outside the drawn cut');
+      const clearance = bottom.y - hit.point.y;
+      assert.ok(clearance >= -.3 && clearance <= .1, `${label} bottom is ${clearance.toFixed(3)} m from the drawn ground`);
+      assert.ok(!contacts.has(label), 'duplicate placement ' + label);
+      contacts.set(label,clearance);
+    },
+  });
+  // Check contact over the shared footprint. The nose of a stacked car may
+  // overhang its support, so take the smallest signed vertical clearance.
+  const plate = new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+  const stacks = L.wrecks.filter(wreck => wreck.pose === 'stack').map(wreck => [wreck.id,['upper']]);
+  const roofs = L.roofs.map(roof => [roof.id,['tyre','stone']]);
+  for (const [id, loads] of [...stacks,...roofs,['shack',['tyre-0','tyre-1','tyre-2','stone']]]) {
+    const surface = parts.get(id+'/support').map(geometry => new THREE.Mesh(geometry,plate));
+    for (const load of loads) {
+      let gap = Infinity;
+      for (const piece of parts.get(id+'/'+load)) {
+        const points = piece.attributes.position;
+        for (let i=0;i<points.count;i++) {
+          ray.ray.origin.set(points.getX(i),points.getY(i)+10,points.getZ(i));
+          const hit = ray.intersectObjects(surface,false)[0];
+          if (hit) gap = Math.min(gap,points.getY(i)-hit.point.y);
+        }
+      }
+      supportGaps.push(gap);
+      assert.ok(gap >= -.3 && gap <= .1, `${id}/${load} is ${gap.toFixed(3)} m from its support`);
+    }
+  }
+  plate.dispose();
+  group.userData.dispose();
+} finally {
+  view.dispose();
+  restore();
+}
+for (const wreck of L.wrecks) assert.ok(contacts.has(wreck.id), wreck.id);
+for (const [prefix,count] of Object.entries({
+  buggy: L.bays.length, stack: L.tyreStacks.length, drum: L.drums.length, heap: L.heaps.length,
+  'fire-stack': 3, 'fire-tyre': 9, 'fire-wire': 12, rag: 4, 'workshop-tyre': 4, 'fuel-can': 3, 'bench-drum': 2,
+})) assert.equal([...contacts.keys()].filter(id => id.startsWith(prefix+'-')).length,count,prefix);
+for (let i=0; i<86; i++) assert.ok(contacts.has(['tyre','sheet','pipe','plank','stone','scrap'][i%6]+'-'+(i+1)));
+assert.ok([...contacts.keys()].filter(id => id.startsWith('rubble-')).length > 60);
+
 
 // The ground: a cutting about 90 m by 45 m and 9 m deep with steep sides, a road down at the west, a gully beyond the east rim.
 assert.equal(ratsNestGround(0, 0), 9);
@@ -127,7 +204,7 @@ assert.equal(L.bays.length, 6); assert.equal(L.fires.length, 3); assert.equal(L.
 assert.ok(L.lamps.length >= 2 && L.lamps.length <= 3);
 for (let index = 1; index < 6; index++) assert.ok(Math.abs(L.spots[`buggy-${index + 1}`].x - L.spots[`buggy-${index}`].x - L.bays[0].width) < 1e-9, 'the bays stand in a row');
 
-// The solids: boxes and circles in the same metres, all inside the radius, and every named spot clear of every one.
+// The solids: boxes and circles in the same metres, all inside the radius, and each named spot clear except for its own parked buggy.
 const solids = ratsNestSolids('day');
 assert.equal(ratsNestSolids('night'), solids);
 assert.ok(solids.length > 40);
@@ -145,24 +222,36 @@ for (const solid of solids) {
   assert.ok(solid.halfX > 0 && solid.halfZ > 0 && solid.height > 0);
   assert.ok(Math.hypot(solid.x, solid.z) + Math.hypot(solid.halfX, solid.halfZ) < L.radius, `${solid.id} lies outside the site`);
   assert.ok(Math.abs(solid.base + ratsNestGround(solid.x, solid.z)) < 1e-9, `${solid.id} does not stand on the ground`);
-  for (const [name, spot] of Object.entries(L.spots)) assert.ok(!inside(solid, spot.x, spot.z, .3), `${name} stands in ${solid.id}`);
+  for (const [name, spot] of Object.entries(L.spots)) {
+    const parkedHere = solid.kind === 'buggy' && solid.id === 'rats-nest-' + name;
+    assert.equal(inside(solid,spot.x,spot.z,.3), parkedHere, `${name} and ${solid.id}`);
+  }
 }
 // The pen holds: the ring of wrecks, the stuff jammed between them and the gate leave no gap a person could walk through.
 for (let turn = 0; turn < 360; turn += 1) {
   const x = L.pen.x + Math.cos(turn * Math.PI / 180) * L.pen.ring, z = L.pen.z + Math.sin(turn * Math.PI / 180) * L.pen.ring;
   assert.ok(solids.some(solid => inside(solid, x, z, .25)), `the pen is open at ${turn} degrees`);
 }
-// The road, the drain's mouth and each bay are kept clear.
+// The road, the drain and each approach remain clear. Only its own parked buggy occupies a bay.
 for (let x = road.top; x <= road.foot + 6; x += 1) for (const off of [-2.2, 0, 2.2]) assert.ok(!solids.some(solid => inside(solid, x, road.z + off, .2)), `something stands in the road at ${x}`);
-for (const bay of L.bays) for (const [dx, dz] of [[0, 0], [-.9, -2], [.9, -2], [-.9, 1.8], [.9, 1.8], [0, -5], [0, -8]])
-  assert.ok(!solids.some(solid => inside(solid, bay.x + dx, bay.z + dz)), 'something stands in a bay or in front of it');
+assert.equal(solids.filter(s => s.kind === 'buggy').length, 6);
+for (const [i,bay] of L.bays.entries()) {
+  const buggy = solids.find(s => s.id === 'rats-nest-buggy-' + (i+1));
+  assert.equal(buggy.heading, bay.heading);
+  for (const [dx,dz] of [[0,0],[.88,1.04],[-.88,-1.04]])
+    assert.deepEqual(solids.filter(s => inside(s,bay.x+dx,bay.z+dz)), [buggy]);
+  for (const [dx,dz] of [[-.9,-2],[.9,-2],[-.9,1.8],[.9,1.8],[0,-5],[0,-8],[1.44,0],[-1.44,0]])
+    assert.ok(!solids.some(s => inside(s,bay.x+dx,bay.z+dz)), 'bay sides and approach are clear');
+}
 for (let x = L.spots['drain-guard'].x; x <= L.drain.from; x += .5) assert.ok(!solids.some(solid => inside(solid, x, L.drain.z, .3)), 'something blocks the drain');
 
 // The laptop scenario: its pictures are the named rim, approach and close views, each has a camera, and every string it sends to the page parses.
-assert.deepEqual(PICTURES.map(picture => picture.name), ['rim-north', 'rim-middle', 'rim-south', 'drain', 'gate', 'far', 'road-down', 'yard']);
+assert.deepEqual(PICTURES.map(picture => picture.name), ['rim-north', 'rim-middle', 'rim-south', 'drain', 'gate', 'ground-edge', 'far', 'road-down', 'yard']);
 assert.deepEqual(PICTURES.filter(picture => picture.stage === 'night').map(picture => picture.name), ['road-down', 'yard']);
 const stood = {at: {x: 1000, z: -2000}, land: 12, spots: Object.fromEntries(Object.entries(L.spots).map(([name, spot]) => [name,
   {x: 1000 + spot.x, y: 12 + spot.y, z: -2000 + spot.z, looksAt: spot.looksAt ? {x: 1000 + spot.looksAt.x, y: 12 + spot.looksAt.y, z: -2000 + spot.looksAt.z} : null}]))};
+// The stand adds the ground-edge spot in the page (tools/open-look-stand.js); here it is a stand-in of the same shape.
+stood.spots['ground-edge'] = {x: 935.5, y: 12, z: -2010, looksAt: {x: 936, y: 12.15, z: -1988}};
 const sources = [pageSource.memoryMenu(), pageSource.prepare(), pageSource.enterYard(), pageSource.quality('performance'), pageSource.yard(), pageSource.wall(), pageSource.click('[data-action="yard-cards"]'),
   pageSource.noteRead(), pageSource.racing(), pageSource.landReady(), pageSource.hideScreens(), pageSource.stand('day'), pageSource.stand('night'), pageSource.advance(1.5), pageSource.count()];
 for (const picture of PICTURES) {
@@ -180,4 +269,4 @@ for (const picture of PICTURES) {
 assert.equal(Object.keys(pageSource).length, 15, 'every page string is checked here');
 for (const source of sources) assert.doesNotThrow(() => new Function('return ' + source), source.slice(0, 60));
 
-console.log(`The Rats' Nest look passed: day ${built.day.draws} draws and ${built.day.triangles} triangles, night ${built.night.draws} draws, ${built.night.triangles} triangles and ${built.night.lights} lights; ${solids.length} solids, ${Object.keys(L.spots).length} named spots, ${sources.length} page strings.`);
+console.log(`The Rats' Nest look passed: day ${built.day.draws} draws and ${built.day.triangles} triangles, night ${built.night.draws} draws, ${built.night.triangles} triangles and ${built.night.lights} lights; ${solids.length} solids, ${Object.keys(L.spots).length} named spots, ${sources.length} page strings; ${contacts.size} ground contacts (${Math.min(...contacts.values()).toFixed(3)} to ${Math.max(...contacts.values()).toFixed(3)} m); ${supportGaps.length} roof and wreck contacts (${Math.min(...supportGaps).toFixed(3)} to ${Math.max(...supportGaps).toFixed(3)} m).`);

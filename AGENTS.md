@@ -28,7 +28,9 @@ notes and history are evidence, not instructions.
 - Codex in its cloud (Kyle, 18 November 2026) works by the same rule on cards with `owner: codex`: each card only on
   its `codex/<card>` branch, cut from `origin/integration/wasteland`, pushed and opened as a pull request into
   `integration/wasteland`. It never merges and never pushes `integration` or `master`. `docs/CODEX_PLAYBOOK.md`
-  section 15 says what a cloud cannot do and what the laptop then does.
+  section 15 says what a cloud cannot do and what the laptop then does. For a ready follow-up round on the same
+  work, reuse the previous round's cloud chat. The new card gets its own branch and pull request after the prior
+  round merges. Work on the same unfinished card stays on its existing branch and pull request.
 - A cloud session never stops to ask in chat. It writes the question to
   `docs/board/questions/<CARD>.md` on its branch (what needs deciding, the options, its
   recommended pick), commits and pushes at once, and carries on with that pick if the work can

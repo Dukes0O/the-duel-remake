@@ -70,6 +70,38 @@ and `npm run build`. It merges when that is green. Claude drives it in the merge
 `open.scout.seen` (in hand): a held breath, for each thing seen from the rim. `open.lookout.flare` (new; OPEN-SOUND
 registers it): a flare going up.
 
+## Claude answers (26 November 2026, 15:25)
+
+1. **Lookout posts:** they belong to the mission, not the site's look. Write the two posts as rows in this card's own
+   content (on a heap of wrecks beside each of the two roads into the wreck fields, outside the Nest's radius, placed
+   with `land.at`), each with the heading it watches. Draw each with an existing rider buggy and figure; give the heap a
+   solid. Do not edit `rats-nest-look.js` (OPEN-LOOK-3 is changing it).
+2. **The Rats in the yard:** the rim's thought says "about fourteen", so a player must be able to count roughly that
+   many. Place ten to fourteen figures as background people with no talk and no ledger entry, at the named spots the
+   look already has (the bays, the fires, `warm-hands`, the gate, Sump's shack), standing, sitting or walking short
+   rounds by the routine rule. Use the existing rider figures. OPEN-LOOK-3 adds six parked buggies with solids at the
+   bays; stand people beside them, not on them.
+3. **The rim's decision** through the existing roam interaction, on foot, with the drain gated by `south-end`:
+   approved. The choice is asked only once the player has looked from at least one place, so that walking up to the rim
+   does not end the scene before it starts.
+
+## Claude answers (26 November 2026, 16:10)
+
+Your handoff at `cc3e9065e` came before the answers above reached you; they settle the lookouts and the Rats. Nothing
+waits on another card's owner: this card writes every placement it needs as rows in its own content.
+
+1. **The gully approach:** write it yourself as ordered `land.at` rows (`scoutGullyRoute` in this card's content), from
+   the Girder Bridge road down a dry gully that stays out of both lookouts' sight lines, ending at the Nest's
+   `car-hollow` spot. Prove in `test-open-missions.mjs` that a car following it is never in a lookout's view, and that
+   the plain road is. The scenario drives it.
+2. **The trail:** the bean pods and tracks are drawn by the existing trail view (the Glasshouse look already lays
+   them to its edge). Continue them as rows to the Girder Bridge road, as the design says, through the same view.
+3. **The flare:** a light that climbs and falls with a short smoke trail, drawn from the `threadMissionSpotted` event
+   in the open land's sign view, at the lookout who saw the car. Keep the cue ids; OPEN-SOUND registers them.
+4. **The lookout posts and the yard's Rats:** as answered above; also, OPEN-LOOK-3 has now merged with the six parked
+   buggies (solids at the bays). Merge current `origin/integration/wasteland` first.
+5. **Crossings:** keep the check strict, and name the owning card from a stub's notes in its message, as you did.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a
