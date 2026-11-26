@@ -216,7 +216,11 @@ export function combatXpCue(event, state, course) {
 
 export function footActionPresentation(state) {
   const gear = state?.footGear, weapons = state?.footWeapons;
+  const job = state?.arena?.worldJob;
   if (!gear || !weapons) return {text: '', locked: false};
+  const inside = job?.serviceSheds && job.open?.parts?.buildings?.inside;
+  if (inside && (gear.name === 'LONGHORN RPG' || (gear.name === 'WRENCH' && !weapons.repairing)))
+    return {text: '', locked: false};
   if (gear.name === 'WRENCH') {
     if (weapons.repairing)
       return {text: `REPAIRING ${Math.round(weapons.repairAmount || 0)} / 40`, locked: false};

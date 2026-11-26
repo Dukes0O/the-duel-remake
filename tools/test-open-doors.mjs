@@ -15,6 +15,7 @@ import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createJob} from '../src/world/jobs/job-engine.js';
 import {night2Job, createNight2, enterNight2Step} from '../src/world/jobs/night-2.js';
 import {actOnTalk, startTalk, talkScreen} from '../src/story/talk.js';
+import {footActionPresentation} from '../src/combat-hud.js';
 import {App} from '../src/app.js';
 import {pageFunctions, pageSource} from './scenarios/open-forge-shed.mjs';
 
@@ -117,7 +118,27 @@ for (const name of Object.keys(pageFunctions)) new Function('return ' + pageSour
 const drawing = createBuildingView();
 drawing.update({serviceSheds:true,open:offered.open},pointInBuilding(forge));
 assert.equal(drawing.group.getObjectByName('forge-shed/roof').visible,false);
-for (const thing of forge.room.things) assert.ok(drawing.group.getObjectByName(thing));
+const forgeRoom = drawing.group.getObjectByName(forge.id), washRoom = drawing.group.getObjectByName(shed.id);
+for (const [row, room] of [[forge,forgeRoom],[shed,washRoom]]) {
+  for (const thing of row.room.things) {
+    const prop = room.getObjectByName(thing.id ?? thing);
+    assert.ok(prop?.isMesh && prop.geometry.getAttribute('position').count > 0);
+  }
+}
+const hearth = forgeRoom.getObjectByName('hearth');
+assert.ok(hearth.children.some(node => node.isPointLight && node.visible));
+assert.ok(hearth.children.some(node => node.isPoints));
+const door = forgeRoom.getObjectByName('Doorway light'), daylight = door.intensity;
+drawing.update({serviceSheds:true,open:offered.open,definition:{open:{partOfDay:'dark'}}},pointInBuilding(forge));
+assert.ok(door.visible && door.intensity > 0 && door.intensity < daylight);
+assert.ok(door.color.b > door.color.r);
+const insideWash = {parts:{buildings:{inside:shed.id}}};
+drawing.update({serviceSheds:true,open:insideWash},pointInBuilding(shed));
+assert.equal(door.visible,false);
+assert.equal(washRoom.getObjectByName('Doorway light').visible,true);
+assert.equal(washRoom.getObjectByName(shed.id + '/roof').visible,false);
+drawing.update({serviceSheds:false},pointInBuilding(shed));
+assert.equal(drawing.group.visible,false);
 drawing.dispose();
 
 // OPEN-ROAM owns the talk host, merged on 25 November: the part's talk request opens a real talk step, which is driven
@@ -149,6 +170,8 @@ app.advance(4);
 pageFunctions.park(street,scablandsSurfaceHeightAt(street.x,street.z),pointInBuilding(forge,forge.carBay.at));
 pageFunctions.walk(true);
 assert.equal(job.open.parts.buildings.inside,'forge-shed');
+assert.equal(duel.state.footGear.name,'LONGHORN RPG');
+assert.deepEqual(footActionPresentation(duel.state),{text:'',locked:false});
 pageFunctions.speak();
 tick();
 assert.match(talkScreen(lastTalk.scene,job.job.stepState.talk).line.words,/6 scrap/);
@@ -166,6 +189,7 @@ assert.equal(app.profile.wasteland.scrap,60);
 respond({type:'advance'});
 pageFunctions.walk(false);
 assert.equal(job.open.parts.buildings.inside,null);
+assert.equal(footActionPresentation(duel.state).text,'HOLD AIM ON A CAR');
 assert.equal(job.job.steps[0].kind,'roam');
 // The real wrench stops mid-stroke at sixty percent and leaves a better car alone.
 const bay = pointInBuilding(forge, forge.carBay.at);
@@ -190,6 +214,8 @@ job.ashHit = true;
 tick();
 pageFunctions.walk(true);
 assert.equal(job.open.parts.buildings.inside,'bess-shed');
+assert.equal(duel.state.footGear.name,'WRENCH');
+assert.equal(footActionPresentation(duel.state).text,'');
 assert.ok(job.open.world.open.car.dirt > 0);
 pageFunctions.speak();
 tick();
@@ -205,4 +231,4 @@ assert.equal(job.open.parts.buildings.ash,false);
 assert.equal(job.open.world.scrap,48);
 assert.equal(app.profile.wasteland.scrap,60);
 buildingsPart.step = stepBuildings;
-console.log('test-open-doors: room collision, prices, dirt, field wrench, scenario syntax and both in-game services passed.');
+console.log('test-open-doors: shed furnishings and lights, indoor prompts, room collision, prices, dirt, field wrench, scenario syntax and both in-game services passed.');
