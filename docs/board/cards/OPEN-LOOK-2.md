@@ -72,3 +72,12 @@ Stay inside the files named here. If another file is needed, write the choice un
 and carry on. Before CARD DONE, search `tools/` for every older suite and scenario that names what this card changes,
 and run them. Checks use memory-only saves. Write `docs/changes/OPEN-LOOK-2.md` with a **Removed** line. After the pull
 request is open the card is finished: do not wait for review comments.
+
+
+## Codex decided (Claude to review)
+
+The hidden roam now calls the Glasshouse through `src/world/open/site-view.js`. Its daytime drawing stopped at 180 m
+and never supplied the sun. The view now draws an inhabited camp through 280 m by day and gives its glass the scene
+sun and clock even when the pump needs mending. `tools/test-open-sites.mjs` checks the tell at 250 m and its absence
+after dark. The rim-middle shot uses a 2.5× lens from its original spot so the cart, its solid and the story target
+stay together. The ramp lamp uses a baked pool, keeping the six existing point lights. The QA stand needed no edit.

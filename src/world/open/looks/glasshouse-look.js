@@ -1410,8 +1410,9 @@ export function buildGlasshouse({stage = 'camp', fresh = true, heightAt = () => 
     wheel: parts.wheel, rod: parts.rod, cart: parts.cart ?? null, smoke, glint, ember: parts.ember ?? null,
     // The clues a player can find in this drawing (section 21, Scene 2).
     clues: camp ? [] : fresh ? ['frames', 'lamp', 'tracks', 'ruts', 'pods', 'pump'] : ['frames', 'lamp', 'pump'],
-    update(seconds, {sun} = {}) {
-      const turn = seconds * GLASSHOUSE_PUMP.turnsPerSecond * Math.PI * 2 + Math.sin(seconds * .37) * .3;
+    update(seconds, {sun, pumpRunning = true} = {}) {
+      const pumpSeconds = pumpRunning ? seconds : 0;
+      const turn = pumpSeconds * GLASSHOUSE_PUMP.turnsPerSecond * Math.PI * 2 + Math.sin(pumpSeconds * .37) * .3;
       parts.wheel.rotation.z = turn;
       parts.rod.position.y = rodBase + Math.sin(turn / GLASSHOUSE_PUMP.rodTurns) * GLASSHOUSE_PUMP.stroke;
       // The wear rides with each thing it lies on. The wheel's is lifted clear of the dust that gathers low down, which
@@ -1434,6 +1435,6 @@ export function buildGlasshouse({stage = 'camp', fresh = true, heightAt = () => 
 
 // The parts that move. `seconds` is the game's clock; `sun`, if given, is the direction towards the sun in the world
 // ({x, y, z}), for the glint.
-export function updateGlasshouse(group, seconds, {sun} = {}) {
-  group?.userData?.update?.(seconds, {sun});
+export function updateGlasshouse(group, seconds, options) {
+  group?.userData?.update?.(seconds, options);
 }

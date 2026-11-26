@@ -77,6 +77,14 @@ function glasshouseFresh(world, site) {
 export function createSiteView({loadAsset}) {
   const group = new THREE.Group();
   group.name = 'Open Scablands sites';
+  let daylight;
+  const direction = new THREE.Vector3(), target = new THREE.Vector3();
+  function directionToSun() {
+    if (!daylight) group.traverseAncestors(parent => {
+      if (parent.isScene) daylight = parent.children.find(light => light.isDirectionalLight && light.castShadow);
+    });
+    if (daylight) return daylight.getWorldPosition(direction).sub(daylight.target.getWorldPosition(target));
+  }
   const camps = CAMP_SITES.map(site => {
     const people = createStoryPeopleView(loadAsset);
     group.add(people.group);
@@ -104,7 +112,9 @@ export function createSiteView({loadAsset}) {
         const range = distance(here, position);
         const stage = stageOf(world, site.id);
         const fresh = stage === 'burned' && glasshouseFresh(world, site.id);
-        const visible = range <= (site.tell === 'dusk-smoke' && phase !== 'dusk' ? 180 : site.tellWithin);
+        // Allow the sun on the screens to be read at 250 m, including the offset from the site's centre.
+        const nearRange = phase === 'day' && hasSiteServices(stage) ? 280 : 180;
+        const visible = range <= (site.tell === 'dusk-smoke' && phase !== 'dusk' ? nearRange : site.tellWithin);
         if (!visible) {
           if (camp.node) camp.node.visible = false;
           people.group.visible = false;
@@ -124,10 +134,11 @@ export function createSiteView({loadAsset}) {
         camp.node.visible = true;
         camp.node.position.set(position.x, drawnShift?.(position.x, position.z, heightAt(0, 0), undefined, camp.node) ?? 0, position.z);
         if (site.id === 'glasshouse') {
-          const {smoke, cart} = camp.node.userData;
+          const {smoke, cart, glint} = camp.node.userData;
           if (smoke) smoke.visible = phase === 'dusk' || fresh;
           const pumpMended = isTrue({fact: 'mark', id: 'glasshouse/pump-mended'}, world) || state.need !== 'glasshouse/pump';
-          updateGlasshouse(camp.node, pumpMended ? seconds : 0);
+          if (glint) glint.visible = phase === 'day';
+          updateGlasshouse(camp.node, seconds, {pumpRunning: pumpMended, sun: glint?.visible ? directionToSun() : undefined});
           if (cart && range < 95 && state.need !== 'glasshouse/cart-axle') {
             const finch = residents.find(row => row.id === 'finch');
             const pose = residentPose(finch, world, state, STORY_FIGURES.finch.pace);

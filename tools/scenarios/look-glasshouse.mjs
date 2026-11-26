@@ -5,18 +5,18 @@
 // The pictures, by name (each file is `look-glasshouse-<name>.png`):
 //   camp-far, camp-edge, camp-rows, camp-pump          the camp whole
 //   burned-far, burned-edge, burned-rows, burned-pump  burned, with `fresh: true`
-//   burned-clues                                       down the track from `ruts` towards `tracks-away`
+//   burned-clues                                       the first pod and footprints between the cart ruts
 // and two more than the card asks for, so that both of the camp's tells and the cold camp can be judged:
 //   camp-glint                                         by day, from 250 m, where the sun is thrown by the upright screens
 //   cold-clues                                         the lamp in the ash, with the broken rows and pump beyond
-// `far` is from the nearest road at dusk and car height; `edge` from `car-stop` at eye height (1.6 m); `rows` on foot
+// `far` is from the clear Salt Road bend at dusk and car height; `edge` from `car-stop` at eye height (1.6 m); `rows` on foot
 // between two rows; `pump` from 8 m.
 //
-// How the camp gets into the page: nothing in the game draws a site yet (OPEN-SITES will), and the page gives a scenario no
+// How the camp gets into the page: the lighting job has no open-site view, and the page gives a scenario no
 // way to load a file of the game by name. So the scenario bundles the look file itself, as tollkeeper.mjs bundles its
 // helpers, loads it into the page as a module of its own, builds the group there and adds it to the Scablands' own group.
 // The bundle carries its own copy of Three.js (only the parts the look uses); the page's renderer draws its meshes as it
-// draws any others. OPEN-SITES will load the look in the game's own bundle, and then this way in can go.
+// draws any others. The open roam loads the same look through site-view.js.
 import {build} from 'vite';
 import {writeFile} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
