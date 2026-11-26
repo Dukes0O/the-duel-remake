@@ -85,6 +85,14 @@ export const page = {
   // BOWL-MENU-FRAME: the game's own render loop, as a player has it (page.enter stops it), for the menu frames.
   live: `(() => { window.__qaApp.start(); return true; })()`,
   idle: `(() => { window.__qaApp.stop(); return true; })()`,
+  hiddenResize: `(async () => { const view = window.__render, host = view.renderer.domElement.parentElement, style = host.getAttribute('style') || '';
+    const aspect = view.camera.aspect, before = view.renderer.info.render.frame;
+    host.style.width = '0px'; host.style.height = '0px'; dispatchEvent(new Event('resize'));
+    for (let i = 0; i < 6; i++) await new Promise(resolve => requestAnimationFrame(resolve));
+    const kept = view.camera.aspect === aspect && Number.isFinite(view.camera.aspect) && view.renderer.info.render.frame > before;
+    host.setAttribute('style', style); dispatchEvent(new Event('resize'));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    return kept; })()`,
   storage: `(() => JSON.stringify(Object.keys(localStorage).sort().map(key => [key, localStorage.getItem(key)])))()`,
   openPicker: `(() => { document.querySelector('#show-night-visit').click(); return true; })()`,
   picker: `(() => { const panel = document.querySelector('.bowl-panel'); return !!panel && panel.textContent.includes('lend you its truck') && !!panel.querySelector('[data-action="show-night-start"][data-night="1"]') && !panel.querySelector('[data-night="3"][data-action="show-night-start"]'); })()`,
@@ -172,6 +180,9 @@ export async function run(context) {
   await context.evaluate(page.openPicker);
   await context.waitFor(page.picker, 'the picker offers night one with the lent truck', 10000);
   for (let frame = 0; frame < 6; frame++) await context.evaluate(page.frame);
+  // The cause Claude found on 26 November: a hidden window measures 0 by 0, and a resize then made the camera's aspect
+  // 0 / 0, so the menu camera's place on the course was not a number and the throw stopped the drawing loop.
+  assert.ok(await context.evaluate(page.hiddenResize), 'a 0 by 0 resize keeps the camera aspect and the drawing loop');
   assert.deepEqual(context.issues, [], 'opening Show Night from the menu logs no page error');
   await context.evaluate(page.idle);
   await context.evaluate(page.easy);

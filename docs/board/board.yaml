@@ -59,17 +59,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-NIGHT-TIMING-ALONE.md"
 
-  - id: QA-NIGHT-22-NOV
-    title: "Four browser scenarios behind dev switches fail since the night of 22 November (on-foot exit, far rain, borer)"
-    owner: "codex"
-    model: "sol"
-    lane: "TOOL"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    details: "docs/board/cards/QA-NIGHT-22-NOV.md"
-
   - id: QA-AUDIO-BASELINE-CONTROL
     title: "Legacy native audio repeat control is unreliable"
     owner: "codex"
@@ -650,31 +639,6 @@ tasks:
 
   # Show Night round 2, the slices of BOWL-SHOW-2 (its "Design" section). Nights 1 to 5 are the first release; BOWL-TOUR follows it.
 
-
-  - id: BOWL-LAUNCHER-REACH
-    title: "Bowl: the player's launcher reaches further, and Easy stays six wins in ten (Kyle, 22 November)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "titan-bowl"
-    details: "docs/board/cards/BOWL-LAUNCHER-REACH.md"
-
-  - id: BOWL-MENU-FRAME
-    title: "Bowl: opening Show Night logs one error from the menu camera (the showcase car has no place for a frame)"
-    owner: "codex"
-    model: "sol"
-    lane: "UI"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/BOWL-MENU-FRAME.md"
 
   - id: BOWL-REX-3
     title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
