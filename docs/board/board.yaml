@@ -1590,7 +1590,8 @@ tasks:
     owner: "claude-cloud"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 26 November 2026: round 1 on branch cloud/OPEN-LOOK-RATS-NEST"
     needs: []
     locks: []
     flag: "story-choices"
