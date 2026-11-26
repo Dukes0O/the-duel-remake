@@ -617,26 +617,13 @@ tasks:
   # Show Night round 2, the slices of BOWL-SHOW-2 (its "Design" section). Nights 1 to 5 are the first release; BOWL-TOUR follows it.
 
 
-  - id: BOWL-REX-3
-    title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: [BOWL-REX-2]
-    locks: []
-    flag: "titan-bowl"
-    details: "docs/board/cards/BOWL-REX-3.md"
-
   - id: BOWL-REX-3-LOOK
     title: "Bowl: the Scrapasaurus's eye beam and bombs drawn (after BOWL-REX-3)"
     owner: "claude"
     lane: "ART"
     size: "S"
     status: "backlog"
-    needs: [BOWL-REX-3]
+    needs: []
     locks: []
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-REX-3-LOOK.md"

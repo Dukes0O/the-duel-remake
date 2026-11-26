@@ -85,6 +85,8 @@ export const FEATURE_STATES = Object.freeze({
   'water-cannon': 'dev',
   // Show Night is on for players (Kyle, 21 November 2026: "I'd like to get this monster nights pushed to the main game").
   'titan-bowl': 'on',
+  // BOWL-REX-3: the Scrapasaurus's eye beam and bombs the hook can send back. Off, night five's fight is as released.
+  'bowl-rex-3': 'dev',
   'arena-tricks': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).
   'warlord-nine': 'on',
