@@ -10,6 +10,7 @@
 //   night     on foot from `table` to the workshop and the welding, at night
 // and two more than the card asks for, so that each tell can be judged at a second distance:
 //   near      from 250 m out on the line to the road, by day and at car height: the roofs
+//   far-zoom  the same as far through a glass of six times, to judge what the far view shows at its size
 //   edge-dusk from `car-stop` at dusk: the lamp on its mast and the flicker through the gate
 // The welding is caught while its arc is struck (`busRingWeld`), so that its flicker is in the pictures that should show it.
 import {writeFile} from 'node:fs/promises';
@@ -54,6 +55,7 @@ export const PICTURES = Object.freeze([
   {name: 'table', stage: 'camp', from: 'forge', eye: EYE, toward: {x: -7.6, z: 3.1, up: 1}},
   {name: 'near', stage: 'camp', out: 250, eye: CAR_HEIGHT, extra: true},
   {name: 'far', stage: 'camp', road: true, eye: CAR_HEIGHT, dusk: true},
+  {name: 'far-zoom', stage: 'camp', road: true, eye: CAR_HEIGHT, dusk: true, zoom: 6, extra: true},
   {name: 'edge-dusk', stage: 'camp', from: 'car-stop', eye: EYE, dusk: true, extra: true},
   {name: 'night', stage: 'night', from: 'table', eye: EYE, dusk: true, toward: 'arc'},
 ]);
@@ -67,7 +69,7 @@ export function viewFor(picture, stood) {
     const road = roadView(), toSite = {x: (SITE.x - road.x) / road.metres, z: (SITE.z - road.z) / road.metres};
     const eye = picture.road ? {x: road.x, z: road.z} : {x: SITE.x - toSite.x * picture.out, z: SITE.z - toSite.z * picture.out};
     return {eye: {...eye, up: picture.eye}, look: {x: SITE.x, z: SITE.z, up: 3}, car: {x: eye.x - toSite.x * 9, z: eye.z - toSite.z * 9},
-      metres: Math.round(Math.hypot(SITE.x - eye.x, SITE.z - eye.z)), road: road.road, dusk: !!picture.dusk};
+      metres: Math.round(Math.hypot(SITE.x - eye.x, SITE.z - eye.z)), road: road.road, dusk: !!picture.dusk, zoom: picture.zoom ?? 1};
   }
   const spot = stood.spots[picture.from];
   if (!spot) throw Error('No spot called ' + picture.from);
@@ -124,7 +126,7 @@ export const pageFunctions = {
     const ground = (x, z) => land.userData.drawnGroundHeightAt(x, z);
     app.inspectionCamera = {position: [view.eye.x, ground(view.eye.x, view.eye.z) + view.eye.up, view.eye.z], target: [view.look.x, ground(view.look.x, view.look.z) + view.look.up, view.look.z]};
     window.__render.camera.position.fromArray(app.inspectionCamera.position);
-    window.__render.camera.zoom = 1;
+    window.__render.camera.zoom = view.zoom ?? 1;
     window.__render.camera.updateProjectionMatrix();
     return app.inspectionCamera;
   },

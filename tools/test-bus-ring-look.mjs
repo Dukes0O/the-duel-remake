@@ -168,7 +168,7 @@ assert.throws(() => buildBusRing({stage: 'town'}), RangeError);
   const group = built.camp, {flashes, weldLight, sparks, smoke} = group.userData;
   const lit = weldMoment(), dark = (() => { for (let seconds = 0; ; seconds += .1) if (busRingWeld(seconds) === 0) return seconds; })();
   updateBusRing(group, lit);
-  assert.ok(flashes.material.uniforms.uWeld.value > .85 && weldLight.intensity > 100 && sparks.visible, 'struck: the flash, its light and the sparks');
+  assert.ok(flashes.material.uniforms.uWeld.value > .85 && weldLight.intensity > 60 && sparks.visible, 'struck: the flash, its light and the sparks');
   updateBusRing(group, dark);
   assert.ok(flashes.material.uniforms.uWeld.value === 0 && weldLight.intensity === 0 && !sparks.visible, 'between beads: dark');
   updateBusRing(group, 31.5);

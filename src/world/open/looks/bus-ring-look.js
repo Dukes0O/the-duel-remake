@@ -265,9 +265,9 @@ const tone = hex => new THREE.Color(hex);
 let PALETTE = null;
 const makePalette = () => ({
   // Faded paint: a mustard school bus, a council green, cream, oxblood, a grey-blue coach and an army olive.
-  paint: [tone(0x7a6a45), tone(0x55604f), tone(0x8c8571), tone(0x5f3b30), tone(0x4d5960), tone(0x56553d)],
+  paint: [tone(0x655838), tone(0x4a5444), tone(0x7a7462), tone(0x553429), tone(0x434e55), tone(0x4b4a34)],
   // The band of a second colour along each bus's waist, faded the same way.
-  livery: [tone(0x8a8470), tone(0x8a8470), tone(0x5f3b30), tone(0x8a8470), tone(0x8a8470), tone(0x7a6a45)],
+  livery: [tone(0x7a7462), tone(0x7a7462), tone(0x553429), tone(0x7a7462), tone(0x7a7462), tone(0x655838)],
   rust: [tone(0x5f3c2b), tone(0x6b4730), tone(0x523727)],
   roof: [tone(0xa9a496), tone(0xa09e91), tone(0xaea693), tone(0x9d9a8e)],
   tin: [tone(0x6e6b63), tone(0x7a5a3d), tone(0x605d57), tone(0x77736a), tone(0x67503a)],
@@ -582,6 +582,11 @@ function drawBus(kit, P, bus, localGround) {
     if (random() < .55) faces('glass', [-W + .35, belt + .12, z - .02, W - .35, belt + .12, z - .02, -W + .35, rail - .08, z - .02, -W + .35, rail - .08, z - .02, W - .35, belt + .12, z - .02, W - .35, rail - .08, z - .02], P.glass);
     else ribbed('sheet', [-W + .3, belt + .08, z - .04], [W - .3, belt + .08, z - .04], [-W + .3, rail - .04, z - .04], [W - .3, rail - .04, z - .04], pick(P.tin), random);
     for (let index = 0; index < 5; index++) bar('frame', [-.7, sill + .2 + index * .09, z - .03], [.7, sill + .2 + index * .09, z - .03], .035, P.iron, .03);
+    // The corners are rounded by a strip, and the lamps are dull red glass or empty sockets.
+    for (const side of [-1, 1]) {
+      bar('sheet', [side * (W - .02), sill + .02, z - .02], [side * (W - .02), rail, z - .02], .07, paint.clone().multiplyScalar(.7), .07);
+      box(random() < .6 ? 'glass' : 'frame', .14, .24, .03, random() < .6 ? tone(0x4a1c16) : P.dark, side * (W - .22), sill + .78, z - .03);
+    }
     box('frame', W * 2 + .08, .2, .14, P.iron, 0, sill + .1, z - .08, [0, 0, between(-.03, .03)]);
     if (random() < .5) {
       for (const x of [.45, .85]) bar('frame', [x, sill + .35, z - .07], [x, crown - .05, z - .07], .035, P.tube, .035);
@@ -632,7 +637,7 @@ function drawBus(kit, P, bus, localGround) {
 function drawCar(kit, P) {
   const {surface, bar, tube, box, tyre, faces} = kit;
   const half = .86, nose = 2.15, belt = .92, roof = 1.4, sill = .34, scuttle = .78, rear = -1.1, arch = .4, axles = [1.35, -1.38];
-  const paint = P.paint[1].clone().lerp(P.rust[0], .35), rust = P.rust[1];
+  const paint = P.paint[3].clone().lerp(P.rust[0], .3), rust = P.rust[2];
   const colour = (x, y, z) => paint.clone().lerp(rust, smooth((lump(Math.floor(z * 2 + 20), Math.floor(y * 3), 71) + (1 - y) * .5 - .7) * 3)).multiplyScalar(.82 + .25 * lump(Math.floor(z * 4 + 20), Math.floor(y * 4), 72));
   const archLift = z => { let lift = 0; for (const axle of axles) { const off = (z - axle) / arch; if (Math.abs(off) < 1) lift = Math.max(lift, .38 * Math.sqrt(1 - off * off)); } return lift; };
   for (const side of [-1, 1]) {
@@ -965,8 +970,13 @@ export function buildBusRing({stage = 'camp', heightAt = null} = {}) {
     box('frame', .26, .3, .06, P.dark, .3, y + .12, -1.2, [-.6, 0, 0]);
   });
   on(T.welder, () => {
-    box('frame', .5, .62, .7, P.welder, 0, .45, 0);
+    // A transformer set in a dented case: louvres down its sides, a front panel with its two dials and terminals.
+    box('frame', .5, .62, .7, P.welder, 0, .45, 0, [0, 0, .012]);
     box('frame', .46, .04, .66, P.welder.clone().multiplyScalar(.7), 0, .78, 0);
+    for (const side of [-1, 1]) for (let louvre = 0; louvre < 5; louvre++) bar('frame', [side * .255, .3 + louvre * .07, -.22], [side * .255, .3 + louvre * .07, .22], .015, P.dark, .025);
+    box('frame', .02, .4, .5, P.dark, .26, .5, 0);
+    for (const z of [-.18, .18]) tube('frame', [.26, .3, z], [.31, .3, z], .025, P.chrome, 6);
+    box('frame', .52, .08, .72, P.rust[0], 0, .17, 0);
     for (const z of [-.15, .1]) tube('frame', [.26, .55, z], [.28, .55, z], .05, P.dark, 8);
     for (const x of [-.22, .22]) tube('frame', [x, .2, -.32], [x * 1.05, .2, -.32], .14, P.rubber, 9);
     bar('frame', [-.2, .9, .3], [.2, .9, .3], .025, P.tube);
@@ -1141,7 +1151,7 @@ export function buildBusRing({stage = 'camp', heightAt = null} = {}) {
   floor.name = 'The yard floor';
   floor.position.set(0, ground(0, 0), 0);
   group.add(floor);
-  const wear = createScrapWear({soot: [[T.forge.x, 1, T.forge.z, 2], [T.stove.x, 2.8, T.stove.z, 1.2]], dustTop: 1.1, paint: .7});
+  const wear = createScrapWear({soot: [[T.forge.x, 1, T.forge.z, 2], [T.stove.x, 2.8, T.stove.z, 1.2]], dustTop: 1.1, paint: .45});
   for (const [kind, list] of Object.entries(kit.lists)) {
     if (!list.length) continue;
     if (kind === 'sheet' || kind === 'frame') wear.apply(materials[kind]);
@@ -1183,7 +1193,8 @@ export function buildBusRing({stage = 'camp', heightAt = null} = {}) {
     lights.push(point);
     return point;
   };
-  const weldLight = light(0xbcd2ff, 0, 18, {x: arcAt.x, y: arcAt.y + .4, z: arcAt.z}, 'weld');
+  // The arc's light stands a little above and in front of it, so that it lights the yard and not only the frame it is on.
+  const weldLight = light(0xbcd2ff, 0, 18, {x: arcAt.x + GATE_FACING.x * .8, y: arcAt.y + 1.1, z: arcAt.z + GATE_FACING.z * .8}, 'weld');
   light(0xffb466, 26, 11, {x: workshopLamp.x, y: workshopLamp.y - .1, z: workshopLamp.z}, 'lamp');
   light(0xffb466, 22, 13, {x: gateLamp.x, y: gy(gateLamp) - .1, z: gateLamp.z}, 'lamp');
   let draws = 0;
@@ -1202,7 +1213,7 @@ export function updateBusRing(group, seconds) {
   if (!data?.flashes || !Number.isFinite(seconds)) return;
   const weld = busRingWeld(seconds);
   data.flashes.material.uniforms.uWeld.value = weld;
-  data.weldLight.intensity = 140 * weld;
+  data.weldLight.intensity = 75 * weld;
   data.sparks.visible = weld > .2;
   if (data.sparks.visible) data.sparks.userData.place(seconds * 1.7, data.arc, {x: data.outward.x * .25, z: data.outward.z * .25}, 0);
   data.smoke.userData.update(seconds);
