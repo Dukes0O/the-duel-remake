@@ -339,6 +339,12 @@ exceptions: stop there.
 whose text is: what was built; each check and its result, with the commit; "For Claude to run"; "Changed assertions";
 "Codex decided"; what is not right yet. The laptop reads the diff, runs what the cloud could not, and merges.
 
+**After the pull request is open, the card is finished for the cloud** (Kyle asked on 25 November 2026 how often Codex
+should look for review comments). Do not wait and do not look again. Claude reads the pull request on the laptop, and
+the verdict is one of two things: the branch is merged, with any small fault mended by Claude at the merge; or what is
+still wrong becomes a new card on the board, which is taken like any other card. A review never asks a finished cloud
+task to do more. The next thing to do is the next card under CODEX CAN START NOW.
+
 **The laptop's check-in (Kyle, 18 November 2026).** At each Wasteland check-in Claude fetches `origin` and looks at every
 `codex/*` branch. For each branch whose own card says `waiting_on: claude`, Claude reviews the diff independently, runs
 the checks listed under "For Claude to run", and records the verdict and any fixes on GitHub against the exact commit

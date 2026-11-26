@@ -193,6 +193,7 @@ assert.match(checkEffect({type: 'site', id: '@camp', stage: 'burned'})[0], /only
     {type: 'made', id: 'tower/crows-step'}, {type: 'debt', id: 'finch/lift', person: 'finch', text: 'Finch owes you a lift.'},
     {type: 'promise', id: 'glasshouse/seed', person: 'glasshouse', text: 'You promised the Glasshouse a sack of seed beans.', dueNights: 3},
     {type: 'met', person: 'marigold', text: 'Marigold showed you her beans.'},
+    {type: 'rumour', site: 'bus-ring'},
   ];
   for (const effect of passed) assert.deepEqual(checkEffect(effect), [], JSON.stringify(effect));
   const done = applyEffects(sampleWorld('helped-camp'), {id: 'test/every-effect', effects: passed});
@@ -201,6 +202,8 @@ assert.match(checkEffect({type: 'site', id: '@camp', stage: 'burned'})[0], /only
   assert.equal(isTrue({fact: 'promise', id: 'glasshouse/seed'}, done.world), true);
   assert.equal(done.world.open.car.dirt, .25);
   assert.equal(done.world.open.crossings['mall-road-2'], 1);
+  assert.equal(isTrue({fact: 'mark', id: 'rumour/bus-ring'}, done.world), true, 'a rumour is the mark the maps read');
+  assert.deepEqual(checkEffect({type: 'rumour', site: '@rumoured'}, {roles: {rumoured: 'sites'}}), []);
 }
 // A choice is applied once a night; one that may happen again carries its count; the next night it may be made again.
 {

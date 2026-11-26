@@ -49,6 +49,13 @@ where a hearth is banked (`src/story/ledger-save.js`, a named hook). A sign does
 - **Holds.** A beat that holds the checkpoints and the signs inside a roam job takes the hold through the part's
   return (`hold: {holder, systems}`) and lets go with `release`.
 - **A sign that is a person's words** is a row in `src/world/open/content/talk-threads.js`.
+- **The shape.** Section 18 now has a part, "The one shape of a storyline's file". Build the storyline rule to read
+  that shape and nothing else, and write the burned camp's file in it: `when` for every condition, `next` for where
+  anything leads (the rule itself makes the `thread` effect; a file never writes one), the conditions `reach`,
+  `after`, `nights`, `seconds`, `part`, `cast`, `asked`, `found`, `chose` and `due`, the `mission` object, `later`
+  and `ignored`. Nine other storylines are already written (`src/story/threads/content/`) and OPEN-THREAD-SHAPE is
+  bringing them to the same shape today; do not load them or edit them in this card. The rule should need no change
+  to play them later.
 
 ## What to build
 

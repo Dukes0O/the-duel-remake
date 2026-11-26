@@ -28,8 +28,10 @@ in `src/story/threads/content/`, and works when there are none.
    the land may write it, so this is a warning and it names where it is read). *Written and never read:* for the
    writers to see what nobody has used yet.
 4. **Every storyline is walked without graphics.** Its beats and ends are a graph. An edge runs from a beat along its
-   `next`, along each value of its `outcomes`, and along every `{type: 'thread', to}` or `{type: 'thread', end}` among
-   its choices' effects. Reported: an end that no path reaches; a beat that no path reaches; a beat with no way out
+   `next`, along each choice's `next`, and along the `next` of each outcome of its mission (section 18, "The one
+   shape of a storyline's file"; a `next` may be a list of `{when, to}`). Until OPEN-THREAD-SHAPE has merged, some
+   files still write an edge as a `thread` effect or as `end`: follow those too, and list each under "not yet in the
+   shape". Reported: an end that no path reaches; a beat that no path reaches; a beat with no way out
    that is not an end.
 5. **A page to look at.** `--html <file>` writes one page that stands alone, with an inline SVG: the storylines as
    boxes round a ring, one line for each crossing with the fact written on it, and the tables below. Without a file

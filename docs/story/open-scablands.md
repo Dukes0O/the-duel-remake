@@ -597,6 +597,116 @@ can read "the Glasshouse was left to the Road Rats". No side thread is ever need
 **The rule that keeps it from tangling** is the one in `five-cold-nights.md` section 7: every thread can be played
 alone. For each fact a thread reads, its file says what happens when nobody ever wrote that fact.
 
+### The one shape of a storyline's file (25 November 2026)
+
+Nine storylines were written in full by three writers on 25 November 2026, and where the lines above were not yet
+specific each writer chose a different word for the same need. This is the one shape. Every storyline's file is
+brought to it (card OPEN-THREAD-SHAPE), `checkThread` refuses a key that is not here, and the storyline rule
+(OPEN-THREADS) reads nothing else. A key is added to the shape here first, and then used.
+
+**One word for one thing.** These hold everywhere in a file.
+
+| The need | The one way | Not used |
+| --- | --- | --- |
+| A condition, on anything | `when`, holding one condition; several are joined with `all` | `needs` as a condition, lists of conditions |
+| Where something leads | `next`, naming a beat or an end. A list is tried in order: `next: [{when, to}, {to}]` | a `thread` effect written by hand, `end`, `ends`, `to` alone |
+| A place | `'@camp'` (a role), a site or a place by its id, or `[place, spot]` for a named spot inside it | a bare role name, `at` beside `when`, prose |
+| A fixed person or place | Its own id from the register. A role is only for what the game chooses | `is`, `only` on a role |
+| A sentence a mark shows on What people remember | `text` on the `mark` or `made` effect. A mark with no `text` is never shown | a `marks` table |
+| An effect that happens only sometimes | `when` on the effect. The storyline rule drops it when the condition is false | `effectsWhen`, `rolls`, `steps` |
+| A rumour of a site | The effect `{type: 'rumour', site: '@rumoured'}`, which writes the mark `rumour/<site>` | `rumour` as a key on a row |
+| A line or a thought for one people only | `when: {cast: 'camp', is: 'glasshouse'}` | `for`, a table by people |
+| A draw made in the middle | A `draw` fact inside a `when`. The rule puts the storyline and the night in front of its name | `rolls`, `draw` as a key |
+
+**Conditions a storyline has beside the facts of section 12.** Each is written as an object with one of these keys,
+and may stand wherever a fact may.
+
+| Condition | True when |
+| --- | --- |
+| `{reach: place, within: 40}` | The player is at that place, or within so many metres of it. `within` may be left out |
+| `{after: 'beat'}` or `{after: ['a', 'b']}` | That beat is done, or any one of them |
+| `{nights: 2, since: 'beat'}` | So many hearths have been banked since that beat was reached. Without `since`, since this beat was reached |
+| `{seconds: 20, since: 'beat'}` | So many seconds of play, counted the same way |
+| `{part: 'dusk'}` | It is that part of the day: `day`, `dusk` or `dark` |
+| `{cast: 'camp'}`, `{cast: 'camp', is: 'glasshouse'}` | That role is filled; that role is filled by that one |
+| `{asked: 'question-id'}` | That question of this storyline has been asked |
+| `{found: 'thing-id'}` beside no `site` | That thing to find in this storyline has been found |
+| `{chose: 'choice-id'}` | That choice of this storyline was made |
+| `{due: 'promise-id'}` | That promise fell due tonight and is not kept |
+| `'sign-seen'` | As the `when` of the first beat only: the sign has been seen |
+
+**The parts.**
+
+```js
+// A ROLE in `cast`.
+camp: {from: 'sites',                    // sites, groups, peoples or persons
+  where: {...},                          // asked of each candidate (it may leave out whose word and which site)
+  weightBy: 'feud',                      // optional: likelier as that rises
+  apartFrom: ['first', 'second'],        // optional: never the one that fills those roles
+  except: ['tin-town'], among: [...],    // optional: never these; only these
+  nearest: 'sumps-gate',                 // optional: the candidate nearest that place
+  optional: true,                        // the storyline begins without it; ask with {cast: 'camp'}
+  late: true}                            // not filled at the start; a choice or an outcome fills it: cast: {haven: 'walkers'}
+
+// THE SIGN.
+sign: {kind: 'smoke', at: '@camp',       // a place, or {checkpoint: {who: 'traders'}}
+  by: 'dot',                             // who says it or who comes, for the kinds `words` and `stranger`
+  seenWithin: 3500, part: 'dark',        // optional
+  lastsNights: 2, nightsNeeded: 2,       // how long it stands; nights the storyline needs before an act ends
+  again: {afterNights: 2}, cue: 'open.smoke.seen'}
+
+// A BEAT. It holds any of these, and they play in this order.
+clues: {when: {reach: '@camp'},
+  cue: 'open.clue.found',
+  lines: [LINE, ...], thoughts: [THOUGHT, ...],
+  explore: [{id, what, thought, tells, when, effects, cue}],          // things to find by walking up to them
+  mend: {id, what, wrenchSeconds, scrap, lines, effects},             // one thing mended on the spot; `mends` for several
+  questions: [{id, to, words, lines, when, shows}],                   // asking costs nothing; `shows` is the writer's note
+  choices: [CHOICE, ...],
+  mission: MISSION,
+  effects: [...],                                                     // made when the beat is reached
+  next: 'scout'}                                                      // where it leads when it holds no choice and no mission
+
+// A LINE, and a THOUGHT. A thought with no condition is a plain string.
+{speaker: 'cinder', words: '...', when, radio: true, low: true, shouted: true, as: 'The boy'}
+{thought: '...', when}
+// `speaker` and a question's `to` are a person's id, 'you', or a role's leader written '{camp.leader}'.
+
+// A CHOICE.
+{id: 'follow', by: 'go',                 // say (the default), do, or go: said, done on the spot, or made by going somewhere
+  words: 'Follow the tracks south-east', // what the player reads
+  plain: 'The bean pods lead that way',  // what is plain to see before choosing
+  thought: '...', when,                  // the player's thought; a choice offered only on a condition
+  hidden: 'A scouting mission begins',   // the writer's note of what is kept out of sight; never shown
+  lines: [...], effects: [...],
+  cast: {haven: 'walkers'},              // fills a late role
+  again: {afterNights: 3, times: 1},     // optional: offered again later
+  next: 'scout'}
+
+// A MISSION: a scene that is driven or walked, with something to lose.
+mission: {id: 'burned-camp/scout',
+  kind: 'reach',                         // a step kind of the job engine, or a new kind named in "What it needs made"
+  by: 'car',                             // car or foot
+  minutes: 4, outing: true,              // `outing`: it is the day's one large outing in an act with a clock
+  holds: ['checkpoints', 'signs'],       // what it holds while it runs; [] for a road with chance on it
+  enemy: '@enemy', cars: 2,              // optional
+  rule: {seenAfterSeconds: 8},           // every other number, by plain names, for the builder and the drive
+  lines: [...], thoughts: [...],         // said during it, each with a `when`
+  outcomes: {                            // each names what happened and where it leads
+    seen:   {lines: [...], effects: [...], next: 'rim'},
+    unseen: {next: 'rim'}}}
+// A car wrecked in a mission is the open land's own rule (section 14) and is not written in a storyline.
+
+// LATER: lines that somebody says afterwards, anywhere in the land. Each is a row for that person's talk table.
+later: [{id, by: 'dot', when: {fact: 'mark', id: 'burned-camp/never-went'}, at: 'tin-town', lines: [...], effects: [...]}]
+
+// IGNORED: what happens when the sign is never followed.
+ignored: {afterNights: 4, effects: [...], next: 'left'}
+```
+
+**What a file may still hold that the rule does not read:** `notes`, at the top level or on a beat, in any form. It is
+for the builder and the drive: what a scene should feel like, a picture to take, a number to try.
+
 ## 19. The first shelf of threads
 
 Twelve, written by Claude beyond the one Kyle dictated, to show the range. Each is one file. The burned camp is in

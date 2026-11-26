@@ -11,6 +11,7 @@
 //   {type: 'town', post: 'ransom', scrap: 150}           a posting to the town; written down and nothing more yet
 //   {type: 'feud', of: 'road-rats', by: 1}               a group's feud; without `of` it is the Ash Men's, as before
 //   {type: 'promise', ..., dueNights: 3}                 the ledger's promise, due that many nights from tonight
+//   {type: 'rumour', site: 'radio-hill'}                 somebody told of a site: the ledger's mark rumour/radio-hill
 // and three that keep count of things and are not written in the journal, because nothing is caused by them:
 //   {type: 'ground', square: 311}                        a square of ground is driven over
 //   {type: 'crossing', checkpoint: 'mall-road-2'}        a checkpoint is crossed once more
@@ -32,7 +33,7 @@ import {GROUND_COLUMNS, GROUND_ROWS, MOST_FAVOURS, favoursOf, feudOf, stageOf} f
 import {checkRole, isRole} from './roles.js';
 
 export const LEDGER_EFFECTS = Object.freeze(['stock', 'word', 'feud', 'roadWord', 'mark', 'made', 'debt', 'promise',
-  'settle', 'met', 'tell', 'read', 'shareHearth']);
+  'settle', 'met', 'tell', 'read', 'shareHearth', 'rumour']);
 export const OPEN_EFFECTS = Object.freeze(['find', 'site', 'favour', 'scrap', 'thread', 'town', 'ground', 'crossing',
   'rest', 'dirt']);
 const COUNTING = Object.freeze(['ground', 'crossing', 'rest', 'dirt']);
@@ -148,6 +149,11 @@ export function applyEffects(world, {id: choiceId, effects}) {
   const forLedger = due.filter(effect => !isOpenEffect(effect)).map(effect => {
     // The Ash Men's feud is the ledger's own, whether or not the effect names them.
     if (effect.type === 'feud') { const {of, ...plain} = effect; return plain; }
+    // A rumour of a site is the ledger's mark for it (section 16), written as an effect so that a role can be named.
+    if (effect.type === 'rumour') {
+      if (!isSite(effect.site)) throw new TypeError('Unknown site: ' + effect.site);
+      return {type: 'mark', id: 'rumour/' + effect.site};
+    }
     // A promise may say how many nights from tonight it falls due.
     if (effect.type === 'promise' && effect.due === undefined && effect.dueNights !== undefined) {
       const {dueNights, ...plain} = effect;
@@ -186,7 +192,7 @@ export function checkEffect(effect, {roles = null} = {}) {
     else if (effect.text.length > LONGEST_SENTENCE) say('The sentence of the effect "' + effect.type + '" is longer than ' + LONGEST_SENTENCE + ' letters.');
   };
   switch (effect.type) {
-    case 'find': named('site', isSite, 'a site in the register', 'site'); break;
+    case 'find': case 'rumour': named('site', isSite, 'a site in the register', 'site'); break;
     case 'site':
       named('id', isSite, 'a site in the register', 'site');
       if (!SITE_STAGES.includes(effect.stage)) say('"' + effect.stage + '" is not a stage a site can have.');
