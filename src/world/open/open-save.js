@@ -37,38 +37,77 @@ export function savedOpenRecord(profile) {
   return profile?.story?.version === 1 && readable(record) ? record : null;
 }
 
-// Rule inputs stay exact: thread-rule reads arrivals, director reads starts,
-// site-view reads burns, and effects/sites/buildings/checkpoints read current
-// choice ids. Keep all thread and burn rows, plus the last banked night and
-// everything newer. Unknown rows also survive. The recollection page and
-// replay read the separate ledger, which this helper never touches.
-// Summaries are audit counts by choice prefix and inclusive night range;
-// they have no choiceId/night and cannot impersonate an applied choice.
+const isBeat = beat => typeof beat === 'string' || beat === null;
+const isBurn = row => row.type === 'site' && row.after === 'burned';
+
+// The readers use findLast in append order. thread-rule reads the last arrival
+// per thread and beat, including arrivals that start a thread. The director
+// reads the last start among its roster, so keep the last start per thread and
+// its position relative to other starts. site-view reads the last burn per site.
+function lastRuleRows(journal) {
+  const arrivals = new Map(), starts = new Map(), burns = new Map();
+  journal.forEach((row, index) => {
+    if (typeof row.key !== 'string') return;
+    if (row.type === 'thread') {
+      if (isBeat(row.after?.beat)) arrivals.set(JSON.stringify([row.key, row.after.beat]), index);
+      if (row.before === null) starts.set(row.key, index);
+    }
+    if (isBurn(row)) burns.set(row.key, index);
+  });
+  return new Set([...arrivals.values(), ...starts.values(), ...burns.values()]);
+}
+
+function summaryGroup(row) {
+  if (row.type === 'summary') {
+    if (typeof row.choicePrefix === 'string') return {choicePrefix: row.choicePrefix};
+    if ((row.kind === 'thread-arrival' || row.kind === 'thread-start') &&
+      typeof row.thread === 'string' && isBeat(row.beat)) return {kind: row.kind, thread: row.thread, beat: row.beat};
+    if (row.kind === 'site-burn' && typeof row.site === 'string') return {kind: row.kind, site: row.site};
+    return null;
+  }
+  if (row.type === 'thread') {
+    if (typeof row.key !== 'string' || !isBeat(row.after?.beat)) return null;
+    return {kind: row.before === null ? 'thread-start' : 'thread-arrival', thread: row.key, beat: row.after.beat};
+  }
+  if (isBurn(row)) return typeof row.key === 'string' ? {kind: 'site-burn', site: row.key} : null;
+  // A service appends /3, and a crossing or recovery can end in -3. Numbers
+  // inside the id or at the end of a place name belong to that name.
+  return {choicePrefix: row.choiceId.replace(/\/\d+$|(\/(?:crossing|recovery))-\d+$/, '$1')};
+}
+
+// At a bank or above the ceiling, fold every eligible row in one pass. Keep
+// the last banked night and newer rows exact for the current choice-id readers
+// in effects, sites, buildings and checkpoints. Unknown rows also survive.
+// The recollection page and replay read the separate ledger. Summaries have
+// an inclusive night range and no choiceId or night, so they never act as choices.
 export function compactOpenJournal(record, bankedNight, {atBank = false} = {}) {
   if (!atBank && record.journal.length <= OPEN_JOURNAL_LIMIT)
     return {record, overflow: 0};
   const audit = new Set(['find', 'site', 'favour', 'scrap', 'town', 'feud']);
-  const summaries = new Map(), kept = [];
+  const summaries = new Map();
+  const latest = lastRuleRows(record.journal);
   const older = night => count(night) && night < bankedNight;
   const ordered = record.journal.map((row, index) => ({row, index})).sort((a, b) =>
     (a.row.fromNight ?? a.row.night ?? Infinity) - (b.row.fromNight ?? b.row.night ?? Infinity) || a.index - b.index);
   const folded = new Set();
   for (const {row, index} of ordered) {
-    const summary = row.type === 'summary' && typeof row.choicePrefix === 'string' &&
-      count(row.entries) && count(row.fromNight) && row.fromNight <= row.toNight && older(row.toNight);
-    if (!summary && !(audit.has(row.type) && older(row.night) && typeof row.choiceId === 'string' &&
-      !(row.type === 'site' && row.after === 'burned'))) continue;
-    // Repeat counters occur both as /3 (services) and -3 (recoveries/runs).
-    const prefix = summary ? row.choicePrefix : row.choiceId.replace(/([/-])\d+(?=\/|$)/g, '$1');
+    const summary = row.type === 'summary';
+    if (summary) {
+      if (!count(row.entries) || !count(row.fromNight) || !older(row.toNight) || row.fromNight > row.toNight) continue;
+    } else if (latest.has(index) || !older(row.night) || typeof row.choiceId !== 'string' ||
+      !(audit.has(row.type) || row.type === 'thread')) continue;
+    const group = summaryGroup(row);
+    if (!group) continue;
+    const key = JSON.stringify(group);
     const first = summary ? row.fromNight : row.night, last = summary ? row.toNight : row.night;
-    const previous = summaries.get(prefix);
-    summaries.set(prefix, {type: 'summary', choicePrefix: prefix,
+    const previous = summaries.get(key);
+    summaries.set(key, {type: 'summary', ...group,
       fromNight: Math.min(previous?.fromNight ?? first, first), toNight: Math.max(previous?.toNight ?? last, last),
       entries: (previous?.entries ?? 0) + (summary ? row.entries : 1)});
     folded.add(index);
   }
   // The relative order of every exact row matters to findLast rule readers.
-  record.journal.forEach((row, index) => { if (!folded.has(index)) kept.push(row); });
+  const kept = record.journal.filter((row, index) => !folded.has(index));
   const journal = [...summaries.values(), ...kept];
   const next = same(journal, record.journal) ? record : {...record, journal};
   return {record: next, overflow: Math.max(0, journal.length - OPEN_JOURNAL_LIMIT)};

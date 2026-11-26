@@ -6,6 +6,7 @@ import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayer
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow} from '../src/story/ledger.js';
 import {savedLedger} from '../src/story/ledger-save.js';
 import {settleNight2} from '../src/story/night-2-save.js';
+import {directThreads} from '../src/story/threads/director.js';
 import {threadRule} from '../src/story/threads/thread-rule.js';
 import {NIGHT_2_CHOICES, NIGHT_2_QUESTIONS} from '../src/story/scenes/night-2.js';
 import {night2Opening} from '../src/world/jobs/night-2.js';
@@ -15,6 +16,8 @@ import {sampleWorld} from '../src/world/open/samples.js';
 import {compactOpenJournal, OPEN_JOURNAL_LIMIT, savedOpenRecord, settleOpenWorld, spendScrap} from '../src/world/open/open-save.js';
 import {worldForProfile} from '../src/world/open/open-world.js';
 import {checkpointsPart} from '../src/world/open/parts/checkpoints.js';
+import {sitePosition} from '../src/world/open/site-rule.js';
+import {createSiteView} from '../src/world/open/site-view.js';
 
 const loadFixture = name => JSON.parse(readFileSync(new URL('./fixtures/saves/' + name, import.meta.url))).storage;
 function memoryStorage(fixture) {
@@ -27,13 +30,14 @@ const oldFixture = loadFixture('24-story-water.json'), newFixture = loadFixture(
 const off = {enabled: id => id === 'hidden-road'};
 const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
 
+function reload(profile) {
+  const store = memoryStorage(newFixture), registry = loadPlayers(store);
+  assert(savePlayers(replacePlayerProfile(registry, registry.activePlayerId, profile), store));
+  return profileOf(store);
+}
+
 // OPEN-JOURNAL-SIZE: fixtures are generated in memory, never from player storage.
 {
-  const reload = profile => {
-    const store = memoryStorage(newFixture), registry = loadPlayers(store);
-    assert(savePlayers(replacePlayerProfile(registry, registry.activePlayerId, profile), store));
-    return profileOf(store);
-  };
   const auditRows = length => Array.from({length}, (_, i) => ({type: 'scrap', key: 'scrap',
     before: 100 + i, after: 99 + i, choiceId: ['forge-shed/repair/', 'checkpoint/ransom/', 'routine/run/'][i % 3] + i, night: 1}));
   const base = profileOf(memoryStorage(newFixture));
@@ -50,7 +54,7 @@ const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
   const before = structuredClone(original), ledger = savedLedger(original);
   const chapter = {completed: true, opening: {seed: ledger.seed, night: 2}, journal: [],
     ledger: bankHearth(ledger).ledger, scrap: 0};
-  const banked = settleNight2(original, chapter);
+  const banked = settleNight2(original, chapter, {flags: on});
   assert(banked.ok && banked.changed);
   const loaded = reload(banked.profile), record = savedOpenRecord(loaded);
   assert.equal(original.story.open.journal.length, 10_000);
@@ -61,23 +65,23 @@ const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
   assert.deepEqual(loaded.story.ledger, {version: 1, ...chapter.ledger}, 'marks, words, stocks and replay history survive');
   assert.deepEqual(ledgerPageData(loaded.story.ledger), ledgerPageData(chapter.ledger));
   assert.deepEqual(original, before, 'bank compaction is pure');
-  assert.equal(settleNight2(original, {...chapter, completed: false}).profile, original);
+  assert.equal(settleNight2(original, {...chapter, completed: false}, {flags: on}).profile, original);
   assert.equal(compactOpenJournal(record, 2, {atBank: true}).record, record, 'folding twice is stable');
   const thread = {id: 'burned-camp', beats: {sign: {}, clues: {}}, ends: []};
   const rule = world => threadRule(thread, {world}, world.open.threads['burned-camp']).ask({nights: 2, since: 'clues'});
   assert.equal(rule(worldForProfile(loaded)), rule(worldForProfile({...original,
     story: {...original.story, ledger: loaded.story.ledger}})), 'thread timing after reload agrees');
 
-  // Ranges and counts merge with the next bank; audit rows fold oldest first.
+  // Ranges and counts merge with the next bank, which folds every eligible row.
   const ranged = compactOpenJournal({...record, journal: [
     {type: 'scrap', choiceId: 'forge-shed/repair/4', night: 2}, ...record.journal,
   ]}, 3, {atBank: true}).record;
-  const repairs = ranged.journal.find(row => row.choicePrefix === 'forge-shed/repair/');
+  const repairs = ranged.journal.find(row => row.choicePrefix === 'forge-shed/repair');
   assert.deepEqual([repairs.fromNight, repairs.toNight], [1, 2]);
   assert.equal(repairs.entries, record.journal.find(row => row.choicePrefix === repairs.choicePrefix).entries + 2);
 
-  // A roam exit enforces the same ceiling, while this night's repeat counters
-  // remain exact and cannot pay twice after reload. Summaries are not choices.
+  // A roam exit over the ceiling folds every eligible row. This night's
+  // repeat counters remain exact and cannot pay twice after reload.
   const current = [
     {type: 'scrap', key: 'scrap', before: 152, after: 140, choiceId: 'forge-shed/repair/3', night: 3},
     {type: 'scrap', key: 'scrap', before: 140, after: 100, choiceId: 'checkpoint/night-3/recovery-7/lift', night: 3},
@@ -88,6 +92,7 @@ const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
   const resumed = worldForProfile(reload(settled.profile));
   assert(resumed.open.journal.length <= OPEN_JOURNAL_LIMIT);
   assert.deepEqual(resumed.open.journal.filter(row => row.type !== 'summary'), current);
+  assert.equal(resumed.open.journal.filter(row => row.type === 'summary').reduce((total, row) => total + row.entries, 0), 10_000);
   assert.equal(applyEffects(resumed, {id: current[0].choiceId, effects: [{type: 'scrap', by: -12}]}).world, resumed);
   assert.equal(applyEffects(resumed, {id: 'forge-shed/repair/4', effects: [{type: 'scrap', by: -12}]}).world.scrap, resumed.scrap - 12);
   const recovered = checkpointsPart.step({}, {world: resumed, holds: [],
@@ -99,9 +104,11 @@ const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
   const warnings = [], warn = console.warn;
   console.warn = (...args) => warnings.push(args);
   try {
-    const protectedRows = Array.from({length: OPEN_JOURNAL_LIMIT + 1}, (_, i) => ({...exact[1], choiceId: 'arrival/' + i}));
+    const protectedRows = Array.from({length: OPEN_JOURNAL_LIMIT + 1}, (_, i) => ({
+      ...exact[1], after: {beat: 'arrival-' + i}, choiceId: 'arrival/' + i,
+    }));
     const protectedProfile = {...original, story: {...original.story, open: {...original.story.open, journal: protectedRows}}};
-    const overflowBank = settleNight2(protectedProfile, chapter);
+    const overflowBank = settleNight2(protectedProfile, chapter, {flags: on});
     assert(overflowBank.ok);
     assert.deepEqual(reload(overflowBank.profile).story.open.journal, protectedRows);
     const overflowRoam = settleOpenWorld(loaded, {...worldForProfile(loaded), open: {...record, journal: protectedRows}});
@@ -117,6 +124,100 @@ const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
     }
   } finally { console.warn = warn; }
   console.log('Open journal: 10,000-row bank and roam, exact rule inputs, repeat choices and lossless overflow passed.');
+}
+
+// OPEN-JOURNAL-SIZE-2: old repeated rule inputs use most of the space after five years.
+{
+  const night = 5 * 365;
+  const base = profileOf(memoryStorage(newFixture));
+  const arrival = (thread, beat, night, before) => ({
+    type: 'thread', key: thread, before, after: {beat, end: null},
+    choiceId: before === null ? thread + '/start' : thread + '/reach/' + beat, night,
+  });
+  const burn = (site, night) => ({
+    type: 'site', key: site, before: 'camp', after: 'burned', choiceId: site + '/burn', night,
+  });
+  const journal = Array.from({length: night - 1}, (_, i) => {
+    const n = i + 1;
+    // A start also counts as an arrival, and may later be superseded by a return to that same beat.
+    return [arrival('road-tale', 'sign', n, null), arrival('burned-camp', 'sign', n, null),
+      arrival('burned-camp', 'clues', n, {beat: 'sign'}), arrival('burned-camp', 'sign', n, {beat: 'clues'}),
+      burn('glasshouse', n), burn('radio-hill', n)];
+  }).flat();
+  const oldSummary = {type: 'summary', choicePrefix: 'old/repair/', fromNight: 1, toNight: 2, entries: 6};
+  const laterRows = [
+    {type: 'scrap', choiceId: 'forge-shed/repair/3', night: night - 1},
+    {type: 'scrap', choiceId: 'forge-shed/repair/4', night: night - 1},
+    {type: 'scrap', choiceId: 'checkpoint/mall-road-2/ransom', night: night - 1},
+    {type: 'scrap', choiceId: 'checkpoint/mall-road-3/ransom', night: night - 1},
+    arrival('road-tale', 'sign', night, {beat: 'clues'}),
+    arrival('road-tale', 'sign', night + 1, {beat: 'clues'}),
+  ];
+  const threads = {
+    'burned-camp': {beat: 'clues', began: night - 1, cast: {}, end: 'done'},
+    'road-tale': {beat: 'sign', began: night - 1, cast: {}, end: 'done'},
+  };
+  const open = {...base.story.open, threads, stages: {...base.story.open.stages, glasshouse: 'burned', 'radio-hill': 'burned'},
+    journal: [oldSummary, ...journal, ...laterRows]};
+  const oldProfile = {...base, story: {...base.story, open, ledger: {...base.story.ledger, night, history: []}}};
+  const original = reload(oldProfile);
+  assert.deepEqual(original, oldProfile, 'a pre-follow-up save, including its old summaries, loads unchanged');
+  const ledgerAfterBank = bankHearth(savedLedger(original)).ledger;
+  const chapter = {completed: true, opening: {seed: ledgerAfterBank.seed, night}, journal: [],
+    ledger: ledgerAfterBank, scrap: 0};
+  const banked = settleNight2(original, chapter, {flags: on});
+  assert(banked.ok && banked.changed);
+  const loaded = reload(banked.profile);
+  const record = savedOpenRecord(loaded);
+  assert(record.journal.length < OPEN_JOURNAL_LIMIT,
+    `the five-year journal should fit after banking: ${open.journal.length} -> ${record.journal.length}`);
+  assert.deepEqual({...record, journal: []}, {...open, journal: []});
+  assert.deepEqual(loaded.story.ledger, {version: 1, ...ledgerAfterBank});
+  assert.equal(compactOpenJournal(record, night, {atBank: true}).record, record, 'folding twice is stable');
+  assert.equal(settleNight2(original, chapter, {flags: off}).profile.story.open, original.story.open);
+  assert.equal(settleNight2(original, chapter).profile.story.open, original.story.open, 'the default dev switch is off in the player build');
+
+  const exact = record.journal.filter(row => row.type !== 'summary');
+  assert.deepEqual(exact, [...journal.slice(-6), ...laterRows.slice(-2)], 'protected rows and their append order are preserved');
+  const summaries = record.journal.filter(row => row.type === 'summary');
+  assert.equal(summaries.reduce((total, row) => total + row.entries, exact.length), open.journal.length + oldSummary.entries - 1);
+  for (const fields of [
+    {kind: 'thread-arrival', thread: 'burned-camp', beat: 'clues'},
+    {kind: 'thread-start', thread: 'burned-camp', beat: 'sign'},
+    {kind: 'site-burn', site: 'glasshouse'},
+  ]) {
+    const summary = summaries.find(row => Object.entries(fields).every(([key, value]) => row[key] === value));
+    assert.deepEqual(summary, {type: 'summary', ...fields, fromNight: 1, toNight: night - 2, entries: night - 2});
+  }
+  assert.deepEqual(summaries.find(row => row.choicePrefix === oldSummary.choicePrefix), oldSummary);
+  assert.deepEqual(summaries.filter(row => row.choicePrefix?.startsWith('checkpoint/')).map(row => row.choicePrefix),
+    ['checkpoint/mall-road-2/ransom', 'checkpoint/mall-road-3/ransom']);
+  assert.equal(summaries.find(row => row.choicePrefix === 'forge-shed/repair').entries, 2);
+
+  const before = worldForProfile({...original, story: {...original.story, ledger: loaded.story.ledger}});
+  const after = worldForProfile(loaded);
+  const tale = (id, kind) => ({id, kind, beats: {sign: {}, clues: {}}, ends: ['done'], cast: {}, sign: {}});
+  const camp = tale('burned-camp', 'camp');
+  const roster = [camp, tale('road-tale', 'road'), tale('camp-next', 'camp'), tale('road-next', 'road')];
+  const look = createSiteView({});
+  const glasshouse = sitePosition('glasshouse', open.landSeed);
+  try {
+    for (const world of [before, after]) {
+      const check = threadRule(camp, {world}, world.open.threads[camp.id]).ask;
+      assert(check({nights: 2, since: 'clues'}));
+      assert(!check({nights: 3, since: 'clues'}));
+      const choices = directThreads(roster, {world}, 'bank');
+      const starts = choices.flatMap(choice => choice.effects).filter(effect => effect.type === 'thread');
+      assert.deepEqual(starts.map(effect => effect.id), ['road-next'], 'the last start is still the camp story');
+      for (const [n, fresh] of [[night, true], [night + 1, false]]) {
+        look.update({open: {world: {...world, ledger: {...world.ledger, night: n}}, parts: {}}}, glasshouse, 0);
+        assert.equal(look.group.children.find(node => node.userData.stage === 'burned')?.userData.fresh, fresh);
+      }
+    }
+  } finally {
+    look.dispose();
+  }
+  console.log(`Open journal: five years folded ${open.journal.length} rows to ${record.journal.length}; rule readers and switch guard passed.`);
 }
 
 function appAtYard(fixture, flags = on) {
