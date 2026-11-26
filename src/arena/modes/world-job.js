@@ -2288,8 +2288,9 @@ export function stepWorldJob(duel, dt) {
       const talks = openStep.requests.filter(isTalk);
       const talk = talks.find(request => request.threadPriority) ?? talks[0];
       if (talk) {
-        for (const skipped of talks) if (skipped !== talk)
-          worldJob.openJobEvents.push({type: 'openTalkSkipped', scene: skipped.id});
+        const skipped = talks.filter(request => request !== talk)
+          .map(request => ({type: 'openTalkSkipped', scene: request.id}));
+        if (skipped.length) worldJob.openJobEvents = [...worldJob.openJobEvents, ...skipped];
         beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
       }
     }
