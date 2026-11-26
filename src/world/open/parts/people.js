@@ -4,11 +4,16 @@ import {scablandsActorHeightAt} from '../../scablands-ground.js';
 import {stepMover, FOOT_GRADE} from '../../scablands-movers.js';
 import {isTrue} from '../facts.js';
 import {followRoutine, routinePose} from '../routine-rule.js';
-import {PEOPLE} from '../content/people.js';
+import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
+import {routineFor} from '../routine-run-rule.js';
+import {marketPeople} from '../market-day-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
+import {haulerPeople} from '../content/stranded-hauler-places.js';
+import {haulerTalkScene} from '../content/talk-hauler.js';
+import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -30,7 +35,9 @@ function firstPose(row, target, grid) {
 }
 
 export function talkFor(row, world, resolveScene = id => TOWN_SCENES[id], heard = []) {
-  for (const entry of TALK_TABLES[row.talk] ?? []) {
+  const table = TALK_TABLES[row.talk] ?? [];
+  for (const entry of [...table.filter(row => row.scene.startsWith('stranded-hauler/')),
+    ...table.filter(row => !row.scene.startsWith('stranded-hauler/'))]) {
     if (entry.once && heard.includes(entry.scene)) continue;
     if (entry.needs && !isTrue(entry.needs, world)) continue;
     if (entry.afterChoice && !world.ledger.history.some(change => change.night === 2 && change.choiceId === entry.afterChoice))
@@ -58,6 +65,8 @@ export const peoplePart = {
     let {active, asked, heard} = state;
     const choices = [];
     for (const event of jobEvents) {
+      if (active && event.type === 'openTalkClosed' && typeof event.scene === 'string' &&
+          event.scene.startsWith('market-day/')) active = null;
       if (!active || event.scene !== active.scene) continue;
       if (event.type === 'openTalkQuestion') {
         asked = {...asked, [active.scene]: [...(asked[active.scene] ?? []), event.id]};
@@ -70,8 +79,18 @@ export const peoplePart = {
         active = null;
       }
     }
-    const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
+    const flag = view.checkpointsEnabled ? flagPeople(world) : [];
+    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
+      ...haulerPeople(world, {...view, seconds: context.seconds}), ...flag] : [];
+    const learner = view.dayClock ? routineFor(world).learner : null;
+    const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
+    const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
+      row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
+    const market = view.checkpointsEnabled ? marketPeople(world, view) : [];
+    const staged = Object.fromEntries(market.map(row => [row.id, (row.routine.day.at ?? row.routine.day.around).join('/')]));
+    const stageAt = row => Object.hasOwn(staged, row.id) ? staged[row.id] : null;
+    const rows = [...residents.filter(row => (standsHere(row, world) || row.id === learner) && !stageAt(row) &&
+      !flag.some(person => person.id === row.id)), ...[...extras, ...mallPeople].filter(row => !stageAt(row)), ...market];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.
@@ -81,19 +100,21 @@ export const peoplePart = {
       if (hasNamedSpot(plan)) return [];
       const target = targetFor(row, context, partOfDay);
       const person = state.cast.find(item => item.id === row.id);
-      if (!person) return [firstPose(row, target, peopleGrid)];
+      if (!person || stageAt(row) && stageAt(row) !== state.staged?.[row.id]) return [firstPose(row, target, peopleGrid)];
       if (active?.person === row.id) return [faceDriver(person, driver, dt)];
       return [followRoutine(person, target, dt, {
         pace: STORY_FIGURES[row.figure].pace * 1.15, radius: person.radius, car: carPosition, grid: peopleGrid,
-        returnBounds: plan.kind === 'post' ? townEdges : null,
+        returnBounds: plan.kind === 'post' && !stageAt(row) ? townEdges : null,
       })];
     });
     const requests = [];
-    if (!active && onFoot && interact && !state.useHeld) {
+    if (!active && onFoot && interact && !state.useHeld &&
+        !context.events?.some(event => event.type === 'routineInteraction')) {
       const nearest = cast.filter(person => distanceToPerson(person, driver) <= TALK_RANGE)
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {
-        const talk = talkFor(rows.find(row => row.id === person.id), world, undefined, heard);
+        const talk = talkFor(rows.find(row => row.id === person.id), world,
+          id => haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);
@@ -101,6 +122,6 @@ export const peoplePart = {
         break;
       }
     }
-    return {state: {cast, active, asked, heard, useHeld: !!interact}, choices, requests};
+    return {state: {cast, active, asked, heard, useHeld: !!interact, ...(market.length ? {staged} : {})}, choices, requests};
   },
 };

@@ -2,12 +2,14 @@ import * as THREE from 'three';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {createStoryPeople, STORY_FIGURES} from '../jobs/story-people.js';
 import {createStoryPeopleView} from '../story-people-view.js';
+import {BUS_RING} from './content/market-day-places.js';
 import {CAMP_SITES, RADIO_HILL} from './content/sites.js';
 import {campPeople} from './content/people-sites.js';
 import {isFound, stageOf} from './open-record.js';
 import {isTrue} from './facts.js';
 import {buildGlasshouse, updateGlasshouse} from './looks/glasshouse-look.js';
 import {distance, hasSiteServices, residentPose, sitePosition} from './site-rule.js';
+import {flagPeople} from './content/somebody-elses-flag-places.js';
 
 function radioHillLook(heightAt) {
   const group = new THREE.Group();
@@ -48,9 +50,37 @@ function radioHillLook(heightAt) {
   return group;
 }
 
+function busRingLook(heightAt) {
+  const group = new THREE.Group();
+  group.name = 'The Bus Ring';
+  const metal = new THREE.MeshStandardMaterial({color: 0x775d43, roughness: .93});
+  const glass = new THREE.MeshStandardMaterial({color: 0x302f2a, roughness: .65});
+  const wood = new THREE.MeshStandardMaterial({color: 0x5e4732, roughness: .95});
+  const box = (material, x, y, z, width, height, depth) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+    mesh.position.set(x, y, z);
+    group.add(mesh);
+    return mesh;
+  };
+  for (const {x, z, halfX, halfZ, height, kind} of BUS_RING.structures) {
+    const y = heightAt(x, z);
+    box(kind === 'wreck' ? metal : wood, x, y + height / 2, z, halfX * 2, height, halfZ * 2);
+    if (kind !== 'wreck') continue;
+    const wide = halfX > halfZ;
+    for (const side of [-1, 1]) for (const along of [-3, -1, 1, 3])
+      box(glass, x + (wide ? along : side * halfX), y + 1.85, z + (wide ? side * halfZ : along),
+        wide ? 1.45 : .06, .65, wide ? .06 : 1.45);
+  }
+  const lamp = box(new THREE.MeshStandardMaterial({color: 0xdba45b, emissive: 0xff891c, emissiveIntensity: 2}),
+    0, heightAt(0, -6) + 2.9, -6, .35, .4, .35);
+  group.userData.update = (range, phase) => { lamp.visible = phase !== 'day' || range < 120; };
+  return group;
+}
+
 const LOOKS = {
   glasshouse: (stage, options) => buildGlasshouse({...options, stage: stage === 'burned' ? 'burned' : 'camp'}),
   'radio-hill': (stage, {heightAt}) => radioHillLook(heightAt),
+  'bus-ring': (stage, {heightAt}) => busRingLook(heightAt),
 };
 
 export function siteLook(id, stage, options = {}) {
@@ -90,7 +120,7 @@ export function createSiteView({loadAsset}) {
     group.add(people.group);
     const residents = campPeople(site.id);
     const cast = createStoryPeople(residents.map(row => ({
-      id: row.figure, position: {x: 0, y: 0, z: 0},
+      id: row.id, figure: row.figure, position: {x: 0, y: 0, z: 0},
       ...(row.id === 'grower-2' ? {framePartner: 'grower-3'} : {}),
       ...(row.id === 'grower-3' ? {framePartner: 'grower-2'} : {}),
     })));
@@ -107,6 +137,12 @@ export function createSiteView({loadAsset}) {
       const phase = state.partOfDay ?? 'day';
       for (const camp of camps) {
         const {site, people, residents, cast} = camp;
+        if ((site.storyOnly || site.storyChoices) &&
+            !(state.marketSites || worldJob.open.parts.threads?.places?.dryPumpEnabled)) {
+          if (camp.node) camp.node.visible = false;
+          people.group.visible = false;
+          continue;
+        }
         const position = sitePosition(site.id, world.open.landSeed);
         const heightAt = (x, z) => scablandsSurfaceHeightAt(position.x + x, position.z + z);
         const range = distance(here, position);
@@ -152,11 +188,12 @@ export function createSiteView({loadAsset}) {
         } else camp.node.userData.update(range, phase, seconds);
         if (range < 100 && hasSiteServices(stage)) {
           for (const [index, person] of cast.entries()) {
-            const pose = residentPose(residents[index], world, state, STORY_FIGURES[person.id].pace);
+            const pose = residentPose(residents[index], world, state, STORY_FIGURES[residents[index].figure].pace);
             // Finch guides the camp's own water cart, drawn with the camp.
             Object.assign(person, pose, {action: pose.action === 'push-cart' ? 'walk' : pose.action});
           }
-          people.update({storyPeople: cast, storySpeaker: state.speaker}, here, seconds, drawnShift);
+          const away = new Set(flagPeople(world).map(person => person.id));
+          people.update({storyPeople: cast.filter(person => !away.has(person.id)), storySpeaker: state.speaker}, here, seconds, drawnShift);
         } else people.group.visible = false;
       }
     },

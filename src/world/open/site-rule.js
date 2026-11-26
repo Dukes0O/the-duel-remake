@@ -3,8 +3,11 @@ import {LAND} from '../scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {sees} from '../scablands-ways.js';
 import {isTrue} from './facts.js';
+import {BUS_RING} from './content/market-day-places.js';
+import {DRY_PUMP_CAMP} from './content/dry-pump-places.js';
 import {landSite, RADIO_HILL} from './content/sites.js';
 import {siteNeed, mendedMark, deliveredMark, brokenMark} from './content/needs.js';
+import {FLAG_SPOTS} from './content/somebody-elses-flag-places.js';
 
 // Keep placement keyed to the land, and everything that happens in it keyed to the save.
 export function namedPick(seed, name, rows) {
@@ -67,7 +70,9 @@ const GLASSHOUSE_SPOTS = {
   'tent-west': {x: 11.5, z: 3.8}, 'frames-west': {x: -.7, z: 1.1}, 'row-end': {x: 1, z: -2.2},
   'car-stop': {x: -9, z: 19},
 };
-const SPOTS = {glasshouse: GLASSHOUSE_SPOTS, 'radio-hill': RADIO_HILL.spots};
+// Claude keeps Market Day's Bus Ring layout; retain the Dry Pump's pump and door spots.
+const SPOTS = {glasshouse: GLASSHOUSE_SPOTS, 'radio-hill': RADIO_HILL.spots, 'sweet-seep': FLAG_SPOTS,
+  'bus-ring': {...DRY_PUMP_CAMP.spots, ...BUS_RING.spots}};
 
 export function siteSpot(siteId, landSeed, spot) {
   const offset = SPOTS[siteId]?.[spot];

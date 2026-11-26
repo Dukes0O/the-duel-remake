@@ -52,6 +52,8 @@ export const ROAD_GROUPS = {
     car: 'falcone_f42', weapon: 'crossbow', color: 0x9c8150, accent: 0x366452, pace: 26},
   travellers: {intent: [[0, 60, 40]],
     car: 'falcone_f42', weapon: 'crossbow', color: 0x768086, accent: 0x375385, pace: 23},
+  'water-men': {intent: [[0, 100, 0], [100, 0, 0], [100, 0, 0], [100, 0, 0]],
+    car: 'dusthawk_rally', weapon: null, color: 0xf1eee4, accent: 0xd4d6cd, pace: 23},
 };
 
 const lines = requireSound([

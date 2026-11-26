@@ -54,6 +54,7 @@ export const SCENARIO_AREAS = [
   // OPEN-LOOK-RATS-NEST: a look scenario of the open Scablands runs when its look file or the QA page's stand changes.
   {prefixes:['look-rats-nest'], paths:['src/world/open/looks/rats-nest-look.js','tools/open-look-stand.js']},
   {prefixes:['look-glasshouse'], paths:['src/world/open/looks/glasshouse-look.js']},
+  {prefixes:['look-bus-ring'], paths:['src/world/open/looks/bus-ring-look.js','tools/open-look-stand.js']},
   {prefixes:['open-map'], paths:['src/world/open/map-marks.js','src/world/open/parts/ground.js','src/world/scablands-map.js']},
   {prefixes:['open-find-camp'], paths:['src/world/open/parts/sites.js','src/world/open/site-rule.js','src/world/open/site-view.js','src/world/open/content/sites.js']},
   {prefixes:['open-forge-shed'], paths:['src/world/open/parts/buildings.js','src/world/open/building-view.js','src/world/open/building-rule.js','src/world/open/content/buildings.js']},
@@ -63,12 +64,34 @@ export const SCENARIO_AREAS = [
     'src/arena/modes/road-riders.js','src/world/open/looks/rats-nest-look.js','src/world/open/content/burned-scout.js',
     'src/world/open/parts/people.js','src/world/open/sign-view.js','src/world/open/looks/glasshouse-look.js',
     'src/world/jobs/story-people.js','src/world/story-people-view.js']},
+  {prefixes:['open-apprentice-run'], paths:['src/app.js','src/arena/modes/world-job.js','src/story/ledger-save.js',
+    'src/story/scenes/routine-offer.js','src/world/jobs/gas-run.js','src/world/jobs/steps/escort.js','src/world/open/day-rule.js',
+    'src/world/open/open-land.js','src/world/open/open-save.js','src/world/open/open-record.js','src/world/open/content/routines.js',
+    'src/world/open/routine-run-rule.js','src/world/open/parts/routines.js','src/world/world-hud.js','src/screen-arena.js']},
+  {prefixes:['open-market-day'], paths:['src/story/threads/content/market-day.js','src/world/open/market-day-rule.js',
+    'src/world/open/content/market-day-places.js','src/world/open/content/market-mission.js','src/world/open/content/mission-kinds.js',
+    'src/world/open/parts/threads.js','src/world/open/parts/missions.js','src/world/open/parts/people.js',
+    'src/world/open/content/sites.js','src/world/open/content/people-sites.js','src/world/open/content/talk-tables.js',
+    'src/world/open/site-view.js','src/world/open/sign-view.js','src/arena/modes/world-job.js']},
+  {prefixes:['open-dry-pump'], paths:['src/story/threads/content/dry-pump.js','src/world/open/parts/dry-pump.js',
+    'src/world/open/content/dry-pump-places.js','src/world/open/content/mission-kinds.js','src/world/open/parts/missions.js',
+    'src/world/open/parts/threads.js','src/world/open/looks/dry-pump-look.js','src/world/open/sign-view.js',
+    'src/arena/modes/world-job.js','src/onfoot-transition.js']},
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
     'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
     'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
+  {prefixes:['open-stranded-hauler'], paths:['src/story/threads/content/stranded-hauler.js','src/story/threads/signs.js',
+    'src/story/threads/thread-rule.js','src/world/open/parts/threads.js','src/world/open/parts/missions.js',
+    'src/world/open/content/mission-kinds.js','src/world/open/content/stranded-hauler-places.js',
+    'src/world/open/content/talk-hauler.js','src/world/open/content/talk-tables.js','src/world/open/parts/people.js',
+    'src/world/open/parts/checkpoints.js','src/world/open/checkpoint-rule.js','src/world/open/sign-view.js',
+    'src/world/open/looks/stranded-hauler-look.js','src/arena/modes/road-riders.js','src/arena/modes/world-job.js','src/world/world-hud.js']},
+  {prefixes:['open-somebody-elses-flag'], paths:['src/story/threads/content/somebody-elses-flag.js',
+    'src/world/open/', 'src/story/threads/signs.js', 'src/story/scenes/burned-camp.js',
+    'src/arena/modes/road-riders.js', 'src/arena/modes/world-job.js', 'src/sim-contacts.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
-export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||
+export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2','open-apprentice-run'].includes(name) ||
   /save|storage|backup|restore|archive|migrat|pay|reward/.test(name);
 const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
 const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
@@ -115,7 +138,7 @@ export const QUIET_SCENARIOS = Object.freeze([
   'arena-ambush-alley', 'arena-fuel-run', 'arena-pit', 'arena-shove',
   'armor-kit-visuals', 'arsenal-core', 'blackiron', 'combat-armor-frame-pacing',
   'combat-ramming', 'convoy-frames', 'convoy-raid', 'convoy-tanker-art',
-  'crew-fighters', 'deep-frames', 'everburn-frames', 'first-person-gear', 'first-person-polish', 'frame-pacing',
+  'crew-fighters', 'deep-frames', 'everburn-frames', 'fire-view', 'first-person-gear', 'first-person-polish', 'frame-pacing',
   'grand-prix', 'gunn', 'harbour-night', 'hidden-road-discovery',
   'onfoot-camera-choice', 'p4-daynight', 'p4-snow', 'polish-arena', 'polish-flame',
   'rustwall', 'rustwall-frame', 'sal-art', 'salt-flats', 'scrapdome',

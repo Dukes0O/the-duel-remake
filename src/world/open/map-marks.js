@@ -3,6 +3,7 @@ import {namedThrow} from '../../story/ledger.js';
 import {isTrue} from './facts.js';
 import {isFound, stageOf} from './open-record.js';
 import {SITES} from './register.js';
+import {flagStory, FLAG_ID} from './content/somebody-elses-flag-places.js';
 
 export function openMapMarks(world, positionOf) {
   const sites = [], rumours = [];
@@ -15,7 +16,9 @@ export function openMapMarks(world, positionOf) {
     if (!Number.isFinite(at?.x) || !Number.isFinite(at?.z)) continue;
     const {x, z} = at;
     if (found) {
-      const name = stageOf(world, site.id) === 'burned' ? site.name + ' (burned)' : site.name;
+      const drilling = site.id === flagStory.sign.at && isTrue({fact: 'mark', id: FLAG_ID + '/tower-seen'}, world) &&
+        !['bought', 'driven-off'].includes(world.open.threads[FLAG_ID]?.end);
+      const name = drilling ? flagStory.notes.sign.mapName : stageOf(world, site.id) === 'burned' ? site.name + ' (burned)' : site.name;
       sites.push({id: site.id, name, x, z});
     } else {
       // Each axis is 70 or 135 metres off, so even the longest diagonal is within 200 m.

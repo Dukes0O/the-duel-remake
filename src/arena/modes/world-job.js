@@ -56,6 +56,7 @@ import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sitePosition} from '../../world/open/site-rule.js';
 import {SITES as OPEN_SITES} from '../../world/open/register.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
+import {ROUTINE_CUES} from '../../story/scenes/routine-offer.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
 import {WAITING_LINE} from '../../world/open/content/talk-town.js';
 import {startTalk, talkScreen} from '../../story/talk.js';
@@ -1724,15 +1725,16 @@ function syncOpenPeople(worldJob) {
   if (moved) worldJob.solidGrid.setStoryPeople(people);
 }
 
-function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false}) {
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked, at, radio = false, position}) {
   const {job} = worldJob;
   const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
   const steps = job.steps.slice();
   // A talk on the radio (OPEN-THREADS: the questions home from a burned camp) has a speaker who is not standing here:
   // it is not ended by walking away, and nobody turns to face the player.
-  const standing = worldJob.storyPeople?.find(item => item.id === person);
+  const standing = worldJob.storyPeople?.find(item => item.id === person) ?? (position && {position});
   const onRadio = radio === true || !standing;
-  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio});
+  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio,
+    ...(at ? {openTalkAt: at} : {}), ...(position ? {openPosition: position} : {})});
   worldJob.openRoamStepState = job.stepState;
   worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
   worldJob.storySpeaker = onRadio ? null : person;
@@ -1757,6 +1759,11 @@ export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (worldJob.definition.routineRun?.passenger && !worldJob.passengerAboard) {
+    worldJob.passengerAboard = true;
+    if (Object.hasOwn(SOUND_BANK, ROUTINE_CUES.learnt)) duel.emit({arenaTell: {id: 'routine-passenger',
+      targetId: 'player', seconds: 0, cue: ROUTINE_CUES.learnt}});
+  }
   // STORY-NIGHT-2-FLOW: the rider laying siege circles the Walkers' camp (a talk passes no time, so it stands still then).
   if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt,
     state.onFoot && state.fighter ? state.fighter : position(duel, state))) syncJobCarSolids(worldJob);
@@ -1764,8 +1771,11 @@ export function stepWorldJob(duel, dt) {
     // OPEN-ROAM: external movement or leaving the driver's seat of the talk
     // closes this temporary step without routing a story choice.
     if (talkStep.openPerson && !talkStep.openRadio) {
-      const person = worldJob.storyPeople.find(item => item.id === talkStep.openPerson);
-      if (!state.onFoot || distanceToPerson(person, state.fighter) > TALK_RANGE) {
+      // A routine's talk is held at its spot (OPEN-APPRENTICE-RUN); otherwise at the person, or at a fixed position.
+      const person = talkStep.openTalkAt ? {position: {...talkStep.openTalkAt, y: state.fighter?.y}} :
+        worldJob.storyPeople?.find(item => item.id === talkStep.openPerson) ??
+        (talkStep.openPosition && {position: talkStep.openPosition});
+      if (!state.onFoot || !person || distanceToPerson(person, state.fighter) > TALK_RANGE) {
         worldJob.talkAction = null;
         closeOpenTalk(duel, worldJob, talkStep, true);
         return null;
@@ -2108,14 +2118,17 @@ export function stepWorldJob(duel, dt) {
       sitePositions: checkpointsEnabled ? withSpots : sites, checkpointSites: sites, missionRidersFighting,
       missionLookoutPosts: worldJob.open.parts.missions?.active?.state.route.posts,
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
+      campSiteState: worldJob.open.parts.sites,
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
-      people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
+      people: worldJob.storyPeople, playerName: worldJob.definition.open.playerName, marketSiteState: worldJob.open.parts.sites,
+      partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
     worldJob.open = openStep.open;
+    if (openStep.leave) worldJob.roamExit = openStep.leave;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
   }
   const next = stepJob(worldJob.job, view, dt);
@@ -2230,6 +2243,8 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'bellowsArrived') {
       worldJob.bellowsResult = {bellows:event.bellows, knocks:event.knocks, pay:event.pay, sentence:event.sentence};
     }
+    if (event.type === 'routineGasArrived')
+      worldJob.routineGasArrival = {load: event.load, clean: event.clean};
     if (currentStep?.gasLoad && event.type === 'gasArrived') {
       worldJob.gasResult = {gas:event.gas, pay:event.pay, sentence:event.sentence};
       worldJob.forgeGasShare = 0;
@@ -2275,21 +2290,30 @@ export function stepWorldJob(duel, dt) {
     const isTalk = request => request.type === 'talk' || request.type === 'openTalk';
     if (currentStep?.kind === 'roam') {
       syncOpenPeople(worldJob);
-      const talk = openStep.requests.find(isTalk);
-      if (talk) beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
+      const talks = openStep.requests.filter(isTalk);
+      const talk = talks.find(request => request.threadPriority) ?? talks[0];
+      if (talk) {
+        const skipped = talks.filter(request => request !== talk)
+          .map(request => ({type: 'openTalkSkipped', scene: request.id}));
+        if (skipped.length) worldJob.openJobEvents = [...worldJob.openJobEvents, ...skipped];
+        beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
+      }
     }
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
     if (checkpointsEnabled) for (const event of openStep.events) {
-      if ((event.type === 'threadCue' || event.type === 'threadMissionSpotted') && Object.hasOwn(SOUND_BANK, event.cue))
+      if (['threadCue', 'threadMissionSpotted', 'threadMissionPhase', 'threadMissionMoment'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
         duel.emit({arenaTell: {id: event.id, cue: event.cue, position: event.position ?? point, seconds: 0}});
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
-      if (checkpointsEnabled && request.type === 'missionLookouts') {
+      if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
+        putFighterOnGround(duel, state.fighter, request.place);
+      } else if (checkpointsEnabled && request.type === 'missionLookouts') {
         const prefix = request.id + '/lookout/';
         worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));
         request.posts.forEach((position, index) => worldJob.actors.push({
-          id: prefix + index, position: {...position, y: position.y + (position.heap?.height ?? 0)},
+          id: prefix + index, position: {...position,
+            y: (position.y ?? scablandsSurfaceHeightAt(position.x, position.z)) + (position.heap?.height ?? 0)},
           heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
           health: 100, speed: 0,
         }));

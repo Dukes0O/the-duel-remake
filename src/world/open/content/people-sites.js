@@ -1,4 +1,5 @@
 import {checkPerson, requireSound} from '../check-tables.js';
+import {BUS_RING, MARKET_FIGURES} from './market-day-places.js';
 
 const there = (home, spot) => [home, spot];
 const post = (home, spot, action = 'stand') => ({kind: 'post', at: there(home, spot), action});
@@ -18,6 +19,8 @@ export const SITES_PEOPLE = Object.freeze(requireSound([
   person('grower-3', glasshouse, track(glasshouse, [['tent-west', 6, 'carry-frame'], ['frames-west', 5], ['hoe-3', 12, 'walk', 'hoe']]), stove, sleep),
   person('hetty', radio, track(radio, [['door', 115], ['lookout', 12]]), post(radio, 'door', 'sit'), post(radio, 'door', 'sit')),
   person('bern', radio, track(radio, [['generator', 8], ['mast', 10], ['door', 7]]), post(radio, 'bench', 'sit'), post(radio, 'bed', 'sleep')),
+  person('gasket', 'bus-ring', post('bus-ring', BUS_RING.meeting, 'stand'), post('bus-ring', BUS_RING.meeting, 'sit'),
+    post('bus-ring', BUS_RING.meeting, 'sleep'), {figure: MARKET_FIGURES.gasket}),
 ], checkPerson, 'Camp people'));
 
 export const campPeople = site => SITES_PEOPLE.filter(person => person.home === site);

@@ -21,6 +21,13 @@ const LOOKS = Object.freeze({
     return {at: sitePosition('rats-nest', 0), layout: look.RATS_NEST_LAYOUT,
       build: look.buildRatsNest, update: look.updateRatsNest};
   },
+  // OPEN-LOOK-BUS-RING. Until OPEN-T-MARKET places the site, it stands where that card puts it. Its one stage is `camp`;
+  // the stand's `night` stands the same camp in the dark.
+  'bus-ring': async () => {
+    const look = await import('../src/world/open/looks/bus-ring-look.js'), {LAND} = await import('../src/world/scablands-names.js');
+    return {at: sitePosition('bus-ring', 0) ?? LAND.at('ridge', -665, -345), layout: look.BUS_RING_LAYOUT,
+      build: ({heightAt}) => look.buildBusRing({stage: 'camp', heightAt}), update: look.updateBusRing};
+  },
 });
 
 const NIGHT = Object.freeze({hemisphere: .22, sun: .09, environment: .14, fog: .07, sky: .06});
