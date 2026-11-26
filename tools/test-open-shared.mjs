@@ -423,10 +423,14 @@ assert.equal(stepOpenLand(releaseOpenLand(open, 'thread:burned-camp'), view(0), 
   assert.equal(loud.events.length, 32);
   assert.deepEqual([loud.events[0].seq, loud.events[31].seq], [9, 40]);
 }
-// The parts as shipped by this card are empty, and stepping them changes nothing.
+// The shared part order is fixed. Thread talk needs a reason before it replaces a greeting.
 assert.deepEqual(OPEN_PARTS.map(part => part.id), ['people', 'buildings', 'sites', 'checkpoints', 'threads', 'ground']);
 assert.deepEqual(PEOPLE, []);
-assert.deepEqual(TALK_TABLES, {});
+const remembered = TALK_TABLES.dot.find(row => row.scene === 'burned-camp/remembered');
+assert.ok(remembered, 'Dot has a row for a player who ignored the burned camp');
+assert.equal(isTrue(remembered.needs, helped), false);
+const ignored = applyEffects(helped, {id: 'test/ignored', effects: [{type: 'mark', id: 'burned-camp/never-went'}]}).world;
+assert.equal(isTrue(remembered.needs, ignored), true);
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);

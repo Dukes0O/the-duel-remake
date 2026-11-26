@@ -2,6 +2,7 @@
 import {applyChoice, bankHearth, createLedger} from './ledger.js';
 import {replayTelling} from './ledger-replay.js';
 import {registerStory, writeStory} from './story-save.js';
+import {threadsAtBankedHearth} from '../world/open/parts/threads.js';
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = n => Number.isSafeInteger(n) && n >= 0;
@@ -65,4 +66,9 @@ export function savedLedger(profile) {
   if (profile?.story?.version !== 1) return null;
   const entry = profile.story.ledger;
   return readable(entry) ? entry : null;
+}
+
+// OPEN-STATE supplies the world to its bank transaction and persists the result. The legacy ledger writer has no open world.
+export function directBankedOpenWorld(world, {storyChoices, holds, view} = {}) {
+  return storyChoices === true ? threadsAtBankedHearth({world, holds, view}) : world;
 }
