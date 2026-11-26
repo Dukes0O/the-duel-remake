@@ -73,7 +73,8 @@ function draw(map, overrides = {}) {
     };
     return {getContext: () => paint};
   }};
-  const ctx = new Proxy({canvas: {ownerDocument: doc}, measureText: text => ({width: text.length * 7}),
+  const ctx = new Proxy({canvas: {ownerDocument: doc}, imageSmoothingEnabled: true, imageSmoothingQuality: 'low',
+    measureText: text => ({width: text.length * 7}),
     drawImage(...args) { calls.push(['drawImage', ...args, this.imageSmoothingEnabled, this.imageSmoothingQuality]); },
   }, {
     get(target, key) {
