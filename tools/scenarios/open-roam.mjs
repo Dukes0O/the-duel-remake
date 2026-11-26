@@ -36,7 +36,9 @@ export const pageFunctions = {
     const job = window.__qaApp.duel.state.arena.worldJob.job;
     return job.steps[job.stepIndex]?.openPerson === 'cinder' && !!talk?.querySelector('.story-words')?.textContent.includes('kiln');
   },
-  advanceLine: () => {
+  advanceLine: index => {
+    const {job} = window.__qaApp.duel.state.arena.worldJob;
+    if (job.stepState.talk?.phase !== 'lines' || job.stepState.talk.index !== index) return false;
     const button = document.querySelector('.story-talk:not([hidden]) .story-talk-controls button:first-child');
     if (!button || button.disabled || !button.getClientRects().length) return false;
     button.click();
@@ -112,8 +114,8 @@ export async function run(context) {
   await context.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'KeyF', key: 'f', windowsVirtualKeyCode: 70});
   try { await wait('talking'); }
   finally { await context.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'KeyF', key: 'f', windowsVirtualKeyCode: 70}); }
-  await wait('advanceLine');
-  await wait('advanceLine');
+  await wait('advanceLine', 0);
+  await wait('advanceLine', 1);
   await wait('leaveTalk');
   await wait('roaming');
   if (!await evaluate('boardForGate', NIGHT_2_SITES.car)) throw Error('F did not board the parked car.');
