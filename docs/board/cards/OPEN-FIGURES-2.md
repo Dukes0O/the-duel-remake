@@ -24,7 +24,10 @@ Rows in `PROFILES` and the task poses named above.
 
 ## Files and locks
 
-The same files as OPEN-FIGURES. Build after OPEN-FIGURES has merged, because both edit `PROFILES`. No lock.
+The same files as OPEN-FIGURES, which is built at the same time (Kyle, 25 November 2026: both start at once). Add this
+card's rows to `PROFILES` in a block of their own after the last row, and its poses the same way, so that the two
+branches join without a clash; the laptop joins them at the merge. Put this card's recipe in a file of its own beside
+`tools/blender/story-walkers.py`. No lock.
 
 ## Checks
 
