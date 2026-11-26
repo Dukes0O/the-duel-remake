@@ -39,7 +39,8 @@ export function tollPlace(place) {
 }
 
 const diner = ['tin-town', 16, 19];
-const wash = ['the-wash', 25, -38];
+const wash = LAND.at('the-wash', 25, -38);
+const town = LAND.at('tin-town');
 const post = (id, figure, at, home) => ({id, figure, home, talk: null,
   routine: {day: {kind: 'post', at, action: 'stand'}}});
 
@@ -48,7 +49,7 @@ export const TOLL_PEOPLE = [
   post('nan-tallow', 'moss', local(8, 17), TOLL_GATE),
   post('sumps-rider', 'road-rat-lookout', local(-65, -352), TOLL_GATE),
   post('dot', 'hetty', diner, 'tin-town'),
-  post('rell', 'rell', wash, 'the-wash'),
+  post('rell', 'rell', ['tin-town', wash.x - town.x, wash.z - town.z], 'tin-town'),
 ];
 
 export const TOLL_TALK_ROWS = story.later;
@@ -150,7 +151,7 @@ export function stagedToll(world) {
 export function tollVisitPosition(id, cast, view, placeAt) {
   if (id === 'nan-tallow') return spots.nan;
   if (id === 'sump') return spots.sump;
-  if (id === 'rell') return view.people?.find(row => row.id === id)?.position ?? LAND.at(...wash);
+  if (id === 'rell') return view.people?.find(row => row.id === id)?.position ?? wash;
   if (id === '{camp.leader}') return placeAt([cast.camp, 'door'], cast) ?? placeAt(cast.camp, cast);
   if (id === 'auntie-solder') return placeAt(['tin-town', 'hearth'], cast);
   if (id === 'sumps-rider') return spots.rider;
