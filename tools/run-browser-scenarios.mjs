@@ -51,6 +51,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['far-rain'], paths:['src/render/','src/scene-lighting.js']},
   // OPEN-LOOK-RATS-NEST: a look scenario of the open Scablands runs when its look file or the QA page's stand changes.
   {prefixes:['look-rats-nest'], paths:['src/world/open/looks/rats-nest-look.js','tools/open-look-stand.js']},
+  {prefixes:['look-glasshouse'], paths:['src/world/open/looks/glasshouse-look.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||

@@ -1506,17 +1506,6 @@ tasks:
 
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
-  - id: OPEN-LOOK-GLASSHOUSE
-    title: "Open Scablands: the Glasshouse drawn in code, whole and burned (round 1)"
-    owner: "claude-cloud"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-GLASSHOUSE.md"
-
 
   - id: OPEN-FIGURES-3
     title: "Open Scablands: the fifteen figures, second round from Claude's verdicts (Sump's coat first)"
