@@ -75,7 +75,7 @@ for (const site of LAND_SITES) for (const {at} of site.where) {
   const found = tick(tooFar.open, {x: p.x + glasshouse.foundWithin, z: p.z}, {onFoot: true});
   assert.deepEqual(found.open.world.open.found, ['glasshouse']);
   assert.match(found.open.world.ledger.encounters.glasshouse, /second night/);
-  assert.equal(found.requests[0].text, 'The Glasshouse is on your map.');
+  assert.equal(found.requests.find(request => request.type === 'say').text, 'The Glasshouse is on your map.');
   assert.equal(found.events[0].cue, 'open.site.found');
   const back = tick(found.open, p);
   assert.deepEqual(back.open.world.open.found, ['glasshouse']);

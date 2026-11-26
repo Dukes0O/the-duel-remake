@@ -1451,7 +1451,11 @@ function applyRequests(duel, worldJob, requests) {
     if (applyBellowsFurnaceLeave(duel, worldJob, request)) continue;
     if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
     if (applyBrandRequest(duel, worldJob, request)) continue;
-    if (request.type === 'marker') {
+    if (request.type === 'solids' && worldJob.open && typeof request.id === 'string' && Array.isArray(request.solids)) {
+      if (worldJob.solidGrid || request.solids.length)
+        (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).setOpenSolids(request.id, request.solids);
+    }
+    else if (request.type === 'marker') {
       const step = worldJob.job.steps[worldJob.job.stepIndex], fighter = duel.state.fighter;
       if (worldJob.night2 && step?.kind === 'rider-fight') continue;
       const chapter = duel.state.onFoot && worldJob.night2;

@@ -1,5 +1,6 @@
 // This part posts choices and requests through the open-land host. Events carry the inputs and outputs for the
 // shared talk, inventory, audio and encounter adapters. Interact is the on-foot repair input until the wrench joins it.
+import {siteSolidRows} from '../../scablands-solids.js';
 import {STORY_FIGURES} from '../../jobs/story-people.js';
 import {campPeople} from '../content/people-sites.js';
 import {FEUD_GROUPS, nameOf} from '../register.js';
@@ -31,15 +32,20 @@ function caption(id, text) {
   return {type: 'say', lineId: id, text};
 }
 
-function speechLines(world, site, sceneId, extra = {}) {
+function filledScene(world, site, sceneId, extra = {}) {
   const here = sitePosition(site.id, world.open.landSeed);
   const fill = (whole, id, field) => {
     if (field === 'name') return extra[id]?.name ?? whole;
     const there = extra[id]?.position ?? sitePosition(id, world.open.landSeed);
     return there ? bearing(here, there) : whole;
   };
-  return siteScene(sceneId).lines.map((line, index) => caption(sceneId + '/' + index,
-    line.words.replace(/\{([a-z-]+)\.(bearing|name)\}/g, fill)));
+  const scene = siteScene(sceneId);
+  return {...scene, lines: scene.lines.map(line => ({...line,
+    words: line.words.replace(/\{([a-z-]+)\.(bearing|name)\}/g, fill)}))};
+}
+
+function speechLines(world, site, sceneId, extra) {
+  return filledScene(world, site, sceneId, extra).lines.map((line, index) => caption(sceneId + '/' + index, line.words));
 }
 
 function listenAtRadio(site, world, state, position, view, holds, events, queue) {
@@ -101,23 +107,23 @@ function news(scene, event, world) {
   return !heard('quiet') ? {scene: 'hetty/quiet', effects: [mark('radio-hill/news/quiet')]} : null;
 }
 
-function meet(site, world, input, choices, events, queue) {
+function meet(site, world, state, person, sign, choices, events, requests, queue) {
   const id = meetingMark(site.id);
   const first = !marked(world, id);
-  const person = input?.person ?? site.leader;
-  if (!campPeople(site.id).some(row => row.id === person)) return;
-  if (first && person !== site.leader) return;
-  const greeting = siteGreeting(person, world);
+  if (first && person && person !== site.leader) return;
+  const greeting = siteGreeting(person ?? site.leader, world);
   if (!greeting) return;
-  queue.push(...speechLines(world, site, greeting));
-  events.push({type: 'siteTalk', site: site.id, scene: greeting, person});
+  if (person) requests.push({type: 'talk', scene: filledScene(world, site, greeting), speaker: person});
+  else queue.push(...speechLines(world, site, greeting));
+  events.push({type: 'siteTalk', site: site.id, scene: greeting, person: person ?? site.leader});
   if (first) {
-    choices.push({id, effects: [mark(id)]});
+    state.introduced = true;
+    if (person || !siteScene(greeting).choices.length) choices.push({id, effects: [mark(id)]});
     return;
   }
   const newsId = 'open/news/' + site.id;
   if (choiceSeen(world, newsId)) return;
-  const item = news(greeting, input?.sign, world);
+  const item = news(greeting, sign, world);
   if (!item) return;
   if (item.scene !== greeting) queue.push(...speechLines(world, site, item.scene, item.extra));
   choices.push({id: newsId, effects: item.effects});
@@ -266,18 +272,25 @@ export const sitesPart = {
     }
 
     let near = null;
-    for (const site of CAMP_SITES) {
+    const layout = CAMP_SITES.map(site => stageOf(world, site.id));
+    const lastLayout = previous.landSeed === world.open.landSeed ? previous.layout : null;
+    for (const [index, site] of CAMP_SITES.entries()) {
       const position = sitePosition(site.id, world.open.landSeed);
+      if (lastLayout?.[index] !== layout[index])
+        requests.push({type: 'solids', id: site.id, solids: siteSolidRows(site.id, position, layout[index])});
       const found = isFound(world, site.id);
       if (!found && discover(site, world, view.onFoot, point, position, choices, events, requests))
         state.nextLineAt = seconds + SPEECH_SECONDS;
       else listenAtRadio(site, world, state, position, view, holds, events, queue);
-      if (found && distance(position, point) <= VISIT_RADIUS && hasSiteServices(stageOf(world, site.id))) near = site;
+      if (found && distance(position, point) <= VISIT_RADIUS && hasSiteServices(layout[index])) near = site;
     }
+    state.layout = layout;
+    state.landSeed = world.open.landSeed;
     if (state.site !== near?.id || previous.night !== world.ledger.night) {
       if (state.repair || state.need) requests.push({type: 'marker', place: null});
       state.site = near?.id;
       state.arrivedAt = state.routineTime;
+      state.introduced = false;
       state.repair = null;
       state.need = null;
     }
@@ -285,10 +298,21 @@ export const sitesPart = {
       const talk = view.onFoot && view.interact && !previous.interact;
       const person = view.siteInput?.person ?? (talk ? campPeople(near.id).find(row =>
         distance(point, residentPose(row, world, state, STORY_FIGURES[row.figure].pace).position) <= 2.5)?.id : null);
-      if (!marked(world, meetingMark(near.id)) || (person && !queue.length))
-        meet(near, world, {...view.siteInput, person}, choices, events, queue);
-
       const need = visitNeed(near, world);
+      const met = marked(world, meetingMark(near.id));
+      if (person && need?.kind === 'supply' && person === need.by && met &&
+          !isTrue({fact: 'promise', id: need.id}, world)) {
+        requests.push({type: 'talk', scene: filledScene(world, near, need.id + '/ask'), speaker: person});
+      } else if ((!met && !state.introduced) || person) {
+        meet(near, world, state, person, view.siteInput?.sign, choices, events, requests, queue);
+      }
+      const reply = view.jobEvents?.find(event => event.type === 'talkChoice' && event.id?.startsWith(near.id + '/meet/'));
+      if (reply && near.id === 'glasshouse') {
+        const option = siteScene('glasshouse/first').choices.find(option => option.id === reply.id);
+        if (option) queue.push(caption(option.id + '/reply', option.reply.words));
+      }
+
+
       if (need) {
         const offerMark = OFFER + need.id + '/' + world.ledger.night;
         const offered = marked(world, offerMark);
@@ -307,7 +331,7 @@ export const sitesPart = {
     } else state.repair = null;
     if (!near || busy) state.need = null;
     state.interact = view.interact === true;
-    if (!requests.some(item => item.type === 'say') && queue.length && seconds >= (state.nextLineAt ?? 0)) {
+    if (!requests.some(item => ['say', 'talk'].includes(item.type)) && queue.length && seconds >= (state.nextLineAt ?? 0)) {
       requests.push(queue.shift());
       state.nextLineAt = seconds + SPEECH_SECONDS;
     }

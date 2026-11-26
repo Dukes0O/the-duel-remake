@@ -23,7 +23,7 @@ import {scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} fr
 import {HILLS} from '../src/world/scablands-height.js';
 import {RIVER, RIVER_LAND, riverDepthAt, riverGorgeDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpHeightAt} from '../src/world/scablands-scarps.js';
-import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, createSolidGrid, createJobSolidGrid, openSiteSolids, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
+import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, createSolidGrid, createJobSolidGrid, siteSolidRows, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
 import {thingSolids} from '../src/world/scablands-things.js';
 import {GROUND, fallHit, dropFor, climbLimit} from '../src/world/scablands-ground-rules.js';
 import {stepMover, FOOT_GRADE} from '../src/world/scablands-movers.js';
@@ -35,6 +35,7 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {fieldBattleJob} from '../src/world/jobs/gas-run.js';
 import {SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
 import {sampleWorld} from '../src/world/open/samples.js';
+import {stageOf} from '../src/world/open/open-record.js';
 import {sitePosition} from '../src/world/open/site-rule.js';
 
 const venue = ARENA_VENUES.scablands, course = new Course(venue, 1989), DT = 1 / 60, MPH = 1.609344;
@@ -68,19 +69,18 @@ test('both furnace roads clear solids and climbable ground, including the return
 
 test('only an open job grid has site solids, and they follow the site stage and seed', () => {
   const world = sampleWorld('helped-camp'), burned = sampleWorld('after-the-smoke');
-  const {x, z} = sitePosition('glasshouse', world.open.landSeed);
+  const site = 'glasshouse', at = sitePosition(site, world.open.landSeed), {x, z} = at;
   const grid = createJobSolidGrid();
-  const nearby = () => grid.near(x, z, x, z, 30).filter(solid => solid.placeId === 'glasshouse');
-  assert.deepEqual(openSiteSolids(null), []);
+  const nearby = () => grid.near(x, z, x, z, 30).filter(solid => solid.placeId === site);
   assert.deepEqual(nearby(), []);
-  grid.setOpenSites(world);
+  grid.setOpenSolids(site, siteSolidRows(site, at, stageOf(world, site)));
   assert.ok(nearby().some(solid => solid.id === 'glasshouse-tent'));
   assert.ok(nearby().some(solid => solid.id === 'glasshouse-pump'));
-  grid.setOpenSites(burned);
+  grid.setOpenSolids(site, siteSolidRows(site, at, stageOf(burned, site)));
   assert.ok(nearby().some(solid => solid.id === 'glasshouse-pump'));
   assert.ok(nearby().some(solid => solid.id === 'glasshouse-tent-pole-west'));
   assert.ok(nearby().every(solid => solid.id !== 'glasshouse-tent' && !solid.id.startsWith('glasshouse-row')));
-  grid.setOpenSites(null);
+  grid.setOpenSolids(site, []);
   assert.deepEqual(nearby(), []);
 });
 

@@ -81,7 +81,7 @@ export function hasSiteServices(stage) {
 function trackPose(stops, seconds, pace, action) {
   const pairs = stops.map((stop, index) => {
     const next = stops[(index + 1) % stops.length];
-    return {stop, next, travel: distance(stop.point, next.point) / pace};
+    return {stop, next, travel: distance(stop.point, next.point) / (stop.move === 'carry-frame' ? .92 : pace)};
   });
   const duration = pairs.reduce((total, pair) => total + pair.stop.seconds + pair.travel, 0);
   let remaining = duration > 0 ? seconds % duration : 0;
@@ -92,7 +92,7 @@ function trackPose(stops, seconds, pace, action) {
     if (remaining <= travel && travel > 0) {
       const share = remaining / travel;
       return {point: {x: stop.point.x + (next.point.x - stop.point.x) * share,
-        z: stop.point.z + (next.point.z - stop.point.z) * share}, yaw, action, distance: seconds * pace};
+        z: stop.point.z + (next.point.z - stop.point.z) * share}, yaw, action: stop.move ?? action, distance: seconds * pace};
     }
     remaining -= travel;
   }
@@ -124,7 +124,7 @@ export function residentPose(person, world, {partOfDay = 'day', routineTime = 0,
   } else if (routine.kind === 'post') {
     pose = {point: at(routine.at[1]), yaw: 0, action: routine.action};
   } else if (routine.kind === 'track') {
-    const stops = routine.stops.map(stop => ({point: at(stop.at[1]), seconds: stop.seconds, action: stop.action}));
+    const stops = routine.stops.map(stop => ({point: at(stop.at[1]), seconds: stop.seconds, action: stop.action, move: stop.move}));
     pose = trackPose(stops, routineTime, pace, routine.action);
   } else {
     const origin = at(routine.around[1]), {radius, pause} = routine;
