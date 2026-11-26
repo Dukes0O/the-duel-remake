@@ -1568,7 +1568,8 @@ tasks:
     owner: "claude-cloud"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), since 26 November 2026: branch cloud/OPEN-WRITE-3, pull request into integration/wasteland"
     needs: []
     locks: []
     flag: "story-choices"
