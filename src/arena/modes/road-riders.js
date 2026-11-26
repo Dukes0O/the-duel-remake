@@ -119,7 +119,7 @@ export function startRoadFight(duel, world, checkpoint = null) {
     car.roadRider = {id:definition.id, weapon:definition.weapon, home:definition.home,
       fightToEnd:definition.fightToEnd === true, slot:definition.boxIn ? slot++ : null,
       targetId, phase:'fighting', ashWait:0, approach:definition.approach === true,
-      circle:definition.circle ?? null};
+      circle:definition.circle ?? null, getawayMetres:step.getawayMetres ?? 0};
     Object.assign(participant,{name:definition.name || definition.id, team:'road-riders', targetId});
     state.opponents.push(car); state.arena.participants.push(participant); fight.riders.push(car.arenaId);
   }
@@ -210,6 +210,14 @@ export function roadRiderGoal(duel,car,dt) {
   if (rider.phase === 'withdrawing') {
     if (dist(me,rider.home) <= R.homeRadius) {
       if (rider.checkpoint) return {...me, speedMph:0, boost:false};
+      // NIGHT-2-TRY-FIXES item 3: a rider that gets away is seen leaving. A car at 'home' is no longer drawn, so on a fight
+      // that names a getaway distance it keeps driving away from the player until it is that far off, and only then is gone.
+      const state=duel.state, you=state.onFoot && state.fighter ? state.fighter : worldPose(duel,state);
+      if (rider.getawayMetres && dist(me,you) < rider.getawayMetres) {
+        const away=Math.atan2(me.x-you.x,me.z-you.z);
+        rider.home={x:me.x+Math.sin(away)*R.getawayLegMetres,z:me.z+Math.cos(away)*R.getawayLegMetres};
+        return reachableGoal(duel,car,{...rider.home,speedMph:R.retreatMph,boost:false});
+      }
       rider.phase='home'; car.finished=true; car.contactExempt=true; car.speedMph=0;
     } else return reachableGoal(duel,car,{...rider.home,speedMph:R.retreatMph,boost:false});
   }

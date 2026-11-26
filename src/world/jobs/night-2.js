@@ -2,7 +2,7 @@ import {WIM_CLEAN} from '../open/content/talk-forge.js';
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow, plainStockChange} from '../../story/ledger.js';
 import {replayTelling} from '../../story/ledger-replay.js';
 import {LEDGER_MARK_LINES} from '../../story/ledger-ui.js';
-import {NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
+import {NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER, NIGHT_2_RIDER_LINES, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
 import {sweepObstacle} from '../../collision.js';
 import {createJobSolidGrid} from '../scablands-solids.js';
 import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../scablands-ground.js';
@@ -73,6 +73,9 @@ const washRiders = riders.map(({id, start, renderCar: car}, index) => ({
   home: {x: sites.camp.position.x - 145 - index * 30, z: sites.camp.position.z + (index - 1) * 75},
   ...(id === NIGHT_2_SIEGE.riderId ? {circle: {x: sites.camp.position.x, z: sites.camp.position.z, radius: NIGHT_2_SIEGE.radius}} : {}),
 }));
+// NIGHT-2-TRY-FIXES item 3 (Claude's decision, 26 November 2026): a rider who breaks off is seen driving away. It is gone only
+// when it is this far from the player: its roof lamps are drawn without fog, and nearer than this they still show as a point.
+export const NIGHT_2_GETAWAY_METRES = 450;
 // The crew who leave a wrecked rider car run for the Walkers' camp; any that reach it take it (src/arena/modes/road-riders.js).
 const washCrewGoal = {x: sites.camp.position.x, z: sites.camp.position.z, radius: sites.camp.radius};
 
@@ -86,6 +89,7 @@ export function night2Job(seed, {washFight = false, saved = null} = {}) {
     {id: 'wash-get-car', kind: 'night-2-action', action: 'board', what: 'Find your car and hold F to get in.'},
     drive('wash-drive', sites.washApproach, 'Drive out to the Walkers’ camp at the Wash.'),
     {id: 'wash-fight', kind: 'rider-fight', riders: washRiders.map(rider => ({...rider})), onLost: 'continue', crewGoal: washCrewGoal,
+      getawayMetres: NIGHT_2_GETAWAY_METRES,
       what: 'Drive off the three Ash riders at the Wash.'},
     talk('wash-fight-won', 'camp-won'),
     drive('wash-drive-home', sites.carHome, 'Drive back to Tin Town.'),
@@ -95,7 +99,8 @@ export function night2Job(seed, {washFight = false, saved = null} = {}) {
   ] : [];
 
   const ledger = night2StartingLedger(saved);
-  return {id: NIGHT_2_ID, name: 'Strangers at the gate', title: 'Strangers at the gate',
+  // NIGHT-2-TRY-FIXES item 1: a story night is not a race, so it starts at once, with no countdown.
+  return {id: NIGHT_2_ID, name: 'Strangers at the gate', title: 'Strangers at the gate', startsAtOnce: true,
     seed: ledger?.seed ?? seed, ...(ledger ? {openingLedger: ledger} : {}),
     steps: [
       talk('hearth', 'hearth', {carStart: sites.car, footStart: hearthStart}),
@@ -546,4 +551,23 @@ export function night2ScoutDestination(worldJob, turned) {
   const chapter = worldJob.night2;
   if (turned) chapter.scoutTurned = true;
   return chapter.scoutTurned ? sites.scoutGate : sites.scoutWall;
+}
+
+// NIGHT-2-TRY-FIXES item 3: the player is told what became of the riders. A line when one breaks off while the fight goes on,
+// and, when the riders are driven off, how many got away. Words only: nothing here changes the fight or the ledger.
+export function watchNight2Riders(worldJob, opponents, say) {
+  const chapter = worldJob.night2, fight = worldJob.riderFight;
+  if (!chapter || !fight || worldJob.job.steps[fight.index]?.id !== 'wash-fight') return false;
+  const told = chapter.ridersTold ??= {leaving: [], gotAway: false};
+  const leaving = opponents.filter(car => fight.riders.includes(car.arenaId) && ['withdrawing', 'home'].includes(car.roadRider?.phase));
+  if (fight.outcome) {
+    if (fight.outcome !== 'won' || told.gotAway || !leaving.length) return false;
+    told.gotAway = true;
+    say(NIGHT_2_RIDER_LINES.gotAway(leaving.length));
+    return true;
+  }
+  const fresh = leaving.filter(car => !told.leaving.includes(car.arenaId));
+  for (const car of fresh) told.leaving.push(car.arenaId);
+  if (fresh.length) say(NIGHT_2_RIDER_LINES.breaksOff);
+  return fresh.length > 0;
 }

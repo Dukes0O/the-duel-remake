@@ -4,7 +4,7 @@ import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
 import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination,
-  night2CampSolids, stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
+  night2CampSolids, stepNight2Siege, watchNight2Camp, watchNight2Riders} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
@@ -2058,6 +2058,7 @@ export function stepWorldJob(duel, dt) {
   }
   const roadResult = worldJob.riderFight && updateRoadFight(duel,worldJob,dt);
   if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
+  if (worldJob.night2) watchNight2Riders(worldJob, state.opponents, text => duel._storyCallout(text, EMBER_CAPTION_SECONDS));
   const truckWater = sprayFromFireTruck(duel, worldJob, currentStep, dt);
   const view = {player: playerView, onFoot: !!state.onFoot, ...(truckWater?.hit ? {waterOnCar: true} : {}),
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
