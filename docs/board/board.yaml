@@ -1117,17 +1117,6 @@ tasks:
     locks: []
     details: "docs/board/cards/SEA-FINISH.md"
 
-  - id: FAR-LINES
-    title: "The Far Side: every line"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: ["TUNNEL-TRIAL"]
-    locks: []
-    details: "docs/board/cards/FAR-LINES.md"
-
   - id: WW-ART-FAR
     title: "Art: Highwater, the mill, PRUDENCE and the green"
     owner: "codex"
@@ -1167,7 +1156,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["FAR-LINES","TOWN-SCRAPYARD","TOWN-OUTPOSTS","TOWN-HAUL-JOB","HELI-RUSTWALL"]
+    needs: ["TOWN-SCRAPYARD","TOWN-OUTPOSTS","TOWN-HAUL-JOB","HELI-RUSTWALL"]
     locks: []
     details: "docs/board/cards/FAR-JOBS-1.md"
 
