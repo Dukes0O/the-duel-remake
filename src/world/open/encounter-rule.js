@@ -195,7 +195,7 @@ export function stepRecovery(recovery, context, camps, serial) {
         {fact: 'word', of: camp.people, atLeast: 'Friendly'},
         {fact: 'favour', of: camp.people, atLeast: 1},
       ]}, world)).sort((a, b) => gap(a.position, at) - gap(b.position, at))[0];
-    const effects = [{type: 'scrap', by: -lossCost(world.scrap)}];
+    const effects = view.recoveryPaid ? [] : [{type: 'scrap', by: -lossCost(world.scrap)}];
     if (friend) {
       effects.push({type: 'favour', person: friend.people, by: -1});
       return {recovery: {phase: 'towed'}, choices: [{id, effects}],

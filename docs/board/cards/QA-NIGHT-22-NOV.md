@@ -14,6 +14,9 @@ that Claude reran on b5df22696 during the Show Night release:
   - `the-dig` (`the-dig`), added 25 November: "Timed out waiting for excavator dug dirt" on the night and again alone
     on 99803804c. `run-gas` failed that night with "Missing #wasteland-visit" and passed alone, as `everburn-ember` did
     on 23 November.
+- Still failing on 26 November, rerun on e5eeb9231 with the same messages: `everburn-job2`, `ships-decks` and
+  `machine-borer` (it finishes now; the camera checks at the 20 m mouth and at the mouth fail). All three are on the standing
+  list under this card (QA-NIGHT-26-NOV).
 - Passed on rerun: `arsenal-wave1-audio`, `menu-front-door` and `rescue-finish`. `p4-audio` failed once with 128
   native sample frames missing while three scenarios shared the laptop, and passed alone (rule 3).
 

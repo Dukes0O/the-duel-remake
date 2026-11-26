@@ -1,11 +1,26 @@
-# Smoke over a friend: when the enemy is the Ash Men
+# Smoke over a friend
 
-A turn of the storyline that `docs/story/open-scablands.md` section 21 writes in full for the Road Rats. Kind: trouble.
-This page writes the same storyline, scene by scene, for the case where the role *the enemy* is cast as the Ash Men,
-and the false trail's drive to the Grey Camp, where there is nobody in the pen. Its data is
-`src/story/threads/content/burned-camp-ash-men.js`, and every line below is in that file exactly as it is here. Card
-OPEN-WRITE-4, 26 November 2026. Nothing here is built yet. Where the file writes `{camp.name}` and `{camp.leader}`,
-this page has the Glasshouse and Marigold, as section 21 does.
+The page of the storyline whose data is `src/story/threads/content/burned-camp.js`. Kind: trouble. It has two turns,
+and that one file holds both:
+
+- **When the enemy is the Road Rats.** `docs/story/open-scablands.md` section 21 writes this turn in full, and the
+  file has it in the beats `sign`, `clues`, `scout`, `rim`, `alone` and `drain` (the last two are still to be built,
+  by OPEN-BURNED-PEN), with `home`, `rescue` and `gate` shared.
+- **When the enemy is the Ash Men,** and the false trail's drive to the Grey Camp, where there is nobody in the pen.
+  The rest of this page writes that turn, scene by scene (card OPEN-WRITE-4, 26 November 2026), and every line below
+  is in the file exactly as it is here.
+
+**How the file tells the turns apart** (card OPEN-ASH-FOLD, 26 November 2026). A row of the Ash Men's turn carries
+`when: ASH`, the enemy cast as the Ash Men. A Road Rats' row that an Ash Men row takes the place of carries `when:
+RATS`, so that the two never show at once. The false trail's rows carry `BLAMED`. A row with none of them belongs to
+both turns: the bean pods, the pump, the drive home, the drive on, raising a party, and staying inside the fence. The
+Ash Men's scouting, rim, fight, pen and break-out are beats of their own, named `grey-...`. The cast, the start and the
+sign are the Road Rats' for now. The Ash Men's (section 2 below) are kept in the file's `notes.ashMenTurn` until the
+main story writes the mark `ash-raid` and a role can ask a condition of one candidate; until then the Ash Men are never
+cast, and none of their rows is offered.
+
+Nothing of the Ash Men's turn is built yet. Where the file writes `{camp.name}` and `{camp.leader}`, this page has the
+Glasshouse and Marigold, as section 21 does.
 
 The choice at its heart is the Road Rats' turn's: scout and go in alone, take what you know home and raise a party,
 buy them back, or leave them. What changes is what the price is made of. The Road Rats want scrap. The Ash Men want
@@ -635,5 +650,5 @@ A player who follows the false trail to the Grey Camp spends one sitting there a
 | `ash-raid` | A mark the main story is to write on the fourth night of Five Cold Nights, when the Ash Men come over the wall |
 | `burned-camp/lamps-promised` | A promise to Old Smoke: Tin Town lights no lamps on one night of his choosing |
 | `burned-camp/brazier`, `/fire-taken`, `/truck-tracks`, `/footprints`, `/went-to-grey-camp`, `/no-pen`, `/grey-seen`, `/found-grey-camp`, `/saw-the-pen`, `/nat-kept-quiet`, `/saw-the-stove`, `/knows-ash-tip`, `/took-them-alone`, `/taken-to-grey-camp`, `/creep-out`, `/car-held`, `/ransomed-in-fire`, `/broke-out`, `/grey-caught`, `/left-at-grey-camp`, `/bought-back-in-fire`, `/rode-out`, `/some-home`, `/rescue-failed`, `/stayed-inside`, `/relit`, `/moved-to-seep` | Marks, each with the sentence given in its scene |
-| `grey-scout`, `grey-rim`, `grey-alone`, `grey-creep`, `grey-sent-home`, `grey-pen`, `grey-ransom`, `grey-break-out`, `grey-offer`, `bought`, `rescue`, `gate`, `false-trail`, `false-rim` | Beats this file names that `burned-camp.js` does not have yet |
-| `creep`, `rescue` | Kinds of mission step not yet in the job engine |
+| `grey-scout`, `grey-rim`, `grey-alone`, `grey-creep`, `grey-sent-home`, `grey-pen`, `grey-ransom`, `grey-break-out`, `grey-offer`, `bought`, `rescue`, `gate`, `false-trail`, `false-rim` | Beats of the Ash Men's turn in `burned-camp.js`, beside the Road Rats' beats |
+| `creep`, `rescue` | Kinds of mission step not yet in the job engine. `fight` and `creep` are OPEN-BURNED-PEN's to build, `rescue` OPEN-BURNED-RESCUE's |

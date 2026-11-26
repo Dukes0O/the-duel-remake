@@ -21,6 +21,7 @@ import {scablandsActorHeightAt} from '../../world/scablands-ground.js';
 import {stepMover, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {RIDER_RULE as R} from '../../world/jobs/rider-rule.js';
 import {AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS} from '../../world/jobs/steps/escort.js';
+import {fightBoxed} from '../../world/open/content/mission-kinds.js';
 
 const sides = ['front', 'back', 'left', 'right'];
 const diff = duel => R.difficulty[duel.state.cpuDifficulty] ?? R.difficulty.medium;
@@ -220,7 +221,10 @@ export function roadRiderGoal(duel,car,dt) {
   }
   const target=arenaActor(duel,rider.targetId);
   if (!target || outOfPlay(duel,target)) return {...me,speedMph:0,boost:false};
-  if (rider.slot !== null) return reachableGoal(duel,car,boxGoal(duel,car,target));
+  if (rider.slot !== null) {
+    const goal = reachableGoal(duel,car,boxGoal(duel,car,target));
+    return rider.missionPace ? {...goal, speedMph: Math.min(goal.speedMph, rider.missionPace), boost: false} : goal;
+  }
   const participant=arenaParticipant(duel,car);
   const opening=rider.approach && openingGoal(duel,car,target,me,participant);
   const brain=opening || thinkBrain(duel,participant,car,dt);
@@ -393,7 +397,9 @@ export function updateRoadFight(duel, world, dt) {
     }
   }
   if (fight.outcome) return;
-  const boxed = fight.targetId === 'player' && boxPressure(duel,cars,dt);
+  const boxed = fight.targetId === 'player' && (step.missionRule ? fightBoxed(
+    {...worldPose(duel,duel.state), y: duel.state.groundHeight, speedMph: duel.state.speedMph}, cars.map(car => ({...worldPose(duel,car), y: car.groundHeight,
+      wrecked: car.combatWrecking})), worldPose(duel,duel.state).heading) : boxPressure(duel,cars,dt));
   if (boxed) {
     // Opposing tyres resist the drivetrain only while four actual bodies hold the car.
     const speed=duel.state.speedMph;
@@ -402,7 +408,8 @@ export function updateRoadFight(duel, world, dt) {
   fight.heldSec = boxed && Math.abs(duel.state.speedMph)<R.boxMph ? fight.heldSec+dt : 0;
   const target=arenaActor(duel,fight.targetId);
   const outcome=duel.state.combatWrecking || !target || target.combatWrecking || target.finished || target.crushed
-    ? 'lost' : fight.heldSec>=R.boxSeconds ? 'surrounded' :
+    ? 'lost' : fight.heldSec >= (step.missionRule?.boxedInSeconds ?? R.boxSeconds) ? 'surrounded' :
+    step.missionRule?.winWrecks && cars.filter(car => car.combatWrecking).length >= step.missionRule.winWrecks ? 'won' :
     cars.every(car=>car.roadRider.phase!=='fighting') && !crewLoose(world,step) ? 'won' : null;
   if (!outcome) return;
   fight.outcome=outcome; fight.endedAt=fight.elapsed;
@@ -458,7 +465,7 @@ function startCheckpointFight(duel, world, request) {
   const ids = added.length ? added : active.cars;
   active.cars.push(...added);
   const target = worldPose(duel, duel.state), tune = ROAD_GROUPS[request.group];
-  world.riderFight = {index:world.job.stepIndex, checkpointStep:{id:request.id}, targetId:'player',
+  world.riderFight = {index:world.job.stepIndex, checkpointStep:{id:request.id, missionRule: request.missionRule}, targetId:'player',
     riders:[...ids], ash:[], smothered:[], heldSec:0, elapsed:0, outcome:null};
   for (const id of ids) {
     const car = arenaActor(duel,id), rider = car.roadRider, at = worldPose(duel,car);
@@ -466,6 +473,14 @@ function startCheckpointFight(duel, world, request) {
     car.armor = Math.min(car.armor, car.maxArmor);
     car.weaponLoadout = [tune.weapon];
     Object.assign(rider, {phase:'fighting', approach:true, targetId:'player', weapon:tune.weapon});
+    if (request.missionRule) {
+      const rule = request.missionRule;
+      rider.mass = rule.mass;
+      rider.fightToEnd = true;
+      rider.slot = 2 + ids.indexOf(id) % 2;
+      rider.missionPace = Math.min(tune.pace, (CARS[duel.state.car].offRoadSpeed ?? 52) * .75);
+      if (rule.shoot === false) { rider.weapon = null; car.weaponLoadout = []; car.weaponsDisabledUntil = Infinity; }
+    }
     if (!rider.home) {
       // A provoked passer retreats in the direction it was already driving.
       const distance = Math.max(1300, dist(at,target) + 900);
@@ -575,11 +590,12 @@ export function checkpointRoadView(duel, world) {
     const car = arenaActor(duel,id), at = worldPose(duel,car), rider = car.roadRider;
     const inDrawRange = Math.abs(duel.relativeS(car.s) - state.s) < RIVAL_DRAW_RANGE + REMOVAL_MARGIN;
     rider.flagVisible = dist(at,player) <= 60 && !car.combatWrecking;
-    return {...at, hitByPlayer:arenaParticipant(duel,car)?.lastHitBy === 'player',
+    return {...at, y: car.groundHeight, wrecked: !!car.combatWrecking, hitByPlayer:arenaParticipant(duel,car)?.lastHitBy === 'player',
       routeDone:rider.route && rider.routeIndex === rider.route.length,
       visible:dist(at,player) < RIVAL_DRAW_RANGE || inDrawRange && dist(at,player) < 2600};
   });
-  return {checkpointsEnabled:true, wrench, checkpointHeading:worldPose(duel,state).heading,
+  return {checkpointsEnabled:true, wrench, carSpeedMph: state.speedMph, recoveryPaid: world.missionRecoveryPaid === true,
+    checkpointHeading:worldPose(duel,state).heading,
     road:road && {id:road.id, cars, external:road.external}};
 }
 
@@ -603,6 +619,11 @@ export function applyCheckpointRoadRequest(duel, world, request) {
     if (!Object.hasOwn(SOUND_BANK, request.cue)) return true;
     const at = request.position;
     duel.emit({arenaTell:{id:request.cue, cue:request.cue, position:{...at, y:scablandsActorHeightAt(at.x,at.z)}}});
+  } else if (action === 'mission-loss') {
+    world.missionRecoveryPaid = true;
+    state.combatWrecking = true;
+    state.armor = 0;
+    placeJobCar(duel,state,nearestRoadPoint(worldPose(duel,state)).position,0);
   } else if (action === 'walk') walkFromWreck(duel,world);
   else if (action === 'lift') placeCheckpointFighter(duel,request.at);
   else if (action === 'recover-car') {
@@ -610,6 +631,7 @@ export function applyCheckpointRoadRequest(duel, world, request) {
     placeJobCar(duel,state,request.at,0);
     if (state.onFoot && !world.checkpointRecovery) placeCheckpointFighter(duel,request.at);
     delete world.checkpointRecovery;
+    delete world.missionRecoveryPaid;
   } else if (action === 'start' && !active) {
     const encounter = world.checkpointRoad = {id, cars:[], scout:request.scout};
     const phase = request.phase === 'trouble' ? 'stopped' : 'passing';
