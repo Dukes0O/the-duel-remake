@@ -2,6 +2,10 @@
 // Each stage builds within the budget; the layout is the same on two runs; every solid lies inside the radius; every named
 // spot is clear of every solid; the welding flickers in bursts; and each text the scenario sends to the page parses.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {PerspectiveCamera} from 'three';
+import {sees} from '../src/world/scablands-ways.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {
   BUS_RING_LAYOUT, BUS_RING_STAGES, BUS_RING_BUDGET, BUS_RING_WELD, busRingSolids, buildBusRing, updateBusRing, busRingWeld,
 } from '../src/world/open/looks/bus-ring-look.js';
@@ -16,7 +20,11 @@ const SPOTS = ['car-stop', 'lookout', 'gate', 'workbench', 'gasket', 'shelves', 
 // ---- The layout ----
 assert.deepEqual(BUS_RING_STAGES, ['camp']);
 assert.deepEqual(Object.keys(L.spots).sort(), [...SPOTS].sort(), 'every named spot, and no other');
-assert.equal(JSON.stringify(L), JSON.stringify(BUS_RING_LAYOUT));
+// Round 1 at e234cc6e1, including the spots, solids and yard furniture. Quantize to
+// a micrometre so a platform's last trigonometric bit cannot change the contract.
+const serializedLayout = JSON.stringify(L, (_, value) => typeof value === 'number' ? Math.round(value * 1e6) : value);
+assert.equal(createHash('sha256').update(serializedLayout).digest('hex'),
+  'd7f4cd6a1ba4fb44dea4768516e19a7fcb6d737ad751f9367f11549227807448', 'round-one layout, including all spots and solids');
 {
   const again = await import('../src/world/open/looks/bus-ring-look.js?second-run');
   assert.notEqual(again.BUS_RING_LAYOUT, L);
@@ -176,7 +184,6 @@ assert.throws(() => buildBusRing({stage: 'town'}), RangeError);
   updateBusRing(null, 1);
   updateBusRing(group, NaN);
   for (const text of [flashes.material.vertexShader, flashes.material.fragmentShader]) assert.doesNotMatch(text, /\b(?:float|vec[234])\s+(?:flat|sample|input|output|filter|common|partition|active|smooth|centroid|patch|far|near)\b/);
-  group.userData.dispose();
 }
 
 // ---- The scenario ----
@@ -188,6 +195,37 @@ assert.throws(() => buildBusRing({stage: 'town'}), RangeError);
     looksAt: {x: SITE.x + spot.looksAt.x, y: spot.looksAt.y, z: SITE.z + spot.looksAt.z}}]));
   const view = name => viewFor(PICTURES.find(picture => picture.name === name), {spots});
   const road = roadView();
+  const camera = new PerspectiveCamera(48, 1280 / 720, .1, 10000);
+  const ground = scablandsSurfaceHeightAt;
+  const focalPixels = 360 / Math.tan(camera.fov * Math.PI / 360);
+  const near = view('near');
+  assert.ok(sees(near.eye, near.look, {heightAt: ground, eye: near.eye.up, target: near.look.up, step: 1}), 'approach sees the ring');
+  const nearWidth = 2 * L.ring.radius * focalPixels / near.metres;
+  assert.ok(near.metres > L.radius && nearWidth > 320 && nearWidth < 800, 'the full ring fills the middle of the approach picture');
+
+  // Exercise the stove plume as it is drawn for each camera. Night and the table
+  // keep their narrow column even immediately after a far view.
+  const {smoke, flashes} = built.camp.userData;
+  camera.position.set(road.x - SITE.x, ground(road.x, road.z) + 1.2 - ground(SITE.x, SITE.z), road.z - SITE.z);
+  smoke.onBeforeRender(null, null, camera);
+  const uniforms = smoke.material.uniforms;
+  const smokeWidth = uniforms.uTop.value * focalPixels / road.metres;
+  const smokeHeight = uniforms.uHeight.value * focalPixels / road.metres;
+  assert.ok(smokeWidth > 10 && smokeHeight > 45, 'the unzoomed road plume has enough projected height and width for the dusk photo');
+  camera.position.copy(smoke.position);
+  smoke.onBeforeRender(null, null, camera);
+  assert.deepEqual([uniforms.uHeight.value, uniforms.uTop.value, uniforms.uStrength.value], [22, 3.2, .5], 'the close stove smoke retains its old shape and density');
+  // The arc itself is too low on the road sightline. Test the position and angular
+  // size of the reflected light actually sent to the flash shader.
+  const {aFoot, aKind} = flashes.geometry.attributes;
+  let spill = -1;
+  for (let i = 0; i < aKind.count; i += 4) if (aKind.getX(i) === 2) spill = i;
+  assert.ok(spill >= 0, 'the far welding reflection shares the flash mesh');
+  const spillAt = {x: SITE.x + aFoot.getX(spill), z: SITE.z + aFoot.getZ(spill)};
+  assert.ok(sees(road, spillAt, {heightAt: ground, eye: 1.2, target: aFoot.getY(spill), step: 1}), 'unzoomed Ridge spur sees the welding reflection');
+  const weldWidth = aKind.getZ(spill) * focalPixels;
+  assert.ok(weldWidth > 16, 'the reflection has an unzoomed screen footprint');
+  console.log(`  Ridge spur ${road.metres.toFixed(1)} m: projected smoke envelope ${smokeWidth.toFixed(1)} × ${smokeHeight.toFixed(1)} px; weld card ${weldWidth.toFixed(1)} px. Near ring ${nearWidth.toFixed(0)} px at ${near.metres} m.`);
   assert.ok(road.metres > 500 && road.metres < 900, `far is from the nearest road that sees the camp: ${road.metres.toFixed(0)} m`);
   assert.ok(view('far').dusk && view('far').eye.up === 1.2, 'far is at dusk and car height');
   assert.ok(Math.abs(view('edge').eye.x - SITE.x - L.spots['car-stop'].x) < 1e-9 && view('edge').eye.up === 1.6, 'edge is from car-stop at eye height');
@@ -203,4 +241,5 @@ assert.throws(() => buildBusRing({stage: 'town'}), RangeError);
   for (const source of sources) assert.doesNotThrow(() => new Function(`return ${source}`), `a text sent to the page parses: ${source.slice(0, 60)}`);
 }
 
+built.camp.userData.dispose();
 console.log(`Bus Ring look: one stage within ${BUS_RING_BUDGET.draws} draws and ${BUS_RING_BUDGET.triangles} triangles, a fixed ring of ${L.buses.length} buses, solids inside ${L.radius} m, ${SPOTS.length} named spots clear, the welding in bursts, and the scenario's page texts pass.`);
