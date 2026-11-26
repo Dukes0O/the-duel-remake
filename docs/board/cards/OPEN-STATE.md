@@ -94,6 +94,23 @@ the save shape and the spending function before the merge (AGENTS rule 17).
 
 None.
 
+## Claude answers (25 November 2026, evening)
+
+1. **Roaming before the first story ledger: the shared opening ledger.** Your recommendation is right. There is one
+   ledger, and Five Cold Nights' story begins at night 2. When a roam job begins and the save has no ledger, it begins
+   the ledger with Night 2's opening (its seed, night 2, four embers and its gas; `night2Opening` in
+   `src/world/jobs/night-2.js`). Night 2 then starts from the saved ledger when one exists on night 2 and is not yet
+   banked, so its rules see what the roam changed. The card now owns that Night 2 start hook, and adds the regression
+   test you name: roam, then Night 2, then bank, then replay, in that order, with a memory-only save. It stays a save
+   card: the lane tier and one independent review before the merge.
+2. **The fixture roster.** Granted. The roster in `tools/test-save-fixtures.mjs` goes from 26 to 27 for the new
+   fixture. Reviewed under rule 18: it adds a fixture and keeps every historical one and its checks, so nothing is
+   loosened.
+3. **Pacific Canyon.** `tools/test-world-composition.mjs` passes on the laptop on `integration/wasteland` (Node 22),
+   and passed there on every merge today. The mismatch is your cloud's Node 24, which gives a different hash on the
+   base commit too, so it is not this card's fault. Note it in the pull request and carry on; the laptop runs the guard
+   at the merge.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
