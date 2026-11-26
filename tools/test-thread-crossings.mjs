@@ -22,7 +22,7 @@ function story(id, more = {}) {
     sign: {kind: 'smoke', at: 'tin-town'},
     beats: {
       sign: {when: 'sign-seen', next: 'middle'},
-      middle: {when: {after: 'sign'}, choices: [{id: id + '/finish', effects: [{type: 'mark', id: id + '/finished'}, {type: 'thread', id, end: 'done'}]}]},
+      middle: {when: {after: 'sign'}, choices: [{id: id + '/finish', effects: [{type: 'mark', id: id + '/finished'}], next: 'done'}]},
     },
     ends: ['done'],
     ignored: {afterNights: 3, says: 'dot', line: 'Nobody came.'},
@@ -32,7 +32,7 @@ function story(id, more = {}) {
 const withEffects = (id, effects, writes = ['mark']) => story(id, {
   writes,
   beats: {sign: {when: 'sign-seen', next: 'middle'},
-    middle: {when: {after: 'sign'}, choices: [{id: id + '/finish', effects: [...effects, {type: 'thread', id, end: 'done'}]}]}},
+    middle: {when: {after: 'sign'}, choices: [{id: id + '/finish', effects: [...effects], next: 'done'}]}},
 });
 const reading = (id, facts, reads) => story(id, {
   reads: ['night', ...reads],
@@ -59,8 +59,7 @@ for (const one of [story('plain'), withEffects('w', [{type: 'mark', id: 'w/seen'
       // Effects under `gives` and `outcomes` count as well as those under `effects`.
       middle: {when: {after: 'sign'}, choices: [{id: 'walker/go', effects: [
         {type: 'word', person: '@camp.people', by: -1}, {type: 'mark', id: 'burned-camp/drove-on'},
-        {type: 'site', id: '@camp', stage: 'burned'}, {type: 'find', site: 'radio-hill'}, {type: 'favour', person: 'walkers', by: 1},
-        {type: 'thread', id: 'walker', end: 'done'}]}],
+        {type: 'site', id: '@camp', stage: 'burned'}, {type: 'find', site: 'radio-hill'}, {type: 'favour', person: 'walkers', by: 1}], next: 'done'}],
         outcomes: {seen: [{type: 'feud', of: 'road-rats', by: 1}, {type: 'stock', stock: 'embers', by: -1}, {type: 'scrap', by: -6}]}},
     },
   });
@@ -102,7 +101,7 @@ for (const one of [story('plain'), withEffects('w', [{type: 'mark', id: 'w/seen'
   // Two roles are never taken for one thing: a fact of "a camp" in two storylines is not a crossing.
   const roleA = story('role-a', {reads: ['night', 'found'], writes: ['site'], cast: {camp: {from: 'sites', where: {fact: 'found'}}}, sign: {kind: 'smoke', at: '@camp'},
     beats: {sign: {when: 'sign-seen', next: 'middle'},
-      middle: {when: {after: 'sign'}, choices: [{id: 'role-a/x', effects: [{type: 'site', id: '@camp', stage: 'burned'}, {type: 'thread', id: 'role-a', end: 'done'}]}]}}});
+      middle: {when: {after: 'sign'}, choices: [{id: 'role-a/x', effects: [{type: 'site', id: '@camp', stage: 'burned'}], next: 'done'}]}}});
   const roleB = story('role-b', {reads: ['night', 'stage', 'found'], cast: {camp: {from: 'sites', where: {fact: 'found'}}}, sign: {kind: 'smoke', at: '@camp'},
     starts: {all: [{fact: 'night', atLeast: 2}, {fact: 'stage', site: '@camp', is: 'burned'}]}});
   assert.deepEqual(checkThread(roleA), []); assert.deepEqual(checkThread(roleB), []);
@@ -133,14 +132,14 @@ for (const one of [story('plain'), withEffects('w', [{type: 'mark', id: 'w/seen'
 
   const noBeat = walkThread(story('no-beat', {beats: {
     sign: {when: 'sign-seen', next: 'middle'},
-    middle: {when: {after: 'sign'}, choices: [{id: 'x', effects: [{type: 'thread', id: 'no-beat', end: 'done'}]}]},
-    orphan: {when: {fact: 'night', atLeast: 9}, choices: [{id: 'y', effects: [{type: 'thread', id: 'no-beat', end: 'done'}]}]},
+    middle: {when: {after: 'sign'}, choices: [{id: 'x', next: 'done'}]},
+    orphan: {when: {fact: 'night', atLeast: 9}, choices: [{id: 'y', next: 'done'}]},
   }}));
   assert.deepEqual(noBeat.faults, ['The beat "orphan" cannot be reached by any path.']);
 
   const stuck = walkThread(story('stuck', {beats: {
     sign: {when: 'sign-seen', next: 'middle'},
-    middle: {when: {after: 'sign'}, choices: [{id: 'x', next: 'dead'}, {id: 'z', effects: [{type: 'thread', id: 'stuck', end: 'done'}]}]},
+    middle: {when: {after: 'sign'}, choices: [{id: 'x', next: 'dead'}, {id: 'z', next: 'done'}]},
     dead: {when: {after: 'middle'}, lines: [{speaker: 'dot', words: 'Nothing more.'}]},
   }}));
   assert.deepEqual(stuck.faults, ['The beat "dead" has no way out and is not an end.']);
@@ -153,7 +152,7 @@ for (const one of [story('plain'), withEffects('w', [{type: 'mark', id: 'w/seen'
       sign: {when: 'sign-seen', next: ['a', {when: {fact: 'night', atLeast: 3}, to: 'b'}]},
       a: {choices: [{id: 'a1', to: 'c'}], outcomes: {late: 'd'}},
       b: {when: {after: ['sign']}, choices: [{id: 'b1', end: [{when: {fact: 'night', atLeast: 4}, is: 'one'}, {is: 'two'}]}]},
-      c: {when: {after: ['a', 'b']}, choices: [{id: 'c1', effects: [{type: 'thread', id: 'ways', end: 'three'}]}]},
+      c: {when: {after: ['a', 'b']}, choices: [{id: 'c1', next: 'three'}]},
       d: {when: {after: 'a'}, next: 'c'},
     },
   }));
@@ -161,7 +160,7 @@ for (const one of [story('plain'), withEffects('w', [{type: 'mark', id: 'w/seen'
   // A beat live at any time stands beside the story: it is reached, and it need not lead anywhere.
   assert.deepEqual(walkThread(story('standing', {beats: {
     sign: {when: 'sign-seen', next: 'middle'},
-    middle: {when: {after: 'sign'}, choices: [{id: 'x', effects: [{type: 'thread', id: 'standing', end: 'done'}]}]},
+    middle: {when: {after: 'sign'}, choices: [{id: 'x', next: 'done'}]},
     afterwards: {when: 'any-time', rows: []},
   }})).faults, []);
   // An end named only by the storyline's own ignore rule is reached.

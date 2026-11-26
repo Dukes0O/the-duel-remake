@@ -177,7 +177,7 @@ function* everyString(value) {
 const EFFECT_LISTS = ['effects', 'gives'];
 const ALL_EFFECTS = [...LEDGER_EFFECTS, ...OPEN_EFFECTS];
 // Effects that move nothing another storyline could read, so `writes` need not list them.
-const UNLISTED_EFFECTS = ['read', 'met', 'tell', 'ground', 'crossing', 'rest', 'dirt'];
+const UNLISTED_EFFECTS = ['thread', 'read', 'met', 'tell', 'ground', 'crossing', 'rest', 'dirt'];
 const THREAD_WORDS = ['any', 'over'];
 const SOURCE_IS = {sites: isSite, groups: isGroup, peoples: isPeople, persons: isPerson};
 
