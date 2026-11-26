@@ -5,6 +5,8 @@ import {ROAD_NET} from '../../world/scablands-road.js';
 import {nearestOnLine} from '../../world/scablands-ways.js';
 import {NAMES} from '../../world/open/register.js';
 import {resolveRoles} from '../../world/open/roles.js';
+import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
+import {sitePosition, siteSpot} from '../../world/open/site-rule.js';
 
 // OPEN-SITES supplies the live site's position. This fixed fallback is its first approved position and the sample's.
 const ships = LAND.at('ships-in-sand');
@@ -22,8 +24,14 @@ export function placeForThread(place, cast, view = {}) {
   if (!place) return null;
   if (place.checkpoint) return view.checkpointPlaces?.[place.checkpoint.who] ?? null;
   const [id, spot] = [resolveRoles(place, cast)].flat();
+  if (id === 'tin-town' && spot) {
+    const townSpots = {hearth: NIGHT_2_SITES.hearthFront.position, gate: NIGHT_2_SITES.gate,
+      board: LAND.at('tin-town', -12, 18)};
+    if (townSpots[spot]) return townSpots[spot];
+  }
   const site = view.sitePositions?.[id];
-  const center = site?.position ?? site ?? (id === 'glasshouse' ? sampleGlasshouse : null);
+  const center = site?.position ?? site ?? (id === 'glasshouse' ? sampleGlasshouse :
+    view.landSeed !== undefined ? sitePosition(id, view.landSeed) : null);
   if (!center) {
     if (spot) return null;
     const fixed = [...LAND.table, ...LAND.named, LAND.yard].find(row => row.id === id);
@@ -33,7 +41,8 @@ export function placeForThread(place, cast, view = {}) {
   if (spot === 'parked-car') return view.carPosition ?? null;
   if (spot === 'road-home') return center === sampleGlasshouse ? sampleRoadHome : roadward(center);
   const offset = site?.spots?.[spot] ?? (id === 'glasshouse' ? GLASSHOUSE_LAYOUT.spots[spot] : null);
-  return offset ? onLand(center.x + offset.x, center.z + offset.z) : null;
+  return offset ? onLand(center.x + offset.x, center.z + offset.z) :
+    view.landSeed !== undefined ? siteSpot(id, view.landSeed, spot) : null;
 }
 
 export function radioScene(thread, beat, rule) {

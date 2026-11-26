@@ -8,6 +8,7 @@ import {RUNAWAY_TALK, THREADS_TALK} from './talk-threads.js';
 import {SITES_TALK} from './talk-sites.js';
 import {FORGE_TALK} from './talk-forge.js';
 import {TOWN_TALK} from './talk-town.js';
+import {HAULER_TALK} from './talk-hauler.js';
 
 export function joinTalkTables(tables) {
   const joined = {}, wrong = [];
@@ -21,4 +22,4 @@ export function joinTalkTables(tables) {
   return Object.freeze(Object.fromEntries(Object.entries(joined).map(([person, rows]) => [person, Object.freeze(rows)])));
 }
 
-export const TALK_TABLES = joinTalkTables([THREADS_TALK, SITES_TALK, FORGE_TALK, TOWN_TALK, RUNAWAY_TALK]);
+export const TALK_TABLES = joinTalkTables([THREADS_TALK, SITES_TALK, FORGE_TALK, TOWN_TALK, RUNAWAY_TALK, HAULER_TALK]);

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-26T18:47:00.886Z
+Observed at: 2026-11-26T19:23:55.181Z
 
-Observation commit: c87c30bcdd219dddfccbca379bdefc691f4e476a
+Observation commit: 41ed2910e9f8d35c33b5ccb8d76da74f3fcf0092
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c87c30bcdd219dddfccbca379bdefc691f4e476a
+Integration HEAD: 41ed2910e9f8d35c33b5ccb8d76da74f3fcf0092
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -42,8 +42,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/car-art-bully | 20 | unknown | false | false | unknown |
 | codex/crew-story-join | 20 | unknown | true | false | unknown |
 | codex/mule-rails | 20 | unknown | true | false | unknown |
-| codex/open-t-flag | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-flag |
-| codex/open-t-hauler | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-hauler |
+| codex/open-t-market | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-market |
 | codex/open-t-runaway | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-runaway |
 | codex/perf-high-night | 42 | unknown | false | false | unknown |
 | codex/qa-arena-shove-baseline | 21 | unknown | true | false | unknown |
@@ -73,8 +72,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 20 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 20 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
-| codex/open-t-flag | unknown | 2026-11-26T11:45:06-07:00 | 0 | last commit 2026-11-26T11:45:06-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/OPEN-LOOK-BUS-RING.md, docs/board/cards/OPEN-LOOK-RADIO-HILL.md, docs/board/cards/OPEN-T-PUMP.md |
-| codex/open-t-hauler | unknown | 2026-11-26T11:19:59-07:00 | 0 | last commit 2026-11-26T11:19:59-07:00 | docs/board/STATUS.md, docs/board/questions/OPEN-T-HAULER.md, docs/changes/OPEN-T-HAULER.md, src/arena/modes/road-riders.js, src/arena/modes/world-job.js |
+| codex/open-t-market | unknown | 2026-11-26T12:22:21-07:00 | 0 | last commit 2026-11-26T12:22:21-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/OPEN-LOOK-BUS-RING.md, docs/board/cards/OPEN-T-FLAG.md, docs/board/cards/OPEN-T-HAULER.md |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 42 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 20 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
 | codex/wild-art-city | unknown | 2026-11-05T21:24:09-07:00 | 20 | last commit 2026-11-05T21:24:09-07:00 | docs/board/looks/wild-art-city/round-1-review.md, docs/board/looks/wild-art-city/round-1.jpg, docs/board/looks/wild-art-city/round-2-review.md, docs/board/looks/wild-art-city/round-2.jpg, docs/changes/WILD-ART-CITY.md |
@@ -94,9 +92,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 499,162 B | +0 B | 500,000 B |
 | Review `looks/` | 105,667,161 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 27,602 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 1,274,412 B | +0 B | 5,000,000 B |
 | All `public/` | 747,552,080 B | +0 B | unavailable |
-| Git objects | 1,503,391,744 B | +0 B | unavailable |
+| Git objects | 1,506,423,808 B | +102,400 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -105,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 0d3ddc8e512a300fefc3fcd4b393683099a1a8aa
 - Local main: missing
-- Local integration/wasteland: d9dc7290c0cf33a19bd1d6adfd6a7501e6589497
+- Local integration/wasteland: 158b4ee6d11f4cb00dc3282f6b815af0be229a90
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -113,9 +111,8 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 0d3ddc8e512a300fefc3fcd4b393683099a1a8aa.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit d9dc7290c0cf33a19bd1d6adfd6a7501e6589497.
+- Remote origin/integration/wasteland: matches local; cached commit 158b4ee6d11f4cb00dc3282f6b815af0be229a90.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
 Issue: codex/bowl-batch3-fix: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix
-Issue: codex/open-t-flag: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-flag' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-flag/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-flag
-Issue: codex/open-t-hauler: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-hauler' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-hauler/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-hauler
+Issue: codex/open-t-market: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-market' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-market/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-t-market

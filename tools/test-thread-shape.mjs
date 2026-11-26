@@ -40,11 +40,10 @@ function tally(thread) {
 
 // The numbers, file by file. A file brought to the shape lost nothing a player reads (26 November 2026).
 const COUNTS = {
-  // The Ash Men's turn of the burned camp (OPEN-WRITE-4, 26 November 2026), a file of its own until it is folded into
-  // burned-camp.js.
-  'burned-camp-ash-men': {lines: 69, thoughts: 34, questions: 13, choices: 16},
-  // OPEN-BURNED-SCOUT adds three observations, two rim thoughts, two choice thoughts and three choices.
-  'burned-camp': {lines: 7, thoughts: 20, questions: 5, choices: 6},
+  // OPEN-BURNED-SCOUT adds three observations, two rim thoughts, two choice thoughts and three choices. OPEN-ASH-FOLD
+  // (26 November 2026) folds in the Ash Men's turn (OPEN-WRITE-4: 69 lines, 34 thoughts, 13 questions, 16 choices),
+  // so the counts are the two files' sums; the shared choices were only ever in the Ash Men's file.
+  'burned-camp': {lines: 76, thoughts: 54, questions: 18, choices: 22},
   'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
   'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
   'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},
@@ -71,7 +70,7 @@ for (const [name, thread] of Object.entries(threads)) {
   for (const [key, lifted] of Object.entries(LIFTED[name] ?? {})) count[key] += lifted;
   assert.deepEqual(tally(thread), count, name + ': its count of lines, thoughts, questions and choices changed');
 }
-assert.equal(Object.keys(threads).length, 11, 'nine storylines are written, the burned camp, and one turn of it');
+assert.equal(Object.keys(threads).length, 10, 'nine storylines are written, and the burned camp with both its turns');
 assert.deepEqual(Object.keys(COUNTS).sort(), Object.keys(threads).sort(), 'every storyline has its counts');
 
 // One key of each older dialect is refused, on a copy of a real file. Each is put where the older files had it.

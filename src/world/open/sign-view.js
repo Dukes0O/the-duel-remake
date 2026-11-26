@@ -15,6 +15,8 @@ import {isFresh} from '../../story/threads/signs.js';
 import {RUNAWAY_PLACES} from './content/runaway-places.js';
 import {sitePosition} from './site-rule.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
+import {createHaulerLook} from './looks/stranded-hauler-look.js';
+import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
 
 function paintedSign({label}) {
   const canvas = globalThis.document?.createElement?.('canvas');
@@ -180,6 +182,10 @@ function runawayClues() {
 export function createSignView() {
   const group = new THREE.Group();
   group.name = 'Open land signs';
+  const hauler = createHaulerLook();
+  group.add(hauler.root);
+  const flagSite = createFlagSiteView();
+  group.add(flagSite.group);
   const smoke = new Map();
   const clues = runawayClues();
   for (const {mesh} of clues) group.add(mesh);
@@ -224,6 +230,8 @@ export function createSignView() {
         }
       }
       const open = worldJob?.open;
+      hauler.update(open, here, open?.seconds ?? seconds, drawnShift);
+      flagSite.update(open?.parts.threads?.places.checkpointsEnabled ? open : null, here, seconds, drawnShift);
       if (lastJob !== worldJob) {
         flareSeq = 0;
         flare.visible = false;
@@ -317,6 +325,8 @@ export function createSignView() {
       if (ash.visible) positionAt(ash, ashAt, drawnShift);
     },
     dispose() {
+      hauler.dispose();
+      flagSite.dispose();
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();

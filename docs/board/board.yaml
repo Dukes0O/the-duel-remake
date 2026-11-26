@@ -47,6 +47,17 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
 
+  - id: QA-NIGHT-TIMING-ALONE
+    title: "Frame-timing scenarios leave the night's browser stage for the frame stage (convoy-frames, fire-view, deep-frames)"
+    owner: "codex"
+    model: "sol"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-NIGHT-TIMING-ALONE.md"
+
   - id: QA-NIGHT-22-NOV
     title: "Four browser scenarios behind dev switches fail since the night of 22 November (on-foot exit, far rain, borer)"
     owner: "codex"
@@ -1372,32 +1383,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-FLAG
-    title: "Open Scablands: Somebody Else's Flag comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-FLAG.md"
-
-  - id: OPEN-T-HAULER
-    title: "Open Scablands: The Stranded Hauler comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-HAULER.md"
-
   - id: OPEN-T-RUNAWAY
     title: "Open Scablands: The Runaway comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1431,7 +1416,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-FLAG]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-TOLL.md"
@@ -1443,7 +1428,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-HAULER]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RADIO.md"
@@ -1455,7 +1440,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-HAULER]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-LIGHTS.md"

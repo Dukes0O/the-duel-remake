@@ -98,6 +98,7 @@ export function drawCheckpoint(checkpoint, world, crossing, {difficulty, camps =
   }
   const purpose = INTENTS[weightedIndex(weights, draw, 'intent')];
   const kind = first ? 'pass' : purpose;
-  return {group, kind, count: first || kind === 'trouble' ? 1 : Math.min(count, difficulty === 'easy' ? 2 : checkpoint.cars[1]),
+  const fewer = group === 'road-rats' && world.ledger.marks.includes('stranded-hauler/one-gate-only') ? 1 : 0;
+  return {group, kind, count: first || kind === 'trouble' ? 1 : Math.max(1, Math.min(count, difficulty === 'easy' ? 2 : checkpoint.cars[1]) - fewer),
     bait: kind === 'trouble' && bait === true, scout: kind === 'pass' && group === 'ash-men' && feud === 0};
 }

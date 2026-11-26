@@ -1729,15 +1729,16 @@ function syncOpenPeople(worldJob) {
   if (moved) worldJob.solidGrid.setStoryPeople(people);
 }
 
-function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false}) {
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false, position}) {
   const {job} = worldJob;
   const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
   const steps = job.steps.slice();
   // A talk on the radio (OPEN-THREADS: the questions home from a burned camp) has a speaker who is not standing here:
   // it is not ended by walking away, and nobody turns to face the player.
-  const standing = worldJob.storyPeople?.find(item => item.id === person);
+  const standing = worldJob.storyPeople?.find(item => item.id === person) ?? (position && {position});
   const onRadio = radio === true || !standing;
-  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio});
+  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio,
+    ...(position ? {openPosition: position} : {})});
   worldJob.openRoamStepState = job.stepState;
   worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
   worldJob.storySpeaker = onRadio ? null : person;
@@ -1814,8 +1815,9 @@ export function stepWorldJob(duel, dt) {
     // OPEN-ROAM: external movement or leaving the driver's seat of the talk
     // closes this temporary step without routing a story choice.
     if (talkStep.openPerson && !talkStep.openRadio) {
-      const person = worldJob.storyPeople.find(item => item.id === talkStep.openPerson);
-      if (!state.onFoot || distanceToPerson(person, state.fighter) > TALK_RANGE) {
+      const person = worldJob.storyPeople?.find(item => item.id === talkStep.openPerson) ??
+        (talkStep.openPosition && {position: talkStep.openPosition});
+      if (!state.onFoot || !person || distanceToPerson(person, state.fighter) > TALK_RANGE) {
         worldJob.talkAction = null;
         closeOpenTalk(duel, worldJob, talkStep, true);
         return null;
@@ -2168,6 +2170,7 @@ export function stepWorldJob(duel, dt) {
         worldJob.riderFight?.heldSec : 0,
       deferCheckpointRecovery, threadSearchCast: worldJob.threadSearchCast, missionLookoutPosts: threadMission?.state.route.posts,
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
+      campSiteState: worldJob.open.parts.sites,
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
@@ -2348,7 +2351,7 @@ export function stepWorldJob(duel, dt) {
     }
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
     if (checkpointsEnabled) for (const event of openStep.events) {
-      if ((event.type === 'threadCue' || event.type === 'threadMissionSpotted') && Object.hasOwn(SOUND_BANK, event.cue))
+      if (['threadCue', 'threadMissionSpotted', 'threadMissionMoment'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
         duel.emit({arenaTell: {id: event.id, cue: event.cue, position: event.position ?? point, seconds: 0}});
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
@@ -2359,7 +2362,8 @@ export function stepWorldJob(duel, dt) {
         const prefix = request.id + '/lookout/';
         worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));
         request.posts.forEach((position, index) => worldJob.actors.push({
-          id: prefix + index, position: {...position, y: position.y + (position.heap?.height ?? 0)},
+          id: prefix + index, position: {...position,
+            y: (position.y ?? scablandsSurfaceHeightAt(position.x, position.z)) + (position.heap?.height ?? 0)},
           heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
           health: 100, speed: 0,
         }));

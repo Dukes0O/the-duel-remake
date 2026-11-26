@@ -4,7 +4,11 @@ import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/th
 import {visitId} from '../../../story/threads/director.js';
 import {isFresh} from '../../../story/threads/signs.js';
 import {nameOf, nameRow} from '../register.js';
-import {distance, siteSpot} from '../site-rule.js';
+import {distance, hasSiteServices, residentPose, siteSpot} from '../site-rule.js';
+import {stageOf} from '../open-record.js';
+import {campPeople} from '../content/people-sites.js';
+import {STORY_FIGURES} from '../../jobs/story-people.js';
+import {distanceToPerson, TALK_RANGE} from './people.js';
 import {isHeld} from '../holds.js';
 import {DRY_PUMP_MISSIONS, DRY_PUMP_SOLIDS, DRY_PUMP_SPOTS, DRY_PUMP_TALK} from '../content/dry-pump-places.js';
 import {inheritThreadMission, prepareThreadMission} from './missions.js';
@@ -12,7 +16,7 @@ import {inheritThreadMission, prepareThreadMission} from './missions.js';
 const ID = dryPump.id;
 export const DRY_PUMP_HOLD = 'thread:dry-pump/mall';
 const trip = new Set(['mall-outside', 'gallery', 'hall', 'penny', 'his-pipe', 'shoe-shop', 'tunnel', 'road-out', 'penny-owed']);
-const campTalk = new Set(['asking', 'fitting']);
+const campTalk = new Set(['asking', 'fitting', 'promise-broken']);
 const entrances = {'front-doors': DRY_PUMP_SPOTS['east-front'], roof: DRY_PUMP_SPOTS['north-side'], tunnel: DRY_PUMP_SPOTS['tunnel-door']};
 const reached = (world, beat) => world.open.journal.findLast(row => row.key === ID && row.type === 'thread' && row.after.beat === beat);
 const opening = firstBeat(dryPump);
@@ -43,7 +47,14 @@ export function dryPumpStep(context, record, previous, dt, decision) {
   const at = place => placeAt(place, record.cast);
   const camp = at('@camp');
   const pump = atCampPump(world, record, placeAt);
-  const leader = nameRow(record.cast.camp)?.leader;
+  const campId = record.cast.camp;
+  const leader = nameRow(campId)?.leader;
+  const resident = view.onFoot && distance(point, camp) <= 42 && hasSiteServices(stageOf(world, campId))
+    ? campPeople(campId).find(row => row.id === leader) : null;
+  // The camp layer draws this same routine. Use the last displayed pose, which stays fixed during talk.
+  const campSpeaker = resident && residentPose(resident, world, {site: campId, ...view.campSiteState},
+    STORY_FIGURES[resident.figure].pace);
+  const nearLeader = campSpeaker && distanceToPerson(campSpeaker, view.fighter?.position ?? point) <= TALK_RANGE;
   const attemptNight = reached(world, 'mall-outside')?.night ?? night;
   const talkEvents = view.jobEvents ?? [];
   const viewReady = view.openRoam && !view.missionLeaving && !context.leave;
@@ -113,7 +124,8 @@ export function dryPumpStep(context, record, previous, dt, decision) {
         words: rule.line(row.words), lines: lines(row.lines), ...(row.when?.asked ? {needs: [row.when.asked]} : {})}))};
     if (!scene.lines.length && !scene.thoughts.length && !scene.choices.length) return false;
     const asked = scene.questions.filter(row => rule.has('asked', row.id)).map(row => row.id);
-    out.requests.push({type: 'talk', id, scene, speaker: by, asked, threadPriority: true});
+    out.requests.push({type: 'talk', id, scene, speaker: by, asked, threadPriority: true,
+      ...(by === leader && campSpeaker ? {position: campSpeaker.position} : {})});
     decision.interact = false;
     return true;
   }
@@ -198,7 +210,7 @@ export function dryPumpStep(context, record, previous, dt, decision) {
         if (row.id === 'the-hearth-that-night' && (!spentOuting(view) || (view.partOfDay ?? 'day') === 'day')) continue;
         const position = row.at ? at(row.at) : view.people?.find(person => person.id === by)?.position ??
           (row.id === 'the-hearth-that-night' ? at(['tin-town', 'hearth']) : null);
-        if (onFootAt(view, position, by === leader ? 14 : 3) && talk(`${ID}/later/${row.id}`, by, {openingLines: row.lines}))
+        if ((by === leader ? nearLeader : onFootAt(view, position, 3)) && talk(`${ID}/later/${row.id}`, by, {openingLines: row.lines}))
           state.later = `${ID}/later/${row.id}`;
         if (talkEvents.some(event => event.type === 'openTalkClosed' && event.finished && event.scene === `${ID}/later/${row.id}`))
           choice(`later/${row.id}`, [remembered('later', row.id), ...rule.effects(row.effects)]);
@@ -215,7 +227,7 @@ export function dryPumpStep(context, record, previous, dt, decision) {
         cue(ID, dryPump.sign.cue);
         choice('saw-dry-pump', [remembered('seen', opening)]);
       }
-      if (onFootAt(view, camp, 22) && decision.interact) {
+      if (nearLeader && decision.interact) {
         const asking = dryPump.beats.asking;
         talk(`${ID}/asking/decision`, leader, {openingLines: asking.lines, thoughtRows: askingThoughts(asking),
           questions: asking.questions, options: askingOptions(asking.choices)});
@@ -232,7 +244,7 @@ export function dryPumpStep(context, record, previous, dt, decision) {
     if (beatId === 'promised' && promise && night >= promise.due) move('promise-due', 'promise-broken');
     else if (beatId === 'promised' && night - since >= 4) move('water-ran-out', 'left-dry');
     else if (beatId === 'promised' && night > (reached(world, 'came-home-empty')?.night ?? 0))
-      decide(beat.choices, leader, onFootAt(view, camp, 22) && view.outingAvailable !== false);
+      decide(beat.choices, leader, nearLeader && view.outingAvailable !== false);
     return out;
   }
 
@@ -310,16 +322,15 @@ export function dryPumpStep(context, record, previous, dt, decision) {
 
   const wrench = beat.mend;
   const mended = state.mended || world.ledger.marks.includes(beatId === 'his-pipe' ? `${ID}/took-penny-valve` : `${ID}/water-back`);
-  const spot = campTalk.has(beatId) ? camp : beatId === 'promise-broken' ? camp :
-    beatId === 'his-pipe' ? DRY_PUMP_SPOTS['penny-pipe'] : DRY_PUMP_SPOTS['staff-door'];
-  const person = campTalk.has(beatId) || beatId === 'promise-broken' ? leader : 'mr-penny';
+  const spot = beatId === 'his-pipe' ? DRY_PUMP_SPOTS['penny-pipe'] : DRY_PUMP_SPOTS['staff-door'];
+  const person = campTalk.has(beatId) ? leader : 'mr-penny';
   if (wrench && !mended) {
     const after = beatId === 'fitting' && night >= (reached(world, 'asking')?.night ?? night) + 2 ?
       wrench.after.filter(row => row.speaker !== 'marigold') : wrench.after;
     mend(wrench, beatId === 'fitting' ? pump : spot, after);
     return out;
   }
-  const near = onFootAt(view, spot, campTalk.has(beatId) || beatId === 'promise-broken' ? 22 : 3.5);
+  const near = campTalk.has(beatId) ? nearLeader : onFootAt(view, spot, 3.5);
   if (beatId === 'fitting' && !rule.has('entered', beatId))
     choice('fitting-word', [remembered('entered', beatId), ...rule.effects(beat.effects)]);
   if (near && beatId === 'promise-broken' && !rule.has('entered', beatId))
