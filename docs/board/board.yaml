@@ -1373,16 +1373,28 @@ tasks:
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
   - id: OPEN-BURNED-SCOUT
-    title: "Open Scablands: the burned camp, the scouting of the Rats' Nest"
+    title: "Open Scablands: the burned camp, the scouting of the Rats' Nest, and the shared mission runner"
     owner: "codex"
     model: "sol"
     lane: "SIM"
-    size: "M"
-    status: "backlog"
-    needs: [OPEN-NEST-GROUND]
+    size: "L"
+    status: "ready"
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-SCOUT.md"
+
+  - id: OPEN-NEST-GROUND-2
+    title: "Open Scablands: the Nest's cut ground, from its review (kept until the arena is left, no edge cracks, work orders measured from the land)"
+    owner: "codex"
+    model: "astra"
+    lane: "RENDER"
+    size: "S"
+    status: "ready"
+    needs: [OPEN-LOOK-2]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-NEST-GROUND-2.md"
 
   - id: OPEN-APPRENTICE-RUN
     title: "Open Scablands: teach somebody the gas run, and have it driven for you from then on (Kyle, 21 November)"
@@ -1445,18 +1457,6 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-LOOK-2.md"
-
-  - id: OPEN-NEST-GROUND
-    title: "Open Scablands: a site cuts its own ground into the land for play (the Rats' Nest's cutting)"
-    owner: "codex"
-    model: "astra"
-    lane: "RENDER"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-NEST-GROUND.md"
 
   - id: OPEN-JOURNAL-SIZE
     title: "Open Scablands: the open record's journal is folded when a hearth is banked, so a save cannot grow without limit"

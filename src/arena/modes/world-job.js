@@ -46,6 +46,7 @@ import {BUILDINGS} from '../../world/open/content/buildings.js';
 import {buildingWalls} from '../../world/open/building-rule.js';
 import {forgePosts} from '../../world/open/content/people-forge.js';
 import {applyEffects} from '../../world/open/open-effects.js';
+import {installSiteGround} from '../../world/open/site-ground.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sitePosition} from '../../world/open/site-rule.js';
 import {SITES as OPEN_SITES} from '../../world/open/register.js';
@@ -320,10 +321,15 @@ export function createWorldJob(definition) {
     clearedWaves: [], hitTargets: [], settled: false};
 }
 
+const endSiteGround = new WeakMap();
+
 export function initializeWorldJob(duel, definition) {
   const state = duel.state, arena = state.arena;
   const worldJob = arena?.worldJob;
   if (!worldJob) return false;
+  if (definition.open && duel.course.def?.scablands && duel.featureFlags?.enabled('story-choices')) {
+    endSiteGround.set(worldJob, installSiteGround(definition.open.world.open.landSeed));
+  }
   // Loaned car weapons belong to this run. They never touch the player profile.
   worldJob.originalWeaponLoadout = [...(state.weaponLoadout || [])];
   worldJob.originalCrewId = state.crewId;
@@ -443,6 +449,8 @@ function placeWorldFighter(duel, start) {
 export function cleanupWorldJobLoan(duel) {
   const worldJob = duel.state.arena?.mode === 'world-job' ? duel.state.arena.worldJob : null;
   if (!worldJob || !Array.isArray(worldJob.originalWeaponLoadout)) return false;
+  endSiteGround.get(worldJob)?.();
+  endSiteGround.delete(worldJob);
   duel.state.weaponLoadout = [...worldJob.originalWeaponLoadout];
   if (worldJob.originalCrewId) duel.state.crewId = worldJob.originalCrewId;
   if (worldJob.originalFootWeaponSelected && duel.state.footWeapons)

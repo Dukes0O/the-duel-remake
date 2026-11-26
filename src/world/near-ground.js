@@ -7,6 +7,7 @@
 // strip only, about 60 to 120 heights. The face mesh is rebuilt when
 // the window moves. `refresh` works out every corner again when the land changes.
 import * as THREE from 'three';
+import {CHUNK_METRES} from './ground-edit.js';
 import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
 
 export const NEAR_GROUND = Object.freeze({
@@ -54,7 +55,50 @@ export function nearGroundHeightAt(x, z, heightAt, grid = NEAR_GROUND) {
   return d + (corner(0, 1) - d) * (1 - u) + (corner(1, 0) - d) * (1 - v);
 }
 
-export function createNearGround({material, heightAt, name = 'Scablands near ground', grid = NEAR_GROUND}) {
+// A site owns only the chunks touched by its metre samples. Split a crossing
+// lattice cell at those chunk edges. The piece under each edited mesh clears
+// its lowest vertex, and the rest stays on the land up to the join.
+export function createSiteUnderlay(ground) {
+  if (!ground.siteGround) return null;
+  const floors = new Map();
+  const bounds = {minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity};
+  for (const row of ground.siteGround.toSave().chunks) {
+    const x = row.x * CHUNK_METRES, z = row.z * CHUNK_METRES;
+    let lowest = Infinity;
+    for (let j = 0; j <= CHUNK_METRES; j++) for (let i = 0; i <= CHUNK_METRES; i++)
+      lowest = Math.min(lowest, ground.heightAt(x + i, z + j));
+    floors.set(row.x + ',' + row.z, lowest - .3);
+    bounds.minX = Math.min(bounds.minX, x); bounds.maxX = Math.max(bounds.maxX, x + CHUNK_METRES);
+    bounds.minZ = Math.min(bounds.minZ, z); bounds.maxZ = Math.max(bounds.maxZ, z + CHUNK_METRES);
+  }
+  const edges = (start, end) => {
+    const result = [start];
+    for (let p = (Math.floor(start / CHUNK_METRES) + 1) * CHUNK_METRES; p < end; p += CHUNK_METRES) result.push(p);
+    result.push(end);
+    return result;
+  };
+  const floorAt = (x, z) => floors.get(Math.floor(x / CHUNK_METRES) + ',' + Math.floor(z / CHUNK_METRES));
+  function splitCell(x, z, width, depth, a, b, c, d, positions, indices, ox = 0, oz = 0) {
+    if (x >= bounds.maxX || x + width <= bounds.minX || z >= bounds.maxZ || z + depth <= bounds.minZ) return false;
+    const xs = edges(x, x + width), zs = edges(z, z + depth);
+    const height = (px, pz) => {
+      const u = (px - x) / width, v = (pz - z) / depth;
+      return u + v <= 1 ? a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v);
+    };
+    for (let j = 1; j < zs.length; j++) for (let i = 1; i < xs.length; i++) {
+      const left = xs[i - 1], right = xs[i], top = zs[j - 1], bottom = zs[j];
+      const floor = floorAt((left + right) / 2, (top + bottom) / 2);
+      const start = positions.length / 3;
+      for (const pz of [top, bottom]) for (const px of [left, right])
+        positions.push(px - ox, floor ?? height(px, pz), pz - oz);
+      indices.push(start, start + 2, start + 1, start + 1, start + 2, start + 3);
+    }
+    return true;
+  }
+  return {splitCell, floorAt};
+}
+
+export function createNearGround({material, heightAt, name = 'Scablands near ground', grid = NEAR_GROUND, siteUnderlay = null}) {
   const {cellX, cellZ, cellsX, cellsZ, lift} = grid;
   const across = cellsX + 1, down = cellsZ + 1, corners = across * down;
   const positions = new Float32Array(corners * 3), normals = new Float32Array(corners * 3);
@@ -95,6 +139,8 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       const a = iz * across + ix, b = a + 1, c = a + across, d = c + 1;
       const x = (centreI + ix - cellsX / 2) * cellX, z = (centreJ + iz - cellsZ / 2) * cellZ;
       if (!isFaceCell(x, z)) {
+        if (siteUnderlay?.splitCell(x, z, cellX, cellZ, heights[a], heights[b], heights[c], heights[d],
+          facePositions, faceIndices, mesh.position.x, mesh.position.z)) continue;
         indices[baseCount++] = a; indices[baseCount++] = c; indices[baseCount++] = b;
         indices[baseCount++] = b; indices[baseCount++] = c; indices[baseCount++] = d;
         continue;
@@ -120,6 +166,10 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       }
       for (let j = 0; j < divisions; j++) for (let i = 0; i < divisions; i++) {
         const q = start + j * (divisions + 1) + i;
+        const stride = divisions + 1;
+        if (siteUnderlay?.splitCell(x + i * cellX / divisions, z + j * cellZ / divisions, cellX / divisions, cellZ / divisions,
+          facePositions[q*3+1], facePositions[(q+1)*3+1], facePositions[(q+stride)*3+1], facePositions[(q+stride+1)*3+1],
+          facePositions, faceIndices, mesh.position.x, mesh.position.z)) continue;
         faceIndices.push(q, q + divisions + 1, q + 1, q + 1, q + divisions + 1, q + divisions + 2);
       }
     }
@@ -131,6 +181,8 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     faceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(facePositions, 3));
     // The number of face vertices changes as the window moves. Three.js otherwise
     // reuses the previous normal buffer, even when it has a different length.
+    faceGeometry.boundingSphere = null;
+    faceGeometry.boundingBox = null;
     faceGeometry.deleteAttribute('normal');
     faceGeometry.setIndex(faceIndices); faceGeometry.computeVertexNormals();
   }
@@ -171,6 +223,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
 
   return {
     mesh, geometry, faceMesh,
+    setSiteUnderlay(value) { siteUnderlay = value; this.refresh(); },
     // The window's middle, in metres, once it has been placed.
     get centreX() { return centreI * cellX; },
     get centreZ() { return centreJ * cellZ; },
@@ -220,6 +273,8 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       if (Number.isNaN(centreI)) return null;
       const fx = x / cellX - (centreI - cellsX / 2), fz = z / cellZ - (centreJ - cellsZ / 2);
       if (fx < 0 || fz < 0 || fx >= cellsX || fz >= cellsZ) return null;
+      const underlay = siteUnderlay?.floorAt(x,z);
+      if (underlay !== undefined) return underlay;
       if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt, grid);
       const ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, at = iz * across + ix;
       return u + v <= 1 ? heights[at] + (heights[at + 1] - heights[at]) * u + (heights[at + across] - heights[at]) * v :

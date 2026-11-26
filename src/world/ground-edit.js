@@ -1,4 +1,4 @@
-const CHUNK_METRES = 32;
+export const CHUNK_METRES = 32;
 const SIDE = CHUNK_METRES;
 const SAMPLE_COUNT = SIDE * SIDE;
 export const GROUND_MATERIALS = Object.freeze(['topsoil', 'clay', 'gravel', 'rock']);
@@ -31,6 +31,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     throw new TypeError('Ground region must say whether it is editable.');
   if (typeof naturalHeight !== 'function') throw new TypeError('Ground edits need a natural height function.');
   for (const shape of reservedShapes) validShape(shape);
+  let siteGround = null;
   let chunks = new Map();
   const numericSeed = Number.isFinite(seed) ? seed | 0 : 1;
   let revision = 0, loadedRevision = 0;
@@ -67,7 +68,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     return null;
   }
 
-  function heightAt(x, z) {
+  function baseHeightAt(x, z) {
     if (!finite(x) || !finite(z)) throw new TypeError('Ground coordinates must be finite.');
     const x0 = Math.floor(x), z0 = Math.floor(z), tx = x - x0, tz = z - z0;
     const deltaAt = (sx, sz) => {
@@ -79,12 +80,18 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     return naturalHeight(x, z) + north * (1 - tz) + south * tz;
   }
 
+  // Site depth is part of the natural surface during an open job. Work orders
+  // remain in their own chunks, so loading another job never carries the site across.
+  const siteOffset = (x, z) => siteGround?.hasChunkAt(x, z) ? siteGround.heightAt(x, z) : 0;
+  const heightAt = (x, z) => baseHeightAt(x, z) + siteOffset(x, z);
+  const unworkedHeight = (x, z) => naturalHeight(x, z) + siteOffset(x, z);
+
   // Use the same seeded layers as cut(), including material placed above
   // the natural surface. Coordinates select the same one-metre ground cell.
   function materialAt(x, y, z) {
     if (![x, y, z].every(finite)) throw new TypeError('Material coordinates must be finite.');
     const sx = Math.floor(x), sz = Math.floor(z);
-    return cellMaterialAt(sx, sz, naturalHeight(sx, sz), sampleAt(sx, sz), y);
+    return cellMaterialAt(sx, sz, unworkedHeight(sx, sz), sampleAt(sx, sz), y);
   }
 
   // The layer at height y in one ground cell, given that cell's natural height and edit sample.
@@ -122,7 +129,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       }
       // Every strip is in the same ground cell, so its natural height and sample are read once.
       const sx = Math.floor(shape.x), sz = Math.floor(shape.z);
-      const natural = naturalHeight(sx, sz), sample = sampleAt(sx, sz);
+      const natural = unworkedHeight(sx, sz), sample = sampleAt(sx, sz);
       for (const {offset, weight} of weights) {
         const y = target + offset;
         if (!finite(y)) throw new TypeError('Material coordinates must be finite.');
@@ -138,14 +145,14 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       const dx = x - shape.x, dz = z - shape.z;
       if (dx * dx + dz * dz > shape.radius * shape.radius) continue;
       const sample = sampleAt(x, z, true), {chunk, index} = sample;
-      const before = naturalHeight(x, z) + chunk.delta[index];
+      const before = unworkedHeight(x, z) + chunk.delta[index];
       const after = Math.max(target, Math.min(before, target));
       if (after >= before) continue;
       const removed = Math.min(before - after, Math.max(0, maxVolume - result.volume));
       if (removed <= 0) continue;
       chunk.delta[index] -= removed;
       const roll = hash(numericSeed, x, z);
-      const depthStart = Math.max(0, naturalHeight(x, z) - before);
+      const depthStart = Math.max(0, unworkedHeight(x, z) - before);
       const depthEnd = depthStart + removed;
       const topsoilEnd = 1 + roll;
       const clayEnd = topsoilEnd + 2 + roll * 2;
@@ -199,6 +206,22 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
         .map(chunk => ({x: chunk.x, z: chunk.z, delta: new Float32Array(chunk.delta), material: new Uint8Array(chunk.material)}))};
   }
 
+  // The mesh sees both layers. Only work orders go through toSave().
+  function drawingChunks() {
+    const work = toSave().chunks;
+    if (!siteGround) return work;
+    const rows = new Map(work.map(row => [chunkKey(row.x, row.z), row]));
+    for (const site of siteGround.toSave().chunks) {
+      const key = chunkKey(site.x, site.z), row = rows.get(key);
+      if (!row) { rows.set(key, site); continue; }
+      for (let i = 0; i < SAMPLE_COUNT; i++) {
+        if (!row.delta[i]) row.material[i] = site.material[i];
+        row.delta[i] += site.delta[i];
+      }
+    }
+    return [...rows.values()];
+  }
+
   function loadSave(save) {
     if (!save || save.version !== 1 || save.chunkMetres !== CHUNK_METRES || !Array.isArray(save.chunks))
       throw new TypeError('Unsupported ground edit save.');
@@ -217,7 +240,10 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     loadedRevision = ++revision;
   }
 
-  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave,
+  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave, drawingChunks, baseHeightAt,
+    get siteGround() { return siteGround; },
+    setSiteGround(layer) { siteGround = layer; loadedRevision = ++revision; },
+    includeChunkAt(x, z) { sampleAt(x, z, true); },
     hasChunkAt(x, z) { return chunks.has(chunkKey(Math.floor(x / CHUNK_METRES), Math.floor(z / CHUNK_METRES))); },
     get revision() { return revision; },
     changedAlongSince(since, position, distance) {
