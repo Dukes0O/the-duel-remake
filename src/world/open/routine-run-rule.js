@@ -1,4 +1,5 @@
 import {applyChoice} from '../../story/ledger.js';
+import {night2Banked} from '../jobs/night-2.js';
 import {GAS_ROUTINE, ROUTINES, learnerOf} from './content/routines.js';
 import {isTrue} from './facts.js';
 import {routineDraw} from './routine-rule.js';
@@ -9,6 +10,9 @@ const empty = handRuns => ({handRuns, offered: false, offeredNight: null, refuse
   tally: {runs: 0, gas: 0, embers: 0}, lastDelivery: null, trouble: null});
 
 export function routineFor(world, row = GAS_ROUTINE) {
+  // An old record can already carry a learner. Leave it intact until the
+  // authored opening night has finished.
+  if (!night2Banked(world.ledger)) return empty(0);
   const saved = world.open.routines?.[row.id];
   const handRuns = world.legacyHandRuns ?? 0;
   if (!saved) return empty(handRuns);
@@ -19,6 +23,7 @@ export function routineFor(world, row = GAS_ROUTINE) {
 }
 
 export function keepRoutine(world, record, row = GAS_ROUTINE) {
+  if (!night2Banked(world.ledger)) return world;
   return {...world, open: {...world.open, routines: {...world.open.routines, [row.id]: record}}};
 }
 
@@ -95,7 +100,8 @@ const learnedLoad = lesson => Math.floor(lesson.lessonLoad * lesson.share);
 export function arriveHandRun(world, {load, clean, passenger}, row = GAS_ROUTINE) {
   const record = routineFor(world, row);
   const night = world.ledger.night;
-  if (record.deliveredNight === night || !Number.isSafeInteger(load) || load < 0 || load > row.fullLoad) return {world};
+  if (!night2Banked(world.ledger) || record.deliveredNight === night ||
+      !Number.isSafeInteger(load) || load < 0 || load > row.fullLoad) return {world};
   const baked = kiln(world, load, 'routine/' + row.id + '/hand');
   let next = {...record, handRuns: record.handRuns + 1, handNight: night, deliveredNight: night};
   if (record.lessonPending && passenger && passenger === record.learner && learnerOf(row, passenger)) {
@@ -113,7 +119,7 @@ export function arriveHandRun(world, {load, clean, passenger}, row = GAS_ROUTINE
 }
 
 export function runBankedRoutines(world, {held = false} = {}) {
-  if (held) return world;
+  if (held || !night2Banked(world.ledger)) return world;
   for (const row of ROUTINES) {
     const record = routineFor(world, row);
     const night = world.ledger.night;
