@@ -8,6 +8,21 @@ const SITE_GROUND = {
   'rats-nest': {radius: RATS_NEST_LAYOUT.radius, depthAt: ratsNestGround},
 };
 
+// The job normally releases its cut with its loan. Its frozen results scene can take
+// ownership of that same release until the duel enters the menu or another arena.
+const releases = new WeakMap();
+export function keepSiteGroundForResults(duel) {
+  const arena = duel.state.arena, site = scablandsGroundEdit.siteGround;
+  const restore = releases.get(site);
+  if (!arena?.worldJob?.definition.open || !restore) return;
+  releases.delete(site);
+  const unsubscribe = duel.onChange(state => {
+    if (state.arena === arena) return;
+    unsubscribe();
+    restore();
+  });
+}
+
 // Author the metre samples once per outing. A sample on a west or north border also
 // belongs to the mesh on the other side of that border (its last row of vertices).
 export function installSiteGround(landSeed, ids = Object.keys(SITE_GROUND)) {
@@ -32,5 +47,9 @@ export function installSiteGround(landSeed, ids = Object.keys(SITE_GROUND)) {
   const site = cuts.chunkCount ? cuts : null;
   if (!site) return () => {};
   ground.setSiteGround(site);
-  return () => { if (ground.siteGround === site) ground.setSiteGround(previous); };
+  releases.set(site, () => { if (ground.siteGround === site) ground.setSiteGround(previous); });
+  return () => {
+    releases.get(site)?.();
+    releases.delete(site);
+  };
 }

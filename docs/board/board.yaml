@@ -1384,18 +1384,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-SCOUT.md"
 
-  - id: OPEN-NEST-GROUND-2
-    title: "Open Scablands: the Nest's cut ground, from its review (kept until the arena is left, no edge cracks, work orders measured from the land)"
-    owner: "codex"
-    model: "astra"
-    lane: "RENDER"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-NEST-GROUND-2.md"
-
   - id: OPEN-LOOK-3
     title: "Open Scablands: the Rats' Nest, round 3 from Claude's verdict (nothing in the air, real tracks, the six buggies, rolling smoke)"
     owner: "codex"

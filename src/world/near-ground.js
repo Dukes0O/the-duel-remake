@@ -60,38 +60,71 @@ export function nearGroundHeightAt(x, z, heightAt, grid = NEAR_GROUND) {
 // its lowest vertex, and the rest stays on the land up to the join.
 export function createSiteUnderlay(ground) {
   if (!ground.siteGround) return null;
-  const floors = new Map();
-  const bounds = {minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity};
-  for (const row of ground.siteGround.toSave().chunks) {
+  const rows = ground.siteGround.toSave().chunks;
+  const xs = rows.map(row => row.x), zs = rows.map(row => row.z);
+  const minI = Math.min(...xs), maxI = Math.max(...xs), minJ = Math.min(...zs), maxJ = Math.max(...zs);
+  const stride = maxI - minI + 1, floors = new Float64Array(stride * (maxJ - minJ + 1)).fill(NaN);
+  for (const row of rows) {
     const x = row.x * CHUNK_METRES, z = row.z * CHUNK_METRES;
     let lowest = Infinity;
     for (let j = 0; j <= CHUNK_METRES; j++) for (let i = 0; i <= CHUNK_METRES; i++)
       lowest = Math.min(lowest, ground.heightAt(x + i, z + j));
-    floors.set(row.x + ',' + row.z, lowest - .3);
-    bounds.minX = Math.min(bounds.minX, x); bounds.maxX = Math.max(bounds.maxX, x + CHUNK_METRES);
-    bounds.minZ = Math.min(bounds.minZ, z); bounds.maxZ = Math.max(bounds.maxZ, z + CHUNK_METRES);
+    floors[(row.z - minJ) * stride + row.x - minI] = lowest - .3;
   }
-  const edges = (start, end) => {
+  function floorAt(x, z) {
+    const i = Math.floor(x / CHUNK_METRES), j = Math.floor(z / CHUNK_METRES);
+    if (i < minI || i > maxI || j < minJ || j > maxJ) return undefined;
+    const floor = floors[(j - minJ) * stride + i - minI];
+    return Number.isNaN(floor) ? undefined : floor;
+  }
+  const edges = (start, end, spacing) => {
     const result = [start];
-    for (let p = (Math.floor(start / CHUNK_METRES) + 1) * CHUNK_METRES; p < end; p += CHUNK_METRES) result.push(p);
+    for (let p = (Math.floor(start / spacing) + 1) * spacing; p < end; p += spacing) result.push(p);
     result.push(end);
     return result;
   };
-  const floorAt = (x, z) => floors.get(Math.floor(x / CHUNK_METRES) + ',' + Math.floor(z / CHUNK_METRES));
-  function splitCell(x, z, width, depth, a, b, c, d, positions, indices, ox = 0, oz = 0) {
-    if (x >= bounds.maxX || x + width <= bounds.minX || z >= bounds.maxZ || z + depth <= bounds.minZ) return false;
-    const xs = edges(x, x + width), zs = edges(z, z + depth);
+  // Include the closed edge of each chunk, including the last vertex of its east/south side.
+  function onSite(x, z) {
+    const west = Math.ceil(x / CHUNK_METRES) * CHUNK_METRES - 1;
+    const north = Math.ceil(z / CHUNK_METRES) * CHUNK_METRES - 1;
+    return floorAt(x, z) !== undefined || floorAt(west, z) !== undefined ||
+      floorAt(x, north) !== undefined || floorAt(west, north) !== undefined;
+  }
+  // A lattice line can cross between two metre samples. Interpolate the actual edit-mesh edge there.
+  const rimVertex = (x, z) => ground.heightAt(x, z) + .035;
+  function rimHeight(x, z) {
+    const i = Math.floor(x), j = Math.floor(z);
+    const a = rimVertex(i, j);
+    return a + (x - i) * (rimVertex(i + 1, j) - a) + (z - j) * (rimVertex(i, j + 1) - a);
+  }
+  function splitCell(x, z, width, depth, a, b, c, d, positions, indices, ox = 0, oz = 0, record = null) {
+    if (x > (maxI + 1) * CHUNK_METRES || x + width < minI * CHUNK_METRES ||
+        z > (maxJ + 1) * CHUNK_METRES || z + depth < minJ * CHUNK_METRES) return false;
+    const xs = edges(x, x + width, CHUNK_METRES), zs = edges(z, z + depth, CHUNK_METRES);
     const height = (px, pz) => {
       const u = (px - x) / width, v = (pz - z) / depth;
       return u + v <= 1 ? a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v);
     };
     for (let j = 1; j < zs.length; j++) for (let i = 1; i < xs.length; i++) {
       const left = xs[i - 1], right = xs[i], top = zs[j - 1], bottom = zs[j];
-      const floor = floorAt((left + right) / 2, (top + bottom) / 2);
+      const midX = (left + right) / 2, midZ = (top + bottom) / 2;
+      const floor = floorAt(midX, midZ);
+      const xx = floor === undefined && (onSite(midX, top) || onSite(midX, bottom)) ? edges(left, right, 1) : [left, right];
+      const zz = floor === undefined && (onSite(left, midZ) || onSite(right, midZ)) ? edges(top, bottom, 1) : [top, bottom];
       const start = positions.length / 3;
-      for (const pz of [top, bottom]) for (const px of [left, right])
-        positions.push(px - ox, floor ?? height(px, pz), pz - oz);
-      indices.push(start, start + 2, start + 1, start + 1, start + 2, start + 3);
+      const corner = (px, pz) => floor ?? (onSite(px, pz) ? rimHeight(px, pz) : height(px, pz));
+      const nw = corner(left, top), ne = corner(right, top), sw = corner(left, bottom), se = corner(right, bottom);
+      for (const pz of zz) for (const px of xx) {
+        const u = (px - left) / (right - left), v = (pz - top) / (bottom - top);
+        // The opposite side can meet an unsplit polygon. Its intermediate vertices stay on the straight edge.
+        const y = floor ?? (onSite(px, pz) ? rimHeight(px, pz) : (1-v)*((1-u)*nw+u*ne) + v*((1-u)*sw+u*se));
+        positions.push(px - ox, y, pz - oz);
+      }
+      for (let v = 0; v < zz.length - 1; v++) for (let u = 0; u < xx.length - 1; u++) {
+        const q = start + v * xx.length + u, next = q + xx.length;
+        indices.push(q, next, q + 1, q + 1, next, next + 1);
+      }
+      if (floor === undefined) record?.(xx, zz, start);
     }
     return true;
   }
@@ -132,15 +165,32 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   mesh.add(faceMesh);
 
   const faceHeights = new Map();
+  // Split polygons live in the face mesh. Keep their lattice-cell index for drawn-feet queries.
+  const sitePatches = new Map();
   function updateFaces() {
     const facePositions = [], faceIndices = [];
+    const siteNormals = [];
+    sitePatches.clear();
     let baseCount = 0;
     for (let iz = 0; iz < cellsZ; iz++) for (let ix = 0; ix < cellsX; ix++) {
       const a = iz * across + ix, b = a + 1, c = a + across, d = c + 1;
       const x = (centreI + ix - cellsX / 2) * cellX, z = (centreJ + iz - cellsZ / 2) * cellZ;
+      const record = siteUnderlay && ((xs, zs, start) => {
+        let patches = sitePatches.get(a);
+        if (!patches) sitePatches.set(a, patches = []);
+        patches.push({xs, zs, start});
+        // Give trimmed pieces the smooth lattice normals of their neighbours.
+        for (const pz of zs) for (const px of xs) {
+          const u = (px - x) / cellX, v = (pz - z) / cellZ;
+          const at = start++;
+          siteNormals.push(at);
+          for (let n = 0; n < 3; n++)
+            siteNormals.push((1-v)*((1-u)*normals[a*3+n]+u*normals[b*3+n]) + v*((1-u)*normals[c*3+n]+u*normals[d*3+n]));
+        }
+      });
       if (!isFaceCell(x, z)) {
         if (siteUnderlay?.splitCell(x, z, cellX, cellZ, heights[a], heights[b], heights[c], heights[d],
-          facePositions, faceIndices, mesh.position.x, mesh.position.z)) continue;
+          facePositions, faceIndices, mesh.position.x, mesh.position.z, record)) continue;
         indices[baseCount++] = a; indices[baseCount++] = c; indices[baseCount++] = b;
         indices[baseCount++] = b; indices[baseCount++] = c; indices[baseCount++] = d;
         continue;
@@ -169,7 +219,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
         const stride = divisions + 1;
         if (siteUnderlay?.splitCell(x + i * cellX / divisions, z + j * cellZ / divisions, cellX / divisions, cellZ / divisions,
           facePositions[q*3+1], facePositions[(q+1)*3+1], facePositions[(q+stride)*3+1], facePositions[(q+stride+1)*3+1],
-          facePositions, faceIndices, mesh.position.x, mesh.position.z)) continue;
+          facePositions, faceIndices, mesh.position.x, mesh.position.z, record)) continue;
         faceIndices.push(q, q + divisions + 1, q + 1, q + 1, q + divisions + 1, q + divisions + 2);
       }
     }
@@ -185,6 +235,9 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     faceGeometry.boundingBox = null;
     faceGeometry.deleteAttribute('normal');
     faceGeometry.setIndex(faceIndices); faceGeometry.computeVertexNormals();
+    const faceNormals = faceGeometry.attributes.normal;
+    for (let i = 0; i < siteNormals.length; i += 4)
+      faceNormals.setXYZ(siteNormals[i], siteNormals[i+1], siteNormals[i+2], siteNormals[i+3]);
   }
 
   // The lattice corner (in whole cells) at the window's middle. Not yet placed.
@@ -266,7 +319,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       if (!facesChanged) for (let z = Math.max(0, z0 - 1); z < Math.min(cellsZ, z1 + 1) && !facesChanged; z++)
         for (let x = Math.max(0, x0 - 1); x < Math.min(cellsX, x1 + 1); x++)
           if (isFaceCell((originI + x) * cellX, (originJ + z) * cellZ)) { facesChanged = true; break; }
-      if (facesChanged) updateFaces();
+      if (facesChanged || siteUnderlay) updateFaces();
     },
     // The drawn height at (x, z), read from this window's own corners, for a point inside it; null outside.
     heightAtDrawn(x, z) {
@@ -275,8 +328,19 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       if (fx < 0 || fz < 0 || fx >= cellsX || fz >= cellsZ) return null;
       const underlay = siteUnderlay?.floorAt(x,z);
       if (underlay !== undefined) return underlay;
-      if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt, grid);
       const ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, at = iz * across + ix;
+      const patches = siteUnderlay && sitePatches.get(at);
+      if (patches) for (const {xs, zs, start} of patches) {
+        if (x < xs[0] || x > xs.at(-1) || z < zs[0] || z > zs.at(-1)) continue;
+        let i = 0, j = 0;
+        while (i + 2 < xs.length && x > xs[i + 1]) i++;
+        while (j + 2 < zs.length && z > zs[j + 1]) j++;
+        const q = start + j * xs.length + i, r = q + xs.length, pos = faceGeometry.attributes.position;
+        const s = (x - xs[i]) / (xs[i+1] - xs[i]), t = (z - zs[j]) / (zs[j+1] - zs[j]);
+        return s + t <= 1 ? (1-s-t)*pos.getY(q) + s*pos.getY(q+1) + t*pos.getY(r) :
+          (s+t-1)*pos.getY(r+1) + (1-s)*pos.getY(r) + (1-t)*pos.getY(q+1);
+      }
+      if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt, grid);
       return u + v <= 1 ? heights[at] + (heights[at + 1] - heights[at]) * u + (heights[at + across] - heights[at]) * v :
         heights[at + across + 1] + (heights[at + across] - heights[at + across + 1]) * (1 - u) + (heights[at + 1] - heights[at + across + 1]) * (1 - v);
     },
