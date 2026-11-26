@@ -80,7 +80,7 @@ export default {
   // checkpoint that traders come to. After a trap the director draws for the sign again, at another such checkpoint,
   // and then it is the hauler.
   sign: {kind: 'thing', at: {checkpoint: {who: 'traders'}}, seenWithin: 400, lastsNights: 2, cue: 'open.hauler.seen',
-    again: {afterNights: 2}},
+    again: {at: {checkpoint: {who: 'traders'}}, when: {all: [TRAP_MET, {not: did('helped')}]}, afterNights: 2}},
 
   beats: {
     sign: {
@@ -100,13 +100,8 @@ export default {
     // ---- The trap ----
 
     'trap-road': {
-      notes: {
-        when: {near: 'sign', within: 220},
+      when: {reach: 'sign', within: 220}, notes: {
         exploreSpots: {waving: 'crest', load: 'crest', ground: 'verge', doors: 'verge', tracks: 'verge', behind: 'high-ground'},
-        questionEffects: {
-          'ask-keeper': [mark('saw-the-trap-first')],
-          'warn-the-road': [mark('warned-the-road', "You warned the road about the Road Rats' trap.")],
-        },
       },
       explore: [
         {id: 'waving', cue: 'open.scout.seen',
@@ -141,11 +136,11 @@ export default {
           when: {fact: 'word', of: 'walkers', atLeast: 'Friendly'},
           shows: 'The truck was not there yesterday',
           lines: [say('rell', 'We walked that road at noon yesterday, and there was no truck on it then. Be careful. Nobody breaks down in the very hour that you happen to come along.', onRadio)]},
-        {id: 'ask-keeper', to: 'keeper', words: 'Keeper, can you see the truck on this road from your tower?',
+        {effects: [mark('saw-the-trap-first')], id: 'ask-keeper', to: 'keeper', words: 'Keeper, can you see the truck on this road from your tower?',
           when: {fact: 'made', id: 'tower/crows-step'},
           shows: 'The buggies, without leaving the car',
           lines: [say('keeper', "I can see that truck from up here, and I can see two buggies sitting behind the hill beside it. I'd turn round, if I were you.", onRadio)]},
-        {id: 'warn-the-road', to: 'auntie-solder', words: "Auntie, there's a trap on the road out here. Can anybody be warned?",
+        {effects: [mark('warned-the-road', "You warned the road about the Road Rats' trap.")], id: 'warn-the-road', to: 'auntie-solder', words: "Auntie, there's a trap on the road out here. Can anybody be warned?",
           when: did('saw-the-trap-first'),
           shows: 'A way to spoil the trap without fighting it',
           lines: [say('auntie-solder', "I'll tell Dot, and Dot will tell every carter who stops for pie. By tonight there won't be a soul on that road who slows down for a raised bonnet.", onRadio)]},
@@ -172,7 +167,7 @@ export default {
     },
 
     'trap-shut': {
-      notes: {when: {near: 'sign', within: 40}},
+      when: {reach: 'sign', within: 40},
       cue: 'open.trap.sprung',
       lines: [
         rat('Thank you for stopping. Hardly anybody does these days, and it gets lonely standing out here.'),
@@ -262,13 +257,12 @@ export default {
     },
 
     // The thread waits here for the director to draw the sign again.
-    between: {notes: {when: {sign: 'again'}}, next: 'sign'},
+    between: {when: {sign: 'again'}, next: 'sign'},
 
     // ---- The hauler ----
 
     'hauler-road': {
-      notes: {
-        when: {reach: 'tally', within: 220},
+      when: {reach: 'tally', within: 220}, notes: {
         exploreSpots: {waving: 'crest', load: 'crest', ground: 'verge', doors: 'verge', tracks: 'verge', behind: 'high-ground'},
       },
       explore: [
@@ -328,12 +322,7 @@ export default {
     },
 
     hauler: {
-      notes: {
-        when: {reach: 'tally', within: 40},
-        mend: {cue: 'open.hauler.mended',
-          during: [tally("I've got her. Do the top bolt first, and don't be gentle with it.")],
-          after: [tally("That's her whole again. Listen to that engine. She sounds dreadful, and she always has, so that's all right.")]},
-      },
+      when: {reach: 'tally', within: 40},
       lines: [
         tally("Somebody put the word round that a raised bonnet means Road Rats. It was good advice. It has also kept me sitting here for two days.",
           {when: did('warned-the-road')}),
@@ -360,7 +349,7 @@ export default {
           lines: [tally("I went up there to see whether there was a road with anybody on it. There wasn't. Then I came back down and felt sorry for myself, which took most of the afternoon.")]},
       ],
       // The mend is done, not said: hold the wrench on the shaft's bolts for twelve seconds while she lifts.
-      mend: {id: `${ID}/drive-shaft`, wrenchSeconds: 12, scrap: 0,
+      mend: {after: [tally("That's her whole again. Listen to that engine. She sounds dreadful, and she always has, so that's all right.")], during: [tally("I've got her. Do the top bolt first, and don't be gentle with it.")], cue: 'open.hauler.mended', id: `${ID}/drive-shaft`, wrenchSeconds: 12, scrap: 0,
         effects: [{type: 'met', person: 'tally', text: 'You met Tally on the road, when her truck had broken down.'},
           {type: 'word', person: 'tally', set: 'Friendly'},
           {type: 'debt', id: `${ID}/tally-owes`, person: 'tally', text: 'Tally owes you for mending her truck.'},
@@ -436,21 +425,18 @@ export default {
       notes: {
         truck: 'patience',
         load: {what: 'tyres', count: 40, lostAtATime: 10},
-        // The moment each mission line is said, in the order of `lines`.
-        lineMoments: [{at: 'buggies-seen'}, {at: 'tyres-lost', cue: 'open.tyres.lost'}, {at: 'buggy-wrecked'},
-          {at: 'crossing-seen'}],
       },
-      mission: {id: `${ID}/escort`, kind: 'escort', holds: ['checkpoints', 'signs'], minutes: 4,
+      mission: {rule: {moments: ['buggies-seen', 'tyres-lost', 'buggy-wrecked', 'crossing-seen']}, id: `${ID}/escort`, kind: 'escort', holds: ['checkpoints', 'signs'], minutes: 4,
         enemy: 'road-rats', cars: 2,
         lines: [
-          tally("Here they come, down off the ridge. They won't shoot at Patience, because they want what she's carrying. Keep them away from the cart.",
-            onRadio),
-          tally("That's ten of my tyres rolling about in the road. I counted them on, and I can count them off.",
-            onRadio),
-          tally("That one won't be hooking anybody's tyres for a while. There's still the other one.",
-            onRadio),
-          tally("I can see the crossing, and I can see carts on it. They'll turn back now. Rats never rob anybody where it might be watched.",
-            onRadio),
+          {...tally("Here they come, down off the ridge. They won't shoot at Patience, because they want what she's carrying. Keep them away from the cart.",
+            onRadio), moment: 'buggies-seen'},
+          {...tally("That's ten of my tyres rolling about in the road. I counted them on, and I can count them off.",
+            onRadio), moment: 'tyres-lost', cue: 'open.tyres.lost'},
+          {...tally("That one won't be hooking anybody's tyres for a while. There's still the other one.",
+            onRadio), moment: 'buggy-wrecked'},
+          {...tally("I can see the crossing, and I can see carts on it. They'll turn back now. Rats never rob anybody where it might be watched.",
+            onRadio), moment: 'crossing-seen'},
         ],
         outcomes: {
           'all-kept': {
@@ -499,12 +485,6 @@ export default {
       notes: {
         service: {id: 'trade', by: 'tally', at: 'tin-town-gate', sells: ['parts', 'seed', 'salt', 'wood'],
           price: 'scrap, by the thing; a quarter off at Friendly and half off at Sworn'},
-        // The map shows a rumour's circle for the site cast as `rumoured` (section 16).
-        questionEffects: {
-          'free-news': [{type: 'rumour', site: '@rumoured'}, mark('told-of-a-site')],
-          'what-she-saw': [mark('saw-a-camp-in-ashes', 'Tally told you what she saw at a camp that had been burned.')],
-          'rats-road': [mark('knows-the-rats-road')],
-        },
       },
       lines: [
         tally("Good morning, Tin Town. I've tyres, salt, seed and parts, and none of it is cheap. I'm not a cheat, though, and those are two different things."),
@@ -512,16 +492,16 @@ export default {
         say('auntie-solder', "A trader at my gate, and nobody on fire. I'd forgotten what an ordinary morning was like. Tell her the tea is free if the gossip is good.", onRadio),
       ],
       questions: [
-        {id: 'free-news', words: "What's the free piece of news?", when: {cast: 'rumoured'},
+        {effects: [{type: 'rumour', site: '@rumoured'}, mark('told-of-a-site')], id: 'free-news', words: "What's the free piece of news?", when: {cast: 'rumoured'},
           shows: 'A circle on the map where a site is said to be',
           lines: [tally("Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you where it is, as near as I can, and my drawing is better than my truck.")]},
-        {id: 'what-she-saw', words: 'Did you see anything at {burned.name}?', when: {cast: 'burned'},
+        {effects: [mark('saw-a-camp-in-ashes', 'Tally told you what she saw at a camp that had been burned.')], id: 'what-she-saw', words: 'Did you see anything at {burned.name}?', when: {cast: 'burned'},
           shows: 'They were taken alive, and her cart tracks are explained',
           lines: [
             tally("I came through there the morning after, to sell them salt. I saw the tracks of a lot of cars going out one way, and a cart's ruts in the middle of them, with footprints beside it."),
             tally("People who walk beside a cart were alive when they left. I'm sorry about my own tracks in the ash. I had to turn Patience round in it."),
           ]},
-        {id: 'rats-road', words: 'Where are the Road Rats working this week?', when: SELLS_TO_RATS,
+        {effects: [mark('knows-the-rats-road')], id: 'rats-road', words: 'Where are the Road Rats working this week?', when: SELLS_TO_RATS,
           shows: 'What her trade with Sump is good for',
           lines: [tally("Sump's people have their raised bonnet out again this week. If you see a truck by the road with doors that match, keep your foot down.")]},
       ],
@@ -535,12 +515,12 @@ export default {
 
   ends: ['at-the-gate', 'one-gate-only', 'her-own-way', 'left-on-the-road', 'ambush-survived'],
 
-  // What happens when the sign is never followed. The trap's part is under `notes`. This is the hauler's: an ambush
-  // survived, if the trap was met first; otherwise she was left on the road.
-  ignored: {
-    effects: [mark('never-stopped-for-her')],
-    next: [{when: TRAP_MET, to: 'ambush-survived'}, {to: 'left-on-the-road'}],
-  },
+  // An untouched trap can lead to another sign. If the player met the trap already, the ending remembers it.
+  ignored: [
+    {when: {all: [did('trap-set'), {not: TRAP_MET}]}, afterNights: 2, next: 'between'},
+    {when: TRAP_MET, effects: [mark('never-stopped-for-her')], next: 'ambush-survived'},
+    {afterNights: 2, effects: [mark('never-stopped-for-her')], next: 'left-on-the-road'},
+  ],
 
   // Lines that somebody says afterwards, anywhere in the land. Each is said once, by the first person its row names
   // who is there to say it, some nights after its condition became true.
@@ -578,14 +558,11 @@ export default {
 
   notes: {
     sign: {what: 'a truck stopped with its bonnet up and somebody waving',
-      // After a trap the director draws for the sign again, at another such checkpoint, and then it is the hauler.
-      againWhen: {all: [TRAP_MET, {not: did('helped')}]},
-      againAt: {checkpoint: {who: 'traders', not: 'the first'}}},
+      againAt: {checkpoint: {not: 'the first'}}},
     // What happens when the sign is never followed, for the trap. `ignored` holds the hauler's.
     ignoredTrap: {
       what: 'The trap stays on that road until the checkpoint rests. Somebody else stops for it.',
       rows: ['somebody-else-was-robbed', 'somebody-else-was-robbed-auntie'],
-      next: 'between',
     },
     ignoredHauler: {
       what: 'Tally sits by her truck for two days. On the third some people on foot help her lift the shaft, and she drives on two days late.',

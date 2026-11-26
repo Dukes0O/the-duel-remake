@@ -52,6 +52,7 @@ export const OLD_FEUD_GROUP = 'ash-men';
 
 // The eight places that are always on the map.
 export const PLACES = Object.freeze(SCABLANDS_PLACES.map(place => place.id));
+export const TIN_TOWN_SPOTS = Object.freeze(['hearth', 'yard', 'gate', 'board', 'store', 'forge-yard', 'kiln']);
 
 // Sites: places a player has to find (section 16). A site's first stage is its kind.
 export const SITE_KINDS = Object.freeze(['camp', 'well', 'ruin', 'lookout', 'den']);

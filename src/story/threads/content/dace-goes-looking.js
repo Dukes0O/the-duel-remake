@@ -132,10 +132,7 @@ export default {
     },
 
     asking: {
-      notes: {
-        when: {reach: 'dace'},
-        questionEffects: {'take-it-anyway': [mark('asked-about-the-key')]},
-      },
+      when: {reach: 'dace'},
       lines: [
         dace("I've been waiting for you. I want to ask you for something, and I've practised it, so please let me get to the end."),
         dace("I owe you, and I'm tired of it. Everybody in my family pays what they owe, and I'm the only one who's still paying."),
@@ -170,7 +167,7 @@ export default {
         {id: 'the-key', to: 'dace', words: 'Dace, why do you keep looking at that key?',
           shows: 'A tell: the key hangs on a nail by the forge door, and he knows exactly where',
           lines: [dace("I wasn't looking at it. I was only seeing where it was.")]},
-        {id: 'take-it-anyway', to: 'dace', words: 'Dace, if I say no, will you take it anyway?', when: {asked: 'the-key'},
+        {effects: [mark('asked-about-the-key')], id: 'take-it-anyway', to: 'dace', words: 'Dace, if I say no, will you take it anyway?', when: {asked: 'the-key'},
           shows: 'Out of sight, it makes him less likely to take the pickup if he is refused',
           lines: [dace("I thought about it for most of last night. Then I thought about what taking things has cost me already, and I decided to ask you. I'd like that to count for something.")]},
       ],
@@ -211,20 +208,11 @@ export default {
 
     ready: {
       when: {after: 'asking'},
-      notes: {
-        // Said after each mend, in the order of `mends`; the radio's mend has a cue.
-        afterMend: {
-          radiator: [dace("Is that all it was? It's a hole the size of a pea, and she's sat in this yard for years because of it.")],
-          spare: [moss("That's a tyre with air in it. She hasn't had one of those to spare for longer than I've had Bess.")],
-          radio: [auntie("Who is that on the old pickup's set? I haven't heard that set since before the fire went out. Tell the boy that it works both ways, and that I'm listening.", onRadio)],
-        },
-        mendCue: {radio: 'open.pickup.radio'},
-      },
       // Three things to mend at the pickup, in any order, for as long as the scrap lasts.
       mends: [
-        {id: `${ID}/radiator`, what: 'The radiator weeps.', wrenchSeconds: 10, scrap: 8, effects: [mark('radiator-mended')]},
-        {id: `${ID}/spare`, what: 'The spare wheel is flat and bald.', wrenchSeconds: 8, scrap: 6, effects: [mark('spare-mended')]},
-        {id: `${ID}/radio`, what: 'The radio hisses and does nothing else.', wrenchSeconds: 12, scrap: 10, effects: [mark('radio-mended')]},
+        {after: [dace("Is that all it was? It's a hole the size of a pea, and she's sat in this yard for years because of it.")], id: `${ID}/radiator`, what: 'The radiator weeps.', wrenchSeconds: 10, scrap: 8, effects: [mark('radiator-mended')]},
+        {after: [moss("That's a tyre with air in it. She hasn't had one of those to spare for longer than I've had Bess.")], id: `${ID}/spare`, what: 'The spare wheel is flat and bald.', wrenchSeconds: 8, scrap: 6, effects: [mark('spare-mended')]},
+        {cue: 'open.pickup.radio', after: [auntie("Who is that on the old pickup's set? I haven't heard that set since before the fire went out. Tell the boy that it works both ways, and that I'm listening.", onRadio)], id: `${ID}/radio`, what: 'The radio hisses and does nothing else.', wrenchSeconds: 12, scrap: 10, effects: [mark('radio-mended')]},
       ],
       next: [{when: HAS_A_RADIO, to: 'radio-check'}, {to: 'telling'}],
     },
@@ -299,37 +287,28 @@ export default {
     away: {
       when: {after: ['leaving', 'night-after']},
       notes: {
-        // For each line below, in order: its id, and the moment it is said and its cue where the writer gave them.
+        // The timing of the scheduled calls in the writer's words.
         // The last line is said after any of the four trouble calls, so that the map can show a circle 600 metres
         // across.
-        lineMoments: [
-          {id: 'first-noon', at: 'noon on the first day', cue: 'open.pickup.call'},
-          {id: 'first-dusk', at: 'dusk on the first day', cue: 'open.pickup.call'},
-          {id: 'second-noon', at: 'noon on the second day', cue: 'open.pickup.call'},
-          {id: 'call-hill', cue: 'open.pickup.call'},
-          {id: 'call-stones', cue: 'open.pickup.call'},
-          {id: 'call-riders', cue: 'open.pickup.call'},
-          {id: 'call-place', cue: 'open.pickup.call'},
-          {id: 'call-where'},
-        ],
+        callTimes: {'first-noon': 'noon on the first day', 'first-dusk': 'dusk on the first day', 'second-noon': 'noon on the second day'},
         relayed: {when: all(HAS_A_RADIO, RADIO_HILL_HEARS, not(CALLS_AT_NOON_AND_DUSK)),
           note: 'The sisters of Radio Hill hear the old set and pass the call on at once, as if a check had been agreed.'},
       },
       lines: [
-        dace("It's noon, and this is Dace. There's nothing to report. That was my bored voice. Did it sound bored?",
-          {...onRadio, when: all(CALLS_AT_NOON_AND_DUSK, not(TROUBLE_ON_THE_FIRST_DAY))}),
-        dace("It's dusk, and I've stopped for the night. I can see more stars from here than I can from Tin Town. There's nothing to report. Tell Rell that I ate.",
-          {...onRadio, when: all(CALLS_AT_NOON_AND_DUSK, not(TROUBLE_ON_THE_FIRST_DAY))}),
-        dace("It's noon, and I've found it. I'm not telling you what it is on the radio, because anybody could be listening. I'm coming home.",
-          {...onRadio, when: all(CALLS_AT_NOON_AND_DUSK, HOME_BY_HIMSELF, STOOD_ON_IT)}),
-        dace("It's Dace. I'm all right, so don't start by asking me that. The truck has boiled over on the long hill, and I've given it all of my drinking water. It's still dry, and now so am I.",
-          {...onRadio, when: all(HAS_A_RADIO, STOPPED_ON_THE_HILL)}),
-        dace("It's Dace. A tyre has gone on the stones, and the spare is as flat as the one that went. I'm sitting on the bonnet. I'm not in a hurry. The sun is, though.",
-          {...onRadio, when: all(HAS_A_RADIO, STOPPED_ON_THE_STONES)}),
-        dace("It's Dace, and I have to be quick. There are buggies behind me with a flag I don't know. I'm going to leave the truck and get into the rocks. Look for the stones.",
-          {...onRadio, low: true, when: all(HAS_A_RADIO, PICKUP_TAKEN)}),
-        dace("It's Dace. I found it, and I'm standing on it. The truck got me here and it won't get me back, so I'm not going to be home by dusk. Don't tell Rell the last part first.",
-          {...onRadio, when: all(HAS_A_RADIO, STRANDED_AT_THE_PLACE)}),
+        {...dace("It's noon, and this is Dace. There's nothing to report. That was my bored voice. Did it sound bored?",
+          {...onRadio, when: all(CALLS_AT_NOON_AND_DUSK, not(TROUBLE_ON_THE_FIRST_DAY), {part: 'noon'}, not({nights: 1, since: 'leaving'}))}), cue: 'open.pickup.call'},
+        {...dace("It's dusk, and I've stopped for the night. I can see more stars from here than I can from Tin Town. There's nothing to report. Tell Rell that I ate.",
+          {...onRadio, when: all(CALLS_AT_NOON_AND_DUSK, not(TROUBLE_ON_THE_FIRST_DAY), {part: 'dusk'}, not({nights: 1, since: 'leaving'}))}), cue: 'open.pickup.call'},
+        {...dace("It's noon, and I've found it. I'm not telling you what it is on the radio, because anybody could be listening. I'm coming home.",
+          {...onRadio, when: all(CALLS_AT_NOON_AND_DUSK, HOME_BY_HIMSELF, STOOD_ON_IT, {part: 'noon'}, {nights: 1, since: 'leaving'}, not({nights: 2, since: 'leaving'}))}), cue: 'open.pickup.call'},
+        {...dace("It's Dace. I'm all right, so don't start by asking me that. The truck has boiled over on the long hill, and I've given it all of my drinking water. It's still dry, and now so am I.",
+          {...onRadio, when: all(HAS_A_RADIO, STOPPED_ON_THE_HILL)}), cue: 'open.pickup.call'},
+        {...dace("It's Dace. A tyre has gone on the stones, and the spare is as flat as the one that went. I'm sitting on the bonnet. I'm not in a hurry. The sun is, though.",
+          {...onRadio, when: all(HAS_A_RADIO, STOPPED_ON_THE_STONES)}), cue: 'open.pickup.call'},
+        {...dace("It's Dace, and I have to be quick. There are buggies behind me with a flag I don't know. I'm going to leave the truck and get into the rocks. Look for the stones.",
+          {...onRadio, low: true, when: all(HAS_A_RADIO, PICKUP_TAKEN)}), cue: 'open.pickup.call'},
+        {...dace("It's Dace. I found it, and I'm standing on it. The truck got me here and it won't get me back, so I'm not going to be home by dusk. Don't tell Rell the last part first.",
+          {...onRadio, when: all(HAS_A_RADIO, STRANDED_AT_THE_PLACE)}), cue: 'open.pickup.call'},
         dace("I'm on the road that we walked in by, about a morning's drive from the gate. I've tied my blanket to the aerial, so look for something red.",
           {...onRadio, when: HAS_A_RADIO}),
       ],
@@ -365,8 +344,7 @@ export default {
 
     // No radio. Dusk on the second day, at the hearth, and the gate has not opened.
     late: {
-      when: {nights: 2},
-      notes: {at: 'hearth'},
+      when: {all: [{nights: 2, since: 'leaving'}, {part: 'dusk'}, {reach: ['tin-town', 'hearth']}]},
       lines: [
         rell("He said dusk on the second day. It's dusk on the second day, and that gate hasn't moved."),
         auntie("I said I'd have several words if this happened. I find that I've only the one, and it's go."),
@@ -461,8 +439,8 @@ export default {
     // ---- The hearth, and the log ----
 
     hearth: {
+      when: {reach: ['tin-town', 'hearth']},
       notes: {
-        when: {at: 'hearth'},
         // The lines after the first are the log, said in this order. Each entry is said when its condition is true,
         // and an entry with no condition always. The lines after the log are how the story closes: the first of the
         // four rows whose condition is true, written here as four exclusive conditions.
@@ -558,17 +536,15 @@ export default {
 
     together: {
       when: {after: 'asking'},
-      notes: {
-        // The moment each mission line is said, in the order of `lines`.
-        lineMoments: [{at: 'the first fork'}, {at: 'the place'}, {at: 'the gate, at dusk'}],
-      },
       mission: {id: `${ID}/together`, kind: 'drive', holds: ['checkpoints', 'signs'], minutes: 6,
+        rule: {moments: ['first-fork', 'the-place', 'gate-at-dusk']},
         lines: [
-          dace('Go left where the wires come down. I saw it from the other side, so everything is backwards. Give me a minute.'),
-          dace('There it is. I knew it was something. You found it, though. I only pointed.'),
-          rell("You kept him safe, and I'm grateful for it. He'll ask you again, you know. They always ask again.")]},
+          {...dace('Go left where the wires come down. I saw it from the other side, so everything is backwards. Give me a minute.'), moment: 'first-fork'},
+          {...dace('There it is. I knew it was something. You found it, though. I only pointed.'), moment: 'the-place'},
+          {...rell("You kept him safe, and I'm grateful for it. He'll ask you again, you know. They always ask again."), moment: 'gate-at-dusk'}]},
       effects: [{type: 'find', site: '@site'}],
       next: 'found-together',
+      notes: {momentLocations: ['the first fork', 'the place', 'the gate, at dusk']},
     },
 
     // ---- No ----

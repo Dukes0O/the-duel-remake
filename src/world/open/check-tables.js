@@ -1,7 +1,7 @@
 // A check for every table of the open Scablands (docs/story/open-scablands.md, section 12) and for a storyline
 // (section 18). Each check takes one row and returns sentences that name what is wrong; an empty list means the row
 // is sound. Content is rows in tables, so these checks are what stands between a writer's slip and the game.
-import {CAST_SOURCES, HOLD_SYSTEMS, PARTS_OF_DAY, ROUTINE_KINDS, SIGN_KINDS, SITE_KINDS, THREAD_KINDS,
+import {CAST_SOURCES, HOLD_SYSTEMS, PARTS_OF_DAY, ROUTINE_KINDS, SIGN_KINDS, SITE_KINDS, THREAD_KINDS, TIN_TOWN_SPOTS,
   isGroup, isPeople, isPerson, isPlace, isSite, nameRow, siteRow} from './register.js';
 import {FACTS, checkFact} from './facts.js';
 import {LEDGER_EFFECTS, OPEN_EFFECTS, checkEffect} from './open-effects.js';
@@ -142,25 +142,27 @@ export const THREAD_SHAPE = Object.freeze({
   storyline: ['id', 'title', 'kind', 'reads', 'writes', 'cast', 'starts', 'sign', 'beats', 'ends', 'ignored', 'later', 'notes'],
   role: ['from', 'where', 'weightBy', 'apartFrom', 'except', 'among', 'nearest', 'optional', 'late', 'draw', 'chance', 'otherwise'],
   sign: ['kind', 'at', 'by', 'seenWithin', 'part', 'lastsNights', 'nightsNeeded', 'again', 'cue'],
-  again: ['afterNights'],
-  beat: ['when', 'cue', 'lines', 'thoughts', 'explore', 'mend', 'mends', 'questions', 'choices', 'mission', 'effects', 'next', 'notes'],
-  line: ['speaker', 'words', 'when', 'radio', 'low', 'shouted', 'as'],
-  thought: ['thought', 'when'],
-  question: ['id', 'to', 'words', 'lines', 'when', 'shows'],
+  again: ['afterNights', 'when', 'at'],
+  beat: ['when', 'cue', 'cues', 'lines', 'thoughts', 'explore', 'mend', 'mends', 'questions', 'choices', 'mission', 'effects', 'next', 'notes'],
+  line: ['speaker', 'words', 'when', 'radio', 'low', 'shouted', 'as', 'cue', 'moment', 'slot'],
+  thought: ['thought', 'when', 'moment', 'slot'],
+  question: ['id', 'to', 'words', 'lines', 'when', 'shows', 'effects', 'cue'],
   thing: ['id', 'what', 'thought', 'tells', 'when', 'effects', 'cue'],
-  mend: ['id', 'what', 'wrenchSeconds', 'scrap', 'lines', 'effects'],
-  choice: ['id', 'by', 'words', 'plain', 'thought', 'when', 'hidden', 'lines', 'effects', 'cast', 'again', 'next'],
+  mend: ['id', 'what', 'wrenchSeconds', 'scrap', 'lines', 'effects', 'cue', 'during', 'after'],
+  choice: ['id', 'by', 'words', 'plain', 'thought', 'when', 'hidden', 'lines', 'effects', 'cast', 'again', 'next', 'cue'],
   choiceAgain: ['afterNights', 'times'],
-  mission: ['id', 'kind', 'by', 'minutes', 'outing', 'holds', 'enemy', 'cars', 'rule', 'lines', 'thoughts', 'outcomes'],
-  outcome: ['lines', 'effects', 'next', 'cast'],
+  mission: ['id', 'kind', 'partOf', 'by', 'minutes', 'outing', 'holds', 'enemy', 'cars', 'rule', 'lines', 'thoughts', 'outcomes', 'cue'],
+  outcome: ['lines', 'effects', 'next', 'cast', 'when', 'cue'],
   nextRow: ['when', 'to'],
-  later: ['id', 'by', 'when', 'at', 'lines', 'effects'],
-  ignored: ['afterNights', 'says', 'line', 'effects', 'next'],
+  later: ['id', 'by', 'when', 'at', 'words', 'lines', 'effects'],
+  ignored: ['when', 'afterNights', 'afterChoice', 'says', 'line', 'effects', 'next'],
+  afterChoice: ['id', 'times'],
 });
 // What a condition of the storyline has beside the facts: its key, and the keys that may stand beside it.
 const CONDITIONS = Object.freeze({reach: ['within'], after: [], nights: ['since'], seconds: ['since'], part: [],
-  cast: ['is'], asked: [], found: [], chose: [], due: []});
+  cast: ['is'], asked: [], found: [], chose: [], due: [], sign: [], ended: []});
 const CHOICE_WAYS = ['say', 'do', 'go'], MISSION_WAYS = ['car', 'foot'];
+const THREAD_PARTS = ['dawn', 'day', 'noon', 'dusk', 'dark'];
 
 // Every object inside a storyline, with the keys that lead to it.
 function* everyObject(value, path = []) {
@@ -181,6 +183,50 @@ const UNLISTED_EFFECTS = ['thread', 'read', 'met', 'tell', 'ground', 'crossing',
 const THREAD_WORDS = ['any', 'over'];
 const SOURCE_IS = {sites: isSite, groups: isGroup, peoples: isPeople, persons: isPerson};
 
+// Follow explicit routes and beats that open after another beat or an end. Unfinished beats may
+// still be checked by the crossings tool, but an ending must never sit on a disconnected beat.
+function checkEndingBeats(beats, ends, firstBeat, ignored, say) {
+  if (!firstBeat) return;
+  const targets = value => [value].flat().map(row => isObject(row) ? row.to : row).filter(storyId);
+  const edges = new Map();
+  const endings = new Set();
+  const add = (from, to) => {
+    if (!edges.has(from)) edges.set(from, new Set());
+    edges.get(from).add(to);
+  };
+  function followAfter(cond, name) {
+    if (!isObject(cond)) return;
+    for (const from of [cond.after].flat()) {
+      if (Object.hasOwn(beats, from)) add(from, name);
+      if (ends.includes(from)) add('end:' + from, name);
+    }
+    for (const parts of [cond.all, cond.any]) if (Array.isArray(parts)) {
+      for (const part of parts) followAfter(part, name);
+    }
+  }
+  function followNext(from, next) {
+    for (const to of targets(next)) {
+      if (Object.hasOwn(beats, to)) add(from, to);
+      if (ends.includes(to)) {
+        add(from, 'end:' + to);
+        endings.add(from);
+      }
+    }
+  }
+  for (const [name, body] of Object.entries(beats)) {
+    followAfter(body?.when, name);
+    followNext(name, body?.next);
+    if (Array.isArray(body?.choices)) for (const choice of body.choices) followNext(name, choice?.next);
+    if (isObject(body?.mission?.outcomes)) {
+      for (const outcome of Object.values(body.mission.outcomes)) followNext(name, outcome?.next);
+    }
+  }
+  for (const row of [ignored].flat()) followNext(firstBeat, row?.next);
+  const reached = new Set([firstBeat]);
+  for (const from of reached) for (const to of edges.get(from) ?? []) reached.add(to);
+  for (const name of endings) if (!reached.has(name)) say('The beat "' + name + '" leads to an end but cannot be reached.');
+}
+
 // The part of checkThread that holds a file to the shape: every key, every place, every `next` and every condition
 // of the storyline's own. It says what is wrong through `say`. The facts inside a condition are checked by checkFact.
 function checkShape(thread, say) {
@@ -189,6 +235,7 @@ function checkShape(thread, say) {
   const beats = isObject(thread.beats) ? thread.beats : {};
   const beatNames = Object.keys(beats), firstBeat = beatNames[0];
   const ends = Array.isArray(thread.ends) ? thread.ends : [];
+  const missionIds = new Set(Object.values(beats).map(body => body?.mission?.id));
   // What a condition may name: the questions, things to find, choices and promises of this file.
   const names = {questions: new Set(), things: new Set(), choices: new Set(), promises: new Set()};
   for (const body of Object.values(beats)) {
@@ -210,12 +257,19 @@ function checkShape(thread, say) {
     value.forEach((item, index) => each(item, where + '[' + index + ']'));
   };
   // A place: a role '@camp', a site or place by its id, or [place, spot].
-  const place = (value, where) => {
+  const place = (value, where, reaching = false) => {
     if (Array.isArray(value)) {
       if (value.length !== 2 || typeof value[1] !== 'string') say(where + ' writes a spot as [place, spot].');
+      else if (value[0] === 'tin-town' && !TIN_TOWN_SPOTS.includes(value[1]))
+        say(where + ' names "' + value[1] + '", which is not a registered Tin Town spot.');
       else place(value[0], where);
     } else if (typeof value !== 'string') say(where + ' needs a place: a role like "@camp", a site or a place by its id, or [place, spot].');
-    else if (isRole(value)) for (const text of checkRole(value, castFrom, 'site')) say(where + ': ' + text);
+    else if (isRole(value)) {
+      const source = castFrom[value.slice(1)];
+      const want = reaching && ['persons', 'peoples'].includes(source) ? 'name' : 'site';
+      for (const text of checkRole(value, castFrom, want)) say(where + ': ' + text);
+    }
+    else if (reaching && (value === 'sign' || isPerson(value))) return;
     else if (roles.includes(value)) say(where + ' names the role "' + value + '" bare. Write "@' + value + '".');
     else if (!somewhere(value)) say(where + ' names "' + value + '", which is not a role of the cast, a site or a place.');
   };
@@ -247,18 +301,18 @@ function checkShape(thread, say) {
     const here = where + ' (' + key + ')';
     switch (key) {
       case 'reach':
-        place(value, here);
+        place(value, here, true);
         if (cond.within !== undefined && !(cond.within > 0)) say(here + ': "within" is a number of metres.');
         break;
       case 'after':
-        if (Array.isArray(value)) value.forEach(item => beat(item, here)); else beat(value, here);
+        for (const name of [value].flat()) beat(name, here, ends);
         break;
       case 'nights': case 'seconds':
         if (!(value > 0)) say(here + ' needs a number.');
         if (cond.since !== undefined) beat(cond.since, here);
         break;
       case 'part':
-        if (!PARTS_OF_DAY.includes(value)) say(here + ' names "' + value + '", which is not a part of the day: ' + PARTS_OF_DAY.join(', ') + '.');
+        if (!THREAD_PARTS.includes(value)) say(here + ' names "' + value + '", which is not a part of the day: ' + THREAD_PARTS.join(', ') + '.');
         break;
       case 'cast':
         if (!roles.includes(value)) say(here + ' names "' + value + '", which is not a role of the cast.');
@@ -269,21 +323,29 @@ function checkShape(thread, say) {
       case 'found': known(value, names.things, 'a thing to find', here); break;
       case 'chose': known(value, names.choices, 'a choice', here); break;
       case 'due': known(value, names.promises, 'a promise made by an effect', here); break;
+      case 'sign': if (value !== 'again') say(here + ' must be "again".'); break;
+      case 'ended': if (!ends.includes(value)) say(here + ' names "' + value + '", which is not an end of this file.'); break;
     }
   }
   const when = (node, where, first = false) => { if (node.when !== undefined) condition(node.when, where + '.when', first); };
+  const cue = (value, where) => { if (value !== undefined && (typeof value !== 'string' || !value)) say(where + ' needs a cue id.'); };
+  const timing = (row, at) => {
+    if (row.slot !== undefined && !['before', 'after'].includes(row.slot)) say(at + '.slot must be "before" or "after".');
+    if (row.moment !== undefined && (typeof row.moment !== 'string' || !row.moment)) say(at + '.moment needs a name.');
+  };
   const lines = (value, where) => list(value, where, (line, at) => {
     if (!keys(line, 'line', at, 'a line')) return;
     if (typeof line.words !== 'string' || !line.words) say(at + ' needs "words".');
     if (typeof line.speaker !== 'string') say(at + ' needs "speaker".');
-    when(line, at);
+    when(line, at); cue(line.cue, at + '.cue'); timing(line, at);
   });
-  const thoughts = (value, where) => list(value, where, (thought, at) => {
+  const thoughtRow = (thought, at) => {
     if (typeof thought === 'string') return;
     if (!keys(thought, 'thought', at, 'a thought')) return;
     if (typeof thought.thought !== 'string') say(at + ' needs "thought".');
-    when(thought, at);
-  });
+    when(thought, at); timing(thought, at);
+  };
+  const thoughts = (value, where) => list(value, where, thoughtRow);
   const effects = (value, where) => list(value, where, (effect, at) => {
     if (!isObject(effect)) return;
     when(effect, at);
@@ -293,6 +355,10 @@ function checkShape(thread, say) {
   const next = (value, where) => {
     if (value === undefined) return;
     if (Array.isArray(value)) {
+      if (value.every(row => typeof row === 'string')) {
+        value.forEach((name, index) => beat(name, where + '[' + index + ']', ends));
+        return;
+      }
       value.forEach((row, index) => {
         const at = where + '[' + index + ']';
         if (!keys(row, 'nextRow', at, 'a row of "next"')) return;
@@ -319,21 +385,29 @@ function checkShape(thread, say) {
   });
   const mend = (value, at) => {
     if (!keys(value, 'mend', at, 'a mend')) return;
+    cue(value.cue, at + '.cue'); lines(value.during, at + '.during'); lines(value.after, at + '.after');
     lines(value.lines, at + '.lines'); effects(value.effects, at + '.effects');
   };
   const questions = (value, where) => list(value, where, (question, at) => {
     if (!keys(question, 'question', at, 'a question')) return;
     when(question, at); lines(question.lines, at + '.lines');
+    cue(question.cue, at + '.cue'); effects(question.effects, at + '.effects');
   });
   const choices = (value, where) => list(value, where, (choice, at) => {
     if (!keys(choice, 'choice', at, 'a choice')) return;
     if (choice.by !== undefined && !CHOICE_WAYS.includes(choice.by)) say(at + ' is made by "' + choice.by + '", which is not one of: ' + CHOICE_WAYS.join(', ') + '.');
     if (choice.again !== undefined) keys(choice.again, 'choiceAgain', at + '.again', 'a choice\'s "again"');
+    if (choice.thought !== undefined) thoughtRow(choice.thought, at + '.thought');
+    cue(choice.cue, at + '.cue');
     when(choice, at); lines(choice.lines, at + '.lines'); effects(choice.effects, at + '.effects');
     cast(choice.cast, at + '.cast'); next(choice.next, at + '.next');
   });
   const mission = (value, at) => {
     if (!keys(value, 'mission', at, 'a mission')) return;
+    if (value.partOf !== undefined && (!storyId(value.partOf) || value.partOf === value.id || !missionIds.has(value.partOf)))
+      say(at + '.partOf must name another mission in this file.');
+    if (value.partOf === undefined && !storyId(value.kind)) say(at + ' needs a mission "kind" or "partOf".');
+    cue(value.cue, at + '.cue');
     if (value.by !== undefined && !MISSION_WAYS.includes(value.by)) say(at + ' is driven "' + value.by + '", which is not one of: ' + MISSION_WAYS.join(', ') + '.');
     for (const system of value.holds ?? []) if (!HOLD_SYSTEMS.includes(system)) say(at + ' holds "' + system + '", which is not a system.');
     if (typeof value.enemy === 'string') {
@@ -341,12 +415,23 @@ function checkShape(thread, say) {
       else if (!isGroup(value.enemy)) say(at + ' has the enemy "' + value.enemy + '", which is not a group in the register.');
     }
     if (value.rule !== undefined && !isObject(value.rule)) say(at + '.rule must be an object of numbers by plain names.');
+    const moments = value.rule?.moments;
+    list(moments, at + '.rule.moments', (name, where) => {
+      if (typeof name !== 'string' || !name) say(where + ' needs a moment name.');
+    });
+    for (const key of ['lines', 'thoughts']) if (Array.isArray(value[key])) {
+      value[key].forEach((row, index) => {
+        if (row?.moment !== undefined && (!Array.isArray(moments) || !moments.includes(row.moment)))
+          say(at + '.' + key + '[' + index + '] names a moment that the mission rule does not list.');
+      });
+    }
     lines(value.lines, at + '.lines'); thoughts(value.thoughts, at + '.thoughts');
     if (value.outcomes !== undefined) {
       if (!isObject(value.outcomes)) say(at + '.outcomes must be an object.');
       else for (const [name, outcome] of Object.entries(value.outcomes)) {
         const here = at + '.outcomes.' + name;
         if (!keys(outcome, 'outcome', here, 'an outcome')) continue;
+        when(outcome, here); cue(outcome.cue, here + '.cue');
         lines(outcome.lines, here + '.lines'); effects(outcome.effects, here + '.effects');
         cast(outcome.cast, here + '.cast'); next(outcome.next, here + '.next');
       }
@@ -366,22 +451,30 @@ function checkShape(thread, say) {
     for (const key of ['optional', 'late']) if (how[key] !== undefined && typeof how[key] !== 'boolean') say(at + '.' + key + ' is true or false.');
   }
   if (thread.starts !== undefined) condition(thread.starts, 'starts');
+  const signAt = (at, where) => {
+    if (at === undefined) return;
+    if (!isObject(at)) { place(at, where); return; }
+    if (Object.keys(at).some(key => key !== 'checkpoint') || !isObject(at.checkpoint) ||
+        Object.keys(at.checkpoint).some(key => key !== 'who') || !isGroup(at.checkpoint.who))
+      say(where + ' is {checkpoint: {who: group}}, where the group is one in the register.');
+  };
   if (isObject(thread.sign)) {
     const sign = thread.sign;
     keys(sign, 'sign', 'sign', 'the sign');
-    if (isObject(sign.at)) {
-      const at = sign.at, who = at.checkpoint?.who;
-      for (const key of Object.keys(at)) if (key !== 'checkpoint') say('sign.at has the key "' + key + '". A sign stands at a place, or at {checkpoint: {who: group}}.');
-      if (!isObject(at.checkpoint) || Object.keys(at.checkpoint).some(key => key !== 'who') || !isGroup(who))
-        say('sign.at is {checkpoint: {who: group}}, where the group is one in the register.');
-    } else if (sign.at !== undefined) place(sign.at, 'The sign');
-    if (sign.part !== undefined && !PARTS_OF_DAY.includes(sign.part)) say('The sign is seen in "' + sign.part + '", which is not a part of the day.');
-    if (sign.again !== undefined) keys(sign.again, 'again', 'sign.again', 'the sign\'s "again"');
+    signAt(sign.at, 'The sign');
+    if (sign.part !== undefined && !THREAD_PARTS.includes(sign.part)) say('The sign is seen in "' + sign.part + '", which is not a part of the day.');
+    if (sign.again !== undefined && keys(sign.again, 'again', 'sign.again', 'the sign\'s "again"')) {
+      if (sign.again.afterNights !== undefined && (!Number.isInteger(sign.again.afterNights) || sign.again.afterNights < 1))
+        say('sign.again.afterNights needs a positive whole number.');
+      when(sign.again, 'sign.again');
+      signAt(sign.again.at, 'sign.again.at');
+    }
   }
   for (const [name, body] of Object.entries(beats)) {
     const at = 'beats.' + name;
     if (!keys(body, 'beat', at, 'a beat')) continue;
     when(body, at, name === firstBeat);
+    list(body.cues, at + '.cues', cue);
     lines(body.lines, at + '.lines'); thoughts(body.thoughts, at + '.thoughts'); things(body.explore, at + '.explore');
     if (body.mend !== undefined) mend(body.mend, at + '.mend');
     list(body.mends, at + '.mends', mend);
@@ -392,13 +485,25 @@ function checkShape(thread, say) {
   list(thread.later, 'later', (row, at) => {
     if (!keys(row, 'later', at, 'a "later" row')) return;
     if (typeof row.by !== 'string') say(at + ' needs "by": who says it.');
+    if (row.words !== undefined && typeof row.words !== 'string') say(at + '.words needs the player\'s words.');
     if (row.at !== undefined) place(row.at, at);
     when(row, at); lines(row.lines, at + '.lines'); effects(row.effects, at + '.effects');
   });
-  if (isObject(thread.ignored)) {
-    keys(thread.ignored, 'ignored', 'ignored', '"ignored"');
-    effects(thread.ignored.effects, 'ignored.effects'); next(thread.ignored.next, 'ignored.next');
-  }
+  const ignored = (row, at) => {
+    if (!keys(row, 'ignored', at, '"ignored"')) return;
+    when(row, at);
+    if (row.afterNights !== undefined && (!Number.isInteger(row.afterNights) || row.afterNights < 1))
+      say(at + '.afterNights needs a positive whole number.');
+    if (row.afterChoice !== undefined && keys(row.afterChoice, 'afterChoice', at + '.afterChoice', '"afterChoice"')) {
+      known(row.afterChoice.id, names.choices, 'a choice', at + '.afterChoice');
+      if (!Number.isInteger(row.afterChoice.times) || row.afterChoice.times < 1)
+        say(at + '.afterChoice.times needs a positive whole number.');
+    }
+    effects(row.effects, at + '.effects'); next(row.next, at + '.next');
+  };
+  if (Array.isArray(thread.ignored)) list(thread.ignored, 'ignored', ignored);
+  else if (thread.ignored !== undefined) ignored(thread.ignored, 'ignored');
+  checkEndingBeats(beats, ends, firstBeat, thread.ignored, say);
   for (const [role, how] of Object.entries(isObject(thread.cast) ? thread.cast : {}))
     if (how?.late === true && !filled.has(role)) say('The role "' + role + '" is "late: true", and no choice or outcome fills it with "cast".');
 }
