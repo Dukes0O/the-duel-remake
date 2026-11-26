@@ -1542,13 +1542,3 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-THREAD-SHAPE.md"
 
-  - id: OPEN-CROSSINGS
-    title: "Open Scablands: a tool that prints and draws where the storylines cross, and walks every branch"
-    owner: "claude-cloud"
-    lane: "TOOLS"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-CROSSINGS.md"
