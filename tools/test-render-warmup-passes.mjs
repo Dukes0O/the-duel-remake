@@ -74,6 +74,8 @@ try{
       equal(f.getTarget(),[f.original,4,2],'Failed direct preparation restores renderer target state');
     }finally{f.retire();}
     const source=readFileSync(new URL('../src/render3d.js',import.meta.url),'utf8');
+    check(/const retiredViews=\[snowmenView,avalancheView\];snowmenView=null;avalancheView=null;\s*const releaseViews=\(\)=>\{for\(const view of retiredViews\)view\?\.dispose\(\);\};\s*if \(world\) retireObject\(world,releaseViews\);else releaseViews\(\);/.test(source),'A rebuilt world frees its snowmen and avalanche materials with the retired world, after any open warmup poll');
+    check(/createBowlView\(\{retire:release=>\{if\(warmup\)warmup\.releaseWhenIdle\(release\);else release\(\);\}\}\)/.test(source),'The Bowl view frees retired art only when the warmup is idle');
     check(/compilation=high\?compileWarmupPipeline\(renderer,scene,camera,composer\):compileWarmupScene\(renderer,scene,camera,null\)/.test(source),'Production Performance selects direct preparation instead of the composite pipeline');
   }
   for(const high of [true,false]){
