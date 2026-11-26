@@ -1554,6 +1554,17 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-FIGURES-4.md"
 
+  - id: OPEN-WRITE-4
+    title: "Open Scablands, written in full: Smoke over a friend when the enemy is the Ash Men, and the Grey Camp"
+    owner: "claude-cloud"
+    lane: "DESIGN"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-WRITE-4.md"
+
   - id: OPEN-MAP
     title: "Open Scablands: the big map shows driven ground in full, a rumour as a circle and a found site by name"
     owner: "codex"
