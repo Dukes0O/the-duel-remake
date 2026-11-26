@@ -317,7 +317,9 @@ If nobody besides Tin Town has said yes, she will not be the first.
 | 1 | "Send it. We'll stand at first light." | The names of those who agreed are on the page | *Every one of them is only coming because I asked them to.* | The stand is tomorrow's mission (Scene 7). In an act with a clock it is the day's outing |
 | 2 | "Not yet. I want to ask somebody else first." | Nothing changes | None | Each one more who stands shortens the morning. Each one asked who says no knows the plan |
 
-**The ledger.** A mark for each who agreed: "Dot will stand at Sump's Gate." Each promise, as written above. If the
+**The ledger.** A mark for each who agreed: "Tin Town will stand at Sump's Gate.", "Dot will stand at Sump's Gate.",
+"The Glasshouse will stand at Sump's Gate.", "The Walkers will stand at Sump's Gate." and "Nan Tallow will stand at
+Sump's Gate." Each promise, as written above. If the
 plan was sold: a mark the player cannot see, "Sump was warned about the stand."
 
 ## Scene 7. The stand
@@ -520,4 +522,4 @@ find at the buggy is `open.clue.found`, in hand.
 | `mall-road-toll/price-heard`, `mall-road-toll/nan-asked`, `mall-road-toll/paid-once` to `mall-road-toll/paid-five` | Marks of the gate and of paying |
 | `mall-road-toll/knows-the-round`, `mall-road-toll/buggy-stripped`, `mall-road-toll/buggy-told`, `mall-road-toll/walkers-shown` | Marks of the way round |
 | `mall-road-toll/stands-tin-town`, `mall-road-toll/stands-dot`, `mall-road-toll/stands-camp`, `mall-road-toll/stands-walkers`, `mall-road-toll/stands-nan`, `mall-road-toll/sump-warned` | Marks of the round of visits |
-| `mall-road-toll/gate-broken`, `mall-road-toll/road-free`, `mall-road-toll/road-taxed`, `mall-road-toll/road-closed`, `mall-road-toll/sump-keeps-the-pass`, `mall-road-toll/drove-through-alone`, `mall-road-toll/promise-broken` | Marks of how it ended |
+| `mall-road-toll/gate-broken`, `mall-road-toll/refused-together`, `mall-road-toll/road-free`, `mall-road-toll/road-taxed`, `mall-road-toll/road-closed`, `mall-road-toll/sump-keeps-the-pass`, `mall-road-toll/drove-through-alone`, `mall-road-toll/promise-broken` | Marks of how it ended |
