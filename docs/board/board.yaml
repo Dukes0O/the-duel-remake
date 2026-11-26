@@ -1559,7 +1559,8 @@ tasks:
     owner: "claude-cloud"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), 26 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
