@@ -3,15 +3,18 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {App} from '../src/app.js';
 import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers, selectPlayer} from '../src/progression.js';
-import {applyChoice, createLedger, namedThrow} from '../src/story/ledger.js';
+import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow} from '../src/story/ledger.js';
 import {savedLedger} from '../src/story/ledger-save.js';
+import {settleNight2} from '../src/story/night-2-save.js';
+import {threadRule} from '../src/story/threads/thread-rule.js';
 import {NIGHT_2_CHOICES, NIGHT_2_QUESTIONS} from '../src/story/scenes/night-2.js';
 import {night2Opening} from '../src/world/jobs/night-2.js';
 import {NIGHT_2_SITES as sites} from '../src/world/jobs/night-2-sites.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {sampleWorld} from '../src/world/open/samples.js';
-import {savedOpenRecord, settleOpenWorld, spendScrap} from '../src/world/open/open-save.js';
+import {compactOpenJournal, OPEN_JOURNAL_LIMIT, savedOpenRecord, settleOpenWorld, spendScrap} from '../src/world/open/open-save.js';
 import {worldForProfile} from '../src/world/open/open-world.js';
+import {checkpointsPart} from '../src/world/open/parts/checkpoints.js';
 
 const loadFixture = name => JSON.parse(readFileSync(new URL('./fixtures/saves/' + name, import.meta.url))).storage;
 function memoryStorage(fixture) {
@@ -23,6 +26,98 @@ const profileOf = storage => activePlayer(loadPlayers(storage)).profile;
 const oldFixture = loadFixture('24-story-water.json'), newFixture = loadFixture('26-story-open.json');
 const off = {enabled: id => id === 'hidden-road'};
 const on = {enabled: id => off.enabled(id) || id === 'story-choices'};
+
+// OPEN-JOURNAL-SIZE: fixtures are generated in memory, never from player storage.
+{
+  const reload = profile => {
+    const store = memoryStorage(newFixture), registry = loadPlayers(store);
+    assert(savePlayers(replacePlayerProfile(registry, registry.activePlayerId, profile), store));
+    return profileOf(store);
+  };
+  const auditRows = length => Array.from({length}, (_, i) => ({type: 'scrap', key: 'scrap',
+    before: 100 + i, after: 99 + i, choiceId: ['forge-shed/repair/', 'checkpoint/ransom/', 'routine/run/'][i % 3] + i, night: 1}));
+  const base = profileOf(memoryStorage(newFixture));
+  const exact = [
+    {type: 'thread', key: 'burned-camp', before: null, after: {beat: 'sign', end: null}, choiceId: 'thread/start', night: 1},
+    {type: 'thread', key: 'burned-camp', before: {beat: 'sign'}, after: {beat: 'clues'}, choiceId: 'thread/clues', night: 1},
+    {type: 'site', key: 'glasshouse', before: 'camp', after: 'burned', choiceId: 'site/burn', night: 1},
+    {type: 'scrap', key: 'scrap', before: 152, after: 140, choiceId: 'forge-shed/repair/3', night: 2},
+    {type: 'later-rule', detail: {keep: true}, choiceId: 'future/rule', night: 1},
+  ];
+  const original = {...base, story: {...base.story, ledger: {...base.story.ledger, night: 2, history: []},
+    open: {...base.story.open, journal: [...auditRows(10_000 - exact.length), ...exact]}}};
+  assert.deepEqual(reload(original), original, 'a pre-card journal loads unchanged, even above the ceiling');
+  const before = structuredClone(original), ledger = savedLedger(original);
+  const chapter = {completed: true, opening: {seed: ledger.seed, night: 2}, journal: [],
+    ledger: bankHearth(ledger).ledger, scrap: 0};
+  const banked = settleNight2(original, chapter);
+  assert(banked.ok && banked.changed);
+  const loaded = reload(banked.profile), record = savedOpenRecord(loaded);
+  assert.equal(original.story.open.journal.length, 10_000);
+  assert(record.journal.length <= OPEN_JOURNAL_LIMIT, '10,000 rows fit after the live bank hook');
+  assert.deepEqual(record.journal.filter(row => row.type !== 'summary'), exact, 'rule inputs and their order stay exact');
+  assert.equal(record.journal.filter(row => row.type === 'summary').reduce((sum, row) => sum + row.entries, 0), 10_000 - exact.length);
+  assert.deepEqual({...record, journal: []}, {...original.story.open, journal: []}, 'every open progress field survives');
+  assert.deepEqual(loaded.story.ledger, {version: 1, ...chapter.ledger}, 'marks, words, stocks and replay history survive');
+  assert.deepEqual(ledgerPageData(loaded.story.ledger), ledgerPageData(chapter.ledger));
+  assert.deepEqual(original, before, 'bank compaction is pure');
+  assert.equal(settleNight2(original, {...chapter, completed: false}).profile, original);
+  assert.equal(compactOpenJournal(record, 2, {atBank: true}).record, record, 'folding twice is stable');
+  const thread = {id: 'burned-camp', beats: {sign: {}, clues: {}}, ends: []};
+  const rule = world => threadRule(thread, {world}, world.open.threads['burned-camp']).ask({nights: 2, since: 'clues'});
+  assert.equal(rule(worldForProfile(loaded)), rule(worldForProfile({...original,
+    story: {...original.story, ledger: loaded.story.ledger}})), 'thread timing after reload agrees');
+
+  // Ranges and counts merge with the next bank; audit rows fold oldest first.
+  const ranged = compactOpenJournal({...record, journal: [
+    {type: 'scrap', choiceId: 'forge-shed/repair/4', night: 2}, ...record.journal,
+  ]}, 3, {atBank: true}).record;
+  const repairs = ranged.journal.find(row => row.choicePrefix === 'forge-shed/repair/');
+  assert.deepEqual([repairs.fromNight, repairs.toNight], [1, 2]);
+  assert.equal(repairs.entries, record.journal.find(row => row.choicePrefix === repairs.choicePrefix).entries + 2);
+
+  // A roam exit enforces the same ceiling, while this night's repeat counters
+  // remain exact and cannot pay twice after reload. Summaries are not choices.
+  const current = [
+    {type: 'scrap', key: 'scrap', before: 152, after: 140, choiceId: 'forge-shed/repair/3', night: 3},
+    {type: 'scrap', key: 'scrap', before: 140, after: 100, choiceId: 'checkpoint/night-3/recovery-7/lift', night: 3},
+  ];
+  const roaming = {...worldForProfile(loaded), open: {...record, journal: [...auditRows(10_000), ...current]}};
+  const settled = settleOpenWorld(loaded, roaming);
+  assert(settled.ok);
+  const resumed = worldForProfile(reload(settled.profile));
+  assert(resumed.open.journal.length <= OPEN_JOURNAL_LIMIT);
+  assert.deepEqual(resumed.open.journal.filter(row => row.type !== 'summary'), current);
+  assert.equal(applyEffects(resumed, {id: current[0].choiceId, effects: [{type: 'scrap', by: -12}]}).world, resumed);
+  assert.equal(applyEffects(resumed, {id: 'forge-shed/repair/4', effects: [{type: 'scrap', by: -12}]}).world.scrap, resumed.scrap - 12);
+  const recovered = checkpointsPart.step({}, {world: resumed, holds: [],
+    view: {checkpointsEnabled: true, combatWrecking: true, carPosition: {x: 0, z: 0}}}, 0);
+  assert.equal(recovered.choices[0].id, 'checkpoint/night-3/recovery-8');
+
+  // The ceiling never discards exact rule inputs, unbanked rows or distinct
+  // audit prefixes that cannot be combined. Both writers report the overflow.
+  const warnings = [], warn = console.warn;
+  console.warn = (...args) => warnings.push(args);
+  try {
+    const protectedRows = Array.from({length: OPEN_JOURNAL_LIMIT + 1}, (_, i) => ({...exact[1], choiceId: 'arrival/' + i}));
+    const protectedProfile = {...original, story: {...original.story, open: {...original.story.open, journal: protectedRows}}};
+    const overflowBank = settleNight2(protectedProfile, chapter);
+    assert(overflowBank.ok);
+    assert.deepEqual(reload(overflowBank.profile).story.open.journal, protectedRows);
+    const overflowRoam = settleOpenWorld(loaded, {...worldForProfile(loaded), open: {...record, journal: protectedRows}});
+    assert(overflowRoam.ok);
+    assert.deepEqual(reload(overflowRoam.profile).story.open.journal, protectedRows);
+    assert.equal(warnings.length, 2);
+    assert(warnings.every(args => /all progress is kept/.test(args[0]) && args[1].entries > args[1].target));
+    for (const rows of [auditRows(OPEN_JOURNAL_LIMIT + 1).map(row => ({...row, night: 3})),
+      auditRows(OPEN_JOURNAL_LIMIT + 1).map((row, i) => ({...row, choiceId: 'distinct/' + i.toString(36) + 'x/choice'}))]) {
+      const result = compactOpenJournal({...record, journal: rows}, 2);
+      assert(result.overflow > 0, 'unbanked choices and distinct prefixes may exceed the target');
+      assert.equal(result.record.journal.reduce((sum, row) => sum + (row.entries ?? 1), 0), rows.length);
+    }
+  } finally { console.warn = warn; }
+  console.log('Open journal: 10,000-row bank and roam, exact rule inputs, repeat choices and lossless overflow passed.');
+}
 
 function appAtYard(fixture, flags = on) {
   globalThis.localStorage = memoryStorage(fixture);
