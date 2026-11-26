@@ -29,6 +29,10 @@ sections 13 and 14.
    hostile, the weapon is held low and no aiming prompt shows. It comes up by itself when a car or an enemy comes
    within range, or when the player presses the fire button.
 
+6. **A player can find the services.** Standing at the town's edge with a damaged car, nothing says where the forge
+   or the wash is. Give each shed a painted sign over its door, read from 40 m ("FORGE", "WASH"), and once Odessa or Moss
+   has been met, mark the shed on both maps with a small spanner or bucket.
+
 ## Files and locks
 
 `src/world/open/content/people-town.js`, `src/world/open/parts/people.js`, `src/world/open/content/talk-town.js`, the
