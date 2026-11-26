@@ -4,7 +4,7 @@ import {join} from 'node:path';
 import {pageFunctions as lightTown} from './everburn-job2.mjs';
 import {TIN_TOWN_GATE} from '../../src/world/tin-town-gate.js';
 import {EVERBURN_JOBS} from '../../src/world/jobs/everburn.js';
-import {walkerGroupAt, setStoryPersonAction} from '../../src/world/jobs/story-people.js';
+import {createStoryPeople, walkerGroupAt, setStoryPersonAction} from '../../src/world/jobs/story-people.js';
 import {scablandsSurfaceHeightAt as ground} from '../../src/world/scablands-ground.js';
 
 const at = (dx, dz) => {
@@ -123,6 +123,19 @@ export const pageFunctions = {
       }
     })();
   },
+  installTown(cast) {
+    const app = window.__qaApp;
+    if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Expected a memory-only QA tab.');
+    const world = app.duel.state.arena.worldJob;
+    world.storyPeople = cast;
+    world.solidGrid.setStoryPeople(cast);
+    app.onFrame?.(app.duel.state,0);
+  },
+  townLoaded(ids) {
+    const group = window.__render.scene.getObjectByName('Wasteland story people');
+    if (group?.userData.loadError) throw Error(group.userData.loadError);
+    return ids.every(id => group?.getObjectByName('story-person-'+id)?.visible);
+  },
   settled: () => new Promise(resolve => setTimeout(resolve, 1250)),
   draw(shot, eye, subject) {
     const api = window.__render, scene = api.scene, camera = api.camera;
@@ -146,7 +159,9 @@ export const pageFunctions = {
     if (Math.abs(projected.x)>1 || Math.abs(projected.y)>1 || Math.abs(projected.z)>1)
       throw Error(shot + ': the crown is outside the image.');
     const cast = window.__qaApp.duel.state.arena.worldJob.storyPeople;
-    if (cast.length!==12 || cast.filter(person=>person.cart).length!==4)
+    if (shot === 'open-figures-20m') {
+      if (cast.length !== 5) throw Error('Expected the five Tin Town figures.');
+    } else if (cast.length!==12 || cast.filter(person=>person.cart).length!==4)
       throw Error(shot + ': expected eleven Walkers, four carts and Auntie.');
     return {shot,subject,people:cast.length,fov:camera.fov,eye:camera.position.toArray(),
       target:point.toArray(),metres:Math.hypot(eye.x-point.x,eye.z-point.z)};
@@ -195,6 +210,17 @@ export async function run(context) {
         rendererCpu:p95Delta('sceneCpuMs'),mainPassGpu:p95Delta('mainPassGpuMs'),delivered:p95Delta('deliveredMs')}};
     }
   }
+  const tasks = [['odessa','weld'],['moss','scrub'],['tin-cook','cook'],['tin-porter','haul-sack'],['tin-child','sit']];
+  const town = createStoryPeople(tasks.map(([id,action],i) => ({
+    id,action,position:at((i-2)*1.6,-5.2),yaw:Math.PI,
+  })));
+  const eye = at(0,-25.2);
+  await evaluate('installTown',town);
+  await evaluate('stage','open-figures-20m',eye,{},null);
+  await context.waitFor(pageSource('townLoaded',town.map(person=>person.id)),'five Tin Town figures',60000);
+  await evaluate('settled');
+  report.views.push(await evaluate('draw','open-figures-20m',eye,'tin-cook'));
+  await context.screenshot('open-figures-20m');
   await writeFile(join(context.outputDir,'story-people.json'), JSON.stringify(report,null,2)+'\n');
   return report;
 }
