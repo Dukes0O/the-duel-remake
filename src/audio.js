@@ -1111,6 +1111,9 @@ export class EngineAudio {
   _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false, summitAttack = false, worldHandFlamer = false } = {}) {
     this._syncMixer();
     const def = bank(id);
+    // The open Scablands' cards name their cues before OPEN-SOUND registers them (docs/story/open-scablands.md, section 22):
+    // until then such a cue is silent rather than stopping the game.
+    if (!def && typeof id === 'string' && id.startsWith('open.')) return null;
     if (!def) throw Error('Unknown audio cue: ' + id);
     const admittedShock = crewShock === true &&
       ['weapon.tesla.charge', 'weapon.tesla.pulse'].includes(id) &&
