@@ -1394,6 +1394,10 @@ table above differ, this section wins.
 | `open-view.js` | The same for what is drawn: a card fills in its own view file |
 | `roam-step.js`, `roam-job.js` | The step `roam` and the job of being out in the open. `startOpenRoam` in `src/app.js` starts it from the Story Wall |
 
+**Spending scrap** (decided at OPEN-STATE's merge, 25 November 2026). During a roam every price and ransom is the `scrap`
+effect, which never takes the scrap below nothing and reports what is still owed; when the roam ends, `spendScrap`
+settles the difference into the player's wallet. The two follow the same rule, so a price is never charged twice.
+
 **Two rules the checks now hold a storyline to.** A storyline's file reads where no other storyline stands and moves
 no other storyline; it reads the marks that another leaves. A mark that a storyline writes begins with the storyline's
 own id, so that a reader knows who wrote it.

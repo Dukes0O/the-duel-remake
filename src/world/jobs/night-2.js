@@ -1,5 +1,6 @@
 import {WIM_CLEAN} from '../open/content/talk-forge.js';
 import {applyChoice, bankHearth, createLedger, ledgerPageData, namedThrow, plainStockChange} from '../../story/ledger.js';
+import {replayTelling} from '../../story/ledger-replay.js';
 import {LEDGER_MARK_LINES} from '../../story/ledger-ui.js';
 import {NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER, NIGHT_2_SCENES, NIGHT_2_WASH_CHOICE, night2Count} from '../../story/scenes/night-2.js';
 import {sweepObstacle} from '../../collision.js';
@@ -40,6 +41,31 @@ export function night2Opening(seed) {
   return {seed: seed >>> 0, night: 2, embers: 4};
 }
 
+const START_AFTER_ROAM = 'night-2/start-after-roam';
+
+function night2StartingLedger(saved) {
+  if (!saved) return null;
+  const opening = night2Opening(saved.seed);
+  if (saved.night === opening.night) return saved;
+
+  // The first telling after roam records where the chapter began. Rebuild just
+  // the preceding choices for a replay, using the same fact rules as replay
+  // confirmation. The night transition lets the replay reader accept the
+  // journal without applying the chapter's hearth cost.
+  const start = saved.history.findIndex(change => change.choiceId === START_AFTER_ROAM && change.night === opening.night);
+  if (start < 0) return null;
+  const bank = saved.history.find(change => change.type === 'night' && change.choiceId === 'bank/2' && change.night === opening.night);
+  if (!bank) return null;
+  const prefix = saved.history.slice(0, start).filter(change => change.night === opening.night);
+  const initial = {...createLedger(opening), night: bank.after, history: [bank]};
+  const played = {...initial, history: [...prefix, bank]};
+  // A ledger whose history cannot be told again (a forged or damaged save) starts Night 2 afresh, as one with no start
+  // marker does, rather than stopping the Story Wall's button.
+  const replayed = replayTelling(initial, played, opening.night);
+  if (!replayed) return null;
+  return {...replayed.ledger, night: opening.night, history: prefix};
+}
+
 const drive = (id, place, what) => ({id, kind: 'reach', inCar: true, place, radius: place.radius, what});
 const returnOnFoot = 'The car will be towed in at dawn. Walk back to the hearth.';
 const washRiders = riders.map(({id, start, renderCar: car}, index) => ({
@@ -50,7 +76,7 @@ const washRiders = riders.map(({id, start, renderCar: car}, index) => ({
 // The crew who leave a wrecked rider car run for the Walkers' camp; any that reach it take it (src/arena/modes/road-riders.js).
 const washCrewGoal = {x: sites.camp.position.x, z: sites.camp.position.z, radius: sites.camp.radius};
 
-export function night2Job(seed, {washFight = false} = {}) {
+export function night2Job(seed, {washFight = false, saved = null} = {}) {
   const tower = talk('tower', 'camp');
   if (washFight) {
     const [watch, ember] = tower.scene.choices;
@@ -68,7 +94,9 @@ export function night2Job(seed, {washFight = false} = {}) {
     walk('wash-walk-home', sites.hearthApproach, 'Walk back to the hearth.'),
   ] : [];
 
-  return {id: NIGHT_2_ID, name: 'Strangers at the gate', title: 'Strangers at the gate', seed,
+  const ledger = night2StartingLedger(saved);
+  return {id: NIGHT_2_ID, name: 'Strangers at the gate', title: 'Strangers at the gate',
+    seed: ledger?.seed ?? seed, ...(ledger ? {openingLedger: ledger} : {}),
     steps: [
       talk('hearth', 'hearth', {carStart: sites.car, footStart: hearthStart}),
       walk('walk-to-gate', sites.gateTalk, 'Walk to the gate.'),
@@ -100,9 +128,13 @@ export function createNight2(definition, grid) {
   const paths = createJobSolidGrid(grid);
   paths.setTownGate(sites.gate, 1);
   paths.setBrandLamps([...sites.lamps, ...sites.chaseLamps]);
-  return {opening, ledger: createLedger(opening), journal: [], set: null, evening: .65, night: false,
+  const chapter = {opening, ledger: definition.openingLedger ? structuredClone(definition.openingLedger) : createLedger(opening),
+    journal: [], set: null, evening: .65, night: false,
     ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius ?? (place === sites.hearth ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius), strict: true}),
     lamps: {}, scrap: 0, props: {}, routes: [], washCarUnavailable: false};
+  if (chapter.ledger.history.length)
+    record(chapter, START_AFTER_ROAM, [{type: 'read', fact: 'stock', key: 'embers'}]);
+  return chapter;
 }
 
 const memoryLines = {

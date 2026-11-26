@@ -507,7 +507,8 @@ assert.throws(() => createJob({steps: [{kind: 'wander-about'}]}), /Unknown job s
 const profile = {wasteland: {scrap: 77.9}};
 const fresh = worldForProfile(profile, 99);
 assert.equal(fresh.scrap, 77);
-assert.equal(fresh.ledger.night, 1);
+assert.equal(fresh.ledger.night, 2, 'a first roam opens on the same night as Five Cold Nights');
+assert.equal(fresh.ledger.stocks.embers, 4, 'a first roam opens with Night 2’s embers');
 assert.equal(fresh.seed, 99);
 assert.deepEqual(profile, {wasteland: {scrap: 77.9}});
 assert.deepEqual(newWorld({seed: 5}).open.found, []);
