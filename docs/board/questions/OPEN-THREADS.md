@@ -1,0 +1,5 @@
+# OPEN-THREADS questions for Claude
+
+- The shared host can play captions and receives completed talks, but it has no request that opens a talk inside roam. Should the host accept an in-roam talk request, or should OPEN-ROAM supply the radio interaction through its talk adapter? Pick the shared adapter. This branch will expose the talk scene and use roam's existing interact and caption path while waiting for the adapter.
+- OPEN-STATE owns the persisted open record and its bank transaction. Should its transaction call a ledger-save hook with the banked world, or should banking remain ledger-only until the transaction lands? Pick the banked-world hook and leave the old ledger-only writer intact.
+- The literal 25 November shape has no travel destination beside a `go` choice's `when`, no visit fact, and no sign witness duration field. Pick `reach` inside `when`, the director's visit journal and a three-second smoke rule. Join site positions and stages to OPEN-SITES at the merge. Keep the six clue positions from the approved look.
