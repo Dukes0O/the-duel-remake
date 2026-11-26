@@ -138,7 +138,7 @@ export function haulerPeople(world, view) {
   const point = gate ? haulerGate : passing ? haulerVisitor(world, view.seconds) : haulerOffset(stop.truck, 0, -3.5);
   const day = {kind: 'post', at: ['tin-town', point.x - anchor.x, point.z - anchor.z], task: 'stand'};
   return [{id: trap && !gate ? 'road-rat' : 'tally', figure: trap && !gate ? 'road-rat-lookout' : 'marigold',
-    home: 'tin-town', routine: {day}, talk: 'tally'}];
+    home: 'tin-town', routine: {day}, talk: passing || gate && record.end ? 'tally' : null}];
 }
 
 export function haulerMission(mission, world) {

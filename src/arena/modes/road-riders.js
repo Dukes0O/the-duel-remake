@@ -220,7 +220,9 @@ export function roadRiderGoal(duel,car,dt) {
     const sin = Math.sin(truck.heading), cos = Math.cos(truck.heading);
     const goal = {x: truck.x - sin * 8 + cos * side, z: truck.z - cos * 8 - sin * side};
     const forward = (goal.x - me.x) * sin + (goal.z - me.z) * cos;
-    return reachableGoal(duel, car, {...goal, speedMph: Math.max(0, Math.min(42, speed * 2.236936 + forward * .8)), boost: false});
+    const sideways = (goal.x - me.x) * cos - (goal.z - me.z) * sin;
+    const aim = dist(me, goal) > 35 ? goal : {x: me.x + sin * 30 + cos * sideways, z: me.z + cos * 30 - sin * sideways};
+    return reachableGoal(duel, car, {...aim, speedMph: Math.max(0, Math.min(42, speed * 2.236936 + forward * .8)), boost: false});
   }
   if (rider.standingArmor !== undefined) {
     if (car.armor >= rider.standingArmor) return {...me, speedMph: 0, boost: false};
