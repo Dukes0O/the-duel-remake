@@ -11,8 +11,21 @@ import json
 import math
 import sys
 import zipfile
-from datetime import date
 from pathlib import Path
+
+def evidence_date():
+    # The same rule as tools/blender/evidence_date.py and tools/evidence-date.mjs: the laptop's local day, or the day of
+    # DUEL_EVIDENCE_NOW. Written out here because the KITS planning audit lets this script read nothing but itself.
+    import os
+    from datetime import date, datetime
+    text = os.environ.get('DUEL_EVIDENCE_NOW')
+    if not text:
+        return date.today().isoformat()
+    try:
+        moment = datetime.fromisoformat(text[:-1] + '+00:00' if text.endswith('Z') else text)
+    except ValueError:
+        raise ValueError(f'DUEL_EVIDENCE_NOW is not a date: {text}') from None
+    return (moment.astimezone() if moment.tzinfo else moment).date().isoformat()
 
 GROUPS = {
     "paddock": ["start-gantry", "pit-garage", "pit-wall", "grandstand"],
@@ -167,7 +180,7 @@ def main():
     args = arguments()
     ROOT = args.root
     out = ROOT / "public/assets/models/circuits/kits"
-    evidence = ROOT / ".evidence" / date.today().isoformat() / "P4-KITS" / ("round-" + str(args.round))
+    evidence = ROOT / ".evidence" / evidence_date() / "P4-KITS" / ("round-" + str(args.round))
     if args.paths_only:
         print(json.dumps({"runtime": str(out), "evidence": str(evidence)}))
         return

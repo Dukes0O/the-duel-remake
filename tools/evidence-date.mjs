@@ -5,7 +5,9 @@
 // 17:00 until midnight, so a run at 23:56 landed in tomorrow's folder while the round planner named today's.
 //
 // `DUEL_EVIDENCE_NOW` (a local time such as 2026-11-18T23:56:00, no zone) fixes the clock for tests that start a child
-// process; nothing else reads it.
+// process; nothing else reads it. The Blender recipes read it through tools/blender/evidence_date.py, the Python twin
+// of this file (QA-EVIDENCE-MIDNIGHT-AGAIN: they used to read `date.today()` on their own clock, so a check that ran
+// across midnight planned yesterday's folder in one process and today's in the next).
 export function evidenceDate(now = clockNow()) {
   const two = number => String(number).padStart(2, '0');
   return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
@@ -16,4 +18,11 @@ export function clockNow(env = process.env) {
   const fixed = new Date(env.DUEL_EVIDENCE_NOW);
   if (Number.isNaN(fixed.getTime())) throw Error(`DUEL_EVIDENCE_NOW is not a date: ${env.DUEL_EVIDENCE_NOW}`);
   return fixed;
+}
+
+// One moment written as a DUEL_EVIDENCE_NOW value: local wall-clock time, no zone, read back unchanged by clockNow and
+// by evidence_date.py. A check that starts several processes reads the clock once and hands every child this value.
+export function evidenceClockText(now = clockNow()) {
+  const two = number => String(number).padStart(2, '0');
+  return `${evidenceDate(now)}T${two(now.getHours())}:${two(now.getMinutes())}:${two(now.getSeconds())}`;
 }
