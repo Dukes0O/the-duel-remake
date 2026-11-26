@@ -14,8 +14,10 @@ import stat
 import sys
 import tempfile
 import time
-from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from evidence_date import evidence_date  # the one evidence day, shared with tools/evidence-date.mjs
 
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
@@ -63,7 +65,7 @@ def texture_path(name, label):
 family = 'rustwall-p2' if args.p2 else 'rustwall'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
              (out / 'evidence' if args.output_dir else
-              root / '.evidence' / date.today().isoformat() / family / f'round-{args.round}'))
+              root / '.evidence' / evidence_date() / family / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:

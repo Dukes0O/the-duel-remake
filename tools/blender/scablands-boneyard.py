@@ -10,8 +10,10 @@ import json
 import math
 import os
 import sys
-from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from evidence_date import evidence_date  # the one evidence day, shared with tools/evidence-date.mjs
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
@@ -22,7 +24,7 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/boneyard.glb'
 blend = root / 'art-build/scablands-boneyard/boneyard.blend'
 evidence = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
-                root / '.evidence' / date.today().isoformat() / 'ww-art-boneyard' / 'round-2')
+                root / '.evidence' / evidence_date() / 'ww-art-boneyard' / 'round-2')
 if not evidence.is_absolute():
     evidence = root / evidence
 if args.paths_only:
