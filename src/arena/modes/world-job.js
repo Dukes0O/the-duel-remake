@@ -51,7 +51,7 @@ import {sitePosition} from '../../world/open/site-rule.js';
 import {SITES as OPEN_SITES} from '../../world/open/register.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
-import {WAITING_LINE, WALK_AWAY} from '../../world/open/content/talk-town.js';
+import {WAITING_LINE} from '../../world/open/content/talk-town.js';
 import {startTalk, talkScreen} from '../../story/talk.js';
 import {sprayWater, waterStreamStart} from '../../arsenal/water-cannon.js';
 import {point as combatPoint} from '../../combat-actors.js';
@@ -1776,10 +1776,10 @@ export function stepWorldJob(duel, dt) {
         type: 'openTalkQuestion', scene: talkStep.id, id,
         effects: talkStep.scene.questions.find(question => question.id === id).effects,
       }));
-      const result = chosen && chosen.id !== WALK_AWAY ? [{...chosen, scene: talkStep.id}] : [];
+      const result = chosen ? [{...chosen, scene: talkStep.id}] : [];
       worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...questions, ...result];
       if (next.stepIndex !== previousStep) {
-        closeOpenTalk(duel, worldJob, talkStep, chosen?.id === WALK_AWAY, true);
+        closeOpenTalk(duel, worldJob, talkStep, false, true);
         return null;
       }
     } else if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];

@@ -7,7 +7,7 @@ import {followRoutine, routinePose} from '../routine-rule.js';
 import {PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
-import {TOWN_SCENES, WALK_AWAY} from '../content/talk-town.js';
+import {TOWN_SCENES} from '../content/talk-town.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -61,7 +61,7 @@ export const peoplePart = {
         asked = {...asked, [active.scene]: [...(asked[active.scene] ?? []), event.id]};
         if (event.effects?.length) choices.push({id: active.scene + '/ask/' + event.id, effects: event.effects});
       }
-      if (event.type === 'talkChoice' && event.id !== WALK_AWAY && event.effects?.length)
+      if (event.type === 'talkChoice' && event.effects?.length)
         choices.push({id: active.scene + '/choose/' + event.id, effects: event.effects});
       if (event.type === 'openTalkClosed') {
         if (event.finished && !heard.includes(active.scene)) heard = [...heard, active.scene];

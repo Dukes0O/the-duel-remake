@@ -12,7 +12,6 @@ import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
 import {peoplePart, talkFor} from '../src/world/open/parts/people.js';
 import {TOWN_PEOPLE} from '../src/world/open/content/people-town.js';
-import {WALK_AWAY} from '../src/world/open/content/talk-town.js';
 import {forgePosts} from '../src/world/open/content/people-forge.js';
 import {sitePosition} from '../src/world/open/site-rule.js';
 import {sampleWorld} from '../src/world/open/samples.js';
@@ -203,10 +202,8 @@ talkTick(false, [
   {type: 'openTalkClosed', scene: first.id},
 ]);
 assert.deepEqual(talkTick(true).asked, ['pump']);
-talkTick(false, [{type: 'talkChoice', scene: first.id, id: WALK_AWAY, effects: [{type: 'mark', id: 'test/unmade'}]},
-  {type: 'openTalkClosed', scene: first.id}]);
+talkTick(false, [{type: 'openTalkClosed', scene: first.id}]);
 assert(land.world.ledger.marks.includes('test/pump-asked'));
-assert(!land.world.ledger.marks.includes('test/unmade'));
 talkTick(true);
 talkTick(false, [{type: 'talkChoice', scene: first.id, id: 'answer', effects: [{type: 'mark', id: 'test/answer-made'}]},
   {type: 'openTalkClosed', scene: first.id, finished: true}]);

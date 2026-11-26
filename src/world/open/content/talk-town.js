@@ -2,7 +2,6 @@ import {validateTalkScene} from '../../../story/talk.js';
 import {FRIEND_WORDS} from '../register.js';
 import {checkSentence, checkTalkRow, requireSound} from '../check-tables.js';
 
-export const WALK_AWAY = 'open/talk/walk-away';
 export const WAITING_LINE = 'We can talk when you come back.';
 
 const greetings = {
