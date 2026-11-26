@@ -94,7 +94,7 @@ const TASK_CAST = {
 
 export function createStoryPeople(placements) {
   const cast = [], ids = new Set();
-  for (const {id, position, yaw = 0, action = 'stand', path, cart, seat, pace, framePartner} of placements) {
+  for (const {id, position, yaw = 0, action = 'stand', path, cart, seat, pace, framePartner, loop} of placements) {
     if (!Object.hasOwn(STORY_FIGURES, id) || ids.has(id))
       throw new Error('Unknown or repeated story figure: ' + id);
     if (![position?.x, position?.y, position?.z, yaw].every(Number.isFinite))
@@ -105,13 +105,13 @@ export function createStoryPeople(placements) {
     const person = {id, position: {...position}, height, radius, yaw, distance: 0, action: 'stand', seat, pace};
     if (framePartner) person.framePartner = framePartner;
     if (cart) placeCart(person);
-    setStoryPersonAction(person, action, path);
+    setStoryPersonAction(person, action, path, loop);
     cast.push(person);
   }
   return cast;
 }
 
-export function setStoryPersonAction(person, action, path = []) {
+export function setStoryPersonAction(person, action, path = [], loop = false) {
   if (!MOVING.has(action) && !RESTING.has(action) && !TIN_TASKS[person.id]?.includes(action)) throw new Error('Unknown story action: ' + action);
   if (Object.hasOwn(TASK_CAST, action) && !TASK_CAST[action].includes(person.id))
     throw new Error(person.id + ' has no pose for ' + action);
@@ -121,6 +121,9 @@ export function setStoryPersonAction(person, action, path = []) {
   person.action = action;
   person.path = MOVING.has(action) ? path : [];
   person.nextPoint = 0;
+  // OPEN-ROAM: a loop needs at least two distinct horizontal points.
+  if (loop && person.path.some(point => point.x !== path[0].x || point.z !== path[0].z)) person.loop = true;
+  else delete person.loop;
 }
 
 // Return whether any solid changed position. A standing crowd requires no
@@ -137,7 +140,11 @@ export function advanceStoryPeople(cast, dt, heightAt) {
     while (remaining > 0 && person.nextPoint < person.path.length) {
       const at = person.position, goal = person.path[person.nextPoint];
       const dx = goal.x - at.x, dz = goal.z - at.z, length = Math.hypot(dx, dz);
-      if (length === 0) { person.nextPoint++; continue; }
+      if (length === 0) {
+        person.nextPoint++;
+        if (person.loop && person.nextPoint === person.path.length) person.nextPoint = 0;
+        continue;
+      }
       const step = Math.min(length, remaining);
       at.x += dx * step / length;
       at.z += dz * step / length;
@@ -151,6 +158,7 @@ export function advanceStoryPeople(cast, dt, heightAt) {
       remaining -= step;
       if (step === length) person.nextPoint++;
       moved = true;
+      if (person.loop && person.nextPoint === person.path.length) person.nextPoint = 0;
     }
     if (person.nextPoint === person.path.length) setStoryPersonAction(person, 'stand');
   }

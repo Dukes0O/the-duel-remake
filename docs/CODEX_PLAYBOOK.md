@@ -331,6 +331,10 @@ the date, so that two sessions never build one card.
 (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`); `npm run build`. A cause is measured before
 it is cured. A test's assertions change only because the card changed what is true, and each one is listed.
 
+**A new browser scenario** gets its row in `SCENARIO_AREAS` (`tools/run-browser-scenarios.mjs`) in the same change, and its
+ready check waits for every button it clicks: on 25 November 2026 three open Scablands cards merged a scenario without
+the row (`tools/test-browser-scenarios.mjs` then fails), and two clicked before the QA panel had its buttons.
+
 **Questions.** Never wait on a question. Write it to `docs/board/questions/<CARD>.md` on the branch (what needs deciding,
 the options, the pick), push, and carry on with the pick. Saves, money and pay, and a released course are the
 exceptions: stop there.

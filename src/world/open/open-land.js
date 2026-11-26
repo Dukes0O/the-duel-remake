@@ -31,7 +31,10 @@
 //             `text` is the caption. {type: 'marker', place} sets the marker. A request raised on the tick the job
 //             ends is not carried out.
 //             Four more, each carried out by one card's handler in world-job.js (decided 25 November 2026):
-//               {type: 'talk', scene, speaker}          open a talk inside roam; the choice returns in jobEvents (OPEN-ROAM)
+//               {type: 'talk', id, scene, speaker, asked}   open a talk inside roam: `scene` is a talk scene object
+//                                                       (src/story/talk.js), `asked` the questions already asked; the
+//                                                       choice returns in jobEvents as talkChoice, the questions as
+//                                                       openTalkQuestion, the close as openTalkClosed (OPEN-ROAM)
 //               {type: 'repair', armour, scrap}, {type: 'wash'}   mend or wash the car; view.car holds
 //                                                       {armour, maxArmour, dirt} (OPEN-DOORS)
 //               {type: 'solids', id, solids}            stand a site's or a building's solids; [] takes them away (OPEN-SITES)

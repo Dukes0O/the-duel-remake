@@ -438,10 +438,13 @@ assert.equal(stepOpenLand(releaseOpenLand(open, 'thread:burned-camp'), view(0), 
   assert.equal(loud.events.length, 32);
   assert.deepEqual([loud.events[0].seq, loud.events[31].seq], [9, 40]);
 }
-// The parts as shipped by this card are empty, and stepping them changes nothing.
+// The shared tables include the content of each populated town row.
 assert.deepEqual(OPEN_PARTS.map(part => part.id), ['people', 'buildings', 'sites', 'checkpoints', 'threads', 'ground']);
-assert.deepEqual(PEOPLE, []);
-assert.deepEqual(TALK_TABLES, {});
+for (const id of ['auntie-solder', 'cinder', 'rell', 'dace', 'wim']) {
+  assert.equal(PEOPLE.filter(row => row.id === id).length, 1, id + ' is in the joined people table once');
+  assert.equal(TALK_TABLES[id].filter(row => row.scene.startsWith('open/town/')).length, 6,
+    id + ' has its five greetings and Night 2 line in the joined talk table');
+}
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);
