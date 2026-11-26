@@ -13,3 +13,4 @@
 - **Removed:** Generated build and test scratch output sent to the Recycle Bin. No feature replaced. Goods sales remain deferred as the page directs.
 - **Look owed:** Patience needs a worn red six-wheel truck, blue door and tyre cart; the trap needs matching red doors, fresh paint and flat cover. Tally, waving, shaft lifting and the slag lookout need their own look.
 - **For Claude to run:** `open-stranded-hauler`, the hand drive and independent review, then push and PR. Cockpit sync stays with Claude outside this lane.
+- Settled the Pump, Flag and Ash-fold merge at `652e1a2f4`: Hauler, Dry Pump, Flag, burned camp, open missions/threads/shared/sites, thread shape and roam passed; after the optional checkpoint-events fix, `734de18bf` passed state, checkpoints, Hauler/Flag rechecks, core (804), race replays (306), combat replays (12), world composition (65) and the build. Existing assertions unchanged; memory-only saves; no browser scenarios.
