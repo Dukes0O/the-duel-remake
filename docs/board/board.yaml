@@ -1396,18 +1396,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-STATE.md"
 
-  - id: OPEN-SITES
-    title: "Open Scablands: find the Glasshouse and Radio Hill, see them join the map, and earn their word"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-SITES.md"
-
   - id: OPEN-THREADS
     title: "Open Scablands: storylines as data, and the burned camp as far as the choice at the camp"
     owner: "codex"

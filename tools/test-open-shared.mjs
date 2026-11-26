@@ -445,6 +445,12 @@ for (const id of ['auntie-solder', 'cinder', 'rell', 'dace', 'wim']) {
   assert.equal(TALK_TABLES[id].filter(row => row.scene.startsWith('open/town/')).length, 6,
     id + ' has its five greetings and Night 2 line in the joined talk table');
 }
+// OPEN-SITES: the camps' people are in the joined table, and the first talk of each who has one is the camp's own.
+for (const id of ['marigold', 'finch', 'grower-1', 'grower-2', 'grower-3', 'hetty', 'bern'])
+  assert.equal(PEOPLE.filter(row => row.id === id).length, 1, id + ' is in the joined people table once');
+assert.deepEqual(Object.fromEntries(['marigold', 'finch', 'hetty'].map(id => [id, TALK_TABLES[id][0].scene])), {
+  marigold: 'glasshouse/ash', finch: 'finch/rumour', hetty: 'radio-hill/first',
+});
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);
