@@ -9,6 +9,7 @@
 // The ground is a grid of 25 m cells (560 by 400, 224,000 of them). It is worked out in slices (`step`) so that no frame is held up:
 // a slice asks about 8 ms worth of rows. Drawing the picture is `src/world/scablands-map.js`.
 import {openMapMarks} from './open/map-marks.js';
+import {sitePosition} from './open/site-rule.js';
 import {LAND} from './scablands-names.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {DRIVE, RIVER, RIVER_LAND, scablandsDriveAt} from './scablands-regions.js';
@@ -78,7 +79,9 @@ const firstPositions = {
   'radio-hill': LAND.at('tin-town', -2245, -992),
 };
 
-export function landMarks({base, world, positionOf = id => firstPositions[id], ...options} = {}) {
+// OPEN-SITES joined on 25 November: a site stands where the land's seed puts it; the first positions remain only for a
+// site whose row gives none.
+export function landMarks({base, world, positionOf = (id, landSeed) => sitePosition(id, landSeed) ?? firstPositions[id], ...options} = {}) {
   const fixed = base ?? fixedLandMarks(options);
   if (!world) return fixed;
   const {sites, rumours, driven} = openMapMarks(world, positionOf);

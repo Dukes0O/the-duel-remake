@@ -47,6 +47,8 @@ import {buildingWalls} from '../../world/open/building-rule.js';
 import {forgePosts} from '../../world/open/content/people-forge.js';
 import {applyEffects} from '../../world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
+import {sitePosition} from '../../world/open/site-rule.js';
+import {SITES as OPEN_SITES} from '../../world/open/register.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
 import {WAITING_LINE, WALK_AWAY} from '../../world/open/content/talk-town.js';
@@ -2071,7 +2073,11 @@ export function stepWorldJob(duel, dt) {
     // and the car, the shed staff and the ash for the sheds.
     const road = checkpointsEnabled ? checkpointRoadView(duel, worldJob) : {};
     const openRoam = currentStep?.kind === 'roam';
-    openStep = stepOpenLand(worldJob.open, {...view, ...road,
+    // Where each site stands in this land, from the land's seed (OPEN-SITES), for every part that places one.
+    const landSeed = worldJob.open.world.open.landSeed;
+    if (worldJob.openSitePositions?.landSeed !== landSeed) worldJob.openSitePositions = {landSeed, at: Object.fromEntries(
+      OPEN_SITES.map(site => [site.id, sitePosition(site.id, landSeed)]).filter(([, at]) => at))};
+    openStep = stepOpenLand(worldJob.open, {...view, ...road, sitePositions: worldJob.openSitePositions.at, checkpointSites: worldJob.openSitePositions.at,
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
