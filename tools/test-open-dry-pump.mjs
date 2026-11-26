@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import {Duel} from '../src/game.js';
+import {activeTalkStep} from '../src/world/jobs/steps/talk.js';
+import {openRoamJob} from '../src/world/open/roam-job.js';
 import dryPump from '../src/story/threads/content/dry-pump.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {DRY_PUMP_MISSIONS, DRY_PUMP_SOLIDS, DRY_PUMP_SPOTS as spots, mallPlace} from '../src/world/open/content/dry-pump-places.js';
@@ -25,6 +28,7 @@ const initial = (beat = 'sign', seed = 2, casting = cast, extras = []) => withEf
 const begin = world => beginOpenLand({id: 'open-roam', steps: [{kind: 'roam'}], open: {world}});
 const house = sitePosition('glasshouse', 2);
 const pump = siteSpot('glasshouse', 2, 'pump');
+const leader = siteSpot('glasshouse', 2, 'marigold');
 const away = LAND.at('dead-mall', 2200, -350);
 const frame = (open, point, inputs = {}, dt = .1) => stepOpenLand(open, {
   player: {position: point}, onFoot: true, carPosition: point, openRoam: true,
@@ -72,41 +76,86 @@ assert.equal(sign.events[0].cue, dryPump.sign.cue);
 assert.deepEqual(sign.requests.filter(row => row.type === 'say').map(row => row.text), dryPump.beats.sign.thoughts);
 assert.equal(beatOf(sign.open), 'sign');
 assert.equal(frame(sign.open, house).events.length, 0, 'the pump clanks once');
-const asked = frame(sign.open, house, {interact: true});
+const asked = frame(sign.open, leader, {interact: true});
 const request = asked.requests.find(row => row.type === 'talk');
 assert.equal(beatOf(asked.open), 'asking');
 assert.equal(request.scene.lines[0].words, dryPump.beats.asking.lines[0].words);
 assert.equal(request.scene.thoughts[0], dryPump.beats.asking.notes.thoughtsWhen[1].thought);
 assert.equal(request.scene.questions.length, dryPump.beats.asking.questions.length);
+// Use the running roam job and the real foot transition, as the laptop does. A friendly
+// Marigold meets the player at the car stop, where her side away from camp is beyond 22 m.
+{
+  const world = initial('sign', 2, {camp: 'glasshouse'}, [
+    {type: 'word', person: 'glasshouse', set: 'Friendly'}, {type: 'mark', id: 'open/met/glasshouse'},
+  ]);
+  const post = siteSpot('glasshouse', world.open.landSeed, 'car-stop');
+  const dx = post.x - house.x, dz = post.z - house.z, radius = Math.hypot(dx, dz);
+  const anchor = LAND.at('ships-in-sand');
+  const footStart = {...LAND.at('ships-in-sand', post.x - anchor.x + dx * 6 / radius,
+    post.z - anchor.z + dz * 6 / radius), heading: Math.atan2(-dx, -dz)};
+  const definition = openRoamJob({}, world.seed);
+  const duel = new Duel({seed: world.seed, featureFlags: {'hidden-road': true, 'story-choices': true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert(duel.startArenaEvent({seed: world.seed, venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    cpuDifficulty: 'easy', opponents: [], job: {...definition, open: {world}, steps: [{...definition.steps[0], footStart}]}}));
+  const dt = 1 / 60;
+  while (duel.state.status === 'countdown') duel.step(dt);
+  const step = seconds => { for (let tick = 0; tick < Math.round(seconds / dt); tick++) duel.step(dt); };
+  step(12);
+  duel.setFighterInput({forward: true});
+  step(1);
+  duel.setFighterInput({forward: false});
+  const {fighter, arena: {worldJob}} = duel.state;
+  assert.ok(Math.hypot(fighter.x - post.x, fighter.z - post.z) < 2.5, 'the driver walks up to Marigold');
+  assert.ok(Math.hypot(fighter.x - house.x, fighter.z - house.z) > 22, 'the driver stands on her side away from camp');
+  assert.equal(beatOf(worldJob.open), 'sign');
+  duel.setInput({interact: true});
+  step(.12);
+  duel.setInput({interact: false});
+  assert.equal(activeTalkStep(duel.state)?.id, 'dry-pump/asking/decision', 'F opens the Dry Pump in the live roam job');
+  assert.equal(activeTalkStep(duel.state).openPerson, 'marigold');
+  assert.equal(activeTalkStep(duel.state).openRadio, false);
+  assert.equal(beatOf(worldJob.open), 'asking');
+  assert.equal(worldJob.job.stepState.screen.line.words, dryPump.beats.asking.lines[0].words);
+  for (let tick = 0; tick < 12 && worldJob.job.stepState.screen.phase !== 'options'; tick++) {
+    worldJob.talkAction = {type: 'advance'};
+    duel.step(dt);
+  }
+  const options = worldJob.job.stepState.screen.options.filter(row => row.kind === 'say').map(row => row.words);
+  assert.deepEqual(options, dryPump.beats.asking.choices.filter(row => !row.when).map(row => row.words));
+  // Restore the site ground installed by the world job before the remaining pure cases run.
+  duel.state.arena = null;
+  duel.emit({});
+}
 const ignore = frame(advance(begin(initial()), 4), away).open;
 assert.equal(endOf(ignore), 'fetched-it-themselves');
 assert.ok(mark(ignore, 'fetched-it-themselves'));
 assert.equal(wordOf(ignore.world, 'glasshouse'), 'Strangers');
 assert.equal(mark(ignore, 'mall-way-in'), false);
-assert.equal(frame(advance(ignore, 8), house, {interact: true}).requests.some(row => row.type === 'talk'), false);
-assert.ok(frame(advance(ignore, 9), house, {interact: true}).requests.some(row => row.type === 'talk' && row.id.includes('the-camp-went-themselves')));
+assert.equal(frame(advance(ignore, 8), leader, {interact: true}).requests.some(row => row.type === 'talk'), false);
+assert.ok(frame(advance(ignore, 9), leader, {interact: true}).requests.some(row => row.type === 'talk' && row.id.includes('the-camp-went-themselves')));
 
 const offered = begin(initial('asking', 2, cast, [{type: 'favour', person: 'walkers', by: 1}]));
-const unavailable = frame(offered, house, {interact: true, outingAvailable: false});
+const unavailable = frame(offered, leader, {interact: true, outingAvailable: false});
 assert.ok(!unavailable.requests.find(row => row.type === 'talk').scene.choices.some(row => row.id.endsWith('/go-today')));
-const refused = choose(offered, house, 'refuse');
+const refused = choose(offered, leader, 'refuse');
 assert.equal(beatOf(refused), 'left-dry');
 assert.equal(wordOf(refused.world, 'glasshouse'), 'Wary');
 assert.equal(stageOf(frame(advance(refused, 4), away).open.world, 'glasshouse'), 'empty');
-const promised = choose(offered, house, 'promise');
+const promised = choose(offered, leader, 'promise');
 assert.equal(promised.world.ledger.obligations.find(row => row.id === `${id}/valve`).due, 5);
 const due = frame(advance(promised, 3), away).open;
 assert.equal(beatOf(due), 'promise-broken');
-const late = frame(due, house).open;
+const late = frame(due, leader).open;
 assert.ok(mark(late, 'promise-broken'));
 assert.equal(wordOf(late.world, 'glasshouse'), 'Wary');
-assert.equal(beatOf(choose(late, house, 'go-late')), 'mall-outside');
-assert.equal(beatOf(choose(late, house, 'leave-it')), 'left-dry');
-assert.equal(beatOf(choose(promised, house, 'go-now')), 'mall-outside');
+assert.equal(beatOf(choose(late, leader, 'go-late')), 'mall-outside');
+assert.equal(beatOf(choose(late, leader, 'leave-it')), 'left-dry');
+assert.equal(beatOf(choose(promised, leader, 'go-now')), 'mall-outside');
 for (const expect of ['fitting', 'promised']) {
   let found = false;
   for (let seed = 1; seed <= 30; seed++) {
-    const camp = sitePosition('glasshouse', seed);
+    const camp = siteSpot('glasshouse', seed, 'marigold');
     const ready = begin(initial('asking', seed, cast, [{type: 'favour', person: 'walkers', by: 1}]));
     const away = choose(ready, camp, 'send-friends');
     assert.equal(favoursOf(away.world, 'walkers'), 0);
@@ -123,10 +172,10 @@ for (const expect of ['fitting', 'promised']) {
 const walkers = begin(initial('asking', 2, cast, [
   {type: 'favour', person: 'walkers', by: 1}, {type: 'word', person: 'walkers', set: 'Friendly'}, {type: 'mark', id: 'told-walkers-of-mall'},
 ]));
-assert.equal(beatOf(frame(advance(choose(walkers, house, 'send-friends'), 2), house).open), 'fitting');
+assert.equal(beatOf(frame(advance(choose(walkers, leader, 'send-friends'), 2), house).open), 'fitting');
 
 // Drive the graph without graphics, including the shared hold across talk, mending and a child mission.
-const visit = choose(offered, house, 'go-today');
+const visit = choose(offered, leader, 'go-today');
 const parking = frame(visit, spots['car-park'], {onFoot: false});
 assert.ok(isHeld(parking.open.holds, 'checkpoints') && isHeld(parking.open.holds, 'signs'));
 assert.ok(parking.requests.some(row => row.type === 'solids' && row.solids.length > 0));
@@ -179,7 +228,7 @@ const water = frame(just.open, pump, {wrench: true}, .01);
 assert.ok(mark(water.open, 'water-back'));
 assert.equal(water.events[0].cue, 'open.pump.water');
 assert.equal(isHeld(water.open.holds, 'checkpoints'), false);
-const returned = choose(water.open, house, 'tell-of-penny');
+const returned = choose(water.open, leader, 'tell-of-penny');
 assert.equal(wordOf(returned.world, 'glasshouse'), 'Sworn');
 assert.equal(endOf(returned), 'water-back');
 assert.ok(mark(returned, 'penny-has-friends'));
@@ -253,5 +302,8 @@ for (const [name, point] of Object.entries(spots)) {
 assert.deepEqual(walkThread(dryPump).faults, []);
 for (const name of Object.keys(pageFunctions)) new Function('return ' + pageSource(name, {}, [], 'test'));
 const syntax = source => new Function('return ' + source);
-await scenario({navigate() {}, waitFor: syntax, evaluate: syntax, screenshot() {}});
+await scenario({navigate() {}, waitFor: syntax, evaluate(source) {
+  syntax(source);
+  if (source === pageSource('campState')) return {world: initial(), site: {site: 'glasshouse'}};
+}, screenshot() {}});
 console.log('The Dry Pump: director, written scenes, holds, outcomes, ledger, terrain and browser source pass.');

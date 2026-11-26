@@ -1383,18 +1383,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-PUMP-2
-    title: "Open Scablands: the Dry Pump cannot begin on the laptop, because no talk opens at Marigold"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-PUMP-2.md"
-
   - id: OPEN-T-HAULER
     title: "Open Scablands: The Stranded Hauler comes into the game (its sign, places, people and missions)"
     owner: "codex"
