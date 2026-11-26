@@ -1791,3 +1791,13 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 SEA-LINES (Claude cloud, Opus): every line of the act in src/story/sea-lines.js, word for word, with a test that fails on one changed word; nothing loads it yet. test-sea-lines passed on the merged result.
 - 2026-11-26 FAR-LINES (Claude cloud, Opus): 122 lines of the Far Side in src/story/far-lines.js, word for word, one line reworded to drop their for one person; nothing loads it yet. test-far-lines passed on the merged result.
 - 2026-11-26 OPEN-T-MARKET (Codex cloud, Sol): Market Day plays behind story-choices. Codex merged integration in a laptop lane; Claude settled three small conflicts keeping both sides. Guards and 17 open-land suites passed 22/22 on the merged result; build passed.
+- 2026-11-26 OPEN-LOOK-BUS-RING (Claude cloud, Opus): the Bus Ring, round 1, drawn in code; its look test and the other look tests passed on the merged result; Claude's laptop pictures and verdict follow.
+- 2026-11-26 QA-EVIDENCE-MIDNIGHT-AGAIN (Claude cloud): merged in the evening batch at c6c9b71b8.
+- 2026-11-26 QA-SUMMIT-WARMUP-EXCEPTION (Claude cloud): merged in the evening batch at 7f0254188.
+- 2026-11-26 QA-NIGHT-TIMING-ALONE (Claude cloud): merged in the evening batch at 88840e450.
+- 2026-11-26 WILDLIFE-HITS-2 (Claude cloud): merged in the evening batch at 220c716c7.
+- 2026-11-26 NIGHT-2-TRY-FIXES (Claude cloud): merged in the evening batch at c22d0ff2e.
+- 2026-11-26 OPEN-LOOK-RADIO-HILL (Claude cloud, Opus): Radio Hill, round 1, drawn in code; Claude settled three additive conflicts with the Bus Ring look. Look, site and scenario suites passed; laptop pictures follow.
+- 2026-11-26 COMBAT-ROOF-BOW-LOOK: merged in the second evening batch at 72911d1a6.
+- 2026-11-26 OPEN-LOOK-BUS-RING-2: merged in the second evening batch at 0449085f0.
+- 2026-11-26 OPEN-T-RUNAWAY (Codex, laptop lanes): The Runaway plays behind story-choices. Claude settled six conflicts with Market Day keeping both, and moved the Grey Camp to a flat spot 639 m from the road. Guards and 18 open-land suites passed 23/23; build passed.

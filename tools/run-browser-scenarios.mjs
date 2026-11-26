@@ -54,6 +54,8 @@ export const SCENARIO_AREAS = [
   // OPEN-LOOK-RATS-NEST: a look scenario of the open Scablands runs when its look file or the QA page's stand changes.
   {prefixes:['look-rats-nest'], paths:['src/world/open/looks/rats-nest-look.js','tools/open-look-stand.js']},
   {prefixes:['look-glasshouse'], paths:['src/world/open/looks/glasshouse-look.js']},
+  {prefixes:['look-bus-ring'], paths:['src/world/open/looks/bus-ring-look.js','tools/open-look-stand.js']},
+  {prefixes:['look-radio-hill'], paths:['src/world/open/looks/radio-hill-look.js','tools/open-look-stand.js']},
   {prefixes:['open-map'], paths:['src/world/open/map-marks.js','src/world/open/parts/ground.js','src/world/scablands-map.js']},
   {prefixes:['open-find-camp'], paths:['src/world/open/parts/sites.js','src/world/open/site-rule.js','src/world/open/site-view.js','src/world/open/content/sites.js']},
   {prefixes:['open-forge-shed'], paths:['src/world/open/parts/buildings.js','src/world/open/building-view.js','src/world/open/building-rule.js','src/world/open/content/buildings.js']},
@@ -79,6 +81,13 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
     'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
     'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
+  {prefixes:['open-runaway'], paths:['src/story/threads/content/runaway.js','src/story/threads/signs.js',
+    'src/world/open/content/runaway-places.js','src/world/open/content/mission-kinds.js',
+    'src/world/open/content/sites.js','src/world/open/content/talk-threads.js','src/world/open/parts/threads.js',
+    'src/world/open/parts/missions.js','src/world/open/parts/people.js','src/world/open/sign-view.js',
+    'src/arena/modes/world-job.js','src/arena/modes/road-riders.js','src/world/jobs/brand-rule.js',
+    'src/world/open/content/talk-tables.js','src/world/scablands-map.js','src/world/scablands-picture.js',
+    'src/world/brand-carried.js','src/world/brand-ash-view.js','src/world/open/parts/checkpoints.js']},
   {prefixes:['open-stranded-hauler'], paths:['src/story/threads/content/stranded-hauler.js','src/story/threads/signs.js',
     'src/story/threads/thread-rule.js','src/world/open/parts/threads.js','src/world/open/parts/missions.js',
     'src/world/open/content/mission-kinds.js','src/world/open/content/stranded-hauler-places.js',
@@ -149,6 +158,12 @@ export const QUIET_SCENARIOS = Object.freeze([
   'vesper-art', 'wasteland-beta',
 ]);
 
+// QA-NIGHT-TIMING-ALONE: these frame-time scenarios belong to the night's frame stage, which refuses to start with
+// company and runs headed, one at a time (AGENTS rule 8). The browser stage's --all and --changed-since leave them
+// out; --scenarios still runs them by name. This is the one list of the names.
+export const FRAME_STAGE_SCENARIOS = Object.freeze(['deep-frames', 'convoy-frames', 'fire-view']);
+const TIMING_ONLY_SCENARIOS = Object.freeze(['deep-frames', 'frame-pacing', 'tremblant-snow', 'tremblant-views', 'convoy-frames', 'fire-view']);
+
 export function parseSuiteArguments(args) {
   const options = {all: false, names: null, jobs: 4, outputDir: null};
   const seen = new Set();
@@ -178,7 +193,7 @@ export function parseSuiteArguments(args) {
   if ([options.all, !!options.names, !!options.changedSince].filter(Boolean).length !== 1)
     throw Error('Usage: node tools/run-browser-scenarios.mjs --all|--scenarios NAMES [--jobs 1..4] [--output-dir .evidence/PATH]');
   if (options.timingOnly) {
-    if (!options.names || options.names.some(name => !['deep-frames','frame-pacing','tremblant-snow','tremblant-views'].includes(name)))
+    if (!options.names || options.names.some(name => !TIMING_ONLY_SCENARIOS.includes(name)))
       throw Error('--timing-only requires explicit existing frame recipe names.');
     options.headed = true;
   }
@@ -225,7 +240,9 @@ export async function main(args = process.argv.slice(2), {
   cleanup = removeQaBundle, log = console.log, error: logError = console.error,
 } = {}) {
   const options = parseSuiteArguments(args);
-  const discovered = await discover({includeManual: !!options.names});
+  const found = await discover({includeManual: !!options.names});
+  // --all and --changed-since leave the frame stage's scenarios out; naming them with --scenarios still runs them.
+  const discovered = options.names ? found : found.filter(name => !FRAME_STAGE_SCENARIOS.includes(name));
   const selection = options.changedSince ? await changedSelection(discovered, options.changedSince) : null;
   const selected = options.names ?? (selection ? selection.map(row => row.name) : discovered);
   if (options.list) {

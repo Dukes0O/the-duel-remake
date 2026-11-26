@@ -4,9 +4,10 @@ import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
 import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination,
-  night2CampSolids, stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
+  night2CampSolids, stepNight2Siege, watchNight2Camp, watchNight2Riders} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
+import {damageFighter} from '../../onfoot.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear, signatureFor} from '../../crew-gear/signature.js';
@@ -1605,6 +1606,10 @@ export function moveJobRaiders(duel, worldJob, dt) {
         worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
     }
     if (actor.riderCrew && (actor.x !== from.x || actor.z !== from.z)) actor.steps++;
+    if (actor.missionRetreat && Math.hypot(actor.x - actor.missionRetreat.x, actor.z - actor.missionRetreat.z) < 2) {
+      actor.missionDeparted = true;
+      actor.approachTarget = null;
+    }
     if (actor.brandAsh) {
       // The foot mover resolves land and buildings, but not other people.
       // Reserve the whole step so a long step cannot pass through a neighbour.
@@ -1644,7 +1649,7 @@ export function moveJobRaiders(duel, worldJob, dt) {
         }
       }
       // A brand opponent receives a fresh movement decision each rule step.
-      actor.approachTarget = null;
+      if (!actor.missionRetreat) actor.approachTarget = null;
     }
   }
 }
@@ -1753,6 +1758,51 @@ function closeOpenTalk(duel, worldJob, step, waiting, finished = false) {
   worldJob.storySpeaker = null;
   worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), {type: 'openTalkClosed', scene: step.id, finished}];
   if (waiting) duel._storyCallout(WAITING_LINE);
+}
+
+function applyOpenFootMissionRequest(duel, worldJob, request) {
+  const {state} = duel;
+  if (request.type === 'searchCast') {
+    worldJob.threadSearchCast = request.target ? request : null;
+  } else if (request.type === 'missionDestinations') {
+    worldJob.threadDestinations = request.places;
+    state.arena.markers = [...(state.arena.markers ?? []).filter(mark => mark.owner !== request.id),
+      ...request.places.map(place => ({...place, id: request.id + '/' + place.id,
+        owner: request.id, kind: 'ring', radius: 12}))];
+  } else if (request.type === 'missionDefence') {
+    if (request.entries.length) {
+      worldJob.threadDefence = {id: request.id, weapons: request.weapons,
+        crew: state.crewId, selected: state.footWeapons?.selected};
+      if (request.weapons.includes('hand-flamer')) {
+        state.crewId = 'cinder';
+        initializeCrewGear(duel);
+        if (state.footWeapons) state.footWeapons.selected = 'hand-flamer';
+      }
+      request.entries.forEach((from, index) =>
+        applyBrandRequest(duel, worldJob, {type: 'spawnBrandAsh', id: request.id + '/' + index, from}));
+    } else if (worldJob.threadDefence?.id === request.id) {
+      const {crew, selected} = worldJob.threadDefence;
+      if (request.retreatTo) {
+        for (const actor of worldJob.actors.filter(row => row.id?.startsWith(request.id + '/')))
+          applyOpenFootMissionRequest(duel, worldJob, {type: 'retreatMissionFighter', id: actor.id, to: request.retreatTo});
+      } else worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(request.id + '/'));
+      state.crewId = crew;
+      if (state.footWeapons && selected) state.footWeapons.selected = selected;
+      initializeCrewGear(duel);
+      worldJob.threadDefence = null;
+      worldJob.brandSwingHeld = false;
+    }
+  } else if (request.type === 'retreatMissionFighter') {
+    const actor = worldJob.actors.find(actor => actor.id === request.id);
+    if (actor) {
+      applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: request.id, place: request.to});
+      actor.approachSpeed = 4.5;
+      actor.missionRetreat = request.to;
+    }
+  } else if (request.type === 'missionAsh') {
+    if (state.onFoot && state.fighter) damageFighter(state.fighter, 25);
+  } else return false;
+  return true;
 }
 
 export function stepWorldJob(duel, dt) {
@@ -2066,6 +2116,7 @@ export function stepWorldJob(duel, dt) {
   }
   const roadResult = worldJob.riderFight && updateRoadFight(duel,worldJob,dt);
   if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
+  if (worldJob.night2) watchNight2Riders(worldJob, state.opponents, text => duel._storyCallout(text, EMBER_CAPTION_SECONDS));
   const truckWater = sprayFromFireTruck(duel, worldJob, currentStep, dt);
   const view = {player: playerView, onFoot: !!state.onFoot, ...(truckWater?.hit ? {waterOnCar: true} : {}),
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
@@ -2112,13 +2163,23 @@ export function stepWorldJob(duel, dt) {
       worldJob.openSitePositions = {landSeed, at, withSpots};
     }
     const {at: sites, withSpots} = worldJob.openSitePositions;
+    const threadMission = worldJob.open.parts.missions?.active;
+    const runawayRecord = worldJob.open.world.open.threads.runaway;
+    const deferCheckpointRecovery = checkpointsEnabled && !runawayRecord?.end &&
+      (threadMission?.state.route.road || ['surrounded', 'breakout'].includes(runawayRecord?.beat));
+    if (deferCheckpointRecovery && state.combatWrecking) state.combatWreckTimer = state.impactTimer = 1;
+    const missionDefence = checkpointsEnabled && worldJob.threadDefence ? brandCombatView(state, worldJob) : {};
     const missionRidersFighting = worldJob.riderFight?.checkpointStep?.id === road.road?.id &&
       worldJob.riderFight?.outcome === null;
     openStep = stepOpenLand(worldJob.open, {...view, ...road,
       sitePositions: checkpointsEnabled ? withSpots : sites, checkpointSites: sites, missionRidersFighting,
-      missionLookoutPosts: worldJob.open.parts.missions?.active?.state.route.posts,
+      ...missionDefence, missionRoadOutcome: roadResult ?? (worldJob.riderFight?.checkpointStep ?
+        {id: worldJob.riderFight.checkpointStep.id, outcome: worldJob.riderFight.outcome} : null),
+      missionRoadHeldSeconds: worldJob.riderFight?.checkpointStep?.id === threadMission?.id ?
+        worldJob.riderFight?.heldSec : 0,
+      deferCheckpointRecovery, threadSearchCast: worldJob.threadSearchCast, missionLookoutPosts: threadMission?.state.route.posts,
       roadEncounter: worldJob.open.parts.checkpoints?.encounter,
-      ...(worldJob.open.parts.missions?.active?.mission.kind === 'squeeze' ? {missionWeapons: state.combat?.cooldowns} : {}),
+      ...(threadMission?.mission.kind === 'squeeze' ? {missionWeapons: state.combat?.cooldowns} : {}),
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       campSiteState: worldJob.open.parts.sites,
       serviceSheds: worldJob.serviceSheds,
@@ -2163,6 +2224,8 @@ export function stepWorldJob(duel, dt) {
   // the six still seconds in which Moss works on the tank.
   if (currentStep?.gasLoad) applyRequests(duel, worldJob, next.requests.filter(request => request.type === 'follow'));
   moveJobRaiders(duel, worldJob, dt);
+  if (worldJob.actors.some(actor => actor.missionDeparted))
+    worldJob.actors = worldJob.actors.filter(actor => !actor.missionDeparted);
   updateJobActors(duel, worldJob, dt);
   if (next.stepIndex !== previousStep) {
     worldJob.clearedWaves = [];
@@ -2292,8 +2355,9 @@ export function stepWorldJob(duel, dt) {
     const isTalk = request => request.type === 'talk' || request.type === 'openTalk';
     if (currentStep?.kind === 'roam') {
       syncOpenPeople(worldJob);
-      const talks = openStep.requests.filter(isTalk);
-      const talk = talks.find(request => request.threadPriority) ?? talks[0];
+        const talks = openStep.requests.filter(isTalk);
+        const talk = talks.find(request => request.threadPriority) ??
+          talks.find(request => request.id?.startsWith('runaway/')) ?? talks[0];
       if (talk) {
         const skipped = talks.filter(request => request !== talk)
           .map(request => ({type: 'openTalkSkipped', scene: request.id}));
@@ -2319,6 +2383,8 @@ export function stepWorldJob(duel, dt) {
           heading: position.heading ?? 0, renderCar: position.car ?? ROAD_GROUPS[request.group]?.car,
           health: 100, speed: 0,
         }));
+      } else if (checkpointsEnabled && applyOpenFootMissionRequest(duel, worldJob, request)) {
+        continue;
       } else if (!checkpointsEnabled || !applyCheckpointRoadRequest(duel, worldJob, request)) applyRequests(duel, worldJob, [request]);
     }
   }

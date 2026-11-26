@@ -10,9 +10,9 @@ import {yardHomeScreen} from '../src/screen-yard-home.js';
 import {pageFunctions, pageSource} from './scenarios/story-night-2.mjs';
 import {Duel} from '../src/game.js';
 import {namedThrow, bankHearth, createLedger} from '../src/story/ledger.js';
-import {NIGHT_2_CHOICES, NIGHT_2_SCENES, night2Count} from '../src/story/scenes/night-2.js';
+import {NIGHT_2_CHOICES, NIGHT_2_RIDER_LINES, NIGHT_2_SCENES, night2Count} from '../src/story/scenes/night-2.js';
 import {validateTalkScene} from '../src/story/talk.js';
-import {night2Job, night2Odds, night2Opening} from '../src/world/jobs/night-2.js';
+import {NIGHT_2_GETAWAY_METRES, night2Job, night2Odds, night2Opening} from '../src/world/jobs/night-2.js';
 import {NIGHT_2_SITES as sites} from '../src/world/jobs/night-2-sites.js';
 import {savedLedger} from '../src/story/ledger-save.js';
 import {settleNight2} from '../src/story/night-2-save.js';
@@ -858,6 +858,8 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
   assert(washApp.visitWasteland());
   washApp.advance(8);
   assert(surrounded ? startWashSurroundReview(washApp) : washApp.startNight2());
+  // NIGHT-2-TRY-FIXES item 1: a story night is not a race. It starts at once, with no countdown.
+  if (!surrounded) assert.equal(washApp.duel.state.status, 'racing', 'Night 2 starts with no countdown');
   const run = chapter(washApp.seed, washApp.duel), {duel, world, view} = run, state = duel.state;
   assert.equal(state.opponents.length, 0, 'Reserved riders stay out of earlier chapter branches');
   const riderCount = surrounded ? 5 : 3;
@@ -994,6 +996,24 @@ for (const result of ['win', 'wreck', 'surrounded', 'win-and-wreck', 'camp-taken
           duel.step(1 / 120);
           assert.equal(circler.roadRider.phase, 'withdrawing', 'The siege rider breaks off last, once the others are beaten');
           assert(run.cues.includes('rider.breaks-off'));
+          // NIGHT-2-TRY-FIXES item 3: the player is told who got away, and a rider leaving is never gone while it is near.
+          assert.equal(world.riderFight.outcome, 'won');
+          assert.equal(state.callout, NIGHT_2_RIDER_LINES.gotAway(1), 'The player is told one rider got away');
+          const me = worldPose(duel, state), home = {...circler.roadRider.home};
+          const putRider = ({x, z}) => {
+            const near = duel.course.nearest(x, z);
+            Object.assign(circler, {s: near.s, prevS: near.s, lateral: near.lateral, prevLateral: near.lateral, speedMph: 0});
+          };
+          putRider(home);
+          duel.step(1 / 120);
+          assert.equal(circler.roadRider.phase, 'withdrawing', 'A rider at its home but near the player drives on');
+          assert(Math.hypot(circler.roadRider.home.x - me.x, circler.roadRider.home.z - me.z) >
+            Math.hypot(home.x - me.x, home.z - me.z), 'It drives on away from the player');
+          const away = Math.atan2(home.x - me.x, home.z - me.z), out = NIGHT_2_GETAWAY_METRES + 10;
+          circler.roadRider.home = {x: me.x + Math.sin(away) * out, z: me.z + Math.cos(away) * out};
+          putRider(circler.roadRider.home);
+          duel.step(1 / 120);
+          assert.equal(circler.roadRider.phase, 'home', 'Out of sight, the rider is gone');
         }
       }
       if (towed) {

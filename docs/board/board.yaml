@@ -47,29 +47,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
 
-  - id: QA-NIGHT-TIMING-ALONE
-    title: "Frame-timing scenarios leave the night's browser stage for the frame stage (convoy-frames, fire-view, deep-frames)"
-    owner: "codex"
-    model: "sol"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-NIGHT-TIMING-ALONE.md"
-
-  - id: QA-NIGHT-22-NOV
-    title: "Four browser scenarios behind dev switches fail since the night of 22 November (on-foot exit, far rain, borer)"
-    owner: "codex"
-    model: "sol"
-    lane: "TOOL"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    details: "docs/board/cards/QA-NIGHT-22-NOV.md"
-
   - id: QA-AUDIO-BASELINE-CONTROL
     title: "Legacy native audio repeat control is unreliable"
     owner: "codex"
@@ -243,17 +220,6 @@ tasks:
     locks: []
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"
-
-  - id: QA-SUMMIT-WARMUP-EXCEPTION
-    title: "Summit candidate records two compile warmup exceptions"
-    owner: "codex"
-    lane: "RENDER"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: [busy-game-files]
-    details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
 
   - id: QA-HARBOUR-PERFORMANCE-PACING
     title: "Harbour Performance fails its one authorized quiet reread"
@@ -651,31 +617,6 @@ tasks:
   # Show Night round 2, the slices of BOWL-SHOW-2 (its "Design" section). Nights 1 to 5 are the first release; BOWL-TOUR follows it.
 
 
-  - id: BOWL-LAUNCHER-REACH
-    title: "Bowl: the player's launcher reaches further, and Easy stays six wins in ten (Kyle, 22 November)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "titan-bowl"
-    details: "docs/board/cards/BOWL-LAUNCHER-REACH.md"
-
-  - id: BOWL-MENU-FRAME
-    title: "Bowl: opening Show Night logs one error from the menu camera (the showcase car has no place for a frame)"
-    owner: "codex"
-    model: "sol"
-    lane: "UI"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/BOWL-MENU-FRAME.md"
-
   - id: BOWL-REX-3
     title: "Bowl: the Scrapasaurus shoots an eye beam and lobs bombs that the hook can send back (Kyle, 20 November)"
     owner: "codex"
@@ -786,30 +727,6 @@ tasks:
     flag: "titan-bowl"
     details: "docs/board/cards/BOWL-TOUR.md"
 
-
-  - id: WILDLIFE-HITS-2
-    title: "Animal hits from Kyle's try: more animals, more kinds, a louder splat, and why the car cannot turn round"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "wildlife-hits"
-    details: "docs/board/cards/WILDLIFE-HITS-2.md"
-
-  - id: NIGHT-2-TRY-FIXES
-    title: "Night 2 from Kyle's try: no countdown, clear arrows, riders that vanish, long pauses"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/NIGHT-2-TRY-FIXES.md"
 
 
 
@@ -955,28 +872,6 @@ tasks:
     locks: []
     flag: "wasteland-town"
     details: "docs/board/cards/TOWN-RESERVED-OUTPOSTS.md"
-
-  - id: QA-EVIDENCE-MIDNIGHT-AGAIN
-    title: "The evidence-folder test fails after midnight again when a previous day's folder exists"
-    owner: "codex"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT-AGAIN.md"
-
-  - id: COMBAT-ROOF-BOW-LOOK
-    title: "The car's roof crossbow reads as a floating cream wedge and black bar"
-    owner: "codex"
-    lane: "UI"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/COMBAT-ROOF-BOW-LOOK.md"
 
   - id: TOWN-FIRE-STREAM-LOOK
     title: "The fire truck's water drawn as a jet and spray, not a white blob"
@@ -1374,18 +1269,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-RUNAWAY
-    title: "Open Scablands: The Runaway comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-RUNAWAY.md"
-
   - id: OPEN-T-TOLL
     title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1448,27 +1331,27 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-DACE.md"
 
-  - id: OPEN-LOOK-RADIO-HILL
-    title: "Open Scablands: Radio Hill, round 1, drawn in code (Claude cloud)"
-    owner: "claude-cloud"
+  - id: OPEN-LOOK-RADIO-HILL-2
+    title: "Open Scablands: Radio Hill, round 2 from Claude's verdict (the red lamp and the hut read at night, the mast from far)"
+    owner: "codex"
+    model: "astra"
     lane: "ART"
-    size: "M"
+    size: "S"
     status: "ready"
     needs: []
     locks: []
     flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-RADIO-HILL.md"
+    details: "docs/board/cards/OPEN-LOOK-RADIO-HILL-2.md"
 
-  - id: OPEN-LOOK-BUS-RING
-    title: "Open Scablands: the Bus Ring, round 1, drawn in code (Claude cloud)"
-    owner: "claude-cloud"
-    lane: "ART"
+  - id: AGENTS-REWRITE
+    title: "AGENTS.md rewritten around three lines: works and better merges, broken waits, the rest is the next card (Kyle, 26 November)"
+    owner: "claude"
+    lane: "DOCS"
     size: "M"
     status: "ready"
     needs: []
     locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-BUS-RING.md"
+    details: "docs/board/cards/AGENTS-REWRITE.md"
 
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"

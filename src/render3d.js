@@ -375,7 +375,7 @@ export function attachRenderer(host, app) {
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
   // WILD-VIEW: the animals, a group of their own beside the cars; with the switch off nothing is drawn and nothing loads.
-  const wildlifeView=createWildlifeView({scene,host,onHit:strength=>app.audio?.animalHit?.(strength)});let wildlifeRevision=0;
+  const wildlifeView=createWildlifeView({scene,host,onHit:(strength,size)=>app.audio?.animalHit?.(strength,size)});let wildlifeRevision=0;
   // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
   const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
@@ -540,7 +540,8 @@ export function attachRenderer(host, app) {
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
   const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
   // The Bowl view owns only course art; its switch never participates in race rules.
-  const bowlView=createBowlView();scene.add(bowlView.group);const bowlTrucks=[];
+  // Bowl art retires mid-session (a new event, a left fight); a warmup poll may still hold its materials, so free them when idle.
+  const bowlView=createBowlView({retire:release=>{if(warmup)warmup.releaseWhenIdle(release);else release();}});scene.add(bowlView.group);const bowlTrucks=[];
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
@@ -592,8 +593,10 @@ export function attachRenderer(host, app) {
   function build(next) {
     const buildStart=performance.now();
     worldReadyStarted=buildStart;host.dataset.worldReadyMs='0';
-    snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;
-    if (world) retireObject(world);
+    // Their materials sit inside the retiring world, which an open warmup poll may still hold: free them with it.
+    const retiredViews=[snowmenView,avalancheView];snowmenView=null;avalancheView=null;
+    const releaseViews=()=>{for(const view of retiredViews)view?.dispose();};
+    if (world) retireObject(world,releaseViews);else releaseViews();
     course = next;
     worldKey=kitWorldKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);
@@ -806,7 +809,10 @@ export function attachRenderer(host, app) {
     }
     // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
     // the wreck-effect pool counts real cars only and is not rebuilt for them.
-    const wreckCars=opponents.filter(actor=>!actor.decoy).length;
+    // NIGHT-2-TRY-FIXES item 4: a world job's riders held in reserve join mid-job (the Wash fight). Counting them from the start
+    // builds and compiles their wreck effects with the job, so their arrival does not stop the picture for a rebuild.
+    const reservedCars=st.arena?.mode==='world-job'?st.arena.worldJob?.riderReserve?.length??0:0;
+    const wreckCars=opponents.filter(actor=>!actor.decoy).length+reservedCars;
     const armoredField=!menu && st.mode==='wasteland' && Number.isFinite(st.maxArmor);
     const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
@@ -1460,7 +1466,10 @@ export function attachRenderer(host, app) {
     }
   }
   const tick = t => { if (disposed) return; frame(t,true); raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick);
-  const resize = () => { renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics();adaptiveResolution.reset(); };
+  // A hidden or minimised window measures 0 by 0. The camera's aspect would be 0 / 0, the menu camera's place on the
+  // course would not be a number, and the throw would stop the drawing loop (BOWL-MENU-FRAME, 26 November 2026).
+  // Keep the last real size until the window has one again; it sends another resize then.
+  const resize = () => { if (!(host.clientWidth > 0 && host.clientHeight > 0)) return; renderer.setSize(host.clientWidth, host.clientHeight); composer.setSize(host.clientWidth,host.clientHeight); camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();rearView.resize();resetFrameMetrics();adaptiveResolution.reset(); };
   const visibility = () => {resetFrameMetrics();adaptiveResolution.reset();};
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange',visibility);

@@ -47,7 +47,8 @@ export async function run(context) {
     await context.evaluate(`(() => { const st = window.__qaApp.duel.state; st.s = ${animal.s} - 140; st.lateral = 0; st.speedMph = 0; })()`);
     await context.evaluate(frames(40));
     await context.evaluate(`(() => { const st = window.__qaApp.duel.state; st.s = ${animal.s}; st.lateral = ${animal.lateral}; st.speedMph = 40; })()`);
-    await context.evaluate(frames(10));
+    // WILDLIFE-HITS-2: the fall is drawn over a few tenths of a second, and the stain spreads once it is down.
+    await context.evaluate(frames(30));
     const hit = await context.evaluate(STATE);
     if (!/hit/.test(hit.status) || !hit.down.length || hit.blood.length !== hit.down.length)
       throw Error(`The ${label} should knock the animal down, with a stain under it: ${JSON.stringify(hit)}`);

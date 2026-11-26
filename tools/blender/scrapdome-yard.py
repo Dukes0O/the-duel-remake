@@ -9,8 +9,10 @@ import json
 import math
 import os
 import sys
-from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from evidence_date import evidence_date  # the one evidence day, shared with tools/evidence-date.mjs
 
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument('--root', required=True)
@@ -23,7 +25,7 @@ args = args_parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 output = root / 'public/assets/models/wasteland/scrapdome/yard.glb'
 blend_output = root / 'art-build/scrapdome/yard.blend'
-evidence = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'scrapdome' / f'round-{args.round}')
+evidence = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / evidence_date() / 'scrapdome' / f'round-{args.round}')
 if not evidence.is_absolute(): evidence = root / evidence
 if args.paths_only:
     print(json.dumps({'blend': [str(blend_output)],

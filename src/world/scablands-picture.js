@@ -1,3 +1,4 @@
+import {nameOf} from './open/register.js';
 // The one picture of the Scablands that both maps are drawn from (SCABLANDS-LAND round 4, slice 4). It is made once, when the
 // land is first asked for, from the same data the ground is drawn and driven from, and nothing in it is written by hand:
 //   the ground      each point of the land is asked what it is (scablandsDriveAt, the question the car's wheels ask), and is painted in
@@ -82,11 +83,13 @@ const firstPositions = {
 
 // OPEN-SITES joined on 25 November: a site stands where the land's seed puts it; the first positions remain only for a
 // site whose row gives none.
-export function landMarks({base, world, serviceSheds, positionOf = (id, landSeed) => sitePosition(id, landSeed) ?? firstPositions[id], ...options} = {}) {
+export function landMarks({base, world, serviceSheds, havens = [], positionOf = (id, landSeed) => sitePosition(id, landSeed) ?? firstPositions[id], ...options} = {}) {
   const fixed = base ?? fixedLandMarks(options);
   if (!world) return fixed;
   const {sites, rumours, driven} = openMapMarks(world, positionOf);
-  const extraPlaces = sites.map(site => ({...site, label: site.name, flatRadius: 60, plan: []}));
+  const havenMarks = havens.filter(haven => !sites.some(site => site.id === haven.id)).map(haven =>
+    ({...haven, name: haven.id === 'nobody' ? 'The Boneyard road' : nameOf(haven.id)}));
+  const extraPlaces = [...sites, ...havenMarks].map(site => ({...site, label: site.name, flatRadius: 60, plan: []}));
   const services = serviceSheds ? SERVICE_LANDMARKS.filter(({person}) => world.ledger.encounters?.[person]) : [];
   return {...fixed, places: [...fixed.places, ...extraPlaces], rumours, driven, services};
 }

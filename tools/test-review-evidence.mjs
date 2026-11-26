@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { analyzeFolder } from './audio-analysis.mjs';
 import * as browserHarness from './browser-harness.mjs';
-import { clockNow, evidenceDate } from './evidence-date.mjs';
+import { clockNow, evidenceClockText, evidenceDate } from './evidence-date.mjs';
 import { wavFromPcm } from './scenarios/audio-race.mjs';
 import { inspectRepository } from './test-repo-hygiene.mjs';
 
@@ -87,7 +87,10 @@ test('Blender path plans keep all four raw capture families in dated evidence wi
 test('browser, Blender and fidelity rounds plan the same raw evidence directory', () => {
   check(typeof browserHarness.reviewRoundOutputDir === 'function',
     'browser harness must expose the shared review round output plan');
-  const plainEnv = { ...process.env };
+  // QA-EVIDENCE-MIDNIGHT-AGAIN: the clock is read once, here, and every process is handed that moment. Reading it again
+  // in each child let a run that crossed midnight plan yesterday's folder in the browser and today's in Blender.
+  const now = clockNow();
+  const plainEnv = { ...process.env, DUEL_EVIDENCE_NOW: evidenceClockText(now) };
   delete plainEnv.DUEL_EVIDENCE_DIR;
   const families = [
     { scenario: 'crew-fighters', family: 'crew', key: 'GFX_CREW_ROUND', mode: '--crew-round', script: 'crew-fighters.py' },
@@ -100,7 +103,7 @@ test('browser, Blender and fidelity rounds plan the same raw evidence directory'
     delete defaultEnv[key];
     for (const [round, env] of [[1, defaultEnv], [3, { ...defaultEnv, [key]: '3' }],
       [3, { ...defaultEnv, [key]: '3', DUEL_EVIDENCE_DIR: join(root, '.evidence', 'acceptance', family, 'round-3') }]]) {
-      const browser = browserHarness.reviewRoundOutputDir(scenario, new Date(), root, env);
+      const browser = browserHarness.reviewRoundOutputDir(scenario, now, root, env);
       const fidelity = spawnSync(process.execPath,
         [join(root, 'tools', 'fidelity-sheet.mjs'), mode, String(round), '--paths-only'],
         { cwd: root, env, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
@@ -118,7 +121,7 @@ test('browser, Blender and fidelity rounds plan the same raw evidence directory'
   }
   for (const env of [plainEnv, { ...plainEnv,
     DUEL_EVIDENCE_DIR: join(root, '.evidence', 'acceptance', 'test-fighter', 'round-1') }]) {
-    const browser = browserHarness.reviewRoundOutputDir('rigged-fighter', new Date(), root, env);
+    const browser = browserHarness.reviewRoundOutputDir('rigged-fighter', now, root, env);
     const fidelity = spawnSync(process.execPath, [join(root, 'tools', 'fidelity-sheet.mjs'), '--paths-only'],
       { cwd: root, env, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
     check(fidelity.status === 0, `test-fighter fidelity path plan must run: ${fidelity.stderr || fidelity.stdout}`);
@@ -131,7 +134,7 @@ test('browser, Blender and fidelity rounds plan the same raw evidence directory'
     check(browser === fidelityDir, `rigged-fighter browser and fidelity must share raw evidence: ${browser} vs ${fidelityDir}`);
     check(browser === blenderDirs[0], `rigged-fighter browser and Blender must share raw evidence: ${browser} vs ${blenderDirs[0]}`);
   }
-  check(browserHarness.reviewRoundOutputDir('audio-race', new Date(), root, plainEnv) === null,
+  check(browserHarness.reviewRoundOutputDir('audio-race', now, root, plainEnv) === null,
     'audio recordings must keep their separate timestamped evidence folder');
 });
 
@@ -164,6 +167,50 @@ test('every tool names the evidence folder by the same local day around midnight
   check(evidenceDate(cases[0][0]) !== evidenceDate(cases[2][0]), 'the evidence day changes at local midnight');
   assert.throws(() => clockNow({ DUEL_EVIDENCE_NOW: 'not a date' }), /DUEL_EVIDENCE_NOW/);
   checks++;
+});
+
+// QA-EVIDENCE-MIDNIGHT-AGAIN: on 20 November case 4 failed at night with yesterday's folder still in .evidence/, because the
+// Blender recipes read `date.today()` on their own clock. Here every Blender recipe, the browser runner and the round planner
+// are handed one moment on each side of midnight, with the two previous days' folders present, and must name one folder.
+test('Blender, browser and round planner name one folder across midnight with an older day folder present', async () => {
+  const fixtureRoot = await mkdtemp(join(tmpdir(), 'duel-evidence-midnight-'));
+  const plainEnv = { ...process.env };
+  delete plainEnv.DUEL_EVIDENCE_DIR;
+  for (const key of ['GFX_CREW_ROUND', 'GFX_FIRST_PERSON_ROUND', 'EGG_RUSTWALL_ROUND']) delete plainEnv[key];
+  const scripts = [['test-fighter.py', 'test-fighter', 'rigged-fighter'], ['crew-fighters.py', 'crew', 'crew-fighters'],
+    ['first-person-gear.py', 'first-person', 'first-person-gear'], ['rustwall.py', 'rustwall', 'rustwall']];
+  const older = ['2026-11-18', '2026-11-19'].flatMap(day => scripts.map(([, family]) => join('.evidence', day, family, 'round-1')));
+  try {
+    for (const folder of older) await mkdir(join(fixtureRoot, folder), { recursive: true });
+    for (const [clock, day] of [[new Date(2026, 10, 19, 23, 59, 59), '2026-11-19'], [new Date(2026, 10, 20, 0, 0, 0), '2026-11-20'],
+      [new Date(2026, 10, 20, 0, 1), '2026-11-20'], [new Date(2026, 10, 20, 0, 35), '2026-11-20']]) {
+      const text = evidenceClockText(clock);
+      check(clockNow({ DUEL_EVIDENCE_NOW: text }).getTime() === clock.getTime(), `${text} reads back as the same local moment`);
+      const env = { ...plainEnv, DUEL_EVIDENCE_NOW: text };
+      for (const [script, family, scenario] of scripts) {
+        const expected = join(fixtureRoot, '.evidence', day, family, 'round-1');
+        const blender = spawnSync('python', [join(root, 'tools', 'blender', script), '--', '--root', fixtureRoot,
+          ...(script === 'test-fighter.py' ? [] : ['--round', '1']), '--paths-only'],
+        { cwd: root, env, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
+        check(blender.status === 0, `${script} must plan paths at ${text}: ${blender.stderr || blender.stdout}`);
+        const planned = JSON.parse(blender.stdout).evidence;
+        check(planned.length === 1 && planned[0] === expected, `${text}: ${script} plans ${day}, not an older folder: ${planned}`);
+        const browser = browserHarness.reviewRoundOutputDir(scenario, clock, fixtureRoot, env);
+        check(browser === planned[0], `${text}: ${family} browser and Blender share one folder: ${browser} vs ${planned[0]}`);
+      }
+      const fidelity = spawnSync(process.execPath, [join(root, 'tools', 'fidelity-sheet.mjs'), '--crew-round', '1', '--paths-only'],
+        { cwd: root, env, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
+      check(fidelity.status === 0, `fidelity path plan must run at ${text}: ${fidelity.stderr || fidelity.stdout}`);
+      check(JSON.parse(fidelity.stdout).directory === join(root, '.evidence', day, 'crew', 'round-1'),
+        `${text}: the round planner names ${day} too`);
+    }
+    const days = readdirSync(join(fixtureRoot, '.evidence')).sort();
+    check(JSON.stringify(days) === JSON.stringify(['2026-11-18', '2026-11-19']), `--paths-only must create no day folder: ${days}`);
+    const refused = spawnSync('python', [join(root, 'tools', 'blender', 'crew-fighters.py'), '--', '--root', fixtureRoot,
+      '--paths-only'], { cwd: root, env: { ...plainEnv, DUEL_EVIDENCE_NOW: 'not a date' }, encoding: 'utf8', windowsHide: true,
+      timeout: 10_000 });
+    check(refused.status !== 0 && /DUEL_EVIDENCE_NOW/.test(refused.stderr), 'Blender refuses a clock it cannot read, as Node does');
+  } finally { await rm(fixtureRoot, { recursive: true, force: true }); }
 });
 
 test('Git ignores raw evidence and retained review sizes are reported against advisory targets', () => {

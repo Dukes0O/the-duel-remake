@@ -7,8 +7,10 @@ import json
 import math
 import os
 import sys
-from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from evidence_date import evidence_date  # the one evidence day, shared with tools/evidence-date.mjs
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
@@ -17,7 +19,7 @@ root = Path(args.root).resolve()
 asset_dir = root / 'public/assets/models/wasteland'
 blend_path = root / 'art-build/test-fighter.blend'
 glb_path = asset_dir / 'test-fighter.glb'
-shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'test-fighter' / 'round-1')
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / evidence_date() / 'test-fighter' / 'round-1')
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:

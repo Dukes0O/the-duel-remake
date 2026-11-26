@@ -14,6 +14,7 @@ import {MISSION_KINDS} from '../src/world/open/content/mission-kinds.js';
 import {prepareThreadMission, missionsPart} from '../src/world/open/parts/missions.js';
 import {createThreadsPart, openThreadSigns, threadsAtBankedHearth} from '../src/world/open/parts/threads.js';
 import {TOLL_GATE, TOLL_ID, stagedToll, tollPlace, tollPosition} from '../src/world/open/content/mall-road-toll-places.js';
+import {RUNAWAY_PLACES} from '../src/world/open/content/runaway-places.js';
 import {peoplePart} from '../src/world/open/parts/people.js';
 import {openMapMarks} from '../src/world/open/map-marks.js';
 import {checkThread} from '../src/world/open/check-tables.js';
@@ -62,6 +63,18 @@ assert.equal(applyThreadDirector([anotherFeud, story], {world: withFeud,
 assert.equal(openThreadSigns({world: startWorld, view: {checkpointsEnabled: false}}).length, 0);
 const [sign] = openThreadSigns({world: startWorld, view: {checkpointsEnabled: true}});
 assert.deepEqual(sign.at, gate);
+const bothStories = apply(startWorld, [
+  {type: 'thread', id: 'runaway', to: 'prints', cast: {haven: 'walkers'}},
+  {type: 'word', person: 'walkers', set: 'Friendly'},
+], 'fixture/shared-story-cast');
+const dayView = {openRoam: true, checkpointsEnabled: true, runawayVisible: true, partOfDay: 'day'};
+assert.deepEqual(openThreadSigns({world: bothStories, view: dayView}).map(row => row.id).sort(), [TOLL_ID, 'runaway']);
+const sharedCast = stepOpenLand(begin(bothStories), dayView, .1, [peoplePart]).open.parts.people.cast;
+const rell = sharedCast.filter(person => person.id === 'rell');
+assert.equal(rell.length, 1);
+assert.equal(rell[0].position.x, RUNAWAY_PLACES.walkers.x);
+assert.equal(rell[0].position.z, RUNAWAY_PLACES.walkers.z);
+assert.ok(sharedCast.some(person => person.id === 'sump'));
 assert.equal(scablandsFloorsAt(spot('approach').x, spot('approach').z, []), 1);
 for (const along of [-599, 599]) {
   const carPosition = tollPosition(0, along);

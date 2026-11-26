@@ -42,16 +42,16 @@ const CALLS_HOME = [
   {id: 'ask-dot', to: 'dot', words: 'Dot, do you know a hauler who carries tyres?',
     when: {fact: 'word', of: 'dot', atLeast: 'Wary'},
     shows: 'The blue door: the one thing the Road Rats cannot copy',
-    lines: [say('dot', "That'll be Tally. She brings my flour when she remembers to. Her truck has one blue door, because the red one fell off years ago and she never found another red one. If all the doors match, it isn't her.", onRadio)]},
+    lines: [say('dot', "That'll be Tally, who brings my flour when she remembers to. Her truck has one blue door, because the red one fell off years ago and she never found another red one, so if all the doors match, it isn't her.", onRadio)]},
 ];
 
 const FIRST_THOUGHTS = [
   "There's a truck stopped up ahead with its bonnet up, and somebody beside it is waving at me.",
-  "If that's somebody in real trouble, I might be the only car on this road all day. If it isn't, then I'm exactly who they're waiting for.",
+  "If that's somebody in real trouble, I might be the only car on this road all day. If it isn't, then I'm exactly the kind of driver a trap is waiting for.",
 ];
 const ROAD_THOUGHTS = [
   "If I stop and it's a trap, I'll be standing still with my engine off when it shuts.",
-  "If I drive on and it isn't a trap, somebody sits out here for another day, and I'll never find out which it was.",
+  "If I drive on and it isn't a trap, somebody will be left sitting out here for another day, and I'll never find out which it was.",
 ];
 
 export default {
@@ -126,7 +126,7 @@ export default {
           tells: 'Buggies are waiting out of sight'},
         {id: 'behind', cue: 'open.scout.seen',
           what: 'Two buggies behind the rise with their engines running, and their drivers standing on the seats.',
-          thought: "There are two buggies behind the rise with their engines running. That truck isn't broken down at all. It's a trap for whoever stops to help.",
+          thought: "There are two buggies behind the rise with their engines running, so that truck isn't broken down at all. It's a trap for whoever stops to help.",
           tells: 'All of it, for certain',
           effects: [mark('saw-the-trap-first', "You saw the Road Rats' trap before it saw you.")]},
       ],
@@ -135,7 +135,7 @@ export default {
         {id: 'ask-rell', to: 'rell', words: 'Rell, have your people seen a truck on this road?',
           when: {fact: 'word', of: 'walkers', atLeast: 'Friendly'},
           shows: 'The truck was not there yesterday',
-          lines: [say('rell', 'We walked that road at noon yesterday, and there was no truck on it then. Be careful. Nobody breaks down in the very hour that you happen to come along.', onRadio)]},
+          lines: [say('rell', 'We walked that road at noon yesterday, and there was no truck on it then. Be careful, because nobody breaks down in the very hour that you happen to come along.', onRadio)]},
         {effects: [mark('saw-the-trap-first')], id: 'ask-keeper', to: 'keeper', words: 'Keeper, can you see the truck on this road from your tower?',
           when: {fact: 'made', id: 'tower/crows-step'},
           shows: 'The buggies, without leaving the car',
@@ -149,7 +149,7 @@ export default {
       choices: [
         {id: 'stop', by: 'do', words: 'Drive up and stop beside the truck',
           plain: 'The man who is waving',
-          thought: "Nobody else is going to stop. I've seen for myself how empty this road is.",
+          thought: "Nobody else is going to stop, because I've seen for myself how empty this road is.",
           hidden: 'The trap shuts', next: 'trap-shut'},
         {id: 'drive-past', by: 'do', words: 'Drive past without slowing down',
           plain: 'The open road beyond the truck',
@@ -181,11 +181,11 @@ export default {
       choices: [
         {id: 'pay', by: 'do', words: 'Put forty scrap down on the road',
           plain: 'He named the price aloud: forty scrap',
-          thought: "It's only scrap. But he'll remember that this car stops, and that it pays.",
+          thought: "It's only scrap, but he'll remember that this car stops and that it pays.",
           hidden: 'The Road Rats ask this car for more next time, and say why',
           effects: [{type: 'scrap', by: -40},
             mark('paid-the-trap', 'You stopped for a trap on the road, and paid the Road Rats to let you go.')],
-          lines: [rat("That's very handsome of you. I'll tell Sump that Tin Town has lovely manners. Mind how you go, and do stop again.")],
+          lines: [rat("That's very handsome of you, and I'll tell Sump that Tin Town has lovely manners. Mind how you go, and do stop again.")],
           next: 'between'},
         {id: 'fight', by: 'do', words: 'Drive straight at the rise and fight',
           plain: 'Two buggies and one slow truck',
@@ -251,7 +251,7 @@ export default {
 
     'trap-passed': {
       // Twenty seconds of two buggies in the mirror, and then an empty road.
-      thoughts: ["Two buggies came out from behind that rise as I went by. They were waiting there for whoever stopped."],
+      thoughts: ["Two buggies came out from behind that rise as I went by, so they must have been waiting there for whoever stopped."],
       effects: [mark('passed-the-trap', 'You drove past a truck with its bonnet up, and it was a trap.')],
       next: 'between',
     },
@@ -268,7 +268,7 @@ export default {
       explore: [
         {id: 'waving', cue: 'open.scout.seen',
           what: 'A woman beside the truck waves once, and sits down again in its shade.',
-          thought: "She waved once and then sat down again in the shade of the truck. Somebody who has been waiting a long time doesn't waste the effort.",
+          thought: "She waved once and then sat down again in the shade of the truck. Anybody who has been waiting that long wouldn't waste the effort of waving twice.",
           tells: 'She has been there a long while'},
         {id: 'load', cue: 'open.scout.seen',
           what: 'A cart behind the truck is stacked with tyres, roped down.',
@@ -306,7 +306,7 @@ export default {
       choices: [
         {id: 'stop', by: 'do', words: 'Drive up and stop beside the truck',
           plain: 'The woman who waved',
-          thought: "Nobody else is going to stop. I've seen for myself how empty this road is.",
+          thought: "Nobody else is going to stop, because I've seen for myself how empty this road is.",
           hidden: 'Tally, and her truck', next: 'hauler'},
         {id: 'drive-past', by: 'do', words: 'Drive past without slowing down',
           plain: 'The open road beyond the truck',
@@ -324,17 +324,17 @@ export default {
     hauler: {
       when: {reach: 'tally', within: 40},
       lines: [
-        tally("Somebody put the word round that a raised bonnet means Road Rats. It was good advice. It has also kept me sitting here for two days.",
+        tally("Somebody put the word round that a raised bonnet means Road Rats. It was good advice, but it has also kept me sitting here for two days.",
           {when: did('warned-the-road')}),
-        tally('You stopped. Four cars have gone past me since yesterday morning, and every one of them speeded up when it saw me.'),
+        tally('You actually stopped for me. Four cars have gone past me since yesterday morning, and every one of them speeded up when it saw me.'),
         tally("My name is Tally, and this old thing is Patience. She's called Patience because that's what you need to drive her."),
-        tally("The shaft that turns her back wheels has dropped off its bolts. I can lift it into place, or I can do up the bolts. I can't do both, because I only have the two hands."),
+        tally("The shaft that turns her back wheels has dropped off its bolts. I can lift it back into place, or I can do up the bolts, but I can't do both at once, because I've only got two hands."),
         tally("I don't need a part, and I don't need a tow. I need one more person for about as long as it takes to boil an egg."),
       ],
       questions: [
         {id: 'why-nobody', words: 'Why has nobody stopped for you?',
           shows: 'What the trap is, for a player who has never met it',
-          lines: [tally("The Road Rats play broken-down on these roads. One of them stands by a raised bonnet, and two more wait behind a hill. So now nobody stops for anybody, and I can't even say that they're wrong.")]},
+          lines: [tally("The Road Rats pretend to be broken down on these roads. One of them stands by a raised bonnet while two more wait behind a hill, so now nobody stops for anybody, and I can't even say that they're wrong.")]},
         {id: 'what-load', words: 'What are you carrying?',
           shows: 'She sells to the Road Rats',
           lines: [tally('I have forty tyres, six sacks of salt and one sack of seed beans. The tyres are for a man called Sump, who has never waited patiently for anything in his life.')]},
@@ -343,13 +343,13 @@ export default {
           lines: [tally("I sell tyres to anybody who has wheels. If I only sold to people I liked, I'd have starved in my first year. I'm not proud of it, and I'm not ashamed of it either.")]},
         {id: 'two-days', words: 'How have you lasted two days out here?',
           shows: 'She is tougher than she looks',
-          lines: [tally("Some people on foot left me a bottle of water, and I've been drinking it a capful at a time. Don't look at me like that. I've been thirstier than this, and for longer.")]},
+          lines: [tally("Some people on foot left me a bottle of water, and I've been drinking it a capful at a time. Don't look at me like that, because I've been thirstier than this, and for longer.")]},
         {id: 'the-rise', words: 'Why did you walk up to that rise?', when: {found: 'tracks'},
           shows: 'What the footprints were',
-          lines: [tally("I went up there to see whether there was a road with anybody on it. There wasn't. Then I came back down and felt sorry for myself, which took most of the afternoon.")]},
+          lines: [tally("I went up there to see whether there was a road with anybody on it, and there wasn't. Then I came back down and felt sorry for myself, which took most of the afternoon.")]},
       ],
       // The mend is done, not said: hold the wrench on the shaft's bolts for twelve seconds while she lifts.
-      mend: {after: [tally("That's her whole again. Listen to that engine. She sounds dreadful, and she always has, so that's all right.")], during: [tally("I've got her. Do the top bolt first, and don't be gentle with it.")], cue: 'open.hauler.mended', id: `${ID}/drive-shaft`, wrenchSeconds: 12, scrap: 0,
+      mend: {after: [tally("That's her whole again, so listen to that engine. She sounds dreadful, but she always has, so that's all right.")], during: [tally("I've got her. Do the top bolt first, and don't be gentle with it.")], cue: 'open.hauler.mended', id: `${ID}/drive-shaft`, wrenchSeconds: 12, scrap: 0,
         effects: [{type: 'met', person: 'tally', text: 'You met Tally on the road, when her truck had broken down.'},
           {type: 'word', person: 'tally', set: 'Friendly'},
           {type: 'debt', id: `${ID}/tally-owes`, person: 'tally', text: 'Tally owes you for mending her truck.'},
@@ -361,8 +361,8 @@ export default {
       when: {after: 'hauler'},
       lines: [
         tally("I carry the news as well, and I carry it for nothing, because it's the only load that weighs nothing."),
-        tally("I don't like owing, and I never have. I pay in goods or in news, whichever you're short of. Where do I find you?"),
-        tally("Before you answer, you should know how a hauler works. What I hear at one gate, I tell at the next. That's true at your gate, and it's true at Sump's."),
+        tally("I don't like owing anybody, and I never have, so I pay in goods or in news, whichever you're short of. Where can I find you?"),
+        tally("Before you answer, you should know how a hauler works. Whatever I hear at one gate, I tell at the next one, and that's as true at your gate as it is at Sump's."),
       ],
       questions: [
         {id: 'if-you-stopped', words: 'What would happen if you stopped selling to Sump?',
@@ -374,12 +374,12 @@ export default {
         'She also drives to the Road Rats every month, and she has just told me that she carries news for nothing.',
       ],
       choices: [
-        {id: 'gate', words: "Come to Tin Town's gate. We'll buy from you.",
+        {id: 'gate', words: "Come and trade at Tin Town's gate, and we'll buy from you.",
           plain: 'A trader at the gate. She said herself where the news goes',
           thought: 'Whatever she hears at our gate, Sump may hear a week later.',
           hidden: 'The Word on the road rises by one after her first visit. Her truck still passes Sump\'s gate',
           effects: [mark('gate-open', "You asked Tally to trade at Tin Town's gate.")],
-          lines: [tally("So you're from Tin Town, where the fire is. I've been meaning to find out whether that was true. Look for me at your gate at first light, and bring your scrap.")],
+          lines: [tally("So you're from Tin Town, where the fire is, and I've been meaning to find out whether that was true. Look for me at your gate at first light, and bring your scrap.")],
           next: 'ridge'},
         {id: 'one-gate', words: "Come to Tin Town's gate, but only if you stop selling to the Road Rats.",
           plain: 'A trader at the gate, and a quarrel that she has to carry to Sump',
@@ -388,12 +388,12 @@ export default {
           effects: [mark('gate-open'),
             mark('one-gate-only', 'Tally stopped selling tyres to the Road Rats because you asked her to.'),
             {type: 'feud', of: 'road-rats', by: 1}],
-          lines: [tally("Then that's forty tyres a month I have to sell somewhere else. I'll do it, because you stopped when nobody else would. But you've bought yourself a quarrel, and I'm the one who has to deliver it.")],
+          lines: [tally("Then that's forty tyres a month I have to sell somewhere else. I'll do it, because you stopped when nobody else would, but you've bought yourself a quarrel, and I'm the one who has to deliver it.")],
           next: 'ridge'},
-        {id: 'no-debt', words: "You don't owe me anything. Get your load home.",
+        {id: 'no-debt', words: "You don't owe me anything, so get your load home.",
           plain: 'Nothing changes at Tin Town',
           hidden: 'What she owes stays owed. She asks again the next time she is met on a road',
-          lines: [tally("Everybody owes somebody. It's the only thing that keeps these roads open. I'll write it down anyway, and one day you'll be glad that I did.")],
+          lines: [tally("Everybody owes somebody, and that's the only thing that keeps these roads open. I'll write it down anyway, and one day you'll be glad that I did.")],
           next: 'ridge'},
       ],
     },
@@ -402,17 +402,17 @@ export default {
       when: {after: 'owing'},
       lines: [
         tally("Wait a moment. There's one more thing, and I should have said it before you picked up that wrench."),
-        tally("Two buggies have been sitting on that ridge since noon. They're Road Rats, but they aren't here on Sump's business. Sump pays me for tyres. Those two would rather have the tyres and keep the pay."),
-        tally("I didn't tell you sooner because I thought you'd drive off. Patience is slow until she's warm. I only need company as far as the crossing, where there are other people on the road."),
+        tally("Two buggies have been sitting on that ridge since noon. They're Road Rats, but they aren't here on Sump's business, because Sump pays me for my tyres. Those two would rather take the tyres off me and keep what Sump would have paid for them."),
+        tally("I didn't tell you sooner because I thought you'd drive off. Patience is slow until she's warmed up, but I only need company as far as the crossing, where there are other people on the road."),
       ],
       thoughts: [
         "She kept that back until the truck was mended. I'd probably have kept it back too.",
-        "It's two kilometres to the crossing, at the speed of a truck that sounds like that.",
+        "It's two kilometres to the crossing, and that's a long way at the speed of a truck that sounds like that.",
       ],
       choices: [
         {id: 'ride-with-her', by: 'do', words: 'Pull out in front of Patience and ride with her to the crossing',
           plain: 'Two buggies on the ridge. In an act with a clock, it is the day\'s outing',
-          thought: 'I stopped for her once already. It would be strange to stop halfway.',
+          thought: "I've already stopped for her once, and it would be strange to give up on her halfway.",
           hidden: 'The escort', next: 'escort'},
         {id: 'own-way', by: 'do', words: 'Drive on your own way',
           plain: 'Your own road, and the day still yours',
@@ -429,13 +429,13 @@ export default {
       mission: {rule: {moments: ['buggies-seen', 'tyres-lost', 'buggy-wrecked', 'crossing-seen']}, id: `${ID}/escort`, kind: 'escort', holds: ['checkpoints', 'signs'], minutes: 4,
         enemy: 'road-rats', cars: 2,
         lines: [
-          {...tally("Here they come, down off the ridge. They won't shoot at Patience, because they want what she's carrying. Keep them away from the cart.",
+          {...tally("Here they come, down off the ridge. They won't shoot at Patience, because they want what she's carrying, so keep them away from the cart.",
             onRadio), moment: 'buggies-seen'},
-          {...tally("That's ten of my tyres rolling about in the road. I counted them on, and I can count them off.",
+          {...tally("There go ten of my tyres, rolling about in the road. I counted every one of them onto that cart, and I can count them coming off.",
             onRadio), moment: 'tyres-lost', cue: 'open.tyres.lost'},
-          {...tally("That one won't be hooking anybody's tyres for a while. There's still the other one.",
+          {...tally("That one won't be hooking anybody's tyres for a while, but there's still the other one.",
             onRadio), moment: 'buggy-wrecked'},
-          {...tally("I can see the crossing, and I can see carts on it. They'll turn back now. Rats never rob anybody where it might be watched.",
+          {...tally("I can see the crossing, and there are carts on it, so they'll turn back now. Road Rats never rob anybody where somebody might be watching.",
             onRadio), moment: 'crossing-seen'},
         ],
         outcomes: {
@@ -446,12 +446,12 @@ export default {
             next: 'parted'},
           'some-kept': {
             lines: [
-              tally('They got some of them, and you kept the rest. This morning I expected to lose every tyre and the truck as well, so I\'m calling this a good day.'),
+              tally("They got some of the tyres, but you kept the rest of them. This morning I expected to lose every tyre and the truck as well, so I'm calling this a good day."),
               tally("An hour ago I owed you for one thing, and now I owe you for two. I don't enjoy owing, so you can expect to see a lot of me."),
             ],
             effects: [{type: 'word', person: 'tally', set: 'Sworn'}, mark('load-saved')], next: 'parted'},
           'none-kept': {
-            lines: [tally("They've left me the salt and the beans, because salt is heavy and beans are dull. Don't look so sorry. You stayed, and that's the part I'll remember.")],
+            lines: [tally("They've left me the salt and the beans, because salt is heavy and beans are dull. Don't look so sorry, because you stayed, and that's the part I'll remember.")],
             effects: [mark('load-lost', "The Road Rats took Tally's tyres.")], next: 'parted'},
           'car-wrecked': {
             lines: [tally('Hook your car on behind the cart. Patience has pulled worse things than that, and I did say that I pay what I owe.')],
@@ -489,17 +489,17 @@ export default {
       lines: [
         tally("Good morning, Tin Town. I've tyres, salt, seed and parts, and none of it is cheap. I'm not a cheat, though, and those are two different things."),
         tally('The first piece of news is always free. After that, you pay for it with a cup of something hot.'),
-        say('auntie-solder', "A trader at my gate, and nobody on fire. I'd forgotten what an ordinary morning was like. Tell her the tea is free if the gossip is good.", onRadio),
+        say('auntie-solder', "There's a trader at my gate, and nobody is on fire. I'd forgotten what an ordinary morning was like. Tell her the tea is free if the gossip is good.", onRadio),
       ],
       questions: [
         {effects: [{type: 'rumour', site: '@rumoured'}, mark('told-of-a-site')], id: 'free-news', words: "What's the free piece of news?", when: {cast: 'rumoured'},
           shows: 'A circle on the map where a site is said to be',
-          lines: [tally("Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you where it is, as near as I can, and my drawing is better than my truck.")]},
+          lines: [tally("Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you a map of where it is, as near as I can, and my drawing is better than my truck.")]},
         {effects: [mark('saw-a-camp-in-ashes', 'Tally told you what she saw at a camp that had been burned.')], id: 'what-she-saw', words: 'Did you see anything at {burned.name}?', when: {cast: 'burned'},
           shows: 'They were taken alive, and her cart tracks are explained',
           lines: [
             tally("I came through there the morning after, to sell them salt. I saw the tracks of a lot of cars going out one way, and a cart's ruts in the middle of them, with footprints beside it."),
-            tally("People who walk beside a cart were alive when they left. I'm sorry about my own tracks in the ash. I had to turn Patience round in it."),
+            tally("People who walk beside a cart were alive when they left. I'm sorry about my own tracks in the ash, but I had to turn Patience round in it."),
           ]},
         {effects: [mark('knows-the-rats-road')], id: 'rats-road', words: 'Where are the Road Rats working this week?', when: SELLS_TO_RATS,
           shows: 'What her trade with Sump is good for',
@@ -533,23 +533,23 @@ export default {
       lines: [say('dot', "A salt carter walked in here last night with empty pockets and sore feet. He'd stopped for a truck with its bonnet up. You drive that road, don't you? I don't suppose you saw it.")]},
     {id: 'somebody-else-was-robbed-auntie', by: 'auntie-solder',
       when: {all: [TRAP_LEFT_STANDING, {not: {fact: 'word', of: 'dot', atLeast: 'Wary'}}]},
-      lines: [say('auntie-solder', "A salt carter came to the gate last night on foot, with nothing left in his pockets. He'd stopped for a truck with its bonnet up. You were out on that road. Did you see it?")]},
+      lines: [say('auntie-solder', "A salt carter came to the gate last night on foot, with nothing left in his pockets. He'd stopped for a truck with its bonnet up, and you were out on that road. Did you see it?")]},
     {id: 'tally-on-the-road', by: 'tally',
       when: {all: [did('helped'), {not: did('gate-open')}]},
-      lines: [tally("It's you again. I still have you written down, and it itches. Is there a gate I can pay you at yet?")]},
+      lines: [tally("It's you again. I've still got you written down as somebody I owe, and it itches. Is there a gate where I can pay you yet?")]},
     // When the sign is never followed, and the car went past her, she is Wary and says so.
     {id: 'tally-counted-the-car', by: 'tally', when: did('drove-past-her'),
       lines: [tally('I know that car. It went past me on the road while I was sitting under my truck. I counted it, because I had nothing else to count.')]},
     {id: 'dot-on-tallys-late-flour', by: 'dot', when: {fact: 'word', of: 'dot', atLeast: 'Wary'},
-      lines: [say('dot', "Tally was two days late with my flour. She says she sat by a broken truck and counted the cars going past. She didn't say whose cars they were. She looked as if she could have.")]},
+      lines: [say('dot', "Tally was two days late with my flour. She says she sat by a broken truck and counted the cars going past, and she didn't say whose cars they were, but she looked as if she could have.")]},
     // After the escort she sent herself on alone: nothing was seen, and she says how it went.
     {id: 'tally-robbed-on-the-ridge', by: 'tally', when: {all: [{after: 'alone'}, did('load-lost')]},
-      lines: [tally("They took the tyres half an hour after you left. I'm not blaming you. You mended my truck, and nobody mended theirs.")]},
+      lines: [tally("They took the tyres half an hour after you left. I'm not blaming you, because you mended my truck, and nobody else on that road did anything for me.")]},
     {id: 'tally-left-the-ridge', by: 'tally', when: {all: [{after: 'alone'}, {not: did('load-lost')}]},
       lines: [tally("Those two followed me for a kilometre and then lost their nerve. I'd like to think it was the look on my face.")]},
     // Said once each, on a later visit to the gate, when its condition is true.
     {id: 'tally-told-sump-of-the-ridge', by: 'tally', when: {all: [did('load-saved'), SELLS_TO_RATS]},
-      lines: [tally("I told Sump what his two boys got up to on that ridge. He was very shocked. Then he took the price of ten tyres out of their share, so he wasn't as shocked as all that.")]},
+      lines: [tally("I told Sump what his two boys got up to on that ridge. He said he was very shocked, and then he took the price of ten tyres out of their share, so he can't have been as shocked as all that.")]},
     {id: 'tally-told-sump-of-the-fire', by: 'tally', when: {all: [did('gate-open'), SELLS_TO_RATS]},
       lines: [tally('Sump asked me whether it was true about the fire at Tin Town. I said that it was, because it is. I did tell you how a hauler works.')],
       effects: [{type: 'roadWord', by: 1},

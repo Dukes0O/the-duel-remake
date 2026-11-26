@@ -268,6 +268,11 @@ function createOpponentMarker(index) {
   return marker;
 }
 
+// NIGHT-2-TRY-FIXES item 2: the on-foot direction pills ("The gate 49 m", "YOUR CAR 73 m") point with a drawn arrow, a shaft
+// and a head, so the way it points is plain. While the story switch is off they keep the old triangle.
+const FOOT_ARROW = '<svg class="foot-arrow-shape" viewBox="0 0 16 22" focusable="false"><path d="M8 1 15 10H10.4V21H5.6V10H1Z"/></svg>' +
+  '<i class="foot-arrow-glyph">▲</i>';
+
 export function createCombatHud({root, app, projectOpponents = () => [], projectFootAim = () => null}) {
   const overlay = root.querySelector('#overlay');
   const host = document.createElement('section');
@@ -287,9 +292,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
     <div class="combat-foot-action combat-lamp-progress" role="status" hidden><b></b><div class="combat-armor-track"><i></i></div></div>
-    <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
-    <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
-    <div class="combat-foot-car combat-foot-town night-2-alternative-route" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b></b><strong></strong></div>
+    <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">${FOOT_ARROW}</span><b>YOUR CAR</b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">${FOOT_ARROW}</span><b></b><strong></strong></div>
+    <div class="combat-foot-car combat-foot-town night-2-alternative-route" role="status" hidden><span class="combat-foot-car-arrow" aria-hidden="true">${FOOT_ARROW}</span><b></b><strong></strong></div>
     <div class="combat-foot-gear" aria-label="On-foot equipment and controls"><b></b><strong></strong><small class="combat-foot-mouse"></small></div>
     <div class="combat-slot-bar" role="group" aria-label="Combat weapons">
       ${WEAPON_IDS.map((id,slot) => `<button type="button" data-combat-weapon="${id}" data-combat-slot="${slot}" title="${WEAPONS[id].name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}"><span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">${slot+1} ${CAR_SLOT_DIRECTIONS[slot]}</span><span class="combat-slot-name">${WEAPONS[id].name}</span><span class="combat-slot-state"></span></button>`).join('')}
@@ -413,6 +418,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     stage.classList.toggle('combat-upgraded', active);
     stage.classList.toggle('on-foot', onFoot);
     host.classList.toggle('on-foot', onFoot);
+    host.classList.toggle('story-arrows', (app._switches?.() ?? app.duel?.featureFlags)?.enabled?.('story-choices') === true);
     drawLampProgress(state);
     if (!active) return;
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {BOWL_SOUND_CUES} from '../src/bowl/bowl-lines.js';
 import {Duel} from '../src/game.js';
-import {bowlHealthLoss, chooseShowWeapon, showMotion, showTarget, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
+import {SHOW_WEAPONS, bowlHealthLoss, chooseShowWeapon, showMotion, showTarget, stepShowWeapons} from '../src/bowl/bowl-weapons.js';
 import {bowlHudView} from '../src/bowl/bowl-night.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 
@@ -153,7 +153,7 @@ for (const [level, expected] of [['easy', 4], ['medium', 13.5], ['hard', 13.5]])
   assert.ok(!v.bowlRighting);
 }
 {
-  const d=fight('launcher'),s=d.state;line(d,4.1);
+  const d=fight('launcher'),s=d.state;line(d,6.1); // just past the player's 6 m reach (4.1 before BOWL-LAUNCHER-REACH)
   s.input.interact=true; let peak=0;
   for(let k=0;k<150;k++){d.step(dt);peak=Math.max(peak,s.airHeight);}
   assert.ok(Math.abs(peak-1.5)<.1 && !s.bowlRighting);
@@ -319,6 +319,28 @@ for (const [level, distance, degrees, hits] of [
   d.step(dt);
   assert.equal(!!target.bowlFlight, hits, `${level}: ${distance} m at ${degrees} degrees`);
   assert.equal(!!s.bowlFlight, !hits, 'an empty shot still hops the launcher truck');
+}
+
+// BOWL-LAUNCHER-REACH (Kyle, 22 November 2026): the player's launcher takes a truck 5 m ahead; a rival's, at 4 m, does not.
+{
+  for (const level of ['easy', 'medium']) {
+    const place5 = (d, from, to) => {
+      place(d, from, 34, 0);
+      place(d, to, 34 + 2 * d._vehicleSpec(from).halfLength + 5, 0);
+    };
+    const d = fight('launcher', level), s = d.state, target = isolate(d);
+    place5(d, s, target);
+    d.setInput({interact: true});
+    d.step(dt);
+    assert.ok(target.bowlFlight?.owner === 'player', level + ': the player launcher takes a truck 5 m ahead');
+    const e = fight('hammer', level), victim = e.state, rival = isolate(e);
+    rival.bowlWeapon.kind = 'launcher';
+    place5(e, rival, victim);
+    ticks(e, Math.round(({easy: .8, medium: .6})[level] / dt) + 2);
+    assert.ok(!victim.bowlFlight && !rival.bowlFlight, level + ': a rival launcher does not take a truck 5 m ahead');
+  }
+  assert.equal(SHOW_WEAPONS.launcher.rivalReach, 4, 'rivals keep their 4 m');
+  assert.equal(SHOW_WEAPONS.launcher.hardReach, 3, 'Hard keeps 3 m');
 }
 
 // Run the actual App event dispatch with memory-only storage and silent audio output.

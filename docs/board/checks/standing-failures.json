@@ -8,13 +8,6 @@
   },
   {
     "stage": "browser",
-    "name": "deep-frames",
-    "since": "2026-11-05",
-    "card": "QA-STANDING-BROWSER",
-    "cause": "Deep frames require headed mode"
-  },
-  {
-    "stage": "browser",
     "name": "frame-pacing",
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
@@ -47,12 +40,5 @@
     "since": "2026-11-23",
     "card": "QA-NIGHT-22-NOV",
     "cause": "Scenario failures:\n- machine-borer-mouth-20m: Mabel is in the camera view\n- machine-borer-mouth-20m: tunnel lining or portal is in the camera view\n- machine-borer-mouth-20m: picture centre is not a flat colour\n- machine-borer-mouth: Mabel is in the camera view\n- machine-borer-mouth: tunnel lining or portal is in the camera view\n- machine-borer-mouth: picture centre is not a flat colour"
-  },
-  {
-    "stage": "browser",
-    "name": "convoy-frames",
-    "since": "2026-11-26",
-    "card": "QA-NIGHT-TIMING-ALONE",
-    "cause": "Tanker adds more than ten percent over matched full-loop box; simplify distant view and remeasure"
   }
 ]

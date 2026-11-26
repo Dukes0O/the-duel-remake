@@ -2222,10 +2222,24 @@ export class EngineAudio {
     });
   }
 
-  // WILD-HIT: the player's car knocks an animal down beside the road (src/wildlife-view.js). Cue: vehicle.crush.
-  animalHit(strength = 0.7) {
+  // WILD-HIT, WILDLIFE-HITS-2: the player's car knocks an animal down beside the road (src/wildlife-view.js). Cues:
+  // wildlife.hit, the splat, never quieter than a crash between cars, and wildlife.hit.heavy, the thump under a large
+  // animal. `strength` is 1 under the monster truck and .7 otherwise; `size` is small, medium or large.
+  animalHit(strength = 0.7, size = 'medium') {
     if (!this.context || this.context.state !== 'running' || this.muted || this.paused) return null;
-    return this._crushImpact(strength);
+    this._syncMixer();
+    const scale = 1 + clamp(Number(strength) - .7, 0, .3) * .5;   // 1, and 1.15 under the monster truck
+    const pitch = size === 'small' ? 1.25 : size === 'large' ? .8 : 1;
+    const splat = this._runCue('wildlife.hit', () => {
+      const def = bank('wildlife.hit'), buffer = this._cueBuffer('wildlife.hit');
+      if (buffer) this._sample(buffer, def.volume * scale, def.rate * pitch);
+      for (const layer of def.layers) this._layer(layer, this._cueOutput, scale);
+    });
+    if (size === 'large')
+      this._runCue('wildlife.hit.heavy', () => {
+        for (const layer of bank('wildlife.hit.heavy').layers) this._layer(layer, this._cueOutput, scale);
+      });
+    return splat;
   }
 
   _crushImpact(strength = 0.7) {

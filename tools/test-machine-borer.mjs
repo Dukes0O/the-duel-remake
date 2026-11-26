@@ -692,6 +692,9 @@ updateBorerCamera(boreCamera, forty, 0, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z - 6)<1e-6, 'The bore view follows the centre line behind the tail.');
 updateBorerCamera(boreCamera, forty, 1, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z + 22)<1e-6, 'The mouth view stands outside the mouth.');
+// QA-NIGHT-22-NOV: with her model drawn, Mabel's second view is still the mouth view while she cuts, not a cab buried in the rock.
+updateBorerCamera(boreCamera, forty, 1, hill, 1, true, new THREE.Group());
+assert.ok(Math.abs(boreCamera.position.z + 22)<1e-6, 'The mouth view stands outside the mouth when her model is drawn.');
 const twenty = {...forty, x:0, z:20, travelM:20,
   segments:[{start:{x:0,y:1.65,z:0},end:{x:0,y:1.65,z:20}}]};
 updateBorerCamera(boreCamera, {...twenty, travelM:19.9}, 0, flat, 1, true);
