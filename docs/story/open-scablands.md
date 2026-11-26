@@ -704,6 +704,35 @@ later: [{id, by: 'dot', when: {fact: 'mark', id: 'burned-camp/never-went'}, at: 
 ignored: {afterNights: 4, effects: [...], next: 'left'}
 ```
 
+**Added to the shape on 25 November 2026,** from what the nine files needed and the first shape could not say
+(OPEN-THREAD-SHAPE's questions). Card OPEN-THREAD-SHAPE-2 lifts each out of `notes` and into its key.
+
+| The need | The key |
+| --- | --- |
+| A question that leaves something behind | `effects` on a question |
+| A scene played inside a larger mission | A `mission` may leave out `kind` when it is one scene of the mission named by `partOf` |
+| Going to a person or a people | `{reach: 'dace'}`, `{reach: '@haven'}`: a person's id, or a role cast from persons or peoples, is where they are |
+| Going to the sign | `{reach: 'sign', within: 40}` |
+| Waiting for the sign to be drawn again | The condition `{sign: 'again'}`, and `again: {afterNights, when, at}` on the sign |
+| Finer times of day | `part` is one of `dawn`, `day`, `noon`, `dusk`, `dark`. A routine still has only `day`, `dusk` and `dark` |
+| A spot in Tin Town | `['tin-town', spot]` with a spot from the register's `TIN_TOWN_SPOTS`: `hearth`, `yard`, `gate`, `board`, `store`, `forge-yard`, `kiln`. Their positions are Night 2's |
+| One end of a storyline | The condition `{ended: 'unanswered'}`, true when this storyline ended at that end |
+| A beat after an end | A beat may follow an end with `after`; it repeats the end in its own `next` |
+| `ignored` by a count of choices, or by beat | `ignored.afterChoice: {id, times}`; and `ignored` may be a list of `{when, ...}`, the first true one used |
+| Effects that depend on each other | In one list, the `when` of every effect is judged before any effect is made |
+| Sounds | `cue` on a line, a choice, an outcome, a question and a mission; `cues` (a list) on a beat |
+| The moment a line is said in a mission | `moment: 'buggies-seen'` on a line or a thought; the mission's rule names its moments |
+| A thought on a choice for some players only | A choice's `thought` may be `{thought, when}` |
+| A line or thought before or after the choices | `slot: 'before'` or `slot: 'after'` on a line or a thought |
+| An outcome on a condition | `when` on an outcome |
+| A mend with words | `cue`, `during` (lines while the wrench is held) and `after` (lines when it is done) on a mend |
+| A talk the player starts later | `words` on a `later` row: the player's words, and the person answers |
+| Several ways on, chosen by going | `next` as a list of plain names: whichever the player reaches first |
+
+**Kept in `notes` for now, and a card of its own when it is needed:** trade (`service`, `prices`), `hostileWith` and
+`placed` on a role, and the sign's drawing (`lamps`, `haze`, `struck`, `mapName`). Repeated copies of a mark's
+sentence in `notes` are deleted.
+
 **What a file may still hold that the rule does not read:** `notes`, at the top level or on a beat, in any form. It is
 for the builder and the drive: what a scene should feel like, a picture to take, a number to try.
 
