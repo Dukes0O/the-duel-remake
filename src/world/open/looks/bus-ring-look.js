@@ -1168,10 +1168,10 @@ export function buildBusRing({stage = 'camp', heightAt = null} = {}) {
   const workshopLamp = busPoint(workshop, L.workshopInside.lamp.lx, workshop.skirt + L.workshopInside.lamp.ly, L.workshopInside.lamp.lz);
   const gy = row => ground(row.x, row.z) + row.y;
   const flashes = createFlashes([
-    {...arcAt, size: .45, kind: 0, strength: 1, least: .006},
-    {...arcAt, y: arcAt.y + .4, size: 2.2, kind: 0, strength: .4},
+    {...arcAt, size: .45, kind: 0, strength: 1, least: .008},
+    {...arcAt, y: arcAt.y + .4, size: 2.2, kind: 0, strength: .4, least: .014},
     {...arcAt, y: arcAt.y + 1.8, size: 9, kind: 0, strength: .1},
-    {x: gateLamp.x, y: gy(gateLamp), z: gateLamp.z, size: 1.4, kind: 1, strength: .7, least: .005},
+    {x: gateLamp.x, y: gy(gateLamp), z: gateLamp.z, size: 1.4, kind: 1, strength: .7, least: .008},
     {x: workshopLamp.x, y: workshopLamp.y, z: workshopLamp.z, size: 1.3, kind: 1, strength: .6},
     {x: tableLamp.x, y: gy(tableLamp) + .02, z: tableLamp.z, size: .5, kind: 1, strength: .6},
   ]);
