@@ -45,7 +45,8 @@ import {placeWorldJobVehicle} from '../src/vehicle-grounding.js';
 import {HOT_DELIVERY_WAYS, routeFor, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsActorHeightAt,scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {nearGroundHeightAt} from '../src/world/near-ground.js';
-import {createRiverField} from '../src/world/scablands-draw.js';
+import {createRiverField,createStripRoadsDraw} from '../src/world/scablands-draw.js';
+import {createTownWorld} from '../src/town/town-world.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
@@ -1038,4 +1039,32 @@ for(const prop of propCluster.children){
 }
 assert.ok(new Set(propCluster.children.map(prop=>prop.name)).size>=5,'the props are of at least five kinds');
 propScene.dispose();
-console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');
+// COMBAT-ROOF-BOW-LOOK: the town's roads lie on the drawn ground as ribbons facing the sky, whole between their ends. One flat
+// box at each road's middle height floated up to 1.9 m over the land (its unlit underside was a near-black slab from a cab).
+{
+  const plainAt=(x,z)=>scablandsSurfaceHeightAt(x,z)+riverDepthAt(x,z);
+  const strips=createTownWorld({seed:1,buildings:[]}).roads;
+  const townRoads=createStripRoadsDraw({strips,plainAt,material:new THREE.MeshStandardMaterial({vertexColors:true})});
+  assert.equal(townRoads.meshes.length,strips.length,'every town road is drawn');
+  for(const mesh of townRoads.meshes){
+    const {a,b}=mesh.userData.strip,length=Math.hypot(b.x-a.x,b.z-a.z),g=mesh.geometry,p=g.attributes.position,index=g.index.array;
+    assert.match(mesh.name,/^Town road /);
+    let above=-Infinity,below=-Infinity,faceUp=1,whole=1;
+    for(let i=0;i<p.count;i++){
+      faceUp=Math.min(faceUp,g.attributes.normal.getY(i));
+      const along=g.attributes.aRoad.getY(i);
+      if(along>=0&&along<=length)whole=Math.min(whole,g.attributes.color.getW(i));
+    }
+    // Between the corners too: the middle of each triangle and of each of its sides, against the ground as drawn.
+    for(let i=0;i<index.length;i+=3)for(const [u,v,w] of [[1/3,1/3,1/3],[.5,.5,0],[0,.5,.5],[.5,0,.5]]){
+      const at=axis=>u*p.getComponent(index[i],axis)+v*p.getComponent(index[i+1],axis)+w*p.getComponent(index[i+2],axis);
+      const gap=at(1)-nearGroundHeightAt(at(0),at(2),plainAt);
+      above=Math.max(above,gap);below=Math.max(below,-gap);
+    }
+    assert.ok(above<.12&&below<.02,`${mesh.name} lies on the drawn ground (up to ${above.toFixed(2)} m over, ${below.toFixed(2)} m under)`);
+    assert.ok(faceUp>.5,`${mesh.name} faces the sky`);
+    assert.equal(whole,1,`${mesh.name} is whole between its ends and fades only past them`);
+  }
+  townRoads.dispose();
+}
+console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility, town roads and all solid collision boxes pass.');

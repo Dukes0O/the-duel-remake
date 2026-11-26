@@ -909,17 +909,6 @@ tasks:
     flag: "wasteland-town"
     details: "docs/board/cards/TOWN-RESERVED-OUTPOSTS.md"
 
-  - id: COMBAT-ROOF-BOW-LOOK
-    title: "The car's roof crossbow reads as a floating cream wedge and black bar"
-    owner: "codex"
-    lane: "UI"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/COMBAT-ROOF-BOW-LOOK.md"
-
   - id: TOWN-FIRE-STREAM-LOOK
     title: "The fire truck's water drawn as a jet and spray, not a white blob"
     owner: "codex"
