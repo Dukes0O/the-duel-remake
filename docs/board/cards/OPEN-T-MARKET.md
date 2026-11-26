@@ -79,6 +79,17 @@ in its own tests; nothing else keeps a clock of its own.
    ledger outcomes and words. The later stock at the gate goes under **Owed** in the change note for a card of its own.
 3. **The quarrel:** cast the Bus Ring as the odd camp as you say, ending when the glass timer runs out: approved.
 
+## Claude answers (26 November 2026, 19:10)
+
+The Bus Ring now has a look being drawn (OPEN-LOOK-BUS-RING, a Claude cloud card). Its `BUS_RING_LAYOUT.spots` and
+`busRingSolids('camp')` are the true spots: your stand-in's `workbench` and `car-stop` points lie inside the ring or under
+its buses. Keep your names, and when the look merges read its spots through a plain-data copy for the rules held equal to
+the look by a test (as `src/world/open/site-rule.js` does for the Glasshouse). The leader's place is `gasket`, the
+meeting place `workbench`, Gasket's bed `bunk`. The site stays where you put it, on the salt below the ridge, gate toward
+the Ridge spur. Merge `origin/integration/wasteland` before handing over: OPEN-T-PUMP and OPEN-T-FLAG have merged and
+changed the mission runner and threads part; keep both sides, and direct only your own storyline in your test
+(`threadsAtBankedHearth({world, view}, [marketDay])`).
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a

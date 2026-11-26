@@ -17,8 +17,9 @@ export const LAND_SITES = Object.freeze(requireSound([
     {foundWithin: 120, tell: 'mast', tellWithin: 1400, radioWithin: 800, leader: 'hetty', meeting: 'door', warns: true}),
   // OPEN-BURNED-SCOUT owns discovery and the look of the den.
   site('rats-nest', [['boneyard', -150, -900]], {foundWithin: 120, tell: 'tyre-smoke'}),
+  site('sweet-seep', [['dead-mall', -1050, 300]], {foundWithin: 160, tell: 'green-patch', tellWithin: 700}),
   site('bus-ring', [['ridge', -665, -345]], {foundWithin: 135, tell: 'lamp', tellWithin: 850,
-    leader: 'gasket', meeting: BUS_RING.meeting, hostileTo: ['glasshouse'], storyOnly: true}),
+    leader: 'gasket', meeting: BUS_RING.meeting, hostileTo: ['glasshouse'], storyOnly: true, storyChoices: true}),
 ], checkSite, 'Open Scablands sites'));
 
 export const CAMP_SITES = Object.freeze(LAND_SITES.filter(site => site.kind === 'camp'));

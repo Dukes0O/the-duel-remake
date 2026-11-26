@@ -8,7 +8,7 @@ import {isHeld, takeHold} from '../src/world/open/holds.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
 import {favoursOf, isFound, newWorld, wordOf} from '../src/world/open/open-record.js';
-import {createThreadsPart, openThreadSigns, threadsPart} from '../src/world/open/parts/threads.js';
+import {openThreadSigns, threadsAtBankedHearth, threadsPart} from '../src/world/open/parts/threads.js';
 import {missionsPart} from '../src/world/open/parts/missions.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createJobSolidGrid, pushOutOfSolids} from '../src/world/scablands-solids.js';
@@ -83,8 +83,8 @@ assert.equal(sceneAt(sign(), MARKET_PLACES.diner).scene.lines[0].words, market.b
 const listen = sceneAt(sign(), MARKET_PLACES.gate);
 assert.deepEqual(listen.scene.lines.map(row => row.words), market.beats.sign.lines.map(row => row.words));
 
-const onlyMarket = [createThreadsPart([market]), missionsPart];
-const direct = world => frame(begin(world), MARKET_PLACES.gate, {regionId: 'road'}, .1, onlyMarket).open;
+// Direct only this storyline at the hearth, independent of other loaded storylines.
+const direct = world => begin(threadsAtBankedHearth({world, view: {player: {position: MARKET_PLACES.gate}}}, [market]));
 assert.equal(record(direct(night(begin(seedWorld), 1).world)), undefined);
 assert.equal(record(direct(changed(seedWorld, 'no-third', [word('radio-hill', 'Strangers')]))), undefined);
 assert.equal(record(direct(changed(seedWorld, 'no-dot', [word('dot', 'Wary')]))), undefined);

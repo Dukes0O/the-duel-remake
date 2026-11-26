@@ -9,6 +9,7 @@ import {isFound, stageOf} from './open-record.js';
 import {isTrue} from './facts.js';
 import {buildGlasshouse, updateGlasshouse} from './looks/glasshouse-look.js';
 import {distance, hasSiteServices, residentPose, sitePosition} from './site-rule.js';
+import {flagPeople} from './content/somebody-elses-flag-places.js';
 
 function radioHillLook(heightAt) {
   const group = new THREE.Group();
@@ -136,7 +137,8 @@ export function createSiteView({loadAsset}) {
       const phase = state.partOfDay ?? 'day';
       for (const camp of camps) {
         const {site, people, residents, cast} = camp;
-        if (site.storyOnly && !state.marketSites) {
+        if ((site.storyOnly || site.storyChoices) &&
+            !(state.marketSites || worldJob.open.parts.threads?.places?.dryPumpEnabled)) {
           if (camp.node) camp.node.visible = false;
           people.group.visible = false;
           continue;
@@ -190,7 +192,8 @@ export function createSiteView({loadAsset}) {
             // Finch guides the camp's own water cart, drawn with the camp.
             Object.assign(person, pose, {action: pose.action === 'push-cart' ? 'walk' : pose.action});
           }
-          people.update({storyPeople: cast, storySpeaker: state.speaker}, here, seconds, drawnShift);
+          const away = new Set(flagPeople(world).map(person => person.id));
+          people.update({storyPeople: cast.filter(person => !away.has(person.id)), storySpeaker: state.speaker}, here, seconds, drawnShift);
         } else people.group.visible = false;
       }
     },

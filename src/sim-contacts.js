@@ -326,7 +326,7 @@ export function _vehicleSpec(actor) {
   // plating adds its weight to the mass (Mad Max only; CRASH-04).
   const car = CARS[actor === this.state ? this.state.car : actor.car || (actor === this.state.rival ? this.state.car : null)] || {};
   return { halfWidth: car.collision?.halfWidth ?? CAR_HALF_WIDTH, halfLength: car.collision?.halfLength ?? CAR_HALF_LENGTH,
-    mass: (car.mass || 1450) + armorKitMass(actor.combatArmorKit), height: car.height || 1.35 };
+    mass: (actor.roadRider?.mass ?? car.mass ?? 1450) + armorKitMass(actor.combatArmorKit), height: car.height || 1.35 };
 }
 
 export function _collisions() {
