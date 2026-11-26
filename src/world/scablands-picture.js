@@ -8,6 +8,7 @@
 //                   (its solid boxes), all read from the land's own tables.
 // The ground is a grid of 25 m cells (560 by 400, 224,000 of them). It is worked out in slices (`step`) so that no frame is held up:
 // a slice asks about 8 ms worth of rows. Drawing the picture is `src/world/scablands-map.js`.
+import {openMapMarks} from './open/map-marks.js';
 import {LAND} from './scablands-names.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {DRIVE, RIVER, RIVER_LAND, scablandsDriveAt} from './scablands-regions.js';
@@ -71,7 +72,21 @@ export function placePlans(places, solids) {
 }
 
 // The marks of the land: everything that is a line, a point or a footprint rather than a ground. Read from the tables, not typed.
-export function landMarks({land = LAND, places = SCABLANDS_PLACES, net = ROAD_NET, river = RIVER_LAND, solids = []} = {}) {
+// At merge the laptop supplies OPEN-SITES's sitePosition in place of these two approved first positions.
+const firstPositions = {
+  glasshouse: LAND.at('ships-in-sand', 2000, 700),
+  'radio-hill': LAND.at('tin-town', -2245, -992),
+};
+
+export function landMarks({base, world, positionOf = id => firstPositions[id], ...options} = {}) {
+  const fixed = base ?? fixedLandMarks(options);
+  if (!world) return fixed;
+  const {sites, rumours, driven} = openMapMarks(world, positionOf);
+  const extraPlaces = sites.map(site => ({...site, label: site.name, flatRadius: 60, plan: []}));
+  return {...fixed, places: [...fixed.places, ...extraPlaces], rumours, driven};
+}
+
+function fixedLandMarks({land = LAND, places = SCABLANDS_PLACES, net = ROAD_NET, river = RIVER_LAND, solids = []} = {}) {
   const plans = placePlans(places, solids);
   const camp = land.at('safe-road');
   return Object.freeze({
