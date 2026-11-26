@@ -1474,7 +1474,7 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "backlog"
-    needs: [OPEN-ROAM, OPEN-DOORS]
+    needs: [OPEN-DOORS]
     locks: [sound-bank]
     flag: "story-choices"
     details: "docs/board/cards/OPEN-SOUND.md"
