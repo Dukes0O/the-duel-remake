@@ -9,9 +9,11 @@ import {pointInBuilding} from '../../src/world/open/building-rule.js';
 import {scablandsSurfaceHeightAt} from '../../src/world/scablands-ground.js';
 
 export const pageFunctions = {
-  ready: () => window.__qaApp?.duel.state.status === 'menu' && !!window.__render,
+  ready: () => window.__qaApp?.duel.state.status === 'menu' && !!window.__render &&
+    !!document.querySelector('.qa-temporary-saves'),
   enter: () => {
     if (!window.name.startsWith('__duel_qa_tab_v2:') || !window.__qaMemoryBackupStore) throw Error('The forge drive needs memory-only storage.');
+    document.querySelector('.qa-temporary-saves').hidden = true;
     const app = window.__qaApp;
     app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true, scrap: 60}};
     if (!app._saveProfile()) throw Error('The memory-only fixture could not be staged.');
