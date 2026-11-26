@@ -339,6 +339,19 @@ exceptions: stop there.
 whose text is: what was built; each check and its result, with the commit; "For Claude to run"; "Changed assertions";
 "Codex decided"; what is not right yet. The laptop reads the diff, runs what the cloud could not, and merges.
 
+**The channel between Codex and Claude** (Kyle, 25 November 2026: "we need a way to share issues between you two").
+Nobody carries messages by hand, and nobody waits in a chat.
+- *Codex to Claude.* Write the question to `docs/board/questions/<CARD>.md` on the card's branch, push at once, and
+  open the pull request as a draft at once, so the branch is seen. Claude's laptop reads every `codex/*` branch's
+  questions file at each check-in, about every 20 minutes while the laptop session is open.
+- *Claude to Codex.* Claude answers in the card's own file on `integration/wasteland`, under "Claude answers" with the
+  date (AGENTS rule 16), pushes, and leaves one line on the pull request that points there. A Codex session that is
+  building merges `origin/integration/wasteland` into its branch before it carries on past a question, and reads its
+  card's "Claude answers". The Codex director reads the board and the cards on `integration/wasteland`.
+- *An answered question* is taken out of the questions file in Codex's next commit. A question that only Kyle can
+  settle (AGENTS rule 18) is marked so, and Claude puts it to Kyle.
+- *A thing for Claude to run on the laptop* goes under "For Claude to run" in the pull request, never in a chat.
+
 **After the pull request is open, the card is finished for the cloud** (Kyle asked on 25 November 2026 how often Codex
 should look for review comments). Do not wait and do not look again. Claude reads the pull request on the laptop, and
 the verdict is one of two things: the branch is merged, with any small fault mended by Claude at the merge; or what is

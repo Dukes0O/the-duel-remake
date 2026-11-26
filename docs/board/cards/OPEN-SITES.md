@@ -156,7 +156,7 @@ If the car is grey with ash, Marigold's first line is this one instead, and the 
 
 | When | The line |
 | --- | --- |
-| Strangers | **Finch:** Does your car go fast? I only drive the water cart, and it goes at the speed of the goat that pulls it. |
+| Strangers | **Finch:** Does your car go fast? I only drive the water cart, and it can't go any faster than I can run. |
 | Friendly or Sworn | **Finch:** I've been watching the road for your dust. You always come from the same side, so I think I know where Tin Town is now. |
 | The wind pump was mended | **Finch:** I oil the pump every morning now, the way you showed me. It hasn't stuck once since you were here. |
 | Friendly, once | **Finch:** At night there's a red light a long way off, high up, and it blinks. Gran says it's a star, but stars don't blink like that. I think it's on a hill to the {radio-hill.bearing}. *(A rumour: the circle for Radio Hill.)* |
@@ -181,7 +181,7 @@ If the car is grey with ash, Marigold's first line is this one instead, and the 
 
 | When | The line |
 | --- | --- |
-| Towed home | **Marigold:** We saw your smoke from the rows and brought the goat cart out. I know it isn't dignified, but it will get you home. We'll call it the favour we owed you. |
+| Towed home | **Marigold:** We saw your smoke from the rows and brought the water cart out. I know it isn't dignified, but it will get you home. We'll call it the favour we owed you. |
 | A car rides out to a fight near the camp | **Finch:** *(on the radio)* Gran says to hold on, because she's coming in the truck! She also says that she can't drive, so please keep out of her way. |
 
 ### Radio Hill
@@ -257,6 +257,27 @@ banked night: the first row below whose condition is true and which has not been
 
 The sisters do not ride out to a fight. Their favour is the warning, which shows the encounter's cars on the small map
 ten seconds before they would otherwise be seen.
+
+## Claude answers (25 November 2026, evening)
+
+1. **Interaction and adapters:** the merge-time joins, as you picked. Use the on-foot Interact hold as the repair's
+   stand-in. Stand a site's solids through the shared `solids` request below, whose handler this card builds.
+2. **Explicit domain events,** not state inferred from unrelated jobs: accepted. Drive them from the sample worlds
+   until their producers land.
+3. **The water cart has a motor,** not a goat: the round 1 look draws one. The two lines of Finch and Marigold in this
+   card that spoke of a goat were changed tonight; use the card as it now stands.
+
+**The four requests the parts share.** Four cards asked for the same missing pieces of the host. Each is now a
+named request in the contract at the top of `src/world/open/open-land.js`, and one card builds its handler in
+`src/arena/modes/world-job.js`. Every other card sends the request by that name and tests its part against it with
+a stand-in in its own files; the laptop joins them at the merge. Do not build a second handler.
+
+| Request | What it does | Built by |
+| --- | --- | --- |
+| `{type: 'talk', scene, speaker}` | Opens a talk inside the roam job; the roam step waits, and the choice comes back as a `talkChoice` in `jobEvents` | OPEN-ROAM |
+| `{type: 'repair', armour, scrap}` and `{type: 'wash'}` | Mend the car by so much armour, or wash it; the view carries `car: {armour, maxArmour, dirt}` | OPEN-DOORS |
+| `{type: 'solids', id, solids}` | Stand a site's or a building's solids in the job's solid grid, or take them away with `solids: []` | OPEN-SITES |
+| `{type: 'riders', ...}` | Start a rider fight inside the roam job | OPEN-CHECKPOINTS |
 
 ## Rules for every open Scablands card
 
