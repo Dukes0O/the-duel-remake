@@ -36,8 +36,9 @@ export const checkpointsPart = {
     if (banked)
       choices.push({id: 'checkpoint/bank/' + world.ledger.night, effects: [{type: 'rest', clear: true}]});
     const camps = () => friendlyCamps(world, view.checkpointSites);
-    if (state.encounter) {
-      const out = stepEncounter(state.encounter, current, dt, held);
+    const encounter = state.encounter ?? view.road?.external;
+    if (encounter) {
+      const out = stepEncounter(encounter, current, dt, held && !encounter.external);
       next.encounter = out.encounter;
       choices.push(...(out.choices ?? []));
       requests.push(...(out.requests ?? []));
@@ -50,7 +51,7 @@ export const checkpointsPart = {
       requests.push(...(out.requests ?? []));
       return {state: next, choices, requests};
     }
-    if (held || banked || state.encounter || !inside || inside.id === state.inside) return {state: next, choices, requests};
+    if (held || banked || encounter || !inside || inside.id === state.inside) return {state: next, choices, requests};
     const friendly = camps();
     if (!isArmed(inside, world, friendly)) return {state: next, choices, requests};
     const number = (world.open.crossings[inside.id] ?? 0) + 1;

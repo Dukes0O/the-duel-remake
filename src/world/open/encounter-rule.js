@@ -30,6 +30,7 @@ const offset = (at, heading, along, side = 0) => ({
 });
 const bearing = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);
 const roadRequest = (action, fields = {}) => ({type: ROAD_REQUEST, action, ...fields});
+const ridersRequest = (id, group, vehicles) => ({type:'riders', id, group, vehicles, checkpoint:true});
 const cue = (name, position) => roadRequest('cue', {cue: ROAD_CUES[name], position});
 const say = (line, text = ROAD_LINES[line]) => ({type: 'say', lineId: 'open/checkpoint/' + line, text});
 
@@ -82,9 +83,10 @@ export function startEncounter(checkpoint, number, draw, player) {
     convoyGeometry(checkpoint, player, count, kind === 'trouble');
   const at = vehicles[0].start;
   const encounter = {id, group, phase: kind, bait, scout: draw.scout, at};
-  const requests = [roadRequest('start', {id, group, phase: kind, scout: draw.scout, vehicles,
-    tracks: bait ? baitTracks(at) : [],
-    displayGroup: bait ? 'traders' : group}), cue('near', at)];
+  const start = kind === 'fight' ? ridersRequest(id, group, vehicles) :
+    roadRequest('start', {id, phase:kind, scout:draw.scout, vehicles,
+      tracks:bait ? baitTracks(at) : [], displayGroup:bait ? 'traders' : group});
+  const requests = [start, cue('near', at)];
   if (kind === 'fight') requests.push(say(group + '-fight'));
   return {encounter, requests};
 }
@@ -103,7 +105,7 @@ function provoked(encounter, cars) {
   const requests = [];
   if (innocent) requests.push(say('civilian-hit', nameOf(group) + ': ' + ROAD_LINES['civilian-hit']));
   if (bait) requests.push(say('bait'));
-  requests.push(roadRequest('fight', {id, group, vehicles: bait ? riderGeometry(at, at.heading, 2, true) : [], bait}));
+  requests.push(ridersRequest(id, group, bait ? riderGeometry(at, at.heading, 2, true) : []));
   if (!cars.length && !bait) return leaving(encounter, requests, choices);
   return {encounter: {...encounter, phase: 'fight'}, choices, requests};
 }
@@ -155,6 +157,7 @@ export function stepEncounter(encounter, context, dt, held) {
   if (phase === 'leaving') return seen ? {encounter} : {encounter: null, requests: [roadRequest('clear', {id})]};
   const result = view.jobEvents?.find(event => event.type === 'riderFight' && event.id === id);
   if (result?.outcome === 'won') {
+    if (encounter.external) return leaving(encounter);
     const effects = [];
     if (result.wrecks > 0) effects.push({type: 'scrap', by: SCRAP_PER_WRECK * result.wrecks});
     if (keepsFeud(group)) effects.push({type: 'feud', of: group, by: 1});

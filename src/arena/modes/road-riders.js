@@ -576,12 +576,25 @@ export function checkpointRoadView(duel, world) {
       routeDone:rider.route && rider.routeIndex === rider.route.length,
       visible:dist(at,player) < RIVAL_DRAW_RANGE || inDrawRange && dist(at,player) < 2600};
   });
-  return {checkpointsEnabled:true, wrench, checkpointHeading:worldPose(duel,state).heading, road:road && {id:road.id, cars}};
+  return {checkpointsEnabled:true, wrench, checkpointHeading:worldPose(duel,state).heading,
+    road:road && {id:road.id, cars, external:road.external}};
 }
 
 export function applyCheckpointRoadRequest(duel, world, request) {
-  if (request.type !== ROAD_REQUEST) return false;
   const state = duel.state, {action, id} = request, active = world.checkpointRoad;
+  // The shared riders request carries the id, group and vehicles with their own start and home.
+  if (request.type === 'riders') {
+    if (active && active.id !== id || world.riderFight || !Array.isArray(request.vehicles) ||
+        !Object.hasOwn(ROAD_GROUPS, request.group) || !active && !request.vehicles.length) return true;
+    if (!active) {
+      const external = request.checkpoint ? null :
+        {id, group:request.group, phase:'fight', at:request.vehicles[0].start, external:true};
+      world.checkpointRoad = {id, cars:[], external};
+    }
+    startRoadFight(duel,world,request);
+    return true;
+  }
+  if (request.type !== ROAD_REQUEST) return false;
   if (action === 'cue') {
     const at = request.position;
     duel.emit({arenaTell:{id:request.cue, cue:request.cue, position:{...at, y:scablandsActorHeightAt(at.x,at.z)}}});
@@ -594,20 +607,16 @@ export function applyCheckpointRoadRequest(duel, world, request) {
     delete world.checkpointRecovery;
   } else if (action === 'start' && !active) {
     const encounter = world.checkpointRoad = {id, cars:[], scout:request.scout};
-    if (request.phase === 'fight') startRoadFight(duel,world,request);
-    else {
-      const phase = request.phase === 'trouble' ? 'stopped' : 'passing';
-      encounter.cars.push(...addCheckpointCars(duel,world,request.vehicles,request.displayGroup,phase));
-      state.opponentCount = state.opponents.length;
-    }
+    const phase = request.phase === 'trouble' ? 'stopped' : 'passing';
+    encounter.cars.push(...addCheckpointCars(duel,world,request.vehicles,request.displayGroup,phase));
+    state.opponentCount = state.opponents.length;
     if (request.tracks.length) {
       const tracks = request.tracks.map((at,index) => ({...at, kind:'tyre', id:TRACK_PREFIX + index,
         y:scablandsActorHeightAt(at.x,at.z)}));
       state.arena.markers = [...(state.arena.markers ?? []), ...tracks];
     }
   } else if (active?.id === id) {
-    if (action === 'fight') startRoadFight(duel,world,request);
-    else if (action === 'leave') leaveCheckpointRoad(duel,world);
+    if (action === 'leave') leaveCheckpointRoad(duel,world);
     else if (action === 'clear') clearCheckpointRoad(duel,world);
   }
   return true;

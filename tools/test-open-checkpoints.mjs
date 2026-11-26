@@ -5,6 +5,7 @@ import {bankHearth} from '../src/story/ledger.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {arenaActor, arenaParticipant} from '../src/combat-teams.js';
 import {placeActor} from '../src/arena/arena-event.js';
+import {applyCheckpointRoadRequest} from '../src/arena/modes/road-riders.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
@@ -155,7 +156,7 @@ assert(gap(buildCheckpoints(moved).find(row => row.id === mall.id).position, mal
   assert.equal(setup.displayGroup, 'traders');
   assert(setup.tracks.length > 0);
   const spring = openAt(trap.open, bait.at, {onFoot:true, road:{id:bait.id, cars:[{...bait.at, visible:true}]}});
-  assert.equal(spring.requests.find(request => request.action === 'fight').vehicles.length, 2);
+  assert.equal(spring.requests.find(request => request.type === 'riders').vehicles.length, 2);
 }
 
 const flags = {'hidden-road':true, 'story-choices':true, arsenal:true, 'scablands-realism':true};
@@ -219,6 +220,18 @@ function advance(duel, seconds) {
 }
 
 {
+  const duel = startDuel(original()), job = duel.state.arena.worldJob;
+  place(duel, mall.position);
+  job.open = holdOpenLand(job.open, 'thread/one');
+  applyCheckpointRoadRequest(duel, job, {type:'riders', id:'thread/fight', group:'road-rats',
+    vehicles:[{start:{...mall.position, z:mall.position.z + 60}, home:approach}]});
+  duel.step(DT);
+  assert.equal(job.riderFight.checkpointStep.id, 'thread/fight');
+  assert.equal(job.riderFight.outcome, null, 'the hold stops chance skirmishes, while an explicit fight can run');
+  assert.deepEqual(job.open.world.open.crossings, {});
+}
+
+{
   const duel = startDuel({...original(), seed});
   globalThis.window = {__qaApp:{duel, stop() {}}};
   try {
@@ -262,6 +275,8 @@ function advance(duel, seconds) {
   const initial = {...priorCrossing(original()), seed};
   const once = openAt(beginOpenLand(roam(initial)), mall.position);
   const firstId = once.open.parts.checkpoints.encounter.id;
+  assert(once.requests.some(request => request.type === 'riders' && request.id === firstId),
+    'the shared riders request carries the encounter id');
   const win = (open, id) => openAt(open, mall.position,
     {jobEvents:[{type:'riderFight', id, outcome:'won', wrecks:2}]});
   const one = win(once.open, firstId);
