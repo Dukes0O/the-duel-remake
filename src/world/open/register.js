@@ -34,7 +34,9 @@ export const NAMES = Object.freeze([
   people('water-men', {group: true, feud: true, leader: 'mrs-vane'}),
   person('mrs-vane', 'water-men'), person('miss-pell', 'water-men'),
   people('traders', {group: true}),
-  person('nan-tallow', 'traders'),
+  person('nan-tallow', 'traders'), person('tally', 'traders'),
+  people('seaview', {leader: 'mr-penny', thing: 'his keys'}),
+  person('mr-penny', 'seaview'),
   people('travellers', {group: true}),
 ]);
 const byId = new Map(NAMES.map(row => [row.id, row]));

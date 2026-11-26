@@ -1505,17 +1505,6 @@ tasks:
 
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
-  - id: OPEN-WRITE-1
-    title: "Open Scablands, written in full: The stranded hauler, The dry pump, Dace goes looking"
-    owner: "claude-cloud"
-    lane: "DESIGN"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-WRITE-1.md"
-
   - id: OPEN-LOOK-GLASSHOUSE
     title: "Open Scablands: the Glasshouse drawn in code, whole and burned (round 1)"
     owner: "claude-cloud"
