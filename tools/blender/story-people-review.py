@@ -12,6 +12,7 @@ parser.add_argument('folder', nargs='?', type=Path)
 parser.add_argument('views', nargs='*')
 parser.add_argument('--out', type=Path)
 parser.add_argument('--root', type=Path, default=Path.cwd())
+parser.add_argument('--open-figures', action='store_true')
 parser.add_argument('--paths-only', action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else sys.argv[1:])
 if not (args.out or args.folder):
@@ -20,6 +21,8 @@ root=args.root.resolve()
 folder=(root/(args.out or args.folder)).resolve()
 if not folder.is_relative_to(root/'.evidence'):
     parser.error('Review images belong under .evidence/.')
+if args.open_figures:
+    NAMES = ('odessa','moss','tin-cook','tin-porter','tin-child')
 if set(args.views)-set(NAMES):
     parser.error('Unknown review view.')
 if args.paths_only:
@@ -112,7 +115,7 @@ def payload(name):
         collection.objects.link(obj)
     return collection
 
-objects = {name:payload(name) for name in ['gate','current','gate-walkers','speaking','leads','actions','at-rest','camp']}
+objects = {name:payload(name) for name in (NAMES if args.open_figures else ['gate','current','gate-walkers','speaking','leads','actions','at-rest','camp'])}
 
 def shot(name, show, eye, target, fov):
     if args.views and name not in args.views:
@@ -124,6 +127,16 @@ def shot(name, show, eye, target, fov):
     camera.data.lens = camera.data.sensor_height / (2 * math.tan(math.radians(fov / 2)))
     scene.render.filepath = str(folder / (name + '.jpg'))
     bpy.ops.render.render(write_still=True)
+
+if args.open_figures:
+    scene.render.resolution_x = 1360
+    scene.render.resolution_y = 365
+    scene.cycles.samples = 5
+    camera.data.type = 'ORTHO'
+    camera.data.ortho_scale = 2.50
+    for name in NAMES:
+        shot(name, [name], (0,-20,2.75), (0,0,.96), 35)
+    sys.exit()
 
 # Blender looks towards +Y at the game gate. Rell stands at -0.4.
 for key in ['current','gate-walkers']:

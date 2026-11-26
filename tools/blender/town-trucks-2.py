@@ -26,8 +26,10 @@ output = (root / '.qa-dist/art-candidates' / f'town-trucks-2{args.candidate_suff
 blend = root / 'art-build/town-trucks-2.blend'
 evidence = root / '.evidence/2026-11-07/TOWN-ART-TRUCKS-2/round-3'
 textures = root / 'public/assets/models/wasteland/town/textures'
+mask_dir = None if args.export_only else str(evidence / 'masks')
 if args.paths_only:
-    print(json.dumps({'blend': [str(blend)], 'glb': [str(output)], 'evidence': [str(evidence)]}))
+    print(json.dumps({'blend': [] if args.export_only else [str(blend)], 'glb': [str(output)],
+                      'evidence': [] if args.export_only else [str(evidence)]}))
     raise SystemExit(0)
 
 import bpy
@@ -164,7 +166,7 @@ body = carve_object('dozer:body', textures, {
     'underside': CHASSIS_Y,
     'wheels': [(axle, WHEEL_R, TRACK_X - TYRE_HALF) for axle in WHEEL_Z],
     'voxel': .035, 'target': 3600, 'tolerance': 25, 'bleed_tolerance': 25,
-    'mask_dir': str(evidence / 'masks'),
+    'mask_dir': mask_dir,
 })
 attach(body, dozer)
 
@@ -443,7 +445,7 @@ def build_photo_van(ident, size, anchors, colour):
         'top': measured['top'], 'wheels': side_wheel_data,
         'underside': .18, 'voxel': .035, 'target': 4300,
         'grey': 26, 'tolerance': 24, 'bleed_tolerance': 22,
-        'mask_dir': str(evidence / 'masks'),
+        'mask_dir': mask_dir,
     }
     if 'cut' in measured:
         table['cut'] = measured['cut']
@@ -542,6 +544,10 @@ def export_glb(path):
 town.export_glb = export_glb
 bpy.context.view_layer.objects.active = dozer
 dozer.select_set(True)
+if args.export_only:
+    town.export_glb(output)
+    raise SystemExit(0)
+
 blend.parent.mkdir(parents=True, exist_ok=True)
 evidence.mkdir(parents=True, exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))

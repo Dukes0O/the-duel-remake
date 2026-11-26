@@ -39,6 +39,7 @@ import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
 import {barricadeShape,barricadeSurface} from './ash-men-look.js';
 import {createNight2Look} from './night-2-look.js';
+import {createOpenView} from './open/open-view.js';
 import {createDustNightLook} from './dust-night-look.js';
 import {dustNightOf} from './dust-night.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
@@ -705,6 +706,7 @@ export function createScablandsScene(course,options={}){
   const storyPeople = createStoryPeopleView(loadAsset);
   group.add(storyPeople.group);
   let night2;
+  let openLand;   // OPEN-SHARED: the open land's drawn parts, made the first time a job begins in the open
   let peopleSeconds = 0;
   // SHIPS-DECKS: the night storm, made the first time a step asks for it. Its beam and dust keep the view's own clock.
   let dustNight = null, dustSeconds = 0;
@@ -904,6 +906,7 @@ export function createScablandsScene(course,options={}){
   }
   registerSceneSystem(group,{
     animate(seconds){
+      openLand?.animate(seconds);
       if(bessRig&&bessEffects){
         bessWear.follow(bessRig);
         // Her wheels turn by the distance she has gone, and the dust behind them thickens with her speed.
@@ -981,6 +984,11 @@ export function createScablandsScene(course,options={}){
         group.add(night2.group);
       }
       night2?.update(worldJob, peopleSeconds, drawnShift, state?.opponents ?? []);
+      if (worldJob?.open && !openLand) {
+        openLand = createOpenView({course, loadAsset});
+        group.add(openLand.group);
+      }
+      openLand?.update(worldJob, here, presentationDt, drawnShift);
       const storm = featureFlags.enabled('wasteland-town') ? dustNightOf(state) : null;
       if (storm && !dustNight) { dustNight = createDustNightLook(storm); group.add(dustNight.group); }
       if (dustNight) {
@@ -1190,7 +1198,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    storyPeople.dispose(); night2?.dispose(); townLife?.dispose(); townFx?.dispose(); townArt?.dispose(); townArtLibrary?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
+    storyPeople.dispose(); night2?.dispose(); openLand?.dispose(); townLife?.dispose(); townFx?.dispose(); townArt?.dispose(); townArtLibrary?.dispose(); dustNight?.dispose(); townOutposts?.dispose(); townOutposts=null; townVane?.dispose(); townVane=null;
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();roadRidersView?.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();

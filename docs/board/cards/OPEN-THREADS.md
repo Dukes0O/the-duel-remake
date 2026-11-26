@@ -5,6 +5,51 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+**Built at the same time as the other open Scablands cards** (Kyle, 25 November 2026). OPEN-SHARED is merged and
+holds what this card once waited for. Where this section and the rest of the card differ, this section wins.
+
+- **Read `src/world/open/open-land.js` first.** It is the contract between the parts of the open land.
+- **Use these, and do not write them again:** `isTrue` and `checkFact` (`facts.js`); `applyEffects` (`open-effects.js`),
+  which is the only way to change the world; the world and its readers (`open-record.js`); holds (`holds.js`); the
+  register (`register.js`; a new name is a row there and in `src/story/people.js`); the table checks
+  (`check-tables.js`; load every table through `requireSound`); the sample worlds (`samples.js`; every test of a rule
+  starts from one of them).
+- **Do not edit** `open-land.js`, `parts.js`, `open-view.js`, `content/people.js`, `content/talk-tables.js`,
+  `src/app.js`, or a part, a view or a content file that belongs to another card.
+- **Where this card needs something that another card is building today,** use a stand-in of your own inside your own
+  files, say so under "Codex decided (Claude to review)", and the laptop joins the two at the merge.
+- `node tools/test-open-shared.mjs` must still pass, and is one of this card's checks.
+
+**Already built by OPEN-SHARED, so not this card's work:** `checkThread` in `src/world/open/check-tables.js` is
+`validateThread`; the `thread` effect and a storyline's record (`world.open.threads`); the `signs` hold. **Item 5,
+the tool, is OPEN-CROSSINGS's.**
+
+**This card's rules live in its part,** `src/world/open/parts/threads.js` (the director, the signs alive and each
+storyline's beats, run from the roam job), and its drawing in `src/world/open/sign-view.js`. The director also runs
+where a hearth is banked (`src/story/ledger-save.js`, a named hook). A sign does not appear while
+`isHeld(context.holds, 'signs')`.
+
+**Changed from the card as first cut:**
+
+- **The camp's burned state is a stage,** set with the `site` effect. OPEN-SITES draws a site by its stage; do not
+  edit `src/world/open/site-view.js`.
+- **The six things to find stand at the named spots of the Glasshouse's layout**
+  (`src/world/open/looks/glasshouse-look.js`, built today in the cloud). If it has not merged, use spots of your own
+  with the same names (`frames`, `lamp`, `tracks`, `ruts`, `pods`, `pump`) and say so.
+- **Sites and their positions are OPEN-SITES's, built today.** Test against the sample worlds `helped-camp` and
+  `after-the-smoke`, with the Glasshouse at the first position in OPEN-SITES's "Claude answers".
+- The storyline's file passes `checkThread`: its marks begin with `burned-camp/`, and it names no other storyline.
+- **Roles.** A storyline writes `'@camp'`, `'@camp.people'` and `'@enemy'` in its conditions and effects, and
+  `{camp.leader}` in its lines. `src/world/open/roles.js` is built: the storyline rule calls `resolveRoles` with the
+  cast before it asks or changes anything, and `fillLine` before it shows a line. Do not write them again.
+- **Draws.** The storyline rule asks every condition of a storyline with
+  `{draw: '<storyline id>/night-<night>'}` as the subject, so that a draw named `start` is drawn afresh each night.
+- **Holds.** A beat that holds the checkpoints and the signs inside a roam job takes the hold through the part's
+  return (`hold: {holder, systems}`) and lets go with `release`.
+- **A sign that is a person's words** is a row in `src/world/open/content/talk-threads.js`.
+
 ## What to build
 
 Sections 18 and 21 (Scenes 1 and 2).

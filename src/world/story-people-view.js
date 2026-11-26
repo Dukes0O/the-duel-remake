@@ -16,7 +16,12 @@ const EMPTY = Object.freeze([]);
 const SIDES = Object.freeze([['L', -1], ['R', 1]]);
 
 
+const TIN_PEOPLE = '/assets/models/wasteland/town/open-figures.glb';
+const tinCast = new Set(['odessa', 'moss', 'tin-cook', 'tin-porter', 'tin-child']);
+
 function sourceFor(id) {
+  if (tinCast.has(id)) return TIN_PEOPLE;
+  if (STORY_FIGURES[id].family === 'open-figures-2') return OPEN_FIGURES_2;
   if (id === 'cinder') return CINDER;
   if (id === 'clinker' || id === 'auntie-solder') return FOLK;
   return WALKERS;
@@ -119,17 +124,33 @@ function makeFigure(id, asset) {
   const model = cloneSkin(piece);
   model.position.set(0, 0, 0);
   const removed = [];
+  const props = [];
   let body;
   model.traverse(node => {
+    if (source === TIN_PEOPLE && node.isMesh && !node.isSkinnedMesh) {
+      const [owner, action] = node.name.split('_');
+      if (owner !== id) removed.push(node);
+      else if (action !== 'wear') props.push({node, action});
+    }
     if (!node.isSkinnedMesh) return;
-    if ((source === WALKERS && node.name !== 'skin-' + profile.asset) ||
+    if (((source === WALKERS || source === TIN_PEOPLE || source === OPEN_FIGURES_2) && node.name !== 'skin-' + profile.asset) ||
         (source === CINDER && node.name.includes('-far'))) removed.push(node);
     else body = node;
   });
-  for (const mesh of removed) { mesh.removeFromParent(); mesh.skeleton.dispose(); }
+  for (const mesh of removed) { mesh.removeFromParent(); mesh.skeleton?.dispose(); }
   if (!body) throw new Error('Story cast has no bound body for ' + id);
+  // Loose task implements live in the same GLB. Fit only the dressed body to its profile.
+  const looseTools = {};
+  if (source === OPEN_FIGURES_2) {
+    for (const node of [...model.children]) {
+      if (!node.name.startsWith('implement-')) continue;
+      node.removeFromParent();
+      looseTools[node.name.slice(10)] = node;
+      node.visible = false;
+    }
+  }
   model.updateMatrixWorld(true);
-  const bounds = new THREE.Box3().setFromObject(model, true);
+  const bounds = new THREE.Box3().setFromObject(source === TIN_PEOPLE ? body : model, true);
   const height = bounds.max.y - bounds.min.y;
   const scale = profile.height / height;
   model.scale.multiplyScalar(scale);
@@ -157,7 +178,8 @@ function makeFigure(id, asset) {
   joints.head.bone.add(anchor);
   anchor.position.copy(joints.head.bone.worldToLocal(up.set(0, profile.height + .12, 0)));
   const soles = soleVertices(body, 0, profile.height);
-  return {root, model, joints, body, owned, soles, baseY:model.position.y, facing: {yaw:0, headYaw:0},
+  const work = source === OPEN_FIGURES_2 ? prepareWorkKit(root, body, joints, looseTools, id) : null;
+  return {root, model, joints, body, owned, soles, props, work, baseY:model.position.y, facing: {yaw:0, headYaw:0},
     first:true, seated:0, asleep:0, armReach:0};
 }
 
@@ -207,7 +229,8 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   figure.asleep += ((person.action === 'sleep' ? 1 : 0) - figure.asleep) * blend;
   figure.armReach += ((person.action === 'push-cart' ? 1 : 0) - figure.armReach) * blend;
   const sit = figure.seated, sleep = figure.asleep, push = figure.armReach;
-  const moving = person.action === 'walk' || person.action === 'run' || person.action === 'push-cart';
+  const moving = person.action === 'walk' || person.action === 'run' || person.action === 'push-cart' ||
+    person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp';
   const running = person.action === 'run';
   const phase = 2 * Math.PI * person.distance / (profile.height * (running ? 1.42 : .86)) + profile.index * .93;
   const stride = moving ? Math.sin(phase) : 0;
@@ -233,6 +256,8 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     poseBone(joints['forearm' + side], -.09 - .14 * push - .66 * sit - .29 * sleep - (running ? .69 : 0) - .5 * gestureSide,
       0, -sign * (sign < 0 ? .34 : .25) * sleep);
   }
+  if (tinCast.has(person.id)) poseTinTask(figure, person, clock);
+  if (figure.work) poseWork(figure, person, clock, stride);
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.
   model.position.y = figure.baseY;
@@ -244,6 +269,35 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     lowest = Math.min(lowest, foot.y);
   }
   model.position.y += root.position.y - lowest;
+  if (figure.work) fitHandTool(figure, person.action);
+}
+
+// Shoulder and elbow pitches for the two hands, then chest and gaze pitches.
+const tinPoses = {
+  weld: [-.48,-.82,-.72,-.51,.17,.27],
+  inspect: [-.30,-1.42,-.52,-1.08,.23,.39],
+  carry: [-.57,-.90,-.59,-.88,-.06,.08],
+  scrub: [-.64,-.76,-.45,-.48,.23,.18],
+  'carry-bucket': [-.19,-.18,.04,-.08,.13,.06],
+  cook: [-.32,-.87,-.58,-.54,.08,.19],
+  'haul-sack': [-.69,-.96,-.56,-1.12,-.12,.07],
+};
+function poseTinTask(figure, person, clock) {
+  const {joints} = figure;
+  for (const {node, action} of figure.props) node.visible = action === person.action;
+  const pose = tinPoses[person.action];
+  if (pose) {
+    const stroke = person.action === 'scrub' ? .20*Math.sin(clock*2.5) : 0;
+    const stir = person.action === 'cook' ? .18*Math.sin(clock*2) : 0;
+    poseBone(joints.upper_armL, pose[0]+stroke, 0, .21);
+    poseBone(joints.forearmL, pose[1]);
+    poseBone(joints.upper_armR, pose[2]+stroke, stir, -.21);
+    poseBone(joints.forearmR, pose[3]-stroke*.5);
+    poseBone(joints.chest, pose[4]);
+    poseBone(joints.head, pose[5], figure.facing.headYaw*.32);
+  } else if (person.id === 'moss' && person.action !== 'sleep') {
+    poseBone(joints.chest, .19);
+  }
 }
 
 function releaseFigure(figure) {
@@ -320,6 +374,11 @@ export function createStoryPeopleView(loadAsset) {
         const speaking = person.id === speaker;
         poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift);
       }
+      // Both skeletons must have reached this frame before fitting a shared pane.
+      for (const person of people) {
+        if (person.action === 'carry-frame' && person.id < person.framePartner)
+          fitCarriedFrame(person, people, figures);
+      }
     },
     dispose() {
       if (disposed) return;
@@ -331,4 +390,143 @@ export function createStoryPeopleView(loadAsset) {
       group.removeFromParent();
     },
   };
+}
+
+// OPEN-FIGURES-2. The old gate company keeps its original poses and draw path.
+const OPEN_FIGURES_2 = '/assets/models/wasteland/scablands/open-figures-2.glb';
+const localX = new THREE.Vector3(1, 0, 0), localY = new THREE.Vector3(0, 1, 0);
+const leftPalm = new THREE.Vector3(), rightPalm = new THREE.Vector3(), span = new THREE.Vector3();
+
+function prepareWorkKit(root, body, joints, looseTools, id) {
+  const tools = {};
+  const names = id.startsWith('grower-') ? ['hoe', 'ties', 'frame', 'glass'] :
+    id === 'road-rat-lamp' ? ['lamp'] : [];
+  for (const name of names) {
+    tools[name] = looseTools[name];
+    root.add(tools[name]);
+  }
+  if (tools.lamp) {
+    looseTools.mantle.visible = true;
+    tools.lamp.add(looseTools.mantle);
+  }
+  const palms = {};
+  if (names.length) {
+    const {position, skinIndex, skinWeight} = body.geometry.attributes;
+    for (const [side] of SIDES) {
+      const hand = joints['hand' + side];
+      const contact = new THREE.Vector3();
+      let count = 0;
+      for (let i = 0; i < position.count; i++) {
+        if (skinIndex.getX(i) !== hand.index || skinWeight.getX(i) < .8) continue;
+        contact.add(body.getVertexPosition(i, foot).applyMatrix4(body.matrixWorld));
+        count++;
+      }
+      if (!count) throw new Error('No palm on the work rig for ' + id);
+      const socket = new THREE.Object3D();
+      socket.position.copy(hand.bone.worldToLocal(contact.divideScalar(count)));
+      hand.bone.add(socket);
+      palms[side] = socket;
+    }
+  }
+  return {tools, palms};
+}
+
+// Angles are in the standing person's axes. Swing at the shoulder and return at
+// the elbow to rest a hand on a hip or to hold the two tied wrists together.
+const WORK_STANCES = {
+  marigold: {stand:'hands-on-hips'},
+  sump: {stand:'hold-ledger', walk:'hold-ledger'},
+  bern: {stand:'hold-coil', walk:'hold-coil'},
+  'road-rat-lamp': {stand:'carry-lamp', walk:'carry-lamp'},
+  'road-rat-lookout': {stand:'lookout'},
+};
+// The long overalls and narrow shirts place the palms at different distances from the rig's wrists.
+const BOUND_GRIP = {
+  'grower-1': [-.05, -1.15, -.95],
+  'grower-2': [.02, -1.03, -.71],
+  'grower-3': [.04, -.84, -.67],
+};
+const WORK_POSES = {
+  hoe(arm, joints, clock) {
+    const stroke = Math.sin(clock * 2.1);
+    poseBone(joints.chest, .30 + .16 * stroke, -.13, .08);
+    arm('L', -.73 + .31*stroke, .06, -.23, .43);
+    arm('R', -.78 + .22*stroke, -.12, -1.25, -.55);
+  },
+  'walk-tied'(arm, joints, clock, stride, id) {
+    const [spread, elbow, inward] = BOUND_GRIP[id];
+    for (const [side, sign] of SIDES) arm(side, -.18 + .035*stride, sign*spread, elbow, sign*inward);
+  },
+  'carry-frame'(arm) {
+    for (const [side, sign] of SIDES) arm(side, -.19, sign*.06, -.94, -sign*.28);
+  },
+  'hands-on-hips'(arm) {
+    for (const [side, sign] of SIDES) arm(side, -.29, sign*1.01, -.34, -sign*1.69);
+  },
+  'hold-ledger'(arm, joints) {
+    arm('L', .53, -.55, -2.11, .55);
+    poseBone(joints.head, -.06, .07, -.065);
+  },
+  'hold-coil'(arm) { arm('R', .34, .07, -2.63, -.26); },
+  'carry-lamp'(arm, joints, clock, stride) { arm('R', -.16 + .025*stride, .24, -1.22, -.18); },
+  lookout(arm, joints, clock) {
+    arm('R', -1.73, .12, -1.77, -.84);
+    poseBone(joints.neck, -.05, .31 * Math.sin(clock * .63));
+  },
+};
+
+function poseWork({joints}, {id, action}, clock, stride) {
+  const pose = WORK_POSES[WORK_STANCES[id]?.[action] ?? action];
+  if (!pose) return;
+  const arm = (side, shoulder, spread, elbow, inward = 0) => {
+    poseBone(joints['upper_arm' + side], shoulder, 0, spread);
+    poseBone(joints['forearm' + side], elbow, 0, inward);
+  };
+  pose(arm, joints, clock, stride, id);
+}
+
+function palmIn(root, socket, out) {
+  return root.worldToLocal(socket.getWorldPosition(out));
+}
+
+function fitHandTool({root, work}, action) {
+  const {tools, palms} = work;
+  if (!palms.L) return;
+  for (const tool of Object.values(tools)) tool.visible = false;
+  palmIn(root, palms.L, leftPalm);
+  palmIn(root, palms.R, rightPalm);
+  if (tools.lamp) {
+    tools.lamp.visible = true;
+    tools.lamp.position.copy(rightPalm);
+  } else if (action === 'hoe') {
+    tools.hoe.visible = true;
+    tools.hoe.position.copy(leftPalm);
+    tools.hoe.quaternion.setFromUnitVectors(localY, span.subVectors(rightPalm,leftPalm).normalize());
+  } else if (action === 'walk-tied') {
+    fitSpan(tools.ties, leftPalm, rightPalm);
+  }
+}
+
+// Frame and bindings are authored from x=0 at the first grip to x=1 at the other.
+function fitSpan(mesh, first, last) {
+  mesh.position.copy(first);
+  span.subVectors(last, first);
+  mesh.scale.x = span.length();
+  mesh.quaternion.setFromUnitVectors(localX, span.normalize());
+  mesh.visible = true;
+}
+
+function fitCarriedFrame(person, people, figures) {
+  const partner = people.find(other => other.id === person.framePartner);
+  if (partner?.action !== 'carry-frame' || partner.framePartner !== person.id) return;
+  const first = figures.get(person.id), last = figures.get(partner.id);
+  if (!first?.root.visible || !last?.root.visible || !first.work?.tools.frame || !last.work?.tools.frame) return;
+  const root = first.root;
+  const partnerOnRight = root.worldToLocal(last.root.getWorldPosition(span)).x >= 0;
+  palmIn(root, first.work.palms[partnerOnRight ? 'R' : 'L'], leftPalm);
+  palmIn(root, last.work.palms[partnerOnRight ? 'L' : 'R'], rightPalm);
+  // Always build left-to-right so that reversed placement keeps the pane upright.
+  const a = partnerOnRight ? leftPalm : rightPalm, b = partnerOnRight ? rightPalm : leftPalm;
+  fitSpan(first.work.tools.frame, a, b);
+  fitSpan(first.work.tools.glass, a, b);
 }
