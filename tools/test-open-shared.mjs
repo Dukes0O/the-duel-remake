@@ -315,7 +315,7 @@ assert.match(checkSentence('No full stop')[0], /does not end as a sentence/);
 assert.throws(() => requireSound([glasshouse, glasshouse], checkSite, 'Sites'), /used twice/);
 assert.throws(() => requireSound([{...glasshouse, kind: 'den'}], checkSite, 'Sites'), /Sites:/);
 
-// A storyline, in the shape of section 18.
+// A storyline, in the one shape of section 18 (docs/story/open-scablands.md, "The one shape of a storyline's file").
 const thread = {id: 'burned-camp', title: 'Smoke over a friend', kind: 'trouble',
   reads: ['word', 'found', 'stage', 'feud', 'favour', 'made', 'stock', 'night'],
   writes: ['word', 'site', 'feud', 'mark', 'favour', 'stock', 'scrap'],
@@ -327,16 +327,18 @@ const thread = {id: 'burned-camp', title: 'Smoke over a friend', kind: 'trouble'
   sign: {kind: 'smoke', at: '@camp', seenWithin: 3500, lastsNights: 2},
   beats: {
     sign: {when: 'sign-seen', thoughts: ['That smoke is over by {camp.name}, and it is far too thick for a cooking fire.'], next: 'clues'},
-    clues: {when: {reach: 'camp'}, choices: [
-      {id: 'burned-camp/drive-on', effects: [{type: 'mark', id: 'burned-camp/drove-on'}, {type: 'thread', id: 'burned-camp', end: 'left'},
-        {type: 'site', id: '@camp', stage: 'burned'}, {type: 'word', person: '@camp.people', by: -1}]},
-      {id: 'burned-camp/follow', effects: [{type: 'thread', id: 'burned-camp', to: 'scout'}]}]},
-    scout: {mission: 'burned-camp/scout', holds: ['checkpoints', 'signs'], next: 'freed',
-      needs: {fact: 'feud', of: '@enemy', atLeast: 'Watching'},
-      outcomes: {seen: [{type: 'feud', of: '@enemy', by: 1}, {type: 'read', fact: 'met', key: 'rell'}]}}},
+    clues: {when: {reach: '@camp'}, choices: [
+      {id: 'burned-camp/drive-on', effects: [{type: 'mark', id: 'burned-camp/drove-on'}, {type: 'site', id: '@camp', stage: 'burned'},
+        {type: 'word', person: '@camp.people', by: -1}], next: 'left'},
+      {id: 'burned-camp/follow', by: 'go', next: 'scout'}]},
+    scout: {when: {fact: 'feud', of: '@enemy', atLeast: 'Watching'},
+      mission: {id: 'burned-camp/scout', kind: 'reach', holds: ['checkpoints', 'signs'],
+        outcomes: {seen: {effects: [{type: 'feud', of: '@enemy', by: 1}, {type: 'read', fact: 'met', key: 'rell'}], next: 'freed'}}}}},
   ends: ['freed', 'bought-back', 'left', 'taken'],
-  ignored: {after: 4, says: 'dot', line: 'There used to be a camp out past the Ridge that grew beans.'}};
+  ignored: {afterNights: 4, says: 'dot', line: 'There used to be a camp out past the Ridge that grew beans.'}};
 assert.deepEqual(checkThread(thread), []);
+const inBeat = (name, change) => ({...thread, beats: {...thread.beats, [name]: {...thread.beats[name], ...change}}});
+const inClues = choice => inBeat('clues', {choices: [{id: 'a', ...choice}]});
 const slips = [
   [{...thread, kind: 'sad'}, /needs a kind/],
   [{...thread, ends: []}, /needs "ends"/],
@@ -345,22 +347,35 @@ const slips = [
   [{...thread, reads: ['word']}, /its "reads" does not list/],
   [{...thread, writes: ['word']}, /its "writes" does not list/],
   [{...thread, starts: {fact: 'thread', id: 'runaway', at: 'over'}}, /No storyline's file names another/],
-  [{...thread, beats: {...thread.beats, sign: {...thread.beats.sign, next: 'nowhere'}}}, /neither a beat nor an end/],
-  [{...thread, beats: {...thread.beats, sign: {thoughts: ['{rival.name} did this.'], next: 'clues'}}}, /the cast does not have/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'mark', id: 'glasshouse/x'}]}]}}}, /should begin with "burned-camp\/"/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'thread', id: 'runaway', to: 'x'}]}]}}}, /moves only itself/],
+  [inBeat('sign', {next: 'nowhere'}), /which is not a beat of this file/],
+  [inBeat('sign', {thoughts: ['{rival.name} did this.']}), /the cast does not have/],
+  [inClues({effects: [{type: 'mark', id: 'glasshouse/x'}]}), /should begin with "burned-camp\/"/],
+  [inClues({effects: [{type: 'thread', id: 'burned-camp', to: 'scout'}]}), /"thread" effect written by hand/],
   [{...thread, starts: {fact: 'word', atLeast: 'Friendly'}}, /needs "of"/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'thread', id: 'burned-camp', to: 'scuot'}]}]}}}, /which is not a beat/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'thread', id: 'burned-camp', end: 'fred'}]}]}}}, /not one of the ends/],
-  [{...thread, beats: {...thread.beats, scout: {...thread.beats.scout, outcomes: {seen: [{type: 'site', id: 'glasshuose', stage: 'burned'}]}}}}, /not a site in the register/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'rain'}]}]}}}, /not an effect/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'site', id: '@cmap', stage: 'burned'}]}]}}}, /the cast does not have/],
+  [inClues({next: 'scuot'}), /"scuot", which is not a beat/],
+  [inClues({next: [{when: {fact: 'night', atLeast: 3}, to: 'fred'}, {to: 'left'}]}), /"fred", which is not a beat/],
+  [inBeat('scout', {mission: {...thread.beats.scout.mission, outcomes: {seen: {effects: [{type: 'site', id: 'glasshuose', stage: 'burned'}]}}}}), /not a site in the register/],
+  [inClues({effects: [{type: 'rain'}]}), /not an effect/],
+  [inClues({effects: [{type: 'site', id: '@cmap', stage: 'burned'}]}), /the cast does not have/],
   [{...thread, sign: {kind: 'smoke', at: 'cmap'}}, /The sign names "cmap"/],
-  [{...thread, beats: {...thread.beats, scout: {...thread.beats.scout, outcomes: {seen: [{type: 'fnid', site: '@camp'}]}}}}, /"fnid" is not an effect/],
-  [{...thread, beats: {...thread.beats, clues: {choices: [{id: 'a', effects: [{type: 'word', person: '@camp', by: 1}]}]}}}, /write "@camp.people"/],
-  [{...thread, beats: {...thread.beats, clues: {when: {reach: 'cmap'}}}}, /The beat "clues" names "cmap"/],
-  [{...thread, beats: {...thread.beats, sign: {thoughts: ['{camp.banana} is burning.'], next: 'clues'}}}, /for "banana"/],
+  [inBeat('scout', {mission: {...thread.beats.scout.mission, outcomes: {seen: {effects: [{type: 'fnid', site: '@camp'}]}}}}), /"fnid" is not an effect/],
+  [inClues({effects: [{type: 'word', person: '@camp', by: 1}]}), /write "@camp.people"/],
+  [inBeat('clues', {when: {reach: 'cmap'}}), /beats.clues.when \(reach\) names "cmap"/],
+  [inBeat('clues', {when: {reach: 'camp'}}), /names the role "camp" bare. Write "@camp"/],
+  [inBeat('sign', {thoughts: ['{camp.banana} is burning.']}), /for "banana"/],
   [{...thread, beats: {...thread.beats, over: {next: 'freed'}}}, /cannot be called "over"/],
+  // A key the shape does not have is refused, and the sentence says which key and where.
+  [{...thread, marks: {}}, /The storyline has the key "marks"/],
+  [inClues({act: 'say'}), /beats.clues.choices\[0\] has the key "act"/],
+  [inBeat('clues', {needs: {fact: 'night', atLeast: 3}}), /beats.clues has the key "needs"/],
+  [inBeat('sign', {thoughts: [{thought: 'Smoke.', needs: true}]}), /thoughts\[0\] has the key "needs"/],
+  [{...thread, cast: {...thread.cast, camp: {...thread.cast.camp, only: 'glasshouse'}}}, /cast.camp has the key "only"/],
+  [inBeat('clues', {when: {banked: 1}}), /a condition is a fact/],
+  [inBeat('clues', {when: {after: 'nowhere'}}), /\(after\) names "nowhere"/],
+  [inBeat('clues', {when: {asked: 'nobody'}}), /\(asked\) names "nobody"/],
+  [inBeat('clues', {when: {cast: 'rival'}}), /not a role of the cast/],
+  [inBeat('scout', {mission: {...thread.beats.scout.mission, job: 1}}), /scout.mission has the key "job"/],
+  [{...thread, ignored: {afterNights: 4, rows: []}}, /ignored has the key "rows"/],
 ];
 for (const [slip, sentence] of slips) assert.ok(checkThread(slip).some(text => sentence.test(text)), String(sentence) + ' <- ' + checkThread(slip).join(' | '));
 
