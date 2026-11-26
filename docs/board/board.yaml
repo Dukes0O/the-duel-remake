@@ -1384,6 +1384,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-SCOUT.md"
 
+  - id: OPEN-JOURNAL-SIZE-2
+    title: "Open Scablands: the journal also folds older duplicates of the rows its rules read, so years of play stay under the target"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [save-shape]
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-JOURNAL-SIZE-2.md"
+
   - id: OPEN-APPRENTICE-RUN
     title: "Open Scablands: teach somebody the gas run, and have it driven for you from then on (Kyle, 21 November)"
     owner: "codex"
@@ -1433,16 +1445,4 @@ tasks:
 
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
-
-  - id: OPEN-JOURNAL-SIZE
-    title: "Open Scablands: the open record's journal is folded when a hearth is banked, so a save cannot grow without limit"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: [save-shape]
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-JOURNAL-SIZE.md"
 

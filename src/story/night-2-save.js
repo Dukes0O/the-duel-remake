@@ -1,6 +1,7 @@
 import {bankLedgerHearth, beginLedger, recordLedgerChoice, replaceLedgerNight, savedLedger} from './ledger-save.js';
 import {replayTelling} from './ledger-replay.js';
 import {NIGHT_2_CHOICES, NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER} from './scenes/night-2.js';
+import {compactOpenJournal, OPEN_JOURNAL_LIMIT, savedOpenRecord} from '../world/open/open-save.js';
 
 // Slice A journaled encounters and debts by key. Later versions add their
 // values, so only the old equivalent authored choices need to supply the text.
@@ -31,6 +32,13 @@ export function settleNight2(profile, chapter) {
   }
   result = bankLedgerHearth(result.profile, chapter.opening.night);
   if (!result.ok) return {...result, profile};
+  const open = savedOpenRecord(result.profile);
+  if (open) {
+    const {record, overflow} = compactOpenJournal(open, night, {atBank: true});
+    if (record !== open) result.profile = {...result.profile, story: {...result.profile.story, open: record}};
+    if (overflow) console.warn('Open journal target exceeded; all progress is kept.',
+      {entries: record.journal.length, target: OPEN_JOURNAL_LIMIT});
+  }
   if (chapter.scrap) {
     const wasteland = result.profile.wasteland ?? {};
     result.profile = {...result.profile, wasteland: {...wasteland, scrap: (wasteland.scrap ?? 0) + chapter.scrap}};
