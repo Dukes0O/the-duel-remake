@@ -32,7 +32,7 @@ export default {
   id: ID,
   title: 'A toll on the Mall Road',
   kind: 'feud',
-  reads: ['feud', 'mark', 'found', 'stage', 'word', 'night', 'draw', 'thread'],
+  reads: ['feud', 'mark', 'found', 'stage', 'word', 'favour', 'night', 'draw', 'thread'],
   writes: ['feud', 'scrap', 'find', 'site', 'word', 'favour', 'promise', 'settle', 'met', 'roadWord', 'mark'],
 
   cast: {
@@ -96,6 +96,10 @@ export default {
           thought: "His lads lost a buggy up there. I think I'm a better driver than his lads are.", next: 'round'},
         {id: 'break', by: 'do', words: 'Drive at the pole',
           thought: 'If I knock that pole down, it will only stay down for as long as I keep winning.', next: 'break'},
+        {id: 'spend-favour', needs: {fact: 'favour', of: 'road-rats', atLeast: 1}, words: "You owe me one, Sump. I'd like to go through free this week.",
+          effects: [{type: 'favour', person: 'road-rats', by: -1}, mark('free-week')], freeNights: 7,
+          lines: [say('sump', "A week of free crossings for one lost buggy is a fair trade, and I do keep my books straight. The pole is up for you until this day week, and after that you're a customer again.")],
+          next: 'gate'},
         {id: 'home', by: 'go', words: 'Turn round and drive home',
           thought: "Nan said she'd stop paying if she weren't the only one. I wonder how many other people would say the same.",
           thoughtNeeds: marked('nan-asked'), next: 'hearth'},

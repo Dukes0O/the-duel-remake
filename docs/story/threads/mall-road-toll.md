@@ -11,6 +11,7 @@ people who use the road and get them to refuse him on the same morning.
 | This storyline reads | This storyline writes |
 | --- | --- |
 | The Road Rats' feud, to decide when the gate goes up and how many buggies guard it | The Road Rats' feud |
+| A favour that Sump owes the player, to spend at the gate | That favour, owed and spent |
 | A mark that the player promised Sump that Tin Town would pay his toll (`road-rats/toll-promised`) | Scrap paid, taken or found |
 | Camps found, and what each has become | Sump's Gate, found and on the map; the gate empty once it is broken or opened |
 | The word of Dot, of the Walkers and of each found camp, for who will stand in the road | Those peoples' words, a favour owed by the Road Rats, and promises to guard a cart |
@@ -174,13 +175,19 @@ to it gives one thought, with the cue `open.clue.found`.
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | a | Strip it with the wrench | Ten seconds with the wrench, and 14 scrap of parts | *Nobody would ever know who took them.* | Nothing more. Sump goes on wondering which hill it is on |
-| b | Leave it, and tell Sump where it is | Nothing is taken | *He treats everything as a deal. Finding his buggy for him ought to be worth something.* | Sump owes the player one favour. It can be spent at the gate for a week of free crossings, or kept for the morning of the stand (Scene 7) |
+| b | Leave it, and tell Sump where it is | Nothing is taken | *He treats everything as a deal. Finding his buggy for him ought to be worth something.* | Sump owes the player one favour, which can be spent at the gate for seven nights of free crossings |
 | c | Leave it and say nothing | Nothing | None | Nothing. It is still there on any later crossing |
 
 If the player tells him, at the gate, on any later day:
 
 > **Sump:** You found my buggy, and you came and told me when you could have stripped it? Nobody has ever done me a
 > favour that I didn't have to pay for first. I owe you one now, and I always write down what I owe.
+
+The favour is spent at the gate, on any day while the gate stands, by saying: "You owe me one, Sump. I'd like to
+go through free this week."
+
+> **Sump:** A week of free crossings for one lost buggy is a fair trade, and I do keep my books straight. The pole is
+> up for you until this day week, and after that you're a customer again.
 
 **Who else can use the way round.** Nobody with a cart or a van, because it is too steep. People on foot can. If the
 Walkers are Friendly, the player can tell Rell about it at her camp, with the choice "Tell Rell about the way
@@ -190,7 +197,7 @@ through the hills".
 > better than it suits everyone else. Thank you. I'll remember who showed it to us.
 
 **The ledger.** Mark: "You know a way round Sump's Gate through the Breaks." Scrap: 14 more if the buggy was stripped.
-A favour owed by the Road Rats, if Sump was told. The Walkers: a favour owed to the player, if Rell was told. The gate
+A favour owed by the Road Rats, if Sump was told, and spent again if the player asked for the free week. The Walkers: a favour owed to the player, if Rell was told. The gate
 still stands, and everybody with a cart still pays.
 
 ## Scene 5. Breaking the gate
@@ -520,6 +527,6 @@ find at the buggy is `open.clue.found`, in hand.
 | **The wage** | One scrap a cart, paid to the Road Rats for keeping the pass |
 | `road-rats/toll-promised` | A mark this storyline reads and never writes: the player promised Sump that Tin Town would pay |
 | `mall-road-toll/price-heard`, `mall-road-toll/nan-asked`, `mall-road-toll/paid-once` to `mall-road-toll/paid-five` | Marks of the gate and of paying |
-| `mall-road-toll/knows-the-round`, `mall-road-toll/buggy-stripped`, `mall-road-toll/buggy-told`, `mall-road-toll/walkers-shown` | Marks of the way round |
+| `mall-road-toll/knows-the-round`, `mall-road-toll/buggy-stripped`, `mall-road-toll/buggy-told`, `mall-road-toll/free-week`, `mall-road-toll/walkers-shown` | Marks of the way round |
 | `mall-road-toll/stands-tin-town`, `mall-road-toll/stands-dot`, `mall-road-toll/stands-camp`, `mall-road-toll/stands-walkers`, `mall-road-toll/stands-nan`, `mall-road-toll/sump-warned` | Marks of the round of visits |
 | `mall-road-toll/gate-broken`, `mall-road-toll/refused-together`, `mall-road-toll/road-free`, `mall-road-toll/road-taxed`, `mall-road-toll/road-closed`, `mall-road-toll/sump-keeps-the-pass`, `mall-road-toll/drove-through-alone`, `mall-road-toll/promise-broken` | Marks of how it ended |
