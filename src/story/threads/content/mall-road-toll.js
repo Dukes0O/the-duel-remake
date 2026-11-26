@@ -84,7 +84,7 @@ export default {
       ],
       thoughts: [
         "Eight scrap isn't much to pay today. I wonder what the price will be once everybody has got used to paying it.",
-        'Sump has three buggies by the fire and one more up on the hill. I can only see one of me.',
+        "Sump has three buggies by the fire and one more up on the hill, and there's only one of me.",
       ],
       questions: [
         {effects: [mark('price-heard', 'Sump told you his price and what he does to people who will not pay it.')], id: 'who-will-not-pay', to: 'sump', words: "What happens to people who don't pay?",
@@ -158,7 +158,7 @@ export default {
       // What the player may do with the buggy, once it is found and while it is still there.
       choices: [
         {id: 'strip', by: 'do', when: {all: [{found: 'lost-buggy'}, {not: marked('buggy-stripped')}]}, words: 'Strip it with the wrench',
-          thought: 'Nobody would ever know who took them.', effects: [{type: 'scrap', by: 14}, mark('buggy-stripped')]},
+          thought: 'Nobody would ever know who took its parts.', effects: [{type: 'scrap', by: 14}, mark('buggy-stripped')]},
         {id: 'tell-sump', by: 'go', when: {all: [{found: 'lost-buggy'}, {not: marked('buggy-stripped')}]}, words: 'Leave it, and tell Sump where it is',
           thought: 'He treats everything as a deal. Finding his buggy for him ought to be worth something.',
           effects: [mark('buggy-told'), {type: 'favour', person: 'road-rats', by: 1}],
@@ -238,9 +238,9 @@ export default {
         say('auntie-solder', 'With the Ash Men sitting on the bridge, that road is the only other way we have to the west. Now Sump wants paying every time one of our wheels turns on it.'),
         say('auntie-solder', 'A toll lasts exactly as long as people go on paying it. If nobody on that road pays him on the same morning, all he owns is a heap of wrecks and a pole.'),
         say('moss', "He can't take the wheels off everybody at once, because he hasn't enough lads to do it. He can take them off anyone who turns up alone, though, and he will."),
-        say('auntie-solder', "Tin Town will stand in that road, and you can tell people so. You'll need two more besides us before it's worth trying. Go and ask them to their faces. Nobody comes out for a message."),
+        say('auntie-solder', "Tin Town will stand in that road, and you can tell people so. You'll need two more besides us before it's worth trying. Go and ask them to their faces, because nobody ever comes out just for a message."),
       ],
-      thoughts: ["If I ask somebody and they say no, they'll still know what we're planning to do."],
+      thoughts: ["If I ask people and they say no, they'll still know what we're planning to do."],
       effects: [mark('stands-tin-town', "Tin Town will stand at Sump's Gate.")],
       next: 'visits',
     },
@@ -274,17 +274,17 @@ export default {
         ]},
         {effects: [{...mark('stands-nan', "Nan Tallow will stand at Sump's Gate."), when: ANOTHER}], id: 'ask-nan', to: 'nan-tallow', words: 'Will you stand with us at the gate?', lines: [
           say('nan-tallow', "Are there really two of you already? Then I'm the third, and I shan't be the last. I told you I'd stop paying the day I wasn't the only one.", {when: ANOTHER}),
-          say('nan-tallow', "Ask me again when you have somebody else. One van and one car aren't a refusal. They're two people about to lose their wheels.", {when: {not: ANOTHER}}),
+          say('nan-tallow', "Ask me again when you have somebody else. One van and one car don't make a refusal. They're only two people who are about to lose their wheels.", {when: {not: ANOTHER}}),
         ]},
       ],
       choices: [
-        {id: 'promise-dot', when: {all: [{asked: 'ask-dot'}, strangers('dot'), {not: stands('dot')}]}, words: 'You have my word. My car stays beside your van.', effects: [STANDS_DOT,
+        {id: 'promise-dot', when: {all: [{asked: 'ask-dot'}, strangers('dot'), {not: stands('dot')}]}, words: 'You have my word that my car will stay beside your van.', effects: [STANDS_DOT,
           {type: 'promise', id: `${ID}/guard-dot`, person: 'dot', dueNights: 6, text: "You promised Dot that your car would stay beside her van at Sump's Gate."}]},
         {id: 'no-promise-dot', when: {all: [{asked: 'ask-dot'}, strangers('dot'), {not: stands('dot')}]}, words: "I can't promise that, Dot.", effects: []},
-        {id: 'promise-camp', when: {all: [{asked: 'ask-camp'}, friendly(CAMP), {not: word(CAMP, 'Sworn')}, {not: stands('camp')}]}, words: 'You have my word. My car stays beside your cart.', effects: [STANDS_CAMP,
+        {id: 'promise-camp', when: {all: [{asked: 'ask-camp'}, friendly(CAMP), {not: word(CAMP, 'Sworn')}, {not: stands('camp')}]}, words: 'You have my word that my car will stay beside your cart.', effects: [STANDS_CAMP,
           {type: 'promise', id: `${ID}/guard-camp`, person: CAMP, dueNights: 6, text: "You promised {camp.name} that your car would stay beside its cart at Sump's Gate."}]},
         {id: 'no-promise-camp', when: {all: [{asked: 'ask-camp'}, friendly(CAMP), {not: word(CAMP, 'Sworn')}, {not: stands('camp')}]}, words: "I can't promise that.", effects: []},
-        {id: 'send-word', when: TWO_OTHERS, words: "Send it. We'll stand at first light.",
+        {id: 'send-word', when: TWO_OTHERS, words: "Send it, and we'll stand at first light.",
           thought: 'Every one of them is only coming because I asked them to.', next: 'stand'},
         {id: 'not-yet', when: TWO_OTHERS, words: 'Not yet. I want to ask somebody else first.', next: 'visits'},
       ],
@@ -298,7 +298,7 @@ export default {
         rule: {moments: ['squeeze', 'afterSeconds'], holdSeconds: 180, lessForEachBeyondThree: 30, outOfLineSeconds: 6, promiseMetres: 30, extraCarsIfWarned: 2, extraCarsIfShootingFirst: 2},
         lines: [
           say('sump', "Well, isn't this a lovely queue! I've never had so many customers at once. Who is going to be first?"),
-          say('you', 'Nobody in this line is paying you today, Sump. Nobody is paying you tomorrow either.'),
+          say('you', 'Nobody in this line is paying you today, Sump, and nobody is paying you tomorrow either.'),
           say('sump', "I can count every scrap that I'm not being paid this morning. I can also count the wheels in this line, and I have lads here who'd enjoy taking every one of them."),
           {...say('sump', 'I knew that you were coming this morning. Somebody at {camp.name} sold me the day for one free crossing. That was a very good price, and I\'d have paid three.', {when: marked('sump-warned')}), moment: 'squeeze'},
           {...say('sump', "You're the one I could do business with. Drive through now and your car goes free on my road for ever. Leave the rest of them here, and they can each decide for themselves.", {low: true, when: OFFERED}), moment: 'afterSeconds'},
@@ -344,7 +344,7 @@ export default {
           next: 'sold'},
         {id: 'stay', by: 'do', when: OFFERED, words: 'Stay where you are', thought: 'He only made me that offer because the line is holding.',
           lines: [
-            say('you', "They came because I asked them, Sump. I'm staying where I am."),
+            say('you', "They came because I asked them to, Sump, so I'm staying where I am."),
             say('sump', "That's a pity. I do hate it when somebody turns down a bargain."),
           ]},
       ],
@@ -358,7 +358,7 @@ export default {
     'wage-offer': {
       thoughts: ["They're all looking at me. Whatever I say now, some of them will think I chose wrongly."],
       choices: [
-        {id: 'no-wage', words: 'No toll and no wage. The road was free before you came.',
+        {id: 'no-wage', words: "There'll be no toll and no wage, because the road was free before you came.",
           thought: "He'll go somewhere, and he won't be in a good mood when he gets there.",
           lines: [say('sump', "Then you can have your free road, and all the holes in it. Don't come looking for me the day somebody worse than me finds this pass empty.")],
           effects: [{type: 'site', id: GATE, stage: 'empty'}, {type: 'feud', of: 'road-rats', by: 1}, mark('road-free'),
@@ -367,11 +367,11 @@ export default {
             {type: 'word', person: CAMP, by: 1, when: stands('camp')},
             {type: 'word', person: 'walkers', by: 1, when: stands('walkers')}],
           next: 'refused'},
-        {cue: 'open.toll.tally', id: 'wage', words: "One scrap a cart, and you keep the pass. That's a fair wage.",
+        {cue: 'open.toll.tally', id: 'wage', words: "You can have one scrap a cart to keep the pass, and that's a fair wage.",
           thought: 'I wonder what Sump does with a road once he has one.',
           lines: [
             say('sump', "Now that is a deal! I told the lads that Tin Town could be reasoned with. You won't see a wreck on this road that we didn't put there ourselves."),
-            say('dot', "So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with you. I shan't pretend that I like it.", {when: stands('dot')}),
+            say('dot', "So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with you, but I shan't pretend that I like it.", {when: stands('dot')}),
           ],
           effects: [mark('sump-keeps-the-pass', 'Sump keeps the pass on the Mall Road for one scrap a cart.'), mark('road-taxed'),
             {type: 'word', person: CAMP, by: 1, when: stands('camp')},

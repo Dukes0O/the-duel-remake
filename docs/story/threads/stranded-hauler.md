@@ -66,8 +66,8 @@ view for three seconds, two thought bubbles come.
 
 > *There's a truck stopped up ahead with its bonnet up, and somebody beside it is waving at me.*
 >
-> *If that's somebody in real trouble, I might be the only car on this road all day. If it isn't, then I'm exactly
-> who they're waiting for.*
+> *If that's somebody in real trouble, I might be the only car on this road all day. If it isn't, then I'm exactly the
+> kind of driver a trap is waiting for.*
 
 **There are six things to read, from three places.** Each is read by stopping where it can be seen for two seconds, as
 the Rats' Nest is read from the rim in section 21. The cue `open.scout.seen` marks each, and each gives one thought.
@@ -83,13 +83,13 @@ slag 120 metres off the road, too steep for the car, so it is climbed on foot.
 | The verge | The bonnet is up. The ground under the engine is dry, and no tools are out | *The bonnet is up, but the ground under it is dry and there isn't a single tool lying out. Nobody has been working on that engine.* | Nothing is broken |
 | The verge | Both doors are the same rusty red. A square of fresh paint covers something on one of them | *Somebody has painted over a mark on that door, and the paint is still shiny. Old trucks out here don't get fresh paint for no reason.* | A flag or a mark has been hidden |
 | The verge | Two sets of narrow tyre tracks leave the road and go round behind a rise | *Two sets of narrow tracks leave the road here and go round behind that rise. There's nothing behind it to drive to.* | Buggies are waiting out of sight |
-| The high ground | Two buggies behind the rise with their engines running, and their drivers standing on the seats | *There are two buggies behind the rise with their engines running. That truck isn't broken down at all. It's a trap for whoever stops to help.* | All of it, for certain |
+| The high ground | Two buggies behind the rise with their engines running, and their drivers standing on the seats | *There are two buggies behind the rise with their engines running, so that truck isn't broken down at all. It's a trap for whoever stops to help.* | All of it, for certain |
 
 **What is there when the truck is the hauler's.**
 
 | From | What is there | The thought | What it tells |
 | --- | --- | --- | --- |
-| The crest | A woman beside the truck waves once, and sits down again in its shade | *She waved once and then sat down again in the shade of the truck. Somebody who has been waiting a long time doesn't waste the effort.* | She has been there a long while |
+| The crest | A woman beside the truck waves once, and sits down again in its shade | *She waved once and then sat down again in the shade of the truck. Anybody who has been waiting that long wouldn't waste the effort of waving twice.* | She has been there a long while |
 | The crest | A cart behind the truck is stacked with tyres, roped down | *There are tyres roped down on the cart behind that truck, a great stack of them. That's a hauler's load, and it's worth a lot to somebody.* | It is a working truck |
 | The verge | A dark patch of oil under the truck, and tools laid out in a row on a cloth | *There's a dark patch of oil under the truck, and tools laid out in a row on a cloth. Somebody has really been trying to mend it.* | Something is broken |
 | The verge | One door of the truck is blue. The rest of it is red | *One door of that truck is blue and the rest of it is red. Whoever owns it mends things with whatever turns up.* | Nothing, unless Dot was asked. Then it is Tally for certain |
@@ -106,8 +106,8 @@ by the rule the lookouts use in section 21, the trap comes out at once and the c
 | --- | --- | --- |
 | "Moss, what does a truck look like when it has really broken down?" | **Moss:** *(on the radio)* It looks like a mess. There'll be tools all over the ground, something dripping underneath and a driver with dirty hands and a bad temper. If the ground is clean and the driver is cheerful, I'd keep driving. | What to look for under the engine |
 | "Auntie, would the Road Rats pretend to be broken down?" | **Auntie Solder:** *(on the radio)* They would, and they do. One of them stands by a car with its bonnet up, and the others wait where you can't see them. Look at where the tracks go before you look at who is waving. | That the trap exists, and that the tracks give it away |
-| "Dot, do you know a hauler who carries tyres?" *(only if Dot has met the player)* | **Dot:** *(on the radio)* That'll be Tally. She brings my flour when she remembers to. Her truck has one blue door, because the red one fell off years ago and she never found another red one. If all the doors match, it isn't her. | The blue door: the one thing the Road Rats cannot copy |
-| "Rell, have your people seen a truck on this road?" *(only if the Walkers are Friendly; when it is a trap)* | **Rell:** *(on the radio)* We walked that road at noon yesterday, and there was no truck on it then. Be careful. Nobody breaks down in the very hour that you happen to come along. | The truck was not there yesterday |
+| "Dot, do you know a hauler who carries tyres?" *(only if Dot has met the player)* | **Dot:** *(on the radio)* That'll be Tally, who brings my flour when she remembers to. Her truck has one blue door, because the red one fell off years ago and she never found another red one, so if all the doors match, it isn't her. | The blue door: the one thing the Road Rats cannot copy |
+| "Rell, have your people seen a truck on this road?" *(only if the Walkers are Friendly; when it is a trap)* | **Rell:** *(on the radio)* We walked that road at noon yesterday, and there was no truck on it then. Be careful, because nobody breaks down in the very hour that you happen to come along. | The truck was not there yesterday |
 | The same question, *when it is the hauler* | **Rell:** *(on the radio)* We passed a truck with its bonnet up at noon yesterday. We had nothing to mend it with, so we left the woman a bottle of water. If she's still sitting there today, then her trouble is real. | The truck has been there since yesterday |
 | "Keeper, can you see the truck on this road from your tower?" *(only if a tower stands on the Crow's Step; when it is a trap)* | **The keeper:** *(on the radio)* I can see that truck from up here, and I can see two buggies sitting behind the hill beside it. I'd turn round, if I were you. | The buggies, without leaving the car |
 | The same question, *when it is the hauler* | **The keeper:** *(on the radio)* That truck has been sitting there since yesterday morning. I've watched one woman walk round it about forty times, and nobody else has come near it. | That nobody else is near it |
@@ -122,11 +122,12 @@ the crest for half a minute.
 
 > *If I stop and it's a trap, I'll be standing still with my engine off when it shuts.*
 >
-> *If I drive on and it isn't a trap, somebody sits out here for another day, and I'll never find out which it was.*
+> *If I drive on and it isn't a trap, somebody will be left sitting out here for another day, and I'll never find out
+> which it was.*
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | Drive up and stop beside the truck | Whoever is waving | *Nobody else is going to stop. I've seen for myself how empty this road is.* | The trap shuts (Scene 2), or it is Tally (Scene 3) |
+| 1 | Drive up and stop beside the truck | Whoever is waving | *Nobody else is going to stop, because I've seen for myself how empty this road is.* | The trap shuts (Scene 2), or it is Tally (Scene 3) |
 | 2 | Drive past without slowing down | The open road beyond the truck | *I can't mend every truck in the Scablands, and I have a town to get home to.* | A trap comes out too late to catch a car at speed. The hauler counts the car as it goes by |
 | 3 | Turn round and go back the way you came | The road behind | None | Nothing happens today. The truck is there tomorrow, and not the day after |
 | 4 | Go round behind the rise and reach the buggies first *(only when the buggies have been seen)* | Two buggies, with their drivers standing on the seats | *They're Road Rats, and they're waiting to rob whoever stops to help. If I leave them here, the next car that stops will belong to somebody kinder than me.* | A fight begun on the player's terms, with one buggy caught standing |
@@ -137,7 +138,7 @@ all the same.
 **The ledger when the player drives past a trap.** Mark: "You drove past a truck with its bonnet up, and it was a
 trap." Two buggies are in the mirror for twenty seconds, and one thought comes.
 
-> *Two buggies came out from behind that rise as I went by. They were waiting there for whoever stopped.*
+> *Two buggies came out from behind that rise as I went by, so they must have been waiting there for whoever stopped.*
 
 ### Scene 2. The trap
 
@@ -161,15 +162,15 @@ November 2026).
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | Put forty scrap down on the road | He named the price aloud: forty scrap | *It's only scrap. But he'll remember that this car stops, and that it pays.* | The Road Rats ask this car for more next time, and say why |
+| 1 | Put forty scrap down on the road | He named the price aloud: forty scrap | *It's only scrap, but he'll remember that this car stops and that it pays.* | The Road Rats ask this car for more next time, and say why |
 | 2 | Drive straight at the rise and fight | Two buggies and one slow truck | *They have to come over that rise one at a time, and I'm already moving.* | A fight won about six times in ten on Easy |
 | 3 | Reverse out and run for it | The open road behind | *Nobody ever robbed a car that they couldn't catch.* | A chase of about a minute. The trap stays where it is |
 
 **1. Paying.** The scrap goes down on the road. A player with fewer than forty puts down what there is, and the rest
 is not owed.
 
-> **The Road Rat:** That's very handsome of you. I'll tell Sump that Tin Town has lovely manners. Mind how you go, and
-> do stop again.
+> **The Road Rat:** That's very handsome of you, and I'll tell Sump that Tin Town has lovely manners. Mind how you go,
+> and do stop again.
 
 **The ledger.** Scrap: 20. Mark: "You stopped for a trap on the road, and paid the Road Rats to let you go."
 
@@ -229,7 +230,7 @@ line at the hearth.
 > bonnet up. You drive that road, don't you? I don't suppose you saw it.
 >
 > **Auntie Solder:** A salt carter came to the gate last night on foot, with nothing left in his pockets. He'd stopped
-> for a truck with its bonnet up. You were out on that road. Did you see it?
+> for a truck with its bonnet up, and you were out on that road. Did you see it?
 
 ### Scene 3. The hauler
 
@@ -246,16 +247,16 @@ The woman stands up slowly. She has a tyre lever in one hand, and she puts it do
 gets out of the car.
 
 > **Tally:** *(only if the road was warned)* Somebody put the word round that a raised bonnet means Road Rats. It was
-> good advice. It has also kept me sitting here for two days.
+> good advice, but it has also kept me sitting here for two days.
 >
-> **Tally:** You stopped. Four cars have gone past me since yesterday morning, and every one of them speeded up when
-> it saw me.
+> **Tally:** You actually stopped for me. Four cars have gone past me since yesterday morning, and every one of them
+> speeded up when it saw me.
 >
 > **Tally:** My name is Tally, and this old thing is Patience. She's called Patience because that's what you need to
 > drive her.
 >
-> **Tally:** The shaft that turns her back wheels has dropped off its bolts. I can lift it into place, or I can do up
-> the bolts. I can't do both, because I only have the two hands.
+> **Tally:** The shaft that turns her back wheels has dropped off its bolts. I can lift it back into place, or I can do
+> up the bolts, but I can't do both at once, because I've only got two hands.
 >
 > **Tally:** I don't need a part, and I don't need a tow. I need one more person for about as long as it takes to boil
 > an egg.
@@ -264,11 +265,11 @@ gets out of the car.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "Why has nobody stopped for you?" | **Tally:** The Road Rats play broken-down on these roads. One of them stands by a raised bonnet, and two more wait behind a hill. So now nobody stops for anybody, and I can't even say that they're wrong. | What the trap is, for a player who has never met it |
+| "Why has nobody stopped for you?" | **Tally:** The Road Rats pretend to be broken down on these roads. One of them stands by a raised bonnet while two more wait behind a hill, so now nobody stops for anybody, and I can't even say that they're wrong. | What the trap is, for a player who has never met it |
 | "What are you carrying?" | **Tally:** I have forty tyres, six sacks of salt and one sack of seed beans. The tyres are for a man called Sump, who has never waited patiently for anything in his life. | She sells to the Road Rats |
 | "Do you really sell tyres to the Road Rats?" *(only after the question above)* | **Tally:** I sell tyres to anybody who has wheels. If I only sold to people I liked, I'd have starved in my first year. I'm not proud of it, and I'm not ashamed of it either. | Who she is |
-| "How have you lasted two days out here?" | **Tally:** Some people on foot left me a bottle of water, and I've been drinking it a capful at a time. Don't look at me like that. I've been thirstier than this, and for longer. | She is tougher than she looks |
-| "Why did you walk up to that rise?" *(only if the footprints were read)* | **Tally:** I went up there to see whether there was a road with anybody on it. There wasn't. Then I came back down and felt sorry for myself, which took most of the afternoon. | What the footprints were |
+| "How have you lasted two days out here?" | **Tally:** Some people on foot left me a bottle of water, and I've been drinking it a capful at a time. Don't look at me like that, because I've been thirstier than this, and for longer. | She is tougher than she looks |
+| "Why did you walk up to that rise?" *(only if the footprints were read)* | **Tally:** I went up there to see whether there was a road with anybody on it, and there wasn't. Then I came back down and felt sorry for myself, which took most of the afternoon. | What the footprints were |
 
 **The mend, on foot, about a minute.** The player walks to the back axle and holds the wrench on the shaft's bolts for
 twelve seconds while Tally lifts, and the picture shows the shaft going home. It costs no scrap, because nothing was
@@ -277,7 +278,7 @@ choice made (section 14), and she is still there until the next night has passed
 
 > **Tally:** *(lifting)* I've got her. Do the top bolt first, and don't be gentle with it.
 >
-> **Tally:** *(when it is done)* That's her whole again. Listen to that engine. She sounds dreadful, and she always
+> **Tally:** *(when it is done)* That's her whole again, so listen to that engine. She sounds dreadful, but she always
 > has, so that's all right.
 
 **The ledger.** Tally: Friendly. "You met Tally on the road, when her truck had broken down." A debt goes on the page:
@@ -288,11 +289,11 @@ choice made (section 14), and she is still there until the next night has passed
 
 > **Tally:** I carry the news as well, and I carry it for nothing, because it's the only load that weighs nothing.
 >
-> **Tally:** I don't like owing, and I never have. I pay in goods or in news, whichever you're short of. Where do I
-> find you?
+> **Tally:** I don't like owing anybody, and I never have, so I pay in goods or in news, whichever you're short of.
+> Where can I find you?
 >
-> **Tally:** Before you answer, you should know how a hauler works. What I hear at one gate, I tell at the next. That's
-> true at your gate, and it's true at Sump's.
+> **Tally:** Before you answer, you should know how a hauler works. Whatever I hear at one gate, I tell at the next one,
+> and that's as true at your gate as it is at Sump's.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
@@ -308,19 +309,18 @@ blamed on Tin Town.
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "Come to Tin Town's gate. We'll buy from you." | A trader at the gate. She said herself where the news goes | *Whatever she hears at our gate, Sump may hear a week later.* | The Word on the road rises by one after her first visit. Her truck still passes Sump's gate |
+| 1 | "Come and trade at Tin Town's gate, and we'll buy from you." | A trader at the gate. She said herself where the news goes | *Whatever she hears at our gate, Sump may hear a week later.* | The Word on the road rises by one after her first visit. Her truck still passes Sump's gate |
 | 2 | "Come to Tin Town's gate, but only if you stop selling to the Road Rats." | A trader at the gate, and a quarrel that she has to carry to Sump | *I'm asking her to give up her best customer because of something I said.* | The Road Rats' feud rises by one. They are a car short at checkpoints. Her truck no longer passes Sump's gate |
-| 3 | "You don't owe me anything. Get your load home." | Nothing changes at Tin Town | None | What she owes stays owed. She asks again the next time she is met on a road |
+| 3 | "You don't owe me anything, so get your load home." | Nothing changes at Tin Town | None | What she owes stays owed. She asks again the next time she is met on a road |
 
-> **Tally:** *(1)* So you're from Tin Town, where the fire is. I've been meaning to find out whether that was true.
-> Look for me at
-> your gate at first light, and bring your scrap.
+> **Tally:** *(1)* So you're from Tin Town, where the fire is, and I've been meaning to find out whether that was true.
+> Look for me at your gate at first light, and bring your scrap.
 >
 > **Tally:** *(2)* Then that's forty tyres a month I have to sell somewhere else. I'll do it, because you stopped when
-> nobody else would. But you've bought yourself a quarrel, and I'm the one who has to deliver it.
+> nobody else would, but you've bought yourself a quarrel, and I'm the one who has to deliver it.
 >
-> **Tally:** *(3)* Everybody owes somebody. It's the only thing that keeps these roads open. I'll write it down anyway,
-> and one day you'll be glad that I did.
+> **Tally:** *(3)* Everybody owes somebody, and that's the only thing that keeps these roads open. I'll write it down
+> anyway, and one day you'll be glad that I did.
 
 **The ledger.** 1: mark "You asked Tally to trade at Tin Town's gate." 2: the same mark, and "Tally stopped selling
 tyres to the Road Rats because you asked her to." The Road Rats: up one step. 3: nothing new.
@@ -330,28 +330,29 @@ tyres to the Road Rats because you asked her to." The Road Rats: up one step. 3:
 > **Tally:** Wait a moment. There's one more thing, and I should have said it before you picked up that wrench.
 >
 > **Tally:** Two buggies have been sitting on that ridge since noon. They're Road Rats, but they aren't here on Sump's
-> business. Sump pays me for tyres. Those two would rather have the tyres and keep the pay.
+> business, because Sump pays me for my tyres. Those two would rather take the tyres off me and keep what Sump would
+> have paid for them.
 >
-> **Tally:** I didn't tell you sooner because I thought you'd drive off. Patience is slow until she's warm. I only need
-> company as far as the crossing, where there are other people on the road.
+> **Tally:** I didn't tell you sooner because I thought you'd drive off. Patience is slow until she's warmed up, but I
+> only need company as far as the crossing, where there are other people on the road.
 
 The two buggies are there to be seen on the ridge, a kilometre off, once she has pointed. The second decision is made
 by driving.
 
 > *She kept that back until the truck was mended. I'd probably have kept it back too.*
 >
-> *It's two kilometres to the crossing, at the speed of a truck that sounds like that.*
+> *It's two kilometres to the crossing, and that's a long way at the speed of a truck that sounds like that.*
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | Pull out in front of Patience and ride with her to the crossing | Two buggies on the ridge. In an act with a clock, it is the day's outing | *I stopped for her once already. It would be strange to stop halfway.* | The escort (Scene 4) |
+| a | Pull out in front of Patience and ride with her to the crossing | Two buggies on the ridge. In an act with a clock, it is the day's outing | *I've already stopped for her once, and it would be strange to give up on her halfway.* | The escort (Scene 4) |
 | b | Drive on your own way | Your own road, and the day still yours | *I mended her truck, and that's what I stopped to do.* | A named draw decides whether the two buggies take her tyres |
 
 **b. Driving on.** Nothing more is seen. An even draw decides it, and Tally says how it went at the gate, or when she
 is next met on a road.
 
-> **Tally:** *(robbed)* They took the tyres half an hour after you left. I'm not blaming you. You mended my truck, and
-> nobody mended theirs.
+> **Tally:** *(robbed)* They took the tyres half an hour after you left. I'm not blaming you, because you mended my
+> truck, and nobody else on that road did anything for me.
 >
 > **Tally:** *(not robbed)* Those two followed me for a kilometre and then lost their nerve. I'd like to think it was
 > the look on my face.
@@ -367,16 +368,16 @@ four seconds takes ten, with the cue `open.tyres.lost`. The player shoves them o
 beside Bess. Tally talks on the radio.
 
 > **Tally:** *(on the radio, when the buggies start down)* Here they come, down off the ridge. They won't shoot at
-> Patience, because they want what she's carrying. Keep them away from the cart.
+> Patience, because they want what she's carrying, so keep them away from the cart.
 >
-> **Tally:** *(on the radio, each time tyres are lost)* That's ten of my tyres rolling about in the road. I counted
-> them on, and I can count them off.
+> **Tally:** *(on the radio, each time tyres are lost)* There go ten of my tyres, rolling about in the road. I counted
+> every one of them onto that cart, and I can count them coming off.
 >
-> **Tally:** *(on the radio, when a buggy is wrecked)* That one won't be hooking anybody's tyres for a while. There's
-> still the other one.
+> **Tally:** *(on the radio, when a buggy is wrecked)* That one won't be hooking anybody's tyres for a while, but
+> there's still the other one.
 >
-> **Tally:** *(on the radio, in sight of the crossing)* I can see the crossing, and I can see carts on it. They'll turn
-> back now. Rats never rob anybody where it might be watched.
+> **Tally:** *(on the radio, in sight of the crossing)* I can see the crossing, and there are carts on it, so they'll
+> turn back now. Road Rats never rob anybody where somebody might be watching.
 
 **How it can end.**
 
@@ -388,13 +389,13 @@ beside Bess. Tally talks on the radio.
   Tally: Sworn. Mark: "You rode beside Tally's truck and kept the Road Rats off her load."
 - **Some reach it.** The same, with one line first.
 
-  > **Tally:** They got some of them, and you kept the rest. This morning I expected to lose every tyre and the truck
-  > as well, so I'm calling this a good day.
+  > **Tally:** They got some of the tyres, but you kept the rest of them. This morning I expected to lose every tyre
+  > and the truck as well, so I'm calling this a good day.
 
 - **None reach it.** Tally stays Friendly. Mark: "The Road Rats took Tally's tyres."
 
-  > **Tally:** They've left me the salt and the beans, because salt is heavy and beans are dull. Don't look so sorry.
-  > You stayed, and that's the part I'll remember.
+  > **Tally:** They've left me the salt and the beans, because salt is heavy and beans are dull. Don't look so sorry,
+  > because you stayed, and that's the part I'll remember.
 
 - **The player's car is wrecked.** The buggies take what they can reach and go. Patience tows the car to Tin Town
   behind the cart, which settles what she owed. Marks: "The Road Rats took Tally's tyres." "Tally towed your car
@@ -417,8 +418,8 @@ then on she comes every third dawn.
 >
 > **Tally:** The first piece of news is always free. After that, you pay for it with a cup of something hot.
 >
-> **Auntie Solder:** *(on the radio)* A trader at my gate, and nobody on fire. I'd forgotten what an ordinary morning
-> was like. Tell her the tea is free if the gossip is good.
+> **Auntie Solder:** *(on the radio)* There's a trader at my gate, and nobody is on fire. I'd forgotten what an ordinary
+> morning was like. Tell her the tea is free if the gossip is good.
 
 **Her goods** are the trade of section 13: parts, seed, salt and wood, for scrap, by the thing. Her price follows her
 word: a quarter off at Friendly and half off at Sworn. If her tyres were taken, she has no tyres or parts on the first
@@ -428,16 +429,16 @@ visit.
 
 | You ask | The answer | What it does |
 | --- | --- | --- |
-| "What's the free piece of news?" | **Tally:** Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you where it is, as near as I can, and my drawing is better than my truck. | A rumour: a circle on the map, 600 metres across, where that site is said to be (section 16) |
-| "Did you see anything at {burned.name}?" *(only if a found camp has been burned)* | **Tally:** I came through there the morning after, to sell them salt. I saw the tracks of a lot of cars going out one way, and a cart's ruts in the middle of them, with footprints beside it. **Tally:** People who walk beside a cart were alive when they left. I'm sorry about my own tracks in the ash. I had to turn Patience round in it. | The people were taken alive. Her cart's tracks at that camp are explained |
+| "What's the free piece of news?" | **Tally:** Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you a map of where it is, as near as I can, and my drawing is better than my truck. | A rumour: a circle on the map, 600 metres across, where that site is said to be (section 16) |
+| "Did you see anything at {burned.name}?" *(only if a found camp has been burned)* | **Tally:** I came through there the morning after, to sell them salt. I saw the tracks of a lot of cars going out one way, and a cart's ruts in the middle of them, with footprints beside it. **Tally:** People who walk beside a cart were alive when they left. I'm sorry about my own tracks in the ash, but I had to turn Patience round in it. | The people were taken alive. Her cart's tracks at that camp are explained |
 | "Where are the Road Rats working this week?" *(only while she still sells to Sump)* | **Tally:** Sump's people have their raised bonnet out again this week. If you see a truck by the road with doors that match, keep your foot down. | The player knows that the trap is out, and how to tell it |
 
 Her answer about the camp writes the mark "Tally told you what she saw at a camp that had been burned."
 
 **Tied back, on a later visit, while she still sells to Sump.**
 
-> **Tally:** *(if her load was saved)* I told Sump what his two boys got up to on that ridge. He was very shocked. Then
-> he took the price of ten tyres out of their share, so he wasn't as shocked as all that.
+> **Tally:** *(if her load was saved)* I told Sump what his two boys got up to on that ridge. He said he was very
+> shocked, and then he took the price of ten tyres out of their share, so he can't have been as shocked as all that.
 >
 > **Tally:** *(once, after her first visit)* Sump asked me whether it was true about the fire at Tin Town. I said that
 > it was, because it is. I did tell you how a hauler works.
@@ -448,7 +449,8 @@ Tin Town's fire. Tally told him, as she said she would."
 **If she was not asked to the gate,** she is a trader who drives by on the roads. When she is hailed she asks again,
 and the decision of Scene 3 is open again.
 
-> **Tally:** It's you again. I still have you written down, and it itches. Is there a gate I can pay you at yet?
+> **Tally:** It's you again. I've still got you written down as somebody I owe, and it itches. Is there a gate where I
+> can pay you yet?
 
 ### When the first truck is the hauler's
 
@@ -486,8 +488,8 @@ Nobody dies, nothing saved is wiped, and no screen says the game is over.
 
   And once, later, Dot says it.
 
-  > **Dot:** Tally was two days late with my flour. She says she sat by a broken truck and counted the cars going past.
-  > She didn't say whose cars they were. She looked as if she could have.
+  > **Dot:** Tally was two days late with my flour. She says she sat by a broken truck and counted the cars going past,
+  > and she didn't say whose cars they were, but she looked as if she could have.
 
 - If the trap was met and the hauler was never stopped for, the storyline ends as **an ambush survived** and nothing
   more.
