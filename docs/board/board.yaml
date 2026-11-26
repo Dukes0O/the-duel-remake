@@ -1498,7 +1498,8 @@ tasks:
     owner: "claude-cloud"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (cloud), 26 November 2026, on branch cloud/OPEN-LOOK-BUS-RING"
     needs: []
     locks: []
     flag: "story-choices"
