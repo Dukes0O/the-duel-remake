@@ -13,6 +13,8 @@ import {radioPlace, radioRamp, radioFuel, RADIO_ID, POCKET_ID, RADIO_MARK} from 
 import {LAND} from '../src/world/scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {riverDistanceAt} from '../src/world/scablands-regions.js';
+import {sampleLine} from '../src/world/scablands-ways.js';
+import {createSignView} from '../src/world/open/sign-view.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {stepMover} from '../src/world/scablands-movers.js';
 import {walkThread} from './thread-crossings.mjs';
@@ -52,6 +54,9 @@ assert.equal(createFeatureFlags({qa: false, storage: null, search: ''}).enabled(
 assert.deepEqual(walkThread(voice).faults, []);
 assert.ok(ROAD_NET.nearest(start.x, start.z));
 assert.ok(riverDistanceAt(start.x, start.z) > 150, 'the browser starts on the road away from decks');
+const approach = sampleLine([start, foot], 2);
+for (const [i, point] of approach.slice(1).entries())
+  assert.equal(stepMover(approach[i], point, {radius: 1.3}).blocked, false, 'the browser approach is drivable');
 for (const name of Object.keys(pageFunctions)) new Function(pageSource(name));
 
 const opening = startAt('first-call');
@@ -202,6 +207,15 @@ assert.equal(lifted.open.parts.missions.active.state.carrying, true);
 assert.ok(lifted.events.some(row => row.cue === 'open.set.taken'));
 const loaded = snap(lifted.open, park, .1, {onFoot: true, carPosition: park});
 assert.equal(missionResult(loaded), undefined);
+const signs = createSignView();
+const beforeLook = structuredClone(heist.open);
+signs.update({open: heist.open}, lamp, heist.open.seconds);
+const beam = signs.group.getObjectByName('The Pocket lamp beam');
+assert.ok(beam?.visible, 'the sweep is visible where the heist uses it');
+signs.update({open: loaded.open}, lamp, loaded.open.seconds);
+assert.equal(beam.visible, false, 'the beam clears when the escape leg begins');
+assert.deepEqual(heist.open, beforeLook, 'drawing the sweep leaves the mission alone');
+signs.dispose();
 const delivered = snap(loaded.open, hut);
 assert.equal(missionResult(delivered), 'out-with-the-set');
 const took = snap(delivered.open, hut);
