@@ -14,7 +14,10 @@ import {
 import {
   WILDLIFE_VIEW, IDLE, FLEE, FLY, GONE, startleReach, nextMood, fleeLength, fadeAlpha, pickNearest, turnToward, yawToward, birdFlight,
   calendarPlayDay, ringLook, viewPlayDay, createWildlifeView, hitReach, bloodOutline, DOWN,
+  FALLS, fallFor, fallPose, canBeHit,
 } from '../src/wildlife-view.js';
+import {EngineAudio} from '../src/audio.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {referenceLap} from '../src/reference-laps.js';
@@ -270,7 +273,7 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   equal(ringLook(-3).opacity, .95, 'a bad age reads as the start');
   const view = readFileSync(new URL('../src/wildlife-view.js', import.meta.url), 'utf8');
   ok(/counted/.test(view) && /addRing/.test(view), 'the view draws rings for counted animals');
-  ok(/planRace\(course, raceNumber, today\);[\s\S]{0,240}clearEntities\('count'\); countIndex\.clear\(\); countKey = null;/.test(view),
+  ok(/planRace\(course, raceNumber, today, roadside\);[\s\S]{0,240}clearEntities\('count'\); countIndex\.clear\(\); countKey = null;/.test(view),
     'a new plan (leaving the helicopter, another course) clears the count animals, so none stand in a race');
   ok(/open: true/.test(readFileSync(new URL('../src/app.js', import.meta.url), 'utf8')), 'the app asks for open ground when it places the count');
 }
@@ -404,6 +407,129 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   equal(rivalHit.sounds.length, 0, "but only the player's own hits make the sound");
   rivalHit.view.dispose();
   equal(DOWN, 4, 'a knocked-down animal has a mood of its own, after GONE');
+}
+
+// ---- Round 2 (WILDLIFE-HITS-2, Kyle's try of 20 November 2026) ---------------------------------------
+// Every kind can be hit and falls by its size: a small one is flung on and tumbles, a medium one goes onto its side,
+// a large one stops the car and slumps where it stood. A bird can be hit on the ground, not in the air. The splat is
+// as loud as a crash between cars, with a heavier thump for a large animal.
+{
+  for (const [id, info] of Object.entries(wildlife.SPECIES)) {
+    if (info.kind === 'decal') continue;
+    ok(wildlife.SIZES.includes(info.size), `${id} has a size, so it falls in its own way`);
+  }
+  same(['moose', 'elk', 'black-bear', 'red-deer'].map(id => wildlife.speciesSize(id)), ['large', 'large', 'large', 'large'], 'a moose, an elk, a bear and a red deer are large');
+  same(['yellow-bellied-marmot', 'beaver', 'echidna', 'raven'].map(id => wildlife.speciesSize(id)), ['small', 'small', 'small', 'small'], 'a marmot, a beaver, an echidna and a bird are small');
+  equal(wildlife.speciesSize('black-bear', {cub: true}), 'medium', 'a bear cub falls one size smaller');
+  equal(wildlife.speciesSize('beaver', {cub: true}), 'small', 'and nothing is smaller than small');
+
+  // The falls themselves, without graphics.
+  ok(FALLS.small.throw > 3 && FALLS.small.throw > FALLS.medium.throw && FALLS.medium.throw > FALLS.large.throw, 'the smaller the animal, the further it is thrown');
+  ok(FALLS.large.throw < .5 && FALLS.large.hop === 0, 'a large animal stops the car: it slumps where it stood');
+  ok(FALLS.small.spins >= 1 && FALLS.medium.spins === 0 && FALLS.large.spins === 0, 'only a small animal tumbles end over end');
+  equal(fallFor('large', true), FALLS.crushed, 'under the monster truck any animal is crushed');
+  ok(FALLS.crushed.heap < FALLS.small.heap && FALLS.crushed.blood > FALLS.large.blood, 'flat, with the widest stain');
+  for (const size of wildlife.SIZES) {
+    const fall = fallFor(size), start = fallPose(fall, 0), middle = fallPose(fall, fall.time / 2), end = fallPose(fall, fall.time);
+    ok(start.along === 0 && start.over === 0 && !start.done, `${size}: the fall starts where the animal stood, on its feet`);
+    ok(middle.along > 0 && middle.along < fall.throw && !middle.done, `${size}: and is part way on through the middle`);
+    near(end.along, fall.throw, 1e-9, `${size}: it ends ${fall.throw} m on`);
+    ok(end.done && end.over === 1 && Math.abs(end.spin) < 1e-9 && end.height === 0, `${size}: on its side on the ground, not turning`);
+  }
+  ok(fallPose(FALLS.small, FALLS.small.time / 2).height > .8, 'a small animal is thrown up as it goes');
+
+  // Who can be hit.
+  ok(canBeHit(IDLE) && canBeHit(FLEE), 'an animal standing or running can be hit');
+  ok(!canBeHit(DOWN) && !canBeHit(GONE), 'one already down, or a bird gone, cannot');
+  ok(canBeHit(IDLE, {bird: true}), 'a bird standing on the ground can be hit');
+  ok(canBeHit(FLY, {bird: true, risen: .3}), 'and so can one just lifting off');
+  ok(!canBeHit(FLY, {bird: true, risen: 2}), 'but a bird in the air has flown off');
+  equal(WILDLIFE_VIEW.roadsideStartle, 10, 'a roadside herd bolts only when a car is 10 m away');
+
+  // In the real view, on Tremblant Woods: a herd of each size, hit by the player's car.
+  const definition = COURSE.find(row => row.id === 'tremblant-woods'), course = new Course(definition, definition.layoutSeed ?? 1989);
+  const clips = new Set(Object.values(WILDLIFE_MODELS).flatMap(entry => [entry.idle, entry.move, entry.fly].filter(Boolean)));
+  const loadModel = async () => {
+    const scene = new THREE.Group(); scene.add(new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, .5).translate(0, .6, 0), new THREE.MeshBasicMaterial()));
+    return {scene, animations: [...clips].map(name => new THREE.AnimationClip(name, 1, []))};
+  };
+  const lap = referenceLap('tremblant-woods', 'fixed') ?? referenceLap('tremblant-woods', 'route_a');
+  const found = {};
+  for (let day = 20700; day < 20900 && Object.keys(found).length < 3; day++) {
+    const placed = wildlife.placeWildlife({courseId: 'tremblant-woods', playDay: day, raceNumber: 1, course, approvedModels: APPROVED_MODEL_IDS, referenceLap: lap, roadside: true});
+    for (const spot of placed.spots) for (const animal of spot.animals) {
+      const size = wildlife.speciesSize(animal.species, {cub: animal.cub});
+      // A lone animal, so the hit is on it alone.
+      if (!found[size] && spot.animals.length === 1) found[size] = {day, animal};
+    }
+  }
+  same(Object.keys(found).sort(), ['large', 'medium', 'small'], 'Tremblant Woods has a lone animal of each size on some day');
+  const pause = ms => new Promise(done => setTimeout(done, ms));
+  const hitOne = async ({day, animal}) => {
+    const sounds = [], view = createWildlifeView({scene: new THREE.Scene(), loadModel, playDay: () => day, onHit: (strength, size) => sounds.push({strength, size})});
+    const player = {position: new THREE.Vector3(), visible: true};
+    const frame = (x, z) => { player.position.set(x, 0, z); view.update({enabled: true, hidden: false, course, runId: 'qa', dt: 1 / 60, worldVisible: true, heli: null, player, rival: null, extras: [], traffic: [], hits: true}); };
+    const away = course.worldAt(course.nearest(animal.x, animal.z).s - 150, 0);
+    frame(away.x, away.z); await pause(30); frame(away.x, away.z);
+    const roots = () => { const list = []; view.group.traverse(node => { if (node.parent?.parent === view.group && node.name !== 'Wildlife blood' && node.isGroup !== false && node.type === 'Group' && node.visible) list.push(node); }); return list; };
+    const nearest = () => roots().reduce((best, node) => !best || Math.hypot(node.position.x - animal.x, node.position.z - animal.z) < Math.hypot(best.position.x - animal.x, best.position.z - animal.z) ? node : best, null);
+    const bloods = () => { const list = []; view.group.traverse(node => { if (node.name === 'Wildlife blood') list.push(node); }); return list; };
+    frame(animal.x + .5, animal.z);
+    const early = nearest(), earlyBlood = bloods();
+    const earlyPose = {along: Math.hypot(early.position.x - animal.x, early.position.z - animal.z), over: early.rotation.x, blood: earlyBlood.some(node => node.visible)};
+    for (let i = 0; i < 60; i++) frame(animal.x + .5, animal.z);
+    const heap = nearest();
+    return {view, sounds, earlyPose, heap, thrown: Math.hypot(heap.position.x - animal.x, heap.position.z - animal.z), blood: bloods()};
+  };
+  const results = {};
+  for (const size of wildlife.SIZES) results[size] = await hitOne(found[size]);
+  for (const size of wildlife.SIZES) {
+    const r = results[size], fall = FALLS[size];
+    equal(r.sounds.length, 1, `${size} (${found[size].animal.species}): one hit, one sound`);
+    equal(r.sounds[0].size, size, `${size}: the sound is told the animal's size`);
+    ok(r.earlyPose.over < Math.PI / 2 - .1 && !r.earlyPose.blood, `${size}: just after the hit it is still going over, and the stain has not spread yet`);
+    near(r.heap.rotation.x, Math.PI / 2, 1e-9, `${size}: then it lies on its side`);
+    near(r.thrown, fall.throw, .35, `${size}: ${fall.throw} m on from where it was hit`);
+    ok(r.blood.length === 1 && r.blood[0].visible, `${size}: with its stain showing once it is down`);
+    r.view.dispose();
+  }
+  ok(results.large.thrown < .7 && results.small.thrown > 3.5, `a ${found.large.animal.species} stops the car (${results.large.thrown.toFixed(2)} m), a ${found.small.animal.species} is flung on (${results.small.thrown.toFixed(2)} m)`);
+
+  // The splat, through the real audio with the takes stood in by labelled buffers.
+  const audio = new EngineAudio({flags: {enabled: () => true}});
+  const played = [], layers = [];
+  audio.context = {state: 'running', currentTime: 10};
+  audio.muted = false; audio.paused = false;
+  audio._syncMixer = () => {};
+  audio._sample = (buffer, volume, rate) => { played.push({buffer, volume, rate}); return {}; };
+  audio._layer = (layer, destination, scale = 1) => { layers.push({cue: audio._playing, layer, scale}); return {}; };
+  audio._runCue = (id, action) => { audio._playing = id; action(); audio._playing = null; return {id}; };
+  audio.cueBuffers['vehicle.crash.recorded'] = ['crash-a', 'crash-b', 'crash-c'];
+  const crashTake = SOUND_BANK['vehicle.crash.recorded'], crashSynth = SOUND_BANK['vehicle.crash'];
+  const loudest = (cue, kind) => Math.max(...layers.filter(row => row.cue === cue && row.layer.kind === kind).map(row => row.layer.volume * row.scale));
+  audio.animalHit(.7, 'medium');
+  equal(played.length, 1, 'a hit plays one recorded take');
+  ok(crashTake.files.includes(played[0].buffer + '.ogg') && played[0].volume >= crashTake.volume,
+    `the splat is a crash take at the crash's own gain or more (${played[0].volume} against ${crashTake.volume})`);
+  ok(played[0].rate < 1, 'played lower, so it is a smack and not metal');
+  ok(loudest('wildlife.hit', 'noise') >= crashSynth.noiseVolume && loudest('wildlife.hit', 'tone') >= crashSynth.layers[0].volume,
+    'and its made-in-code splat is at least as loud as the made-in-code crash');
+  ok(!layers.some(row => row.cue === 'wildlife.hit.heavy'), 'a medium animal has no heavy thump');
+  played.length = 0; layers.length = 0;
+  audio.animalHit(.7, 'large');
+  ok(layers.some(row => row.cue === 'wildlife.hit.heavy') && Math.min(...layers.filter(row => row.cue === 'wildlife.hit.heavy' && row.layer.kind === 'tone').map(row => row.layer.frequency)) < 60,
+    'a large animal adds the heavy thump, deep under the splat');
+  const largeRate = played[0].rate;
+  played.length = 0; layers.length = 0;
+  audio.animalHit(.7, 'small');
+  ok(played[0].rate > largeRate && !layers.some(row => row.cue === 'wildlife.hit.heavy'), 'a small one is higher and has no thump');
+  played.length = 0;
+  audio.animalHit(1, 'medium');
+  ok(played[0].volume > crashTake.volume, 'the monster truck hits harder still');
+  played.length = 0;
+  audio.muted = true; audio.animalHit(.7, 'large');
+  equal(played.length, 0, 'muted, nothing plays');
+  ok(SOUND_BANK['wildlife.hit'].bus === 'impacts' && SOUND_BANK['wildlife.hit.heavy'].bus === 'impacts', 'both are on the impacts bus with the crashes');
 }
 
 // ---- Drawing never reaches into the race ---------------------------------------
