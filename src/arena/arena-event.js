@@ -17,6 +17,7 @@ import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
   stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
+import {keepSiteGroundForResults} from '../world/open/site-ground.js';
 import {activeTalkStep} from '../world/jobs/steps/talk.js';
 import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, worldJobPilotGoal, prepareWorldJobControls} from './modes/world-job.js';
 import {stepRaiders} from '../raiders.js';
@@ -220,6 +221,7 @@ function finish(duel, reason, winnerId = null) {
     winnerId === 'player' ? ['player', 'cpu-1'] : ['raiders', 'player', 'cpu-1'] :
     winnerId ? [winnerId, ...ranked.filter(id => id !== winnerId)] : ranked;
   arena.phase = 'over';
+  keepSiteGroundForResults(duel);
   cleanupWorldJobLoan(duel);
   arena.result = {placings, winnerId: placings[0], reason};
   state.status = 'arena_result';
@@ -315,8 +317,9 @@ export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
   const ambush = arena.mode === 'ambush-alley';
   const scablands = !!duel.course.def.scablands;
-  if (activeTalkStep(state)) {
-    const decision = stepWorldJob(duel, 0);
+  const talk = activeTalkStep(state);
+  if (talk) {
+    const decision = stepWorldJob(duel, talk.scene.autoAdvance ? dt : 0);
     if (decision) finish(duel, decision.reason, decision.winnerId);
     return;
   }

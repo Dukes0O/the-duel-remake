@@ -1,11 +1,14 @@
 // Laptop only. The fixture supplies what the driver already knows and a clear eastbound start.
-import {mkdir, writeFile} from 'node:fs/promises';
+import {mkdir, rm, writeFile} from 'node:fs/promises';
 import {applyEffects} from '../../src/world/open/open-effects.js';
 import {sampleWorld} from '../../src/world/open/samples.js';
 import {LAND} from '../../src/world/scablands-names.js';
 
 const fixture = applyEffects(sampleWorld('helped-camp'), {id: 'map/heard', effects: [{type: 'rumour', site: 'radio-hill'}]}).world;
-const start = LAND.at('ships-in-sand', 500, 700);
+// Land seed 2 puts the Glasshouse at Ships in the Sand. End the drive just northwest
+// of it so the little place mark and the car arrow are distinct on both maps.
+fixture.open.landSeed = 2;
+const start = LAND.at('ships-in-sand', 200, 450);
 
 function drive(world, start) {
   const {duel} = window.__qaApp, state = duel.state, job = state.arena.worldJob;
@@ -81,5 +84,6 @@ export async function run(context) {
   const jpeg = await context.evaluate(`(${sheet})()`);
   const folder = new URL('../../docs/board/looks/open-map/', import.meta.url);
   await mkdir(folder, {recursive: true});
-  await writeFile(new URL('round-1.jpg', folder), Buffer.from(jpeg, 'base64'));
+  await writeFile(new URL('round-2.jpg', folder), Buffer.from(jpeg, 'base64'));
+  await rm(new URL('round-1.jpg', folder), {force: true});
 }

@@ -2,6 +2,8 @@
 import {namedThrow} from '../../story/ledger.js';
 import {LAND} from '../scablands-names.js';
 import {FOOT_GRADE, stepMover} from '../scablands-movers.js';
+import {SOLID_GRID} from '../scablands-solids.js';
+import {brandAshAim} from '../jobs/brand-sites.js';
 
 const separation = (a, b) => Math.hypot(b.x - a.x, b.z - a.z);
 const heading = (a, b) => Math.atan2(b.x - a.x, b.z - a.z);
@@ -35,10 +37,10 @@ export function routinePose(routine, seconds, seed, partOfDay = 'day') {
     const cycle = legs.reduce((sum, leg) => sum + leg.stop.seconds + leg.travel, 0);
     let left = cycle ? time % cycle : 0;
     for (const {from, to, stop, travel} of legs) {
-      const yaw = travel ? heading(from, to) : stop.yaw ?? 0;
-      if (left < stop.seconds || !cycle) return pose(from, yaw, stop.task);
+      const yaw = travel ? heading(from, to) : 0;
+      if (left < stop.seconds || !cycle) return pose(from, stop.yaw ?? yaw, stop.task);
       left -= stop.seconds;
-      if (left < travel) return pose(mix(from, to, left / travel), yaw, 'walk');
+      if (left < travel) return {...pose(mix(from, to, left / travel), yaw, 'walk'), travelTask: stop.travelTask};
       left -= travel;
     }
     return pose(legs[0].from, 0, stops[0].task);
@@ -63,7 +65,7 @@ export function routinePose(routine, seconds, seed, partOfDay = 'day') {
   return elapsed < travel ? pose(mix(from, to, elapsed / travel), yaw, 'walk') : pose(to, yaw, plan.task ?? 'stand');
 }
 
-export function followRoutine(person, target, dt, {pace, radius, car, grid}) {
+export function followRoutine(person, target, dt, {pace, radius, car, grid, returnBounds}) {
   const from = person.position;
   const walk = (goal, amount) => {
     const distance = separation(from, goal);
@@ -77,7 +79,19 @@ export function followRoutine(person, target, dt, {pace, radius, car, grid}) {
   const nearCar = car && separation(from, car) < 3 && Math.abs(from.y - (car.y ?? from.y)) < 1.5;
   const avoid = nearCar && separation(from, car) > .001
     ? mix(car, from, 3.2 / separation(from, car)) : target;
-  let next = walk(avoid, amount);
+  let next = walk(avoid, amount), returnRoute = null;
+  if (returnBounds && !nearCar && separation(from, target) > amount &&
+      (person.returnRoute || separation(from, next) < amount * .1)) {
+    // A new post may be across the town from this person's daytime track.
+    // Reuse the alley routing for its fixed geometry, then step past cars and people as usual.
+    const kept = person.returnRoute;
+    const actor = {...from, brandAlley: kept && separation(target, kept.goal) < .01
+      ? {...kept, route: [...kept.route]} : null};
+    const waypoint = brandAshAim(actor, target, returnBounds, SOLID_GRID);
+    next = walk(waypoint, amount);
+    if (separation(from, waypoint) - separation(next, waypoint) >= Math.min(amount, separation(from, waypoint)) * .5)
+      returnRoute = actor.brandAlley.route.length ? actor.brandAlley : null;
+  }
   if (separation(from, next) < amount * .1 && separation(from, avoid) > amount) {
     const yaw = heading(from, avoid);
     for (const turn of [Math.PI / 2, -Math.PI / 2]) {
@@ -87,7 +101,8 @@ export function followRoutine(person, target, dt, {pace, radius, car, grid}) {
     }
   }
   const distance = separation(from, next);
-  return {...person, position: {x: next.x, y: next.y, z: next.z},
-    yaw: distance > .001 ? heading(from, next) : person.yaw,
-    distance: person.distance + distance, task: distance > .001 ? 'walk' : target.task};
+  const walking = distance > .001;
+  return {...person, returnRoute, position: {x: next.x, y: next.y, z: next.z},
+    yaw: walking ? heading(from, next) : target.yaw ?? person.yaw,
+    distance: person.distance + distance, task: walking ? target.travelTask ?? 'walk' : target.task};
 }

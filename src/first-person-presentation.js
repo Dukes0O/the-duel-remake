@@ -15,7 +15,8 @@ export function selectFirstPersonPresentation(entry, {time = 0} = EMPTY, out = {
   const now = Math.max(0, finite(time));
   out.crewId = crewMember(fighter.crewId) ? fighter.crewId : 'rook';
   out.weapon = weapons.selected === 'shock-charge' ? 'shock-charge' : weapons.selected === 'wrench' ? 'wrench' : 'rpg';
-  out.aim = out.weapon === 'rpg' && input.aim === true;
+  out.lowered = weapons.lowered === true;
+  out.aim = !out.lowered && out.weapon === 'rpg' && input.aim === true;
   out.loaded = out.weapon === 'rpg' && weapons.ammo > 0;
   out.action = 'idle';
   out.actionTime = 0;

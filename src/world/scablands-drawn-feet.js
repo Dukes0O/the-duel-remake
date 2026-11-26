@@ -48,6 +48,7 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
   }
   const plainAt = (x, z) => scablandsSurfaceHeightAt(x, z) + riverDepthAt(x, z);
   function groundAt(x, z) {
+    if (scablandsGroundEdit.siteGround?.hasChunkAt(x,z)) return scablandsGroundEdit.heightAt(x,z) + .035;
     const distance = riverField.distanceAt(x, z);
     const land = near.heightAtDrawn(x, z) ?? nearGroundHeightAt(x, z, plainAt);
     const river = distance < 94 ? riverAt(x, z) : null;
@@ -73,7 +74,8 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
       Number.isFinite(support) ? support : count?floors[0]:own;
     // Unknown supports, decks, edited yards and tunnel floors keep their own drawing.
     if (Math.abs(floor - own) > .1 ||
-        (scablandsGroundEdit.chunkCount>0 && Math.abs(scablandsGroundEdit.heightAt(x,z) - scablandsNaturalHeightAt(x,z)) > 1e-6) ||
+        (scablandsGroundEdit.chunkCount>0 && !scablandsGroundEdit.siteGround?.hasChunkAt(x,z) &&
+          Math.abs(scablandsGroundEdit.heightAt(x,z) - scablandsNaturalHeightAt(x,z)) > 1e-6) ||
         inTunnel(x,z,floor)) return null;
     // The plain already has a small drawing lift. Keep lattice corners fixed,
     // but do not subtract that lift at the river join (which has none).

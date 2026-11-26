@@ -46,12 +46,13 @@ import {BUILDINGS} from '../../world/open/content/buildings.js';
 import {buildingWalls} from '../../world/open/building-rule.js';
 import {forgePosts} from '../../world/open/content/people-forge.js';
 import {applyEffects} from '../../world/open/open-effects.js';
+import {installSiteGround} from '../../world/open/site-ground.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sitePosition} from '../../world/open/site-rule.js';
 import {SITES as OPEN_SITES} from '../../world/open/register.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
-import {WAITING_LINE, WALK_AWAY} from '../../world/open/content/talk-town.js';
+import {WAITING_LINE} from '../../world/open/content/talk-town.js';
 import {startTalk, talkScreen} from '../../story/talk.js';
 import {sprayWater, waterStreamStart} from '../../arsenal/water-cannon.js';
 import {point as combatPoint} from '../../combat-actors.js';
@@ -320,10 +321,15 @@ export function createWorldJob(definition) {
     clearedWaves: [], hitTargets: [], settled: false};
 }
 
+const endSiteGround = new WeakMap();
+
 export function initializeWorldJob(duel, definition) {
   const state = duel.state, arena = state.arena;
   const worldJob = arena?.worldJob;
   if (!worldJob) return false;
+  if (definition.open && duel.course.def?.scablands && duel.featureFlags?.enabled('story-choices')) {
+    endSiteGround.set(worldJob, installSiteGround(definition.open.world.open.landSeed));
+  }
   // Loaned car weapons belong to this run. They never touch the player profile.
   worldJob.originalWeaponLoadout = [...(state.weaponLoadout || [])];
   worldJob.originalCrewId = state.crewId;
@@ -443,6 +449,8 @@ function placeWorldFighter(duel, start) {
 export function cleanupWorldJobLoan(duel) {
   const worldJob = duel.state.arena?.mode === 'world-job' ? duel.state.arena.worldJob : null;
   if (!worldJob || !Array.isArray(worldJob.originalWeaponLoadout)) return false;
+  endSiteGround.get(worldJob)?.();
+  endSiteGround.delete(worldJob);
   duel.state.weaponLoadout = [...worldJob.originalWeaponLoadout];
   if (worldJob.originalCrewId) duel.state.crewId = worldJob.originalCrewId;
   if (worldJob.originalFootWeaponSelected && duel.state.footWeapons)
@@ -1756,10 +1764,13 @@ export function stepWorldJob(duel, dt) {
         return null;
       }
     }
-    if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
+    const previousScreen = worldJob.job.stepState.screen;
+    if (previousScreen && !worldJob.talkAction && !talkStep.scene.autoAdvance) return null;
     const previousStep = worldJob.job.stepIndex;
     const before = worldJob.job.stepState.talk;
-    const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
+    const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, dt);
+    if (talkStep.scene.autoAdvance && previousScreen && next.stepState.talk?.phase === before?.phase &&
+        next.stepState.talk?.index === before?.index) next.stepState.screen = previousScreen;
     worldJob.talkAction = null;
     routeWorldNight2(duel, worldJob, previousStep, next);
     worldJob.job = next;
@@ -1773,10 +1784,10 @@ export function stepWorldJob(duel, dt) {
         type: 'openTalkQuestion', scene: talkStep.id, id,
         effects: talkStep.scene.questions.find(question => question.id === id).effects,
       }));
-      const result = chosen && chosen.id !== WALK_AWAY ? [{...chosen, scene: talkStep.id}] : [];
+      const result = chosen ? [{...chosen, scene: talkStep.id}] : [];
       worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...questions, ...result];
       if (next.stepIndex !== previousStep) {
-        closeOpenTalk(duel, worldJob, talkStep, chosen?.id === WALK_AWAY, true);
+        closeOpenTalk(duel, worldJob, talkStep, false, true);
         return null;
       }
     } else if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];

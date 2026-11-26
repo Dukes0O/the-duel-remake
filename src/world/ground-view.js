@@ -93,7 +93,7 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
   let disposed = false, changedBounds = [];
   function update() {
     if (disposed) return 0;
-    const rows = groundEdit.toSave().chunks, live = new Set();
+    const rows = groundEdit.drawingChunks?.() ?? groundEdit.toSave().chunks, live = new Set();
     changedBounds = [];
     let changed = 0;
     // A corner can sample the neighbouring chunk. Rebuild only neighbours of

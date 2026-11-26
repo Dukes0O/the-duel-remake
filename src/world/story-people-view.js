@@ -18,6 +18,7 @@ const SIDES = Object.freeze([['L', -1], ['R', 1]]);
 
 const TIN_PEOPLE = '/assets/models/wasteland/town/open-figures.glb';
 const tinCast = new Set(['odessa', 'moss', 'tin-cook', 'tin-porter', 'tin-child']);
+const carrying = new Set(['haul-sack', 'carry-bucket']);
 
 function sourceFor(id) {
   if (tinCast.has(id)) return TIN_PEOPLE;
@@ -179,7 +180,8 @@ function makeFigure(id, asset) {
   anchor.position.copy(joints.head.bone.worldToLocal(up.set(0, profile.height + .12, 0)));
   const soles = soleVertices(body, 0, profile.height);
   const work = source === OPEN_FIGURES_2 ? prepareWorkKit(root, body, joints, looseTools, id) : null;
-  return {root, model, joints, body, owned, soles, props, work, baseY:model.position.y, facing: {yaw:0, headYaw:0},
+  return {root, model, joints, body, owned, soles, props, work, routineProp: null,
+    baseY:model.position.y, facing: {yaw:0, headYaw:0},
     first:true, seated:0, asleep:0, armReach:0};
 }
 
@@ -213,9 +215,15 @@ function fitCart(figure, person) {
   return {spread:centre.x, height:centre.y, back:centre.z-HANDCART.axleAhead+.055};
 }
 
-function poseFigure(figure, person, target, speaking, clock, dt, shift) {
+function poseFigure(figure, person, target, speaking, clock, dt, shift, openJob = false) {
   const {root, joints, facing, model} = figure, profile = STORY_FIGURES[person.id];
+  // Wim also appears in the older fence scene. Only the open land changes her rest.
+  const openResident = openJob || tinCast.has(person.id) || !!figure.work;
   if (figure.first) {
+    if (openResident && person.action === 'sleep') {
+      figure.seated = 1;
+      figure.asleep = 1;
+    }
     facing.yaw = person.yaw;
     if (person.action === 'sit' && person.seat === 'handcart') figure.seated = 1;
     figure.first = false;
@@ -229,13 +237,11 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   figure.asleep += ((person.action === 'sleep' ? 1 : 0) - figure.asleep) * blend;
   figure.armReach += ((person.action === 'push-cart' ? 1 : 0) - figure.armReach) * blend;
   const sit = figure.seated, sleep = figure.asleep, push = figure.armReach;
-  // The open town has no fence behind its sleepers. Roll onto the left
-  // shoulder with the knees loosely bent; legacy camp seats use their own pose.
-  const sideRest = tinCast.has(person.id) ? sleep : 0;
-  const seatedBend = sit - sideRest * .75;
-  const campSleep = sleep - sideRest;
+  const sideRest = openResident ? sleep : 0;
+  const campSleep = openResident ? 0 : sleep;
   const moving = person.action === 'walk' || person.action === 'run' || person.action === 'push-cart' ||
-    person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp';
+    person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp' ||
+    carrying.has(person.action);
   const running = person.action === 'run';
   const phase = 2 * Math.PI * person.distance / (profile.height * (running ? 1.42 : .86)) + profile.index * .93;
   const stride = moving ? Math.sin(phase) : 0;
@@ -252,20 +258,26 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     const swing = sign * stride;
     const lift = moving ? Math.max(0, sign * Math.cos(phase)) : 0;
     const longLeg = sign < 0 ? campSleep : 0;
-    poseBone(joints['thigh' + side], -1.43 * seatedBend - .71 * campSleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
-    poseBone(joints['shin' + side], 1.65 * seatedBend + 1.20 * campSleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
-    poseBone(joints['foot' + side], -.26 * seatedBend - .44 * campSleep + 1.29 * longLeg - lift * .19);
+    poseBone(joints['thigh' + side], -1.43 * sit - .71 * campSleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
+    poseBone(joints['shin' + side], 1.65 * sit + 1.20 * campSleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
+    poseBone(joints['foot' + side], -.26 * sit - .44 * campSleep + 1.29 * longLeg - lift * .19);
     const gestureSide = sign > 0 ? gesture : .15 * gesture;
     poseBone(joints['upper_arm' + side], swing * (running ? .5 : .31) * (1 - push) -
       .68 * push - .43 * sit - .23 * gestureSide, 0, -sign * (.055 + .10 * gestureSide + (sign < 0 ? .49 : .39) * sleep));
     poseBone(joints['forearm' + side], -.09 - .14 * push - .66 * sit - .29 * sleep - (running ? .69 : 0) - .5 * gestureSide,
       0, -sign * (sign < 0 ? .34 : .25) * sleep);
   }
-  if (tinCast.has(person.id)) poseTinTask(figure, person, clock);
+  if (tinCast.has(person.id) || person.action === 'cook' || person.action === 'bank-kiln' || carrying.has(person.action))
+    poseTinTask(figure, person, clock);
+  if (figure.routineProp) figure.routineProp.visible = carrying.has(person.action);
   if (figure.work) poseWork(figure, person, clock, stride);
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.
-  if (tinCast.has(person.id)) model.rotation.z = sideRest * Math.PI / 2;
+  if (sideRest > .0001) poseSideRest(figure, sideRest, profile.height);
+  else if (openResident) {
+    model.rotation.set(0, 0, 0);
+    model.position.x = 0;
+  }
   model.position.y = figure.baseY;
   root.updateWorldMatrix(true, false);
   root.updateMatrixWorld(true);
@@ -296,6 +308,36 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   if (figure.work) fitHandTool(figure, person.action);
 }
 
+// Fold both legs forward and stack them. The lower arm rests beneath the cheek.
+function poseSideRest({model, joints}, amount, height) {
+  model.rotation.set(0.25 * amount, 0, 1.58 * amount);
+  // Roll around the hips so the sleeper stays on the assigned bed.
+  model.position.x = .52 * height * Math.sin(model.rotation.z);
+  for (const [name, pitch, yaw, roll] of SIDE_REST_JOINTS) {
+    const joint = joints[name];
+    previousPose.copy(joint.bone.quaternion);
+    poseBone(joint, pitch, yaw, roll);
+    joint.bone.quaternion.slerp(previousPose, 1 - amount);
+  }
+}
+
+const previousPose = new THREE.Quaternion();
+const SIDE_REST_JOINTS = [
+  ['chest', 0.18, 0.12, 0.06],
+  ['neck', 0.46, 0.16, 0.1],
+  ['head', 0.48, 0.35, 0.17],
+  ['upper_armL', -1.33, -.08, .31],
+  ['upper_armR', -.44, -.12, -.28],
+  ['forearmL', -1.53, .19, .34],
+  ['forearmR', -1.52, -.68, -.79],
+  ['thighL', -1.6, -0.14, 0.08],
+  ['thighR', -1.46, -0.13, -0.31],
+  ['shinL', 2.06, 0.02, 0.1],
+  ['shinR', 2.39, 0.38, -0.34],
+  ['footL', -0.22, 0, 0],
+  ['footR', -0.22, 0, 0],
+];
+
 // Shoulder and elbow pitches for the two hands, then chest and gaze pitches.
 const tinPoses = {
   weld: [-.48,-.82,-.72,-.51,.17,.27],
@@ -304,6 +346,7 @@ const tinPoses = {
   scrub: [-.64,-.76,-.45,-.48,.23,.18],
   'carry-bucket': [-.19,-.18,.04,-.08,.13,.06],
   cook: [-.32,-.87,-.58,-.54,.08,.19],
+  'bank-kiln': [-.48,-.62,-.78,-.76,.25,.22],
   'haul-sack': [-.69,-.96,-.56,-1.12,-.12,.07],
 };
 function poseTinTask(figure, person, clock) {
@@ -312,7 +355,7 @@ function poseTinTask(figure, person, clock) {
   const pose = tinPoses[person.action];
   if (pose) {
     const stroke = person.action === 'scrub' ? .20*Math.sin(clock*2.5) : 0;
-    const stir = person.action === 'cook' ? .18*Math.sin(clock*2) : 0;
+    const stir = person.action === 'cook' || person.action === 'bank-kiln' ? .18*Math.sin(clock*2) : 0;
     poseBone(joints.upper_armL, pose[0]+stroke, 0, .21);
     poseBone(joints.forearmL, pose[1]);
     poseBone(joints.upper_armR, pose[2]+stroke, stir, -.21);
@@ -324,9 +367,43 @@ function poseTinTask(figure, person, clock) {
   }
 }
 
+function addRoutineProp(figure, id) {
+  const prop = new THREE.Group();
+  // Cinder and the porter haul sacks; the child carries a bucket.
+  const sack = id === 'cinder' || id === 'tin-porter';
+  const material = new THREE.MeshStandardMaterial({color: sack ? 0x796346 : 0x666761, roughness: .91, side: THREE.DoubleSide});
+  const mesh = geometry => {
+    const part = new THREE.Mesh(geometry, material);
+    figure.owned.push(geometry);
+    part.castShadow = true;
+    prop.add(part);
+    return part;
+  };
+  if (sack) {
+    mesh(new THREE.SphereGeometry(1, 9, 7)).scale.set(.17, .25, .11);
+    const neck = mesh(new THREE.CylinderGeometry(.045, .07, .09, 7));
+    neck.position.y = .25;
+    prop.position.set(-.15, 1.17, -.19);
+    figure.root.add(prop);
+    figure.joints.chest.bone.attach(prop);
+  } else {
+    mesh(new THREE.CylinderGeometry(.105, .08, .17, 12, 1, true));
+    mesh(new THREE.CircleGeometry(.08, 12)).rotateX(-Math.PI / 2).position.y = -.084;
+    mesh(new THREE.TorusGeometry(.105, .009, 5, 12, Math.PI)).position.y = .085;
+    figure.joints.handR.bone.getWorldPosition(prop.position);
+    prop.position.y -= .18;
+    figure.root.add(prop);
+    figure.joints.handR.bone.attach(prop);
+  }
+  prop.visible = false;
+  prop.userData.dispose = () => material.dispose();
+  figure.routineProp = prop;
+}
+
 function releaseFigure(figure) {
   figure.cart?.dispose();
   figure.stool?.dispose();
+  figure.routineProp?.userData.dispose();
   const skeletons = new Set();
   figure.root.traverse(node => { if (node.skeleton) skeletons.add(node.skeleton); });
   for (const skeleton of skeletons) skeleton.dispose();
@@ -340,7 +417,7 @@ export function createStoryPeopleView(loadAsset) {
   group.visible = false;
   const assets = new Map(), figures = new Map();
   let cast = EMPTY, time = null, disposed = false;
-  const populate = async people => {
+  const populate = async (people, open) => {
     for (const person of people) {
       const url = sourceFor(person.id);
       if (!assets.has(url)) assets.set(url, Promise.resolve().then(() => loadAsset(url)));
@@ -349,6 +426,7 @@ export function createStoryPeopleView(loadAsset) {
       const asset = await assets.get(sourceFor(person.id));
       if (disposed || cast !== people) return;
       const figure = makeFigure(person.id, asset);
+      if (open && ['cinder', 'tin-porter', 'tin-child'].includes(person.id)) addRoutineProp(figure, person.id);
       // The dialogue camera may look up this head before the next update places it in the world.
       figure.root.visible = false;
       figures.set(person.id, figure);
@@ -364,7 +442,7 @@ export function createStoryPeopleView(loadAsset) {
         figures.clear();
         cast = people;
         group.userData.loadError = null;
-        group.userData.ready = populate(people).catch(error => {
+        group.userData.ready = populate(people, !!worldJob?.open).catch(error => {
           if (cast === people && !disposed) group.userData.loadError = String(error.message || error);
         });
       }
@@ -396,7 +474,7 @@ export function createStoryPeopleView(loadAsset) {
         }
         if (figure.stool) figure.stool.root.visible = person.action === 'sit' && !person.seat;
         const speaking = person.id === speaker;
-        poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift);
+        poseFigure(figure, person, speaking ? viewer : speakerAt, speaking, clock, dt, shift, !!worldJob.open);
       }
       // Both skeletons must have reached this frame before fitting a shared pane.
       for (const person of people) {

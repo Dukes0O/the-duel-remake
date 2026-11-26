@@ -339,6 +339,21 @@ const thread = {id: 'burned-camp', title: 'Smoke over a friend', kind: 'trouble'
 assert.deepEqual(checkThread(thread), []);
 const inBeat = (name, change) => ({...thread, beats: {...thread.beats, [name]: {...thread.beats[name], ...change}}});
 const inClues = choice => inBeat('clues', {choices: [{id: 'a', ...choice}]});
+const withNewShape = {
+  ...thread,
+  cast: {...thread.cast, guide: {from: 'persons'}, allies: {from: 'peoples'}},
+  sign: {...thread.sign, part: 'noon', again: {afterNights: 2, when: {sign: 'again'}, at: ['tin-town', 'board']}},
+  beats: {
+    ...thread.beats,
+    sign: {...thread.beats.sign, next: ['clues', 'scout']},
+    clues: {...thread.beats.clues,
+      when: {all: [{reach: 'dace'}, {reach: '@guide'}, {reach: '@allies'}, {reach: 'sign'}, {part: 'dawn'}]},
+      questions: [{id: 'ask', effects: [{type: 'mark', id: 'burned-camp/asked'}], cue: 'open.ask'}]},
+    return: {when: {after: 'freed'}, next: 'freed'},
+  },
+  ignored: [{when: {not: {ended: 'freed'}}, afterChoice: {id: 'burned-camp/follow', times: 2}, next: 'left'}, thread.ignored],
+};
+assert.deepEqual(checkThread(withNewShape), []);
 const slips = [
   [{...thread, kind: 'sad'}, /needs a kind/],
   [{...thread, ends: []}, /needs "ends"/],
@@ -376,6 +391,14 @@ const slips = [
   [inBeat('clues', {when: {cast: 'rival'}}), /not a role of the cast/],
   [inBeat('scout', {mission: {...thread.beats.scout.mission, job: 1}}), /scout.mission has the key "job"/],
   [{...thread, ignored: {afterNights: 4, rows: []}}, /ignored has the key "rows"/],
+  [inBeat('clues', {when: {reach: ['tin-town', 'haerth']}}), /not a registered Tin Town spot/],
+  [inBeat('clues', {when: {reach: '@enemy'}}), /where a site is wanted/],
+  [inBeat('clues', {when: {sign: 'later'}}), /\(sign\) must be "again"/],
+  [inBeat('clues', {when: {ended: 'nowhere'}}), /not an end of this file/],
+  [inBeat('scout', {mission: {id: 'burned-camp/scout'}}), /needs a mission "kind" or "partOf"/],
+  [inBeat('scout', {mission: {...thread.beats.scout.mission, lines: [{speaker: 'dot', words: 'Look.', moment: 'too-late'}]}}),
+    /moment that the mission rule does not list/],
+  [inBeat('orphan', {when: {after: 'orphan'}, next: 'freed'}), /"orphan" leads to an end but cannot be reached/],
 ];
 for (const [slip, sentence] of slips) assert.ok(checkThread(slip).some(text => sentence.test(text)), String(sentence) + ' <- ' + checkThread(slip).join(' | '));
 

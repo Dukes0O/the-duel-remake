@@ -98,7 +98,7 @@ export default {
     },
 
     shed: {
-      when: {reach: ['tin-town', 'bess-shed']},
+      when: {reach: ['tin-town', 'yard']},
       cue: 'open.runaway.found',
       lines: [
         boy('Don\'t shout. Please don\'t shout. If you shout, the cook will ring the bell, and then everybody will know where I am.', {as: 'The boy'}),
@@ -108,6 +108,8 @@ export default {
       thoughts: [
         'He\'s holding that tyre lever like a club, and his hands are shaking so much that he can hardly keep hold of it.',
         'Moss is taking Bess out within the hour. After that there\'ll be nothing in this shed to hide behind.',
+        {thought: 'If Clinker comes for him, he\'ll come to our gate, and he won\'t come by himself.', slot: 'before'},
+        {thought: 'He carried one hot coal to somebody who was cold. That\'s the very thing that our hearth is for.', slot: 'before'},
       ],
       // A thing to mend on the spot (design section 16).
       mend: {id: `${ID}/west-wire`, wrenchSeconds: 6, scrap: 2,
@@ -128,7 +130,7 @@ export default {
         {id: 'how-in', words: 'How did you get in here?',
           lines: [boy('I came under your west fence, where the bottom wire is loose. I hooked it up again behind me. You ought to mend it properly, because I wasn\'t the first one to find it.')],
           shows: 'A tell: he gives away a weakness for nothing. A thing to mend: the wire'},
-        {id: 'his-name', words: 'Is Slack your real name?',
+        {effects: [mark('asked-his-name', 'You asked the Ash Men\'s runaway what his name was, and he told you.')], id: 'his-name', words: 'Is Slack your real name?',
           lines: [boy('Slack is the dust at the bottom of the coal heap, the part that\'s no use to anybody. It\'s what they call you when you\'re small. My name was Nat, before I went grey. Nobody has asked me for it in three years.')],
           shows: 'His name. From this answer on, his bubble reads Nat'},
       ],
@@ -148,15 +150,10 @@ export default {
       ],
       effects: [mark('found-him', 'You found a boy from the Ash Men hiding in Bess\'s shed.')],
       notes: {
+        // Bess's shed is a building. Use the yard until storyline reach can name buildings.
+        reach: ['tin-town', 'bess-shed'],
         // The wire is mended on the spot once the question "how-in" has been asked.
         mendOfferedWith: {question: 'how-in'},
-        // Asking "his-name" makes this mark.
-        questions: {'his-name': {effects: [mark('asked-his-name', 'You asked the Ash Men\'s runaway what his name was, and he told you.')]}},
-        // The two thoughts that come before the choice.
-        beforeTheChoice: {thoughts: [
-          'If Clinker comes for him, he\'ll come to our gate, and he won\'t come by himself.',
-          'He carried one hot coal to somebody who was cold. That\'s the very thing that our hearth is for.',
-        ]},
       },
     },
 
@@ -167,6 +164,7 @@ export default {
         cinder('I\'ve known Clinker for thirty years, and he has never once let go of anything that he had counted. He\'ll be at our gate by dusk.'),
         auntie('We have two embers, a fence with a hole in it, and now a boy that the Ash Men want back. I\'m not complaining. I\'m only counting.'),
         moss('He folded the sacks. I\'d keep him for that alone.'),
+        {...auntie('Whatever you say at that gate tonight, the rest of us will say it too. So think about it before dusk, and not while he\'s standing in front of you.'), slot: 'after'},
       ],
       questions: [
         {id: 'a-spy', words: 'Cinder, could he be a spy?',
@@ -180,12 +178,7 @@ export default {
           shows: 'He asks for very little'},
       ],
       effects: [{type: 'mark', id: `${ID}/town-knows`}],
-      notes: {
-        // What Auntie says last, after the questions.
-        closing: [auntie('Whatever you say at that gate tonight, the rest of us will say it too. So think about it before dusk, and not while he\'s standing in front of you.')],
-        // The player may hide him, leave him at the hearth in plain sight, or drive him out.
-        next: ['hiding', 'road-out', 'gate'],
-      },
+      next: ['hiding', 'road-out', 'gate'],
     },
 
     // The choice is made by walking him somewhere. Each place has somebody who finds out, and says so in passing.
@@ -250,6 +243,7 @@ export default {
       thoughts: [
         'If I say that he isn\'t here and Clinker finds him, Clinker will never believe another word that Tin Town says.',
         'If I hand him back, Clinker goes home content. I wonder what the boy will be thinking about tomorrow night, beside a cold grate.',
+        {thought: 'He didn\'t argue, and he didn\'t believe me. He\'ll come back tonight, and he won\'t knock.', slot: 'after', when: {chose: 'no-boy'}},
       ],
       // The first four choices are for when the boy is in Tin Town, and the last three for when he was driven out by
       // day. The player cannot say that there was no boy then, because the prints are there.
@@ -270,7 +264,7 @@ export default {
           ],
           effects: [ashFeud(1), mark('kept', 'You kept the Ash Men\'s runaway, and you said so to Clinker\'s face.')],
           next: 'kept'},
-        {id: 'pay', words: 'Here are two embers. Count them, and then count him as gone.',
+        {cue: 'story.pot.lump-grey', id: 'pay', words: 'Here are two embers. Count them, and then count him as gone.',
           when: {all: [{asked: 'his-worth'}, {fact: 'stock', of: 'embers', atLeast: 2}, inTinTown]}, plain: 'The count falls by two',
           thought: 'That\'s two nights of the whole town\'s fire, for one boy who doesn\'t eat much.',
           hidden: 'The boy is free and clear, and the feud does not move. Tin Town has shown that it pays.',
@@ -313,7 +307,6 @@ export default {
         rule: {riderCars: 3, riderCarsWhenRaiding: 5},
         choices: {
           'no-boy': {
-            after: {thought: 'He didn\'t argue, and he didn\'t believe me. He\'ll come back tonight, and he won\'t knock.'},
             // Among the Walkers, with Wim not taken to the Wash: she speaks, and the choice goes back to keeping him or handing him over.
             wimSpeaks: {when: {all: [has('among-the-walkers')], notAsked: 'wim-secret'},
               lines: [
@@ -323,7 +316,6 @@ export default {
               effects: [mark('wim-told', 'Clinker heard the truth from Wim after he had heard a lie from you.')],
               thenOnly: ['keep', 'hand-back']},
           },
-          pay: {cue: 'story.pot.lump-grey'},
           'tell-the-road': {drawWorse: {name: 'road-alone', chance: .25}},
         },
       },
@@ -363,18 +355,15 @@ export default {
 
     // The player slept through the search. Said at dawn.
     'search-slept': {
-      when: {all: [{after: 'search-asked'}, {part: 'day'}]},
+      mission: {id: `${ID}/slept-through-search`, partOf: `${ID}/the-search`, outcomes: {
+        'not-found': {next: 'hidden'},
+        found: {effects: [ashFeud(1), mark('found-in-search')], next: 'taken'},
+      }},
+      when: {all: [{after: 'search-asked'}, {part: 'dawn'}]},
       lines: [
         {...clinker('My two found nothing, and they are good at finding. So either there\'s no boy, or you hide things better than you fence them. I shall write him down as lost on the road.'), when: {not: has('found-in-search')}},
         {...auntie('They found him in the night, and he went back over the wall between the two of them. Clinker called down that this town tells lies. I couldn\'t think of anything to shout back.'), when: has('found-in-search')},
       ],
-      notes: {
-        // How the named draw of "his-chance" comes out: the boy is not found, or he is.
-        outcomes: {
-          'not-found': {effects: [], next: 'hidden'},
-          found: {effects: [ashFeud(1), mark('found-in-search', 'Clinker\'s searchers found the boy that you said was not there.')], next: 'taken'},
-        },
-      },
     },
 
     found: {
@@ -481,7 +470,10 @@ export default {
 
     // The first morning after he is safe at Tin Town: kept in the open, paid for, or hidden through the search.
     'what-he-leaves': {
-      when: {all: [{after: ['gate', 'wall-fight', 'found', 'search', 'search-slept']}, {reach: ['tin-town', 'hearth']}, {part: 'day'}, {nights: 1}, {any: [has('kept'), has('paid'), has('kept-ahead')]}]},
+      when: {all: [
+        {after: ['gate', 'wall-fight', 'found', 'search', 'search-slept']}, {after: ['kept', 'paid', 'hidden']},
+        {reach: ['tin-town', 'hearth']}, {part: 'dawn'},
+      ]},
       lines: [
         {...auntie('I\'m not shouting "Slack" across my own hearth. It sounds like something that has gone wrong with a rope. What did your mother call you?'), when: {not: has('asked-his-name')}},
         {...boy('She called me Nat. Nobody has asked me that since I went grey.'), when: {not: has('asked-his-name')}},
@@ -492,20 +484,16 @@ export default {
       cue: 'open.ash.drawn',
       effects: DRAWN,
       // The storyline's end stays what the gate made it.
-      next: [{when: has('paid'), to: 'paid'}, {to: 'kept'}],
+      next: [{when: {ended: 'paid'}, to: 'paid'}, {when: {ended: 'hidden'}, to: 'hidden'}, {to: 'kept'}],
     },
 
     // A boy who was driven to a haven makes the same drawing there, in the dirt, on the player's next visit.
     'drawn-at-the-haven': {
-      when: {all: [{after: ['gate', 'arrived']}, {nights: 1}, has('sent-on'), {not: has('taken-on-the-road')}, {not: {fact: 'made', id: BACK_WAY}}]},
+      when: {all: [{after: ['gate', 'arrived']}, {after: 'sent-on'}, {reach: '@haven'}, {not: {fact: 'made', id: BACK_WAY}}]},
       lines: THE_DRAWING,
       cue: 'open.ash.drawn',
       effects: DRAWN_AGAIN,
       next: 'sent-on',
-      notes: {
-        // The beat is for a visit to the haven.
-        reach: '@haven',
-      },
     },
   },
 
@@ -513,6 +501,7 @@ export default {
 
   // What happens when the prints are never followed: at dark he goes back under the wire by himself.
   ignored: {
+    when: {part: 'dark'},
     effects: [mark('left', 'A boy hid in Tin Town for a day, and left again before anybody spoke to him.')],
     next: 'gone',
   },
@@ -564,8 +553,6 @@ export default {
         {at: 'hearth', ...auntie('Somebody had a bowl of my soup in the night, and then washed the bowl. Nobody in this town has ever washed a bowl without being told to.')},
       ],
     },
-    // The storyline is ignored after a day, and not after nights.
-    ignored: {after: {days: 1}},
     // Where the writer said each row of `later` is heard.
     later: {
       'price-up': 'the next time Clinker names a price for anything',
@@ -585,11 +572,5 @@ export default {
       'bowl-washer-caught': 'at the hearth, some nights later',
     },
     laterExtras: {'smoke-found': {fourFiresNeeded: true}},
-    // Sentences of marks that are made in more than one place: each is written once on its effect, and again here.
-    repeatedMarkText: {
-      'told-where': ['You told Clinker where the runaway had gone.'],
-      'found-in-search': ['Clinker\'s searchers found the boy that you said was not there.'],
-      'drew-the-camp': ['The runaway drew you the Grey Camp in the ash of your own hearth.'],
-    },
   },
 };

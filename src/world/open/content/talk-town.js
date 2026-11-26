@@ -2,7 +2,6 @@ import {validateTalkScene} from '../../../story/talk.js';
 import {FRIEND_WORDS} from '../register.js';
 import {checkSentence, checkTalkRow, requireSound} from '../check-tables.js';
 
-export const WALK_AWAY = 'open/talk/walk-away';
 export const WAITING_LINE = 'We can talk when you come back.';
 
 const greetings = {
@@ -52,8 +51,7 @@ const entries = [];
 function row(person, key, needs, words, afterChoice) {
   const scene = 'open/town/' + person + '/' + key;
   const lines = words.map(text => ({speaker: person, words: text}));
-  const choices = [{id: WALK_AWAY, words: 'Walk away.', effects: []}];
-  entries.push({id: scene, lines, choices});
+  entries.push({id: scene, lines, choices: [], autoAdvance: true});
   return {id: scene, scene, needs, afterChoice, once: key === 'night-2'};
 }
 

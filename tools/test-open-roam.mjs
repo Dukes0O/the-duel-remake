@@ -1,21 +1,31 @@
 import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
 import {yardHomeScreen} from '../src/screen-yard-home.js';
+import {createResultsScreen} from '../src/screen-results.js';
+import {footActionPresentation} from '../src/combat-hud.js';
+import {selectFirstPersonPresentation} from '../src/first-person-presentation.js';
+import {stepFootWeapons} from '../src/onfoot-weapons.js';
+import {captionSeconds} from '../src/story/caption-queue.js';
+import {savedLedger} from '../src/story/ledger-save.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
 import {peoplePart, talkFor} from '../src/world/open/parts/people.js';
 import {TOWN_PEOPLE} from '../src/world/open/content/people-town.js';
-import {WALK_AWAY} from '../src/world/open/content/talk-town.js';
+import {forgePosts} from '../src/world/open/content/people-forge.js';
+import {sitePosition} from '../src/world/open/site-rule.js';
 import {sampleWorld} from '../src/world/open/samples.js';
+import {landMarks} from '../src/world/scablands-picture.js';
+import {worldHudModel} from '../src/world/world-hud.js';
 import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {stepMover} from '../src/world/scablands-movers.js';
-import {pageFunctions, pageSource, run} from './scenarios/open-roam.mjs';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {pageFunctions, run} from './scenarios/open-roam.mjs';
 
 // The cloud does not start a browser. Capture and parse the actual strings
 // sent by the scenario, including its arguments.
 const parsePage = source => { new Function(source); return true; };
-await run({navigate: () => {}, command: () => {}, waitFor: parsePage, evaluate: parsePage});
+await run({navigate: () => {}, command: () => {}, waitFor: parsePage, evaluate: parsePage, screenshot: () => {}});
 
 const sample = sampleWorld('first-night');
 const definition = {id: 'open-roam', open: {world: sample}, steps: [{kind: 'roam'}]};
@@ -28,7 +38,7 @@ for (let i = 0; i < 3600; i++) {
 assert.equal(job.done, false);
 assert.deepEqual(open.holds, []);
 assert.deepEqual(open.world, sample);
-assert.deepEqual(open.parts.people.cast.map(person => person.id), ['auntie-solder', 'cinder']);
+assert.deepEqual(open.parts.people.cast.map(person => person.id), ['auntie-solder', 'cinder', 'tin-cook', 'tin-porter', 'tin-child']);
 
 const memory = new Map();
 globalThis.localStorage = {getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
@@ -54,6 +64,67 @@ app.advance(4);
 const state = app.duel.state, worldJob = state.arena.worldJob;
 const cast = worldJob.storyPeople;
 globalThis.window = {__qaApp: app};
+assert.equal(worldHudModel({worldJob}).line, '');
+assert.equal(worldHudModel({worldJob}).target, null);
+app.togglePause();
+const paused = createResultsScreen({app, profile: () => app.profile, escapeHTML: String, credits: String, time: String})(state);
+assert.match(paused, /<h2 id="result-title">Out in the open<\/h2>/);
+assert.match(paused, /data-action="resume"><span>Back out<\/span>/);
+assert.match(paused, /data-action="arena-yard"><span>Home to the yard<\/span>/);
+assert.doesNotMatch(paused, /TIME ON THE JOB|START AGAIN|forfeits/i);
+app.togglePause();
+
+const weapons = state.footWeapons;
+const lower = () => stepFootWeapons(app.duel, 1 / 120);
+const viewPose = () => selectFirstPersonPresentation({fighter: state.fighter, weapons, input: {aim: true}});
+assert.equal(weapons.lowered, true);
+assert.equal(footActionPresentation(state).text, '');
+assert.equal(viewPose().lowered, true);
+assert.equal(viewPose().aim, false);
+app.duel.featureFlags = flags(false);
+lower();
+assert.equal(viewPose().lowered, false);
+assert.match(footActionPresentation(state).text, /HOLD AIM/);
+app.duel.featureFlags = flags(true);
+const opponents = state.opponents;
+state.opponents = [app.duel.course.nearest(state.fighter.x + 35, state.fighter.z)];
+lower();
+assert.equal(viewPose().aim, true, 'a car in reach raises the weapon');
+state.opponents = opponents;
+const raids = state.raids;
+state.raids = {zones: [{raiders: [{x: state.fighter.x + 20, z: state.fighter.z}]}]};
+lower();
+assert.equal(viewPose().aim, true, 'an enemy on foot in reach raises the weapon');
+state.raids = raids;
+const townFeet = {...state.fighter}, townWorld = worldJob.open.world;
+const camp = sitePosition('glasshouse', townWorld.open.landSeed);
+Object.assign(state.fighter, {x: camp.x + 59, z: camp.z});
+lower();
+assert.equal(viewPose().lowered, false, 'an unfound camp leaves the weapon ready');
+worldJob.open.world = applyEffects(townWorld, {id: 'test/glasshouse', effects: [{type: 'find', site: 'glasshouse'}]}).world;
+lower();
+assert.equal(viewPose().lowered, true, 'within 60 m of a found non-hostile camp');
+state.fighter.x = camp.x + 61;
+lower();
+assert.equal(viewPose().lowered, false);
+state.fighter.x = camp.x + 59;
+worldJob.open.world = applyEffects(worldJob.open.world, {id: 'test/cold-camp', effects: [
+  {type: 'word', person: 'glasshouse', set: 'Cold'},
+]}).world;
+lower();
+assert.equal(viewPose().lowered, false, 'a hostile camp leaves the weapon ready');
+Object.assign(state.fighter, townFeet);
+worldJob.open.world = townWorld;
+const serial = weapons.serial;
+app.duel.setFighterInput({fire: true});
+lower();
+assert.equal(viewPose().aim, true, 'pressing fire raises the weapon');
+assert.equal(weapons.serial, serial + 1, 'the same press can fire');
+app.duel.setFighterInput({fire: false});
+lower();
+assert.equal(viewPose().lowered, true);
+state.combat.projectiles.length = 0;
+
 assert(pageFunctions.walkToCinder());
 const cinder = cast.find(person => person.id === 'cinder');
 const gate = NIGHT_2_SITES.gate;
@@ -96,15 +167,19 @@ assert.equal(worldJob.job.steps.length, 1, 'the temporary talk step is removed')
 at(2);
 use();
 assert.equal(active().openPerson, 'cinder');
-const act = (type, index) => {
-  assert(app.duel.talkInput({type, index}, worldJob.job.stepState.screen));
-  app.advance(.05);
-};
-act('advance');
-act('advance');
-assert.equal(worldJob.job.stepState.screen.options[0].words, 'Walk away.');
-act('select', 0);
+assert.equal(worldHudModel({worldJob}).line, '');
+const firstLine = worldJob.job.stepState.screen;
+const firstSeconds = captionSeconds(firstLine.line.words);
+app.advance(firstSeconds - .1);
+assert.equal(worldJob.job.stepState.screen.line.words, firstLine.line.words, 'the greeting stays up for reading');
+assert.deepEqual(worldJob.job.stepState.screen.options, []);
+app.advance(.2);
+const secondLine = worldJob.job.stepState.screen;
+assert.notEqual(secondLine.line.words, firstLine.line.words);
+assert.deepEqual(secondLine.options, []);
+app.advance(captionSeconds(secondLine.line.words) + .15);
 assert.equal(active().kind, 'roam');
+assert.equal(worldJob.job.steps.length, 1);
 assert.deepEqual(worldJob.open.world, before);
 
 const cinderRow = TOWN_PEOPLE.find(person => person.id === 'cinder');
@@ -114,7 +189,7 @@ const cold = applyEffects(sample, {id: 'test/cold', effects: [{type: 'word', per
 assert.doesNotMatch(talkFor(cinderRow, cold).scene.lines[0].words, /camp is dark/);
 
 let land = beginOpenLand(definition);
-const person = {position: {...cinder.position, x: cinder.position.x + 1}};
+const person = {position: {x: 6032, y: cinder.position.y, z: 7}};
 const talkTick = (interact, jobEvents = []) => {
   const result = stepOpenLand(land, {openRoam: true, onFoot: true, fighter: person, interact, jobEvents}, 0, [peoplePart]);
   land = result.open;
@@ -127,17 +202,41 @@ talkTick(false, [
   {type: 'openTalkClosed', scene: first.id},
 ]);
 assert.deepEqual(talkTick(true).asked, ['pump']);
-talkTick(false, [{type: 'talkChoice', scene: first.id, id: WALK_AWAY, effects: [{type: 'mark', id: 'test/unmade'}]},
-  {type: 'openTalkClosed', scene: first.id}]);
+talkTick(false, [{type: 'openTalkClosed', scene: first.id}]);
 assert(land.world.ledger.marks.includes('test/pump-asked'));
-assert(!land.world.ledger.marks.includes('test/unmade'));
 talkTick(true);
 talkTick(false, [{type: 'talkChoice', scene: first.id, id: 'answer', effects: [{type: 'mark', id: 'test/answer-made'}]},
   {type: 'openTalkClosed', scene: first.id, finished: true}]);
 assert(land.world.ledger.marks.includes('test/answer-made'));
 
+assert(pageFunctions.frameTown(NIGHT_2_SITES.hearth.position).length >= 3, 'the day picture is framed on at least three moving people');
 assert(pageFunctions.boardForGate(NIGHT_2_SITES.car), 'F boards the parked car');
 for (const inside of [true, false, true])
   assert(pageFunctions.driveAcross(gate, inside), 'the simulated car crosses the open gate');
+
+const markedServices = (serviceSheds = true) => landMarks({world: worldJob.open.world, serviceSheds}).services;
+assert.deepEqual(markedServices(), []);
+app.keys.KeyF = true;
+app.advance(.8);
+app.keys.KeyF = false;
+assert(state.onFoot && state.fighter);
+for (const post of forgePosts('day', scablandsSurfaceHeightAt)) {
+  app.advance(.05);
+  const {x, y, z} = post.position, {s, lateral} = app.duel.course.nearest(x, z);
+  Object.assign(state.fighter, {x, y, z, groundY: y, s, lateral});
+  use();
+  assert.equal(active().openPerson, post.id);
+  assert(worldJob.open.world.ledger.encounters[post.id], 'the service introduction records meeting the worker');
+  if (post.id === 'odessa') assert.deepEqual(markedServices().map(({id}) => id), ['forge-shed']);
+  assert(app.duel.talkInput({type: 'advance'}, worldJob.job.stepState.screen));
+  app.advance(.05);
+}
+assert.deepEqual(markedServices().map(({id, icon}) => [id, icon]), [['forge-shed', 'spanner'], ['bess-shed', 'bucket']]);
+assert.deepEqual(markedServices(false), []);
+assert(app.leaveWorldJob());
+assert.deepEqual(savedLedger(app.profile).encounters, worldJob.open.world.ledger.encounters);
+assert(app.returnToYard());
+app.advance(8);
+assert(app.isYardHomeActive());
 delete globalThis.window;
 console.log('test-open-roam: ok');

@@ -1,4 +1,4 @@
-const CHUNK_METRES = 32;
+export const CHUNK_METRES = 32;
 const SIDE = CHUNK_METRES;
 const SAMPLE_COUNT = SIDE * SIDE;
 export const GROUND_MATERIALS = Object.freeze(['topsoil', 'clay', 'gravel', 'rock']);
@@ -31,7 +31,9 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     throw new TypeError('Ground region must say whether it is editable.');
   if (typeof naturalHeight !== 'function') throw new TypeError('Ground edits need a natural height function.');
   for (const shape of reservedShapes) validShape(shape);
-  let chunks = new Map();
+  let siteGround = null;
+  let columns = new Map();
+  let chunkCount = 0;
   const numericSeed = Number.isFinite(seed) ? seed | 0 : 1;
   let revision = 0, loadedRevision = 0;
   const editHistory = new Array(2048);
@@ -40,23 +42,41 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     editHistory[revision % editHistory.length] = {revision, ...shape};
   };
 
-  const chunkKey = (cx, cz) => `${cx},${cz}`;
+  function storeChunk(grid, chunk) {
+    let column = grid.get(chunk.x);
+    if (!column) grid.set(chunk.x, column = new Map());
+    column.set(chunk.z, chunk);
+  }
+
+  function chunkAt(x, z) {
+    return columns.get(Math.floor(x / SIDE))?.get(Math.floor(z / SIDE));
+  }
+  const indexAt = (x, z) => (z - Math.floor(z / SIDE) * SIDE) * SIDE + x - Math.floor(x / SIDE) * SIDE;
   function sampleAt(x, z, create = false) {
-    const cx = Math.floor(x / CHUNK_METRES), cz = Math.floor(z / CHUNK_METRES);
-    const lx = x - cx * CHUNK_METRES, lz = z - cz * CHUNK_METRES;
-    const key = chunkKey(cx, cz);
-    let chunk = chunks.get(key);
+    let chunk = chunkAt(x, z);
     if (!chunk && create) {
-      chunk = {x: cx, z: cz, delta: new Float32Array(SAMPLE_COUNT), material: new Uint8Array(SAMPLE_COUNT)};
-      chunks.set(key, chunk);
+      chunk = {x: Math.floor(x / SIDE), z: Math.floor(z / SIDE),
+        delta: new Float32Array(SAMPLE_COUNT), material: new Uint8Array(SAMPLE_COUNT)};
+      storeChunk(columns, chunk);
+      chunkCount++;
     }
-    if (!chunk) return null;
-    const index = lz * SIDE + lx;
-    return {chunk, index};
+    return chunk ? {chunk, index: indexAt(x, z)} : null;
+  }
+
+  // Test the whole footprint before changing any samples or allocating a work chunk.
+  function intersectsChunks(shape) {
+    for (const column of columns.values()) for (const chunk of column.values()) {
+      const left = chunk.x * SIDE, top = chunk.z * SIDE;
+      const dx = shape.x - clamp(shape.x, left, left + SIDE);
+      const dz = shape.z - clamp(shape.z, top, top + SIDE);
+      if (dx * dx + dz * dz <= shape.radius * shape.radius) return true;
+    }
+    return false;
   }
 
   function refusal(shape) {
     if (!region.editable) return 'This region is protected ground.';
+    if (siteGround?.intersectsChunks(shape)) return 'This site is protected ground.';
     for (const reserved of reservedShapes) {
       const dx = shape.x - reserved.x, dz = shape.z - reserved.z, reach = shape.radius + reserved.radius;
       // The distance is never less than either offset, so a place that far off along one axis is clear.
@@ -67,24 +87,30 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     return null;
   }
 
-  function heightAt(x, z) {
+  function deltaAt(x, z) {
+    return chunkAt(x, z)?.delta[indexAt(x, z)] ?? 0;
+  }
+  function baseHeightAt(x, z) {
     if (!finite(x) || !finite(z)) throw new TypeError('Ground coordinates must be finite.');
+    if (!chunkCount) return naturalHeight(x, z);
     const x0 = Math.floor(x), z0 = Math.floor(z), tx = x - x0, tz = z - z0;
-    const deltaAt = (sx, sz) => {
-      const sample = sampleAt(sx, sz);
-      return sample ? sample.chunk.delta[sample.index] : 0;
-    };
     const north = deltaAt(x0, z0) * (1 - tx) + deltaAt(x0 + 1, z0) * tx;
     const south = deltaAt(x0, z0 + 1) * (1 - tx) + deltaAt(x0 + 1, z0 + 1) * tx;
     return naturalHeight(x, z) + north * (1 - tz) + south * tz;
   }
+
+  // Site depth is part of the natural surface during an open job. Work orders
+  // remain in their own chunks, so loading another job never carries the site across.
+  const siteOffset = (x, z) => siteGround?.hasChunkAt(x, z) ? siteGround.heightAt(x, z) : 0;
+  const heightAt = (x, z) => baseHeightAt(x, z) + siteOffset(x, z);
+  const unworkedHeight = (x, z) => naturalHeight(x, z) + siteOffset(x, z);
 
   // Use the same seeded layers as cut(), including material placed above
   // the natural surface. Coordinates select the same one-metre ground cell.
   function materialAt(x, y, z) {
     if (![x, y, z].every(finite)) throw new TypeError('Material coordinates must be finite.');
     const sx = Math.floor(x), sz = Math.floor(z);
-    return cellMaterialAt(sx, sz, naturalHeight(sx, sz), sampleAt(sx, sz), y);
+    return cellMaterialAt(sx, sz, unworkedHeight(sx, sz), sampleAt(sx, sz), y);
   }
 
   // The layer at height y in one ground cell, given that cell's natural height and edit sample.
@@ -122,7 +148,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       }
       // Every strip is in the same ground cell, so its natural height and sample are read once.
       const sx = Math.floor(shape.x), sz = Math.floor(shape.z);
-      const natural = naturalHeight(sx, sz), sample = sampleAt(sx, sz);
+      const natural = unworkedHeight(sx, sz), sample = sampleAt(sx, sz);
       for (const {offset, weight} of weights) {
         const y = target + offset;
         if (!finite(y)) throw new TypeError('Material coordinates must be finite.');
@@ -138,14 +164,14 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       const dx = x - shape.x, dz = z - shape.z;
       if (dx * dx + dz * dz > shape.radius * shape.radius) continue;
       const sample = sampleAt(x, z, true), {chunk, index} = sample;
-      const before = naturalHeight(x, z) + chunk.delta[index];
+      const before = unworkedHeight(x, z) + chunk.delta[index];
       const after = Math.max(target, Math.min(before, target));
       if (after >= before) continue;
       const removed = Math.min(before - after, Math.max(0, maxVolume - result.volume));
       if (removed <= 0) continue;
       chunk.delta[index] -= removed;
       const roll = hash(numericSeed, x, z);
-      const depthStart = Math.max(0, naturalHeight(x, z) - before);
+      const depthStart = Math.max(0, unworkedHeight(x, z) - before);
       const depthEnd = depthStart + removed;
       const topsoilEnd = 1 + roll;
       const clayEnd = topsoilEnd + 2 + roll * 2;
@@ -195,14 +221,31 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
 
   function toSave() {
     return {version: 1, seed: numericSeed, chunkMetres: CHUNK_METRES,
-      chunks: [...chunks.values()].sort((a, b) => a.x - b.x || a.z - b.z)
+      chunks: [...columns.values()].flatMap(column => [...column.values()]).sort((a, b) => a.x - b.x || a.z - b.z)
         .map(chunk => ({x: chunk.x, z: chunk.z, delta: new Float32Array(chunk.delta), material: new Uint8Array(chunk.material)}))};
+  }
+
+  // The mesh sees both layers. Only work orders go through toSave().
+  function drawingChunks() {
+    const work = toSave().chunks;
+    if (!siteGround) return work;
+    const rows = new Map();
+    for (const row of work) storeChunk(rows, row);
+    for (const site of siteGround.toSave().chunks) {
+      const row = rows.get(site.x)?.get(site.z);
+      if (!row) { work.push(site); continue; }
+      for (let i = 0; i < SAMPLE_COUNT; i++) {
+        if (!row.delta[i]) row.material[i] = site.material[i];
+        row.delta[i] += site.delta[i];
+      }
+    }
+    return work;
   }
 
   function loadSave(save) {
     if (!save || save.version !== 1 || save.chunkMetres !== CHUNK_METRES || !Array.isArray(save.chunks))
       throw new TypeError('Unsupported ground edit save.');
-    const nextChunks = new Map();
+    const nextColumns = new Map();
     for (const row of save.chunks) {
       if (!Number.isInteger(row.x) || !Number.isInteger(row.z) || !(row.delta instanceof Float32Array) ||
           row.delta.length !== SAMPLE_COUNT || !(row.material instanceof Uint8Array) || row.material.length !== SAMPLE_COUNT)
@@ -211,14 +254,20 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
         if (!finite(row.delta[index]) || row.material[index] >= GROUND_MATERIALS.length)
           throw new TypeError('Invalid ground edit sample.');
       }
-      nextChunks.set(chunkKey(row.x, row.z), {x: row.x, z: row.z, delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
+      storeChunk(nextColumns, {x: row.x, z: row.z, delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
     }
-    chunks = nextChunks;
+    columns = nextColumns;
+    chunkCount = 0;
+    for (const column of columns.values()) chunkCount += column.size;
     loadedRevision = ++revision;
   }
 
-  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave,
-    hasChunkAt(x, z) { return chunks.has(chunkKey(Math.floor(x / CHUNK_METRES), Math.floor(z / CHUNK_METRES))); },
+  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave, drawingChunks, baseHeightAt,
+    get siteGround() { return siteGround; },
+    setSiteGround(layer) { siteGround = layer; loadedRevision = ++revision; },
+    includeChunkAt(x, z) { sampleAt(x, z, true); },
+    hasChunkAt(x, z) { return !!chunkAt(x, z); },
+    intersectsChunks,
     get revision() { return revision; },
     changedAlongSince(since, position, distance) {
       if (since < loadedRevision || revision - since > editHistory.length) return true;
@@ -232,6 +281,6 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       }
       return false;
     },
-    get chunkCount() { return chunks.size; },
-    get saveByteLength() { return chunks.size * SAMPLE_COUNT * 5 + chunks.size * 8 + 16; }});
+    get chunkCount() { return chunkCount; },
+    get saveByteLength() { return chunkCount * SAMPLE_COUNT * 5 + chunkCount * 8 + 16; }});
 }

@@ -1,22 +1,22 @@
 // OPEN-LOOK-GLASSHOUSE: stands the Glasshouse in the Scablands at its first position (OPEN-SITES, "Claude answers":
-// `land.at('ships-in-sand', 2000, 700)`) and takes the card's pictures for Claude's look review. Laptop only.
+// `land.at('ships-in-sand', 2000, 700)`) and takes the card's pictures for Claude's look review. Memory-only look stand.
 // The browser uses memory-only storage. This is a guide for the eye, not a frame check and not a test of any rule.
 //
 // The pictures, by name (each file is `look-glasshouse-<name>.png`):
 //   camp-far, camp-edge, camp-rows, camp-pump          the camp whole
 //   burned-far, burned-edge, burned-rows, burned-pump  burned, with `fresh: true`
-//   burned-clues                                       down the track from `ruts` towards `tracks-away`
+//   burned-clues                                       the first pod and footprints between the cart ruts
 // and two more than the card asks for, so that both of the camp's tells and the cold camp can be judged:
 //   camp-glint                                         by day, from 250 m, where the sun is thrown by the upright screens
-//   cold-clues                                         the same view as burned-clues with `fresh: false`
-// `far` is from the nearest road at dusk and car height; `edge` from `car-stop` at eye height (1.6 m); `rows` on foot
+//   cold-clues                                         the lamp in the ash, with the broken rows and pump beyond
+// `far` is from the clear Salt Road bend at dusk and car height; `edge` from `car-stop` at eye height (1.6 m); `rows` on foot
 // between two rows; `pump` from 8 m.
 //
-// How the camp gets into the page: nothing in the game draws a site yet (OPEN-SITES will), and the page gives a scenario no
+// How the camp gets into the page: the lighting job has no open-site view, and the page gives a scenario no
 // way to load a file of the game by name. So the scenario bundles the look file itself, as tollkeeper.mjs bundles its
 // helpers, loads it into the page as a module of its own, builds the group there and adds it to the Scablands' own group.
 // The bundle carries its own copy of Three.js (only the parts the look uses); the page's renderer draws its meshes as it
-// draws any others. OPEN-SITES will load the look in the game's own bundle, and then this way in can go.
+// draws any others. The open roam loads the same look through site-view.js.
 import {build} from 'vite';
 import {writeFile} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
@@ -44,32 +44,28 @@ export async function lookBundle() {
   return output.find(item => item.type === 'chunk').code;
 }
 
-// The point of the road net nearest the site.
-export function nearestRoadPoint(site = SITE) {
-  let best = null;
-  for (const road of ROAD_NET.roads) for (let index = 0; index < road.points.length - 1; index++) {
-    const a = road.points[index], b = road.points[index + 1], dx = b.x - a.x, dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((site.x - a.x) * dx + (site.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    const x = a.x + dx * t, z = a.z + dz * t, distance = Math.hypot(site.x - x, site.z - z);
-    if (!best || distance < best.distance) best = {road: road.id, x, z, distance};
-  }
-  return best;
+// The low bend on the Salt Road opens onto the pan. At the nearest point the road bank fills the foreground.
+function saltRoadView() {
+  const road = ROAD_NET.roads.find(road => road.id === 'salt-road');
+  const bend = road.points.reduce((best, p) => Math.abs(p.z + 2730) < Math.abs(best.z + 2730) ? p : best);
+  return {road: road.id, x: bend.x, z: bend.z, distance: Math.hypot(SITE.x - bend.x, SITE.z - bend.z)};
 }
 
 // The views, in the land's own metres. `eye` and `look` are {x, z, up}: `up` is metres above the drawn ground there. `car`
 // is where the player's car is parked, so that the land is drawn finely round the camp and the car is out of the picture.
 export function views() {
   const {spots, things, rows} = GLASSHOUSE_LAYOUT, at = (point, up = 0) => ({x: SITE.x + point.x, z: SITE.z + point.z, up});
-  const road = nearestRoadPoint(), toSite = {x: (SITE.x - road.x) / road.distance, z: (SITE.z - road.z) / road.distance};
+  const road = saltRoadView(), toSite = {x: (SITE.x - road.x) / road.distance, z: (SITE.z - road.z) / road.distance};
   const stop = spots['car-stop'], out = Math.hypot(stop.x, stop.z), parked = at({x: stop.x / out * (out + 9), z: stop.z / out * (out + 9)});
   const path = (rows[2].z + rows[3].z) / 2;
   return {
-    far: {dusk: true, eye: {x: road.x, z: road.z, up: CAR_HEIGHT}, look: at({x: 0, z: 0}, 3), car: {x: road.x - toSite.x * 9, z: road.z - toSite.z * 9}, road: road.road, metres: Math.round(road.distance)},
+    far: {dusk: true, eye: {x: road.x, z: road.z, up: CAR_HEIGHT}, look: at({x: 0, z: 0}, 24), car: {x: road.x - toSite.x * 9, z: road.z - toSite.z * 9}, road: road.road, metres: Math.round(road.distance)},
     edge: {eye: at(stop, EYE), look: at({x: 2, z: -2}, 1.4), car: parked},
     rows: {eye: at({x: rows[2].x0 + .4, z: path}, EYE), look: at({x: rows[2].x1, z: path - .4}, .7), car: parked},
     // From up the wind, so that the wheel is seen nearly face on.
     pump: {eye: at({x: things.pump.x - 7.7, z: things.pump.z - 1.7}, EYE), look: at(things.pump, 3.1), car: parked},
-    clues: {eye: at(spots.ruts, EYE), look: at(spots['tracks-away'], .3), car: parked},
+    clues: {eye: at({x: spots.pods.x - 2.5, z: spots.pods.z - 2.1}, EYE), look: at(GLASSHOUSE_LAYOUT.pods[0], .12), car: parked},
+    cold: {eye: at({x: 12.7, z: 4.4}, EYE), look: at({x: 8.4, z: .55}, .65), car: parked},
   };
 }
 export const PICTURES = Object.freeze([
@@ -79,11 +75,25 @@ export const PICTURES = Object.freeze([
   {name: 'burned-far', stage: 'burned', fresh: true, view: 'far'}, {name: 'burned-edge', stage: 'burned', fresh: true, view: 'edge'},
   {name: 'burned-rows', stage: 'burned', fresh: true, view: 'rows'}, {name: 'burned-pump', stage: 'burned', fresh: true, view: 'pump'},
   {name: 'burned-clues', stage: 'burned', fresh: true, view: 'clues'},
-  {name: 'cold-clues', stage: 'burned', fresh: false, view: 'clues', extra: true},
+  {name: 'cold-clues', stage: 'burned', fresh: false, view: 'cold', extra: true},
 ]);
 
 // ---- What runs in the page. Each is sent as text; `pageSource` proves that the text parses. ----
 export const pageFunctions = {
+  ready: () => window.__qaApp?.visualReady && window.__qaApp.duel.state.status === 'menu' &&
+    !!window.__render && !!document.querySelector('#graphics-quality') &&
+    [...document.querySelectorAll('details button')].some(button => !button.disabled && button.textContent.startsWith('Create temporary player ready for job 2:')),
+  prepare: () => {
+    const app = window.__qaApp;
+    if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only player required');
+    const quality = document.querySelector('#graphics-quality');
+    quality.value = 'performance';
+    quality.dispatchEvent(new Event('change', {bubbles: true}));
+    const player = [...document.querySelectorAll('details button')].find(button => button.textContent.startsWith('Create temporary player ready for job 2:'));
+    player.click();
+    if (!app.visitWasteland({arrived: true})) throw Error('Could not enter the memory-only yard');
+    return true;
+  },
   // Only the 3D view is drawn in the pictures: the menu, the HUD and the captions are hidden.
   hideInterface: () => {
     const style = document.createElement('style');
@@ -135,6 +145,7 @@ export const pageFunctions = {
     Object.assign(state.arena.worldJob.job.stepState, {brandBriefed: true, brandsUsed: 1, brandElapsed: view.dusk ? duskSeconds : 0, dusk: view.dusk ? 1 : 0});
     const ground = (x, z) => land.userData.drawnGroundHeightAt(x, z);
     app.inspectionCamera = {position: [view.eye.x, ground(view.eye.x, view.eye.z) + view.eye.up, view.eye.z], target: [view.look.x, ground(view.look.x, view.look.z) + view.look.up, view.look.z]};
+    window.__render.camera.position.fromArray(app.inspectionCamera.position);
     const towardsSun = sun ? {x: sun.position.x - sun.target.position.x, y: sun.position.y - sun.target.position.y, z: sun.position.z - sun.target.position.z} : null;
     window.__lookGlasshouse.updateGlasshouse(window.__glasshouseGroup, seconds, towardsSun ? {sun: towardsSun} : {});
     return {camera: app.inspectionCamera, sun: towardsSun};
@@ -169,7 +180,19 @@ export const pageFunctions = {
       return {draws: withCamp.draws - without.draws, triangles: withCamp.triangles - without.triangles, evening: document.querySelector('#view3d')?.dataset.evening ?? null};
     } finally { renderer.shadowMap.enabled = shadows; group.visible = seen; }
   },
-  settled: () => window.__qaApp.visualReady === true,
+  startDuskBlend: () => {
+    let previous = performance.now(), elapsed = 0;
+    window.__glasshouseDuskReady = false;
+    function frame(now) {
+      elapsed += Math.min(.05, (now - previous) / 1000);
+      previous = now;
+      if (elapsed >= 3) window.__glasshouseDuskReady = true;
+      else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    return true;
+  },
+  settled: () => window.__glasshouseDuskReady && document.querySelector('#view3d')?.dataset.evening === '1.00',
 };
 export function pageSource(name, ...args) {
   const fn = pageFunctions[name], source = `(${fn.toString()})(...${JSON.stringify(args)})`;
@@ -181,30 +204,35 @@ export function pageSource(name, ...args) {
 export function pageSources() {
   const all = views(), site = SITE;
   return [
-    pageSource('hideInterface'), pageSource('load', 'export const GLASSHOUSE_LAYOUT = {spots: {}};'), pageSource('glintView', site), pageSource('measure'), pageSource('settled'),
+    pageSource('hideInterface'), pageSource('load', 'export const GLASSHOUSE_LAYOUT = {spots: {}};'), pageSource('glintView', site), pageSource('measure'), pageSource('startDuskBlend'), pageSource('settled'),
     ...PICTURES.filter(picture => picture.view !== 'glint').flatMap(picture => [pageSource('stand', site, picture.stage, picture.fresh), pageSource('place', all[picture.view], 3.3, BRAND_RULE.duskSeconds)]),
-    ...['ready', 'prepare', 'yard', 'start', 'loaded'].map(name => job2(name)),
+    pageSource('ready'), pageSource('prepare'), ...['yard', 'start', 'loaded'].map(name => job2(name)),
   ];
 }
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'OPEN-LOOK-GLASSHOUSE', site: SITE, quality: 'performance', budget: GLASSHOUSE_BUDGET, pictures: [], failures: []};
+  const report = {card: 'OPEN-LOOK-2', round: 2, site: SITE, quality: 'performance', budget: GLASSHOUSE_BUDGET, pictures: [], failures: []};
   const persist = () => writeFile(join(context.outputDir, 'look-glasshouse.json'), JSON.stringify(report, null, 2) + '\n');
   try {
     const source = await lookBundle(), all = views();
-    report.nearestRoad = {road: all.far.road, metres: all.far.metres};
+    report.roadView = {road: all.far.road, metres: all.far.metres};
     // Light the Town is the job that has an evening, so the camp can be seen at dusk as well as by day.
     await context.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,warlord-cards,scablands-realism,story-choices&harness=look-glasshouse');
-    await context.waitFor(job2('ready'), 'memory-only menu', 90000);
-    await context.evaluate(job2('prepare'));
+    await context.waitFor(pageSource('ready'), 'memory-only menu', 90000);
+    await context.evaluate(pageSource('prepare'));
     await context.waitFor(job2('yard'), 'yard', 90000);
     await context.evaluate(job2('start'));
+    await context.evaluate('window.__qaApp.advance(4)');
     await context.waitFor(job2('loaded'), 'Light the Town and the Scablands art', 120000);
     await context.evaluate(pageSource('hideInterface'));
     report.spots = await context.evaluate(pageSource('load', source));
     let standing = null;
-    for (const picture of PICTURES) {
+    // Take both distant views at the end, after the daylight pictures. The game's sky blends
+    // towards dusk per rendered frame; elapsed wall time alone leaves a slow renderer in daylight.
+    const sequence = [...PICTURES.filter(p => p.view !== 'far'), ...PICTURES.filter(p => p.view === 'far')];
+    let duskSet = false;
+    for (const picture of sequence) {
       const key = picture.stage + ':' + picture.fresh;
       const row = {name: picture.name, stage: picture.stage, fresh: picture.fresh, view: picture.view, extra: picture.extra === true};
       if (standing !== key) { row.built = await context.evaluate(pageSource('stand', SITE, picture.stage, picture.fresh)); standing = key; report.groundFall = row.built.groundFall; }
@@ -212,13 +240,17 @@ export async function run(context) {
       if (picture.view === 'glint') {
         const glint = await context.evaluate(pageSource('glintView', SITE));
         row.glint = glint;
-        if (!glint?.view) { row.skipped = 'The sun does not reach an upright screen in this light.'; report.pictures.push(row); continue; }
+        if (!glint?.view) throw Error('The day view could not see the sun on an upright screen.');
         view = glint.view; seconds = glint.seconds;
       }
       row.placed = await context.evaluate(pageSource('place', view, seconds, BRAND_RULE.duskSeconds));
       // Let the land draw itself finely round the car and the light settle, then set the moment again and take the picture.
       await context.evaluate('(() => window.__qaApp.advance(1.5))()');
-      await new Promise(done => setTimeout(done, 3200));
+      if (view.dusk && !duskSet) {
+        await context.evaluate(pageSource('startDuskBlend'));
+        await context.waitFor(pageSource('settled'), 'dusk sky over the Salt Road', 180000);
+        duskSet = true;
+      } else await new Promise(done => setTimeout(done, 3200));
       await context.evaluate(pageSource('place', view, seconds, BRAND_RULE.duskSeconds));
       await new Promise(done => setTimeout(done, 400));
       row.picture = await context.screenshot('look-glasshouse-' + picture.name);
