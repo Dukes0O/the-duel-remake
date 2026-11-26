@@ -1443,7 +1443,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "Codex (cloud), 26 November 2026"
     needs: []
     locks: []
