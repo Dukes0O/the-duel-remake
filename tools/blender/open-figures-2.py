@@ -1,7 +1,7 @@
 """Dress the Walkers' photographic skins and export the Glasshouse, Radio Hill and Rats.
 
 blender -b -t 4 --python-exit-code 1 --python tools/blender/open-figures-2.py -- --root .
-node tools/art/story-people-poses.mjs .evidence/open-figures-2 --open-figures-2
+node tools/art/story-people-poses.mjs .evidence/open-figures-2 --open-figures-3
 Repeat the Blender command with --sheet .evidence/open-figures-2 for the comparison.
 """
 import argparse
@@ -20,7 +20,7 @@ args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv
 root = args.root.resolve()
 models = root / 'public/assets/models/wasteland'
 output = models / 'scablands/open-figures-2.glb'
-sheet = root / 'docs/board/looks/open-people/round-2.jpg'
+sheet = root / 'docs/board/looks/open-people/round-3.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [], 'glb': [] if args.sheet else [str(output)],
                       **({'summary': [str(sheet)]} if args.sheet else {})}))
@@ -36,9 +36,9 @@ cast = [
     ('marigold', 4, 'walker-b', (.76, .95, .59)),
     ('finch', 1, 'dace', (.76, .90, .77)),
     ('grower-1', 6, 'walker-vane', (1.16, .85, .57)),
-    ('grower-2', 10, 'walker-h', (.68, .91, .87)),
+    ('grower-2', 10, 'walker-h', (.78, .75, .64)),
     ('grower-3', 7, 'walker-e', (1.16, 1.02, .78)),
-    ('hetty', 7, 'walker-e', (.78, .86, 1.22)),
+    ('hetty', 7, 'walker-e', (.83, .79, .83)),
     ('bern', 10, 'walker-h', (1.30, .79, .57)),
     ('sump', 9, 'walker-g', (.91, .73, .61)),
     ('road-rat-lamp', 6, 'walker-vane', (.58, .67, .72)),
@@ -58,6 +58,7 @@ swatches = {
     'oxblood': ('patched-canvas', (.84, .43, .32)),
     'pages': ('canvas-cream', (1.16, 1.14, 1.0)),
     'amber': ('broken-glass', (2.1, 1.28, .41)),
+    'seat-vinyl': ('big-wheel-seat-top', (.82, .57, .44)),
     'lens': ('broken-glass', (.46, .68, .74)),
 }
 WIDTH, ROW = 1280, 256
@@ -77,6 +78,22 @@ def texture_atlas(photo):
         strip = photo.crop((0, top, WIDTH, top + ROW))
         clothes = strip.crop((250, 0, WIDTH, ROW))
         strip.paste(dye(clothes, tint), (250, 0))
+        if name in ('hetty', 'grower-2'):
+            clothes = ImageEnhance.Color(strip.crop((250, 0, WIDTH, ROW))).enhance(.46)
+            strip.paste(clothes, (250, 0))
+            # Abrasion follows the arm and leg UV islands and fades into the fabric.
+            soil = Image.open(models / 'town/textures/dirt.jpg').convert('RGB')
+            for x, y, w, h in [(500,190,100,35),(753,190,100,35),(631,105,90,56),(883,105,90,56)]:
+                patch = strip.crop((x,y,x+w,y+h))
+                mask = Image.new('L', (w,h))
+                for v in range(h):
+                    for u in range(w):
+                        mask.putpixel((u,v), int(130*max(0,1-(2*u/w-1)**2-(2*v/h-1)**2)))
+                strip.paste(ImageOps.fit(soil, patch.size), (x,y), mask)
+        if name.startswith('road-rat'):
+            # Strip the donor torso's red checks. Put the gang dye on individual kit.
+            torso = strip.crop((252,0,500,ROW))
+            strip.paste(ImageOps.colorize(ImageOps.grayscale(torso), '#201e19', '#a2977f'), (252,0))
         if name == 'marigold':
             # Arm UV panels run up from each cuff. Work earth into both sleeves.
             soil = Image.open(models / 'town/textures/dirt.jpg').convert('RGB')
@@ -89,6 +106,9 @@ def texture_atlas(photo):
         atlas.paste(strip, (0, HEIGHT - (idx + 1) * ROW))
     for n, (source, factors) in enumerate(swatches.values()):
         photo = Image.open(models / 'town/textures' / (source + '.jpg')).convert('RGB')
+        if source == 'big-wheel-seat-top':
+            w,h = photo.size
+            photo = photo.crop((w//3,h//3,2*w//3,2*h//3))
         atlas.paste(dye(ImageOps.fit(photo, (156, 124)), factors), (160 * (n % 8), 128 * (n // 8)))
     return atlas
 
@@ -214,11 +234,11 @@ def kit_for(name):
             k.oval((0,0,1.77),[(0,.124,.131),(.032,.12,.128),(.067,.08,.09)],'canvas','head')
             k.tube([(.095,.053,1.79),(.16,.07,1.67),(.17,.08,1.53)],.024,'canvas','head')
     elif name == 'hetty':
-        k.tube([(-.136,-.074,1.489),(-.15,.025,1.534),(-.089,.102,1.56),
-                (.082,.106,1.56),(.15,.019,1.53),(.136,-.074,1.489)],.017,'steel')
+        k.tube([(-.145,-.121,1.489),(-.15,.025,1.534),(-.089,.102,1.56),
+                (.082,.106,1.56),(.15,.019,1.53),(.145,-.121,1.489)],.024,'steel')
         for sign in (-1,1):
-            k.box((sign*.132,-.078,1.477),(.068,.102,.119),'boot')
-            k.box((sign*.16,-.079,1.477),(.025,.083,.096),'indigo')
+            k.box((sign*.145,-.129,1.477),(.104,.129,.151),'boot')
+            k.box((sign*.196,-.129,1.477),(.029,.108,.126),'tin')
         k.tube([(-.14,-.08,1.45),(-.17,-.14,1.30),(-.145,-.16,1.21),(-.098,-.12,1.25)],.006,'boot')
     elif name == 'bern':
         scarf(k,'oxblood')
@@ -227,16 +247,31 @@ def kit_for(name):
         k.tube([(.13,-.15,1.07),(.18,-.17,1.0),(.23,-.13,.94)],.008,'rust')
         k.box((.142,-.119,1.505),(.061,.084,.031),'canvas')
     elif name == 'sump':
-        # Split upholstery panels hang with the thighs. Welting and stitches show the joins.
-        for sign,side in [(-1,'L'),(1,'R')]:
-            for z,w,bone in [(1.27,.18,'chest'),(1.06,.20,'pelvis'),(.84,.21,'thigh.'+side)]:
-                y = -.142 if z>1.2 else -.16
-                k.box((sign*(w/2+.012),y,z),(w,.039,.208),'oxblood' if z==1.06 else 'boot',bone)
-                for j in range(1,4):
-                    x=sign*(.012+w*j/4)
-                    k.tube([(x,y-.02,z-.092),(x,y-.025,z+.092)],.004,'canvas',bone)
-            k.tube([(sign*.035,-.144,1.365),(sign*.115,-.116,1.477),
-                    (sign*.16,-.04,1.487)],.027,'boot')
+        # Four shoulder-to-hem gores wrap around the body. The open edges form
+        # front and back vents; the skirt follows the corresponding thigh.
+        for sign, side in [(-1,'L'),(1,'R')]:
+            for back, fabric in [(False,'seat-vinyl' if sign < 0 else 'oxblood'),
+                                 (True,'indigo' if sign < 0 else 'boot')]:
+                rings, edges = [], []
+                for z,w,d,gap in [(.57,.29,.192,.16),(.83,.251,.176,.085),
+                                  (1.04,.217,.166,.035),(1.28,.241,.174,.035),
+                                  (1.46,.218,.144,.20),(1.52,.133,.112,.28)]:
+                    angles = [gap+(math.pi/2-gap)*i/8 for i in range(9)]
+                    curve = [(sign*w*math.sin(t), (1 if back else -1)*d*math.cos(t),
+                              z+.016*math.sin(2*t)) for t in angles]
+                    rings.append(curve+[(x*.97,y*.97,h) for x,y,h in reversed(curve)])
+                    edges.append(curve[0])
+                first = len(k.weights)
+                k.loft(rings,fabric)
+                for j, bone in enumerate(['thigh.'+side,'thigh.'+side,'pelvis','chest','chest','chest']):
+                    start = first+j*len(rings[j])
+                    k.weights[start:start+len(rings[j])] = [bone]*len(rings[j])
+                # Welt the fixed bodice edge; leave the moving skirt free.
+                k.tube(edges[3:],.008,'cord')
+            for x,z,sections,bone in [
+                    (.246,1.40,[(-.16,.072,.078),(0,.096,.104),(.077,.067,.08)],'upper_arm.'),
+                    (.304,1.15,[(-.14,.068,.071),(.02,.074,.08),(.106,.072,.078)],'forearm.')]:
+                k.oval((sign*x,0,z),sections,'seat-vinyl' if sign<0 else 'canvas',bone+side)
         k.box((-.237,-.088,1.20),(.055,.244,.282),'pages')
         for x in (-.273,-.201):
             k.box((x,-.088,1.20),(.014,.259,.30),'oxblood')
@@ -248,7 +283,7 @@ def kit_for(name):
         side = 'L' if name.endswith('lamp') else 'R'
         sign = -1 if side == 'L' else 1
         k.oval((sign*.215,0,1.425),[(-.054,.124,.114),(0,.139,.131),
-               (.042,.098,.093)],'boot','upper_arm.'+side)
+               (.042,.098,.093)],'oxblood' if side=='L' else 'boot','upper_arm.'+side)
         for dx in (-.057,0,.057):
             k.tube([(sign*.215+dx,-.105,1.40),(sign*.215+dx,-.064,1.46),
                     (sign*.215+dx,.058,1.467)],.011,'steel','upper_arm.'+side)
@@ -419,7 +454,7 @@ def render_sheet(folder):
 
     gutter, margin, header, caption = 18, 26, 82, 68
     panel_h = height + caption
-    page = Image.new('RGB', (2*width+gutter+2*margin, header+3*panel_h+2*gutter+margin+126), '#e9e5d9')
+    page = Image.new('RGB', (2*width+gutter+2*margin, header+3*panel_h+2*gutter+margin+252), '#e9e5d9')
     draw = ImageDraw.Draw(page)
     def font(size, bold=False):
         try:
@@ -427,7 +462,7 @@ def render_sheet(folder):
         except OSError:
             return ImageFont.load_default(size=size)
     draw.text((margin,16), 'Open Scablands', font=font(38,True), fill='#263027')
-    draw.text((page.width-margin,33), 'FIGURES   /   ROUND 2     •     RELL   1.78 M', font=font(19,True),
+    draw.text((page.width-margin,33), 'FIGURES   /   ROUND 3     •     RELL   1.78 M', font=font(19,True),
               fill='#44513f', anchor='ra')
     for i, panel in enumerate(panels):
         objects = []
@@ -458,7 +493,7 @@ def render_sheet(folder):
         for label in panel['labels']:
             px = x + width*(.5+label['x']/camera.data.ortho_scale)
             draw.text((px,y+height+39), label['text'], font=font(17), fill='#29332c', anchor='ma')
-        if i < 2:
+        if i < 3:
             # Show actual apparent size as well as the enlarged outfit studies above.
             camera.location = (0,-20,1.62)
             camera.rotation_euler = (Vector((0,0,1.62))-camera.location).to_track_quat('-Z','Y').to_euler()
@@ -470,7 +505,7 @@ def render_sheet(folder):
             distant = folder/(panel['name']+'-20m.png')
             scene.render.filepath = str(distant)
             bpy.ops.render.render(write_still=True)
-            bottom = header+3*panel_h+2*gutter
+            bottom = header+3*panel_h+2*gutter+(i//2)*126
             crop = Image.open(distant).convert('RGB').crop((128,325,1152,422))
             page.paste(crop,(x,bottom+29))
             draw.text((x,bottom+3), '20 m   /   '+panel['title'].split('  /  ')[0]+

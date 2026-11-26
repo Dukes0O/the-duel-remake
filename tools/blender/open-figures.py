@@ -77,18 +77,47 @@ def cloth(name, bone, rows, colour):
     scene.collection.objects.link(obj)
     return finish(obj,name,bone,colour)
 
+def draped(name, bone, sections, colour, action='', pleat=0):
+    # Offset elliptical cross-sections give cloth a changing centre of gravity.
+    n = 32
+    verts = []
+    for x,y,z,w,d in sections:
+        for i in range(n):
+            angle = math.tau*i/n
+            fold = 1 + pleat*math.cos(7*angle + z*2)
+            verts.append((x+w*fold*math.cos(angle),y+d*fold*math.sin(angle),z))
+    faces = [(j*n+i,j*n+(i+1)%n,(j+1)*n+(i+1)%n,(j+1)*n+i)
+             for j in range(len(sections)-1) for i in range(n)]
+    faces.extend([tuple(reversed(range(n))), tuple(range(len(verts)-n,len(verts)))])
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts,[],faces)
+    obj = bpy.data.objects.new(name,mesh)
+    scene.collection.objects.link(obj)
+    for face in mesh.polygons:
+        face.use_smooth = len(face.vertices)==4
+    return finish(obj,name,bone,colour,action)
+
 owner = 'odessa'
-cloth('split-leather-apron','chest',[(1.39,.125,-.16),(1.2,.22,-.18),(.98,.225,-.17),(.68,.24,-.14)],'hide')
-oval('raised-welding-hood','head',(0,-.063,1.80),(.174,.14,.115),'soot')
-oval('green-lens','head',(0,-.18,1.82),(.116,.034,.048),'glass')
+cloth('leather-apron','chest',[(1.40,.097,-.168),(1.30,.145,-.179),
+      (1.19,.211,-.182),(1.145,.204,-.163),(1.12,.212,-.186),
+      (.91,.228,-.191),(.70,.213,-.202),(.66,.183,-.205)],'hide')
+for sign in (-1,1):
+    rod('neck-strap','chest',(sign*.085,-.166,1.39),(sign*.101,-.045,1.53),.016,'oil')
+draped('work-cap','head',[(0,0,1.733,.13,.123),(0,.004,1.762,.141,.131),
+       (0,.014,1.813,.118,.109),(0,.02,1.832,.065,.061)],'denim')
+oval('cap-peak','head',(0,-.105,1.744),(.121,.094,.014),'oil')
 for side, x in [('L',-.34),('R',.34)]:
-    oval('gauntlet'+side,'hand.'+side,(x,-.035,.935),(.062,.072,.104),'hide')
+    bone = 'hand.'+side
+    draped('gauntlet-cuff',bone,[(x,-.024,.957,.055,.052),(x,-.015,1.045,.071,.066)],'hide')
+    oval('palm',bone,(x,-.03,.929),(.051,.039,.066),'hide')
+    for i,length in enumerate((.050,.066,.070,.057)):
+        oval('finger'+str(i),bone,(x+(i-1.5)*.023,-.042,.902-length/2),(.014,.023,length/2),'hide')
+    oval('thumb',bone,(x*.86,-.059,.919),(.021,.028,.041),'hide')
 rod('torch','hand.R',(.33,-.04,.91),(.33,-.28,.94),.022,'steel','weld')
 rod('billet','hand.L',(-.34,-.04,.92),(.25,-.04,.92),.054,'steel','carry')
 
 owner = 'moss'
 cloth('overall-bib','chest',[(1.37,.14,-.157),(1.18,.18,-.16),(.96,.196,-.158)],'denim')
-oval('fuel-stain','chest',(.062,-.157,1.07),(.084,.017,.073),'oil')
 oval('pocket-rag','pelvis',(.14,.13,.91),(.07,.036,.15),'rag')
 rod('scrubbing-shaft','hand.R',(.34,.13,1.13),(.34,-.65,.28),.016,'canvas','scrub')
 rod('brush-stock','hand.R',(.20,-.65,.28),(.48,-.65,.28),.042,'hide','scrub')
@@ -102,13 +131,20 @@ for x in (.21,.47):
 for owner in ('tin-cook','tin-porter','tin-child'):
     rod('ladle-stem','hand.R',(.33,-.04,.94),(.34,-.34,.84),.014,'hide','cook')
     oval('ladle-bowl','hand.R',(.34,-.35,.83),(.054,.068,.025),'steel','cook')
-    oval('grain-sack','chest',(-.07,-.25,1.17),(.22,.16,.25),'canvas','haul-sack')
-    oval('gathered-neck','chest',(-.13,-.25,1.41),(.065,.056,.069),'hide','haul-sack')
+    # The filled belly drops down the back. The empty neck folds forward over
+    # the left shoulder and is bound tight below its flared mouth.
+    bag = [(-.19,.18,1.04,.052,.062),(-.20,.18,1.09,.147,.121),
+           (-.218,.16,1.23,.157,.144),(-.232,.127,1.37,.142,.133),
+           (-.23,.061,1.47,.111,.132),(-.216,-.024,1.52,.086,.114),
+           (-.204,-.096,1.54,.044,.058),(-.202,-.113,1.56,.029,.033),
+           (-.201,-.134,1.59,.059,.046)]
+    draped('canvas-sack','chest',bag,'canvas','haul-sack',.092)
+    draped('binding','chest',[(-.202,-.11,1.55,.033,.039),
+           (-.202,-.114,1.562,.034,.038)],'hide','haul-sack')
     if owner == 'tin-cook':
-        oval('knotted-headwrap','head',(0,.014,1.77),(.153,.15,.082),'rust')
-    elif owner == 'tin-porter':
-        cloth('shoulder-pad','chest',[(1.45,.22,-.12),(1.37,.24,-.15),(1.31,.18,-.14)],'canvas')
-    else:
+        draped('linen-headwrap','head',[(0,0,1.716,.148,.147),(0,0,1.752,.156,.15),
+               (0,.008,1.815,.14,.135),(0,.014,1.847,.099,.092)],'rag',pleat=.027)
+    elif owner == 'tin-child':
         oval('wool-cap','head',(0,.006,1.76),(.164,.145,.11),'denim')
 
 bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',export_animations=False)
