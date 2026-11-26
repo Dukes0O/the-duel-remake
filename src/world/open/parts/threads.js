@@ -8,6 +8,9 @@ import {distanceBetween} from '../../../story/threads/cast.js';
 import {applyThreadDirector, directThreads, visitId} from '../../../story/threads/director.js';
 import {isFresh, liveSigns, witnessSign} from '../../../story/threads/signs.js';
 import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/thread-rule.js';
+import dryPump from '../../../story/threads/content/dry-pump.js';
+import {mallPlace} from '../content/dry-pump-places.js';
+import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {placeForThread, radioScene} from '../../../story/scenes/burned-camp.js';
 import {flagStory, FLAG_ID, FLAG_SCENES, FLAG_LATER_PLACES, FLAG_TALK_ROWS, stagedFlag, flagSolids} from '../content/somebody-elses-flag-places.js';
@@ -15,7 +18,7 @@ import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {residentPose} from '../site-rule.js';
 import {campPeople} from '../content/people-sites.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, flagStory], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, flagStory, dryPump], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -23,13 +26,14 @@ const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 function withPlaces(context) {
   const {world, view = {}} = context;
   return {...context, placeAt: (place, cast) => {
-      const point = placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
+      const point = mallPlace(place) ?? placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsCast: (thread, role, id) => thread !== burnedCamp || role !== 'camp' ||
+    allowsCast: (thread, role, id) => role === 'camp' && thread === dryPump ?
+      dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&
         distanceBetween(playerPoint(view), placeForThread(id, {}, view)) > 40),
     startsEffects: (thread, cast) => thread === burnedCamp ?
@@ -37,8 +41,10 @@ function withPlaces(context) {
   };
 }
 
-export function threadsAtBankedHearth(context) {
-  return applyThreadDirector(OPEN_THREADS, withPlaces(context), 'hearth');
+// `threads` narrows the director to some storylines, so that one storyline's checks are not changed by which others
+// happen to be loaded; the game always passes none and directs every loaded storyline.
+export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
+  return applyThreadDirector(threads, withPlaces(context), 'hearth');
 }
 
 export function openThreadSigns(context) {
@@ -118,7 +124,7 @@ function outputFor(thread, context, record, state, observed, decision) {
   if (opening && isHeld(context.holds, 'signs') && !ownedHold) return out;
   const approachedCold = opening && beat.when === 'sign-seen' && !isFresh(thread, record, world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
-  const startingMission = mission && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
+  const startingMission = mission && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
     (mission.by !== 'car' || !view.onFoot) && !view.combatWrecking && !view.missionLeaving && !(mission.outing && view.outingAvailable === false);
   if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
     if (mission) {
@@ -232,11 +238,14 @@ export function createThreadsPart(threads) {
       const state = {interact: !!view.interact, regions: previous.night === night ? [...(previous.regions ?? [])] : [],
         night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay,
           sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
+      const enabled = view.checkpointsEnabled === true;
+      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID);
+      if (enabled) state.places.dryPumpEnabled = true;
       const region = regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
       if (!isHeld(holds, 'signs') && region && !state.regions.includes(region)) {
-        choices.push(...directThreads(threads.filter(thread => thread.id !== FLAG_ID || view.checkpointsEnabled), context, `region-${region}`));
+        choices.push(...directThreads(availableThreads, context, `region-${region}`));
         state.regions.push(region);
       }
       const events = [], requests = [];
@@ -245,17 +254,28 @@ export function createThreadsPart(threads) {
       state.flagSite = flagKey;
       if (flagKey !== (previous.flagSite ?? '')) requests.push({type: 'solids', id: FLAG_ID,
         solids: flagKey ? flagSolids(world, scablandsSurfaceHeightAt) : []});
-      const signs = liveSigns(threads, context);
-      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission};
+      const signs = liveSigns(availableThreads, context);
+      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission, journey: enabled && previous.journey};
       const settled = input.previousEvents.some(event => event.id === previous.mission &&
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
       state.mission = settled ? null : previous.mission;
       let hold, release;
-      for (const source of threads) {
+      for (const source of availableThreads) {
         const thread = source.id === FLAG_ID ? stagedFlag(world) : source;
         const record = world.open.threads[thread.id];
         if (!record) continue;
-        if (thread.id === FLAG_ID && view.checkpointsEnabled !== true) continue;
+        if (thread === dryPump) {
+          const out = dryPumpStep(context, record, previous.dryPump ?? {}, dt, decision);
+          state.dryPump = out.state;
+          if (out.state.mall) state.journey = {holder: DRY_PUMP_HOLD};
+          choices.push(...out.choices);
+          events.push(...out.events);
+          requests.push(...out.requests);
+          if (out.mission !== undefined) state.mission = out.mission;
+          hold ??= out.hold;
+          release ??= out.release;
+          continue;
+        }
         const struck = thread.notes?.sign?.struck;
         const waterStruck = !record.end && struck && night - record.began >= struck.afterNights;
         if (waterStruck)

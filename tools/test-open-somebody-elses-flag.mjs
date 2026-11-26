@@ -4,7 +4,7 @@ import {checkThread} from '../src/world/open/check-tables.js';
 import {newWorld} from '../src/world/open/open-record.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
-import {threadsPart, OPEN_THREADS} from '../src/world/open/parts/threads.js';
+import {threadsAtBankedHearth, threadsPart, OPEN_THREADS} from '../src/world/open/parts/threads.js';
 import {missionsPart} from '../src/world/open/parts/missions.js';
 import {MISSION_KINDS} from '../src/world/open/content/mission-kinds.js';
 import {FLAG_ID, flagStory, stagedFlag, FLAG_SPOTS} from '../src/world/open/content/somebody-elses-flag-places.js';
@@ -70,6 +70,10 @@ assert.equal(openMapMarks(sign.open.world, sitePosition).sites.find(row => row.i
 assert.deepEqual(frame(begin(), table, {checkpointsEnabled: false}, 10).open.world, initial());
 const unstarted = initial();
 delete unstarted.open.threads[FLAG_ID];
+// Give the hearth director only this storyline, independent of other loaded storylines.
+const fromHearth = threadsAtBankedHearth({world: unstarted, view: {}}, [flagStory]);
+assert.equal(fromHearth.open.threads[FLAG_ID].beat, 'sign');
+assert.deepEqual(fromHearth.open.threads[FLAG_ID].cast, {camp: 'glasshouse'});
 assert.equal(frame(begin(unstarted), table, {checkpointsEnabled: false, groundRegion: 'west'}, 10).open.world.open.threads[FLAG_ID], undefined);
 assert.equal(record(frame(sign.open, table, {onFoot: false}).open).beat, 'site');
 const site = frame(sign.open);
