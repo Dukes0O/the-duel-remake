@@ -34,20 +34,29 @@ export const pageFunctions = {
   drive: scout.drive,
   advance: scout.advance,
   walkAt: camp.walkAt,
+  // The open roam keeps the shared day on its own clock, so the part of the day is set there. The job's clock moves
+  // with it, as it does for a player whose outing began at dawn. A bank moves the night on and starts a new dawn.
   setDay: (partOfDay, seconds, bank = false) => {
     const {state} = window.__qaApp.duel;
     const {worldJob} = state.arena;
-    worldJob.definition.open.partOfDay = partOfDay;
+    worldJob.open = {...worldJob.open, daySeconds: seconds, partOfDay};
     state.stageTimeSec = seconds;
     if (bank) worldJob.open.world.ledger.night++;
   },
   // The runner polls this while the conversation progresses. Both a choice and Continue must be visible and enabled.
+  // Another storyline's one-off aside can open first when its speaker stands where Market Day's talk is (Dot at the
+  // gate). A player answers it with its one reply and speaks again, so this does the same and says 'aside'.
   optionReady: words => {
     const talk = document.querySelector('.story-talk:not([hidden])');
     const ready = button => !!button?.getClientRects().length && !button.disabled;
-    const option = [...(talk?.querySelectorAll('.story-options button') ?? [])]
-      .find(button => button.textContent.includes(words));
+    const options = [...(talk?.querySelectorAll('.story-options button') ?? [])];
+    const option = options.find(button => button.textContent.includes(words));
     if (ready(option)) return true;
+    if (talk?.dataset.phase === 'options' && options.length === 1 && options[0].textContent.includes('I hear you.') &&
+        ready(options[0])) {
+      options[0].click();
+      return 'aside';
+    }
     const next = talk?.querySelector('.story-talk-controls button:first-child');
     if (ready(next) && talk.dataset.phase !== 'options') next.click();
     return false;
@@ -70,6 +79,25 @@ export const pageFunctions = {
   },
   voices: () => window.__qaApp.duel.state.arena.worldJob.open.events.some(event =>
     event.id === 'market-day/day' && event.phase === 'voices'),
+  // When a wait times out, this says what the talk box shows and where the storyline and the day stand.
+  talkReport: () => {
+    const {worldJob} = window.__qaApp.duel.state.arena;
+    const {open, job} = worldJob;
+    const talk = document.querySelector('.story-talk:not([hidden])');
+    const record = open.world.open.threads['market-day'];
+    const fighter = window.__qaApp.duel.state.fighter;
+    return JSON.stringify({
+      talk: talk ? {phase: talk.dataset.phase, text: talk.textContent.replace(/\s+/g, ' ').trim().slice(0, 400),
+        options: [...talk.querySelectorAll('.story-options button')].map(button => button.textContent.trim() +
+          (button.disabled ? ' (disabled)' : ''))} : null,
+      beat: record?.beat, end: record?.end, entered: open.world.ledger.marks.filter(mark => mark.startsWith('market-day/')),
+      partOfDay: open.partOfDay, daySeconds: open.daySeconds, definitionPart: worldJob.definition.open.partOfDay,
+      night: open.world.ledger.night, mission: open.parts.missions?.active?.id ?? null,
+      step: job?.stepIndex ?? job?.step ?? null, onFoot: window.__qaApp.duel.state.onFoot,
+      at: fighter && {x: Math.round(fighter.x * 10) / 10, z: Math.round(fighter.z * 10) / 10},
+      holds: open.holds.map(hold => hold.holder),
+    });
+  },
   mendedAtDusk: () => {
     const {world, holds} = window.__qaApp.duel.state.arena.worldJob.open;
     return world.open.threads['market-day'].end === 'mended' &&
@@ -86,17 +114,28 @@ export function pageSource(name, ...values) {
 
 export async function run(context) {
   const evaluate = (name, ...args) => context.evaluate(pageSource(name, ...args));
-  const wait = (name, ...args) => context.waitFor(pageSource(name, ...args), name, 120000);
-  const choose = async (beat, option) => {
-    const {words} = market.beats[beat].choices.find(row => row.id === option);
-    await wait('optionReady', words);
-    await evaluate('choose', words);
+  const wait = async (name, ...args) => {
+    try {
+      return await context.waitFor(pageSource(name, ...args), name, 120000);
+    } catch (error) {
+      error.message += ' | ' + await context.evaluate(pageSource('talkReport')).catch(failure => 'no report: ' + failure.message);
+      throw error;
+    }
   };
   const use = async () => {
     const event = {key: 'f', code: 'KeyF', windowsVirtualKeyCode: 70};
     await context.command('Input.dispatchKeyEvent', {type: 'keyDown', ...event});
     await evaluate('advance', .05);
     await context.command('Input.dispatchKeyEvent', {type: 'keyUp', ...event});
+  };
+  const choose = async (beat, option) => {
+    const {words} = market.beats[beat].choices.find(row => row.id === option);
+    for (let aside = 0; await wait('optionReady', words) === 'aside'; aside++) {
+      if (aside === 2) throw Error('Market talk kept giving way to asides: ' + words);
+      await evaluate('advance', .3);
+      await use();
+    }
+    await evaluate('choose', words);
   };
   await context.navigate('/tools/menu-check.html?flags=story-choices,crew-gear&seed=' + world.seed + '&harness=open-market-day');
   await wait('memoryMenu');
