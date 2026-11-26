@@ -154,8 +154,10 @@ export function escortPoint(path, metres) {
   }
   return {...path[0], heading: 0};
 }
-const truckRequest = (mission, state, view) => ({type: 'missionTruck', id: mission.id,
-  position: atGround(view, state.truck), heading: state.truck.heading, tyres: state.tyres, speed: state.speed});
+const truckRequest = (mission, state, view) => ({type: 'solids', id: mission.id + '/truck', solids: [
+  {id: mission.id + '/truck', kind: 'wreck', shape: 'box', x: state.truck.x, z: state.truck.z,
+    halfX: 1.5, halfZ: 4, height: 3.4, base: height(view, state.truck), heading: state.truck.heading},
+]});
 const escort = {
   prepare(mission, place) {
     const riders = prepareRiders(mission, place), path = place(mission.rule?.path);
@@ -211,7 +213,7 @@ const escort = {
     return {state: next, requests, events, outcome};
   },
   end(mission, state, view) {
-    return [...missionEnd(mission, state, view), {type: 'missionTruck', id: mission.id, position: null},
+    return [...missionEnd(mission, state, view), {type: 'solids', id: mission.id + '/truck', solids: []},
       ...(view.combatWrecking ? [{type: ROAD_REQUEST, action: 'recover-car', at: view.missionHome ?? mission.rule.home}] : [])];
   },
 };

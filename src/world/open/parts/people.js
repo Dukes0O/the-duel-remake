@@ -9,6 +9,8 @@ import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
 import {scoutPeople} from '../content/burned-scout.js';
+import {haulerPeople} from '../content/stranded-hauler-places.js';
+import {haulerTalkScene} from '../content/talk-hauler.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -30,7 +32,9 @@ function firstPose(row, target, grid) {
 }
 
 export function talkFor(row, world, resolveScene = id => TOWN_SCENES[id], heard = []) {
-  for (const entry of TALK_TABLES[row.talk] ?? []) {
+  const table = TALK_TABLES[row.talk] ?? [];
+  for (const entry of [...table.filter(row => row.scene.startsWith('stranded-hauler/')),
+    ...table.filter(row => !row.scene.startsWith('stranded-hauler/'))]) {
     if (entry.once && heard.includes(entry.scene)) continue;
     if (entry.needs && !isTrue(entry.needs, world)) continue;
     if (entry.afterChoice && !world.ledger.history.some(change => change.night === 2 && change.choiceId === entry.afterChoice))
@@ -70,7 +74,8 @@ export const peoplePart = {
         active = null;
       }
     }
-    const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
+    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
+      ...haulerPeople(world, {...view, seconds: context.seconds})] : [];
     const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
@@ -93,7 +98,8 @@ export const peoplePart = {
       const nearest = cast.filter(person => distanceToPerson(person, driver) <= TALK_RANGE)
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {
-        const talk = talkFor(rows.find(row => row.id === person.id), world, undefined, heard);
+        const talk = talkFor(rows.find(row => row.id === person.id), world,
+          id => haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);

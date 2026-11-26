@@ -9,7 +9,7 @@ export const mark = id => ({type: 'mark', id});
 export function threadRule(thread, context, record = {}, state = {}) {
   const {world, view = {}, seconds = 0, placeAt} = context;
   const night = world.ledger.night;
-  const has = (kind, key) => world.ledger.marks.includes(threadMark(thread.id, kind, key));
+  const has = (kind, key) => world.ledger.marks.includes(threadMark(thread.id, kind, key + (state.visit ?? '')));
   const reached = beat => world.open.journal.findLast(row => row.type === 'thread' && row.key === thread.id && row.after.beat === beat);
   const player = view.player?.position ?? view.player;
   const ask = (when, cast = record.cast ?? {}, subject = {}) => {

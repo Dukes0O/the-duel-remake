@@ -12,6 +12,7 @@ import {scoutTrail} from './content/burned-scout.js';
 import {buildGlasshouseTrail} from './looks/glasshouse-look.js';
 import {isFresh} from '../../story/threads/signs.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
+import {createHaulerLook} from './looks/stranded-hauler-look.js';
 
 function paintedSign({label}) {
   const canvas = globalThis.document?.createElement?.('canvas');
@@ -149,6 +150,8 @@ const disposeMeshes = root => {
 export function createSignView() {
   const group = new THREE.Group();
   group.name = 'Open land signs';
+  const hauler = createHaulerLook();
+  group.add(hauler.root);
   const smoke = new Map();
   const heaps = new Map();
   const flare = lookoutFlare();
@@ -183,6 +186,7 @@ export function createSignView() {
         }
       }
       const open = worldJob?.open;
+      hauler.update(open, here, open?.seconds ?? seconds, drawnShift);
       if (lastJob !== worldJob) {
         flareSeq = 0;
         flare.visible = false;
@@ -244,6 +248,7 @@ export function createSignView() {
       if (ash.visible) positionAt(ash, ashAt, drawnShift);
     },
     dispose() {
+      hauler.dispose();
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();

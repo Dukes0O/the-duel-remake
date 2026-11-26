@@ -2280,7 +2280,7 @@ export function stepWorldJob(duel, dt) {
     }
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
     if (checkpointsEnabled) for (const event of openStep.events) {
-      if ((event.type === 'threadCue' || event.type === 'threadMissionSpotted') && Object.hasOwn(SOUND_BANK, event.cue))
+      if (['threadCue', 'threadMissionSpotted', 'threadMissionMoment'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
         duel.emit({arenaTell: {id: event.id, cue: event.cue, position: event.position ?? point, seconds: 0}});
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
@@ -2289,7 +2289,8 @@ export function stepWorldJob(duel, dt) {
         const prefix = request.id + '/lookout/';
         worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));
         request.posts.forEach((position, index) => worldJob.actors.push({
-          id: prefix + index, position: {...position, y: position.y + (position.heap?.height ?? 0)},
+          id: prefix + index, position: {...position,
+            y: (position.y ?? scablandsSurfaceHeightAt(position.x, position.z)) + (position.heap?.height ?? 0)},
           heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
           health: 100, speed: 0,
         }));
