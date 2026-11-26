@@ -5,6 +5,7 @@ import {buildingsPart} from './parts/buildings.js';
 import {sitesPart} from './parts/sites.js';
 import {checkpointsPart} from './parts/checkpoints.js';
 import {threadsPart} from './parts/threads.js';
+import {missionsPart} from './parts/missions.js';
 import {groundPart} from './parts/ground.js';
 
-export const OPEN_PARTS = Object.freeze([peoplePart, buildingsPart, sitesPart, checkpointsPart, threadsPart, groundPart]);
+export const OPEN_PARTS = Object.freeze([peoplePart, buildingsPart, sitesPart, threadsPart, missionsPart, checkpointsPart, groundPart]);

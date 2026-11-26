@@ -1,5 +1,7 @@
 import {checkThread, requireSound} from '../check-tables.js';
-import {isHeld} from '../holds.js';
+import {isHeld, USUAL_HOLDS} from '../holds.js';
+import {resolveRoles} from '../roles.js';
+import {prepareThreadMission} from './missions.js';
 import {isFound, stageOf} from '../open-record.js';
 import {SITES, nameOf} from '../register.js';
 import {distanceBetween} from '../../../story/threads/cast.js';
@@ -16,7 +18,12 @@ const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 
 function withPlaces(context) {
   const {world, view = {}} = context;
-  return {...context, placeAt: (place, cast) => placeForThread(place, cast, view),
+  return {...context, placeAt: (place, cast) => {
+      const point = placeForThread(place, cast, view);
+      if (!point || !Array.isArray(place)) return point;
+      const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
+      return spot ? {...point, heading: spot.heading, eye: spot.eye, range: spot.range} : point;
+    },
     allowsCast: (thread, role, id) => thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&
         distanceBetween(playerPoint(view), placeForThread(id, {}, view)) > 40),
@@ -39,7 +46,7 @@ function localCampVisit({world, view, placeAt}) {
 }
 
 function outputFor(thread, context, record, state, observed, decision) {
-  const {world, view, seconds} = context;
+  const {world, view, seconds, previousEvents} = context;
   const {beat: beatId} = record;
   const beat = thread.beats[beatId];
   const opening = beatId === firstBeat(thread);
@@ -58,6 +65,22 @@ function outputFor(thread, context, record, state, observed, decision) {
   };
 
   if (!beat) return out;
+  const mission = beat.mission;
+  if (mission && decision.activeMission === mission.id) {
+    const finished = previousEvents.find(event =>
+      (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled') && event.id === mission.id);
+    if (finished) {
+      out.mission = null;
+      out.release = holder;
+      const outcome = Object.hasOwn(mission.outcomes ?? {}, finished.outcome) && mission.outcomes[finished.outcome];
+      if (outcome && rule.ask(outcome.when)) {
+        (outcome.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`${beatId}/outcome/${index}`, row));
+        cue(beatId, outcome.cue);
+        move(`mission/${beatId}/${finished.outcome}`, outcome);
+      }
+      return out;
+    }
+  }
   if (opening && thread.sign.kind === 'smoke' && isFresh(thread, record, world.ledger.night) && !rule.has('entered', beatId) && !isHeld(context.holds, 'signs')) {
     const warning = beat.lines?.filter(row => row.radio && rule.ask(row.when)) ?? [];
     if (warning.length && !rule.has('warned', beatId)) {
@@ -77,15 +100,24 @@ function outputFor(thread, context, record, state, observed, decision) {
   if (opening && isHeld(context.holds, 'signs') && !ownedHold) return out;
   const approachedCold = opening && beat.when === 'sign-seen' && !isFresh(thread, record, world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
-  if (!rule.has('entered', beatId) && (approachedCold || rule.ask(beat.when))) {
-    if (beat.mission && (!decision.canStartMission || (beat.mission.outing && view.outingAvailable === false))) return out;
+  const entered = rule.has('entered', beatId);
+  const startingMission = mission && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
+    (mission.by !== 'car' || !view.onFoot) && !view.combatWrecking && !view.missionLeaving && !(mission.outing && view.outingAvailable === false);
+  if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
+    if (mission) {
+      if (!startingMission) return out;
+      const authored = {...mission, enemy: resolveRoles(mission.enemy, record.cast)};
+      const route = prepareThreadMission(authored, place => context.placeAt(place, record.cast));
+      if (!route) return out;
+      decision.activeMission = mission.id;
+      out.mission = mission.id;
+      const systems = mission.holds ?? USUAL_HOLDS;
+      if (systems.length) out.hold = {holder, systems};
+      out.events.push({type: 'threadMission', id: mission.id, thread: thread.id, beat: beatId, holder, mission: authored, route});
+      if (entered) return out;
+    }
     state.beatSeconds[beatId] = seconds;
     const entry = [remember('entered', beatId), ...rule.effects(beat.effects)];
-    if (beat.mission) {
-      decision.canStartMission = false;
-      if (beat.mission.holds?.length) out.hold = {holder, systems: beat.mission.holds};
-      out.events.push({type: 'threadMission', thread: thread.id, mission: beat.mission.id});
-    }
     (beat.lines ?? []).filter(row => rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
     if (!approachedCold) cue(beatId, beat.cue ?? (opening ? thread.sign.cue : undefined));
     if (beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
@@ -141,25 +173,27 @@ function outputFor(thread, context, record, state, observed, decision) {
       const thought = typeof row === 'string' ? {thought: row} : row, id = `${beatId}-mission-${index}`;
       if (rule.ask(thought.when) && !rule.has('thought', id)) { once('thought', id); text(id, thought.thought); }
     });
-    if (!ownedHold && beat.mission.holds?.length) out.hold = {holder, systems: beat.mission.holds};
-    const finished = (view.jobEvents ?? []).find(event => event.type === 'threadMissionOutcome' && event.id === beat.mission.id);
-    const outcome = beat.mission.outcomes?.[finished?.outcome];
-    if (outcome) {
-      out.release = holder;
-      delete out.hold;
-      (outcome.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`${beatId}/outcome/${index}`, row));
-      move(`mission/${beatId}/${finished.outcome}`, outcome);
-    }
     return out;
   }
 
-  const option = beat.choices?.find(row => !rule.has('chose', row.id) && rule.ask(row.when) &&
-    (row.by === 'go' ? !view.onFoot : completed.some(event => event.id === row.id)));
+  const available = beat.choices?.filter(row => !rule.has('chose', row.id) && rule.ask(row.when)) ?? [];
+  const spoken = available.filter(row => row.by === 'say');
+  if (spoken.length && view.onFoot && view.openRoam && view.checkpointsEnabled && decision.interact) {
+    decision.interact = false;
+    const id = `${thread.id}/${beatId}/decision`;
+    const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: rule.line(row.words),
+      ...(row.plain ? {detail: rule.line(row.plain)} : {})}));
+    out.requests.push({type: 'talk', id, scene: {id, choices}, speaker: 'you'});
+  }
+  const option = available.find(row => row.by === 'go' ? !view.onFoot :
+    row.by === 'say' ? view.onFoot && completed.some(event => event.id === `${thread.id}/${beatId}/decision/${row.id}`) :
+      completed.some(event => event.id === row.id));
   if (!beat.choices?.length && beat.next) {
     const effects = rule.move(beat.next);
     if (effects.length) choose(`next/${beatId}`, effects);
   }
   if (option) {
+    cue(option.id, option.cue);
     if (option.thought) text(`choice/${option.id}`, option.thought);
     (option.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`choice/${option.id}/${index}`, row));
     move(`choice/${option.id}`, option, [remember('chose', option.id)]);
@@ -184,12 +218,8 @@ export function createThreadsPart(threads) {
       }
       const events = [], requests = [];
       const signs = liveSigns(threads, context);
-      const decision = {interact: state.interact && !previous.interact,
-        canStartMission: !threads.some(thread => {
-          const record = world.open.threads[thread.id];
-          return record && !record.end && thread.beats[record.beat]?.mission &&
-            world.ledger.marks.includes(threadMark(thread.id, 'entered', record.beat));
-        })};
+      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission};
+      state.mission = previous.mission;
       let hold, release;
       for (const thread of threads) {
         const record = world.open.threads[thread.id];
@@ -204,6 +234,7 @@ export function createThreadsPart(threads) {
         choices.push(...out.choices);
         events.push(...out.events);
         requests.push(...out.requests);
+        if (out.mission !== undefined) state.mission = out.mission;
         hold ??= out.hold;
         release ??= out.release;
       }

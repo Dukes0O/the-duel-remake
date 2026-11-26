@@ -207,7 +207,11 @@ export function walkThread(thread) {
   for (const end of ends) if (!seen.has('end:' + end)) faults.push('The end "' + end + '" cannot be reached by any path.');
   for (const beat of beats) {
     if (!seen.has('beat:' + beat)) faults.push('The beat "' + beat + '" cannot be reached by any path.');
-    if (!edges.get(beat).size && !ends.includes(beat) && !standing.includes(beat)) faults.push('The beat "' + beat + '" has no way out and is not an end.');
+    if (!edges.get(beat).size && !ends.includes(beat) && !standing.includes(beat)) {
+      const notes = thread.beats[beat].notes;
+      const nextCard = typeof notes === 'string' && /^OPEN-[A-Z0-9-]+ /.test(notes) ? ' ' + notes : '';
+      faults.push('The beat "' + beat + '" has no way out and is not an end.' + nextCard);
+    }
   }
   return {beats, ends, start, edges, faults};
 }

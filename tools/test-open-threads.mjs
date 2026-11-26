@@ -8,6 +8,7 @@ import {isHeld, takeHold} from '../src/world/open/holds.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
 import {sampleWorld} from '../src/world/open/samples.js';
+import {missionsPart} from '../src/world/open/parts/missions.js';
 import {createThreadsPart} from '../src/world/open/parts/threads.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {placeForThread} from '../src/story/scenes/burned-camp.js';
@@ -90,14 +91,19 @@ for (const [thread, jobEvents] of [[spoken, [{type: 'talkChoice', id: 'test-spok
 }
 
 const mission = storyline('test-mission', 'trouble', {cast: {}, sign: {kind: 'call', at: 'tin-town'}, beats: {work: {
-  mission: {id: 'test-mission/job', kind: 'reach', holds: ['checkpoints', 'signs'], outcomes: {home: {next: 'done'}}},
+  mission: {id: 'test-mission/job', kind: 'reach', by: 'car', rule: {destination: 'tin-town', within: 8},
+    outcomes: {unseen: {next: 'done'}}},
 }}});
 const missionWorld = choose(helped, 'fixture/mission', [{type: 'thread', id: mission.id, to: 'work'}]);
+const atTown = {openRoam: true, checkpointsEnabled: true, carPosition: LAND.at('tin-town')};
+const parts = [createThreadsPart([mission]), missionsPart];
 let open = beginOpenLand({...definition, open: {world: missionWorld}});
-({open} = stepOpenLand(open, {}, 1, [createThreadsPart([mission])]));
-assert.ok(isHeld(open.holds, 'checkpoints') && isHeld(open.holds, 'signs'));
-({open} = stepOpenLand(open, {jobEvents: [{type: 'threadMissionOutcome', id: 'test-mission/job', outcome: 'home'}]}, 1,
-  [createThreadsPart([mission])]));
+({open} = stepOpenLand(open, atTown, 1, parts));
+assert.ok(isHeld(open.holds, 'checkpoints') && isHeld(open.holds, 'signs'), 'a mission takes the default hold');
+const completed = stepOpenLand(open, atTown, 1, parts);
+assert.equal(completed.events[0].outcome, 'unseen');
+assert.equal(isHeld(completed.open.holds, 'signs'), false);
+({open} = stepOpenLand(completed.open, atTown, 1, parts));
 assert.equal(open.world.open.threads[mission.id].end, 'done');
-assert.equal(isHeld(open.holds, 'signs'), false);
+assert.deepEqual(stepOpenLand(open, atTown, 1, parts).open.world, open.world, 'the outcome is applied once');
 console.log('test-open-threads: passed');
