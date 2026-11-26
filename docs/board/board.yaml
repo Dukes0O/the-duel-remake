@@ -1388,17 +1388,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-DACE.md"
 
-  - id: OPEN-LOOK-RADIO-HILL
-    title: "Open Scablands: Radio Hill, round 1, drawn in code (Claude cloud)"
-    owner: "claude-cloud"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-RADIO-HILL.md"
-
   - id: OPEN-LOOK-BUS-RING-2
     title: "Open Scablands: the Bus Ring, round 2 from Claude's verdict (buses that are buses, the far tell, the near view)"
     owner: "codex"
