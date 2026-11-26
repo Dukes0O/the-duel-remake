@@ -1,4 +1,4 @@
-// OPEN-LOOK-RATS-NEST, round 2: the pictures by which Claude judges the Rats' Nest on the laptop. Not a frame check.
+// OPEN-LOOK-3, round 3: the pictures by which Claude judges the Rats' Nest on the laptop. Not a frame check.
 //
 // It enters the Scablands by Hot Delivery, as tools/scenarios/scablands-things.mjs does, stands the site at its position in "Claude
 // answers" of docs/board/cards/OPEN-SITES.md (`land.at('boneyard', -150, -900)`) through tools/open-look-stand.js, which also cuts
@@ -113,7 +113,7 @@ async function enterLand(context) {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'OPEN-LOOK-2', round: 2, quality: 'performance', budget: RATS_NEST_BUDGET, radius: RATS_NEST_LAYOUT.radius,
+  const report = {card: 'OPEN-LOOK-3', round: 3, quality: 'performance', budget: RATS_NEST_BUDGET, radius: RATS_NEST_LAYOUT.radius,
     pictures: [], stages: {}, failures: []};
   const persist = () => writeFile(join(context.outputDir, 'look-rats-nest.json'), JSON.stringify(report, null, 2) + '\n');
   try {

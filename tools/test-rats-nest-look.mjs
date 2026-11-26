@@ -2,6 +2,12 @@
 // on two runs, the ground is what the card says, every solid lies inside the radius, every named spot is clear of every solid, and
 // every string the laptop scenario sends to the page parses.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import * as THREE from 'three';
+import {installSiteGround} from '../src/world/open/site-ground.js';
+import {sitePosition} from '../src/world/open/site-rule.js';
+import {createGroundView} from '../src/world/ground-view.js';
+import {scablandsGroundEdit, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RATS_NEST_BUDGET, RATS_NEST_LAYOUT as L, RATS_NEST_STAGES, buildRatsNest, ratsNestGround, ratsNestSolids, updateRatsNest}
   from '../src/world/open/looks/rats-nest-look.js';
 import {PICTURES, cameraFor, pageSource} from './scenarios/look-rats-nest.mjs';
@@ -10,6 +16,10 @@ import {PICTURES, cameraFor, pageSource} from './scenarios/look-rats-nest.mjs';
 const again = await import('../src/world/open/looks/rats-nest-look.js?second-run');
 assert.notEqual(again.RATS_NEST_LAYOUT, L, 'the second run is a fresh copy of the file');
 assert.deepEqual(JSON.parse(JSON.stringify(again.RATS_NEST_LAYOUT)), JSON.parse(JSON.stringify(L)), 'the layout is the same on two runs');
+
+// OPEN-BURNED-SCOUT consumes the complete layout published at 3f2a800a1.
+assert.equal(createHash('sha256').update(JSON.stringify(L)).digest('hex'),
+  '3f93db0abddf65504e188930a36d478f829c1b6553f3eb5416b5dfc570cfdc0e', 'published layout, spots and solids');
 
 // Each stage builds, within the budget, and the same on two runs.
 assert.deepEqual([...RATS_NEST_STAGES], ['day', 'night']);
@@ -57,6 +67,49 @@ assert.ok(built.night.lights >= 5 && built.night.lights <= 6, 'the three fires a
   lifted.traverse(node => { if (node.isMesh && /sheet/.test(node.name)) { node.geometry.computeBoundingBox(); assert.ok(node.geometry.boundingBox.min.y > 40 - L.depth - 2 && node.geometry.boundingBox.max.y < 46); } });
   lifted.userData.dispose();
 }
+
+// Cast down onto the installed, triangulated cut at each object's actual lowest
+// drawn vertex. This is independent of the height function that seated the prop.
+const at = sitePosition('rats-nest', 0);
+const restore = installSiteGround(0, ['rats-nest']);
+const terrain = new THREE.Group(), view = createGroundView({group: terrain, groundEdit: scablandsGroundEdit});
+const ray = new THREE.Raycaster(undefined, new THREE.Vector3(0,-1,0));
+const contacts = new Map();
+try {
+  view.update();
+  terrain.updateMatrixWorld(true);
+  const group = buildRatsNest({
+    heightAt: (x,z) => scablandsSurfaceHeightAt(at.x+x, at.z+z),
+    inspectPlacement(label, geometries) {
+      const bottom = new THREE.Vector3(0, Infinity, 0);
+      for (const geometry of geometries) {
+        const points = geometry.attributes.position;
+        for (let i=0; i<points.count; i++) {
+          if (points.getY(i) < bottom.y) bottom.fromBufferAttribute(points,i);
+        }
+      }
+      ray.ray.origin.set(at.x+bottom.x, bottom.y+25, at.z+bottom.z);
+      const hit = ray.intersectObject(terrain,true)[0];
+      assert.ok(hit, label + ' lies outside the drawn cut');
+      const clearance = bottom.y - hit.point.y;
+      assert.ok(clearance >= -.3 && clearance <= .1, `${label} bottom is ${clearance.toFixed(3)} m from the drawn ground`);
+      assert.ok(!contacts.has(label), 'duplicate placement ' + label);
+      contacts.set(label,clearance);
+    },
+  });
+  group.userData.dispose();
+} finally {
+  view.dispose();
+  restore();
+}
+for (const wreck of L.wrecks) assert.ok(contacts.has(wreck.id), wreck.id);
+for (const [prefix,count] of Object.entries({
+  buggy: L.bays.length, stack: L.tyreStacks.length, drum: L.drums.length, heap: L.heaps.length,
+  'fire-stack': 3, 'fire-tyre': 9, 'fire-wire': 12, rag: 4, 'workshop-tyre': 4, 'fuel-can': 3, 'bench-drum': 2,
+})) assert.equal([...contacts.keys()].filter(id => id.startsWith(prefix+'-')).length,count,prefix);
+for (let i=0; i<86; i++) assert.ok(contacts.has(['tyre','sheet','pipe','plank','stone','scrap'][i%6]+'-'+(i+1)));
+assert.ok([...contacts.keys()].filter(id => id.startsWith('rubble-')).length > 60);
+
 
 // The ground: a cutting about 90 m by 45 m and 9 m deep with steep sides, a road down at the west, a gully beyond the east rim.
 assert.equal(ratsNestGround(0, 0), 9);
@@ -180,4 +233,4 @@ for (const picture of PICTURES) {
 assert.equal(Object.keys(pageSource).length, 15, 'every page string is checked here');
 for (const source of sources) assert.doesNotThrow(() => new Function('return ' + source), source.slice(0, 60));
 
-console.log(`The Rats' Nest look passed: day ${built.day.draws} draws and ${built.day.triangles} triangles, night ${built.night.draws} draws, ${built.night.triangles} triangles and ${built.night.lights} lights; ${solids.length} solids, ${Object.keys(L.spots).length} named spots, ${sources.length} page strings.`);
+console.log(`The Rats' Nest look passed: day ${built.day.draws} draws and ${built.day.triangles} triangles, night ${built.night.draws} draws, ${built.night.triangles} triangles and ${built.night.lights} lights; ${solids.length} solids, ${Object.keys(L.spots).length} named spots, ${sources.length} page strings; ${contacts.size} ground contacts (${Math.min(...contacts.values()).toFixed(3)} to ${Math.max(...contacts.values()).toFixed(3)} m).`);
