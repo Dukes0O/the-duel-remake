@@ -874,7 +874,7 @@ export function attachRenderer(host, app) {
     const chapter = !menu ? st.arena?.worldJob?.night2 : null;
     if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
     const open = !menu && st.arena?.worldJob?.open;
-    const choices = open?.parts.threads?.places;
+    const choices = open?.parts?.threads?.places;
     const lightsNight = choices?.checkpointsEnabled && choices.partOfDay === 'dark' &&
       !!open.world.open.threads[LIGHTS_ID] && !open.world.open.threads[LIGHTS_ID].end;
     const dustNight = lightsWeather(open) ??

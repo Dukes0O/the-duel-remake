@@ -151,7 +151,7 @@ export const LIGHTS_HAZE = Object.freeze({
 });
 const onSalt = new Set(['salt', 'crew', 'crew-after-sounding', 'buoy', 'sounding', 'back-to-cart', 'two-trips', 'walk-in']);
 export function lightsWeather(open) {
-  if (!open?.parts.threads?.places.checkpointsEnabled) return null;
+  if (!open?.parts?.threads?.places?.checkpointsEnabled) return null;
   const record = open.world.open.threads[LIGHTS_ID];
   const offAt = open.parts.threads.beatSeconds?.[LIGHTS_ID]?.salt;
   return record && !record.end && onSalt.has(record.beat) &&
