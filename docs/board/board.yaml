@@ -1547,6 +1547,7 @@ tasks:
     lane: "TOOLS"
     size: "M"
     status: "ready"
+    claimed_by: "Claude (cloud), 26 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
