@@ -1,7 +1,8 @@
 // Somebody else's flag: a storyline of the open Scablands, written as data (docs/story/open-scablands.md, section 18).
 // The page that explains every scene is docs/story/threads/somebody-elses-flag.md. Every line a player reads is here
 // exactly as the page has it. The camp's lines are written twice: for the Glasshouse (`for: 'glasshouse'`), and for any
-// other camp, with its leader's name put in as {camp.leader}.
+// other camp, with its leader's name put in as {camp.leader}. In a condition or an effect the camp's people are
+// '@camp.people' (src/world/open/roles.js).
 // Nothing loads this file yet. It names no other storyline: it meets the others only through facts.
 // Nobody in it says Mrs Vane's name: her people call her "the Office" (the page says why).
 
@@ -13,28 +14,32 @@ const say = (speaker, words, more = {}) => ({speaker, words, ...more});
 
 const WELL = 'sweet-seep';
 const CAMP = {cast: 'camp'};
+const CAMP_PEOPLE = '@camp.people';
+const scrap = atLeast => ({fact: 'scrap', atLeast});
 const GLASSHOUSE = {for: 'glasshouse'};
 const OTHER_CAMP = {for: 'any-other'};
 const WATER_STRUCK = marked('water-struck');
 const AT_ODDS = {fact: 'feud', of: 'water-men', atLeast: 'Raiding'};
 const HAS_EMBER = {fact: 'stock', of: 'embers', atLeast: 1};
+// The player has the price in the car: today's, or the dearer one once water is struck.
+const priced = (today, later) => ({any: [{all: [{not: WATER_STRUCK}, scrap(today)]}, {all: [WATER_STRUCK, scrap(later)]}]});
+const PRICE_IN_SCRAP = priced(160, 240), PRICE_WITH_EMBER = priced(60, 140);
 const BOUGHT = [
   {type: 'made', id: `${ID}/hand-pump`, text: 'A hand pump stands on the Sweet Seep.'},
   mark('bought-out', 'You bought the Sweet Seep back from the water company.'),
-  {type: 'word', person: '{camp}', by: 1, when: CAMP},
+  {type: 'word', person: CAMP_PEOPLE, by: 1, when: CAMP},
 ];
 
 export default {
   id: ID,
   title: "Somebody else's flag",
   kind: 'rival',
-  reads: ['found', 'made', 'word', 'feud', 'stock', 'night', 'draw', 'mark', 'thread'],
-  writes: ['made', 'word', 'favour', 'debt', 'feud', 'stock', 'scrap', 'roadWord', 'met', 'mark'],
+  reads: ['found', 'stage', 'made', 'word', 'feud', 'stock', 'scrap', 'night', 'mark'],
+  writes: ['made', 'word', 'favour', 'debt', 'feud', 'stock', 'scrap', 'roadWord', 'mark'],
 
+  // The well is one place and the rival is one group, so neither is a role: the Sweet Seep and the water men are named.
   cast: {
-    well: {site: WELL},
-    rival: {group: 'water-men'},
-    camp: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'word', atLeast: 'Friendly'}]}, nearest: 'well', optional: true},
+    camp: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'stage', is: 'camp'}, {fact: 'word', atLeast: 'Friendly'}]}, nearest: WELL, optional: true},
   },
 
   starts: {all: [
@@ -45,7 +50,7 @@ export default {
     {fact: 'draw', name: 'start', chance: .4},
   ]},
 
-  sign: {kind: 'out-of-place', at: 'well', seenWithin: 2500, lamps: 2, cue: 'open.flag.seen',
+  sign: {kind: 'thing', at: WELL, seenWithin: 2500, lamps: 2, cue: 'open.flag.seen',
     mapName: 'The Sweet Seep (somebody is drilling here)',
     // Two banked nights after the tower appears, the drill strikes water, and everything at the site costs more.
     struck: {afterNights: 2, effects: [mark('water-struck')]}},
@@ -62,7 +67,7 @@ export default {
     },
 
     site: {
-      when: {reach: 'well'},
+      when: {reach: WELL},
       cue: 'open.flag.drill',
       effects: [{type: 'met', person: 'water-men', text: 'You met Miss Pell of the water company at the Sweet Seep.'}],
       explore: [
@@ -154,7 +159,7 @@ export default {
         {id: 'sign', by: 'do', words: 'Sign the schedule, for Tin Town', cue: 'open.flag.stamp',
           thought: "It's only a signature. It may also be the one thing here that's still true next year.",
           effects: [mark('signed', 'Tin Town signed that the Sweet Seep is the water company\'s, and {camp.name} draws from it free.'),
-            {type: 'favour', person: '{camp}', by: 1}],
+            {type: 'favour', person: CAMP_PEOPLE, by: 1}],
           lines: [
             say('miss-pell', "Thank you. That's the first schedule I've filled in all year. Most people shout at me, and there isn't a card for shouting."),
             say('marigold', "That's forty cans a week, and my name on a company's paper. Well, the beans will drink. I'll save you the first basket, and I'll try not to think about the paper.", GLASSHOUSE),
@@ -187,7 +192,7 @@ export default {
     },
 
     hearth: {
-      when: {all: [{choice: 'buy'}, {reach: 'hearth'}]},
+      when: {all: [{choice: 'buy'}, {reach: 'tin-town'}]}, at: 'the hearth',
       lines: [
         say('auntie-solder', "You want to buy a well that isn't ours, from people who didn't dig it, with scrap that we haven't got. I'll lend you sixty from the town's tin, and I shall want to know who is paying it back."),
         say('cinder', "Don't offer them an ember until you've counted the store. That's a night of fire going out through the gate in a pot, and it won't come back as water.", {when: HAS_EMBER}),
@@ -201,7 +206,7 @@ export default {
           say('{camp.leader}', "We've no scrap to give you. We can pay you back in work and in what we make, a little at a time, until you say it's enough.", OTHER_CAMP),
         ],
         effects: [mark('beans-offered'),
-          {type: 'debt', id: `${ID}/beans`, person: '{camp}', text: '{camp.name} owes you a basket of beans at every picking.', ...GLASSHOUSE}]},
+          {type: 'debt', id: `${ID}/beans`, person: CAMP_PEOPLE, text: '{camp.name} owes you a basket of beans at every picking.', ...GLASSHOUSE}]},
       next: 'carry',
     },
 
@@ -212,13 +217,13 @@ export default {
     },
 
     table: {
-      when: {reach: 'well'},
+      when: {reach: WELL},
       choices: [
-        {id: 'pay-scrap', by: 'do', words: 'Pay it all in scrap', cue: 'open.flag.stamp',
+        {id: 'pay-scrap', by: 'do', needs: PRICE_IN_SCRAP, words: 'Pay it all in scrap', cue: 'open.flag.stamp',
           thought: "That's everything I have, and sixty of it is the town's.",
           effects: [{type: 'scrap', by: -160, when: {not: WATER_STRUCK}}, {type: 'scrap', by: -240, when: WATER_STRUCK}, ...BOUGHT],
           next: 'sold'},
-        {id: 'pay-ember', by: 'do', needs: HAS_EMBER, words: 'Pay sixty scrap and one ember', cue: 'open.flag.stamp',
+        {id: 'pay-ember', by: 'do', needs: {all: [HAS_EMBER, PRICE_WITH_EMBER]}, words: 'Pay sixty scrap and one ember', cue: 'open.flag.stamp',
           thought: "That's a night of fire, and Cinder told me to count first.",
           effects: [{type: 'scrap', by: -60, when: {not: WATER_STRUCK}}, {type: 'scrap', by: -140, when: WATER_STRUCK},
             {type: 'stock', stock: 'embers', by: -1}, mark('ember-paid'), {type: 'roadWord', by: 1}, ...BOUGHT],
@@ -252,12 +257,14 @@ export default {
             say('{camp.leader}', "They've gone, and the water is still here. I hope that it was worth making an enemy for.", {when: CAMP, ...OTHER_CAMP}),
           ],
           cue: 'open.flag.down',
-          effects: [{type: 'feud', of: 'water-men', by: 1}, {type: 'roadWord', by: 1}, {type: 'word', person: '{camp}', by: 1, when: CAMP},
+          effects: [{type: 'feud', of: 'water-men', by: 1}, {type: 'roadWord', by: 1}, {type: 'word', person: CAMP_PEOPLE, by: 1, when: CAMP},
             mark('driven-off', 'You drove the water company off the Sweet Seep.')],
           end: 'driven-off'},
         lost: {
           lines: [say('miss-pell', "I did read you the card. We'll tow you as far as the road. There's a recovery charge, and I'm afraid it's half of whatever is in the car. I'll write you a receipt for it.")],
-          effects: [{type: 'scrap', share: -.5}, {type: 'feud', of: 'water-men', by: 1}, {type: 'roadWord', by: 1},
+          // The recovery charge is half the scrap in the car (section 15).
+          takesShareOfScrap: .5,
+          effects: [{type: 'feud', of: 'water-men', by: 1}, {type: 'roadWord', by: 1},
             mark('towed-off', 'The water company towed you off the Sweet Seep, and its tower still stands.')],
           end: 'beaten'},
       },

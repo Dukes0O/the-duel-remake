@@ -1,6 +1,7 @@
 // A toll on the Mall Road: a storyline of the open Scablands, written as data (docs/story/open-scablands.md, section 18).
 // The page that explains every scene is docs/story/threads/mall-road-toll.md. Every line a player reads is here exactly
-// as the page has it, with the cast camp's names put in as {camp.leader}, {camp.name} and {camp.child}.
+// as the page has it, with the cast camp's names put in as {camp.leader} and {camp.name}. In a condition or an effect the
+// camp's people are '@camp.people' (src/world/open/roles.js).
 // Nothing loads this file yet. It names no other storyline: it meets the others only through facts.
 
 const ID = 'mall-road-toll';
@@ -14,12 +15,14 @@ const STANDS_CAMP = mark('stands-camp', "{camp.name} will stand at Sump's Gate."
 const CLOSED = mark('road-closed', 'Sump has closed the Mall Road to Tin Town.');
 const PROMISED = {fact: 'mark', id: 'road-rats/toll-promised'};
 
-// A people's word, as three bands. `who` is a people's id, or a role of the cast written as {role: 'camp'}.
-const word = (who, atLeast) => ({fact: 'word', ...(typeof who === 'string' ? {of: who} : who), atLeast});
+// A people's word, as three bands. `who` is a name of the register, or a role of the cast written '@camp.people'.
+const word = (who, atLeast) => ({fact: 'word', of: who, atLeast});
+const GATE = 'sumps-gate';   // a new site: its row is on the page under "New names"
+const scrap = atLeast => ({fact: 'scrap', atLeast});
 const friendly = who => word(who, 'Friendly');
 const strangers = who => ({all: [word(who, 'Strangers'), {not: word(who, 'Friendly')}]});
 const wary = who => ({not: word(who, 'Strangers')});
-const CAMP = {role: 'camp'};
+const CAMP = '@camp.people';
 
 // Somebody besides Tin Town has agreed to stand, and two besides Tin Town have.
 const ANOTHER = {any: [stands('dot'), stands('camp'), stands('walkers')]};
@@ -32,13 +35,12 @@ export default {
   id: ID,
   title: 'A toll on the Mall Road',
   kind: 'feud',
-  reads: ['feud', 'mark', 'found', 'stage', 'word', 'favour', 'night', 'draw', 'thread'],
-  writes: ['feud', 'scrap', 'find', 'site', 'word', 'favour', 'promise', 'settle', 'met', 'roadWord', 'mark'],
+  reads: ['feud', 'mark', 'found', 'stage', 'word', 'favour', 'scrap', 'night'],
+  writes: ['feud', 'scrap', 'site', 'word', 'favour', 'promise', 'settle', 'roadWord', 'mark'],
 
+  // The gate is one place and the enemy is one people, so neither is a role: Sump's Gate and the Road Rats are named.
   cast: {
-    gate: {site: 'sumps-gate', at: {road: 'mall-road', share: .855}},
-    enemy: {group: 'road-rats'},
-    camp: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'stage', is: 'camp'}]}, nearest: 'gate', optional: true},
+    camp: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'stage', is: 'camp'}]}, nearest: GATE, optional: true},
   },
 
   starts: {all: [
@@ -47,7 +49,7 @@ export default {
     {any: [PROMISED, {all: [{fact: 'feud', of: 'road-rats', atLeast: 'Watching'}, {fact: 'draw', name: 'start', chance: .35}]}]},
   ]},
 
-  sign: {kind: 'out-of-place', at: 'gate', seenWithin: 600, lastsNights: 6, cue: 'open.toll.seen'},
+  sign: {kind: 'wreckage', at: GATE, stands: {road: 'mall-road', share: .855}, seenWithin: 600, lastsNights: 6, cue: 'open.toll.seen'},
 
   beats: {
     sign: {
@@ -56,13 +58,12 @@ export default {
         "Those wrecks weren't lying across the road the last time I drove this way. Somebody has dragged them there on purpose.",
         "There's only one gap, and it has a pole across it. This pass is the only way through these hills that a truck can use.",
       ],
-      found: {within: 160, effects: [{type: 'find', site: 'sumps-gate'},
-        {type: 'met', person: 'road-rats', text: "You found Sump's Gate across the Mall Road on the {night} night."}]},
+      // The gate is found as any site is (section 16): within 160 metres, and the land writes the find and its sentence.
       next: 'gate',
     },
 
     gate: {
-      when: {reach: 'gate'},
+      when: {reach: GATE},
       lines: [
         say('sump', "Good morning, and welcome to my road. Until four days ago it was only a road, and now it's a road with somebody looking after it.", {when: {not: PROMISED}}),
         say('sump', "The price is two scrap a wheel. You have four wheels, so that comes to eight scrap, and I'll lift the pole for you myself.", {when: {not: PROMISED}}),
@@ -90,7 +91,7 @@ export default {
         'Sump has three buggies by the fire and one more up on the hill. I can only see one of me.',
       ],
       choices: [
-        {id: 'pay', by: 'do', words: 'Put eight scrap in the bucket',
+        {id: 'pay', by: 'do', needs: scrap(8), words: 'Put eight scrap in the bucket',
           thought: "It's cheaper than a fight, and I'll be through in a minute.", next: 'paying'},
         {id: 'round', by: 'go', words: 'Turn off the road and climb into the Breaks',
           thought: "His lads lost a buggy up there. I think I'm a better driver than his lads are.", next: 'round'},
@@ -115,8 +116,8 @@ export default {
         {when: {all: [marked('paid-once'), {not: marked('paid-twice')}]}, effects: [{type: 'scrap', by: -8}, mark('paid-twice')]},
         {when: {all: [marked('paid-twice'), {not: marked('paid-three')}]}, effects: [{type: 'scrap', by: -8}, mark('paid-three')],
           lines: [say('sump', "I'm putting the price up to three scrap a wheel from next week. Everybody has stopped complaining about two, and that tells me two was too cheap.")]},
-        {when: {all: [marked('paid-three'), {not: marked('paid-four')}]}, effects: [{type: 'scrap', by: -12}, mark('paid-four')]},
-        {when: marked('paid-four'), effects: [{type: 'scrap', by: -12}, mark('paid-five', "Tin Town paid Sump's toll five times, and now everybody on the Mall Road pays it."), mark('road-taxed'), {type: 'roadWord', by: 1},
+        {when: {all: [marked('paid-three'), {not: marked('paid-four')}]}, needs: scrap(12), effects: [{type: 'scrap', by: -12}, mark('paid-four')]},
+        {when: marked('paid-four'), needs: scrap(12), effects: [{type: 'scrap', by: -12}, mark('paid-five', "Tin Town paid Sump's toll five times, and now everybody on the Mall Road pays it."), mark('road-taxed'), {type: 'roadWord', by: 1},
             {type: 'settle', id: 'road-rats/toll-promised', when: PROMISED}],
           lines: [say('sump', "That makes five times, and I've enjoyed every one of them. You're my best customer, and I tell everybody so. They all pay a little quicker when they hear that Tin Town does.")],
           end: 'paid'},
@@ -149,12 +150,13 @@ export default {
         seen: {
           lines: [say('sumps-rider', "Sump says the hills are his as well, because they're standing next to his road. That will be eight scrap for the pass and eight more for making us climb.")],
           choices: [
-            {id: 'pay-double', by: 'do', words: 'Pay sixteen scrap', effects: [{type: 'scrap', by: -16}, KNOWS_ROUND]},
+            {id: 'pay-double', by: 'do', needs: scrap(16), words: 'Pay sixteen scrap', effects: [{type: 'scrap', by: -16}, KNOWS_ROUND]},
             {id: 'outrun', by: 'go', words: 'Outrun them over the hills', effects: [KNOWS_ROUND]},
             {id: 'fight-on-the-slope', by: 'do', words: 'Fight two buggies on the slope', effects: [KNOWS_ROUND]},
           ],
           next: 'gate'},
-        wrecked: {effects: [{type: 'scrap', share: -.5}], next: 'gate'},
+        // A car wrecked here is towed home (section 14), and the riders take half the scrap in it (section 15).
+        wrecked: {takesShareOfScrap: .5, next: 'gate'},
       },
       // Told to Rell at her camp, on any later day, when the Walkers are Friendly or better.
       tell: {to: 'rell', needs: {all: [marked('knows-the-round'), friendly('walkers'), {not: marked('walkers-shown')}]},
@@ -173,7 +175,7 @@ export default {
             say('sump', "I had a fair price and a good pole, and you've cost me three buggies. I write down everything that I'm owed, and you've just gone to the top of the page."),
             say('nan-tallow', "I'm not going to thank you until I've seen whether he comes back. If he hasn't come back in a week, I'll bring you a box of candles."),
           ],
-          effects: [{type: 'site', id: 'sumps-gate', stage: 'empty'}, {type: 'feud', of: 'road-rats', by: 1}, mark('gate-broken', "You broke Sump's Gate, and the Mall Road is free."), mark('road-free'),
+          effects: [{type: 'site', id: GATE, stage: 'empty'}, {type: 'feud', of: 'road-rats', by: 1}, mark('gate-broken', "You broke Sump's Gate, and the Mall Road is free."), mark('road-free'),
             {...mark('promise-broken'), when: PROMISED}, {type: 'feud', of: 'road-rats', by: 1, when: PROMISED}, {type: 'roadWord', by: 1, when: PROMISED}],
           end: 'broken',
           tiedBack: [
@@ -187,7 +189,8 @@ export default {
             say('sump', "That was a silly thing to do, and I'd been so pleasant to you. I'm taking half the scrap in this car for my pole. That isn't robbery. It's the bill for the damage."),
             say('sump', "Your car doesn't come through my gate again, at any price. If Tin Town wants this road, Tin Town can send somebody with thirty scrap in a bucket to tell me it's sorry."),
           ],
-          effects: [{type: 'scrap', share: -.5}, {type: 'feud', of: 'road-rats', by: 1}, CLOSED],
+          takesShareOfScrap: .5,
+          effects: [{type: 'feud', of: 'road-rats', by: 1}, CLOSED],
           next: 'closed'},
       },
     },
@@ -196,7 +199,7 @@ export default {
     closed: {
       when: marked('road-closed'),
       choices: [
-        {id: 'sorry-bucket', by: 'do', words: 'Carry thirty scrap to the gate in a bucket, and say sorry',
+        {id: 'sorry-bucket', by: 'do', needs: scrap(30), words: 'Carry thirty scrap to the gate in a bucket, and say sorry',
           effects: [{type: 'scrap', by: -30}, mark('road-taxed')], next: 'gate'},
         {id: 'round-again', by: 'go', words: 'Turn off the road and climb into the Breaks', next: 'round'},
         {id: 'home-again', by: 'go', words: 'Turn round and drive home', next: 'hearth'},
@@ -204,7 +207,7 @@ export default {
     },
 
     hearth: {
-      when: {reach: 'hearth'},
+      when: {reach: 'tin-town'}, at: 'the hearth',
       lines: [
         say('auntie-solder', 'With the Ash Men sitting on the bridge, that road is the only other way we have to the west. Now Sump wants paying every time one of our wheels turns on it.'),
         say('auntie-solder', 'A toll lasts exactly as long as people go on paying it. If nobody on that road pays him on the same morning, all he owns is a heap of wrecks and a pole.'),
@@ -227,7 +230,7 @@ export default {
             lines: [say('dot', "I'd like to, and I'm frightened to. That van is my whole living, and it has four wheels he could take. I'll come if you promise me your car stays beside my van from start to finish.")],
             choices: [
               {id: 'promise-dot', words: 'You have my word. My car stays beside your van.', effects: [STANDS_DOT,
-                {type: 'promise', id: `${ID}/guard-dot`, person: 'dot', text: "You promised Dot that your car would stay beside her van at Sump's Gate."}]},
+                {type: 'promise', id: `${ID}/guard-dot`, person: 'dot', dueNights: 6, text: "You promised Dot that your car would stay beside her van at Sump's Gate."}]},
               {id: 'no-promise-dot', words: "I can't promise that, Dot.", effects: []},
             ]},
           {when: wary('dot'),
@@ -240,7 +243,7 @@ export default {
             lines: [say('{camp.leader}', "We've only the one cart, and it's the water cart. If he takes its wheels, everybody at home goes thirsty. I'll bring it if you give me your word that your car stays right beside it.")],
             choices: [
               {id: 'promise-camp', words: 'You have my word. My car stays beside your cart.', effects: [STANDS_CAMP,
-                {type: 'promise', id: `${ID}/guard-camp`, person: '{camp}', text: "You promised {camp.name} that your car would stay beside its cart at Sump's Gate."}]},
+                {type: 'promise', id: `${ID}/guard-camp`, person: CAMP, dueNights: 6, text: "You promised {camp.name} that your car would stay beside its cart at Sump's Gate."}]},
               {id: 'no-promise-camp', words: "I can't promise that.", effects: []},
             ]},
           {when: strangers(CAMP),
@@ -289,11 +292,11 @@ export default {
           {id: 'drive-through', by: 'do', words: 'Drive through the gap', thought: "I'd never have to pay him again.",
             effects: [mark('drove-through-alone', "You drove through Sump's Gate and left the others standing in the road."), mark('road-taxed'),
               {type: 'word', person: 'dot', by: -1, when: stands('dot')},
-              {type: 'word', person: '{camp}', by: -1, when: stands('camp')},
+              {type: 'word', person: CAMP, by: -1, when: stands('camp')},
               {type: 'word', person: 'walkers', by: -1, when: stands('walkers')}],
             end: 'sold',
             tiedBack: {by: '{camp.leader}', when: stands('camp'),
-              lines: [say('{camp.leader}', "We waited in that road until the sun was right up, and then we paid him, one cart at a time. {camp.child} asked me why you'd driven off without us, and I said that you could answer that yourself.")]}},
+              lines: [say('{camp.leader}', "We waited in that road until the sun was right up, and then we paid him, one cart at a time. One of the little ones asked me why you'd driven off without us, and I said that you could answer that yourself.")]}},
           {id: 'stay', by: 'do', words: 'Stay where you are', thought: 'He only made me that offer because the line is holding.',
             lines: [
               say('you', "They came because I asked them, Sump. I'm staying where I am."),
@@ -314,10 +317,10 @@ export default {
             {id: 'no-wage', words: 'No toll and no wage. The road was free before you came.',
               thought: "He'll go somewhere, and he won't be in a good mood when he gets there.",
               lines: [say('sump', "Then you can have your free road, and all the holes in it. Don't come looking for me the day somebody worse than me finds this pass empty.")],
-              effects: [{type: 'site', id: 'sumps-gate', stage: 'empty'}, {type: 'feud', of: 'road-rats', by: 1}, mark('road-free'),
+              effects: [{type: 'site', id: GATE, stage: 'empty'}, {type: 'feud', of: 'road-rats', by: 1}, mark('road-free'),
                 mark('refused-together', "The Mall Road refused Sump's toll together, and it is free."),
                 {type: 'word', person: 'dot', by: 1, when: stands('dot')},
-                {type: 'word', person: '{camp}', by: 1, when: stands('camp')},
+                {type: 'word', person: CAMP, by: 1, when: stands('camp')},
                 {type: 'word', person: 'walkers', by: 1, when: stands('walkers')}],
               end: 'refused'},
             {id: 'wage', words: "One scrap a cart, and you keep the pass. That's a fair wage.",
@@ -328,7 +331,7 @@ export default {
                 say('dot', "So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with you. I shan't pretend that I like it.", {when: stands('dot')}),
               ],
               effects: [mark('sump-keeps-the-pass', 'Sump keeps the pass on the Mall Road for one scrap a cart.'), mark('road-taxed'),
-                {type: 'word', person: '{camp}', by: 1, when: stands('camp')},
+                {type: 'word', person: CAMP, by: 1, when: stands('camp')},
                 {type: 'word', person: 'walkers', by: 1, when: stands('walkers')}],
               end: 'kept'},
           ],
@@ -336,8 +339,8 @@ export default {
           kept: [
             {when: {all: [stands('dot'), strangers('dot')]}, effects: [{type: 'settle', id: `${ID}/guard-dot`}, {type: 'word', person: 'dot', by: 1},
               {type: 'met', person: 'dot', text: "You stayed beside Dot's van, as you said you would."}]},
-            {when: {all: [stands('camp'), {not: marked('camp-two-carts')}]}, effects: [{type: 'settle', id: `${ID}/guard-camp`}, {type: 'word', person: '{camp}', by: 1},
-              {type: 'met', person: '{camp}', text: "You stayed beside {camp.name}'s cart, as you said you would."}]},
+            {when: {all: [stands('camp'), {not: marked('camp-two-carts')}]}, effects: [{type: 'settle', id: `${ID}/guard-camp`}, {type: 'word', person: CAMP, by: 1},
+              {type: 'met', person: CAMP, text: "You stayed beside {camp.name}'s cart, as you said you would."}]},
           ]},
         broke: {
           lines: [

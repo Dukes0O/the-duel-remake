@@ -20,25 +20,26 @@ Section 21 has the promise begin "A toll on the Mall Road" by name, and no story
   mark beside it. The toll reads it in `starts` and in Sump's first lines, and settles a promise of the same id.
 - b. A new fact for promises (`{fact: 'promise', id: ...}`). Section 12 has none.
 
-## 3. What the data files needed that sections 12 and 18 do not give
+## 3. What the data files still write that `checkThread` does not look at
 
-I wrote each the plainest way I could and will bring all three files into `checkThread`'s shape when OPEN-SHARED lands.
+OPEN-SHARED answered most of what stood here on 25 November: roles are `'@camp.people'`, a feud effect takes `of`, the
+facts `scrap`, `favour` and `promise` exist, and the kinds and signs have ids. The files were mended to all of it.
+`checkThread` passes these keys by without reading them, so whoever builds the storyline rule decides each. My picks:
 
-| What was needed | How the files write it |
+| What is needed | How the files write it |
 | --- | --- |
-| A condition that asks about a role of the cast | `{fact: 'word', role: 'camp', atLeast: 'Friendly'}`; and `{cast: 'camp'}` for "this role was filled" |
-| An effect that happens only on a condition ("each people who stood") | `when:` on the effect |
+| An effect that happens only on a condition ("each people who stood") | `when:` on the effect. `applyEffects` does not read it, so the storyline rule must drop such an effect before applying |
 | The sentence a readable mark shows on What people remember | `text:` on the `mark` or `made` effect. A mark without one is kept out of sight |
-| Half the scrap in the car, taken after a lost fight | `{type: 'scrap', share: -.5}` |
-| A feud that moves for one group | `{type: 'feud', of: 'road-rats', by: 1}` |
-| A choice that needs scrap the player may not have | Nothing: I took it that the rule refuses a choice whose `scrap` effect would go below nothing |
+| Whether an optional role was filled | `{cast: 'camp'}`, beside the facts in `all`, `any` and `not` |
 | Lines only one people could say | `for: 'glasshouse'` on the line or the talk, and `for: 'any-other'` on the line with role names |
-| A role for "a people at odds with one of these roles" | `hostileWith: ['first', 'second', 'third']` on the role |
+| A role for "a camp at odds with one of these roles" | `hostileWith: ['first', 'second', 'third']` on the role |
 | A quarrel that is mended, so two peoples are no longer at odds | The mark `market-day/quarrel-mended`. My pick is that a site's `hostileTo` entry takes an `unless` condition that reads it |
-| Ids for the kinds and the signs | Kinds `feud`, `build`, `rival`. Signs `out-of-place` (a thing out of place) and `words` (a person's words) |
+| Half the scrap in the car, taken after a lost fight | `takesShareOfScrap: .5` on the mission's outcome, because a `scrap` effect takes a whole number |
+| Where a choice leads | `next:` and `end:` on the choice, as a beat has `next`. Section 18's example writes a `thread` effect there, and the two say the same thing |
 | A count of payments, and "two others have agreed" | Marks, and `any` over pairs of marks, because the vocabulary has no counter |
 
 ## 4. Names I had to choose
 
-The Bus Ring's leader had no name: she is **Gasket**, and the people's id is `bus-ring`. The role name for a camp's
-young one is `{camp.child}`. The water men's id is `water-men`. Each page's last section lists every new name.
+The Bus Ring's leader had no name: she is **Gasket**. Each page's last section lists every new name, and says whose
+people each person is, for the rows in `src/story/people.js` and `src/world/open/register.js`: the site `sumps-gate`,
+and the persons `nan-tallow`, `gasket`, `lug` and `miss-pell`.

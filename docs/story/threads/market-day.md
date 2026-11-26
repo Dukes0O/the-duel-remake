@@ -23,7 +23,7 @@ while another storyline of the kind "a thing to build" is open.
 **Its sign** is a person's words: a row in Dot's talk table, at the diner or beside her van at Tin Town's gate.
 
 **Its cast.** *The host* is Dot. *The first, second and third guests* are three peoples who are Friendly or better,
-filled from the player's own ledger. *The odd one* is a found people who are at odds with one of the three, by the
+filled from the player's own ledger. *The odd one* is a found camp whose people are at odds with one of the three, by the
 `hostileTo` of either. If nobody is at odds, no odd one is cast. The chapter below is written for the Glasshouse, the
 Walkers and Radio Hill as the guests and the Bus Ring as the odd one. The Glasshouse is hostile to the Bus Ring. What
 changes for other peoples follows it.
@@ -168,8 +168,9 @@ When asked to the market:
 | "Why do you mend the Road Rats' buggies?" | **Gasket:** Because a tinker in the hill country who turns work away doesn't eat that week. I mended the buggy that went through the bean woman's glass. I've been sorry about that job ever since, and I've never found a way to say so. | Gasket is sorry, and Marigold has never heard it |
 | "What do you need at a market?" | **Gasket:** We need an anvil and a fire, or all we can do is sell parts out of a box. Put us by your forge, if your smith will have us. | Where the tinkers must stand to do their whole trade |
 
-**The ledger after the asking.** A mark for each people who agreed: "The Glasshouse will come to the market." The
-promise to Marigold, if it was made. Radio Hill: "Hetty will come to the market." or "Bern will come to the market."
+**The ledger after the asking.** A mark for each guest who agreed, named for its role: "The Glasshouse will come to
+the market.", "The Walkers will come to the market." and "Radio Hill will come to the market." The promise to
+Marigold, if it was made. Radio Hill: "Hetty will come to the market." or "Bern will come to the market."
 The Bus Ring: "The tinkers of the Bus Ring were asked to the market." If the Bus Ring was found and never asked, no
 mark is written until the day, when being left out is written.
 
@@ -500,9 +501,9 @@ has, in hand.
 
 | Name | What it is |
 | --- | --- |
-| **Gasket** | A person: she leads the tinkers of the Bus Ring. Her id is `gasket` |
-| **Lug** | A person: a rider of the Road Rats who wants a fan belt. His id is `lug` |
-| **The Bus Ring's tinkers** | A people, already named in section 16. This page uses the id `bus-ring` for them |
+| **Gasket** | A person, of the Bus Ring, and its leader: the register has no leader for the Bus Ring yet. Her id is `gasket` |
+| **Lug** | A person, of the Road Rats: a rider who wants a fan belt. His id is `lug` |
+| **The Bus Ring's tinkers** | A people and a site, in the register already as `bus-ring` |
 | **The five pitches** | Spots in Tin Town's yard: `beside-the-gate`, `the-pump`, `the-sunny-wall`, `the-forge-wall`, `bess-shed` |
 | **Market prices** | A quarter off every service in the yard for the day |
 | `market-day/asked`, `market-day/comes-first`, `market-day/comes-second`, `market-day/comes-third`, `market-day/odd-asked`, `market-day/hetty-came`, `market-day/bern-came` | Marks of the asking. A guest's mark is named for its role, so that the same three marks serve any three peoples |

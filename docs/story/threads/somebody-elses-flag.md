@@ -24,7 +24,7 @@ player claims no well here, builds no fence and raises no tower.
 The director draws for it each night at a chance of forty in a hundred. It does not begin while another storyline of
 the kind "a rival" is open.
 
-**Its sign** is a thing out of place, seen far off: a thin drill tower with a white flag, where the player knows
+**Its sign** is a thing out of place, seen far off (the register's kind `thing`): a thin drill tower with a white flag, where the player knows
 there was nothing. By day it is seen from two and a half kilometres. At night it carries two work lamps. Once it has
 been seen, the big map shows the site as "The Sweet Seep (somebody is drilling here)".
 
@@ -419,9 +419,10 @@ view. `open.flag.drill`: the drill's thump, close. `open.flag.card`: a stiff car
 
 | Name | What it is |
 | --- | --- |
-| **Miss Pell** | A person: the water men's surveyor. Her id is `miss-pell` |
+| **Miss Pell** | A person, of the water men: their surveyor. Her id is `miss-pell` |
+| **A traveller**, **the trader**, **a printed card** | Speakers with no names of their own: a traveller at the rope, any trader, and a card pinned to Tin Town's board. The ids are `traveller`, `trader` and `printed-card` |
 | **The Office** | What Mrs Vane's water men call whoever they work for. No person of that name is ever seen |
-| **The water company** | What the water men call themselves, and what everybody in this storyline calls them. The group is Mrs Vane's water men, and this page uses the id `water-men` for it |
+| **The water company** | What the water men call themselves, and what everybody in this storyline calls them. The group is Mrs Vane's water men, in the register as `water-men` |
 | **A Prior Use Schedule** | The Office's form for people who drew water at a site before it was drilled |
 | **The finder's fee** | Ten scrap, paid by the Office to whoever found a site first |
 | **Site 14** | The Office's number for the well in this storyline. Every site has one |

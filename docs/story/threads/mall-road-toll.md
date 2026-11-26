@@ -21,7 +21,7 @@ people who use the road and get them to refuse him on the same morning.
 it each night at a chance of thirty-five in a hundred. If the player has promised Sump that Tin Town will pay his toll,
 it begins on the next night with no draw. It does not begin while another storyline of the kind "a feud" is open.
 
-**Its sign** is a thing out of place, come across on a drive: a row of wrecks across the Mall Road, with one gap and a
+**Its sign** is wreckage, come across on a drive (the register's kind `wreckage`): a row of wrecks across the Mall Road, with one gap and a
 pole across the gap. It is seen from 600 metres on either side of the pass. The gate stands for six banked nights after
 the player first sees it. If the player has neither broken it nor refused it by then, it becomes part of the land.
 
@@ -439,8 +439,8 @@ driver pays.
 
 **Tied back, after driving through alone,** by whoever stood, at the player's next visit.
 
-> **Marigold:** We waited in that road until the sun was right up, and then we paid him, one cart at a time. Finch
-> asked me why you'd driven off without us, and I said that you could answer that yourself.
+> **Marigold:** We waited in that road until the sun was right up, and then we paid him, one cart at a time. One of
+> the little ones asked me why you'd driven off without us, and I said that you could answer that yourself.
 
 ## How you can lose
 
@@ -521,8 +521,9 @@ find at the buggy is `open.clue.found`, in hand.
 
 | Name | What it is |
 | --- | --- |
-| **Sump's Gate** | A site of the kind "den": the Road Rats' toll gate in the pass on the Mall Road, 600 metres north of the Dead Mall. Its id is `sumps-gate` |
-| **Nan Tallow** | A person: a carter who sells candles and lamp fat from a three-wheeled van. Her id is `nan-tallow` |
+| **Sump's Gate** | A site of the kind `den`, whose people are the Road Rats: the toll gate in the pass on the Mall Road, 600 metres north of the Dead Mall. Its id is `sumps-gate`, it stands at one place (`{road: 'mall-road', share: .855}`), and it is found within 160 metres. Until its row is in the register, `checkThread` names it three times |
+| **Nan Tallow** | A person, of the traders: a carter who sells candles and lamp fat from a three-wheeled van. Her id is `nan-tallow` |
+| **Sump's rider** | A speaker with no name of his own: whichever Road Rat is sent to collect. The id is `sumps-rider` |
 | **The sorry bucket** | Thirty scrap and an apology, which is Sump's price for opening a road he has closed |
 | **The wage** | One scrap a cart, paid to the Road Rats for keeping the pass |
 | `road-rats/toll-promised` | A mark this storyline reads and never writes: the player promised Sump that Tin Town would pay |

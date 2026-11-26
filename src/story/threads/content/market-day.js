@@ -1,14 +1,13 @@
 // Market day: a storyline of the open Scablands, written as data (docs/story/open-scablands.md, section 18).
 // The page that explains every scene is docs/story/threads/market-day.md. Every line a player reads is here exactly as
 // the page has it. Lines that only one people could say are written for that people and chosen by `for`; a guest with
-// no lines of its own answers with the line whose speaker is {guest.leader}.
+// no lines of its own answers with the line whose speaker is that role's leader: {first.leader}, {second.leader} or
+// {third.leader}. In a condition or an effect the odd one's people are '@odd.people' (src/world/open/roles.js).
 // Nothing loads this file yet. It names no other storyline: it meets the others only through facts.
 
 const ID = 'market-day';
 // A mark with a sentence is one the player can read on the page What people remember. A mark without one is kept out of sight.
 const mark = (what, text) => ({type: 'mark', id: `${ID}/${what}`, ...(text ? {text} : {})});
-// A guest's mark is named for its role (first, second or third), so that the same three marks serve any three peoples.
-const COMES = mark('comes-{guest.role}', '{guest.name} will come to the market.');
 const marked = what => ({fact: 'mark', id: `${ID}/${what}`});
 const say = (speaker, words, more = {}) => ({speaker, words, ...more});
 
@@ -24,20 +23,85 @@ const PROMISE_BROKEN = {all: [marked('told-no-tinkers'), marked('odd-asked')]};
 
 const ASK = 'Will you come to a market at Tin Town?';
 
+// What each guest says when asked. A guest is one of three roles, and any people may fill any of them, so the same
+// talks are written once and made for each role. `for` chooses the talk by the people who fill the role.
+const guestTalks = role => {
+  // A guest's mark is named for its role, so that the same three marks serve any three peoples.
+  const comes_ = mark(`comes-${role}`, `{${role}.name} will come to the market.`);
+  return [
+    {id: `ask-glasshouse-${role}`, role, for: 'glasshouse', to: 'marigold', words: ASK,
+      lines: [
+        say('marigold', "Did you say a market? I haven't sold beans across a table since Finch's mother was small. We'll bring beans, and seedlings under glass for anybody who wants to grow their own."),
+        say('marigold', 'Give us a wall that gets the sun, because seedlings sulk in the shade, and so do I. Tell me one thing first, though. Are the tinkers from the Bus Ring coming?', {when: {cast: 'odd'}}),
+      ],
+      questions: [
+        {id: `what-tinkers-did-${role}`, words: 'What did the tinkers do to you?', needs: {cast: 'odd'}, effects: [mark('heard-marigold')],
+          lines: [say('marigold', 'Two winters ago a Road Rat drove a buggy straight through my frames. The tinkers had mended that buggy the week before, and they knew whose it was. They told me afterwards that a job was a job.')]},
+      ],
+      choices: [
+        {id: `no-tinkers-${role}`, words: "No. I won't ask the tinkers.", needs: {cast: 'odd'},
+          thought: "That's easy to say today. I haven't been to the Bus Ring yet.",
+          effects: [comes_, mark('told-no-tinkers'), {type: 'promise', id: `${ID}/no-tinkers`, person: 'glasshouse', dueNights: 5,
+            text: 'You told Marigold that the tinkers would not be at the market.'}],
+          lines: [say('marigold', "That's good to hear. We'll be there at first light, and I'll bring the big basket.")]},
+        {id: `tinkers-come-${role}`, words: 'Yes. I mean to ask them, because a market is for everybody.', needs: {cast: 'odd'},
+          thought: 'She might not come at all if I say this.',
+          effects: [comes_, mark('told-tinkers-come')],
+          lines: [say('marigold', "Then put the whole yard between us and them, and I'll come for Dot's sake. I shan't promise you that I'll be civil.")]},
+        {id: `not-decided-${role}`, words: "I haven't decided yet.", needs: {cast: 'odd'},
+          effects: [comes_],
+          lines: [say('marigold', "Then make up your mind before I've loaded the cart. I don't like surprises, and neither do beans.")]},
+      ]},
+    {id: `ask-walkers-${role}`, role, for: 'walkers', to: 'rell', words: ASK,
+      lines: [
+        say('rell', "We'll come. We have salt to sell, and my people will fetch and carry for anybody who is short of hands. Put us near the gate, will you? Walkers don't rest easy with a fence between them and the road."),
+        say('wim', "Will there be pies? I've only ever had half of one."),
+      ],
+      questions: [
+        {id: `who-minds-${role}`, words: 'Do you mind who stands next to you?', needs: {all: [{cast: 'odd'}, {fact: 'found', site: 'bus-ring'}]},
+          lines: [say('rell', "I don't mind anybody who minds their own cart. I'll tell you who does mind, though. The bean woman won't stand near the tinkers, and everybody on the road knows it except the tinkers.")]},
+      ],
+      effects: [comes_]},
+    {id: `ask-radio-hill-${role}`, role, for: 'radio-hill', to: 'hetty', words: ASK,
+      lines: [
+        say('hetty', "There's going to be a market! Bern, did you hear that? I've been listening to other people's lives for eleven years, and now I can go and look at some of them."),
+        say('bern', "We can't both go. Somebody has to stay with the set, or nobody is listening to the roads for a whole day. You'll have to choose which of us you want."),
+      ],
+      thoughts: ['Hetty hears everything, and she repeats most of it. Bern mends everything, and she hardly says a word.'],
+      choices: [
+        {id: `hetty-comes-${role}`, words: 'Come yourself, Hetty, and bring the news.',
+          thought: "A stall wants somebody who talks. I only hope she doesn't tell everybody everything.",
+          effects: [comes_, mark('hetty-came', 'Hetty will come to the market.')],
+          lines: [say('hetty', "I'll wear the good scarf. Bern, you'll write down everything you hear while I'm away, won't you? I want every word of it.")]},
+        {id: `bern-comes-${role}`, words: 'Come yourself, Bern, and bring your tools.',
+          thought: "Bern won't start any trouble. I'm not sure she'll start any talk, either.",
+          effects: [comes_, mark('bern-came', 'Bern will come to the market.')],
+          lines: [say('bern', "I'll bring the small soldering iron. Hetty, stop looking at me like that. You can go to the next one.")]},
+      ]},
+    {id: `ask-deck-folk-${role}`, role, for: 'deck-folk', to: 'captain-imre', words: ASK,
+      lines: [say('captain-imre', "The Deck Folk will send a shore party of four, with rope and salt. I'll enter it in the log as shore leave, which nobody on these ships has had in thirty years.")],
+      effects: [comes_]},
+    // Any other guest.
+    {id: `ask-guest-${role}`, role, for: 'any-other', to: `{${role}.leader}`, words: ASK,
+      lines: [say(`{${role}.leader}`, "You're holding a market at Tin Town? Nobody has asked us anywhere in a long time. We'll come, and we'll bring what we have to sell.")],
+      effects: [comes_]},
+  ];
+};
+
 export default {
   id: ID,
   title: 'Market day',
   kind: 'build',
-  reads: ['word', 'found', 'feud', 'night', 'mark', 'thread'],
+  reads: ['word', 'found', 'stage', 'feud', 'night', 'mark'],
   writes: ['word', 'made', 'promise', 'settle', 'favour', 'mark'],
 
   cast: {
-    host: {person: 'dot'},
-    first: {from: 'peoples', where: FRIENDLY},
-    second: {from: 'peoples', where: FRIENDLY, not: ['first']},
-    third: {from: 'peoples', where: FRIENDLY, not: ['first', 'second']},
-    // A found people who are at odds with one of the three, by the hostileTo of either. Nobody, when no people is.
-    odd: {from: 'peoples', where: {fact: 'found'}, hostileWith: ['first', 'second', 'third'], optional: true},
+    // The host is Dot, who is named and is not a role. Tin Town is nobody's guest at its own market.
+    first: {from: 'peoples', where: FRIENDLY, except: ['tin-town']},
+    second: {from: 'peoples', where: FRIENDLY, except: ['tin-town'], not: ['first']},
+    third: {from: 'peoples', where: FRIENDLY, except: ['tin-town'], not: ['first', 'second']},
+    // A found camp whose people are at odds with one of the three, by the hostileTo of either. Nobody, when no camp is.
+    odd: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'stage', is: 'camp'}]}, hostileWith: ['first', 'second', 'third'], optional: true},
   },
 
   starts: {all: [
@@ -46,7 +110,7 @@ export default {
     {not: {fact: 'thread', id: ID, at: 'any'}},
   ]},
 
-  sign: {kind: 'words', person: 'dot', at: ['diner', 'tin-town-gate']},
+  sign: {kind: 'words', person: 'dot'},
 
   beats: {
     sign: {
@@ -78,7 +142,7 @@ export default {
 
     // Auntie Solder gives the yard and its rules, at the hearth, the same day or any day after.
     hearth: {
-      when: {all: [marked('asked'), {reach: 'hearth'}]},
+      when: {all: [marked('asked'), {reach: 'tin-town'}]}, at: 'the hearth',
       lines: [
         say('auntie-solder', 'You want to hold a market inside my fence? I suppose the pie woman put you up to it. I have two rules. Everybody leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.'),
         say('auntie-solder', "There's room for five pitches round the yard, besides Dot's van at the gate. Who stands next to whom is your business, and I'd thank you to get it right."),
@@ -91,62 +155,7 @@ export default {
       holds: [],
       thoughts: ['Everybody I ask is going to want to know who else is coming.'],
       talks: [
-        {id: 'ask-glasshouse', for: 'glasshouse', to: 'marigold', words: ASK,
-          lines: [
-            say('marigold', "Did you say a market? I haven't sold beans across a table since Finch's mother was small. We'll bring beans, and seedlings under glass for anybody who wants to grow their own."),
-            say('marigold', 'Give us a wall that gets the sun, because seedlings sulk in the shade, and so do I. Tell me one thing first, though. Are the tinkers from the Bus Ring coming?', {when: {cast: 'odd'}}),
-          ],
-          questions: [
-            {id: 'what-tinkers-did', words: 'What did the tinkers do to you?', needs: {cast: 'odd'}, effects: [mark('heard-marigold')],
-              lines: [say('marigold', 'Two winters ago a Road Rat drove a buggy straight through my frames. The tinkers had mended that buggy the week before, and they knew whose it was. They told me afterwards that a job was a job.')]},
-          ],
-          choices: [
-            {id: 'no-tinkers', words: "No. I won't ask the tinkers.", needs: {cast: 'odd'},
-              thought: "That's easy to say today. I haven't been to the Bus Ring yet.",
-              effects: [COMES, mark('told-no-tinkers'), {type: 'promise', id: `${ID}/no-tinkers`, person: 'glasshouse',
-                text: 'You told Marigold that the tinkers would not be at the market.'}],
-              lines: [say('marigold', "That's good to hear. We'll be there at first light, and I'll bring the big basket.")]},
-            {id: 'tinkers-come', words: 'Yes. I mean to ask them, because a market is for everybody.', needs: {cast: 'odd'},
-              thought: 'She might not come at all if I say this.',
-              effects: [COMES, mark('told-tinkers-come')],
-              lines: [say('marigold', "Then put the whole yard between us and them, and I'll come for Dot's sake. I shan't promise you that I'll be civil.")]},
-            {id: 'not-decided', words: "I haven't decided yet.", needs: {cast: 'odd'},
-              effects: [COMES],
-              lines: [say('marigold', "Then make up your mind before I've loaded the cart. I don't like surprises, and neither do beans.")]},
-          ]},
-        {id: 'ask-walkers', for: 'walkers', to: 'rell', words: ASK,
-          lines: [
-            say('rell', "We'll come. We have salt to sell, and my people will fetch and carry for anybody who is short of hands. Put us near the gate, will you? Walkers don't rest easy with a fence between them and the road."),
-            say('wim', "Will there be pies? I've only ever had half of one."),
-          ],
-          questions: [
-            {id: 'who-minds', words: 'Do you mind who stands next to you?', needs: {all: [{cast: 'odd'}, {fact: 'found', site: 'bus-ring'}]},
-              lines: [say('rell', "I don't mind anybody who minds their own cart. I'll tell you who does mind, though. The bean woman won't stand near the tinkers, and everybody on the road knows it except the tinkers.")]},
-          ],
-          effects: [COMES]},
-        {id: 'ask-radio-hill', for: 'radio-hill', to: 'hetty', words: ASK,
-          lines: [
-            say('hetty', "There's going to be a market! Bern, did you hear that? I've been listening to other people's lives for eleven years, and now I can go and look at some of them."),
-            say('bern', "We can't both go. Somebody has to stay with the set, or nobody is listening to the roads for a whole day. You'll have to choose which of us you want."),
-          ],
-          thoughts: ['Hetty hears everything, and she repeats most of it. Bern mends everything, and she hardly says a word.'],
-          choices: [
-            {id: 'hetty-comes', words: 'Come yourself, Hetty, and bring the news.',
-              thought: "A stall wants somebody who talks. I only hope she doesn't tell everybody everything.",
-              effects: [COMES, mark('hetty-came', 'Hetty will come to the market.')],
-              lines: [say('hetty', "I'll wear the good scarf. Bern, you'll write down everything you hear while I'm away, won't you? I want every word of it.")]},
-            {id: 'bern-comes', words: 'Come yourself, Bern, and bring your tools.',
-              thought: "Bern won't start any trouble. I'm not sure she'll start any talk, either.",
-              effects: [COMES, mark('bern-came', 'Bern will come to the market.')],
-              lines: [say('bern', "I'll bring the small soldering iron. Hetty, stop looking at me like that. You can go to the next one.")]},
-          ]},
-        {id: 'ask-deck-folk', for: 'deck-folk', to: 'captain-imre', words: ASK,
-          lines: [say('captain-imre', "The Deck Folk will send a shore party of four, with rope and salt. I'll enter it in the log as shore leave, which nobody on these ships has had in thirty years.")],
-          effects: [COMES]},
-        // Any other guest.
-        {id: 'ask-guest', for: 'any-other', to: '{guest.leader}', words: ASK,
-          lines: [say('{guest.leader}', "You're holding a market at Tin Town? Nobody has asked us anywhere in a long time. We'll come, and we'll bring what we have to sell.")],
-          effects: [COMES]},
+        ...guestTalks('first'), ...guestTalks('second'), ...guestTalks('third'),
         // The odd one, written for the Bus Ring. Whether to ask is decided by driving there or by not driving there.
         {id: 'ask-bus-ring', for: 'bus-ring', role: 'odd', to: 'gasket', words: ASK,
           thought: "If I ask the tinkers, Marigold will be angry. If I don't ask them, they'll hear about the market anyway.",
@@ -168,7 +177,7 @@ export default {
 
     // The stakes, at dusk, in Tin Town's yard. The choice is made by carrying a stake to a pitch.
     stakes: {
-      when: {reach: 'tin-town-yard'},
+      when: {reach: 'tin-town'}, at: 'the yard',
       pitches: ['beside-the-gate', 'the-pump', 'the-sunny-wall', 'the-forge-wall', 'bess-shed'],
       cue: 'open.market.stake',
       lines: [say('auntie-solder', "Here are your stakes. Knock one in at each pitch, and that's where those people stand tomorrow. The sunny wall is right next to the forge wall, and I can't move either of them for you.")],
@@ -314,7 +323,7 @@ export default {
       effects: [{type: 'made', id: `${ID}/market`, text: 'A market has been held at Tin Town.'}, {type: 'settle', id: `${ID}/hold-market`}, {type: 'word', person: 'dot', by: 1}],
       // A found people who are at odds with a guest, and who were never asked, hear of it.
       leftOut: {when: {all: [{cast: 'odd'}, {not: marked('odd-asked')}]},
-        effects: [mark('left-out', 'The tinkers of the Bus Ring were left out of the market.'), {type: 'word', person: '{odd}', by: -1}],
+        effects: [mark('left-out', 'The tinkers of the Bus Ring were left out of the market.'), {type: 'word', person: '@odd.people', by: -1}],
         tiedBack: {by: 'gasket', for: 'bus-ring',
           lines: [say('gasket', "We heard there was a market at Tin Town. Everybody in the land was asked to it, except the people who mend their axles. I shan't forget that, and I shan't pretend to.")]}},
       ends: [
