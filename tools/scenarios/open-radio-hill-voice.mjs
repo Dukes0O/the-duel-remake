@@ -1,9 +1,12 @@
-// Laptop only. One drive up the Radio Hill ramp with a memory-only player.
+// Laptop only. Follow the red lamp, climb, and ask Parrot to read the news.
+import {bankHearth} from '../../src/story/ledger.js';
 import {newWorld} from '../../src/world/open/open-record.js';
 import {applyEffects} from '../../src/world/open/open-effects.js';
 import {sitePosition} from '../../src/world/open/site-rule.js';
-import {radioRamp, RADIO_ID} from '../../src/world/open/content/radio-hill-voice-places.js';
+import {radioPlace, radioRamp, RADIO_ID} from '../../src/world/open/content/radio-hill-voice-places.js';
+import {scablandsSurfaceHeightAt} from '../../src/world/scablands-ground.js';
 import {LAND} from '../../src/world/scablands-names.js';
+import {pageFunctions as camp} from './open-burned-camp.mjs';
 import {pageFunctions as scout} from './open-burned-scout.mjs';
 import voice from '../../src/story/threads/content/radio-hill-voice.js';
 
@@ -24,10 +27,17 @@ export const pageFunctions = {
   placeCar: scout.placeCar,
   advance: scout.advance,
   drive: scout.drive,
+  walkAt: camp.walkAt,
   loadNight: world => {
     const job = window.__qaApp.duel.state.arena.worldJob;
     job.open.world = world;
     job.definition.open.partOfDay = 'dark';
+  },
+  ledger: () => window.__qaApp.duel.state.arena.worldJob.open.world.ledger,
+  nextVisit: ledger => {
+    const job = window.__qaApp.duel.state.arena.worldJob;
+    job.open.world = {...job.open.world, ledger};
+    job.definition.open.partOfDay = 'day';
   },
   use: () => {
     const {duel} = window.__qaApp;
@@ -45,6 +55,12 @@ export const pageFunctions = {
     return open.world.open.threads['radio-hill-voice'].beat === beat &&
       (!mark || open.world.ledger.marks.includes('radio-hill-voice/' + mark));
   },
+  peace: () => {
+    const {world} = window.__qaApp.duel.state.arena.worldJob.open;
+    return world.open.threads['radio-hill-voice'].end === 'two-voices' &&
+      world.ledger.marks.includes('radio-hill-voice/two-voices') &&
+      world.ledger.words['radio-hill'] === 'Sworn' && world.ledger.roadWord === 1;
+  },
   climbed: () => {
     const {open} = window.__qaApp.duel.state.arena.worldJob;
     return open.world.open.threads['radio-hill-voice'].beat === 'other-voice' &&
@@ -59,7 +75,9 @@ export function pageSource(name, ...args) {
 }
 
 export async function run(context) {
-  const route = radioRamp(sitePosition('radio-hill', seed)).map(row => row.point);
+  const hill = sitePosition('radio-hill', seed);
+  const route = radioRamp(hill).map(row => row.point);
+  const hut = radioPlace(['radio-hill', 'hut'], hill);
   const evaluate = (name, ...args) => context.evaluate(pageSource(name, ...args));
   const wait = (name, ...args) => context.waitFor(pageSource(name, ...args), name, 120000);
   await context.navigate('/tools/menu-check.html?flags=story-choices,crew-gear&seed=' + seed + '&harness=open-radio-hill-voice');
@@ -92,4 +110,23 @@ export async function run(context) {
   await evaluate('advance', .3);
   await wait('climbed');
   await context.screenshot('radio-hill-climb');
+
+  // Supply the banked ledger for the next visit until the shared hearth action lands.
+  const next = bankHearth(await evaluate('ledger')).ledger;
+  await evaluate('nextVisit', next);
+  await evaluate('walkAt', {...hut, y: scablandsSurfaceHeightAt(hut.x, hut.z)});
+  await wait('atBeat', 'other-voice', 'entered/other-voice');
+  await evaluate('use');
+  const microphone = voice.beats['other-voice'].choices.find(row => row.id === 'the-microphone').words;
+  await wait('choiceReady', microphone);
+  await evaluate('choose', microphone);
+  await evaluate('advance', .25);
+  await wait('atBeat', 'on-the-air', 'entered/on-the-air');
+  await evaluate('use');
+  const eveningNews = voice.beats['on-the-air'].choices.find(row => row.id === 'read-the-news').words;
+  await wait('choiceReady', eveningNews);
+  await evaluate('choose', eveningNews);
+  await evaluate('advance', .25);
+  await wait('peace');
+  await context.screenshot('radio-hill-two-voices');
 }
