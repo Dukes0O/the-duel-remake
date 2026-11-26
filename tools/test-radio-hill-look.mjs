@@ -170,6 +170,19 @@ assert.ok(built['second-set'].userData.lines > built.camp.userData.lines, 'and t
   assert.ok(day.userData.lights[0].visible && day.userData.levels.x > 1, 'the camp built by day can be lit at night');
   updateRadioHill(day, .4, {night: false});
   updateRadioHill(null, 1);
+  // From far off (OPEN-LOOK-RADIO-HILL-2): the red lamp keeps a least size on the screen; the mast's outline runs its whole height
+  // in strokes and Hetty's rag flies near its top, both seen only from far off; the rag darkens at night.
+  {
+    const points = day.userData.glow.geometry.attributes, shape = points.aShape.array, least = points.aLeast.array, near = points.aNear.array, y = index => points.position.getY(index);
+    const strokes = [...shape.keys()].filter(index => shape[index] === 1), rag = [...shape.keys()].find(index => shape[index] === 2);
+    const lamp = shape.length - 1;
+    assert.ok(least[lamp] >= 16 && points.aWhich.array[lamp] === 0 && shape[lamp] === 0, 'the red lamp, drawn last, is never smaller than 16 pixels across');
+    assert.ok(strokes.length >= 9 && Math.min(...strokes.map(y)) < 2 && Math.max(...strokes.map(y)) > L.mast.height - 2.5, 'the outline runs from the foot to the head');
+    assert.ok(rag !== undefined && y(rag) > L.mast.height - 2 && y(rag) < L.mast.height, 'the rag flies under the head');
+    assert.ok([...strokes, rag].every(index => near[index] >= 200 && least[index] >= 3), 'they are drawn only from far off, never smaller than a few pixels');
+    assert.equal(day.userData.daylight.value, 1, 'by day they keep their colour');
+    assert.ok(night.userData.daylight.value < .5, 'at night the rag darkens');
+  }
   for (const group of Object.values(built)) group.userData.dispose();
 }
 
@@ -195,9 +208,10 @@ assert.ok(built['second-set'].userData.lines > built.camp.userData.lines, 'and t
   assert.deepEqual(SITE, {x: first.x, z: first.z}, 'the scenario stands the camp at the first position of OPEN-SITES');
   assert.deepEqual({x: placed.x, z: placed.z}, SITE, 'which is where the look stand puts it, for the land\'s seed 0');
   const all = views();
-  assert.deepEqual(Object.keys(all), ['far', 'edge', 'door', 'yard', 'mast', 'night', 'night-far', 'hut']);
+  assert.deepEqual(Object.keys(all), ['far', 'far-day', 'edge', 'door', 'yard', 'mast', 'night', 'night-far', 'night-door', 'hut']);
+  assert.ok(!all['far-day'].dusk && all['far-day'].eye === all.far.eye, 'the far view is taken by day too, from the same place');
   const named = PICTURES.filter(picture => !picture.extra).map(picture => picture.name);
-  assert.deepEqual(named, ['camp-edge', 'camp-door', 'camp-yard', 'second-set-edge', 'second-set-door', 'camp-far', 'camp-night'], 'the pictures the card lists, by name');
+  assert.deepEqual(named, ['camp-edge', 'camp-door', 'camp-yard', 'camp-far-day', 'second-set-edge', 'second-set-door', 'camp-far', 'camp-night'], 'the pictures the cards list, by name');
   assert.ok(PICTURES.every(picture => all[picture.view] && ['camp', 'second-set', 'dusk', 'night'].includes(picture.stand)));
   // The far view: on the nearest road, as near the distance the tell is read from as the open road allows, at dusk and car height,
   // where the top of the mast can be seen.
@@ -206,7 +220,7 @@ assert.ok(built['second-set'].userData.lines > built.camp.userData.lines, 'and t
   assert.ok(Math.abs(all.far.eye.y - scablandsSurfaceHeightAt(road.x, road.z) - 1.2) < 1e-9, 'at car height above the road');
   assert.ok(sees(road, SITE, {heightAt: scablandsSurfaceHeightAt, eye: 1.2, target: L.mast.height, step: 2}), 'and the top of the mast can be seen from it');
   assert.ok(Math.abs(all.edge.eye.x - SITE.x - L.spots['car-stop'].x) < 1e-9 && Math.abs(all.edge.eye.z - SITE.z - L.spots['car-stop'].z) < 1e-9 && all.edge.eye.up === 1.6, 'edge is from car-stop at eye height');
-  for (const name of ['door', 'yard', 'mast']) {
+  for (const name of ['door', 'yard', 'mast', 'night-door']) {
     for (const stage of RADIO_HILL_STAGES) for (const solid of radioHillSolids(stage)) assert.ok(clearance(solid, all[name].eye.x - SITE.x, all[name].eye.z - SITE.z) > .3, `${name} is not taken from inside ${solid.id}`);
     assert.ok(Math.hypot(all[name].eye.x - SITE.x, all[name].eye.z - SITE.z) < L.radius, `${name} is on foot inside the camp`);
   }
