@@ -36,6 +36,12 @@ export const STORY_PEOPLE = Object.freeze({
   gasket: 'Gasket',
   lug: 'Lug',
   'miss-pell': 'Miss Pell',
+  parrot: 'Parrot',
+  fathom: 'Fathom',
+  sprat: 'Sprat',
+  kedge: 'Kedge',
+  wick: 'Wick',
+  slack: 'Slack',   // his own name is Nat, which he gives if he is asked (docs/story/threads/runaway.md)
 });
 
 export const FEUD_WORDS = Object.freeze(['Watching', 'Raiding', 'Hunting', 'War party']);

@@ -1540,17 +1540,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-WRITE-1.md"
 
-  - id: OPEN-WRITE-2
-    title: "Open Scablands, written in full: The voice on Radio Hill, Lights on the Whites, The runaway"
-    owner: "claude-cloud"
-    lane: "DESIGN"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-WRITE-2.md"
-
   - id: OPEN-LOOK-GLASSHOUSE
     title: "Open Scablands: the Glasshouse drawn in code, whole and burned (round 1)"
     owner: "claude-cloud"

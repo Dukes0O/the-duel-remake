@@ -25,11 +25,12 @@ export const NAMES = Object.freeze([
   people('bus-ring', {leader: 'gasket', thing: 'their tools'}),
   person('gasket', 'bus-ring'),
   people('deck-folk', {leader: 'captain-imre'}),
-  person('captain-imre', 'deck-folk'),
+  person('captain-imre', 'deck-folk'), person('fathom', 'deck-folk'), person('sprat', 'deck-folk'),
+  person('kedge', 'deck-folk'), person('wick', 'deck-folk'),
   people('ash-men', {group: true, feud: true, leader: 'old-smoke'}),
-  person('old-smoke', 'ash-men'), person('clinker', 'ash-men'),
+  person('old-smoke', 'ash-men'), person('clinker', 'ash-men'), person('slack', 'ash-men'),
   people('road-rats', {group: true, feud: true, leader: 'sump'}),
-  person('sump', 'road-rats'), person('lug', 'road-rats'),
+  person('sump', 'road-rats'), person('lug', 'road-rats'), person('parrot', 'road-rats'),
   people('water-men', {group: true, feud: true, leader: 'mrs-vane'}),
   person('mrs-vane', 'water-men'), person('miss-pell', 'water-men'),
   people('traders', {group: true}),
@@ -65,6 +66,8 @@ export const SITES = Object.freeze([
   site('grey-camp', 'The Grey Camp', 'den', 'ash-men'),
   // Sites that the storylines written in full bring in.
   site('sumps-gate', "Sump's Gate", 'den', 'road-rats'),
+  site('the-pocket', 'The Pocket', 'den', 'road-rats'),
+  site('bell-buoy', 'The Bell Buoy', 'lookout'),
 ]);
 const siteById = new Map(SITES.map(row => [row.id, row]));
 
