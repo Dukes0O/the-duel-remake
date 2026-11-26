@@ -1707,17 +1707,21 @@ function syncOpenPeople(worldJob) {
   if (moved) worldJob.solidGrid.setStoryPeople(people);
 }
 
-function beginOpenTalk(duel, worldJob, {id, person, scene, asked}) {
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false}) {
   const {job} = worldJob;
   const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
   const steps = job.steps.slice();
-  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person});
+  // A talk on the radio (OPEN-THREADS: the questions home from a burned camp) has a speaker who is not standing here:
+  // it is not ended by walking away, and nobody turns to face the player.
+  const standing = worldJob.storyPeople?.find(item => item.id === person);
+  const onRadio = radio === true || !standing;
+  steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio});
   worldJob.openRoamStepState = job.stepState;
   worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
-  worldJob.storySpeaker = person;
+  worldJob.storySpeaker = onRadio ? null : person;
   duel.emit({talkOpened: true});
-  duel.emit({arenaTell: {id: 'open-talk', targetId: 'player', seconds: 0, cue: OPEN_TALK_HAIL,
-    position: worldJob.storyPeople.find(item => item.id === person).position}});
+  if (!onRadio) duel.emit({arenaTell: {id: 'open-talk', targetId: 'player', seconds: 0, cue: OPEN_TALK_HAIL,
+    position: standing.position}});
 }
 
 function closeOpenTalk(duel, worldJob, step, waiting, finished = false) {
@@ -1742,7 +1746,7 @@ export function stepWorldJob(duel, dt) {
   if (talkStep?.kind === 'talk') {
     // OPEN-ROAM: external movement or leaving the driver's seat of the talk
     // closes this temporary step without routing a story choice.
-    if (talkStep.openPerson) {
+    if (talkStep.openPerson && !talkStep.openRadio) {
       const person = worldJob.storyPeople.find(item => item.id === talkStep.openPerson);
       if (!state.onFoot || distanceToPerson(person, state.fighter) > TALK_RANGE) {
         worldJob.talkAction = null;

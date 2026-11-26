@@ -1384,18 +1384,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-STATE.md"
 
-  - id: OPEN-THREADS
-    title: "Open Scablands: storylines as data, and the burned camp as far as the choice at the camp"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-THREADS.md"
-
   - id: OPEN-BURNED-SCOUT
     title: "Open Scablands: the burned camp, the scouting of the Rats' Nest"
     owner: "codex"
@@ -1403,7 +1391,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "backlog"
-    needs: [OPEN-THREADS, OPEN-NEST-GROUND]
+    needs: [OPEN-NEST-GROUND]
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-SCOUT.md"

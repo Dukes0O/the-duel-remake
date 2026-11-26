@@ -1,6 +1,6 @@
-// The nine written storylines are in the one shape of docs/story/open-scablands.md section 18, "The one shape of a
+// The written storylines are in the one shape of docs/story/open-scablands.md section 18, "The one shape of a
 // storyline's file" (card OPEN-THREAD-SHAPE). This test holds them there:
-//   1. checkThread finds nothing wrong with any of the nine.
+//   1. checkThread finds nothing wrong with any of the files.
 //   2. Each file keeps its count of lines, thoughts, questions and choices, as numbers, so that a later edit that
 //      drops one is seen. A count that rises is a deliberate addition: change the number with the reason.
 //   3. checkThread refuses one key of each older dialect, on a copy of a real file, and names the key and where.
@@ -42,6 +42,7 @@ const COUNTS = {
   // The Ash Men's turn of the burned camp (OPEN-WRITE-4, 26 November 2026), a file of its own until it is folded into
   // burned-camp.js.
   'burned-camp-ash-men': {lines: 69, thoughts: 34, questions: 13, choices: 16},
+  'burned-camp': {lines: 7, thoughts: 13, questions: 5, choices: 3},
   'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
   'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
   'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},
@@ -57,7 +58,7 @@ for (const [name, thread] of Object.entries(threads)) {
   assert.deepEqual(checkThread(thread), [], name + ' is not in the shape');
   assert.deepEqual(tally(thread), COUNTS[name], name + ': its count of lines, thoughts, questions and choices changed');
 }
-assert.equal(Object.keys(threads).length, 10, 'nine storylines are written, and one turn of the burned camp');
+assert.equal(Object.keys(threads).length, 11, 'nine storylines are written, the burned camp, and one turn of it');
 assert.deepEqual(Object.keys(COUNTS).sort(), Object.keys(threads).sort(), 'every storyline has its counts');
 
 // One key of each older dialect is refused, on a copy of a real file. Each is put where the older files had it.

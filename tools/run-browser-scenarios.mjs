@@ -57,6 +57,7 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-map'], paths:['src/world/open/map-marks.js','src/world/open/parts/ground.js','src/world/scablands-map.js']},
   {prefixes:['open-find-camp'], paths:['src/world/open/parts/sites.js','src/world/open/site-rule.js','src/world/open/site-view.js','src/world/open/content/sites.js']},
   {prefixes:['open-forge-shed'], paths:['src/world/open/parts/buildings.js','src/world/open/building-view.js','src/world/open/building-rule.js','src/world/open/content/buildings.js']},
+  {prefixes:['open-burned-camp'], paths:['src/world/open/parts/threads.js','src/story/threads/','src/story/scenes/burned-camp.js','src/world/open/sign-view.js']},
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.

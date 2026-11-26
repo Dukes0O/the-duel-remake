@@ -457,6 +457,12 @@ for (const id of ['odessa', 'moss']) {
   const service = id + '/service';
   assert.deepEqual(TALK_TABLES[id].filter(row => row.scene === service), [{id: service, scene: service}]);
 }
+// OPEN-THREADS: thread talk needs a reason before it replaces a greeting.
+const remembered = TALK_TABLES.dot.find(row => row.scene === 'burned-camp/remembered');
+assert.ok(remembered, 'Dot has a row for a player who ignored the burned camp');
+assert.equal(isTrue(remembered.needs, helped), false);
+const ignored = applyEffects(helped, {id: 'test/ignored', effects: [{type: 'mark', id: 'burned-camp/never-went'}]}).world;
+assert.equal(isTrue(remembered.needs, ignored), true);
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);

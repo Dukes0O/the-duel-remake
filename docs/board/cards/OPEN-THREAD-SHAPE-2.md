@@ -30,7 +30,9 @@ same time; tell it nothing, and edit none of its files.
 
 1. The string comparison of OPEN-THREAD-SHAPE, before and after: nothing missing, nothing extra but the deleted
    repeats, which are listed.
-2. `checkThread` reports nothing on all nine; `node tools/thread-crossings.mjs --check` exits 0;
+2. `checkThread` reports nothing on all nine; `node tools/thread-crossings.mjs --check` reports no fault but the two
+   that are expected until OPEN-BURNED-SCOUT and OPEN-BURNED-RESCUE build the scenes they lead to (the burned camp's
+   beats `scout` and `home` have no way out yet);
    `tools/test-thread-shape.mjs` keeps its counts and refuses one misspelt new key.
 3. Rule 23: `node tools/run-tests.mjs --jobs 4 --filter core --filter test-replays --filter test-combat-replays --filter test-world-composition --filter test-open-shared --filter test-thread-shape --filter test-thread-crossings`
    and `npm run build`.
