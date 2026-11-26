@@ -220,7 +220,10 @@ function finish(duel, reason, winnerId = null) {
     winnerId === 'player' ? ['player', 'cpu-1'] : ['raiders', 'player', 'cpu-1'] :
     winnerId ? [winnerId, ...ranked.filter(id => id !== winnerId)] : ranked;
   arena.phase = 'over';
-  cleanupWorldJobLoan(duel);
+  // An open job still draws its cut behind the results. Its normal completion
+  // settles borrowed gear; the menu tears down the outing when the player leaves.
+  if (!(arena.worldJob?.definition.open && duel.course.def?.scablands && duel.featureFlags.enabled('story-choices')))
+    cleanupWorldJobLoan(duel);
   arena.result = {placings, winnerId: placings[0], reason};
   state.status = 'arena_result';
   state.results = {arena: arena.result};

@@ -48,7 +48,7 @@ export function createScablandsDrawnFeet({near, gorge, riverField, course}) {
   }
   const plainAt = (x, z) => scablandsSurfaceHeightAt(x, z) + riverDepthAt(x, z);
   function groundAt(x, z) {
-    if (scablandsGroundEdit.siteGround?.hasChunkAt(x,z)) return scablandsGroundEdit.heightAt(x,z) + NEAR_GROUND.lift;
+    if (scablandsGroundEdit.siteGround?.hasChunkAt(x,z)) return scablandsGroundEdit.heightAt(x,z) + .035;
     const distance = riverField.distanceAt(x, z);
     const land = near.heightAtDrawn(x, z) ?? nearGroundHeightAt(x, z, plainAt);
     const river = distance < 94 ? riverAt(x, z) : null;

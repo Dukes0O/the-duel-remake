@@ -8,9 +8,10 @@
 // `window.__openLookStand.stand(name, {stage, seconds})` returns where the site stands and every named spot in the land's metres.
 // At the stage `night` it also turns the land's own light down while the picture is drawn. That is a stand-in for the night that
 // the card which places the site will bring; it is here only so that the site's fires and lamps can be judged in the dark.
+import {CHUNK_METRES} from '../src/world/ground-edit.js';
 import {installSiteGround} from '../src/world/open/site-ground.js';
 import {sitePosition} from '../src/world/open/site-rule.js';
-import {scablandsNaturalHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsGroundEdit, scablandsNaturalHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // One row a site: where it stands and what its look file gives. A later look card adds its row here.
 const LOOKS = Object.freeze({
@@ -103,6 +104,14 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
       x: at.x + spot.x, y: scablandsSurfaceHeightAt(at.x + spot.x, at.z + spot.z), z: at.z + spot.z,
       looksAt: spot.looksAt ? {x: at.x + spot.looksAt.x, z: at.z + spot.looksAt.z,
         y: scablandsNaturalHeightAt(at.x + spot.looksAt.x, at.z + spot.looksAt.z) + spot.looksAt.y} : null}]));
+    // Look north along the outside of the westernmost square, where the dune bends away from the lattice.
+    if (name === 'rats-nest' && scablandsGroundEdit.siteGround) {
+      let x = Math.floor(at.x / CHUNK_METRES) * CHUNK_METRES;
+      while (scablandsGroundEdit.siteGround.hasChunkAt(x - 1, at.z)) x -= CHUNK_METRES;
+      const z = Math.floor(at.z / CHUNK_METRES) * CHUNK_METRES;
+      spots['ground-edge'] = {x: x - .5, y: scablandsSurfaceHeightAt(x - .5, z + 6), z: z + 6,
+        looksAt: {x, y: scablandsSurfaceHeightAt(x, z + 28) + .15, z: z + 28}};
+    }
     return {name, stage, at: {x: at.x, z: at.z}, land: scablandsNaturalHeightAt(at.x, at.z), landFall: high - low, spots,
       draws: group.userData.draws, triangles: group.userData.triangles, lights: group.userData.lights.length};
   }
