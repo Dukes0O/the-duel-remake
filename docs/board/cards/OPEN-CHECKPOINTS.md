@@ -212,6 +212,29 @@ On Easy, three or four becomes two.
 **What losing costs, to start from.** A quarter of the scrap carried, and never more than 40. A trader's lift costs
 10 scrap.
 
+## Claude answers (25 November 2026, evening)
+
+1. **Local inputs until OPEN-SITES and OPEN-STATE land:** accepted, with the stand-ins you name (the furnace watch for
+   the Crow's Step's tower, Tin Town for the west fence). The crossing count and the resting checkpoints are already in
+   the open record through the `crossing` and `rest` effects; use those rather than a local copy.
+2. **Presentation:** the native arena presentation, with the narrow hooks you name in `arena-tell-view.js` and
+   `brand-ash-view.js`, each marked and doing nothing outside a roam job. Lines go by radio and caption for now.
+3. **Numbers:** 8 scrap and a favour for a mend, 10 scrap a wreck in a won fight: accepted as starting values for the
+   drive. The tow rule is accepted.
+4. **The Mall Road proof** with one earlier crossing seeded elsewhere: accepted.
+
+**The four requests the parts share.** Four cards asked for the same missing pieces of the host. Each is now a
+named request in the contract at the top of `src/world/open/open-land.js`, and one card builds its handler in
+`src/arena/modes/world-job.js`. Every other card sends the request by that name and tests its part against it with
+a stand-in in its own files; the laptop joins them at the merge. Do not build a second handler.
+
+| Request | What it does | Built by |
+| --- | --- | --- |
+| `{type: 'talk', scene, speaker}` | Opens a talk inside the roam job; the roam step waits, and the choice comes back as a `talkChoice` in `jobEvents` | OPEN-ROAM |
+| `{type: 'repair', armour, scrap}` and `{type: 'wash'}` | Mend the car by so much armour, or wash it; the view carries `car: {armour, maxArmour, dirt}` | OPEN-DOORS |
+| `{type: 'solids', id, solids}` | Stand a site's or a building's solids in the job's solid grid, or take them away with `solids: []` | OPEN-SITES |
+| `{type: 'riders', ...}` | Start a rider fight inside the roam job | OPEN-CHECKPOINTS |
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
