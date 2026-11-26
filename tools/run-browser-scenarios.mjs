@@ -54,6 +54,7 @@ export const SCENARIO_AREAS = [
   // OPEN-LOOK-RATS-NEST: a look scenario of the open Scablands runs when its look file or the QA page's stand changes.
   {prefixes:['look-rats-nest'], paths:['src/world/open/looks/rats-nest-look.js','tools/open-look-stand.js']},
   {prefixes:['look-glasshouse'], paths:['src/world/open/looks/glasshouse-look.js']},
+  {prefixes:['look-radio-hill'], paths:['src/world/open/looks/radio-hill-look.js','tools/open-look-stand.js']},
   {prefixes:['open-map'], paths:['src/world/open/map-marks.js','src/world/open/parts/ground.js','src/world/scablands-map.js']},
   {prefixes:['open-find-camp'], paths:['src/world/open/parts/sites.js','src/world/open/site-rule.js','src/world/open/site-view.js','src/world/open/content/sites.js']},
   {prefixes:['open-forge-shed'], paths:['src/world/open/parts/buildings.js','src/world/open/building-view.js','src/world/open/building-rule.js','src/world/open/content/buildings.js']},
