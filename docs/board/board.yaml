@@ -1470,18 +1470,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-FIGURES-4.md"
 
-  - id: OPEN-MAP-2
-    title: "Open Scablands: driven ground reads as known land, and a found site has a place mark (round 2)"
-    owner: "codex"
-    model: "astra"
-    lane: "UI"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-MAP-2.md"
-
   - id: OPEN-JOURNAL-SIZE
     title: "Open Scablands: the open record's journal is folded when a hearth is banked, so a save cannot grow without limit"
     owner: "codex"
