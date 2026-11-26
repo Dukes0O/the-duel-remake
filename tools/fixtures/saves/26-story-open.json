@@ -1,0 +1,299 @@
+{
+  "shape": "story-open-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "open-qa",
+      "players": [
+        {
+          "id": "open-qa",
+          "name": "Open QA",
+          "profile": {
+            "version": 2,
+            "credits": 1280,
+            "wasteland": {
+              "version": 1,
+              "discoveredGate": true,
+              "scrap": 140
+            },
+            "story": {
+              "version": 1,
+              "kogane": {},
+              "ledger": {
+                "version": 1,
+                "seed": 1234,
+                "night": 3,
+                "stocks": {
+                  "embers": 3,
+                  "gas": 12
+                },
+                "words": {
+                  "walkers": "Friendly",
+                  "glasshouse": "Friendly"
+                },
+                "feud": "Watching",
+                "roadWord": 1,
+                "marks": [
+                  "glasshouse/pump-mended",
+                  "burned-camp/burned",
+                  "rumour/radio-hill"
+                ],
+                "made": [],
+                "obligations": [
+                  {
+                    "type": "debt",
+                    "id": "gate-watch",
+                    "person": "walkers",
+                    "text": "The Walkers owe you two nights' watch.",
+                    "owedBy": "walkers"
+                  }
+                ],
+                "encounters": {
+                  "rell": "Rell kept the gate with you.",
+                  "glasshouse": "You found the Glasshouse on the second night."
+                },
+                "extraHeatFrom": null,
+                "history": [
+                  {
+                    "type": "word",
+                    "key": "walkers",
+                    "before": null,
+                    "after": "Friendly",
+                    "choiceId": "sample/walkers-watch",
+                    "night": 3
+                  },
+                  {
+                    "type": "roadWord",
+                    "key": "roadWord",
+                    "before": 0,
+                    "after": 1,
+                    "choiceId": "sample/walkers-watch",
+                    "night": 3
+                  },
+                  {
+                    "type": "debt",
+                    "key": "gate-watch",
+                    "before": null,
+                    "after": {
+                      "type": "debt",
+                      "id": "gate-watch",
+                      "person": "walkers",
+                      "text": "The Walkers owe you two nights' watch.",
+                      "owedBy": "walkers"
+                    },
+                    "choiceId": "sample/walkers-watch",
+                    "night": 3
+                  },
+                  {
+                    "type": "met",
+                    "key": "rell",
+                    "before": null,
+                    "after": "Rell kept the gate with you.",
+                    "choiceId": "sample/walkers-watch",
+                    "night": 3
+                  },
+                  {
+                    "type": "met",
+                    "key": "glasshouse",
+                    "before": null,
+                    "after": "You found the Glasshouse on the second night.",
+                    "choiceId": "sample/glasshouse-found",
+                    "night": 3
+                  },
+                  {
+                    "type": "word",
+                    "key": "glasshouse",
+                    "before": null,
+                    "after": "Friendly",
+                    "choiceId": "sample/glasshouse-pump",
+                    "night": 3
+                  },
+                  {
+                    "type": "mark",
+                    "key": "glasshouse/pump-mended",
+                    "choiceId": "sample/glasshouse-pump",
+                    "night": 3
+                  },
+                  {
+                    "type": "mark",
+                    "key": "burned-camp/burned",
+                    "choiceId": "sample/glasshouse-burned",
+                    "night": 3
+                  },
+                  {
+                    "type": "mark",
+                    "key": "rumour/radio-hill",
+                    "choiceId": "fixture/open-land",
+                    "night": 3
+                  }
+                ]
+              },
+              "open": {
+                "version": 1,
+                "landSeed": 789,
+                "found": [
+                  "glasshouse"
+                ],
+                "stages": {
+                  "glasshouse": "burned"
+                },
+                "favours": {
+                  "glasshouse": 1
+                },
+                "feuds": {
+                  "road-rats": "Raiding"
+                },
+                "threads": {
+                  "burned-camp": {
+                    "beat": "clues",
+                    "began": 3,
+                    "cast": {
+                      "camp": "glasshouse",
+                      "enemy": "road-rats"
+                    },
+                    "end": null
+                  }
+                },
+                "crossings": {
+                  "mall-road-2": 1
+                },
+                "resting": [
+                  "mall-road-2"
+                ],
+                "car": {
+                  "dirt": 0.625,
+                  "armour": 48.5
+                },
+                "routines": {
+                  "gas-run": {
+                    "offered": true,
+                    "learner": "dace",
+                    "share": 0.75,
+                    "lessonLoad": 60,
+                    "running": true,
+                    "tally": 40
+                  }
+                },
+                "driven": [
+                  42,
+                  559
+                ],
+                "journal": [
+                  {
+                    "type": "find",
+                    "key": "glasshouse",
+                    "choiceId": "sample/glasshouse-found",
+                    "night": 3
+                  },
+                  {
+                    "type": "scrap",
+                    "key": "scrap",
+                    "before": 148,
+                    "after": 140,
+                    "choiceId": "sample/glasshouse-pump",
+                    "night": 3
+                  },
+                  {
+                    "type": "favour",
+                    "key": "glasshouse",
+                    "before": 0,
+                    "after": 1,
+                    "choiceId": "sample/glasshouse-pump",
+                    "night": 3
+                  },
+                  {
+                    "type": "site",
+                    "key": "glasshouse",
+                    "before": "camp",
+                    "after": "burned",
+                    "choiceId": "sample/glasshouse-burned",
+                    "night": 3
+                  },
+                  {
+                    "type": "thread",
+                    "key": "burned-camp",
+                    "before": null,
+                    "after": {
+                      "beat": "clues",
+                      "end": null
+                    },
+                    "choiceId": "sample/glasshouse-burned",
+                    "night": 3
+                  },
+                  {
+                    "type": "feud",
+                    "key": "road-rats",
+                    "before": "Watching",
+                    "after": "Raiding",
+                    "choiceId": "fixture/open-land",
+                    "night": 3
+                  }
+                ],
+                "laterRecord": {
+                  "keep": true
+                }
+              },
+              "laterStory": {
+                "keep": true
+              }
+            },
+            "world": {
+              "found": [
+                "tin-town",
+                "glasshouse"
+              ],
+              "laterMap": {
+                "keep": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {
+      "path": "players.0.profile.story.open.version",
+      "equals": 1
+    },
+    {
+      "path": "players.0.profile.story.open.landSeed",
+      "equals": 789
+    },
+    {
+      "path": "players.0.profile.story.open.car",
+      "equals": {
+        "dirt": 0.625,
+        "armour": 48.5
+      }
+    },
+    {
+      "path": "players.0.profile.story.open.driven",
+      "equals": [
+        42,
+        559
+      ]
+    },
+    {
+      "path": "players.0.profile.story.open.routines.gas-run.tally",
+      "equals": 40
+    },
+    {
+      "path": "players.0.profile.story.open.laterRecord",
+      "equals": {
+        "keep": true
+      }
+    },
+    {
+      "path": "players.0.profile.world.found",
+      "equals": [
+        "tin-town",
+        "glasshouse"
+      ]
+    },
+    {
+      "path": "players.0.profile.wasteland.scrap",
+      "equals": 140
+    }
+  ]
+}

@@ -83,6 +83,7 @@ import {NIGHT_2_ID, night2Job, night2Page, night2Remembered} from './world/jobs/
 import {arriveHiddenRoadVisitAtOnce} from './hidden-road-journey.js';
 import {keepNight2Replay, settleNight2} from './story/night-2-save.js';
 import {OPEN_ROAM_ID, openRoamJob} from './world/open/roam-job.js';
+import {savedOpenRecord, settleOpenWorld} from './world/open/open-save.js';
 import {playJournalNote, playLedgerChoice, playLedgerPageTurn} from './story/ledger-ui.js';
 import {savedLedger} from './story/ledger-save.js';
 import {emberStoryProps} from './story/ember-road.js';
@@ -877,8 +878,9 @@ export class App {
   }
   startNight2() {
     if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
+    this._refreshPlayer();
     return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0,
-      job: night2Job(this.seed, {washFight: this._switches().enabled('road-riders')})});
+      job: night2Job(this.seed, {washFight: this._switches().enabled('road-riders'), saved: savedLedger(this.profile)})});
   }
 
   // A job still in play is left first.
@@ -886,12 +888,21 @@ export class App {
   // OPEN-SHARED: out in the open with no mission (docs/story/open-scablands.md, section 14).
   startOpenRoam() {
     if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
+    return this._startOpenRoam();
+  }
+  _startOpenRoam() {
+    this._refreshPlayer();
     return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0, job: openRoamJob(this.profile, this.seed)});
   }
   worldJobAgain(){
     this.leaveWorldJob();
     const definition=this.duel.state.arena?.worldJob?.definition;
     if(!definition)return false;
+    if (definition.id === OPEN_ROAM_ID) {
+      const state = this.duel.state, result = state.arena.result;
+      if (result?.openSaveIssue && !this._settleArenaResult({result}, state)) return false;
+      return this._startOpenRoam();
+    }
     if(definition.run===true)return this.gasRun(definition.road);
     if(definition.kind==='town-job')return this._townJob?this.startTownJob(this._townJob.town,definition.id):false; // TOWN-HAUL-JOB
     const side=sideJobKey(definition);
@@ -1649,7 +1660,8 @@ export class App {
       this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return false;
     this._refreshPlayer();
     if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
-    const chapter = state.arena.worldJob?.night2;
+    const job = state.arena.worldJob;
+    const chapter = job?.night2;
     if (chapter) {
       if (!chapter.completed || result.winnerId !== 'player' || result.night2Page || result.night2Replay) return false;
       const previous = this.profile;
@@ -1668,6 +1680,26 @@ export class App {
       result.night2Remembered = chapter.remembered ?? night2Remembered(chapter.ledger);
       result.night2SaveIssue = updated.reason || (updated.changed && !result.settlementSaved ? 'Tonight’s ledger could not be saved.' : '');
       playJournalNote(this.audio);
+      return result.settlementSaved;
+    }
+    if (job?.open) {
+      if (this._switches().enabled('story-choices') !== true || result.settlementSaved) return false;
+      const roam = job.definition.steps.length === 1 && job.definition.steps[0].kind === 'roam';
+      const completed = result.winnerId === 'player' && ['complete', 'job-complete'].includes(result.reason) && job.job.done;
+      if (!completed && !(roam && result.reason === 'job-quit')) return false;
+
+      const previous = this.profile, world = job.open.world;
+      const open = {...world.open, car: {...world.open.car, armour: state.armor}};
+      const updated = settleOpenWorld(previous, {...world, open}, {
+        atStart: job.definition.open.world, savedAtStart: job.savedOpenAtStart,
+      });
+      if (updated.ok && updated.changed) this.profile = updated.profile;
+      result.settlementSaved = updated.ok && (!updated.changed || this._saveShopProfile(previous));
+      result.openSaveIssue = updated.reason || (result.settlementSaved ? '' : 'Your open land could not be saved. Try again.');
+      if (result.settlementSaved) {
+        result.scrapBalance = this.profile.wasteland.scrap;
+        result.scrapEarned = Math.max(0, result.scrapBalance - previous.wasteland.scrap);
+      }
       return result.settlementSaved;
     }
     const previous=this.profile,settled=settleArenaResult(previous,{runId:this.runId,
@@ -2220,7 +2252,7 @@ export class App {
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
     const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
-      (job.id === NIGHT_2_ID || job.id === OPEN_ROAM_ID ? this._switches().enabled('story-choices') === true :
+      (job.id === NIGHT_2_ID || job.id === OPEN_ROAM_ID || job.open ? this._switches().enabled('story-choices') === true :
         ['town-drive','town-job'].includes(job.kind)?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
@@ -2266,6 +2298,14 @@ export class App {
     // Vesper speaks after the Baron's first defeat only, never after a rematch.
     const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
+    if (started && mode === 'world-job' && job.open) {
+      const state = this.duel.state;
+      state.arena.worldJob.savedOpenAtStart = {
+        ledger: savedLedger(this.profile), open: savedOpenRecord(this.profile),
+      };
+      const armour = job.open.world.open.car.armour;
+      if (Number.isFinite(armour)) state.armor = Math.min(state.maxArmor, armour);
+    }
     this._waterStartLine = started ? waterLine : null; // said when the fight begins (see the listener)
     return started;
   }

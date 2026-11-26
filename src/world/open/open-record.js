@@ -33,7 +33,8 @@ export function newOpenRecord({seed = 0} = {}) {
     threads: {},            // storyline id -> {beat, began, cast, end}
     crossings: {},          // checkpoint id -> times crossed
     resting: [],            // checkpoints that have brought somebody since the last banked hearth
-    car: {dirt: 0},         // 0 clean to 1 caked
+    car: {dirt: 0, armour: null}, // dirt from 0 clean to 1 caked; null armour until the first drive
+    routines: {},           // routine id -> offer, learner, share, lesson load, running state and tally
     driven: [],             // squares of ground the player has driven over (squareAt), in the order driven
     journal: [],            // every change made by an open effect, with the choice and the night that caused it
   };
