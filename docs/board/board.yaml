@@ -1386,18 +1386,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RUNAWAY.md"
 
-  - id: OPEN-T-MARKET
-    title: "Open Scablands: Market Day comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-MARKET.md"
-
   - id: OPEN-T-TOLL
     title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
     owner: "codex"

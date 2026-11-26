@@ -2122,7 +2122,8 @@ export function stepWorldJob(duel, dt) {
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
-      people: worldJob.storyPeople, playerName: worldJob.definition.open.playerName, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
+      people: worldJob.storyPeople, playerName: worldJob.definition.open.playerName, marketSiteState: worldJob.open.parts.sites,
+      partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
@@ -2300,7 +2301,7 @@ export function stepWorldJob(duel, dt) {
     }
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
     if (checkpointsEnabled) for (const event of openStep.events) {
-      if (['threadCue', 'threadMissionSpotted', 'threadMissionMoment'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
+      if (['threadCue', 'threadMissionSpotted', 'threadMissionPhase', 'threadMissionMoment'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
         duel.emit({arenaTell: {id: event.id, cue: event.cue, position: event.position ?? point, seconds: 0}});
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
