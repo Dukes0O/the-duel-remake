@@ -42,7 +42,7 @@ function temporaryCampPosition(id, seed) {
 }
 
 export function friendlyCamps(world, sitePositions) {
-  return SITES.filter(site => site.people && isTrue({all: [
+  return SITES.filter(site => site.kind === 'camp' && site.people && isTrue({all: [
     {fact: 'found', site: site.id}, {fact: 'word', of: site.people, atLeast: 'Friendly'},
     {not: {fact: 'stage', site: site.id, is: 'burned'}}, {not: {fact: 'stage', site: site.id, is: 'empty'}},
   ]}, world)).map(site => ({people: site.people,

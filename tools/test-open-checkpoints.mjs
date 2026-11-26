@@ -121,6 +121,10 @@ assert(gap(buildCheckpoints(moved).find(row => row.id === mall.id).position, mal
   assert.equal(openAt(beginOpenLand(roam(world)), mall.position,
     {checkpointSites:{glasshouse:mall.position}}).open.world.open.crossings[mall.id], undefined);
   assert.equal(friendlyCamps(sampleWorld('after-the-smoke')).length, 0);
+  const den = choice(original(), 'friendly-den', [
+    {type:'find', site:'rats-nest'}, {type:'word', person:'road-rats', set:'Friendly'},
+  ]);
+  assert.equal(friendlyCamps(den, {'rats-nest':mall.position}).length, 0);
 }
 
 {
