@@ -60,6 +60,15 @@ and `npm run build`. It merges when that is green. Claude drives it in the merge
 The cues the storyline's file names. Any that are not in the sound bank keep their ids for OPEN-SOUND to register;
 list them in the change note.
 
+## Claude answers (26 November 2026, 18:15)
+
+1. **The runner:** a small reusable `heist` kind with `partOf` missions, and optional rows read from the approved
+   words, as you pick. Other storylines use it next (OPEN-T-RADIO).
+2. **The outing and the gas run:** use the outing availability hook and the clock-free dialogue as you pick. No change
+   to the Cold Nights economy, saves or pay in this card.
+3. **The Mall:** the authored same-level fallback, with the delivery, roof and front approaches at separate named spots
+   and the lamps on the mission's clock, as you pick. Name it under **Look owed** for a later Astra card.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a

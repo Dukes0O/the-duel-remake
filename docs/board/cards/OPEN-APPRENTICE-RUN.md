@@ -66,6 +66,31 @@ still runs through `src/story/ledger-save.js` and `settleNight2` in `src/story/n
 run through `src/world/open/parts/missions.js` if the lesson needs one. This card also takes the `save-shape` lock,
 because it adds to what is saved; it starts when OPEN-JOURNAL-SIZE-2 has let go of it.
 
+## Claude answers (26 November 2026, 18:15)
+
+**The day in the open land (one answer for OPEN-APPRENTICE-RUN, OPEN-T-RUNAWAY and OPEN-T-MARKET).** A roam's day
+passes on play time, never while the game is closed or paused: dawn 2 minutes, day 14, dusk 4, then dark until the
+player banks the hearth. The player banks at Tin Town's hearth, on foot, at dusk or in the dark, once a day. That is the
+open land's repeatable bank: it settles the open record and the ledger together, ends the day, and the next roam starts
+at dawn with the morning's lines. The authored Night 2 and its replay stay as they are. OPEN-APPRENTICE-RUN builds both
+pieces, the clock as a plain rule in `src/world/open/day-rule.js` giving `view.partOfDay` (`dawn`, `day`, `dusk`,
+`dark`) and the bank, because it holds the `save-shape` lock. Every other card reads `view.partOfDay` and supplies it
+in its own tests; nothing else keeps a clock of its own.
+
+1. **The load of a hand run.** Under `story-choices`, a repeatable gas road measures its load from Bess's health on
+   arrival: a clean run brings home 60 of gas, and a damaged Bess brings home 60 times her health's share, rounded down.
+   Road scrap and feud stay as they are. Earlier `emberRuns` count as hand runs for the offer; a lesson needs a run
+   measured this way. The Boneyard furnace battle is not a gas run: it does not count and brings no gas. With the
+   switch off, nothing about the gas run changes.
+2. **The bank:** as above. Build the clock and the bank in this card. A hand run delivers on arrival. On a day the
+   player takes Bess out, or teaches, the learner does not also run. At a bank with the routine going, the learner's
+   delivery is posted once, before that night's burn, and Cinder says the sum the next morning. A refused or repeated
+   save changes nothing twice.
+3. **Gas and embers.** The tally records the whole delivery. The kiln bakes one ember for each 20 of gas in the stock,
+   and what is left stays in the stock and adds to the next delivery. Under `story-choices` this replaces the gas run's
+   present ember award, so a run is never paid twice. These are design numbers: one independent review of them before
+   the merge (rule 17), with the lane tier, as the card says.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
