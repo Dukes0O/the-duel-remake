@@ -73,8 +73,8 @@ export const peoplePart = {
       }
       if (event.type === 'talkChoice' && event.effects?.length)
         choices.push({id: active.scene + '/choose/' + event.id, effects: event.effects});
-      if (event.type === 'openTalkClosed') {
-        if (event.finished && !heard.includes(active.scene)) heard = [...heard, active.scene];
+      if (event.type === 'openTalkClosed' || event.type === 'openTalkSkipped') {
+        if (event.type === 'openTalkClosed' && event.finished && !heard.includes(active.scene)) heard = [...heard, active.scene];
         active = null;
       }
     }
