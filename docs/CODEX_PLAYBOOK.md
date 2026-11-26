@@ -356,11 +356,16 @@ Nobody carries messages by hand, and nobody waits in a chat.
   settle (AGENTS rule 18) is marked so, and Claude puts it to Kyle.
 - *A thing for Claude to run on the laptop* goes under "For Claude to run" in the pull request, never in a chat.
 
-**After the pull request is open, the card is finished for the cloud** (Kyle asked on 25 November 2026 how often Codex
-should look for review comments). Do not wait and do not look again. Claude reads the pull request on the laptop, and
-the verdict is one of two things: the branch is merged, with any small fault mended by Claude at the merge; or what is
-still wrong becomes a new card on the board, which is taken like any other card. A review never asks a finished cloud
-task to do more. The next thing to do is the next card under CODEX CAN START NOW.
+**After handoff.** Claude reviews the pull request on the laptop and records any further work on the board. The cloud
+builder finishes its turn at handoff. The director reads the board for the next ready card. When Claude answers a
+question on an unfinished card, continue that card in its existing chat, branch and draft pull request.
+
+**Follow-up rounds (Kyle, 26 November 2026).** For a ready card that directly continues earlier work, find the cloud
+chat that built the previous round. Match it by the previous card, pull request or verdict the new card names. Check
+that the chat has not already received the new card. Reuse it once it is idle, with the new card's assigned model at
+High reasoning effort. Read the new card and verdict and cut its own branch from current `origin/integration/wasteland`
+after the previous round merges. Open a separate pull request for the new card. If the previous chat is unavailable,
+start a new one and include the previous verdict or pull request in its kickoff. Unrelated cards start their own chats.
 
 **The laptop's check-in (Kyle, 18 November 2026).** At each Wasteland check-in Claude fetches `origin` and looks at every
 `codex/*` branch. For each branch whose own card says `waiting_on: claude`, Claude reviews the diff independently, runs
