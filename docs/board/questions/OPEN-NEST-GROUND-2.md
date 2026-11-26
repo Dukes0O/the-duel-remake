@@ -1,6 +1,3 @@
 # OPEN-NEST-GROUND-2
 
-- For work orders, the card permits measuring from the natural land or refusing the order. Pick refusal for the entire cut or fill when its footprint reaches an installed square. It uses the machine's existing refusal path and preserves earlier work and its save format.
-- For the seam, fit the adjoining terrain to the edit mesh's metre-spaced rim. The shared stand exposes `spots['ground-edge']` for OPEN-LOOK-3's scenario. With its fixture car at the Nest, `await __openLookStand.stand('rats-nest', {stage:'day', view:'ground-edge'})` also sets the low daylight camera directly. OPEN-LOOK-3 owns the automatic list of pictures. Please include the spot at 0.35 m eye height there.
-- The independent review found that delaying all loan cleanup would leave borrowed gear equipped on a quit. The results scene takes ownership of the terrain's restore callback until the arena changes. Gear settles on every result. This keeps the change inside the listed files and resolves the cleanup-hook question.
 - The normal lane found an unrelated failure in `tools/test-open-doors.mjs:192`. After leaving the forge the fixture expects HOLD AIM ON A CAR and receives an empty prompt. Node 22.23.5 reproduces it on untouched integration `3f2a800a1`. Pick a separate Open Doors follow-up. The assertion, replay fingerprints and world signatures stay as published.
