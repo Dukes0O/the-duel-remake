@@ -165,7 +165,8 @@ November 2026).
 | 2 | Drive straight at the rise and fight | Two buggies and one slow truck | *They have to come over that rise one at a time, and I'm already moving.* | A fight won about six times in ten on Easy |
 | 3 | Reverse out and run for it | The open road behind | *Nobody ever robbed a car that they couldn't catch.* | A chase of about a minute. The trap stays where it is |
 
-**1. Paying.** The scrap goes down on the road. A player with fewer than forty puts down what there is, and the rest is not owed.
+**1. Paying.** The scrap goes down on the road. A player with fewer than forty puts down what there is, and the rest
+is not owed.
 
 > **The Road Rat:** That's very handsome of you. I'll tell Sump that Tin Town has lovely manners. Mind how you go, and
 > do stop again.
@@ -190,7 +191,8 @@ first buggy at the top of the rise has it half beaten before the second arrives.
   that broke the trap is news. Mark: "You broke the Road Rats' trap on the road."
 - **If the car is wrecked,** the man walks over to it.
 
-  > **The Road Rat:** There, now. You could have paid forty and kept your car in one piece. I'll take the forty anyway,
+  > **The Road Rat:** Well, there you are. You could have paid forty and kept your car in one piece. I'll take the
+  > forty anyway,
   > and I'll take a little more for the trouble.
 
   **The ledger.** Scrap: 0. Mark: "You stopped for a trap on the road, and the Road Rats wrecked your car." The car is
@@ -310,7 +312,8 @@ blamed on Tin Town.
 | 2 | "Come to Tin Town's gate, but only if you stop selling to the Road Rats." | A trader at the gate, and a quarrel that she has to carry to Sump | *I'm asking her to give up her best customer because of something I said.* | The Road Rats' feud rises by one. They are a car short at checkpoints. Her truck no longer passes Sump's gate |
 | 3 | "You don't owe me anything. Get your load home." | Nothing changes at Tin Town | None | What she owes stays owed. She asks again the next time she is met on a road |
 
-> **Tally:** *(1)* Tin Town, where the fire is. I've been meaning to find out whether that was true. Look for me at
+> **Tally:** *(1)* So you're from Tin Town, where the fire is. I've been meaning to find out whether that was true.
+> Look for me at
 > your gate at first light, and bring your scrap.
 >
 > **Tally:** *(2)* Then that's forty tyres a month I have to sell somewhere else. I'll do it, because you stopped when
@@ -324,7 +327,7 @@ tyres to the Road Rats because you asked her to." The Road Rats: up one step. 3:
 
 **What she kept back.** The player turns for the car.
 
-> **Tally:** Wait. There's one more thing, and I should have said it before you picked up that wrench.
+> **Tally:** Wait a moment. There's one more thing, and I should have said it before you picked up that wrench.
 >
 > **Tally:** Two buggies have been sitting on that ridge since noon. They're Road Rats, but they aren't here on Sump's
 > business. Sump pays me for tyres. Those two would rather have the tyres and keep the pay.

@@ -34,7 +34,7 @@ const PENNY_PROMISE = {type: 'promise', id: `${ID}/penny-valve`, person: 'mr-pen
 
 // Said by the Ash Men when the lamps find the player, in the hall or outside the shoe shop.
 const SEEN_SHOUT = ashMan("There's somebody in the hall! Turn the lamps on the shops!", {shouted: true});
-const BOLTED_DOOR = penny("Staff only! I have told them, and told them. Go down the corridor and out by the tunnel, and don't stop to thank me.");
+const BOLTED_DOOR = penny("This door is for staff only! I have told them, and told them. Go down the corridor and out by the tunnel, and don't stop to thank me.");
 const CAUGHT = [
   ashMan("Put that down. It's Old Smoke's, and so is everything else under this roof."),
   ashMan("Old Smoke doesn't keep thieves, because thieves have to be fed. Walk out by the front doors, and tell Tin Town who owns the Mall."),
@@ -124,7 +124,7 @@ export default {
           thought: 'A promise is easy to make this morning. I wonder what the third night will look like.',
           hidden: "Breaking it costs a word, said to the player's face. At the Glasshouse the beans die on the second day",
           effects: [mark('asked'), PROMISE],
-          lines: [leader("Three nights. I'll tell the others, and I'll tell them it was a promise, so that they stop looking at the cart. Take the cracked one with you, for the size.")],
+          lines: [leader("I'll hold you to three nights. I'll tell the others, and I'll tell them it was a promise, so that they stop looking at the cart. Take the cracked one with you, for the size.")],
           next: 'promised'},
         {id: 'send-friends', act: 'say', words: "I know some people who owe me. I'll ask them to go.",
           when: {cast: 'friend'},
@@ -369,7 +369,7 @@ export default {
       ],
       outcomes: {
         'not-seen': {
-          lines: [penny("Fourteen. I counted. You'd have made a very good night watchman, and I don't say that to contractors.")],
+          lines: [penny("That was fourteen. I counted. You'd have made a very good night watchman, and I don't say that to contractors.")],
           effects: [mark('took-the-spare')],
           next: 'tunnel'},
         seen: {cue: 'open.mall.alarm',
@@ -461,7 +461,7 @@ export default {
     'penny-owed': {
       when: {all: [did('promised-penny'), {reach: ['dead-mall', 'tunnel-door']}]},
       mission: `${ID}/second-trip`, kind: 'heist', holds: ['checkpoints', 'signs'], minutes: 6,
-      lines: [penny("Two knocks, so it's a contractor. I've kept your page of the book open, and the kettle has been very patient.")],
+      lines: [penny("That was two knocks, so it's a contractor. I've kept your page of the book open, and the kettle has been very patient.")],
       outcomes: {
         'brought-down': {
           lines: [penny("You came back with it. I'll strike that out of the book, then. I've never struck anything out of the book before, and I find that I rather like it.")],

@@ -205,7 +205,7 @@ export default {
             mark('trap-broken')],
           next: 'between'},
         lost: {
-          lines: [rat("There, now. You could have paid forty and kept your car in one piece. I'll take the forty anyway, and I'll take a little more for the trouble.")],
+          lines: [rat("Well, there you are. You could have paid forty and kept your car in one piece. I'll take the forty anyway, and I'll take a little more for the trouble.")],
           effects: [{type: 'scrap', by: -60}, mark('lost-to-the-trap')],
           then: 'towed-home', next: 'between'},
       },
@@ -234,7 +234,7 @@ export default {
       outcomes: {
         away: {effects: [mark('ran-from-the-trap')], next: 'between'},
         caught: {
-          lines: [rat("There, now. You could have paid forty and kept your car in one piece. I'll take the forty anyway, and I'll take a little more for the trouble.")],
+          lines: [rat("Well, there you are. You could have paid forty and kept your car in one piece. I'll take the forty anyway, and I'll take a little more for the trouble.")],
           effects: [{type: 'scrap', by: -60}, mark('lost-to-the-trap')],
           then: 'towed-home', next: 'between'},
       },
@@ -369,7 +369,7 @@ export default {
           thought: 'Whatever she hears at our gate, Sump may hear a week later.',
           hidden: 'The Word on the road rises by one after her first visit. Her truck still passes Sump\'s gate',
           effects: [mark('gate-open')],
-          lines: [tally("Tin Town, where the fire is. I've been meaning to find out whether that was true. Look for me at your gate at first light, and bring your scrap.")],
+          lines: [tally("So you're from Tin Town, where the fire is. I've been meaning to find out whether that was true. Look for me at your gate at first light, and bring your scrap.")],
           next: 'ridge'},
         {id: 'one-gate', act: 'say', words: "Come to Tin Town's gate, but only if you stop selling to the Road Rats.",
           plain: 'A trader at the gate, and a quarrel that she has to carry to Sump',
@@ -389,7 +389,7 @@ export default {
     ridge: {
       when: {after: 'owing'},
       lines: [
-        tally("Wait. There's one more thing, and I should have said it before you picked up that wrench."),
+        tally("Wait a moment. There's one more thing, and I should have said it before you picked up that wrench."),
         tally("Two buggies have been sitting on that ridge since noon. They're Road Rats, but they aren't here on Sump's business. Sump pays me for tyres. Those two would rather have the tyres and keep the pay."),
         tally("I didn't tell you sooner because I thought you'd drive off. Patience is slow until she's warm. I only need company as far as the crossing, where there are other people on the road."),
       ],

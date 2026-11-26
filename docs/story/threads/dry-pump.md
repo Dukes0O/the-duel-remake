@@ -46,8 +46,8 @@ enter it in the book.
 ## 4. Where things stand, in this example
 
 It is the third day of Five Cold Nights, at first light. The player found the Glasshouse on the second day and mended
-its wind pump, so the growers are Friendly. The Walkers are Friendly and owe two nights' watch. The Ash Men are
-Watching. There are two embers in the store and 45 scrap in the car. Bess is due to go for gas today. The player has
+its wind pump, so the growers are Friendly. The Walkers are Friendly and owe two nights' watch. A watch is a debt, and
+only a favour can be spent on an errand, so in this example there is nobody to send. The Ash Men are Watching. There are two embers in the store and 45 scrap in the car. Bess is due to go for gas today. The player has
 never taught anybody the gas run (section 23), so a day's outing spent on anything else is a day with no gas.
 
 The scenes follow a player who drives out to the Glasshouse before the gas run, says yes, goes in by the roof, goes up
@@ -118,7 +118,8 @@ When no clock is running, or somebody has been taught the gas run, the first tho
 > **Marigold:** *(1)* Then take the cracked one with you, so that you can match the size. Hold it up against whatever
 > you find. A valve that's a finger too wide is as much use as no valve.
 >
-> **Marigold:** *(2)* Three nights. I'll tell the others, and I'll tell them it was a promise, so that they stop
+> **Marigold:** *(2)* I'll hold you to three nights. I'll tell the others, and I'll tell them it was a promise, so
+> that they stop
 > looking at the cart. Take the cracked one with you, for the size.
 >
 > **Marigold:** *(3)* I don't mind whose hands it comes in. I'll mind very much if it doesn't come.
@@ -200,7 +201,8 @@ If a lamp's light is on the player for two seconds, a guard shouts, with the cue
 Then the player runs. Out by the front doors is the end of the trip, with two grey trucks behind the car on the road
 (Scene 6). The door behind the fountain is nearer, and it opens before the player reaches it.
 
-> **Mr Penny:** Staff only! I have told them, and told them. Go down the corridor and out by the tunnel, and don't
+> **Mr Penny:** This door is for staff only! I have told them, and told them. Go down the corridor and out by the
+> tunnel, and don't
 > stop to thank me.
 
 He bolts it. The talk below still happens, in the corridor, but the Ash Men now know the door is there, and the shoe
@@ -315,7 +317,7 @@ than one gap. The rim of the dry fountain is the one place to crouch while a lam
 
 - **Not seen.** The door closes behind the player.
 
-  > **Mr Penny:** Fourteen. I counted. You'd have made a very good night watchman, and I don't say that to
+  > **Mr Penny:** That was fourteen. I counted. You'd have made a very good night watchman, and I don't say that to
   > contractors.
 
   Mark: "You took a brass valve back from the Ash Men's store in the Dead Mall."
@@ -440,8 +442,8 @@ from the Dead Mall with nothing." Two of the camp's four days are gone, and the 
 ### When the promise is kept late, or broken
 
 A promise of three nights lets the gas run go first. While it stands, the trip begins whenever the player chooses to
-"Drive to the Dead Mall", on any of the three days, and it is Scenes 3 to 7 as they are. At the Glasshouse, a valve that comes after the second day comes to dead beans, and Marigold's line about
-watering them is not said.
+"Drive to the Dead Mall", on any of the three days, and it is Scenes 3 to 7 as they are. At the Glasshouse, a valve
+that comes after the second day comes to dead beans, and Marigold's line about watering them is not said.
 
 If the third night is banked with no valve, the leader says so on the player's next visit.
 
@@ -463,7 +465,8 @@ A valve brought on that last day keeps the camp where it is, and its people are 
 A second trip, on any of the five days, of about six minutes: in by the tunnel with two knocks, up to the shoe shop,
 and down again.
 
-> **Mr Penny:** Two knocks, so it's a contractor. I've kept your page of the book open, and the kettle has been very
+> **Mr Penny:** That was two knocks, so it's a contractor. I've kept your page of the book open, and the kettle has
+> been very
 > patient.
 
 The shoe shop is as Scene 5 has it. With the valve brought down, the player holds the wrench on his pipe again.
