@@ -1457,17 +1457,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-LOOK-RADIO-HILL.md"
 
-  - id: OPEN-LOOK-BUS-RING
-    title: "Open Scablands: the Bus Ring, round 1, drawn in code (Claude cloud)"
-    owner: "claude-cloud"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-BUS-RING.md"
-
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
     owner: "codex"
