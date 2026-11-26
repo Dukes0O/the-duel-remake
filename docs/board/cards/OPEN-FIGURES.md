@@ -7,6 +7,11 @@ fix cards moved to Sol: this card stays with Astra, because all of it is new fig
 their poses and a look sheet).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+OPEN-FIGURES-2 is built at the same time (Kyle, 25 November 2026). Keep this card's rows of `PROFILES` and its poses
+in one block each, so that the two branches join without a clash; the laptop joins them at the merge.
+
 ## What to build
 
 Section 13, and `five-cold-nights.md` section 16 ("Moss, Odessa as figures").

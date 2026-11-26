@@ -5,6 +5,51 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+**Built at the same time as the other open Scablands cards** (Kyle, 25 November 2026). OPEN-SHARED is merged and
+holds what this card once waited for. Where this section and the rest of the card differ, this section wins.
+
+- **Read `src/world/open/open-land.js` first.** It is the contract between the parts of the open land.
+- **Use these, and do not write them again:** `isTrue` and `checkFact` (`facts.js`); `applyEffects` (`open-effects.js`),
+  which is the only way to change the world; the world and its readers (`open-record.js`); holds (`holds.js`); the
+  register (`register.js`; a new name is a row there and in `src/story/people.js`); the table checks
+  (`check-tables.js`; load every table through `requireSound`); the sample worlds (`samples.js`; every test of a rule
+  starts from one of them).
+- **Do not edit** `open-land.js`, `parts.js`, `open-view.js`, `content/people.js`, `content/talk-tables.js`,
+  `src/app.js`, or a part, a view or a content file that belongs to another card.
+- **Where this card needs something that another card is building today,** use a stand-in of your own inside your own
+  files, say so under "Codex decided (Claude to review)", and the laptop joins the two at the merge.
+- `node tools/test-open-shared.mjs` must still pass, and is one of this card's checks.
+
+**Already built by OPEN-SHARED, so not this card's work:** the open record's shape in memory
+(`src/world/open/open-record.js`), the six new effects and a feud for each group (`open-effects.js`), all of `isTrue`,
+and the open land's people in `STORY_PEOPLE`. Items 2, 5 and 6 are done.
+
+**Changed from the card as first cut.** A group's feud other than the Ash Men's stays in the open record
+(`open.feuds`), and is not moved into the ledger: `src/story/ledger.js` and `src/story/ledger-replay.js` are not
+edited by this card, and a ledger saved today is untouched. The open land's changes stay in the record's own journal.
+
+**This card's work:**
+
+1. **Saving the record,** version 1, beside the ledger in the story's save (`registerStory`): everything
+   `newOpenRecord` holds. This card may add to `newOpenRecord` the car's armour and each routine's record (section
+   23), and nothing else changes in that file. A save from before this card loads unchanged, and with the switch off
+   nothing new is written.
+2. **`worldForProfile`** (`src/world/open/open-world.js`) reads the saved record where there is one.
+3. **`settleOpenWorld(profile, world)`** writes the ledger, the record and the scrap back when a job that began in the
+   open ends, by finishing or by being left from the pause menu, and writes nothing when a mission is lost by
+   leaving it. Found sites also go through `rememberWorldFound`. The hook is in `src/app.js`, where a world job's
+   result is settled; this card holds `busy-game-files` for it.
+4. **`spendScrap(profile, amount, reason)`,** as item 4.
+5. **Starting again.** `worldJobAgain` in `src/app.js` restarts a job from its definition, and a roam job's
+   definition holds the world as it was when the job began. A roam job that is started again reads the world afresh
+   from the profile, so that nothing done in the open is undone.
+
+Files: `src/world/open/open-save.js`, `src/world/open/open-world.js`, `tools/test-open-state.mjs`, a fixture under
+`tools/fixtures/saves/`; hooks in `src/app.js` and `src/story/story-save.js` (the registration only);
+`tools/test-story-save.mjs`. Locks: `save-shape`, `busy-game-files`.
+
 ## What to build
 
 Sections 12, 16 and 17.
