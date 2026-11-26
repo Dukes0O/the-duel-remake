@@ -14,8 +14,7 @@
 // along (cos h, -sin h), which is also how src/world/scablands-solids.js reads a solid's `heading`.
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {createFlameMaterial,createScrapWear} from '../../scrap-look.js';
-import {createSmokeColumn} from '../../smoke-column.js';
+import {createFlameMaterial,createScrapWear,scrapNoise} from '../../scrap-look.js';
 
 export const RATS_NEST_STAGES=Object.freeze(['day','night']);
 export const RATS_NEST_BUDGET=Object.freeze({draws:12,triangles:60000});
@@ -253,7 +252,7 @@ const makePalette=()=>({
   cloth:[tone(0x5b5a40),tone(0x7d735c),tone(0x4f5a60),tone(0x6a4034),tone(0x8a8474)],
   concrete:tone(0x77736a),stain:tone(0x4f4a42),glass:tone(0xa9b8ad),chrome:tone(0x8a8c88),
   clay:tone(0x8f5a3c),dark:tone(0x6f4a38),seam:tone(0x44342c),scree:tone(0x8a5c42),rock:tone(0x77675c),top:tone(0x5e3b2a),
-  oil:tone(0x0d0c0b),worn:tone(0x2e1c14),track:tone(0x2d2924),soot:tone(0x0a0908),
+  oil:tone(0x0d0c0b),worn:tone(0xad896d),track:tone(0x2d2924),soot:tone(0x0a0908),
 });
 
 // Collects pieces by material, each with its colour in its vertices, under a stack of placements, and merges them: one mesh a material.
@@ -312,17 +311,22 @@ function assembly(){
   const ribbed=(kind,p00,p10,p01,p11,colour,{ragged=.05,sag=0,random=Math.random}={})=>{
     const a=new THREE.Vector3(...p00),b=new THREE.Vector3(...p10),c=new THREE.Vector3(...p01),d=new THREE.Vector3(...p11);
     const normal=new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).normalize(),ribs=Math.max(2,Math.round(a.distanceTo(b)/.2));
-    const positions=[],indices=[],foot=new THREE.Vector3(),head=new THREE.Vector3(),at=new THREE.Vector3(),rows=sag?3:2;
+    const positions=[],indices=[],colours=[],foot=new THREE.Vector3(),head=new THREE.Vector3(),at=new THREE.Vector3(),rows=sag?6:2;
+    const weatherSeed = Math.round(random() * 100000);
+    const bare = colour.clone().lerp(tone(0x655c50), .64), oxide = tone(0x754425);
     for(let rib=0;rib<=ribs;rib++){
-      const u=rib/ribs,wave=(rib%2?.032:-.032);foot.lerpVectors(a,b,u);head.lerpVectors(c,d,u);
+      const u=rib/ribs,wave=(rib%2?.016:-.016);foot.lerpVectors(a,b,u);head.lerpVectors(c,d,u);
       const fray=random()*ragged,frayHead=random()*ragged*.5;
       for(let row=0;row<rows;row++){
         const v=row/(rows-1),t=v===0?fray/Math.max(.1,foot.distanceTo(head)):v===1?1-frayHead/Math.max(.1,foot.distanceTo(head)):v;
-        at.lerpVectors(foot,head,t).addScaledVector(normal,wave-(row===1&&rows===3?sag:0));positions.push(at.x,at.y,at.z);
+        at.lerpVectors(foot,head,t).addScaledVector(normal,wave - sag * Math.sin(v * Math.PI));positions.push(at.x,at.y,at.z);
+        const stain = lump(rib >> 1, row >> 1, weatherSeed) * .55 + lump(rib, 0, weatherSeed) * .32 + (1-v) * .21;
+        const patina = bare.clone().lerp(oxide, smooth((stain - .29) * 2.2)).multiplyScalar(.68 + .34 * lump(rib, row, weatherSeed));
+        colours.push(patina.r, patina.g, patina.b);
       }
     }
     for(let rib=0;rib<ribs;rib++)for(let row=0;row<rows-1;row++){const e=rib*rows+row,f=e+rows;indices.push(e,f,e+1,e+1,f,f+1);}
-    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);keep(kind,geometry,colour);
+    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,3));geometry.setIndex(indices);keep(kind,geometry);
   };
   // A tyre lying flat at a point (turn tips it): rubber is drawn with the earth, which does not rust. And an oil drum with its two rolled ribs.
   const tyre=(x,y,z,turn=[0,0,0],radius=.33,section=.115,squash=1)=>{
@@ -336,7 +340,7 @@ function assembly(){
 // ---- Drawing: a wrecked car ----------------------------------------------------------------------------------------------
 // A stripped shell built from stations along its length: a lower body with its wheel arches cut up into it, an open cabin with thin
 // pillars and a dished roof, and no glass. `front` is +z. The shell stands with its sills on the ground at y = 0.
-function drawWreck(kit,style,seed,{bonnet='shut',wheels=true}={}){
+function drawWreck(kit,style,seed,{bonnet='shut',wheels=true,close=false}={}){
   const random=mulberry(seed),between=(low,high)=>low+(high-low)*random(),pick=list=>list[Math.floor(random()*list.length)];
   const half=style.width/2,nose=style.length/2,frontArch=nose-.85,rearArch=-nose+.9,arch=.4;
   const zs=new Set([nose,nose-.12,style.scuttle,style.rear,-nose+.1,-nose,...style.posts]);
@@ -393,6 +397,34 @@ function drawWreck(kit,style,seed,{bonnet='shut',wheels=true}={}){
   // What is left inside: a seat back burnt to its frame, and now and then the wheel.
   kit.box('frame',half*1.5,.5,.09,PALETTE.burnt,between(-.04,.04),style.belt-.22,style.scuttle-.95,[-.3,0,between(-.06,.06)]);
   if(random()<.4){const wheel=new THREE.TorusGeometry(.17,.014,3,8);wheel.rotateX(-.45);wheel.translate(-half*.45,style.belt+.02,style.scuttle-.32);kit.keep('frame',wheel,PALETTE.iron);}
+  if (close) {
+    // What survives stripping: the lamp sockets, a crooked grille, hubs and the door hardware.
+    kit.box('frame', half * 1.56, .18, .06, PALETTE.burnt, 0, style.belt - .27, nose + .012);
+    for (let slat = 0; slat < 4; slat++)
+      kit.bar('frame', [-half*.48, style.belt-.34+slat*.042, nose+.05], [half*.46, style.belt-.31+slat*.041, nose+.055], .018, PALETTE.tube);
+    for (const side of [-1, 1]) {
+      const x = side * half * .72;
+      kit.tube('frame',[x,.53,nose-.018],[x,.53,nose+.067],.116,PALETTE.tube,10);
+      kit.tube('frame',[x,.53,nose+.067],[x,.53,nose+.071],.092,PALETTE.burnt,10);
+      kit.bar('frame',[side*half,.34,style.rear],[side*half,style.belt-.06,style.rear+.08],.018,PALETTE.iron);
+      kit.bar('frame',[side*(half+.025),style.belt-.14,style.rear+.16],[side*(half+.027),style.belt-.14,style.rear+.34],.027,PALETTE.chrome);
+      for (const z of [frontArch, rearArch]) {
+        kit.tube('frame',[side*(half-.32),.31,z],[side*(half-.04),.31,z],.19,PALETTE.rust[3],12);
+        kit.tube('frame',[side*(half-.045),.31,z],[side*half,.31,z],.074,PALETTE.iron,7);
+      }
+    }
+    // One door hangs off its latch. Its pressed panel and empty quarter-light also read from behind the shell.
+    const doorSide = style.scuttle - style.rear > 1.1 ? -1 : 1;
+    kit.within(kit.placed(doorSide*half,.01,style.scuttle-.06,-doorSide*.43,0,doorSide*.055),()=>{
+      kit.surface('sheet',5,3,(u,v)=>[doorSide*(.025+.07*Math.sin(Math.PI*v)),.26+v*(style.belt-.26),-u*1.03],other);
+      const top=style.roof-.13;
+      kit.bar('frame',[0,style.belt,0],[0,top,-.3],.035,body);
+      kit.bar('frame',[0,top,-.3],[0,top-.05,-.98],.036,body);
+      kit.bar('frame',[0,top-.05,-.98],[0,style.belt,-1.03],.034,body);
+      kit.bar('frame',[doorSide*.09,style.belt-.13,-.72],[doorSide*.09,style.belt-.13,-.88],.032,PALETTE.chrome);
+    });
+    kit.bar('frame',[-half*.88,.32,nose+.11],[half*.85,.24,nose+.18],.09,PALETTE.chrome,.07);
+  }
   // The bonnet stands open on some, with the engine gone or burnt to a lump.
   if(bonnet!=='shut'){
     kit.box('frame',.55,.38,.62,PALETTE.burnt,between(-.1,.1),.5,frontArch+.05,[between(-.1,.1),between(-.3,.3),between(-.1,.1)]);
@@ -439,14 +471,83 @@ function groundMarks(){
     let alpha=0;
     if(cx===0&&cy===0)alpha=smooth((ragged-far)/.34)*(.45+.75*blotch);
     else if(cx===1&&cy===0){
-      // Two rows of lugs with a gap down the middle, worn away in places and fading at both ends.
-      const across=Math.abs(u-.5),lug=Math.sin((v*9+(u<.5?0:.5))*Math.PI*2)>-.2?1:.35;
-      alpha=(across>.1&&across<.42?lug:0)*(.3+.9*blotch)*smooth(Math.min(v,1-v)/.05)*(1-smooth((across-.34)/.08));
+      const across = Math.abs(u-.5)*2;
+      alpha = (1-smooth((across-.46)/.53))*(.64+.34*blotch);
+
     }else if(cx===0&&cy===1)alpha=smooth((ragged+.25-far)/.5)*(.3+.7*smooth(far/.45))*(.5+.7*blotch);
     else alpha=Math.pow(Math.max(0,1-far),1.8);
     const index=(y*size+x)*4;data[index]=data[index+1]=data[index+2]=255;data[index+3]=Math.round(clamp(alpha)*255);
   }
   const map=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);map.magFilter=map.minFilter=THREE.LinearFilter;map.needsUpdate=true;return map;
+}
+
+// Three intersecting ribbons share a draw. Eddies travel up each ribbon at a different phase,
+// so a curl can break away on the sunlit side while the foot still looks dense from the rim.
+function tyreSmoke(index, wind, night) {
+  const sheets = [];
+  for (let side = 0; side < 3; side++) {
+    const angle = Math.PI * side / 3 + .41 * index;
+    const sheet = new THREE.PlaneGeometry(1, 1, 1, 48);
+    sheet.translate(0, .5, 0);
+    sheet.rotateY(angle);
+    const phase = new Float32Array(sheet.attributes.position.count).fill(side * 1.7 + index * 2.4);
+    sheet.setAttribute('phase', new THREE.BufferAttribute(phase, 1));
+    sheets.push(sheet);
+  }
+  const geometry = mergeGeometries(sheets);
+  sheets.forEach(sheet => sheet.dispose());
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      clock: {value: 0}, noiseMap: {value: scrapNoise()}, plumeHeight: {value: 92 + index * 6},
+      wind: {value: new THREE.Vector2(wind.x, wind.z).normalize()},
+      smokeTop: {value: new THREE.Color(night ? 0x776d62 : 0xb1a499)},
+    },
+    vertexShader: `
+      attribute float phase;
+      uniform float clock, plumeHeight;
+      uniform vec2 wind;
+      varying vec2 at;
+      varying float sheetPhase;
+      void main() {
+        at = uv;
+        sheetPhase = phase;
+        float h = position.y;
+        float roll = h * 34.0 - clock * .65 + phase;
+        float width = (.62 + 23.0 * pow(h,.82)) * (.88 + .14 * sin(roll));
+        vec2 drift = wind * (plumeHeight * .29 * h * h + h * sin(roll*.34));
+        drift += vec2(-wind.y,wind.x) * h * (1.5*sin(roll*.58) + .8*sin(roll));
+        vec3 p = vec3(position.x * width + drift.x, h * plumeHeight, position.z * width + drift.y);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0);
+      }`,
+    fragmentShader: `
+      uniform sampler2D noiseMap;
+      uniform float clock;
+      uniform vec3 smokeTop;
+      varying vec2 at;
+      varying float sheetPhase;
+      void main() {
+        float up = at.y, x = at.x*2.0-1.0;
+        vec2 uvSmoke = vec2(at.x*.82 + sheetPhase, up*4.8-clock*.083);
+        float fold = texture2D(noiseMap,uvSmoke).r;
+        float grain = texture2D(noiseMap,uvSmoke*2.1 + vec2(fold,-clock*.028)).g;
+        float swirl = sin(up*49.0 - clock*.8 + fold*5.0 + sheetPhase);
+        float body = 1.0 - abs(x+.13*swirl) + (fold-.5)*1.6 + (grain-.5)*.52;
+        float ink = smoothstep(.18,.76,body)*(.52+.3*fold);
+        ink *= smoothstep(0.0,.017,up) * (1.0-smoothstep(.52+.28*fold,1.0,up));
+        ink *= mix(.92,.39,up);
+        if (ink < .012) discard;
+        vec3 tint = mix(vec3(.025,.019,.016),smokeTop,smoothstep(.035,.83,up)*(.65+.35*fold));
+        gl_FragColor = vec4(tint*(.78+.36*fold+.14*swirl),ink);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 2;
+  mesh.userData.update = seconds => { material.uniforms.clock.value = seconds; };
+  return mesh;
 }
 
 // ---- Drawing: the site --------------------------------------------------------------------------------------------------------
@@ -548,7 +649,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   }
 
   // Every wreck of the layout: the pen's ring, the ones about the yard and the ones bedded in the walls.
-  const wreckAt=(row,pose,options,extra=placed(0,0,0))=>within(placed(row.x,ground(row.seat?.x??row.x,row.seat?.z??row.z),row.z,row.heading).multiply(extra),()=>drawWreck(kit,CAR_STYLES[row.style],row.seed+pose,options));
+  const wreckAt=(row,pose,options,extra=placed(0,0,0))=>within(placed(row.x,ground(row.seat?.x??row.x,row.seat?.z??row.z),row.z,row.heading).multiply(extra),()=>drawWreck(kit,CAR_STYLES[row.style],row.seed+pose,{...options,close:['yard-2','yard-4','pen-1','pen-9'].includes(row.id)}));
   for(const row of L.wrecks){
     const style=CAR_STYLES[row.style],random=mulberry(row.seed^0x51ed),between=(low,high)=>low+(high-low)*random();
     // On its side, a wreck of the pen turns its roof to the yard outside, and one against a wall turns its roof to the middle.
@@ -608,7 +709,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     if(row.lying)drum(0,.3,-.44,colour,[Math.PI/2,random()*3,0]);else drum(0,0,0,colour,[(random()-.5)*.08,random()*6,(random()-.5)*.08]);
   });
   // Heaps of scrap: a low mound of rust with pipe, sheet and a tyre or two standing out of it.
-  for(const heap of L.heaps)on(heap.x,heap.z,0,()=>{
+  for(const [heapIndex,heap] of L.heaps.entries())on(heap.x,heap.z,0,()=>{
     const random=mulberry(heap.seed),between=(low,high)=>low+(high-low)*random();
     // Several rounded mounds run together, as a heap is (docs/ART_LINE.md), not one cone.
     const mounds=[0,1,2,3].map(index=>({x:index?between(-.5,.5)*heap.radius:0,z:index?between(-.5,.5)*heap.radius:0,reach:heap.radius*between(.42,.62),high:heap.height*(index?between(.5,.85):1)}));
@@ -617,12 +718,20 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       let high=0;for(const mound of mounds)high=Math.max(high,mound.high*Math.exp(-((x-mound.x)**2+(z-mound.z)**2)/mound.reach**2));
       return [x,high*edge*(.85+.3*lump(Math.round(u*11),Math.round(v*11),heap.seed))-.06,z];
     },tone(0x4a3830),(u,v)=>[u*3,v*3]);
-    for(let piece=0;piece<16;piece++){
-      const angle=between(0,6.28),reach=between(.2,heap.radius*.8),x=Math.cos(angle)*reach,z=Math.sin(angle)*reach,y=heap.height*(1-reach/heap.radius)*.8;
-      if(piece%3===0)tube('frame',[x,y,z],[x+between(-.9,.9),y+between(.3,1),z+between(-.9,.9)],between(.02,.045),P.iron,5);
-      else if(piece%3===1)ribbed('sheet',[x-.5,y,z],[x+.5,y+between(-.1,.2),z+between(-.3,.3)],[x-.5+between(-.2,.2),y+between(.3,.6),z+.6],[x+.5,y+between(.3,.6),z+.7],P.tin[piece%P.tin.length],{random});
-      else tyre(x,y+.15,z,[between(-.9,.9),between(0,3),between(-.9,.9)]);
+    for (let piece = 0; piece < 14; piece++) {
+      const angle = between(0, 6.28), reach = between(.1, heap.radius * .8);
+      const x = Math.cos(angle) * reach, z = Math.sin(angle) * reach, y = heap.height * (1 - reach / heap.radius) * .9;
+      if (heapIndex === 0) {
+        const end = [x + between(-.17,.17), y + between(.05,.28), z + .95];
+        tube('frame',[x,y,z-.95],end,.10,P.rust[piece%6],8);
+        tube('frame',end,[end[0],end[1],end[2]+.008],.073,P.burnt,8);
+      } else if (heapIndex === 1) {
+        tyre(x, y+.17, z, [between(-.45,.45),angle,between(-.4,.4)], .4, .12);
+      } else {
+        ribbed('sheet',[x-.65,y,z-.55],[x+.54,y+.06,z-.56],[x-.58,y+.2,z+.64],[x+.62,y+.28,z+.62],P.tin[piece%6],{random});
+      }
     }
+
   });
 
   // The pen's gate: two leaves of angle iron and bed mesh with a car door wired to each, hung on leaning posts, and the chain.
@@ -756,6 +865,15 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     for(const side of [-.24,.24])bar('frame',[-w-.9,0,-.4+side],[-w-.12,back+.9,-.4+side],.045,P.timber[2]);
     for(let rung=0;rung<8;rung++){const t=(rung+.6)/8.6;bar('frame',[-w-.9+.78*t,(back+.9)*t,-.66],[-w-.9+.78*t,(back+.9)*t,-.14],.03,P.timber[0]);}
   });
+  // Laundry runs between the two eastern shelters. The middle sags under a blanket.
+  const lineAt = t => [13.1, ground(13.1, -8+10*t) + 2.18 - .56*Math.sin(Math.PI*t), -8+10*t];
+  for (let i=0;i<10;i++) bar('frame',lineAt(i/10),lineAt((i+1)/10),.018,P.rope);
+  for (const [t, length, drop, colour] of [[.11,.11,.64,4],[.26,.075,.45,2],[.4,.18,.91,1],[.66,.095,.72,3],[.8,.08,.51,4]]) {
+    surface('sheet',5,3,(u,v)=>{
+      const [x,y,z] = lineAt(t+u*length);
+      return [x + v*(.23+.1*Math.sin(8*u+t)), y-v*(drop+.08*Math.sin(5*u)), z];
+    },P.cloth[colour]);
+  }
   // The table: a car's bonnet laid on two trestles, with the book in which Sump writes down what he is owed, a mug and a scale pan.
   on(L.shack.table.x,L.shack.table.z,L.shack.table.heading,()=>{
     const random=mulberry(0x7ab1e),between=(low,high)=>low+(high-low)*random(),high=L.shack.table.height;
@@ -769,7 +887,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     tube('frame',[.3,high+.04,-.2],[.3,high+.15,-.2],.04,P.tube,6);tube('frame',[.05,high+.045,.22],[.05,high+.06,.22],.13,P.chrome.clone().multiplyScalar(.7),8,.15);
   });
 
-  // The Glasshouse's water cart. No Glasshouse look has merged, so this is a plain three-wheeled motor cart of the size the Glasshouse's
+  // The Glasshouse's captured three-wheeled motor cart, of the size the Glasshouse's
   // card gives (a drum of about 400 litres): a frame of tube, one wheel on forks in front and two behind, a seat over a small engine,
   // the drum in a cradle, and old windscreens in their stake frames stacked against a rack over it and roped down.
   on(L.cart.x,L.cart.z,L.cart.heading,()=>{
@@ -801,10 +919,17 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     const screen=(matrix,crack)=>within(matrix,()=>{
       const wide=between(1.24,1.38),tall=between(.6,.7);
       for(const [a,b] of [[[-wide/2,0,0],[wide/2,0,0]],[[-wide/2,tall,0],[wide/2,tall,0]],[[-wide/2,0,0],[-wide/2,tall,0]],[[wide/2,0,0],[wide/2,tall,0]]])bar('frame',a,b,.03,P.timber[crack%3],.022);
-      surface('glass',4,1,(u,v)=>[(u-.5)*(wide-.08)*(1-.12*v),.04+v*(tall-.08),.012+.07*Math.sin(u*Math.PI)],P.glass);
+      const pane = (u,v) => [(u-.5)*(wide-.08)*(1-.12*v),.04+v*(tall-.08),.012+.095*Math.sin(u*Math.PI)];
+      surface('glass',6,2,pane,P.glass);
+      // A strip of sky in the curved glass and a narrow polished upper edge against its dark seal.
+      surface('glass',4,1,(u,v)=>{
+        const [x,y,z] = pane(u,.42+.18*u+.085*v);
+        return [x,y,z+.008];
+      },tone(0xe1f8ff,1.5));
+      bar('frame',pane(.07,.98),pane(.94,.98),.019,P.chrome);
       if(crack%2)bar('frame',[-.2,.15,.075],[.25,.52,.075],.012,P.cloth[4]);
     });
-    for(const side of [-1,1])for(let leaf=0;leaf<3;leaf++)screen(placed(side*(.5+leaf*.06),.53+leaf*.02,-.55+between(-.05,.05),side*Math.PI/2+between(-.03,.03),-.31,0),leaf+(side>0?3:0));
+    for(const side of [-1,1])for(let leaf=0;leaf<3;leaf++)screen(placed(side*(.44+leaf*.085),.81+leaf*.13,-.55+between(-.05,.05),side*Math.PI/2+between(-.03,.03),-.34-leaf*.075,0),leaf+(side>0?3:0));
     screen(placed(0,1.96,-.55,Math.PI/2,-Math.PI/2+.04,0),1);
     // Rope over the lot, down to the frame on both sides.
     for(const z of [-1.05,-.1]){const over=[[-.62,.47,z],[-.66,1.2,z],[-.2,1.98,z],[.2,2,z],[.66,1.2,z],[.62,.47,z]];for(let index=0;index<over.length-1;index++)tube('frame',over[index],over[index+1],.011,P.rope,4);}
@@ -855,7 +980,9 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
 
   // The lamps: a storm lamp under the porch, and one each on a pole at the gate and at the bays.
   const lampAt=[];
-  for(const lamp of L.lamps){
+  // The lookout hangs a lamp over the road. Its baked pool reaches the wheel ruts without a seventh point light.
+  const lookout = {x:ROAD.top+6,z:ROAD.z+ROAD.half+.35,height:2.7,pole:true,lean:[.03,-.07]};
+  for(const lamp of [...L.lamps,lookout]){
     const base=ground(lamp.x,lamp.z);let x=lamp.x,z=lamp.z;
     if(lamp.pole){
       const tx=lamp.x+lamp.lean[0]*lamp.height,tz=lamp.z+lamp.lean[1]*lamp.height,ax=tx+.5,az=tz+.12;
@@ -867,7 +994,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     tube('frame',[x,y+.13,z],[x,y+.17,z],.075,P.iron,7,.03);tube('frame',[x,y-.15,z],[x,y-.09,z],.07,P.iron,7,.085);
     for(const side of [-1,1])bar('frame',[x+side*.075,y-.1,z],[x+side*.075,y+.15,z],.008,P.iron);
     const flame=new THREE.CylinderGeometry(.045,.055,.2,6);flame.translate(x,y+.02,z);keep('glow',flame,night?new THREE.Color(2.4,1.25,.42):new THREE.Color(.16,.14,.1));
-    lampAt.push({x,y,z,base});
+    lampAt.push({x,y,z,lookout:lamp===lookout});
   }
 
   // What lies on the ground: oil under each bay, tyre tracks in and out of the bays and down the road, scorch round each fire, the
@@ -888,26 +1015,73 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
       geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,4));keep(list,geometry);
     };
+    // Compacted sweepings tint the exposed floor. Follow the existing surface and feather
+    // into the foot of the walls. This is a translucent mark, like the silt at the drain.
+    const floorCoat = new THREE.PlaneGeometry(40, 82, 20, 41);
+    floorCoat.rotateX(-Math.PI/2);
+    const vertices = floorCoat.attributes.position, uv = floorCoat.attributes.uv, rgba = [];
+    const dust = tone(0x755b46);
+    for (let i = 0; i < vertices.count; i++) {
+      const x = vertices.getX(i), z = vertices.getZ(i), grain = lump(x,z,41);
+      const weight = smooth((insideRim(x,z)-CUT.run-.2)/1.8);
+      vertices.setY(i,ground(x,z)+.032);
+      uv.setXY(i,.25+(grain-.5)*.12,.25+(lump(x,z,9)-.5)*.12);
+      const tint = .82 + grain * .23;
+      rgba.push(dust.r*tint,dust.g*tint,dust.b*tint,weight*.96);
+    }
+    floorCoat.setAttribute('color',new THREE.Float32BufferAttribute(rgba,4));
+    keep('marks',floorCoat);
     for(const bay of L.bays){
       mark('spill','marks',bay.x+between(-.3,.3),bay.z+between(-.2,.9),between(0,3),between(1.5,2.4),between(1.2,1.9),P.oil);
       if(random()<.6)mark('spill','marks',bay.x+between(-.7,.7),bay.z-between(.6,1.6),between(0,3),between(.6,1.1),between(.5,.9),P.oil,.8);
-      for(const side of [-.62,.62])for(let piece=0;piece<4;piece++)mark('track','marks',bay.x+side+between(-.05,.05),bay.z-bay.depth/2-1.2-piece*2.3+2.6,between(-.03,.03),2.7,.34,P.track,between(.45,.9));
+      for(const side of [-.69,.69])mark('track','marks',bay.x+side,bay.z-4.2,0,11,.31,P.track,.68);
     }
-    for(let x=ROAD.top-10;x<ROAD.foot+7;x+=2.3)for(const side of [-1.9,-.75,.7,1.85])if(random()<.85)mark('track','marks',x,ROAD.z+side+between(-.15,.15),Math.PI/2+between(-.03,.03),2.75,.36,P.track,between(.5,1));
-    // The fan of tracks west of the road's top: many cars have come in from many ways.
-    for(const spread of [-.5,-.28,-.1,.08,.3,.52])for(let piece=1;piece<5;piece++){
-      const reach=piece*2.7,x=ROAD.top-10-Math.cos(spread)*reach,z=ROAD.z+Math.sin(spread)*reach;
-      if(Math.hypot(x,z)<L.radius-2)for(const side of [-.62,.62])mark('track','marks',x+Math.sin(spread)*side,z+Math.cos(spread)*side,Math.PI/2-spread,2.75,.36,P.track,between(.35,.8));
+    const start = ROAD.top-5, end = ROAD.foot+7;
+    for (const side of [-.84,.84]) mark('track','marks',(start+end)/2,ROAD.z+side,Math.PI/2,end-start,.45,P.track,.81);
+    for (const spread of [-.34,.02,.38]) for (const side of [-.84,.84]) {
+      mark('track','marks',start-2.8*Math.cos(spread),ROAD.z+side+2.8*Math.sin(spread),Math.PI/2-spread,5.7,.39,P.track,.57);
     }
     for(const fire of L.fires)mark('scorch','marks',fire.x,fire.z,between(0,3),4.6,4.6,P.soot,.95);
     mark('spill','marks',L.drain.from-3.4,L.drain.z,Math.PI/2,6.4,3,P.stain,.5);
     mark('spill','marks',L.shack.table.x+.4,L.shack.table.z+.5,1,2.2,1.6,P.oil,.5);
-    // The yard's floor is trodden and oil-soaked where people and cars go: dark soft patches along the ways between things.
-    for(const [x,z,size,strength] of [[2,-17,9,.3],[-4,-6,8,.34],[1,6,10,.3],[-6,18,9,.36],[3,27,12,.42],[-14,29,8,.4],[9,22,7,.3],[5,-1,6,.4],[2,-28,9,.34]])
-      mark('spill','marks',x,z,between(0,3),size*between(1.1,1.6),size*1.1,P.worn,strength*.75);
+    // Walked earth joins doorways and stopping places. The narrow dusty margins blend into the yard.
+    for (const way of [
+      [[L.pen.gate.x,L.pen.gate.z+1],[.3,-15],[-4,-9],[-6,-5.3]],
+      [[-6,-5.3],[-4,-1],[-1,5],[-3,8.2]],
+      [[-3,8.2],[-8,8.5],[-13,9]], [[-1,5],[6,2.9],[13,3.4]],
+      [[.3,-15],[-3.3,-16],[-7.3,-16]], [[.3,-15],[6,-8],[13,-10]],
+      [[-3,8.2],[.2,14],[1.3,21],[5,28],[12.5,30]]
+    ]) {
+      const curve = new THREE.SplineCurve(way.map(([x,z])=>new THREE.Vector2(x,z)));
+      const path = curve.getSpacedPoints(Math.ceil(curve.getLength()/1.1)), half = between(.73,1.03);
+      const edges = path.map((p,i)=>{
+        const prev=path[Math.max(0,i-1)],next=path[Math.min(i+1,path.length-1)];
+        const normal = next.clone().sub(prev).normalize();
+        return [-1,-.62,.62,1].map(off=>{
+          const reach = off*half*(.77+.41*lump(i,way.length,4));
+          const x = p.x-normal.y*reach, z = p.y+normal.x*reach;
+          return [x,ground(x,z)+.065,z];
+        });
+      });
+      const pos=[],rgba=[],uv=[];
+      for(let row=1;row<edges.length;row++) for(let band=0;band<3;band++) {
+        for(const [i,j] of [[row-1,band],[row-1,band+1],[row,band],[row-1,band+1],[row,band+1],[row,band]]) {
+          pos.push(...edges[i][j]);uv.push(.23+.2*lump(i,j,11),.26+.13*lump(i,j,7));
+          rgba.push(P.worn.r,P.worn.g,P.worn.b,j===0||j===3?0:(.23+.15*lump(i,j,4))*Math.min(1,i/2,(edges.length-1-i)/2));
+        }
+      }
+      const ribbon=new THREE.BufferGeometry();
+      ribbon.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+      ribbon.setAttribute('color',new THREE.Float32BufferAttribute(rgba,4));
+      ribbon.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+      keep('marks',ribbon);
+    }
     if(night){
       for(const fire of L.fires)mark('soft','pools',fire.x,fire.z,0,15,15,new THREE.Color(.55,.2,.045),1);
-      for(const lamp of lampAt)mark('soft','pools',lamp.x,lamp.z,0,8,8,new THREE.Color(.42,.24,.08));
+      for (const lamp of lampAt) {
+        if (lamp.lookout) mark('soft','pools',lamp.x+1.8,ROAD.z+1.2,Math.PI/2,16,10,new THREE.Color(.53,.23,.068));
+        else mark('soft','pools',lamp.x,lamp.z,0,8,8,new THREE.Color(.42,.24,.08));
+      }
     }
   }
 
@@ -917,7 +1091,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     sheet:new THREE.MeshStandardMaterial({name:'sheet, shells and cloth',vertexColors:true,roughness:.88,metalness:.08,side:THREE.DoubleSide,flatShading:true}),
     frame:new THREE.MeshStandardMaterial({name:'poles, iron, timber and rubber',vertexColors:true,roughness:.9,metalness:.08}),
     earth:new THREE.MeshStandardMaterial({name:'cut earth, rubble, concrete and rubber',vertexColors:true,roughness:1,metalness:0,map:grain}),
-    glass:new THREE.MeshStandardMaterial({name:'old windscreens',vertexColors:true,roughness:.22,metalness:0,transparent:true,opacity:.42,side:THREE.DoubleSide,depthWrite:false}),
+    glass:new THREE.MeshStandardMaterial({name:'old windscreens',vertexColors:true,roughness:.11,metalness:.16,envMapIntensity:1.9,transparent:true,opacity:.76,forceSinglePass:true,side:THREE.DoubleSide,depthWrite:false}),
     glow:new THREE.MeshBasicMaterial({name:'embers and lamp flames',vertexColors:true}),
     marks:new THREE.MeshStandardMaterial({name:'oil, tracks and scorch',vertexColors:true,map:marks,roughness:.85,metalness:0,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
     pools:new THREE.MeshBasicMaterial({name:'firelight on the ground',vertexColors:true,map:marks,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}),
@@ -958,16 +1132,16 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   }
   // Black tyre smoke from each fire, tall enough to stand over the rim from far off, leaning with the wind.
   const columns=L.fires.map((fire,index)=>{
-    const column=createSmokeColumn({height:92+index*6,foot:.7,top:17+index,wind,lean:.36+index*.04,colour:0x0b0a09,pale:0x3b3733,strength:.9});
+    const column = tyreSmoke(index, wind, night);
     column.name=`The Rats' Nest, smoke of tyre fire ${index+1}`;column.position.set(fire.x,ground(fire.x,fire.z)+1.5,fire.z);group.add(column);return column;
   });
   const lights=[];
   if(night){
     for(const fire of L.fires){const light=new THREE.PointLight(0xff8436,105,30,2);light.position.set(fire.x,ground(fire.x,fire.z)+1.7,fire.z);light.userData={strength:105,flicker:fire.seed};group.add(light);lights.push(light);}
-    for(const lamp of lampAt){const light=new THREE.PointLight(0xffb060,34,15,2);light.position.set(lamp.x,lamp.y-.05,lamp.z);light.userData={strength:34,flicker:null};group.add(light);lights.push(light);}
+    for(const lamp of lampAt.filter(lamp=>!lamp.lookout)){const light=new THREE.PointLight(0xffb060,34,15,2);light.position.set(lamp.x,lamp.y-.05,lamp.z);light.userData={strength:34,flicker:null};group.add(light);lights.push(light);}
   }
   const count={draws:0};group.traverse(node=>{if(node.isMesh||node.isPoints||node.isLine)count.draws++;});
-  group.userData={stage,triangles:kit.triangles+flames.length*2+columns.length*56,draws:count.draws,flames:flameMaterial,columns,lights,wear,floor,pools:materials.pools,
+  group.userData={stage,triangles:kit.triangles+flames.length*2+columns.reduce((sum, column) => sum + column.geometry.index.count / 3, 0),draws:count.draws,flames:flameMaterial,columns,lights,wear,floor,pools:materials.pools,
     dispose(){grain.dispose();marks.dispose();group.traverse(node=>{node.geometry?.dispose();node.material?.dispose?.();});}};
   return group;
 }

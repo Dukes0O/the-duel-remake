@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   GLASSHOUSE_LAYOUT, GLASSHOUSE_STAGES, GLASSHOUSE_BUDGET, GLASSHOUSE_PUMP, glasshouseLayout, glasshouseSolids, buildGlasshouse, updateGlasshouse, glasshouseGlint,
 } from '../src/world/open/looks/glasshouse-look.js';
-import {PICTURES, SITE, views, pageSources, nearestRoadPoint, lookBundle} from './scenarios/look-glasshouse.mjs';
+import {PICTURES, SITE, views, pageSources, lookBundle} from './scenarios/look-glasshouse.mjs';
 import {LAND} from '../src/world/scablands-names.js';
 
 const L = GLASSHOUSE_LAYOUT;
@@ -214,11 +214,11 @@ assert.throws(() => buildGlasshouse({stage: 'town'}), RangeError);
   const first = LAND.at('ships-in-sand', 2000, 700);
   assert.deepEqual(SITE, {x: first.x, z: first.z}, 'the scenario stands the camp at the first position of OPEN-SITES');
   const all = views();
-  assert.deepEqual(Object.keys(all), ['far', 'edge', 'rows', 'pump', 'clues']);
+  assert.deepEqual(Object.keys(all), ['far', 'edge', 'rows', 'pump', 'clues', 'cold']);
   const named = PICTURES.filter(picture => !picture.extra).map(picture => picture.name);
   assert.deepEqual(named, ['camp-far', 'camp-edge', 'camp-rows', 'camp-pump', 'burned-far', 'burned-edge', 'burned-rows', 'burned-pump', 'burned-clues'], 'the pictures the card lists, by name');
   assert.ok(PICTURES.every(picture => picture.view === 'glint' || all[picture.view]));
-  assert.ok(all.far.dusk && Math.abs(all.far.eye.up - 1.2) < .01 && nearestRoadPoint().distance >= 600, 'far is from the nearest road, at dusk, at car height');
+  assert.ok(all.far.dusk && Math.abs(all.far.eye.up - 1.2) < .01 && all.far.road === 'salt-road' && all.far.metres >= 1000 && all.far.metres <= 1150, 'the Salt Road tell is seen from a kilometre away, at dusk and at car height');
   assert.ok(Math.abs(all.edge.eye.x - SITE.x - L.spots['car-stop'].x) < 1e-9 && all.edge.eye.up === 1.6, 'edge is from car-stop at eye height');
   const pump = {x: SITE.x + L.things.pump.x, z: SITE.z + L.things.pump.z};
   assert.ok(Math.abs(Math.hypot(all.pump.eye.x - pump.x, all.pump.eye.z - pump.z) - 8) < .3, 'the pump is seen from 8 m');

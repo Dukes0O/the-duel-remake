@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {Scene, DirectionalLight} from 'three';
 import {beginOpenLand, stepOpenLand, holdOpenLand} from '../src/world/open/open-land.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {favoursOf, stageOf, wordOf} from '../src/world/open/open-record.js';
@@ -223,6 +224,23 @@ for (const site of LAND_SITES) for (const {at} of site.where) {
   const view = createSiteView({loadAsset: () => Promise.reject(Error('No graphics in this check.'))});
   view.update({open: begin(burned)}, poseOf(glasshouse, burned), 0);
   assert.ok(view.group.getObjectByName('The Glasshouse (burned, fresh)'));
+  const scene = new Scene(), sun = new DirectionalLight();
+  sun.castShadow = true;
+  sun.position.set(-8,5,9);
+  sun.target.position.set(2,1,3);
+  scene.add(view.group, sun, sun.target);
+  const unmended = sampleWorld('first-night');
+  const open = begin(unmended), at = poseOf(glasshouse, unmended);
+  open.parts.sites = {...open.parts.sites, partOfDay: 'day', need: 'glasshouse/pump'};
+  view.update({open}, {x:at.x+250,z:at.z}, 7);
+  const camp = view.group.getObjectByName('The Glasshouse (camp)');
+  assert.ok(camp?.visible && camp.userData.glint.visible, 'the day tell is visible from 250 m in the open roam');
+  assert.deepEqual(camp.userData.glint.material.uniforms.uSun.value.toArray(), [-10,4,6]);
+  assert.equal(camp.userData.glint.material.uniforms.uTime.value, 7, 'the glass still flashes with a stopped pump');
+  assert.equal(camp.userData.wheel.rotation.z, 0);
+  open.parts.sites.partOfDay = 'dark';
+  view.update({open}, at, 8);
+  assert.equal(camp.userData.glint.visible, false);
   view.dispose();
   assert.equal(siteLook('rats-nest', 'den'), null);
 }

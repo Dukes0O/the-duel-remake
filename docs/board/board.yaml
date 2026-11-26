@@ -1391,7 +1391,7 @@ tasks:
     lane: "RENDER"
     size: "S"
     status: "ready"
-    needs: [OPEN-LOOK-2]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-NEST-GROUND-2.md"
@@ -1445,18 +1445,6 @@ tasks:
 
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
-
-  - id: OPEN-LOOK-2
-    title: "Open Scablands: the Glasshouse and the Rats' Nest, round 2 from Claude's verdicts (the burned camp reads as burned)"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-2.md"
 
   - id: OPEN-JOURNAL-SIZE
     title: "Open Scablands: the open record's journal is folded when a hearth is banked, so a save cannot grow without limit"
