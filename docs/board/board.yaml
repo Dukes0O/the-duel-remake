@@ -1468,6 +1468,7 @@ tasks:
     needs: []
     locks: []
     flag: "story-choices"
+    claimed_by: "Codex (cloud), 26 November 2026"
     details: "docs/board/cards/OPEN-THREAD-SHAPE-2.md"
 
   - id: OPEN-FIGURES-4
