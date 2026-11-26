@@ -52,6 +52,8 @@ function sheet() {
 export async function run(context) {
   await context.navigate('/tools/menu-check.html?flags=story-choices,crew-gear&seed=' + fixture.seed + '&harness=open-map');
   await context.waitFor("window.__qaApp?.duel.state.status === 'menu' && !!window.__render", 'memory-only menu', 90000);
+  // The QA panel adds its temporary-player buttons after the menu is up: wait for the one this scenario uses.
+  await context.waitFor("[...document.querySelectorAll('details button')].some(b => b.textContent === 'Create temporary player ready for Night 2' && !b.hidden && !b.disabled)", 'Night 2 player button', 90000);
   await context.evaluate(`(() => {
     if (!window.name.startsWith('__duel_qa_tab_v2:') || !Object.getOwnPropertyDescriptor(window, 'localStorage')?.value)
       throw Error('Open map requires the memory-only QA page.');
