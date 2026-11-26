@@ -67,12 +67,17 @@ const HELPERS = `(window.__jobQa = {
     if (!s.autopilotOn) s.pressAutopilot();
     try { this.fly(seconds, () => ({}), v => v.cruiseOffered); } catch (e) { if (!/too long/.test(e.message)) throw e; }
   },
-  arrive(courseId) {
+  // A leg is two browser calls (arriveOut up to the accepted cruise, then arriveIn) because one call has 60 s and a whole
+  // leg on a busy laptop took longer (QA-NIGHT-26-NOV), as ski-finish's legs did. The steps and their order are unchanged.
+  arriveOut(courseId) {
     const s = this.s();
     if (s.destination !== courseId && !s.setDestination(courseId)) throw Error('cannot set ' + courseId);
     if (!s.autopilotOn) s.pressAutopilot();
     this.fly(400, () => ({}), v => v.cruiseOffered);
     if (!s.acceptCruise()) throw Error('cruise refused');
+  },
+  arriveIn(courseId) {
+    const s = this.s();
     this.fly(20, () => ({}), v => v.phase === 'flying' && v.courseId === courseId);
     if (!s.autopilotOn) s.pressAutopilot();
     // SKI-FINISH: with a ski flight in hand the leg ends beside the marked pads, and the autopilot goes to the nearest.
@@ -123,6 +128,12 @@ async function expect(context, expression, pattern, label) {
   return got;
 }
 
+// One leg of the autopilot, out of the area and then in to the pad, in two browser calls.
+async function arrive(context, courseId) {
+  await context.evaluate(`window.__jobQa.arriveOut(${JSON.stringify(courseId)})`);
+  await context.evaluate(`window.__jobQa.arriveIn(${JSON.stringify(courseId)})`);
+}
+
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1366, height: 768, deviceScaleFactor: 1, mobile: false});
   const report = {scope: 'Private QA page, released switches, memory-only saves; no frame timing.', facts: {}, pictures: {}};
@@ -147,7 +158,8 @@ export async function run(context) {
   await drawn(context);
   report.facts.flying = await expect(context, card, /Carrying\. Fly to Tremblant Snow\./, 'the card while carrying');
   await shot('job-card-flying', 'Job card while flying with the car');
-  await context.evaluate(`window.__jobQa.arrive('tremblant-snow'); window.__jobQa.setDown()`);
+  await arrive(context, 'tremblant-snow');
+  await context.evaluate(`window.__jobQa.setDown()`);
   await drawn(context);
   report.facts.releasePrompt = await expect(context, prompt, /^Press H to let go$/, 'the release prompt');
   report.facts.releaseCard = await expect(context, card, /Lower it onto the pad and press H to let go\./, 'the card at the drop-off');
@@ -160,12 +172,16 @@ export async function run(context) {
 
   // ---- Home for fuel (one tank does not carry the car and the 524 kg crate as well), then the crate beside the
   // Tremblant Snow pad, to Panorama Ridge ----
-  await context.evaluate(`(() => { const q = window.__jobQa; q.climb(45); q.arrive('tremblant-woods'); const v = q.s().view(); q.landAt(v.zone.x, v.zone.z); })()`);
+  await context.evaluate(`window.__jobQa.climb(45)`);
+  await arrive(context, 'tremblant-woods');
+  await context.evaluate(`(() => { const q = window.__jobQa, v = q.s().view(); q.landAt(v.zone.x, v.zone.z); })()`);
   await pause(600);
   await context.waitFor(`!!document.querySelector('[data-heli-fuel="fill"]')`, 'the pump', 30_000);
   await context.evaluate(`document.querySelector('[data-heli-fuel="fill"]').click()`);
   report.facts.refuelled = await context.evaluate(`window.__qaApp.heliView().heli.fuelKg`);
-  await context.evaluate(`(() => { const q = window.__jobQa; q.climb(45); q.arrive('tremblant-snow'); const v = q.s().view(); q.landAt(v.zone.x + 8, v.zone.z); })()`);
+  await context.evaluate(`window.__jobQa.climb(45)`);
+  await arrive(context, 'tremblant-snow');
+  await context.evaluate(`(() => { const q = window.__jobQa, v = q.s().view(); q.landAt(v.zone.x + 8, v.zone.z); })()`);
   await pause(5500);
   report.facts.crateOffer = await context.evaluate(text('.heli-arrival p'));
   const crate = await context.evaluate(`window.__qaApp.heliView().returnLoad`);
@@ -174,7 +190,9 @@ export async function run(context) {
   await context.evaluate(`(() => { const q = window.__jobQa; q.climb(20); q.overLoad(q.s().view().loads.find(l => l.returnJob)); })()`);
   await context.evaluate(`window.__qaApp._inputAction('heli-hook')`);
   report.facts.crateCard = await expect(context, card, /CRATE JOB.*Carrying\. Fly to Panorama Ridge\./, 'the crate card');
-  await context.evaluate(`window.__jobQa.climb(45); window.__jobQa.arrive('panorama-ridge'); window.__jobQa.setDown()`);
+  await context.evaluate(`window.__jobQa.climb(45)`);
+  await arrive(context, 'panorama-ridge');
+  await context.evaluate(`window.__jobQa.setDown()`);
   await expect(context, prompt, /^Press H to let go$/, 'the crate release prompt');
   await context.evaluate(`window.__qaApp._inputAction('heli-hook')`);
   report.facts.crateDelivered = await expect(context, card, /Delivered: [\d,]+ credits/, 'crate delivered');
@@ -202,7 +220,8 @@ export async function run(context) {
   await visit(context, 'home helipad for the ski drop');
   await context.waitFor(`!!document.querySelector('[data-ski-board="drop"]')`, 'ski box', 30_000);
   await context.evaluate(`document.querySelector('[data-ski-board="drop"]').click()`);
-  await context.evaluate(`window.__jobQa.climb(45); window.__jobQa.arrive('summit-run')`);
+  await context.evaluate(`window.__jobQa.climb(45)`);
+  await arrive(context, 'summit-run');
   report.facts.skiCardOnArrival = await expect(context, card, /Land on the ski pad under the orange light: .*km, heading \d{3}\./, 'the ski card at Summit Run');
   await context.evaluate(`window.__jobQa.toPad(${JSON.stringify(SKI_PADS.devils)})`);
   await drawn(context, 2500);
