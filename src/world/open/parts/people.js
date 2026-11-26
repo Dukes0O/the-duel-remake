@@ -4,13 +4,16 @@ import {scablandsActorHeightAt} from '../../scablands-ground.js';
 import {stepMover, FOOT_GRADE} from '../../scablands-movers.js';
 import {isTrue} from '../facts.js';
 import {followRoutine, routinePose} from '../routine-rule.js';
-import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
+import {DRY_PUMP_CAST, PEOPLE, LIGHTS_CAST} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
 import {scoutPeople} from '../content/burned-scout.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
+import {lightsTalkScene} from '../content/talk-lights.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
+import {LAND} from '../../scablands-names.js';
+import {lightsCrew} from '../content/lights-on-the-whites-places.js';
 import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
@@ -81,7 +84,13 @@ export const peoplePart = {
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
       row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
-    const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras, ...mallPeople];
+    const ships = LAND.at('ships-in-sand');
+    const lightsRows = view.checkpointsEnabled ? lightsCrew(world, view.threadMission, partOfDay).map(({id, position, deckHeight}) => {
+      const row = LIGHTS_CAST.find(person => person.id === id);
+      return {...row, elevation: deckHeight === undefined ? undefined : deckHeight - scablandsActorHeightAt(position.x, position.z),
+        routine: {day: {kind: 'post', at: ['ships-in-sand', position.x - ships.x, position.z - ships.z], action: 'stand'}}};
+    }) : [];
+    const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras, ...mallPeople, ...lightsRows];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.
@@ -91,7 +100,8 @@ export const peoplePart = {
       if (hasNamedSpot(plan)) return [];
       const target = targetFor(row, context, partOfDay);
       const person = state.cast.find(item => item.id === row.id);
-      if (!person) return [firstPose(row, target, peopleGrid)];
+      if (!person || row.elevation !== undefined || row.home === 'ships-in-sand')
+        return [firstPose(row, target, peopleGrid)];
       if (active?.person === row.id) return [faceDriver(person, driver, dt)];
       return [followRoutine(person, target, dt, {
         pace: STORY_FIGURES[row.figure].pace * 1.15, radius: person.radius, car: carPosition, grid: peopleGrid,
@@ -104,7 +114,7 @@ export const peoplePart = {
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {
         const talk = talkFor(rows.find(row => row.id === person.id), world,
-          id => haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
+          id => haulerTalkScene(id, context) ?? lightsTalkScene(id, context) ?? TOWN_SCENES[id], heard);
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);

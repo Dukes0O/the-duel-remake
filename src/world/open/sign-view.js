@@ -14,6 +14,7 @@ import {makeDryPumpLook} from './looks/dry-pump-look.js';
 import {isFresh} from '../../story/threads/signs.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 import {createHaulerLook} from './looks/stranded-hauler-look.js';
+import {createLightsLook} from './looks/lights-on-the-whites-look.js';
 import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
 
 function paintedSign({label}) {
@@ -158,7 +159,7 @@ export function createSignView() {
   group.add(flagSite.group);
   const smoke = new Map();
   const heaps = new Map();
-  let dryPumpLook;
+  let dryPumpLook, lightsLook;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -223,6 +224,11 @@ export function createSignView() {
       if (view.dryPumpEnabled && open.world.open.threads['dry-pump'] && !dryPumpLook)
         dryPumpLook = makeDryPumpLook(group);
       dryPumpLook?.update(open, here, (place, cast) => placeForThread(place, cast, view), drawnShift);
+      if (view.checkpointsEnabled && !lightsLook) {
+        lightsLook = createLightsLook();
+        group.add(lightsLook.group);
+      }
+      lightsLook?.update(open, signs.find(({sign}) => sign.kind === 'lights'), here, drawnShift);
       const columns = signs.filter(({sign, at}) => sign.kind === 'smoke' && at);
       const kept = new Set(columns.map(({id}) => id));
       for (const [id, mesh] of smoke) if (!kept.has(id)) disposeSmoke(id, mesh);
@@ -259,6 +265,7 @@ export function createSignView() {
     dispose() {
       hauler.dispose();
       flagSite.dispose();
+      lightsLook?.dispose();
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();

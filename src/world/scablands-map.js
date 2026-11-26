@@ -478,6 +478,9 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   // At 60 m a rider is only ten pixels from the car. Keep its mark above the
   // car's thirteen-pixel arrow so the last part of a scout chase stays visible.
   drawActors(ctx, view, actors, 5);
+  const open = frame.worldJob?.open;
+  const masthead = open?.parts.threads?.places.checkpointsEnabled && open.parts.checkpoints?.masthead;
+  if (masthead) drawActors(ctx, view, [{kind: 'rider', position: masthead}], 5);
   drawServiceMarks(ctx, view, marks.services, 7);
   if (town) drawActors(ctx, view, town.men.map(man => ({kind: 'hunter', position: man})), 5);
   // On the map a place already carries its name; a mark on the edge, or a point that is no place, says what it is and how far (km).

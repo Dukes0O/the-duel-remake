@@ -64,11 +64,17 @@ export function isArmed(checkpoint, world, camps) {
     !camps.some(camp => gap(checkpoint.position, camp.position) <= TIN_TOWN_CLEARANCE);
 }
 
+export function mastheadWatches(checkpoint, world) {
+  const road = checkpoint.at?.road;
+  const id = road === 'salt-road' ? 'watch/ships-salt-road' : road === 'ridge-spur' ? 'watch/ships-ridge-road' : null;
+  return id !== null && world.ledger.made.includes(id);
+}
+
 const feudRank = (world, group) => Math.max(0, FEUD_WORDS.indexOf(feudOf(world, group)));
 export function arrivalChance(checkpoint, world, camps) {
   const {position, feud, chance} = checkpoint;
   const weighted = chance + (feud ? .10 * feudRank(world, feud) : 0) + .03 * world.ledger.roadWord
-    - (towerSees(world, position) ? .15 : 0) - (camps.some(camp => gap(position, camp.position) <= 2000) ? .10 : 0);
+    - (towerSees(world, position) ? .15 : 0) - (mastheadWatches(checkpoint, world) ? .15 : 0) - (camps.some(camp => gap(position, camp.position) <= 2000) ? .10 : 0);
   return Math.max(.05, Math.min(.75, weighted));
 }
 

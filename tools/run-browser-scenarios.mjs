@@ -79,6 +79,12 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-somebody-elses-flag'], paths:['src/story/threads/content/somebody-elses-flag.js',
     'src/world/open/', 'src/story/threads/signs.js', 'src/story/scenes/burned-camp.js',
     'src/arena/modes/road-riders.js', 'src/arena/modes/world-job.js', 'src/sim-contacts.js']},
+  {prefixes:['open-lights-on-the-whites'], paths:['src/story/threads/content/lights-on-the-whites.js',
+    'src/story/threads/signs.js','src/world/open/parts/threads.js','src/world/open/parts/missions.js',
+    'src/world/open/content/lights-on-the-whites-places.js','src/world/open/content/mission-kinds.js',
+    'src/world/open/content/rescue-by-car.js','src/world/open/content/talk-lights.js','src/world/open/content/sites.js',
+    'src/world/open/looks/lights-on-the-whites-look.js','src/world/open/sign-view.js','src/world/deck-plates.js',
+    'src/world/open/roam-step.js','src/arena/modes/world-job.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||

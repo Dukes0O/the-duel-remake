@@ -10,6 +10,8 @@ const site = (id, positions, rules) => ({
   ...rules,
 });
 
+export const BUOY_POSITIONS = [['ships-in-sand', 2600, 150], ['ships-in-sand', 3800, 250], ['ships-in-sand', 2900, 700]];
+
 export const LAND_SITES = Object.freeze(requireSound([
   site('glasshouse', [['ships-in-sand', 2000, 700], ['dead-mall', -1500, -2150], ['tin-town', -200, 1900]],
     {foundWithin: 160, tell: 'dusk-smoke', tellWithin: 1500, leader: 'marigold', meeting: 'marigold', ashWary: true}),
@@ -20,6 +22,7 @@ export const LAND_SITES = Object.freeze(requireSound([
   site('sweet-seep', [['dead-mall', -1050, 300]], {foundWithin: 160, tell: 'green-patch', tellWithin: 700}),
   site(DRY_PUMP_CAMP.id, [DRY_PUMP_CAMP.at], {foundWithin: 120, tell: 'lamp', tellWithin: 500,
     leader: 'gasket', meeting: 'door', storyChoices: true}),
+  site('bell-buoy', BUOY_POSITIONS, {foundWithin: 24, tell: 'bell', tellWithin: 400, storyChoices: true}),
 ], checkSite, 'Open Scablands sites'));
 
 export const CAMP_SITES = Object.freeze(LAND_SITES.filter(site => site.kind === 'camp'));
