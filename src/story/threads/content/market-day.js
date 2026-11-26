@@ -72,7 +72,7 @@ export default {
             text: 'You told Dot that Tin Town would hold a market within five nights.'}],
           lines: [say('dot', "Go and ask each of them yourself, to their face. People come to a market when they've been asked, and they stay at home when they've only been told.")],
           next: 'asking'},
-        {id: 'not-now', words: 'Not now, Dot. Ask me another time.', effects: [], again: {afterNights: 3, times: 1}},
+        {id: 'not-now', words: "I can't do it now, Dot. Ask me another time.", effects: [], again: {afterNights: 3, times: 1}},
       ],
     },
 
@@ -80,7 +80,7 @@ export default {
     hearth: {
       when: {all: [marked('asked'), {reach: 'hearth'}]},
       lines: [
-        say('auntie-solder', 'A market, inside my fence? I suppose the pie woman put you up to it. I have two rules. Everybody leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.'),
+        say('auntie-solder', 'You want to hold a market inside my fence? I suppose the pie woman put you up to it. I have two rules. Everybody leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.'),
         say('auntie-solder', "There's room for five pitches round the yard, besides Dot's van at the gate. Who stands next to whom is your business, and I'd thank you to get it right."),
       ],
     },
@@ -93,8 +93,8 @@ export default {
       talks: [
         {id: 'ask-glasshouse', for: 'glasshouse', to: 'marigold', words: ASK,
           lines: [
-            say('marigold', "A market? I haven't sold beans across a table since Finch's mother was small. We'll bring beans, and seedlings under glass for anybody who wants to grow their own."),
-            say('marigold', 'Give us a wall that gets the sun, because seedlings sulk in the shade, and so do I. And tell me one thing first. Are the tinkers from the Bus Ring coming?', {when: {cast: 'odd'}}),
+            say('marigold', "Did you say a market? I haven't sold beans across a table since Finch's mother was small. We'll bring beans, and seedlings under glass for anybody who wants to grow their own."),
+            say('marigold', 'Give us a wall that gets the sun, because seedlings sulk in the shade, and so do I. Tell me one thing first, though. Are the tinkers from the Bus Ring coming?', {when: {cast: 'odd'}}),
           ],
           questions: [
             {id: 'what-tinkers-did', words: 'What did the tinkers do to you?', needs: {cast: 'odd'}, effects: [mark('heard-marigold')],
@@ -105,7 +105,7 @@ export default {
               thought: "That's easy to say today. I haven't been to the Bus Ring yet.",
               effects: [COMES, mark('told-no-tinkers'), {type: 'promise', id: `${ID}/no-tinkers`, person: 'glasshouse',
                 text: 'You told Marigold that the tinkers would not be at the market.'}],
-              lines: [say('marigold', "Good. Then we'll be there at first light, and I'll bring the big basket.")]},
+              lines: [say('marigold', "That's good to hear. We'll be there at first light, and I'll bring the big basket.")]},
             {id: 'tinkers-come', words: 'Yes. I mean to ask them, because a market is for everybody.', needs: {cast: 'odd'},
               thought: 'She might not come at all if I say this.',
               effects: [COMES, mark('told-tinkers-come')],
@@ -126,7 +126,7 @@ export default {
           effects: [COMES]},
         {id: 'ask-radio-hill', for: 'radio-hill', to: 'hetty', words: ASK,
           lines: [
-            say('hetty', "A market! Bern, did you hear that? I've been listening to other people's lives for eleven years, and now I can go and look at some of them."),
+            say('hetty', "There's going to be a market! Bern, did you hear that? I've been listening to other people's lives for eleven years, and now I can go and look at some of them."),
             say('bern', "We can't both go. Somebody has to stay with the set, or nobody is listening to the roads for a whole day. You'll have to choose which of us you want."),
           ],
           thoughts: ['Hetty hears everything, and she repeats most of it. Bern mends everything, and she hardly says a word.'],
@@ -134,7 +134,7 @@ export default {
             {id: 'hetty-comes', words: 'Come yourself, Hetty, and bring the news.',
               thought: "A stall wants somebody who talks. I only hope she doesn't tell everybody everything.",
               effects: [COMES, mark('hetty-came', 'Hetty will come to the market.')],
-              lines: [say('hetty', "I'll wear the good scarf. Bern, you'll write down everything you hear while I'm away, won't you? Every word of it.")]},
+              lines: [say('hetty', "I'll wear the good scarf. Bern, you'll write down everything you hear while I'm away, won't you? I want every word of it.")]},
             {id: 'bern-comes', words: 'Come yourself, Bern, and bring your tools.',
               thought: "Bern won't start any trouble. I'm not sure she'll start any talk, either.",
               effects: [COMES, mark('bern-came', 'Bern will come to the market.')],
@@ -145,7 +145,7 @@ export default {
           effects: [COMES]},
         // Any other guest.
         {id: 'ask-guest', for: 'any-other', to: '{guest.leader}', words: ASK,
-          lines: [say('{guest.leader}', "A market at Tin Town? Nobody has asked us anywhere in a long time. We'll come, and we'll bring what we have to sell.")],
+          lines: [say('{guest.leader}', "You're holding a market at Tin Town? Nobody has asked us anywhere in a long time. We'll come, and we'll bring what we have to sell.")],
           effects: [COMES]},
         // The odd one, written for the Bus Ring. Whether to ask is decided by driving there or by not driving there.
         {id: 'ask-bus-ring', for: 'bus-ring', role: 'odd', to: 'gasket', words: ASK,
@@ -162,7 +162,7 @@ export default {
       ],
       // The market can be called when two of the three have agreed. The player tells Dot.
       call: {to: 'dot', needs: TWO_COME, words: 'Tell Dot that the market is tomorrow',
-        lines: [say('dot', "Tomorrow, then. I'll light the oven tonight and I shan't sleep, and you'll owe me for that as well.")],
+        lines: [say('dot', "Then it's tomorrow. I'll light the oven tonight and I shan't sleep, and you'll owe me for that as well.")],
         next: 'stakes'},
     },
 
@@ -199,7 +199,7 @@ export default {
         say('finch', "Dace says he can run faster than our water cart. I told him that everybody can, because it's a water cart.", {for: ['glasshouse', 'walkers']}),
         say('hetty', "I've matched six voices to six faces this morning, and four of them look nothing like I pictured. The bean woman is a great deal shorter than she sounds.", {when: marked('hetty-came')}),
         say('bern', "I've mended three lamps and a radio. Nobody has asked me a single question, and it's the nicest morning I've had in years.", {when: marked('bern-came')}),
-        say('cinder', "I count five peoples inside one fence and nobody shouting. I never expected to see it, and I'm trying not to expect it to last."),
+        say('cinder', "There are people from every corner of the land inside one fence, and nobody is shouting. I never expected to see it, and I'm trying not to expect it to last."),
       ],
       next: 'rider',
     },
@@ -232,7 +232,7 @@ export default {
             say('marigold', 'I see how it is. This is a market for everybody, and that includes the people who smash other people\'s glass.', {low: true, for: 'glasshouse'}),
           ],
           next: 'quarrel'},
-        {id: 'turn-him-away', words: 'Not today. Moss, give him back his gun and see him on his way.',
+        {id: 'turn-him-away', words: "He isn't coming in today. Moss, give him back his gun and see him on his way.",
           thought: "He'll tell Sump that Tin Town turned him away over a fan belt.",
           effects: [mark('rider-turned-away', "A Road Rat was turned away from Tin Town's market.")],
           lines: [
@@ -243,7 +243,7 @@ export default {
         {id: 'at-the-fence', words: 'Moss, carry his scrap in and carry the belt out to him.',
           thought: 'That way, nobody has to stand next to him.',
           effects: [mark('rider-at-the-fence', "A Road Rat was served through the fence at Tin Town's market.")],
-          lines: [say('lug', "So my scrap can come in, and I can't. I've been served through a fence once before, and that was at a dog pound.")],
+          lines: [say('lug', "So my scrap can come in, and I can't. That's how people feed a dog that they're afraid of.")],
           next: 'quarrel'},
       ],
     },
@@ -261,11 +261,11 @@ export default {
       ],
       thoughts: ["If one of them knocks that table, there'll be glass all over the yard, and one of them will go home."],
       choices: [
-        {id: 'enough', words: "That's enough, both of you. Not in Auntie Solder's yard.",
+        {id: 'enough', words: "That's enough, both of you. You're not doing this in Auntie Solder's yard.",
           thought: "They'll stop because of Auntie. They won't have changed their minds about anything.",
           effects: [mark('peace-kept', "The growers and the tinkers kept the peace at Tin Town's market.")],
           lines: [
-            say('marigold', "I'll hold my tongue until dusk, for Dot's sake and for the old woman's. I shan't hold it one minute longer than that."),
+            say('marigold', "I'll hold my tongue until dusk, for Dot's sake and for Auntie Solder's. I shan't hold it one minute longer than that."),
             say('gasket', "That suits me. I came here to sell parts, and selling parts is what I'll do."),
           ],
           next: 'dusk'},
@@ -308,7 +308,7 @@ export default {
         say('dot', "That's a hundred and four pies sold, and one given away to a child who looked at me. I haven't had a day like this one in twenty years."),
         say('auntie-solder', "Nobody was shot, nobody was robbed, and nobody stood on my hearth stones. I'm not saying that we should do it again. I'm saying that I've seen worse days."),
         say('cinder', "Did you see the bean woman handing seedlings to the tinker? I'd have bet an ember against that this morning, and I never bet embers.", {when: marked('quarrel-mended')}),
-        say('cinder', "We began the day with five peoples in this yard, and we're ending it with four. A market shows you who your friends are. It shows them each other as well.",
+        say('cinder', "Somebody went home early today, and everybody else watched them go. A market shows you who your friends are. It shows them each other as well.",
           {when: {any: [marked('promise-broken'), marked('odd-sent-home'), marked('guest-sent-home'), marked('glass-broken')]}}),
       ],
       effects: [{type: 'made', id: `${ID}/market`, text: 'A market has been held at Tin Town.'}, {type: 'settle', id: `${ID}/hold-market`}, {type: 'word', person: 'dot', by: 1}],

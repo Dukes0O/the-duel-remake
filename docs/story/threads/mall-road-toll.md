@@ -91,8 +91,8 @@ wrecks, and the choice shows as "Walk up to the candle van".
 **If the player promised Sump that Tin Town would pay,** his first two lines are different, and paying here counts
 toward the five times that were promised.
 
-> **Sump:** There you are! I've been telling everybody that Tin Town would be along to pay, and here you are, right
-> on time.
+> **Sump:** There you are! I've been telling everybody that Tin Town would be along to pay, and here you are, right on
+> time.
 >
 > **Sump:** That's eight scrap, and it's the first of the five you promised me. I'm keeping count on the gatepost so
 > that neither of us forgets.
@@ -120,8 +120,8 @@ Nan was asked: "Nan Tallow said she would stop paying if she were not the only o
 The scrap goes into the bucket with the cue `open.toll.bucket`, the pole lifts, and the player drives through. Nothing
 else happens on the road that day. Every later crossing is the same small scene, and each one is a choice again.
 
-> **Sump:** Thank you kindly. You see how easy that was? Nobody shouted, and nobody lost a wheel. I do like a
-> customer who can count.
+> **Sump:** Thank you kindly. You see how easy that was? Nobody shouted, and nobody lost a wheel. I do like a customer
+> who can count.
 
 Sump's price follows what he has learnt. After the player's third payment he says so.
 
@@ -209,8 +209,8 @@ On Easy a pre-teen wins this about four times in ten, and the thought at the gat
   > **Sump:** All right, all right, that's enough! You've made your point, and you've made it all over my gate. Take
   > your road back, if it matters that much to you.
   >
-  > **Sump:** I had a fair price and a good pole, and you've cost me three buggies. I write down everything that
-  > I'm owed, and you've just gone to the top of the page.
+  > **Sump:** I had a fair price and a good pole, and you've cost me three buggies. I write down everything that I'm
+  > owed, and you've just gone to the top of the page.
 
   The wrecks are dragged apart by the people who were waiting, and the road is open. Nan Tallow drives through.
 
@@ -219,8 +219,8 @@ On Easy a pre-teen wins this about four times in ten, and the thought at the gat
 
 - **If the car is wrecked, or boxed in for six seconds,** it is the surround. Sump walks up to the window.
 
-  > **Sump:** That was a silly thing to do, and I'd been so pleasant to you. I'm taking half the scrap in this car
-  > for my pole. That isn't robbery. It's the bill for the damage.
+  > **Sump:** That was a silly thing to do, and I'd been so pleasant to you. I'm taking half the scrap in this car for
+  > my pole. That isn't robbery. It's the bill for the damage.
   >
   > **Sump:** Your car doesn't come through my gate again, at any price. If Tin Town wants this road, Tin Town can
   > send somebody with thirty scrap in a bucket to tell me it's sorry.
@@ -286,9 +286,9 @@ us at the gate?"
 | The camp's word | What is said | What it means |
 | --- | --- | --- |
 | Sworn | **Marigold:** We'll come, and we'll bring both carts. You don't need to promise us anything. You've kept every promise you ever made here, and that's why we're coming. | The camp stands, with two carts |
-| Friendly | **Marigold:** We've only the one cart, and it's the water cart. If he takes its wheels, nine people go thirsty. I'll bring it if you give me your word that your car stays right beside it. | The camp stands if the player says "You have my word. My car stays beside your cart." The promise goes on the page: "You promised the Glasshouse that your car would stay beside its cart at Sump's Gate." If the player says "I can't promise that." the camp does not stand |
+| Friendly | **Marigold:** We've only the one cart, and it's the water cart. If he takes its wheels, everybody at home goes thirsty. I'll bring it if you give me your word that your car stays right beside it. | The camp stands if the player says "You have my word. My car stays beside your cart." The promise goes on the page: "You promised the Glasshouse that your car would stay beside its cart at Sump's Gate." If the player says "I can't promise that." the camp does not stand |
 | Strangers | **Marigold:** We don't know you well enough for that. You're asking us to put our cart in front of the Road Rats on your say alone. Come back when we know you better. | The camp does not stand |
-| Wary or Cold | **Marigold:** No. And I'd think hard about who else you ask, because not everybody on this road wishes Tin Town well. | The camp does not stand. One time in two, drawn from the seed, somebody from the camp sells the plan to Sump for a free crossing |
+| Wary or Cold | **Marigold:** No. I'd also think hard about who else you ask, because not everybody on this road wishes Tin Town well. | The camp does not stand. One time in two, drawn from the seed, somebody from the camp sells the plan to Sump for a free crossing |
 
 **Rell,** at the Walkers' camp, if the Walkers are Friendly or better. The player asks: "Will the Walkers stand
 with us at the gate?"
@@ -299,13 +299,13 @@ with us at the gate?"
 **Nan Tallow,** at the gate or on the road. The player asks: "Will you stand with us at the gate?" She says yes
 once anybody besides Tin Town has said yes.
 
-> **Nan Tallow:** There are two of you already? Truly? Then I'm the third, and I shan't be the last. I told you I'd
+> **Nan Tallow:** Are there really two of you already? Then I'm the third, and I shan't be the last. I told you I'd
 > stop paying the day I wasn't the only one.
 
 If nobody besides Tin Town has said yes, she will not be the first.
 
-> **Nan Tallow:** Ask me again when you have somebody else. One van and one car aren't a refusal. They're two
-> people about to lose their wheels.
+> **Nan Tallow:** Ask me again when you have somebody else. One van and one car aren't a refusal. They're two people
+> about to lose their wheels.
 
 **Calling the morning.** When Tin Town and two others have agreed, Auntie Solder asks at the hearth.
 
@@ -378,16 +378,16 @@ If the player stays:
 **If the line holds.** The buggies pull back to the fire. Sump climbs down and walks along the whole line, looking at
 each cart, and then speaks loudly enough for everybody.
 
-> **Sump:** All right. I can do the sum as well as any of you, and there's no toll in it. So here's a different
-> offer, and you can all hear this one.
+> **Sump:** All right, I can do the sum as well as any of you, and there's no toll in it. So here's a different offer,
+> and you can all hear this one.
 >
 > **Sump:** A road wants looking after. For one scrap a cart, my lads keep this pass clear, tow anybody who breaks
 > down in it, and see off the Ash Men if they come sniffing. It isn't a toll. It's a wage.
 
 Those who stood each say one thing, and they do not agree.
 
-> **Dot:** I didn't get out of bed before dawn to haggle with him. We came here to pay nothing, and nothing is what
-> I mean to pay.
+> **Dot:** I didn't get out of bed before dawn to haggle with him. We came here to pay nothing, and nothing is what I
+> mean to pay.
 >
 > **Nan Tallow:** One scrap, and a tow when my axle goes? I've paid a lot more than that for a lot less. I'd take it
 > and be glad.
@@ -408,8 +408,8 @@ Those who stood each say one thing, and they do not agree.
 > **Sump:** *(2)* Now that is a deal! I told the lads that Tin Town could be reasoned with. You won't see a wreck on
 > this road that we didn't put there ourselves.
 >
-> **Dot:** *(2)* So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with
-> you. I shan't pretend that I like it.
+> **Dot:** *(2)* So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with you.
+> I shan't pretend that I like it.
 
 **If the line breaks.** A cart is pushed out for six seconds, a buggy on each side walks it to the bucket, and its
 driver pays.
@@ -417,8 +417,8 @@ driver pays.
 > **Sump:** There, that's one of you paid. One is all a toll ever needs. Tomorrow it will be two of you, and by the
 > end of the week you'll all be telling each other it was never worth the fuss.
 >
-> **Sump:** As for Tin Town, my gate is shut to you until I've had thirty scrap and an apology, and I want the
-> apology first.
+> **Sump:** As for Tin Town, my gate is shut to you until I've had thirty scrap and an apology, and I want the apology
+> first.
 
 **The ledger, by how it ended.**
 
@@ -433,7 +433,7 @@ driver pays.
 **Tied back, after driving through alone,** by whoever stood, at the player's next visit.
 
 > **Marigold:** We waited in that road until the sun was right up, and then we paid him, one cart at a time. Finch
-> asked me why you'd driven off without us. I told him I'd let you answer that yourself.
+> asked me why you'd driven off without us, and I said that you could answer that yourself.
 
 ## How you can lose
 

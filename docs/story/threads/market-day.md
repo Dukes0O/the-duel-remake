@@ -45,8 +45,8 @@ At the diner, or beside Dot's van at Tin Town's gate. The player walks up to Dot
 > **Dot:** Do you know that you have three lots of people out there who'd cross the road to say hello to you? I hear
 > it from every one of them, and I'm tired of carrying their messages to each other.
 >
-> **Dot:** When my mother was young and three camps were on speaking terms, they held a market. I think Tin Town
-> ought to hold one, and I think you're the one who ought to ask them.
+> **Dot:** When my mother was young and three camps were on speaking terms, they held a market. I think Tin Town ought
+> to hold one, and I think you're the one who ought to ask them.
 
 **You may ask before you answer. Asking costs nothing.**
 
@@ -62,17 +62,17 @@ At the diner, or beside Dot's van at Tin Town's gate. The player walks up to Dot
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | 1 | "Let's hold one. I'll go and ask them myself." | A promise goes on the page: "You told Dot that Tin Town would hold a market within five nights." | *If I ask them all and then it never happens, Dot will have baked a hundred pies for nobody.* | The asking begins (Scene 2). A market that is not held by the fifth night is called off, and Dot remembers it |
-| 2 | "Not now, Dot. Ask me another time." | Nothing changes | None | Dot asks once more after three nights, and never again |
+| 2 | "I can't do it now, Dot. Ask me another time." | Nothing changes | None | Dot asks once more after three nights, and never again |
 
 If the player says yes, Dot gives the one rule of asking.
 
-> **Dot:** Go and ask each of them yourself, to their face. People come to a market when they've been asked, and
-> they stay at home when they've only been told.
+> **Dot:** Go and ask each of them yourself, to their face. People come to a market when they've been asked, and they
+> stay at home when they've only been told.
 
 **At the hearth,** the same day or any day after, Auntie Solder gives the yard and its rules.
 
-> **Auntie Solder:** A market, inside my fence? I suppose the pie woman put you up to it. I have two rules. Everybody
-> leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.
+> **Auntie Solder:** You want to hold a market inside my fence? I suppose the pie woman put you up to it. I have two
+> rules. Everybody leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.
 >
 > **Auntie Solder:** There's room for five pitches round the yard, besides Dot's van at the gate. Who stands next to
 > whom is your business, and I'd thank you to get it right.
@@ -92,11 +92,11 @@ The player asks each people the same thing: "Will you come to a market at Tin To
 
 ### The Glasshouse
 
-> **Marigold:** A market? I haven't sold beans across a table since Finch's mother was small. We'll bring beans, and
-> seedlings under glass for anybody who wants to grow their own.
+> **Marigold:** Did you say a market? I haven't sold beans across a table since Finch's mother was small. We'll bring
+> beans, and seedlings under glass for anybody who wants to grow their own.
 >
-> **Marigold:** Give us a wall that gets the sun, because seedlings sulk in the shade, and so do I. And tell me one
-> thing first. Are the tinkers from the Bus Ring coming?
+> **Marigold:** Give us a wall that gets the sun, because seedlings sulk in the shade, and so do I. Tell me one thing
+> first, though. Are the tinkers from the Bus Ring coming?
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
@@ -108,10 +108,10 @@ The player asks each people the same thing: "Will you come to a market at Tin To
 | b | "Yes. I mean to ask them, because a market is for everybody." | Marigold folds her arms | *She might not come at all if I say this.* | The Glasshouse comes, for Dot's sake, and Marigold says where she will not stand |
 | c | "I haven't decided yet." | Nothing | None | The Glasshouse comes. If the tinkers are there, Marigold finds out when she sees them |
 
-> **Marigold:** *(a)* Good. Then we'll be there at first light, and I'll bring the big basket.
+> **Marigold:** *(a)* That's good to hear. We'll be there at first light, and I'll bring the big basket.
 >
-> **Marigold:** *(b)* Then put the whole yard between us and them, and I'll come for Dot's sake. I shan't promise
-> you that I'll be civil.
+> **Marigold:** *(b)* Then put the whole yard between us and them, and I'll come for Dot's sake. I shan't promise you
+> that I'll be civil.
 >
 > **Marigold:** *(c)* Then make up your mind before I've loaded the cart. I don't like surprises, and neither do
 > beans.
@@ -129,11 +129,11 @@ The player asks each people the same thing: "Will you come to a market at Tin To
 
 ### Radio Hill
 
-> **Hetty:** A market! Bern, did you hear that? I've been listening to other people's lives for eleven years, and
-> now I can go and look at some of them.
+> **Hetty:** There's going to be a market! Bern, did you hear that? I've been listening to other people's lives for
+> eleven years, and now I can go and look at some of them.
 >
-> **Bern:** We can't both go. Somebody has to stay with the set, or nobody is listening to the roads for a whole
-> day. You'll have to choose which of us you want.
+> **Bern:** We can't both go. Somebody has to stay with the set, or nobody is listening to the roads for a whole day.
+> You'll have to choose which of us you want.
 
 > *Hetty hears everything, and she repeats most of it. Bern mends everything, and she hardly says a word.*
 
@@ -142,8 +142,8 @@ The player asks each people the same thing: "Will you come to a market at Tin To
 | a | "Come yourself, Hetty, and bring the news." | Hetty is already looking for her coat | *A stall wants somebody who talks. I only hope she doesn't tell everybody everything.* | Hetty keeps a news stall. The player gets a rumour of a place. She also tells each people what the others have said about them on the radio, and the quarrel starts hotter |
 | b | "Come yourself, Bern, and bring your tools." | Bern nods once | *Bern won't start any trouble. I'm not sure she'll start any talk, either.* | Bern mends lamps and radios all day, the car's radio among them. No rumour. Hetty stays with the set, and says four times that she does not mind |
 
-> **Hetty:** *(a)* I'll wear the good scarf. Bern, you'll write down everything you hear while I'm away, won't you?
-> Every word of it.
+> **Hetty:** *(a)* I'll wear the good scarf. Bern, you'll write down everything you hear while I'm away, won't you? I
+> want every word of it.
 >
 > **Bern:** *(b)* I'll bring the small soldering iron. Hetty, stop looking at me like that. You can go to the next
 > one.
@@ -155,8 +155,8 @@ there. A thought comes when the player first looks at the Bus Ring's marker on t
 
 > *If I ask the tinkers, Marigold will be angry. If I don't ask them, they'll hear about the market anyway.*
 
-> **Gasket:** I'm Gasket, and this is the Bus Ring. We mend anything with a wheel on it, and we don't ask whose
-> wheel it is. People hold that against us.
+> **Gasket:** I'm Gasket, and this is the Bus Ring. We mend anything with a wheel on it, and we don't ask whose wheel
+> it is. People hold that against us.
 
 When asked to the market:
 
@@ -178,7 +178,7 @@ mark is written until the day, when being left out is written.
 The market can be called when two of the three guests have agreed. The player tells Dot, at the diner or at the
 gate, with the choice "Tell Dot that the market is tomorrow".
 
-> **Dot:** Tomorrow, then. I'll light the oven tonight and I shan't sleep, and you'll owe me for that as well.
+> **Dot:** Then it's tomorrow. I'll light the oven tonight and I shan't sleep, and you'll owe me for that as well.
 
 At dusk the player walks Tin Town's yard with Auntie Solder. She hands over one painted stake for each people who is
 coming. A stake knocked in at a pitch, with the cue `open.market.stake`, is where that people stands tomorrow. Dot's
@@ -211,8 +211,8 @@ A mission, walked, of about eight minutes, inside Tin Town's fence. It holds the
 light Auntie Solder beats a ladle on a pot lid, with the cue `open.market.open`, and the gate opens. Carts come in.
 Moss takes each gun at the gate and hangs it on a rack. Tin Town's people wander from pitch to pitch.
 
-> **Dot:** Everything in this yard is a quarter cheaper today, and that includes my pies. Those are market prices,
-> and there won't be any haggling, because I've no patience for it.
+> **Dot:** Everything in this yard is a quarter cheaper today, and that includes my pies. Those are market prices, and
+> there won't be any haggling, because I've no patience for it.
 
 **Every friend's service is in one yard.** The player walks up to a stall and uses it, as a service is used anywhere.
 
@@ -239,13 +239,13 @@ Moss takes each gun at the gate and hangs it on a rack. Tin Town's people wander
 > **Bern:** I've mended three lamps and a radio. Nobody has asked me a single question, and it's the nicest morning
 > I've had in years.
 >
-> **Cinder:** I count five peoples inside one fence and nobody shouting. I never expected to see it, and I'm trying
-> not to expect it to last.
+> **Cinder:** There are people from every corner of the land inside one fence, and nobody is shouting. I never
+> expected to see it, and I'm trying not to expect it to last.
 
 **The rider at the gate.** At noon the gate bell rings. Moss calls the player over.
 
-> **Moss:** There's a Road Rat at the gate, and he's on his own. He handed me his gun before I'd asked for it, and
-> he says he only wants to buy a fan belt.
+> **Moss:** There's a Road Rat at the gate, and he's on his own. He handed me his gun before I'd asked for it, and he
+> says he only wants to buy a fan belt.
 >
 > **Lug:** My name's Lug. I have forty kilometres to drive home, and a fan belt that's held together with string. I
 > have scrap to pay for a new one, and I'm not here for anything else.
@@ -266,11 +266,11 @@ The yard has gone quiet, with the cue `open.market.hush`. Everybody is looking a
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | 1 | "He's hung up his gun like everybody else. Let him in to buy his belt." | Lug walks in, and Marigold turns her back | *If a market is for everybody, then it has to be for him as well.* | The tinkers are pleased and the growers are not. Sump hears that a Rat was served at Tin Town. The quarrel starts hotter |
-| 2 | "Not today. Moss, give him back his gun and see him on his way." | Lug shrugs and goes | *He'll tell Sump that Tin Town turned him away over a fan belt.* | The growers are pleased and the tinkers have lost a sale. The Road Rats remember which gate it was |
+| 2 | "He isn't coming in today. Moss, give him back his gun and see him on his way." | Lug shrugs and goes | *He'll tell Sump that Tin Town turned him away over a fan belt.* | The growers are pleased and the tinkers have lost a sale. The Road Rats remember which gate it was |
 | 3 | "Moss, carry his scrap in and carry the belt out to him." | Lug waits outside the gate | *That way, nobody has to stand next to him.* | He is served and not let in. Nobody is pleased, and nobody is very angry. Nothing is changed with Sump |
 
-> **Lug:** *(1)* Thank you. I'll tell Sump there's one gate on this road where a Rat can buy a fan belt without
-> being shot at. He'll think I'm making it up.
+> **Lug:** *(1)* Thank you. I'll tell Sump there's one gate on this road where a Rat can buy a fan belt without being
+> shot at. He'll think I'm making it up.
 >
 > **Marigold:** *(1, low)* I see how it is. This is a market for everybody, and that includes the people who smash
 > other people's glass.
@@ -281,8 +281,7 @@ The yard has gone quiet, with the cue `open.market.hush`. Everybody is looking a
 > **Gasket:** *(2)* I'd have liked to make that sale. You asked us to a market, and then you told us who we were
 > allowed to sell to.
 >
-> **Lug:** *(3)* So my scrap can come in, and I can't. I've been served through a fence once before, and that was at
-> a dog pound.
+> **Lug:** *(3)* So my scrap can come in, and I can't. That's how people feed a dog that they're afraid of.
 
 **When the Road Rats are at Raiding or worse,** Moss has not opened the gate at all, and his line is different. The
 three answers are the same.
@@ -318,22 +317,22 @@ lose.
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "That's enough, both of you. Not in Auntie Solder's yard." | They both stop | *They'll stop because of Auntie. They won't have changed their minds about anything.* | Both stay until dusk. Nothing is mended and nothing is broken |
+| 1 | "That's enough, both of you. You're not doing this in Auntie Solder's yard." | They both stop | *They'll stop because of Auntie. They won't have changed their minds about anything.* | Both stay until dusk. Nothing is mended and nothing is broken |
 | 2 | "Gasket, tell Marigold what you told me about that buggy." *(only if Gasket was asked why she mends for the Road Rats)* | Gasket looks at her boots | *Gasket said she'd been sorry ever since. Marigold has never heard her say so.* | Gasket says it, and offers what she can. Marigold takes it, unless the player broke a promise to her by having the tinkers here at all |
 | 3 | "Marigold has a right to be angry. Gasket, pack up your parts." | Gasket begins to pack | *Somebody has to go home, or this will go on all afternoon.* | The Bus Ring leaves at noon and its people go down a word. The Glasshouse owes the player a favour |
 | 4 | "Gasket has broken no rule here. Marigold, the gate is open if you can't bear it." | Marigold stares | *I asked the tinkers to come. I can't send them home for coming.* | The Glasshouse leaves at noon and its people go down a word. The Bus Ring's people go up to Friendly |
 
 **1. Peace kept.**
 
-> **Marigold:** I'll hold my tongue until dusk, for Dot's sake and for the old woman's. I shan't hold it one minute
+> **Marigold:** I'll hold my tongue until dusk, for Dot's sake and for Auntie Solder's. I shan't hold it one minute
 > longer than that.
 >
 > **Gasket:** That suits me. I came here to sell parts, and selling parts is what I'll do.
 
 **2. Gasket says it.**
 
-> **Gasket:** I mended that buggy. I knew whose it was, and I took the job because we hadn't eaten properly in a
-> week. I've been sorry every day since, and I didn't know how to come and tell you.
+> **Gasket:** I mended that buggy. I knew whose it was, and I took the job because we hadn't eaten properly in a week.
+> I've been sorry every day since, and I didn't know how to come and tell you.
 >
 > **Gasket:** I can't unbreak eleven frames. I can make you eleven new ones, with corners that a buggy would bounce
 > off, and I'd want nothing for them.
@@ -345,18 +344,18 @@ If no promise to Marigold was broken, the quarrel is mended.
 
 If the player told Marigold that the tinkers would not be there, she will not hear it.
 
-> **Marigold:** I was told that the tinkers wouldn't be here, and I was told it to my face. I'm not taking frames
-> or anything else from this market. Finch, load the cart.
+> **Marigold:** I was told that the tinkers wouldn't be here, and I was told it to my face. I'm not taking frames or
+> anything else from this market. Finch, load the cart.
 
 **3. The tinkers are sent home.**
 
-> **Gasket:** So that's how it is. We were asked to a market, and we're being sent home from it before noon. I'll
-> know better the next time anybody from Tin Town asks me anywhere.
+> **Gasket:** So that's how it is. We were asked to a market, and we're being sent home from it before noon. I'll know
+> better the next time anybody from Tin Town asks me anywhere.
 
 **4. The growers go home.**
 
-> **Marigold:** You'd keep the tinkers and send the growers home? Then you can eat tinkers' beans this winter, and
-> I hope they're as good as a tinker's word.
+> **Marigold:** You'd keep the tinkers and send the growers home? Then you can eat tinkers' beans this winter, and I
+> hope they're as good as a tinker's word.
 
 **If the player comes too late,** side by side, a frame is already in pieces.
 
@@ -382,16 +381,16 @@ gate and Moss hands back the guns.
 > **Dot:** That's a hundred and four pies sold, and one given away to a child who looked at me. I haven't had a day
 > like this one in twenty years.
 >
-> **Auntie Solder:** Nobody was shot, nobody was robbed, and nobody stood on my hearth stones. I'm not saying that
-> we should do it again. I'm saying that I've seen worse days.
+> **Auntie Solder:** Nobody was shot, nobody was robbed, and nobody stood on my hearth stones. I'm not saying that we
+> should do it again. I'm saying that I've seen worse days.
 
 Cinder says one more thing, by how the quarrel went.
 
 > **Cinder:** *(mended)* Did you see the bean woman handing seedlings to the tinker? I'd have bet an ember against
 > that this morning, and I never bet embers.
 >
-> **Cinder:** *(somebody went home)* We began the day with five peoples in this yard, and we're ending it with four.
-> A market shows you who your friends are. It shows them each other as well.
+> **Cinder:** *(somebody went home)* Somebody went home early today, and everybody else watched them go. A market
+> shows you who your friends are. It shows them each other as well.
 
 **The ledger at dusk.** Made: "A market has been held at Tin Town." The promise to Dot is kept and comes off the
 page. Dot: up one word. What the player spent at the stalls was taken by each service's own price.
@@ -419,12 +418,12 @@ to the Bus Ring, or by a tinker met on the road.
 
 Nobody dies, nothing saved is wiped, and no screen says the game is over.
 
-**If you never follow the sign.** After the second "not now", or six nights after Dot first spoke of it, Dot holds a
+**If you never follow the sign.** After the second refusal, or six nights after Dot first spoke of it, Dot holds a
 small market at the diner by herself. Tin Town is not in it, and no market stands at Tin Town. The growers and the
 tinkers meet there with nobody between them. Some nights later Marigold mentions it.
 
-> **Marigold:** Dot held a market at her diner. I went, and so did the tinkers, and nobody had thought about where
-> to put us. I shan't be going to another one.
+> **Marigold:** Dot held a market at her diner. I went, and so did the tinkers, and nobody had thought about where to
+> put us. I shan't be going to another one.
 
 ## What this changes later
 
@@ -440,7 +439,7 @@ tinkers meet there with nobody between them. Some nights later Marigold mentions
 
 | What is different | What happens |
 | --- | --- |
-| A guest who is not the Glasshouse, the Walkers or Radio Hill | That people's leader answers the asking with one line: **The leader:** A market at Tin Town? Nobody has asked us anywhere in a long time. We'll come, and we'll bring what we have to sell. |
+| A guest who is not the Glasshouse, the Walkers or Radio Hill | That people's leader answers the asking with one line: **The leader:** You're holding a market at Tin Town? Nobody has asked us anywhere in a long time. We'll come, and we'll bring what we have to sell. |
 | The Deck Folk are a guest | **Captain Imre:** The Deck Folk will send a shore party of four, with rope and salt. I'll enter it in the log as shore leave, which nobody on these ships has had in thirty years. |
 | No people is at odds with a guest | No odd one is cast, the stakes go in without a choice, and there is no quarrel. The rider at the gate is the day's one trouble |
 | The tinkers are not at the market | Lug has come for pies, and Dot is the one who would serve him. The question is "Dot, would you sell to him?", and his line and hers are below |
@@ -449,8 +448,8 @@ tinkers meet there with nobody between them. Some nights later Marigold mentions
 > **Lug:** My name's Lug. I could smell those pies from the Mall Road, and I have scrap to pay for two of them. I'm
 > not here for anything else.
 >
-> **Dot:** His scrap is as good as anybody's, and his manners can't be worse than some I've served. It's your
-> market, though.
+> **Dot:** His scrap is as good as anybody's, and his manners can't be worse than some I've served. It's your market,
+> though.
 
 ## When nobody ever wrote a fact it reads
 
@@ -477,7 +476,7 @@ tinkers meet there with nobody between them. Some nights later Marigold mentions
 
 Three sittings of about ten minutes, which may be days apart: Dot, the hearth and the first asking; the rest of the
 asking and the stakes; and the day. The driving between camps is the open land's own, and is not counted. A player
-who says "not now" twice has played two minutes of it.
+who refuses Dot twice has played two minutes of it.
 
 ## What it needs made
 

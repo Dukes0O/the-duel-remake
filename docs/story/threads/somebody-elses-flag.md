@@ -92,8 +92,8 @@ and forty empty cans.
 > **Miss Pell:** Good morning. This site is being improved by the water company. May I ask whether you're here as a
 > customer or as a member of the public?
 >
-> **Miss Pell:** I'm Miss Pell, and I'm the surveyor. I'm required to tell you that the rope is there for your
-> safety, although it's really there for ours.
+> **Miss Pell:** I'm Miss Pell, and I'm the surveyor. I'm required to tell you that the rope is there for your safety,
+> although it's really there for ours.
 
 **You may ask before you choose. Asking costs nothing.**
 
@@ -143,11 +143,11 @@ taken.
 
 A talk at the table. Miss Pell turns over a card, with the cue `open.flag.card`.
 
-> **Miss Pell:** There is a card for that, and it's called a Prior Use Schedule. If people drew water here before
-> the improvement, and somebody signs to say so, those people may go on drawing it free, up to a fixed number of cans.
+> **Miss Pell:** There is a card for that, and it's called a Prior Use Schedule. If people drew water here before the
+> improvement, and somebody signs to say so, those people may go on drawing it free, up to a fixed number of cans.
 >
-> **Miss Pell:** It needs two signatures. One is from somebody who drew the water. The other is from somebody who
-> will answer for them, and that would be you, signing for Tin Town.
+> **Miss Pell:** It needs two signatures. One is from somebody who drew the water. The other is from somebody who will
+> answer for them, and that would be you, signing for Tin Town.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
@@ -156,8 +156,8 @@ A talk at the table. Miss Pell turns over a card, with the cue `open.flag.card`.
 
 Marigold is asked to sign, at the rope.
 
-> **Marigold:** Sign a paper to drink water that I've been drinking for thirty years? I'll sign it, because beans
-> can't wait for me to feel better about it. I'd like somebody to remember that I didn't enjoy it.
+> **Marigold:** You want me to sign a paper to drink water that I've been drinking for thirty years? I'll sign it,
+> because beans can't wait for me to feel better about it. I'd like somebody to remember that I didn't enjoy it.
 
 > *If I sign, Marigold's people drink for nothing. I'd also be writing down that this water belongs to the company.*
 
@@ -169,8 +169,8 @@ Marigold is asked to sign, at the rope.
 > **Miss Pell:** *(a)* Thank you. That's the first schedule I've filled in all year. Most people shout at me, and
 > there isn't a card for shouting.
 >
-> **Marigold:** *(a)* Forty cans a week, and my name on a company's paper. Well, the beans will drink. I'll save
-> you the first basket, and I'll try not to think about the paper.
+> **Marigold:** *(a)* That's forty cans a week, and my name on a company's paper. Well, the beans will drink. I'll
+> save you the first basket, and I'll try not to think about the paper.
 
 **The ledger.** Mark: "Tin Town signed that the Sweet Seep is the water company's, and the Glasshouse draws from it
 free." A favour owed by the Glasshouse. The water men: Watching. The storyline ends with the water men as neighbours.
@@ -185,11 +185,11 @@ free." A favour owed by the Glasshouse. The water men: Watching. The storyline e
 A talk at the table, a drive home, and a drive back with the price.
 
 > **Miss Pell:** The Office sells anything, and there's a card for that as well. The tower, the fence, the forms and
-> the survey come to a hundred and sixty scrap today. From the morning we strike water, they come to two hundred
-> and forty.
+> the survey come to a hundred and sixty scrap today. From the morning we strike water, they come to two hundred and
+> forty.
 >
-> **Miss Pell:** I'm also told that Tin Town makes a kind of coal that burns all night. The Office would count one
-> of those as a hundred scrap, and I think it would sooner have one than not.
+> **Miss Pell:** I'm also told that Tin Town makes a kind of coal that burns all night. The Office would count one of
+> those as a hundred scrap, and I think it would sooner have one than not.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
@@ -200,17 +200,17 @@ A talk at the table, a drive home, and a drive back with the price.
 
 **At the hearth,** that evening.
 
-> **Auntie Solder:** You want to buy a well that isn't ours, from people who didn't dig it, with scrap that we
-> haven't got. I'll lend you sixty from the town's tin, and I shall want to know who is paying it back.
+> **Auntie Solder:** You want to buy a well that isn't ours, from people who didn't dig it, with scrap that we haven't
+> got. I'll lend you sixty from the town's tin, and I shall want to know who is paying it back.
 >
-> **Cinder:** Don't offer them an ember until you've counted the store. That's a night of fire going out through
-> the gate in a pot, and it won't come back as water.
+> **Cinder:** Don't offer them an ember until you've counted the store. That's a night of fire going out through the
+> gate in a pot, and it won't come back as water.
 
 In this example the player then has 150 scrap, which is ten short of today's price. The finder's fee is ten scrap,
 and it is still lying on Miss Pell's table. Marigold, if she is asked, offers what the Glasshouse has.
 
-> **Marigold:** We've no scrap worth the name. We can pay you in beans, a basket at every picking until you say
-> it's enough. I know that isn't what the white trucks want, so it will have to be what you want.
+> **Marigold:** We've no scrap worth the name. We can pay you in beans, a basket at every picking until you say it's
+> enough. I know that isn't what the white trucks want, so it will have to be what you want.
 
 **Carrying the price, by car.** The drive back to the site is a mission that holds nothing, so the checkpoints on the
 way are armed. Whatever is lost in a fight on the road is lost from the price, as section 15 says. This is the drive
@@ -237,8 +237,8 @@ stands on the bore.
 **The ledger.** Scrap and embers, as paid. A debt, if the sixty was lent: "You owe Auntie Solder sixty scrap from
 the town's tin." Made: "A hand pump stands on the Sweet Seep." Mark: "You bought the Sweet Seep back from the water
 company." The Glasshouse: up one word. A debt, if Marigold's offer was taken: "The Glasshouse owes you a basket of
-beans at every picking." The water men: Watching. The storyline ends with the water men as neighbours. The well belongs to nobody on any map: what the form
-is worth is for the join with the town to say.
+beans at every picking." The water men: Watching. The storyline ends with the water men as neighbours. The well
+belongs to nobody on any map: what the form is worth is for the join with the town to say.
 
 **Tied back,** some nights later, by a printed card pinned to Tin Town's notice board.
 
@@ -252,8 +252,8 @@ fought and why: the water company's crew, because they roped off water that othe
 it. When the car turns toward the rope, the two pickups roll out to meet it and sound their horns, with the cue
 `open.flag.horn`, and Miss Pell reads a card from behind the table.
 
-> **Miss Pell:** I'm required to read you this card before anything happens. "The company regrets any damage that
-> may shortly occur to your vehicle." I am sorry about this. It isn't personal.
+> **Miss Pell:** I'm required to read you this card before anything happens. "The company regrets any damage that may
+> shortly occur to your vehicle." I am sorry about this. It isn't personal.
 
 The pickups weigh three tonnes each, and they do not shoot. They shove, and with one on each side they box the car
 in against the rope, as the riders do today. They are slower than the player's car on every kind of ground. The
@@ -262,14 +262,14 @@ in ten.
 
 - **If the player wins,** the second pickup pulls back to the table.
 
-  > **Miss Pell:** That will do. Stop the drill, please, and bring down the flag. I shall have to write this up as
-  > an incident, and the Office reads every incident twice.
+  > **Miss Pell:** That will do. Stop the drill, please, and bring down the flag. I shall have to write this up as an
+  > incident, and the Office reads every incident twice.
 
   The crew load the drill and leave. They cap the bore with a steel plate and take the board. The Seep is as it was,
   with its reeds cut.
 
-  > **Marigold:** They've gone, and they've taken their price board with them. The Seep is still here. The reeds
-  > will take a year to grow back, but beans are patient, and so am I.
+  > **Marigold:** They've gone, and they've taken their price board with them. The Seep is still here. The reeds will
+  > take a year to grow back, but beans are patient, and so am I.
 
 - **If the car is wrecked, or boxed in for six seconds,** the pickups stop pushing.
 
@@ -288,8 +288,8 @@ men as a feud, and the price at the board is doubled for anybody from Tin Town.
 
 **Tied back, either way,** some nights later, by a printed card pinned to Tin Town's notice board.
 
-> **A printed card:** NOTICE. The water company has recorded an incident at site 14, and has instructed its people
-> to take an interest in Tin Town. Kind regards, the Office.
+> **A printed card:** The water company gives notice that it has recorded an incident at site 14, and that it has
+> instructed its people to take an interest in Tin Town. Kind regards, the Office.
 
 **Tied back, after the fee was taken,** by Finch, at the player's next visit to the Glasshouse.
 
@@ -313,8 +313,8 @@ Nobody dies, nothing saved is wiped, and no screen says the game is over.
 the price goes to six scrap a can within a week. A mark is written, "The water company keeps the Sweet Seep.", and
 the storyline ends with the water men as neighbours on their own terms. Some nights later Marigold mentions it.
 
-> **Marigold:** The Sweet Seep has a wire fence round it now, and a woman with a list. We buy ten cans a week, and
-> the beans get whatever is left when the people have drunk. I don't suppose you ever go out that way.
+> **Marigold:** The Sweet Seep has a wire fence round it now, and a woman with a list. We buy ten cans a week, and the
+> beans get whatever is left when the people have drunk. I don't suppose you ever go out that way.
 
 ## What this changes later
 
@@ -363,8 +363,8 @@ schedule, so the first choice of Scene 2 is not offered.
 
 If the sign is never followed and no camp is cast, Dot is the one who mentions it.
 
-> **Dot:** Somebody is selling water out of a can in the west, at six scrap a time, from a hole that used to be
-> free. I don't know who found it for them, and I hope it wasn't anybody I feed.
+> **Dot:** Somebody is selling water out of a can in the west, at six scrap a time, from a hole that used to be free.
+> I don't know who found it for them, and I hope it wasn't anybody I feed.
 
 ## When nobody ever wrote a fact it reads
 
@@ -379,8 +379,8 @@ If the sign is never followed and no camp is cast, Dot is the one who mentions i
 **When the water men's feud is already Raiding or worse,** from something done elsewhere, Miss Pell's greeting is
 different, the schedule is not offered, and the price is a quarter higher.
 
-> **Miss Pell:** I know your car. The Office keeps a file on Tin Town, and I've been told to read you only the
-> short cards.
+> **Miss Pell:** I know your car. The Office keeps a file on Tin Town, and I've been told to read you only the short
+> cards.
 
 ## Crossings
 

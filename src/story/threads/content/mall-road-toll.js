@@ -233,7 +233,7 @@ export default {
           {when: word(CAMP, 'Sworn'), effects: [STANDS_CAMP, mark('camp-two-carts')],
             lines: [say('{camp.leader}', "We'll come, and we'll bring both carts. You don't need to promise us anything. You've kept every promise you ever made here, and that's why we're coming.")]},
           {when: {all: [friendly(CAMP), {not: word(CAMP, 'Sworn')}]},
-            lines: [say('{camp.leader}', "We've only the one cart, and it's the water cart. If he takes its wheels, nine people go thirsty. I'll bring it if you give me your word that your car stays right beside it.")],
+            lines: [say('{camp.leader}', "We've only the one cart, and it's the water cart. If he takes its wheels, everybody at home goes thirsty. I'll bring it if you give me your word that your car stays right beside it.")],
             choices: [
               {id: 'promise-camp', words: 'You have my word. My car stays beside your cart.', effects: [STANDS_CAMP,
                 {type: 'promise', id: `${ID}/guard-camp`, person: '{camp}', text: "You promised {camp.name} that your car would stay beside its cart at Sump's Gate."}]},
@@ -242,7 +242,7 @@ export default {
           {when: strangers(CAMP),
             lines: [say('{camp.leader}', "We don't know you well enough for that. You're asking us to put our cart in front of the Road Rats on your say alone. Come back when we know you better.")]},
           {when: wary(CAMP), effects: [{...mark('sump-warned', 'Sump was warned about the stand.'), when: {fact: 'draw', name: 'sold', chance: .5}}],
-            lines: [say('{camp.leader}', "No. And I'd think hard about who else you ask, because not everybody on this road wishes Tin Town well.")]},
+            lines: [say('{camp.leader}', "No. I'd also think hard about who else you ask, because not everybody on this road wishes Tin Town well.")]},
         ]},
         {id: 'ask-walkers', to: 'rell', needs: friendly('walkers'), words: 'Will the Walkers stand with us at the gate?', answers: [
           {effects: [mark('stands-walkers', "The Walkers will stand at Sump's Gate.")],
@@ -250,7 +250,7 @@ export default {
         ]},
         {id: 'ask-nan', to: 'nan-tallow', words: 'Will you stand with us at the gate?', answers: [
           {when: ANOTHER, effects: [mark('stands-nan', "Nan Tallow will stand at Sump's Gate.")],
-            lines: [say('nan-tallow', "There are two of you already? Truly? Then I'm the third, and I shan't be the last. I told you I'd stop paying the day I wasn't the only one.")]},
+            lines: [say('nan-tallow', "Are there really two of you already? Then I'm the third, and I shan't be the last. I told you I'd stop paying the day I wasn't the only one.")]},
           {when: {not: ANOTHER},
             lines: [say('nan-tallow', "Ask me again when you have somebody else. One van and one car aren't a refusal. They're two people about to lose their wheels.")]},
         ]},
@@ -289,7 +289,7 @@ export default {
               {type: 'word', person: 'walkers', by: -1, when: stands('walkers')}],
             end: 'sold',
             tiedBack: {by: '{camp.leader}', when: stands('camp'),
-              lines: [say('{camp.leader}', "We waited in that road until the sun was right up, and then we paid him, one cart at a time. {camp.child} asked me why you'd driven off without us. I told him I'd let you answer that yourself.")]}},
+              lines: [say('{camp.leader}', "We waited in that road until the sun was right up, and then we paid him, one cart at a time. {camp.child} asked me why you'd driven off without us, and I said that you could answer that yourself.")]}},
           {id: 'stay', by: 'do', words: 'Stay where you are', thought: 'He only made me that offer because the line is holding.',
             lines: [
               say('you', "They came because I asked them, Sump. I'm staying where I am."),
@@ -299,7 +299,7 @@ export default {
       outcomes: {
         held: {
           lines: [
-            say('sump', "All right. I can do the sum as well as any of you, and there's no toll in it. So here's a different offer, and you can all hear this one."),
+            say('sump', "All right, I can do the sum as well as any of you, and there's no toll in it. So here's a different offer, and you can all hear this one."),
             say('sump', "A road wants looking after. For one scrap a cart, my lads keep this pass clear, tow anybody who breaks down in it, and see off the Ash Men if they come sniffing. It isn't a toll. It's a wage."),
             say('dot', "I didn't get out of bed before dawn to haggle with him. We came here to pay nothing, and nothing is what I mean to pay.", {when: stands('dot')}),
             say('nan-tallow', "One scrap, and a tow when my axle goes? I've paid a lot more than that for a lot less. I'd take it and be glad.", {when: stands('nan')}),

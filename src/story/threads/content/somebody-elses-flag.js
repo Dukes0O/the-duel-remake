@@ -145,7 +145,7 @@ export default {
           lines: [say('miss-pell', "It's forty cans a week for each camp that signs, which is one cartload. Anybody who isn't on the schedule pays at the board.")]},
       ],
       asked: [
-        say('marigold', "Sign a paper to drink water that I've been drinking for thirty years? I'll sign it, because beans can't wait for me to feel better about it. I'd like somebody to remember that I didn't enjoy it.", GLASSHOUSE),
+        say('marigold', "You want me to sign a paper to drink water that I've been drinking for thirty years? I'll sign it, because beans can't wait for me to feel better about it. I'd like somebody to remember that I didn't enjoy it.", GLASSHOUSE),
         say('{camp.leader}', "I'll sign it, because my people have to drink. I'd like it remembered that nobody asked us before the rope went up.", OTHER_CAMP),
       ],
       thoughts: ["If I sign, Marigold's people drink for nothing. I'd also be writing down that this water belongs to the company."],
@@ -157,7 +157,7 @@ export default {
             {type: 'favour', person: '{camp}', by: 1}],
           lines: [
             say('miss-pell', "Thank you. That's the first schedule I've filled in all year. Most people shout at me, and there isn't a card for shouting."),
-            say('marigold', "Forty cans a week, and my name on a company's paper. Well, the beans will drink. I'll save you the first basket, and I'll try not to think about the paper.", GLASSHOUSE),
+            say('marigold', "That's forty cans a week, and my name on a company's paper. Well, the beans will drink. I'll save you the first basket, and I'll try not to think about the paper.", GLASSHOUSE),
             say('{camp.leader}', "Forty cans a week will keep us. I'd sooner have had the seep the way it was, but I'll take the water.", OTHER_CAMP),
           ],
           end: 'shared',
@@ -262,7 +262,7 @@ export default {
           end: 'beaten'},
       },
       tiedBack: {by: 'printed-card', at: 'tin-town-board',
-        lines: [say('printed-card', 'NOTICE. The water company has recorded an incident at site 14, and has instructed its people to take an interest in Tin Town. Kind regards, the Office.')]},
+        lines: [say('printed-card', 'The water company gives notice that it has recorded an incident at site 14, and that it has instructed its people to take an interest in Tin Town. Kind regards, the Office.')]},
     },
   },
 
