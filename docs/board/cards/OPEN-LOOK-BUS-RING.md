@@ -79,6 +79,15 @@ that loads the storyline places the site in play; do not edit its files.
 
 Claude takes the pictures on the laptop and writes the verdict at the merge; round 2 is a card of its own.
 
+## Claude answers (26 November 2026, 19:10)
+
+1. **Whose spots:** your pick a. The look's `BUS_RING_LAYOUT.spots` and `busRingSolids` are the true ones. OPEN-T-MARKET
+   (or a small card after it) replaces its stand-in with a plain-data copy for the rules, held equal to the look by a
+   test, as `src/world/open/site-rule.js` does for the Glasshouse. `gasket` at the lathe, `workbench` the meeting place
+   and `bunk` are approved names; OPEN-T-MARKET's card now says so.
+2. **On the salt below the ridge:** your pick a for round 1. Keep the position, gate toward the Ridge spur. If Kyle or a
+   later verdict wants it in the hills, it is one line and new pictures.
+
 ## Sound cues
 
 None. The card that places the site names its own.

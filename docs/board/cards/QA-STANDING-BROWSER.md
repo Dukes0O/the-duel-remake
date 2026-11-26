@@ -68,6 +68,7 @@ None of the five faults was in the game.
 - **`deep-frames`** throws unless it has a visible window, and the nightly browser step has none and runs four browsers at
   once. Claude's ruling: it leaves that step and runs in the frame stage. That needs the frame stage's own list of three
   names (`tools/full-check.mjs`, three places) and a check of the deep-frames result, so it is a small job of its own.
+  Since 26 November that job is QA-NIGHT-TIMING-ALONE (Codex), with `convoy-frames` and `fire-view`.
 - **The frame stage** read High 34.3 and 35.1 ms and Performance 18.2 and 35.3 ms on two nights. Readings near 33 to 35 ms
   are two refreshes of the screen: the known sign that the laptop was not set to one screen (rule 8), not a slow game.
   To rule: whether the stage should say "not valid: more than one screen" and not count as a failure on such a night.

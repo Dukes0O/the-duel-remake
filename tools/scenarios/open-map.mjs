@@ -1,5 +1,6 @@
 // Laptop only. The fixture supplies what the driver already knows and a clear eastbound start.
 import {mkdir, rm, writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 import {applyEffects} from '../../src/world/open/open-effects.js';
 import {sampleWorld} from '../../src/world/open/samples.js';
 import {LAND} from '../../src/world/scablands-names.js';
@@ -81,9 +82,14 @@ export async function run(context) {
   })()`, 'finished terrain and updated small map', 120000);
   await context.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', {code: 'KeyM', bubbles: true, cancelable: true}))");
   await context.waitFor("!document.querySelector('.world-hud-map').hidden && window.__qaApp.duel.state.paused", 'whole map open');
-  const jpeg = await context.evaluate(`(${sheet})()`);
+  const jpeg = Buffer.from(await context.evaluate(`(${sheet})()`), 'base64');
+  // The sheet always goes to the output folder. It replaces the committed review sheet only when asked
+  // (OPEN_MAP_SHEET=1), like the other sheet scenarios: the night check runs on a clean copy and refuses
+  // a copy whose tracked files changed (QA-NIGHT-26-NOV).
+  await writeFile(join(context.outputDir, 'open-map-sheet.jpg'), jpeg);
+  if (process.env.OPEN_MAP_SHEET !== '1') return;
   const folder = new URL('../../docs/board/looks/open-map/', import.meta.url);
   await mkdir(folder, {recursive: true});
-  await writeFile(new URL('round-2.jpg', folder), Buffer.from(jpeg, 'base64'));
+  await writeFile(new URL('round-2.jpg', folder), jpeg);
   await rm(new URL('round-1.jpg', folder), {force: true});
 }
