@@ -5,7 +5,7 @@
 import {checkTalkRow} from '../check-tables.js';
 import {nameRow} from '../register.js';
 import {MARKET_TALK} from '../market-day-rule.js';
-import {THREADS_TALK} from './talk-threads.js';
+import {RUNAWAY_TALK, THREADS_TALK} from './talk-threads.js';
 import {SITES_TALK} from './talk-sites.js';
 import {FORGE_TALK} from './talk-forge.js';
 import {TOWN_TALK} from './talk-town.js';
@@ -23,4 +23,4 @@ export function joinTalkTables(tables) {
   return Object.freeze(Object.fromEntries(Object.entries(joined).map(([person, rows]) => [person, Object.freeze(rows)])));
 }
 
-export const TALK_TABLES = joinTalkTables([THREADS_TALK, SITES_TALK, FORGE_TALK, TOWN_TALK, MARKET_TALK, HAULER_TALK]);
+export const TALK_TABLES = joinTalkTables([THREADS_TALK, SITES_TALK, FORGE_TALK, TOWN_TALK, MARKET_TALK, RUNAWAY_TALK, HAULER_TALK]);

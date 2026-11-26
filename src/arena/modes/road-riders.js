@@ -267,9 +267,9 @@ export function roadRiderGoal(duel,car,dt) {
 }
 
 // Check actual cars in the player's own four directions. Merely assigning a rider to a slot confers no hold.
-function boxPressure(duel, cars, dt) {
+function boxPressure(duel, cars, dt, minimum = R.minimumBoxRiders) {
   const target=duel.state, at=worldPose(duel,target), sin=Math.sin(at.heading), cos=Math.cos(at.heading), occupied=new Set();
-  if (target.onFoot || cars.filter(car=>car.roadRider.slot !== null && car.roadRider.phase==='fighting').length<R.minimumBoxRiders) return false;
+  if (target.onFoot || cars.filter(car=>car.roadRider.slot !== null && car.roadRider.phase==='fighting').length<minimum) return false;
   for (const car of cars) {
     if (car.roadRider.slot === null || car.roadRider.phase !== 'fighting') continue;
     const me=worldPose(duel,car), dx=me.x-at.x, dz=me.z-at.z;
@@ -282,7 +282,8 @@ function boxPressure(duel, cars, dt) {
     if (Math.abs(side)<Math.abs(ahead)*R.axisShare) occupied.add(ahead>0?'front':'back');
     if (Math.abs(ahead)<Math.abs(side)*R.axisShare) occupied.add(side>0?'right':'left');
   }
-  return sides.every(side=>occupied.has(side));
+  return minimum === 2 ? (occupied.has('front') && occupied.has('back') ||
+    occupied.has('left') && occupied.has('right')) : sides.every(side=>occupied.has(side));
 }
 
 // A door that opens onto the player's car puts its man on the ground beside it, never standing in it (STORY-NIGHT-2-FLOW,
@@ -422,7 +423,7 @@ export function updateRoadFight(duel, world, dt) {
   if (fight.outcome) return;
   const boxed = fight.targetId === 'player' && (step.missionRule ? fightBoxed(
     {...worldPose(duel,duel.state), y: duel.state.groundHeight, speedMph: duel.state.speedMph}, cars.map(car => ({...worldPose(duel,car), y: car.groundHeight,
-      wrecked: car.combatWrecking})), worldPose(duel,duel.state).heading) : boxPressure(duel,cars,dt));
+      wrecked: car.combatWrecking})), worldPose(duel,duel.state).heading) : boxPressure(duel,cars,dt,step.box?.cars));
   if (boxed) {
     // Opposing tyres resist the drivetrain only while four actual bodies hold the car.
     const speed=duel.state.speedMph;
@@ -431,7 +432,7 @@ export function updateRoadFight(duel, world, dt) {
   fight.heldSec = boxed && Math.abs(duel.state.speedMph)<R.boxMph ? fight.heldSec+dt : 0;
   const target=arenaActor(duel,fight.targetId);
   const outcome=duel.state.combatWrecking || !target || target.combatWrecking || target.finished || target.crushed
-    ? 'lost' : fight.heldSec >= (step.missionRule?.boxedInSeconds ?? R.boxSeconds) ? 'surrounded' :
+    ? 'lost' : fight.heldSec >= (step.missionRule?.boxedInSeconds ?? step.box?.seconds ?? R.boxSeconds) ? 'surrounded' :
     step.missionRule?.winWrecks && cars.filter(car => car.combatWrecking).length >= step.missionRule.winWrecks ? 'won' :
     cars.every(car=>car.roadRider.phase!=='fighting') && !crewLoose(world,step) ? 'won' : null;
   if (!outcome) return;
@@ -488,7 +489,7 @@ function startCheckpointFight(duel, world, request) {
   const ids = added.length ? added : active.cars;
   active.cars.push(...added);
   const target = worldPose(duel, duel.state), tune = ROAD_GROUPS[request.group];
-  world.riderFight = {index:world.job.stepIndex, checkpointStep:{id:request.id, missionRule: request.missionRule}, targetId:'player',
+  world.riderFight = {index:world.job.stepIndex, checkpointStep:{id:request.id, box:request.box, missionRule: request.missionRule}, targetId:'player',
     riders:[...ids], ash:[], smothered:[], heldSec:0, elapsed:0, outcome:null};
   for (const id of ids) {
     const car = arenaActor(duel,id), rider = car.roadRider, at = worldPose(duel,car);
@@ -629,13 +630,20 @@ export function checkpointRoadView(duel, world) {
   });
   return {checkpointsEnabled:true, wrench, carSpeedMph: state.speedMph, recoveryPaid: world.missionRecoveryPaid === true,
     checkpointHeading:worldPose(duel,state).heading,
-    road:road && {id:road.id, cars, external:road.external}};
+    road:road && {id:road.id, cars, external:road.external,
+      ...(world.riderFight?.checkpointStep?.box ? {outcome:world.riderFight.outcome} : {})}};
 }
 
 export function applyCheckpointRoadRequest(duel, world, request) {
-  const state = duel.state, {action, id} = request, active = world.checkpointRoad;
+  const state = duel.state, {action, id} = request;
+  let active = world.checkpointRoad;
   // The shared riders request carries the id, group and vehicles with their own start and home.
   if (request.type === 'riders') {
+    if (active && request.replaceSurround && world.riderFight?.checkpointStep?.box &&
+        world.riderFight.outcome === 'surrounded') {
+      clearCheckpointRoad(duel, world);
+      active = null;
+    }
     if (active && active.id !== id || world.riderFight || !Array.isArray(request.vehicles) ||
         !Object.hasOwn(ROAD_GROUPS, request.group) || !active && !request.vehicles.length) return true;
     if (!active) {

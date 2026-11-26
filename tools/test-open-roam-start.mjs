@@ -5,6 +5,7 @@ import {yardHomeScreen} from '../src/screen-yard-home.js';
 import {OPEN_ROAM_ID} from '../src/world/open/roam-job.js';
 import {isHeld} from '../src/world/open/holds.js';
 import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
+import {beginLedger} from '../src/story/ledger-save.js';
 
 const memory = new Map();
 globalThis.localStorage = {getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
@@ -13,10 +14,20 @@ globalThis.cancelAnimationFrame = () => {};
 const on = {enabled: id => ['hidden-road', 'story-choices', 'crew-gear', 'warlord-cards'].includes(id)};
 const off = {enabled: id => ['hidden-road', 'crew-gear', 'warlord-cards'].includes(id)};
 
-const app = new App();
-app.audio.unlock = () => {};
-app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true, scrap: 120}};
-assert(app._saveProfile());
+function freshApp(night) {
+  memory.clear();
+  const app = new App();
+  app.audio.unlock = () => {};
+  const begun = beginLedger({...app.profile,
+    wasteland: {...app.profile.wasteland, discoveredGate: true, scrap: 120}},
+  {seed: app.seed, night, embers: 4});
+  assert(begun.ok);
+  app.profile = begun.profile;
+  assert(app._saveProfile());
+  return app;
+}
+
+const app = freshApp(1);
 
 // The button is on the Story Wall only with the switch on.
 const wall = flags => yardHomeScreen({profile: app.profile, playerName: app.player.name, escapeHTML: String, panel: 'cards', featureFlags: flags});
@@ -47,8 +58,9 @@ assert.deepEqual(worldJob.open.holds, [], 'being out in the open holds nothing')
 assert.equal(isHeld(worldJob.open.holds, 'checkpoints'), false);
 assert.equal(worldJob.night2, undefined);
 
-// A minute out in the open: the job is not done, the clock of the open land runs, and nothing was changed.
+// Night 1 has no eligible storyline. A minute out in the open changes nothing while the clock runs.
 const before = structuredClone(worldJob.open.world);
+assert.equal(before.ledger.night, 1);
 app.advance(60);
 state = app.duel.state;
 assert.equal(state.status, 'racing');
@@ -60,5 +72,36 @@ assert.deepEqual(state.arena.worldJob.open.events, []);
 // Leaving from the pause menu ends it, as it ends any world job.
 assert.equal(app.leaveWorldJob(), true);
 assert.equal(app.duel.state.status, 'arena_result');
+
+// Starting at home on night 2 counts as entering Tin Town. The director records eligibility and the stranger's arrival once.
+const night2 = freshApp(2);
+night2.duel.featureFlags = on;
+assert(night2.visitWasteland());
+night2.advance(8);
+assert(night2.isYardHomeActive());
+assert(night2.startOpenRoam());
+const night2Job = night2.duel.state.arena.worldJob;
+assert.equal(night2.duel.state.onFoot, true);
+assert(Math.hypot(night2.duel.state.fighter.x - NIGHT_2_SITES.hearthFront.position.x,
+  night2.duel.state.fighter.z - NIGHT_2_SITES.hearthFront.position.z) < 2);
+const expected = structuredClone(night2Job.open.world);
+assert.equal(expected.ledger.night, 2);
+const choiceId = 'threads/director/2/region-runaway-tin-town';
+const marks = ['runaway/director/eligible-2', choiceId];
+assert(marks.every(id => !expected.ledger.marks.includes(id)));
+expected.ledger.marks.push(...marks);
+expected.ledger.history.push(...marks.map(key => ({type: 'mark', key, choiceId, night: 2})));
+expected.open.threads.runaway = {beat: 'prints', began: 2, cast: {}, end: null};
+expected.open.journal.push({type: 'thread', key: 'runaway', before: null,
+  after: {beat: 'prints', end: null}, choiceId, night: 2});
+night2.advance(5); // The start countdown finishes before the open land is stepped.
+assert.deepEqual(night2Job.open.world, expected, 'entering Tin Town records only Runaway eligibility and arrival');
+night2.advance(55);
+assert.equal(night2.duel.state.status, 'racing');
+assert.equal(night2Job.job.done, false);
+assert(night2Job.open.seconds > 50);
+assert.deepEqual(night2Job.open.world, expected, 'the rest of the first minute adds no marks or other changes');
+assert.deepEqual(night2Job.open.events, []);
+assert.equal(night2.leaveWorldJob(), true);
 
 console.log('test-open-roam-start: ok');

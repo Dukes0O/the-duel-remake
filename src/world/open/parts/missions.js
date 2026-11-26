@@ -37,7 +37,8 @@ export const missionsPart = {
     const record = world.open.threads[active.thread];
     const current = kind.continues ? kind.continues(mission, record?.beat) : record?.beat === active.beat;
     const interrupted = (record?.end && !active.runAfterEnd) || !current || leave || !view.openRoam || view.missionLeaving ||
-      (view.combatWrecking && !['fight', 'rider-fight', 'outrun', 'escort'].includes(mission.kind) && !mission.rule?.wrecked);
+      (view.combatWrecking && !active.state.route?.road &&
+        !['fight', 'rider-fight', 'outrun', 'escort'].includes(mission.kind) && !mission.rule?.wrecked);
     const next = interrupted ? {state: active.state} : kind.step(mission, active.state, {...view, missionScrap: world.scrap}, dt, {record, world});
     if (next.events) next.events = next.events.map(event => ({...event, seconds}));
     if (!interrupted && !next.outcome) return {...next, state: {active: {...active, state: next.state}}};

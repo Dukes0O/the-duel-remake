@@ -42,12 +42,15 @@ export function createCarriedBrand() {
   let seconds = 0;
   return {group,
     update(state, drawnShift) {
-      const job = state?.arena?.mode === 'world-job' ? state.arena.worldJob?.job : null;
+      const worldJob = state?.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+      const job = worldJob?.job;
       const step = job?.steps?.[job.stepIndex], fighter = state?.fighter;
       const carried = job?.stepState;
-      group.visible = Boolean(step?.brand && carried?.brandsUsed > 0 && state.onFoot &&
+      const defenceBrand = worldJob?.threadDefence?.weapons.includes('brand');
+      const brandSeconds = defenceBrand ? 15 : carried?.brandSeconds;
+      group.visible = Boolean((defenceBrand || step?.brand && carried?.brandsUsed > 0) && state.onFoot &&
         fighter && !fighter.knockedDown);
-      const burning = group.visible && carried.brandSeconds > 0;
+      const burning = group.visible && brandSeconds > 0;
       light.intensity = burning ? R.brandLightIntensity : 0;
       flame.visible = burning; pool.visible = burning;
       // The rag itself stays black: only a dull glow shows where it burns.
@@ -62,7 +65,7 @@ export function createCarriedBrand() {
       group.rotation.set(fighter.pitch || 0, yaw, 0, 'YXZ');
       pool.position.y = .06 - R.brandHandHeight;
       // A brand in its last fifteen seconds burns low.
-      const share = burning ? Math.min(1, carried.brandSeconds / 15) : 0;
+      const share = burning ? Math.min(1, brandSeconds / 15) : 0;
       tongues.forEach((tongue, index) => {
         const lick = .8 + .3 * Math.abs(Math.sin(seconds * (5.1 + index) + index * 2.3));
         tongue.scale.set(R.brandFlameHeight * (.75 - .2 * index) * (.6 + .4 * share), R.brandFlameHeight * (1.55 - .4 * index) * lick * (.5 + .5 * share), 1);

@@ -8,6 +8,8 @@ import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
+import {runawayPeople} from '../content/runaway-places.js';
+import {runawayTalkScene} from '../content/talk-threads.js';
 import {routineFor} from '../routine-run-rule.js';
 import {marketPeople} from '../market-day-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
@@ -35,7 +37,7 @@ function firstPose(row, target, grid) {
 }
 
 export function talkFor(row, world, resolveScene = id => TOWN_SCENES[id], heard = []) {
-  const table = TALK_TABLES[row.talk] ?? [];
+  const table = TALK_TABLES[row?.talk] ?? [];
   for (const entry of [...table.filter(row => row.scene.startsWith('stranded-hauler/')),
     ...table.filter(row => !row.scene.startsWith('stranded-hauler/'))]) {
     if (entry.once && heard.includes(entry.scene)) continue;
@@ -74,14 +76,15 @@ export const peoplePart = {
       }
       if (event.type === 'talkChoice' && event.effects?.length)
         choices.push({id: active.scene + '/choose/' + event.id, effects: event.effects});
-      if (event.type === 'openTalkClosed') {
-        if (event.finished && !heard.includes(active.scene)) heard = [...heard, active.scene];
+      if (event.type === 'openTalkClosed' || event.type === 'openTalkSkipped') {
+        if (event.type === 'openTalkClosed' && event.finished && !heard.includes(active.scene)) heard = [...heard, active.scene];
         active = null;
       }
     }
     const flag = view.checkpointsEnabled ? flagPeople(world) : [];
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
       ...haulerPeople(world, {...view, seconds: context.seconds}), ...flag] : [];
+    const runaways = view.checkpointsEnabled ? runawayPeople(world, view.threadSearchCast, view.sitePositions, partOfDay) : [];
     const learner = view.dayClock ? routineFor(world).learner : null;
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
@@ -90,9 +93,15 @@ export const peoplePart = {
     const staged = Object.fromEntries(market.map(row => [row.id, (row.routine.day.at ?? row.routine.day.around).join('/')]));
     const stageAt = row => Object.hasOwn(staged, row.id) ? staged[row.id] : null;
     const rows = [...residents.filter(row => (standsHere(row, world) || row.id === learner) && !stageAt(row) &&
-      !flag.some(person => person.id === row.id)), ...[...extras, ...mallPeople].filter(row => !stageAt(row)), ...market];
+      !flag.some(person => person.id === row.id)), ...[...extras, ...mallPeople].filter(row => !stageAt(row)), ...market, ...runaways];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
+      if (row.position) {
+        const at = row.position;
+        const {height, width} = STORY_FIGURES[row.figure];
+        return [{id: row.id, figure: row.figure, position: {...at, y: at.y ?? scablandsActorHeightAt(at.x, at.z)},
+          yaw: row.yaw ?? 0, task: 'stand', radius: .4 * width * height / 1.7, height, distance: 0}];
+      }
       // A parallel card can supply a resolver for building or site spots.
       const hasNamedSpot = plan => (plan.stops?.some(stop => stop.at.length === 2) ||
         (plan.at ?? plan.around)?.length === 2);
@@ -108,13 +117,16 @@ export const peoplePart = {
       })];
     });
     const requests = [];
-    if (!active && onFoot && interact && !state.useHeld &&
+    if (!active && !view.threadSearchCast?.target && onFoot && interact && !state.useHeld &&
         !context.events?.some(event => event.type === 'routineInteraction')) {
       const nearest = cast.filter(person => distanceToPerson(person, driver) <= TALK_RANGE)
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {
-        const talk = talkFor(rows.find(row => row.id === person.id), world,
-          id => haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
+        const thread = view.checkpointsEnabled && (TALK_TABLES[person.id] ?? []).find(row =>
+          row.scene.startsWith('runaway/later/') && !heard.includes(row.scene) &&
+          (!row.needs || isTrue(row.needs, world)) && runawayTalkScene(row.scene, context));
+        const talk = thread ? {id: thread.scene, scene: runawayTalkScene(thread.scene, context)} : talkFor(rows.find(row => row.id === person.id), world,
+          id => (view.checkpointsEnabled ? runawayTalkScene(id, context) : null) ?? haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);
