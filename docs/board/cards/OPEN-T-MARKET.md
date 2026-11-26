@@ -60,6 +60,25 @@ and `npm run build`. It merges when that is green. Claude drives it in the merge
 The cues the storyline's file names. Any that are not in the sound bank keep their ids for OPEN-SOUND to register;
 list them in the change note.
 
+## Claude answers (26 November 2026, 18:15)
+
+**The day in the open land (one answer for OPEN-APPRENTICE-RUN, OPEN-T-RUNAWAY and OPEN-T-MARKET).** A roam's day
+passes on play time, never while the game is closed or paused: dawn 2 minutes, day 14, dusk 4, then dark until the
+player banks the hearth. The player banks at Tin Town's hearth, on foot, at dusk or in the dark, once a day. That is the
+open land's repeatable bank: it settles the open record and the ledger together, ends the day, and the next roam starts
+at dawn with the morning's lines. The authored Night 2 and its replay stay as they are. OPEN-APPRENTICE-RUN builds both
+pieces, the clock as a plain rule in `src/world/open/day-rule.js` giving `view.partOfDay` (`dawn`, `day`, `dusk`,
+`dark`) and the bank, because it holds the `save-shape` lock. Every other card reads `view.partOfDay` and supplies it
+in its own tests; nothing else keeps a clock of its own.
+
+1. **Dawn, noon and the beats that run side by side:** read `view.partOfDay` from the shared day (noon is the middle of
+   `day`). Your Market Day rows may show the hearth's rules during the invitations, start the yard mission after the
+   stakes, and let the day offer the rider, the quarrel and dusk, as you pick. Keep the deadline and refusal branches
+   explicit, and keep the authored text and counts.
+2. **Trade and pay:** no change to pay or prices in this card. The quarter off and the day's trade are written as
+   ledger outcomes and words. The later stock at the gate goes under **Owed** in the change note for a card of its own.
+3. **The quarrel:** cast the Bus Ring as the odd camp as you say, ending when the glass timer runs out: approved.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a

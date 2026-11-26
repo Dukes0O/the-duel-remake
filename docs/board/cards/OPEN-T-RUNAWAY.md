@@ -60,6 +60,26 @@ and `npm run build`. It merges when that is green. Claude drives it in the merge
 The cues the storyline's file names. Any that are not in the sound bank keep their ids for OPEN-SOUND to register;
 list them in the change note.
 
+## Claude answers (26 November 2026, 18:15)
+
+**The day in the open land (one answer for OPEN-APPRENTICE-RUN, OPEN-T-RUNAWAY and OPEN-T-MARKET).** A roam's day
+passes on play time, never while the game is closed or paused: dawn 2 minutes, day 14, dusk 4, then dark until the
+player banks the hearth. The player banks at Tin Town's hearth, on foot, at dusk or in the dark, once a day. That is the
+open land's repeatable bank: it settles the open record and the ledger together, ends the day, and the next roam starts
+at dawn with the morning's lines. The authored Night 2 and its replay stay as they are. OPEN-APPRENTICE-RUN builds both
+pieces, the clock as a plain rule in `src/world/open/day-rule.js` giving `view.partOfDay` (`dawn`, `day`, `dusk`,
+`dark`) and the bank, because it holds the `save-shape` lock. Every other card reads `view.partOfDay` and supplies it
+in its own tests; nothing else keeps a clock of its own.
+
+1. **Dawn, dusk and dark:** read `view.partOfDay` from the shared day, which OPEN-APPRENTICE-RUN is building now. Do not
+   keep a local clock; until the day lands, your tests and the scenario supply the part of the day. Nothing in this card
+   makes time pass for other storylines or changes the save.
+2. **The road out:** extend `reach` with optional rows (several destinations by condition, a surround, a breakout),
+   added so that a mission without them runs exactly as before. Prove that the burned camp's scouting is unchanged in
+   `test-open-missions.mjs`.
+3. **Outcomes kept in notes:** approved as you pick. Storyline rows run through the existing interact, talk and combat
+   adapters, with the authored lines and counts kept.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a
