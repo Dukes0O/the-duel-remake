@@ -57,6 +57,7 @@ function jpegDimensions(bytes, start, length) {
 }
 
 const generators = [
+  {script:'tools/blender/open-figures-2.py',args:[],recipeOnly:true,glb:['public/assets/models/wasteland/scablands/open-figures-2.glb']},
   {script:'tools/blender/story-walkers.py',args:[],recipeOnly:true,glb:['public/assets/models/wasteland/town/story-walkers.glb']},
   // TOWN-ART-WORKS keeps the recipe, not a .blend (AGENTS: no .blend files): it plans none.
   {id:'town-works',script:'tools/blender/town-works.py',args:[],candidate:true,recipeOnly:true,
