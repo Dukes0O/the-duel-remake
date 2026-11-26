@@ -79,6 +79,9 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-somebody-elses-flag'], paths:['src/story/threads/content/somebody-elses-flag.js',
     'src/world/open/', 'src/story/threads/signs.js', 'src/story/scenes/burned-camp.js',
     'src/arena/modes/road-riders.js', 'src/arena/modes/world-job.js', 'src/sim-contacts.js']},
+  {prefixes:['open-radio-hill-voice'], paths:['src/story/threads/content/radio-hill-voice.js',
+    'src/story/threads/signs.js','src/story/threads/director.js','src/world/open/',
+    'src/arena/modes/world-job.js','src/arena/modes/road-riders.js','src/sim-contacts.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||

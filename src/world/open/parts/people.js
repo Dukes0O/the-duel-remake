@@ -11,6 +11,8 @@ import {TOWN_SCENES} from '../content/talk-town.js';
 import {scoutPeople} from '../content/burned-scout.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
+import {POCKET_ID, radioPeople, PARROT_TALK, PARROT_SCENE} from '../content/radio-hill-voice-places.js';
+import {sitePosition} from '../site-rule.js';
 import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
@@ -77,7 +79,8 @@ export const peoplePart = {
     }
     const staged = view.checkpointsEnabled ? flagPeople(world) : [];
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
-      ...haulerPeople(world, {...view, seconds: context.seconds}), ...staged] : [];
+      ...haulerPeople(world, {...view, seconds: context.seconds}), ...staged,
+      ...radioPeople(world, view.checkpointSites?.[POCKET_ID] ?? sitePosition(POCKET_ID, world.open.landSeed))] : [];
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
       row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
@@ -104,7 +107,7 @@ export const peoplePart = {
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {
         const talk = talkFor(rows.find(row => row.id === person.id), world,
-          id => haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
+          id => id === PARROT_TALK ? PARROT_SCENE : haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);

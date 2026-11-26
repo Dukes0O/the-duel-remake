@@ -16,6 +16,7 @@ import {scablandsSurfaceHeightAt as heightAt} from '../src/world/scablands-groun
 import {stepMover} from '../src/world/scablands-movers.js';
 import {solidsNear} from '../src/world/scablands-solids.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
+import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {HILLS} from '../src/world/scablands-height.js';
 import {townOutpostWorld} from '../src/town/town-outpost-world.js';
 import {run as browserScenario} from './scenarios/open-find-camp.mjs';
@@ -35,7 +36,17 @@ for (const site of LAND_SITES) {
   const one = sitePosition(site.id, 12);
   assert.deepEqual(sitePosition(site.id, 12), one);
   const picked = Array.from({length: 50}, (_, seed) => JSON.stringify(sitePosition(site.id, seed)));
-  assert.equal(new Set(picked).size, site.where.length, site.id + ' can appear at each authored position');
+  if (site.id === 'the-pocket') {
+    const gate = NIGHT_2_SITES.gate;
+    const bearings = site.where.map(({at}) => LAND.at(...at));
+    const heading = point => Math.atan2(point.z - gate.z, point.x - gate.x);
+    for (const [seed, point] of picked.entries()) {
+      const hill = sitePosition('radio-hill', seed);
+      const swing = bearing => Math.cos(heading(hill) - heading(bearing));
+      const expected = [...bearings].sort((a, b) => swing(a) - swing(b))[0];
+      assert.deepEqual(JSON.parse(point), expected, 'the Pocket faces away from this seed’s hill');
+    }
+  } else assert.equal(new Set(picked).size, site.where.length, site.id + ' can appear at each authored position');
 }
 assert.notDeepEqual(sitePosition(glasshouse.id, 2), sitePosition(glasshouse.id, 12));
 assert.deepEqual(sitePosition('bus-ring', 12), LAND.at(...landSite('bus-ring').where[0].at));
@@ -52,7 +63,11 @@ for (const site of LAND_SITES) for (const {at} of site.where) {
     if (Math.hypot(dx, dz) <= 28) terrain.push(heightAt(p.x + dx, p.z + dz));
   assert.ok(Math.max(...terrain) - Math.min(...terrain) <= 2, label + ' is flat over 56 m');
   assert.equal(solidsNear(p.x - 28, p.z - 28, p.x + 28, p.z + 28, 0).length, 0, label + ' is clear');
-  assert.ok(distanceToNet(p.x, p.z) >= 600, label + ' is away from the road');
+  const roadGap = distanceToNet(p.x, p.z);
+  if (site.id === 'the-pocket') {
+    const distances = {'boneyard,1000,-300': 680, 'tin-town,300,-1700': 1000, 'tin-town,-2600,700': 415};
+    assert.ok(Math.abs(roadGap - distances[at.join(',')]) <= 10, label + ' has its authored road access');
+  } else assert.ok(roadGap >= 600, label + ' is away from the road');
   assert.ok(distance(p, LAND.at('tin-town')) >= 1500, label + ' is away from Tin Town');
   assert.ok(outposts.every(outpost => distance(p, outpost) >= 800), label + ' is away from other outposts');
   assert.ok(Math.abs(p.x) + 28 < SCABLANDS_LAYOUT.halfWidth && Math.abs(p.z) + 28 < SCABLANDS_LAYOUT.halfDepth);
@@ -60,7 +75,11 @@ for (const site of LAND_SITES) for (const {at} of site.where) {
   const mesa = HILLS.find(hill => hill.kind === 'mesa' && distance(p, hill) < hill.radius);
   const ramp = mesa && {x: mesa.x + Math.cos(mesa.rampAngle) * (mesa.radius + mesa.ramp + 12),
     z: mesa.z + Math.sin(mesa.rampAngle) * (mesa.radius + mesa.ramp + 12)};
-  const entry = nearestRoad(ramp ?? p), approach = ramp ? [entry, ramp, p] : [entry, p];
+  // The western Pocket is on the far side of a cut. Its way in leaves the East Road
+  // on the approach to the bridge; the geometrically nearest point faces the cut.
+  const westPocket = site.id === 'the-pocket' && at[1] === -2600;
+  const entry = nearestRoad(westPocket ? LAND.at('tin-town', -2774, 298) : ramp ?? p);
+  const approach = ramp ? [entry, ramp, p] : [entry, p];
   // Use the road way-finder on the approach road, then walk the off-road legs through the game's mover.
   assert.ok(roadWay(entry.road.points[0], entry), label + ' has a way onto its access road');
   const samples = sampleLine(approach, 2);

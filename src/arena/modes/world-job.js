@@ -1,3 +1,4 @@
+import {bankHearth} from '../../story/ledger.js';
 import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal,
   checkpointRoadView, applyCheckpointRoadRequest} from './road-riders.js';
 import {barricadeEnds} from '../../world/jobs/barricade.js';
@@ -1724,16 +1725,16 @@ function syncOpenPeople(worldJob) {
   if (moved) worldJob.solidGrid.setStoryPeople(people);
 }
 
-function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false, position}) {
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false, position, anchorPosition = false}) {
   const {job} = worldJob;
   const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
   const steps = job.steps.slice();
   // A talk on the radio (OPEN-THREADS: the questions home from a burned camp) has a speaker who is not standing here:
   // it is not ended by walking away, and nobody turns to face the player.
-  const standing = worldJob.storyPeople?.find(item => item.id === person) ?? (position && {position});
+  const standing = (!anchorPosition && worldJob.storyPeople?.find(item => item.id === person)) || (position && {position});
   const onRadio = radio === true || !standing;
   steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio,
-    ...(position ? {openPosition: position} : {})});
+    ...(position ? {openPosition: position, ...(anchorPosition ? {anchorPosition} : {})} : {})});
   worldJob.openRoamStepState = job.stepState;
   worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
   worldJob.storySpeaker = onRadio ? null : person;
@@ -1765,7 +1766,7 @@ export function stepWorldJob(duel, dt) {
     // OPEN-ROAM: external movement or leaving the driver's seat of the talk
     // closes this temporary step without routing a story choice.
     if (talkStep.openPerson && !talkStep.openRadio) {
-      const person = worldJob.storyPeople?.find(item => item.id === talkStep.openPerson) ??
+      const person = (!talkStep.anchorPosition && worldJob.storyPeople?.find(item => item.id === talkStep.openPerson)) ||
         (talkStep.openPosition && {position: talkStep.openPosition});
       if (!state.onFoot || !person || distanceToPerson(person, state.fighter) > TALK_RANGE) {
         worldJob.talkAction = null;
@@ -2115,6 +2116,8 @@ export function stepWorldJob(duel, dt) {
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
       people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
+      freeRoamDaylight: openRoam && worldJob.definition.open.partOfDay === undefined,
+      nightStartedAt: worldJob.openNightAt,
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
@@ -2288,7 +2291,21 @@ export function stepWorldJob(duel, dt) {
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
-      if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
+      if (checkpointsEnabled && request.type === 'threadBankHearth') {
+        const {world} = worldJob.open;
+        const {ledger} = bankHearth(world.ledger);
+        const id = 'checkpoint/bank/' + ledger.night;
+        worldJob.open = {...worldJob.open, world: applyEffects({...world, ledger},
+          {id, effects: [{type: 'rest', clear: true}]}).world};
+        worldJob.openNightAt = worldJob.open.seconds;
+        worldJob.openJobEvents = [...worldJob.openJobEvents, {type: 'hearthBanked'}];
+      } else if (checkpointsEnabled && request.type === 'threadCarPosition' && !state.onFoot) {
+        const at = duel.course.nearest(request.place.x, request.place.z, state.s);
+        const ground = duel.course.groundAt(at.s, at.lateral);
+        Object.assign(state, {s: at.s, prevS: at.s, lateral: at.lateral, prevLateral: at.lateral,
+          groundHeight: ground.y, prevGroundHeight: ground.y, speedMph: 0, headingError: 0, combatWrecking: false,
+          armor: request.armour});
+      } else if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
         putFighterOnGround(duel, state.fighter, request.place);
       } else if (checkpointsEnabled && request.type === 'missionLookouts') {
         const prefix = request.id + '/lookout/';
