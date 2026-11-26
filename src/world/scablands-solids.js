@@ -217,6 +217,7 @@ export function siteSolidRows(id, at, stage) {
 export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
   const openSolids = new Map();
+  let roomShells, roomGrid;
   const grid = {
     people: [],
     storyPeople: [],
@@ -231,7 +232,9 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     town: [],
     near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
-      for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
+      for (const solid of baseGrid.near(ax, az, bx, bz, pad)) {
+        if (!roomShells?.has(solid.id)) found.push(solid);
+      }
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.shelter) found.push(solid);
@@ -247,11 +250,19 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.storyPeople) found.push(solid);
       for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
+      // OPEN-DOORS: use a wall from the shared solids handler when it is present.
+      // These two fixed shack shells also have to work before OPEN-SITES joins.
+      if (roomGrid) for (const wall of roomGrid.near(ax, az, bx, bz, pad))
+        if (!found.some(solid => solid.id === wall.id)) found.push(wall);
       return found;
     },
     setOpenSolids(id, solids) {
       if (solids.length) openSolids.set(id, createSolidGrid(solids.map(solid => make(solid))));
       else openSolids.delete(id);
+    },
+    openBuildingShells(rows, walls) {
+      roomShells = new Set(rows.map(row => row.shell));
+      roomGrid = createSolidGrid(walls.map(make));
     },
     setPeople(people) {
       this.people = people.map(({id, position, floorHeight}) => make({id, kind:'person', shape:'ellipse',

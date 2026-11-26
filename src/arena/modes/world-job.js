@@ -42,6 +42,10 @@ import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
 import {BELL_CUE, fillWorkVehicleTank, loadWorkVehicle, pumpWorkVehicleTank, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
 import {groupKg} from '../../world/jobs/steps/haul.js';
+import {BUILDINGS} from '../../world/open/content/buildings.js';
+import {buildingWalls} from '../../world/open/building-rule.js';
+import {forgePosts} from '../../world/open/content/people-forge.js';
+import {applyEffects} from '../../world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
@@ -398,6 +402,19 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.tinTownGateProgress = 1;
     worldJob.solidGrid.setTownGate(NIGHT_2_SITES.gate, 1);
+  }
+  // OPEN-DOORS: only the story outing replaces the two shack shells and staffs their posts.
+  worldJob.serviceSheds = !!worldJob.open && !!duel.featureFlags?.enabled('story-choices') &&
+    definition.steps.length === 1 && definition.steps[0].kind === 'roam';
+  if (worldJob.serviceSheds) {
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.openBuildingShells(BUILDINGS, BUILDINGS.flatMap(buildingWalls));
+    const people = worldJob.storyPeople ?? [];
+    const posts = forgePosts(definition.open.partOfDay, scablandsSurfaceHeightAt);
+    // The shed staff stand at fixed posts; OPEN-ROAM's people part keeps them beside its own cast (syncOpenPeople).
+    worldJob.fixedOpenPeople = posts.filter(p => !people.some(other => other.id === p.id));
+    worldJob.storyPeople = [...people, ...createStoryPeople(worldJob.fixedOpenPeople)];
+    worldJob.solidGrid.setStoryPeople(worldJob.storyPeople);
   }
   return true;
 }
@@ -1458,6 +1475,18 @@ export function applyBellowsRestart(duel, worldJob, request) {
 
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
+    // OPEN-DOORS: the scrap effect has already returned a paid receipt to the part.
+    if (worldJob.serviceSheds && request.type === 'repair') {
+      duel.state.armor = Math.min(duel.state.maxArmor, duel.state.armor + request.armour);
+      worldJob.fieldPatched = false;
+      continue;
+    }
+    if (worldJob.serviceSheds && request.type === 'wash') {
+      const washed = applyEffects(worldJob.open.world, {id: 'car/wash', effects: [{type: 'dirt', to: 0}]});
+      worldJob.open = {...worldJob.open, world: washed.world};
+      continue;
+    }
+    if (worldJob.serviceSheds && request.type === 'shedCue') { night2Cue(duel, request.cue); continue; }
     if (applyBellowsRestart(duel, worldJob, request)) continue;
     if (applyBellowsFurnaceLeave(duel, worldJob, request)) continue;
     if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
@@ -1663,10 +1692,11 @@ function finishWorldJob(duel, worldJob) {
 // OPEN-ROAM: keep the cast array stable while figures move. The renderer
 // uses its identity to decide when a different group needs to be loaded.
 function syncOpenPeople(worldJob) {
-  const cast = worldJob.open.parts.people?.cast ?? [];
+  const cast = worldJob.open.parts.people?.cast ?? [], fixed = worldJob.fixedOpenPeople ?? [];
   let people = worldJob.storyPeople;
-  const changed = !people || cast.length !== people.length || cast.some((person, i) => person.id !== people[i].id);
-  if (changed) worldJob.storyPeople = people = createStoryPeople(cast);
+  // OPEN-DOORS: people at fixed posts (the shed staff) stand after the routine cast and are not moved here.
+  const changed = !people || cast.length + fixed.length !== people.length || cast.some((person, i) => person.id !== people[i].id);
+  if (changed) worldJob.storyPeople = people = createStoryPeople([...cast, ...fixed]);
   let moved = changed;
   cast.forEach((person, i) => {
     if (people[i].position !== person.position &&
@@ -2033,16 +2063,28 @@ export function stepWorldJob(duel, dt) {
   let openStep = null;
   const checkpointsEnabled = worldJob.open && duel.featureFlags?.enabled('story-choices') === true;
   if (worldJob.open) {
-    // OPEN-CHECKPOINTS and OPEN-ROAM: the road state, the clock's part of the day and the job's collision grid.
+    // OPEN-CHECKPOINTS, OPEN-ROAM and OPEN-DOORS: the road state, the clock's part of the day, the job's collision grid,
+    // and the car, the shed staff and the ash for the sheds.
     const road = checkpointsEnabled ? checkpointRoadView(duel, worldJob) : {};
     const openRoam = currentStep?.kind === 'roam';
-    openStep = stepOpenLand(worldJob.open, {...view, ...road, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? [],
-      openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined, partOfDay: worldJob.definition.open.partOfDay}, dt);
+    openStep = stepOpenLand(worldJob.open, {...view, ...road,
+      openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
+      serviceSheds: worldJob.serviceSheds,
+      car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
+      fieldPatched: worldJob.fieldPatched,
+      people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
+      greyWithAsh: worldJob.open.parts.buildings?.ash === true,
+      onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
+    worldJob.ashHit = false;
     worldJob.open = openStep.open;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
   }
   const next = stepJob(worldJob.job, view, dt);
-  if (worldJob.open) worldJob.openJobEvents = roadResult ? [...next.events, roadResult] : next.events;
+  if (worldJob.open) {
+    worldJob.openJobEvents = roadResult ? [...next.events, roadResult] : next.events;
+    const fall = next.stepState.bridgeAsh?.hitFall;
+    if (worldJob.serviceSheds && fall != null && fall !== previousStepState.bridgeAsh?.hitFall) worldJob.ashHit = true;
+  }
   worldJob.gasCarContacts = [];
   routeWorldNight2(duel, worldJob, previousStep, next);
   worldJob.job = next;

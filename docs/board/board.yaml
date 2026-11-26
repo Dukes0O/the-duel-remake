@@ -1372,18 +1372,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-DOORS
-    title: "Open Scablands: walk into the forge shed; Odessa mends the car and Moss washes it"
-    owner: "codex"
-    model: "astra"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-DOORS.md"
-
   - id: OPEN-STATE
     title: "Open Scablands: what the open land saves, and the new ledger effects"
     owner: "codex"
@@ -1462,7 +1450,7 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "backlog"
-    needs: [OPEN-DOORS]
+    needs: []
     locks: [sound-bank]
     flag: "story-choices"
     details: "docs/board/cards/OPEN-SOUND.md"

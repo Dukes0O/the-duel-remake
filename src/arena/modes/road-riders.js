@@ -330,6 +330,8 @@ function stepAsh(duel,world,step,dt) {
     const smothered=[];
     for (const car of [duel.state,...duel.state.opponents]) {
       if (dist(worldPose(duel,car),at)>R.ashRadius) continue;
+      // OPEN-DOORS: a sack coats the outing car where it lands.
+      if (car === duel.state && world.serviceSheds) world.ashHit = true;
       const id=car===duel.state?'player':car.arenaId;
       if(duel.state.combat.flameBurns?.[id]) {
         delete duel.state.combat.flameBurns[id]; setCarEffect(car,'burning',{duration:0}); smothered.push(id);
