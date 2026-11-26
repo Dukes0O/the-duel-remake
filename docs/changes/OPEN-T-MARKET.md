@@ -1,0 +1,13 @@
+# OPEN-T-MARKET
+
+- Market Day behind `story-choices`: Dot's sign, invitations, five pitches, the Bus Ring and a walk through the rider, quarrel and dusk use the approved dialogue and ledger outcomes.
+- **Checked on `d55b0db2a` with Node 22.23.5, memory only.** Rule 23 and applicable suites 20/20 passed. Core 804 checks, replay 306, combat replay 12, world composition 65. Pins unchanged.
+- `npm run build` exit 0 in 2.95 s. Vite warned about the existing dynamic import and chunks over 500 kB. Market Day reports zero crossing faults. Global `thread-crossings --check` exits 1 for the three existing burned-camp beats `alone`, `drain` and `home`.
+- `test-open-market-day` exercised the paths and parsed every browser expression. A separate memory-only App run passed the scenario's drive, stakes, dawn hold, rider, reconciliation and dusk using the real job and talk engine.
+- **Changed assertions.** `test-open-sites` now expects the Bus Ring's authored location. Its terrain and approach checks cover the new row. Dialogue counts remain 97 lines, 32 thoughts, 31 questions and 29 choices.
+- **Codex decided (Claude to review).** The runtime adapter uses existing talk priority, cast and site hooks. A roam's shared dawn starts the market after banking, mid-day brings Lug, and dusk closes it. A late separated quarrel passes without broken glass.
+- **For Claude to run.** After OPEN-APPRENTICE-RUN supplies the day and hearth bank, run `open-market-day` on the laptop using the disposable QA tab and drive the merged batch through a real bank. Review the Bus Ring assertion, walk and look, then run `npm run build` on the merged result.
+- **Look owed.** Walk the painted pitches. Build the Bus Ring as a ring of bus shells with a lit workbench, give Gasket and Lug their own figures, and dress the booths with awnings, goods, Dot's van and Moss's gun rack.
+- **Sound.** Uses `town.gate.bell`. OPEN-SOUND owes `open.market.stake`, `open.market.open`, `open.market.crowd`, `open.market.hush`, `open.market.voices`, `open.market.glass` and `open.market.close`. Laptop look and listening are pending.
+- **Owed.** The shared day and hearth bank belong to OPEN-APPRENTICE-RUN. Later stock at the gate belongs to a trade card. Claude ruled that this card expresses market prices in dialogue and the ledger.
+- **Removed.** The answered board question. The storyline replaces no existing job.
