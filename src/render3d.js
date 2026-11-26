@@ -375,7 +375,7 @@ export function attachRenderer(host, app) {
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
   // WILD-VIEW: the animals, a group of their own beside the cars; with the switch off nothing is drawn and nothing loads.
-  const wildlifeView=createWildlifeView({scene,host,onHit:strength=>app.audio?.animalHit?.(strength)});let wildlifeRevision=0;
+  const wildlifeView=createWildlifeView({scene,host,onHit:(strength,size)=>app.audio?.animalHit?.(strength,size)});let wildlifeRevision=0;
   // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
   const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});

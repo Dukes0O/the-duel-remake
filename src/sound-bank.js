@@ -822,6 +822,25 @@ export const SOUND_BANK = {
     rate: 0.72,
     layers: [tone(145, 0.18, 0.045, 'triangle', 0, 80)],
   }),
+  // WILDLIFE-HITS-2: the player's car hits an animal (switch wildlife-hits, src/wildlife-view.js). The splat is one of
+  // the recorded crash takes at the car-to-car crash's own gain (4.2), played lower and duller so it lands as a wet
+  // smack rather than metal, with a made-in-code splat on top that is at least as loud as the made-in-code crash
+  // (noise .62 against .56, thud .3 against .24) and stands in alone while the takes load. A small animal plays it a
+  // little higher; a large one a little lower, with the heavy thump under it.
+  'wildlife.hit': cue('impacts', {
+    buffersFrom: 'vehicle.crash.recorded',
+    volume: 4.2,
+    rate: .72,
+    priority: 74,
+    limit: 3,
+    farCutoff: 1800,
+    layers: [noise(650, .3, .62, 'lowpass'), noise(1500, .12, .3, 'bandpass'), tone(95, .25, .3, 'sine', 0, 40)],
+  }),
+  'wildlife.hit.heavy': cue('impacts', {
+    priority: 76,
+    limit: 2,
+    layers: [tone(46, .6, .55, 'sine', 0, 24), tone(70, .35, .25, 'triangle', .02, 30), noise(220, .45, .4, 'lowpass')],
+  }),
   // BOWL-SOUND-CRUSH: the Bowl's crush set, built by tools/audio/build-bowl-crush.mjs from CC0 recordings. Every
   // take plays at the car-to-car crash's gain (4.2); each file's own loudness sets the balance: the bite -16 LUFS
   // (the crash files are about -17.5), a bus -15, a stack -14.5, a pancake -14, and the glass, clank, crowd and a

@@ -1795,3 +1795,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 QA-EVIDENCE-MIDNIGHT-AGAIN (Claude cloud): merged in the evening batch at c6c9b71b8.
 - 2026-11-26 QA-SUMMIT-WARMUP-EXCEPTION (Claude cloud): merged in the evening batch at 7f0254188.
 - 2026-11-26 QA-NIGHT-TIMING-ALONE (Claude cloud): merged in the evening batch at 88840e450.
+- 2026-11-26 WILDLIFE-HITS-2 (Claude cloud): merged in the evening batch at 220c716c7.

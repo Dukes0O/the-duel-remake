@@ -70,12 +70,14 @@ const WATER_CANNON_CUES = new Set(['weapon.water.spray', 'weapon.water.douse']);
 // BOWL-SOUND-CRUSH and BOWL-SOUND: the Bowl's own cues (bowl.*), all made after P4, behind titan-bowl. The historical
 // projection keeps all earlier cues.
 const BOWL_CRUSH_CUE = id => id.startsWith('bowl.');
+// WILDLIFE-HITS-2: the animal-hit splat and its heavy thump, behind wildlife-hits. The historical projection keeps all earlier cues.
+const WILDLIFE_HIT_CUES = new Set(['wildlife.hit', 'wildlife.hit.heavy']);
 const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 // Full pre-P4 objects are pinned; no old record or credit can silently change.
 assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !SKI_BANK_CUES.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) && !id.startsWith('deep.ana.') && !LAB_BANK_CUES.has(id) &&
-  !LEDGER_CUES.has(id) && !NIGHT_2_CUES.has(id) && !TOWN_VEHICLE_CUES.has(id) && !TOWN_FIRE_CUES.has(id) && !WATER_CANNON_CUES.has(id) && !BOWL_CRUSH_CUE(id) && !['rider.breaks-off', 'rider.crew-bail', 'rider.won', 'rider.surrounded'].includes(id) &&
+  !LEDGER_CUES.has(id) && !NIGHT_2_CUES.has(id) && !TOWN_VEHICLE_CUES.has(id) && !TOWN_FIRE_CUES.has(id) && !WATER_CANNON_CUES.has(id) && !BOWL_CRUSH_CUE(id) && !WILDLIFE_HIT_CUES.has(id) && !['rider.breaks-off', 'rider.crew-bail', 'rider.won', 'rider.surrounded'].includes(id) &&
   id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id) && !EMBER_CUES.has(id) && !GROUND_CUES.has(id) && !FENCE_CUES.has(id)))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
 assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !SKI_BANK_CUES.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !String(row.cue).startsWith('deep.ana.') && !String(row.cue).startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue) && !SKYLINE_CUES.has(row.cue) && !KOGANE_CUES.has(row.cue) && !BOWL_CRUSH_CUE(String(row.cue)))}),

@@ -22,12 +22,21 @@
 // way on, lies on its side as a small heap and stays for the race, with a dark
 // red stain on the ground under it; under the monster truck it is flattened and
 // the stain is wider. Drawing only, like everything here: the car feels nothing
-// and no race rule, replay or pay changes. A hit by the player's own car plays
-// the crush sound (`vehicle.crush`) through the `onHit` the renderer hands in.
+// and no race rule, replay or pay changes.
+//
+// Round 2 (WILDLIFE-HITS-2, Kyle's try of 20 November 2026): each kind falls by its
+// size (src/wildlife.js `size`): a small one is flung on, tumbling end over end; a
+// medium one is knocked onto its side; a large one (a moose, an elk, a bear) stops
+// the car and slumps where it stood. With the switch on the race also has roadside
+// herds, 3 to 12 m from the road edge, that bolt only when a car is 10 m away, and a
+// bird can be hit while it is still on the ground (in the air it is out of reach).
+// A hit by the player's own car plays the splat (`wildlife.hit`, as loud as a crash
+// between cars) and, for a large animal, the heavy thump under it (`wildlife.hit.heavy`),
+// through the `onHit(strength, size)` the renderer hands in.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
-import {placeWildlife, createPlacementChecker, wildlifeRng} from './wildlife.js';
+import {placeWildlife, createPlacementChecker, wildlifeRng, speciesSize} from './wildlife.js';
 import {referenceLap} from './reference-laps.js';
 import {renderedGroundHeight} from './rendered-ground.js';
 import {WILDLIFE_MODELS, APPROVED_MODEL_IDS, wildlifeModelUrl} from './wildlife-models.js';
@@ -54,16 +63,42 @@ export const WILDLIFE_VIEW = Object.freeze({
   ringStay: .3,            // ...and then stays at this opacity until the count ends
   hitReach: 2.4,           // a car's middle this close knocks an animal down
   crushReach: 3.4,         // ...the monster truck's, this close
-  hitThrow: 1.2,           // the heap lies this far on from where it was hit, away from the car
-  heapHeight: .6,          // a knocked-down animal lies on its side at this share of its width...
-  crushHeight: .2,         // ...and under the monster truck is flattened to this share
+  // How far a knocked-down animal is thrown and how flat it lies are FALLS, below, by its size.
   bloodColor: 0x6e0a0a,    // the stain under it: a bit of deep red, matte so it never mirrors the sky
   bloodOpacity: .85,
-  bloodSize: .22,          // the stain's radius as a share of the heap's longest side...
+  bloodSize: .22,          // the stain's radius as a share of the heap's longest side (times its fall's `blood`)...
   bloodMin: .3,            // ...but at least this, metres
-  crushBlood: 1.6,         // the monster truck's stain is this much wider
   bloodSmear: 1.3,         // and every stain is drawn out this much along the way the car pushed
+  roadsideStartle: 10,     // a roadside herd (switch wildlife-hits) bolts only when a car is this close
+  birdOnGround: .8,        // a bird that has risen less than this since take-off can still be hit
 });
+
+// How each size falls (WILDLIFE-HITS-2). throw: metres it ends up on from where it was hit, away from the car;
+// time: seconds the fall takes; hop: how high it is thrown on the way (metres); spins: turns end over end;
+// heap: its height on its side as a share of its width; blood: the stain's size against a medium one's.
+// Under the monster truck any animal is crushed: flattened where it was, with the wider stain.
+export const FALLS = Object.freeze({
+  small: Object.freeze({throw: 4.5, time: .55, hop: 1.1, spins: 1.5, heap: .5, blood: .8}),
+  medium: Object.freeze({throw: 1.2, time: .3, hop: .25, spins: 0, heap: .6, blood: 1}),
+  large: Object.freeze({throw: .3, time: .45, hop: 0, spins: 0, heap: .7, blood: 1.3}),
+  crushed: Object.freeze({throw: 1.2, time: .15, hop: 0, spins: 0, heap: .2, blood: 1.6}),
+});
+export const fallFor = (size, crusher = false) => crusher ? FALLS.crushed : FALLS[size] ?? FALLS.medium;
+
+// Where a falling animal is `age` seconds after the hit: how far on (metres), how high above where it comes to rest,
+// how far over onto its side (0 standing, 1 on its side) and how far round end over end (radians, 0 at rest).
+export function fallPose(fall, age) {
+  const t = Math.min(1, Math.max(0, age / fall.time)), ease = 1 - (1 - t) * (1 - t);
+  return {along: fall.throw * ease, height: fall.hop * 4 * t * (1 - t), over: ease, spin: fall.spins * Math.PI * 2 * (1 - ease), done: t >= 1};
+}
+
+// Can a car knock this animal down now? Not one already down or gone, and a bird only while it is still on the
+// ground (`risen`: metres it has climbed since take-off).
+export function canBeHit(mood, {bird = false, risen = 0} = {}) {
+  if (mood === DOWN || mood === GONE) return false;
+  if (mood === FLY) return bird && risen < WILDLIFE_VIEW.birdOnGround;
+  return true;
+}
 
 // How near a car's middle must come to knock an animal down.
 export const hitReach = crusher => crusher ? WILDLIFE_VIEW.crushReach : WILDLIFE_VIEW.hitReach;
@@ -179,8 +214,8 @@ function disposeModel(scene) {
 
 // options: scene (the parent the animals' group joins), host (an element that
 // shows the view's state in data-wildlife, for the browser checks), loadModel(url)
-// -> a glTF (tests give their own), playDay() -> a whole number, onHit(strength)
-// -> called when the player's own car knocks an animal down (the sound).
+// -> a glTF (tests give their own), playDay() -> a whole number, onHit(strength, size)
+// -> called when the player's own car knocks an animal down (the sound; size is small, medium or large).
 export function createWildlifeView({scene, host = null, loadModel = defaultLoad, playDay = viewPlayDay, onHit = null} = {}) {
   const group = new THREE.Group();
   group.name = 'Wildlife';
@@ -229,7 +264,8 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   // ---- entities ---------------------------------------------------------------
   function makeEntity(source, id, herd, animal, unit) {
     return {
-      source, id, herd, species: animal.species, cub: animal.cub === true, bird: animal.kind === 'bird',
+      source, id, herd, species: animal.species, cub: animal.cub === true, bird: animal.kind === 'bird', roadside: animal.roadside === true,
+      size: speciesSize(animal.species, {cub: animal.cub === true}), fall: null, fallAge: 0, fallX: 0, fallY: 0, fallZ: 0, restX: 0, restY: 0, restZ: 0, lift: 0,
       x: animal.x, y: animal.y, z: animal.z, s: animal.s ?? null, lateral: animal.lateral ?? null,
       yaw: unit * Math.PI * 2, yawTarget: null, mood: IDLE, drawn: false, picked: false, blend: 0, alpha: -1, shadow: null, flees: 0,
       fromX: 0, fromY: 0, fromZ: 0, toX: 0, toY: 0, toZ: 0, travel: 0, length: 0, speed: 0, age: 0, dirX: 0, dirZ: 0, startY: 0,
@@ -284,13 +320,13 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     return Number.isFinite(y) ? y : entity.y;
   }
 
-  function planRace(course, raceNumber, day) {
+  function planRace(course, raceNumber, day, roadside = false) {
     clearEntities('race');
     hitCount = 0;
     const id = course.def.id;
     let placed = null;
     try {
-      placed = placeWildlife({courseId: id, playDay: day, raceNumber, course,
+      placed = placeWildlife({courseId: id, playDay: day, raceNumber, course, roadside,
         referenceLap: referenceLap(id, 'fixed') ?? referenceLap(id, 'route_a'), approvedModels: APPROVED_MODEL_IDS});
     } catch { placed = null; }   // an animal never stops a race
     if (!placed) return;
@@ -396,40 +432,64 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     return Number.isFinite(y) ? y : fallback;
   }
 
-  // Car `index` has hit this animal: it is thrown on, lies on its side as a heap
-  // (flattened under the monster truck) and a stain spreads under it.
+  // Car `index` has hit this animal: it falls by its size (thrown on and tumbling, onto its side, or slumped where
+  // it stood; crushed under the monster truck) and a stain spreads where it comes to rest. The rest pose is worked
+  // out now, so the heap and the stain are right; the fall to it is drawn over the next few frames.
   function knockDown(entity, course, index) {
-    const crusher = crushers[index] === 1;
+    const crusher = crushers[index] === 1, fall = fallFor(entity.size, crusher);
     let dx = entity.x - threats[index * 2], dz = entity.z - threats[index * 2 + 1];
     const length = Math.hypot(dx, dz);
     if (length > .01) { dx /= length; dz /= length; } else { dx = Math.cos(entity.yaw); dz = -Math.sin(entity.yaw); }
-    entity.x += dx * WILDLIFE_VIEW.hitThrow; entity.z += dz * WILDLIFE_VIEW.hitThrow;
+    entity.fallX = entity.x; entity.fallY = entity.y; entity.fallZ = entity.z;
+    entity.x += dx * fall.throw; entity.z += dz * fall.throw;
     entity.y = groundAt(course, entity.x, entity.z, entity.y);
     entity.mood = DOWN; entity.crushed = crusher; entity.yawTarget = null; entity.blend = 0;
+    entity.fall = fall; entity.fallAge = 0;
     entity.yaw = yawToward(dx, dz);   // it lies along the way it was pushed
     // Still, in the model's rest pose (stopping the clips restores it); then onto its side (a roll about its own nose).
     entity.mixer.stopAllAction();
     const root = entity.root, s = entity.scale;
     root.rotation.set(0, 0, 0); root.rotation.order = 'YXZ';
     root.rotation.y = entity.yaw; root.rotation.x = Math.PI / 2;
-    root.scale.set(s * (crusher ? 1.2 : 1), s * (crusher ? 1.1 : .9), s * (crusher ? WILDLIFE_VIEW.crushHeight : WILDLIFE_VIEW.heapHeight));
+    root.scale.set(s * (crusher ? 1.2 : 1), s * (crusher ? 1.1 : .9), s * fall.heap);
     root.position.set(entity.x, entity.y, entity.z);
     root.updateMatrixWorld(true);
     heapBox.setFromObject(root);
     // Rest it on the ground (its feet were the origin, so on its side it would sink half in).
     entity.lift = Number.isFinite(heapBox.min.y) ? entity.y + .02 - heapBox.min.y : 0;
-    root.position.y += entity.lift;
     heapBox.getSize(heapSize);
     // The roll swings the body off its feet line, so the stain goes under the body itself.
     const centreX = Number.isFinite(heapBox.min.x) ? (heapBox.min.x + heapBox.max.x) / 2 : entity.x;
     const centreZ = Number.isFinite(heapBox.min.z) ? (heapBox.min.z + heapBox.max.z) / 2 : entity.z;
-    addBlood(entity, course, crusher, Math.max(heapSize.x, heapSize.z) || 1, centreX, centreZ);
+    addBlood(entity, course, fall, Math.max(heapSize.x, heapSize.z) || 1, centreX, centreZ);
+    entity.blood.visible = false;   // it spreads once the animal is down
+    entity.restX = entity.x; entity.restY = entity.y + entity.lift; entity.restZ = entity.z;
+    poseFall(entity, 0);
     hitCount++; revision++;
-    if (index === playerThreat) onHit?.(crusher ? 1 : .7);
+    if (index === playerThreat) onHit?.(crusher ? 1 : .7, entity.size);
   }
 
-  function addBlood(entity, course, crusher, size, x, z) {
-    const radius = Math.max(WILDLIFE_VIEW.bloodMin, size * WILDLIFE_VIEW.bloodSize) * (crusher ? WILDLIFE_VIEW.crushBlood : 1);
+  // The fall itself, from where it was hit to its rest pose.
+  function poseFall(entity, dt) {
+    entity.fallAge += dt;
+    const root = entity.root, fall = entity.fall, pose = fallPose(fall, entity.fallAge), s = entity.scale;
+    if (pose.done) {
+      root.position.set(entity.restX, entity.restY, entity.restZ);
+      root.rotation.x = Math.PI / 2; root.rotation.z = 0;
+      root.scale.set(s * (entity.crushed ? 1.2 : 1), s * (entity.crushed ? 1.1 : .9), s * fall.heap);
+      entity.fall = null;
+      if (entity.blood) entity.blood.visible = true;
+      return;
+    }
+    const share = fall.throw > 0 ? pose.along / fall.throw : 1;
+    root.position.set(entity.fallX + (entity.restX - entity.fallX) * share, entity.fallY + (entity.restY - entity.fallY) * pose.over + pose.height,
+      entity.fallZ + (entity.restZ - entity.fallZ) * share);
+    root.rotation.x = Math.PI / 2 * pose.over; root.rotation.z = pose.spin;
+    root.scale.set(s * (1 + ((entity.crushed ? 1.2 : 1) - 1) * pose.over), s * (1 + ((entity.crushed ? 1.1 : .9) - 1) * pose.over), s * (1 + (fall.heap - 1) * pose.over));
+  }
+
+  function addBlood(entity, course, fall, size, x, z) {
+    const radius = Math.max(WILDLIFE_VIEW.bloodMin, size * WILDLIFE_VIEW.bloodSize) * fall.blood;
     const outline = bloodOutline(entity.unit), shape = new THREE.Shape();
     outline.forEach((share, i) => {
       const angle = i / outline.length * Math.PI * 2, x = Math.cos(angle) * radius * share, y = Math.sin(angle) * radius * share;
@@ -515,13 +575,14 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   function step(entity, dt, course, heli, limit, distance, hits) {
     if (!entity.root) dress(entity);
     // A car on top of an animal on the ground knocks it down (a bird in the air is out of reach).
-    if (hits && !heli && entity.mood !== DOWN && entity.mood !== FLY && entity.mood !== GONE) {
+    if (hits && !heli && canBeHit(entity.mood, {bird: entity.bird, risen: entity.mood === FLY ? entity.y - entity.startY : 0})) {
       const near = nearestThreat(entity);
       if (nearestIndex >= 0 && near < hitReach(crushers[nearestIndex] === 1)) knockDown(entity, course, nearestIndex);
     }
     if (entity.mood === DOWN) {
-      // A heap: it stays where it fell and only fades with distance.
-      entity.root.position.set(entity.x, entity.y + entity.lift, entity.z);
+      // Falling, then a heap: it stays where it fell and only fades with distance.
+      if (entity.fall) poseFall(entity, dt);
+      else entity.root.position.set(entity.restX, entity.restY, entity.restZ);
       fade(entity, distance, limit);
       entity.root.visible = true; entity.drawn = true;
       return;
@@ -529,7 +590,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     // Startle: the nearest threat decides, by the pure rule above. A car is the
     // nearest of the cars; the helicopter counts only while it is low.
     if (entity.mood === IDLE) {
-      const reach = heli ? startleReach(heli.agl) : WILDLIFE_VIEW.startle;
+      const reach = heli ? startleReach(heli.agl) : hits && entity.roadside ? WILDLIFE_VIEW.roadsideStartle : WILDLIFE_VIEW.startle;
       const dx = heli ? entity.x - heli.x : 0, dz = heli ? entity.z - heli.z : 0;
       const near = !heli ? nearestThreat(entity) : reach > 0 ? Math.hypot(dx, dz) : Infinity;
       if (nextMood(IDLE, near, {reach, bird: entity.bird}) !== IDLE) startFlee(entity, course, heli ? dx : null, heli ? dz : null);
@@ -602,11 +663,12 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       raceCount++;
     }
     // The animals of the race in hand; from the air, the race there would be next.
-    const key = `${course.def.id}|${heli ? raceCount + 1 : Math.max(1, raceCount)}|${heli ? 'air' : 'road'}`;
+    const roadside = frame.hits === true;
+    const key = `${course.def.id}|${heli ? raceCount + 1 : Math.max(1, raceCount)}|${heli ? 'air' : 'road'}|${roadside ? 'roadside' : ''}`;
     if (key !== planKey || planCourse !== course) {
       planKey = key; planCourse = course;
       const today = playDay(), raceNumber = heli ? (today === countDay ? raceCount : 0) + 1 : Math.max(1, raceCount);
-      planRace(course, raceNumber, today);
+      planRace(course, raceNumber, today, roadside);
       // Leaving the helicopter or the course ends the count's animals too, so they
       // never stand in a race; planCount rebuilds them below if a count is still on.
       clearEntities('count'); countIndex.clear(); countKey = null;
@@ -657,7 +719,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       if (e.ring) stepRing(e, dt, distance, limit);
       if (e.blood) {
         e.blood.material.opacity = WILDLIFE_VIEW.bloodOpacity * fadeAlpha(distance, limit);
-        e.blood.visible = e.blood.material.opacity > .01;
+        e.blood.visible = !e.fall && e.blood.material.opacity > .01;   // it spreads once the animal is down
       }
     }
     drawnCount = count;
