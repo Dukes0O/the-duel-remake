@@ -5,6 +5,37 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+**Codex model: Astra** from today, because most of this card is drawn: the room, the roof and the near wall left
+undrawn while the player is inside, the dirt on the car and the wash.
+
+**Built at the same time as the other open Scablands cards** (Kyle, 25 November 2026). OPEN-SHARED is merged and
+holds what this card once waited for. Where this section and the rest of the card differ, this section wins.
+
+- **Read `src/world/open/open-land.js` first.** It is the contract between the parts of the open land.
+- **Use these, and do not write them again:** `isTrue` and `checkFact` (`facts.js`); `applyEffects` (`open-effects.js`),
+  which is the only way to change the world; the world and its readers (`open-record.js`); holds (`holds.js`); the
+  register (`register.js`; a new name is a row there and in `src/story/people.js`); the table checks
+  (`check-tables.js`; load every table through `requireSound`); the sample worlds (`samples.js`; every test of a rule
+  starts from one of them).
+- **Do not edit** `open-land.js`, `parts.js`, `open-view.js`, `content/people.js`, `content/talk-tables.js`,
+  `src/app.js`, or a part, a view or a content file that belongs to another card.
+- **Where this card needs something that another card is building today,** use a stand-in of your own inside your own
+  files, say so under "Codex decided (Claude to review)", and the laptop joins the two at the merge.
+- `node tools/test-open-shared.mjs` must still pass, and is one of this card's checks.
+
+**This card's rules live in its part,** `src/world/open/parts/buildings.js` (which building the player is in, the
+service asked for, the dirt gathered), its drawing in `src/world/open/building-view.js`, and Odessa's and Moss's rows
+and talk in `content/people-forge.js` and `content/talk-forge.js`. A price is paid with the `scrap` effect. The
+car's dirt is `world.open.car.dirt`, changed with the effect `{type: 'dirt', by}` or `{type: 'dirt', to: 0}` for a
+wash. A service that may be bought again the same night is a choice with its count in its id
+(`forge-shed/repair/2`). What the player could not pay comes back to the part as `context.changes`, a scrap change
+with `owed`. A talk's result reaches the part as `context.view.jobEvents`. Every building row is checked with `checkBuilding`.
+
+The figures of OPEN-FIGURES are built today too: use a figure in hand for Odessa and Moss as a stand-in. The people's
+routines are OPEN-ROAM's rule, built today: stand Odessa and Moss at their posts, and their routines join at the merge.
+
 ## What to build
 
 Section 13.

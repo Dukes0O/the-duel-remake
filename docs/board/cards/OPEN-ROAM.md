@@ -5,6 +5,41 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+**Built at the same time as the other open Scablands cards** (Kyle, 25 November 2026). OPEN-SHARED is merged and
+holds what this card once waited for. Where this section and the rest of the card differ, this section wins.
+
+- **Read `src/world/open/open-land.js` first.** It is the contract between the parts of the open land.
+- **Use these, and do not write them again:** `isTrue` and `checkFact` (`facts.js`); `applyEffects` (`open-effects.js`),
+  which is the only way to change the world; the world and its readers (`open-record.js`); holds (`holds.js`); the
+  register (`register.js`; a new name is a row there and in `src/story/people.js`); the table checks
+  (`check-tables.js`; load every table through `requireSound`); the sample worlds (`samples.js`; every test of a rule
+  starts from one of them).
+- **Do not edit** `open-land.js`, `parts.js`, `open-view.js`, `content/people.js`, `content/talk-tables.js`,
+  `src/app.js`, or a part, a view or a content file that belongs to another card.
+- **Where this card needs something that another card is building today,** use a stand-in of your own inside your own
+  files, say so under "Codex decided (Claude to review)", and the laptop joins the two at the merge.
+- `node tools/test-open-shared.mjs` must still pass, and is one of this card's checks.
+
+**Already built by OPEN-SHARED, so not this card's work:** item 1 (the step `roam` in
+`src/world/open/roam-step.js`, its job in `roam-job.js`, `startOpenRoam` in `src/app.js`, and the button "Go out into
+the Scablands" on the Story Wall) and item 5 (`isTrue`). This card no longer touches `src/app.js` and holds no lock.
+
+**This card's work is items 2, 3, 4 and 6,** in these files: `src/world/open/routine-rule.js`;
+`src/world/open/parts/people.js` (the part: who is where, who the player has walked up to, and the request that
+starts a talk); `src/world/open/content/people-town.js` and `content/talk-town.js` (Auntie Solder, Cinder and the
+Walkers); `src/world/open/open-cues.js`; the two tests and the scenario. Named hooks, each marked with the card's
+name: path looping in `src/world/jobs/story-people.js`; in `src/arena/modes/world-job.js`, the cast of
+`worldJob.storyPeople` kept in step with the part's state, and a talk begun when the part asks for one (a `talk` step
+put in front of the roam step, which follows it again). Tin Town's gate stands open in a roam job.
+
+A talk's result reaches the part on the next tick as `context.view.jobEvents` (a `talkChoice` event), and the part
+applies its effects as a choice. A person's rows may come from several cards' files: read `TALK_TABLES` from
+`content/talk-tables.js`, which joins them in order.
+
+Not this card's: what the pause menu says when the player leaves a roam job. Claude settles that at the drive.
+
 ## What to build
 
 Sections 10, 13 and 14.

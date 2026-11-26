@@ -5,6 +5,37 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+**Built at the same time as the other open Scablands cards** (Kyle, 25 November 2026). OPEN-SHARED is merged and
+holds what this card once waited for. Where this section and the rest of the card differ, this section wins.
+
+- **Read `src/world/open/open-land.js` first.** It is the contract between the parts of the open land.
+- **Use these, and do not write them again:** `isTrue` and `checkFact` (`facts.js`); `applyEffects` (`open-effects.js`),
+  which is the only way to change the world; the world and its readers (`open-record.js`); holds (`holds.js`); the
+  register (`register.js`; a new name is a row there and in `src/story/people.js`); the table checks
+  (`check-tables.js`; load every table through `requireSound`); the sample worlds (`samples.js`; every test of a rule
+  starts from one of them).
+- **Do not edit** `open-land.js`, `parts.js`, `open-view.js`, `content/people.js`, `content/talk-tables.js`,
+  `src/app.js`, or a part, a view or a content file that belongs to another card.
+- **Where this card needs something that another card is building today,** use a stand-in of your own inside your own
+  files, say so under "Codex decided (Claude to review)", and the laptop joins the two at the merge.
+- `node tools/test-open-shared.mjs` must still pass, and is one of this card's checks.
+
+**Already built by OPEN-SHARED, so not this card's work:** item 5, the holds (`src/world/open/holds.js`), and the hold
+that every job takes when it starts (`beginOpenLand`). Do not write `holds.js`.
+
+**This card's rules live in its part,** `src/world/open/parts/checkpoints.js`: the part reads the car's position from
+the view each tick, makes the draws by name, keeps the one live encounter in its own state, and asks for changes
+through choices. It does nothing while `isHeld(context.holds, 'checkpoints')`. A crossing is counted with the effect
+`{type: 'crossing', checkpoint}` and a checkpoint is rested with `{type: 'rest', checkpoint}`; both are in the open
+record (`world.open.crossings`, `world.open.resting`), so they outlast a mission. `{type: 'rest', clear: true}` wakes
+them when a hearth is banked. Each draw is asked with the checkpoint's id and its count of crossings in front of its
+name (`isTrue(fact, world, {draw: 'checkpoint/mall-road-2/crossing-7'})`). A fight's result reaches the part on the
+next tick as `context.view.jobEvents`. A fight won again the same night is a choice with its count in its id. Named hooks, each marked with
+the card's name: starting a rider fight inside a roam job in `src/arena/modes/road-riders.js`, and the one place in
+`src/arena/modes/world-job.js` where the part's request for a fight is carried out.
+
 ## What to build
 
 Section 15.

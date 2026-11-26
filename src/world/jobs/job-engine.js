@@ -18,10 +18,12 @@ import { stepWhistle } from './steps/whistle.js';
 import { stepHaul } from './steps/haul.js';
 import { stepDouse } from './steps/douse.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
+import { stepRoam } from '../open/roam-step.js';
 
 const runners = { 'rider-fight': stepRiderJob, reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
-  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle, haul: stepHaul, douse: stepDouse, talk: stepTalk, 'night-2-action': stepNight2Action };
+  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle, haul: stepHaul, douse: stepDouse, talk: stepTalk, 'night-2-action': stepNight2Action,
+  roam: stepRoam };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);

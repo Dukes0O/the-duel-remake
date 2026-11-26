@@ -41,6 +41,7 @@ import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
 import {BELL_CUE, fillWorkVehicleTank, loadWorkVehicle, pumpWorkVehicleTank, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
 import {groupKg} from '../../world/jobs/steps/haul.js';
+import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sprayWater, waterStreamStart} from '../../arsenal/water-cannon.js';
 import {point as combatPoint} from '../../combat-actors.js';
 import {targetIdentity} from '../../arsenal/targeting.js';
@@ -385,6 +386,8 @@ export function initializeWorldJob(duel, definition) {
     worldJob.night2 = createNight2(definition, duel.course.solidGrid);
     enterNight2(duel, worldJob);
   }
+  // OPEN-SHARED: a job that begins in the open land carries the open state (src/world/open/open-land.js).
+  if (definition.open) worldJob.open = beginOpenLand(definition);
   return true;
 }
 
@@ -1660,6 +1663,8 @@ export function stepWorldJob(duel, dt) {
     if (!before) duel.emit({talkOpened: true});
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
+    // OPEN-SHARED: the open land stands still during a talk, and hears what was chosen when it moves again.
+    if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
     if (chosen) duel.emit({storyChoice: chosen});
     if (next.stepIndex !== previousStep) {
@@ -1944,7 +1949,15 @@ export function stepWorldJob(duel, dt) {
     contact, waveCleared: worldJob.clearedWaves};
   const previousStep = worldJob.job.stepIndex;
   const previousStepState = worldJob.job.stepState;
+  // OPEN-SHARED: the open land's parts run beside the job's own step, and the step may read what they left.
+  let openStep = null;
+  if (worldJob.open) {
+    openStep = stepOpenLand(worldJob.open, {...view, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
+    worldJob.open = openStep.open;
+    view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
+  }
   const next = stepJob(worldJob.job, view, dt);
+  if (worldJob.open) worldJob.openJobEvents = next.events;
   worldJob.gasCarContacts = [];
   routeWorldNight2(duel, worldJob, previousStep, next);
   worldJob.job = next;
@@ -2087,6 +2100,12 @@ export function stepWorldJob(duel, dt) {
     }
   }
   applyRequests(duel, worldJob, next.requests);
+  if (openStep) {
+    // A part's line brings its own caption.
+    for (const request of openStep.requests) if (request.type === 'say' && request.lineId && typeof request.text === 'string')
+      worldJob.definition.captions = {...worldJob.definition.captions, [request.lineId]: request.text};
+    applyRequests(duel, worldJob, openStep.requests);
+  }
   if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
   if (next.steps[next.stepIndex]?.kind === 'douse') markDouseWater(duel, next.steps[next.stepIndex], next.stepState);
   worldJob.controls=null;
