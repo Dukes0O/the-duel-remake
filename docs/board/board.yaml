@@ -1544,6 +1544,7 @@ tasks:
   - id: OPEN-WRITE-1
     title: "Open Scablands, written in full: The stranded hauler, The dry pump, Dace goes looking"
     owner: "claude-cloud"
+    claimed_by: "Claude (cloud), since 26 November 2026"
     lane: "DESIGN"
     size: "M"
     status: "ready"
