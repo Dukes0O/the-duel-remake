@@ -874,7 +874,8 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   // drain's silt, and the fan of tracks on the land at the top of the road, which is the Nest's other tell.
   {
     const random=mulberry(0x7a4c5),between=(low,high)=>low+(high-low)*random();
-    // A mark lying on the ground about a point: its long side along a heading.
+    // A mark lying on the ground about a point: its long side along a heading. `strength` is how much of it shows: a mark on the
+    // ground is that much opaque, and a pool of light is that much bright.
     const mark=(kind,list,x,z,heading,long,wide,colour,strength=1)=>{
       const [cu,cv]=MARK[kind],sin=Math.sin(heading),cos=Math.cos(heading),positions=[],uvs=[];
       const rows=Math.max(1,Math.round(long/2.2));
@@ -882,7 +883,10 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       for(let row=0;row<rows;row++)for(const [u,v] of [[0,row],[0,row+1],[1,row],[1,row],[0,row+1],[1,row+1]]){
         positions.push(...corner(u,v/rows));uvs.push((cu+.02+u*.96)/2,(cv+.02+(v/rows)*.96)/2);
       }
-      faces(list,positions,colour.clone().multiplyScalar(strength),uvs);
+      const lit=list==='pools'?strength:1,colours=[];
+      for(let corner=0;corner<positions.length/3;corner++)colours.push(colour.r*lit,colour.g*lit,colour.b*lit,list==='pools'?1:strength);
+      const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+      geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,4));keep(list,geometry);
     };
     for(const bay of L.bays){
       mark('spill','marks',bay.x+between(-.3,.3),bay.z+between(-.2,.9),between(0,3),between(1.5,2.4),between(1.2,1.9),P.oil);
@@ -896,13 +900,13 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       if(Math.hypot(x,z)<L.radius-2)for(const side of [-.62,.62])mark('track','marks',x+Math.sin(spread)*side,z+Math.cos(spread)*side,Math.PI/2-spread,2.75,.36,P.track,between(.35,.8));
     }
     for(const fire of L.fires)mark('scorch','marks',fire.x,fire.z,between(0,3),4.6,4.6,P.soot,.95);
-    mark('spill','marks',L.drain.from-3.4,L.drain.z,Math.PI/2,6.4,3,P.stain,.7);
+    mark('spill','marks',L.drain.from-3.4,L.drain.z,Math.PI/2,6.4,3,P.stain,.5);
     mark('spill','marks',L.shack.table.x+.4,L.shack.table.z+.5,1,2.2,1.6,P.oil,.5);
     // The yard's floor is trodden and oil-soaked where people and cars go: dark soft patches along the ways between things.
     for(const [x,z,size,strength] of [[2,-17,9,.3],[-4,-6,8,.34],[1,6,10,.3],[-6,18,9,.36],[3,27,12,.42],[-14,29,8,.4],[9,22,7,.3],[5,-1,6,.4],[2,-28,9,.34]])
-      mark('spill','marks',x,z,between(0,3),size*between(1.1,1.6),size*1.1,P.worn,strength*.42);
+      mark('spill','marks',x,z,between(0,3),size*between(1.1,1.6),size*1.1,P.worn,strength*.75);
     if(night){
-      for(const fire of L.fires)mark('soft','pools',fire.x,fire.z,0,15,15,new THREE.Color(.55,.2,.045));
+      for(const fire of L.fires)mark('soft','pools',fire.x,fire.z,0,15,15,new THREE.Color(.55,.2,.045),1);
       for(const lamp of lampAt)mark('soft','pools',lamp.x,lamp.z,0,8,8,new THREE.Color(.42,.24,.08));
     }
   }
