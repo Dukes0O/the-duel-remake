@@ -1530,14 +1530,3 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-DOORS-2.md"
 
-  - id: OPEN-WRITE-4
-    title: "Open Scablands, written in full: Smoke over a friend when the enemy is the Ash Men, and the Grey Camp"
-    owner: "claude-cloud"
-    lane: "DESIGN"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-WRITE-4.md"
-

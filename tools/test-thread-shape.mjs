@@ -39,6 +39,9 @@ function tally(thread) {
 
 // The numbers, file by file. A file brought to the shape lost nothing a player reads (26 November 2026).
 const COUNTS = {
+  // The Ash Men's turn of the burned camp (OPEN-WRITE-4, 26 November 2026), a file of its own until it is folded into
+  // burned-camp.js.
+  'burned-camp-ash-men': {lines: 69, thoughts: 34, questions: 13, choices: 16},
   'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
   'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
   'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},
@@ -54,7 +57,7 @@ for (const [name, thread] of Object.entries(threads)) {
   assert.deepEqual(checkThread(thread), [], name + ' is not in the shape');
   assert.deepEqual(tally(thread), COUNTS[name], name + ': its count of lines, thoughts, questions and choices changed');
 }
-assert.equal(Object.keys(threads).length, 9, 'nine storylines are written');
+assert.equal(Object.keys(threads).length, 10, 'nine storylines are written, and one turn of the burned camp');
 assert.deepEqual(Object.keys(COUNTS).sort(), Object.keys(threads).sort(), 'every storyline has its counts');
 
 // One key of each older dialect is refused, on a copy of a real file. Each is put where the older files had it.
