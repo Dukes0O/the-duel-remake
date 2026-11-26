@@ -117,7 +117,7 @@ function deliver(state, changes, choices, requests) {
 export const buildingsPart = {
   id: 'buildings',
   begin: () => ({inside: null, held: false, dustSeconds: 0, looseDust: 0, ash: false}),
-  step(previous, {world, view, holds, changes}, dt) {
+  step(previous, {world, view, holds, changes, events = []}, dt) {
     if (!view.serviceSheds) return {};
     const state = {...previous}, choices = [], requests = [];
     if (!state.wallsPlaced) {
@@ -129,7 +129,8 @@ export const buildingsPart = {
     state.inside = row?.id ?? null;
     if (state.inside !== previous.inside) requests.push(cue('open.door'));
     gatherDirt(state, world, view, dt, choices);
-    const pressed = view.interact && !state.held;
+    const pressed = (view.interact && !state.held && !events.some(event => event.type === 'routineInteraction')) ||
+      events.some(event => event.type === 'askMossForWash');
     state.held = !!view.interact;
     if (state.payment) deliver(state, changes, choices, requests);
     else if (state.offer) answer(state, world, view, holds, choices, requests);

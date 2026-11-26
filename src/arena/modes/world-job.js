@@ -57,6 +57,7 @@ import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sitePosition} from '../../world/open/site-rule.js';
 import {SITES as OPEN_SITES} from '../../world/open/register.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
+import {ROUTINE_CUES} from '../../story/scenes/routine-offer.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
 import {WAITING_LINE} from '../../world/open/content/talk-town.js';
 import {startTalk, talkScreen} from '../../story/talk.js';
@@ -1729,7 +1730,7 @@ function syncOpenPeople(worldJob) {
   if (moved) worldJob.solidGrid.setStoryPeople(people);
 }
 
-function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false, position}) {
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked, at, radio = false, position}) {
   const {job} = worldJob;
   const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
   const steps = job.steps.slice();
@@ -1738,7 +1739,7 @@ function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false,
   const standing = worldJob.storyPeople?.find(item => item.id === person) ?? (position && {position});
   const onRadio = radio === true || !standing;
   steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio,
-    ...(position ? {openPosition: position} : {})});
+    ...(at ? {openTalkAt: at} : {}), ...(position ? {openPosition: position} : {})});
   worldJob.openRoamStepState = job.stepState;
   worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
   worldJob.storySpeaker = onRadio ? null : person;
@@ -1808,6 +1809,11 @@ export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (worldJob.definition.routineRun?.passenger && !worldJob.passengerAboard) {
+    worldJob.passengerAboard = true;
+    if (Object.hasOwn(SOUND_BANK, ROUTINE_CUES.learnt)) duel.emit({arenaTell: {id: 'routine-passenger',
+      targetId: 'player', seconds: 0, cue: ROUTINE_CUES.learnt}});
+  }
   // STORY-NIGHT-2-FLOW: the rider laying siege circles the Walkers' camp (a talk passes no time, so it stands still then).
   if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt,
     state.onFoot && state.fighter ? state.fighter : position(duel, state))) syncJobCarSolids(worldJob);
@@ -1815,7 +1821,9 @@ export function stepWorldJob(duel, dt) {
     // OPEN-ROAM: external movement or leaving the driver's seat of the talk
     // closes this temporary step without routing a story choice.
     if (talkStep.openPerson && !talkStep.openRadio) {
-      const person = worldJob.storyPeople?.find(item => item.id === talkStep.openPerson) ??
+      // A routine's talk is held at its spot (OPEN-APPRENTICE-RUN); otherwise at the person, or at a fixed position.
+      const person = talkStep.openTalkAt ? {position: {...talkStep.openTalkAt, y: state.fighter?.y}} :
+        worldJob.storyPeople?.find(item => item.id === talkStep.openPerson) ??
         (talkStep.openPosition && {position: talkStep.openPosition});
       if (!state.onFoot || !person || distanceToPerson(person, state.fighter) > TALK_RANGE) {
         worldJob.talkAction = null;
@@ -2174,11 +2182,12 @@ export function stepWorldJob(duel, dt) {
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
-      people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
+      people: worldJob.storyPeople, playerName: worldJob.definition.open.playerName, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
     worldJob.open = openStep.open;
+    if (openStep.leave) worldJob.roamExit = openStep.leave;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
   }
   const next = stepJob(worldJob.job, view, dt);
@@ -2295,6 +2304,8 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'bellowsArrived') {
       worldJob.bellowsResult = {bellows:event.bellows, knocks:event.knocks, pay:event.pay, sentence:event.sentence};
     }
+    if (event.type === 'routineGasArrived')
+      worldJob.routineGasArrival = {load: event.load, clean: event.clean};
     if (currentStep?.gasLoad && event.type === 'gasArrived') {
       worldJob.gasResult = {gas:event.gas, pay:event.pay, sentence:event.sentence};
       worldJob.forgeGasShare = 0;
@@ -2340,12 +2351,13 @@ export function stepWorldJob(duel, dt) {
     const isTalk = request => request.type === 'talk' || request.type === 'openTalk';
     if (currentStep?.kind === 'roam') {
       syncOpenPeople(worldJob);
-      const talk = openStep.requests.find(request => isTalk(request) && request.threadPriority) ??
-        openStep.requests.find(request => request.type === 'talk' && request.id?.startsWith('runaway/')) ??
-        openStep.requests.find(isTalk);
+        const talks = openStep.requests.filter(isTalk);
+        const talk = talks.find(request => request.threadPriority) ??
+          talks.find(request => request.id?.startsWith('runaway/')) ?? talks[0];
       if (talk) {
-        for (const other of openStep.requests.filter(isTalk)) if (other !== talk)
-          worldJob.openJobEvents.push({type: 'openTalkClosed', scene: other.id, finished: false});
+        const skipped = talks.filter(request => request !== talk)
+          .map(request => ({type: 'openTalkSkipped', scene: request.id}));
+        if (skipped.length) worldJob.openJobEvents = [...worldJob.openJobEvents, ...skipped];
         beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
       }
     }

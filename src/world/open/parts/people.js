@@ -10,6 +10,7 @@ import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
 import {runawayPeople} from '../content/runaway-places.js';
 import {runawayTalkScene} from '../content/talk-threads.js';
+import {routineFor} from '../routine-run-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
@@ -81,11 +82,13 @@ export const peoplePart = {
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
       ...haulerPeople(world, {...view, seconds: context.seconds}), ...staged] : [];
     const runaways = view.checkpointsEnabled ? runawayPeople(world, view.threadSearchCast, view.sitePositions, partOfDay) : [];
+    const learner = view.dayClock ? routineFor(world).learner : null;
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
       row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
-    const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)),
-      ...extras, ...mallPeople, ...runaways];
+    const townPeople = residents.filter(row =>
+      (standsHere(row, world) || row.id === learner) && !staged.some(person => person.id === row.id));
+    const rows = [...townPeople, ...extras, ...mallPeople, ...runaways];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       if (row.position) {
@@ -109,7 +112,8 @@ export const peoplePart = {
       })];
     });
     const requests = [];
-    if (!active && !view.threadSearchCast?.target && onFoot && interact && !state.useHeld) {
+    if (!active && !view.threadSearchCast?.target && onFoot && interact && !state.useHeld &&
+        !context.events?.some(event => event.type === 'routineInteraction')) {
       const nearest = cast.filter(person => distanceToPerson(person, driver) <= TALK_RANGE)
         .sort((a, b) => distanceToPerson(a, driver) - distanceToPerson(b, driver));
       for (const person of nearest) {
