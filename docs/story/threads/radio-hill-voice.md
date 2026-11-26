@@ -146,7 +146,7 @@ it, and the rest follows as written.
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | 1 | Drive toward the red lamp | A red lamp, high up, that blinks | *A lamp on top of a hill is where a mast ought to be.* | The foot of the ramp (Scene 3) |
-| 2 | Drive toward the white lamp | A white lamp, low down, held steady | *She did tell me to come quickly.* | The Pocket (Scene 4) |
+| 2 | Drive toward the white lamp | A white lamp, low down, held steady | *The voice by the white lamp did tell me to come quickly.* | The Pocket (Scene 4) |
 | 3 | Drive home and bank the hearth | The road home | *Neither of them is going anywhere tonight, and I can think better by the hearth.* | Both call again tomorrow night. Nothing is lost by sleeping on it, until the fourth night |
 
 **The ledger when the player leaves.** Marks: "You heard two voices on the radio, and each of them said it was Radio
@@ -160,11 +160,11 @@ on it. The player stops at its foot.
 > **Hetty:** *(on the radio)* The only way up is the ramp, and it has no lamps on it and no wall. I'll talk you up it,
 > if you'll trust me to. Will you come up?
 
-> *I can't see the edge of that ramp at all. She says that she can.*
+> *I can't see the edge of that ramp at all, but she says that she can.*
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | "Talk me up. I'm coming." | A dark ramp and a long drop | *If she's the liar, this is exactly where she would want me.* | The climb, below. A driver who comes up in the dark on Hetty's word is Friendly from the first cup |
+| a | "Talk me up the ramp, then. I'm coming." | A dark ramp and a long drop | *If she's the liar, this is exactly where she would want me.* | The climb, below. A driver who comes up in the dark on Hetty's word is Friendly from the first cup |
 | b | "I won't climb it tonight. I'll come back when I can see the edge." | The road home | None | By day the ramp is plain and safe, and climbing it is no mission. The sisters are Strangers, as they are for anybody who finds them |
 
 **The climb, by car, about three minutes.** A mission. It holds the checkpoints and the signs. The lamps show twelve
@@ -173,8 +173,8 @@ before it comes. While Parrot still has her set, she cuts in on the same station
 `open.radio.cut-in`. On the climb every radio line is shown under the one label "The radio", because a driver hears
 two voices from one set and has only the words to tell them apart. The voice that says what it can see is Hetty's.
 
-> **Hetty:** *(on the radio)* Driver, the way up starts at the white rock on your left. Take it slowly. I can see your
-> lamps all the way, so I'll tell you what's coming before you reach it.
+> **Hetty:** *(on the radio)* Driver, the way up starts at the white rock on your left, so take it slowly. I can see
+> your lamps all the way, so I'll tell you what's coming before you reach it.
 >
 > **Hetty:** *(on the radio)* There's a bend to your right in a moment, with no wall on the outside of it. Keep close
 > in to the rock.
@@ -196,7 +196,7 @@ two voices from one set and has only the words to tell them apart. The voice tha
 > **Hetty:** *(on the radio)* Please go slowly now. The top is flat for two car lengths, and after that there isn't
 > any more top.
 >
-> **Hetty:** *(on the radio)* That's it, you're up. Turn your lamps off before you blind my sister. Welcome to Radio
+> **Hetty:** *(on the radio)* That's it, you're up! Turn your lamps off before you blind my sister, and welcome to Radio
 > Hill.
 
 If Parrot has lost her set, or the player has already driven out of her Pocket, she does not cut in, because she has
@@ -260,7 +260,7 @@ While the player waits, the second voice goes on.
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | Drive in to the lamp | A white lamp and a narrow mouth | *It could still be a camp. Camps do hide themselves.* | The trap is sprung, below |
+| a | Drive in to the lamp | A white lamp and a narrow mouth | *It could still be a camp, because some camps do hide themselves.* | The trap is sprung, below |
 | b | Back out and drive for the red lamp | The red lamp still blinks, far off | *One of those voices could see my lamps. It wasn't this one.* | Scene 3. Parrot knows that her trick has failed, and says so |
 | c | Turn off your lamps and wait at the mouth *(only if the wheels or the tracks were found)* | Darkness, and the engine off | *She can't see me. I'd like to know what she does when the car doesn't come.* | She walks out to look, and the player sees who she is |
 
@@ -292,7 +292,7 @@ moves, the second voice speaks again, and this time it is her own.
 
 > *Three cars in a place this narrow can't all get at me at once.*
 >
-> *Wheels can be bought again. I'm not sure that the whole car can.*
+> *I can buy wheels again, but I'm not sure that I could buy a whole car again.*
 
 | | You do | Plain to see | Kept out of sight |
 | --- | --- | --- | --- |
@@ -303,7 +303,7 @@ moves, the second voice speaks again, and this time it is her own.
 she names is marked, and a car that leaves by it takes half the knocks.
 
 > **Hetty:** *(on the radio)* Driver, I can see lamps bunched together among the wrecks, and I think one pair is yours.
-> The buggy on your left has its lamps pointed at the wall. The gap is on that side.
+> The buggy on your left has its lamps pointed at the wall, so the gap is on that side.
 
 - *Out.* Two buggies are wrecked and the third backs away. The Road Rats' feud rises one step, and the wrecks pay
   scrap.
@@ -340,8 +340,8 @@ at the set. She is standing at the edge, looking south.
 >
 > **Bern:** People have begun to say that Radio Hill robs travellers. Nobody will answer a station that robs them.
 >
-> **Hetty:** I waited eleven years for somebody to answer me. I don't want the first thing they hear to be a lie in my
-> own voice.
+> **Hetty:** I waited eleven years for people to answer me, and I don't want the first thing they hear from me to be a
+> lie in my own voice.
 
 **You may ask before you choose. Asking costs nothing.**
 
@@ -360,7 +360,7 @@ at the set. She is standing at the edge, looking south.
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "I'll go to the Pocket and take her set away from her." | Bern says how many buggies are there | *Without a set she can't call anybody. Sump will also know exactly who took it.* | A mission (Scene 6). The Road Rats' feud rises. The hill gains a second set |
+| 1 | "I'll go to the Pocket and take her set away from her." | Bern says how many buggies are there | *Without a set she can't call anybody, but Sump will know exactly who took it.* | A mission (Scene 6). The Road Rats' feud rises. The hill gains a second set |
 | 2 | "Talk over her every night. I'll keep you in fuel for as long as it takes." | Bern says what it will cost | *That keeps everybody safe, and it means Hetty never sleeps.* | A promise of fuel. Hetty has no news to give while it lasts. Nothing is settled |
 | 3 | "Give me the microphone. I'd like to talk to her myself." | Hetty hands it over, frowning | *She copied Hetty all spring before she robbed anybody. Perhaps what she wants is to be listened to.* | A talk on the air (Scene 7) |
 
@@ -424,15 +424,15 @@ on the set's bracket for six seconds, with the cue `open.set.taken`. The set is 
   road or fought.
 - *Caught on foot,* boxed in between two buggies for six seconds.
 
-  > **Parrot:** You walked all this way to steal a radio from a thief. I admire that, driver, I really do. I'm still
-  > having your wheels.
+  > **Parrot:** You walked all this way to steal a radio from a thief. I admire that, driver, I really do, but I'm
+  > still having your wheels.
 
   The set stays, the wheels go, and the Pocket has twice the watch on it from tonight.
 
 **Tied back,** the next time the Road Rats are met at a checkpoint after the set was taken.
 
 > **A Road Rat:** That's the car that took Parrot's voice box. She hasn't said a word to anybody for a week, and Sump
-> says that the quiet is costing him wheels.
+> says that every night without her voice is costing him wheels.
 
 ### Scene 7. Talking to Parrot
 
@@ -440,8 +440,8 @@ On the air, from the hut. Hetty and Bern stand behind the player's chair.
 
 > **You:** Parrot, this is the driver you tried to rob. I'm sitting on Radio Hill, and I can hear your engine.
 >
-> **Parrot:** *(on the radio)* Well, that's cheating. Nobody was meant to find the real one. Is the old girl cross with
-> me?
+> **Parrot:** *(on the radio)* Well, that's cheating, because nobody was meant to find the real one. Is the old girl
+> cross with me?
 >
 > **Hetty:** I am extremely cross with you. You have my voice nearly right, and you use it to steal wheels.
 >
@@ -452,14 +452,14 @@ On the air, from the hut. Hetty and Bern stand behind the player's chair.
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "Would you stop, if you had something better to do?" | **Parrot:** *(on the radio)* I'd stop tomorrow. I like the set far more than I like the Pocket. But Sump counts wheels, and he'll notice when I stop bringing them. | She would rather have the radio than the robbing. Sump is in the way |
+| "Would you stop, if you had something better to do?" | **Parrot:** *(on the radio)* I'd stop tomorrow, because I like the set far more than I like the Pocket. But Sump counts wheels, and he'll notice when I stop bringing them. | She would rather have the radio than the robbing. Sump is in the way |
 | "What does Sump want most?" | **Parrot:** *(on the radio)* Sump wants to know things before other people know them. He likes to hear who is on which road and what they're carrying. Wheels are only what he takes when he doesn't know anything better. | News is worth more to Sump than wheels |
 
 **The decision.**
 
 > *If she reads the news from this hill, then Sump hears everything that Hetty hears.*
 >
-> *If she doesn't, she goes on doing the only other thing that she's good at.*
+> *If she doesn't, she'll go on stealing wheels, because that's the only other thing that she's good at.*
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |

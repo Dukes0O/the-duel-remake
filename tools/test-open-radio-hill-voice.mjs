@@ -6,7 +6,7 @@ import {witnessSign} from '../src/story/threads/signs.js';
 import {newWorld, isFound, feudOf, favoursOf, wordOf} from '../src/world/open/open-record.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
-import {createThreadsPart, OPEN_THREADS, openThreadSigns} from '../src/world/open/parts/threads.js';
+import {createThreadsPart, OPEN_THREADS, openThreadSigns, threadsAtBankedHearth} from '../src/world/open/parts/threads.js';
 import {missionsPart} from '../src/world/open/parts/missions.js';
 import {sitePosition} from '../src/world/open/site-rule.js';
 import {radioPlace, radioRamp, radioFuel, RADIO_ID, POCKET_ID, RADIO_MARK} from '../src/world/open/content/radio-hill-voice-places.js';
@@ -50,6 +50,14 @@ const choose = (open, point, phase, id, extra = {}) => snap(open, point, .1, {jo
 const bank = open => ({...open, world: {...open.world, ledger: bankHearth(open.world.ledger).ledger}});
 
 assert.ok(OPEN_THREADS.includes(voice));
+// Give the hearth director only this storyline, independent of other loaded storylines.
+const direct = (world, view) => threadsAtBankedHearth({world, view}, [voice]);
+const directed = Array.from({length: 30}, (_, seed) => direct(newWorld({seed, night: 2}), {
+  openRoam: true, checkpointsEnabled: true, partOfDay: 'dark', onRoad: true, carPosition: start,
+  sitePositions: {'radio-hill': hill}, missionHeightAt: scablandsSurfaceHeightAt,
+})).find(world => world.open.threads[RADIO_ID]);
+assert.ok(directed, 'the hearth director can start Radio Hill');
+assert.deepEqual(Object.keys(directed.open.threads), [RADIO_ID]);
 assert.equal(createFeatureFlags({qa: false, storage: null, search: ''}).enabled('story-choices'), false);
 assert.deepEqual(walkThread(voice).faults, []);
 assert.ok(ROAD_NET.nearest(start.x, start.z));

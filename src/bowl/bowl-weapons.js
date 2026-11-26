@@ -11,7 +11,10 @@ export const SHOW_WEAPONS = Object.freeze({
   // A tap of F spins the player's saw for spinSec, as the hammer and launcher answer a tap (Kyle, 22 November 2026:
   // the saw seemed to do no damage, because a tap cut for one frame).
   saw: {name:'Saw', reach:1.5, spinSec:1, rest:3, cue:'bowl.saw.spin', picture:'⚙', line:'Hold F against a truck to cut. Four seconds of cutting heats the saw.'},
-  launcher: {name:'Launcher', reach:4, hardReach:3, arc:40 * Math.PI / 180, rest:4, cue:'bowl.launcher.fire', picture:'↗', line:'Throws a truck high into the air. An empty shot hops your own truck.'},
+  // Kyle, 22 November 2026: the launcher "could use a bigger range". The player's reach is 6 m on Easy and Medium (it
+  // was 4); the rivals' stays 4 m (rivalReach) and Hard keeps 3 m for both. 5 m only moved the Easy careful driver's
+  // 10-seed result by chance (60 seeds: 35 wins at 5 m, 34 at 4 m); 6 m measured 40 of 60 (BOWL-LAUNCHER-REACH).
+  launcher: {name:'Launcher', reach:6, rivalReach:4, hardReach:3, arc:40 * Math.PI / 180, rest:4, cue:'bowl.launcher.fire', picture:'↗', line:'Throws a truck high into the air. An empty shot hops your own truck.'},
   horn: {reach:.6, rest:2.5, cue:'bowl.rhino.horn'},
   fire: {reach:6, rest:1, cue:'bowl.dragon.fire'},
 });
@@ -161,7 +164,7 @@ function tickWeapon(duel,actor,night,dt,contactBudget) {
   }
   if(actor.bowlFlight || actor.bowlHeldStill>0) return;
   const hard = night.cpuDifficulty === 'hard';
-  const reach = hard ? rules.hardReach ?? rules.reach : rules.reach;
+  const reach = hard ? rules.hardReach ?? rules.reach : player ? rules.reach : rules.rivalReach ?? rules.reach;
   const target = showTarget(duel, actor, reach, null, rules.arc);
   const held=player ? actor.input.interact || weapon.spinSec>0 : !!target;
   if(weapon.phase==='ready') {

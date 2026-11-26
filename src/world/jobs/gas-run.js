@@ -4,6 +4,7 @@
 import {makeRng} from '../../rng.js';
 import {arenaReward} from '../../arena/arena-settlement.js';
 import {ambushRaiders, escortCarStart, escortTruckStart, ESCORT_TRUCK_START_ALONG_METRES} from './steps/escort.js';
+import {GAS_ROUTINE} from '../open/content/routines.js';
 import {LAND} from '../scablands-names.js';
 
 const place = (id, x, z, radius = 12) => Object.freeze({id, position: Object.freeze({x, y: 0, z}), radius});
@@ -126,7 +127,7 @@ export const GAS_RUN_LINES = Object.freeze({start: START_LINE, raid: 'story.embe
 
 // The job definition of one run, from the road, the feud (1 to 4), the number of runs already arrived and the difficulty.
 // `furnaceDead` (the battle has been won): a Boneyard run carries `wreck`, where the scene draws the dead furnace.
-export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium', furnaceDead = false} = {}) {
+export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium', furnaceDead = false, routineRun = null} = {}) {
   if (!validRoad(road)) throw new RangeError(`There is no gas road called ${JSON.stringify(road)}.`);
   const route = GAS_RUN_PATHS[road], ambushes = Object.freeze(gasRunAmbushes(road, feud, runs));
   // Auntie Solder says her line once: when this arrival is the one that takes the feud to War party.
@@ -137,11 +138,13 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium', furn
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route, start: escortTruckStart(route)}),
     path: route, destination: route.at(-1), speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp,
     carStart: escortCarStart(route, GAS_RUN_START_BEHIND_METRES, undefined, ESCORT_TRUCK_START_ALONG_METRES),
+    ...(routineRun ? {measureGas: GAS_ROUTINE.fullLoad} : {}),
     ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: START_LINE[road],
     arrival: Object.freeze({wholeLineId: GAS_RUN_LINES.whole, hurtLineId: GAS_RUN_LINES.hurt, hurtBelow: GAS_RUN_LINES.hurtBelow,
       thenLineIds: reachesWarParty ? Object.freeze([GAS_RUN_LINES.warParty]) : Object.freeze([])})});
   return Object.freeze({id: `gas-run-${road}`, storyId: 'everburn', run: true, road, name: 'Gas Run', kind: 'escort',
     feud: clampFeud(feud), runs, difficulty, shares: GAS_RUN_SHARES[road],
+    ...(routineRun ? {routineRun} : {}),
     // What the child-pace Easy rule gives: the raids' raiders, one fewer on Easy (never fewer than one).
     raids: Object.freeze(ambushes.map(item => Object.freeze({id: item.id, count: ambushRaiders(item, difficulty)}))),
     easy: Object.freeze({truckHealth: 100, raiderPressure: 'low', breakdownRecovery: 'one-rest-then-restart'}),

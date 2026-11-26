@@ -4,9 +4,10 @@ import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
 import {NIGHT_2_ID, NIGHT_2_SCOUT, createNight2, enterNight2Step, routeNight2, night2Action, night2BrandRoute, night2ScoutDestination,
-  night2CampSolids, stepNight2Siege, watchNight2Camp} from '../../world/jobs/night-2.js';
+  night2CampSolids, stepNight2Siege, watchNight2Camp, watchNight2Riders} from '../../world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../../world/jobs/night-2-sites.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
+import {damageFighter} from '../../onfoot.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear, signatureFor} from '../../crew-gear/signature.js';
@@ -56,6 +57,7 @@ import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sitePosition} from '../../world/open/site-rule.js';
 import {SITES as OPEN_SITES} from '../../world/open/register.js';
 import {distanceToPerson, TALK_RANGE} from '../../world/open/parts/people.js';
+import {ROUTINE_CUES} from '../../story/scenes/routine-offer.js';
 import {OPEN_TALK_HAIL} from '../../world/open/open-cues.js';
 import {WAITING_LINE} from '../../world/open/content/talk-town.js';
 import {startTalk, talkScreen} from '../../story/talk.js';
@@ -1604,6 +1606,10 @@ export function moveJobRaiders(duel, worldJob, dt) {
         worldJob.solidGrid?.setPeople([{id:actor.id, position:actor, floorHeight:actor.y}]);
     }
     if (actor.riderCrew && (actor.x !== from.x || actor.z !== from.z)) actor.steps++;
+    if (actor.missionRetreat && Math.hypot(actor.x - actor.missionRetreat.x, actor.z - actor.missionRetreat.z) < 2) {
+      actor.missionDeparted = true;
+      actor.approachTarget = null;
+    }
     if (actor.brandAsh) {
       // The foot mover resolves land and buildings, but not other people.
       // Reserve the whole step so a long step cannot pass through a neighbour.
@@ -1643,7 +1649,7 @@ export function moveJobRaiders(duel, worldJob, dt) {
         }
       }
       // A brand opponent receives a fresh movement decision each rule step.
-      actor.approachTarget = null;
+      if (!actor.missionRetreat) actor.approachTarget = null;
     }
   }
 }
@@ -1724,7 +1730,7 @@ function syncOpenPeople(worldJob) {
   if (moved) worldJob.solidGrid.setStoryPeople(people);
 }
 
-function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false, position, anchorPosition = false}) {
+function beginOpenTalk(duel, worldJob, {id, person, scene, asked, at, radio = false, position, anchorPosition = false}) {
   const {job} = worldJob;
   const talk = {...startTalk(scene), asked: asked.filter(key => scene.questions?.some(question => question.id === key))};
   const steps = job.steps.slice();
@@ -1733,7 +1739,7 @@ function beginOpenTalk(duel, worldJob, {id, person, scene, asked, radio = false,
   const standing = (!anchorPosition && worldJob.storyPeople?.find(item => item.id === person)) || (position && {position});
   const onRadio = radio === true || !standing;
   steps.splice(job.stepIndex, 0, {kind: 'talk', id, scene, openPerson: person, openRadio: onRadio,
-    ...(position ? {openPosition: position, ...(anchorPosition ? {anchorPosition} : {})} : {})});
+    ...(at ? {openTalkAt: at} : {}), ...(position ? {openPosition: position, ...(anchorPosition ? {anchorPosition} : {})} : {})});
   worldJob.openRoamStepState = job.stepState;
   worldJob.job = {...job, steps, stepState: {talk, screen: talkScreen(scene, talk)}};
   worldJob.storySpeaker = onRadio ? null : person;
@@ -1754,10 +1760,60 @@ function closeOpenTalk(duel, worldJob, step, waiting, finished = false) {
   if (waiting) duel._storyCallout(WAITING_LINE);
 }
 
+function applyOpenFootMissionRequest(duel, worldJob, request) {
+  const {state} = duel;
+  if (request.type === 'searchCast') {
+    worldJob.threadSearchCast = request.target ? request : null;
+  } else if (request.type === 'missionDestinations') {
+    worldJob.threadDestinations = request.places;
+    state.arena.markers = [...(state.arena.markers ?? []).filter(mark => mark.owner !== request.id),
+      ...request.places.map(place => ({...place, id: request.id + '/' + place.id,
+        owner: request.id, kind: 'ring', radius: 12}))];
+  } else if (request.type === 'missionDefence') {
+    if (request.entries.length) {
+      worldJob.threadDefence = {id: request.id, weapons: request.weapons,
+        crew: state.crewId, selected: state.footWeapons?.selected};
+      if (request.weapons.includes('hand-flamer')) {
+        state.crewId = 'cinder';
+        initializeCrewGear(duel);
+        if (state.footWeapons) state.footWeapons.selected = 'hand-flamer';
+      }
+      request.entries.forEach((from, index) =>
+        applyBrandRequest(duel, worldJob, {type: 'spawnBrandAsh', id: request.id + '/' + index, from}));
+    } else if (worldJob.threadDefence?.id === request.id) {
+      const {crew, selected} = worldJob.threadDefence;
+      if (request.retreatTo) {
+        for (const actor of worldJob.actors.filter(row => row.id?.startsWith(request.id + '/')))
+          applyOpenFootMissionRequest(duel, worldJob, {type: 'retreatMissionFighter', id: actor.id, to: request.retreatTo});
+      } else worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(request.id + '/'));
+      state.crewId = crew;
+      if (state.footWeapons && selected) state.footWeapons.selected = selected;
+      initializeCrewGear(duel);
+      worldJob.threadDefence = null;
+      worldJob.brandSwingHeld = false;
+    }
+  } else if (request.type === 'retreatMissionFighter') {
+    const actor = worldJob.actors.find(actor => actor.id === request.id);
+    if (actor) {
+      applyBrandRequest(duel, worldJob, {type: 'moveBrandAsh', id: request.id, place: request.to});
+      actor.approachSpeed = 4.5;
+      actor.missionRetreat = request.to;
+    }
+  } else if (request.type === 'missionAsh') {
+    if (state.onFoot && state.fighter) damageFighter(state.fighter, 25);
+  } else return false;
+  return true;
+}
+
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
   const talkStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (worldJob.definition.routineRun?.passenger && !worldJob.passengerAboard) {
+    worldJob.passengerAboard = true;
+    if (Object.hasOwn(SOUND_BANK, ROUTINE_CUES.learnt)) duel.emit({arenaTell: {id: 'routine-passenger',
+      targetId: 'player', seconds: 0, cue: ROUTINE_CUES.learnt}});
+  }
   // STORY-NIGHT-2-FLOW: the rider laying siege circles the Walkers' camp (a talk passes no time, so it stands still then).
   if (worldJob.night2 && dt > 0 && stepNight2Siege(worldJob, dt,
     state.onFoot && state.fighter ? state.fighter : position(duel, state))) syncJobCarSolids(worldJob);
@@ -1765,7 +1821,9 @@ export function stepWorldJob(duel, dt) {
     // OPEN-ROAM: external movement or leaving the driver's seat of the talk
     // closes this temporary step without routing a story choice.
     if (talkStep.openPerson && !talkStep.openRadio) {
-      const person = (!talkStep.anchorPosition && worldJob.storyPeople?.find(item => item.id === talkStep.openPerson)) ||
+      // A routine's talk is held at its spot (OPEN-APPRENTICE-RUN); otherwise at the person, or at a fixed position.
+      const person = talkStep.openTalkAt ? {position: {...talkStep.openTalkAt, y: state.fighter?.y}} :
+        (!talkStep.anchorPosition && worldJob.storyPeople?.find(item => item.id === talkStep.openPerson)) ||
         (talkStep.openPosition && {position: talkStep.openPosition});
       if (!state.onFoot || !person || distanceToPerson(person, state.fighter) > TALK_RANGE) {
         worldJob.talkAction = null;
@@ -2058,6 +2116,7 @@ export function stepWorldJob(duel, dt) {
   }
   const roadResult = worldJob.riderFight && updateRoadFight(duel,worldJob,dt);
   if (worldJob.night2) watchNight2Camp(worldJob, cue => night2Cue(duel, cue));
+  if (worldJob.night2) watchNight2Riders(worldJob, state.opponents, text => duel._storyCallout(text, EMBER_CAPTION_SECONDS));
   const truckWater = sprayFromFireTruck(duel, worldJob, currentStep, dt);
   const view = {player: playerView, onFoot: !!state.onFoot, ...(truckWater?.hit ? {waterOnCar: true} : {}),
     ...(currentStep?.kind === 'rider-fight' ? {riderFight:worldJob.riderFight} : {}),
@@ -2104,21 +2163,35 @@ export function stepWorldJob(duel, dt) {
       worldJob.openSitePositions = {landSeed, at, withSpots};
     }
     const {at: sites, withSpots} = worldJob.openSitePositions;
+    const threadMission = worldJob.open.parts.missions?.active;
+    const runawayRecord = worldJob.open.world.open.threads.runaway;
+    const deferCheckpointRecovery = checkpointsEnabled && !runawayRecord?.end &&
+      (threadMission?.state.route.road || ['surrounded', 'breakout'].includes(runawayRecord?.beat));
+    if (deferCheckpointRecovery && state.combatWrecking) state.combatWreckTimer = state.impactTimer = 1;
+    const missionDefence = checkpointsEnabled && worldJob.threadDefence ? brandCombatView(state, worldJob) : {};
     const missionRidersFighting = worldJob.riderFight?.checkpointStep?.id === road.road?.id &&
       worldJob.riderFight?.outcome === null;
     openStep = stepOpenLand(worldJob.open, {...view, ...road,
       sitePositions: checkpointsEnabled ? withSpots : sites, checkpointSites: sites, missionRidersFighting,
-      missionLookoutPosts: worldJob.open.parts.missions?.active?.state.route.posts,
+      ...missionDefence, missionRoadOutcome: roadResult ?? (worldJob.riderFight?.checkpointStep ?
+        {id: worldJob.riderFight.checkpointStep.id, outcome: worldJob.riderFight.outcome} : null),
+      missionRoadHeldSeconds: worldJob.riderFight?.checkpointStep?.id === threadMission?.id ?
+        worldJob.riderFight?.heldSec : 0,
+      deferCheckpointRecovery, threadSearchCast: worldJob.threadSearchCast, missionLookoutPosts: threadMission?.state.route.posts,
+      roadEncounter: worldJob.open.parts.checkpoints?.encounter,
+      ...(threadMission?.mission.kind === 'squeeze' ? {missionWeapons: state.combat?.cooldowns} : {}),
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       campSiteState: worldJob.open.parts.sites,
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
       fieldPatched: worldJob.fieldPatched,
-      people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
+      people: worldJob.storyPeople, playerName: worldJob.definition.open.playerName, marketSiteState: worldJob.open.parts.sites,
+      partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
     worldJob.open = openStep.open;
+    if (openStep.leave) worldJob.roamExit = openStep.leave;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
   }
   const next = stepJob(worldJob.job, view, dt);
@@ -2151,6 +2224,8 @@ export function stepWorldJob(duel, dt) {
   // the six still seconds in which Moss works on the tank.
   if (currentStep?.gasLoad) applyRequests(duel, worldJob, next.requests.filter(request => request.type === 'follow'));
   moveJobRaiders(duel, worldJob, dt);
+  if (worldJob.actors.some(actor => actor.missionDeparted))
+    worldJob.actors = worldJob.actors.filter(actor => !actor.missionDeparted);
   updateJobActors(duel, worldJob, dt);
   if (next.stepIndex !== previousStep) {
     worldJob.clearedWaves = [];
@@ -2233,6 +2308,8 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'bellowsArrived') {
       worldJob.bellowsResult = {bellows:event.bellows, knocks:event.knocks, pay:event.pay, sentence:event.sentence};
     }
+    if (event.type === 'routineGasArrived')
+      worldJob.routineGasArrival = {load: event.load, clean: event.clean};
     if (currentStep?.gasLoad && event.type === 'gasArrived') {
       worldJob.gasResult = {gas:event.gas, pay:event.pay, sentence:event.sentence};
       worldJob.forgeGasShare = 0;
@@ -2278,12 +2355,19 @@ export function stepWorldJob(duel, dt) {
     const isTalk = request => request.type === 'talk' || request.type === 'openTalk';
     if (currentStep?.kind === 'roam') {
       syncOpenPeople(worldJob);
-      const talk = openStep.requests.find(request => isTalk(request) && request.threadPriority) ?? openStep.requests.find(isTalk);
-      if (talk) beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
+        const talks = openStep.requests.filter(isTalk);
+        const talk = talks.find(request => request.threadPriority) ??
+          talks.find(request => request.id?.startsWith('runaway/')) ?? talks[0];
+      if (talk) {
+        const skipped = talks.filter(request => request !== talk)
+          .map(request => ({type: 'openTalkSkipped', scene: request.id}));
+        if (skipped.length) worldJob.openJobEvents = [...worldJob.openJobEvents, ...skipped];
+        beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
+      }
     }
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
     if (checkpointsEnabled) for (const event of openStep.events) {
-      if (['threadCue', 'threadMissionSpotted', 'threadMissionMoment'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
+      if (['threadCue', 'threadMissionSpotted', 'threadMissionPhase', 'threadMissionMoment', 'threadMissionPoleDown'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))
         duel.emit({arenaTell: {id: event.id, cue: event.cue, position: event.position ?? point, seconds: 0}});
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
@@ -2302,9 +2386,11 @@ export function stepWorldJob(duel, dt) {
         request.posts.forEach((position, index) => worldJob.actors.push({
           id: prefix + index, position: {...position,
             y: (position.y ?? scablandsSurfaceHeightAt(position.x, position.z)) + (position.heap?.height ?? 0)},
-          heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
+          heading: position.heading ?? 0, renderCar: position.car ?? ROAD_GROUPS[request.group]?.car,
           health: 100, speed: 0,
         }));
+      } else if (checkpointsEnabled && applyOpenFootMissionRequest(duel, worldJob, request)) {
+        continue;
       } else if (!checkpointsEnabled || !applyCheckpointRoadRequest(duel, worldJob, request)) applyRequests(duel, worldJob, [request]);
     }
   }

@@ -1787,3 +1787,18 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 QA-NIGHT-26-NOV (Claude, Opus session): the night of 26 November cured or carded. open-map no longer writes into the copy; heli-jobs flies each leg in its own call; nine pass on rerun (rule 3); five join the standing list with their cards; frame-timing scenarios in the browser stage carded as QA-NIGHT-TIMING-ALONE. The frame check waits for a night with the laptop alone.
 - 2026-11-26 OPEN-T-PUMP-2 (Codex cloud, Sol): Marigold can be hailed wherever her routine puts her, so the Dry Pump begins; the whole open-dry-pump scenario passed in the cloud's Chromium. Guards and 9 open-land suites passed 13/13 on the merged result; build passed.
 - 2026-11-26 OPEN-T-HAULER (Codex on the laptop, gpt-6.1-sol): The Stranded Hauler plays behind story-choices, with rider-fight, outrun and escort kinds. Codex settled the merge with Pump and Flag. Guards and 15 open-land suites passed 19/19 on the merged result; build passed. Unblocks OPEN-T-RADIO and OPEN-T-LIGHTS.
+- 2026-11-26 OPEN-APPRENTICE-RUN (Codex cloud, Sol): the open land's day on play time, a repeatable hearth bank, the gas run taught to a learner, 60 gas a clean run, 20 gas to the ember. Independent review: nothing blocks; a run before Night 2 changes Night 2's stock, carded as OPEN-APPRENTICE-RUN-2. Claude settled two small conflicts. 37 suites passed on the merged result; build passed.
+- 2026-11-26 SEA-LINES (Claude cloud, Opus): every line of the act in src/story/sea-lines.js, word for word, with a test that fails on one changed word; nothing loads it yet. test-sea-lines passed on the merged result.
+- 2026-11-26 FAR-LINES (Claude cloud, Opus): 122 lines of the Far Side in src/story/far-lines.js, word for word, one line reworded to drop their for one person; nothing loads it yet. test-far-lines passed on the merged result.
+- 2026-11-26 OPEN-T-MARKET (Codex cloud, Sol): Market Day plays behind story-choices. Codex merged integration in a laptop lane; Claude settled three small conflicts keeping both sides. Guards and 17 open-land suites passed 22/22 on the merged result; build passed.
+- 2026-11-26 OPEN-LOOK-BUS-RING (Claude cloud, Opus): the Bus Ring, round 1, drawn in code; its look test and the other look tests passed on the merged result; Claude's laptop pictures and verdict follow.
+- 2026-11-26 QA-EVIDENCE-MIDNIGHT-AGAIN (Claude cloud): merged in the evening batch at c6c9b71b8.
+- 2026-11-26 QA-SUMMIT-WARMUP-EXCEPTION (Claude cloud): merged in the evening batch at 7f0254188.
+- 2026-11-26 QA-NIGHT-TIMING-ALONE (Claude cloud): merged in the evening batch at 88840e450.
+- 2026-11-26 WILDLIFE-HITS-2 (Claude cloud): merged in the evening batch at 220c716c7.
+- 2026-11-26 NIGHT-2-TRY-FIXES (Claude cloud): merged in the evening batch at c22d0ff2e.
+- 2026-11-26 OPEN-LOOK-RADIO-HILL (Claude cloud, Opus): Radio Hill, round 1, drawn in code; Claude settled three additive conflicts with the Bus Ring look. Look, site and scenario suites passed; laptop pictures follow.
+- 2026-11-26 COMBAT-ROOF-BOW-LOOK: merged in the second evening batch at 72911d1a6.
+- 2026-11-26 OPEN-LOOK-BUS-RING-2: merged in the second evening batch at 0449085f0.
+- 2026-11-26 OPEN-T-RUNAWAY (Codex, laptop lanes): The Runaway plays behind story-choices. Claude settled six conflicts with Market Day keeping both, and moved the Grey Camp to a flat spot 639 m from the road. Guards and 18 open-land suites passed 23/23; build passed.
+- 2026-11-26 OPEN-T-TOLL (Codex): The Mall Road Toll plays behind story-choices (lookout, squeeze kinds). Merged at 96d803932 after Codex reconciled it with the Runaway. Guards and 20 open-land suites passed 25/25; build passed.

@@ -51,7 +51,7 @@ export const checkpointsPart = {
       choices.push(...(out.choices ?? []));
       requests.push(...(out.requests ?? []));
     }
-    if (!held && !missionLoss && (state.recovery || view.combatWrecking)) {
+    if (!held && !missionLoss && (state.recovery || view.combatWrecking && !view.deferCheckpointRecovery)) {
       if (!state.recovery) next.recoveries = recoveryNumber(world, state.recoveries);
       const out = stepRecovery(state.recovery, current, view.combatWrecking && !state.recovery ? camps() : [], next.recoveries);
       if (next.missionLossPaid) out.choices = out.choices?.map(choice => ({...choice,

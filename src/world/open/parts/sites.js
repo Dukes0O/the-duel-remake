@@ -7,6 +7,7 @@ import {FEUD_GROUPS, nameOf} from '../register.js';
 import {isTrue} from '../facts.js';
 import {isHeld} from '../holds.js';
 import {isFound, stageOf} from '../open-record.js';
+import {BUS_RING} from '../content/market-day-places.js';
 import {CAMP_SITES, LAND_SITES} from '../content/sites.js';
 import {brokenMark} from '../content/needs.js';
 import {meetingMark, siteGreeting, siteScene} from '../content/talk-sites.js';
@@ -284,10 +285,12 @@ export const sitesPart = {
     const layout = CAMP_SITES.map(site => stageOf(world, site.id));
     const lastLayout = previous.landSeed === world.open.landSeed ? previous.layout : null;
     for (const [index, site] of CAMP_SITES.entries()) {
-      if (site.storyChoices && !view.checkpointsEnabled) continue;
+      if ((site.storyChoices || site.storyOnly) && !view.checkpointsEnabled) continue;
       const position = sitePosition(site.id, world.open.landSeed);
       if (lastLayout?.[index] !== layout[index])
-        requests.push({type: 'solids', id: site.id, solids: siteSolidRows(site.id, position, layout[index])});
+        requests.push({type: 'solids', id: site.id, solids: site.id === 'bus-ring' && hasSiteServices(layout[index]) ?
+          BUS_RING.structures.map(row => ({...row, id: site.id + '/' + row.id, x: position.x + row.x, z: position.z + row.z})) :
+          siteSolidRows(site.id, position, layout[index])});
       const found = isFound(world, site.id);
       if (!found && discover(site, world, view.onFoot, point, position, choices, events, requests))
         state.nextLineAt = seconds + SPEECH_SECONDS;
@@ -295,6 +298,7 @@ export const sitesPart = {
       if (found && distance(position, point) <= VISIT_RADIUS && hasSiteServices(layout[index])) near = site;
     }
     state.layout = layout;
+    state.marketSites = !!view.checkpointsEnabled;
     state.landSeed = world.open.landSeed;
     if (state.site !== near?.id || previous.night !== world.ledger.night) {
       if (state.repair || state.need) requests.push({type: 'marker', place: null});

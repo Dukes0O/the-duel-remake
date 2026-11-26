@@ -73,7 +73,7 @@ export default {
       effects: [{type: 'met', person: 'water-men', text: 'You met Miss Pell of the water company at the Sweet Seep.'}],
       lines: [
         // Who stands at the rope.
-        say('marigold', "We fill the cart here whenever the wind drops and our pump stands still. It holds forty cans. That woman says forty cans is a hundred and sixty scrap, and I haven't got sixteen.", {when: GLASSHOUSE}),
+        say('marigold', "We fill the cart here whenever the wind drops and our pump stands still, and it holds forty cans. That woman says forty cans will cost a hundred and sixty scrap, and I haven't even got sixteen.", {when: GLASSHOUSE}),
         say('{camp.leader}', "We've always filled our cans here in the dry weeks. Now there's a rope round it and a price on a board, and we haven't the scrap to pay it.", {when: OTHER_CAMP}),
         say('traveller', "I've drunk from this seep every time I've crossed the grey. Today there's a rope round it, and a woman with a list.", {when: {not: CAMP}}),
         say('miss-pell', "Good morning. This site is being improved by the water company. May I ask whether you're here as a customer or as a member of the public?", {when: {not: AT_ODDS}}),
@@ -106,7 +106,7 @@ export default {
         {id: 'what-charge', words: 'What will you charge for it?',
           lines: [say('miss-pell', "It's four scrap a can to begin with. The Office looks at every price once a month, and I've never known it to look at one and make it smaller.")]},
         {id: 'cannot-pay', words: "What about people who can't pay?",
-          lines: [say('miss-pell', "Then they can have the water they had before we drilled, which was a puddle. I'm sorry. I don't write the cards. I only read them out.")]},
+          lines: [say('miss-pell', "Then they can have the water they had before we drilled, which was a puddle. I'm sorry about that, but I don't write the cards. I only read out what's on them.")]},
         {id: 'who-for', words: 'Who do you work for?',
           lines: [say('miss-pell', "I work for the Office. The Office works for a lady I've never met, who sends her instructions on very nice paper. I'm told that she's always polite.")]},
       ],
@@ -115,12 +115,12 @@ export default {
           effects: [{type: 'scrap', by: 10}, mark('took-the-fee', 'You took ten scrap from the water company for finding the Sweet Seep.')]},
         {id: 'leave-the-card', by: 'do', when: {not: marked('took-the-fee')}, words: 'Leave the card on the table', effects: []},
         {id: 'share', by: 'do', when: {all: [CAMP, {not: AT_ODDS}]}, words: 'Ask Miss Pell what it would take to share the water',
-          thought: "She reads everything off a card. Maybe there's a card for sharing.", next: 'schedule'},
+          thought: "She reads everything off a card, so maybe there's a card for sharing.", next: 'schedule'},
         {id: 'buy', by: 'do', words: 'Ask Miss Pell what the whole site would cost',
           thought: 'I wonder what the Office thinks a well is worth.', next: 'price'},
         {id: 'drive-at-the-rope', by: 'do', words: 'Drive at the rope',
           thought: 'Those pickups are heavier than my car, and there are two of them.', next: 'fight'},
-        {id: 'drive-away', by: 'go', words: 'Drive away', thought: 'It was never mine. All I did was find it.'},
+        {id: 'drive-away', by: 'go', words: 'Drive away', thought: 'It was never really mine, because all I did was find it.'},
       ],
       notes: {
         // The first three lines are those of the people at the rope. The finder's fee is read before the player leaves the
@@ -133,8 +133,8 @@ export default {
       when: {chose: 'share'},
       cue: 'open.flag.card',
       lines: [
-        say('miss-pell', "There is a card for that, and it's called a Prior Use Schedule. If people drew water here before the improvement, and somebody signs to say so, those people may go on drawing it free, up to a fixed number of cans."),
-        say('miss-pell', 'It needs two signatures. One is from somebody who drew the water. The other is from somebody who will answer for them, and that would be you, signing for Tin Town.'),
+        say('miss-pell', "There is a card for that, and it's called a Prior Use Form. If people drew water here before the improvement, and somebody signs to say so, those people may go on drawing it free, up to a fixed number of cans."),
+        say('miss-pell', 'It needs two signatures, one from somebody who drew the water and one from somebody who will answer for them. The second one would be you, signing for Tin Town.'),
         say('marigold', "You want me to sign a paper to drink water that I've been drinking for thirty years? I'll sign it, because beans can't wait for me to feel better about it. I'd like somebody to remember that I didn't enjoy it.", {when: GLASSHOUSE}),
         say('{camp.leader}', "I'll sign it, because my people have to drink. I'd like it remembered that nobody asked us before the rope went up.", {when: OTHER_CAMP}),
       ],
@@ -143,20 +143,20 @@ export default {
         {id: 'what-signing', words: 'What exactly am I signing?',
           lines: [say('miss-pell', "You're signing that Tin Town recognises the improvement of this site by the water company. In plain words, you're agreeing that it's ours, and we're agreeing to be generous about it.")]},
         {id: 'how-many-cans', words: 'How many cans is that?',
-          lines: [say('miss-pell', "It's forty cans a week for each camp that signs, which is one cartload. Anybody who isn't on the schedule pays at the board.")]},
+          lines: [say('miss-pell', "It's forty cans a week for each camp that signs, which is one cartload. Anybody who isn't on the form pays at the board.")]},
       ],
       choices: [
-        {cue: 'open.flag.stamp', id: 'sign', by: 'do', words: 'Sign the schedule, for Tin Town',
-          thought: "It's only a signature. It may also be the one thing here that's still true next year.",
+        {cue: 'open.flag.stamp', id: 'sign', by: 'do', words: 'Sign the form for Tin Town',
+          thought: "It's only a signature, but that paper will still say this water is theirs long after today.",
           effects: [mark('signed', 'Tin Town signed that the Sweet Seep is the water company\'s, and {camp.name} draws from it free.'),
             {type: 'favour', person: CAMP_PEOPLE, by: 1}],
           lines: [
-            say('miss-pell', "Thank you. That's the first schedule I've filled in all year. Most people shout at me, and there isn't a card for shouting."),
-            say('marigold', "That's forty cans a week, and my name on a company's paper. Well, the beans will drink. I'll save you the first basket, and I'll try not to think about the paper.", {when: GLASSHOUSE}),
+            say('miss-pell', "Thank you. That's the first one of these forms I've filled in all year. Most people shout at me, and there isn't a card for shouting."),
+            say('marigold', "So that's forty cans a week, with my name on a company's paper. Well, at least the beans will drink. I'll save you the first basket, and I'll try not to think about the paper.", {when: GLASSHOUSE}),
             say('{camp.leader}', "Forty cans a week will keep us. I'd sooner have had the seep the way it was, but I'll take the water.", {when: OTHER_CAMP}),
           ],
           next: 'shared'},
-        {id: 'pen-down', by: 'do', words: 'Put the pen down', thought: {thought: 'Then Marigold pays four scrap a can, or goes without.', when: GLASSHOUSE}, next: 'site'},
+        {id: 'pen-down', by: 'do', words: 'Put the pen down', thought: {thought: 'Then Marigold will have to pay four scrap a can, or go without water.', when: GLASSHOUSE}, next: 'site'},
       ],
       notes: {
         // The lines of the camp's leader are said when the camp is asked to sign.
@@ -168,14 +168,14 @@ export default {
       when: {chose: 'buy'},
       lines: [
         say('miss-pell', "The Office sells anything, and there's a card for that as well. The tower, the fence, the forms and the survey come to a hundred and sixty scrap today. From the morning we strike water, they come to two hundred and forty."),
-        say('miss-pell', 'I\'m also told that Tin Town makes a kind of coal that burns all night. The Office would count one of those as a hundred scrap, and I think it would sooner have one than not.', {when: HAS_EMBER}),
+        say('miss-pell', 'I\'m also told that Tin Town makes a kind of coal that burns all night. The Office would count one of those as a hundred scrap, and between you and me, I think it would rather have the coal than the scrap.', {when: HAS_EMBER}),
       ],
-      thoughts: ["I haven't that much scrap in the car. An ember would cover what I'm short, and an ember is a night of fire."],
+      thoughts: ["I haven't got that much scrap in the car. An ember would make up what I'm short, but an ember is a whole night of fire at home."],
       questions: [
         {id: 'what-for-it', words: 'What do I get for it?',
           lines: [say('miss-pell', 'You get the bore, a hand pump and the ground inside the rope. We take the drill, the flag and the price board away with us. What you do with a hole full of water afterwards is your own affair.')]},
         {id: 'come-back', words: 'Will you come back?',
-          lines: [say('miss-pell', "We won't come back to this site. The Office never goes back to a site that it has sold. It simply looks for the next one, and it does look.")]},
+          lines: [say('miss-pell', "We won't come back to this site. The Office never goes back to a site that it has sold. It looks for the next one instead, and it is always looking.")]},
       ],
       next: 'hearth',
       notes: {
@@ -188,10 +188,10 @@ export default {
       when: {all: [{chose: 'buy'}, {reach: ['tin-town', 'hearth']}]},
       lines: [
         say('auntie-solder', "You want to buy a well that isn't ours, from people who didn't dig it, with scrap that we haven't got. I'll lend you sixty from the town's tin, and I shall want to know who is paying it back."),
-        say('cinder', "Don't offer them an ember until you've counted the store. That's a night of fire going out through the gate in a pot, and it won't come back as water.", {when: HAS_EMBER}),
+        say('cinder', "Don't offer them an ember until you've counted how many we have in the store. Every ember is a night of fire for us, and once one goes out through the gate, we won't get it back.", {when: HAS_EMBER}),
         // The camp's offer, if its leader is asked.
-        say('marigold', "We've no scrap worth the name. We can pay you in beans, a basket at every picking until you say it's enough. I know that isn't what the white trucks want, so it will have to be what you want.", {when: GLASSHOUSE}),
-        say('{camp.leader}', "We've no scrap to give you. We can pay you back in work and in what we make, a little at a time, until you say it's enough.", {when: OTHER_CAMP}),
+        say('marigold', "We haven't got any scrap worth talking about, but we can pay you in beans, one basket at every picking, until you say it's enough. I know beans aren't what the white trucks want, so I hope they'll do for you.", {when: GLASSHOUSE}),
+        say('{camp.leader}', "We haven't any scrap to give you, but we can pay you back in work and in what we make, a little at a time, until you say it's enough.", {when: OTHER_CAMP}),
       ],
       effects: [{type: 'scrap', by: 60}, mark('till-lent'),
         {type: 'debt', id: `${ID}/town-tin`, person: 'auntie-solder', owedBy: 'player', text: "You owe Auntie Solder sixty scrap from the town's tin."},
@@ -244,19 +244,19 @@ export default {
         // Two heavy pickups that shove and box in, and do not shoot. Won when one is wrecked.
         enemy: 'water-men', cars: 2,
         rule: {shoot: false, boxedInSeconds: 6},
-        lines: [say('miss-pell', "I'm required to read you this card before anything happens. \"The company regrets any damage that may shortly occur to your vehicle.\" I am sorry about this. It isn't personal.")],
+        lines: [say('miss-pell', "I'm required to read you this card before anything happens. \"The company regrets any damage that may shortly occur to your vehicle.\" I am sorry about this, and it isn't personal.")],
         outcomes: {
           won: {
             cue: 'open.flag.down', lines: [
-              say('miss-pell', 'That will do. Stop the drill, please, and bring down the flag. I shall have to write this up as an incident, and the Office reads every incident twice.'),
-              say('marigold', "They've gone, and they've taken their price board with them. The Seep is still here. The reeds will take a year to grow back, but beans are patient, and so am I.", {when: GLASSHOUSE}),
+              say('miss-pell', "That's enough, everybody. Stop the drill, please, and bring down the flag. I shall have to write this up as an incident, and the Office reads every incident twice."),
+              say('marigold', "They've gone, and they've taken their price board with them, and the Seep is still here. The reeds will take a year to grow back, but beans are patient, and so am I.", {when: GLASSHOUSE}),
               say('{camp.leader}', "They've gone, and the water is still here. I hope that it was worth making an enemy for.", {when: OTHER_CAMP}),
             ],
             effects: [{type: 'feud', of: 'water-men', by: 1}, {type: 'roadWord', by: 1}, {type: 'word', person: CAMP_PEOPLE, by: 1, when: CAMP},
               mark('driven-off', 'You drove the water company off the Sweet Seep.')],
             next: 'driven-off'},
           lost: {
-            lines: [say('miss-pell', "I did read you the card. We'll tow you as far as the road. There's a recovery charge, and I'm afraid it's half of whatever is in the car. I'll write you a receipt for it.")],
+            lines: [say('miss-pell', "I did read you the card, you know. We'll tow you as far as the road, but there's a recovery charge, and I'm afraid it's half of whatever is in the car. I'll write you a receipt for it.")],
             // The recovery charge is half the scrap in the car (section 15).
             effects: [{type: 'feud', of: 'water-men', by: 1}, {type: 'roadWord', by: 1},
               mark('towed-off', 'The water company towed you off the Sweet Seep, and its tower still stands.')],

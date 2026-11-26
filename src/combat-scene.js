@@ -26,6 +26,7 @@ import {
 import {
   createArmorKitMeshes
 } from './armor-kit-meshes.js';
+import {createRoofBow, seatRoofBow} from './combat-roof-bow.js';
 import {
   createRiggedFighterFigures
 } from './rigged-fighter.js';
@@ -500,22 +501,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       bumper.add(spike);
       return spike;
     });
-    const bow = new THREE.Group();
-    bow.name = `combat-bow-${index}`;
-    const rail = new THREE.Mesh(shaft, materials.iron);
-    rail.rotation.x = Math.PI / 2;
-    bow.add(rail);
-    for (const side of [-1, 1]) {
-      const arm = new THREE.Mesh(armorGeometry, materials.iron);
-      arm.scale.set(1.3, .12, .18);
-      arm.position.set(side * .55, 0, .5);
-      arm.rotation.y = side * .35;
-      bow.add(arm);
-    }
-    const bolt = new THREE.Mesh(tip, materials.tip);
-    bolt.rotation.x = Math.PI / 2;
-    bolt.position.z = 1.5;
-    bow.add(bolt);
+    // COMBAT-ROOF-BOW-LOOK: a lit, worn crossbow on a rack, seated on the car's roof when it is bound (src/combat-roof-bow.js).
+    const roofBow = createRoofBow(`combat-bow-${index}`), bow = roofBow.group;
     const shield = new THREE.Group();
     shield.name = `combat-shield-${index}`;
     const ball = new THREE.Mesh(shieldShell, materials.shield);
@@ -523,7 +510,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     shield.add(ball, halo);
     group.add(bumper, bow, shield);
     return {
-      bumper, bar, spikes, bow, shield, ball, halo
+      bumper, bar, spikes, bow, roofBow, shield, ball, halo
     };
   });
   const bindings = [null, null, null, null];
@@ -563,7 +550,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     rig.spikes.forEach((spike, spikeIndex) => {
       spike.position.set((spikeIndex - 2) * width * .21, 0, .45);
     });
-    rig.bow.scale.setScalar(Math.max(.78, Math.min(1.2, width / 2.3)));
+    // Sized to the car, its feet on the roof's skin and its point behind the windscreen's top edge.
+    if (rig.bow.parent?.name === 'vehicle-socket-roof') seatRoofBow(rig.roofBow, vehicle, rig.bow.parent);
     // Leave a narrow gap around the body, with a low rim near the wheel line.
     rig.ball.scale.set(width * .62, height * .58 + .12, length * .57);
     rig.halo.scale.set(width * .50, 1, length * .44);
@@ -711,6 +699,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         spike.scale.y = nitro ? 2.4 : 1;
       });
       rig.bow.visible = visible;
+      // The bow's rust and grain ride with it, not with the world.
+      if (visible) rig.roofBow.wear.follow(rig.bow);
       rig.shield.visible = visible && (index ? index === 1 ? c.rivalShield : actor.combatShield : c.shield) > 0;
       if (rig.shield.visible) rig.shield.rotation.y = s.stageTimeSec * 2;
     });
@@ -884,6 +874,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       armorKits.dispose();
       for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
       rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
+      rigs.forEach(rig => { rig.roofBow.mesh.geometry.dispose(); rig.roofBow.material.dispose(); });
       for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim,
         turretBase.geometry,turretHead.geometry,turretBarrel.geometry,
         chargeBase.geometry])geometry.dispose();

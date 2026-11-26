@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {MARKET_PLACES} from './content/market-day-places.js';
+import {marketStalls} from './market-day-rule.js';
 import {isHeld} from './holds.js';
 import {openThreadSigns} from './parts/threads.js';
 import {placeForThread} from '../../story/scenes/burned-camp.js';
@@ -12,11 +14,14 @@ import {scoutTrail} from './content/burned-scout.js';
 import {buildGlasshouseTrail} from './looks/glasshouse-look.js';
 import {makeDryPumpLook} from './looks/dry-pump-look.js';
 import {isFresh} from '../../story/threads/signs.js';
+import {RUNAWAY_PLACES} from './content/runaway-places.js';
+import {sitePosition} from './site-rule.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 import {createHaulerLook} from './looks/stranded-hauler-look.js';
 import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPlace, pocketWrecks} from './content/radio-hill-voice-places.js';
-import {sitePosition} from './site-rule.js';
 import {heistLampPose} from './content/mission-kinds.js';
+import {lookoutHeading} from './content/mission-kinds.js';
+import {TOLL_GATE, TOLL_ID, TOLL_WRECKS, tollPlace} from './content/mall-road-toll-places.js';
 import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
 
 function paintedSign({label}) {
@@ -117,6 +122,53 @@ function lookoutHeap(post) {
   group.position.set(post.x, scablandsSurfaceHeightAt(post.x, post.z), post.z);
   group.rotation.y = post.heading ?? 0;
   return group;
+}
+
+
+function wreckageGate(drawnShift) {
+  const root = new THREE.Group();
+  root.name = "Sump's Gate wreckage";
+  for (const at of TOLL_WRECKS) {
+    const wreck = lookoutHeap({...at, heading: at.heading + Math.PI / 2});
+    wreck.scale.set(.95, .58, 1.35);
+    wreck.position.y += drawnShift?.(at.x, at.z) ?? 0;
+    root.add(wreck);
+  }
+  const at = tollPlace(TOLL_GATE);
+  const stand = new THREE.Group();
+  stand.position.set(at.x, scablandsSurfaceHeightAt(at.x, at.z) + (drawnShift?.(at.x, at.z) ?? 0), at.z);
+  stand.rotation.y = at.heading;
+  root.add(stand);
+  const metal = new THREE.MeshStandardMaterial({color: 0x716052, roughness: .9});
+  const beam = (x, y, z, w, h, d) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), metal);
+    mesh.position.set(x, y, z);
+    stand.add(mesh);
+    return mesh;
+  };
+  beam(-8.8, 1.6, 0, .28, 3.2, .28);
+  beam(8.8, .7, 0, .22, 1.4, .22);
+  const pivot = new THREE.Group();
+  pivot.position.set(-8.8, 1.05, 0);
+  const pole = beam(8.8, 0, 0, 17.6, .15, .16);
+  pivot.add(pole);
+  stand.add(pivot);
+  const sign = paintedSign({label: 'TOLL. 2 SCRAP A WHEEL.'});
+  if (sign) {
+    sign.visible = true;
+    sign.position.set(-9, 2.35, -.17);
+    sign.rotation.y = Math.PI;
+    stand.add(sign);
+  }
+  const light = new THREE.PointLight(0xff8732, 25, 11);
+  light.position.set(-5.5, 1.15, 8);
+  const smoke = createSmokeColumn({height: 12, foot: .7, top: 3, strength: .65});
+  smoke.position.copy(light.position);
+  const tyre = new THREE.Mesh(new THREE.TorusGeometry(.58, .21, 6, 14), metal);
+  tyre.rotation.x = Math.PI / 2;
+  tyre.position.set(-5.5, .25, 8);
+  stand.add(tyre, light, smoke);
+  return {root, pivot, smoke, sign};
 }
 
 function lookoutFlare() {
@@ -232,6 +284,56 @@ function radioBearings(group, positionAt) {
   };
 }
 
+function marketStall(pitch, index, stake) {
+  const group = new THREE.Group();
+  group.name = (stake ? 'Market stake ' : 'Market stall ') + pitch;
+  const wood = new THREE.MeshStandardMaterial({color: 0x785b42, roughness: .94});
+  const cloth = new THREE.MeshStandardMaterial({color: [0x9c4840, 0xaa8a57, 0x5c7d84, 0x6d7e52][index % 4], roughness: 1});
+  const box = (material, x, y, z, width, height, depth) => {
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+    piece.position.set(x, y, z);
+    group.add(piece);
+  };
+  if (stake) {
+    box(wood, 0, .35, 0, .1, .7, .1);
+    box(cloth, 0, .62, 0, .18, .14, .18);
+  } else {
+    box(wood, 0, .91, 0, 2.1, .12, .78);
+    box(cloth, 0, 2.1, 0, 2.45, .09, 1.45);
+    for (const x of [-.96, .96]) for (const z of [-.32, .32])
+      box(wood, x, 1.05, z, .075, 2.1, .075);
+  }
+  return group;
+}
+
+function runawayClues() {
+  const material = new THREE.MeshStandardMaterial({color: 0x797271, roughness: 1});
+  const clue = (name, geometry) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = 'Runaway ' + name;
+    mesh.visible = false;
+    return mesh;
+  };
+  const prints = new THREE.Group();
+  prints.name = 'Runaway footprints';
+  const print = new THREE.CircleGeometry(.12, 12);
+  for (let i = 0; i < 10; i++) {
+    const foot = new THREE.Mesh(print, material);
+    foot.position.set(-i * .29, .035, (i % 2) * .22);
+    foot.rotation.x = -Math.PI / 2;
+    foot.scale.y = .48;
+    prints.add(foot);
+  }
+  prints.visible = false;
+  const wire = clue('wire', new THREE.TorusGeometry(.45, .023, 5, 16, Math.PI));
+  const bowl = clue('bowl', new THREE.SphereGeometry(.19, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2));
+  const hand = clue('handprint', new THREE.CircleGeometry(.15, 7));
+  return [
+    {key: 'footprints', mesh: prints, lift: 0}, {key: 'wire', mesh: wire, lift: .32},
+    {key: 'bowl', mesh: bowl, lift: .06}, {key: 'handprint', mesh: hand, lift: 1.45},
+  ];
+}
+
 export function createSignView() {
   const group = new THREE.Group();
   group.name = 'Open land signs';
@@ -241,8 +343,18 @@ export function createSignView() {
   group.add(flagSite.group);
   const radio = radioBearings(group, (mesh, point, shift) => positionAt(mesh, point, shift));
   const smoke = new Map();
+  const clues = runawayClues();
+  for (const {mesh} of clues) group.add(mesh);
+  const lamps = new THREE.Group();
+  lamps.name = 'Runaway search lamps';
+  group.add(lamps);
+  const campHeap = lookoutHeap(RUNAWAY_PLACES.nobody);
+  campHeap.name = 'Grey Camp ash and wrecks';
+  campHeap.visible = false;
+  group.add(campHeap);
   const heaps = new Map();
-  let dryPumpLook;
+  const stalls = new Map();
+  let dryPumpLook, tollLook, tollBuggy, tollLamp;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -276,6 +388,26 @@ export function createSignView() {
       }
       const open = worldJob?.open;
       radio.update(open, here, drawnShift);
+      const market = open?.world.open.threads['market-day'];
+      const marketActive = market && open.parts.missions?.active?.thread === 'market-day';
+      const placing = market?.beat === 'stakes' && !market.end && !!open.parts.threads?.market;
+      const marketRows = marketActive ? [{people: 'dot', pitch: 'gate'}, ...marketStalls(open.world, market)] :
+        placing ? ['beside-the-gate', 'the-pump', 'the-sunny-wall', 'the-forge-wall', 'bess-shed']
+          .map(pitch => ({people: pitch, pitch})) : [];
+      const keys = new Set(marketRows.map(({people, pitch}) => (placing ? 'stake/' : 'stall/') + people + '/' + pitch));
+      for (const [key, stall] of stalls) if (!keys.has(key)) { disposeMeshes(stall); stalls.delete(key); }
+      marketRows.forEach(({people, pitch}, index) => {
+        const key = (placing ? 'stake/' : 'stall/') + people + '/' + pitch;
+        let stall = stalls.get(key);
+        if (!stall) { stall = marketStall(pitch, index, placing); stalls.set(key, stall); group.add(stall); }
+        const point = MARKET_PLACES[pitch];
+        stall.visible = distanceBetween(here, point) < 180;
+        if (stall.visible) {
+          positionAt(stall, point, drawnShift);
+          if (!placing) stall.position.z -= 1.7;
+        }
+      });
+
       hauler.update(open, here, open?.seconds ?? seconds, drawnShift);
       flagSite.update(open?.parts.threads?.places.checkpointsEnabled ? open : null, here, seconds, drawnShift);
       if (lastJob !== worldJob) {
@@ -304,7 +436,80 @@ export function createSignView() {
       if (!open || flareAge > 7.2) flare.visible = false;
       if (flare.visible) flare.userData.animate(flareAge);
       const view = open?.parts.threads?.places ?? {};
+      const tollRecord = view.checkpointsEnabled && open.world.open.threads[TOLL_ID];
+      const wreck = tollPlace([TOLL_GATE, 'buggy']);
+      const buggyVisible = tollRecord && distanceBetween(here, wreck) <= 500 &&
+        (tollRecord.beat === 'round' || open.world.ledger.marks.includes(TOLL_ID + '/knows-the-round')) &&
+        !open.world.ledger.marks.some(id => id === TOLL_ID + '/buggy-stripped' || id === TOLL_ID + '/buggy-told');
+      if (buggyVisible && !tollBuggy) {
+        tollBuggy = lookoutHeap(wreck);
+        tollBuggy.scale.set(.65, .4, .85);
+        tollBuggy.rotation.z = .42;
+        positionAt(tollBuggy, wreck, drawnShift);
+        group.add(tollBuggy);
+      }
+      if (tollBuggy) tollBuggy.visible = !!buggyVisible;
+      const active = open?.parts.missions?.active;
+      const lampPost = active?.mission.kind === 'lookout' && posts[0];
+      if (lampPost && !tollLamp) {
+        const geometry = new THREE.ConeGeometry(1, 1, 18, 1, true);
+        geometry.rotateX(-Math.PI / 2);
+        geometry.translate(0, 0, .5);
+        tollLamp = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: 0xffc185,
+          transparent: true, opacity: .13, side: THREE.DoubleSide, depthWrite: false}));
+        group.add(tollLamp);
+      }
+      if (tollLamp) {
+        tollLamp.visible = !!lampPost;
+        if (lampPost) {
+          positionAt(tollLamp, lampPost, drawnShift);
+          tollLamp.position.y += lampPost.eye ?? 2;
+          tollLamp.rotation.y = lookoutHeading(lampPost, active.mission.rule.turnsIn, active.state.elapsed);
+          tollLamp.scale.set(30, 1.8, lampPost.range);
+        }
+      }
       const signs = open ? openThreadSigns({...open, view}) : [];
+      const stranger = signs.find(entry => entry.id === 'runaway');
+      for (const {key, mesh, lift} of clues) {
+        const at = RUNAWAY_PLACES[key];
+        mesh.visible = !!stranger && distanceBetween(here, at) <= stranger.sign.seenWithin;
+        if (mesh.visible) { positionAt(mesh, at, drawnShift); mesh.position.y += lift; }
+      }
+      const lights = worldJob?.threadSearchCast?.lamps ?? [];
+      while (lamps.children.length < lights.length) {
+        const lamp = new THREE.Mesh(new THREE.ConeGeometry(3.2, 9, 16, 1, true),
+          new THREE.MeshBasicMaterial({color: 0xffd48b, transparent: true, opacity: .19, depthWrite: false, side: THREE.DoubleSide}));
+        lamp.rotation.x = -Math.PI / 2;
+        const shutter = new THREE.Group();
+        shutter.add(lamp);
+        lamp.position.set(0, -.35, 4.5);
+        lamps.add(shutter);
+      }
+      lamps.children.forEach((lamp, index) => {
+        const light = lights[index];
+        lamp.visible = !!light && distanceBetween(here, light) < 150;
+        if (lamp.visible) {
+          positionAt(lamp, light, drawnShift);
+          lamp.position.y += 1.5;
+          lamp.rotation.y = light.heading;
+        }
+      });
+      const grey = open?.world.ledger.marks.includes('rumour/grey-camp') ?
+        sitePosition('grey-camp', open.world.open.landSeed) : null;
+      campHeap.visible = !!grey && distanceBetween(here, grey) < 240;
+      if (campHeap.visible) positionAt(campHeap, grey, drawnShift);
+      const tollVisible = view.tollGate && distanceBetween(here, tollPlace(TOLL_GATE)) <= 600;
+      if (tollVisible && !tollLook) {
+        tollLook = wreckageGate(drawnShift);
+        group.add(tollLook.root);
+      }
+      if (tollLook) {
+        tollLook.root.visible = !!tollVisible;
+        if (tollVisible) {
+          tollLook.pivot.rotation.z = view.tollGate === 'open' ? 1.38 : 0;
+          tollLook.smoke.userData.update(seconds);
+        }
+      }
       if (view.dryPumpEnabled && open.world.open.threads['dry-pump'] && !dryPumpLook)
         dryPumpLook = makeDryPumpLook(group);
       dryPumpLook?.update(open, here, (place, cast) => placeForThread(place, cast, view), drawnShift);
@@ -345,12 +550,23 @@ export function createSignView() {
       hauler.dispose();
       flagSite.dispose();
       radio.dispose();
+      if (tollBuggy) disposeMeshes(tollBuggy);
+      if (tollLamp) disposeMeshes(tollLamp);
+      if (tollLook) {
+        tollLook.sign?.material.map.dispose();
+        disposeMeshes(tollLook.root);
+      }
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();
+      for (const stall of stalls.values()) disposeMeshes(stall);
+      stalls.clear();
       trail?.userData.dispose();
       for (const root of dryPumpLook?.roots ?? []) disposeMeshes(root);
       disposeMeshes(flare);
+      for (const {mesh} of clues) disposeMeshes(mesh);
+      disposeMeshes(lamps);
+      disposeMeshes(campHeap);
       for (const {sign} of sheds) {
         sign.geometry.dispose();
         sign.material.map.dispose();

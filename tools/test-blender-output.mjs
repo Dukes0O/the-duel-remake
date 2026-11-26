@@ -216,6 +216,8 @@ const nativeGenerators = [
   {script: 'tools/blender/wildlife-north-woods.py', test: 'tools/test-blender-output.mjs'},
   {script: 'tools/blender/ardennes-landmarks.py', test: 'tools/test-circuit-ardennes.mjs'},
   {script: 'tools/blender/ardennes-beech.py', test: 'tools/test-circuit-ardennes.mjs'},
+  // OPEN-LOOK-3: plain Python with PIL; its wreck table and atlas are proved by the Rats' Nest look suite.
+  {script: 'tools/blender/rats-nest-wrecks.py', test: 'tools/test-rats-nest-look.mjs'},
 ];
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
@@ -452,7 +454,7 @@ function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false,
   return call;
 }
 check('all Blender asset generators are covered', () => {
-  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py','photo_model.py','hull_model.py','photo_carve.py'].includes(name))
+  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py','photo_model.py','hull_model.py','photo_carve.py','evidence_date.py'].includes(name))
     .map(name => `tools/blender/${name}`);
   assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators, ...kitGenerators].map(item => item.script).sort());
 });

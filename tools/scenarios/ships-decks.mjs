@@ -46,8 +46,10 @@ export const pageFunctions = {
       const job = state.arena.worldJob.job;
       state.arena.worldJob.job = {...job, stepIndex: 1, stepState: {index: 0, plate: at.plate, fHeld: false}};
       if (!state.onFoot) {
-        duel.setInput({interact: true, throttle: 0, brake: 1});
+        // The app re-reads the held keys on every step, so F is held as a player holds it.
+        app.keys.KeyF = true;
         for (let tick = 0; tick < 240 && !state.onFoot; tick++) app.advance(1 / 60);
+        app.keys.KeyF = false;
         duel.setInput({interact: false, brake: 0});
       }
       if (!state.onFoot) throw Error('The fighter did not leave the car.');

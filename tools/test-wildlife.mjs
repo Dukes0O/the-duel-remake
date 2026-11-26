@@ -10,7 +10,9 @@ import {pitAt} from '../src/pit-lane.js';
 import {
   COURSE_SPECIES, SPECIES, SPECIES_IDS, SEA_LEVEL,
   availableSpecies, createPlacementChecker, modelIdsFor, sightingSpotCount, wildlifeSeed, planWildlife, placeWildlife, lapClock, speciesFor,
+  roadsidePlan, ROADSIDE_EDGE,
 } from '../src/wildlife.js';
+import {APPROVED_MODEL_IDS} from '../src/wildlife-models.js';
 
 // WILD-PLACE (docs/HELI_WILDLIFE.md section 3): where the animals stand. The
 // placement is checked against the course's own data and, where possible,
@@ -370,6 +372,52 @@ for (const id of ['titan-arena', 'titan-stunt-trial', 'titan-freestyle']) {
   const clock = lapClock(referenceFor('tremblant-woods'), courseFor('tremblant-woods').length, true);
   check(Math.abs(clock.timeAt(courseFor('tremblant-woods').length - 1e-6) - 77.068) < .05 && clock.timeAt(0) === 0, 'The lap clock runs from 0 to the reference lap time');
   check(Math.abs(clock.timeAt(clock.distanceAt(40)) - 40) < 1e-6, 'The lap clock turns back into distance');
+}
+
+// ---- Roadside herds (switch wildlife-hits, WILDLIFE-HITS-2) -------------------------------------------
+// About twice as many animals on each course with wildlife, the new ones within a car's reach of the road and spread
+// along the lap between the ordinary herds, which stay exactly where they were.
+{
+  const plan = planWildlife({courseId: 'tremblant-woods', playDay: 9, raceNumber: 1, lapSeconds: 77.068});
+  const slots = roadsidePlan(plan);
+  equal(slots.length, plan.count, 'a closed lap has one roadside slot for each herd');
+  const lapGap = (a, b) => { const d = Math.abs(a - b) % 77.068; return Math.min(d, 77.068 - d); };
+  for (const slot of slots) {
+    const nearestOrdinary = Math.min(...plan.slots.flatMap(other => [lapGap(slot.from, other.to), lapGap(slot.to, other.from), lapGap(slot.from, other.from), lapGap(slot.to, other.to)]));
+    check(nearestOrdinary >= 6, `a roadside slot keeps clear of the ordinary ones (${nearestOrdinary.toFixed(1)} s)`);
+  }
+  const open = planWildlife({courseId: 'gap-check', playDay: 1, raceNumber: 1, lapSeconds: 200, closed: false});
+  equal(roadsidePlan(open).length, open.count - 1, 'an open road has one between each two herds, none beyond the last');
+  let off = 0, on = 0, total = 0;
+  for (const id of Object.keys(COURSE_SPECIES)) {
+    if (!availableSpecies(id, APPROVED_MODEL_IDS).any || !definitions.has(id)) continue;
+    const course = courseFor(id), checker = createPlacementChecker(course);
+    let offHere = 0, onHere = 0;
+    for (let day = 30; day < 36; day++) {
+      const args = {courseId: id, playDay: day, raceNumber: 1, course, referenceLap: referenceFor(id), approvedModels: APPROVED_MODEL_IDS};
+      const without = placeWildlife(args), withRoadside = placeWildlife({...args, roadside: true});
+      equal(withRoadside.spots.filter(spot => !spot.roadside).map(spot => JSON.stringify(spot)).sort(), without.spots.map(spot => JSON.stringify({...spot, roadside: false, animals: spot.animals.map(animal => ({...animal, roadside: false}))})).sort(),
+        `${id} day ${day}: the ordinary herds are the same with roadside herds or without`);
+      offHere += without.spots.reduce((sum, spot) => sum + spot.animals.length, 0);
+      onHere += withRoadside.spots.reduce((sum, spot) => sum + spot.animals.length, 0);
+      const times = withRoadside.spots.map(spot => spot.timeS);
+      check(times.every((time, i) => i === 0 || time >= times[i - 1]), `${id}: the spots run in lap order`);
+      for (const spot of withRoadside.spots.filter(spot => spot.roadside)) {
+        check(!spot.rare && !SPECIES[spot.species].lake, `${id}: a roadside herd is a common animal that is not tied to a lake`);
+        for (const animal of spot.animals) {
+          total++;
+          // The edge of the nearest road of any kind (the main road, a shortcut or a branch).
+          const n = course.nearest(animal.x, animal.z), stand = checker.inspect(animal.x, animal.z, {minEdge: 0, maxEdge: Infinity, verge: true});
+          check(!!stand, `${id}: a roadside animal stands on ground an animal may stand on`);
+          check(stand.edge >= ROADSIDE_EDGE[0] - .01 && stand.edge <= ROADSIDE_EDGE[1] + 4.01, `${id}: within reach of the road (${stand.edge.toFixed(1)} m from its edge)`);
+          check(!course.surfaceAt(course.phase(n.s), n.lateral).road, `${id}: and never on it`);
+        }
+      }
+    }
+    check(onHere >= 1.6 * offHere && onHere <= 2.6 * offHere, `${id}: about twice as many animals with the roadside herds (${onHere} against ${offHere})`);
+    off += offHere; on += onHere;
+  }
+  check(total > 200 && on >= 1.8 * off, `about twice as many animals in all (${on} against ${off}; ${total} by the road)`);
 }
 
 console.log(`Wildlife placement: ${checks} checks, ${animalsChecked} animals on ${OUT_OF_THE_WAY.length} courses; ${seen.size} species seen.`);

@@ -35,16 +35,18 @@ export const missionsPart = {
     const {id, holder, mission} = active;
     const kind = kindOf(mission);
     const record = world.open.threads[active.thread];
-    const interrupted = (record?.end && !active.runAfterEnd) || record?.beat !== active.beat || leave || !view.openRoam || view.missionLeaving ||
-      (view.combatWrecking && !['fight', 'rider-fight', 'outrun', 'escort'].includes(mission.kind) && !mission.rule?.wrecked && !mission.rule?.recovery);
-    const next = interrupted ? {state: active.state} : kind.step(mission, active.state, {...view, missionScrap: world.scrap}, dt);
+    const current = kind.continues ? kind.continues(mission, record?.beat) : record?.beat === active.beat;
+    const interrupted = (record?.end && !active.runAfterEnd) || !current || leave || !view.openRoam || view.missionLeaving ||
+      (view.combatWrecking && !active.state.route?.road &&
+        !['fight', 'rider-fight', 'outrun', 'escort', 'squeeze'].includes(mission.kind) && !mission.rule?.wrecked && !mission.rule?.recovery);
+    const next = interrupted ? {state: active.state} : kind.step(mission, active.state, {...view, missionScrap: world.scrap}, dt, {record, world});
     if (next.events) next.events = next.events.map(event => ({...event, seconds}));
     if (!interrupted && !next.outcome) return {...next, state: {active: {...active, state: next.state}}};
     return {
       state: {}, ...(!active.keepHold ? {release: holder} : {}),
       choices: next.choices,
       events: [...(next.events ?? []), interrupted ?
-        {type: 'threadMissionCancelled', id} : {type: 'threadMissionOutcome', id, outcome: next.outcome,
+        {type: 'threadMissionCancelled', id} : {type: 'threadMissionOutcome', id, outcome: next.outcome, ...(next.result ? {result: next.result} : {}),
           ...(mission.kind === 'heist' && next.state.seen && mission.cue ? {alarmPlayed: true} : {})}],
       requests: [...(next.requests ?? []), ...kind.end(mission, next.state, view)],
     };

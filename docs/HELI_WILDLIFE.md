@@ -126,22 +126,45 @@ truck. leave them in a small heap with a bit of red blood on the ground."
   middle comes within 2.4 m of an animal on the ground knocks it down; the
   monster truck (`kind: 'monster'`) within 3.4 m. A bird in the air is out
   of reach; one still on the ground is not.
-- The animal is thrown 1.2 m on, away from the car, and lies on its side,
-  still, as a small heap (60% of its width high). Under the monster truck it
-  is flattened to 20%. It stays for the rest of the race and fades with
-  distance like any animal. Flying the helicopter and landing again plans the
-  race's animals afresh, so they stand again (as animals that ran do).
-- A small stain spreads under it (about a quarter of the body's length
-  across): deep red, matte, ragged (the same shape every
-  time for the same animal), lying on the ground's slope and drawn out
-  along the way the car pushed; half as wide again under the monster truck.
-- The player's own hits play the crush crunch (`vehicle.crush`), a harder
-  one from the monster truck. Other cars' hits are silent.
+- Each kind falls by its size (`size` in `src/wildlife.js`, round 2, Kyle's
+  try of 20 November 2026; a cub falls one size smaller). A small animal (a
+  marmot, a beaver, a fox, a bird) is flung 4.5 m on, thrown about a metre up
+  and tumbling end over end. A medium one (a deer, a wolf, a sheep) is thrown
+  1.2 m on and goes over onto its side. A large one (a moose, an elk, a bear, a
+  red deer) stops the car: it slumps where it stood, 0.3 m on. Each ends on its
+  side, still, as a heap (50, 60 and 70% of its width high). Under the monster
+  truck any animal is crushed flat (20%). It stays for the rest of the race and
+  fades with distance like any animal. Flying the helicopter and landing again
+  plans the race's animals afresh, so they stand again (as animals that ran do).
+- A small stain spreads under it once it is down (about a quarter of the
+  body's length across, a little smaller for a small animal and a third wider
+  for a large one): deep red, matte, ragged (the same shape every time for the
+  same animal), lying on the ground's slope and drawn out along the way the car
+  pushed; 1.6 times as wide under the monster truck.
+- **Roadside herds:** with the switch on, a race also has one roadside herd
+  halfway between each two of its herds (`roadsidePlan`), so a course has about
+  twice as many animals, spread along the lap. They stand 3 to 12 m from the
+  road edge, on the verge or the run-off but never on a road, an escape road,
+  the pit lane or the paddock, and bolt only when a car is 10 m away, so a car
+  that runs wide can reach them. Lake animals and the rare animal stay away
+  from the road. The ordinary herds are exactly where they would be without them.
+- **Birds:** a bird standing on the ground can be hit, and so can one in the
+  first moment of taking off (risen less than 0.8 m); once in the air it has
+  flown off.
+- The player's own hits play the splat (`wildlife.hit`): one of the recorded
+  crash takes at the car-to-car crash's own gain (4.2), played lower so it
+  lands as a smack rather than metal, with a made-in-code splat on top that is
+  at least as loud as the made-in-code crash. A small animal is a little
+  higher; a large one lower, with the heavy thump under it
+  (`wildlife.hit.heavy`); the monster truck hits 15% harder. Other cars' hits
+  are silent.
 - Drawing only: the car feels no bump and loses no speed, and nothing in
   the race, replays, records or pay changes. A bump the driver feels would
-  be a race rule and a card of its own.
+  be a race rule and a card of its own ("a moose stops a car" is the moose's
+  fall for now; `docs/board/questions/WILDLIFE-HITS-2.md`).
 - The browser look is `tools/scenarios/wildlife-hits.mjs`; the rules are
-  checked without graphics in `tools/test-wildlife-view.mjs`.
+  checked without graphics in `tools/test-wildlife-view.mjs` (the falls and
+  the splat) and `tools/test-wildlife.mjs` (the roadside herds).
 
 ## 4. The wildlife count
 

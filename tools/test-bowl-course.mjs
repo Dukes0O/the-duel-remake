@@ -326,4 +326,19 @@ check(jets().every(child=>!child.visible),'Flame jets extinguish during the rest
 view.update(bowl,{},4000,false);
 check(!view.group.visible,'The Bowl presentation stays hidden with its feature switch off.');
 view.dispose();
+// QA-SUMMIT-WARMUP-EXCEPTION: Three's compileAsync polls each collected material's program, so leaving the Bowl takes the art
+// out of the scene at once but disposes its materials only when the renderer's warmup is idle (render3d's `retire`).
+{
+  const later=[],held=createBowlView({loadModel:async()=>fakeCrush(),loadFireTexture:async()=>fireTexture,retire:release=>later.push(release)});
+  held.update(bowl,{},1000,true);await new Promise(resolve=>setTimeout(resolve,0));await new Promise(resolve=>setTimeout(resolve,0));
+  const materials=new Set();held.group.traverse(node=>{for(const material of [node.material].flat().filter(Boolean))materials.add(material);});
+  const disposed=new Set();for(const material of materials)material.addEventListener('dispose',()=>disposed.add(material));
+  check(materials.size>5&&held.group.userData.crushModelsReady,'The held view drew its stadium and crush props.');
+  held.update(bowl,{},2000,false);
+  check(held.group.children.every(child=>child.name.startsWith('Scrapasaurus')||child.name.startsWith('Bowl weapons')||child.type==='Group'&&!child.name.startsWith('Bowl stadium')),'Leaving the Bowl takes the stadium out of the scene at once.');
+  check(disposed.size===0&&later.length>=1,'No material is disposed while the warmup may still poll it; the releases wait.');
+  later.splice(0).forEach(release=>release());
+  check(disposed.size>5,'The held release disposes the stadium and crush materials once the warmup is idle.');
+  held.dispose();later.splice(0).forEach(release=>release());
+}
 console.log('Bowl course: a stadium floor in proportion, jumps that fly, mirrored lanes, free turning, crush line, stadium view and existing courses passed.');

@@ -136,7 +136,8 @@ export function brandSwingReady(state) {
   const world = state.arena?.mode === 'world-job' && state.arena.worldJob;
   const job = world?.job, fighter = state.onFoot && state.fighter;
   return state.status === 'racing' && !state.paused && !!fighter && !fighter.knockedDown &&
-    job?.steps[job.stepIndex]?.brand === true && job.stepState?.brandSeconds > 0 &&
+    ((job?.steps[job.stepIndex]?.brand === true && job.stepState?.brandSeconds > 0) ||
+      world?.threadDefence?.weapons.includes('brand')) &&
     world.actors.some(actor => actor.brandAsh && distance(actor, fighter) <= BRAND_RULE.swingRadius);
 }
 
