@@ -1561,4 +1561,5 @@ tasks:
     needs: []
     locks: []
     flag: "story-choices"
+    claimed_by: "Claude (cloud), 26 November 2026"
     details: "docs/board/cards/OPEN-CROSSINGS.md"
