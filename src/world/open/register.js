@@ -39,6 +39,7 @@ export const NAMES = Object.freeze([
   people('seaview', {leader: 'mr-penny', thing: 'his keys'}),
   person('mr-penny', 'seaview'),
   people('travellers', {group: true}),
+  person('sumps-rider', 'road-rats'),
 ]);
 const byId = new Map(NAMES.map(row => [row.id, row]));
 // tools/test-open-shared.mjs holds this list to src/story/people.js, name for name.

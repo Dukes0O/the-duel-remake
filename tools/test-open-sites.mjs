@@ -19,6 +19,7 @@ import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {HILLS} from '../src/world/scablands-height.js';
 import {townOutpostWorld} from '../src/town/town-outpost-world.js';
 import {run as browserScenario} from './scenarios/open-find-camp.mjs';
+import toll from '../src/story/threads/content/mall-road-toll.js';
 
 const glasshouse = landSite('glasshouse'), radio = landSite('radio-hill');
 const changed = (world, id, ...effects) => applyEffects(world, {id, effects}).world;
@@ -52,7 +53,11 @@ for (const site of LAND_SITES) for (const {at} of site.where) {
     if (Math.hypot(dx, dz) <= 28) terrain.push(heightAt(p.x + dx, p.z + dz));
   assert.ok(Math.max(...terrain) - Math.min(...terrain) <= 2, label + ' is flat over 56 m');
   assert.equal(solidsNear(p.x - 28, p.z - 28, p.x + 28, p.z + 28, 0).length, 0, label + ' is clear');
-  assert.ok(distanceToNet(p.x, p.z) >= 600, label + ' is away from the road');
+  if (site.id === toll.sign.at) {
+    const road = nearestRoad(p);
+    assert.equal(road.road.id, toll.notes.signStands.road, label + ' blocks the authored road');
+    assert.ok(road.distance <= 1, label + ' stands on the road');
+  } else assert.ok(distanceToNet(p.x, p.z) >= 600, label + ' is away from the road');
   assert.ok(distance(p, LAND.at('tin-town')) >= 1500, label + ' is away from Tin Town');
   assert.ok(outposts.every(outpost => distance(p, outpost) >= 800), label + ' is away from other outposts');
   assert.ok(Math.abs(p.x) + 28 < SCABLANDS_LAYOUT.halfWidth && Math.abs(p.z) + 28 < SCABLANDS_LAYOUT.halfDepth);

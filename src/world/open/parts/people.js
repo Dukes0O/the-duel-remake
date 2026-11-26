@@ -1,10 +1,11 @@
+import {TOLL_ID, tollGateStanding} from '../content/mall-road-toll-places.js';
 import {attendTo, STORY_FIGURES} from '../../jobs/story-people.js';
 import {NIGHT_2_SITES} from '../../jobs/night-2-sites.js';
 import {scablandsActorHeightAt} from '../../scablands-ground.js';
 import {stepMover, FOOT_GRADE} from '../../scablands-movers.js';
 import {isTrue} from '../facts.js';
 import {followRoutine, routinePose} from '../routine-rule.js';
-import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
+import {DRY_PUMP_CAST, PEOPLE, TOLL_CAST} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
@@ -81,19 +82,28 @@ export const peoplePart = {
         active = null;
       }
     }
-    const flag = view.checkpointsEnabled ? flagPeople(world) : [];
-    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
-      ...haulerPeople(world, {...view, seconds: context.seconds}), ...flag] : [];
     const runaways = view.checkpointsEnabled ? runawayPeople(world, view.threadSearchCast, view.sitePositions, partOfDay) : [];
+    const toll = view.checkpointsEnabled && world.open.threads[TOLL_ID];
+    const tollPeople = toll ? TOLL_CAST.filter(row => {
+      if (runaways.some(person => person.id === row.id)) return false;
+      if (row.id === 'sump') return tollGateStanding(world);
+      if (row.id === 'sumps-rider') return ['caught', 'slope-run', 'slope-fight'].includes(toll.beat);
+      if (row.id === 'rell') return !world.ledger.marks.includes('walkers-inside') &&
+        isTrue({fact: 'word', of: 'walkers', atLeast: 'Friendly'}, world);
+      return true;
+    }) : [];
+    const storyPeople = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople] : [];
+    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
+      ...haulerPeople(world, {...view, seconds: context.seconds}), ...storyPeople] : [];
     const learner = view.dayClock ? routineFor(world).learner : null;
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
-      row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
+      (row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') && !tollPeople.some(person => person.id === row.id)) : [];
     const market = view.checkpointsEnabled ? marketPeople(world, view) : [];
     const staged = Object.fromEntries(market.map(row => [row.id, (row.routine.day.at ?? row.routine.day.around).join('/')]));
     const stageAt = row => Object.hasOwn(staged, row.id) ? staged[row.id] : null;
     const rows = [...residents.filter(row => (standsHere(row, world) || row.id === learner) && !stageAt(row) &&
-      !flag.some(person => person.id === row.id)), ...[...extras, ...mallPeople].filter(row => !stageAt(row)), ...market, ...runaways];
+      !storyPeople.some(person => person.id === row.id)), ...[...extras, ...mallPeople].filter(row => !stageAt(row)), ...market, ...runaways];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       if (row.position) {

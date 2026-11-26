@@ -1,14 +1,14 @@
 import runaway from '../../../story/threads/content/runaway.js';
-import {nameRow} from '../register.js';
 import {distance} from '../site-rule.js';
 import {RUNAWAY_PLACES} from './runaway-places.js';
+import {TOLL_TALK_ROWS} from './mall-road-toll-places.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {validateTalkScene} from '../../../story/talk.js';
 import {firstBeat, threadRule} from '../../../story/threads/thread-rule.js';
 import {isSignAlive} from '../../../story/threads/signs.js';
 import {namedThrow} from '../../../story/ledger.js';
 import {feudOf} from '../open-record.js';
-import {FEUD_WORDS} from '../register.js';
+import {FEUD_WORDS, nameRow} from '../register.js';
 import {isHeld} from '../holds.js';
 import {checkTalkRow, requireSound} from '../check-tables.js';
 
@@ -75,6 +75,9 @@ export function runawayTalkScene(id, context) {
   validateTalkScene(scene);
   return scene;
 }
+
+export const MALL_ROAD_TALK = Object.freeze(requireSound(TOLL_TALK_ROWS.map(row => ({...row, scene: row.id})),
+  checkTalkRow, 'Mall Road Toll talk rows'));
 
 // The host's scene resolver can call this for an offered row after checking its speaker and location.
 export function openThreadTalkScene(id, context, threads = [burnedCamp]) {

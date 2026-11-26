@@ -97,8 +97,12 @@ export function drawCheckpoint(checkpoint, world, crossing, {difficulty, camps =
     weights[0] /= 2;
   }
   const purpose = INTENTS[weightedIndex(weights, draw, 'intent')];
-  const kind = first ? 'pass' : purpose;
+  const toll = group === 'road-rats' && world.open.threads['mall-road-toll']?.end;
+  const keepsPass = toll === 'kept' && checkpoint.at?.road === 'mall-road' && purpose === 'fight';
+  const kind = first || keepsPass ? 'pass' : purpose;
   const fewer = group === 'road-rats' && world.ledger.marks.includes('stranded-hauler/one-gate-only') ? 1 : 0;
-  return {group, kind, count: first || kind === 'trouble' ? 1 : Math.max(1, Math.min(count, difficulty === 'easy' ? 2 : checkpoint.cars[1]) - fewer),
+  const extra = toll === 'stands' && checkpoint.feud === 'road-rats' && kind === 'fight' ? 2 : 0;
+  return {group, kind, count: first || kind === 'trouble' ? 1 :
+    Math.max(1, Math.min(count, difficulty === 'easy' ? 2 : checkpoint.cars[1]) - fewer) + extra,
     bait: kind === 'trouble' && bait === true, scout: kind === 'pass' && group === 'ash-men' && feud === 0};
 }
