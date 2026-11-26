@@ -93,7 +93,7 @@ function radioTalkPoint(beat, {view, placeAt}, {cast}) {
   if (distanceBetween(playerPoint(view), position) > 2.5) return null;
   const speaker = beat === 'set-asked' ? 'bern' : 'hetty';
   // Use the hut door as the talk anchor even while the sisters follow their routines.
-  return {speaker, position};
+  return {speaker, position: {...position, y: scablandsSurfaceHeightAt(position.x, position.z)}};
 }
 
 const voiceAtWar = radioHillVoice.beats['pocket-fight'].mission.rule.atWar;
@@ -526,7 +526,8 @@ export function createThreadsPart(threads) {
             if (used) choices.push({id: fuel.id, effects: fuel.effects});
             else if (view.openRoam && decision.interact) {
               decision.interact = false;
-              requests.push({type: 'talk', threadPriority: true, id: fuel.id, speaker: fuel.speaker, position: fuel.point,
+              requests.push({type: 'talk', threadPriority: true, id: fuel.id, speaker: fuel.speaker, anchorPosition: true,
+                position: {...fuel.point, y: fuel.point.y ?? scablandsSurfaceHeightAt(fuel.point.x, fuel.point.z)},
                 scene: {id: fuel.id, choices: [{id: fuel.id, words: fuel.words}]}});
             }
           }
@@ -557,7 +558,7 @@ export function createThreadsPart(threads) {
           decision.interact = false;
           const id = `${thread.id}/later/${later.id}`;
           requests.push({type: 'talk', id, speaker: later.by, threadPriority: thread.id === RADIO_ID,
-            ...(thread.id === RADIO_ID ? {position: playerPoint(view)} : {}),
+            ...(thread.id === RADIO_ID ? {position: playerPoint(view), anchorPosition: true} : {}),
             scene: {id,
             lines: later.lines.filter(row => laterRule.ask(row.when)).map(row => ({...row, speaker: laterRule.line(row.speaker), words: laterRule.line(row.words)})),
             choices: [{id, words: 'I hear you.'}]}});
