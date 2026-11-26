@@ -33,8 +33,10 @@ export const pageFunctions = {
     const app = window.__qaApp, duel = app.duel, state = duel.state;
     state.countdown = 0;
     state.arena.worldJob.job.stepState = {brandBriefed: true};
-    duel.setInput({interact: true, throttle: 0, brake: 1});
+    // The app re-reads the held keys on every step, so F is held as a player holds it.
+    app.keys.KeyF = true;
     for (let tick = 0; tick < 240 && !state.onFoot; tick++) app.advance(1 / 60);
+    app.keys.KeyF = false;
     duel.setInput({interact: false});
     if (!state.onFoot || !state.fighter) throw Error('The existing exit action did not create a fighter.');
   },

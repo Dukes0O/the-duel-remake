@@ -115,7 +115,9 @@ export function followBorerSlope(camera, target, state, distance = 8, ahead = -3
 }
 // The head is the simulation origin; the model's tail is about 18 m behind it.
 export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false, body = null) {
-  if (cameraIndex === 1 && body) {
+  // QA-NIGHT-22-NOV: once Mabel has cut a tunnel her cab is inside the rock, so the second view stands outside the mouth.
+  const cutting = state.started === true && !!state.segments?.[0]?.start;
+  if (cameraIndex === 1 && body && !cutting) {
     updateMachineCamera(camera, machineDefinition('borer'), state, 'cab', {body});
     // Rebuild the tunnel route when returning to the chase view.
     delete camera.userData.borerTarget;
