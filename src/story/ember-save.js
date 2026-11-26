@@ -65,13 +65,13 @@ registerStory({
     // The battle on the Boneyard road ended (FIELD-BATTLE-ASH). 'won': the furnace is dead for good, the feud falls to Watching and
     // the run counts. 'arrived': Big Bess reached Tin Town with the furnace still rolling; the run counts and the feud stays at War
     // party. The battle happens only at War party and only while the furnace is alive.
-    battle: (ember, ending) => {
+    battle: (ember, ending, countRun = true) => {
       if (!EMBER_BATTLE_ENDINGS.includes(ending)) return 'That is not an ending of the battle.';
       if (!EMBER_JOBS.every(id => (ember.jobs ?? []).includes(id))) return 'Finish all six Everburn jobs first.';
       if (emberFeudOf(ember) !== EMBER_FEUD_WORDS.length) return 'The Ash Men have not gathered a war party.';
       if (ember.furnaceDead === true) return 'The furnace is already dead.';
-      const runs = emberRunsOf(ember) + 1;
-      return ending === 'won' ? {furnaceDead: true, feud: 1, runs} : {runs};
+      const run = countRun ? {runs: emberRunsOf(ember) + 1} : null;
+      return ending === 'won' ? {furnaceDead: true, feud: 1, ...run} : run;
     },
   },
 });
@@ -102,9 +102,9 @@ export function applyArrivedRun(profile, road) {
 
 // The battle on the Boneyard road ended by `ending` ('won' or 'arrived'). Pure, like applyArrivedRun: the profile it is given is
 // never changed. The result says the feud before and after. A battle that is left or not finished writes nothing.
-export function applyBattleEnding(profile, ending) {
+export function applyBattleEnding(profile, ending, {countRun = true} = {}) {
   const before = emberFeud(profile);
-  const written = writeStory(profile, EMBER_KEY, 'battle', ending);
+  const written = writeStory(profile, EMBER_KEY, 'battle', ending, countRun);
   const after = written.ok ? emberFeud(written.profile) : before;
   return {...written, ending, feudBefore: before, feudAfter: after, runs: written.ok ? emberRuns(written.profile) : emberRuns(profile),
     furnaceDead: written.ok ? emberFurnaceDead(written.profile) : emberFurnaceDead(profile)};
