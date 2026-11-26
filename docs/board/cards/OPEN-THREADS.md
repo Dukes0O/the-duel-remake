@@ -110,6 +110,31 @@ the merged batch.
 `open.smoke.seen`: wind and one low note when the smoke first comes into view. `open.clue.found`: a small find.
 No cue marks a thread beginning: the player learns of it from the sign.
 
+## Claude answers (25 November 2026, evening)
+
+1. **A talk inside roam:** the shared `talk` request below, built by OPEN-ROAM. Until it lands, use roam's interact
+   and caption path, as you picked, in your own part file.
+2. **Banking:** the banked-world hook, as you picked, with the old ledger-only writer left intact. OPEN-STATE now also
+   begins the ledger with Night 2's opening when a roam comes first; the director runs on whatever ledger it is given.
+3. **Gaps in the shape:** `reach` inside a `go` choice's `when` is the shape's own way (its `{reach: place}`
+   condition); the director's visit journal and the three-second rule for seeing the smoke (section 21, Scene 1) are
+   accepted. Join site positions and stages to OPEN-SITES at the merge, and keep the six clue positions of the
+   Glasshouse's look.
+4. **The nine written storylines** are being brought to the shape by OPEN-THREAD-SHAPE; write the burned camp in it,
+   and do not load the nine in this card.
+
+**The four requests the parts share.** Four cards asked for the same missing pieces of the host. Each is now a
+named request in the contract at the top of `src/world/open/open-land.js`, and one card builds its handler in
+`src/arena/modes/world-job.js`. Every other card sends the request by that name and tests its part against it with
+a stand-in in its own files; the laptop joins them at the merge. Do not build a second handler.
+
+| Request | What it does | Built by |
+| --- | --- | --- |
+| `{type: 'talk', scene, speaker}` | Opens a talk inside the roam job; the roam step waits, and the choice comes back as a `talkChoice` in `jobEvents` | OPEN-ROAM |
+| `{type: 'repair', armour, scrap}` and `{type: 'wash'}` | Mend the car by so much armour, or wash it; the view carries `car: {armour, maxArmour, dirt}` | OPEN-DOORS |
+| `{type: 'solids', id, solids}` | Stand a site's or a building's solids in the job's solid grid, or take them away with `solids: []` | OPEN-SITES |
+| `{type: 'riders', ...}` | Start a rider fight inside the roam job | OPEN-CHECKPOINTS |
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
