@@ -149,8 +149,8 @@ function makeLayout(){
   leanTo('lean-to-1',1,-10,4.2,3);leanTo('lean-to-2',1,3.5,3.6,2.8);leanTo('lean-to-3',-1,8.5,4.4,3);leanTo('lean-to-4',-1,-27.5,3.4,2.8);
   leanTo('lean-to-5',1,30.6,4.4,3.1,{workshop:true});
 
-  // Three tyre fires. The guard stops at the middle one to warm his hands.
-  const fires=[[-8,-16.5],[-3,9.5],[-10.5,22]].map(([x,z],index)=>{round(`tyre-fire-${index+1}`,'fire',x,z,.8,1.3);return Object.freeze({x,z,seed:index*31+7});});
+  // Three tyre fires, each kept off the line from a place on the rim to what it looks at. The guard stops at the middle one to warm his hands.
+  const fires=[[-8,-16.5],[-3,9.5],[-12.6,36.2]].map(([x,z],index)=>{round(`tyre-fire-${index+1}`,'fire',x,z,.8,1.3);return Object.freeze({x,z,seed:index*31+7});});
   spot('warm-hands',fires[1].x+.3,fires[1].z+1.7,{heading:Math.PI,looksAt:look(fires[1].x,fires[1].z,.8)});
 
   // The Glasshouse's water cart in the middle of the yard, glass frames stacked on it.
@@ -252,8 +252,8 @@ const makePalette=()=>({
   iron:tone(0x3a3835),tube:tone(0x6d6a63),timber:[tone(0x6f6253),tone(0x574a3c),tone(0x7c7062)],rubber:tone(0x24221f),rope:tone(0x7b6845),
   cloth:[tone(0x5b5a40),tone(0x7d735c),tone(0x4f5a60),tone(0x6a4034),tone(0x8a8474)],
   concrete:tone(0x77736a),stain:tone(0x4f4a42),glass:tone(0xa9b8ad),chrome:tone(0x8a8c88),
-  clay:tone(0xa3977f),dark:tone(0x7d7262),seam:tone(0x6e5340),scree:tone(0xb0a690),rock:tone(0x8a8376),top:tone(0x6f6557),
-  oil:tone(0x0d0c0b),track:tone(0x2d2924),soot:tone(0x0a0908),
+  clay:tone(0x8f5a3c),dark:tone(0x6f4a38),seam:tone(0x44342c),scree:tone(0x8a5c42),rock:tone(0x77675c),top:tone(0x5e3b2a),
+  oil:tone(0x0d0c0b),worn:tone(0x2e1c14),track:tone(0x2d2924),soot:tone(0x0a0908),
 });
 
 // Collects pieces by material, each with its colour in its vertices, under a stack of placements, and merges them: one mesh a material.
@@ -469,10 +469,11 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     rock.applyMatrix4(matrix);keep('earth',rock,colour);
   };
 
-  // The cutting's walls: cut earth in its beds, lumpy, with a seam of old scrap part of the way down and scree at the foot. The mesh
-  // stands a hand or two proud of the ground it follows, so that the land's own drawing of the cut lies behind it.
+  // The cutting's walls: the wreck fields' red earth cut through its beds, lumpy, with a dark seam of old scrap part of the way down
+  // and scree at the foot. The mesh begins at the rim's edge and stands a hand or two proud of the ground it follows, so that the
+  // land's own drawing of the cut lies behind it and nothing of it lies on the land.
   const strata=(drop,grain)=>{
-    const colour=drop<.45?P.top:drop<2.6?P.clay:drop<3.5?P.seam:drop<7.4?P.dark:P.scree;
+    const colour=drop<.5?P.top:drop<2.6?P.clay:drop<3.5?P.seam:drop<7.4?P.dark:P.scree;
     return colour.clone().multiplyScalar(.82+.36*grain);
   };
   const wallStrip=(columns,closed)=>{
@@ -508,15 +509,15 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     side(-sx,-CUT.halfZ,sx,-CUT.halfZ,0,-1);turn(sx,-sz,-Math.PI/2);side(CUT.halfX,-sz,CUT.halfX,sz,1,0);turn(sx,sz,0);
     side(sx,CUT.halfZ,-sx,CUT.halfZ,0,1);turn(-sx,sz,Math.PI/2);side(-CUT.halfX,sz,-CUT.halfX,-sz,-1,0);turn(-sx,-sz,Math.PI);
   }
-  const WALL_ROWS=[[-1.1,0,.02],[-.15,0,.05],[.35,.22,0],[.9,.34,0],[1.5,.6,0],[2.1,.36,0],[2.7,.24,0],[3.3,.52,0],[3.9,.46,0],[4.5,.4,0],[5.1,.46,.12],[5.9,.36,.4],[7.2,0,.04]];
-  wallStrip(rimPoints.map(rim=>ratsNestGround(rim.x-rim.nx*.4,rim.z-rim.nz*.4)>CUT.depth*.55?null:
+  const WALL_ROWS=[[.04,.02,.04],[.35,.22,0],[.9,.34,0],[1.5,.6,0],[2.1,.36,0],[2.7,.24,0],[3.3,.52,0],[3.9,.46,0],[4.5,.4,0],[5.1,.46,.12],[5.9,.36,.4],[7.2,0,.04]];
+  wallStrip(rimPoints.map(rim=>ratsNestGround(rim.x-rim.nx*.3,rim.z-rim.nz*.3)>CUT.depth*.45?null:
     WALL_ROWS.map(([inward,push,lift])=>({x:rim.x-rim.nx*inward,z:rim.z-rim.nz*inward,nx:-rim.nx,nz:-rim.nz,push,lift}))),true);
   // The two sides of the road's ramp, and the two sides of the gully.
   for(const side of [-1,1]){
     const columns=[];
     for(let x=ROAD.top+5;x<=ROAD.foot-1.5;x+=1.25){
       const floor=roadFloor(x),run=roadSideRun(floor);
-      columns.push(floor<.7?null:[1.14,.97,.8,.62,.44,.26,.1,-.08].map((share,row)=>({x,z:ROAD.z+side*(ROAD.half+run*share),nx:0,nz:-side,push:row&&row<7?.24:0,lift:row===6?.12:.02})));
+      columns.push(floor<.7?null:[.99,.86,.72,.58,.44,.26,.1,-.08].map((share,row)=>({x,z:ROAD.z+side*(ROAD.half+run*share),nx:0,nz:-side,push:row&&row<7?.24:.02,lift:row===6?.12:.03})));
     }
     wallStrip(side>0?columns:columns.reverse(),false);
     const banks=[];
@@ -525,7 +526,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       while(index<GULLY.line.length-2&&left>Math.hypot(GULLY.line[index+1][0]-GULLY.line[index][0],GULLY.line[index+1][1]-GULLY.line[index][1])){left-=Math.hypot(GULLY.line[index+1][0]-GULLY.line[index][0],GULLY.line[index+1][1]-GULLY.line[index][1]);index++;}
       const [ax,az]=GULLY.line[index],[bx,bz]=GULLY.line[index+1],length=Math.hypot(bx-ax,bz-az),tx=(bx-ax)/length,tz=(bz-az)/length;
       const cx=ax+tx*left,cz=az+tz*left,bed=gullyBed(along),run=gullySideRun(bed),nx=-tz*side,nz=tx*side;
-      banks.push(bed<.8?null:[1.12,.92,.72,.52,.32,.12,-.05].map((share,row)=>({x:cx+nx*(GULLY.half+run*share),z:cz+nz*(GULLY.half+run*share),nx:-nx,nz:-nz,push:row&&row<6?.22:0,lift:row===5?.15:.02})));
+      banks.push(bed<.8?null:[.99,.86,.7,.52,.32,.12,-.05].map((share,row)=>({x:cx+nx*(GULLY.half+run*share),z:cz+nz*(GULLY.half+run*share),nx:-nx,nz:-nz,push:row&&row<6?.22:.02,lift:row===5?.15:.03})));
     }
     wallStrip(side>0?banks:banks.reverse(),false);
   }
@@ -615,7 +616,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       const x=(u*2-1)*heap.radius*1.15,z=(v*2-1)*heap.radius*1.15,edge=smooth((1.12-Math.hypot(x,z)/heap.radius)/.5);
       let high=0;for(const mound of mounds)high=Math.max(high,mound.high*Math.exp(-((x-mound.x)**2+(z-mound.z)**2)/mound.reach**2));
       return [x,high*edge*(.85+.3*lump(Math.round(u*11),Math.round(v*11),heap.seed))-.06,z];
-    },tone(0x54463b),(u,v)=>[u*3,v*3]);
+    },tone(0x4a3830),(u,v)=>[u*3,v*3]);
     for(let piece=0;piece<16;piece++){
       const angle=between(0,6.28),reach=between(.2,heap.radius*.8),x=Math.cos(angle)*reach,z=Math.sin(angle)*reach,y=heap.height*(1-reach/heap.radius)*.8;
       if(piece%3===0)tube('frame',[x,y,z],[x+between(-.9,.9),y+between(.3,1),z+between(-.9,.9)],between(.02,.045),P.iron,5);
@@ -898,8 +899,8 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     mark('spill','marks',L.drain.from-3.4,L.drain.z,Math.PI/2,6.4,3,P.stain,.7);
     mark('spill','marks',L.shack.table.x+.4,L.shack.table.z+.5,1,2.2,1.6,P.oil,.5);
     // The yard's floor is trodden and oil-soaked where people and cars go: dark soft patches along the ways between things.
-    for(const [x,z,size,strength] of [[2,-17,9,.3],[-4,-6,8,.34],[1,6,10,.3],[-6,18,9,.36],[3,27,12,.42],[-14,29,8,.4],[9,22,7,.3],[5,-1,6,.4],[-8,-16.5,6,.3],[2,-28,9,.34]])
-      mark('spill','marks',x,z,between(0,3),size*between(1.1,1.6),size*1.1,P.stain,strength*.5);
+    for(const [x,z,size,strength] of [[2,-17,9,.3],[-4,-6,8,.34],[1,6,10,.3],[-6,18,9,.36],[3,27,12,.42],[-14,29,8,.4],[9,22,7,.3],[5,-1,6,.4],[2,-28,9,.34]])
+      mark('spill','marks',x,z,between(0,3),size*between(1.1,1.6),size*1.1,P.worn,strength*.42);
     if(night){
       for(const fire of L.fires)mark('soft','pools',fire.x,fire.z,0,15,15,new THREE.Color(.55,.2,.045));
       for(const lamp of lampAt)mark('soft','pools',lamp.x,lamp.z,0,8,8,new THREE.Color(.42,.24,.08));
@@ -953,7 +954,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   }
   // Black tyre smoke from each fire, tall enough to stand over the rim from far off, leaning with the wind.
   const columns=L.fires.map((fire,index)=>{
-    const column=createSmokeColumn({height:80+index*8,foot:.7,top:12+index,wind,lean:.36+index*.04,colour:0x0b0a09,pale:0x3b3733,strength:.88});
+    const column=createSmokeColumn({height:92+index*6,foot:.7,top:17+index,wind,lean:.36+index*.04,colour:0x0b0a09,pale:0x3b3733,strength:.9});
     column.name=`The Rats' Nest, smoke of tyre fire ${index+1}`;column.position.set(fire.x,ground(fire.x,fire.z)+1.5,fire.z);group.add(column);return column;
   });
   const lights=[];

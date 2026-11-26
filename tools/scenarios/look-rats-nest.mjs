@@ -43,8 +43,9 @@ export const pageSource = {
   racing: () => '(() => window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing" && window.__qaApp.visualReady)()',
   landReady: () => `(() => {let root = null; window.__render.scene.traverse(n => {if (n.name === 'The Scablands') root = n;});
     return root?.userData.assetStatus === 'ready';})()`,
-  // Only the 3D view is drawn in the pictures: the menu, the HUD and the captions are hidden.
-  hideScreens: () => `(() => { const style = document.createElement('style'); style.textContent = 'body *{visibility:hidden !important} canvas{visibility:visible !important} canvas.world-hud-minimap,.world-hud-minimap canvas{visibility:hidden !important}'; document.head.appendChild(style); return true; })()`,
+  // Only the 3D view is drawn in the pictures: the menu, the HUD, the captions and the rear view (which is not drawn once its
+  // frame has no size) are hidden.
+  hideScreens: () => `(() => { const style = document.createElement('style'); style.textContent = 'body *{visibility:hidden !important} canvas{visibility:visible !important} canvas.world-hud-minimap,.world-hud-minimap canvas{visibility:hidden !important} .rear-view-frame{display:none !important}'; document.head.appendChild(style); window.dispatchEvent(new Event('resize')); return true; })()`,
   stand: stage => `(async () => window.__openLookStand.stand('rats-nest', {stage: ${JSON.stringify(stage)}}))()`,
   // The car is put down out of the picture, so that the land near the camera is drawn in full, and the camera is set by hand.
   view: ({car, position, target}) => `(() => {
