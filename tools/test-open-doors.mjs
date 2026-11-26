@@ -189,7 +189,10 @@ assert.equal(app.profile.wasteland.scrap,60);
 respond({type:'advance'});
 pageFunctions.walk(false);
 assert.equal(job.open.parts.buildings.inside,null);
-assert.equal(footActionPresentation(duel.state).text,'HOLD AIM ON A CAR');
+// The RPG is back in hand after the forge, held low because Tin Town is peaceful (OPEN-ROAM-2), so no aiming prompt.
+assert.equal(duel.state.footWeapons.selected,'rpg');
+assert.equal(duel.state.footWeapons.lowered,true);
+assert.equal(footActionPresentation(duel.state).text,'');
 assert.equal(job.job.steps[0].kind,'roam');
 // The real wrench stops mid-stroke at sixty percent and leaves a better car alone.
 const bay = pointInBuilding(forge, forge.carBay.at);
