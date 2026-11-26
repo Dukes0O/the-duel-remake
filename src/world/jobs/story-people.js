@@ -94,15 +94,16 @@ const TASK_CAST = {
 
 export function createStoryPeople(placements) {
   const cast = [], ids = new Set();
-  for (const {id, position, yaw = 0, action = 'stand', path, cart, seat, pace, framePartner, loop} of placements) {
-    if (!Object.hasOwn(STORY_FIGURES, id) || ids.has(id))
+  for (const {id, figure = id, position, yaw = 0, action = 'stand', path, cart, seat, pace, framePartner, loop} of placements) {
+    if (!Object.hasOwn(STORY_FIGURES, figure) || ids.has(id))
       throw new Error('Unknown or repeated story figure: ' + id);
     if (![position?.x, position?.y, position?.z, yaw].every(Number.isFinite))
       throw new TypeError('A story figure needs a ground position and heading: ' + id);
     ids.add(id);
-    const {height, width} = STORY_FIGURES[id];
+    const {height, width} = STORY_FIGURES[figure];
     const radius = .4 * width * height / 1.7;
     const person = {id, position: {...position}, height, radius, yaw, distance: 0, action: 'stand', seat, pace};
+    if (figure !== id) person.figure = figure;
     if (framePartner) person.framePartner = framePartner;
     if (cart) placeCart(person);
     setStoryPersonAction(person, action, path, loop);
@@ -113,7 +114,7 @@ export function createStoryPeople(placements) {
 
 export function setStoryPersonAction(person, action, path = [], loop = false) {
   if (!MOVING.has(action) && !RESTING.has(action) && !TIN_TASKS[person.id]?.includes(action)) throw new Error('Unknown story action: ' + action);
-  if (Object.hasOwn(TASK_CAST, action) && !TASK_CAST[action].includes(person.id))
+  if (Object.hasOwn(TASK_CAST, action) && !TASK_CAST[action].includes(person.figure ?? person.id))
     throw new Error(person.id + ' has no pose for ' + action);
   if (MOVING.has(action) && (!path.length || !path.every(p => Number.isFinite(p.x) && Number.isFinite(p.z))))
     throw new Error('A moving story figure needs a path in metres.');
@@ -134,7 +135,7 @@ export function advanceStoryPeople(cast, dt, heightAt) {
   for (const person of cast) {
     if (!MOVING.has(person.action)) continue;
     // Both ends of a windscreen travel at one pace.
-    const usual = STORY_FIGURES[person.id].pace;
+    const usual = STORY_FIGURES[person.figure ?? person.id].pace;
     const speed = person.pace ?? (person.action === 'carry-frame' ? .92 : usual * PACE_FACTOR[person.action]);
     let remaining = Math.max(0, dt) * speed;
     while (remaining > 0 && person.nextPoint < person.path.length) {

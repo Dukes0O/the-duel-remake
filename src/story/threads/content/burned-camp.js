@@ -6,6 +6,14 @@ const atCar = reach('parked-car', 8);
 const leftCar = {found: 'approached'};
 const backAtCar = {all: [atCar, {found: 'approached'}]};
 const approach = {reach: '@camp', within: 40};
+const rim = (spot, within = 3) => ({reach: ['rats-nest', spot], within});
+const rimSpots = ['rim-north', 'rim-middle', 'rim-south'];
+const onRim = {any: rimSpots.map(spot => rim(spot, 6))};
+const surveyed = {any: ['north-end', 'middle', 'south-end'].map(found => ({found}))};
+const nestFound = [
+  {type: 'find', site: 'rats-nest'},
+  mark('found-rats-nest', "You found the Rats' Nest."),
+];
 const keeper = {fact: 'made', id: 'tower/crows-step'};
 const clues = [
   ['frames', 'The glass frames are smashed, and tyre marks run straight down the bean rows.',
@@ -31,7 +39,7 @@ export default {
   title: 'Smoke over a friend',
   kind: 'trouble',
   reads: ['stage', 'found', 'word', 'feud', 'night', 'made', 'mark'],
-  writes: ['site', 'mark'],
+  writes: ['site', 'find', 'mark'],
   cast: {
     camp: {from: 'sites', among: ['glasshouse'], where: {all: [{fact: 'stage', is: 'camp'}, {fact: 'found'}, {fact: 'word', atLeast: 'Friendly'}]}},
     enemy: {from: 'groups', among: ['road-rats'], where: {fact: 'feud', atLeast: 'Watching'}, weightBy: 'feud'},
@@ -87,8 +95,56 @@ export default {
           when: {all: [leftCar, {not: {reach: '@camp', within: 150}}]}, effects: [mark('drove-on', 'You saw {camp.name} burned and drove on.')], next: 'left'},
       ],
     },
-    scout: {notes: 'OPEN-BURNED-SCOUT builds Scene 3 on this beat.'},
-    home: {notes: 'The later hearth card builds Scene 5 on this beat.'},
+    scout: {
+      when: reach('tracks-away', 22),
+      mission: {id: `${ID}/scout`, kind: 'reach', by: 'car', minutes: 4, outing: true, holds: ['checkpoints', 'signs'],
+        enemy: '@enemy', cars: 2, cue: 'open.lookout.flare',
+        rule: {
+          seenAfterSeconds: 8, lookouts: 2, riders: 2,
+          lookoutSpots: [['rats-nest', 'lookout-1'], ['rats-nest', 'lookout-2']],
+          riderStarts: [['rats-nest', 'road-foot'], ['rats-nest', 'road-top']],
+          via: 'girder-bridge', viaWithin: 40, destination: ['rats-nest', 'car-hollow'], within: 8,
+          viaLine: 'The bean pods end here, but the tyre tracks go on into the wreck fields.',
+          seenLine: 'A lookout has sent up a flare. Two buggies are coming.',
+        },
+        outcomes: {
+          seen: {effects: [mark('seen', 'The Road Rats know somebody was looking.')], next: 'rim'},
+          unseen: {next: 'rim'},
+        },
+      },
+    },
+    rim: {
+      when: {any: [rim('car-hollow', 15), onRim]},
+      explore: [
+        {id: 'north-end', when: rim('rim-north'), cue: 'open.scout.seen',
+          what: 'A ring of wrecked cars with a chained gate, and nine people sitting inside it. One of them is small, and looks up.',
+          thought: "There are nine of them in that pen, and that's all of the growers. The small one is Finch, and I think he saw me.",
+          effects: nestFound},
+        {id: 'middle', when: rim('rim-middle'), cue: 'open.scout.seen',
+          what: "The Glasshouse's water cart, with glass frames stacked on it.",
+          thought: "That's Marigold's cart and Marigold's glass. So it was these people who burned the camp, and now I know it for certain.",
+          effects: nestFound},
+        {id: 'south-end', when: rim('rim-south'), cue: 'open.scout.seen',
+          what: 'Six buggies in a row, about fourteen Rats, and a drain as tall as a man under the east wall of the cutting.',
+          thought: "I can count six cars and about fourteen of them. There's also a drain under that wall, and nobody is watching it.",
+          effects: [...nestFound, mark('counted-six', 'You counted six cars.'), mark('knows-drain', 'You know the drain.')]},
+      ],
+      thoughts: [
+        {thought: 'I know where they are and how many of them there are. Back at Tin Town, nobody else knows any of it.', when: {found: 'south-end'}},
+        {thought: "There are six cars down there, and there's only one of me.", when: {found: 'south-end'}},
+      ],
+      choices: [
+        {id: 'rim-alone', by: 'say', words: 'Drive in now, alone.', plain: 'Six cars.',
+          when: {all: [onRim, surveyed]}, thought: "If I'm quick, they won't all get to their cars in time.", next: 'alone'},
+        {id: 'rim-drain', by: 'say', words: 'Go in by the drain, on foot.', plain: 'A dark drain, and one guard with a lamp.',
+          when: {all: [onRim, {found: 'south-end'}]}, thought: 'Finch is small enough to get through that drain, and so am I.', next: 'drain'},
+        {id: 'rim-home', by: 'say', words: 'Slip away home with what you have seen.', plain: 'The road home.',
+          when: {all: [onRim, surveyed]}, next: 'home'},
+      ],
+    },
+    alone: {notes: 'OPEN-BURNED-PEN builds the fight alone in Scene 4.'},
+    drain: {notes: 'OPEN-BURNED-PEN builds the drain in Scene 4.'},
+    home: {notes: 'OPEN-BURNED-RESCUE builds Scene 5 on this beat.'},
   },
   ends: ['left', 'taken'],
   ignored: {afterNights: 4, effects: [{type: 'site', id: '@camp', stage: 'burned'}, mark('never-went')], next: 'taken'},

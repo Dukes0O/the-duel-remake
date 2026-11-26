@@ -1372,18 +1372,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-BURNED-SCOUT
-    title: "Open Scablands: the burned camp, the scouting of the Rats' Nest, and the shared mission runner"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-BURNED-SCOUT.md"
-
   - id: OPEN-JOURNAL-SIZE-2
     title: "Open Scablands: the journal also folds older duplicates of the rows its rules read, so years of play stay under the target"
     owner: "codex"
@@ -1415,7 +1403,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "backlog"
-    needs: [OPEN-BURNED-SCOUT, OPEN-APPRENTICE-RUN]
+    needs: [OPEN-APPRENTICE-RUN]
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-PEN.md"

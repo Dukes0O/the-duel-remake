@@ -43,7 +43,8 @@ const COUNTS = {
   // The Ash Men's turn of the burned camp (OPEN-WRITE-4, 26 November 2026), a file of its own until it is folded into
   // burned-camp.js.
   'burned-camp-ash-men': {lines: 69, thoughts: 34, questions: 13, choices: 16},
-  'burned-camp': {lines: 7, thoughts: 13, questions: 5, choices: 3},
+  // OPEN-BURNED-SCOUT adds three observations, two rim thoughts, two choice thoughts and three choices.
+  'burned-camp': {lines: 7, thoughts: 20, questions: 5, choices: 6},
   'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
   'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
   'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},

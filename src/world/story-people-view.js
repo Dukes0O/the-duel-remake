@@ -216,7 +216,7 @@ function fitCart(figure, person) {
 }
 
 function poseFigure(figure, person, target, speaking, clock, dt, shift, openJob = false) {
-  const {root, joints, facing, model} = figure, profile = STORY_FIGURES[person.id];
+  const {root, joints, facing, model} = figure, profile = STORY_FIGURES[person.figure ?? person.id];
   // Wim also appears in the older fence scene. Only the open land changes her rest.
   const openResident = openJob || tinCast.has(person.id) || !!figure.work;
   if (figure.first) {
@@ -419,13 +419,13 @@ export function createStoryPeopleView(loadAsset) {
   let cast = EMPTY, time = null, disposed = false;
   const populate = async (people, open) => {
     for (const person of people) {
-      const url = sourceFor(person.id);
+      const url = sourceFor(person.figure ?? person.id);
       if (!assets.has(url)) assets.set(url, Promise.resolve().then(() => loadAsset(url)));
     }
     await Promise.all(people.map(async person => {
-      const asset = await assets.get(sourceFor(person.id));
+      const asset = await assets.get(sourceFor(person.figure ?? person.id));
       if (disposed || cast !== people) return;
-      const figure = makeFigure(person.id, asset);
+      const figure = makeFigure(person.figure ?? person.id, asset);
       if (open && ['cinder', 'tin-porter', 'tin-child'].includes(person.id)) addRoutineProp(figure, person.id);
       // The dialogue camera may look up this head before the next update places it in the world.
       figure.root.visible = false;

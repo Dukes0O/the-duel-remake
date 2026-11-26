@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {isHeld} from './holds.js';
 import {openThreadSigns} from './parts/threads.js';
 import {placeForThread} from '../../story/scenes/burned-camp.js';
@@ -7,6 +8,10 @@ import {SMOKE_HEIGHT} from '../../story/threads/signs.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {createSmokeColumn} from '../smoke-column.js';
 import {SERVICE_LANDMARKS} from './building-rule.js';
+import {scoutTrail} from './content/burned-scout.js';
+import {buildGlasshouseTrail} from './looks/glasshouse-look.js';
+import {isFresh} from '../../story/threads/signs.js';
+import burnedCamp from '../../story/threads/content/burned-camp.js';
 
 function paintedSign({label}) {
   const canvas = globalThis.document?.createElement?.('canvas');
@@ -57,10 +62,98 @@ function falseTrailAsh() {
   return group;
 }
 
+function lookoutHeap(post) {
+  const group = new THREE.Group();
+  group.name = 'Scouting lookout wreck heap';
+  const rust = new THREE.MeshStandardMaterial({color: 0x514034, roughness: 1, metalness: .25});
+  const dark = new THREE.MeshStandardMaterial({color: 0x272522, roughness: .95});
+  const body = new THREE.BoxGeometry(1.8, .55, 4.4);
+  const wheel = new THREE.CylinderGeometry(.34, .34, .24, 9);
+  // Three tiers of crossed, crushed bodies. Open roof rails leave the broken windows readable.
+  for (let tier = 0; tier < 3; tier++) for (const side of [-1, 1]) {
+    const car = new THREE.Group();
+    car.position.set(side * 1.05, .45 + tier * .96, tier % 2 ? .35 : -.35);
+    car.rotation.set(.035 * side, tier % 2 ? .5 : -.3, .05 * side);
+    const shell = new THREE.Mesh(body, rust);
+    car.add(shell);
+    for (const x of [-.81, .81]) for (const z of [-1.4, 1.4]) {
+      const tyre = new THREE.Mesh(wheel, dark);
+      tyre.rotation.z = Math.PI / 2;
+      tyre.position.set(x, -.19, z);
+      car.add(tyre);
+    }
+    for (const x of [-.72, .72]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(.07, .07, 1.9), rust);
+      rail.position.set(x, .54, -.2);
+      car.add(rail);
+      for (const z of [-1.1, .7]) {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(.07, .55, .07), rust);
+        pillar.position.set(x, .3, z);
+        car.add(pillar);
+      }
+    }
+    group.add(car);
+  }
+  // Merge the repeated bodies, rails and wheels into two draws for each heap.
+  group.updateMatrixWorld(true);
+  const pieces = new Map([[rust, []], [dark, []]]), originals = new Set();
+  group.traverse(node => {
+    if (!node.isMesh) return;
+    pieces.get(node.material).push(node.geometry.clone().applyMatrix4(node.matrixWorld));
+    originals.add(node.geometry);
+  });
+  group.clear();
+  for (const [material, geometries] of pieces) {
+    group.add(new THREE.Mesh(mergeGeometries(geometries), material));
+    for (const geometry of geometries) geometry.dispose();
+  }
+  for (const geometry of originals) geometry.dispose();
+  group.position.set(post.x, scablandsSurfaceHeightAt(post.x, post.z), post.z);
+  group.rotation.y = post.heading ?? 0;
+  return group;
+}
+
+function lookoutFlare() {
+  const group = new THREE.Group();
+  group.name = 'Scouting lookout flare';
+  const light = new THREE.Mesh(new THREE.SphereGeometry(.55, 8, 6),
+    new THREE.MeshBasicMaterial({color: 0xffb96a, transparent: true}));
+  light.name = 'Scouting flare light';
+  const glow = new THREE.PointLight(0xff6c22, 100, 38, 1.5);
+  const smoke = createSmokeColumn({height: 7, foot: .2, top: 1.4, strength: .65, colour: 0x7d7064, pale: 0xc2b9ac});
+  smoke.name = 'Scouting flare smoke';
+  group.add(light, glow, smoke);
+  group.visible = false;
+  group.userData.animate = age => {
+    const up = Math.max(0, 18 * age - 2.5 * age * age);
+    light.position.set(age * .65, up, age * .22);
+    glow.position.copy(light.position);
+    smoke.position.set(light.position.x, up - 6, light.position.z);
+    const fade = Math.min(1, (7.2 - age) / 1.3);
+    light.material.opacity = Math.max(0, fade);
+    glow.intensity = Math.max(0, 100 * fade);
+    smoke.material.uniforms.uStrength.value = Math.max(0, .65 * fade);
+    smoke.userData.update(age);
+  };
+  return group;
+}
+
+const disposeMeshes = root => {
+  const geometries = new Set(), materials = new Set();
+  root.traverse(node => { if (node.isMesh) { geometries.add(node.geometry); materials.add(node.material); } });
+  for (const geometry of geometries) geometry.dispose();
+  for (const material of materials) material.dispose();
+  root.removeFromParent();
+};
+
 export function createSignView() {
   const group = new THREE.Group();
   group.name = 'Open land signs';
   const smoke = new Map();
+  const heaps = new Map();
+  const flare = lookoutFlare();
+  group.add(flare);
+  let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
   const ash = falseTrailAsh();
   ash.visible = false;
   group.add(ash);
@@ -90,6 +183,31 @@ export function createSignView() {
         }
       }
       const open = worldJob?.open;
+      if (lastJob !== worldJob) {
+        flareSeq = 0;
+        flare.visible = false;
+        lastJob = worldJob;
+      }
+      const posts = open?.parts.missions?.active?.state.route.posts ?? [];
+      const keptPosts = new Set(posts.map((post, i) => post.heap ? i : null));
+      for (const [id, heap] of heaps) if (!keptPosts.has(id)) { disposeMeshes(heap); heaps.delete(id); }
+      posts.forEach((post, i) => {
+        if (!post.heap) return;
+        let heap = heaps.get(i);
+        if (!heap) { heap = lookoutHeap(post); heaps.set(i, heap); group.add(heap); }
+        heap.visible = distanceBetween(here, post) < 1200;
+        if (heap.visible) positionAt(heap, post, drawnShift);
+      });
+      const spotted = open?.events.findLast(event => event.type === 'threadMissionSpotted');
+      if (spotted && spotted.seq > flareSeq) {
+        flareSeq = spotted.seq;
+        flareBorn = spotted.seconds ?? open.seconds;
+        flare.position.set(spotted.position.x, spotted.position.y + (spotted.position.eye ?? 1.8), spotted.position.z);
+        flare.visible = true;
+      }
+      const flareAge = (open?.seconds ?? 0) - flareBorn;
+      if (!open || flareAge > 7.2) flare.visible = false;
+      if (flare.visible) flare.userData.animate(flareAge);
       const view = open?.parts.threads?.places ?? {};
       const signs = open ? openThreadSigns({...open, view}) : [];
       const columns = signs.filter(({sign, at}) => sign.kind === 'smoke' && at);
@@ -110,12 +228,27 @@ export function createSignView() {
         }
       }
       const burned = open?.world.open.threads['burned-camp'];
-      const trail = burned?.cast.blamed && placeForThread(['@camp', 'stove'], burned.cast, view);
-      ash.visible = !!trail && distanceBetween(here, trail) <= 100 && !isHeld(open.holds, 'signs');
-      if (ash.visible) positionAt(ash, trail, drawnShift);
+      const camp = burned && !burned.end && isFresh(burnedCamp, burned, open.world.ledger.night) &&
+        placeForThread('@camp', burned.cast, view);
+      const nextTrailKey = camp ? `${camp.x}/${camp.z}` : '';
+      if (trailKey !== nextTrailKey) {
+        if (trail) { trail.userData.dispose(); group.remove(trail); trail = null; }
+        trailKey = nextTrailKey;
+        if (camp) {
+          trail = buildGlasshouseTrail(scoutTrail(camp), (x, z) => scablandsSurfaceHeightAt(x, z) + (drawnShift?.(x, z) ?? 0));
+          group.add(trail);
+        }
+      }
+      const ashAt = burned?.cast.blamed && placeForThread(['@camp', 'stove'], burned.cast, view);
+      ash.visible = !!ashAt && distanceBetween(here, ashAt) <= 100 && !isHeld(open.holds, 'signs');
+      if (ash.visible) positionAt(ash, ashAt, drawnShift);
     },
     dispose() {
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
+      for (const heap of heaps.values()) disposeMeshes(heap);
+      heaps.clear();
+      trail?.userData.dispose();
+      disposeMeshes(flare);
       for (const {sign} of sheds) {
         sign.geometry.dispose();
         sign.material.map.dispose();

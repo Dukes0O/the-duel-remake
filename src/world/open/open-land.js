@@ -16,7 +16,7 @@
 //   {id,
 //    begin(world, view)          -> the part's first state (optional; {} without it)
 //    step(state, context, dt)    -> {state, choices, events, requests, leave} (all optional)}
-//   context   {world, holds, view, seconds, seed, changes}
+//   context   {world, holds, view, seconds, seed, changes, events, previousEvents, leave}
 //     view      the job step's view (player, onFoot, fighter, carPosition, interact, actors, ...) with two things
 //               added: `clockSec`, and `jobEvents`, the events the job's own step raised since the open land was last
 //               stepped. A talk's result is there as {type: 'talkChoice', id, effects, questionEffects}, and a
@@ -25,7 +25,9 @@
 //               not be paid in full is there as a scrap change with `owed`.
 //   choices   [{id, effects}], applied in order through `applyEffects`; a part changes the world in no other way.
 //             A choice is applied once a night: one that may happen again carries a count in its id.
-//   events    [{type, ...}], kept in `events` above
+//   events    [{type, ...}], kept in `events` above. In context, events and leave come from earlier parts on this
+//             tick; previousEvents carries the previous tick's events once. A threadMission begins a mission
+//             and threadMissionOutcome carries its named outcome back. Cancellation has no outcome.
 //   requests  carried out by world-job.js as a job step's are. A line on the screen is
 //             {type: 'say', lineId: 'open/site-found/glasshouse', text: 'The Glasshouse is on your map.'}; the
 //             `text` is the caption. {type: 'marker', place} sets the marker. A request raised on the tick the job
@@ -40,6 +42,7 @@
 //                                                       {armour, maxArmour, dirt} (OPEN-DOORS)
 //               {type: 'solids', id, solids}            stand a site's or a building's solids; [] takes them away (OPEN-SITES)
 //               {type: 'riders', ...}                   start a rider fight inside roam (OPEN-CHECKPOINTS)
+//               {type: 'missionLookouts', id, posts}   place a mission's parked lookout cars; [] clears them
 //   hold      {holder, systems} takes a hold in the open land's list; `release: holder` lets it go. A storyline's
 //             beat that holds the checkpoints inside a roam job does it this way. A holder beginning 'job:' is the
 //             job's own and is refused.
@@ -59,7 +62,7 @@ export function beginOpenLand(definition) {
   const world = definition?.open?.world;
   if (!world?.ledger || !world?.open) throw new TypeError('A job in the open land needs definition.open.world.');
   return {world: structuredClone(world), holds: takeHold(NO_HOLDS, holderOf(definition), holdsOfJob(definition)),
-    parts: {}, seconds: 0, events: [], eventCount: 0, changes: {}};
+    parts: {}, seconds: 0, events: [], eventCount: 0, changes: {}, previousEvents: []};
 }
 
 export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
@@ -70,7 +73,8 @@ export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
     const state = parts[part.id] ?? part.begin?.(world, view) ?? {};
     parts[part.id] = state;
     if (!part.step) continue;
-    const out = part.step(state, {world, holds, view, seconds, seed: world.seed, changes: open.changes[part.id] ?? []}, dt) ?? {};
+    const out = part.step(state, {world, holds, view, seconds, seed: world.seed, changes: open.changes[part.id] ?? [],
+      events: raised, previousEvents: open.previousEvents ?? [], leave}, dt) ?? {};
     if (out.state !== undefined) parts[part.id] = out.state;
     for (const choice of out.choices ?? []) {
       const applied = applyEffects(world, choice);
@@ -89,7 +93,7 @@ export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
   let {eventCount} = open;
   const events = raised.length
     ? [...open.events, ...raised.map(event => ({...event, seq: ++eventCount}))].slice(-KEPT_EVENTS) : open.events;
-  return {open: {...open, world, holds, parts, seconds, events, eventCount, changes: byPart}, events: raised, requests, changes, leave};
+  return {open: {...open, world, holds, parts, seconds, events, eventCount, changes: byPart, previousEvents: raised}, events: raised, requests, changes, leave};
 }
 
 // A mission that begins inside the open land takes a hold, and lets go when it ends, fails or is left.

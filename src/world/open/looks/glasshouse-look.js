@@ -1197,7 +1197,11 @@ function drawGround(kit, stage, fresh) {
   }
   marks.keep();
   // The bean pods, dropped one at a time between the ruts: fresh and green, each a hand long and curved.
-  for (const pod of pods) kit.stand(pod.x, pod.z, -.68 + .15 * pod.turn, () => {
+  for (const pod of pods) drawBeanPod(kit, pod);
+}
+
+function drawBeanPod(kit, pod) {
+  kit.stand(pod.x, pod.z, -.68 + .15 * (pod.turn ?? 0), () => {
     // Bowed shell, individual beans swelling under its skin, and a taper at either end.
     const skin = kit.sheet('plain', span(10), span(6), (u, v) => {
       const swell = Math.sin(Math.PI * u) ** .65 * (.83 + .17 * Math.cos(u * Math.PI * 8));
@@ -1208,6 +1212,40 @@ function drawGround(kit, stage, fresh) {
     kit.keep('plain', skin, PALETTE.pod);
     kit.tube('plain', [.18, .074, 0], [.21, .087, -.01], .008, PALETTE.leafOld, 4, .003);
   });
+}
+
+// The same ruts and pods continue beyond the camp, from authored world rows. No world state is changed here.
+export function buildGlasshouseTrail({tracks, pods}, heightAt) {
+  PALETTE ??= makePalette();
+  const kit = createKit(heightAt, {plain: {}, ground: {alpha: true}});
+  const marks = kit.loose('ground');
+  const line = [];
+  for (let i = 1; i < tracks.length; i++) {
+    const a = tracks[i - 1], b = tracks[i], count = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2);
+    for (let j = 0; j < count; j++) line.push({x: a.x + (b.x - a.x) * j / count, z: a.z + (b.z - a.z) * j / count});
+  }
+  line.push(tracks.at(-1));
+  for (const side of [-.64, .64, -.89, .89])
+    groundStrip(kit, marks, lineOffset(line, side), Math.abs(side) > .8 ? .14 : .095, MARK.rut, () => .72, .06);
+  marks.keep();
+  for (const pod of pods) drawBeanPod(kit, pod);
+  const group = new THREE.Group();
+  group.name = 'The scouting trail';
+  for (const [kind, list] of Object.entries(kit.lists)) {
+    if (!list.length) continue;
+    const material = new THREE.MeshStandardMaterial({vertexColors: true, roughness: 1,
+      transparent: kind === 'ground', depthWrite: kind !== 'ground', side: THREE.DoubleSide,
+      polygonOffset: kind === 'ground', polygonOffsetFactor: -4, polygonOffsetUnits: -4});
+    const geometry = mergeGeometries(list);
+    for (const piece of list) piece.dispose();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = kind === 'ground' ? 'Scouting tyre tracks' : 'Scouting bean pods';
+    group.add(mesh);
+  }
+  group.userData.dispose = () => group.traverse(node => {
+    if (node.isMesh) { node.geometry.dispose(); node.material.dispose(); }
+  });
+  return group;
 }
 
 // A line moved sideways by `side` metres (to its left when walking along it).

@@ -8,6 +8,7 @@ import {PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
+import {scoutPeople} from '../content/burned-scout.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -22,8 +23,9 @@ const targetFor = (row, context, partOfDay) => routinePose(
 function firstPose(row, target, grid) {
   const {height, width} = STORY_FIGURES[row.figure];
   const radius = .4 * width * height / 1.7;
-  const {x, y, z} = stepMover(target, target, {radius, grade: FOOT_GRADE, grid});
-  return {id: row.id, figure: row.figure, position: {x, y: scablandsActorHeightAt(x, z, y), z},
+  const {x, y, z} = row.elevation ? {...target, y: scablandsActorHeightAt(target.x, target.z)} :
+    stepMover(target, target, {radius, grade: FOOT_GRADE, grid});
+  return {id: row.id, figure: row.figure, position: {x, y: scablandsActorHeightAt(x, z, y) + (row.elevation ?? 0), z},
     yaw: target.yaw, task: target.travelTask ?? target.task, distance: 0, radius, height};
 }
 
@@ -68,7 +70,8 @@ export const peoplePart = {
         active = null;
       }
     }
-    const rows = residents.filter(row => standsHere(row, world));
+    const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
+    const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.

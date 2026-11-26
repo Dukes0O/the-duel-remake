@@ -46,6 +46,11 @@ import {BUILDINGS} from '../../world/open/content/buildings.js';
 import {buildingWalls} from '../../world/open/building-rule.js';
 import {forgePosts} from '../../world/open/content/people-forge.js';
 import {applyEffects} from '../../world/open/open-effects.js';
+import {SOUND_BANK} from '../../sound-bank.js';
+import {ROAD_GROUPS} from '../../world/open/content/checkpoints.js';
+import {RATS_NEST_LAYOUT} from '../../world/open/looks/rats-nest-look.js';
+import {BURNED_SCOUT} from '../../world/open/content/burned-scout.js';
+import {abandonOpenMission} from '../../world/open/parts/missions.js';
 import {installSiteGround} from '../../world/open/site-ground.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sitePosition} from '../../world/open/site-rule.js';
@@ -449,6 +454,7 @@ function placeWorldFighter(duel, start) {
 export function cleanupWorldJobLoan(duel) {
   const worldJob = duel.state.arena?.mode === 'world-job' ? duel.state.arena.worldJob : null;
   if (!worldJob || !Array.isArray(worldJob.originalWeaponLoadout)) return false;
+  if (worldJob.open) worldJob.open = abandonOpenMission(worldJob.open);
   endSiteGround.get(worldJob)?.();
   endSiteGround.delete(worldJob);
   duel.state.weaponLoadout = [...worldJob.originalWeaponLoadout];
@@ -1690,6 +1696,7 @@ function routeWorldNight2(duel, worldJob, previous, next) {
 function finishWorldJob(duel, worldJob) {
   const state = duel.state;
   worldJob.settled = true;
+  if (worldJob.open) worldJob.open = abandonOpenMission(worldJob.open);
   if (worldJob.definition.battle === true) settleBattle(worldJob);
   state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
   if (worldJob.originalCrewId) state.crewId = worldJob.originalCrewId;
@@ -2086,9 +2093,20 @@ export function stepWorldJob(duel, dt) {
     const openRoam = currentStep?.kind === 'roam';
     // Where each site stands in this land, from the land's seed (OPEN-SITES), for every part that places one.
     const landSeed = worldJob.open.world.open.landSeed;
-    if (worldJob.openSitePositions?.landSeed !== landSeed) worldJob.openSitePositions = {landSeed, at: Object.fromEntries(
-      OPEN_SITES.map(site => [site.id, sitePosition(site.id, landSeed)]).filter(([, at]) => at))};
-    openStep = stepOpenLand(worldJob.open, {...view, ...road, sitePositions: worldJob.openSitePositions.at, checkpointSites: worldJob.openSitePositions.at,
+    if (worldJob.openSitePositions?.landSeed !== landSeed) {
+      const at = Object.fromEntries(OPEN_SITES.map(site => [site.id, sitePosition(site.id, landSeed)]).filter(([, point]) => point));
+      // OPEN-SHARED: the mission reads the same named spots as the site look. Road encounters still read site centres.
+      const nest = at['rats-nest'];
+      const withSpots = nest ? {...at, 'rats-nest': {position: nest,
+        spots: {...RATS_NEST_LAYOUT.spots, ...BURNED_SCOUT.spots}}} : at;
+      worldJob.openSitePositions = {landSeed, at, withSpots};
+    }
+    const {at: sites, withSpots} = worldJob.openSitePositions;
+    const missionRidersFighting = worldJob.riderFight?.checkpointStep?.id === road.road?.id &&
+      worldJob.riderFight?.outcome === null;
+    openStep = stepOpenLand(worldJob.open, {...view, ...road,
+      sitePositions: checkpointsEnabled ? withSpots : sites, checkpointSites: sites, missionRidersFighting,
+      missionLookoutPosts: worldJob.open.parts.missions?.active?.state.route.posts,
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
@@ -2260,9 +2278,22 @@ export function stepWorldJob(duel, dt) {
       const talk = openStep.requests.find(isTalk);
       if (talk) beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
     }
+    // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
+    if (checkpointsEnabled) for (const event of openStep.events) {
+      if ((event.type === 'threadCue' || event.type === 'threadMissionSpotted') && Object.hasOwn(SOUND_BANK, event.cue))
+        duel.emit({arenaTell: {id: event.id, cue: event.cue, position: event.position ?? point, seconds: 0}});
+    }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
-      if (!checkpointsEnabled || !applyCheckpointRoadRequest(duel, worldJob, request)) applyRequests(duel, worldJob, [request]);
+      if (checkpointsEnabled && request.type === 'missionLookouts') {
+        const prefix = request.id + '/lookout/';
+        worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));
+        request.posts.forEach((position, index) => worldJob.actors.push({
+          id: prefix + index, position: {...position, y: position.y + (position.heap?.height ?? 0)},
+          heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
+          health: 100, speed: 0,
+        }));
+      } else if (!checkpointsEnabled || !applyCheckpointRoadRequest(duel, worldJob, request)) applyRequests(duel, worldJob, [request]);
     }
   }
   if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
