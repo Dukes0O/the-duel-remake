@@ -76,14 +76,20 @@ export const peoplePart = {
         active = null;
       }
     }
-    const toll = view.checkpointsEnabled && tollGateStanding(world) ? TOLL_CAST.filter(row =>
-      row.id !== 'sumps-rider' || ['caught', 'slope-run', 'slope-fight'].includes(world.open.threads[TOLL_ID].beat)) : [];
-    const staged = view.checkpointsEnabled ? [...flagPeople(world), ...toll] : [];
+    const toll = view.checkpointsEnabled && world.open.threads[TOLL_ID];
+    const tollPeople = toll ? TOLL_CAST.filter(row => {
+      if (row.id === 'sump') return tollGateStanding(world);
+      if (row.id === 'sumps-rider') return ['caught', 'slope-run', 'slope-fight'].includes(toll.beat);
+      if (row.id === 'rell') return !world.ledger.marks.includes('walkers-inside') &&
+        isTrue({fact: 'word', of: 'walkers', atLeast: 'Friendly'}, world);
+      return true;
+    }) : [];
+    const staged = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople] : [];
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
       ...haulerPeople(world, {...view, seconds: context.seconds}), ...staged] : [];
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
-      (row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') && !toll.some(person => person.id === row.id)) : [];
+      (row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') && !tollPeople.some(person => person.id === row.id)) : [];
     const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras, ...mallPeople];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];

@@ -92,6 +92,7 @@ assert.ok(has(drive, 'nan-asked'));
 const cast = stepOpenLand(drive, {openRoam: true, checkpointsEnabled: true}, .1, [peoplePart]).open.parts.people.cast;
 assert.ok(cast.some(row => row.id === 'nan-tallow'));
 assert.ok(cast.some(row => row.id === 'sump'));
+assert.ok(cast.some(row => row.id === 'dot'));
 
 for (const [index, balance] of [52, 44, 36, 24, 12].entries()) {
   drive = interact(drive, 'gate', 'pay');

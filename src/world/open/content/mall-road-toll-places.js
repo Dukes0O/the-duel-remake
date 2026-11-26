@@ -29,7 +29,7 @@ const spots = {
   sump: tollPosition(-6, -4), nan: tollPosition(8, 17), rider: tollPosition(-65, -352),
   turn: tollPosition(-75, -440), west: tollPosition(-380, -165), buggy: tollPosition(-570, 35),
   rejoin: tollPosition(-4, 240), lookout: {...tollPosition(-215, -70), eye: 2.8, range: 360},
-  'fire-left': tollPosition(-12, 19), 'fire-right': tollPosition(14, 18), 'fire-back': tollPosition(0, 32),
+  'fire-left': tollPosition(-12, 19), 'fire-right': tollPosition(14, 18), 'fire-back': tollPosition(10, 34),
   'hill-rider': tollPosition(-95, -40), 'extra-left': tollPosition(-24, 30), 'extra-right': tollPosition(24, 30),
 };
 const at = spot => [TOLL_GATE, spot];
@@ -38,15 +38,17 @@ export function tollPlace(place) {
   return Array.isArray(place) && place[0] === TOLL_GATE ? spots[place[1]] : null;
 }
 
-const post = (id, figure, side, along) => {
-  const day = {kind: 'post', at: local(side, along), action: 'stand'};
-  return {id, figure, home: TOLL_GATE, talk: null, routine: {day}};
-};
+const diner = ['tin-town', 16, 19];
+const wash = ['the-wash', 25, -38];
+const post = (id, figure, at, home) => ({id, figure, home, talk: null,
+  routine: {day: {kind: 'post', at, action: 'stand'}}});
 
 export const TOLL_PEOPLE = [
-  post('sump', 'sump', -6, -4),
-  post('nan-tallow', 'moss', 8, 17),
-  post('sumps-rider', 'road-rat-lookout', -65, -352),
+  post('sump', 'sump', local(-6, -4), TOLL_GATE),
+  post('nan-tallow', 'moss', local(8, 17), TOLL_GATE),
+  post('sumps-rider', 'road-rat-lookout', local(-65, -352), TOLL_GATE),
+  post('dot', 'hetty', diner, 'tin-town'),
+  post('rell', 'rell', wash, 'the-wash'),
 ];
 
 export const TOLL_TALK_ROWS = story.later;
@@ -148,11 +150,11 @@ export function stagedToll(world) {
 export function tollVisitPosition(id, cast, view, placeAt) {
   if (id === 'nan-tallow') return spots.nan;
   if (id === 'sump') return spots.sump;
-  if (id === 'rell') return view.people?.find(row => row.id === id)?.position ?? LAND.at('the-wash', 25, -38);
+  if (id === 'rell') return view.people?.find(row => row.id === id)?.position ?? LAND.at(...wash);
   if (id === '{camp.leader}') return placeAt([cast.camp, 'door'], cast) ?? placeAt(cast.camp, cast);
   if (id === 'auntie-solder') return placeAt(['tin-town', 'hearth'], cast);
   if (id === 'sumps-rider') return spots.rider;
-  if (id === 'dot') return view.people?.find(row => row.id === id)?.position ?? LAND.at('tin-town', 16, 19);
+  if (id === 'dot') return view.people?.find(row => row.id === id)?.position ?? LAND.at(...diner);
   return null;
 }
 
