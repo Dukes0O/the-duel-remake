@@ -229,6 +229,11 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   figure.asleep += ((person.action === 'sleep' ? 1 : 0) - figure.asleep) * blend;
   figure.armReach += ((person.action === 'push-cart' ? 1 : 0) - figure.armReach) * blend;
   const sit = figure.seated, sleep = figure.asleep, push = figure.armReach;
+  // The open town has no fence behind its sleepers. Roll onto the left
+  // shoulder with the knees loosely bent; legacy camp seats use their own pose.
+  const sideRest = tinCast.has(person.id) ? sleep : 0;
+  const seatedBend = sit - sideRest * .75;
+  const campSleep = sleep - sideRest;
   const moving = person.action === 'walk' || person.action === 'run' || person.action === 'push-cart' ||
     person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp';
   const running = person.action === 'run';
@@ -246,10 +251,10 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   for (const [side, sign] of SIDES) {
     const swing = sign * stride;
     const lift = moving ? Math.max(0, sign * Math.cos(phase)) : 0;
-    const longLeg = sign < 0 ? sleep : 0;
-    poseBone(joints['thigh' + side], -1.43 * sit - .71 * sleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
-    poseBone(joints['shin' + side], 1.65 * sit + 1.20 * sleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
-    poseBone(joints['foot' + side], -.26 * sit - .44 * sleep + 1.29 * longLeg - lift * .19);
+    const longLeg = sign < 0 ? campSleep : 0;
+    poseBone(joints['thigh' + side], -1.43 * seatedBend - .71 * campSleep + .55 * longLeg - swing * (running ? .81 : .46), 0, sign * .23 * sit);
+    poseBone(joints['shin' + side], 1.65 * seatedBend + 1.20 * campSleep - 2.77 * longLeg + lift * (running ? 1.07 : .47));
+    poseBone(joints['foot' + side], -.26 * seatedBend - .44 * campSleep + 1.29 * longLeg - lift * .19);
     const gestureSide = sign > 0 ? gesture : .15 * gesture;
     poseBone(joints['upper_arm' + side], swing * (running ? .5 : .31) * (1 - push) -
       .68 * push - .43 * sit - .23 * gestureSide, 0, -sign * (.055 + .10 * gestureSide + (sign < 0 ? .49 : .39) * sleep));
@@ -260,6 +265,7 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   if (figure.work) poseWork(figure, person, clock, stride);
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.
+  if (tinCast.has(person.id)) model.rotation.z = sideRest * Math.PI / 2;
   model.position.y = figure.baseY;
   root.updateWorldMatrix(true, false);
   root.updateMatrixWorld(true);
@@ -267,6 +273,24 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   for (const index of figure.soles) {
     figure.body.getVertexPosition(index, foot).applyMatrix4(figure.body.matrixWorld);
     lowest = Math.min(lowest, foot.y);
+  }
+  if (sideRest > .001) {
+    // Each height band supplies the leftmost body point from the rest mesh.
+    // These contacts follow the hip, sleeve and head as the skeleton rolls.
+    if (!figure.sideContacts) {
+      const bands = new Map();
+      const positions = figure.body.geometry.attributes.position;
+      for (let index = 0; index < positions.count; index++) {
+        const band = Math.floor(positions.getY(index) * 20);
+        const current = bands.get(band);
+        if (current === undefined || positions.getX(index) < positions.getX(current)) bands.set(band, index);
+      }
+      figure.sideContacts = [...bands.values()];
+    }
+    for (const index of figure.sideContacts) {
+      figure.body.getVertexPosition(index, foot).applyMatrix4(figure.body.matrixWorld);
+      lowest = Math.min(lowest, foot.y);
+    }
   }
   model.position.y += root.position.y - lowest;
   if (figure.work) fitHandTool(figure, person.action);
