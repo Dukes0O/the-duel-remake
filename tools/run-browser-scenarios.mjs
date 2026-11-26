@@ -66,6 +66,9 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
     'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
     'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
+  {prefixes:['open-somebody-elses-flag'], paths:['src/story/threads/content/somebody-elses-flag.js',
+    'src/world/open/', 'src/story/threads/signs.js', 'src/story/scenes/burned-camp.js',
+    'src/arena/modes/road-riders.js', 'src/arena/modes/world-job.js', 'src/sim-contacts.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||

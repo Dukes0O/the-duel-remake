@@ -29,12 +29,14 @@ export const missionsPart = {
     const {id, holder, mission} = active;
     const kind = kindOf(mission);
     const record = world.open.threads[active.thread];
-    const interrupted = record?.end || record?.beat !== active.beat || leave || !view.openRoam || view.missionLeaving || view.combatWrecking;
-    const next = interrupted ? {state: active.state} : kind.step(mission, active.state, view, dt);
+    const interrupted = record?.end || record?.beat !== active.beat || leave || !view.openRoam || view.missionLeaving ||
+      view.combatWrecking && mission.kind !== 'fight';
+    const next = interrupted ? {state: active.state} : kind.step(mission, active.state, {...view, missionScrap: world.scrap}, dt);
     if (next.events) next.events = next.events.map(event => ({...event, seconds}));
     if (!interrupted && !next.outcome) return {...next, state: {active: {...active, state: next.state}}};
     return {
       state: {}, release: holder,
+      choices: next.choices,
       events: [...(next.events ?? []), interrupted ?
         {type: 'threadMissionCancelled', id} : {type: 'threadMissionOutcome', id, outcome: next.outcome}],
       requests: [...(next.requests ?? []), ...kind.end(mission, next.state, view)],

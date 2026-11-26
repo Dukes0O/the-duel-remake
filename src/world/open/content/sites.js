@@ -16,6 +16,7 @@ export const LAND_SITES = Object.freeze(requireSound([
     {foundWithin: 120, tell: 'mast', tellWithin: 1400, radioWithin: 800, leader: 'hetty', meeting: 'door', warns: true}),
   // OPEN-BURNED-SCOUT owns discovery and the look of the den.
   site('rats-nest', [['boneyard', -150, -900]], {foundWithin: 120, tell: 'tyre-smoke'}),
+  site('sweet-seep', [['dead-mall', -850, -450]], {foundWithin: 160, tell: 'green-patch', tellWithin: 700}),
 ], checkSite, 'Open Scablands sites'));
 
 export const CAMP_SITES = Object.freeze(LAND_SITES.filter(site => site.kind === 'camp'));

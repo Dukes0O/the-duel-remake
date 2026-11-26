@@ -9,6 +9,7 @@ import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
 import {scoutPeople} from '../content/burned-scout.js';
+import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -70,8 +71,9 @@ export const peoplePart = {
         active = null;
       }
     }
-    const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
+    const staged = view.checkpointsEnabled ? flagPeople(world) : [];
+    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []), ...staged] : [];
+    const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.

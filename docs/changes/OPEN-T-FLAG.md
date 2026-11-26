@@ -1,0 +1,15 @@
+# OPEN-T-FLAG
+- Loaded the unchanged storyline behind story-choices, with its tower sign, Sweet Seep, cast, clues, payments and later talk.
+- Added a reusable car fight: two unarmed three tonne cars, side boxing, one wreck to win, and one half-scrap recovery charge.
+- Mechanical choices and the extra hooks are in docs/board/questions/OPEN-T-FLAG.md. No storyline file or page words changed.
+- Checked the implementation tree committed with this note, based on a8ec19377. Only handoff notes and status follow the code checks.
+- Passed: test-open-somebody-elses-flag, test-open-missions, test-open-threads, test-open-shared, test-thread-shape and test-burned-camp.
+- Rule 23 with --jobs 2: 7 suites passed. Later fixes ran their affected suites and the three guards. test-open-checkpoints also passed.
+- Fingerprints stayed unchanged: 306 replay checks, 12 combat replay checks and 65 world composition checks. Core: 804 passed.
+- npm run build passed. Board: 743 checks passed. Repository hygiene passed; existing bundle and size warnings remain advisory.
+- thread-crossings --check: this storyline is sound; exit 1 is the three existing Burned Camp beats assigned to OPEN-BURNED-PEN and OPEN-BURNED-RESCUE.
+- Changed assertions: none in older suites. Source shape counts remain 46 lines, 16 thoughts, 9 questions and 11 choices.
+- **For Claude to run:** open-somebody-elses-flag in Chrome, review the mechanical picks and fight feel, and run the integration Cockpit sync. Scenario page strings parse in the headless suite.
+- **Look owed:** Sweet Seep needs its white drill rig, survey crew, armoured pickups, cut reeds, rope, forms, price board and hand pump refined from this reused car, cart and figure staging.
+- **Sound owed to OPEN-SOUND:** open.flag.seen, open.flag.drill, open.flag.card, open.flag.stamp, open.flag.down, open.flag.horn and open.clue.found are not in the bank; their ids are retained.
+- **Removed:** Nothing. Existing reach missions and the authored storyline remain in place.

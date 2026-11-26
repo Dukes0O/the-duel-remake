@@ -10,8 +10,12 @@ import {isFresh, liveSigns, witnessSign} from '../../../story/threads/signs.js';
 import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/thread-rule.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {placeForThread, radioScene} from '../../../story/scenes/burned-camp.js';
+import {flagStory, FLAG_ID, FLAG_SCENES, FLAG_LATER_PLACES, FLAG_TALK_ROWS, stagedFlag, flagSolids} from '../content/somebody-elses-flag-places.js';
+import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
+import {residentPose} from '../site-rule.js';
+import {campPeople} from '../content/people-sites.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, flagStory], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -19,7 +23,7 @@ const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 function withPlaces(context) {
   const {world, view = {}} = context;
   return {...context, placeAt: (place, cast) => {
-      const point = placeForThread(place, cast, view);
+      const point = placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
@@ -92,16 +96,28 @@ function outputFor(thread, context, record, state, observed, decision) {
   }
 
   const followed = Object.keys(thread.beats).some(id => id !== firstBeat(thread) && rule.has('entered', id));
-  if (!followed && world.ledger.night - record.began >= thread.ignored.afterNights) {
+  if ((!followed && world.ledger.night - record.began >= thread.ignored.afterNights) ||
+      (thread.ignored.afterChoice && rule.has('chose', thread.ignored.afterChoice.id))) {
     move('ignored', thread.ignored);
     return out;
   }
 
   const ownedHold = context.holds.some(hold => hold.holder === holder);
+  const entered = rule.has('entered', beatId);
+  const staging = thread.id === FLAG_ID && FLAG_SCENES[beatId];
+  const atTalk = !staging || view.onFoot === staging.foot && rule.ask({reach: staging.at, within: staging.within});
+  if (thread.id === FLAG_ID && entered && beat.choices?.some(row => row.by === 'go') && !view.onFoot &&
+      !rule.ask({reach: thread.sign.at, within: 60})) {
+    const option = beat.choices.find(row => row.by === 'go');
+    if (option.thought) text(`choice/${option.id}`, option.thought);
+    move(`choice/${option.id}`, option, [remember('chose', option.id)]);
+    return out;
+  }
+  const exploring = entered && view.onFoot && beat.explore?.length && rule.ask({reach: thread.sign.at, within: 45});
+  if (staging && !atTalk && !exploring) return out;
   if (opening && isHeld(context.holds, 'signs') && !ownedHold) return out;
   const approachedCold = opening && beat.when === 'sign-seen' && !isFresh(thread, record, world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
-  const entered = rule.has('entered', beatId);
   const startingMission = mission && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
     (mission.by !== 'car' || !view.onFoot) && !view.combatWrecking && !view.missionLeaving && !(mission.outing && view.outingAvailable === false);
   if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
@@ -153,7 +169,7 @@ function outputFor(thread, context, record, state, observed, decision) {
     ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === radio?.id).map(event => event.id),
   ]);
   for (const question of radio?.questions ?? []) if (asked.has(question.id)) once('asked', question.id);
-  if (!asked.size && radio && rule.ask(beat.when) && view.onFoot && decision.interact) {
+  if (!asked.size && radio && atTalk && rule.ask(beat.when) && view.onFoot && decision.interact) {
     decision.interact = false;
     if (view.openRoam) out.requests.push({type: 'talk', id: radio.id, scene: radio, speaker: radio.questions[0].lines[0]?.speaker, radio: true});
     else {
@@ -177,27 +193,32 @@ function outputFor(thread, context, record, state, observed, decision) {
     return out;
   }
 
-  const available = beat.choices?.filter(row => !rule.has('chose', row.id) && rule.ask(row.when)) ?? [];
-  const spoken = available.filter(row => row.by === 'say');
-  if (spoken.length && view.onFoot && view.openRoam && view.checkpointsEnabled && decision.interact) {
+  const available = beat.choices?.filter(row => (!rule.has('chose', row.id) || row.by === 'do' && row.next) && rule.ask(row.when)) ?? [];
+  const spoken = available.filter(row => row.by === 'say' || row.by === 'do' || !row.by);
+  if (spoken.length && atTalk && view.onFoot && view.openRoam && view.checkpointsEnabled && decision.interact) {
     decision.interact = false;
     const id = `${thread.id}/${beatId}/decision`;
-    const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: rule.line(row.words),
+    const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: rule.line(row.words).replace(/([^.!?])$/, '$1.'),
       ...(row.plain ? {detail: rule.line(row.plain)} : {})}));
     out.requests.push({type: 'talk', id, scene: {id, choices}, speaker: 'you'});
   }
   const option = available.find(row => row.by === 'go' ? !view.onFoot :
-    row.by === 'say' ? view.onFoot && completed.some(event => event.id === `${thread.id}/${beatId}/decision/${row.id}`) :
+    ['say', 'do', undefined].includes(row.by) ? atTalk && view.onFoot && completed.some(event => event.id === `${thread.id}/${beatId}/decision/${row.id}`) :
       completed.some(event => event.id === row.id));
-  if (!beat.choices?.length && beat.next) {
+  if (!beat.choices?.length && beat.next && (!beat.questions?.length || completed.some(event => event.id === `${thread.id}/radio-done`))) {
     const effects = rule.move(beat.next);
     if (effects.length) choose(`next/${beatId}`, effects);
   }
   if (option) {
     cue(option.id, option.cue);
-    if (option.thought) text(`choice/${option.id}`, option.thought);
+    if (option.thought) {
+      const thought = typeof option.thought === 'string' ? {thought: option.thought} : option.thought;
+      if (rule.ask(thought.when)) text(`choice/${option.id}`, thought.thought);
+    }
     (option.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`choice/${option.id}/${index}`, row));
-    move(`choice/${option.id}`, option, [remember('chose', option.id)]);
+    const count = option.by === 'do' ? world.open.journal.filter(change => change.type === 'thread' &&
+      change.choiceId.startsWith(`${thread.id}/choice/${option.id}/`)).length : null;
+    move(`choice/${option.id}${count === null ? '' : '/' + count}`, option, [remember('chose', option.id)]);
   }
   return out;
 }
@@ -209,30 +230,70 @@ export function createThreadsPart(threads) {
       const context = withPlaces(input);
       const {world, view, holds} = context, night = world.ledger.night;
       const state = {interact: !!view.interact, regions: previous.night === night ? [...(previous.regions ?? [])] : [],
-        night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay, sitePositions: view.sitePositions}};
+        night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay,
+          sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
       const region = regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
       if (!isHeld(holds, 'signs') && region && !state.regions.includes(region)) {
-        choices.push(...directThreads(threads, context, `region-${region}`));
+        choices.push(...directThreads(threads.filter(thread => thread.id !== FLAG_ID || view.checkpointsEnabled), context, `region-${region}`));
         state.regions.push(region);
       }
       const events = [], requests = [];
+      const flagKey = view.checkpointsEnabled && world.open.threads[FLAG_ID] ?
+        world.open.threads[FLAG_ID].end ?? 'company' : '';
+      state.flagSite = flagKey;
+      if (flagKey !== (previous.flagSite ?? '')) requests.push({type: 'solids', id: FLAG_ID,
+        solids: flagKey ? flagSolids(world, scablandsSurfaceHeightAt) : []});
       const signs = liveSigns(threads, context);
       const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission};
       const settled = input.previousEvents.some(event => event.id === previous.mission &&
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
       state.mission = settled ? null : previous.mission;
       let hold, release;
-      for (const thread of threads) {
+      for (const source of threads) {
+        const thread = source.id === FLAG_ID ? stagedFlag(world) : source;
         const record = world.open.threads[thread.id];
-        if (!record || record.end) continue;
+        if (!record) continue;
+        if (thread.id === FLAG_ID && view.checkpointsEnabled !== true) continue;
+        const struck = thread.notes?.sign?.struck;
+        const waterStruck = !record.end && struck && night - record.began >= struck.afterNights;
+        if (waterStruck)
+          choices.push({id: `${thread.id}/water-struck`, effects: struck.effects});
+        // A choice on the first tick of the new morning must already see the new price.
+        const threadContext = waterStruck ? {...context, world: {...world, ledger: {...world.ledger,
+          marks: [...world.ledger.marks, ...struck.effects.filter(row => row.type === 'mark').map(row => row.id)]}}} : context;
+        const laterRule = threadRule(thread, threadContext, record);
+        const laterRows = thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.later ?? [];
+        const later = laterRows.find(row => {
+          if (!view.onFoot || !laterRule.ask(row.when) || laterRule.has('later', row.id)) return false;
+          if (thread.id === FLAG_ID && (!record.end || night - (world.open.journal.findLast(change =>
+            change.type === 'thread' && change.key === thread.id && change.after.end)?.night ?? night) < row.afterNights)) return false;
+          const at = row.at ?? (thread.id === FLAG_ID && FLAG_LATER_PLACES[row.by]);
+          if (at) return laterRule.ask({reach: at, within: 3});
+          const speaker = laterRule.line(row.by);
+          const person = view.people?.find(person => person.id === row.by || nameOf(person.id) === speaker);
+          const resident = record.cast.camp && campPeople(record.cast.camp).find(person => person.id === row.by || nameOf(person.id) === speaker);
+          const position = person?.position ?? (resident && residentPose(resident, world,
+            {partOfDay: view.partOfDay, routineTime: context.seconds}).position);
+          return distanceBetween(playerPoint(view), position) <= 2.5;
+        });
+        if (later && decision.interact) {
+          decision.interact = false;
+          const id = `${thread.id}/later/${later.id}`;
+          requests.push({type: 'talk', id, speaker: later.by, scene: {id,
+            lines: later.lines.filter(row => laterRule.ask(row.when)).map(row => ({...row, speaker: laterRule.line(row.speaker), words: laterRule.line(row.words)})),
+            choices: [{id, words: 'I hear you.'}]}});
+        }
+        for (const row of laterRows) if (view.jobEvents?.some(event => event.type === 'talkChoice' && event.id === `${thread.id}/later/${row.id}`) && later?.id === row.id)
+          choices.push({id: `${thread.id}/later/${row.id}`, effects: [mark(threadMark(thread.id, 'later', row.id)), ...laterRule.effects(row.effects)]});
+        if (record.end) continue;
         const first = record.beat === firstBeat(thread);
         const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), view, previous.seen?.[thread.id] ?? 0, dt) : null;
         if (sight?.seconds) state.seen[thread.id] = sight.seconds;
         const details = {beatSeconds: {...state.beatSeconds[thread.id]}};
         details.beatSeconds[record.beat] ??= context.seconds;
-        const out = outputFor(thread, context, record, details, sight?.witnessed ?? false, decision);
+        const out = outputFor(thread, threadContext, record, details, sight?.witnessed ?? false, decision);
         if (Object.keys(details.beatSeconds).length) state.beatSeconds[thread.id] = details.beatSeconds;
         choices.push(...out.choices);
         events.push(...out.events);
