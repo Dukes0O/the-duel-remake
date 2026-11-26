@@ -1560,7 +1560,8 @@ tasks:
     model: "astra"
     lane: "UI"
     size: "M"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "Codex (cloud), 2026-11-25"
     needs: []
     locks: []
