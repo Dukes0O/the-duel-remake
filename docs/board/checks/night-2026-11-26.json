@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "size": "full",
+  "sizeLine": "Full night: no earlier night that passed is on record to compare with. Every suite, the frame check, combat balance and the browser scenarios are checked.",
+  "date": "2026-11-26",
+  "source": "5269a4dc53d037a7fee7905733adc53f406fedbf",
+  "started": "2026-11-26T11:00:01.884Z",
+  "status": "failed",
+  "sizeDetail": {
+    "base": null,
+    "changedFiles": 0
+  },
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": true
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-26/FAC-03/night-NTwlEP/full.log",
+      "started": "2026-11-26T11:00:07.488Z",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "passed": 737,
+        "failed": 0,
+        "unrun": 0,
+        "total": 737
+      },
+      "failureNames": [],
+      "generatedReport": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-26/FAC-03/night-NTwlEP/full-tier.json",
+      "finished": "2026-11-26T12:55:11.406Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--scenarios",
+        "frame-pacing,tremblant-snow,tremblant-views",
+        "--timing-only",
+        "--headed",
+        "--jobs",
+        "1",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-CIqTvK/source/.evidence/2026-11-26/FAC-03/night-NTwlEP/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-26/FAC-03/night-NTwlEP/frames.log",
+      "started": "2026-11-26T12:55:11.406Z",
+      "passed": false,
+      "exitCode": 1,
+      "warnings": [
+        "Performance: full first-race load 5825.100000023842 ms exceeds 5000 ms (warning only)."
+      ],
+      "reports": [
+        {
+          "quality": "High",
+          "p95": 33.30000000000109,
+          "worldBuildMs": 336,
+          "constructionMs": 4673.100000023842
+        },
+        {
+          "quality": "Performance",
+          "p95": 33.30000000000109,
+          "worldBuildMs": 318,
+          "constructionMs": 5825.100000023842
+        }
+      ],
+      "measuredFailure": true,
+      "reportError": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "finished": "2026-11-26T12:57:04.846Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-26/FAC-03/night-NTwlEP/combat.log",
+      "started": "2026-11-26T12:57:04.846Z",
+      "passed": true,
+      "exitCode": 0,
+      "finished": "2026-11-26T13:02:54.125Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--all",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-CIqTvK/source/.evidence/2026-11-26/FAC-03/night-NTwlEP/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-26/FAC-03/night-NTwlEP/browser.log",
+      "started": "2026-11-26T13:02:54.125Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 239,
+        "failed": 18,
+        "total": 257,
+        "leftForSaturday": 0
+      },
+      "failureNames": [
+        "browser: audio-baseline",
+        "browser: convoy-frames",
+        "browser: crash-presentation",
+        "browser: deep-frames",
+        "browser: drive-lesson-run",
+        "browser: drive-lessons-view-2",
+        "browser: everburn-ember",
+        "browser: everburn-job1",
+        "browser: everburn-job2",
+        "browser: fire-view",
+        "browser: frame-pacing",
+        "browser: heli-jobs",
+        "browser: lab-classroom-projectile",
+        "browser: lab-navigation",
+        "browser: machine-borer",
+        "browser: onfoot-camera-choice",
+        "browser: ships-decks",
+        "browser: story-kogane"
+      ],
+      "error": "Copied source changed.",
+      "finished": "2026-11-26T16:01:53.520Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "browser",
+      "error": "Copied source changed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "copy-cleanup",
+      "error": "Copy is changed; nonforced cleanup refused.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "frames",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-26/FAC-03/night-NTwlEP",
+  "finished": "2026-11-26T16:01:53.650Z",
+  "nowPassing": [],
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-11-26.json",
+      "docs/board/checks/night-2026-11-26.md",
+      "docs/board/STATUS.md"
+    ]
+  }
+}
