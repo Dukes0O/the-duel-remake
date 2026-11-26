@@ -6,6 +6,7 @@
 //                  to the job's place that the way-finder worked out (src/world/scablands-ways.js).
 // Nothing here changes a job: the maps read the car, the job's step and what the picture holds. A job's own line from point to point
 // is not drawn; a way is the player's choice.
+import {GROUND_COLUMNS, GROUND_ROWS, GROUND_SQUARE} from './open/open-record.js';
 import {SCABLANDS_SOLIDS} from './scablands-scene.js';
 import {createLandPicture, landMarks, REGION_COLOURS} from './scablands-picture.js';
 import {furnaceSighting, hotDeliveryGlass} from './jobs/furnace-sightings.js';
@@ -167,6 +168,38 @@ function drawGround(ctx, picture, canvas, view) {
   const k = view.width / rect.width, l = view.height / rect.height;
   ctx.imageSmoothingEnabled = true; if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'low';
   ctx.drawImage(canvas, x0, y0, x1 - x0, y1 - y0, (x0 - rect.x) * k, (y0 - rect.y) * l, (x1 - x0) * k, (y1 - y0) * l);
+}
+
+// The paper wash goes over the relief and under the ink. Leave holes for driven squares.
+function drawUndrivenGround(ctx, view, picture, driven) {
+  const known = new Set(driven);
+  const size = GROUND_SQUARE * view.scale;
+  const origin = toScreen(view, picture.x0, picture.z0);
+  ctx.fillStyle = 'rgba(245, 232, 204, 0.44)';
+  ctx.beginPath();
+  for (let row = 0; row < GROUND_ROWS; row++) {
+    for (let column = 0; column < GROUND_COLUMNS; column++) {
+      if (!known.has(row * GROUND_COLUMNS + column))
+        ctx.rect(origin.x + column * size, origin.y + row * size, size, size);
+    }
+  }
+  ctx.fill();
+}
+
+function drawRumours(ctx, view, rumours, boxes, size) {
+  for (const rumour of rumours) {
+    const at = toScreen(view, rumour.x, rumour.z), radius = rumour.radius * view.scale;
+    if (at.x + radius < 0 || at.x - radius > view.width || at.y + radius < 0 || at.y - radius > view.height) continue;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(at.x, at.y, radius, 0, Math.PI * 2);
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = INK.paper; ctx.lineWidth = 4; ctx.stroke();
+    ctx.strokeStyle = INK.pale; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+    const offset = radius + size;
+    nameAt(ctx, boxes, rumour.name, at.x, at.y, [[0, -offset], [0, offset], [0, 0]], {size, italic: true}, view, true);
+  }
 }
 
 function drawRiver(ctx, view, marks) {
@@ -343,7 +376,8 @@ function drawTownFires(ctx, town) {
 
 // `frame`: {picture, canvas (the picture as a canvas), car: {x, z, heading}, target: {x, z, name} | null, knowledge, actors: [{kind, position}]}.
 export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMALL_MAP.height} = {}) {
-  const {picture, car, target, knowledge, actors = []} = frame, marks = picture.marks;
+  const {picture, car, target, knowledge, actors = []} = frame;
+  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world});
   const town = brandTownMap(frame, {width, height});
   const pursuit = frame.worldJob?.night2 && frame.worldJob.job.steps[frame.worldJob.job.stepIndex]?.id === 'chase';
   const view = town?.view ?? smallView(car, {width, height, ...(pursuit ? {metresAcross: 250} : {})});
@@ -375,9 +409,10 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   for (const camp of marks.camps) if (visible(camp.x, camp.z)) { const at = toScreen(view, camp.x, camp.z); drawPlace(ctx, view, {...camp, flatRadius: 18, plan: []}, {minimum: 2}); names.push({at, string: camp.name, rank: 3, tries: [[0, -17], [0, 19], [60, 0]], options: {size: 13, colour: INK.mute}}); }
   drawBarricades(ctx, view, knowledge, 6);
   drawBraziers(ctx, view, knowledge);
-  for (const place of marks.places) if (visible(place.x, place.z)) { const at = toScreen(view, place.x, place.z), r = Math.max(8, place.flatRadius * view.scale); names.push({at, string: shortName(place.name), rank: 1, tries: [[0, -(r + 12)], [0, r + 14], [r + 50, 0], [-(r + 50), 0]], options: {size: 16, spacing: 1}}); }
+  for (const place of marks.places) if (visible(place.x, place.z)) { const at = toScreen(view, place.x, place.z), r = Math.max(8, place.flatRadius * view.scale); names.push({at, string: place.label ?? shortName(place.name), rank: 1, tries: [[0, -(r + 12)], [0, r + 14], [r + 50, 0], [-(r + 50), 0]], options: {size: 16, spacing: 1}}); }
   names.sort((a, b) => a.rank - b.rank);
   for (const item of names) nameAt(ctx, boxes, item.string, item.at.x, item.at.y, item.tries, item.options, view, item.rank <= 2);
+  if (marks.rumours) drawRumours(ctx, view, marks.rumours, boxes, 13);
   let marker = null;
   if (target) {
     marker = edgeMarker(view, target, car);
@@ -491,8 +526,10 @@ function textAlong(ctx, view, boxes, points, string, options, fractions = [.5, .
 
 // `frame` as for the small map, with `ways` [{id, name, points}] to draw and `title`.
 export function drawBigMap(ctx, frame, {width, height}) {
-  const {picture, car, target, knowledge, actors = [], ways = []} = frame, marks = picture.marks, view = wholeView(picture, {width, height});
+  const {picture, car, target, knowledge, actors = [], ways = []} = frame, view = wholeView(picture, {width, height});
+  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world});
   drawGround(ctx, picture, frame.canvas, view);
+  if (marks.driven) drawUndrivenGround(ctx, view, picture, marks.driven);
   drawRiver(ctx, view, marks);
   drawSights(ctx, view, knowledge);
   drawRoads(ctx, view, marks, {casing: 6, line: 3});
@@ -512,13 +549,14 @@ export function drawBigMap(ctx, frame, {width, height}) {
   for (const at of [toScreen(view, car.x, car.z), ...(target ? [toScreen(view, target.x, target.z)] : [])]) boxes.push({left: at.x - 22, right: at.x + 22, top: at.y - 22, bottom: at.y + 22});
   for (const place of marks.places) {
     const at = toScreen(view, place.x, place.z);
-    nameAt(ctx, boxes, shortName(place.name), at.x, at.y, [[0, -30], [0, 32], [86, 0], [-86, 0], [0, -56], [0, 58]], {size: 27, spacing: 2}, view, true);
+    nameAt(ctx, boxes, place.label ?? shortName(place.name), at.x, at.y, [[0, -30], [0, 32], [86, 0], [-86, 0], [0, -56], [0, 58]], {size: 27, spacing: 2}, view, true);
   }
   for (const crossing of marks.crossings) {
     const at = toScreen(view, crossing.x, crossing.z);
     nameAt(ctx, boxes, crossing.name, at.x, at.y, [[0, -26], [0, 28], [92, 0], [-92, 0], [0, -48], [0, 50]], {size: 20, colour: INK.mute}, view, true);
   }
   for (const camp of marks.camps) { const at = toScreen(view, camp.x, camp.z); nameAt(ctx, boxes, camp.name, at.x, at.y, [[0, -24], [0, 26], [86, 0], [-86, 0]], {size: 20, colour: INK.mute}, view, true); }
+  if (marks.rumours) drawRumours(ctx, view, marks.rumours, boxes, 18);
   for (const label of picture.labels) {
     const at = toScreen(view, label.x, label.z), tone = REGION_COLOURS[label.key];
     const light = tone[0] * .3 + tone[1] * .59 + tone[2] * .11 > 120;
