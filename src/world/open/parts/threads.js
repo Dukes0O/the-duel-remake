@@ -13,7 +13,7 @@ import marketDay from '../../../story/threads/content/market-day.js';
 import runaway from '../../../story/threads/content/runaway.js';
 import {RUNAWAY_GATE_RIDERS, RUNAWAY_SIGN, runawayBeat, runawayCanStart, runawayPlace} from '../content/runaway-places.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
-import {distance, residentPose, sitePosition} from '../site-rule.js';
+import {canFindSite, distance, residentPose, sitePosition} from '../site-rule.js';
 import dryPump from '../../../story/threads/content/dry-pump.js';
 import {mallPlace} from '../content/dry-pump-places.js';
 import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
@@ -25,9 +25,14 @@ import {HAULER_ID, haulerPlaces, haulerStop, haulerMission, haulerReading, haule
 import {haulerTalkScene, haulerGateNews} from '../content/talk-hauler.js';
 import {haulerVisitor} from '../content/stranded-hauler-places.js';
 import {flagStory, FLAG_ID, FLAG_SCENES, FLAG_LATER_PLACES, FLAG_TALK_ROWS, stagedFlag, flagSolids} from '../content/somebody-elses-flag-places.js';
+import {MALL_ROAD_TALK} from '../content/talk-threads.js';
 import {campPeople} from '../content/people-sites.js';
+import mallRoadToll from '../../../story/threads/content/mall-road-toll.js';
+import {TOLL_GATE, TOLL_ID, TOLL_SITE, stagedToll, tollPlace, tollTalk, tollOffer, tollMissionResult,
+  tollGateStanding, tollGateSolids, tollIgnored, tollPoleUp, atTollPerson,
+  tollAfterEnd, tollParkedCars, unusedTollPass, pastTollPole} from '../content/mall-road-toll-places.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -38,6 +43,8 @@ function withPlaces(context) {
       const hauler = haulerPlaces(world);
       if (place?.checkpoint?.who === 'traders') return hauler.sign ?? null;
       if (typeof place === 'string' && Object.hasOwn(hauler, place)) return hauler[place];
+      const toll = tollPlace(place);
+      if (toll) return toll;
       const point = runawayPlace(place, cast) ?? mallPlace(place) ?? placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
@@ -66,6 +73,7 @@ export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
 export function openThreadSigns(context) {
   const threads = OPEN_THREADS.filter(thread => (thread !== runaway || context.view?.runawayVisible) &&
     (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
+    (thread.id !== TOLL_ID || context.view?.checkpointsEnabled === true) &&
     (thread !== marketDay ||
       (context.world.open.threads[marketDay.id] && marketSignReady(context.world, context.world.open.threads[marketDay.id]))));
   return liveSigns(threads, withPlaces(context));
@@ -85,6 +93,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const visit = hauling && haulerMarked(world, 'second-truck') ? '/again' : '';
   if (state.visit !== visit) { state.reading = {}; state.mending = 0; state.lifting = false; }
   state.visit = visit;
+  const toll = thread.id === TOLL_ID;
   const opening = beatId === firstBeat(thread);
   const holder = trackId(thread, record);
   const rule = threadRule(thread, context, record, {...state, signSeen: observed});
@@ -97,9 +106,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     nameOf(row.speaker) ?? rule.line(row.speaker));
   const line = (id, row) => text(id, `${speaker(row)}: ${row.words}`);
   const cue = (id, sound) => { if (sound) out.events.push({type: 'threadCue', id, cue: sound}); };
-  const move = (id, row, effects = []) => {
+  const move = (id, row, effects = [], authoredEffects = row.effects) => {
     const cast = row.cast ? {...record.cast, ...row.cast} : undefined;
-    choose(id, [...effects, ...rule.effects(row.effects, cast), ...rule.move(row.next, cast)]);
+    choose(id, [...effects, ...rule.effects(authoredEffects, cast), ...rule.move(row.next, cast)]);
   };
 
   if (!beat) return out;
@@ -116,16 +125,35 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   }
   const mission = beat.mission;
   if (mission && decision.activeMission === mission.id) {
+    if (toll && previousEvents.some(event => event.type === 'threadMissionOffer' && event.id === mission.id))
+      out.requests.push(tollOffer(mission, beat, rule));
+    if (toll && beatId === 'stand') {
+      const selected = (view.jobEvents ?? []).find(event => event.type === 'talkChoice' && event.scene === mission.id + '/offer');
+      const option = beat.choices.find(row => selected?.id === mission.id + '/' + row.id);
+      if (option) {
+        if (option.thought) text('choice/' + option.id, option.thought);
+        (option.lines ?? []).forEach((row, index) => line('choice/' + option.id + '/' + index, row));
+      }
+    }
     const finished = previousEvents.find(event =>
       (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled') && event.id === mission.id);
     if (finished) {
       out.mission = null;
       out.release = holder;
-      const outcome = Object.hasOwn(mission.outcomes ?? {}, finished.outcome) && mission.outcomes[finished.outcome];
+      const sold = toll && finished.outcome === 'sold';
+      const outcome = sold ? beat.choices.find(row => row.id === 'drive-through') :
+        Object.hasOwn(mission.outcomes ?? {}, finished.outcome) && mission.outcomes[finished.outcome];
       if (outcome && rule.ask(outcome.when)) {
         (outcome.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`${beatId}/outcome/${index}`, row));
-        cue(beatId, outcome.cue);
-        move(`mission/${beatId}/${finished.outcome}`, outcome);
+        if (!(toll && beatId === 'break')) cue(beatId, outcome.cue);
+        if (toll) {
+          const extra = tollMissionResult(beatId, finished.outcome, finished.result, world);
+          const written = (outcome.effects ?? []).filter(effect => beatId !== 'stand' ||
+            finished.outcome !== 'held' || finished.result?.kept?.some(id => effect.id?.endsWith('guard-' + id) ||
+              effect.person === (id === 'camp' ? '@camp.people' : id)));
+          move(`mission/${beatId}/${finished.outcome}`, outcome, sold ? [remember('chose', 'drive-through')] : [],
+            [...written, ...extra]);
+        } else move(`mission/${beatId}/${finished.outcome}`, outcome);
       }
       return out;
     }
@@ -142,7 +170,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const followed = isRunaway ? rule.ask({fact: 'mark', id: 'runaway/found-him'}) :
     Object.keys(thread.beats).some(id => id !== firstBeat(thread) && rule.has('entered', id));
   const unhelped = hauling && !haulerMarked(world, 'helped') && beatId !== 'between';
-  const ignored = isRunaway ? (!record.end && !followed && ['prints', 'shed'].includes(record.beat) &&
+  const ignored = toll ? (tollIgnored(world, record) ? thread.ignored : null) :
+    isRunaway ? (!record.end && !followed && ['prints', 'shed'].includes(record.beat) &&
     (world.ledger.night > record.began || rule.ask(thread.ignored.when)) ? thread.ignored : null) :
     [thread.ignored].flat().find(row => rule.ask(row.when) && (
     ((!followed || unhelped) && world.ledger.night - signRecord(thread, record, world).began >=
@@ -177,7 +206,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     (mission.by !== 'car' || !view.onFoot) && (!isRunaway || mission.by !== 'foot' || view.onFoot) &&
     (!view.combatWrecking || (isRunaway && beatId === 'breakout')) && !view.missionLeaving &&
     !(mission.outing && view.outingAvailable === false);
-  if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
+  const tollPayment = toll && beatId === 'paying';
+  if ((!entered || startingMission || tollPayment) && (approachedCold || rule.ask(beat.when))) {
     if (mission) {
       if (!startingMission) return out;
       const authored = hauling ? haulerMission(mission, world) : {...mission, enemy: resolveRoles(mission.enemy, record.cast)};
@@ -200,9 +230,11 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     const entry = [remember('entered', beatId), ...rule.effects(beat.effects)];
     (beat.lines ?? []).filter(row => (!isRunaway || !(beat.walked || beat.choices?.some(choice => choice.by !== 'go'))) && rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
     if (!approachedCold) cue(beatId, beat.cue ?? (opening ? thread.sign.cue : undefined));
+    if (toll) (beat.cues ?? []).forEach((sound, index) => cue(beatId + '/' + index, sound));
     if (!beat.walked && beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
       entry.push(...rule.move(beat.next));
-    choose(`entered/${beatId}`, entry);
+    const paidCount = tollPayment ? world.ledger.marks.filter(id => id.startsWith(TOLL_ID + '/paid-')).length : 0;
+    choose(`entered/${beatId}${tollPayment ? '/' + paidCount : ''}`, entry);
     if (opening && !approachedCold) (beat.thoughts ?? []).forEach((row, index) => {
       const thought = typeof row === 'string' ? {thought: row} : row;
       if (rule.ask(thought.when)) text(`${beatId}/thought/${index}`, thought.thought);
@@ -309,7 +341,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   });
   for (const item of beat.explore ?? []) {
     if (hauling ? !haulerReading(beat, item, context, state, dt) : !view.onFoot) continue;
-    if (rule.has('found', item.id) || !rule.ask(item.when)) continue;
+    if (rule.has('found', item.id) || !rule.ask(item.when) ||
+        toll && distanceBetween(playerPoint(view), tollPlace([TOLL_GATE, 'buggy'])) > 3) continue;
     once('found', item.id, rule.effects(item.effects));
     if (item.thought) text(`clue/${item.id}`, item.thought);
     cue(item.id, item.cue ?? beat.cue);
@@ -317,6 +350,54 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   if (hauling && beatId === 'trap-road' && state.reading?.['high-ground']?.seconds >= 8) {
     move('lookout-spotted', {next: 'trap-fight'});
     cue('lookout-spotted', 'open.trap.sprung');
+    return out;
+  }
+
+  if (toll) {
+    const {request, asked = [], option: spokenOption} = tollTalk(context, record, beat, rule);
+    const at = playerPoint(view);
+    const driving = beatId === 'gate' && !view.onFoot && view.openRoam && (view.carSpeedMph ?? 0) > 4;
+    const driveChoice = driving && [
+      ['round', distanceBetween(at, tollPlace([TOLL_GATE, 'turn'])) <= 22],
+      ['break', !tollPoleUp(world, record) && distanceBetween(at, tollPlace(TOLL_GATE)) <= 18 &&
+        (view.speedKmh ?? 0) >= 50],
+      ['home', rule.ask({reach: ['tin-town', 'hearth'], within: 55})],
+    ].find(([, reached]) => reached)?.[0];
+    const option = spokenOption ?? beat.choices?.find(row => row.id === driveChoice);
+    if (request && decision.interact) {
+      decision.interact = false;
+      out.requests.push(request);
+    }
+    for (const row of asked) {
+      const suffix = rule.has('asked', row.id) ? '/again' : '';
+      choose('asked/' + row.id + suffix, [remember('asked', row.id), ...rule.effects(row.effects)]);
+    }
+    if (option) {
+      cue(option.id, option.cue);
+      const thought = typeof option.thought === 'string' ? {thought: option.thought} : option.thought;
+      if (thought && rule.ask(thought.when)) text('choice/' + option.id, thought.thought);
+      (option.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line('choice/' + option.id + '/' + index, row));
+      const count = world.open.journal.filter(change => change.type === 'thread' && change.key === TOLL_ID).length;
+      const occurrence = world.ledger.marks.filter(id => id.startsWith(TOLL_ID + '/paid-')).length;
+      move('choice/' + option.id + '/' + count + '/' + occurrence, option, [remember('chose', option.id),
+        ...(option.id === 'send-word' ? [mark(TOLL_ID + '/stood-called')] : [])]);
+    }
+    if (beatId === 'round' && view.onFoot && view.wrench &&
+        distanceBetween(playerPoint(view), tollPlace([TOLL_GATE, 'buggy'])) <= 3) {
+      state.wrench = (state.wrench ?? 0) + dt;
+      const strip = beat.choices.find(row => row.id === 'strip');
+      if (state.wrench >= beat.notes.choiceNumbers.strip.wrenchSeconds && rule.ask(strip.when)) {
+        text('choice/strip', strip.thought);
+        move('choice/strip', strip, [remember('chose', strip.id)]);
+      }
+    } else state.wrench = 0;
+    if (mission) for (const [index, row] of (mission.lines ?? []).entries()) {
+      const id = beatId + '-mission-' + index;
+      if (row.moment !== 'afterSeconds' && rule.ask(row.when) && !rule.has('line', id)) {
+        once('line', id);
+        line(id, row);
+      }
+    }
     return out;
   }
 
@@ -425,7 +506,8 @@ export function createThreadsPart(threads) {
         night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay,
           sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
       const enabled = view.checkpointsEnabled === true;
-      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID && thread.id !== HAULER_ID && thread !== marketDay);
+      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID &&
+        thread.id !== HAULER_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
       if (enabled) state.places.dryPumpEnabled = true;
       const canStartRunaway = runawayCanStart(context);
       const region = canStartRunaway ? 'runaway-tin-town' : regionId(view);
@@ -459,6 +541,30 @@ export function createThreadsPart(threads) {
       state.flagSite = flagKey;
       if (flagKey !== (previous.flagSite ?? '')) requests.push({type: 'solids', id: FLAG_ID,
         solids: flagKey ? flagSolids(world, scablandsSurfaceHeightAt) : []});
+      const tollRecord = enabled && world.open.threads[TOLL_ID];
+      const gateStanding = tollRecord && tollGateStanding(world);
+      const poleUp = gateStanding && (tollPoleUp(world, tollRecord) || tollRecord.beat === 'break' && previous.tollPoleDown);
+      const tollKey = gateStanding ? (poleUp ? 'open' : 'shut') : '';
+      state.tollPoleDown = tollRecord?.beat === 'break' && (previous.tollPoleDown ||
+        input.previousEvents.some(event => event.type === 'threadMissionPoleDown' && event.id === TOLL_ID + '/break'));
+      state.tollGate = tollKey;
+      if (tollKey !== (previous.tollGate ?? '')) requests.push({type: 'solids', id: TOLL_GATE,
+        solids: tollKey ? tollGateSolids(!poleUp, scablandsSurfaceHeightAt) : []});
+      if (gateStanding && !isFound(world, TOLL_GATE) &&
+          canFindSite(TOLL_SITE, playerPoint(view), tollPlace(TOLL_GATE), view.onFoot)) {
+        choices.push({id: 'open/site-found/' + TOLL_GATE, effects: [{type: 'find', site: TOLL_GATE},
+          {type: 'met', person: 'road-rats', text: "You found Sump's Gate across the Mall Road on night " + night + '.'}]});
+        requests.push({type: 'say', lineId: 'open/site-found/' + TOLL_GATE, text: "Sump's Gate is on your map."});
+        events.push({type: 'threadCue', id: TOLL_GATE, position: tollPlace(TOLL_GATE), cue: 'open.site.found'});
+      }
+      state.places.tollGate = tollKey;
+      const fighting = !!state.tollPoleDown || tollRecord?.beat === 'stand';
+      const showParked = gateStanding && !fighting;
+      if (!!previous.tollParked !== !!showParked) requests.push({type: 'missionLookouts', id: TOLL_ID + '/gate',
+        group: 'road-rats', posts: showParked ? tollParkedCars(world, tollRecord, fighting) : []});
+      state.tollParked = !!showParked;
+      const pass = gateStanding && unusedTollPass(world);
+      if (pass && !view.onFoot && pastTollPole(view.carPosition)) choices.push({id: pass, effects: [mark(pass)]});
       const signs = liveSigns(availableThreads.filter(thread => thread !== runaway || runawayVisible),
         {...context, view: {...view, partOfDay: view.partOfDay === 'dawn' ? 'day' : view.partOfDay}});
       const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission, journey: enabled && previous.journey};
@@ -467,9 +573,9 @@ export function createThreadsPart(threads) {
       state.mission = settled ? null : previous.mission;
       let hold, release;
       for (const source of availableThreads) {
-        const thread = source.id === FLAG_ID ? stagedFlag(world) : source;
-        const record = world.open.threads[thread.id];
+        const record = world.open.threads[source.id];
         if (!record) continue;
+        const thread = source.id === FLAG_ID ? stagedFlag(world) : source.id === TOLL_ID ? stagedToll(world) : source;
         if (thread === marketDay) {
           if (!view.openRoam) continue;
           const out = marketDayStep(context, record, previous.market, decision.interact, state.mission);
@@ -503,11 +609,13 @@ export function createThreadsPart(threads) {
         const threadContext = waterStruck ? {...context, world: {...world, ledger: {...world.ledger,
           marks: [...world.ledger.marks, ...struck.effects.filter(row => row.type === 'mark').map(row => row.id)]}}} : context;
         const laterRule = threadRule(thread, threadContext, record);
-        const laterRows = thread === runaway ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.later ?? [];
+        const laterRows = thread === runaway ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.id === TOLL_ID ? MALL_ROAD_TALK : thread.later ?? [];
         const later = laterRows.find(row => {
+          if (thread.id === TOLL_ID && row.by === 'sumps-rider') return false;
           if (!view.onFoot || !laterRule.ask(row.when) || laterRule.has('later', row.id)) return false;
           if (thread.id === FLAG_ID && (!record.end || night - (world.open.journal.findLast(change =>
             change.type === 'thread' && change.key === thread.id && change.after.end)?.night ?? night) < row.afterNights)) return false;
+          if (thread.id === TOLL_ID) return atTollPerson(threadContext, record, row.by, 2.5);
           const at = row.at ?? (thread.id === FLAG_ID && FLAG_LATER_PLACES[row.by]);
           if (at) return laterRule.ask({reach: at, within: 3});
           const speaker = laterRule.line(row.by);
@@ -520,13 +628,30 @@ export function createThreadsPart(threads) {
         if (later && decision.interact) {
           decision.interact = false;
           const id = `${thread.id}/later/${later.id}`;
-          requests.push({type: 'talk', id, speaker: later.by, scene: {id,
+          requests.push({type: 'talk', id, speaker: later.by, threadPriority: thread.id === TOLL_ID, scene: {id,
             lines: later.lines.filter(row => laterRule.ask(row.when)).map(row => ({...row, speaker: laterRule.line(row.speaker), words: laterRule.line(row.words)})),
-            choices: [{id, words: 'I hear you.'}]}});
+            choices: [{id, words: later.words ?? 'I hear you.'}]}});
         }
         for (const row of laterRows) if (view.jobEvents?.some(event => event.type === 'talkChoice' && event.id === `${thread.id}/later/${row.id}`) && later?.id === row.id)
           choices.push({id: `${thread.id}/later/${row.id}`, effects: [mark(threadMark(thread.id, 'later', row.id)), ...laterRule.effects(row.effects)]});
-        if (record.end && thread !== runaway) continue;
+        if (thread.id === TOLL_ID && !view.onFoot && view.roadEncounter?.group === 'road-rats' &&
+            view.roadEncounter.phase === 'fight' && laterRule.has('later', 'rider-collects') === false) {
+          const rider = laterRows.find(row => row.by === 'sumps-rider' && laterRule.ask(row.when));
+          if (rider) {
+            choices.push({id: TOLL_ID + '/later/' + rider.id, effects: [mark(threadMark(TOLL_ID, 'later', rider.id))]});
+            rider.lines.forEach((row, i) => requests.push({type: 'say', lineId: TOLL_ID + '/later/' + rider.id + '/' + i,
+              text: nameOf(row.speaker) + ': ' + laterRule.line(row.words)}));
+          }
+        }
+        if (record.end && thread !== runaway) {
+          if (thread.id === TOLL_ID) {
+            const service = tollAfterEnd(threadContext, record, decision.interact);
+            choices.push(...(service.choices ?? []));
+            events.push(...(service.events ?? []));
+            if (service.request) { requests.push(service.request); decision.interact = false; }
+          }
+          continue;
+        }
         const first = record.beat === firstBeat(thread);
         const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), view, previous.seen?.[thread.id] ?? 0, dt) : null;
         if (sight?.seconds) state.seen[thread.id] = sight.seconds;

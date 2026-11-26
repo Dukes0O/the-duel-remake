@@ -18,6 +18,8 @@ import {RUNAWAY_PLACES} from './content/runaway-places.js';
 import {sitePosition} from './site-rule.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 import {createHaulerLook} from './looks/stranded-hauler-look.js';
+import {lookoutHeading} from './content/mission-kinds.js';
+import {TOLL_GATE, TOLL_ID, TOLL_WRECKS, tollPlace} from './content/mall-road-toll-places.js';
 import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
 
 function paintedSign({label}) {
@@ -118,6 +120,53 @@ function lookoutHeap(post) {
   group.position.set(post.x, scablandsSurfaceHeightAt(post.x, post.z), post.z);
   group.rotation.y = post.heading ?? 0;
   return group;
+}
+
+
+function wreckageGate(drawnShift) {
+  const root = new THREE.Group();
+  root.name = "Sump's Gate wreckage";
+  for (const at of TOLL_WRECKS) {
+    const wreck = lookoutHeap({...at, heading: at.heading + Math.PI / 2});
+    wreck.scale.set(.95, .58, 1.35);
+    wreck.position.y += drawnShift?.(at.x, at.z) ?? 0;
+    root.add(wreck);
+  }
+  const at = tollPlace(TOLL_GATE);
+  const stand = new THREE.Group();
+  stand.position.set(at.x, scablandsSurfaceHeightAt(at.x, at.z) + (drawnShift?.(at.x, at.z) ?? 0), at.z);
+  stand.rotation.y = at.heading;
+  root.add(stand);
+  const metal = new THREE.MeshStandardMaterial({color: 0x716052, roughness: .9});
+  const beam = (x, y, z, w, h, d) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), metal);
+    mesh.position.set(x, y, z);
+    stand.add(mesh);
+    return mesh;
+  };
+  beam(-8.8, 1.6, 0, .28, 3.2, .28);
+  beam(8.8, .7, 0, .22, 1.4, .22);
+  const pivot = new THREE.Group();
+  pivot.position.set(-8.8, 1.05, 0);
+  const pole = beam(8.8, 0, 0, 17.6, .15, .16);
+  pivot.add(pole);
+  stand.add(pivot);
+  const sign = paintedSign({label: 'TOLL. 2 SCRAP A WHEEL.'});
+  if (sign) {
+    sign.visible = true;
+    sign.position.set(-9, 2.35, -.17);
+    sign.rotation.y = Math.PI;
+    stand.add(sign);
+  }
+  const light = new THREE.PointLight(0xff8732, 25, 11);
+  light.position.set(-5.5, 1.15, 8);
+  const smoke = createSmokeColumn({height: 12, foot: .7, top: 3, strength: .65});
+  smoke.position.copy(light.position);
+  const tyre = new THREE.Mesh(new THREE.TorusGeometry(.58, .21, 6, 14), metal);
+  tyre.rotation.x = Math.PI / 2;
+  tyre.position.set(-5.5, .25, 8);
+  stand.add(tyre, light, smoke);
+  return {root, pivot, smoke, sign};
 }
 
 function lookoutFlare() {
@@ -222,7 +271,7 @@ export function createSignView() {
   group.add(campHeap);
   const heaps = new Map();
   const stalls = new Map();
-  let dryPumpLook;
+  let dryPumpLook, tollLook, tollBuggy, tollLamp;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -256,9 +305,9 @@ export function createSignView() {
       }
       const open = worldJob?.open;
       const market = open?.world.open.threads['market-day'];
-      const active = market && open.parts.missions?.active?.thread === 'market-day';
+      const marketActive = market && open.parts.missions?.active?.thread === 'market-day';
       const placing = market?.beat === 'stakes' && !market.end && !!open.parts.threads?.market;
-      const marketRows = active ? [{people: 'dot', pitch: 'gate'}, ...marketStalls(open.world, market)] :
+      const marketRows = marketActive ? [{people: 'dot', pitch: 'gate'}, ...marketStalls(open.world, market)] :
         placing ? ['beside-the-gate', 'the-pump', 'the-sunny-wall', 'the-forge-wall', 'bess-shed']
           .map(pitch => ({people: pitch, pitch})) : [];
       const keys = new Set(marketRows.map(({people, pitch}) => (placing ? 'stake/' : 'stall/') + people + '/' + pitch));
@@ -303,6 +352,38 @@ export function createSignView() {
       if (!open || flareAge > 7.2) flare.visible = false;
       if (flare.visible) flare.userData.animate(flareAge);
       const view = open?.parts.threads?.places ?? {};
+      const tollRecord = view.checkpointsEnabled && open.world.open.threads[TOLL_ID];
+      const wreck = tollPlace([TOLL_GATE, 'buggy']);
+      const buggyVisible = tollRecord && distanceBetween(here, wreck) <= 500 &&
+        (tollRecord.beat === 'round' || open.world.ledger.marks.includes(TOLL_ID + '/knows-the-round')) &&
+        !open.world.ledger.marks.some(id => id === TOLL_ID + '/buggy-stripped' || id === TOLL_ID + '/buggy-told');
+      if (buggyVisible && !tollBuggy) {
+        tollBuggy = lookoutHeap(wreck);
+        tollBuggy.scale.set(.65, .4, .85);
+        tollBuggy.rotation.z = .42;
+        positionAt(tollBuggy, wreck, drawnShift);
+        group.add(tollBuggy);
+      }
+      if (tollBuggy) tollBuggy.visible = !!buggyVisible;
+      const active = open?.parts.missions?.active;
+      const lampPost = active?.mission.kind === 'lookout' && posts[0];
+      if (lampPost && !tollLamp) {
+        const geometry = new THREE.ConeGeometry(1, 1, 18, 1, true);
+        geometry.rotateX(-Math.PI / 2);
+        geometry.translate(0, 0, .5);
+        tollLamp = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: 0xffc185,
+          transparent: true, opacity: .13, side: THREE.DoubleSide, depthWrite: false}));
+        group.add(tollLamp);
+      }
+      if (tollLamp) {
+        tollLamp.visible = !!lampPost;
+        if (lampPost) {
+          positionAt(tollLamp, lampPost, drawnShift);
+          tollLamp.position.y += lampPost.eye ?? 2;
+          tollLamp.rotation.y = lookoutHeading(lampPost, active.mission.rule.turnsIn, active.state.elapsed);
+          tollLamp.scale.set(30, 1.8, lampPost.range);
+        }
+      }
       const signs = open ? openThreadSigns({...open, view}) : [];
       const stranger = signs.find(entry => entry.id === 'runaway');
       for (const {key, mesh, lift} of clues) {
@@ -333,6 +414,18 @@ export function createSignView() {
         sitePosition('grey-camp', open.world.open.landSeed) : null;
       campHeap.visible = !!grey && distanceBetween(here, grey) < 240;
       if (campHeap.visible) positionAt(campHeap, grey, drawnShift);
+      const tollVisible = view.tollGate && distanceBetween(here, tollPlace(TOLL_GATE)) <= 600;
+      if (tollVisible && !tollLook) {
+        tollLook = wreckageGate(drawnShift);
+        group.add(tollLook.root);
+      }
+      if (tollLook) {
+        tollLook.root.visible = !!tollVisible;
+        if (tollVisible) {
+          tollLook.pivot.rotation.z = view.tollGate === 'open' ? 1.38 : 0;
+          tollLook.smoke.userData.update(seconds);
+        }
+      }
       if (view.dryPumpEnabled && open.world.open.threads['dry-pump'] && !dryPumpLook)
         dryPumpLook = makeDryPumpLook(group);
       dryPumpLook?.update(open, here, (place, cast) => placeForThread(place, cast, view), drawnShift);
@@ -372,6 +465,12 @@ export function createSignView() {
     dispose() {
       hauler.dispose();
       flagSite.dispose();
+      if (tollBuggy) disposeMeshes(tollBuggy);
+      if (tollLamp) disposeMeshes(tollLamp);
+      if (tollLook) {
+        tollLook.sign?.material.map.dispose();
+        disposeMeshes(tollLook.root);
+      }
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();
