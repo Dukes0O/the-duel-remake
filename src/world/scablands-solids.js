@@ -21,6 +21,10 @@ import {everburnPropSolids} from './everburn-props.js';
 import {riverFor, stepsWayFor} from './scablands-regions.js';
 import {ROAD_NET, roadNet} from './scablands-road.js';
 import {BRAND_RULE} from './jobs/brand-rule.js';
+import {CAMP_SITES} from './open/content/sites.js';
+import {stageOf} from './open/open-record.js';
+import {hasSiteServices, radioHillSolids, sitePosition} from './open/site-rule.js';
+import {glasshouseSolids} from './open/looks/glasshouse-look.js';
 
 // A wheel's height: anything this tall or less is driven over, anything taller is solid.
 export const WHEEL_HEIGHT = .9;
@@ -202,9 +206,23 @@ export const solidsNear = (ax, az, bx, bz, pad) => SOLID_GRID.near(ax, az, bx, b
 export function brazierSolid(spot, index) {
   return make({id: `brazier-${index + 1}`, placeId: null, kind: 'prop', shape: 'ellipse', x: spot.x, z: spot.z, halfX: .65, halfZ: .65, height: 1.15});
 }
+
+// Open job solids use the same seed and stages as the view. No world means no camp solids.
+export function openSiteSolids(world) {
+  if (!world) return [];
+  return CAMP_SITES.flatMap(site => {
+    const stage = stageOf(world, site.id);
+    if (stage !== 'burned' && !hasSiteServices(stage)) return [];
+    const at = sitePosition(site.id, world.open.landSeed);
+    const local = site.id === 'glasshouse' ? glasshouseSolids(stage === 'burned' ? stage : 'camp') : radioHillSolids();
+    return local.map(row => make({...row, x: at.x + row.x, z: at.z + row.z, placeId: site.id}));
+  });
+}
+
 // Each job owns its temporary solids and its query result. The fixed grid never changes.
 export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
+  let sites = null, lastSiteLayout = null;
   const grid = {
     people: [],
     storyPeople: [],
@@ -224,6 +242,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.shelter) found.push(solid);
       for (const solid of this.camp) found.push(solid);
+      if (sites) for (const solid of sites.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
       // The town's things in the land (the neighbours' outposts, TOWN-OUTPOST-SCENE): many, so asked of their own grid.
@@ -233,6 +252,12 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
       return found;
+    },
+    setOpenSites(world) {
+      const layout = world ? [world.open.landSeed, ...CAMP_SITES.map(site => stageOf(world, site.id))].join('/') : null;
+      if (layout === lastSiteLayout) return;
+      lastSiteLayout = layout;
+      sites = world ? createSolidGrid(openSiteSolids(world)) : null;
     },
     setPeople(people) {
       this.people = people.map(({id, position, floorHeight}) => make({id, kind:'person', shape:'ellipse',

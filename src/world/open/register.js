@@ -20,6 +20,7 @@ export const NAMES = Object.freeze([
   person('rell', 'walkers'), person('dace', 'walkers'), person('wim', 'walkers'),
   people('glasshouse', {leader: 'marigold', thing: 'her glass frames'}),
   person('marigold', 'glasshouse'), person('finch', 'glasshouse'),
+  person('grower-1', 'glasshouse'), person('grower-2', 'glasshouse'), person('grower-3', 'glasshouse'),
   people('radio-hill', {leader: 'hetty', thing: 'the set'}),
   person('hetty', 'radio-hill'), person('bern', 'radio-hill'),
   people('bus-ring', {leader: 'gasket', thing: 'their tools'}),
