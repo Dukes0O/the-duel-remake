@@ -78,6 +78,9 @@ function stepFighterInFixedTime(duel, dt) {
   const motion = boardingMotion(duel, dt);
   transition.fighterStepRemainder += dt;
   let steppedBoarding = false;
+  const activeMission = state.arena?.worldJob?.open?.parts.missions?.active;
+  const carryingValve = activeMission?.mission.kind === 'heist' && activeMission.state.carrying;
+  const input = carryingValve ? {...state.fighterInput, sprint: false, walkScale: .5} : state.fighterInput;
   while (transition.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
     const fighter = state.fighter, wasOnRoof = state.boarding?.phase === 'roof';
     if (fighter.bailTumbleSeconds > 0) {
@@ -86,7 +89,7 @@ function stepFighterInFixedTime(duel, dt) {
     }
     const previousRespawns = fighter.respawns, previousY = fighter.y;
     if (!wasOnRoof && !state.crewGear?.grapple) stepFighter(duel.course, state, fighter,
-      fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput, FIGHTER_STEP_SECONDS);
+      fighter.bailTumbleSeconds > 0 ? {} : input, FIGHTER_STEP_SECONDS);
     if (fighter.respawns !== previousRespawns) {
       fighter.presentation = {clip: 'get-up', startedAt: Math.max(0, state.stageTimeSec -
         (transition.fighterStepRemainder - FIGHTER_STEP_SECONDS)), duration: .8};

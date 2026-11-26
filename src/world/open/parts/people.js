@@ -4,7 +4,7 @@ import {scablandsActorHeightAt} from '../../scablands-ground.js';
 import {stepMover, FOOT_GRADE} from '../../scablands-movers.js';
 import {isTrue} from '../facts.js';
 import {followRoutine, routinePose} from '../routine-rule.js';
-import {PEOPLE} from '../content/people.js';
+import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
@@ -74,7 +74,10 @@ export const peoplePart = {
     }
     const extras = view.checkpointsEnabled ? scoutPeople(view.missionLookoutPosts ?? []) : [];
     const runaways = view.checkpointsEnabled ? runawayPeople(world, view.threadSearchCast, view.sitePositions, partOfDay) : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras, ...runaways];
+    const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
+    const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
+      row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
+    const rows = [...residents.filter(row => standsHere(row, world)), ...extras, ...mallPeople, ...runaways];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       if (row.position) {

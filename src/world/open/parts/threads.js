@@ -12,10 +12,13 @@ import runaway from '../../../story/threads/content/runaway.js';
 import {RUNAWAY_GATE_RIDERS, RUNAWAY_SIGN, runawayBeat, runawayCanStart, runawayPlace} from '../content/runaway-places.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {distance, sitePosition} from '../site-rule.js';
+import dryPump from '../../../story/threads/content/dry-pump.js';
+import {mallPlace} from '../content/dry-pump-places.js';
+import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {placeForThread, radioScene} from '../../../story/scenes/burned-camp.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, runaway], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, dryPump, runaway], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -23,14 +26,15 @@ const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 function withPlaces(context) {
   const {world, view = {}} = context;
   return {...context, placeAt: (place, cast) => {
-      const point = runawayPlace(place, cast) ?? placeForThread(place, cast, view);
+      const point = runawayPlace(place, cast) ?? mallPlace(place) ?? placeForThread(place, cast, view);
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
     signFor: thread => thread === runaway ? RUNAWAY_SIGN : thread.sign,
-    allowsCast: (thread, role, id) => thread !== burnedCamp || role !== 'camp' ||
+    allowsCast: (thread, role, id) => role === 'camp' && thread === dryPump ?
+      dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&
         distanceBetween(playerPoint(view), placeForThread(id, {}, view)) > 40),
     startsEffects: (thread, cast) => thread === burnedCamp ?
@@ -38,8 +42,12 @@ function withPlaces(context) {
   };
 }
 
-export function threadsAtBankedHearth(context) {
-  return applyThreadDirector(OPEN_THREADS.filter(thread => thread !== runaway || runawayCanStart({...context, view: {...context.view, checkpointsEnabled: true}})), withPlaces(context), 'hearth');
+// `threads` narrows the director to some storylines, so that one storyline's checks are not changed by which others
+// happen to be loaded; the game always passes none and directs every loaded storyline.
+export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
+  const available = threads.filter(thread => thread !== runaway ||
+    runawayCanStart({...context, view: {...context.view, checkpointsEnabled: true}}));
+  return applyThreadDirector(available, withPlaces(context), 'hearth');
 }
 
 export function openThreadSigns(context) {
@@ -114,8 +122,10 @@ function outputFor(thread, context, record, state, observed, decision) {
     rule.ask({reach: thread.sign.at});
   if (isRunaway && !view.checkpointsEnabled) return out;
   const entered = rule.has('entered', beatId);
-  const startingMission = mission && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
-    (mission.by !== 'car' || !view.onFoot) && (!isRunaway || mission.by !== 'foot' || view.onFoot) && (!view.combatWrecking || (isRunaway && beatId === 'breakout')) && !view.missionLeaving && !(mission.outing && view.outingAvailable === false);
+  const startingMission = mission && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
+    (mission.by !== 'car' || !view.onFoot) && (!isRunaway || mission.by !== 'foot' || view.onFoot) &&
+    (!view.combatWrecking || (isRunaway && beatId === 'breakout')) && !view.missionLeaving &&
+    !(mission.outing && view.outingAvailable === false);
   if ((!entered || startingMission) && (approachedCold || rule.ask(beat.when))) {
     if (mission) {
       if (!startingMission) return out;
@@ -325,12 +335,15 @@ export function createThreadsPart(threads) {
       const {world, view, holds} = context, night = world.ledger.night;
       const state = {interact: !!view.interact, regions: previous.night === night ? [...(previous.regions ?? [])] : [],
         night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay, sitePositions: view.sitePositions}};
+      const enabled = view.checkpointsEnabled === true;
+      const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump);
+      if (enabled) state.places.dryPumpEnabled = true;
       const canStartRunaway = runawayCanStart(context);
       const region = canStartRunaway ? 'runaway-tin-town' : regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
       if (!isHeld(holds, 'signs') && region && !state.regions.includes(region)) {
-        choices.push(...directThreads(threads.filter(thread => thread !== runaway || canStartRunaway), context, `region-${region}`));
+        choices.push(...directThreads(availableThreads.filter(thread => thread !== runaway || canStartRunaway), context, `region-${region}`));
         state.regions.push(region);
       }
       const events = [], requests = [];
@@ -352,16 +365,29 @@ export function createThreadsPart(threads) {
       const runawayVisible = !!view.checkpointsEnabled && ['day', 'dawn'].includes(view.partOfDay ?? 'day');
       state.places.runawayVisible = runawayVisible;
       if (view.partOfDay === 'dawn' && runawayVisible) state.places.partOfDay = 'day';
-      const signs = liveSigns(threads.filter(thread => thread !== runaway || runawayVisible),
+      const signs = liveSigns(availableThreads.filter(thread => thread !== runaway || runawayVisible),
         {...context, view: {...view, partOfDay: view.partOfDay === 'dawn' ? 'day' : view.partOfDay}});
-      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission};
+      const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission, journey: enabled && previous.journey};
       const settled = input.previousEvents.some(event => event.id === previous.mission &&
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
       state.mission = settled ? null : previous.mission;
       let hold, release;
-      for (const thread of threads) {
+      for (const thread of availableThreads) {
         const record = world.open.threads[thread.id];
-        if (!record || (record.end && thread !== runaway) || (thread === runaway && !view.checkpointsEnabled)) continue;
+        if (!record) continue;
+        if (thread === dryPump) {
+          const out = dryPumpStep(context, record, previous.dryPump ?? {}, dt, decision);
+          state.dryPump = out.state;
+          if (out.state.mall) state.journey = {holder: DRY_PUMP_HOLD};
+          choices.push(...out.choices);
+          events.push(...out.events);
+          requests.push(...out.requests);
+          if (out.mission !== undefined) state.mission = out.mission;
+          hold ??= out.hold;
+          release ??= out.release;
+          continue;
+        }
+        if ((record.end && thread !== runaway) || (thread === runaway && !view.checkpointsEnabled)) continue;
         const first = record.beat === firstBeat(thread);
         const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), view, previous.seen?.[thread.id] ?? 0, dt) : null;
         if (sight?.seconds) state.seen[thread.id] = sight.seconds;

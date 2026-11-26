@@ -1424,18 +1424,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-MARKET.md"
 
-  - id: OPEN-T-PUMP
-    title: "Open Scablands: The Dry Pump comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-PUMP.md"
-
   - id: OPEN-T-TOLL
     title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1455,7 +1443,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-HAULER, OPEN-T-PUMP]
+    needs: [OPEN-T-HAULER]
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RADIO.md"
@@ -1483,6 +1471,28 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-DACE.md"
+
+  - id: OPEN-LOOK-RADIO-HILL
+    title: "Open Scablands: Radio Hill, round 1, drawn in code (Claude cloud)"
+    owner: "claude-cloud"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-LOOK-RADIO-HILL.md"
+
+  - id: OPEN-LOOK-BUS-RING
+    title: "Open Scablands: the Bus Ring, round 1, drawn in code (Claude cloud)"
+    owner: "claude-cloud"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-LOOK-BUS-RING.md"
 
   - id: OPEN-APPRENTICE-RUN
     title: "Open Scablands: teach somebody the gas run, and have it driven for you from then on (Kyle, 21 November)"

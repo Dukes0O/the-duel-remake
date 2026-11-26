@@ -100,7 +100,6 @@ const reach = {
   },
 };
 
-
 function prepareRoad(rule, place) {
   const destinations = (rule.destinations ?? []).map(row => ({id: row.id, at: place(row.at)}));
   const posts = (rule.lookoutSpots ?? []).map(key => {
@@ -286,8 +285,95 @@ const defend = {
   },
 };
 
+// `partOf` scenes inherit the parent's lamps and timing. Each scene supplies its own targets
+// and outcome names, so the rule can serve another heist without knowing its storyline.
+export function heistLampPose(lamp, seconds) {
+  const heading = (seconds / lamp.turnsIn + lamp.phase) * Math.PI * 2 + (lamp.offset ?? 0);
+  return {...lamp, heading};
+}
+
+const heist = {
+  prepare({rule}, place) {
+    const {destination, pickup, retreat, eject, cover, lamps, riders} = rule;
+    const target = place(destination);
+    const stations = (lamps ?? []).map(({at, ...lamp}) => ({...lamp, position: place(at)}));
+    const starts = (riders ?? []).map(place);
+    if (!target || !(rule.within > 0) || stations.some(lamp => !lamp.position || !(lamp.turnsIn > 0)) ||
+        starts.some(start => !start) || [pickup, retreat, eject, cover].some(at => at && !place(at))) return null;
+    return {destination: target, pickup: pickup && place(pickup), retreat: retreat && place(retreat),
+      eject: eject && place(eject), cover: cover && place(cover), lamps: stations, starts};
+  },
+
+  begin(mission, route, view) {
+    return {state: {route, elapsed: mission.elapsed ?? 0, exposure: 0, litFor: 0, seen: !!mission.alarmed,
+      carrying: false, sentRiders: false, distance: 0, wrench: 0},
+    requests: [marker(view, route.pickup ?? route.destination, mission.rule.within)]};
+  },
+
+  step(mission, state, view, dt) {
+    const {rule} = mission;
+    const {route} = state;
+    const next = {...state, elapsed: state.elapsed + dt};
+    const requests = [], events = [];
+    const finish = outcome => ({state: next, requests, events, outcome});
+    if (rule.road) {
+      if (view.combatWrecking || (view.jobEvents ?? []).some(event => event.type === 'riderFight' &&
+          event.id === mission.id && ['lost', 'surrounded'].includes(event.outcome))) return finish(rule.wrecked);
+      if (view.onFoot || !view.carPosition) return finish(null);
+      if (!state.seen) return finish(rule.success);
+      if (!state.sentRiders && !view.road) {
+        next.sentRiders = true;
+        next.lastCar = view.carPosition;
+        requests.push({type: 'riders', id: mission.id, group: mission.enemy,
+          vehicles: route.starts.map(start => ({start: atGround(view, start), home: start}))});
+      }
+      if (state.sentRiders) {
+        next.lastCar = view.carPosition;
+        next.distance += distance(state.lastCar, view.carPosition);
+      }
+      return finish(next.distance >= rule.pursuitMetres ? rule.spotted : null);
+    }
+
+    const point = view.fighter?.position ?? view.player?.position ?? view.player;
+    if (!view.onFoot || !point) return finish(null);
+    // The rim blocks the cones. No exposure accumulates in the staff corridor.
+    const covered = route.cover && isNear(point, route.cover, rule.coverRadius);
+    const inLight = !covered && !isNear(point, route.destination, rule.within) && route.lamps.some(lamp => {
+      const {heading} = heistLampPose(lamp, state.elapsed + dt / 2);
+      const at = {...lamp.position, heading, range: rule.range, halfAngle: rule.coneDegrees * Math.PI / 360};
+      return lookoutSees(at, point, view.missionHeightAt);
+    });
+    next.litFor = inLight ? state.litFor + dt : 0;
+    next.exposure += inLight ? dt : 0;
+    next.seen ||= next.litFor + 1e-9 >= rule.seenSeconds;
+    if (!state.seen && next.seen && mission.cue) events.push({type: 'threadCue', id: mission.id, cue: mission.cue});
+    if (rule.caught && (next.exposure + 1e-9 >= rule.caughtSeconds ||
+      (next.carrying && route.lamps.some(lamp => isNear(point, lamp.position, 1.2))))) {
+      if (route.eject) requests.push({type: 'threadFootPosition', place: route.eject});
+      return finish(rule.caught);
+    }
+    if (rule.escape && next.seen && isNear(point, route.retreat, rule.within)) return finish(rule.escape);
+    if (route.pickup && !next.carrying && isNear(point, route.pickup, rule.within) && view.interact) {
+      next.carrying = true;
+      requests.push(marker(view, route.destination, rule.within));
+      events.push({type: 'threadMissionPickup', id: mission.id});
+    }
+    const returned = (!route.pickup || next.carrying) && isNear(point, route.destination, rule.within);
+    next.wrench = returned && view.wrench ? state.wrench + dt : 0;
+    if (returned && (!rule.wrenchSeconds || next.wrench + 1e-9 >= rule.wrenchSeconds))
+      return finish(next.seen ? rule.spotted : rule.success);
+    return finish(null);
+  },
+
+  end(mission, _state, view) {
+    return [{type: 'marker', place: null},
+      ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : [])];
+  },
+};
+
 export const MISSION_KINDS = Object.freeze({
   reach: Object.freeze(reach),
   onfoot: Object.freeze(search),
   defend: Object.freeze(defend),
+  heist: Object.freeze(heist),
 });

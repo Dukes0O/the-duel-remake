@@ -3,7 +3,7 @@ import runaway from '../src/story/threads/content/runaway.js';
 import {witnessSign} from '../src/story/threads/signs.js';
 import {bankHearth} from '../src/story/ledger.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {OPEN_THREADS, openThreadSigns, threadsPart} from '../src/world/open/parts/threads.js';
+import {OPEN_THREADS, openThreadSigns, threadsAtBankedHearth, threadsPart} from '../src/world/open/parts/threads.js';
 import {missionsPart} from '../src/world/open/parts/missions.js';
 import {MISSION_KINDS} from '../src/world/open/content/mission-kinds.js';
 import {RUNAWAY_PLACES as at, runawayBeat, runawayPlace} from '../src/world/open/content/runaway-places.js';
@@ -47,7 +47,7 @@ assert.deepEqual(walkThread(runaway).faults, []);
 for (const name in pageFunctions) assert.doesNotThrow(() => new Function(pageSource(name)));
 
 const directed = Array.from({length: 30}, (_, seed) => newWorld({seed, night: 3})).find(world =>
-  frame(beginOpenLand({id: 'open-roam', steps: [{kind: 'roam'}], open: {world}}), at.hearth, {partOfDay: 'dawn'}).open.world.open.threads.runaway);
+  threadsAtBankedHearth({world, view: {player: {position: at.hearth}, partOfDay: 'dawn'}}, [runaway]).open.threads.runaway);
 assert.ok(directed, 'the seeded director starts the storyline in Tin Town');
 for (const [point, input] of [[LAND.at('ridge'), {partOfDay: 'dawn'}], [at.hearth, {partOfDay: 'day'}], [at.hearth, {partOfDay: 'dark'}], [at.hearth, {checkpointsEnabled: false}]]) {
   const fresh = beginOpenLand({id: 'open-roam', steps: [{kind: 'roam'}], open: {world: directed}});
