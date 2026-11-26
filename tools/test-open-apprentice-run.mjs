@@ -21,7 +21,7 @@ import {worldForProfile} from '../src/world/open/open-world.js';
 import {answerRoutine, arriveHandRun, mayOfferRoutine, morningDelivery, routineFor, setRoutineRunning,
   showRoutineOffer, takeHandRun, willingLearners} from '../src/world/open/routine-run-rule.js';
 import {worldHudModel} from '../src/world/world-hud.js';
-import {run as scenario} from './scenarios/open-apprentice-run.mjs';
+import {pageSource, run as scenario} from './scenarios/open-apprentice-run.mjs';
 
 const on = {storyChoices: true};
 const nextNight = world => ({...world, ledger: bankHearth(world.ledger).ledger});
@@ -246,12 +246,11 @@ test('App measures a learner trip, refuses and retries a hearth bank, then shows
   assert.equal(gas.definition.routineRun.passenger.id, learner);
   app.advance(4);
   assert.match(worldHudModel({worldJob: gas}).lesson.line, /riding beside you/);
-  const bess = gas.actors.find(actor => actor.id === 'big-bess');
-  const last = gas.definition.steps[0].path.at(-1).position;
   const prior = disk(), night = savedLedger(prior).night;
-  bess.position = {...last};
-  bess.pathIndex = gas.definition.steps[0].path.length - 1;
-  app.advance(6);
+  // Use the same final-stretch setup the laptop scenario sends to the page.
+  globalThis.window = {__qaApp: app};
+  try { new Function('return ' + pageSource('finalStretch'))(); }
+  finally { delete globalThis.window; }
   const state = app.duel.state, result = state.arena.result;
   assert(result.settlementSaved, result.routineSaveIssue);
   assert.deepEqual(result.routineGas, {gas: 60, embers: 3});

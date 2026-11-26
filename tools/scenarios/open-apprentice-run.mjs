@@ -58,15 +58,19 @@ const pageFunctions = {
       notes?.textContent.includes('riding beside you');
   },
   finalStretch: () => {
-    const app = window.__qaApp, trip = app.duel.state.arena.worldJob;
+    const app = window.__qaApp, {state, course} = app.duel, trip = state.arena.worldJob;
     const bess = trip.actors.find(actor => actor.id === 'big-bess');
     const road = trip.definition.steps[0].path;
     const from = road.at(-2).position, stop = road.at(-1).position;
-    const share = 8 / Math.hypot(stop.x - from.x, stop.z - from.z);
-    bess.position = {...bess.position, x: stop.x + (from.x - stop.x) * share, z: stop.z + (from.z - stop.z) * share};
+    const length = Math.hypot(stop.x - from.x, stop.z - from.z);
+    const dx = (stop.x - from.x) / length, dz = (stop.z - from.z) / length;
+    const x = stop.x - 8 * dx, z = stop.z - 8 * dz;
+    const ahead = course.nearest(x, z);
+    bess.position = {x, z, y: course.groundAt(ahead.s, ahead.lateral).y};
     bess.pathIndex = road.length - 1;
-    const {s, lateral} = app.duel.course.nearest(bess.position.x, bess.position.z);
-    Object.assign(app.duel.state, {s, lateral, prevS: s, prevLateral: lateral});
+    const {s, lateral} = course.nearest(x - 12 * dx + 6 * dz, z - 12 * dz - 6 * dx);
+    Object.assign(state, {s, lateral, prevS: s, prevLateral: lateral,
+      headingError: Math.atan2(dx, dz) - course.at(s).heading});
     app.advance(8);
   },
   lessonKept: () => {
