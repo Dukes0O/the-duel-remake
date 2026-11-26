@@ -161,6 +161,9 @@ assert(gap(buildCheckpoints(moved).find(row => row.id === mall.id).position, mal
 
 const flags = {'hidden-road':true, 'story-choices':true, arsenal:true, 'scablands-realism':true};
 function startDuel(world, on = true) {
+  // This suite drives chance encounters. The Hauler replaces one trader checkpoint on Night 2,
+  // so finish that independent storyline in this fixture rather than letting its director claim the test road.
+  world = choice(world, 'checkpoint-only', [{type: 'thread', id: 'stranded-hauler', end: 'left-on-the-road'}]);
   const duel = new Duel({seed:world.seed, featureFlags:{...flags, 'story-choices':on}});
   duel.state.wastelandGateDiscovered = true;
   assert(duel.startArenaEvent({seed:world.seed, venueId:'scablands', mode:'world-job', car:'falcone_f42',

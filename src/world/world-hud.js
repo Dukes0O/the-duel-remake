@@ -137,7 +137,8 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     found, stepState: job?.stepState}, places);
   if (worldJob?.open && step?.openPerson && worldJob.definition?.steps[0]?.kind === 'roam') next.line = '';
   const openMission = worldJob?.open?.parts.missions?.active;
-  if (openMission?.mission.kind === 'escort') next.line = 'There are ' + openMission.state.tyres + ' tyres on the cart.';
+  if (openMission?.mission.kind === 'escort') next.line = 'There are ' + openMission.state.tyres + ' ' +
+    (openMission.mission.rule.load.what ?? 'items') + ' on the cart.';
   if (step?.brand) {
     const brand = brandHudStep(step, job.stepState, player);
     next.line = brand.line;

@@ -206,7 +206,8 @@ const escort = {
     }
     if (next.route.length - next.metres <= 150) moment('crossing-seen');
     if (next.tyres !== state.tyres || !state.elapsed)
-      requests.push({type: 'say', lineId: mission.id + '/load/' + next.tyres, text: 'There are ' + next.tyres + ' tyres on the cart.'});
+      requests.push({type: 'say', lineId: mission.id + '/load/' + next.tyres,
+        text: 'There are ' + next.tyres + ' ' + (mission.rule.load.what ?? 'items') + ' on the cart.'});
     requests.push(truckRequest(mission, next, view));
     const outcome = view.combatWrecking ? 'car-wrecked' : next.metres >= next.route.length
       ? next.tyres === mission.rule.load.count ? 'all-kept' : next.tyres > 0 ? 'some-kept' : 'none-kept' : null;
@@ -214,7 +215,8 @@ const escort = {
   },
   end(mission, state, view) {
     return [...missionEnd(mission, state, view), {type: 'solids', id: mission.id + '/truck', solids: []},
-      ...(view.combatWrecking ? [{type: ROAD_REQUEST, action: 'recover-car', at: view.missionHome ?? mission.rule.home}] : [])];
+      ...(view.combatWrecking && (view.missionHome ?? mission.rule.home)
+        ? [{type: ROAD_REQUEST, action: 'recover-car', at: view.missionHome ?? mission.rule.home}] : [])];
   },
 };
 

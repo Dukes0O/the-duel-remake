@@ -146,5 +146,5 @@ export function haulerMission(mission, world) {
     home: haulerGate,
     riderStarts: stop.starts.map((_, i) => 'hauler-rider-' + i),
     firstCarStanding: world.open.threads[HAULER_ID].beat === 'trap-from-behind',
-    load: {count: 40, lostAtATime: 10}, beginAt: stop.truck}};
+    load: {what: 'tyres', count: 40, lostAtATime: 10}, beginAt: stop.truck}};
 }
