@@ -12,10 +12,10 @@ Kind: a stranger. The choice at its heart, from section 19: stop for a stranger 
 | This storyline reads | This storyline writes |
 | --- | --- |
 | The Road Rats' feud, to weight whether the first truck is a trap | The Road Rats' feud |
-| Dot's word, the Walkers' word and a tower on the Crow's Step, for who can be asked by radio | Tally's word for the player, and a favour owed |
+| Dot's word, the Walkers' word and a tower on the Crow's Step, for who can be asked by radio | Tally's word for the player, and what she owes |
 | A found camp that has been burned, for what Tally saw there | Marks that later scenes read (section 8) |
-| The scrap in the car | Scrap |
-| The night, and whether an act with a clock is running | The Word on the road |
+| Which sites are found, for her free piece of news | Scrap |
+| The night | The Word on the road |
 
 ## 2. When it can begin, and its sign
 
@@ -27,16 +27,18 @@ its bonnet up, and somebody beside it waving. It stands at a checkpoint on a roa
 checkpoint's own draw, and it is seen from 400 metres. Nothing is marked on the map and no line appears on the screen.
 It stands for that day and the next.
 
-**Whether the first truck is a trap is a named draw.** One time in five it is, and one more draw is made for each step
-of the Road Rats' feud: about one time in three at Watching, one in two at Raiding and three in five at Hunting. When
+**Whether the first truck is a trap is a named draw,** made once, when the truck first comes into view, and kept as a
+mark. One time in five it is, and one more draw is made for each step of the Road Rats' feud: about one time in three
+at Watching, one in two at Raiding and three in five at Hunting. When
 the first truck was a trap, the director draws for the sign again from two nights later, on a different road, and that
 truck is always the hauler's. So a player may be robbed first and asked to trust second. Nothing tells the player that
 the second truck is safe.
 
 ## 3. Its cast
 
-- **The road** is drawn from the checkpoints on roads that traders use, and **the second road** is another of them.
 - **The hauler** is always Tally.
+- **The road** is not a role. The sign stands at any checkpoint that traders come to, and a second truck stands at
+  another.
 - **A rumoured place** is drawn from the sites the player has not found, for Tally's free piece of news.
 - **A burned camp** is any found camp whose stage is burned. The role is empty when there is none.
 
@@ -163,7 +165,7 @@ November 2026).
 | 2 | Drive straight at the rise and fight | Two buggies and one slow truck | *They have to come over that rise one at a time, and I'm already moving.* | A fight won about six times in ten on Easy |
 | 3 | Reverse out and run for it | The open road behind | *Nobody ever robbed a car that they couldn't catch.* | A chase of about a minute. The trap stays where it is |
 
-**1. Paying.** The scrap goes down on the road. A player with fewer than forty puts down what there is.
+**1. Paying.** The scrap goes down on the road. A player with fewer than forty puts down what there is, and the rest is not owed.
 
 > **The Road Rat:** That's very handsome of you. I'll tell Sump that Tin Town has lovely manners. Mind how you go, and
 > do stop again.
@@ -276,8 +278,9 @@ choice made (section 14), and she is still there until the next night has passed
 > **Tally:** *(when it is done)* That's her whole again. Listen to that engine. She sounds dreadful, and she always
 > has, so that's all right.
 
-**The ledger.** Tally: Friendly, and she owes the player a favour. "You met Tally on the road, when her truck had
-broken down." Mark: "You stopped for a stranger on the road and mended her truck."
+**The ledger.** Tally: Friendly. "You met Tally on the road, when her truck had broken down." A debt goes on the page:
+"Tally owes you for mending her truck." It is written as a debt of her own, because a favour is owed by a people
+(section 17) and Tally is one person. Mark: "You stopped for a stranger on the road and mended her truck."
 
 **What she owes.** She wipes her hands and does not let the player leave yet.
 
@@ -305,7 +308,7 @@ blamed on Tin Town.
 | --- | --- | --- | --- | --- |
 | 1 | "Come to Tin Town's gate. We'll buy from you." | A trader at the gate. She said herself where the news goes | *Whatever she hears at our gate, Sump may hear a week later.* | The Word on the road rises by one after her first visit. Her truck still passes Sump's gate |
 | 2 | "Come to Tin Town's gate, but only if you stop selling to the Road Rats." | A trader at the gate, and a quarrel that she has to carry to Sump | *I'm asking her to give up her best customer because of something I said.* | The Road Rats' feud rises by one. They are a car short at checkpoints. Her truck no longer passes Sump's gate |
-| 3 | "You don't owe me anything. Get your load home." | Nothing changes at Tin Town | None | The favour stays owed. She asks again the next time she is met on a road |
+| 3 | "You don't owe me anything. Get your load home." | Nothing changes at Tin Town | None | What she owes stays owed. She asks again the next time she is met on a road |
 
 > **Tally:** *(1)* Tin Town, where the fire is. I've been meaning to find out whether that was true. Look for me at
 > your gate at first light, and bring your scrap.
@@ -391,7 +394,7 @@ beside Bess. Tally talks on the radio.
   > You stayed, and that's the part I'll remember.
 
 - **The player's car is wrecked.** The buggies take what they can reach and go. Patience tows the car to Tin Town
-  behind the cart, which spends the favour she owed. Marks: "The Road Rats took Tally's tyres." "Tally towed your car
+  behind the cart, which settles what she owed. Marks: "The Road Rats took Tally's tyres." "Tally towed your car
   home behind her cart."
 
   > **Tally:** Hook your car on behind the cart. Patience has pulled worse things than that, and I did say that I pay
@@ -424,7 +427,7 @@ visit.
 | --- | --- | --- |
 | "What's the free piece of news?" | **Tally:** Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you where it is, as near as I can, and my drawing is better than my truck. | A rumour: a circle on the map, 600 metres across, where that site is said to be (section 16) |
 | "Did you see anything at {burned.name}?" *(only if a found camp has been burned)* | **Tally:** I came through there the morning after, to sell them salt. I saw the tracks of a lot of cars going out one way, and a cart's ruts in the middle of them, with footprints beside it. **Tally:** People who walk beside a cart were alive when they left. I'm sorry about my own tracks in the ash. I had to turn Patience round in it. | The people were taken alive. Her cart's tracks at that camp are explained |
-| "Where are the Road Rats working this week?" *(only while she still sells to Sump)* | **Tally:** Sump's people have their raised bonnet out on {road.name} this week. If you see a truck there with doors that match, keep your foot down. | The player knows which road has the trap on it |
+| "Where are the Road Rats working this week?" *(only while she still sells to Sump)* | **Tally:** Sump's people have their raised bonnet out again this week. If you see a truck by the road with doors that match, keep your foot down. | The player knows that the trap is out, and how to tell it |
 
 Her answer about the camp writes the mark "Tally told you what she saw at a camp that had been burned."
 
@@ -460,7 +463,7 @@ from then on.
 - **You run.** The armour shot off the car's back stays off until a mechanic mends it. Somebody else stops there.
 - **You are seen on the high ground.** The trap comes out while you are on foot, and you run for the car.
 - **The tyres are taken on the road to the crossing.** Tally has less to sell, and is Friendly and not Sworn.
-- **Your car is wrecked beside Patience.** The favour she owed is spent on the tow.
+- **Your car is wrecked beside Patience.** What she owed is settled by the tow.
 - **You ask Tally to the gate.** Sump hears about Tin Town's fire.
 - **You make her choose.** The Road Rats' feud rises, and they know who asked.
 
@@ -488,7 +491,7 @@ Nobody dies, nothing saved is wiped, and no screen says the game is over.
 
 ### What this changes later
 
-- Tally at the gate every third dawn is a trade, a rumour and a tow that the player did not have.
+- Tally at the gate every third dawn is a trade and a rumour that the player did not have, and while she owes, a tow.
 - A Tally who is Sworn sends Patience when called, as any Sworn people send a car (section 17).
 - The six things are learnt. Every stopped car that a checkpoint draws afterwards can be read by them.
 - A road that was warned has no robberies and no kindness on it for a while.
@@ -503,8 +506,7 @@ Nobody dies, nothing saved is wiped, and no screen says the game is over.
 | The Walkers' word | Rell is not there to ask. The bottle of water was still left by "some people on foot" |
 | A tower on the Crow's Step | There is no keeper to ask. The high ground is the only way to see behind the rise |
 | A found camp that is burned | The question about it is not offered |
-| The scrap in the car | With fewer than forty, the Road Rat takes what there is, and paying costs that much |
-| An act with a clock | With no clock, the road to the crossing costs nothing but its danger |
+| Which sites are found | When every site is found, she has no free piece of news, and the question is not offered |
 
 ## 8. Crossings
 
@@ -550,7 +552,7 @@ horn outside the gate. The things read from a distance use `open.scout.seen`, wh
 | **Tally** | A person. A hauler who carries tyres, salt, seed and news between the camps, and trades at Tin Town's gate if asked |
 | **Patience** | Tally's truck, red with one blue door, and its cart. A thing, not a person, but people say her name |
 | **The crossing** | Not a new place: whichever crossing of two roads is nearest the hauler's checkpoint. It needs no name on the map |
-| `tally` | The id for Tally's word, her favour and her talk |
+| `tally` | The id for Tally's word, her debt and her talk. A person, of the people `traders` |
 | `road-rat`, `sumps-rider`, `keeper` | Speakers with no name of their own: the Road Rat by the truck, one of Sump's riders at a checkpoint, and whoever keeps a tower |
 | `stranded-hauler/helped` | Mark: the player stopped for Tally and mended her truck |
 | `stranded-hauler/gate-open` | Mark: Tally was asked to trade at Tin Town's gate |
@@ -560,4 +562,4 @@ horn outside the gate. The things read from a distance use `open.scout.seen`, wh
 | `stranded-hauler/paid-the-trap`, `stranded-hauler/trap-broken`, `stranded-hauler/lost-to-the-trap`, `stranded-hauler/ran-from-the-trap`, `stranded-hauler/passed-the-trap` | Marks: how the trap ended |
 | `stranded-hauler/drove-past-her`, `stranded-hauler/never-stopped-for-her` | Marks: the hauler was left on the road |
 | `stranded-hauler/told-of-a-site`, `stranded-hauler/saw-a-camp-in-ashes`, `stranded-hauler/knows-the-rats-road`, `stranded-hauler/sump-knows-of-the-fire` | Marks: news given at the gate, and news carried away from it |
-| `rumour/<site>` | Not new: the land's own mark for a rumour (section 12). Tally's free news writes it |
+| `stranded-hauler/tally-owes` | A debt on the page: what Tally owes for the mend |

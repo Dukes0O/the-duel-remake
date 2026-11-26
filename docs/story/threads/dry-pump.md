@@ -13,7 +13,7 @@ Kind: a need. The choice at its heart, from section 19: spend the day's outing o
 | --- | --- |
 | A camp that is found, still stands, and whose people are Strangers or better | That camp's word: Sworn, or down a word. Its stage, if its people leave |
 | Who owes the player a favour, for somebody to send | That favour, spent |
-| The Ash Men's feud, for how the Dead Mall is watched | The Ash Men's feud |
+| Nothing of the Ash Men: the Dead Mall is watched the same way in every ledger | The Ash Men's feud |
 | Whether the Walkers were told of the Dead Mall's roof (the second of the Cold Nights) | A way into the Dead Mall, as a mark that any later trip can read |
 | Whether a day's outing costs the gas run today (an act with a clock, and no learner on the run) | Promises: a valve for the camp, and one for Mr Penny |
 | The mark for a pump the player mended at the Glasshouse | Marks that later scenes read (section 8) |
@@ -514,7 +514,7 @@ the player's next visit. Nobody's word moves. Nothing is learnt about the Mall.
 - The way into the Dead Mall is the player's for good. Any later trip there may start at the tunnel door.
 - Mr Penny is a person the land holds: a man who has kept a watch for thirty years and has asked to be relieved.
 - The Ash Men at a higher feud come to fight more often, and in Five Cold Nights they come over the wall in greater
-  numbers.
+  numbers. With no feud written, being seen in the Mall raises it by one step all the same.
 - An ember that was not baked is a night of fire that the town does not have.
 
 **What the join with the town will add** (not built here; Kyle, 21 November 2026). A tower needs a keeper from the
@@ -529,7 +529,6 @@ grow round.
 | The camp's word | A camp just found is Strangers, and that is enough. The leader's first line is written to be said to a stranger |
 | A favour owed to the player | The third answer in Scene 2 is not offered |
 | The Walkers were told of the Mall's roof | Rell cannot be asked the way, and the Walkers, if sent, are a draw like any other friends |
-| The Ash Men's feud | They have no feud with the player. The Mall is watched by the same two lamps, and being seen begins the feud at Watching |
 | The mark for the pump mended at the Glasshouse | Marigold's line about the pump "you mended" is not said |
 | An act with a clock, or a learner on the gas run | With no clock, or with the gas run taught, the day costs nothing at home, and the other first thought comes in Scene 2 |
 

@@ -5,7 +5,8 @@
 // what can be read by looking, `questions` cost nothing to ask, and `choices` are what the player says (`act: 'say'`)
 // or does (`act: 'do'`). `plain` is what anybody could see before choosing and `hidden` is the writer's note of what
 // the game keeps to itself; neither is shown as words. `words` and `thought` are shown exactly as written. A role's
-// names are put into a line as {camp.leader} and {camp.name}, and into an effect as {camp.people} and {camp.id}.
+// names are put into a line as {camp.leader} and {camp.name}, and into a condition or an effect as '@camp' (the
+// site) and '@camp.people' (its people). A draw is named short: the storyline rule puts the id and the night in front.
 // `{banked: 2}` on a beat means: live once two hearths have been banked since the thread reached it.
 const ID = 'dry-pump';
 const say = (speaker, words, more) => ({speaker, words, ...more});
@@ -17,7 +18,7 @@ const onRadio = {radio: true};
 const low = {low: true};
 const mark = what => ({type: 'mark', id: `${ID}/${what}`});
 const did = what => ({fact: 'mark', id: `${ID}/${what}`});
-const campWord = change => ({type: 'word', person: '{camp.people}', ...change});
+const campWord = change => ({type: 'word', person: '@camp.people', ...change});
 
 const AT_THE_GLASSHOUSE = {cast: 'camp', is: 'glasshouse'};
 const PUMP_WAS_MENDED = {fact: 'mark', id: 'glasshouse/pump-mended'};
@@ -26,7 +27,7 @@ const WALKERS_KNOW_THE_MALL = {all: [{fact: 'word', of: 'walkers', atLeast: 'Fri
   {fact: 'mark', id: 'told-walkers-of-mall'}]};
 const HAS_A_VALVE = {any: [did('took-penny-valve'), did('took-the-spare')]};
 
-const PROMISE = {type: 'promise', id: `${ID}/valve`, person: '{camp.people}', dueNights: 3,
+const PROMISE = {type: 'promise', id: `${ID}/valve`, person: '@camp.people', dueNights: 3,
   text: 'You promised {camp.name} a brass valve from the Dead Mall within three nights.'};
 const PENNY_PROMISE = {type: 'promise', id: `${ID}/penny-valve`, person: 'mr-penny', dueNights: 5,
   text: 'You promised Mr Penny the valve from the shoe shop within five nights.'};
@@ -44,26 +45,26 @@ export default {
   title: 'The dry pump',
   kind: 'need',
 
-  reads: ['found', 'stage', 'word', 'favour', 'feud', 'mark', 'stock', 'night'],
-  writes: ['word', 'favour', 'feud', 'site', 'promise', 'mark', 'met'],
+  reads: ['found', 'stage', 'word', 'favour', 'mark', 'night'],
+  writes: ['word', 'favour', 'feud', 'site', 'promise', 'settle', 'mark', 'met'],
 
   cast: {
     // Any found camp that still stands and whose people have not turned against the player.
     camp: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'stage', is: 'camp'},
-      {fact: 'word', atLeast: 'Strangers'}]}, draw: 'camp'},
+      {fact: 'word', atLeast: 'Strangers'}]}},
     // A people who owe the player, and are not the camp's own. Left empty when nobody owes.
-    friend: {from: 'peoples', where: {fact: 'favour', atLeast: 1}, not: 'camp', draw: 'friend', optional: true},
+    friend: {from: 'peoples', where: {fact: 'favour', atLeast: 1}, not: 'camp', optional: true},
   },
 
   starts: {all: [
     {fact: 'night', atLeast: 2},
     {not: {fact: 'thread', id: ID, at: 'any'}},
-    {fact: 'draw', name: `${ID}/start`, chance: .5},
+    {fact: 'draw', name: 'start', chance: .5},
   ]},
 
   // A person's words: the request is the first row of the leader's talk table. What is seen on the way in is a pump
   // that turns over a dry trough. The need stands for four nights, which is as long as the camp's water lasts.
-  sign: {kind: 'words', by: '{camp.leader}', at: 'camp', seenWithin: 60, lastsNights: 4, cue: 'open.pump.dry'},
+  sign: {kind: 'words', by: '{camp.leader}', at: '@camp', seenWithin: 60, lastsNights: 4, cue: 'open.pump.dry'},
 
   beats: {
     sign: {
@@ -76,7 +77,7 @@ export default {
     },
 
     asking: {
-      when: {reach: 'camp'},
+      when: {reach: '@camp'},
       lines: [
         leader("You've come on a bad day, and you may be the one good thing in it. Our pump has stopped bringing up water. It turns as well as it ever did, and nothing comes up with it."),
         say('marigold', "The pump you mended is turning beautifully. It just isn't bringing anything up with it, and beans can't drink the sound of a pump.",
@@ -130,7 +131,7 @@ export default {
           plain: 'What they owe is spent, and the page says so. They go on foot and are back at the second dawn',
           thought: "They'd be keeping my promise for me, in a place that none of us knows.",
           hidden: 'A named draw, three in five. Sure when they have slept in the Mall. The way in is theirs, and not the player\'s',
-          effects: [mark('asked'), mark('sent-friends'), {type: 'favour', person: '{friend.people}', by: -1}],
+          effects: [mark('asked'), mark('sent-friends'), {type: 'favour', person: '@friend', by: -1}],
           lines: [
             leader("I don't mind whose hands it comes in. I'll mind very much if it doesn't come."),
             friend("We owe you, and this is a fair way to pay it. We'll walk to the Mall for your friends and be back at the second dawn. After that, you and I are square.", onRadio),
@@ -160,7 +161,7 @@ export default {
     },
 
     'promise-broken': {
-      when: {reach: 'camp'},
+      when: {reach: '@camp'},
       lines: [leader("You said three nights, and I told the others that it was a promise. I shan't tell them that again about anybody.")],
       effects: [mark('promise-broken'), campWord({by: -1}), {type: 'settle', id: `${ID}/valve`}],
       // They have one day of water left, and the cart is half loaded. The valve can still be fetched today.
@@ -176,7 +177,7 @@ export default {
     'friends-away': {
       when: {banked: 2},
       outcomes: {
-        fetched: {when: {any: [WALKERS_KNOW_THE_MALL, {fact: 'draw', name: `${ID}/friends`, chance: .6}]},
+        fetched: {when: {any: [WALKERS_KNOW_THE_MALL, {fact: 'draw', name: 'friends', chance: .6}]},
           lines: [friend("Here's your valve. An old man under that place made every one of us sign a book before he'd part with it. We're square now, and I'd like it said that we were quick.")],
           effects: [mark('took-penny-valve'), mark('friends-fetched-it')],
           next: 'fitting'},
@@ -238,7 +239,7 @@ export default {
     },
 
     gallery: {
-      when: {reach: 'mall-gallery'},
+      when: {reach: ['dead-mall', 'gallery']},
       explore: [
         {id: 'footprints', cue: 'open.clue.found',
           what: 'A ring of footprints in the sand, all the way round the gallery.',
@@ -258,7 +259,7 @@ export default {
 
     // The fountain hall. Two lamps turn, each with a cone of light. A lamp on the player for two seconds is a shout.
     hall: {
-      when: {reach: 'mall-hall'},
+      when: {reach: ['dead-mall', 'hall']},
       thoughts: [{when: {came: 'front-doors'},
         thought: 'The fountain is in the middle of the hall, and the only door near it says STAFF ONLY. The pump room must be through there, on the far side of both lamps.'}],
       outcomes: {
@@ -277,7 +278,7 @@ export default {
     },
 
     penny: {
-      when: {reach: 'mall-staff-door'},
+      when: {reach: ['dead-mall', 'staff-door']},
       lines: [
         penny("Come in quickly, please, and mind the step. I'm afraid the Seaview Centre is closed. We close at nine, and it has been after nine for thirty years.", low),
         penny("My name is Mr Penny, and I'm the night watchman. You'll be a contractor, because customers never use this door. Contractors sign the book."),
@@ -355,7 +356,7 @@ export default {
 
     // Across the back of the hall to the third shop, and back with something heavy.
     'shoe-shop': {
-      when: {reach: 'mall-shoe-shop'},
+      when: {reach: ['dead-mall', 'shoe-shop']},
       explore: [
         {id: 'ash-store', cue: 'open.clue.found',
           what: 'Sacks of ash to the ceiling, and rolls of wet blanket.',
@@ -385,7 +386,7 @@ export default {
     },
 
     tunnel: {
-      when: {reach: 'mall-tunnel-door'},
+      when: {reach: ['dead-mall', 'tunnel-door']},
       cue: 'open.mall.bar',
       lines: [
         penny("This is the contractors' way. Remember where it comes out. Next time, knock twice on this door, so that I know it isn't a customer."),
@@ -398,7 +399,7 @@ export default {
 
     // Round the building to the car, and away. If the alarm was raised, two grey trucks come round the wall.
     'road-out': {
-      when: {reach: 'car'},
+      when: {reach: ['dead-mall', 'car-park']},
       outcomes: {
         clear: {when: {not: did('seen-in-the-mall')}, next: [{when: HAS_A_VALVE, to: 'fitting'}, {to: 'came-home-empty'}]},
         outrun: {next: [{when: HAS_A_VALVE, to: 'fitting'}, {to: 'came-home-empty'}]},
@@ -420,7 +421,7 @@ export default {
     // ---- The camp again ----
 
     fitting: {
-      when: {reach: 'camp'},
+      when: {reach: '@camp'},
       // Hold the wrench on the foot of the pipe for twelve seconds. Then the pump is worked, and water comes.
       mend: {id: `${ID}/fit-the-valve`, wrenchSeconds: 12, scrap: 0, cue: 'open.pump.water',
         after: [
@@ -458,7 +459,7 @@ export default {
 
     // Only for a player who took Mr Penny's own valve and promised him the other. A second trip, by the tunnel.
     'penny-owed': {
-      when: {all: [did('promised-penny'), {reach: 'mall-tunnel-door'}]},
+      when: {all: [did('promised-penny'), {reach: ['dead-mall', 'tunnel-door']}]},
       mission: `${ID}/second-trip`, kind: 'heist', holds: ['checkpoints', 'signs'], minutes: 6,
       lines: [penny("Two knocks, so it's a contractor. I've kept your page of the book open, and the kettle has been very patient.")],
       outcomes: {
@@ -483,8 +484,8 @@ export default {
     // Nobody brought a valve. On the fifth day the camp loads its cart.
     'left-dry': {
       when: {banked: 4},
-      effects: [mark('left-dry'), {type: 'site', id: '{camp.id}', stage: 'empty'}],
-      next: 'end:gone',
+      effects: [mark('left-dry'), {type: 'site', id: '@camp', stage: 'empty'}],
+      next: 'gone',
     },
 
     // Lines that tie a consequence back to its choice. Each is said once, by the person its row names, some nights

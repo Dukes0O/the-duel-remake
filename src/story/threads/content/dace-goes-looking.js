@@ -5,9 +5,9 @@
 // what can be read by looking, `questions` cost nothing to ask, and `choices` are what the player says (`act: 'say'`)
 // or does (`act: 'do'`). `plain` is what anybody could see before choosing and `hidden` is the writer's note of what
 // the game keeps to itself; neither is shown as words. `words` and `thought` are shown exactly as written. A role's
-// names are put into a line as {site.name}, {site.what}, {site.road} and {site.leader}, and into an effect as
-// {site.id} and {site.people}. `{banked: 2}` on a beat means: live once two hearths have been banked since the thread
-// reached it.
+// names are put into a line as {site.name} and {site.leader}, and into a condition or an effect as '@site' (the
+// site) and '@site.people' (its people). `{banked: 2}` on a beat means: live once two hearths have been banked since
+// the thread reached it. A draw is named short: the storyline rule puts the id and the night in front of it.
 const ID = 'dace-goes-looking';
 const say = (speaker, words, more) => ({speaker, words, ...more});
 const dace = (words, more) => say('dace', words, more);
@@ -18,43 +18,54 @@ const you = words => say('you', words);
 const onRadio = {radio: true};
 const mark = what => ({type: 'mark', id: `${ID}/${what}`});
 const did = what => ({fact: 'mark', id: `${ID}/${what}`});
-const draw = (name, chance) => ({fact: 'draw', name: `${ID}/${name}`, chance});
+const draw = (name, chance) => ({fact: 'draw', name, chance});
 const all = (...facts) => ({all: facts});
 const any = (...facts) => ({any: facts});
 const not = fact => ({not: fact});
 
-// ---- What the player's choices do to his road. Every draw is named, so it is the same boy on every load. ----
+// ---- What the player's choices do to his road ----
+// His luck is drawn once, on the morning he leaves, and kept as marks, so that it is the same boy on every load and
+// the log at the hearth agrees with what happened two nights before.
+const ROLLS = [
+  // The long hill, at noon on the first day: the engine boils three times in five, unless the radiator was mended.
+  {when: draw('hill', .6), effects: [mark('hill-unkind')]},
+  // The stones, that afternoon: a tyre goes one time in two. With the spare mended, he changes the wheel and goes on.
+  {when: draw('stones', .5), effects: [mark('tyre-goes')]},
+  // Riders at a crossing on the way home, at noon on the second day: two times in five, and more when the Road Rats
+  // are Raiding.
+  {when: any(draw('riders', .4), all({fact: 'feud', of: 'road-rats', atLeast: 'Raiding'}, draw('riders-raiding', .2))),
+    effects: [mark('riders-come')]},
+  // A boy told to hide from flags spends half a day behind wrecks, and one time in two still reaches the place.
+  {when: draw('in-time', .5), effects: [mark('in-time')]},
+];
+// Left to wait a night with nobody telling him to stay, he starts walking home one time in two.
+const WALK_ROLL = [{when: all(not(did('told-stay')), draw('walks', .5)), effects: [mark('walked')]}];
+
 const TRUSTED = did('told-trust');
 const TOLD_TO_HIDE = did('told-hide');
 const TOLD_TO_STAY = did('told-stay');
 const WITHOUT_LEAVE = did('took-it-in-the-night');
-// The long hill, at noon on the first day: the engine boils three times in five, unless the radiator was mended.
-const HILL_IS_UNKIND = draw('hill', .6);
+const HILL_IS_UNKIND = did('hill-unkind');
 const BOILED = all(not(did('radiator-mended')), HILL_IS_UNKIND);
-// The stones, that afternoon: a tyre goes one time in two. With the spare mended, he changes the wheel and goes on.
-const TYRE_GOES = draw('stones', .5);
+const TYRE_GOES = did('tyre-goes');
 const FLAT_AND_NO_SPARE = all(not(did('spare-mended')), TYRE_GOES);
 // The first trouble stops him where it happens, unless he was told that he would know what to do. Then he limps on.
 const STOPPED_ON_THE_HILL = all(BOILED, not(TRUSTED));
 const STOPPED_ON_THE_STONES = all(not(STOPPED_ON_THE_HILL), FLAT_AND_NO_SPARE, not(TRUSTED));
 const REACHED_THE_PLACE = all(not(STOPPED_ON_THE_HILL), not(STOPPED_ON_THE_STONES));
-// A boy told to hide from flags spends half a day behind wrecks, and one time in two has to turn for home in sight
-// of the place.
-const OUT_OF_TIME = all(TOLD_TO_HIDE, not(draw('in-time', .5)));
+const OUT_OF_TIME = all(TOLD_TO_HIDE, not(did('in-time')));
 const STOOD_ON_IT = all(REACHED_THE_PLACE, not(OUT_OF_TIME));
 const SAW_IT_FROM_A_RIDGE = all(REACHED_THE_PLACE, OUT_OF_TIME);
 // He limped there on a boiling engine or a flat tyre, and cannot get back by dusk.
 const STRANDED_AT_THE_PLACE = all(TRUSTED, any(BOILED, FLAT_AND_NO_SPARE));
-// Riders at a crossing on the way home, at noon on the second day: two times in five, and more when the Road Rats
-// are Raiding. A boy who was told to hide is never found by them.
-const RIDERS_COME = any(draw('riders', .4), all({fact: 'feud', of: 'road-rats', atLeast: 'Raiding'}, draw('riders-raiding', .2)));
+// A boy who was told to hide is never found by the riders.
+const RIDERS_COME = did('riders-come');
 const PICKUP_TAKEN = all(REACHED_THE_PLACE, not(STRANDED_AT_THE_PLACE), not(TOLD_TO_HIDE), RIDERS_COME);
 const HOME_BY_HIMSELF = all(REACHED_THE_PLACE, not(STRANDED_AT_THE_PLACE), not(PICKUP_TAKEN));
 const TROUBLE_ON_THE_FIRST_DAY = any(STOPPED_ON_THE_HILL, STOPPED_ON_THE_STONES);
 const CALLS_AT_NOON_AND_DUSK = did('radio-check');
 const HAS_A_RADIO = did('radio-mended');
-// Left to wait a night with nobody telling him to stay, he starts walking home one time in two.
-const WALKED = all(not(TOLD_TO_STAY), did('left-until-morning'), draw('walks', .5));
+const WALKED = did('walked');
 
 const RADIO_HILL_HEARS = {fact: 'word', of: 'radio-hill', atLeast: 'Friendly'};
 const THE_STONES = {id: 'the-stones', asks: 'rell', words: 'Rell, how do I find a Walker who is on foot?',
@@ -70,21 +81,23 @@ export default {
   title: 'Dace goes looking',
   kind: 'need',
 
-  reads: ['word', 'mark', 'favour', 'found', 'feud', 'made', 'stock', 'night'],
-  writes: ['find', 'word', 'scrap', 'mark', 'met'],
+  reads: ['word', 'mark', 'debt', 'found', 'feud', 'made', 'night'],
+  writes: ['find', 'word', 'scrap', 'mark'],
 
   cast: {
-    dace: {from: 'people', is: 'dace'},
+    dace: {from: 'persons', is: 'dace'},
     // A place nobody has shown the player, and not an enemy's den: a camp, a well site, a ruin or a lookout.
-    site: {from: 'sites', where: {all: [{not: {fact: 'found'}}, {kind: ['camp', 'well', 'ruin', 'lookout']}]},
-      draw: 'site'},
+    site: {from: 'sites', where: {all: [{not: {fact: 'found'}}, {kind: ['camp', 'well', 'ruin', 'lookout']}]}},
   },
 
   // The Walkers live inside the fence or are Friendly; Dace owes the player; and he was never sent away.
   starts: {all: [
     {fact: 'night', atLeast: 2},
     any({fact: 'mark', id: 'walkers-inside'}, {fact: 'word', of: 'walkers', atLeast: 'Friendly'}),
-    any({fact: 'mark', id: 'dace-runner'}, {fact: 'mark', id: 'dace-secret'}, {fact: 'favour', of: 'dace', atLeast: 1}),
+    // He owes: he was caught with the embers and taken to Rell, or his secret was kept, or he reached the Wash with
+    // them (the Walkers' great favour), or any later debt of his own.
+    any({fact: 'mark', id: 'dace-runner'}, {fact: 'mark', id: 'dace-secret'},
+      {fact: 'debt', id: 'walkers-great-favour'}, {fact: 'debt', person: 'dace'}),
     not({fact: 'mark', id: 'dace-sent-away'}),
     not({fact: 'thread', id: ID, at: 'any'}),
     draw('start', .5),
@@ -105,7 +118,7 @@ export default {
     },
 
     asking: {
-      when: {reach: 'dace'},
+      when: {reach: '@dace'},
       lines: [
         dace("I've been waiting for you. I want to ask you for something, and I've practised it, so please let me get to the end."),
         dace("I owe you, and I'm tired of it. Everybody in my family pays what they owe, and I'm the only one who's still paying."),
@@ -232,7 +245,7 @@ export default {
         ],
       },
       leaving: {
-        cue: 'open.pickup.started',
+        cue: 'open.pickup.started', rolls: ROLLS,
         lines: [
           rell('Here\'s a blanket and two days of water. You slept nine nights on the salt with no fire, so one night in a cab with a roof on it is a holiday.'),
           rell("Dusk on the second day, Dace. I'm not going to say it twice."),
@@ -274,7 +287,7 @@ export default {
           lines: [dace("It's Dace. I found it, and I'm standing on it. The truck got me here and it won't get me back, so I'm not going to be home by dusk. Don't tell Rell the last part first.", onRadio)]},
         // Said after any of the four, so that the map can show a circle 600 metres across.
         {id: 'call-where', when: HAS_A_RADIO,
-          lines: [dace("I'm on {site.road}, about a morning's drive from the gate. I've tied my blanket to the aerial, so look for something red.", onRadio)]},
+          lines: [dace("I'm on the road that we walked in by, about a morning's drive from the gate. I've tied my blanket to the aerial, so look for something red.", onRadio)]},
       ],
       relayed: {when: all(HAS_A_RADIO, RADIO_HILL_HEARS, not(CALLS_AT_NOON_AND_DUSK)),
         note: 'The sisters of Radio Hill hear the old set and pass the call on at once, as if a check had been agreed.'},
@@ -302,7 +315,7 @@ export default {
           plain: 'He spends the night out, with the truck',
           thought: 'He has a blanket and a cab. He walked here with less than that.',
           hidden: "The fetch is tomorrow's outing. If nobody told him to stay with the truck, he may start walking",
-          effects: [mark('left-until-morning')],
+          effects: [mark('left-until-morning')], rolls: WALK_ROLL,
           lines: [dace("First light. All right. I'll be here. I mean, I'll be somewhere. I'll be here.", onRadio)],
           next: 'search'},
       ],
@@ -329,7 +342,7 @@ export default {
           plain: 'Rell picks up her stick',
           thought: "I'll find him faster by daylight. I hope he knows that somebody is coming.",
           hidden: 'Rell walks out tonight, and is not on the fence. He spends a third night out, and may have walked',
-          effects: [mark('left-until-morning'), mark('rell-walked')],
+          effects: [mark('left-until-morning'), mark('rell-walked')], rolls: WALK_ROLL,
           lines: [rell("Then I'll start walking now, and you can pick me up on the road in the morning. I'm not angry with you. I just can't sit.")],
           next: 'search'},
       ],
@@ -388,7 +401,8 @@ export default {
           dace("It's still out there, further along that road than I got. Give me your map, and I'll show you how far I'd come.",
             {when: not(REACHED_THE_PLACE)}),
         ],
-        effects: [{when: not(REACHED_THE_PLACE), effects: [{type: 'mark', id: 'rumour/{site.id}'}]}],
+        // When he never reached the place, the map shows a rumour's circle for it (section 16).
+        rumour: {when: not(REACHED_THE_PLACE), site: '@site'},
       },
       outcomes: {
         'brought-home': {effects: [mark('fetched-home')], next: 'hearth'},
@@ -427,7 +441,7 @@ export default {
           words: "First day, afternoon. A tyre went bang on the stones. I drove on with it flat, very slowly, and it made a noise like Auntie's ladle in a pot."},
         {words: 'First night. I slept in the cab. The windows froze on the inside, and I drew Wim on one of them with my finger. She was gone by morning.'},
         {when: STOOD_ON_IT,
-          words: "Second day, morning. I found it. It's {site.what}, and there's nobody living there who minded. I stood in the middle of it for a while, because I was the first."},
+          words: "Second day, morning. I found it. I'm not going to tell you what it is, because you'll have to come and see. I stood in the middle of it for a while, because I was the first."},
         {when: SAW_IT_FROM_A_RIDGE,
           words: "Second day, morning. I saw it from a ridge, a long way off. I'd spent too long hiding from flags to go down to it, and I'd promised dusk. I can show you where to stand."},
         {when: all(REACHED_THE_PLACE, not(STRANDED_AT_THE_PLACE), TOLD_TO_HIDE, RIDERS_COME),
@@ -448,7 +462,7 @@ export default {
             rell("You trusted my boy with a truck and two days. I don't know yet whether that was wise. I do know that it was trust, and Walkers don't forget that."),
             auntie("He came back, he brought the truck back, and he found something. I had several words ready, and it seems that I shan't need them. I'll keep them for another day."),
           ],
-          effects: [{type: 'find', site: '{site.id}'}, mark('site-found-by-dace'), mark('square'),
+          effects: [{type: 'find', site: '@site'}, mark('site-found-by-dace'), mark('square'),
             {type: 'word', person: 'walkers', by: 1}],
           end: 'found-alone'},
         {id: 'seen-alone', when: all(HOME_BY_HIMSELF, SAW_IT_FROM_A_RIDGE),
@@ -457,7 +471,8 @@ export default {
             ...SQUARE,
             rell("You trusted my boy with a truck and two days. I don't know yet whether that was wise. I do know that it was trust, and Walkers don't forget that."),
           ],
-          effects: [{type: 'mark', id: 'rumour/{site.id}'}, mark('site-seen-by-dace'), mark('square'),
+          rumour: {site: '@site'},
+          effects: [mark('site-seen-by-dace'), mark('square'),
             {type: 'word', person: 'walkers', by: 1}],
           end: 'found-alone'},
         {id: 'fetched-and-found', when: all(not(HOME_BY_HIMSELF), STOOD_ON_IT),
@@ -466,7 +481,7 @@ export default {
             ...SQUARE,
             rell("You let him go, and then you went and got him. Both of those were yours to do, and you did both. I've nothing to add to that."),
           ],
-          effects: [{type: 'find', site: '{site.id}'}, mark('site-found-by-dace'), mark('square')],
+          effects: [{type: 'find', site: '@site'}, mark('site-found-by-dace'), mark('square')],
           end: 'fetched'},
         {id: 'fetched', when: not(HOME_BY_HIMSELF),
           lines: [
@@ -488,8 +503,8 @@ export default {
         dace('There. I knew it was something. You found it, though. I only pointed.', {at: 'the place'}),
         rell("You kept him safe, and I'm grateful for it. He'll ask you again, you know. They always ask again.", {at: 'the gate, at dusk'}),
       ],
-      effects: [{type: 'find', site: '{site.id}'}],
-      next: 'end:found-together',
+      effects: [{type: 'find', site: '@site'}],
+      next: 'found-together',
     },
 
     // ---- No ----
@@ -521,7 +536,7 @@ export default {
             dace('You took the key. I asked you, and you said no, and I said all right. Then you took the key anyway.'),
             dace("I wasn't going to take it. Now I'll never be able to show you that."),
           ],
-          next: 'end:stayed'},
+          next: 'stayed'},
         // One time in two, or one in five if the player asked him straight out.
         'he-took-it': {when: any(all(did('asked-about-the-key'), draw('takes-it-asked', .2)),
           all(not(did('asked-about-the-key')), draw('takes-it', .5))),
@@ -531,7 +546,7 @@ export default {
             rell("He'll have gone back the way we came. He has a night's start, in a truck that boils, with nothing mended and nobody told. I'm not asking you to go. I'm telling you that I'm going."),
           ],
           thoughts: ["I said no so that he'd be safe. He's out there now with nothing mended, and nobody has told him anything."],
-          effects: [mark('took-it-in-the-night')],
+          effects: [mark('took-it-in-the-night')], rolls: ROLLS,
           choices: [
             {id: 'go-after-him', act: 'do', words: 'Drive out after him now',
               plain: "The day's outing. One set of tracks, half a night old",
@@ -548,7 +563,7 @@ export default {
             rell('You left the key on its nail. I saw that, and so did he. It did him more good than the truck would have.'),
           ],
           effects: [mark('he-stayed'), {type: 'word', person: 'walkers', by: 1}],
-          next: 'end:stayed'},
+          next: 'stayed'},
       },
     },
 
@@ -559,7 +574,7 @@ export default {
         {id: 'he-spoke-for-you', by: '{site.leader}', at: 'the place, on the player\'s first visit, if it is a camp',
           when: all(did('site-found-by-dace'), {cast: 'site', kind: 'camp'}),
           lines: [say('{site.leader}', 'A boy in a pickup found us two days ago. He said that a car would come after him, and that whoever was in it could be trusted. He also knocked over our water butt.')],
-          effects: [mark('spoke-for-you'), {type: 'word', person: '{site.people}', set: 'Friendly'}]},
+          effects: [mark('spoke-for-you'), {type: 'word', person: '@site.people', set: 'Friendly'}]},
         {id: 'moss-fetches-the-pickup', by: 'moss', at: 'the yard, the next morning',
           when: did('pickup-left-out'),
           lines: [moss("I'm taking Bess out to bring the old pickup home before somebody strips her. That makes Bess late for gas today. I'm not complaining. I'm only telling you where the morning went.")]},
@@ -593,6 +608,11 @@ export default {
     [`${ID}/spare-mended`]: null,
     [`${ID}/radio-mended`]: null,
     [`${ID}/radio-check`]: null,
+    [`${ID}/hill-unkind`]: null,
+    [`${ID}/tyre-goes`]: null,
+    [`${ID}/riders-come`]: null,
+    [`${ID}/in-time`]: null,
+    [`${ID}/walked`]: null,
     [`${ID}/told-hide`]: "You told Dace to get off the road when he saw a flag he didn't know.",
     [`${ID}/told-stay`]: 'You told Dace to stay with the truck.',
     [`${ID}/told-trust`]: 'You told Dace that he would know what to do.',

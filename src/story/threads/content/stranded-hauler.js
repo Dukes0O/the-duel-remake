@@ -13,10 +13,12 @@ const onRadio = {radio: true};
 const mark = what => ({type: 'mark', id: `${ID}/${what}`});
 const did = what => ({fact: 'mark', id: `${ID}/${what}`});
 const ratsFeud = atLeast => ({fact: 'feud', of: 'road-rats', atLeast});
-const draw = (name, chance) => ({fact: 'draw', name: `${ID}/${name}`, chance});
+// A draw is named short. The storyline rule puts this storyline's id and the night in front of the name.
+const draw = (name, chance) => ({fact: 'draw', name, chance});
 
 // The first truck is the trap one time in five, and one more draw is made for each step of the Road Rats' feud:
-// about one time in three at Watching, one in two at Raiding and three in five at Hunting.
+// about one time in three at Watching, one in two at Raiding and three in five at Hunting. It is asked once, when
+// the first truck comes into view, and what it answered is kept as the mark `trap-set`.
 const TRAP_DRAWN = {any: [
   draw('trap', .2),
   {all: [ratsFeud('Watching'), draw('trap-watching', .15)]},
@@ -56,16 +58,13 @@ export default {
   title: 'The stranded hauler',
   kind: 'stranger',
 
-  reads: ['feud', 'word', 'made', 'stage', 'stock', 'night'],
-  writes: ['word', 'favour', 'scrap', 'feud', 'roadWord', 'mark', 'met'],
+  reads: ['feud', 'word', 'made', 'found', 'stage', 'mark', 'night'],
+  writes: ['word', 'debt', 'settle', 'scrap', 'feud', 'roadWord', 'mark', 'met'],
 
   cast: {
-    hauler: {from: 'people', is: 'tally'},
-    // Any checkpoint on a road that traders use. The trap and the hauler are never met at the same one.
-    road: {from: 'checkpoints', where: {group: 'traders'}, draw: 'road'},
-    secondRoad: {from: 'checkpoints', where: {group: 'traders'}, draw: 'second-road', not: 'road'},
+    hauler: {from: 'persons', is: 'tally'},
     // A site nobody has shown the player, for Tally's free piece of news. Left empty when every site is found.
-    rumoured: {from: 'sites', where: {not: {fact: 'found'}}, draw: 'rumoured', optional: true},
+    rumoured: {from: 'sites', where: {not: {fact: 'found'}}, optional: true},
     // A found camp that has been burned, by anybody. Left empty when there is none.
     burned: {from: 'sites', where: {all: [{fact: 'found'}, {fact: 'stage', is: 'burned'}]}, optional: true},
   },
@@ -76,11 +75,13 @@ export default {
     draw('start', .4),
   ]},
 
-  // A thing out of place, come across on a drive: a truck with its bonnet up, standing in for the checkpoint's own
-  // draw. After a trap the director draws for the sign again, at the second road, and then it is the hauler.
-  sign: {kind: 'thing', what: 'a truck stopped with its bonnet up and somebody waving', at: 'road',
-    seenWithin: 400, lastsNights: 2, cue: 'open.hauler.seen',
-    again: {when: {all: [TRAP_MET, {not: did('helped')}]}, at: 'secondRoad', afterNights: 2}},
+  // A thing out of place, come across on a drive: a truck with its bonnet up, standing in for the draw of a
+  // checkpoint that traders come to. After a trap the director draws for the sign again, at another such checkpoint,
+  // and then it is the hauler.
+  sign: {kind: 'thing', what: 'a truck stopped with its bonnet up and somebody waving',
+    at: {checkpoint: {who: 'traders'}}, seenWithin: 400, lastsNights: 2, cue: 'open.hauler.seen',
+    again: {when: {all: [TRAP_MET, {not: did('helped')}]}, at: {checkpoint: {who: 'traders', not: 'the first'}},
+      afterNights: 2}},
 
   beats: {
     sign: {
@@ -98,7 +99,7 @@ export default {
     // ---- The trap ----
 
     'trap-road': {
-      when: {reach: 'road', within: 220},
+      when: {near: 'sign', within: 220},
       explore: [
         {id: 'waving', from: 'crest', cue: 'open.scout.seen',
           what: 'A man beside the truck waves both arms without stopping, and looks behind him.',
@@ -164,7 +165,7 @@ export default {
     },
 
     'trap-shut': {
-      when: {reach: 'road', within: 40},
+      when: {near: 'sign', within: 40},
       cue: 'open.trap.sprung',
       lines: [
         rat('Thank you for stopping. Hardly anybody does these days, and it gets lonely standing out here.'),
@@ -252,7 +253,7 @@ export default {
     // ---- The hauler ----
 
     'hauler-road': {
-      when: {reach: 'hauler', within: 220},
+      when: {reach: '@hauler', within: 220},
       explore: [
         {id: 'waving', from: 'crest', cue: 'open.scout.seen',
           what: 'A woman beside the truck waves once, and sits down again in its shade.',
@@ -301,7 +302,7 @@ export default {
           thought: "I can't mend every truck in the Scablands, and I have a town to get home to.",
           hidden: 'She counts the car as it goes by. She is gone in two days, and she remembers',
           effects: [mark('drove-past-her'), {type: 'word', person: 'tally', set: 'Wary'}],
-          next: 'end:left-on-the-road'},
+          next: 'left-on-the-road'},
         {id: 'turn-back', act: 'do', words: 'Turn round and go back the way you came',
           plain: 'The road behind',
           hidden: 'Nothing happens today. She is there tomorrow, and not the day after', next: 'hauler-road'},
@@ -309,7 +310,7 @@ export default {
     },
 
     hauler: {
-      when: {reach: 'hauler', within: 40},
+      when: {reach: '@hauler', within: 40},
       lines: [
         tally("Somebody put the word round that a raised bonnet means Road Rats. It was good advice. It has also kept me sitting here for two days.",
           {when: did('warned-the-road')}),
@@ -340,7 +341,9 @@ export default {
         during: [tally("I've got her. Do the top bolt first, and don't be gentle with it.")],
         after: [tally("That's her whole again. Listen to that engine. She sounds dreadful, and she always has, so that's all right.")],
         effects: [{type: 'met', person: 'tally', text: 'You met Tally on the road, when her truck had broken down.'},
-          {type: 'word', person: 'tally', set: 'Friendly'}, {type: 'favour', person: 'tally', by: 1}, mark('helped')]},
+          {type: 'word', person: 'tally', set: 'Friendly'},
+          {type: 'debt', id: `${ID}/tally-owes`, person: 'tally', text: 'Tally owes you for mending her truck.'},
+          mark('helped')]},
       next: 'owing',
     },
 
@@ -377,7 +380,7 @@ export default {
           next: 'ridge'},
         {id: 'no-debt', act: 'say', words: "You don't owe me anything. Get your load home.",
           plain: 'Nothing changes at Tin Town',
-          hidden: 'The favour stays owed. She asks again the next time she is met on a road',
+          hidden: 'What she owes stays owed. She asks again the next time she is met on a road',
           lines: [tally("Everybody owes somebody. It's the only thing that keeps these roads open. I'll write it down anyway, and one day you'll be glad that I did.")],
           next: 'ridge'},
       ],
@@ -434,7 +437,7 @@ export default {
           effects: [mark('load-lost')], next: 'parted'},
         'car-wrecked': {
           lines: [tally('Hook your car on behind the cart. Patience has pulled worse things than that, and I did say that I pay what I owe.')],
-          effects: [{type: 'favour', person: 'tally', by: -1}, mark('load-lost'), mark('towed-by-patience')],
+          effects: [{type: 'settle', id: `${ID}/tally-owes`}, mark('load-lost'), mark('towed-by-patience')],
           next: 'parted'},
       },
     },
@@ -457,7 +460,7 @@ export default {
       next: [
         {when: {all: [did('gate-open'), did('one-gate-only')]}, to: 'gate', end: 'one-gate-only'},
         {when: did('gate-open'), to: 'gate', end: 'at-the-gate'},
-        {to: 'end:her-own-way'},
+        {to: 'her-own-way'},
       ],
     },
 
@@ -476,7 +479,8 @@ export default {
         {id: 'free-news', words: "What's the free piece of news?", when: {cast: 'rumoured'},
           shows: 'A circle on the map where a site is said to be',
           lines: [tally("Here's the free one. There's a place called {rumoured.name} that hardly anybody knows about. I've drawn you where it is, as near as I can, and my drawing is better than my truck.")],
-          effects: [{type: 'mark', id: 'rumour/{rumoured.id}'}, mark('told-of-a-site')]},
+          // The map shows a rumour's circle for the site cast as `rumoured` (section 16).
+          rumour: '@rumoured', effects: [mark('told-of-a-site')]},
         {id: 'what-she-saw', words: 'Did you see anything at {burned.name}?', when: {cast: 'burned'},
           shows: 'They were taken alive, and her cart tracks are explained',
           lines: [
@@ -486,7 +490,7 @@ export default {
           effects: [mark('saw-a-camp-in-ashes')]},
         {id: 'rats-road', words: 'Where are the Road Rats working this week?', when: SELLS_TO_RATS,
           shows: 'What her trade with Sump is good for',
-          lines: [tally("Sump's people have their raised bonnet out on {road.name} this week. If you see a truck there with doors that match, keep your foot down.")],
+          lines: [tally("Sump's people have their raised bonnet out again this week. If you see a truck by the road with doors that match, keep your foot down.")],
           effects: [mark('knows-the-rats-road')]},
       ],
       // Said once each, on a later visit, when its condition is true.
