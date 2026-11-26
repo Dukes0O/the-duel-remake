@@ -395,10 +395,11 @@ export default {
   ends: ['mended', 'peaceful', 'quarrel', 'called-off', 'dots-own-market'],
 
   // What happens when the sign is never followed: Dot holds a small market at the diner, and Tin Town is not in it.
-  ignored: [
-    {afterChoice: {id: 'not-now', times: 2}, effects: [mark('dots-own-market')], next: 'dots-own-market'},
-    {afterNights: 6, effects: [mark('dots-own-market')], next: 'dots-own-market'},
-  ],
+  ignored: {
+    afterNights: 6, afterChoice: {id: 'not-now', times: 2},
+    effects: [mark('dots-own-market')],
+    next: 'dots-own-market',
+  },
 
   // What somebody says afterwards.
   later: [

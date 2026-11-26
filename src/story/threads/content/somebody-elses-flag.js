@@ -269,10 +269,11 @@ export default {
   ends: ['shared', 'bought', 'driven-off', 'beaten', 'stays'],
 
   // What happens when the sign is never followed, or the player drives away: the water men keep the well.
-  ignored: [
-    {afterChoice: {id: 'drive-away', times: 1}, effects: [mark('company-keeps-it')], next: 'stays'},
-    {afterNights: 3, effects: [mark('company-keeps-it', 'The water company keeps the Sweet Seep.')], next: 'stays'},
-  ],
+  ignored: {
+    afterNights: 3, afterChoice: {id: 'drive-away', times: 1},
+    effects: [mark('company-keeps-it', 'The water company keeps the Sweet Seep.')],
+    next: 'stays',
+  },
 
   // What somebody says afterwards.
   later: [

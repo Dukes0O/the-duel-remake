@@ -515,8 +515,7 @@ export default {
 
   ends: ['at-the-gate', 'one-gate-only', 'her-own-way', 'left-on-the-road', 'ambush-survived'],
 
-  // What happens when the sign is never followed. The trap's part is under `notes`. This is the hauler's: an ambush
-  // survived, if the trap was met first; otherwise she was left on the road.
+  // An untouched trap can lead to another sign. If the player met the trap already, the ending remembers it.
   ignored: [
     {when: {all: [did('trap-set'), {not: TRAP_MET}]}, afterNights: 2, next: 'between'},
     {when: TRAP_MET, effects: [mark('never-stopped-for-her')], next: 'ambush-survived'},
