@@ -24,6 +24,7 @@ import {yardHomeScreen} from './screen-yard-home.js';
 import {createBowlScreens} from './bowl/bowl-screens.js'; // BOWL-HOOKS: Show Night
 import {bindLedgerReplayKeys, ledgerPageMarkup, ledgerReplayMarkup, night2DawnMarkup, night2JournalMarkup, playLedgerPageTurn} from './story/ledger-ui.js';
 import {night2Page} from './world/jobs/night-2.js';
+import {OPEN_ROAM_ID} from './world/open/roam-job.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
 import {finishArenaEvent} from './arena/arena-event.js';
@@ -389,7 +390,9 @@ root.addEventListener('click',e => {
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.leaveTownDrive?.()){lastScreen=null;renderState(app.duel.state);return;}
       if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
-      app.leaveWorldJob?.();lastScreen=null;renderState(app.duel.state);return;
+      const roam = app.duel.state.arena.worldJob?.definition?.id === OPEN_ROAM_ID;
+      if (app.leaveWorldJob?.() && roam) app.returnToYard();
+      lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
     // Opening a presentation screen must not mark story notes read or save a profile.
     case 'yard-ledger':

@@ -315,8 +315,9 @@ export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
   const ambush = arena.mode === 'ambush-alley';
   const scablands = !!duel.course.def.scablands;
-  if (activeTalkStep(state)) {
-    const decision = stepWorldJob(duel, 0);
+  const talk = activeTalkStep(state);
+  if (talk) {
+    const decision = stepWorldJob(duel, talk.scene.autoAdvance ? dt : 0);
     if (decision) finish(duel, decision.reason, decision.winnerId);
     return;
   }

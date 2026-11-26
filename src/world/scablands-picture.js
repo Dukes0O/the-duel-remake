@@ -10,6 +10,7 @@
 // a slice asks about 8 ms worth of rows. Drawing the picture is `src/world/scablands-map.js`.
 import {openMapMarks} from './open/map-marks.js';
 import {sitePosition} from './open/site-rule.js';
+import {SERVICE_LANDMARKS} from './open/building-rule.js';
 import {LAND} from './scablands-names.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {DRIVE, RIVER, RIVER_LAND, scablandsDriveAt} from './scablands-regions.js';
@@ -81,12 +82,13 @@ const firstPositions = {
 
 // OPEN-SITES joined on 25 November: a site stands where the land's seed puts it; the first positions remain only for a
 // site whose row gives none.
-export function landMarks({base, world, positionOf = (id, landSeed) => sitePosition(id, landSeed) ?? firstPositions[id], ...options} = {}) {
+export function landMarks({base, world, serviceSheds, positionOf = (id, landSeed) => sitePosition(id, landSeed) ?? firstPositions[id], ...options} = {}) {
   const fixed = base ?? fixedLandMarks(options);
   if (!world) return fixed;
   const {sites, rumours, driven} = openMapMarks(world, positionOf);
   const extraPlaces = sites.map(site => ({...site, label: site.name, flatRadius: 60, plan: []}));
-  return {...fixed, places: [...fixed.places, ...extraPlaces], rumours, driven};
+  const services = serviceSheds ? SERVICE_LANDMARKS.filter(({person}) => world.ledger.encounters?.[person]) : [];
+  return {...fixed, places: [...fixed.places, ...extraPlaces], rumours, driven, services};
 }
 
 function fixedLandMarks({land = LAND, places = SCABLANDS_PLACES, net = ROAD_NET, river = RIVER_LAND, solids = []} = {}) {

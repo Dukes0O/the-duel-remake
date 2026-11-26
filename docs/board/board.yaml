@@ -1470,15 +1470,3 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-JOURNAL-SIZE.md"
 
-  - id: OPEN-ROAM-2
-    title: "Open Scablands: Tin Town lives, a greeting ends by itself, the pause screen and the weapon fit being out in the open"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-ROAM-2.md"
-

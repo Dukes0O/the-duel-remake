@@ -7,6 +7,9 @@ import {LAND} from '../src/world/scablands-names.js';
 import {FOOT_GRADE, stepMover} from '../src/world/scablands-movers.js';
 import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {advanceStoryPeople, createStoryPeople, STORY_FIGURES} from '../src/world/jobs/story-people.js';
+import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
+import {BUILDINGS} from '../src/world/open/content/buildings.js';
+import {buildingWalls} from '../src/world/open/building-rule.js';
 
 const sample = sampleWorld('first-night');
 const world = applyEffects(sample, {id: 'test/invite', effects: [{type: 'mark', id: 'walkers-inside'}]}).world;
@@ -31,29 +34,33 @@ for (let time = 0; time <= 600; time += .5) {
 assert.notDeepEqual(routinePose(wander, 5, seed), routinePose(wander, 5, seed + 1));
 
 const dt = .25, grid = createJobSolidGrid();
+grid.setTownGate(NIGHT_2_SITES.gate, 1);
+grid.openBuildingShells(BUILDINGS, BUILDINGS.flatMap(buildingWalls));
 const tick = (state, seconds, partOfDay) => peoplePart.step(state,
-  {world, seed, seconds, view: {openRoam: true, partOfDay, peopleGrid: grid}}, dt).state;
+  {world, seed, seconds, view: {openRoam: true, partOfDay, peopleGrid: grid, carPosition: NIGHT_2_SITES.car}}, dt).state;
 let state = peoplePart.begin(), movedAfterPhase = false;
-for (let time = 0; time <= 600; time += dt) {
-  const phase = time < 200 ? 'day' : time < 400 ? 'dusk' : 'dark';
+for (let time = 0; time <= 800; time += dt) {
+  const phase = time <= 600 ? 'day' : time < 700 ? 'dusk' : 'dark';
   const next = tick(state, time, phase);
-  assert.equal(next.cast.length, 13);
+  assert.equal(next.cast.length, 16);
   for (const [i, person] of next.cast.entries()) {
     const old = state.cast[i]?.position, point = person.position;
-    assert.equal(stepMover(point, point, {radius: person.radius, grid, height: point.y, moverId: person.id}).blocked, false,
-      person.id + ' stands outside solids at ' + time);
+    const clear = stepMover(point, point, {radius: person.radius, grid, height: point.y, moverId: person.id});
+    assert(distance(point, clear) <= 1e-7, person.id + ' stands outside solids at ' + time);
+    if (time === 600) assert(person.distance >= 30, person.id + ' walks at least 30 m in ten minutes of day');
     if (!old) continue;
     const travelled = distance(point, old);
     assert(travelled <= STORY_FIGURES[person.figure].pace * 1.15 * dt + 1e-7, 'the phase cannot teleport a person');
     if (travelled > 1e-7) {
       assert((point.y - old.y) / travelled <= FOOT_GRADE + 1e-7, 'no uphill step exceeds the foot grade');
-      if (time >= 400 && time <= 405) movedAfterPhase = true;
+      if (time >= 700 && time <= 705) movedAfterPhase = true;
     }
   }
   grid.setStoryPeople(next.cast);
   state = next;
 }
 assert(movedAfterPhase, 'the dark routine is reached on foot');
+for (const id of ['auntie-solder', 'cinder']) assert.equal(state.cast.find(person => person.id === id).task, 'sleep');
 
 const cinder = state.cast.find(person => person.id === 'cinder');
 const car = {...cinder.position, z: cinder.position.z - 1};

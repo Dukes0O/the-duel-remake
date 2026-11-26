@@ -337,6 +337,12 @@ export function arenaPauseScreen(state, {metric, action, time, escapeHTML = Stri
   // what it asks, shows the time spent on it, and offers BACK TO THE JOB, START AGAIN (the action TRY AGAIN uses on the results screen) and the yard.
   if (state.arena?.mode === 'world-job') {
     const worldJob = state.arena.worldJob, step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+    if (worldJob?.open && worldJob.definition?.steps[0]?.kind === 'roam') return {
+      eyebrow: 'THE SCABLANDS / PAUSED', title: 'Out in the open',
+      description: 'Your progress is saved when you go home to the yard.',
+      metrics: '', extra: '', showPauseHelp: false,
+      actions: action('Back out', 'resume', true) + action('Home to the yard', 'arena-yard'),
+    };
     const name = worldJob?.definition?.name ?? 'The job';
     const place = worldJob?.definition?.id === 'everburn-hot-delivery' ? ', the Scablands' : '';
     return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',

@@ -2,7 +2,8 @@ import {NIGHT_2_SITES} from '../../src/world/jobs/night-2-sites.js';
 
 export const pageFunctions = {
   prepare: () => {
-    if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only storage is required.');
+    if (!window.name.startsWith('__duel_qa_tab_v2:') || !Object.getOwnPropertyDescriptor(window, 'localStorage')?.value)
+      throw Error('Memory-only storage is required.');
     const button = [...document.querySelectorAll('details button')]
       .find(el => el.textContent === 'Create temporary player ready for Night 2' && !el.hidden && !el.disabled);
     if (!button) return false;
@@ -36,24 +37,39 @@ export const pageFunctions = {
     const job = window.__qaApp.duel.state.arena.worldJob.job;
     return job.steps[job.stepIndex]?.openPerson === 'cinder' && !!talk?.querySelector('.story-words')?.textContent.includes('kiln');
   },
-  advanceLine: index => {
-    const {job} = window.__qaApp.duel.state.arena.worldJob;
-    if (job.stepState.talk?.phase !== 'lines' || job.stepState.talk.index !== index) return false;
-    const button = document.querySelector('.story-talk:not([hidden]) .story-talk-controls button:first-child');
-    if (!button || button.disabled || !button.getClientRects().length) return false;
-    button.click();
-    return true;
-  },
-  leaveTalk: () => {
-    const button = [...document.querySelectorAll('.story-options button')].find(el => el.textContent.includes('Walk away.'));
-    if (!button || button.disabled) return false;
-    button.click();
-    return true;
-  },
   roaming: () => {
     const job = window.__qaApp.duel.state.arena.worldJob.job;
-    return job.steps.length === 1 && job.steps[job.stepIndex]?.kind === 'roam' && !job.talkResult;
+    return job.steps.length === 1 && job.steps[job.stepIndex]?.kind === 'roam' && !job.talkResult &&
+      document.querySelector('.story-talk')?.hidden && document.querySelector('.world-hud-line')?.hidden;
   },
+  frameTown: hearth => {
+    const app = window.__qaApp, {state, course} = app.duel;
+    const worldJob = state.arena.worldJob;
+    if (!state.onFoot || worldJob.open.seconds >= 78) return false;
+    const x = hearth.x - 38, z = hearth.z + 15;
+    const {s, lateral} = course.nearest(x, z), {y} = course.groundAt(s, lateral);
+    Object.assign(state.fighter, {x, y, z, groundY: y, s, lateral, yaw: Math.PI / 2, pitch: 0});
+    app.setFootCamera('first-person');
+    app.advance(Math.max(.01, 75 - worldJob.open.seconds));
+    const cast = worldJob.storyPeople, before = new Map(cast.map(person => [person.id, person.distance]));
+    app.advance(.25);
+    return cast.filter(person => {
+      const dx = person.position.x - x, dz = person.position.z - z;
+      return dx > 0 && Math.abs(dz) < dx * .48 && person.distance - before.get(person.id) > .1;
+    }).map(person => person.id);
+  },
+  pause: () => {
+    window.__qaApp.togglePause();
+    return window.__qaApp.duel.state.paused;
+  },
+  roamPause: () => {
+    const panel = document.querySelector('.result-panel');
+    return panel?.querySelector('h2')?.textContent === 'Out in the open' &&
+      !/TIME ON THE JOB|START AGAIN|forfeits/i.test(panel.textContent) &&
+      panel.querySelector('[data-action="resume"]')?.textContent.trim() === 'Back out' &&
+      panel.querySelector('[data-action="arena-yard"]')?.textContent.trim() === 'Home to the yard';
+  },
+  home: () => window.__qaApp.isYardHomeActive(),
   boardForGate: car => {
     // Reposition only the fighter to the parked car. The stock F control
     // boards it; the drive itself crosses both faces of the actual gate.
@@ -114,14 +130,21 @@ export async function run(context) {
   await context.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'KeyF', key: 'f', windowsVirtualKeyCode: 70});
   try { await wait('talking'); }
   finally { await context.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'KeyF', key: 'f', windowsVirtualKeyCode: 70}); }
-  await wait('advanceLine', 0);
-  await wait('advanceLine', 1);
-  await wait('leaveTalk');
   await wait('roaming');
+  const moving = await evaluate('frameTown', NIGHT_2_SITES.hearth.position);
+  if (moving.length < 3) throw Error('Fewer than three moving people are in the town view.');
+  await context.screenshot('open-roam-tin-town-by-day');
+  if (!await evaluate('pause')) throw Error('Could not pause the roam.');
+  await wait('roamPause');
+  await click('resume');
   if (!await evaluate('boardForGate', NIGHT_2_SITES.car)) throw Error('F did not board the parked car.');
   // The car starts outside the gate. Bring it in, then drive out and back.
   for (const inside of [true, false, true]) {
     if (!await evaluate('driveAcross', NIGHT_2_SITES.gate, inside)) throw Error('The car did not clear the open gate.');
   }
-  return {roam: true, talked: 'cinder', departedTalk: true, crossedGate: true};
+  if (!await evaluate('pause')) throw Error('Could not pause before going home.');
+  await wait('roamPause');
+  await click('arena-yard');
+  await wait('home');
+  return {roam: true, talked: 'cinder', greetingClosed: true, crossedGate: true, moving};
 }

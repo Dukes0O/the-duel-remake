@@ -6,6 +6,7 @@ import {doService, servicePrice} from '../service-rule.js';
 import {isHeld} from '../holds.js';
 import {isTrue} from '../facts.js';
 import {wordOf} from '../open-record.js';
+import {STORY_PEOPLE} from '../../../story/people.js';
 
 const distance = (a, b) => a && b ? Math.hypot(a.x - b.x, a.z - b.z) : Infinity;
 const bubble = (speaker, lines, choices = []) => ({type: 'talk', speaker, scene: {lines, choices}});
@@ -142,7 +143,13 @@ export const buildingsPart = {
       }
       const service = row.services.find(service => distance(feet,
         view.people?.find(p => p.id === service.by)?.position) <= 2.5);
-      if (service && !isHeld(holds, 'services')) speakTo(state, row, service, world, view, requests);
+      if (service && !isHeld(holds, 'services')) {
+        const person = service.by;
+        if (!world.ledger.encounters[person]) choices.push({id: row.id + '/meet', effects: [
+          {type: 'met', person, text: `You met ${STORY_PEOPLE[person]} at ${service.id === 'repair' ? 'the forge' : 'the wash'} in Tin Town.`},
+        ]});
+        speakTo(state, row, service, world, view, requests);
+      }
     } else if (feet && view.people && !world.open.car.dirt && !state.looseDust) {
       const wim = view.people.find(person => person.id === 'wim');
       if (distance(wim?.position, feet) <= 2.5 && distance(wim?.position, view.carPosition) <= 12 &&

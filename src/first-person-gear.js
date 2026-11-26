@@ -157,7 +157,9 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     const moving = selected.locomotion === 'walk' || selected.locomotion === 'sprint';
     const amount = moving ? selected.locomotion === 'sprint' ? .013 : .007 : 0;
     const phase = selected.motionTime * (selected.locomotion === 'sprint' ? 12 : 8);
-    motion.position.set(Math.sin(phase) * amount, Math.cos(phase * 2) * amount * .55, 0);
+    const low = selected.lowered && !busy;
+    motion.position.set(Math.sin(phase) * amount, Math.cos(phase * 2) * amount * .55 - (low ? .16 : 0), 0);
+    motion.rotation.x = low ? -.22 : 0;
     const camera = options.camera;
     camera.updateWorldMatrix(true, false);
     camera.getWorldPosition(group.position);

@@ -57,6 +57,9 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
   const actor = id => actors.find(item => item.id === id);
   let target = null, line;
   switch (step.kind) {
+    case 'roam':
+      line = '';
+      break;
     case 'reach':
       target = step.place ?? step.destination;
       line = step.what ?? `Drive to ${labelOf(target, places)}`;
@@ -132,6 +135,7 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
     found, stepState: job?.stepState}, places);
+  if (worldJob?.open && step?.openPerson && worldJob.definition?.steps[0]?.kind === 'roam') next.line = '';
   if (step?.brand) {
     const brand = brandHudStep(step, job.stepState, player);
     next.line = brand.line;
@@ -570,6 +574,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       const model = worldHudModel({worldJob: state.arena.worldJob, player: point, speedKmh:(state.speedMph ?? 0) * 1.609344, onFoot:state.onFoot,
         found: profile?.world?.found ?? []});
       line.textContent = model.line;
+      line.hidden = !model.line;
       prompt.textContent = model.prompt;
       // With nothing to ask, the box goes too (it stayed as an empty dark pill beside the mirror).
       prompt.hidden = !model.prompt;
