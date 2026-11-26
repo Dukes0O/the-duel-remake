@@ -129,8 +129,8 @@ async function savePose(name, specs, speaker, viewer, beforeDraw = () => {}, fra
   for (let i = 0; i <= frames; i++) view.update(world, viewer, i / 60);
   await fs.writeFile(path.join(out, name + '.json'), JSON.stringify(bake(view.group)));
 }
-if (process.argv.includes('--open-figures-3')) {
-  await openFiguresRound3();
+if (process.argv.includes('--open-figures-4')) {
+  await openFiguresRound4();
   view.dispose();
   process.exit(0);
 }
@@ -188,7 +188,7 @@ await fs.writeFile(path.join(out,'camp.json'),JSON.stringify(bake(camp)));
 view.dispose();
 
 // The two OPEN cast reviews have independent lineups. Rell stands at the same scale in every panel.
-async function openFiguresRound3() {
+async function openFiguresRound4() {
   const glasshouse = ['marigold', 'finch', 'grower-1', 'grower-2', 'grower-3'];
   const hillAndRats = ['hetty', 'bern', 'sump', 'road-rat-lamp', 'road-rat-lookout'];
   const panels = [];
@@ -222,5 +222,20 @@ async function openFiguresRound3() {
     ['grower-1','sit','Seated'], ['grower-2','walk-tied','Bound walk'],
     ['sump','stand','Coat · side',undefined,Math.PI/2], ['road-rat-lamp','walk','Patrol'], ['road-rat-lookout','stand','On watch'],
   ]);
+  // Tighter views use the same loaded meshes, poses and world scale as the lineups.
+  async function detail(title, specs, camera) {
+    const name = 'open-' + panels.length;
+    await savePose(name, specs, null, {x:0,z:20});
+    panels.push({name, title, camera, labels:specs.map(p => ({text:p.label, x:p.position.x}))});
+  }
+  await detail('Workshop details  /  Odessa and Hetty', [
+    {id:'odessa', action:'stand', yaw:.28, position:{x:-.57,y:0,z:0}, label:'Odessa  /  split-hide gauntlets and tied apron'},
+    {id:'hetty', action:'stand', yaw:-.26, position:{x:.57,y:0,z:0}, label:'Hetty  /  radio headphones'},
+  ], {width:3.45, target:1.17, elevation:3});
+  await detail('After dark  /  Sleeping on one side', [
+    {id:'tin-cook', action:'sleep', yaw:0, position:{x:-1.57,y:0,z:0}, label:'Tin cook'},
+    {id:'tin-porter', action:'sleep', yaw:-.45, position:{x:.04,y:0,z:0}, label:'Tin porter'},
+    {id:'tin-child', action:'sleep', yaw:.33, position:{x:1.70,y:0,z:0}, label:'Tin child'},
+  ], {width:5.05, target:.20, elevation:43});
   await fs.writeFile(path.join(out,'panels.json'), JSON.stringify(panels));
 }
