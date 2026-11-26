@@ -6,8 +6,10 @@ import {CAMP_SITES, RADIO_HILL} from './content/sites.js';
 import {campPeople} from './content/people-sites.js';
 import {isFound, stageOf} from './open-record.js';
 import {isTrue} from './facts.js';
+import {busRingLook} from './looks/dry-pump-look.js';
 import {buildGlasshouse, updateGlasshouse} from './looks/glasshouse-look.js';
 import {distance, hasSiteServices, residentPose, sitePosition} from './site-rule.js';
+import {flagPeople} from './content/somebody-elses-flag-places.js';
 
 function radioHillLook(heightAt) {
   const group = new THREE.Group();
@@ -51,6 +53,7 @@ function radioHillLook(heightAt) {
 const LOOKS = {
   glasshouse: (stage, options) => buildGlasshouse({...options, stage: stage === 'burned' ? 'burned' : 'camp'}),
   'radio-hill': (stage, {heightAt}) => radioHillLook(heightAt),
+  'bus-ring': (stage, {heightAt}) => busRingLook(heightAt),
 };
 
 export function siteLook(id, stage, options = {}) {
@@ -107,6 +110,11 @@ export function createSiteView({loadAsset}) {
       const phase = state.partOfDay ?? 'day';
       for (const camp of camps) {
         const {site, people, residents, cast} = camp;
+        if (site.storyChoices && !worldJob.open.parts.threads?.places?.dryPumpEnabled) {
+          people.group.visible = false;
+          if (camp.node) camp.node.visible = false;
+          continue;
+        }
         const position = sitePosition(site.id, world.open.landSeed);
         const heightAt = (x, z) => scablandsSurfaceHeightAt(position.x + x, position.z + z);
         const range = distance(here, position);
@@ -156,7 +164,8 @@ export function createSiteView({loadAsset}) {
             // Finch guides the camp's own water cart, drawn with the camp.
             Object.assign(person, pose, {action: pose.action === 'push-cart' ? 'walk' : pose.action});
           }
-          people.update({storyPeople: cast, storySpeaker: state.speaker}, here, seconds, drawnShift);
+          const away = new Set(flagPeople(world).map(person => person.id));
+          people.update({storyPeople: cast.filter(person => !away.has(person.id)), storySpeaker: state.speaker}, here, seconds, drawnShift);
         } else people.group.visible = false;
       }
     },

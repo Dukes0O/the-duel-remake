@@ -4,13 +4,14 @@ import {scablandsActorHeightAt} from '../../scablands-ground.js';
 import {stepMover, FOOT_GRADE} from '../../scablands-movers.js';
 import {isTrue} from '../facts.js';
 import {followRoutine, routinePose} from '../routine-rule.js';
-import {PEOPLE} from '../content/people.js';
+import {DRY_PUMP_CAST, PEOPLE} from '../content/people.js';
 import {TOWN_BACKGROUND, WALKER_COMPANIONS} from '../content/people-town.js';
 import {TALK_TABLES} from '../content/talk-tables.js';
 import {TOWN_SCENES} from '../content/talk-town.js';
 import {scoutPeople} from '../content/burned-scout.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
+import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -74,9 +75,13 @@ export const peoplePart = {
         active = null;
       }
     }
+    const staged = view.checkpointsEnabled ? flagPeople(world) : [];
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
-      ...haulerPeople(world, {...view, seconds: context.seconds})] : [];
-    const rows = [...residents.filter(row => standsHere(row, world)), ...extras];
+      ...haulerPeople(world, {...view, seconds: context.seconds}), ...staged] : [];
+    const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
+    const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
+      row.id === 'nan-tallow' ? pump.end === 'gone' : !pump.end || row.id === 'mr-penny') : [];
+    const rows = [...residents.filter(row => standsHere(row, world) && !staged.some(person => person.id === row.id)), ...extras, ...mallPeople];
     let cast = rows.flatMap(row => {
       if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       // A parallel card can supply a resolver for building or site spots.

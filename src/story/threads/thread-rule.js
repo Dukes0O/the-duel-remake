@@ -34,6 +34,7 @@ export function threadRule(thread, context, record = {}, state = {}) {
     if (when.asked !== undefined) return has('asked', when.asked);
     if (when.found !== undefined && !when.site) return has('found', when.found);
     if (when.chose !== undefined) return has('chose', when.chose);
+    if (when.ended !== undefined) return record.end === when.ended;
     if (when.due !== undefined) return world.ledger.obligations.some(item => item.type === 'promise' && item.id === when.due && item.due === night);
     return isTrue(resolveRoles(when, cast), world, {...subject, draw: `${thread.id}/night-${night}`});
   };

@@ -38,7 +38,7 @@ for (const site of LAND_SITES) {
   assert.equal(new Set(picked).size, site.where.length, site.id + ' can appear at each authored position');
 }
 assert.notDeepEqual(sitePosition(glasshouse.id, 2), sitePosition(glasshouse.id, 12));
-assert.equal(sitePosition('bus-ring', 12), null);
+assert.deepEqual(sitePosition('bus-ring', 12), LAND.at(...landSite('bus-ring').where[0].at));
 assert.equal(stageOf(sampleWorld('first-night'), 'rats-nest'), 'den');
 
 const nearestRoad = p => ROAD_NET.roads.map(road => ({road, ...nearestOnLine(road.points, p.x, p.z)}))

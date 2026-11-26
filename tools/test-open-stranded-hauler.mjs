@@ -6,7 +6,7 @@ import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {haulerStop, haulerIsTrap, haulerGate, haulerAtGate, haulerPeople} from '../src/world/open/content/stranded-hauler-places.js';
 import {haulerTalkScene, haulerGateNews} from '../src/world/open/content/talk-hauler.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
-import {createThreadsPart, OPEN_THREADS} from '../src/world/open/parts/threads.js';
+import {createThreadsPart, OPEN_THREADS, threadsAtBankedHearth} from '../src/world/open/parts/threads.js';
 import {missionsPart} from '../src/world/open/parts/missions.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {sampleWorld} from '../src/world/open/samples.js';
@@ -99,6 +99,11 @@ const seen = trap => {
   return tick(out.open, stop.spots.crest).open;
 };
 assert.ok(OPEN_THREADS.includes(hauler));
+// Direct only this storyline, so another loaded storyline cannot take its place at a hearth.
+const direct = (world, view) => threadsAtBankedHearth({world, view}, [hauler]);
+const fromHearth = Array.from({length: 30}, (_, index) => direct({...sampleWorld('after-the-smoke'), seed: index + 1}));
+assert.ok(fromHearth.some(world => world.open.threads[hauler.id]?.beat === 'sign'));
+assert.ok(fromHearth.every(world => !world.open.threads['dry-pump'] && !world.open.threads['somebody-elses-flag']));
 assert.equal(FEATURE_STATES['story-choices'], 'dev');
 assert.equal(createFeatureFlags({qa: false, storage: null, search: ''}).enabled('story-choices'), false);
 assert.deepEqual(walkThread(hauler).faults, []);

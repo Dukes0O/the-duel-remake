@@ -33,6 +33,7 @@ export const checkpointsPart = {
     const held = isHeld(holds, 'checkpoints');
     const banked = hearthBanked(world, view.jobEvents);
     const current = {...context, view: {...view, player: view.player?.position ?? view.player,
+      recoveryPaid: view.recoveryPaid || (context.events ?? []).some(event => event.type === 'threadMissionRecoveryPaid'),
       interactWasHeld: state.interact, hearthBanked:banked}};
     const choices = [], requests = [];
     const missionLoss = context.events.find(event => event.type === 'threadMissionOutcome' &&

@@ -4,7 +4,7 @@ import {distanceBetween} from './cast.js';
 import {firstBeat} from './thread-rule.js';
 
 export const SMOKE_HEIGHT = 95;
-export const isFresh = (thread, record, night) => night - record.began < (thread.sign.lastsNights ?? 1);
+export const isFresh = (thread, record, night) => night - record.began < (thread.sign.lastsNights ?? (thread.sign.kind === 'thing' ? Infinity : 1));
 export function signRecord(thread, record, world) {
   if (!thread.sign.again) return record;
   const latest = world.open.journal.findLast(row => row.type === 'thread' && row.key === thread.id && row.after?.beat === firstBeat(thread));
@@ -34,9 +34,17 @@ export function witnessSign(entry, view, elapsed, dt) {
     event.type === 'talkChoice' && event.id === `${id}/heard-sign`)};
   const inRange = !at || distanceBetween(player, at) <= (sign.seenWithin ?? Infinity);
   if (sign.kind === 'call') return {seconds: 0, witnessed: inRange};
-  if (!['smoke', 'thing'].includes(sign.kind) || !at || !player || !inRange) return {seconds: 0, witnessed: false};
-  const visible = sees(player, at, {heightAt: view.missionHeightAt, eye: view.onFoot ? 1.6 : 2.5,
-    target: sign.kind === 'thing' ? 2.8 : SMOKE_HEIGHT * .7});
+  if (sign.kind === 'thing') return witnessThing(entry, view, elapsed, dt);
+  if (sign.kind !== 'smoke' || !at || !player || !inRange) return {seconds: 0, witnessed: false};
+  const visible = sees(player, at, {heightAt: view.missionHeightAt, eye: view.onFoot ? 1.6 : 2.5, target: SMOKE_HEIGHT * .7});
+  const seconds = visible ? elapsed + dt : 0;
+  return {seconds, witnessed: seconds >= 3 - 1e-9};
+}
+
+export function witnessThing({sign, at}, view, elapsed, dt) {
+  const player = view.player?.position ?? view.player;
+  const visible = player && at && distanceBetween(player, at) <= (sign.seenWithin ?? Infinity) &&
+    sees(player, at, {eye: view.onFoot ? 1.6 : 2.5, target: sign.at?.checkpoint ? 2.8 : 24, heightAt: view.signHeightAt ?? view.missionHeightAt});
   const seconds = visible ? elapsed + dt : 0;
   return {seconds, witnessed: seconds >= 3 - 1e-9};
 }
