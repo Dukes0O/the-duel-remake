@@ -6,6 +6,41 @@ import {distanceBetween} from '../../story/threads/cast.js';
 import {SMOKE_HEIGHT} from '../../story/threads/signs.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {createSmokeColumn} from '../smoke-column.js';
+import {SERVICE_LANDMARKS} from './building-rule.js';
+
+function paintedSign({label}) {
+  const canvas = globalThis.document?.createElement?.('canvas');
+  const ink = canvas?.getContext('2d');
+  if (!ink) return null;
+  canvas.width = 512;
+  canvas.height = 144;
+  ink.fillStyle = '#392b20';
+  ink.fillRect(0, 0, 512, 144);
+  ink.fillStyle = '#564331';
+  ink.fillRect(7, 6, 498, 132);
+  ink.strokeStyle = '#be9a61';
+  ink.lineWidth = 3;
+  ink.strokeRect(13, 12, 486, 120);
+  ink.fillStyle = '#f3dab0';
+  ink.font = '900 110px Impact, "Arial Black", sans-serif';
+  ink.textAlign = 'center';
+  ink.textBaseline = 'middle';
+  ink.fillText(label, 256, 76, 460);
+  ink.fillStyle = '#201a14';
+  for (const x of [24, 488]) for (const y of [24, 120]) {
+    ink.beginPath();
+    ink.arc(x, y, 4, 0, Math.PI * 2);
+    ink.fill();
+  }
+  const map = new THREE.CanvasTexture(canvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  map.anisotropy = 4;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.25, .92),
+    new THREE.MeshStandardMaterial({map, emissive: 0x584633, emissiveMap: map, roughness: .9}));
+  mesh.name = label + ' painted shed sign';
+  mesh.visible = false;
+  return mesh;
+}
 
 function falseTrailAsh() {
   const group = new THREE.Group();
@@ -29,6 +64,12 @@ export function createSignView() {
   const ash = falseTrailAsh();
   ash.visible = false;
   group.add(ash);
+  const sheds = SERVICE_LANDMARKS.flatMap(landmark => {
+    const sign = paintedSign(landmark);
+    if (!sign) return [];
+    group.add(sign);
+    return [{sign, landmark}];
+  });
   const disposeSmoke = (id, mesh) => {
     group.remove(mesh);
     mesh.geometry.dispose();
@@ -41,6 +82,13 @@ export function createSignView() {
   return {
     group,
     update(worldJob, here, seconds, drawnShift) {
+      for (const {sign, landmark} of sheds) {
+        sign.visible = !!worldJob?.serviceSheds && distanceBetween(here, landmark) < 550;
+        if (sign.visible) {
+          positionAt(sign, landmark, drawnShift);
+          sign.position.y += landmark.height;
+        }
+      }
       const open = worldJob?.open;
       const view = open?.parts.threads?.places ?? {};
       const signs = open ? openThreadSigns({...open, view}) : [];
@@ -68,6 +116,11 @@ export function createSignView() {
     },
     dispose() {
       for (const [id, mesh] of smoke) disposeSmoke(id, mesh);
+      for (const {sign} of sheds) {
+        sign.geometry.dispose();
+        sign.material.map.dispose();
+        sign.material.dispose();
+      }
       ash.userData.dispose();
       group.clear();
     },

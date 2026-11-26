@@ -6,6 +6,14 @@ export function pointInBuilding(row, offset = [0, 0], land = LAND) {
   return land.at(row.place, row.at[0] + offset[0], row.at[1] + offset[1]);
 }
 
+const serviceSigns = {repair: {label: 'FORGE', icon: 'spanner'}, wash: {label: 'WASH', icon: 'bucket'}};
+export const SERVICE_LANDMARKS = Object.freeze(BUILDINGS.flatMap(row => row.services.flatMap(service => {
+  const sign = serviceSigns[service.id];
+  if (!sign) return [];
+  const at = pointInBuilding(row, [0, row.size[1] / 2 + .16]);
+  return [Object.freeze({id: row.id, person: service.by, ...at, ...sign, height: row.size[2] - .14})];
+})));
+
 export function roomAt(point, rows = BUILDINGS) {
   if (!point) return null;
   return rows.find(row => {

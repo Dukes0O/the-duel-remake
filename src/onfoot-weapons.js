@@ -5,6 +5,11 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {brandSwingReady} from './world/jobs/brand-rule.js';
 import {wrenchLimit} from './world/open/service-rule.js';
+import {isFound, stageOf, wordOf} from './world/open/open-record.js';
+import {CAMP_SITES} from './world/open/content/sites.js';
+import {sitePosition} from './world/open/site-rule.js';
+import {SCABLANDS_PLACES} from './world/scablands.js';
+import {signatureFor} from './crew-gear/gear.js';
 import {AMBUSH_RULES, ambushRepairTarget} from './arena/modes/ambush-alley.js';
 import {initializeCrewGear, crewGearEnabled, crewRpgTiming, selectSignatureGear,
   showSignatureGear, resetCrewGearUser, stepSignatureGear, restoreRpgTiming,
@@ -97,6 +102,28 @@ function aimDirection(fighter) {
 function viableTarget(actor) {
   return actor && !actor.finished && !actor.crushed && !actor.combatWrecking &&
     Number.isFinite(actor.s) && Number.isFinite(actor.lateral);
+}
+
+const tinTown = SCABLANDS_PLACES.find(place => place.id === 'tin-town');
+const inRange = (from, to, range) => to && Math.hypot(from.x - to.x, from.z - to.z) <= range;
+
+function openWeaponLowered(duel, fighter, weapons, input, world) {
+  if (input.fire || weapons.selected === 'wrench') return false;
+  const inTown = inRange(fighter, tinTown, tinTown.flatRadius);
+  const byCamp = () => CAMP_SITES.some(({id, people}) => isFound(world, id) &&
+    ['camp', 'outpost', 'town', 'rebuilt'].includes(stageOf(world, id)) && wordOf(world, people) !== 'Cold' &&
+    inRange(fighter, sitePosition(id, world.open.landSeed), 60));
+  if (!inTown && !byCamp()) return false;
+  const signature = signatureFor(fighter.crewId);
+  const range = weapons.selected === 'rpg'
+    ? T.rpgLockRange * (crewPerks(fighter.crewId).lockRangeMultiplier || 1)
+    : signature.range ?? signature.radius ?? T.rpgLockRange;
+  const {state, course} = duel;
+  const nearbyCar = state.opponents.some(actor => viableTarget(actor) &&
+    inRange(fighter, course.groundAt(actor.s, actor.lateral), range));
+  const nearbyRaider = state.raids?.zones?.some(zone => zone.raiders.some(raider =>
+    !raider.knockedDown && inRange(fighter, raider, range)));
+  return !nearbyCar && !nearbyRaider;
 }
 
 function aimedCar(duel, fighter, direction) {
@@ -266,6 +293,10 @@ function stepFootWeaponInput(duel, dt) {
   if (!state.onFoot || !fighter || !weapons || !combatArmorEnabled(duel) ||
       state.status !== 'racing' || state.paused || !(dt > 0)) return;
   const input = state.fighterInput;
+  const job = state.arena?.worldJob;
+  if (job?.open && job.job.steps[job.job.stepIndex]?.kind === 'roam' && duel.featureFlags?.enabled('story-choices'))
+    weapons.lowered = openWeaponLowered(duel, fighter, weapons, input, job.open.world);
+  else if (weapons.lowered !== undefined) delete weapons.lowered;
   if (state.arena?.worldJob?.night2?.holstered) {
     weapons.fireHeld = !!input.fire;
     fighter.flaming = false;

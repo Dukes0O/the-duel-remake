@@ -158,6 +158,44 @@ const shortName = name => String(name).replace(/^The /i, '').toUpperCase();
 // True when the target stands on one of the land's named places (its name is then already on the map).
 const namesAPlace = (marks, target) => marks.places.some(place => Math.hypot(place.x - target.x, place.z - target.z) < 60 || shortName(place.name) === shortName(target.name));
 
+function drawServiceMarks(ctx, view, services = [], size) {
+  const marks = services.map(service => ({...toScreen(view, service.x, service.z), icon: service.icon}));
+  if (marks.length === 2) {
+    const [a, b] = marks, dx = b.x - a.x, dz = b.y - a.y, gap = Math.hypot(dx, dz);
+    if (gap > 0 && gap < 2 * size + 2) {
+      const extra = (size + 1) / gap - .5;
+      a.x -= dx * extra; a.y -= dz * extra;
+      b.x += dx * extra; b.y += dz * extra;
+    }
+  }
+  for (const {x, y, icon} of marks) {
+    if (x < 0 || x > view.width || y < 0 || y > view.height) continue;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(size / 10, size / 10);
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#211c16'; ctx.fill();
+    ctx.strokeStyle = INK.gold; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.strokeStyle = '#f3dab0';
+    ctx.lineWidth = 1.7;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (icon === 'spanner') {
+      ctx.moveTo(-4.8, 4.8); ctx.lineTo(.8, -.8);
+      ctx.moveTo(1, -4.8); ctx.lineTo(-.8, -2.8); ctx.lineTo(.8, -.8);
+      ctx.lineTo(3.1, .3); ctx.lineTo(5, -1.8);
+    } else {
+      ctx.moveTo(-5, -1.5); ctx.lineTo(-3.3, 5); ctx.lineTo(3.3, 5); ctx.lineTo(5, -1.5);
+      ctx.closePath();
+      ctx.moveTo(-4, -1.5); ctx.quadraticCurveTo(0, -9, 4, -1.5);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 function drawGround(ctx, picture, canvas, view) {
   ctx.fillStyle = INK.paper; ctx.fillRect(0, 0, view.width, view.height);
   if (!canvas) return;
@@ -377,7 +415,8 @@ function drawTownFires(ctx, town) {
 // `frame`: {picture, canvas (the picture as a canvas), car: {x, z, heading}, target: {x, z, name} | null, knowledge, actors: [{kind, position}]}.
 export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMALL_MAP.height} = {}) {
   const {picture, car, target, knowledge, actors = []} = frame;
-  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world, positionOf: frame.positionOf});
+  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world,
+    serviceSheds: frame.worldJob?.serviceSheds, positionOf: frame.positionOf});
   const town = brandTownMap(frame, {width, height});
   const pursuit = frame.worldJob?.night2 && frame.worldJob.job.steps[frame.worldJob.job.stepIndex]?.id === 'chase';
   const view = town?.view ?? smallView(car, {width, height, ...(pursuit ? {metresAcross: 250} : {})});
@@ -425,6 +464,7 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   // At 60 m a rider is only ten pixels from the car. Keep its mark above the
   // car's thirteen-pixel arrow so the last part of a scout chase stays visible.
   drawActors(ctx, view, actors, 5);
+  drawServiceMarks(ctx, view, marks.services, 7);
   if (town) drawActors(ctx, view, town.men.map(man => ({kind: 'hunter', position: man})), 5);
   // On the map a place already carries its name; a mark on the edge, or a point that is no place, says what it is and how far (km).
   if (marker && (!marker.onMap || !namesAPlace(marks, target))) {
@@ -527,7 +567,8 @@ function textAlong(ctx, view, boxes, points, string, options, fractions = [.5, .
 // `frame` as for the small map, with `ways` [{id, name, points}] to draw and `title`.
 export function drawBigMap(ctx, frame, {width, height}) {
   const {picture, car, target, knowledge, actors = [], ways = []} = frame, view = wholeView(picture, {width, height});
-  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world, positionOf: frame.positionOf});
+  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world,
+    serviceSheds: frame.worldJob?.serviceSheds, positionOf: frame.positionOf});
   drawGround(ctx, picture, frame.canvas, view);
   if (marks.driven) drawUndrivenGround(ctx, view, picture, marks.driven);
   drawRiver(ctx, view, marks);
@@ -572,6 +613,7 @@ export function drawBigMap(ctx, frame, {width, height}) {
     text(ctx, String.fromCharCode(65 + index), at.x, at.y + 1, {size: 17, colour: INK.paper, halo: 'transparent'});
   });
   drawActors(ctx, view, actors, 7);
+  drawServiceMarks(ctx, view, marks.services, 8);
   if (target) {
     const at = toScreen(view, target.x, target.z);
     drawTargetMark(ctx, at.x, at.y, 14);

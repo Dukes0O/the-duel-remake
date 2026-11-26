@@ -52,8 +52,7 @@ const entries = [];
 function row(person, key, needs, words, afterChoice) {
   const scene = 'open/town/' + person + '/' + key;
   const lines = words.map(text => ({speaker: person, words: text}));
-  const choices = [{id: WALK_AWAY, words: 'Walk away.', effects: []}];
-  entries.push({id: scene, lines, choices});
+  entries.push({id: scene, lines, choices: [], autoAdvance: true});
   return {id: scene, scene, needs, afterChoice, once: key === 'night-2'};
 }
 

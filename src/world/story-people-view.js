@@ -18,6 +18,7 @@ const SIDES = Object.freeze([['L', -1], ['R', 1]]);
 
 const TIN_PEOPLE = '/assets/models/wasteland/town/open-figures.glb';
 const tinCast = new Set(['odessa', 'moss', 'tin-cook', 'tin-porter', 'tin-child']);
+const carrying = new Set(['haul-sack', 'carry-bucket']);
 
 function sourceFor(id) {
   if (tinCast.has(id)) return TIN_PEOPLE;
@@ -179,7 +180,8 @@ function makeFigure(id, asset) {
   anchor.position.copy(joints.head.bone.worldToLocal(up.set(0, profile.height + .12, 0)));
   const soles = soleVertices(body, 0, profile.height);
   const work = source === OPEN_FIGURES_2 ? prepareWorkKit(root, body, joints, looseTools, id) : null;
-  return {root, model, joints, body, owned, soles, props, work, baseY:model.position.y, facing: {yaw:0, headYaw:0},
+  return {root, model, joints, body, owned, soles, props, work, routineProp: null,
+    baseY:model.position.y, facing: {yaw:0, headYaw:0},
     first:true, seated:0, asleep:0, armReach:0};
 }
 
@@ -235,7 +237,8 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
   const seatedBend = sit - sideRest * .75;
   const campSleep = sleep - sideRest;
   const moving = person.action === 'walk' || person.action === 'run' || person.action === 'push-cart' ||
-    person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp';
+    person.action === 'walk-tied' || person.action === 'carry-frame' || person.action === 'carry-lamp' ||
+    carrying.has(person.action);
   const running = person.action === 'run';
   const phase = 2 * Math.PI * person.distance / (profile.height * (running ? 1.42 : .86)) + profile.index * .93;
   const stride = moving ? Math.sin(phase) : 0;
@@ -261,7 +264,9 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     poseBone(joints['forearm' + side], -.09 - .14 * push - .66 * sit - .29 * sleep - (running ? .69 : 0) - .5 * gestureSide,
       0, -sign * (sign < 0 ? .34 : .25) * sleep);
   }
-  if (tinCast.has(person.id)) poseTinTask(figure, person, clock);
+  if (tinCast.has(person.id) || person.action === 'cook' || person.action === 'bank-kiln' || carrying.has(person.action))
+    poseTinTask(figure, person, clock);
+  if (figure.routineProp) figure.routineProp.visible = carrying.has(person.action);
   if (figure.work) poseWork(figure, person, clock, stride);
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.
@@ -304,6 +309,7 @@ const tinPoses = {
   scrub: [-.64,-.76,-.45,-.48,.23,.18],
   'carry-bucket': [-.19,-.18,.04,-.08,.13,.06],
   cook: [-.32,-.87,-.58,-.54,.08,.19],
+  'bank-kiln': [-.48,-.62,-.78,-.76,.25,.22],
   'haul-sack': [-.69,-.96,-.56,-1.12,-.12,.07],
 };
 function poseTinTask(figure, person, clock) {
@@ -312,7 +318,7 @@ function poseTinTask(figure, person, clock) {
   const pose = tinPoses[person.action];
   if (pose) {
     const stroke = person.action === 'scrub' ? .20*Math.sin(clock*2.5) : 0;
-    const stir = person.action === 'cook' ? .18*Math.sin(clock*2) : 0;
+    const stir = person.action === 'cook' || person.action === 'bank-kiln' ? .18*Math.sin(clock*2) : 0;
     poseBone(joints.upper_armL, pose[0]+stroke, 0, .21);
     poseBone(joints.forearmL, pose[1]);
     poseBone(joints.upper_armR, pose[2]+stroke, stir, -.21);
@@ -324,9 +330,42 @@ function poseTinTask(figure, person, clock) {
   }
 }
 
+function addRoutineProp(figure, id) {
+  const prop = new THREE.Group();
+  const sack = id === 'cinder';
+  const material = new THREE.MeshStandardMaterial({color: sack ? 0x796346 : 0x666761, roughness: .91, side: THREE.DoubleSide});
+  const mesh = geometry => {
+    const part = new THREE.Mesh(geometry, material);
+    figure.owned.push(geometry);
+    part.castShadow = true;
+    prop.add(part);
+    return part;
+  };
+  if (sack) {
+    mesh(new THREE.SphereGeometry(1, 9, 7)).scale.set(.17, .25, .11);
+    const neck = mesh(new THREE.CylinderGeometry(.045, .07, .09, 7));
+    neck.position.y = .25;
+    prop.position.set(-.15, 1.17, -.19);
+    figure.root.add(prop);
+    figure.joints.chest.bone.attach(prop);
+  } else {
+    mesh(new THREE.CylinderGeometry(.105, .08, .17, 12, 1, true));
+    mesh(new THREE.CircleGeometry(.08, 12)).rotateX(-Math.PI / 2).position.y = -.084;
+    mesh(new THREE.TorusGeometry(.105, .009, 5, 12, Math.PI)).position.y = .085;
+    figure.joints.handR.bone.getWorldPosition(prop.position);
+    prop.position.y -= .18;
+    figure.root.add(prop);
+    figure.joints.handR.bone.attach(prop);
+  }
+  prop.visible = false;
+  prop.userData.dispose = () => material.dispose();
+  figure.routineProp = prop;
+}
+
 function releaseFigure(figure) {
   figure.cart?.dispose();
   figure.stool?.dispose();
+  figure.routineProp?.userData.dispose();
   const skeletons = new Set();
   figure.root.traverse(node => { if (node.skeleton) skeletons.add(node.skeleton); });
   for (const skeleton of skeletons) skeleton.dispose();
@@ -340,7 +379,7 @@ export function createStoryPeopleView(loadAsset) {
   group.visible = false;
   const assets = new Map(), figures = new Map();
   let cast = EMPTY, time = null, disposed = false;
-  const populate = async people => {
+  const populate = async (people, open) => {
     for (const person of people) {
       const url = sourceFor(person.id);
       if (!assets.has(url)) assets.set(url, Promise.resolve().then(() => loadAsset(url)));
@@ -349,6 +388,7 @@ export function createStoryPeopleView(loadAsset) {
       const asset = await assets.get(sourceFor(person.id));
       if (disposed || cast !== people) return;
       const figure = makeFigure(person.id, asset);
+      if (open && (person.id === 'cinder' || person.id === 'tin-child')) addRoutineProp(figure, person.id);
       // The dialogue camera may look up this head before the next update places it in the world.
       figure.root.visible = false;
       figures.set(person.id, figure);
@@ -364,7 +404,7 @@ export function createStoryPeopleView(loadAsset) {
         figures.clear();
         cast = people;
         group.userData.loadError = null;
-        group.userData.ready = populate(people).catch(error => {
+        group.userData.ready = populate(people, !!worldJob?.open).catch(error => {
           if (cast === people && !disposed) group.userData.loadError = String(error.message || error);
         });
       }

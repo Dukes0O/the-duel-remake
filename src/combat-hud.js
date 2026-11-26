@@ -215,6 +215,7 @@ export function combatXpCue(event, state, course) {
 }
 
 export function footActionPresentation(state) {
+  if (state?.footWeapons?.lowered) return {text: '', locked: false};
   const gear = state?.footGear, weapons = state?.footWeapons;
   if (!gear || !weapons) return {text: '', locked: false};
   if (gear.name === 'WRENCH') {
@@ -454,7 +455,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       footGearBox.hidden = holstered && !app.footMouseHint;
       footGearName.hidden = holstered;
       footGearAmmo.hidden = holstered;
-      footAction.hidden = holstered;
+      footAction.hidden = holstered || state.footWeapons?.lowered === true;
       const gear = footAmmoPresentation(state);
       setText(footGearName, gear.name);
       setText(footGearAmmo, gear.ammo);
@@ -463,7 +464,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setText(footAction, action.text);
       footReticle.classList.toggle('is-locked', action.locked);
       const aim=projectFootAim();
-      footReticle.hidden=holstered || aim?.visible===false;
+      footReticle.hidden=holstered || state.footWeapons?.lowered === true || aim?.visible===false;
       const left=`${((aim?.x??.5)*100).toFixed(3)}%`,top=`${((aim?.y??.5)*100).toFixed(3)}%`;
       if(footReticle.style.left!==left)footReticle.style.left=left;
       if(footReticle.style.top!==top)footReticle.style.top=top;

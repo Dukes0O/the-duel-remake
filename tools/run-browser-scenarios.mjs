@@ -58,7 +58,9 @@ export const SCENARIO_AREAS = [
   {prefixes:['open-find-camp'], paths:['src/world/open/parts/sites.js','src/world/open/site-rule.js','src/world/open/site-view.js','src/world/open/content/sites.js']},
   {prefixes:['open-forge-shed'], paths:['src/world/open/parts/buildings.js','src/world/open/building-view.js','src/world/open/building-rule.js','src/world/open/content/buildings.js']},
   {prefixes:['open-burned-camp'], paths:['src/world/open/parts/threads.js','src/story/threads/','src/story/scenes/burned-camp.js','src/world/open/sign-view.js']},
-  {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js']},
+  {prefixes:['open-roam'], paths:['src/world/open/parts/people.js','src/world/open/routine-rule.js','src/world/open/content/people-town.js','src/world/open/content/talk-town.js',
+    'src/world/story-people-view.js','src/world/jobs/steps/talk.js','src/screen-arena.js','src/screen-results.js','src/screen-router.js',
+    'src/world/world-hud.js','src/combat-hud.js','src/onfoot-weapons.js','src/first-person-gear.js','src/world/open/sign-view.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
 export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens','story-night-2'].includes(name) ||

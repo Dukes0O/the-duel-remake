@@ -1756,10 +1756,13 @@ export function stepWorldJob(duel, dt) {
         return null;
       }
     }
-    if (worldJob.job.stepState.screen && !worldJob.talkAction) return null;
+    const previousScreen = worldJob.job.stepState.screen;
+    if (previousScreen && !worldJob.talkAction && !talkStep.scene.autoAdvance) return null;
     const previousStep = worldJob.job.stepIndex;
     const before = worldJob.job.stepState.talk;
-    const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
+    const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, dt);
+    if (talkStep.scene.autoAdvance && previousScreen && next.stepState.talk?.phase === before?.phase &&
+        next.stepState.talk?.index === before?.index) next.stepState.screen = previousScreen;
     worldJob.talkAction = null;
     routeWorldNight2(duel, worldJob, previousStep, next);
     worldJob.job = next;
