@@ -80,11 +80,31 @@ export function hookMarker(fight, truck, course) {
 }
 
 export function newHook() {
-  return {phase:'idle', held:false, box:-1, time:0, tight:false, length:TOW_LENGTH, pulls:[0,0,0], drag:null};
+  return {phase:'idle', held:false, box:-1, bomb:false, time:0, tight:false, length:TOW_LENGTH, pulls:[0,0,0], drag:null};
 }
 export function releaseHook(hook, events) {
   if(hook.phase!=='idle')events.push({type:'letgo'});
-  Object.assign(hook,{phase:'idle',box:-1,time:0,tight:false,pulling:false,arrivalSpeed:0,stalled:0,length:TOW_LENGTH,drag:null,tip:null});
+  Object.assign(hook,{phase:'idle',box:-1,bomb:false,time:0,tight:false,pulling:false,arrivalSpeed:0,stalled:0,length:TOW_LENGTH,drag:null,tip:null});
+}
+// BOWL-REX-3: a bomb lying on the floor is a target for the hook when no open box is in reach,
+// by the box's own test: within 25 m and within 60 degrees of the truck's nose.
+export function bombInReach(fight, truck, course) {
+  const bomb=fight.bomb;
+  if(!bomb || bomb.phase!=='lying' || bomb.onCable || fight.phase==='fallen' || fight.marker?.canBite)return false;
+  const from=truckPoint(course,truck), dx=bomb.x-from.x, dz=bomb.z-from.z;
+  const angle=signedAngle(Math.atan2(dx,dz)-from.heading);
+  return Math.hypot(dx,bomb.y-from.y,dz)<=25 && Math.abs(angle)<=Math.PI/3;
+}
+// The horizontal distance from a floor point to the nearest of the beast's legs, body or tail.
+export function beastDistance(fight, course, point) {
+  let nearest=Infinity;
+  for(const o of rexSolids(fight,course)){
+    if(!/shin|thigh|ribs|tail/.test(o.id))continue;
+    const c=Math.cos(o.heading), s=Math.sin(o.heading), x=point.x-o.x, z=point.z-o.z;
+    const along=Math.max(0,Math.abs(x*c-z*s)-o.halfX), across=Math.max(0,Math.abs(x*s+z*c)-o.halfZ);
+    nearest=Math.min(nearest,Math.hypot(along,across));
+  }
+  return nearest;
 }
 function linePoint(a,b,t) {
   return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t};
@@ -112,31 +132,49 @@ export function stepHook(fight, truck, dt, course, events) {
   const press=down && !h.held;
   h.held=down; h.origin=from;
   if (press && fight.phase!=='fallen') {
-    if(h.phase==='dragging' && h.drag)fight.dropped[h.box]={...h.drag};
+    // F lets a dragged box or bomb go where it lies.
+    if(h.phase==='dragging' && h.bomb && fight.bomb)fight.bomb.onCable=false;
+    else if(h.phase==='dragging' && h.drag)fight.dropped[h.box]={...h.drag};
     if(h.phase!=='idle') { releaseHook(h,events);return; }
-    const marker=fight.marker;
+    const marker=fight.marker, bomb=fight.bomb;
+    // An open box in reach always comes first; otherwise a bomb in reach (bombInReach).
     h.box=marker?.canBite ? marker.box : -1;
+    h.bomb=h.box<0 && !!bomb?.canBite;
     h.phase='flying';h.time=0;h.start=from;h.tip=from;
-    h.target=h.box>=0 ? {...marker} : modelPoint(from,0,0,15);
+    h.target=h.box>=0 ? {...marker} : h.bomb ? {x:bomb.x,y:bomb.y+.45,z:bomb.z} : modelPoint(from,0,0,15);
     events.push({type:'hookFire'});
-    if(!marker)events.push({type:'noBox'});
+    if(!marker && !h.bomb)events.push({type:'noBox'});
   }
   if(h.phase==='flying') {
     h.time+=dt;
     const tip=linePoint(h.start,h.target,Math.min(1,h.time/.3));
-    const clang=h.box<0 && hitsShell(h.tip,tip,rexSolids(fight,course));
+    const clang=h.box<0 && !h.bomb && hitsShell(h.tip,tip,rexSolids(fight,course));
     h.tip=tip;
     if(clang || h.time+.0000001>=.3){
       if(h.box>=0 && fight.marker?.box===h.box){
         h.phase='attached';h.tight=false;h.length=TOW_LENGTH;
         events.push({type:'bite',box:h.box});
-      }else{h.phase='returning';h.start=tip;h.time=0;if(clang)events.push({type:'clang'});}
+      }else if(h.bomb && fight.bomb?.phase==='lying' && !fight.bomb.onCable){
+        // The bomb is dragged on the cable as a box that has come out is dragged, its clock still running.
+        h.phase='dragging';h.time=0;fight.bomb.onCable=true;
+        events.push({type:'bite',box:-1,bomb:true});
+      }else{h.phase='returning';h.bomb=false;h.start=tip;h.time=0;if(clang)events.push({type:'clang'});}
     }
   }
   if(h.phase==='returning'){
     h.time+=dt;h.tip=linePoint(h.start,from,Math.min(1,h.time/1.5));
     h.tip.y=Math.max(course.groundAt(truck.s,truck.lateral).y+.08,h.tip.y-2*Math.sin(Math.PI*Math.min(1,h.time/1.5)));
     if(h.time>=1.5){h.phase='idle';h.tip=null;}
+  }
+  if(h.phase==='dragging' && h.bomb){
+    // A bomb trails at the cable's end: it lies where it is until the cable is out to 15 m, then follows.
+    const bomb=fight.bomb;
+    if(!bomb){releaseHook(h,[]);return;}
+    h.time+=dt;
+    const dx=bomb.x-from.x, dz=bomb.z-from.z, r=Math.hypot(dx,dz);
+    if(r>TOW_LENGTH){bomb.x=from.x+dx*TOW_LENGTH/r;bomb.z=from.z+dz*TOW_LENGTH/r;}
+    bomb.y=course.groundAt(truck.s,truck.lateral).y;
+    h.drag={x:bomb.x,y:bomb.y,z:bomb.z};h.tip={...h.drag,y:bomb.y+.45};return;
   }
   if(h.phase==='dragging'){
     h.time+=dt;
