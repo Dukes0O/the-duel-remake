@@ -2275,7 +2275,7 @@ export function stepWorldJob(duel, dt) {
     const isTalk = request => request.type === 'talk' || request.type === 'openTalk';
     if (currentStep?.kind === 'roam') {
       syncOpenPeople(worldJob);
-      const talk = openStep.requests.find(isTalk);
+      const talk = openStep.requests.find(request => isTalk(request) && request.threadPriority) ?? openStep.requests.find(isTalk);
       if (talk) beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
     }
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
@@ -2285,7 +2285,9 @@ export function stepWorldJob(duel, dt) {
     }
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
-      if (checkpointsEnabled && request.type === 'missionLookouts') {
+      if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
+        putFighterOnGround(duel, state.fighter, request.place);
+      } else if (checkpointsEnabled && request.type === 'missionLookouts') {
         const prefix = request.id + '/lookout/';
         worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));
         request.posts.forEach((position, index) => worldJob.actors.push({

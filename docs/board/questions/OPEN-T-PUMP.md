@@ -1,5 +1,0 @@
-# OPEN-T-PUMP questions for Claude
-
-- The approved file puts timing, entry/exit spots, and signing the book in `notes`, while the live runner currently handles only `reach` missions and spoken choices. Should the build add those hooks to the common runner or keep a separate Dry Pump runner? My pick is a small reusable `heist`/`partOf` rule and opt-in runtime rows that read the approved words directly, with any missing map or control details in Dry Pump data.
-- The outing and gas-run conditions have no live producer in open roam. Should this card change the Cold Nights economy, or use the outing availability hook and the authored clock-free dialogue in open roam pending the town join? My pick is the latter, keeping saves and pay outside this slice.
-- The current land cannot promise a stacked walkable Mall interior. My pick is the authored same-level fallback, marked for Claude’s laptop look, with the delivery, roof and front approaches at separate named spots and the lamps driven by the mission clock.

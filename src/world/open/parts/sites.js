@@ -275,6 +275,7 @@ export const sitesPart = {
     const layout = CAMP_SITES.map(site => stageOf(world, site.id));
     const lastLayout = previous.landSeed === world.open.landSeed ? previous.layout : null;
     for (const [index, site] of CAMP_SITES.entries()) {
+      if (site.storyChoices && !view.checkpointsEnabled) continue;
       const position = sitePosition(site.id, world.open.landSeed);
       if (lastLayout?.[index] !== layout[index])
         requests.push({type: 'solids', id: site.id, solids: siteSolidRows(site.id, position, layout[index])});
