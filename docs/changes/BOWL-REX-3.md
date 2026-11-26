@@ -1,0 +1,11 @@
+# BOWL-REX-3: the eye beam, and bombs the hook can send back (behind `titan-bowl`)
+
+**Changed.** `bowl-rex.js`: extra attacks on getting up (beam after one box; Easy bomb, beam, car; Medium and Hard bomb or car, the beam between breaths, twice on Hard), the beam (follow, stop, 3 m orange, 0.5 s burn, 2.5 m, over 3 m up is `beamOver` and fills the crowd as a new trick), bombs (tell and throw as a car, 10/8/6 s fuse, 7 m burst, burst on landing), the stagger (uncounted tired spell, 1 s of pull), first tells half as long again, scorches by cause, Big Mo's five calls and four reasons once each. `bowl-hook.js`: the hook takes a bomb only with no open box in reach; it trails at the cable's 15 m and F lets it go. `bowl-lines.js`: the three goal lines, nine lines, eleven cues on stand-ins. `bowl-rex-view.js`: plain shapes; the rings darken the floor under them (keep 94 %, take a little per channel), 3 steps of 255 on the Bowl's dirt, 2 to 4 over its darkest and lightest floor from half to twice the light. Questions and picks: `docs/board/questions/BOWL-REX-3.md`.
+
+**Checks on `85d0bc6`.** `test-bowl-rex` passed (alone and in the small set). Rule 23 small set (core, replays, combat replays, world composition, bowl-rex): 5 of 5 passed. `npm run build` passed. Older suites naming the fight: bowl-night, -show, -hud, -camera, -crush-audio, -jump-events, -rivals, -turns, -weapons, -course, -walls, -out, blender-output running (bowl-night passed). `test-bowl-sound` fails on the eleven new cues only, as expected: they play stand-ins until BOWL-SOUND records them.
+
+**Drive (Easy, ten seeds).** With Space 10 of 10 (scorches: fire 20, beam 0, bomb 0, car 0); without Space 10 of 10 (fire 23); late-reaction driver 9 of 10. The card's "not on all ten" is not met: question 1.
+
+**Changed assertions (for Claude, rule 18).** `test-bowl-rex`: the thrown-car check sets `due=['car']` in place of the removed `throwDue` flag (same event, same landing). The child-pace drive now also asserts 8 m from a bomb within 3 s and no bomb hooked. Nothing loosened. No replay fingerprint covers the fight; every course's is unchanged.
+
+**Removed.** The fight's `throwDue` flag (replaced by `due`). Nothing else.
