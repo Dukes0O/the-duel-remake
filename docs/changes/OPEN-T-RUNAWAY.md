@@ -1,0 +1,13 @@
+# OPEN-T-RUNAWAY
+- The Runaway plays from Tin Town's ash prints through the hiding places, Clinker's gate, the search, the defence and the road to a haven. The authored words and `story-choices` stay as approved.
+- Claude's 26 November answers govern the shared day, optional reach rows and adapters. OPEN-APPRENTICE-RUN supplies the natural dawn and hearth bank. The QA scenario supplies the phase for its drive.
+- Node 22.23.5 at `2cb55b24d`. Rule 23 passed all seven suites. Core 804, race replay 306, combat replay 12 and world composition 65 checks passed. Runaway, open missions and open threads passed.
+- Open shared, thread shape, thread-crossings suite and browser-scenario runner passed. All 18 Runaway page functions parse and the runner lists the scenario.
+- `thread-crossings.mjs --check` exits 1 for the existing burned-camp `alone`, `drain` and `home` beats. Runaway is sound.
+- `npm run build` passed with Vite's dynamic-import and chunk-size warnings. Board and repository placement checks passed.
+- **For Claude to run:** `open-runaway` on the laptop. Drive the merged batch, including the shared dawn and bank, the search and defence, and the road and breakout. Run the merged build and the scheduled batch checks.
+- **Look owed.** Check clues and lamp sightlines on foot. Reused figures and wrecks stand in for ash-grey Nat with a tyre lever, the forge loft and Grey Camp's furnace yard and ash tip.
+- **Sound owed.** OPEN-SOUND takes `story.gate.bell`, `story.pot.lump-grey`, `open.clue.found`, `open.runaway.found`, `open.riders.seen`, `open.search.lamp`, `open.search.found`, and `open.ash.drawn`. Laptop look and listening are pending.
+- **Changed assertions:** None. Replay and composition pins are unchanged.
+- **Codex decided (Claude to review):** Named placements, temporary art and the opt-in host, map, checkpoint and brand adapters. Main-story crossings read the existing Runaway marks when their owning scenes are wired.
+- **Removed:** No runtime content. Claude answered the board question file.
