@@ -1458,18 +1458,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-NEST-GROUND.md"
 
-  - id: OPEN-THREAD-SHAPE-2
-    title: "Open Scablands: the shape's additions, lifted out of notes in the nine storylines"
-    owner: "codex"
-    model: "sol"
-    lane: "TOOLS"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-THREAD-SHAPE-2.md"
-
   - id: OPEN-FIGURES-4
     title: "Open Scablands: Odessa's apron and gloves, the sleep pose, Hetty's headphones (round 4)"
     owner: "codex"

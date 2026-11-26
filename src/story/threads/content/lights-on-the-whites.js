@@ -120,7 +120,7 @@ export default {
         {id: 'your-lamp', words: 'Why can\'t they see your lamp?',
           lines: [imre('Our riding light is an oil lamp, and the haze swallows it. In fog this ship used to burn a fire basket at her masthead, and a boat could steer home by it from the far buoy. We have had nothing to put in the basket since the spring.')],
           shows: 'Why they are lost. An ember would bring them home'},
-        {id: 'which-way', words: 'Which way did they go?',
+        {effects: [{type: 'rumour', site: 'bell-buoy'}], id: 'which-way', words: 'Which way did they go?',
           lines: [imre('They went down the old channel, straight out from our bow. The last buoy has a bell on it, and the bell still rings whenever the wind gets up.')],
           shows: 'A rumour: the circle for the Bell Buoy'},
       ],
@@ -129,7 +129,7 @@ export default {
         'It would also be one night of Tin Town\'s fire, burning on top of somebody else\'s ship.',
       ],
       choices: [
-        {id: 'give-ember', words: 'Put this ember in your fire basket.',
+        {next: ['salt', 'home-by-the-basket'], cue: 'open.basket.lit', id: 'give-ember', words: 'Put this ember in your fire basket.',
           when: {all: [{fact: 'stock', of: 'embers', atLeast: 1}, {asked: 'your-lamp'}]},
           plain: 'The count falls by one. A bucket comes down on a line',
           thought: 'That\'s a night of our own fire gone, and I\'ll have to explain it to Auntie.',
@@ -147,26 +147,16 @@ export default {
           effects: [mark('heard-and-left', 'You heard that a boat\'s crew was lost on the salt, and you drove home.')],
           next: 'passed-by'},
       ],
-      notes: {
-        questions: {'which-way': {effects: [{type: 'rumour', site: 'bell-buoy'}]}},
-        choices: {
-          'give-ember': {
-            cue: 'open.basket.lit',
-            // The player may still follow the lamps. A player who drives home has done enough.
-            next: ['salt', 'home-by-the-basket'],
-          },
-        },
-      },
     },
 
     salt: {
       mission: {id: `${ID}/out-on-the-salt`, kind: 'reach', by: 'car', holds: ['checkpoints', 'signs'],
-        rule: {seconds: 90, marker: false, searchSecondsAfterLastLamp: 120, foundWithinMetres: 70},
+        rule: {seconds: 90, marker: false, searchSecondsAfterLastLamp: 120, foundWithinMetres: 70, moments: ['first-lamp-out', 'haze-down', 'last-lamp-out']},
         thoughts: [
-          'There were four lamps when I left the road. I can only count three of them now.',
-          'The ground has gone white and soft at its edges. I can\'t tell where the salt stops and the air begins.',
-          'Now there are only two lamps.',
-          'The last lamp has gone out, and there\'s nothing out here now but white. I could drive past them ten metres away and never know it.',
+          {thought: 'There were four lamps when I left the road. I can only count three of them now.', moment: 'first-lamp-out'},
+          {thought: 'The ground has gone white and soft at its edges. I can\'t tell where the salt stops and the air begins.', moment: 'haze-down'},
+          {thought: 'Now there are only two lamps.', moment: 'haze-down'},
+          {thought: 'The last lamp has gone out, and there\'s nothing out here now but white. I could drive past them ten metres away and never know it.', moment: 'last-lamp-out'},
         ],
         outcomes: {
           found: {effects: [mark('found-the-crew', 'You followed four lamps out on to the salt at night, and found the ships\' boat\'s crew.')], next: 'crew'},
@@ -174,10 +164,6 @@ export default {
           lost: {effects: [mark('lost-the-lamps', 'You followed the lamps on to the salt and lost them in the haze.')],
             next: [{when: basketLit, to: 'home-by-the-basket'}, {to: 'in-at-dawn'}]},
         },
-      },
-      notes: {
-        // The moment of the salt at which each thought of the mission is said, in the order of its `thoughts`.
-        thoughtMoments: [{at: 'first-lamp-out'}, {at: 'haze-down'}, {at: 'haze-down'}, {at: 'last-lamp-out'}],
       },
     },
 
@@ -266,7 +252,7 @@ export default {
         rule: {marker: false, metresOut: 1000, bellHeardMetres: 400, holdSeconds: 20, bellCue: 'open.buoy.bell'},
         outcomes: {
           sounded: {
-            lines: [fathom('By the mark, it is nought. The depth of the sea at the bell buoy is no fathoms and no feet. Thank you, driver. That is one sounding for every year since we touched bottom, and every one of them agrees.')],
+            cue: 'open.site.found', lines: [fathom('By the mark, it is nought. The depth of the sea at the bell buoy is no fathoms and no feet. Thank you, driver. That is one sounding for every year since we touched bottom, and every one of them agrees.')],
             effects: [{type: 'find', site: 'bell-buoy'},
               mark('sounding-taken', 'You drove the ships\' leadsman out to the bell buoy, so that the year\'s sounding was taken.')],
             next: 'crew',
@@ -277,7 +263,6 @@ export default {
         // What the outcome "sounded" says and shows beyond its lines and effects.
         outcomes: {
           sounded: {
-            cue: 'open.site.found',
             thoughts: ['He walked out here in the cold to measure a sea that isn\'t there, and he\'s pleased with the answer.'],
             questions: [
               {id: 'why-measure', words: 'Why do you still measure it?',
@@ -305,26 +290,22 @@ export default {
           },
           // Sprat is leading Fathom home: they are met on the line between the cart and the ships, with or without a lamp.
           'met-on-the-way': {
-            lines: [sprat('There you are, driver. We\'ve come about half of the way, and Mr Fathom has only argued with me twice.')],
+            when: spratLed, lines: [sprat('There you are, driver. We\'ve come about half of the way, and Mr Fathom has only argued with me twice.')],
             next: 'all-hands-home',
           },
           // The basket is burning: whoever was left is walking toward it, and is met on the same line.
-          'met-by-the-basket': {next: 'all-hands-home'},
+          'met-by-the-basket': {when: basketLit, next: 'all-hands-home'},
           'not-found': {next: 'two-at-dawn'},
         },
-      },
-      notes: {
-        // The outcomes that happen only when their condition is true.
-        outcomes: {'met-on-the-way': {when: spratLed}, 'met-by-the-basket': {when: basketLit}},
       },
     },
 
     'walk-in': {
       mission: {id: `${ID}/the-walk-in`, kind: 'escort', by: 'car', holds: ['checkpoints', 'signs'],
-        rule: {stretches: 2, secondsEach: 60, followersLoseLampsMetres: 120, withSpratLeading: 'the line keeps walking the true way', usesTheNight: true},
+        rule: {stretches: 2, secondsEach: 60, followersLoseLampsMetres: 120, withSpratLeading: 'the line keeps walking the true way', usesTheNight: true, moments: ['lamps-lost', 'second-stretch']},
         lines: [
-          wick('Driver, slow down! We\'ve lost your lamps, and Sprat has stopped walking.'),
-          sprat('I\'m not tired. I\'m only resting my feet, one at a time.'),
+          {...wick('Driver, slow down! We\'ve lost your lamps, and Sprat has stopped walking.'), moment: 'lamps-lost'},
+          {...sprat('I\'m not tired. I\'m only resting my feet, one at a time.'), moment: 'second-stretch'},
         ],
         // The player may stop and take Sprat into the car. If she is left to walk, she comes in last and coldest.
         outcomes: {
@@ -333,8 +314,6 @@ export default {
         },
       },
       notes: {
-        // The moment at which each line of the mission is said, in the order of its `lines`.
-        lineMoments: [{at: 'lamps-lost'}, {at: 'second-stretch'}],
         between: {text: 'They walk for a long time. The haze closes in behind them, and nobody says very much.'},
       },
     },
@@ -456,7 +435,5 @@ export default {
       'something-on-the-salt': 'when any sign rises on the salt pan',
       'walked-in-at-dawn': 'at the gate or on the road, some nights later',
     },
-    // The sentence of the mark "drove-on", which the beat "sign" makes first and shows.
-    marks: {'drove-on': 'You saw lamps far out on the salt at night, and drove on.'},
   },
 };
