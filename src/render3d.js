@@ -540,7 +540,8 @@ export function attachRenderer(host, app) {
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
   const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
   // The Bowl view owns only course art; its switch never participates in race rules.
-  const bowlView=createBowlView();scene.add(bowlView.group);const bowlTrucks=[];
+  // Bowl art retires mid-session (a new event, a left fight); a warmup poll may still hold its materials, so free them when idle.
+  const bowlView=createBowlView({retire:release=>{if(warmup)warmup.releaseWhenIdle(release);else release();}});scene.add(bowlView.group);const bowlTrucks=[];
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
@@ -592,8 +593,10 @@ export function attachRenderer(host, app) {
   function build(next) {
     const buildStart=performance.now();
     worldReadyStarted=buildStart;host.dataset.worldReadyMs='0';
-    snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;
-    if (world) retireObject(world);
+    // Their materials sit inside the retiring world, which an open warmup poll may still hold: free them with it.
+    const retiredViews=[snowmenView,avalancheView];snowmenView=null;avalancheView=null;
+    const releaseViews=()=>{for(const view of retiredViews)view?.dispose();};
+    if (world) retireObject(world,releaseViews);else releaseViews();
     course = next;
     worldKey=kitWorldKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);

@@ -641,15 +641,20 @@ function buildRig(look, mesh) {
   return rig;
 }
 
-function disposeRig(rig, mesh) {
+// The rig leaves the scene and the truck's paint is restored now; the GPU resources go through `retire`, so a warmup
+// poll that still holds these materials finds them (Three's compileAsync throws on a disposed one).
+function disposeRig(rig, mesh, retire = release => release()) {
   rig.root.removeFromParent();
-  const used = new Set(rig.materialList);
-  rig.root.traverse(node => { if (node.isMesh) { node.geometry?.dispose?.(); used.add(node.material); } });
-  for (const material of used) { material.map?.dispose?.(); material.dispose?.(); }
-  rig.flame.dispose();
-  rig.built.saw?.blurMaterial.dispose();
-  rig.built.snout?.eyes.dispose();
-  if (rig.sparks) { rig.sparks.removeFromParent(); rig.sparks.geometry.dispose(); rig.sparks.material.dispose(); }
+  if (rig.sparks) rig.sparks.removeFromParent();
+  retire(() => {
+    const used = new Set(rig.materialList);
+    rig.root.traverse(node => { if (node.isMesh) { node.geometry?.dispose?.(); used.add(node.material); } });
+    for (const material of used) { material.map?.dispose?.(); material.dispose?.(); }
+    rig.flame.dispose();
+    rig.built.saw?.blurMaterial.dispose();
+    rig.built.snout?.eyes.dispose();
+    if (rig.sparks) { rig.sparks.geometry.dispose(); rig.sparks.material.dispose(); }
+  });
   if (rig.paintBefore && mesh?.userData.paint) {
     mesh.userData.originalColor.copy(rig.paintBefore); mesh.userData.paint.color.copy(rig.paintBefore); mesh.userData.damageKey = null;
   }
@@ -694,7 +699,7 @@ function createFlash() {
   return mesh;
 }
 
-export function createBowlWeaponsView() {
+export function createBowlWeaponsView({retire = release => release()} = {}) {
   const group = new THREE.Group(); group.name = 'Bowl weapons and damage';
   const puffs = createPuffs(240), rings = createRings();
   const hitSparks = createSparks(64); hitSparks.name = 'Hammer hit sparks'; hitSparks.visible = false;
@@ -927,7 +932,7 @@ export function createBowlWeaponsView() {
         const look = truckLook(actor, index === 0, fight);
         if (!look) return;
         let rig = rigs.get(mesh);
-        if (rig && rig.look.key !== look.key) { disposeRig(rig, mesh); rig = null; }
+        if (rig && rig.look.key !== look.key) { disposeRig(rig, mesh, retire); rig = null; }
         if (!rig) {
           rig = buildRig(look, mesh); group.add(rig.root); if (rig.sparks) group.add(rig.sparks);
           rigs.set(mesh, rig); group.userData.builds++;
@@ -954,7 +959,7 @@ export function createBowlWeaponsView() {
         stepDamage(rig, actor, mesh, dt, seconds);
       });
       for (const [mesh, rig] of rigs) if (!live.has(mesh)) {
-        disposeRig(rig, mesh); rigs.delete(mesh);
+        disposeRig(rig, mesh, retire); rigs.delete(mesh);
       }
       hitSparks.visible = flash.visible = fightOn && seconds < hitUntil;
       if (hitSparks.visible) {

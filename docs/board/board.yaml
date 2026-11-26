@@ -244,17 +244,6 @@ tasks:
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"
 
-  - id: QA-SUMMIT-WARMUP-EXCEPTION
-    title: "Summit candidate records two compile warmup exceptions"
-    owner: "codex"
-    lane: "RENDER"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: [busy-game-files]
-    details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
-
   - id: QA-HARBOUR-PERFORMANCE-PACING
     title: "Harbour Performance fails its one authorized quiet reread"
     owner: "codex"

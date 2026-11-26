@@ -1793,3 +1793,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 OPEN-T-MARKET (Codex cloud, Sol): Market Day plays behind story-choices. Codex merged integration in a laptop lane; Claude settled three small conflicts keeping both sides. Guards and 17 open-land suites passed 22/22 on the merged result; build passed.
 - 2026-11-26 OPEN-LOOK-BUS-RING (Claude cloud, Opus): the Bus Ring, round 1, drawn in code; its look test and the other look tests passed on the merged result; Claude's laptop pictures and verdict follow.
 - 2026-11-26 QA-EVIDENCE-MIDNIGHT-AGAIN (Claude cloud): merged in the evening batch at c6c9b71b8.
+- 2026-11-26 QA-SUMMIT-WARMUP-EXCEPTION (Claude cloud): merged in the evening batch at 7f0254188.
