@@ -129,8 +129,8 @@ async function savePose(name, specs, speaker, viewer, beforeDraw = () => {}, fra
   for (let i = 0; i <= frames; i++) view.update(world, viewer, i / 60);
   await fs.writeFile(path.join(out, name + '.json'), JSON.stringify(bake(view.group)));
 }
-if (process.argv.includes('--open-figures-2')) {
-  await openFiguresRound2();
+if (process.argv.includes('--open-figures-3')) {
+  await openFiguresRound3();
   view.dispose();
   process.exit(0);
 }
@@ -188,13 +188,13 @@ await fs.writeFile(path.join(out,'camp.json'),JSON.stringify(bake(camp)));
 view.dispose();
 
 // The two OPEN cast reviews have independent lineups. Rell stands at the same scale in every panel.
-async function openFiguresRound2() {
+async function openFiguresRound3() {
   const glasshouse = ['marigold', 'finch', 'grower-1', 'grower-2', 'grower-3'];
   const hillAndRats = ['hetty', 'bern', 'sump', 'road-rat-lamp', 'road-rat-lookout'];
   const panels = [];
   async function panel(title, rows) {
-    const specs = [['rell','stand','Rell'], ...rows].map(([id,action,label,framePartner], i) => ({
-      id, action, label, framePartner, position:{x:(i-2.5)*1.28, y:0, z:0}, yaw:.12,
+    const specs = [['rell','stand','Rell'], ...rows].map(([id,action,label,framePartner,yaw = .12], i) => ({
+      id, action, label, framePartner, position:{x:(i-2.5)*1.28, y:0, z:0}, yaw,
       path:[{x:(i-2.5)*1.28, z:4}],
     }));
     const name = 'open-' + panels.length;
@@ -203,12 +203,16 @@ async function openFiguresRound2() {
     });
     panels.push({name, title, labels:specs.map(s => ({text:s.label, x:s.position.x}))});
   }
-  const names = {'road-rat-lamp':'Lamp carrier', 'road-rat-lookout':'Lookout'};
+  const names = {'sump':'Sump · front','road-rat-lamp':'Lamp carrier', 'road-rat-lookout':'Lookout'};
   const row = (id,action) => [id,action,names[id] ?? (id[0].toUpperCase()+id.slice(1)).replace('-', ' ')];
-  for (const [action, label] of [['stand','At rest'], ['walk','Walking']]) {
-    await panel('Glasshouse  /  ' + label, glasshouse.map(id => row(id,action)));
-    await panel('Radio Hill and Road Rats  /  ' + label, hillAndRats.map(id => row(id,action)));
-  }
+  const town = ['odessa','moss','tin-cook','tin-porter','tin-child'];
+  await panel('Tin Town  /  Work clothes', town.map(id => row(id,'stand')));
+  await panel('Glasshouse  /  Work clothes', glasshouse.map(id => row(id,'stand')));
+  await panel('Radio Hill and Road Rats  /  Work clothes', hillAndRats.map(id => row(id,'stand')));
+  await panel('Tin Town  /  At work', [
+    ['odessa','weld','Welding'], ['moss','carry-bucket','Bucket'],
+    ['tin-cook','cook','Ladle'], ['tin-porter','haul-sack','Shoulder load'], ['tin-child','sleep','Asleep',undefined,.98],
+  ]);
   await panel('Glasshouse  /  Working the bean rows', [
     ['marigold','stand','Hands on hips'], ['grower-1','hoe','Hoeing'],
     ['grower-2','carry-frame','Frame','grower-3'], ['grower-3','carry-frame','Frame','grower-2'],
@@ -216,7 +220,7 @@ async function openFiguresRound2() {
   ]);
   await panel('Rats’ Nest  /  Growers in the pen', [
     ['grower-1','sit','Seated'], ['grower-2','walk-tied','Bound walk'],
-    ['sump','stand','Ledger'], ['road-rat-lamp','walk','Patrol'], ['road-rat-lookout','stand','On watch'],
+    ['sump','stand','Coat · side',undefined,Math.PI/2], ['road-rat-lamp','walk','Patrol'], ['road-rat-lookout','stand','On watch'],
   ]);
   await fs.writeFile(path.join(out,'panels.json'), JSON.stringify(panels));
 }

@@ -1507,18 +1507,6 @@ tasks:
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
 
-  - id: OPEN-FIGURES-3
-    title: "Open Scablands: the fifteen figures, second round from Claude's verdicts (Sump's coat first)"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-FIGURES-3.md"
-
   - id: OPEN-LOOK-2
     title: "Open Scablands: the Glasshouse and the Rats' Nest, round 2 from Claude's verdicts (the burned camp reads as burned)"
     owner: "codex"
@@ -1543,6 +1531,41 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-NEST-GROUND.md"
 
+  - id: OPEN-THREAD-SHAPE-2
+    title: "Open Scablands: the shape's additions, lifted out of notes in the nine storylines"
+    owner: "codex"
+    model: "sol"
+    lane: "TOOLS"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-THREAD-SHAPE-2.md"
+
+  - id: OPEN-FIGURES-4
+    title: "Open Scablands: Odessa's apron and gloves, the sleep pose, Hetty's headphones (round 4)"
+    owner: "codex"
+    model: "astra"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-FIGURES-4.md"
+
+  - id: OPEN-WRITE-4
+    title: "Open Scablands, written in full: Smoke over a friend when the enemy is the Ash Men, and the Grey Camp"
+    owner: "claude-cloud"
+    lane: "DESIGN"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-WRITE-4.md"
+
   - id: OPEN-MAP
     title: "Open Scablands: the big map shows driven ground in full, a rumour as a circle and a found site by name"
     owner: "codex"
@@ -1554,15 +1577,4 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-MAP.md"
-
-  - id: OPEN-THREAD-SHAPE
-    title: "Open Scablands: the nine written storylines brought to one shape, and the check that holds them to it"
-    owner: "claude-cloud"
-    lane: "TOOLS"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-THREAD-SHAPE.md"
 
