@@ -65,7 +65,18 @@ const dimensions = {width: 1400, height: 1000};
 const frame = {picture, positionOf, canvas: {}, car: positions['radio-hill'], knowledge: createKnowledge()};
 function draw(map, overrides = {}) {
   const calls = [];
-  const ctx = new Proxy({measureText: text => ({width: text.length * 7})}, {
+  const doc = {createElement(tag) {
+    assert.equal(tag, 'canvas');
+    const paint = {
+      fillRect(...args) { calls.push(['wash', this.fillStyle, ...args]); },
+      clearRect(...args) { calls.push(['clear', ...args]); },
+    };
+    return {getContext: () => paint};
+  }};
+  const ctx = new Proxy({canvas: {ownerDocument: doc}, imageSmoothingEnabled: true, imageSmoothingQuality: 'low',
+    measureText: text => ({width: text.length * 7}),
+    drawImage(...args) { calls.push(['drawImage', ...args, this.imageSmoothingEnabled, this.imageSmoothingQuality]); },
+  }, {
     get(target, key) {
       return target[key] ?? ((...args) => calls.push([key, ...args]));
     },
@@ -82,16 +93,41 @@ for (const map of [drawSmallMap, drawBigMap]) {
   const view = map === drawBigMap ? wholeView(picture, dimensions) : smallView(frame.car);
   const at = toScreen(view, circle.x, circle.z);
   assert.ok(drawn.some(([op, x, y, radius]) => op === 'arc' && x === at.x && y === at.y && radius === 300 * view.scale));
-  const site = draw(map, {car: positions.glasshouse, worldJob: {open: {world: told}}});
+  // The car stands clear of the site, just as in the laptop sheet.
+  const car = {...positions.glasshouse, x: positions.glasshouse.x - 300};
+  const site = draw(map, {car, worldJob: {open: {world: told}}});
   assert.ok(site.some(([op, name]) => op === 'fillText' && name === 'The Glasshouse (burned)'));
-  const size = GROUND_SQUARE * view.scale;
-  const pale = drawn.filter(([op,,, w, h]) => op === 'rect' && w === size && h === size);
-  if (map === drawSmallMap) assert.deepEqual(pale, []);
+  function placeMark(calls, position, car) {
+    const view = map === drawBigMap ? wholeView(picture, dimensions) : smallView(car);
+    const at = toScreen(view, position.x, position.z);
+    return calls.find(([op, x, y, w, h]) => op === 'rect' && w === h &&
+      Math.abs(x + w / 2 - at.x) < 1e-6 && Math.abs(y + h / 2 - at.y) < 1e-6);
+  }
+  const yard = base.places[0];
+  const yardMark = placeMark(draw(map, {car: yard}), yard, yard);
+  const siteMark = placeMark(site, positions.glasshouse, car);
+  assert.ok(siteMark && yardMark && siteMark[3] > 0 && siteMark[3] < yardMark[3], 'a smaller place mark at the found site');
+  assert.equal(placeMark(draw(map, {car, worldJob: {open: {world: sampleWorld('nothing-found')}}}), positions.glasshouse, car), undefined);
+
+  assert.equal(ordinary.filter(([op]) => op === 'drawImage').length, 1);
+  const layers = drawn.filter(([op]) => op === 'drawImage');
+  assert.equal(layers[0][1], frame.canvas);
+  if (map === drawSmallMap) assert.equal(layers.length, 1);
   else {
-    assert.equal(pale.length, GROUND_COLUMNS * GROUND_ROWS - 1);
-    const known = toScreen(view, points[0].x, points[0].z);
-    assert.ok(!pale.some(([,x,y]) => x === known.x && y === known.y));
-    assert.ok(drawn.findIndex(([op]) => op === 'drawImage') < drawn.indexOf(pale[0]));
+    assert.equal(layers.length, 2);
+    const [, mask, x, y, width, height, smooth, quality] = layers[1];
+    const origin = toScreen(view, picture.x0, picture.z0);
+    assert.deepEqual([x, y, width, height], [origin.x, origin.y, GROUND_COLUMNS * GROUND_SQUARE * view.scale, GROUND_ROWS * GROUND_SQUARE * view.scale]);
+    assert.deepEqual([smooth, quality], [true, 'low']);
+    const texels = mask.width / GROUND_COLUMNS;
+    assert.equal(mask.height / GROUND_ROWS, texels);
+    assert.ok(GROUND_SQUARE / texels >= 80 && GROUND_SQUARE / texels <= 125, 'the wash feathers over about 100 m');
+    assert.deepEqual(drawn.filter(([op]) => op === 'wash'), [['wash', 'rgba(245, 232, 204, 0.44)', 0, 0, mask.width, mask.height]]);
+    const hole = square => ['clear', (square % GROUND_COLUMNS) * texels, Math.floor(square / GROUND_COLUMNS) * texels, texels, texels];
+    assert.deepEqual(drawn.filter(([op]) => op === 'clear'), [hole(squares[0])]);
+    const strip = draw(map, {worldJob: {open}});
+    assert.deepEqual(strip.filter(([op]) => op === 'clear'), squares.map(hole));
+    assert.ok(drawn.indexOf(layers[1]) < drawn.findIndex(([op]) => op === 'stroke'), 'the wash sits under the ink');
   }
 }
 console.log('open-map: ground choices, seeded rumours, found sites and both map canvases passed');

@@ -170,20 +170,26 @@ function drawGround(ctx, picture, canvas, view) {
   ctx.drawImage(canvas, x0, y0, x1 - x0, y1 - y0, (x0 - rect.x) * k, (y0 - rect.y) * l, (x1 - x0) * k, (y1 - y0) * l);
 }
 
-// The paper wash goes over the relief and under the ink. Leave holes for driven squares.
+// Each 500 m square covers five texels of paper. Smoothing the paper across one texel
+// feathers the boundary over 100 m, without blurring the terrain or leaving seams between driven squares.
 function drawUndrivenGround(ctx, view, picture, driven) {
-  const known = new Set(driven);
-  const size = GROUND_SQUARE * view.scale;
-  const origin = toScreen(view, picture.x0, picture.z0);
-  ctx.fillStyle = 'rgba(245, 232, 204, 0.44)';
-  ctx.beginPath();
-  for (let row = 0; row < GROUND_ROWS; row++) {
-    for (let column = 0; column < GROUND_COLUMNS; column++) {
-      if (!known.has(row * GROUND_COLUMNS + column))
-        ctx.rect(origin.x + column * size, origin.y + row * size, size, size);
-    }
+  const texels = 5;
+  const mask = ctx.canvas.ownerDocument.createElement('canvas');
+  mask.width = GROUND_COLUMNS * texels;
+  mask.height = GROUND_ROWS * texels;
+  const wash = mask.getContext('2d');
+  wash.fillStyle = 'rgba(245, 232, 204, 0.44)';
+  wash.fillRect(0, 0, mask.width, mask.height);
+  for (const square of driven) {
+    const column = square % GROUND_COLUMNS, row = Math.floor(square / GROUND_COLUMNS);
+    wash.clearRect(column * texels, row * texels, texels, texels);
   }
-  ctx.fill();
+  const origin = toScreen(view, picture.x0, picture.z0), size = GROUND_SQUARE * view.scale;
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'low'; // Bilinear sampling between the clear ground and the paper.
+  ctx.drawImage(mask, origin.x, origin.y, GROUND_COLUMNS * size, GROUND_ROWS * size);
+  ctx.restore();
 }
 
 function drawRumours(ctx, view, rumours, boxes, size) {
@@ -236,8 +242,10 @@ export function crossingGlyph(ctx, kind, x, y, size, held = false) {
 
 // A place: a ring where its ground is level, a plan of what stands there (each solid box as a filled footprint) and a mark when it
 // stands too small to show a plan.
-function drawPlace(ctx, view, place, {minimum}) {
-  const at = toScreen(view, place.x, place.z), radius = Math.max(5, place.flatRadius * view.scale);
+function drawPlace(ctx, view, place, {minimum, foundSite = false}) {
+  const at = toScreen(view, place.x, place.z);
+  const markScale = foundSite ? .75 : 1;
+  const radius = Math.max(5, place.flatRadius * view.scale) * markScale;
   ctx.save();
   ctx.strokeStyle = INK.mute; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]); ctx.globalAlpha = .75;
   ctx.beginPath(); ctx.arc(at.x, at.y, radius, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
@@ -247,7 +255,11 @@ function drawPlace(ctx, view, place, {minimum}) {
     ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(-(box.heading ?? 0));
     ctx.fillRect(-w / 2, -d / 2, w, d); ctx.strokeRect(-w / 2, -d / 2, w, d); ctx.restore();
   }
-  if (!place.plan.length) { ctx.fillStyle = INK.pale; ctx.strokeStyle = INK.paper; ctx.lineWidth = 2; ctx.beginPath(); ctx.rect(at.x - 3.5, at.y - 3.5, 7, 7); ctx.fill(); ctx.stroke(); }
+  if (!place.plan.length) {
+    const side = 7 * markScale;
+    ctx.fillStyle = INK.pale; ctx.strokeStyle = INK.paper; ctx.lineWidth = 2 * markScale;
+    ctx.beginPath(); ctx.rect(at.x - side / 2, at.y - side / 2, side, side); ctx.fill(); ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -405,7 +417,9 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
     crossingGlyph(ctx, crossing.kind, at.x, at.y, 9, knowledge.crossings.has(crossing.id));
     names.push({at, string: crossing.name, rank: 2, tries: [[0, -21], [0, 23], [66, 0], [-66, 0], [0, -38], [0, 40]], options: {size: 13, colour: INK.mute}});
   }
-  for (const place of marks.places) if (visible(place.x, place.z)) drawPlace(ctx, view, place, {minimum: 2.5});
+  for (const [index, place] of marks.places.entries()) {
+    if (visible(place.x, place.z)) drawPlace(ctx, view, place, {minimum: 2.5, foundSite: index >= picture.marks.places.length});
+  }
   for (const camp of marks.camps) if (visible(camp.x, camp.z)) { const at = toScreen(view, camp.x, camp.z); drawPlace(ctx, view, {...camp, flatRadius: 18, plan: []}, {minimum: 2}); names.push({at, string: camp.name, rank: 3, tries: [[0, -17], [0, 19], [60, 0]], options: {size: 13, colour: INK.mute}}); }
   drawBarricades(ctx, view, knowledge, 6);
   drawBraziers(ctx, view, knowledge);
@@ -539,7 +553,9 @@ export function drawBigMap(ctx, frame, {width, height}) {
     strokeLine(ctx, view, way.points, INK.paper, 7, [14, 8]); strokeLine(ctx, view, way.points, wayColour(index), 3.6, [14, 8]);
   });
   const boxes = [];
-  for (const place of marks.places) drawPlace(ctx, view, place, {minimum: 4});
+  for (const [index, place] of marks.places.entries()) {
+    drawPlace(ctx, view, place, {minimum: 4, foundSite: index >= picture.marks.places.length});
+  }
   for (const camp of marks.camps) drawPlace(ctx, view, {...camp, flatRadius: 18, plan: []}, {minimum: 3});
   drawBarricades(ctx, view, knowledge, 9);
   drawBraziers(ctx, view, knowledge);
