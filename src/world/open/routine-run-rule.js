@@ -5,7 +5,7 @@ import {routineDraw} from './routine-rule.js';
 
 const GAS_PER_EMBER = 20;
 const empty = handRuns => ({handRuns, offered: false, offeredNight: null, refusedNight: null, learner: null,
-  lessonPending: false, share: null, lessonLoad: null, running: false, handNight: null, deliveredNight: null,
+  lessonPending: false, startAfterLesson: false, share: null, lessonLoad: null, running: false, handNight: null, deliveredNight: null,
   tally: {runs: 0, gas: 0, embers: 0}, lastDelivery: null, trouble: null});
 
 export function routineFor(world, row = GAS_ROUTINE) {
@@ -24,24 +24,26 @@ export function keepRoutine(world, record, row = GAS_ROUTINE) {
 
 export function willingLearners(world, row = GAS_ROUTINE) {
   const {learner} = row;
-  return [...learner.people.filter(person => isTrue(learner.where, world, {of: person.of}) ||
+  const known = routineFor(world, row).learner;
+  return [...learner.people.filter(person => person.id === known || isTrue(learner.where, world, {of: person.of}) ||
     isTrue({fact: 'word', of: person.id, atLeast: 'Friendly'}, world)), learner.otherwise];
 }
 
-// A bank burns fuel but is not a loss to ransom, theft or a raid. A stock
-// return later in the same night can bring the store back above the threshold.
+// A bank burns fuel but is not a loss to ransom, theft or a raid. The town
+// stays short from that loss until the next change to the store outside the bank.
 export function shortAfterLoss(world) {
-  return world.ledger.stocks.embers <= 1 && world.ledger.history.some(change =>
-    change.night === world.ledger.night && change.type === 'stock' && change.key === 'embers' &&
-    change.after < change.before && /(?:^|[/-])(?:ransom|theft|raid)(?:$|[/-])/.test(change.choiceId));
+  if (world.ledger.stocks.embers > 1) return false;
+  const loss = world.ledger.history.findLast(change => change.type === 'stock' && change.key === 'embers' &&
+    typeof change.choiceId === 'string' && !change.choiceId.startsWith('bank/'));
+  return !!loss && loss.after < loss.before &&
+    /(?:^|[/-])(?:ransom|theft|raid)(?:$|[/-])/.test(loss.choiceId);
 }
 
 export function mayOfferRoutine(world, row = GAS_ROUTINE) {
   const kept = routineFor(world, row);
-  const night = world.ledger.night;
-  if (kept.learner || kept.handRuns < row.handRunsFirst ||
-      (kept.refusedNight !== null && night - kept.refusedNight < 3)) return false;
-  return kept.handRuns >= 3 || shortAfterLoss(world);
+  if (kept.running || kept.lessonPending || kept.handRuns < row.handRunsFirst) return false;
+  if (kept.refusedNight !== null) return world.ledger.night - kept.refusedNight >= 3;
+  return shortAfterLoss(world) || (!kept.learner && kept.handRuns >= 3);
 }
 
 export function answerRoutine(world, id, row = GAS_ROUTINE) {
@@ -50,7 +52,9 @@ export function answerRoutine(world, id, row = GAS_ROUTINE) {
   if (id === 'not-yet') return keepRoutine(world, {...record, refusedNight: world.ledger.night}, row);
   const person = willingLearners(world, row).find(learner => learner.id === id);
   if (!person) return world;
-  return keepRoutine(world, {...record, learner: id, lessonPending: true}, row);
+  const changedLearner = record.learner !== id;
+  return keepRoutine(world, {...record, learner: id, lessonPending: true, startAfterLesson: true, refusedNight: null,
+    ...(changedLearner ? {share: null, lessonLoad: null, lastDelivery: null} : {})}, row);
 }
 
 export function showRoutineOffer(world, row = GAS_ROUTINE) {
@@ -102,7 +106,8 @@ export function arriveHandRun(world, {load, clean, passenger}, row = GAS_ROUTINE
     const lesson = {lessonLoad: load, share};
     const better = record.share === null || learnedLoad(lesson) > learnedLoad(record) ||
       (learnedLoad(lesson) === learnedLoad(record) && load * share > record.lessonLoad * record.share);
-    next = {...next, ...(better ? lesson : {}), lessonPending: false, running: record.share === null || record.running};
+    next = {...next, ...(better ? lesson : {}), lessonPending: false, startAfterLesson: false,
+      running: record.startAfterLesson === true || record.share === null || record.running};
   }
   return {world: keepRoutine(baked.world, next, row), embers: baked.embers};
 }

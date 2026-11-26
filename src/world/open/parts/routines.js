@@ -52,7 +52,7 @@ export const routinesPart = {
           return {state, leave: {to: 'hearth-bank', night: world.ledger.night}};
         if (kind === 'offer') {
           const learner = id.startsWith('teach/') && learnerOf(GAS_ROUTINE, id.slice(6));
-          const owes = learner?.of && favoursOf(world, learner.of) > 0;
+          const owes = learner?.of && learner.id !== record.learner && favoursOf(world, learner.of) > 0;
           change(id, answerRoutine(world, learner ? learner.id : id),
             owes ? [{type: 'favour', person: learner.of, by: -1}] : []);
         }

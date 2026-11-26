@@ -78,6 +78,8 @@ export function readableRoutine(record, learnerIds) {
     count(record.handRuns) && typeof record.offered === 'boolean' && stamp(record.offeredNight) &&
     stamp(record.refusedNight) && (record.learner === null || learnerIds.includes(record.learner)) &&
     typeof record.lessonPending === 'boolean' && (!record.lessonPending || record.learner !== null) &&
+    (!Object.hasOwn(record, 'startAfterLesson') || (typeof record.startAfterLesson === 'boolean' &&
+      (!record.startAfterLesson || record.lessonPending))) &&
     (record.share === null ? record.lessonLoad === null && !record.running :
       Number.isFinite(record.share) && record.share >= .6 && record.share <= .85 &&
       load(record.lessonLoad) && record.learner !== null) &&

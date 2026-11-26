@@ -55,12 +55,14 @@ test('Cinder waits for a hand run and a loss or three runs, and respects three b
   const burned = nextNight(nextNight({...world, legacyHandRuns: 1}));
   assert.equal(burned.ledger.stocks.embers, 1);
   assert(!mayOfferRoutine(burned), 'an ordinary burn is not a loss');
-  const shown = showRoutineOffer({...lost, legacyHandRuns: 3});
+  const shown = showRoutineOffer({...lost, legacyHandRuns: 1});
   assert(routineFor(shown).offered);
   let refused = answerRoutine(shown, 'not-yet');
   assert.equal(routineFor(refused).refusedNight, refused.ledger.night);
   for (let i = 0; i < 3; i++, refused = nextNight(refused)) assert(!mayOfferRoutine(refused));
   assert(mayOfferRoutine(refused));
+  const recovered = choice({...refused, legacyHandRuns: 1}, 'embers-found', [{type: 'stock', stock: 'embers', by: 4}]);
+  assert(mayOfferRoutine(recovered), 'a refused offer returns after three nights even after stock recovers');
 });
 
 test('the ledger casts interested neighbours and the town always supplies a learner', () => {
@@ -156,6 +158,14 @@ test('open banks carry gas, bake before the burn, settle only once and leave the
   const stopped = setRoutineRunning(night, false);
   assert.equal(routineFor(bankOpenHearth(dusk(stopped), 8, on)).tally.runs, 0);
   assert(routineFor(setRoutineRunning(stopped, true)).running);
+
+  const ransom = choice(stopped, 'burned-camp/ransom/paid', [{type: 'stock', stock: 'embers', by: -15}]);
+  assert(mayOfferRoutine(ransom), 'a stopped routine can be offered after a loss');
+  assert(!mayOfferRoutine(setRoutineRunning(ransom, true)), 'a running learner gets Cinder’s reassurance');
+  const resume = answerRoutine(ransom, learner);
+  assert.equal(routineFor(resume).share, routineFor(stopped).share);
+  assert(!routineFor(resume).running && routineFor(resume).lessonPending);
+  assert(routineFor(hand(resume, 50, false, learner).world).running, 'the chosen learner resumes after the lesson');
 
   const old = {...saved.story.open, routines: {'gas-run': {offered: true, learner: 'dace',
     share: .75, lessonLoad: 60, running: true, tally: 40}, 'future-routine': {keep: true}}};
@@ -277,6 +287,33 @@ test('App measures a learner trip, refuses and retries a hearth bank, then shows
   assert.equal(jobOf(app).open.partOfDay, 'dawn');
   assert.match(jobOf(app).job.stepState.screen.line.words, /brought home \d+ of gas yesterday/);
   assert.equal(jobOf(app).job.steps[jobOf(app).job.stepIndex].openPerson, 'cinder');
+});
+
+test('the measured road reserves the day and retries refused pay without duplicating it', () => {
+  const app = appAtYard();
+  const before = disk();
+  assert(app.gasRun('long'));
+  const reserved = disk();
+  assert.equal(routineFor(worldForProfile(reserved)).handNight, savedLedger(before).night);
+  assert.deepEqual(savedLedger(reserved), savedLedger(before));
+  assert.equal(reserved.wasteland.scrap, before.wasteland.scrap);
+
+  app.advance(4);
+  const gas = jobOf(app), bess = gas.actors.find(actor => actor.id === 'big-bess');
+  const path = gas.definition.steps[0].path;
+  bess.position = {...path.at(-1).position};
+  bess.pathIndex = path.length - 1;
+  const store = localStorage;
+  globalThis.localStorage = {...store, setItem() { throw Error('QA write denied'); }};
+  app.advance(6);
+  assert(!app.duel.state.arena.result.settlementSaved);
+  assert.deepEqual(disk(), reserved);
+  assert.equal(app.worldJobAgain(), false);
+  globalThis.localStorage = store;
+  assert(app.worldJobAgain());
+  assert.equal(emberRuns(disk()), emberRuns(before) + 1);
+  assert.equal(disk().wasteland.scrap - reserved.wasteland.scrap, gasRunPay('long', app.cpuDifficulty));
+  assert.equal(savedLedger(disk()).stocks.embers, savedLedger(before).stocks.embers + 3);
 });
 
 test('the switch-off road keeps its old save path and the battle has no gas when enabled', () => {
