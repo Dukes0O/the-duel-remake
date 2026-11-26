@@ -124,7 +124,7 @@ export function createSiteUnderlay(ground) {
         const q = start + v * xx.length + u, next = q + xx.length;
         indices.push(q, next, q + 1, q + 1, next, next + 1);
       }
-      record?.(xx, zz, start);
+      if (floor === undefined) record?.(xx, zz, start);
     }
     return true;
   }

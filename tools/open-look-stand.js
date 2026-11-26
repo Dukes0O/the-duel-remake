@@ -6,6 +6,7 @@
 // scene to draw it again. Nothing is saved: the QA page keeps its saves in memory.
 //
 // `window.__openLookStand.stand(name, {stage, seconds})` returns where the site stands and every named spot in the land's metres.
+// After positioning the car at the Nest, stand('rats-nest', {stage: 'day', view: 'ground-edge'}) looks down the rim at 35 cm.
 // At the stage `night` it also turns the land's own light down while the picture is drawn. That is a stand-in for the night that
 // the card which places the site will bring; it is here only so that the site's fires and lamps can be judged in the dark.
 import {CHUNK_METRES} from '../src/world/ground-edit.js';
@@ -75,7 +76,7 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     return true;
   }
 
-  async function stand(name, {stage, seconds = 7.3} = {}) {
+  async function stand(name, {stage, seconds = 7.3, view: requestedView} = {}) {
     const switches = app._switches?.() ?? app.duel.featureFlags;
     if (switches.enabled('story-choices') !== true) throw Error('The open Scablands looks need the switch story-choices.');
     if (!Object.hasOwn(LOOKS, name)) throw Error('No look called ' + name);
@@ -109,8 +110,16 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
       let x = Math.floor(at.x / CHUNK_METRES) * CHUNK_METRES;
       while (scablandsGroundEdit.siteGround.hasChunkAt(x - 1, at.z)) x -= CHUNK_METRES;
       const z = Math.floor(at.z / CHUNK_METRES) * CHUNK_METRES;
-      spots['ground-edge'] = {x: x - .5, y: scablandsSurfaceHeightAt(x - .5, z + 6), z: z + 6,
+      const edge = {x: x - .5, y: scablandsSurfaceHeightAt(x - .5, z + 6), z: z + 6,
         looksAt: {x, y: scablandsSurfaceHeightAt(x, z + 28) + .15, z: z + 28}};
+      spots['ground-edge'] = edge;
+      if (requestedView === 'ground-edge') {
+        const camera = view().camera, target = edge.looksAt;
+        app.inspectionCamera = {position: [edge.x, edge.y + .35, edge.z], target: [target.x, target.y, target.z]};
+        camera.position.fromArray(app.inspectionCamera.position);
+        camera.zoom = 1;
+        camera.updateProjectionMatrix();
+      }
     }
     return {name, stage, at: {x: at.x, z: at.z}, land: scablandsNaturalHeightAt(at.x, at.z), landFall: high - low, spots,
       draws: group.userData.draws, triangles: group.userData.triangles, lights: group.userData.lights.length};
