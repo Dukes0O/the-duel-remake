@@ -131,14 +131,13 @@ export function haulerPeople(world, view) {
   const record = world.open.threads[HAULER_ID], stop = haulerStop(world);
   if (!record || !stop) return [];
   const gate = haulerAtGate(world);
-  const roadside = !record.end && !['between', 'escort', 'alone', 'parted', 'gate'].includes(record.beat);
-  const passing = record.end && !haulerMarked(world, 'gate-open');
-  if (!gate && !roadside && !passing) return [];
+  const roadside = !record.end && ['sign', 'hauler-road', 'hauler', 'owing', 'ridge', 'trap-road', 'trap-shut'].includes(record.beat);
+  if (!gate && !roadside) return [];
   const trap = haulerIsTrap(world);
-  const point = gate ? haulerGate : passing ? haulerVisitor(world, view.seconds) : haulerOffset(stop.truck, 0, -3.5);
+  const point = gate ? haulerGate : haulerOffset(stop.truck, 0, -3.5);
   const day = {kind: 'post', at: ['tin-town', point.x - anchor.x, point.z - anchor.z], task: 'stand'};
   return [{id: trap && !gate ? 'road-rat' : 'tally', figure: trap && !gate ? 'road-rat-lookout' : 'marigold',
-    home: 'tin-town', routine: {day}, talk: passing || gate && record.end ? 'tally' : null}];
+    home: 'tin-town', routine: {day}, talk: gate && record.end ? 'tally' : null}];
 }
 
 export function haulerMission(mission, world) {

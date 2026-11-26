@@ -9,7 +9,7 @@ export const HAULER_TALK = Object.groupBy(hauler.later.filter(row => row.by !== 
 export function haulerTalkScene(id, context) {
   const record = context.world.open.threads[hauler.id];
   if (!record) return null;
-  const rule = threadRule(hauler, context, record);
+  const rule = threadRule(hauler, context, record, {visit: haulerMarked(context.world, 'second-truck') ? '/again' : ''});
   const later = hauler.later.find(row => id === hauler.id + '/later/' + row.id);
   if (!later || !rule.ask(later.when) || haulerMarked(context.world, 'said/' + later.id)) return null;
   if (['tally-told-sump-of-the-ridge', 'tally-told-sump-of-the-fire'].includes(later.id) &&

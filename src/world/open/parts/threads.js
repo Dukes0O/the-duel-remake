@@ -60,7 +60,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const {beat: beatId} = record;
   const beat = thread.beats[beatId];
   const hauling = thread.id === HAULER_ID;
-  state.visit = hauling && haulerMarked(world, 'second-truck') ? '/again' : '';
+  const visit = hauling && haulerMarked(world, 'second-truck') ? '/again' : '';
+  if (state.visit !== visit) { state.reading = {}; state.mending = 0; state.lifting = false; }
+  state.visit = visit;
   const opening = beatId === firstBeat(thread);
   const holder = trackId(thread, record);
   const rule = threadRule(thread, context, record, {...state, signSeen: observed});
@@ -341,7 +343,7 @@ export function createThreadsPart(threads) {
           const later = hauler.later.filter(row => row.by === 'tally')
             .map(row => haulerTalkScene(HAULER_ID + '/later/' + row.id, context)).find(Boolean);
           const scene = later ?? (atGate ? haulerGateNews(context) : null);
-          if (scene) requests.push({type: 'talk', id: scene.id, scene, speaker: 'tally', radio: !view.onFoot});
+          if (scene) requests.push({type: 'talk', id: scene.id, scene, speaker: 'tally', radio: !view.onFoot || !atGate});
         }
       }
       return {state, choices, events, requests, hold, release};
