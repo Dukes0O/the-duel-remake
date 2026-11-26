@@ -1510,8 +1510,9 @@ tasks:
     owner: "claude-cloud"
     lane: "ART"
     size: "M"
-    status: "building"
-    claimed_by: "Claude (cloud), since 26 November 2026, on branch cloud/OPEN-LOOK-GLASSHOUSE"
+    status: "review"
+    claimed_by: "Claude (cloud), since 26 November 2026: round 1 built on branch cloud/OPEN-LOOK-GLASSHOUSE with its pull request open; owed: Claude's pictures on the laptop and the verdict"
+    waiting_on: "claude"
     needs: []
     locks: []
     flag: "story-choices"
