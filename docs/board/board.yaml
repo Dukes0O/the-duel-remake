@@ -1047,17 +1047,6 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-VANE-JOBS.md"
 
-  - id: SEA-LINES
-    title: "Act 5: every line"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Opus), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/SEA-LINES.md"
-
   - id: SEA-WORKS
     title: "Act 5: the Sea Works as town work, years of it"
     owner: "codex"
@@ -1074,7 +1063,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["SEA-WORKS","SEA-LINES","MULE-JOBS","TOWN-PEACE","WW-ART-SEA"]
+    needs: ["SEA-WORKS", "MULE-JOBS", "TOWN-PEACE", "WW-ART-SEA"]
     locks: []
     details: "docs/board/cards/SEA-JOBS-1.md"
 
@@ -1084,7 +1073,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
-    needs: ["SEA-WORKS","SEA-LINES","HELI-RUSTWALL","WW-ART-SEA"]
+    needs: ["SEA-WORKS", "HELI-RUSTWALL", "WW-ART-SEA"]
     locks: []
     details: "docs/board/cards/SEA-LIFT.md"
 
