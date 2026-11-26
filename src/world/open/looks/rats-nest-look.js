@@ -16,6 +16,8 @@ import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {createFlameMaterial,createScrapWear,scrapNoise} from '../../scrap-look.js';
 
+import scrapyardWrecks from './rats-nest-wrecks.json' with {type: 'json'};
+
 export const RATS_NEST_STAGES=Object.freeze(['day','night']);
 export const RATS_NEST_BUDGET=Object.freeze({draws:12,triangles:60000});
 
@@ -217,6 +219,10 @@ function makeLayout(){
   spot('road-top',ROAD.top-2,ROAD.z,{heading:Math.PI/2,looksAt:look(ROAD.foot+10,ROAD.z-3,1)});
   spot('road-foot',ROAD.foot+4,ROAD.z,{heading:Math.PI/2});
 
+  // Parked cars occupy the existing six mission anchors. Keep the approaches and all older solids.
+  for (const [i, bay] of bays.entries())
+    solid(`buggy-${i+1}`, 'buggy', 'box', bay.x, bay.z, 1.03, 1.63, bay.heading, 1.60);
+
   return Object.freeze({
     radius:95,depth:CUT.depth,
     cutting:Object.freeze({halfX:CUT.halfX,halfZ:CUT.halfZ,depth:CUT.depth,wallRun:CUT.run}),
@@ -252,17 +258,73 @@ const makePalette=()=>({
   cloth:[tone(0x5b5a40),tone(0x7d735c),tone(0x4f5a60),tone(0x6a4034),tone(0x8a8474)],
   concrete:tone(0x77736a),stain:tone(0x4f4a42),glass:tone(0xa9b8ad),chrome:tone(0x8a8c88),
   clay:tone(0x8f5a3c),dark:tone(0x6f4a38),seam:tone(0x44342c),scree:tone(0x8a5c42),rock:tone(0x77675c),top:tone(0x5e3b2a),
-  oil:tone(0x0d0c0b),worn:tone(0xad896d),track:tone(0x2d2924),soot:tone(0x0a0908),
+  oil:tone(0x0d0c0b),worn:tone(0xb09a7d),track:tone(0x49392e),soot:tone(0x0a0908),
 });
 
 // Collects pieces by material, each with its colour in its vertices, under a stack of placements, and merges them: one mesh a material.
-const WITH_UV=new Set(['earth','marks','pools']);
-function assembly(){
-  const lists={sheet:[],frame:[],earth:[],glass:[],glow:[],marks:[],pools:[]},stack=[new THREE.Matrix4()];
+const WITH_UV=new Set(['earth','marks','pools','wreck']);
+function assembly(inspectParts){
+  const lists={wreck:[],sheet:[],frame:[],earth:[],glass:[],glow:[],marks:[],pools:[]},stack=[new THREE.Matrix4()];
   let triangles=0;
   const here=()=>stack[stack.length-1];
   const placed=(x,y,z,yaw=0,pitch=0,roll=0)=>new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch,yaw,roll,'YXZ')),new THREE.Vector3(1,1,1));
   const within=(matrix,work)=>{stack.push(here().clone().multiply(matrix));try{work();}finally{stack.pop();}};
+  // keep() has already applied every nested placement when a piece enters this list.
+  // Seat a rigid object as a whole, including its rebar, axle or upper tyres.
+  let observed = null;
+  function capture(draw) {
+    const pieces = [];
+    observed = pieces;
+    try { draw(); } finally { observed = null; }
+    return pieces;
+  }
+  function observe(label, draw) {
+    if (!inspectParts) return draw();
+    inspectParts(label, capture(draw));
+  }
+  // The six wreck stacks have different crushed rooflines. Lower each upper
+  // shell until its underside first touches metal within the shared footprint.
+  function stackWrecks(id, lower, upper) {
+    const base = capture(lower), shell = capture(upper);
+    const material = new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+    const supports = base.map(piece => new THREE.Mesh(piece,material));
+    const ray = new THREE.Raycaster(undefined,new THREE.Vector3(0,-1,0));
+    let gap = Infinity;
+    for (const piece of shell) {
+      const points = piece.attributes.position;
+      for (let i=0;i<points.count;i++) {
+        ray.ray.origin.set(points.getX(i),points.getY(i)+6,points.getZ(i));
+        const hit = ray.intersectObjects(supports,false)[0];
+        if (hit) gap = Math.min(gap,points.getY(i)-hit.point.y);
+      }
+    }
+    material.dispose();
+    if (!Number.isFinite(gap)) throw Error(id + ' has no supporting wreck');
+    for (const piece of shell) piece.translate(0,-gap,0);
+    inspectParts?.(id+'/support',base);
+    inspectParts?.(id+'/upper',shell);
+  }
+  let resting = null;
+  function settle(label, ground, draw, inspect) {
+    const pieces = [];
+    resting = pieces;
+    try { draw(); } finally { resting = null; }
+    let bottom = Infinity, x, z;
+    for (const geometry of pieces) {
+      const points = geometry.attributes.position;
+      for (let i = 0; i < points.count; i++) {
+        if (points.getY(i) >= bottom) continue;
+        bottom = points.getY(i);
+        x = points.getX(i);
+        z = points.getZ(i);
+      }
+    }
+    // The ground mesh is lifted 3.5 cm and the yard dust is drawn 5.2 cm up.
+    // Give thin planks and sheets the same visible surface as the dust.
+    const lift = ground(x, z) + .052 - bottom;
+    for (const geometry of pieces) geometry.translate(0, lift, 0);
+    inspect?.(label, pieces);
+  }
   const keep=(kind,geometry,colour=null)=>{
     const count=geometry.attributes.position.count;
     if(!geometry.index)geometry.setIndex([...Array(count).keys()]);
@@ -275,6 +337,8 @@ function assembly(){
     }
     geometry.applyMatrix4(here());geometry.computeVertexNormals();
     triangles+=geometry.index.count/3;lists[kind].push(geometry);
+    resting?.push(geometry);
+    observed?.push(geometry);
   };
   // Loose triangles, three corners each, with one colour a corner or one for all.
   const faces=(kind,positions,colour,uvs=null)=>{
@@ -334,13 +398,13 @@ function assembly(){
   };
   const DRUM=[[0,0],[.28,0],[.29,.03],[.29,.28],[.305,.3],[.29,.32],[.29,.57],[.305,.59],[.29,.61],[.29,.86],[.27,.88],[.2,.87],[0,.87]].map(([r,h])=>new THREE.Vector2(r,h));
   const drum=(x,y,z,colour,turn=[0,0,0])=>keep('frame',turned(new THREE.LatheGeometry(DRUM,9),x,y,z,turn),colour);
-  return {lists,placed,within,keep,faces,box,bar,tube,surface,ribbed,tyre,drum,get triangles(){return triangles;}};
+  return {lists,settle,observe,stackWrecks,placed,within,keep,faces,box,bar,tube,surface,ribbed,tyre,drum,get triangles(){return triangles;}};
 }
 
 // ---- Drawing: a wrecked car ----------------------------------------------------------------------------------------------
 // A stripped shell built from stations along its length: a lower body with its wheel arches cut up into it, an open cabin with thin
 // pillars and a dished roof, and no glass. `front` is +z. The shell stands with its sills on the ground at y = 0.
-function drawWreck(kit,style,seed,{bonnet='shut',wheels=true,close=false}={}){
+function drawWreck(kit,style,seed,{bonnet='shut',wheels=true}={}){
   const random=mulberry(seed),between=(low,high)=>low+(high-low)*random(),pick=list=>list[Math.floor(random()*list.length)];
   const half=style.width/2,nose=style.length/2,frontArch=nose-.85,rearArch=-nose+.9,arch=.4;
   const zs=new Set([nose,nose-.12,style.scuttle,style.rear,-nose+.1,-nose,...style.posts]);
@@ -397,34 +461,6 @@ function drawWreck(kit,style,seed,{bonnet='shut',wheels=true,close=false}={}){
   // What is left inside: a seat back burnt to its frame, and now and then the wheel.
   kit.box('frame',half*1.5,.5,.09,PALETTE.burnt,between(-.04,.04),style.belt-.22,style.scuttle-.95,[-.3,0,between(-.06,.06)]);
   if(random()<.4){const wheel=new THREE.TorusGeometry(.17,.014,3,8);wheel.rotateX(-.45);wheel.translate(-half*.45,style.belt+.02,style.scuttle-.32);kit.keep('frame',wheel,PALETTE.iron);}
-  if (close) {
-    // What survives stripping: the lamp sockets, a crooked grille, hubs and the door hardware.
-    kit.box('frame', half * 1.56, .18, .06, PALETTE.burnt, 0, style.belt - .27, nose + .012);
-    for (let slat = 0; slat < 4; slat++)
-      kit.bar('frame', [-half*.48, style.belt-.34+slat*.042, nose+.05], [half*.46, style.belt-.31+slat*.041, nose+.055], .018, PALETTE.tube);
-    for (const side of [-1, 1]) {
-      const x = side * half * .72;
-      kit.tube('frame',[x,.53,nose-.018],[x,.53,nose+.067],.116,PALETTE.tube,10);
-      kit.tube('frame',[x,.53,nose+.067],[x,.53,nose+.071],.092,PALETTE.burnt,10);
-      kit.bar('frame',[side*half,.34,style.rear],[side*half,style.belt-.06,style.rear+.08],.018,PALETTE.iron);
-      kit.bar('frame',[side*(half+.025),style.belt-.14,style.rear+.16],[side*(half+.027),style.belt-.14,style.rear+.34],.027,PALETTE.chrome);
-      for (const z of [frontArch, rearArch]) {
-        kit.tube('frame',[side*(half-.32),.31,z],[side*(half-.04),.31,z],.19,PALETTE.rust[3],12);
-        kit.tube('frame',[side*(half-.045),.31,z],[side*half,.31,z],.074,PALETTE.iron,7);
-      }
-    }
-    // One door hangs off its latch. Its pressed panel and empty quarter-light also read from behind the shell.
-    const doorSide = style.scuttle - style.rear > 1.1 ? -1 : 1;
-    kit.within(kit.placed(doorSide*half,.01,style.scuttle-.06,-doorSide*.43,0,doorSide*.055),()=>{
-      kit.surface('sheet',5,3,(u,v)=>[doorSide*(.025+.07*Math.sin(Math.PI*v)),.26+v*(style.belt-.26),-u*1.03],other);
-      const top=style.roof-.13;
-      kit.bar('frame',[0,style.belt,0],[0,top,-.3],.035,body);
-      kit.bar('frame',[0,top,-.3],[0,top-.05,-.98],.036,body);
-      kit.bar('frame',[0,top-.05,-.98],[0,style.belt,-1.03],.034,body);
-      kit.bar('frame',[doorSide*.09,style.belt-.13,-.72],[doorSide*.09,style.belt-.13,-.88],.032,PALETTE.chrome);
-    });
-    kit.bar('frame',[-half*.88,.32,nose+.11],[half*.85,.24,nose+.18],.09,PALETTE.chrome,.07);
-  }
   // The bonnet stands open on some, with the engine gone or burnt to a lump.
   if(bonnet!=='shut'){
     kit.box('frame',.55,.38,.62,PALETTE.burnt,between(-.1,.1),.5,frontArch+.05,[between(-.1,.1),between(-.3,.3),between(-.1,.1)]);
@@ -472,7 +508,7 @@ function groundMarks(){
     if(cx===0&&cy===0)alpha=smooth((ragged-far)/.34)*(.45+.75*blotch);
     else if(cx===1&&cy===0){
       const across = Math.abs(u-.5)*2;
-      alpha = (1-smooth((across-.46)/.53))*(.64+.34*blotch);
+      alpha = (1-smooth((across-.23)/.76))*(.34+.65*blotch);
 
     }else if(cx===0&&cy===1)alpha=smooth((ragged+.25-far)/.5)*(.3+.7*smooth(far/.45))*(.5+.7*blotch);
     else alpha=Math.pow(Math.max(0,1-far),1.8);
@@ -481,67 +517,73 @@ function groundMarks(){
   const map=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);map.magFilter=map.minFilter=THREE.LinearFilter;map.needsUpdate=true;return map;
 }
 
-// Three intersecting ribbons share a draw. Eddies travel up each ribbon at a different phase,
-// so a curl can break away on the sunlit side while the foot still looks dense from the rim.
+// Each tyre fire draws a stream of soft, overlapping billows in a single draw.
+// Their centres rise with the game clock. Noise rotates inside each billow and
+// frays its perimeter; the width, ash colour and wind drift grow with height.
 function tyreSmoke(index, wind, night) {
-  const sheets = [];
-  for (let side = 0; side < 3; side++) {
-    const angle = Math.PI * side / 3 + .41 * index;
-    const sheet = new THREE.PlaneGeometry(1, 1, 1, 48);
-    sheet.translate(0, .5, 0);
-    sheet.rotateY(angle);
-    const phase = new Float32Array(sheet.attributes.position.count).fill(side * 1.7 + index * 2.4);
-    sheet.setAttribute('phase', new THREE.BufferAttribute(phase, 1));
-    sheets.push(sheet);
+  const positions = [], seeds = [], uvs = [], indices = [];
+  const count = 40;
+  for (let i = 0; i < count; i++) {
+    const phase = (i + .4 * lump(i, index)) / count;
+    for (const [u,v] of [[0,0],[1,0],[0,1],[1,1]]) {
+      positions.push(u-.5, v-.5, 0);
+      uvs.push(u, v);
+      seeds.push(phase, lump(i,7,index), lump(i,13,index));
+    }
+    const a = i * 4;
+    indices.push(a,a+1,a+2,a+1,a+3,a+2);
   }
-  const geometry = mergeGeometries(sheets);
-  sheets.forEach(sheet => sheet.dispose());
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs,2));
+  geometry.setAttribute('billow', new THREE.Float32BufferAttribute(seeds,3));
+  geometry.setIndex(indices);
   const material = new THREE.ShaderMaterial({
     uniforms: {
       clock: {value: 0}, noiseMap: {value: scrapNoise()}, plumeHeight: {value: 92 + index * 6},
       wind: {value: new THREE.Vector2(wind.x, wind.z).normalize()},
-      smokeTop: {value: new THREE.Color(night ? 0x776d62 : 0xb1a499)},
+      ash: {value: new THREE.Color(night ? 0x897e72 : 0xbab3aa)},
     },
     vertexShader: `
-      attribute float phase;
+      attribute vec3 billow;
       uniform float clock, plumeHeight;
       uniform vec2 wind;
-      varying vec2 at;
-      varying float sheetPhase;
+      varying vec2 disc;
+      varying float height, angle, seed;
       void main() {
-        at = uv;
-        sheetPhase = phase;
-        float h = position.y;
-        float roll = h * 34.0 - clock * .65 + phase;
-        float width = (.62 + 23.0 * pow(h,.82)) * (.88 + .14 * sin(roll));
-        vec2 drift = wind * (plumeHeight * .29 * h * h + h * sin(roll*.34));
-        drift += vec2(-wind.y,wind.x) * h * (1.5*sin(roll*.58) + .8*sin(roll));
-        vec3 p = vec3(position.x * width + drift.x, h * plumeHeight, position.z * width + drift.y);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0);
+        float age = fract(billow.x + clock * .058);
+        height = age * (.45 + .55 * age);
+        angle = billow.y * 6.283 + clock * (.27 + .19 * billow.z);
+        seed = billow.z;
+        float width = 1.2 + 32.0 * pow(height,.74);
+        vec2 drift = wind * (plumeHeight * .29 * height * height);
+        drift += vec2(-wind.y,wind.x) * width * ((billow.y-.5)*.39 + .11*sin(age*12.0));
+        vec4 centre = modelViewMatrix * vec4(drift.x,height*plumeHeight,drift.y,1.);
+        centre.xy += position.xy * width * vec2(.82 + .35 * billow.z,.82);
+        gl_Position = projectionMatrix * centre;
+        disc = 2. * uv - 1.;
       }`,
     fragmentShader: `
       uniform sampler2D noiseMap;
-      uniform float clock;
-      uniform vec3 smokeTop;
-      varying vec2 at;
-      varying float sheetPhase;
+      uniform vec3 ash;
+      varying vec2 disc;
+      varying float height, angle, seed;
       void main() {
-        float up = at.y, x = at.x*2.0-1.0;
-        vec2 uvSmoke = vec2(at.x*.82 + sheetPhase, up*4.8-clock*.083);
-        float fold = texture2D(noiseMap,uvSmoke).r;
-        float grain = texture2D(noiseMap,uvSmoke*2.1 + vec2(fold,-clock*.028)).g;
-        float swirl = sin(up*49.0 - clock*.8 + fold*5.0 + sheetPhase);
-        float body = 1.0 - abs(x+.13*swirl) + (fold-.5)*1.6 + (grain-.5)*.52;
-        float ink = smoothstep(.18,.76,body)*(.52+.3*fold);
-        ink *= smoothstep(0.0,.017,up) * (1.0-smoothstep(.52+.28*fold,1.0,up));
-        ink *= mix(.92,.39,up);
-        if (ink < .012) discard;
-        vec3 tint = mix(vec3(.025,.019,.016),smokeTop,smoothstep(.035,.83,up)*(.65+.35*fold));
-        gl_FragColor = vec4(tint*(.78+.36*fold+.14*swirl),ink);
+        vec2 swirl = mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*disc;
+        vec2 uv = swirl * .44 + vec2(seed,seed*.81);
+        float fold = texture2D(noiseMap,uv).r;
+        float fringe = texture2D(noiseMap,uv*1.9+fold*.15).g;
+        float density = 1.-length(disc) + (fold-.5)*.95 + (fringe-.5)*.36;
+        float alpha = smoothstep(.10,.64,density) * (.38+.22*fold)
+                    * smoothstep(0.,.012,height) * (1.-smoothstep(.71,1.,height));
+        if (alpha < .007) discard;
+        float light = smoothstep(.01,.63,height) * (.76+.23*fold);
+        vec3 soot = vec3(.028,.023,.020) + vec3(.075)*fold*fold;
+        gl_FragColor = vec4(mix(soot,ash,light)*(.69+.42*fold),alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
-    transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
+    transparent: true, depthWrite: false,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.frustumCulled = false;
@@ -552,14 +594,15 @@ function tyreSmoke(index, wind, night) {
 
 // ---- Drawing: the site --------------------------------------------------------------------------------------------------------
 /** The Rats' Nest as a `THREE.Group` in the site's metres. `heightAt(x, z)` gives the ground under each thing (the land less `ratsNestGround`). */
-export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
+export function buildRatsNest({stage='day',heightAt=null,wind=WIND, inspectPlacement, inspectParts}={}){
   if(!RATS_NEST_STAGES.includes(stage))throw new RangeError(`The Rats' Nest has no stage called ${JSON.stringify(stage)}.`);
   PALETTE??=makePalette();
   const L=RATS_NEST_LAYOUT,night=stage==='night',ground=heightAt??((x,z)=>-ratsNestGround(x,z));
   const group=new THREE.Group();group.name='The Rats\' Nest';
-  const kit=assembly(),{within,placed,box,bar,tube,surface,ribbed,tyre,drum,faces,keep}=kit;
+  const kit=assembly(inspectParts),{observe,within,placed,box,bar,tube,surface,ribbed,tyre,drum,faces,keep}=kit;
   const P=PALETTE,floorY=ground(L.cart.x,L.cart.z);
   const on=(x,z,yaw,work,lift=0)=>within(placed(x,ground(x,z)+lift,z,yaw),work);
+  const settle = (label, draw) => kit.settle(label, ground, draw, inspectPlacement);
   // A broken stone: a twenty-sided lump with every corner pulled in or out by its own amount, the same on every run.
   const stone=(size,matrix,colour,squash=.65)=>{
     const rock=new THREE.IcosahedronGeometry(1,0),points=rock.attributes.position;
@@ -636,29 +679,59 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     const random=mulberry(0x5c4ee),between=(low,high)=>low+(high-low)*random();
     rimPoints.forEach((rim,index)=>{
       if(random()<.34)return;
-      const inward=between(4.9,7.4),x=rim.x-rim.nx*inward,z=rim.z-rim.nz*inward;
+      const inward=between(7.3,8.7),x=rim.x-rim.nx*inward,z=rim.z-rim.nz*inward;
       if(ratsNestGround(x,z)<CUT.depth*.8||Math.abs(z-ROAD.z)<ROAD.half+1.2&&x<-10||Math.hypot(x-L.drain.from,z-L.drain.z)<2.6)return;
       const size=between(.22,.62)*(random()<.12?1.7:1),y=ground(x,z)+size*.3;
-      if(random()<.2){
-        box('earth',size*1.8,size*.8,size*1.2,P.concrete.clone().multiplyScalar(between(.75,1)),x,y,z,[between(-.5,.5),between(0,3),between(-.5,.5)]);
-        bar('frame',[x,y,z],[x+between(-.5,.5),y+between(.3,.7),z+between(-.5,.5)],.016,P.iron);
-      }else{
-        stone(size*1.25,placed(x,y,z,between(0,6),between(-.4,.4),between(-.4,.4)),(index%3?P.rock:P.scree).clone().multiplyScalar(between(.62,.9)));
-      }
+      settle('rubble-' + index, () => {
+        if(random()<.2){
+          box('earth',size*1.8,size*.8,size*1.2,P.concrete.clone().multiplyScalar(between(.75,1)),x,y,z,[between(-.5,.5),between(0,3),between(-.5,.5)]);
+          bar('frame',[x,y,z],[x+between(-.5,.5),y+between(.3,.7),z+between(-.5,.5)],.016,P.iron);
+        }else{
+          stone(size*1.25,placed(x,y,z,between(0,6),between(-.4,.4),between(-.4,.4)),(index%3?P.rock:P.scree).clone().multiplyScalar(between(.62,.9)));
+        }
+      });
     });
   }
 
   // Every wreck of the layout: the pen's ring, the ones about the yard and the ones bedded in the walls.
-  const wreckAt=(row,pose,options,extra=placed(0,0,0))=>within(placed(row.x,ground(row.seat?.x??row.x,row.seat?.z??row.z),row.z,row.heading).multiply(extra),()=>drawWreck(kit,CAR_STYLES[row.style],row.seed+pose,{...options,close:['yard-2','yard-4','pen-1','pen-9'].includes(row.id)}));
-  for(const row of L.wrecks){
+  const wreckAt = (row, pose, options, extra = placed(0,0,0)) =>
+    within(placed(row.x, ground(row.x,row.z), row.z, row.heading).multiply(extra),
+      () => drawWreck(kit, CAR_STYLES[row.style], row.seed + pose, options));
+
+  function crushedCar(row, paint, y, yaw = 0) {
+    const data = scrapyardWrecks[paint], style = CAR_STYLES[row.style];
+    const hull = new THREE.BufferGeometry();
+    hull.setAttribute('position', new THREE.Float32BufferAttribute(data.positions, 3));
+    hull.setAttribute('uv', new THREE.Float32BufferAttribute(data.uv, 2));
+    hull.setIndex(data.indices);
+    hull.scale(style.width / 1.8, 1, style.length / 4.2);
+    within(placed(0, y, 0, yaw), () => keep('wreck', hull));
+  }
+  for (const row of L.wrecks) settle(row.id, () => {
     const style=CAR_STYLES[row.style],random=mulberry(row.seed^0x51ed),between=(low,high)=>low+(high-low)*random();
     // On its side, a wreck of the pen turns its roof to the yard outside, and one against a wall turns its roof to the middle.
     const out=row.pen?[row.x-L.pen.x,row.z-L.pen.z]:[-row.x,-row.z],way=-Math.sign(Math.cos(row.heading)*out[0]-Math.sin(row.heading)*out[1])||1;
     const onSide=()=>wreckAt(row,1,{wheels:false},placed(0,style.width/2-.06,0,0,0,way*(Math.PI/2+between(-.08,.08))));
     const upright=(options={})=>wreckAt(row,0,options,placed(0,-.17,0,0,between(-.03,.03),between(-.04,.04)));
     const second=()=>wreckAt({...row,style:STYLE_NAMES[(STYLE_NAMES.indexOf(row.style)+1)%STYLE_NAMES.length]},7,{wheels:false},placed(between(-.15,.15),style.roof-.52,between(-.3,.3),between(-.25,.25),between(-.1,.1),between(-.12,.12)));
+    if (['pen-1','pen-9','yard-2','yard-4'].includes(row.id)) {
+      const paint = row.id === 'pen-1' || row.id === 'yard-2' ? 'red' : 'brown';
+      on(row.x, row.z, row.heading, () => {
+        if (row.pose === 'blocks') {
+          for (const x of [-.62,.62]) for (const z of [-1.1,1.1])
+            box('frame', .38, .26, .55, P.timber[1], x, .13, z);
+        }
+        if (row.pose === 'stack') {
+          kit.stackWrecks(row.id, () => crushedCar(row, paint, 0),
+            () => crushedCar(row, paint === 'red' ? 'brown' : 'red', .85, -.065));
+        } else crushedCar(row, paint, row.pose === 'blocks' ? .26 : 0);
+      });
+      return;
+    }
     if(row.pose==='side')onSide();
-    else if(row.pose==='stack'){upright({wheels:false});second();}
+    else if (row.pose === 'stack') {
+      kit.stackWrecks(row.id, () => upright({wheels:false}), second);
+    }
     else if(row.pose==='wire'){
       upright();
       // Bars driven down through the roof, with three strands of wire along them.
@@ -671,13 +744,16 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
         }
       });
     }else if(row.pose==='bonnet')upright({bonnet:'up'});
-    else if(row.pose==='blocks'){
-      // Up on drums and timber with its wheels off, half stripped.
-      wreckAt(row,0,{bonnet:'off',wheels:false},placed(0,.28,0,0,.02,-.03));
-      on(row.x,row.z,row.heading,()=>{for(const [x,z] of [[-.7,1.4],[.7,1.4],[-.7,-1.4],[.7,-1.4]])for(let layer=0;layer<3;layer++)for(const off of [-.17,.17])box('frame',layer%2?.56:.13,.14,layer%2?.13:.56,P.timber[(layer+(x>0))%3],x+(layer%2?0:off),.07+layer*.145,z+(layer%2?off:0),[0,between(-.12,.12),between(-.02,.02)]);tyre(1.5,.12,.6,[0,0,0]);tyre(1.55,.34,.7,[.1,0,.08]);});
-    }else if(row.pose==='bedded')wreckAt(row,0,{wheels:false,bonnet:random()<.3?'off':'shut'},placed(0,row.lift,0,0,row.pitch,row.roll));
+    else if (row.pose === 'bedded') {
+      const dx = Math.sin(row.heading), dz = Math.cos(row.heading);
+      const drop = ground(row.x-dx,row.z-dz) - ground(row.x+dx,row.z+dz);
+      // Only the crushed nose breaks through the cut face; the tail stays in the bank.
+      const pitch = clamp(Math.atan2(drop,2), .035, .13);
+      within(placed(row.x,ground(row.x,row.z),row.z,row.heading,pitch,row.roll),
+        () => crushedCar(row, row.seed % 2 ? 'red' : 'brown', 0));
+    }
     else upright({bonnet:random()<.4?'off':'shut'});
-  }
+  });
 
   // What lies about the yard: tyres, lengths of pipe, sheets of tin, planks and stones, kept off the things that stand and off the named spots.
   {
@@ -689,27 +765,29 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       const x=between(-17,17),z=between(-40,40),kind=piece%6;
       if(!free(x,z,kind===1||kind===2?1.4:.6))continue;
       const y=ground(x,z),turn=between(0,6.28);piece++;
-      if(kind===0)tyre(x,y+.1,z,[between(-.08,.08),turn,between(-.08,.08)],between(.3,.36),.11,.9);
-      else if(kind===1)within(placed(x,y+.045,z,turn,between(-.03,.03),0),()=>ribbed('sheet',[-.45,0,-between(.6,1.1)],[.45,0,-between(.6,1.1)],[-.45,between(0,.08),between(.5,1)],[.45,0,between(.5,1)],P.tin[piece%P.tin.length],{ragged:.2,random}));
-      else if(kind===2)tube('frame',[x,y+.04,z],[x+Math.sin(turn)*between(1,2.4),y+between(.04,.16),z+Math.cos(turn)*between(1,2.4)],between(.025,.05),piece%4?P.iron:P.rust[2],5);
-      else if(kind===3)box('frame',between(.12,.2),.035,between(.9,2),P.timber[piece%3],x,y+.03,z,[between(-.02,.02),turn,0]);
-      else if(kind===4)stone(between(.1,.28),placed(x,y+.05,z,turn,between(-.4,.4),0),P.rock.clone().multiplyScalar(between(.6,.85)));
-      else box('frame',.16,between(.2,.3),.12,(piece%4?P.rust[piece%6]:P.paint[piece%5]).clone().multiplyScalar(.8),x,y+.12,z,[between(-.2,1.5),turn,between(-.1,.1)]);
+      settle(['tyre','sheet','pipe','plank','stone','scrap'][kind] + '-' + piece, () => {
+        if(kind===0)tyre(x,y+.1,z,[between(-.08,.08),turn,between(-.08,.08)],between(.3,.36),.11,.9);
+        else if(kind===1)within(placed(x,y+.045,z,turn,between(-.03,.03),0),()=>ribbed('sheet',[-.45,0,-between(.6,1.1)],[.45,0,-between(.6,1.1)],[-.45,between(0,.08),between(.5,1)],[.45,0,between(.5,1)],P.tin[piece%P.tin.length],{ragged:.2,random}));
+        else if(kind===2)tube('frame',[x,y+.04,z],[x+Math.sin(turn)*between(1,2.4),y+between(.04,.16),z+Math.cos(turn)*between(1,2.4)],between(.025,.05),piece%4?P.iron:P.rust[2],5);
+        else if(kind===3)box('frame',between(.12,.2),.035,between(.9,2),P.timber[piece%3],x,y+.03,z,[between(-.02,.02),turn,0]);
+        else if(kind===4)stone(between(.1,.28),placed(x,y+.05,z,turn,between(-.4,.4),0),P.rock.clone().multiplyScalar(between(.6,.85)));
+        else box('frame',.16,between(.2,.3),.12,(piece%4?P.rust[piece%6]:P.paint[piece%5]).clone().multiplyScalar(.8),x,y+.12,z,[between(-.2,1.5),turn,between(-.1,.1)]);
+      });
     }
   }
 
   // Stacks of tyres, and drums.
-  for(const stack of L.tyreStacks)on(stack.x,stack.z,0,()=>{
+  for(const [id,stack] of L.tyreStacks.entries())settle('stack-' + id, () => on(stack.x,stack.z,0,()=>{
     const random=mulberry(stack.seed),between=(low,high)=>low+(high-low)*random();
     for(let index=0;index<stack.count;index++)tyre(between(-.07,.07),.115+index*.225,between(-.07,.07),[between(-.06,.06),between(0,3),between(-.06,.06)],between(.31,.36));
     if(stack.plug)bar('frame',[.1,0,.1],[between(-.2,.2),stack.count*.23+.9,between(-.2,.2)],.03,P.iron);
-  });
-  for(const row of L.drums)on(row.x,row.z,0,()=>{
+  }));
+  for(const [id,row] of L.drums.entries())settle('drum-' + id, () => on(row.x,row.z,0,()=>{
     const random=mulberry(row.seed),colour=(random()<.5?P.rust[Math.floor(random()*P.rust.length)]:P.paint[Math.floor(random()*P.paint.length)]).clone().multiplyScalar(.8);
     if(row.lying)drum(0,.3,-.44,colour,[Math.PI/2,random()*3,0]);else drum(0,0,0,colour,[(random()-.5)*.08,random()*6,(random()-.5)*.08]);
-  });
+  }));
   // Heaps of scrap: a low mound of rust with pipe, sheet and a tyre or two standing out of it.
-  for(const [heapIndex,heap] of L.heaps.entries())on(heap.x,heap.z,0,()=>{
+  for(const [heapIndex,heap] of L.heaps.entries())settle('heap-' + heapIndex, () => on(heap.x,heap.z,0,()=>{
     const random=mulberry(heap.seed),between=(low,high)=>low+(high-low)*random();
     // Several rounded mounds run together, as a heap is (docs/ART_LINE.md), not one cone.
     const mounds=[0,1,2,3].map(index=>({x:index?between(-.5,.5)*heap.radius:0,z:index?between(-.5,.5)*heap.radius:0,reach:heap.radius*between(.42,.62),high:heap.height*(index?between(.5,.85):1)}));
@@ -732,7 +810,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       }
     }
 
-  });
+  }));
 
   // The pen's gate: two leaves of angle iron and bed mesh with a car door wired to each, hung on leaning posts, and the chain.
   on(L.pen.gate.x,L.pen.gate.z,0,()=>{
@@ -772,10 +850,10 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
       const x0=a.x+(b.x-a.x)*u,z0=a.z+(b.z-a.z)*u,x1=far[0][0]+(far[1][0]-far[0][0])*u,z1=far[0][1]+(far[1][1]-far[0][1])*u;
       return [x0+(x1-x0)*v,y+2.25-.45*v-.5*Math.sin(u*Math.PI)*Math.sin(v*Math.PI)-.08*lump(Math.round(u*5),Math.round(v*4),3),z0+(z1-z0)*v];
     },P.cloth[0]);
-    for(let rag=0;rag<4;rag++){
+    for(let rag=0;rag<4;rag++) settle('rag-' + rag, () => {
       const angle=between(3.4,5.8),reach=between(3.6,5),x=pen.x+Math.cos(angle)*reach,z=pen.z+Math.sin(angle)*reach,turn=between(0,3);
       surface('sheet',2,2,(u,v)=>[x+(u-.5)*1.5*Math.cos(turn)-(v-.5)*.8*Math.sin(turn),y+.03+.04*lump(Math.round(u*2)+rag,Math.round(v*2),4),z+(u-.5)*1.5*Math.sin(turn)+(v-.5)*.8*Math.cos(turn)],P.cloth[1+rag%4].clone().multiplyScalar(.7));
-    }
+    });
     tube('frame',[pen.drum.x+.2,y+.9,pen.drum.z],[pen.drum.x+.26,y+1.25,pen.drum.z+.05],.01,P.tube,4);
   }
 
@@ -787,22 +865,26 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     bar('frame',[-w-.2,row.low+.02,d],[w+.2,corners[3][2]+.02,d],.07,P.timber[1]);bar('frame',[-w-.2,row.high+.02,-d],[w+.2,corners[1][2]+.02,-d],.07,P.timber[0]);
     // Three or four sheets side by side, each its own length and colour, one of them slipped.
     const sheets=Math.round(row.wide/1.25);
-    for(let sheet=0;sheet<sheets;sheet++){
-      const x0=-w-.25+sheet*(row.wide+.5)/sheets,x1=x0+(row.wide+.5)/sheets+.08,slip=sheet===1?.28:0,over=between(.25,.6);
-      const yAt=(x,z)=>{const u=(x+w)/row.wide,back=row.high+(corners[1][2]-row.high)*u,front=row.low+(corners[3][2]-row.low)*u;return back+(front-back)*(z+d)/row.deep+.07;};
-      ribbed('sheet',[x1,yAt(x1,d+over)-slip*.2,d+over+slip],[x0,yAt(x0,d+over)-slip*.2,d+over+slip],[x1,yAt(x1,-d-.2),-d-.2+slip],[x0,yAt(x0,-d-.2),-d-.2+slip],P.tin[(sheet+row.seed)%P.tin.length],{ragged:.12,sag:between(.02,.07),random});
-    }
+    observe(row.id + '/support', () => {
+      for(let sheet=0;sheet<sheets;sheet++){
+        const x0=-w-.25+sheet*(row.wide+.5)/sheets,x1=x0+(row.wide+.5)/sheets+.08,slip=sheet===1?.28:0,over=between(.25,.6);
+        const yAt=(x,z)=>{const u=(x+w)/row.wide,back=row.high+(corners[1][2]-row.high)*u,front=row.low+(corners[3][2]-row.low)*u;return back+(front-back)*(z+d)/row.deep+.07;};
+        ribbed('sheet',[x1,yAt(x1,d+over)-slip*.2,d+over+slip],[x0,yAt(x0,d+over)-slip*.2,d+over+slip],[x1,yAt(x1,-d-.2),-d-.2+slip],[x0,yAt(x0,-d-.2),-d-.2+slip],P.tin[(sheet+row.seed)%P.tin.length],{ragged:.12,sag:between(.02,.07),random});
+      }
+    });
     // Stones and a tyre hold the roof down.
-    tyre(between(-w*.5,w*.5),(row.high+row.low)/2+.2,between(-.4,.4),[(row.low-row.high)/row.deep*-.9,0,0]);
-    stone(.2,placed(between(-w,w)*.7,(row.high+row.low)/2+.16,between(-.3,.6),between(0,3),.2,.1),P.rock.clone().multiplyScalar(.75));
+    observe(row.id + '/tyre', () => tyre(between(-w*.5,w*.5),(row.high+row.low)/2+.2,between(-.4,.4),[(row.low-row.high)/row.deep*-.9,0,0]));
+    observe(row.id + '/stone', () => stone(.2,placed(between(-w,w)*.7,(row.high+row.low)/2+.16,between(-.3,.6),between(0,3),.2,.1),P.rock.clone().multiplyScalar(.75)));
     // The side the wind comes from is closed with a tarpaulin that sags between its ties.
     surface('sheet',1,4,(u,v)=>[w+.04+.1*Math.sin(v*Math.PI*3),row.low*(1-u)*.98+(u?.12:0)+(row.high-row.low)*(1-v)*(1-u)*.9,-d+v*row.deep],P.cloth[row.seed%P.cloth.length].clone().multiplyScalar(.85));
     if(row.workshop){
       // A bench of planks on drums, a vice, a rack of spare tyres and cans of fuel.
-      box('frame',2.6,.06,.7,P.timber[0],-.3,.92,-d+.5,[0,0,.015]);drum(-1.3,0,-d+.5,P.rust[2]);drum(.7,0,-d+.5,P.paint[3].clone().multiplyScalar(.7));
+      box('frame',2.6,.06,.7,P.timber[0],-.3,.92,-d+.5,[0,0,.015]);
+      settle('bench-drum-left', () => drum(-1.3,0,-d+.5,P.rust[2]));
+      settle('bench-drum-right', () => drum(.7,0,-d+.5,P.paint[3].clone().multiplyScalar(.7)));
       box('frame',.16,.2,.24,P.iron,.4,1.05,-d+.6);bar('frame',[.4,1.14,-d+.5],[.4,1.14,-d+.95],.02,P.tube);
-      for(let spare=0;spare<4;spare++)tyre(w-.5,.34+spare*.02,d-.4-spare*.26,[Math.PI/2-.14,0,0]);
-      for(let can=0;can<3;can++)box('frame',.17,.46,.34,(can%2?P.paint[2]:P.rust[4]).clone().multiplyScalar(.8),-w+.4+can*.28,.23,d-.5,[0,between(-.4,.4),0]);
+      for(let spare=0;spare<4;spare++)settle('workshop-tyre-' + spare, () => tyre(w-.5,.34+spare*.02,d-.4-spare*.26,[Math.PI/2-.14,0,0]));
+      for(let can=0;can<3;can++)settle('fuel-can-' + can, () => box('frame',.17,.46,.34,(can%2?P.paint[2]:P.rust[4]).clone().multiplyScalar(.8),-w+.4+can*.28,.23,d-.5,[0,between(-.4,.4),0]));
     }else{
       // A bed roll on a pallet of slats, and a crate.
       for(let slat=0;slat<5;slat++)box('frame',.09,.03,1.9,P.timber[slat%3],-w+.5+slat*.2,.14,-d+1.1,[0,between(-.03,.03),0]);
@@ -834,12 +916,15 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     box('sheet',.04,.9,1.3,P.paint[0].clone().multiplyScalar(.8),w+.05,1.3,-.5,[0,0,.03]);
     ribbed('sheet',[-w-.05,.9,.2],[-w-.05,.85,1.3],[-w-.05,1.9,.2],[-w-.05,1.95,1.3],P.tin[5],{random});
     // The roof: four sheets with their ribs running down the fall, the front edge over the porch beam.
-    for(let sheet=0;sheet<4;sheet++){
-      const x0=-w-.3+sheet*(L.shack.wide+.6)/4,x1=x0+(L.shack.wide+.6)/4+.08,lift=sheet%2*.035;
-      ribbed('sheet',[x0,front+.14+lift,d+.55],[x1,front+.14+lift,d+.55],[x0,back+.04+lift,-d-.35],[x1,back+.04+lift,-d-.35],P.tin[(sheet*3+1)%P.tin.length],{ragged:.14,sag:between(.03,.08),random});
-    }
-    for(const [x,z] of [[-1.6,.4],[1.2,-.9],[.3,1.2]])tyre(x,top(z)+.3,z,[-.14,0,0]);
-    stone(.24,placed(-.6,top(-1)+.24,-1,.6,.1,-.1),P.rock.clone().multiplyScalar(.75));
+    observe('shack/support', () => {
+      for(let sheet=0;sheet<4;sheet++){
+        const x0=-w-.3+sheet*(L.shack.wide+.6)/4,x1=x0+(L.shack.wide+.6)/4+.08,lift=sheet%2*.035;
+        ribbed('sheet',[x0,front+.14+lift,d+.55],[x1,front+.14+lift,d+.55],[x0,back+.04+lift,-d-.35],[x1,back+.04+lift,-d-.35],P.tin[(sheet*3+1)%P.tin.length],{ragged:.14,sag:between(.03,.08),random});
+      }
+    });
+    for(const [id,[x,z]] of [[-1.6,.4],[1.2,-.9],[.3,1.2]].entries())
+      observe('shack/tyre-'+id, () => tyre(x,top(z)+.19,z,[-.14,0,0]));
+    observe('shack/stone', () => stone(.24,placed(-.6,top(-1)+.24,-1,.6,.1,-.1),P.rock.clone().multiplyScalar(.75)));
     bar('frame',[-w-.3,front+.08,d+.05],[w+.3,front+.06,d+.05],.09,P.timber[0]);bar('frame',[-w-.3,back+.02,-d-.05],[w+.3,back,-d-.05],.09,P.timber[1]);
     // The stovepipe, up through the back of the roof with a bend and a cowl.
     tube('frame',[1.5,1.2,-d+.6],[1.5,top(-d+.6)+.9,-d+.6],.085,P.iron,7);tube('frame',[1.5,top(-d+.6)+.9,-d+.6],[1.62,top(-d+.6)+1.35,-d+.5],.085,P.iron,7);
@@ -935,10 +1020,39 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     for(const z of [-1.05,-.1]){const over=[[-.62,.47,z],[-.66,1.2,z],[-.2,1.98,z],[.2,2,z],[.66,1.2,z],[.62,.47,z]];for(let index=0;index<over.length-1;index++)tube('frame',over[index],over[index+1],.011,P.rope,4);}
   });
 
+  // Six parked buggies. The open cages, staggered wheel sizes and exposed rear
+  // motors are visible from above. The noses point down each bay's own heading.
+  for (const [i, bay] of L.bays.entries()) settle('buggy-' + (i+1), () => on(bay.x, bay.z, bay.heading, () => {
+    const paint = [P.paint[1], P.rust[1], P.paint[0], P.tin[2], P.paint[4], P.tin[5]][i];
+    for (const side of [-1,1]) {
+      for (const [z, radius] of [[1.05,.38],[-1.05,.47]]) {
+        const x = side * .89;
+        tyre(x, radius, z, [0,0,Math.PI/2], radius, .14, 1.28);
+        tube('frame',[x-side*.12,radius,z],[x+side*.135,radius,z], radius*.44, P.iron, 8);
+        bar('frame',[side*.41,.41,z+.3],[x,radius,z],.07,P.tube);
+      }
+      const rail = [[side*.45,.55,1.64],[side*.56,.76,.47],[side*.48,1.52,-.02],
+        [side*.47,1.58,-.67],[side*.6,.68,-1.44]];
+      for (let j=1;j<rail.length;j++) tube('frame',rail[j-1],rail[j],.045,P.tube,6);
+      bar('frame',[side*.64,.45,.85],[side*.65,.5,-1.4],.08,P.iron);
+      bar('frame',[side*.59,.53,.54],[side*.47,1.58,-.67],.046,paint);
+    }
+    for (const [y,z] of [[1.52,-.02],[1.58,-.67],[.53,1.65]]) bar('frame',[-.47,y,z],[.47,y,z],.06,P.tube);
+    surface('sheet',4,2,(u,v)=>[(u-.5)*(.9+.2*v),.56+.21*v+.08*Math.sin(Math.PI*u),1.62-1.15*v],paint);
+    surface('sheet',2,1,(u,v)=>[(u-.5)*.98,1.54+.06*v+.04*Math.sin(Math.PI*u),-.02-v*.64],paint);
+    box('frame',.81,.12,1.22,P.iron,0,.39,-.16);
+    box('frame',.55,.57,.14,P.burnt,0,.79,-.55,[-.18,0,0]);
+    box('frame',.67,.44,.56,P.iron,0,.61,-1.16);
+    for (const side of [-1,1]) {
+      tube('frame',[side*.25,.66,-1.12],[side*.41,.91,-1.49],.053,P.rust[3],6);
+      tube('frame',[side*.38,.68,1.43],[side*.38,.69,1.5],.109,P.tin[1],8);
+    }
+  }));
+
   // The drain: the pipe from the yard to the gully, a broken concrete face round its mouth with two wing walls, and a rusted grating
   // that has been bent back and left hanging.
   {
-    const drain=L.drain,y=floorY,outer=drain.inner+drain.shell,length=drain.length+.9,middle=(drain.from+drain.to)/2;
+    const drain=L.drain,y=ground(L.spots['drain-in'].x,drain.z),outer=drain.inner+drain.shell,length=drain.length+.9,middle=(drain.from+drain.to)/2;
     const shell=new THREE.CylinderGeometry(outer,outer,length,14,1,true),bore=new THREE.CylinderGeometry(drain.inner,drain.inner,length,14,1,true);
     bore.scale(-1,1,1);bore.index.array.reverse();
     for(const geometry of [shell,bore]){geometry.rotateZ(Math.PI/2);geometry.translate(middle,y+drain.inner-.04,drain.z);keep('earth',geometry,geometry===bore?P.stain:P.concrete);}
@@ -970,9 +1084,19 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   const flames=[],embers=[];
   for(const [index,fire] of L.fires.entries())on(fire.x,fire.z,0,()=>{
     const random=mulberry(fire.seed),between=(low,high)=>low+(high-low)*random();
-    for(let layer=0;layer<5;layer++)tyre(between(-.12,.12)+layer*.03,.1+layer*.2,between(-.12,.12),[between(-.12,.12),between(0,3),between(-.1,.1)],.34,layer<2?.07:.115,layer<2?.6:1);
-    for(let lying=0;lying<3;lying++){const angle=between(0,6.28);tyre(Math.cos(angle)*.75,.14,Math.sin(angle)*.75,[between(.9,1.3),angle,0],.33,.11);}
-    for(let wire=0;wire<4;wire++){const angle=between(0,6.28);const ring=new THREE.TorusGeometry(.3,.008,3,9);ring.rotateX(Math.PI/2+between(-.5,.5));ring.translate(Math.cos(angle)*between(.4,1.1),.04,Math.sin(angle)*between(.4,1.1));keep('frame',ring,P.iron);}
+    settle('fire-stack-' + index, () => {
+      for(let layer=0;layer<5;layer++)tyre(between(-.12,.12)+layer*.03,.1+layer*.2,between(-.12,.12),[between(-.12,.12),between(0,3),between(-.1,.1)],.34,layer<2?.07:.115,layer<2?.6:1);
+    });
+    for (let i=0;i<3;i++) settle('fire-tyre-' + index + '-' + i, () => {
+      const angle=between(0,6.28);
+      tyre(Math.cos(angle)*.75,.14,Math.sin(angle)*.75,[between(.9,1.3),angle,0],.33,.11);
+    });
+    for (let i=0;i<4;i++) settle('fire-wire-' + index + '-' + i, () => {
+      const angle=between(0,6.28), ring=new THREE.TorusGeometry(.3,.008,3,9);
+      ring.rotateX(Math.PI/2+between(-.5,.5));
+      ring.translate(Math.cos(angle)*between(.4,1.1),.04,Math.sin(angle)*between(.4,1.1));
+      keep('frame',ring,P.iron);
+    });
     const glow=new THREE.CylinderGeometry(.42,.6,.16,9);glow.translate(0,.2,0);keep('glow',glow,new THREE.Color(1.5,.42,.07));
     embers.push({x:fire.x,z:fire.z});
     for(const [dx,dz,wide,tall] of [[0,0,1.5,2.7],[-.32,.12,.95,1.6],[.3,-.1,1,1.8]])flames.push({x:fire.x+dx,y:ground(fire.x,fire.z)+.35,z:fire.z+dz,wide,tall,seed:index*.31+dx});
@@ -1024,58 +1148,80 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     for (let i = 0; i < vertices.count; i++) {
       const x = vertices.getX(i), z = vertices.getZ(i), grain = lump(x,z,41);
       const weight = smooth((insideRim(x,z)-CUT.run-.2)/1.8);
-      vertices.setY(i,ground(x,z)+.032);
+      vertices.setY(i,ground(x,z)+.052);
       uv.setXY(i,.25+(grain-.5)*.12,.25+(lump(x,z,9)-.5)*.12);
       const tint = .82 + grain * .23;
       rgba.push(dust.r*tint,dust.g*tint,dust.b*tint,weight*.96);
     }
     floorCoat.setAttribute('color',new THREE.Float32BufferAttribute(rgba,4));
     keep('marks',floorCoat);
+    for (const row of [...L.bays,...L.wrecks.filter(wreck => wreck.pose !== 'bedded')])
+      mark('soft','marks',row.x,row.z,row.heading,4.8,2.5,P.soot,.48);
     for(const bay of L.bays){
       mark('spill','marks',bay.x+between(-.3,.3),bay.z+between(-.2,.9),between(0,3),between(1.5,2.4),between(1.2,1.9),P.oil);
       if(random()<.6)mark('spill','marks',bay.x+between(-.7,.7),bay.z-between(.6,1.6),between(0,3),between(.6,1.1),between(.5,.9),P.oil,.8);
-      for(const side of [-.69,.69])mark('track','marks',bay.x+side,bay.z-4.2,0,11,.31,P.track,.68);
     }
-    const start = ROAD.top-5, end = ROAD.foot+7;
-    for (const side of [-.84,.84]) mark('track','marks',(start+end)/2,ROAD.z+side,Math.PI/2,end-start,.45,P.track,.81);
-    for (const spread of [-.34,.02,.38]) for (const side of [-.84,.84]) {
-      mark('track','marks',start-2.8*Math.cos(spread),ROAD.z+side+2.8*Math.sin(spread),Math.PI/2-spread,5.7,.39,P.track,.57);
+    // The two wheels follow the same centreline. Offset perpendicular to its
+    // tangent at each sample so the gauge stays constant through a turn.
+    function trail(way, offsets, halfWidth, colour, opacity, seed) {
+      const curve = new THREE.SplineCurve(way.map(([x,z]) => new THREE.Vector2(x,z)));
+      const path = curve.getSpacedPoints(Math.ceil(curve.getLength()/1.15));
+      const lane = offsets.length > 1;
+      const bands = lane ? [-1,1] : [-1,-.30,.30,1];
+      for (const offset of offsets) {
+        const pos = [], uv = [], rgba = [], index = [];
+        for (let i = 0; i < path.length; i++) {
+          const point = path[i];
+          const tangent = path[Math.min(i+1,path.length-1)].clone().sub(path[Math.max(0,i-1)]).normalize();
+          const fade = smooth(Math.min(i,path.length-1-i)/(lane ? 5 : 2));
+          const grain = lump(i,17,seed), width = halfWidth*(.73+.48*grain);
+          for (const across of bands) {
+            const reach = offset + across*width;
+            const x = point.x - tangent.y*reach, z = point.y + tangent.x*reach;
+            pos.push(x,ground(x,z)+(lane ? .105 : .085),z);
+            uv.push(lane ? .75+across*.245 : .24+grain*.04,.23+.12*lump(i,3,seed));
+            rgba.push(colour.r,colour.g,colour.b,!lane && Math.abs(across)===1 ? 0 : fade*opacity*(.33+.67*grain));
+          }
+          if (i === 0) continue;
+          for (let j=0;j<bands.length-1;j++) {
+            const a = (i-1)*bands.length+j, b = a+bands.length;
+            index.push(a,a+1,b,a+1,b+1,b);
+          }
+        }
+        const strip = new THREE.BufferGeometry();
+        strip.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+        strip.setAttribute('color',new THREE.Float32BufferAttribute(rgba,4));
+        strip.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+        strip.setIndex(index);
+        keep('marks',strip);
+      }
+    }
+    const ruts = (way, seed, strength=.74) => trail(way,[-.8,.8],.23,P.track,strength,seed);
+    ruts([[-92,27],[-80,28.8],[-66,29.4],[-49,28.6],[-27,29.3],[-18,29],[-11,26],[-6,19],[-5.7,11]],1);
+    ruts([[-89,32],[-79,29.6],[-62,29.8],[-44,29.3],[-25,28.8],[-17,27],[-10,21],[-7,11],[-6.7,-1],[-7.1,-11],[-4,-17],[1,-18.6]],2,.60);
+    ruts([[-23,29],[-16,29.5],[-13,31.2],[-10,34],[-8.5,35]],3);
+    ruts([[-8,18],[-4,12],[-.5,10],[2,7],[1,3]],4,.55);
+    for (const [i,bay] of L.bays.entries()) {
+      const x=bay.x, bend=26.9-i*.85;
+      const way = [[x,bay.z+.8],[x-.04,32],[x-.7,bend+1.2],
+        [x-2.6,bend-.6],[x-5.5,bend-.9]];
+      if (i%2 === 0) way.push([-15.1,27.7+i*.12],[-20.3,29.2]);
+      ruts(way,11+i,.53);
     }
     for(const fire of L.fires)mark('scorch','marks',fire.x,fire.z,between(0,3),4.6,4.6,P.soot,.95);
     mark('spill','marks',L.drain.from-3.4,L.drain.z,Math.PI/2,6.4,3,P.stain,.5);
     mark('spill','marks',L.shack.table.x+.4,L.shack.table.z+.5,1,2.2,1.6,P.oil,.5);
-    // Walked earth joins doorways and stopping places. The narrow dusty margins blend into the yard.
-    for (const way of [
+    // Pale compacted grit at foot traffic junctions, feathered into the dirt.
+    const walks = [
       [[L.pen.gate.x,L.pen.gate.z+1],[.3,-15],[-4,-9],[-6,-5.3]],
       [[-6,-5.3],[-4,-1],[-1,5],[-3,8.2]],
       [[-3,8.2],[-8,8.5],[-13,9]], [[-1,5],[6,2.9],[13,3.4]],
       [[.3,-15],[-3.3,-16],[-7.3,-16]], [[.3,-15],[6,-8],[13,-10]],
-      [[-3,8.2],[.2,14],[1.3,21],[5,28],[12.5,30]]
-    ]) {
-      const curve = new THREE.SplineCurve(way.map(([x,z])=>new THREE.Vector2(x,z)));
-      const path = curve.getSpacedPoints(Math.ceil(curve.getLength()/1.1)), half = between(.73,1.03);
-      const edges = path.map((p,i)=>{
-        const prev=path[Math.max(0,i-1)],next=path[Math.min(i+1,path.length-1)];
-        const normal = next.clone().sub(prev).normalize();
-        return [-1,-.62,.62,1].map(off=>{
-          const reach = off*half*(.77+.41*lump(i,way.length,4));
-          const x = p.x-normal.y*reach, z = p.y+normal.x*reach;
-          return [x,ground(x,z)+.065,z];
-        });
-      });
-      const pos=[],rgba=[],uv=[];
-      for(let row=1;row<edges.length;row++) for(let band=0;band<3;band++) {
-        for(const [i,j] of [[row-1,band],[row-1,band+1],[row,band],[row-1,band+1],[row,band+1],[row,band]]) {
-          pos.push(...edges[i][j]);uv.push(.23+.2*lump(i,j,11),.26+.13*lump(i,j,7));
-          rgba.push(P.worn.r,P.worn.g,P.worn.b,j===0||j===3?0:(.23+.15*lump(i,j,4))*Math.min(1,i/2,(edges.length-1-i)/2));
-        }
-      }
-      const ribbon=new THREE.BufferGeometry();
-      ribbon.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-      ribbon.setAttribute('color',new THREE.Float32BufferAttribute(rgba,4));
-      ribbon.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-      keep('marks',ribbon);
-    }
+      [[-3,8.2],[.2,14],[1.3,21],[5,28],[12.5,30]],
+      [[-3,8.2],[-6,15],[-9,23],[-11,30],[-12.4,34.8]],
+      [[-7.3,-16],[-10,-18],[-11,-23],[-14,-27.5]]
+    ];
+    for (const [i,way] of walks.entries()) trail(way,[0],.96,P.worn,.48,20+i);
     if(night){
       for(const fire of L.fires)mark('soft','pools',fire.x,fire.z,0,15,15,new THREE.Color(.55,.2,.045),1);
       for (const lamp of lampAt) {
@@ -1088,6 +1234,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   // Merge each material's pieces, put the wear over the scrap, and add the fires, the smoke and (at night) the lights.
   const grain=earthGrain(),marks=groundMarks();
   const materials={
+    wreck:new THREE.MeshStandardMaterial({name:'Tin Town scrapyard wrecks',roughness:.94,side:THREE.DoubleSide}),
     sheet:new THREE.MeshStandardMaterial({name:'sheet, shells and cloth',vertexColors:true,roughness:.88,metalness:.08,side:THREE.DoubleSide,flatShading:true}),
     frame:new THREE.MeshStandardMaterial({name:'poles, iron, timber and rubber',vertexColors:true,roughness:.9,metalness:.08}),
     earth:new THREE.MeshStandardMaterial({name:'cut earth, rubble, concrete and rubber',vertexColors:true,roughness:1,metalness:0,map:grain}),
@@ -1096,6 +1243,12 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     marks:new THREE.MeshStandardMaterial({name:'oil, tracks and scorch',vertexColors:true,map:marks,roughness:.85,metalness:0,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
     pools:new THREE.MeshBasicMaterial({name:'firelight on the ground',vertexColors:true,map:marks,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}),
   };
+  if (typeof document !== 'undefined') {
+    const map = new THREE.TextureLoader().load('/assets/textures/rats-nest-wrecks.jpg');
+    map.flipY = false;
+    map.colorSpace = THREE.SRGBColorSpace;
+    materials.wreck.map = map;
+  }
   // The wear reads heights from the yard's floor, so that dust and shade gather low on things that stand in the cutting.
   const floor=new THREE.Object3D();floor.name='The yard floor';floor.position.set(0,floorY,0);group.add(floor);
   const wear=createScrapWear({soot:L.fires.map(fire=>[fire.x,1,fire.z,2.4]),dustTop:1.1,paint:.7});
@@ -1104,7 +1257,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
     if(kind==='sheet'||kind==='frame')wear.apply(materials[kind]);
     const merged=mergeGeometries(list);for(const geometry of list)geometry.dispose();
     const mesh=new THREE.Mesh(merged,materials[kind]);mesh.name=`The Rats' Nest, ${materials[kind].name}`;
-    mesh.castShadow=kind==='sheet'||kind==='frame'||kind==='earth';mesh.receiveShadow=mesh.castShadow;
+    mesh.castShadow=kind==='wreck'||kind==='sheet'||kind==='frame'||kind==='earth';mesh.receiveShadow=mesh.castShadow;
     if(kind==='marks')mesh.renderOrder=1;if(kind==='pools'||kind==='glass')mesh.renderOrder=2;
     group.add(mesh);
   }
@@ -1142,7 +1295,7 @@ export function buildRatsNest({stage='day',heightAt=null,wind=WIND}={}){
   }
   const count={draws:0};group.traverse(node=>{if(node.isMesh||node.isPoints||node.isLine)count.draws++;});
   group.userData={stage,triangles:kit.triangles+flames.length*2+columns.reduce((sum, column) => sum + column.geometry.index.count / 3, 0),draws:count.draws,flames:flameMaterial,columns,lights,wear,floor,pools:materials.pools,
-    dispose(){grain.dispose();marks.dispose();group.traverse(node=>{node.geometry?.dispose();node.material?.dispose?.();});}};
+    dispose(){materials.wreck.map?.dispose();grain.dispose();marks.dispose();group.traverse(node=>{node.geometry?.dispose();node.material?.dispose?.();});}};
   return group;
 }
 

@@ -1,4 +1,4 @@
-// OPEN-LOOK-RATS-NEST, round 2: the pictures by which Claude judges the Rats' Nest on the laptop. Not a frame check.
+// OPEN-LOOK-3, round 3: the pictures by which Claude judges the Rats' Nest on the laptop. Not a frame check.
 //
 // It enters the Scablands by Hot Delivery, as tools/scenarios/scablands-things.mjs does, stands the site at its position in "Claude
 // answers" of docs/board/cards/OPEN-SITES.md (`land.at('boneyard', -150, -900)`) through tools/open-look-stand.js, which also cuts
@@ -17,6 +17,8 @@ export const PICTURES = Object.freeze([
   {name: 'rim-south', stage: 'day', from: 'rim-south', eye: 1.6},
   {name: 'drain', stage: 'day', from: 'drain-in', eye: 1.6, back: {x: -8.7, z: 1.5}},
   {name: 'gate', stage: 'day', from: 'pen-gate', eye: 1.6, back: {x: -.65, z: 1.7}},
+  // Low along the outside of the cut's westernmost square, where the land's ground meets the cut (OPEN-NEST-GROUND-2).
+  {name: 'ground-edge', stage: 'day', from: 'ground-edge', eye: .35},
   {name: 'far', stage: 'day', far: 1200, eye: 1.2},
   {name: 'road-down', stage: 'night', from: 'road-top', eye: 1.2},
   {name: 'yard', stage: 'night', from: 'pen-gate', eye: 1.6},
@@ -113,7 +115,7 @@ async function enterLand(context) {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'OPEN-LOOK-2', round: 2, quality: 'performance', budget: RATS_NEST_BUDGET, radius: RATS_NEST_LAYOUT.radius,
+  const report = {card: 'OPEN-LOOK-3', round: 3, quality: 'performance', budget: RATS_NEST_BUDGET, radius: RATS_NEST_LAYOUT.radius,
     pictures: [], stages: {}, failures: []};
   const persist = () => writeFile(join(context.outputDir, 'look-rats-nest.json'), JSON.stringify(report, null, 2) + '\n');
   try {
