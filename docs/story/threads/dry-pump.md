@@ -74,7 +74,7 @@ On foot, by the pump. The leader has the cracked valve in one hand: a brass thin
 flap inside it. The player is asked plainly, before anything begins (section 14). Here the leader is Marigold.
 
 > **Marigold:** You've come on a bad day, and you may be the one good thing in it. Our pump has stopped bringing up
-> water. It turns as well as it ever did, and nothing comes up with it.
+> water. It turns as well as it ever did, but nothing comes up with it.
 >
 > **Marigold:** *(Glasshouse only, if the player mended this pump)* The pump you mended is turning beautifully. It
 > just isn't bringing anything up with it, and beans can't drink the sound of a pump.
@@ -92,10 +92,10 @@ flap inside it. The player is asked plainly, before anything begins (section 14)
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
-| "What does the valve do?" | **Marigold:** It sits at the bottom of the pipe, under the water. It lets water come up and won't let it fall back down. With a crack in it, the pump lifts the same cupful all day and never gets it to the top. | What is being fetched, and why nothing else will do |
-| "How long will your water last?" | **Marigold:** We have two barrels and what's in the trough. That's four days of drinking, if nobody washes and nothing gets watered. **Marigold:** *(Glasshouse only)* The beans won't last four days. They'll last two. People can go thirsty and complain about it, and beans just die. | How long a promise can wait |
-| "Why can't you go yourselves?" | **Marigold:** We've a handcart and no car, and it's two days there and back on foot. People say that lamps move about inside that place at night. None of us knows how to creep past a lamp. | Somebody keeps a watch in the Mall |
-| "What will you do if nobody goes?" | **Marigold:** Then we load the cart and walk to wherever there's water, and this place goes back to the sand. We've done that before. I'd hoped we had finished doing it. | What is lost if the player says no |
+| "What does the valve do?" | **Marigold:** It sits at the bottom of the pipe, under the water, and it lets the water come up but won't let it fall back down. With a crack in it, the pump lifts the same cupful all day and never gets it to the top. | What is being fetched, and why nothing else will do |
+| "How long will your water last?" | **Marigold:** We have two barrels and what's in the trough. That's four days of drinking, if nobody washes and nothing gets watered. **Marigold:** *(Glasshouse only)* The beans won't last four days, though. They'll last two at most, because people can go thirsty and complain about it, but beans just die. | How long a promise can wait |
+| "Why can't you go yourselves?" | **Marigold:** We've a handcart and no car, and it's two days there and back on foot. People say that lamps move about inside that place at night, and none of us knows how to creep past a lamp without being seen. | Somebody keeps a watch in the Mall |
+| "What will you do if nobody goes?" | **Marigold:** Then we load the cart and walk to wherever there's water, and this place goes back to the sand. We've done that before, and I'd hoped we had finished doing it. | What is lost if the player says no |
 
 **The decision.** Two thought bubbles come first. The first is the one below when a day's outing costs the gas run, as
 it does here.
@@ -110,22 +110,21 @@ When no clock is running, or somebody has been taught the gas run, the first tho
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "I'll go to the Mall for it today." | In an act with a clock, it is the day's outing: Bess does not go for gas | *I'd better come back with it, after spending a whole day of fire on it.* | The trip (Scene 3) |
-| 2 | "I'll fetch it, but I can't go today. You'll have it within three nights." | A promise goes on the page with its night. Their water lasts four days | *A promise is easy to make this morning. I wonder what the third night will look like.* | Breaking it costs a word, said to the player's face. At the Glasshouse the beans die on the second day |
+| 1 | "I'll go to the Mall for it today." | In an act with a clock, it is the day's outing: Bess does not go for gas | *This costs me a whole day that I'd have spent on embers, so I'd better come back with it.* | The trip (Scene 3) |
+| 2 | "I'll fetch it, but I can't go today. You'll have it within three nights." | A promise goes on the page with its night. Their water lasts four days | *A promise is easy to make this morning, but I wonder how it will look on the third night.* | Breaking it costs a word, said to the player's face. At the Glasshouse the beans die on the second day |
 | 3 | "I know some people who owe me. I'll ask them to go." *(only if a people owe the player a favour)* | What they owe is spent, and the page says so. They go on foot and are back at the second dawn | *They'd be keeping my promise for me, in a place that none of us knows.* | A named draw, three in five. Sure when they have slept in the Mall. The way in is theirs, and not the player's |
-| 4 | "I'm sorry. I can't spare a day for it." | Nothing changes at Tin Town | *I wonder where they'll walk to, when the barrels are empty.* | Their word falls by one. They leave on the fifth day, and somebody speaks of it later |
+| 4 | "I'm sorry, but I can't spare a day for it." | Nothing changes at Tin Town | *I wonder where they'll walk to, when the barrels are empty.* | Their word falls by one. They leave on the fifth day, and somebody speaks of it later |
 
-> **Marigold:** *(1)* Then take the cracked one with you, so that you can match the size. Hold it up against whatever
-> you find. A valve that's a finger too wide is as much use as no valve.
+> **Marigold:** *(1)* Then take the cracked one with you, so that you can hold it up against whatever you find and match
+> the size. A valve that's a finger too wide is no more use than no valve at all.
 >
-> **Marigold:** *(2)* I'll hold you to three nights. I'll tell the others, and I'll tell them it was a promise, so
-> that they stop
-> looking at the cart. Take the cracked one with you, for the size.
+> **Marigold:** *(2)* I'll hold you to three nights. I'll tell the others that it's a promise, so that they stop looking
+> at the cart. Take the cracked one with you, so that you can match the size.
 >
-> **Marigold:** *(3)* I don't mind whose hands it comes in. I'll mind very much if it doesn't come.
+> **Marigold:** *(3)* I don't mind whose hands it comes in, but I'll mind very much if it doesn't come at all.
 >
-> **Marigold:** *(4)* I thought you might say that, and I asked anyway. You have a town to keep. Go on home, and mind
-> the road.
+> **Marigold:** *(4)* I thought you might say that, and I asked anyway. You have a town of your own to keep, so go on
+> home and mind the road.
 
 **The ledger when the player leaves.** 1: nothing yet. 2: "You promised the Glasshouse a brass valve from the Dead Mall
 within three nights." 3: the favour is spent, and the mark is "You sent friends to the Dead Mall in your place." 4: the
@@ -149,7 +148,7 @@ east front are letters as tall as a person, with some of them gone. One thought 
 | From | What is there | The thought | What it tells |
 | --- | --- | --- | --- |
 | The east front | The glass doors are gone. Two grey trucks stand beside them, and inside a light moves slowly across the floor | *Those are Ash Men's trucks, grey to the wheels, and there's a lamp moving about inside. This is one of Old Smoke's places, and somebody is awake in it.* | Who keeps the watch, and that the front is watched |
-| The north side | The sand has drifted to the top of the wall, and part of the roof has fallen in | *The sand goes right up to the roof on this side, and there's a hole where the roof fell in. I could slide down inside. I couldn't climb back up that slope carrying anything heavy.* | A way in that is not a way out |
+| The north side | The sand has drifted to the top of the wall, and part of the roof has fallen in | *The sand goes right up to the roof on this side, and there's a hole where the roof fell in. I could slide down inside, but I couldn't climb back up that slope carrying anything heavy.* | A way in that is not a way out |
 | The south side | Four lorries are nose-down in the sand in a row, pointing at the wall | *Those lorries were all driving down under the building when the sand caught them. There must be a door down there, but it's buried to the top.* | A third way exists, and cannot be used from outside |
 
 So the player knows whose place this is, and why they would stop somebody taking from it, before going in (Kyle, 11
@@ -160,18 +159,18 @@ November 2026).
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
 | "Cinder, why would the Ash Men be in the Dead Mall?" | **Cinder:** *(on the radio)* Old Smoke stores things there that he doesn't want burned or stolen. His people will have lamps on the ground floor. I never heard of them looking up, though, so I'd come at them from above. | The lamps are on the ground floor, and nobody watches from above |
-| "Rell, did your people ever reach the Dead Mall?" *(only if the Walkers are Friendly and were told of the Mall's roof)* | **Rell:** *(on the radio)* We slept in it for two nights, after you told us it had a roof. An old man under the fountain keeps a door that the grey men have never found. Go in by the roof, come down the dead stairs and knock on the door marked STAFF ONLY. | The whole way to the door, from somebody who has walked it |
+| "Rell, did your people ever reach the Dead Mall?" *(only if the Walkers are Friendly and were told of the Mall's roof)* | **Rell:** *(on the radio)* We slept in it for two nights, after you told us it had a roof. An old man under the fountain keeps a door that the grey men have never found. Go in by the roof, come down the stairs that don't move any more, and knock on the door marked STAFF ONLY. | The whole way to the door, from somebody who has walked it |
 
 **The decision** is made by going somewhere, on foot.
 
 > *I have to go in on foot, and whatever I bring out is going to be heavy.*
 >
-> *The front doors are the short way to the middle of the building. They're also where the lamps are.*
+> *The front doors are the short way to the middle of the building, but they're also where the lamps are.*
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
 | a | Walk in by the front doors | Two lamps sweeping the hall | *It's the short way, and I can see where both of the lamps are.* | The whole width of the hall, in the lamps' light. Being seen brings the alarm |
-| b | Climb the sand and go in by the roof | A slope of sand going down into the dark | *Nobody watches a roof. I'll have to find another way out, though.* | The gallery, above the lamps. There is no way back up |
+| b | Climb the sand and go in by the roof | A slope of sand going down into the dark | *Nobody watches a roof, but I'll have to find another way out.* | The gallery, above the lamps. There is no way back up |
 | c | Go in by the delivery tunnel and knock twice *(only when the way is known)* | A door in the south wall, behind the lorries | None | The corridor and the pump room, past nobody |
 
 ### Scene 4. Inside, and Mr Penny
@@ -201,9 +200,8 @@ If a lamp's light is on the player for two seconds, a guard shouts, with the cue
 Then the player runs. Out by the front doors is the end of the trip, with two grey trucks behind the car on the road
 (Scene 6). The door behind the fountain is nearer, and it opens before the player reaches it.
 
-> **Mr Penny:** This door is for staff only! I have told them, and told them. Go down the corridor and out by the
-> tunnel, and don't
-> stop to thank me.
+> **Mr Penny:** This door is for staff only, and I have told them so again and again! Go down the corridor and out by
+> the tunnel, and don't stop to thank me.
 
 He bolts it. The talk below still happens, in the corridor, but the Ash Men now know the door is there, and the shoe
 shop is closed to the player for today. The Ash Men's feud rises by one. Marks: "The Ash Men saw you in the Dead
@@ -216,7 +214,7 @@ to it. An old man in a peaked cap is behind it, with a torch that is switched of
 > at nine, and it has been after nine for thirty years.
 >
 > **Mr Penny:** My name is Mr Penny, and I'm the night watchman. You'll be a contractor, because customers never use
-> this door. Contractors sign the book.
+> this door, and contractors sign the book.
 
 He holds out a visitors' book and a pencil, and the player's name goes in it, with the cue `open.mall.book`. One
 thought comes.
@@ -236,7 +234,7 @@ shelves, where everything is brass and nothing is rusty.
 > great many other things that weren't theirs. It's in the old shoe shop now, where they keep their store.
 >
 > **Mr Penny:** You may have mine. A camp full of people needs it more than one old man needs tea. I can let a bucket
-> down into the tank on a rope. It's thirty-one steps down and thirty-one up, and I've counted them before.
+> down into the tank on a rope instead. It's thirty-one steps down and thirty-one up, and I've counted them before.
 
 **You may ask before you answer. Asking costs nothing.**
 
@@ -245,7 +243,7 @@ shelves, where everything is brass and nothing is rusty.
 | "Why are you still here?" | **Mr Penny:** Somebody has to lock up, and I have the keys. I did write and ask to be relieved. The office hasn't answered yet, but the post has been slow since the sea went. | Who he is |
 | "Who are the grey men upstairs?" | **Mr Penny:** They call themselves the Ash Men. They came in by the front doors, so I counted them as customers. I've told them twice that we're closed, and they've stayed, so now I count them as shoplifters. | What he thinks of them |
 | "Don't they know that you're here?" *(only after the question above)* | **Mr Penny:** They've never found this door. In all my years of customers, hardly anybody has looked up, and nobody at all has looked behind a sign that says STAFF ONLY. | Why the corridor is safe |
-| "How do they move their lamps?" | **Mr Penny:** They turn their lamps the way a tired man stirs soup, slowly and always the same way round. Between one lamp leaving the shoe shop and the other arriving, I can count to twenty. I've never needed more than fifteen. | The gap: a count of twenty |
+| "How do they move their lamps?" | **Mr Penny:** They turn their lamps the way a tired man stirs soup, slowly and always the same way round. Between one lamp leaving the shoe shop and the other arriving, I can count to twenty, and I've never needed more than fifteen to get across. | The gap: a count of twenty |
 | "Is there another way out?" | **Mr Penny:** Staff and contractors use the delivery tunnel. It runs from the end of this corridor to the lorry ramp on the south side. The ramp door is barred on the inside, which is why nobody has ever found it from the outside. | The way out, and the way in for next time |
 
 **The decision. This is the choice with no best answer.** One valve is safe to take and costs an old man his water.
@@ -257,9 +255,9 @@ The other costs nobody anything, unless the player is seen, and then it may cost
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "Thank you. I'll take the one from your pipe." | His tap stops. He said how he will manage | *Thirty-one steps down and thirty-one up, with a full bucket, at his age.* | He hauls his water by hand from now on, and it shows when he is next met |
+| 1 | "Thank you. I'll take the one from your pipe." | His tap stops. He said how he will manage | *He'd be climbing thirty-one steps down and thirty-one up with a full bucket, at his age.* | He hauls his water by hand from now on, and it shows when he is next met |
 | 2 | "Keep yours. I'll go up and get the other one." *(not offered if the Ash Men have found the door)* | Two lamps, and a count of twenty | *It was his before it was theirs. I'd only be taking it back.* | The shoe shop (Scene 5) |
-| 3 | "I can't take your water, and I can't get past those lamps. I'm sorry." | Nothing is taken | *I'll have to tell them at the camp that there was a valve, and that I left it there.* | The day is spent, and the camp is still dry |
+| 3 | "I'm sorry, but I can't take your water, and I can't get past those lamps." | Nothing is taken | *I'll have to tell them at the camp that there was a valve, and that I left it there.* | The day is spent, and the camp is still dry |
 
 **1. Taking his.**
 
@@ -286,14 +284,14 @@ Penny the valve from the shoe shop within five nights."
 
 **2. Going up for the other.** Scene 5.
 
-> **Mr Penny:** I hoped you'd say that, and I'd never have asked it of you. The shoe shop is the third door on the
-> left from the top of my stairs. The valve is on the counter, beside the till. Count to twenty, and be back behind
-> this door by fifteen.
+> **Mr Penny:** I hoped you'd say that, and I'd never have asked it of you. The shoe shop is the third door on the left
+> from the top of my stairs, and the valve is on the counter beside the till. You'll have a count of twenty between the
+> lamps, so try to be back behind this door by fifteen.
 
 **3. Taking neither.**
 
-> **Mr Penny:** There's no shame in that. I've been not getting past those lamps myself since last winter. Come back
-> if you change your mind. I'm here every night, and every day as well.
+> **Mr Penny:** There's no shame in that. I've been not getting past those lamps myself since last winter. Come back if
+> you change your mind, because I'm here every night, and every day as well.
 
 The player leaves by the tunnel (Scene 6) with the way learnt and no valve. One thought comes on the road.
 
@@ -317,8 +315,8 @@ than one gap. The rim of the dry fountain is the one place to crouch while a lam
 
 - **Not seen.** The door closes behind the player.
 
-  > **Mr Penny:** That was fourteen. I counted. You'd have made a very good night watchman, and I don't say that to
-  > contractors.
+  > **Mr Penny:** You were back by fourteen, and I counted every one. You'd have made a very good night watchman, and
+  > I don't say that to contractors.
 
   Mark: "You took a brass valve back from the Ash Men's store in the Dead Mall."
 - **Seen,** if a lamp's light is on the player for two seconds. The guard shouts and Mr Penny bolts the door behind
@@ -328,8 +326,8 @@ than one gap. The rim of the dry fountain is the one place to crouch while a lam
 
   > **The Ash Man:** Put that down. It's Old Smoke's, and so is everything else under this roof.
   >
-  > **The Ash Man:** Old Smoke doesn't keep thieves, because thieves have to be fed. Walk out by the front doors, and
-  > tell Tin Town who owns the Mall.
+  > **The Ash Man:** Old Smoke doesn't keep thieves prisoner, because thieves have to be fed. Walk out by the
+  > front doors, and tell Tin Town who owns the Mall.
 
   The player is walked out of the front doors with nothing. The Ash Men's feud rises by one. Marks: "The Ash Men saw
   you in the Dead Mall." "The Ash Men caught you in their store and put you out of the Dead Mall." The day is spent.
@@ -340,7 +338,7 @@ than one gap. The rim of the dry fountain is the one place to crouch while a lam
 On foot, about a minute, and then the car. Mr Penny walks the player to the end of the corridor, where a ramp goes up
 into the dark between the backs of four lorries. He lifts a bar from a door, with the cue `open.mall.bar`.
 
-> **Mr Penny:** This is the contractors' way. Remember where it comes out. Next time, knock twice on this door, so
+> **Mr Penny:** This is the contractors' way, so remember where it comes out. Next time, knock twice on this door, so
 > that I know it isn't a customer.
 >
 > **Mr Penny:** If that camp of yours has any tea, you might mention that the Seaview Centre has run rather short.
@@ -373,7 +371,7 @@ and water comes up and hits the tin trough, with the cue `open.pump.water`.
 > to that pump for two days, and they deserve some of what it brings up.
 >
 > **Marigold:** You spent a whole day on water that you'll never drink. People here will be telling that to their
-> children. The first cup is yours.
+> children, and the first cup is yours.
 >
 > **Marigold:** Where did you find it? We'd heard that the grey men had cleared that place out.
 
@@ -383,11 +381,11 @@ and water comes up and hits the tin trough, with the cue `open.pump.water`.
 | b | "An old man who lives under the Mall gave me the one out of his own pump." *(if that is where it came from)* | The truth, and all of it | None | The camp takes on part of what the valve cost |
 | c | "I found it in the pump room." *(if it was Mr Penny's)* | Nothing | *That's true, as far as it goes.* | Nobody carries water to Mr Penny |
 
-> **Marigold:** *(a)* You took it from under Old Smoke's lamps, for us? Sit down. You're not driving anywhere until
-> you've had something to eat.
+> **Marigold:** *(a)* You took it from under Old Smoke's lamps, for us? Sit down, because you're not driving anywhere
+> until you've had something to eat.
 >
-> **Marigold:** *(b)* Then somebody we've never met is hauling a bucket tonight so that we don't have to. We can't have
-> that. Our cart will stop at his door with a barrel, every time it goes out.
+> **Marigold:** *(b)* Then somebody we've never met is hauling a bucket tonight so that we don't have to, and we can't
+> have that. Our cart will stop at his door with a barrel, every time it goes out.
 
 With b, the mark is "The Glasshouse carries water to Mr Penny, because you told them whose valve it was."
 
@@ -398,7 +396,8 @@ hearth is banked, with no gas baked today.
 **Tied back,** at the hearth that night, when the day's outing cost the gas run.
 
 > **Auntie Solder:** So Bess sat in the yard all day, and tonight's ember burns with nothing baked to replace it. I'm
-> told there's a whole camp drinking tonight that wasn't going to be. I've decided not to be cross until tomorrow.
+> told there's a whole camp with water to drink tonight that wouldn't have had any. I've decided not to be cross until
+> tomorrow.
 
 **Tied back,** when Cinder hears of the shoe shop.
 
@@ -412,7 +411,7 @@ carries him water, and the second when the camp does.
 > twenty steps, and I do the rest rather slowly.
 >
 > **Mr Penny:** A cart came to the tunnel door with a barrel of water and a twist of tea. I've entered it in the book
-> under deliveries. It's the first delivery in thirty years.
+> under deliveries, and it's the first delivery in thirty years.
 
 ### When friends are sent
 
@@ -431,8 +430,8 @@ decides, at three chances in five.
 > **The friend's leader:** *(with the valve)* Here's your valve. An old man under that place made every one of us sign
 > a book before he'd part with it. We're square now, and I'd like it said that we were quick.
 >
-> **The friend's leader:** *(without it)* We got as far as the lamps and no further. I'm sorry. We've paid what we
-> owed you in walking, and your friends still have no valve.
+> **The friend's leader:** *(without it)* We got as far as the lamps and no further, and I'm sorry. We've paid what we
+> owed you in walking, but your friends still have no valve.
 
 With the valve, the player fits it (Scene 7), the camp is Sworn, and the mark is "Your friends brought a valve back
 from the Dead Mall." It was Mr Penny's own, so the choice of what to tell the camp is there. The way into the Mall is
@@ -447,15 +446,15 @@ that comes after the second day comes to dead beans, and Marigold's line about w
 
 If the third night is banked with no valve, the leader says so on the player's next visit.
 
-> **Marigold:** You said three nights, and I told the others that it was a promise. I shan't tell them that again
-> about anybody.
+> **Marigold:** You said three nights, and I told the others that it was a promise. I shan't ever tell them that about
+> anybody again.
 
 The camp's word falls by one. Mark: "You promised the Glasshouse a valve, and did not bring it in time." The cart is
 half loaded, and there is one day of water left. The choice is made by driving.
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | Drive to the Dead Mall | The cart is half loaded | *It's late, and I said it wouldn't be. It isn't too late yet.* | The trip, a day late |
+| a | Drive to the Dead Mall | The cart is half loaded | *It's later than I said it would be, but it isn't too late yet.* | The trip, a day late |
 | b | Drive home | Nothing | None | The camp leaves on the fifth day |
 
 A valve brought on that last day keeps the camp where it is, and its people are Friendly and not Sworn.
@@ -478,8 +477,8 @@ Mark: "You brought Mr Penny the other valve, and his tap runs again." If the fif
 so at the tunnel door, his word for the player falls by one, and the mark is "You promised Mr Penny a valve, and did
 not bring it."
 
-> **Mr Penny:** I've left it in the book as work outstanding. Most things in the book are. Please don't look so
-> troubled. I'm very used to waiting.
+> **Mr Penny:** I've left it in the book as work outstanding, like most things in the book. Please don't look so
+> troubled, because I'm very used to waiting.
 
 ## 6. Losing, leaving it alone, and what it changes
 
@@ -497,8 +496,8 @@ not bring it."
   "The Glasshouse packed its cart and left, because its pump was dry." Some nights later any trader says it, at the
   gate or on a road.
 
-  > **The trader:** I met a line of people on the road with a handcart, heading south for the pans. They said their
-  > pump had failed. They said somebody with a car had been to see them, too, and I didn't like to ask who.
+  > **The trader:** I met a line of people on the road with a handcart, heading south for the pans. They told me their
+  > pump had failed, and that somebody with a car had been to see them, too. I didn't like to ask who.
 
 Nobody dies, nothing saved is wiped, and no screen says the game is over.
 
