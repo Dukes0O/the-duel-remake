@@ -21,7 +21,7 @@ export function openMapMarks(world, positionOf) {
       // Each axis is 70 or 135 metres off, so even the longest diagonal is within 200 m.
       const draw = key => namedThrow(world, mark + '/' + key, .5);
       const offset = axis => (draw(axis + '/far') ? 135 : 70) * (draw(axis + '/positive') ? 1 : -1);
-      rumours.push({id: site.id, x: x + offset('east'), z: z + offset('south'), radius: 300, name: 'Said to be near here.'});
+      rumours.push({id: site.id, x: x + offset('east'), z: z + offset('south'), radius: 300, name: site.name + ' is said to be near here.'});
     }
   }
   return {driven: world.open.driven, sites, rumours};

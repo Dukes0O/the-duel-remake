@@ -1554,6 +1554,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-FIGURES-4.md"
 
+  - id: OPEN-MAP-2
+    title: "Open Scablands: driven ground reads as known land, and a found site has a place mark (round 2)"
+    owner: "codex"
+    model: "astra"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-MAP-2.md"
+
   - id: OPEN-WRITE-4
     title: "Open Scablands, written in full: Smoke over a friend when the enemy is the Ash Men, and the Grey Camp"
     owner: "claude-cloud"
