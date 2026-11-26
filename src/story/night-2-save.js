@@ -2,6 +2,7 @@ import {bankLedgerHearth, beginLedger, recordLedgerChoice, replaceLedgerNight, s
 import {replayTelling} from './ledger-replay.js';
 import {NIGHT_2_CHOICES, NIGHT_2_EFFECTS, NIGHT_2_GATE_ENCOUNTER} from './scenes/night-2.js';
 import {compactOpenJournal, OPEN_JOURNAL_LIMIT, savedOpenRecord} from '../world/open/open-save.js';
+import {featureFlags} from '../feature-flags.js';
 
 // Slice A journaled encounters and debts by key. Later versions add their
 // values, so only the old equivalent authored choices need to supply the text.
@@ -16,7 +17,7 @@ function legacyNight2Value({type, key, choiceId, after}) {
 
 // Write the example only on completion. Quit/retry keeps the chapter's
 // transient choices out of the profile, and a replay never awards salt twice.
-export function settleNight2(profile, chapter) {
+export function settleNight2(profile, chapter, {flags = featureFlags} = {}) {
   if (!chapter.completed) return {ok: false, profile, changed: false, reason: 'Finish the night before keeping it.'};
   const kept = savedLedger(profile);
   const night = chapter.opening.night;
@@ -32,7 +33,7 @@ export function settleNight2(profile, chapter) {
   }
   result = bankLedgerHearth(result.profile, chapter.opening.night);
   if (!result.ok) return {...result, profile};
-  const open = savedOpenRecord(result.profile);
+  const open = flags.enabled('story-choices') === true ? savedOpenRecord(result.profile) : null;
   if (open) {
     const {record, overflow} = compactOpenJournal(open, night, {atBank: true});
     if (record !== open) result.profile = {...result.profile, story: {...result.profile.story, open: record}};
