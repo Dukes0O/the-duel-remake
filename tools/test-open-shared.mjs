@@ -440,8 +440,10 @@ assert.equal(stepOpenLand(releaseOpenLand(open, 'thread:burned-camp'), view(0), 
 }
 // The parts as shipped by this card are empty, and stepping them changes nothing.
 assert.deepEqual(OPEN_PARTS.map(part => part.id), ['people', 'buildings', 'sites', 'checkpoints', 'threads', 'ground']);
-assert.deepEqual(PEOPLE, []);
-assert.deepEqual(TALK_TABLES, {});
+assert.deepEqual(PEOPLE.map(person => person.id), ['marigold', 'finch', 'grower-1', 'grower-2', 'grower-3', 'hetty', 'bern']);
+assert.deepEqual(Object.fromEntries(Object.entries(TALK_TABLES).map(([id, rows]) => [id, rows[0].scene])), {
+  marigold: 'glasshouse/ash', finch: 'finch/rumour', hetty: 'radio-hill/first',
+});
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);
