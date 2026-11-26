@@ -15,7 +15,8 @@ import {sweepObstacle} from '../src/collision.js';
 import {createScrapdomeYard} from '../src/scrapdome-yard.js';
 import {createRexView,bombRingOver,BOMB_RING_TONE,BOWL_FLOOR_TONES} from '../src/bowl/bowl-rex-view.js';
 import {bowlStrip, offscreenRexPull} from '../src/bowl/bowl-hud.js';
-import {createRexFight,stepRexFight,REX_RULES,REX_CUES,REX_EVENT,REX_TROPHY,rexInTheYard,rexRiseAttacks,rexLineFor} from '../src/bowl/bowl-rex.js';
+import {createRexFight,stepRexFight,REX_RULES,REX_CUES,REX_EVENT,REX_TROPHY,rexInTheYard,rexRiseAttacks,rexLineFor,REX_3_EVENTS} from '../src/bowl/bowl-rex.js';
+import {FEATURE_STATES} from '../src/feature-flags.js';
 import {eyePoint,hookMarker,modelPoint,rexAnchor,rexSolids,signedAngle,truckPoint,stepHook,releaseHook,TOW_LENGTH,wrap} from '../src/bowl/bowl-hook.js';
 import {childDrive} from './scenarios/bowl-rex-fight.mjs';
 
@@ -24,9 +25,9 @@ assert.equal(scoreStuntEvent({type:'rexBox'}, 0).points, 300);
 assert.equal(scoreStuntEvent({type:'rexFall'}, 0).points, 500);
 assert.equal(scoreStuntEvent({type:'rexBox'}, 50).points, 450);
 assert.equal(scoreStuntEvent({type:'rexFall'}, 50).points, 750);
-function start(seed=101,level='easy'){
+function start(seed=101,level='easy',rex3=false){
   const d=new Duel({seed});
-  d.featureFlags={enabled:n=>n==='titan-bowl'};
+  d.featureFlags={enabled:n=>n==='titan-bowl' || rex3 && n==='bowl-rex-3'};
   assert.ok(d.startBowlNight({night:5,eventIndex:2,cpuDifficulty:level,seed}));
   assert.equal(d.state.bowlNight.event.type,REX_EVENT);
   return d;
@@ -410,25 +411,32 @@ function modelFixture(){
   first(60);assert.equal(loads,1);
   view.dispose();
 }
-// BOWL-REX-3: the eye beam and the bombs, without driving.
+// BOWL-REX-3: the eye beam and the bombs, without driving, with its switch (`bowl-rex-3`) on.
+const make3=(difficulty='easy')=>createRexFight({difficulty,course,rex3:true});
+const tired3=(index=0,level='easy')=>Object.assign(tired(index,level),{rex3:true});
+assert.ok(Object.hasOwn(FEATURE_STATES,'bowl-rex-3'),'the beam and the bombs have a switch of their own');
+// Off, it gets up as released: a car with two boxes out, nothing else, and no beam between Medium's breaths.
+for(const level of ['easy','medium','hard'])for(const [out,owed] of [[0,[]],[1,[]],[2,['car']]]){
+  const f=make(level);f.boxes=[0,1,2].map(i=>i<out);assert.deepEqual(rexRiseAttacks(f),owed);
+}
 {
   const levels=['easy','medium','hard'];
   // No beam and no bomb before the first box is out, on any level.
   for(const level of levels){
-    const f=make(level),events=[];
+    const f=make3(level),events=[];
     for(let i=0;i<120*40 && !events.some(e=>e.type==='boxOpen');i++)events.push(...stepRexFight(f,still,dt,course));
     assert.ok(!events.some(e=>['beamAim','bombTell'].includes(e.type)),level+': nothing new before a box is out');
-    assert.deepEqual(rexRiseAttacks(make(level)),[]);
+    assert.deepEqual(rexRiseAttacks(make3(level)),[]);
   }
   // Getting up: the beam alone after the first box; with two out, Easy's bomb, beam, car and round again,
   // Medium's and Hard's bomb and car in turn, the bomb first.
-  const order=(level,out,count)=>{const f=make(level);f.boxes=[0,1,2].map(i=>i<out);return Array.from({length:count},()=>rexRiseAttacks(f).join());};
+  const order=(level,out,count)=>{const f=make3(level);f.boxes=[0,1,2].map(i=>i<out);return Array.from({length:count},()=>rexRiseAttacks(f).join());};
   for(const level of levels)assert.deepEqual(order(level,1,3),['beam','beam','beam']);
   assert.deepEqual(order('easy',2,4),['bomb','beam','car','bomb']);
   for(const level of ['medium','hard'])assert.deepEqual(order(level,2,3),['bomb','car','bomb']);
   // The same orders when it really gets up from a tired spell (the first extra event after the rise).
   const risen=(level,out,clear=true)=>{
-    const f=tired(out,level),seen=[];
+    const f=tired3(out,level),seen=[];
     for(let round=0;round<3;round++){
       Object.assign(f,{phase:'rest',low:true,t:REX_RULES.level[level].restSec,rests:1});
       if(clear)f.bomb=null;
@@ -448,7 +456,7 @@ function modelFixture(){
   // Medium and Hard, two boxes out: the beam between its two breaths; on Hard twice running, the second
   // following for 0.6 s and stopping for 0.4 s. Nothing is added while it is tired.
   for(const level of ['medium','hard']){
-    const f=tired(2,level);Object.assign(f,{phase:'fire',low:false,fires:1,t:REX_RULES.fire.seconds,
+    const f=tired3(2,level);Object.assign(f,{phase:'fire',low:false,fires:1,t:REX_RULES.fire.seconds,
       cone:{x:0,z:0,heading:0,flameHeading:0,sweep:0,halfAngle:.3,range:29}});
     const aims=[];let second=null;
     for(let i=0;i<120*12 && f.phase!=='tell';i++){
@@ -457,13 +465,13 @@ function modelFixture(){
     assert.equal(aims.length,level==='hard'?2:1,level+' beams between the breaths');
     if(level==='hard')assert.deepEqual([second.aimSec,second.lockSec],[.6,.4]);
   }
-  const resting=tired(2,'medium');resting.due=['beam'];
+  const resting=tired3(2,'medium');resting.due=['beam'];
   for(let i=0;i<120*5;i++)assert.ok(!stepRexFight(resting,still,dt,course).some(e=>['beamAim','bombTell','lift'].includes(e.type)),'nothing new while tired');
 }
 // The eye beam: a fight with one box out that has just got up, and a truck on the floor.
 const truckOn=(s,lateral,extra={})=>({s,lateral,speedMph:0,input:{},headingError:0,airHeight:0,...extra});
 function beamFight(level='easy'){
-  const f=make(level);Object.assign(f,{first:false,boxes:[true,false,false],phase:'walk',t:0,s:60,direction:1,due:['beam']});
+  const f=make3(level);Object.assign(f,{first:false,boxes:[true,false,false],phase:'walk',t:0,s:60,direction:1,due:['beam']});
   return f;
 }
 function runBeam(f,truck,move){
@@ -521,7 +529,7 @@ function bombAt(f,point,extra={}){
 {
   // It bursts when its time is up and scorches only a truck within 7 m.
   for(const [lateral,hit] of [[-6.5,true],[-7.5,false]]){
-    const f=make();Object.assign(f,{first:false,phase:'walk',t:0,s:200,direction:1});
+    const f=make3();Object.assign(f,{first:false,phase:'walk',t:0,s:200,direction:1});
     bombAt(f,{s:70,lateral:0});
     const truck=truckOn(70,lateral),events=[];
     for(let i=0;i<120*11 && f.bomb;i++)events.push(...stepRexFight(f,truck,dt,course));
@@ -529,13 +537,13 @@ function bombAt(f,point,extra={}){
     assert.ok(burst && events.filter(e=>e.type==='bombTick').length>5);
     assert.equal(burst.truck,hit);assert.equal(f.hits,hit?1:0,'a burst scorches only a truck within 7 m');
     const ticks=[];let clock=0;
-    const g=make();Object.assign(g,{first:false,phase:'walk',t:0,s:200,direction:1});bombAt(g,{s:70,lateral:0});
+    const g=make3();Object.assign(g,{first:false,phase:'walk',t:0,s:200,direction:1});bombAt(g,{s:70,lateral:0});
     for(let i=0;i<120*11 && g.bomb;i++){clock+=dt;if(stepRexFight(g,truckOn(70,-15),dt,course).some(e=>e.type==='bombTick'))ticks.push(clock);}
     assert.ok(Math.abs(clock-10)<.02,'the Easy bomb ticks for 10 seconds');
     assert.ok(ticks.at(-1)-ticks.at(-2)<(ticks[1]-ticks[0])/3,'the tick quickens');
   }
   // A bomb thrown onto the truck bursts at once, as it lands.
-  const f=make();Object.assign(f,{first:false,boxes:[true,true,false],phase:'walk',t:0,s:200,direction:1,due:['bomb']});
+  const f=make3();Object.assign(f,{first:false,boxes:[true,true,false],phase:'walk',t:0,s:200,direction:1,due:['bomb']});
   const truck=truckOn(70,0),events=[];
   for(let i=0;i<120*8 && !events.some(e=>e.type==='bombBurst');i++)events.push(...stepRexFight(f,truck,dt,course));
   assert.ok(events.some(e=>e.type==='bombTell') && events.some(e=>e.type==='bombThrow'));
@@ -545,13 +553,13 @@ function bombAt(f,point,extra={}){
 }
 {
   // The hook takes a bomb only with no open box in reach.
-  const box=tired(),truck=approach(box),from=truckPoint(course,truck);
+  const box=tired3(),truck=approach(box),from=truckPoint(course,truck);
   const ahead=modelPoint(from,0,0,8),road=d._roadPosition(ahead,truck.s);
   bombAt(box,road);
   truck.input.interact=true;
   const ev=[];for(let i=0;i<60;i++)ev.push(...stepRexFight(box,truck,dt,course));
   assert.equal(box.hook.phase,'attached');assert.ok(!box.bomb.onCable && !ev.some(e=>e.bomb));
-  const walk=make();Object.assign(walk,{first:false,phase:'walk',t:0,s:200,direction:1});
+  const walk=make3();Object.assign(walk,{first:false,phase:'walk',t:0,s:200,direction:1});
   const lone=truckOn(70,0,{headingError:0}),loneAt=truckPoint(course,lone);
   bombAt(walk,d._roadPosition(modelPoint(loneAt,0,0,10),70));
   stepRexFight(walk,lone,dt,course);
@@ -573,7 +581,7 @@ function bombAt(f,point,extra={}){
   // Sent back: a bomb on the cable within 6 m of a leg bursts there; it sags, the tired spell does not count,
   // the box that opens has a second of pull, and the truck at the cable's end is not scorched.
   for(const level of ['easy','hard']){
-    const f=make(level);Object.assign(f,{first:false,boxes:[true,true,false],phase:'walk',t:0,s:60,direction:1,rests:2});
+    const f=make3(level);Object.assign(f,{first:false,boxes:[true,true,false],phase:'walk',t:0,s:60,direction:1,rests:2});
     const shin=rexSolids(f,course).find(p=>p.id==='rex-shin1');
     const spot=modelPoint({...shin,heading:shin.heading},shin.halfX+3,0,0);
     const bomb=bombAt(f,d._roadPosition(spot,60),{onCable:true});
@@ -590,7 +598,7 @@ function bombAt(f,point,extra={}){
     assert.equal(f.rests,2);assert.equal(f.phase,'walk');
   }
   // A bomb on the cable that bursts away from the beast harms only a truck within 7 m, and is late.
-  const f=make();Object.assign(f,{first:false,boxes:[true,true,false],phase:'walk',t:0,s:200,direction:1});
+  const f=make3();Object.assign(f,{first:false,boxes:[true,true,false],phase:'walk',t:0,s:200,direction:1});
   bombAt(f,{s:70,lateral:0},{onCable:true,left:dt/2});Object.assign(f.hook,{phase:'dragging',bomb:true,box:-1});
   const ev=stepRexFight(f,truckOn(70+TOW_LENGTH,0),dt,course),burst=ev.find(e=>e.type==='bombBurst');
   assert.ok(burst && burst.onCable && !burst.beast && !burst.truck && f.hits===0);
@@ -618,8 +626,8 @@ function bombAt(f,point,extra={}){
   assert.equal(rexLineFor({type:'bombBurst',landed:true,truck:true}),'rex.why.bombLand');
   assert.equal(rexLineFor({type:'bombBurst',truck:true}),'rex.why.bombNear');
   assert.equal(rexLineFor({type:'bite',bomb:true}),'rex.bombHooked');
-  for(const type of ['beamAim','beamLock','beam','beamOver','bombTell','bombThrow','bombWhistle','bombLand','bombTick','bombBurst','stagger'])
-    assert.ok(Object.hasOwn(BOWL_SOUND_CUES,REX_CUES[type]),type+' names its cue');
+  // Each new event's cue is named (bowl-rex.js, beside REX_3_EVENTS), and plays nothing until BOWL-SOUND records it.
+  for(const type of REX_3_EVENTS)assert.ok(!Object.hasOwn(REX_CUES,type),type+' plays no stand-in');
 }
 {
   // The rings' tone: a darkening of the floor under it, 2 to 4 steps of 255 on each of red, green and blue,
@@ -629,7 +637,7 @@ function bombAt(f,point,extra={}){
     for(let k=0;k<3;k++){const step=lit[k]-ring[k];assert.ok(step>=2 && step<=4,`${name} at ${light}: ${lit} against ${ring}`);}
   }
   let loads=0;const view=createRexView({loadModel:async()=>{loads++;return {scene:new THREE.Group(),animations:[]};}});
-  const f=make();Object.assign(f,{first:false,boxes:[true,true,false],phase:'hatch',t:0,s:60,direction:1});
+  const f=make3();Object.assign(f,{first:false,boxes:[true,true,false],phase:'hatch',t:0,s:60,direction:1});
   bombAt(f,{s:80,lateral:0},{phase:'tell'});
   const state={bowlNight:{night:5,event:{type:REX_EVENT,rex:f}}};
   const land=()=>view.group.getObjectByName('Scrapasaurus bomb landing ring'),lie=()=>view.group.getObjectByName('Scrapasaurus bomb ring');
@@ -670,8 +678,8 @@ function bombAt(f,point,extra={}){
   const before=JSON.stringify(f);view.update(course,state,30000,true);assert.equal(JSON.stringify(f),before,'the view writes nothing');
   view.dispose();assert.equal(loads,1);
 }
-function drive(seed,useSpace=true,slowTween=false){
-  const duel=start(seed),s=duel.state,night=s.bowlNight,f=night.event.rex;
+function drive(seed,useSpace=true,slowTween=false,rex3=false){
+  const duel=start(seed,'easy',rex3),s=duel.state,night=s.bowlNight,f=night.event.rex;
   const rng=makeRng(seed),driver={useSpace,reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
   if(slowTween)Object.assign(driver,{slowTween:true,reaction:rng.range(.75,1.25),pace:rng.range(22,30),wobble:rng.range(.13,.23),wobblePhase:rng.range(0,6.28)});
   const trace=[], awards=[];
@@ -736,6 +744,22 @@ function drive(seed,useSpace=true,slowTween=false){
 }
 const byCause=runs=>Object.entries(runs.reduce((sum,run)=>{for(const [k,v] of Object.entries(run.scorches))sum[k]=(sum[k]||0)+v;return sum;},{}))
   .map(([k,v])=>k+' '+v).join(', ');
+// With bowl-rex-3 off the released fight is unchanged, event for event: Big Mo's lines, every Scrapasaurus event and
+// its cue, the result and the final truck, boxes, pulls and scorches of five whole fights by the child-pace driver.
+// The digest was recorded from integration/wasteland at 6f5c75f, before BOWL-REX-3.
+{
+  const {createHash}=await import('node:crypto'),digest=createHash('sha256');
+  for(const [seed,level] of [[101,'easy'],[104,'easy'],[107,'easy'],[101,'medium'],[102,'hard']]){
+    const duel=start(seed,level),s=duel.state,night=s.bowlNight,f=night.event.rex,rng=makeRng(seed);
+    const driver={useSpace:true,reaction:rng.range(.4,.75),lane:rng.range(9.7,10.4),pace:rng.range(16,19)};
+    const trace=[];
+    duel.onChange((_,ev)=>{if(ev.bowlRex)trace.push(ev.bowlRex.type+':'+(ev.bowlRex.cue??''));if(ev.bowlCaption)trace.push('mo:'+ev.bowlCaption.id);});
+    for(let i=0;i<120*400&&s.status!=='bowl_break';i++){childDrive(duel,driver);duel.step(dt);}
+    digest.update(JSON.stringify({trace,result:night.lastResult,s:s.s.toFixed(6),lat:s.lateral.toFixed(6),hits:f.hits,rests:f.rests,
+      boxes:f.boxes,pulls:f.hook.pulls.map(p=>p.toFixed(6))}));
+  }
+  assert.equal(digest.digest('hex'),'ff8709563353fbbabd00c43c120070f867ec69d4828122bc8072f3414d686c22','bowl-rex-3 off: the released fight');
+}
 if(!process.argv.includes('--rules-only')){
   const runs=Array.from({length:10},(_,i)=>drive(101+i));
   assert.deepEqual(drive(101),runs[0]);
@@ -748,5 +772,11 @@ if(!process.argv.includes('--rules-only')){
   assert.ok(backBoxes >= 6, 'the same Easy driver can pull the braced back box with throttle alone');
   const tween=Array.from({length:10},(_,i)=>drive(101+i,true,true));
   console.log('Late-reaction 22-30 mph driver wins:',tween.filter(run=>run.won).length,'of 10');
+  // BOWL-REX-3 on: the same child-pace driver over thirty seeds, crossing the line, keeping 8 m from bombs.
+  const on=Array.from({length:30},(_,i)=>drive(101+i,true,false,true));
+  const onWins=on.filter(run=>run.won).length;
+  console.log('With bowl-rex-3, Easy wins using Space:',onWins,'of 30; scorches by cause:',byCause(on));
+  assert.ok(on.every(run=>run.trace.includes('beamAim') && run.trace.includes('bombTell')),'every fight meets a beam and a bomb');
+  assert.ok(onWins>=18,'the child-pace driver still wins at least six in ten with the beam and bombs');
 }
 console.log('Scrapasaurus tow rules, continuous wall contacts, yard and read-only view passed.');

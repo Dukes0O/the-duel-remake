@@ -3,8 +3,9 @@
 // the pictures show the chest glow, followed by the fire with no floor marking,
 // and the rest with a battery box open. Then a child-pace driver in the page plays the fight to the
 // end; the results name the yard, the purse is paid once, and the yard has its Scrapasaurus.
-// BOWL-REX-3: on the way the driver meets the eye beam after the first box and a bomb after the second,
-// turning across the red line and keeping 8 m from the bomb, and still wins.
+// BOWL-REX-3, behind its own switch: with BOWL_REX_3=1 the page also turns on `bowl-rex-3`, and the driver meets
+// the eye beam after the first box and a bomb after the second, turns across the red line, keeps 8 m from the bomb,
+// and still wins. Without it the fight is the released one, and the same driver plays it as before.
 // Claude runs it on the laptop; pictures go to the evidence folder for the look.
 import assert from 'node:assert/strict';
 
@@ -46,7 +47,9 @@ export function childDrive(duel, driver) {
     if(gain(driver.acrossSide)*s.lateral>0 && Math.abs(s.lateral)>edge-5)driver.acrossSide*=-1;
     ({throttle,brake,steer}=head(square(driver.acrossSide)));
   }else if(flee){
-    ({throttle,brake,steer}=head(Math.atan2(here.x-bomb.x,here.z-bomb.z)));
+    // Away along the floor, the open way round the ring, in whichever direction leaves the bomb behind.
+    const along=duel.course.at(s.s).heading, away=Math.atan2(here.x-bomb.x,here.z-bomb.z);
+    ({throttle,brake,steer}=head(Math.cos(turn(away-along))>=0 ? along : along+Math.PI));
   }else if(h.phase==='flying'||h.phase==='attached'){
     // Ease onto the back cable without a run-up. Once tight, keep the throttle down.
     throttle=h.box===1 && !h.tight ? (s.speedMph<13 ? .2 : 0) : 1;
@@ -142,7 +145,10 @@ export const page = {
     !!scene?.getObjectByName('Scrapasaurus chest glow')?.visible && !scene.getObjectByName('Scrapasaurus fire')?.visible; })()`,
   fireDrawn: `(() => { const scene = window.__render?.scene; return !scene?.getObjectByName('Scrapasaurus fire cone') &&
     !!scene?.getObjectByName('Scrapasaurus fire')?.visible; })()`,
+  // Whether the fight showed an eye beam or a bomb (BOWL-REX-3), read from the fight's state.
+  newAttacks: `(() => JSON.stringify(window.__rexSeen ?? {beam: false, bomb: false}))()`,
   driver: `(() => { const app=window.__qaApp, control=${childDrive.toString()}, driver={};
+    window.__rexSeen={beam:false,bomb:false};
     app._driveAutopilot=function(){
       if(!driver.firstTap && this.duel.state.bowlNight?.event?.rex?.marker?.canBite){
         driver.firstTap=true;this.autopilot=false;return;
@@ -150,6 +156,8 @@ export const page = {
       if(!driver.firstBrace && this.duel.state.bowlNight?.event?.rex?.braced){
         driver.firstBrace=true;this.autopilot=false;return;
       }
+      const fight=this.duel.state.bowlNight?.event?.rex;
+      if(fight?.beam)window.__rexSeen.beam=true;if(fight?.bomb)window.__rexSeen.bomb=true;
       control(this.duel,driver);
     };app.autopilot=true;return true; })()`,
   manual: `(() => { window.__qaApp.autopilot = false; return true; })()`,
@@ -177,7 +185,8 @@ async function waitInFight(context, expression, label, timeout) {
 }
 
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=titan-bowl');
+  const rex3 = process.env.BOWL_REX_3 === '1';
+  await context.navigate('/tools/menu-check.html?flags=titan-bowl' + (rex3 ? ',bowl-rex-3' : ''));
   await context.waitFor(page.ready, 'isolated test game', 60000);
   await context.evaluate(page.enter);
   await context.waitFor(page.menuButton, 'SHOW NIGHT on the main menu', 30000);
@@ -257,9 +266,12 @@ export async function run(context) {
   assert.equal(await context.evaluate(page.scrap), scrapBefore + 600, 'night five\'s purse is paid once');
   assert.ok(await context.evaluate(page.rexInYard), 'the yard now has its Scrapasaurus');
   const cues = JSON.parse(await context.evaluate(page.cues));
-  for (const cue of ['bowl.rex.roar', 'bowl.rex.fire', 'bowl.rex.box.open', 'bowl.hook.fire', 'bowl.hook.bite', 'bowl.rex.box.out', 'bowl.rex.fall',
-    'bowl.rex.eyes.aim', 'bowl.rex.eyes.lock', 'bowl.rex.beam', 'bowl.rex.bomb.hatch', 'bowl.rex.bomb.launch'])
+  for (const cue of ['bowl.rex.roar', 'bowl.rex.fire', 'bowl.rex.box.open', 'bowl.hook.fire', 'bowl.hook.bite', 'bowl.rex.box.out', 'bowl.rex.fall'])
     assert.ok(cues.includes(cue), `the ${cue} cue played`);
+  // The new attacks have no sound until BOWL-SOUND records them, so they are seen in the fight's state instead.
+  const seen = JSON.parse(await context.evaluate(page.newAttacks));
+  if (rex3) assert.ok(seen.beam && seen.bomb, 'the beam and a bomb came: ' + JSON.stringify(seen));
+  else assert.deepEqual(seen, {beam: false, bomb: false}, 'with bowl-rex-3 off there is no beam and no bomb');
   await context.evaluate(page.leave);
   await context.waitFor(page.menu, 'back on the main menu', 10000);
   assert.equal(await context.evaluate(page.scrap), scrapBefore + 600, 'leaving pays nothing more');

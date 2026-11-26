@@ -17,15 +17,13 @@ export const REX_RULES=Object.freeze({
   // bursts within 6 m of the beast's legs, body or tail, and the box that then opens has 1 second pulled.
   beam:{reach:60,width:3,hitRadius:2.5,burnSec:.5,overHeight:3,second:{aimSec:.6,lockSec:.4}},
   bomb:{flightSec:1,landRadius:3.5,burstRadius:7,beastRadius:6,pullGift:1},
-  // A new attack's first tell in a fight lasts half as long again, on Easy and Medium.
-  firstTell:1.5,
   level:{
     easy:{walk:5,tellSec:2.6,restSec:24,throwTellSec:2.1,breaths:1,rests:6,hits:5,pull:[2,4,3],
-      beamAimSec:1.8,beamLockSec:.7,fuseSec:10},
+      beamAimSec:1.8,beamLockSec:.7,fuseSec:10,firstTell:1.5},
     medium:{walk:7,tellSec:2,restSec:19,throwTellSec:1.65,breaths:2,rests:5,hits:4,pull:[3,4,4],
-      beamAimSec:1.4,beamLockSec:.5,fuseSec:8},
+      beamAimSec:1.4,beamLockSec:.5,fuseSec:8,firstTell:1.5},
     hard:{walk:9,tellSec:1.5,restSec:15,throwTellSec:1.25,breaths:2,rests:5,hits:3,pull:[3,5,5],
-      beamAimSec:1,beamLockSec:.4,fuseSec:6},
+      beamAimSec:1,beamLockSec:.4,fuseSec:6,firstTell:1},
   },
 });
 export const REX_CUES=Object.freeze({
@@ -35,12 +33,16 @@ export const REX_CUES=Object.freeze({
   sag:'bowl.rex.sag',rise:'bowl.rex.rise',sweep:'bowl.rex.sweep',brace:'bowl.rex.brace',
   hookFire:'bowl.hook.fire',bite:'bowl.hook.bite',clang:'bowl.hook.clang',tight:'bowl.hook.tight',
   jerk:'bowl.hook.jerk',letgo:'bowl.hook.letgo',boxOut:'bowl.rex.box.out',drag:'bowl.rex.box.drag',
-  // BOWL-REX-3 (stand-ins in BOWL_SOUND_CUES until BOWL-SOUND records them). The whistle and the tick are
-  // events of their own so that each has its cue: the whistle as the bomb leaves, a tick each time it ticks.
-  beamAim:'bowl.rex.eyes.aim',beamLock:'bowl.rex.eyes.lock',beam:'bowl.rex.beam',beamOver:'bowl.rex.beam.over',
-  bombTell:'bowl.rex.bomb.hatch',bombThrow:'bowl.rex.bomb.launch',bombWhistle:'bowl.rex.bomb.whistle',
-  bombLand:'bowl.rex.bomb.land',bombTick:'bowl.rex.bomb.tick',bombBurst:'bowl.rex.bomb.burst',stagger:'bowl.rex.stagger',
 });
+// BOWL-REX-3's events play no sound until BOWL-SOUND records each its own take (tools/test-bowl-sound.mjs
+// admits no stand-in). Each event's cue, for that card to add to REX_CUES and BOWL_SOUND_CUES with its recording:
+//   beamAim `bowl.rex.eyes.aim` (a rising whine while the line follows), beamLock `bowl.rex.eyes.lock` (two beeps),
+//   beam `bowl.rex.beam`, beamOver `bowl.rex.beam.over` (the crowd), bombTell `bowl.rex.bomb.hatch` (clank and
+//   klaxon), bombThrow `bowl.rex.bomb.launch` (a thump), bombWhistle `bowl.rex.bomb.whistle` (the second in the
+//   air), bombLand `bowl.rex.bomb.land` (a clank), bombTick `bowl.rex.bomb.tick` (one per tick, quickening),
+//   bombBurst `bowl.rex.bomb.burst`, stagger `bowl.rex.stagger`. A hit is `bowl.rex.scorch`, the hook `bowl.hook.bite`.
+export const REX_3_EVENTS=Object.freeze(['beamAim','beamLock','beam','beamOver','bombTell','bombThrow','bombWhistle',
+  'bombLand','bombTick','bombBurst','stagger']);
 
 export function rexPlaces(course){
   const show=course.features.bowl;
@@ -50,7 +52,8 @@ export function rexPlaces(course){
     headTop:11.58,headAhead:7.99,edge:course.def.scrapdome.floorHalfWidth,
     penS:show.crush.lastRowS,penLateral:rail+Math.sign(rail)*2};
 }
-export function createRexFight({difficulty='medium',course}){
+// `rex3`: the eye beam and the bombs (switch `bowl-rex-3`). Without it the fight is as released.
+export function createRexFight({difficulty='medium',course,rex3=false}){
   const places=rexPlaces(course),level=REX_RULES.level[difficulty]?difficulty:'medium';
   return {version:3,level,places,length:course.length,phase:'walk',direction:-1,s:places.startS,t:0,
     boxes:[false,false,false],dropped:[],low:false,rests:0,fires:0,tells:0,hits:0,maxHits:REX_RULES.level[level].hits,
@@ -58,7 +61,7 @@ export function createRexFight({difficulty='medium',course}){
     braced:false,scorched:false,first:true,lastBox:-1,hints:{},
     // BOWL-REX-3: the attacks owed before it walks on, the turn in its order, the line, the bomb,
     // which new tells it has shown, and the scorches by cause.
-    due:[],turn:0,headDown:false,beam:null,bomb:null,shown:{beam:false,bomb:false},staggers:0,
+    rex3:rex3===true,due:[],turn:0,headDown:false,beam:null,bomb:null,shown:{beam:false,bomb:false},staggers:0,
     scorches:{fire:0,car:0,beam:0,bomb:0}};
 }
 export const rexFightOf=night=>night?.event?.type===REX_EVENT ? night.event.rex??null:null;
@@ -93,6 +96,8 @@ function tell(fight,course,target,alongCable,events){
 // The extra attack made each time it gets up from a tired spell (BOWL-REX-3, item 1).
 export function rexRiseAttacks(fight){
   const out=3-rexBoxesLeft(fight);
+  // As released: with two boxes out it throws a car each time it gets up.
+  if(!fight.rex3)return out===2 ? ['car'] : [];
   if(out===1)return ['beam'];
   if(out!==2)return [];
   const order=fight.level==='easy' ? ['bomb','beam','car'] : ['bomb','car'];
@@ -116,10 +121,10 @@ function scorch(fight,events,cause){
   fight.hits++;fight.scorches[cause]++;events.push({type:'scorch',hits:fight.hits,cause});
   if(fight.hits>=fight.maxHits){fight.done={won:false,reason:'toasted'};events.push({type:'toasted'});}
 }
-// A new attack's tell is half as long again the first time in a fight, on Easy and Medium.
+// A new attack's tell is longer the first time in a fight (half as long again on Easy and Medium).
 function firstTell(fight,kind){
   const first=!fight.shown[kind];fight.shown[kind]=true;
-  return first && fight.level!=='hard' ? REX_RULES.firstTell : 1;
+  return first ? REX_RULES.level[fight.level].firstTell : 1;
 }
 // The line from its head through the truck and 60 m on. It follows the truck until it stops.
 function aimLine(beam,at){
@@ -286,7 +291,7 @@ export function stepRexFight(fight,truck,dt,course){
         else{
           // Medium and Hard, two boxes out: the eye beam between its two breaths (twice running on Hard).
           phase(fight,'walk');
-          if(3-rexBoxesLeft(fight)===2){fight.due=['beam'];fight.beamTwice=fight.level==='hard';}
+          if(fight.rex3 && 3-rexBoxesLeft(fight)===2){fight.due=['beam'];fight.beamTwice=fight.level==='hard';}
         }
       }
       break;
@@ -360,7 +365,8 @@ function crowdForBeamOver(duel,night){
 
 registerBowlEventRunner(REX_EVENT,{
   place(duel,night){
-    const s=duel.state,fight=createRexFight({difficulty:night.cpuDifficulty,course:duel.course});
+    const s=duel.state,fight=createRexFight({difficulty:night.cpuDifficulty,course:duel.course,
+      rex3:duel.featureFlags?.enabled?.('bowl-rex-3')===true});
     night.event.rex=fight;
     s.s=s.prevS=wrap(fight.places.gateS-17,fight.length);
     s.lateral=s.prevLateral=fight.places.rail-fight.places.side*10;

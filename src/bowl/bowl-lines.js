@@ -35,19 +35,6 @@ export const BOWL_SOUND_CUES = Object.freeze({
   'bowl.rex.box.drag': 'bowl.rex.box.drag',
   'bowl.rex.fall': 'bowl.rex.fall',      // the third box is smashed and it falls over
   'bowl.rex.gate': 'bowl.rex.gate',    // it walks out through the car park gate
-  // BOWL-REX-3: the eye beam and the bombs, on stand-ins until BOWL-SOUND records each its own. The card named
-  // no stand-in for the whine, the whistle and the tick; these three are the bank's nearest.
-  'bowl.rex.eyes.aim': 'weapon.tesla.charge',      // a rising whine while the red line follows the truck
-  'bowl.rex.eyes.lock': 'interface.countdown',     // two sharp beeps as the line stops
-  'bowl.rex.beam': 'weapon.tesla.pulse',           // the beam burns along the orange
-  'bowl.rex.beam.over': 'crowd.cheer',             // the crowd as the truck clears the beam in the air
-  'bowl.rex.bomb.hatch': 'raider.warning',         // the hatch clanks open and a klaxon sounds (the bomb's tell)
-  'bowl.rex.bomb.launch': 'weapon.harpoon.fire',   // a thump from the tube
-  'bowl.rex.bomb.whistle': 'weapon.mortar.whistle', // a falling whistle for the second the bomb is in the air
-  'bowl.rex.bomb.land': 'heli.setdown.thud',       // a heavy clank where it lands
-  'bowl.rex.bomb.tick': 'heli.clock.tick',         // a tick that quickens while the bomb lies or is dragged
-  'bowl.rex.bomb.burst': 'vehicle.crash-impact',   // the bomb bursts
-  'bowl.rex.stagger': 'yeti.roar',                 // it is caught by its own bomb and staggers
   'bowl.out.over': 'bowl.out.over',
   'bowl.out.leap': 'bowl.out.leap',
   'bowl.out.gate': 'bowl.out.gate',
