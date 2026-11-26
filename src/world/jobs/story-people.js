@@ -16,6 +16,18 @@ const PROFILES = [
   ['auntie-solder', 'auntie-solder', 1.70, 1, 1.16],
   ['cinder', 'cinder', 1.70, 1, 1.4],
   ['clinker', 'clinker', 1.85, 1.11, 1.37],
+
+  // The Glasshouse, Radio Hill and the Road Rats (OPEN-FIGURES-2).
+  ['marigold', 'marigold', 1.64, 1.21, 1.09, 'open-figures-2'],
+  ['finch', 'finch', 1.44, .87, 1.46, 'open-figures-2'],
+  ['grower-1', 'grower-1', 1.79, 1.04, 1.25, 'open-figures-2'],
+  ['grower-2', 'grower-2', 1.61, 1.01, 1.16, 'open-figures-2'],
+  ['grower-3', 'grower-3', 1.72, .97, 1.31, 'open-figures-2'],
+  ['hetty', 'hetty', 1.69, .96, 1.21, 'open-figures-2'],
+  ['bern', 'bern', 1.64, 1.08, 1.18, 'open-figures-2'],
+  ['sump', 'sump', 1.81, 1.24, 1.12, 'open-figures-2'],
+  ['road-rat-lamp', 'road-rat-lamp', 1.76, .95, 1.24, 'open-figures-2'],
+  ['road-rat-lookout', 'road-rat-lookout', 1.85, 1.06, 1.37, 'open-figures-2'],
 ];
 
 // Tin Town's off-switch cast. Keep the gate company's order and gait phases.
@@ -35,7 +47,7 @@ PROFILES.push(
 );
 
 export const STORY_FIGURES = Object.freeze(Object.fromEntries(PROFILES.map(
-  ([id, asset, height, width, pace], index) => [id, Object.freeze({asset, height, width, pace, index})]
+  ([id, asset, height, width, pace, family], index) => [id, Object.freeze({asset, height, width, pace, index, family})]
 )));
 
 // From the gate, Rell occupies the open front of the group. Wim can look
@@ -70,12 +82,19 @@ export function walkerGroupAt(origin, yaw, heightAt = () => origin.y) {
   });
 }
 
-const MOVING = new Set(['walk', 'run', 'push-cart']);
-const RESTING = new Set(['stand', 'sit', 'sleep']);
+const PACE_FACTOR = {walk:1, run:3.15, 'push-cart':.72, 'walk-tied':.74, 'carry-lamp':1};
+const MOVING = new Set([...Object.keys(PACE_FACTOR), 'carry-frame']);
+const RESTING = new Set(['stand', 'sit', 'sleep', 'hoe', 'hands-on-hips', 'lookout', 'hold-ledger']);
+const GROWERS = ['grower-1', 'grower-2', 'grower-3'];
+const TASK_CAST = {
+  hoe:GROWERS, 'walk-tied':GROWERS, 'carry-frame':GROWERS,
+  'carry-lamp':['road-rat-lamp'], lookout:['road-rat-lookout'],
+  'hold-ledger':['sump'], 'hands-on-hips':['marigold'],
+};
 
 export function createStoryPeople(placements) {
   const cast = [], ids = new Set();
-  for (const {id, position, yaw = 0, action = 'stand', path, cart, seat, pace} of placements) {
+  for (const {id, position, yaw = 0, action = 'stand', path, cart, seat, pace, framePartner} of placements) {
     if (!Object.hasOwn(STORY_FIGURES, id) || ids.has(id))
       throw new Error('Unknown or repeated story figure: ' + id);
     if (![position?.x, position?.y, position?.z, yaw].every(Number.isFinite))
@@ -84,6 +103,7 @@ export function createStoryPeople(placements) {
     const {height, width} = STORY_FIGURES[id];
     const radius = .4 * width * height / 1.7;
     const person = {id, position: {...position}, height, radius, yaw, distance: 0, action: 'stand', seat, pace};
+    if (framePartner) person.framePartner = framePartner;
     if (cart) placeCart(person);
     setStoryPersonAction(person, action, path);
     cast.push(person);
@@ -93,6 +113,8 @@ export function createStoryPeople(placements) {
 
 export function setStoryPersonAction(person, action, path = []) {
   if (!MOVING.has(action) && !RESTING.has(action) && !TIN_TASKS[person.id]?.includes(action)) throw new Error('Unknown story action: ' + action);
+  if (Object.hasOwn(TASK_CAST, action) && !TASK_CAST[action].includes(person.id))
+    throw new Error(person.id + ' has no pose for ' + action);
   if (MOVING.has(action) && (!path.length || !path.every(p => Number.isFinite(p.x) && Number.isFinite(p.z))))
     throw new Error('A moving story figure needs a path in metres.');
   if (action === 'push-cart') placeCart(person);
@@ -108,8 +130,9 @@ export function advanceStoryPeople(cast, dt, heightAt) {
   let moved = false;
   for (const person of cast) {
     if (!MOVING.has(person.action)) continue;
-    const speed = person.pace ?? STORY_FIGURES[person.id].pace *
-      (person.action === 'run' ? 3.15 : person.action === 'push-cart' ? .72 : 1);
+    // Both ends of a windscreen travel at one pace.
+    const usual = STORY_FIGURES[person.id].pace;
+    const speed = person.pace ?? (person.action === 'carry-frame' ? .92 : usual * PACE_FACTOR[person.action]);
     let remaining = Math.max(0, dt) * speed;
     while (remaining > 0 && person.nextPoint < person.path.length) {
       const at = person.position, goal = person.path[person.nextPoint];

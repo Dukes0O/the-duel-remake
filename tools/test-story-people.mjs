@@ -252,3 +252,122 @@ for (const person of residents) {
   assert.equal(rotations.size, tinTasks[person.id].length+1, person.id+' has distinct working poses');
 }
 townView.dispose();
+// OPEN-FIGURES-2. Load through the same shared view and exercise the actual skinned hands.
+const {createFeatureFlags} = await import('../src/feature-flags.js');
+assert.equal(createFeatureFlags({qa:false, storage:null, search:'?flags=story-choices'}).enabled('story-choices'), false);
+const openIds = ['marigold','finch','grower-1','grower-2','grower-3','hetty','bern','sump','road-rat-lamp','road-rat-lookout'];
+const openCast = createStoryPeople(openIds.map((id, i) => ({id, position:{x:i*1.35, y:0, z:0}})));
+const assetRequests = [];
+const workers = createStoryPeopleView(path => { assetRequests.push(path); return loadRealAsset(path); });
+const openJob = {storyPeople:openCast}, eye = {x:5, z:20};
+let workClock = 0;
+function drawWork(dt = 1/60) {
+  workers.update(openJob, eye, workClock += dt);
+  workers.group.updateMatrixWorld(true);
+}
+drawWork();
+await workers.group.userData.ready;
+assert.ifError(workers.group.userData.loadError);
+drawWork();
+assert.deepEqual(assetRequests, ['/assets/models/wasteland/scablands/open-figures-2.glb']);
+const actorFor = person => workers.group.getObjectByName('story-person-'+person.id);
+const skinFor = person => actorFor(person).getObjectByName('skin-'+person.id);
+function palmAt(person, side) {
+  const skin = skinFor(person), {position,skinIndex,skinWeight} = skin.geometry.attributes;
+  const centre = new THREE.Vector3(), vertex = new THREE.Vector3();
+  let count = 0;
+  for (let i=0; i<position.count; i++) {
+    if (skin.skeleton.bones[skinIndex.getX(i)].name !== 'hand'+side || skinWeight.getX(i) < .8) continue;
+    centre.add(skin.getVertexPosition(i,vertex).applyMatrix4(skin.matrixWorld));
+    count++;
+  }
+  assert.ok(count > 0, person.id+' has weighted palm vertices');
+  return centre.divideScalar(count);
+}
+function visibleTools(name) {
+  const found = [];
+  workers.group.traverseVisible(node => { if (node.name === 'implement-'+name) found.push(node); });
+  return found;
+}
+const toPath = person => [{x:person.position.x, z:person.position.z+3}];
+for (const person of openCast) {
+  const skin = skinFor(person);
+  assert.ok(skin.isSkinnedMesh && skin.skeleton.bones.length >= 17 && skin.material.map, person.id+' is a dressed rig');
+  const bounds = new THREE.Box3().setFromObject(skin,true);
+  assert.ok(Math.abs(bounds.min.y)<.02 && Math.abs(bounds.max.y-person.height)<.05);
+  assert.ok(person.height > 1.2 && person.height < 2 && STORY_FIGURES[person.id].pace > .8 && STORY_FIGURES[person.id].pace < 2);
+  setStoryPersonAction(person,'walk',toPath(person));
+}
+advanceStoryPeople(openCast,.32,flat);
+drawWork();
+assert.ok(openCast.every(p=>p.distance>0 && p.position.z>0));
+for (const person of openCast) setStoryPersonAction(person,'stand');
+const [marigold,finch,...rest] = openCast;
+const growers = rest.slice(0,3), sump = openCast[7], lamp = openCast[8], lookout = openCast[9];
+assert.ok(finch.height < Math.min(...openCast.filter(p=>p!==finch).map(p=>p.height)));
+setStoryPersonAction(marigold,'hands-on-hips');
+setStoryPersonAction(sump,'hold-ledger');
+setStoryPersonAction(lamp,'carry-lamp',toPath(lamp));
+setStoryPersonAction(lookout,'lookout');
+drawWork();
+const localPalm = (p, side) => actorFor(p).worldToLocal(palmAt(p,side));
+for (const [side,sign] of [['L',-1],['R',1]]) {
+  const hand = localPalm(marigold,side);
+  assert.ok(sign*hand.x > .19 && sign*hand.x < .31 && hand.y > .53*marigold.height && hand.y < .66*marigold.height,
+    'Both hands reach the sides of Marigold’s waist');
+}
+assert.ok(localPalm(sump,'L').y > .60*sump.height, 'Sump folds an arm under the ledger');
+assert.ok(localPalm(lookout,'R').y > .91*lookout.height, 'The lookout shades the eyes');
+assert.ok(visibleTools('lamp')[0].getWorldPosition(new THREE.Vector3()).distanceTo(palmAt(lamp,'R')) < .025);
+assert.equal(visibleTools('mantle').length,1);
+for (const i of [0,1,2]) {
+  const hoe = growers[i], bound = growers[(i+1)%3], seated = growers[(i+2)%3];
+  setStoryPersonAction(hoe,'hoe');
+  setStoryPersonAction(bound,'walk-tied',toPath(bound));
+  setStoryPersonAction(seated,'sit');
+  const before = {...bound.position};
+  advanceStoryPeople(openCast,.15,flat);
+  let low = Infinity, high = -Infinity;
+  for (let frame=0;frame<32;frame++) {
+    drawWork(.1);
+    const tool = visibleTools('hoe')[0];
+    const blade = new THREE.Box3().setFromObject(tool,true).min.y;
+    low = Math.min(low,blade);
+    high = Math.max(high,blade);
+  }
+  assert.ok(high-low > .14 && low < .19, hoe.id+' lowers and lifts the hoe');
+  const tool = visibleTools('hoe')[0];
+  assert.ok(tool.getWorldPosition(new THREE.Vector3()).distanceTo(palmAt(hoe,'L')) < .03);
+  const shaft = new THREE.Line3(tool.localToWorld(new THREE.Vector3(0,-.96,0)), tool.localToWorld(new THREE.Vector3(0,.63,0)));
+  const topHand = palmAt(hoe,'R');
+  assert.ok(shaft.closestPointToPoint(topHand,true,new THREE.Vector3()).distanceTo(topHand) < .03);
+  assert.ok(bound.position.z>before.z && localPalm(bound,'L').z>.11 && localPalm(bound,'R').z>.11);
+  const ties = visibleTools('ties')[0];
+  assert.ok(ties.getWorldPosition(new THREE.Vector3()).distanceTo(palmAt(bound,'L')) < .03);
+  assert.ok(ties.localToWorld(new THREE.Vector3(1,0,0)).distanceTo(palmAt(bound,'R')) < .03);
+  assert.ok(palmAt(bound,'R').distanceTo(palmAt(bound,'L')) < .22, bound.id+' walks with both wrists together');
+  assert.ok(new THREE.Box3().setFromObject(skinFor(seated),true).max.y < seated.height-.15);
+}
+// All three can take either end. Each pair walks with one pane, even when ids and placement order disagree.
+for (const i of [0,1,2]) {
+  for (const person of growers) setStoryPersonAction(person,'stand');
+  const a = growers[i], b = growers[(i+1)%3];
+  Object.assign(a.position,{x:2,y:0,z:0});
+  Object.assign(b.position,{x:3.35,y:0,z:0});
+  a.framePartner = b.id;
+  b.framePartner = a.id;
+  for (const p of [a,b]) setStoryPersonAction(p,'carry-frame',toPath(p));
+  advanceStoryPeople(openCast,.3,flat);
+  drawWork(.1);
+  assert.equal(a.position.z,b.position.z);
+  assert.equal(visibleTools('frame').length,1);
+  assert.equal(visibleTools('glass').length,1);
+  const frame = visibleTools('frame')[0];
+  assert.ok(frame.getWorldPosition(new THREE.Vector3()).distanceTo(palmAt(a,'R')) < .03);
+  assert.ok(frame.localToWorld(new THREE.Vector3(1,0,0)).distanceTo(palmAt(b,'L')) < .03);
+  setStoryPersonAction(b,'stand');
+  drawWork();
+  assert.equal(visibleTools('frame').length,0);
+}
+workers.dispose();
+console.log('Open Scablands figures: ten photographed rigs, work poses, grounded tools and a shared carried windscreen passed.');

@@ -73,7 +73,8 @@ function bake(group) {
       const row = {name:mesh.name, position:[], normal:[], uv:[], index:Array.from(
         geometry.index?.array ?? Array.from({length:positions.count}, (_, i) => i)),
         texture:material.map?.userData?.imageFile, colour:shade.clone().multiply(material.color).toArray(),
-        emissive:material.emissive?.toArray(), rough:material.roughness ?? .85, metal:material.metalness ?? 0};
+        emissive:material.emissive?.toArray(), emissiveIntensity:material.emissiveIntensity,
+        opacity:material.opacity, rough:material.roughness ?? .85, metal:material.metalness ?? 0};
       for (let i = 0; i < positions.count; i++) {
         mesh.getVertexPosition(i, point).applyMatrix4(matrix);
         row.position.push([round(point.x), round(-point.z), round(point.y)]);
@@ -118,6 +119,21 @@ if (process.argv.includes('--open-figures')) {
   view.dispose();
   process.exit(0);
 }
+const view = createStoryPeopleView(loadAsset);
+async function savePose(name, specs, speaker, viewer, beforeDraw = () => {}, frames = 120) {
+  const people = createStoryPeople(specs), world = {storyPeople:people, storySpeaker:speaker};
+  beforeDraw(people);
+  view.update(world, viewer, 0);
+  await view.group.userData.ready;
+  if (view.group.userData.loadError) throw Error(view.group.userData.loadError);
+  for (let i = 0; i <= frames; i++) view.update(world, viewer, i / 60);
+  await fs.writeFile(path.join(out, name + '.json'), JSON.stringify(bake(view.group)));
+}
+if (process.argv.includes('--open-figures-2')) {
+  await openFiguresRound2();
+  view.dispose();
+  process.exit(0);
+}
 
 const gate = createTinTownGate();
 gate.position.set(0, 0, -5.1);
@@ -134,16 +150,6 @@ for (const person of createStoryPeople(placements)) {
 }
 await fs.writeFile(path.join(out, 'current.json'), JSON.stringify(bake(source.group)));
 source.dispose();
-const view = createStoryPeopleView(loadAsset);
-async function savePose(name, specs, speaker, viewer, beforeDraw = () => {}, frames = 120) {
-  const people = createStoryPeople(specs), world = {storyPeople:people, storySpeaker:speaker};
-  beforeDraw(people);
-  view.update(world, viewer, 0);
-  await view.group.userData.ready;
-  if (view.group.userData.loadError) throw Error(view.group.userData.loadError);
-  for (let i = 0; i <= frames; i++) view.update(world, viewer, i / 60);
-  await fs.writeFile(path.join(out, name + '.json'), JSON.stringify(bake(view.group)));
-}
 await savePose('gate-walkers', placements, 'rell', {x:0,z:6});
 await savePose('speaking', placements, 'rell', {x:.3,z:3.9}, undefined, 192);
 const leads = [{id:'rell', x:-1}, {id:'dace', x:0}, {id:'wim', x:1}]
@@ -180,3 +186,37 @@ coals.material = new THREE.MeshStandardMaterial({color:0xb54215,emissive:0xb7470
 camp.add(pot);
 await fs.writeFile(path.join(out,'camp.json'),JSON.stringify(bake(camp)));
 view.dispose();
+
+// The two OPEN cast reviews have independent lineups. Rell stands at the same scale in every panel.
+async function openFiguresRound2() {
+  const glasshouse = ['marigold', 'finch', 'grower-1', 'grower-2', 'grower-3'];
+  const hillAndRats = ['hetty', 'bern', 'sump', 'road-rat-lamp', 'road-rat-lookout'];
+  const panels = [];
+  async function panel(title, rows) {
+    const specs = [['rell','stand','Rell'], ...rows].map(([id,action,label,framePartner], i) => ({
+      id, action, label, framePartner, position:{x:(i-2.5)*1.28, y:0, z:0}, yaw:.12,
+      path:[{x:(i-2.5)*1.28, z:4}],
+    }));
+    const name = 'open-' + panels.length;
+    await savePose(name, specs, null, {x:0,z:20}, people => {
+      for (const [i, person] of people.entries()) person.distance = .78 + i*.21;
+    });
+    panels.push({name, title, labels:specs.map(s => ({text:s.label, x:s.position.x}))});
+  }
+  const names = {'road-rat-lamp':'Lamp carrier', 'road-rat-lookout':'Lookout'};
+  const row = (id,action) => [id,action,names[id] ?? (id[0].toUpperCase()+id.slice(1)).replace('-', ' ')];
+  for (const [action, label] of [['stand','At rest'], ['walk','Walking']]) {
+    await panel('Glasshouse  /  ' + label, glasshouse.map(id => row(id,action)));
+    await panel('Radio Hill and Road Rats  /  ' + label, hillAndRats.map(id => row(id,action)));
+  }
+  await panel('Glasshouse  /  Working the bean rows', [
+    ['marigold','stand','Hands on hips'], ['grower-1','hoe','Hoeing'],
+    ['grower-2','carry-frame','Frame','grower-3'], ['grower-3','carry-frame','Frame','grower-2'],
+    ['finch','walk','Bean satchel'],
+  ]);
+  await panel('Rats’ Nest  /  Growers in the pen', [
+    ['grower-1','sit','Seated'], ['grower-2','walk-tied','Bound walk'],
+    ['sump','stand','Ledger'], ['road-rat-lamp','walk','Patrol'], ['road-rat-lookout','stand','On watch'],
+  ]);
+  await fs.writeFile(path.join(out,'panels.json'), JSON.stringify(panels));
+}
