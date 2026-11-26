@@ -33,8 +33,12 @@ export function createBrandAshView({road = false} = {}) {
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
       const fight = worldJob?.riderFight;
       // A scout knocked down by the car stays on the ground where he fell for the rest of the night's scenes.
-      group.visible = road ? Boolean(fight) : step?.brand === true || worldJob?.night2 != null && (step?.id === 'scout' || worldJob.night2.scoutDowned === true);
-      const actors = group.visible ? (worldJob.actors ?? []).filter(actor => road ? actor.riderCrew : actor.brandAsh) : [];
+      // OPEN-CHECKPOINTS: use the standing figure rig for the driver even before the road fight view exists.
+      const driver = worldJob?.checkpointRoad?.driver;
+      group.visible = road ? Boolean(fight) :
+        Boolean(driver) || step?.brand === true || worldJob?.night2 != null && (step?.id === 'scout' || worldJob.night2.scoutDowned === true);
+      const actors = group.visible ? (worldJob.actors ?? []).filter(actor => road
+        ? actor.riderCrew && actor.id !== driver : actor.brandAsh || actor.id === driver) : [];
       figures.update(actors, {active: group.visible, drawnShift});
       for (let index = 0; index < capacity; index++) {
         const actor = actors[index], ash = road ? fight?.ash?.[index] : job?.stepState?.brandAsh?.men?.[actor?.id]?.ash;

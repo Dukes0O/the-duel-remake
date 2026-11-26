@@ -23,6 +23,8 @@ export const SCENARIO_AREAS = [
     'src/arena/arena-pilot.js','src/arena/arena-tell-view.js','src/world/jobs/rider-rule.js','src/world/jobs/wash-riders.js',
     'src/world/jobs/job-engine.js','src/world/brand-ash-view.js','src/combat-ai.js','src/combat-hud.js','src/sim-contacts.js',
     'src/audio.js','src/sound-bank.js','tools/menu-check.js']},
+  {prefixes:['open-checkpoint'], paths:['src/world/open/', 'src/arena/modes/world-job.js',
+    'src/arena/modes/road-riders.js', 'src/arena/arena-tell-view.js', 'src/world/brand-ash-view.js']},
   {prefixes:['arena-'], paths:['src/arena/','src/arena-props.js','src/screen-arena.js']},
   {prefixes:['arsenal-'], paths:['src/arsenal/']},
   // WEAPON-WATER-CANNON: the water cannon's scenario also guards the Armory's town gear and the town's Fire Station read.
