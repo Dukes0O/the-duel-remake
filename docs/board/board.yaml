@@ -1287,7 +1287,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
     needs: []
     locks: [busy-game-files, save-shape]
     flag: "story-choices"
@@ -1346,7 +1347,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "L"
-    status: "backlog"
+    status: "building"
+    claimed_by: "Claude (Opus session), 26 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
