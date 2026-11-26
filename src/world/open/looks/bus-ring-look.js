@@ -1,4 +1,4 @@
-// The Bus Ring (OPEN-LOOK-BUS-RING, round 1), drawn in code: the camp of the tinkers, led by Gasket, who mend anything
+// The Bus Ring (OPEN-LOOK-BUS-RING-2), drawn in code: the camp of the tinkers, led by Gasket, who mend anything
 // with a wheel on it for anybody, Road Rats included. Design: docs/story/open-scablands.md section 16 (its row in the
 // sites table) and docs/story/threads/market-day.md (the Bus Ring and the tinkers).
 //
@@ -397,13 +397,24 @@ function assembly() {
 // skirt, its side panels with the wheel arches cut up into them, a band of window bays between thin pillars, an arched
 // roof, and its two ends. The workshop's roof is cut away down to its hoops.
 function drawBus(kit, P, bus, localGround) {
-  const {box, bar, tube, line, surface, ribbed, tyre, faces, lathe, within, placed} = kit;
+  const {box, bar, tube, line, surface, ribbed, tyre, faces, lathe} = kit;
   const random = mulberry(bus.seed), between = (low, high) => low + (high - low) * random(), pick = list => list[Math.floor(random() * list.length)];
-  const W = BUS.halfWidth, half = bus.length / 2, sill = bus.skirt, belt = sill + BUS.belt, rail = belt + BUS.window, crown = rail + BUS.crown, floor = sill + .3;
+  const W = BUS.halfWidth, half = bus.length / 2, sill = bus.skirt, belt = sill + BUS.belt;
+  // Lower the spring of the roof, keeping the original overall height and footprint.
+  const rail = belt + BUS.window - .12, crown = belt + BUS.window + BUS.crown, floor = sill + .3;
   const nose = bus.style === 'nose', front = nose ? half - BUS.bonnet : half, rear = -half;
   const axles = [nose ? half - .8 : front - 2.3, rear + 2.85];
   const paint = P.paint[bus.paint], rust = P.rust[bus.seed % P.rust.length], roofColour = P.roof[bus.seed % P.roof.length];
-  const door = [front - 1.2, front - .22];
+  const sideRear = rear + .28, sideFront = front - .32, door = [front - 1.7, front - .55];
+  // The front bows across its width and leans back 38 cm above the waist. The back is gentler.
+  const endZ = (end, x, y) => end > 0
+    ? front - .06 - .26 * (x / W) ** 4 - .38 * clamp((y - belt) / (rail - belt))
+    : rear + .02 + .26 * (x / W) ** 4 + .1 * clamp((y - belt) / (rail - belt));
+  const sideZ = (z, y) => z - .38 * clamp((y - belt) / (rail - belt)) * clamp((z - (front - 1.7)) / 1.38)
+    + .1 * clamp((y - belt) / (rail - belt)) * clamp((rear + 1.1 - z) / .82);
+  // Removed lower skins expose the actual ribs, rather than a dark patch on an intact panel.
+  const stripped = bus.rest === 'blocks' || bus.paint === 1;
+  const missingSkin = stripped ? [rear + 4.0, rear + 5.35] : null;
   // Two knocks that pushed the panels in.
   const dents = [0, 1].map(() => ({side: random() < .5 ? -1 : 1, y: between(sill + .3, belt - .1), z: between(rear + .8, front - .8), reach: between(.5, 1), deep: between(.05, .14)}));
   // Paint faded and rusted through: worst low down, where the wet stood, in soft patches; a second colour along the waist.
@@ -417,7 +428,7 @@ function drawBus(kit, P, bus, localGround) {
   };
   const archLift = z => {
     let lift = 0;
-    for (const axle of nose ? [axles[1]] : axles) { const off = (z - axle) / .66; if (Math.abs(off) < 1) lift = Math.max(lift, .64 * Math.sqrt(1 - off * off)); }
+    for (const axle of nose ? [axles[1]] : axles) { const off = (z - axle) / .72; if (Math.abs(off) < 1) lift = Math.max(lift, .72 * Math.sqrt(1 - off * off)); }
     return lift;
   };
   const dent = (x, y, z) => {
@@ -428,9 +439,11 @@ function drawBus(kit, P, bus, localGround) {
 
   // The side panels from the skirt to the window sills, with the arches, and the door on the yard side.
   for (const side of [-1, 1]) {
-    const ranges = side < 0 ? [[rear, door[0]], [door[1], front]] : [[rear, front]];
+    let ranges = side < 0 ? [[sideRear, door[0]], [door[1], sideFront]] : [[sideRear, sideFront]];
+    if (side < 0 && missingSkin) ranges = ranges.flatMap(([a, b]) => b <= missingSkin[0] || a >= missingSkin[1]
+      ? [[a, b]] : [[a, missingSkin[0]], [missingSkin[1], b]].filter(([low, high]) => high > low));
     for (const [z0, z1] of ranges) {
-      const columns = Math.max(2, Math.round((z1 - z0) / .3));
+      const columns = Math.max(2, Math.ceil((z1 - z0) / .12));
       surface('sheet', columns, 3, (u, v) => {
         const z = z0 + (z1 - z0) * u, bottom = sill + archLift(z), y = bottom + (belt - bottom) * v;
         return [dent(side * (W - .015 * Math.sin(v * Math.PI)), y, z), y, z];
@@ -443,43 +456,76 @@ function drawBus(kit, P, bus, localGround) {
       for (const [y, colour] of [[sill + .5, P.rust[1]], [belt, paint]]) {
         if (y === sill + .5) {
           let start = z0;
-          for (const axle of nose ? [axles[1]] : axles) if (axle - .7 > start && axle - .7 < z1) { bar('sheet', [side * (W + .02), y, start + .02], [side * (W + .02), y, axle - .7], .05, colour, .07); start = axle + .7; }
+          for (const axle of [...(nose ? [axles[1]] : axles)].sort((a, b) => a - b)) if (axle - .7 > start && axle - .7 < z1) { bar('sheet', [side * (W + .02), y, start + .02], [side * (W + .02), y, axle - .7], .05, colour, .07); start = axle + .7; }
           if (z1 - start > .3) bar('sheet', [side * (W + .02), y, start], [side * (W + .02), y, z1 - .02], .05, colour, .07);
         } else bar('sheet', [side * (W + .015), y, z0], [side * (W + .015), y, z1], .06, colour, .05);
       }
     }
     // The gutter at the top of the windows.
-    bar('sheet', [side * (W + .01), rail, rear + .02], [side * (W + .01), rail, front - .02], .05, paint, .06);
-  }
-  // The door on the yard side: its leaves folded open, and the gap of the stair well.
-  {
-    const hinge = door[1];
-    for (const leaf of [0, 1]) {
-      const z = hinge - leaf * .5, swing = 1.25 - leaf * .1;
-      within(placed(-W + .05, floor - .25, z, Math.PI / 2 - swing), () => {
-        box('sheet', .48, belt - floor + .15, .04, paint.clone().multiplyScalar(.9), .24, (belt - floor + .15) / 2, 0);
-        box('glass', .38, rail - belt - .15, .02, P.glass, .24, belt - floor + .15 + (rail - belt - .15) / 2, .02);
-      });
+    bar('sheet', [side * (W + .01), rail, sideZ(sideRear, rail)], [side * (W + .01), rail, sideZ(sideFront, rail)], .05, paint, .06);
+    // A rolled lip and its deep return make an unmistakable open wheel arch.
+    for (const axle of nose ? [axles[1]] : axles) {
+      surface('sheet', 14, 2, (u, v) => {
+        const angle = u * Math.PI, radius = .72 + v * .09;
+        return [side * (W + .015 + .035 * Math.sin(v * Math.PI)), sill + radius * Math.sin(angle), axle + radius * Math.cos(angle)];
+      }, paint.clone().lerp(rust, .38));
+      surface('frame', 14, 1, (u, v) => {
+        // The return faces into the wheel well on both sides (frame is single-sided).
+        const angle = (side > 0 ? u : 1 - u) * Math.PI;
+        return [side * (W - .22 * v), sill + .72 * Math.sin(angle), axle + .72 * Math.cos(angle)];
+      }, P.rust[2]);
     }
-    box('frame', .1, rail - sill, .08, P.iron, -W + .02, (rail + sill) / 2, door[0]);
+    if (side < 0 && missingSkin) {
+      for (const y of [sill + .08, belt - .08]) bar('frame', [-W + .11, y, missingSkin[0]], [-W + .11, y, missingSkin[1]], .065, P.rust[2]);
+      for (const z of [missingSkin[0], (missingSkin[0] + missingSkin[1]) / 2, missingSkin[1]])
+        bar('frame', [-W + .11, sill + .08, z], [-W + .11, belt, z], .065, P.rust[1]);
+      bar('frame', [-W + .12, sill + .12, missingSkin[0]], [-W + .12, belt - .1, missingSkin[1]], .04, P.iron);
+      // A ragged remaining flap curls away from the rib beside the missing panel.
+      surface('sheet', 2, 3, (u, v) => [-W - .08 * u * v, sill + .12 + (belt - sill - .15) * v, missingSkin[0] + .12 * u * (1 - .55 * v)], body);
+    }
+  }
+  // A two-leaf folding door stacked into the rear jamb, clear of the existing step and bunk sightline.
+  {
+    const hinge = door[0], leafWidth = (door[1] - door[0]) / 2;
+    const points = [[-W + .01, hinge], [-W + .44, hinge + .38], [-W + .09, hinge + .10]];
+    for (let leaf = 0; leaf < 2; leaf++) {
+      const [ax, az] = points[leaf], [bx, bz] = points[leaf + 1];
+      const at = (t, y) => [ax + (bx - ax) * t, y, sideZ(az + (bz - az) * t, y)];
+      const quad = (kind, y0, y1, colour, inset = 0) => {
+        const a = at(inset, y0), b = at(1 - inset, y0), c = at(inset, y1), d = at(1 - inset, y1);
+        faces(kind, [...a, ...b, ...c, ...c, ...b, ...d], colour);
+      };
+      quad('sheet', sill + .06, belt - .06, paint.clone().multiplyScalar(.85));
+      quad('glass', belt + .03, rail - .08, P.glass, .08 / leafWidth);
+      for (const t of [0, 1]) bar('frame', at(t, sill + .04), at(t, rail - .02), .045, P.tube);
+      for (const y of [sill + .04, belt - .02, rail - .02]) bar('frame', at(0, y), at(1, y), .05, paint);
+    }
+    for (const z of door) line('frame', [[-W + .02, sill, z], [-W + .02, belt, z], [-W + .02, rail, sideZ(z, rail)]], .035, P.iron, 5);
+    bar('frame', [-W, rail, sideZ(door[0], rail)], [-W, rail, sideZ(door[1], rail)], .07, paint);
+    for (let step = 0; step < 3; step++) {
+      const x = -W + .14 + step * .22, y = sill + .03 + step * .13;
+      box('frame', .25, .06, door[1] - door[0] - .08, P.iron, x, y, (door[0] + door[1]) / 2);
+      bar('frame', [x - .12, y + .035, door[0] + .04], [x - .12, y + .035, door[1] - .04], .018, P.chrome);
+    }
   }
 
   // The window bays. To the yard the glass is kept or gone; to the land the bays are shut with tin and boards.
-  const span = front - rear - .5, bays = Math.max(6, Math.round(span / 1.05));
+  const span = sideFront - sideRear, bays = Math.max(6, Math.round(span / 1.05));
   for (const side of [-1, 1]) {
-    let posts = [...Array(bays + 1).keys()].map(index => rear + .25 + index * span / bays);
-    if (side < 0) posts = [...posts.filter(z => Math.abs(z - door[0]) > .35 && Math.abs(z - door[1]) > .25 && (z < door[0] || z > door[1])), door[0], door[1]].sort((a, b) => a - b);
-    for (const z of posts) bar('sheet', [side * (W - .01), belt, z], [side * (W - .01), rail, z], .045, paint, .075);
+    let posts = [...Array(bays + 1).keys()].map(index => sideRear + index * span / bays);
+    if (side < 0) posts = [...posts.filter(z => z === sideRear || z === sideFront || (Math.abs(z - door[0]) > .35 && Math.abs(z - door[1]) > .25 && (z < door[0] || z > door[1]))), door[0], door[1]].sort((a, b) => a - b);
+    for (const z of posts) bar('sheet', [side * (W - .01), belt, z], [side * (W - .01), rail, sideZ(z, rail)], .045, paint, .075);
     for (let index = 0; index < posts.length - 1; index++) {
       const z0 = posts[index], z1 = posts[index + 1];
       if (side < 0 && z0 >= door[0] - .01 && z1 <= door[1] + .01) continue;
-      const roll = random(), x = side * W;
-      const fill = bus.workshop ? (side < 0 ? 'empty' : roll < .75 ? 'tin' : 'board')
+      const roll = random();
+      const cornerBay = z0 < sideRear + .01 || z1 > sideFront - .01;
+      const fill = cornerBay ? (bus.workshop ? 'empty' : 'glass') : bus.workshop ? (side < 0 ? 'empty' : roll < .75 ? 'tin' : 'board')
         : side < 0 ? (roll < .34 ? 'empty' : roll < .74 ? 'glass' : roll < .9 ? 'broken' : 'board')
           : (roll < .5 ? 'tin' : roll < .74 ? 'board' : roll < .88 ? 'glass' : 'empty');
       if (fill === 'glass' || fill === 'broken') {
         const g = side * (W - .035), y0 = belt + .04, y1 = rail - .04, a = z0 + .04, b = z1 - .04, shade = P.glass.clone().multiplyScalar(.8 + .4 * random());
-        if (fill === 'glass') faces('glass', [g, y0, a, g, y0, b, g, y1, a, g, y1, a, g, y0, b, g, y1, b], shade);
+        if (fill === 'glass') surface('glass', 1, 1, (u, v) => { const y = y0 + (y1 - y0) * v; return [g, y, sideZ(a + (b - a) * u, y)]; }, shade);
         else {
           const cut = between(.3, .7);
           faces('glass', [g, y0, a, g, y0, b, g, y0 + (y1 - y0) * cut, b, g, y0, a, g, y0 + (y1 - y0) * cut, b, g, y1, a + (b - a) * (1 - cut), g, y0, a, g, y1, a + (b - a) * (1 - cut), g, y1, a], shade);
@@ -496,11 +542,12 @@ function drawBus(kit, P, bus, localGround) {
   }
 
   // The roof: an arched sheet from gutter to gutter, pale and dirty, with hatches and what is kept on it.
-  const roofY = u => rail + (crown - rail) * Math.sqrt(1 - Math.abs(2 * u - 1) ** 5);
+  const roofY = u => rail + (crown - rail) * Math.sqrt(Math.max(0, 1 - (2 * u - 1) ** 2));
+  const roofEnd = (end, x, rise = 1) => endZ(end, x, rail) - end * (end > 0 ? .3 : .2) * Math.sqrt(Math.max(0, 1 - (x / W) ** 2)) * Math.sin(rise * Math.PI / 2);
   if (!bus.workshop) {
     const along = Math.round((front - rear) / .55), ripple = lump(bus.seed, 3, 3) * .03;
-    surface('roof', 10, along, (u, v) => {
-      const z = rear + .02 + (front - rear - .04) * v, x = W * (2 * u - 1) * .995;
+    surface('roof', 16, along, (u, v) => {
+      const x = W * (2 * u - 1), z = roofEnd(-1, x) + (roofEnd(1, x) - roofEnd(-1, x)) * v;
       return [x, roofY(u) - ripple * Math.sin(v * Math.PI * 5) * (1 - Math.abs(2 * u - 1)), z];
     }, (x, y, z, u) => {
       const edge = Math.abs(2 * u - 1), streak = lump(Math.floor(z * 2.2 + 60), Math.floor(u * 6), bus.seed + 21);
@@ -512,9 +559,9 @@ function drawBus(kit, P, bus, localGround) {
     else if (keepOnRoof < .6) kit.drum(between(-.3, .3), crown + .25, between(rear + 1, front - 1), pick(P.tin), [0, 0, Math.PI / 2]);
   } else {
     // The workshop: the roof cut off along the gutters, its hoops left standing, a tarpaulin over the back of them.
-    const hoops = [rear + .3, rear + 2.2, rear + 4.1, rear + 6, rear + 7.9, front - .3];
+    const hoops = [sideZ(sideRear, rail) + .05, rear + 2.2, rear + 4.1, rear + 6, rear + 7.9, roofEnd(1, 0) - .05];
     for (const z of hoops) line('frame', [...Array(9).keys()].map(index => { const u = index / 8; return [W * (2 * u - 1), roofY(u) - .03, z + (index % 2 ? .01 : 0)]; }), .028, P.tube);
-    for (const side of [-1, 1]) bar('frame', [side * W, rail + .02, rear], [side * W, rail + .02, front], .06, P.iron, .05);
+    for (const side of [-1, 1]) bar('frame', [side * W, rail + .02, sideZ(sideRear, rail)], [side * W, rail + .02, sideZ(sideFront, rail)], .06, P.iron, .05);
     const tarp = P.cloth[1];
     surface('sheet', 8, 6, (u, v) => {
       const z = hoops[0] + (hoops[2] - hoops[0] + .3) * v, sag = .12 * Math.sin(v * Math.PI * 2) ** 2;
@@ -528,76 +575,96 @@ function drawBus(kit, P, bus, localGround) {
     }
     box('frame', .7, .9, 2.2, P.timber[2], W - .5, floor + .45, -1.5);
   }
-  // The roof's ends, and the gap between the roof and the gutters at each end, filled.
-  const cap = (z, colour) => {
-    const positions = [];
-    for (let index = 0; index < 10; index++) {
-      const u0 = index / 10, u1 = (index + 1) / 10;
-      positions.push(0, rail, z, W * (2 * u1 - 1), roofY(u1), z, W * (2 * u0 - 1), roofY(u0), z);
-    }
-    faces('sheet', positions, colour);
-  };
+  // Curved roof caps continue the elliptical cross section into the rounded end profiles.
+  const cap = (end, colour) => surface('roof', 16, 4, (u, v) => {
+    const x = W * (2 * u - 1);
+    return [x, rail + (roofY(u) - rail) * v, roofEnd(end, x, v)];
+  }, colour);
 
-  // The front.
+  // A bowed nose below a strongly raked split windscreen, with visible frames and wipers.
   {
-    const z = front;
-    surface('sheet', 4, 2, (u, v) => [W * (2 * u - 1), sill + (belt - sill) * v, z + .02 * Math.sin(u * Math.PI)], body);
-    if (!bus.workshop) cap(z, paint.clone().multiplyScalar(.92)); else cap(z, P.tin[0]);
-    box('glass', 1.5, .2, .02, P.dark, 0, rail + .16, z + .01);
-    for (const x of [-W + .03, 0, W - .03]) bar('sheet', [x, belt, z], [x * .985, rail, z - .06], .07, paint, .06);
-    const missing = random() < .4 ? (random() < .5 ? -1 : 1) : 0;
+    surface('sheet', 12, 3, (u, v) => { const x = W * (2 * u - 1), y = sill + (belt - sill) * v; return [x, y, endZ(1, x, y)]; }, body);
+    cap(1, bus.workshop ? P.tin[0] : roofColour);
+    const at = (x, y, out = .015) => [x, y, endZ(1, x, y) + out];
+    for (const x of [-W, 0, W]) bar('sheet', at(x, belt), at(x, rail), .065, paint, .07);
+    for (const y of [belt, rail]) line('sheet', [...Array(9).keys()].map(i => at(W * (i / 4 - 1), y)), .035, paint, 5);
+    const missing = bus.rest === 'blocks' && !bus.workshop ? -1 : 0;
     for (const side of [-1, 1]) if (side !== missing) {
-      const a = side * .05, b = side * (W - .07);
-      faces('glass', [a, belt + .05, z, b, belt + .05, z, a, rail - .05, z - .055, a, rail - .05, z - .055, b, belt + .05, z, b, rail - .05, z - .055], P.glass);
+      surface('glass', 5, 1, (u, v) => { const x = side * (.05 + (W - .1) * u), y = belt + .05 + (rail - belt - .1) * v; return at(x, y, .005); }, P.glass);
+      bar('frame', at(side * .24, belt + .06, .035), at(side * .7, belt + .35, .035), .018, P.iron);
     }
+    // The destination board is recessed below the crown rather than floating above the end.
+    box('frame', 1.1, .14, .045, P.dark, 0, rail + .12, roofEnd(1, 0, .4) + .02);
     if (!nose) {
-      box('frame', W * 2 + .08, .2, .14, P.iron, 0, sill + .1, z + .08, [0, 0, between(-.03, .03)]);
-      for (const side of [-1, 1]) tube('frame', [side * (W - .32), sill + .42, z - .02], [side * (W - .32), sill + .42, z + .05], .1, P.dark, 8);
-      for (let index = 0; index < 4; index++) bar('frame', [-.55, sill + .18 + index * .07, z + .03], [.55, sill + .18 + index * .07, z + .03], .03, P.iron, .03);
+      const bumper = [...Array(9).keys()].map(i => { const x = (W - .03) * (i / 4 - 1); return [x, sill + .12, front - .015 - .18 * (x / W) ** 4]; });
+      for (let i = 1; i < bumper.length; i++) bar('frame', bumper[i - 1], bumper[i], .16, P.iron, .2);
+      for (const side of [-1, 1]) {
+        const x = side * (W - .28), y = sill + .52, z = endZ(1, x, y);
+        tube('frame', [x, y, z - .02], [x, y, z + .035], .145, P.iron, 10);
+        tube('glass', [x, y, z + .036], [x, y, z + .055], .105, P.chrome.clone().multiplyScalar(.65), 10);
+        box('glass', .18, .065, .03, P.rust[1], x, y + .22, z + .02);
+      }
+      for (let index = 0; index < 5; index++) bar('frame', [-.58, sill + .27 + index * .075, front - .04], [.58, sill + .27 + index * .075, front - .04], .035, P.iron, .035);
     }
   }
   // The bonnet of a school bus: a rounded hood between the wings, a grille, and the wings over the front wheels.
   if (nose) {
     const hood = belt - .12, tip = half - .12;
     surface('sheet', 6, 3, (u, v) => {
-      const x = (2 * u - 1) * .82, z = front + (tip - front) * v;
+      const x = (2 * u - 1) * .82, start = endZ(1, x, hood), z = start + (tip - start) * v;
       return [x, hood + .1 * (1 - (2 * u - 1) ** 2) - .08 * v * v, z];
     }, body);
-    for (const side of [-1, 1]) surface('sheet', 1, 3, (u, v) => [side * .82, hood - .4 * u, front + (tip - front) * v], body);
+    for (const side of [-1, 1]) surface('sheet', 1, 3, (u, v) => {
+      const start = endZ(1, side * .82, hood);
+      return [side * .82, hood - .4 * u, start + (tip - start) * v];
+    }, body);
     box('frame', 1.5, hood - sill - .2, .06, P.iron, 0, sill + .15 + (hood - sill - .2) / 2, tip + .02);
     for (let index = 0; index < 7; index++) bar('frame', [-.62 + index * .2, sill + .25, tip + .06], [-.62 + index * .2, hood - .08, tip + .06], .03, P.chrome, .03);
     for (const side of [-1, 1]) {
-      const wing = new THREE.CylinderGeometry(.62, .62, .48, 9, 1, true, 0, Math.PI);
-      wing.rotateZ(Math.PI / 2);
-      kit.keep('sheet', wing.applyMatrix4(placed(side * (W - .24), sill + .1, axles[0])), paint.clone().lerp(rust, .3));
-      tube('frame', [side * (W - .4), hood - .08, tip - .05], [side * (W - .4), hood - .08, tip + .08], .11, P.dark, 8);
+      surface('sheet', 14, 3, (u, v) => {
+        const angle = u * Math.PI;
+        return [side * (.77 + .48 * v), sill + .1 + .66 * Math.sin(angle), axles[0] + .66 * Math.cos(angle)];
+      }, body);
+      surface('sheet', 14, 1, (u, v) => {
+        const radius = .66 + .08 * v;
+        return [side * W, sill + .1 + radius * Math.sin(u * Math.PI), axles[0] + radius * Math.cos(u * Math.PI)];
+      }, paint.clone().lerp(rust, .3));
+      const x = side * (W - .28);
+      tube('frame', [x, hood - .08, tip - .09], [x, hood - .08, tip + .045], .145, P.iron, 10);
+      tube('glass', [x, hood - .08, tip + .046], [x, hood - .08, tip + .065], .105, P.chrome.clone().multiplyScalar(.65), 10);
     }
     box('frame', W * 2 + .06, .18, .14, P.iron, 0, sill + .12, half - .04);
   }
   // The back: a panel from the skirt to the gutters, the back window kept or shut with tin, the engine's grille.
   {
     const z = rear;
-    surface('sheet', 4, 4, (u, v) => [W * (2 * u - 1), sill + (rail - sill) * v, z - .015 * Math.sin(u * Math.PI)], body);
-    cap(z, bus.workshop ? P.tin[0] : paint.clone().multiplyScalar(.92));
+    surface('sheet', 12, 4, (u, v) => { const x = W * (2 * u - 1), y = sill + (rail - sill) * v; return [x, y, endZ(-1, x, y)]; }, body);
+    cap(-1, bus.workshop ? P.tin[0] : roofColour);
     if (random() < .55) faces('glass', [-W + .35, belt + .12, z - .02, W - .35, belt + .12, z - .02, -W + .35, rail - .08, z - .02, -W + .35, rail - .08, z - .02, W - .35, belt + .12, z - .02, W - .35, rail - .08, z - .02], P.glass);
     else ribbed('sheet', [-W + .3, belt + .08, z - .04], [W - .3, belt + .08, z - .04], [-W + .3, rail - .04, z - .04], [W - .3, rail - .04, z - .04], pick(P.tin), random);
     for (let index = 0; index < 5; index++) bar('frame', [-.7, sill + .2 + index * .09, z - .03], [.7, sill + .2 + index * .09, z - .03], .035, P.iron, .03);
     // The corners are rounded by a strip, and the lamps are dull red glass or empty sockets.
     for (const side of [-1, 1]) {
-      bar('sheet', [side * (W - .02), sill + .02, z - .02], [side * (W - .02), rail, z - .02], .07, paint.clone().multiplyScalar(.7), .07);
-      box(random() < .6 ? 'glass' : 'frame', .14, .24, .03, random() < .6 ? tone(0x4a1c16) : P.dark, side * (W - .22), sill + .78, z - .03);
+      bar('sheet', [side * (W - .02), sill + .02, endZ(-1, W - .02, sill)], [side * (W - .02), rail, endZ(-1, W - .02, rail)], .07, paint.clone().multiplyScalar(.7), .07);
+      box(random() < .6 ? 'glass' : 'frame', .14, .24, .03, random() < .6 ? tone(0x4a1c16) : P.dark, side * (W - .22), sill + .78, endZ(-1, W - .22, sill + .78) - .02);
     }
-    box('frame', W * 2 + .08, .2, .14, P.iron, 0, sill + .1, z - .08, [0, 0, between(-.03, .03)]);
+    for (let i = 0; i < 8; i++) {
+      const a = W * (i / 4 - 1), b = W * ((i + 1) / 4 - 1);
+      bar('frame', [a, sill + .1, rear + .04 + .2 * (a / W) ** 4], [b, sill + .1, rear + .04 + .2 * (b / W) ** 4], .15, P.iron, .2);
+    }
     if (random() < .5) {
       for (const x of [.45, .85]) bar('frame', [x, sill + .35, z - .07], [x, crown - .05, z - .07], .035, P.tube, .035);
       for (let rung = 0; rung < 7; rung++) bar('frame', [.45, sill + .5 + rung * .3, z - .07], [.85, sill + .5 + rung * .3, z - .07], .03, P.tube, .03);
     }
   }
   // Inside: the floor, and some of the seats still in their rows.
-  box('frame', W * 2 - .1, .05, front - rear - .2, P.floor, 0, floor, (front + rear) / 2);
+  // Split the floor around the door: the three treads remain visible through its opening.
+  for (const [a, b] of [[sideRear, door[0]], [door[1], sideFront]])
+    box('frame', W * 2 - .1, .05, b - a, P.floor, 0, floor, (a + b) / 2);
+  box('frame', W * 2 - .75, .05, door[1] - door[0], P.floor, .325, floor, (door[0] + door[1]) / 2);
   if (!bus.workshop) for (let index = 0; index < 5; index++) {
     const z = rear + 1.6 + index * (front - rear - 3.2) / 4, colour = pick(P.seat);
-    for (const side of [-1, 1]) if (random() < .6) {
+    for (const side of [-1, 1]) if (random() < .6 && (side > 0 || z + .45 < door[0] || z - .15 > door[1])) {
       box('frame', .85, .5, .09, colour, side * (W - .55), floor + .62, z, [-.2, 0, 0]);
       box('frame', .85, .1, .42, colour, side * (W - .55), floor + .42, z + .22);
     }
@@ -608,7 +675,17 @@ function drawBus(kit, P, bus, localGround) {
   for (const side of [-1, 1]) bar('frame', [side * .55, under, rear + .4], [side * .55, under, (nose ? half : front) - .35], .1, P.iron, .16);
   for (const axle of axles) {
     tube('frame', [-W + .3, sill + .04, axle], [W - .3, sill + .04, axle], .06, P.iron, 6);
-    for (const side of [-1, 1]) tube('frame', [side * (W - .45), sill + .04, axle], [side * (W - .25), sill + .04, axle], .2, P.iron, 9);
+    for (const side of [-1, 1]) {
+      const y = sill + .04;
+      tube('frame', [side * (W - .45), y, axle], [side * (W - .08), y, axle], .22, P.rust[2], 10);
+      if (bus.rest === 'blocks') {
+        tube('frame', [side * (W - .09), y, axle], [side * (W - .015), y, axle], .12, P.tube, 8);
+        for (let bolt = 0; bolt < 5; bolt++) {
+          const angle = bolt * Math.PI * 2 / 5, by = y + Math.sin(angle) * .16, bz = axle + Math.cos(angle) * .16;
+          tube('frame', [side * (W - .08), by, bz], [side * (W + .005), by, bz], .018, P.chrome, 4);
+        }
+      }
+    }
   }
   box('frame', .5, .38, 1.1, P.iron, W - .55, sill - .05, (axles[0] + axles[1]) / 2 + .6);
   tube('frame', [-.3, under - .02, axles[1] + .6], [-.4, under, rear + .2], .045, P.rust[2], 5);
@@ -722,8 +799,13 @@ function createFlashes(cards) {
     vertexShader: `
       attribute vec3 aFoot;attribute vec3 aKind;varying vec2 vUv;varying vec2 vKind;
       void main(){
-        vUv=uv;vKind=aKind.xy;
+        vUv=uv;
         vec4 mv=modelViewMatrix*vec4(aFoot,1.0);
+        // The arc itself is below the salt skyline from the Ridge spur. At range its
+        // blue spill on the canopy is the visible part of the same welding burst.
+        float strength=aKind.y;
+        if(aKind.x==2.0) strength*=smoothstep(100.0,500.0,-mv.z);
+        vKind=vec2(aKind.x==1.0 ? 1.0 : 0.0,strength);
         // A card never shrinks below its least angle, so that a spark of light still shows from far off.
         float size=length(position.xy)*1.4142;
         mv.xy+=position.xy*max(1.0,-mv.z*aKind.z/max(size,.001));
@@ -1171,6 +1253,7 @@ export function buildBusRing({stage = 'camp', heightAt = null} = {}) {
     {...arcAt, size: .45, kind: 0, strength: 1, least: .008},
     {...arcAt, y: arcAt.y + .4, size: 2.2, kind: 0, strength: .4, least: .014},
     {...arcAt, y: arcAt.y + 1.8, size: 9, kind: 0, strength: .1},
+    {...arcAt, y: arcAt.y + 3, size: 4, kind: 2, strength: .85, least: .034},
     {x: gateLamp.x, y: gy(gateLamp), z: gateLamp.z, size: 1.4, kind: 1, strength: .7, least: .008},
     {x: workshopLamp.x, y: workshopLamp.y, z: workshopLamp.z, size: 1.3, kind: 1, strength: .6},
     {x: tableLamp.x, y: gy(tableLamp) + .02, z: tableLamp.z, size: .5, kind: 1, strength: .6},
@@ -1183,6 +1266,18 @@ export function buildBusRing({stage = 'camp', heightAt = null} = {}) {
   const smoke = createSmokeColumn({height: 22, foot: .16, top: 3.2, wind: WIND, lean: .22, colour: 0x8a8278, pale: 0xd6cec2, strength: .5});
   smoke.name = 'The Bus Ring, stove smoke';
   smoke.position.set(T.stove.x + .12, ground(T.stove.x, T.stove.z) + 2.86, T.stove.z - .08);
+  // Keep the thin pipe smoke at the table. As it recedes, draw the wind-carried
+  // plume above it with enough width and contrast to survive the dusk haze.
+  const smokeAt = new THREE.Vector3(), eye = new THREE.Vector3();
+  const smokeUniforms = smoke.material.uniforms, pipeColour = smokeUniforms.uDark.value.clone(), sootColour = tone(0x514942);
+  smoke.onBeforeRender = (_renderer, _scene, camera) => {
+    const range = smoke.getWorldPosition(smokeAt).distanceTo(camera.getWorldPosition(eye));
+    const distant = smooth((range - 100) / 400);
+    smokeUniforms.uHeight.value = 22 + 27 * distant;
+    smokeUniforms.uTop.value = 3.2 + 8 * distant;
+    smokeUniforms.uStrength.value = .5 + .52 * distant;
+    smokeUniforms.uDark.value.copy(pipeColour).lerp(sootColour, distant);
+  };
   group.add(smoke);
   const lights = [];
   const light = (colour, strength, distance, at, flicker) => {

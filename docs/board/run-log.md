@@ -1799,3 +1799,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 NIGHT-2-TRY-FIXES (Claude cloud): merged in the evening batch at c22d0ff2e.
 - 2026-11-26 OPEN-LOOK-RADIO-HILL (Claude cloud, Opus): Radio Hill, round 1, drawn in code; Claude settled three additive conflicts with the Bus Ring look. Look, site and scenario suites passed; laptop pictures follow.
 - 2026-11-26 COMBAT-ROOF-BOW-LOOK: merged in the second evening batch at 72911d1a6.
+- 2026-11-26 OPEN-LOOK-BUS-RING-2: merged in the second evening batch at 0449085f0.

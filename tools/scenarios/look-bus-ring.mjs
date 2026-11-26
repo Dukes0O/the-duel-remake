@@ -1,4 +1,4 @@
-// OPEN-LOOK-BUS-RING: the pictures by which Claude judges the Bus Ring, round 1. Not a frame check, and not a test of any rule.
+// OPEN-LOOK-BUS-RING-2: the pictures by which Claude judges the Bus Ring, round 2. Not a frame check, and not a test of any rule.
 //
 // It enters the Scablands by Light the Town, the job that has an evening, as tools/scenarios/look-glasshouse.mjs does, and stands
 // the camp at the position OPEN-T-MARKET gives it (`land.at('ridge', -665, -345)`) through tools/open-look-stand.js. The browser
@@ -9,7 +9,7 @@
 //   far       from the nearest point of a road that sees the camp (the Ridge spur, about 700 m out), at dusk and car height (1.2 m)
 //   night     on foot from `table` to the workshop and the welding, at night
 // and two more than the card asks for, so that each tell can be judged at a second distance:
-//   near      from 250 m out on the line to the road, by day and at car height: the roofs
+//   near      from 52 m out on the line to the road, by day and at car height: the roofs
 //   far-zoom  the same as far through a glass of six times, to judge what the far view shows at its size
 //   edge-dusk from `car-stop` at dusk: the lamp on its mast and the flicker through the gate
 // The welding is caught while its arc is struck (`busRingWeld`), so that its flicker is in the pictures that should show it.
@@ -53,7 +53,7 @@ export const PICTURES = Object.freeze([
   {name: 'edge', stage: 'camp', from: 'car-stop', eye: EYE},
   {name: 'yard', stage: 'camp', from: 'gate', eye: EYE},
   {name: 'table', stage: 'camp', from: 'forge', eye: EYE, toward: {x: -7.6, z: 3.1, up: 1}},
-  {name: 'near', stage: 'camp', out: 250, eye: CAR_HEIGHT, extra: true},
+  {name: 'near', stage: 'camp', out: 52, eye: CAR_HEIGHT, extra: true},
   {name: 'far', stage: 'camp', road: true, eye: CAR_HEIGHT, dusk: true},
   {name: 'far-zoom', stage: 'camp', road: true, eye: CAR_HEIGHT, dusk: true, zoom: 6, extra: true},
   {name: 'edge-dusk', stage: 'camp', from: 'car-stop', eye: EYE, dusk: true, extra: true},
@@ -94,7 +94,7 @@ export const pageFunctions = {
     const quality = document.querySelector('#graphics-quality');
     quality.value = 'performance';
     quality.dispatchEvent(new Event('change', {bubbles: true}));
-    const player = [...document.querySelectorAll('details button')].find(button => button.textContent.startsWith('Create temporary player ready for job 2:'));
+    const player = [...document.querySelectorAll('details button')].find(button => !button.disabled && button.textContent.startsWith('Create temporary player ready for job 2:'));
     player.click();
     if (!app.visitWasteland({arrived: true})) throw Error('Could not enter the memory-only yard');
     return true;
@@ -108,6 +108,7 @@ export const pageFunctions = {
     window.__qaApp.audio.setMuted(true);
     return true;
   },
+  advance: seconds => window.__qaApp.advance(seconds),
   stand: async (stage, seconds) => {
     const stood = await window.__openLookStand.stand('bus-ring', {stage, seconds});
     window.__openLookStand.at(seconds);
@@ -125,10 +126,30 @@ export const pageFunctions = {
     Object.assign(state.arena.worldJob.job.stepState, {brandBriefed: true, brandsUsed: 1, brandElapsed: view.dusk ? duskSeconds : 0, dusk: view.dusk ? 1 : 0});
     const ground = (x, z) => land.userData.drawnGroundHeightAt(x, z);
     app.inspectionCamera = {position: [view.eye.x, ground(view.eye.x, view.eye.z) + view.eye.up, view.eye.z], target: [view.look.x, ground(view.look.x, view.look.z) + view.look.up, view.look.z]};
-    window.__render.camera.position.fromArray(app.inspectionCamera.position);
-    window.__render.camera.zoom = view.zoom ?? 1;
-    window.__render.camera.updateProjectionMatrix();
+    const camera = window.__render.camera;
+    camera.position.fromArray(app.inspectionCamera.position);
+    camera.lookAt(...app.inspectionCamera.target);
+    camera.zoom = view.zoom ?? 1;
+    camera.updateProjectionMatrix();
     return app.inspectionCamera;
+  },
+  // Measure the rendered approach camera after the game has settled. Keep the actual
+  // direction and projected roof span alongside the requested pose in the report.
+  approach: () => {
+    const {scene, camera} = window.__render;
+    const roof = scene.getObjectByName('The Bus Ring, the pale roofs');
+    if (!roof) throw Error('Cannot frame the Bus Ring roofs');
+    camera.updateMatrixWorld();
+    const target = camera.position.clone().fromArray(window.__qaApp.inspectionCamera.target).project(camera);
+    const point = camera.position.clone(), vertices = roof.geometry.attributes.position;
+    let left = Infinity, right = -Infinity, top = -Infinity, bottom = Infinity;
+    for (let i = 0; i < vertices.count; i++) {
+      point.fromBufferAttribute(vertices, i).applyMatrix4(roof.matrixWorld).project(camera);
+      left = Math.min(left, point.x); right = Math.max(right, point.x);
+      bottom = Math.min(bottom, point.y); top = Math.max(top, point.y);
+    }
+    return {position: camera.position.toArray(), direction: camera.getWorldDirection(point).toArray(),
+      targetNdc: target.toArray(), roofNdc: {left, right, bottom, top}};
   },
   // What the camp costs in this view: the main scene drawn with it and without it, shadows off.
   measure: () => {
@@ -168,8 +189,9 @@ export function pageSources() {
   const spots = Object.fromEntries(Object.entries(BUS_RING_LAYOUT.spots).map(([name, spot]) => [name, {x: SITE.x + spot.x, y: 0, z: SITE.z + spot.z,
     looksAt: {x: SITE.x + spot.looksAt.x, y: spot.looksAt.y, z: SITE.z + spot.looksAt.z}}]));
   return [
-    pageSource('ready'), pageSource('prepare'), pageSource('hideInterface'), pageSource('measure'), pageSource('startDuskBlend'), pageSource('settled'),
+    pageSource('ready'), pageSource('prepare'), pageSource('hideInterface'), pageSource('approach'), pageSource('measure'), pageSource('startDuskBlend'), pageSource('settled'),
     pageSource('stand', 'camp', weldMoment()), pageSource('stand', 'night', weldMoment()),
+    pageSource('advance', 4), pageSource('advance', 1.5),
     ...PICTURES.map(picture => pageSource('place', viewFor(picture, {spots}), BRAND_RULE.duskSeconds)),
     ...['yard', 'start', 'loaded'].map(name => job2(name)),
   ];
@@ -177,7 +199,7 @@ export function pageSources() {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'OPEN-LOOK-BUS-RING', round: 1, site: SITE, quality: 'performance', budget: BUS_RING_BUDGET, radius: BUS_RING_LAYOUT.radius, pictures: [], failures: []};
+  const report = {card: 'OPEN-LOOK-BUS-RING-2', round: 2, site: SITE, quality: 'performance', budget: BUS_RING_BUDGET, radius: BUS_RING_LAYOUT.radius, pictures: [], failures: []};
   const persist = () => writeFile(join(context.outputDir, 'look-bus-ring.json'), JSON.stringify(report, null, 2) + '\n');
   try {
     const seconds = weldMoment();
@@ -188,7 +210,7 @@ export async function run(context) {
     await context.evaluate(pageSource('prepare'));
     await context.waitFor(job2('yard'), 'yard', 90000);
     await context.evaluate(job2('start'));
-    await context.evaluate('window.__qaApp.advance(4)');
+    await context.evaluate(pageSource('advance', 4));
     await context.waitFor(job2('loaded'), 'Light the Town and the Scablands art', 120000);
     await context.evaluate(pageSource('hideInterface'));
     let standing = null, duskSet = false;
@@ -198,7 +220,7 @@ export async function run(context) {
       const view = viewFor(picture, standing);
       row.view = view;
       row.camera = await context.evaluate(pageSource('place', view, BRAND_RULE.duskSeconds));
-      await context.evaluate('(() => window.__qaApp.advance(1.5))()');
+      await context.evaluate(pageSource('advance', 1.5));
       if (view.dusk && !duskSet) {
         await context.evaluate(pageSource('startDuskBlend'));
         await context.waitFor(pageSource('settled'), 'dusk sky over the ridge', 180000);
@@ -206,6 +228,13 @@ export async function run(context) {
       } else await new Promise(done => setTimeout(done, 3200));
       await context.evaluate(pageSource('place', view, BRAND_RULE.duskSeconds));
       await new Promise(done => setTimeout(done, 400));
+      if (picture.name === 'near') {
+        row.approach = await context.evaluate(pageSource('approach'));
+        const {left, right, bottom, top} = row.approach.roofNdc;
+        const [x, y, z] = row.approach.targetNdc;
+        if (!(Math.hypot(x, y) < .1 && z > -1 && z < 1 && left > -1 && right < 1 &&
+            bottom > -1 && top < 1 && right - left > .5)) report.failures.push('near did not frame the ring on approach');
+      }
       row.picture = await context.screenshot('look-bus-ring-' + picture.name);
       row.cost = await context.evaluate(pageSource('measure'));
       if (row.cost.draws > BUS_RING_BUDGET.draws || row.cost.triangles > BUS_RING_BUDGET.triangles) report.failures.push(picture.name + ' is over the budget: ' + JSON.stringify(row.cost));

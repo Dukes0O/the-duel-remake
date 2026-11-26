@@ -1377,18 +1377,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-DACE.md"
 
-  - id: OPEN-LOOK-BUS-RING-2
-    title: "Open Scablands: the Bus Ring, round 2 from Claude's verdict (buses that are buses, the far tell, the near view)"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-BUS-RING-2.md"
-
   - id: OPEN-BURNED-PEN
     title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
     owner: "codex"
