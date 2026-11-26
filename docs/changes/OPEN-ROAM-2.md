@@ -7,6 +7,7 @@ The painted FORGE and WASH signs sit above their doors. Each map adds the corres
 **Checks** Node 22.23.5, memory-only. At `3c65604bf` the Rule 23 and affected older set passed 43/43 and `npm run build` passed.
 At `c4b6acdb9` the Rule 23 and touched suites passed 14/14 and the build passed. Guards checked core, 306 replay fingerprints, 12 combat replay fingerprints and 65 world-composition assertions.
 At `268a434c3` with `a83c0f1ab` integrated, the open-land compatibility checks passed 8/8 and the build passed.
+At `bbd68235d` with OPEN-MAP-2 integrated from `c693e2fb6`, the map, roam and project checks passed 7/7 and the build passed.
 **Changed assertions** The town cast count now includes the three new residents. The greeting checks timed lines and closure. The routine collision assertion measures residual penetration, to distinguish actual overlap from floating-point contact.
 **Codex decided** Use the existing caption reading time and ledger meeting fact. Claude approved the shared hooks. Roam starts by day and the tests supply dusk and dark through the existing phase input.
 **For Claude to run** `node tools/run-browser-scenarios.mjs --scenarios open-roam --jobs 1` and the merged build. Review the daylight picture, 40 m sign legibility, and the lowered and raised weapon poses.
