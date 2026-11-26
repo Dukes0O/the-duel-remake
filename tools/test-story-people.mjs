@@ -244,10 +244,11 @@ for (const person of residents) {
     townView.update(townJob,observer,++clock);
     if (task === 'sleep') {
       for (let frame = 0; frame < 45; frame++) townView.update(townJob,observer,clock += 1/60);
+      actor.updateMatrixWorld(true);
       const bounds = new THREE.Box3().setFromObject(actor.getObjectByName('skin-'+person.id), true);
       const extent = bounds.getSize(new THREE.Vector3());
       assert.ok(Math.max(extent.x,extent.z) > extent.y*1.5, person.id+' rests on one side');
-      assert.ok(Math.abs(bounds.min.y) < .04, person.id+' rests on the ground');
+      assert.ok(Math.abs(bounds.min.y) < .04, person.id+' rests on the ground, lowest vertex '+bounds.min.y);
     }
     rotations.add(arm.quaternion.toArray().map(n=>n.toFixed(3)).join());
     if (!['stand','inspect','sit','sleep'].includes(task)) {
