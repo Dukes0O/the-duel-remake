@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {App} from '../src/app.js';
-import {PLAYERS_KEY, activePlayer, loadPlayers} from '../src/progression.js';
-import {EMBER_JOBS, applyBattleEnding, emberRuns} from '../src/story/ember-save.js';
-import {bankHearth} from '../src/story/ledger.js';
+import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
+import {settleArenaResult} from '../src/arena/arena-settlement.js';
+import {EMBER_JOBS, applyArrivedRun, applyBattleEnding, emberFeud, emberRuns} from '../src/story/ember-save.js';
+import {bankHearth, createLedger} from '../src/story/ledger.js';
 import {bankOpenHearth, savedLedger} from '../src/story/ledger-save.js';
 import {learnerTalk, morningLine, mossTalk, passengerLine, routineOffer, shortStoreLine} from '../src/story/scenes/routine-offer.js';
 import {validateTalkScene} from '../src/story/talk.js';
 import {gasRunJob, gasRunPay} from '../src/world/jobs/gas-run.js';
+import {night2Opening} from '../src/world/jobs/night-2.js';
 import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {stepEscort} from '../src/world/jobs/steps/escort.js';
 import {GAS_ROUTINE, learnerOf} from '../src/world/open/content/routines.js';
@@ -20,7 +22,7 @@ import {newWorld} from '../src/world/open/open-record.js';
 import {savedOpenRecord, settleOpenHearth, settleOpenWorld} from '../src/world/open/open-save.js';
 import {worldForProfile} from '../src/world/open/open-world.js';
 import {answerRoutine, arriveHandRun, mayOfferRoutine, morningDelivery, routineFor, setRoutineRunning,
-  showRoutineOffer, takeHandRun, willingLearners} from '../src/world/open/routine-run-rule.js';
+  runBankedRoutines, showRoutineOffer, takeHandRun, willingLearners} from '../src/world/open/routine-run-rule.js';
 import {worldHudModel} from '../src/world/world-hud.js';
 import {pageSource, run as scenario} from './scenarios/open-apprentice-run.mjs';
 
@@ -198,11 +200,13 @@ const flags = choices => ({enabled: id => ['hidden-road', 'story-everburn', 'sca
 const jobOf = app => app.duel.state.arena.worldJob;
 const disk = () => activePlayer(loadPlayers(localStorage)).profile;
 const source = JSON.parse(readFileSync(new URL('./fixtures/saves/26-story-open.json', import.meta.url))).storage;
-function appAtYard({choices = true, feud = 1} = {}) {
+function appAtYard({choices = true, feud = 1, night = 3} = {}) {
   const fixture = structuredClone(source);
   const stored = fixture[PLAYERS_KEY].players[0].profile;
   stored.story = {...stored.story, ember: {read: true, jobs: EMBER_JOBS, feud, runs: 3}};
   stored.story.open = {...stored.story.open, routines: {}};
+  if (night === null) delete stored.story.ledger;
+  else if (night === 2) stored.story.ledger = {version: 1, ...createLedger(night2Opening(stored.story.ledger.seed))};
   const values = new Map(Object.entries(fixture).map(([key, value]) => [key, JSON.stringify(value)]));
   globalThis.localStorage = {getItem: key => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, String(value)), removeItem: key => values.delete(key)};
@@ -351,6 +355,159 @@ test('the switch-off road keeps its old save path and the battle has no gas when
   assert(battle.ok);
   assert.equal(emberRuns(battle.profile), 3);
   assert.equal(battle.feudAfter, 1);
+});
+
+function finishGasRun(app) {
+  const job = jobOf(app), bess = job.actors.find(actor => actor.id === 'big-bess');
+  const path = job.definition.steps[0].path;
+  bess.position = {...path.at(-1).position};
+  bess.pathIndex = path.length - 1;
+  app.advance(6);
+  assert.equal(app.duel.state.status, 'arena_result');
+  return app.duel.state.arena.result;
+}
+
+test('pre-Night-2 hand runs keep Night 2 at its written opening stocks', () => {
+  for (const night of [null, 2]) {
+    const app = appAtYard({night});
+    const before = disk();
+    assert(app.gasRun('long'));
+    assert(!jobOf(app).definition.routineRun);
+    assert(!jobOf(app).definition.steps[0].measureGas);
+    assert.deepEqual(disk().story, before.story, 'starting a pre-Night-2 gas run writes no story');
+    app.advance(4);
+    const first = finishGasRun(app);
+    assert(first.settlementSaved);
+    assert.equal(first.routineGas, undefined);
+    assert(app.worldJobAgain(), 'a second Story Wall run can start');
+    app.advance(4);
+    assert(finishGasRun(app).settlementSaved);
+    const after = disk();
+    assert.equal(emberRuns(after), emberRuns(before) + 2);
+    assert.equal(after.wasteland.scrap - before.wasteland.scrap, 2 * gasRunPay('long', app.cpuDifficulty));
+    assert.deepEqual(after.story.open, before.story.open);
+    assert.deepEqual(savedLedger(after), savedLedger(before));
+    assert(app.returnToYard());
+    app.advance(8);
+    assert(app.startNight2());
+    assert.deepEqual(jobOf(app).night2.ledger.stocks, {embers: 4, gas: 0});
+  }
+});
+
+test('an old routine record stays untouched until Night 2 is banked', () => {
+  const night2 = {...newWorld({night: 2, embers: 1, gas: 22}), legacyHandRuns: 3};
+  night2.open.routines['gas-run'] = {offered: true, learner: 'dace', share: .75, lessonLoad: 60, running: true, tally: 40};
+  const original = structuredClone(night2);
+  assert(!mayOfferRoutine({...night2, open: {...night2.open, routines: {}}}));
+  assert.equal(arriveHandRun(night2, {load: 60, clean: true}).world, night2);
+  assert.equal(runBankedRoutines(night2), night2);
+  assert.equal(takeHandRun(night2), night2);
+  assert.deepEqual(night2, original);
+  const next = nextNight(night2);
+  assert.equal(routineFor(next).learner, 'dace');
+  assert(runBankedRoutines(next).ledger.stocks.embers > next.ledger.stocks.embers);
+});
+
+test('unmeasured, invalid and stale gas arrivals still keep scrap and feud exactly once', (t) => {
+  const warnings = t.mock.method(console, 'warn', () => {});
+  for (const fault of ['missing', 'invalid', 'stale-night', 'stale-record']) {
+    const app = appAtYard({feud: 2});
+    assert(app.gasRun('long'));
+    app.advance(4);
+    if (fault === 'missing' || fault === 'invalid') {
+      delete jobOf(app).job.steps[0].measureGas;
+      if (fault === 'invalid') jobOf(app).routineGasArrival = {load: -1, clean: true};
+    } else {
+      const registry = loadPlayers(localStorage), {id, profile} = activePlayer(registry);
+      const story = {...profile.story};
+      if (fault === 'stale-night') story.ledger = bankHearth(savedLedger(profile)).ledger;
+      else story.open = {...story.open, found: [...story.open.found, 'radio-hill']};
+      assert(savePlayers(replacePlayerProfile(registry, id, {...profile, story}), localStorage));
+    }
+    const before = disk(), result = finishGasRun(app);
+    assert(result.settlementSaved, fault);
+    assert(!result.routineSaveIssue, fault);
+    assert.equal(result.routineGas, undefined, fault);
+    assert.equal(disk().wasteland.scrap - before.wasteland.scrap, gasRunPay('long', app.cpuDifficulty), fault);
+    assert.equal(emberRuns(disk()), emberRuns(before) + 1, fault);
+    assert.equal(emberFeud(disk()), emberFeud(before) - 1, fault);
+    assert.deepEqual(disk().story.open, before.story.open, fault);
+    assert.deepEqual(savedLedger(disk()), savedLedger(before), fault);
+    const state = app.duel.state, after = disk();
+    assert.equal(app._settleArenaResult({result}, state), false);
+    assert.deepEqual(disk(), after);
+  }
+  assert.equal(warnings.mock.callCount(), 4);
+  assert(warnings.mock.calls.every(call => /gas/.test(call.arguments[0])));
+});
+
+for (const night of [2, 3]) {
+  test(`a failed write on night ${night} keeps the run’s earnings when returning to the yard`, () => {
+    const app = appAtYard({feud: 2, night});
+    assert(app.gasRun('long'));
+    assert.equal(Boolean(jobOf(app).definition.routineRun), night === 3);
+    app.advance(4);
+    const store = localStorage, before = disk(), pay = gasRunPay('long', app.cpuDifficulty);
+    globalThis.localStorage = {...store, setItem() { throw Error('QA write denied'); }};
+    try {
+      const result = finishGasRun(app);
+      assert(!result.settlementSaved);
+      assert.deepEqual(disk(), before);
+      assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+      assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
+      assert(app.returnToYard());
+      app.advance(8);
+      assert(app.isYardHomeActive());
+      assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+      assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
+      assert.equal(emberRuns(app.profile), emberRuns(before) + 1);
+      assert.deepEqual(disk(), before);
+    } finally { globalThis.localStorage = store; }
+    assert(app._saveProfile());
+    assert.equal(disk().wasteland.scrap, before.wasteland.scrap + pay);
+    assert.equal(emberRuns(disk()), emberRuns(before) + 1);
+    if (night === 2) {
+      assert.deepEqual(savedLedger(disk()), savedLedger(before));
+      assert.deepEqual(disk().story.open, before.story.open);
+    }
+  });
+}
+
+test('the open clock cannot cross into dusk while paused', () => {
+  const app = appAtYard();
+  assert(app.startOpenRoam());
+  app.advance(4);
+  const job = jobOf(app), before = disk();
+  job.open.daySeconds = 959.5;
+  app.advance(.1);
+  assert.equal(job.open.partOfDay, 'day');
+  const pausedAt = job.open.daySeconds;
+  app.togglePause();
+  app.advance(5);
+  assert.equal(job.open.daySeconds, pausedAt);
+  assert.equal(job.open.partOfDay, 'day');
+  assert.deepEqual(disk(), before);
+  app.togglePause();
+  app.advance(.5);
+  assert.equal(job.open.partOfDay, 'dusk');
+});
+
+test('the switch-off profile matches the established settlement field by field', () => {
+  const app = appAtYard({choices: false, feud: 2});
+  assert(app.gasRun('long'));
+  app.advance(4);
+  const registry = loadPlayers(localStorage), {id, profile} = activePlayer(registry);
+  assert(finishGasRun(app).settlementSaved);
+  const state = app.duel.state;
+  const settled = settleArenaResult(profile, {runId: app.runId, ownerPlayerId: id, activePlayerId: id,
+    arena: state.arena, cpuDifficulty: state.cpuDifficulty || app.cpuDifficulty});
+  assert(settled.awarded);
+  const arrived = applyArrivedRun(settled.profile, 'long');
+  assert(arrived.ok);
+  const values = new Map();
+  const storage = {getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value)};
+  assert(savePlayers(replacePlayerProfile(registry, id, arrived.profile), storage));
+  assert.deepEqual(disk(), activePlayer(loadPlayers(storage)).profile);
 });
 
 test('the laptop scenario parses every page call and waits on each control it clicks', async () => {

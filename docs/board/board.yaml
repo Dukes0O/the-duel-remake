@@ -1281,18 +1281,17 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-RADIO.md"
 
-  - id: OPEN-APPRENTICE-RUN-2
-    title: "Open Scablands: the kiln and the apprentice start after Night 2, and a gas run's pay is never lost (from the review)"
+  - id: OPEN-APPRENTICE-RUN-3
+    title: "Open Scablands: a gas run keeps its earnings when storage cannot be read (from the review)"
     owner: "codex"
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "building"
-    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
+    status: "ready"
     needs: []
     locks: [busy-game-files, save-shape]
     flag: "story-choices"
-    details: "docs/board/cards/OPEN-APPRENTICE-RUN-2.md"
+    details: "docs/board/cards/OPEN-APPRENTICE-RUN-3.md"
 
   - id: OPEN-T-LIGHTS
     title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"

@@ -1802,3 +1802,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 OPEN-LOOK-BUS-RING-2: merged in the second evening batch at 0449085f0.
 - 2026-11-26 OPEN-T-RUNAWAY (Codex, laptop lanes): The Runaway plays behind story-choices. Claude settled six conflicts with Market Day keeping both, and moved the Grey Camp to a flat spot 639 m from the road. Guards and 18 open-land suites passed 23/23; build passed.
 - 2026-11-26 OPEN-T-TOLL (Codex): The Mall Road Toll plays behind story-choices (lookout, squeeze kinds). Merged at 96d803932 after Codex reconciled it with the Runaway. Guards and 20 open-land suites passed 25/25; build passed.
+- 2026-11-26 OPEN-APPRENTICE-RUN-2 (Codex cloud, Sol): the kiln and routine start after Night 2; an unmeasured run still pays; a failed save keeps the earnings. Independent review: nothing blocks; one later fix carded as OPEN-APPRENTICE-RUN-3. 19 suites passed; build passed.
