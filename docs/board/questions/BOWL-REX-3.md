@@ -31,9 +31,13 @@ near it, even at a 15 m burst.
 - C. Give Easy more of the new attacks, for example the beam also after the second box. This is a design change to the
   order in item 1.
 
-**Pick (carried on with): A.** B meets the number only by making the beam a sure hit and fitting it to one script, which
-is the opposite of "the way out is to drive across". C changes the design. The suite asserts at least 18 wins in 30 with
-the switch on and prints the counts and the scorches by cause.
+**Kyle chose B (26 November 2026).** Built with a 0.53 s stop, not 0.52 s. The game steps at 1/120 s, so 0.52 s is
+63 steps: the beam hits every time and Easy wins 33 of 100. At 0.53 s (64 steps) Easy wins 64 of 100 over seeds 101 to
+200, and the driver escapes the beam by crossing it about one time in three (65 beam scorches in 100 fights). So: with
+`bowl-rex-3` on, Easy allows 4 scorches, the beam follows 1.0 s and stops 0.53 s, and the first beam is not longer.
+Medium, Hard and the switch-off fight are unchanged. The suite drives 100 seeds and asserts 50 to 70 wins, and that the
+beam is escaped in some fights and not in others. The result still depends on a single step of the beam's stop:
+Claude's Easy hand drive is the check that matters.
 
 ## 2. Which way a bomb trails on the cable
 

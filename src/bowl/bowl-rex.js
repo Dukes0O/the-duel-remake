@@ -19,7 +19,10 @@ export const REX_RULES=Object.freeze({
   bomb:{flightSec:1,landRadius:3.5,burstRadius:7,beastRadius:6,pullGift:1},
   level:{
     easy:{walk:5,tellSec:2.6,restSec:24,throwTellSec:2.1,breaths:1,rests:6,hits:5,pull:[2,4,3],
-      beamAimSec:1.8,beamLockSec:.7,fuseSec:10,firstTell:1.5},
+      // Kyle's pick B (26 November 2026): with the beam and bombs on, Easy allows 4 scorches and its beam follows
+      // 1.0 s and stops 0.53 s, with no longer first tell. The child-pace driver then wins 64 of 100 seeds and
+      // escapes the beam about one time in three (docs/board/questions/BOWL-REX-3.md, question 1).
+      beamAimSec:1,beamLockSec:.53,fuseSec:10,firstTell:1,hitsWithRex3:4},
     medium:{walk:7,tellSec:2,restSec:19,throwTellSec:1.65,breaths:2,rests:5,hits:4,pull:[3,4,4],
       beamAimSec:1.4,beamLockSec:.5,fuseSec:8,firstTell:1.5},
     hard:{walk:9,tellSec:1.5,restSec:15,throwTellSec:1.25,breaths:2,rests:5,hits:3,pull:[3,5,5],
@@ -56,7 +59,7 @@ export function rexPlaces(course){
 export function createRexFight({difficulty='medium',course,rex3=false}){
   const places=rexPlaces(course),level=REX_RULES.level[difficulty]?difficulty:'medium';
   return {version:3,level,places,length:course.length,phase:'walk',direction:-1,s:places.startS,t:0,
-    boxes:[false,false,false],dropped:[],low:false,rests:0,fires:0,tells:0,hits:0,maxHits:REX_RULES.level[level].hits,
+    boxes:[false,false,false],dropped:[],low:false,rests:0,fires:0,tells:0,hits:0,maxHits:rex3===true ? REX_RULES.level[level].hitsWithRex3??REX_RULES.level[level].hits : REX_RULES.level[level].hits,
     penCars:REX_RULES.penCars,hook:newHook(),marker:null,cone:null,throwAt:null,done:null,
     braced:false,scorched:false,first:true,lastBox:-1,hints:{},
     // BOWL-REX-3: the attacks owed before it walks on, the turn in its order, the line, the bomb,

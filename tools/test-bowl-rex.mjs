@@ -416,6 +416,8 @@ const make3=(difficulty='easy')=>createRexFight({difficulty,course,rex3:true});
 const tired3=(index=0,level='easy')=>Object.assign(tired(index,level),{rex3:true});
 assert.ok(Object.hasOwn(FEATURE_STATES,'bowl-rex-3'),'the beam and the bombs have a switch of their own');
 // Off, it gets up as released: a car with two boxes out, nothing else, and no beam between Medium's breaths.
+// Easy allows 4 scorches only with the switch on (pick B); off, 5 as released.
+assert.deepEqual([make('easy').maxHits,make3('easy').maxHits,make3('medium').maxHits,make3('hard').maxHits],[5,4,4,3]);
 for(const level of ['easy','medium','hard'])for(const [out,owed] of [[0,[]],[1,[]],[2,['car']]]){
   const f=make(level);f.boxes=[0,1,2].map(i=>i<out);assert.deepEqual(rexRiseAttacks(f),owed);
 }
@@ -512,8 +514,8 @@ function runBeam(f,truck,move){
   const jump=beamFight(),air=truckOn(70,4,{airHeight:3.5});
   const evj=runBeam(jump,air);
   assert.equal(jump.hits,0);assert.ok(evj.some(e=>e.type==='beamOver'),'the truck over the beam is called');
-  // The first beam in a fight follows half as long again on Easy and Medium, not on Hard.
-  for(const [level,first] of [['easy',2.7],['medium',2.1],['hard',1]]){
+  // The first beam in a fight follows half as long again on Medium; not on Easy (pick B) or Hard.
+  for(const [level,first] of [['easy',1],['medium',2.1],['hard',1]]){
     const f=beamFight(level);stepRexFight(f,truckOn(70,4),dt,course);
     assert.ok(Math.abs(f.beam.aimSec-first)<1e-9,level);
     f.beam=null;f.phase='walk';f.due=['beam'];stepRexFight(f,truckOn(70,4),dt,course);
@@ -772,11 +774,13 @@ if(!process.argv.includes('--rules-only')){
   assert.ok(backBoxes >= 6, 'the same Easy driver can pull the braced back box with throttle alone');
   const tween=Array.from({length:10},(_,i)=>drive(101+i,true,true));
   console.log('Late-reaction 22-30 mph driver wins:',tween.filter(run=>run.won).length,'of 10');
-  // BOWL-REX-3 on: the same child-pace driver over thirty seeds, crossing the line, keeping 8 m from bombs.
-  const on=Array.from({length:30},(_,i)=>drive(101+i,true,false,true));
+  // BOWL-REX-3 on: the same child-pace driver over a hundred seeds (ten are a coin flip), crossing the line and
+  // keeping 8 m from bombs. Kyle's word: about six in ten on Easy for a tween; the gate is 5 to 7 in 10.
+  const on=Array.from({length:100},(_,i)=>drive(101+i,true,false,true));
   const onWins=on.filter(run=>run.won).length;
-  console.log('With bowl-rex-3, Easy wins using Space:',onWins,'of 30; scorches by cause:',byCause(on));
+  console.log('With bowl-rex-3, Easy wins using Space:',onWins,'of 100; scorches by cause:',byCause(on));
   assert.ok(on.every(run=>run.trace.includes('beamAim') && run.trace.includes('bombTell')),'every fight meets a beam and a bomb');
-  assert.ok(onWins>=18,'the child-pace driver still wins at least six in ten with the beam and bombs');
+  assert.ok(onWins>=50 && onWins<=70,'the child-pace driver wins 5 to 7 in 10 on Easy with the beam and bombs');
+  assert.ok(on.some(run=>run.scorches.beam===0) && on.some(run=>run.scorches.beam>0),'the beam can be escaped by crossing, and is not always');
 }
 console.log('Scrapasaurus tow rules, continuous wall contacts, yard and read-only view passed.');
