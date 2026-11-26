@@ -50,6 +50,13 @@ sign is never followed). It uses only the facts and the effects of section 12. E
 file exactly as the page has it, with role names put in as `{camp.leader}`. Nothing loads the file yet; OPEN-THREADS
 will.
 
+**Roles, as `checkThread` holds them** (added 25 November 2026, after the card started; section 18 has the example).
+In a condition or an effect a role of the cast is written with an at sign: `{type: 'site', id: '@camp', stage:
+'burned'}`, `{type: 'word', person: '@camp.people', by: 1}`, `{fact: 'feud', of: '@enemy', atLeast: 'Raiding'}`. In a
+line a role has four words: `{camp.name}`, `{camp.people}`, `{camp.leader}`, `{camp.thing}`. A favour is owed by a
+people, not a person. A draw is named short (`start`); the game puts the storyline and the night in front of it. A
+thread effect moves only to a beat or an end that the file has.
+
 ## Rules for the writing
 
 - **No storyline's file names another storyline.** The page may, in its crossings. A mark begins with the storyline's

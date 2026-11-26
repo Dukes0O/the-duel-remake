@@ -5,6 +5,39 @@ The short board entry controls current state, ownership, dependencies and locks.
 **Codex model: Sol** (Kyle, 20 November 2026: Sol builds what is not graphics or physics).
 [STORY-OPEN-WORLD](STORY-OPEN-WORLD.md) cut this card from `docs/story/open-scablands.md`.
 
+## Re-cut on 25 November 2026: read this first
+
+**Built at the same time as the other open Scablands cards** (Kyle, 25 November 2026). OPEN-SHARED is merged and
+holds what this card once waited for. Where this section and the rest of the card differ, this section wins.
+
+- **Read `src/world/open/open-land.js` first.** It is the contract between the parts of the open land.
+- **Use these, and do not write them again:** `isTrue` and `checkFact` (`facts.js`); `applyEffects` (`open-effects.js`),
+  which is the only way to change the world; the world and its readers (`open-record.js`); holds (`holds.js`); the
+  register (`register.js`; a new name is a row there and in `src/story/people.js`); the table checks
+  (`check-tables.js`; load every table through `requireSound`); the sample worlds (`samples.js`; every test of a rule
+  starts from one of them).
+- **Do not edit** `open-land.js`, `parts.js`, `open-view.js`, `content/people.js`, `content/talk-tables.js`,
+  `src/app.js`, or a part, a view or a content file that belongs to another card.
+- **Where this card needs something that another card is building today,** use a stand-in of your own inside your own
+  files, say so under "Codex decided (Claude to review)", and the laptop joins the two at the merge.
+- `node tools/test-open-shared.mjs` must still pass, and is one of this card's checks.
+
+**This card's rules live in its part,** `src/world/open/parts/sites.js`, its drawing in
+`src/world/open/site-view.js`, and its people and talk in `content/people-sites.js` and `content/talk-sites.js`.
+Every site row is checked with `checkSite` and agrees with `SITES` in the register.
+
+**Changed from the card as first cut:**
+
+- **Item 3, the maps, is OPEN-MAP's.** Do not edit `src/world/scablands-map.js` or `src/world/scablands-picture.js`.
+  Give OPEN-MAP one function from `src/world/open/site-rule.js`: `sitePosition(siteId, landSeed)`, the position the
+  seed picks.
+- **Item 4, how the camps look, comes from the look files.** `site-view.js` draws a site through one function of its
+  own, `siteLook(id, stage)`. The Glasshouse's look is `src/world/open/looks/glasshouse-look.js`
+  (OPEN-LOOK-GLASSHOUSE, built today in the cloud): use it if it has merged, and if not, stand a plain group of the
+  right size behind `siteLook` and say so. Radio Hill's mast and hut are drawn here, simply, for now. The figures of
+  OPEN-FIGURES-2 are built today too: use a figure in hand as a stand-in.
+- The land's seed is `world.open.landSeed`.
+
 ## What to build
 
 Sections 16 and 17.

@@ -187,7 +187,7 @@ function, `isTrue(fact, world)`:
 {fact: 'made', id: 'tower/west-fence'}                  // something that stands
 {fact: 'feud', of: 'road-rats', atLeast: 'Raiding'}
 {fact: 'stock', of: 'embers', atLeast: 2}
-{fact: 'night', atLeast: 3}                             // nights banked since the ledger began
+{fact: 'night', atLeast: 3}                             // the ledger's night: 2 on the second night
 {fact: 'thread', id: 'burned-camp', at: 'home'}         // where another thread stands
 {fact: 'town', has: 'well'}                             // the town's sim, read only (section 20)
 {fact: 'draw', name: 'burned-camp/start', chance: .5}   // a named draw from the seed
@@ -506,22 +506,27 @@ over years.
 (`validateThread`, as `validateTalkScene` checks a talk today). It has seven parts.
 
 ```js
-{id: 'burned-camp', title: 'Smoke over a friend',
-  reads: ['word', 'found', 'feud', 'favour', 'made', 'stock'],        // for the crossings table (section 19)
+{id: 'burned-camp', title: 'Smoke over a friend', kind: 'trouble',
+  reads: ['word', 'found', 'stage', 'night', 'feud', 'favour', 'made', 'stock'],   // for the crossings (section 19)
   writes: ['word', 'site', 'feud', 'mark', 'favour', 'stock', 'scrap'],
   cast: {                                                             // roles, filled when the thread starts
-    camp:  {from: 'sites', where: {all: [{fact: 'stage', is: 'camp'}, {fact: 'word', atLeast: 'Friendly'}]}},
+    camp:  {from: 'sites', where: {all: [{fact: 'stage', is: 'camp'}, {fact: 'found'}, {fact: 'word', atLeast: 'Friendly'}]}},
     enemy: {from: 'groups', where: {fact: 'feud', atLeast: 'Watching'}, weightBy: 'feud'},
     blamed: {from: 'groups', draw: 'false-trail', chance: .3, otherwise: 'enemy'}},
   starts: {all: [{fact: 'night', atLeast: 2}, {not: {fact: 'thread', id: 'burned-camp', at: 'any'}},
                  {fact: 'draw', name: 'start', chance: .5}]},
-  sign: {kind: 'smoke', at: 'camp', seenWithin: 3500, lastsNights: 2},
+  sign: {kind: 'smoke', at: '@camp', seenWithin: 3500, lastsNights: 2},
   beats: {
-    sign:  {when: 'sign-seen', thoughts: [...], next: 'clues'},
-    clues: {when: {reach: 'camp'}, explore: [...], choices: [...]},
-    scout: {mission: 'burned-camp/scout', holds: ['checkpoints', 'signs'], outcomes: {...}},
+    sign:  {when: 'sign-seen', thoughts: ['That smoke is over by {camp.name}.'], next: 'clues'},
+    clues: {when: {reach: '@camp'}, explore: [...], choices: [
+      {id: 'burned-camp/drive-on', effects: [{type: 'site', id: '@camp', stage: 'burned'},
+        {type: 'word', person: '@camp.people', by: -1}, {type: 'mark', id: 'burned-camp/drove-on'},
+        {type: 'thread', id: 'burned-camp', end: 'left'}]}]},
+    scout: {mission: 'burned-camp/scout', holds: ['checkpoints', 'signs'],
+      outcomes: {seen: [{type: 'feud', of: '@enemy', by: 1}]}, next: 'home'},
     ...},
-  ends: ['freed', 'bought-back', 'left', 'taken']}
+  ends: ['freed', 'bought-back', 'left', 'taken'],
+  ignored: {afterNights: 4, says: 'dot', line: 'There used to be a camp out past the Ridge that grew beans.'}}
 ```
 
 1. **Reads and writes.** The same two lists that `five-cold-nights.md` section 7 asks of every story. A tool prints
@@ -529,10 +534,15 @@ over years.
 2. **A cast of roles.** A thread never names the camp it happens to. It asks for "a camp whose people are Friendly",
    and the game fills the role from the player's own ledger by a named draw. The burned camp is the Glasshouse for one
    player and Radio Hill for another, and the enemy is whichever group that player has a feud with. Lines are written
-   once with the role's names put in: "{camp.leader} would never have left {camp.thing} behind." Lines that only one
-   people could say are written for that people and chosen by condition.
+   once with the role's names put in: "{camp.leader} would never have left {camp.thing} behind." A role in a line has
+   four words: `name`, `people`, `leader` and `thing`. In a condition or an effect a role is written with an at
+   sign: `'@camp'` is the site cast as the camp, `'@camp.people'` is the people who live there, and `'@enemy'` is
+   the group cast as the enemy (`src/world/open/roles.js`). Lines that only one people could say are written for that
+   people and chosen by condition.
 3. **Conditions for starting,** in the vocabulary of section 12. Most include a named draw, so that a thread begins
-   on most nights for one player and later for another, as Kyle asked in section 7.
+   on most nights for one player and later for another, as Kyle asked in section 7. A storyline writes a draw's name
+   short (`start`), and the storyline rule puts the storyline's id and the night in front of it
+   (`burned-camp/night-3/start`), so that it is drawn afresh each night.
 4. **A sign.** How the player comes to know. Every thread uses one of the same few kinds, so the player learns to
    read the land and a writer has no new machinery to ask for:
 
@@ -566,8 +576,9 @@ banks a hearth and again when the player first enters a region that day.
 - It picks among what is left by weight and a named draw. A thread's weight rises with each night it has been
   possible and has not begun, so nothing waits for ever.
 
-**Where a thread's state lives.** In the ledger, as one small record for each thread begun: its beat, its cast, the
-night it began and its own marks. It is saved with the ledger and replayed with it (`src/story/ledger-replay.js`).
+**Where a thread's state lives.** In the open record (`world.open.threads`), as one small record for each thread
+begun: its beat, its cast, the night it began and its end. Its marks are the ledger's marks, each beginning with the
+thread's id. The record is moved only by the `thread` effect, and OPEN-STATE saves it beside the ledger.
 
 **The main story is a thread too.** Five Cold Nights keeps its own files and its written nights. Its scenes use the
 same conditions, effects, casting and holds, so a side thread can read "the Walkers were refused" and the fifth night
@@ -1219,6 +1230,40 @@ card, registers and chooses them, as BOWL-SOUND does for the Bowl.
 **Removed by this work.** Nothing is replaced: no released screen, job or rule changes with the switch off. When
 OPEN-ROAM merges, people who stand still in Tin Town during a night's story stop being the only kind there is, and the
 suites that name Night 2's placements are brought up to date by the card that moves them.
+
+### Re-cut on 25 November 2026: one shared card, then everything together
+
+Kyle gave two days to the open land on 25 November 2026, built mostly in the cloud. As first cut, the cards above
+waited on each other seven deep, because the one way of asking, the open record and the new effects sat inside
+OPEN-ROAM and OPEN-STATE. They were taken out into one card, OPEN-SHARED, built first on the laptop, and every other
+card of the table now needs only that card and is built at the same time as the rest. Where this section and the
+table above differ, this section wins.
+
+**What OPEN-SHARED built, all in `src/world/open/`.** These are the rules every card uses and none writes again.
+
+| File | What it is |
+| --- | --- |
+| `register.js` | Every people, person, group, place, site, stock and word under one id and one name. A new name is a row here and in `src/story/people.js` |
+| `roles.js` | Roles of a storyline's cast: `resolveRoles` turns `'@camp'` into the real id before anything is asked or changed, and `fillLine` fills `{camp.leader}` in a line |
+| `open-record.js` | The world that every rule reads, `{seed, ledger, open, scrap, town}`, and the open record in memory |
+| `facts.js` | `isTrue(fact, world, subject)` for every fact of section 12, and five more: `favour`, `debt`, `promise`, `scrap` and `roadWord`. `checkFact` says what is wrong with a condition as written |
+| `open-effects.js` | `applyEffects(world, {id, effects})`: the ledger's effects and the six of section 12 through one door, with a feud for each group (`{type: 'feud', of: 'road-rats', by: 1}`), and four that only keep count: `ground`, `crossing`, `rest` and `dirt`. A group's feud other than the Ash Men's is kept in the open record. A choice is applied once a night, so one that may happen again the same night carries a count in its id |
+| `holds.js` | Section 15's holds. A job of the one step `roam` holds nothing; every other job holds the checkpoints and the signs unless its definition says otherwise |
+| `check-tables.js` | A check for a person, a building, a checkpoint, a site, a need and a storyline (`checkThread`), each returning sentences |
+| `samples.js` | Sample worlds that every card's tests start from; `helped-camp` is the state section 21 is written for |
+| `open-land.js` | The host. A job whose definition has `open: {world}` carries the open state, and the parts in `parts/` run beside its step whenever the world moves. A part is told the job's own events (a talk's choice, a fight's result) and what its last choices changed, and may take a hold. A card fills in its own part and edits neither the host nor `world-job.js` |
+| `open-view.js` | The same for what is drawn: a card fills in its own view file |
+| `roam-step.js`, `roam-job.js` | The step `roam` and the job of being out in the open. `startOpenRoam` in `src/app.js` starts it from the Story Wall |
+
+**Two rules the checks now hold a storyline to.** A storyline's file reads where no other storyline stands and moves
+no other storyline; it reads the marks that another leaves. A mark that a storyline writes begins with the storyline's
+own id, so that a reader knows who wrote it.
+
+**New cards.** OPEN-MAP: the big map shows driven ground in full, a rumour as a circle and a found site by name.
+OPEN-CROSSINGS: a tool that prints and draws where the storylines cross and walks every branch. OPEN-WRITE-1, 2 and
+3: nine storylines of section 19 written in full, as pages under `docs/story/threads/` and data files under
+`src/story/threads/content/`. OPEN-LOOK-GLASSHOUSE and OPEN-LOOK-RATS-NEST: the two sites drawn in code, in
+`src/world/open/looks/`.
 
 ## 23. A routine that an apprentice can run
 
