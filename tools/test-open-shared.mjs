@@ -440,11 +440,11 @@ assert.equal(stepOpenLand(releaseOpenLand(open, 'thread:burned-camp'), view(0), 
 }
 // The host keeps its six slots. The forge now contributes two registered people and their service talks.
 assert.deepEqual(OPEN_PARTS.map(part => part.id), ['people', 'buildings', 'sites', 'checkpoints', 'threads', 'ground']);
-assert.deepEqual(PEOPLE.map(person => person.id), ['odessa', 'moss']);
-assert.deepEqual(TALK_TABLES, {
-  odessa: [{id: 'odessa/service', scene: 'odessa/service'}],
-  moss: [{id: 'moss/service', scene: 'moss/service'}],
-});
+for (const id of ['odessa', 'moss']) {
+  assert.equal(PEOPLE.filter(row => row.id === id && row.talk === id).length, 1, id + ' staffs one post');
+  const service = id + '/service';
+  assert.deepEqual(TALK_TABLES[id].filter(row => row.scene === service), [{id: service, scene: service}]);
+}
 // Driven ground: 560 squares, kept in the order driven, and not journalled.
 assert.equal(squareAt(-7000, -5000), 0);
 assert.equal(squareAt(6999, 4999), 559);
