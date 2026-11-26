@@ -89,6 +89,36 @@ function bake(group) {
   return objects;
 }
 
+// Bake the exact in-game skinned vertices, tools and seats in each review cell.
+if (process.argv.includes('--open-figures')) {
+  const town = ['cook','haul-sack','sit','sleep'];
+  const rows = {odessa:['weld','inspect','carry'], moss:['scrub','carry-bucket','sit'],
+    'tin-cook':town, 'tin-porter':town, 'tin-child':town};
+  const view = createStoryPeopleView(loadAsset);
+  for (const [id,tasks] of Object.entries(rows)) {
+    const poses = ['scale','stand','walk',...tasks];
+    const cast = createStoryPeople(['rell',id].map(id => ({id,position:{x:0,y:0,z:0}})));
+    const job = {storyPeople:cast}, observer = {x:0,z:8};
+    view.update(job, observer, 0);
+    await view.group.userData.ready;
+    if (view.group.userData.loadError) throw Error(view.group.userData.loadError);
+    const objects = [];
+    let clock = 0;
+    for (const [column,action] of poses.entries()) {
+      const person = action === 'scale' ? cast[0] : cast[1];
+      person.position.x = (column-3)*1.28;
+      person.yaw = -.31;
+      setStoryPersonAction(person,action === 'scale' ? 'stand' : action,[{x:10,z:0}]);
+      person.distance = .27;
+      for (let j=0;j<12;j++) view.update(job,observer,clock+=.18);
+      objects.push(...bake(view.group.getObjectByName('story-person-'+person.id)));
+    }
+    await fs.writeFile(path.join(out,id+'.json'),JSON.stringify(objects));
+  }
+  view.dispose();
+  process.exit(0);
+}
+
 const gate = createTinTownGate();
 gate.position.set(0, 0, -5.1);
 gate.rotation.y = 0;

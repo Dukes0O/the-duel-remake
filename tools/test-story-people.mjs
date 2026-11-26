@@ -218,3 +218,37 @@ for (let i=0;i<160;i++) stepFighter(duel.course,duel.state,walker,{forward:true}
 assert.ok(walker.z < stop.z -.35 && walker.z > stop.z - 1.4, 'Actual player walker stopped at the figure');
 assert.deepEqual(duel.state.arena.worldJob.storyPeople[0].position,stop);
 console.log('Story people: the game car and a fighter on foot both stop short in the real world job.');
+
+const tinTasks = {
+  odessa:['weld','inspect','carry'], moss:['scrub','carry-bucket','sit'],
+  'tin-cook':['cook','haul-sack','sit','sleep'], 'tin-porter':['cook','haul-sack','sit','sleep'],
+  'tin-child':['cook','haul-sack','sit','sleep'],
+};
+const {STORY_FIGURES} = await import('../src/world/jobs/story-people.js');
+const townView = createStoryPeopleView(loadRealAsset);
+const residents = createStoryPeople(Object.keys(tinTasks).map((id,x) => ({id,position:{x,y:0,z:0}})));
+const townJob = {storyPeople:residents};
+townView.update(townJob, observer, 0);
+await townView.group.userData.ready;
+assert.ifError(townView.group.userData.loadError);
+let clock = 0;
+for (const person of residents) {
+  const {height,pace} = STORY_FIGURES[person.id];
+  assert.ok(height >= 1 && height <= 2 && pace >= .8 && pace <= 1.7);
+  const actor = townView.group.getObjectByName('story-person-'+person.id);
+  assert.ok(actor.getObjectByName('skin-'+person.id));
+  const arm = actor.getObjectByName('upper_armR') ?? actor.getObjectByName('upper_arm.R');
+  const rotations = new Set();
+  for (const task of ['stand', ...tinTasks[person.id]]) {
+    setStoryPersonAction(person,task);
+    townView.update(townJob,observer,++clock);
+    rotations.add(arm.quaternion.toArray().map(n=>n.toFixed(3)).join());
+    if (!['stand','inspect','sit','sleep'].includes(task)) {
+      const props = [];
+      actor.traverseVisible(node => { if (node.name.startsWith(person.id+'_'+task+'_')) props.push(node); });
+      assert.ok(props.length, person.id+' holds the tool for '+task);
+    }
+  }
+  assert.equal(rotations.size, tinTasks[person.id].length+1, person.id+' has distinct working poses');
+}
+townView.dispose();

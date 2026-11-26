@@ -18,6 +18,22 @@ const PROFILES = [
   ['clinker', 'clinker', 1.85, 1.11, 1.37],
 ];
 
+// Tin Town's off-switch cast. Keep the gate company's order and gait phases.
+const TIN_TASKS = Object.freeze({
+  odessa: ['weld', 'inspect', 'carry'],
+  moss: ['scrub', 'carry-bucket', 'sit'],
+  'tin-cook': ['cook', 'haul-sack', 'sit', 'sleep'],
+  'tin-porter': ['cook', 'haul-sack', 'sit', 'sleep'],
+  'tin-child': ['cook', 'haul-sack', 'sit', 'sleep'],
+});
+PROFILES.push(
+  ['odessa', 'odessa', 1.74, 1.24, 1.17],
+  ['moss', 'moss', 1.89, .94, 1.08],
+  ['tin-cook', 'tin-cook', 1.62, 1.08, 1.18],
+  ['tin-porter', 'tin-porter', 1.80, 1.04, 1.34],
+  ['tin-child', 'tin-child', 1.24, .92, 1.42],
+);
+
 export const STORY_FIGURES = Object.freeze(Object.fromEntries(PROFILES.map(
   ([id, asset, height, width, pace], index) => [id, Object.freeze({asset, height, width, pace, index})]
 )));
@@ -76,7 +92,7 @@ export function createStoryPeople(placements) {
 }
 
 export function setStoryPersonAction(person, action, path = []) {
-  if (!MOVING.has(action) && !RESTING.has(action)) throw new Error('Unknown story action: ' + action);
+  if (!MOVING.has(action) && !RESTING.has(action) && !TIN_TASKS[person.id]?.includes(action)) throw new Error('Unknown story action: ' + action);
   if (MOVING.has(action) && (!path.length || !path.every(p => Number.isFinite(p.x) && Number.isFinite(p.z))))
     throw new Error('A moving story figure needs a path in metres.');
   if (action === 'push-cart') placeCart(person);

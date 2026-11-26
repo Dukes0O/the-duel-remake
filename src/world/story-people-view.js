@@ -16,7 +16,11 @@ const EMPTY = Object.freeze([]);
 const SIDES = Object.freeze([['L', -1], ['R', 1]]);
 
 
+const TIN_PEOPLE = '/assets/models/wasteland/town/open-figures.glb';
+const tinCast = new Set(['odessa', 'moss', 'tin-cook', 'tin-porter', 'tin-child']);
+
 function sourceFor(id) {
+  if (tinCast.has(id)) return TIN_PEOPLE;
   if (id === 'cinder') return CINDER;
   if (id === 'clinker' || id === 'auntie-solder') return FOLK;
   return WALKERS;
@@ -119,17 +123,23 @@ function makeFigure(id, asset) {
   const model = cloneSkin(piece);
   model.position.set(0, 0, 0);
   const removed = [];
+  const props = [];
   let body;
   model.traverse(node => {
+    if (source === TIN_PEOPLE && node.isMesh && !node.isSkinnedMesh) {
+      const [owner, action] = node.name.split('_');
+      if (owner !== id) removed.push(node);
+      else if (action !== 'wear') props.push({node, action});
+    }
     if (!node.isSkinnedMesh) return;
-    if ((source === WALKERS && node.name !== 'skin-' + profile.asset) ||
+    if (((source === WALKERS || source === TIN_PEOPLE) && node.name !== 'skin-' + profile.asset) ||
         (source === CINDER && node.name.includes('-far'))) removed.push(node);
     else body = node;
   });
-  for (const mesh of removed) { mesh.removeFromParent(); mesh.skeleton.dispose(); }
+  for (const mesh of removed) { mesh.removeFromParent(); mesh.skeleton?.dispose(); }
   if (!body) throw new Error('Story cast has no bound body for ' + id);
   model.updateMatrixWorld(true);
-  const bounds = new THREE.Box3().setFromObject(model, true);
+  const bounds = new THREE.Box3().setFromObject(source === TIN_PEOPLE ? body : model, true);
   const height = bounds.max.y - bounds.min.y;
   const scale = profile.height / height;
   model.scale.multiplyScalar(scale);
@@ -157,7 +167,7 @@ function makeFigure(id, asset) {
   joints.head.bone.add(anchor);
   anchor.position.copy(joints.head.bone.worldToLocal(up.set(0, profile.height + .12, 0)));
   const soles = soleVertices(body, 0, profile.height);
-  return {root, model, joints, body, owned, soles, baseY:model.position.y, facing: {yaw:0, headYaw:0},
+  return {root, model, joints, body, owned, soles, props, baseY:model.position.y, facing: {yaw:0, headYaw:0},
     first:true, seated:0, asleep:0, armReach:0};
 }
 
@@ -233,6 +243,7 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     poseBone(joints['forearm' + side], -.09 - .14 * push - .66 * sit - .29 * sleep - (running ? .69 : 0) - .5 * gestureSide,
       0, -sign * (sign < 0 ? .34 : .25) * sleep);
   }
+  if (tinCast.has(person.id)) poseTinTask(figure, person, clock);
   // After bending the legs, put the weight back on the lower boot. The head
   // anchor, seated posture and moving cart handle all follow the same pose.
   model.position.y = figure.baseY;
@@ -244,6 +255,34 @@ function poseFigure(figure, person, target, speaking, clock, dt, shift) {
     lowest = Math.min(lowest, foot.y);
   }
   model.position.y += root.position.y - lowest;
+}
+
+// Shoulder and elbow pitches for the two hands, then chest and gaze pitches.
+const tinPoses = {
+  weld: [-.48,-.82,-.72,-.51,.17,.27],
+  inspect: [-.30,-1.42,-.52,-1.08,.23,.39],
+  carry: [-.57,-.90,-.59,-.88,-.06,.08],
+  scrub: [-.64,-.76,-.45,-.48,.23,.18],
+  'carry-bucket': [-.19,-.18,.04,-.08,.13,.06],
+  cook: [-.32,-.87,-.58,-.54,.08,.19],
+  'haul-sack': [-.69,-.96,-.56,-1.12,-.12,.07],
+};
+function poseTinTask(figure, person, clock) {
+  const {joints} = figure;
+  for (const {node, action} of figure.props) node.visible = action === person.action;
+  const pose = tinPoses[person.action];
+  if (pose) {
+    const stroke = person.action === 'scrub' ? .20*Math.sin(clock*2.5) : 0;
+    const stir = person.action === 'cook' ? .18*Math.sin(clock*2) : 0;
+    poseBone(joints.upper_armL, pose[0]+stroke, 0, .21);
+    poseBone(joints.forearmL, pose[1]);
+    poseBone(joints.upper_armR, pose[2]+stroke, stir, -.21);
+    poseBone(joints.forearmR, pose[3]-stroke*.5);
+    poseBone(joints.chest, pose[4]);
+    poseBone(joints.head, pose[5], figure.facing.headYaw*.32);
+  } else if (person.id === 'moss' && person.action !== 'sleep') {
+    poseBone(joints.chest, .19);
+  }
 }
 
 function releaseFigure(figure) {
