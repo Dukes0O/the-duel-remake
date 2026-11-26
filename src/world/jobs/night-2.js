@@ -102,8 +102,6 @@ export function createNight2(definition, grid) {
   paths.setBrandLamps([...sites.lamps, ...sites.chaseLamps]);
   return {opening, ledger: createLedger(opening), journal: [], set: null, evening: .65, night: false,
     ways: createBrandWays({places: points, around: sites.around, grid: paths, reach: place => place.radius ?? (place === sites.hearth ? BRAND_RULE.relightRadius : BRAND_RULE.lampRadius), strict: true}),
-    // The standalone chapter follows the dusty first-night drive. An open outing carries its own coat.
-    carDirt: definition.open?.world?.open.car.dirt ?? .35,
     lamps: {}, scrap: 0, props: {}, routes: [], washCarUnavailable: false};
 }
 
@@ -268,7 +266,7 @@ export function enterNight2Step(worldJob) {
   }
   chapter.holstered = step.id !== 'scout';
   if (step.kind === 'talk') step.scene = sceneFor(step, chapter);
-  if (step.id === 'gate' && (worldJob.open?.world.open.car.dirt ?? chapter.carDirt) === 0)
+  if (step.id === 'gate' && worldJob.open?.world.open.car.dirt === 0)
     step.scene = {...step.scene, lines: step.scene.lines.map(line =>
       line.speaker === 'wim' ? {...line, words: WIM_CLEAN} : line)};
   const set = step.set ?? {chase: 'chase', 'walk-to-gate': 'gate', 'walk-watch-post': 'scout', 'light-pump': 'pump'}[step.id];

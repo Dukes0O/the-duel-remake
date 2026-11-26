@@ -44,7 +44,7 @@ import {groupKg} from '../../world/jobs/steps/haul.js';
 import {BUILDINGS} from '../../world/open/content/buildings.js';
 import {buildingWalls} from '../../world/open/building-rule.js';
 import {forgePosts} from '../../world/open/content/people-forge.js';
-import {dirtAfter} from '../../world/open/dirt-rule.js';
+import {applyEffects} from '../../world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
 import {sprayWater, waterStreamStart} from '../../arsenal/water-cannon.js';
 import {point as combatPoint} from '../../combat-actors.js';
@@ -391,8 +391,11 @@ export function initializeWorldJob(duel, definition) {
     enterNight2(duel, worldJob);
   }
   // OPEN-SHARED: a job that begins in the open land carries the open state (src/world/open/open-land.js).
-  if (definition.open && duel.featureFlags?.enabled('story-choices')) {
-    worldJob.open = beginOpenLand(definition);
+  if (definition.open) worldJob.open = beginOpenLand(definition);
+  // OPEN-DOORS: only the story outing replaces the two shack shells and staffs their posts.
+  worldJob.serviceSheds = !!worldJob.open && !!duel.featureFlags?.enabled('story-choices') &&
+    definition.steps.length === 1 && definition.steps[0].kind === 'roam';
+  if (worldJob.serviceSheds) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.openBuildingShells(BUILDINGS, BUILDINGS.flatMap(buildingWalls));
     const people = worldJob.storyPeople ?? [];
@@ -1459,19 +1462,18 @@ export function applyBellowsRestart(duel, worldJob, request) {
 
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
-    if (worldJob.open && request.type === 'shedTalk') {
-      const speaker = worldJob.storyPeople?.find(p => p.id === request.speaker);
-      const anchors = speaker ? {[speaker.id]: {...speaker.position, y: speaker.position.y + speaker.height}} : {};
-      worldJob.beforeShedTalk = worldJob.job;
-      worldJob.job = createJob({id: worldJob.job.id, steps: [{kind: 'talk', focus: request.speaker, anchors, scene: request.scene}]}, worldJob.job.seed);
-      continue;
-    }
-    if (worldJob.open && request.type === 'shedCue') { night2Cue(duel, request.cue); continue; }
-    if (worldJob.open && request.type === 'shedRepair') {
-      duel.state.armor = duel.state.maxArmor;
+    // OPEN-DOORS: the scrap effect has already returned a paid receipt to the part.
+    if (worldJob.serviceSheds && request.type === 'repair') {
+      duel.state.armor = Math.min(duel.state.maxArmor, duel.state.armor + request.armour);
       worldJob.fieldPatched = false;
       continue;
     }
+    if (worldJob.serviceSheds && request.type === 'wash') {
+      const washed = applyEffects(worldJob.open.world, {id: 'car/wash', effects: [{type: 'dirt', to: 0}]});
+      worldJob.open = {...worldJob.open, world: washed.world};
+      continue;
+    }
+    if (worldJob.serviceSheds && request.type === 'shedCue') { night2Cue(duel, request.cue); continue; }
     if (applyBellowsRestart(duel, worldJob, request)) continue;
     if (applyBellowsFurnaceLeave(duel, worldJob, request)) continue;
     if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
@@ -1683,24 +1685,14 @@ export function stepWorldJob(duel, dt) {
     const before = worldJob.job.stepState.talk;
     const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
     worldJob.talkAction = null;
-    if (!worldJob.beforeShedTalk) routeWorldNight2(duel, worldJob, previousStep, next);
+    routeWorldNight2(duel, worldJob, previousStep, next);
     worldJob.job = next;
     if (!before) duel.emit({talkOpened: true});
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
     // OPEN-SHARED: the open land stands still during a talk, and hears what was chosen when it moves again.
-    if (worldJob.open && next.events.length) {
-      // Finishing the temporary talk ends that conversation only. The interrupted job is still running.
-      const heard = worldJob.beforeShedTalk ? next.events.filter(event => event.type === 'talkChoice') : next.events;
-      worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...heard];
-    }
+    if (worldJob.open && next.events.length) worldJob.openJobEvents = [...(worldJob.openJobEvents ?? []), ...next.events];
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;
-    if (worldJob.beforeShedTalk && next.done) {
-      worldJob.job = worldJob.beforeShedTalk;
-      delete worldJob.beforeShedTalk;
-      if (chosen) night2Cue(duel, 'story.talk.choose');
-      return null;
-    }
     if (chosen) duel.emit({storyChoice: chosen});
     if (next.stepIndex !== previousStep) {
       if (worldJob.night2) enterNight2(duel, worldJob);
@@ -1935,15 +1927,6 @@ export function stepWorldJob(duel, dt) {
     duel._storyCallout('Cold mist lies in the hollows. Steer round it.', 3);
   }
   const carriedCar = position(duel, state);
-  if (worldJob.night2 && !worldJob.open) {
-    const chapter = worldJob.night2, last = chapter.lastCar;
-    const metres = last && !state.onFoot ? Math.hypot(carriedCar.x - last.x, carriedCar.z - last.z) : 0;
-    chapter.carDirt = dirtAfter(chapter.carDirt ?? 0, metres, worldJob.ashHit ? 'ash-hit' : ground.id, ground.id === 'road');
-    if (worldJob.ashHit || metres && ground.id === 'burn') chapter.dustGround = 'burn';
-    else if (metres && chapter.dustGround !== 'burn') chapter.dustGround = ground.id;
-    chapter.lastCar = carriedCar;
-    worldJob.ashHit = false;
-  }
   if (worldJob.night2 && currentStep?.id === 'scout') {
     const scout = worldJob.actors.find(item => item.id === NIGHT_2_SCOUT.id);
     const chapter = worldJob.night2;
@@ -1997,7 +1980,9 @@ export function stepWorldJob(duel, dt) {
   let openStep = null;
   if (worldJob.open) {
     openStep = stepOpenLand(worldJob.open, {...view,
-      car: {armor: state.armor, maxArmor: state.maxArmor, fieldPatched: worldJob.fieldPatched},
+      serviceSheds: worldJob.serviceSheds,
+      car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
+      fieldPatched: worldJob.fieldPatched,
       people: worldJob.storyPeople, partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
@@ -2009,7 +1994,7 @@ export function stepWorldJob(duel, dt) {
   if (worldJob.open) {
     worldJob.openJobEvents = next.events;
     const fall = next.stepState.bridgeAsh?.hitFall;
-    if (fall != null && fall !== previousStepState.bridgeAsh?.hitFall) worldJob.ashHit = true;
+    if (worldJob.serviceSheds && fall != null && fall !== previousStepState.bridgeAsh?.hitFall) worldJob.ashHit = true;
   }
   worldJob.gasCarContacts = [];
   routeWorldNight2(duel, worldJob, previousStep, next);

@@ -177,3 +177,9 @@ and carry on, unless it touches saves or a released course; then stop and say so
 every older suite and scenario that names what this card changes, and run them. Checks use memory-only saves. Do not
 clean up anything in Claude's scratchpad. A commit from the lane needs approval: rerun git and ask for it. Write
 `docs/changes/OPEN-DOORS.md` with a **Removed** line.
+
+## Codex decided (Claude to review)
+
+Applied Claude's 25 November answer. The sheds send the shared talk and solids requests. The memory check supplies OPEN-ROAM's side of the conversation using the real story talk rules. The two existing shack slots supply their own wall shapes until OPEN-SITES places the same walls. The shop handlers mend the quoted armour and wash through the shared dirt effect after the scrap receipt arrives.
+
+Used the integration figures at the two fixed posts and day when the outing supplies no hour. The scene, camera, finish and ash hit hooks run for the story outing. Claude joins the routines and handlers and judges the room, figures, dirt and sound on the laptop.

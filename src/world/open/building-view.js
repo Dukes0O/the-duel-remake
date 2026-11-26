@@ -108,6 +108,8 @@ export function createBuildingView() {
     return {row, root, walls, roof};
   });
   return {group, update(worldJob, here) {
+    group.visible = !!worldJob.serviceSheds;
+    if (!group.visible) return;
     for (const {row,root,walls,roof} of rooms) {
       const inside = worldJob.open.parts.buildings?.inside === row.id;
       root.visible = inside || !here || Math.hypot(root.position.x-here.x,root.position.z-here.z) < 550;

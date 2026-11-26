@@ -1,6 +1,6 @@
 import {BUILDINGS} from '../content/buildings.js';
 import {forgeLine, WIM_CLEAN} from '../content/talk-forge.js';
-import {inBay, pointInBuilding, roomAt} from '../building-rule.js';
+import {buildingWalls, inBay, pointInBuilding, roomAt} from '../building-rule.js';
 import {dirtAfter} from '../dirt-rule.js';
 import {doService, servicePrice} from '../service-rule.js';
 import {isHeld} from '../holds.js';
@@ -8,7 +8,7 @@ import {isTrue} from '../facts.js';
 import {wordOf} from '../open-record.js';
 
 const distance = (a, b) => a && b ? Math.hypot(a.x - b.x, a.z - b.z) : Infinity;
-const bubble = (speaker, lines, choices = []) => ({type: 'shedTalk', speaker, scene: {lines, choices}});
+const bubble = (speaker, lines, choices = []) => ({type: 'talk', speaker, scene: {lines, choices}});
 const cue = id => ({type: 'shedCue', cue: id});
 
 function gatherDirt(state, world, view, dt, choices) {
@@ -38,7 +38,7 @@ function serviceStatus(row, service, world, view, word) {
   if (service.needs && !isTrue(service.needs, world)) return word === 'Cold' ? 'Cold' : 'idle';
   if (service.id === 'wash') return world.open.car.dirt ? null : 'clean';
   if (!inBay(row, view.carPosition)) return 'bay';
-  return view.car?.armor < view.car?.maxArmor ? null : 'clean';
+  return view.car?.armour < view.car?.maxArmour ? null : 'clean';
 }
 
 function speakTo(state, row, service, world, view, requests) {
@@ -57,7 +57,7 @@ function speakTo(state, row, service, world, view, requests) {
   state.orders = {...state.orders, [prefix]: count};
   const id = prefix + count;
   const lines = [];
-  if (service.id === 'repair' && view.car.fieldPatched) lines.push(forgeLine(who, 'patch'));
+  if (service.id === 'repair' && view.fieldPatched) lines.push(forgeLine(who, 'patch'));
   if (service.id === 'wash' && state.ash) lines.push(forgeLine(who, 'ash'));
   lines.push(forgeLine(who, word, {price}));
   state.offer = {id, price, who, service: service.id, house: row.id};
@@ -70,7 +70,10 @@ function answer(state, world, view, holds, choices, requests) {
   const offer = state.offer;
   const choice = view.jobEvents?.find(e => e.type === 'talkChoice' &&
     [offer.id + '/yes', offer.id + '/no'].includes(e.id));
-  if (!choice) return;
+  if (!choice) {
+    if (view.jobEvents?.some(event => event.type === 'openTalkClosed')) state.offer = null;
+    return;
+  }
   state.offer = null;
   const row = BUILDINGS.find(row => row.id === offer.house);
   const service = row.services.find(s => s.id === offer.service);
@@ -81,7 +84,7 @@ function answer(state, world, view, holds, choices, requests) {
     const sale = doService(offer, world);
     if (sale.short) requests.push(bubble(offer.who, [forgeLine(offer.who, 'short', {...offer, short: sale.short})]));
     else {
-      state.payment = offer;
+      state.payment = {...offer, armour: view.car.maxArmour - view.car.armour};
       choices.push(sale.choice);
     }
   }
@@ -100,13 +103,13 @@ function deliver(state, changes, choices, requests) {
   }
   requests.push(cue('open.scrap.paid'));
   if (offer.service === 'wash') {
-    choices.push({id: offer.id + '/wash', effects: [{type: 'dirt', to: 0}]});
+    requests.push({type: 'wash'});
     state.ash = false;
     state.ashCoat = 0;
     state.dustGround = null;
     state.looseDust = 0;
     requests.push(cue('open.wash'));
-  } else requests.push(cue('repair.start'), {type: 'shedRepair'}, cue('repair.complete'));
+  } else requests.push(cue('repair.start'), {type: 'repair', armour: offer.armour, scrap: offer.price}, cue('repair.complete'));
   requests.push(bubble(offer.who, [forgeLine(offer.who, 'done')]));
 }
 
@@ -114,7 +117,12 @@ export const buildingsPart = {
   id: 'buildings',
   begin: () => ({inside: null, held: false, dustSeconds: 0, looseDust: 0, ash: false}),
   step(previous, {world, view, holds, changes}, dt) {
+    if (!view.serviceSheds) return {};
     const state = {...previous}, choices = [], requests = [];
+    if (!state.wallsPlaced) {
+      for (const row of BUILDINGS) requests.push({type: 'solids', id: row.id, solids: buildingWalls(row)});
+      state.wallsPlaced = true;
+    }
     const feet = view.onFoot ? view.fighter?.position ?? view.player?.position : null;
     const row = roomAt(feet);
     state.inside = row?.id ?? null;

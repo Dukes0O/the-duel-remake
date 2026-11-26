@@ -14,14 +14,15 @@ import {createBuildingView} from '../src/world/open/building-view.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createJob} from '../src/world/jobs/job-engine.js';
 import {night2Job, createNight2, enterNight2Step} from '../src/world/jobs/night-2.js';
+import {actOnTalk, startTalk, talkScreen} from '../src/story/talk.js';
 import {App} from '../src/app.js';
 import {pageFunctions, pageSource} from './scenarios/open-forge-shed.mjs';
 
 const [forge, shed] = BUILDINGS, world = sampleWorld('first-night');
-const car = {armor: 44, maxArmor: 100};
+const car = {armour: 44, maxArmour: 100};
 assert.deepEqual(['Wary','Strangers','Friendly','Sworn','Cold'].map(word => servicePrice('repair', word, car)),
   [15,12,9,6,null]);
-assert.equal(servicePrice('repair','Strangers',{armor: 99,maxArmor:100}),4);
+assert.equal(servicePrice('repair','Strangers',{armour: 99,maxArmour:100}),4);
 assert.equal(servicePrice('wash','Friendly',car),5);
 const dirt = world.open.car.dirt;
 assert.equal(dirtAfter(dirt,100,'sand',false), 3*dirtAfter(dirt,100,'road',true));
@@ -53,7 +54,7 @@ for (const row of BUILDINGS) {
 const posts = forgePosts('day',()=>0);
 const action = (row, baseWorld = world) => {
   let land = beginOpenLand({open:{world:baseWorld},steps:[{kind:'roam'}]});
-  const view = {onFoot:true, player:{position:pointInBuilding(row)}, people:posts, car,
+  const view = {serviceSheds:true, onFoot:true, player:{position:pointInBuilding(row)}, people:posts, car,
     carPosition: pointInBuilding(row,row.carBay.at)};
   const step = (input = {}) => {
     const out = stepOpenLand(land,{...view,...input},1/60,[buildingsPart]);
@@ -65,6 +66,9 @@ const action = (row, baseWorld = world) => {
 };
 const tab = action(forge);
 let offered = tab.step({interact:true});
+assert.deepEqual(offered.requests.filter(r=>r.type==='solids'), BUILDINGS.map(row=>({type:'solids',id:row.id,solids:buildingWalls(row)})));
+assert.equal(offered.requests.at(-1).type,'talk');
+assert.deepEqual(action(forge).step({serviceSheds:false, interact:true}).requests,[]);
 const first = offered.open.parts.buildings.offer;
 assert.equal(first.price,12);
 assert.match(offered.requests.at(-1).scene.lines[0].words,/12 scrap/);
@@ -73,7 +77,7 @@ assert.equal(tab.world.scrap,world.scrap);
 offered = tab.step({interact:true});
 tab.reply(offered.open.parts.buildings.offer.id);
 assert.equal(tab.world.scrap,world.scrap-12);
-assert.ok(tab.step().requests.some(r=>r.type==='shedRepair'));
+assert.deepEqual(tab.step().requests.find(r=>r.type==='repair'), {type:'repair',armour:56,scrap:12});
 const second = tab.step({interact:true}).open.parts.buildings.offer;
 assert.notEqual(second.id,first.id);
 tab.reply(first.id);
@@ -83,9 +87,9 @@ const poor = action(forge,applyEffects(world,{id:'test/spent',effects:[{type:'sc
 const refusal = poor.reply(poor.step({interact:true}).open.parts.buildings.offer.id);
 assert.match(refusal.requests.at(-1).scene.lines[0].words,/10 scrap short/);
 assert.equal(poor.world.scrap,2);
-assert.ok(!poor.step().requests.some(r=>r.type==='shedRepair'));
+assert.ok(!poor.step().requests.some(r=>r.type==='repair'));
 for (const [view,match] of [[{partOfDay:'dark'},/forge is cold/],[{carPosition:{x:0,z:0}},/marked patch/],
-  [{car:{armor:100,maxArmor:100}},/isn't a mark/]]) {
+  [{car:{armour:100,maxArmour:100}},/isn't a mark/]]) {
   const out = action(forge).step({...view,interact:true});
   assert.match(out.requests.at(-1).scene.lines[0].words,match);
   assert.ok(!out.open.parts.buildings.offer);
@@ -95,10 +99,10 @@ assert.match(action(forge,cold).step({interact:true}).requests.at(-1).scene.line
 const wash = action(shed,applyEffects(world,{id:'test/dust',effects:[{type:'dirt',by:.6}]}).world);
 const quote = wash.step({interact:true}).open.parts.buildings.offer;
 wash.reply(quote.id);
-assert.ok(wash.step().requests.some(r=>r.cue==='open.wash'));
-assert.equal(wash.world.open.car.dirt,0);
+const washRequests = wash.step().requests;
+assert.ok(washRequests.some(r=>r.type==='wash') && washRequests.some(r=>r.cue==='open.wash'));
 assert.equal(wash.world.scrap,world.scrap-6);
-assert.equal(wrenchLimit({open:{world},definition:{steps:[{kind:'roam'}]}},100),60);
+assert.equal(wrenchLimit({serviceSheds:true},100),60);
 assert.equal(wrenchLimit({night2:{},definition:{steps:[{kind:'talk'}]}},100),100);
 
 for (const [amount, words] of [[0,/clean today/],[.4,/very dirty/]]) {
@@ -111,12 +115,24 @@ for (const [amount, words] of [[0,/clean today/],[.4,/very dirty/]]) {
 }
 for (const name of Object.keys(pageFunctions)) new Function('return ' + pageSource(name));
 const drawing = createBuildingView();
-drawing.update({open:offered.open},pointInBuilding(forge));
+drawing.update({serviceSheds:true,open:offered.open},pointInBuilding(forge));
 assert.equal(drawing.group.getObjectByName('forge-shed/roof').visible,false);
 for (const thing of forge.room.things) assert.ok(drawing.group.getObjectByName(thing));
 drawing.dispose();
 
-// Exercise the actual talk input and armour mutation through the same outing as the laptop drive.
+// OPEN-ROAM owns the talk host. Its stand-in consumes our real scene with the story talk
+// rules and sends the choice back in jobEvents. Payment, armour and wash use the real outing.
+const stepBuildings = buildingsPart.step;
+let lastTalk, conversation;
+buildingsPart.step = function (...args) {
+  const out = stepBuildings(...args);
+  const request = out.requests?.find(r=>r.type==='talk');
+  if (request) {
+    lastTalk = request;
+    conversation = startTalk(request.scene);
+  }
+  return out;
+};
 const memory = new Map();
 globalThis.localStorage = {getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)};
 globalThis.cancelAnimationFrame = () => {};
@@ -138,12 +154,17 @@ pageFunctions.walk(true);
 assert.equal(job.open.parts.buildings.inside,'forge-shed');
 pageFunctions.speak();
 tick();
-assert.match(job.job.stepState.screen.line.words,/6 scrap/);
-const respond = action => { assert.ok(duel.talkInput(action,job.job.stepState.screen)); tick(); };
+assert.match(talkScreen(lastTalk.scene,conversation).line.words,/6 scrap/);
+const respond = action => {
+  const result = actOnTalk(lastTalk.scene,conversation,action);
+  conversation = result.state;
+  if (result.choice) job.openJobEvents = [{type:'talkChoice', ...result.choice}];
+  tick();
+};
 respond({type:'advance'});
 respond({type:'select',index:0});
 for (let i=0;i<4;i++) tick();
-assert.match(job.job.stepState.screen.line.words,/every panel/);
+assert.match(talkScreen(lastTalk.scene,conversation).line.words,/every panel/);
 assert.equal(duel.state.armor,duel.state.maxArmor);
 assert.equal(job.open.world.scrap,54);
 assert.equal(app.profile.wasteland.scrap,60);
@@ -177,15 +198,16 @@ assert.equal(job.open.parts.buildings.inside,'bess-shed');
 assert.ok(job.open.world.open.car.dirt > 0);
 pageFunctions.speak();
 tick();
-assert.match(job.job.stepState.screen.line.words,/ash on your car/);
+assert.match(talkScreen(lastTalk.scene,conversation).line.words,/ash on your car/);
 respond({type:'advance'});
-assert.match(job.job.stepState.screen.line.words,/6 scrap/);
+assert.match(talkScreen(lastTalk.scene,conversation).line.words,/6 scrap/);
 respond({type:'advance'});
 respond({type:'select',index:0});
 for (let i=0;i<4;i++) tick();
-assert.match(job.job.stepState.screen.line.words,/what colour/);
+assert.match(talkScreen(lastTalk.scene,conversation).line.words,/what colour/);
 assert.equal(job.open.world.open.car.dirt,0);
 assert.equal(job.open.parts.buildings.ash,false);
 assert.equal(job.open.world.scrap,48);
 assert.equal(app.profile.wasteland.scrap,60);
+buildingsPart.step = stepBuildings;
 console.log('test-open-doors: room collision, prices, dirt, field wrench, scenario syntax and both in-game services passed.');

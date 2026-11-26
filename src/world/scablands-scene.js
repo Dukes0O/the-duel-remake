@@ -968,7 +968,8 @@ export function createScablandsScene(course,options={}){
         townArt?.update({viewer:{x:here.x,y:scablandsSurfaceHeightAt(here.x,here.z)+2,z:here.z},fogFar:1200,hour:8+Math.floor(townLifeClock/1.875)%10,dt:presentationDt});
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
-      tinTownShacks.userData.occupied.visible = !worldJob?.open;
+      // OPEN-DOORS: the occupied sheds replace these two shells in roam.
+      tinTownShacks.userData.occupied.visible = !worldJob?.serviceSheds;
       brandLamps.update(worldJob);
       brandAuntie.update(worldJob);
       // The town's windows light when the third lamp is lit (Light the Town's ending), and are dark in every other job.

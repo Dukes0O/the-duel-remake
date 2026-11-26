@@ -478,7 +478,7 @@ export function applyPaintFinish(vehicle,paint,pattern,baseColor){
 /** The finish's shader numbers on a paint material, or null if it never wore a drawn finish (tests read this). */
 export function paintFinishUniforms(paint){return finishUniforms.get(paint)??null;}
 
-// Dust lies over the chosen garage finish. Washing only clears this layer.
+// OPEN-DOORS: dust lies over the chosen garage finish. Washing only clears this layer.
 export function drawRoadDirt(vehicle, amount, color) {
   const paint = vehicle?.userData.paint;
   if (!paint) return;

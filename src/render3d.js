@@ -1125,7 +1125,8 @@ export function attachRenderer(host, app) {
       firstPersonView = false;
       player.visible = false;
     }
-    const openLand = !menu && st.arena?.worldJob?.open;
+    // OPEN-DOORS: draw the inside camera and dust only on a story outing.
+    const openLand = !menu && st.arena?.worldJob?.serviceSheds && st.arena.worldJob.open;
     const buildings = openLand?.parts?.buildings;
     if (buildings?.inside && st.onFoot) {
       const room = BUILDINGS.find(row => row.id === buildings.inside);
@@ -1135,10 +1136,9 @@ export function attachRenderer(host, app) {
       camera.fov = 52;
       firstPersonView = false;
     }
-    const nightCar = menu ? null : st.arena?.worldJob?.night2;
-    const dustGround = buildings?.dustGround ?? nightCar?.dustGround;
+    const dustGround = buildings?.dustGround;
     const dust = dustGround === 'burn' ? 0x898681 : (DUST_GROUNDS[dustGround] ?? DUST_GROUNDS.flats).dust;
-    drawRoadDirt(player, openLand?.world?.open.car.dirt ?? nightCar?.carDirt ?? 0, dust);
+    drawRoadDirt(player, openLand?.world?.open.car.dirt ?? 0, dust);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&!landingBlend&&!forgeHold&&!talk&&['chase','wide'].includes(app.cameraMode||'chase')){

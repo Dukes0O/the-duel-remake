@@ -223,7 +223,6 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) {
         if (!roomShells?.has(solid.id)) found.push(solid);
       }
-      if (roomGrid) found.push(...roomGrid.near(ax, az, bx, bz, pad));
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.shelter) found.push(solid);
@@ -236,6 +235,10 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.storyPeople) found.push(solid);
       for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
+      // OPEN-DOORS: use a wall from the shared solids handler when it is present.
+      // These two fixed shack shells also have to work before OPEN-SITES joins.
+      if (roomGrid) for (const wall of roomGrid.near(ax, az, bx, bz, pad))
+        if (!found.some(solid => solid.id === wall.id)) found.push(wall);
       return found;
     },
     openBuildingShells(rows, walls) {
