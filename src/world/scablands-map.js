@@ -377,7 +377,7 @@ function drawTownFires(ctx, town) {
 // `frame`: {picture, canvas (the picture as a canvas), car: {x, z, heading}, target: {x, z, name} | null, knowledge, actors: [{kind, position}]}.
 export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMALL_MAP.height} = {}) {
   const {picture, car, target, knowledge, actors = []} = frame;
-  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world});
+  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world, positionOf: frame.positionOf});
   const town = brandTownMap(frame, {width, height});
   const pursuit = frame.worldJob?.night2 && frame.worldJob.job.steps[frame.worldJob.job.stepIndex]?.id === 'chase';
   const view = town?.view ?? smallView(car, {width, height, ...(pursuit ? {metresAcross: 250} : {})});
@@ -527,7 +527,7 @@ function textAlong(ctx, view, boxes, points, string, options, fractions = [.5, .
 // `frame` as for the small map, with `ways` [{id, name, points}] to draw and `title`.
 export function drawBigMap(ctx, frame, {width, height}) {
   const {picture, car, target, knowledge, actors = [], ways = []} = frame, view = wholeView(picture, {width, height});
-  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world});
+  const marks = landMarks({base: picture.marks, world: frame.worldJob?.open?.world, positionOf: frame.positionOf});
   drawGround(ctx, picture, frame.canvas, view);
   if (marks.driven) drawUndrivenGround(ctx, view, picture, marks.driven);
   drawRiver(ctx, view, marks);

@@ -32,8 +32,8 @@ tick(LAND.at('yard', 7000), false, 0);
 assert.deepEqual(open.world.open.driven, squares);
 
 const positions = {
-  glasshouse: LAND.at('ships-in-sand', 2000, 700),
-  'radio-hill': LAND.at('tin-town', -2245, -992),
+  glasshouse: LAND.at('ridge', 400, 500),
+  'radio-hill': LAND.at('dry-dam', -750, 600),
   hangar: LAND.at('yard', 900, 600),
 };
 const helped = sampleWorld('helped-camp'), burned = sampleWorld('after-the-smoke');
@@ -62,7 +62,7 @@ const base = landMarks(), picture = createLandPicture({marks: base});
 assert.equal(landMarks({base}), base);
 assert.deepEqual(landMarks({base, world: found, positionOf}).places.slice(0, base.places.length), base.places);
 const dimensions = {width: 1400, height: 1000};
-const frame = {picture, canvas: {}, car: positions['radio-hill'], knowledge: createKnowledge()};
+const frame = {picture, positionOf, canvas: {}, car: positions['radio-hill'], knowledge: createKnowledge()};
 function draw(map, overrides = {}) {
   const calls = [];
   const ctx = new Proxy({measureText: text => ({width: text.length * 7})}, {
