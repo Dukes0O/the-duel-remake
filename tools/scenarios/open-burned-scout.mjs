@@ -2,6 +2,7 @@
 import burned from '../../src/story/threads/content/burned-camp.js';
 import {placeForThread} from '../../src/story/scenes/burned-camp.js';
 import {RATS_NEST_LAYOUT} from '../../src/world/open/looks/rats-nest-look.js';
+import {BURNED_SCOUT, scoutGullyRoute} from '../../src/world/open/content/burned-scout.js';
 import {applyEffects} from '../../src/world/open/open-effects.js';
 import {sampleWorld} from '../../src/world/open/samples.js';
 import {sitePosition} from '../../src/world/open/site-rule.js';
@@ -68,11 +69,10 @@ export async function run(context) {
   const layout = RATS_NEST_LAYOUT;
   const nest = sitePosition('rats-nest', world.open.landSeed);
   const sitePositions = {glasshouse: sitePosition('glasshouse', world.open.landSeed),
-    'rats-nest': {position: nest, spots: layout.spots}};
+    'rats-nest': {position: nest, spots: {...layout.spots, ...BURNED_SCOUT.spots}}};
   const locate = place => placeForThread(place, cast, {sitePositions});
-  if (rule.lookoutSpots.some(post => !locate(post)) || !layout.scoutGullyRoute?.length)
-    throw Error('The Rats’ Nest layout needs two lookout posts and the approved scoutGullyRoute.');
-  const gully = layout.scoutGullyRoute.map(name => locate(['rats-nest', name]));
+  if (rule.lookoutSpots.some(post => !locate(post))) throw Error('The scouting needs both lookout posts.');
+  const gully = scoutGullyRoute;
   if (gully.length < 2 || gully.some(point => !point)) throw Error('The gully route must name at least two existing spots.');
   const start = locate(['@camp', 'tracks-away']), bridge = locate(rule.via), hollow = locate(rule.destination);
   const evaluate = (name, ...values) => context.evaluate(pageSource(name, ...values));
@@ -90,9 +90,8 @@ export async function run(context) {
   await evaluate('placeCar', start, bridge);
   await evaluate('advance', .15);
   await evaluate('scoutStarted');
-  await evaluate('placeCar', bridge, gully[0]);
+  await evaluate('placeCar', bridge, gully[1]);
   await evaluate('advance', .15);
-  await evaluate('placeCar', gully[0], gully[1]);
   for (const point of gully.slice(1)) await evaluate('drive', point, 4, 60);
   await evaluate('drive', hollow, rule.within - 2, 60);
   await evaluate('advance', .15);

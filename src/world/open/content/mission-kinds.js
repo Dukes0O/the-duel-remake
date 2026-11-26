@@ -11,6 +11,15 @@ const marker = (view, point, radius) => ({type: 'marker', place: {...atGround(vi
 const lookoutsRequest = (mission, posts) => ({type: 'missionLookouts', id: mission.id, group: mission.enemy, posts});
 const isNear = (car, point, radius) => distance(car, point) <= radius;
 
+export function lookoutSees(post, car, heightAt = scablandsSurfaceHeightAt) {
+  if (!car) return false;
+  if (Number.isFinite(post.heading)) {
+    const bearing = Math.atan2(car.x - post.x, car.z - post.z);
+    if (Math.cos(bearing - post.heading) < Math.cos(post.halfAngle ?? Math.PI / 3)) return false;
+  }
+  return sees(post, car, {heightAt, eye: post.eye ?? 1.8, range: post.range ?? Infinity, step: 4});
+}
+
 const reach = {
   prepare(mission, place) {
     const {rule = {}, by} = mission;
@@ -31,6 +40,10 @@ const reach = {
       state: {route, sight: posts.map(() => 0), followed: !via, seen: false, sentRiders: false},
       requests: [
         ...(posts.length ? [lookoutsRequest(mission, posts.map(post => atGround(view, post)))] : []),
+        {type: 'solids', id: mission.id + '/lookouts', solids: posts.filter(post => post.heap).map((post, i) => ({
+          id: mission.id + '/heap/' + i, kind: 'wreck', shape: 'box', x: post.x, z: post.z,
+          heading: post.heading ?? 0, base: height(view, post), ...post.heap,
+        }))},
         marker(view, via ?? destination, via ? mission.rule.viaWithin : mission.rule.within),
       ],
     };
@@ -49,10 +62,8 @@ const reach = {
       if (rule.viaLine) requests.push({type: 'say', lineId: mission.id + '/via', text: rule.viaLine});
     }
     if (!next.seen) {
-      next.sight = posts.map((post, index) => car && sees(post, car, {
-        heightAt: view.missionHeightAt ?? scablandsSurfaceHeightAt, eye: post.eye ?? 1.8,
-        range: post.range ?? Infinity, step: 4,
-      }) ? next.sight[index] + dt : 0);
+      next.sight = posts.map((post, index) => lookoutSees(post, car, view.missionHeightAt)
+        ? next.sight[index] + dt : 0);
       const watcher = next.sight.findIndex(seconds => seconds + 1e-9 >= rule.seenAfterSeconds);
       if (watcher >= 0) {
         next.seen = true;
@@ -77,6 +88,7 @@ const reach = {
   end(mission, state, view) {
     return [
       {type: 'marker', place: null},
+      {type: 'solids', id: mission.id + '/lookouts', solids: []},
       ...(state.route.posts.length ? [lookoutsRequest(mission, [])] : []),
       ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : []),
     ];

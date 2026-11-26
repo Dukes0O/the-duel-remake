@@ -22,7 +22,8 @@ function withPlaces(context) {
       const point = placeForThread(place, cast, view);
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
-      return spot ? {...point, heading: spot.heading, eye: spot.eye, range: spot.range} : point;
+      return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
+        range: spot.range, heap: spot.heap} : point;
     },
     allowsCast: (thread, role, id) => thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&

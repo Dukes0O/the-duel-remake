@@ -49,6 +49,7 @@ import {applyEffects} from '../../world/open/open-effects.js';
 import {SOUND_BANK} from '../../sound-bank.js';
 import {ROAD_GROUPS} from '../../world/open/content/checkpoints.js';
 import {RATS_NEST_LAYOUT} from '../../world/open/looks/rats-nest-look.js';
+import {BURNED_SCOUT} from '../../world/open/content/burned-scout.js';
 import {abandonOpenMission} from '../../world/open/parts/missions.js';
 import {installSiteGround} from '../../world/open/site-ground.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
@@ -2096,7 +2097,8 @@ export function stepWorldJob(duel, dt) {
       const at = Object.fromEntries(OPEN_SITES.map(site => [site.id, sitePosition(site.id, landSeed)]).filter(([, point]) => point));
       // OPEN-SHARED: the mission reads the same named spots as the site look. Road encounters still read site centres.
       const nest = at['rats-nest'];
-      const withSpots = nest ? {...at, 'rats-nest': {position: nest, spots: RATS_NEST_LAYOUT.spots}} : at;
+      const withSpots = nest ? {...at, 'rats-nest': {position: nest,
+        spots: {...RATS_NEST_LAYOUT.spots, ...BURNED_SCOUT.spots}}} : at;
       worldJob.openSitePositions = {landSeed, at, withSpots};
     }
     const {at: sites, withSpots} = worldJob.openSitePositions;
@@ -2104,6 +2106,7 @@ export function stepWorldJob(duel, dt) {
       worldJob.riderFight?.outcome === null;
     openStep = stepOpenLand(worldJob.open, {...view, ...road,
       sitePositions: checkpointsEnabled ? withSpots : sites, checkpointSites: sites, missionRidersFighting,
+      missionLookoutPosts: worldJob.open.parts.missions?.active?.state.route.posts,
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       serviceSheds: worldJob.serviceSheds,
       car: {armour: state.armor, maxArmour: state.maxArmor, dirt: worldJob.open.world.open.car.dirt},
@@ -2286,7 +2289,8 @@ export function stepWorldJob(duel, dt) {
         const prefix = request.id + '/lookout/';
         worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));
         request.posts.forEach((position, index) => worldJob.actors.push({
-          id: prefix + index, position, heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
+          id: prefix + index, position: {...position, y: position.y + (position.heap?.height ?? 0)},
+          heading: position.heading ?? 0, renderCar: ROAD_GROUPS[request.group]?.car,
           health: 100, speed: 0,
         }));
       } else if (!checkpointsEnabled || !applyCheckpointRoadRequest(duel, worldJob, request)) applyRequests(duel, worldJob, [request]);

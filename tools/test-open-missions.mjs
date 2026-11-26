@@ -12,6 +12,15 @@ import {threadsPart} from '../src/world/open/parts/threads.js';
 import {sampleWorld} from '../src/world/open/samples.js';
 import {sitePosition} from '../src/world/open/site-rule.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {BURNED_SCOUT, SCOUT_RATS, scoutPeople, scoutTrail, scoutGullyRoute} from '../src/world/open/content/burned-scout.js';
+import {lookoutSees} from '../src/world/open/content/mission-kinds.js';
+import {installSiteGround} from '../src/world/open/site-ground.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {stepMover} from '../src/world/scablands-movers.js';
+import {createJobSolidGrid, pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {peoplePart} from '../src/world/open/parts/people.js';
+import {createStoryPeople, STORY_FIGURES} from '../src/world/jobs/story-people.js';
+import {createSignView} from '../src/world/open/sign-view.js';
 import {walkThread} from './thread-crossings.mjs';
 import {pageSource, pageFunctions} from './scenarios/open-burned-scout.mjs';
 
@@ -43,6 +52,97 @@ const beat = open => open.world.open.threads[burned.id].beat;
 const marks = open => open.world.ledger.marks;
 const completed = out => out.events.find(event => event.type === 'threadMissionOutcome')?.outcome;
 const decision = out => out.requests.find(request => request.type === 'talk')?.scene.choices.map(option => option.id.split('/').at(-1));
+
+// The real authored approach, including every segment between its rows, is hidden from both posts.
+const releaseGround = installSiteGround(world.open.landSeed);
+try {
+  const realSites = {glasshouse: sitePosition('glasshouse', world.open.landSeed),
+    'rats-nest': {position: nest, spots: {...RATS_NEST_LAYOUT.spots, ...BURNED_SCOUT.spots}}};
+  const realFrame = (open, point, dt = 1) => frame(open, point, dt,
+    {sitePositions: realSites, missionHeightAt: scablandsSurfaceHeightAt});
+  const realStart = placeForThread(['@camp', 'tracks-away'], cast, {sitePositions: realSites});
+  let drive = realFrame(begin(), realStart);
+  assert.equal(drive.events[0].type, 'threadMission', 'authored posts start the mission without test geometry');
+  const heaps = drive.requests.find(row => row.type === 'solids');
+  assert.equal(heaps.solids.length, 2, 'both wreck heaps are solid');
+  for (const post of BURNED_SCOUT.lookouts) assert.ok(Math.hypot(post.x - nest.x, post.z - nest.z) > RATS_NEST_LAYOUT.radius);
+  drive = realFrame(drive.open, scoutGullyRoute[0]);
+  for (let i = 1; i < scoutGullyRoute.length; i++) {
+    const a = scoutGullyRoute[i - 1], b = scoutGullyRoute[i], length = Math.hypot(b.x - a.x, b.z - a.z);
+    let previous = a;
+    const steps = Math.ceil(length / 2);
+    for (let j = 1; j <= steps; j++) {
+      const point = {x: a.x + (b.x - a.x) * j / steps, z: a.z + (b.z - a.z) * j / steps};
+      assert.ok(BURNED_SCOUT.lookouts.every(post => !lookoutSees(post, point)), `hidden gully segment ${i}, sample ${j}`);
+      assert.equal(stepMover(previous, point, {solids: false}).blocked, false, `driveable gully segment ${i}, sample ${j}`);
+      drive = realFrame(drive.open, point, length / steps / 10);
+      assert.ok(!drive.events.some(event => event.type === 'threadMissionSpotted'));
+      previous = point;
+    }
+  }
+  assert.equal(held(drive.open), false);
+  assert.equal(beat(drive.open), 'rim');
+  assert.ok(!marks(drive.open).includes('burned-camp/seen'));
+  const plain = LAND.at('boneyard', -80, -1450);
+  assert.ok(BURNED_SCOUT.lookouts.some(post => lookoutSees(post, plain)), 'the plain road is watched');
+  const spotted = realFrame(realFrame(realFrame(begin(), realStart).open, via).open, plain, 8);
+  assert.equal(spotted.events[0].type, 'threadMissionSpotted');
+  assert.equal(spotted.requests.find(row => row.type === 'riders').vehicles.length, 2);
+
+  const grid = createJobSolidGrid();
+  grid.setOpenSolids('rats-nest', RATS_NEST_LAYOUT.solids.map(row => ({...row,
+    x: nest.x + row.x, z: nest.z + row.z, base: scablandsSurfaceHeightAt(nest.x + row.x, nest.z + row.z)})));
+  const crowdRows = scoutPeople();
+  assert.ok(SCOUT_RATS.length >= 10 && SCOUT_RATS.length <= 14);
+  assert.ok(crowdRows.every(row => row.talk === null && !Object.hasOwn(STORY_FIGURES, row.id)));
+  const peopleView = {openRoam: true, checkpointsEnabled: true, peopleGrid: grid,
+    missionLookoutPosts: BURNED_SCOUT.lookouts};
+  let crowd = stepOpenLand(begin(), peopleView, 0, [peoplePart]).open;
+  const placed = crowd.parts.people.cast.filter(person => person.id.startsWith('scout-'));
+  assert.equal(placed.length, SCOUT_RATS.length + 2);
+  assert.equal(createStoryPeople(placed).length, placed.length, 'distinct background IDs reuse rider figures');
+  for (const row of placed.filter(person => person.id.startsWith('scout-rat-'))) {
+    const point = row.position;
+    assert.ok(!pushOutOfSolids(point.x, point.z, row.radius, grid, point.y).hit, row.id + ' is clear of yard solids');
+    const plan = crowdRows.find(person => person.id === row.id).routine.day;
+    const origin = LAND.at(...(plan.at ?? plan.stops[0].at));
+    assert.ok(Math.hypot(point.x - origin.x, point.z - origin.z) < .01, row.id + ' stands at its row');
+  }
+  for (let tick = 0; tick < 40; tick++) crowd = stepOpenLand(crowd, peopleView, .5, [peoplePart]).open;
+  assert.deepEqual(crowd.world, begin().world, 'background routines write no ledger entries');
+  assert.equal(stepOpenLand(begin(), {...peopleView, checkpointsEnabled: false}, 0, [peoplePart])
+    .open.parts.people.cast.some(person => person.id.startsWith('scout-')), false);
+
+  const trailRows = scoutTrail(realSites.glasshouse);
+  assert.deepEqual(trailRows.pods.at(-1), via, 'pods end at the bridge');
+  assert.ok(Math.hypot(trailRows.tracks.at(-1).x - nest.x, trailRows.tracks.at(-1).z - nest.z) < 95);
+  const visuals = createSignView(), worldJob = {open: spotted.open};
+  const beforeDraw = structuredClone(spotted.open);
+  visuals.update(worldJob, plain, 0);
+  const flare = visuals.group.getObjectByName('Scouting lookout flare');
+  const light = visuals.group.getObjectByName('Scouting flare light');
+  assert.equal(flare.visible, true, 'a flare is drawn even while signs are held');
+  assert.equal(flare.position.x, spotted.events[0].position.x, 'the flare starts at the watcher');
+  assert.equal(visuals.group.children.filter(row => row.name === 'Scouting lookout wreck heap').length, 2);
+  assert.ok(visuals.group.getObjectByName('Scouting tyre tracks'));
+  assert.ok(visuals.group.getObjectByName('Scouting bean pods'));
+  for (const age of [1, 3.6]) {
+    worldJob.open = {...spotted.open, seconds: spotted.open.seconds + age};
+    visuals.update(worldJob, plain, age);
+    assert.ok(light.position.y > 0, 'the flare climbs');
+  }
+  const peak = light.position.y;
+  worldJob.open = {...spotted.open, seconds: spotted.open.seconds + 6};
+  visuals.update(worldJob, plain, 6);
+  assert.ok(light.position.y < peak, 'the flare falls');
+  worldJob.open = {...spotted.open, seconds: spotted.open.seconds + 8};
+  visuals.update(worldJob, plain, 8);
+  assert.equal(flare.visible, false, 'an old event cannot restart the flare');
+  assert.deepEqual(spotted.open, beforeDraw, 'the sign view does not change mission state');
+  visuals.dispose();
+} finally {
+  releaseGround();
+}
 
 assert.equal(FEATURE_STATES['story-choices'], 'dev');
 assert.equal(createFeatureFlags({qa: false, storage: null, search: ''}).enabled('story-choices'), false);
