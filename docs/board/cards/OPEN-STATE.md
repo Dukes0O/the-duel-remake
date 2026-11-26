@@ -111,6 +111,12 @@ None.
    base commit too, so it is not this card's fault. Note it in the pull request and carry on; the laptop runs the guard
    at the merge.
 
+## At the merge (Claude, 25 November 2026, night)
+
+The browser scenario `open-find-camp` (OPEN-SITES, merged) ends by opening What people remember and waiting for the
+Glasshouse at Friendly. It cannot pass until this card saves the open world when a roam ends, so it is part of this
+card's proof: run it after your change, and it must pass.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
