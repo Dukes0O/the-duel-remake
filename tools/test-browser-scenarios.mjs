@@ -240,6 +240,28 @@ test('named timing mode is explicit, headed and restricted to the existing frame
   assert.deepEqual(modes,[{timingOnly:true,headed:true},{timingOnly:true,headed:true}]);
 });
 
+test('QA-NIGHT-TIMING-ALONE: --all and --changed-since leave the frame-stage scenarios out; --scenarios still runs them', async () => {
+  assert.deepEqual([...suite.FRAME_STAGE_SCENARIOS].sort(), ['convoy-frames','deep-frames','fire-view']);
+  for (const name of suite.FRAME_STAGE_SCENARIOS) assert.ok(suite.QUIET_SCENARIOS.includes(name), name + ' stays on the quiet list');
+  const names = ['one', 'deep-frames', 'convoy-frames', 'fire-view', 'frame-pacing', 'two'];
+  const all = fixture(names);
+  assert.equal(await suite.main(['--all', '--jobs', '4', '--output-dir', archive], all.operations), 0);
+  assert.deepEqual(all.summary.rows.map(row => row.name), ['one', 'frame-pacing', 'two']);
+  assert.equal(all.summary.leftForSaturday, 0, 'the frame stage runs them; nothing is left over');
+  const changed = fixture(names), listed = [];
+  assert.equal(await suite.main(['--changed-since', 'HEAD', '--jobs', '4', '--output-dir', archive], {...changed.operations, log: line => listed.push(line)}), 0);
+  assert.ok(changed.summary.rows.length > 0);
+  for (const name of suite.FRAME_STAGE_SCENARIOS) assert.ok(!changed.summary.rows.some(row => row.name === name), name + ' is not in --changed-since');
+  const named = fixture(names);
+  assert.equal(await suite.main(['--scenarios', 'fire-view,deep-frames,convoy-frames', '--jobs', '1', '--output-dir', archive], named.operations), 0);
+  assert.deepEqual(named.summary.rows.map(row => row.name), ['fire-view', 'deep-frames', 'convoy-frames'], 'a run by name is unchanged');
+  const timing = fixture(names), modes = [], run = timing.operations.scenario;
+  timing.operations.scenario = async (...args) => { modes.push(args[3]); return run(...args); };
+  assert.equal(await suite.main(['--scenarios', 'frame-pacing,deep-frames,convoy-frames,fire-view', '--timing-only', '--headed', '--jobs', '1', '--output-dir', archive], timing.operations), 0);
+  assert.ok(modes.every(mode => mode.timingOnly && mode.headed), 'the frame stage runs them headed, one at a time');
+  assert.equal(timing.maximum, 1);
+});
+
 test('ordinary Tremblant views run concurrently with explicit semantic mode and no timing-pass claim', async () => {
   assert.ok(!suite.QUIET_SCENARIOS.includes('tremblant-snow'));
   assert.ok(!suite.QUIET_SCENARIOS.includes('tremblant-views'));

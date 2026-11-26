@@ -146,6 +146,12 @@ export const QUIET_SCENARIOS = Object.freeze([
   'vesper-art', 'wasteland-beta',
 ]);
 
+// QA-NIGHT-TIMING-ALONE: these frame-time scenarios belong to the night's frame stage, which refuses to start with
+// company and runs headed, one at a time (AGENTS rule 8). The browser stage's --all and --changed-since leave them
+// out; --scenarios still runs them by name. This is the one list of the names.
+export const FRAME_STAGE_SCENARIOS = Object.freeze(['deep-frames', 'convoy-frames', 'fire-view']);
+const TIMING_ONLY_SCENARIOS = Object.freeze(['deep-frames', 'frame-pacing', 'tremblant-snow', 'tremblant-views', 'convoy-frames', 'fire-view']);
+
 export function parseSuiteArguments(args) {
   const options = {all: false, names: null, jobs: 4, outputDir: null};
   const seen = new Set();
@@ -175,7 +181,7 @@ export function parseSuiteArguments(args) {
   if ([options.all, !!options.names, !!options.changedSince].filter(Boolean).length !== 1)
     throw Error('Usage: node tools/run-browser-scenarios.mjs --all|--scenarios NAMES [--jobs 1..4] [--output-dir .evidence/PATH]');
   if (options.timingOnly) {
-    if (!options.names || options.names.some(name => !['deep-frames','frame-pacing','tremblant-snow','tremblant-views'].includes(name)))
+    if (!options.names || options.names.some(name => !TIMING_ONLY_SCENARIOS.includes(name)))
       throw Error('--timing-only requires explicit existing frame recipe names.');
     options.headed = true;
   }
@@ -222,7 +228,9 @@ export async function main(args = process.argv.slice(2), {
   cleanup = removeQaBundle, log = console.log, error: logError = console.error,
 } = {}) {
   const options = parseSuiteArguments(args);
-  const discovered = await discover({includeManual: !!options.names});
+  const found = await discover({includeManual: !!options.names});
+  // --all and --changed-since leave the frame stage's scenarios out; naming them with --scenarios still runs them.
+  const discovered = options.names ? found : found.filter(name => !FRAME_STAGE_SCENARIOS.includes(name));
   const selection = options.changedSince ? await changedSelection(discovered, options.changedSince) : null;
   const selected = options.names ?? (selection ? selection.map(row => row.name) : discovered);
   if (options.list) {

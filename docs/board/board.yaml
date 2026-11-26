@@ -47,18 +47,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
 
-  - id: QA-NIGHT-TIMING-ALONE
-    title: "Frame-timing scenarios leave the night's browser stage for the frame stage (convoy-frames, fire-view, deep-frames)"
-    owner: "codex"
-    model: "sol"
-    lane: "TOOLS"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude cloud (Sonnet), 26 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-NIGHT-TIMING-ALONE.md"
-
   - id: QA-NIGHT-22-NOV
     title: "Four browser scenarios behind dev switches fail since the night of 22 November (on-foot exit, far rain, borer)"
     owner: "codex"
