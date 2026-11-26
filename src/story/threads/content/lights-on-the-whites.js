@@ -384,7 +384,7 @@ export default {
 
     // On any later day, once the ladder is down. On foot, with nothing to lose.
     aboard: {
-      when: {all: [{reach: ['ships-in-sand', 'patience-ladder']}, {fact: 'made', id: LADDER}, {nights: 1}]},
+      when: {all: [{after: ['all-hands-home', 'two-at-dawn', 'in-at-dawn']}, {reach: ['ships-in-sand', 'patience-ladder']}, {fact: 'made', id: LADDER}, {nights: 1}]},
       lines: [
         sprat('The Captain says that the ladder is down for you whenever you come. I\'m to show you the ship, and I\'m not to let you touch the mast, because the mast is his.'),
         {...wick('We kept your ember going in the galley stove after the basket was done with it. There has been hot soup aboard every night since, for the first time since the spring. Sit down and have a bowl.'), when: basketLit},

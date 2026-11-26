@@ -39,6 +39,15 @@ function tally(thread) {
 
 // The numbers, file by file. A file brought to the shape lost nothing a player reads (26 November 2026).
 const COUNTS = {
+  'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
+  'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
+  'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},
+  'mall-road-toll': {lines: 59, thoughts: 18, questions: 10, choices: 24},
+  'market-day': {lines: 97, thoughts: 32, questions: 31, choices: 29},
+  'radio-hill-voice': {lines: 79, thoughts: 32, questions: 15, choices: 19},
+  'runaway': {lines: 78, thoughts: 17, questions: 13, choices: 20},
+  'somebody-elses-flag': {lines: 46, thoughts: 16, questions: 9, choices: 11},
+  'stranded-hauler': {lines: 67, thoughts: 38, questions: 20, choices: 15},
 };
 
 for (const [name, thread] of Object.entries(threads)) {
@@ -70,8 +79,8 @@ refused('radio-hill-voice', copy => { firstBeat(copy).choices[0].does = 'Go'; },
 refused('lights-on-the-whites', copy => { firstBeat(copy).job = {}; }, 'job', 'beats.');
 refused('runaway', copy => { firstBeat(copy).effectsWhen = []; }, 'effectsWhen', 'beats.');
 refused('radio-hill-voice', copy => { copy.tiedBack = []; }, 'tiedBack', 'The storyline');
-refused('runaway', copy => { Object.values(copy.cast)[0].only = 'x'; }, 'only', 'cast.');
-refused('lights-on-the-whites', copy => { Object.values(copy.cast)[0].castWhen = {}; }, 'castWhen', 'cast.');
+refused('mall-road-toll', copy => { Object.values(copy.cast)[0].only = 'x'; }, 'only', 'cast.');
+refused('runaway', copy => { Object.values(copy.cast)[0].castWhen = {}; }, 'castWhen', 'cast.');
 // Dialect of the third three (mall-road-toll, market-day, somebody-elses-flag): `needs` for a condition, `for` for a
 // people, `end` and `ends`, `steps`, `fight`, `not` on a role.
 refused('mall-road-toll', copy => { firstBeat(copy).needs = {fact: 'night', atLeast: 2}; }, 'needs', 'beats.');

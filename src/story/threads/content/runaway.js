@@ -481,7 +481,7 @@ export default {
 
     // The first morning after he is safe at Tin Town: kept in the open, paid for, or hidden through the search.
     'what-he-leaves': {
-      when: {all: [{reach: ['tin-town', 'hearth']}, {part: 'day'}, {nights: 1}, {any: [has('kept'), has('paid'), has('kept-ahead')]}]},
+      when: {all: [{after: ['gate', 'wall-fight', 'found', 'search', 'search-slept']}, {reach: ['tin-town', 'hearth']}, {part: 'day'}, {nights: 1}, {any: [has('kept'), has('paid'), has('kept-ahead')]}]},
       lines: [
         {...auntie('I\'m not shouting "Slack" across my own hearth. It sounds like something that has gone wrong with a rope. What did your mother call you?'), when: {not: has('asked-his-name')}},
         {...boy('She called me Nat. Nobody has asked me that since I went grey.'), when: {not: has('asked-his-name')}},
@@ -491,14 +491,17 @@ export default {
       ],
       cue: 'open.ash.drawn',
       effects: DRAWN,
+      // The storyline's end stays what the gate made it.
+      next: [{when: has('paid'), to: 'paid'}, {to: 'kept'}],
     },
 
     // A boy who was driven to a haven makes the same drawing there, in the dirt, on the player's next visit.
     'drawn-at-the-haven': {
-      when: {all: [{nights: 1}, has('sent-on'), {not: has('taken-on-the-road')}, {not: {fact: 'made', id: BACK_WAY}}]},
+      when: {all: [{after: ['gate', 'arrived']}, {nights: 1}, has('sent-on'), {not: has('taken-on-the-road')}, {not: {fact: 'made', id: BACK_WAY}}]},
       lines: THE_DRAWING,
       cue: 'open.ash.drawn',
       effects: DRAWN_AGAIN,
+      next: 'sent-on',
       notes: {
         // The beat is for a visit to the haven.
         reach: '@haven',

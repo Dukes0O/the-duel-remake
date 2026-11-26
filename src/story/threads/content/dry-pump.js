@@ -43,6 +43,13 @@ const CAUGHT = [
   ashMan("Old Smoke doesn't keep thieves, because thieves have to be fed. Walk out by the front doors, and tell Tin Town who owns the Mall."),
 ];
 
+// Where the camp's fitting leads: the thread's end, by how the valve was got.
+const FITTING_END = [
+  {when: did('promise-broken'), to: 'late'},
+  {when: did('friends-fetched-it'), to: 'friends-fetched'},
+  {to: 'water-back'},
+];
+
 export default {
   id: ID,
   title: 'The dry pump',
@@ -478,8 +485,7 @@ export default {
             leader("Where did you find it? We'd heard that the grey men had cleared that place out."),
           ]},
         // If Mr Penny was promised the other valve, its record stays open for that: the beat `penny-owed` is still
-        // live after the thread's end.
-        stillOpenAfterTheEnd: 'penny-owed',
+        // live after the thread's end (it follows this beat, and leads to the same end).
       },
       // Hold the wrench on the foot of the pipe for twelve seconds. Then the pump is worked, and water comes.
       mend: {id: `${ID}/fit-the-valve`, wrenchSeconds: 12, scrap: 0,
@@ -508,17 +514,15 @@ export default {
           lines: [leader("You took it from under Old Smoke's lamps, for us? Sit down. You're not driving anywhere until you've had something to eat.")]},
       ],
       // The thread's end is named here.
-      next: [
-        {when: did('promise-broken'), to: 'late'},
-        {when: did('friends-fetched-it'), to: 'friends-fetched'},
-        {to: 'water-back'},
-      ],
+      next: FITTING_END,
     },
 
     // Only for a player who took Mr Penny's own valve and promised him the other. A second trip, by the tunnel.
     'penny-owed': {
-      when: {all: [did('promised-penny'), {reach: ['dead-mall', 'tunnel-door']}]},
+      when: {all: [{after: 'fitting'}, did('promised-penny'), {reach: ['dead-mall', 'tunnel-door']}]},
       notes: {
+        // The thread has ended at the camp. This second trip is still open after that, and whichever way it goes the
+        // thread's end stays what the fitting made it.
         outcomeCues: {'seen-and-brought-down': 'open.mall.alarm', caught: 'open.mall.alarm'},
         outcomeWhen: {broken: {due: `${ID}/penny-valve`}},
       },
@@ -529,19 +533,23 @@ export default {
             lines: [penny("You came back with it. I'll strike that out of the book, then. I've never struck anything out of the book before, and I find that I rather like it.")],
             effects: [mark('took-the-spare'),
               mark('penny-valve-returned', 'You brought Mr Penny the other valve, and his tap runs again.'),
-              {type: 'settle', id: `${ID}/penny-valve`}]},
+              {type: 'settle', id: `${ID}/penny-valve`}],
+            next: FITTING_END},
           'seen-and-brought-down': {
             lines: [SEEN_SHOUT, BOLTED_DOOR,
               penny("You came back with it. I'll strike that out of the book, then. I've never struck anything out of the book before, and I find that I rather like it.")],
             effects: [mark('took-the-spare'), mark('penny-valve-returned'), mark('seen-in-the-mall'), mark('door-found'),
-              {type: 'feud', of: 'ash-men', by: 1}, {type: 'settle', id: `${ID}/penny-valve`}]},
+              {type: 'feud', of: 'ash-men', by: 1}, {type: 'settle', id: `${ID}/penny-valve`}],
+            next: FITTING_END},
           caught: {
             lines: [SEEN_SHOUT, ...CAUGHT],
-            effects: [mark('seen-in-the-mall'), mark('caught-in-the-mall'), {type: 'feud', of: 'ash-men', by: 1}]},
+            effects: [mark('seen-in-the-mall'), mark('caught-in-the-mall'), {type: 'feud', of: 'ash-men', by: 1}],
+            next: FITTING_END},
           broken: {
             lines: [penny("I've left it in the book as work outstanding. Most things in the book are. Please don't look so troubled. I'm very used to waiting.")],
             effects: [mark('penny-promise-broken', 'You promised Mr Penny a valve, and did not bring it.'),
-              {type: 'word', person: 'mr-penny', by: -1}, {type: 'settle', id: `${ID}/penny-valve`}]},
+              {type: 'word', person: 'mr-penny', by: -1}, {type: 'settle', id: `${ID}/penny-valve`}],
+            next: FITTING_END},
         }},
     },
 

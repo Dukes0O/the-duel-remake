@@ -254,7 +254,7 @@ export default {
 
     // A player who heard the calls, did not answer them, and came up in daylight.
     'by-day': {
-      when: {all: [{reach: 'radio-hill'}, {part: 'day'}, {fact: 'mark', id: `${ID}/heard-two-voices`}, {not: {fact: 'found', site: 'radio-hill'}}]},
+      when: {all: [{after: 'ramp'}, {reach: 'radio-hill'}, {part: 'day'}, {fact: 'mark', id: `${ID}/heard-two-voices`}, {not: {fact: 'found', site: 'radio-hill'}}]},
       lines: [hettyHere('You came up in daylight, which was very sensible of you. I talked to you for three nights, you know. I\'d begun to think that I was talking to the wind.')],
       effects: [{type: 'find', site: 'radio-hill'}],
       next: 'other-voice',
@@ -414,8 +414,10 @@ export default {
     // While Hetty talks over the second voice, this stands in for the news she gives on a visit. A drum from Moss is
     // 25 scrap, carried in the car, and each drum buys nine more nights.
     'talking-over': {
-      when: {all: [{reach: ['radio-hill', 'hut']}, {fact: 'mark', id: `${ID}/talks-over`}, parrotHasSet]},
+      when: {all: [{after: 'other-voice'}, {reach: ['radio-hill', 'hut']}, {fact: 'mark', id: `${ID}/talks-over`}, parrotHasSet]},
       lines: [hettyHere('I\'ve no news for you, driver. I\'ve spent every night this week talking over that woman, and I haven\'t listened to anything else.')],
+      // Nothing is settled, so the other choices still stand.
+      next: 'other-voice',
       notes: {
         fuel: {drumScrap: 25, nightsADrum: 9, firstDrumGives: [sisters({by: 1})], brokenCosts: [sisters({by: -1})]},
       },

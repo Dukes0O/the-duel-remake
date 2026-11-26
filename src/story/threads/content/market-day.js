@@ -159,11 +159,13 @@ export default {
 
     // Auntie Solder gives the yard and its rules, at the hearth, the same day or any day after.
     hearth: {
-      when: {all: [marked('asked'), {reach: ['tin-town', 'the hearth']}]},
+      when: {all: [{after: 'sign'}, marked('asked'), {reach: ['tin-town', 'the hearth']}]},
       lines: [
         say('auntie-solder', 'You want to hold a market inside my fence? I suppose the pie woman put you up to it. I have two rules. Everybody leaves their guns at the gate with Moss, and nobody sells anything on my hearth stones.'),
         say('auntie-solder', "There's room for five pitches round the yard, besides Dot's van at the gate. Who stands next to whom is your business, and I'd thank you to get it right."),
       ],
+      // With the rules known, the stakes are laid out in the yard.
+      next: 'stakes',
     },
 
     // The asking. Each is a talk at that people's own place, in any order, on any day. No mission runs, so nothing is held.
@@ -358,7 +360,7 @@ export default {
 
     // Side by side, and the player did not reach them in time.
     glass: {
-      when: {all: [BESIDE, {seconds: 25, since: 'yard-quarrel'}]},
+      when: {all: [{after: 'yard-quarrel'}, BESIDE, {seconds: 25, since: 'yard-quarrel'}]},
       cue: 'open.market.glass',
       lines: [say('marigold', "That's a frame gone, and a tray of seedlings gone with it! I knew how it would be the moment I saw where you'd put us. Finch, load the cart. We're going home.")],
       effects: [mark('glass-broken', 'A frame was broken at the market, and the growers went home.'), {type: 'word', person: 'glasshouse', by: -1}],
@@ -390,7 +392,7 @@ export default {
 
     // The promise to Dot was not kept by its night.
     calledOff: {
-      when: {due: `${ID}/hold-market`},
+      when: {all: [{after: 'asking'}, {due: `${ID}/hold-market`}]},
       lines: [say('dot', "I baked for a market that never came. I have a hundred pies going stale, and nobody to blame for it except you. Don't ask me to bake for one of your ideas again.")],
       effects: [mark('called-off'), {type: 'settle', id: `${ID}/hold-market`}, {type: 'word', person: 'dot', by: -1}],
       next: 'called-off',
