@@ -15,6 +15,7 @@ import {GAS_ROUTINE, learnerOf} from '../src/world/open/content/routines.js';
 import {advanceDay, daySecondsOf, partOfDay} from '../src/world/open/day-rule.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
+import {routinesPart} from '../src/world/open/parts/routines.js';
 import {newWorld} from '../src/world/open/open-record.js';
 import {savedOpenRecord, settleOpenHearth, settleOpenWorld} from '../src/world/open/open-save.js';
 import {worldForProfile} from '../src/world/open/open-world.js';
@@ -63,6 +64,19 @@ test('Cinder waits for a hand run and a loss or three runs, and respects three b
   assert(mayOfferRoutine(refused));
   const recovered = choice({...refused, legacyHandRuns: 1}, 'embers-found', [{type: 'stock', stock: 'embers', by: 4}]);
   assert(mayOfferRoutine(recovered), 'a refused offer returns after three nights even after stock recovers');
+});
+
+test('an offer skipped for a priority story conversation is offered again', () => {
+  const world = {...newWorld({night: 3}), legacyHandRuns: 3};
+  const view = {openRoam: true, dayClock: true, partOfDay: 'dusk', onFoot: true,
+    fighter: {position: NIGHT_2_SITES.hearthFront.position}};
+  const first = routinesPart.step({}, {world, view, holds: []});
+  const scene = first.requests[0].id;
+  assert.deepEqual(first.choices, []);
+  const skipped = routinesPart.step(first.state, {world, holds: [], view: {...view,
+    jobEvents: [{type: 'openTalkSkipped', scene}]}});
+  assert.equal(skipped.state.talk, null);
+  assert.equal(routinesPart.step(skipped.state, {world, view, holds: []}).requests[0].id, scene);
 });
 
 test('the ledger casts interested neighbours and the town always supplies a learner', () => {

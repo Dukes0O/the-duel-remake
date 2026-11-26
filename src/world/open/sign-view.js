@@ -10,6 +10,7 @@ import {createSmokeColumn} from '../smoke-column.js';
 import {SERVICE_LANDMARKS} from './building-rule.js';
 import {scoutTrail} from './content/burned-scout.js';
 import {buildGlasshouseTrail} from './looks/glasshouse-look.js';
+import {makeDryPumpLook} from './looks/dry-pump-look.js';
 import {isFresh} from '../../story/threads/signs.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 
@@ -151,6 +152,7 @@ export function createSignView() {
   group.name = 'Open land signs';
   const smoke = new Map();
   const heaps = new Map();
+  let dryPumpLook;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -210,6 +212,9 @@ export function createSignView() {
       if (flare.visible) flare.userData.animate(flareAge);
       const view = open?.parts.threads?.places ?? {};
       const signs = open ? openThreadSigns({...open, view}) : [];
+      if (view.dryPumpEnabled && open.world.open.threads['dry-pump'] && !dryPumpLook)
+        dryPumpLook = makeDryPumpLook(group);
+      dryPumpLook?.update(open, here, (place, cast) => placeForThread(place, cast, view), drawnShift);
       const columns = signs.filter(({sign, at}) => sign.kind === 'smoke' && at);
       const kept = new Set(columns.map(({id}) => id));
       for (const [id, mesh] of smoke) if (!kept.has(id)) disposeSmoke(id, mesh);
@@ -248,6 +253,7 @@ export function createSignView() {
       for (const heap of heaps.values()) disposeMeshes(heap);
       heaps.clear();
       trail?.userData.dispose();
+      for (const root of dryPumpLook?.roots ?? []) disposeMeshes(root);
       disposeMeshes(flare);
       for (const {sign} of sheds) {
         sign.geometry.dispose();

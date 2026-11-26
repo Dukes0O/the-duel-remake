@@ -43,6 +43,13 @@ export const routinesPart = {
     };
 
     if (state.talk) {
+      if (jobEvents.some(event => event.type === 'openTalkSkipped' && event.scene === state.talk)) {
+        if (state.talk === prefix + 'offer') state.offerThisVisit = false;
+        if (state.talk === prefix + 'morning') state.morning = false;
+        if (state.talk === prefix + 'short') state.short = false;
+        state.talk = null;
+        return {state};
+      }
       const outcome = jobEvents.find(event => event.type === 'talkChoice' && event.scene === state.talk);
       const closed = jobEvents.some(event => event.type === 'openTalkClosed' && event.scene === state.talk);
       if (outcome) {
@@ -63,7 +70,10 @@ export const routinesPart = {
           change('take-bess', takeHandRun(world, {teach: id === 'teach-long'}), [{type: 'outing'}]);
           return {state, choices, leave: {to: 'gas-run', road: id === 'boneyard' ? id : 'long'}};
         }
-      } else if (closed) state.talk = null;
+      } else if (closed) {
+        if (state.talk === prefix + 'offer') change('offer', showRoutineOffer(world));
+        state.talk = null;
+      }
       return {state, choices, events};
     }
     if (!feet || isHeld(holds, 'routines') || view.missionActive) return {state};
@@ -76,7 +86,6 @@ export const routinesPart = {
     } else if (atHearth && (interact || (evening && !state.offerThisVisit && record.offeredNight !== world.ledger.night)) &&
         mayOfferRoutine(world)) {
       state.offerThisVisit = true;
-      change('offer', showRoutineOffer(world));
       talk('offer', 'cinder', routineOffer(world, view.playerName ?? 'Driver'));
     } else if (atHearth && (evening || interact) && person && record.running && shortAfterLoss(world) && !state.short) {
       state.short = true;
