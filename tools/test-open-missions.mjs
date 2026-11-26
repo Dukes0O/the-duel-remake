@@ -108,6 +108,14 @@ for (const interrupt of [{missionLeaving: true}, {combatWrecking: true}, {openRo
   assert.equal(beat(left.open), 'scout');
   assert.deepEqual(frame(left.open, hidden).open.world, left.open.world);
 }
+// An externally ended storyline cannot keep another mission from starting.
+const redirected = {...started.open, world: applyEffects(started.open.world, {id: 'fixture/redirect', effects: [
+  {type: 'thread', id: burned.id, end: 'left'},
+]}).world};
+const cancelled = frame(redirected, hidden);
+assert.equal(cancelled.events[0].type, 'threadMissionCancelled');
+assert.equal(frame(cancelled.open, hidden).open.parts.threads.mission, null);
+
 const discarded = abandonOpenMission(started.open);
 assert.equal(held(discarded), false);
 assert.equal(discarded.parts.missions.active, undefined);

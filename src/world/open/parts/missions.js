@@ -8,7 +8,8 @@ const kindOf = mission => Object.hasOwn(MISSION_KINDS, mission.kind) ? MISSION_K
 export function abandonOpenMission(open) {
   const active = open?.parts.missions?.active;
   if (!active) return open;
-  return {...open, holds: dropHold(open.holds, active.holder), parts: {...open.parts, missions: {}}};
+  return {...open, holds: dropHold(open.holds, active.holder),
+    parts: {...open.parts, threads: {...open.parts.threads, mission: null}, missions: {}}};
 }
 
 export const missionsPart = {

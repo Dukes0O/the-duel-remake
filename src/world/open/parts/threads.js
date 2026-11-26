@@ -219,7 +219,9 @@ export function createThreadsPart(threads) {
       const events = [], requests = [];
       const signs = liveSigns(threads, context);
       const decision = {interact: state.interact && !previous.interact, activeMission: previous.mission};
-      state.mission = previous.mission;
+      const settled = input.previousEvents.some(event => event.id === previous.mission &&
+        (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
+      state.mission = settled ? null : previous.mission;
       let hold, release;
       for (const thread of threads) {
         const record = world.open.threads[thread.id];
