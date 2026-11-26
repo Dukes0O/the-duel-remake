@@ -1,0 +1,10 @@
+# OPEN-T-FLAG-2: the Flag's browser scenario passes
+
+**Cause.** The scenario sent F down and up before any game step read it, so Miss Pell's talk never opened ("Timed out waiting for choose"). Behind it was a game fault a player would meet: when Sweet Seep moved to `dead-mall (-1050, 300)` at the merge of 26 November, `FLAG_WHERE` kept the old place, so the tower, Miss Pell, her crew, the camp's people and the solids stood 780 m from the well, its talks and its clues.
+**Game fix.** `somebody-elses-flag-places.js` takes the company's origin from the Sweet Seep's own row in `sites.js`. No word a player reads changed.
+**New check.** `test-open-somebody-elses-flag` proves that the people, the drill and the drawn tower stand on the site (fails on the old position).
+**Scenario fixes.** F is held across a game step. A choice counts only once the game's talk screen has left it, because stale buttons stay on the page for one frame. The wait for "Sign the schedule, for Tin Town" now uses the game's words, "Sign the form for Tin Town". On a timeout the scenario now reports the talk box, the beat and the distances. The scenario asks every question before it presses F for the choices, because the shared part (`parts/threads.js`) opens a beat's choices only when no question is left (follow-up below). One new picture shows the talk at the table.
+**Checks on 793e1bff1 (integration merged in).** `open-somebody-elses-flag` browser scenario PASS, 3 pictures looked at. `test-open-somebody-elses-flag`, `test-open-missions`, `test-open-threads`, `test-open-sites` and `test-thread-shape` pass. core, test-replays, test-combat-replays and test-world-composition 4/4. `npm run build` passes.
+**Changed assertions.** None; the new check only adds assertions.
+**Follow-up.** In the shared part (`parts/threads.js`, the question talk), a beat with questions and choices (the Flag's site and schedule; Burned Camp's grey-pen and home) hides its choices until every question is asked. The design page reads "You may ask before you choose."
+**Removed.** The Flag's second copy of the Sweet Seep's position.
