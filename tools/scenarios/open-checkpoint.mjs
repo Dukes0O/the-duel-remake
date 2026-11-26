@@ -11,7 +11,10 @@ const heading = Math.atan2(mall.position.x - approach.x, mall.position.z - appro
 
 export const pageFunctions = {
   ready: () => !!window.__qaApp && !!window.__render && window.__qaApp.duel.state.status === 'menu' &&
-    !document.querySelector('#start-engine')?.disabled,
+    !document.querySelector('#start-engine')?.disabled &&
+    // The QA panel adds its temporary-player buttons after the menu is up.
+    [...document.querySelectorAll('details button')].some(item =>
+      item.textContent === 'Create temporary player who has found the wasteland' && !item.hidden && !item.disabled),
   prepare: seed => {
     if (!window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only storage is required.');
     const button = [...document.querySelectorAll('details button')]
