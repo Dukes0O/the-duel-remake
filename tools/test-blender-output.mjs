@@ -216,6 +216,8 @@ const nativeGenerators = [
   {script: 'tools/blender/wildlife-north-woods.py', test: 'tools/test-blender-output.mjs'},
   {script: 'tools/blender/ardennes-landmarks.py', test: 'tools/test-circuit-ardennes.mjs'},
   {script: 'tools/blender/ardennes-beech.py', test: 'tools/test-circuit-ardennes.mjs'},
+  // OPEN-LOOK-3: plain Python with PIL; its wreck table and atlas are proved by the Rats' Nest look suite.
+  {script: 'tools/blender/rats-nest-wrecks.py', test: 'tools/test-rats-nest-look.mjs'},
 ];
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
