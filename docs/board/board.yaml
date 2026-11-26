@@ -1385,6 +1385,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-FLAG.md"
 
+  - id: OPEN-T-PUMP-2
+    title: "Open Scablands: the Dry Pump cannot begin on the laptop, because no talk opens at Marigold"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-PUMP-2.md"
+
   - id: OPEN-T-HAULER
     title: "Open Scablands: The Stranded Hauler comes into the game (its sign, places, people and missions)"
     owner: "codex"
