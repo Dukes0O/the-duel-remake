@@ -1384,15 +1384,125 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-JOURNAL-SIZE-2.md"
 
+  - id: OPEN-T-FLAG
+    title: "Open Scablands: Somebody Else's Flag comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "building"
+    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-FLAG.md"
+
+  - id: OPEN-T-HAULER
+    title: "Open Scablands: The Stranded Hauler comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "building"
+    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-HAULER.md"
+
+  - id: OPEN-T-RUNAWAY
+    title: "Open Scablands: The Runaway comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-RUNAWAY.md"
+
+  - id: OPEN-T-MARKET
+    title: "Open Scablands: Market Day comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-MARKET.md"
+
+  - id: OPEN-T-PUMP
+    title: "Open Scablands: The Dry Pump comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-PUMP.md"
+
+  - id: OPEN-T-TOLL
+    title: "Open Scablands: The Mall Road Toll comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [OPEN-T-FLAG]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-TOLL.md"
+
+  - id: OPEN-T-RADIO
+    title: "Open Scablands: The Voice on Radio Hill comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [OPEN-T-HAULER, OPEN-T-PUMP]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-RADIO.md"
+
+  - id: OPEN-T-LIGHTS
+    title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [OPEN-T-HAULER]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-LIGHTS.md"
+
+  - id: OPEN-T-DACE
+    title: "Open Scablands: Dace Goes Looking comes into the game (its sign, places, people and missions)"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [OPEN-T-LIGHTS]
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-T-DACE.md"
+
   - id: OPEN-APPRENTICE-RUN
     title: "Open Scablands: teach somebody the gas run, and have it driven for you from then on (Kyle, 21 November)"
     owner: "codex"
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "ready"
     needs: []
-    locks: [busy-game-files]
+    locks: [busy-game-files, save-shape]
     flag: "story-choices"
     details: "docs/board/cards/OPEN-APPRENTICE-RUN.md"
 

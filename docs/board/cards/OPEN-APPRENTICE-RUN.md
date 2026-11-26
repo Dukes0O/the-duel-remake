@@ -56,6 +56,16 @@ routine's record and the embers it bakes before the merge (AGENTS rule 17).
 `open.routine.learnt`: a second pair of boots climbing into a cab. `open.routine.home`: Bess's engine heard coming in
 at the gate, far off.
 
+## Claude answers (26 November 2026, 17:50)
+
+Ready now: OPEN-STATE merged on 25 November. Files have moved since this card was cut. There is no
+`src/world/open/open-state.js`: the routine's record goes in the open record (its shape in
+`src/world/open/open-record.js`, its saving and loading in `src/world/open/open-save.js`, the same file
+OPEN-JOURNAL-SIZE folds). The gas run is still `src/world/jobs/gas-run.js` with `gasRun` in `src/app.js`, and the bank
+still runs through `src/story/ledger-save.js` and `settleNight2` in `src/story/night-2-save.js`. Storyline missions now
+run through `src/world/open/parts/missions.js` if the lesson needs one. This card also takes the `save-shape` lock,
+because it adds to what is saved; it starts when OPEN-JOURNAL-SIZE-2 has let go of it.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
