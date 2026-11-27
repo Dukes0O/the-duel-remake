@@ -1206,6 +1206,18 @@ tasks:
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-LOOK-1.md"
 
+  - id: HOME-GROUND-2
+    title: "Home Ground, step 2: two brown hens, nest boxes, the real clock and the board at the gate, plus the step 1 drive's fixes"
+    owner: "claude"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    waiting_on: "kyle"
+    needs: ["HOME-GROUND-LOOK-1"]
+    locks: []
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-2.md"
+
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"
