@@ -1278,6 +1278,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-RESCUE.md"
 
+  - id: OPEN-LOOK-DACE
+    title: "Open Scablands: Dace's pickup, the stones, the Deep Sign, the Hangar and the Crow's Step look real"
+    owner: "codex"
+    model: "astra"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-LOOK-DACE.md"
+
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
     owner: "claude"
