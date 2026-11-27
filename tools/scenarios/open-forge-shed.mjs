@@ -23,6 +23,9 @@ export const pageFunctions = {
   start: () => {
     const app = window.__qaApp;
     if (!app.startOpenRoam()) throw Error('The outing could not start.');
+    // The day pictures are taken in daytime: at dawn the Runaway can put Slack in the wash shed's doorway, as
+    // test-open-doors found (QA-OPEN-DOORS-WASH, 26 November 2026).
+    app.duel.state.arena.worldJob.open.daySeconds = 2 * 60;
   },
   startDark: job => {
     const app = window.__qaApp;
