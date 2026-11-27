@@ -1274,9 +1274,10 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "building"
+    status: "review"
     claimed_by: "Codex (cloud), 26 November 2026"
     branch: "codex/open-talk-choices"
+    waiting_on: "claude"
     needs: []
     locks: []
     flag: "story-choices"
