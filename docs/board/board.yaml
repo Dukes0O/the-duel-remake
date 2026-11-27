@@ -1194,17 +1194,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
-  - id: HOME-GROUND-1
-    title: "Home Ground, step 1: the ground, the tin fence, the gate and the lanes, the view from above, sprinting and the third speed on foot"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-1.md"
-
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"

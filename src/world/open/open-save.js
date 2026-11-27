@@ -6,6 +6,7 @@ import {rememberWorldFound} from '../world-save.js';
 import {GROUND_COLUMNS, GROUND_ROWS, OPEN_RECORD_VERSION, readableRoutine} from './open-record.js';
 import {ROUTINES} from './content/routines.js';
 import {DARK_START} from './day-rule.js';
+import {readableHome} from './home-rule.js';
 
 const MAX_SCRAP = 1_000_000_000; // normalizeWasteland's wallet ceiling
 export const OPEN_JOURNAL_LIMIT = 512; // saved rows; progress takes priority over this target
@@ -28,6 +29,8 @@ function readable(entry) {
     (!Object.hasOwn(entry, 'day') || (count(entry.day?.night) && entry.day.night > 0 &&
       Number.isFinite(entry.day.seconds) && entry.day.seconds >= 0 && entry.day.seconds <= DARK_START)) &&
     (!Object.hasOwn(entry, 'outingNight') || (count(entry.outingNight) && entry.outingNight > 0)) &&
+    // HOME-GROUND-1: the player's own ground, only once he has been given it with the switch on.
+    (!Object.hasOwn(entry, 'home') || readableHome(entry.home)) &&
     Array.isArray(entry.driven) && entry.driven.every(square => count(square) && square < GROUND_COLUMNS * GROUND_ROWS) &&
     Array.isArray(entry.journal) && entry.journal.every(object);
 }

@@ -9,8 +9,9 @@ import * as THREE from 'three';
 import {createBuildingView} from './building-view.js';
 import {createSiteView} from './site-view.js';
 import {createSignView} from './sign-view.js';
+import {createHomeGroundView} from './looks/home-ground-look.js';
 
-const VIEW_PARTS = [createSiteView, createBuildingView, createSignView];
+const VIEW_PARTS = [createSiteView, createBuildingView, createSignView, createHomeGroundView];
 
 export function createOpenView(context, makers = VIEW_PARTS) {
   const group = new THREE.Group();

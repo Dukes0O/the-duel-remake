@@ -318,6 +318,18 @@ go into the real game after step 4.
 10. Levels, a building at a time as each is drawn, now that there is timber.
 11. Act 3 on top.
 
+### Step 1 as built (HOME-GROUND-1, behind the switch `home-ground`)
+
+- The ground's north-west corner is `LAND.at('tin-town', -100, 100)`; it is 40 m square on a 2 m grid, 52 m from Tin
+  Town's gate. Rules: `src/world/open/home-rule.js`; content: `src/world/open/content/home-ground.js`; the part:
+  `src/world/open/parts/home.js`; the look: `src/world/open/looks/home-ground-look.js`.
+- Keys on foot: B held hammers (a press picks a piece up), R turns the piece a quarter, G changes panel and gate, V
+  looks straight down and back, X is the burst, F at the board renames. Shift is the sprint.
+- A panel takes 3 seconds and the gate 4. The lane runs from the gate to the far fence, 8 m wide; panels may line it
+  and close its far end. 80 panels are stacked by the north-east corner. The gate opens within 7 m of him.
+- The record is `world.open.home` = `{version: 1, name, pieces, marks}`, written by the counting effect `home`. Later
+  steps add their own fields to it and keep `readableHome` reading the older ones.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

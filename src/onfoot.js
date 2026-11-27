@@ -6,6 +6,8 @@ export const FIGHTER_STEP_SECONDS = 1 / 120;
 export const FIGHTER_RULES = Object.freeze({
   walkMetersPerSecond: 4.5,
   sprintMetersPerSecond: 7.5,
+  // HOME-GROUND-1: the third speed, far too fast, that a burst gives for three seconds (src/world/open/parts/home.js).
+  burstMetersPerSecond: 15,
   // Keyboard turning, like steering a car: A/D and the left and right arrows.
   turnRadiansPerSecond: 2.4,
   jumpMeters: 1.1,
@@ -226,7 +228,7 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
 
   const move = footMoveDirection(fighter.yaw, input);
   if (move.x || move.z) {
-    const distance = (input.sprint ? T.sprintMetersPerSecond *
+    const distance = (input.burst ? T.burstMetersPerSecond : input.sprint ? T.sprintMetersPerSecond *
       (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond * (input.walkScale ?? 1)) *
       (car.arena?.mode === 'fuel-run' && car.arena.participants.find(p => p.id === 'player')?.fuelCanisterId ? .7 : 1) * dt;
     const dx = move.x * distance, dz = move.z * distance;
@@ -248,6 +250,6 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   }
   // Observed planar movement from this fixed step, including collision sliding.
   fighter.speed = Math.hypot(fighter.x - startX, fighter.z - startZ) / dt;
-  fighter.locomotion = fighter.speed > .01 ? input.sprint ? 'sprint' : 'walk' : 'idle';
+  fighter.locomotion = fighter.speed > .01 ? input.sprint || input.burst ? 'sprint' : 'walk' : 'idle';
   return fighter;
 }

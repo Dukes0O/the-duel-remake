@@ -62,7 +62,7 @@ import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 import {activeTalkStep} from './world/jobs/steps/talk.js';
 import './bowl/bowl-rex.js'; // BOWL-REX-FIGHT: night five's Scrapasaurus registers its Show Night runner
-import {initializeWorldJob} from './arena/modes/world-job.js';
+import {initializeWorldJob, nameHomeGround} from './arena/modes/world-job.js';
 import {startBowlNight, continueBowlNight, retryBowlEvent, stepBowlNight, observeBowlNight} from './bowl/bowl-night.js';
 import './bowl/bowl-rivals.js'; // BOWL-RIVALS: Side by Side and Last Truck Rolling against the named rivals
 import {riderOpponentSpecs} from './arena/modes/road-riders.js';
@@ -940,6 +940,11 @@ export class Duel {
     return true;
   }
 
+  // HOME-GROUND-1: the name typed in the ground's box; the ground's part reads it on the next tick.
+  homeNameInput(name) {
+    return !this.state.paused && nameHomeGround(this.state.arena?.worldJob, name);
+  }
+
   setInput(partial) {
     if(this.state.deepJourney?.controlsLocked)partial={throttle:0,brake:0,steer:0,boost:false,shiftUp:false,shiftDown:false,interact:false};
     const input = this.state.input;
@@ -960,7 +965,7 @@ export class Duel {
     if (!this.state.onFoot || !this.state.fighter) return false;
     const input = this.state.fighterInput;
     for (const key of ['forward', 'back', 'left', 'right', 'turnLeft', 'turnRight', 'sprint', 'jump',
-      'fire', 'aim'])
+      'fire', 'aim', 'homeBuild', 'homeTurn', 'homePiece', 'homeView', 'homeBurst'])
       if (partial[key] != null) input[key] = !!partial[key];
     for (const key of ['lookX', 'lookY'])
       if (Number.isFinite(partial[key])) input[key] = partial[key];
