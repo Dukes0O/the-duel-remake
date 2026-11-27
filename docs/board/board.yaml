@@ -1286,7 +1286,8 @@ tasks:
     model: "sol"
     lane: "QA"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex on the laptop (started by Claude), 27 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/QA-OPEN-DOORS-WASH.md"
@@ -1320,7 +1321,7 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "L"
-    status: "backlog"
+    status: "ready"
     needs: []
     locks: []
     flag: "story-choices"
