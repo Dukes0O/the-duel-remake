@@ -40,7 +40,11 @@ export const INPUT_CONTEXTS = Object.freeze({
       turnLeft: Object.freeze(['KeyA', 'ArrowLeft']), turnRight: Object.freeze(['KeyD', 'ArrowRight']),
       left: Object.freeze(['KeyQ']), right: Object.freeze(['KeyE']),
       sprint: Object.freeze(['ShiftLeft', 'ShiftRight']),
-      interact: Object.freeze(['KeyF']) }) }),
+      interact: Object.freeze(['KeyF']),
+      // HOME-GROUND-1: on his own ground B builds (held), R turns the piece, G changes it and V looks down from above;
+      // X is the burst of speed. The ground reads them only while its switch is on.
+      homeBuild: Object.freeze(['KeyB']), homeTurn: Object.freeze(['KeyR']), homePiece: Object.freeze(['KeyG']),
+      homeView: Object.freeze(['KeyV']), homeBurst: Object.freeze(['KeyX']) }) }),
   // Kestrel One (docs/HELICOPTER.md section 4). W/S collective, arrows
   // cyclic, A/D pedals; H hook, P autopilot, C camera, Esc pause. The race
   // keys never reach the car while this context is active. H2 Fire: R
@@ -148,6 +152,9 @@ export function footControlInput(keys, pad, pointer = {}) {
     sprint: heldInput('foot', 'sprint', keys) || !!pad.sprint,
     jump: !!keys.Space || !!pad.jump,
     interact: heldInput('foot', 'interact', keys) || !!pad.interact,
+    homeBuild: heldInput('foot', 'homeBuild', keys), homeTurn: heldInput('foot', 'homeTurn', keys),
+    homePiece: heldInput('foot', 'homePiece', keys), homeView: heldInput('foot', 'homeView', keys),
+    homeBurst: heldInput('foot', 'homeBurst', keys),
     lookX: (pointer.lookX || 0) + (pad.lookX || 0),
     lookY: (pointer.lookY || 0) + (pad.lookY || 0),
     fire: !!pointer.fire || !!pad.fire,

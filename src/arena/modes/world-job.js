@@ -342,6 +342,21 @@ function markTownStepThings(duel, requests) {
   duel.state.arena.markers = [...markers.filter(marker => !String(marker.id).startsWith('town-thing-')), ...rings];
 }
 
+// HOME-GROUND-1: the keys the ground reads, from the walker's own input (src/input-contexts.js, footControlInput).
+const homeKeysOf = state => {
+  const input = state.onFoot ? state.fighterInput ?? {} : {};
+  return {build: !!input.homeBuild, turn: !!input.homeTurn, piece: !!input.homePiece, view: !!input.homeView,
+    burst: !!input.homeBurst, sprint: !!input.sprint, forward: !!input.forward, back: !!input.back, left: !!input.left,
+    right: !!input.right, turnLeft: !!input.turnLeft, turnRight: !!input.turnRight};
+};
+
+// HOME-GROUND-1: a name typed in the ground's box (src/world/world-hud.js), taken on the next tick. Escape sends none.
+export function nameHomeGround(worldJob, name) {
+  if (!worldJob?.open || !worldJob.open.parts.home?.naming) return false;
+  worldJob.homeNameInput = typeof name === 'string' ? {name} : {cancel: true};
+  return true;
+}
+
 export function createWorldJob(definition) {
   if (!definition) throw new TypeError('World Job mode needs a job definition');
   return {job: createJob(definition, definition.seed ?? 0), definition,
@@ -2250,7 +2265,11 @@ export function stepWorldJob(duel, dt) {
       people: worldJob.storyPeople, playerName: worldJob.definition.open.playerName, marketSiteState: worldJob.open.parts.sites,
       partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
-      onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
+      onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? [],
+      // HOME-GROUND-1: the player's own ground reads its switch, the keys held this tick and a name typed in its box.
+      ...(duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state),
+        homeName: worldJob.homeNameInput ?? null} : {})}, dt);
+    worldJob.homeNameInput = null;
     worldJob.ashHit = false;
     const clearings = openStep.open.parts.sites?.clearings;
     if (clearings !== worldJob.open.parts.sites?.clearings)
@@ -2442,6 +2461,9 @@ export function stepWorldJob(duel, dt) {
         beginOpenTalk(duel, worldJob, {...talk, person: talk.person ?? talk.speaker, asked: talk.asked ?? []});
       }
     }
+    // HOME-GROUND-1: each of the ground's events names its cue; a cue is heard once OPEN-SOUND has registered it.
+    for (const event of openStep.events) if (event.type === 'homeCue' && Object.hasOwn(SOUND_BANK, event.cue))
+      duel.emit({arenaTell: {id: 'home/' + event.cue, cue: event.cue, position: point, seconds: 0}});
     // OPEN-SHARED: reuse the arena's car models and sound dispatch for a thread mission.
     if (checkpointsEnabled) for (const event of openStep.events) {
       if (['threadCue', 'threadMissionSpotted', 'threadMissionPhase', 'threadMissionMoment', 'threadMissionPoleDown'].includes(event.type) && Object.hasOwn(SOUND_BANK, event.cue))

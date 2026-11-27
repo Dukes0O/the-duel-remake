@@ -19,6 +19,7 @@ import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {passengerLine} from '../story/scenes/routine-offer.js';
 import {NIGHT_2_SITES} from './jobs/night-2-sites.js';
 import {FURNACE_PATIENCE_SECONDS, pathShare} from './jobs/furnace-sightings.js';
+import {HOME_NAME_LONGEST, HOME_WORDS} from './open/content/home-ground.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -161,6 +162,14 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
 }
 
 export const TOWN_GATE_ARROW = Object.freeze({pastMetres: 2});
+// HOME-GROUND-1: the sentence under the ground's outline, the burst bar (only while it is in use or filling) and the
+// name box. Read from the ground's part (src/world/open/parts/home.js); nothing is changed.
+function homeHudOf(worldJob) {
+  const home = worldJob.open.parts.home;
+  return {prompt: home.prompt || '', burst: home.burst?.shown ? {share: home.burst.charge, spent: home.burst.spent} : null,
+    naming: home.naming === true, name: worldJob.open.world.open.home?.name ?? ''};
+}
+
 export function worldHudModel({worldJob, player = null, speedKmh = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
@@ -264,6 +273,8 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     line: worldJob?.arrivalHold ? 'Delivered. The forge takes the fire.' : next.line, kind: next.kind, target, bearing,
     // While the town's ending is watched there is nothing to do, so nothing is asked.
     prompt: hearthPrompt || townGatePrompt || (step?.kind==='onfoot' && !job?.stepState?.townEnding ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
+    // HOME-GROUND-1: what the ground's part says, its burst bar and its name box; nothing while its switch is off.
+    home: worldJob?.open?.parts.home?.on === true && !step?.openPerson ? homeHudOf(worldJob) : null,
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
@@ -540,6 +551,23 @@ export function createWorldHud({host, app = null, picture = null}) {
       <aside class="world-hud-ways" aria-label="Ways to the job's place"></aside></div>
       </section>`;
   host.append(root);
+  // HOME-GROUND-1: the ground's sentence, the burst bar and the box in which he names his ground.
+  const homeLine = doc.createElement('div'); homeLine.className = 'world-hud-home'; homeLine.setAttribute('role', 'status'); homeLine.hidden = true;
+  const burstGauge = doc.createElement('div'); burstGauge.className = 'world-hud-burst'; burstGauge.hidden = true;
+  burstGauge.innerHTML = '<b>BURST</b><span><i></i></span>';
+  const nameBox = doc.createElement('form'); nameBox.className = 'world-hud-name'; nameBox.hidden = true;
+  nameBox.innerHTML = `<label><b>${HOME_WORDS.nameAsk}</b><input type="text" maxlength="${HOME_NAME_LONGEST}" autocomplete="off" spellcheck="false"></label><p>${HOME_WORDS.nameHint}</p>`;
+  root.append(homeLine, burstGauge, nameBox);
+  const nameInput = nameBox.querySelector('input'), burstBar = burstGauge.querySelector('i');
+  let naming = false;
+  nameBox.addEventListener('submit', event => {
+    event.preventDefault();
+    if (app?.duel?.homeNameInput(nameInput.value)) nameInput.blur();
+  });
+  nameInput.addEventListener('keydown', event => {
+    event.stopPropagation();
+    if (event.code === 'Escape') { event.preventDefault(); app?.duel?.homeNameInput(null); nameInput.blur(); }
+  });
   const seenGauge = doc.createElement('div');
   seenGauge.className = 'world-hud-seen';
   seenGauge.hidden = true;
@@ -663,6 +691,19 @@ export function createWorldHud({host, app = null, picture = null}) {
         emberGauge.setAttribute('aria-label', model.ember.out ? 'Ember out, go back to the brazier' : `Ember ${Math.ceil(model.ember.value)} out of ${model.ember.max}`);
       }
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
+      const home = model.home;
+      homeLine.textContent = home && !home.naming ? home.prompt : '';
+      homeLine.hidden = !homeLine.textContent;
+      burstGauge.hidden = !home?.burst;
+      if (home?.burst) { burstBar.style.width = `${(home.burst.share * 100).toFixed(1)}%`; burstGauge.classList.toggle('is-spent', home.burst.spent); }
+      if (!!home?.naming !== naming) {
+        naming = !!home?.naming; nameBox.hidden = !naming;
+        if (naming) {
+          nameInput.value = home.name;
+          if (doc.pointerLockElement) doc.exitPointerLock?.();
+          nameInput.focus?.(); nameInput.select?.();
+        }
+      }
       // The maps read the game and change nothing in it. What the player has learnt stays for the job.
       const worldJob = state.arena.worldJob;
       let knowledge = knowledgeOf.get(worldJob);

@@ -37,3 +37,27 @@ save, the switch off); the rule 23 set; `npm run build`; one browser scenario th
 gate by real key presses; Claude's drive by hand with pictures; then Kyle's and Gratian's try before step 2 is cut.
 
 ## Claude answers
+
+Claude (builder), 27 November 2026, measured on the land before code.
+
+**The place.** The ground's north-west corner is `LAND.at('tin-town', -100, 100)`, world (5900, 100); it runs 40 m east
+and 40 m south to (5940, 140), so its middle is `LAND.at('tin-town', -80, 120)`. Measured with
+`scablandsSurfaceHeightAt` on a 2 m grid with 6 m round it: the ground is 0.59 m high at its north edge and 1.05 to 1.18 m
+at its south edge, a rise of half a metre over 40 m. The nearest road is the Tin Road south from the gate, 35 m from
+the ground's middle line, so its edge (14 m half width) is 21 m from the ground's east edge. The nearest solid of
+`SCABLANDS_SOLIDS` is Tin Town's own gate fence, 31 m away; the nearest named spot (`LAND.at('tin-town', ...)` anywhere
+in `src/`, and every site's `where` in the sites table) is 30 m away. Tin Town's gate stands at (5975, 62), 52 m from
+the ground's north-east corner: out of the gate, a short walk south-west, on his right as he goes out. Of 408 flat,
+clear spots scanned within 200 m of the town, this was among the nearest to the gate and the clearest of other things.
+
+**Settled before code.**
+- Keys on foot: B held hammers (and a press picks a piece up), R turns the piece a quarter, G changes panel and gate,
+  V lifts the view and brings it back, X is the burst, F at the board renames. Shift stays the sprint.
+- The lane runs from the gate straight across to the far fence, 8 m wide. Panels may line its sides and close its far
+  end; nothing may cross it. A gate whose lane a panel crosses is refused.
+- The gate hangs only in the outside fence. It opens as he comes within 7 m and is solid when shut.
+- 80 panels are stacked by the north-east corner: 76 fence the edge round the gate, and four are over. Picking one up
+  puts it back in his hands.
+- Auntie Solder's talk replaces her greeting while he has no ground; the ground is marked on the map after it.
+- The record is `world.open.home` = `{version, name, pieces, marks}`, written only with the switch on, by a counting
+  effect that adds no journal rows.

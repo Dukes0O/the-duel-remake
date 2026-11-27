@@ -37,6 +37,7 @@ export function newOpenRecord({seed = 0} = {}) {
     routines: {},           // routine id -> offer, learner, share, lesson load, running state and tally
     driven: [],             // squares of ground the player has driven over (squareAt), in the order driven
     journal: [],            // every change made by an open effect, with the choice and the night that caused it
+    // home                 the player's own ground (src/world/open/home-rule.js), written only once he is given it
   };
 }
 

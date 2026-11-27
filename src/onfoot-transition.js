@@ -80,7 +80,11 @@ function stepFighterInFixedTime(duel, dt) {
   let steppedBoarding = false;
   const activeMission = state.arena?.worldJob?.open?.parts.missions?.active;
   const carryingValve = activeMission?.mission.kind === 'heist' && activeMission.state.carrying;
-  const input = carryingValve ? {...state.fighterInput, sprint: false, walkScale: .5} : state.fighterInput;
+  // HOME-GROUND-1: while he looks down on his ground from above he stands still, and a burst runs at the third speed.
+  const home = state.arena?.worldJob?.open?.parts.home;
+  const input = carryingValve ? {...state.fighterInput, sprint: false, walkScale: .5}
+    : home?.above ? {lookX: state.fighterInput.lookX, lookY: state.fighterInput.lookY}
+    : home?.burst?.active ? {...state.fighterInput, burst: true} : state.fighterInput;
   while (transition.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
     const fighter = state.fighter, wasOnRoof = state.boarding?.phase === 'roof';
     if (fighter.bailTumbleSeconds > 0) {

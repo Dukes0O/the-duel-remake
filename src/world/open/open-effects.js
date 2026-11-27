@@ -17,6 +17,7 @@
 //   {type: 'crossing', checkpoint: 'mall-road-2'}        a checkpoint is crossed once more
 //   {type: 'rest', checkpoint: 'mall-road-2'}            a checkpoint rests; {type: 'rest', clear: true} wakes them all
 //   {type: 'dirt', by: .02}  or  {type: 'dirt', to: 0}   dirt on the car, from 0 clean to 1 caked
+//   {type: 'home', record: {...}}                        the player's own ground (HOME-GROUND-1, src/world/open/home-rule.js)
 //
 // A CHOICE IS APPLIED ONCE A NIGHT. The same id on the same night changes nothing more, so that a talk that is shown
 // twice cannot pay twice. A choice that may truly happen again the same night (a second repair, a second fight won)
@@ -32,12 +33,13 @@ import {FEUD_WORDS, FRIEND_WORDS, OLD_FEUD_GROUP, SITE_STAGES, STOCKS, isPeople,
 import {GROUND_COLUMNS, GROUND_ROWS, MOST_FAVOURS, favoursOf, feudOf, stageOf, readableRoutine} from './open-record.js';
 import {checkRole, isRole} from './roles.js';
 import {ROUTINES} from './content/routines.js';
+import {readableHome} from './home-rule.js';
 
 export const LEDGER_EFFECTS = Object.freeze(['stock', 'word', 'feud', 'roadWord', 'mark', 'made', 'debt', 'promise',
   'settle', 'met', 'tell', 'read', 'shareHearth', 'rumour']);
 export const OPEN_EFFECTS = Object.freeze(['find', 'site', 'favour', 'scrap', 'thread', 'town', 'ground', 'crossing',
-  'rest', 'dirt', 'routine', 'outing']);
-const COUNTING = Object.freeze(['ground', 'crossing', 'rest', 'dirt', 'routine', 'outing']);
+  'rest', 'dirt', 'routine', 'outing', 'home']);
+const COUNTING = Object.freeze(['ground', 'crossing', 'rest', 'dirt', 'routine', 'outing', 'home']);
 const SQUARES = GROUND_COLUMNS * GROUND_ROWS;
 const LONGEST_SENTENCE = 259;
 const clip = (n, low, high) => Math.max(low, Math.min(high, n));
@@ -55,6 +57,12 @@ function applyOpen(world, effect) {
       const after = structuredClone(effect.record);
       open.routines = {...open.routines, [effect.id]: after};
       return {key: effect.id, before, after};
+    }
+    case 'home': {
+      if (!readableHome(effect.record)) throw new TypeError('A home effect needs a readable record of the ground.');
+      if (JSON.stringify(open.home ?? null) === JSON.stringify(effect.record)) return null;
+      open.home = structuredClone(effect.record);
+      return {key: 'home'};
     }
     case 'outing': {
       const after = world.ledger.night;
@@ -213,6 +221,7 @@ export function checkEffect(effect, {roles = null} = {}) {
       break;
     }
     case 'outing': break;
+    case 'home': if (!readableHome(effect.record)) say('A home effect needs a readable record of the ground.'); break;
     case 'find': case 'rumour': named('site', isSite, 'a site in the register', 'site'); break;
     case 'site':
       named('id', isSite, 'a site in the register', 'site');

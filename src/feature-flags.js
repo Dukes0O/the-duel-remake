@@ -93,6 +93,8 @@ export const FEATURE_STATES = Object.freeze({
   'arena-tricks': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).
   'warlord-nine': 'on',
+  // HOME-GROUND-1: the player's own ground beside Tin Town, fenced by hand in the open Scablands (docs/HOME_GROUND.md).
+  'home-ground': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
