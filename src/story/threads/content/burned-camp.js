@@ -457,7 +457,7 @@ export default {
       notes: {
         // Out: they come out of the drain into the wreck fields and walk to the Girder Bridge road. If a people owe the
         // player a favour their car is waiting there; otherwise it is a long walk and the day is gone. The car stays with
-        // Sump for the rest of the day, and bringing it home is OPEN-BURNED-RESCUE's.
+        // Sump for the rest of the day. The shared hearth bank records its return at first light.
         carStays: 'car-with-sump',
       },
     },

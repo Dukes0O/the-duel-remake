@@ -301,6 +301,19 @@ test('leaving the growers is Wary, empty and ledgered; the stay warms the hearth
   assert(notes(nextNight(two)).ledger.marks.includes(id + '/bean-bed-ready'));
 });
 
+test('a reload on breakout day keeps the car at the Nest until the next bank', () => {
+  const escaped = fixture('home', [mark(id + '/broke-out'), mark(id + '/car-with-sump')]);
+  const midDay = step(begin(escaped), hearth);
+  const parked = midDay.requests.find(row => row.type === 'threadTaken');
+  assert.equal(parked?.parkOnly, true);
+  assert.deepEqual([parked.car.x, parked.car.z], [at(['rats-nest', 'held-car']).x, at(['rats-nest', 'held-car']).z]);
+  assert(!step(midDay.open, hearth).requests.some(row => row.type === 'threadTaken'));
+  const banked = bankOpenHearth(dusk(escaped), escaped.ledger.night, {storyChoices: true});
+  assert(marks(banked).includes(id + '/car-back-at-town'));
+  assert(!step(begin(banked), hearth).requests.some(row => row.type === 'threadTaken'));
+  assert.equal(banked.scrap, escaped.scrap);
+});
+
 test('every browser expression parses before laptop execution', () => {
   for (const name of Object.keys(pageFunctions)) assert.doesNotThrow(() => new Function('return ' + pageSource(name)), name);
 });

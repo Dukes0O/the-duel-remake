@@ -1761,6 +1761,18 @@ function closeOpenTalk(duel, worldJob, step, waiting, finished = false) {
   if (waiting) duel._storyCallout(WAITING_LINE);
 }
 
+// Reposition a car without touching its armour unless the mission explicitly supplies new armour.
+function placeThreadCar(duel, place, armour) {
+  const {state, course} = duel;
+  const nearest = course.nearest(place.x, place.z, state.s);
+  const ground = course.groundAt(nearest.s, nearest.lateral);
+  Object.assign(state, {s: nearest.s, prevS: nearest.s, lateral: nearest.lateral, prevLateral: nearest.lateral,
+    groundHeight: ground.y, prevGroundHeight: ground.y, speedMph: 0, pushVelocity: 0,
+    airHeight: 0, verticalSpeed: 0,
+    headingError: Number.isFinite(place.heading) ? place.heading - course.at(nearest.s).heading : 0,
+    ...(armour !== undefined && {combatWrecking: false, armor: armour})});
+}
+
 function applyOpenFootMissionRequest(duel, worldJob, request) {
   const {state} = duel;
   if (request.type === 'searchCast') {
@@ -1804,7 +1816,12 @@ function applyOpenFootMissionRequest(duel, worldJob, request) {
     if (state.onFoot && state.fighter) damageFighter(state.fighter, 25);
   } else if (request.type === 'threadTaken') {
     // OPEN-BURNED-PEN: the player taken to a pen, on foot, with the car held where they put it, and let go again.
-    if (request.held) {
+    if (request.parkOnly) {
+      // The fighter has already escaped. After a same-day reload, keep them outside the car at the point they resume.
+      if (!state.onFoot) placeWorldFighter(duel, position(duel, state));
+      placeThreadCar(duel, request.car);
+      worldJob.carHeldBy = request.id;
+    } else if (request.held) {
       applyCheckpointRoadRequest(duel, worldJob, {type: 'checkpointRoad', action: 'recover-car', at: request.car});
       if (state.onFoot && state.fighter) putFighterOnGround(duel, state.fighter, request.foot);
       else placeWorldFighter(duel, request.foot);
@@ -2396,14 +2413,7 @@ export function stepWorldJob(duel, dt) {
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
       if (checkpointsEnabled && request.type === 'threadCarPosition' && !state.onFoot) {
-        const {place} = request;
-        const nearest = duel.course.nearest(place.x, place.z, state.s);
-        const ground = duel.course.groundAt(nearest.s, nearest.lateral);
-        Object.assign(state, {s: nearest.s, prevS: nearest.s, lateral: nearest.lateral, prevLateral: nearest.lateral,
-          groundHeight: ground.y, prevGroundHeight: ground.y, speedMph: 0, pushVelocity: 0,
-          airHeight: 0, verticalSpeed: 0,
-          headingError: Number.isFinite(place.heading) ? place.heading - duel.course.at(nearest.s).heading : 0,
-          ...(request.armour !== undefined && {combatWrecking: false, armor: request.armour})});
+        placeThreadCar(duel, request.place, request.armour);
       } else if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
         putFighterOnGround(duel, state.fighter, request.place);
       } else if (checkpointsEnabled && request.type === 'missionConvoy') {

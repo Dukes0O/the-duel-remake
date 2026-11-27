@@ -107,13 +107,18 @@ export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
   const available = threads.filter(thread => thread !== runaway ||
     runawayCanStart({...context, view: {...context.view, checkpointsEnabled: true}}));
   const banked = applyThreadDirector(available, withPlaces({...context, bankedHearth: true}), 'hearth');
-  if (!available.includes(burnedCamp) || !banked.ledger.marks.includes('burned-camp/stayed-inside') ||
-      banked.ledger.marks.includes('burned-camp/bean-bed-ready')) return banked;
-  const moved = banked.ledger.history.findLast(row => row.type === 'mark' && row.key === 'burned-camp/stayed-inside');
-  if (!moved || banked.ledger.night - moved.night < 3) return banked;
-  return applyEffects(banked, {id: 'burned-camp/first-beans', effects: rescuePage([
-    {type: 'mark', id: 'burned-camp/bean-bed-ready', text: 'The beans by the south fence are feeding Tin Town.'},
-  ])}).world;
+  if (!available.includes(burnedCamp)) return banked;
+  const {ledger} = banked;
+  const aged = (mark, nights) => {
+    const row = ledger.history.findLast(change => change.type === 'mark' && change.key === 'burned-camp/' + mark);
+    return row && ledger.night - row.night >= nights;
+  };
+  const effects = [];
+  if (aged('stayed-inside', 3) && !ledger.marks.includes('burned-camp/bean-bed-ready'))
+    effects.push({type: 'mark', id: 'burned-camp/bean-bed-ready', text: 'The beans by the south fence are feeding Tin Town.'});
+  if (aged('car-with-sump', 1) && !ledger.marks.includes('burned-camp/car-back-at-town'))
+    effects.push({type: 'mark', id: 'burned-camp/car-back-at-town', text: 'Your car came back from the Rats’ Nest at first light.'});
+  return effects.length ? applyEffects(banked, {id: 'burned-camp/banked/' + ledger.night, effects: rescuePage(effects)}).world : banked;
 }
 
 export function openThreadSigns(context) {
@@ -1054,6 +1059,16 @@ export function createThreadsPart(threads) {
               text: nameOf(row.speaker) + ': ' + laterRule.line(row.words)}));
           }
         }
+        if (thread === burnedCamp && enabled && view.openRoam &&
+            world.ledger.marks.includes('burned-camp/car-with-sump') &&
+            !world.ledger.marks.includes('burned-camp/car-back-at-town') && !previous.parkedAtNest) {
+          // A same-day reload must not put the held car back in the player's hands.
+          const distant = context.placeAt(['rats-nest', 'held-car'], record.cast);
+          if (distant) {
+            requests.push({type: 'threadTaken', id: thread.id, held: true, parkOnly: true, car: distant});
+            state.parkedAtNest = true;
+          }
+        } else if (thread === burnedCamp) state.parkedAtNest = previous.parkedAtNest;
         if (record.end && thread !== runaway) {
           if (thread.id === TOLL_ID) {
             const service = tollAfterEnd(threadContext, record, decision.interact);
