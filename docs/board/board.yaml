@@ -1272,7 +1272,7 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "L"
-    status: "building"
+    status: "review"
     waiting_on: "claude"
     claimed_by: "Codex (cloud), 26 November 2026"
     branch: "codex/open-burned-rescue"
