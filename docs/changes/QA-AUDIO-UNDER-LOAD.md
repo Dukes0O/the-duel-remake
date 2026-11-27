@@ -1,15 +1,15 @@
-# QA-AUDIO-UNDER-LOAD
-Cause: callback scheduling breaks P4's native frame clock; Skyline's main-thread recorder receives repeated/corrupt buffers under load.
-Evidence: night P4 callbacks jump 7327104 to 7327360; four-job Skyline witness breaks at source frame 162816 after 1024 intact samples.
-P4 now reports exact callback/frame or witness damage as "capture disturbed, rerun alone"; no gap is filled or tolerated.
-Skyline adds an independent recorder-only witness and missed-lift evidence; measures loudness before classifying damage.
-The four-job Skyline measured -12.8 LUFS/-7.57 dBTP with two blowoffs; advisory loudness was never its failing assertion.
-The historical Skyline failing predicate was not retained; the new report names wiring/level facts as well as capture evidence.
-Solo: P4 5/5 disturbed; Skyline 5/5 disturbed (one fifth run with company replaced by a solo run); no clean browser pass claimed.
-Four jobs: P4 and Skyline disturbed; arsenal-core-audio and arsenal-wave1-audio passed; zero browser warnings/errors, memory-only saves.
-Focused checks: 20 passed, including clean-capture rejection of clipping, missing/doubled/close blowoffs, inaudible/surviving turbo and failed isolation.
-Lane: 26/26 passed, including importing suites; replay fingerprints (306 checks), combat replays and world signatures (65 checks) unchanged. Build passed.
-Commit: this change's final working tree on base 54fab2ed0; no game source or replay fixtures changed. Two long suites deferred by the lane runner.
-Assertions: capture damage now gets its own failing diagnosis; all existing clean-capture sound assertions and limits remain. Claude review owed.
-Sound cues: none added. Solo disturbance remains a laptop capture limitation; rerunning alone did not clear it today.
-**Removed:** ambiguous capture-as-sound-fault reporting; no game behavior, sound measurement or tolerance removed.
+# QA-AUDIO-UNDER-LOAD - round 2
+Stopped: neither scenario passed clean alone; not ready to merge. Five clean runs and the four-job stage were not claimed.
+All browser starts had zero competing heavy jobs; no holds. Seven attempts, all memory-only, zero browser warnings/errors.
+P4: sandbox DevTools closed; normal baseline callback frame 2427776/offset 256 failed. Fixed run expected 584704, got 584576 (16/16 callbacks).
+P4 raw rerun: segment 1, all stems repeat 1233024 at offset 128, expected 1233152; independent witness matches all 2048 samples.
+Skyline baseline: 12 witness reasons; fixed run: 13. Menu-ready run: source gaps of 128 at callbacks 43 and 114; both blowoffs present.
+Round 1 raw captures are gone; today's quiet failures cannot be blamed solely on other heavy jobs or detector boundary/startup assumptions.
+Fixes: validate only retained P4 callback coverage; trim Skyline pre-source silence; use lift cue time; await menu assets and cue decoding.
+P4 now retains its existing raw failure packet for callback-clock mismatches too. Detailed run verdicts are on the card.
+Focused: 24 passed; all original disturbed and clean-sound rejection cases unchanged. Sound limits and loudness tolerances unchanged; Claude review owed.
+Lane on final working tree, base 632a4881b: all 26 passed (5 + corrected board + 20 unrun); two long suites deferred. Temporary null waiting field corrected, no test change.
+Build: passed (existing dynamic-import and chunk-size warnings). No game source, race fingerprints or world signatures changed; sound cues: none added.
+Remaining cause: native clock labels can disagree with intact P4 samples; Skyline loses real source samples even alone. Lower-level cause unresolved.
+Board: review, waiting on Claude. No push or merge. Generated evidence and build output recycled after recording the verdict.
+**Removed:** false boundary/startup/lift diagnoses; no sound assertion, game behavior or damaged-capture rejection removed.

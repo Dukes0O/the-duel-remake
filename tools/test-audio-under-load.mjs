@@ -61,3 +61,34 @@ check('P4 short callback/witness is disturbed', () => {
   const c = chunk(); c.callbacks.pop(); assert.equal(inspectNativeCallbacks(c).complete, false);
   const w = chunk(); w.callbacks[1].witnessFrames = 0; assert.equal(inspectNativeCallbacks(w).complete, false);
 });
+
+check('Skyline accepts only source startup silence before the witnessed mix', () => {
+  const p = packet();
+  p.callbacks.unshift({frames: 0, startupFrames: 2048, identity: {complete: false}});
+  assert.equal(inspectSkylineCapture(p).disturbed, false);
+  p.callbacks[1] = {...p.callbacks[1], frames: 1024, startupFrames: 1024,
+    identity: inspectCaptureWitness(reference.slice(0, 1024), reference)};
+  p.callbacks[2].identity = identity(1024); p.callbacks[3].identity = identity(3072);
+  assert.equal(inspectSkylineCapture(p).disturbed, false);
+  p.callbacks[2].identity = identity(0);
+  assert.equal(inspectSkylineCapture(p).disturbed, true);
+});
+check('Skyline rejects startup silence after recording has begun', () => {
+  const p = packet(); p.callbacks[1] = {frames: 0, startupFrames: 2048, identity: {complete: false}};
+  assert.equal(inspectSkylineCapture(p).disturbed, true);
+  p.callbacks = [{frames: 0, startupFrames: 2048, identity: {complete: false}}];
+  assert.equal(inspectSkylineCapture(p).disturbed, true);
+});
+check('Skyline lift uses the cue clock when a control row straddles the boundary', () => {
+  const p = packet(); p.rows[0].time = 1.999; p.rows[0].liftCueTime = 2;
+  assert.equal(inspectSkylineCapture(p).disturbed, false);
+  p.rows[0].liftCueTime = 2.5;
+  assert.equal(inspectSkylineCapture(p).disturbed, true);
+});
+check('P4 accepts intact partial segment boundary chunks', () => {
+  const c = chunk(); c.callbacks = c.callbacks.slice(2, 15);
+  const interval = {from: c.frame + 256, to: c.frame + 15 * 128};
+  assert.equal(inspectNativeCallbacks(c, interval).complete, true);
+  c.callbacks.splice(3, 1);
+  assert.equal(inspectNativeCallbacks(c, interval).complete, false);
+});

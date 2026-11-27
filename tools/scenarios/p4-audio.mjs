@@ -8,11 +8,20 @@ import {detectOnset, rms} from '../audio-analysis.mjs';
 import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
   from '../audio/capture-witness.mjs';
 
-export function inspectNativeCallbacks(chunk) {
-  const mismatch = chunk.callbacks.find((row, index) => row.chunkOffset !== index * 128 ||
-    row.frame !== chunk.frame + index * 128 || row.witnessFrames !== 128);
-  return {complete: chunk.callbacks.length === 16 && !mismatch,
-    ...(mismatch ? {mismatch} : {})};
+export function inspectNativeCallbacks(chunk, interval = {}) {
+  const from = interval.from ?? chunk.frame, to = interval.to ?? chunk.frame + 2048;
+  const firstOffset = Math.floor((from - chunk.frame) / 128) * 128;
+  const endOffset = Math.ceil((to - chunk.frame) / 128) * 128;
+  // Segment boundaries can retain only part of a block. Check every quantum
+  // contributing PCM, without requiring callbacks outside the retained interval.
+  const callbacks = chunk.callbacks.filter(row => row.chunkOffset >= firstOffset && row.chunkOffset < endOffset);
+  const expectedCount = (endOffset - firstOffset) / 128;
+  const mismatchIndex = callbacks.findIndex((row, index) => row.chunkOffset !== firstOffset + index * 128 ||
+    row.frame !== chunk.frame + row.chunkOffset || row.witnessFrames !== 128);
+  return {complete: to > from && callbacks.length === expectedCount && mismatchIndex < 0,
+    callbacks: callbacks.length, expectedCallbacks: expectedCount,
+    ...(mismatchIndex >= 0 ? {mismatch: callbacks[mismatchIndex],
+      expectedFrame: chunk.frame + firstOffset + mismatchIndex * 128} : {})};
 }
 
 async function install(recorder) {
@@ -293,8 +302,9 @@ async function nativeRecorder(audio, helpers) {
       for (const chunk of chunks) {
         demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
         const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
-        if (from !== covered && !clockFailure) {
-          const header={segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
+        const timing = helpers.inspectCallbacks(chunk, {from, to});
+        if ((from !== covered || !timing.complete) && !clockFailure) {
+          const header={callbackTiming:timing,sampleIdentity:helpers.inspectWitness(chunk.witness,reference),segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
             expected:covered,actual:from,chunkFrame:chunk.frame,scope:'four raw neighboring chunks per stem; not a whole segment'};
           try {
             clockFailure={...header,tracks:Object.fromEntries(Object.entries(row.tracks).map(([stem,input])=>{
@@ -309,7 +319,6 @@ async function nativeRecorder(audio, helpers) {
           segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
           chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
           callbacks: chunk.callbacks.map(item => item.frame), witnessFirst: chunk.witness[0]}));
-        const timing = helpers.inspectCallbacks(chunk);
         demand(timing.complete, 'capture disturbed, rerun alone: native callback clock gap/repeat: ' + name + ' ' + JSON.stringify(timing));
         const offset = from - chunk.frame, count = to - from, target = from - row.startFrame;
         pcm.set(chunk.pcm.subarray(offset * 2, (offset + count) * 2), target * 2);
