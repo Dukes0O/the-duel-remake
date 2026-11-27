@@ -101,6 +101,17 @@ const askedOverRadio = walk(open, site, {jobEvents: [{type: 'openTalkQuestion', 
 assert.ok(marks(askedOverRadio).includes('burned-camp/asked/walkers'));
 next = walk(open, site, {jobEvents: [{type: 'talkChoice', id: 'burned-camp/radio-done', asked: ['ash-men']}]});
 assert.ok(marks(next.open).includes('burned-camp/asked/ash-men'));
+// OPEN-RADIO-HOLDS-F (Claude's drive, 27 November 2026): after one call, F held beside the car gets in, and away from the
+// car F still calls again.
+{
+  const afterCall = next.open, car = at('car-stop');
+  const atCar = walk(afterCall, {x: car.x + 2.2, z: car.z}, {interact: true, openRoam: true});
+  assert.ok(!atCar.requests.some(request => request.type === 'talk' && request.radio), 'F beside the car does not reopen the radio');
+  assert.ok(walk(afterCall, site, {interact: true, openRoam: true}).requests.some(request => request.type === 'talk' && request.radio),
+    'F away from the car calls again');
+  assert.ok(walk(open, {x: car.x + 2.2, z: car.z}, {interact: true, openRoam: true}).requests.some(request => request.type === 'talk' && request.radio),
+    'the first call can still be made beside the car');
+}
 next = walk(next.open, site, {interact: true});
 assert.ok(marks(next.open).includes('burned-camp/asked/captives'));
 assert.match(next.requests.at(-1).text, /^Auntie Solder: The Road Rats do/);

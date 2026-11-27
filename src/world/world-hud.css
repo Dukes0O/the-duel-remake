@@ -49,6 +49,8 @@
 .world-hud-ways h3:not(:first-child){margin-top:12px}
 .world-hud-ways ol{display:grid;gap:7px;margin:0;padding:0;list-style:none}
 .world-hud-way{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;padding:6px 8px 7px 8px;background:#222018;border:1px solid #e4d4b230;border-left:4px solid var(--way,#ffce75)}
+/* A row with no numbered badge (MAP-NO-WAY-WRAP) spans both columns. */
+.world-hud-way-none{display:block;color:#cfc3a4}
 .world-hud-way>b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--way,#ffce75);color:#14120e;font-size:13px}
 .world-hud-way strong{font-size:14px}
 .world-hud-way em{margin-left:6px;font-style:normal;font-weight:800;color:var(--way,#ffce75)}

@@ -6,6 +6,7 @@ import {prepareThreadMission} from './missions.js';
 import {isFound, stageOf} from '../open-record.js';
 import {SITES, nameOf} from '../register.js';
 import {distanceBetween} from '../../../story/threads/cast.js';
+import {COMBAT_TUNING} from '../../../wasteland-tuning.js';
 import {applyThreadDirector, directThreads, visitId} from '../../../story/threads/director.js';
 import {isFresh, liveSigns, witnessSign, signRecord} from '../../../story/threads/signs.js';
 import {firstBeat, mark, threadMark, threadRule} from '../../../story/threads/thread-rule.js';
@@ -722,7 +723,12 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     once('asked', question.id, rule.effects(authored.effects));
   }
   let questionTalk;
-  if (!asked.size && radio && atTalk && rule.ask(beat.when) && (view.onFoot || hauling && beatId.endsWith('-road')) && decision.interact && !lights) {
+  // Once a call has been made at this beat, holding F beside the car gets in: the player who ended the call and walked
+  // back has chosen to drive on (OPEN-RADIO-HOLDS-F). Away from the car, F still calls again.
+  const calledBefore = (beat.questions ?? []).some(row => rule.has('asked', row.id));
+  const atCar = !!(view.onFoot && view.carPosition &&
+    distanceBetween(playerPoint(view), view.carPosition) <= COMBAT_TUNING.foot.reentryRangeMeters);
+  if (!asked.size && radio && atTalk && !(calledBefore && atCar) && rule.ask(beat.when) && (view.onFoot || hauling && beatId.endsWith('-road')) && decision.interact && !lights) {
     decision.interact = false;
     if (view.openRoam) {
       questionTalk = {type: 'talk', id: radio.id, scene: radio, speaker: radio.questions[0].lines[0]?.speaker, radio: true};

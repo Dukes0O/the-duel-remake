@@ -13,3 +13,8 @@ a numbered badge (`b`) in the first column. A row with bare text puts the text i
 
 **Likely fix.** Give the no-way row its own class (or a rule for a row without the badge) so its text spans both
 columns. Check: a look at the map with no way known and with two ways known.
+
+## Claude answers
+
+27 November 2026: fixed in code (the empty row gets `world-hud-way-none`, which spans the box). The look it asks for is
+owed on the next drive, with the map open and no way known; close the card then.

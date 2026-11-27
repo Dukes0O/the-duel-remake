@@ -509,7 +509,7 @@ export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} 
   }).join('');
   const learnt = [...knowledge.barricades.values()].map(item => `A barricade of the ${item.who}`)
     .concat([...knowledge.crossings.values()].map(item => `${item.name} is held by the ${item.who}`), [...knowledge.sights.values()].map(() => "The furnace's sight, as far as the ground allows"));
-  return `${heading}<ol>${items || '<li class="world-hud-way">No way is known.</li>'}</ol><h3>WHAT YOU HAVE LEARNT</h3>` +
+  return `${heading}<ol>${items || '<li class="world-hud-way world-hud-way-none">No way is known.</li>'}</ol><h3>WHAT YOU HAVE LEARNT</h3>` +
     (learnt.length ? `<ul class="world-hud-learnt">${learnt.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '<p class="world-hud-none">Nothing yet. Drive, and look.</p>');
 }
 
