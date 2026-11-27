@@ -294,14 +294,6 @@ export const homePart = {
         requests.push(say('gathered', note));
       } else if (hen && near) Object.assign(next, {naming: true, namingHen: hen.index, namingKey: 'hen-' + hen.index, namingChain: false});
     }
-    // The board at the gate shows itself the first time he comes near it in an outing.
-    if (fighter && news && !state.boardShown && distance(fighter.position, news) <= BOARD_NEAR) {
-      next.boardShown = true;
-      next.board = {lines: boardLines(next.opened, record), until: now + BOARD_SECONDS};
-      events.push(cue(HOME_CUES.boardRead));
-    }
-    if (next.board && (now > next.board.until || !fighter || !news || distance(fighter.position, news) > BOARD_NEAR + 4)) next.board = null;
-
     // ---- Building -----------------------------------------------------------------------------------------------
     // The launcher is lowered on his ground; the fire key takes it back, and B puts the hammer back in his hands.
     // On or near his ground (as far out as its sentences show) the launcher is lowered and the car-aim words hidden.
@@ -461,6 +453,16 @@ export const homePart = {
     // Where he stands and faces, for his mark in the view from above.
     next.standing = fighter ? {x: fighter.position.x, z: fighter.position.z, yaw: fighter.yaw} : null;
     next.strike = building && next.hammer ? (next.hammer.seconds % HAMMER_STRIKE_SECONDS) / HAMMER_STRIKE_SECONDS : null;
+
+    // Read the board only beside it, down on foot. Refresh its news after gathering, laying or building this tick.
+    const canReadBoard = fighter && news && !next.above && distance(fighter.position, news) <= BOARD_NEAR;
+    if (canReadBoard && !next.boardShown && !next.building && !next.naming) {
+      next.boardShown = true;
+      next.board = {lines: [], until: now + BOARD_SECONDS};
+      events.push(cue(HOME_CUES.boardRead));
+    }
+    if (next.board) next.board = canReadBoard && now <= next.board.until
+      ? {...next.board, lines: boardLines(next.opened, record)} : null;
 
     // The fence, the gate and the nest boxes are solid; the gate's leaves only while it is shut.
     const solidsKey = JSON.stringify([record.pieces, record.boxes.map(box => [box.i, box.j]), next.gateOpen]);

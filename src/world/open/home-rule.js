@@ -276,10 +276,26 @@ export function boxForEgg(boxes) {
 const boxInLane = (cell, lane) => !!lane && cell.i + 1 > lane.i0 && cell.i < lane.i1 && cell.j + 1 > lane.j0 && cell.j < lane.j1;
 // A middle of a cell in the land.
 export const boxInLand = ({i, j}) => groundPoint(i + .5, j + .5);
+// Keep the snapped box inside the forward view, in radians to either side of where he looks.
+const BOX_AIM = .6;
 // The cell in front of him, for a nest box.
 export function boxSlotInFront(position, yaw) {
-  const {a, b} = toGrid(position.x + Math.sin(yaw) * HOME_REACH, position.z + Math.cos(yaw) * HOME_REACH);
-  return {kind: 'box', i: Math.floor(a), j: Math.floor(b)};
+  const ahead = {x: Math.sin(yaw), z: Math.cos(yaw)};
+  const {a, b} = toGrid(position.x + ahead.x * HOME_REACH, position.z + ahead.z * HOME_REACH);
+  let best = null;
+  // Snapping to a two-metre cell must not bring the box back under his feet. Choose the nearest cell whose centre
+  // is at least a step ahead and inside his forward view.
+  for (let i = Math.floor(a) - 1; i <= Math.floor(a) + 1; i++) {
+    for (let j = Math.floor(b) - 1; j <= Math.floor(b) + 1; j++) {
+      const at = boxInLand({i, j}), dx = at.x - position.x, dz = at.z - position.z;
+      const along = dx * ahead.x + dz * ahead.z, across = dx * ahead.z - dz * ahead.x;
+      if (along < HOME_STEP / 2 || Math.abs(across) > along * Math.tan(BOX_AIM)) continue;
+      const score = (along - HOME_REACH) ** 2 + across ** 2;
+      if (!best || score < best.score) best = {i, j, score};
+    }
+  }
+  // No cell clears a step ahead inside the view only at a grid corner; the plain cell ahead is then the answer.
+  return best ? {kind: 'box', i: best.i, j: best.j} : {kind: 'box', i: Math.floor(a), j: Math.floor(b)};
 }
 export function boxRefusal(home, cell) {
   if (!whole(cell.i) || !whole(cell.j) || cell.i < 0 || cell.j < 0 || cell.i >= HOME_CELLS || cell.j >= HOME_CELLS) return 'offGround';
@@ -362,7 +378,8 @@ export function awayWords(seconds) {
 export function boardLines(opened, home) {
   const lines = [];
   const away = opened?.away ?? 0;
-  lines.push(opened?.long ? BOARD_WORDS.awayLong : away < 60 ? BOARD_WORDS.awayMoment : fill(BOARD_WORDS.away, {time: awayWords(away)}));
+  if (opened?.long) lines.push(BOARD_WORDS.awayLong);
+  else if (away >= 3600) lines.push(fill(BOARD_WORDS.away, {time: awayWords(away)}));
   if (!home?.hens?.length) {
     lines.push(hensWaiting(home) ? BOARD_WORDS.crate : BOARD_WORDS.fenceFirst);
     return lines;
@@ -383,13 +400,17 @@ export function facedThing(home, position, yaw) {
   const ahead = {x: Math.sin(yaw), z: Math.cos(yaw)};
   let best = null;
   const offer = (thing, along) => { if (!best || along < best.along) best = {...thing, along}; };
+  // The box's snapped cell can lie beside the sight line or one cell further on. The same reach serves building,
+  // gathering and picking it up, without extending the reach for fence panels.
+  (home?.boxes ?? []).forEach((box, index) => {
+    const at = boxInLand(box), dx = at.x - position.x, dz = at.z - position.z;
+    const along = dx * ahead.x + dz * ahead.z, across = dx * ahead.z - dz * ahead.x;
+    if (along >= .3 && Math.hypot(dx, dz) <= HOME_REACH + HOME_STEP && Math.abs(across) <= along * Math.tan(BOX_AIM))
+      offer({kind: 'box', index, box}, along);
+  });
   for (let step = 3; step <= 20; step++) {
     const along = step / 10, px = position.x + ahead.x * along, pz = position.z + ahead.z * along;
     if (best && along > best.along) break;
-    (home?.boxes ?? []).forEach((box, index) => {
-      const at = boxInLand(box);
-      if (Math.max(Math.abs(px - at.x), Math.abs(pz - at.z)) <= HOME_BOX.size / 2 + .25) offer({kind: 'box', index, box}, along);
-    });
     for (const piece of home?.pieces ?? []) {
       const {x, z, length, heading} = pieceInLand(piece);
       const run = {x: Math.cos(heading), z: -Math.sin(heading)};

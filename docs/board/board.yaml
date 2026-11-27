@@ -1196,19 +1196,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
-  - id: HOME-GROUND-2-DRIVE
-    title: "Home Ground step 2: the seven fixes from Claude's drive by hand"
-    owner: "codex"
-    model: "sol"
-    lane: "UI"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
-    needs: []
-    locks: []
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-2-DRIVE.md"
-
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"
