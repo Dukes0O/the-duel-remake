@@ -206,8 +206,9 @@ check('released sound-bank entries and other exports stay exact', () => {
     // The medal cars' engine voices (EARN-CAR-1, 2 and 3) are new entries;
     // LAB-LIVE-FIX adds the Speirling to this pin, with every earlier voice unchanged.
     // Skyline is new; its exact row is checked by test-audio. Keep this old hash.
+    // Workshop voices are new too; test-audio exercises their actual sample mixes.
     // New Kogane, Eifel and Scablands beds are outside this historical projection; every earlier bed stays pinned.
-    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'nissan_skyline_gtr_r34', 'falcone_vasca'].includes(id))) :
+    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'nissan_skyline_gtr_r34', 'falcone_vasca', 'rattler', 'longhaul', 'scarab', 'bully'].includes(id))) :
       key === 'AMBIENCE' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['kogane', 'kogane-night', 'eifel', 'scablands'].includes(id))) : value]))),
     '4f41cdd93762f37b875ab7d52675a32c67cfd2335775b697503a934f48010a6b',
     'existing sound-bank exports remain exact');

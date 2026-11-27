@@ -1193,7 +1193,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "Codex laptop lane"
     needs: ["CAR-ART-RATTLER","CAR-ART-LONGHAUL","CAR-ART-SCARAB","CAR-ART-BULLY"]
     locks: ["busy-game-files"]

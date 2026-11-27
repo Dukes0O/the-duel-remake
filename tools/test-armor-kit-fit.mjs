@@ -93,7 +93,7 @@ test('Scarab stacks clear the rear tyres and stand on the actual chassis', async
   kit.updateMatrixWorld(true);
   const tyres=model.vehicle.userData.wheels.map(wheel=>new THREE.Box3().setFromObject(wheel).expandByScalar(.012));
   const point=new THREE.Vector3(),ray=new THREE.Raycaster(),body=[];
-  model.vehicle.traverse(mesh=>{if(mesh.isMesh&&/chipped deep olive enamel/.test(mesh.material.name))body.push(mesh);});
+  model.vehicle.traverse(mesh=>{if(mesh.isMesh&&mesh.material.name==='ground-in sand and road dust on lower chassis')body.push(mesh);});
   for (const id of ['kit-stack-0','kit-stack-1']) {
     const stack=kit.getObjectByName(id);assert.ok(stack);
     stack.traverse(mesh=>{if(!mesh.isMesh)return;
@@ -105,7 +105,7 @@ test('Scarab stacks clear the rear tyres and stand on the actual chassis', async
     });
     const bounds=new THREE.Box3().setFromObject(stack),centre=bounds.getCenter(new THREE.Vector3());
     ray.set(new THREE.Vector3(centre.x,5,centre.z),new THREE.Vector3(0,-1,0));
-    const contact=ray.intersectObjects(body,false)[0];assert.ok(contact,'actual painted chassis below each stack');
+    const contact=ray.intersectObjects(body,false)[0];assert.ok(contact,'actual lower chassis below each stack');
     const gap=bounds.min.y-contact.point.y;
     assert.ok(gap<=.005&&gap>=-.04,`${id}: stack base seats on chassis, gap ${gap}`);
   }
