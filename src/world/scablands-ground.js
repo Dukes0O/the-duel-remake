@@ -3,6 +3,7 @@ import {ROAD_HALF_WIDTH,ROAD_NET,distanceToNet} from './scablands-road.js';
 import {createGroundEdit} from './ground-edit.js';
 import {cutAt,regionAt,regionNaturalHeightAt} from './regions.js';
 import {riverDepthAt,riverGorgeDepthAt} from './scablands-regions.js';
+import {pipeInteriorAt} from './open/pipe-rule.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 let scablandsOpenMarks=new Set();
@@ -104,7 +105,17 @@ export function selectScablandsFloor(floors,count,feet){
 
 // Reuse storage for the common height query; no list is allocated per step.
 const floorScratch=[];
+const siteInteriors=new WeakMap();
+export function setScablandsSiteInteriors(site,interiors){siteInteriors.set(site,interiors);}
+export function getScablandsSiteInteriors(){return siteInteriors.get(scablandsGroundEdit.siteGround)??[];}
+
+export function scablandsInteriorAt(x,z,feet,radius=0){
+  return pipeInteriorAt(siteInteriors.get(scablandsGroundEdit.siteGround),x,z,feet,scablandsSurfaceHeightAt,radius);
+}
+
 export function scablandsActorHeightAt(x,z,actorHeight){
+  const interior=scablandsInteriorAt(x,z,actorHeight);
+  if(interior)return interior.floor;
   const count=scablandsFloorsAt(x,z,floorScratch);
   return selectScablandsFloor(floorScratch,count,actorHeight);
 }

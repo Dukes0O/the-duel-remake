@@ -7,7 +7,8 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
-  onScablandsOpenMarksChanged} from './scablands-ground.js';
+  onScablandsOpenMarksChanged, getScablandsSiteInteriors} from './scablands-ground.js';
+import {pipeMouths} from './open/pipe-rule.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,createSiteUnderlay,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
 import {createGroundLook,createHillField,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
@@ -627,6 +628,9 @@ export function createScablandsScene(course,options={}){
   const hillField=createHillField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,raised:(x,z)=>scablandsTerrainHeightAt(x,z)-scablandsTerrainHeightAt(x,z,NO_HILLS),
     spots:HILLS.map(hill=>({x:hill.x,z:hill.z,reach:(hill.radius+(hill.ramp??0))*1.3+40}))});
   const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn'),hills:hillField},photos:groundPhotos});
+  const syncSiteMouths=()=>groundLook.setTunnelMouths([
+    ...(featureFlags.enabled('wasteland-town')?course.groundTunnels?.mouths??[]:[]), ...pipeMouths(getScablandsSiteInteriors())]);
+  syncSiteMouths();
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadLook = createRoadLook({photo: groundPhotos?.road ?? null, gate: course.realismThings ? TIN_TOWN_GATE : null});
   const roadMaterial=roadLook.apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
@@ -640,7 +644,7 @@ export function createScablandsScene(course,options={}){
     if(!featureFlags.enabled('wasteland-town')||tunnelRevision===course.groundTunnelsRevision)return;
     tunnelRevision=course.groundTunnelsRevision;
     const current=course.groundTunnels;
-    groundLook.setTunnelMouths(current?.mouths??[]);
+    syncSiteMouths();
     if(current?.segments.length){
       if(tunnelLining)createTunnelMesh(current,tunnelLining);
       else {tunnelLining=createTunnelMesh(current);ground.add(tunnelLining);}
@@ -1251,6 +1255,7 @@ export function createScablandsScene(course,options={}){
   // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
   const refreshSiteUnderlay=()=>{
     drawnSite=scablandsGroundEdit.siteGround;
+    syncSiteMouths();
     siteUnderlay=createSiteUnderlay(scablandsGroundEdit);
     near.setSiteUnderlay(siteUnderlay);
   };

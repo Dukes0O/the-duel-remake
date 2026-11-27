@@ -1,6 +1,6 @@
 // The one declaration of a site's terrain. Placement comes from the same seeded site table as discovery.
 import {createGroundEdit, CHUNK_METRES} from '../ground-edit.js';
-import {scablandsGroundEdit} from '../scablands-ground.js';
+import {scablandsGroundEdit, scablandsSurfaceHeightAt, setScablandsSiteInteriors} from '../scablands-ground.js';
 import {sitePosition} from './site-rule.js';
 import {ratsNestGround, RATS_NEST_LAYOUT} from './looks/rats-nest-look.js';
 
@@ -47,6 +47,15 @@ export function installSiteGround(landSeed, ids = Object.keys(SITE_GROUND)) {
   const site = cuts.chunkCount ? cuts : null;
   if (!site) return () => {};
   ground.setSiteGround(site);
+  if (ids.includes('rats-nest')) {
+    const at = sitePosition('rats-nest', landSeed), {drain, spots} = RATS_NEST_LAYOUT;
+    // Match the drawn bore's anchor and its 45 cm lips, with open aprons to the named spots.
+    setScablandsSiteInteriors(site, [{id: 'rats-nest/drain', inner: drain.inner,
+      floor: scablandsSurfaceHeightAt(at.x + spots['drain-in'].x, at.z + drain.z) - .04,
+      from: {x: at.x + drain.from - .45, z: at.z + drain.z},
+      to: {x: at.x + drain.to + .45, z: at.z + drain.z},
+      approach: [drain.from - .45 - spots['drain-in'].x, spots['drain-out'].x - drain.to - .45]}]);
+  }
   releases.set(site, () => { if (ground.siteGround === site) ground.setSiteGround(previous); });
   return () => {
     releases.get(site)?.();
