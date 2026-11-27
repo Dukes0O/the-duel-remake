@@ -23,6 +23,8 @@ import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPlace, pocketWrecks} 
 import {heistLampPose} from './content/mission-kinds.js';
 import {lookoutHeading} from './content/mission-kinds.js';
 import {TOLL_GATE, TOLL_ID, TOLL_WRECKS, tollPlace} from './content/mall-road-toll-places.js';
+import {createDaceLook} from './looks/dace-goes-looking-look.js';
+import {DACE_ID} from './content/dace-goes-looking-places.js';
 import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
 
 function paintedSign({label}) {
@@ -355,7 +357,7 @@ export function createSignView() {
   group.add(campHeap);
   const heaps = new Map();
   const stalls = new Map();
-  let dryPumpLook, lightsLook, tollLook, tollBuggy, tollLamp;
+  let daceLook, dryPumpLook, lightsLook, tollLook, tollBuggy, tollLamp;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -470,6 +472,9 @@ export function createSignView() {
         }
       }
       const signs = open ? openThreadSigns({...open, view}) : [];
+      if (view.checkpointsEnabled && open.world.open.threads[DACE_ID] && !daceLook)
+        daceLook = createDaceLook(group, positionAt);
+      daceLook?.update(open, signs.find(entry => entry.id === DACE_ID), here, drawnShift);
       const stranger = signs.find(entry => entry.id === 'runaway');
       for (const {key, mesh, lift} of clues) {
         const at = RUNAWAY_PLACES[key];
@@ -556,6 +561,7 @@ export function createSignView() {
       hauler.dispose();
       flagSite.dispose();
       lightsLook?.dispose();
+      daceLook?.dispose();
       radio.dispose();
       if (tollBuggy) disposeMeshes(tollBuggy);
       if (tollLamp) disposeMeshes(tollLamp);
