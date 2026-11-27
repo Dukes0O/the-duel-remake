@@ -45,3 +45,12 @@ The card names `src/world/jobs/steps/`, `town-jobs.js`, `job-vehicle.js` and `to
 ## 5. Things on the ground are rings for now
 
 The wrecks, the towed van and the fence bundles are shown as amber rings, because their models belong to a scene card. The rules do not depend on the drawing. **Pick: rings now, and a scene card later.**
+
+## 6. Captain Imre's line starts with a small letter
+
+`imre.won` begins with `{aground}`, which the captions fill with a number in words, so the line reads "thirty-eight years aground and we've not missed a watch." `tools/test-town-chapters.mjs` pins that exact text.
+
+- **A.** Leave it, because it is an older card's line and an older suite's assertion.
+- **B.** Give a number that begins a line a capital letter (three lines in `townCaptionText`), and change the older suite's one assertion to "Thirty-one".
+
+**Pick: A for this card.** B is the better game, and it needs your written review of the changed assertion (rule 18).

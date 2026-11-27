@@ -114,7 +114,8 @@ function washoutAt(washout, point) {
 
 /** The pile's stack in lift order: pieces drawn from the good's list until the pile's kilograms are used. Seeded. */
 export function haulPileOrder(step, seed = 0) {
-  const kinds = HAUL_PIECES[step.good] ?? HAUL_PIECES.salvage;
+  // TOWN-JOBS-2: a step may name its own pieces (sacks of flour, boxes of books, goats).
+  const kinds = step.pieces ?? HAUL_PIECES[step.good] ?? HAUL_PIECES.salvage;
   const rng = makeRng(((seed >>> 0) ^ 0x4a41554c) >>> 0 || 1);
   const pieces = [];
   let left = step.pile?.kg ?? 9000;
@@ -137,24 +138,24 @@ function shedTop(stack, kg) {
 /** One sentence for the results screen: what was delivered and what was lost. */
 export function haulSentence(step, deliveredKg, lostKg) {
   const good = step.goodName ?? step.good ?? 'salvage';
-  const delivered = `You brought home ${groupKg(deliveredKg)} kg of ${good}.`;
+  const delivered = `${step.words?.delivered ?? 'You brought home'} ${groupKg(deliveredKg)} kg of ${good}.`;
   if (lostKg <= 0) return `${delivered} Nothing fell off on the way.`;
   return `${delivered} ${groupKg(lostKg)} kg fell off on the way and is lost.`;
 }
 
 /** What the screen line asks for in each part of the haul. */
 export function haulLine(step, state = {}) {
-  const phase = state.phase ?? 'out';
+  const phase = state.phase ?? 'out', words = step.words ?? {};
   if (phase === 'out') return step.what ?? `Drive to ${step.pile?.name ?? 'the pile'} and stop beside it.`;
   if (phase === 'loading') {
-    if ((state.load?.length ?? 0) === 0) return 'Hold still while the gang lifts the first piece on.';
-    if (state.full) return 'The bed is full. Drive home slowly.';
-    return 'Hold still and they keep loading. Drive off when you have enough.';
+    if ((state.load?.length ?? 0) === 0) return words.first ?? 'Hold still while the gang lifts the first piece on.';
+    if (state.full) return words.full ?? 'The bed is full. Drive home slowly.';
+    return words.loading ?? 'Hold still and they keep loading. Drive off when you have enough.';
   }
-  if (phase === 'unloading') return 'Hold still while they take the load off.';
+  if (phase === 'unloading') return words.unloading ?? 'Hold still while they take the load off.';
   if (state.washout === 'inside') return `You are on the washed-out road. Keep below ${HAUL_RULE.washoutCrawlKmh} km/h and the load will hold.`;
   if (state.washout === 'ahead') return `Washed-out road ahead. Crawl over it below ${HAUL_RULE.washoutCrawlKmh} km/h, or go round it over the flats to the south.`;
-  return `Take the load to ${step.drop?.name ?? 'the drop'} and stop there. Hard knocks throw pieces off.`;
+  return words.carry ?? `Take the load to ${step.drop?.name ?? 'the drop'} and stop there. Hard knocks throw pieces off.`;
 }
 
 function knock(view) {

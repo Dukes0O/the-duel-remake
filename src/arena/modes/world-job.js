@@ -41,6 +41,7 @@ import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
+import {TOWN_STEP_KINDS, keepTownStepResults} from '../../world/jobs/town-step-results.js';
 import {BELL_CUE, fillWorkVehicleTank, loadWorkVehicle, pumpWorkVehicleTank, ringWorkVehicleBell, startWorkVehicle, stepWorkVehicleControls, unloadWorkVehicle} from '../../town/work-vehicles.js';
 import {groupKg} from '../../world/jobs/steps/haul.js';
 import {BUILDINGS} from '../../world/open/content/buildings.js';
@@ -326,11 +327,10 @@ function playHaulEvent(duel, worldJob, event, point) {
 // cue and, where the player should read it, a sentence; a finished step's `result` is kept by the step's id for the town
 // (src/world/jobs/town-jobs.js). The weight a step puts on the truck (`loadKg`, `tankL`) is the truck's weight. The things a step
 // has on the ground (wrecks, a towed van, fence bundles) are shown as rings until a scene card draws them: view-only.
-const TOWN_STEP_KINDS = new Set(['tow', 'repair', 'fence', 'clear', 'hold']);
 const townStepHasRats = step => !!(step?.rats || step?.stops?.some(stop => stop.rats));
 function playTownStepEvent(duel, worldJob, step, event, point) {
   if (event.callout) duel._storyCallout(event.callout, 2.6, true);
-  if (event.result) (worldJob.townResults ??= {})[step.id ?? step.kind] = event.result;
+  if (event.result?.sentence) worldJob.townSentence = event.result.sentence;
   if (event.cue) duel.emit({arenaTell:{id:'town-job', targetId:'player', seconds:0, cue:event.cue,
     position:event.position ? {x:event.position.x, y:scablandsSurfaceHeightAt(event.position.x, event.position.z), z:event.position.z} : {...point}}});
 }
@@ -375,7 +375,8 @@ export function initializeWorldJob(duel, definition) {
   }
   // The neighbours' outposts and Mrs Vane's things are solid in a town drive only, from the layout the drive was started with
   // (TOWN-OUTPOST-SCENE, TOWN-VANE-SCENE). After the yard's grid, which replaces any grid made before it.
-  const townSolids=definition.kind==='town-drive'?[...definition.layout?.outposts?.solids??[],...definition.layout?.vane?.solids??[]]:[];
+  // TOWN-JOBS-2: a town job that goes to a neighbour says so (`outpostSolids`), and the outposts are solid for it too.
+  const townSolids=definition.kind==='town-drive'||definition.outpostSolids===true?[...definition.layout?.outposts?.solids??[],...definition.layout?.vane?.solids??[]]:[];
   if(townSolids.length){
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setTown(townSolids);
@@ -2278,14 +2279,8 @@ export function stepWorldJob(duel, dt) {
     syncDouseVehicle(worldJob);
     for (const event of next.events) playTownStepEvent(duel, worldJob, currentStep, event, point);
   }
-  // A town job of several steps keeps each step's result (the haul's and the fire call's are their own events).
-  if (worldJob.definition.kind === 'town-job') for (const event of next.events) {
-    if (event.type === 'haulDelivered') (worldJob.townResults ??= {})[currentStep.id ?? 'haul'] = {kind:'haul', good:event.good,
-      deliveredKg:event.deliveredKg, lostKg:event.lostKg, pieces:event.pieces, lostPieces:event.lostPieces};
-    if (event.type === 'douseDone') (worldJob.townResults ??= {})[currentStep.id ?? 'douse'] = {kind:'douse', savedIds:event.savedIds,
-      lostIds:event.lostIds, mainSaved:event.mainSaved, usedL:event.usedL};
-    if (event.result && !TOWN_STEP_KINDS.has(currentStep?.kind)) (worldJob.townResults ??= {})[currentStep.id ?? currentStep.kind] = event.result;
-  }
+  // A town job of several steps keeps what each step reported, by the step's id (src/world/jobs/town-step-results.js).
+  if (worldJob.definition.kind === 'town-job' && currentStep) worldJob.townResults = keepTownStepResults(worldJob.townResults, currentStep, next.events);
   if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
     worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));

@@ -262,7 +262,13 @@ export function stepDouse(step, state, view, dt = 0) {
     if (base.spraying) events.push({type:'douseSprayStop'});
   }
 
-  burnFires(step, next, dt, scale, target?.id ?? null, events, sayOnce);
+  // TOWN-JOBS-2: a fire a long drive away (`heldUntilMetres`) is held with buckets until the truck first comes that near, so
+  // the drive out is not a race against it (docs/WASTELAND_TOWN.md section 7: no racing clock). From then on it burns as any fire.
+  if (step.heldUntilMetres > 0 && !next.reached) {
+    const main = buildings.find(building => building.id === step.mainId) ?? buildings[0];
+    if (main && gap(here, main) <= step.heldUntilMetres) next.reached = true;
+  }
+  if (!(step.heldUntilMetres > 0) || next.reached) burnFires(step, next, dt, scale, target?.id ?? null, events, sayOnce);
 
   // Filling: standing still inside a water point's ring, the tank fills at the flow that point gives.
   if (still && next.tankL < capacity) {

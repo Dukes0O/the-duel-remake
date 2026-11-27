@@ -17,6 +17,10 @@ import {townCaptionText, TOWN_CAPTIONS} from '../../town/content/lines.js';
 import {buildingById} from '../../town/content/registry.js';
 import {fuelHours} from '../../town/town-fire.js';
 import {DOUSE_WATER, tapFlowLpm} from './steps/douse.js';
+import {TOWN_CHAPTER_JOBS, TOWN_REPEAT_JOBS, townJobRow} from '../../town/content/jobs.js';
+import {OUTPOST_CHAPTERS} from '../../town/content/neighbours.js';
+import {OUTPOSTS_WORLD} from '../../town/content/outposts-world.js';
+import {makeRng} from '../../rng.js';
 
 export const TOWN_JOB_KIND = 'town-job';
 export const TOWN_HAUL_CHAPTER = 'town.act1.salvage';
@@ -91,9 +95,16 @@ export function openTownJobs(town) {
   // TOWN-FIRE-JOB: a fire is the most urgent thing the town can ask for, so it comes first.
   if (townFireChapterOpen(town)) open.push({id:'town-fire-first', kind:'fire', chapter:true});
   else if (townBurning(town).length) open.push({id:'town-fire-call', kind:'fire', chapter:false});
+  // TOWN-JOBS-2: a neighbour's chapter comes next (the town's own first haul is done before any of them), then what the town
+  // is short of, then the jobs that come round again, and last the salvage run, which is always there.
+  const neighbour = townSalvageChapterOpen(town) ? null : townChapterJobOpen(town);
+  if (neighbour) open.push({id:neighbour.id, kind:neighbour.kind, chapter:true});
   if (townSteelShortage(town)) open.push({id:'town-steel-run', kind:'steel', chapter:false});
   if (townSalvageChapterOpen(town)) open.push({id:'town-haul-salvage', kind:'salvage', chapter:true});
-  else if (townSalvageRunOpen(town)) open.push({id:'town-salvage-run', kind:'salvage', chapter:false});
+  else {
+    for (const row of TOWN_REPEAT_JOBS) if (townRepeatJobOpen(town, row)) open.push({id:row.id, kind:row.kind, chapter:false});
+    if (townSalvageRunOpen(town)) open.push({id:'town-salvage-run', kind:'salvage', chapter:false});
+  }
   return open;
 }
 
@@ -109,6 +120,8 @@ export function townJobDefinition(town, jobId, {seed = town?.seed ?? 1, ember = 
   const open = openTownJobs(town).find(job => job.id === jobId);
   if (!open) return null;
   if (open.kind === 'fire') return townFireDefinition(town, open, {seed, ember});
+  const row = townJobRow(jobId);
+  if (row) return townRowDefinition(town, row, {seed, ember});
   const chapter = jobId === 'town-haul-salvage', kind = KINDS[open.kind], closing = CLOSING[jobId];
   const lines = chapter ? {...kind.lines, start:'town.haul.go.camp'} : kind.lines;
   const pile = chapter ? CAMP_PILE() : kind.pile();
@@ -135,6 +148,7 @@ export function townJobResult(worldJob, runId) {
       waterL:Math.min(TOWN_MISSION_MAX_LITRES, Math.max(0, Math.round(fire.usedL))),
       chapter:definition.chapter ?? null, ash:definition.ash ?? null};
   }
+  if (townJobRow(definition.id)) return townRowResult(worldJob, runId);
   const state = worldJob.haulResult;
   if (!state) return null;
   return {runId, jobId:definition.id, kind:'haul', good:state.good, deliveredKg:state.deliveredKg, lostKg:state.lostKg,
@@ -299,4 +313,197 @@ function holdingFires(step, ids) {
       }
     }
   };
+}
+
+// ---- TOWN-JOBS-2: the jobs that are not fights ------------------------------------------------------------------------------
+// The neighbours' chapters (Act 2, chapters 11 to 16) and section 7's jobs that come round again. Each is a row of
+// src/town/content/jobs.js; this turns a row and the town into steps for the World Job engine. The neighbours stand where the
+// land has them (src/town/town-outpost-world.js, read once from the town's layout), so a replay is repeatable from seed, inputs
+// and that layout. Reading the town here writes nothing to it.
+
+const TICKS_A_DAY = 24;
+const outpostChapter = id => OUTPOST_CHAPTERS.find(chapter => chapter.id === id) ?? null;
+const yearOf = town => Number.isFinite(town?.calendar?.year) ? town.calendar.year : 1;
+
+/** The neighbour's chapter job open now, or null: the first chapter not yet done whose year has come, in the story's order. */
+export function townChapterJobOpen(town) {
+  const next = OUTPOST_CHAPTERS.find(chapter => completed(town)[chapter.id] !== true);
+  if (!next || yearOf(town) < (next.year ?? 1)) return null;
+  const rows = TOWN_CHAPTER_JOBS.filter(row => row.chapter === next.id);
+  // A chapter of two jobs (Dot's fire, then her fence): the second waits for the fact the first leaves.
+  return rows.find(row => row.needsFact ? facts(town)[row.needsFact] === true : !row.setsFact || facts(town)[row.setsFact] !== true) ?? null;
+}
+
+/** The tick a repeating job was last done at, or null. */
+function lastDoneTick(town, jobId) {
+  const tick = town?.missions?.totals?.[jobId]?.lastTick;
+  try { return tick === undefined ? null : BigInt(tick); } catch { return null; }
+}
+
+/** The unanswered report that opens a job, or null. */
+export function townJobReport(town, row) {
+  if (!row?.opens?.report) return null;
+  return (town?.reports ?? []).find(report => report?.unanswered && report.eventId === row.opens.report) ?? null;
+}
+
+function townRepeatJobOpen(town, row) {
+  const opens = row.opens ?? {};
+  // A row whose kind has no builder yet is never open, so no job is offered that cannot be started.
+  if (!BUILDERS[row.kind]) return false;
+  if (opens.fact && facts(town)[opens.fact] !== true) return false;
+  if (opens.chapter && completed(town)[opens.chapter] !== true) return false;
+  if (opens.report && !townJobReport(town, row)) return false;
+  if (opens.everyDays) {
+    const last = lastDoneTick(town, row.id);
+    let now = 0n;
+    try { now = BigInt(town?.tick ?? 0); } catch { now = 0n; }
+    if (last !== null && now - last < BigInt(opens.everyDays * TICKS_A_DAY)) return false;
+  }
+  return true;
+}
+
+const spotOf = (id, name, x, z, radius) => place(id, name, {x, z}, radius);
+// A point `metres` from an outpost's middle toward the road (or rail) it faces; a negative distance is the far side.
+function beside(outpost, metres, sideways = 0) {
+  const dx = outpost.faces.x - outpost.x, dz = outpost.faces.z - outpost.z, length = Math.hypot(dx, dz) || 1;
+  const ux = dx / length, uz = dz / length;
+  return {x:outpost.x + ux * metres + uz * sideways, z:outpost.z + uz * metres - ux * sideways};
+}
+// The point `metres` along a road from its town end.
+function alongRoad(roadId, metres) {
+  const points = ROAD_NET.road(roadId).points, from = Math.max(0, metres);
+  const at = sliceLine(points, from, from + 1)[0] ?? points.at(-1);
+  return {x:at.x, z:at.z};
+}
+const roadLine = (roadId, from, to) => (from <= to ? sliceLine(ROAD_NET.road(roadId).points, from, to)
+  : sliceLine(ROAD_NET.road(roadId).points, to, from).reverse()).map(point => Object.freeze({x:point.x, z:point.z}));
+
+const homePile = town => { const drop = dropPlace(town); return {...drop, name:drop.id === 'salvage-yard' ? 'the Salvage Yard' : 'the pile by the truck bay'}; };
+const NAMES_OF = Object.freeze({'dot-diner':"Dot's diner", 'plane-school':"Miss Quill's school", 'hermit-camp':"Old Tam's hut", 'deck-town':"Deck Town's tank",
+  'rail-halt':'the Rail Halt'});
+
+function haulStep(id, part, {pile, drop, what, count, spare = 0, extra = {}}) {
+  const pieces = part.pieces ?? [part.piece], kg = part.kg ?? part.piece.kg * count, spareKg = part.spareKg ?? (part.piece?.kg ?? 0) * spare;
+  return {kind:'haul', id, good:part.good ?? part.piece?.id ?? id, goodName:part.goodName ?? `${part.piece?.name ?? 'load'}s`, pieces, maxKg:kg,
+    pile:{...pile, kg:kg + spareKg}, drop, lines:part.lines ?? {}, startLineId:part.lines?.start, closing:[...(part.closing ?? [])],
+    words:part.words, what, ...extra};
+}
+
+const BUILDERS = Object.freeze({
+  // Chapter 11: flour out to Dot, pies home.
+  trade(town, row, {outpost}) {
+    const home = homePile(town), dot = spotOf(row.outpostId, NAMES_OF[row.outpostId], ...Object.values(beside(outpost, 20)), 12);
+    return [haulStep('out', row.out, {pile:home, drop:dot, count:row.out.count, spare:row.out.spare, what:`Drive to ${home.name} and stop beside it.`}),
+      haulStep('back', row.back, {pile:dot, drop:home, count:row.back.count, spare:row.back.count, what:"Stop in the ring at Dot's diner."})];
+  },
+  // Chapter 13: chalk and books to the school.
+  delivery(town, row, {outpost}) {
+    const home = homePile(town), school = spotOf(row.outpostId, NAMES_OF[row.outpostId], ...Object.values(beside(outpost, 22)), 12);
+    return [haulStep('out', row.out, {pile:home, drop:school, what:`Drive to ${home.name} and stop beside it.`,
+      extra:row.out.nearLineId ? {sayNear:[{place:school, radius:60, lineId:row.out.nearLineId}]} : {}})];
+  },
+  // Chapter 14: salt up the Ridge, goats down.
+  goats(town, row, {outpost}) {
+    const home = homePile(town), hut = spotOf(row.outpostId, NAMES_OF[row.outpostId], ...Object.values(beside(outpost, 22)), 12);
+    const salt = {good:'salt', goodName:'salt', piece:row.salt.piece, lines:{start:row.lines.start}, closing:[row.goats.lines.atPile],
+      words:{first:'Hold still while the first sack of salt goes on.', loading:'Hold still while the salt goes on.', full:"That is all the salt. Drive up the Ridge to Old Tam's hut.",
+        carry:"Take the salt up the Ridge to Old Tam's hut and stop in the ring.", unloading:'Hold still while the salt comes off.', delivered:'You delivered'}};
+    const goats = {good:'goat', goodName:'goats', piece:row.goats.piece, lines:{atPile:row.goats.loadingLineId, setOff:row.goats.lines.setOff},
+      closing:row.goats.closing, words:row.goats.words};
+    return [haulStep('salt', salt, {pile:home, drop:hut, count:row.salt.count, spare:row.salt.count, what:`Drive to ${home.name} and stop beside it.`}),
+      haulStep('goats', goats, {pile:hut, drop:home, count:row.goats.count, spare:4, what:"Stop in the ring at Old Tam's hut."})];
+  },
+  // Chapter 12, first part: the fire at Dot's, then the Rats who lit it.
+  'outpost-fire'(town, row, {outpost, ember}) {
+    const world = OUTPOSTS_WORLD.find(item => item.id === row.outpostId), [west, north, east, south] = world.bounds;
+    const half = Math.max(east - west, south - north) / 2, id = `outpost:${row.outpostId}`, name = NAMES_OF[row.outpostId];
+    const diner = Object.freeze({id, buildingId:row.outpostId, name, x:outpost.x, z:outpost.z, halfX:half, halfZ:half,
+      areaM2:(east - west) * (south - north), fuelHours:fuelHours({buildingId:row.burnsLike}), heat:row.heat,
+      position:Object.freeze({x:outpost.x, z:outpost.z}), radius:half + 10});
+    const well = beside(outpost, 14, 22), door = beside(outpost, 22);
+    const lines = Object.freeze({...FIRE_LINES, start:row.lines.start, won:row.lines.won, burnt:row.lines.burnt});
+    const cinder = ember?.smokeBeaten === true ? {afterStartLineId:row.lines.cinder} : {};
+    return [{kind:'douse', id:'douse', mainId:id, buildings:[diner], headStartSeconds:row.headStartSeconds, heldUntilMetres:150,
+      water:[Object.freeze({id:'water:dot-well', kind:'well', name:"Dot's well", position:Object.freeze(well), flowLpm:row.well.flowLpm, storeL:row.well.storeL, radius:8})],
+      wind:townFireWind(town), tank:{capacityL:3000, startL:3000, pumpLpm:1000}, lines, startLineId:lines.start, ...cinder},
+    {kind:'hold', id:'watch', place:spotOf('dot-door', "Dot's door", door.x, door.z, row.watch.radius), radius:row.watch.radius,
+      what:"Park in the ring by Dot's door and stay there.", gauge:{label:row.watch.label, total:row.watch.seconds, seconds:row.watch.seconds},
+      rats:{...row.watch.rats, place:spotOf('dot-rats', 'the Rats', ...Object.values(beside(outpost, 40, -14)), 12)}}];
+  },
+  // Chapter 12, second part: a fence round Dot's, stop by stop.
+  fence(town, row, {outpost}) {
+    const names = ['north', 'east', 'south', 'west'], d = row.stopMetres;
+    const stops = [[0, -d], [d, 0], [0, d], [-d, 0]].map(([dx, dz], index) => ({...spotOf(`fence-${names[index]}`, `the ${names[index]} side`, outpost.x + dx, outpost.z + dz, row.stopRadius),
+      ...(row.ratsAt.includes(index) ? {rats:{...row.rats, id:`${row.id}-rats`, alertMetres:60}} : {})}));
+    return [{kind:'fence', id:'fence', stops, what:"Drive to the first stop at Dot's diner.", startLineId:row.lines.start, closing:[...row.closing]}];
+  },
+  // Chapter 15: the tanker to Deck Town.
+  water(town, row, {outpost}) {
+    const at = beside(outpost, row.ringMetres);
+    return [{kind:'hold', id:'fill', place:spotOf(row.outpostId, NAMES_OF[row.outpostId], at.x, at.z, row.radius), radius:row.radius,
+      what:"Drive the tanker to Deck Town and stop in the ring by their tank.", gauge:{label:'litres pumped', total:row.tank.litres, seconds:row.seconds, easySeconds:row.easySeconds},
+      tank:{startL:row.tank.litres, pumpLpm:row.tank.pumpLpm}, startLineId:row.lines.start, arriveLineId:row.lines.arrive, closing:[...row.closing]}];
+  },
+  // Chapter 16: Pim's water crane, on foot.
+  crane(town, row, {outpost}) {
+    const park = beside(outpost, -row.parkMetres);
+    const joints = Array.from({length:row.bolts}, (_, index) => { const at = beside(outpost, -row.craneMetres, (index - (row.bolts - 1) / 2) * 3);
+      return spotOf(`crane-bolt-${index + 1}`, 'the water crane', at.x, at.z, 3); });
+    return [{kind:'repair', id:'crane', requiresExit:true, jointName:'bolt', seconds:row.seconds, carPlace:spotOf('halt-yard', NAMES_OF[row.outpostId], park.x, park.z, 14),
+      joints, what:"Drive to Pim's Rail Halt and stop in the ring.", startLineId:row.lines.start, startedLineId:row.lines.started, closing:[...row.closing]}];
+  },
+});
+
+function townRowDefinition(town, row, {seed, ember}) {
+  const layout = createTownWorld(town);
+  const outpost = row.outpostId ? (layout.outposts?.outposts ?? []).find(item => item.id === row.outpostId) ?? null : null;
+  if (row.outpostId && !outpost) return null;
+  const steps = BUILDERS[row.kind]?.(town, row, {outpost, seed:seed >>> 0, ember, layout});
+  if (!steps?.length) return null;
+  const said = step => [step.startLineId, ...[].concat(step.afterStartLineId ?? []), ...(step.opening ?? []), ...(step.closing ?? []), ...Object.values(step.lines ?? {}),
+    step.arriveLineId, step.holdLineId, step.outLineId, step.backLineId, step.startedLineId, step.jointLineId, step.downLineId, step.dropLineId, step.hookLineId,
+    step.snapLineId, step.raidLineId, step.afterFirstLineId, step.stolen?.lineId, step.rats?.lineId, step.rats?.goneLineId,
+    ...(step.sayNear ?? []).map(cue => cue.lineId), ...(step.sayAt ?? []).map(cue => cue.lineId), ...(step.stops ?? []).flatMap(stop => [stop.rats?.lineId, stop.rats?.goneLineId])];
+  const lineIds = [...new Set([row.resultLineId, row.card?.lineId, row.vehicle?.lendLineId, ...steps.flatMap(said)].filter(id => TOWN_CAPTIONS[id]))];
+  return {
+    id:row.id, kind:TOWN_JOB_KIND, townJob:row.kind, chapter:row.chapter ?? null, name:row.name, eyebrow:'THE TOWN', seed:seed >>> 0,
+    ...(row.side ? {side:row.side} : {}), ...(row.vehicle != null ? {vehicle:row.vehicle} : {}), layout, outpostSolids:true,
+    resultLineId:row.resultLineId, captions:captionsFor(lineIds, town), steps,
+  };
+}
+
+/**
+ * What a finished job of a row hands the town: {runId, jobId, kind:'job', amounts}. `amounts` is what the run really did: the
+ * kilograms that arrived, the litres pumped, what was saved. Null when the job was not finished.
+ */
+function townRowResult(worldJob, runId) {
+  const definition = worldJob.definition, row = townJobRow(definition.id), results = worldJob.townResults ?? {};
+  const whole = value => Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
+  const amounts = {};
+  if (row.kind === 'trade') {
+    if (!results.out || !results.back) return null;
+    amounts.sacks = Math.floor(whole(results.out.deliveredKg) / row.out.piece.kg);
+    amounts.pies = Math.floor(whole(results.back.deliveredKg) / row.back.piece.kg) * row.back.piesEach;
+  } else if (row.kind === 'delivery') {
+    if (!results.out) return null;
+    amounts.kg = whole(results.out.deliveredKg);
+  } else if (row.kind === 'goats') {
+    if (!results.salt || !results.goats) return null;
+    amounts.saltKg = whole(results.salt.deliveredKg);
+    amounts.goats = Math.floor(whole(results.goats.deliveredKg) / row.goats.piece.kg);
+  } else if (row.kind === 'outpost-fire') {
+    if (!results.douse || !results.watch) return null;
+    amounts.saved = results.douse.mainSaved === true ? 1 : 0;
+    amounts.waterL = Math.min(TOWN_MISSION_MAX_LITRES, whole(results.douse.usedL));
+  } else if (row.kind === 'fence') {
+    if (!results.fence) return null;
+    amounts.stops = whole(results.fence.stops);
+  } else if (row.kind === 'water') {
+    if (!results.fill) return null;
+    amounts.litres = whole(results.fill.total);
+  } else if (row.kind === 'crane') {
+    if (!results.crane) return null;
+    amounts.bolts = whole(results.crane.joints);
+  } else return null;
+  return {runId, jobId:definition.id, kind:'job', amounts};
 }

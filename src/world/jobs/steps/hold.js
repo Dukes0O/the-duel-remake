@@ -7,6 +7,7 @@
 // clock. With `keepOutside` the ring is the other way round: the gauge fills while the vehicle stays outside the inner ring and
 // inside the place's `outerRadius`. A step with `tank` pumps its water as the gauge fills, so the truck gets lighter as it
 // empties (the mode reads `state.tankL`). A step with `rats` (src/world/jobs/town-rats.js) pauses while Rats stand near.
+// With `placeActorId` the ring is where that actor stands when the step begins (a truck that has been stopped).
 //
 // Real numbers, and where they come from:
 // - The water tanker's pump gives 600 litres a minute (src/town/content/work-vehicles.js), so its 5,600 litre tank takes nine
@@ -48,13 +49,17 @@ export function holdLine(step, state = {}) {
 
 export function stepHold(step, state, view, dt = 0) {
   const here = view.player?.position ?? {}, difficulty = view.difficulty ?? 'medium';
+  // A ring round a stopped actor is fixed where the actor stood when the step first saw it.
+  const stood = step.placeActorId ? state.at ?? (view.actors ?? []).find(actor => actor.id === step.placeActorId)?.position ?? null : null;
+  if (step.placeActorId) step = {...step, place:{id:step.placeActorId, name:step.placeName, radius:step.radius, ...step.place,
+    position:stood ? {x:stood.x, z:stood.z} : step.place?.position ?? {x:here.x ?? 0, z:here.z ?? 0}}};
   const mps = Math.abs(finite(view.speedKmh) ? view.speedKmh : 0) / 3.6;
   const radius = holdRadius(step, difficulty), away = gap(here, step.place);
   const inPlace = step.keepOutside ? away > radius && away <= (step.outerRadius ?? radius * 4) : away <= radius;
   const stopped = step.keepOutside ? true : mps <= (step.stopSpeed ?? HOLD_RULE.stopSpeed) && !view.onFoot;
   const seconds = Math.max(.001, (difficulty === 'easy' ? step.gauge?.easySeconds : null) ?? step.gauge?.seconds ?? HOLD_RULE.seconds);
   const next = {share:state.share ?? 0, arrived:state.arrived === true, holding:false, stopped:null, said:state.said ?? [],
-    outs:state.outs ?? 0, wasOut:state.wasOut === true, reported:state.reported === true, rats:state.rats ?? {}};
+    outs:state.outs ?? 0, ...(stood ? {at:{x:stood.x, z:stood.z}} : {}), wasOut:state.wasOut === true, reported:state.reported === true, rats:state.rats ?? {}};
   const events = [], requests = [{type:'marker', place:{...step.place, radius}}];
   const say = lineId => { if (lineId) requests.push({type:'say', lineId}); };
   const done = next.share >= 1;

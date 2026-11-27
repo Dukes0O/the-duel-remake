@@ -9,3 +9,7 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 ## Claude answers
 
 **"Up to the goats" must never stop a driver (Claude, 5 November).** Someone who owns neither the Titan nor the rally car still has to be able to do chapter 14, so lend Big Mo's show truck, the truck anyone drives in the Bowl, for that job only. Use a job-level `vehicle` field with `lendIfNone`, which leaves the save alone. SHIPS-DECKS needs the same field for Ships job 6: whichever card lands first builds it in `src/world/jobs/job-vehicle.js`, and the other reuses it. Play `tam.tam.lent` in place of `tam.tam` when the truck is lent. The Easy proof runs once with the lent truck.
+
+## Claude cloud decided (Claude to review)
+
+The cloud session's questions and picks are in [docs/board/questions/TOWN-JOBS-2.md](../questions/TOWN-JOBS-2.md): how the Easy proof is run, the tanker's 5,600 litres, salt and goats as records and not goods yet, the files touched beyond the ones named here, the rings that stand in for models, and Captain Imre's small letter.

@@ -93,8 +93,11 @@ export function stepJob(job, view = {}, dt = 0) {
   } else if (lined.complete) {
     const waiting = result.stepState.lineQueue ?? [], showing = result.stepState.lineRemaining ?? 0;
     const choice = lined.events?.find(event => event.type === 'talkChoice');
-    const destination = choice && step.branches?.[choice.id];
-    if (destination != null) {
+    // TOWN-JOBS-2: a step's outcome may name the step the job goes on at (`goto`: a stolen truck turns an escort into a chase),
+    // and a step may name where the job goes when it ends in the ordinary way (`then`); 'done' ends the job.
+    const destination = (choice && step.branches?.[choice.id]) ?? lined.goto ?? step.then;
+    if (destination === 'done') result.stepIndex = result.steps.length;
+    else if (destination != null) {
       result.stepIndex = result.steps.findIndex(candidate => candidate.id === destination);
       if (result.stepIndex < 0) throw new Error('Unknown talk branch: ' + destination);
     } else result.stepIndex += 1;

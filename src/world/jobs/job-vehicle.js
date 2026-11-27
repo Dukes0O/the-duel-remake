@@ -2,7 +2,8 @@
 //   'tow-rig' (or {id, loadKg, tankL})       a town work vehicle, run by TOWN-VEHICLES (src/town/work-vehicles.js) as before;
 //   {oneOf:[cars], lendIfNone, lendLineId}   one of the player's own garage cars: the car they have chosen if it is in the list,
 //                                            else the first of the list they own; with none of them, `lendIfNone` is lent for
-//                                            this run only, and `lendLineId` is said as the job starts.
+//                                            this run only, and `lendLineId` is said as the job starts. With `lendInsteadOf`
+//                                            (TOWN-JOBS-2) the loan's line is said in place of that line of the job's steps.
 // A loan is never written anywhere: the profile, its cars, its chosen car and its upgrades are left exactly as they were.
 // Pure: no DOM, no Three.js, nothing from src/app.js.
 import {isWorkVehicle} from '../../town/work-vehicles.js';
@@ -38,11 +39,17 @@ export function jobForRun(job, context = {}) {
   if (!job) return {job, car: null, refused: null};
   const {vehicleLent, ...plain} = job;
   const asked = vehicleLent ? vehicleLent.asked : job.vehicle;
-  const base = vehicleLent ? {...plain, vehicle: asked} : job;
+  const base = vehicleLent ? {...plain, vehicle: asked, ...(vehicleLent.steps ? {steps: vehicleLent.steps} : {})} : job;
   const choice = jobVehicleChoice(asked, context);
   if (choice?.message) return {job: base, car: null, refused: choice.message};
   if (!choice?.lent) return {job: base, car: choice?.car ?? null, refused: null};
-  return {job: {...base, ...(choice.work ? {vehicle: choice.work} : {}),
-    vehicleLent: Object.freeze({asked, car: choice.car ?? null, work: choice.work ?? null, lineId: choice.lineId ?? null})},
+  // TOWN-JOBS-2: `lendInsteadOf` names a line of the job that the loan's line replaces, so the two are never both said. The steps
+  // as they were asked are kept beside the loan, so that running the same definition again chooses afresh.
+  const instead = asked?.lendInsteadOf, swap = typeof instead === 'string' && choice.lineId ? id => id === instead ? choice.lineId : id : null;
+  const swapped = swap ? base.steps.map(step => ({...step, ...(step.startLineId ? {startLineId: swap(step.startLineId)} : {}),
+    ...(step.opening ? {opening: step.opening.map(swap)} : {}), ...(step.lines?.start ? {lines: {...step.lines, start: swap(step.lines.start)}} : {})})) : null;
+  return {job: {...base, ...(choice.work ? {vehicle: choice.work} : {}), ...(swapped ? {steps: swapped} : {}),
+    vehicleLent: Object.freeze({asked, car: choice.car ?? null, work: choice.work ?? null, lineId: swap ? null : choice.lineId ?? null,
+      ...(swapped ? {steps: base.steps} : {})})},
   car: choice.car ?? null, refused: null};
 }

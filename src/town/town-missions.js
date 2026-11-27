@@ -8,6 +8,8 @@
 import {goodDefinition, storeGood, stockpileAt} from './town-goods.js';
 import {answerReport} from './town-reports.js';
 import {stepTown} from './town-sim.js';
+import {townJobRow} from './content/jobs.js';
+import {changeTownNeighbourStanding, setTownOutpostProtection} from './town-outposts.js';
 
 export const TOWN_MISSION_SETTLED_LIMIT = 500;
 export const TOWN_MISSION_HISTORY_LIMIT = 40;
@@ -50,6 +52,7 @@ export function townMissionSettled(town, runId) {
 export function townMissionResult(town, result = {}) {
   if (!record(town)) return {ok:false, settled:false, message:'There is no town to take the result.'};
   if (result?.kind === 'fire') return townFireResult(town, result);
+  if (result?.kind === 'job') return townRowResult(town, result);
   const {runId, jobId, kind, good, deliveredKg, lostKg, chapter = null} = result;
   if (typeof runId !== 'string' || !runId || runId.length > 128 || typeof jobId !== 'string' || !jobId || kind !== 'haul' ||
       !goodDefinition(good) || !wholeKg(deliveredKg) || !wholeKg(lostKg) ||
@@ -159,4 +162,70 @@ export function createTownMissionClock(town, {secondsPerTick = 10, radioGapSecon
     return {ticks:stepped, radio};
   }
   return Object.freeze({advance, get ticks() { return ticks; }, get waiting() { return waiting.length; }});
+}
+
+// TOWN-JOBS-2: the result of a job that is a row of src/town/content/jobs.js: {runId, jobId, kind:'job', amounts}. `amounts` is
+// what the run really did, each a whole number inside what one run could do. What the town gets is the row's own: a chapter
+// done and its fact, a neighbour who thinks better of the town, pies or fuel or salvage on the pile, a fence round Dot's, a
+// report answered. Nothing here takes anything away from the town. The record of when a repeating job was last done is kept
+// under the job's id in `town.missions.totals`, made the first time it is done, so an older town loads exactly as it was.
+const AMOUNT_LIMITS = Object.freeze({sacks:10, pies:240, kg:1000, saltKg:1000, goats:12, saved:1, waterL:TOWN_MISSION_MAX_LITRES, stops:8, litres:TOWN_MISSION_MAX_LITRES,
+  bolts:8, people:8, joints:8, wrecks:24, fuelL:2000, stolen:1, lootKg:3000});
+const AMOUNTS_OF = Object.freeze({trade:['sacks', 'pies'], delivery:['kg'], goats:['saltKg', 'goats'], 'outpost-fire':['saved', 'waterL'], fence:['stops'],
+  water:['litres'], crane:['bolts'], rescue:['people'], 'pipe-patch':['joints'], 'road-clear':['wrecks'], 'road-fight':['fuelL', 'stolen', 'lootKg']});
+function storyOf(town) {
+  if (!record(town.story)) town.story = {};
+  if (!record(town.story.facts)) town.story.facts = {};
+  if (!record(town.story.completed)) town.story.completed = {};
+  return town.story;
+}
+function townRowResult(town, result) {
+  const {runId, jobId, amounts} = result, row = typeof jobId === 'string' ? townJobRow(jobId) : null;
+  const names = row ? AMOUNTS_OF[row.kind] ?? [] : [];
+  const clear = typeof runId === 'string' && runId && runId.length <= 128 && row && record(amounts) &&
+    Object.keys(amounts).every(name => names.includes(name)) &&
+    Object.entries(amounts).every(([name, value]) => Number.isSafeInteger(value) && value >= 0 && value <= AMOUNT_LIMITS[name]);
+  if (!clear) return {ok:false, settled:false, message:'That job result is not clear.'};
+  if (townMissionSettled(town, runId)) return {ok:true, settled:false, message:'That job already has a result.'};
+  const state = missionsFor(town), cell = townMissionDropCell(town), get = name => amounts[name] ?? 0;
+  // What reached the town, by the kind of job.
+  let done = true, message = `${row.name} is done.`;
+  if (row.kind === 'trade') {
+    done = get('sacks') > 0;
+    if (get('pies') > 0) storeGood(town, cell, 'pie', get('pies'));
+    message = done ? `Dot has her flour, and ${get('pies')} pies went on the town's pile.` : 'No flour reached Dot this time.';
+  } else if (row.kind === 'delivery') {
+    done = get('kg') > 0;
+    message = done ? 'The school has its chalk and books.' : 'Nothing reached the school this time.';
+  } else if (row.kind === 'goats') {
+    done = get('goats') > 0;
+    message = done ? `${get('goats')} goats came down to the town.` : 'No goats came down this time.';
+  } else if (row.kind === 'water') {
+    done = get('litres') > 0;
+    message = `${get('litres')} litres went into Deck Town's tank.`;
+  } else if (row.kind === 'road-fight') {
+    if (row.side === 'defend' && get('fuelL') > 0) storeGood(town, cell, 'fuel', get('fuelL'));
+    if (row.side === 'attack' && get('lootKg') > 0) storeGood(town, cell, 'salvage', get('lootKg'));
+    message = row.side === 'defend' ? `${get('fuelL')} litres of fuel reached the town.` : `${get('lootKg')} kg of salvage went on the town's pile.`;
+  }
+  state.settled.push(runId);
+  if (state.settled.length > TOWN_MISSION_SETTLED_LIMIT) state.settled.splice(0, state.settled.length - TOWN_MISSION_SETTLED_LIMIT);
+  const totals = state.totals[jobId] ??= {runs:0, lastTick:'0'};
+  totals.runs += 1; totals.lastTick = String(town.tick ?? 0);
+  for (const name of names) totals[name] = (totals[name] ?? 0) + get(name);
+  state.history.push({runId, jobId, kind:'job', amounts:{...amounts}, tick:String(town.tick ?? 0)});
+  if (state.history.length > TOWN_MISSION_HISTORY_LIMIT) state.history.splice(0, state.history.length - TOWN_MISSION_HISTORY_LIMIT);
+  if (done) {
+    const story = storyOf(town);
+    if (row.fact) story.facts[row.fact] = true;
+    if (row.setsFact) story.facts[row.setsFact] = true;
+    if (row.chapter && row.completes !== false) story.completed[row.chapter] = true;
+    if (row.neighbourId && row.standing) changeTownNeighbourStanding(town, row.neighbourId, row.standing);
+    if (row.protects) setTownOutpostProtection(town, row.neighbourId, true);
+    if (row.opens?.report && row.answers) {
+      const report = (town.reports ?? []).find(item => item?.unanswered && item.eventId === row.opens.report);
+      if (report) answerReport(town, report.id, row.answers);
+    }
+  }
+  return {ok:true, settled:true, message};
 }
