@@ -1280,6 +1280,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-SITE-LOOKS.md"
 
+  - id: OPEN-TALK-CHOICES
+    title: "Open Scablands: a talk offers its choices from the start; asking stays optional, as the design says"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-TALK-CHOICES.md"
+
   - id: OPEN-T-LIGHTS
     title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
     owner: "codex"
