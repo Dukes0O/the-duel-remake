@@ -897,8 +897,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "ready"
-    waiting_on: "kyle"
+    status: "building"
+    claimed_by: "Claude cloud (Opus), 27 November 2026"
     needs: ["TOWN-FIRE-JOB","TOWN-OUTPOSTS"]
     locks: []
     details: "docs/board/cards/TOWN-JOBS-2.md"
