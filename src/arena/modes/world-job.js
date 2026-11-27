@@ -2269,7 +2269,7 @@ export function stepWorldJob(duel, dt) {
       // HOME-GROUND-1: the player's own ground reads its switch, the keys held this tick and a name typed in its box.
       ...(duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state),
         homeName: worldJob.homeNameInput ?? null} : {})}, dt);
-    worldJob.homeNameInput = null;
+    if (worldJob.homeNameInput) worldJob.homeNameInput = null;
     worldJob.ashHit = false;
     const clearings = openStep.open.parts.sites?.clearings;
     if (clearings !== worldJob.open.parts.sites?.clearings)

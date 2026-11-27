@@ -89,6 +89,7 @@ export const homePart = {
           requests.push(say('given', HOME_WORDS.given));
           const centre = groundCentre();
           requests.push({type: 'marker', place: {x: centre.x, z: centre.z, y: scablandsSurfaceHeightAt(centre.x, centre.z), radius: 6}});
+          next.marked = true;
         }
         if (['openTalkClosed', 'openTalkSkipped'].includes(event.type)) next.offerOpen = false;
       }
@@ -110,6 +111,11 @@ export const homePart = {
     const gateMiddle = gate && pieceInLand(gate);
     next.gateOpen = !!gateMiddle && !!where && Math.hypot(where.x - gateMiddle.x, where.z - gateMiddle.z) < GATE_OPENS;
     const near = !!fighter && outsideBy(fighter.position.x, fighter.position.z) < BUILD_NEAR;
+    // The marker that led him here goes once he stands on his ground.
+    if (state.marked && where && outsideBy(where.x, where.z) === 0) {
+      requests.push({type: 'marker', place: null});
+      next.marked = false;
+    }
 
     // The name: typed in the box, or the box closed without one.
     if (state.naming && view.homeName) {

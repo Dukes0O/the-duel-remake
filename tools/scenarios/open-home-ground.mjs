@@ -86,6 +86,7 @@ export const pageFunctions = {
     const y = window.__render?.camera?.position.y;
     return Number.isFinite(y) && (above ? y > metres : y < metres);
   },
+  marker: () => window.__qaApp.duel.state.arena.worldJob.marker ?? null,
   savedHome: () => {
     const app = window.__qaApp, profile = app.profile;
     return profile?.story?.open?.home ?? null;
@@ -162,7 +163,9 @@ export async function run(context) {
   await evaluate('advance', 6.2);
   await wait('hudShows', '.world-hud-burst', false);
   const first = point(10, .8);
+  if (!await evaluate('marker')) fail('His ground was not marked for him to find.');
   if (await walk(first, .2) > .4) fail('He could not walk onto his ground.');
+  if (await evaluate('marker')) fail('The marker stayed after he reached his ground.');
   await evaluate('face', Math.PI);
   now = await home();
   if (!now.prompt.startsWith('Hold B to hammer up the tin panel.')) fail('On his ground the outline did not say how to build.', now.prompt);

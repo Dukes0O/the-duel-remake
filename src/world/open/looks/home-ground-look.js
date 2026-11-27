@@ -162,7 +162,8 @@ export function createHomeGroundView({course} = {}) {
   const outlineFill = new THREE.Mesh(keep(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0)), materials.fill);
   const outlineEdges = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0))), materials.edge);
   outline.add(outlineBox, outlineFill, outlineEdges);
-  const marks = new THREE.InstancedMesh(keep(new THREE.BoxGeometry(1, .08, .32).translate(0, .04, 0)), materials.mark, MOST_MARKS);
+  // A mark is a chalk strip half a metre wide, so that it can be seen from straight above.
+  const marks = new THREE.InstancedMesh(keep(new THREE.BoxGeometry(1, .08, .5).translate(0, .04, 0)), materials.mark, MOST_MARKS);
   marks.name = 'home-marks'; group.add(marks);
   // The 2 m grid, shown only from above.
   const gridPoints = [];
@@ -268,9 +269,11 @@ export function createHomeGroundView({course} = {}) {
         materials.outline.color.setHex(colour); materials.fill.color.setHex(colour); materials.edge.color.setHex(colour);
         const wobble = shape.shake ? Math.sin(seconds * 60) * .06 : 0;
         outline.position.set(x + wobble, ground(x, z, drawnShift), z); outline.rotation.y = yawOf(heading);
-        outlineBox.scale.set(length, height, .3); outlineEdges.scale.set(length, height, .3);
+        // From above the outline is drawn a metre thick, or it would be a hair seen from 60 m.
+        const depth = state.above ? 1 : .3;
+        outlineBox.scale.set(length, height, depth); outlineEdges.scale.set(length, height, depth);
         outlineFill.visible = shape.progress > 0;
-        outlineFill.scale.set(length * .98, Math.max(.01, height * shape.progress), .32);
+        outlineFill.scale.set(length * .98, Math.max(.01, height * shape.progress), depth + .02);
       }
     },
     dispose() {
