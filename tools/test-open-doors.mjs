@@ -166,6 +166,8 @@ const street = pointInBuilding(forge,[0,forge.size[1]/2+1]);
 pageFunctions.start();
 const {duel} = app, job = duel.state.arena.worldJob;
 const tick = () => duel.step(1/120);
+// Stage daytime before the first tick: dawn can start the runaway story and put Slack in the wash doorway.
+job.open.daySeconds = 2 * 60;
 app.advance(4);
 pageFunctions.park(street,scablandsSurfaceHeightAt(street.x,street.z),pointInBuilding(forge,forge.carBay.at));
 pageFunctions.walk(true);
