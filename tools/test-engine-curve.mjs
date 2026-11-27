@@ -22,6 +22,10 @@ const def = {id: 'test-engine-curve', name: 'Test only', kind: 'circuit', closed
     ['straight', 6000], ['turn', 'L', 90, 100], ['straight', 500], ['turn', 'L', 90, 100]]};
 const flags = on => createFeatureFlags({storage: null, overrides: on === null ? {} : {'engine-curve': on}});
 const IDS = Object.keys(CARS).filter(id => CARS[id].electric !== true); // Electric single-gear cars have no piston engine or shift trade.
+// Slow Workshop trucks cannot reach 100 mph. Exercise the same shift rules
+// at the same low/mid-range shares of their top speed; tolerances are unchanged.
+// Released cars keep their 0 to 100 mph mark exactly (the review of 27 November 2026 caught the Titan moving to 98.6).
+const shiftMark = id => CARS[id].workshop ? Math.min(100, CARS[id].topSpeed * .85) : 100;
 const topOf = id => CARS[id].topSpeed * (CARS[id].factoryMaxed ? 1.105 : 1);
 
 // A full-throttle run on a flat straight, in one gear box: the seconds to reach each speed in `marks`.
@@ -204,24 +208,26 @@ test('a Grand Prix field: every racer within 2% of today after a minute and a ha
 
 test('manual box: changing up at the lights is as quick as the automatic', () => {
   for (const id of IDS) {
-    const auto = secondsTo(id, [100], {curve: true})[0];
-    const lights = secondsTo(id, [100], {curve: true, difficulty: 'pro', shiftAt: .975})[0];
+    const auto = secondsTo(id, [shiftMark(id)], {curve: true})[0];
+    const lights = secondsTo(id, [shiftMark(id)], {curve: true, difficulty: 'pro', shiftAt: .975})[0];
     assert.ok(Math.abs(lights / auto - 1) <= .01, `${id}: ${auto.toFixed(3)} s automatic, ${lights.toFixed(3)} s manual at 97.5% revs`);
   }
 });
 
-test('manual box: shifting at 50% revs is at least 5% slower from 0 to 100 mph', () => {
+test('manual box: shifting at 50% revs is at least 5% slower to the reachable comparison speed', () => {
   for (const id of IDS) {
-    const auto = secondsTo(id, [100], {curve: true})[0];
-    const early = secondsTo(id, [100], {curve: true, difficulty: 'pro', shiftAt: .5})[0];
+    const auto = secondsTo(id, [shiftMark(id)], {curve: true})[0];
+    const early = secondsTo(id, [shiftMark(id)], {curve: true, difficulty: 'pro', shiftAt: .5})[0];
     assert.ok(early >= auto * 1.05, `${id}: ${auto.toFixed(3)} s automatic, ${early.toFixed(3)} s shifting at half revs`);
   }
 });
 
-test('manual box: held in top gear from 30 to 60 mph takes at least twice as long as the automatic box', () => {
+test('manual box: held in top gear through the low-speed comparison takes at least twice as long as the automatic box', () => {
   for (const id of IDS) {
-    const auto = secondsTo(id, [60], {curve: true, from: 30})[0];
-    const held = secondsTo(id, [60], {curve: true, difficulty: 'pro', from: 30, gear: CARS[id].gears.length - 1, hold: true})[0];
+    const from = CARS[id].workshop ? Math.min(30, CARS[id].topSpeed * .2) : 30;
+    const to = CARS[id].workshop ? Math.min(60, CARS[id].topSpeed * .4) : 60;
+    const auto = secondsTo(id, [to], {curve: true, from})[0];
+    const held = secondsTo(id, [to], {curve: true, difficulty: 'pro', from, gear: CARS[id].gears.length - 1, hold: true})[0];
     assert.ok(held >= auto * 2, `${id}: ${auto.toFixed(2)} s automatic, ${held.toFixed(2)} s held in top gear`);
   }
 });

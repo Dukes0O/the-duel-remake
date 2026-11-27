@@ -172,9 +172,9 @@ test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, sh
   const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'];
   // The Falcone Sirena (SIRENA-CAR) is on no list until DEEP-SIRENA-VIEW lists it once the Lab restores it.
   const sirena = 'falcone_sirena';
-  const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34');
-  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
-  assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
+  const today = Object.keys(CARS).filter(id => !CARS[id].workshop && !medalCars.includes(id) && id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34');
+  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !CARS[id].workshop && !medalCars.includes(id) && id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
+  assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => !CARS[id].workshop && id !== sirena && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
   assert.deepEqual(shownCarIds(false), today);
   assert.deepEqual(AIR_ONLY_CARS, [sirena, 'falcone_vasca', 'mcmurtry_speirling']);
   assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
@@ -226,7 +226,7 @@ import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
 const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
-const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== 'falcone_sirena' && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'); // story cars are listed only when owned
+const today = Object.keys(CARS).filter(id => !CARS[id].workshop && !medalCars.includes(id) && id !== 'falcone_sirena' && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'); // story cars are listed only when owned
 // Lists: off is today's, on adds the medal cars.
 assert.deepEqual(shownCarIds(false), today);
 assert.deepEqual(shownCarIds(true), [...today, ...medalCars]);
@@ -305,12 +305,28 @@ assert.ok(html.indexOf('MEDAL SHEET') < html.indexOf('PAINT FINISH') && html.inc
 flags['earned-cars'] = false;
 const choices = {car: 'medal_test_a', rival: {car: 'medal_test_b', upgradeLevel: 0}};
 const text = {}, ui = {'car-select': {options: shownCarIds(false).map(value => ({value})), value: ''}, 'driver-select': {innerHTML: '', value: ''}, 'entry-reward': {}};
+ui['car-select'].append = option => ui['car-select'].options.push(option);
+const root = {ownerDocument: {createElement: () => {
+  const option = {value: '', textContent: ''};
+  option.remove = () => { ui['car-select'].options = ui['car-select'].options.filter(item => item !== option); };
+  return option;
+}}};
 const menu = createMenuScreen({app, choices, ui, profile: () => saved, credits: String, escapeHTML: String,
-  text: (key, value) => { text[key] = String(value); }, root: {}, coursePreview: {}, time: String, onEntryReward: () => {}}).updateMenuCar;
+  text: (key, value) => { text[key] = String(value); }, root, coursePreview: {}, time: String, onEntryReward: () => {}}).updateMenuCar;
 menu();
 assert.equal(choices.car, 'falcone_f42');
 assert.equal(choices.rival.car, 'match');
 assert.equal(text['garage-count'], '01 / ' + String(today.length).padStart(2, '0'));
+flags['wasteland-cars'] = true;
+for (const id of Object.keys(CARS).filter(key => CARS[key].workshop)) {
+  saved.unlockedCars.push(id); choices.car = id; choices.rival = {car: id}; menu();
+  assert.equal(choices.car, id, 'the owned Workshop car stays selected');
+  assert.ok(ui['car-select'].options.some(option => option.value === id));
+  assert.equal(choices.rival.car, 'match', 'Workshop cars are player choices only');
+}
+saved = createProfile(); menu();
+assert.equal(choices.car, 'falcone_f42', 'switching player cannot borrow a Workshop car');
+assert.ok(ui['car-select'].options.every(option => !CARS[option.value].workshop));
 console.log('scratch earned-car screens passed');
 `;
     const run = spawnSync(process.execPath, ['--input-type=module', '-e', code], {cwd: scratch, encoding: 'utf8', windowsHide: true});

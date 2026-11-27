@@ -8,7 +8,7 @@ import {pilotStep, arenaCarSpec} from '../src/arena/arena-pilot.js';
 
 const STEP = 1 / 120;
 const TITAN = 'titan_monster';
-const others = Object.keys(CARS).filter(id => id !== TITAN);
+const others = Object.keys(CARS).filter(id => id !== TITAN && !CARS[id].workshop);
 const fixturePath = new URL('./replays/titan-handling.json', import.meta.url);
 const failures = [];
 let checks = 0;

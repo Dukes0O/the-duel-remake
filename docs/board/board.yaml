@@ -1142,16 +1142,6 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-JOBS-3.md"
 
-  - id: CAR-DRIVE-WASTE
-    title: "The Wasteland cars become drivable"
-    owner: "codex"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: ["CAR-ART-RATTLER","CAR-ART-LONGHAUL","CAR-ART-SCARAB","CAR-ART-BULLY"]
-    locks: ["busy-game-files"]
-    details: "docs/board/cards/CAR-DRIVE-WASTE.md"
-
   - id: MACHINE-YARD-NEXT
     title: "The machine yard after its first hand plays: what the road machines and the drill still need"
     owner: "claude"

@@ -141,8 +141,10 @@ export function chooseCars({ playerSpec, playerCar, playerUpgrades, racers, cpuD
   const tuning = FIELD_TUNING[cpuDifficulty] || FIELD_TUNING.medium;
   const target = performanceIndex(playerSpec, course);
   const rng = makeRng((seed ^ 0xc4a7) >>> 0);
-  const own = () => ({ car: playerCar, level: Math.round(Math.min(3, ...Object.values(playerUpgrades || {}).concat(3))) });
-  const pool = ROAD_CLASS.includes(playerCar) ? ROAD_CARS : [];
+  // A Workshop car belongs to the player alone: the field is chosen as for its rival type (CAR-DRIVE-WASTE).
+  const fieldCar = CARS[playerCar]?.workshop ? CARS[playerCar].rivalCar : playerCar;
+  const own = () => ({ car: fieldCar, level: Math.round(Math.min(3, ...Object.values(playerUpgrades || {}).concat(3))) });
+  const pool = ROAD_CLASS.includes(fieldCar) ? ROAD_CARS : [];
   const candidates = [];
   for (const car of pool) for (let level = 0; level <= 3; level++) {
     const generic = racerSpec(car, levelsFor(level), 'club');

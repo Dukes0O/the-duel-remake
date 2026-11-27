@@ -141,8 +141,16 @@ function updateMenuCar() {
   if(skylineOn && !skylineOption) {
     const option = root.ownerDocument.createElement('option'); option.value=KOGANE_SKYLINE; option.textContent=CARS[KOGANE_SKYLINE].name; ui['car-select'].append(option);
   } else if(!skylineOn) skylineOption?.remove?.();
+  const workshopCars = Object.keys(CARS).filter(id => CARS[id].workshop);
+  const ownedWorkshopCars = workshopCars.filter(id => app._switches?.().enabled('wasteland-cars') === true && isCarUnlocked(profile(), id));
+  for (const id of workshopCars) {
+    const option = [...ui['car-select'].options].find(item => item.value === id);
+    if (ownedWorkshopCars.includes(id) && !option) {
+      const item = root.ownerDocument.createElement('option'); item.value = id; item.textContent = CARS[id].name; ui['car-select'].append(item);
+    } else if (!ownedWorkshopCars.includes(id)) option?.remove?.();
+  }
   // A car hidden by the earned-cars switch is never the menu car or the rival's car.
-  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn) || skylineOn && choices.car===KOGANE_SKYLINE || sirenaOn && choices.car==='falcone_sirena' || vascaOn && choices.car==='falcone_vasca' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
+  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn) || ownedWorkshopCars.includes(choices.car) || skylineOn && choices.car===KOGANE_SKYLINE || sirenaOn && choices.car==='falcone_sirena' || vascaOn && choices.car==='falcone_vasca' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
   // The Skyline is the story's prize: a rival car in the player's own setup only once they own it (Daichi is set by the story itself, not here).
   const rivalSkyline = ui['rival-car'] && [...(ui['rival-car'].options ?? [])].find(option => option.value === KOGANE_SKYLINE);
   if (skylineOn && ui['rival-car']?.append && !rivalSkyline) {
@@ -153,7 +161,7 @@ function updateMenuCar() {
   app.duel.state.car = choices.car; app.menuCar = choices.car;
   text('car-speed', speedKph(car.topSpeed)); text('car-gears', String(car.gears.length).padStart(2,'0'));
   text('car-character', car.grip >= .9 ? 'PLANTED' : 'UNTAMED');
-  const carIds = [...shownCarIds(earnedOn), ...(skylineOn?[KOGANE_SKYLINE]:[]), ...(sirenaOn?['falcone_sirena']:[]), ...(vascaOn?['falcone_vasca']:[]), ...(fanOn?['mcmurtry_speirling']:[])];
+  const carIds = [...shownCarIds(earnedOn), ...(skylineOn?[KOGANE_SKYLINE]:[]), ...(sirenaOn?['falcone_sirena']:[]), ...(vascaOn?['falcone_vasca']:[]), ...(fanOn?['mcmurtry_speirling']:[]), ...ownedWorkshopCars];
   text('garage-count', `${String(carIds.indexOf(choices.car)+1).padStart(2,'0')} / ${String(carIds.length).padStart(2,'0')}`);
   text('menu-credits', `${credits(profile().credits)} CR`);
   for(const option of ui['car-select'].options){const key=option.value,progress=completionCarProgress(profile(),key),locked=medalProgressLabel(profile(),key)??(progress.total?`MAX OTHER CARS ${progress.maxed}/${progress.total}`:`${credits(CAR_PRICES[key])} CR`);option.textContent=isCarUnlocked(profile(),key)?CARS[key].name:`${CARS[key].name} · LOCKED · ${locked}`;}

@@ -12,12 +12,15 @@ import { createSirenaVehicle, SIRENA_VEHICLE_DIMENSIONS } from './sirena-vehicle
 import {createVascaVehicle, VASCA_VEHICLE_DIMENSIONS} from './vasca-vehicle.js';
 import { loadHeroVehicle } from './hero-vehicle.js';
 import { loadSpeirlingVehicle } from './speirling-vehicle.js';
+import {loadWastelandVehicle} from './wasteland-vehicles.js';
+import {isWorkshopCar} from './town/content/workshop-cars.js';
 
 // One source of model selection for the player, rival and personal-best ghost.
 // Nine original models are ready synchronously. Heritage and Aurora share the
 // licensed GLB, with the former F42 sport trim and the separate GT package.
 // A pending or failed import never substitutes an earlier coupe silhouette.
-export function createVehicleAssets({ loadSkyline = loadSkylineVehicle, loadHero = loadHeroVehicle, loadSpeirling = loadSpeirlingVehicle, loadWreck = loadSirenaWreck, flags = featureFlags } = {}) {
+export function createVehicleAssets({ loadWasteland = loadWastelandVehicle, loadSkyline = loadSkylineVehicle, loadHero = loadHeroVehicle, loadSpeirling = loadSpeirlingVehicle, loadWreck = loadSirenaWreck, flags = featureFlags } = {}) {
+  const wasteland = new Map();
   let skyline, skylinePending, skylineFailed = false;
   let hero, pending, failed = false;
   let speirling, fanPending, fanFailed = false;
@@ -28,8 +31,13 @@ export function createVehicleAssets({ loadSkyline = loadSkylineVehicle, loadHero
   const earnedDimensions = { ...ENZO_VEHICLE_DIMENSIONS, ...MCLAREN_F1_VEHICLE_DIMENSIONS, ...BOLIDE_VEHICLE_DIMENSIONS, ...SIRENA_VEHICLE_DIMENSIONS,
     ...(flags.enabled('deep-vasca') ? VASCA_VEHICLE_DIMENSIONS : {}) };
   const licensedKinds = { falcone_heritage: 'sport', aurora_gt: 'gt' };
-  const source = key => key === 'nissan_skyline_gtr_r34' ? (flags.enabled('nissan-skyline') ? 'skyline' : null) : key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
+  const source = key => isWorkshopCar(key) ? (flags.enabled('wasteland-cars') ? 'wasteland' : null) : key === 'nissan_skyline_gtr_r34' ? (flags.enabled('nissan-skyline') ? 'skyline' : null) : key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
   function status(key, options) {
+    if (isWorkshopCar(key)) {
+      if (!flags.enabled('wasteland-cars')) return 'error';
+      const entry = wasteland.get(key);
+      return entry?.factory ? 'ready' : entry?.failed ? 'error' : entry?.pending ? 'loading' : 'idle';
+    }
     if (source(key) === 'skyline') return skyline ? 'ready' : skylineFailed ? 'error' : skylinePending ? 'loading' : 'idle';
     if (isWreck(key, options)) return wreck ? 'ready' : wreckFailed ? 'error' : wreckPending ? 'loading' : 'idle';
     if (source(key) === 'speirling') return speirling ? 'ready' : fanFailed ? 'error' : fanPending ? 'loading' : 'idle';
@@ -37,6 +45,20 @@ export function createVehicleAssets({ loadSkyline = loadSkylineVehicle, loadHero
     return source(key) ? 'ready' : 'error';
   }
   function load(key, { retry = false, finish } = {}) {
+    if (isWorkshopCar(key)) {
+      if (!flags.enabled('wasteland-cars')) return Promise.resolve(false);
+      let entry = wasteland.get(key);
+      if (entry?.factory) return Promise.resolve(true);
+      if (entry?.pending) return entry.pending;
+      if (entry?.failed && !retry) return Promise.resolve(false);
+      entry = {factory: null, failed: false, pending: null};
+      wasteland.set(key, entry);
+      entry.pending = Promise.resolve().then(() => loadWasteland(key)).then(factory => {
+        if (typeof factory !== 'function') throw new TypeError('Workshop asset did not return a model factory.');
+        entry.factory = factory; return true;
+      }).catch(() => {entry.failed = true; return false;}).finally(() => {entry.pending = null;});
+      return entry.pending;
+    }
     if (source(key) === 'skyline') {
       if (skyline) return Promise.resolve(true);
       if (skylinePending) return skylinePending;
@@ -84,6 +106,12 @@ export function createVehicleAssets({ loadSkyline = loadSkylineVehicle, loadHero
   function create(key, options = {}) {
     if (status(key, options) !== 'ready') return null;
     const appearance = { color: CARS[key]?.color, accent: CARS[key]?.accent, ...options, key };
+    if (isWorkshopCar(key)) {
+      const vehicle = wasteland.get(key).factory(appearance);
+      vehicle.userData.vehicleKey = key;
+      vehicle.userData.vehicleSource = 'wasteland';
+      return vehicle;
+    }
     const vehicle = source(key) === 'skyline' ? skyline(appearance) : isWreck(key, options) ? wreck(appearance) : source(key) === 'speirling' ? speirling(appearance) : source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
     vehicle.userData.vehicleKey = key;
     vehicle.userData.vehicleSource = source(key);

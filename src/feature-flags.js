@@ -82,6 +82,7 @@ export const FEATURE_STATES = Object.freeze({
   'far-jobs': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
+  'wasteland-cars': 'dev',
   // WEAPON-WATER-CANNON: the water cannon as a car weapon, offered in the Armory once your town has a Fire Station
   // (docs/ARSENAL.md, src/arsenal/water-cannon.js). The fire truck's own cannon comes with wasteland-town. Off in the game.
   'water-cannon': 'dev',

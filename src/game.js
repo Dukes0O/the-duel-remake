@@ -384,9 +384,12 @@ export class Duel {
     s.status = 'countdown';
     // rival
     const rivalSettings=s.rivalSettings;
-    const rivalCar=rivalSettings?.car&&rivalSettings.car!=='match'?rivalSettings.car:s.car;
+    const selectedRival=rivalSettings?.car&&rivalSettings.car!=='match'?rivalSettings.car:s.car;
+    // Workshop cars belong to the player. Matching one uses its established
+    // rival type, so the computer field keeps the cars its routes were built for.
+    const rivalCar=CARS[selectedRival].workshop?CARS[selectedRival].rivalCar:selectedRival;
     const rivalLevels=Object.fromEntries(UPGRADE_KEYS.map(key=>[key,CARS[rivalCar].factoryMaxed?3:rivalSettings?.upgradeLevel||0]));
-    this.rivalSpec=rivalSettings?applyDriverModifiers(upgradedCar(CARS[rivalCar],rivalLevels),rivalSettings.driverId,rivalCar):CARS[s.car];
+    this.rivalSpec=rivalSettings?applyDriverModifiers(upgradedCar(CARS[rivalCar],rivalLevels),rivalSettings.driverId,rivalCar):CARS[rivalCar];
     const firstOpponent = (!grandPrix && s.opponentCount > 0 && !s.practice && (COURSE[idx].hasRival || s.opponentCount > 1) && s.mode !== 'timetrial')
       ? { car:rivalCar,driverId:rivalSettings?.driverId||DEFAULT_DRIVER,upgrades:rivalLevels,s: this.course.rivalStartS ?? -20, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
         headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost:1, boosting:false,

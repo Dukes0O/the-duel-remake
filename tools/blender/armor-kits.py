@@ -32,6 +32,11 @@ SIZES = {
     # The Nissan Skyline GT-R R34 (SKYLINE-FULL-GAME): the model's own size. Its shell is the unlocks GLB, whose body is the
     # skyline_paint material. Last, so the cars before it keep their plates.
     'nissan_skyline_gtr_r34': (1.96, 4.60, 1.36),
+    # Workshop cars: runtime bounds; append so all previous kit shapes stay exact.
+    'rattler': (2.442, 4.508, 1.791),
+    'longhaul': (3.186, 6.938, 3.941),
+    'scarab': (2.268, 4.072, 2.613),
+    'bully': (2.560, 5.821, 2.880),
 }
 
 # Where the general placement rules would put a plate on a wheel, a car gets its own numbers. The Sirena's wheels stand
@@ -39,6 +44,8 @@ SIZES = {
 # `fenderGrid`; the front one stops where the hood drops away from the fender), its exhaust stacks stand behind the rear
 # wheels and its Raider door sheets stop short of them.
 CAR_RULES = {
+    'scarab': {'stack_x': .45, 'stack_base': .686},
+    'longhaul': {'cabin_front': 1.8, 'cabin_rear': .8, 'turret_z': 1.3},
     # The Skyline (SKYLINE-FULL-GAME): see ground_y in body_skin_from_source.
     'nissan_skyline_gtr_r34': {'shell_ratio': .36, 'ground_y': 0.0, 'raider_doors': [(-.95, -.30), (-.115, .874)]},
     'falcone_sirena': {'quarter': (.70, .78), 'quarter_reach': [(.57, .30), (.57, .57)], 'stack_z': -1.74,
@@ -532,10 +539,12 @@ def build(car, width, length, height, material, sal_material, mark_material,
     for x in [-width*.34, width*.34]:
         rod('bull-bar-brace', bar, material, (x, .26, front+.02),
             (x, .56, front-.085), .045)
-    stack_z = CAR_RULES.get(car, {}).get('stack_z', -length*.31)
-    for j, x in enumerate([-width*.39, width*.39]):
+    rules = CAR_RULES.get(car, {})
+    stack_z = rules.get('stack_z', -length*.31)
+    stack_x = rules.get('stack_x', width*.39)
+    for j, x in enumerate([-stack_x, stack_x]):
         stack = empty(f'kit-stack-{j}', scrapper)
-        rod('stack-pipe', stack, material, (x, roof*.57, stack_z),
+        rod('stack-pipe', stack, material, (x, rules.get('stack_base', roof*.57), stack_z),
             (x, roof*.57 + min(.7, height*.32), stack_z), .095)
         rod('stack-cap', stack, material, (x-.11, roof*.57 + min(.7, height*.32), stack_z),
             (x+.11, roof*.57 + min(.7, height*.32), stack_z), .06)
@@ -583,8 +592,8 @@ def build(car, width, length, height, material, sal_material, mark_material,
                 x=body_x(fit,sign,z,width/2,flank_y-.04)+sign*.03
                 rod('raider-door-rivet',raider,material,
                     (x,flank_y-.04,z),(x+sign*.02,flank_y-.04,z),.027,6)
-    cabin_front=length*.10
-    cabin_rear=-length*.17
+    cabin_front=rules.get('cabin_front', length*.10)
+    cabin_rear=rules.get('cabin_rear', -length*.17)
     rail_span=.24 if car=='viper_proto' else .31
     rail_foot=.19 if car=='viper_proto' else .26
     for sign in [-1, 1]:
@@ -608,13 +617,14 @@ def build(car, width, length, height, material, sal_material, mark_material,
     rod('cage-crossbar', cage, material, (-width*rail_span, roof+.07, cabin_front),
         (width*rail_span, roof+.07, cabin_front), .045)
     turret = empty('kit-turret-mount', raider)
+    turret_z = rules.get('turret_z', -.18)
     bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=width*.17, depth=.10,
-                                         location=(0, roof+.17, -.18))
+                                         location=(0, roof+.17, turret_z))
     bpy.context.object.rotation_euler.x = math.pi/2
     finish(bpy.context.object, 'turret-ring', turret, material)
     for sign in [-1, 1]:
-        rod('mount-truss', turret, material, (sign*width*.17, roof+.15, -.18),
-            (sign*width*.28, roof-.08, -.38), .05)
+        rod('mount-truss', turret, material, (sign*width*.17, roof+.15, turret_z),
+            (sign*width*.28, roof-.08, turret_z-.2), .05)
 
     crown = empty('kit-crown', warlord)
     for j in range(5):

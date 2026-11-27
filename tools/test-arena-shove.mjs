@@ -198,12 +198,12 @@ for (const fps of [30, 60, 144]) for (const kind of fixture.sittingStates) {
 
 // The nine cars of the released game, before the first medal car (the Enzo),
 // the ten with the Enzo, and the eleven with the F1, before the Bolide.
-const RELEASED_CARS = CARS_IN_GAME.filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
-const ENZO_ERA_CARS = CARS_IN_GAME.filter(car => !['mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
-const F1_ERA_CARS = CARS_IN_GAME.filter(car => !['bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
-const BOLIDE_ERA_CARS = CARS_IN_GAME.filter(car => !['falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
-const SIRENA_ERA_CARS = CARS_IN_GAME.filter(car => car !== 'mcmurtry_speirling' && car !== 'nissan_skyline_gtr_r34');
-const SPEIRLING_ERA_CARS = CARS_IN_GAME.filter(car => car !== 'nissan_skyline_gtr_r34');
+const RELEASED_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop).filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
+const ENZO_ERA_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop).filter(car => !['mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
+const F1_ERA_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop).filter(car => !['bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
+const BOLIDE_ERA_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop).filter(car => !['falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car));
+const SIRENA_ERA_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop).filter(car => car !== 'mcmurtry_speirling' && car !== 'nissan_skyline_gtr_r34');
+const SPEIRLING_ERA_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop).filter(car => car !== 'nissan_skyline_gtr_r34');
 export function solverControl(cars = CARS_IN_GAME) {
   const results = [];
   for (const attackingCar of cars) for (const targetCar of cars) {
@@ -228,7 +228,7 @@ test('released solver all-mass rear/side/corner fingerprint stays unchanged', ()
   eq(solverControl(BOLIDE_ERA_CARS), fixture.solverFingerprintWithBolide, 'the same solver with the Bolide added to every mass pair');
   eq(solverControl(SIRENA_ERA_CARS), fixture.solverFingerprintWithSirena, 'the Sirena joins every mass pair without changing historical solver pins');
   eq(solverControl(SPEIRLING_ERA_CARS), fixture.solverFingerprintWithSpeirling, 'the fan joins every current mass pair without changing historical solver pins');
-  eq(solverControl(), fixture.solverFingerprintWithSkyline, 'the Skyline (released with the Kogane story) joins every mass pair without changing historical solver pins');
+  eq(solverControl(CARS_IN_GAME.filter(car => !CARS[car].workshop)), fixture.solverFingerprintWithSkyline, 'the Skyline (released with the Kogane story) joins every mass pair without changing historical solver pins');
 });
 
 test('released solver conserves linear momentum and never adds energy', () => {

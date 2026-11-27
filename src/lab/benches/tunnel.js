@@ -11,7 +11,7 @@ export {carMassKg};
 import {control, choice, makeBench} from './bench-core.js';
 
 const MPH = DRIVE.mphToWorld;
-const carIds = Object.keys(CARS);
+const carIds = Object.keys(CARS).filter(id => !CARS[id].workshop);
 
 // ---- Grip: grip against slide ------------------------------------------------------------------------
 // The slide angle the tyre-slip rule draws at a given slip, inverted by bisection (the angle only grows with slip).

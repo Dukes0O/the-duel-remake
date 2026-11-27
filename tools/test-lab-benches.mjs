@@ -328,7 +328,8 @@ test('wind tunnel downforce: twice the speed, four times the push, and the wing 
 test('wind tunnel braking: a real car\'s braking, a hundred needs four times the road of fifty, weight tips forward at that braking', () => {
   const id = Object.keys(CARS)[0];
   near(brakingBench.facts().hundredOverFifty, 4, 1e-12, 'stopping distance ratio');
-  for (const carId of Object.keys(CARS)) {
+  // Every car the Lab offers: the bench leaves out the Workshop's cars (CAR-DRIVE-WASTE), as the lessons do.
+  for (const carId of Object.keys(CARS).filter(carId => !CARS[carId].workshop)) {
     const a = BRAKE_RIG.g * CARS[carId].braking + BRAKE_RIG.dragMs2;
     near(stopDistance(carId, 100).metres, (100 * DRIVE.mphToWorld) ** 2 / (2 * a), 1e-12, `${carId} stops as v squared over 2a`);
     near(stopDistance(carId, 100).seconds, 100 * DRIVE.mphToWorld / a, 1e-12, `${carId} stops in v over a`);

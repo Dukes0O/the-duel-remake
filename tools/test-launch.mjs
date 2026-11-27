@@ -35,7 +35,7 @@ test('every car races at its own engine level on the Casual gearbox', () => {
 test('0 to 60 mph: fastest car 2.4 to 2.8 s, slowest stock car 3.6 to 4.2 s', () => {
   const times = ids.map(id => runs[id].seconds);
   const fastest = Math.min(...times);
-  const slowestStock = Math.max(...ids.filter(id => !CARS[id].factoryMaxed).map(id => runs[id].seconds));
+  const slowestStock = Math.max(...ids.filter(id => !CARS[id].factoryMaxed && !CARS[id].workshop).map(id => runs[id].seconds));
   assert.ok(fastest >= 2.4 && fastest <= 2.8, `fastest 0 to 60 is ${fastest.toFixed(3)} s`);
   assert.ok(slowestStock >= 3.6 && slowestStock <= 4.2, `slowest stock 0 to 60 is ${slowestStock.toFixed(3)} s`);
 });

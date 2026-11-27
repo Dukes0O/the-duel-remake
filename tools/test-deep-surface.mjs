@@ -53,9 +53,12 @@ test('every car keeps its own thrust, steering grip and strict speed ceiling inc
     const surface = duel._drivingSurface(st.s, st.lateral);
     near(surface.traction, .75 * (tyre === 'winter' ? .94 : 1), `${id} traction`);
     near(surface.speedLimit, car.topSpeed * .7, `${id} surface cap`);
+    // Stay in each first gear's full-thrust range; Bully's first gear ends at 18 mph.
+    const launchSpeed = Math.min(10, car.gears[0] / 2);
+    st.speedMph = launchSpeed;
     duel.setInput({ throttle: 1, brake: 0, steer: 0, boost: false });
     duel._drive(DT);
-    near(st.speedMph, 10 + car.accel * DRIVE.accelScale * .6 * DT - DRIVE.dragCoeff * .2 * DT, `${id} thrust`);
+    near(st.speedMph, launchSpeed + car.accel * DRIVE.accelScale * .6 * DT - DRIVE.dragCoeff * .2 * DT, `${id} thrust`);
     Object.assign(st, { speedMph: -1, gear: -1 });
     duel.setInput({ throttle: 0, brake: 1 });
     duel._drive(DT);

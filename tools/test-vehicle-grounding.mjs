@@ -23,8 +23,8 @@ for(const model of models){
   const meta=prepareVehicleGrounding(v);
   ok(Object.isFrozen(meta)&&Object.isFrozen(meta.wheels),`${model.key} immutable cached metadata`);
   near(meta.contactY,Math.min(...model.wheels.map(w=>w.minY)),1e-9,`${model.key} actual tire base`);
-  ok(meta.wheels.length===4,`${model.key} four measured tires`);
-  for(let i=0;i<4;i++)near(v.userData.wheels[i].parent.userData.radius,model.wheels[i].radius,1e-9,`${model.key} measured rolling radius`);
+  ok(meta.wheels.length===(model.key==='longhaul'?6:4),`${model.key} every authored tire is measured`);
+  for(let i=0;i<meta.wheels.length;i++)near(v.userData.wheels[i].parent.userData.radius,model.wheels[i].radius,1e-9,`${model.key} measured rolling radius`);
   for(const[n,g,version,p]of geometryBefore){ok(n.geometry===g&&g.attributes.position.version===version,`${model.key} no geometry mutation`);if(n!==v.userData.contactShadow)ok(n.position.equals(p),`${model.key} body and wheels stay together`);}
   const wheelNodes=new Set();for(const wheel of v.userData.wheels)wheel.traverse(n=>wheelNodes.add(n));
   let bodyFloor=Infinity;const vertex=new THREE.Vector3();
@@ -50,7 +50,7 @@ for(const model of models){
   ok(v.userData.grounding===meta&&v.rotation.order==='YXZ',`${model.key} cached yaw-first pose`);
   const groundedY=v.position.y;v.position.y+=2.25;
   near(v.position.y-groundedY,2.25,1e-12,`${model.key} airborne displacement preserved`);
-  for(let i=0;i<4;i++){v.userData.wheels[i].traverse=traverses[i];v.userData.wheels[i].rotation.x=0;}
+  for(let i=0;i<meta.wheels.length;i++){v.userData.wheels[i].traverse=traverses[i];v.userData.wheels[i].rotation.x=0;}
   updateVehicleDamage(v,2,false,0,{left:2});updateVehicleDamage(v,0,false,0,null);
   placeGroundedVehicle(v,p,0,0);
   ok(v.userData.grounding===meta,`${model.key} damage reset preserves tire origin`);

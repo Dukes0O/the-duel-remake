@@ -81,6 +81,7 @@ test('ordinary and pre-gate races have no armor before gate discovery', () => {
 test('all eleven car masses and both clamps set the exact base maximum armor', async () => {
   const {maxArmorForMass} = await import('../src/combat-armor.js');
   const expected = {
+    rattler: 87.09883407113854, longhaul: 160, scarab: 80, bully: 160,
     falcone_f42: 100,
     stuttgart_959s: 100,
     falcone_heritage: 100,

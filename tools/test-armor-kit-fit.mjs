@@ -87,3 +87,47 @@ test('Speirling tiers leave wheels, canopy and fan outlets clear', async () => {
     assert.ok(count>100,`${tier}: checked actual fitted geometry`);
   }
 });
+
+test('Scarab stacks clear the rear tyres and stand on the actual chassis', async () => {
+  const model=models.find(row=>row.key==='scarab'),kit=await loadGeometryOnly('scarab');
+  kit.updateMatrixWorld(true);
+  const tyres=model.vehicle.userData.wheels.map(wheel=>new THREE.Box3().setFromObject(wheel).expandByScalar(.012));
+  const point=new THREE.Vector3(),ray=new THREE.Raycaster(),body=[];
+  model.vehicle.traverse(mesh=>{if(mesh.isMesh&&mesh.material.name==='ground-in sand and road dust on lower chassis')body.push(mesh);});
+  for (const id of ['kit-stack-0','kit-stack-1']) {
+    const stack=kit.getObjectByName(id);assert.ok(stack);
+    stack.traverse(mesh=>{if(!mesh.isMesh)return;
+      const vertices=mesh.geometry.attributes.position;
+      for(let i=0;i<vertices.count;i++) {
+        point.fromBufferAttribute(vertices,i).applyMatrix4(mesh.matrixWorld);
+        assert.ok(tyres.every(box=>!box.containsPoint(point)),`${id}: no stack vertex enters a tyre`);
+      }
+    });
+    const bounds=new THREE.Box3().setFromObject(stack),centre=bounds.getCenter(new THREE.Vector3());
+    ray.set(new THREE.Vector3(centre.x,5,centre.z),new THREE.Vector3(0,-1,0));
+    const contact=ray.intersectObjects(body,false)[0];assert.ok(contact,'actual lower chassis below each stack');
+    const gap=bounds.min.y-contact.point.y;
+    assert.ok(gap<=.005&&gap>=-.04,`${id}: stack base seats on chassis, gap ${gap}`);
+  }
+});
+
+test('Longhaul cage feet sit in the cab roof instead of floating above the bed', async () => {
+  const model=models.find(row=>row.key==='longhaul'),kit=await loadGeometryOnly('longhaul');
+  kit.updateMatrixWorld(true);
+  const cage=kit.getObjectByName('kit-cage');assert.ok(cage);
+  const floor=new THREE.Box3().setFromObject(cage).min.y,body=[];
+  model.vehicle.traverse(mesh=>{if(mesh.isMesh&&/faded ochre enamel/.test(mesh.material.name))body.push(mesh);});
+  const point=new THREE.Vector3(),ray=new THREE.Raycaster();let feet=0;
+  cage.traverse(mesh=>{if(!mesh.isMesh)return;
+    const vertices=mesh.geometry.attributes.position;
+    for(let i=0;i<vertices.count;i++) {
+      point.fromBufferAttribute(vertices,i).applyMatrix4(mesh.matrixWorld);
+      if(point.y>floor+.04)continue;
+      ray.set(new THREE.Vector3(point.x,8,point.z),new THREE.Vector3(0,-1,0));
+      const contact=ray.intersectObjects(body,false)[0];assert.ok(contact,'painted cab roof under each cage foot');
+      const gap=point.y-contact.point.y;
+      assert.ok(gap<=.005&&gap>=-.12,`cage foot seats inside the roof, gap ${gap}`);feet++;
+    }
+  });
+  assert.ok(feet>=16,'all four feet contribute actual geometry');
+});
