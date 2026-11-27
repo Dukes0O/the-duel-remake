@@ -140,7 +140,7 @@ export function radioHillLayout() {
   }
 
   const spots = {
-    // The rules' own spots (src/world/open/content/sites.js), at the same places.
+    // The original rule spots keep their authored positions.
     mast: {x: 1.6, z: 0}, generator: {x: -4, z: -2.5}, anchor: {x: 10, z: 1.4},
     door: {x: -7, z: 6.6}, lookout: {x: 3, z: 12}, bench: {x: -10.5, z: 5}, bed: {x: -7, z: 4},
     // Where the player leaves the car, south of the camp on the open hilltop, with the lookout between it and the hut.

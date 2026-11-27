@@ -13,6 +13,7 @@ import {RADIO_HILL_SPOTS, BUS_RING_SPOTS} from '../src/world/open/content/site-l
 import {RADIO_HILL_BUDGET, RADIO_HILL_LAYOUT, radioHillSolids} from '../src/world/open/looks/radio-hill-look.js';
 import {BUS_RING_BUDGET, BUS_RING_LAYOUT, busRingSolids, busRingWeld} from '../src/world/open/looks/bus-ring-look.js';
 import {RATS_NEST_BUDGET, RATS_NEST_LAYOUT} from '../src/world/open/looks/rats-nest-look.js';
+import {RADIO_ID, RADIO_MARK} from '../src/world/open/content/radio-hill-voice-places.js';
 import {installSiteGround} from '../src/world/open/site-ground.js';
 import {sitesPart} from '../src/world/open/parts/sites.js';
 import {createFixedThingsView, createSmallThingsView} from '../src/world/scablands-things-view.js';
@@ -23,7 +24,9 @@ import {roadWay, nearestOnLine, sampleLine} from '../src/world/scablands-ways.js
 import {scablandsSurfaceHeightAt as heightAt} from '../src/world/scablands-ground.js';
 import {stepMover} from '../src/world/scablands-movers.js';
 import {createJobSolidGrid, solidsNear} from '../src/world/scablands-solids.js';
-import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
+import {Course} from '../src/course.js';
+import {createFighter, stepFighter} from '../src/onfoot.js';
+import {SCABLANDS_LAYOUT, SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {HILLS} from '../src/world/scablands-height.js';
 import {townOutpostWorld} from '../src/town/town-outpost-world.js';
@@ -314,11 +317,19 @@ function checkBudget(group, budget) {
       assert.deepEqual(siteSpot(id, seed, name), {x, z, y: heightAt(x, z)}, id + '/' + name);
     }
   }
-  const throughDoor = ['door', 'hut', 'set'].map(name => siteSpot('radio-hill', seed, name));
-  const path = sampleLine(throughDoor, .15);
-  for (let i = 1; i < path.length; i++) assert.equal(stepMover(path[i - 1], path[i], {grid}).blocked, false);
-  const wall = {...hill, x: hill.x - 9, z: hill.z + 6};
-  assert.equal(stepMover(wall, wall, {grid}).blocked, 'solid');
+  const course = new Course(SCABLANDS_VENUE, seed);
+  const car = {arena: {worldJob: {solidGrid: grid}}};
+  const [door, hut, set] = ['door', 'hut', 'set'].map(name => siteSpot('radio-hill', seed, name));
+  const walker = createFighter(course, car, course.nearest(door.x, door.z));
+  for (const target of [hut, set]) {
+    for (let i = 0; i < 90 && distance(walker, target) > .02; i++) {
+      walker.yaw = Math.atan2(target.x - walker.x, target.z - walker.z);
+      stepFighter(course, car, walker, {forward: true});
+    }
+    assert.ok(distance(walker, target) <= .02, 'the player walks through the door to the set');
+  }
+  assert.equal(walker.contacts, 0);
+  assert.throws(() => createFighter(course, car, course.nearest(hill.x - 9, hill.z + 6)), /solid scenery/);
   draw(hill, 3);
   const camp = view.group.getObjectByName('Radio Hill');
   checkBudget(camp, RADIO_HILL_BUDGET);
@@ -346,6 +357,14 @@ function checkBudget(group, budget) {
   draw(ring, 10);
   assert.equal(buses.userData.weldLight.intensity, 75 * busRingWeld(10));
 
+  const gasket = SITES_PEOPLE.find(row => row.id === 'gasket');
+  for (const [partOfDay, spot] of [['day', 'gasket'], ['dark', 'bunk']]) {
+    const pose = residentPose(gasket, step.open.world, {partOfDay});
+    assert.deepEqual(pose.position, siteSpot('bus-ring', seed, spot));
+  }
+  const meeting = residentPose(gasket, step.open.world, {site: 'bus-ring'});
+  assert.deepEqual(meeting.position, siteSpot('bus-ring', seed, 'workbench'));
+
   const restore = installSiteGround(seed);
   try {
     step = stepSites(step.open, nest);
@@ -362,6 +381,20 @@ function checkBudget(group, budget) {
     assert.equal(night.userData.flames.uniforms.uTime.value, 12);
     checkBudget(night, RATS_NEST_BUDGET);
   } finally { restore(); }
+
+  // The story's far bearing and three-blink request use the reviewed mast and the outing clock.
+  step = stepSites({...step.open, world: changed(step.open.world, 'check/radio-call',
+    {type: 'thread', id: RADIO_ID, to: 'first-call'})}, hill, 'dark');
+  const far = {x: hill.x + 3000, z: hill.z};
+  step.open.parts.threads = {progress: {[RADIO_ID]: {blinkedAt: step.open.seconds}}};
+  draw(far, 20);
+  assert.ok(second.visible && !second.userData.lights[1].visible);
+  step.open.seconds += 1.6;
+  draw(far, 21);
+  assert.ok(second.userData.lights[1].visible);
+  step.open.world.ledger.history.push({type: 'settle', key: RADIO_MARK.fuel, choiceId: RADIO_ID + '/broken/test'});
+  draw(far, 22);
+  assert.equal(second.userData.levels.x, 0, 'a broken fuel promise extinguishes the mast');
 
   step = stepSites(step.open, ring, 'day', false);
   draw(ring, 13);

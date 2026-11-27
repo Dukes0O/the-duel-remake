@@ -30,4 +30,3 @@ export const MARKET_FIGURES = Object.freeze({
 });
 
 export const MARKET_GUESTS = Object.freeze(['first', 'second', 'third']);
-export const BUS_RING = Object.freeze({meeting: 'workbench'});

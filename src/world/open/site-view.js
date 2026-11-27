@@ -76,7 +76,7 @@ export function createSiteView({loadAsset}) {
       const secondSet = world.ledger.made.includes('radio-hill/second-set');
       for (const camp of camps) {
         const {site, people, residents, cast} = camp;
-        if (site.id !== 'glasshouse' && !state.marketSites) {
+        if ((site.storyChoices || site.storyOnly || site.id === 'radio-hill' || site.id === 'rats-nest') && !state.marketSites) {
           if (camp.node) camp.node.visible = false;
           people.group.visible = false;
           continue;
