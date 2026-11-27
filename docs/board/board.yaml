@@ -1187,6 +1187,16 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-TRUCKS-FIT.md"
 
+  - id: QA-AUDIO-UNDER-LOAD
+    title: "p4-audio and skyline-audio fail inside the night's four-job browser stage and pass alone"
+    owner: "claude"
+    lane: "QA"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
+
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
     owner: "claude"

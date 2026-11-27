@@ -77,6 +77,11 @@ None of the five faults was in the game.
 
 ## Claude answers
 
+**27 November 2026, night of 26 November.** The frame stage failed with the standing cause plus a new line: "Tanker
+adds more than ten percent over matched full-loop box; simplify distant view and remeasure". So it is news under the
+standing entry. The tanker is the convoy tanker of the frame scene; simplify its far view (fewer parts beyond a set
+distance) and remeasure within rule 8 before anything else on this card.
+
 Changed assertions reviewed 16 November 2026, nothing loosened: `drive-lesson-run` (the already selected corner must stay
 checked; every other choice still must move the course), `p4-audio` (two result fields join the ones the unpaid replay
 cannot write; every other field still must match), `ski-finish` (the thin-air radio line is read right after the piece of

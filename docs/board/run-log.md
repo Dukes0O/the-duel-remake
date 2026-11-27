@@ -1825,3 +1825,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge TOWN-HAUL-LOAD-LOOK (Claude session): passes
 - Merge TOWN-FIRE-STREAM-LOOK (Claude session): passes
 - Merge TOWN-JOBS-2 (Claude cloud): the town's jobs that are not fights
+- Night 2026-11-26, full (shared files): failed, 15 items, 2 standing. Cured on 27 November: vesper-art checksum, Old Smoke floor, Dace review names, open-forge-shed (Slack in the wash doorway: a game fault, fixed), everburn-job2 (brandSwingReady returned undefined). Reruns passed alone: p4-audio, skyline-audio (QA-AUDIO-UNDER-LOAD). Open: WASTE-TRUCKS-FIT (arena-shove, lesson instructor), frames (standing, new tanker line on QA-STANDING-BROWSER).
