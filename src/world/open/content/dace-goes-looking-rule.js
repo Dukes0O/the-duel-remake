@@ -68,7 +68,7 @@ export function daceStep(context, record, previous = {}, decision, dt) {
   };
   const placeAt = value => value === '@site' ? site() : value;
   const rule = threadRule(story, context, record);
-  const state = previous.beat === beat ? {...previous} : {beat};
+  const state = previous.beat === beat ? {...previous} : {beat, rescue: previous.rescue};
   const out = {state, choices: [], events: [], requests: []};
   const remember = (kind, key) => mark(threadMark(DACE_ID, kind, key));
   const choose = (id, effects = []) => out.choices.push({id: daceMark(id), effects});
@@ -93,7 +93,7 @@ export function daceStep(context, record, previous = {}, decision, dt) {
   });
   const settled = id => (view.jobEvents ?? []).find(event => event.type === 'talkChoice' && event.scene === id);
 
-  function talk(id, entry, speaker, position, {radio = false, interact = true, ack, extraChoices = []} = {}) {
+  function talk(id, entry, speaker, position, {radio = false, interact = true, ack} = {}) {
     const choice = settled(id);
     // A question can be asked, and its answer remembered, even if the player walks away.
     for (const event of view.jobEvents ?? []) {
@@ -106,7 +106,6 @@ export function daceStep(context, record, previous = {}, decision, dt) {
     const choices = entry.choices?.filter(option => rule.ask(option.when)).map(option => ({
       id: id + '/' + option.id, words: rule.line(option.words),
     })) ?? [];
-    choices.push(...extraChoices);
     if (ack) choices.push({id: ack, words: 'I hear you.'});
     const questions = entry.questions?.filter(question => question.when?.asked || rule.ask(question.when)).map(question => ({
       id: question.id, words: rule.line(question.words), lines: publicLines(question.lines),
@@ -272,7 +271,10 @@ export function daceStep(context, record, previous = {}, decision, dt) {
         if (rescue && (left || stopped) && !effects.some(effect => effect.id === daceMark('pickup-left-out')))
           effects.push(story.beats.search.effects.find(effect => effect.id === daceMark('pickup-left-out')));
         move('mission/' + beat + '/' + finished.outcome, outcome, effects.map(({when, ...effect}) => effect));
-        if (!rescue) cue('found', 'open.site.found', site());
+        if (!rescue) {
+          out.dusk = true;
+          cue('found', 'open.site.found', site());
+        }
       }
       return out;
     }
@@ -292,7 +294,7 @@ export function daceStep(context, record, previous = {}, decision, dt) {
         const arrival = starting.slice(0, 5).find(line => rule.ask(line.when));
         lines('found-dace', [arrival, ...starting.slice(5)].filter(Boolean));
       }
-      const clues = [places['his-tracks'], rescue.truck, places.walking];
+      const clues = [places['his-tracks'], rescue.reason === 'rocks' ? null : rescue.truck, places.walking];
       for (const [index, item] of row.explore.entries()) {
         if (!rule.has('found', item.id) && rule.ask(item.when) &&
             (index === 1 ? distance(here, clues[index]) <= 100 : near(clues[index], 5))) {

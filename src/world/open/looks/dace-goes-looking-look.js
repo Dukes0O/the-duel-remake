@@ -72,6 +72,8 @@ export function createDaceLook(group, positionAt) {
         cover.visible = yard && !uncovered && (!end || end === 'never-asked' || end === 'stayed');
         folded.visible = yard && uncovered;
         bonnet.visible = !!roadside || beat === 'ready';
+        const flat = !daceMarked(world, 'spare-mended') && (yard || staged?.rescue?.reason === 'stones');
+        truck.userData.wheelPivots[0].scale.y = flat ? .64 : 1;
         aerial.visible = !cover.visible;
         blanket.visible = !!roadside && (!fetch?.walking || daceMarked(world, 'told-stay'));
       }

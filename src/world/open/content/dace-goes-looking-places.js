@@ -36,7 +36,12 @@ export const DACE_CAST = Object.freeze(['dace', 'moss', 'rell', 'wim', 'auntie-s
 
 export function dacePeople(world, morning, mission) {
   const record = world.open.threads[DACE_ID];
-  if (!record || record.end) return [];
+  if (!record) return [];
+  if (record.end) {
+    const waitingReport = record.end === 'never-asked' && world.ledger.night - record.began >= story.sign.lastsNights + 2 &&
+      !daceMarked(world, 'later/rell-on-dace-waiting');
+    return waitingReport ? [{...DACE_CAST[2], position: LAND.at('tin-town', -22, 58)}] : [];
+  }
   const {beat, began} = record;
   const sign = beat === 'sign' && world.ledger.night - began < story.sign.lastsNights && morning;
   if (sign || ['asking', 'ready', 'radio-check', 'telling', 'leaving', 'key'].includes(beat)) {

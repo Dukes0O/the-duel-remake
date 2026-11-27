@@ -7,3 +7,7 @@ The story calls for Dace to interrupt a gas outing and for Moss to take Bess on 
 ## Road home and preparing the pickup
 
 The merged rescue rule carries people in the player's car. The hill repair and a following pickup would need separate vehicle state and presentation, and the existing tow machinery does not carry a named passenger. Options are to extend vehicle and tow ownership across jobs or use the named rescue outcomes and keep the visual follow and tow for a later card. Pick the second. At the forge, use proximity and the existing wrench input for the three repairs, and Use at the pickup to finish preparing it. The authored preparation beat has no confirmation line.
+
+## Site draw and the ending at the gate
+
+The Bell Buoy is a lookout in the register but its route runs past the ship deck and over the salt, where Dace's pickup would need a special arrival. Pick the land sites for his draw and keep the Buoy for Lights. The new drive uses the shared dusk transition when it ends at the gate, so the authored return plays without a long wait. The scene uses its written words and the existing talk acknowledgement.

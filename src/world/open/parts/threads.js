@@ -835,6 +835,7 @@ export function createThreadsPart(threads) {
           if (out.mission !== undefined) state.mission = out.mission;
           hold ??= out.hold;
           release ??= out.release;
+          dusk ||= out.dusk === true;
           continue;
         }
         if (thread === marketDay) {
