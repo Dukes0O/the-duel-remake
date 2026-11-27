@@ -1,7 +1,7 @@
 // The wind tunnel (docs/LAB.md 4.4): a car on a rolling road with smoke, a fan dial and a scale under each wheel.
 // Five benches, one per lesson. Where the game has the rule they use it: the tyre-slip rules for Grip (config.js),
-// the car's own braking for Braking (DRIVE.brakeAccel x car.braking, as sim-driving.js applies it), the heli
-// table's car masses for Fuel. Where the game has no rule yet (a wing's push, spring rates, brake balance) the
+// the heli table's car masses for Fuel. Braking brakes each car at a real car's deceleration (LAB-BRAKING-REAL), which
+// is gentler than the race's. Where the game has no rule yet (a wing's push, spring rates, brake balance) the
 // bench is plain physics with its constants written here, which LAB-TUNE then makes the game's own.
 import {CARS, DRIVE, TYRE_SLIP, tyreSlipAngle, tyreSlipGrip, tyreSlipRawSound} from '../../config.js';
 import {GRAVITY} from '../../heli/heli-flight.js';
@@ -61,24 +61,40 @@ export const downforceBench = makeBench({
 });
 
 // ---- Braking: stopping distance and weight transfer ----------------------------------------------------
-// The game slows a car by DRIVE.brakeAccel x car.braking mph/s (and a little passive drag) on a dry road.
-export function stopDistance(carId, speedMph, dt = 1 / 120) {
-  let speed = speedMph, metres = 0, seconds = 0;
-  while (speed > 0) {
-    const before = speed;
-    speed = Math.max(0, speed - DRIVE.brakeAccel * CARS[carId].braking * dt - DRIVE.dragCoeff * dt);
-    metres += (before + speed) / 2 * MPH * dt; seconds += dt;
-  }
-  return {metres, seconds};
+// The rig brakes each car at a real car's deceleration (LAB-BRAKING-REAL, Claude, 27 November 2026), not at the race's
+// quicker braking (DRIVE.brakeAccel, over 2 g), so the tape shows real stopping distances.
+// - g is standard gravity, 9.80665 m/s² (the CGPM's value of 1901), written 9.81 as the lesson shows it (GRAVITY).
+// - The tyres hold the car to brake strength x g. Strength 1 is a road car on good tyres on a dry road, 1 g: the
+//   peak grip of a road tyre on dry asphalt is close to 1 (Michelin, "The tyre: Grip", 2001), and brake tests of road
+//   cars on dry asphalt measure 10 to 11 m/s² (Radu, "Comparison of passenger vehicle braking distance when traveling on
+//   snow and asphalt", Annals of the University of Oradea, 2020). The road cars in CARS are 0.9 to 1.18 g. Only racing
+//   tyres with downforce brake harder: the prototypes and the track hypercars at 1.24 to 1.5 g (racing slicks grip
+//   about 1.5 times the load, Milliken and Milliken, "Race Car Vehicle Dynamics", 1995), and the Spéirling at 2.2 g,
+//   because its fans press it down with about 2,000 kg although it weighs under 1,000 kg (McMurtry's figures,
+//   docs/LAB.md section 6), so its tyres carry three times its weight.
+// - Passive drag is 0.27 m/s², the road and the air together: tyres roll against about 0.015 of the car's weight
+//   (0.15 m/s²), and 0.65 m² of drag area (WING.bodyDragArea) on a 1,250 kg car slows it by 0.12 m/s² on average over a
+//   stop from 100 km/h (half of 1.225 kg/m³ x 0.65 m² x the average v², which is half of 27.78² m²/s², over 1,250 kg).
+// - The centre of mass is 0.5 m above the road and the wheels are 2.6 m apart, a road car's usual figures (most road
+//   cars' centres of mass are 0.45 to 0.6 m up, and their wheelbases 2.3 to 2.8 m).
+export const BRAKE_RIG = Object.freeze({g: GRAVITY, dragMs2: 0.27, centreHeightM: 0.5, wheelbaseM: 2.6, staticFront: 0.5, fanPressPerWeight: 2});
+// The deceleration while the brakes are on, in m/s²: the tyres' braking and the passive drag.
+export const brakesMs2 = carId => BRAKE_RIG.g * CARS[carId].braking;
+export const decelMs2 = carId => brakesMs2(carId) + BRAKE_RIG.dragMs2;
+// A steady deceleration a from v stops in v² ÷ (2 × a) and takes v ÷ a.
+export function stopDistance(carId, speedMph) {
+  const v = speedMph * MPH, a = decelMs2(carId);
+  return {metres: v * v / (2 * a), seconds: v / a};
 }
-// A hard road stop at one g: the car's weight tips forward by (centre height / wheelbase) x g.
-export const BRAKE_RIG = Object.freeze({stopG: 1, centreHeightM: 0.5, wheelbaseM: 2.6, staticFront: 0.5});
-export const frontLoadShare = () => BRAKE_RIG.staticFront + BRAKE_RIG.centreHeightM / BRAKE_RIG.wheelbaseM * BRAKE_RIG.stopG;
+// Braking tips the weight forward by (deceleration ÷ g) x (centre height ÷ wheelbase): front share = 0.5 + (a ÷ g) x h ÷ L.
+// A fan car's fans press both ends down evenly, so its shift is a share of its weight and the fans' push together.
+const loadPerWeight = carId => 1 + (CARS[carId].fanGrip ? BRAKE_RIG.fanPressPerWeight : 0);
+export const frontLoadShare = (carId = carIds[0]) => BRAKE_RIG.staticFront + decelMs2(carId) / (BRAKE_RIG.g * loadPerWeight(carId)) * BRAKE_RIG.centreHeightM / BRAKE_RIG.wheelbaseM;
 export const brakingBench = makeBench({
   id: 'braking', cues: ['lab.fan'],
   controls: [choice('car', 'Car', carIds, carIds[0]), control('speedMph', 'Speed', 'mph', 20, 150, 10, 50), control('frontShare', 'Brake to the front', '%', 40, 90, 5, 60)],
   run({car, speedMph, frontShare}) {
-    const stop = stopDistance(car, speedMph), frontLoad = frontLoadShare();
+    const stop = stopDistance(car, speedMph), frontLoad = frontLoadShare(car);
     // The rear tyres hold as much braking as the weight left on them: more rear brake than rear load slides.
     return {stopMetres: stop.metres, stopSeconds: stop.seconds, frontLoadShare: frontLoad, rearLoadShare: 1 - frontLoad,
       rearBrakeShare: 1 - frontShare / 100, rearSlides: 1 - frontShare / 100 > 1 - frontLoad};
