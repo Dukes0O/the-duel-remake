@@ -15,6 +15,7 @@ import {createThreadsPart, openThreadSigns, threadsAtBankedHearth} from '../src/
 import {sitePosition} from '../src/world/open/site-rule.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {stepMover} from '../src/world/scablands-movers.js';
+import {sampleLine} from '../src/world/scablands-ways.js';
 import {walkThread} from './thread-crossings.mjs';
 import {run, scenarioWorld} from './scenarios/open-dace-goes-looking.mjs';
 
@@ -250,5 +251,9 @@ await run({
 assert.ok(sources.length > 15);
 for (const source of sources) assert.doesNotThrow(() => new Function('return ' + source));
 assert.equal(stepMover(p.start, p.start, {radius: 2}).blocked, false);
-assert.ok(sitePosition(record({world: scenarioWorld()}).cast.site, scenarioWorld().open.landSeed));
+const browserWorld = scenarioWorld();
+const browserSite = sitePosition(record({world: browserWorld}).cast.site, browserWorld.open.landSeed);
+const browserRoad = sampleLine([p.start, p['first-fork'], browserSite, p['gate-at-dusk']], 2);
+assert.ok(browserRoad.slice(1).every((point, i) => !stepMover(browserRoad[i], point, {radius: 1.2}).blocked),
+  'the scenario follows a solid-free route on the real ground');
 console.log('test-open-dace-goes-looking: sign, three decisions, paid repairs, radio, drive and rescue outcomes, ledger, and browser source passed');

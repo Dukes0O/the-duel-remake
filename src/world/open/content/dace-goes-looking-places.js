@@ -31,6 +31,7 @@ const spots = {
 };
 
 export const DACE_PLACES = Object.freeze(spots);
+export const DACE_LANDMARKS = Object.freeze(['deep-sign', 'hangar', 'crows-step']);
 const person = id => ({id, figure: id, home: 'tin-town', talk: id});
 export const DACE_CAST = Object.freeze(['dace', 'moss', 'rell', 'wim', 'auntie-solder'].map(person));
 

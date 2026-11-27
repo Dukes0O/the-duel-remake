@@ -24,7 +24,7 @@ import {heistLampPose} from './content/mission-kinds.js';
 import {lookoutHeading} from './content/mission-kinds.js';
 import {TOLL_GATE, TOLL_ID, TOLL_WRECKS, tollPlace} from './content/mall-road-toll-places.js';
 import {createDaceLook} from './looks/dace-goes-looking-look.js';
-import {DACE_ID} from './content/dace-goes-looking-places.js';
+import {DACE_ID, DACE_LANDMARKS} from './content/dace-goes-looking-places.js';
 import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
 
 function paintedSign({label}) {
@@ -472,7 +472,8 @@ export function createSignView() {
         }
       }
       const signs = open ? openThreadSigns({...open, view}) : [];
-      if (view.checkpointsEnabled && open.world.open.threads[DACE_ID] && !daceLook)
+      if (view.checkpointsEnabled && !daceLook &&
+          (open.world.open.threads[DACE_ID] || DACE_LANDMARKS.some(id => open.world.open.found.includes(id))))
         daceLook = createDaceLook(group, positionAt);
       daceLook?.update(open, signs.find(entry => entry.id === DACE_ID), here, drawnShift);
       const stranger = signs.find(entry => entry.id === 'runaway');

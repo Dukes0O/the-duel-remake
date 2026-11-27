@@ -4,7 +4,6 @@ import {POCKET_ID, POCKET_POSITIONS} from './radio-hill-voice-places.js';
 import {TOLL_SITE} from './mall-road-toll-places.js';
 import {BUS_RING} from './market-day-places.js';
 import {SITE_NEEDS} from './needs.js';
-import {LAND} from '../../scablands-names.js';
 
 const site = (id, positions, rules) => ({
   ...siteRow(id),
@@ -14,8 +13,6 @@ const site = (id, positions, rules) => ({
 });
 
 export const BUOY_POSITIONS = [['ships-in-sand', 2600, 150], ['ships-in-sand', 3500, 250], ['ships-in-sand', 2900, 700]];
-
-const watch = LAND.at('furnace-watch'), ridge = LAND.at('ridge');
 
 export const LAND_SITES = Object.freeze(requireSound([
   site('glasshouse', [['ships-in-sand', 2000, 700], ['dead-mall', -1500, -2150], ['tin-town', -200, 1900]],
@@ -31,9 +28,9 @@ export const LAND_SITES = Object.freeze(requireSound([
   TOLL_SITE,
   site(POCKET_ID, POCKET_POSITIONS, {foundWithin: 80, tell: 'lamp', tellWithin: 4000, storyChoices: true}),
   site('bell-buoy', BUOY_POSITIONS, {foundWithin: 24, tell: 'bell', tellWithin: 400, storyChoices: true}),
-  site('deep-sign', [['everburn', 110, -230]], {foundWithin: 80, tell: 'green-patch', tellWithin: 450, storyChoices: true}),
-  site('hangar', [['iron-line', 180, 100]], {foundWithin: 95, tell: 'mast', tellWithin: 650, storyChoices: true}),
-  site('crows-step', [['ridge', watch.x - ridge.x, watch.z - ridge.z]],
+  site('deep-sign', [['everburn', -190, -530]], {foundWithin: 80, tell: 'green-patch', tellWithin: 450, storyChoices: true}),
+  site('hangar', [['iron-line', 180, 650]], {foundWithin: 95, tell: 'mast', tellWithin: 650, storyChoices: true}),
+  site('crows-step', [['ridge', -1976, 2322]],
     {foundWithin: 100, tell: 'mast', tellWithin: 600, storyChoices: true}),
 ], checkSite, 'Open Scablands sites'));
 

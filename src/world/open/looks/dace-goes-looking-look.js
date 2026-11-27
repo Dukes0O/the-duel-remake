@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {createVehicle} from '../../../vehicles.js';
-import {distance} from '../site-rule.js';
+import {distance, sitePosition} from '../site-rule.js';
+import {stripOfSheet} from '../../tin-town-shacks.js';
 import {DACE_ID, DACE_PLACES as places, daceMarked} from '../content/dace-goes-looking-places.js';
 
 export function createDaceLook(group, positionAt) {
@@ -37,15 +38,59 @@ export function createDaceLook(group, positionAt) {
   tracks.name = "The old pickup's tracks";
   for (const x of [-.86, .86]) box(tracks, 'Tyre rut', 0x77624a, [.18, .018, 5], [x, .021, 0]);
   root.add(stones, tracks);
+
+  // Tin Town's corrugated sheets mark the three unplaced destinations until their site art is ready.
+  const iron = new THREE.MeshStandardMaterial({color: 0x706052, roughness: .96, side: THREE.DoubleSide});
+  const sheet = (parent, width, height, x, z, angle = 0) => {
+    const mesh = new THREE.Mesh(stripOfSheet(width, height), iron);
+    mesh.position.set(x, 0, z);
+    mesh.rotation.y = angle;
+    parent.add(mesh);
+    return mesh;
+  };
+  const sites = [
+    {id: 'deep-sign', name: 'The Deep Sign', build(site) {
+      box(site, 'Well casing', 0x454646, [.48, .62, .48], [-2, .31, 0]);
+      sheet(site, 1.5, .45, -1.5, -1.5);
+      sheet(site, 1.4, .48, -2.3, -.75, Math.PI / 2);
+    }},
+    {id: 'hangar', name: 'The Hangar', build(site) {
+      sheet(site, 8, 3.3, 0, -3.8);
+      sheet(site, 7, 2.8, -3.9, -.3, Math.PI / 2);
+      sheet(site, 4, 2.4, 3.9, -1.8, Math.PI / 2);
+      const roof = sheet(site, 8, 3.9, 0, -3.8);
+      roof.rotation.x = Math.PI / 2;
+      roof.position.y = 3.15;
+    }},
+    {id: 'crows-step', name: "The Crow's Step", build(site) {
+      sheet(site, 4.8, .9, 0, -2.4);
+      for (const x of [-2.1, 2.1]) box(site, 'Lookout rail post', 0x554739, [.16, 1.25, .16], [x, .625, -2.45]);
+      box(site, 'Lookout bench', 0x635643, [1.9, .12, .42], [-.9, .48, -1.8]);
+    }},
+  ].map(({id, name, build}) => {
+    const mesh = new THREE.Group();
+    mesh.name = name;
+    build(mesh);
+    root.add(mesh);
+    return {id, mesh};
+  });
   let departureAt = null;
 
   return {
     update(open, sign, here, drawnShift) {
       const enabled = open?.parts.threads?.places.checkpointsEnabled;
       const world = open?.world, record = enabled && world.open.threads[DACE_ID];
-      root.visible = !!record;
+      root.visible = !!enabled;
+      if (!enabled) return;
+      for (const {id, mesh} of sites) {
+        const at = sitePosition(id, world.open.landSeed);
+        mesh.visible = (record?.cast.site === id && !['sign', 'asking'].includes(record.beat) || world.open.found.includes(id)) &&
+          distance(here, at) < 350;
+        if (mesh.visible) positionAt(mesh, at, drawnShift);
+      }
       if (!record) {
         departureAt = null;
+        for (const item of [truck, key, stones, tracks]) item.visible = false;
         return;
       }
       const {beat, end} = record;
