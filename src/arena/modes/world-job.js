@@ -2177,11 +2177,13 @@ export function stepWorldJob(duel, dt) {
     const {at: sites, withSpots} = worldJob.openSitePositions;
     const threadMission = worldJob.open.parts.missions?.active;
     const runawayRecord = worldJob.open.world.open.threads.runaway;
-    // A car wrecked in the fight alone at the Rats' Nest is taken to the pen with its driver, not towed home.
+    // A car wrecked in the fight alone at the Rats' Nest is taken to the pen with its driver, not towed home: while that
+    // fight runs, between its loss and the pen, and in the pen. A wreck anywhere else is towed as usual.
     const penRecord = worldJob.open.world.open.threads['burned-camp'];
+    const penTaking = !penRecord?.end && (threadMission?.id === 'burned-camp/alone' || penRecord?.beat === 'pen' ||
+      (penRecord?.beat === 'alone' && worldJob.open.events.some(event => event.type === 'threadMissionTaken')));
     const deferCheckpointRecovery = checkpointsEnabled && ((!runawayRecord?.end &&
-      (threadMission?.state.route.road || ['surrounded', 'breakout'].includes(runawayRecord?.beat))) ||
-      (!penRecord?.end && ['alone', 'pen'].includes(penRecord?.beat)));
+      (threadMission?.state.route.road || ['surrounded', 'breakout'].includes(runawayRecord?.beat))) || penTaking);
     if (deferCheckpointRecovery && state.combatWrecking) state.combatWreckTimer = state.impactTimer = 1;
     const missionDefence = checkpointsEnabled && worldJob.threadDefence ? brandCombatView(state, worldJob) : {};
     const missionRidersFighting = worldJob.riderFight?.checkpointStep?.id === road.road?.id &&

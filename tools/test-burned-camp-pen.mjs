@@ -120,6 +120,11 @@ const waitFor = (open, point, ready, view = {}) => {
   assert.equal(outcome(lost), 'lost');
   assert.ok(lost.events.some(event => event.type === 'threadMissionTaken'), 'the loss is not towed home');
   assert.ok(!lost.requests.some(row => row.action === 'mission-loss'), 'no recovery is charged for being taken');
+  // The checkpoints do not tow a taken player home, and waive nothing for a later wreck.
+  const towed = checkpointsPart.step({}, {world, holds: [], events: [{type: 'threadMissionTaken', id: `${ID}/alone`}],
+    view: {checkpointsEnabled: true, combatWrecking: true, carPosition: at('road-foot'), player: at('road-foot')}}, 1 / 60);
+  assert.equal(towed?.state.recovery, undefined);
+  assert.notEqual(towed?.state.missionLossPaid, true);
   out = step(lost.open, at('road-foot'), {onFoot: false});
   assert.deepEqual(said(out).map(text => text.slice(0, 22)), ['Sump: Well, look at th', "Sump: There's no need "]);
   assert.equal(beat(out.open), 'pen');
@@ -293,6 +298,8 @@ function ransomed(world, {roadWord, scrap, embers, till, caught = false, handRun
   for (const id of ['broke-out', 'car-with-sump', 'waved-along-1', 'waved-along-2', 'waved-along-3'])
     assert.ok(marks(out.open).includes('burned-camp/' + id), id);
   assert.ok(!marks(out.open).some(id => id === 'burned-camp/waved-along-4'), 'three at most');
+  assert.deepEqual(penPeople(out.open.world).map(row => row.figure), ['marigold', 'road-rat-lamp'],
+    'Finch and the three waved along are out of the pen');
   assert.equal(beat(out.open), 'home');
   assert.equal(out.requests.some(row => row.type === 'threadTaken' && !row.held), false, 'the car stays with Sump');
 

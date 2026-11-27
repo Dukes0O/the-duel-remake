@@ -45,7 +45,9 @@ export function penPeople(world) {
       !world.ledger.marks.includes('burned-camp/burned')) return [];
   const marks = world.ledger.marks;
   const drained = marks.includes('burned-camp/drain-out'), broke = marks.includes('burned-camp/broke-out');
-  const gone = new Set([...(drained ? ['finch', 'grower-1', 'grower-2'] : []), ...(broke ? ['finch'] : [])]);
+  // Those waved along on a break-out (`waved-along-1` to `-3`) come out with Finch, the first grower first.
+  const waved = ['grower-1', 'grower-2', 'grower-3'].filter((_, index) => marks.includes('burned-camp/waved-along-' + (index + 1)));
+  const gone = new Set([...(drained ? ['finch', 'grower-1', 'grower-2'] : []), ...(broke ? ['finch', ...waved] : [])]);
   const captives = CAPTIVES.filter(([id]) => !gone.has(id)).map(([id, spot]) => ({id: 'pen/' + id, figure: id, talk: null,
     routine: {day: {kind: 'post', at: nestPlace(spot), yaw: RATS_NEST_LAYOUT.spots[spot].heading, task: 'sit'}}}));
   const {round, pace} = PEN_GUARD;

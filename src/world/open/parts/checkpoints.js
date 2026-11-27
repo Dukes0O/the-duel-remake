@@ -41,9 +41,10 @@ export const checkpointsPart = {
       recoveryPaid: view.recoveryPaid || events.some(event => event.type === 'threadMissionRecoveryPaid'),
       interactWasHeld: state.interact, hearthBanked:banked}};
     const choices = [], requests = [];
-    // A player taken to a pen after a lost fight is not towed home (OPEN-BURNED-PEN).
-    const missionLoss = events.find(event => event.type === 'threadMissionTaken' || event.type === 'threadMissionOutcome' &&
+    const missionLoss = events.find(event => event.type === 'threadMissionOutcome' &&
       event.id.startsWith(hauler.id + '/') && ['lost', 'caught', 'car-wrecked'].includes(event.outcome));
+    // A player taken to a pen after a lost fight is not towed home, and nothing is waived for a later tow (OPEN-BURNED-PEN).
+    const taken = events.some(event => event.type === 'threadMissionTaken');
     if (missionLoss) next.missionLossPaid = true;
     if (banked)
       choices.push({id: 'checkpoint/bank/' + world.ledger.night, effects: [{type: 'rest', clear: true}]});
@@ -55,7 +56,7 @@ export const checkpointsPart = {
       choices.push(...(out.choices ?? []));
       requests.push(...(out.requests ?? []));
     }
-    if (!held && !missionLoss && (state.recovery || view.combatWrecking && !view.deferCheckpointRecovery)) {
+    if (!held && !missionLoss && !taken && (state.recovery || view.combatWrecking && !view.deferCheckpointRecovery)) {
       if (!state.recovery) next.recoveries = recoveryNumber(world, state.recoveries);
       const out = stepRecovery(state.recovery, current, view.combatWrecking && !state.recovery ? camps() : [], next.recoveries);
       if (next.missionLossPaid) out.choices = out.choices?.map(choice => ({...choice,
