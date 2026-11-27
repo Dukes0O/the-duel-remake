@@ -1818,3 +1818,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge TOWN-RESERVED-OUTPOSTS (Claude cloud): planning refuses the neighbours' outposts; rule 23 set and town suites 9/9 passed
 - Merge LAB-BRAKING-REAL (Claude cloud): real braking in the Lab; braking and Lab suites, guards and heli-mode passed
 - Merge LAB-UX-FIXES (Claude cloud): the last of the old lesson frame removed; Lab suites and every lab scenario passed
+- Merge WW-ART-MULE (Claude session): the Iron Mule, round 2 passes; blender output 445 checks, board, hygiene, build

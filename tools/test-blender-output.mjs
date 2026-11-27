@@ -117,6 +117,9 @@ const generators = [
     glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
   {id:'ww-art-ships',script:'tools/blender/scablands-ships.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/scablands/ships.glb'],budget:50000,maxBytes:3*1024*1024},
+  // WW-ART-MULE: the card's budget, 40,000 triangles and 2 MB. Recipe only: no Blend file is kept.
+  {id:'ww-art-mule',script:'tools/blender/scablands-mule.py',args:[],candidate:true,recipeOnly:true,
+    glb:['public/assets/models/wasteland/scablands/mule.glb'],budget:40000,maxBytes:2000000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -1002,6 +1005,35 @@ try {
         for (const material of gltf.materials || []) {
           assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
             `${material.name || 'material'} metallicFactor exceeds .3`);
+        }
+      }
+      if (generator.id === 'ww-art-mule') {
+        const node = name => gltf.nodes.find(item => item.name === name);
+        for (const name of ['iron-mule', 'mule-cab', 'mule-cab:body', 'mule-tank-wagon-1', 'mule-tank-wagon-2',
+          'tank-wagon-1', 'tank-wagon-2', 'tank-wagon-1:drip-1', 'tank-wagon-2:drip-1', 'mule-guard-wagon',
+          'mule-box-wagon', 'box-wagon-door', 'box-wagon-door-far', 'cab-coupling', 'tank-wagon-1-coupling',
+          'tank-wagon-2-coupling', 'guard-wagon-coupling', 'mule-rail', 'mule-bridge-span']) {
+          assert.ok(node(name), `named part ${name}`);
+        }
+        // The train stands as the job code runs it: the charge's coupling 12 m behind the engine's front,
+        // the roof plates 22 m and 42 m behind it and 3.5 m above the rail (src/world/jobs/steps/board.js).
+        const near = (value, wanted, label) => assert.ok(Math.abs(value - wanted) < .02, `${label}: ${value}`);
+        near(node('cab-coupling').translation[0], -12, 'cab-coupling');
+        near(node('mule-tank-wagon-1').translation[0], -22, 'first roof plate');
+        near(node('mule-tank-wagon-2').translation[0], -42, 'second roof plate');
+        const plate = gltf.meshes[node('tank-wagon-1').mesh];
+        assert.equal(node('tank-wagon-2').mesh, node('tank-wagon-1').mesh, 'the two roof plates share one mesh');
+        assert.equal(node('mule-tank-wagon-2:body').mesh, node('mule-tank-wagon-1:body').mesh, 'the two tank wagons share one mesh');
+        const reach = gltf.accessors[plate.primitives[0].attributes.POSITION];
+        near(reach.max[1], 3.5, 'roof plate height');
+        assert.ok(reach.max[0] - reach.min[0] > 16, 'the roof plate runs the length of the tank');
+        assert.ok(!(gltf.materials || []).some(material => material.emissiveFactor?.some(value => value > 0)),
+          'the Mule carries no lamp: nothing on it glows');
+        for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
+          assert.deepEqual(Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_')), ['TEXCOORD_0']);
+        }
+        for (const material of gltf.materials) {
+          assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallicFactor exceeds 0.3`);
         }
       }
       if (generator.id === 'ww-art-rail') {

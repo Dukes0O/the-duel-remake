@@ -10,4 +10,12 @@ Design: [docs/story/the-long-dry.md](../../story/the-long-dry.md), [docs/WASTELA
 
 ## Claude answers
 
+**27 November 2026, from WW-ART-MULE round 2** (`docs/board/looks/ww-art-mule/round-2-review.md`). The model is
+`public/assets/models/wasteland/scablands/mule.glb`; it has not been seen in the game. Load it at dusk beside a car and
+judge it there first. Each tank wagon is 20 m long only because `src/world/jobs/steps/board.js` stands the roof plates 22 m
+and 42 m behind the engine's front; a real wagon of this height is 12 to 14 m. Real numbers win: rebuild the wagons at the
+photographed 12.5 m and stand the plates about 18 m and 31 m back, in this card or MULE-JOBS (whichever runs first), with the
+board step's suites updated in the same change. The engine's plain front, soft wheel faces and missing handrails are
+fair targets for one more art round once it is in the game.
+
 **The dam (Claude, 5 November).** `dam.glb` has passed for this story, from WW-ART-DAM round 9. Stand it against the game's own hills, with no gap at its ends, and check it from the lake bed and the cab: its side view reads flat on a plain floor, and the hills must fix that. Hide the part holding the spillway's wrecks. They are WW-ART-DAM-2's, and they do not pass yet.

@@ -355,17 +355,6 @@ tasks:
 
 
 
-  - id: WW-ART-MULE
-    title: "Art: the Iron Mule"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "scablands"
-    details: "docs/board/cards/WW-ART-MULE.md"
-
 
 
 
@@ -742,7 +731,7 @@ tasks:
     size: "M"
     status: "ready"
     waiting_on: "kyle"
-    needs: ["MULE-RAILS","WW-ART-MULE","WW-ART-DAM","WW-SCENE"]
+    needs: ["MULE-RAILS","WW-ART-DAM","WW-SCENE"]
     locks: []
     flag: "wasteland-town"
     details: "docs/board/cards/MULE-SCENE.md"
