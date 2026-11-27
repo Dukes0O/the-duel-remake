@@ -132,7 +132,7 @@ assert.ok(marked(askedWalkers, 'comes-second'));
 const radioPoint = pose('radio-hill', 'door');
 const askedRadio = speak(askedWalkers, radioPoint, ['ask-radio-hill-third', 'hetty-comes-third']).open;
 assert.ok(marked(askedRadio, 'hetty-came'));
-const gasketPoint = pose('bus-ring', 'workbench');
+const gasketPoint = pose('bus-ring', 'gasket');
 const askedOdd = speak(askedRadio, gasketPoint, ['ask-bus-ring', 'why-mend-for-rats', 'what-tinkers-need', 'close']).open;
 assert.ok(marked(askedOdd, 'heard-gasket'));
 assert.ok(marked(askedOdd, 'odd-asked'));

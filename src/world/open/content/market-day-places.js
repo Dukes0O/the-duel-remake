@@ -30,13 +30,3 @@ export const MARKET_FIGURES = Object.freeze({
 });
 
 export const MARKET_GUESTS = Object.freeze(['first', 'second', 'third']);
-export const BUS_RING = Object.freeze({
-  meeting: 'workbench',
-  spots: {workbench: {x: 0, z: 4}, 'car-stop': {x: 0, z: 15}, lookout: {x: 0, z: 15}},
-  structures: [
-    {id: 'bus-west', kind: 'wreck', x: -7, z: 0, halfX: 1.4, halfZ: 4.6, height: 2.7},
-    {id: 'bus-east', kind: 'wreck', x: 7, z: 0, halfX: 1.4, halfZ: 4.6, height: 2.7},
-    {id: 'bus-north', kind: 'wreck', x: 0, z: -6, halfX: 4.6, halfZ: 1.4, height: 2.7},
-    {id: 'workbench', kind: 'prop', x: -2, z: 4, halfX: 1, halfZ: .5, height: 1},
-  ],
-});

@@ -3,10 +3,11 @@ import {LAND} from '../scablands-names.js';
 import {tinTownGateFor} from '../tin-town-gate.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {sees} from '../scablands-ways.js';
+import {stageOf} from './open-record.js';
 import {isTrue} from './facts.js';
-import {BUS_RING} from './content/market-day-places.js';
+import {BUS_RING_SOLIDS, BUS_RING_SPOTS, RADIO_HILL_SOLIDS, RADIO_HILL_SPOTS, SECOND_AERIAL} from './content/site-look-data.js';
 import {DRY_PUMP_CAMP} from './content/dry-pump-places.js';
-import {landSite, RADIO_HILL} from './content/sites.js';
+import {landSite} from './content/sites.js';
 import {siteNeed, mendedMark, deliveredMark, brokenMark} from './content/needs.js';
 import {POCKET_ID, pocketOpposite} from './content/radio-hill-voice-places.js';
 import {FLAG_SPOTS} from './content/somebody-elses-flag-places.js';
@@ -59,10 +60,33 @@ export function visitNeed(site, world) {
   return namedPick(seed, 'open/need/' + site.id + '/night-' + ledger.night, eligible);
 }
 
-export function radioHillSolids() {
-  return RADIO_HILL.structures
-    .filter(row => row.height > .9)
-    .map(row => ({...row, id: 'radio-hill-' + row.id}));
+export function radioHillSolids(stage = 'camp') {
+  return stage === 'second-set' ? [...RADIO_HILL_SOLIDS, SECOND_AERIAL] : RADIO_HILL_SOLIDS;
+}
+
+export function busRingSolids() {
+  return BUS_RING_SOLIDS;
+}
+
+// The den changes with the light. Parrot's second set follows the earned deed across outings.
+export function siteLookStage(id, stage, secondSet = false, night = false) {
+  if (id === 'rats-nest') return stage === 'den' ? (night ? 'night' : 'day') : null;
+  if (id === 'radio-hill' && stage === 'second-set') return stage;
+  if (!hasSiteServices(stage) && stage !== 'burned') return null;
+  if (id === 'glasshouse' && stage === 'burned') return 'burned';
+  return id === 'radio-hill' && secondSet ? 'second-set' : 'camp';
+}
+
+const SITE_RADII = {glasshouse: 28, 'radio-hill': 24, 'bus-ring': 36, 'rats-nest': 95};
+
+export function siteClearings(world) {
+  return Object.entries(SITE_RADII)
+    .filter(([id]) => siteLookStage(id, stageOf(world, id)))
+    .map(([id, radius]) => ({...sitePosition(id, world.open.landSeed), radius}));
+}
+
+export function inSiteClearing(clearings, x, z, reach = 0) {
+  return clearings?.some(site => (x - site.x) ** 2 + (z - site.z) ** 2 <= (site.radius + reach) ** 2);
 }
 
 // Interaction spots from the merged Glasshouse layout, kept as plain data so the rules do not import its renderer.
@@ -75,8 +99,8 @@ const GLASSHOUSE_SPOTS = {
   'car-stop': {x: -9, z: 19},
 };
 // Claude keeps Market Day's Bus Ring layout; retain the Dry Pump's pump and door spots.
-const SPOTS = {glasshouse: GLASSHOUSE_SPOTS, 'radio-hill': RADIO_HILL.spots, 'sweet-seep': FLAG_SPOTS,
-  'bus-ring': {...DRY_PUMP_CAMP.spots, ...BUS_RING.spots}};
+const SPOTS = {glasshouse: GLASSHOUSE_SPOTS, 'radio-hill': RADIO_HILL_SPOTS, 'sweet-seep': FLAG_SPOTS,
+  'bus-ring': {...DRY_PUMP_CAMP.spots, ...BUS_RING_SPOTS}};
 
 export function siteSpot(siteId, landSeed, spot) {
   const offset = SPOTS[siteId]?.[spot];

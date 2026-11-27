@@ -1256,18 +1256,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-SITE-LOOKS
-    title: "Open Scablands: Radio Hill and the Bus Ring drawn in play by their finished looks, not stand-ins"
-    owner: "codex"
-    model: "astra"
-    lane: "RENDER"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-SITE-LOOKS.md"
-
   - id: QA-OPEN-DOORS-WASH
     title: "test-open-doors: walking into Moss's wash shed after the ash sack leaves 'inside' empty, in the integration folder only"
     owner: "codex"
