@@ -21,6 +21,7 @@ import {boardSpot, build, cleanHomeName, groundPoint, homeSolids, lift, newHome,
   readableHome, refusal, slotInFront, toggleMark} from '../src/world/open/home-rule.js';
 import {homeCameraPose, stepHomeLift} from '../src/world/open/home-camera.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
+import {worldHudModel} from '../src/world/world-hud.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -73,6 +74,20 @@ const given = () => {
   open = run(open, viewOf({x: 5980, z: 11, yaw: 0}, {}, {interact: true}), DT).open;
   return run(open, viewOf({x: 5980, z: 11, yaw: 0}, {}, {jobEvents: [{type: 'talkChoice', id: 'take', scene: HOME_OFFER_ID}]}), DT).open;
 };
+
+// The name form gives each kind of name its own instruction, and marks the HUD only while a build tool is held.
+{
+  const record = {...newHome('G-Town'), hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}]};
+  const home = {on: true, naming: true, namingKey: 'hen-0', namingHen: 0, tool: 'hammer'};
+  const worldJob = {open: {parts: {home}, world: {open: {home: record}}}};
+  const model = () => worldHudModel({worldJob}).home;
+  equal(model().nameHint, 'Type a name and press Enter.', 'a hen name asks only for typing and Enter');
+  check(model().building, 'the HUD knows the hammer is in his hands');
+  home.namingHen = null; home.namingKey = 'ground'; home.tool = 'wrench';
+  check(model().nameHint.includes('Press F at the board') && model().building, 'the ground keeps its board hint and the wrench hides the weapon panel too');
+  home.tool = null;
+  check(!model().building, 'putting away the tool restores the weapon panel');
+}
 
 // ---- The switch off: nothing is read, written or asked to be drawn. ---------------------------------------------
 {

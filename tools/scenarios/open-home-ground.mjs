@@ -421,16 +421,13 @@ export async function run(context) {
   const news = newsBoardSpot(gatePiece);
   if (await walk({x: 5975, z: 48}, 1.5, true) > 2) fail('He could not reach the inside of the Tin Town gate again.');
   if (await walk({x: 5975, z: 80}, 1.5, true) > 2) fail('He could not walk out through the Tin Town gate again.');
-  if (await walk({x: news.x, z: news.z - 9}, 1.5, true) > 2.5) fail('He could not walk back to his gate.');
+  if (await walk({x: news.x, z: news.z - 3.5}, 1.5, true) > 2.5) fail('He could not walk back to the board at his gate.');
   await wait('boardShows', 'Your hens laid');
   now = await home();
   report.board = now.board;
   if (!/full|hold/.test(now.board)) fail('The board did not say what the boxes hold.', now.board);
   await evaluate('face', Math.atan2(news.x - (await home()).fighter.x, news.z - (await home()).fighter.z));
-  await evaluate('camera', 'overhead');
-  await evaluate('advance', .3);
   await context.screenshot('home-hens-board');
-  await evaluate('camera', 'first-person');
   // He gathers the eggs: one press at the box.
   if (await walk(point(10, 3), .3) > .6) fail('He could not walk in through his gate.');
   if (await walk({x: nest.x, z: nest.z + 1.3}, .12) > .3) fail('He could not walk to the nest box.');

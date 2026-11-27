@@ -5,6 +5,8 @@
 // frames. The hens, the nest boxes and the eggs are HOME-GROUND-LOOK-1's parts (src/world/open/looks/home-hens-look.js);
 // Moss's travelling crate and the spare crates are plain slatted crates drawn here.
 import * as THREE from 'three';
+import {createStoryPeople} from '../../jobs/story-people.js';
+import {createStoryPeopleView} from '../../story-people-view.js';
 import {BOX_HOLDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_PANELS, HOME_PIECES, HOME_SIZE, HOME_STEP} from '../content/home-ground.js';
 import {GATE_POST, boardSpot, boxInLand, crateSpot, cratesLeft, gateOf, hensWaiting, newsBoardSpot, panelsLeft,
   pieceInLand} from '../home-rule.js';
@@ -128,6 +130,9 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     mesh.setMatrixAt(index, matrix.compose(new THREE.Vector3(x, y, z), quaternion, scale));
   };
   const group = new THREE.Group(); group.name = 'home-ground'; group.visible = false;
+  const moss = createStoryPeopleView(loadAsset);
+  group.add(moss.group);
+  let mossCast = [], mossKey = '';
   const wear = tinTexture();
   const std = (name, color, extra = {}) => new THREE.MeshStandardMaterial({name, color, roughness: .82, metalness: .18, ...extra});
   const materials = {
@@ -275,6 +280,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   function henDraw(index) {
     if (henDraws[index] || !henModel) return henDraws[index] ?? null;
     const hen = createHen(henModel, {band: index % 2 ? 'yellow' : 'blue', pose: 'peck', phase: index * 1.7});
+    // Measured standing height: 36.32 cm before this scale, 39.95 cm after it. The model and its art are unchanged.
+    hen.object.scale.setScalar(1.1);
     hens.add(hen.object);
     return (henDraws[index] = hen);
   }
@@ -325,6 +332,20 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       group.visible = state?.on === true;
       if (!group.visible) return;
       const record = worldJob.open.world.open.home ?? null;
+      const deliveryGate = gateOf(record), delivery = record && hensWaiting(record) ? crateSpot(deliveryGate) : null;
+      const nextMossKey = delivery ? `${delivery.x}/${delivery.z}` : '';
+      if (mossKey !== nextMossKey) {
+        mossKey = nextMossKey;
+        mossCast = [];
+        if (delivery) {
+          const gateAt = pieceInLand(deliveryGate);
+          const x = delivery.x + Math.cos(gateAt.heading) * 1.3;
+          const z = delivery.z - Math.sin(gateAt.heading) * 1.3;
+          mossCast = createStoryPeople([{id: 'moss', position: {x, y: ground(x, z), z},
+            yaw: Math.atan2(gateAt.x - x, gateAt.z - z)}]);
+        }
+      }
+      moss.update({open: worldJob.open, storyPeople: mossCast}, here, seconds, drawnShift);
       // The bounds and the stack: drawn once, again when the drawn ground moves.
       const shiftKey = String(drawnShift?.(HOME_CORNER.x, HOME_CORNER.z) ?? 0);
       if (boundsKey !== shiftKey) {
@@ -515,6 +536,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
     },
     dispose() {
+      moss.dispose();
       for (const geometry of geometries) geometry.dispose();
       for (const material of Object.values(materials)) { material.map?.dispose?.(); material.dispose(); }
       for (const mesh of [pegs, ropes, stakes, flags, stack, panels, posts, marks, crateSlats, tops]) mesh.dispose();

@@ -62,7 +62,7 @@ export const HEN_SETTLE_SECONDS = 45;
 // clock set back counts as no time at all.
 export const AWAY_LONGEST = 3 * DAY_SECONDS;
 // The board at the gate shows itself once an outing when he comes this near, and stays up this long.
-export const BOARD_NEAR = 12;
+export const BOARD_NEAR = 6;
 export const BOARD_SECONDS = 14;
 // The build outline goes away when he has pressed none of the build keys for this long.
 export const BUILD_IDLE_SECONDS = 10;
@@ -124,6 +124,7 @@ export const HOME_WORDS = Object.freeze({
   boxFull: 'The nest boxes are full, so your hens have stopped laying until you gather the eggs.',
   henSeen: '{hen}, a Tin Town Brown. Press F to give her a new name.',
   henAsk: 'What will you call this hen?',
+  henNameHint: 'Type a name and press Enter.',
   crateWaiting: 'Moss has brought two hens in a crate. Press F to talk to him.',
   firstBox: 'Your hens need somewhere to lay. Press B, then G until you hold an old crate, and hold B to make a nest box.',
   boardHint: 'Press F to read the board again.',
@@ -131,7 +132,6 @@ export const HOME_WORDS = Object.freeze({
 
 // What the board at the gate says (src/world/open/home-rule.js, boardLines). Every line is a whole sentence.
 export const BOARD_WORDS = Object.freeze({
-  awayMoment: 'You were only away for a moment.',
   away: 'You were away for {time}.',
   awayLong: 'You were away for more than three days, and the board counts only the last three.',
   laidMany: 'Your hens laid {count} eggs while you were gone.',

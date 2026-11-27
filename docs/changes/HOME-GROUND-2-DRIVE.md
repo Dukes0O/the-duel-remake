@@ -1,0 +1,15 @@
+# HOME-GROUND-2-DRIVE
+- 1. Board sentences stay within 6 m, disappear in both overhead views, and refresh from the current boxes and store.
+- 2. Nest boxes snap a step ahead inside the forward view; the same reach offers gathering and lifting.
+- 3. Moss uses the existing open-world figure and renderer beside the crate, facing the gate; he leaves after acceptance.
+- 4. Hen naming says, "Type a name and press Enter." The ground keeps its board hint.
+- 5. The launcher panel is hidden while the home part puts a hammer or wrench in his hands.
+- 6. Gaps under an hour have no away sentence; the board opens with its news.
+- 7. Before edits: standing feet-to-comb bounds were 0.363197 m, scale 1. After: 0.399516 m, home-view scale 1.1; no new art.
+- Targeted checks: home-ground 132 and home-hens 1220 passed; headless Moss delivery rendering and drawn hen measurement passed.
+- Rule 23 set (`--jobs 2`): 7/7 passed; core 804, race replays 306, combat replays 12, world composition 65; fingerprints unchanged.
+- Extra set: world-hud, everburn-play-fixes-round4, scenery-fence-bounce, board and hygiene filters, 8/8 passed. Scenario syntax passed.
+- `npm run build` passed. Browser scenarios and frames were not run, as directed; Claude drives after merging. No new events or sound cues.
+- Checks ran on `54fab2ed0` plus this card's working tree; the handoff contains the tested game and check code unchanged.
+- Changed assertion: the short-gap crate news is now first, because the away sentence is omitted; new checks cover range, overhead, gathering, placement and hints. Claude review owed.
+- **Removed:** the moment-away sentence, the hen form's ground-renaming hint, and the drive script's distant board approach and overhead board shot. Generated output recycled; no evidence remains.

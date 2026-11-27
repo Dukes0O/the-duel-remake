@@ -171,6 +171,7 @@ function homeHudOf(worldJob) {
   return {prompt: home.prompt || '', burst: home.burst?.shown ? {share: home.burst.charge, spent: home.burst.spent} : null,
     naming: home.naming === true, namingKey: home.naming === true ? home.namingKey || 'ground' : '',
     ask: hen ? HOME_WORDS.henAsk : HOME_WORDS.nameAsk, name: hen ? hen.name : record?.name ?? '',
+    nameHint: hen ? HOME_WORDS.henNameHint : HOME_WORDS.nameHint, building: home.tool === 'hammer' || home.tool === 'wrench',
     board: home.board?.lines?.length ? home.board.lines : null};
 }
 
@@ -565,7 +566,7 @@ export function createWorldHud({host, app = null, picture = null}) {
   const boardCard = doc.createElement('section'); boardCard.className = 'world-hud-board'; boardCard.hidden = true;
   boardCard.setAttribute('role', 'status'); boardCard.setAttribute('aria-label', 'The board at your gate');
   root.append(homeLine, burstGauge, nameBox, boardCard);
-  const nameInput = nameBox.querySelector('input'), nameAsk = nameBox.querySelector('b'), burstBar = burstGauge.querySelector('i');
+  const nameInput = nameBox.querySelector('input'), nameAsk = nameBox.querySelector('b'), nameHint = nameBox.querySelector('p'), burstBar = burstGauge.querySelector('i');
   let naming = '', boardText = '';
   nameBox.addEventListener('submit', event => {
     event.preventDefault();
@@ -701,11 +702,12 @@ export function createWorldHud({host, app = null, picture = null}) {
       }
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
       const home = model.home;
+      root.classList.toggle('is-home-building', home?.building === true);
       homeLine.textContent = home && !home.naming ? home.prompt : '';
       homeLine.hidden = !homeLine.textContent;
       burstGauge.hidden = !home?.burst;
       if (home?.burst) { burstBar.style.width = `${(home.burst.share * 100).toFixed(1)}%`; burstGauge.classList.toggle('is-spent', home.burst.spent); }
-      const lines = home?.board && !home.naming ? home.board : null;
+      const lines = home?.board && !home.naming && app?.footCameraMode !== 'overhead' ? home.board : null;
       const nextBoard = lines ? lines.join('|') : '';
       if (nextBoard !== boardText) {
         boardText = nextBoard; boardCard.hidden = !lines;
@@ -715,6 +717,7 @@ export function createWorldHud({host, app = null, picture = null}) {
         naming = home?.namingKey ?? ''; nameBox.hidden = !naming;
         if (naming) {
           nameAsk.textContent = home.ask;
+          nameHint.textContent = home.nameHint;
           nameInput.value = home.name;
           if (doc.pointerLockElement) doc.exitPointerLock?.();
           nameInput.focus?.(); nameInput.select?.();

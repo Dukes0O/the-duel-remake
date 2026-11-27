@@ -1202,7 +1202,8 @@ tasks:
     model: "sol"
     lane: "UI"
     size: "S"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "Codex Sol, laptop lane, 27 November 2026"
     needs: []
     locks: []

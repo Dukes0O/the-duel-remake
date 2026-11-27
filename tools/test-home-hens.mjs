@@ -14,7 +14,7 @@ import {homePart} from '../src/world/open/parts/home.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, DAY_SECONDS, HEN_SETTLE_SECONDS, HOME_CELLS, HOME_CRATES, HOME_CUES, HOME_WORDS,
   MOSS_HENS, MOSS_HENS_ID, MOSS_TALK} from '../src/world/open/content/home-ground.js';
-import {awayFor, boardLines, boxInLand, boxRefusal, build, refusal, buildBox, crateSpot, cratesLeft, facedThing, fenceClosed,
+import {awayFor, boardLines, boxInLand, boxRefusal, boxSlotInFront, build, refusal, buildBox, crateSpot, cratesLeft, facedThing, fenceClosed,
   gatherBox, giveHens, groundPoint, hensWaiting, homeSolids, liftBox, nameHen, newHome, newsBoardSpot, readableHome, ripen,
   upgradeHome} from '../src/world/open/home-rule.js';
 import {selectFirstPersonPresentation} from '../src/first-person-presentation.js';
@@ -42,6 +42,22 @@ function fenced(name = 'G-Town') {
   return home;
 }
 const withBoxes = (home, cells) => cells.reduce((record, [i, j]) => buildBox(record, {kind: 'box', i, j}), home);
+
+// A snapped nest box stays a step ahead at different places and headings, and is offered by the same reach.
+{
+  for (const [a, b] of [[4.5, 6.3], [4.5, 6.5], [4, 6], [4.05, 6.95], [4, 4.4]]) {
+    for (let turn = 0; turn < 72; turn++) {
+      const yaw = turn * Math.PI / 36, me = groundPoint(a, b), slot = boxSlotInFront(me, yaw), at = boxInLand(slot);
+      check((at.x - me.x) * Math.sin(yaw) + (at.z - me.z) * Math.cos(yaw) >= 1 - 1e-9,
+        'the nest box is a step ahead instead of under his feet');
+      check(Math.abs(Math.atan2(Math.sin(Math.atan2(at.x - me.x, at.z - me.z) - yaw),
+        Math.cos(Math.atan2(at.x - me.x, at.z - me.z) - yaw))) < Math.PI / 5,
+        'the nest box stays in the forward view');
+      const home = buildBox(giveHens(fenced()), slot);
+      check(facedThing(home, me, yaw)?.kind === 'box', 'without moving or turning he can reach the box he just built');
+    }
+  }
+}
 
 // ---- The rules of laying, over any stretch of real time. ---------------------------------------------------------
 {
@@ -311,7 +327,11 @@ const partOf = open => open.parts.home;
   // Before the hens.
   equal(boardLines({away: 7200, laid: 0}, build(newHome('x'), {kind: 'gate', i: 8, j: 0, axis: 'x'})),
     ['You were away for 2 hours.', BOARD_WORDS.fenceFirst], 'before the fence is closed the board says how to get the hens');
-  equal(boardLines({away: 30, laid: 0}, fenced())[1], BOARD_WORDS.crate, 'once it is closed, that Moss has left them by the gate');
+  equal(boardLines({away: 30, laid: 0}, fenced())[0], BOARD_WORDS.crate, 'a short gap opens with the news that Moss has left the hens');
+  for (const away of [0, 30, 3599])
+    check(!boardLines({away, laid: 0}, home).some(line => line.startsWith('You were')),
+      'a visit less than an hour apart has no away line');
+  check(boardLines({away: 3600, laid: 0}, home)[0].startsWith('You were away'), 'an hour away is reported');
   // Laying in play counts from the clock's one reading: the last visit moves on with the outing's own seconds.
   const box = {...withBoxes(giveHens(fenced()), [[3, 4]]), lastSeen: seen};
   out = run(landWith(box), viewOf(far, {}, {homeClock: seen + 60}), 200);
@@ -320,6 +340,28 @@ const partOf = open => open.parts.home;
   equal(homeOf(out.open).boxes[0].eggs, 1, 'her first egg is laid in play');
   check(Math.abs(homeOf(out.open).lastSeen - (seen + 60 + 60)) < .05,
     'an egg laid in play leaves the last visit at the clock\'s reading plus the seconds played when it was laid');
+}
+
+// The board stays beside the board, disappears from above, and reads the current store after a gather.
+{
+  let record = withBoxes(giveHens(fenced()), [[13, 1]]);
+  record = {...record, boxes: record.boxes.map(box => ({...box, eggs: 3}))};
+  const news = newsBoardSpot(record.pieces.find(piece => piece.kind === 'gate'));
+  const me = {x: news.x, z: news.z + 5, yaw: 0};
+  let out = run(landWith(record), viewOf(me), DT);
+  check(partOf(out.open).board, 'the board can be read beside the gate');
+  out = run(out.open, viewOf({...me, z: news.z + 7}), DT);
+  equal(partOf(out.open).board, null, 'the board is hidden more than about six metres away');
+  out = run(landWith(record), viewOf(me), DT);
+  out = run(out.open, viewOf(me, {view: true}), DT);
+  equal(partOf(out.open).board, null, 'the board is hidden in the overhead view');
+  const at = boxInLand(record.boxes[0]);
+  const gatherAt = {x: at.x, z: at.z - 1.5, yaw: 0};
+  out = run(landWith(record), viewOf(gatherAt), DT);
+  check(partOf(out.open).board?.lines.includes(BOARD_WORDS.storeNone), 'the board starts with the empty store');
+  out = run(out.open, viewOf(gatherAt, {}, {interact: true}), DT);
+  check(partOf(out.open).board?.lines.includes('You have 3 eggs in your store.') && homeOf(out.open).eggs === 3,
+    'gathering refreshes the board with the new store count');
 }
 
 // ---- The save: written, reloaded, and the saves made before this card. ------------------------------------------
