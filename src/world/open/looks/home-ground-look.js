@@ -2,19 +2,20 @@
 // ground's part (worldJob.open.parts.home) and its record (world.open.home) and changes neither. It draws nothing until
 // the part has run with its switch on (`state.on`). Level 1 is tin: galvanised corrugated panels on two posts, the same
 // sheet that Tin Town's own fence is made of (src/world/tin-town-gate.js), and a gate of two tin leaves in angle-iron
-// frames. The hens are the wildlife line's chicken (src/wildlife-models.js) and the nest boxes plain crates, until
-// HOME-GROUND-LOOK-1 brings their own look.
+// frames. The hens, the nest boxes and the eggs are HOME-GROUND-LOOK-1's parts (src/world/open/looks/home-hens-look.js);
+// Moss's travelling crate and the spare crates are plain slatted crates drawn here.
 import * as THREE from 'three';
-import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {BOX_HOLDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_PANELS, HOME_PIECES, HOME_SIZE, HOME_STEP} from '../content/home-ground.js';
 import {GATE_POST, boardSpot, boxInLand, crateSpot, cratesLeft, gateOf, hensWaiting, newsBoardSpot, panelsLeft,
   pieceInLand} from '../home-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
-import {WILDLIFE_MODELS, wildlifeModelUrl} from '../../../wildlife-models.js';
+import {HOME_HEN_MODEL, createEgg, createHen, createNestBox} from './home-hens-look.js';
 
 const MOST_MARKS = 96;
 // The eggs drawn in one nest box: a clutch of up to this many shows how full it is.
-const EGGS_DRAWN = 12;
+const EGGS_DRAWN = 6;
+// Where the eggs of a clutch lie round the first, in the box's own metres.
+const CLUTCH = [[0, 0], [.045, .012], [-.043, .016], [.018, -.04], [-.02, -.036], [.004, .046]];
 const OUTLINE = Object.freeze({build: 0xe8f0c8, lift: 0xf2c14a, refused: 0xe0442c});
 
 // A zig-zag sheet `width` wide and `height` tall, its foot at y 0, running along x and centred on it.
@@ -239,44 +240,43 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   // ---- Nest boxes, Moss's crate of hens and the spare crates (HOME-GROUND-2). -----------------------------------
   // One unit box, scaled into every slat of every crate.
   const slatGeometry = keep(new THREE.BoxGeometry(1, 1, 1));
-  const nestParts = crateParts(HOME_BOX.size, HOME_BOX.size, .5, true);
   const crateParts2 = crateParts(1.1, .6, .55, false);
   const spareParts = crateParts(.8, .55, .5, false);
-  const nestSlats = new THREE.InstancedMesh(slatGeometry, materials.crate, nestParts.length * 2);
   const crateSlats = new THREE.InstancedMesh(slatGeometry, materials.crate, crateParts2.length + spareParts.length * 2);
-  nestSlats.name = 'home-nest-boxes'; crateSlats.name = 'home-crates';
-  nestSlats.castShadow = crateSlats.castShadow = true;
-  const straw = new THREE.InstancedMesh(keep(new THREE.BoxGeometry(HOME_BOX.size - .08, .09, HOME_BOX.size - .08)), materials.straw, 2);
-  const eggs = new THREE.InstancedMesh(keep(new THREE.SphereGeometry(.028, 10, 8).scale(1, 1.3, 1)), materials.egg, EGGS_DRAWN * 2);
-  straw.name = 'home-straw'; eggs.name = 'home-eggs';
-  group.add(nestSlats, crateSlats, straw, eggs);
+  crateSlats.name = 'home-crates'; crateSlats.castShadow = true;
+  group.add(crateSlats);
+  // Each nest box is HOME-GROUND-LOOK-1's crate on its side, its open front to the south; the egg it shows is the first
+  // of a clutch, and more lie round it as the box fills.
+  const nests = [];
+  function nest(index) {
+    if (nests[index]) return nests[index];
+    const box = createNestBox();
+    const first = box.userData.egg;
+    const clutch = CLUTCH.slice(1).map(([dx, dz]) => {
+      const egg = createEgg(); egg.position.set(first.position.x + dx, first.position.y, first.position.z + dz);
+      egg.rotation.set(first.rotation.x, first.rotation.y + dx * 20, first.rotation.z); egg.visible = false; box.add(egg);
+      return egg;
+    });
+    group.add(box);
+    return (nests[index] = {box, clutch});
+  }
   let boxesKey = '';
 
   // ---- The hens: the wildlife chicken until HOME-GROUND-LOOK-1 (HOME-GROUND-2). ---------------------------------
   const hens = new THREE.Group(); hens.name = 'home-hens'; group.add(hens);
   const henDraws = [];
-  let henModel = null, henAsked = false, lastSeconds = null;
+  let henModel = null, henAsked = false;
   function askHen() {
     if (henAsked || typeof loadAsset !== 'function') return;
     henAsked = true;
-    Promise.resolve().then(() => loadAsset(wildlifeModelUrl('chicken'))).then(gltf => {
-      const entry = WILDLIFE_MODELS.chicken;
-      henModel = {gltf, idle: THREE.AnimationClip.findByName(gltf.animations, entry.idle),
-        walk: THREE.AnimationClip.findByName(gltf.animations, entry.move), scale: entry.scale};
-    }).catch(() => { henModel = null; });
+    Promise.resolve().then(() => loadAsset(HOME_HEN_MODEL)).then(gltf => { henModel = gltf; }).catch(() => { henModel = null; });
   }
+  // The first two wear blue and yellow leg bands, so that he can tell them apart.
   function henDraw(index) {
     if (henDraws[index] || !henModel) return henDraws[index] ?? null;
-    const root = cloneSkeleton(henModel.gltf.scene);
-    root.name = 'home-hen'; root.scale.setScalar(henModel.scale);
-    root.traverse(node => { if (node.isMesh) { node.castShadow = true; node.frustumCulled = false; } });
-    const mixer = new THREE.AnimationMixer(root);
-    const idle = henModel.idle ? mixer.clipAction(henModel.idle).play() : null;
-    const walk = henModel.walk ? mixer.clipAction(henModel.walk).play() : null;
-    if (idle) { idle.time = index * .7; idle.weight = 1; }
-    if (walk) walk.weight = 0;
-    hens.add(root);
-    return (henDraws[index] = {root, mixer, idle, walk});
+    const hen = createHen(henModel, {band: index % 2 ? 'yellow' : 'blue', pose: 'peck', phase: index * 1.7});
+    hens.add(hen.object);
+    return (henDraws[index] = hen);
   }
 
   // ---- What is rising as he hammers: the panel, the gate's leaves or the nest box, growing up out of the ground. --
@@ -284,8 +284,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const risingSheet = new THREE.Mesh(sheet, materials.tin); risingSheet.castShadow = true;
   const risingPosts = [-1, 1].map(() => { const mesh = new THREE.Mesh(post, materials.post); mesh.castShadow = true; return mesh; });
   const risingLeaves = new THREE.Mesh(keep(corrugated(HOME_PIECES.gate.cells * HOME_STEP - GATE_POST * 2, HOME_PIECES.gate.height - .35).translate(0, .2, 0)), materials.tin);
-  const risingCrate = new THREE.InstancedMesh(slatGeometry, materials.crate, nestParts.length);
-  nestParts.forEach((part, index) => place(risingCrate, index, part.x, part.y, part.z, 0, part.sx, part.sy, part.sz));
+  const risingCrate = createNestBox({name: 'home-rising-nest-box'});
   rising.add(risingSheet, ...risingPosts, risingLeaves, risingCrate);
 
   // ---- From above: where he stands, and each built piece as a dark strip of its real length. ------------------
@@ -412,18 +411,17 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       const nextBoxes = JSON.stringify([record?.boxes ?? [], waiting, hensKept.length, crateAt, boundsKey]);
       if (nextBoxes !== boxesKey) {
         boxesKey = nextBoxes;
-        let slats = 0, eggCount = 0;
-        (record?.boxes ?? []).slice(0, 2).forEach((box, index) => {
-          const {x, z} = boxInLand(box), y = ground(x, z, drawnShift);
-          for (const part of nestParts) place(nestSlats, slats++, x + part.x, y + part.y, z + part.z, 0, part.sx, part.sy, part.sz);
-          place(straw, index, x, y + .08, z);
+        const boxes = record?.boxes ?? [];
+        for (let index = 0; index < Math.max(boxes.length, nests.length); index++) {
+          const box = boxes[index], drawn = box ? nest(index) : nests[index];
+          drawn.box.visible = !!box;
+          if (!box) continue;
+          const {x, z} = boxInLand(box);
+          drawn.box.position.set(x, ground(x, z, drawnShift), z);
           const shown = Math.min(EGGS_DRAWN, Math.ceil(box.eggs * EGGS_DRAWN / BOX_HOLDS));
-          for (let n = 0; n < shown; n++) {
-            const col = n % 4, row = Math.floor(n / 4) % 3;
-            place(eggs, eggCount++, x - .18 + col * .12 + (row % 2) * .04, y + .16, z - .12 + row * .12, (n * 1.3) % 3);
-          }
-        });
-        nestSlats.count = slats; straw.count = Math.min(2, record?.boxes?.length ?? 0); eggs.count = eggCount;
+          drawn.box.userData.setEgg(shown > 0);
+          drawn.clutch.forEach((egg, n) => { egg.visible = n + 1 < shown; });
+        }
         let crates = 0;
         const spares = waiting ? 1 : crateAt ? cratesLeft(record) : 0;
         if (crateAt) {
@@ -436,30 +434,34 @@ export function createHomeGroundView({course, loadAsset} = {}) {
           }
         }
         crateSlats.count = crates;
-        for (const mesh of [nestSlats, crateSlats, straw, eggs]) { mesh.instanceMatrix.needsUpdate = true; mesh.computeBoundingSphere(); }
+        crateSlats.instanceMatrix.needsUpdate = true; crateSlats.computeBoundingSphere();
       }
 
-      // The hens: in Moss's crate until he takes them, then about his ground as the part walks them.
-      const delta = lastSeconds === null ? 0 : Math.max(0, Math.min(.1, seconds - lastSeconds));
-      lastSeconds = seconds;
+      // The hens: in Moss's crate until he takes them, then about his ground as the part walks them. A hen sitting is on
+      // the seat of the box she lays in.
       const flock = state.flock ?? [];
       const henCount = waiting ? 2 : flock.length;
       if (henCount) askHen();
       for (let index = 0; index < Math.max(henCount, henDraws.length); index++) {
         const drawn = index < henCount ? henDraw(index) : henDraws[index];
         if (!drawn) continue;
-        drawn.root.visible = index < henCount;
-        if (!drawn.root.visible) continue;
+        drawn.object.visible = index < henCount;
+        if (!drawn.object.visible) continue;
         let x, z, yaw, mode;
-        if (waiting && crateAt) ({x, z, yaw, mode} = {x: crateAt.x + (index ? .25 : -.25), z: crateAt.z, yaw: index ? -2.2 : .8, mode: 'peck'});
+        if (waiting && crateAt) ({x, z, yaw, mode} = {x: crateAt.x + (index ? .25 : -.25), z: crateAt.z, yaw: index ? -2.2 : .8, mode: 'stand'});
         else ({x, z, yaw, mode} = flock[index]);
-        const sitting = mode === 'sit';
-        drawn.root.position.set(x, ground(x, z, drawnShift) + (waiting ? .05 : sitting ? .1 : 0), z);
-        // The model's nose is along +X; a yaw of 0 faces +z.
-        drawn.root.rotation.y = yaw - Math.PI / 2;
-        if (drawn.walk) drawn.walk.weight = mode === 'walk' ? 1 : 0;
-        if (drawn.idle) drawn.idle.weight = mode === 'walk' ? 0 : 1;
-        drawn.mixer.update(sitting ? 0 : delta * (mode === 'scratch' ? 1.6 : 1));
+        let y = ground(x, z, drawnShift) + (waiting ? .05 : 0);
+        if (mode === 'sit') {
+          // On the nest box nearest her, facing out of its open front.
+          const sat = nests.filter(row => row.box.visible).map(row => row.box)
+            .sort((a, b) => Math.hypot(a.position.x - x, a.position.z - z) - Math.hypot(b.position.x - x, b.position.z - z))[0];
+          if (sat) { const seat = sat.userData.seat; x = sat.position.x + seat.x; z = sat.position.z + seat.z; y = sat.position.y + seat.y; yaw = 0; }
+        }
+        drawn.object.position.set(x, y, z);
+        // The hen's nose is along +X; a yaw of 0 faces +z.
+        drawn.object.rotation.y = yaw - Math.PI / 2;
+        if (drawn.pose !== mode) drawn.setPose(mode);
+        drawn.update(seconds);
       }
       hens.visible = henCount > 0;
       // The gate swings in over about a second when he comes near, and shuts behind him.
@@ -515,8 +517,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     dispose() {
       for (const geometry of geometries) geometry.dispose();
       for (const material of Object.values(materials)) { material.map?.dispose?.(); material.dispose(); }
-      for (const mesh of [pegs, ropes, stakes, flags, stack, panels, posts, marks, nestSlats, crateSlats, straw, eggs, tops, risingCrate]) mesh.dispose();
-      for (const drawn of henDraws) if (drawn) { drawn.mixer.stopAllAction(); drawn.root.traverse(node => { if (node.isSkinnedMesh) node.skeleton.dispose(); }); }
+      for (const mesh of [pegs, ropes, stakes, flags, stack, panels, posts, marks, crateSlats, tops]) mesh.dispose();
+      for (const drawn of henDraws) drawn?.dispose();
     },
   };
 }

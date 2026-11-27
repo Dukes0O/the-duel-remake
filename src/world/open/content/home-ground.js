@@ -21,7 +21,8 @@ export const HOME_PIECES = Object.freeze({
 });
 // HOME-GROUND-2: a nest box is knocked together from an old crate in a cell of the grid, not on its lines. It is hammered
 // up like a panel, and picked up again free.
-export const HOME_BOX = Object.freeze({id: 'box', name: 'nest box', hammer: 2.5, size: .8, height: .7, upCue: 'home.box.up'});
+// Its size is HOME-GROUND-LOOK-1's crate on its side on two blocks (home-hens-look.js, HOME_NEST_SIZE), with room round it.
+export const HOME_BOX = Object.freeze({id: 'box', name: 'nest box', hammer: 2.5, size: .5, height: .55, upCue: 'home.box.up'});
 // Auntie Solder has the panels stacked at the ground for him: 76 fence the edge round the gate, and four are over.
 export const HOME_PANELS = 80;
 // The lane runs from the gate straight across the ground to the far fence, as wide as the gate (section 6).

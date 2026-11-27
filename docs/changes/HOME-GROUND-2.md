@@ -1,0 +1,11 @@
+# HOME-GROUND-2: hens, nest boxes, the real clock and the board at the gate (behind `home-ground`)
+
+**What changed.** Moss brings two Tin Town Browns once the fence is closed; he names them, makes nest boxes from two old crates, and gathers eggs (F) into his store. A hen lays every 4 hours on the real clock; a box holds 18; full boxes make the hens wait. A board of news beside the gate says what happened while he was away. The drive's six fixes: a hammer (a wrench for the gate) in his first-person hands with the panel rising as he hammers; launcher lowered and car-aim words hidden on his ground; from above, his ring and arrow and dark strips for built pieces; the outline only after B, R or G, and facing a built piece offers to pick it up; "Step up to the edge of your ground to hang the gate."; his ground tinted. The hens are the wildlife chicken until HOME-GROUND-LOOK-1 brings their look; Moss is heard at the crate but not drawn there; the third-person figure holds no tool yet.
+
+**Save.** `world.open.home` becomes version 2 with `hens`, `boxes`, `eggs`, `lastSeen`; a version 1 record or none loads unchanged, and gains the four fields only when the part runs with the switch on. **Clock.** `src/app.js` reads it once as an open outing starts (switch on only); time away is 0 to 3 days. Known trade, kept on purpose: a clock set back loses nothing, and once put right the gap counts again (at most full boxes); the other choice stalls laying for as long as a clock was set ahead.
+
+**Checks** on CHECKS_COMMIT: `test-home-hens` (new, 130), `test-home-ground` (128), lane tier LANE_RESULT, `npm run build` BUILD_RESULT, `open-home-ground` by real keys SCENARIO_RESULT. One independent review of the save and the clock: the hens never walked to a box (fixed, now checked) and a gate's lane could take a nest box (fixed, checked); the set-back trade above was its other point.
+
+**Changed assertions** (`test-home-ground`): the outline is null until a build key is pressed (drive item 4, Kyle's drive); the lane refusal test presses B first. Nothing loosened. **Cues:** `home.hen.cluck`, `home.hen.lay`, `home.egg.gather`, `home.box.full`, `home.board.read`, `home.fence.hammer` (per strike), `home.box.up`, `home.crate.open`.
+
+**Removed:** nothing; step 1's always-shown outline and its sentence are replaced in place.

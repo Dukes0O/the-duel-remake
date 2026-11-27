@@ -304,9 +304,11 @@ export const homePart = {
 
     // ---- Building -----------------------------------------------------------------------------------------------
     // The launcher is lowered on his ground; the fire key takes it back, and B puts the hammer back in his hands.
-    next.onGround = near;
-    if (!near) next.armed = false;
+    // On or near his ground (as far out as its sentences show) the launcher is lowered and the car-aim words hidden.
+    next.onGround = !!fighter && outsideBy(fighter.position.x, fighter.position.z) < PROMPT_NEAR;
+    if (!next.onGround) next.armed = false;
     else if (pressed('fire')) Object.assign(next, {armed: true, building: false});
+    if (!near) next.building = false;
     // B shows the outline and starts the hammering; R and G, which change what he holds, show it too.
     if (near && (pressed('build') || pressed('turn') || pressed('piece')) && !next.naming) Object.assign(next, {building: true, armed: false, board: null});
     const touched = held.build || pressed('turn') || pressed('piece') || pressed('view');

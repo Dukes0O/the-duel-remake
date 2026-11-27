@@ -250,7 +250,10 @@ const partOf = open => open.parts.home;
   equal(footActionPresentation({...state, arena: null}).text, 'HOLD AIM ON A CAR', 'elsewhere it is shown as before');
   // Walking off his ground puts the tool away and the outline with it.
   out = run(out.open, viewOf({x: groundPoint(10, -6).x, z: groundPoint(10, -6).z, yaw: 0}), DT);
-  equal([partOf(out.open).tool, partOf(out.open).onGround, partOf(out.open).outline], [null, false, null], 'off his ground nothing is in his hands');
+  equal([partOf(out.open).tool, partOf(out.open).onGround, partOf(out.open).outline], [null, true, null],
+    'outside his gate nothing is in his hands, and the aim words stay hidden as far out as the board');
+  out = run(out.open, viewOf({x: groundPoint(10, -12).x, z: groundPoint(10, -12).z, yaw: 0}), DT);
+  equal(partOf(out.open).onGround, false, 'further out the launcher is his again');
   // Left alone, the outline goes away.
   out = run(out.open, viewOf(me, {build: true}), DT);
   out = run(out.open, viewOf(me), 10.2);
