@@ -14,7 +14,9 @@ export const RUNAWAY_PLACES = Object.freeze({
   'wire': townPoint(NIGHT_2_SITES.westGap.position),
   'bowl': LAND.at('tin-town', 26.7, 49),
   'handprint': LAND.at('tin-town', 25.5, 48.5),
-  'in-the-shed': LAND.at('tin-town', 26, 47.1),
+  // In the back corner of Moss's wash shed (bess-shed: 4 by 3 m about (26, 46.25), door on its +z side), clear of the
+  // doorway and of Moss at his post, so a player can still walk in (the night check of 26 November 2026).
+  'in-the-shed': LAND.at('tin-town', 24.7, 45.3),
   'in-the-loft': LAND.at('tin-town', -7.5, -42),
   'in-the-woodpile': LAND.at('tin-town', 34, 7),
   'among-the-walkers': LAND.at('tin-town', -13, -34),
