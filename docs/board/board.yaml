@@ -418,7 +418,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude cloud, 27 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
