@@ -28,16 +28,20 @@ export const pageFunctions = {
   advance: scout.advance,
   drive: scout.drive,
   walkAt: camp.walkAt,
+  // The open roam keeps the shared day on its own clock (src/world/open/day-rule.js: dark from 20 minutes of play), so
+  // the part of the day is set there, as open-market-day.mjs does; the job's definition no longer decides it.
   loadNight: world => {
     const job = window.__qaApp.duel.state.arena.worldJob;
     job.open.world = world;
     job.definition.open.partOfDay = 'dark';
+    if (job.open.daySeconds !== undefined) job.open = {...job.open, daySeconds: 20 * 60, partOfDay: 'dark'};
   },
   ledger: () => window.__qaApp.duel.state.arena.worldJob.open.world.ledger,
   nextVisit: ledger => {
     const job = window.__qaApp.duel.state.arena.worldJob;
     job.open.world = {...job.open.world, ledger};
     job.definition.open.partOfDay = 'day';
+    if (job.open.daySeconds !== undefined) job.open = {...job.open, daySeconds: 3 * 60, partOfDay: 'day'};
   },
   use: () => {
     const {duel} = window.__qaApp;
