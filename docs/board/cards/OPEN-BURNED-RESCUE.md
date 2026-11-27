@@ -44,6 +44,15 @@ the price's path and the favours spent before the merge (AGENTS rule 17).
 
 `open.party.ride`: three engines starting together at dusk. `open.rescue.home`: the gate bell rung by somebody glad.
 
+## Claude answers (27 November 2026)
+
+Ready now: OPEN-BURNED-PEN merged on 27 November. Build inside what exists, as the pen card did: the beat `home` in
+`src/story/threads/content/burned-camp.js` (it holds the Ash Men's turn too, with `notes.missionKindBy` naming this card for
+`rescue`), the shared mission runner and its kinds (`rescue` arrived with OPEN-T-LIGHTS, `escort` with OPEN-T-HAULER),
+the open land's day clock and hearth bank, the pen's `ransom-rule.js`, and the Rats' Nest's spots and cut ground. Any new
+kind is a reusable row. In the test, direct only this storyline (`threadsAtBankedHearth({world, view}, [burnedCamp])`).
+Run `node tools/thread-crossings.mjs --check`: the burned camp must have no stub left. Merge current integration first.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
