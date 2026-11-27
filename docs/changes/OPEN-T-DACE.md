@@ -2,7 +2,7 @@
 
 - Dace’s authored words, morning sign, forge repairs, choices, search, hearth log and later reports now play behind `story-choices` (dev).
 - Drive runs ordered moments. Fetch uses the Lights rescue rule and keeps the road checkpoints armed.
-- Tested code `2ef966a6b` on Node 22.23.5, memory-only. Rule 23 plus the named Dace, missions, threads, shared and shape checks passed. Also passed Lights, open sites, burned pen, browser runner, board and repository placement.
+- Tested code `7b7408ae6` on Node 22.23.5, memory-only, with OPEN-TALK-CHOICES and OPEN-SITE-LOOKS merged in. All 14 filtered suites passed, including Rule 23 and the card’s named checks. Board and repository placement passed.
 - `node tools/thread-crossings.mjs --check` reported no faults. `npm run build` passed with Vite warnings. Replay, combat and composition pins passed.
 - Browser source strings parse with `new Function`. The seeded route is clear in the ground and mover checks.
 - **Changed assertions** None in existing suites. The authored thread and its shape counts are intact.
