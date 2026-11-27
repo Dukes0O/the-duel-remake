@@ -114,4 +114,4 @@ Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata
 
 ## OPEN-BURNED-RESCUE cloud handoff
 
-Card branch `codex/open-burned-rescue` is in review at tested code `e6ac9cad4`, based on fetched integration `79b1625c0`. The Node 22 build and card checks passed. The lane's two baseline failures and the laptop checks are recorded on the card change note and draft PR #127. [Change note](../changes/OPEN-BURNED-RESCUE.md)
+Card branch `codex/open-burned-rescue` is in review. The focused Node 22 checks and build passed at `63d779c2a` after the clean merge of fetched integration `a8e2f894c`. The lane's two baseline failures and the laptop checks are recorded on the card change note and draft PR #127. [Change note](../changes/OPEN-BURNED-RESCUE.md)
