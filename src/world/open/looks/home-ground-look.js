@@ -260,7 +260,9 @@ export function createHomeGroundView({course} = {}) {
       const shape = state.outline;
       outline.visible = !!shape;
       grid.visible = state.above === true;
-      if (grid.visible) grid.position.set(HOME_CORNER.x, ground(HOME_CORNER.x + HOME_SIZE / 2, HOME_CORNER.z + HOME_SIZE / 2, drawnShift) + .15, HOME_CORNER.z);
+      // The ground slopes half a metre, so the flat grid stands just above its highest corner.
+      if (grid.visible) grid.position.set(HOME_CORNER.x, Math.max(...corners.map(([x, z]) =>
+        ground(HOME_CORNER.x + x, HOME_CORNER.z + z, drawnShift))) + .12, HOME_CORNER.z);
       if (shape) {
         const piece = shape.mode === 'lift' ? shape.target : shape.piece;
         const {x, z, length, heading} = pieceInLand(piece);
