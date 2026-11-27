@@ -380,14 +380,14 @@ def coupling(name, parent, shot, rust_px, x, y, reach=.9, links=3):
         run = reach / links
         for index in range(links):
             centre = -reach / 2 + run * (index + .5)
-            loops = [stadium(pcx, pcy, run * .66 / k, .07 / k), stadium(pcx, pcy, run * .66 / k - .03 / k, .035 / k)]
+            loops = [stadium(pcx, pcy, run * .68 / k, .105 / k), stadium(pcx, pcy, run * .68 / k - .045 / k, .055 / k)]
             flat = index % 2 == 1
 
             def place(px, py, d, centre=centre, flat=flat):
                 u, v = (px - pcx) * k, (pcy - py) * k
                 return (centre + u, d, v) if flat else (centre + u, v, d)
 
-            plate(mesh, 'rust', shot.photo, loops, place, -.022, .022)
+            plate(mesh, 'rust', shot.photo, loops, place, -.035, .035)
         obj = weld(mesh.finish(name, {'rust': shot.photo.material()}))
         TRIANGLES[name] = mesh.triangles()
         _COUPLING = obj.data
@@ -488,7 +488,7 @@ def plated(name, spec):
     # What is between the frames is unlit iron, not daylight.
     DARK = ('dark', side.photo, spec['dark'])
     materials['dark'] = dark_material()
-    box(gear, side.X(beam[0]) + .15, side.X(beam[1]) - .15, .32, lowest + .04, -(frame_z - .12), frame_z - .12,
+    box(gear, side.X(beam[0]) + .15, side.X(beam[1]) - .15, spec.get('under', .32), lowest + .04, -(frame_z - .12), frame_z - .12,
         {'+z': DARK, '-z': DARK, '-y': DARK, '+x': DARK, '-x': DARK, '+y': DARK})
     # Buffers and hooks at both ends. A wagon photographed from one end wears that end at both.
     for end_key, direction, column, over_px in (('front', 1, beam[1], side.box[2]), ('rear', -1, beam[0], side.box[0])):
@@ -502,6 +502,8 @@ def plated(name, spec):
         hooks = trace(side.mask, spec['hooks'][0 if direction < 0 else 1], tolerance=1.2, min_area=40)
         if hooks:
             plate(gear, 'side', side.photo, hooks, side.world, -.035, .035)
+    if doorway:
+        box(gear, side.X(doorway[0]) - .1, side.X(doorway[2]) + .1, lowest, side.Y(doorway[1]) + .1, -.03, .03, {'+z': DARK, '-z': DARK})
     gear_obj = weld(gear.finish(f'{name}:running-gear', materials))
     adopt(gear_obj, vehicle)
     TRIANGLES[gear_obj.name] = gear.triangles()
@@ -669,8 +671,8 @@ def tank_wagon(name, plate_name):
             box(mesh, tip - .018, tip + .018, y - .018, y + .018, -.2, .2, {'+x': RUNG, '-x': RUNG, '+y': RUNG, '-y': RUNG})
     # Filler hatches beside the walkway, one on each length.
     for v in (646, 1540 + MOVE):
-        profile = [(3.0, .27), (3.36, .27), (3.38, .3), (3.44, .3)]
-        lathe(mesh, 'side', (vx(v), 0, -.84), (0, 1, 0), (0, 0, 1), (1, 0, 0), profile,
+        profile = [(3.0, .2), (3.28, .2), (3.3, .23), (3.35, .23)]
+        lathe(mesh, 'side', (vx(v), 0, -.8), (0, 1, 0), (0, 0, 1), (1, 0, 0), profile,
               lambda i, d, r, a: side.uv(656 + math.sin(a) * 50, 90 - (d - 3.0) * 70), sides=14,
               cap_end=('top', lambda a, f: top.uv(646 + math.sin(a) * f * 62, 221 + math.cos(a) * f * 62)))
     body = weld(mesh.finish(f'{name}:body', {'side': side.photo.material(), 'top': top.photo.material(),
@@ -724,7 +726,7 @@ if 'guard' in ONLY:
     # Side photograph 1774 x 887. One end photograph dresses both ends.
     guard, guard_shots = plated('mule-guard-wagon', {
         'stem': 'guard', 'length': GUARD_LENGTH, 'rear': 'guard-end', 'ground': 866, 'body': (73, 1700),
-        'voxel': .045, 'target': 3600, 'skirt': ((73, 629), (1700, 629)),
+        'voxel': .045, 'target': 3600, 'skirt': ((73, 629), (1700, 629)), 'under': .76,
         'wheels': ((451, 759, 107), (1315, 759, 107)), 'dark': (600, 645, 700, 690), 'frame_z': .98,
         'buffers': {'rear': ((342, 910, 61), (913, 910, 61))}, 'buffer_row': 647,
         'stock': (600, 645, 700, 690), 'hooks': ((66, 676, 112, 782), (1662, 676, 1708, 782)),
@@ -740,14 +742,17 @@ if 'box' in ONLY:
     BARS = (682, 176, 1112, 388)
     box_wagon, box_shots = plated('mule-box-wagon', {
         'stem': 'box', 'length': BOX_LENGTH, 'rear': 'box-end', 'ground': 854, 'body': (53, 1724), 'beam': (86, 1693),
-        'voxel': .045, 'target': 3600, 'skirt': ((53, 612), (1724, 612)),
+        'voxel': .045, 'target': 3600, 'skirt': ((53, 612), (1724, 612)), 'under': .81,
         'wheels': ((433, 727, 127), (1353, 727, 127)), 'dark': (700, 626, 800, 660), 'frame_z': .98,
         'buffers': {'rear': ((327, 884, 64), (939, 884, 64))}, 'buffer_row': 620,
         'stock': (700, 626, 800, 660), 'hooks': ((62, 648, 112, 760), (1658, 648, 1704, 760)),
         'doorway': (690, 164, 1110, 612),
     })
     box_side = box_shots['side']
-    BOX_HALF = box_shots['half']
+    box_end = box_shots['rear']
+    wall = np.flatnonzero(box_end.mask[int(box_end.ground - 2.0 / box_end.s)])
+    BOX_HALF = (wall[-1] - wall[0] + 1) * box_end.s / 2      # the wall's width 2 m up, not the eaves'
+    print(f'box wagon wall half width {BOX_HALF:.2f} m')
     door_mask = box_side.mask.copy()
     shade = box_side.photo.rgb().max(axis=2)
     gaps = np.zeros_like(door_mask)
@@ -761,11 +766,11 @@ if 'box' in ONLY:
     plate(door, 'side', box_side.photo, BOX_DOOR_LOOPS,
           lambda px, py, d: (box_side.X(px) - origin[0], box_side.Y(py) - origin[1], d), 0, .06)
     door_obj = weld(door.finish('box-wagon-door', {'side': box_side.photo.material()}))
-    adopt(door_obj, box_wagon, (origin[0], origin[1], BOX_HALF + .015))
+    adopt(door_obj, box_wagon, (origin[0], origin[1], BOX_HALF - .01))
     TRIANGLES['box-wagon-door'] = door.triangles()
     far_door = bpy.data.objects.new('box-wagon-door-far', door_obj.data)
     bpy.context.collection.objects.link(far_door)
-    adopt(far_door, box_wagon, (origin[0], origin[1], -(BOX_HALF + .015)))
+    adopt(far_door, box_wagon, (origin[0], origin[1], -(BOX_HALF - .01)))
     far_door.rotation_euler = (0, 0, math.pi)      # half a turn about the upright axis
 
 # ---------------------------------------------------------------- the line
