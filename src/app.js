@@ -161,6 +161,9 @@ function readWarlordRegistry() {
     return {status: 'ready', registry: loadPlayers({getItem: key => key === PLAYERS_KEY ? raw : null})};
   } catch { return {status: 'invalid'}; }
 }
+function gasSaveOwnerMatches(owner, verified) {
+  return !!owner && owner.id === verified?.ownerId && JSON.stringify(owner.profile) === verified.snapshot;
+}
 const warlordHold = (profile, id) => {
   const hold = profile?.wasteland?.territories?.[id]?.hold;
   return Number.isSafeInteger(hold) ? Math.max(0, Math.min(100, hold)) : 0;
@@ -905,19 +908,18 @@ export class App {
   }
   worldJobAgain(){
     this.leaveWorldJob();
-    const definition=this.duel.state.arena?.worldJob?.definition;
+    const state = this.duel.state, job = state.arena?.worldJob, result = state.arena?.result;
+    const definition = job?.definition;
     if(!definition)return false;
     if (definition.id === OPEN_ROAM_ID) {
-      const state = this.duel.state, result = state.arena.result;
       if (result?.openSaveIssue && !this._settleArenaResult({result}, state)) return false;
       if (result?.openExit?.to === 'gas-run') return this.gasRun(result.openExit.road);
       return this._startOpenRoam();
     }
-    if (definition.routineRun && this.duel.state.arena.result?.winnerId === 'player') {
-      const state = this.duel.state, result = state.arena.result;
-      if (result.routineSaveIssue && !this._settleArenaResult({result}, state)) return false;
-      return this._startOpenRoam();
-    }
+    const toHearth = definition.routineRun && result?.winnerId === 'player';
+    if ((job.gasSettlementPending || (toHearth && result.routineSaveIssue)) &&
+        !this._settleArenaResult({result}, state)) return false;
+    if (toHearth) return this._startOpenRoam();
     if(definition.run===true)return this.gasRun(definition.road);
     if(definition.kind==='town-job')return this._townJob?this.startTownJob(this._townJob.town,definition.id):false; // TOWN-HAUL-JOB
     const side=sideJobKey(definition);
@@ -928,9 +930,9 @@ export class App {
     return id?this.everburnStep(id):false;
   }
   // RUN-GAS: the gas run needs both switches (the run's own and the Everburn's) and the sixth Everburn job won.
-  gasRunAvailable(){
-    return this._switches().enabled('scablands-runs')===true&&this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()&&
-      EMBER_JOBS.every(id=>(emberOf(this.profile).jobs??[]).includes(id));
+  gasRunAvailable(profile = this.profile){
+    return this._switches().enabled('scablands-runs')===true&&this._switches().enabled('story-everburn')===true&&wastelandUnlocked(profile)&&
+      EMBER_JOBS.every(id=>(emberOf(profile).jobs??[]).includes(id));
   }
   // A road button on the Story Wall's gas run: Big Bess drives from the well to Tin Town by that road ('long' or 'boneyard').
   gasRun(road){
@@ -1421,6 +1423,16 @@ export class App {
     // Preserve other local players if another tab added or updated one.
     const retrying = this.profileSaved === false;
     const durable = retrying ? readWarlordRegistry() : null;
+    if (retrying && this._gasSaveOwner?.ownerId === this.player.id) {
+      // Earnings carried back to the yard still belong to the verified save.
+      const registry = durable.registry;
+      if (!registry || !gasSaveOwnerMatches(activePlayer(registry), this._gasSaveOwner)) return false;
+      const candidate = replacePlayerProfile(registry, this.player.id, this.profile);
+      if (!savePlayers(candidate)) return false;
+      this._gasSaveOwner = null;
+      this._adoptWarlordRegistry(candidate, true);
+      return true;
+    }
     const fresh = retrying
       ? durable.status === 'ready' ? durable.registry : this.players
       : loadPlayers();
@@ -1705,9 +1717,14 @@ export class App {
     if(!result||event?.result!==result||state!==this.duel.state||
       !this.runId||
       this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return false;
-    this._refreshPlayer();
-    if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
     const job = state.arena.worldJob;
+    const runDefinition = state.arena.mode === 'world-job' ? job?.definition : null;
+    const gasRun = isGasRun(runDefinition);
+    const keepGasResult = gasRun && runDefinition.battle !== true && this._switches().enabled('story-choices') === true;
+    // A failed read can make loadPlayers return a default Player 1. Use the
+    // owned in-session profile until the gas run can verify a durable owner.
+    if (!keepGasResult) this._refreshPlayer();
+    if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
     const chapter = job?.night2;
     if (chapter) {
       if (!chapter.completed || result.winnerId !== 'player' || result.night2Page || result.night2Replay) return false;
@@ -1769,30 +1786,33 @@ export class App {
       }
       return result.settlementSaved;
     }
-    const runDefinition = state.arena.mode === 'world-job' ? job?.definition : null;
-    const gasRun = isGasRun(runDefinition);
-    const keepGasResult = gasRun && runDefinition.battle !== true && this._switches().enabled('story-choices') === true;
+    if (keepGasResult && result.settlementSaved) return false;
     const trip = keepGasResult ? runDefinition.routineRun : null;
     const gasRegistry = keepGasResult ? readWarlordRegistry().registry : null;
     const owner = gasRegistry && activePlayer(gasRegistry);
-    if (keepGasResult && (owner?.id !== this._runPlayerId ||
-        (this.profileSaved === false && (this._warlordVerifiedOwner?.ownerId !== owner.id ||
-          this._warlordVerifiedOwner.snapshot !== JSON.stringify(owner.profile))))) {
-      result.routineSaveIssue = 'Your saved progress changed during the run. Return to the yard.';
+    const verified = this.profileSaved === false && this._gasSaveOwner?.ownerId === this._runPlayerId
+      ? this._gasSaveOwner : this._warlordVerifiedOwner;
+    if (owner && (owner.id !== this._runPlayerId ||
+        (this.profileSaved === false && !gasSaveOwnerMatches(owner, verified)))) {
+      result.routineSaveIssue = job.gasSettlementPending
+        ? 'Your saved progress changed. Your earnings are kept for this session.'
+        : 'Your saved progress changed during the run. Return to the yard.';
       return false;
     }
     const previous = owner && this.profileSaved !== false ? owner.profile : this.profile;
     const saveGasResult = keepGasResult && (profile => {
-      const candidate = replacePlayerProfile(gasRegistry, owner.id, profile);
-      const saved = savePlayers(candidate);
-      if (!saved && this.profileSaved !== false)
-        this._warlordVerifiedOwner = {ownerId: owner.id, snapshot: JSON.stringify(owner.profile)};
+      const candidate = replacePlayerProfile(gasRegistry ?? this.players, this._runPlayerId, profile);
+      const saved = !!gasRegistry && savePlayers(candidate);
+      const ownerSnapshot = owner && this.profileSaved !== false ? JSON.stringify(owner.profile) :
+        (verified?.ownerId === this._runPlayerId ? verified.snapshot : null);
+      this._gasSaveOwner = saved ? null : {ownerId: this._runPlayerId, snapshot: ownerSnapshot};
+      if (!saved && owner && this.profileSaved !== false) this._warlordVerifiedOwner = this._gasSaveOwner;
       // Carry the complete earned result into the yard even if storage
       // refuses it. A retry writes the same result without awarding again.
       this._adoptWarlordRegistry(candidate, saved);
       job.gasSettlementPending = !saved;
       const pendingMessage = trip ? 'Your earnings are kept for this session. Try saving again.' :
-        'Your earnings are kept for this session.';
+        'Your earnings are kept for this session. Choose Drive Another Run to try saving again.';
       result.routineSaveIssue = saved ? '' : pendingMessage;
       result.settlementSaved = saved;
       return saved;
@@ -1813,7 +1833,7 @@ export class App {
       // FIELD-BATTLE-ASH: the battle on the Boneyard road writes by how it ended: 'won' (the furnace is dead) or 'arrived' (Big
       // Bess is home with the furnace still rolling).
       const battle=runDefinition.battle===true,ending=state.arena.worldJob?.battleEnding;
-      const arrived=this.gasRunAvailable()?(battle?applyBattleEnding(awardedProfile,ending,
+      const arrived=this.gasRunAvailable(previous)?(battle?applyBattleEnding(awardedProfile,ending,
         {countRun: this._switches().enabled('story-choices') !== true}):applyArrivedRun(awardedProfile,runDefinition.road)):null;
       if (trip) {
         const world = {...worldForProfile(previous, this.seed), legacyHandRuns: emberRuns(previous)};
