@@ -1314,19 +1314,6 @@ tasks:
     locks: []
     details: "docs/board/cards/AGENTS-REWRITE.md"
 
-  - id: OPEN-BURNED-PEN
-    title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "L"
-    status: "building"
-    claimed_by: "Claude (Opus session), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-BURNED-PEN.md"
-
   - id: OPEN-BURNED-RESCUE
     title: "Open Scablands: the burned camp, the choice at home, the rescue party and where the growers live"
     owner: "codex"
@@ -1334,7 +1321,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "backlog"
-    needs: [OPEN-BURNED-PEN]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-RESCUE.md"

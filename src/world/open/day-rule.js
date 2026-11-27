@@ -1,6 +1,6 @@
 // Play time in an open roam. Dark lasts until a hearth is banked.
 const DAY_START = 2 * 60;
-const DUSK_START = DAY_START + 14 * 60;
+export const DUSK_START = DAY_START + 14 * 60;
 export const DARK_START = DUSK_START + 4 * 60;
 
 export function partOfDay(seconds) {

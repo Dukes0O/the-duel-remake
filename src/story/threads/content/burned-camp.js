@@ -9,7 +9,8 @@
 // are only blamed. A row with neither belongs to both turns: the bean pods, the pump, the drive home, the drive on,
 // raising a party and staying inside the fence.
 //
-// The Road Rats' scouting, rim, fight and pen are the beats `scout`, `rim`, `alone` and `drain`. The Ash Men's scouting,
+// The Road Rats' scouting and rim are the beats `scout` and `rim`; their Scene 4 (card OPEN-BURNED-PEN, 26 November 2026)
+// is `alone`, `drain`, `pen`, `waiting`, `ransom`, `break-out`, `offer` and `promised`. The Ash Men's scouting,
 // rim, fight, pen and break-out are beats of their own, named `grey-...`, because their missions and places are not the
 // Road Rats'. `home`, `rescue` and `gate` are both turns' beats.
 //
@@ -71,6 +72,20 @@ const DACE_HERE = {any: [{fact: 'mark', id: 'walkers-inside'}, {fact: 'mark', id
 const GREY_SEEN = has('grey-seen');
 // The price was raised once a break-out was caught.
 const CAUGHT = has('grey-caught');
+// The Road Rats' pen (Scene 4). A Nest spot within some metres; being taken; the car held at the end of the row while
+// the player is in the pen; and the price raised after a caught break-out.
+const nest = (spot, within) => ({reach: ['rats-nest', spot], within});
+const TAKEN = mark('taken-to-nest', "The Road Rats took you to the Rats' Nest.");
+const HELD = {foot: ['rats-nest', 'pen-inside'], car: ['rats-nest', 'held-car']};
+const CAUGHT_RATS = has('caught-breaking-out');
+// The guard at the Nest. His round is a routine like anybody's (section 13, the `track` of the people table): he stands
+// by the drain, walks to the pen's gate, and stops at the middle tyre fire to warm his hands for about as long as it
+// takes to say the alphabet twice. `yaw` is the way he faces while he stands; his lamp reaches twelve metres.
+const GUARD = {pace: 1.2, range: 12, coneDegrees: 70, eye: 1.6, round: {kind: 'track', stops: [
+  {at: ['rats-nest', 'drain-guard'], seconds: 8, yaw: -Math.PI / 2, task: 'stand'},
+  {at: ['rats-nest', 'pen-gate'], seconds: 6, yaw: Math.PI, task: 'stand'},
+  {at: ['rats-nest', 'warm-hands'], seconds: 12, yaw: Math.PI, task: 'stand'},
+]}};
 
 // The Road Rats' six things to find at the camp: [id, what is there, the thought, when]. The first four are the Road
 // Rats' only; the Ash Men's turn has its own four in their place. The bean pods and the pump are both turns'.
@@ -106,7 +121,7 @@ export default {
   title: 'Smoke over a friend',
   kind: 'trouble',
   reads: ['stage', 'found', 'word', 'feud', 'night', 'made', 'mark', 'stock', 'thread', 'draw', 'promise'],
-  writes: ['site', 'mark', 'feud', 'word', 'stock', 'find', 'rumour', 'promise', 'shareHearth'],
+  writes: ['site', 'mark', 'feud', 'word', 'stock', 'find', 'rumour', 'promise', 'shareHearth', 'scrap', 'town'],
 
   // The Road Rats' cast. A false trail is never laid by the Ash Men: they would not set a fire to put the blame on
   // anybody, so `blamed` is cast only when the enemy is the Road Rats. The Ash Men's enemy row is in `notes.ashMenTurn`.
@@ -275,8 +290,203 @@ export default {
           when: {all: [onRim, surveyed]}, next: 'home'},
       ],
     },
-    alone: {notes: 'OPEN-BURNED-PEN builds the fight alone in Scene 4.'},
-    drain: {notes: 'OPEN-BURNED-PEN builds the drain in Scene 4.'},
+    // Scene 4, the Road Rats. Driving in alone, by car, down the cutting's road. Six buggies come out of the row and box
+    // the car in as the riders do today. On Easy a pre-teen wins this about twice in ten.
+    alone: {
+      when: rats(nest('road-top', 30)),
+      mission: {id: `${ID}/alone`, kind: 'fight', by: 'car', minutes: 2, holds: ['checkpoints', 'signs'],
+        enemy: '@enemy', cars: 6,
+        rule: {at: ['rats-nest', 'road-foot'], riderStarts: [1, 2, 3, 4, 5, 6].map(bay => ['rats-nest', `bay-front-${bay}`]),
+          boxedInSeconds: 6, winWrecks: 4, takenOnLoss: true},
+        outcomes: {
+          won: {cue: 'open.pen.chain',
+            lines: [
+              say('sump', 'All right, all right, you can take them! They ate more than they sorted anyway. But you\'ve cost me four cars today, and I write down everything that I\'m owed.', {shouted: true}),
+            ],
+            effects: [{type: 'feud', of: '@enemy', by: 1, when: {fact: 'feud', of: '@enemy', is: 'Watching'}},
+              mark('took-them-alone', "You took {camp.name}'s people out of the Rats' Nest by yourself.")],
+            next: 'gate'},
+          lost: {cue: 'open.taken',
+            lines: [
+              say('sump', 'Well, look at this. You drove all the way out here by yourself to bring me a car. That\'s the nicest thing anybody has done for me all week.'),
+              say('sump', "There's no need to look so worried. I never hurt people, because nobody pays good scrap for hurt people. You're going to sit in my pen while I find out what Tin Town thinks you're worth."),
+            ],
+            effects: [TAKEN],
+            next: 'pen'},
+        },
+      },
+      notes: {
+        // Won: the pen's gate is opened with the wrench and the growers walk out behind the water cart. The road home at
+        // a walking pace is Scene 6's, which OPEN-BURNED-RESCUE builds; until then the storyline goes on at the gate.
+        // The road riders cannot yet hold four of the six back for twenty seconds, so all six set off together.
+        sixAtOnce: true,
+      },
+    },
+
+    // Scene 4, the Road Rats. Going in by the drain, on foot. One guard walks a round with a lamp, and the round is a
+    // routine like anybody's. The player keeps out of the lamp's light, holds the wrench on the pen's chain for eight
+    // seconds, and goes back out through the drain with Finch and two growers. Two seconds in the light is being taken.
+    drain: {
+      when: rats(nest('drain-out', 12)),
+      mission: {id: `${ID}/drain`, kind: 'heist', by: 'foot', minutes: 3, holds: ['checkpoints', 'signs'], cue: 'open.guard.shout',
+        rule: {pickup: ['rats-nest', 'pen-gate'], pickupWrenchSeconds: 8, destination: ['rats-nest', 'drain-out'], within: 3,
+          guards: [GUARD], seenSeconds: 2, caughtLitSeconds: 2, eject: ['rats-nest', 'pen-inside'],
+          success: 'out', spotted: 'taken', caught: 'taken', moments: ['pickup']},
+        lines: [
+          say('marigold', "Take the boy and go. I'm too old and too wide for a drain, and somebody has to stay and keep this lot cheerful.", {low: true, moment: 'pickup'}),
+        ],
+        outcomes: {
+          out: {cue: 'open.pen.chain',
+            effects: [mark('drain-out', "You brought Finch and two growers out of the Rats' Nest by the drain.")],
+            next: 'home'},
+          taken: {cue: 'open.taken', effects: [TAKEN], next: 'pen'},
+        },
+      },
+      notes: {
+        // Marigold says her line when the chain falls: the others are too slow for the drain, and she will not leave them.
+        lineMoments: {marigold: 'pickup'}},
+    },
+
+    // Scene 4, the Road Rats. The pen: inside the ring of wrecks with the growers, on foot, with no car and no wrench, at
+    // dusk. Sump calls Tin Town on the player's own radio.
+    pen: {
+      when: RATS,
+      cue: 'open.taken',
+      takes: HELD,
+      lines: [
+        say('marigold', "Oh, it's you. First you mended our pump, and now you've come to share our pen. Nobody could say you do things by halves."),
+        say('finch', 'I dropped beans all the way here so that somebody could follow us. Did you see them? I ran out of beans at the bridge.'),
+        say('marigold', 'They want us to sort their scrap for them. I told Sump that all I know is how to grow beans, and he said scrap grows too, if you leave it lying about for long enough.'),
+        say('sump', "Good evening, Tin Town. I have your driver here, and I have your driver's car as well. I'd like a hundred and fifty scrap for the pair of them. I'd also like one of those embers that I keep hearing about, because I've never seen one. You can have until morning to think about it.", onRadio),
+        say('auntie-solder', "You'll have your answer in the morning. If that child has so much as a scratch by then, you'll have me as well, and I'm a great deal worse than a scratch.", onRadio),
+      ],
+      questions: [
+        {id: 'night-watch', to: 'finch', words: 'How many of them keep watch at night?',
+          lines: [say('finch', "Only one of them stays awake, and he walks round with a lamp. He stops by the tyre fire every time, to warm his hands. I've counted, and he stands there for about as long as it takes to say the alphabet twice.")],
+          shows: "The guard's round, and its gap"},
+        {id: 'my-car', to: 'marigold', words: 'Where have they put my car?',
+          lines: [say('marigold', "It's at the end of the row with theirs, and they've taken the wheels off one side already. You won't be driving it out of here tonight.")],
+          shows: 'The car cannot be taken back tonight'},
+        {id: 'sump-wants', to: 'marigold', words: 'What does Sump want with you?',
+          lines: [say('marigold', "He wants what he wants with everybody, which is to sell us. He's waiting to see whether anybody comes asking for us. Nobody has yet, because the only people who knew us are sitting in this pen.")],
+          shows: 'They can be bought. Nobody else is coming'},
+      ],
+      thoughts: [
+        'Auntie will pay to get me back. It will cost her all our scrap, and it will cost the town a night of fire as well.',
+        "Finch says there's only one guard, and that he stops at the fire every time he comes round.",
+      ],
+      choices: [
+        {id: 'wait', by: 'say', words: 'Wait for morning', plain: 'The price was said aloud: 150 scrap and one ember',
+          thought: "It's a lot. I wonder what Auntie will have to go without to pay it.",
+          hidden: 'The ransom is paid. The growers stay in the pen', next: 'waiting'},
+        {id: 'break-out', by: 'do', when: {not: CAUGHT_RATS}, words: 'Break out tonight, with Finch', plain: 'One guard, one lamp, one drain',
+          thought: "If we're caught, the price won't stay at a hundred and fifty.",
+          hidden: "A creep on foot. Luck plays no part: it is the player's own feet. Caught, and the price rises to 220 scrap and two embers",
+          next: 'break-out'},
+        {id: 'offer', by: 'say', when: {not: {chose: 'no-promise'}}, words: "Sump, I'd like to make you an offer myself.",
+          plain: 'Sump likes a deal',
+          thought: 'He treats everything as a deal. Maybe I have something he wants more than scrap.',
+          hidden: 'A promise in place of the price (below)', next: 'offer'},
+      ],
+      // The questions, the thoughts and the three choices are one talk, as at the hearth: asking costs nothing.
+      oneTalk: true,
+    },
+
+    // Scene 4, the Road Rats. 1. Waiting for morning. The night passes in the pen: at Tin Town the hearth is banked
+    // without the player, and one ember burns. The roam ends there, as it does when the player banks the hearth.
+    waiting: {
+      when: {chose: 'wait'},
+      takes: HELD,
+      leaves: 'hearth-bank',
+      next: 'ransom',
+    },
+
+    // At first light Moss drives Big Bess up to the cutting, and the ransom is paid as section 21 says under "What a
+    // ransom takes". The player's car is given back with its wheels on and no armour mended. The growers stay.
+    ransom: {
+      when: {nights: 1, since: 'waiting'},
+      cue: 'open.ransom.paid',
+      frees: true,
+      lines: [
+        say('moss', "I've brought it, and you can count it if you like. Auntie says she counted it three times, and that she didn't enjoy it any more the third time."),
+        say('sump', "It's a pleasure, Tin Town. Your driver was no trouble at all, and neither was the car, once we had the wheels off it."),
+        say('marigold', "Off you go, then. Don't you look back at us like that. You came all this way, and that's more than anybody else has done."),
+      ],
+      ransom: {
+        price: [{when: CAUGHT_RATS, scrap: 220, embers: 1}, {scrap: 150}],
+        asked: [{roadWord: 3, embers: 2}, {roadWord: 1, embers: 1}],
+      },
+      effects: [mark('ransomed', 'Tin Town paid the Road Rats to get you back, in scrap and in fire.')],
+      next: 'home',
+      notes: {
+        // If the ransom leaves the store with one ember or none, the evening at the hearth goes to section 23: Cinder's
+        // line when the routine is running, or the offer when it is not (OPEN-APPRENTICE-RUN reads the loss by its id).
+        shortStore: 'section 23',
+      },
+    },
+
+    // Scene 4, the Road Rats. 2. Breaking out, on foot, in the dark. The guard's round is the routine Finch described.
+    // The player and Finch go from wreck to wreck while the guard warms his hands, and reach the drain. Each grower
+    // whose hiding place they pass can be waved along: three at most, the quickest of them.
+    'break-out': {
+      when: {chose: 'break-out'},
+      takes: HELD,
+      mission: {id: `${ID}/break-out`, kind: 'heist', by: 'foot', minutes: 3, holds: ['checkpoints', 'signs'], cue: 'open.guard.shout',
+        rule: {start: ['rats-nest', 'pen-slip'], destination: ['rats-nest', 'drain-out'], within: 3,
+          guards: [GUARD], seenSeconds: 2, caughtLitSeconds: 2, eject: ['rats-nest', 'pen-inside'],
+          along: {places: ['hide-1', 'hide-2', 'hide-3'].map(spot => ['rats-nest', spot]), within: 3, atMost: 3,
+            mark: `${ID}/waved-along`},
+          success: 'out', spotted: 'caught', caught: 'caught'},
+        outcomes: {
+          out: {
+            lines: [say('finch', "Gran said I had to go if I got the chance. She also said I was to tell you that she isn't cross with you. She said it twice, so I think she's a bit cross.")],
+            effects: [mark('broke-out', "You got Finch out of the Rats' Nest by the drain."), mark('car-with-sump', "Sump kept your car at the Rats' Nest.")],
+            next: 'home'},
+          caught: {cue: 'open.taken',
+            lines: [say('sump', "Now that was rude of you, and I'd been so pleasant about everything. The price has gone up to two hundred and twenty and a second ember, and I'm putting two men on the lamp tonight.")],
+            effects: [mark('caught-breaking-out', "The Road Rats caught you breaking out of the Rats' Nest, and the price went up.")],
+            next: 'pen'},
+        },
+      },
+      notes: {
+        // Out: they come out of the drain into the wreck fields and walk to the Girder Bridge road. If a people owe the
+        // player a favour their car is waiting there; otherwise it is a long walk and the day is gone. The car stays with
+        // Sump for the rest of the day, and bringing it home is OPEN-BURNED-RESCUE's.
+        carStays: 'car-with-sump',
+      },
+    },
+
+    // Scene 4, the Road Rats. 3. Making Sump an offer. Sump names what he wants more than scrap: a road.
+    offer: {
+      when: {chose: 'offer'},
+      takes: HELD,
+      lines: [
+        say('sump', "Here's what I'd like. I'm putting a gate across the Mall Road next week. If Tin Town's trucks pay my toll at it five times without any fuss, then other people will see them paying, and they'll pay as well. Give me your word on that, and you and your car can go home tonight."),
+      ],
+      choices: [
+        {id: 'promise-toll', by: 'say', words: 'You have my word. Tin Town will pay your toll five times.',
+          hidden: 'The player drives home tonight with the car. It begins the thread "A toll on the Mall Road" with the gate already standing',
+          effects: [mark('toll-promised'), {type: 'promise', id: `${ID}/toll-promised`, person: 'sump', dueNights: 6,
+            text: 'You promised the Road Rats that Tin Town would pay their toll five times.'}],
+          next: 'promised'},
+        {id: 'no-promise', by: 'say', words: "No. Tin Town doesn't pay tolls to anybody.",
+          lines: [say('sump', 'Then Tin Town can pay for you in the morning, the same as everybody else does.')],
+          next: 'pen'},
+      ],
+      notes: {
+        // The promise is the mark and the promise of one id, `burned-camp/toll-promised`, which "A toll on the Mall Road"
+        // reads to begin the next night with no draw, and settles at the fifth payment. Six nights is how long the gate
+        // stands for.
+        promiseDue: 'six nights, as long as the gate stands',
+      },
+    },
+
+    // The promise is given: the car is given back and the player drives home tonight.
+    promised: {
+      when: {chose: 'promise-toll'},
+      frees: 'held-car',
+      next: 'home',
+    },
 
     // Scene 3b, the false trail: the drive to the Grey Camp, where there is nobody from the camp.
     'false-trail': {
@@ -433,8 +643,9 @@ export default {
         // Won: the pen's chain is opened with the wrench, the growers walk out, and the player brings them home at a
         // walking pace (the road home of Scene 6) before Scene 7. Taken: the car is wrecked or boxed in for six seconds.
         outcomeCues: {taken: 'open.taken', won: 'open.pen.chain'},
-        // The mission kind `fight` is not built yet; OPEN-BURNED-PEN builds it for the Road Rats' fight alone.
-        missionKindBy: 'OPEN-BURNED-PEN',
+        // The kind `fight` names its loss `lost`; the card that casts the Ash Men renames `taken` here, and gives this
+        // fight `takenOnLoss` and the pen `takes`, as the Road Rats' fight alone has them.
+        missionKindBy: 'the card that casts the Ash Men',
       },
     },
 
@@ -459,8 +670,9 @@ export default {
         },
       },
       notes: {outcomeCues: {out: 'open.pen.chain', taken: 'open.taken'}, missionCue: 'open.furnace.door',
-        // The mission kind `creep` is not built yet; OPEN-BURNED-PEN builds it for the Road Rats' drain.
-        missionKindBy: 'OPEN-BURNED-PEN'},
+        // There is no kind `creep`. The Road Rats' drain is a `heist` with a guard on a round; the card that casts the
+        // Ash Men writes this one the same way, with the furnace doors as its light.
+        missionKindBy: 'the card that casts the Ash Men'},
     },
 
     // During the act the player cannot sit in the pen through the fifth night. Clinker sends the player home on foot,
@@ -569,8 +781,8 @@ export default {
         // Out: they come over the top of the tip onto the burn and walk to the bridge road. If a people owe the player a
         // favour their car is waiting there; otherwise it is a long walk and the day is gone. The car stays with Clinker.
         outcomeCues: {caught: 'open.taken'},
-        // The mission kind `creep` is not built yet; OPEN-BURNED-PEN builds it for the Road Rats' break-out.
-        missionKindBy: 'OPEN-BURNED-PEN',
+        // There is no kind `creep`: as the Road Rats' break-out, a `heist` (the card that casts the Ash Men).
+        missionKindBy: 'the card that casts the Ash Men',
       },
     },
 
@@ -759,6 +971,9 @@ export default {
   // turn asks who was cast or a promise falling due, its `when` asks the land's nearest fact and `notes.laterWhen` keeps
   // the storyline's own condition.
   later: [
+    // Tied back, the next time the Road Rats are met at a checkpoint (parts/checkpoints.js says it as the meeting begins).
+    {id: 'rats-know-the-car', by: 'sumps-rider', when: has('ransomed'),
+      lines: [say('sumps-rider', "We know that car, don't we? That's the one from Tin Town, where they pay up. Sump says the price will be higher next time, because you've shown him that you can find the scrap.")]},
     {id: 'burned-camp/remembered', by: 'dot', when: {fact: 'mark', id: 'burned-camp/never-went'},
       lines: [{speaker: 'dot', words: 'There used to be a camp out past the Ridge that grew beans.'}]},
     // Tied back, the next time Clinker names a price for anything.
