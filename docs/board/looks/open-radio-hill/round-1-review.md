@@ -1,7 +1,7 @@
 # Radio Hill, round 1 (OPEN-LOOK-RADIO-HILL): Claude's verdict
 
 26 November 2026, on nine pictures taken in the game on the laptop at `8d0455f38` (Performance quality, the scenario
-`look-radio-hill`, memory-only saves). The sheet is `round-1.jpg`. Round 2 is card OPEN-LOOK-RADIO-HILL-2.
+`look-radio-hill`, memory-only saves). Its sheet `round-1.jpg` was replaced by round 2's `round-2.jpg` (card OPEN-LOOK-RADIO-HILL-2); git keeps it.
 
 **The verdict: passes by day; the night does not yet.** The camp of two sisters who keep a working set reads at once.
 

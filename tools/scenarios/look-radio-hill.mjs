@@ -1,16 +1,18 @@
-// OPEN-LOOK-RADIO-HILL, round 1: the pictures by which Claude judges Radio Hill. Not a frame check and not a test of any rule.
+// OPEN-LOOK-RADIO-HILL, rounds 1 and 2: the pictures by which Claude judges Radio Hill. Not a frame check and not a test of any rule.
 //
 // It enters Light the Town (the job that has an evening) on a memory-only player, stands Radio Hill at its position for the land's
 // seed 0 (`land.at('tin-town', -2245, -992)`, the first of OPEN-SITES' three, on the mesa north-west of Tin Town's east road)
 // through tools/open-look-stand.js, and takes the card's pictures. Each file is `look-radio-hill-<name>.png`:
 //   camp-far          from the East Road at about 1.4 km (the distance the mast is read from), at dusk, at car height
+//   camp-far-day      the same by day (round 2: the mast is the tell by day and at dusk)
 //   camp-edge         from `car-stop`, at eye height (1.6 m)
 //   camp-door         on foot, in front of the hut's door, looking in at the set
 //   camp-yard         on foot, from Hetty's lookout back across the camp to the hut and the mast
 //   camp-night        from 50 m south of the camp at night, eye height: the red lamp lit and the light in the hut
 //   second-set-edge, second-set-door   the same views with the second set and its aerial
-// and two more than the card asks for: `camp-mast` (from the foot of the mast up the lattice to the lamp) and `camp-night-far`
-// (the red lamp from the East Road at night, which is how the storyline's bearing is given).
+// and three more than the cards ask for: `camp-mast` (from the foot of the mast up the lattice to the lamp), `camp-night-far` (the
+// red lamp from the East Road at night, which is how the storyline's bearing is given) and `camp-night-door` (round 2: from 10 m in
+// front of the hut at night, the light through the door and the window falling on the ground).
 //
 // The browser uses memory-only storage. The land's own light is turned down for the night pictures by the stand; that is a
 // stand-in for the night the card which places the site will bring.
@@ -62,6 +64,7 @@ export function views() {
   const far = {eye: {x: road.x, z: road.z, y: road.y + CAR_HEIGHT}, look: {...at({x: 0, z: 0}), y: scablandsSurfaceHeightAt(SITE.x, SITE.z) + 13}, car: {x: road.x - toSite.x * 9, z: road.z - toSite.z * 9}, road: road.road, metres: Math.round(road.distance)};
   return {
     far: {...far, dusk: true},
+    'far-day': far,
     edge: {eye: at(stop, EYE), look: at({x: -3.5, z: 2.5}, 3.2), car: parked},
     door: {eye: at({x: spots.door.x + .35, z: spots.door.z + 2.1}, EYE), look: at({x: things.table.x + .1, z: things.table.z}, .95), car: parked},
     yard: {eye: at({x: spots.lookout.x - .2, z: spots.lookout.z - .3}, EYE), look: at({x: -5.5, z: 1}, 4.5), car: parked},
@@ -69,6 +72,8 @@ export function views() {
     // Far enough back that the whole mast, its lamp and the hut are in the one picture.
     night: {eye: at({x: 14, z: 50}, EYE), look: at({x: -2.5, z: 2}, 10), car: {x: SITE.x + 20, z: SITE.z + 62}, dusk: true},
     'night-far': {...far, look: {...far.look, y: far.look.y + 5}, dusk: true},
+    // Round 2: in front of the hut at night, to see the light through the door and the window falling on the ground.
+    'night-door': {eye: at({x: spots.door.x + 4.5, z: spots.door.z + 9}, EYE), look: at({x: spots.door.x + .6, z: spots.door.z - .5}, 1), car: {x: SITE.x + 20, z: SITE.z + 62}, dusk: true},
     hut: {x: SITE.x + hut.x, z: SITE.z + hut.z},
   };
 }
@@ -77,9 +82,11 @@ export function views() {
 export const PICTURES = Object.freeze([
   {name: 'camp-edge', stand: 'camp', view: 'edge'}, {name: 'camp-door', stand: 'camp', view: 'door'},
   {name: 'camp-yard', stand: 'camp', view: 'yard'}, {name: 'camp-mast', stand: 'camp', view: 'mast', extra: true},
+  {name: 'camp-far-day', stand: 'camp', view: 'far-day'},
   {name: 'second-set-edge', stand: 'second-set', view: 'edge'}, {name: 'second-set-door', stand: 'second-set', view: 'door'},
   {name: 'camp-far', stand: 'dusk', view: 'far'},
   {name: 'camp-night', stand: 'night', view: 'night'}, {name: 'camp-night-far', stand: 'night', view: 'night-far', extra: true},
+  {name: 'camp-night-door', stand: 'night', view: 'night-door', extra: true},
 ]);
 
 // ---- What runs in the page. Each is sent as text; `pageSource` proves that the text parses. ----
@@ -173,7 +180,7 @@ export function pageSources() {
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   const all = views();
-  const report = {card: 'OPEN-LOOK-RADIO-HILL', round: 1, site: SITE, quality: 'performance', budget: RADIO_HILL_BUDGET,
+  const report = {card: 'OPEN-LOOK-RADIO-HILL-2', round: 2, site: SITE, quality: 'performance', budget: RADIO_HILL_BUDGET,
     roadView: {road: all.far.road, metres: all.far.metres}, pictures: [], failures: []};
   const persist = () => writeFile(join(context.outputDir, 'look-radio-hill.json'), JSON.stringify(report, null, 2) + '\n');
   try {

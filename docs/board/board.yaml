@@ -1304,19 +1304,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-DACE.md"
 
-  - id: OPEN-LOOK-RADIO-HILL-2
-    title: "Open Scablands: Radio Hill, round 2 from Claude's verdict (the red lamp and the hut read at night, the mast from far)"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude (Opus session), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-RADIO-HILL-2.md"
-
   - id: AGENTS-REWRITE
     title: "AGENTS.md rewritten around three lines: works and better merges, broken waits, the rest is the next card (Kyle, 26 November)"
     owner: "claude"

@@ -57,6 +57,8 @@ function deepFreeze(value) {
 // the rest was added in sections of scavenged tube.
 const MAST = Object.freeze({x: 0, z: 0, height: 25, footRadius: .5, oldTop: 9, oldRadius: .42, topRadius: .27, lean: Object.freeze({x: .34, z: -.18}),
   legs: Object.freeze([0, 2 * Math.PI / 3, 4 * Math.PI / 3]), guys: Object.freeze([8, 16, 23]), lamp: 25.12});
+// Hetty's rag on the mast: tied at `at` metres up, `long` along the wind and `deep` down.
+const FLAG = Object.freeze({at: 24.1, long: 1.3, deep: .62});
 // The hut: a box 5.6 m by 4 m on the ground, as the rules have it, with its door in the middle of the south wall. The roof runs down
 // from the front to the back. `front` and `back` are the heights of the eaves.
 const HUT = Object.freeze({x: -7, z: 4, halfX: 2.8, halfZ: 2, front: 2.62, back: 2.14, door: Object.freeze({half: .45, high: 1.86}), wall: .08});
@@ -251,7 +253,7 @@ const makePalette = () => {
     oldRed: tone(.085, .042, .032), oldWhite: tone(.11, .105, .095), pipeGreen: tone(.05, .062, .047), conduit: tone(.1, .098, .09),
     sheets: [tone(.095, .092, .086), tone(.08, .05, .034), tone(.068, .074, .076), tone(.11, .104, .094), tone(.058, .04, .03), tone(.098, .078, .056)],
     truck: faded(.07, .09, .1, .3), truckBed: tone(.062, .053, .042),
-    rubber: tone(.022, .022, .024, 1), rope: tone(.14, .12, .075), wire: tone(.03, .03, .028, 1), copper: tone(.07, .04, .022),
+    rag: tone(.26, .065, .035), rubber: tone(.022, .022, .024, 1), rope: tone(.14, .12, .075), wire: tone(.03, .03, .028, 1), copper: tone(.07, .04, .022),
     canvas: tone(.09, .085, .055), tarpGrey: tone(.095, .095, .09), blanket: tone(.11, .065, .045), wool: tone(.09, .09, .095), mattress: tone(.13, .12, .09),
     cloth: [tone(.15, .13, .1), tone(.075, .085, .1), tone(.13, .06, .045), tone(.14, .13, .12), tone(.09, .1, .07)],
     can: [tone(.12, .11, .045), tone(.13, .055, .04), tone(.085, .095, .07)], drum: tone(.08, .1, .11), drumRed: faded(.16, .055, .04, .35),
@@ -500,6 +502,15 @@ function drawMast(kit) {
     kit.keep('hard', kit.place(new THREE.SphereGeometry(.022, 6, 4), .16, 2.56, .05), P.galv);
   });
   kit.line([[head[0] + .02, head[1] + .27, head[2]], [head[0] + .07, head[1] + 1.4, head[2] + .02], [head[0] + .16, head[1] + 2.55, head[2] + .05]], P.wire, .7);
+  // Hetty's rag: a strip of faded red cloth tied to the first leg under the head, flying with the wind. It shows which way the wind
+  // blows for the aerials, and from the roads it marks the top of the mast by day.
+  const tie = mastLegAt(0, FLAG.at), wind = Math.atan2(WIND.z, WIND.x);
+  const flag = [tie.x + WIND.x * FLAG.long / 2, base + FLAG.at - FLAG.deep / 2 - .06, tie.z + WIND.z * FLAG.long / 2];
+  kit.within(tie.x, base + FLAG.at, tie.z, [0, -wind, 0], () => {
+    kit.keep('cloth', kit.sheet('cloth', span(5), span(2), (u, v) => [u * FLAG.long, -v * FLAG.deep * (1 - u * .25) - u * .12, Math.sin(u * 5.5 + v) * .07 * u],
+      (u, v) => rgb(paint(P.rag, (.8 + .35 * Math.sin(u * 9 + v * 3) ** 2) * (u > .85 ? .7 : 1)))));
+    kit.tube('hard', [0, .04, -.03], [0, -FLAG.deep - .04, .03], .014, P.rope, 4);
+  });
   // The dipole: a cross-arm of tube at 22.4 m with a ceramic insulator at each end, and its wires falling away to either side.
   // Each wire ends at another insulator, from which a rope runs down to a stake in the ground.
   const arm = mastMiddleAt(22.4), armY = base + 22.4, armTurn = -.35, way = (side, reach) => [arm.x + Math.cos(armTurn) * side * reach, arm.z - Math.sin(armTurn) * side * reach];
@@ -520,7 +531,7 @@ function drawMast(kit) {
   const feeder = [];
   for (let y = 22.2; y > 3.3; y -= 2.4) { const p = mastLegAt(1, y); feeder.push([p.x - .05, base + y, p.z]); }
   kit.line(feeder, P.wire, .15);
-  return {head};
+  return {head, flag};
 }
 
 // The guys: three to each anchor, from the leg that points at it, each with a turnbuckle near the ground. The lowest two near the
@@ -711,13 +722,21 @@ function drawHut(kit, stage) {
     }
     // A rag rug on the floor in front of the cot.
     kit.keep('cloth', kit.sheet('cloth', span(2), span(2), (u, v) => [-.7 + u * 1.3, .012, .55 + v * .65]), P.cloth[1]);
-    // The light from the door falls on the step and the ground in front of it at night.
+    // At night the hut's light fills the doorway and the window, falls out of the door across the step and the ground in front of it,
+    // and lies in a square under the window. Each is warmest near where the light comes out.
     kit.glowing(LIT.hut, () => {
-      kit.keep('lit', kit.sheet('lit', span(4), span(3), (u, v) => [(u - .5) * (1 + v * .7), .03, H.halfZ + .15 + v * 1.7], (u, v) => {
-        const fade = Math.sin(u * Math.PI) * (1 - v) * (1 - v) * .42;
-        return [fade * .95, fade * .62, fade * .32];
+      const warm = (level, r = 1, g = .62, b = .3) => [level * r, level * g, level * b];
+      // The doorway: a haze of light just inside the opening, brightest low down where the floor is lit.
+      kit.keep('lit', kit.sheet('lit', span(2), span(3), (u, v) => [(u - .5) * H.door.half * 2, v * H.door.high, H.halfZ - .06],
+        (u, v) => warm((.2 + .14 * (1 - v)) * (.75 + .25 * Math.sin(u * Math.PI)), 1, .52, .2)));
+      // The ground in front of the door: a wedge of light widening as it goes, falling off with distance and at its sides.
+      kit.keep('lit', kit.sheet('lit', span(6), span(5), (u, v) => [(u - .5) * (H.door.half * 2 + v * 2.2), .03 + (v > .9 ? .02 : 0), H.halfZ + .08 + v * 3.4], (u, v) => {
+        const side = Math.sin(u * Math.PI) ** 1.3, fade = side * (1 - v) ** 2;
+        return warm(fade * .85, 1, .5, .18);
       }));
-      kit.keep('lit', kit.sheet('lit', span(1), span(1), (u, v) => [H.halfX - .02, 1.06 + v * .48, .62 + u * .66], () => [.34, .21, .1]));
+      // The window: the glass lit from inside, and a patch of light on the ground below it.
+      kit.keep('lit', kit.sheet('lit', span(1), span(1), (u, v) => [H.halfX - .02, 1.06 + v * .48, .62 + u * .66], () => warm(.45, 1, .55, .22)));
+      kit.keep('lit', kit.sheet('lit', span(3), span(3), (u, v) => [H.halfX + .12 + v * 1.6, .03, .62 - v * .2 + u * (.66 + v * .5)], (u, v) => warm(Math.sin(u * Math.PI) ** 1.3 * (1 - v) ** 2 * .4, 1, .5, .18)));
     });
   });
 }
@@ -1163,48 +1182,92 @@ function drawGround(kit) {
   groundPatch(kit, .2, 0, 1.2, 1.2, MARK.pale, .35, 0, random);
 }
 
-// ---- The glow of the lamps, seen from far off ----------------------------------------------------------------------------------
-// Each lamp is a soft round glow drawn over the scene and added to it, about the same size on the screen near and far, so that the
-// red lamp reads as a point of light from the roads below. One draw for all of them.
-function createGlow(points, levels) {
-  const positions = [], which = [], sizes = [], colours = [];
-  for (const point of points) { positions.push(...point.at); which.push(point.which); sizes.push(point.size); colours.push(...point.colour); }
+// ---- The lamps and the mast, seen from far off ----------------------------------------------------------------------------
+// One draw of points, each a small picture drawn over the scene at its place. A point has a size in metres and a least size in
+// pixels, so that it is its true size close to and never smaller than a few pixels far off (docs/ART_LINE.md: a far tell needs a
+// least size). Three shapes:
+//   glow   a lamp's light: a haze that adds light to what is behind it, with a hot core; a glow with `wide` 1 also covers it a
+//          little, so that the red lamp keeps its colour against a bright sky;
+//   mast   one length of the mast's outline, a dark upright stroke at least 1.5 pixels wide, seen only beyond `near` metres, where
+//          the lattice itself has thinned to less than a pixel;
+//   rag    Hetty's rag at the top, a small faded red patch at least 4 pixels across, seen only beyond `near` metres.
+// A glow follows its lamp's level (`which` 0 the red lamp, 1 the hut). The rag's colour follows the daylight, so that at night it
+// does not keep its day colour; the mast is a dark outline at any hour.
+const SHAPE = Object.freeze({glow: 0, mast: 1, rag: 2});
+function createGlow(points, levels, daylight) {
+  const positions = [], which = [], sizes = [], least = [], colours = [], shapes = [], wide = [], near = [];
+  for (const point of points) {
+    positions.push(...point.at); which.push(point.which ?? 0); sizes.push(point.size); least.push(point.least); colours.push(...point.colour);
+    shapes.push(SHAPE[point.shape ?? 'glow']); wide.push(point.wide ?? 0); near.push(point.near ?? 0);
+  }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('aWhich', new THREE.Float32BufferAttribute(which, 1));
-  geometry.setAttribute('aSize', new THREE.Float32BufferAttribute(sizes, 1));
+  for (const [name, values] of [['aWhich', which], ['aSize', sizes], ['aLeast', least], ['aShape', shapes], ['aWide', wide], ['aNear', near]])
+    geometry.setAttribute(name, new THREE.Float32BufferAttribute(values, 1));
   geometry.setAttribute('aColour', new THREE.Float32BufferAttribute(colours, 3));
+  const viewport = new THREE.Vector4();
   const material = new THREE.ShaderMaterial({
-    name: 'Radio Hill lamps from far off',
-    uniforms: {uLevels: levels, uPixels: {value: 1}},
+    name: 'Radio Hill lamps and mast from far off',
+    uniforms: {uLevels: levels, uDaylight: daylight, uPixels: {value: 1}, uHeight: {value: 720}},
     vertexShader: `
-      attribute float aWhich; attribute float aSize; attribute vec3 aColour;
-      uniform vec2 uLevels; uniform float uPixels;
-      varying vec3 vColour;
+      attribute float aWhich; attribute float aSize; attribute float aLeast; attribute float aShape; attribute float aWide; attribute float aNear;
+      attribute vec3 aColour;
+      uniform vec2 uLevels; uniform float uDaylight; uniform float uPixels; uniform float uHeight;
+      varying vec3 vColour; varying float vLevel; varying float vShape; varying float vWide; varying float vPixel; varying float vCover;
       void main() {
-        float level = aWhich < .5 ? uLevels.x : uLevels.y;
+        vCover = aShape < .5 ? aWide : 1.0;
         vec4 view = modelViewMatrix * vec4(position, 1.0);
         float reach = max(-view.z, .1);
-        vColour = aColour * level;
-        gl_PointSize = level > .003 ? aSize * uPixels * clamp(24.0 / reach, .34, 1.4) * (.55 + .45 * level) : 0.0;
+        // Pixels to the metre at this distance.
+        float perMetre = projectionMatrix[1][1] * uHeight * .5 / reach;
+        float level = aShape > .5 ? 1.0 : aWhich < .5 ? uLevels.x : uLevels.y;
+        float seen = aShape < .5 ? 1.0 : smoothstep(aNear, aNear * 1.8, reach);
+        float size = max(aSize * perMetre, aLeast * uPixels);
+        if (aShape < .5) size *= .6 + .4 * min(level, 1.0);
+        // The rag darkens with the daylight; the mast is dark against the sky by day and by night.
+        vColour = aShape > 1.5 ? aColour * uDaylight : aColour; vShape = aShape; vLevel = level * seen; vPixel = 1.0 / size;
+        // How much of the point's width the stroke or the patch fills.
+        vWide = aShape < .5 ? 0.0 : aShape < 1.5 ? max(aWide * perMetre, 1.5 * uPixels) / size : max(aWide * perMetre, 2.6 * uPixels) / size;
+        gl_PointSize = vLevel > .003 ? min(size, 160.0 * uPixels) : 0.0;
         gl_Position = projectionMatrix * view;
       }`,
     fragmentShader: `
-      varying vec3 vColour;
+      varying vec3 vColour; varying float vLevel; varying float vShape; varying float vWide; varying float vPixel; varying float vCover;
       void main() {
-        float d = length(gl_PointCoord - .5) * 2.0;
-        float glow = (exp(-d * d * 9.0) * 1.4 + exp(-d * 3.2) * .35) * (1.0 - smoothstep(.8, 1.0, d));
-        gl_FragColor = vec4(vColour * glow, glow);
+        vec2 at = gl_PointCoord - .5;
+        vec4 colour;
+        if (vShape < .5) {
+          // The lamp: a core, a haze round it and a faint wide halo. The core and the haze cover the sky a little, so that the lamp
+          // reads in its own colour against a bright dusk; the halo only adds light.
+          float d = length(at) * 2.0;
+          float core = exp(-d * d * 38.0), haze = exp(-d * d * 7.0), halo = exp(-d * 2.6) * (1.0 - smoothstep(.75, 1.0, d));
+          float level = min(vLevel, 1.4);
+          // Kept below the brightness at which the tone mapping turns a strong red to white.
+          vec3 light = vColour * (core * 1.05 + haze * .75 + halo * .18) + vec3(.5, .16, .1) * core * core * .12;
+          colour = vec4(light * level, vCover * min(1.0, (core * .95 + haze * .8 + halo * .15) * min(level, 1.0)));
+        } else {
+          // The mast's stroke fills the point's height; the rag is a patch across the middle. Their edges are softened by a pixel.
+          float across = clamp((vWide * .5 - abs(at.x)) / vPixel + .5, 0.0, 1.0);
+          float high = vShape < 1.5 ? 1.0 : clamp((vWide * .3 - abs(at.y)) / vPixel + .5, 0.0, 1.0);
+          float cover = across * high * min(vLevel, 1.0);
+          colour = vec4(vColour * cover, cover);
+        }
+        gl_FragColor = colour;
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    // Each point gives its colour already weighed by how much it covers: what it covers is taken away, its light is added.
+    transparent: true, depthWrite: false, blending: THREE.CustomBlending,
+    blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
   });
   const glow = new THREE.Points(geometry, material);
   glow.name = 'Radio Hill, the glow of its lamps';
   glow.frustumCulled = false;
   glow.renderOrder = 4;
-  glow.onBeforeRender = renderer => { material.uniforms.uPixels.value = renderer.getPixelRatio(); };
+  glow.onBeforeRender = renderer => {
+    material.uniforms.uPixels.value = renderer.getPixelRatio();
+    material.uniforms.uHeight.value = renderer.getCurrentViewport(viewport).w;
+  };
   return glow;
 }
 
@@ -1308,14 +1371,24 @@ export function buildRadioHill({stage = 'camp', heightAt = () => 0, night = fals
   parts.rotor.rotation.set(0, charger.facing, 0, 'YXZ');
   const wires = createLines(kit.lines);
   group.add(wires);
-  // The lamps' glows: the red lamp, the hut's bulb seen through the door, the window.
-  const hutY = heightAt(HUT.x, HUT.z), T = L.things.table;
+  // The lamps' glows: the red lamp, the hut's bulb seen through the door, the window and the doorway. Then the mast's outline from
+  // far off, a stroke for each 2.5 m of it, so that each length is hidden by the land in front of it on its own; and the rag.
+  const hutY = heightAt(HUT.x, HUT.z), T = L.things.table, base = heightAt(L.mast.x, L.mast.z), daylight = {value: 1};
+  const outline = [];
+  for (let y = 1.25; y < L.mast.height; y += 2.5) {
+    const middle = mastMiddleAt(y), width = L.mast.footRadius * 1.6 + (L.mast.topRadius - L.mast.footRadius) * 1.6 * y / L.mast.height;
+    outline.push({at: [middle.x, base + y, middle.z], shape: 'mast', size: 3.1, least: 3, wide: width, near: 320, colour: y < L.mast.oldTop ? [.085, .06, .05] : [.06, .055, .05]});
+  }
   const glow = createGlow([
-    {at: [mast.head[0], mast.head[1] + .15, mast.head[2]], which: LIT.lamp, size: 26, colour: [.8, .07, .02]},
-    {at: [T.x + .35, hutY + 1.98, T.z + .25], which: LIT.hut, size: 12, colour: [1, .72, .38]},
-    {at: [HUT.x + HUT.halfX - .1, hutY + 1.3, HUT.z + .95], which: LIT.hut, size: 7, colour: [.9, .58, .28]},
-    {at: [HUT.x, hutY + 1.2, HUT.z + HUT.halfZ - .2], which: LIT.hut, size: 17, colour: [.85, .55, .26]},
-  ], levels);
+    {at: [T.x + .35, hutY + 1.98, T.z + .25], which: LIT.hut, size: .5, least: 3, colour: [.9, .6, .3]},
+    {at: [HUT.x + HUT.halfX + .05, hutY + 1.3, HUT.z + .95], which: LIT.hut, size: .7, least: 3, colour: [.32, .17, .06]},
+    {at: [HUT.x, hutY + .95, HUT.z + HUT.halfZ + .05], which: LIT.hut, size: .9, least: 4, colour: [.3, .15, .05]},
+    ...outline,
+    {at: mast.flag, shape: 'rag', size: FLAG.long, least: 4.5, wide: FLAG.long, near: 320, colour: [.32, .07, .035]},
+    // The red lamp last, so that it is drawn over the mast's outline and the rag. It covers the sky a little (`wide`) so that it
+    // reads red against a bright dusk; the hut's glows only add light.
+    {at: [mast.head[0], mast.head[1] + .15, mast.head[2]], which: LIT.lamp, size: 2.2, least: 16, wide: 1, colour: [.95, .06, .02]},
+  ], levels, daylight);
   group.add(glow);
   // Two lights at night: the hut's bulb, and the red lamp on the top of the mast, which colours the lattice round it.
   const hutLight = new THREE.PointLight(0xffb36a, 9, 4.4, 2);
@@ -1336,13 +1409,14 @@ export function buildRadioHill({stage = 'camp', heightAt = () => 0, night = fals
   const lineCount = kit.lines.positions.length / 6;
   group.userData = {
     stage, night, draws, triangles: kit.triangles + smoke.geometry.index.count / 3, lines: lineCount,
-    lights: [hutLight, lampLight], rotor: parts.rotor, smoke, glow, wires, lit: parts.lit, levels: levels.value,
+    lights: [hutLight, lampLight], rotor: parts.rotor, smoke, glow, wires, lit: parts.lit, levels: levels.value, daylight,
     head: {x: mast.head[0], y: mast.head[1], z: mast.head[2]},
     update(seconds, {night: dark = group.userData.night, signalAt = null} = {}) {
       const lamp = radioHillLamp(seconds, {night: dark, signalAt});
       // The hut's light is steady, with a small waver from the generator.
       const hut = dark ? .92 + .05 * Math.sin(seconds * 7.3) * Math.sin(seconds * 2.1) : 0;
       levels.value.set(dark ? .1 + lamp * 1.15 : .0, hut);
+      daylight.value = dark ? .2 : 1;
       hutLight.visible = dark; lampLight.visible = dark && lamp > .02;
       hutLight.intensity = 9 * hut; lampLight.intensity = 5 * lamp;
       // The wires and the smoke are drawn without the scene's light, so the night takes them down by hand.
