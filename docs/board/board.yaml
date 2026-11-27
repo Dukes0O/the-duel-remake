@@ -1001,8 +1001,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
-    waiting_on: "kyle"
+    status: "building"
+    claimed_by: "Claude session (local), 27 November 2026"
     needs: ["TUNNEL-TRIAL"]
     locks: []
     flag: "wasteland-town"
