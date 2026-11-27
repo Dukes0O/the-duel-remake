@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {ffmpeg} from '../audio/codec.mjs';
 import {measureLoudness, repetition} from '../audio/measurements.mjs';
 import {detectOnset, rms} from '../audio-analysis.mjs';
-import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
+import {createCaptureWitness, inspectCaptureWitness, inspectCaptureStartup, recorderWorkletSource}
   from '../audio/capture-witness.mjs';
 
 export function inspectNativeCallbacks(chunk, interval = {}, identity = null) {
@@ -268,14 +268,21 @@ async function nativeRecorder(audio, helpers) {
       node.connect(silent); bus.connect(node); source.connect(node, 0, 1);
       tracks[name] = {node, bus, chunks};
     }
-    source.start();
     const row = {index: segments.length, tracks, source, startFrame: null}; segments.push(row);
+    // Prove each worklet is running before starting the shared witness source.
+    await settle(() => Object.values(tracks).every(track => track.chunks.length),
+      'capture disturbed, rerun alone: P4 worklet did not run');
+    source.start();
     await settle(() => Object.values(tracks).every(track => {
-      const last = track.chunks.slice(-3);
-      return last.length === 3 && last.every((chunk, i) => chunk.witness[0] > 0 &&
-        (!i || chunk.frame === last[i - 1].frame + 2048));
-    }), 'Recorder did not establish three real consecutive blocks');
-    row.startFrame = Math.min(...Object.values(tracks).map(track => track.chunks.at(-1).frame));
+      const startup = helpers.inspectStartup(track.chunks, reference, helpers.inspectWitness);
+      track.startup = startup;
+      if (startup.started && !startup.complete)
+        throw Error('capture disturbed, rerun alone: P4 ' + startup.reasons.join('; '));
+      return startup.complete && track.chunks.slice(-3).every(chunk =>
+        helpers.inspectWitness(chunk.witness, reference).complete) && track.chunks.length >= 3;
+    }), 'capture disturbed, rerun alone: P4 witness source frame 0 and three real blocks not captured');
+    row.startFrame = Math.min(...Object.values(tracks).map(track =>
+      track.chunks[0].frame + (track.chunks.length - 1) * 2048));
     return row;
   }
   function disconnect(row) {
@@ -359,6 +366,9 @@ async function nativeRecorder(audio, helpers) {
   }
   return {
     failurePacket() { return clockFailure; },
+    startupPacket() { return segments.map(row => ({segment: row.index,
+      tracks: Object.fromEntries(Object.entries(row.tracks).map(([name, track]) =>
+        [name, track.startup ?? helpers.inspectStartup(track.chunks, reference, helpers.inspectWitness)]))})); },
     async begin() { active = await segment(); return {sampleRate: rate, startFrame: active.startFrame}; },
     age() { return active ? ctx.currentTime - active.startFrame / rate : 0; },
     async rotate() {
@@ -377,7 +387,7 @@ async function nativeRecorder(audio, helpers) {
 
 function recorderCode() {
   return '{worklet:' + JSON.stringify(recorderWorkletSource) + ',createWitness:(' + createCaptureWitness.toString() +
-    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),inspectCallbacks:(' + inspectNativeCallbacks.toString() +
+    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),inspectStartup:(' + inspectCaptureStartup.toString() + '),inspectCallbacks:(' + inspectNativeCallbacks.toString() +
     '),create:(' + nativeRecorder.toString() + ')}';
 }
 
@@ -573,6 +583,7 @@ export async function run(context) {
         recording.clockDispute={file:'clock-failure.json',scope:failure.scope,retentionError:failure.retentionError??null};
       }
     } catch(error) {recording.clockRetentionError=error.message;}
+    recording.startup=await context.evaluate('window.__p4Capture.startupPacket()');
     await context.evaluate('window.__qaApp.stop(); window.__p4Capture.stop()');
     const report = await context.evaluate('window.__p4Audio.result()');
     await writeFile(join(context.outputDir, 'p4-audio.json'), JSON.stringify(report, null, 2) + '\n');

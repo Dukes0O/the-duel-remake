@@ -1,15 +1,15 @@
-# QA-AUDIO-UNDER-LOAD - round 3
-Stopped under the round 3 rule: Skyline solo runs 1-4 passed; run 5 was disturbed at startup. P4 solos/four-job stage not run.
-P4 uses full interval witness identity for continuity; disagreeing callback/chunk labels are clock notes, not sound faults.
-Skyline now records through P4's shared AudioWorklet; its witness remains on a separate input from the measured stereo.
-Claude's 27 November rule 18 approval and both method decisions are repeated on the card; sound checks/limits unchanged.
-All five launches counted zero competing heavy jobs; private ports, memory-only saves, no browser warnings/errors.
-Skyline clock notes by run: 0, 0, 0, 146, 0. Run 4 labels stay +256 frames ahead while witness samples stay intact.
-Run 5: two silent startup blocks; callback 2 has no first-sample identity; callback 3 starts at source 1792, intact for 2048 samples.
-Raw startup witness was not retained; missing samples versus excess startup silence cannot be proved from this report. Both blowoffs present.
-Next proposal only: explicit worklet/source startup handshake, retain witness prefix, start stimulus after source frame 0 is confirmed.
-Focused: 28 passed; all existing damaged fixtures still fail; added clean wrong-label and disturbed wrong-label/witness cases.
-Lane on round 3 working tree over 15024b2b5: all 26 passed, 0 failed; arena-shove/first-person-polish deferred to night. Build passed (existing import/chunk warnings).
-Race fingerprints/world signatures unchanged by code; no game source or sound cues added. Detailed measurements are on the card.
-Board: review, waiting on Claude; no push/merge. STATUS refreshed locally; external cockpit sync omitted to respect this lane-only instruction.
-**Removed:** Skyline ScriptProcessor recorder/splitter/merger; clock labels as P4 continuity verdicts. Evidence/build output recycled after recording.
+# QA-AUDIO-UNDER-LOAD - round 4
+Not ready: Skyline passed 5/5 solos; P4 passed 0/5. All ten ran; four-job stage skipped under the explicit P4 stop rule.
+Added delivered-worklet/source-frame-0 handshakes before stimuli and P4 segment starts; reports retain the first raw witness blocks.
+Skyline trims arbitrary silence before frame 0; missing/repeated/changed samples still fail. Removed its NaN follow-on gap diagnosis.
+All ten launches counted zero competing heavy jobs; private ports, lane-local profiles/temp, memory-only saves, zero browser warnings/errors.
+Skyline clock-note counts: 1, 0, 147, 0, 0; all witnesses intact. Run 1 label -128 frames once; run 3 labels +384 frames.
+P4 startup label offsets: +24448, +23424, +19968, +18688, +20608 frames. Clock notes per stem: 8094, 8117, 8073, 8086, 8067.
+P4 samples/frame-0 handshakes are intact; cue windows are misaligned. Light PCM exists at offset-adjusted time; nominal windows are silent.
+Unchanged P4 error: Native race cue absent from recorded interface stem: light. Automatic rerun-alone diagnosis remains unmet; no new method tried.
+Checked round 4 tool edits over 3e02c850d: focused 30 pass. Lane command --tier lane --changed --since 3e02c850d --jobs 2: 21 pass, 1 environment failure, 4 unstarted.
+Hygiene rerun unchanged: 165 checks pass with lane-local TEMP and GIT_CEILING_DIRECTORIES to prevent inherited ignored Git listings; remaining 4 suites pass at jobs 2.
+Replays: 306 checks/34 cases; combat: 12/4 encounters; world: 65/32 events, all pass. arena-shove and first-person-polish left to night.
+Build passed (existing import/chunk warnings). Assertions: arbitrary pre-frame-0 silence accepted as directed; no sound limit or damaged fixture loosened.
+Board: review/waiting_on claude. STATUS refreshed; read-only audit, other lane inspections skipped; external cockpit sync omitted under lane-only instruction.
+**Removed:** fixed two-callback startup cutoff and NaN follow-on diagnostic; generated evidence/build/temp recycled. Game code, saves, race fingerprints and sound cues unchanged.

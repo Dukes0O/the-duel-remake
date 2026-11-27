@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {inspectNativeCallbacks} from './scenarios/p4-audio.mjs';
 import {inspectSkylineCapture, validateSkylineAudio} from './scenarios/skyline-audio.mjs';
-import {createCaptureWitness, inspectCaptureWitness} from './audio/capture-witness.mjs';
+import {createCaptureWitness, inspectCaptureWitness, inspectCaptureStartup} from './audio/capture-witness.mjs';
 
 const reference = createCaptureWitness(48000);
 const identity = offset => inspectCaptureWitness(reference.slice(offset, offset + 2048), reference);
@@ -90,6 +90,30 @@ check('Skyline accepts only source startup silence before the witnessed mix', ()
   assert.equal(inspectSkylineCapture(p).disturbed, false);
   p.callbacks[2].identity = identity(0);
   assert.equal(inspectSkylineCapture(p).disturbed, true);
+});
+check('handshake trims any number of silent blocks and retains the source frame 0 block', () => {
+  const chunks = Array.from({length: 5}, (_, frame) => ({frame, witness: new Float32Array(2048)}));
+  const boundary = new Float32Array(2048); boundary.set(reference.subarray(0, 1280), 768);
+  chunks.push({frame: 5, witness: boundary}, {frame: 6, witness: reference.slice(1280, 3328)});
+  const startup = inspectCaptureStartup(chunks, reference);
+  assert.equal(startup.complete, true);
+  assert.equal(startup.startupFrames, 5 * 2048 + 768);
+  assert.equal(startup.sourceFrames, 3328);
+  assert.deepEqual(startup.blocks[5].witness, Array.from(boundary));
+  const p = packet();
+  p.callbacks.unshift(...Array.from({length: 5}, () => ({frames: 0, startupFrames: 2048, identity: {complete: false}})));
+  assert.equal(inspectSkylineCapture(p).disturbed, false);
+});
+check('handshake needs source frame 0 and rejects lost, repeated and changed samples after it', () => {
+  assert.equal(inspectCaptureStartup([{witness: new Float32Array(2048)}], reference).complete, false);
+  assert.equal(inspectCaptureStartup([{witness: reference.slice(128, 2176)}], reference).complete, false);
+  for (const offset of [0, 2176]) assert.equal(inspectCaptureStartup([
+    {witness: reference.slice(0, 2048)}, {witness: reference.slice(offset, offset + 2048)},
+  ], reference).complete, false);
+  const damaged = reference.slice(0, 2048); damaged[128] = 0;
+  assert.equal(inspectCaptureStartup([{witness: damaged}], reference).complete, false);
+  assert.equal(inspectCaptureStartup([{witness: reference.slice(0, 2048)},
+    {witness: new Float32Array(2048)}], reference).complete, false);
 });
 check('Skyline rejects startup silence after recording has begun', () => {
   const p = packet(); p.callbacks[1] = {frames: 0, startupFrames: 2048, identity: {complete: false}};

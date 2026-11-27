@@ -31,6 +31,27 @@ export function inspectCaptureWitness(samples, reference) {
   return {complete: true, sourceStartFrame: lo, checkedFrames: samples.length};
 }
 
+// Called only during the handshake. Retain the actual first blocks so a
+// failed start can distinguish extra leading silence from lost source samples.
+export function inspectCaptureStartup(chunks, reference, inspect = inspectCaptureWitness) {
+  let startupFrames = 0, sourceFrames = 0, started = false;
+  const reasons = [], blocks = [];
+  for (const chunk of chunks) {
+    let offset = 0;
+    if (!started) while (offset < chunk.witness.length && chunk.witness[offset] === 0) offset++;
+    startupFrames += offset;
+    const samples = chunk.witness.subarray(offset);
+    const identity = inspect(samples, reference);
+    blocks.push({frame: chunk.frame, startupFrames: offset, identity, witness: Array.from(chunk.witness)});
+    if (!samples.length && !started) continue;
+    started = true;
+    if (!identity.complete || identity.sourceStartFrame !== sourceFrames)
+      reasons.push('startup witness expected source frame ' + sourceFrames + ': ' + JSON.stringify(identity));
+    sourceFrames += samples.length;
+  }
+  return {complete: started && !reasons.length, started, startupFrames, sourceFrames, reasons, blocks};
+}
+
 export const recorderWorkletSource = `class Meter extends AudioWorkletProcessor {
   constructor(){super();this.pcm=new Float32Array(4096);this.at=0;this.first=0;
     this.witness=new Float32Array(2048);this.callbacks=[];}

@@ -2,7 +2,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {wavFromPcm} from './audio-race.mjs';
 import {measureLoudness} from '../audio/measurements.mjs';
-import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource} from '../audio/capture-witness.mjs';
+import {createCaptureWitness, inspectCaptureWitness, inspectCaptureStartup, recorderWorkletSource} from '../audio/capture-witness.mjs';
 
 export function inspectSkylineCapture(packet) {
   const reasons = [], clockNotes = [];
@@ -12,10 +12,10 @@ export function inspectSkylineCapture(packet) {
     const row = packet.callbacks[i];
     const expectedFrame = packet.callbacks[0].frame + i * 2048;
     if (row.frame !== expectedFrame) clockNotes.push({callback: i, actualFrame: row.frame, expectedFrame});
-    // Only the first two callbacks may contain silence before source frame 0.
+    // Any silence before source frame 0 is startup, regardless of callback count.
     // Startup samples are also excluded from the measured stereo PCM.
     if (row.startupFrames) {
-      if (i > 1 || previous || row.startupFrames + row.frames !== 2048 ||
+      if (previous || row.startupFrames + row.frames !== 2048 ||
           (row.frames && row.identity.sourceStartFrame !== 0))
         reasons.push('invalid witness startup at callback ' + i);
       if (!row.frames) continue;
@@ -26,7 +26,8 @@ export function inspectSkylineCapture(packet) {
       reasons.push('sample witness mismatch at callback ' + i);
     // Callback frame labels describe the clock, not input sample identity.
     // A late delivery alone must never invalidate an otherwise intact buffer.
-    if (previous && row.identity.sourceStartFrame !== previous.identity.sourceStartFrame + previous.frames)
+    if (previous?.identity.complete && row.identity.complete &&
+        row.identity.sourceStartFrame !== previous.identity.sourceStartFrame + previous.frames)
       reasons.push('sample witness gap/repeat at callback ' + i + ' (expected source frame ' +
         (previous.identity.sourceStartFrame + previous.frames) + ', got ' + row.identity.sourceStartFrame + ')');
     previous = row;
@@ -60,6 +61,7 @@ export async function run(context) {
     'memory-only Skyline audio', 30000);
   await context.waitFor("window.__qaApp.visualReady && document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'",
     'Skyline menu assets ready before recording', 60000);
+  try {
   await context.evaluate(`(async () => {
     const app=window.__qaApp; app.stop();
     const audio=app.audio; audio.unlock(); audio.setMuted(false); audio.setPaused(false);
@@ -78,21 +80,37 @@ export async function run(context) {
     witness.buffer=witnessBuffer;witness.connect(processor,0,1);
     audio.output.connect(processor);
     silent.gain.value=0;
-    const chunks=[],callbacks=[],cues=[],rows=[],start=ctx.currentTime, original=audio._playCue;
+    const chunks=[],callbacks=[],cues=[],rows=[],firstBlocks=[],original=audio._playCue;
+    const inspectStartup=(${inspectCaptureStartup.toString()});
+    const inspectCaptureWitness=inspectWitness;
+    let start, startup=null, handshakeDone=false;
     let witnessStarted=false;
     audio._playCue=function(id,...args){cues.push({id,time:ctx.currentTime-start});return original.call(this,id,...args);};
     processor.port.onmessage=event=>{
       const {witness:measured,pcm:stereo,frame}=event.data;
       let startupFrames=0;
-      if(!witnessStarted && callbacks.length<2)while(startupFrames<measured.length && measured[startupFrames]===0)startupFrames++;
+      if(!witnessStarted)while(startupFrames<measured.length && measured[startupFrames]===0)startupFrames++;
       if(startupFrames<measured.length)witnessStarted=true;
+      if(!handshakeDone)firstBlocks.push({frame,witness:measured});
       const frames=measured.length-startupFrames,pcm=new Int16Array(frames*2);
       callbacks.push({frame,frames,startupFrames,
         deliveredMs:performance.now(),identity:inspectWitness(measured.subarray(startupFrames),reference)});
       for(let i=0;i<frames*2;i++)pcm[i]=Math.round(Math.max(-1,Math.min(1,stereo[startupFrames*2+i]))*32767);
       chunks.push(pcm);
     };
-    witness.start();processor.connect(silent);silent.connect(ctx.destination);
+    processor.connect(silent);silent.connect(ctx.destination);
+    const settle=async(test,label)=>{const deadline=performance.now()+5000;
+      while(!test()){if(performance.now()>deadline)throw Error('capture disturbed, rerun alone: '+label);
+        await new Promise(resolve=>setTimeout(resolve,16));}};
+    window.__skylineAudio={audio,ctx,processor,silent,witness,chunks,callbacks,cues,rows,original,
+      startupPacket:()=>startup??inspectStartup(firstBlocks,reference)};
+    // A delivered worklet block proves process() is running before source.start().
+    await settle(()=>callbacks.length>0,'Skyline worklet did not run');
+    witness.start();
+    await settle(()=>witnessStarted,'Skyline witness source frame 0 was not captured');
+    startup=inspectStartup(firstBlocks,reference);handshakeDone=true;
+    if(!startup.complete)throw Error('capture disturbed, rerun alone: Skyline '+startup.reasons.join('; '));
+    start=ctx.currentTime;
     const state={car:'nissan_skyline_gtr_r34',status:'racing',paused:false,impactTimer:0,
       speedMph:120,revs:.85,gear:3,input:{throttle:1,brake:0},slipAngle:0,steerVisual:0,
       offRoad:false,airborne:false,airHeight:0,police:{beep:0,pursuit:null}};
@@ -105,8 +123,13 @@ export async function run(context) {
       rows.push({time,throttle:state.input.throttle,liftCueTime,frequency:audio.turboLoop?.osc.frequency.value,
         gain:audio.turboLoop?.gain.gain.value});
     },16);
-    window.__skylineAudio={audio,ctx,processor,silent,witness,chunks,callbacks,cues,rows,timer,original};
+    window.__skylineAudio.timer=timer;
   })()`);
+  } catch(error) {
+    const startup=await context.evaluate('window.__skylineAudio?.startupPacket()');
+    await writeFile(join(context.outputDir,'skyline-startup.json'),JSON.stringify(startup??null,null,2)+'\n');
+    throw error;
+  }
   await new Promise(resolve=>setTimeout(resolve,6200));
   const packet=await context.evaluate(`(() => {
     const c=window.__skylineAudio;clearInterval(c.timer);c.audio.setPaused(true);
@@ -116,7 +139,7 @@ export async function run(context) {
     for(const chunk of c.chunks){pcm.set(chunk,offset);offset+=chunk.length;}
     const bytes=new Uint8Array(pcm.buffer);let binary='';
     for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-    return {pcm:btoa(binary),rate:c.ctx.sampleRate,cues:c.cues,rows:c.rows,callbacks:c.callbacks,
+    return {pcm:btoa(binary),rate:c.ctx.sampleRate,cues:c.cues,rows:c.rows,callbacks:c.callbacks,startup:c.startupPacket(),
       turboStopped:!c.audio.turboLoop,memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value};
   })()`);
   const wave=wavFromPcm(Buffer.from(packet.pcm,'base64'),packet.rate);delete packet.pcm;
