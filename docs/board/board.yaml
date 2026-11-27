@@ -1268,6 +1268,18 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-APPRENTICE-RUN-3.md"
 
+  - id: OPEN-SITE-LOOKS
+    title: "Open Scablands: Radio Hill and the Bus Ring drawn in play by their finished looks, not stand-ins"
+    owner: "codex"
+    model: "astra"
+    lane: "RENDER"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-SITE-LOOKS.md"
+
   - id: OPEN-T-LIGHTS
     title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
     owner: "codex"
