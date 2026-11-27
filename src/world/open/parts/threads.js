@@ -14,6 +14,7 @@ import runaway from '../../../story/threads/content/runaway.js';
 import {RUNAWAY_GATE_RIDERS, RUNAWAY_SIGN, runawayBeat, runawayCanStart, runawayPlace} from '../content/runaway-places.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {canFindSite, distance, residentPose, sitePosition} from '../site-rule.js';
+import {ransomEffects, ransomTerms} from '../ransom-rule.js';
 import dryPump from '../../../story/threads/content/dry-pump.js';
 import {mallPlace} from '../content/dry-pump-places.js';
 import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
@@ -173,6 +174,17 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
 
   if (!beat) return out;
   if (lights && beatId === 'shelved') return out;
+  // A beat that `takes` the player holds them on foot at one spot and the car at another for as long as the storyline
+  // stands there, and takes them back there in any roam that meets it again. The day is brought on to dusk.
+  if (beat.takes && !state.taken && view.openRoam && view.checkpointsEnabled && rule.ask(beat.when)) {
+    const foot = context.placeAt(beat.takes.foot, record.cast), car = context.placeAt(beat.takes.car, record.cast);
+    if (foot && car) {
+      state.taken = true;
+      state.heldCar = {x: car.x, z: car.z};
+      out.dusk = true;
+      out.requests.push({type: 'threadTaken', id: thread.id, held: true, foot, car});
+    }
+  }
   if (hauling && beatId === 'between' && !haulerMarked(world, 'second-truck')) {
     if (!state.clearedLookouts) {
       out.requests.push({type: 'missionLookouts', id: HAULER_ID + '/sign', group: 'road-rats', posts: []});
@@ -324,6 +336,16 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     }
     state.returning = false;
     const entry = [remember('entered', beatId), ...rule.effects(beat.effects)];
+    // A ransom is paid on entry, from what the world holds now (ransom-rule.js). The choice's id names the ransom, so
+    // that a store left short is read as a loss by the apprentice run.
+    if (beat.ransom) entry.push(...ransomEffects(ransomTerms(beat.ransom, world, rule.ask)));
+    if (beat.leaves) out.leave = {to: beat.leaves, night: world.ledger.night};
+    // `frees` lets go of both; a spot (the held car's) puts the player beside the car to drive it home.
+    if (beat.frees && state.taken) {
+      const car = typeof beat.frees === 'string' ? state.heldCar : null;
+      out.requests.push({type: 'threadTaken', id: thread.id, held: false, ...(car ? {foot: {x: car.x + 3, z: car.z}} : {})});
+      state.taken = false;
+    }
     if (hill && mission) (mission.lines ?? []).filter(row => !row.moment && rule.ask(row.when))
       .forEach((row, i) => line(beatId + '/mission/' + i, row));
     if (hill && beatId === 'wheels-off' && !view.combatWrecking)
@@ -434,7 +456,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
 
   const roadThoughtsReady = !hauling || !beatId.endsWith('-road') || state.reading?.verge?.seconds >= 2 ||
     seconds - state.beatSeconds[beatId] >= 30;
-  if (!opening && !isRunaway && roadThoughtsReady) (beat.thoughts ?? []).forEach((row, index) => {
+  if (!opening && !isRunaway && !beat.oneTalk && roadThoughtsReady) (beat.thoughts ?? []).forEach((row, index) => {
     const thought = typeof row === 'string' ? {thought: row} : row, id = `${beatId}-${index}`;
     if (rule.has('thought', id) || !rule.ask(thought.when)) return;
     once('thought', id);
@@ -588,7 +610,14 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     }
     return out;
   }
-  const radio = isRunaway ? null : radioScene(thread, beat, rule);
+  const radio = isRunaway || beat.oneTalk ? null : radioScene(thread, beat, rule);
+  // One talk (`oneTalk`): a question asked in the decision's own talk is written down as a radio question is.
+  const decisionId = `${thread.id}/${beatId}/decision`;
+  if (beat.oneTalk) for (const event of view.jobEvents ?? []) {
+    const question = event.type === 'openTalkQuestion' && event.scene === decisionId && !rule.has('asked', event.id) &&
+      beat.questions?.find(row => row.id === event.id);
+    if (question) once('asked', question.id, rule.effects(question.effects));
+  }
   const asked = new Set([
     ...(completed.find(event => event.id === `${thread.id}/radio-done`)?.asked ?? []),
     ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === (lights ? `${thread.id}/radio` : radio?.id)).map(event => event.id),
@@ -645,7 +674,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     (beatId !== 'crew' && beatId !== 'crew-after-sounding' || rule.ask({reach: ['ships-in-sand', 'whites-crew'], within: 100}));
   if ((spoken.length || lightsTalk && radio) && atTalk && (lights ? lightsTalk : view.onFoot) && view.openRoam && view.checkpointsEnabled && decision.interact) {
     decision.interact = false;
-    const id = `${thread.id}/${beatId}/decision`;
+    const id = decisionId;
     const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: lights ? rule.line(row.words) : rule.line(row.words).replace(/([^.!?])$/, '$1.'),
       ...(row.plain ? {detail: rule.line(row.plain)} : {})}));
     if (lights && radio) {
@@ -654,8 +683,15 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
         speaker: 'you', radio: true, threadPriority: true});
     } else {
       const lines = lights && beatId === 'aboard' ? beat.notes.watch : undefined;
-      out.requests.push({type: 'talk', id, scene: {id, choices, ...(lines && {lines})},
-        speaker: 'you', ...(lights && {radio: true, threadPriority: true})});
+      const scene = {id, choices, ...(lines && {lines})};
+      if (beat.oneTalk) {
+        scene.questions = (beat.questions ?? []).filter(row => !rule.has('asked', row.id) && rule.ask(row.when)).map(row => ({
+          id: row.id, words: rule.line(row.words),
+          lines: row.lines.filter(line => rule.ask(line.when)).map(line => ({speaker: line.speaker, words: rule.line(line.words)}))}));
+        scene.thoughts = (beat.thoughts ?? []).map(row => typeof row === 'string' ? {thought: row} : row)
+          .filter(row => rule.ask(row.when)).map(row => rule.line(row.thought));
+      }
+      out.requests.push({type: 'talk', id, scene, speaker: 'you', ...(lights && {radio: true, threadPriority: true})});
     }
   }
   const option = available.find(row => hauling && row.by === 'do' ? haulerAction(row, context) : row.by === 'go' ? !view.onFoot &&
@@ -785,7 +821,7 @@ export function createThreadsPart(threads) {
       const settled = input.previousEvents.some(event => event.id === previous.mission &&
         (event.type === 'threadMissionOutcome' || event.type === 'threadMissionCancelled'));
       state.mission = settled ? null : previous.mission;
-      let hold, release;
+      let hold, release, leave, dusk = false;
       for (const source of availableThreads) {
         const record = world.open.threads[source.id];
         if (!record) continue;
@@ -858,7 +894,8 @@ export function createThreadsPart(threads) {
         }
         const laterRows = thread === runaway || thread.id === LIGHTS_ID ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.id === TOLL_ID ? MALL_ROAD_TALK : thread.later ?? [];
         const later = laterRows.find(row => {
-          if (thread.id === TOLL_ID && row.by === 'sumps-rider') return false;
+          // Sump's rider speaks at a checkpoint, not on foot: the toll's row below, the others in parts/checkpoints.js.
+          if (row.by === 'sumps-rider') return false;
           if (!view.onFoot || !laterRule.ask(row.when) || laterRule.has('later', row.id)) return false;
           if (thread.id === FLAG_ID && (!record.end || night - (world.open.journal.findLast(change =>
             change.type === 'thread' && change.key === thread.id && change.after.end)?.night ?? night) < row.afterNights)) return false;
@@ -936,6 +973,8 @@ export function createThreadsPart(threads) {
         if (out.mission !== undefined) state.mission = out.mission;
         hold ??= out.hold;
         release ??= out.release;
+        leave ??= out.leave;
+        dusk ||= out.dusk === true;
       }
       const hauler = threads.find(thread => thread.id === HAULER_ID);
       const haulerRecord = hauler && world.open.threads[HAULER_ID];
@@ -976,7 +1015,7 @@ export function createThreadsPart(threads) {
           if (scene) requests.push({type: 'talk', id: scene.id, scene, speaker: 'tally', radio: !view.onFoot || !atGate});
         }
       }
-      return {state, choices, events, requests, hold, release};
+      return {state, choices, events, requests, hold, release, ...(leave ? {leave} : {}), ...(dusk ? {dusk} : {})};
     },
   };
 }

@@ -1256,18 +1256,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-APPRENTICE-RUN-3
-    title: "Open Scablands: a gas run keeps its earnings when storage cannot be read (from the review)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: [busy-game-files, save-shape]
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-APPRENTICE-RUN-3.md"
-
   - id: OPEN-SITE-LOOKS
     title: "Open Scablands: Radio Hill and the Bus Ring drawn in play by their finished looks, not stand-ins"
     owner: "codex"
@@ -1326,19 +1314,6 @@ tasks:
     locks: []
     details: "docs/board/cards/AGENTS-REWRITE.md"
 
-  - id: OPEN-BURNED-PEN
-    title: "Open Scablands: the burned camp, the fight alone, the pen, the ransom and the ways out"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "L"
-    status: "building"
-    claimed_by: "Claude (Opus session), 26 November 2026"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-BURNED-PEN.md"
-
   - id: OPEN-BURNED-RESCUE
     title: "Open Scablands: the burned camp, the choice at home, the rescue party and where the growers live"
     owner: "codex"
@@ -1346,7 +1321,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "backlog"
-    needs: [OPEN-BURNED-PEN]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-RESCUE.md"

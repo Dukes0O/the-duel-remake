@@ -52,7 +52,7 @@
 import {applyEffects} from './open-effects.js';
 import {NO_HOLDS, dropHold, holdsOfJob, takeHold} from './holds.js';
 import {OPEN_PARTS} from './parts.js';
-import {advanceDay, daySecondsOf, outingAvailable, partOfDay, reserveOuting} from './day-rule.js';
+import {DUSK_START, advanceDay, daySecondsOf, outingAvailable, partOfDay, reserveOuting} from './day-rule.js';
 
 const KEPT_EVENTS = 32;
 const holderOf = definition => 'job:' + (definition?.id ?? 'unnamed');
@@ -72,7 +72,7 @@ export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
   const parts = {...open.parts}, raised = [], requests = [], changes = [], byPart = {};
   const seconds = open.seconds + dt;
   const dayClock = open.daySeconds !== undefined;
-  const daySeconds = dayClock ? advanceDay(open.daySeconds, dt) : undefined;
+  let daySeconds = dayClock ? advanceDay(open.daySeconds, dt) : undefined;
   if (dayClock) view = {...view, dayClock, partOfDay: partOfDay(daySeconds),
     missionActive: !!open.parts.missions?.active, outingAvailable: outingAvailable(world)};
   for (const part of partList) {
@@ -100,6 +100,11 @@ export function stepOpenLand(open, view, dt, partList = OPEN_PARTS) {
     if (dayClock) view = {...view, outingAvailable: outingAvailable(world)};
     requests.push(...(out.requests ?? []));
     leave ??= out.leave ?? null;
+    // A part may bring the day on to dusk (the player taken to a pen at dusk). The clock never runs back.
+    if (dayClock && out.dusk && daySeconds < DUSK_START) {
+      daySeconds = DUSK_START;
+      view = {...view, partOfDay: partOfDay(daySeconds)};
+    }
   }
   let {eventCount} = open;
   const events = raised.length

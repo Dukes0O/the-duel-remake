@@ -171,7 +171,9 @@ export function stepFootTransition(duel, dt) {
     if (state.boarding?.phase === 'roof') {transition.heldSeconds = 0; return true;}
     if (transition.needsRelease || !held || state.fighter.knockedDown ||
         state.fighter.bailTumbleSeconds > 0 ||
-        state.combatWrecking || state.arena?.worldJob?.night2?.washCarUnavailable || fighterDistanceToCar(duel) > T.reentryRangeMeters) {
+        state.combatWrecking || state.arena?.worldJob?.night2?.washCarUnavailable ||
+        // OPEN-BURNED-PEN: the Road Rats hold the car at the end of their row while the player is in their pen.
+        state.arena?.worldJob?.carHeldBy || fighterDistanceToCar(duel) > T.reentryRangeMeters) {
       transition.heldSeconds = 0;
       return true;
     }

@@ -51,6 +51,7 @@ import {SOUND_BANK} from '../../sound-bank.js';
 import {ROAD_GROUPS} from '../../world/open/content/checkpoints.js';
 import {RATS_NEST_LAYOUT} from '../../world/open/looks/rats-nest-look.js';
 import {BURNED_SCOUT} from '../../world/open/content/burned-scout.js';
+import {BURNED_PEN} from '../../world/open/content/burned-pen.js';
 import {abandonOpenMission} from '../../world/open/parts/missions.js';
 import {installSiteGround} from '../../world/open/site-ground.js';
 import {beginOpenLand, stepOpenLand} from '../../world/open/open-land.js';
@@ -1801,6 +1802,17 @@ function applyOpenFootMissionRequest(duel, worldJob, request) {
     }
   } else if (request.type === 'missionAsh') {
     if (state.onFoot && state.fighter) damageFighter(state.fighter, 25);
+  } else if (request.type === 'threadTaken') {
+    // OPEN-BURNED-PEN: the player taken to a pen, on foot, with the car held where they put it, and let go again.
+    if (request.held) {
+      applyCheckpointRoadRequest(duel, worldJob, {type: 'checkpointRoad', action: 'recover-car', at: request.car});
+      if (state.onFoot && state.fighter) putFighterOnGround(duel, state.fighter, request.foot);
+      else placeWorldFighter(duel, request.foot);
+      worldJob.carHeldBy = request.id;
+    } else if (worldJob.carHeldBy === request.id) {
+      worldJob.carHeldBy = null;
+      if (request.foot && state.onFoot && state.fighter) putFighterOnGround(duel, state.fighter, request.foot);
+    }
   } else return false;
   return true;
 }
@@ -2159,14 +2171,19 @@ export function stepWorldJob(duel, dt) {
       // OPEN-SHARED: the mission reads the same named spots as the site look. Road encounters still read site centres.
       const nest = at['rats-nest'];
       const withSpots = nest ? {...at, 'rats-nest': {position: nest,
-        spots: {...RATS_NEST_LAYOUT.spots, ...BURNED_SCOUT.spots}}} : at;
+        spots: {...RATS_NEST_LAYOUT.spots, ...BURNED_SCOUT.spots, ...BURNED_PEN.spots}}} : at;
       worldJob.openSitePositions = {landSeed, at, withSpots};
     }
     const {at: sites, withSpots} = worldJob.openSitePositions;
     const threadMission = worldJob.open.parts.missions?.active;
     const runawayRecord = worldJob.open.world.open.threads.runaway;
-    const deferCheckpointRecovery = checkpointsEnabled && !runawayRecord?.end &&
-      (threadMission?.state.route.road || ['surrounded', 'breakout'].includes(runawayRecord?.beat));
+    // A car wrecked in the fight alone at the Rats' Nest is taken to the pen with its driver, not towed home: while that
+    // fight runs, between its loss and the pen, and in the pen. A wreck anywhere else is towed as usual.
+    const penRecord = worldJob.open.world.open.threads['burned-camp'];
+    const penTaking = !penRecord?.end && (threadMission?.id === 'burned-camp/alone' || penRecord?.beat === 'pen' ||
+      (penRecord?.beat === 'alone' && worldJob.open.events.some(event => event.type === 'threadMissionTaken')));
+    const deferCheckpointRecovery = checkpointsEnabled && ((!runawayRecord?.end &&
+      (threadMission?.state.route.road || ['surrounded', 'breakout'].includes(runawayRecord?.beat))) || penTaking);
     if (deferCheckpointRecovery && state.combatWrecking) state.combatWreckTimer = state.impactTimer = 1;
     const missionDefence = checkpointsEnabled && worldJob.threadDefence ? brandCombatView(state, worldJob) : {};
     const missionRidersFighting = worldJob.riderFight?.checkpointStep?.id === road.road?.id &&
