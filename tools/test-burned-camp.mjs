@@ -11,7 +11,7 @@ import {openThreadSigns, threadsAtBankedHearth, threadsPart} from '../src/world/
 import {sampleWorld} from '../src/world/open/samples.js';
 import {openThreadTalkScene} from '../src/world/open/content/talk-threads.js';
 import {createSignView} from '../src/world/open/sign-view.js';
-import {pageFunctions, pageSource} from './scenarios/open-burned-camp.mjs';
+import {pageFunctions, pageSource, scenarioWorld} from './scenarios/open-burned-camp.mjs';
 
 const id = burned.id;
 const cast = {camp: 'glasshouse', enemy: 'road-rats'};
@@ -32,6 +32,13 @@ const walk = (open, point, extra = {}, dt = 1) => stepOpenLand(open, {player: {p
 const drive = (open, point, dt = 1) => walk(open, point, {onFoot: false}, dt);
 const marks = open => open.world.ledger.marks;
 const record = open => open.world.open.threads[id];
+
+const reviewWorld = scenarioWorld();
+assert.equal(reviewWorld.open.threads[id].beat, 'sign', 'the smoke review must start its named story before entering roam');
+assert.equal(reviewWorld.open.threads[id].cast.camp, 'glasshouse');
+assert.equal(stageOf(reviewWorld, 'glasshouse'), 'burned');
+assert.ok(openThreadSigns({world: reviewWorld}).some(sign => sign.id === id && sign.sign.kind === 'smoke'),
+  'the smoke review supplies a live smoke sign with every storyline loaded');
 
 const started = direct(enabled);
 assert.equal(started.open.threads[id].beat, 'sign');

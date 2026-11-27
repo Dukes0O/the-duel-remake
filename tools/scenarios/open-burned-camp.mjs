@@ -3,6 +3,8 @@ import {placeForThread} from '../../src/story/scenes/burned-camp.js';
 import {sampleWorld} from '../../src/world/open/samples.js';
 import {LAND} from '../../src/world/scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../../src/world/scablands-ground.js';
+import {openThreadSigns, threadsAtBankedHearth} from '../../src/world/open/parts/threads.js';
+import burnedCamp from '../../src/story/threads/content/burned-camp.js';
 
 const cast = {camp: 'glasshouse'};
 const site = placeForThread('@camp', cast);
@@ -13,11 +15,13 @@ const parking = spot('car-stop');
 const homeward = spot('road-home');
 const home = LAND.at('tin-town');
 const clues = ['frames', 'lamp', 'tracks', 'ruts', 'pods', 'pump'];
-const scenarioWorld = () => {
+export const scenarioWorld = () => {
   const world = sampleWorld('helped-camp');
   // Land seed 2 puts the Glasshouse at its first position, where this scenario's drive and clue spots are laid out
   // (the site's place now comes from the land's seed in every part, since the join of 25 November).
-  return {...world, seed: 1250, ledger: {...world.ledger, seed: 1250}, open: {...world.open, landSeed: 2}};
+  const prepared = {...world, seed: 1250, ledger: {...world.ledger, seed: 1250}, open: {...world.open, landSeed: 2}};
+  // This checks the burned camp, not which of all loaded storylines wins the director's next draw.
+  return threadsAtBankedHearth({world: prepared}, [burnedCamp]);
 };
 
 export const pageFunctions = {
@@ -37,6 +41,8 @@ export const pageFunctions = {
     if (!app.startOpenRoam()) throw Error('Could not start the open land: ' + JSON.stringify({yard: app.isYardHomeActive(), flag: app._switches().enabled('story-choices'), status: app.duel.state.status}));
     app.duel.state.arena.worldJob.open.world = world;
   },
+  roamReady: () => window.__qaApp.visualReady && window.__qaApp.duel.state.status === 'racing' &&
+    window.__qaApp.duel.state.arena?.worldJob?.definition.id === 'open-roam',
   placeCar: (point, toward) => {
     const {duel} = window.__qaApp;
     const {s, lateral} = duel.course.nearest(point.x, point.z);
@@ -74,6 +80,15 @@ export const pageFunctions = {
   },
   mark: id => window.__qaApp.duel.state.arena.worldJob.open.world.ledger.marks.includes('burned-camp/' + id),
   smoke: () => window.__render.scene.getObjectByName('burned-camp smoke')?.visible === true,
+  smokeState: () => {
+    const {state, course} = window.__qaApp.duel;
+    const open = state.arena.worldJob.open;
+    return {thread: open.world.open.threads['burned-camp'] ?? null, night: open.world.ledger.night,
+      partOfDay: open.partOfDay, open, smoke: window.__render.scene.getObjectByName('burned-camp smoke')?.visible ?? null,
+      onFoot: state.onFoot, car: course.worldAt(state.s, state.lateral), fighter: state.fighter &&
+        {x: state.fighter.x, y: state.fighter.y, z: state.fighter.z},
+      talk: document.querySelector('.story-talk:not([hidden])')?.textContent ?? null};
+  },
   radio: () => {
     const question = [...document.querySelectorAll('.story-options button')]
       .find(button => button.textContent.includes('would the Ash Men burn a camp?'));
@@ -103,9 +118,21 @@ export async function run(context) {
   await evaluate('begin', scenarioWorld());
   await wait('inYard', 'the Wasteland yard');
   await evaluate('startRoam', scenarioWorld());
+  await wait('roamReady', 'the loaded open land');
   await evaluate('placeCar', floor(approach), site);
   await evaluate('advance', 6.5);
-  await wait('smoke', 'the smoke over the Glasshouse');
+  const reportSmoke = async () => {
+    const {open, ...state} = await evaluate('smokeState');
+    const view = open.parts.threads?.places ?? {};
+    return JSON.stringify({...state, holds: open.holds,
+      threads: open.world.open.threads, signs: openThreadSigns({...open, view}).map(({id, sign, at}) => ({id, kind: sign.kind, at}))});
+  };
+  try {
+    await wait('smoke', 'the smoke over the Glasshouse');
+  } catch (error) {
+    error.message += ' Smoke diagnostics: ' + await reportSmoke();
+    throw error;
+  }
   await context.screenshot('burned-camp-smoke');
   await evaluate('drive', parking, 6, 28);
   for (const clue of clues) {
@@ -114,9 +141,17 @@ export async function run(context) {
   }
   await context.screenshot('burned-camp-clues');
   await evaluate('walkAt', floor(parking));
-  for (const type of ['keyDown', 'keyUp']) await context.command('Input.dispatchKeyEvent',
-    {type, key: 'f', code: 'KeyF', windowsVirtualKeyCode: 70});
-  await wait('radio', 'the radio question for Cinder');
+  // F is held input. Let the simulation sample it before the browser releases it.
+  for (const type of ['keyDown', 'keyUp']) {
+    await context.command('Input.dispatchKeyEvent', {type, key: 'f', code: 'KeyF', windowsVirtualKeyCode: 70});
+    await evaluate('advance', 1 / 30);
+  }
+  try {
+    await wait('radio', 'the radio question for Cinder');
+  } catch (error) {
+    error.message += ' Radio diagnostics: ' + await reportSmoke();
+    throw error;
+  }
   await wait('answer', "Cinder's answer");
   await context.screenshot('burned-camp-radio');
   await wait('endCall', 'the end of the radio call');
