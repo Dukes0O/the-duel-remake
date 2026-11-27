@@ -1,0 +1,12 @@
+# FAR-JOBS-1
+- Pure first-three-job rules behind `far-jobs` (dev): ordered goat finds and Brian's lesson, Dune's logs or a real-flight ceiling observer, and the 18 m, 12 t shaft.
+- Fourteen joins Tam's outpost layout; named southern anchors follow the land. Borer parts enter through the existing Scrapyard route; no save schema changes.
+- Shaft overhang sweeps between poses, sheds on hard contact, recovers locally after six stopped seconds, and restarts after ten sheds.
+- Checked implementation: `5df71337a`; standalone FAR-JOBS-1 passed, 182 checks and 10/10 slow Easy wins for each job (lent Titan, no pilot).
+- Required rule 23 run on `5df71337a`: 5/5 suites passed; core 804, racing replays 306, combat replays 12, world composition 65, FAR-JOBS-1 182.
+- `npm run build` passed on `5df71337a`; chunk-size and dynamic-import warnings only.
+- Older checks passed: world jobs, town haul (11, 10/10 Easy drives), Scrapyard (24), Scablands size (9). Board (665) and repository placement passed. No older suite names the new jobs.
+- Cues: finds, dispatch logs and ceiling use `heli.radio.click`; shaft lift/recovery use `world.bellows.load`; shed uses `vehicle.crush`; delivery/completion uses `interface.bonus`; Fourteen names `far.bell` for the later audio hookup.
+- Existing assertions and race/world fingerprints unchanged. New jobs alone opt into waiting for queued captions before completion.
+- Claude: review the card's choices, story entry and progress wiring, goat bell playback, the full ascent and fuel budget, and actual truck mass/view integration; no browser was run here.
+- **Removed:** Nothing. FAR-BORE continues machine building; FAR-FINISH owns the composed story drive. This slice supplies pure rules, not new player-facing story screens.

@@ -1037,8 +1037,9 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: "Codex laptop lane"
+    waiting_on: "claude"
     needs: ["TOWN-SCRAPYARD","TOWN-OUTPOSTS","TOWN-HAUL-JOB","HELI-RUSTWALL"]
     locks: []
     details: "docs/board/cards/FAR-JOBS-1.md"

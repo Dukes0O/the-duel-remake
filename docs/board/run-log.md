@@ -1812,3 +1812,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-27 OPEN-SITE-LOOKS (Codex cloud): merged in the evening batch at 92f03402f.
 - 2026-11-27 QA-OPEN-DOORS-WASH (Codex on the laptop): test-open-doors began at dawn, when the Runaway can begin and its handprint clue at the wash door sends the boy into the shed; the fixture now starts in daytime, assertions unchanged. Open Doors, roam, apprentice, routines and Runaway suites passed.
 - Merge OPEN-T-DACE (Codex, laptop handoff): Dace Goes Looking; rule 23 set and open-land suites 10/10 passed
+- FAR-JOBS-1 lane janitor: no unrelated removals; generated build output recycled, no evidence kept; no asset growth or size-target change proposed.
