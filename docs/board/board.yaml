@@ -1184,18 +1184,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: QA-AUDIO-UNDER-LOAD
-    title: "p4-audio and skyline-audio fail inside the night's four-job browser stage and pass alone"
-    owner: "codex"
-    model: "sol"
-    lane: "QA"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
-
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"

@@ -5,8 +5,50 @@ import {join} from 'node:path';
 import {ffmpeg} from '../audio/codec.mjs';
 import {measureLoudness, repetition} from '../audio/measurements.mjs';
 import {detectOnset, rms} from '../audio-analysis.mjs';
-import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
+import {createCaptureWitness, inspectCaptureWitness, inspectCaptureStartup, recorderWorkletSource}
   from '../audio/capture-witness.mjs';
+
+export function inspectNativeCallbacks(chunk, interval = {}, identity = null) {
+  const from = interval.from ?? chunk.frame, to = interval.to ?? chunk.frame + 2048;
+  const firstOffset = Math.floor((from - chunk.frame) / 128) * 128;
+  const endOffset = Math.ceil((to - chunk.frame) / 128) * 128;
+  // Segment boundaries can retain only part of a block. Check every quantum
+  // contributing PCM, without requiring callbacks outside the retained interval.
+  const callbacks = chunk.callbacks.filter(row => row.chunkOffset >= firstOffset && row.chunkOffset < endOffset);
+  const expectedCount = (endOffset - firstOffset) / 128;
+  const mismatchIndex = callbacks.findIndex((row, index) => row.chunkOffset !== firstOffset + index * 128 ||
+    row.witnessFrames !== 128);
+  const clockNotes = callbacks.filter(row => row.frame !== chunk.frame + row.chunkOffset)
+    .map(row => ({actualFrame: row.frame, expectedFrame: chunk.frame + row.chunkOffset, chunkOffset: row.chunkOffset}));
+  const witnessed = identity?.complete && identity.checkedFrames === 2048;
+  return {complete: to > from && callbacks.length === expectedCount && mismatchIndex < 0 &&
+      (identity ? witnessed : clockNotes.length === 0), clockNotes,
+    callbacks: callbacks.length, expectedCallbacks: expectedCount,
+    ...(mismatchIndex >= 0 ? {mismatch: callbacks[mismatchIndex],
+      expectedFrame: chunk.frame + firstOffset + mismatchIndex * 128} : {})};
+}
+
+// A block's position comes from its witness and the scheduled source start.
+// Browser frame labels remain diagnostic notes, never sample coordinates.
+export function witnessedChunkFrame(chunk, sourceStartFrame, reference, inspect = inspectCaptureWitness) {
+  let offset = 0;
+  while (offset < chunk.witness.length && chunk.witness[offset] === 0) offset++;
+  if (offset === chunk.witness.length) return null;
+  const identity = inspect(chunk.witness.subarray(offset), reference);
+  if (!identity.complete) throw Error('capture disturbed, rerun alone: P4 window witness ' + JSON.stringify(identity));
+  return sourceStartFrame + identity.sourceStartFrame - offset;
+}
+
+export function checkNativeCueWindow(ui, engine, event, overlap) {
+  const duration = Math.min(.3, event.duration);
+  const uiRms = rms(ui, event.audioTimeSec, duration), engineRms = rms(engine, event.audioTimeSec, duration);
+  const onset = detectOnset(ui, event.audioTimeSec);
+  if (!(uiRms > .00001)) throw Error('Native race cue absent from recorded interface stem: ' + event.kind);
+  if (!overlap && (onset === null || Math.abs(onset) > .15)) throw Error('Recorded interface onset missing or late: ' + event.kind);
+  return {interfaceRms: uiRms, engineRms,
+    interfaceOverEngineDb: engineRms > 0 ? 20 * Math.log10(uiRms / engineRms) : null,
+    onsetDelaySec: onset, overlappingInterfaceCue: overlap};
+}
 
 async function install(recorder) {
   const app = window.__qaApp, audio = app.audio;
@@ -219,7 +261,7 @@ async function install(recorder) {
 }
 
 // Each segment uses the established recorder and its independent input witness.
-// Overlapping meters see one absolute native clock; no wall-time splicing.
+// Overlapping meters use the witness source schedule; no wall-time splicing.
 async function nativeRecorder(audio, helpers) {
   const ctx = audio.context, rate = ctx.sampleRate;
   const reference = helpers.createWitness(rate);
@@ -248,14 +290,22 @@ async function nativeRecorder(audio, helpers) {
       node.connect(silent); bus.connect(node); source.connect(node, 0, 1);
       tracks[name] = {node, bus, chunks};
     }
-    source.start();
     const row = {index: segments.length, tracks, source, startFrame: null}; segments.push(row);
+    // Prove each worklet is running before starting the shared witness source.
+    await settle(() => Object.values(tracks).every(track => track.chunks.length),
+      'capture disturbed, rerun alone: P4 worklet did not run');
+    row.sourceStartFrame = Math.ceil((ctx.currentTime + .05) * rate / 128) * 128;
+    source.start(row.sourceStartFrame / rate);
     await settle(() => Object.values(tracks).every(track => {
-      const last = track.chunks.slice(-3);
-      return last.length === 3 && last.every((chunk, i) => chunk.witness[0] > 0 &&
-        (!i || chunk.frame === last[i - 1].frame + 2048));
-    }), 'Recorder did not establish three real consecutive blocks');
-    row.startFrame = Math.min(...Object.values(tracks).map(track => track.chunks.at(-1).frame));
+      const startup = helpers.inspectStartup(track.chunks, reference, helpers.inspectWitness);
+      track.startup = startup;
+      if (startup.started && !startup.complete)
+        throw Error('capture disturbed, rerun alone: P4 ' + startup.reasons.join('; '));
+      return startup.complete && track.chunks.slice(-3).every(chunk =>
+        helpers.inspectWitness(chunk.witness, reference).complete) && track.chunks.length >= 3;
+    }), 'capture disturbed, rerun alone: P4 witness source frame 0 and three real blocks not captured');
+    row.startFrame = Math.min(...Object.values(tracks).map(track =>
+      helpers.chunkFrame(track.chunks.at(-1), row.sourceStartFrame, reference, helpers.inspectWitness)));
     return row;
   }
   function disconnect(row) {
@@ -275,19 +325,28 @@ async function nativeRecorder(audio, helpers) {
   async function close(row, endFrame) {
     demand(Number.isInteger(endFrame) && endFrame > row.startFrame, 'Invalid native capture interval');
     await settle(() => Object.values(row.tracks).every(track =>
-      track.chunks.at(-1)?.frame + 2048 >= endFrame), 'Recorder did not cover its final native frame');
+      helpers.chunkFrame(track.chunks.at(-1), row.sourceStartFrame, reference, helpers.inspectWitness) + 2048 >= endFrame),
+      'capture disturbed, rerun alone: Recorder did not cover its final witnessed frame');
     disconnect(row);
     const output = {};
     for (const [name, track] of Object.entries(row.tracks)) {
-      const chunks = track.chunks.filter(chunk => chunk.frame < endFrame && chunk.frame + 2048 > row.startFrame);
+      // Message order and sample identity define the stream. Clock labels may
+      // disagree, but cannot remove, duplicate or rearrange its samples.
+      const chunks = track.chunks.map(chunk => ({...chunk, labelFrame: chunk.frame,
+        frame: helpers.chunkFrame(chunk, row.sourceStartFrame, reference, helpers.inspectWitness)}))
+        .filter(chunk => chunk.frame !== null && chunk.frame < endFrame && chunk.frame + 2048 > row.startFrame);
       const pcm = new Float32Array((endFrame - row.startFrame) * 2);
       const witness = new Float32Array(endFrame - row.startFrame);
+      const clockNotes = [];
       let covered = row.startFrame, emptyInput = 0, callbacks = 0;
       for (const chunk of chunks) {
         demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
         const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
-        if (from !== covered && !clockFailure) {
-          const header={segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
+        const timing = helpers.inspectCallbacks(chunk, {from, to}, helpers.inspectWitness(chunk.witness, reference));
+        if (chunk.labelFrame !== chunk.frame) timing.clockNotes.push({actualFrame: chunk.labelFrame,
+          expectedFrame: chunk.frame, chunkOffset: 0, scope: 'chunk label'});
+        if ((from !== covered || !timing.complete) && !clockFailure) {
+          const header={callbackTiming:timing,sampleIdentity:helpers.inspectWitness(chunk.witness,reference),segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
             expected:covered,actual:from,chunkFrame:chunk.frame,scope:'four raw neighboring chunks per stem; not a whole segment'};
           try {
             clockFailure={...header,tracks:Object.fromEntries(Object.entries(row.tracks).map(([stem,input])=>{
@@ -298,28 +357,32 @@ async function nativeRecorder(audio, helpers) {
             }))};
           } catch(error) {clockFailure={...header,retentionError:error.message};}
         }
-        demand(from === covered, 'Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
+        demand(from === covered, 'capture disturbed, rerun alone: Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
           segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
           chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
           callbacks: chunk.callbacks.map(item => item.frame), witnessFirst: chunk.witness[0]}));
+        demand(timing.complete, 'capture disturbed, rerun alone: native callback/witness gap/repeat: ' + name + ' ' + JSON.stringify(timing));
         const offset = from - chunk.frame, count = to - from, target = from - row.startFrame;
         pcm.set(chunk.pcm.subarray(offset * 2, (offset + count) * 2), target * 2);
         witness.set(chunk.witness.subarray(offset, offset + count), target);
-        for (const header of chunk.callbacks.filter(item => item.frame < to && item.frame + 128 > from)) {
+        for (const note of timing.clockNotes) clockNotes.push({...note, chunkFrame: chunk.frame});
+        for (const header of chunk.callbacks.filter(item => chunk.frame + item.chunkOffset < to &&
+            chunk.frame + item.chunkOffset + 128 > from)) {
           callbacks++;
-          demand(header.witnessFrames === 128, 'Short witness input: ' + name);
-          demand([0, 128].includes(header.leftFrames) && [0, 128].includes(header.rightFrames), 'Short signal input: ' + name);
+          demand(header.witnessFrames === 128, 'capture disturbed, rerun alone: Short witness input: ' + name);
+          demand([0, 128].includes(header.leftFrames) && [0, 128].includes(header.rightFrames),
+            'capture disturbed, rerun alone: Short signal input: ' + name);
           if (!header.leftFrames) emptyInput++;
         }
         covered = to;
       }
       demand(covered === endFrame, 'Incomplete native interval: ' + name);
       const identity = helpers.inspectWitness(witness, reference);
-      demand(identity.complete, 'Native sample identity failed: ' + name + ' ' + JSON.stringify(identity));
+      demand(identity.complete, 'capture disturbed, rerun alone: Native sample identity failed: ' + name + ' ' + JSON.stringify(identity));
       demand(name === 'interface' || emptyInput === 0, 'Connected mix/engine input missing: ' + name);
       for (const sample of pcm) demand(Number.isFinite(sample), 'Nonfinite recorded sample: ' + name);
-      output[name] = {pcmBase64: encode(pcm), identity, callbacks, disconnectedSilentInputCallbacks: emptyInput,
-        startFrame: row.startFrame, endFrame, frames: pcm.length / 2};
+      output[name] = {pcmBase64: encode(pcm), identity, callbacks, clockNotes, disconnectedSilentInputCallbacks: emptyInput,
+        sourceStartFrame: row.sourceStartFrame, startFrame: row.startFrame, endFrame, frames: pcm.length / 2};
     }
     // Keep earlier stems available if a later stem fails validation.
     for (const track of Object.values(row.tracks)) track.chunks.length = 0;
@@ -327,6 +390,9 @@ async function nativeRecorder(audio, helpers) {
   }
   return {
     failurePacket() { return clockFailure; },
+    startupPacket() { return segments.map(row => ({segment: row.index,
+      tracks: Object.fromEntries(Object.entries(row.tracks).map(([name, track]) =>
+        [name, track.startup ?? helpers.inspectStartup(track.chunks, reference, helpers.inspectWitness)]))})); },
     async begin() { active = await segment(); return {sampleRate: rate, startFrame: active.startFrame}; },
     age() { return active ? ctx.currentTime - active.startFrame / rate : 0; },
     async rotate() {
@@ -345,7 +411,8 @@ async function nativeRecorder(audio, helpers) {
 
 function recorderCode() {
   return '{worklet:' + JSON.stringify(recorderWorkletSource) + ',createWitness:(' + createCaptureWitness.toString() +
-    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),create:(' + nativeRecorder.toString() + ')}';
+    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),inspectStartup:(' + inspectCaptureStartup.toString() + '),inspectCallbacks:(' + inspectNativeCallbacks.toString() +
+    '),chunkFrame:(' + witnessedChunkFrame.toString() + '),create:(' + nativeRecorder.toString() + ')}';
 }
 
 async function appendSegment(outputDir, recording, segment) {
@@ -399,16 +466,11 @@ async function measureRecording(outputDir, recording, functional) {
       if (event.audioTimeSec * rate < recording.startFrame || (event.audioTimeSec + event.duration) * rate > recording.endFrame)
         throw Error('Native cue or its full tail is outside retained PCM: ' + event.kind);
       const ui = await windowTrack('interface', event, event.duration), engine = await windowTrack('engine', event, event.duration);
-      const duration = Math.min(.3, event.duration), uiRms = rms(ui, event.audioTimeSec, duration), engineRms = rms(engine, event.audioTimeSec, duration);
+      const duration = Math.min(.3, event.duration);
       const overlap = functional.interfaceActivity.some(other => other.phase === 'race' && other.started &&
         !(other.id === event.cue && Math.abs(other.audioTimeSec - event.audioTimeSec) < .05) &&
         other.audioTimeSec < event.audioTimeSec + duration && other.until > event.audioTimeSec);
-      const onset = detectOnset(ui, event.audioTimeSec);
-      if (!(uiRms > .00001)) throw Error('Native race cue absent from recorded interface stem: ' + event.kind);
-      if (!overlap && (onset === null || Math.abs(onset) > .15)) throw Error('Recorded interface onset missing or late: ' + event.kind);
-      recording.events.push({...event, interfaceRms: uiRms, engineRms,
-        interfaceOverEngineDb: engineRms > 0 ? 20 * Math.log10(uiRms / engineRms) : null,
-        onsetDelaySec: onset, overlappingInterfaceCue: overlap});
+      recording.events.push({...event, ...checkNativeCueWindow(ui, engine, event, overlap)});
     }
   } finally { await Promise.all(Object.values(handles).map(handle => handle.close())); }
   recording.repetition = repetition(events);
@@ -519,8 +581,8 @@ export async function run(context) {
       q.report.functionalVerdict={nativeEvents:true,replay:true,lifecycle:true,genuineThreeLapFinish:true,listeningApproved:false};
     })()`);
   } finally {
-    // Retain the actual disputed samples before recorder cleanup. The original
-    // thrown continuity assertion still decides this run's failure.
+    // Retain damaged samples before cleanup. Intact samples with disagreeing
+    // clock labels are reported as notes on their segment tracks instead.
     try {
       const failure=await context.evaluate('window.__p4Capture.failurePacket()');
       if(failure) {
@@ -540,6 +602,7 @@ export async function run(context) {
         recording.clockDispute={file:'clock-failure.json',scope:failure.scope,retentionError:failure.retentionError??null};
       }
     } catch(error) {recording.clockRetentionError=error.message;}
+    recording.startup=await context.evaluate('window.__p4Capture.startupPacket()');
     await context.evaluate('window.__qaApp.stop(); window.__p4Capture.stop()');
     const report = await context.evaluate('window.__p4Audio.result()');
     await writeFile(join(context.outputDir, 'p4-audio.json'), JSON.stringify(report, null, 2) + '\n');

@@ -1836,4 +1836,5 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-GROUND-LOOK-1 (Claude session): Home Ground's coop, nest box and egg pass; the hen goes to round 5
 - Merge HOME-GROUND-2 (Claude session): hens, nest boxes, the real clock and the board at the gate
 - Merge HOME-HEN-BODY (Claude session): the brown hen's own round, low body passes at 4 of 5 (hens-round-5)
-- - Merge HOME-GROUND-2-DRIVE (Codex Sol, laptop lane): the step 2 drive's seven fixes; Claude kept the hen at scale 1 (her new body is real size) and guarded the box placing
+- Merge HOME-GROUND-2-DRIVE (Codex Sol, laptop lane): the step 2 drive's seven fixes; Claude kept the hen at scale 1 (her new body is real size) and guarded the box placing
+- Merge QA-AUDIO-UNDER-LOAD (Codex Sol, laptop lane, five rounds): p4-audio and skyline-audio trust their sample witness, record through the worklet and name a disturbed capture; P4 5/5 and Skyline 5/5 alone, four-job stage 4/4
