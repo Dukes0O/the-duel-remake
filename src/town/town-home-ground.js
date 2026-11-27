@@ -1,6 +1,6 @@
 import {registerTownCommand} from './town-commands.js';
 import {registerTownSystem} from './town-sim.js';
-import {cellIsReserved, ensureTownRegion, getTownChunk, TOWN_REGIONS} from './town-world-data.js';
+import {cellIsReserved, ensureTownRegion, getTownChunk, RESERVED_GROUND_SENTENCE, reservedGroundSentence, TOWN_REGIONS} from './town-world-data.js';
 import {TOWN_HOME_TYPES} from './content/homes.js';
 import {stockpileAt, takeGood} from './town-goods.js';
 import {raiseTownReport} from './town-reports.js';
@@ -18,8 +18,11 @@ registerTownCommand('paintHomeGround',(town,command)=>{
   if(!TOWN_REGIONS.has(regionId)||!Array.isArray(command.cells)||!command.cells.length) return {ok:false,message:'Drag across clear ground to paint home plots.'};
   const fresh=[];
   for(const cell of command.cells) {
-    if(!validCell(cell)||occupied(town,regionId,cell.x,cell.z)||plots.some(p=>p.regionId===regionId&&p.x===cell.x&&p.z===cell.z))
-      return {ok:false,message:'Plots need clear ground. Roads, pipes and buildings must stay clear.'};
+    if(!validCell(cell)||occupied(town,regionId,cell.x,cell.z)||plots.some(p=>p.regionId===regionId&&p.x===cell.x&&p.z===cell.z)) {
+      // On a neighbour's outpost the answer says whose place it is (TOWN-RESERVED-OUTPOSTS).
+      const kept=validCell(cell)?reservedGroundSentence(regionId,cell.x,cell.z):null;
+      return {ok:false,message:kept&&kept!==RESERVED_GROUND_SENTENCE?kept:'Plots need clear ground. Roads, pipes and buildings must stay clear.'};
+    }
     fresh.push({id:`plot-${regionId}-${cell.x}-${cell.z}`,regionId,x:cell.x,z:cell.z,groundY:TOWN_REGIONS.get(regionId).groundHeightAt((cell.x+.5)*8,(cell.z+.5)*8),tier:0,progressDays:0,household:null,burning:false,waitingGood:null});
   }
   plots.push(...fresh);

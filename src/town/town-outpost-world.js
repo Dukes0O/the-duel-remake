@@ -5,7 +5,7 @@ import {LAND} from '../world/scablands-names.js';
 import {IRON_LINE, nearestIronLineDistance, sampleIronLine} from '../world/iron-line.js';
 import {scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
 import {makeRng} from '../rng.js';
-import {OUTPOSTS_WORLD, OUTPOST_FENCE} from './content/outposts-world.js';
+import {OUTPOSTS_WORLD, OUTPOST_FENCE, OUTPOST_GROUND_MARGIN} from './content/outposts-world.js';
 import {boxSolids, fenceRing, fenceSolid, headingToward, nearestRoadPoint, thingBase, thingPoint, thingSeed} from './town-world-things.js';
 
 // The nearest point of the Iron Line's rail to (x, z).
@@ -23,6 +23,19 @@ export function placeOutpost(row, {land = LAND, heightAt = scablandsSurfaceHeigh
   const thing = {id: row.id, x: at.x, z: at.z, heading};
   const base = thingBase(thing, row.bounds, heightAt);
   return Object.freeze({...thing, base: base.y, buried: base.buried, relief: base.relief, faces: Object.freeze({...target})});
+}
+
+// The ground town planning keeps clear round each outpost (TOWN-RESERVED-OUTPOSTS): the fenced ground (the fence's own bounds, or the
+// outpost's), out to where the fence stands and OUTPOST_GROUND_MARGIN past it, turned with the outpost. Each is a reserved shape of the
+// town's region (src/town/town-world-data.js), with the sentence that says whose place it is. It reads no town, so every town keeps the
+// same ground clear.
+export function outpostReservedGround({land = LAND, heightAt = scablandsSurfaceHeightAt, rows = OUTPOSTS_WORLD} = {}) {
+  return Object.freeze(rows.map(row => {
+    const {x, z, heading} = placeOutpost(row, {land, heightAt});
+    const [west, north, east, south] = row.fence.bounds ?? row.bounds, grow = (row.fence.margin ?? 3) + OUTPOST_GROUND_MARGIN;
+    return Object.freeze({id: `outpost-${row.id}`, type: 'footprint', outpostId: row.id, neighbourId: row.neighbourId, x, z, heading,
+      west: west - grow, north: north - grow, east: east + grow, south: south + grow, sentence: row.ground});
+  }));
 }
 
 // A person's or an animal's spot, in the world, on the ground or on the outpost's own floor.
