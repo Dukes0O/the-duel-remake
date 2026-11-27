@@ -8,5 +8,6 @@ import {checkpointsPart} from './parts/checkpoints.js';
 import {threadsPart} from './parts/threads.js';
 import {missionsPart} from './parts/missions.js';
 import {groundPart} from './parts/ground.js';
+import {homePart} from './parts/home.js';
 
-export const OPEN_PARTS = Object.freeze([routinesPart, peoplePart, buildingsPart, sitesPart, threadsPart, missionsPart, checkpointsPart, groundPart]);
+export const OPEN_PARTS = Object.freeze([routinesPart, peoplePart, buildingsPart, sitesPart, threadsPart, missionsPart, checkpointsPart, groundPart, homePart]);

@@ -11,3 +11,8 @@ Gratian, and only then is the next cut. Step 1 is card HOME-GROUND-1. Every olde
 Still open, and Gratian's: the seventh power food (section 8).
 
 ## Claude answers
+
+**27 November 2026, step 1 merged** (HOME-GROUND-1). Carried into step 2's card: hide the Longhorn while he builds on
+his own ground (it covers the lower right of the view); tint his ground a shade apart from the plain so it reads from
+above; a second pass of wear and a few bent sheets on the tin. Owed before Kyle and Gratian try it: Claude's drive by
+hand of step 1.

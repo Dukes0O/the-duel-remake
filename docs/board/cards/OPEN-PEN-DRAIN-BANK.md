@@ -19,11 +19,17 @@ spots, and the ground cut that the Rats' Nest look joins, see the OPEN-BURNED-PE
 solids are not joined to the land yet). Check: the drain walked with real keys from mouth to pen, the ground along it
 measured; the scenario walks rather than sets positions.
 
-## Build decision and checks
+## Claude answers
 
-Cut only the drain corridor between the existing yard and gully, at the drain's 9 m depth, with blended banks on the
-existing metre grid. Keep the layout, other cuts and foot physics. No new game event or sound cue.
-Checks: `test-open-pen-drain-bank` samples every metre and walks the real fighter in both directions;
-`test-burned-camp-pen`, `test-burned-camp`, `test-rats-nest-look`, `test-world-composition`, core and both replay guards;
-`npm run build`. Claude runs `open-burned-pen` and reviews the replaced uncut-drain assertion in `test-rats-nest-look`.
-The scenario now goes round the lean-to and south of the pen's wreck: its former straight line crossed both solids.
+**27 November 2026, verdict on the Codex lane's commit 578c6bb20 (kept on the laptop branch `codex/open-pen-drain-bank`,
+not merged).** It made the drain walkable by cutting an open 9 m trench from the yard to the gully, through the
+cutting's east wall, and changed `test-rats-nest-look`'s "the drain runs under uncut land" to "the drain bed is cut
+continuously". That changes the place: the drain is a hidden concrete pipe under the wall, and an open trench is a new
+way in that the guards, the lookouts and the look were not built for. Rejected.
+
+The fix wanted is a real floor inside the pipe, as the lane's own factory note offers: the land above the pipe stays
+whole, and a walker who enters a mouth follows the pipe's floor (its height and walls) until the other mouth, as the
+open land's buildings give a walker an inside. Keep "the drain runs under uncut land" exactly as it was. Keep the
+lane's good parts: its new check that samples the route and walks it with the real foot mover (on the pipe's floor),
+and the scenario that walks the drain with real inputs round the lean-to and the pen wreck. Claude's card; Codex's
+model was at capacity when the lane stopped.

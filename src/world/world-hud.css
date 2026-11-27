@@ -77,3 +77,15 @@
   border-bottom: 2px solid #e99c3e;
   font: 700 12px/1.4 system-ui, sans-serif;
 }
+/* HOME-GROUND-1: the ground's sentence sits low in the middle, clear of the caption under the mirror; the burst bar
+   sits just above it and is shown only while it is used or filling; the name box is a small form in the middle. */
+.world-hud-home{position:absolute;left:50%;bottom:128px;transform:translateX(-50%);max-width:min(70vw,40rem);padding:8px 16px;background:#171711dc;border:1px solid #e4d4b255;border-left:4px solid #b8c88a;border-radius:4px;text-align:center;font-size:15px;font-weight:700;letter-spacing:.02em}
+.world-hud-burst{position:absolute;left:50%;bottom:184px;transform:translateX(-50%);width:200px;padding:4px 9px;background:#171711dc;border:1px solid #e4d4b255;border-radius:3px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;font-size:10px;font-weight:800;letter-spacing:.12em;color:#9fd8ff}
+.world-hud-burst span{height:9px;background:#0c0b0a;border:1px solid #3d5566;border-radius:2px;overflow:hidden}
+.world-hud-burst i{display:block;height:100%;background:linear-gradient(90deg,#2b74a8,#7fd0ff)}
+.world-hud-burst.is-spent{color:#8b98a2}
+.world-hud-burst.is-spent i{background:#556570}
+.world-hud-name{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);pointer-events:auto;min-width:min(26rem,70vw);padding:16px 20px;background:#171711f0;border:1px solid #e4d4b277;border-left:4px solid #b8c88a;border-radius:5px;text-align:center}
+.world-hud-name label{display:grid;gap:10px;font-size:17px}
+.world-hud-name input{font:inherit;font-size:20px;font-weight:800;letter-spacing:.04em;text-align:center;padding:7px 10px;background:#0c0b0a;color:#f3eddf;border:1px solid #b8c88a88;border-radius:3px}
+.world-hud-name p{margin:10px 0 0;font-size:13px;color:#d8cfbb}

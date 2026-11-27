@@ -32,6 +32,7 @@ import {BUILDINGS} from './world/open/content/buildings.js';
 import {roomCamera} from './world/open/building-view.js';
 import {DRIVE as DUST_GROUNDS} from './world/scablands-regions.js';
 import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
+import {homeCameraPose, stepHomeLift} from './world/open/home-camera.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
@@ -703,6 +704,7 @@ export function attachRenderer(host, app) {
     }
   }
   let ready = false, lastMenu = null, previousT = performance.now(), machineLiftNow = 0, machineLiftApplied = 0, landingBlend = 0;
+  let homeLift = 0; // HOME-GROUND-1: how far the camera has risen over the player's ground, drawing only
   const bowlCamera = createBowlCamera(); let bowlFrame = 0; // BOWL-CAMERA: the show camera's own memory of the truck's path (drawing only)
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
@@ -961,9 +963,13 @@ export function attachRenderer(host, app) {
       const compact=host.clientHeight<850;
       lookTarget.set(aim.x, pp.y + (tall ? (compact ? .95 : 1.8) : compact ? -1.1 : .95), aim.z); camera.fov = 48;
     } else if(st.onFoot && st.fighter){
+      if(!st.arena?.worldJob?.open)homeLift=0; // HOME-GROUND-1: a lift left from an outing that ended is not carried over
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
-      const pose=onFootCameraPose(course,st.fighter,footMode);
+      let pose=onFootCameraPose(course,st.fighter,footMode);
+      // HOME-GROUND-1: one key lifts the camera straight above his ground and the same key brings it back.
+      homeLift=stepHomeLift(homeLift,st.arena?.worldJob?.open?.parts.home?.above===true,dt);
+      if(homeLift>0){pose=homeCameraPose(pose,homeLift,st.fighter.groundY??st.fighter.y);if(homeLift>.15)firstPersonView=false;}
       const shift=drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0),st.fighter.airHeight>0?st.fighter.y:undefined,cameraFeetRig);
       pose.position.y+=shift;pose.target.y+=shift;
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
@@ -1063,7 +1069,7 @@ export function attachRenderer(host, app) {
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead')&&!(st.onFoot&&homeLift>0))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     if(!menu&&!deepPose&&!heliPose&&!rampCamera)constrainMountainCamera(course,camera.position,distance);
     if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera&&!bowlShot)

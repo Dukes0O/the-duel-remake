@@ -621,3 +621,7 @@ the game.
 - **Lettering that grows from its origin lands off its sign.** A Blender text object starts at its origin and grows to the right (left-aligned). Turn it half way round to face the other side and it grows the other way, so three of five shop words in the mall stood 6 m from their boards and one hung outside the wall (SCABLANDS-LAND round 3, 12 November). Set `align_x="CENTER"` and put the origin on the sign's middle, then read the exported GLB's lettering and sign boxes against each other.
 
 - **Timed flame needs contact throughout the burst.** The weapon normally reports a world object once per burst. A four-second burn rule then receives only one frame of heat. Slow Ride's timber blocks report each touching frame behind `step.gasLoad`; Hot Delivery keeps its immediate burn. Check a real burst against the block as well as injected contact facts (EVERBURN-REMAKE, 17 November).
+- **A drawn pipe or tunnel needs a floor a walker can follow.** The Rats' Nest drew a pipe under 30 m of earth, but the
+  foot mover walks the land's one surface, so the pipe could not be walked, and a scenario that set the fighter's
+  position hid it. Give the passage its own floor and walls inside it; do not cut the land above it open. Walk every
+  route with the real foot mover (OPEN-PEN-DRAIN-BANK, 27 November 2026).
