@@ -1,6 +1,7 @@
 // Saved consequences are ordinary ledger effects. Cancelling a drive changes none of them.
 import {namedThrow} from '../../story/ledger.js';
 import {favoursOf} from './open-record.js';
+import {daceIsAway} from './content/dace-goes-looking-places.js';
 import {RESCUE_HELPERS} from '../../story/scenes/burned-camp-home.js';
 
 const id = 'burned-camp';
@@ -56,6 +57,7 @@ function costOf(world, helper, debts = new Set(), spent = {}) {
 export function availableRescueHelpers(world, cast, ask) {
   const fresh = partyAttempt(world) === 0;
   return RESCUE_HELPERS.filter(helper => {
+    if (helper.id === 'dace' && daceIsAway(world)) return false;
     if (helper.ashOnly && cast.enemy !== 'ash-men' || helper.id === 'tally' && cast.enemy !== 'road-rats') return false;
     return ask(helper.when) && (fresh || costOf(world, helper));
   });

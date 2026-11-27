@@ -25,7 +25,7 @@ export const RESCUE_HELPERS = [
   helper('moss', 'moss', undefined, 'Moss, would you bring Bess?',
     "If you ask me to, I'll bring Bess. But if they put a hole in Bess, nobody fetches gas tomorrow, and you'll be the one who explains that to Auntie.",
     'Moss, bring Bess.', 'carry', {people: 'tin-town'}),
-  helper('keeper', 'you', {fact: 'made', id: 'tower/crows-step'}, 'Would you watch their road for us?',
+  helper('keeper', 'you', {any: ['tower/crows-step', 'tower/west-fence'].map(id => ({fact: 'made', id}))}, 'Would you watch their road for us?',
     "I can't leave my tower, but I can watch their road for you. I'll tell you the moment the buggies turn round and come back.",
     'Keep watch from your tower.', 'watch', {as: 'The keeper'}),
   helper('tally', 'tally', {fact: 'mark', id: 'stranded-hauler/helped'}, 'Tally, could you help us?',

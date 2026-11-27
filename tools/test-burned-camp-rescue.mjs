@@ -67,6 +67,8 @@ test('home offers the ledger helpers and Finch after the drain. Questions spend 
     ['rats-who-rell', 'rats-who-dace', 'rats-who-moss', 'rats-who-keeper', 'rats-who-tally']);
   assert(talk(rich).lines.some(row => row.speaker === 'finch'));
   assert.equal(talk(rich).thoughts.length, 2);
+  const distant = allParty([{type: 'thread', id: 'dace-goes-looking', to: 'search'}]);
+  assert(!talk(step(walk(begin(distant), hearth), hearth, {interact: true})).questions.some(row => row.id === 'rats-who-dace'));
   const questioned = walk(rich.open, hearth, {jobEvents: [{type: 'openTalkQuestion', scene: rich.requests[0].id, id: 'rats-who-rell'}]});
   assert.deepEqual(questioned.world.ledger.obligations, open.world.ledger.obligations);
 });

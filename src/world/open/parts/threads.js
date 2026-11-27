@@ -791,9 +791,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
         lights && beatId === 'aboard' ? beat.notes.watch : undefined;
       const scene = {id, choices, ...(lines && {lines})};
       if (beat.oneTalk) {
+        const offered = hearth ? new Set(availableRescueHelpers(world, record.cast, rule.ask).map(row => row.id)) : null;
         scene.questions = (beat.questions ?? []).filter(row => (hearth || !rule.has('asked', row.id)) && rule.ask(row.when) &&
-          (!hearth || !row.id.startsWith('rats-who-') ||
-            availableRescueHelpers(world, record.cast, rule.ask).some(helper => row.id === 'rats-who-' + helper.id))).map(row => ({
+          (!offered || row.id === 'who-tally' || offered.has(row.id.replace(/^(?:rats-)?who-/, '')))).map(row => ({
           id: row.id, words: rule.line(row.words),
           lines: row.lines.filter(line => rule.ask(line.when)).map(line => ({...line, speaker: line.as ?? line.speaker, words: rule.line(line.words)}))}));
         scene.thoughts = (beat.thoughts ?? []).map(row => typeof row === 'string' ? {thought: row} : row)
