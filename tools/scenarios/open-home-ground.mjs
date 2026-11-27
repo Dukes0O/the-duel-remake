@@ -86,6 +86,11 @@ export const pageFunctions = {
     const y = window.__render?.camera?.position.y;
     return Number.isFinite(y) && (above ? y > metres : y < metres);
   },
+  // The HUD's sentence, once the page has drawn the frame after the simulation moved.
+  promptStarts: text => {
+    const el = document.querySelector('.world-hud-home');
+    return !!el && !el.hidden && el.textContent.startsWith(text);
+  },
   marker: () => window.__qaApp.duel.state.arena.worldJob.marker ?? null,
   savedHome: () => {
     const app = window.__qaApp, profile = app.profile;
@@ -167,8 +172,7 @@ export async function run(context) {
   if (await walk(first, .2) > .4) fail('He could not walk onto his ground.');
   if (await evaluate('marker')) fail('The marker stayed after he reached his ground.');
   await evaluate('face', Math.PI);
-  now = await home();
-  if (!now.prompt.startsWith('Hold B to hammer up the tin panel.')) fail('On his ground the outline did not say how to build.', now.prompt);
+  await wait('promptStarts', 'Hold B to hammer up the tin panel.');
 
   // ---- The gate, and its name. ----------------------------------------------------------------------------------
   await tap('KeyG');
@@ -189,8 +193,8 @@ export async function run(context) {
   // ---- The lane: a panel across it is refused, with a sentence. --------------------------------------------------
   if (await walk(point(10.5, 5.8), .2) > .4) fail('He could not walk into the lane.');
   await evaluate('face', Math.PI);
-  now = await home();
-  if (now.outline?.mode !== 'refused' || now.prompt !== HOME_WORDS.lane) fail('A panel across the lane was not refused.', now);
+  if ((await home()).outline?.mode !== 'refused') fail('A panel across the lane was not refused.');
+  await wait('promptStarts', HOME_WORDS.lane);
   await hold('KeyB', 3.3);
   if ((await home()).record.pieces.length !== 1) fail('Holding B across the lane built something.');
 
@@ -225,8 +229,8 @@ export async function run(context) {
   // ---- Pick a panel up and set it elsewhere; then put it back. ---------------------------------------------------
   if (await walk(point(2.5, .8), .12) > .3) fail('He could not reach the panel to pick up.');
   await evaluate('face', Math.PI);
-  now = await home();
-  if (now.outline?.mode !== 'lift' || now.prompt !== 'Press B to pick up this tin panel.') fail('Facing a panel did not offer to pick it up.', now);
+  if ((await home()).outline?.mode !== 'lift') fail('Facing a panel did not offer to pick it up.');
+  await wait('promptStarts', 'Press B to pick up this tin panel.');
   await tap('KeyB');
   if ((await home()).record.pieces.length !== 76) fail('B did not pick the panel up.');
   if (await walk(point(4.5, 10.8), .12) > .3) fail('He could not carry the panel inside.');
