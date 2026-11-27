@@ -204,7 +204,8 @@ const standAt = (i, j, yaw = Math.PI) => ({...groundPoint(i, j), yaw});
   equal([cleanHomeName(''), cleanHomeName('x'.repeat(25)), cleanHomeName('<b>')], [null, null, null], 'an empty, long or odd name is refused');
   // Every player name the game allows (progression.js: up to 24 characters that are not control characters) gives a
   // starting name the record can hold.
-  for (const player of ['Gratian', 'Abcdefghijklmnop', 'Kyle_B', 'Dad (Kyle)', 'x'.repeat(24), '   ', '***', 'Zoë 2', '', null])
+  for (const player of ['Gratian', 'Abcdefghijklmnop', 'Kyle_B', 'Dad (Kyle)', 'x'.repeat(24), '   ', '***', 'Zoë 2', 'abcdefghijklmn' + String.fromCodePoint(0x1D400) + 'x',
+    String.fromCodePoint(0x1D400).repeat(12), '', null])
     check(readableHome(newHome(defaultHomeName(player))), 'the player name ' + JSON.stringify(player) + ' gives a name the ground can keep');
   equal([defaultHomeName('Kyle_B'), defaultHomeName('***')], ["KyleB's Ground", 'My Ground'], 'odd marks are left out of the starting name');
   // At the board he can rename it.

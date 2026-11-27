@@ -94,6 +94,9 @@ if (wrongWords.length) throw new Error('Home ground words:\n  ' + wrongWords.joi
 const NAME_SUFFIX = "'s Ground";
 export function defaultHomeName(playerName) {
   const kept = typeof playerName === 'string' ? playerName.replace(/[^\p{L}\p{N} -]/gu, '').replace(/\s+/g, ' ').trim() : '';
-  const short = kept.slice(0, HOME_NAME_LONGEST - NAME_SUFFIX.length).trim();
+  // Whole characters only, so that a letter written as two code units is never cut in half.
+  let short = '';
+  for (const letter of kept) { if (short.length + letter.length > HOME_NAME_LONGEST - NAME_SUFFIX.length) break; short += letter; }
+  short = short.trim();
   return short ? short + NAME_SUFFIX : 'My Ground';
 }
