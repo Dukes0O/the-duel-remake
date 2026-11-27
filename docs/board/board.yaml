@@ -1178,3 +1178,48 @@ tasks:
 
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
+
+  # Claude's drive of the merged batch, 27 November 2026 (docs/board/looks/drive-2026-11-27.md).
+  - id: OPEN-DACE-MOSS-TWICE
+    title: "Dace's morning sign freezes the open land: Moss is placed twice (story cast and shed staff)"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-DACE-MOSS-TWICE.md"
+
+  - id: OPEN-RADIO-HOLDS-F
+    title: "Burned camp: F at the car reopens the radio until every question is asked, so the player cannot get in"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-RADIO-HOLDS-F.md"
+
+  - id: OPEN-PEN-DRAIN-BANK
+    title: "Rats' Nest: a 9 m bank of earth fills the drain, so the way in on foot cannot be walked"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-PEN-DRAIN-BANK.md"
+
+  - id: MAP-NO-WAY-WRAP
+    title: "Big map: 'No way is known.' wraps one word per line in the ways panel"
+    owner: "claude"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/MAP-NO-WAY-WRAP.md"
