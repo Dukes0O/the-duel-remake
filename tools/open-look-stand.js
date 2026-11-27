@@ -42,7 +42,47 @@ const LOOKS = Object.freeze({
     return {at: row.at(0), onDrawnGround: true, layout: {radius: row.radius, spots: {}}, build: ({stage, heightAt}) => look.buildDaceStand(name, {stage, heightAt}),
       update: (group, seconds) => group.userData.update(seconds)};
   }])),
+  // HOME-GROUND-LOOK-1. Home Ground's hens, nest box, coop and eggs, standing on his ground inside a fenced edge that step 1's
+  // own drawing draws from a record made here (the gate in the north fence, every other edge panel up). Its stages are 'day'
+  // (one hen sits in the box) and 'laid' (her egg in the straw, another set down by the ramp); the look scenario's dusk is Light
+  // the Town's own. It needs the switch home-ground as well.
+  'home-hens': async () => {
+    const [look, fence, ground, {scablandsSurfaceHeightAt: surface}] = await Promise.all([import('../src/world/open/looks/home-hens-look.js'),
+      import('../src/world/open/looks/home-ground-look.js'), import('../src/world/open/content/home-ground.js'), import('../src/world/scablands-ground.js')]);
+    const model = await look.loadHenModel(), at = {x: ground.HOME_CORNER.x + look.HOME_HENS_STAND.x, z: ground.HOME_CORNER.z + look.HOME_HENS_STAND.z};
+    return {at, flag: 'home-ground', onDrawnGround: true, layout: look.HOME_HENS_LAYOUT,
+      build: ({stage, heightAt}) => {
+        const group = look.buildHomeHens({stage, heightAt, model}), fenced = fence.createHomeGroundView();
+        const job = {open: {parts: {home: {on: true, gateOpen: false, outline: null, above: false}}, world: {open: {home: fencedHome(ground)}}}};
+        group.add(fenced.group);
+        const {update, dispose} = group.userData;
+        let land = null;
+        Object.assign(group.userData, {
+          dispose() { fenced.dispose(); dispose(); },
+          update(seconds) {
+            update(seconds);
+            if (!land) group.parent?.traverse(node => { if (node.name === 'The Scablands') land = node; });
+            const drawn = land?.userData.drawnGroundHeightAt;
+            // The fence is drawn in the land's own metres; the stand's group stands at the site and is lifted to the drawn ground.
+            fenced.group.position.set(-at.x, -group.position.y, -at.z);
+            fenced.update(job, null, seconds, drawn ? (x, z) => drawn(x, z) - surface(x, z) : null);
+          },
+        });
+        return group;
+      },
+      update: (group, seconds) => group.userData.update(seconds)};
+  },
 });
+
+// HOME-GROUND-LOOK-1: his whole edge fenced in tin with the gate in the north fence, as the record step 1 writes.
+function fencedHome({HOME_CELLS}) {
+  const pieces = [{kind: 'gate', i: 8, j: 0, axis: 'x'}];
+  for (let n = 0; n < HOME_CELLS; n++) {
+    if (n < 8 || n >= 12) pieces.push({kind: 'panel', i: n, j: 0, axis: 'x'});
+    pieces.push({kind: 'panel', i: n, j: HOME_CELLS, axis: 'x'}, {kind: 'panel', i: 0, j: n, axis: 'z'}, {kind: 'panel', i: HOME_CELLS, j: n, axis: 'z'});
+  }
+  return {version: 1, name: 'G-Town', pieces, marks: []};
+}
 
 const NIGHT = Object.freeze({hemisphere: .22, sun: .09, environment: .14, fog: .07, sky: .06});
 
@@ -107,6 +147,7 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     if (switches.enabled('story-choices') !== true) throw Error('The open Scablands looks need the switch story-choices.');
     if (!Object.hasOwn(LOOKS, name)) throw Error('No look called ' + name);
     const look = await LOOKS[name](), {at, layout} = look, scene = view().scene, land = scablands();
+    if (look.flag && switches.enabled(look.flag) !== true) throw Error('The look ' + name + ' needs the switch ' + look.flag + '.');
     // Day and night share the same installed ground. Hot Delivery, used by
     // the look scenario, can borrow it here without starting an open job.
     let restoreGround = stood?.restoreGround;

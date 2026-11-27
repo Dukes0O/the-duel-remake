@@ -618,6 +618,8 @@ export function _staticContacts(car, player, journeyColliders = null) {
     }
     if (player && !journeyColliders) this._breakDrift('hit');
     const { nx, nz, t, penetration, obstacle } = first;
+    const thinSceneryWall = this.course.def.scablands && obstacle.shape === 'box' && obstacle.kind === 'wall' &&
+      Math.min(obstacle.halfX, obstacle.halfZ) <= .12;
     const dx = end.x - start.x, dz = end.z - start.z;
     const incoming = Math.max(0, -(Math.sin(travelHeading) * nx + Math.cos(travelHeading) * nz) * (car.speedMph < 0 ? -1 : 1));
     const roadHeading = this.course.at(car.s).heading;
@@ -726,6 +728,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
     start = stop;
     const road = this._roadPosition(end, car.s);
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
+    // A sheet contact must keep the body used by the sweep. Snapping a CPU car
+    // toward the road turns its nose into the fence and adds metres of overlap
+    // on the next tick. Preserve world heading through the road-frame change too.
+    if (thinSceneryWall) car.headingError = wrapBowlHeading(travelHeading - this.course.at(car.s).heading - (car.dir < 0 ? Math.PI : 0));
     if (obstacle.bowlBoundary === 'rim') car.lateral = Math.min(car.lateral, exterior.wall - .5);
     const bowlRules = this.course.def.scrapdome?.wallBounce;
     if (bowlRules && obstacle.arenaWall) {
@@ -801,7 +807,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
       const world = this.state.arena.worldJob;
       world.riderContactShedKmh = (world.riderContactShedKmh || 0) + Math.abs(beforeSolidMph - car.speedMph) * 1.609344;
     }
-    if (!player) { car.contactCooldown = 1.2; car.headingError = clamp((car.headingError || 0) - Math.sign(car.lateral) * .25, -.65, .65); }
+    if (!player) {
+      car.contactCooldown = 1.2;
+      if (!thinSceneryWall) car.headingError = clamp((car.headingError || 0) - Math.sign(car.lateral) * .25, -.65, .65);
+    }
   }
   car.offRoad = !this._surface(car.s, car.lateral).mainRoad;
 }

@@ -1194,18 +1194,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
-  - id: HOME-GROUND-LOOK-1
-    title: "Home Ground art, round 1: two brown hens, a crate nest box, a tin coop and an egg"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude session (local), 27 November 2026"
-    needs: []
-    locks: []
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-LOOK-1.md"
-
   - id: HOME-GROUND-2
     title: "Home Ground, step 2: two brown hens, nest boxes, the real clock and the board at the gate, plus the step 1 drive's fixes"
     owner: "claude"
@@ -1219,6 +1207,17 @@ tasks:
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-2.md"
 
+  - id: HOME-HEN-BODY
+    title: "Home Ground art, round 5: the brown hen's own round, low body (the coop, box and egg pass)"
+    owner: "claude"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-HEN-BODY.md"
+
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"
@@ -1228,18 +1227,6 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/HOME-GROUND.md"
-
-  - id: SCENERY-FENCE-BOUNCE
-    title: "A car shoved into a thin fence jumps 1 to 2 m back off it in one tick"
-    owner: "codex"
-    model: "astra"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex laptop lane, 27 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/SCENERY-FENCE-BOUNCE.md"
 
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"

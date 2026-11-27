@@ -56,6 +56,8 @@ export const SCENARIO_AREAS = [
   {prefixes:['look-glasshouse'], paths:['src/world/open/looks/glasshouse-look.js']},
   {prefixes:['look-bus-ring'], paths:['src/world/open/looks/bus-ring-look.js','tools/open-look-stand.js']},
   {prefixes:['look-radio-hill'], paths:['src/world/open/looks/radio-hill-look.js','tools/open-look-stand.js']},
+  // HOME-GROUND-LOOK-1: the hens, the crate nest box, the tin coop and the egg, stood on his fenced ground.
+  {prefixes:['look-home-hens'], paths:['src/world/open/looks/home-hens-look.js','src/world/open/looks/home-ground-look.js','tools/open-look-stand.js']},
   {prefixes:['look-dace'], paths:['src/world/open/looks/dace-goes-looking-look.js','src/world/open/looks/dace-pickup-look.js',
     'src/world/open/looks/dace-sites-look.js','src/world/open/looks/dace-look-kit.js','tools/open-look-stand.js']},
   // TOWN-HAUL-LOAD-LOOK and TOWN-FIRE-STREAM-LOOK: look scenarios of the town's work trucks, run when their drawing changes.
