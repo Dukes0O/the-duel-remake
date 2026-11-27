@@ -78,6 +78,8 @@ export const FEATURE_STATES = Object.freeze({
   // FAR-RAIN: rain on the far side of The Teeth (docs/story/the-far-side.md), drawing and sound only. One switch per
   // region with rain (src/render/rain-regions.js). Off in the game; no released course ever uses it.
   'far-rain': 'dev',
+  // FAR-JOBS-1: the first three Far Side jobs. Pure rules first; story integration follows.
+  'far-jobs': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
   // WEAPON-WATER-CANNON: the water cannon as a car weapon, offered in the Armory once your town has a Fire Station

@@ -7,6 +7,11 @@ export function stepExplore(step, state, view) {
     events.push({ type: 'found', id: finds[index].id, lineId: finds[index].lineId });
     index += 1;
   }
-  return { state: { index }, complete: index >= finds.length, events,
-    requests: index < finds.length ? [{ type: 'marker', place: finds[index].place ?? finds[index].position }, { type: 'say', lineId: finds[index].hint }] : [] };
+  const requests = index < finds.length
+    ? [{type:'marker', place:finds[index].place ?? finds[index].position}, {type:'say', lineId:finds[index].hint}] : [];
+  if (step.sayFinds) {
+    if (state.hintedIndex === index) requests.splice(1, 1);
+    requests.unshift(...events.filter(event => event.lineId).map(event => ({type:'say', lineId:event.lineId})));
+  }
+  return {state:{index, ...(step.sayFinds ? {hintedIndex:index} : {})}, complete:index >= finds.length, events, requests};
 }
