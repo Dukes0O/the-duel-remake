@@ -272,7 +272,9 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
 
 // ---- 5. After a hit: stagger, a plate, a speed-up; always slower than any car ----
 {
-  const slowestMps = Math.min(...Object.values(CARS).map(car => car.topSpeed)) * .44704;
+  // The Workshop's slow trucks (CAR-DRIVE-WASTE, behind wasteland-cars) are not yet cars the story allows for a chase:
+  // card WASTE-CARS-IN-CHASES settles which story jobs they may drive. Every other car still sets the floor.
+  const slowestMps = Math.min(...Object.values(CARS).filter(car => !car.workshop).map(car => car.topSpeed)) * .44704;
   for (const difficulty of ['easy', 'medium', 'hard']) {
     const f = fresh(difficulty), factor = OLD_SMOKE.speedUp[difficulty];
     [14, 14 * factor, 14 * factor * factor].forEach((expected, hits) =>

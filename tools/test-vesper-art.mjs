@@ -16,7 +16,8 @@ const CONFIG = 'tools/art/vesper-fit.json';
 const CLIPS = ['idle', 'walk', 'sprint', 'jump', 'knockdown', 'get-up', 'aim', 'fire', 'reload', 'repair', 'enter', 'exit'];
 const SOURCES = Object.freeze({
   [SOURCE]: '364de3fd43de474eb4ef0fd12b859940f067549b02f2922b432d3a0c422170ca',
-  'tools/blender/crew-fighters.py': '661eb808f94c338ba913b0fc8efdb9118d12984d0ba0669bc2e1de932d391857',
+  // Re-recorded 27 November 2026: QA-EVIDENCE-MIDNIGHT-AGAIN (c6c9b71b8) changed only where the recipe reads the evidence day.
+  'tools/blender/crew-fighters.py': '5576a296d97149d2218bab8acdd67dc5fa5fbd9bd794417123b3361591b0beb5',
   'public/assets/reference/wasteland-crew-1.png': 'af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058',
   'public/assets/reference/CREDITS.md': '1062f54070340b87c10ec40b1d528f17845d723ac313b446b9bd4d2ecae863ad',
 });
