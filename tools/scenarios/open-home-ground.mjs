@@ -342,7 +342,7 @@ export async function run(context) {
   await key('keyUp', 'KeyF');
   await wait('talkShows', 'two hens');
   for (let n = 0; n < 16 && (await evaluate('talk'))?.phase !== 'options'; n++) { await tap('Space'); await evaluate('advance', .3); }
-  if ((await evaluate('talk'))?.phase !== 'options') fail('Moss's talk did not reach its answer.', await evaluate('talk'));
+  if ((await evaluate('talk'))?.phase !== 'options') fail('The talk with Moss did not reach its answer.', await evaluate('talk'));
   await tap('Digit1');
   await evaluate('advance', .3);
   await wait('roaming');
