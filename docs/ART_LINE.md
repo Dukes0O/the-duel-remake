@@ -621,4 +621,5 @@ the game.
 - **A drawn pipe or tunnel needs a floor a walker can follow.** The Rats' Nest drew a pipe under 30 m of earth, but the
   foot mover walks the land's one surface, so the pipe could not be walked, and a scenario that set the fighter's
   position hid it. Give the passage its own floor and walls inside it; do not cut the land above it open. Walk every
-  route with the real foot mover (OPEN-PEN-DRAIN-BANK, 27 November 2026).
+  route with the real foot mover. Keep the camera below the ceiling and clear the terrain skin only inside the bore,
+  using the same pipe data (OPEN-PEN-DRAIN-BANK, 27 November 2026).

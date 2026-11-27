@@ -1,6 +1,7 @@
 import {sweepObstacle} from './collision.js';
 import {SOLID_GRID} from './world/scablands-solids.js';
 import {deckFloorHeightAt} from './world/deck-plates.js';
+import {scablandsInteriorAt} from './world/scablands-ground.js';
 
 export const FIGHTER_STEP_SECONDS = 1 / 120;
 export const FIGHTER_RULES = Object.freeze({
@@ -150,6 +151,18 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
   const nearest = course.nearest(x, z, fighter.s);
   const ground = course.groundAt(nearest.s, nearest.lateral,
     course.def?.scablands || course.groundTunnels ? feetY : undefined);
+  if (course.def?.scablands) {
+    const interior = scablandsInteriorAt(x, z, fighter.groundY);
+    if (interior) {
+      const body = scablandsInteriorAt(x, z, fighter.groundY, T.radius);
+      if (!body || body.floor + T.height > body.ceiling ||
+          (airborne && feetY + T.height > body.ceiling)) {
+        fighter.contacts++;
+        return {moved: false};
+      }
+      ground.y = body.floor;
+    }
+  }
   // SHIPS-DECKS: a fighter on a still plate (src/world/deck-plates.js) walks on its floor, and a step off its edge drops to the
   // ground, which the job turns into a fall beside the ship. Without `deckPlate` nothing here changes.
   const deckY = fighter.deckPlate ? deckFloorHeightAt(fighter.deckPlate, x, z) : null;
@@ -224,6 +237,11 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   if (airborne) {
     feetY += fighter.verticalSpeed * dt;
     fighter.verticalSpeed -= T.gravity * dt;
+    const interior = course.def?.scablands && scablandsInteriorAt(fighter.x, fighter.z, fighter.groundY, T.radius);
+    if (interior && feetY + T.height > interior.ceiling) {
+      feetY = Math.max(fighter.groundY, interior.ceiling - T.height);
+      fighter.verticalSpeed = Math.min(0, fighter.verticalSpeed);
+    }
   }
 
   const move = footMoveDirection(fighter.yaw, input);
