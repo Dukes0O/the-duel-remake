@@ -372,7 +372,11 @@ These are settled. A card's own open question goes on the card in writing first.
   as `water-save.js` does, and never writes.
 - **Jobs.** Town missions are job data on the existing engine and `world-job` mode. New step kinds, each its own file in
   `src/world/jobs/steps/`: `douse`, `haul` (load, carry with shed risk, unload), `tow`, `repair`, `fence`, `clear`, `hold`. A job may set
-  `side: 'defend' | 'attack'`, so one road fight can run both ways.
+  `side: 'defend' | 'attack'`, so one road fight can run both ways. Each job is a row of `src/town/content/jobs.js` (who asks, the mission card's
+  words, the vehicle, the numbers, what the town gets), built into steps by `src/world/jobs/town-jobs.js`; a new job of a kind already there is one
+  more row. None of the five kinds has a clock or can be lost: a hook that lets go is hooked on again, a gauge waits while you are out of the ring,
+  a joint keeps the turns it has. Road Rats at a job (`src/world/jobs/town-rats.js`) stop the work while one stands within 30 m, and go when they are
+  knocked down or after they give up, so waiting always works. A step's `result` is kept by its id and becomes the one `missionResult`.
 - **Your town in the world.** `src/town/town-world.js` turns town data into solids and instance lists, read once at the start of a job,
   so a replay is repeatable from seed, inputs and that layout. Walkers step aside and are never hit.
 - **During a mission** the app ticks the town at one tick every 10 real seconds outside race state, and passes serious reports to the

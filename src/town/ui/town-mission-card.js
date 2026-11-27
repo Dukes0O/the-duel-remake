@@ -3,6 +3,7 @@
 // The model reads the town and never writes it; the markup is plain HTML for town-entry to put on the screen.
 import {openTownJobs, townBurning} from '../../world/jobs/town-jobs.js';
 import {TOWN_CAPTIONS, townCaptionText} from '../content/lines.js';
+import {townJobRow} from '../content/jobs.js';
 
 const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
 
@@ -51,6 +52,10 @@ export const TOWN_MISSION_CARD_FACTS = Object.freeze({
 export function townMissionCardModel(town, {readOnly = false} = {}) {
   const job = openTownJobs(town)[0];
   if (!job) return null;
+  // TOWN-JOBS-2: a job that is a row of src/town/content/jobs.js brings its own words, so no job is ever without a card.
+  const row = townJobRow(job.id);
+  if (row) return Object.freeze({jobId:job.id, title:row.name, who:TOWN_CAPTIONS[row.card.lineId].who, line:townCaptionText(row.card.lineId, town),
+    facts:row.card.facts, later:row.card.later, readOnly});
   const text = TOWN_MISSION_CARD_TEXT[job.id], line = TOWN_CAPTIONS[text.lineId];
   if (job.kind === 'fire') {
     const burning = townBurning(town)[0];

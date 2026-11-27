@@ -264,13 +264,15 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const haulSentence = won ? arena.worldJob?.haulResult?.sentence : null;
     // TOWN-FIRE-JOB: a fire call says what was saved, what burnt down and the water used.
     const fireSentence = won ? arena.worldJob?.fireResult?.sentence : null;
+    // TOWN-JOBS-2: a tow, repair, fence, clear or hold says in one sentence how it went.
+    const townSentence = won ? arena.worldJob?.townSentence : null;
     // EVERBURN-PLAY-FIXES: the story lines said as the job was decided, in order, "Who: words", above the result line. A line the result
     // line already shows is not said twice.
     const closing = won ? [...new Set((arena.worldJob?.endLines ?? []).filter(line => line.lineId !== lineId &&
       !(EMBER_CAPTIONS[line.lineId]?.text && description.includes(EMBER_CAPTIONS[line.lineId].text))).map(line => line.text))] : [];
     const rewards = won && result.settlementSaved ? metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`, true) : '';
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
-    return {eyebrow: job?.eyebrow ?? 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description: `${description}${haulSentence ? ` ${haulSentence}` : ''}${fireSentence ? ` ${fireSentence}` : ''}${emberSentence ? ` ${emberSentence}` : ''}${brandSentence ? ` ${brandSentence}` : ''}${bellowsSentence ? ` ${bellowsSentence}` : ''}${gasSentence ? ` ${gasSentence}` : ''}${awaitingRemake ? ' The next job is being made.' : ''}`, closing,
+    return {eyebrow: job?.eyebrow ?? 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description: `${description}${haulSentence ? ` ${haulSentence}` : ''}${fireSentence ? ` ${fireSentence}` : ''}${townSentence ? ` ${townSentence}` : ''}${emberSentence ? ` ${emberSentence}` : ''}${brandSentence ? ` ${brandSentence}` : ''}${bellowsSentence ? ` ${bellowsSentence}` : ''}${gasSentence ? ` ${gasSentence}` : ''}${awaitingRemake ? ' The next job is being made.' : ''}`, closing,
       metrics: rewards + (run ? metric('THE ASH MEN', escapeHTML(String(run.word).toUpperCase())) + metric('GAS RUNS', String(run.runs)) : '') + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
       extra: '', actions: won ? (job?.run === true ? action(job.routineRun ? (result.routineSaveIssue ? 'TRY SAVING AGAIN' : 'BACK TO THE HEARTH') :
           'DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : '') +

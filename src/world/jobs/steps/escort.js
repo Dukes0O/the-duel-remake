@@ -111,6 +111,15 @@ export function stepEscort(step, state, view, dt = 0) {
   const truck = actors.find(actor => actor.id === step.actorId);
   const lessonHurt = step.measureGas && (state.lessonHurt === true || (truck && truck.health < step.health));
   const lesson = lessonHurt ? {lessonHurt: true} : {};
+  // TOWN-JOBS-2: a truck that can be stolen (`stolen: {belowHealth, lineId, goto}`). Hurt that badly, the raiders stop her and take
+  // her: the step ends there and the job goes on at the step `goto` names (a chase). Such a truck never rests.
+  if (step.stolen && truck && (state.stolen === true || (truck.health ?? 100) <= step.stolen.belowHealth)) {
+    const clear = (step.ambushes ?? []).filter(ambush => (state.spawned ?? []).includes(ambush.id) && !(state.gone ?? []).includes(ambush.id))
+      .map(ambush => ({type: 'clearWave', key: `ambush:${ambush.id}`}));
+    return {state: {...state, stolen: true, gone: [...(state.spawned ?? [])]}, complete: true, goto: step.stolen.goto, closingLines: [],
+      events: state.stolen ? [] : [{type: 'escortStolen', actorId: step.actorId, cue: 'raider.warning', result: {kind: 'escort', stolen: true}}],
+      requests: [{type: 'follow', path: step.path, speed: 0}, ...(state.stolen ? [] : [...clear, {type: 'say', lineId: step.stolen.lineId}])]};
+  }
   if (!step.gasLoad && truck && (truck.health ?? 1) <= 0) {
     // Rests are counted for the stretch she is on (the place she is heading for), so a run can never loop for ever (RUN-GAS).
     const stretch = String(truck.pathIndex ?? 1);

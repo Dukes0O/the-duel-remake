@@ -19,13 +19,20 @@ import { stepHaul } from './steps/haul.js';
 import { stepDouse } from './steps/douse.js';
 import {stepDispatch} from './steps/dispatch.js';
 import {stepHeliceiling} from './steps/heliceiling.js';
+import {stepTow} from './steps/tow.js';
+import {stepRepair} from './steps/repair.js';
+import {stepFence} from './steps/fence.js';
+import {stepClear} from './steps/clear.js';
+import {stepHold} from './steps/hold.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
 import { stepRoam } from '../open/roam-step.js';
 
 const runners = { 'rider-fight': stepRiderJob, reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
   board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle, haul: stepHaul, douse: stepDouse, talk: stepTalk, 'night-2-action': stepNight2Action,
-  roam: stepRoam, dispatch:stepDispatch, heliceiling:stepHeliceiling };
+  roam: stepRoam, dispatch:stepDispatch, heliceiling:stepHeliceiling,
+  // TOWN-JOBS-2: the town's jobs that are not fights (docs/WASTELAND_TOWN.md section 11).
+  tow:stepTow, repair:stepRepair, fence:stepFence, clear:stepClear, hold:stepHold };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);
@@ -86,8 +93,11 @@ export function stepJob(job, view = {}, dt = 0) {
   } else if (lined.complete) {
     const waiting = result.stepState.lineQueue ?? [], showing = result.stepState.lineRemaining ?? 0;
     const choice = lined.events?.find(event => event.type === 'talkChoice');
-    const destination = choice && step.branches?.[choice.id];
-    if (destination != null) {
+    // TOWN-JOBS-2: a step's outcome may name the step the job goes on at (`goto`: a stolen truck turns an escort into a chase),
+    // and a step may name where the job goes when it ends in the ordinary way (`then`); 'done' ends the job.
+    const destination = (choice && step.branches?.[choice.id]) ?? lined.goto ?? step.then;
+    if (destination === 'done') result.stepIndex = result.steps.length;
+    else if (destination != null) {
       result.stepIndex = result.steps.findIndex(candidate => candidate.id === destination);
       if (result.stepIndex < 0) throw new Error('Unknown talk branch: ' + destination);
     } else result.stepIndex += 1;

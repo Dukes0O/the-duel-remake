@@ -1824,3 +1824,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge WW-ART-FAR (Claude session): the Far Side kit, round 2 passes
 - Merge TOWN-HAUL-LOAD-LOOK (Claude session): passes
 - Merge TOWN-FIRE-STREAM-LOOK (Claude session): passes
+- Merge TOWN-JOBS-2 (Claude cloud): the town's jobs that are not fights

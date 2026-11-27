@@ -719,7 +719,7 @@ tasks:
     size: "M"
     status: "ready"
     waiting_on: "kyle"
-    needs: ["MULE-RAILS","MULE-LINES","CREW-STORY-JOIN","TOWN-JOBS-2","TOWN-VANE"]
+    needs: ["MULE-RAILS","MULE-LINES","CREW-STORY-JOIN","TOWN-VANE"]
     locks: []
     flag: "wasteland-town"
     details: "docs/board/cards/MULE-JOBS.md"
@@ -756,7 +756,7 @@ tasks:
     size: "M"
     status: "ready"
     waiting_on: "kyle"
-    needs: ["SHIPS-DECKS","SHIPS-LINES","MULE-JOBS","TOWN-JOBS-2","TOWN-VANE","TOWN-VEHICLES"]
+    needs: ["SHIPS-DECKS","SHIPS-LINES","MULE-JOBS","TOWN-VANE","TOWN-VEHICLES"]
     locks: []
     flag: "wasteland-town"
     details: "docs/board/cards/SHIPS-JOBS.md"
@@ -824,17 +824,6 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-T1-FINISH.md"
 
-
-  - id: TOWN-JOBS-2
-    title: "Town: the jobs that are not fights"
-    owner: "claude"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    waiting_on: "kyle"
-    needs: ["TOWN-FIRE-JOB","TOWN-OUTPOSTS"]
-    locks: []
-    details: "docs/board/cards/TOWN-JOBS-2.md"
 
 
   - id: TOWN-SUPPORT
@@ -966,7 +955,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["FAR-BORE","TOWN-PIPES","MACHINE-TRENCHER","TOWN-JOBS-2"]
+    needs: ["FAR-BORE","TOWN-PIPES","MACHINE-TRENCHER"]
     locks: []
     details: "docs/board/cards/FAR-JOBS-2.md"
 
@@ -1090,7 +1079,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["TOWN-DEEDS","TOWN-JOBS-2","TOWN-VANE-JOBS","WW-ART-PEACE"]
+    needs: ["TOWN-DEEDS","TOWN-VANE-JOBS","WW-ART-PEACE"]
     locks: []
     details: "docs/board/cards/TOWN-PEACE.md"
 
@@ -1102,7 +1091,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["TOWN-JOBS-2","TOWN-VANE","TOWN-ART-TRUCKS-2"]
+    needs: ["TOWN-VANE","TOWN-ART-TRUCKS-2"]
     locks: []
     details: "docs/board/cards/TOWN-JOBS-3.md"
 
@@ -1149,7 +1138,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["TOWN-REPORTS","TOWN-PIPES","TOWN-WORLD","TOWN-JOBS-2"]
+    needs: ["TOWN-REPORTS","TOWN-PIPES","TOWN-WORLD"]
     locks: []
     details: "docs/board/cards/TOWN-DEFEND.md"
 
@@ -1163,6 +1152,17 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/AGENTS-REWRITE.md"
+
+  - id: TOWN-JOBS-2-LOOK
+    title: "Town jobs: the wrecks, fence bundles, towed van, fuel truck and Rats' truck drawn, not rings"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/TOWN-JOBS-2-LOOK.md"
 
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"

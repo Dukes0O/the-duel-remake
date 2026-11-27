@@ -15,7 +15,7 @@ assert.ok(ACT1_CHAPTERS.every(chapter => chapter.next.trim().length > 0));
 assert.equal(getTownNext({id:'town-1'}).chapter, ACT1_CHAPTERS[0]);
 assert.equal(getTownNext({id:'town-1', story:{facts:{pitsDug:true}, completed:{'town.act1.twelve':true}}}).chapter, ACT1_CHAPTERS[1]);
 assert.equal(townCaptionText('town.book.first', {founders:[{name:'Hollis'}, {name:'Odessa'}]}), 'These twelve came first. Hollis, Odessa');
-assert.equal(townCaptionText('imre.won', {calendar:{year:1}}), "thirty-one years aground and we've not missed a watch. She'll want a crew when the water's back.");
+assert.equal(townCaptionText('imre.won', {calendar:{year:1}}), "Thirty-one years aground and we've not missed a watch. She'll want a crew when the water's back.");
 
 const custom = [{id:'new-story.open', when:{path:'stories.newStory.ready', equals:true}, lineIds:['new.line'], next:'Meet the new neighbours.', mapTarget:'new-place'}];
 const next = getTownNext({stories:{newStory:{ready:true}}}, custom);
