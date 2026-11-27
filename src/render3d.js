@@ -969,9 +969,9 @@ export function attachRenderer(host, app) {
       let pose=onFootCameraPose(course,st.fighter,footMode);
       if(pose.insidePipe)firstPersonView=true;
       // HOME-GROUND-1: one key lifts the camera straight above his ground and the same key brings it back.
-      homeLift=stepHomeLift(homeLift,st.arena?.worldJob?.open?.parts.home?.above===true,dt);
+      homeLift=pose.insidePipe?0:stepHomeLift(homeLift,st.arena?.worldJob?.open?.parts.home?.above===true,dt);
       if(homeLift>0){pose=homeCameraPose(pose,homeLift,st.fighter.groundY??st.fighter.y);if(homeLift>.15)firstPersonView=false;}
-      const shift=drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0),st.fighter.airHeight>0?st.fighter.y:undefined,cameraFeetRig);
+      const shift=pose.insidePipe?0:drawnShift(st.fighter.x,st.fighter.z,st.fighter.groundY??st.fighter.y-(st.fighter.airHeight||0),st.fighter.airHeight>0?st.fighter.y:undefined,cameraFeetRig);
       pose.position.y+=shift;pose.target.y+=shift;
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);
       lookTarget.set(pose.target.x,pose.target.y,pose.target.z);
