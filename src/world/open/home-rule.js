@@ -112,6 +112,7 @@ export function refusal(home, piece) {
   if (piece.kind === 'gate') {
     const lane = laneOf(piece);
     if (home.pieces.some(other => stepsOf(other).some(key => crossesLane(key, lane)))) return 'gateLane';
+    if ((home.boxes ?? []).some(box => boxInLane(box, lane))) return 'gateLaneBox';
     if (!gatesLeft(home)) return 'noGate';
   } else {
     const lane = laneOf(gateOf(home));
@@ -271,6 +272,8 @@ export function boxForEgg(boxes) {
   boxes.forEach((box, index) => { if (box.eggs < BOX_HOLDS && (best < 0 || box.eggs < boxes[best].eggs)) best = index; });
   return best;
 }
+// A cell overlaps the lane from the gate.
+const boxInLane = (cell, lane) => !!lane && cell.i + 1 > lane.i0 && cell.i < lane.i1 && cell.j + 1 > lane.j0 && cell.j < lane.j1;
 // A middle of a cell in the land.
 export const boxInLand = ({i, j}) => groundPoint(i + .5, j + .5);
 // The cell in front of him, for a nest box.
@@ -281,8 +284,7 @@ export function boxSlotInFront(position, yaw) {
 export function boxRefusal(home, cell) {
   if (!whole(cell.i) || !whole(cell.j) || cell.i < 0 || cell.j < 0 || cell.i >= HOME_CELLS || cell.j >= HOME_CELLS) return 'offGround';
   if (home.boxes.some(box => box.i === cell.i && box.j === cell.j)) return 'boxCell';
-  const lane = laneOf(gateOf(home));
-  if (lane && cell.i + 1 > lane.i0 && cell.i < lane.i1 && cell.j + 1 > lane.j0 && cell.j < lane.j1) return 'boxLane';
+  if (boxInLane(cell, laneOf(gateOf(home)))) return 'boxLane';
   if (cratesLeft(home) <= 0) return 'noCrates';
   return null;
 }

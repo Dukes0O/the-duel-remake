@@ -83,12 +83,13 @@ function startFlock(hens, from) {
   return hens.map((_, index) => ({x: from.x + (index ? .6 : -.6), z: from.z, yaw: 0, mode: 'peck', left: 1.5 + index, tx: from.x, tz: from.z}));
 }
 const insideGround = value => Math.max(HEN_KEEP_IN, Math.min(HOME_SIZE - HEN_KEEP_IN, value));
-function stepFlock(flock, seedIn, record, dt, events) {
+// `since` is the seconds since the record's dues were last brought up to date: a hen's egg is due in `due - since`.
+function stepFlock(flock, seedIn, record, dt, events, since) {
   let seed = seedIn;
   const room = boxRoom(record) > 0;
   const box = room ? boxForEgg(record.boxes) : -1;
   const out = flock.map((hen, index) => {
-    const due = record.hens[index]?.due ?? Infinity;
+    const due = (record.hens[index]?.due ?? Infinity) - since;
     let {x, z, yaw, mode, left, tx, tz} = hen;
     // Her egg is near and a box has room: she goes to it and sits.
     if (box >= 0 && due <= HEN_HEADS_TO_BOX) {
@@ -240,7 +241,7 @@ export const homePart = {
     }
     if (record.hens.length && next.flock.length !== record.hens.length) next.flock = startFlock(record.hens, groundCentre());
     if (next.flock.length) {
-      const walked = stepFlock(next.flock, next.flockSeed, record, dt, events);
+      const walked = stepFlock(next.flock, next.flockSeed, record, dt, events, now - next.ripenedAt);
       next.flock = walked.flock; next.flockSeed = walked.seed;
     }
 

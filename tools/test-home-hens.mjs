@@ -14,7 +14,7 @@ import {homePart} from '../src/world/open/parts/home.js';
 import {applyEffects} from '../src/world/open/open-effects.js';
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, DAY_SECONDS, HEN_SETTLE_SECONDS, HOME_CELLS, HOME_CRATES, HOME_CUES, HOME_WORDS,
   MOSS_HENS, MOSS_HENS_ID, MOSS_TALK} from '../src/world/open/content/home-ground.js';
-import {awayFor, boardLines, boxInLand, boxRefusal, build, buildBox, crateSpot, cratesLeft, facedThing, fenceClosed,
+import {awayFor, boardLines, boxInLand, boxRefusal, build, refusal, buildBox, crateSpot, cratesLeft, facedThing, fenceClosed,
   gatherBox, giveHens, groundPoint, hensWaiting, homeSolids, liftBox, nameHen, newHome, newsBoardSpot, readableHome, ripen,
   upgradeHome} from '../src/world/open/home-rule.js';
 import {selectFirstPersonPresentation} from '../src/first-person-presentation.js';
@@ -81,6 +81,12 @@ const withBoxes = (home, cells) => cells.reduce((record, [i, j]) => buildBox(rec
   equal(boxRefusal(withBoxes(lane, [[3, 3], [4, 3]]), {kind: 'box', i: 5, j: 3}), 'noCrates', 'he has two old crates');
   equal(boxRefusal(fenced(), {kind: 'box', i: 3, j: 3}), 'noCrates', 'before the hens come he has no crate');
   for (const reason of ['boxLane', 'boxCell', 'noCrates']) check(/^[A-Z].*\.$/.test(HOME_WORDS[reason]), 'the refusal "' + reason + '" is a sentence');
+  // The gate, moved, keeps its lane clear of nest boxes too.
+  // The gate taken down, and four panels beside where it stood, so that it could hang from node 2 to node 6.
+  const moved = {...withBoxes(giveHens(fenced()), [[3, 6]]), pieces: fenced().pieces.filter(piece => piece.kind !== 'gate' &&
+    !(piece.j === 0 && piece.axis === 'x' && piece.i >= 2 && piece.i < 6))};
+  equal(refusal(moved, {kind: 'gate', i: 2, j: 0, axis: 'x'}), 'gateLaneBox', 'a gate whose lane a nest box stands in is refused');
+  equal(refusal({...moved, boxes: []}, {kind: 'gate', i: 2, j: 0, axis: 'x'}), null, 'and hangs there once the box is moved');
   const solids = homeSolids(withBoxes(lane, [[3, 3]]), {heightAt: scablandsSurfaceHeightAt});
   check(solids.some(row => row.id === 'home/box/3/3'), 'a nest box is solid');
 }
@@ -186,7 +192,10 @@ const partOf = open => open.parts.home;
   check(homeOf(out.open).boxes[0].eggs >= 1, 'the first egg is laid within a couple of minutes of the box');
   check(cues(out.events).includes(HOME_CUES.lay) && says(out.requests).some(text => text.endsWith('laid an egg in the nest box.')),
     'laying has its cue and its sentence');
-  // A hen whose egg is near goes to the box and sits.
+  // A hen whose egg is near goes to the box and sits: Nutmeg's comes about seven minutes after she arrived.
+  let sat = false, settle = out.open;
+  for (let t = 0; t < 320 && !sat; t += 2) { settle = run(settle, viewOf(stand), 2).open; sat = partOf(settle).flock.some(row => row.mode === 'sit'); }
+  check(sat, 'a hen whose egg is near goes to the nest box and sits in it');
   check(partOf(out.open).flock.every(hen => {
     const at = {x: hen.x - groundPoint(0, 0).x, z: hen.z - groundPoint(0, 0).z};
     return at.x > 1 && at.x < 39 && at.z > 1 && at.z < 39;

@@ -112,6 +112,7 @@ export const HOME_WORDS = Object.freeze({
   boxCell: 'A nest box stands there already. Pick it up first.',
   boxLane: 'That would stand in the lane from your gate. Set the nest box beside it.',
   noCrates: 'You have no old crates left. Pick up a nest box to move it.',
+  gateLaneBox: 'A nest box stands in the lane this gate needs. Pick it up first.',
   cratesLeft: 'You have {count} old crates left.',
   gather: 'Press F to gather the {count} eggs in this nest box.',
   gatherOne: 'Press F to gather the egg in this nest box.',
