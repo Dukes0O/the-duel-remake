@@ -34,7 +34,6 @@ parser.add_argument('--only', default='', help='comma list of parts, for a trial
 parser.add_argument('--no-build', action='store_true', help='render from the glb already on disk')
 parser.add_argument('--sheet', default='', help='folder of review pictures to lay out as one sheet (plain Python)')
 parser.add_argument('--refs', default='C:/Users/kyleb/dev/art-library/ww-art-far/reference')
-parser.add_argument('--round', default='1')
 options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(options.root).resolve()
 ONLY = [n for n in options.only.split(',') if n]
@@ -52,11 +51,11 @@ PARTS = ['highwater-mill', 'highwater-house', 'highwater-barn', 'maud-cart', 'to
 VIEWS = {'highwater-mill': 38, 'highwater-house': -28, 'highwater-barn': 30, 'maud-cart': 55, 'top-pond-bank': 28,
          'top-pond-gate': 28, 'prudence': 48, 'prudence-gallery': 12, 'tunnel-ring': 20, 'tunnel-portal': 18,
          'spoil-heap': 25, 'goat-fourteen': 62, 'sheep': 62, 'conifer-tall': 0, 'conifer-small': 0, 'apple-tree': 15,
-         'grass-clump': 20, 'wet-rock': 30, 'maud-tarn': 202, 'wick': 158}
+         'grass-clump': 20, 'wet-rock': 30, 'maud-tarn': 202, 'wick': 158, 'prudence deck': 128}
 
 # A part far longer than 15 m cannot be seen whole from 15 m without a lens that bends it. These are framed on
 # the stretch a player looks at, given as limits along the part's own Z (metres).
-FRAME = {'highwater-mill': (-6.5, 5.5), 'prudence': (-1.7, 12.5)}
+FRAME = {'highwater-mill': (-6.5, 5.5), 'prudence': (-1.7, 12.5), 'prudence deck': (14.6, 21.5)}
 if options.paths_only:
     print(json.dumps({'blend': [str(NATIVE)], 'glb': [str(OUT)], 'json': []}))
     sys.exit(0)
@@ -66,8 +65,9 @@ if options.sheet:
     # named part from car height at 15 m, each with its name. Plain Python with Pillow; Blender is not involved.
     from PIL import Image, ImageDraw, ImageFont
     folder = Path(options.sheet)
-    cw, ch, cols, bar = 432, 300, 5, 22
-    names = [n for n in PARTS if (folder / f'{n}.png').exists()]
+    cw, ch, cols, bar = 360, 250, 6, 22
+    names = [n for n in PARTS + ['prudence deck'] if (folder / f'{n}.png').exists()]
+    names.insert(names.index('prudence') + 1, names.pop()) if 'prudence deck' in names and 'prudence' in names else None
     rows = (len(names) + cols - 1) // cols
     top_h = 430
     sheet = Image.new('RGB', (cols * cw, top_h + bar + rows * (ch + bar)), (38, 40, 40))
@@ -84,7 +84,7 @@ if options.sheet:
         x, y = (im.width - w) // 2, (im.height - h) // 2
         return im.crop((x, y, x + w, y + h))
 
-    tops = [(folder / 'place.png', 'Highwater, the whole kit together, from the road (model)', 1150)]
+    tops = [(folder / 'place.png', 'Highwater, the above-ground parts together, from car height (model)', 1150)]
     refs = Path(options.refs)
     for file, label in (('peirce-mill-wheel.jpg', 'real: Peirce Mill, CC0'), ('hoh-mist-forest.jpg', 'real: Hoh forest in mist, NPS')):
         if (refs / file).exists():
@@ -214,8 +214,9 @@ def save_picture(name, arr, quality=62):
 
 MATERIALS, TILE = {}, {}
 
-def material(key, picture=None, tile=(1, 1), colour=(.5, .5, .5), rough=.85, metal=0., cutout=False, quality=62):
-    """A named surface. `tile` is the picture's size in metres, for surfaces laid out in metres."""
+def material(key, picture=None, tile=(1, 1), colour=(.5, .5, .5), rough=.85, metal=0., cutout=False, quality=62, like=None, tint=None):
+    """A named surface. `tile` is the picture's size in metres, for surfaces laid out in metres. `like` names a
+    surface whose picture this one shares, darkened by `tint`: the file then holds the picture once."""
     mat = bpy.data.materials.new('far-side-' + key)
     mat.use_nodes = True
     bsdf = mat.node_tree.nodes['Principled BSDF']
@@ -223,11 +224,19 @@ def material(key, picture=None, tile=(1, 1), colour=(.5, .5, .5), rough=.85, met
     bsdf.inputs['Roughness'].default_value = rough
     bsdf.inputs['Metallic'].default_value = min(metal, .3)
     mat.diffuse_color = (*colour, 1)
-    if picture is not None:
-        image = save_picture('far-side-' + key, picture, quality)
+    if picture is not None or like:
+        image = IMAGES['far-side-' + like] if like else save_picture('far-side-' + key, picture, quality)
         node = mat.node_tree.nodes.new('ShaderNodeTexImage')
         node.image = image
-        mat.node_tree.links.new(node.outputs['Color'], bsdf.inputs['Base Color'])
+        if tint:
+            mix = mat.node_tree.nodes.new('ShaderNodeMix')
+            mix.data_type, mix.blend_type = 'RGBA', 'MULTIPLY'
+            mix.inputs[0].default_value = 1            # factor; sockets 6 and 7 are the two colours
+            mix.inputs[7].default_value = (*tint, 1)
+            mat.node_tree.links.new(node.outputs['Color'], mix.inputs[6])
+            mat.node_tree.links.new(mix.outputs[2], bsdf.inputs['Base Color'])
+        else:
+            mat.node_tree.links.new(node.outputs['Color'], bsdf.inputs['Base Color'])
         if cutout:
             mat.node_tree.links.new(node.outputs['Alpha'], bsdf.inputs['Alpha'])
             mat.blend_method = 'CLIP'
@@ -238,8 +247,8 @@ def material(key, picture=None, tile=(1, 1), colour=(.5, .5, .5), rough=.85, met
     return mat
 
 # ------------------------------------------------------------------ shapes
-# A part gathers faces in game metres (x right, y up, z towards the viewer of its front, which is -Z... so the
-# front wall is the one at the lowest z). Surfaces laid out in metres read their picture at TILE[material].
+# A part gathers faces in game metres: x to the right, y up, and its front at the lowest z (the front is -Z).
+# Surfaces laid out in metres read their picture at TILE[material].
 
 def vnoise(p, scale=1.0, seed=0):
     """Smooth noise between -1 and 1 at a point, the same every run."""
@@ -746,18 +755,19 @@ def build_surfaces():
     rng = np.random.default_rng(7)
     stone = resize(read_picture(SCAB_TEX / 'dam-gatehouse-stone.jpg')[..., :3], 512, 512)
     stone = wet(stone, .82, 1.0) * np.array((1.0, .99, .95))
-    material('stone', stone, (2.3, 2.3), rough=.62, quality=58)
+    material('stone', stone, (1.65, 1.65), rough=.62, quality=58)
     yy = np.mgrid[0:384, 0:384][0] / 384
     small = resize(stone, 384, 384)
-    material('stone-foot', moss_over(small * (.72 + .2 * (1 - yy))[..., None], .34, rng, low=smooth(.45, 1.0, yy) * .8), (2.3, 2.3), rough=.5, quality=56)
-    material('stone-moss', moss_over(small * .88, .62, rng), (2.3, 2.3), rough=.7, quality=56)
+    material('stone-foot', moss_over(small * (.72 + .2 * (1 - yy))[..., None], .34, rng, low=smooth(.45, 1.0, yy) * .8), (1.65, 1.65), rough=.5, quality=56)
+    material('stone-moss', moss_over(small * .88, .62, rng), (1.65, 1.65), rough=.7, quality=56)
     material('slate', slate_picture(512, rng), (2.4, 2.4), rough=.5, quality=60)
     material('moss', moss_picture(256, rng), (.9, .9), rough=.95)
     material('grass', grass_picture(256, rng), (1.6, 1.6), rough=.8)
     material('bark', bark_picture(256, rng), (.9, .9), rough=.8)
     material('wool', wool_picture(256, rng), (.55, .55), rough=.95)
-    material('water', water_picture(256, rng), (1.2, 3.0), rough=.3, quality=58)
+    material('water', water_picture(256, rng), (1.2, 3.0), rough=.55, quality=58)
     material('bough', bough_picture(256, rng), cutout=True, rough=.6)
+    material('bough-dark', like='bough', tint=(.55, .62, .58), cutout=True, rough=.6)
     material('blades', blades_picture(256, 128, rng), cutout=True, rough=.6)
     timber = resize(read_picture(TOWN_TEX / 'timber.jpg')[..., :3], 384, 384)
     material('timber', wet(timber, .80, 1.05), (1.0, 1.0), rough=.55)
@@ -774,7 +784,7 @@ def build_surfaces():
     sack = resize(read_picture(TOWN_TEX / 'canvas-tan.jpg')[..., :3], 192, 192)
     material('sacking', wet(sack, .46, .45) * np.array((1.0, .99, .93)), (.8, .8), rough=.8)
     earth = resize(read_picture(TOWN_TEX / 'wet-brown-earth.jpg')[..., :3], 256, 256)
-    material('mud', wet(earth, .62, .8), (1.5, 1.5), rough=.35)
+    material('mud', wet(earth, .62, .8), (1.5, 1.5), rough=.62)
     steel = resize(read_picture(TOWN_TEX / 'rusted-steel.jpg')[..., :3], 320, 320)
     material('iron', wet(steel, .62, 1.15), (1.4, 1.4), rough=.68, metal=.1)
     plate = resize(read_picture(TOWN_TEX / 'plate-steel-mill.jpg')[..., :3], 320, 320)
@@ -1647,7 +1657,7 @@ def build_portal(parent):
         part.quad('planks', a, b, b + Z * (depth + .15), a + Z * (depth + .15), o)
     # The face the bore broke out of: a wall of broken rock, wider than it is high, in rough benches, with the
     # hole through the foot of it.
-    cols = [-10.5, -8.2, -6.2, -4.7, -3.75, -2.6, -1.3, 0, 1.3, 2.6, 3.75, 4.7, 6.2, 8.2, 10.5]
+    cols = [-10.5, -9.3, -8.2, -7.1, -6.2, -5.4, -4.7, -3.75, -2.6, -1.3, 0, 1.3, 2.6, 3.75, 4.7, 5.4, 6.2, 7.1, 8.2, 9.3, 10.5]
     rows = [0, 1.5, 3.1, 4.8, 6.75, 7.6, 8.9, 10.4]
 
     def face(i, j):
@@ -1657,7 +1667,7 @@ def build_portal(parent):
             a = math.atan2(max(y, .01) - cy, x)
             return np.array((3.72 * math.cos(a), max(0, cy + 3.72 * math.sin(a)), .02))
         edge = max(0, 1 - abs(x) / 10.5) ** .5
-        top = (7.6 + 2.8 * edge) * (.9 + .12 * vnoise((x, 0, 0), .35, 61))
+        top = (7.2 + 3.4 * edge) * (.86 + .22 * vnoise((x, 0, 0), .45, 61) + .08 * vnoise((x, 0, 0), 1.7, 66))
         y = min(y, top) if j < len(rows) - 1 else top
         z = .15 + .55 * y / 4 + .55 * vnoise((x, y, 0), .42, 62) + .3 * math.floor(y / 3.2) + .25 * vnoise((x, y, 0), 1.3, 63)
         return np.array((x + .3 * vnoise((x, y, 1), .5, 64), y, z))
@@ -1731,7 +1741,7 @@ def build_spoil(parent):
 
 # ------------------------------------------------------------------ the green
 
-def bough(part, root, out, reach, droop, seed, leans=(0., 1.2, -1.2)):
+def bough(part, root, out, reach, droop, seed, leans=(0., 1.2, -1.2), mat='bough'):
     """One spruce bough as three cut-out strips sharing the branch line: one hanging and one spread to each side."""
     root, out = np.asarray(root, float), unit(out)
     side = np.cross(Y, out)
@@ -1743,7 +1753,7 @@ def bough(part, root, out, reach, droop, seed, leans=(0., 1.2, -1.2)):
             a, b = line[k], line[k + 1]
             da, db = depth * (.6 if k == 0 else 1.0), depth * (1.0 if k == 0 else .5)
             u0, u1 = (k / 2, (k + 1) / 2)
-            part.face('bough', (a + hang * da, b + hang * db, b - hang * depth * .14, a - hang * depth * .14),
+            part.face(mat, (a + hang * da, b + hang * db, b - hang * depth * .14, a - hang * depth * .14),
                       [(u0, 0), (u1, 0), (u1, 1), (u0, 1)])
 
 def build_conifer(parent, name, height, girth, whorls, per, reach, seed):
@@ -1752,7 +1762,7 @@ def build_conifer(parent, name, height, girth, whorls, per, reach, seed):
     part = Part(name)
     lean = np.array((.02 * vnoise((seed, 0, 0), 1., 1), 0, .02 * vnoise((seed, 1, 0), 1., 2)))
     spine = lambda y: np.array((0, y, 0)) + lean * y * (1 + .3 * math.sin(y * .5 + seed))
-    stations = [0, .12, .5, 1.5, height * .35, height * .7, height * .985]
+    stations = [0, .12, .5, 1.5, height * .35, height * .7, height * .975]
     part.tube('bark', [spine(y) for y in stations], [girth * 1.5, girth * 1.12, girth, girth * .92, girth * .66, girth * .3, .015], sides=7, caps=(False, False))
     first = height * (.13 if height > 9 else .10)
     for k in range(6 if height > 9 else 2):
@@ -1763,8 +1773,8 @@ def build_conifer(parent, name, height, girth, whorls, per, reach, seed):
     for w in range(whorls):
         f = (w + .35 * vnoise((w, seed, 0), 1.9, 6)) / (whorls - 1)
         f = min(1, max(0, f))
-        y = first + (height * .975 - first) * f ** .95
-        r = reach * (1 - f) ** .72 * (.62 + .38 * min(1, f / .14)) + .14
+        y = first + (height * .985 - first) * f ** .95
+        r = reach * (1 - f) ** .72 * (.62 + .38 * min(1, f / .14)) + .14 + height * .012
         n = per + (1 if f < .5 else 0) - (2 if f > .85 else 0)
         for b in range(n):
             jit = vnoise((w, b, seed), 1.7, 4)
@@ -1774,7 +1784,7 @@ def build_conifer(parent, name, height, girth, whorls, per, reach, seed):
             d = np.array((math.cos(a), 0, math.sin(a)))
             lee = 1 - .32 * max(0, math.cos(a - seed * 1.7))
             bough(part, spine(y) - Y * .05 * r, d, r * lee * (.78 + .34 * (jit * .5 + .5)), (.22 + .30 * (1 - f) + .08 * jit) if f < .9 else .5, w * 7 + b + seed,
-                  leans=(0., 1.2, -1.2) if f < .9 else (0.,))
+                  leans=(0., 1.2, -1.2) if f < .9 else (0.,), mat='bough-dark' if (f < .22 or jit > .45) else 'bough')
     return part.finish(parent)
 
 def beech_leaf_tile():
@@ -1965,11 +1975,11 @@ def build_goat(parent):
     for loop in mesh.loops:
         uv_of.setdefault(loop.vertex_index, tuple(mesh.uv_layers.active.data[loop.index].uv))
     trunk = [(i, q) for i, q in enumerate(pts) if abs(q[0]) > .05 and front * .45 < q[2] < -front * .75 and .30 < q[1] < .46]
-    step = max(1, len(trunk) // 110)
+    step = max(1, len(trunk) // 150)
     for k, (i, q) in enumerate(trunk[::step]):
         side = 1 if q[0] > 0 else -1
         width = .022 + .018 * ((k * .37) % 1)
-        drop = .05 + .06 * ((k * .61) % 1)
+        drop = .07 + .08 * ((k * .61) % 1)
         a_, b_ = q + (0, 0, -width), q + (0, 0, width)
         tip = q + (side * .012, -drop, .02 * math.sin(k))
         uv = uv_of[i]
@@ -2171,8 +2181,8 @@ def build_family():
         'top-pond-bank': build_bank, 'top-pond-gate': build_gate, 'prudence': build_prudence, 'prudence-gallery': build_gallery,
         'tunnel-ring': build_ring, 'tunnel-portal': build_portal, 'spoil-heap': build_spoil, 'goat-fourteen': build_goat,
         'sheep': build_sheep,
-        'conifer-tall': lambda p: build_conifer(p, 'conifer-tall', 17.0, .30, 19, 5, 3.3, 3),
-        'conifer-small': lambda p: build_conifer(p, 'conifer-small', 6.5, .13, 10, 4, 1.7, 8),
+        'conifer-tall': lambda p: build_conifer(p, 'conifer-tall', 17.0, .30, 24, 5, 3.3, 3),
+        'conifer-small': lambda p: build_conifer(p, 'conifer-small', 6.5, .13, 13, 4, 1.7, 8),
         'apple-tree': build_apple, 'grass-clump': build_grass, 'wet-rock': build_rock,
         'maud-tarn': lambda p: build_person(p, 'maud-tarn', 'walker-a', 1.62, 'adult', (.075, .07, .055), 'oilskin-dark', .25, True),
         'wick': lambda p: build_person(p, 'wick', 'walker-kid-b', 1.30, 'child', (.40, .30, .06), 'oilskin-yellow', .30, False),
@@ -2289,17 +2299,22 @@ def render_pictures(folder):
         return cam
 
     scene.render.resolution_x, scene.render.resolution_y = 864, 600
-    wanted = [n for n in PARTS if n in parts]
-    for name in wanted:
+    wanted = [n for n in PARTS if n in parts] + (['prudence deck'] if 'prudence' in parts else [])
+    for shot in wanted:
+        name = shot.split(' ')[0]
         show([name])
         bpy.context.view_layer.update()
         lo, hi = world_bounds([parts[name], *parts[name].children_recursive])
-        if name in FRAME:           # glTF z is -y here
-            lo.y, hi.y = max(lo.y, -FRAME[name][1]), min(hi.y, -FRAME[name][0])
+        if shot in FRAME:           # glTF z is -y here
+            lo.y, hi.y = max(lo.y, -FRAME[shot][1]), min(hi.y, -FRAME[shot][0])
         centre = (lo + hi) / 2
-        ang = math.radians(VIEWS[name])
+        ang = math.radians(VIEWS[shot])
         # A part's front is glTF -Z, which is Blender +Y. The camera stands 15 m from the middle, at car height.
         eye = Vector((centre.x + 15 * math.sin(ang), centre.y + 15 * math.cos(ang), 1.2))
+        if shot == 'prudence deck':
+            lo.z, hi.z = 1.3, 4.6
+            centre = (lo + hi) / 2
+            eye = Vector((centre.x + 15 * math.sin(ang), centre.y + 15 * math.cos(ang), 1.2))
         if name == 'prudence-gallery':
             eye = Vector((1.2, centre.y + 15, 1.6))
         cam = camera_at(eye, centre, 50)
@@ -2311,15 +2326,15 @@ def render_pictures(folder):
                 continue
             for v in o.data.vertices:
                 w = o.matrix_world @ v.co
-                if lo.y - .01 <= w.y <= hi.y + .01:
+                if lo.y - .01 <= w.y <= hi.y + .01 and lo.z - .01 <= w.z <= hi.z + .01:
                     p = inv @ w
                     if p.z < -.5:
                         tan_x, tan_y = max(tan_x, abs(p.x / p.z)), max(tan_y, abs(p.y / p.z))
         need = max(tan_x, tan_y * 864 / 600) * 1.12
         cam.data.lens = float(np.clip(18 / max(need, 1e-3), 14, 900))
-        scene.render.filepath = str(folder / f'{name}.png')
+        scene.render.filepath = str(folder / f'{shot}.png')
         bpy.ops.render.render(write_still=True)
-        print('PICTURE', name, 'lens', round(cam.data.lens), 'bounds', [round(v, 2) for v in (*lo, *hi)])
+        print('PICTURE', shot, 'lens', round(cam.data.lens), 'bounds', [round(v, 2) for v in (*lo, *hi)])
         bpy.data.objects.remove(cam)
     if ONLY:
         return

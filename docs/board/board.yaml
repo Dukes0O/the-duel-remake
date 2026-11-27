@@ -1001,8 +1001,9 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "building"
-    claimed_by: "Claude session (local), 27 November 2026"
+    status: "review"
+    claimed_by: "Claude session (local), 27 November 2026: round 2 submitted, docs/board/looks/ww-art-far/round-2.jpg"
+    waiting_on: "claude"
     needs: ["TUNNEL-TRIAL"]
     locks: []
     flag: "wasteland-town"
