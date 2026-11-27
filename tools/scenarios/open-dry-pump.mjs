@@ -40,20 +40,32 @@ export const pageFunctions = {
   talkReady: id => {
     const {job} = window.__qaApp.duel.state.arena.worldJob;
     const overlay = document.querySelector('.story-talk:not([hidden])');
-    return job.steps[job.stepIndex]?.id === id && !!overlay?.getClientRects().length;
+    return job.steps[job.stepIndex]?.id === id && overlay?.dataset.scene === id && !!overlay.getClientRects().length;
   },
   beatReady: beat => window.__qaApp.duel.state.arena.worldJob.open.world.open.threads['dry-pump']?.beat === beat,
-  decisionReady: option => {
-    const overlay = document.querySelector('.story-talk:not([hidden])');
-    const options = [...(overlay?.querySelectorAll('.story-options button') ?? [])];
-    return options.some(button => button.textContent.includes(option) && button.getClientRects().length && !button.disabled);
+  talkState: () => {
+    const state = window.__qaApp?.duel.state, trip = state?.arena?.worldJob;
+    const job = trip?.job;
+    return {status: state?.status, step: job?.steps[job.stepIndex], talk: job?.stepState.talk,
+      threads: trip?.open?.world.open.threads, progress: trip?.open?.parts.threads?.dryPump,
+      talks: [...document.querySelectorAll('.story-talk')].map(box => ({
+        html: box.outerHTML, buttons: [...box.querySelectorAll('button')].map(button => ({
+          text: button.textContent, hidden: button.hidden, disabled: button.disabled,
+          visible: !!button.getClientRects().length, visibility: getComputedStyle(button).visibility,
+        })),
+      }))};
   },
-  advanceTalk: () => {
-    const button = document.querySelector('.story-talk:not([hidden]) .story-talk-controls button:first-child');
+  decisionReady: (id, option) => {
+    const overlay = document.querySelector('.story-talk:not([hidden])');
+    if (overlay?.dataset.scene !== id) return false;
+    const options = [...(overlay?.querySelectorAll('.story-options button') ?? [])];
+    if (options.some(button => button.textContent.includes(option) && button.getClientRects().length && !button.disabled)) return true;
+    // Poll between advances so the renderer can replace the screen accepted by talkInput.
+    const button = overlay.querySelector('.story-talk-controls button:first-child');
     if (!button || button.disabled || !button.getClientRects().length) return false;
     button.click();
     window.__qaApp.advance(.1);
-    return true;
+    return false;
   },
   select: option => {
     const button = [...document.querySelectorAll('.story-talk:not([hidden]) .story-options button')].find(row =>
@@ -85,7 +97,13 @@ export function pageSource(name, ...values) {
 
 export async function run(context) {
   const evaluate = (name, ...values) => context.evaluate(pageSource(name, ...values));
-  const wait = (name, ...values) => context.waitFor(pageSource(name, ...values), name, 120000);
+  const wait = async (name, ...values) => {
+    try { return await context.waitFor(pageSource(name, ...values), name, 120000); }
+    catch (error) {
+      error.message += '\nTalk state: ' + await evaluate('talkState').then(JSON.stringify, failure => failure.message);
+      throw error;
+    }
+  };
   const foot = point => evaluate('onFoot', onGround(point));
   const meetLeader = async () => {
     const state = await evaluate('campState');
@@ -93,8 +111,7 @@ export async function run(context) {
   };
   const choose = async (id, option) => {
     await wait('talkReady', id);
-    for (let i = 0; i < 16 && await evaluate('advanceTalk'); i++) { /* Advance only a visible, enabled button. */ }
-    await wait('decisionReady', option);
+    await wait('decisionReady', id, option);
     await evaluate('select', option);
   };
   await context.navigate('/tools/menu-check.html?flags=story-choices,crew-gear&seed=2&harness=open-dry-pump');
