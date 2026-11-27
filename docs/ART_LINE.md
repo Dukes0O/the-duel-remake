@@ -415,6 +415,27 @@ the game.
 - **The point of a roof weapon decides where it can stand.** A bolt reaching 0.36 m past the prod pushed the whole bow back off
   a short roof onto the engine cover. Keep what sticks forward short, and let the butt overhang the back instead.
 
+### Loads and loose pieces (TOWN-HAUL-LOAD-LOOK, 27 November 2026)
+
+- **A bed measured from the model's own load is the load's size, not the deck's.** The flatbed's model carries a heap of sacks on
+  the 1.8 m behind its cab, and the haul's stack was laid inside that heap's box: a full load stood as a tower on half the bed.
+  Take the deck from the truck's own figures (`tools.bed` in `src/town/content/work-vehicles.js`) and only its height and front
+  edge from the model.
+- **Things stacked by their outer boxes make a tower with air in it.** A gear leg's box is mostly air, so a spar laid on "its top"
+  floats. A load of scrap is a heap: put each piece where the heap is lowest and let it settle half way between the mean height
+  and the highest point under it, tilted where the two halves differ (`stackHaulPieces` in `src/town/view/haul-load-look.js`).
+  Thin open things (seat frames, lattices) read as wires that the next piece floats on; fold or fill them into a solid thing.
+- **A thin piece laid at the rules' ground height is buried.** On sand the drawn ground stands some centimetres over the height the
+  rules use, and a 2 cm steel plate vanished under it. Lay loose things on the ground as it is drawn
+  (`userData.drawnGroundHeightAt` on the Scablands' group), and prop a flat piece on one edge so that it catches the light.
+- **Bare aluminium does not rust.** `createScrapWear` draws brown rust, which is right for steel and paint. Salvaged aluminium
+  takes grey grime, scratches along its length and the land's dust on what faces up. Zinc-chromate primer written as the colour
+  it should be came out lime in the hard light; a dull olive at about two thirds of it reads as primer.
+- **A seeded deal hides kinds from the pictures.** Two rounds of pictures had no seat frames in them at all. A look scenario of
+  anything dealt from a seed ends with one of every kind, written straight into the job for the pictures only.
+- **A look scenario named after its area runs every night that area changes.** `town-...` matches the `town-` row of
+  `SCENARIO_AREAS`. Name it `look-...` and give it its own row with the look's files, as the open land's looks have.
+
 ### Moments (a thing that happens, not a thing that stands)
 
 - **A drawn moment that no player sees.** Hot Delivery's hand-over and the
