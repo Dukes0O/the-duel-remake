@@ -18,3 +18,12 @@ passes because its `walkTo` sets the player's position directly and never walks.
 spots, and the ground cut that the Rats' Nest look joins, see the OPEN-BURNED-PEN hand-over: the Nest's look and
 solids are not joined to the land yet). Check: the drain walked with real keys from mouth to pen, the ground along it
 measured; the scenario walks rather than sets positions.
+
+## Build decision and checks
+
+Cut only the drain corridor between the existing yard and gully, at the drain's 9 m depth, with blended banks on the
+existing metre grid. Keep the layout, other cuts and foot physics. No new game event or sound cue.
+Checks: `test-open-pen-drain-bank` samples every metre and walks the real fighter in both directions;
+`test-burned-camp-pen`, `test-burned-camp`, `test-rats-nest-look`, `test-world-composition`, core and both replay guards;
+`npm run build`. Claude runs `open-burned-pen` and reviews the replaced uncut-drain assertion in `test-rats-nest-look`.
+The scenario now goes round the lean-to and south of the pen's wreck: its former straight line crossed both solids.

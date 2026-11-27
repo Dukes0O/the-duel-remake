@@ -169,7 +169,8 @@ assert.ok(ratsNestGround(road.top, road.z) < .05 && Math.abs(ratsNestGround(road
 assert.ok(ratsNestGround(L.gully.line[0][0], L.gully.line[0][1]) > 9, 'the gully is as deep as the drain where the drain comes out');
 assert.ok(ratsNestGround(...L.gully.line.at(-1)) < .05, 'the gully ends at the land');
 assert.ok(L.drain.length > 29 && L.drain.length < 32 && L.drain.inner * 2 === 1.8, 'the drain is 30 m long and as tall as a man');
-for (let x = L.drain.from + 7; x < L.drain.to - 7; x += 1) assert.equal(ratsNestGround(x, L.drain.z), 0, 'the drain runs under uncut land');
+for (let x = L.spots['drain-in'].x; x <= L.spots['drain-out'].x; x += 1)
+  assert.ok(ratsNestGround(x, L.drain.z) >= -L.drain.floor, 'the drain bed is cut continuously from yard to gully');
 
 // The layout: the named spots the card asks for, in the site's metres.
 const need = ['rim-north', 'rim-middle', 'rim-south', 'car-hollow', 'road-top', 'road-foot', 'pen-gate', 'sump', 'drain-in', 'drain-out', 'drain-guard',

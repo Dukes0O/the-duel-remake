@@ -70,6 +70,9 @@ the game.
 
 ## What to watch for
 
+- **A drawn pipe does not cut the ground inside it.** The Rats' Nest had cut mouths but 30 m of earth between them.
+  On a height field with one surface, cut a continuous bed or provide a real tunnel floor. Sample the installed ground
+  along the whole route and walk it with the foot mover; setting a fighter's position hides blocked routes.
 - **An open cage is not a roof.** The Scarab's roof weapon probe found the floor through its cage. Give an open vehicle a supported weapon bridge and check all four mount feet against its real geometry; do not raise the socket until the weapon appears to fit.
 - **Generic kit dimensions do not prove a fit.** Probe each stack against the tyre rubber and each cage foot against the body below it. Scarab needed inboard stacks seated on its chassis; Longhaul needed the whole cage and turret moved onto its cab. A single roof-centre height cannot place feet over a truck bed.
 - **Imported paint needs the full finish contract.** A standard GLB material has no clearcoat value. Convert painted surfaces to physical materials with an explicit factory clearcoat before preparing damage, so switching paint back to Factory restores the original finish exactly.

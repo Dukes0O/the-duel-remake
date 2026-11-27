@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-27T09:51:31.358Z
+Observed at: 2026-11-27T15:30:53.586Z
 
-Observation commit: 136bc0e3a5890baa0149dbfd33c76b7b3f4f9bed
+Observation commit: 3d1bae1d638c70cfebd31ed4ae836f08dbc7e3d0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 136bc0e3a5890baa0149dbfd33c76b7b3f4f9bed
+Integration HEAD: 3d1bae1d638c70cfebd31ed4ae836f08dbc7e3d0
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -34,7 +34,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/batch-3 | 21 | unknown | true | false | unknown |
 | codex/board-lines | 21 | unknown | true | false | unknown |
 | codex/bowl-art-rex | 21 | unknown | false | false | unknown |
-| codex/bowl-batch3-fix | 5 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix |
+| codex/bowl-batch3-fix | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix |
 | codex/bowl-course | 21 | unknown | true | false | unknown |
 | codex/bowl-freestyle-nights | 5 | unknown | true | false | unknown |
 | codex/bowl-hud | 6 | unknown | true | false | unknown |
@@ -42,11 +42,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/car-art-bully | 21 | unknown | false | false | unknown |
 | codex/crew-story-join | 21 | unknown | true | false | unknown |
 | codex/mule-rails | 21 | unknown | true | false | unknown |
+| codex/open-pen-drain-bank | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/open-pen-drain-bank |
 | codex/perf-high-night | 43 | unknown | false | false | unknown |
 | codex/qa-arena-shove-baseline | 21 | unknown | true | false | unknown |
 | codex/qa-drive-lesson-run-board | 21 | unknown | true | false | unknown |
 | codex/qa-ski-finish-timeout | 21 | unknown | true | false | unknown |
-| codex/rail-lines | 20 | unknown | true | false | unknown |
+| codex/rail-lines | 21 | unknown | true | false | unknown |
 | codex/rail-region | 20 | unknown | true | false | unknown |
 | codex/rail-steps | 20 | unknown | true | false | unknown |
 | codex/skin-waste | 21 | unknown | true | false | unknown |
@@ -83,16 +84,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 752,787,319 B | +0 B | 250,000,000 B |
-| Wasteland models | 462,599,075 B | +12,243,804 B | 60,000,000 B |
+| Build `dist/` | 770,367,356 B | unavailable | 250,000,000 B |
+| Wasteland models | 462,599,075 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 499,162 B | +0 B | 500,000 B |
-| Review `looks/` | 115,398,539 B | +9,731,378 B | 20,000,000 B |
-| Added bytes in last merge | 167,508 B | -1,199,376 B | 5,000,000 B |
-| All `public/` | 759,795,884 B | +12,243,804 B | unavailable |
-| Git objects | 1,149,914,112 B | -348,760,064 B | unavailable |
-| Lane folders | 1 | +0 | unavailable |
+| Review `looks/` | 115,398,539 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 28,213 B | +0 B | 5,000,000 B |
+| All `public/` | 759,795,884 B | +0 B | unavailable |
+| Git objects | 1,151,306,752 B | +299,008 B | unavailable |
+| Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
@@ -100,7 +101,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 0d3ddc8e512a300fefc3fcd4b393683099a1a8aa
 - Local main: missing
-- Local integration/wasteland: 136bc0e3a5890baa0149dbfd33c76b7b3f4f9bed
+- Local integration/wasteland: 3d1bae1d638c70cfebd31ed4ae836f08dbc7e3d0
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -108,6 +109,7 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 0d3ddc8e512a300fefc3fcd4b393683099a1a8aa.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 136bc0e3a5890baa0149dbfd33c76b7b3f4f9bed.
+- Remote origin/integration/wasteland: matches local; cached commit 3d1bae1d638c70cfebd31ed4ae836f08dbc7e3d0.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
+Issue: codex/bowl-batch3-fix: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix

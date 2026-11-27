@@ -1,5 +1,7 @@
 # Wasteland run log
 
+27 November (OPEN-PEN-DRAIN-BANK lane sweep): repo audit reviewed; candidates advisory, no asset removals; generated build and scratch recycled; sizes and idle branches in STATUS.
+
 17 November, evening (Claude; Codex built, a Claude reviewer reviewed, Claude cured): EVERBURN-REMAKE slice 12 merged, hidden: job 4, Slow Ride (Big Bess on the Tin Road with her gas, three blocks, four raids); the review found six faults, the worst that it stopped job 3's knocks from counting, all cured; also merged before it: the Boneyard's wrecks solid only where they are drawn; lane tier 180 of 180, build and browser scenarios pass.
 17 November, evening (Claude; Codex for code, checks and reviews): EVERBURN-REMAKE slice 11 merged, hidden: the six rule faults of Claude's hand play of jobs 2 and 3 cured (the thief stays in reach, weapons spoil the bellows, a marker and a town map for the lamps, Auntie's warnings, Ash Men apart, one click for brand and flamer); one Codex review found two faults, both cured; build and three browser scenarios pass.
 17 November, evening (Claude; Codex for code, checks and reviews): EVERBURN-REMAKE slice 10 merged, hidden: what stands on the Scablands is drawn at the drawn ground, which cures the car sinking (Kyle's finding 11) without drawing the ground finer; one Codex review found three faults, two cured and the river seam left to Claude; lane tier 80 of 80, build, drive-through and browser scenario pass.
